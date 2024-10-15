@@ -6,7 +6,8 @@ type Props = {
   checked: boolean;
   label: string;
   description?: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  inline?: boolean;
+  onChange: React.ChangeEventHandler<HTMLInputElement>;
 };
 
 export function FormRadioButton({
@@ -15,10 +16,11 @@ export function FormRadioButton({
   checked,
   label,
   description = "",
+  inline = false,
   onChange,
 }: Props) {
   return (
-    <div className="flex flex-col gap-2">
+    <div className={`flex ${inline ? "items-center" : "flex-col"} gap-2`}>
       <div className="flex items-center gap-2">
         <input
           id={label}
@@ -29,9 +31,11 @@ export function FormRadioButton({
           className="radio radio-info"
           name={registerKey}
         />
-        <label htmlFor={label} className="label cursor-pointer">{label}</label>
+        <label htmlFor={label} className="label font-semibold cursor-pointer">
+          {label}
+        </label>
       </div>
-      <p className="text-sm">{description}</p>
+      <p className="text-sm text-neutral-soft-content">{description}</p>
     </div>
   );
 }

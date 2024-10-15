@@ -1,11 +1,13 @@
-import React, { useState } from "react";
+import React, { ReactNode, useState } from "react";
+import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
 import { useForm } from "react-hook-form";
 import { Address, formatUnits, parseUnits } from "viem";
-import { TokenGarden } from "#/subgraph/.graphclient";
+import { CVStrategy, TokenGarden } from "#/subgraph/.graphclient";
+import { AllowListInput } from "./AllowListInput";
 import { FormAddressInput } from "./FormAddressInput";
+import { FormCheckBox } from "./FormCheckBox";
 import { FormInput } from "./FormInput";
 import { FormPreview, FormRow } from "./FormPreview";
-import { FormRadioButton } from "./FormRadioButton";
 import { FormSelect } from "./FormSelect";
 import { Button } from "../Button";
 import { EthAddress } from "../EthAddress";
@@ -14,21 +16,25 @@ import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { cvStrategyABI } from "@/src/generated";
-import { DisputeOutcome, PoolTypes } from "@/types";
-import { abiWithErrors } from "@/utils/abiWithErrors";
+import { DisputeOutcome, PoolTypes, SybilResistanceType } from "@/types";
+import { filterFunctionFromABI } from "@/utils/abi";
 import {
   calculateDecay,
+  CV_PASSPORT_THRESHOLD_SCALE,
   calculateMaxRatioNum,
+  convertSecondsToReadableTime,
   CV_SCALE_PRECISION,
   ETH_DECIMALS,
 } from "@/utils/numbers";
 import { capitalize } from "@/utils/text";
+import { parseTimeUnit } from "@/utils/time";
 
 type ArbitrationSettings = {
   defaultResolution: number;
   proposalCollateral: number | string;
   disputeCollateral: number | string;
   tribunalAddress: string;
+  rulingTime: number;
 };
 
 type FormInputs = {
@@ -36,49 +42,130 @@ type FormInputs = {
   minimumConviction: number | string;
   convictionGrowth: number | string;
   minThresholdPoints: string;
+  sybilResistanceValue?: undefined | number | Address[];
+  sybilResistanceType: SybilResistanceType;
 } & ArbitrationSettings;
 
 type Props = {
-  strategyAddr: Address;
+  strategy: Pick<CVStrategy, "id" | "poolId" | "sybilScorer">;
   token: TokenGarden["decimals"];
   chainId: string;
   initValues: FormInputs;
   proposalType: string;
+  pointSystemType: number;
   proposalOnDispute: boolean;
   setModalOpen: (value: boolean) => void;
 };
 
+const sybilResistancePreview = (
+  sybilType: SybilResistanceType,
+  addresses: string[],
+  value?: string | Address[],
+): ReactNode => {
+  const previewMap: Record<SybilResistanceType, ReactNode> = {
+    noSybilResist: "No restrictions (anyone can vote)",
+    allowList: (() => {
+      if (addresses.length === 0) {
+        return "Allow list (no addresses submitted)";
+      }
+      return (
+        <div className="flex flex-col">
+          <div className="w-fit text-nowrap flex-nowrap">Allow list:</div>
+          <ul className="bg-base-200">
+            <li className="flex flex-col">
+              {addresses.map((address) => (
+                <EthAddress key={address} address={address as Address} />
+              ))}
+            </li>
+          </ul>
+        </div>
+      );
+    })(),
+    gitcoinPassport: `Passport score required: ${value}`,
+  };
+
+  return previewMap[sybilType];
+};
+
+const parseAllowListMembers = (
+  initialList: Address[],
+  currentList: Address[],
+) => {
+  const initialSet = new Set(initialList);
+  const currentSet = new Set(currentList);
+
+  const membersToAdd: Address[] = [];
+  const membersToRemove: Address[] = [];
+
+  for (const address of initialSet) {
+    if (!currentSet.has(address)) {
+      membersToRemove.push(address);
+    }
+  }
+
+  for (const address of currentSet) {
+    if (!initialSet.has(address)) {
+      membersToAdd.push(address);
+    }
+  }
+
+  return { membersToAdd, membersToRemove };
+};
+
 export default function PoolEditForm({
   token,
-  strategyAddr,
+  strategy,
   chainId,
   initValues,
   proposalType,
+  pointSystemType,
   setModalOpen,
 }: Props) {
   const {
     register,
     handleSubmit,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<FormInputs>({
-    defaultValues: {
-      spendingLimit: initValues.spendingLimit,
-      minimumConviction: initValues.minimumConviction,
-      convictionGrowth: Math.round(+initValues.convictionGrowth / 3600 / 24), // convert seconds to days
-      minThresholdPoints: initValues.minThresholdPoints,
-      // arb settings
-      defaultResolution: initValues.defaultResolution,
-      proposalCollateral: formatUnits(
-        BigInt(initValues.proposalCollateral),
-        ETH_DECIMALS,
-      ),
-      disputeCollateral: formatUnits(
-        BigInt(initValues.disputeCollateral),
-        ETH_DECIMALS,
-      ),
-      tribunalAddress: initValues.tribunalAddress,
-    },
+    defaultValues:
+      initValues ?
+        {
+          // sybil resistance
+          sybilResistanceValue: initValues.sybilResistanceValue,
+          sybilResistanceType: initValues.sybilResistanceType,
+          //pool settings
+          spendingLimit: initValues.spendingLimit,
+          minimumConviction: initValues.minimumConviction,
+          convictionGrowth: parseTimeUnit(
+            +initValues.convictionGrowth,
+            "seconds",
+            "days",
+          ), // convert seconds to days
+          minThresholdPoints: initValues.minThresholdPoints,
+          // arb settings
+          defaultResolution: initValues.defaultResolution,
+          rulingTime: parseTimeUnit(
+            initValues.rulingTime, // ?? 7 days
+            "seconds",
+            "days",
+          ),
+          proposalCollateral: formatUnits(
+            BigInt(initValues.proposalCollateral),
+            ETH_DECIMALS,
+          ),
+          disputeCollateral: formatUnits(
+            BigInt(initValues.disputeCollateral),
+            ETH_DECIMALS,
+          ),
+          tribunalAddress: initValues.tribunalAddress,
+        }
+      : undefined,
   });
+  const sybilResistanceType =
+    strategy.sybilScorer == null ? "allowList" : "gitcoinPassport";
+  const sybilResistanceValue = watch("sybilResistanceValue");
+
   const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** token.decimals;
   const INPUT_MIN_THRESHOLD_VALUE = 0;
   const shouldRenderInput = (key: string): boolean => {
@@ -96,6 +183,7 @@ export default function PoolEditForm({
   const [tribunalAddress, setTribunalAddress] = useState(
     initValues?.tribunalAddress ?? "",
   );
+
   const [loading, setLoading] = useState(false);
   const { publish } = usePubSubContext();
   const chain = useChainFromPath()!;
@@ -111,7 +199,12 @@ export default function PoolEditForm({
     },
     convictionGrowth: {
       label: "Conviction growth:",
-      parse: (value: string) => value + " days",
+      parse: (days: string) => {
+        const { value, unit } = convertSecondsToReadableTime(
+          parseTimeUnit(+days, "days", "seconds"),
+        );
+        return value + " " + unit + (value > 1 ? "s" : "");
+      },
     },
     minThresholdPoints: {
       label: "Minimum threshold points:",
@@ -120,20 +213,38 @@ export default function PoolEditForm({
         return value || "0";
       },
     },
+    sybilResistanceType: {
+      label: "Pool voting authorization:",
+      parse: () =>
+        sybilResistancePreview(
+          sybilResistanceType,
+          Array.isArray(sybilResistanceValue) ? sybilResistanceValue : [],
+          sybilResistanceValue?.toString(),
+        ),
+    },
     defaultResolution: {
       label: "Default resolution:",
       parse: (value: string) =>
         DisputeOutcome[value] == "approved" ? "Approve" : "Reject",
     },
+    rulingTime: {
+      label: "Ruling time:",
+      parse: (days: string) => {
+        const { value, unit } = convertSecondsToReadableTime(
+          parseTimeUnit(+days, "days", "seconds"),
+        );
+        return value + " " + unit + (value > 1 ? "s" : "");
+      },
+    },
     proposalCollateral: {
       label: "Proposal collateral:",
       parse: (value: string) =>
-        value + " " + chain.nativeCurrency?.symbol ?? "ETH",
+        value + " " + chain.nativeCurrency?.symbol || "",
     },
     disputeCollateral: {
       label: "Dispute collateral:",
       parse: (value: string) =>
-        value + " " + chain.nativeCurrency?.symbol ?? "ETH",
+        value + " " + chain.nativeCurrency?.symbol || "",
     },
     tribunalAddress: {
       label: "Tribunal safe:",
@@ -145,6 +256,9 @@ export default function PoolEditForm({
 
   const contractWrite = () => {
     setLoading(true);
+    if (!previewData) {
+      throw new Error("No preview data");
+    }
     let spendingLimit: number;
     let minimumConviction;
     let convictionGrowth;
@@ -172,36 +286,57 @@ export default function PoolEditForm({
       token.decimals,
     );
 
-    if (!previewData) {
-      throw new Error("No preview data");
-    }
+    const initialAllowList =
+      Array.isArray(initValues?.sybilResistanceValue) ?
+        initValues.sybilResistanceValue
+      : [];
 
-    writeEditPool({
-      args: [
-        {
-          arbitrator: chain.arbitrator as Address,
-          tribunalSafe: tribunalAddress as Address,
-          submitterCollateralAmount: parseUnits(
-            previewData.proposalCollateral.toString(),
-            token?.decimals,
-          ),
-          challengerCollateralAmount: parseUnits(
-            previewData.disputeCollateral.toString(),
-            token?.decimals,
-          ),
-          defaultRuling: BigInt(previewData.defaultResolution),
-          defaultRulingTimeout: BigInt(
-            process.env.NEXT_PUBLIC_DEFAULT_RULING_TIMEOUT ?? 300,
-          ),
-        },
-        {
-          maxRatio: maxRatio,
-          weight: weight,
-          decay: decay,
-          minThresholdPoints: minThresholdPoints,
-        },
-      ],
-    });
+    const currentAllowList =
+      Array.isArray(previewData?.sybilResistanceValue) ?
+        previewData.sybilResistanceValue
+      : [];
+
+    const { membersToAdd, membersToRemove } = parseAllowListMembers(
+      initialAllowList,
+      currentAllowList,
+    );
+
+    const coreArgs = [
+      {
+        arbitrator: chain.arbitrator as Address,
+        tribunalSafe: tribunalAddress as Address,
+        submitterCollateralAmount: parseUnits(
+          previewData.proposalCollateral.toString(),
+          token?.decimals,
+        ),
+        challengerCollateralAmount: parseUnits(
+          previewData.disputeCollateral.toString(),
+          token?.decimals,
+        ),
+        defaultRuling: BigInt(previewData.defaultResolution),
+        defaultRulingTimeout: BigInt(
+          Math.round(parseTimeUnit(previewData.rulingTime, "days", "seconds")),
+        ),
+      },
+      {
+        maxRatio: maxRatio,
+        weight: weight,
+        decay: decay,
+        minThresholdPoints: minThresholdPoints,
+      },
+    ] as const;
+
+    if (sybilResistanceType === "gitcoinPassport") {
+      const sybilValue =
+        +(previewData.sybilResistanceValue ?? 0) * CV_PASSPORT_THRESHOLD_SCALE;
+      writeEditPoolWithScoreThreshold({
+        args: [...coreArgs, BigInt(sybilValue)],
+      });
+    } else {
+      writeEditPoolWithAllowlist({
+        args: [...coreArgs, membersToAdd, membersToRemove],
+      });
+    }
   };
 
   const formatFormRows = () => {
@@ -211,11 +346,14 @@ export default function PoolEditForm({
     let formattedRows: FormRow[] = [];
 
     const reorderedData = {
+      sybilResistanceType: previewData.sybilResistanceType,
+      sybilResistanceValue: previewData.sybilResistanceValue,
+      spendingLimit: previewData.spendingLimit,
       minimumConviction: previewData.minimumConviction,
       convictionGrowth: previewData.convictionGrowth,
       minThresholdPoints: previewData.minThresholdPoints,
-      spendingLimit: previewData.spendingLimit,
       defaultResolution: previewData.defaultResolution,
+      rulingTime: previewData.rulingTime,
       proposalCollateral: previewData.proposalCollateral,
       disputeCollateral: previewData.disputeCollateral,
       tribunalAddress: tribunalAddress,
@@ -240,18 +378,17 @@ export default function PoolEditForm({
     return formattedRows;
   };
 
-  const { write: writeEditPool } = useContractWriteWithConfirmations({
-    address: strategyAddr,
-    abi: abiWithErrors(cvStrategyABI),
+  const setPoolParamsWritePayload = {
+    address: strategy.id as Address,
     contractName: "CV Strategy",
     functionName: "setPoolParams",
-    fallbackErrorMessage: "Error editing a pool. Please ty again.",
+    fallbackErrorMessage: "Error editing a pool, please report a bug.",
     onConfirmations: () => {
       publish({
         topic: "pool",
         function: "setPoolParams",
         type: "update",
-        containerId: strategyAddr,
+        id: strategy.poolId,
         chainId: chainId,
       });
     },
@@ -261,16 +398,41 @@ export default function PoolEditForm({
     onSuccess: () => {
       setModalOpen(false);
     },
-  });
+  } as const;
+
+  const { write: writeEditPoolWithAllowlist } =
+    useContractWriteWithConfirmations({
+      ...setPoolParamsWritePayload,
+      abi: filterFunctionFromABI(
+        cvStrategyABI,
+        (abiItem) =>
+          abiItem.name === "setPoolParams" &&
+          !!abiItem.inputs.find((param) => param.name === "membersToAdd"),
+      ),
+    });
+
+  const { write: writeEditPoolWithScoreThreshold } =
+    useContractWriteWithConfirmations({
+      ...setPoolParamsWritePayload,
+      abi: filterFunctionFromABI(
+        cvStrategyABI,
+        (abiItem) =>
+          abiItem.name === "setPoolParams" &&
+          !!abiItem.inputs.find(
+            (param) => param.name === "sybilScoreThreshold",
+          ),
+      ),
+    });
 
   const handlePreview = (data: FormInputs) => {
     setPreviewData(data);
     setShowPreview(true);
   };
+
   return (
     <form
       onSubmit={handleSubmit(handlePreview)}
-      className="w-[480px] max-w-2xl"
+      className="w-[480px] max-w-4xl"
     >
       {showPreview ?
         <FormPreview
@@ -278,18 +440,55 @@ export default function PoolEditForm({
           previewTitle="Check pool details"
         />
       : <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-4">
+            {sybilResistanceType === "gitcoinPassport" ?
+              <FormInput
+                label="Gitcoin Passport score"
+                register={register}
+                required={sybilResistanceType === "gitcoinPassport"}
+                registerOptions={{
+                  min: {
+                    value: 1 / CV_PASSPORT_THRESHOLD_SCALE,
+                    message: `Amount must be greater than ${1 / CV_PASSPORT_THRESHOLD_SCALE}`,
+                  },
+                }}
+                otherProps={{
+                  step: 1 / CV_PASSPORT_THRESHOLD_SCALE,
+                  min: 1 / CV_PASSPORT_THRESHOLD_SCALE,
+                }}
+                errors={errors}
+                registerKey="sybilResistanceValue"
+                type="number"
+                placeholder="0"
+              />
+            : sybilResistanceType === "allowList" && (
+                <AllowListInput
+                  label="Allow list"
+                  register={register}
+                  registerKey="sybilResistanceValue"
+                  addresses={sybilResistanceValue}
+                  // required={sybilResistanceType === "allowList"}
+                  setValue={setValue}
+                  errors={errors}
+                  pointSystemType={pointSystemType}
+                />
+              )
+            }
+          </div>
+
           {/* pool settings section */}
-          <div className="flex flex-col gap-6">
-            {shouldRenderInput("minimumConviction") && (
-              <div className="flex max-w-64 flex-col">
+          <div className="flex flex-col">
+            <h6 className="mb-4">Conviction params</h6>
+            {shouldRenderInput("spendingLimit") && (
+              <div className="flex flex-col">
                 <FormInput
-                  label="Minimum conviction"
+                  label="Spending limit"
                   register={register}
                   required
                   errors={errors}
-                  registerKey="minimumConviction"
+                  registerKey="spendingLimit"
                   type="number"
-                  placeholder="10"
+                  placeholder="20"
                   className="pr-14"
                   otherProps={{
                     step: 1 / CV_SCALE_PRECISION,
@@ -305,13 +504,41 @@ export default function PoolEditForm({
                       message: "Amount must be greater than 0",
                     },
                   }}
-                >
-                  <span className="absolute right-4 top-4 text-black">%</span>
-                </FormInput>
+                  suffix="%"
+                />
+              </div>
+            )}
+            {shouldRenderInput("minimumConviction") && (
+              <div className="flex flex-col">
+                <FormInput
+                  label="Minimum conviction"
+                  register={register}
+                  required
+                  errors={errors}
+                  registerKey="minimumConviction"
+                  type="number"
+                  placeholder="10"
+                  className="pr-14"
+                  otherProps={{
+                    step: 1 / CV_SCALE_PRECISION,
+                    min: 1 / CV_SCALE_PRECISION,
+                  }}
+                  registerOptions={{
+                    max: {
+                      value: 99.9,
+                      message: "Minimum conviction should be under 100%",
+                    },
+                    min: {
+                      value: 1 / CV_SCALE_PRECISION,
+                      message: "Minimum conviction must be greater than 0",
+                    },
+                  }}
+                  suffix="%"
+                />
               </div>
             )}
             {shouldRenderInput("convictionGrowth") && (
-              <div className="flex max-w-64 flex-col">
+              <div className="flex flex-col">
                 <FormInput
                   label="Conviction growth"
                   register={register}
@@ -335,11 +562,8 @@ export default function PoolEditForm({
                       message: `Amount must be greater than ${INPUT_TOKEN_MIN_VALUE}`,
                     },
                   }}
-                >
-                  <span className="absolute right-4 top-4 text-black">
-                    days
-                  </span>
-                </FormInput>
+                  suffix="Days"
+                />
               </div>
             )}
             {shouldRenderInput("minThresholdPoints") && (
@@ -365,120 +589,91 @@ export default function PoolEditForm({
                 />
               </div>
             )}
-            {shouldRenderInput("spendingLimit") && (
-              <div className="flex max-w-64 flex-col">
-                <FormInput
-                  label="Spending limit"
-                  register={register}
-                  required
-                  errors={errors}
-                  registerKey="spendingLimit"
-                  type="number"
-                  placeholder="20"
-                  className="pr-14"
-                  otherProps={{
-                    step: 1 / CV_SCALE_PRECISION,
-                    min: 1 / CV_SCALE_PRECISION,
-                  }}
-                  registerOptions={{
-                    max: {
-                      value: 100,
-                      message: "Max amount cannot exceed 100%",
-                    },
-                    min: {
-                      value: 1 / CV_SCALE_PRECISION,
-                      message: "Amount must be greater than 0",
-                    },
-                  }}
-                >
-                  <span className="absolute right-4 top-4 text-black">%</span>
-                </FormInput>
-              </div>
-            )}
           </div>
           {/* arbitration section */}
           <div className="flex flex-col gap-4">
+            <h6 className="mt-4">Arbitration settings</h6>
+            <FormInput
+              tooltip={
+                'Deposited by proposal creator and forfeited if the proposal is ruled as "Rejected" by the Tribunal (violation of Covenant found).\n Deposit is returned when the proposal is either cancelled by the creator or executed successfully.'
+              }
+              type="number"
+              label={"Collateral to Create Proposal"}
+              register={register}
+              registerKey="proposalCollateral"
+              required
+              otherProps={{
+                step: 1 / 10 ** ETH_DECIMALS,
+                min: 1 / 10 ** ETH_DECIMALS,
+              }}
+              suffix={chain.nativeCurrency?.symbol ?? ""}
+            />
+            <FormInput
+              tooltip={
+                'Deposited by the proposal disputer and forfeited if the proposal is ruled as "Allowed" by the Tribunal (no violation of Covenant found). Deposit is returned if the proposal is ruled as "Rejected."'
+              }
+              type="number"
+              label={"Collateral to Dispute Proposal"}
+              register={register}
+              registerKey="disputeCollateral"
+              required
+              otherProps={{
+                step: 1 / 10 ** ETH_DECIMALS,
+                min: 1 / 10 ** ETH_DECIMALS,
+              }}
+              suffix={chain.nativeCurrency?.symbol ?? ""}
+            />
+            <FormInput
+              label="Ruling Time"
+              registerKey="rulingTime"
+              register={register}
+              type="number"
+              required
+              otherProps={{
+                step: 0.0001,
+              }}
+              suffix="Days"
+              tooltip="Number of days Tribunal has to make a decision on the dispute. Past that time, the default resolution will be applied."
+            />
+            <FormSelect
+              tooltip={
+                'Resolution executed if the Tribunal rules "Abstain", or doesn\'t make a ruling in time.'
+              }
+              label="Default Abstain Resolution"
+              options={Object.entries(DisputeOutcome)
+                .slice(1)
+                .map(([value, text]) => ({
+                  label: capitalize(text),
+                  value: value,
+                }))}
+              required
+              registerKey="defaultResolution"
+              register={register}
+            />
             <div className="flex flex-col">
-              <h4 className="my-4">Arbitration settings</h4>
-            </div>
-            <div className="flex gap-4 mt-2 flex-wrap">
-              <FormRadioButton
-                label="Global gardens tribunal"
-                checked={
-                  tribunalAddress.toLowerCase() ===
-                  chain.globalTribunal?.toLowerCase()
-                }
-                onChange={() => setTribunalAddress(chain.globalTribunal ?? "")}
-                registerKey="tribunalOption"
-                value="global"
+              <FormAddressInput
+                tooltip="Enter a Safe address to rule on proposal disputes in the Pool and determine if they are in violation of the Covenant."
+                label="Tribunal address"
+                required
+                onChange={(ev) => setValue("tribunalAddress", ev.target.value)}
+                value={tribunalAddress}
               />
-              <FormRadioButton
-                label="Custom tribunal"
-                checked={
-                  tribunalAddress.toLowerCase() !==
+              <FormCheckBox
+                label="Use global tribunal"
+                register={register}
+                registerKey="useGlobalTribunal"
+                type="checkbox"
+                tooltip="Check this box to use the Gardens global tribunal Safe to rule on proposal disputes in the Pool, a service we offer if your community does not have an impartial 3rd party that can rule on violations of the Covenant."
+                value={
+                  tribunalAddress.toLowerCase() ===
                   chain.globalTribunal?.toLowerCase()
                 }
                 onChange={() => {
                   setTribunalAddress((oldAddress) =>
-                    chain.globalTribunal ? "" : oldAddress,
+                    oldAddress === chain.globalTribunal ?
+                      ""
+                    : (chain.globalTribunal ?? ""),
                   );
-                  document.getElementById("tribunalAddress")?.focus();
-                }}
-                registerKey="tribunalOption"
-                value="custom"
-              />
-            </div>
-            <FormAddressInput
-              tooltip="The tribunal Safe, represented by trusted members, is
-                responsible for resolving proposal disputes. The global tribunal
-                Safe is a shared option featuring trusted members of the Gardens
-                community. It's use is recommended for objective dispute resolution."
-              label="Tribunal address"
-              registerKey="tribunalAddress"
-              register={register}
-              required
-              onChange={(newValue) => setTribunalAddress(newValue)}
-              value={tribunalAddress}
-            />
-            <div className="flex flex-col">
-              <FormSelect
-                tooltip="The default resolution will be applied in the case of abstained or dispute ruling timeout."
-                label="Default resolution"
-                options={Object.entries(DisputeOutcome)
-                  .slice(1)
-                  .map(([value, text]) => ({
-                    label: capitalize(text),
-                    value: value,
-                  }))}
-                required
-                registerKey="defaultResolution"
-                register={register}
-                errors={undefined}
-              />
-            </div>
-            <div className="flex gap-4 max-w-md">
-              <FormInput
-                tooltip="Proposal submission stake. Locked until proposal is resolved, can be forfeited if disputed."
-                type="number"
-                label={`Proposal collateral (${chain.nativeCurrency?.symbol ?? "ETH"})`}
-                register={register}
-                registerKey="proposalCollateral"
-                required
-                otherProps={{
-                  step: 1 / 10 ** ETH_DECIMALS,
-                  min: 1 / 10 ** ETH_DECIMALS,
-                }}
-              />
-              <FormInput
-                tooltip="Proposal dispute stake. Locked until dispute is resolved, can be forfeited if dispute is denied."
-                type="number"
-                label={`Dispute collateral (${chain.nativeCurrency?.symbol ?? "ETH"})`}
-                register={register}
-                registerKey="disputeCollateral"
-                required
-                otherProps={{
-                  step: 1 / 10 ** ETH_DECIMALS,
-                  min: 1 / 10 ** ETH_DECIMALS,
                 }}
               />
             </div>
@@ -495,7 +690,7 @@ export default function PoolEditForm({
               }}
               btnStyle="outline"
             >
-              Go Back
+              Edit
             </Button>
             <Button onClick={() => contractWrite()} isLoading={loading}>
               Submit

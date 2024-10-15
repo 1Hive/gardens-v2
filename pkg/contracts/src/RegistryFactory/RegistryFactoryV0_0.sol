@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.19;
 
-import {RegistryCommunityV0_0} from "../RegistryCommunity/RegistryCommunityV0_0.sol";
+import {
+    RegistryCommunityV0_0,
+    RegistryCommunityInitializeParamsV0_0
+} from "../RegistryCommunity/RegistryCommunityV0_0.sol";
 import {ProxyOwnableUpgrader} from "../ProxyOwnableUpgrader.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {Clone} from "allo-v2-contracts/core/libraries/Clone.sol";
@@ -78,7 +81,7 @@ contract RegistryFactoryV0_0 is ProxyOwnableUpgrader {
         // setReceiverAddress(_gardensFeeReceiver); //onlyOwner
     }
 
-    function createRegistry(RegistryCommunityV0_0.InitializeParams memory params)
+    function createRegistry(RegistryCommunityInitializeParamsV0_0 memory params)
         public
         virtual
         returns (address _createdRegistryAddress)

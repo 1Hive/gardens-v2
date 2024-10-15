@@ -14,7 +14,7 @@ import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithC
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useHandleAllowance } from "@/hooks/useHandleAllowance";
 import { alloABI } from "@/src/generated";
-import { abiWithErrors } from "@/utils/abiWithErrors";
+import { abiWithErrors } from "@/utils/abi";
 import { getTxMessage } from "@/utils/transactionMessages";
 
 interface PoolMetricsProps {
@@ -144,11 +144,8 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                 step: INPUT_TOKEN_MIN_VALUE,
                 min: INPUT_TOKEN_MIN_VALUE,
               }}
-            >
-              <span className="absolute right-4 top-4 text-black">
-                {poolToken.symbol}
-              </span>
-            </FormInput>
+              suffix={poolToken.symbol}
+            />
             <Button
               type="submit"
               disabled={missmatchUrl || !accountAddress}

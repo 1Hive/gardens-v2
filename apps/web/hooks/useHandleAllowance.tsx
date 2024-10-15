@@ -4,12 +4,12 @@ import { useChainIdFromPath } from "./useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "./useContractWriteWithConfirmations";
 import { TransactionProps } from "@/components/TransactionModal";
 import { erc20ABI } from "@/src/generated";
-import { abiWithErrors } from "@/utils/abiWithErrors";
+import { abiWithErrors } from "@/utils/abi";
 import { getTxMessage } from "@/utils/transactionMessages";
 
 export function useHandleAllowance(
   accountAddr: Address | undefined,
-  tokenAddr: Address,
+  tokenAddr: Address | undefined,
   tokenSymbol: string,
   spenderAddr: Address,
   amount: bigint,
@@ -32,7 +32,7 @@ export function useHandleAllowance(
     abi: abiWithErrors(erc20ABI),
     args: [accountAddr as Address, spenderAddr],
     functionName: "allowance",
-    enabled: accountAddr !== undefined,
+    enabled: !!tokenAddr && accountAddr !== undefined,
   });
 
   const {

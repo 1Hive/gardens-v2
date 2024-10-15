@@ -142,7 +142,7 @@ export function useSubgraphQuery<
     }
     setFetching(true);
     fetchingRef.current = true;
-    const res = await refetch();
+    const res = await refetch(undefined);
     setResponse(res);
     setFetching(false);
     fetchingRef.current = false;
@@ -153,6 +153,7 @@ export function useSubgraphQuery<
     retryCount?: number,
   ): Promise<Awaited<ReturnType<typeof fetch>>> => {
     const result = await fetch();
+
     if (!retryCount) {
       retryCount = 0;
       toast.loading("Pulling new data", {

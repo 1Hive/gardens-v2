@@ -6,9 +6,10 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Card } from "./Card";
 import { Statistic } from "./Statistic";
+import TooltipIfOverflow from "./TooltipIfOverflow";
 import { commImg } from "@/assets";
 import { QUERY_PARAMS } from "@/constants/query-params";
-import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
+import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 
 type CommunityCardProps = {
   name: string;
@@ -33,7 +34,7 @@ export function CommunityCard({
     <Card
       key={id}
       href={`${pathname}/${id}`}
-      className={`w-[275px] sm:m-w-[313px] ${isNewCommunity ? "shadow-2xl" : ""}`}
+      className={`w-[275px] sm:min-w-[313px] ${isNewCommunity ? "shadow-2xl" : ""}`}
     >
       <Image
         src={commImg}
@@ -43,12 +44,9 @@ export function CommunityCard({
         width={100}
       />
       <div className="flex flex-col gap-2">
-        <div
-          className="flex items-start w-fit max-w-full tooltip"
-          data-tip={name}
-        >
-          <h3 className="truncate tooltip">{name}</h3>
-        </div>
+        <h3 className="flex items-start w-fit max-w-full">
+          <TooltipIfOverflow>{name}</TooltipIfOverflow>
+        </h3>
         <Statistic
           label="members"
           count={membersCount}

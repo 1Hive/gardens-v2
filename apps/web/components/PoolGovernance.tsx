@@ -4,23 +4,30 @@ import React from "react";
 import { Dnum } from "dnum";
 import { Address, useAccount } from "wagmi";
 import {
+  CVStrategy,
+  CVStrategyConfig,
+  TokenGarden,
+} from "#/subgraph/.graphclient";
+import {
   ActivatePoints,
   Badge,
   DisplayNumber,
   CheckPassport,
   InfoBox,
 } from "@/components/";
-import { LightCVStrategy } from "@/types";
 
-interface PoolGovernanceProps {
+export type PoolGovernanceProps = {
   memberPoolWeight: number;
   tokenDecimals: number;
-  strategy: LightCVStrategy;
+  strategy: Pick<CVStrategy, "id" | "sybilScorer" | "poolId"> & {
+    registryCommunity: { garden: Pick<TokenGarden, "symbol"> };
+    config: Pick<CVStrategyConfig, "pointSystem" | "allowlist">;
+  };
   communityAddress: Address;
   memberTokensInCommunity: number;
   isMemberCommunity: boolean;
   memberActivatedStrategy: boolean;
-}
+};
 
 export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
   memberPoolWeight,
@@ -36,10 +43,13 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
   const { address } = useAccount();
 
   const poolSystemDefinition: { [key: number]: string } = {
-    0: "This pool has a fixed system, meaning every member has the same governance weight, limited to their registration stake.",
-    1: "This pool has a capped system, allowing your governance weight to increase with more tokens staked, but only up to a limit.",
-    2: "This pool has an unlimited system, allowing you to increase your governance weight without restrictions as you stake more tokens.",
-    3: "This pool has a quadratic points system, meaning your governance weight grows at a squared rate relative to the tokens you have staked.",
+    0: "This pool has a fixed voting system, meaning every member has the same governance weight, limited to their registration stake. Changing your stake in the community will not affect your governance weight in this pool.",
+
+    1: "This pool has a capped voting system, allowing your governance weight to increase with more tokens staked, but only up to a limit. If you are below the cap, you can stake more tokens to increase your governance weight in this pool.",
+
+    2: "This pool has an unlimited voting system, meaning your governance weight is equal to your tokens staked tokens in the community. Stake more tokens to increase your governance weight in this pool.",
+
+    3: "This pool has a quadratic voting system, meaning your governance weight is equal to the square root of your stake in the community. Stake more tokens to increase your governance weight in this pool.",
   };
 
   return (
@@ -48,11 +58,11 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
         <h2>Pool Governance</h2>
         <div className="flex flex-col gap-2">
           <CheckPassport
-            strategyAddr={strategy.id as Address}
+            strategy={strategy}
             enableCheck={!memberActivatedStrategy}
           >
             <ActivatePoints
-              strategyAddress={strategy.id as Address}
+              strategy={strategy}
               communityAddress={communityAddress}
               isMemberActivated={memberActivatedStrategy}
               isMember={isMemberCommunity}
@@ -77,7 +87,7 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
               </div>
               {showPoolGovernanceData && (
                 <div className="flex items-start gap-6">
-                  <p className="subtitle2">Your governance weight:</p>
+                  <p className="subtitle2">Your voting weight:</p>
                   <p className="subtitle2 text-primary-content">
                     {memberPoolWeight.toFixed(2)} %
                   </p>

@@ -9,12 +9,12 @@ import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { MetadataV1 } from "@/hooks/useIpfsFetch";
 import { cvStrategyABI } from "@/src/generated";
-import { abiWithErrors } from "@/utils/abiWithErrors";
+import { abiWithErrors } from "@/utils/abi";
 
 type Props = {
   proposalData: Maybe<
     Pick<CVProposal, "id" | "proposalNumber"> & {
-      strategy: Pick<CVStrategy, "id">;
+      strategy: Pick<CVStrategy, "id" | "poolId">;
     }
   > &
     MetadataV1;
@@ -25,21 +25,21 @@ function CancelButton({ proposalData }: Props) {
   const chainId = useChainIdFromPath();
   const { publish } = usePubSubContext();
   const { strategy } = proposalData;
-  const [strategyId, proposalNumber] = proposalData.id.split("-");
+  const [, proposalNumber] = proposalData.id.split("-");
 
   const { write: writeCancel, isLoading } = useContractWriteWithConfirmations({
     address: strategy.id as Address,
     abi: abiWithErrors(cvStrategyABI),
     functionName: "cancelProposal",
     contractName: "CV Strategy",
-    fallbackErrorMessage: "Error cancelling proposal. Please try again.",
+    fallbackErrorMessage: "Error cancelling proposal, please report a bug.",
     onConfirmations: () => {
       publish({
         topic: "proposal",
         type: "update",
         function: "cancelProposal",
         id: +proposalNumber,
-        containerId: strategyId,
+        containerId: proposalData.strategy.poolId,
         chainId: chainId,
       });
     },

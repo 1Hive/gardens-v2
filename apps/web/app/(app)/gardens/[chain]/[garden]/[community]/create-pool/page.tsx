@@ -25,7 +25,7 @@ export default function Page({
 
   if (!token) {
     return (
-      <div className="mt-96">
+      <div className="my-40">
         <LoadingSpinner />
       </div>
     );
