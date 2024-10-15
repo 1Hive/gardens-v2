@@ -50,6 +50,7 @@ import {
   formatTokenAmount,
   MAX_RATIO_CONSTANT,
 } from "@/utils/numbers";
+import { shortenAddress } from "@/utils/text";
 
 type Props = {
   ipfsResult: MetadataV1 | null;
@@ -165,6 +166,16 @@ export default function PoolHeader({
 
   const { value, unit } = convertSecondsToReadableTime(convictionGrowthSec);
 
+  let sybilResistanceType: SybilResistanceType;
+  let sybilResistanceValue: Address[] | number | undefined;
+  if (passportScore && passportScore > 0) {
+    sybilResistanceType = "gitcoinPassport";
+    sybilResistanceValue = passportScore;
+  } else {
+    sybilResistanceType = "allowList";
+    sybilResistanceValue = allowList as Address[] | undefined;
+  }
+
   const poolConfig = [
     {
       label: "Spending limit",
@@ -185,6 +196,21 @@ export default function PoolHeader({
       label: "Min Threshold",
       value: `${minThresholdPoints}`,
       info: `A fixed amount of ${token.symbol} that overrides Minimum Conviction when the Pool's activated governance is low.`,
+    },
+    {
+      label: "Restriction system",
+      value:
+        sybilResistanceType ?
+          sybilResistanceType === "gitcoinPassport" ?
+            "Gitcoin Passport"
+          : "Allowlist"
+        : "",
+      info:
+        sybilResistanceType ?
+          sybilResistanceType === "gitcoinPassport" ?
+            `Only users with a Gitcoin Passport above the threshold can interact with this pool: \n Threshold: ${(sybilResistanceValue as number).toFixed(2)}`
+          : `Only users in the allowlist can interact with this pool: \n -${(sybilResistanceValue as Array<string>).map((x) => shortenAddress(x)).join("\n- ")}`
+        : "",
     },
   ];
 
@@ -228,6 +254,7 @@ export default function PoolHeader({
       });
     },
   });
+
   const { write: removeStrategyByPoolId } = useContractWriteWithConfirmations({
     address: communityAddr,
     abi: abiWithErrors(registryCommunityABI),
@@ -261,17 +288,6 @@ export default function PoolHeader({
   const { tooltipMessage, missmatchUrl, isConnected } = useDisableButtons(
     disableCouncilSafeBtnCondition,
   );
-
-  let sybilResistanceType: SybilResistanceType;
-  let sybilResistanceValue: Address[] | number | undefined;
-
-  if (passportScore && passportScore > 0) {
-    sybilResistanceType = "gitcoinPassport";
-    sybilResistanceValue = passportScore;
-  } else {
-    sybilResistanceType = "allowList";
-    sybilResistanceValue = (allowList as Address[]) ?? [];
-  }
 
   return (
     <section className="section-layout flex flex-col gap-0">
@@ -330,28 +346,30 @@ export default function PoolHeader({
           isOpen={isOpenModal}
           onClose={() => setIsOpenModal(false)}
         >
-          <PoolEditForm
-            strategy={strategy}
-            pointSystemType={pointSystemType}
-            token={token}
-            proposalType={proposalType}
-            chainId={chainId}
-            proposalOnDispute={proposalOnDispute}
-            initValues={{
-              sybilResistanceValue: sybilResistanceValue,
-              sybilResistanceType: sybilResistanceType,
-              spendingLimit: spendingLimit.toFixed(2),
-              minimumConviction: minimumConviction.toFixed(2),
-              convictionGrowth: convictionGrowthSec.toFixed(4),
-              minThresholdPoints: minThresholdPoints,
-              defaultResolution: defaultResolution,
-              proposalCollateral: proposalCollateral,
-              disputeCollateral: disputeCollateral,
-              tribunalAddress: tribunalAddress,
-              rulingTime,
-            }}
-            setModalOpen={setIsOpenModal}
-          />
+          {!!passportStrategyData && (
+            <PoolEditForm
+              strategy={strategy}
+              pointSystemType={pointSystemType}
+              token={token}
+              proposalType={proposalType}
+              chainId={chainId}
+              proposalOnDispute={proposalOnDispute}
+              initValues={{
+                sybilResistanceValue: sybilResistanceValue,
+                sybilResistanceType: sybilResistanceType,
+                spendingLimit: spendingLimit.toFixed(2),
+                minimumConviction: minimumConviction.toFixed(2),
+                convictionGrowth: convictionGrowthSec.toFixed(4),
+                minThresholdPoints: minThresholdPoints,
+                defaultResolution: defaultResolution,
+                proposalCollateral: proposalCollateral,
+                disputeCollateral: disputeCollateral,
+                tribunalAddress: tribunalAddress,
+                rulingTime,
+              }}
+              setModalOpen={setIsOpenModal}
+            />
+          )}
         </Modal>
       </header>
       <Skeleton rows={5} isLoading={!ipfsResult}>

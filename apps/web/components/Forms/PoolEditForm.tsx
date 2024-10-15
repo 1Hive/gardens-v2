@@ -127,36 +127,39 @@ export default function PoolEditForm({
     watch,
     formState: { errors },
   } = useForm<FormInputs>({
-    defaultValues: {
-      // sybil resistance
-      sybilResistanceValue: initValues.sybilResistanceValue,
-      sybilResistanceType: initValues.sybilResistanceType,
-      //pool settings
-      spendingLimit: initValues.spendingLimit,
-      minimumConviction: initValues.minimumConviction,
-      convictionGrowth: parseTimeUnit(
-        +initValues.convictionGrowth,
-        "seconds",
-        "days",
-      ), // convert seconds to days
-      minThresholdPoints: initValues.minThresholdPoints,
-      // arb settings
-      defaultResolution: initValues.defaultResolution,
-      rulingTime: parseTimeUnit(
-        initValues.rulingTime, // ?? 7 days
-        "seconds",
-        "days",
-      ),
-      proposalCollateral: formatUnits(
-        BigInt(initValues.proposalCollateral),
-        ETH_DECIMALS,
-      ),
-      disputeCollateral: formatUnits(
-        BigInt(initValues.disputeCollateral),
-        ETH_DECIMALS,
-      ),
-      tribunalAddress: initValues.tribunalAddress,
-    },
+    defaultValues:
+      initValues ?
+        {
+          // sybil resistance
+          sybilResistanceValue: initValues.sybilResistanceValue,
+          sybilResistanceType: initValues.sybilResistanceType,
+          //pool settings
+          spendingLimit: initValues.spendingLimit,
+          minimumConviction: initValues.minimumConviction,
+          convictionGrowth: parseTimeUnit(
+            +initValues.convictionGrowth,
+            "seconds",
+            "days",
+          ), // convert seconds to days
+          minThresholdPoints: initValues.minThresholdPoints,
+          // arb settings
+          defaultResolution: initValues.defaultResolution,
+          rulingTime: parseTimeUnit(
+            initValues.rulingTime, // ?? 7 days
+            "seconds",
+            "days",
+          ),
+          proposalCollateral: formatUnits(
+            BigInt(initValues.proposalCollateral),
+            ETH_DECIMALS,
+          ),
+          disputeCollateral: formatUnits(
+            BigInt(initValues.disputeCollateral),
+            ETH_DECIMALS,
+          ),
+          tribunalAddress: initValues.tribunalAddress,
+        }
+      : undefined,
   });
   const sybilResistanceType =
     strategy.sybilScorer == null ? "allowList" : "gitcoinPassport";
@@ -173,11 +176,11 @@ export default function PoolEditForm({
     }
     return true;
   };
-
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
   const [showPreview, setShowPreview] = useState<boolean>(false);
   const [previewData, setPreviewData] = useState<FormInputs>();
   const [tribunalAddress, setTribunalAddress] = useState(
-    initValues?.tribunalAddress ?? "",
+    initValues?.tribunalAddress ?? "",                                                                                                            
   );
 
   const [loading, setLoading] = useState(false);
@@ -426,6 +429,7 @@ export default function PoolEditForm({
     setPreviewData(data);
     setShowPreview(true);
   };
+
   return (
     <form
       onSubmit={handleSubmit(handlePreview)}
