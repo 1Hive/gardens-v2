@@ -10,7 +10,7 @@ import { getTokenGardensQuery } from "#/subgraph/.graphclient";
 import { Statistic, TokenLabel } from ".";
 import { gardenLand } from "@/assets";
 import { Card } from "@/components/Card";
-import { getConfigByChain } from "@/configs/chains";
+import { ChainIcon, getConfigByChain } from "@/configs/chains";
 
 type TokenGarden = getTokenGardensQuery["tokenGardens"][number];
 
@@ -44,13 +44,17 @@ export function GardenCard({ garden }: { garden: TokenGarden }) {
         <div className="flex items-center justify-between gap-2">
           {/* TODO: find appropiate token image */}
           <h3 className="text-neutral-content">{name}</h3>
-          <TokenLabel chainId={chainId} noSymbol iconSize={34} />
+          <TokenLabel chainId={chainId} noSymbol />
         </div>
         <div className="flex flex-col gap-4">
           <div className="flex flex-col">
             <div className="align-start flex flex-col justify-start">
               <p className="text-neutral-content text-sm">Network:</p>
-              <div className="flex gap-2.5 items-center">
+              <div className="flex gap-2.5 items-center mt-1">
+                <div className="flex content-center justify-center">
+                  {/* TODO: change Icon library */}
+                  <ChainIcon chain={chainId} height={24} />
+                </div>
                 <h5 className="text-neutral-content">
                   {getConfigByChain(chainId)?.name}
                 </h5>
