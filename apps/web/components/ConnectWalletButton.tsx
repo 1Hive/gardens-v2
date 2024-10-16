@@ -3,7 +3,11 @@
 import React, { Fragment } from "react";
 import { Menu, Transition } from "@headlessui/react";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
-import { ChevronUpIcon, PowerIcon } from "@heroicons/react/24/solid";
+import {
+  ChevronUpIcon,
+  PowerIcon,
+  ArrowsRightLeftIcon,
+} from "@heroicons/react/24/solid";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import cn from "classnames";
 import Image from "next/image";
@@ -165,8 +169,15 @@ export function ConnectWallet() {
                             <Menu.Item as="div" className="flex flex-col gap-2">
                               {isWrongNetwork && (
                                 <Button
+                                  className="w-full"
                                   onClick={() =>
                                     switchNetwork && switchNetwork(urlChainId)
+                                  }
+                                  icon={
+                                    <ArrowsRightLeftIcon
+                                      className="h-5 w-5"
+                                      strokeWidth={10}
+                                    />
                                   }
                                 >
                                   <TooltipIfOverflow>

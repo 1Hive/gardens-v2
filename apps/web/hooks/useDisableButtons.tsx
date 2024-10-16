@@ -13,7 +13,7 @@ const supportedChains: { [key: number]: string } = {
 };
 
 export interface DisableButtonsHookProps {
-  tooltipMessage: string;
+  tooltipMessage: string | undefined;
   isConnected: boolean;
   missmatchUrl: boolean;
 }
@@ -39,7 +39,7 @@ export function useDisableButtons(
         return activeCondition.message;
       }
     }
-    return "tooltip message";
+    return undefined;
   }, [conditions, isConnected, missmatchUrlAndWalletChain]);
 
   return {

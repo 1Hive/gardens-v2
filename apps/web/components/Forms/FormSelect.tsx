@@ -32,7 +32,7 @@ export function FormSelect({
 }: Props) {
   return (
     <div className="flex flex-col">
-      <label htmlFor={registerKey} className="label w-fit">
+      <label htmlFor={registerKey} className="label w-fit cursor-pointer">
         {tooltip ?
           <InfoWrapper tooltip={tooltip}>
             {label}
