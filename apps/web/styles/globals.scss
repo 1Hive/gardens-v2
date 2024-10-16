@@ -223,6 +223,8 @@ caption {
   }
 }
 
+// Markdown overrides
+
 .md-editor-preview,
 .wmde-markdown {
   ol {
@@ -232,4 +234,8 @@ caption {
   ul {
     list-style-type: unset !important;
   }
+}
+
+.cm-gutters {
+  display: none !important;
 }

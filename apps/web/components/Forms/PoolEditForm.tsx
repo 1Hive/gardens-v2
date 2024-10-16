@@ -437,7 +437,6 @@ export default function PoolEditForm({
       {showPreview ?
         <FormPreview
           formRows={formatFormRows()}
-          previewTitle="Check pool details"
         />
       : <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-4">

@@ -147,7 +147,6 @@ export const ProposalForm = ({
     },
     proposalType: {
       label: "Proposal Type:",
-      parse: (value: number) => capitalize(PoolTypes[value]),
     },
     strategy: { label: "Strategy:" },
   };
@@ -325,7 +324,6 @@ export const ProposalForm = ({
           title={previewData?.title ?? ""}
           description={previewData?.description ?? ""}
           formRows={formatFormRows()}
-          previewTitle="Check proposals details"
         />
       : <div className="flex flex-col gap-2 overflow-hidden p-1">
           {proposalTypeName === "funding" && (

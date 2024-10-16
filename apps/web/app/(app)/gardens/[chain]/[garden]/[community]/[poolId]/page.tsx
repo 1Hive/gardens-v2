@@ -27,7 +27,7 @@ export default function Page({
   params: { chain: string; poolId: number; garden: string };
 }) {
   const searchParams = useCollectQueryParams();
-  
+
   const { data, refetch, error } = useSubgraphQuery<getPoolDataQuery>({
     query: getPoolDataDocument,
     variables: { poolId: poolId, garden: garden },
@@ -40,6 +40,18 @@ export default function Page({
         topic: "proposal",
         containerId: poolId,
         type: "update",
+      },
+      {
+        topic: "member",
+        function: "activatePoints",
+        type: "update",
+        containerId: poolId,
+      },
+      {
+        topic: "member",
+        function: "deactivatePoints",
+        type: "update",
+        containerId: poolId,
       },
     ],
   });
@@ -93,10 +105,7 @@ export default function Page({
 
   const tokenGarden = data?.tokenGarden;
 
-  if (
-    !tokenGarden ||
-    (!poolToken && PoolTypes[proposalType] === "funding")
-  ) {
+  if (!tokenGarden || (!poolToken && PoolTypes[proposalType] === "funding")) {
     return (
       <div className="mt-96">
         <LoadingSpinner />

@@ -15,7 +15,7 @@ import { abiWithErrors } from "@/utils/abi";
 import { useErrorDetails } from "@/utils/getErrorName";
 
 type ActiveMemberProps = {
-  strategy: Pick<CVStrategy, "id"> & {
+  strategy: Pick<CVStrategy, "id" | "poolId"> & {
     config: Pick<CVStrategyConfig, "allowlist">;
   };
   communityAddress: Address;
@@ -50,7 +50,7 @@ export function ActivatePoints({
           id: connectedAccount,
           type: "update",
           function: "activatePoints",
-          containerId: communityAddress,
+          containerId: strategy.poolId,
           chainId,
         });
       },
@@ -67,7 +67,7 @@ export function ActivatePoints({
         publish({
           topic: "member",
           id: connectedAccount,
-          containerId: communityAddress,
+          containerId: strategy.poolId,
           type: "update",
           function: "deactivatePoints",
           chainId,
