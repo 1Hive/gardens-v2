@@ -223,12 +223,13 @@ caption {
   }
 }
 
-.md-editor-preview {
+.md-editor-preview,
+.wmde-markdown {
   ol {
-    list-style-type: decimal;
+    list-style-type: decimal !important;
   }
 
   ul {
-    list-style: unset;
+    list-style-type: unset !important;
   }
 }
