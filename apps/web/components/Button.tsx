@@ -73,7 +73,7 @@ export function Button({
   className: styles,
   disabled = false,
   tooltip,
-  showToolTip = false,
+  showToolTip = true,
   tooltipClassName: tooltipStyles,
   tooltipSide = "tooltip-top",
   children,
