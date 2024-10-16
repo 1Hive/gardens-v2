@@ -300,11 +300,11 @@ export default function PoolHeader({
     <section className="section-layout flex flex-col gap-0">
       <header className="mb-2 flex flex-col">
         <div className="flex justify-between flex-wrap">
-          <Skeleton isLoading={!ipfsResult} className="!w-96 h-8">
-            <h2>
+          <h2>
+            <Skeleton isLoading={!ipfsResult} className="!w-96 h-8">
               {ipfsResult?.title} #{poolId}
-            </h2>
-          </Skeleton>
+            </Skeleton>
+          </h2>
           {(!!isCouncilMember || isCouncilSafe) && (
             <div className="flex gap-2">
               <Button

@@ -602,7 +602,6 @@ export function PoolForm({ token, communityAddr }: Props) {
           title={previewData?.title ?? ""}
           description={previewData?.description ?? ""}
           formRows={formatFormRows()}
-          previewTitle="Check pool creation details"
         />
       : <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-4">
