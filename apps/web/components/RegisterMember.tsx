@@ -158,7 +158,7 @@ export function RegisterMember({
     btnStyle: BtnStyle;
     color: Color;
     disabled: boolean;
-    tooltip: string;
+    tooltip: string | undefined;
   } = useMemo(
     () => ({
       onClick: handleClick,
