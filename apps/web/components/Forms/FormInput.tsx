@@ -115,7 +115,7 @@ export function FormInput({
         : <div data-color-mode="light">
             <MarkdownEditor
               {...registered}
-              className="textarea textarea-info p-0 ![--color-neutral-muted:#cceeff44]"
+              className="textarea textarea-info p-0 ![--color-canvas-subtle:white] ![--color-neutral-muted:#cceeff44]"
               id={registerKey}
               style={{
                 resize: "vertical",
