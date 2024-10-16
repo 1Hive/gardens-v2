@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Fragment, useEffect, useState } from "react";
+import React, { Fragment, useEffect, useRef, useState } from "react";
 import {
   AdjustmentsHorizontalIcon,
   PlusIcon,
@@ -30,7 +30,7 @@ import {
   PoolGovernance,
   ProposalCard,
 } from "@/components";
-import { usePubSubContext } from "@/contexts/pubsub.context";
+import { SubscriptionId, usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import useCheckAllowList from "@/hooks/useCheckAllowList";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
@@ -111,6 +111,7 @@ export function Proposals({
   const chainId = useChainIdFromPath();
   const allowList = (strategy?.config?.allowlist as Address[]) ?? [];
   const isAllowed = useCheckAllowList(allowList, wallet);
+  const { subscribe, unsubscribe, connected } = usePubSubContext();
 
   const tokenDecimals = strategy.registryCommunity.garden.decimals;
 
@@ -125,6 +126,7 @@ export function Proposals({
       {
         topic: "member",
         id: wallet,
+        containerId: strategy.poolId,
         type: ["add", "delete"],
       },
       {
@@ -148,14 +150,14 @@ export function Proposals({
           containerId: strategy.poolId,
           type: "update",
         },
-        { topic: "member", id: wallet },
+        { topic: "member", id: wallet, containerId: strategy.poolId },
       ],
       enabled: !!wallet,
     },
   );
 
   // Contract reads
-  const { data: memberPower } = useContractRead({
+  const { data: memberPower, refetch: refetchMemberPower } = useContractRead({
     address: communityAddress,
     abi: registryCommunityABI,
     functionName: "getMemberPowerInStrategy",
@@ -163,6 +165,26 @@ export function Proposals({
     chainId: chainId,
     enabled: !!wallet,
   });
+
+  const subscritionId = useRef<SubscriptionId>();
+  useEffect(() => {
+    subscritionId.current = subscribe(
+      {
+        topic: "member",
+        id: wallet,
+        containerId: strategy.poolId,
+        type: "update",
+      },
+      () => {
+        return refetchMemberPower();
+      },
+    );
+    return () => {
+      if (subscritionId.current) {
+        unsubscribe(subscritionId.current);
+      }
+    };
+  }, [connected]);
 
   // Derived state
   const isMemberCommunity =

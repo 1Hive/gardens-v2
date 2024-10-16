@@ -149,12 +149,15 @@ const sybilResistancePreview = (
       return (
         <div className="flex flex-col">
           <div className="w-fit text-nowrap flex-nowrap">Allow list:</div>
-          <ul className="bg-base-200">
-            <li className="flex flex-col">
-              {addresses.map((address) => (
-                <EthAddress key={address} address={address as Address} />
-              ))}
-            </li>
+          <ul className="space-y-2 overflow-y-auto border1 p-2 rounded-xl w-fit resize-y">
+            {addresses.map((address) => (
+              <li key={address}>
+                <EthAddress
+                  address={address as Address}
+                  shortenAddress={false}
+                />
+              </li>
+            ))}
           </ul>
         </div>
       );
@@ -345,6 +348,7 @@ export function PoolForm({ token, communityAddr }: Props) {
     setPreviewData(data);
     setShowPreview(true);
   };
+
   const contractWrite = async (ipfsHash: string) => {
     let spendingLimit: number;
     let minimumConviction;
@@ -602,7 +606,6 @@ export function PoolForm({ token, communityAddr }: Props) {
           title={previewData?.title ?? ""}
           description={previewData?.description ?? ""}
           formRows={formatFormRows()}
-          previewTitle="Check pool creation details"
         />
       : <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-4">
@@ -717,7 +720,7 @@ export function PoolForm({ token, communityAddr }: Props) {
           {shouldRenderInputMap("sybilResistanceType", strategyType) && (
             <div className="flex flex-col gap-4">
               <FormSelect
-                label="Pool voting restriction"
+                label="Pool voting protection"
                 register={register}
                 errors={errors}
                 required
@@ -814,7 +817,7 @@ export function PoolForm({ token, communityAddr }: Props) {
               otherProps={{
                 step: 0.0001,
               }}
-              suffix="days"
+              suffix="Days"
               tooltip="Number of days Tribunal has to make a decision on the dispute. Past that time, the default resolution will be applied."
             />
             <FormSelect

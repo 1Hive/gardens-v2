@@ -236,7 +236,6 @@ export const CommunityForm = ({
           title={previewData?.title ?? ""}
           description={previewData?.covenant ?? ""}
           formRows={formatFormRows()}
-          previewTitle="Check details and covenant description"
         />
       : <div className="flex flex-col gap-2 p-1">
           <div className="flex flex-col">

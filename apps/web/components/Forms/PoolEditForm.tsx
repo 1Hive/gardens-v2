@@ -1,5 +1,4 @@
 import React, { ReactNode, useState } from "react";
-import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
 import { useForm } from "react-hook-form";
 import { Address, formatUnits, parseUnits } from "viem";
 import { CVStrategy, TokenGarden } from "#/subgraph/.graphclient";
@@ -71,12 +70,15 @@ const sybilResistancePreview = (
       return (
         <div className="flex flex-col">
           <div className="w-fit text-nowrap flex-nowrap">Allow list:</div>
-          <ul className="bg-base-200">
-            <li className="flex flex-col">
-              {addresses.map((address) => (
-                <EthAddress key={address} address={address as Address} />
-              ))}
-            </li>
+          <ul className="space-y-2 overflow-y-auto border1 p-2 rounded-xl w-fit resize-y">
+            {addresses.map((address) => (
+              <li key={address}>
+                <EthAddress
+                  address={address as Address}
+                  shortenAddress={false}
+                />
+              </li>
+            ))}
           </ul>
         </div>
       );
@@ -435,10 +437,7 @@ export default function PoolEditForm({
       className="w-[480px] max-w-4xl"
     >
       {showPreview ?
-        <FormPreview
-          formRows={formatFormRows()}
-          previewTitle="Check pool details"
-        />
+        <FormPreview formRows={formatFormRows()} />
       : <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-4">
             {sybilResistanceType === "gitcoinPassport" ?

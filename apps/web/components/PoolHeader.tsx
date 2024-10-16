@@ -184,7 +184,7 @@ export default function PoolHeader({
     {
       label: "Spending limit",
       value: `${spendingLimit.toPrecision(2)} %`,
-      info: "Max percentage of the pool funds that can be spent in a single proposal",
+      info: "Max percentage of the pool funds that can be spent in a single proposal.",
     },
     {
       label: "Min conviction",
@@ -194,7 +194,7 @@ export default function PoolHeader({
     {
       label: "Conviction growth",
       value: `${value} ${unit}${value !== 1 ? "s" : ""}`,
-      info: "It's the time for conviction to reach proposal support. This parameter is logarithmic, represented as a half life",
+      info: "It's the time for conviction to reach proposal support. This parameter is logarithmic, represented as a half life and may vary slightly over time depending on network block times.",
     },
     {
       label: "Min Threshold",
@@ -300,11 +300,11 @@ export default function PoolHeader({
     <section className="section-layout flex flex-col gap-0">
       <header className="mb-2 flex flex-col">
         <div className="flex justify-between flex-wrap">
-          <Skeleton isLoading={!ipfsResult} className="!w-96 h-8">
-            <h2>
+          <h2>
+            <Skeleton isLoading={!ipfsResult} className="!w-96 h-8">
               {ipfsResult?.title} #{poolId}
-            </h2>
-          </Skeleton>
+            </Skeleton>
+          </h2>
           {(!!isCouncilMember || isCouncilSafe) && (
             <div className="flex gap-2">
               <Button

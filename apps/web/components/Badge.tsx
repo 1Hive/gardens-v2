@@ -31,7 +31,8 @@ const PROPOSAL_STATUS_STYLES = [
   "bg-danger-soft text-danger-content",
 ];
 
-const BASE_STYLES = "border-none rounded-full leading-5 py-2 px-4 text-base";
+const BASE_STYLES =
+  "border-none rounded-full leading-5 py-2 px-4 text-base cursor-default";
 
 export function Badge({
   type,
@@ -53,7 +54,7 @@ export function Badge({
   // Determine the label content
   const content =
     isStatusBadge ? ProposalStatus[status]
-    : ispoolTypeDefined ? PoolTypes[type] ?? label
+    : ispoolTypeDefined ? (PoolTypes[type] ?? label)
     : label;
 
   //For type => conditionally set the icon based on type === poolTypes[type]
@@ -64,7 +65,7 @@ export function Badge({
         signaling: <HandThumbUpIcon className="h-6 w-6 text-inherit" />,
         funding: <CurrencyDollarIcon className="h-6 w-6 text-inherit" />,
       };
-      return type != null ? iconMap[PoolTypes[type]] ?? null : null;
+      return type != null ? (iconMap[PoolTypes[type]] ?? null) : null;
     })();
 
   return (
