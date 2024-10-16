@@ -173,7 +173,7 @@ export function Proposals({
         topic: "member",
         id: wallet,
         containerId: strategy.poolId,
-        type: ["update"],
+        type: "update",
       },
       () => {
         return refetchMemberPower();

@@ -73,7 +73,7 @@ export function Button({
   className: styles,
   disabled = false,
   tooltip,
-  showToolTip = false,
+  showToolTip = true,
   tooltipClassName: tooltipStyles,
   tooltipSide = "tooltip-top",
   children,
@@ -104,7 +104,7 @@ export function Button({
 
   return disabled || showToolTip ?
       <div
-        className={`tooltip ${tooltipSide} ${tooltipStyles}`}
+        className={`${tooltip ? "tooltip" : ""} ${tooltipSide} ${tooltipStyles}`}
         data-tip={tooltip}
       >
         {buttonElement}

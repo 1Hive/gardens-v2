@@ -1,5 +1,5 @@
 "use client";
-import { ReactNode, useEffect, useRef } from "react";
+import { ReactNode, useEffect, useRef, useState } from "react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 
 interface ModalProps {
@@ -19,58 +19,45 @@ export function Modal({
   isOpen,
   className = "",
 }: ModalProps) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
-    const dialogElement = dialogRef.current;
-
-    if (isOpen) {
-      dialogElement?.showModal();
-    } else {
-      dialogElement?.close();
-    }
-
-    const handleDialogClose = () => {
-      if (!dialogElement?.open) {
-        onClose();
-      }
-    };
-
-    dialogElement?.addEventListener("close", handleDialogClose);
-
-    return () => {
-      dialogElement?.removeEventListener("close", handleDialogClose);
-    };
+    setIsModalOpen(isOpen);
   }, [isOpen, onClose]);
 
   const handleClose = () => {
     onClose();
-    dialogRef.current?.close();
+    setIsModalOpen(false);
   };
 
   return (
-    <dialog
-      className={`modal max-sm:modal-bottom ${className}`}
-      ref={dialogRef}
-    >
-      <div className="modal-box overflow-auto sm:overflow-visible max-w-5xl w-fit flex flex-col gap-8 rounded-3xl bg-primary p-8">
-        <div className="flex items-center justify-between gap-6">
-          <div className="flex gap-4 items-center">
-            {icon && (
-              <div className="flex h-12 w-12 items-center justify-center">
-                {icon}
-              </div>
-            )}
-            <h3>{title}</h3>
+    <>
+      <input
+        type="checkbox"
+        id="my_modal_6"
+        className="modal-toggle"
+        checked={isModalOpen}
+      />
+      <div className={`modal max-sm:modal-bottom ${className}`} role="dialog">
+        <div className="modal-box max-w-5xl overflow-visible w-fit flex flex-col rounded-xl bg-primary p-0">
+          <div className="flex items-center justify-between w-full p-2 shadow">
+            <div className="flex gap-4 items-center p-2">
+              {icon && (
+                <div className="flex h-12 w-12 items-center justify-center">
+                  {icon}
+                </div>
+              )}
+              <h3>{title}</h3>
+            </div>
+            <div className="flex items-center pl-16 overflow-auto h-4/5">
+              <button onClick={handleClose} className="h-7 w-7 cursor-pointer">
+                <XMarkIcon />
+              </button>
+            </div>
           </div>
-          <div className="flex items-center">
-            <button onClick={handleClose} className="h-7 w-7 cursor-pointer">
-              <XMarkIcon />
-            </button>
-          </div>
+          <div className="px-16 py-4 overflow-auto">{children}</div>
         </div>
-        {children}
       </div>
-    </dialog>
+    </>
   );
 }

@@ -341,6 +341,7 @@ export function handlePowerIncreased(event: PowerIncreased): void {
   const cvc = CVStrategyContract.bind(event.address);
   const totalEffectiveActivePoints = cvc.totalEffectiveActivePoints();
   cvs.totalEffectiveActivePoints = totalEffectiveActivePoints;
+  cvs.maxCVSupply = cvc.getMaxConviction(totalEffectiveActivePoints);
 
   cvs.save();
 
@@ -373,6 +374,7 @@ export function handlePowerDecreased(event: PowerDecreased): void {
   const cvc = CVStrategyContract.bind(event.address);
   const totalEffectiveActivePoints = cvc.totalEffectiveActivePoints();
   cvs.totalEffectiveActivePoints = totalEffectiveActivePoints;
+  cvs.maxCVSupply = cvc.getMaxConviction(totalEffectiveActivePoints);
 
   cvs.save();
 
@@ -402,6 +404,11 @@ export function handleCVParamsUpdated(event: CVParamsUpdated): void {
     ]);
     return;
   }
+
+  const cvc = CVStrategyContract.bind(event.address);
+  cvs.totalEffectiveActivePoints = cvc.totalEffectiveActivePoints();
+  cvs.maxCVSupply = cvc.getMaxConviction(cvs.totalEffectiveActivePoints);
+  cvs.save();
 
   let config = CVStrategyConfig.load(cvs.config);
   if (config == null) {

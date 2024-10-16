@@ -10,6 +10,7 @@ type EthAddressProps = {
   address?: Address;
   actions?: "all" | "copy" | "explorer" | "none";
   icon?: false | "ens" | "identicon" | ((address: Address) => string);
+  shortenAddress?: number | false;
 };
 
 //TODO: handle theme change by create a theme object and pass it to Addre
@@ -20,6 +21,7 @@ export const EthAddress = ({
   address,
   actions = "all",
   icon = "identicon",
+  shortenAddress = 4,
 }: EthAddressProps) => {
   const chain = useChainFromPath();
   // const theme: ThemeDeclaration = {
@@ -48,6 +50,7 @@ export const EthAddress = ({
           badgeHeight: 32,
           fontSize: 16,
         }}
+        shortenAddress={shortenAddress}
         actions={actions}
         icon={icon}
         address={address as Address}
