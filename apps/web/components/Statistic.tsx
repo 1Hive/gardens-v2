@@ -26,12 +26,12 @@ export const Statistic = ({
         data-tip={tooltip}
       >
         {icon && <div className="w-6 h-6">{icon}</div>}
-        {label && (
-          <p className="first-letter:uppercase">
-            {label}: {count}
-          </p>
-        )}
       </div>
+      {label && (
+        <p className="first-letter:uppercase">
+          {label}: {count}
+        </p>
+      )}
       {children}
     </div>
   );

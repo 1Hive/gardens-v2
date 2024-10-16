@@ -233,10 +233,10 @@ export function AllowListInput({
       )}
 
       <div className="flex justify-between items-center my-3">
-        <h3 className="text-lg font-medium">
-          Allowlist ({addresses.length} address
+        <label className="font-semibold">
+          List ({addresses.length} address
           {addresses.length !== 1 && "es"})
-        </h3>
+        </label>
         <div className="flex space-x-1">
           <Button
             type="button"
