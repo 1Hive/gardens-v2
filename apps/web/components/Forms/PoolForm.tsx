@@ -130,9 +130,9 @@ const proposalInputMap: Record<string, number[]> = {
 };
 
 const fullSybilResistanceOptions: Record<SybilResistanceType, string> = {
-  noSybilResist: "No restrictions",
-  allowList: "Allow list",
-  gitcoinPassport: "Gitcoin passport",
+  noSybilResist: "Any member can vote",
+  allowList: "Members in Allow List only",
+  gitcoinPassport: "Members with Gitcoin Passport score",
 };
 
 const sybilResistancePreview = (
@@ -725,8 +725,8 @@ export function PoolForm({ token, communityAddr }: Props) {
                 errors={errors}
                 required
                 registerKey="sybilResistanceType"
-                placeholder="Select a voting restriction"
-                tooltip="Select the type of restriction you want to apply to restrict pools to prevent abused votings."
+                placeholder="Who can vote in this pool ?"
+                tooltip="Select the restriction type to prevent voting abuse for this pool."
                 options={Object.entries(sybilResistanceOptions).map(
                   ([value, text]) => ({
                     label: text,
@@ -736,7 +736,7 @@ export function PoolForm({ token, communityAddr }: Props) {
               />
               <div className="flex flex-col gap-2 my-2">
                 <hr />
-                <span className="text-neutral-soft-content mx-auto">
+                <span className="text-neutral-soft-content mx-auto pt-2">
                   Council can edit this section once the pool is created.
                 </span>
               </div>
