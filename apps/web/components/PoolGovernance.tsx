@@ -53,7 +53,7 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
   };
 
   return (
-    <section className="section-layout">
+    <section className="section-layout flex flex-col gap-4">
       <header className="flex justify-between flex-wrap">
         <h2>Pool Governance</h2>
         <div className="flex flex-col gap-2">
@@ -71,7 +71,7 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
         </div>
       </header>
       {address && (
-        <div className="mt-4 flex flex-col justify-between items-start">
+        <div className="flex flex-col justify-between items-start">
           <div className="flex flex-1 gap-10 flex-wrap">
             <div className="flex flex-col items-start gap-2">
               <div className="flex items-center gap-6 flex-wrap">
@@ -94,14 +94,14 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
                 </div>
               )}
             </div>
-            <InfoBox
-              content={poolSystemDefinition[poolSystem]}
-              infoBoxType="info"
-              className="flex-1 w-full"
-            />
           </div>
         </div>
       )}
+      <InfoBox
+        content={poolSystemDefinition[poolSystem]}
+        infoBoxType="info"
+        className="flex-1 w-full"
+      />
     </section>
   );
 };

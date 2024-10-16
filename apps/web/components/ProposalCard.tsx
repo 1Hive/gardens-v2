@@ -245,6 +245,7 @@ export function ProposalCard({
                       className="mb-2 !p-2 !px-3"
                       btnStyle="outline"
                       onClick={() => inputHandler(proposalData.id, 0)}
+                      tooltip="Clear allocation"
                     >
                       &times;
                     </Button>

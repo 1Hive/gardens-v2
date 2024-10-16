@@ -184,7 +184,7 @@ export default function PoolHeader({
     {
       label: "Spending limit",
       value: `${spendingLimit.toPrecision(2)} %`,
-      info: "Max percentage of the pool funds that can be spent in a single proposal",
+      info: "Max percentage of the pool funds that can be spent in a single proposal.",
     },
     {
       label: "Min conviction",
@@ -194,7 +194,7 @@ export default function PoolHeader({
     {
       label: "Conviction growth",
       value: `${value} ${unit}${value !== 1 ? "s" : ""}`,
-      info: "It's the time for conviction to reach proposal support. This parameter is logarithmic, represented as a half life",
+      info: "It's the time for conviction to reach proposal support. This parameter is logarithmic, represented as a half life and may vary slightly over time depending on network block times.",
     },
     {
       label: "Min Threshold",
