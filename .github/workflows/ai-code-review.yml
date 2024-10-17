@@ -101,8 +101,8 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            const runUrl = `https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}`;
-            const commentBody = `Gemini Code Review encountered an error. [View the run here](${runUrl}).\n\nLogs from the Gemini review step may still contains some review before failing.`;
+            const runUrl = `https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/job/${{ github.job }}`;
+            const commentBody = `Gemini Code Review encountered an error. [View the run here](${runUrl}).\n\nLogs from the `Code Review by Gemini AI` step may still contains some review before failing.`;
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
