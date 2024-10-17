@@ -43,7 +43,7 @@ import {ISybilScorer} from "../ISybilScorer.sol";
 /// @param _metadata The covenant IPFS hash of the community
 /// @param _councilSafe The council safe contract address
 /// @param _communityName The community name
-/// @param _isKickEnabled Enable or disable the kick feature
+/// @param _isKickEnabled Enable or able the kick feature
 struct RegistryCommunityInitializeParamsV0_0 {
     address _allo;
     IERC20 _gardenToken;
@@ -232,7 +232,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
     }
 
     function onlyEmptyCommunity() internal view {
-        if (totalMembers == 0) {
+        if (totalMembers > 0) {
             revert OnlyEmptyCommunity(totalMembers);
         }
     }

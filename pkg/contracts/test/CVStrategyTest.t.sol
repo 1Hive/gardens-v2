@@ -612,10 +612,12 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
     function test_disputeAbstain() public {
         (IAllo.Pool memory pool,, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
         CVStrategyV0_0 cv = CVStrategyV0_0(payable(address(pool.strategy)));
-        vm.deal(address(_councilSafe()), 1 ether);
-        vm.startPrank(address(_councilSafe()));
+        vm.deal(address(pool_admin()), 1 ether);
+        vm.startPrank(address(pool_admin()));
         uint256 disputeId = cv.disputeProposal{value: 0.02 ether}(proposalId, "I dont agree", "0x");
         uint256 abstainRulingOutcome = 0;
+        vm.stopPrank();
+        vm.startPrank(address(_councilSafe()));
         safeArbitrator.executeRuling(disputeId, abstainRulingOutcome, address(cv));
         vm.stopPrank();
     }
@@ -806,11 +808,11 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
     function test_total_staked_amount() public {
         (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
         // registryCommunity.setBasisStakedAmount(45000);
-        safeHelper(
-            address(registryCommunity),
-            0,
-            abi.encodeWithSelector(registryCommunity.setBasisStakedAmount.selector, 45 ether)
-        );
+        // safeHelper(
+        //     address(registryCommunity),
+        //     0,
+        //     abi.encodeWithSelector(registryCommunity.setBasisStakedAmount.selector, 45 ether)
+        // );
         /**
          * ASSERTS
          */
@@ -855,11 +857,11 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         assertEq(cv.totalStaked(), uint256(int256(AMOUNT_STAKED) + REMOVE_SUPPORT2 + REMOVE_SUPPORT), "TotalStaked");
 
         // registryCommunity.setBasisStakedAmount(MINIMUM_STAKE);
-        safeHelper(
-            address(registryCommunity),
-            0,
-            abi.encodeWithSelector(registryCommunity.setBasisStakedAmount.selector, MINIMUM_STAKE)
-        );
+        // safeHelper(
+        //     address(registryCommunity),
+        //     0,
+        //     abi.encodeWithSelector(registryCommunity.setBasisStakedAmount.selector, MINIMUM_STAKE)
+        // );
     }
 
     function testRevert_allocate_proposalSupport_empty_array() public {
@@ -2138,11 +2140,11 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
     function test_allocate_noRevert_when_remove_support() public {
         (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
         // registryCommunity.setBasisStakedAmount(45000);
-        safeHelper(
-            address(registryCommunity),
-            0,
-            abi.encodeWithSelector(registryCommunity.setBasisStakedAmount.selector, 45 ether)
-        );
+        // safeHelper(
+        //     address(registryCommunity),
+        //     0,
+        //     abi.encodeWithSelector(registryCommunity.setBasisStakedAmount.selector, 45 ether)
+        // );
         CVStrategyV0_0 cv = CVStrategyV0_0(payable(address(pool.strategy)));
         vm.startPrank(address(councilSafe));
         address[] memory membersToAdd = new address[](1);
@@ -2190,11 +2192,11 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
     function testRevert_allocate_userCantExecuteAction() public {
         (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
         // registryCommunity.setBasisStakedAmount(45000);
-        safeHelper(
-            address(registryCommunity),
-            0,
-            abi.encodeWithSelector(registryCommunity.setBasisStakedAmount.selector, 45 ether)
-        );
+        // safeHelper(
+        //     address(registryCommunity),
+        //     0,
+        //     abi.encodeWithSelector(registryCommunity.setBasisStakedAmount.selector, 45 ether)
+        // );
         CVStrategyV0_0 cv = CVStrategyV0_0(payable(address(pool.strategy)));
         vm.startPrank(address(councilSafe));
         address[] memory membersToAdd = new address[](1);
