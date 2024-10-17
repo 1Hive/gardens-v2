@@ -96,45 +96,13 @@ jobs:
             When a line start with a minus (`-`) it means that the line was removed, when it starts with plus (`+`) it means that the line was added.
           log_level: "DEBUG"
 
-      - name: Get Gemini step log
-        if: steps.review.outcome == 'failure'
-        id: get-gemini-log
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        run: |
-          max_retries=5
-          delay=10
-          attempt=1
-          while [[ $attempt -le $max_retries ]]; do
-            gemini_log=$(gh run view ${{ github.run_id }} --log || echo "in-progress")
-            if [[ "$gemini_log" != "in-progress" ]]; then
-              echo "gemini_log<<EOF" >> $GITHUB_OUTPUT
-              echo "$gemini_log" >> $GITHUB_OUTPUT
-              echo "EOF" >> $GITHUB_OUTPUT
-              exit 0
-            else
-              echo "Run is still in progress. Retrying in $delay seconds... (Attempt $attempt/$max_retries)"
-              sleep $delay
-              attempt=$((attempt + 1))
-            fi
-          done
-          echo "Failed to retrieve logs after $max_retries attempts."
-          exit 1
-
       - name: Add comment with log
         if: steps.review.outcome == 'failure'
         uses: actions/github-script@v6
         with:
           script: |
             const runUrl = `https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}`;
-            let commentBody = `Gemini Code Review encountered an error. [View the run here](${runUrl}).\n\n`;
-
-            // Only insert the Gemini log if the previous step succeeded
-            if ('get-gemini-log' in steps && steps['get-gemini-log'].outcome == 'success') {
-              const geminiLog = `${{ steps.get-gemini-log.outputs.gemini_log }}`;
-              commentBody += `Here is the step log from the review step:\n\n\`\`\`\n${geminiLog}\n\`\`\`\n`;
-            }
-
+            const commentBody = `Gemini Code Review encountered an error. [View the run here](${runUrl}).\n\nLogs from the Gemini review step may still contains some review before failing.`;
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
