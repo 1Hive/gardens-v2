@@ -65,6 +65,16 @@ struct Member {
     bool isRegistered;
 }
 
+struct CommunityParams {
+    uint256 registerStakeAmount;
+    bool isKickEnabled;
+    string covenantIpfsHash;
+    address councilSafe;
+    address feeReceiver;
+    uint256 communityFee;
+    string communityName;
+}
+
 struct Strategies {
     address[] strategies;
 }
@@ -90,15 +100,19 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
     event BasisStakedAmountSet(uint256 _newAmount);
     event MemberPowerIncreased(address _member, uint256 _stakedAmount);
     event MemberPowerDecreased(address _member, uint256 _unstakedAmount);
+    event CommunityNameUpdated(string _communityName);
+    event CovenantIpfsHashUpdated(string _covenantIpfsHash);
+    event KickEnabledUpdated(bool _isKickEnabled);
+    event FeeReceiverChanged(address _feeReceiver);
     event PoolCreated(uint256 _poolId, address _strategy, address _community, address _token, Metadata _metadata); // 0x778cac0a
-
-    error AllowlistTooBig(uint256 size);
 
     /*|--------------------------------------------|*/
     /*|              CUSTOM ERRORS                 |*/
     /*|--------------------------------------------|*/
 
+    error AllowlistTooBig(uint256 size);
     error AddressCannotBeZero();
+    error OnlyEmptyCommunity(uint256 totalMembers);
     error RegistryCannotBeZero();
     error UserNotInCouncil(address _user);
     error UserNotInRegistry();
@@ -164,6 +178,9 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
     /// @notice The covenant IPFS hash of community
     string public covenantIpfsHash;
 
+    /// @notice The total number of members in the community 
+    uint256 public totalMembers;
+
     // mapping(address => bool) public tribunalMembers;
 
     /// @notice List of enabled/disabled strategies
@@ -214,6 +231,11 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         }
     }
 
+    function onlyEmptyCommunity() internal view {
+        if (totalMembers == 0) {
+            revert OnlyEmptyCommunity(totalMembers);
+        }
+    }
     function onlyStrategyAddress(address _sender, address _strategy) internal pure {
         if (_sender != _strategy) {
             revert SenderNotStrategy();
@@ -237,6 +259,8 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
     function setCollateralVaultTemplate(address template) external onlyOwner {
         collateralVaultTemplate = template;
     }
+
+   
 
     // AUDIT: acknowledged upgradeable contract hat does not protect initialize functions,
     // slither-disable-next-line unprotected-upgrade
@@ -274,6 +298,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         registryFactory = params._registryFactory;
         feeReceiver = params._feeReceiver;
         councilSafe = ISafe(params._councilSafe);
+        totalMembers = 0;
 
         _grantRole(COUNCIL_MEMBER, params._councilSafe);
 
@@ -582,6 +607,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
                 // console.log("gardensFactory.getGardensFeeReceiver()", gardensFactory.getGardensFeeReceiver());
                 gardenToken.safeTransfer(gardensFactory.getGardensFeeReceiver(), gardensFeeAmount);
             }
+            totalMembers += 1;
 
             emit MemberRegistered(_member, registerStakeAmount);
         }
@@ -602,9 +628,45 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
 
     function setBasisStakedAmount(uint256 _newAmount) external virtual {
         onlyCouncilSafe();
+        onlyEmptyCommunity();
         registerStakeAmount = _newAmount;
         emit BasisStakedAmountSet(_newAmount);
     }
+
+     function setCommunityParams(CommunityParams memory _params) external onlyOwner {
+        onlyCouncilSafe();
+        if(_params.registerStakeAmount != registerStakeAmount || _params.isKickEnabled != isKickEnabled || keccak256(bytes(_params.covenantIpfsHash)) != keccak256(bytes(covenantIpfsHash))) {
+            onlyEmptyCommunity();
+            if (_params.registerStakeAmount != registerStakeAmount){
+                registerStakeAmount = _params.registerStakeAmount;
+                emit BasisStakedAmountSet(_params.registerStakeAmount);
+            }
+            if (_params.isKickEnabled != isKickEnabled){
+                isKickEnabled = _params.isKickEnabled;
+                emit KickEnabledUpdated(_params.isKickEnabled);
+            }
+            if (keccak256(bytes(_params.covenantIpfsHash)) != keccak256(bytes(covenantIpfsHash))) {
+                covenantIpfsHash = _params.covenantIpfsHash;
+                emit CovenantIpfsHashUpdated(_params.covenantIpfsHash);
+            }
+        }
+        if(keccak256(bytes(_params.communityName)) != keccak256(bytes(communityName))){
+            communityName = _params.communityName;
+            emit CommunityNameUpdated(_params.communityName);
+        }
+        if(_params.communityFee != communityFee){
+            communityFee = _params.communityFee;
+            emit CommunityFeeUpdated(_params.communityFee);
+        }
+        if(_params.feeReceiver != feeReceiver){
+            if (_params.feeReceiver != address(0)){
+            feeReceiver = _params.feeReceiver;
+            emit FeeReceiverChanged(_params.feeReceiver);
+            }
+        }
+    }
+
+
 
     function setCommunityFee(uint256 _newCommunityFee) public virtual {
         onlyCouncilSafe();
@@ -628,7 +690,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         Member memory member = addressToMemberInfo[_member];
         delete addressToMemberInfo[_member];
         delete strategiesByMember[_member];
-
+        totalMembers -= 1;
         gardenToken.safeTransfer(_member, member.stakedAmount);
         emit MemberUnregistered(_member, member.stakedAmount);
     }
@@ -642,7 +704,11 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
             IPointStrategy(memberStrategies[i]).deactivatePoints(_member);
         }
     }
-
+    function setKickEnabled() public virtual nonReentrant {
+        onlyCouncilSafe();
+        onlyEmptyCommunity();
+        isKickEnabled = !isKickEnabled;
+    }
     function kickMember(address _member, address _transferAddress) public virtual nonReentrant {
         onlyCouncilSafe();
         if (!isKickEnabled) {
@@ -654,6 +720,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         Member memory member = addressToMemberInfo[_member];
         deactivateAllStrategies(_member);
         delete addressToMemberInfo[_member];
+        totalMembers -= 1;
 
         gardenToken.safeTransfer(_transferAddress, member.stakedAmount);
         emit MemberKicked(_member, _transferAddress, member.stakedAmount);

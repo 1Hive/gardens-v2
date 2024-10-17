@@ -251,6 +251,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         (,, uint256 submitterCollateralAmount,,,) = strategy.getArbitrableConfig();
         vm.deal(pool_admin(), submitterCollateralAmount);
         vm.startPrank(pool_admin());
+        _registryCommunity().gardenToken().approve(address(registryCommunity), STAKE_WITH_FEES);
+        _registryCommunity().stakeAndRegisterMember();
         proposalId = uint160(allo().registerRecipient{value: submitterCollateralAmount}(poolId, data));
         vm.stopPrank();
 
@@ -359,7 +361,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         // votes[2] = ProposalSupport(proposalId, -10 ); // 90 - 10 = 80% = 40
         // 35 + 45 + 40 = 120
         bytes memory data = abi.encode(votes);
-        vm.startPrank(pool_admin());
+        vm.startPrank(gardenMember);
         vm.expectRevert(CVStrategyV0_0.UserNotInRegistry.selector);
         // vm.expectRevert(abi.encodeWithSelector(ProposalSupportDuplicated.selector, proposalId, 0));
         allo().allocate(poolId, data);
@@ -2613,48 +2615,50 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         assertEq(cv.totalPointsActivated(), MINIMUM_STAKE * 2, "Points should be activated");
     }
 
-    function test_createProposal_fails_not_enough_score() public {
-        (IAllo.Pool memory pool, uint256 poolId,) = _createProposal(NATIVE, 0, 0);
-        CVStrategyV0_0 cv = CVStrategyV0_0(payable(address(pool.strategy)));
+    //Create Proposal does not require sybil anymore
+    // function test_createProposal_fails_not_enough_score() public {
+    //     (IAllo.Pool memory pool, uint256 poolId,) = _createProposal(NATIVE, 0, 0);
+    //     CVStrategyV0_0 cv = CVStrategyV0_0(payable(address(pool.strategy)));
 
-        vm.startPrank(address(_councilSafe()));
-        cv.setSybilScorer(address(passportScorer), MINIMUM_SCORE);
-        passportScorer.activateStrategy(address(cv));
-        vm.stopPrank();
+    //     vm.startPrank(address(_councilSafe()));
+    //     cv.setSybilScorer(address(passportScorer), MINIMUM_SCORE);
+    //     passportScorer.activateStrategy(address(cv));
+    //     vm.stopPrank();
 
-        uint256 passportScore = MINIMUM_SCORE - 1;
-        passportScorer.addUserScore(address(6), passportScore);
+    //     uint256 passportScore = MINIMUM_SCORE - 1;
+    //     passportScorer.addUserScore(address(6), passportScore);
 
-        vm.startPrank(address(6));
-        CreateProposal memory proposal = CreateProposal(poolId, pool_admin(), 11000 ether, NATIVE, metadata);
-        bytes memory data = abi.encode(proposal);
-        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.UserCannotExecuteAction.selector));
-        allo().registerRecipient(poolId, data);
-        vm.stopPrank();
-    }
+    //     vm.startPrank(address(6));
+    //     CreateProposal memory proposal = CreateProposal(poolId, pool_admin(), 11000 ether, NATIVE, metadata);
+    //     bytes memory data = abi.encode(proposal);
+    //     vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.UserCannotExecuteAction.selector));
+    //     allo().registerRecipient(poolId, data);
+    //     vm.stopPrank();
+    // }
 
-    function test_createProposal_success_enough_score() public {
-        (IAllo.Pool memory pool, uint256 poolId,) = _createProposal(NATIVE, 0, 0);
-        CVStrategyV0_0 cv = CVStrategyV0_0(payable(address(pool.strategy)));
+    // No sybil in createProposal anymore
+    // function test_createProposal_success_enough_score() public {
+    //     (IAllo.Pool memory pool, uint256 poolId,) = _createProposal(NATIVE, 0, 0);
+    //     CVStrategyV0_0 cv = CVStrategyV0_0(payable(address(pool.strategy)));
 
-        vm.startPrank(address(_councilSafe()));
-        cv.setSybilScorer(address(passportScorer), MINIMUM_SCORE);
-        passportScorer.activateStrategy(address(cv));
-        vm.stopPrank();
+    //     vm.startPrank(address(_councilSafe()));
+    //     cv.setSybilScorer(address(passportScorer), MINIMUM_SCORE);
+    //     passportScorer.activateStrategy(address(cv));
+    //     vm.stopPrank();
 
-        uint256 passportScore = MINIMUM_SCORE + 1;
-        passportScorer.addUserScore(address(6), passportScore);
+    //     uint256 passportScore = MINIMUM_SCORE + 1;
+    //     passportScorer.addUserScore(address(6), passportScore);
 
-        vm.startPrank(address(6));
+    //     vm.startPrank(address(6));
 
-        CreateProposal memory proposal = CreateProposal(poolId, pool_admin(), 110 ether, NATIVE, metadata);
-        bytes memory data = abi.encode(proposal);
-        (,, uint256 submitterCollateralAmount,,,) = cv.getArbitrableConfig();
-        vm.deal(address(6), submitterCollateralAmount * 2000);
-        uint256 PROPOSAL_ID = uint160(allo().registerRecipient{value: submitterCollateralAmount}(poolId, data));
-        vm.stopPrank();
-        _assertProposalStatus(cv, PROPOSAL_ID, ProposalStatus.Active);
-    }
+    //     CreateProposal memory proposal = CreateProposal(poolId, pool_admin(), 110 ether, NATIVE, metadata);
+    //     bytes memory data = abi.encode(proposal);
+    //     (,, uint256 submitterCollateralAmount,,,) = cv.getArbitrableConfig();
+    //     vm.deal(address(6), submitterCollateralAmount * 2000);
+    //     uint256 PROPOSAL_ID = uint160(allo().registerRecipient{value: submitterCollateralAmount}(poolId, data));
+    //     vm.stopPrank();
+    //     _assertProposalStatus(cv, PROPOSAL_ID, ProposalStatus.Active);
+    // }
 
     function test_allocate_not_enough_score() public {
         (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);

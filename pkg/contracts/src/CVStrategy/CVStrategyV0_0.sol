@@ -395,9 +395,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     // this could also check attestations directly and then Accept
 
     function _registerRecipient(bytes memory _data, address _sender) internal virtual override returns (address) {
-        if (!_canExecuteAction(_sender)) {
-            revert UserCannotExecuteAction();
-        }
+        checkSenderIsMember(_sender);
         // surpressStateMutabilityWarning++;
         _data;
         CreateProposal memory proposal = abi.decode(_data, (CreateProposal));
@@ -1259,7 +1257,8 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         payable
         virtual
         returns (uint256 disputeId)
-    {
+    {   
+        checkSenderIsMember(msg.sender);
         Proposal storage proposal = proposals[proposalId];
         ArbitrableConfig memory arbitrableConfig = arbitrableConfigs[proposal.arbitrableConfigVersion];
 
