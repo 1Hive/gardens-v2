@@ -99,7 +99,7 @@ jobs:
       - name: Get current job ID
         id: get-job-id
         run: |
-          job_id=$(gh run view ${{ github.run_id }} --json jobs --jq '.jobs[] | select(.name=="'"${{ github.job }}"'") | .id')
+          job_id=$(gh run --repo ${{ github.repository }} view ${{ github.run_id }} --json jobs --jq '.jobs[] | select(.name == "${{ github.job }}") | .url')
           echo "job_id=$job_id" >> $GITHUB_OUTPUT
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -109,8 +109,8 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            const runUrl = `https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs/${{ steps.get-job-id.outputs.job_id }}`;
-            const commentBody = `Gemini Code Review encountered an error. [View the run here](${runUrl}).\n\nExpand **Code Review by Gemini AI** step as it may still contains some review before failing.`;
+            const runUrl = `https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs/${{ steps.get-job-id.outputs.job_id }}#step:8:1`;
+            const commentBody = `Gemini Code Review encountered an error. [View the run here](${runUrl}).\n\nSee **Code Review by Gemini AI** step as it may still contains some review before failing.`;
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
