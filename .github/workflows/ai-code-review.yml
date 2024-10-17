@@ -99,8 +99,8 @@ jobs:
       - name: Get current job ID
         id: get-job-id
         run: |
-          jobs=$(gh run view ${{ github.run_id }} --json jobs --jq '.jobs[] | select(.name=="${{ github.job }}") | .id')
-          echo "job_id=$jobs" >> $GITHUB_OUTPUT
+          job_id=$(gh run view ${{ github.run_id }} --json jobs --jq '.jobs[] | select(.name=="'"${{ github.job }}"'") | .id')
+          echo "job_id=$job_id" >> $GITHUB_OUTPUT
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
