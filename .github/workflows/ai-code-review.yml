@@ -106,6 +106,8 @@ jobs:
       - name: Get Gemini step log
         if: steps.review.outcome == 'failure'
         id: get-gemini-log
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           echo "gemini_log<<EOF" >> $GITHUB_OUTPUT
           gh run view ${{ steps.review.outputs.run_id }} --log >> $GITHUB_OUTPUT
