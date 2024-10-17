@@ -111,11 +111,13 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
+            const runUrl = `https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}`;
+            const geminiLog = `${{ steps.get-gemini-log.outputs.gemini_log }}`;
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: 'Gemini Code Review encountered an error. Here is the step log:\n\n```\n${{ steps.get-gemini-log.outputs.gemini_log }}\n```'
+              body: `Gemini Code Review encountered an error. [View the run here](${runUrl}).\n\nHere is the step log from the review step:\n\n\`\`\`\n${geminiLog}\n\`\`\``
             });
 
       - name: Add thumbs down reaction if something went wrong
