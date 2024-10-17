@@ -96,13 +96,6 @@ jobs:
             When a line start with a minus (`-`) it means that the line was removed, when it starts with plus (`+`) it means that the line was added.
           log_level: "DEBUG"
 
-      - name: Add thumbs down reaction if something went wrong
-        if: failure()
-        run: gh api graphql --silent --raw-field query="mutation AddReaction {addReaction(input:{subjectId:\"$NODE_ID\",content:THUMBS_DOWN}){reaction{content}subject{id}}}"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NODE_ID: ${{ github.event.comment.node_id }}
-
       - name: Get Gemini step log
         if: steps.review.outcome == 'failure'
         id: get-gemini-log
@@ -124,3 +117,10 @@ jobs:
               repo: context.repo.repo,
               body: 'Gemini Code Review encountered an error. Here is the step log:\n\n```\n${{ steps.get-gemini-log.outputs.gemini_log }}\n```'
             });
+
+      - name: Add thumbs down reaction if something went wrong
+        if: failure()
+        run: gh api graphql --silent --raw-field query="mutation AddReaction {addReaction(input:{subjectId:\"$NODE_ID\",content:THUMBS_DOWN}){reaction{content}subject{id}}}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_ID: ${{ github.event.comment.node_id }}
