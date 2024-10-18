@@ -11,6 +11,7 @@ import { Statistic, TokenLabel } from ".";
 import { gardenLand } from "@/assets";
 import { Card } from "@/components/Card";
 import { ChainIcon, getConfigByChain } from "@/configs/chains";
+import TooltipIfOverflow from "./TooltipIfOverflow";
 
 type TokenGarden = getTokenGardensQuery["tokenGardens"][number];
 
@@ -43,7 +44,9 @@ export function GardenCard({ garden }: { garden: TokenGarden }) {
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between gap-2">
           {/* TODO: find appropiate token image */}
-          <h3 className="text-neutral-content h-14">{name}</h3>
+          <h3 className="text-neutral-content h-14">
+            <TooltipIfOverflow lineClamp="line-clamp-2">{name}</TooltipIfOverflow>
+          </h3>
           <TokenLabel chainId={chainId} noSymbol />
         </div>
         <div className="flex flex-col gap-4">
