@@ -258,6 +258,10 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
         condition: isCooldown,
         message: "Please wait 2 hours before submitting another dispute",
       },
+      {
+        condition: isCooldown,
+        message: "Please wait 2 hours before submitting another dispute",
+      },
     ],
     [isEnoughBalance, isCooldown],
   );
@@ -270,7 +274,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
   );
 
   const content = (
-    <div className="flex md:flex-col gap-10 flex-wrap">
+    <div className="flex md:flex-col gap-10 flex-wrap w-[600px]">
       {proposalStatus !== "active" ?
         <div className="p-16 rounded-lg">
           {disputes.map((dispute) => (
@@ -310,7 +314,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
     },
   ];
 
-  const disableTribunalSafeButtons = disableTribunalSafeBtnCondition.some(
+  const disableTribunalSafeButtons = disableTribunalSafeBtnCondition.find(
     (cond) => cond.condition,
   );
 
@@ -328,7 +332,8 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
                 btnStyle="outline"
                 onClick={() => handleSubmitRuling(ABSTAINED_RULING)}
                 isLoading={rulingLoading === ABSTAINED_RULING}
-                disabled={disableTribunalSafeButtons}
+                disabled={!!disableTribunalSafeButtons}
+                tooltip={disableTribunalSafeButtons?.message}
               >
                 <InfoWrapper
                   className={"[&>svg]:text-secondary-content"}
@@ -346,8 +351,8 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
                     btnStyle="outline"
                     onClick={() => handleSubmitRuling(APPROVED_RULING)}
                     isLoading={rulingLoading === APPROVED_RULING}
-                    disabled={disableTribunalSafeButtons}
-                    tooltip={tooltipMessage}
+                    disabled={!!disableTribunalSafeButtons}
+                    tooltip={disableTribunalSafeButtons?.message}
                   >
                     <InfoWrapper
                       className="[&>svg]:text-primary-content"
@@ -363,11 +368,12 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
                     btnStyle="outline"
                     onClick={() => handleSubmitRuling(REJECTED_RULING)}
                     isLoading={rulingLoading === REJECTED_RULING}
-                    disabled={disableTribunalSafeButtons}
-                    tooltip={tooltipMessage}
+                    disabled={!!disableTribunalSafeButtons}
+                    tooltip={disableTribunalSafeButtons?.message}
+                    tooltipSide="tooltip-left"
                   >
                     <InfoWrapper
-                      className="[&>svg]:text-error"
+                      className="[&>svg]:!text-error tooltip-left"
                       tooltip={
                         "Reject if the proposal violates the rules outlined in the community covenant."
                       }

@@ -9,6 +9,7 @@ import { Countdown } from "./Countdown";
 import { DateComponent } from "./DateComponent";
 import { InfoWrapper } from "./InfoWrapper";
 import { DisputeOutcome, DisputeStatus, ProposalStatus } from "@/types";
+import { convertSecondsToReadableTime } from "@/utils/numbers";
 
 type Props = {
   proposalData: Pick<CVProposal, "createdAt" | "proposalStatus"> & {
@@ -36,7 +37,7 @@ type Props = {
 export const ProposalTimeline: FC<Props> = ({
   proposalData,
   disputes = [],
-  className,
+  className = "",
 }) => {
   const arbitrationConfig = proposalData.arbitrableConfig;
   const defaultRuling = DisputeOutcome[arbitrationConfig.defaultRuling];
@@ -65,7 +66,7 @@ export const ProposalTimeline: FC<Props> = ({
 
   return (
     <ul
-      className={`timeline timeline-vertical sm:timeline-horizontal mt-5 ${className}`}
+      className={`timeline timeline-vertical sm:timeline-horizontal mt-5 w-fit ${className}`}
     >
       <li className="flex-grow">
         <div className="timeline-start text-sm opacity-60">
@@ -87,6 +88,11 @@ export const ProposalTimeline: FC<Props> = ({
         const isLastDispute = index === disputes.length - 1;
         const timeoutTimestamp =
           +dispute.createdAt + +arbitrationConfig.defaultRulingTimeout;
+
+        const rulingTimeout = convertSecondsToReadableTime(
+          arbitrationConfig.defaultRulingTimeout,
+        );
+
         return (
           <Fragment key={dispute.id}>
             <li className="flex-grow">
@@ -107,7 +113,7 @@ export const ProposalTimeline: FC<Props> = ({
                 <div className="timeline-start shadow-lg p-2 border border-tertiary-content rounded-lg flex items-center">
                   <InfoWrapper
                     className="[&>svg]:text-tertiary-content m-0.5"
-                    tooltip={`The tribunal safe has 3 days to rule the dispute. Past this delay and considering the abstain behavior on this pool, this proposal will be ${defaultRuling === "rejected" ? "closed as rejected" : "back to active"} and both collateral will be restored.`}
+                    tooltip={`The tribunal safe has ${rulingTimeout.value} ${rulingTimeout.unit} to rule the dispute. Past this delay and considering the abstain behavior on this pool, this proposal will be ${defaultRuling === "rejected" ? "closed as rejected" : "back to active"} and both collateral will be restored.`}
                   >
                     <Countdown endTimestamp={timeoutTimestamp} />
                   </InfoWrapper>
@@ -135,7 +141,7 @@ export const ProposalTimeline: FC<Props> = ({
                           "Pool default ruling on timeout is to Approve"
                         : "The proposal will be closed as rejected."
                       }
-                      className={`[&>svg]:text-error-content [&:before]:ml-[-26px] ${isTimeout && defaultRuling === "approved" && "[&>svg]:opacity-50"}`}
+                      className={`[&>svg]:!text-error-content [&:before]:ml-[-26px] ${isTimeout && defaultRuling === "approved" && "[&>svg]:opacity-50"}`}
                     >
                       <span
                         className={`${isTimeout && defaultRuling === "approved" && "opacity-50"}`}
