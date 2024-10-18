@@ -133,7 +133,6 @@ export default function Page({
         poolId={poolId}
         ipfsResult={ipfsResult}
         isEnabled={isEnabled}
-        chainId={chain}
       />
       {isEnabled && (
         <>

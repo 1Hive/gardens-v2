@@ -141,7 +141,7 @@ const sybilResistancePreview = (
   value?: string | Address[],
 ): ReactNode => {
   const previewMap: Record<SybilResistanceType, ReactNode> = {
-    noSybilResist: "No restrictions (anyone can vote)",
+    noSybilResist: "No protections (anyone can vote)",
     allowList: (() => {
       if (addresses.length === 0) {
         return "Allow list (no addresses submitted)";
@@ -323,7 +323,11 @@ export function PoolForm({ token, communityAddr }: Props) {
     tribunalAddress: {
       label: "Tribunal safe:",
       parse: (value: string) => (
-        <EthAddress address={value as Address} icon={"ens"} />
+        <EthAddress
+          address={value as Address}
+          icon={"ens"}
+          shortenAddress={false}
+        />
       ),
     },
     poolTokenAddress: {
@@ -726,7 +730,7 @@ export function PoolForm({ token, communityAddr }: Props) {
                 required
                 registerKey="sybilResistanceType"
                 placeholder="Who can vote in this pool ?"
-                tooltip="Select the restriction type to prevent voting abuse for this pool."
+                tooltip="Select the protection type to prevent voting abuse for this pool."
                 options={Object.entries(sybilResistanceOptions).map(
                   ([value, text]) => ({
                     label: text,
