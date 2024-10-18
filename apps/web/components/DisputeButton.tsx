@@ -79,6 +79,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
   const [isDisputeCreateLoading, setIsDisputeCreateLoading] = useState(false);
   const chainId = useChainIdFromPath();
   const [rulingLoading, setisRulingLoading] = useState<number | false>(false);
+  const [error, setError] = useState("");
 
   const arbitrationConfig = proposalData.arbitrableConfig;
 
@@ -113,7 +114,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
   });
 
   const totalStake =
-    arbitrationCost && arbitrationConfig ?
+    arbitrationCost != null && arbitrationConfig ?
       arbitrationCost + BigInt(arbitrationConfig.challengerCollateralAmount)
     : undefined;
   const lastDispute =
@@ -175,14 +176,18 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
     });
 
   async function handleSubmit() {
-    setIsDisputeCreateLoading(true);
-    const reasonHash = await ipfsJsonUpload({ reason }, "disputeReason");
-    if (!reasonHash) {
-      return;
+    if (!reason) {
+      setError("The dispute reason is required.");
+    } else {
+      setIsDisputeCreateLoading(true);
+      const reasonHash = await ipfsJsonUpload({ reason }, "disputeReason");
+      if (!reasonHash) {
+        return;
+      }
+      await writeDisputeProposalAsync({
+        args: [BigInt(proposalData.proposalNumber), reasonHash, "0x0"],
+      });
     }
-    await writeDisputeProposalAsync({
-      args: [BigInt(proposalData.proposalNumber), reasonHash, "0x0"],
-    });
   }
 
   const { write: writeSubmitRuling } = useContractWriteWithConfirmations({
@@ -275,14 +280,18 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
           ))}
         </div>
       : <div>
-          <textarea
-            id="reason"
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            placeholder="Enter your dispute reason here"
-            className="textarea textarea-accent w-full  mb-4"
-            rows={5}
-          />
+          <div className="w-full mb-4">
+            <textarea
+              id="reason"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="Enter your dispute reason here"
+              className="textarea textarea-accent w-full"
+              rows={5}
+              required
+            />
+            <div className="text-error ml-4 mt-1">{error}</div>
+          </div>
           <InfoBox
             infoBoxType="info"
             content={`Disputing this proposal stops it from being executed but not from growing in support. The Tribunal has ${rulingTimeout.value} ${rulingTimeout.unit} to settle any disputes before it can be closed and collateral is returned.`}

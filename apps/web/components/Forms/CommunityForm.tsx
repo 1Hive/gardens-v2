@@ -63,7 +63,6 @@ export const CommunityForm = ({
 
   const { publish } = usePubSubContext();
 
-  const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** tokenGarden.decimals;
   const [showPreview, setShowPreview] = useState<boolean>(false);
   const [previewData, setPreviewData] = useState<FormInputs>();
   const [loading, setLoading] = useState(false);
@@ -261,7 +260,7 @@ export const CommunityForm = ({
               registerOptions={{
                 min: {
                   value: 0,
-                  message: `Amount must be greater than 0`,
+                  message: "Amount must be greater than 0",
                 },
               }}
               suffix={tokenGarden.symbol}

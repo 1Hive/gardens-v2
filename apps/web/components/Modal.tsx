@@ -1,5 +1,5 @@
 "use client";
-import { ReactNode, useEffect, useRef, useState } from "react";
+import { ReactNode, useEffect, useRef } from "react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 
 interface ModalProps {
@@ -51,7 +51,6 @@ export function Modal({
   return (
     <dialog
       className={`modal max-sm:modal-bottom ${className}`}
-      role="dialog"
       ref={dialogRef}
     >
       <div className="modal-box max-w-5xl overflow-visible w-fit flex flex-col rounded-2xl bg-primary p-0">

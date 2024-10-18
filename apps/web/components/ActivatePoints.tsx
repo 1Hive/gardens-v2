@@ -25,7 +25,6 @@ type ActiveMemberProps = {
 
 export function ActivatePoints({
   strategy,
-  communityAddress,
   isMember,
   isMemberActivated,
 }: ActiveMemberProps) {

@@ -77,6 +77,7 @@ jobs:
       - uses: rubensflinco/gemini-code-review-action@1.0.5
         name: "Code Review by Gemini AI"
         id: review
+        continue-on-error: true
         with:
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -95,29 +96,31 @@ jobs:
             When a line start with a minus (`-`) it means that the line was removed, when it starts with plus (`+`) it means that the line was added.
           log_level: "DEBUG"
 
-      - name: Add thumbs down reaction if something went wrong
-        if: steps.review.outcome == 'failure'
-        run: gh api graphql --silent --raw-field query="mutation AddReaction {addReaction(input:{subjectId:\"$NODE_ID\",content:THUMBS_DOWN}){reaction{content}subject{id}}}"
+      - name: Get current job ID
+        id: get-job-id
+        run: |
+          job_uri=$(gh run --repo ${{ github.repository }} view ${{ github.run_id }} --json jobs --jq '.jobs[] | select(.name == "${{ github.job }}") | .url')
+          echo "job_uri=$job_uri" >> $GITHUB_OUTPUT
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NODE_ID: ${{ github.event.comment.node_id }}
-
-      - name: Get Gemini step log
-        if: steps.review.outcome == 'failure'
-        id: get-gemini-log
-        run: |
-          echo "gemini_log<<EOF" >> $GITHUB_OUTPUT
-          gh run view ${{ steps.review.outputs.run_id }} --log >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Add comment with log
         if: steps.review.outcome == 'failure'
         uses: actions/github-script@v6
         with:
           script: |
+            const runUrl = `${{ steps.get-job-id.outputs.job_uri }}#step:8:1`;
+            const commentBody = `Gemini Code Review encountered an error. [View the run here](${runUrl}).\n\nSee **Code Review by Gemini AI** step as it may still contains some review before failing.`;
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: 'Gemini Code Review encountered an error. Here is the step log:\n\n```\n${{ steps.get-gemini-log.outputs.gemini_log }}\n```'
+              body: commentBody
             });
+
+      - name: Add thumbs down reaction if something went wrong
+        if: failure()
+        run: gh api graphql --silent --raw-field query="mutation AddReaction {addReaction(input:{subjectId:\"$NODE_ID\",content:THUMBS_DOWN}){reaction{content}subject{id}}}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_ID: ${{ github.event.comment.node_id }}
