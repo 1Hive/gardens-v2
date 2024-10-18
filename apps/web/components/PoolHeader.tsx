@@ -284,7 +284,7 @@ export default function PoolHeader({
   const disableCouncilSafeBtnCondition: ConditionObject[] = [
     {
       condition: !isCouncilSafe,
-      message: "Connect with council safe address",
+      message: `Connect with council safe (${shortenAddress(strategy.registryCommunity.councilSafe ?? "")})`,
     },
   ];
 
