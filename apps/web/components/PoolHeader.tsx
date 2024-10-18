@@ -1,5 +1,6 @@
 import { useState } from "react";
 import {
+  ArrowTopRightOnSquareIcon,
   BoltIcon,
   ChartBarIcon,
   CheckIcon,
@@ -31,6 +32,7 @@ import { Statistic } from "./Statistic";
 import { blueLand, grassLarge } from "@/assets";
 import { chainConfigMap } from "@/configs/chains";
 import { usePubSubContext } from "@/contexts/pubsub.context";
+import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { MetadataV1 } from "@/hooks/useIpfsFetch";
@@ -67,7 +69,6 @@ type Props = {
   >;
   token: Pick<TokenGarden, "address" | "name" | "symbol" | "decimals">;
   poolToken?: FetchTokenResult;
-  chainId: string;
 };
 
 function calculateConvictionGrowthInSeconds(
@@ -102,11 +103,11 @@ export default function PoolHeader({
   arbitrableConfig,
   token,
   poolToken,
-  chainId,
 }: Props) {
   const [isOpenModal, setIsOpenModal] = useState(false);
   const { address } = useAccount();
   const { publish } = usePubSubContext();
+  const { id: chainId, safePrefix } = useChainFromPath()!;
 
   const { data: passportStrategyData } =
     useSubgraphQuery<getPassportStrategyQuery>({
@@ -126,7 +127,7 @@ export default function PoolHeader({
       Number(passportStrategy?.threshold) / CV_PASSPORT_THRESHOLD_SCALE
     : null;
 
-  const blockTime = chainConfigMap[chainId].blockTime;
+  const blockTime = chainConfigMap[chainId!].blockTime;
   const spendingLimitPct =
     (Number(strategy.config.maxRatio || 0) / CV_SCALE_PRECISION) * 100;
 
@@ -207,7 +208,7 @@ export default function PoolHeader({
         sybilResistanceType ?
           sybilResistanceType === "gitcoinPassport" ? "Gitcoin Passport"
           : (sybilResistanceValue as Array<Address>)?.[0] === zeroAddress ?
-            "No restriction"
+            undefined
           : "Allowlist"
         : "",
       info:
@@ -225,6 +226,7 @@ export default function PoolHeader({
     PoolTypes[proposalType] === "signaling" ?
       poolConfig.filter(
         (config) =>
+          !!config.value &&
           !["Spending limit", "Min Threshold", "Min conviction"].includes(
             config.label,
           ),
@@ -307,6 +309,22 @@ export default function PoolHeader({
           </h2>
           {(!!isCouncilMember || isCouncilSafe) && (
             <div className="flex gap-2">
+              <div className="flex flex-col gap-1 p-1 w-48">
+                <a
+                  href={`https://app.safe.global/transactions/queue?safe=${safePrefix}:${strategy.registryCommunity.councilSafe}`}
+                  className="text-info whitespace-nowrap flex flex-nowrap gap-1 items-center"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Council safe
+                  <ArrowTopRightOnSquareIcon width={16} height={16} />
+                </a>
+                <EthAddress
+                  address={strategy.registryCommunity.councilSafe as Address}
+                  shortenAddress={true}
+                  actions="copy"
+                />
+              </div>
               <Button
                 btnStyle="outline"
                 icon={<Cog6ToothIcon height={24} width={24} />}
@@ -359,7 +377,6 @@ export default function PoolHeader({
               pointSystemType={pointSystemType}
               token={token}
               proposalType={proposalType}
-              chainId={chainId}
               proposalOnDispute={proposalOnDispute}
               initValues={{
                 sybilResistanceValue: sybilResistanceValue,

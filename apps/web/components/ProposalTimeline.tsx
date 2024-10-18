@@ -66,7 +66,7 @@ export const ProposalTimeline: FC<Props> = ({
 
   return (
     <ul
-      className={`timeline timeline-vertical sm:timeline-horizontal mt-5 w-fit ${className}`}
+      className={`timeline timeline-vertical sm:timeline-horizontal mt-5 w-full ${className}`}
     >
       <li className="flex-grow">
         <div className="timeline-start text-sm opacity-60">
