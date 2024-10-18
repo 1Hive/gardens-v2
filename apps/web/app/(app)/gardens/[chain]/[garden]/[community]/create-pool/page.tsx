@@ -1,47 +1,50 @@
+"use client";
+
+import React from "react";
+import { Address } from "viem";
 import {
-  TokenGarden,
   getPoolCreationDataDocument,
   getPoolCreationDataQuery,
 } from "#/subgraph/.graphclient";
-import PoolForm from "@/components/Forms/PoolForm";
-import { initUrqlClient, queryByChain } from "@/providers/urql";
-import React from "react";
-import { Address } from "viem";
+import { PoolForm } from "@/components/Forms/PoolForm";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 
-export default async function CreatePool({
-  params: { chain, garden, community },
+export default function Page({
+  params: { garden, community },
 }: {
-  params: { chain: number; garden: string; community: string };
+  params: { garden: string; community: string };
 }) {
-  const { urqlClient } = initUrqlClient();
-
-  const { data: result, error: error } =
-    await queryByChain<getPoolCreationDataQuery>(
-      urqlClient,
-      chain,
-      getPoolCreationDataDocument,
-      { communityAddr: community, tokenAddr: garden },
-    );
+  const { data: result } = useSubgraphQuery<getPoolCreationDataQuery>({
+    query: getPoolCreationDataDocument,
+    variables: { communityAddr: community, tokenAddr: garden },
+  });
   let token = result?.tokenGarden;
   let alloAddr = result?.allos[0]?.id as Address;
   let communityName = result?.registryCommunity?.communityName as string;
 
-  return (
-    <div className="mx-auto flex max-w-[820px] flex-col items-center justify-center gap-4">
-      <div className="text-center sm:mt-5">
-        <h2 className="text-xl font-semibold leading-6 text-gray-900">
-          Create a Pool in {communityName} community
-        </h2>
-        {/* <div className="mt-1">
-          <p className="text-sm">subtitle for pool form creation...</p>
-        </div> */}
+  if (!token) {
+    return (
+      <div className="my-40">
+        <LoadingSpinner />
       </div>
-      <PoolForm
-        alloAddr={alloAddr}
-        token={token as TokenGarden}
-        communityAddr={community as Address}
-        chainId={chain}
-      />
-    </div>
-  );
+    );
+  }
+
+  return result ?
+      <div className="page-layout">
+        <section className="section-layout">
+          <div className="text-center sm:mt-5 mb-12">
+            <h2 className="">Create a Pool in {communityName} community</h2>
+          </div>
+          <PoolForm
+            alloAddr={alloAddr}
+            token={token}
+            communityAddr={community as Address}
+          />
+        </section>
+      </div>
+    : <div className="mt-96">
+        <LoadingSpinner />
+      </div>;
 }

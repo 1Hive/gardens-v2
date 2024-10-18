@@ -1,21 +1,27 @@
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#default-profile
 [profile.default]
 # solc-version = "0.8.19"
-src = 'pkg/contracts'
+src = 'pkg/contracts/src'
+script = 'pkg/contracts/script'
 test = 'pkg/contracts/test'
 out = 'pkg/contracts/out'
 libs = ['lib']
+ffi = true
+ast = true
+build_info = true
+extra_output = ["storageLayout"]
 
 optimizer = true
-optimizer-runs = 1_000
+optimizer-runs = 0
 # prompt_timeout = 120
 fs_permissions = [{ access = "read", path = "./"}]
+# fs_permissions = []
 # auto_detect_remappings = true # recursive auto-detection of remappings
 # remappings = ["ds-test/=lib/forge-std/lib/ds-test/src/",
 # "forge-std/=lib/forge-std/src/",
 # "allo-v2/=lib/allo-v2/"
 # ,"allo-v2-contracts/=lib/allo-v2/contracts/"
-# ,"allo-v2-test/=lib/allo-v2/test/","safe-contracts/=lib/safe-contracts/"]
+# ,"allo-v2-test/=lib/allo-v2/test/","safe-smart-account/=lib/safe-contracts/"]
 # # list of libraries to link in the form of `<path to lib>:<lib name>:<address>`: `"src/MyLib.sol:MyLib:0x8De6DDbCd5053d32292AAA0D2105A32d108484a6"`
 # # the <path to lib> supports remappings
 # libraries = []

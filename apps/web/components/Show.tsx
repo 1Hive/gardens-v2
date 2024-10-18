@@ -16,7 +16,7 @@ const Show = ({ children }: { children: React.ReactNode }) => {
     }
   });
 
-  return when || otherwise || null;
+  return when ?? otherwise ?? null;
 };
 
 const When = ({

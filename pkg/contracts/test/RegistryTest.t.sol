@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+pragma solidity ^0.8.19;
+
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -15,12 +18,25 @@ import {AlloSetup} from "allo-v2-test/foundry/shared/AlloSetup.sol";
 import {RegistrySetupFull} from "allo-v2-test/foundry/shared/RegistrySetup.sol";
 import {TestStrategy} from "allo-v2-test/utils/TestStrategy.sol";
 import {MockStrategy} from "allo-v2-test/utils/MockStrategy.sol";
+import {IArbitrator} from "../src/interfaces/IArbitrator.sol";
 import {GV2ERC20} from "../script/GV2ERC20.sol";
 import {GasHelpers2} from "./shared/GasHelpers2.sol";
-import {RegistryFactory} from "../src/RegistryFactory.sol";
-import {CVStrategy, StrategyStruct} from "../src/CVStrategy.sol";
-import {RegistryCommunity} from "../src/RegistryCommunity.sol";
-import {Safe} from "safe-contracts/contracts/Safe.sol";
+import {RegistryFactoryV0_0} from "../src/RegistryFactory/RegistryFactoryV0_0.sol";
+import {RegistryFactoryV0_1} from "../src/RegistryFactory/RegistryFactoryV0_1.sol";
+import {
+    CVStrategyV0_0,
+    PointSystem,
+    ProposalType,
+    ArbitrableConfig,
+    PointSystemConfig
+} from "../src/CVStrategy/CVStrategyV0_0.sol";
+import {CollateralVault} from "../src/CollateralVault.sol";
+import {SafeArbitrator} from "../src/SafeArbitrator.sol";
+import {
+    RegistryCommunityV0_0,
+    RegistryCommunityInitializeParamsV0_0
+} from "../src/RegistryCommunity/RegistryCommunityV0_0.sol";
+import {ISafe as Safe, SafeProxyFactory, Enum} from "../src/interfaces/ISafe.sol";
 import {SafeSetup} from "./shared/SafeSetup.sol";
 
 import {CVStrategyHelpers} from "./CVStrategyHelpers.sol";
@@ -28,10 +44,23 @@ import {CVStrategyHelpers} from "./CVStrategyHelpers.sol";
 import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
 
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+// import {Upgrades} from "@openzeppelin/foundry/LegacyUpgrades.sol";
+import {Core} from "@openzeppelin/foundry/internal/Core.sol";
+
+import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {RegistryFactoryDiamond, BaseDiamond} from "@src/diamonds/RegistryFactoryDiamond.sol";
+
+import {IDiamond} from "@src/diamonds/interfaces/IDiamond.sol";
+import {IDiamondCut} from "@src/diamonds/interfaces/IDiamondCut.sol";
+import {DiamondCutFacet} from "@src/diamonds/facets/DiamondCutFacet.sol";
+import {DiamondLoupeFacet} from "@src/diamonds/facets/DiamondLoupeFacet.sol";
+import {RegistryFactoryFacet} from "@src/diamonds/facets/RegistryFactoryFacet.sol";
 // @dev Run forge test --mc RegistryTest -vvvvv
 
 contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, Errors, GasHelpers2, SafeSetup {
-    CVStrategy public strategy;
+    CVStrategyV0_0 public strategy;
+    uint256 public poolId;
+    IArbitrator safeArbitrator;
     GV2ERC20 public token;
     uint256 public mintAmount = 1_000_000 * DECIMALS;
 
@@ -45,9 +74,9 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
 
     // Metadata public metadata = Metadata({protocol: 1, pointer: "strategy pointer"});
 
-    RegistryFactory internal registryFactory;
-    RegistryCommunity internal registryCommunity;
-    RegistryCommunity internal nonKickableCommunity;
+    RegistryFactoryV0_0 internal registryFactory;
+    RegistryCommunityV0_0 internal registryCommunity;
+    RegistryCommunityV0_0 internal nonKickableCommunity;
 
     address gardenOwner = makeAddr("communityGardenOwner");
     address gardenMember = makeAddr("communityGardenMember");
@@ -75,21 +104,51 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         token.approve(address(allo()), mintAmount);
 
         //        strategy = address(new CVMockStrategy(address(allo())));
-        strategy = new CVStrategy(address(allo()));
+
+        // ERC1967Proxy strategyProxy = new ERC1967Proxy(
+        //     address(new CVStrategyV0_0()),
+        //     abi.encodeWithSelector(
+        //         CVStrategyV0_0.init.selector, address(allo()), address(new CollateralVault()), pool_admin()
+        //     )
+        // );
+
+        ERC1967Proxy arbitratorProxy = new ERC1967Proxy(
+            address(new SafeArbitrator()), abi.encodeWithSelector(SafeArbitrator.initialize.selector, 2 ether)
+        );
+        safeArbitrator = SafeArbitrator(payable(address(arbitratorProxy)));
+
+        // strategy.init(address(allo()),address(this),address(this)); @todo Kev create a testRevert
+        // allo.createPoolWithCustomStrategy() @todo kev create new testRvert
+
         //        strategy = address(new MockStrategy(address(allo())));
-        // uint256 poolId = createPool(
-        //     allo(), address(strategy), address(_registryCommunity()), registry(), NATIVE, StrategyStruct.ProposalType(0)
+        // uint256 /* _poolId */ = createPool(
+        //     allo(), address(strategy), address(_registryCommunity()), registry(), NATIVE, ProposalType(0)
         // );
         vm.stopPrank();
         vm.startPrank(allo_owner());
         allo().transferOwnership(local());
         vm.stopPrank();
         vm.startPrank(gardenOwner);
-        registryFactory = new RegistryFactory();
-        _registryFactory().setReceiverAddress(address(protocolFeeReceiver));
+        ERC1967Proxy proxy = new ERC1967Proxy(
+            address(new RegistryFactoryV0_0()),
+            abi.encodeWithSelector(
+                RegistryFactoryV0_0.initialize.selector,
+                gardenOwner,
+                address(protocolFeeReceiver),
+                address(new RegistryCommunityV0_0()),
+                address(new CVStrategyV0_0()),
+                address(new CollateralVault())
+            )
+        );
+
+        registryFactory = RegistryFactoryV0_0(address(proxy));
+
+        // registryFactory = new RegistryFactoryV0_0();
+        // _registryFactory().setReceiverAddress(address(protocolFeeReceiver));
+
         vm.stopPrank();
-        RegistryCommunity.InitializeParams memory params;
-        params._strategyTemplate = address(strategy);
+
+        RegistryCommunityInitializeParamsV0_0 memory params;
         params._allo = address(allo());
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = MINIMUM_STAKE;
@@ -99,24 +158,155 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         params._councilSafe = payable(address(_councilSafe()));
 
         params._isKickEnabled = true;
-        registryCommunity = RegistryCommunity(registryFactory.createRegistry(params));
+
+        registryCommunity = RegistryCommunityV0_0(registryFactory.createRegistry(params));
+        ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
+        (uint256 returnedPoolId, address strategyProxy) = registryCommunity.createPool(
+            NATIVE,
+            getParams(
+                address(registryCommunity),
+                ProposalType(0),
+                PointSystem.Unlimited,
+                PointSystemConfig(0),
+                arbitrableConfig,
+                new address[](1),
+                address(0),
+                0
+            ),
+            metadata
+        );
+        strategy = CVStrategyV0_0(payable(strategyProxy));
+        poolId = returnedPoolId;
+        assertEq(registryFactory.nonce(), 1, "nonce before upgrade");
+
         vm.startPrank(gardenOwner);
         _registryFactory().setProtocolFee(address(registryCommunity), PROTOCOL_FEE_PERCENTAGE);
+
+        // Upgrades.upgradeProxy(
+        //     address(_registryFactory()),
+        //     "RegistryFactoryV0_1.sol",
+        //     abi.encodeWithSelector(RegistryFactoryV0_1.initializeV2.selector)
+        // );
+
+        // assertEq(registryFactory.nonce(), 1, "nonce after upgrade");
+
+        Core.upgradeProxyTo(
+            address(_registryFactory()),
+            address(new RegistryFactoryDiamond()),
+            abi.encodeWithSelector(BaseDiamond.initialize.selector, gardenOwner)
+        );
+
+        // RegistryFactoryFacet(address(_registryFactory())).initialize(gardenOwner);
+
+        IDiamondCut(address(_registryFactory())).diamondCut(createCutsFactory(), address(0), "");
+
+        RegistryFactoryFacet(address(_registryFactory())).initializeV2(gardenOwner);
+
+        assertEq(
+            address(RegistryFactoryDiamond(payable(address(registryFactory)))._owner()),
+            address(gardenOwner),
+            "owner after upgrade"
+        );
+        assertEq(registryFactory.nonce(), 1, "nonce after upgrade");
+        assertEq(registryFactory.VERSION(), "0.0", "VERSION after upgrade");
+
         vm.stopPrank();
+
         params._isKickEnabled = false;
-        nonKickableCommunity = RegistryCommunity(registryFactory.createRegistry(params));
+
+        nonKickableCommunity = RegistryCommunityV0_0(registryFactory.createRegistry(params));
     }
 
-    function _registryCommunity() internal view returns (RegistryCommunity) {
+    function createCutsFactory() public returns (IDiamond.FacetCut[] memory cuts) {
+        DiamondCutFacet dCutFacet = new DiamondCutFacet(); //@todo can be removed
+        DiamondLoupeFacet dLoupe = new DiamondLoupeFacet();
+        // OwnershipFacet ownerF = new OwnershipFacet();
+        RegistryFactoryFacet registryFactoryF = new RegistryFactoryFacet();
+
+        cuts = new IDiamond.FacetCut[](3);
+
+        bytes4[] memory sighashes = new bytes4[](1);
+        sighashes[0] = bytes4(0x1f931c1c);
+
+        cuts[0] = IDiamond.FacetCut({
+            facetAddress: address(dCutFacet),
+            action: IDiamond.FacetCutAction.Add,
+            functionSelectors: sighashes
+        });
+
+        sighashes = new bytes4[](5);
+        sighashes[0] = bytes4(0x7a0ed627);
+        sighashes[1] = bytes4(0xadfca15e);
+        sighashes[2] = bytes4(0x52ef6b2c);
+        sighashes[3] = bytes4(0xcdffacc6);
+        sighashes[4] = bytes4(0x01ffc9a7);
+        //build cut struct
+        // IDiamond.FacetCut[] memory cut = new IDiamond.FacetCut[](2);
+
+        cuts[1] = (
+            IDiamond.FacetCut({
+                facetAddress: address(dLoupe),
+                action: IDiamond.FacetCutAction.Add,
+                functionSelectors: sighashes
+            })
+        );
+
+        // sighashes = new bytes4[](2);
+        // sighashes[0] = bytes4(0xf2fde38b);
+        // sighashes[1] = bytes4(0x8da5cb5b);
+
+        // cut[1] = (IDiamond.FacetCut({facetAddress: address(ownerF), action: IDiamond.FacetCutAction.Add, functionSelectors: sighashes}));
+
+        bytes4[] memory sighashesInit = new bytes4[](25);
+        sighashesInit[0] = bytes4(0x77122d56);
+        sighashesInit[1] = bytes4(0xbeb331a3);
+        sighashesInit[2] = bytes4(0xb8bed901);
+        sighashesInit[3] = bytes4(0xf5016b5e);
+        sighashesInit[4] = bytes4(0x987435be);
+        sighashesInit[5] = bytes4(0x0a992e0c);
+        sighashesInit[6] = bytes4(0xc4d66de8);
+        sighashesInit[7] = bytes4(0x1459457a);
+        sighashesInit[8] = bytes4(0x29b6eca9);
+        sighashesInit[9] = bytes4(0x3101cfcb);
+        sighashesInit[10] = bytes4(0xaffed0e0);
+        sighashesInit[11] = bytes4(0x8da5cb5b);
+        sighashesInit[12] = bytes4(0x52d1902d);
+        sighashesInit[13] = bytes4(0x02c1d0b1);
+        sighashesInit[14] = bytes4(0x715018a6);
+        sighashesInit[15] = bytes4(0xb0d3713a);
+        sighashesInit[16] = bytes4(0x5a2c8ace);
+        sighashesInit[17] = bytes4(0xb5b3ca2c);
+        sighashesInit[18] = bytes4(0x8279c7db);
+        sighashesInit[19] = bytes4(0x5decae02);
+        sighashesInit[20] = bytes4(0x1b71f0e4);
+        sighashesInit[21] = bytes4(0x5c94e4d2);
+        sighashesInit[22] = bytes4(0xf2fde38b);
+        sighashesInit[23] = bytes4(0x3659cfe6);
+        sighashesInit[24] = bytes4(0x4f1ef286);
+
+        cuts[2] = (
+            IDiamond.FacetCut({
+                facetAddress: address(registryFactoryF),
+                action: IDiamond.FacetCutAction.Add,
+                functionSelectors: sighashesInit
+            })
+        );
+    }
+
+    function _registryCommunity() internal view returns (RegistryCommunityV0_0) {
         return registryCommunity;
     }
 
-    function _registryFactory() internal view returns (RegistryFactory) {
+    function _registryFactory() internal view returns (RegistryFactoryV0_0) {
         return registryFactory;
     }
 
-    function _nonKickableCommunity() internal view returns (RegistryCommunity) {
+    function _nonKickableCommunity() internal view returns (RegistryCommunityV0_0) {
         return nonKickableCommunity;
+    }
+
+    function _generateArbitrableConfig() internal returns (ArbitrableConfig memory) {
+        return ArbitrableConfig(safeArbitrator, payable(address(_councilSafe())), 3 ether, 2 ether, 1, 600);
     }
 
     function test_stakeAndRegisterMember() public {
@@ -195,7 +385,9 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         vm.startPrank(gardenOwner);
         _registryFactory().setProtocolFee(address(registryCommunity), 2);
         _registryFactory().setCommunityValidity(address(registryCommunity), false);
-        vm.expectRevert(abi.encodeWithSelector(RegistryFactory.CommunityInvalid.selector, address(registryCommunity)));
+        vm.expectRevert(
+            abi.encodeWithSelector(RegistryFactoryV0_0.CommunityInvalid.selector, address(registryCommunity))
+        );
         _registryFactory().getProtocolFee(address(registryCommunity));
         vm.stopPrank();
         stopMeasuringGas();
@@ -215,27 +407,35 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
 
     function test_activate_totalActivatedPoints_fixed_system() public {
         vm.startPrank(pool_admin());
-        uint256 poolId = createPool(
-            allo(),
-            address(strategy),
-            address(_registryCommunity()),
-            registry(),
+        ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
+        ( /*uint256  _poolId */ , address strategyProxy) = registryCommunity.createPool(
             NATIVE,
-            StrategyStruct.ProposalType(0),
-            StrategyStruct.PointSystem.Fixed
+            getParams(
+                address(registryCommunity),
+                ProposalType(0),
+                PointSystem.Fixed,
+                PointSystemConfig(0),
+                arbitrableConfig,
+                new address[](1),
+                address(0),
+                0
+            ),
+            metadata
         );
-        console.log("PoolId: %s", poolId);
+        // poolId = _poolId;
+        CVStrategyV0_0 fixedStrategy = CVStrategyV0_0(payable(strategyProxy));
+
         vm.stopPrank();
 
         vm.startPrank(address(councilSafe));
-        _registryCommunity().addStrategy(address(strategy));
+        _registryCommunity().addStrategy(address(fixedStrategy));
         vm.stopPrank();
 
         vm.startPrank(gardenMember);
         token.approve(address(registryCommunity), STAKE_WITH_FEES);
         _registryCommunity().stakeAndRegisterMember();
         //vm.expectRevert("error");
-        strategy.activatePoints();
+        fixedStrategy.activatePoints();
 
         // token.approve(address(registryCommunity), tokenAmount * DECIMALS);
         // _registryCommunity().increasePower(tokenAmount * DECIMALS);
@@ -245,7 +445,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         vm.stopPrank();
 
         assertEq(
-            registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
+            registryCommunity.getMemberPowerInStrategy(gardenMember, address(fixedStrategy)),
             registryCommunity.getMemberStakedAmount(gardenMember),
             "memberPower"
         );
@@ -253,27 +453,35 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
 
     function test_activate_deactivate_totalActivatedPoints_fixed_system() public {
         vm.startPrank(pool_admin());
-        uint256 poolId = createPool(
-            allo(),
-            address(strategy),
-            address(_registryCommunity()),
-            registry(),
+
+        ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
+        ( /*uint256  _poolId */ , address strategyProxy) = registryCommunity.createPool(
             NATIVE,
-            StrategyStruct.ProposalType(0),
-            StrategyStruct.PointSystem.Fixed
+            getParams(
+                address(registryCommunity),
+                ProposalType(0),
+                PointSystem.Fixed,
+                PointSystemConfig(0),
+                arbitrableConfig,
+                new address[](1),
+                address(0),
+                0
+            ),
+            metadata
         );
-        console.log("PoolId: %s", poolId);
+        CVStrategyV0_0 fixedStrategy = CVStrategyV0_0(payable(strategyProxy));
+
         vm.stopPrank();
 
         vm.startPrank(address(councilSafe));
-        _registryCommunity().addStrategy(address(strategy));
+        _registryCommunity().addStrategy(address(fixedStrategy));
         vm.stopPrank();
 
         vm.startPrank(gardenMember);
         token.approve(address(registryCommunity), STAKE_WITH_FEES);
         _registryCommunity().stakeAndRegisterMember();
         //vm.expectRevert("error");
-        strategy.activatePoints();
+        fixedStrategy.activatePoints();
 
         // token.approve(address(registryCommunity), tokenAmount * DECIMALS);
         // _registryCommunity().increasePower(tokenAmount * DECIMALS);
@@ -281,12 +489,12 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         assertEq(token.balanceOf(address(registryCommunity)), MINIMUM_STAKE, "balance");
         token.approve(address(registryCommunity), 20 * DECIMALS);
         _registryCommunity().increasePower(20 * DECIMALS);
-        strategy.deactivatePoints();
-        strategy.activatePoints();
+        fixedStrategy.deactivatePoints();
+        fixedStrategy.activatePoints();
         vm.stopPrank();
 
         assertEq(
-            registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
+            registryCommunity.getMemberPowerInStrategy(gardenMember, address(fixedStrategy)),
             registryCommunity.registerStakeAmount(),
             "memberPower"
         );
@@ -295,16 +503,8 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
     function testFuzz_increasePower(uint256 tokenAmount) public {
         vm.assume(tokenAmount > 2 && tokenAmount < 100);
         vm.startPrank(pool_admin());
-        uint256 poolId = createPool(
-            allo(),
-            address(strategy),
-            address(_registryCommunity()),
-            registry(),
-            NATIVE,
-            StrategyStruct.ProposalType(0),
-            StrategyStruct.PointSystem.Unlimited
-        );
-        console.log("PoolId: %s", poolId);
+
+        assertEq(strategy.getMaxAmount(), 200 * DECIMALS);
         vm.stopPrank();
         vm.startPrank(address(councilSafe));
         _registryCommunity().addStrategy(address(strategy));
@@ -337,32 +537,39 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         // vm.assume(tokenAmount > 0);
 
         vm.startPrank(pool_admin());
-        uint256 poolId = createPool(
-            allo(),
-            address(strategy),
-            address(_registryCommunity()),
-            registry(),
+        ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
+        ( /*uint256  _poolId */ , address strategyProxy) = registryCommunity.createPool(
             NATIVE,
-            StrategyStruct.ProposalType(0),
-            StrategyStruct.PointSystem.Capped
+            getParams(
+                address(registryCommunity),
+                ProposalType(0),
+                PointSystem.Capped,
+                PointSystemConfig(0),
+                arbitrableConfig,
+                new address[](1),
+                address(0),
+                0
+            ),
+            metadata
         );
-        console.log("PoolId: %s", poolId);
+        CVStrategyV0_0 cappedStrategy = CVStrategyV0_0(payable(strategyProxy));
+
         vm.stopPrank();
         vm.startPrank(address(councilSafe));
-        _registryCommunity().addStrategy(address(strategy));
+        _registryCommunity().addStrategy(address(cappedStrategy));
         vm.stopPrank();
         vm.startPrank(gardenMember);
         token.approve(address(registryCommunity), STAKE_WITH_FEES);
         _registryCommunity().stakeAndRegisterMember();
         //vm.expectRevert("error");
-        strategy.activatePoints();
+        cappedStrategy.activatePoints();
 
         token.mint(gardenMember, tokenAmount * DECIMALS);
         token.approve(address(registryCommunity), tokenAmount * DECIMALS);
 
         _registryCommunity().increasePower(tokenAmount * DECIMALS);
 
-        uint256 memberPower = registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy));
+        uint256 memberPower = registryCommunity.getMemberPowerInStrategy(gardenMember, address(cappedStrategy));
 
         uint256 current = tokenAmount * DECIMALS + MINIMUM_STAKE;
 
@@ -383,23 +590,27 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         vm.assume(secondIncrease < 10000 && secondIncrease > 0);
 
         vm.startPrank(pool_admin());
-        {
-            uint256 poolId = createPool(
-                allo(),
-                address(strategy),
-                address(_registryCommunity()),
-                registry(),
-                NATIVE,
-                StrategyStruct.ProposalType(0),
-                StrategyStruct.PointSystem.Quadratic
-            );
-            console.log("PoolId: %s", poolId);
-        }
+        ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
+        (, address strategyProxy) = registryCommunity.createPool(
+            NATIVE,
+            getParams(
+                address(registryCommunity),
+                ProposalType(0),
+                PointSystem.Quadratic,
+                PointSystemConfig(0),
+                arbitrableConfig,
+                new address[](1),
+                address(0),
+                0
+            ),
+            metadata
+        );
+        CVStrategyV0_0 quadraticStrategy = CVStrategyV0_0(payable(strategyProxy));
         vm.stopPrank();
 
         vm.startPrank(address(councilSafe));
         {
-            _registryCommunity().addStrategy(address(strategy));
+            _registryCommunity().addStrategy(address(quadraticStrategy));
         }
         vm.stopPrank();
 
@@ -408,7 +619,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
             token.approve(address(registryCommunity), STAKE_WITH_FEES);
             _registryCommunity().stakeAndRegisterMember();
             //vm.expectRevert("error");
-            strategy.activatePoints(); //its call increasePower w 0
+            quadraticStrategy.activatePoints(); //its call increasePower w 0
 
             token.approve(address(registryCommunity), firstIncrease * DECIMALS);
 
@@ -417,7 +628,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
             assertEq(token.balanceOf(address(registryCommunity)), MINIMUM_STAKE + (firstIncrease * DECIMALS));
 
             assertEq(
-                registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
+                registryCommunity.getMemberPowerInStrategy(gardenMember, address(quadraticStrategy)),
                 (Math.sqrt((MINIMUM_STAKE + firstIncrease * DECIMALS) * DECIMALS)),
                 "power1"
             );
@@ -426,7 +637,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
 
             _registryCommunity().increasePower(secondIncrease * DECIMALS);
             assertEq(
-                registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
+                registryCommunity.getMemberPowerInStrategy(gardenMember, address(quadraticStrategy)),
                 Math.sqrt((MINIMUM_STAKE + firstIncrease * DECIMALS + secondIncrease * DECIMALS) * DECIMALS),
                 "power2"
             );
@@ -437,19 +648,26 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
 
     function test_increasePowerQuadraticFixedValues() public {
         vm.startPrank(pool_admin());
-        uint256 poolId = createPool(
-            allo(),
-            address(strategy),
-            address(_registryCommunity()),
-            registry(),
+        ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
+        ( /*uint256  _poolId */ , address strategyProxy) = registryCommunity.createPool(
             NATIVE,
-            StrategyStruct.ProposalType(0),
-            StrategyStruct.PointSystem.Quadratic
+            getParams(
+                address(registryCommunity),
+                ProposalType(0),
+                PointSystem.Quadratic,
+                PointSystemConfig(0),
+                arbitrableConfig,
+                new address[](1),
+                address(0),
+                0
+            ),
+            metadata
         );
-        console.log("PoolId: %s", poolId);
+        CVStrategyV0_0 quadraticStrategy = CVStrategyV0_0(payable(strategyProxy));
+
         vm.stopPrank();
         vm.startPrank(address(councilSafe));
-        _registryCommunity().addStrategy(address(strategy));
+        _registryCommunity().addStrategy(address(quadraticStrategy));
         vm.stopPrank();
         vm.startPrank(gardenMember);
         token.approve(address(registryCommunity), STAKE_WITH_FEES);
@@ -465,11 +683,13 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         assertEq(token.balanceOf(address(registryCommunity)), MINIMUM_STAKE + TO_INCREASE, "After increase");
         //Sqrt of 1100
 
-        strategy.activatePoints();
+        quadraticStrategy.activatePoints();
 
         uint256 sqrtValue = 33166247903553998491;
         assertEq(
-            registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)), sqrtValue, "power for 1100"
+            registryCommunity.getMemberPowerInStrategy(gardenMember, address(quadraticStrategy)),
+            sqrtValue,
+            "power for 1100"
         );
 
         token.approve(address(registryCommunity), 300 * DECIMALS);
@@ -477,21 +697,23 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         //sqrt of 1400
         sqrtValue = 37416573867739413855;
         assertEq(
-            registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)), sqrtValue, "power for 1200"
+            registryCommunity.getMemberPowerInStrategy(gardenMember, address(quadraticStrategy)),
+            sqrtValue,
+            "power for 1200"
         );
         vm.stopPrank();
     }
 
     // function test_activateAfterIncreasePowerQuadratic() public {
     //     vm.startPrank(pool_admin());
-    //     uint256 poolId = createPool(
+    //     uint256 /* _poolId */ = createPool(
     //         allo(),
     //         address(strategy),
     //         address(_registryCommunity()),
     //         registry(),
     //         NATIVE,
-    //         StrategyStruct.ProposalType(0),
-    //         StrategyStruct.PointSystem.Quadratic
+    //         ProposalType(0),
+    //         PointSystem.Quadratic
     //     );
     //     console.log("PoolId: %s", poolId);
     //     vm.stopPrank();
@@ -528,25 +750,32 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
 
     function test_activateAfterIncreasePowerQuadratic() public {
         vm.startPrank(pool_admin());
-        uint256 poolId = createPool(
-            allo(),
-            address(strategy),
-            address(_registryCommunity()),
-            registry(),
+        ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
+        ( /*uint256  _poolId */ , address strategyProxy) = registryCommunity.createPool(
             NATIVE,
-            StrategyStruct.ProposalType(0),
-            StrategyStruct.PointSystem.Quadratic
+            getParams(
+                address(registryCommunity),
+                ProposalType(0),
+                PointSystem.Quadratic,
+                PointSystemConfig(0),
+                arbitrableConfig,
+                new address[](1),
+                address(0),
+                0
+            ),
+            metadata
         );
+        CVStrategyV0_0 quadraticStrategy = CVStrategyV0_0(payable(strategyProxy));
         console.log("PoolId: %s", poolId);
         vm.stopPrank();
         vm.startPrank(address(councilSafe));
-        _registryCommunity().addStrategy(address(strategy));
+        _registryCommunity().addStrategy(address(quadraticStrategy));
         vm.stopPrank();
         vm.startPrank(gardenMember);
         token.approve(address(registryCommunity), STAKE_WITH_FEES);
         _registryCommunity().stakeAndRegisterMember();
         //vm.expectRevert("error");
-        strategy.activatePoints();
+        quadraticStrategy.activatePoints();
 
         // DECIMALS = 10 ** 6;
         uint256 TO_INCREASE = 1100 * DECIMALS - MINIMUM_STAKE;
@@ -558,7 +787,9 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         //Sqrt of 1100
         uint256 sqrtValue = 33166247903553998491;
         assertEq(
-            registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)), sqrtValue, "power for 1100"
+            registryCommunity.getMemberPowerInStrategy(gardenMember, address(quadraticStrategy)),
+            sqrtValue,
+            "power for 1100"
         );
 
         token.approve(address(registryCommunity), 300 * DECIMALS);
@@ -566,7 +797,9 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         //sqrt of 1400
         sqrtValue = 37416573867739413855;
         assertEq(
-            registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)), sqrtValue, "power for 1200"
+            registryCommunity.getMemberPowerInStrategy(gardenMember, address(quadraticStrategy)),
+            sqrtValue,
+            "power for 1200"
         );
         vm.stopPrank();
     }
@@ -574,18 +807,6 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
     function testFuzz_activateAfterIncreasePower(uint256 tokenAmount) public {
         //To avoid InsufficientBalance
         vm.assume(tokenAmount < 100000);
-        vm.startPrank(pool_admin());
-        uint256 poolId = createPool(
-            allo(),
-            address(strategy),
-            address(_registryCommunity()),
-            registry(),
-            NATIVE,
-            StrategyStruct.ProposalType(0),
-            StrategyStruct.PointSystem.Unlimited
-        );
-        console.log("PoolId: %s", poolId);
-        vm.stopPrank();
         vm.startPrank(address(councilSafe));
         _registryCommunity().addStrategy(address(strategy));
         vm.stopPrank();
@@ -609,16 +830,18 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
 
     function test_DecreasePower_after_increasePower_diff_orders() public {
         vm.startPrank(pool_admin());
-        uint256 poolId = createPool(
-            allo(),
-            address(strategy),
-            address(_registryCommunity()),
-            registry(),
-            address(token),
-            StrategyStruct.ProposalType(0),
-            StrategyStruct.PointSystem.Unlimited
-        );
-        console.log("PoolId: %s", poolId);
+        // ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
+        // uint256 poolId = createPool(
+        //     allo(),
+        //     address(strategy),
+        //     address(_registryCommunity()),
+        //     registry(),
+        //     address(token),
+        //     ProposalType(0),
+        //     PointSystem.Unlimited,
+        //     arbitrableConfig
+        // );
+        // console.log("PoolId: %s", poolId);
         vm.stopPrank();
 
         vm.startPrank(address(councilSafe));
@@ -655,22 +878,12 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
             registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
             registryCommunity.registerStakeAmount()
         );
-        // vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.DecreaseUnderMinimum.selector));
+        // vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.DecreaseUnderMinimum.selector));
         vm.stopPrank();
     }
 
     function test_DecreasePower_after_increasePower() public {
         vm.startPrank(pool_admin());
-        uint256 poolId = createPool(
-            allo(),
-            address(strategy),
-            address(_registryCommunity()),
-            registry(),
-            NATIVE,
-            StrategyStruct.ProposalType(0),
-            StrategyStruct.PointSystem.Unlimited
-        );
-        console.log("PoolId: %s", poolId);
         vm.stopPrank();
 
         vm.startPrank(address(councilSafe));
@@ -700,39 +913,288 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
             registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
             registryCommunity.registerStakeAmount()
         );
-        // vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.DecreaseUnderMinimum.selector));
+        // vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.DecreaseUnderMinimum.selector));
         vm.stopPrank();
     }
 
-    function test_decreasePowerQuadratic_FixedValues() public {
+    function test_only_allowlist_executeAction() public {
         vm.startPrank(pool_admin());
-        uint256 poolId = createPool(
-            allo(),
-            address(strategy),
-            address(_registryCommunity()),
-            registry(),
+        ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
+        address[] memory allowlist = new address[](2);
+        address otherGardenMember = makeAddr("otherCommunityGardenMember");
+        allowlist[0] = address(gardenMember);
+        allowlist[1] = address(otherGardenMember);
+        token.mint(otherGardenMember, mintAmount);
+
+        (, address strategyProxy) = registryCommunity.createPool(
             NATIVE,
-            StrategyStruct.ProposalType(0),
-            StrategyStruct.PointSystem.Quadratic
+            getParams(
+                address(registryCommunity),
+                ProposalType(0),
+                PointSystem.Unlimited,
+                PointSystemConfig(0),
+                arbitrableConfig,
+                allowlist,
+                address(0),
+                0
+            ),
+            metadata
         );
-        console.log("PoolId: %s", poolId);
+        CVStrategyV0_0 allowlistStrategy = CVStrategyV0_0(payable(strategyProxy));
         vm.stopPrank();
 
         vm.startPrank(address(councilSafe));
+        _registryCommunity().addStrategy(address(allowlistStrategy));
+        vm.stopPrank();
+
+        vm.startPrank(gardenMember);
+        token.approve(address(registryCommunity), STAKE_WITH_FEES);
+        _registryCommunity().stakeAndRegisterMember();
+        allowlistStrategy.activatePoints();
+        vm.stopPrank();
+
+        vm.startPrank(otherGardenMember);
+        token.approve(address(registryCommunity), STAKE_WITH_FEES);
+        _registryCommunity().stakeAndRegisterMember();
+        allowlistStrategy.activatePoints();
+        vm.stopPrank();
+    }
+
+    function test_add_to_allowlist() public {
+        vm.startPrank(pool_admin());
+        ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
+        address[] memory allowlist = new address[](2);
+        address otherGardenMember = makeAddr("otherCommunityGardenMember");
+        allowlist[0] = address(gardenMember);
+        allowlist[1] = address(otherGardenMember);
+        token.mint(otherGardenMember, mintAmount);
+
+        (, address strategyProxy) = registryCommunity.createPool(
+            NATIVE,
+            getParams(
+                address(registryCommunity),
+                ProposalType(0),
+                PointSystem.Unlimited,
+                PointSystemConfig(0),
+                arbitrableConfig,
+                allowlist,
+                address(0),
+                0
+            ),
+            metadata
+        );
+        CVStrategyV0_0 allowlistStrategy = CVStrategyV0_0(payable(strategyProxy));
+        vm.stopPrank();
+
+        vm.startPrank(address(councilSafe));
+        _registryCommunity().addStrategy(address(allowlistStrategy));
+        vm.stopPrank();
+
+        // gardenOwner isn't in allowlist, so should revert
+        vm.startPrank(gardenOwner);
+        token.approve(address(registryCommunity), STAKE_WITH_FEES);
+        _registryCommunity().stakeAndRegisterMember();
+        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.UserCannotExecuteAction.selector));
+        allowlistStrategy.activatePoints();
+        vm.stopPrank();
+
+        vm.startPrank(address(councilSafe));
+        address[] memory membersToAdd = new address[](1);
+        membersToAdd[0] = gardenOwner;
+        allowlistStrategy.addToAllowList(membersToAdd);
+        vm.stopPrank();
+        // Now should be able to activate points
+        vm.startPrank(gardenOwner);
+        allowlistStrategy.activatePoints();
+        vm.stopPrank();
+    }
+
+    function testRevert_allowlistTooBig() public {
+        vm.startPrank(pool_admin());
+        ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
+        // Max is 10000, should revert
+        uint256 limit = 10001;
+        address[] memory allowlist = new address[](limit);
+        for (uint256 i = 0; i < limit; i++) {
+            allowlist[i] = address(uint160(uint256(keccak256(abi.encodePacked(i)))));
+        }
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.AllowlistTooBig.selector, limit));
+        registryCommunity.createPool(
+            NATIVE,
+            getParams(
+                address(registryCommunity),
+                ProposalType(0),
+                PointSystem.Unlimited,
+                PointSystemConfig(0),
+                arbitrableConfig,
+                allowlist,
+                address(0),
+                0
+            ),
+            metadata
+        );
+    }
+
+    function test_createPool_loop_gas() public {
+        vm.startPrank(pool_admin());
+        ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
+        uint256 limit = 10000;
+        address[] memory allowlist = new address[](limit);
+        for (uint256 i = 0; i < limit; i++) {
+            allowlist[i] = address(uint160(uint256(keccak256(abi.encodePacked(i)))));
+        }
+        // CreatePool with one address = 1 246 096 gas used
+        // CreatePool with two addresses = 1 271 771
+        // Around 25000 gas per extra address
+        registryCommunity.createPool(
+            NATIVE,
+            getParams(
+                address(registryCommunity),
+                ProposalType(0),
+                PointSystem.Unlimited,
+                PointSystemConfig(0),
+                arbitrableConfig,
+                allowlist,
+                address(0),
+                0
+            ),
+            metadata
+        );
+        vm.stopPrank();
+    }
+
+    function test_add_to_allowlist_after_addressZero_initialized() public {
+        // The strategy created in setup has address(0) as initial member,
+        // in other words everyone
+        vm.startPrank(address(councilSafe));
         _registryCommunity().addStrategy(address(strategy));
+        address[] memory membersToAdd = new address[](1);
+        membersToAdd[0] = gardenMember;
+        strategy.addToAllowList(membersToAdd);
         vm.stopPrank();
 
         vm.startPrank(gardenMember);
         token.approve(address(registryCommunity), STAKE_WITH_FEES);
         _registryCommunity().stakeAndRegisterMember();
         strategy.activatePoints();
+        vm.stopPrank();
+
+        // gardenOwner isn't in allowlist, so should revert
+        vm.startPrank(gardenOwner);
+        token.approve(address(registryCommunity), STAKE_WITH_FEES);
+        _registryCommunity().stakeAndRegisterMember();
+        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.UserCannotExecuteAction.selector));
+        strategy.activatePoints();
+        vm.stopPrank();
+    }
+
+    function test_removeFromAllowlist() public {
+        vm.startPrank(address(councilSafe));
+        _registryCommunity().addStrategy(address(strategy));
+        address[] memory membersToAdd = new address[](1);
+        membersToAdd[0] = gardenMember;
+        strategy.addToAllowList(membersToAdd);
+        vm.stopPrank();
+
+        vm.startPrank(gardenMember);
+        token.approve(address(registryCommunity), STAKE_WITH_FEES);
+        _registryCommunity().stakeAndRegisterMember();
+        strategy.activatePoints();
+        vm.stopPrank();
+
+        vm.startPrank(address(councilSafe));
+        address[] memory membersToRemove = new address[](1);
+        membersToRemove[0] = gardenMember;
+        strategy.removeFromAllowList(membersToRemove);
+        vm.stopPrank();
+        // gardenMember isn't in allowlist, so should revert
+        vm.startPrank(gardenMember);
+        token.approve(address(registryCommunity), 350 * DECIMALS);
+        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.UserCannotExecuteAction.selector));
+        _registryCommunity().increasePower(350 * DECIMALS);
+        vm.stopPrank();
+    }
+
+    function testRevert_only_allowlist_executeAction() public {
+        vm.startPrank(pool_admin());
+        ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
+        address[] memory allowlist = new address[](2);
+        address otherGardenMember = makeAddr("otherCommunityGardenMember");
+        allowlist[0] = address(gardenMember);
+        allowlist[1] = address(otherGardenMember);
+        token.mint(otherGardenMember, mintAmount);
+
+        (, address strategyProxy) = registryCommunity.createPool(
+            NATIVE,
+            getParams(
+                address(registryCommunity),
+                ProposalType(0),
+                PointSystem.Unlimited,
+                PointSystemConfig(0),
+                arbitrableConfig,
+                allowlist,
+                address(0),
+                0
+            ),
+            metadata
+        );
+        CVStrategyV0_0 allowlistStrategy = CVStrategyV0_0(payable(strategyProxy));
+        vm.stopPrank();
+
+        vm.startPrank(address(councilSafe));
+        _registryCommunity().addStrategy(address(allowlistStrategy));
+        vm.stopPrank();
+        // This one shouldn't revert, because he's in allowlist
+        vm.startPrank(gardenMember);
+        token.approve(address(registryCommunity), STAKE_WITH_FEES);
+        _registryCommunity().stakeAndRegisterMember();
+        allowlistStrategy.activatePoints();
+        vm.stopPrank();
+
+        // gardenOwner isn't in allowlist, so should revert
+        vm.startPrank(gardenOwner);
+        token.approve(address(registryCommunity), STAKE_WITH_FEES);
+        _registryCommunity().stakeAndRegisterMember();
+        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.UserCannotExecuteAction.selector));
+        allowlistStrategy.activatePoints();
+        vm.stopPrank();
+    }
+
+    function test_decreasePowerQuadratic_FixedValues() public {
+        vm.startPrank(pool_admin());
+        ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
+        (, address strategyProxy) = registryCommunity.createPool(
+            NATIVE,
+            getParams(
+                address(registryCommunity),
+                ProposalType(0),
+                PointSystem.Quadratic,
+                PointSystemConfig(0),
+                arbitrableConfig,
+                new address[](1),
+                address(0),
+                0
+            ),
+            metadata
+        );
+        CVStrategyV0_0 quadraticStrategy = CVStrategyV0_0(payable(strategyProxy));
+        vm.stopPrank();
+
+        vm.startPrank(address(councilSafe));
+        _registryCommunity().addStrategy(address(quadraticStrategy));
+        vm.stopPrank();
+
+        vm.startPrank(gardenMember);
+        token.approve(address(registryCommunity), STAKE_WITH_FEES);
+        _registryCommunity().stakeAndRegisterMember();
+        quadraticStrategy.activatePoints();
 
         token.approve(address(registryCommunity), 350 * DECIMALS);
         _registryCommunity().increasePower(350 * DECIMALS);
 
         uint256 sqrtValue = 20 * DECIMALS;
         assertEq(
-            registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
+            registryCommunity.getMemberPowerInStrategy(gardenMember, address(quadraticStrategy)),
             sqrtValue,
             "powerrrrrrrrrrrr for 1100"
         );
@@ -740,14 +1202,14 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         _registryCommunity().decreasePower(300 * DECIMALS);
 
         sqrtValue = 10 * DECIMALS;
-        assertEq(registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)), sqrtValue);
+        assertEq(registryCommunity.getMemberPowerInStrategy(gardenMember, address(quadraticStrategy)), sqrtValue);
 
         _registryCommunity().decreasePower(36 * DECIMALS);
 
         sqrtValue = 8 * DECIMALS;
-        assertEq(registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)), sqrtValue);
+        assertEq(registryCommunity.getMemberPowerInStrategy(gardenMember, address(quadraticStrategy)), sqrtValue);
 
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.DecreaseUnderMinimum.selector));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.DecreaseUnderMinimum.selector));
         _registryCommunity().decreasePower(50 * DECIMALS);
         vm.stopPrank();
     }
@@ -763,16 +1225,6 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         //CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
 
         vm.startPrank(pool_admin());
-        uint256 poolId = createPool(
-            allo(),
-            address(strategy),
-            address(_registryCommunity()),
-            registry(),
-            NATIVE,
-            StrategyStruct.ProposalType(0),
-            StrategyStruct.PointSystem.Unlimited
-        );
-        console.log("PoolId: %s", poolId);
         vm.stopPrank();
         vm.startPrank(address(councilSafe));
         _registryCommunity().addStrategy(address(strategy));
@@ -805,7 +1257,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         _nonKickableCommunity().stakeAndRegisterMember();
         vm.stopPrank();
         vm.startPrank(address(councilSafe));
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.KickNotEnabled.selector));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.KickNotEnabled.selector));
         _nonKickableCommunity().kickMember(gardenMember, address(councilSafe));
         vm.stopPrank();
         stopMeasuringGas();
@@ -814,27 +1266,10 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
     function test_revert_activateMemberInStrategy() public {
         startMeasuringGas("Registering and kicking member");
 
-        //CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
-
-        vm.startPrank(pool_admin());
-        uint256 poolId = createPool(
-            allo(),
-            address(strategy),
-            address(_registryCommunity()),
-            registry(),
-            NATIVE,
-            StrategyStruct.ProposalType(0),
-            StrategyStruct.PointSystem.Unlimited
-        );
-        vm.stopPrank();
-        //Commented to test revert if strategy not enabled
-        // vm.startPrank(address(councilSafe));
-        // _registryCommunity().addStrategy(address(strategy));
-        // vm.stopPrank();
         vm.startPrank(gardenMember);
         token.approve(address(registryCommunity), STAKE_WITH_FEES);
         _registryCommunity().stakeAndRegisterMember();
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.StrategyDisabled.selector));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.StrategyDisabled.selector));
         strategy.activatePoints();
         vm.stopPrank();
     }
@@ -842,24 +1277,25 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
     function test_revert_addStrategy() public {
         startMeasuringGas("Registering and kicking member");
 
-        //CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
-
-        vm.startPrank(pool_admin());
-        uint256 poolId = createPool(
-            allo(),
-            address(strategy),
-            address(_registryCommunity()),
-            registry(),
-            NATIVE,
-            StrategyStruct.ProposalType(0),
-            StrategyStruct.PointSystem.Unlimited
-        );
-        vm.stopPrank();
         vm.startPrank(address(councilSafe));
         _registryCommunity().addStrategy(address(strategy));
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.StrategyExists.selector));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.StrategyExists.selector));
         _registryCommunity().addStrategy(address(strategy));
         vm.stopPrank();
+    }
+
+    function test_revert_initialize_zeroStake() public {
+        RegistryCommunityInitializeParamsV0_0 memory params;
+        params._allo = address(allo());
+        params._gardenToken = IERC20(address(token));
+        params._registerStakeAmount = 0;
+        params._communityFee = COMMUNITY_FEE_PERCENTAGE;
+        params._metadata = metadata;
+        params._feeReceiver = address(daoFeeReceiver);
+        params._councilSafe = payable(address(_councilSafe()));
+        params._isKickEnabled = true;
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.ValueCannotBeZero.selector));
+        registryCommunity = RegistryCommunityV0_0(registryFactory.createRegistry(params));
     }
 
     function test_revert_deactivateMemberInStrategyCaller() public {
@@ -871,7 +1307,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
 
         _registryCommunity().stakeAndRegisterMember();
 
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.SenderNotStrategy.selector));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.SenderNotStrategy.selector));
         _registryCommunity().deactivateMemberInStrategy(gardenMember, address(strategy));
 
         vm.stopPrank();
@@ -879,25 +1315,26 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         stopMeasuringGas();
     }
 
+    function test_revert_deactivateMember_alreadyDeactivated() public {
+        startMeasuringGas("Registering and kicking member");
+        vm.startPrank(gardenMember);
+        token.approve(address(registryCommunity), STAKE_WITH_FEES);
+        _registryCommunity().stakeAndRegisterMember();
+        vm.stopPrank();
+        vm.startPrank(address(strategy));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.UserAlreadyDeactivated.selector));
+        _registryCommunity().deactivateMemberInStrategy(gardenMember, address(strategy));
+        vm.stopPrank();
+        stopMeasuringGas();
+    }
+
     function test_revertIncreasePower() public {
         vm.startPrank(gardenMember);
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.UserNotInRegistry.selector));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.UserNotInRegistry.selector));
         _registryCommunity().increasePower(20 * DECIMALS);
     }
 
     function test_revertDecreasePower() public {
-        vm.startPrank(pool_admin());
-        uint256 poolId = createPool(
-            allo(),
-            address(strategy),
-            address(_registryCommunity()),
-            registry(),
-            NATIVE,
-            StrategyStruct.ProposalType(0),
-            StrategyStruct.PointSystem.Unlimited
-        );
-        console.log("PoolId: %s", poolId);
-        vm.stopPrank();
         vm.startPrank(address(councilSafe));
         _registryCommunity().addStrategy(address(strategy));
         vm.stopPrank();
@@ -913,7 +1350,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
             registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
             registryCommunity.getMemberStakedAmount(gardenMember)
         );
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.DecreaseUnderMinimum.selector));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.DecreaseUnderMinimum.selector));
         _registryCommunity().decreasePower(101 * DECIMALS);
 
         //Test if decreasing by 100 doesn't revert as it shouldn't
@@ -925,7 +1362,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
     function test_revertKickUnregisteredMember() public {
         startMeasuringGas("Registering and kicking member");
         vm.startPrank(address(councilSafe));
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.UserNotInRegistry.selector));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.UserNotInRegistry.selector));
         _registryCommunity().kickMember(gardenMember, address(councilSafe));
         vm.stopPrank();
         stopMeasuringGas();
@@ -938,7 +1375,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         _registryCommunity().stakeAndRegisterMember();
         vm.stopPrank();
         vm.startPrank(gardenOwner);
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.UserNotInCouncil.selector));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.UserNotInCouncil.selector, gardenOwner));
         _registryCommunity().kickMember(gardenMember, address(councilSafe));
         vm.stopPrank();
         stopMeasuringGas();
@@ -976,17 +1413,17 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
 
     function test_revertSetCouncilSafe() public {
         vm.startPrank(gardenMember);
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.UserNotInCouncil.selector));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.UserNotInCouncil.selector, gardenMember));
         _registryCommunity().setCouncilSafe(payable(newCouncilSafe));
         vm.stopPrank();
         vm.startPrank(address(councilSafe));
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.AddressCannotBeZero.selector));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.AddressCannotBeZero.selector));
         _registryCommunity().setCouncilSafe(payable(address(0)));
         _registryCommunity().setCouncilSafe(payable(newCouncilSafe));
         assertEq(address(_registryCommunity().pendingCouncilSafe()), address(newCouncilSafe));
         vm.stopPrank();
         vm.startPrank(gardenMember);
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.SenderNotNewOwner.selector));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.SenderNotNewOwner.selector));
         _registryCommunity().acceptCouncilSafe();
         vm.stopPrank();
     }
@@ -1014,7 +1451,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
     function test_revertUnregisterMember() public {
         startMeasuringGas("Testing kick member revert");
         vm.startPrank(gardenOwner);
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.UserNotInRegistry.selector));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.UserNotInRegistry.selector));
         _registryCommunity().unregisterMember();
         vm.stopPrank();
         stopMeasuringGas();
@@ -1023,12 +1460,12 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
     function test_revertSetCommunityFee() public {
         startMeasuringGas("Testing update protocol revert");
         vm.startPrank(gardenOwner);
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.UserNotInCouncil.selector));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.UserNotInCouncil.selector, gardenOwner));
         _registryCommunity().setCommunityFee(5);
         vm.stopPrank();
 
         vm.startPrank(address(councilSafe));
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.NewFeeGreaterThanMax.selector));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.NewFeeGreaterThanMax.selector));
         _registryCommunity().setCommunityFee(11 * PERCENTAGE_SCALE);
         _registryCommunity().setCommunityFee(10 * PERCENTAGE_SCALE);
         assertEq(_registryCommunity().communityFee(), 10 * PERCENTAGE_SCALE);
@@ -1038,7 +1475,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
     function test_revertSetBasisStakeAmount() public {
         startMeasuringGas("Testing setBasisStake revert");
         vm.startPrank(gardenOwner);
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.UserNotInCouncil.selector));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.UserNotInCouncil.selector, gardenOwner));
         _registryCommunity().setBasisStakedAmount(500);
         vm.stopPrank();
         stopMeasuringGas();
@@ -1050,19 +1487,6 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
     }
 
     function test_removeStrategyByPoolId() public {
-        vm.startPrank(pool_admin());
-        uint256 poolId = createPool(
-            allo(),
-            address(strategy),
-            address(_registryCommunity()),
-            registry(),
-            address(token),
-            StrategyStruct.ProposalType(0),
-            StrategyStruct.PointSystem.Unlimited
-        );
-        console.log("PoolId: %s", poolId);
-        vm.stopPrank();
-
         assertEq(_registryCommunity().enabledStrategies(address(strategy)), false);
 
         vm.startPrank(address(councilSafe));
@@ -1078,19 +1502,6 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
     }
 
     function test_addStrategyByPoolId() public {
-        vm.startPrank(pool_admin());
-        uint256 poolId = createPool(
-            allo(),
-            address(strategy),
-            address(_registryCommunity()),
-            registry(),
-            address(token),
-            StrategyStruct.ProposalType(0),
-            StrategyStruct.PointSystem.Unlimited
-        );
-        console.log("PoolId: %s", poolId);
-        vm.stopPrank();
-
         assertEq(_registryCommunity().enabledStrategies(address(strategy)), false);
 
         vm.startPrank(address(councilSafe));
@@ -1101,31 +1512,18 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
     }
 
     function test_Revert_removeStrategyByPoolId() public {
-        vm.startPrank(pool_admin());
-        uint256 poolId = createPool(
-            allo(),
-            address(strategy),
-            address(_registryCommunity()),
-            registry(),
-            address(token),
-            StrategyStruct.ProposalType(0),
-            StrategyStruct.PointSystem.Unlimited
-        );
-        console.log("PoolId: %s", poolId);
-        vm.stopPrank();
-
         assertEq(_registryCommunity().enabledStrategies(address(strategy)), false);
 
         vm.startPrank(address(councilSafe));
         _registryCommunity().addStrategyByPoolId(poolId);
         vm.stopPrank();
 
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.UserNotInCouncil.selector));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.UserNotInCouncil.selector, address(this)));
         _registryCommunity().removeStrategyByPoolId(poolId);
 
         vm.startPrank(address(councilSafe));
 
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.AddressCannotBeZero.selector));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.AddressCannotBeZero.selector));
         _registryCommunity().removeStrategyByPoolId(poolId + 1);
 
         vm.stopPrank();
@@ -1134,26 +1532,15 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
     }
 
     function test_Revert_addStrategyByPoolId() public {
-        vm.startPrank(pool_admin());
-        uint256 poolId = createPool(
-            allo(),
-            address(strategy),
-            address(_registryCommunity()),
-            registry(),
-            address(token),
-            StrategyStruct.ProposalType(0),
-            StrategyStruct.PointSystem.Unlimited
-        );
-        console.log("PoolId: %s", poolId);
-        vm.stopPrank();
-
         assertEq(_registryCommunity().enabledStrategies(address(strategy)), false);
 
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.UserNotInCouncil.selector));
+        vm.startPrank(gardenOwner);
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.UserNotInCouncil.selector, gardenOwner));
         _registryCommunity().addStrategyByPoolId(poolId);
+        vm.stopPrank();
 
         vm.startPrank(address(councilSafe));
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.AddressCannotBeZero.selector));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.AddressCannotBeZero.selector));
         _registryCommunity().addStrategyByPoolId(poolId + 1);
         vm.stopPrank();
 

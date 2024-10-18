@@ -1,22 +1,88 @@
 import * as dn from "dnum";
 import { formatUnits } from "viem";
 
-export const PRECISION_SCALE = BigInt(10 ** 4);
 export const INPUT_MIN_VALUE = 0.000000000001;
 export const MAX_RATIO_CONSTANT = 0.77645;
-export const PERCENTAGE_PRECISION = 10 ** 7;
-export const PERCENTAGE_PRECISION_DECIMALS = 7;
+export const CV_PERCENTAGE_SCALE = 10 ** 4;
+export const CV_PASSPORT_THRESHOLD_SCALE = 10 ** 4;
+export const CV_PERCENTAGE_SCALE_DECIMALS = 4;
+
+export const UI_PERCENTAGE_FORMAT = 10 ** 2; // 100% = 1
+export const UI_PERCENTAGE_FORMAT_DECIMALS = 2;
+
+export const SCALE_PRECISION = CV_PERCENTAGE_SCALE * UI_PERCENTAGE_FORMAT; // 1% = 10.000
+export const SCALE_PRECISION_DECIMALS =
+  CV_PERCENTAGE_SCALE_DECIMALS + UI_PERCENTAGE_FORMAT_DECIMALS; // 6 decimals
+
+export const CV_SCALE_PRECISION = 10 ** 7;
+export const CV_SCALE_PRECISION_DECIMALS = 7;
+export const ETH_DECIMALS = 18;
+
+export function convertSecondsToReadableTime(totalSeconds: number): {
+  value: number;
+  unit: "second" | "minute" | "hour" | "day";
+} {
+  const days = totalSeconds / (24 * 60 * 60);
+  const hours = totalSeconds / (60 * 60);
+  const minutes = totalSeconds / 60;
+
+  if (days >= 1) {
+    return { value: Number(days.toPrecision(2)), unit: "day" };
+  } else if (hours >= 1) {
+    return { value: Number(hours.toPrecision(2)), unit: "hour" };
+  } else if (minutes >= 1) {
+    return { value: Number(minutes.toPrecision(2)), unit: "minute" };
+  } else {
+    return { value: Number(totalSeconds.toPrecision(2)), unit: "second" };
+  }
+}
+
+export function parseToken(value: dn.Dnum | string, compact?: boolean) {
+  const str =
+    typeof value === "string" ? value : (
+      dn.format([BigInt(value[0]), Number(value[1])])
+    );
+
+  const charsLength = 3;
+  const prefixLength = 2; // "0."
+
+  if (!str) {
+    return "";
+  }
+  if (str.length < charsLength * 2 + prefixLength) {
+    return str;
+  }
+  if (str.slice(0, 2) === "0.") {
+    return (
+      str.slice(0, charsLength + prefixLength - 1) +
+      "…" +
+      str.slice(-charsLength)
+    );
+  }
+  if (typeof value === "string") {
+    return dn.format(dn.from(value), {
+      compact: compact,
+      digits: 2,
+    });
+  }
+
+  return dn.format(value, { compact: compact, digits: 2 });
+}
 
 function formatTokenAmount(
   value: string | number | bigint | undefined,
   decimals: number,
+  digits?: number,
 ) {
+  if (digits === undefined) {
+    digits = 2;
+  }
   if (!value) {
     return "0";
   }
-  const num = [BigInt(value), decimals] as const;
+  const num = [BigInt(Math.floor(Number(value))), decimals] as const;
 
-  return dn.format(num, { digits: 2 });
+  return dn.format(num, { digits: digits });
 }
 
 function calculateFees(
@@ -25,7 +91,7 @@ function calculateFees(
   tokenDecimals: number,
 ) {
   const dividend = BigInt(stakeAmount) * BigInt(fee || 0);
-  const divisor = BigInt(100) * PRECISION_SCALE;
+  const divisor = BigInt(100) * BigInt(SCALE_PRECISION);
 
   const result = dividend / divisor;
   const num = [result, tokenDecimals] as dn.Dnum;
@@ -101,7 +167,7 @@ function calculatePercentageDecimals(
     dnumValue1 = dn.from(value1);
     dnumValue2 = dn.from(value2);
   } catch (error) {
-    console.log(error);
+    console.error(error);
     return 0;
   }
 
@@ -116,12 +182,25 @@ function calculatePercentageDecimals(
     decimals,
   );
 
-  console.log(percentage);
-
   const formattedPercentage = dn.format(percentage, 2);
 
-  // console.log(formattedPercentage);
   return Number(formattedPercentage);
+}
+
+function calculateDecay(blockTime: number, convictionGrowth: number) {
+  const halfLifeInSeconds = convictionGrowth * 24 * 60 * 60;
+
+  const result =
+    Math.pow(10, 7) * Math.pow(1 / 2, blockTime / halfLifeInSeconds);
+
+  return Math.floor(result);
+}
+
+function calculateMaxRatioNum(
+  spendingLimit: number,
+  minimumConviction: number,
+) {
+  return spendingLimit / (1 - Math.sqrt(minimumConviction));
 }
 
 export {
@@ -132,4 +211,6 @@ export {
   calculatePercentageDecimals,
   calculatePercentageBigInt,
   calculatePercentage,
+  calculateDecay,
+  calculateMaxRatioNum,
 };

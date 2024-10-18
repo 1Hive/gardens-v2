@@ -1,5 +1,4 @@
 import * as dn from "dnum";
-import { formatTokenAmount } from "./numbers";
 
 function validateInput(input: any) {
   return Number.isInteger(Number(input));
@@ -68,3 +67,24 @@ export const calcCurrentConviction = (
   ).toFixed(2);
   return formattedCurrentConv;
 };
+
+export function getRemainingBlocksToPass(
+  threshold: number,
+  conviction: number,
+  amount: number,
+  alpha: number,
+) {
+  const a = alpha;
+  const y = threshold;
+  const y0 = conviction;
+  const x = amount;
+
+  const blocksToPass =
+    Math.log(((a - 1) * y + x) / ((a - 1) * y0 + x)) / Math.log(a);
+
+  if (blocksToPass < 0 || isNaN(blocksToPass)) {
+    return 0;
+  }
+
+  return blocksToPass;
+}

@@ -10,6 +10,8 @@ type CVStrategy @entity(immutable: false) {
   maxCVSupply: BigInt!
   totalEffectiveActivePoints: BigInt!
   isEnabled: Boolean!
+  token: String!
+  sybilScorer: PassportScorer
 }
 
 type CVStrategyConfig @entity(immutable: false) {
@@ -23,13 +25,27 @@ type CVStrategyConfig @entity(immutable: false) {
   proposalType: BigInt!
   pointSystem: BigInt!
   maxAmount: BigInt
+  allowlist: [String!]
+}
+
+type ArbitrableConfig @entity(immutable: false) {
+  id: ID!
+  version: BigInt!
+  strategy: CVStrategy!
+  arbitrator: String!
+  tribunalSafe: String!
+  challengerCollateralAmount: BigInt!
+  submitterCollateralAmount: BigInt!
+  defaultRuling: BigInt!
+  defaultRulingTimeout: BigInt!
+  allowlist: [String!]
 }
 
 type CVProposal @entity(immutable: false) {
   id: ID!
   proposalNumber: BigInt!
-  # proposalMeta: ProposalMeta!
-  metadata: String!
+  metadata: ProposalMetadata
+  metadataHash: String!
   version: BigInt
   strategy: CVStrategy!
   beneficiary: String!
@@ -47,6 +63,7 @@ type CVProposal @entity(immutable: false) {
   # agreementActionId: BigInt!
   createdAt: BigInt!
   updatedAt: BigInt!
+  arbitrableConfig: ArbitrableConfig!
 }
 
 # type ProposalMeta @entity(immutable: false) {
@@ -63,6 +80,7 @@ type RegistryFactory @entity(immutable: false) {
   registryCommunities: [RegistryCommunity!]
     @derivedFrom(field: "registryFactory")
 }
+
 type RegistryCommunity @entity(immutable: false) {
   id: ID!
   chainId: BigInt!
@@ -82,6 +100,7 @@ type RegistryCommunity @entity(immutable: false) {
   members: [MemberCommunity!] @derivedFrom(field: "registryCommunity")
   # members: [Member!] @derivedFrom(field: "registryCommunity")
   garden: TokenGarden!
+  isValid: Boolean!
 }
 
 type Member @entity(immutable: false) {
@@ -135,4 +154,70 @@ type Allo @entity(immutable: false) {
   id: ID!
   chainId: BigInt!
   tokenNative: String!
+}
+
+type PassportScorer @entity(immutable: false) {
+  id: ID!
+  strategies: [PassportStrategy!] @derivedFrom(field: "passportScorer")
+  users: [PassportUser!] @derivedFrom(field: "passportScorer")
+}
+
+type PassportStrategy @entity(immutable: false) {
+  id: ID!
+  passportScorer: PassportScorer!
+  strategy: CVStrategy!
+  threshold: BigInt!
+  councilSafe: String!
+  active: Boolean!
+}
+
+type PassportUser @entity(immutable: false) {
+  id: ID!
+  passportScorer: PassportScorer!
+  userAddress: String!
+  score: BigInt!
+  lastUpdated: BigInt!
+}
+
+type ProposalDispute @entity(immutable: false) {
+  id: ID!
+  createdAt: BigInt!
+  disputeId: BigInt!
+  proposal: CVProposal!
+  status: BigInt!
+  challenger: String!
+  context: String!
+  metadata: ProposalDisputeMetadata
+
+  # When ruled
+  rulingOutcome: BigInt
+  ruledAt: BigInt
+}
+
+type ProposalDisputeMetadata @entity(immutable: false) {
+  id: ID!
+  reason: String!
+}
+
+type ProposalMetadata @entity(immutable: false) {
+  id: ID!
+  title: String!
+  description: String!
+}
+
+type CollateralVault @entity(immutable: false) {
+  id: ID!
+  strategy: CVStrategy!
+  collaterals: [CollateralVaultDeposit!] @derivedFrom(field: "collateralVault")
+}
+
+type CollateralVaultDeposit @entity(immutable: false) {
+  id: ID!
+  collateralVault: CollateralVault!
+  amount: BigInt!
+  depositor: Bytes!
+  createdAt: BigInt!
+  proposalId: BigInt!
+  withdrawnAt: BigInt
+  withdrawnTo: Bytes
 }
