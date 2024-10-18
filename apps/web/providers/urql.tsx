@@ -18,7 +18,7 @@ let urqlRecord: Record<
 const isServer = typeof window === "undefined";
 
 //Subgraph URL
-const subgraphArbSepURL = process.env.NEXT_PUBLIC_SUBGRAPH_URL_ARB_SEP ?? "";
+const subgraphArbSepURL = getConfigByChain(421614)!.subgraphUrl;
 
 /**
  * Function to initialize urql client. can be used both on client and server
