@@ -166,7 +166,7 @@ export const chainConfigMap: {
     subgraphUrl: `${process.env.NEXT_PUBLIC_SUBGRAPH_URL_GNOSIS?.replace("/version/latest", "")}/${SUBGRAPH_PRODNET_VERSION}`,
     globalTribunal: "0x1B8C7f06F537711A7CAf6770051A43B4F3E69A7e",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
-    arbitrator: "0x4d858f327d63bbf693291b96f9e585cac64895a9",
+    arbitrator: "0x450967c1497ab95df8530a9a8eaae5e951171dee",
     passportScorer: "0xd7b72fcb6a4e2857685175f609d1498ff5392e46",
     isTestnet: false,
   },
