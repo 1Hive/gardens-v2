@@ -44,6 +44,7 @@ import { abiWithErrors } from "@/utils/abi";
 import { delayAsync } from "@/utils/delayAsync";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 import { convertSecondsToReadableTime } from "@/utils/numbers";
+import { shortenAddress } from "@/utils/text";
 
 type Props = {
   proposalData: Maybe<
@@ -310,7 +311,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
   const disableTribunalSafeBtnCondition: ConditionObject[] = [
     {
       condition: !isTribunalSafe,
-      message: "Connect with tribunal safe address",
+      message: `Connect with tribunal safe (${shortenAddress(arbitrationConfig.tribunalSafe)})`,
     },
   ];
 
@@ -323,8 +324,8 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
       {isDisputed ?
         <div className="w-full flex justify-end gap-4 flex-wrap">
           {(
-            DisputeStatus[lastDispute.status] === "waiting" &&
-            ((isTribunalMember ?? isTribunalSafe) || isTimeout)
+            DisputeStatus[+lastDispute.status] === "waiting" &&
+            (!!isTribunalMember || isTribunalSafe || isTimeout)
           ) ?
             <>
               <Button
@@ -373,7 +374,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
                     tooltipSide="tooltip-left"
                   >
                     <InfoWrapper
-                      className="[&>svg]:!text-error tooltip-left"
+                      className="[&>svg]:!text-danger-content tooltip-left"
                       tooltip={
                         "Reject if the proposal violates the rules outlined in the community covenant."
                       }
