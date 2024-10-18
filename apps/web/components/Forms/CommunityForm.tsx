@@ -1,24 +1,30 @@
 "use client";
+
 import React, { useState } from "react";
-import { useForm } from "react-hook-form";
-import { registryFactoryABI, safeABI } from "@/src/generated";
-import { Address, Chain, createPublicClient, http, parseUnits } from "viem";
-import { useContractWrite } from "wagmi";
-import { abiWithErrors } from "@/utils/abiWithErrors";
-import { Button } from "@/components";
-import { ipfsJsonUpload } from "@/utils/ipfsUtils";
-import { toast } from "react-toastify";
-import FormPreview, { FormRow } from "./FormPreview";
-import { FormInput } from "./FormInput";
-import { FormCheckBox } from "./FormCheckBox";
-import { FormSelect } from "./FormSelect";
-import { TokenGarden } from "#/subgraph/.graphclient";
-import { Option } from "./FormSelect";
+import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
 import { usePathname, useRouter } from "next/navigation";
-import { getChain } from "@/configs/chainServer";
-import { getChainIdFromPath } from "@/utils/path";
-import { PERCENTAGE_PRECISION_DECIMALS } from "@/utils/numbers";
-import { getContractsAddrByChain } from "@/constants/contracts";
+import { useForm } from "react-hook-form";
+import { Address, Chain, createPublicClient, http, parseUnits } from "viem";
+import { TokenGarden } from "#/subgraph/.graphclient";
+import { FormCheckBox } from "./FormCheckBox";
+import { FormInput } from "./FormInput";
+import { FormPreview, FormRow } from "./FormPreview";
+import { Button } from "@/components";
+import { getChain } from "@/configs/chains";
+import { QUERY_PARAMS } from "@/constants/query-params";
+import { usePubSubContext } from "@/contexts/pubsub.context";
+import { useChainFromPath } from "@/hooks/useChainFromPath";
+import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
+import { useDisableButtons } from "@/hooks/useDisableButtons";
+import { registryFactoryABI, safeABI } from "@/src/generated";
+import { abiWithErrors } from "@/utils/abi";
+import { getEventFromReceipt } from "@/utils/contracts";
+import { ipfsJsonUpload } from "@/utils/ipfsUtils";
+import {
+  CV_PERCENTAGE_SCALE,
+  CV_PERCENTAGE_SCALE_DECIMALS,
+} from "@/utils/numbers";
+import { ethAddressRegEx } from "@/utils/text";
 
 //protocol : 1 => means ipfs!, to do some checks later
 
@@ -38,45 +44,38 @@ type FormRowTypes = {
   parse?: (value: any) => string;
 };
 
-const ethereumAddressRegEx = /^(0x)?[0-9a-fA-F]{40}$/;
-const feeOptions: Option[] = [
-  { value: 0, label: "0%" },
-  { value: 0.01, label: "1%" },
-  { value: 0.02, label: "2%" },
-];
-
 export const CommunityForm = ({
-  chain,
+  chainId,
   tokenGarden,
   registryFactoryAddr,
-  alloContractAddr,
 }: {
-  chain: number;
-  tokenGarden: TokenGarden;
+  chainId: number;
+  tokenGarden: Pick<TokenGarden, "address" | "symbol" | "decimals">;
   registryFactoryAddr: Address;
-  alloContractAddr: Address;
 }) => {
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting, isSubmitted },
+    formState: { errors },
     getValues,
     setValue,
-    reset,
-    watch,
   } = useForm<FormInputs>();
 
-  const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** tokenGarden.decimals;
+  const { publish } = usePubSubContext();
+
   const [showPreview, setShowPreview] = useState<boolean>(false);
   const [previewData, setPreviewData] = useState<FormInputs>();
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+  const { isConnected, missmatchUrl, tooltipMessage } = useDisableButtons();
+
+  const chainFromPath = useChainFromPath()!;
 
   // const [file, setFile] = useState<File | null>(null);
 
   const publicClient = createPublicClient({
-    chain: getChain(getChainIdFromPath()) as Chain,
+    chain: chainFromPath as Chain,
     transport: http(),
   });
 
@@ -91,114 +90,98 @@ export const CommunityForm = ({
     },
     feeAmount: {
       label: "Community Fee Amount:",
-      parse: (value: number) => `${value * 100 ?? "0"} %`,
+      parse: (value: number) => `${value || "0"}%`,
     },
-    feeReceiver: { label: "Fee Receiver:" },
+    feeReceiver: {
+      label: "Fee Receiver:",
+      parse: (value: string) => value || "0x",
+    },
     councilSafe: { label: "Council Safe:" },
   };
 
-  // const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-  //   if (!e.target.files) return;
-  //   const selectedFile = e.target.files[0];
-
-  //   const ipfsUpload = ipfsFileUpload(selectedFile);
-
-  //   toast
-  //     .promise(ipfsUpload, {
-  //       pending: "Uploading image...",
-  //       success: "Successfully uploaded!",
-  //       error: "Try uploading banner image again",
-  //     })
-  //     .then((data) => {
-  //       console.log("https://ipfs.io/ipfs/" + data);
-  //       setFile(selectedFile);
-  //       setIpfsFileHash(data);
-  //     })
-  //     .catch((error: any) => {
-  //       console.error(error);
-  //     });
-  // };
-
-  const createCommunity = () => {
+  const createCommunity = async () => {
     setLoading(true);
     const json = {
       // image: getValues("image IPFS"), ???
       covenant: getValues("covenant"),
     };
 
-    const ipfsUpload = ipfsJsonUpload(json);
+    const ipfsHash = await ipfsJsonUpload(json);
+    if (ipfsHash) {
+      if (previewData === undefined) {
+        throw new Error("No preview data");
+      }
+      const gardenTokenAddress = tokenGarden.address;
+      const communityName = previewData?.title;
+      const stakeAmount = parseUnits(
+        previewData?.stakeAmount.toString() as string,
+        tokenGarden.decimals,
+      );
+      const communityFeeAmount = parseUnits(
+        previewData?.feeAmount.toString() as string,
+        CV_PERCENTAGE_SCALE_DECIMALS,
+      );
 
-    toast
-      .promise(ipfsUpload, {
-        pending: "Uploading data, wait a moment...",
-        success: "All ready!",
-        error: "Something went wrong",
-      })
-      .then((ipfsHash) => {
-        console.log("https://ipfs.io/ipfs/" + ipfsHash);
-        if (previewData === undefined) throw new Error("No preview data");
-        const argsArray = contractWriteParsedData(ipfsHash);
-        write?.({ args: [argsArray] });
-      })
-      .catch((error: any) => {
-        console.error(error);
-        setLoading(false);
+      const communityFeeReceiver =
+        previewData?.feeReceiver ||
+        "0x0000000000000000000000000000000000000000";
+      const councilSafeAddress = previewData?.councilSafe;
+      // arb safe 0xda7bdebd79833a5e0c027fab1b1b9b874ddcbd10
+      const isKickMemberEnabled = previewData?.isKickMemberEnabled;
+      const covenantIpfsHash = ipfsHash;
+
+      write?.({
+        args: [
+          {
+            _allo: chainFromPath.allo as Address,
+            _feeReceiver: communityFeeReceiver as Address,
+            _communityName: communityName,
+            _registerStakeAmount: stakeAmount,
+            _communityFee: communityFeeAmount,
+            _councilSafe: councilSafeAddress as Address,
+            _gardenToken: gardenTokenAddress as Address,
+            _isKickEnabled: isKickMemberEnabled,
+            _nonce: 0n,
+            _registryFactory: registryFactoryAddr,
+            covenantIpfsHash: covenantIpfsHash,
+            _metadata: { protocol: 1n, pointer: "" },
+          },
+        ],
       });
+    }
+    setLoading(false);
   };
 
-  const { write, error, isError, data } = useContractWrite({
+  const { write } = useContractWriteWithConfirmations({
     address: registryFactoryAddr,
     abi: abiWithErrors(registryFactoryABI),
     functionName: "createRegistry",
-    onSuccess: () => router.push(pathname.replace(`/create-community`, "")),
-    onError: (err) => {
-      console.log(err);
-      toast.error("Something went wrong creating Community");
+    contractName: "Registry Factory",
+    fallbackErrorMessage: "Error creating community, please report a bug.",
+    onConfirmations: async (receipt) => {
+      const newCommunityAddr = getEventFromReceipt(
+        receipt,
+        "RegistryFactory",
+        "CommunityCreated",
+      ).args._registryCommunity;
+      publish({
+        topic: "community",
+        type: "add",
+        function: "createRegistry",
+        containerId: tokenGarden.address,
+        id: newCommunityAddr, // new community address
+      });
+      if (pathname) {
+        router.push(
+          pathname?.replace(
+            "/create-community",
+            `?${QUERY_PARAMS.gardenPage.newCommunity}=${newCommunityAddr}`,
+          ),
+        );
+      }
     },
     onSettled: () => setLoading(false),
   });
-
-  const contractWriteParsedData = (ipfsHash: string) => {
-    const gardenTokenAddress = tokenGarden?.id;
-    const communityName = previewData?.title;
-    const stakeAmount = parseUnits(
-      previewData?.stakeAmount.toString() as string,
-      tokenGarden.decimals,
-    );
-    const communityFeeAmount = parseUnits(
-      previewData?.feeAmount.toString() as string,
-      PERCENTAGE_PRECISION_DECIMALS,
-    );
-    const communityFeeReceiver = previewData?.feeReceiver;
-    const councilSafeAddress = previewData?.councilSafe;
-    // arb safe 0xda7bdebd79833a5e0c027fab1b1b9b874ddcbd10
-    const metadata = [1n, "ipfsHash"];
-    const isKickMemberEnabled = previewData?.isKickMemberEnabled;
-    const covenantIpfsHash = ipfsHash;
-    const strategyTemplate = getContractsAddrByChain(chain)?.strategyTemplate;
-    if (!strategyTemplate) {
-      console.log("No strategy template found for chain", chain);
-      toast.error("No strategy template found for chain");
-    }
-    const args = [
-      alloContractAddr,
-      gardenTokenAddress,
-      stakeAmount,
-      communityFeeAmount,
-      0n,
-      registryFactoryAddr,
-      communityFeeReceiver,
-      metadata,
-      councilSafeAddress,
-      communityName,
-      isKickMemberEnabled,
-      covenantIpfsHash,
-      strategyTemplate,
-    ];
-    console.log(args);
-
-    return args;
-  };
 
   const handlePreview = (data: FormInputs) => {
     setPreviewData(data);
@@ -206,7 +189,9 @@ export const CommunityForm = ({
   };
 
   const formatFormRows = () => {
-    if (!previewData) return [];
+    if (!previewData) {
+      return [];
+    }
     let formattedRows: FormRow[] = [];
 
     Object.entries(previewData).forEach(([key, value]) => {
@@ -224,6 +209,9 @@ export const CommunityForm = ({
   };
 
   const addressIsSAFE = async (walletAddress: Address) => {
+    if (localStorage.getItem("bypassSafeCheck") === "true") {
+      return true;
+    }
     let isSafe = false;
     try {
       const data = await publicClient.readContract({
@@ -233,7 +221,7 @@ export const CommunityForm = ({
       });
       isSafe = !!data;
     } catch (error) {
-      console.log(
+      console.warn(
         walletAddress + " is not a valid Safe address in the network",
       );
     }
@@ -242,15 +230,13 @@ export const CommunityForm = ({
 
   return (
     <form onSubmit={handleSubmit(handlePreview)} className="w-full">
-      {showPreview ? (
+      {showPreview ?
         <FormPreview
-          title={previewData?.title || ""}
-          description={previewData?.covenant || ""}
+          title={previewData?.title ?? ""}
+          description={previewData?.covenant ?? ""}
           formRows={formatFormRows()}
-          previewTitle="Check details and covenant description"
         />
-      ) : (
-        <div className="flex flex-col gap-2 overflow-hidden p-1">
+      : <div className="flex flex-col gap-2 p-1">
           <div className="flex flex-col">
             <FormInput
               label="Community Name"
@@ -260,7 +246,7 @@ export const CommunityForm = ({
               registerKey="title"
               type="text"
               placeholder="1hive"
-            ></FormInput>
+            />
           </div>
           <div className="flex flex-col">
             <FormInput
@@ -273,37 +259,48 @@ export const CommunityForm = ({
               type="number"
               registerOptions={{
                 min: {
-                  value: INPUT_TOKEN_MIN_VALUE,
-                  message: `Amount must be greater than ${INPUT_TOKEN_MIN_VALUE}`,
+                  value: 0,
+                  message: "Amount must be greater than 0",
                 },
               }}
-              otherProps={{
-                step: INPUT_TOKEN_MIN_VALUE,
-                min: INPUT_TOKEN_MIN_VALUE,
-              }}
-            >
-              <span className="absolute right-4 top-4 text-black">
-                {tokenGarden.symbol}
-              </span>
-            </FormInput>
+              suffix={tokenGarden.symbol}
+              tooltip="Amount of tokens user must stake to join and participate in community governance. Refundable upon leaving the community."
+            />
           </div>
           <div className="flex flex-col">
-            <FormSelect
+            <FormInput
               label="Community fee %"
               register={register}
               errors={errors}
               registerKey="feeAmount"
-              options={feeOptions}
-            ></FormSelect>
+              type="number"
+              placeholder="0"
+              className="pr-14"
+              otherProps={{
+                step: 1 / CV_PERCENTAGE_SCALE,
+                min: 0,
+              }}
+              registerOptions={{
+                max: {
+                  value: 100,
+                  message: "Max amount cannot exceed 100%",
+                },
+                min: {
+                  value: 0,
+                  message: "Amount must be greater than 0",
+                },
+              }}
+              suffix="%"
+              tooltip="A percentage fee applied from the membership stake amount when joining a community."
+            />
           </div>
           <div className="flex flex-col">
             <FormInput
               label="Community fee Receiver address"
               register={register}
-              required
               registerOptions={{
                 pattern: {
-                  value: ethereumAddressRegEx,
+                  value: ethAddressRegEx,
                   message: "Invalid Eth Address",
                 },
               }}
@@ -311,7 +308,8 @@ export const CommunityForm = ({
               registerKey="feeReceiver"
               placeholder="0x.."
               type="text"
-            ></FormInput>
+              tooltip="Safe or Ethereum address that receives the fees paid by members."
+            />
           </div>
           <div className="flex flex-col">
             <FormInput
@@ -320,114 +318,86 @@ export const CommunityForm = ({
               required
               registerOptions={{
                 pattern: {
-                  value: ethereumAddressRegEx,
+                  value: ethAddressRegEx,
                   message: "Invalid Eth Address",
                 },
                 validate: async (value) =>
                   (await addressIsSAFE(value)) ||
-                  `Not a valid Safe address in ${getChain(chain)?.name} network`,
+                  `Not a valid Safe address in ${getChain(chainId)?.name} network`,
               }}
               errors={errors}
               registerKey="councilSafe"
               placeholder="0x.."
               type="text"
-            ></FormInput>
+              tooltip="The moderators of the community. Choose a Safe address that can create pools and manage settings in the community."
+            />
           </div>
 
           <div className="flex">
             <FormCheckBox
-              label="Admins can expel members"
+              label="council safe can remove members"
               register={register}
               errors={errors}
               registerKey="isKickMemberEnabled"
               type="checkbox"
-            ></FormCheckBox>
+              tooltip="If enabled, the council can remove members from the community. Removed members will receive their staked tokens back and can rejoin later."
+            />
           </div>
           <div className="flex flex-col">
             <FormInput
-              label="Covenant description"
+              label="Covenant"
               register={register}
               required
               errors={errors}
               registerKey="covenant"
-              type="textarea"
+              onChange={(e) => {
+                setValue("covenant", e.target.value);
+              }}
+              value={getValues("covenant")}
+              type="markdown"
               rows={7}
               placeholder="Covenant description..."
-            ></FormInput>
-          </div>
-
-          {/* Upload image */}
-          {/* <label htmlFor="cover-photo" className={labelClassname}>
-            Banner Image
-          </label>
-          <div className="mt-2  flex justify-center rounded-lg border border-dashed border-secondary px-6 py-10">
-            <div className="text-center">
-              {file ? (
-                <Image
-                  src={URL.createObjectURL(file)}
-                  alt="Project cover photo"
-                  width={100}
-                  height={100}
+            />
+            <div className="flex sm:items-center gap-4">
+              <a
+                href="https://www.notion.so/1hive-gardens/Covenant-the-community-constitution-103d6929d014801da379c5952d66d1a0"
+                target="_blank"
+                rel="noreferrer"
+                className="text-primary-content flex items-center gap-1 hover:opacity-90"
+              >
+                Tools for creating your Community&apos;s Covenant
+                <ArrowTopRightOnSquareIcon
+                  width={16}
+                  height={16}
+                  className="text-primary-content"
                 />
-              ) : (
-                <>
-                  <div className="mt-4 flex flex-col text-sm leading-6 text-gray-400 ">
-                    <PhotoIcon
-                      className="mx-auto h-12 w-12 text-secondary"
-                      aria-hidden="true"
-                    />
-                    <label
-                      htmlFor={"image"}
-                      className="relative cursor-pointer rounded-lg bg-surface font-semibold transition-colors duration-200 ease-in-out focus-within:outline-none focus-within:ring-2 focus-within:ring-indigo-200 focus-within:ring-offset-2 focus-within:ring-offset-gray-900 hover:text-primary"
-                    >
-                      <span className="text-secondary">Upload a file</span>
-                      <input
-                        id={"image"}
-                        name={"image"}
-                        type="file"
-                        className="sr-only"
-                        accept="image/*"
-                        onChange={(e) => setFile(e.target.files?[0])}
-                      />
-                    </label>
-
-                    <div className="mt-1 space-y-1">
-                      <p className="pl-1 text-black">or drag and drop</p>
-                      <p className="text-xs leading-5 text-black">
-                        PNG, JPG, GIF up to 10MB
-                      </p>
-                    </div>
-                  </div>
-                </>
-              )}
+              </a>
             </div>
-          </div> */}
+          </div>
         </div>
-      )}
+      }
       <div className="flex w-full items-center justify-center py-6">
-        {showPreview ? (
+        {showPreview ?
           <div className="flex items-center gap-10">
             <Button
-              type="button"
-              onClick={() => createCommunity()}
-              isLoading={loading}
-            >
-              Submit
-            </Button>
-            <Button
-              type="button"
               onClick={() => {
                 setShowPreview(false);
                 setLoading(false);
               }}
-              variant="fill"
+              btnStyle="outline"
             >
               Edit
             </Button>
+            <Button
+              onClick={() => createCommunity()}
+              isLoading={loading}
+              disabled={!isConnected || missmatchUrl}
+              tooltip={tooltipMessage}
+            >
+              Submit
+            </Button>
           </div>
-        ) : (
-          <Button type="submit">Preview</Button>
-        )}
+        : <Button type="submit">Preview</Button>}
       </div>
     </form>
   );

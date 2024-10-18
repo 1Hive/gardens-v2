@@ -19,11 +19,15 @@
       abis:
         - name: {{name}}
           file: ../contracts/out/{{name}}.sol/{{name}}.json
-        - name: RegistryCommunity
-          file: ../contracts/out/RegistryCommunity.sol/RegistryCommunity.json
+        - name: RegistryCommunityV0_0
+          file: ../contracts/out/RegistryCommunityV0_0.sol/RegistryCommunityV0_0.json
       eventHandlers:
         - event: CommunityCreated(address)
           handler: handleCommunityCreated
+        - event: CommunityValiditySet(address,bool)
+          handler: handleCommunityValiditySet
         - event: ProtocolFeeSet(address,uint256)
-          handler: handleProtocolFeeSet
+          handler: handleProtocolFeeSet  
+        - event: Initialized(uint8)
+          handler: handleRegistryInitialized  
       file: ./src/mappings/registry-factory.ts

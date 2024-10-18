@@ -1,25 +1,26 @@
 # Gardens v2
 
-> Gardens is a **coordination platform** 
+> Gardens is a **coordination platform**
 > that fosters **vibrant ecosystems of shared wealth**
-> by providing **healthy funding mechanisms to communities in web3** 
+> by providing **healthy funding mechanisms to communities in web3**
 
-As a modular governance mechanism, Gardens strategically mixes centralized and decentralized components to take advantage of the efficiency and security benefits of both when needed.
+As a modular governance mechdwaawdadwdwadawdawanism, Gardens strategically mixes centralized and decentralized components to take advantage of the efficiency and security benefits of both when needed.
+daawd
+Project and Ecosystem leaderdwadwadwas can use Gardens to:
 
-Project and Ecosystem leaders can use Gardens to:
-* Publish a Covenant to IPFS and Create a Community pinned to its values and purpose.
-* Appoint a Council Safe as admin for the Community and a Tribunal Safe to rule on disputes
-* Create funding pools and strategies to allocate funding and source collective decisions
+- Publish a Covenant to IPFS and Create a Community pinned to its values and purpose.
+- Appoint a Council Safe as admin for the Community and a Tribunal Safe to rule on disputes
+- Create funding pools and strategies to allocate funding and source collective decisions
 
 Community members and Public Goods builders can use Gardens to:
-* Support Communities by staking in their Covenant
-* Create proposals in funding pools and strategies they're eligible for
-* Take part in collective decision-making by voting on Proposals.
 
-For Communities building goods and services whose value subjective to its users (AKA "Public Goods"), Gardens offers a toolset capable of leveraging the _Wisdom of the Crowds_ and that resists value extraction by malicious, abusive, or apathetic parties. 
+- Support Communities by staking in their Covenant
+- Create proposals in funding pools and strategies they're eligible for
+- Take part in collective decision-making by voting on Proposals.
 
+For Communities building goods and services whose value subjective to its users (AKA "Public Goods"), Gardens offers a toolset capable of leveraging the _Wisdom of the Crowds_ and that resists value extraction by malicious, abusive, or apathetic parties.
 
-## Turborepo starter for web3 projects
+## Turborepo starter for wedadawawdwadb3 projects
 
 This turborepo uses [pnpm](https://pnpm.io) as a package manager. It includes the following packages/apps:
 
@@ -57,7 +58,7 @@ pnpm run build
 
 ### Develop
 
-To develop all apps and packages, run the following command:
+To develop all apps and packadawdwadawawdges, run the following command:
 
 ```
 cd my-turborepo
@@ -66,9 +67,9 @@ pnpm run dev
 
 ### Remote Caching
 
-Turborepo can use a technique known as [Remote Caching](https://turbo.build/repo/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
+Turborepo can use a technique known as [Remote Caching](https://turbo.build/repo/docs/core-concepts/remote-caching) to share cache artifacdwadawts across machines, enabling you to share build caches with your team and CI/CD pipelines.
 
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup), then enter the following commands:
+By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an accountddwaaaaaaaaaaawdawdw you can [create one](https://vercel.com/signup), then enter the following commands:
 
 ```
 cd my-turborepo
@@ -77,7 +78,7 @@ pnpm dlx turbo login
 
 This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
 
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your turborepo:
+Next, you can link yourdawdwdwa Turborepo to your Remote Cache by running the following command from the root of your turborepo:
 
 ```
 pnpm dlx turbo link
@@ -85,7 +86,7 @@ pnpm dlx turbo link
 
 ## Useful Links
 
-Learn more about the power of Turborepo:
+Learn more about the pdwadawdower of Turborepo:
 
 - [Pipelines](https://turbo.build/repo/docs/core-concepts/monorepos/running-tasks)
 - [Caching](https://turbo.build/repo/docs/core-concepts/caching)

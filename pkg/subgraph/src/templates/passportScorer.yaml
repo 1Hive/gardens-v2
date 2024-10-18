@@ -1,0 +1,36 @@
+- kind: ethereum/contract
+    name: {{name}}
+    network: {{network}}
+    context:
+      chainId: 
+        type: Int
+        data: {{chainId}}
+    source:
+      address: "{{address}}"
+      abi: {{name}}
+      startBlock: {{startBlock}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - {{name}}
+      abis:
+        - name: {{name}}
+          file: ../contracts/out/{{name}}.sol/{{name}}.json
+      eventHandlers:
+        - event: Initialized(uint8)
+          handler: handleInitialized
+        - event: UserScoreAdded(indexed address,uint256)
+          handler: handleUserScoreAdded
+        - event: UserRemoved(indexed address)
+          handler: handleUserRemoved
+        - event: StrategyAdded(indexed address,uint256,bool,address)
+          handler: handleStrategyAdded
+        - event: StrategyRemoved(indexed address)
+          handler: handleStrategyRemoved
+        - event: StrategyActivated(indexed address)
+          handler: handleStrategyActivated
+        - event: ThresholdModified(indexed address,uint256)
+          handler: handleThresholdModified
+      file: ./src/mappings/passport-scorer.ts

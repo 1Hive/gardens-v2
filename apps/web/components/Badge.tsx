@@ -1,54 +1,81 @@
-import { proposalStatus, proposalTypes } from "@/types";
 import React from "react";
+import {
+  CurrencyDollarIcon,
+  HandThumbUpIcon,
+} from "@heroicons/react/24/outline";
+import { PoolTypes, ProposalStatus } from "@/types";
 
-interface BadgeProps {
-  type: number;
-  classNames?: string;
-}
+type BadgeProps = {
+  type?: number;
+  status?: number;
+  label?: string;
+  className?: string;
+  icon?: React.ReactNode;
+  isCapitalize?: boolean;
+};
 
-interface StatusBadgeProps {
-  status: number;
-  classNames?: string;
-}
-
-// TODO!: add real styles, this is just a placeholder
-//variant for common badge
-const TYPE_STYLES = [
-  "bg-warning text-black",
-  "bg-primary text-black",
-  "bg-secondary text-white",
+// Styles for different pool badge types
+const POOL_TYPE_STYLES = [
+  "bg-secondary-soft text-secondary-content",
+  "bg-secondary-soft text-secondary-content",
 ];
 
-//variants for Status Badge
-const STATUS_STYLES = ["badge-error", "bg-success", "bg-warning"];
+// Styles for different proposal status badge
+const PROPOSAL_STATUS_STYLES = [
+  "bg-danger-soft text-danger-content",
+  "bg-primary-soft text-primary-content",
+  "bg-secondary-soft text-secondary-content",
+  "bg-danger-soft text-danger-content",
+  "bg-tertiary-soft text-tertiary-content",
+  "bg-danger-soft text-danger-content",
+  "bg-danger-soft text-danger-content",
+];
 
-const BASE_STYLES = "badge w-28 p-4 font-semibold";
-const BASE_STYLES_STATUS =
-  "badge text-white min-w-20 p-4 text-center tracking-widest";
+const BASE_STYLES =
+  "border-none rounded-full leading-5 py-2 px-4 text-base cursor-default";
 
-export function Badge({ type, classNames }: BadgeProps) {
+export function Badge({
+  type,
+  status,
+  label,
+  className,
+  icon,
+}: BadgeProps): JSX.Element {
+  const isStatusBadge = status !== undefined;
+  const ispoolTypeDefined = type !== undefined;
+
+  // Determine the appropriate styles based on whether it's a proposal status badge or a pool type badge
+  const styles =
+    isStatusBadge ? `${PROPOSAL_STATUS_STYLES[status] ?? "bg-secondary-soft"}`
+    : ispoolTypeDefined ?
+      `${POOL_TYPE_STYLES[type] ?? "bg-tertiary-soft text-tertiary-content"}`
+    : "bg-tertiary-soft text-tertiary-content";
+
+  // Determine the label content
+  const content =
+    isStatusBadge ? ProposalStatus[status]
+    : ispoolTypeDefined ? (PoolTypes[type] ?? label)
+    : label;
+
+  //For type => conditionally set the icon based on type === poolTypes[type]
+  const iconIncluded =
+    icon ??
+    (() => {
+      const iconMap: { [key: string]: React.ReactNode } = {
+        signaling: <HandThumbUpIcon className="h-6 w-6 text-inherit" />,
+        funding: <CurrencyDollarIcon className="h-6 w-6 text-inherit" />,
+      };
+      return type != null ? (iconMap[PoolTypes[type]] ?? null) : null;
+    })();
+
   return (
-    <>
-      <span
-        className={`${
-          TYPE_STYLES[type] ?? "bg-accent text-black"
-        } ${BASE_STYLES} ${classNames}`}
-      >
-        {proposalTypes[type] ?? "no type"}
-      </span>
-    </>
-  );
-}
-
-export function StatusBadge({ status, classNames }: StatusBadgeProps) {
-  return (
-    <>
-      <span
-        className={`${STATUS_STYLES[status] ?? "bg-primary"} 
-           ${BASE_STYLES_STATUS} ${classNames}`}
-      >
-        {proposalStatus[status] ?? "no status"}
-      </span>
-    </>
+    <div
+      className={`${BASE_STYLES} ${styles} ${className} flex items-center gap-2`}
+    >
+      {iconIncluded && (
+        <div className="h-6 w-6 text-inherit">{iconIncluded}</div>
+      )}
+      <h6 className="first-letter:uppercase">{content}</h6>
+    </div>
   );
 }

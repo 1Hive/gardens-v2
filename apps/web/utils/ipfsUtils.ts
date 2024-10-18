@@ -1,26 +1,47 @@
-type MetadataV1 = {
-  title: string;
-  description: string;
-};
+import { toast } from "react-toastify";
+import { NOTIFICATION_AUTO_CLOSE_DELAY } from "@/globals";
 
-export const ipfsJsonUpload = async (form: {}) => {
-  try {
-    const res = await fetch("/api/ipfs", {
-      method: "POST",
-      body: JSON.stringify(form),
-      headers: {
-        "content-type": "application/json",
-      },
-    });
+export const ipfsJsonUpload = async (
+  payload: string | object,
+  toastId?: string,
+) => {
+  const fetchPromise: Promise<string> = fetch("/api/ipfs", {
+    method: "POST",
+    body: typeof payload === "string" ? payload : JSON.stringify(payload),
+    headers: {
+      "content-type": "application/json",
+    },
+  }).then(async (res) => {
     const json = await res.json();
-    if (json?.IpfsHash) {
-      return Promise.resolve(json.IpfsHash);
-    } else {
-      return Promise.reject(json);
-    }
-  } catch (err) {
-    console.error(err);
-  }
+    console.info("Uploaded to: " + json.IpfsHash, { payload });
+    return json.IpfsHash;
+  });
+
+  return toast
+    .promise(fetchPromise, {
+      pending: {
+        toastId,
+        render: "Uploading data...",
+        type: "default",
+        closeOnClick: true,
+        isLoading: true,
+        style: {
+          width: "fit-content",
+          marginLeft: "auto",
+        },
+      },
+      error: {
+        toastId,
+        render: "Error uploading data, please report a bug.",
+        type: "error",
+        closeOnClick: true,
+        autoClose: NOTIFICATION_AUTO_CLOSE_DELAY,
+      },
+    })
+    .catch((error) => {
+      console.error("Error uploading data to IPFS", { payload, error });
+      return null;
+    });
 };
 
 export const ipfsFileUpload = async (selectedFile: File) => {
@@ -33,34 +54,38 @@ export const ipfsFileUpload = async (selectedFile: File) => {
     });
     const json = await res.json();
     if (json?.IpfsHash) {
-      return Promise.resolve(json.IpfsHash);
+      return await Promise.resolve(json.IpfsHash);
     } else {
-      return Promise.reject(json);
+      return await Promise.reject(json);
     }
   } catch (err) {
     console.error(err);
   }
 };
 
-export const getIpfsMetadata = async (ipfsHash: string) => {
-  let title = "No title found";
-  let description = "No description found";
-  try {
-    const rawProposalMetadata = await fetch(
-      `https://ipfs.io/ipfs/${ipfsHash}`,
-      {
-        method: "GET",
-        headers: {
-          "content-type": "application/json",
-        },
-      },
-    );
+export const fetchIpfs = async <TResult>(
+  ipfsHash: string,
+  isStringResult?: boolean,
+) => {
+  const ipfsEndpoint = `/api/ipfs/${ipfsHash}${isStringResult ? "?isText=true" : ""}`;
+  const ipfsResult = await fetch(ipfsEndpoint, {
+    method: "GET",
+    headers: {
+      "content-type": "application/json",
+    },
+  });
 
-    const proposalMetadata: MetadataV1 = await rawProposalMetadata.json();
-    if (title) title = proposalMetadata?.title;
-    if (description) description = proposalMetadata?.description;
-  } catch (error) {
-    console.log(error);
+  if (!ipfsResult.ok) {
+    console.error("Error fetching IPFS data", { ipfsEndpoint });
+    return null;
   }
-  return { title: title, description: description };
+
+  let result;
+  if (isStringResult) {
+    result = await ipfsResult.text();
+  } else {
+    result = await ipfsResult.json();
+  }
+
+  return result as TResult;
 };

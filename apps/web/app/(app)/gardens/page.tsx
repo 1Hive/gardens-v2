@@ -1,96 +1,114 @@
-import React from "react";
+"use client";
+
+import React, { useMemo } from "react";
 import Image from "next/image";
-import { clouds1, clouds2, gardenHeader } from "@/assets";
-import { GardenCard } from "@/components";
 import {
   getTokenGardensDocument,
   getTokenGardensQuery,
 } from "#/subgraph/.graphclient";
-import { initUrqlClient, queryByChain } from "@/providers/urql";
-import {
-  localhost,
-  arbitrumSepolia,
-  optimismSepolia,
-  sepolia,
-} from "viem/chains";
-import { getContractsAddrByChain, isProd } from "@/constants/contracts";
+import { clouds1, clouds2, groupFlowers } from "@/assets";
+import { GardenCard, InfoBox } from "@/components";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { useSubgraphQueryMultiChain } from "@/hooks/useSubgraphQueryMultiChain";
 
-export const dynamic = "force-dynamic";
+export default function Page() {
+  const { data: gardens, fetching } =
+    useSubgraphQueryMultiChain<getTokenGardensQuery>({
+      query: getTokenGardensDocument,
+      modifier: (data) =>
+        data.sort(
+          (a, b) =>
+            (a.tokenGardens.length ? a.tokenGardens[0].chainId : 0) -
+            (b.tokenGardens.length ? b.tokenGardens[0].chainId : 0),
+        ),
+      changeScope: [
+        {
+          topic: "garden",
+        },
+        {
+          topic: "community",
+        },
+      ],
+    });
 
-const { urqlClient } = initUrqlClient();
+  const tokenGardens = useMemo(
+    () =>
+      gardens
+        ?.flatMap((g) => g.tokenGardens)
+        .filter((x): x is NonNullable<typeof x> => !!x),
+    [gardens],
+  );
 
-export default async function Gardens() {
-  const chainsId = [
-    localhost.id,
-    arbitrumSepolia.id,
-    optimismSepolia.id,
-    sepolia.id,
-  ];
-  let gardens: getTokenGardensQuery | null = null;
-  gardens = {
-    tokenGardens: [],
-  };
-
-  try {
-    if (isProd) {
-      const r0 = await getTokenGardens(sepolia.id);
-      gardens?.tokenGardens.push(...r0.data.tokenGardens);
-    } else {
-      const promises = [];
-      for (let index = 0; index < chainsId.length; index++) {
-        const chainId = chainsId[index];
-        const subgraph = getContractsAddrByChain(chainId)?.subgraphUrl;
-        if (subgraph !== "") promises.push(await getTokenGardens(chainId));
-      }
-
-      const resArr = await Promise.all(promises);
-      resArr.forEach((res) => {
-        if (res?.data) gardens?.tokenGardens.push(...res?.data.tokenGardens);
-      });
+  const GardenList = useMemo(() => {
+    if (!tokenGardens) {
+      return <LoadingSpinner />;
     }
-  } catch (error) {
-    console.error("Error fetching token gardens:", error);
-  }
+    if (tokenGardens.length) {
+      return (
+        <>
+          {tokenGardens
+            .sort(
+              (a, b) =>
+                (a.communities?.length ?? 0) - (b.communities?.length ?? 0),
+            )
+            .map((garden) => (
+              <div key={garden.id}>
+                <GardenCard garden={garden} />
+              </div>
+            ))}
+        </>
+      );
+    } else {
+      return (
+        <>
+          <InfoBox infoBoxType="info">
+            <span />
+            Be the first to create your community 🌱 <br />
+            <a
+              target="_blank"
+              href="https://discord.gg/H8fNyAWSBy"
+              className="text-accent"
+              rel="noreferrer"
+            >
+              https://discord.gg/FjEVDqC6EP
+            </a>
+          </InfoBox>
+        </>
+      );
+    }
+  }, [fetching, tokenGardens?.length]);
 
   return (
-    <div className="flex flex-col items-center justify-center gap-8">
-      <header className="flex flex-col items-center gap-8">
-        <div className="flex items-center text-center">
-          <div className="relative flex-1">
-            <Image src={clouds1} alt="clouds" />
-          </div>
-          <div className="mx-10 flex flex-col items-center gap-5">
-            <div className="flex flex-col items-center">
-              <h1 className="max-w-xl text-center text-[#084D21]">
-                Explore and Join Gardens Ecosystems
-              </h1>
-              <p className="text-xl">
-                A place where you help shape digital economies
-              </p>
+    <>
+      <div className="flex flex-col items-center justify-center gap-8 relative">
+        <header className="flex flex-col items-center gap-8 2xl:mt-20">
+          <div className="flex items-center text-center">
+            <div className="relative flex-1">
+              <Image src={clouds1} alt="clouds" width={205} height={205} />
+            </div>
+            <div className="mx-10 flex flex-col items-center gap-5">
+              <div className="flex flex-col items-center">
+                <h1 className="max-w-xl text-center text-neutral-content">
+                  Welcome to Gardens
+                </h1>
+                <p className="text-xl text-primary-content text-center">
+                  A place where communities grow through collective
+                  decision-making
+                </p>
+              </div>
+            </div>
+            <div className="relative flex-1">
+              <Image src={clouds2} alt="clouds" width={205} height={205} />
             </div>
           </div>
-          <div className="relative flex-1">
-            <Image src={clouds2} alt="clouds" />
+        </header>
+        <section className="my-2 flex w-full max-w-2xl flex-col items-center justify-center gap-8 2xl:mt-10">
+          <div className="flex flex-wrap mx-4 sm:grid max-w-7xl grid-cols-[repeat(auto-fit,minmax(310px,1fr))] gap-6 md:grid-cols-[repeat(auto-fit,320px)] z-10">
+            {GardenList}
           </div>
-        </div>
-        <div className="relative"></div>
-      </header>
-      <section className="my-2 flex w-full max-w-2xl flex-col items-center justify-center gap-8">
-        <div className="grid max-w-7xl grid-cols-[repeat(auto-fit,minmax(310px,1fr))] gap-6 md:grid-cols-[repeat(auto-fit,minmax(320px,1fr))]">
-          {gardens ? (
-            gardens.tokenGardens.map((garden, id) => (
-              <GardenCard garden={garden} key={`${garden.id}-${id}`} />
-            ))
-          ) : (
-            <div>{"Can't find token gardens"}</div>
-          )}
-        </div>
-        <Image src={gardenHeader} alt="gardens" />
-      </section>
-    </div>
+        </section>
+        <Image src={groupFlowers} alt="flowers" />
+      </div>
+    </>
   );
-}
-
-async function getTokenGardens(chainId: string | number) {
-  return await queryByChain(urqlClient, chainId, getTokenGardensDocument, {});
 }

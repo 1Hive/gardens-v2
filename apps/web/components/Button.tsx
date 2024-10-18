@@ -1,6 +1,6 @@
 "use client";
+
 import React from "react";
-import cn from "classnames";
 import { Size } from "@/types";
 
 type ButtonProps = {
@@ -8,12 +8,20 @@ type ButtonProps = {
     | "button"
     | "submit"
     | "reset"
-    | (undefined & React.ButtonHTMLAttributes<HTMLButtonElement>["type"]);
-  variant?: keyof VariantStyles;
+    | React.ButtonHTMLAttributes<HTMLButtonElement>["type"];
+  btnStyle?: BtnStyle;
+  color?: Color;
   onClick?: React.DOMAttributes<HTMLButtonElement>["onClick"];
+  showToolTip?: boolean;
   className?: string;
   disabled?: boolean;
   tooltip?: string;
+  tooltipClassName?: string;
+  tooltipSide?:
+    | "tooltip-top"
+    | "tooltip-bottom"
+    | "tooltip-left"
+    | "tooltip-right";
   children: React.ReactNode;
   isLoading?: boolean;
   size?: Size;
@@ -21,62 +29,85 @@ type ButtonProps = {
   walletConnected?: boolean;
 };
 
-type Variant = "primary" | "outline" | "fill" | "error" | "link";
-type VariantStyles = Record<
-  Variant,
-  React.HTMLAttributes<HTMLButtonElement>["className"]
->;
+export type Color =
+  | "primary"
+  | "secondary"
+  | "tertiary"
+  | "danger"
+  | "disabled";
+export type BtnStyle = "filled" | "outline" | "link";
 
-// TODO: add real styles, this is just a placeholder
-const VARIANT_STYLES: VariantStyles = {
-  primary: "bg-primary text-black",
-  outline: "text-black bg-secondary",
-  fill: "bg-secondary text-white",
-  error: "bg-error text-white",
-  link: "border-primary bg-inherit text-primary disabled:text-black disabled:border-black",
+type BtnStyles = Record<BtnStyle, Record<Color, string>>;
+
+const btnStyles: BtnStyles = {
+  filled: {
+    primary:
+      "bg-primary-button text-neutral-inverted-content hover:bg-primary-hover-content",
+    secondary: "",
+    tertiary: "",
+    danger:
+      "bg-danger-button text-neutral-inverted-content hover:bg-danger-hover-content",
+    disabled: "bg-neutral-button text-neutral-inverted-content",
+  },
+  outline: {
+    primary:
+      "text-primary-content border border-primary-content hover:text-primary-hover-content hover:outline-primary-hover-content",
+    secondary:
+      "text-secondary-content border border-secondary-content hover:text-secondary-hover-content hover:outline-secondary-hover-content",
+    tertiary: "",
+    danger:
+      "text-danger-button border border-danger-button hover:text-danger-hover-content hover:outline-danger-hover-content",
+    disabled: "text-neutral-soft-content border border-neutral-soft-content",
+  },
+  link: {
+    primary: "text-primary-content",
+    secondary: "",
+    tertiary: "",
+    danger: "text-danger-button",
+    disabled: "text-neutral-soft",
+  },
 };
 
 export function Button({
   onClick,
-  className,
+  className: styles,
   disabled = false,
-  tooltip = "Connect wallet",
+  tooltip,
+  showToolTip = true,
+  tooltipClassName: tooltipStyles,
+  tooltipSide = "tooltip-top",
   children,
-  size,
-  variant,
+  btnStyle = "filled",
+  color = "primary",
   isLoading = false,
   icon,
   type = "button",
 }: ButtonProps) {
-  const buttonContent = isLoading ? (
-    <span className="loading loading-spinner"></span>
-  ) : (
-    children
-  );
-
   const buttonElement = (
     <button
       type={type}
-      className={`${VARIANT_STYLES[variant ?? "primary"]} ${cn({
-        "h-7 px-6": size === "sm",
-        "h-9": size === "md",
-        "h-14": size === "lg",
-      })} ${cn({
-        "border-2": type === "button",
-      })} 
-      disabled:scale-1 w-fit flex cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-black px-10 py-3 font-chakra font-bold transition-all ease-out hover:brightness-90 active:scale-95 disabled:scale-100 disabled:cursor-not-allowed disabled:bg-gray-300 ${className}`}
+      className={`${btnStyles[btnStyle][disabled ? "disabled" : color]}
+      flex relative cursor-pointer  justify-center rounded-lg px-6 py-4 transition-all ease-out disabled:cursor-not-allowed h-fit ${styles}`}
       onClick={onClick}
       disabled={disabled || isLoading}
     >
-      {icon && icon} {buttonContent}
+      <div
+        className={`${isLoading ? "invisible" : "visible"} flex gap-2 items-center`}
+      >
+        {icon && icon} {children}
+      </div>
+      <span
+        className={`loading loading-spinner absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 ${isLoading ? "block" : "hidden"}`}
+      />
     </button>
   );
 
-  return disabled ? (
-    <div className="tooltip" data-tip={tooltip}>
-      {buttonElement}
-    </div>
-  ) : (
-    buttonElement
-  );
+  return disabled || showToolTip ?
+      <div
+        className={`${tooltip ? "tooltip" : ""} ${tooltipSide} ${tooltipStyles}`}
+        data-tip={tooltip}
+      >
+        {buttonElement}
+      </div>
+    : buttonElement;
 }

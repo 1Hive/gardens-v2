@@ -1,8 +1,9 @@
 "use client";
+
 import React, { useEffect, useMemo, useState } from "react";
+import type { EChartsOption } from "echarts";
 import { ChartSetup } from "./ChartSetup";
 import { ChartWrapper } from "./ChartWrapper";
-import type { EChartsOption } from "echarts";
 
 export type Proposals = {
   name: string;
@@ -57,7 +58,7 @@ export const ProposalDistributionPointsChart = ({
     ],
   };
   return (
-    <ChartWrapper title="Proposals Support Distribution - %" size="md">
+    <ChartWrapper>
       <ChartSetup options={OPTION_TEST} />
     </ChartWrapper>
   );

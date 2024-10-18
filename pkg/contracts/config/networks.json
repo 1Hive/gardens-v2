@@ -3,21 +3,76 @@
     {
       "name": "arbsepolia",
       "chainId": 421614,
+      "testnet": true,
+      "no-safe": true,
       "ENVS": {
-        "SENDER": "0x2F9e113434aeBDd70bB99cB6505e1F726C578D6d",
-        "COUNCIL_SAFE": "0x0000000000000000000000000000000000000000",
+        "SENDER": "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD",
+        "COUNCIL_SAFE": "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD",
         "SAFE_PROXY_FACTORY": "0xC22834581EbC8527d974F8a1c97E1bEA4EF910BC",
         "TOKEN": "0xcc6c8B9f745dB2277f7aaC1Bc026d5C2Ea7bD88D",
         "ALLO_PROXY": "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
         "ALLO_IMPL": "0xB087535DB0df98fC4327136e897A5985E5Cfbd66",
         "REGISTRY": "0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3"
+      },
+      "PROXIES": {
+        "REGISTRY_FACTORY": "0x7a603877488db46c0f6b40c2c770becfd7a65593",
+        "REGISTRY_COMMUNITIES": [
+          "0x17a3d80b587202999243aca5e7938537d090d420",
+          "0x20731544b8c29c17c42a1cb1278371af5c08142f",
+          "0x4d434729b80c95b0454a77fc152464b2f196abf0",
+          "0x5a044599606c86e14e085f4bada529242d28e5e8",
+          "0x622255fc131da4294cabfb7f08cc3add78fd728f",
+          "0xc2b5443ccb8aa0b8f2b93b560beaee1b5bb964e5",
+          "0xf17e005599813f626ff6b4ff8189105b1306af94",
+          "0xf6d60f30eed6e3ec588242cff30d9c8f596370cb",
+          "0xffa2e39cce305c82ffa70f7da0333e5f172be5f6"
+        ],
+        "CV_STRATEGIES": [
+          "0x17769fb86708abf03d7083ea7dc6b01976a91c47",
+          "0x233105f07593424866adeaa27a4045dcb6301844",
+          "0x271c5834f61901623c00ca274dc0911131e3865d",
+          "0x2a309fc9b3d3031826fae08254c3eb3fb3e136a9",
+          "0x2b7e64cf97cb0ad9f074e941f29e99899cad6f00",
+          "0x2c3adb40206952738927b6648c14de835d3a87d9",
+          "0x39db23696c0ad7a4afc5db891154a426193d3046",
+          "0x45cbefe5f9f0df5f76c8bdd07003724ec100497f",
+          "0x5ba5c0d3908c12773adf3a8c2aa504339b537011",
+          "0x5d63ec43e1ac82d0bb4434f2d2202eec7bb05d69",
+          "0x6500599270e13fbed12c1de58904e0358937a66c",
+          "0x768a7ce48322a6360db94a4c3eae3e50babb032c",
+          "0x769e1039322c9516581849485f9780390c2fac9c",
+          "0x7932c33f0a0dd335aecbe83a3d88b2435543a0fb",
+          "0x7cebd57140c10e81fb283fb3dee28f98a6a1f3e7",
+          "0x84b9c9d4f40e3c05278b6f688c5c78c89c7c95a8",
+          "0x876e104878b6dfdda13d717b5c9aec91439bc45b",
+          "0xa999227ef53b685cd0a91ca2301e550e6373d03c",
+          "0xaf83df434a976e7e4620e44b474c40f6fa7dbe18",
+          "0xb4a340406311a6baf6d0ca84059ca69bb3b02a07",
+          "0xb9540d3e9dff4de30ae19a96c604d261d3919a21",
+          "0xbd7474ca99a439d2926526a0168e3e948d2987c6",
+          "0xbf647db7c6bbacaab6a1e956f97c1c4df5ca0d3e",
+          "0xc0410861dbae69dbe94ab2db56ef988625dcd322",
+          "0xc5ae99a250617a875abc9bbb485dfde746cf3ba9",
+          "0xd76cd68881ad9c95000ad0a8d2f332374e91d23b",
+          "0xd8e2fc7ddc06e67b039cfaf2e1255de55e0789a0",
+          "0xdc3a597e60297bf51627918019ba7252b844970c",
+          "0xdd02fe21984aef0d8d3fa46d545b2dece39749b4",
+          "0xe0eb96a8c31d95ccca8f7fa52ee38d0d42b4167b",
+          "0xe57e7f0707bdb9c826a7c6da352dfb2be1275c21",
+          "0xee81fb9c0a60dfc69a7922bc3472418dd46f7dd3",
+          "0xfbaecc060d6a9051eb13c824b9eaff825976d44f",
+          "0xfd71d94f892670d3085cfaf1d93d0e4eb0b8963b"
+        ],
+        "PASSPORT_SCORER": "0xff53a163e43eccc00d8fde7aca24aa9fa4da7356"
       }
     },
     {
       "name": "opsepolia",
       "chainId": 11155420,
+      "testnet": true,
+      "no-safe": true,
       "ENVS": {
-        "SENDER": "0x2F9e113434aeBDd70bB99cB6505e1F726C578D6d",
+        "SENDER": "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD",
         "COUNCIL_SAFE": "0x0000000000000000000000000000000000000000",
         "TOKEN": "0x0000000000000000000000000000000000000000",
         "ALLO_PROXY": "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
@@ -28,11 +83,123 @@
     {
       "name": "sepolia",
       "chainId": 11155111,
+      "testnet": true,
+      "no-safe": false,
       "ENVS": {
-        "SENDER": "0x2F9e113434aeBDd70bB99cB6505e1F726C578D6d",
+        "SENDER": "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD",
         "COUNCIL_SAFE": "0xc6Eaf449f79B081300F5317122B2Dff3f039ad0b",
         "SAFE_PROXY_FACTORY": "0xC22834581EbC8527d974F8a1c97E1bEA4EF910BC",
         "TOKEN": "0xb34d5a6186fe1aee35005886271f3b2ca2d17c20",
+        "ALLO_PROXY": "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
+        "ALLO_IMPL": "0xB087535DB0df98fC4327136e897A5985E5Cfbd66",
+        "REGISTRY": "0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3"
+      }
+    },
+    {
+      "name": "arbitrum",
+      "chainId": 42161,
+      "testnet": false,
+      "no-safe": false,
+      "ENVS": {
+        "SENDER": "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD",
+        "ALLO_PROXY": "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
+        "ALLO_IMPL": "0xB087535DB0df98fC4327136e897A5985E5Cfbd66",
+        "REGISTRY": "0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3"
+      },
+      "PROXIES": {
+        "REGISTRY_FACTORY": "0xc1c2e092b7dbc8413e1ac02e92c161b0bda783f6",
+        "REGISTRY_COMMUNITIES": [
+          "0x8281fd9c5f709a681813c49843a253a05d9b837c",
+          "0xc3ba42da1d9f6b09d4d1315ac04f873a5ba64d3c",
+          "0xf62a2e4ecf3bf73313b3bbbfb1563cb4433c8933"
+        ],
+        "CV_STRATEGIES": [
+          "0x7749aee50faeca5d7eed53bcbcf07db5aaf72e51",
+          "0xad3d78ed1b03f26238845612eeb3c5b2677fa359",
+          "0xb9739585e54374268c231f042d384bfa57e41c95",
+          "0xea03978db787d89572cb7a07b60ac65b98111143"
+        ],
+        "PASSPORT_SCORER": "0xa2d5900d53a548637dd61312d02b90f3ff1d6a5e"
+      }
+    },
+    {
+      "name": "optimism",
+      "chainId": 10,
+      "testnet": false,
+      "no-safe": false,
+      "ENVS": {
+        "SENDER": "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD",
+        "ALLO_PROXY": "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
+        "ALLO_IMPL": "0xB087535DB0df98fC4327136e897A5985E5Cfbd66",
+        "REGISTRY": "0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3"
+      },
+      "PROXIES": {
+        "REGISTRY_FACTORY": "0x1fac47cf25f1ca9f20ba366099d26b28401f5715",
+        "REGISTRY_COMMUNITIES": [
+          "0x2088bbe7e70acfaf643e834c96aa4c277be6653e",
+          "0x3da181b922a890ec30c41ebe764c49f28f890e77",
+          "0x888e2fbc7e7afe3a8f9b54030d0cb0eed896f955",
+          "0xcee4e641af10b05c17a657d038c2a0071e1ec051"
+        ],
+        "CV_STRATEGIES": [
+          "0x1c720bfa4a2535fb6675b859a717b4cba56fd97b",
+          "0x63e2b63072e131c0e5ad72205e03cbe6ca1484fa",
+          "0x8f80c90ef85254bd1c401804058bb68f2eb7cfab",
+          "0x94daa3f0e1380139e178f8cc523eea39395bcf78",
+          "0x964251300e577801ce3e21897c6a335505fedee5",
+          "0xaeecbc91e44541204d0c784e4ac3e8eca6a47cc8",
+          "0xd9cf1f7d077166236e260819257a567b1ca22c8c"
+        ],
+        "PASSPORT_SCORER": "0xc93830dd463516ed5f28f6cd4f837173b87ff389"
+      }
+    },
+    {
+      "name": "polygon",
+      "chainId": 137,
+      "testnet": false,
+      "no-safe": false,
+      "ENVS": {
+        "SENDER": "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD",
+        "ALLO_PROXY": "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
+        "ALLO_IMPL": "0xB087535DB0df98fC4327136e897A5985E5Cfbd66",
+        "REGISTRY": "0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3"
+      },
+      "PROXIES": {
+        "REGISTRY_FACTORY": "0x57a9835b204dbcc101dbf981625a3625e8043b9c",
+        "REGISTRY_COMMUNITIES": [
+          "0x9eee52873350c26d6c7fa23d048d22c4ab82db09"
+        ],
+        "CV_STRATEGIES": [],
+        "PASSPORT_SCORER": "0x1fac47cf25f1ca9f20ba366099d26b28401f5715"
+      }
+    },
+    {
+      "name": "gnosis",
+      "chainId": 100,
+      "testnet": false,
+      "no-safe": false,
+      "ENVS": {
+        "SENDER": "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD",
+        "ALLO_PROXY": "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
+        "ALLO_IMPL": "0xB087535DB0df98fC4327136e897A5985E5Cfbd66",
+        "REGISTRY": "0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3"
+      },
+      "PROXIES": {
+        "REGISTRY_FACTORY": "0x08df82f74d1f56f650e98da2dd4240f1a31711bc",
+        "REGISTRY_COMMUNITIES": [
+          "0xe2396fe2169ca026962971d3b2e373ba925b6257"
+        ],
+        "CV_STRATEGIES": [],
+        "PASSPORT_SCORER": "0xd7b72fcb6a4e2857685175f609d1498ff5392e46"
+      }
+    },
+    {
+      "name": "mainnet",
+      "chainId": 1,
+      "testnet": false,
+      "no-safe": false,
+      "ENVS": {
+        "SENDER": "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD",
         "ALLO_PROXY": "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
         "ALLO_IMPL": "0xB087535DB0df98fC4327136e897A5985E5Cfbd66",
         "REGISTRY": "0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3"

@@ -7,6 +7,8 @@
     "fork": "make fork",
     "_build": "forge build --sizes",
     "lint": "forge fmt",
-    "test": "forge test -vvv"
+    "test": "forge test -vvv",
+    "test:force": "forge test -vvv --force",
+    "format": "forge fmt"
   }
 }

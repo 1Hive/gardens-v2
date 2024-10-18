@@ -10,11 +10,17 @@
       entities:
         - CVStrategy
       abis:
-        - name: CVStrategy
-          file: ../contracts/out/CVStrategy.sol/CVStrategy.json
+        - name: CVStrategyV0_0
+          file: ../contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json
       eventHandlers:
-        - event: InitializedCV(uint256,(address,uint256,uint256,uint256))
+        - event: InitializedCV(uint256,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address,address[]))
           handler: handleInitialized
+        - event: ProposalDisputed(address,uint256,uint256,address,string,uint256)
+          handler: handleProposalDisputed
+        - event: ArbitrationConfigUpdated(address,(address,address,uint256,uint256,uint256,address))
+          handler: handleArbitrationConfigUpdated
+        - event: Ruling(indexed address,indexed uint256,uint256)
+          handler: handleDisputeRuled
         - event: ProposalCreated(uint256,uint256)
           handler: handleProposalCreated
         - event: SupportAdded(address,uint256,uint256,uint256)

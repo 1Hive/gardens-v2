@@ -1,12 +1,19 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity ^0.8.19;
 
 import "forge-std/console.sol";
 import {Allo} from "allo-v2-contracts/core/Allo.sol";
-import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
-import {CVStrategy, StrategyStruct} from "../src/CVStrategy.sol";
+import {
+    CVStrategyV0_0,
+    ProposalType,
+    PointSystem,
+    CreateProposal,
+    PointSystemConfig,
+    ArbitrableConfig,
+    CVStrategyInitializeParamsV0_1
+} from "../src/CVStrategy/CVStrategyV0_0.sol";
 import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
-import {IRegistry} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
+import {IRegistry, Metadata} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 
 import {Accounts} from "allo-v2-test/foundry/shared/Accounts.sol";
 
@@ -22,7 +29,7 @@ contract CVStrategyHelpers is Native, Accounts {
     uint256 internal constant TWO_128 = 2 ** 128;
     uint256 internal constant D = 10 ** 7;
 
-    // function poolProfile_id1(RegistryCommunity registryCommunity) public virtual returns (bytes32) {
+    // function poolProfile_id1(RegistryCommunityV0_0 registryCommunity) public virtual returns (bytes32) {
     function poolProfile_id1(IRegistry registry, address pool_admin, address[] memory pool_managers)
         public
         virtual
@@ -38,26 +45,34 @@ contract CVStrategyHelpers is Native, Accounts {
 
     function getParams(
         address registryCommunity,
-        StrategyStruct.ProposalType proposalType,
-        StrategyStruct.PointSystem pointSystem,
-        StrategyStruct.PointSystemConfig memory pointConfig
-    ) public pure returns (StrategyStruct.InitializeParams memory params) {
+        ProposalType proposalType,
+        PointSystem pointSystem,
+        PointSystemConfig memory pointConfig,
+        ArbitrableConfig memory arbitrableConfig,
+        address[] memory initialAllowlist,
+        address sybilScorer,
+        uint256 sybilScorerThreshold
+    ) public pure returns (CVStrategyInitializeParamsV0_1 memory params) {
         // IAllo allo = IAllo(ALLO_PROXY_ADDRESS);
-        params.decay = _etherToFloat(0.9999799 ether); // alpha = decay
-        // params.decay = _etherToFloat(0.9999 ether); // alpha = decay
-        params.maxRatio = _etherToFloat(0.2 ether); // beta = maxRatio
-        params.weight = _etherToFloat(0.001 ether); // RHO = p  = weight
-        // params.minThresholdStakePercentage = 0.2 ether; // 20%
+        params.cvParams.decay = _etherToFloat(0.9999799 ether); // alpha = decay
+        params.cvParams.maxRatio = _etherToFloat(0.2 ether); // beta = maxRatio
+        params.cvParams.weight = _etherToFloat(0.001 ether); // RHO = p  = weight
+        params.cvParams.minThresholdPoints = 0.2 ether; // 20%
         params.registryCommunity = registryCommunity;
         params.proposalType = proposalType;
         params.pointSystem = pointSystem;
+        params.sybilScorer = sybilScorer;
+        params.sybilScorerThreshold = sybilScorerThreshold;
 
         if (pointConfig.maxAmount == 0) {
-            // StrategyStruct.PointSystemConfig memory pointConfig;
+            // PointSystemConfig memory pointConfig;
             //Capped point system
             pointConfig.maxAmount = 200 * DECIMALS;
         }
         params.pointConfig = pointConfig;
+        params.arbitrableConfig = arbitrableConfig;
+        // params.initialAllowlist = new address[](1);
+        params.initialAllowlist = initialAllowlist;
     }
 
     function createPool(
@@ -66,13 +81,14 @@ contract CVStrategyHelpers is Native, Accounts {
         address registryCommunity,
         IRegistry registry,
         address token,
-        StrategyStruct.ProposalType proposalType,
-        StrategyStruct.PointSystem pointSystem,
-        StrategyStruct.PointSystemConfig memory pointConfig
+        ProposalType proposalType,
+        PointSystem pointSystem,
+        PointSystemConfig memory pointConfig,
+        ArbitrableConfig memory arbitrableConfig
     ) public returns (uint256 poolId) {
         // IAllo allo = IAllo(ALLO_PROXY_ADDRESS);
-        StrategyStruct.InitializeParams memory params =
-            getParams(registryCommunity, proposalType, pointSystem, pointConfig);
+        CVStrategyInitializeParamsV0_1 memory params =
+        getParams(registryCommunity, proposalType, pointSystem, pointConfig, arbitrableConfig, new address[](1), address(0), 0);
 
         address[] memory _pool_managers = new address[](2);
         _pool_managers[0] = address(this);
@@ -97,7 +113,7 @@ contract CVStrategyHelpers is Native, Accounts {
             _pool_managers
         );
 
-        assert(CVStrategy(payable(strategy)).proposalType() == proposalType);
+        assert(CVStrategyV0_0(payable(strategy)).proposalType() == proposalType);
     }
 
     function createPool(
@@ -106,8 +122,9 @@ contract CVStrategyHelpers is Native, Accounts {
         address registryCommunity,
         IRegistry registry,
         address token,
-        StrategyStruct.ProposalType proposalType,
-        StrategyStruct.PointSystem pointSystem
+        ProposalType proposalType,
+        PointSystem pointSystem,
+        ArbitrableConfig memory arbitrableConfig
     ) public returns (uint256 poolId) {
         return createPool(
             allo,
@@ -117,7 +134,8 @@ contract CVStrategyHelpers is Native, Accounts {
             token,
             proposalType,
             pointSystem,
-            StrategyStruct.PointSystemConfig(0)
+            PointSystemConfig(0),
+            arbitrableConfig
         );
     }
 
@@ -154,6 +172,11 @@ contract CVStrategyHelpers is Native, Accounts {
     {
         uint256 t = _timePassed;
         uint256 atTWO_128 = _pow((decay << 128) / D, t);
-        return (((atTWO_128 * _lastConv) + (_oldAmount * D * (TWO_128 - atTWO_128) / (D - decay))) + TWO_127) >> 128;
+        return (((atTWO_128 * _lastConv) + ((_oldAmount * D * (TWO_128 - atTWO_128)) / (D - decay))) + TWO_127) >> 128;
+    }
+
+    function getDecay(CVStrategyV0_0 strategy) public view returns (uint256) {
+        (,, uint256 decay,) = strategy.cvParams();
+        return decay;
     }
 }

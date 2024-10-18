@@ -1,106 +1,107 @@
 "use client";
-import React from "react";
-import { StatusBadge } from "./Badge";
-import { ActivatePoints } from "./ActivatePoints";
-import { Address, useAccount, useContractRead } from "wagmi";
-import { abiWithErrors2 } from "@/utils/abiWithErrors";
-import { registryCommunityABI } from "@/src/generated";
-import { CVStrategy } from "#/subgraph/.graphclient";
-import { DisplayNumber } from "./DisplayNumber";
-import { Dnum } from "dnum";
 
-type PoolGovernanceProps = {
+import React from "react";
+import { Dnum } from "dnum";
+import { Address, useAccount } from "wagmi";
+import {
+  CVStrategy,
+  CVStrategyConfig,
+  TokenGarden,
+} from "#/subgraph/.graphclient";
+import {
+  ActivatePoints,
+  Badge,
+  DisplayNumber,
+  CheckPassport,
+  InfoBox,
+} from "@/components/";
+
+export type PoolGovernanceProps = {
   memberPoolWeight: number;
   tokenDecimals: number;
-  strategy: CVStrategy;
+  strategy: Pick<CVStrategy, "id" | "sybilScorer" | "poolId"> & {
+    registryCommunity: { garden: Pick<TokenGarden, "symbol"> };
+    config: Pick<CVStrategyConfig, "pointSystem" | "allowlist">;
+  };
   communityAddress: Address;
-  memberTokensInCommunity: string;
+  memberTokensInCommunity: number;
+  isMemberCommunity: boolean;
+  memberActivatedStrategy: boolean;
 };
 
-export const PoolGovernance = ({
+export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
   memberPoolWeight,
   tokenDecimals,
   strategy,
   communityAddress,
   memberTokensInCommunity,
-}: PoolGovernanceProps) => {
-  const { address: connectedAccount } = useAccount();
+  isMemberCommunity,
+  memberActivatedStrategy,
+}) => {
+  const showPoolGovernanceData = isMemberCommunity && memberActivatedStrategy;
+  const poolSystem = strategy.config.pointSystem;
+  const { address } = useAccount();
 
-  const registryContractCallConfig = {
-    address: communityAddress,
-    abi: abiWithErrors2(registryCommunityABI),
+  const poolSystemDefinition: { [key: number]: string } = {
+    0: "This pool has a fixed voting system, meaning every member has the same governance weight, limited to their registration stake. Changing your stake in the community will not affect your governance weight in this pool.",
+
+    1: "This pool has a capped voting system, allowing your governance weight to increase with more tokens staked, but only up to a limit. If you are below the cap, you can stake more tokens to increase your governance weight in this pool.",
+
+    2: "This pool has an unlimited voting system, meaning your governance weight is equal to your tokens staked tokens in the community. Stake more tokens to increase your governance weight in this pool.",
+
+    3: "This pool has a quadratic voting system, meaning your governance weight is equal to the square root of your stake in the community. Stake more tokens to increase your governance weight in this pool.",
   };
 
-  const { data: isMemberActivated } = useContractRead({
-    ...registryContractCallConfig,
-    functionName: "memberActivatedInStrategies",
-    args: [connectedAccount as Address, strategy.id as Address],
-    watch: true,
-  });
-
-  const { data: isMember } = useContractRead({
-    ...registryContractCallConfig,
-    functionName: "isMember",
-    args: [connectedAccount as Address],
-    watch: true,
-  });
-
-  const showPoolGovernanceData =
-    isMember && isMemberActivated !== undefined && isMemberActivated;
   return (
-    <section className="border2 flex w-full flex-col rounded-xl bg-white px-12 py-8">
-      <h3 className="mb-6 font-semibold">Your Pool Governance</h3>
-      <div className="flex flex-col justify-between">
-        <div className="flex items-center justify-between">
-          <div className="flex flex-1 items-center space-x-10">
-            <div className="flex w-full max-w-xl flex-col items-center gap-2 font-semibold">
-              {showPoolGovernanceData ? (
-                <>
-                  <div className="flex w-full items-center gap-6">
-                    <h5 className="">Total staked in community:</h5>
-                    <DisplayNumber
-                      tokenSymbol={strategy.registryCommunity.garden.symbol}
-                      className="text-2xl"
-                      number={
-                        [BigInt(memberTokensInCommunity), tokenDecimals] as Dnum
-                      }
-                    />
-                    {/* <span className="px-2 text-lg">
-                        {strategy.registryCommunity.garden.symbol}
-                      </span> */}
-                  </div>
-                  <div className="flex w-full items-center gap-6">
-                    <h5 className="">Status:</h5>
-                    <div>
-                      <StatusBadge status={isMemberActivated ? 1 : 0} />
-                    </div>
-                  </div>
-                  <div className="flex w-full items-baseline gap-6">
-                    <h5 className="">Your governance weight:</h5>
-                    <p className="text-3xl text-info">
-                      {memberPoolWeight.toFixed(2)} %
-                      <span className="text-lg text-black"> of the pool</span>
-                    </p>
-                  </div>
-                </>
-              ) : (
-                <div className="flex w-full items-center gap-6">
-                  <h5 className="">Status:</h5>
-                  <div>
-                    <StatusBadge status={isMemberActivated ? 1 : 0} />
-                  </div>
+    <section className="section-layout flex flex-col gap-4">
+      <header className="flex justify-between flex-wrap">
+        <h2>Pool Governance</h2>
+        <div className="flex flex-col gap-2">
+          <CheckPassport
+            strategy={strategy}
+            enableCheck={!memberActivatedStrategy}
+          >
+            <ActivatePoints
+              strategy={strategy}
+              communityAddress={communityAddress}
+              isMemberActivated={memberActivatedStrategy}
+              isMember={isMemberCommunity}
+            />
+          </CheckPassport>
+        </div>
+      </header>
+      {address && (
+        <div className="flex flex-col justify-between items-start">
+          <div className="flex flex-1 gap-10 flex-wrap">
+            <div className="flex flex-col items-start gap-2">
+              <div className="flex items-center gap-6 flex-wrap">
+                <p className="subtitle2">Your stake in the community:</p>
+                <DisplayNumber
+                  tokenSymbol={strategy.registryCommunity.garden.symbol}
+                  className="subtitle2 text-primary-content"
+                  number={
+                    [BigInt(memberTokensInCommunity), tokenDecimals] as Dnum
+                  }
+                />
+                <Badge status={memberActivatedStrategy ? 1 : 0} />
+              </div>
+              {showPoolGovernanceData && (
+                <div className="flex items-start gap-6">
+                  <p className="subtitle2">Your voting weight:</p>
+                  <p className="subtitle2 text-primary-content">
+                    {memberPoolWeight.toFixed(2)} %
+                  </p>
                 </div>
               )}
             </div>
           </div>
-          <ActivatePoints
-            strategyAddress={strategy.id as Address}
-            communityAddress={communityAddress}
-            isMemberActivated={isMemberActivated as boolean | undefined}
-            isMember={isMember}
-          />
         </div>
-      </div>
+      )}
+      <InfoBox
+        content={poolSystemDefinition[poolSystem]}
+        infoBoxType="info"
+        className="flex-1 w-full"
+      />
     </section>
   );
 };

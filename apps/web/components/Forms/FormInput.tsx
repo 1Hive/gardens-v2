@@ -1,30 +1,32 @@
+/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 "use client";
-import { HTMLInputTypeAttribute } from "react";
-import {
-  FieldValues,
-  Path,
-  RegisterOptions,
-  UseFormRegister,
-} from "react-hook-form";
+
+import { ChangeEvent, HTMLInputTypeAttribute } from "react";
+import MarkdownEditor from "@uiw/react-markdown-editor";
+import { RegisterOptions, UseFormRegister } from "react-hook-form";
+import {} from "react-hook-form";
+import { InfoWrapper } from "../InfoWrapper";
 
 type Props = {
   label?: string;
   subLabel?: string | undefined;
-  type: HTMLInputTypeAttribute;
+  type: HTMLInputTypeAttribute | "markdown";
   registerKey?: string;
   placeholder?: string;
-  register?: any;
+  register?: UseFormRegister<any>;
   errors?: any;
   required?: boolean;
   registerOptions?: RegisterOptions;
-  children?: any;
   rows?: number;
   readOnly?: boolean;
+  disabled?: boolean;
   otherProps?: any;
   className?: string;
   value?: string | number;
   step?: number | string;
-  onChange?: (value: any) => void;
+  tooltip?: string;
+  onChange?: React.ChangeEventHandler<HTMLInputElement>;
+  suffix?: React.ReactNode;
 };
 
 export function FormInput({
@@ -33,66 +35,114 @@ export function FormInput({
   type,
   registerKey = "",
   placeholder = "",
-  register = () => ({}),
+  register,
   errors = false,
   required = false,
   registerOptions,
-  children,
   rows,
   readOnly,
+  disabled,
   otherProps,
   className,
   value = undefined,
   step,
+  tooltip,
   onChange,
+  suffix,
 }: Props) {
+  const registered = register?.(registerKey, {
+    required,
+    disabled,
+    ...registerOptions,
+  });
+
   const fixedInputClassname =
-    "border-gray-300 focus:border-gray-300 focus:outline-gray-300 cursor-not-allowed";
+    "!border-gray-300 focus:border-gray-300 focus:outline-gray-300 cursor-not-allowed bg-transparent";
+
   return (
     <div className="flex flex-col">
       {label && (
-        <label htmlFor={registerKey} className="my-2 text-lg text-black">
-          {label}
+        <label htmlFor={registerKey} className="label cursor-pointer w-fit">
+          {tooltip ?
+            <InfoWrapper tooltip={tooltip}>
+              {label}
+              {required && <span>*</span>}
+            </InfoWrapper>
+          : <>
+              {label}
+              {required && <span className="ml-1">*</span>}
+            </>
+          }
         </label>
       )}
-      {subLabel && <p className="text-xs mb-1">{subLabel}</p>}
-      <div className={`relative ${type !== "textarea" && "max-w-md"}`}>
-        {type !== "textarea" ? (
+      {subLabel && <p className="mb-1 text-xs">{subLabel}</p>}
+      <div
+        className={`relative ${type !== "textarea" && type !== "markdown" && "max-w-md"}`}
+      >
+        {type !== "textarea" && type !== "markdown" ?
           <input
+            {...registered}
             id={registerKey}
-            onChange={onChange}
-            value={value}
             type={type}
             placeholder={placeholder}
-            className={`${className} hide-input-arrows input input-bordered ${!!errors[registerKey] ? "input-error" : "input-info"} w-full ${readOnly && fixedInputClassname}`}
+            className={`hide-input-arrows input input-bordered ${
+              errors[registerKey] ? "input-error" : "input-info"
+            } w-full ${readOnly && fixedInputClassname} ${className}`}
             required={required}
-            readOnly={readOnly}
             step={step}
-            {...register(registerKey, {
-              required,
-              ...registerOptions,
-            })}
+            disabled={disabled || readOnly}
+            readOnly={readOnly || disabled}
+            // value={value}
+            onChange={onChange}
             {...otherProps}
           />
-        ) : (
+        : type === "textarea" ?
           <textarea
+            {...registered}
+            id={registerKey}
             placeholder={placeholder}
-            className={`${className} textarea textarea-info line-clamp-5 w-full ${!!errors[registerKey] ? "input-error" : "input-info"}`}
+            className={`${className} textarea textarea-info line-clamp-5 w-full overflow-auto h-24 ${
+              errors[registerKey] ? "input-error" : "input-info"
+            }`}
             required={required}
             rows={rows}
-            readOnly={readOnly}
-            id={registerKey}
-            {...register(registerKey, {
-              required,
-              ...registerOptions,
-            })}
+            disabled={disabled || readOnly}
+            readOnly={readOnly || disabled}
+            onChange={onChange}
+            value={value}
             {...otherProps}
           />
+        : <div data-color-mode="light">
+            <MarkdownEditor
+              {...registered}
+              className="textarea textarea-info p-0 ![--color-canvas-subtle:white] ![--color-neutral-muted:#cceeff44]"
+              id={registerKey}
+              style={{
+                resize: "vertical",
+                overflow: "auto",
+                minHeight: "200px",
+              }}
+              disabled={disabled || readOnly}
+              readOnly={readOnly || disabled}
+              required={required}
+              value={value}
+              onChange={(v) => {
+                const e = {
+                  target: { value: v },
+                } as ChangeEvent<HTMLInputElement>;
+                registered?.onChange(e);
+                onChange?.(e);
+              }}
+              {...otherProps}
+            />
+          </div>
+        }
+        {suffix && (
+          <span className="absolute right-4 top-4 text-black">{suffix}</span>
         )}
-        {children}
       </div>
       {errors && (
-        <p className="mt-2 text-sm text-red">
+        <p className="text-error mt-2 text-sm font-semibold ml-1">
           {errors[registerKey]?.message || ""}
         </p>
       )}

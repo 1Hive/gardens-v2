@@ -1,8 +1,7 @@
 import React from "react";
-import { ChartSetup } from "./ChartSetup";
-import { ChartWrapper } from "./ChartWrapper";
 import type { EChartsOption } from "echarts";
 import EChartsReact from "echarts-for-react";
+import { ChartWrapper } from "./ChartWrapper";
 
 //Total Amount of points staked in each proposal within all Stakers / Members
 
@@ -23,7 +22,6 @@ const truncateText = (text: string, maxWords: number): string => {
 export const ProposalTotalStakedChart = ({
   proposals,
 }: ProposalTotalStakedChartProps) => {
-
   const xAxisData = proposals.map((proposal) => truncateText(proposal.name, 2));
   const seriesData = proposals.map((proposal) => proposal.value);
   const OPTION_TEST: EChartsOption = {
@@ -57,7 +55,7 @@ export const ProposalTotalStakedChart = ({
     ],
   };
   return (
-    <ChartWrapper title="Proposals Total Support (tokens)" size="md">
+    <ChartWrapper>
       <EChartsReact option={OPTION_TEST} />
     </ChartWrapper>
   );
