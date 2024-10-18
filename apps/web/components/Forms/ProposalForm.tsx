@@ -14,6 +14,7 @@ import {
 import { FormInput } from "./FormInput";
 import { FormPreview, FormRow } from "./FormPreview";
 import { LoadingSpinner } from "../LoadingSpinner";
+import { FormAddressInput } from "./FormAddressInput";
 import { WalletBalance } from "../WalletBalance";
 import { Button, EthAddress } from "@/components";
 import { QUERY_PARAMS } from "@/constants/query-params";
@@ -26,8 +27,6 @@ import { abiWithErrors } from "@/utils/abi";
 import { getEventFromReceipt } from "@/utils/contracts";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 import { formatTokenAmount } from "@/utils/numbers";
-import { capitalize } from "@/utils/text";
-import { FormAddressInput } from "./FormAddressInput";
 
 //protocol : 1 => means ipfs!, to do some checks later
 type FormInputs = {
@@ -73,8 +72,6 @@ const abiParameters = [
     ],
   },
 ];
-
-const ethereumAddressRegEx = /^(0x)?[0-9a-fA-F]{40}$/;
 
 function formatNumber(num: string | number): string {
   if (num == 0) {
@@ -141,9 +138,7 @@ export const ProposalForm = ({
     },
     beneficiary: {
       label: "Beneficiary:",
-      parse: (value: string) => (
-        <EthAddress address={value as Address}></EthAddress>
-      ),
+      parse: (value: string) => <EthAddress address={value as Address} />,
     },
     proposalType: {
       label: "Proposal Type:",
