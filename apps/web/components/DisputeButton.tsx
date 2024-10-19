@@ -313,7 +313,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
   const disableTribunalSafeBtnCondition: ConditionObject[] = [
     {
       condition: !isTribunalSafe,
-      message: `Connect with tribunal safe (${shortenAddress(arbitrationConfig.tribunalSafe)})`,
+      message: `Connect with Tribunal safe`,
     },
   ];
 

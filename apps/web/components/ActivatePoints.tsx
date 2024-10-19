@@ -117,7 +117,7 @@ export function ActivatePoints({
       btnStyle={isMemberActivated ? "outline" : "filled"}
       color={isMemberActivated ? "danger" : "primary"}
       disabled={missmatchUrl || disableActiveBtn || !isAllowed}
-      tooltip={String(tooltipMessage)}
+      tooltip={tooltipMessage}
     >
       {isMemberActivated ? "Deactivate governance" : "Activate governance"}
     </Button>

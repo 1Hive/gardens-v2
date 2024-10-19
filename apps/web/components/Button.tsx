@@ -104,7 +104,7 @@ export function Button({
   return disabled || showToolTip ?
       <div
         className={`${tooltip ? "tooltip" : ""} ${tooltipSide} ${tooltipStyles}`}
-        data-tip={tooltip}
+        data-tip={tooltip ?? ""}
       >
         {buttonElement}
       </div>
