@@ -43,6 +43,7 @@ deploy:
 	--broadcast -vvvvv
 
 add-strategy-local: #make add-strategy S=0x1234 
+
 	-forge script script/AddStrategy.s.sol:AddStrategy \
 	--rpc-url $(RPC_URL_LOCALHOST) \
 	--sender 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266 \
@@ -94,6 +95,18 @@ add-strategy-ethsep-pool: #make add-strategy S=0x1234
 	--broadcast \
 	--legacy \
 	-vvvv
+
+# Optimism Sepolia
+deploy-testnet-multi-op: 
+	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
+	--rpc-url $(RPC_URL_OP_TESTNET) \
+	--account pkGarden \
+	--sig "run(string)" 'opsepolia' \
+	--ffi \
+	--etherscan-api-key $(ETHERSCAN_API_KEY) \
+	--broadcast \
+	--verify \
+	-vvv
 
 # Arbitrum Sepolia
 
@@ -243,18 +256,8 @@ deploy-new-collateral-vault-template-arbitrum-sepolia:
 	--verify \
 	-vvv
 
-# Optimism Sepolia
+upgrade-and-verify-arbsep: upgrade-testnet-multi-arb verify-testnet-multi-arb
 
-deploy-testnet-multi-op: 
-	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
-	--rpc-url $(RPC_URL_OP_TESTNET) \
-	--account pkGarden \
-	--sig "run(string)" 'opsepolia' \
-	--ffi \
-	--etherscan-api-key $(ETHERSCAN_API_KEY) \
-	--broadcast \
-	--verify \
-	-vvv
 
 # Arbitrum
 
@@ -312,6 +315,8 @@ verify-arbitrum:
 	--via-ir \
 	-vvv \
 	--slow
+
+upgrade-and-verify-arbitrum: upgrade-multi-arbitrum verify-arbitrum
 
 # Optimism
 
@@ -372,6 +377,8 @@ verify-optimism:
 	-vvv \
 	--slow
 
+upgrade-and-verify-optimism: upgrade-multi-optimism verify-optimism
+
 # Polygon
 
 deploy-new-collateral-vault-template-polygon: 
@@ -429,33 +436,7 @@ verify-polygon:
 	-vvv \
 	--slow
 
-# Mainnet
-
-deploy-multi-mainnet: 
-	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
-	--rpc-url $(RPC_URL_MAINNET) \
-	--sig "run(string)" 'mainnet' \
-	--account pkGarden \
-	--ffi \
-	--chain-id 1 \
-	--broadcast \
-	--legacy \
-	--via-ir \
-	-vvv
-
-verify-mainnet: 
-	-forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
-	--rpc-url $(RPC_URL_MAINNET) \
-	--sig "run(string)" 'mainnet' \
-	--account pkGarden \
-	--etherscan-api-key $(ETHERSCAN_API_KEY) \
-	--ffi \
-	--chain-id 1 \
-	--legacy \
-	--verify \
-	--via-ir \
-	-vvv \
-	--slow
+upgrade-and-verify-polygon: upgrade-multi-polygon verify-polygon
 
 # Gnosis
 
@@ -510,6 +491,36 @@ verify-gnosis:
 	--verifier-url https://gnosis.blockscout.com/api/ \
 	--ffi \
 	--chain-id 100 \
+	--legacy \
+	--verify \
+	--via-ir \
+	-vvv \
+	--slow
+
+upgrade-and-verify-gnosis: upgrade-multi-gnosis verify-gnosis
+
+# Mainnet
+
+deploy-multi-mainnet: 
+	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
+	--rpc-url $(RPC_URL_MAINNET) \
+	--sig "run(string)" 'mainnet' \
+	--account pkGarden \
+	--ffi \
+	--chain-id 1 \
+	--broadcast \
+	--legacy \
+	--via-ir \
+	-vvv
+
+verify-mainnet: 
+	-forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
+	--rpc-url $(RPC_URL_MAINNET) \
+	--sig "run(string)" 'mainnet' \
+	--account pkGarden \
+	--etherscan-api-key $(ETHERSCAN_API_KEY) \
+	--ffi \
+	--chain-id 1 \
 	--legacy \
 	--verify \
 	--via-ir \

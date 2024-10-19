@@ -208,7 +208,7 @@ export default function PoolHeader({
         sybilResistanceType ?
           sybilResistanceType === "gitcoinPassport" ? "Gitcoin Passport"
           : (sybilResistanceValue as Array<Address>)?.[0] === zeroAddress ?
-            undefined
+            "None"
           : "Allowlist"
         : "",
       info:
@@ -286,7 +286,7 @@ export default function PoolHeader({
   const disableCouncilSafeBtnCondition: ConditionObject[] = [
     {
       condition: !isCouncilSafe,
-      message: `Connect with council safe (${shortenAddress(strategy.registryCommunity.councilSafe ?? "")})`,
+      message: `Connect with Council safe`,
     },
   ];
 
