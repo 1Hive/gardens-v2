@@ -96,11 +96,6 @@ export function ProposalCard({
   const inputValue =
     inputData ? calculatePercentage(inputData.value, memberActivatedPoints) : 0;
 
-  const allocatedInProposal = calculatePercentage(
-    stakedFilter?.value,
-    memberActivatedPoints,
-  );
-
   const poolWeightAllocatedInProposal = (
     (inputValue * memberPoolWeight) /
     100
@@ -169,7 +164,7 @@ export function ProposalCard({
             </div>
             <div>
               <h4 className="sm:max-w-md lg:max-w-lg">
-                <Skeleton isLoading={!metadata} className="w-96 h-5">
+                <Skeleton isLoading={!metadata} className="sm:w-96 h-5">
                   <TooltipIfOverflow className="first-letter:uppercase">
                     {metadata?.title}
                   </TooltipIfOverflow>
@@ -207,8 +202,8 @@ export function ProposalCard({
           <div className="mt-4 w-full">
             {isAllocationView ?
               <div className=" flex w-full flex-wrap items-center justify-between gap-6">
-                <div className="flex items-center gap-8">
-                  <div>
+                <div className="flex items-center gap-8 flex-grow flex-wrap">
+                  <div className="flex-grow sm:max-w-[460px]">
                     <div
                       className={isProposalEnded ? "tooltip" : ""}
                       data-tip={
@@ -222,7 +217,7 @@ export function ProposalCard({
                         min={0}
                         max={memberActivatedPoints}
                         value={inputData?.value}
-                        className={`range range-md min-w-[460px] cursor-pointer bg-neutral-soft [--range-shdw:var(--color-green-500)] ${isProposalEnded ? "grayscale !cursor-not-allowed" : ""}`}
+                        className={`range range-md cursor-pointer bg-neutral-soft [--range-shdw:var(--color-green-500)] ${isProposalEnded ? "grayscale !cursor-not-allowed" : ""}`}
                         step={memberActivatedPoints / 100}
                         onChange={(e) =>
                           inputHandler(proposalData.id, Number(e.target.value))
@@ -250,8 +245,8 @@ export function ProposalCard({
                       &times;
                     </Button>
                   )}
-                  <div className="mb-2">
-                    {inputValue > 0 && (
+                  {inputValue > 0 && (
+                    <div className="mb-2">
                       <>
                         <div className="flex gap-10">
                           <div className="flex flex-col items-center justify-center">
@@ -261,15 +256,15 @@ export function ProposalCard({
                               </span>
                               /{memberPoolWeight}%{" "}
                               <span className="text-neutral-soft-content text-sm">
-                                ({allocatedInProposal}% of your total support)
+                                ({inputValue}% of your total support)
                               </span>
                             </p>
                             {/* <p className="text-primary-content">Support</p> */}
                           </div>
                         </div>
                       </>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
               </div>
             : <div className="w-full">

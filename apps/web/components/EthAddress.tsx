@@ -5,12 +5,15 @@ import { Addreth } from "addreth/no-wagmi";
 import { Address } from "viem";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
+import { shortenAddress as shortenAddressFn } from "@/utils/text";
 
 type EthAddressProps = {
   address?: Address;
   actions?: "all" | "copy" | "explorer" | "none";
   icon?: false | "ens" | "identicon" | ((address: Address) => string);
-  shortenAddress?: number | false;
+  shortenAddress?: boolean;
+  label?: string;
+  showPopup?: boolean;
 };
 
 //TODO: handle theme change by create a theme object and pass it to Addre
@@ -21,9 +24,13 @@ export const EthAddress = ({
   address,
   actions = "all",
   icon = "identicon",
-  shortenAddress = 4,
+  shortenAddress = true,
+  showPopup = true,
+  label,
 }: EthAddressProps) => {
+  const divParentRef = React.useRef<HTMLDivElement>(null);
   const chain = useChainFromPath();
+  // const topLayerNode = document.getElementById("dialog");
   // const theme: ThemeDeclaration = {
   //   textColor: "black",
   //   // secondaryColor: "black",
@@ -41,24 +48,33 @@ export const EthAddress = ({
   // };
 
   return address && chain?.id ?
-      <Addreth
-        // theme={theme}
-        theme={{
-          base: "simple-light",
-          textColor: "var(--color-green-500)",
-          badgeIconRadius: 12,
-          badgeHeight: 32,
-          fontSize: 16,
-        }}
-        shortenAddress={shortenAddress}
-        actions={actions}
-        icon={icon}
-        address={address as Address}
-        explorer={(addr: string) => ({
-          name: chain.name,
-          url: `${chain.explorer}/address/${addr}`,
-          accountUrl: `${chain.explorer}/address/${addr}`,
-        })}
-      />
+      <div ref={divParentRef}>
+        <Addreth
+          // theme={theme}
+          theme={{
+            base: "simple-light",
+            textColor: "var(--color-green-500)",
+            badgeIconRadius: 12,
+            badgeHeight: 32,
+            fontSize: 14,
+          }}
+          fontMono={"monospace"}
+          label={() => (
+            <>
+              {label ?? (shortenAddress ? shortenAddressFn(address) : address)}
+            </>
+          )}
+          // shortenAddress={shortenAddress}
+          actions={actions}
+          icon={icon}
+          address={address as Address}
+          popupNode={showPopup ? undefined : document.createElement("div")}
+          explorer={(addr: string) => ({
+            name: chain.name,
+            url: `${chain.explorer}/address/${addr}`,
+            accountUrl: `${chain.explorer}/address/${addr}`,
+          })}
+        />
+      </div>
     : <LoadingSpinner />;
 };

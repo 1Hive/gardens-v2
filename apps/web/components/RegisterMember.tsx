@@ -17,7 +17,6 @@ import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { useHandleAllowance } from "@/hooks/useHandleAllowance";
 import { useHandleRegistration } from "@/hooks/useHandleRegistration";
 import { registryCommunityABI } from "@/src/generated";
-import { abiWithErrors } from "@/utils/abi";
 import { useErrorDetails } from "@/utils/getErrorName";
 import { gte } from "@/utils/numbers";
 
@@ -55,7 +54,7 @@ export function RegisterMember({
   const registryContractCallConfig = useMemo(
     () => ({
       address: communityAddress as Address,
-      abi: abiWithErrors(registryCommunityABI),
+      abi: registryCommunityABI,
       contractName: "Registry Community",
     }),
     [communityAddress],

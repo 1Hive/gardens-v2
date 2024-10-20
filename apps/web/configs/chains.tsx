@@ -54,6 +54,7 @@ type ChainData = {
   passportScorer: Address;
   allo: Address;
   isTestnet: boolean;
+  safePrefix?: string;
 };
 
 const SUBGRAPH_TESTNET_VERSION = Subgraph.VERSION_TESTNET;
@@ -151,6 +152,7 @@ export const chainConfigMap: {
     arbitrator: "0xd58ff588177f02cc535a0e235a4c002a17e27202",
     passportScorer: "0xa2d5900d53a548637dd61312d02b90f3ff1d6a5e",
     isTestnet: false,
+    safePrefix: "arb",
   },
   10: {
     name: optimism.name,
@@ -169,6 +171,7 @@ export const chainConfigMap: {
     arbitrator: "0xb39dfa15f96055664179e8ecaa890f3fa26c21e9",
     passportScorer: "0xc93830dd463516ed5f28f6cd4f837173b87ff389",
     isTestnet: false,
+    safePrefix: "opt",
   },
   137: {
     name: polygon.name,
@@ -187,6 +190,7 @@ export const chainConfigMap: {
     arbitrator: "0x7842e2d0dda2e64727c251382e9b1ee70fa33b94",
     passportScorer: "0x1fac47cf25f1ca9f20ba366099d26b28401f5715",
     isTestnet: false,
+    safePrefix: "matic",
   },
   100: {
     name: gnosis.name,
@@ -202,9 +206,10 @@ export const chainConfigMap: {
     ),
     globalTribunal: "0x1B8C7f06F537711A7CAf6770051A43B4F3E69A7e",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
-    arbitrator: "0x4d858f327d63bbf693291b96f9e585cac64895a9",
+    arbitrator: "0x450967c1497ab95df8530a9a8eaae5e951171dee",
     passportScorer: "0xd7b72fcb6a4e2857685175f609d1498ff5392e46",
     isTestnet: false,
+    safePrefix: "gno",
   },
   // 1: {
   //   name: mainnet.name,

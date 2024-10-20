@@ -14,10 +14,10 @@ import { Button } from "./Button";
 import { Skeleton } from "./Skeleton";
 import { Modal } from "@/components";
 import { isProd } from "@/configs/isProd";
+import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { CV_PASSPORT_THRESHOLD_SCALE } from "@/utils/numbers";
-import { usePubSubContext } from "@/contexts/pubsub.context";
 
 type SubmitPassportResponse = {
   data: any;

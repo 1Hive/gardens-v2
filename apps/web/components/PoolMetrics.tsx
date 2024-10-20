@@ -14,7 +14,6 @@ import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithC
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useHandleAllowance } from "@/hooks/useHandleAllowance";
 import { alloABI } from "@/src/generated";
-import { abiWithErrors } from "@/utils/abi";
 import { getTxMessage } from "@/utils/transactionMessages";
 
 interface PoolMetricsProps {
@@ -49,7 +48,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     error: fundPoolError,
   } = useContractWriteWithConfirmations({
     address: alloInfo.id as Address,
-    abi: abiWithErrors(alloABI),
+    abi: alloABI,
     args: [BigInt(poolId), requestedAmount],
     functionName: "fundPool",
     contractName: "Allo",

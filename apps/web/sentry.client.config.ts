@@ -31,5 +31,9 @@ Sentry.init({
       colorScheme: "light",
       showBranding: false,
     }),
+    Sentry.extraErrorDataIntegration({
+      depth: 3,
+      captureErrorCause: true,
+    }),
   ],
 });

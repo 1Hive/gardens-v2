@@ -17,7 +17,6 @@ import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { registryFactoryABI, safeABI } from "@/src/generated";
-import { abiWithErrors } from "@/utils/abi";
 import { getEventFromReceipt } from "@/utils/contracts";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 import {
@@ -63,7 +62,6 @@ export const CommunityForm = ({
 
   const { publish } = usePubSubContext();
 
-  const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** tokenGarden.decimals;
   const [showPreview, setShowPreview] = useState<boolean>(false);
   const [previewData, setPreviewData] = useState<FormInputs>();
   const [loading, setLoading] = useState(false);
@@ -155,7 +153,7 @@ export const CommunityForm = ({
 
   const { write } = useContractWriteWithConfirmations({
     address: registryFactoryAddr,
-    abi: abiWithErrors(registryFactoryABI),
+    abi: registryFactoryABI,
     functionName: "createRegistry",
     contractName: "Registry Factory",
     fallbackErrorMessage: "Error creating community, please report a bug.",
@@ -217,7 +215,7 @@ export const CommunityForm = ({
     try {
       const data = await publicClient.readContract({
         address: walletAddress,
-        abi: abiWithErrors(safeABI),
+        abi: safeABI,
         functionName: "getOwners",
       });
       isSafe = !!data;
@@ -261,7 +259,7 @@ export const CommunityForm = ({
               registerOptions={{
                 min: {
                   value: 0,
-                  message: `Amount must be greater than 0`,
+                  message: "Amount must be greater than 0",
                 },
               }}
               suffix={tokenGarden.symbol}
