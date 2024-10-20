@@ -303,12 +303,12 @@ export default function PoolHeader({
       <header className="mb-2 flex flex-col">
         <div className="flex justify-between flex-wrap">
           <h2>
-            <Skeleton isLoading={!ipfsResult} className="!w-96 h-8">
+            <Skeleton isLoading={!ipfsResult} className="sm:!w-96 h-8">
               {ipfsResult?.title} #{poolId}
             </Skeleton>
           </h2>
           {(!!isCouncilMember || isCouncilSafe) && (
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <div className="flex flex-col gap-1 p-1 w-48">
                 <a
                   href={`https://app.safe.global/transactions/queue?safe=${safePrefix}:${strategy.registryCommunity.councilSafe}`}
