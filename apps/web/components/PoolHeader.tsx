@@ -364,7 +364,11 @@ export default function PoolHeader({
           )}
         </div>
         <div>
-          <EthAddress icon={false} address={strategy.id as Address} />
+          <EthAddress
+            icon={false}
+            address={strategy.id as Address}
+            label="Pool address"
+          />
         </div>
         <Modal
           title={`Edit ${ipfsResult?.title} #${poolId}`}
