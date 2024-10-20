@@ -366,19 +366,19 @@ export function Proposals({
       setAllocationView(false);
     },
     onError: (err) => {
-      // if (err.message.includes("NotEnoughPointsToSupport")) {
-      // Fixing by reseting totalVoterStakePct mapping (deactivate and reactivate points for this pool)
-      toastId.current = toast.loading(
-        <div className="flex flex-col">
-          <span>🚧 Stake reset needed.</span>
-          <span>
-            <b>Deactivating points </b> (<b>1</b>/3)
-          </span>
-        </div>,
-        { closeButton: true },
-      );
-      deactivatePointsWrite({ args: [] });
-      // }
+      if (err.message.includes("NotEnoughPointsToSupport")) {
+        // Fixing by reseting totalVoterStakePct mapping (deactivate and reactivate points for this pool)
+        toastId.current = toast.loading(
+          <div className="flex flex-col">
+            <span>🚧 Stake reset needed.</span>
+            <span>
+              <b>Deactivating points </b> (<b>1</b>/3)
+            </span>
+          </div>,
+          { closeButton: true },
+        );
+        deactivatePointsWrite({ args: [] });
+      }
     },
     onConfirmations: () => {
       publish({
