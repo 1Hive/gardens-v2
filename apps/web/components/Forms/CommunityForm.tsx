@@ -154,7 +154,7 @@ export const CommunityForm = ({
 
   const { write } = useContractWriteWithConfirmations({
     address: registryFactoryAddr,
-    abi: abiWithErrors(registryFactoryABI),
+    abi: registryFactoryABI,
     functionName: "createRegistry",
     contractName: "Registry Factory",
     fallbackErrorMessage: "Error creating community, please report a bug.",
@@ -216,7 +216,7 @@ export const CommunityForm = ({
     try {
       const data = await publicClient.readContract({
         address: walletAddress,
-        abi: abiWithErrors(safeABI),
+        abi: safeABI,
         functionName: "getOwners",
       });
       isSafe = !!data;

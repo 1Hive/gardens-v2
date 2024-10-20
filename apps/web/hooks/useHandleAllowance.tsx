@@ -29,7 +29,7 @@ export function useHandleAllowance(
   const { refetch: refetchAllowance } = useContractRead({
     chainId,
     address: tokenAddr,
-    abi: abiWithErrors(erc20ABI),
+    abi: erc20ABI,
     args: [accountAddr as Address, spenderAddr],
     functionName: "allowance",
     enabled: !!tokenAddr && accountAddr !== undefined,
@@ -41,7 +41,7 @@ export function useHandleAllowance(
     error: allowanceError,
   } = useContractWriteWithConfirmations({
     address: tokenAddr,
-    abi: abiWithErrors(erc20ABI),
+    abi: erc20ABI,
     args: [spenderAddr, amount],
     functionName: "approve",
     contractName: "ERC20",

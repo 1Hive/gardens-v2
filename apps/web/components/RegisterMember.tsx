@@ -55,7 +55,7 @@ export function RegisterMember({
   const registryContractCallConfig = useMemo(
     () => ({
       address: communityAddress as Address,
-      abi: abiWithErrors(registryCommunityABI),
+      abi: registryCommunityABI,
       contractName: "Registry Community",
     }),
     [communityAddress],

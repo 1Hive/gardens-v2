@@ -236,7 +236,7 @@ export default function PoolHeader({
   //hooks
   const { data: isCouncilMember } = useContractRead({
     address: strategy.registryCommunity.councilSafe as Address,
-    abi: abiWithErrors(safeABI),
+    abi: safeABI,
     functionName: "isOwner",
     chainId: Number(chainId),
     enabled: !!address,
@@ -248,7 +248,7 @@ export default function PoolHeader({
 
   const { write: addStrategyByPoolId } = useContractWriteWithConfirmations({
     address: communityAddr,
-    abi: abiWithErrors(registryCommunityABI),
+    abi: registryCommunityABI,
     contractName: "Registry Community",
     functionName: "addStrategyByPoolId",
     fallbackErrorMessage: "Error approving pool, please report a bug.",
@@ -266,7 +266,7 @@ export default function PoolHeader({
 
   const { write: removeStrategyByPoolId } = useContractWriteWithConfirmations({
     address: communityAddr,
-    abi: abiWithErrors(registryCommunityABI),
+    abi: registryCommunityABI,
     contractName: "Registry Community",
     functionName: "removeStrategyByPoolId",
     fallbackErrorMessage: "Error disabling pool, please report a bug.",

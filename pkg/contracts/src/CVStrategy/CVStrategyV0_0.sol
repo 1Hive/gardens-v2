@@ -750,6 +750,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
                 emit SupportAdded(_member, proposalId, 0, proposal.stakedAmount, proposal.convictionLast);
             }
         }
+        totalVoterStakePct[_member] = 0;
     }
 
     /**

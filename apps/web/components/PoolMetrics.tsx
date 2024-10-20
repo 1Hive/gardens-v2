@@ -49,7 +49,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     error: fundPoolError,
   } = useContractWriteWithConfirmations({
     address: alloInfo.id as Address,
-    abi: abiWithErrors(alloABI),
+    abi: alloABI,
     args: [BigInt(poolId), requestedAmount],
     functionName: "fundPool",
     contractName: "Allo",
