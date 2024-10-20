@@ -40,7 +40,7 @@ export function ActivatePoints({
       chainId,
       address: strategy.id as Address,
       contractName: "CV Strategy",
-      abi: abiWithErrors(cvStrategyABI),
+      abi: cvStrategyABI,
       functionName: "activatePoints",
       fallbackErrorMessage: "Error activating points, please report a bug.",
       onConfirmations: () => {
@@ -58,7 +58,7 @@ export function ActivatePoints({
   const { write: writeDeactivatePoints, error: errorDeactivatePoints } =
     useContractWriteWithConfirmations({
       address: strategy.id as Address,
-      abi: abiWithErrors(cvStrategyABI),
+      abi: cvStrategyABI,
       contractName: "CV Strategy",
       functionName: "deactivatePoints",
       fallbackErrorMessage: "Error deactivating points, please report a bug.",

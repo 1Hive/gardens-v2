@@ -143,7 +143,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
 
   const { data: isTribunalMember } = useContractRead({
     address: arbitrationConfig.tribunalSafe as Address,
-    abi: abiWithErrors(safeABI),
+    abi: safeABI,
     functionName: "isOwner",
     chainId: Number(chainId),
     enabled: !!address,

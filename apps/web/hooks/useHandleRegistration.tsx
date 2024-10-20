@@ -31,7 +31,7 @@ export function useHandleRegistration(
     error: registerMemberTxError,
   } = useContractWriteWithConfirmations({
     address: communityAddress,
-    abi: abiWithErrors(registryCommunityABI),
+    abi: registryCommunityABI,
     functionName: "stakeAndRegisterMember",
     contractName: "Registry Community",
     showNotification: false,

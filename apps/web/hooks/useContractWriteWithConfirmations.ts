@@ -1,7 +1,6 @@
 import { useEffect, useMemo } from "react";
-
 import { WriteContractMode } from "@wagmi/core";
-import { Abi, TransactionReceipt } from "viem";
+import { Abi, encodeFunctionData, TransactionReceipt } from "viem";
 import {
   useChainId,
   useContractWrite,
@@ -11,6 +10,8 @@ import {
 import { useChainIdFromPath } from "./useChainIdFromPath";
 import { useTransactionNotification } from "./useTransactionNotification";
 import { chainConfigMap } from "@/configs/chains";
+import { AbiFunction } from "abitype";
+import { abiWithErrors } from "@/utils/abi";
 
 export type ComputedStatus =
   | "loading"
@@ -47,12 +48,58 @@ export function useContractWriteWithConfirmations<
   let propsWithChainId = {
     ...props,
     chainId: props.chainId ?? chainIdFromPath ?? chainIdFromWallet,
+    abi: abiWithErrors(props.abi as Abi),
   };
 
-  function logError(error: any, variables: any, context: string) {
+  async function logError(error: any, variables: any, context: string) {
+    // if (
+    //   process.env.NEXT_PUBLIC_TENDERLY_ACCESS_KEY &&
+    //   process.env.NEXT_PUBLIC_TENDERLY_ACCOUNT_NAME &&
+    //   process.env.NEXT_PUBLIC_TENDERLY_PROJECT_NAME &&
+    //   chainIdFromPath &&
+    //   walletAddress
+    // ) {
+    //   const encodedData = encodeFunctionData({
+    //     abi: props.abi as [AbiFunction],
+    //     functionName: props.functionName as string,
+    //     args: variables.args,
+    //   });
+    //   const tenderly = new Tenderly({
+    //     accessKey: process.env.NEXT_PUBLIC_TENDERLY_ACCESS_KEY,
+    //     network: +chainIdFromPath,
+    //     accountName: process.env.NEXT_PUBLIC_TENDERLY_ACCOUNT_NAME,
+    //     projectName: process.env.NEXT_PUBLIC_TENDERLY_PROJECT_NAME,
+    //   });
+    //   const blockNumber = await publicClient.getBlockNumber();
+    //   try {
+    //     const simulationResult = await tenderly.simulator.simulateTransaction({
+    //       transaction: {
+    //         from: walletAddress as Address,
+    //         to: props.address as Address,
+    //         gas: 20000000,
+    //         gas_price: "19419609232",
+    //         value: 0,
+    //         input: encodedData,
+    //       },
+    //       blockNumber: Number(blockNumber),
+    //     });
+    //     console.log({ simulationResult });
+    //     const simulationLink = `https://dashboard.tenderly.co/${tenderly.configuration.accountName}/${tenderly.configuration.projectName}/simulator/${simulationResult}`;
+    //     console.log({ simulationResult, simulationLink });
+    //   } catch (error) {
+    //     console.error("Error. Failed to simulate transaction: ", error);
+    //   }
+    // }
+    const encodedData = encodeFunctionData({
+      abi: props.abi as [AbiFunction],
+      functionName: props.functionName as string,
+      args: variables.args,
+    });
+    const rawData = encodedData;
+
     console.error(
       `Error with transaction [${props.contractName} -> ${props.functionName}]`,
-      { error, variables, context },
+      { error, variables, context, rawData, contract: props.address },
     );
   }
 

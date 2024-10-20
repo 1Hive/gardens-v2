@@ -121,7 +121,7 @@ export default function Page({
     isError: isErrorDistribute,
   } = useContractWriteWithConfirmations({
     address: data?.allos[0]?.id as Address,
-    abi: abiWithErrors(alloABI),
+    abi: alloABI,
     functionName: "distribute",
     contractName: "Allo",
     fallbackErrorMessage: "Error executing proposal, please report a bug.",

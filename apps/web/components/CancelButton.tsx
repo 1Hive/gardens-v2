@@ -29,7 +29,7 @@ function CancelButton({ proposalData }: Props) {
 
   const { write: writeCancel, isLoading } = useContractWriteWithConfirmations({
     address: strategy.id as Address,
-    abi: abiWithErrors(cvStrategyABI),
+    abi: cvStrategyABI,
     functionName: "cancelProposal",
     contractName: "CV Strategy",
     fallbackErrorMessage: "Error cancelling proposal, please report a bug.",
