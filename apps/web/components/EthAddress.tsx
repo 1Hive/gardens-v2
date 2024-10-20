@@ -30,7 +30,7 @@ export const EthAddress = ({
 }: EthAddressProps) => {
   const divParentRef = React.useRef<HTMLDivElement>(null);
   const chain = useChainFromPath();
-  const topLayerNode = document.getElementById("dialog");
+  // const topLayerNode = document.getElementById("dialog");
   // const theme: ThemeDeclaration = {
   //   textColor: "black",
   //   // secondaryColor: "black",

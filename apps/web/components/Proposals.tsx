@@ -7,6 +7,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { FetchTokenResult } from "@wagmi/core";
 import Link from "next/link";
+import { Id, toast } from "react-toastify";
 import { parseAbiParameters, encodeAbiParameters } from "viem";
 import { Address, useAccount, useContractRead } from "wagmi";
 import {
@@ -38,10 +39,8 @@ import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { alloABI, cvStrategyABI, registryCommunityABI } from "@/src/generated";
 import { ProposalStatus } from "@/types";
-import { abiWithErrors } from "@/utils/abi";
 import { useErrorDetails } from "@/utils/getErrorName";
 import { calculatePercentage } from "@/utils/numbers";
-import { Id, toast } from "react-toastify";
 
 // Types
 export type ProposalInputItem = {
@@ -128,7 +127,6 @@ export function Proposals({
         topic: "member",
         id: wallet,
         containerId: strategy.poolId,
-        type: ["add", "delete"],
       },
       {
         topic: "proposal",
@@ -403,7 +401,7 @@ export function Proposals({
       inputs,
       stakedFilters,
     );
-
+    console.debug("Proposal Deltas", proposalsDifferencesArr);
     const abiTypes = parseAbiParameters(
       "(uint256 proposalId, int256 deltaSupport)[]",
     );

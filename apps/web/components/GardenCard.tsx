@@ -8,10 +8,10 @@ import Image from "next/image";
 import { Address } from "viem";
 import { getTokenGardensQuery } from "#/subgraph/.graphclient";
 import { Statistic, TokenLabel } from ".";
+import TooltipIfOverflow from "./TooltipIfOverflow";
 import { gardenLand } from "@/assets";
 import { Card } from "@/components/Card";
 import { ChainIcon, getConfigByChain } from "@/configs/chains";
-import TooltipIfOverflow from "./TooltipIfOverflow";
 
 type TokenGarden = getTokenGardensQuery["tokenGardens"][number];
 
@@ -45,7 +45,9 @@ export function GardenCard({ garden }: { garden: TokenGarden }) {
         <div className="flex items-center justify-between gap-2">
           {/* TODO: find appropiate token image */}
           <h3 className="text-neutral-content h-14">
-            <TooltipIfOverflow lineClamp="line-clamp-2">{name}</TooltipIfOverflow>
+            <TooltipIfOverflow lineClamp="line-clamp-2">
+              {name}
+            </TooltipIfOverflow>
           </h3>
           <TokenLabel chainId={chainId} noSymbol />
         </div>

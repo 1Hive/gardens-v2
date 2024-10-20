@@ -20,7 +20,6 @@ import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithC
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { useHandleAllowance } from "@/hooks/useHandleAllowance";
 import { registryCommunityABI } from "@/src/generated";
-import { abiWithErrors } from "@/utils/abi";
 import { parseToken } from "@/utils/numbers";
 import { getTxMessage } from "@/utils/transactionMessages";
 

@@ -44,7 +44,6 @@ import {
   ProposalStatus,
   SybilResistanceType,
 } from "@/types";
-import { abiWithErrors } from "@/utils/abi";
 import {
   convertSecondsToReadableTime,
   CV_PASSPORT_THRESHOLD_SCALE,
@@ -286,7 +285,7 @@ export default function PoolHeader({
   const disableCouncilSafeBtnCondition: ConditionObject[] = [
     {
       condition: !isCouncilSafe,
-      message: `Connect with Council safe`,
+      message: "Connect with Council safe",
     },
   ];
 

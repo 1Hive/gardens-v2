@@ -42,11 +42,9 @@ import {
   safeArbitratorABI,
 } from "@/src/generated";
 import { DisputeStatus, ProposalStatus } from "@/types";
-import { abiWithErrors } from "@/utils/abi";
 import { delayAsync } from "@/utils/delayAsync";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 import { convertSecondsToReadableTime } from "@/utils/numbers";
-import { shortenAddress } from "@/utils/text";
 
 type Props = {
   proposalData: Maybe<
@@ -313,7 +311,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
   const disableTribunalSafeBtnCondition: ConditionObject[] = [
     {
       condition: !isTribunalSafe,
-      message: `Connect with Tribunal safe`,
+      message: "Connect with Tribunal safe",
     },
   ];
 
