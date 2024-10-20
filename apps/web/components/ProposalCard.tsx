@@ -96,11 +96,6 @@ export function ProposalCard({
   const inputValue =
     inputData ? calculatePercentage(inputData.value, memberActivatedPoints) : 0;
 
-  const allocatedInProposal = calculatePercentage(
-    stakedFilter?.value,
-    memberActivatedPoints,
-  );
-
   const poolWeightAllocatedInProposal = (
     (inputValue * memberPoolWeight) /
     100
@@ -261,7 +256,7 @@ export function ProposalCard({
                               </span>
                               /{memberPoolWeight}%{" "}
                               <span className="text-neutral-soft-content text-sm">
-                                ({allocatedInProposal}% of your total support)
+                                ({inputValue}% of your total support)
                               </span>
                             </p>
                             {/* <p className="text-primary-content">Support</p> */}

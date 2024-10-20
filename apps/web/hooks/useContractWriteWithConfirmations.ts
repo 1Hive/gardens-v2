@@ -99,7 +99,7 @@ export function useContractWriteWithConfirmations<
 
     console.error(
       `Error with transaction [${props.contractName} -> ${props.functionName}]`,
-      { error, variables, context, rawData, contract: props.address },
+      { error, variables, context, rawData, contract: props.address, message: error.message },
     );
   }
 

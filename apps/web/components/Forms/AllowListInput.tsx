@@ -244,7 +244,6 @@ export function AllowListInput({
             className={`!p-2 font-normal text-[14px] leading-4 
               ${!isUnlimited ? "" : "!text-black !border-black"}`}
             onClick={handleAllowEveryone}
-            showToolTip
             disabled={!isUnlimited}
             icon={<UserGroupIcon className="w-4 h-4" />}
             tooltip={
