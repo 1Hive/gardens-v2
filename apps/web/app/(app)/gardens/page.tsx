@@ -49,7 +49,7 @@ export default function Page() {
           {tokenGardens
             .sort(
               (a, b) =>
-                (a.communities?.length ?? 0) - (b.communities?.length ?? 0),
+                (b.communities?.length ?? 0) - (a.communities?.length ?? 0),
             )
             .map((garden) => (
               <div key={garden.id}>
