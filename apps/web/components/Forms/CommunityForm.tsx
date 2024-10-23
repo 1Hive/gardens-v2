@@ -228,7 +228,7 @@ export const CommunityForm = ({
     }
     return isSafe;
   };
-  console.log(INPUT_TOKEN_MIN_VALUE);
+
   return (
     <form onSubmit={handleSubmit(handlePreview)} className="w-full">
       {showPreview ?
