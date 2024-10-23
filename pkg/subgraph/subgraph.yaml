@@ -8,7 +8,7 @@ dataSources:
     name: RegistryFactoryV0_0
     network: gnosis
     context:
-      chainId: 
+      chainId:
         type: Int
         data: 100
     source:
@@ -33,16 +33,16 @@ dataSources:
         - event: CommunityValiditySet(address,bool)
           handler: handleCommunityValiditySet
         - event: ProtocolFeeSet(address,uint256)
-          handler: handleProtocolFeeSet  
+          handler: handleProtocolFeeSet
         - event: Initialized(uint8)
-          handler: handleRegistryInitialized  
+          handler: handleRegistryInitialized
       file: ./src/mappings/registry-factory.ts
 
   - kind: ethereum/contract
     name: PassportScorer
     network: gnosis
     context:
-      chainId: 
+      chainId:
         type: Int
         data: 100
     source:
@@ -100,7 +100,7 @@ templates:
           file: ../contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json
         - name: RegistryFactoryV0_0
           file: ../contracts/out/RegistryFactoryV0_0.sol/RegistryFactoryV0_0.json
-     
+
       eventHandlers:
         - event: RegistryInitialized(bytes32,string,(uint256,string))
           handler: handleInitialized
@@ -129,7 +129,7 @@ templates:
         - event: MemberPowerIncreased(address,uint256)
           handler: handleMemberPowerIncreased
         # - event: BasisStakedAmountSet(uint256)
-          # handler: handleBasisStakedAmountSet
+        # handler: handleBasisStakedAmountSet
         # - event: CouncilSafeSet(address)
         #   handler: handleCouncilSafeSet
         # - event: CouncilSafeChangeStarted(address,address)
@@ -194,7 +194,7 @@ templates:
           handler: handleAllowlistMembersRemoved
         - event: SybilScorerUpdated(address)
           handler: handleSybilScorerUpdated
- 
+
       file: ./src/mappings/cv-strategy.ts
 
   - kind: ethereum/contract
@@ -219,8 +219,8 @@ templates:
           handler: handleCollateralWithdrawnFor
         - event: CollateralWithdrawn(uint256,indexed address,uint256,bool)
           handler: handleCollateralWithdrawn
-      file: ./src/mappings/cv-strategy.ts  
-  
+      file: ./src/mappings/cv-strategy.ts
+
   - name: ProposalDisputeMetadata
     kind: file/ipfs
     mapping:
@@ -233,7 +233,7 @@ templates:
       abis:
         - name: CVStrategyV0_0
           file: ../contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json
-  
+
   - name: ProposalMetadata
     kind: file/ipfs
     mapping:

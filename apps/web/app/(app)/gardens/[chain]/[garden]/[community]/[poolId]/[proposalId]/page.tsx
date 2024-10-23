@@ -49,8 +49,8 @@ export default function Page({
   const { data } = useSubgraphQuery<getProposalDataQuery>({
     query: getProposalDataDocument,
     variables: {
-      garden: garden,
-      proposalId: proposalId,
+      garden: garden.toLowerCase(),
+      proposalId: proposalId.toLowerCase(),
     },
     changeScope: {
       topic: "proposal",

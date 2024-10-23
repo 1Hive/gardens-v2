@@ -30,7 +30,7 @@ export default function Page({
 
   const { data, refetch, error } = useSubgraphQuery<getPoolDataQuery>({
     query: getPoolDataDocument,
-    variables: { poolId: poolId, garden: garden },
+    variables: { poolId: poolId, garden: garden.toLowerCase() },
     changeScope: [
       {
         topic: "pool",

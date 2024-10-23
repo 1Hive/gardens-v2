@@ -77,7 +77,7 @@ export function CheckPassport({
   const { data: passportStrategyData } =
     useSubgraphQuery<getPassportStrategyQuery>({
       query: getPassportStrategyDocument,
-      variables: { strategyId: strategy.id },
+      variables: { strategyId: strategy.id.toLowerCase() },
       enabled: enableCheck,
       changeScope: {
         topic: "member",
