@@ -15,7 +15,7 @@ export default function Page({
 }) {
   const { data } = useSubgraphQuery<getPoolDataQuery>({
     query: getPoolDataDocument,
-    variables: { poolId: poolId, garden: garden },
+    variables: { poolId: poolId, garden: garden.toLowerCase() },
   });
   const strategyObj = data?.cvstrategies?.[0];
 

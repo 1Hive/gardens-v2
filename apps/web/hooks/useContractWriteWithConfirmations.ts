@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from "react";
 import { WriteContractMode } from "@wagmi/core";
+import { AbiFunction } from "abitype";
 import { Abi, encodeFunctionData, TransactionReceipt } from "viem";
 import {
   useChainId,
@@ -10,7 +11,6 @@ import {
 import { useChainIdFromPath } from "./useChainIdFromPath";
 import { useTransactionNotification } from "./useTransactionNotification";
 import { chainConfigMap } from "@/configs/chains";
-import { AbiFunction } from "abitype";
 import { abiWithErrors } from "@/utils/abi";
 
 export type ComputedStatus =
@@ -99,7 +99,14 @@ export function useContractWriteWithConfirmations<
 
     console.error(
       `Error with transaction [${props.contractName} -> ${props.functionName}]`,
-      { error, variables, context, rawData, contract: props.address, message: error.message },
+      {
+        error,
+        variables,
+        context,
+        rawData,
+        contract: props.address,
+        message: error.message,
+      },
     );
   }
 
