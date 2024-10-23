@@ -750,6 +750,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
                 emit SupportAdded(_member, proposalId, 0, proposal.stakedAmount, proposal.convictionLast);
             }
         }
+        totalVoterStakePct[_member] = 0;
     }
 
     /**
@@ -1220,8 +1221,12 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         address[] memory membersToRemove
     ) internal virtual {
         _setPoolParams(_arbitrableConfig, _cvParams);
-        _addToAllowList(membersToAdd);
-        _removeFromAllowList(membersToRemove);
+        if (membersToAdd.length > 0) {
+            _addToAllowList(membersToAdd);
+        }
+        if (membersToRemove.length > 0) {
+            _removeFromAllowList(membersToRemove);
+        }
     }
 
     function _setPoolParams(

@@ -19,7 +19,7 @@ export default function Page({
   const { data: result, error: getCommunityCreationDataQueryError } =
     useSubgraphQuery<getCommunityCreationDataQuery>({
       query: getCommunityCreationDataDocument,
-      variables: { addr: garden },
+      variables: { addr: garden.toLowerCase() },
     });
 
   useEffect(() => {

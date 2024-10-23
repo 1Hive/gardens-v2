@@ -17,7 +17,10 @@ export default function Page({
 }) {
   const { data: result } = useSubgraphQuery<getPoolCreationDataQuery>({
     query: getPoolCreationDataDocument,
-    variables: { communityAddr: community, tokenAddr: garden },
+    variables: {
+      communityAddr: community.toLowerCase(),
+      tokenAddr: garden.toLowerCase(),
+    },
   });
   let token = result?.tokenGarden;
   let alloAddr = result?.allos[0]?.id as Address;
