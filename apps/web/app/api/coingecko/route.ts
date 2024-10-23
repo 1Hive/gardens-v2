@@ -1,8 +1,4 @@
-// app/api/tokens/[chain]/[token]/route.ts
 import { NextResponse } from "next/server";
-
-// You should store this in your .env.local file
-const COINGECKO_API_KEY = "CG-ibuEwEyXJ79RKSqQFxr78EGQ";
 
 // Define supported chains and their CoinGecko IDs
 const SUPPORTED_CHAINS = {
@@ -16,10 +12,14 @@ const SUPPORTED_CHAINS = {
 
 type ChainType = keyof typeof SUPPORTED_CHAINS;
 
-export async function GET(
-  request: Request,
-  { params }: { params: { chain: string; token: string } },
-) {
+interface Params {
+  params: {
+    chain: ChainType;
+    token: string;
+  };
+}
+
+export async function GET(request: Request, { params }: Params) {
   try {
     const { chain, token } = params;
 
@@ -52,9 +52,11 @@ export async function GET(
     const response = await fetch(url, {
       headers: {
         accept: "application/json",
-        "x-cg-demo-api-key": COINGECKO_API_KEY,
+        //TODO: undo this
+        // eslint-disable-next-line turbo/no-undeclared-env-vars
+        "x-cg-demo-api-key": process.env.COINGECKO_API_KEY ?? "",
       },
-      next: { revalidate: 60 }, // Cache for 60 seconds
+      //next: { revalidate: 60 }, // Cache for 60 seconds
     });
 
     if (!response.ok) {
@@ -74,35 +76,35 @@ export async function GET(
     const data = await response.json();
 
     // Format the response with the most relevant data
-    const formattedData = {
-      success: true,
-      data: {
-        id: data.id,
-        symbol: data.symbol,
-        name: data.name,
-        asset_platform_id: data.asset_platform_id,
-        contract_address: data.contract_address,
-        market_data: {
-          current_price: data.market_data?.current_price,
-          market_cap: data.market_data?.market_cap,
-          total_volume: data.market_data?.total_volume,
-          price_change_percentage_24h:
-            data.market_data?.price_change_percentage_24h,
-          price_change_percentage_7d:
-            data.market_data?.price_change_percentage_7d,
-          price_change_percentage_30d:
-            data.market_data?.price_change_percentage_30d,
-        },
-        last_updated: data.last_updated,
-      },
-      metadata: {
-        chain,
-        token,
-        timestamp: new Date().toISOString(),
-      },
-    };
+    // const formattedData = {
+    //   success: true,
+    //   data: {
+    //     id: data.id,
+    //     symbol: data.symbol,
+    //     name: data.name,
+    //     asset_platform_id: data.asset_platform_id,
+    //     contract_address: data.contract_address,
+    //     market_data: {
+    //       current_price: data.market_data?.current_price,
+    //       market_cap: data.market_data?.market_cap,
+    //       total_volume: data.market_data?.total_volume,
+    //       price_change_percentage_24h:
+    //         data.market_data?.price_change_percentage_24h,
+    //       price_change_percentage_7d:
+    //         data.market_data?.price_change_percentage_7d,
+    //       price_change_percentage_30d:
+    //         data.market_data?.price_change_percentage_30d,
+    //     },
+    //     last_updated: data.last_updated,
+    //   },
+    //   metadata: {
+    //     chain,
+    //     token,
+    //     timestamp: new Date().toISOString(),
+    //   },
+    // };
 
-    return NextResponse.json(formattedData, {
+    return NextResponse.json(data, {
       status: 200,
       headers: {
         "Cache-Control": "public, s-maxage=60, stale-while-revalidate=30",
