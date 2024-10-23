@@ -23,7 +23,6 @@ import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithC
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { alloABI } from "@/src/generated";
 import { PoolTypes } from "@/types";
-import { abiWithErrors } from "@/utils/abi";
 import { getEventFromReceipt } from "@/utils/contracts";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 import { formatTokenAmount } from "@/utils/numbers";
@@ -199,7 +198,7 @@ export const ProposalForm = ({
 
   const { write } = useContractWriteWithConfirmations({
     address: alloInfo.id as Address,
-    abi: abiWithErrors(alloABI),
+    abi: alloABI,
     contractName: "Allo",
     functionName: "registerRecipient",
     fallbackErrorMessage: "Error creating Proposal, please report a bug.",

@@ -60,7 +60,8 @@
         "RPC_URL_OPTIMISM",
         "RPC_URL_GNOSIS",
         "RPC_URL_MATIC",
-        "CRON_SECRET"
+        "CRON_SECRET",
+        "COINGECKO_API_KEY"
       ]
     },
     "test": {
@@ -70,13 +71,13 @@
       "inputs": [
         "test/**/*.t.sol"
       ],
-      "outputs": []
+      "outputs": [ ]
     },
     "test:watch": {
       "cache": false
     },
     "lint": {
-      "outputs": []
+      "outputs": [ ]
     },
     "dev": {
       "dependsOn": [
