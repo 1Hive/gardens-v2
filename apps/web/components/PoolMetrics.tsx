@@ -25,6 +25,7 @@ interface PoolMetricsProps {
   poolId: number;
   chainId: string;
 }
+type FormInputs = { amount: number };
 
 export const PoolMetrics: FC<PoolMetricsProps> = ({
   alloInfo,
@@ -41,12 +42,12 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     handleSubmit,
     formState: { errors },
     watch,
-  } = useForm<{ amount: number }>();
+  } = useForm<FormInputs>();
 
   const [isOpenModal, setIsOpenModal] = useState(false);
   const { address: accountAddress } = useAccount();
   const { publish } = usePubSubContext();
-  const { data } = useBalance({
+  const { data: balance } = useBalance({
     address: accountAddress,
     formatUnits: poolToken.decimals,
     token: poolToken.address,
@@ -54,10 +55,9 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     chainId: Number(chainId),
   });
 
-  const tokenWalletBalance = data ? Number(data.value) : 0;
+  const tokenWalletBalance = balance ? Number(balance.value) : 0;
   const amount = watch("amount") ? watch("amount") : 0;
   const requestedAmount = parseUnits(amount.toString(), poolToken.decimals);
-
   const {
     write: writeFundPool,
     transactionStatus: fundPoolStatus,
@@ -106,14 +106,14 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     }));
   }, [fundPoolStatus]);
 
-  const handleFundPool = () => {
-    setIsOpenModal(true);
+  const handleFundPool = (data: FormInputs) => {
     setAddFundsTx((prev) => ({
       ...prev,
       message: getTxMessage("idle"),
       status: "idle",
     }));
-    handleAllowance();
+    setIsOpenModal(true);
+    handleAllowance(parseUnits(data.amount.toString(), poolToken.decimals));
   };
 
   return (
