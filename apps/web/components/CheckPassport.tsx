@@ -77,7 +77,7 @@ export function CheckPassport({
   const { data: passportStrategyData } =
     useSubgraphQuery<getPassportStrategyQuery>({
       query: getPassportStrategyDocument,
-      variables: { strategyId: strategy.id },
+      variables: { strategyId: strategy.id.toLowerCase() },
       enabled: enableCheck,
       changeScope: {
         topic: "member",
@@ -259,8 +259,9 @@ export function CheckPassport({
         title="Gitcoin passport"
         isOpen={isOpenModal}
         onClose={() => setIsOpenModal(false)}
+        size="small"
       >
-        <div className="flex flex-col gap-8 max-w-96">
+        <div className="flex flex-col gap-8">
           <div>
             <p>
               Passport score:{" "}

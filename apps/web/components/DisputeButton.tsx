@@ -87,7 +87,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
   const { data: disputesResult } = useSubgraphQuery<getProposalDisputesQuery>({
     query: getProposalDisputesDocument,
     variables: {
-      proposalId: proposalData?.id,
+      proposalId: proposalData?.id.toLowerCase(),
     },
     changeScope: {
       topic: "proposal",

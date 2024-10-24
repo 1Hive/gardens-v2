@@ -66,7 +66,10 @@ export default function Page({
     refetch,
   } = useSubgraphQuery<getCommunityQuery>({
     query: getCommunityDocument,
-    variables: { communityAddr: communityAddr, tokenAddr: tokenAddr },
+    variables: {
+      communityAddr: communityAddr.toLowerCase(),
+      tokenAddr: tokenAddr.toLowerCase(),
+    },
     changeScope: [
       { topic: "community", id: communityAddr },
       { topic: "member", containerId: communityAddr },

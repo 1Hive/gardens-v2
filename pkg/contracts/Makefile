@@ -318,6 +318,17 @@ verify-arbitrum:
 
 upgrade-and-verify-arbitrum: upgrade-multi-arbitrum verify-arbitrum
 
+change-passport-manager-arbitrum: 
+	-forge script script/PassportScorerWriter.s.sol:PassportScorerWriter \
+	--rpc-url $(RPC_URL_ARB) \
+	--sig "run(string)" 'arbitrum' \
+	--account pkGarden \
+	--ffi \
+	--chain-id 42161 \
+	--broadcast \
+	--legacy \
+	-vvv
+
 # Optimism
 
 deploy-new-collateral-vault-template-optimism: 
@@ -379,6 +390,17 @@ verify-optimism:
 
 upgrade-and-verify-optimism: upgrade-multi-optimism verify-optimism
 
+change-passport-manager-polygon: 
+	-forge script script/PassportScorerWriter.s.sol:PassportScorerWriter \
+	--rpc-url $(RPC_URL_OPT) \
+	--sig "run(string)" 'optimism' \
+	--account pkGarden \
+	--ffi \
+	--chain-id 10 \
+	--broadcast \
+	--legacy \
+	-vvv
+
 # Polygon
 
 deploy-new-collateral-vault-template-polygon: 
@@ -437,6 +459,17 @@ verify-polygon:
 	--slow
 
 upgrade-and-verify-polygon: upgrade-multi-polygon verify-polygon
+
+change-passport-manager-polygon: 
+	-forge script script/PassportScorerWriter.s.sol:PassportScorerWriter \
+	--rpc-url $(RPC_URL_POLYGON) \
+	--sig "run(string)" 'polygon' \
+	--account pkGarden \
+	--ffi \
+	--chain-id 137 \
+	--broadcast \
+	--legacy \
+	-vvv
 
 # Gnosis
 
@@ -498,6 +531,17 @@ verify-gnosis:
 	--slow
 
 upgrade-and-verify-gnosis: upgrade-multi-gnosis verify-gnosis
+
+change-passport-manager-polygon: 
+	-forge script script/PassportScorerWriter.s.sol:PassportScorerWriter \
+	--rpc-url $(RPC_URL_GNOSIS) \
+	--sig "run(string)" 'gnosis' \
+	--account pkGarden \
+	--ffi \
+	--chain-id 100 \
+	--broadcast \
+	--legacy \
+	-vvv
 
 # Mainnet
 

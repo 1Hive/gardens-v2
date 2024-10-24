@@ -111,7 +111,7 @@ export default function PoolHeader({
   const { data: passportStrategyData } =
     useSubgraphQuery<getPassportStrategyQuery>({
       query: getPassportStrategyDocument,
-      variables: { strategyId: strategy.id as Address },
+      variables: { strategyId: strategy.id.toLowerCase() as Address },
       changeScope: {
         topic: "pool",
         type: "update",
