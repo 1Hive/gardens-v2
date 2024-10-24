@@ -15,7 +15,7 @@ export function useHandleAllowance(
   triggerNextTx: () => void,
 ): {
   allowanceTxProps: TransactionProps;
-  handleAllowance: () => void;
+  handleAllowance: (formAmount?: bigint) => void;
   resetState: () => void;
 } {
   const chainId = useChainIdFromPath();
@@ -41,19 +41,19 @@ export function useHandleAllowance(
   } = useContractWriteWithConfirmations({
     address: tokenAddr,
     abi: erc20ABI,
-    args: [spenderAddr, amount],
+    // args: [spenderAddr, amount],
     functionName: "approve",
     contractName: "ERC20",
     showNotification: false,
   });
 
-  const handleAllowance = async () => {
-    const newAllowance = await refetchAllowance();
-    if (
-      newAllowance.data === undefined ||
-      (newAllowance.data as bigint) < amount
-    ) {
-      writeAllowToken();
+  const handleAllowance = async (formAmount?: bigint) => {
+    const currentAllowance = await refetchAllowance();
+    if (formAmount) {
+      amount = formAmount;
+    }
+    if (!currentAllowance?.data || currentAllowance.data < amount) {
+      writeAllowToken({ args: [spenderAddr, amount] });
     } else {
       setAllowanceTxProps({
         contractName: `${tokenSymbol} expenditure approval`,

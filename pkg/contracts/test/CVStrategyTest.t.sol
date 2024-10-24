@@ -2576,7 +2576,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         vm.stopPrank();
 
         //notice how we set the score to the user as 0
-        uint256 passportScore =0;
+        uint256 passportScore = 0;
         passportScorer.addUserScore(address(6), passportScore);
 
         vm.startPrank(address(6));
