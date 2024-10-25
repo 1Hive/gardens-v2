@@ -34,6 +34,7 @@ import {CollateralVault} from "../src/CollateralVault.sol";
 import {SafeArbitrator} from "../src/SafeArbitrator.sol";
 import {
     RegistryCommunityV0_0,
+    CommunityParams,
     RegistryCommunityInitializeParamsV0_0
 } from "../src/RegistryCommunity/RegistryCommunityV0_0.sol";
 import {ISafe as Safe, SafeProxyFactory, Enum} from "../src/interfaces/ISafe.sol";
@@ -1447,7 +1448,51 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         vm.stopPrank();
         stopMeasuringGas();
     }
-
+    function test_setCommunityParams() public {
+        startMeasuringGas("Testing setCommunityParams");
+        vm.startPrank(address(councilSafe));
+//         struct CommunityParams {
+//     uint256 registerStakeAmount;
+//     bool isKickEnabled;
+//     string covenantIpfsHash;
+//     address councilSafe;
+//     address feeReceiver;
+//     uint256 communityFee;
+//     string communityName;
+// }       
+        
+        _registryCommunity().setCommunityParams(CommunityParams({
+            registerStakeAmount: 500,
+            isKickEnabled: true,
+            covenantIpfsHash: "0x0",
+            councilSafe: address(councilSafe),
+            feeReceiver: address(daoFeeReceiver),
+            communityFee: 5 * PERCENTAGE_SCALE,
+            communityName: "Test"
+        }));
+        assertEq(_registryCommunity().registerStakeAmount(), 500);
+        assertEq(_registryCommunity().isKickEnabled(), true);
+        assertEq(_registryCommunity().communityFee(), 5 * PERCENTAGE_SCALE);
+        assertEq(_registryCommunity().communityName(), "Test");
+        assertEq(_registryCommunity().covenantIpfsHash(), "0x0");
+        assertEq(_registryCommunity().feeReceiver(), address(daoFeeReceiver));
+        _registryCommunity().setCommunityParams(CommunityParams({
+            registerStakeAmount: 500,
+            isKickEnabled: true,
+            covenantIpfsHash: "0x0",
+            councilSafe: address(newCouncilSafe),
+            feeReceiver: address(daoFeeReceiver),
+            communityFee: 5 * PERCENTAGE_SCALE,
+            communityName: "Test"
+        }));
+        assertEq(address(_registryCommunity().pendingCouncilSafe()), address(newCouncilSafe));
+        vm.stopPrank();
+        vm.startPrank(newCouncilSafe);
+        _registryCommunity().acceptCouncilSafe();
+        assertEq(address(_registryCommunity().councilSafe()), address(newCouncilSafe));
+        vm.stopPrank();
+        stopMeasuringGas();
+    }
     function test_revertUnregisterMember() public {
         startMeasuringGas("Testing kick member revert");
         vm.startPrank(gardenOwner);

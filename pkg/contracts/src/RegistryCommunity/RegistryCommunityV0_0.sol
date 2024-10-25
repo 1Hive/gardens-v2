@@ -633,7 +633,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         emit BasisStakedAmountSet(_newAmount);
     }
 
-     function setCommunityParams(CommunityParams memory _params) external onlyOwner {
+     function setCommunityParams(CommunityParams memory _params) external {
         onlyCouncilSafe();
         if(_params.registerStakeAmount != registerStakeAmount || _params.isKickEnabled != isKickEnabled || keccak256(bytes(_params.covenantIpfsHash)) != keccak256(bytes(covenantIpfsHash))) {
             onlyEmptyCommunity();
@@ -663,6 +663,10 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
             feeReceiver = _params.feeReceiver;
             emit FeeReceiverChanged(_params.feeReceiver);
             }
+        }
+        if(_params.councilSafe != address(0)){
+            setCouncilSafe(payable(_params.councilSafe));
+            // event already emitted in setCouncilSafe
         }
     }
 
