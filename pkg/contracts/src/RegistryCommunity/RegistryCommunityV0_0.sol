@@ -501,9 +501,9 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
             revert StrategyExists();
         }
         enabledStrategies[_newStrategy] = true;
-        ISybilScorer sybilScorer= CVStrategyV0_0(payable(_newStrategy)).sybilScorer();
+        ISybilScorer sybilScorer = CVStrategyV0_0(payable(_newStrategy)).sybilScorer();
         if (address(sybilScorer) != address(0)) {
-          sybilScorer.activateStrategy(_newStrategy);
+            sybilScorer.activateStrategy(_newStrategy);
         }
         emit StrategyAdded(_newStrategy);
     }
