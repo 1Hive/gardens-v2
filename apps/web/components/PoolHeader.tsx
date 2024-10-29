@@ -299,7 +299,7 @@ export default function PoolHeader({
 
   return (
     <section className="section-layout flex flex-col gap-0">
-      <header className="mb-2 flex flex-col">
+      <header className="mb-4 flex flex-col">
         <div className="flex justify-between flex-wrap">
           <h2>
             <Skeleton isLoading={!ipfsResult} className="sm:!w-96 h-8">
@@ -308,22 +308,6 @@ export default function PoolHeader({
           </h2>
           {(!!isCouncilMember || isCouncilSafe) && (
             <div className="flex gap-2 flex-wrap">
-              <div className="flex flex-col gap-1 p-1 w-48">
-                <a
-                  href={`https://app.safe.global/transactions/queue?safe=${safePrefix}:${strategy.registryCommunity.councilSafe}`}
-                  className="text-info whitespace-nowrap flex flex-nowrap gap-1 items-center"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Council safe
-                  <ArrowTopRightOnSquareIcon width={16} height={16} />
-                </a>
-                <EthAddress
-                  address={strategy.registryCommunity.councilSafe as Address}
-                  shortenAddress={true}
-                  actions="copy"
-                />
-              </div>
               <Button
                 btnStyle="outline"
                 icon={<Cog6ToothIcon height={24} width={24} />}
@@ -362,12 +346,31 @@ export default function PoolHeader({
             </div>
           )}
         </div>
-        <div>
-          <EthAddress
-            icon={false}
-            address={strategy.id as Address}
-            label="Pool address"
-          />
+        <div className="flex justify-between">
+          <div className="-ml-1">
+            <EthAddress
+              icon={false}
+              address={strategy.id as Address}
+              label="Pool address"
+            />
+          </div>
+
+          <div className="flex gap-1">
+            <a
+              href={`https://app.safe.global/transactions/queue?safe=${safePrefix}:${strategy.registryCommunity.councilSafe}`}
+              className="text-primary-content whitespace-nowrap flex flex-nowrap gap-1 items-center"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Council safe
+              <ArrowTopRightOnSquareIcon width={16} height={16} />
+            </a>
+            <EthAddress
+              address={strategy.registryCommunity.councilSafe as Address}
+              shortenAddress={true}
+              actions="copy"
+            />
+          </div>
         </div>
         <Modal
           title={`Edit ${ipfsResult?.title} #${poolId}`}
