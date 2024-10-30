@@ -263,12 +263,12 @@ export function CheckPassport({
       >
         <div className="flex flex-col gap-8">
           <div>
-            <p>
+            <div>
               Passport score:{" "}
               <Skeleton isLoading={passportUserFetching}>
                 <span className="font-semibold w-12">{score.toFixed(2)}</span>
               </Skeleton>
-            </p>
+            </div>
             <p>
               Pool requirement:{" "}
               <span className="font-semibold">{threshold.toFixed(2)}</span>
