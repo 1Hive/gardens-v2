@@ -194,7 +194,7 @@ export function PoolForm({ token, communityAddr }: Props) {
       rulingTime: parseTimeUnit(DEFAULT_RULING_TIMEOUT_SEC, "seconds", "days"),
       defaultResolution: 1,
       minThresholdPoints: 0,
-      poolTokenAddress: token.id,
+      poolTokenAddress: "",
       proposalCollateral:
         chain.id === polygon.id ?
           defaultMaticProposalColateral
@@ -227,6 +227,7 @@ export function PoolForm({ token, communityAddr }: Props) {
   const { isConnected, missmatchUrl, tooltipMessage } = useDisableButtons();
 
   const watchedAddress = watch("poolTokenAddress").toLowerCase() as Address;
+
   const { data: customTokenData } = useToken({
     address: watchedAddress ?? "0x",
     chainId: +chain,
@@ -711,7 +712,7 @@ export function PoolForm({ token, communityAddr }: Props) {
                             registerKey="maxAmount"
                             type="number"
                             placeholder="0"
-                            suffix={token.symbol}
+                            suffix={customTokenData?.symbol}
                           />
                         </div>
                       )}
