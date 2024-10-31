@@ -76,11 +76,18 @@ export function PoolCard({ pool, tokenGarden }: Props) {
           icon={<HandRaisedIcon />}
           count={proposals.length}
           label="proposals"
+          className={`${isEnabled ? "visible" : "invisible"}`}
         />
         <Statistic
           icon={<CurrencyDollarIcon />}
           label="funds"
-          className={`${poolType && PoolTypes[poolType] === "funding" ? "visible" : "invisible"}`}
+          className={`${
+            isEnabled ?
+              poolType && PoolTypes[poolType] === "funding" ?
+                "visible"
+              : "invisible"
+            : "invisible"
+          }`}
         >
           <DisplayNumber
             number={[BigInt(poolAmount), tokenGarden.decimals]}
