@@ -60,14 +60,12 @@ templates:
           handler: handleMemberPowerDecreased
         - event: MemberPowerIncreased(address,uint256)
           handler: handleMemberPowerIncreased
-        # - event: BasisStakedAmountSet(uint256)
-          # handler: handleBasisStakedAmountSet
-        # - event: CouncilSafeSet(address)
-        #   handler: handleCouncilSafeSet
-        # - event: CouncilSafeChangeStarted(address,address)
-        #   handler: handleCouncilSafeChangeStarted
-        # - event: AlloSet(address)
-        #   handler: handleAlloSet
+        - event: BasisStakedAmountUpdated(uint256)
+          andler: handleBasisStakedAmountUpdated
+        - event: CouncilSafeUpdated(address)
+          handler: handleCouncilSafeUpdated
+        - event: CouncilSafeChangeStarted(address,address)
+          handler: handleCouncilSafeChangeStarted
       file: ./src/mappings/registry-community.ts
 
   - kind: ethereum/contract

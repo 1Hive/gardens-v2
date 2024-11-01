@@ -626,17 +626,15 @@ export function Proposals({
           </div>
         : <div>
             <div className="flex items-center justify-center gap-6">
-              <CheckPassport strategy={strategy}>
-                <Link href={createProposalUrl}>
-                  <Button
-                    icon={<PlusIcon height={24} width={24} />}
-                    disabled={!isConnected || missmatchUrl || !isAllowed}
-                    tooltip="Address not in allowlist"
-                  >
-                    Create a proposal
-                  </Button>
-                </Link>
-              </CheckPassport>
+              <Link href={createProposalUrl}>
+                <Button
+                  icon={<PlusIcon height={24} width={24} />}
+                  disabled={!isConnected || missmatchUrl}
+                  tooltip={isConnected ? undefined : "Connect wallet first"}
+                >
+                  Create a proposal
+                </Button>
+              </Link>
             </div>
           </div>
         }

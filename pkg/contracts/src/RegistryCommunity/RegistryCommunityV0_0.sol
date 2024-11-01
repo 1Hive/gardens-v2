@@ -86,7 +86,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
     /*|--------------------------------------------|*/
 
     event AlloSet(address _allo);
-    event CouncilSafeSet(address _safe);
+    event CouncilSafeUpdated(address _safe);
     event CouncilSafeChangeStarted(address _safeOwner, address _newSafeOwner);
     event MemberRegistered(address _member, uint256 _amountStaked);
     event MemberUnregistered(address _member, uint256 _amountReturned);
@@ -558,17 +558,13 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         emit CouncilSafeChangeStarted(address(councilSafe), pendingCouncilSafe);
     }
 
-    function _changeCouncilSafe() internal virtual {
-        councilSafe = ISafe(pendingCouncilSafe);
-        delete pendingCouncilSafe;
-        emit CouncilSafeSet(pendingCouncilSafe);
-    }
-
     function acceptCouncilSafe() public virtual {
         if (msg.sender != pendingCouncilSafe) {
             revert SenderNotNewOwner();
         }
-        _changeCouncilSafe();
+        councilSafe = ISafe(pendingCouncilSafe);
+        delete pendingCouncilSafe;
+        emit CouncilSafeUpdated(pendingCouncilSafe);
     }
 
     function isMember(address _member) public view virtual returns (bool _isMember) {
