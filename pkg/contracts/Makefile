@@ -107,7 +107,7 @@ deploy-verify-arbsep:
   /home/corantin/Documents/GitHub/gardens-v2/main/pkg/contracts/src/RegistryFactoryV0_0.sol:RegistryFactoryV0_0 \
 	--etherscan-api-key $(ETHERSCAN_API_KEY)
 
-deploy-testnet-multi-arb: 
+deploy-arbsep: 
 	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
 	--rpc-url $(RPC_URL_ARB_TESTNET) \
 	--sig "run(string)" 'arbsepolia' \
@@ -121,7 +121,7 @@ deploy-testnet-multi-arb:
 	--verify \
 	-vvvvv
 
-upgrade-testnet-multi-arb: 
+upgrade-arbsep: 
 	-forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
 	--rpc-url $(RPC_URL_ARB_TESTNET) \
 	--sig "run(string)" 'arbsepolia' \
@@ -136,7 +136,7 @@ upgrade-testnet-multi-arb:
 	--with-gas-price 500000000 \
 	-vvv
 
-verify-testnet-multi-arb: 
+verify-blockscout-arbsep: 
 	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
 	--rpc-url $(RPC_URL_ARB_TESTNET) \
 	--account pkGarden \
@@ -243,7 +243,7 @@ deploy-new-collateral-vault-template-arbitrum-sepolia:
 	--verify \
 	-vvv
 
-# Optimism Sepolia
+upgrade-and-verify-arbsep: upgrade-arbsep verify-blockscout-arb
 
 deploy-testnet-multi-op: 
 	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
@@ -298,7 +298,7 @@ upgrade-multi-arbitrum:
 	--verify \
 	-vvv
 
-verify-arbitrum: 
+verify-blockscout-arbitrum: 
 	-forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
 	--rpc-url $(RPC_URL_ARB) \
 	--sig "run(string)" 'arbitrum' \
@@ -312,6 +312,19 @@ verify-arbitrum:
 	--via-ir \
 	-vvv \
 	--slow
+
+upgrade-and-verify-arbitrum: upgrade-multi-arbitrum verify-blockscout-arbitrum
+
+change-passport-manager-arbitrum: 
+	-forge script script/PassportScorerWriter.s.sol:PassportScorerWriter \
+	--rpc-url $(RPC_URL_ARB) \
+	--sig "run(string)" 'arbitrum' \
+	--account pkGarden \
+	--ffi \
+	--chain-id 42161 \
+	--broadcast \
+	--legacy \
+	-vvv
 
 # Optimism
 
@@ -357,7 +370,7 @@ upgrade-multi-optimism:
 	--verify \
 	-vvv
 
-verify-optimism: 
+verify-blockscout-optimism: 
 	-forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
 	--rpc-url $(RPC_URL_OPT) \
 	--sig "run(string)" 'optimism' \
@@ -371,6 +384,19 @@ verify-optimism:
 	--via-ir \
 	-vvv \
 	--slow
+
+upgrade-and-verify-optimism: upgrade-multi-optimism verify-blockscout-optimism
+
+change-passport-manager-optimism: 
+	-forge script script/PassportScorerWriter.s.sol:PassportScorerWriter \
+	--rpc-url $(RPC_URL_OPT) \
+	--sig "run(string)" 'optimism' \
+	--account pkGarden \
+	--ffi \
+	--chain-id 10 \
+	--broadcast \
+	--legacy \
+	-vvv
 
 # Polygon
 
@@ -414,7 +440,7 @@ upgrade-multi-polygon:
 	--verify \
 	-vvv
 
-verify-polygon: 
+verify-blockscout-polygon: 
 	-forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
 	--rpc-url $(RPC_URL_POLYGON) \
 	--sig "run(string)" 'polygon' \
@@ -429,7 +455,7 @@ verify-polygon:
 	-vvv \
 	--slow
 
-# Mainnet
+upgrade-and-verify-polygon: upgrade-multi-polygon verify-blockscout-polygon
 
 deploy-multi-mainnet: 
 	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
@@ -501,7 +527,7 @@ upgrade-multi-gnosis:
 	--via-ir \
 	-vvv
 
-verify-gnosis: 
+verify-blockscout-gnosis: 
 	-forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
 	--rpc-url $(RPC_URL_GNOSIS) \
 	--sig "run(string)" 'gnosis' \
@@ -515,3 +541,68 @@ verify-gnosis:
 	--via-ir \
 	-vvv \
 	--slow
+
+# verify-tenderly-gnosis: 
+# 	-forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
+# 	--rpc-url $(RPC_URL_GNOSIS) \
+# 	--sig "run(string)" 'gnosis' \
+# 	--account pkGarden \
+# 	--verifier-url $(TENDERLY_VERIFIER_URL)/100/public \
+# 	--etherscan-api-key $(TENDERLY_ACCESS_TOKEN) \
+# 	--ffi \
+# 	--chain-id 100 \
+# 	--legacy \
+# 	--verify \
+# 	--via-ir \
+# 	-vvv \
+# 	--slow
+
+verify-tenderly-gnosis: 
+	-forge verify-contract \
+  0x853c80cce43c2f37d60c3679abc9966a346787f4 \
+  CVStrategyV0_0 \
+  --etherscan-api-key ZVbLp2Jg48fSiv9gNsqjjg2iEAmYwHO1 \
+  --verifier-url https://api.tenderly.co/api/v1/account/Gossman/project/project/etherscan/verify/network/100/public \
+  --watch \
+ 	--via-ir 
+
+upgrade-and-verify-gnosis: upgrade-multi-gnosis verify-blockscout-gnosis
+
+change-passport-manager-gnosis: 
+	-forge script script/PassportScorerWriter.s.sol:PassportScorerWriter \
+	--rpc-url $(RPC_URL_GNOSIS) \
+	--sig "run(string)" 'gnosis' \
+	--account pkGarden \
+	--ffi \
+	--chain-id 100 \
+	--broadcast \
+	--legacy \
+	-vvv
+
+# Mainnet
+
+# deploy-multi-mainnet: 
+# 	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
+# 	--rpc-url $(RPC_URL_MAINNET) \
+# 	--sig "run(string)" 'mainnet' \
+# 	--account pkGarden \
+# 	--ffi \
+# 	--chain-id 1 \
+# 	--broadcast \
+# 	--legacy \
+# 	--via-ir \
+# 	-vvv
+
+# verify-mainnet: 
+# 	-forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
+# 	--rpc-url $(RPC_URL_MAINNET) \
+# 	--sig "run(string)" 'mainnet' \
+# 	--account pkGarden \
+# 	--etherscan-api-key $(ETHERSCAN_API_KEY) \
+# 	--ffi \
+# 	--chain-id 1 \
+# 	--legacy \
+# 	--verify \
+# 	--via-ir \
+# 	-vvv \
+# 	--slow
