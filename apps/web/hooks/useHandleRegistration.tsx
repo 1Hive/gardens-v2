@@ -4,7 +4,6 @@ import { TransactionProps } from "@/components/TransactionModal";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { registryCommunityABI } from "@/src/generated";
-import { abiWithErrors } from "@/utils/abi";
 import { getTxMessage } from "@/utils/transactionMessages";
 
 export function useHandleRegistration(
@@ -31,7 +30,7 @@ export function useHandleRegistration(
     error: registerMemberTxError,
   } = useContractWriteWithConfirmations({
     address: communityAddress,
-    abi: abiWithErrors(registryCommunityABI),
+    abi: registryCommunityABI,
     functionName: "stakeAndRegisterMember",
     contractName: "Registry Community",
     showNotification: false,

@@ -19,6 +19,7 @@ export const Skeleton = ({
           .fill(0)
           .map((_, i) => (
             <div
+              // eslint-disable-next-line react/no-array-index-key
               key={i}
               className={`[--fallback-b3:#f0f0f0] skeleton h-5 w-full my-1 rounded-md ${className}`}
             />

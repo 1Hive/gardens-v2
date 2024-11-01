@@ -17,7 +17,6 @@ import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { registryFactoryABI, safeABI } from "@/src/generated";
-import { abiWithErrors } from "@/utils/abi";
 import { getEventFromReceipt } from "@/utils/contracts";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 import {
@@ -53,6 +52,8 @@ export const CommunityForm = ({
   tokenGarden: Pick<TokenGarden, "address" | "symbol" | "decimals">;
   registryFactoryAddr: Address;
 }) => {
+  const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** (tokenGarden?.decimals ?? 0);
+
   const {
     register,
     handleSubmit,
@@ -63,7 +64,6 @@ export const CommunityForm = ({
 
   const { publish } = usePubSubContext();
 
-  const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** tokenGarden.decimals;
   const [showPreview, setShowPreview] = useState<boolean>(false);
   const [previewData, setPreviewData] = useState<FormInputs>();
   const [loading, setLoading] = useState(false);
@@ -155,7 +155,7 @@ export const CommunityForm = ({
 
   const { write } = useContractWriteWithConfirmations({
     address: registryFactoryAddr,
-    abi: abiWithErrors(registryFactoryABI),
+    abi: registryFactoryABI,
     functionName: "createRegistry",
     contractName: "Registry Factory",
     fallbackErrorMessage: "Error creating community, please report a bug.",
@@ -217,7 +217,7 @@ export const CommunityForm = ({
     try {
       const data = await publicClient.readContract({
         address: walletAddress,
-        abi: abiWithErrors(safeABI),
+        abi: safeABI,
         functionName: "getOwners",
       });
       isSafe = !!data;
@@ -254,15 +254,19 @@ export const CommunityForm = ({
               label="Membership Stake Amount"
               register={register}
               required
-              className="pr-14"
+              className="pr-[90px]"
               errors={errors}
               registerKey="stakeAmount"
               type="number"
               registerOptions={{
                 min: {
-                  value: 0,
-                  message: `Amount must be greater than 0`,
+                  value: INPUT_TOKEN_MIN_VALUE,
+                  message: `Amount must be greater than ${INPUT_TOKEN_MIN_VALUE}`,
                 },
+              }}
+              otherProps={{
+                step: INPUT_TOKEN_MIN_VALUE,
+                min: INPUT_TOKEN_MIN_VALUE,
               }}
               suffix={tokenGarden.symbol}
               tooltip="Amount of tokens user must stake to join and participate in community governance. Refundable upon leaving the community."

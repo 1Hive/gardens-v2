@@ -4,7 +4,6 @@ import { useChainIdFromPath } from "./useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "./useContractWriteWithConfirmations";
 import { TransactionProps } from "@/components/TransactionModal";
 import { erc20ABI } from "@/src/generated";
-import { abiWithErrors } from "@/utils/abi";
 import { getTxMessage } from "@/utils/transactionMessages";
 
 export function useHandleAllowance(
@@ -16,7 +15,7 @@ export function useHandleAllowance(
   triggerNextTx: () => void,
 ): {
   allowanceTxProps: TransactionProps;
-  handleAllowance: () => void;
+  handleAllowance: (formAmount?: bigint) => void;
   resetState: () => void;
 } {
   const chainId = useChainIdFromPath();
@@ -29,7 +28,7 @@ export function useHandleAllowance(
   const { refetch: refetchAllowance } = useContractRead({
     chainId,
     address: tokenAddr,
-    abi: abiWithErrors(erc20ABI),
+    abi: erc20ABI,
     args: [accountAddr as Address, spenderAddr],
     functionName: "allowance",
     enabled: !!tokenAddr && accountAddr !== undefined,
@@ -41,20 +40,20 @@ export function useHandleAllowance(
     error: allowanceError,
   } = useContractWriteWithConfirmations({
     address: tokenAddr,
-    abi: abiWithErrors(erc20ABI),
-    args: [spenderAddr, amount],
+    abi: erc20ABI,
+    // args: [spenderAddr, amount],
     functionName: "approve",
     contractName: "ERC20",
     showNotification: false,
   });
 
-  const handleAllowance = async () => {
-    const newAllowance = await refetchAllowance();
-    if (
-      newAllowance.data === undefined ||
-      (newAllowance.data as bigint) < amount
-    ) {
-      writeAllowToken();
+  const handleAllowance = async (formAmount?: bigint) => {
+    const currentAllowance = await refetchAllowance();
+    if (formAmount) {
+      amount = formAmount;
+    }
+    if (!currentAllowance?.data || currentAllowance.data < amount) {
+      writeAllowToken({ args: [spenderAddr, amount] });
     } else {
       setAllowanceTxProps({
         contractName: `${tokenSymbol} expenditure approval`,

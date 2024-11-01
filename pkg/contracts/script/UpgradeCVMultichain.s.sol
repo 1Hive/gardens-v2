@@ -16,10 +16,10 @@ contract UpgradeCVMultichain is BaseMultiChain {
         address passportScorerImplementation = address(new PassportScorer());
 
         // PASSPORT SCORER UPGRADE
-        address passportScorerProxy = networkJson.readAddress(getKeyNetwork(".PROXIES.PASSPORT_SCORER"));
-        PassportScorer passportScorer = PassportScorer(address(passportScorerProxy));
+        // address passportScorerProxy = networkJson.readAddress(getKeyNetwork(".PROXIES.PASSPORT_SCORER"));
+        // PassportScorer passportScorer = PassportScorer(address(passportScorerProxy));
         // Upgrades.upgradeProxy(address(passportScorer), "PassportScorer.sol:PassportScorer", "");
-        passportScorer.upgradeTo(passportScorerImplementation); // DOESNT VALIDATE SAFE UPGRADING
+        // passportScorer.upgradeTo(passportScorerImplementation); // DOESNT VALIDATE SAFE UPGRADING
 
         // REGISTRY FACTORY UPGRADE
         address registryFactoryProxy = networkJson.readAddress(getKeyNetwork(".PROXIES.REGISTRY_FACTORY"));
@@ -27,8 +27,8 @@ contract UpgradeCVMultichain is BaseMultiChain {
 
         // Upgrades.upgradeProxy(address(registryFactoryProxy), "RegistryFactoryV0_0.sol:RegistryFactoryV0_0", "");
         // abi.encodeWithSelector(RegistryFactoryV0_1.initializeV2.selector)
-        registryFactory.upgradeTo(registryFactoryImplementation); // DOESNT VALIDATE SAFE UPGRADING
-        registryFactory.setRegistryCommunityTemplate(registryImplementation);
+        // registryFactory.upgradeTo(registryFactoryImplementation); // DOESNT VALIDATE SAFE UPGRADING
+        // registryFactory.setRegistryCommunityTemplate(registryImplementation);
         registryFactory.setStrategyTemplate(strategyImplementation);
 
         // REGISTRY COMMUNITIES UPGRADES
@@ -41,7 +41,7 @@ contract UpgradeCVMultichain is BaseMultiChain {
             //     address(registryCommunityProxies[i]), "RegistryCommunityV0_0.sol:RegistryCommunityV0_0", ""
             // );
             // abi.encodeWithSelector(RegistryCommunityV0_0.initializeV2.selector)
-            registryCommunity.upgradeTo(registryImplementation); // DOESNT VALIDATE SAFE UPGRADING
+            // registryCommunity.upgradeTo(registryImplementation); // DOESNT VALIDATE SAFE UPGRADING
             registryCommunity.setStrategyTemplate(strategyImplementation);
         }
 

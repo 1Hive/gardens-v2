@@ -70,11 +70,11 @@ const btnStyles: BtnStyles = {
 
 export function Button({
   onClick,
-  className: styles,
+  className: styles = "",
   disabled = false,
   tooltip,
-  showToolTip = true,
-  tooltipClassName: tooltipStyles,
+  showToolTip = false,
+  tooltipClassName: tooltipStyles = "",
   tooltipSide = "tooltip-top",
   children,
   btnStyle = "filled",
@@ -86,8 +86,7 @@ export function Button({
   const buttonElement = (
     <button
       type={type}
-      className={`${btnStyles[btnStyle][disabled ? "disabled" : color]}
-      flex relative cursor-pointer  justify-center rounded-lg px-6 py-4 transition-all ease-out disabled:cursor-not-allowed h-fit ${styles}`}
+      className={`${btnStyles[btnStyle][disabled ? "disabled" : color]} flex relative cursor-pointer  justify-center rounded-lg px-6 py-4 transition-all ease-out disabled:cursor-not-allowed h-fit ${styles}`}
       onClick={onClick}
       disabled={disabled || isLoading}
     >
@@ -105,7 +104,7 @@ export function Button({
   return disabled || showToolTip ?
       <div
         className={`${tooltip ? "tooltip" : ""} ${tooltipSide} ${tooltipStyles}`}
-        data-tip={tooltip}
+        data-tip={tooltip ?? ""}
       >
         {buttonElement}
       </div>

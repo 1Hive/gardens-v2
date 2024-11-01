@@ -1,5 +1,6 @@
 import { useState } from "react";
 import {
+  ArrowTopRightOnSquareIcon,
   BoltIcon,
   ChartBarIcon,
   CheckIcon,
@@ -31,6 +32,7 @@ import { Statistic } from "./Statistic";
 import { blueLand, grassLarge } from "@/assets";
 import { chainConfigMap } from "@/configs/chains";
 import { usePubSubContext } from "@/contexts/pubsub.context";
+import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { MetadataV1 } from "@/hooks/useIpfsFetch";
@@ -42,7 +44,6 @@ import {
   ProposalStatus,
   SybilResistanceType,
 } from "@/types";
-import { abiWithErrors } from "@/utils/abi";
 import {
   convertSecondsToReadableTime,
   CV_PASSPORT_THRESHOLD_SCALE,
@@ -67,7 +68,6 @@ type Props = {
   >;
   token: Pick<TokenGarden, "address" | "name" | "symbol" | "decimals">;
   poolToken?: FetchTokenResult;
-  chainId: string;
 };
 
 function calculateConvictionGrowthInSeconds(
@@ -102,16 +102,16 @@ export default function PoolHeader({
   arbitrableConfig,
   token,
   poolToken,
-  chainId,
 }: Props) {
   const [isOpenModal, setIsOpenModal] = useState(false);
   const { address } = useAccount();
   const { publish } = usePubSubContext();
+  const { id: chainId, safePrefix } = useChainFromPath()!;
 
   const { data: passportStrategyData } =
     useSubgraphQuery<getPassportStrategyQuery>({
       query: getPassportStrategyDocument,
-      variables: { strategyId: strategy.id as Address },
+      variables: { strategyId: strategy.id.toLowerCase() as Address },
       changeScope: {
         topic: "pool",
         type: "update",
@@ -126,7 +126,7 @@ export default function PoolHeader({
       Number(passportStrategy?.threshold) / CV_PASSPORT_THRESHOLD_SCALE
     : null;
 
-  const blockTime = chainConfigMap[chainId].blockTime;
+  const blockTime = chainConfigMap[chainId!].blockTime;
   const spendingLimitPct =
     (Number(strategy.config.maxRatio || 0) / CV_SCALE_PRECISION) * 100;
 
@@ -207,7 +207,7 @@ export default function PoolHeader({
         sybilResistanceType ?
           sybilResistanceType === "gitcoinPassport" ? "Gitcoin Passport"
           : (sybilResistanceValue as Array<Address>)?.[0] === zeroAddress ?
-            "No restriction"
+            "None"
           : "Allowlist"
         : "",
       info:
@@ -225,6 +225,7 @@ export default function PoolHeader({
     PoolTypes[proposalType] === "signaling" ?
       poolConfig.filter(
         (config) =>
+          !!config.value &&
           !["Spending limit", "Min Threshold", "Min conviction"].includes(
             config.label,
           ),
@@ -234,7 +235,7 @@ export default function PoolHeader({
   //hooks
   const { data: isCouncilMember } = useContractRead({
     address: strategy.registryCommunity.councilSafe as Address,
-    abi: abiWithErrors(safeABI),
+    abi: safeABI,
     functionName: "isOwner",
     chainId: Number(chainId),
     enabled: !!address,
@@ -246,7 +247,7 @@ export default function PoolHeader({
 
   const { write: addStrategyByPoolId } = useContractWriteWithConfirmations({
     address: communityAddr,
-    abi: abiWithErrors(registryCommunityABI),
+    abi: registryCommunityABI,
     contractName: "Registry Community",
     functionName: "addStrategyByPoolId",
     fallbackErrorMessage: "Error approving pool, please report a bug.",
@@ -264,7 +265,7 @@ export default function PoolHeader({
 
   const { write: removeStrategyByPoolId } = useContractWriteWithConfirmations({
     address: communityAddr,
-    abi: abiWithErrors(registryCommunityABI),
+    abi: registryCommunityABI,
     contractName: "Registry Community",
     functionName: "removeStrategyByPoolId",
     fallbackErrorMessage: "Error disabling pool, please report a bug.",
@@ -284,7 +285,7 @@ export default function PoolHeader({
   const disableCouncilSafeBtnCondition: ConditionObject[] = [
     {
       condition: !isCouncilSafe,
-      message: "Connect with council safe address",
+      message: "Connect with Council safe",
     },
   ];
 
@@ -301,12 +302,28 @@ export default function PoolHeader({
       <header className="mb-2 flex flex-col">
         <div className="flex justify-between flex-wrap">
           <h2>
-            <Skeleton isLoading={!ipfsResult} className="!w-96 h-8">
+            <Skeleton isLoading={!ipfsResult} className="sm:!w-96 h-8">
               {ipfsResult?.title} #{poolId}
             </Skeleton>
           </h2>
           {(!!isCouncilMember || isCouncilSafe) && (
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
+              <div className="flex flex-col gap-1 p-1 w-48">
+                <a
+                  href={`https://app.safe.global/transactions/queue?safe=${safePrefix}:${strategy.registryCommunity.councilSafe}`}
+                  className="text-info whitespace-nowrap flex flex-nowrap gap-1 items-center"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Council safe
+                  <ArrowTopRightOnSquareIcon width={16} height={16} />
+                </a>
+                <EthAddress
+                  address={strategy.registryCommunity.councilSafe as Address}
+                  shortenAddress={true}
+                  actions="copy"
+                />
+              </div>
               <Button
                 btnStyle="outline"
                 icon={<Cog6ToothIcon height={24} width={24} />}
@@ -346,7 +363,11 @@ export default function PoolHeader({
           )}
         </div>
         <div>
-          <EthAddress icon={false} address={strategy.id as Address} />
+          <EthAddress
+            icon={false}
+            address={strategy.id as Address}
+            label="Pool address"
+          />
         </div>
         <Modal
           title={`Edit ${ipfsResult?.title} #${poolId}`}
@@ -359,7 +380,6 @@ export default function PoolHeader({
               pointSystemType={pointSystemType}
               token={token}
               proposalType={proposalType}
-              chainId={chainId}
               proposalOnDispute={proposalOnDispute}
               initValues={{
                 sybilResistanceValue: sybilResistanceValue,

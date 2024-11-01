@@ -66,7 +66,10 @@ export default function Page({
     refetch,
   } = useSubgraphQuery<getCommunityQuery>({
     query: getCommunityDocument,
-    variables: { communityAddr: communityAddr, tokenAddr: tokenAddr },
+    variables: {
+      communityAddr: communityAddr.toLowerCase(),
+      tokenAddr: tokenAddr.toLowerCase(),
+    },
     changeScope: [
       { topic: "community", id: communityAddr },
       { topic: "member", containerId: communityAddr },
@@ -238,7 +241,11 @@ export default function Page({
         <div className="flex flex-1 flex-col gap-2">
           <div>
             <h2>{communityName}</h2>
-            <EthAddress icon={false} address={communityAddr as Address} />
+            <EthAddress
+              icon={false}
+              address={communityAddr as Address}
+              label="Community address"
+            />
           </div>
           <div className="flex flex-col gap-2">
             <Statistic

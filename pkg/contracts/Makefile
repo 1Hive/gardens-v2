@@ -43,6 +43,7 @@ deploy:
 	--broadcast -vvvvv
 
 add-strategy-local: #make add-strategy S=0x1234 
+
 	-forge script script/AddStrategy.s.sol:AddStrategy \
 	--rpc-url $(RPC_URL_LOCALHOST) \
 	--sender 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266 \
@@ -94,6 +95,18 @@ add-strategy-ethsep-pool: #make add-strategy S=0x1234
 	--broadcast \
 	--legacy \
 	-vvvv
+
+# Optimism Sepolia
+deploy-testnet-multi-op: 
+	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
+	--rpc-url $(RPC_URL_OP_TESTNET) \
+	--account pkGarden \
+	--sig "run(string)" 'opsepolia' \
+	--ffi \
+	--etherscan-api-key $(ETHERSCAN_API_KEY) \
+	--broadcast \
+	--verify \
+	-vvv
 
 # Arbitrum Sepolia
 
@@ -245,16 +258,6 @@ deploy-new-collateral-vault-template-arbitrum-sepolia:
 
 upgrade-and-verify-arbsep: upgrade-arbsep verify-blockscout-arb
 
-deploy-testnet-multi-op: 
-	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
-	--rpc-url $(RPC_URL_OP_TESTNET) \
-	--account pkGarden \
-	--sig "run(string)" 'opsepolia' \
-	--ffi \
-	--etherscan-api-key $(ETHERSCAN_API_KEY) \
-	--broadcast \
-	--verify \
-	-vvv
 
 # Arbitrum
 
@@ -457,31 +460,16 @@ verify-blockscout-polygon:
 
 upgrade-and-verify-polygon: upgrade-multi-polygon verify-blockscout-polygon
 
-deploy-multi-mainnet: 
-	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
-	--rpc-url $(RPC_URL_MAINNET) \
-	--sig "run(string)" 'mainnet' \
+change-passport-manager-polygon: 
+	-forge script script/PassportScorerWriter.s.sol:PassportScorerWriter \
+	--rpc-url $(RPC_URL_POLYGON) \
+	--sig "run(string)" 'polygon' \
 	--account pkGarden \
 	--ffi \
-	--chain-id 1 \
+	--chain-id 137 \
 	--broadcast \
 	--legacy \
-	--via-ir \
 	-vvv
-
-verify-mainnet: 
-	-forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
-	--rpc-url $(RPC_URL_MAINNET) \
-	--sig "run(string)" 'mainnet' \
-	--account pkGarden \
-	--etherscan-api-key $(ETHERSCAN_API_KEY) \
-	--ffi \
-	--chain-id 1 \
-	--legacy \
-	--verify \
-	--via-ir \
-	-vvv \
-	--slow
 
 # Gnosis
 

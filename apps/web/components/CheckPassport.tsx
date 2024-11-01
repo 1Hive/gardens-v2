@@ -14,10 +14,10 @@ import { Button } from "./Button";
 import { Skeleton } from "./Skeleton";
 import { Modal } from "@/components";
 import { isProd } from "@/configs/isProd";
+import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { CV_PASSPORT_THRESHOLD_SCALE } from "@/utils/numbers";
-import { usePubSubContext } from "@/contexts/pubsub.context";
 
 type SubmitPassportResponse = {
   data: any;
@@ -77,7 +77,7 @@ export function CheckPassport({
   const { data: passportStrategyData } =
     useSubgraphQuery<getPassportStrategyQuery>({
       query: getPassportStrategyDocument,
-      variables: { strategyId: strategy.id },
+      variables: { strategyId: strategy.id.toLowerCase() },
       enabled: enableCheck,
       changeScope: {
         topic: "member",
@@ -259,15 +259,16 @@ export function CheckPassport({
         title="Gitcoin passport"
         isOpen={isOpenModal}
         onClose={() => setIsOpenModal(false)}
+        size="small"
       >
-        <div className="flex flex-col gap-8 max-w-96">
+        <div className="flex flex-col gap-8">
           <div>
-            <p>
+            <div>
               Passport score:{" "}
               <Skeleton isLoading={passportUserFetching}>
                 <span className="font-semibold w-12">{score.toFixed(2)}</span>
               </Skeleton>
-            </p>
+            </div>
             <p>
               Pool requirement:{" "}
               <span className="font-semibold">{threshold.toFixed(2)}</span>
