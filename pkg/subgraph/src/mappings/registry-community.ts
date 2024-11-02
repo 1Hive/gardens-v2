@@ -23,7 +23,13 @@ import {
   PoolCreated,
   MemberKicked,
   MemberPowerIncreased,
-  MemberPowerDecreased
+  MemberPowerDecreased,
+  CommunityNameUpdated,
+  CovenantIpfsHashUpdated,
+  KickEnabledUpdated,
+  CouncilSafeChangeStarted,
+  CouncilSafeUpdated,
+  BasisStakedAmountUpdated
 } from "../../generated/templates/RegistryCommunityV0_0/RegistryCommunityV0_0";
 
 import { RegistryFactoryV0_0 as RegistryFactoryContract } from "../../generated/RegistryFactoryV0_0/RegistryFactoryV0_0";
@@ -405,6 +411,136 @@ export function handleMemberPowerDecreased(event: MemberPowerDecreased): void {
     : event.params._unstakedAmount;
 
   newMemberCommunity.save();
+}
+
+/** Need to hanlde the following events:
+ * - handleFeeReceiverChanged
+ * - handleCommunityNameUpdated
+ * handleCovenantIpfsHashUpdated
+ * handleKickEnabledUpdated
+ * handleCouncilSafeChangeStarted
+ * handleCouncilSafeUpdated
+ * handleBasisStakedAmountUpdated
+ */
+
+// export function handleFeeReceiverChanged(event: MemberPowerDecreased): void {
+//   log.debug("RegistryCommunity: handleFeeReceiverChanged: {}", [
+//     event.params._member.toHexString()
+//   ]);
+
+// }
+
+export function handleCommunityNameUpdated(event: CommunityNameUpdated): void {
+  log.debug("RegistryCommunity: handleCommunityNameUpdated: {}", [
+    event.params._communityName
+  ]);
+
+  let community = RegistryCommunity.load(event.address.toHexString());
+  if (community == null) {
+    log.error("RegistryCommunity: Community not found: {}", [
+      event.address.toHexString()
+    ]);
+    return;
+  }
+
+  community.communityName = event.params._communityName;
+  community.save();
+}
+
+export function handleCovenantIpfsHashUpdated(
+  event: CovenantIpfsHashUpdated
+): void {
+  log.debug("RegistryCommunity: handleCovenantIpfsHashUpdated: {}", [
+    event.params._covenantIpfsHash
+  ]);
+
+  let community = RegistryCommunity.load(event.address.toHexString());
+  if (community == null) {
+    log.error("RegistryCommunity: Community not found: {}", [
+      event.address.toHexString()
+    ]);
+    return;
+  }
+
+  community.covenantIpfsHash = event.params._covenantIpfsHash;
+  community.save();
+}
+
+export function handleKickEnabledUpdated(event: KickEnabledUpdated): void {
+  log.debug("RegistryCommunity: handleKickEnabledUpdated: {}", [
+    event.params._isKickEnabled.toString()
+  ]);
+
+  let community = RegistryCommunity.load(event.address.toHexString());
+  if (community == null) {
+    log.error("RegistryCommunity: Community not found: {}", [
+      event.address.toHexString()
+    ]);
+    return;
+  }
+
+  community.isKickEnabled = event.params._isKickEnabled;
+  community.save();
+}
+
+export function handleCouncilSafeChangeStarted(
+  event: CouncilSafeChangeStarted
+): void {
+  log.debug(
+    "RegistryCommunity: handleCouncilSafeChangeStarted: from {} to {}",
+    [
+      event.params._safeOwner.toHexString(),
+      event.params._newSafeOwner.toHexString()
+    ]
+  );
+
+  let community = RegistryCommunity.load(event.address.toHexString());
+  if (community == null) {
+    log.error("RegistryCommunity: Community not found: {}", [
+      event.address.toHexString()
+    ]);
+    return;
+  }
+
+  community.pendingNewCouncilSafe = event.params._newSafeOwner.toHexString();
+  community.save();
+}
+
+export function handleCouncilSafeUpdated(event: CouncilSafeUpdated): void {
+  log.debug("RegistryCommunity: handleCouncilSafeUpdated: {}", [
+    event.params._safe.toHexString()
+  ]);
+
+  let community = RegistryCommunity.load(event.address.toHexString());
+  if (community == null) {
+    log.error("RegistryCommunity: Community not found: {}", [
+      event.address.toHexString()
+    ]);
+    return;
+  }
+
+  community.councilSafe = event.params._safe.toHexString();
+  community.pendingNewCouncilSafe = null;
+  community.save();
+}
+
+export function handleBasisStakedAmountUpdated(
+  event: BasisStakedAmountUpdated
+): void {
+  log.debug("RegistryCommunity: handleBasisStakedAmountUpdated: {}", [
+    event.params._newAmount.toString()
+  ]);
+
+  let community = RegistryCommunity.load(event.address.toHexString());
+  if (community == null) {
+    log.error("RegistryCommunity: Community not found: {}", [
+      event.address.toHexString()
+    ]);
+    return;
+  }
+
+  community.registerStakeAmount = event.params._newAmount;
+  community.save();
 }
 
 // handler: handleMemberPowerDecreased

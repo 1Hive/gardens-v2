@@ -93,6 +93,7 @@ type RegistryCommunity @entity(immutable: false) {
   registryFactory: RegistryFactory
   strategies: [CVStrategy!] @derivedFrom(field: "registryCommunity")
   councilSafe: String
+  pendingNewCouncilSafe: String
   isKickEnabled: Boolean
   registerStakeAmount: BigInt
   registerToken: String

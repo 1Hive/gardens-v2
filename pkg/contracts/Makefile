@@ -150,10 +150,11 @@ upgrade-arbsep:
 	-vvv
 
 verify-blockscout-arbsep: 
-	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
+	-forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
 	--rpc-url $(RPC_URL_ARB_TESTNET) \
 	--account pkGarden \
-	--etherscan-api-key $(ARBISCAN_API_KEY) \
+	--verifier blockscout \
+	--verifier-url https://arbitrum.blockscout.com/api/ \
 	--verify \
 	--via-ir \
 	--slow
@@ -256,7 +257,7 @@ deploy-new-collateral-vault-template-arbitrum-sepolia:
 	--verify \
 	-vvv
 
-upgrade-and-verify-arbsep: upgrade-arbsep verify-blockscout-arb
+upgrade-and-verify-arbsep: upgrade-arbsep verify-blockscout-arbsep
 
 
 # Arbitrum
