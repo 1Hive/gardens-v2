@@ -629,8 +629,14 @@ export function Proposals({
               <Link href={createProposalUrl}>
                 <Button
                   icon={<PlusIcon height={24} width={24} />}
-                  disabled={!isConnected || missmatchUrl}
-                  tooltip={isConnected ? undefined : "Connect wallet first"}
+                  disabled={!isConnected || missmatchUrl || !isMemberCommunity}
+                  tooltip={
+                    isConnected ?
+                      isMemberCommunity ?
+                        undefined
+                      : "Register to community first"
+                    : "Connect wallet first"
+                  }
                 >
                   Create a proposal
                 </Button>

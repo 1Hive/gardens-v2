@@ -29,7 +29,8 @@ import {
   KickEnabledUpdated,
   CouncilSafeChangeStarted,
   CouncilSafeUpdated,
-  BasisStakedAmountUpdated
+  BasisStakedAmountUpdated,
+  CommunityFeeUpdated
 } from "../../generated/templates/RegistryCommunityV0_0/RegistryCommunityV0_0";
 
 import { RegistryFactoryV0_0 as RegistryFactoryContract } from "../../generated/RegistryFactoryV0_0/RegistryFactoryV0_0";
@@ -540,6 +541,23 @@ export function handleBasisStakedAmountUpdated(
   }
 
   community.registerStakeAmount = event.params._newAmount;
+  community.save();
+}
+
+export function handleCommunityFeeUpdated(event: CommunityFeeUpdated): void {
+  log.debug("RegistryCommunity: handleCommunityFeeUpdated: {}", [
+    event.params._newFee.toString()
+  ]);
+
+  let community = RegistryCommunity.load(event.address.toHexString());
+  if (community == null) {
+    log.error("RegistryCommunity: Community not found: {}", [
+      event.address.toHexString()
+    ]);
+    return;
+  }
+
+  community.communityFee = event.params._newFee;
   community.save();
 }
 
