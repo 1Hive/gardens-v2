@@ -130,7 +130,7 @@ export const ProposalForm = ({
     getValues,
     setValue,
     watch,
-  } = useForm<FormInputs>();
+  } = useForm<FormInputs>({ mode: "onBlur" });
 
   const { publish } = usePubSubContext();
 
@@ -356,7 +356,9 @@ export const ProposalForm = ({
                 subLabel={`Max ${formatNumber(spendingLimitString)} ${poolToken?.symbol} (${spendingLimitPct.toFixed(2)}% of Pool Funds)`}
                 register={register}
                 required
-                onChange={(e) => setRequestedAmount(e.target.value)}
+                onChange={(e) => {
+                  setRequestedAmount(e.target.value);
+                }}
                 registerOptions={{
                   max: {
                     value: spendingLimitNumber,
