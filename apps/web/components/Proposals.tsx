@@ -621,7 +621,7 @@ export function Proposals({
               }
               tooltip="Make changes in proposals support first"
             >
-              Allocate
+              Submit allocation
             </Button>
           </div>
         : <div>
