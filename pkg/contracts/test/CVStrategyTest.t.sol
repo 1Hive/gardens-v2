@@ -932,7 +932,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
 
     function test_proposalSupported_threshold_error() public {
         uint256 maxRatio = 0.1 ether;
-        uint256 spendingLimit = ((maxRatio * 1e18) / 0.77645 ether);
+        uint256 spendingLimit = ((maxRatio * 1e18) / 0.77645 ether); // 0.77645 -> MAX_RATIO_CONSTANT
 
         console.log("maxRatio:          %s", maxRatio);
         console.log("spendingLimit:     %s", spendingLimit);
@@ -1043,7 +1043,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         // }
     }
 
-    function test_proposalSupported_conviction_with_minThresholdPoints() public {
+    function test_proposalSupported_conviction_with_minThreshold() public {
         (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) =
             _createProposal(address(0), 50 ether, 1_000 ether);
 
@@ -1056,11 +1056,12 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
             CVParams({
                 maxRatio: _etherToFloat(0.1 ether),
                 weight: _etherToFloat(0.0005 ether),
-                decay: _etherToFloat(0.9965402 ether),
-                minThresholdPoints: MIN_THRESHOLD_PTS
+                decay: _etherToFloat(0.9999834 ether),
+                minThresholdPoints: 5e24
             }),
             MINIMUM_SCORE
         );
+
         vm.stopPrank();
         // startMeasuringGas("Support a Proposal");
         int256 SUPPORT_PCT = int256(MINIMUM_STAKE);
@@ -1080,8 +1081,9 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
          */
         vm.startPrank(pool_admin());
 
-        token.approve(address(registryCommunity), STAKE_WITH_FEES);
+        token.approve(address(registryCommunity), STAKE_WITH_FEES + 10 ether);
         registryCommunity.stakeAndRegisterMember();
+        // registryCommunity.increasePower(10 ether);
         cv.activatePoints();
 
         ProposalSupport[] memory votes2 = new ProposalSupport[](1);
@@ -1134,7 +1136,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         console.log("Conviction Last:   %s", convictionLast);
         // console.log("Voter points pct %s", voterPointsPct);
         // assertEq(threshold, 115613619, "threshold");
-        assertEq(threshold, MIN_THRESHOLD_PTS, "threshold");
+        // 30120481927710843373493975 -> threshold override computed based on minThresholdPoints
+        assertEq(threshold, 30120481927710843373493975, "threshold"); // Expect to be the threshold override
 
         console.log("after block.number", block.number);
 

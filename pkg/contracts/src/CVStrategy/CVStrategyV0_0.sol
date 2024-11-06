@@ -199,7 +199,6 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     );
     event CVParamsUpdated(CVParams cvParams);
     event RegistryUpdated(address registryCommunity);
-    event MinThresholdPointsUpdated(uint256 before, uint256 minThresholdPoints);
     event ProposalDisputed(
         IArbitrator arbitrator,
         uint256 proposalId,
@@ -1047,9 +1046,14 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
             (((((cvParams.weight << 128) / D) / ((denom * denom) >> 64)) * D) / (D - cvParams.decay))
                 * totalEffectiveActivePoints()
         ) >> 64;
+        console.log("_threshold", _threshold);
+        uint256 thresholdOverride = (
+            ((cvParams.minThresholdPoints / totalEffectiveActivePoints()) * D) * (getMaxConviction(totalEffectiveActivePoints()))
+        ) / 10**11;
+        
         //_threshold = ((((((weight * 2**128) / D) / ((denom * denom) / 2 **64)) * D) / (D - decay)) * _totalStaked()) / 2 ** 64;
-        // console.log("_threshold", _threshold);
-        _threshold = _threshold > cvParams.minThresholdPoints ? _threshold : cvParams.minThresholdPoints;
+
+        _threshold = _threshold > thresholdOverride ? _threshold : thresholdOverride;
     }
 
     /**
