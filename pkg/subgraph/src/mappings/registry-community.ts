@@ -30,7 +30,8 @@ import {
   CouncilSafeChangeStarted,
   CouncilSafeUpdated,
   BasisStakedAmountUpdated,
-  CommunityFeeUpdated
+  CommunityFeeUpdated,
+  FeeReceiverChanged
 } from "../../generated/templates/RegistryCommunityV0_0/RegistryCommunityV0_0";
 
 import { RegistryFactoryV0_0 as RegistryFactoryContract } from "../../generated/RegistryFactoryV0_0/RegistryFactoryV0_0";
@@ -558,6 +559,27 @@ export function handleCommunityFeeUpdated(event: CommunityFeeUpdated): void {
   }
 
   community.communityFee = event.params._newFee;
+  community.save();
+}
+
+export function handleFeeReceiverChanged(event: FeeReceiverChanged): void {
+  log.debug("RegistryCommunity: handleFeeReceiverChanged: {}", [
+    event.params._feeReceiver.toHexString()
+  ]);
+
+  let community = RegistryCommunity.load(event.address.toHexString());
+  if (community == null) {
+    log.error("RegistryCommunity: Community not found: {}", [
+      event.address.toHexString()
+    ]);
+    return;
+  }
+
+  if (event.params._feeReceiver) {
+    community.protocolFeeReceiver = event.params._feeReceiver.toHexString();
+  } else {
+    community.protocolFeeReceiver = null;
+  }
   community.save();
 }
 

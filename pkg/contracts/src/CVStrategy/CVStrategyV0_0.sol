@@ -150,12 +150,9 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     error TokenCannotBeZero(); //0x596a094c
     error TokenNotAllowed(); // 0xa29c4986
     error AmountOverMaxRatio(); // 0x3bf5ca14
-    error PoolIdCannotBeZero(); //0x4e791786
     error AddressCannotBeZero(); //0xe622e040
     error RegistryCannotBeZero(); // 0x5df4b1ef
     error SupportUnderflow(uint256 _support, int256 _delta, int256 _result); // 0x3bbc7142
-    error MaxPointsReached(); // 0x8402b474
-    error CantIncreaseFixedSystem(); // 0x573c3e93
     error NotEnoughPointsToSupport(uint256 pointsSupport, uint256 pointsBalance); // 0xd64182fe
 
     error ProposalDataIsEmpty(); //0xc5f7c4c0
@@ -399,12 +396,6 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         _data;
         CreateProposal memory proposal = abi.decode(_data, (CreateProposal));
 
-        // if (proposal.proposalId == 0) {
-        // revert ProposalIdCannotBeZero();
-        // }
-        if (proposal.poolId == 0) {
-            revert PoolIdCannotBeZero();
-        }
         // console.log("proposalType", uint256(proposalType));
         if (proposalType == ProposalType.Funding) {
             _revertZeroAddress(proposal.beneficiary);
@@ -1028,32 +1019,24 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         if (poolAmount <= 0) {
             revert PoolIsEmpty();
         }
-        //        require(maxRatio.mul(funds) > _requestedAmount.mul(D), ERROR_AMOUNT_OVER_MAX_RATIO);
-        // console.log("maxRatio", maxRatio);
-        // console.log("funds=poolAmount", funds);
-        // console.log("_requestedAmount", _requestedAmount);
-        // console.log("D", D);
-        // console.log("maxRatio * funds", maxRatio * funds);
-        // console.log("_requestedAmount * D", _requestedAmount * D);
 
         if (_isOverMaxRatio(_requestedAmount)) {
             revert AmountOverMaxRatio();
         }
-        // denom = maxRatio * 2 ** 64 / D  - requestedAmount * 2 ** 64 / funds
-        // denom = maxRatio / 1 - _requestedAmount / funds;
+
         uint256 denom = (cvParams.maxRatio * 2 ** 64) / D - (_requestedAmount * 2 ** 64) / poolAmount;
         _threshold = (
             (((((cvParams.weight << 128) / D) / ((denom * denom) >> 64)) * D) / (D - cvParams.decay))
                 * totalEffectiveActivePoints()
         ) >> 64;
-        console.log("_threshold", _threshold);
-        uint256 thresholdOverride = (
-            ((cvParams.minThresholdPoints / totalEffectiveActivePoints()) * D) * (getMaxConviction(totalEffectiveActivePoints()))
-        ) / 10**11;
-        
-        //_threshold = ((((((weight * 2**128) / D) / ((denom * denom) / 2 **64)) * D) / (D - decay)) * _totalStaked()) / 2 ** 64;
 
-        _threshold = _threshold > thresholdOverride ? _threshold : thresholdOverride;
+        if (totalEffectiveActivePoints() != 0) {
+            uint256 thresholdOverride = (
+                ((cvParams.minThresholdPoints / totalEffectiveActivePoints()) * D)
+                    * (getMaxConviction(totalEffectiveActivePoints()))
+            ) / 10 ** 11;
+            _threshold = _threshold > thresholdOverride ? _threshold : thresholdOverride;
+        }
     }
 
     /**
@@ -1266,7 +1249,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         payable
         virtual
         returns (uint256 disputeId)
-    {   
+    {
         checkSenderIsMember(msg.sender);
         Proposal storage proposal = proposals[proposalId];
         ArbitrableConfig memory arbitrableConfig = arbitrableConfigs[proposal.arbitrableConfigVersion];

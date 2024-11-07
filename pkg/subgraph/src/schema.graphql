@@ -88,6 +88,7 @@ type RegistryCommunity @entity(immutable: false) {
   profileId: String
   communityFee: BigInt!
   protocolFee: BigInt!
+  protocolFeeReceiver: String
   communityName: String
   covenantIpfsHash: String
   registryFactory: RegistryFactory
