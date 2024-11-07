@@ -19,6 +19,7 @@ type ConvictionBarChartProps = {
   proposalNumber: number;
   compact?: boolean;
   timeToPass?: number;
+  defaultChartMaxValue?: boolean;
   onReadyToExecute?: () => void;
 };
 
@@ -31,6 +32,7 @@ export const ConvictionBarChart = ({
   compact,
   timeToPass,
   onReadyToExecute,
+  defaultChartMaxValue = false,
 }: ConvictionBarChartProps) => {
   const supportNeeded = (thresholdPct - proposalSupportPct).toFixed(2);
   const scenarioMappings: Record<string, ScenarioMapping> = {
@@ -181,7 +183,7 @@ export const ConvictionBarChart = ({
     disabled: true,
   };
 
-  const borderRadius = [50, 0, 0, 50];
+  const borderRadius = defaultChartMaxValue ? [50, 50] : [50, 0, 0, 50];
 
   const markLine: MarkLineComponentOption = {
     symbol: "none",
@@ -213,6 +215,12 @@ export const ConvictionBarChart = ({
         },
         z: 50,
       };
+
+  const chartMaxValue =
+    defaultChartMaxValue ?
+      Math.max(currentConvictionPct, proposalSupportPct, thresholdPct)
+    : 100;
+
   const option: EChartsOption = {
     emphasis: emphasis,
     yAxis: {
@@ -228,12 +236,12 @@ export const ConvictionBarChart = ({
       axisLabel: {
         show: false,
         formatter: "{value}%",
-        fontSize: 10,
+        fontSize: 8,
       },
       axisLine: {
         show: false,
       },
-      max: 100,
+      max: chartMaxValue,
     },
     tooltip: {
       trigger: "axis",
@@ -273,7 +281,7 @@ export const ConvictionBarChart = ({
           show: !compact,
           position: "insideRight",
           color: "#191919",
-          fontSize: 10,
+          fontSize: 8,
           formatter: "{@score} %",
         },
         z:
@@ -294,7 +302,7 @@ export const ConvictionBarChart = ({
           show: !compact,
           position: "insideRight",
           color: "#FFFFFF",
-          fontSize: 10,
+          fontSize: 8,
           formatter: "{@score} %",
           width: 0,
         },

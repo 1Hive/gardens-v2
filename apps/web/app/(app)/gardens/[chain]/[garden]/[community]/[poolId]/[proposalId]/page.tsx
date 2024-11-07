@@ -278,6 +278,7 @@ export default function Page({
               proposalNumber={Number(proposalIdNumber)}
               timeToPass={Number(timeToPass)}
               onReadyToExecute={triggerConvictionRefetch}
+              defaultChartMaxValue
             />
           </>
         }
