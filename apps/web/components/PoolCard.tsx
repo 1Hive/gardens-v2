@@ -62,32 +62,32 @@ export function PoolCard({ pool, tokenGarden }: Props) {
           </h3>
         </Skeleton>
         <div className="flex justify-between items-center w-full">
-          <h6>ID #{poolId}</h6>
+          <h6>POOL ID: #{poolId}</h6>
           <Badge type={poolType} />
         </div>
       </header>
-      <div className="mb-8 flex min-h-[60px] flex-col gap-2">
+      <div className="mb-8 flex flex-col gap-2">
         <Statistic
           icon={<BoltIcon />}
           label="voting weight"
           count={capitalize(PointSystems[config?.pointSystem])}
         />
-        <Statistic
-          icon={<HandRaisedIcon />}
-          count={proposals.length}
-          label="proposals"
-        />
-        <Statistic
-          icon={<CurrencyDollarIcon />}
-          label="funds"
-          className={`${poolType && PoolTypes[poolType] === "funding" ? "visible" : "invisible"}`}
-        >
-          <DisplayNumber
-            number={[BigInt(poolAmount), tokenGarden.decimals]}
-            compact={true}
-            tokenSymbol={tokenGarden.symbol}
+        {isEnabled && (
+          <Statistic
+            icon={<HandRaisedIcon />}
+            count={proposals.length}
+            label="proposals"
           />
-        </Statistic>
+        )}
+        {isEnabled && poolType && PoolTypes[poolType] === "funding" && (
+          <Statistic icon={<CurrencyDollarIcon />} label="funds">
+            <DisplayNumber
+              number={[BigInt(poolAmount), tokenGarden.decimals]}
+              compact={true}
+              tokenSymbol={tokenGarden.symbol}
+            />
+          </Statistic>
+        )}
       </div>
       {!isEnabled ?
         <div className="banner md:min-w-[262px]">
