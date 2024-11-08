@@ -158,13 +158,50 @@ export function handleMemberRegisteredWithCovenant(
 }
 
 export function handleMemberRegistered(event: MemberRegistered): void {
-  event.parameters[2].value = ethereum.Value.fromString("");
-  // @ts-ignore
-  const eventWithCovenant = changetype<MemberRegisteredWithCovenant>(
-    event.params
-  );
+  const community = event.address.toHex();
+  const memberAddress = event.params._member.toHexString();
+  const memberCommunityId = `${memberAddress}-${community}`;
+  log.debug("RegistryCommunity: handleMemberRegistered: {}, {}", [
+    community,
+    memberAddress
+  ]);
 
-  handleMemberRegisteredWithCovenant(eventWithCovenant);
+  let member = Member.load(memberAddress);
+
+  if (member == null) {
+    member = new Member(memberAddress);
+  }
+
+  member.save();
+
+  const rcc = RegistryCommunityContract.bind(event.address);
+
+  const token = rcc.gardenToken();
+  let tg = TokenGarden.load(token.toHexString());
+  if (tg == null) {
+    log.error("RegistryCommunity: TokenGarden not found", []);
+    return;
+  }
+  const erc20 = ERC20Contract.bind(token);
+
+  tg.totalBalance = erc20.balanceOf(event.address);
+  tg.save();
+
+  let newMemberCommunity = MemberCommunity.load(memberCommunityId);
+
+  if (newMemberCommunity == null) {
+    newMemberCommunity = new MemberCommunity(memberCommunityId);
+    newMemberCommunity.member = memberAddress;
+    newMemberCommunity.registryCommunity = community;
+    newMemberCommunity.memberAddress = memberAddress;
+  }
+
+  newMemberCommunity.stakedTokens = newMemberCommunity.stakedTokens
+    ? newMemberCommunity.stakedTokens!.plus(event.params._amountStaked)
+    : event.params._amountStaked;
+
+  newMemberCommunity.isRegistered = true;
+  newMemberCommunity.save();
 }
 
 //handleMemberUnregistered
