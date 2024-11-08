@@ -124,14 +124,17 @@ export function RegisterMember({
     token.symbol,
     communityAddress as Address,
     registrationCost,
-    handleRegistration,
+    () => handleRegistration(covenantSignature),
   );
 
   const message = `You agree with the terms and conditions of ${communityName} covenant: 
     https://ipfs.io/ipfs/${covenantIpfsHash}`;
 
-  const { covenantAgreementTxProps: covenantAgreementTx, handleSignature } =
-    useCovenantAgreementSignature(message, handleAllowance);
+  const {
+    covenantAgreementTxProps: covenantAgreementTx,
+    handleSignature,
+    covenantSignature,
+  } = useCovenantAgreementSignature(message, handleAllowance);
 
   const handleClick = useCallback(() => {
     if (isMember) {

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { toast } from "react-toastify";
 import { Address } from "wagmi";
 import { TransactionProps } from "@/components/TransactionModal";
 import { usePubSubContext } from "@/contexts/pubsub.context";
@@ -12,7 +13,7 @@ export function useHandleRegistration(
   urlChainId: number | undefined,
 ): {
   registrationTxProps: TransactionProps;
-  handleRegistration: () => void;
+  handleRegistration: (covenantSignature: `0x${string}` | undefined) => void;
   resetState: () => void;
 } {
   const [registrationTxProps, setRegistrationTxProps] =
@@ -54,9 +55,19 @@ export function useHandleRegistration(
     }));
   }, [registerMemberTxStatus, registerMemberTxError]);
 
-  const handleRegistration = useCallback(() => {
-    writeRegisterMember();
-  }, [writeRegisterMember]);
+  const handleRegistration = useCallback(
+    (covenantSignature: `0x${string}` | undefined) => {
+      console.log({ covenantSignature });
+      if (!covenantSignature) {
+        toast.error("Covenant signature is required");
+        return;
+      }
+      writeRegisterMember({
+        args: [covenantSignature],
+      });
+    },
+    [writeRegisterMember],
+  );
 
   const resetState = useCallback(() => {
     setRegistrationTxProps({
