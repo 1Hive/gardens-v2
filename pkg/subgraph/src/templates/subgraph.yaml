@@ -38,6 +38,8 @@ templates:
           handler: handleInitialized
         - event: MemberRegistered(address,uint256)
           handler: handleMemberRegistered
+        - event: MemberRegisteredWithCovenant(address,uint256,string)
+          handler: handleMemberRegisteredWithCovenant
         - event: MemberUnregistered(address,uint256)
           handler: handleMemberUnregistered
         - event: PoolCreated(uint256,address,address,address,(uint256,string))

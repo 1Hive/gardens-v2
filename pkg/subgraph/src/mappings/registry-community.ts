@@ -31,7 +31,8 @@ import {
   CouncilSafeUpdated,
   BasisStakedAmountUpdated,
   CommunityFeeUpdated,
-  FeeReceiverChanged
+  FeeReceiverChanged,
+  MemberRegisteredWithCovenant
 } from "../../generated/templates/RegistryCommunityV0_0/RegistryCommunityV0_0";
 
 import { RegistryFactoryV0_0 as RegistryFactoryContract } from "../../generated/RegistryFactoryV0_0/RegistryFactoryV0_0";
@@ -108,6 +109,14 @@ export function handleInitialized(event: RegistryInitialized): void {
 }
 
 // // handleMemberRegistered
+export function handleMemberRegisteredWithCovenant(
+  event: MemberRegisteredWithCovenant
+): void {
+  // @ts-ignore
+  const eventWithoutCovenant = changetype<MemberRegistered>(event.params);
+  handleMemberRegistered(eventWithoutCovenant);
+}
+
 export function handleMemberRegistered(event: MemberRegistered): void {
   const community = event.address.toHex();
   const memberAddress = event.params._member.toHexString();

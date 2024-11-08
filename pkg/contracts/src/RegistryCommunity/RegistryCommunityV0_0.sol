@@ -89,6 +89,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
     event CouncilSafeUpdated(address _safe);
     event CouncilSafeChangeStarted(address _safeOwner, address _newSafeOwner);
     event MemberRegistered(address _member, uint256 _amountStaked);
+    event MemberRegisteredWithCovenant(address _member, uint256 _amountStaked, string _covenantSig);
     event MemberUnregistered(address _member, uint256 _amountReturned);
     event MemberKicked(address _member, address _transferAddress, uint256 _amountReturned);
     event CommunityFeeUpdated(uint256 _newFee);
@@ -570,7 +571,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         return newMember.isRegistered;
     }
 
-    function stakeAndRegisterMember() public virtual nonReentrant {
+    function stakeAndRegisterMember(string memory covenantSig) public virtual nonReentrant {
         address _member = msg.sender;
         Member storage newMember = addressToMemberInfo[_member];
         IRegistryFactory gardensFactory = IRegistryFactory(registryFactory);
@@ -603,7 +604,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
             }
             totalMembers += 1;
 
-            emit MemberRegistered(_member, registerStakeAmount);
+            emit MemberRegisteredWithCovenant(_member, registerStakeAmount, covenantSig);
         }
     }
 
