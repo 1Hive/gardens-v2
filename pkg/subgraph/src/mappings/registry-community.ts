@@ -23,16 +23,16 @@ import {
   PoolCreated,
   MemberKicked,
   MemberPowerIncreased,
+  MemberRegisteredWithCovenant,
   MemberPowerDecreased,
   CommunityNameUpdated,
-  CovenantIpfsHashUpdated,
-  KickEnabledUpdated,
-  CouncilSafeChangeStarted,
-  CouncilSafeUpdated,
   BasisStakedAmountUpdated,
   CommunityFeeUpdated,
+  CouncilSafeChangeStarted,
+  CouncilSafeUpdated,
+  CovenantIpfsHashUpdated,
   FeeReceiverChanged,
-  MemberRegisteredWithCovenant
+  KickEnabledUpdated
 } from "../../generated/templates/RegistryCommunityV0_0/RegistryCommunityV0_0";
 
 import { RegistryFactoryV0_0 as RegistryFactoryContract } from "../../generated/RegistryFactoryV0_0/RegistryFactoryV0_0";
@@ -108,7 +108,6 @@ export function handleInitialized(event: RegistryInitialized): void {
   }
 }
 
-// // handleMemberRegistered
 export function handleMemberRegisteredWithCovenant(
   event: MemberRegisteredWithCovenant
 ): void {
@@ -160,10 +159,12 @@ export function handleMemberRegisteredWithCovenant(
 }
 
 export function handleMemberRegistered(event: MemberRegistered): void {
+  event.parameters[2].value = ethereum.Value.fromString("");
   // @ts-ignore
   const eventWithCovenant = changetype<MemberRegisteredWithCovenant>(
     event.params
   );
+
   handleMemberRegisteredWithCovenant(eventWithCovenant);
 }
 
