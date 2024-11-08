@@ -129,6 +129,7 @@ type MemberCommunity @entity(immutable: false) {
   isRegistered: Boolean
   member: Member!
   registryCommunity: RegistryCommunity!
+  covenantSignature: String
 }
 
 type MemberStrategy @entity(immutable: false) {

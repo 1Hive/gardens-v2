@@ -10,7 +10,7 @@ import {
   MemberStrategy
 } from "../../generated/schema";
 
-import { BigInt, dataSource, log } from "@graphprotocol/graph-ts";
+import { BigInt, dataSource, ethereum, log } from "@graphprotocol/graph-ts";
 import {
   RegistryInitialized,
   RegistryCommunityV0_0 as RegistryCommunityContract,
@@ -112,12 +112,6 @@ export function handleInitialized(event: RegistryInitialized): void {
 export function handleMemberRegisteredWithCovenant(
   event: MemberRegisteredWithCovenant
 ): void {
-  // @ts-ignore
-  const eventWithoutCovenant = changetype<MemberRegistered>(event.params);
-  handleMemberRegistered(eventWithoutCovenant);
-}
-
-export function handleMemberRegistered(event: MemberRegistered): void {
   const community = event.address.toHex();
   const memberAddress = event.params._member.toHexString();
   const memberCommunityId = `${memberAddress}-${community}`;
@@ -161,7 +155,16 @@ export function handleMemberRegistered(event: MemberRegistered): void {
     : event.params._amountStaked;
 
   newMemberCommunity.isRegistered = true;
+  newMemberCommunity.covenantSignature = event.params._covenantSig;
   newMemberCommunity.save();
+}
+
+export function handleMemberRegistered(event: MemberRegistered): void {
+  // @ts-ignore
+  const eventWithCovenant = changetype<MemberRegisteredWithCovenant>(
+    event.params
+  );
+  handleMemberRegisteredWithCovenant(eventWithCovenant);
 }
 
 //handleMemberUnregistered
