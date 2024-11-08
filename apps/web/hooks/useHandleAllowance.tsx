@@ -4,6 +4,7 @@ import { useChainIdFromPath } from "./useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "./useContractWriteWithConfirmations";
 import { TransactionProps } from "@/components/TransactionModal";
 import { erc20ABI } from "@/src/generated";
+import { delayAsync } from "@/utils/delayAsync";
 import { getTxMessage } from "@/utils/transactionMessages";
 
 export function useHandleAllowance(
@@ -55,6 +56,7 @@ export function useHandleAllowance(
     if (!currentAllowance?.data || currentAllowance.data < amount) {
       writeAllowToken({ args: [spenderAddr, amount] });
     } else {
+      await delayAsync(1000);
       setAllowanceTxProps({
         contractName: `${tokenSymbol} expenditure approval`,
         message: getTxMessage("success"),
