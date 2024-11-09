@@ -87,7 +87,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     poolToken.symbol,
     alloInfo.id as Address,
     requestedAmount,
-    writeFundPool,
+    () => writeFundPool(),
   );
 
   const { tooltipMessage, missmatchUrl } = useDisableButtons();
@@ -113,7 +113,9 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
       status: "idle",
     }));
     setIsOpenModal(true);
-    handleAllowance(parseUnits(data.amount.toString(), poolToken.decimals));
+    handleAllowance({
+      formAmount: parseUnits(data.amount.toString(), poolToken.decimals),
+    });
   };
 
   return (

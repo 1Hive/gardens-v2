@@ -55,7 +55,18 @@ export function useHandleRegistration(
     }));
   }, [registerMemberTxStatus, registerMemberTxError]);
 
+  const handleRegistration = useCallback(
+    (covenantSignature: `0x${string}` | undefined) => {
+      if (!covenantSignature) {
+        toast.error("Covenant signature is required");
+        return;
+      }
+      writeRegisterMember({
+        args: [covenantSignature],
       });
+    },
+    [writeRegisterMember],
+  );
 
   const resetState = useCallback(() => {
     setRegistrationTxProps({

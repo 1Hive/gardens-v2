@@ -14,12 +14,12 @@ export function useHandleAllowance(
   tokenSymbol: string,
   spenderAddr: Address,
   amount: bigint,
-  triggerNextTx: (covenantSignature: `0x${string}`) => void,
+  triggerNextTx: (covenantSignature: `0x${string}` | undefined) => void,
 ): {
   allowanceTxProps: TransactionProps;
   handleAllowance: (args: {
     formAmount?: bigint;
-    covenantSignature: `0x${string}`;
+    covenantSignature?: `0x${string}`;
   }) => void;
   resetState: () => void;
 } {
@@ -55,7 +55,7 @@ export function useHandleAllowance(
 
   const handleAllowance = async (args: {
     formAmount?: bigint;
-    covenantSignature: `0x${string}`;
+    covenantSignature?: `0x${string}`;
   }) => {
     const currentAllowance = await refetchAllowance();
     if (args.formAmount) {
