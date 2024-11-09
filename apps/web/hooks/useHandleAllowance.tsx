@@ -65,6 +65,7 @@ export function useHandleAllowance(
       setOnSuccess(() => triggerNextTx(args.covenantSignature));
       writeAllowToken({ args: [spenderAddr, amount] });
     } else {
+      await delayAsync(1000);
       setAllowanceTxProps({
         contractName: `${tokenSymbol} expenditure approval`,
         message: getTxMessage("success"),

@@ -250,10 +250,10 @@ export function handlePointsDeactivated(event: PointsDeactivated): void {
               }
               let prop = contractProposal.value;
               const maxConviction = cvc.getMaxConviction(
-                prop.value4 // proposalStakedAmount
+                prop.getStakedAmount()
               );
               proposal.maxCVStaked = maxConviction;
-              proposal.convictionLast = prop.value7; // convictionLast
+              proposal.convictionLast = prop.getConvictionLast();
 
               proposal.save();
               const memberStrategyId = `${member.id}-${strategy.id}`;
