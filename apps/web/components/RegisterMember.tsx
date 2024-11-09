@@ -124,7 +124,7 @@ export function RegisterMember({
     token.symbol,
     communityAddress as Address,
     registrationCost,
-    () => handleRegistration(covenantSignature),
+    handleRegistration,
   );
 
   const message = `You agree with the terms and conditions of ${communityName} covenant: 
@@ -133,7 +133,6 @@ export function RegisterMember({
   const {
     covenantAgreementTxProps: covenantAgreementTx,
     handleSignature,
-    covenantSignature,
   } = useCovenantAgreementSignature(message, handleAllowance);
 
   const handleClick = useCallback(() => {

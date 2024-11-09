@@ -135,7 +135,7 @@ deploy-arbsep:
 	-vvvvv
 
 upgrade-arbsep: 
-	-forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
+	-forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
 	--rpc-url $(RPC_URL_ARB_TESTNET) \
 	--sig "run(string)" 'arbsepolia' \
 	--account pkGarden \
@@ -150,7 +150,7 @@ upgrade-arbsep:
 	-vvv
 
 verify-blockscout-arbsep: 
-	-forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
+	-forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
 	--rpc-url $(RPC_URL_ARB_TESTNET) \
 	--account pkGarden \
 	--verifier blockscout \
@@ -276,7 +276,7 @@ deploy-new-collateral-vault-template-arbitrum:
 	--verify \
 	-vvv
 
-deploy-multi-arbitrum: 
+deploy-arbitrum: 
 	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
 	--rpc-url $(RPC_URL_ARB) \
 	--sig "run(string)" 'arbitrum' \
@@ -288,8 +288,8 @@ deploy-multi-arbitrum:
 	--via-ir \
 	-vvv
 
-upgrade-multi-arbitrum: 
-	-forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
+upgrade-arbitrum: 
+	-forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
 	--rpc-url $(RPC_URL_ARB) \
 	--sig "run(string)" 'arbitrum' \
 	--account pkGarden \
@@ -303,7 +303,7 @@ upgrade-multi-arbitrum:
 	-vvv
 
 verify-blockscout-arbitrum: 
-	-forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
+	-forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
 	--rpc-url $(RPC_URL_ARB) \
 	--sig "run(string)" 'arbitrum' \
 	--account pkGarden \
@@ -317,7 +317,7 @@ verify-blockscout-arbitrum:
 	-vvv \
 	--slow
 
-upgrade-and-verify-arbitrum: upgrade-multi-arbitrum verify-blockscout-arbitrum
+upgrade-and-verify-arbitrum: upgrade-arbitrum verify-blockscout-arbitrum
 
 change-passport-manager-arbitrum: 
 	-forge script script/PassportScorerWriter.s.sol:PassportScorerWriter \
@@ -346,7 +346,7 @@ deploy-new-collateral-vault-template-optimism:
 	--verify \
 	-vvv
 
-deploy-multi-optimism: 
+deploy-optimism: 
 	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
 	--rpc-url $(RPC_URL_OPT) \
 	--sig "run(string)" 'optimism' \
@@ -360,8 +360,8 @@ deploy-multi-optimism:
 	--verify \
 	-vvv
 
-upgrade-multi-optimism: 
-	-forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
+upgrade-optimism: 
+	-forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
 	--rpc-url $(RPC_URL_OPT) \
 	--sig "run(string)" 'optimism' \
 	--account pkGarden \
@@ -375,7 +375,7 @@ upgrade-multi-optimism:
 	-vvv
 
 verify-blockscout-optimism: 
-	-forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
+	-forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
 	--rpc-url $(RPC_URL_OPT) \
 	--sig "run(string)" 'optimism' \
 	--account pkGarden \
@@ -389,7 +389,7 @@ verify-blockscout-optimism:
 	-vvv \
 	--slow
 
-upgrade-and-verify-optimism: upgrade-multi-optimism verify-blockscout-optimism
+upgrade-and-verify-optimism: upgrade-optimism verify-blockscout-optimism
 
 change-passport-manager-optimism: 
 	-forge script script/PassportScorerWriter.s.sol:PassportScorerWriter \
@@ -418,7 +418,7 @@ deploy-new-collateral-vault-template-polygon:
 	--verify \
 	-vvv
 
-deploy-multi-polygon: 
+deploy-polygon: 
 	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
 	--rpc-url $(RPC_URL_POLYGON) \
 	--sig "run(string)" 'polygon' \
@@ -430,8 +430,8 @@ deploy-multi-polygon:
 	--via-ir \
 	-vvv
 
-upgrade-multi-polygon: 
-	-forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
+upgrade-polygon: 
+	-forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
 	--rpc-url $(RPC_URL_POLYGON) \
 	--sig "run(string)" 'polygon' \
 	--account pkGarden \
@@ -445,7 +445,7 @@ upgrade-multi-polygon:
 	-vvv
 
 verify-blockscout-polygon: 
-	-forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
+	-forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
 	--rpc-url $(RPC_URL_POLYGON) \
 	--sig "run(string)" 'polygon' \
 	--account pkGarden \
@@ -459,7 +459,7 @@ verify-blockscout-polygon:
 	-vvv \
 	--slow
 
-upgrade-and-verify-polygon: upgrade-multi-polygon verify-blockscout-polygon
+upgrade-and-verify-polygon: upgrade-polygon verify-blockscout-polygon
 
 change-passport-manager-polygon: 
 	-forge script script/PassportScorerWriter.s.sol:PassportScorerWriter \
@@ -488,7 +488,7 @@ deploy-new-collateral-vault-template-gnosis:
 	--verify \
 	-vvv
 
-deploy-multi-gnosis: 
+deploy-gnosis: 
 	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
 	--rpc-url $(RPC_URL_GNOSIS) \
 	--sig "run(string)" 'gnosis' \
@@ -502,8 +502,8 @@ deploy-multi-gnosis:
 	--via-ir \
 	-vvv
 
-upgrade-multi-gnosis: 
-	-forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
+upgrade-gnosis: 
+	-forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
 	--rpc-url $(RPC_URL_GNOSIS) \
 	--sig "run(string)" 'gnosis' \
 	--account pkGarden \
@@ -517,7 +517,7 @@ upgrade-multi-gnosis:
 	-vvv
 
 verify-blockscout-gnosis: 
-	-forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
+	-forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
 	--rpc-url $(RPC_URL_GNOSIS) \
 	--sig "run(string)" 'gnosis' \
 	--account pkGarden \
@@ -532,7 +532,7 @@ verify-blockscout-gnosis:
 	--slow
 
 # verify-tenderly-gnosis: 
-# 	-forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
+# 	-forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
 # 	--rpc-url $(RPC_URL_GNOSIS) \
 # 	--sig "run(string)" 'gnosis' \
 # 	--account pkGarden \
@@ -555,7 +555,7 @@ verify-tenderly-gnosis:
   --watch \
  	--via-ir 
 
-upgrade-and-verify-gnosis: upgrade-multi-gnosis verify-blockscout-gnosis
+upgrade-and-verify-gnosis: upgrade-gnosis verify-blockscout-gnosis
 
 change-passport-manager-gnosis: 
 	-forge script script/PassportScorerWriter.s.sol:PassportScorerWriter \
@@ -570,7 +570,7 @@ change-passport-manager-gnosis:
 
 # Mainnet
 
-# deploy-multi-mainnet: 
+# deploy-mainnet: 
 # 	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
 # 	--rpc-url $(RPC_URL_MAINNET) \
 # 	--sig "run(string)" 'mainnet' \
@@ -583,7 +583,7 @@ change-passport-manager-gnosis:
 # 	-vvv
 
 # verify-mainnet: 
-# 	-forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
+# 	-forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
 # 	--rpc-url $(RPC_URL_MAINNET) \
 # 	--sig "run(string)" 'mainnet' \
 # 	--account pkGarden \

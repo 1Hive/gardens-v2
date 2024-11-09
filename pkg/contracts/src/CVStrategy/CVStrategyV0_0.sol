@@ -142,21 +142,21 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     /*|              CUSTOM ERRORS                 |*/
     /*|--------------------------------------------|*/
 
-    error UserCannotBeZero(); // 0xd1f28288
+    // error UserCannotBeZero(); // 0xd1f28288
     error UserNotInRegistry(); //0x6a5cfb6d
     error UserIsInactive(); // 0x5fccb67f
     error PoolIsEmpty(); // 0xed4421ad
     error NotImplemented(); //0xd6234725
-    error TokenCannotBeZero(); //0x596a094c
+    // error TokenCannotBeZero(); //0x596a094c
     error TokenNotAllowed(); // 0xa29c4986
     error AmountOverMaxRatio(); // 0x3bf5ca14
     error AddressCannotBeZero(); //0xe622e040
-    error RegistryCannotBeZero(); // 0x5df4b1ef
+    // error RegistryCannotBeZero(); // 0x5df4b1ef
     error SupportUnderflow(uint256 _support, int256 _delta, int256 _result); // 0x3bbc7142
     error NotEnoughPointsToSupport(uint256 pointsSupport, uint256 pointsBalance); // 0xd64182fe
 
-    error ProposalDataIsEmpty(); //0xc5f7c4c0
-    error ProposalIdCannotBeZero(); //0xf881a10d
+    // error ProposalDataIsEmpty(); //0xc5f7c4c0
+    // error ProposalIdCannotBeZero(); //0xf881a10d
     error ProposalNotActive(uint256 _proposalId); // 0x44980d8f
     error ProposalNotInList(uint256 _proposalId); // 0xc1d17bef
     error ProposalSupportDuplicated(uint256 _proposalId, uint256 index); //0xadebb154
@@ -168,7 +168,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     error InsufficientCollateral(uint256 sentAmount, uint256 requiredAmount);
     error OnlyArbitrator();
     error ProposalNotDisputed(uint256 _proposalId);
-    error ArbitratorCannotBeZero();
+    // error ArbitratorCannotBeZero();
     error OnlySubmitter(address submitter, address sender);
     // Goss: Support Collateral Zero
     // error CollateralVaultCannotBeZero();
@@ -288,9 +288,9 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
 
         CVStrategyInitializeParamsV0_1 memory ip = abi.decode(_data, (CVStrategyInitializeParamsV0_1));
 
-        if (ip.registryCommunity == address(0)) {
-            revert RegistryCannotBeZero();
-        }
+        // if (ip.registryCommunity == address(0)) {
+        //     revert RegistryCannotBeZero();
+        // }
         //Set councilsafe to whitelist admin
         registryCommunity = RegistryCommunityV0_0(ip.registryCommunity);
 
@@ -328,14 +328,14 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     /*|                 MODIFIERS                  |*/
     /*|--------------------------------------------|*/
     function checkSenderIsMember(address _sender) internal view virtual {
-        if (_sender == address(0)) {
-            revert UserCannotBeZero();
-        }
-        if (address(registryCommunity) == address(0)) {
-            revert RegistryCannotBeZero();
-        }
+        // if (_sender == address(0)) {
+        //     revert UserCannotBeZero();
+        // }
+        // if (address(registryCommunity) == address(0)) {
+        //     revert RegistryCannotBeZero();
+        // }
         if (!registryCommunity.isMember(_sender)) {
-            revert UserNotInRegistry();
+            revert();
         }
         // _;
     }
@@ -400,9 +400,9 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         if (proposalType == ProposalType.Funding) {
             _revertZeroAddress(proposal.beneficiary);
             // getAllo().getPool(poolId).token;
-            if (proposal.requestedToken == address(0)) {
-                revert TokenCannotBeZero();
-            }
+            // if (proposal.requestedToken == address(0)) {
+            //     revert TokenCannotBeZero();
+            // }
             IAllo _allo = this.getAllo();
             IAllo.Pool memory pool = _allo.getPool(proposal.poolId);
             if (proposal.requestedToken != pool.token) {
@@ -451,12 +451,11 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     // }
 
     function activatePoints() external virtual {
-        address member = msg.sender;
-        if (!_canExecuteAction(member)) {
+        if (!_canExecuteAction(msg.sender)) {
             revert UserCannotExecuteAction();
         }
-        registryCommunity.activateMemberInStrategy(member, address(this));
-        totalPointsActivated += registryCommunity.getMemberPowerInStrategy(member, address(this));
+        registryCommunity.activateMemberInStrategy(msg.sender, address(this));
+        totalPointsActivated += registryCommunity.getMemberPowerInStrategy(msg.sender, address(this));
     }
 
     function deactivatePoints() public virtual {
@@ -514,16 +513,15 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     }
 
     function increasePowerCapped(address _member, uint256 _amountToStake) internal view virtual returns (uint256) {
-        uint256 pointsToIncrease = _amountToStake;
-        // console.log("POINTS TO INCREASE", pointsToIncrease);
+        // console.log("POINTS TO INCREASE", _amountToStake);
         uint256 memberPower = registryCommunity.getMemberPowerInStrategy(_member, address(this));
         // console.log("MEMBERPOWER", memberPower);
-        if (memberPower + pointsToIncrease > pointConfig.maxAmount) {
-            pointsToIncrease = pointConfig.maxAmount - memberPower;
+        if (memberPower + _amountToStake > pointConfig.maxAmount) {
+            _amountToStake = pointConfig.maxAmount - memberPower;
         }
-        // console.log("POINTS TO INCREASE END", pointsToIncrease);
+        // console.log("POINTS TO INCREASE END", _amountToStake);
 
-        return pointsToIncrease;
+        return _amountToStake;
     }
 
     function increasePowerQuadratic(address _member, uint256 _amountToStake) internal view virtual returns (uint256) {
@@ -599,10 +597,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
                 }
             }
         }
-        // surpressStateMutabilityWarning++;
-
-        bool isMemberActivatedPoints = registryCommunity.memberActivatedInStrategies(_sender, address(this));
-        if (!isMemberActivatedPoints) {
+        if (!registryCommunity.memberActivatedInStrategies(_sender, address(this))) {
             revert UserIsInactive();
         }
         // ProposalSupport[] memory pv = abi.decode(_data, (ProposalSupport[]));
@@ -615,15 +610,15 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     // this contract will need to track the amount paid already, so that it doesn't double pay
     function _distribute(address[] memory, bytes memory _data, address) internal virtual override {
         // surpressStateMutabilityWarning++;
-        if (_data.length <= 0) {
-            revert ProposalDataIsEmpty();
-        }
+        // if (_data.length <= 0) {
+        //     revert ProposalDataIsEmpty();
+        // }
 
         uint256 proposalId = abi.decode(_data, (uint256));
 
-        if (proposalId == 0) {
-            revert ProposalIdCannotBeZero();
-        }
+        // if (proposalId == 0) {
+        //     revert ProposalIdCannotBeZero();
+        // }
         Proposal storage proposal = proposals[proposalId];
 
         if (proposalType == ProposalType.Funding) {
@@ -725,9 +720,8 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
 
     function withdraw(address _member) internal virtual {
         // remove all proposals from the member
-        uint256[] memory proposalsIds = voterStakedProposals[_member];
-        for (uint256 i = 0; i < proposalsIds.length; i++) {
-            uint256 proposalId = proposalsIds[i];
+        for (uint256 i = 0; i < voterStakedProposals[_member].length; i++) {
+            uint256 proposalId = voterStakedProposals[_member][i];
             Proposal storage proposal = proposals[proposalId];
             if (proposalExists(proposalId)) {
                 uint256 stakedPoints = proposal.voterStakedPoints[_member];
@@ -1254,9 +1248,9 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         Proposal storage proposal = proposals[proposalId];
         ArbitrableConfig memory arbitrableConfig = arbitrableConfigs[proposal.arbitrableConfigVersion];
 
-        if (address(arbitrableConfig.arbitrator) == address(0)) {
-            revert ArbitratorCannotBeZero();
-        }
+        // if (address(arbitrableConfig.arbitrator) == address(0)) {
+        //     revert ArbitratorCannotBeZero();
+        // }
         // Goss: Support Collateral Zero
         // if (address(collateralVault) == address(0)) {
         //     revert CollateralVaultCannotBeZero();

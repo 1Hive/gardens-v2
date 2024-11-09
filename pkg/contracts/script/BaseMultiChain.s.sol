@@ -55,7 +55,6 @@ abstract contract BaseMultiChain is Native, CVStrategyHelpers, Script, SafeSetup
     address allo_proxy;
     Allo allo;
     GV2ERC20 token;
-    RegistryFactoryV0_0 registryFactory;
     IArbitrator arbitrator;
     ISybilScorer sybilScorer;
 

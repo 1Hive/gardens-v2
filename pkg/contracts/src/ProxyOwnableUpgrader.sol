@@ -11,19 +11,21 @@ contract ProxyOwnableUpgrader is OwnableUpgradeable, UUPSUpgradeable {
         _transferOwnership(initialOwner);
     }
 
-    function owner() public view override returns (address) {
-        address currentOwner = OwnableUpgradeable.owner();
+    function proxyOwner() public view returns (address) {
+        return OwnableUpgradeable.owner();
+    }
 
+    function owner() public view override returns (address) {
         // Check if the current owner is a contract
-        if (address(currentOwner).code.length == 0) {
+        if (address(proxyOwner()).code.length == 0) {
             // The owner is an EOA or a non-contract address
-            return currentOwner;
+            return proxyOwner();
         } else {
-            try OwnableUpgradeable(currentOwner).owner() returns (address _owner) {
+            try OwnableUpgradeable(proxyOwner()).owner() returns (address _owner) {
                 return _owner;
             } catch {
                 // Handle the case where the recursive call fails
-                return currentOwner;
+                return proxyOwner();
             }
         }
     }

@@ -6,20 +6,17 @@ import {CVStrategyV0_0} from "../src/CVStrategy/CVStrategyV0_0.sol";
 import {RegistryCommunityV0_0} from "../src/RegistryCommunity/RegistryCommunityV0_0.sol";
 import {RegistryFactoryV0_0} from "../src/RegistryFactory/RegistryFactoryV0_0.sol";
 
-contract UpgradeCVMultichain is BaseMultiChain {
+contract UpgradeCVMultichainTest is BaseMultiChain {
     using stdJson for string;
 
     function runCurrentNetwork(string memory networkJson) public override {
-        address registryFactoryImplementation = address(new RegistryFactoryV0_0());
-        address registryImplementation = address(new RegistryCommunityV0_0());
-        address strategyImplementation = address(new CVStrategyV0_0());
-        address passportScorerImplementation = address(new PassportScorer());
+        address proxyOwner = networkJson.readAddress(getKeyNetwork(".PROXIES.PROXY_OWNER"));
+
+        // Arbitrator
+        address passportScorerProxy = networkJson.readAddress(getKeyNetwork(".PROXIES.PASSPORT_SCORER"));
 
         // PASSPORT SCORER UPGRADE
-        // address passportScorerProxy = networkJson.readAddress(getKeyNetwork(".PROXIES.PASSPORT_SCORER"));
-        // PassportScorer passportScorer = PassportScorer(address(passportScorerProxy));
-        // Upgrades.upgradeProxy(address(passportScorer), "PassportScorer.sol:PassportScorer", "");
-        // passportScorer.upgradeTo(passportScorerImplementation); // DOESNT VALIDATE SAFE UPGRADING
+        address passportScorerProxy = networkJson.readAddress(getKeyNetwork(".PROXIES.PASSPORT_SCORER"));
 
         // REGISTRY FACTORY UPGRADE
         address registryFactoryProxy = networkJson.readAddress(getKeyNetwork(".PROXIES.REGISTRY_FACTORY"));

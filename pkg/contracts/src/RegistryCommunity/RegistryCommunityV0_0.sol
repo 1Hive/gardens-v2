@@ -337,7 +337,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         address strategyProxy = address(
             new ERC1967Proxy(
                 address(strategyTemplate),
-                abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo), collateralVaultTemplate, owner())
+                abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo), collateralVaultTemplate, proxyOwner())
             )
         );
         (poolId, strategy) = createPool(strategyProxy, _token, _params, _metadata);
@@ -566,27 +566,24 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         emit CouncilSafeUpdated(address(councilSafe));
     }
 
-    function isMember(address _member) public view virtual returns (bool _isMember) {
-        Member memory newMember = addressToMemberInfo[_member];
-        return newMember.isRegistered;
+    function isMember(address _member) public view virtual returns (bool) {
+        return addressToMemberInfo[_member].isRegistered;
     }
 
     function stakeAndRegisterMember(string memory covenantSig) public virtual nonReentrant {
-        address _member = msg.sender;
-        Member storage newMember = addressToMemberInfo[_member];
         IRegistryFactory gardensFactory = IRegistryFactory(registryFactory);
         uint256 communityFeeAmount = (registerStakeAmount * communityFee) / (100 * PRECISION_SCALE);
         uint256 gardensFeeAmount =
             (registerStakeAmount * gardensFactory.getProtocolFee(address(this))) / (100 * PRECISION_SCALE);
-        if (!isMember(_member)) {
-            newMember.isRegistered = true;
+        if (!isMember(msg.sender)) {
+            addressToMemberInfo[msg.sender].isRegistered = true;
 
-            newMember.stakedAmount = registerStakeAmount;
+            addressToMemberInfo[msg.sender].stakedAmount = registerStakeAmount;
             // console.log("registerStakeAmount", registerStakeAmount);
             // console.log("gardenToken", address(gardenToken));
 
             gardenToken.safeTransferFrom(
-                _member, address(this), registerStakeAmount + communityFeeAmount + gardensFeeAmount
+                msg.sender, address(this), registerStakeAmount + communityFeeAmount + gardensFeeAmount
             );
             //TODO: Test if revert because of approve on contract, if doesnt work, transfer all to this contract, and then transfer to each receiver
             //individually. Check vulnerabilites for that with Felipe
@@ -604,15 +601,14 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
             }
             totalMembers += 1;
 
-            emit MemberRegisteredWithCovenant(_member, registerStakeAmount, covenantSig);
+            emit MemberRegisteredWithCovenant(msg.sender, registerStakeAmount, covenantSig);
         }
     }
 
     function getStakeAmountWithFees() public view virtual returns (uint256) {
-        IRegistryFactory gardensFactory = IRegistryFactory(registryFactory);
         uint256 communityFeeAmount = (registerStakeAmount * communityFee) / (100 * PRECISION_SCALE);
         uint256 gardensFeeAmount =
-            (registerStakeAmount * gardensFactory.getProtocolFee(address(this))) / (100 * PRECISION_SCALE);
+            (registerStakeAmount * IRegistryFactory(registryFactory).getProtocolFee(address(this))) / (100 * PRECISION_SCALE);
 
         return registerStakeAmount + communityFeeAmount + gardensFeeAmount;
     }
@@ -678,7 +674,6 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
 
     function unregisterMember() public virtual nonReentrant {
         address _member = msg.sender;
-        onlyRegistryMemberAddress(_member);
         deactivateAllStrategies(_member);
         Member memory member = addressToMemberInfo[_member];
         delete addressToMemberInfo[_member];
@@ -715,5 +710,5 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         emit MemberKicked(_member, _transferAddress, member.stakedAmount);
     }
 
-    uint256[50] private __gap;
+    uint256[49] private __gap;
 }

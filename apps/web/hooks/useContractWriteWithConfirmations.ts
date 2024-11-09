@@ -100,8 +100,10 @@ export function useContractWriteWithConfirmations<
     console.error(
       `Error with transaction [${props.contractName} -> ${props.functionName}]`,
       {
-        error: JSON.stringify(error),
-        variables: JSON.stringify(variables),
+        errorJson: JSON.stringify(error),
+        error,
+        variablesJson: JSON.stringify(variables),
+        variables,
         context,
         rawData,
         contract: props.address,
