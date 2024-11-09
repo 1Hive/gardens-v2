@@ -57,7 +57,6 @@ export function useHandleRegistration(
 
   const handleRegistration = useCallback(
     (covenantSignature: `0x${string}` | undefined) => {
-      console.log({ covenantSignature });
       if (!covenantSignature) {
         toast.error("Covenant signature is required");
         return;

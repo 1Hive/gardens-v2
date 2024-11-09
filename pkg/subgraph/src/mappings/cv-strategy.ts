@@ -6,11 +6,11 @@ import {
   MemberStrategy,
   Stake,
   Member,
-  ProposalDispute
+  ProposalDispute,
 } from "../../generated/schema";
 import {
   ProposalDisputeMetadata as ProposalDisputeMetadataTemplate,
-  ProposalMetadata as ProposalMetadataTemplate
+  ProposalMetadata as ProposalMetadataTemplate,
 } from "../../generated/templates";
 
 import {
@@ -610,7 +610,6 @@ export function handleSybilScorerUpdated(event: SybilScorerUpdated): void {
   cvs.sybilScorer = event.params.sybilScorer.toHexString();
   cvs.save();
 }
-
 /// -- Privates -- ///
 
 function computeConfig(

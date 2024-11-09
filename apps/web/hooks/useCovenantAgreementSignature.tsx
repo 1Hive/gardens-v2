@@ -11,14 +11,11 @@ interface CustomError extends Error {
 
 export function useCovenantAgreementSignature(
   message: string,
-  triggerNextTx: () => void,
+  triggerNextTx: (args: { covenantSignature: `0x${string}` }) => void,
 ): {
   covenantAgreementTxProps: TransactionProps;
-  covenantSignature: `0x${string}` | undefined;
   handleSignature: () => void;
 } {
-  const [covenantSignatureState, setCovenantSignature] =
-    useState<`0x${string}`>();
   const path = usePathname();
   const CovenantTitle = (
     <div className="flex gap-2">
@@ -60,8 +57,7 @@ export function useCovenantAgreementSignature(
           message: getTxMessage("success"),
           status: "success",
         });
-        setCovenantSignature(data);
-        triggerNextTx();
+        triggerNextTx({ covenantSignature: data });
       }
     },
   });
@@ -78,7 +74,6 @@ export function useCovenantAgreementSignature(
 
   return {
     covenantAgreementTxProps,
-    covenantSignature: covenantSignatureState,
     handleSignature: signMessage,
   };
 }
