@@ -1116,6 +1116,11 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         );
     }
 
+    function setPoolParams(ArbitrableConfig memory _arbitrableConfig, CVParams memory _cvParams) external virtual {
+      onlyCouncilSafe();
+      _setPoolParams(_arbitrableConfig, _cvParams);
+    }
+
     function _setPoolParams(ArbitrableConfig memory _arbitrableConfig, CVParams memory _cvParams) internal virtual {
         if (
             _arbitrableConfig.tribunalSafe != address(0) && address(_arbitrableConfig.arbitrator) != address(0)

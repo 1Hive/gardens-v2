@@ -13,7 +13,8 @@
         "TOKEN": "0xcc6c8B9f745dB2277f7aaC1Bc026d5C2Ea7bD88D",
         "ALLO_PROXY": "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
         "ALLO_IMPL": "0xB087535DB0df98fC4327136e897A5985E5Cfbd66",
-        "REGISTRY": "0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3"
+        "REGISTRY": "0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3",
+        "ARBITRATOR": "0x5534fecacd5f84e22c0aba9ea9813ff594d37262"
       },
       "PROXIES": {
         "REGISTRY_FACTORY": "0x7a603877488db46c0f6b40c2c770becfd7a65593",
@@ -71,7 +72,7 @@
           "0xfbaecc060d6a9051eb13c824b9eaff825976d44f",
           "0xfd71d94f892670d3085cfaf1d93d0e4eb0b8963b"
         ],
-        "PASSPORT_SCORER": "0xff53a163e43eccc00d8fde7aca24aa9fa4da7356"
+        "PASSPORT_SCORER": "0x32fe66622a4d4607241ac723e23fef487acdabb5"
       }
     },
     {

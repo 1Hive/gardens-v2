@@ -259,6 +259,40 @@ deploy-new-collateral-vault-template-arbitrum-sepolia:
 
 upgrade-and-verify-arbsep: upgrade-arbsep verify-blockscout-arbsep
 
+transfer-ownership-arbsep:
+	-forge script script/TransferOwnershipAllContracts.s.sol:TransferOwnershipAllContracts \
+	--rpc-url $(RPC_URL_ARB_TESTNET) \
+	--account pkGarden \
+	--sig "run(string)" 'arbsepolia' \
+	--chain-id 421614 \
+	--via-ir \
+	--broadcast \
+	-vvvv
+
+deploy-passport-scorer-arbsep:
+	-forge script script/DeployPassportScorer.s.sol:DeployPassportScorer \
+	--rpc-url $(RPC_URL_ARB_TESTNET) \
+	--account pkGarden \
+	--sig "run(string)" 'arbsepolia' \
+	--chain-id 421614 \
+	--via-ir \
+	--etherscan-api-key $(ARBISCAN_API_KEY) \
+	--verify \
+	--broadcast \
+	-vvvv
+
+
+deploy-safe-arbitrator-arbsep:
+	-forge script script/DeploySafeArbitrator.s.sol:DeploySafeArbitrator \
+	--rpc-url $(RPC_URL_ARB_TESTNET) \
+	--account pkGarden \
+	--sig "run(string)" 'arbsepolia' \
+	--chain-id 421614 \
+	--via-ir \
+	--etherscan-api-key $(ARBISCAN_API_KEY) \
+	--verify \
+	--broadcast \
+	-vvvv
 
 # Arbitrum
 
