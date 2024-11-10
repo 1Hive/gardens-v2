@@ -96,17 +96,35 @@ export function useContractWriteWithConfirmations<
       args: variables.args,
     });
     const rawData = encodedData;
-
+    let logPayload = {
+      errorJson: JSON.stringify(error),
+      error,
+      variablesJson: JSON.stringify(variables),
+      variables,
+      context,
+      rawData,
+      contract: props.address,
+      message: error.message,
+    };
+    try {
+      logPayload = {
+        ...logPayload,
+        errorJson: JSON.stringify(error),
+      };
+    } catch (e) {
+      console.error("Error parsing logPayload error: ", e);
+    }
+    try {
+      logPayload = {
+        ...logPayload,
+        variablesJson: JSON.stringify(variables),
+      };
+    } catch (e) {
+      console.error("Error parsing logPayload variable: ", e);
+    }
     console.error(
       `Error with transaction [${props.contractName} -> ${props.functionName}]`,
-      {
-        error,
-        variables,
-        context,
-        rawData,
-        contract: props.address,
-        message: error.message,
-      },
+      logPayload,
     );
   }
 
