@@ -51,14 +51,6 @@ abstract contract BaseMultiChain is Native, CVStrategyHelpers, Script, SafeSetup
 
     address public BENEFICIARY = 0xc583789751910E39Fd2Ddb988AD05567Bcd81334;
 
-    uint256 councilMemberPKEnv;
-    address allo_proxy;
-    Allo allo;
-    GV2ERC20 token;
-    RegistryFactoryV0_0 registryFactory;
-    IArbitrator arbitrator;
-    ISybilScorer sybilScorer;
-
     function pool_admin() public virtual override returns (address) {
         return address(SENDER);
     }
@@ -289,7 +281,7 @@ abstract contract BaseMultiChain is Native, CVStrategyHelpers, Script, SafeSetup
         // token.approve(address(registryCommunity), type(uint256).max);
         // // token.mint(address(pool_admin()), 100);
         // //@todo get correct value instead infinite approval
-        // registryCommunity.stakeAndRegisterMember();
+        // registryCommunity.stakeAndRegisterMember("");
 
         // assertEq(registryCommunity.isMember(address(pool_admin())), true, "Not a member");
         // // assertEq(token.balanceOf(address(this)), registryCommunity.getStakeAmountWithFees(), "Balance not correct");

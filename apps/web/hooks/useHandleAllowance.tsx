@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { noop } from "lodash-es";
 import { Address, useContractRead } from "wagmi";
 import { useChainIdFromPath } from "./useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "./useContractWriteWithConfirmations";
@@ -13,10 +14,13 @@ export function useHandleAllowance(
   tokenSymbol: string,
   spenderAddr: Address,
   amount: bigint,
-  triggerNextTx: () => void,
+  triggerNextTx: (covenantSignature: `0x${string}` | undefined) => void,
 ): {
   allowanceTxProps: TransactionProps;
-  handleAllowance: (formAmount?: bigint) => void;
+  handleAllowance: (args: {
+    formAmount?: bigint;
+    covenantSignature?: `0x${string}`;
+  }) => void;
   resetState: () => void;
 } {
   const chainId = useChainIdFromPath();
@@ -25,6 +29,7 @@ export function useHandleAllowance(
     message: "",
     status: "idle",
   });
+  const [onSuccess, setOnSuccess] = useState<() => void>(noop);
 
   const { refetch: refetchAllowance } = useContractRead({
     chainId,
@@ -48,12 +53,16 @@ export function useHandleAllowance(
     showNotification: false,
   });
 
-  const handleAllowance = async (formAmount?: bigint) => {
+  const handleAllowance = async (args: {
+    formAmount?: bigint;
+    covenantSignature?: `0x${string}`;
+  }) => {
     const currentAllowance = await refetchAllowance();
-    if (formAmount) {
-      amount = formAmount;
+    if (args.formAmount) {
+      amount = args.formAmount;
     }
     if (!currentAllowance?.data || currentAllowance.data < amount) {
+      setOnSuccess(() => triggerNextTx(args.covenantSignature));
       writeAllowToken({ args: [spenderAddr, amount] });
     } else {
       await delayAsync(1000);
@@ -62,7 +71,7 @@ export function useHandleAllowance(
         message: getTxMessage("success"),
         status: "success",
       });
-      triggerNextTx();
+      triggerNextTx(args.covenantSignature);
     }
   };
 
@@ -73,7 +82,7 @@ export function useHandleAllowance(
       status: transactionStatus ?? "idle",
     });
     if (transactionStatus === "success") {
-      triggerNextTx();
+      delayAsync(2000).then(() => onSuccess());
     }
   }, [transactionStatus]);
 
