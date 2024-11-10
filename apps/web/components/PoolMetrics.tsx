@@ -159,7 +159,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
               <p className="subtitle2">Wallet balance:</p>
               <Skeleton isLoading={!balance}>
                 <DisplayNumber
-                  number={[balance!.value, poolToken.decimals]}
+                  number={[balance?.value ?? BigInt(0), poolToken.decimals]}
                   tokenSymbol={poolToken.symbol}
                   compact={true}
                   className="subtitle2 text-primary-content"
