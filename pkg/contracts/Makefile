@@ -132,7 +132,7 @@ deploy-arbsep:
 	--legacy \
 	--via-ir \
 	--verify \
-	-vvvvv
+	-vv
 
 upgrade-arbsep: 
 	-forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
