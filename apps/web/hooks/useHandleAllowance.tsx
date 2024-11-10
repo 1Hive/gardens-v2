@@ -62,7 +62,7 @@ export function useHandleAllowance(
       amount = args.formAmount;
     }
     if (!currentAllowance?.data || currentAllowance.data < amount) {
-      setOnSuccess(() => triggerNextTx(args.covenantSignature));
+      setOnSuccess(() => () => triggerNextTx(args.covenantSignature));
       writeAllowToken({ args: [spenderAddr, amount] });
     } else {
       await delayAsync(1000);
