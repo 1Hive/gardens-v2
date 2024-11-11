@@ -382,13 +382,15 @@ export const ProposalForm = ({
               />
             </div>
           )}
+
           {requestedAmount && thresholdPct !== 0 && thresholdPct < 100 && (
-            <p>Conviction required to pass {thresholdPct}%</p>
-          )}
-          {requestedAmount && thresholdPct > 50 && thresholdPct < 100 && (
             <InfoBox infoBoxType={"warning"}>
-              This proposal needs over half of the pool&apos;s governance weight
-              in conviction and it may be difficult to pass.
+              The conviction required in order for the proposal to pass with the
+              requested amount is {thresholdPct}%.{" "}
+              {requestedAmount &&
+                thresholdPct > 50 &&
+                thresholdPct < 100 &&
+                "It may be difficult to pass"}
             </InfoBox>
           )}
           {proposalTypeName !== "signaling" && (
