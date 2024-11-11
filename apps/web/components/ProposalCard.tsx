@@ -154,32 +154,32 @@ export function ProposalCard({
   const proposalCardContent = (
     <>
       <div
-        className={`flex gap-3 justify-between py-3 flex-wrap ${isAllocationView ? `section-layout ${isNewProposal ? "shadow-2xl" : ""}` : ""}`}
+        className={`flex gap-3 justify-between flex-wrap ${isAllocationView ? `section-layout ${isNewProposal ? "shadow-2xl" : ""}` : ""}`}
       >
-        <div className="flex flex-col sm:flex-row w-full">
+        <div className="flex flex-col sm:flex-row w-full justify-between gap-2">
           {/* icon title and id */}
-          <div className="flex gap-6 flex-1">
-            <div className="hidden sm:block">
+          <header className="flex  justify-between items-start gap-2 ">
+            <div className="hidden lg:block">
               <Hashicon value={id} size={45} />
             </div>
-            <div>
-              <h4 className="sm:max-w-md lg:max-w-lg">
-                <Skeleton isLoading={!metadata} className="sm:w-96 h-5">
-                  <TooltipIfOverflow className="first-letter:uppercase">
-                    {metadata?.title}
-                  </TooltipIfOverflow>
-                </Skeleton>
-              </h4>
-              <div className="flex items-baseline gap-3">
-                <h6 className="text-sm">ID {proposalNumber}</h6>
-                <p className="text-sm text-neutral-soft-content">
-                  {prettyTimestamp(proposalData.createdAt ?? 0)}
-                </p>
+            <div className="flex w-full items-start flex-col gap-1">
+              <Skeleton isLoading={!metadata}>
+                <h3 className="flex items-start w-fit max-w-full">
+                  <TooltipIfOverflow>{metadata?.title}</TooltipIfOverflow>
+                </h3>
+              </Skeleton>
+              <div className="flex justify-between items-center">
+                <div className="flex items-baseline gap-3">
+                  <h6 className="text-sm">ID {proposalNumber}</h6>
+                  <p className="text-sm text-neutral-soft-content">
+                    {prettyTimestamp(proposalData.createdAt ?? 0)}
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
+          </header>
           {/* amount requested and proposal status */}
-          <div className="flex gap-6 text-neutral-soft-content">
+          <div className="flex gap-6 text-neutral-soft-content justify-end">
             {!isSignalingType && poolToken && (
               <div className="flex items-center gap-1 justify-self-end">
                 <p>Requested amount: </p>
@@ -299,7 +299,7 @@ export function ProposalCard({
         </div>
       </div>
       {!isAllocationView && stakedFilter && stakedFilter?.value > 0 && (
-        <p className="flex items-baseline text-xs">
+        <p className="flex items-baseline text-xs mt-2">
           Your support: {poolWeightAllocatedInProposal}%
         </p>
       )}
