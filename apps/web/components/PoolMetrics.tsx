@@ -9,6 +9,7 @@ import { Allo } from "#/subgraph/.graphclient";
 import { Button } from "./Button";
 import { DisplayNumber } from "./DisplayNumber";
 import { FormInput } from "./Forms";
+import { Skeleton } from "./Skeleton";
 import { TransactionModal, TransactionProps } from "./TransactionModal";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
@@ -16,7 +17,6 @@ import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useHandleAllowance } from "@/hooks/useHandleAllowance";
 import { alloABI } from "@/src/generated";
 import { getTxMessage } from "@/utils/transactionMessages";
-import { Skeleton } from "./Skeleton";
 
 interface PoolMetricsProps {
   poolAmount: number;
