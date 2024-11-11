@@ -20,7 +20,7 @@ contract PassportScorerTest is Test {
     function setUp() public {
         ERC1967Proxy proxy = new ERC1967Proxy(
             address(new PassportScorer()),
-            abi.encodeWithSelector(PassportScorer.initialize.selector, address(listManager))
+            abi.encodeWithSelector(PassportScorer.initialize.selector, address(councilSafe), address(listManager))
         );
 
         passportScorer = PassportScorer(payable(address(proxy)));

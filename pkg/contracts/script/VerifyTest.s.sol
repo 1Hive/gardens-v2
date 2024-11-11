@@ -38,13 +38,13 @@ contract VerifyTest is BaseMultiChain {
     using stdJson for string;
 
     function runCurrentNetwork(string memory networkJson) public virtual override {
-        allo_proxy = networkJson.readAddress(getKeyNetwork(".ENVS.ALLO_PROXY"));
+        address allo_proxy = networkJson.readAddress(getKeyNetwork(".ENVS.ALLO_PROXY"));
 
         if (allo_proxy == address(0)) {
             revert("ALLO_PROXY not set");
         }
 
-        allo = Allo(allo_proxy);
+        IAllo allo = Allo(allo_proxy);
 
         assertTrue(address(allo) != address(0));
 

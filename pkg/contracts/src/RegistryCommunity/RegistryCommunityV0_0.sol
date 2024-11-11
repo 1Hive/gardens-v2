@@ -673,6 +673,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
     }
 
     function unregisterMember() public virtual nonReentrant {
+        onlyRegistryMemberSender();
         address _member = msg.sender;
         deactivateAllStrategies(_member);
         Member memory member = addressToMemberInfo[_member];

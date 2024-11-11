@@ -335,7 +335,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         //     revert RegistryCannotBeZero();
         // }
         if (!registryCommunity.isMember(_sender)) {
-            revert();
+            revert UserNotInRegistry();
         }
         // _;
     }
