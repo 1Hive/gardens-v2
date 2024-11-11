@@ -146,7 +146,7 @@ export const IncreasePower = ({
       status: "idle",
     }));
     setIsOpenModal(true);
-    handleAllowance();
+    handleAllowance({});
   }
 
   const isInputIncreaseGreaterThanBalance =
@@ -201,7 +201,7 @@ export const IncreasePower = ({
     tokenSymbol,
     communityAddress as Address,
     parseUnits(amount, tokenDecimals),
-    writeIncreasePower,
+    () => writeIncreasePower(),
   );
 
   // useEffect(() => {

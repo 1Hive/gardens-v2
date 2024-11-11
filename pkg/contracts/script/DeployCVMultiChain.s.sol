@@ -51,12 +51,12 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
 
     string public CURRENT_NETWORK = "arbsepolia";
 
-    address BENEFICIARY = 0xc583789751910E39Fd2Ddb988AD05567Bcd81334;
+    address BENEFICIARY = 0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD;
 
-    ProxyOwner public PROXY_OWNER;
+    address public PROXY_OWNER = 0xD28473FbD87183864CAc0482DBEe1C54EE3d8Cd1;
     RegistryFactoryV0_0 public REGISTRY_FACTORY; // = RegistryFactoryV0_0(0xd7b72Fcb6A4e2857685175F609D1498ff5392E46);
-    PassportScorer PASSPORT_SCORER; // = PassportScorer(0x83bDE2E2D8AcAAad2D300DA195dF3cf86b234bdd);
-    SafeArbitrator ARBITRATOR; // = SafeArbitrator(0x450967C1497Ab95dF8530A9a8eAaE5E951171Dee);
+    PassportScorer PASSPORT_SCORER = PassportScorer(0x32Fe66622a4D4607241AC723e23Fef487ACDABb5);
+    SafeArbitrator ARBITRATOR = SafeArbitrator(0x5534FECacD5f84e22C0aBA9ea9813ff594D37262);
 
     uint256 councilMemberPKEnv;
     address allo_proxy;
@@ -131,10 +131,10 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
             revert("ALLO_PROXY not set");
         }
         // get PK from env
-        councilMemberPKEnv = vm.envUint("PK");
-        if (councilMemberPKEnv == 0) {
-            revert("PK not set");
-        }
+        // councilMemberPKEnv = vm.envUint("PK");
+        // if (councilMemberPKEnv == 0) {
+        //     revert("PK not set");
+        // }
 
         allo = Allo(allo_proxy);
 
@@ -147,9 +147,9 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
                 address(new ProxyOwner()), abi.encodeWithSelector(ProxyOwner.initialize.selector, SENDER)
             );
 
-            PROXY_OWNER = ProxyOwner(payable(address(proxyOwnerProxy)));
+            PROXY_OWNER = address(proxyOwnerProxy);
         }
-        console2.log("Proxy owner Addr: %s", address(PROXY_OWNER));
+        console2.log("Proxy owner Addr: %s", PROXY_OWNER);
 
         if (address(PASSPORT_SCORER) == address(0)) {
             ERC1967Proxy scorerProxy = new ERC1967Proxy(
@@ -284,7 +284,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
             token.approve(address(registryCommunity), type(uint256).max);
             // token.mint(address(pool_admin()), 100);
             //@todo get correct value instead infinite approval
-            registryCommunity.stakeAndRegisterMember();
+            registryCommunity.stakeAndRegisterMember("");
 
             assertEq(registryCommunity.isMember(address(pool_admin())), true, "Not a member");
 

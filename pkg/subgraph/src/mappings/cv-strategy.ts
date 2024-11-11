@@ -6,11 +6,11 @@ import {
   MemberStrategy,
   Stake,
   Member,
-  ProposalDispute
+  ProposalDispute,
 } from "../../generated/schema";
 import {
   ProposalDisputeMetadata as ProposalDisputeMetadataTemplate,
-  ProposalMetadata as ProposalMetadataTemplate
+  ProposalMetadata as ProposalMetadataTemplate,
 } from "../../generated/templates";
 
 import {
@@ -250,10 +250,10 @@ export function handlePointsDeactivated(event: PointsDeactivated): void {
               }
               let prop = contractProposal.value;
               const maxConviction = cvc.getMaxConviction(
-                prop.value4 // proposalStakedAmount
+                prop.getStakedAmount()
               );
               proposal.maxCVStaked = maxConviction;
-              proposal.convictionLast = prop.value7; // convictionLast
+              proposal.convictionLast = prop.getConvictionLast();
 
               proposal.save();
               const memberStrategyId = `${member.id}-${strategy.id}`;
@@ -610,7 +610,6 @@ export function handleSybilScorerUpdated(event: SybilScorerUpdated): void {
   cvs.sybilScorer = event.params.sybilScorer.toHexString();
   cvs.save();
 }
-
 /// -- Privates -- ///
 
 function computeConfig(
