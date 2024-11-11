@@ -225,7 +225,7 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
             token.mint(address(membersStaked[i]), MINIMUM_STAKE * 2);
             if (i < 4) {
                 token.approve(address(registryCommunity), MINIMUM_STAKE);
-                registryCommunity.stakeAndRegisterMember();
+                registryCommunity.stakeAndRegisterMember("");
                 strategy1.activatePoints();
                 strategy2.activatePoints();
             }
@@ -418,7 +418,7 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
             token.mint(address(membersStaked[i]), MINIMUM_STAKE * 2);
             if (i < 4) {
                 token.approve(address(registryCommunity), MINIMUM_STAKE + ((MINIMUM_STAKE * COMMUNITY_FEE) / 100e4));
-                registryCommunity.stakeAndRegisterMember();
+                registryCommunity.stakeAndRegisterMember("");
                 strategy1.activatePoints();
                 strategy2.activatePoints();
             }
