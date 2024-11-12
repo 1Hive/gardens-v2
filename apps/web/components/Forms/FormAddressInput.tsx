@@ -1,4 +1,4 @@
-import { ChangeEvent, useCallback, useEffect } from "react";
+import { ChangeEvent, useCallback, useEffect, useState } from "react";
 import { blo } from "blo";
 import { uniqueId } from "lodash-es";
 import { Address, isAddress } from "viem";
@@ -7,20 +7,24 @@ import { InfoWrapper } from "../InfoWrapper";
 import { useDebounce } from "@/hooks/useDebounce";
 import { isENS } from "@/utils/web3";
 
-/**
- * Address input with ENS name resolution
- */
+type ValidationStatus = {
+  isValid: boolean;
+  message?: string;
+};
+
 type Props = {
   label?: string;
   errors?: any;
   required?: boolean;
   placeholder?: string;
   readOnly?: boolean;
+  registerKey?: string;
   disabled?: boolean;
   className?: string;
   value?: string;
   tooltip?: string;
   onChange?: React.ChangeEventHandler<HTMLInputElement>;
+  onValidationChange?: (status: ValidationStatus) => void;
 };
 
 export const FormAddressInput = ({
@@ -29,20 +33,26 @@ export const FormAddressInput = ({
   required = false,
   placeholder = "0x",
   readOnly,
+  registerKey,
   disabled,
   className,
   value = undefined,
   tooltip,
   onChange,
+  onValidationChange,
 }: Props) => {
   const id = uniqueId("address-input-");
   const debouncedValue = useDebounce(value, 500);
+  const [validationStatus, setValidationStatus] = useState<ValidationStatus>({
+    isValid: false,
+  });
+  const [shouldValidate, setShouldValidate] = useState(false);
+
   const debouncedOrValue = isAddress(value ?? "") ? value : debouncedValue;
   const isDebouncedValueLive = debouncedOrValue === value;
-
   const settledValue = isDebouncedValueLive ? debouncedOrValue : undefined;
 
-  const { data: ensAddress } = useEnsAddress({
+  const { data: ensAddress, isError: ensError } = useEnsAddress({
     name: settledValue,
     enabled: isENS(debouncedOrValue),
     chainId: 1,
@@ -63,6 +73,51 @@ export const FormAddressInput = ({
     cacheTime: 30_000,
   });
 
+  const validateAddress = useCallback(() => {
+    if (!value) {
+      setValidationStatus({
+        isValid: !required,
+        message: required ? "Address is required" : undefined,
+      });
+      return;
+    }
+
+    if (isAddress(value)) {
+      setValidationStatus({ isValid: true });
+    } else if (isENS(value)) {
+      if (ensError) {
+        setValidationStatus({
+          isValid: false,
+          message: "Invalid ENS name",
+        });
+      } else if (ensAddress) {
+        setValidationStatus({ isValid: true });
+      } else {
+        setValidationStatus({
+          isValid: false,
+          message: "Resolving ENS name...",
+        });
+      }
+    } else {
+      setValidationStatus({
+        isValid: false,
+        message: "Invalid Ethereum address or ENS name",
+      });
+    }
+  }, [value, ensAddress, ensError, required]);
+
+  // Only validate when shouldValidate is true (after blur)
+  useEffect(() => {
+    if (shouldValidate) {
+      validateAddress();
+    }
+  }, [shouldValidate, validateAddress]);
+
+  // Notify parent component of validation changes
+  useEffect(() => {
+    onValidationChange?.(validationStatus);
+  }, [validationStatus, onValidationChange]);
+
   useEffect(() => {
     if (!ensAddress) return;
     const ev = {
@@ -81,14 +136,20 @@ export const FormAddressInput = ({
     [onChange],
   );
 
+  const handleBlur = useCallback(() => {
+    setShouldValidate(true);
+  }, []);
+
   let modifier = "";
-  if (Object.keys(errors).length > 0) {
+  if (Object.keys(errors).find((err) => err === registerKey)) {
     modifier = "border-error";
   } else if (disabled) {
     modifier = "border-disabled";
   } else if (readOnly) {
     modifier =
       "!border-gray-300 !focus-within:border-gray-300 focus-within:outline !outline-gray-300 cursor-not-allowed bg-transparent";
+  } else if (!validationStatus.isValid && shouldValidate) {
+    modifier = "border-error";
   }
 
   return (
@@ -113,28 +174,37 @@ export const FormAddressInput = ({
         className={`form-control input input-info flex flex-row font-normal items-center ${modifier}`}
       >
         <input
-          className={`input font-mono text-sm px-0 w-full border-none focus:border-none outline-none focus:outline-none ${(readOnly ?? disabled) ? "cursor-not-allowed" : ""}`}
+          className={`input font-mono text-sm px-0 w-full border-none focus:border-none outline-none focus:outline-none ${
+            (readOnly ?? disabled) ? "cursor-not-allowed" : ""
+          }`}
           placeholder={placeholder || "Enter address or ENS name"}
           id={id}
           name={id}
           onChange={(e) => handleChange(e.target.value)}
+          onBlur={handleBlur}
           disabled={disabled ?? readOnly}
           readOnly={readOnly ?? disabled}
           required={required}
           value={value}
         />
         {value && (
-          // Don't want to use nextJS Image here (and adding remote patterns for the URL)
           // eslint-disable-next-line @next/next/no-img-element
           <img
             alt=""
-            className={"!rounded-full ml-2"}
+            className="!rounded-full ml-2"
             src={avatarUrl ? avatarUrl : blo(value as Address)}
             width="30"
             height="30"
           />
         )}
       </div>
+      {validationStatus.message &&
+        !validationStatus.isValid &&
+        shouldValidate && (
+          <p className="text-xs mt-[6px] text-error">
+            {validationStatus.message}
+          </p>
+        )}
     </div>
   );
 };
