@@ -303,7 +303,7 @@ export default function PoolHeader({
         <div className="flex justify-between flex-wrap">
           <h2>
             <Skeleton isLoading={!ipfsResult} className="sm:!w-96 h-8">
-              {ipfsResult?.title} #{poolId}
+              {ipfsResult?.title}
             </Skeleton>
           </h2>
           {(!!isCouncilMember || isCouncilSafe) && (
