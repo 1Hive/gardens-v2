@@ -210,42 +210,31 @@ const Hero = () => {
 
 const Banner = () => {
   const [openBanner, setOpenBanner] = useState(true);
-  //const notOpenBanner = "NotOpenBannerAck";
-
-  // useEffect(() => {
-  //   const openBannerStorage = localStorage.getItem(notOpenBanner);
-  //   setOpenBanner(openBannerStorage !== "true");
-  // }, []);
-
-  // const handleBannerClose = () => {
-  //   setOpenBanner(false);
-  //   localStorage.setItem(notOpenBanner, "true");
-  // };
-
   return (
     <>
       {openBanner && (
         <div className="pointer-events-none fixed inset-x-0 bottom-0 sm:flex sm:justify-center sm:px-6 sm:pb-5 lg:px-8">
           <div className="pointer-events-auto flex items-center justify-between gap-x-6 bg-primary-soft px-6 py-2.5 sm:rounded-xl sm:py-3 sm:pl-4 sm:pr-3.5 shadow-xl">
             <p className="subtitle2">
-              <a
+              {/* <a
                 href=" https://www.notion.so/1hive-gardens/Growing-the-Public-Gardens-GG22-Community-Round-118d6929d01480a1adf3f772880f72a1"
                 target="_blank"
                 rel="noreferrer"
+              > */}
+              <strong className="font-semibold">
+                Congratulations to the communities that joined GG22 – Growing
+                the Public Gardens!
+              </strong>
+              <svg
+                viewBox="0 0 2 2"
+                aria-hidden="true"
+                className="mx-2 inline h-0.5 w-0.5 fill-current"
               >
-                <strong className="font-semibold">
-                  Apply for funding for your new Gardens community
-                </strong>
-                <svg
-                  viewBox="0 0 2 2"
-                  aria-hidden="true"
-                  className="mx-2 inline h-0.5 w-0.5 fill-current"
-                >
-                  <circle r={1} cx={1} cy={1} />
-                </svg>
-                Deadline October 23 &nbsp;
-                <span aria-hidden="true">&rarr;</span>
-              </a>
+                <circle r={1} cx={1} cy={1} />
+              </svg>
+              Review in progress&nbsp;
+              {/* <span aria-hidden="true">&rarr;</span> */}
+              {/* </a> */}
             </p>
             <button
               type="button"
