@@ -158,13 +158,13 @@ export function ProposalCard({
       >
         <div className="flex flex-col sm:flex-row w-full justify-between gap-2">
           {/* icon title and id */}
-          <header className="flex  justify-between items-start gap-2 ">
-            <div className="hidden lg:block">
+          <header className="flex justify-between items-start gap-2">
+            <div className="hidden xl:block">
               <Hashicon value={id} size={45} />
             </div>
             <div className="flex w-full items-start flex-col gap-1">
               <Skeleton isLoading={!metadata}>
-                <h3 className="flex items-start w-fit max-w-full">
+                <h3 className="flex items-start max-w-full sm:max-w-md lg:max-w-lg">
                   <TooltipIfOverflow>{metadata?.title}</TooltipIfOverflow>
                 </h3>
               </Skeleton>
