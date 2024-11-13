@@ -256,7 +256,7 @@ export function ProposalCard({
                               </span>
                               /{memberPoolWeight}%{" "}
                               <span className="text-neutral-soft-content text-sm">
-                                ({inputValue}% of your total support)
+                                ({inputValue}% of your voting weight)
                               </span>
                             </p>
                             {/* <p className="text-primary-content">Support</p> */}
