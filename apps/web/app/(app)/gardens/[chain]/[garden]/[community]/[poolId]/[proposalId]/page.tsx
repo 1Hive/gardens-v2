@@ -1,7 +1,12 @@
 "use client";
 import { useEffect } from "react";
 import { Hashicon } from "@emeraldpay/hashicon-react";
-import { AdjustmentsHorizontalIcon, InformationCircleIcon, UserIcon } from "@heroicons/react/24/outline";
+import {
+  AdjustmentsHorizontalIcon,
+  InformationCircleIcon,
+  UserIcon,
+} from "@heroicons/react/24/outline";
+import { usePathname, useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { Address, encodeAbiParameters, formatUnits } from "viem";
 import { useAccount, useToken } from "wagmi";
@@ -22,10 +27,12 @@ import { DisputeButton } from "@/components/DisputeButton";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import MarkdownWrapper from "@/components/MarkdownWrapper";
 import { Skeleton } from "@/components/Skeleton";
+import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useConvictionRead } from "@/hooks/useConvictionRead";
+import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { alloABI } from "@/src/generated";
@@ -33,8 +40,6 @@ import { PoolTypes, ProposalStatus } from "@/types";
 
 import { useErrorDetails } from "@/utils/getErrorName";
 import { prettyTimestamp } from "@/utils/text";
-import { usePathname,useRouter } from "next/navigation";
-import { QUERY_PARAMS } from "@/constants/query-params";
 
 export default function Page({
   params: { proposalId, garden, poolId },
@@ -46,7 +51,7 @@ export default function Page({
     garden: string;
   };
 }) {
-  const { isDisconnected, address } = useAccount();
+  const { address } = useAccount();
   const [, proposalNumber] = proposalId.split("-");
   const { data } = useSubgraphQuery<getProposalDataQuery>({
     query: getProposalDataDocument,
@@ -93,7 +98,8 @@ export default function Page({
     enabled: !!poolTokenAddr && !isSignalingType,
     chainId,
   });
-  
+
+  const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons();
 
   const {
     currentConvictionPct,
@@ -142,15 +148,15 @@ export default function Page({
     },
   });
 
-  const manageSupportClicked = () => { 
+  const manageSupportClicked = () => {
     const pathSegments = path.split("/");
     pathSegments.pop();
     if (pathSegments.length === 3) {
       pathSegments.pop();
     }
     const newPath = pathSegments.join("/");
-    router.push(newPath+`?${QUERY_PARAMS.poolPage.allocationView}=true`,);
-  }
+    router.push(newPath + `?${QUERY_PARAMS.poolPage.allocationView}=true`);
+  };
   const distributeErrorName = useErrorDetails(errorDistribute);
   useEffect(() => {
     if (isErrorDistribute && distributeErrorName.errorName !== undefined) {
@@ -259,32 +265,14 @@ export default function Page({
         : <>
             <div className="flex justify-between">
               <h2>Metrics</h2>
-              {status === "active" && !isSignalingType && (
-                
-                
-                <Button
-                  onClick={() =>
-                    writeDistribute?.({
-                      args: [
-                        BigInt(poolId),
-                        [proposalData?.strategy.id as Address],
-                        encodedDataProposalId(proposalIdNumber),
-                      ],
-                    })
-                  }
-                  disabled={
-                    currentConvictionPct < thresholdPct || isDisconnected
-                  }
-                  tooltip={
-                    isDisconnected ? "Connect wallet"
-                    : currentConvictionPct < thresholdPct ?
-                      "Proposal not executable"
-                    : undefined
-                  }
-                >
-                  Execute
-                </Button>
-              )}
+              <Button
+                icon={<AdjustmentsHorizontalIcon height={24} width={24} />}
+                onClick={() => manageSupportClicked()}
+                disabled={!isConnected || missmatchUrl}
+                tooltip={tooltipMessage}
+              >
+                Manage support
+              </Button>
             </div>
             <ConvictionBarChart
               currentConvictionPct={currentConvictionPct}
@@ -296,17 +284,29 @@ export default function Page({
               onReadyToExecute={triggerConvictionRefetch}
               defaultChartMaxValue
             />
-            <Button
-                      icon={
-                        <AdjustmentsHorizontalIcon height={24} width={24} />
-                      }
-                      onClick={() => manageSupportClicked()}
-                      // disabled={disableManSupportButton || !isAllowed}
-                      // tooltip={tooltipMessage}
-                    >
-                      Manage support
-                    </Button>
-            
+            <div className="flex justify-center w-full">
+              {status === "active" && !isSignalingType && (
+                <Button
+                  onClick={() =>
+                    writeDistribute?.({
+                      args: [
+                        BigInt(poolId),
+                        [proposalData?.strategy.id as Address],
+                        encodedDataProposalId(proposalIdNumber),
+                      ],
+                    })
+                  }
+                  disabled={currentConvictionPct < thresholdPct || !isConnected}
+                  tooltip={
+                    tooltipMessage ?? currentConvictionPct < thresholdPct ?
+                      "Proposal not executable"
+                    : undefined
+                  }
+                >
+                  Execute
+                </Button>
+              )}
+            </div>
           </>
         }
       </section>
