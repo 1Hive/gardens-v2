@@ -3672,7 +3672,7 @@ export type getCommunityQueryVariables = Exact<{
 export type getCommunityQuery = {
     registryCommunity?: Maybe<(Pick<RegistryCommunity, 'communityName' | 'id' | 'covenantIpfsHash' | 'communityFee' | 'protocolFee' | 'registerStakeAmount' | 'registerToken'> & {
         members?: Maybe<Array<Pick<MemberCommunity, 'id' | 'stakedTokens'>>>;
-        strategies?: Maybe<Array<(Pick<CVStrategy, 'id' | 'isEnabled' | 'poolAmount' | 'poolId' | 'metadata'> & {
+        strategies?: Maybe<Array<(Pick<CVStrategy, 'id' | 'isEnabled' | 'poolAmount' | 'poolId' | 'token' | 'metadata'> & {
             proposals: Array<Pick<CVProposal, 'id'>>;
             config: Pick<CVStrategyConfig, 'proposalType' | 'pointSystem'>;
         })>>;

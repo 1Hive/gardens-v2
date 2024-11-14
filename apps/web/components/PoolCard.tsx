@@ -23,9 +23,11 @@ import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { PointSystems, PoolTypes } from "@/types";
 import { capitalize } from "@/utils/text";
+import { Address, useToken } from "wagmi";
+import { useEffect } from "react";
 
 type Props = {
-  tokenGarden: Pick<TokenGarden, "decimals" | "symbol">;
+  token: string;
   pool: Pick<
     CVStrategy,
     "id" | "isEnabled" | "poolAmount" | "poolId" | "metadata"
@@ -33,9 +35,10 @@ type Props = {
     proposals: Pick<CVProposal, "id">[];
     config: Pick<CVStrategyConfig, "proposalType" | "pointSystem">;
   };
+  chainId: number;
 };
 
-export function PoolCard({ pool, tokenGarden }: Props) {
+export function PoolCard({ pool, token,chainId }: Props) {
   const pathname = usePathname();
   const searchParams = useCollectQueryParams();
 
@@ -47,6 +50,16 @@ export function PoolCard({ pool, tokenGarden }: Props) {
 
   poolAmount = poolAmount || 0;
   const poolType = config?.proposalType as number | undefined;
+  const { data: tokenGarden } = useToken({
+    address: token as Address,
+    chainId: +chainId,
+  });
+  //MAYBE: use getPoolDataQuery to get token address, but should be done
+  // from community page that already fetches pools and their data
+  useEffect(() => {
+    console.log("chainID", chainId);
+    console.log("token", token);
+  }, [chainId]);
 
   const isNewPool =
     searchParams[QUERY_PARAMS.communityPage.newPool] === pool.poolId.toString();
@@ -82,9 +95,9 @@ export function PoolCard({ pool, tokenGarden }: Props) {
         {isEnabled && poolType && PoolTypes[poolType] === "funding" && (
           <Statistic icon={<CurrencyDollarIcon />} label="funds">
             <DisplayNumber
-              number={[BigInt(poolAmount), tokenGarden.decimals]}
+              number={[BigInt(poolAmount), tokenGarden?.decimals as number]}
               compact={true}
-              tokenSymbol={tokenGarden.symbol}
+              tokenSymbol={tokenGarden?.symbol}
             />
           </Statistic>
         )}

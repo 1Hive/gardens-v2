@@ -85,6 +85,7 @@ interface ProposalsProps {
   communityAddress: Address;
   createProposalUrl: string;
   proposalType: number;
+  allocationViewInit?: boolean;
 }
 
 export function Proposals({
@@ -93,9 +94,10 @@ export function Proposals({
   poolToken,
   communityAddress,
   createProposalUrl,
+  allocationViewInit
 }: ProposalsProps) {
   // State
-  const [allocationView, setAllocationView] = useState(false);
+  const [allocationView, setAllocationView] = useState(allocationViewInit ?? false);
   const [inputAllocatedTokens, setInputAllocatedTokens] = useState<number>(0);
   const [inputs, setInputs] = useState<{ [key: string]: ProposalInputItem }>(
     {},
