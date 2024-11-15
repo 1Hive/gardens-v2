@@ -75,7 +75,6 @@ export default function Page({
       { topic: "member", containerId: communityAddr },
     ],
   });
-  console.log(result);
   const registryCommunity = result?.registryCommunity;
 
   let {
@@ -343,11 +342,7 @@ export default function Page({
           <div className="flex flex-row flex-wrap gap-10">
             {fundingPools.map((pool) => (
               <Fragment key={pool.poolId}>
-              <PoolCard
-                token={pool.token}
-                chainId={chain}
-                pool={pool}
-                />
+                <PoolCard token={pool.token} chainId={chain} pool={pool} />
               </Fragment>
             ))}
           </div>

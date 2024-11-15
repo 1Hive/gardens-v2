@@ -8,11 +8,11 @@ import {
 } from "@heroicons/react/24/outline";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { Address, useToken } from "wagmi";
 import {
   CVProposal,
   CVStrategy,
   CVStrategyConfig,
-  TokenGarden,
 } from "#/subgraph/.graphclient";
 import { Skeleton } from "./Skeleton";
 import TooltipIfOverflow from "./TooltipIfOverflow";
@@ -23,8 +23,6 @@ import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { PointSystems, PoolTypes } from "@/types";
 import { capitalize } from "@/utils/text";
-import { Address, useToken } from "wagmi";
-import { useEffect } from "react";
 
 type Props = {
   token: string;
@@ -38,7 +36,7 @@ type Props = {
   chainId: number;
 };
 
-export function PoolCard({ pool, token,chainId }: Props) {
+export function PoolCard({ pool, token, chainId }: Props) {
   const pathname = usePathname();
   const searchParams = useCollectQueryParams();
 
@@ -54,12 +52,6 @@ export function PoolCard({ pool, token,chainId }: Props) {
     address: token as Address,
     chainId: +chainId,
   });
-  //MAYBE: use getPoolDataQuery to get token address, but should be done
-  // from community page that already fetches pools and their data
-  useEffect(() => {
-    console.log("chainID", chainId);
-    console.log("token", token);
-  }, [chainId]);
 
   const isNewPool =
     searchParams[QUERY_PARAMS.communityPage.newPool] === pool.poolId.toString();

@@ -56,7 +56,6 @@ export default function Page({
       },
     ],
   });
-  console.log("data", data);
   const strategyObj = data?.cvstrategies?.[0];
   const poolTokenAddr = strategyObj?.token as Address;
   const proposalType = strategyObj?.config.proposalType;
@@ -103,11 +102,10 @@ export default function Page({
       refetch();
     }
   }, [searchParams, strategyObj?.proposals]);
-  
+
   const tokenGarden = data?.tokenGarden;
 
   useEffect(() => {
-    console.log("QUERY PARAM ALLOCATION",searchParams[QUERY_PARAMS.poolPage.allocationView]);
     if (
       searchParams[QUERY_PARAMS.poolPage.allocationView] !== undefined &&
       proposalSectionRef.current
@@ -163,18 +161,16 @@ export default function Page({
               chainId={chain}
             />
           )}
-        <section ref={proposalSectionRef} className="section-layout">
-
-          <Proposals
-            poolToken={poolToken}
-            strategy={strategyObj}
-            alloInfo={alloInfo}
-            communityAddress={communityAddress}
-            createProposalUrl={`/gardens/${chain}/${garden}/${communityAddress}/${poolId}/create-proposal`}
-            proposalType={proposalType}
-            allocationViewInit={searchParams[QUERY_PARAMS.poolPage.allocationView] === "true"}
-          />
-        </section>
+          <section ref={proposalSectionRef} className="section-layout">
+            <Proposals
+              poolToken={poolToken}
+              strategy={strategyObj}
+              alloInfo={alloInfo}
+              communityAddress={communityAddress}
+              createProposalUrl={`/gardens/${chain}/${garden}/${communityAddress}/${poolId}/create-proposal`}
+              proposalType={proposalType}
+            />
+          </section>
         </>
       )}
     </div>

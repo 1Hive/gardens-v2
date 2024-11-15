@@ -36,8 +36,6 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
   poolId,
   chainId,
 }) => {
-  const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** poolToken.decimals;
-
   const {
     register,
     handleSubmit,
