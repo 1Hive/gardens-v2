@@ -240,6 +240,7 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
     poolId
     totalEffectiveActivePoints
     isEnabled
+    maxCVSupply
     sybilScorer {
       id
     }

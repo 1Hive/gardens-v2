@@ -569,6 +569,7 @@ export const getPoolDataDocument = gql `
     poolId
     totalEffectiveActivePoints
     isEnabled
+    maxCVSupply
     sybilScorer {
       id
     }
