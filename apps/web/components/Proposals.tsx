@@ -385,14 +385,14 @@ export function Proposals({
     },
     {
       id: 2,
-      name: "Your voting weight used",
+      name: "Voting weight used",
       stat: memberSupportedProposalsPct,
       className: `${
         memberSupportedProposalsPct >= 100 ?
           "bg-secondary-content text-secondary-soft border-secondary-content"
         : "bg-primary-content text-primary-soft border-primary-content"
       }`,
-      info: "Is the percentage of your pool weight supporting proposals.",
+      info: "Reflects the percentage of your pool weight supporting proposals.",
     },
   ];
 
