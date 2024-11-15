@@ -37,7 +37,7 @@ import useCheckAllowList from "@/hooks/useCheckAllowList";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
-import { alloABI, cvStrategyABI, registryCommunityABI } from "@/src/generated";
+import { alloABI, registryCommunityABI } from "@/src/generated";
 import { ProposalStatus } from "@/types";
 import { useErrorDetails } from "@/utils/getErrorName";
 import { calculatePercentage } from "@/utils/numbers";
@@ -302,53 +302,6 @@ export function Proposals({
 
   const toastId = useRef<Id | null>(null);
 
-  const { write: deactivatePointsWrite } = useContractWriteWithConfirmations({
-    address: strategy.id as Address,
-    abi: cvStrategyABI,
-    functionName: "deactivatePoints",
-    contractName: "CVStrategy",
-    fallbackErrorMessage: "Error deactivating points. Please report a bug.",
-    onConfirmations: () => {
-      if (toastId.current) {
-        toast.update(toastId.current, {
-          render: (
-            <div className="flex flex-col">
-              <span>🚧 Stake reset needed.</span>
-              <span>
-                <b>Reactivating points </b> (<b>2</b>/3)
-              </span>
-            </div>
-          ),
-          closeButton: true,
-        });
-      }
-      activatePointsWrite({ args: [] });
-    },
-  });
-
-  const { write: activatePointsWrite } = useContractWriteWithConfirmations({
-    address: strategy.id as Address,
-    abi: cvStrategyABI,
-    functionName: "activatePoints",
-    contractName: "CVStrategy",
-    fallbackErrorMessage: "Error activating points. Please report a bug.",
-    onConfirmations: () => {
-      if (toastId.current) {
-        toast.update(toastId.current, {
-          render: (
-            <div className="flex flex-col">
-              <span>🚧 Stake reset needed.</span>
-              <span>
-                <b>Allocating points </b> (<b>3</b>/3)
-              </span>
-            </div>
-          ),
-        });
-      }
-      submit();
-    },
-  });
-
   // Contract interaction
   const {
     write: writeAllocate,
@@ -362,21 +315,6 @@ export function Proposals({
     fallbackErrorMessage: "Error allocating points, please report a bug.",
     onSuccess: () => {
       setAllocationView(false);
-    },
-    onError: (err) => {
-      if (err.message.includes("NotEnoughPointsToSupport")) {
-        // Fixing by reseting totalVoterStakePct mapping (deactivate and reactivate points for this pool)
-        toastId.current = toast.loading(
-          <div className="flex flex-col">
-            <span>🚧 Stake reset needed.</span>
-            <span>
-              <b>Deactivating points </b> (<b>1</b>/3)
-            </span>
-          </div>,
-          { closeButton: true },
-        );
-        deactivatePointsWrite({ args: [] });
-      }
     },
     onConfirmations: () => {
       publish({
