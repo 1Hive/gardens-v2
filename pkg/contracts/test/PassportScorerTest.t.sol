@@ -71,7 +71,7 @@ contract PassportScorerTest is Test {
     function testOnlyOwnerCanChangeListManager() public {
         address newManager = address(6);
 
-        vm.prank(listManager);
+        vm.prank(councilSafe);
         vm.expectRevert("Ownable: caller is not the owner");
         passportScorer.changeListManager(newManager);
     }

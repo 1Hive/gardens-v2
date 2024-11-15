@@ -78,7 +78,7 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
                 address(
                     new ERC1967Proxy(
                         address(new SafeArbitrator()),
-                        abi.encodeWithSelector(SafeArbitrator.initialize.selector, ARBITRATION_FEE)
+                        abi.encodeWithSelector(SafeArbitrator.initialize.selector, ARBITRATION_FEE, factoryOwner)
                     )
                 )
             )

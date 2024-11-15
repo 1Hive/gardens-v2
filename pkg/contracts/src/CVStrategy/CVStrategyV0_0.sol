@@ -392,6 +392,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
 
     function _registerRecipient(bytes memory _data, address _sender) internal virtual override returns (address) {
         checkSenderIsMember(_sender);
+        registryCommunity.onlyStrategyEnabled(address(this));
         // surpressStateMutabilityWarning++;
         _data;
         CreateProposal memory proposal = abi.decode(_data, (CreateProposal));
@@ -511,7 +512,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         emit PowerDecreased(_member, _amountToUnstake, pointsToDecrease);
         return pointsToDecrease;
     }
-
+    
     function increasePowerCapped(address _member, uint256 _amountToStake) internal view virtual returns (uint256) {
         // console.log("POINTS TO INCREASE", _amountToStake);
         uint256 memberPower = registryCommunity.getMemberPowerInStrategy(_member, address(this));

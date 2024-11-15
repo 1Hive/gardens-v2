@@ -1412,6 +1412,28 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         stopMeasuringGas();
     }
 
+    function test_rejectPool() public {
+        startMeasuringGas("Adding strategy");
+        vm.startPrank(address(councilSafe));
+        _registryCommunity().addStrategy(address(strategy));
+        assertEq(_registryCommunity().enabledStrategies(address(strategy)), true);
+        _registryCommunity().rejectPool(address(strategy));
+        assertEq(_registryCommunity().enabledStrategies(address(strategy)), false);
+        vm.stopPrank();
+        stopMeasuringGas();
+    }
+
+    function testRevert_rejectPool_onlyCouncilSafe() public {
+        startMeasuringGas("Adding strategy");
+        vm.startPrank(address(councilSafe));
+        _registryCommunity().addStrategy(address(strategy));
+        assertEq(_registryCommunity().enabledStrategies(address(strategy)), true);
+        vm.stopPrank();
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.UserNotInCouncil.selector, address(this)));
+        _registryCommunity().rejectPool(address(strategy));
+        stopMeasuringGas();
+    }
+
     function test_revertSetCouncilSafe() public {
         vm.startPrank(gardenMember);
         vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.UserNotInCouncil.selector, gardenMember));
@@ -1498,7 +1520,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         vm.stopPrank();
         stopMeasuringGas();
     }
-
+    
     function test_revertUnregisterMember() public {
         startMeasuringGas("Testing kick member revert");
         vm.startPrank(gardenOwner);

@@ -106,6 +106,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
     event KickEnabledUpdated(bool _isKickEnabled);
     event FeeReceiverChanged(address _feeReceiver);
     event PoolCreated(uint256 _poolId, address _strategy, address _community, address _token, Metadata _metadata); // 0x778cac0a
+    event PoolRejected(address _strategy);
 
     /*|--------------------------------------------|*/
     /*|              CUSTOM ERRORS                 |*/
@@ -223,7 +224,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         }
     }
 
-    function onlyStrategyEnabled(address _strategy) internal view {
+    function onlyStrategyEnabled(address _strategy) public view {
         if (!enabledStrategies[_strategy]) {
             revert StrategyDisabled();
         }
@@ -528,6 +529,14 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
             sybilScorer.activateStrategy(_newStrategy);
         }
         emit StrategyAdded(_newStrategy);
+    }
+
+    function rejectPool(address _strategy) public virtual {
+        onlyCouncilSafe();
+        if (enabledStrategies[_strategy]) {
+            _removeStrategy(_strategy);
+        }
+        emit PoolRejected(_strategy);
     }
 
     function removeStrategyByPoolId(uint256 poolId) public virtual {
