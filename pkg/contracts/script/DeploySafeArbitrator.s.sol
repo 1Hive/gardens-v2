@@ -13,13 +13,6 @@ contract DeploySafeArbitrator is BaseMultiChain {
         address proxyOwner = networkJson.readAddress(getKeyNetwork(".ENVS.PROXY_OWNER"));
         address sender = 0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD;
 
-        address newSafeArbitrator = address(
-            new ERC1967Proxy(
-                address(new SafeArbitrator()),
-                abi.encodeWithSelector(SafeArbitrator.initialize.selector, 0.001 ether, address(proxyOwner))
-            )
-        );
-
         // CV STRATEGIES
         address[] memory cvStrategyProxies = networkJson.readAddressArray(getKeyNetwork(".PROXIES.CV_STRATEGIES"));
         for (uint256 i = 0; i < cvStrategyProxies.length; i++) {
@@ -27,7 +20,7 @@ contract DeploySafeArbitrator is BaseMultiChain {
             if (address(strategy.registryCommunity().councilSafe()) != sender) {
                 continue;
             }
-            address existingSybil = address(strategy.sybilScorer());
+            // address existingSybil = address(strategy.sybilScorer());
             (
                 ,
                 address tribunalSafe,
@@ -39,7 +32,16 @@ contract DeploySafeArbitrator is BaseMultiChain {
             (uint256 maxRatio, uint256 weight, uint256 decay, uint256 minThresholdPoints) = strategy.cvParams();
             strategy.setPoolParams(
                 ArbitrableConfig(
-                    IArbitrator(newSafeArbitrator),
+                    IArbitrator(
+                        address(
+                            new ERC1967Proxy(
+                                address(new SafeArbitrator()),
+                                abi.encodeWithSelector(
+                                    SafeArbitrator.initialize.selector, 0.001 ether, address(proxyOwner)
+                                )
+                            )
+                        )
+                    ),
                     tribunalSafe,
                     submitterCollateralAmount,
                     challengerCollateralAmount,
