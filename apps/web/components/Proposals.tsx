@@ -37,7 +37,7 @@ import useCheckAllowList from "@/hooks/useCheckAllowList";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
-import { alloABI, cvStrategyABI, registryCommunityABI } from "@/src/generated";
+import { alloABI, registryCommunityABI } from "@/src/generated";
 import { ProposalStatus } from "@/types";
 import { useErrorDetails } from "@/utils/getErrorName";
 import { calculatePercentage } from "@/utils/numbers";
@@ -302,53 +302,6 @@ export function Proposals({
 
   const toastId = useRef<Id | null>(null);
 
-  const { write: deactivatePointsWrite } = useContractWriteWithConfirmations({
-    address: strategy.id as Address,
-    abi: cvStrategyABI,
-    functionName: "deactivatePoints",
-    contractName: "CVStrategy",
-    fallbackErrorMessage: "Error deactivating points. Please report a bug.",
-    onConfirmations: () => {
-      if (toastId.current) {
-        toast.update(toastId.current, {
-          render: (
-            <div className="flex flex-col">
-              <span>🚧 Stake reset needed.</span>
-              <span>
-                <b>Reactivating points </b> (<b>2</b>/3)
-              </span>
-            </div>
-          ),
-          closeButton: true,
-        });
-      }
-      activatePointsWrite({ args: [] });
-    },
-  });
-
-  const { write: activatePointsWrite } = useContractWriteWithConfirmations({
-    address: strategy.id as Address,
-    abi: cvStrategyABI,
-    functionName: "activatePoints",
-    contractName: "CVStrategy",
-    fallbackErrorMessage: "Error activating points. Please report a bug.",
-    onConfirmations: () => {
-      if (toastId.current) {
-        toast.update(toastId.current, {
-          render: (
-            <div className="flex flex-col">
-              <span>🚧 Stake reset needed.</span>
-              <span>
-                <b>Allocating points </b> (<b>3</b>/3)
-              </span>
-            </div>
-          ),
-        });
-      }
-      submit();
-    },
-  });
-
   // Contract interaction
   const {
     write: writeAllocate,
@@ -362,21 +315,6 @@ export function Proposals({
     fallbackErrorMessage: "Error allocating points, please report a bug.",
     onSuccess: () => {
       setAllocationView(false);
-    },
-    onError: (err) => {
-      if (err.message.includes("NotEnoughPointsToSupport")) {
-        // Fixing by reseting totalVoterStakePct mapping (deactivate and reactivate points for this pool)
-        toastId.current = toast.loading(
-          <div className="flex flex-col">
-            <span>🚧 Stake reset needed.</span>
-            <span>
-              <b>Deactivating points </b> (<b>1</b>/3)
-            </span>
-          </div>,
-          { closeButton: true },
-        );
-        deactivatePointsWrite({ args: [] });
-      }
     },
     onConfirmations: () => {
       publish({
@@ -448,13 +386,6 @@ export function Proposals({
     {
       id: 2,
       name: "Voting weight used",
-      stat: calcPoolWeightUsed(memberSupportedProposalsPct),
-      className: poolWeightClassName,
-      info: "Indicates the portion of your pool weight currently allocated in proposals.",
-    },
-    {
-      id: 3,
-      name: "Total support",
       stat: memberSupportedProposalsPct,
       className: `${
         memberSupportedProposalsPct >= 100 ?
@@ -653,34 +584,28 @@ function UserAllocationStats({ stats }: { stats: Stats[] }) {
   return (
     <div className="mt-10">
       <h3>Support Overview</h3>
-      <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-5 grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-2">
         {stats.map((stat) => (
-          <div
-            key={`stat_${stat.id}`}
-            className="section-layout sm:px-6 sm:pt-6"
-          >
-            <div>
-              <div
-                className={`radial-progress absolute rounded-full border-4 border-neutral transition-all duration-300 ease-in-out ${stat.className}`}
-                style={{
-                  // @ts-ignore
-                  "--value": stat.stat,
-                  "--size": "4rem",
-                  "--thickness": "0.35rem",
-                }}
-                role="progressbar"
-              >
-                <span className="text-xs">{stat.stat} %</span>
-              </div>
-
-              <InfoWrapper tooltip={stat.info}>
-                <p className="ml-20">
-                  <TooltipIfOverflow>{stat.name}</TooltipIfOverflow>
-                </p>
-              </InfoWrapper>
+          <div key={`stat_${stat.id}`} className="section-layout flex gap-4">
+            <div
+              className={`radial-progress rounded-full border-4 border-neutral transition-all duration-300 ease-in-out ${stat.className}`}
+              style={{
+                // @ts-ignore
+                "--value": stat.stat,
+                "--size": "4.2rem",
+                "--thickness": "0.35rem",
+              }}
+              role="progressbar"
+            >
+              <span className="text-xs">{stat.stat} %</span>
             </div>
-            <div className="ml-20">
-              <p className="text-2xl font-semibold">{stat.stat} %</p>
+            <div className="flex flex-col items-start justify-center">
+              <InfoWrapper tooltip={stat.info}>
+                <h5>
+                  <TooltipIfOverflow>{stat.name}</TooltipIfOverflow>
+                </h5>
+              </InfoWrapper>
+              <p className="text-2xl font-semibold text-right">{stat.stat} %</p>
             </div>
           </div>
         ))}

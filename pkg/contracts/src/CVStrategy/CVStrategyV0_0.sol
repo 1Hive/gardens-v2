@@ -1029,7 +1029,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
             uint256 thresholdOverride = (
                 ((cvParams.minThresholdPoints / totalEffectiveActivePoints()) * D)
                     * (getMaxConviction(totalEffectiveActivePoints()))
-            ) / 10 ** 11;
+            ) / 10 ** 18;
             _threshold = _threshold > thresholdOverride ? _threshold : thresholdOverride;
         }
     }
@@ -1087,13 +1087,16 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
      * @param _proposal Proposal
      * @param _oldStaked Amount of tokens staked on a proposal until now
      */
-    function _calculateAndSetConviction(Proposal storage _proposal, uint256 _oldStaked) internal virtual {
-        (uint256 conviction, uint256 blockNumber) = _checkBlockAndCalculateConviction(_proposal, _oldStaked);
-        if (conviction == 0 && blockNumber == 0) {
-            return;
+    function _calculateAndSetConviction(Proposal storage _proposal, uint256 _oldStaked)
+        internal
+        virtual
+        returns (uint256 conviction, uint256 blockNumber)
+    {
+        (conviction, blockNumber) = _checkBlockAndCalculateConviction(_proposal, _oldStaked);
+        if (conviction != 0 || blockNumber != 0) {
+            _proposal.blockLast = blockNumber;
+            _proposal.convictionLast = conviction;
         }
-        _proposal.blockLast = blockNumber;
-        _proposal.convictionLast = conviction;
     }
 
     function _checkBlockAndCalculateConviction(Proposal storage _proposal, uint256 _oldStaked)
@@ -1118,8 +1121,8 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     }
 
     function setPoolParams(ArbitrableConfig memory _arbitrableConfig, CVParams memory _cvParams) external virtual {
-      onlyCouncilSafe();
-      _setPoolParams(_arbitrableConfig, _cvParams);
+        onlyCouncilSafe();
+        _setPoolParams(_arbitrableConfig, _cvParams);
     }
 
     function _setPoolParams(ArbitrableConfig memory _arbitrableConfig, CVParams memory _cvParams) internal virtual {
@@ -1165,7 +1168,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         emit CVParamsUpdated(_cvParams);
     }
 
-    function updateProposalConviction(uint256 proposalId) public virtual returns (uint256) {
+    function updateProposalConviction(uint256 proposalId) public virtual returns (uint256 conviction) {
         Proposal storage proposal = proposals[proposalId];
 
         if (proposal.proposalId != proposalId) {
@@ -1177,8 +1180,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         //     revert ProposalNotActive(proposalId);
         // }
 
-        _calculateAndSetConviction(proposal, proposal.stakedAmount);
-        return proposal.convictionLast;
+        (conviction,) = _calculateAndSetConviction(proposal, proposal.stakedAmount);
     }
 
     function getMaxConviction(uint256 amount) public view virtual returns (uint256) {

@@ -487,17 +487,17 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
     // function testRevert_registerRecipient_TokenNotAllowed() public {
     //     (, uint256 poolId,) = _createProposal(NATIVE, 0, 0);
 
-    //     // address wrong_token = address(new GV2ERC20());
-    //     CreateProposal memory proposal =
-    //         CreateProposal(poolId, pool_admin(), REQUESTED_AMOUNT, address(0x666), metadata);
-    //     bytes memory data = abi.encode(proposal);
-    //     vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.TokenNotAllowed.selector));
-    //     allo().registerRecipient(poolId, data);
-    //     proposal = CreateProposal(poolId, pool_admin(), REQUESTED_AMOUNT, address(0), metadata);
-    //     data = abi.encode(proposal);
-    //     vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.TokenCannotBeZero.selector));
-    //     allo().registerRecipient(poolId, data);
-    // }
+        // address wrong_token = address(new GV2ERC20());
+        CreateProposal memory proposal =
+            CreateProposal(poolId, pool_admin(), REQUESTED_AMOUNT, address(0x666), metadata);
+        bytes memory data = abi.encode(proposal);
+        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.TokenNotAllowed.selector));
+        allo().registerRecipient(poolId, data);
+        proposal = CreateProposal(poolId, pool_admin(), REQUESTED_AMOUNT, address(0), metadata);
+        data = abi.encode(proposal);
+        // vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.TokenCannotBeZero.selector));
+        allo().registerRecipient(poolId, data);
+    }
 
     // Removed this revert error to save contract size for now
     // function testRevert_registerRecipient_PoolIdCannotBeZero() public {

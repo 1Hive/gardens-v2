@@ -51,6 +51,13 @@ abstract contract BaseMultiChain is Native, CVStrategyHelpers, Script, SafeSetup
 
     address public BENEFICIARY = 0xc583789751910E39Fd2Ddb988AD05567Bcd81334;
 
+    uint256 councilMemberPKEnv;
+    address allo_proxy;
+    Allo allo;
+    GV2ERC20 token;
+    IArbitrator arbitrator;
+    ISybilScorer sybilScorer;
+
     function pool_admin() public virtual override returns (address) {
         return address(SENDER);
     }
