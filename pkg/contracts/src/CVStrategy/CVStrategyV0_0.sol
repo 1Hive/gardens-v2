@@ -454,12 +454,16 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     //     return cvParams.decay;
     // }
 
-    function activatePoints() external virtual {
-        if (!_canExecuteAction(msg.sender)) {
+    function _activatePoints(address _sender) public virtual {
+        if (!_canExecuteAction(_sender)) {
             revert UserCannotExecuteAction();
         }
-        registryCommunity.activateMemberInStrategy(msg.sender, address(this));
-        totalPointsActivated += registryCommunity.getMemberPowerInStrategy(msg.sender, address(this));
+        registryCommunity.activateMemberInStrategy(_sender, address(this));
+        totalPointsActivated += registryCommunity.getMemberPowerInStrategy(_sender, address(this));
+    }
+
+    function activatePoints() external virtual {
+        _activatePoints(msg.sender);
     }
 
     function deactivatePoints() public virtual {
@@ -888,12 +892,11 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         // Check that the sum of support is not greater than the participant balance
         if (newTotalVotingSupport > participantBalance) {
             // Reset mechanism to fix points unsynced from previous version of this contract
-            registryCommunity.deactivateMemberInStrategy(_sender, address(this));
-            registryCommunity.activateMemberInStrategy(_sender, address(this));
+            _deactivatePoints(_sender);
+            _activatePoints(_sender);
 
-            // recompute data
+            // Recompute data
             newTotalVotingSupport = _applyDelta(getTotalVoterStakePct(_sender), deltaSupportSum);
-            // console.log("newTotalVotingSupport", newTotalVotingSupport);
             participantBalance = registryCommunity.getMemberPowerInStrategy(_sender, address(this));
 
             if (newTotalVotingSupport > participantBalance) {
