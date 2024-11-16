@@ -1,10 +1,13 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { ArrowPathIcon } from "@heroicons/react/24/solid";
 import type { EChartsOption, MarkLineComponentOption } from "echarts";
 import EChartsReact from "echarts-for-react";
 import { ChartWrapper } from "./ChartWrapper";
+import { Button } from "../Button";
 import { Countdown } from "../Countdown";
+import { Skeleton } from "../Skeleton";
 
 type ScenarioMapping = {
   condition: () => boolean;
@@ -20,6 +23,7 @@ type ConvictionBarChartProps = {
   compact?: boolean;
   timeToPass?: number;
   onReadyToExecute?: () => void;
+  refreshConviction?: () => Promise<any>;
 };
 
 export const ConvictionBarChart = ({
@@ -31,7 +35,9 @@ export const ConvictionBarChart = ({
   compact,
   timeToPass,
   onReadyToExecute,
+  refreshConviction,
 }: ConvictionBarChartProps) => {
+  const [convictionRefreshing, setConvictionRefreshing] = useState(true);
   const supportNeeded = (thresholdPct - proposalSupportPct).toFixed(2);
   const scenarioMappings: Record<string, ScenarioMapping> = {
     //1-SignalingType) Support > 0 && > Conviction
@@ -173,6 +179,20 @@ export const ConvictionBarChart = ({
       }
     );
   }, [timeToPass, currentConvictionPct, proposalSupportPct, thresholdPct]);
+
+  useEffect(() => {
+    if (convictionRefreshing && currentConvictionPct != null) {
+      setConvictionRefreshing(false);
+    }
+  }, [convictionRefreshing, currentConvictionPct]);
+
+  const handleRefreshConviction = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setConvictionRefreshing(true);
+    await refreshConviction?.();
+    setConvictionRefreshing(false);
+  };
 
   const supportGtConv = proposalSupportPct > currentConvictionPct;
   const convEqSupport = proposalSupportPct === currentConvictionPct;
@@ -327,23 +347,37 @@ export const ConvictionBarChart = ({
     Number(supportNeeded) < 0 &&
     (currentConvictionPct ?? 0) < (thresholdPct ?? 0);
 
-  return (
+  const chart = (
     <>
-      {compact ?
+      <Skeleton isLoading={convictionRefreshing}>
         <EChartsReact
           option={option}
           style={{ height: "100%", width: "100%" }}
+          className="cursor-default"
         />
+      </Skeleton>
+      <Button
+        btnStyle="link"
+        onClick={handleRefreshConviction}
+        tooltip="Refresh conviction"
+        className="!p-3"
+      >
+        <ArrowPathIcon className="w-5" />
+      </Button>
+    </>
+  );
+
+  return (
+    <>
+      {compact ?
+        chart
       : <>
           <ChartWrapper
             message={isSignalingType ? undefined : message}
             growing={growing}
             isSignalingType={isSignalingType}
           >
-            <EChartsReact
-              option={option}
-              style={{ height: "100%", width: "100%" }}
-            />
+            {chart}
           </ChartWrapper>
           {scenarioMappings.supportLTConvictionLTThreshold &&
             proposalWillPass &&
