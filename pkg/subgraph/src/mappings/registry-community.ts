@@ -10,7 +10,7 @@ import {
   MemberStrategy
 } from "../../generated/schema";
 
-import { BigInt, dataSource, ethereum, log } from "@graphprotocol/graph-ts";
+import { BigInt, dataSource, log } from "@graphprotocol/graph-ts";
 import {
   RegistryInitialized,
   RegistryCommunityV0_0 as RegistryCommunityContract,
@@ -32,7 +32,8 @@ import {
   CouncilSafeUpdated,
   CovenantIpfsHashUpdated,
   FeeReceiverChanged,
-  KickEnabledUpdated
+  KickEnabledUpdated,
+  PoolRejected
 } from "../../generated/templates/RegistryCommunityV0_0/RegistryCommunityV0_0";
 
 import { RegistryFactoryV0_0 as RegistryFactoryContract } from "../../generated/RegistryFactoryV0_0/RegistryFactoryV0_0";
@@ -265,6 +266,7 @@ export function handleStrategyAdded(event: StrategyAdded): void {
   }
 
   cvs.isEnabled = true;
+  cvs.archived = false;
   cvs.save();
 }
 
@@ -631,6 +633,23 @@ export function handleFeeReceiverChanged(event: FeeReceiverChanged): void {
     community.protocolFeeReceiver = null;
   }
   community.save();
+}
+
+export function handlePoolRejected(event: PoolRejected): void {
+  log.debug("RegistryCommunity: handlePoolRejected: strategy:{}", [
+    event.params._strategy.toHexString()
+  ]);
+
+  const strategyAddress = event.params._strategy;
+  const strategy = CVStrategy.load(strategyAddress.toHexString());
+  if (strategy == null) {
+    log.error("RegistryCommunity: Strategy not found: {}", [
+      strategyAddress.toHexString()
+    ]);
+    return;
+  }
+  strategy.archived = true;
+  strategy.save();
 }
 
 // handler: handleMemberPowerDecreased

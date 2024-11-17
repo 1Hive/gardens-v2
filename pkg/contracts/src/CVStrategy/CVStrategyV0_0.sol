@@ -891,17 +891,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         // console.log("participantBalance", participantBalance);
         // Check that the sum of support is not greater than the participant balance
         if (newTotalVotingSupport > participantBalance) {
-            // Reset mechanism to fix points unsynced from previous version of this contract
-            _deactivatePoints(_sender);
-            _activatePoints(_sender);
-
-            // Recompute data
-            newTotalVotingSupport = _applyDelta(getTotalVoterStakePct(_sender), deltaSupportSum);
-            participantBalance = registryCommunity.getMemberPowerInStrategy(_sender, address(this));
-
-            if (newTotalVotingSupport > participantBalance) {
-                revert NotEnoughPointsToSupport(newTotalVotingSupport, participantBalance);
-            }
+            revert NotEnoughPointsToSupport(newTotalVotingSupport, participantBalance);
         }
 
         totalVoterStakePct[_sender] = newTotalVotingSupport;
@@ -993,6 +983,16 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         return uint256(result);
     }
 
+
+    function calculateProposalConviction(uint256 _proposalId) public view virtual returns (uint256) {
+        Proposal storage proposal = proposals[_proposalId];
+        return calculateConviction(
+          block.number - proposal.blockLast, 
+          proposal.convictionLast, 
+          proposal.stakedAmount
+        );
+    }
+
     /**
      * @dev Conviction formula: a^t * y(0) + x * (1 - a^t) / (1 - a)
      * Solidity implementation: y = (2^128 * a^t * y0 + x * D * (2^128 - 2^128 * a^t) / (D - aD) + 2^127) / 2^128
@@ -1015,6 +1015,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         return (((atTWO_128 * _lastConv) + ((_oldAmount * D * (TWO_128 - atTWO_128)) / (D - cvParams.decay))) + TWO_127)
             >> 128;
     }
+
 
     /**
      * @dev Formula: ρ * totalStaked / (1 - a) / (β - requestedAmount / total)**2
@@ -1130,7 +1131,6 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         }
         // calculateConviction and store it
         conviction = calculateConviction(
-            // TODO: Goss -> we should do this math inside the func so UI does not need to fetch latest block
             blockNumber - _proposal.blockLast, // we assert it doesn't overflow above
             _proposal.convictionLast,
             _oldStaked
