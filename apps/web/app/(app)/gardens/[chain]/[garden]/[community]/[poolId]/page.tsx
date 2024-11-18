@@ -161,7 +161,7 @@ export default function Page({
               chainId={chain}
             />
           )}
-          <section ref={proposalSectionRef} className="section-layout">
+          <section ref={proposalSectionRef}>
             <Proposals
               poolToken={poolToken}
               strategy={strategyObj}
