@@ -142,21 +142,21 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     /*|              CUSTOM ERRORS                 |*/
     /*|--------------------------------------------|*/
 
-    // error UserCannotBeZero(); // 0xd1f28288
+    error UserCannotBeZero(); // 0xd1f28288
     error UserNotInRegistry(); //0x6a5cfb6d
     error UserIsInactive(); // 0x5fccb67f
     error PoolIsEmpty(); // 0xed4421ad
     error NotImplemented(); //0xd6234725
-    // error TokenCannotBeZero(); //0x596a094c
+    error TokenCannotBeZero(); //0x596a094c
     error TokenNotAllowed(); // 0xa29c4986
     error AmountOverMaxRatio(); // 0x3bf5ca14
     error AddressCannotBeZero(); //0xe622e040
-    // error RegistryCannotBeZero(); // 0x5df4b1ef
+    error RegistryCannotBeZero(); // 0x5df4b1ef
     error SupportUnderflow(uint256 _support, int256 _delta, int256 _result); // 0x3bbc7142
     error NotEnoughPointsToSupport(uint256 pointsSupport, uint256 pointsBalance); // 0xd64182fe
 
-    // error ProposalDataIsEmpty(); //0xc5f7c4c0
-    // error ProposalIdCannotBeZero(); //0xf881a10d
+    error ProposalDataIsEmpty(); //0xc5f7c4c0
+    error ProposalIdCannotBeZero(); //0xf881a10d
     error ProposalNotActive(uint256 _proposalId); // 0x44980d8f
     error ProposalNotInList(uint256 _proposalId); // 0xc1d17bef
     error ProposalSupportDuplicated(uint256 _proposalId, uint256 index); //0xadebb154
@@ -168,7 +168,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     error InsufficientCollateral(uint256 sentAmount, uint256 requiredAmount);
     error OnlyArbitrator();
     error ProposalNotDisputed(uint256 _proposalId);
-    // error ArbitratorCannotBeZero();
+    error ArbitratorCannotBeZero();
     error OnlySubmitter(address submitter, address sender);
     // Goss: Support Collateral Zero
     // error CollateralVaultCannotBeZero();

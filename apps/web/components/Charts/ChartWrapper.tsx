@@ -33,7 +33,7 @@ export const ChartWrapper = ({
     {
       name: "Conviction",
       className: "bg-primary-content  h-4 w-4 rounded-full",
-      info: "Accumulated pool weight for a proposal, increasing over time, based on the conviction growth param.",
+      info: "Accumulated pool weight for a proposal, increasing over time, based on the conviction growth.",
     },
     {
       name: "Threshold",

@@ -188,6 +188,7 @@ query getCommunity($communityAddr: ID!, $tokenAddr: ID!) {
       isEnabled
       poolAmount
       poolId
+      token
       metadata
       config {
         proposalType

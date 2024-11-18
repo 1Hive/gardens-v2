@@ -1,8 +1,13 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Hashicon } from "@emeraldpay/hashicon-react";
-import { InformationCircleIcon, UserIcon } from "@heroicons/react/24/outline";
+import {
+  AdjustmentsHorizontalIcon,
+  InformationCircleIcon,
+  UserIcon,
+} from "@heroicons/react/24/outline";
 import { ArrowPathIcon } from "@heroicons/react/24/solid";
+import { usePathname, useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { Address, encodeAbiParameters, formatUnits } from "viem";
 import { useAccount, useToken } from "wagmi";
@@ -23,10 +28,12 @@ import { DisputeButton } from "@/components/DisputeButton";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import MarkdownWrapper from "@/components/MarkdownWrapper";
 import { Skeleton } from "@/components/Skeleton";
+import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useConvictionRead } from "@/hooks/useConvictionRead";
+import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { alloABI } from "@/src/generated";
@@ -46,7 +53,9 @@ export default function Page({
   };
 }) {
   const [convictionRefreshing, setConvictionRefreshing] = useState(true);
-  const { isDisconnected, address } = useAccount();
+  const router = useRouter();
+
+  const { address } = useAccount();
   const [, proposalNumber] = proposalId.split("-");
   const { data } = useSubgraphQuery<getProposalDataQuery>({
     query: getProposalDataDocument,
@@ -75,6 +84,7 @@ export default function Page({
     hash: proposalData?.metadataHash,
     enabled: !proposalData?.metadata,
   });
+  const path = usePathname();
   const metadata = proposalData?.metadata ?? ipfsResult;
   const isProposerConnected =
     proposalData?.submitter === address?.toLowerCase();
@@ -91,6 +101,8 @@ export default function Page({
     enabled: !!poolTokenAddr && !isSignalingType,
     chainId,
   });
+
+  const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons();
 
   const {
     currentConvictionPct,
@@ -145,6 +157,15 @@ export default function Page({
     },
   });
 
+  const manageSupportClicked = () => {
+    const pathSegments = path.split("/");
+    pathSegments.pop();
+    if (pathSegments.length === 3) {
+      pathSegments.pop();
+    }
+    const newPath = pathSegments.join("/");
+    router.push(newPath + `?${QUERY_PARAMS.poolPage.allocationView}=true`);
+  };
   const distributeErrorName = useErrorDetails(errorDistribute);
   useEffect(() => {
     if (isErrorDistribute && distributeErrorName.errorName !== undefined) {
@@ -261,6 +282,26 @@ export default function Page({
         : <>
             <div className="flex justify-between">
               <h2>Metrics</h2>
+              <Button
+                icon={<AdjustmentsHorizontalIcon height={24} width={24} />}
+                onClick={() => manageSupportClicked()}
+                disabled={!isConnected || missmatchUrl}
+                tooltip={tooltipMessage}
+              >
+                Manage support
+              </Button>
+            </div>
+            <ConvictionBarChart
+              currentConvictionPct={currentConvictionPct}
+              thresholdPct={thresholdPct}
+              proposalSupportPct={totalSupportPct}
+              isSignalingType={isSignalingType}
+              proposalNumber={Number(proposalIdNumber)}
+              timeToPass={Number(timeToPass)}
+              onReadyToExecute={triggerConvictionRefetch}
+              defaultChartMaxValue
+            />
+            <div className="flex justify-center w-full">
               {status === "active" && !isSignalingType && (
                 <Button
                   onClick={() =>
@@ -272,12 +313,9 @@ export default function Page({
                       ],
                     })
                   }
-                  disabled={
-                    currentConvictionPct < thresholdPct || isDisconnected
-                  }
+                  disabled={currentConvictionPct < thresholdPct || !isConnected}
                   tooltip={
-                    isDisconnected ? "Connect wallet"
-                    : currentConvictionPct < thresholdPct ?
+                    tooltipMessage ?? currentConvictionPct < thresholdPct ?
                       "Proposal not executable"
                     : undefined
                   }
@@ -286,15 +324,6 @@ export default function Page({
                 </Button>
               )}
             </div>
-            <ConvictionBarChart
-              currentConvictionPct={currentConvictionPct}
-              thresholdPct={thresholdPct}
-              proposalSupportPct={totalSupportPct}
-              isSignalingType={isSignalingType}
-              proposalNumber={Number(proposalIdNumber)}
-              timeToPass={Number(timeToPass)}
-              onReadyToExecute={triggerConvictionRefetch}
-            />
           </>
         }
       </section>

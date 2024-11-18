@@ -31,6 +31,8 @@ import {
   PoolGovernance,
   ProposalCard,
 } from "@/components";
+import { QUERY_PARAMS } from "@/constants/query-params";
+import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import { SubscriptionId, usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import useCheckAllowList from "@/hooks/useCheckAllowList";
@@ -114,7 +116,7 @@ export function Proposals({
   const { subscribe, unsubscribe, connected } = usePubSubContext();
 
   const tokenDecimals = strategy.registryCommunity.garden.decimals;
-
+  const searchParams = useCollectQueryParams();
   // Queries
   const { data: memberData, error } = useSubgraphQuery<isMemberQuery>({
     query: isMemberDocument,
@@ -238,6 +240,33 @@ export function Proposals({
     }
   }, [memberActivatedStrategy]);
 
+  const disableManageSupportBtnCondition: ConditionObject[] = [
+    {
+      condition: !memberActivatedStrategy,
+      message: "Must have points activated to support proposals",
+    },
+    {
+      condition: !isAllowed,
+      message: "Address not in allowlist",
+    },
+  ];
+
+  const disableManSupportButton = disableManageSupportBtnCondition.some(
+    (cond) => cond.condition,
+  );
+  const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons(
+    disableManageSupportBtnCondition,
+  );
+  useEffect(() => {
+    if (
+      searchParams[QUERY_PARAMS.poolPage.allocationView] === "true" &&
+      !disableManSupportButton &&
+      isConnected
+    ) {
+      setAllocationView(true);
+    }
+  }, [disableManSupportButton, isConnected, searchParams]);
+
   useEffect(() => {
     if (!proposals) return;
 
@@ -335,6 +364,7 @@ export function Proposals({
       console.error("Inputs not yet computed");
       return;
     }
+
     const proposalsDifferencesArr = getProposalsInputsDifferences(
       inputs,
       stakedFilters,
@@ -396,25 +426,6 @@ export function Proposals({
     },
   ];
 
-  const disableManageSupportBtnCondition: ConditionObject[] = [
-    {
-      condition: !memberActivatedStrategy,
-      message: "Must have points activated to support proposals",
-    },
-    {
-      condition: !isAllowed,
-      message: "Address not in allowlist",
-    },
-  ];
-
-  const disableManSupportButton = disableManageSupportBtnCondition.some(
-    (cond) => cond.condition,
-  );
-
-  const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons(
-    disableManageSupportBtnCondition,
-  );
-
   const endedProposals = proposals.filter(
     (x) =>
       ProposalStatus[x.proposalStatus] === "cancelled" ||
@@ -437,7 +448,7 @@ export function Proposals({
         isMemberCommunity={isMemberCommunity}
         memberActivatedStrategy={memberActivatedStrategy}
       />
-      <section className="section-layout flex flex-col gap-10">
+      <section className="section-layout flex flex-col gap-10 mt-10">
         <div>
           <header className="flex items-center justify-between gap-10 flex-wrap">
             <h2>Proposals</h2>
@@ -552,7 +563,7 @@ export function Proposals({
               }
               tooltip="Make changes in proposals support first"
             >
-              Allocate
+              Submit your support
             </Button>
           </div>
         : <div>
