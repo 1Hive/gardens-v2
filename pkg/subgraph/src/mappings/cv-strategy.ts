@@ -6,11 +6,11 @@ import {
   MemberStrategy,
   Stake,
   Member,
-  ProposalDispute,
+  ProposalDispute
 } from "../../generated/schema";
 import {
   ProposalDisputeMetadata as ProposalDisputeMetadataTemplate,
-  ProposalMetadata as ProposalMetadataTemplate,
+  ProposalMetadata as ProposalMetadataTemplate
 } from "../../generated/templates";
 
 import {
@@ -692,6 +692,7 @@ function computeInitialize(
   cvs.totalEffectiveActivePoints = cvc.totalEffectiveActivePoints();
   cvs.isEnabled = false;
   cvs.sybilScorer = data.sybilScorer.toHexString();
+  cvs.archived = false;
   config.proposalType = BigInt.fromI32(pType);
   config.pointSystem = BigInt.fromI32(pointSystem);
   config.maxAmount = maxAmount;

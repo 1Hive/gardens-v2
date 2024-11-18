@@ -230,9 +230,9 @@ export function Proposals({
 
   useEffect(() => {
     setMemberActivatedPoints(
-      Number(memberData?.member?.memberCommunity?.[0]?.stakedTokens ?? 0n),
+      Number(memberStrategyData?.memberStrategy?.activatedPoints ?? 0n),
     );
-  }, [memberData?.member?.memberCommunity?.[0]?.stakedTokens]);
+  }, [memberStrategyData?.memberStrategy?.activatedPoints]);
 
   useEffect(() => {
     if (memberActivatedStrategy === false) {

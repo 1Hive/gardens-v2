@@ -281,7 +281,7 @@ export function ProposalCard({
                         </div>
                         <ProposalCountDown />
                       </div>
-                      <div className="h-3">
+                      <div className="h-3 flex items-center">
                         <ConvictionBarChart
                           compact
                           currentConvictionPct={currentConvictionPct}
@@ -289,6 +289,7 @@ export function ProposalCard({
                           proposalSupportPct={totalSupportPct}
                           isSignalingType={isSignalingType}
                           proposalNumber={proposalNumber}
+                          refreshConviction={triggerConvictionRefetch}
                         />
                       </div>
                     </div>

@@ -8,6 +8,7 @@ import {
   UserRejectedRequestError,
 } from "viem";
 import {
+  useAccount,
   useChainId,
   useContractWrite,
   UseContractWriteConfig,
@@ -48,6 +49,7 @@ export function useContractWriteWithConfirmations<
     fallbackErrorMessage?: string;
   },
 ) {
+  const { address: walletAddress } = useAccount();
   const toastId = props.contractName + "_" + props.functionName;
   const chainIdFromWallet = useChainId();
   const chainIdFromPath = useChainIdFromPath();
@@ -109,6 +111,7 @@ export function useContractWriteWithConfirmations<
       rawData,
       contract: props.address,
       message: error.message,
+      from: walletAddress,
     };
     try {
       logPayload = {

@@ -75,7 +75,9 @@ templates:
         - event: CommunityNameUpdated(string)
           handler: handleCommunityNameUpdated
         - event: FeeReceiverChanged(address)
-          handler: handleFeeReceiverChanged 
+          handler: handleFeeReceiverChanged
+        - event: PoolRejected(address)
+          handler: handlePoolRejected
       file: ./src/mappings/registry-community.ts
 
   - kind: ethereum/contract

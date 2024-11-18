@@ -1,11 +1,12 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Hashicon } from "@emeraldpay/hashicon-react";
 import {
   AdjustmentsHorizontalIcon,
   InformationCircleIcon,
   UserIcon,
 } from "@heroicons/react/24/outline";
+import { ArrowPathIcon } from "@heroicons/react/24/solid";
 import { usePathname, useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { Address, encodeAbiParameters, formatUnits } from "viem";
@@ -51,6 +52,9 @@ export default function Page({
     garden: string;
   };
 }) {
+  const [convictionRefreshing, setConvictionRefreshing] = useState(true);
+  const router = useRouter();
+
   const { address } = useAccount();
   const [, proposalNumber] = proposalId.split("-");
   const { data } = useSubgraphQuery<getProposalDataQuery>({
@@ -80,7 +84,6 @@ export default function Page({
     hash: proposalData?.metadataHash,
     enabled: !proposalData?.metadata,
   });
-  const router = useRouter();
   const path = usePathname();
   const metadata = proposalData?.metadata ?? ipfsResult;
   const isProposerConnected =
@@ -114,6 +117,12 @@ export default function Page({
     tokenData: data?.tokenGarden?.decimals,
     enabled: proposalData?.proposalNumber != null,
   });
+
+  useEffect(() => {
+    if (convictionRefreshing && currentConvictionPct != null) {
+      setConvictionRefreshing(false);
+    }
+  }, [convictionRefreshing, currentConvictionPct]);
 
   //encode proposal id to pass as argument to distribute function
   const encodedDataProposalId = (proposalId_: bigint) => {
@@ -176,6 +185,14 @@ export default function Page({
       </div>
     );
   }
+
+  const handleRefreshConviction = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setConvictionRefreshing(true);
+    await triggerConvictionRefetch?.();
+    setConvictionRefreshing(false);
+  };
 
   const status = ProposalStatus[proposalData.proposalStatus];
 

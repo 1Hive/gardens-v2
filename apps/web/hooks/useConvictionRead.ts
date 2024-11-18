@@ -51,7 +51,7 @@ export const useConvictionRead = ({
     refetch: triggerConvictionRefetch,
   } = useContractRead({
     ...cvStrategyContract,
-    functionName: "updateProposalConviction" as any,
+    functionName: "calculateProposalConviction",
     args: [BigInt(proposalData?.proposalNumber ?? 0)],
     enabled,
   });
