@@ -59,7 +59,7 @@ export const useConvictionRead = ({
   const { data: thresholdFromContract, error: errorThreshold } =
     useContractRead({
       ...cvStrategyContract,
-      functionName: "calculateThreshold" as any,
+      functionName: "calculateThreshold",
       args: [proposalData?.requestedAmount ?? 0],
       enabled: enabled && PoolTypes[strategyConfig?.proposalType] === "funding",
     });
@@ -135,6 +135,7 @@ export const useConvictionRead = ({
 
   logOnce("debug", "Conviction computed numbers", {
     thresholdPct,
+    thresholdFromContract,
     totalSupportPct,
     currentConvictionPct,
   });
