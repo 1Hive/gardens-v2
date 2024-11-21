@@ -25,6 +25,7 @@ import { Badge } from "./Badge";
 import { Button } from "./Button";
 import { EthAddress } from "./EthAddress";
 import PoolEditForm from "./Forms/PoolEditForm";
+import { InfoBox } from "./InfoBox";
 import MarkdownWrapper from "./MarkdownWrapper";
 import { Modal } from "./Modal";
 import { Skeleton } from "./Skeleton";
@@ -150,6 +151,14 @@ export default function PoolHeader({
     strategy.config.minThresholdPoints,
     +token.decimals,
   );
+
+  const totalPointsActivatedInPool = formatTokenAmount(
+    strategy.totalEffectiveActivePoints,
+    +token.decimals,
+  );
+
+  const minThGtTotalEffPoints =
+    +minThresholdPoints > +totalPointsActivatedInPool;
 
   const spendingLimit =
     (strategy.config.maxRatio / CV_SCALE_PRECISION) *
@@ -470,6 +479,13 @@ export default function PoolHeader({
           ))}
         </div>
       </div>
+      {minThGtTotalEffPoints && isEnabled && (
+        <InfoBox
+          infoBoxType="warning"
+          content="Activated governance in this pool is too low. No proposals will pass unless more members activate their governance. You can still create and support proposals."
+          className="mb-4"
+        />
+      )}
       {!isEnabled ?
         <div className="banner">
           <ClockIcon className="h-8 w-8 text-secondary-content" />
