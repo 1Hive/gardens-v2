@@ -68,6 +68,7 @@ type Props = {
   >;
   token: Pick<TokenGarden, "address" | "name" | "symbol" | "decimals">;
   poolToken?: FetchTokenResult;
+  maxAmount: number;
 };
 
 function calculateConvictionGrowthInSeconds(
@@ -102,6 +103,7 @@ export default function PoolHeader({
   arbitrableConfig,
   token,
   poolToken,
+  maxAmount,
 }: Props) {
   const [isOpenModal, setIsOpenModal] = useState(false);
   const { address } = useAccount();
@@ -197,9 +199,14 @@ export default function PoolHeader({
       info: "It's the time for conviction to reach proposal support. This parameter is logarithmic, represented as a half life and may vary slightly over time depending on network block times.",
     },
     {
-      label: "Min Threshold",
+      label: "Min threshold",
       value: `${minThresholdPoints}`,
       info: `A fixed amount of ${token.symbol} that overrides Minimum Conviction when the Pool's activated governance is low.`,
+    },
+    {
+      label: "Pool staked cap",
+      value: `${formatTokenAmount(maxAmount, token.decimals)} ${token.symbol}`,
+      info: "Max amount of staked tokens to increase your voting weight.",
     },
     {
       label: "Protection",
@@ -220,17 +227,31 @@ export default function PoolHeader({
         : "",
     },
   ];
-
   const filteredPoolConfig =
-    PoolTypes[proposalType] === "signaling" ?
+    (
+      PoolTypes[proposalType] === "signaling" &&
+      PointSystems[pointSystem] !== "capped"
+    ) ?
       poolConfig.filter(
         (config) =>
           !!config.value &&
-          !["Spending limit", "Min Threshold", "Min conviction"].includes(
+          ![
+            "Spending limit",
+            "Min threshold",
+            "Min conviction",
+            "Pool staked cap",
+          ].includes(config.label),
+      )
+    : PoolTypes[proposalType] === "signaling" ?
+      poolConfig.filter(
+        (config) =>
+          !!config.value &&
+          !["Spending limit", "Min threshold", "Min conviction"].includes(
             config.label,
           ),
       )
-    : poolConfig;
+    : PointSystems[pointSystem] === "capped" ? poolConfig
+    : poolConfig.filter((config) => config.label !== "Pool staked cap");
 
   //hooks
   const { data: isCouncilMember } = useContractRead({
