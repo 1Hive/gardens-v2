@@ -137,12 +137,16 @@ export default function Page({
     (strategy) =>
       PoolTypes[strategy.config?.proposalType] === "signaling" &&
       strategy.isEnabled,
+    //&&
+    //strategy.isArchived,
   );
 
   const fundingPools = strategies.filter(
     (strategy) =>
       PoolTypes[strategy.config?.proposalType] === "funding" &&
       strategy.isEnabled,
+    //&&
+    //strategy.isArchived,
   );
   const activePools = strategies?.filter((strategy) => strategy?.isEnabled);
 

@@ -196,6 +196,7 @@ query getCommunity($communityAddr: ID!, $tokenAddr: ID!) {
       proposals {
         id
       }
+      isArchived
     }
     covenantIpfsHash
     communityFee

@@ -12,7 +12,7 @@ type CVStrategy @entity(immutable: false) {
   isEnabled: Boolean!
   token: String!
   sybilScorer: PassportScorer
-  archived: Boolean!
+  isArchived: Boolean
 }
 
 type CVStrategyConfig @entity(immutable: false) {
