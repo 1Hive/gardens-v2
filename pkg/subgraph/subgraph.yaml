@@ -204,7 +204,6 @@ templates:
           handler: handleAllowlistMembersRemoved
         - event: SybilScorerUpdated(address)
           handler: handleSybilScorerUpdated
- 
       file: ./src/mappings/cv-strategy.ts
 
   - kind: ethereum/contract

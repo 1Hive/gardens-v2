@@ -425,6 +425,25 @@ export function handlePoolCreated(event: PoolCreated): void {
   CVStrategyTemplate.create(strategyAddress);
 }
 
+export function handlePoolRejected(event: PoolRejected): void {
+  log.debug("RegistryCommunity: handlePoolRejected: address:{} poolid: {}", [
+    event.params._strategy.toHexString()
+  ]);
+
+  const strategyAddress = event.params._strategy;
+
+  let cvStrategy = CVStrategy.load(strategyAddress.toHexString());
+
+  if (cvStrategy == null) {
+    log.error("RegistryCommunity: CVStrategy not found: {}", [
+      strategyAddress.toHexString()
+    ]);
+    return;
+  }
+  cvStrategy.isArchived = true;
+  cvStrategy.save();
+}
+
 export function handleMemberPowerIncreased(event: MemberPowerIncreased): void {
   const community = event.address.toHex();
   const memberAddress = event.params._member.toHexString();
