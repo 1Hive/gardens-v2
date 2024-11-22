@@ -35,6 +35,7 @@
     "deploy:arbsep:last": "dotenvx run -- ts-node --esm -P ../../apps/web/tsconfig.json ./src/scripts/last-version.ts gv2-arbsepolia",
     "deploy:ethsep:last": "dotenvx run -- ts-node --esm -P ../../apps/web/tsconfig.json ./src/scripts/last-version.ts gv2-ethsepolia",
     "codegen": "graph codegen",
+    "graph": "graph",
     "tsc": "tsc"
   },
   "dependencies": {

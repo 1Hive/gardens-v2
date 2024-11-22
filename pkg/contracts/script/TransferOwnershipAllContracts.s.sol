@@ -5,12 +5,22 @@ import "./BaseMultiChain.s.sol";
 import {CVStrategyV0_0} from "../src/CVStrategy/CVStrategyV0_0.sol";
 import {RegistryCommunityV0_0} from "../src/RegistryCommunity/RegistryCommunityV0_0.sol";
 import {RegistryFactoryV0_0} from "../src/RegistryFactory/RegistryFactoryV0_0.sol";
+import {ProxyOwner} from "../src/ProxyOwner.sol";
 
 contract TransferOwnershipAllContracts is BaseMultiChain {
     using stdJson for string;
 
     function runCurrentNetwork(string memory networkJson) public override {
-        address proxyOwner = networkJson.readAddress(getKeyNetwork(".ENVS.PROXY_OWNER"));
+        address proxyOwner = address(
+            new ERC1967Proxy(
+                address(new ProxyOwner()), abi.encodeWithSelector(ProxyOwner.initialize.selector, address(SENDER))
+            )
+        );
+        console.log("ProxyOwner: ", proxyOwner);
+
+        // address proxyOwner = networkJson.readAddress(getKeyNetwork(".ENVS.PROXY_OWNER"));
+        ProxyOwner proxy = ProxyOwner(payable(address(proxyOwner)));
+        proxy.upgradeTo(address(new ProxyOwner()));
 
         // ARBITRATOR
         address arbitratorScorerProxy = networkJson.readAddress(getKeyNetwork(".ENVS.ARBITRATOR"));

@@ -265,8 +265,10 @@ transfer-ownership-arbsep:
 	--account pkGarden \
 	--sig "run(string)" 'arbsepolia' \
 	--chain-id 421614 \
-	--via-ir \
 	--broadcast \
+	--via-ir \
+	--etherscan-api-key $(ARBISCAN_API_KEY) \
+	--verify \
 	-vvvv
 
 deploy-passport-scorer-arbsep:
@@ -295,6 +297,18 @@ deploy-safe-arbitrator-arbsep:
 	-vvvv
 
 # Arbitrum
+
+transfer-ownership-arbitrum:
+	-forge script script/TransferOwnershipAllContracts.s.sol:TransferOwnershipAllContracts \
+	--rpc-url $(RPC_URL_ARB) \
+	--account pkGarden \
+	--sig "run(string)" 'arbitrum' \
+	--chain-id 42161 \
+	--broadcast \
+	--via-ir \
+	--etherscan-api-key $(ARBISCAN_API_KEY) \
+	--verify \
+	-vvv
 
 deploy-new-collateral-vault-template-arbitrum: 
 	-forge script script/DeployCollateralVaultTemplate.s.sol:DeployCollateralVaultTemplate \
@@ -366,14 +380,26 @@ change-passport-manager-arbitrum:
 
 # Optimism
 
+transfer-ownership-optimism:
+	-forge script script/TransferOwnershipAllContracts.s.sol:TransferOwnershipAllContracts \
+	--rpc-url $(RPC_URL_OPT) \
+	--sig "run(string)" 'optimism' \
+	--etherscan-api-key $(OPTIMISM_API_KEY) \
+	--chain-id 10 \
+	--account pkGarden \
+	--broadcast \
+	--via-ir \
+	--verify \
+	-vvv
+
 deploy-new-collateral-vault-template-optimism: 
 	-forge script script/DeployCollateralVaultTemplate.s.sol:DeployCollateralVaultTemplate \
 	--rpc-url $(RPC_URL_OPT) \
 	--sig "run(string)" 'optimism' \
-	--account pkGarden \
 	--etherscan-api-key $(OPTIMISM_API_KEY) \
-	--ffi \
 	--chain-id 10 \
+	--account pkGarden \
+	--ffi \
 	--legacy \
 	--broadcast \
 	--via-ir \
@@ -438,14 +464,26 @@ change-passport-manager-optimism:
 
 # Polygon
 
+transfer-ownership-polygon:
+	-forge script script/TransferOwnershipAllContracts.s.sol:TransferOwnershipAllContracts \
+	--rpc-url $(RPC_URL_POLYGON) \
+	--sig "run(string)" 'polygon' \
+	--etherscan-api-key $(POLYGONSCAN_API_KEY) \
+	--chain-id 137 \
+	--account pkGarden \
+	--broadcast \
+	--via-ir \
+	--verify \
+	-vvv
+
 deploy-new-collateral-vault-template-polygon: 
 	-forge script script/DeployCollateralVaultTemplate.s.sol:DeployCollateralVaultTemplate \
 	--rpc-url $(RPC_URL_POLYGON) \
 	--sig "run(string)" 'polygon' \
-	--account pkGarden \
 	--etherscan-api-key $(POLYGONSCAN_API_KEY) \
-	--ffi \
 	--chain-id 137 \
+	--account pkGarden \
+	--ffi \
 	--legacy \
 	--broadcast \
 	--via-ir \
@@ -508,14 +546,26 @@ change-passport-manager-polygon:
 
 # Gnosis
 
+transfer-ownership-gnosis:
+	-forge script script/TransferOwnershipAllContracts.s.sol:TransferOwnershipAllContracts \
+	--rpc-url $(RPC_URL_GNOSIS) \
+	--sig "run(string)" 'gnosis' \
+	--etherscan-api-key $(GNOSISSCAN_API_KEY) \
+	--chain-id 100 \
+	--account pkGarden \
+	--broadcast \
+	--via-ir \
+	--verify \
+	-vvv
+
 deploy-new-collateral-vault-template-gnosis: 
 	-forge script script/DeployCollateralVaultTemplate.s.sol:DeployCollateralVaultTemplate \
 	--rpc-url $(RPC_URL_GNOSIS) \
 	--sig "run(string)" 'gnosis' \
-	--account pkGarden \
 	--etherscan-api-key $(GNOSISSCAN_API_KEY) \
-	--ffi \
 	--chain-id 100 \
+	--account pkGarden \
+	--ffi \
 	--legacy \
 	--broadcast \
 	--via-ir \

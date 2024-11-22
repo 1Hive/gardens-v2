@@ -70,8 +70,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
     uint256 public mintAmount = 15000 ether;
     uint256 public constant TOTAL_SUPPLY = 45000 ether;
     uint256 public constant POOL_AMOUNT = 15000 ether;
-    uint256 public constant MINIMUM_STAKE = 50 ether;
-    uint256 public constant MINIMUM_SCORE = 40 ether;
+    uint256 public constant MINIMUM_STAKE = 5 ether;
+    uint256 public constant MINIMUM_SYBIL_SCORE = 40 ether;
     uint256 public constant PROTOCOL_FEE_PERCENTAGE = 1;
     uint256 public constant COMMUNITY_FEE_PERCENTAGE = 2;
     uint256 public constant STAKE_WITH_FEES =
@@ -669,7 +669,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         });
         ArbitrableConfig memory arbConfig;
         vm.startPrank(address(_councilSafe()));
-        cv.setPoolParams(arbConfig, params, MINIMUM_SCORE);
+        cv.setPoolParams(arbConfig, params, MINIMUM_SYBIL_SCORE);
         vm.stopPrank();
         // safeHelper(address(cv), 0, abi.encodeWithSelector(cv.setDecay.selector, _etherToFloat(0.9 ether)));
         // safeHelper(address(cv), 0, abi.encodeWithSelector(cv.setMaxRatio.selector, _etherToFloat(0.2 ether)));
@@ -714,7 +714,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
                 decay: _etherToFloat(0.9 ether),
                 minThresholdPoints: 0
             }),
-            MINIMUM_SCORE
+            MINIMUM_SYBIL_SCORE
         );
         vm.stopPrank();
 
@@ -1046,7 +1046,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
 
     function test_proposalSupported_conviction_with_minThreshold() public {
         (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) =
-            _createProposal(address(0), 50 ether, 1_000 ether);
+            _createProposal(address(0), 150 ether, 1_000 ether);
+        _createProposal(address(0), 1 ether, 1_000 ether);
 
         CVStrategyV0_0 cv = CVStrategyV0_0(payable(address(pool.strategy)));
 
@@ -1054,13 +1055,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         vm.startPrank(address(_councilSafe()));
         cv.setPoolParams(
             arbConfig,
-            CVParams({
-                maxRatio: _etherToFloat(0.1 ether),
-                weight: _etherToFloat(0.0005 ether),
-                decay: _etherToFloat(0.9999834 ether),
-                minThresholdPoints: 5e24
-            }),
-            MINIMUM_SCORE
+            CVParams({maxRatio: 3656188, weight: 133677, decay: 9999887, minThresholdPoints: 100000000000000000000}),
+            MINIMUM_SYBIL_SCORE
         );
 
         vm.stopPrank();
@@ -1084,11 +1080,12 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
 
         token.approve(address(registryCommunity), STAKE_WITH_FEES + 10 ether);
         registryCommunity.stakeAndRegisterMember("");
+        registryCommunity.increasePower(5 ether);
         // registryCommunity.increasePower(10 ether);
         cv.activatePoints();
 
         ProposalSupport[] memory votes2 = new ProposalSupport[](1);
-        int256 SUPPORT_PCT2 = int256(MINIMUM_STAKE);
+        int256 SUPPORT_PCT2 = 10 ether;
         votes2[0] = ProposalSupport(proposalId, SUPPORT_PCT2);
         data = abi.encode(votes2);
         // vm.expectEmit(true, true, true, false);
@@ -1137,8 +1134,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         console.log("Conviction Last:   %s", convictionLast);
         // console.log("Voter points pct %s", voterPointsPct);
         // assertEq(threshold, 115613619, "threshold");
-        // 30120481927710843373493975 -> threshold override computed based on minThresholdPoints
-        assertEq(threshold, 30120481927710843373493975, "threshold"); // Expect to be the threshold override
+        // 88495575221238938053097333333333 -> threshold override computed based on minThresholdPoints
+        assertEq(threshold, 88495575221238938053097333333333, "threshold"); // Expect to be the threshold override
 
         console.log("after block.number", block.number);
 
@@ -1156,7 +1153,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
                 decay: _etherToFloat(0.9965402 ether),
                 minThresholdPoints: 0
             }),
-            MINIMUM_SCORE
+            MINIMUM_SYBIL_SCORE
         );
         vm.stopPrank();
         cv.updateProposalConviction(proposalId);
@@ -1443,7 +1440,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
                 decay: _etherToFloat(0.9965402 ether),
                 minThresholdPoints: 0
             }),
-            MINIMUM_SCORE
+            MINIMUM_SYBIL_SCORE
         );
         vm.stopPrank();
         // safeHelper(address(cv), 0, abi.encodeWithSelector(cv.setDecay.selector, _etherToFloat(0.9965402 ether)));
@@ -2531,11 +2528,13 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         CVStrategyV0_0 cv = CVStrategyV0_0(payable(address(pool.strategy)));
 
         vm.startPrank(address(_councilSafe()));
-        cv.setSybilScorer(address(passportScorer), MINIMUM_SCORE);
+        cv.setSybilScorer(address(passportScorer), MINIMUM_SYBIL_SCORE);
         passportScorer.activateStrategy(address(cv));
         vm.stopPrank();
 
-        uint256 passportScore = MINIMUM_SCORE + 1;
+        //Because OnlyAuthorized and factoryOwner also Passport owner
+        vm.startPrank(factoryOwner);
+        uint256 passportScore = MINIMUM_SYBIL_SCORE + 1;
         passportScorer.addUserScore(address(6), passportScore);
 
         vm.startPrank(address(6));
@@ -2555,11 +2554,13 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         CVStrategyV0_0 cv = CVStrategyV0_0(payable(address(pool.strategy)));
 
         vm.startPrank(address(_councilSafe()));
-        cv.setSybilScorer(address(passportScorer), MINIMUM_SCORE);
+        cv.setSybilScorer(address(passportScorer), MINIMUM_SYBIL_SCORE);
         passportScorer.activateStrategy(address(cv));
         vm.stopPrank();
 
-        uint256 passportScore = MINIMUM_SCORE - 1;
+        uint256 passportScore = MINIMUM_SYBIL_SCORE - 1;
+        //Because OnlyAuthorized and factoryOwner also Passport owner
+        vm.startPrank(factoryOwner);
         passportScorer.addUserScore(address(6), passportScore);
 
         vm.startPrank(address(6));
@@ -2578,7 +2579,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         CVStrategyV0_0 cv = CVStrategyV0_0(payable(address(pool.strategy)));
 
         vm.startPrank(address(_councilSafe()));
-        cv.setSybilScorer(address(passportScorer), MINIMUM_SCORE);
+        cv.setSybilScorer(address(passportScorer), MINIMUM_SYBIL_SCORE);
 
         // passportScorer.activateStrategy(address(cv));
         vm.stopPrank();
@@ -2602,8 +2603,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
     function test_activatePoints_success_not_sybyl_scorer_set() public {
         (IAllo.Pool memory pool, uint256 poolId,) = _createProposal(NATIVE, 0, 0);
         CVStrategyV0_0 cv = CVStrategyV0_0(payable(address(pool.strategy)));
-
-        passportScorer.addStrategy(address(cv), MINIMUM_SCORE, address(_councilSafe()));
+        vm.startPrank(address(factoryOwner));
+        passportScorer.addStrategy(address(cv), MINIMUM_SYBIL_SCORE, address(_councilSafe()));
 
         //notice how we set the score to the user as 0
         uint256 passportScore = 0;
@@ -2672,11 +2673,13 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         CVStrategyV0_0 cv = CVStrategyV0_0(payable(address(pool.strategy)));
 
         vm.startPrank(address(_councilSafe()));
-        cv.setSybilScorer(address(passportScorer), MINIMUM_SCORE);
+        cv.setSybilScorer(address(passportScorer), MINIMUM_SYBIL_SCORE);
         passportScorer.activateStrategy(address(cv));
         vm.stopPrank();
 
-        uint256 passportScore = MINIMUM_SCORE - 1;
+        //Because OnlyAuthorized and factoryOwner also Passport owner
+        vm.startPrank(factoryOwner);
+        uint256 passportScore = MINIMUM_SYBIL_SCORE - 1;
         passportScorer.addUserScore(address(6), passportScore);
 
         ProposalSupport[] memory votes = new ProposalSupport[](1);
@@ -2700,15 +2703,14 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         CVStrategyV0_0 cv = CVStrategyV0_0(payable(address(pool.strategy)));
 
         vm.startPrank(address(_councilSafe()));
-        cv.setSybilScorer(address(passportScorer), MINIMUM_SCORE);
+        cv.setSybilScorer(address(passportScorer), MINIMUM_SYBIL_SCORE);
         passportScorer.activateStrategy(address(cv));
         vm.stopPrank();
 
-        uint256 passportScore = MINIMUM_SCORE + 1;
+        uint256 passportScore = MINIMUM_SYBIL_SCORE + 1;
         passportScorer.addUserScore(address(6), passportScore);
 
         ProposalSupport[] memory votes = new ProposalSupport[](1);
-        votes[0] = ProposalSupport(proposalId, 80);
 
         bytes memory data = abi.encode(votes);
 
