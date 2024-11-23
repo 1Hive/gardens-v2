@@ -213,9 +213,9 @@ export default function PoolHeader({
       info: `A fixed amount of ${token.symbol} that overrides Minimum Conviction when the Pool's activated governance is low.`,
     },
     {
-      label: "Pool staked cap",
+      label: "Max voting weight",
       value: `${formatTokenAmount(maxAmount, token.decimals)} ${token.symbol}`,
-      info: "Max amount of staked tokens to increase your voting weight.",
+      info: "Staking above this specified limit won’t increase your voting weight.",
     },
     {
       label: "Protection",
