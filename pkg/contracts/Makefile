@@ -274,27 +274,26 @@ transfer-ownership-arbsep:
 deploy-passport-scorer-arbsep:
 	-forge script script/DeployPassportScorer.s.sol:DeployPassportScorer \
 	--rpc-url $(RPC_URL_ARB_TESTNET) \
-	--account pkGarden \
 	--sig "run(string)" 'arbsepolia' \
 	--chain-id 421614 \
-	--via-ir \
 	--etherscan-api-key $(ARBISCAN_API_KEY) \
+	--account pkGarden \
+	--via-ir \
 	--verify \
 	--broadcast \
-	-vvvv
-
+	-vv
 
 deploy-safe-arbitrator-arbsep:
 	-forge script script/DeploySafeArbitrator.s.sol:DeploySafeArbitrator \
 	--rpc-url $(RPC_URL_ARB_TESTNET) \
-	--account pkGarden \
 	--sig "run(string)" 'arbsepolia' \
 	--chain-id 421614 \
-	--via-ir \
 	--etherscan-api-key $(ARBISCAN_API_KEY) \
+	--account pkGarden \
+	--via-ir \
 	--verify \
 	--broadcast \
-	-vvvv
+	-vv
 
 # Arbitrum
 
@@ -371,12 +370,36 @@ change-passport-manager-arbitrum:
 	-forge script script/PassportScorerWriter.s.sol:PassportScorerWriter \
 	--rpc-url $(RPC_URL_ARB) \
 	--sig "run(string)" 'arbitrum' \
+	--chain-id 42161 \
 	--account pkGarden \
 	--ffi \
-	--chain-id 42161 \
 	--broadcast \
 	--legacy \
 	-vvv
+
+deploy-passport-scorer-arbitrum:
+	-forge script script/DeployPassportScorer.s.sol:DeployPassportScorer \
+	--rpc-url $(RPC_URL_ARB) \
+	--sig "run(string)" 'arbitrum' \
+	--chain-id 42161 \
+	--etherscan-api-key $(ARBISCAN_API_KEY) \
+	--account pkGarden \
+	--via-ir \
+	--verify \
+	--broadcast \
+	-vv
+
+deploy-safe-arbitrator-arbitrum:
+	-forge script script/DeploySafeArbitrator.s.sol:DeploySafeArbitrator \
+	--rpc-url $(RPC_URL_ARB) \
+	--sig "run(string)" 'arbitrum' \
+	--chain-id 42161 \
+	--etherscan-api-key $(ARBISCAN_API_KEY) \
+	--account pkGarden \
+	--via-ir \
+	--verify \
+	--broadcast \
+	-vv
 
 # Optimism
 
@@ -455,12 +478,36 @@ change-passport-manager-optimism:
 	-forge script script/PassportScorerWriter.s.sol:PassportScorerWriter \
 	--rpc-url $(RPC_URL_OPT) \
 	--sig "run(string)" 'optimism' \
+	--chain-id 10 \
 	--account pkGarden \
 	--ffi \
-	--chain-id 10 \
 	--broadcast \
 	--legacy \
 	-vvv
+
+deploy-passport-scorer-optimism:
+	-forge script script/DeployPassportScorer.s.sol:DeployPassportScorer \
+	--rpc-url $(RPC_URL_OPT) \
+	--sig "run(string)" 'optimism' \
+	--chain-id 10 \
+	--etherscan-api-key $(OPTIMISM_API_KEY) \
+	--account pkGarden \
+	--via-ir \
+	--verify \
+	--broadcast \
+	-vv
+
+deploy-safe-arbitrator-optimism:
+	-forge script script/DeploySafeArbitrator.s.sol:DeploySafeArbitrator \
+	--rpc-url $(RPC_URL_OPT) \
+	--sig "run(string)" 'optimism' \
+	--chain-id 10 \
+	--etherscan-api-key $(OPTIMISM_API_KEY) \
+	--account pkGarden \
+	--via-ir \
+	--verify \
+	--broadcast \
+	-vv
 
 # Polygon
 
@@ -537,12 +584,36 @@ change-passport-manager-polygon:
 	-forge script script/PassportScorerWriter.s.sol:PassportScorerWriter \
 	--rpc-url $(RPC_URL_POLYGON) \
 	--sig "run(string)" 'polygon' \
+	--chain-id 137 \
 	--account pkGarden \
 	--ffi \
-	--chain-id 137 \
 	--broadcast \
 	--legacy \
 	-vvv
+
+deploy-passport-scorer-polygon:
+	-forge script script/DeployPassportScorer.s.sol:DeployPassportScorer \
+	--rpc-url $(RPC_URL_POLYGON) \
+	--sig "run(string)" 'polygon' \
+	--chain-id 137 \
+	--etherscan-api-key $(POLYGONSCAN_API_KEY) \
+	--account pkGarden \
+	--via-ir \
+	--verify \
+	--broadcast \
+	-vv
+
+deploy-safe-arbitrator-polygon:
+	-forge script script/DeploySafeArbitrator.s.sol:DeploySafeArbitrator \
+	--rpc-url $(RPC_URL_POLYGON) \
+	--sig "run(string)" 'polygon' \
+	--chain-id 137 \
+	--etherscan-api-key $(POLYGONSCAN_API_KEY) \
+	--account pkGarden \
+	--via-ir \
+	--verify \
+	--broadcast \
+	-vv
 
 # Gnosis
 
@@ -604,16 +675,40 @@ verify-blockscout-gnosis:
 	-forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
 	--rpc-url $(RPC_URL_GNOSIS) \
 	--sig "run(string)" 'gnosis' \
+	--chain-id 100 \
 	--account pkGarden \
 	--verifier blockscout \
 	--verifier-url https://gnosis.blockscout.com/api/ \
 	--ffi \
-	--chain-id 100 \
 	--legacy \
 	--verify \
 	--via-ir \
 	-vvv \
 	--slow
+
+deploy-passport-scorer-gnosis:
+	-forge script script/DeployPassportScorer.s.sol:DeployPassportScorer \
+	--rpc-url $(RPC_URL_GNOSIS) \
+	--sig "run(string)" 'gnosis' \
+	--chain-id 100 \
+	--etherscan-api-key $(GNOSISSCAN_API_KEY) \
+	--account pkGarden \
+	--via-ir \
+	--verify \
+	--broadcast \
+	-vv
+
+deploy-safe-arbitrator-gnosis:
+	-forge script script/DeploySafeArbitrator.s.sol:DeploySafeArbitrator \
+	--rpc-url $(RPC_URL_GNOSIS) \
+	--sig "run(string)" 'gnosis' \
+	--chain-id 100 \
+	--etherscan-api-key $(GNOSISSCAN_API_KEY) \
+	--account pkGarden \
+	--via-ir \
+	--verify \
+	--broadcast \
+	-vv
 
 # verify-tenderly-gnosis: 
 # 	-forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \

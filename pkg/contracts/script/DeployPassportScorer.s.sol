@@ -21,19 +21,21 @@ contract DeployPassportScorer is BaseMultiChain {
             )
         );
 
+        console.log("New Passport Scorer: ", newPassportScorer);
+
         // CV STRATEGIES
-        address[] memory cvStrategyProxies = networkJson.readAddressArray(getKeyNetwork(".PROXIES.CV_STRATEGIES"));
-        for (uint256 i = 0; i < cvStrategyProxies.length; i++) {
-            CVStrategyV0_0 strategy = CVStrategyV0_0(payable(address(cvStrategyProxies[i])));
-            if (address(strategy.registryCommunity().councilSafe()) != sender) {
-                continue;
-            }
-            address existingSybil = address(strategy.sybilScorer());
-            if (existingSybil == address(0)) {
-                continue;
-            }
-            (uint256 existingThreshold,,) = PassportScorer(existingSybil).strategies(address(cvStrategyProxies[i]));
-            strategy.setSybilScorer(newPassportScorer, existingThreshold);
-        }
+        // address[] memory cvStrategyProxies = networkJson.readAddressArray(getKeyNetwork(".PROXIES.CV_STRATEGIES"));
+        // for (uint256 i = 0; i < cvStrategyProxies.length; i++) {
+        //     CVStrategyV0_0 strategy = CVStrategyV0_0(payable(address(cvStrategyProxies[i])));
+        //     if (address(strategy.registryCommunity().councilSafe()) != sender) {
+        //         continue;
+        //     }
+        //     address existingSybil = address(strategy.sybilScorer());
+        //     if (existingSybil == address(0)) {
+        //         continue;
+        //     }
+        //     (uint256 existingThreshold,,) = PassportScorer(existingSybil).strategies(address(cvStrategyProxies[i]));
+        //     strategy.setSybilScorer(newPassportScorer, existingThreshold);
+        // }
     }
 }

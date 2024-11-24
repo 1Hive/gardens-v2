@@ -106,13 +106,14 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
     event KickEnabledUpdated(bool _isKickEnabled);
     event FeeReceiverChanged(address _feeReceiver);
     event PoolCreated(uint256 _poolId, address _strategy, address _community, address _token, Metadata _metadata); // 0x778cac0a
+    event PoolRejected(address _strategy);
 
     /*|--------------------------------------------|*/
     /*|              CUSTOM ERRORS                 |*/
     /*|--------------------------------------------|*/
 
     error AllowlistTooBig(uint256 size);
-    error AddressCannotBeZero();
+    // error AddressCannotBeZero();
     error OnlyEmptyCommunity(uint256 totalMembers);
     error UserNotInCouncil(address _user);
     error UserNotInRegistry();
@@ -223,7 +224,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         }
     }
 
-    function onlyStrategyEnabled(address _strategy) internal view {
+    function onlyStrategyEnabled(address _strategy) public view {
         if (!enabledStrategies[_strategy]) {
             revert StrategyDisabled();
         }
@@ -247,9 +248,9 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         }
     }
 
-    function _revertZeroAddress(address _address) internal pure {
-        if (_address == address(0)) revert AddressCannotBeZero();
-    }
+    // function _revertZeroAddress(address _address) internal pure {
+    //     if (_address == address(0)) revert AddressCannotBeZero();
+    // }
 
     function setStrategyTemplate(address template) external onlyOwner {
         strategyTemplate = template;
@@ -273,14 +274,14 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
 
         _setRoleAdmin(COUNCIL_MEMBER, DEFAULT_ADMIN_ROLE);
 
-        _revertZeroAddress(address(params._gardenToken));
-        _revertZeroAddress(params._councilSafe);
-        _revertZeroAddress(params._allo);
-        _revertZeroAddress(params._registryFactory);
+        // _revertZeroAddress(address(params._gardenToken));
+        // _revertZeroAddress(params._councilSafe);
+        // _revertZeroAddress(params._allo);
+        // _revertZeroAddress(params._registryFactory);
 
-        if (params._communityFee != 0) {
-            _revertZeroAddress(params._feeReceiver);
-        }
+        // if (params._communityFee != 0) {
+        //     _revertZeroAddress(params._feeReceiver);
+        // }
         allo = FAllo(params._allo);
         gardenToken = params._gardenToken;
         if (params._registerStakeAmount == 0) {
@@ -337,7 +338,9 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         address strategyProxy = address(
             new ERC1967Proxy(
                 address(strategyTemplate),
-                abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo), collateralVaultTemplate, proxyOwner())
+                abi.encodeWithSelector(
+                    CVStrategyV0_0.init.selector, address(allo), collateralVaultTemplate, proxyOwner()
+                )
             )
         );
         (poolId, strategy) = createPool(strategyProxy, _token, _params, _metadata);
@@ -371,10 +374,8 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         }
         strategy = _strategy;
 
-        address[] memory _pool_managers = initialMembers;
-
         poolId = allo.createPoolWithCustomStrategy(
-            profileId, strategy, abi.encode(_params), token, 0, _metadata, _pool_managers
+            profileId, strategy, abi.encode(_params), token, 0, _metadata, initialMembers
         );
 
         emit PoolCreated(poolId, strategy, address(this), _token, _metadata);
@@ -384,7 +385,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         onlyRegistryMemberAddress(_member);
         onlyStrategyEnabled(_strategy);
         onlyStrategyAddress(msg.sender, _strategy);
-        _revertZeroAddress(_strategy);
+        // _revertZeroAddress(_strategy);
 
         if (memberActivatedInStrategies[_member][_strategy]) {
             revert UserAlreadyActivated();
@@ -411,7 +412,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
 
     function deactivateMemberInStrategy(address _member, address _strategy) public virtual {
         onlyRegistryMemberAddress(_member);
-        _revertZeroAddress(_strategy);
+        // _revertZeroAddress(_strategy);
         onlyStrategyAddress(msg.sender, _strategy);
 
         if (!memberActivatedInStrategies[_member][_strategy]) {
@@ -439,17 +440,15 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
     function increasePower(uint256 _amountStaked) public virtual nonReentrant {
         onlyRegistryMemberSender();
         address member = msg.sender;
-        address[] memory memberStrategies = strategiesByMember[member];
-
         uint256 pointsToIncrease;
 
-        for (uint256 i = 0; i < memberStrategies.length; i++) {
+        for (uint256 i = 0; i < strategiesByMember[member].length; i++) {
             //FIX support interface check
-            //if (address(memberStrategies[i]) == _strategy) {
-            pointsToIncrease = IPointStrategy(memberStrategies[i]).increasePower(member, _amountStaked);
+            //if (address(strategiesByMember[member][i]) == _strategy) {
+            pointsToIncrease = IPointStrategy(strategiesByMember[member][i]).increasePower(member, _amountStaked);
             if (pointsToIncrease != 0) {
-                memberPowerInStrategy[member][memberStrategies[i]] += pointsToIncrease;
-                // console.log("Strategy power", memberPowerInStrategy[member][memberStrategies[i]]);
+                memberPowerInStrategy[member][strategiesByMember[member][i]] += pointsToIncrease;
+                // console.log("Strategy power", memberPowerInStrategy[member][strategiesByMember[member][i]]);
             }
             //}
         }
@@ -507,7 +506,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
     function addStrategyByPoolId(uint256 poolId) public virtual {
         onlyCouncilSafe();
         address strategy = address(allo.getPool(poolId).strategy);
-        _revertZeroAddress(strategy);
+        // _revertZeroAddress(strategy);
         if (strategy.supportsInterface(type(IPointStrategy).interfaceId)) {
             _addStrategy(strategy);
         }
@@ -530,15 +529,23 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         emit StrategyAdded(_newStrategy);
     }
 
+    function rejectPool(address _strategy) public virtual {
+        onlyCouncilSafe();
+        if (enabledStrategies[_strategy]) {
+            _removeStrategy(_strategy);
+        }
+        emit PoolRejected(_strategy);
+    }
+
     function removeStrategyByPoolId(uint256 poolId) public virtual {
         onlyCouncilSafe();
         address strategy = address(allo.getPool(poolId).strategy);
-        _revertZeroAddress(strategy);
+        // _revertZeroAddress(strategy);
         _removeStrategy(strategy);
     }
 
     function _removeStrategy(address _strategy) internal virtual {
-        _revertZeroAddress(_strategy);
+        // _revertZeroAddress(_strategy);
         enabledStrategies[_strategy] = false;
         emit StrategyRemoved(_strategy);
     }
@@ -550,7 +557,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
 
     function setCouncilSafe(address payable _safe) public virtual {
         onlyCouncilSafe();
-        _revertZeroAddress(_safe);
+        // _revertZeroAddress(_safe);
         pendingCouncilSafe = _safe;
         emit CouncilSafeChangeStarted(address(councilSafe), pendingCouncilSafe);
     }
@@ -607,8 +614,9 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
 
     function getStakeAmountWithFees() public view virtual returns (uint256) {
         uint256 communityFeeAmount = (registerStakeAmount * communityFee) / (100 * PRECISION_SCALE);
-        uint256 gardensFeeAmount =
-            (registerStakeAmount * IRegistryFactory(registryFactory).getProtocolFee(address(this))) / (100 * PRECISION_SCALE);
+        uint256 gardensFeeAmount = (
+            registerStakeAmount * IRegistryFactory(registryFactory).getProtocolFee(address(this))
+        ) / (100 * PRECISION_SCALE);
 
         return registerStakeAmount + communityFeeAmount + gardensFeeAmount;
     }
@@ -673,6 +681,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
     }
 
     function unregisterMember() public virtual nonReentrant {
+        onlyRegistryMemberSender();
         address _member = msg.sender;
         deactivateAllStrategies(_member);
         Member memory member = addressToMemberInfo[_member];

@@ -11,7 +11,7 @@
     {
       "name": "PassportScorer",
       "startBlock": 251465002,
-      "address": "0xa2d5900d53a548637dd61312d02b90f3ff1d6a5e",
+      "address": "0x8cd4bA4ad10d85A550fe45d567a49E49e1D23CE1",
       "customTemplate": "passportScorer"
     }
   ]

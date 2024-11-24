@@ -13,8 +13,10 @@ contract UpgradeCVMultichainTest is BaseMultiChain {
         address registryFactoryImplementation = address(new RegistryFactoryV0_0());
         address registryImplementation = address(new RegistryCommunityV0_0());
         address strategyImplementation = address(new CVStrategyV0_0());
-        address passportScorerImplementation = address(new PassportScorer());
-
+        address passportScorer = networkJson.readAddress(getKeyNetwork(".PROXIES.PASSPORT_SCORER"));
+        address safeArbitrator = networkJson.readAddress(getKeyNetwork(".ENVS.ARBITRATOR"));
+        console.log("safeArbitrator", safeArbitrator);
+        console.log("passportScorer", passportScorer);
         // PASSPORT SCORER UPGRADE
         // address passportScorerProxy = networkJson.readAddress(getKeyNetwork(".PROXIES.PASSPORT_SCORER"));
         // PassportScorer passportScorer = PassportScorer(address(passportScorerProxy));
@@ -48,9 +50,26 @@ contract UpgradeCVMultichainTest is BaseMultiChain {
         // CV STRATEGIES UPGRADES
         address[] memory cvStrategyProxies = networkJson.readAddressArray(getKeyNetwork(".PROXIES.CV_STRATEGIES"));
         for (uint256 i = 0; i < cvStrategyProxies.length; i++) {
-            // Upgrades.upgradeProxy(address(cvStrategyProxies[i]), "CVStrategyV0_0.sol:CVStrategyV0_0", "");
+            // Upgrades.upgradeProxy(
+            //     address(cvStrategyProxies[i]),
+            //     "CVStrategyV0_0.sol:CVStrategyV0_0",
+            //     abi.encodeWithSelector(CVStrategyV0_0.init2.selector, safeArbitrator));
+
             // abi.encodeWithSelector(CVStrategyV0_0initializeV2.selector)
-            CVStrategyV0_0(payable(address(cvStrategyProxies[i]))).upgradeTo(strategyImplementation); // DOESNT VALIDATE SAFE UPGRADING
+            CVStrategyV0_0 cvStrategy = CVStrategyV0_0(payable(address(cvStrategyProxies[i])));
+            cvStrategy.upgradeTo(strategyImplementation); // DOESNT VALIDATE SAFE UPGRADING
+
+            (IArbitrator arbitrator,,,,,) = cvStrategy.arbitrableConfigs(
+                cvStrategy.currentArbitrableConfigVersion()
+            );
+            if (address(arbitrator) != safeArbitrator) {
+                cvStrategy.init2(safeArbitrator);
+            }
+            address oldPassport = address(cvStrategy.sybilScorer());
+            if (oldPassport != address(0)) {
+                (uint256 threshold,,) = PassportScorer(oldPassport).strategies(address(cvStrategyProxies[i]));
+                cvStrategy.setSybilScorer(passportScorer, threshold);
+            }
         }
     }
 }
