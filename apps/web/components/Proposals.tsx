@@ -192,6 +192,8 @@ export function Proposals({
     !!memberData?.member?.memberCommunity?.[0]?.isRegistered;
   const memberActivatedStrategy =
     Number(memberStrategyData?.memberStrategy?.activatedPoints) > 0;
+  const memberTokensInCommunity =
+    memberData?.member?.memberCommunity?.[0].stakedTokens ?? 0;
 
   const proposals = strategy.proposals;
 
@@ -444,7 +446,7 @@ export function Proposals({
         tokenDecimals={tokenDecimals}
         strategy={strategy}
         communityAddress={communityAddress}
-        memberTokensInCommunity={memberActivatedPoints}
+        memberTokensInCommunity={memberTokensInCommunity}
         isMemberCommunity={isMemberCommunity}
         memberActivatedStrategy={memberActivatedStrategy}
       />
