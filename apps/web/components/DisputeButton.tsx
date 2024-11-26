@@ -65,13 +65,17 @@ type Props = {
     }
   > &
     MetadataV1;
+  isMemberCommunity: boolean;
 };
 
 const ABSTAINED_RULING = 0;
 const APPROVED_RULING = 1;
 const REJECTED_RULING = 2;
 
-export const DisputeButton: FC<Props> = ({ proposalData }) => {
+export const DisputeButton: FC<Props> = ({
+  proposalData,
+  isMemberCommunity,
+}) => {
   const [isModalOpened, setIsModalOpened] = useState(false);
   const [reason, setReason] = useState("");
   const [isEnoughBalance, setIsEnoughBalance] = useState(true);
@@ -249,8 +253,12 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
     }
   };
 
-  const disableSubmitBtn = useMemo<ConditionObject[]>(
+  const disableDisputeSubmitBtn = useMemo<ConditionObject[]>(
     () => [
+      {
+        condition: !isMemberCommunity,
+        message: "Join community to dispute",
+      },
       {
         condition: !isEnoughBalance,
         message: "Insufficient balance",
@@ -267,8 +275,9 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
     [isEnoughBalance, isCooldown],
   );
 
-  const { isConnected, missmatchUrl, tooltipMessage } =
-    useDisableButtons(disableSubmitBtn);
+  const { isConnected, missmatchUrl, tooltipMessage } = useDisableButtons(
+    disableDisputeSubmitBtn,
+  );
 
   const rulingTimeout = convertSecondsToReadableTime(
     arbitrationConfig.defaultRulingTimeout,
@@ -437,7 +446,11 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
               onClick={handleSubmit}
               color="danger"
               disabled={
-                !isConnected || missmatchUrl || !isEnoughBalance || isCooldown
+                !isConnected ||
+                missmatchUrl ||
+                !isMemberCommunity ||
+                !isEnoughBalance ||
+                isCooldown
               }
               tooltip={tooltipMessage}
               tooltipSide="tooltip-left"
@@ -460,7 +473,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
             btnStyle="outline"
             onClick={() => setIsModalOpened(true)}
           >
-            {(isDisputed ?? isProposalEnded) ? "Open dispute" : "Dispute"}
+            {isDisputed ?? isProposalEnded ? "Open dispute" : "Dispute"}
           </Button>
           <Modal
             title={`Disputed Proposal: ${proposalData.title} #${proposalData.proposalNumber}`}
