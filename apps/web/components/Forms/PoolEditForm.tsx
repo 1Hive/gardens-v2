@@ -177,7 +177,9 @@ export default function PoolEditForm({
   const shouldRenderInput = (key: string): boolean => {
     if (
       PoolTypes[proposalType] === "signaling" &&
-      (key === "spendingLimit" || key === "minThresholdPoints")
+      (key === "spendingLimit" ||
+        key === "minThresholdPoints" ||
+        key === "minimumConviction")
     ) {
       return false;
     }

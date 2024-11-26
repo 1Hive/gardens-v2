@@ -819,7 +819,7 @@ export type CVStrategy_filter = {
     and?: InputMaybe<Array<InputMaybe<CVStrategy_filter>>>;
     or?: InputMaybe<Array<InputMaybe<CVStrategy_filter>>>;
 };
-export type CVStrategy_orderBy = 'id' | 'poolId' | 'poolAmount' | 'metadata' | 'registryCommunity' | 'registryCommunity__id' | 'registryCommunity__chainId' | 'registryCommunity__strategyTemplate' | 'registryCommunity__profileId' | 'registryCommunity__communityFee' | 'registryCommunity__protocolFee' | 'registryCommunity__communityName' | 'registryCommunity__covenantIpfsHash' | 'registryCommunity__councilSafe' | 'registryCommunity__isKickEnabled' | 'registryCommunity__registerStakeAmount' | 'registryCommunity__registerToken' | 'registryCommunity__alloAddress' | 'registryCommunity__isValid' | 'config' | 'config__id' | 'config__D' | 'config__decay' | 'config__maxRatio' | 'config__minThresholdPoints' | 'config__weight' | 'config__proposalType' | 'config__pointSystem' | 'config__maxAmount' | 'proposals' | 'memberActive' | 'maxCVSupply' | 'totalEffectiveActivePoints' | 'isEnabled' | 'token' | 'sybilScorer' | 'sybilScorer__id';
+export type CVStrategy_orderBy = 'id' | 'poolId' | 'poolAmount' | 'metadata' | 'registryCommunity' | 'registryCommunity__id' | 'registryCommunity__chainId' | 'registryCommunity__strategyTemplate' | 'registryCommunity__profileId' | 'registryCommunity__communityFee' | 'registryCommunity__protocolFee' | 'registryCommunity__protocolFeeReceiver' | 'registryCommunity__communityName' | 'registryCommunity__covenantIpfsHash' | 'registryCommunity__councilSafe' | 'registryCommunity__pendingNewCouncilSafe' | 'registryCommunity__isKickEnabled' | 'registryCommunity__registerStakeAmount' | 'registryCommunity__registerToken' | 'registryCommunity__alloAddress' | 'registryCommunity__isValid' | 'config' | 'config__id' | 'config__D' | 'config__decay' | 'config__maxRatio' | 'config__minThresholdPoints' | 'config__weight' | 'config__proposalType' | 'config__pointSystem' | 'config__maxAmount' | 'proposals' | 'memberActive' | 'maxCVSupply' | 'totalEffectiveActivePoints' | 'isEnabled' | 'token' | 'sybilScorer' | 'sybilScorer__id';
 export type CollateralVault = {
     id: Scalars['ID']['output'];
     strategy: CVStrategy;
@@ -993,6 +993,7 @@ export type MemberCommunity = {
     isRegistered?: Maybe<Scalars['Boolean']['output']>;
     member: Member;
     registryCommunity: RegistryCommunity;
+    covenantSignature?: Maybe<Scalars['String']['output']>;
 };
 export type MemberCommunity_filter = {
     id?: InputMaybe<Scalars['ID']['input']>;
@@ -1077,12 +1078,32 @@ export type MemberCommunity_filter = {
     registryCommunity_not_ends_with?: InputMaybe<Scalars['String']['input']>;
     registryCommunity_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
     registryCommunity_?: InputMaybe<RegistryCommunity_filter>;
+    covenantSignature?: InputMaybe<Scalars['String']['input']>;
+    covenantSignature_not?: InputMaybe<Scalars['String']['input']>;
+    covenantSignature_gt?: InputMaybe<Scalars['String']['input']>;
+    covenantSignature_lt?: InputMaybe<Scalars['String']['input']>;
+    covenantSignature_gte?: InputMaybe<Scalars['String']['input']>;
+    covenantSignature_lte?: InputMaybe<Scalars['String']['input']>;
+    covenantSignature_in?: InputMaybe<Array<Scalars['String']['input']>>;
+    covenantSignature_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
+    covenantSignature_contains?: InputMaybe<Scalars['String']['input']>;
+    covenantSignature_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+    covenantSignature_not_contains?: InputMaybe<Scalars['String']['input']>;
+    covenantSignature_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+    covenantSignature_starts_with?: InputMaybe<Scalars['String']['input']>;
+    covenantSignature_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    covenantSignature_not_starts_with?: InputMaybe<Scalars['String']['input']>;
+    covenantSignature_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    covenantSignature_ends_with?: InputMaybe<Scalars['String']['input']>;
+    covenantSignature_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    covenantSignature_not_ends_with?: InputMaybe<Scalars['String']['input']>;
+    covenantSignature_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
     /** Filter for the block changed event. */
     _change_block?: InputMaybe<BlockChangedFilter>;
     and?: InputMaybe<Array<InputMaybe<MemberCommunity_filter>>>;
     or?: InputMaybe<Array<InputMaybe<MemberCommunity_filter>>>;
 };
-export type MemberCommunity_orderBy = 'id' | 'memberAddress' | 'stakedTokens' | 'isRegistered' | 'member' | 'member__id' | 'registryCommunity' | 'registryCommunity__id' | 'registryCommunity__chainId' | 'registryCommunity__strategyTemplate' | 'registryCommunity__profileId' | 'registryCommunity__communityFee' | 'registryCommunity__protocolFee' | 'registryCommunity__communityName' | 'registryCommunity__covenantIpfsHash' | 'registryCommunity__councilSafe' | 'registryCommunity__isKickEnabled' | 'registryCommunity__registerStakeAmount' | 'registryCommunity__registerToken' | 'registryCommunity__alloAddress' | 'registryCommunity__isValid';
+export type MemberCommunity_orderBy = 'id' | 'memberAddress' | 'stakedTokens' | 'isRegistered' | 'member' | 'member__id' | 'registryCommunity' | 'registryCommunity__id' | 'registryCommunity__chainId' | 'registryCommunity__strategyTemplate' | 'registryCommunity__profileId' | 'registryCommunity__communityFee' | 'registryCommunity__protocolFee' | 'registryCommunity__protocolFeeReceiver' | 'registryCommunity__communityName' | 'registryCommunity__covenantIpfsHash' | 'registryCommunity__councilSafe' | 'registryCommunity__pendingNewCouncilSafe' | 'registryCommunity__isKickEnabled' | 'registryCommunity__registerStakeAmount' | 'registryCommunity__registerToken' | 'registryCommunity__alloAddress' | 'registryCommunity__isValid' | 'covenantSignature';
 export type MemberStrategy = {
     id: Scalars['ID']['output'];
     member: Member;
@@ -1976,11 +1997,13 @@ export type RegistryCommunity = {
     profileId?: Maybe<Scalars['String']['output']>;
     communityFee: Scalars['BigInt']['output'];
     protocolFee: Scalars['BigInt']['output'];
+    protocolFeeReceiver?: Maybe<Scalars['String']['output']>;
     communityName?: Maybe<Scalars['String']['output']>;
     covenantIpfsHash?: Maybe<Scalars['String']['output']>;
     registryFactory?: Maybe<RegistryFactory>;
     strategies?: Maybe<Array<CVStrategy>>;
     councilSafe?: Maybe<Scalars['String']['output']>;
+    pendingNewCouncilSafe?: Maybe<Scalars['String']['output']>;
     isKickEnabled?: Maybe<Scalars['Boolean']['output']>;
     registerStakeAmount?: Maybe<Scalars['BigInt']['output']>;
     registerToken?: Maybe<Scalars['String']['output']>;
@@ -2076,6 +2099,26 @@ export type RegistryCommunity_filter = {
     protocolFee_lte?: InputMaybe<Scalars['BigInt']['input']>;
     protocolFee_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
     protocolFee_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+    protocolFeeReceiver?: InputMaybe<Scalars['String']['input']>;
+    protocolFeeReceiver_not?: InputMaybe<Scalars['String']['input']>;
+    protocolFeeReceiver_gt?: InputMaybe<Scalars['String']['input']>;
+    protocolFeeReceiver_lt?: InputMaybe<Scalars['String']['input']>;
+    protocolFeeReceiver_gte?: InputMaybe<Scalars['String']['input']>;
+    protocolFeeReceiver_lte?: InputMaybe<Scalars['String']['input']>;
+    protocolFeeReceiver_in?: InputMaybe<Array<Scalars['String']['input']>>;
+    protocolFeeReceiver_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
+    protocolFeeReceiver_contains?: InputMaybe<Scalars['String']['input']>;
+    protocolFeeReceiver_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+    protocolFeeReceiver_not_contains?: InputMaybe<Scalars['String']['input']>;
+    protocolFeeReceiver_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+    protocolFeeReceiver_starts_with?: InputMaybe<Scalars['String']['input']>;
+    protocolFeeReceiver_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    protocolFeeReceiver_not_starts_with?: InputMaybe<Scalars['String']['input']>;
+    protocolFeeReceiver_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    protocolFeeReceiver_ends_with?: InputMaybe<Scalars['String']['input']>;
+    protocolFeeReceiver_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    protocolFeeReceiver_not_ends_with?: InputMaybe<Scalars['String']['input']>;
+    protocolFeeReceiver_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
     communityName?: InputMaybe<Scalars['String']['input']>;
     communityName_not?: InputMaybe<Scalars['String']['input']>;
     communityName_gt?: InputMaybe<Scalars['String']['input']>;
@@ -2158,6 +2201,26 @@ export type RegistryCommunity_filter = {
     councilSafe_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
     councilSafe_not_ends_with?: InputMaybe<Scalars['String']['input']>;
     councilSafe_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    pendingNewCouncilSafe?: InputMaybe<Scalars['String']['input']>;
+    pendingNewCouncilSafe_not?: InputMaybe<Scalars['String']['input']>;
+    pendingNewCouncilSafe_gt?: InputMaybe<Scalars['String']['input']>;
+    pendingNewCouncilSafe_lt?: InputMaybe<Scalars['String']['input']>;
+    pendingNewCouncilSafe_gte?: InputMaybe<Scalars['String']['input']>;
+    pendingNewCouncilSafe_lte?: InputMaybe<Scalars['String']['input']>;
+    pendingNewCouncilSafe_in?: InputMaybe<Array<Scalars['String']['input']>>;
+    pendingNewCouncilSafe_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
+    pendingNewCouncilSafe_contains?: InputMaybe<Scalars['String']['input']>;
+    pendingNewCouncilSafe_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+    pendingNewCouncilSafe_not_contains?: InputMaybe<Scalars['String']['input']>;
+    pendingNewCouncilSafe_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+    pendingNewCouncilSafe_starts_with?: InputMaybe<Scalars['String']['input']>;
+    pendingNewCouncilSafe_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    pendingNewCouncilSafe_not_starts_with?: InputMaybe<Scalars['String']['input']>;
+    pendingNewCouncilSafe_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    pendingNewCouncilSafe_ends_with?: InputMaybe<Scalars['String']['input']>;
+    pendingNewCouncilSafe_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    pendingNewCouncilSafe_not_ends_with?: InputMaybe<Scalars['String']['input']>;
+    pendingNewCouncilSafe_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
     isKickEnabled?: InputMaybe<Scalars['Boolean']['input']>;
     isKickEnabled_not?: InputMaybe<Scalars['Boolean']['input']>;
     isKickEnabled_in?: InputMaybe<Array<Scalars['Boolean']['input']>>;
@@ -2241,7 +2304,7 @@ export type RegistryCommunity_filter = {
     and?: InputMaybe<Array<InputMaybe<RegistryCommunity_filter>>>;
     or?: InputMaybe<Array<InputMaybe<RegistryCommunity_filter>>>;
 };
-export type RegistryCommunity_orderBy = 'id' | 'chainId' | 'strategyTemplate' | 'profileId' | 'communityFee' | 'protocolFee' | 'communityName' | 'covenantIpfsHash' | 'registryFactory' | 'registryFactory__id' | 'registryFactory__chainId' | 'strategies' | 'councilSafe' | 'isKickEnabled' | 'registerStakeAmount' | 'registerToken' | 'alloAddress' | 'members' | 'garden' | 'garden__id' | 'garden__name' | 'garden__description' | 'garden__chainId' | 'garden__totalBalance' | 'garden__ipfsCovenant' | 'garden__symbol' | 'garden__decimals' | 'garden__address' | 'isValid';
+export type RegistryCommunity_orderBy = 'id' | 'chainId' | 'strategyTemplate' | 'profileId' | 'communityFee' | 'protocolFee' | 'protocolFeeReceiver' | 'communityName' | 'covenantIpfsHash' | 'registryFactory' | 'registryFactory__id' | 'registryFactory__chainId' | 'strategies' | 'councilSafe' | 'pendingNewCouncilSafe' | 'isKickEnabled' | 'registerStakeAmount' | 'registerToken' | 'alloAddress' | 'members' | 'garden' | 'garden__id' | 'garden__name' | 'garden__description' | 'garden__chainId' | 'garden__totalBalance' | 'garden__ipfsCovenant' | 'garden__symbol' | 'garden__decimals' | 'garden__address' | 'isValid';
 export type RegistryFactory = {
     id: Scalars['ID']['output'];
     chainId: Scalars['BigInt']['output'];
@@ -3184,6 +3247,7 @@ export type MemberCommunityResolvers<ContextType = MeshContext, ParentType exten
     isRegistered?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
     member?: Resolver<ResolversTypes['Member'], ParentType, ContextType>;
     registryCommunity?: Resolver<ResolversTypes['RegistryCommunity'], ParentType, ContextType>;
+    covenantSignature?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
 export type MemberStrategyResolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['MemberStrategy'] = ResolversParentTypes['MemberStrategy']> = ResolversObject<{
@@ -3291,11 +3355,13 @@ export type RegistryCommunityResolvers<ContextType = MeshContext, ParentType ext
     profileId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
     communityFee?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
     protocolFee?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
+    protocolFeeReceiver?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
     communityName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
     covenantIpfsHash?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
     registryFactory?: Resolver<Maybe<ResolversTypes['RegistryFactory']>, ParentType, ContextType>;
     strategies?: Resolver<Maybe<Array<ResolversTypes['CVStrategy']>>, ParentType, ContextType, RequireFields<RegistryCommunitystrategiesArgs, 'skip' | 'first'>>;
     councilSafe?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+    pendingNewCouncilSafe?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
     isKickEnabled?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
     registerStakeAmount?: Resolver<Maybe<ResolversTypes['BigInt']>, ParentType, ContextType>;
     registerToken?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -3606,7 +3672,7 @@ export type getCommunityQueryVariables = Exact<{
 export type getCommunityQuery = {
     registryCommunity?: Maybe<(Pick<RegistryCommunity, 'communityName' | 'id' | 'covenantIpfsHash' | 'communityFee' | 'protocolFee' | 'registerStakeAmount' | 'registerToken'> & {
         members?: Maybe<Array<Pick<MemberCommunity, 'id' | 'stakedTokens'>>>;
-        strategies?: Maybe<Array<(Pick<CVStrategy, 'id' | 'isEnabled' | 'poolAmount' | 'poolId' | 'metadata'> & {
+        strategies?: Maybe<Array<(Pick<CVStrategy, 'id' | 'isEnabled' | 'poolAmount' | 'poolId' | 'token' | 'metadata'> & {
             proposals: Array<Pick<CVProposal, 'id'>>;
             config: Pick<CVStrategyConfig, 'proposalType' | 'pointSystem'>;
         })>>;
@@ -3626,7 +3692,7 @@ export type getPoolDataQueryVariables = Exact<{
 export type getPoolDataQuery = {
     allos: Array<Pick<Allo, 'id' | 'chainId' | 'tokenNative'>>;
     tokenGarden?: Maybe<Pick<TokenGarden, 'address' | 'name' | 'symbol' | 'description' | 'totalBalance' | 'ipfsCovenant' | 'decimals'>>;
-    cvstrategies: Array<(Pick<CVStrategy, 'token' | 'poolAmount' | 'metadata' | 'id' | 'poolId' | 'totalEffectiveActivePoints' | 'isEnabled'> & {
+    cvstrategies: Array<(Pick<CVStrategy, 'token' | 'poolAmount' | 'metadata' | 'id' | 'poolId' | 'totalEffectiveActivePoints' | 'isEnabled' | 'maxCVSupply'> & {
         sybilScorer?: Maybe<Pick<PassportScorer, 'id'>>;
         memberActive?: Maybe<Array<Pick<Member, 'id'>>>;
         config: Pick<CVStrategyConfig, 'id' | 'weight' | 'decay' | 'maxAmount' | 'maxRatio' | 'minThresholdPoints' | 'pointSystem' | 'proposalType' | 'allowlist'>;

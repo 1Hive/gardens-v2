@@ -12,6 +12,7 @@ type CVStrategy @entity(immutable: false) {
   isEnabled: Boolean!
   token: String!
   sybilScorer: PassportScorer
+  archived: Boolean!
 }
 
 type CVStrategyConfig @entity(immutable: false) {
@@ -88,11 +89,13 @@ type RegistryCommunity @entity(immutable: false) {
   profileId: String
   communityFee: BigInt!
   protocolFee: BigInt!
+  protocolFeeReceiver: String
   communityName: String
   covenantIpfsHash: String
   registryFactory: RegistryFactory
   strategies: [CVStrategy!] @derivedFrom(field: "registryCommunity")
   councilSafe: String
+  pendingNewCouncilSafe: String
   isKickEnabled: Boolean
   registerStakeAmount: BigInt
   registerToken: String
@@ -127,6 +130,7 @@ type MemberCommunity @entity(immutable: false) {
   isRegistered: Boolean
   member: Member!
   registryCommunity: RegistryCommunity!
+  covenantSignature: String
 }
 
 type MemberStrategy @entity(immutable: false) {

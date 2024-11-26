@@ -16,15 +16,7 @@ import { logOnce } from "@/utils/log";
 import { calculatePercentageBigInt, CV_SCALE_PRECISION } from "@/utils/numbers";
 
 export type ProposalDataLight = Maybe<
-  Pick<
-    CVProposal,
-    | "proposalNumber"
-    | "convictionLast"
-    | "stakedAmount"
-    | "threshold"
-    | "requestedAmount"
-    | "blockLast"
-  > & {
+  Pick<CVProposal, "proposalNumber" | "stakedAmount" | "requestedAmount"> & {
     strategy: Pick<
       CVStrategy,
       "id" | "maxCVSupply" | "totalEffectiveActivePoints"
@@ -59,7 +51,7 @@ export const useConvictionRead = ({
     refetch: triggerConvictionRefetch,
   } = useContractRead({
     ...cvStrategyContract,
-    functionName: "updateProposalConviction" as any,
+    functionName: "calculateProposalConviction",
     args: [BigInt(proposalData?.proposalNumber ?? 0)],
     enabled,
   });
@@ -67,7 +59,7 @@ export const useConvictionRead = ({
   const { data: thresholdFromContract, error: errorThreshold } =
     useContractRead({
       ...cvStrategyContract,
-      functionName: "calculateThreshold" as any,
+      functionName: "calculateThreshold",
       args: [proposalData?.requestedAmount ?? 0],
       enabled: enabled && PoolTypes[strategyConfig?.proposalType] === "funding",
     });
@@ -143,6 +135,7 @@ export const useConvictionRead = ({
 
   logOnce("debug", "Conviction computed numbers", {
     thresholdPct,
+    thresholdFromContract,
     totalSupportPct,
     currentConvictionPct,
   });

@@ -9,6 +9,7 @@ import { Allo } from "#/subgraph/.graphclient";
 import { Button } from "./Button";
 import { DisplayNumber } from "./DisplayNumber";
 import { FormInput } from "./Forms";
+import { Skeleton } from "./Skeleton";
 import { TransactionModal, TransactionProps } from "./TransactionModal";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
@@ -35,8 +36,6 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
   poolId,
   chainId,
 }) => {
-  const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** poolToken.decimals;
-
   const {
     register,
     handleSubmit,
@@ -55,8 +54,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     chainId: Number(chainId),
   });
 
-  const tokenWalletBalance = balance ? Number(balance.value) : 0;
-  const amount = watch("amount") ? watch("amount") : 0;
+  const amount = +(watch("amount") ?? 0);
   const requestedAmount = parseUnits(amount.toString(), poolToken.decimals);
   const {
     write: writeFundPool,
@@ -65,10 +63,10 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
   } = useContractWriteWithConfirmations({
     address: alloInfo.id as Address,
     abi: alloABI,
-    args: [BigInt(poolId), requestedAmount],
     functionName: "fundPool",
     contractName: "Allo",
     showNotification: false,
+    args: [BigInt(poolId), requestedAmount],
     onConfirmations: () => {
       publish({
         topic: "pool",
@@ -87,10 +85,19 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     poolToken.symbol,
     alloInfo.id as Address,
     requestedAmount,
-    writeFundPool,
+    () => writeFundPool(),
   );
 
-  const { tooltipMessage, missmatchUrl } = useDisableButtons();
+  const { tooltipMessage, isButtonDisabled } = useDisableButtons([
+    {
+      message: "Connected account has insufficient balance",
+      condition: balance && balance.value < requestedAmount,
+    },
+    {
+      message: "Amount must be greater than 0",
+      condition: amount <= 0,
+    },
+  ]);
 
   const [addFundsTx, setAddFundsTx] = useState<TransactionProps>({
     contractName: "Add funds",
@@ -113,9 +120,10 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
       status: "idle",
     }));
     setIsOpenModal(true);
-    handleAllowance(parseUnits(data.amount.toString(), poolToken.decimals));
+    handleAllowance({
+      formAmount: parseUnits(data.amount.toString(), poolToken.decimals),
+    });
   };
-
   return (
     <>
       <TransactionModal
@@ -135,14 +143,27 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
       <section className="section-layout gap-4 flex flex-col">
         <h2>Pool Funds</h2>
         <div className="flex justify-between items-center flex-wrap">
-          <div className="flex gap-3">
-            <p className="subtitle2">Funds available:</p>
-            <DisplayNumber
-              number={[BigInt(poolAmount), poolToken.decimals]}
-              tokenSymbol={poolToken.symbol}
-              compact={true}
-              className="subtitle2 text-primary-content"
-            />
+          <div className="flex flex-col gap-2">
+            <div className="flex gap-3">
+              <p className="subtitle2">Funds in pool:</p>
+              <DisplayNumber
+                number={[BigInt(poolAmount), poolToken.decimals]}
+                tokenSymbol={poolToken.symbol}
+                compact={true}
+                className="subtitle2 text-primary-content"
+              />
+            </div>
+            <div className="flex gap-3">
+              <p className="subtitle2">Wallet balance:</p>
+              <Skeleton isLoading={!balance}>
+                <DisplayNumber
+                  number={[balance?.value ?? BigInt(0), poolToken.decimals]}
+                  tokenSymbol={poolToken.symbol}
+                  compact={true}
+                  className="subtitle2 text-primary-content"
+                />
+              </Skeleton>
+            </div>
           </div>
           <form
             className="flex gap-2 flex-wrap"
@@ -152,30 +173,23 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
               type="number"
               placeholder="0"
               required
-              step={INPUT_TOKEN_MIN_VALUE}
               register={register}
               registerKey="amount"
               errors={errors}
-              value={amount}
+              suffix={poolToken.symbol}
               otherProps={{
-                step: INPUT_TOKEN_MIN_VALUE,
-                min: INPUT_TOKEN_MIN_VALUE,
+                max: balance?.formatted,
               }}
               registerOptions={{
                 max: {
-                  value: tokenWalletBalance,
-                  message: "Not enough balance",
-                },
-                min: {
-                  value: INPUT_TOKEN_MIN_VALUE,
-                  message: `Amount must be greater than ${INPUT_TOKEN_MIN_VALUE}`,
+                  value: balance?.formatted ?? 0,
+                  message: "Insufficient balance",
                 },
               }}
-              suffix={poolToken.symbol}
             />
             <Button
               type="submit"
-              disabled={missmatchUrl || !accountAddress}
+              disabled={isButtonDisabled}
               tooltip={tooltipMessage}
               className="min-w-[200px]"
             >

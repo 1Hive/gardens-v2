@@ -77,9 +77,9 @@ export function handleProposalCreated(event: ProposalCreated): void {
   }
   let proposal = p.value;
 
-  const proposalStakedAmount = cvc.getProposalStakedAmount(
-    event.params.proposalId
-  );
+  const proposalStakedAmount = cvc
+    .proposals(event.params.proposalId)
+    .getStakedAmount();
   const maxConviction = cvc.getMaxConviction(proposalStakedAmount);
 
   let newProposal = new CVProposal(proposalIdString);
@@ -107,7 +107,7 @@ export function handleProposalCreated(event: ProposalCreated): void {
   // newProposal.voterStakedPointsPct = proposal.getVoterStakedPointsPct();
   // newProposal.agreementActionId = proposal.getAgreementActionId();
 
-  const pointer = cvc.getMetadata(event.params.proposalId).pointer;
+  const pointer = cvc.proposals(event.params.proposalId).getMetadata().pointer;
 
   newProposal.metadataHash = pointer;
   newProposal.metadata = pointer;
@@ -205,9 +205,9 @@ export function handleSupportAdded(event: SupportAdded): void {
   stake.save();
 
   const cvc = CVStrategyContract.bind(event.address);
-  const proposalStakedAmount = cvc.getProposalStakedAmount(
-    event.params.proposalId
-  );
+  const proposalStakedAmount = cvc
+    .proposals(event.params.proposalId)
+    .getStakedAmount();
   const maxConviction = cvc.getMaxConviction(proposalStakedAmount);
 
   memberStrategy.save();
@@ -250,10 +250,10 @@ export function handlePointsDeactivated(event: PointsDeactivated): void {
               }
               let prop = contractProposal.value;
               const maxConviction = cvc.getMaxConviction(
-                prop.value4 // proposalStakedAmount
+                prop.getStakedAmount()
               );
               proposal.maxCVStaked = maxConviction;
-              proposal.convictionLast = prop.value7; // convictionLast
+              proposal.convictionLast = prop.getConvictionLast();
 
               proposal.save();
               const memberStrategyId = `${member.id}-${strategy.id}`;
@@ -610,7 +610,6 @@ export function handleSybilScorerUpdated(event: SybilScorerUpdated): void {
   cvs.sybilScorer = event.params.sybilScorer.toHexString();
   cvs.save();
 }
-
 /// -- Privates -- ///
 
 function computeConfig(
@@ -693,6 +692,7 @@ function computeInitialize(
   cvs.totalEffectiveActivePoints = cvc.totalEffectiveActivePoints();
   cvs.isEnabled = false;
   cvs.sybilScorer = data.sybilScorer.toHexString();
+  cvs.archived = false;
   config.proposalType = BigInt.fromI32(pType);
   config.pointSystem = BigInt.fromI32(pointSystem);
   config.maxAmount = maxAmount;

@@ -11,7 +11,7 @@ interface CustomError extends Error {
 
 export function useCovenantAgreementSignature(
   message: string,
-  triggerNextTx: () => void,
+  triggerNextTx: (args: { covenantSignature: `0x${string}` }) => void,
 ): {
   covenantAgreementTxProps: TransactionProps;
   handleSignature: () => void;
@@ -57,7 +57,7 @@ export function useCovenantAgreementSignature(
           message: getTxMessage("success"),
           status: "success",
         });
-        triggerNextTx();
+        triggerNextTx({ covenantSignature: data });
       }
     },
   });

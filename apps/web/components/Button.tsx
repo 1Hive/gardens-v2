@@ -22,7 +22,7 @@ type ButtonProps = {
     | "tooltip-bottom"
     | "tooltip-left"
     | "tooltip-right";
-  children: React.ReactNode;
+  children?: React.ReactNode;
   isLoading?: boolean;
   size?: Size;
   icon?: React.ReactNode;
@@ -70,7 +70,7 @@ const btnStyles: BtnStyles = {
 
 export function Button({
   onClick,
-  className: styles = "",
+  className = "",
   disabled = false,
   tooltip,
   showToolTip = false,
@@ -86,7 +86,7 @@ export function Button({
   const buttonElement = (
     <button
       type={type}
-      className={`${btnStyles[btnStyle][disabled ? "disabled" : color]} flex relative cursor-pointer  justify-center rounded-lg px-6 py-4 transition-all ease-out disabled:cursor-not-allowed h-fit ${styles}`}
+      className={`${btnStyles[btnStyle][disabled ? "disabled" : color]} flex relative cursor-pointer  justify-center rounded-lg px-6 py-4 transition-all ease-out disabled:cursor-not-allowed h-fit ${className}`}
       onClick={onClick}
       disabled={disabled || isLoading}
     >

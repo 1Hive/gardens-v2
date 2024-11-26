@@ -1,8 +1,14 @@
 import { useEffect, useMemo } from "react";
 import { WriteContractMode } from "@wagmi/core";
 import { AbiFunction } from "abitype";
-import { Abi, encodeFunctionData, TransactionReceipt } from "viem";
 import {
+  Abi,
+  encodeFunctionData,
+  TransactionReceipt,
+  UserRejectedRequestError,
+} from "viem";
+import {
+  useAccount,
   useChainId,
   useContractWrite,
   UseContractWriteConfig,
@@ -12,6 +18,7 @@ import { useChainIdFromPath } from "./useChainIdFromPath";
 import { useTransactionNotification } from "./useTransactionNotification";
 import { chainConfigMap } from "@/configs/chains";
 import { abiWithErrors } from "@/utils/abi";
+import { stringifyJson } from "@/utils/json";
 
 export type ComputedStatus =
   | "loading"
@@ -42,6 +49,7 @@ export function useContractWriteWithConfirmations<
     fallbackErrorMessage?: string;
   },
 ) {
+  const { address: walletAddress } = useAccount();
   const toastId = props.contractName + "_" + props.functionName;
   const chainIdFromWallet = useChainId();
   const chainIdFromPath = useChainIdFromPath();
@@ -96,18 +104,37 @@ export function useContractWriteWithConfirmations<
       args: variables.args,
     });
     const rawData = encodedData;
-
-    console.error(
-      `Error with transaction [${props.contractName} -> ${props.functionName}]`,
-      {
-        error,
-        variables,
-        context,
-        rawData,
-        contract: props.address,
-        message: error.message,
-      },
-    );
+    let logPayload = {
+      error,
+      variables,
+      context,
+      rawData,
+      contract: props.address,
+      message: error.message,
+      from: walletAddress,
+    };
+    try {
+      logPayload = {
+        ...logPayload,
+        errorJson: stringifyJson(error),
+      } as any;
+    } catch (e) {
+      console.debug("Error parsing logPayload error: ", e);
+    }
+    try {
+      logPayload = {
+        ...logPayload,
+        variablesJson: stringifyJson(variables),
+      } as any;
+    } catch (e) {
+      console.debug("Error parsing logPayload variable: ", e);
+    }
+    if (!(error?.cause instanceof UserRejectedRequestError)) {
+      console.error(
+        `Error with transaction [${props.contractName} -> ${props.functionName}]`,
+        logPayload,
+      );
+    }
   }
 
   const txResult = useContractWrite(

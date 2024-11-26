@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { Fragment, useEffect, useRef, useState } from "react";
 import {
   CurrencyDollarIcon,
   PlusIcon,
@@ -75,7 +75,6 @@ export default function Page({
       { topic: "member", containerId: communityAddr },
     ],
   });
-
   const registryCommunity = result?.registryCommunity;
 
   let {
@@ -147,6 +146,30 @@ export default function Page({
   const activePools = strategies?.filter((strategy) => strategy?.isEnabled);
 
   const poolsInReview = strategies.filter((strategy) => !strategy.isEnabled);
+
+  // const [tokenDataArray, setTokenDataArray] = useState([]);
+
+  // useEffect(() => {
+  //   // Initialize an empty array for holding token data for each pool
+  //   const newTokenDataArray = fundingPools.map((pool) => ({
+  //     poolId: pool.poolId,
+  //     tokenData: null ,
+  //   }));
+
+  //   // Iterate over each pool and use `useToken` to get token data
+  //   fundingPools.forEach((pool, index) => {
+  //     const { data } = useToken({
+  //       address: pool.token as Address,
+  //       chainId: +chain,
+  //     });
+
+  //     // Update the tokenData in the array for this specific pool
+  //     newTokenDataArray[index].tokenData = data;
+  //   });
+
+  //   // Once data is fetched, update the state
+  //   setTokenDataArray(newTokenDataArray);
+  // }, [fundingPools, chain]);
 
   useEffect(() => {
     const newPoolId = searchParams[QUERY_PARAMS.communityPage.newPool];
@@ -318,14 +341,9 @@ export default function Page({
           </h4>
           <div className="flex flex-row flex-wrap gap-10">
             {fundingPools.map((pool) => (
-              <PoolCard
-                key={pool.poolId}
-                tokenGarden={{
-                  decimals: tokenGarden?.decimals ?? 18,
-                  symbol: tokenGarden?.symbol ?? "",
-                }}
-                pool={pool}
-              />
+              <Fragment key={pool.poolId}>
+                <PoolCard token={pool.token} chainId={chain} pool={pool} />
+              </Fragment>
             ))}
           </div>
         </div>
@@ -337,10 +355,8 @@ export default function Page({
             {signalingPools.map((pool) => (
               <PoolCard
                 key={pool.poolId}
-                tokenGarden={{
-                  symbol: tokenGarden?.symbol ?? "",
-                  decimals: tokenGarden?.decimals ?? 18,
-                }}
+                token={pool.token}
+                chainId={chain}
                 pool={pool}
               />
             ))}
@@ -354,10 +370,8 @@ export default function Page({
             {poolsInReview.map((pool) => (
               <PoolCard
                 key={pool.poolId}
-                tokenGarden={{
-                  decimals: tokenGarden?.decimals ?? 18,
-                  symbol: tokenGarden?.symbol ?? "",
-                }}
+                token={pool.token}
+                chainId={chain}
                 pool={pool}
               />
             ))}

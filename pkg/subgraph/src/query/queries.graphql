@@ -188,6 +188,7 @@ query getCommunity($communityAddr: ID!, $tokenAddr: ID!) {
       isEnabled
       poolAmount
       poolId
+      token
       metadata
       config {
         proposalType
@@ -239,6 +240,7 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
     poolId
     totalEffectiveActivePoints
     isEnabled
+    maxCVSupply
     sybilScorer {
       id
     }
