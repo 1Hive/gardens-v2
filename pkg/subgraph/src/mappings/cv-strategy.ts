@@ -77,9 +77,9 @@ export function handleProposalCreated(event: ProposalCreated): void {
   }
   let proposal = p.value;
 
-  const proposalStakedAmount = cvc.getProposalStakedAmount(
-    event.params.proposalId
-  );
+  const proposalStakedAmount = cvc
+    .proposals(event.params.proposalId)
+    .getStakedAmount();
   const maxConviction = cvc.getMaxConviction(proposalStakedAmount);
 
   let newProposal = new CVProposal(proposalIdString);
@@ -107,7 +107,7 @@ export function handleProposalCreated(event: ProposalCreated): void {
   // newProposal.voterStakedPointsPct = proposal.getVoterStakedPointsPct();
   // newProposal.agreementActionId = proposal.getAgreementActionId();
 
-  const pointer = cvc.getMetadata(event.params.proposalId).pointer;
+  const pointer = cvc.proposals(event.params.proposalId).getMetadata().pointer;
 
   newProposal.metadataHash = pointer;
   newProposal.metadata = pointer;
@@ -205,9 +205,9 @@ export function handleSupportAdded(event: SupportAdded): void {
   stake.save();
 
   const cvc = CVStrategyContract.bind(event.address);
-  const proposalStakedAmount = cvc.getProposalStakedAmount(
-    event.params.proposalId
-  );
+  const proposalStakedAmount = cvc
+    .proposals(event.params.proposalId)
+    .getStakedAmount();
   const maxConviction = cvc.getMaxConviction(proposalStakedAmount);
 
   memberStrategy.save();

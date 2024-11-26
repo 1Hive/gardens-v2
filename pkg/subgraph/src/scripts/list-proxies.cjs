@@ -1,4 +1,5 @@
 const viemChains = require("viem/chains");
+const hash = require("object-hash");
 const subgraphConfig = require("../../../../apps/web/configs/subgraph.json");
 
 const localhostSubgraph = "http://localhost:8000/subgraphs/name/kamikazebr/gv2";
@@ -31,12 +32,11 @@ const jsons = {
   // [viemChains.sepolia.id]: sepoliaLatest,
 
   // @ts-ignore
+  [viemChains.arbitrum.id]: arbitrumSubgraph,
   [viemChains.optimism.id]: optimismSubgraph,
+  [viemChains.polygon.id]: maticSubgraph,
   [viemChains.gnosis.id]: gnosisSubgraph,
   // @ts-ignore
-  [viemChains.polygon.id]: maticSubgraph,
-  // @ts-ignore
-  [viemChains.arbitrum.id]: arbitrumSubgraph,
   // [viemChains.mainnet.id]: mainnetLatest
 };
 
@@ -135,7 +135,11 @@ async function extractProxies(chainId) {
 
 extractProxies(chainArg)
   .then((proxies) => {
-    const json = JSON.stringify({ PROXIES: proxies }, null, 2);
+    const json = JSON.stringify(
+      { PROXIES: proxies, hash: hash(proxies) },
+      null,
+      2,
+    );
     console.debug(json);
   })
   .catch((err) => console.error(err));

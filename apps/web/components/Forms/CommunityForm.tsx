@@ -210,7 +210,7 @@ export const CommunityForm = ({
   };
 
   const addressIsSAFE = async (walletAddress: Address) => {
-    if (localStorage.getItem("bypassSafeCheck") === "true") {
+    if (localStorage.getItem("bypassSafeCheck") === "true" || chainFromPath.isTestnet) {
       return true;
     }
     let isSafe = false;

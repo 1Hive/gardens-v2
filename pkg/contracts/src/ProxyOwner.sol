@@ -2,10 +2,10 @@
 pragma solidity ^0.8.19;
 
 import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
-
+import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 // Taking 2 steps transfers from: https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/access/Ownable2Step.sol
 
-contract ProxyOwner is OwnableUpgradeable {
+contract ProxyOwner is OwnableUpgradeable, UUPSUpgradeable {
     address public pendingOwner;
 
     event OwnershipTransferStarted(address indexed previousOwner, address indexed newOwner);
@@ -46,4 +46,6 @@ contract ProxyOwner is OwnableUpgradeable {
         }
         _transferOwnership(sender);
     }
+
+    function _authorizeUpgrade(address) internal view override onlyOwner {}
 }
