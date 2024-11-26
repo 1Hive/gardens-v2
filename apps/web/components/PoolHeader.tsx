@@ -248,7 +248,7 @@ export default function PoolHeader({
             "Spending limit",
             "Min threshold",
             "Min conviction",
-            "Pool staked cap",
+            "Max voting weight",
           ].includes(config.label),
       )
     : PoolTypes[proposalType] === "signaling" ?
@@ -260,7 +260,7 @@ export default function PoolHeader({
           ),
       )
     : PointSystems[pointSystem] === "capped" ? poolConfig
-    : poolConfig.filter((config) => config.label !== "Pool staked cap");
+    : poolConfig.filter((config) => config.label !== "Max voting weight");
 
   //hooks
   const { data: isCouncilMember } = useContractRead({
