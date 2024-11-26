@@ -6,15 +6,15 @@ schema:
 dataSources:
   - kind: ethereum/contract
     name: RegistryFactoryV0_0
-    network: gnosis
+    network: arbitrum-sepolia
     context:
       chainId: 
         type: Int
-        data: 100
+        data: 421614
     source:
-      address: "0x08df82f74d1f56f650e98da2dd4240f1a31711bc"
+      address: "0x2689b1e4afcbfb393d9727fba2ab52930035ee85"
       abi: RegistryFactoryV0_0
-      startBlock: 36032423
+      startBlock: 95965509
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -40,15 +40,15 @@ dataSources:
 
   - kind: ethereum/contract
     name: PassportScorer
-    network: gnosis
+    network: arbitrum-sepolia
     context:
       chainId: 
         type: Int
-        data: 100
+        data: 421614
     source:
-      address: "0x20965C5C8a021ac6fFeD5dE7A402f7CEaC3b0A82"
+      address: "0x2053E225672776deb23Af0A3EBa9CE2c87838a72"
       abi: PassportScorer
-      startBlock: 36032423
+      startBlock: 95965509
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -78,7 +78,7 @@ dataSources:
 templates:
   - kind: ethereum/contract
     name: RegistryCommunityV0_0
-    network: gnosis
+    network: arbitrum-sepolia
     source:
       abi: RegistryCommunityV0_0
     mapping:
@@ -150,7 +150,7 @@ templates:
 
   - kind: ethereum/contract
     name: CVStrategyV0_0
-    network: gnosis
+    network: arbitrum-sepolia
     source:
       abi: CVStrategyV0_0
     mapping:
@@ -209,7 +209,7 @@ templates:
 
   - kind: ethereum/contract
     name: CollateralVault
-    network: gnosis
+    network: arbitrum-sepolia
     source:
       abi: CollateralVault
     mapping:
