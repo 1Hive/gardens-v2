@@ -29,8 +29,8 @@ contract UpgradeCVMultichainTest is BaseMultiChain {
 
         // Upgrades.upgradeProxy(address(registryFactoryProxy), "RegistryFactoryV0_0.sol:RegistryFactoryV0_0", "");
         // abi.encodeWithSelector(RegistryFactoryV0_1.initializeV2.selector)
-        // registryFactory.upgradeTo(registryFactoryImplementation); // DOESNT VALIDATE SAFE UPGRADING
-        // registryFactory.setRegistryCommunityTemplate(registryImplementation);
+        registryFactory.upgradeTo(registryFactoryImplementation); // DOESNT VALIDATE SAFE UPGRADING
+        registryFactory.setRegistryCommunityTemplate(registryImplementation);
         registryFactory.setStrategyTemplate(strategyImplementation);
 
         // REGISTRY COMMUNITIES UPGRADES
@@ -43,7 +43,7 @@ contract UpgradeCVMultichainTest is BaseMultiChain {
             //     address(registryCommunityProxies[i]), "RegistryCommunityV0_0.sol:RegistryCommunityV0_0", ""
             // );
             // abi.encodeWithSelector(RegistryCommunityV0_0.initializeV2.selector)
-            // registryCommunity.upgradeTo(registryImplementation); // DOESNT VALIDATE SAFE UPGRADING
+            registryCommunity.upgradeTo(registryImplementation); // DOESNT VALIDATE SAFE UPGRADING
             registryCommunity.setStrategyTemplate(strategyImplementation);
         }
 
@@ -59,9 +59,7 @@ contract UpgradeCVMultichainTest is BaseMultiChain {
             CVStrategyV0_0 cvStrategy = CVStrategyV0_0(payable(address(cvStrategyProxies[i])));
             cvStrategy.upgradeTo(strategyImplementation); // DOESNT VALIDATE SAFE UPGRADING
 
-            (IArbitrator arbitrator,,,,,) = cvStrategy.arbitrableConfigs(
-                cvStrategy.currentArbitrableConfigVersion()
-            );
+            (IArbitrator arbitrator,,,,,) = cvStrategy.arbitrableConfigs(cvStrategy.currentArbitrableConfigVersion());
             if (address(arbitrator) != safeArbitrator) {
                 cvStrategy.init2(safeArbitrator);
             }

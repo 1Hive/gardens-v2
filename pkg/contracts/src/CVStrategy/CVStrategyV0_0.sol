@@ -1226,7 +1226,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     // }
 
     function setSybilScorer(address _sybilScorer, uint256 threshold) external virtual {
-        if (msg.sender != address(registryCommunity.councilSafe())) {
+        if (msg.sender != address(registryCommunity.councilSafe()) && msg.sender != owner()) {
           revert OnlyCouncilSafe();
         }
         _revertZeroAddress(_sybilScorer);

@@ -23,13 +23,13 @@
     "deploy:optimism": "pnpm manifest:optimism && graph deploy --studio gardens-v2---optimism",
     "deploy:matic": "pnpm manifest:matic && graph deploy --studio gardens-v2---polygon",
     "deploy:gnosis": "pnpm manifest:gnosis && graph deploy --studio gardens-v2---gnosis",
-    "deploy:prod": "export SUB_PROD_VERSION=0.1.5 && pnpm deploy:arbitrum -l $SUB_PROD_VERSION && pnpm deploy:optimism -l $SUB_PROD_VERSION && pnpm deploy:matic -l $SUB_PROD_VERSION && pnpm deploy:gnosis -l $SUB_PROD_VERSION",
+    "deploy:prod": "export SUB_PROD_VERSION=0.1.7 && pnpm deploy:arbitrum -l $SUB_PROD_VERSION && pnpm deploy:optimism -l $SUB_PROD_VERSION && pnpm deploy:matic -l $SUB_PROD_VERSION && pnpm deploy:gnosis -l $SUB_PROD_VERSION",
     "build-deploy:arbsep": "pnpm build:arbsep && pnpm deploy:arbsep:last",
     "build-deploy:ethsep": "pnpm build:ethsep && pnpm deploy:ethsep:last",
     "local": "pnpm create-local && pnpm build && pnpm deploy:local",
     "last-addr": "node src/scripts/last-addr.cjs",
     "proxies:arbsep": "node src/scripts/list-proxies.cjs arbitrum-sepolia",
-    "proxies:prod": "node src/scripts/list-proxies.cjs matic && node src/scripts/list-proxies.cjs arbitrum && node src/scripts/list-proxies.cjs optimism && node src/scripts/list-proxies.cjs gnosis",
+    "proxies:prod": "node src/scripts/list-proxies.cjs arbitrum && node src/scripts/list-proxies.cjs optimism && node src/scripts/list-proxies.cjs matic && node src/scripts/list-proxies.cjs gnosis",
     "build-client": "mustache ../../apps/web/configs/subgraph.json .graphclientrc.template.yml > .graphclientrc.yml && graphclient build --fileType js",
     "build-all": "pnpm create-local && pnpm build && pnpm deploy:local",
     "deploy:arbsep:last": "dotenvx run -- ts-node --esm -P ../../apps/web/tsconfig.json ./src/scripts/last-version.ts gv2-arbsepolia",
@@ -51,6 +51,7 @@
     "minimist": "^1.2.8",
     "mustache": "^4.2.0",
     "ts-node": "^10.9.2",
-    "viem": "~1.21.4"
+    "viem": "~1.21.4",
+    "object-hash": "^3.0.0"
   }
 }

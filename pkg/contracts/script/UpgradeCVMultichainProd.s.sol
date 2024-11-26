@@ -47,15 +47,7 @@ contract UpgradeCVMultichainProd is BaseMultiChain {
         }
 
         // Prepare JSON for Gnosis Safe transaction builder
-        string memory json = string(
-            abi.encodePacked(
-                '{"version":"1.0","chainId":"',
-                chainId,
-                '","createdAt":',
-                block.timestamp,
-                ',"meta":{"name":"Transactions Batch","description":"","txBuilderVersion":"1.16.5","createdFromSafeAddress":"0xD30aee396a54560581a3265Fd2194B0edB787525","createdFromOwnerAddress":""},"transactions":['
-            )
-        );
+        string memory json = string(abi.encodePacked("["));
 
         json = string(abi.encodePacked(json, _createTransactionJson(registryFactoryProxy, upgradeRegistryFactory), ","));
         json = string(
@@ -82,7 +74,13 @@ contract UpgradeCVMultichainProd is BaseMultiChain {
             json = string(
                 abi.encodePacked(json, _createTransactionJson(cvStrategyProxies[i], upgradeCVStrategies[i]), ",")
             );
-            json = string(abi.encodePacked(json, _createTransactionJson(cvStrategyProxies[i], initStategies[i]), ","));
+            json = string(
+                abi.encodePacked(
+                    json,
+                    _createTransactionJson(cvStrategyProxies[i], initStategies[i]),
+                    i == cvStrategyProxies.length - 1 && bytes(setSybilScorers[i]).length <= 0 ? "" : ","
+                )
+            );
             if (bytes(setSybilScorers[i]).length > 0) {
                 json = string(
                     abi.encodePacked(
@@ -95,7 +93,7 @@ contract UpgradeCVMultichainProd is BaseMultiChain {
         }
 
         // Remove the last comma and close the JSON array
-        json = string(abi.encodePacked(json, "]}"));
+        json = string(abi.encodePacked(json, "]"));
 
         console.log(json);
 
