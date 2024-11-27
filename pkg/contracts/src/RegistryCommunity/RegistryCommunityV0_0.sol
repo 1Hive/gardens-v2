@@ -177,9 +177,6 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
     /// @notice The covenant IPFS hash of community
     string public covenantIpfsHash;
 
-    /// @notice The total number of members in the community
-    uint256 public totalMembers;
-
     // mapping(address => bool) public tribunalMembers;
 
     /// @notice List of enabled/disabled strategies
@@ -195,6 +192,9 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
 
     /// @notice List of initial members to be added as pool managers in the Allo Pool
     address[] initialMembers;
+
+    /// @notice The total number of members in the community
+    uint256 public totalMembers;
 
     /*|--------------------------------------------|*/
     /*|                 ROLES                      |*/
@@ -687,7 +687,10 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         Member memory member = addressToMemberInfo[_member];
         delete addressToMemberInfo[_member];
         delete strategiesByMember[_member];
-        totalMembers -= 1;
+        // In order to resync older contracts that skipped this counter until upgrade (community-params-editable)
+        if (totalMembers > 0) {
+            totalMembers -= 1;
+        }
         gardenToken.safeTransfer(_member, member.stakedAmount);
         emit MemberUnregistered(_member, member.stakedAmount);
     }
