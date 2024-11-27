@@ -105,6 +105,8 @@ export default function Page({
 
   const tokenGarden = data?.tokenGarden;
 
+  const maxAmount = strategyObj?.config?.maxAmount ?? 0;
+
   useEffect(() => {
     if (
       searchParams[QUERY_PARAMS.poolPage.allocationView] !== undefined &&
@@ -148,6 +150,7 @@ export default function Page({
         poolId={poolId}
         ipfsResult={ipfsResult}
         isEnabled={isEnabled}
+        maxAmount={maxAmount}
       />
       {isEnabled && (
         <>

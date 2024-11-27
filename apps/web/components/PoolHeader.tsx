@@ -25,6 +25,7 @@ import { Badge } from "./Badge";
 import { Button } from "./Button";
 import { EthAddress } from "./EthAddress";
 import PoolEditForm from "./Forms/PoolEditForm";
+import { InfoBox } from "./InfoBox";
 import MarkdownWrapper from "./MarkdownWrapper";
 import { Modal } from "./Modal";
 import { Skeleton } from "./Skeleton";
@@ -68,6 +69,7 @@ type Props = {
   >;
   token: Pick<TokenGarden, "address" | "name" | "symbol" | "decimals">;
   poolToken?: FetchTokenResult;
+  maxAmount: number;
 };
 
 function calculateConvictionGrowthInSeconds(
@@ -102,6 +104,7 @@ export default function PoolHeader({
   arbitrableConfig,
   token,
   poolToken,
+  maxAmount,
 }: Props) {
   const [isOpenModal, setIsOpenModal] = useState(false);
   const { address } = useAccount();
@@ -148,6 +151,14 @@ export default function PoolHeader({
     strategy.config.minThresholdPoints,
     +token.decimals,
   );
+
+  const totalPointsActivatedInPool = formatTokenAmount(
+    strategy.totalEffectiveActivePoints,
+    +token.decimals,
+  );
+
+  const minThGtTotalEffPoints =
+    +minThresholdPoints > +totalPointsActivatedInPool;
 
   const spendingLimit =
     (strategy.config.maxRatio / CV_SCALE_PRECISION) *
@@ -197,9 +208,14 @@ export default function PoolHeader({
       info: "It's the time for conviction to reach proposal support. This parameter is logarithmic, represented as a half life and may vary slightly over time depending on network block times.",
     },
     {
-      label: "Min Threshold",
+      label: "Min threshold",
       value: `${minThresholdPoints}`,
       info: `A fixed amount of ${token.symbol} that overrides Minimum Conviction when the Pool's activated governance is low.`,
+    },
+    {
+      label: "Max voting weight",
+      value: `${formatTokenAmount(maxAmount, token.decimals)} ${token.symbol}`,
+      info: "Staking above this specified limit won’t increase your voting weight.",
     },
     {
       label: "Protection",
@@ -220,17 +236,31 @@ export default function PoolHeader({
         : "",
     },
   ];
-
   const filteredPoolConfig =
-    PoolTypes[proposalType] === "signaling" ?
+    (
+      PoolTypes[proposalType] === "signaling" &&
+      PointSystems[pointSystem] !== "capped"
+    ) ?
       poolConfig.filter(
         (config) =>
           !!config.value &&
-          !["Spending limit", "Min Threshold", "Min conviction"].includes(
+          ![
+            "Spending limit",
+            "Min threshold",
+            "Min conviction",
+            "Pool staked cap",
+          ].includes(config.label),
+      )
+    : PoolTypes[proposalType] === "signaling" ?
+      poolConfig.filter(
+        (config) =>
+          !!config.value &&
+          !["Spending limit", "Min threshold", "Min conviction"].includes(
             config.label,
           ),
       )
-    : poolConfig;
+    : PointSystems[pointSystem] === "capped" ? poolConfig
+    : poolConfig.filter((config) => config.label !== "Pool staked cap");
 
   //hooks
   const { data: isCouncilMember } = useContractRead({
@@ -449,6 +479,13 @@ export default function PoolHeader({
           ))}
         </div>
       </div>
+      {minThGtTotalEffPoints && isEnabled && (
+        <InfoBox
+          infoBoxType="warning"
+          content="Activated governance in this pool is too low. No proposals will pass unless more members activate their governance. You can still create and support proposals."
+          className="mb-4"
+        />
+      )}
       {!isEnabled ?
         <div className="banner">
           <ClockIcon className="h-8 w-8 text-secondary-content" />
