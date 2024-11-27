@@ -10,22 +10,31 @@ contract UpgradeCVMultichainProd is BaseMultiChain {
     using stdJson for string;
 
     function runCurrentNetwork(string memory networkJson) public override {
-        address registryFactoryImplementation = address(new RegistryFactoryV0_0());
+        // address registryFactoryImplementation = address(new RegistryFactoryV0_0());
         address registryImplementation = address(new RegistryCommunityV0_0());
-        address strategyImplementation = address(new CVStrategyV0_0());
+        address strategyImplementation = 0x66eE8A18F18ef93eFaCb30f99e415058bf88942d; // address(new CVStrategyV0_0());
         address passportScorer = networkJson.readAddress(getKeyNetwork(".PROXIES.PASSPORT_SCORER"));
         address safeArbitrator = networkJson.readAddress(getKeyNetwork(".ENVS.ARBITRATOR"));
+
+        string memory json = string(abi.encodePacked("["));
 
         // REGISTRY FACTORY UPGRADE
         address registryFactoryProxy = networkJson.readAddress(getKeyNetwork(".PROXIES.REGISTRY_FACTORY"));
         RegistryFactoryV0_0 registryFactory = RegistryFactoryV0_0(payable(address(registryFactoryProxy)));
 
-        bytes memory upgradeRegistryFactory =
-            abi.encodeWithSelector(registryFactory.upgradeTo.selector, registryFactoryImplementation);
+        // bytes memory upgradeRegistryFactory =
+        //     abi.encodeWithSelector(registryFactory.upgradeTo.selector, registryFactoryImplementation);
+        // json = string(abi.encodePacked(json, _createTransactionJson(registryFactoryProxy, upgradeRegistryFactory), ","));
+
         bytes memory setRegistryCommunityTemplate =
             abi.encodeWithSelector(registryFactory.setRegistryCommunityTemplate.selector, registryImplementation);
-        bytes memory setStrategyTemplate =
-            abi.encodeWithSelector(registryFactory.setStrategyTemplate.selector, strategyImplementation);
+        json = string(
+            abi.encodePacked(json, _createTransactionJson(registryFactoryProxy, setRegistryCommunityTemplate), ",")
+        );
+
+        // bytes memory setStrategyTemplate =
+        //     abi.encodeWithSelector(registryFactory.setStrategyTemplate.selector, strategyImplementation);
+        // json = string(abi.encodePacked(json, _createTransactionJson(registryFactoryProxy, setStrategyTemplate), ","));
 
         // REGISTRY COMMUNITIES UPGRADES
         address[] memory registryCommunityProxies =
@@ -35,26 +44,6 @@ contract UpgradeCVMultichainProd is BaseMultiChain {
             (upgradeRegistryCommunities[i * 2], upgradeRegistryCommunities[i * 2 + 1]) =
                 _upgradeRegistryCommunity(registryCommunityProxies[i], registryImplementation, strategyImplementation);
         }
-
-        // CV STRATEGIES UPGRADES
-        address[] memory cvStrategyProxies = networkJson.readAddressArray(getKeyNetwork(".PROXIES.CV_STRATEGIES"));
-        bytes[] memory upgradeCVStrategies = new bytes[](cvStrategyProxies.length);
-        bytes[] memory initStategies = new bytes[](cvStrategyProxies.length);
-        bytes[] memory setSybilScorers = new bytes[](cvStrategyProxies.length);
-        for (uint256 i = 0; i < cvStrategyProxies.length; i++) {
-            (upgradeCVStrategies[i], initStategies[i], setSybilScorers[i]) =
-                _upgradeCVStrategy(cvStrategyProxies[i], strategyImplementation, safeArbitrator, passportScorer);
-        }
-
-        // Prepare JSON for Gnosis Safe transaction builder
-        string memory json = string(abi.encodePacked("["));
-
-        json = string(abi.encodePacked(json, _createTransactionJson(registryFactoryProxy, upgradeRegistryFactory), ","));
-        json = string(
-            abi.encodePacked(json, _createTransactionJson(registryFactoryProxy, setRegistryCommunityTemplate), ",")
-        );
-        json = string(abi.encodePacked(json, _createTransactionJson(registryFactoryProxy, setStrategyTemplate), ","));
-
         for (uint256 i = 0; i < registryCommunityProxies.length; i++) {
             json = string(
                 abi.encodePacked(
@@ -70,30 +59,40 @@ contract UpgradeCVMultichainProd is BaseMultiChain {
             );
         }
 
-        for (uint256 i = 0; i < cvStrategyProxies.length; i++) {
-            json = string(
-                abi.encodePacked(json, _createTransactionJson(cvStrategyProxies[i], upgradeCVStrategies[i]), ",")
-            );
-            json = string(
-                abi.encodePacked(
-                    json,
-                    _createTransactionJson(cvStrategyProxies[i], initStategies[i]),
-                    i == cvStrategyProxies.length - 1 && bytes(setSybilScorers[i]).length <= 0 ? "" : ","
-                )
-            );
-            if (bytes(setSybilScorers[i]).length > 0) {
-                json = string(
-                    abi.encodePacked(
-                        json,
-                        _createTransactionJson(cvStrategyProxies[i], setSybilScorers[i]),
-                        i == cvStrategyProxies.length - 1 ? "" : ","
-                    )
-                );
-            }
-        }
+        // CV STRATEGIES UPGRADES
+        // address[] memory cvStrategyProxies = networkJson.readAddressArray(getKeyNetwork(".PROXIES.CV_STRATEGIES"));
+        // bytes[] memory upgradeCVStrategies = new bytes[](cvStrategyProxies.length);
+        // bytes[] memory initStategies = new bytes[](cvStrategyProxies.length);
+        // bytes[] memory setSybilScorers = new bytes[](cvStrategyProxies.length);
+        // for (uint256 i = 0; i < cvStrategyProxies.length; i++) {
+        //     (upgradeCVStrategies[i], initStategies[i], setSybilScorers[i]) =
+        //         _upgradeCVStrategy(cvStrategyProxies[i], strategyImplementation, safeArbitrator, passportScorer);
+        // }
+        // for (uint256 i = 0; i < cvStrategyProxies.length; i++) {
+        //     json = string(
+        //         abi.encodePacked(json, _createTransactionJson(cvStrategyProxies[i], upgradeCVStrategies[i]), ",")
+        //     );
+        //     json = string(
+        //         abi.encodePacked(
+        //             json,
+        //             _createTransactionJson(cvStrategyProxies[i], initStategies[i]),
+        //             ","
+        //         )
+        //     );
+        //     if (bytes(setSybilScorers[i]).length > 0) {
+        //         json = string(
+        //             abi.encodePacked(
+        //                 json,
+        //                 _createTransactionJson(cvStrategyProxies[i], setSybilScorers[i]),
+        //                 ","
+        //             )
+        //         );
+        //     }
+        // }
 
         // Remove the last comma and close the JSON array
-        json = string(abi.encodePacked(json, "]"));
+
+        json = string(abi.encodePacked(_removeLastChar(json), "]"));
 
         console.log(json);
 
@@ -103,6 +102,17 @@ contract UpgradeCVMultichainProd is BaseMultiChain {
         // );
         // vm.writeFile(path, json);
         // console.log("Payload written to: ", path);
+    }
+
+    function _removeLastChar(string memory input) internal pure returns (string memory) {
+        bytes memory inputBytes = bytes(input);
+        require(inputBytes.length > 0, "String is empty");
+        // Create a new bytes array with one less length
+        bytes memory trimmedBytes = new bytes(inputBytes.length - 1);
+        for (uint256 i = 0; i < inputBytes.length - 1; i++) {
+            trimmedBytes[i] = inputBytes[i];
+        }
+        return string(trimmedBytes);
     }
 
     function _upgradeRegistryCommunity(

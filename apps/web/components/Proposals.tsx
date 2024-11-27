@@ -193,7 +193,7 @@ export function Proposals({
   const memberActivatedStrategy =
     Number(memberStrategyData?.memberStrategy?.activatedPoints) > 0;
   const memberTokensInCommunity =
-    memberData?.member?.memberCommunity?.[0].stakedTokens ?? 0;
+    memberData?.member?.memberCommunity?.[0]?.stakedTokens ?? 0;
 
   const proposals = strategy.proposals;
 
