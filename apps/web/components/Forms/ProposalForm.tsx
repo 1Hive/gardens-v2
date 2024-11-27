@@ -162,25 +162,6 @@ export const ProposalForm = ({
 
   const chainIdFromPath = useChainIdFromPath();
 
-  const { data: thresholdFromContract } = useContractRead({
-    address: strategy.id as Address,
-    abi: cvStrategyABI,
-    chainId: chainIdFromPath,
-    functionName: "calculateThreshold",
-    args: [
-      requestedAmount ? parseUnits(requestedAmount, tokenGarden.decimals) : 0n,
-    ],
-    enabled:
-      requestedAmount !== undefined &&
-      PoolTypes[strategy?.config?.proposalType] === "funding",
-  });
-
-  const thresholdPct = calculatePercentageBigInt(
-    thresholdFromContract as bigint,
-    BigInt(strategy.maxCVSupply),
-    tokenGarden?.decimals ?? 18,
-  );
-
   const disableSubmitBtn = useMemo<ConditionObject[]>(
     () => [
       {
@@ -192,12 +173,6 @@ export const ProposalForm = ({
   );
   const { isConnected, missmatchUrl, tooltipMessage } =
     useDisableButtons(disableSubmitBtn);
-
-  const spendingLimitString = formatTokenAmount(
-    spendingLimit,
-    +tokenGarden?.decimals,
-    6,
-  );
 
   const proposalTypeName = PoolTypes[proposalType];
 
@@ -264,8 +239,36 @@ export const ProposalForm = ({
     chainId,
   });
 
+  const spendingLimitString = formatTokenAmount(
+    spendingLimit,
+    poolToken?.decimals ?? 18,
+    6,
+  );
+
   const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** (poolToken?.decimals ?? 0);
+
   const spendingLimitNumber = spendingLimit / 10 ** (poolToken?.decimals ?? 0);
+
+  const { data: thresholdFromContract } = useContractRead({
+    address: strategy.id as Address,
+    abi: cvStrategyABI,
+    chainId: chainIdFromPath,
+    functionName: "calculateThreshold",
+    args: [
+      requestedAmount ?
+        parseUnits(requestedAmount, poolToken?.decimals ?? 0)
+      : 0n,
+    ],
+    enabled:
+      requestedAmount !== undefined &&
+      PoolTypes[strategy?.config?.proposalType] === "funding",
+  });
+
+  const thresholdPct = calculatePercentageBigInt(
+    thresholdFromContract as bigint,
+    BigInt(strategy.maxCVSupply),
+    poolToken?.decimals ?? 18,
+  );
 
   if (!poolToken && PoolTypes[proposalType] === "funding") {
     return (
