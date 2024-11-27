@@ -241,7 +241,7 @@ export const ProposalForm = ({
 
   const spendingLimitString = formatTokenAmount(
     spendingLimit,
-    poolToken?.decimals ?? 0,
+    poolToken?.decimals ?? 18,
     6,
   );
 
