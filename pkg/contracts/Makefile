@@ -146,7 +146,6 @@ upgrade-arbsep:
 	--legacy \
 	--via-ir \
 	--verify \
-	--with-gas-price 500000000 \
 	-vvv
 
 verify-blockscout-arbsep: 
