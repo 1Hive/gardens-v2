@@ -275,6 +275,24 @@ export default function PoolHeader({
     },
   });
 
+  const { write: rejectPoolWrite } = useContractWriteWithConfirmations({
+    address: communityAddr,
+    abi: registryCommunityABI,
+    contractName: "Registry Community",
+    functionName: "rejectPool",
+    fallbackErrorMessage: "Error rejecting pool, please report a bug.",
+    args: [strategy.id as Address],
+    onConfirmations: () => {
+      publish({
+        topic: "pool",
+        function: "rejectPool",
+        type: "update",
+        containerId: communityAddr,
+        chainId: chainId,
+      });
+    },
+  });
+
   const { write: addStrategyByPoolId } = useContractWriteWithConfirmations({
     address: communityAddr,
     abi: registryCommunityABI,
@@ -364,6 +382,18 @@ export default function PoolHeader({
                 onClick={() => setIsOpenModal(true)}
               >
                 Edit
+              </Button>
+              <Button
+                icon={<StopIcon height={24} width={24} />}
+                disabled={
+                  !isConnected || missmatchUrl || disableCouncilSafeButtons
+                }
+                tooltip={tooltipMessage}
+                onClick={() => rejectPoolWrite()}
+                btnStyle="outline"
+                color="danger"
+              >
+                Reject Pool
               </Button>
               {isEnabled ?
                 <Button

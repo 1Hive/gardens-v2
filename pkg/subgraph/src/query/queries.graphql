@@ -180,7 +180,7 @@ query getCommunity($communityAddr: ID!, $tokenAddr: ID!) {
       id
       stakedTokens
     }
-    strategies(orderBy: poolId, orderDirection: desc) {
+    strategies(orderBy: poolId, orderDirection: desc, where: { archived:false}) {
       id
       proposals {
         id

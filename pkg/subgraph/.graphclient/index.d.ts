@@ -254,7 +254,7 @@ export type ArbitrableConfig_filter = {
     and?: InputMaybe<Array<InputMaybe<ArbitrableConfig_filter>>>;
     or?: InputMaybe<Array<InputMaybe<ArbitrableConfig_filter>>>;
 };
-export type ArbitrableConfig_orderBy = 'id' | 'version' | 'strategy' | 'strategy__id' | 'strategy__poolId' | 'strategy__poolAmount' | 'strategy__metadata' | 'strategy__maxCVSupply' | 'strategy__totalEffectiveActivePoints' | 'strategy__isEnabled' | 'strategy__token' | 'arbitrator' | 'tribunalSafe' | 'challengerCollateralAmount' | 'submitterCollateralAmount' | 'defaultRuling' | 'defaultRulingTimeout' | 'allowlist';
+export type ArbitrableConfig_orderBy = 'id' | 'version' | 'strategy' | 'strategy__id' | 'strategy__poolId' | 'strategy__poolAmount' | 'strategy__metadata' | 'strategy__maxCVSupply' | 'strategy__totalEffectiveActivePoints' | 'strategy__isEnabled' | 'strategy__token' | 'strategy__archived' | 'arbitrator' | 'tribunalSafe' | 'challengerCollateralAmount' | 'submitterCollateralAmount' | 'defaultRuling' | 'defaultRulingTimeout' | 'allowlist';
 export type BlockChangedFilter = {
     number_gte: Scalars['Int']['input'];
 };
@@ -529,7 +529,7 @@ export type CVProposal_filter = {
     and?: InputMaybe<Array<InputMaybe<CVProposal_filter>>>;
     or?: InputMaybe<Array<InputMaybe<CVProposal_filter>>>;
 };
-export type CVProposal_orderBy = 'id' | 'proposalNumber' | 'metadata' | 'metadata__id' | 'metadata__title' | 'metadata__description' | 'metadataHash' | 'version' | 'strategy' | 'strategy__id' | 'strategy__poolId' | 'strategy__poolAmount' | 'strategy__metadata' | 'strategy__maxCVSupply' | 'strategy__totalEffectiveActivePoints' | 'strategy__isEnabled' | 'strategy__token' | 'beneficiary' | 'requestedAmount' | 'requestedToken' | 'proposalStatus' | 'blockLast' | 'convictionLast' | 'threshold' | 'maxCVStaked' | 'stakedAmount' | 'submitter' | 'createdAt' | 'updatedAt' | 'arbitrableConfig' | 'arbitrableConfig__id' | 'arbitrableConfig__version' | 'arbitrableConfig__arbitrator' | 'arbitrableConfig__tribunalSafe' | 'arbitrableConfig__challengerCollateralAmount' | 'arbitrableConfig__submitterCollateralAmount' | 'arbitrableConfig__defaultRuling' | 'arbitrableConfig__defaultRulingTimeout';
+export type CVProposal_orderBy = 'id' | 'proposalNumber' | 'metadata' | 'metadata__id' | 'metadata__title' | 'metadata__description' | 'metadataHash' | 'version' | 'strategy' | 'strategy__id' | 'strategy__poolId' | 'strategy__poolAmount' | 'strategy__metadata' | 'strategy__maxCVSupply' | 'strategy__totalEffectiveActivePoints' | 'strategy__isEnabled' | 'strategy__token' | 'strategy__archived' | 'beneficiary' | 'requestedAmount' | 'requestedToken' | 'proposalStatus' | 'blockLast' | 'convictionLast' | 'threshold' | 'maxCVStaked' | 'stakedAmount' | 'submitter' | 'createdAt' | 'updatedAt' | 'arbitrableConfig' | 'arbitrableConfig__id' | 'arbitrableConfig__version' | 'arbitrableConfig__arbitrator' | 'arbitrableConfig__tribunalSafe' | 'arbitrableConfig__challengerCollateralAmount' | 'arbitrableConfig__submitterCollateralAmount' | 'arbitrableConfig__defaultRuling' | 'arbitrableConfig__defaultRulingTimeout';
 export type CVStrategy = {
     id: Scalars['ID']['output'];
     poolId: Scalars['BigInt']['output'];
@@ -544,6 +544,7 @@ export type CVStrategy = {
     isEnabled: Scalars['Boolean']['output'];
     token: Scalars['String']['output'];
     sybilScorer?: Maybe<PassportScorer>;
+    archived: Scalars['Boolean']['output'];
 };
 export type CVStrategyproposalsArgs = {
     skip?: InputMaybe<Scalars['Int']['input']>;
@@ -657,7 +658,7 @@ export type CVStrategyConfig_filter = {
     and?: InputMaybe<Array<InputMaybe<CVStrategyConfig_filter>>>;
     or?: InputMaybe<Array<InputMaybe<CVStrategyConfig_filter>>>;
 };
-export type CVStrategyConfig_orderBy = 'id' | 'strategy' | 'strategy__id' | 'strategy__poolId' | 'strategy__poolAmount' | 'strategy__metadata' | 'strategy__maxCVSupply' | 'strategy__totalEffectiveActivePoints' | 'strategy__isEnabled' | 'strategy__token' | 'D' | 'decay' | 'maxRatio' | 'minThresholdPoints' | 'weight' | 'proposalType' | 'pointSystem' | 'maxAmount' | 'allowlist';
+export type CVStrategyConfig_orderBy = 'id' | 'strategy' | 'strategy__id' | 'strategy__poolId' | 'strategy__poolAmount' | 'strategy__metadata' | 'strategy__maxCVSupply' | 'strategy__totalEffectiveActivePoints' | 'strategy__isEnabled' | 'strategy__token' | 'strategy__archived' | 'D' | 'decay' | 'maxRatio' | 'minThresholdPoints' | 'weight' | 'proposalType' | 'pointSystem' | 'maxAmount' | 'allowlist';
 export type CVStrategy_filter = {
     id?: InputMaybe<Scalars['ID']['input']>;
     id_not?: InputMaybe<Scalars['ID']['input']>;
@@ -814,12 +815,16 @@ export type CVStrategy_filter = {
     sybilScorer_not_ends_with?: InputMaybe<Scalars['String']['input']>;
     sybilScorer_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
     sybilScorer_?: InputMaybe<PassportScorer_filter>;
+    archived?: InputMaybe<Scalars['Boolean']['input']>;
+    archived_not?: InputMaybe<Scalars['Boolean']['input']>;
+    archived_in?: InputMaybe<Array<Scalars['Boolean']['input']>>;
+    archived_not_in?: InputMaybe<Array<Scalars['Boolean']['input']>>;
     /** Filter for the block changed event. */
     _change_block?: InputMaybe<BlockChangedFilter>;
     and?: InputMaybe<Array<InputMaybe<CVStrategy_filter>>>;
     or?: InputMaybe<Array<InputMaybe<CVStrategy_filter>>>;
 };
-export type CVStrategy_orderBy = 'id' | 'poolId' | 'poolAmount' | 'metadata' | 'registryCommunity' | 'registryCommunity__id' | 'registryCommunity__chainId' | 'registryCommunity__strategyTemplate' | 'registryCommunity__profileId' | 'registryCommunity__communityFee' | 'registryCommunity__protocolFee' | 'registryCommunity__protocolFeeReceiver' | 'registryCommunity__communityName' | 'registryCommunity__covenantIpfsHash' | 'registryCommunity__councilSafe' | 'registryCommunity__pendingNewCouncilSafe' | 'registryCommunity__isKickEnabled' | 'registryCommunity__registerStakeAmount' | 'registryCommunity__registerToken' | 'registryCommunity__alloAddress' | 'registryCommunity__isValid' | 'config' | 'config__id' | 'config__D' | 'config__decay' | 'config__maxRatio' | 'config__minThresholdPoints' | 'config__weight' | 'config__proposalType' | 'config__pointSystem' | 'config__maxAmount' | 'proposals' | 'memberActive' | 'maxCVSupply' | 'totalEffectiveActivePoints' | 'isEnabled' | 'token' | 'sybilScorer' | 'sybilScorer__id';
+export type CVStrategy_orderBy = 'id' | 'poolId' | 'poolAmount' | 'metadata' | 'registryCommunity' | 'registryCommunity__id' | 'registryCommunity__chainId' | 'registryCommunity__strategyTemplate' | 'registryCommunity__profileId' | 'registryCommunity__communityFee' | 'registryCommunity__protocolFee' | 'registryCommunity__protocolFeeReceiver' | 'registryCommunity__communityName' | 'registryCommunity__covenantIpfsHash' | 'registryCommunity__councilSafe' | 'registryCommunity__pendingNewCouncilSafe' | 'registryCommunity__isKickEnabled' | 'registryCommunity__registerStakeAmount' | 'registryCommunity__registerToken' | 'registryCommunity__alloAddress' | 'registryCommunity__isValid' | 'config' | 'config__id' | 'config__D' | 'config__decay' | 'config__maxRatio' | 'config__minThresholdPoints' | 'config__weight' | 'config__proposalType' | 'config__pointSystem' | 'config__maxAmount' | 'proposals' | 'memberActive' | 'maxCVSupply' | 'totalEffectiveActivePoints' | 'isEnabled' | 'token' | 'sybilScorer' | 'sybilScorer__id' | 'archived';
 export type CollateralVault = {
     id: Scalars['ID']['output'];
     strategy: CVStrategy;
@@ -966,7 +971,7 @@ export type CollateralVault_filter = {
     and?: InputMaybe<Array<InputMaybe<CollateralVault_filter>>>;
     or?: InputMaybe<Array<InputMaybe<CollateralVault_filter>>>;
 };
-export type CollateralVault_orderBy = 'id' | 'strategy' | 'strategy__id' | 'strategy__poolId' | 'strategy__poolAmount' | 'strategy__metadata' | 'strategy__maxCVSupply' | 'strategy__totalEffectiveActivePoints' | 'strategy__isEnabled' | 'strategy__token' | 'collaterals';
+export type CollateralVault_orderBy = 'id' | 'strategy' | 'strategy__id' | 'strategy__poolId' | 'strategy__poolAmount' | 'strategy__metadata' | 'strategy__maxCVSupply' | 'strategy__totalEffectiveActivePoints' | 'strategy__isEnabled' | 'strategy__token' | 'strategy__archived' | 'collaterals';
 export type Member = {
     id: Scalars['ID']['output'];
     memberCommunity?: Maybe<Array<MemberCommunity>>;
@@ -1183,7 +1188,7 @@ export type MemberStrategy_filter = {
     and?: InputMaybe<Array<InputMaybe<MemberStrategy_filter>>>;
     or?: InputMaybe<Array<InputMaybe<MemberStrategy_filter>>>;
 };
-export type MemberStrategy_orderBy = 'id' | 'member' | 'member__id' | 'strategy' | 'strategy__id' | 'strategy__poolId' | 'strategy__poolAmount' | 'strategy__metadata' | 'strategy__maxCVSupply' | 'strategy__totalEffectiveActivePoints' | 'strategy__isEnabled' | 'strategy__token' | 'totalStakedPoints' | 'activatedPoints';
+export type MemberStrategy_orderBy = 'id' | 'member' | 'member__id' | 'strategy' | 'strategy__id' | 'strategy__poolId' | 'strategy__poolAmount' | 'strategy__metadata' | 'strategy__maxCVSupply' | 'strategy__totalEffectiveActivePoints' | 'strategy__isEnabled' | 'strategy__token' | 'strategy__archived' | 'totalStakedPoints' | 'activatedPoints';
 export type Member_filter = {
     id?: InputMaybe<Scalars['ID']['input']>;
     id_not?: InputMaybe<Scalars['ID']['input']>;
@@ -1335,7 +1340,7 @@ export type PassportStrategy_filter = {
     and?: InputMaybe<Array<InputMaybe<PassportStrategy_filter>>>;
     or?: InputMaybe<Array<InputMaybe<PassportStrategy_filter>>>;
 };
-export type PassportStrategy_orderBy = 'id' | 'passportScorer' | 'passportScorer__id' | 'strategy' | 'strategy__id' | 'strategy__poolId' | 'strategy__poolAmount' | 'strategy__metadata' | 'strategy__maxCVSupply' | 'strategy__totalEffectiveActivePoints' | 'strategy__isEnabled' | 'strategy__token' | 'threshold' | 'councilSafe' | 'active';
+export type PassportStrategy_orderBy = 'id' | 'passportScorer' | 'passportScorer__id' | 'strategy' | 'strategy__id' | 'strategy__poolId' | 'strategy__poolAmount' | 'strategy__metadata' | 'strategy__maxCVSupply' | 'strategy__totalEffectiveActivePoints' | 'strategy__isEnabled' | 'strategy__token' | 'strategy__archived' | 'threshold' | 'councilSafe' | 'active';
 export type PassportUser = {
     id: Scalars['ID']['output'];
     passportScorer: PassportScorer;
@@ -3198,6 +3203,7 @@ export type CVStrategyResolvers<ContextType = MeshContext, ParentType extends Re
     isEnabled?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
     token?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
     sybilScorer?: Resolver<Maybe<ResolversTypes['PassportScorer']>, ParentType, ContextType>;
+    archived?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
 export type CVStrategyConfigResolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['CVStrategyConfig'] = ResolversParentTypes['CVStrategyConfig']> = ResolversObject<{
