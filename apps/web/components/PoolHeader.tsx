@@ -12,6 +12,7 @@ import {
 import { StopIcon } from "@heroicons/react/24/solid";
 import { FetchTokenResult } from "@wagmi/core";
 import Image from "next/image";
+import { usePathname, useRouter } from "next/navigation";
 import { Address, zeroAddress } from "viem";
 import { useAccount, useContractRead } from "wagmi";
 import {
@@ -95,7 +96,6 @@ function calculateMinimumConviction(weight: number, spendingLimit: number) {
 
   return minimumConviction;
 }
-
 export default function PoolHeader({
   ipfsResult,
   poolId,
@@ -110,6 +110,8 @@ export default function PoolHeader({
   const { address } = useAccount();
   const { publish } = usePubSubContext();
   const { id: chainId, safePrefix } = useChainFromPath()!;
+  const router = useRouter();
+  const path = usePathname();
 
   const { data: passportStrategyData } =
     useSubgraphQuery<getPassportStrategyQuery>({
@@ -128,7 +130,6 @@ export default function PoolHeader({
     passportStrategy?.threshold ?
       Number(passportStrategy?.threshold) / CV_PASSPORT_THRESHOLD_SCALE
     : null;
-
   const blockTime = chainConfigMap[chainId!].blockTime;
   const spendingLimitPct =
     (Number(strategy.config.maxRatio || 0) / CV_SCALE_PRECISION) * 100;
@@ -291,6 +292,16 @@ export default function PoolHeader({
         chainId: chainId,
       });
     },
+    onSuccess: () => {
+      const pathSegments = path.split("/");
+      pathSegments.pop();
+      console.log("LENGTH", pathSegments.length);
+      if (pathSegments.length === 6) {
+        pathSegments.pop();
+      }
+      const newPath = pathSegments.join("/");
+      router.push(newPath);
+    },
   });
 
   const { write: addStrategyByPoolId } = useContractWriteWithConfirmations({
@@ -383,6 +394,7 @@ export default function PoolHeader({
               >
                 Edit
               </Button>
+
               <Button
                 icon={<StopIcon height={24} width={24} />}
                 disabled={
