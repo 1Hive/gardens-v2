@@ -291,8 +291,6 @@ export default function PoolHeader({
         containerId: communityAddr,
         chainId: chainId,
       });
-    },
-    onSuccess: () => {
       const pathSegments = path.split("/");
       pathSegments.pop();
       console.log("LENGTH", pathSegments.length);
