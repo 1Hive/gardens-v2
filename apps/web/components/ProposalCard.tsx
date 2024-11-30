@@ -26,7 +26,10 @@ import {
 } from "@/hooks/useConvictionRead";
 import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { PoolTypes, ProposalStatus } from "@/types";
-import { calculatePercentage } from "@/utils/numbers";
+import {
+  calculatePercentage,
+  calculatePercentageBigInt,
+} from "@/utils/numbers";
 import { prettyTimestamp } from "@/utils/text";
 
 export type ProposalCardProps = {
@@ -45,13 +48,13 @@ export type ProposalCardProps = {
   stakedFilter: ProposalInputItem;
   poolToken?: FetchTokenResult;
   isAllocationView: boolean;
-  memberActivatedPoints: number;
+  memberActivatedPoints: bigint;
   memberPoolWeight: number;
   executeDisabled: boolean;
   tokenDecimals: number;
   alloInfo: Allo;
   tokenData: Parameters<typeof useConvictionRead>[0]["tokenData"];
-  inputHandler: (proposalId: string, value: number) => void;
+  inputHandler: (proposalId: string, value: bigint) => void;
 };
 
 export function ProposalCard({
@@ -92,12 +95,13 @@ export function ProposalCard({
     strategyConfig,
     tokenData,
   });
-
   const inputValue =
-    inputData ? calculatePercentage(inputData.value, memberActivatedPoints) : 0;
+    inputData ?
+      calculatePercentageBigInt(inputData.value, memberActivatedPoints)
+    : 0;
 
   const poolWeightAllocatedInProposal = (
-    (inputValue * memberPoolWeight) /
+    (inputValue * Number(memberPoolWeight)) /
     100
   ).toFixed(2);
 
@@ -215,13 +219,16 @@ export function ProposalCard({
                       <input
                         type="range"
                         min={0}
-                        max={memberActivatedPoints}
-                        value={inputData?.value}
+                        max={Number(memberActivatedPoints)}
+                        value={inputData ? Number(inputData.value) : undefined}
                         className={`range range-md cursor-pointer bg-neutral-soft [--range-shdw:var(--color-green-500)] ${isProposalEnded ? "grayscale !cursor-not-allowed" : ""}`}
-                        step={memberActivatedPoints / 100}
-                        onChange={(e) =>
-                          inputHandler(proposalData.id, Number(e.target.value))
-                        }
+                        step={Number(memberActivatedPoints / 100n)}
+                        onChange={(e) => {
+                          inputHandler(
+                            proposalData.id,
+                            BigInt(Math.floor(Number(e.target.value))),
+                          );
+                        }}
                         disabled={isProposalEnded}
                       />
                     </div>
@@ -235,11 +242,11 @@ export function ProposalCard({
                     </div>
                   </div>
 
-                  {isProposalEnded && inputData?.value != 0 && (
+                  {isProposalEnded && inputData?.value != 0n && (
                     <Button
                       className="mb-2 !p-2 !px-3"
                       btnStyle="outline"
-                      onClick={() => inputHandler(proposalData.id, 0)}
+                      onClick={() => inputHandler(proposalData.id, 0n)}
                       tooltip="Clear allocation"
                     >
                       &times;

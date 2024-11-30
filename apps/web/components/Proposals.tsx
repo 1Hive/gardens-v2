@@ -42,13 +42,13 @@ import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { alloABI, registryCommunityABI } from "@/src/generated";
 import { ProposalStatus } from "@/types";
 import { useErrorDetails } from "@/utils/getErrorName";
-import { calculatePercentage } from "@/utils/numbers";
+import { bigIntMin, calculatePercentageBigInt } from "@/utils/numbers";
 
 // Types
 export type ProposalInputItem = {
   proposalId: string;
   proposalNumber: number;
-  value: number;
+  value: bigint;
 };
 
 // export type Strategy = getStrategyByPoolQuery["cvstrategies"][number];
@@ -63,7 +63,7 @@ export type ProposalTypeVoter = CVProposal & {
 type Stats = {
   id: number;
   name: string;
-  stat: number | string;
+  stat: number | undefined;
   className: string;
   info: string;
 };
@@ -98,11 +98,10 @@ export function Proposals({
 }: ProposalsProps) {
   // State
   const [allocationView, setAllocationView] = useState(false);
-  const [inputAllocatedTokens, setInputAllocatedTokens] = useState<number>(0);
+  const [inputAllocatedTokens, setInputAllocatedTokens] = useState<bigint>(0n);
   const [inputs, setInputs] = useState<{ [key: string]: ProposalInputItem }>(
     {},
   );
-  const [memberActivatedPoints, setMemberActivatedPoints] = useState<number>(0);
   const [stakedFilters, setStakedFilters] = useState<{
     [key: string]: ProposalInputItem;
   }>({});
@@ -117,6 +116,7 @@ export function Proposals({
 
   const tokenDecimals = strategy.registryCommunity.garden.decimals;
   const searchParams = useCollectQueryParams();
+
   // Queries
   const { data: memberData, error } = useSubgraphQuery<isMemberQuery>({
     query: isMemberDocument,
@@ -157,6 +157,10 @@ export function Proposals({
     },
   );
 
+  const memberActivatedPoints: bigint = BigInt(
+    memberStrategyData?.memberStrategy?.activatedPoints ?? 0,
+  );
+
   // Contract reads
   const { data: memberPower, refetch: refetchMemberPower } = useContractRead({
     address: communityAddress,
@@ -191,9 +195,10 @@ export function Proposals({
   const isMemberCommunity =
     !!memberData?.member?.memberCommunity?.[0]?.isRegistered;
   const memberActivatedStrategy =
-    Number(memberStrategyData?.memberStrategy?.activatedPoints) > 0;
-  const memberTokensInCommunity =
-    memberData?.member?.memberCommunity?.[0]?.stakedTokens ?? 0;
+    memberStrategyData?.memberStrategy?.activatedPoints > 0n;
+  const memberTokensInCommunity = BigInt(
+    memberData?.member?.memberCommunity?.[0]?.stakedTokens ?? 0,
+  );
 
   const proposals = strategy.proposals;
 
@@ -206,14 +211,16 @@ export function Proposals({
 
   useEffect(() => {
     const stakesFiltered =
-      memberData?.member?.stakes?.filter(
-        (stake) =>
-          stake.proposal.strategy.id.toLowerCase() ===
-          strategy.id.toLowerCase(),
-      ) ?? [];
+      memberData?.member?.stakes
+        ?.filter(
+          (stake) =>
+            stake.proposal.strategy.id.toLowerCase() ===
+            strategy.id.toLowerCase(),
+        )
+        .map((x) => ({ ...x, amount: BigInt(x.amount) })) ?? [];
 
     const totalStaked = stakesFiltered.reduce(
-      (acc, curr) => acc + BigInt(curr.amount),
+      (acc, curr) => acc + curr.amount,
       0n,
     );
 
@@ -221,20 +228,14 @@ export function Proposals({
     stakesFiltered.forEach((item) => {
       memberStakes[item.proposal.id] = {
         proposalId: item.proposal.id,
-        value: Number(item.amount),
+        value: item.amount,
         proposalNumber: item.proposal.proposalNumber,
       };
     });
 
-    setInputAllocatedTokens(Number(totalStaked));
+    setInputAllocatedTokens(totalStaked);
     setStakedFilters(memberStakes);
   }, [memberData?.member?.stakes, strategy.id]);
-
-  useEffect(() => {
-    setMemberActivatedPoints(
-      Number(memberStrategyData?.memberStrategy?.activatedPoints ?? 0n),
-    );
-  }, [memberStrategyData?.memberStrategy?.activatedPoints]);
 
   useEffect(() => {
     if (memberActivatedStrategy === false) {
@@ -276,7 +277,7 @@ export function Proposals({
     proposals.forEach(({ id, proposalNumber }) => {
       newInputs[id] = {
         proposalId: id,
-        value: stakedFilters[id]?.value ?? 0,
+        value: stakedFilters[id]?.value ?? 0n,
         proposalNumber,
       };
     });
@@ -287,12 +288,12 @@ export function Proposals({
     inputData: { [key: string]: ProposalInputItem },
     currentData: { [key: string]: ProposalInputItem },
   ) => {
+    // log maximum stakable tokens
     return Object.values(inputData).reduce<
       { proposalId: bigint; deltaSupport: bigint }[]
     >((acc, input) => {
       const current = currentData[input.proposalId];
-      const diff =
-        BigInt(Math.floor(input.value)) - BigInt(current?.value ?? 0);
+      const diff = BigInt(input.value) - BigInt(current?.value ?? 0);
       if (diff !== 0n) {
         acc.push({
           proposalId: BigInt(input.proposalNumber),
@@ -306,7 +307,7 @@ export function Proposals({
   const calculateTotalTokens = (exceptProposalId?: string) => {
     if (!inputs) {
       console.error("Inputs not yet computed");
-      return 0;
+      return 0n;
     }
     return Object.values(inputs).reduce((acc, curr) => {
       if (
@@ -315,20 +316,21 @@ export function Proposals({
       ) {
         return acc;
       } else {
-        return acc + Number(curr.value);
+        return acc + curr.value;
       }
-    }, 0);
+    }, 0n);
   };
 
-  const inputHandler = (proposalId: string, value: number) => {
+  const inputHandler = (proposalId: string, value: bigint) => {
     const currentPoints = calculateTotalTokens(proposalId);
+
     const maxAllowableValue = memberActivatedPoints - currentPoints;
-    value = Math.min(value, maxAllowableValue);
+    const minValue = (value = bigIntMin(value, maxAllowableValue));
 
     const input = inputs[proposalId];
-    input.value = value;
+    input.value = minValue;
     setInputs((prev) => ({ ...prev, [proposalId]: input }));
-    setInputAllocatedTokens(currentPoints + value);
+    setInputAllocatedTokens(currentPoints + minValue);
   };
 
   const toastId = useRef<Id | null>(null);
@@ -371,7 +373,6 @@ export function Proposals({
       inputs,
       stakedFilters,
     );
-    console.debug("Proposal Deltas", proposalsDifferencesArr);
     const abiTypes = parseAbiParameters(
       "(uint256 proposalId, int256 deltaSupport)[]",
     );
@@ -387,22 +388,29 @@ export function Proposals({
   useErrorDetails(errorAllocate, "errorAllocate");
 
   // Computed values
-  const memberSupportedProposalsPct = calculatePercentage(
+  const memberSupportedProposalsPct = calculatePercentageBigInt(
     inputAllocatedTokens,
     memberActivatedPoints,
   );
-  const memberPoolWeight = calculatePercentage(
-    Number(memberPower),
-    strategy.totalEffectiveActivePoints,
-  );
 
-  const calcPoolWeightUsed = (number: number) => {
-    if (memberPoolWeight == 0) return 0;
-    return ((number / 100) * memberPoolWeight).toFixed(2);
-  };
+  const memberPoolWeight =
+    memberPower != null && +strategy.totalEffectiveActivePoints > 0 ?
+      calculatePercentageBigInt(
+        memberPower,
+        BigInt(strategy.totalEffectiveActivePoints),
+      )
+    : undefined;
+
+  const calcPoolWeightUsed =
+    memberPoolWeight ?
+      (number: number) => {
+        if (memberPoolWeight == 0) return 0;
+        return ((number / 100) * memberPoolWeight).toFixed(2);
+      }
+    : undefined;
 
   const poolWeightClassName = `${
-    calcPoolWeightUsed(memberSupportedProposalsPct) === memberPoolWeight ?
+    calcPoolWeightUsed?.(memberSupportedProposalsPct) === memberPoolWeight ?
       "bg-secondary-soft text-secondary-content"
     : "bg-primary-soft text-primary-content"
   }`;
@@ -475,7 +483,7 @@ export function Proposals({
           {allocationView && <UserAllocationStats stats={stats} />}
         </div>
         <div className="flex flex-col gap-6">
-          {proposals && inputs ?
+          {proposals && inputs && memberPoolWeight != null ?
             <>
               {proposals
                 .filter(
@@ -492,7 +500,7 @@ export function Proposals({
                       stakedFilter={stakedFilters[proposalData.id]}
                       isAllocationView={allocationView}
                       memberActivatedPoints={memberActivatedPoints}
-                      memberPoolWeight={memberPoolWeight}
+                      memberPoolWeight={memberPoolWeight ?? 0}
                       executeDisabled={
                         proposalData.proposalStatus == 4 ||
                         !isConnected ||
