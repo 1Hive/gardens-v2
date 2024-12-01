@@ -1,0 +1,7 @@
+sources:
+  - name: gv2
+    handler:
+      graphql:
+        endpoint: https://api.studio.thegraph.com/query/70985/gardens-v2---arbitrum-sepolia/{{VERSION_TESTNET}}
+documents:
+  - ./src/query/queries.graphql

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import {
+  ArrowTopRightOnSquareIcon,
   BoltIcon,
   ChartBarIcon,
   CheckIcon,
@@ -11,10 +12,12 @@ import {
 import { StopIcon } from "@heroicons/react/24/solid";
 import { FetchTokenResult } from "@wagmi/core";
 import Image from "next/image";
-import { Address } from "viem";
+import { Address, zeroAddress } from "viem";
 import { useAccount, useContractRead } from "wagmi";
 import {
   ArbitrableConfig,
+  getPassportStrategyDocument,
+  getPassportStrategyQuery,
   getPoolDataQuery,
   TokenGarden,
 } from "#/subgraph/.graphclient";
@@ -22,24 +25,34 @@ import { Badge } from "./Badge";
 import { Button } from "./Button";
 import { EthAddress } from "./EthAddress";
 import PoolEditForm from "./Forms/PoolEditForm";
+import { InfoBox } from "./InfoBox";
 import MarkdownWrapper from "./MarkdownWrapper";
 import { Modal } from "./Modal";
+import { Skeleton } from "./Skeleton";
 import { Statistic } from "./Statistic";
 import { blueLand, grassLarge } from "@/assets";
 import { chainConfigMap } from "@/configs/chains";
 import { usePubSubContext } from "@/contexts/pubsub.context";
+import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { MetadataV1 } from "@/hooks/useIpfsFetch";
+import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { registryCommunityABI, safeABI } from "@/src/generated";
-import { PointSystems, PoolTypes, ProposalStatus } from "@/types";
-import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
+import {
+  PointSystems,
+  PoolTypes,
+  ProposalStatus,
+  SybilResistanceType,
+} from "@/types";
 import {
   convertSecondsToReadableTime,
+  CV_PASSPORT_THRESHOLD_SCALE,
   CV_SCALE_PRECISION,
   formatTokenAmount,
   MAX_RATIO_CONSTANT,
 } from "@/utils/numbers";
+import { shortenAddress } from "@/utils/text";
 
 type Props = {
   ipfsResult: MetadataV1 | null;
@@ -52,13 +65,11 @@ type Props = {
     | "tribunalSafe"
     | "submitterCollateralAmount"
     | "challengerCollateralAmount"
+    | "defaultRulingTimeout"
   >;
   token: Pick<TokenGarden, "address" | "name" | "symbol" | "decimals">;
-  poolToken: FetchTokenResult;
-  pointSystem: number;
-  chainId: string;
-  proposalType: string;
-  spendingLimitPct: number;
+  poolToken?: FetchTokenResult;
+  maxAmount: number;
 };
 
 function calculateConvictionGrowthInSeconds(
@@ -93,16 +104,34 @@ export default function PoolHeader({
   arbitrableConfig,
   token,
   poolToken,
-  pointSystem,
-  chainId,
-  proposalType,
-  spendingLimitPct,
+  maxAmount,
 }: Props) {
   const [isOpenModal, setIsOpenModal] = useState(false);
   const { address } = useAccount();
   const { publish } = usePubSubContext();
+  const { id: chainId, safePrefix } = useChainFromPath()!;
 
-  const blockTime = chainConfigMap[chainId].blockTime;
+  const { data: passportStrategyData } =
+    useSubgraphQuery<getPassportStrategyQuery>({
+      query: getPassportStrategyDocument,
+      variables: { strategyId: strategy.id.toLowerCase() as Address },
+      changeScope: {
+        topic: "pool",
+        type: "update",
+        id: strategy.poolId,
+        chainId: chainId,
+      },
+    });
+  const pointSystemType = Number(strategy.config.pointSystem);
+  const passportStrategy = passportStrategyData?.passportStrategy;
+  const passportScore =
+    passportStrategy?.threshold ?
+      Number(passportStrategy?.threshold) / CV_PASSPORT_THRESHOLD_SCALE
+    : null;
+
+  const blockTime = chainConfigMap[chainId!].blockTime;
+  const spendingLimitPct =
+    (Number(strategy.config.maxRatio || 0) / CV_SCALE_PRECISION) * 100;
 
   const isCouncilSafe =
     address?.toLowerCase() ===
@@ -113,7 +142,7 @@ export default function PoolHeader({
     spendingLimitPct * MAX_RATIO_CONSTANT,
   );
 
-  const convictionGrowth = calculateConvictionGrowthInSeconds(
+  const convictionGrowthSec = calculateConvictionGrowthInSeconds(
     strategy.config.decay,
     blockTime,
   );
@@ -122,20 +151,52 @@ export default function PoolHeader({
     strategy.config.minThresholdPoints,
     +token.decimals,
   );
-  const spendingLimit = spendingLimitPct * MAX_RATIO_CONSTANT;
+
+  const totalPointsActivatedInPool = formatTokenAmount(
+    strategy.totalEffectiveActivePoints,
+    +token.decimals,
+  );
+
+  const minThGtTotalEffPoints =
+    +minThresholdPoints > +totalPointsActivatedInPool;
+
+  const spendingLimit =
+    (strategy.config.maxRatio / CV_SCALE_PRECISION) *
+    (1 - Math.sqrt(minimumConviction / 100)) *
+    100;
+
   const communityAddr = strategy.registryCommunity.id as Address;
   const defaultResolution = arbitrableConfig.defaultRuling;
   const proposalCollateral = arbitrableConfig.submitterCollateralAmount;
   const disputeCollateral = arbitrableConfig.challengerCollateralAmount;
   const tribunalAddress = arbitrableConfig.tribunalSafe;
+  const proposalType = strategy.config.proposalType;
+  const pointSystem = strategy.config.pointSystem;
+  const allowList = strategy.config.allowlist;
+  const rulingTime = arbitrableConfig.defaultRulingTimeout;
 
   const proposalOnDispute = strategy.proposals?.some(
     (proposal) => ProposalStatus[proposal.proposalStatus] === "disputed",
   );
 
-  const { value, unit } = convertSecondsToReadableTime(convictionGrowth);
+  const { value, unit } = convertSecondsToReadableTime(convictionGrowthSec);
+
+  let sybilResistanceType: SybilResistanceType;
+  let sybilResistanceValue: Address[] | number | undefined;
+  if (passportScore && passportScore > 0) {
+    sybilResistanceType = "gitcoinPassport";
+    sybilResistanceValue = passportScore;
+  } else {
+    sybilResistanceType = "allowList";
+    sybilResistanceValue = allowList as Address[] | undefined;
+  }
 
   const poolConfig = [
+    {
+      label: "Spending limit",
+      value: `${spendingLimit.toPrecision(2)} %`,
+      info: "Max percentage of the pool funds that can be spent in a single proposal.",
+    },
     {
       label: "Min conviction",
       value: `${minimumConviction.toPrecision(2)} %`,
@@ -144,35 +205,67 @@ export default function PoolHeader({
     {
       label: "Conviction growth",
       value: `${value} ${unit}${value !== 1 ? "s" : ""}`,
-      info: "It's the time for conviction to reach proposal support. This parameter is logarithmic, represented as a half life",
+      info: "It's the time for conviction to reach proposal support. This parameter is logarithmic, represented as a half life and may vary slightly over time depending on network block times.",
     },
     {
-      label: "Min Threshold",
+      label: "Min threshold",
       value: `${minThresholdPoints}`,
       info: `A fixed amount of ${token.symbol} that overrides Minimum Conviction when the Pool's activated governance is low.`,
     },
     {
-      label: "Spending limit",
-      // TODO: check number for some pools, they have more zeros or another config ?
-      value: `${spendingLimit.toFixed(2)} %`,
-      info: "Max percentage of the pool funds that can be spent in a single proposal",
+      label: "Max voting weight",
+      value: `${formatTokenAmount(maxAmount, token.decimals)} ${token.symbol}`,
+      info: "Staking above this specified limit won’t increase your voting weight.",
+    },
+    {
+      label: "Protection",
+      value:
+        sybilResistanceType ?
+          sybilResistanceType === "gitcoinPassport" ? "Gitcoin Passport"
+          : (sybilResistanceValue as Array<Address>)?.[0] === zeroAddress ?
+            "None"
+          : "Allowlist"
+        : "",
+      info:
+        sybilResistanceType ?
+          sybilResistanceType === "gitcoinPassport" ?
+            `Only users with a Gitcoin Passport above the threshold can interact with this pool: \n Threshold: ${(sybilResistanceValue as number).toFixed(2)}`
+          : (sybilResistanceValue as Array<Address>)?.[0] === zeroAddress ?
+            "Any wallet can interact with this pool"
+          : `Only users in the allowlist can interact with this pool: \n -${(sybilResistanceValue as Array<string>).map((x) => shortenAddress(x)).join("\n- ")}`
+        : "",
     },
   ];
-
   const filteredPoolConfig =
-    PoolTypes[proposalType] === "signaling" ?
+    (
+      PoolTypes[proposalType] === "signaling" &&
+      PointSystems[pointSystem] !== "capped"
+    ) ?
       poolConfig.filter(
         (config) =>
-          !["Spending limit", "Min Threshold", "Min conviction"].includes(
+          !!config.value &&
+          ![
+            "Spending limit",
+            "Min threshold",
+            "Min conviction",
+            "Max voting weight",
+          ].includes(config.label),
+      )
+    : PoolTypes[proposalType] === "signaling" ?
+      poolConfig.filter(
+        (config) =>
+          !!config.value &&
+          !["Spending limit", "Min threshold", "Min conviction"].includes(
             config.label,
           ),
       )
-    : poolConfig;
+    : PointSystems[pointSystem] === "capped" ? poolConfig
+    : poolConfig.filter((config) => config.label !== "Max voting weight");
 
   //hooks
   const { data: isCouncilMember } = useContractRead({
     address: strategy.registryCommunity.councilSafe as Address,
-    abi: abiWithErrors2(safeABI),
+    abi: safeABI,
     functionName: "isOwner",
     chainId: Number(chainId),
     enabled: !!address,
@@ -184,10 +277,10 @@ export default function PoolHeader({
 
   const { write: addStrategyByPoolId } = useContractWriteWithConfirmations({
     address: communityAddr,
-    abi: abiWithErrors(registryCommunityABI),
+    abi: registryCommunityABI,
     contractName: "Registry Community",
     functionName: "addStrategyByPoolId",
-    fallbackErrorMessage: "Error approving pool. Please try again.",
+    fallbackErrorMessage: "Error approving pool, please report a bug.",
     args: [BigInt(poolId)],
     onConfirmations: () => {
       publish({
@@ -199,12 +292,13 @@ export default function PoolHeader({
       });
     },
   });
+
   const { write: removeStrategyByPoolId } = useContractWriteWithConfirmations({
     address: communityAddr,
-    abi: abiWithErrors(registryCommunityABI),
+    abi: registryCommunityABI,
     contractName: "Registry Community",
     functionName: "removeStrategyByPoolId",
-    fallbackErrorMessage: "Error disabling pool. Please try again.",
+    fallbackErrorMessage: "Error disabling pool, please report a bug.",
     args: [BigInt(poolId)],
     onConfirmations: () => {
       publish({
@@ -221,7 +315,7 @@ export default function PoolHeader({
   const disableCouncilSafeBtnCondition: ConditionObject[] = [
     {
       condition: !isCouncilSafe,
-      message: "Connect with council safe address",
+      message: "Connect with Council safe",
     },
   ];
 
@@ -234,15 +328,32 @@ export default function PoolHeader({
   );
 
   return (
-    <section className="section-layout flex flex-col gap-0 overflow-hidden">
+    <section className="section-layout flex flex-col gap-0">
       <header className="mb-2 flex flex-col">
-        <div className="flex justify-between">
+        <div className="flex justify-between flex-wrap">
           <h2>
-            {ipfsResult?.title} #{poolId}
+            <Skeleton isLoading={!ipfsResult} className="sm:!w-96 h-8">
+              {ipfsResult?.title} #{poolId}
+            </Skeleton>
           </h2>
-          {(isCouncilMember ?? isCouncilSafe) && (
-            // true
-            <div className="flex gap-2">
+          {(!!isCouncilMember || isCouncilSafe) && (
+            <div className="flex gap-2 flex-wrap">
+              <div className="flex flex-col gap-1 p-1 w-48">
+                <a
+                  href={`https://app.safe.global/transactions/queue?safe=${safePrefix}:${strategy.registryCommunity.councilSafe}`}
+                  className="text-info whitespace-nowrap flex flex-nowrap gap-1 items-center"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Council safe
+                  <ArrowTopRightOnSquareIcon width={16} height={16} />
+                </a>
+                <EthAddress
+                  address={strategy.registryCommunity.councilSafe as Address}
+                  shortenAddress={true}
+                  actions="copy"
+                />
+              </div>
               <Button
                 btnStyle="outline"
                 icon={<Cog6ToothIcon height={24} width={24} />}
@@ -282,37 +393,48 @@ export default function PoolHeader({
           )}
         </div>
         <div>
-          <EthAddress icon={false} address={strategy.id as Address} />
+          <EthAddress
+            icon={false}
+            address={strategy.id as Address}
+            label="Pool address"
+          />
         </div>
         <Modal
           title={`Edit ${ipfsResult?.title} #${poolId}`}
           isOpen={isOpenModal}
           onClose={() => setIsOpenModal(false)}
         >
-          <PoolEditForm
-            strategyAddr={strategy.id as Address}
-            token={token}
-            proposalType={proposalType}
-            chainId={chainId}
-            proposalOnDispute={proposalOnDispute}
-            initValues={{
-              minimumConviction: minimumConviction.toFixed(2),
-              convictionGrowth: convictionGrowth.toFixed(2),
-              minThresholdPoints: minThresholdPoints,
-              spendingLimit: spendingLimit.toFixed(2),
-              defaultResolution: defaultResolution,
-              proposalCollateral: proposalCollateral,
-              disputeCollateral: disputeCollateral,
-              tribunalAddress: tribunalAddress,
-            }}
-            setModalOpen={setIsOpenModal}
-          />
+          {!!passportStrategyData && (
+            <PoolEditForm
+              strategy={strategy}
+              pointSystemType={pointSystemType}
+              token={token}
+              proposalType={proposalType}
+              proposalOnDispute={proposalOnDispute}
+              initValues={{
+                sybilResistanceValue: sybilResistanceValue,
+                sybilResistanceType: sybilResistanceType,
+                spendingLimit: spendingLimit.toFixed(2),
+                minimumConviction: minimumConviction.toFixed(2),
+                convictionGrowth: convictionGrowthSec.toFixed(4),
+                minThresholdPoints: minThresholdPoints,
+                defaultResolution: defaultResolution,
+                proposalCollateral: proposalCollateral,
+                disputeCollateral: disputeCollateral,
+                tribunalAddress: tribunalAddress,
+                rulingTime,
+              }}
+              setModalOpen={setIsOpenModal}
+            />
+          )}
         </Modal>
       </header>
-      <MarkdownWrapper>
-        {ipfsResult?.description ?? "No description found"}
-      </MarkdownWrapper>
-      <div className="mb-10 mt-8 flex items-start gap-24">
+      <Skeleton rows={5} isLoading={!ipfsResult}>
+        <MarkdownWrapper>
+          {ipfsResult?.description ?? "No description found"}
+        </MarkdownWrapper>
+      </Skeleton>
+      <div className="mb-10 mt-8 flex items-start justify-between gap-8 flex-wrap">
         <div className="flex flex-col gap-2 max-w-fit">
           <Statistic label="pool type">
             <Badge type={parseInt(proposalType)} />
@@ -326,11 +448,11 @@ export default function PoolHeader({
               />
             </Statistic>
           )}
-          <Statistic label="pool system">
+          <Statistic label="voting weight">
             <div className="flex flex-col gap-3 sm:flex-row">
               <Badge
                 label="conviction voting"
-                classNames="text-secondary-content"
+                className="text-secondary-content"
                 icon={<ChartBarIcon />}
               />
               <Badge label={PointSystems[pointSystem]} icon={<BoltIcon />} />
@@ -357,6 +479,13 @@ export default function PoolHeader({
           ))}
         </div>
       </div>
+      {minThGtTotalEffPoints && isEnabled && (
+        <InfoBox
+          infoBoxType="warning"
+          content="Activated governance in this pool is too low. No proposals will pass unless more members activate their governance. You can still create and support proposals."
+          className="mb-4"
+        />
+      )}
       {!isEnabled ?
         <div className="banner">
           <ClockIcon className="h-8 w-8 text-secondary-content" />

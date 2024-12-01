@@ -25,8 +25,19 @@ import { initUrqlClient } from "@/providers/urql";
 import { ChainId } from "@/types";
 import { delayAsync } from "@/utils/delayAsync";
 
+let isQueryAllChains = false;
+try {
+  isQueryAllChains = localStorage.getItem("queryAllChains") === "true";
+} catch (error) {
+  // ignore when not browser side
+}
+
 const allChains: ChainId[] = Object.values(chains)
-  .filter((x) => (isProd ? !x.testnet : !!x.testnet || x.id === localhost.id))
+  .filter(
+    (x) =>
+      isQueryAllChains ||
+      (isProd ? !x.testnet : !!x.testnet || x.id === localhost.id),
+  )
   .map((x) => x.id);
 
 const pendingRefreshToastId = "pending-refresh";
@@ -40,12 +51,14 @@ export function useSubgraphQueryMultiChain<
   queryContext,
   changeScope,
   chainIds,
+  modifier,
 }: {
   query: DocumentInput<any, Variables>;
   variables?: Variables;
   queryContext?: Partial<OperationContext>;
   changeScope?: ChangeEventScope[] | ChangeEventScope;
   chainIds?: ChainId[];
+  modifier?: (data: Data[]) => Data[];
 }) {
   const { connected, subscribe, unsubscribe } = usePubSubContext();
   const mounted = useIsMounted();
@@ -92,11 +105,11 @@ export function useSubgraphQueryMultiChain<
       const chainSubgraphs = (chainsOverride ?? chainIds ?? allChains).map(
         (chain) => ({
           chainId: +chain,
-          url: getConfigByChain(chain)?.subgraphUrl,
+          chainConfig: getConfigByChain(chain),
         }),
       );
       await Promise.all(
-        chainSubgraphs.map(async ({ chainId, url }, i) => {
+        chainSubgraphs.map(async ({ chainId, chainConfig }, i) => {
           const fetchSubgraphChain = async (retryCount?: number) => {
             if (!retryCount && retryOnNoChange) {
               retryCount = 0;
@@ -111,19 +124,31 @@ export function useSubgraphQueryMultiChain<
               });
             }
             try {
-              const fetchQuery = async () => {
+              const fetchQuery = async (skipPublished: boolean) => {
                 const { urqlClient } = initUrqlClient({
                   chainId: (chainsOverride ?? allChains)[i],
                 });
                 return urqlClient.query<Data>(query, variables, {
                   ...queryContext,
-                  url,
+                  url:
+                    skipPublished || !chainConfig?.publishedSubgraphUrl ?
+                      chainConfig?.subgraphUrl
+                    : chainConfig?.publishedSubgraphUrl,
                   chainId,
                   requestPolicy: "network-only",
                 } as OperationContext & { _instance: any });
               };
 
-              const res = await fetchQuery();
+              let res;
+              try {
+                res = await fetchQuery(false);
+              } catch (err1) {
+                console.error(
+                  "⚡ Error fetching through published subgraph, retrying with hosted:",
+                  err1,
+                );
+                res = await fetchQuery(true);
+              }
 
               if (res.error) {
                 errorsMap.current.set(chainId, res.error);
@@ -172,7 +197,8 @@ export function useSubgraphQueryMultiChain<
       );
 
       // Make sure unique values are returned
-      setResponse(Array.from(new Set(responseMap.current.values())));
+      const result = Array.from(new Set(responseMap.current.values()));
+      setResponse(modifier ? modifier(result) : result);
       setFetching(false);
       fetchingRef.current = false;
     },

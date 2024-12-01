@@ -19,7 +19,7 @@ import {
   InitializedCV,
   InitializedCV2,
   ProposalCreated,
-  CVStrategyV0_1 as CVStrategyContract,
+  CVStrategyV0_0 as CVStrategyContract,
   PoolAmountIncreased,
   SupportAdded,
   PowerIncreased,
@@ -32,10 +32,11 @@ import {
   ProposalCancelled,
   AllowlistMembersAdded,
   AllowlistMembersRemoved,
-  InitializedCV2DataStruct
-} from "../../generated/templates/CVStrategyV0_1/CVStrategyV0_1";
+  InitializedCV2DataStruct,
+  SybilScorerUpdated
+} from "../../generated/templates/CVStrategyV0_0/CVStrategyV0_0";
 
-import { Allo as AlloContract } from "../../generated/templates/CVStrategyV0_1/Allo";
+import { Allo as AlloContract } from "../../generated/templates/CVStrategyV0_0/Allo";
 
 import { Address, BigInt, ethereum, log } from "@graphprotocol/graph-ts";
 
@@ -48,7 +49,7 @@ const DISPUTE_STATUS_SOLVED = BigInt.fromI32(1);
 export function handleInitialized(event: InitializedCV): void {
   // @ts-ignore
   const data2 = changetype<InitializedCV2DataStruct>(event.params.data);
-  data2[7] = ethereum.Value.fromAddressArray([Address.zero()]); // Initialize allowlist to everyone allowed
+  data2[8] = ethereum.Value.fromAddressArray([Address.zero()]); // Initialize allowlist to everyone allowed
   computeInitialize(event.address, event.params.poolId, data2);
 }
 
@@ -76,9 +77,9 @@ export function handleProposalCreated(event: ProposalCreated): void {
   }
   let proposal = p.value;
 
-  const proposalStakedAmount = cvc.getProposalStakedAmount(
-    event.params.proposalId
-  );
+  const proposalStakedAmount = cvc
+    .proposals(event.params.proposalId)
+    .getStakedAmount();
   const maxConviction = cvc.getMaxConviction(proposalStakedAmount);
 
   let newProposal = new CVProposal(proposalIdString);
@@ -106,7 +107,7 @@ export function handleProposalCreated(event: ProposalCreated): void {
   // newProposal.voterStakedPointsPct = proposal.getVoterStakedPointsPct();
   // newProposal.agreementActionId = proposal.getAgreementActionId();
 
-  const pointer = cvc.getMetadata(event.params.proposalId).pointer;
+  const pointer = cvc.proposals(event.params.proposalId).getMetadata().pointer;
 
   newProposal.metadataHash = pointer;
   newProposal.metadata = pointer;
@@ -204,9 +205,9 @@ export function handleSupportAdded(event: SupportAdded): void {
   stake.save();
 
   const cvc = CVStrategyContract.bind(event.address);
-  const proposalStakedAmount = cvc.getProposalStakedAmount(
-    event.params.proposalId
-  );
+  const proposalStakedAmount = cvc
+    .proposals(event.params.proposalId)
+    .getStakedAmount();
   const maxConviction = cvc.getMaxConviction(proposalStakedAmount);
 
   memberStrategy.save();
@@ -249,10 +250,10 @@ export function handlePointsDeactivated(event: PointsDeactivated): void {
               }
               let prop = contractProposal.value;
               const maxConviction = cvc.getMaxConviction(
-                prop.value4 // proposalStakedAmount
+                prop.getStakedAmount()
               );
               proposal.maxCVStaked = maxConviction;
-              proposal.convictionLast = prop.value7; // convictionLast
+              proposal.convictionLast = prop.getConvictionLast();
 
               proposal.save();
               const memberStrategyId = `${member.id}-${strategy.id}`;
@@ -340,6 +341,7 @@ export function handlePowerIncreased(event: PowerIncreased): void {
   const cvc = CVStrategyContract.bind(event.address);
   const totalEffectiveActivePoints = cvc.totalEffectiveActivePoints();
   cvs.totalEffectiveActivePoints = totalEffectiveActivePoints;
+  cvs.maxCVSupply = cvc.getMaxConviction(totalEffectiveActivePoints);
 
   cvs.save();
 
@@ -372,6 +374,7 @@ export function handlePowerDecreased(event: PowerDecreased): void {
   const cvc = CVStrategyContract.bind(event.address);
   const totalEffectiveActivePoints = cvc.totalEffectiveActivePoints();
   cvs.totalEffectiveActivePoints = totalEffectiveActivePoints;
+  cvs.maxCVSupply = cvc.getMaxConviction(totalEffectiveActivePoints);
 
   cvs.save();
 
@@ -395,11 +398,17 @@ export function handlePowerDecreased(event: PowerDecreased): void {
 export function handleCVParamsUpdated(event: CVParamsUpdated): void {
   let cvs = CVStrategy.load(event.address.toHexString());
   if (cvs == null) {
-    log.error("CVStrategy: handlePoolParamsUpdated cvs not found: {}", [
+    // Ignore because can be from initialization and the config will be computed there
+    log.warning("CVStrategy: handlePoolParamsUpdated cvs not found: {}", [
       event.address.toHexString()
     ]);
     return;
   }
+
+  const cvc = CVStrategyContract.bind(event.address);
+  cvs.totalEffectiveActivePoints = cvc.totalEffectiveActivePoints();
+  cvs.maxCVSupply = cvc.getMaxConviction(cvs.totalEffectiveActivePoints);
+  cvs.save();
 
   let config = CVStrategyConfig.load(cvs.config);
   if (config == null) {
@@ -420,7 +429,9 @@ export function handleCVParamsUpdated(event: CVParamsUpdated): void {
   );
 
   computeConfig(config, event.params.cvParams);
-  computeAllowList(config, [], []);
+  if (config.allowlist == null) {
+    config.allowlist = [];
+  }
 
   config.save();
 }
@@ -545,17 +556,21 @@ export function handleProposalCancelled(event: ProposalCancelled): void {
 export function handleAllowlistMembersAdded(
   event: AllowlistMembersAdded
 ): void {
+  if (event.params.members.length == 0) {
+    return;
+  }
+
   let config = CVStrategyConfig.load(
     `${event.address.toHex()}-${event.params.poolId.toString()}-config`
   );
 
   if (config == null) {
-    log.error(
-      "CVStrategy: handleAllowlistMembersRemoved config not found: {}",
-      [`${event.address.toHex()}-${event.params.poolId.toString()}-config`]
-    );
+    log.error("CVStrategy: handleAllowlistMembersAdded config not found: {}", [
+      `${event.address.toHex()}-${event.params.poolId.toString()}-config`
+    ]);
     return;
   }
+
   computeAllowList(config, event.params.members, []);
   config.save();
 }
@@ -563,6 +578,10 @@ export function handleAllowlistMembersAdded(
 export function handleAllowlistMembersRemoved(
   event: AllowlistMembersRemoved
 ): void {
+  if (event.params.members.length == 0) {
+    return;
+  }
+
   let config = CVStrategyConfig.load(
     `${event.address.toHex()}-${event.params.poolId.toString()}-config`
   );
@@ -579,6 +598,18 @@ export function handleAllowlistMembersRemoved(
   config.save();
 }
 
+export function handleSybilScorerUpdated(event: SybilScorerUpdated): void {
+  let cvs = CVStrategy.load(event.address.toHexString());
+  if (cvs == null) {
+    log.error("CVStrategy: handleSybilScorerUpdated cvs not found: {}", [
+      event.address.toHexString()
+    ]);
+    return;
+  }
+
+  cvs.sybilScorer = event.params.sybilScorer.toHexString();
+  cvs.save();
+}
 /// -- Privates -- ///
 
 function computeConfig(
@@ -660,6 +691,8 @@ function computeInitialize(
   cvs.maxCVSupply = BigInt.fromI32(0);
   cvs.totalEffectiveActivePoints = cvc.totalEffectiveActivePoints();
   cvs.isEnabled = false;
+  cvs.sybilScorer = data.sybilScorer.toHexString();
+  cvs.archived = false;
   config.proposalType = BigInt.fromI32(pType);
   config.pointSystem = BigInt.fromI32(pointSystem);
   config.maxAmount = maxAmount;
@@ -669,6 +702,8 @@ function computeInitialize(
   let cvParams = changetype<CVParamsUpdatedCvParamsStruct>(data.cvParams);
 
   computeConfig(config, cvParams);
+
+  // With allowlist
   computeAllowList(config, data.initialAllowlist, []);
 
   config.D = cvc.D();

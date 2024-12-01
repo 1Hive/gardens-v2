@@ -7,14 +7,14 @@ import "forge-std/StdJson.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "@openzeppelin/contracts/utils/Strings.sol";
-import "../src/CVStrategy/CVStrategyV0_1.sol";
+import "../src/CVStrategy/CVStrategyV0_0.sol";
 import {SafeArbitrator} from "../src/SafeArbitrator.sol";
 import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import {Allo} from "allo-v2-contracts/core/Allo.sol";
 import {IRegistry} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 import {Registry} from "allo-v2-contracts/core/Registry.sol";
 import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
-import {CVStrategyHelpers, CVStrategyV0_1} from "../test/CVStrategyHelpers.sol";
+import {CVStrategyHelpers, CVStrategyV0_0} from "../test/CVStrategyHelpers.sol";
 import {GV2ERC20} from "./GV2ERC20.sol";
 import {SafeSetup} from "../test/shared/SafeSetup.sol";
 import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
@@ -23,9 +23,9 @@ import {Accounts} from "allo-v2-test/foundry/shared/Accounts.sol";
 import {RegistryFactoryV0_0} from "../src/RegistryFactory/RegistryFactoryV0_0.sol";
 
 import {
-    RegistryCommunityV0_1,
+    RegistryCommunityV0_0,
     RegistryCommunityInitializeParamsV0_0
-} from "../src/RegistryCommunity/RegistryCommunityV0_1.sol";
+} from "../src/RegistryCommunity/RegistryCommunityV0_0.sol";
 import {ISafe as Safe, SafeProxyFactory, Enum} from "../src/interfaces/ISafe.sol";
 import {CollateralVault} from "../src/CollateralVault.sol";
 // import {SafeProxyFactory} from "safe-smart-account/contracts/proxies/SafeProxyFactory.sol";
@@ -51,12 +51,12 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
 
     string public CURRENT_NETWORK = "arbsepolia";
 
-    address BENEFICIARY = 0xc583789751910E39Fd2Ddb988AD05567Bcd81334;
+    address BENEFICIARY = 0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD;
 
-    ProxyOwner public PROXY_OWNER;
+    address public PROXY_OWNER = 0xD28473FbD87183864CAc0482DBEe1C54EE3d8Cd1;
     RegistryFactoryV0_0 public REGISTRY_FACTORY; // = RegistryFactoryV0_0(0xd7b72Fcb6A4e2857685175F609D1498ff5392E46);
-    PassportScorer PASSPORT_SCORER; // = PassportScorer(0x83bDE2E2D8AcAAad2D300DA195dF3cf86b234bdd);
-    SafeArbitrator ARBITRATOR; // = SafeArbitrator(0x450967C1497Ab95dF8530A9a8eAaE5E951171Dee);
+    PassportScorer PASSPORT_SCORER = PassportScorer(0x32Fe66622a4D4607241AC723e23Fef487ACDABb5);
+    SafeArbitrator ARBITRATOR = SafeArbitrator(0x5534FECacD5f84e22C0aBA9ea9813ff594D37262);
 
     uint256 councilMemberPKEnv;
     address allo_proxy;
@@ -131,10 +131,10 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
             revert("ALLO_PROXY not set");
         }
         // get PK from env
-        councilMemberPKEnv = vm.envUint("PK");
-        if (councilMemberPKEnv == 0) {
-            revert("PK not set");
-        }
+        // councilMemberPKEnv = vm.envUint("PK");
+        // if (councilMemberPKEnv == 0) {
+        //     revert("PK not set");
+        // }
 
         allo = Allo(allo_proxy);
 
@@ -147,9 +147,9 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
                 address(new ProxyOwner()), abi.encodeWithSelector(ProxyOwner.initialize.selector, SENDER)
             );
 
-            PROXY_OWNER = ProxyOwner(payable(address(proxyOwnerProxy)));
+            PROXY_OWNER = address(proxyOwnerProxy);
         }
-        console2.log("Proxy owner Addr: %s", address(PROXY_OWNER));
+        console2.log("Proxy owner Addr: %s", PROXY_OWNER);
 
         if (address(PASSPORT_SCORER) == address(0)) {
             ERC1967Proxy scorerProxy = new ERC1967Proxy(
@@ -175,8 +175,8 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
                     RegistryFactoryV0_0.initialize.selector,
                     address(PROXY_OWNER),
                     address(SENDER),
-                    address(new RegistryCommunityV0_1()),
-                    address(new CVStrategyV0_1()),
+                    address(new RegistryCommunityV0_0()),
+                    address(new CVStrategyV0_0()),
                     address(new CollateralVault())
                 )
             );
@@ -222,7 +222,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
 
             assertTrue(params._councilSafe != address(0));
 
-            RegistryCommunityV0_1 registryCommunity = RegistryCommunityV0_1(REGISTRY_FACTORY.createRegistry(params));
+            RegistryCommunityV0_0 registryCommunity = RegistryCommunityV0_0(REGISTRY_FACTORY.createRegistry(params));
 
             PointSystemConfig memory pointConfig;
             pointConfig.maxAmount = MINIMUM_STAKE * 2;
@@ -234,7 +234,10 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
                 pointConfig,
                 ArbitrableConfig(
                     IArbitrator(address(ARBITRATOR)), payable(COUNCIL_SAFE), 0.002 ether, 0.001 ether, 1, 300
-                )
+                ),
+                new address[](1),
+                address(0),
+                0
             );
 
             (uint256 poolId, address _strategy1) = registryCommunity.createPool(
@@ -251,9 +254,9 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
                 address(0), paramsCV, Metadata({protocol: 1, pointer: "QmReQ5dwWgVZTMKkJ4EWHSM6MBmKN21PQN45YtRRAUHiLG"})
             );
 
-            CVStrategyV0_1 strategy2 = CVStrategyV0_1(payable(_strategy2));
+            CVStrategyV0_0 strategy2 = CVStrategyV0_0(payable(_strategy2));
 
-            CVStrategyV0_1 strategy1 = CVStrategyV0_1(payable(_strategy1));
+            CVStrategyV0_0 strategy1 = CVStrategyV0_0(payable(_strategy1));
 
             if (isNoSafe()) {
                 registryCommunity.addStrategy(_strategy1);
@@ -281,7 +284,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
             token.approve(address(registryCommunity), type(uint256).max);
             // token.mint(address(pool_admin()), 100);
             //@todo get correct value instead infinite approval
-            registryCommunity.stakeAndRegisterMember();
+            registryCommunity.stakeAndRegisterMember("");
 
             assertEq(registryCommunity.isMember(address(pool_admin())), true, "Not a member");
 

@@ -1,5 +1,3 @@
-import { getPoolDataQuery } from "#/subgraph/.graphclient";
-
 export * from "./styles";
 
 export const PoolTypes: Record<string, "signaling" | "funding" | "streaming"> =
@@ -11,7 +9,7 @@ export const PoolTypes: Record<string, "signaling" | "funding" | "streaming"> =
 
 export const PointSystems: Record<
   string,
-  "fixed" | "capped" | "capped" | "unlimited" | "quadratic"
+  "fixed" | "capped" | "unlimited" | "quadratic"
 > = {
   0: "fixed",
   1: "capped",
@@ -54,5 +52,7 @@ export const DisputeOutcome: Record<
 
 export type ChainId = string | number;
 
-export type LightCVStrategy = getPoolDataQuery["cvstrategies"][number];
-export type LightProposal = LightCVStrategy["proposals"][number];
+export type SybilResistanceType =
+  | "noSybilResist"
+  | "gitcoinPassport"
+  | "allowList";

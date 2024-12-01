@@ -4,16 +4,17 @@ pragma solidity ^0.8.19;
 import "forge-std/Test.sol";
 import {SafeArbitrator} from "../src/SafeArbitrator.sol";
 import {
-    CVStrategyV0_1,
     CVStrategyV0_0,
-    CVStrategyInitializeParamsV0_0,
     ArbitrableConfig,
     PointSystemConfig,
     PointSystem,
     ProposalType,
     CreateProposal
-} from "../src/CVStrategy/CVStrategyV0_1.sol";
-import {RegistryCommunityV0_1, RegistryCommunityInitializeParamsV0_0} from "../src/RegistryCommunity/RegistryCommunityV0_1.sol";
+} from "../src/CVStrategy/CVStrategyV0_0.sol";
+import {
+    RegistryCommunityV0_0,
+    RegistryCommunityInitializeParamsV0_0
+} from "../src/RegistryCommunity/RegistryCommunityV0_0.sol";
 import {RegistryFactoryV0_0} from "../src/RegistryFactory/RegistryFactoryV0_0.sol";
 import {CollateralVault} from "../src/CollateralVault.sol";
 import {RegistrySetupFull} from "allo-v2-test/foundry/shared/RegistrySetup.sol";
@@ -29,9 +30,9 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHelpers, SafeSetup {
     SafeArbitrator safeArbitrator;
-    CVStrategyV0_1 cvStrategy;
+    CVStrategyV0_0 cvStrategy;
     uint256 poolId;
-    RegistryCommunityV0_1 internal registryCommunity;
+    RegistryCommunityV0_0 internal registryCommunity;
     GV2ERC20 public token;
     // address allo_owner = address(0x1);
     address factoryOwner = address(1);
@@ -40,7 +41,7 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
     address challenger = address(3);
 
     uint256 public constant POOL_AMOUNT = 15000 ether;
-    uint256 constant TOTAL_SUPPLY = 1000 ether;
+    uint256 constant TOTAL_SUPPLY = 100000 ether;
     uint256 constant MINIMUM_STAKE = 1 ether;
     uint256 constant COMMUNITY_FEE_PERCENTAGE = 1;
     uint256 constant PROTOCOL_FEE_PERCENTAGE = 1;
@@ -59,10 +60,11 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
         vm.stopPrank();
 
         token = new GV2ERC20("Mock Token", "MTK", 18);
-        token.mint(local(), TOTAL_SUPPLY / 3);
-        token.mint(pool_admin(), TOTAL_SUPPLY / 3);
+        token.mint(local(), TOTAL_SUPPLY / 4);
+        token.mint(pool_admin(), TOTAL_SUPPLY / 4);
+        token.mint(challenger, TOTAL_SUPPLY / 4);
         //PassportScorer test
-        token.mint(address(6), TOTAL_SUPPLY / 3);
+        token.mint(address(6), TOTAL_SUPPLY / 4);
         token.approve(address(allo()), 1500 ether);
 
         vm.startPrank(allo_owner());
@@ -85,7 +87,7 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
         // RegistryFactoryV0_0 registryFactory = new RegistryFactoryV0_0();
 
         vm.stopPrank();
-
+        
         RegistryCommunityInitializeParamsV0_0 memory params;
         params._allo = address(allo());
         params._gardenToken = IERC20(address(token));
@@ -97,7 +99,7 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
         params._metadata = metadata;
         params._councilSafe = payable(address(_councilSafe()));
 
-        registryCommunity = RegistryCommunityV0_1(
+        registryCommunity = RegistryCommunityV0_0(
             RegistryFactoryV0_0(
                 address(
                     new ERC1967Proxy(
@@ -106,8 +108,8 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
                             RegistryFactoryV0_0.initialize.selector,
                             address(factoryOwner),
                             address(2),
-                            address(new RegistryCommunityV0_1()),
-                            address(new CVStrategyV0_1()),
+                            address(new RegistryCommunityV0_0()),
+                            address(new CVStrategyV0_0()),
                             address(new CollateralVault())
                         )
                     )
@@ -125,13 +127,20 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
                 ProposalType.Funding,
                 PointSystem.Unlimited,
                 PointSystemConfig(200 * DECIMALS),
-                ArbitrableConfig(safeArbitrator, payable(address(_councilSafe())), 0.02 ether, 0.01 ether, 1, 300)
+                ArbitrableConfig(safeArbitrator, payable(address(_councilSafe())), 0.02 ether, 0.01 ether, 1, 300),
+                new address[](1),
+                address(0),
+                0
             ),
             metadata
         );
+        vm.startPrank(challenger);
+        registryCommunity.gardenToken().approve(address(registryCommunity), STAKE_WITH_FEES);
+        registryCommunity.stakeAndRegisterMember("");
+        vm.stopPrank();
 
         poolId = _poolId;
-        cvStrategy = CVStrategyV0_1(payable(_strategy));
+        cvStrategy = CVStrategyV0_0(payable(_strategy));
         vm.startPrank(pool_admin());
         safeHelper(
             address(registryCommunity),
@@ -141,7 +150,7 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
         vm.stopPrank();
 
         registryCommunity.gardenToken().approve(address(registryCommunity), STAKE_WITH_FEES);
-        registryCommunity.stakeAndRegisterMember();
+        registryCommunity.stakeAndRegisterMember("");
         cvStrategy.activatePoints();
 
         vm.deal(address(this), POOL_AMOUNT);
@@ -157,6 +166,8 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
         vm.deal(pool_admin(), submitterCollateralAmount);
 
         vm.startPrank(pool_admin());
+        registryCommunity.gardenToken().approve(address(registryCommunity), STAKE_WITH_FEES);
+        registryCommunity.stakeAndRegisterMember("");
         proposalId = uint160(allo().registerRecipient{value: submitterCollateralAmount}(poolId, data));
         vm.stopPrank();
     }
@@ -215,14 +226,17 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
     function testCannotExecuteRulingFromNonSafe() public {
         uint256 proposalId = createProposal();
 
-        vm.deal(challenger, 10 ether);
-        vm.prank(challenger);
+        vm.deal(challenger, 1000 ether);
+        vm.startPrank(challenger);
+        
+        registryCommunity.stakeAndRegisterMember("");
         uint256 disputeID = cvStrategy.disputeProposal{value: 0.01 ether + ARBITRATION_FEE}(proposalId, "", "");
 
         vm.expectRevert(abi.encodeWithSelector(SafeArbitrator.OnlySafe.selector, challenger, councilSafe));
-        vm.prank(challenger);
         safeArbitrator.executeRuling(disputeID, 2, address(cvStrategy));
+        vm.stopPrank();
     }
+
 
     function testCannotExecuteRulingTwice() public {
         uint256 proposalId = createProposal();

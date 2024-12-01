@@ -1,10 +1,14 @@
 import { useEffect, useState } from "react";
 import { useAccount, Address } from "wagmi";
+import { CVStrategy, RegistryCommunity } from "#/subgraph/.graphclient";
 import { useViemClient } from "./useViemClient";
 import { registryCommunityABI } from "@/src/generated";
-import { LightCVStrategy } from "@/types";
 
-export function useIsMemberActivated(strategy: LightCVStrategy) {
+export function useIsMemberActivated(
+  strategy: Pick<CVStrategy, "id"> & {
+    registryCommunity: Pick<RegistryCommunity, "id">;
+  },
+) {
   const { address } = useAccount();
   const client = useViemClient();
 

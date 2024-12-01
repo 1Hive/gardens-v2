@@ -16,6 +16,7 @@ module.exports = {
           "secondary-content": "#FF9500",
           "neutral-button": "#ACACAC",
           "neutral-content": "#252525",
+          "border-neutral": "#d5d5d5",
           neutral: "#FFFFFF",
           "neutral-soft-2": "#F9F9F9",
           "neutral-soft": "#EEEEEE",
@@ -50,6 +51,7 @@ module.exports = {
       fontFamily: {
         press: ["var(--font-inter)"],
         chakra: ["var(--font-chakra)"],
+        mono: ["Chakra Petch", "monospace"],
       },
       colors: {
         //added color for the our daisy - lightTheme
@@ -60,6 +62,7 @@ module.exports = {
         "neutral-soft-2": "#F9F9F9",
         "secondary-soft": "#FFF4E6",
         "tertiary-content": "#2AAAE5",
+        "border-neutral": "#d5d5d5",
         "tertiary-soft": "#e5f7fa",
         "primary-hover-content": "#49A612",
         "primary-button": "#65ad18",

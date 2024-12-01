@@ -1,5 +1,6 @@
-import { FC, Fragment, useState } from "react";
+import { FC, Fragment, useMemo, useState } from "react";
 // @ts-ignore - no types available
+import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
 import { blo } from "blo";
 import { formatEther } from "viem";
 import {
@@ -22,13 +23,14 @@ import {
 } from "#/subgraph/.graphclient";
 import { Button } from "./Button";
 import { DateComponent } from "./DateComponent";
+import { EthAddress } from "./EthAddress";
 import { InfoBox } from "./InfoBox";
 import { InfoWrapper } from "./InfoWrapper";
 import { Modal } from "./Modal";
 import { ProposalTimeline } from "./ProposalTimeline";
 import { WalletBalance } from "./WalletBalance";
 import { usePubSubContext } from "@/contexts/pubsub.context";
-import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
+import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { MetadataV1, useIpfsFetch } from "@/hooks/useIpfsFetch";
@@ -40,9 +42,9 @@ import {
   safeArbitratorABI,
 } from "@/src/generated";
 import { DisputeStatus, ProposalStatus } from "@/types";
-import { abiWithErrors2 } from "@/utils/abiWithErrors";
 import { delayAsync } from "@/utils/delayAsync";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
+import { convertSecondsToReadableTime } from "@/utils/numbers";
 
 type Props = {
   proposalData: Maybe<
@@ -50,7 +52,7 @@ type Props = {
       CVProposal,
       "id" | "proposalNumber" | "blockLast" | "proposalStatus" | "createdAt"
     > & {
-      strategy: Pick<CVStrategy, "id">;
+      strategy: Pick<CVStrategy, "id" | "poolId">;
       arbitrableConfig: Pick<
         ArbitrableConfig,
         | "defaultRulingTimeout"
@@ -63,33 +65,38 @@ type Props = {
     }
   > &
     MetadataV1;
+  isMemberCommunity: boolean;
 };
 
 const ABSTAINED_RULING = 0;
 const APPROVED_RULING = 1;
 const REJECTED_RULING = 2;
 
-export const DisputeButton: FC<Props> = ({ proposalData }) => {
+export const DisputeButton: FC<Props> = ({
+  proposalData,
+  isMemberCommunity,
+}) => {
   const [isModalOpened, setIsModalOpened] = useState(false);
   const [reason, setReason] = useState("");
   const [isEnoughBalance, setIsEnoughBalance] = useState(true);
   const { publish } = usePubSubContext();
-  const { address, isDisconnected } = useAccount();
+  const { address } = useAccount();
   const [isDisputeCreateLoading, setIsDisputeCreateLoading] = useState(false);
-  const chainId = useChainIdFromPath();
+  const { id: chainId, safePrefix } = useChainFromPath()!;
   const [rulingLoading, setisRulingLoading] = useState<number | false>(false);
+  const [error, setError] = useState("");
 
-  const config = proposalData.arbitrableConfig;
+  const arbitrationConfig = proposalData.arbitrableConfig;
 
   const { data: disputesResult } = useSubgraphQuery<getProposalDisputesQuery>({
     query: getProposalDisputesDocument,
     variables: {
-      proposalId: proposalData?.id,
+      proposalId: proposalData?.id.toLowerCase(),
     },
     changeScope: {
       topic: "proposal",
       id: proposalData?.proposalNumber,
-      containerId: proposalData?.strategy.id,
+      containerId: proposalData?.strategy.poolId,
       type: "update",
     },
     enabled: !!proposalData,
@@ -99,8 +106,8 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
     chainId,
     abi: iArbitratorABI,
     functionName: "arbitrationCost",
-    address: config?.arbitrator as Address,
-    enabled: !!config?.arbitrator,
+    address: arbitrationConfig?.arbitrator as Address,
+    enabled: !!arbitrationConfig?.arbitrator,
     args: ["0x0"],
   });
 
@@ -112,8 +119,8 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
   });
 
   const totalStake =
-    arbitrationCost && config ?
-      arbitrationCost + BigInt(config.challengerCollateralAmount)
+    arbitrationCost != null && arbitrationConfig ?
+      arbitrationCost + BigInt(arbitrationConfig.challengerCollateralAmount)
     : undefined;
   const lastDispute =
     disputesResult?.proposalDisputes[
@@ -128,15 +135,17 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
     proposalData && lastDispute && proposalStatus === "disputed";
   const isTimeout =
     lastDispute &&
-    config &&
-    +lastDispute.createdAt + +config.defaultRulingTimeout < Date.now() / 1000;
+    arbitrationConfig &&
+    +lastDispute.createdAt + +arbitrationConfig.defaultRulingTimeout <
+      Date.now() / 1000;
   const disputes = disputesResult?.proposalDisputes ?? [];
   const isProposalEnded = proposalStatus !== "active" && !isDisputed;
-  const isTribunalSafe = config.tribunalSafe === address?.toLowerCase();
+  const isTribunalSafe =
+    arbitrationConfig.tribunalSafe === address?.toLowerCase();
 
   const { data: isTribunalMember } = useContractRead({
-    address: config.tribunalSafe as Address,
-    abi: abiWithErrors2(safeABI),
+    address: arbitrationConfig.tribunalSafe as Address,
+    abi: safeABI,
     functionName: "isOwner",
     chainId: Number(chainId),
     enabled: !!address,
@@ -165,28 +174,32 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
           type: "update",
           function: "disputeProposal",
           id: proposalData.proposalNumber,
-          containerId: proposalData.strategy.id,
+          containerId: proposalData.strategy.poolId,
           chainId,
         });
       },
     });
 
   async function handleSubmit() {
-    setIsDisputeCreateLoading(true);
-    const reasonHash = await ipfsJsonUpload({ reason }, "disputeReason");
-    if (!reasonHash) {
-      return;
+    if (!reason) {
+      setError("The dispute reason is required.");
+    } else {
+      setIsDisputeCreateLoading(true);
+      const reasonHash = await ipfsJsonUpload({ reason }, "disputeReason");
+      if (!reasonHash) {
+        return;
+      }
+      await writeDisputeProposalAsync({
+        args: [BigInt(proposalData.proposalNumber), reasonHash, "0x0"],
+      });
     }
-    await writeDisputeProposalAsync({
-      args: [BigInt(proposalData.proposalNumber), reasonHash, "0x0"],
-    });
   }
 
   const { write: writeSubmitRuling } = useContractWriteWithConfirmations({
     contractName: "SafeArbitrator",
     functionName: "executeRuling",
     abi: safeArbitratorABI,
-    address: config?.arbitrator as Address,
+    address: arbitrationConfig?.arbitrator as Address,
     onSuccess: () => {
       setIsModalOpened(false);
     },
@@ -197,7 +210,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
         type: "update",
         function: "executeRuling",
         id: proposalData.proposalNumber,
-        containerId: proposalData.strategy.id,
+        containerId: proposalData.strategy.poolId,
         chainId,
       });
     },
@@ -219,7 +232,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
         type: "update",
         function: "rule",
         id: proposalData.proposalNumber,
-        containerId: proposalData.strategy.id,
+        containerId: proposalData.strategy.poolId,
         chainId,
       });
     },
@@ -240,8 +253,38 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
     }
   };
 
+  const disableDisputeSubmitBtn = useMemo<ConditionObject[]>(
+    () => [
+      {
+        condition: !isMemberCommunity,
+        message: "Join community to dispute",
+      },
+      {
+        condition: !isEnoughBalance,
+        message: "Insufficient balance",
+      },
+      {
+        condition: isCooldown,
+        message: "Please wait 2 hours before submitting another dispute",
+      },
+      {
+        condition: isCooldown,
+        message: "Please wait 2 hours before submitting another dispute",
+      },
+    ],
+    [isEnoughBalance, isCooldown],
+  );
+
+  const { isConnected, missmatchUrl, tooltipMessage } = useDisableButtons(
+    disableDisputeSubmitBtn,
+  );
+
+  const rulingTimeout = convertSecondsToReadableTime(
+    arbitrationConfig.defaultRulingTimeout,
+  );
+
   const content = (
-    <div className="flex md:flex-col gap-10">
+    <div className="flex md:flex-col gap-10 flex-wrap overflow-x-hidden">
       {proposalStatus !== "active" ?
         <div className="p-16 rounded-lg">
           {disputes.map((dispute) => (
@@ -251,17 +294,21 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
           ))}
         </div>
       : <div>
-          <textarea
-            id="reason"
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            placeholder="Enter your dispute reason here"
-            className="textarea textarea-accent w-full  mb-4"
-            rows={5}
-          />
+          <div className="w-full mb-4">
+            <textarea
+              id="reason"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="Enter your dispute reason here"
+              className="textarea textarea-accent w-full"
+              rows={5}
+              required
+            />
+            <div className="text-error ml-4 mt-1">{error}</div>
+          </div>
           <InfoBox
             infoBoxType="info"
-            content="Disputing this proposal stops it from being executed but not from growing in support. The Tribunal has one week to settle any disputes before it can be closed and collateral is returned."
+            content={`Disputing this proposal stops it from being executed but not from growing in support. The Tribunal has ${rulingTimeout.value} ${rulingTimeout.unit} to settle any disputes before it can be closed and collateral is returned.`}
           />
         </div>
       }
@@ -273,94 +320,116 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
   const disableTribunalSafeBtnCondition: ConditionObject[] = [
     {
       condition: !isTribunalSafe,
-      message: "Connect with tribunal safe address",
+      message: "Connect with Tribunal safe",
     },
   ];
 
-  const disableTribunalSafeButtons = disableTribunalSafeBtnCondition.some(
+  const disableTribunalSafeButtons = disableTribunalSafeBtnCondition.find(
     (cond) => cond.condition,
   );
-
-  const { tooltipMessage } = useDisableButtons(disableTribunalSafeBtnCondition);
 
   const buttons = (
     <div className="modal-action w-full">
       {isDisputed ?
-        <div className="w-full flex justify-end gap-4">
-          {(
-            DisputeStatus[lastDispute.status] === "waiting" &&
-            ((isTribunalMember ?? isTribunalSafe) || isTimeout)
-          ) ?
-            <>
-              <Button
-                color="secondary"
-                btnStyle="outline"
-                onClick={() => handleSubmitRuling(ABSTAINED_RULING)}
-                isLoading={rulingLoading === ABSTAINED_RULING}
-                disabled={disableTribunalSafeButtons}
-              >
-                <InfoWrapper
-                  classNames={`[&>svg]:text-secondary-content ${isTimeout ? "tooltip-left" : ""}`}
-                  tooltip={
-                    "Abstain to follow the pool's default resolution (approve/reject) and return collaterals to both parties."
-                  }
+        <>
+          {DisputeStatus[+lastDispute.status] === "waiting" &&
+            (!!isTribunalMember || isTribunalSafe) && (
+              <div className="flex flex-col gap-1 p-1 w-48">
+                <a
+                  href={`https://app.safe.global/transactions/queue?safe=${safePrefix}:${arbitrationConfig.tribunalSafe}`}
+                  className="text-info whitespace-nowrap flex flex-nowrap gap-1 items-center"
+                  target="_blank"
+                  rel="noreferrer"
                 >
-                  Abstain
-                </InfoWrapper>
-              </Button>
-              {!isTimeout && (
-                <>
-                  <Button
-                    color="primary"
-                    btnStyle="outline"
-                    onClick={() => handleSubmitRuling(APPROVED_RULING)}
-                    isLoading={rulingLoading === APPROVED_RULING}
-                    disabled={disableTribunalSafeButtons}
-                    tooltip={tooltipMessage}
+                  Tribunal safe
+                  <ArrowTopRightOnSquareIcon width={16} height={16} />
+                </a>
+                <EthAddress
+                  address={arbitrationConfig.tribunalSafe as Address}
+                  shortenAddress={true}
+                  actions="copy"
+                  showPopup={false}
+                />
+              </div>
+            )}
+          <div className="w-full flex justify-end gap-4 flex-wrap">
+            {(
+              DisputeStatus[+lastDispute.status] === "waiting" &&
+              (!!isTribunalMember || isTribunalSafe || isTimeout)
+            ) ?
+              <>
+                <Button
+                  color="secondary"
+                  btnStyle="outline"
+                  onClick={() => handleSubmitRuling(ABSTAINED_RULING)}
+                  isLoading={rulingLoading === ABSTAINED_RULING}
+                  disabled={!!disableTribunalSafeButtons}
+                  tooltip={disableTribunalSafeButtons?.message}
+                >
+                  <InfoWrapper
+                    className={"[&>svg]:text-secondary-content"}
+                    tooltip={
+                      "Abstain to follow the pool's default resolution (approve/reject) and return collaterals to both parties."
+                    }
                   >
-                    <InfoWrapper
-                      classNames="[&>svg]:text-primary-content"
-                      tooltip={
-                        "Approve if the dispute is invalid and the proposal should remain active."
-                      }
+                    Abstain
+                  </InfoWrapper>
+                </Button>
+                {!isTimeout && (
+                  <>
+                    <Button
+                      color="primary"
+                      btnStyle="outline"
+                      onClick={() => handleSubmitRuling(APPROVED_RULING)}
+                      isLoading={rulingLoading === APPROVED_RULING}
+                      disabled={!!disableTribunalSafeButtons}
+                      tooltip={disableTribunalSafeButtons?.message}
                     >
-                      Approve
-                    </InfoWrapper>
-                  </Button>
-                  <Button
-                    color="danger"
-                    btnStyle="outline"
-                    onClick={() => handleSubmitRuling(REJECTED_RULING)}
-                    isLoading={rulingLoading === REJECTED_RULING}
-                    disabled={disableTribunalSafeButtons}
-                    tooltip={tooltipMessage}
-                  >
-                    <InfoWrapper
-                      classNames="[&>svg]:text-danger-button [&:before]:mr-10 tooltip-left"
-                      tooltip={
-                        "Reject if the proposal violates the rules outlined in the community covenant."
-                      }
+                      <InfoWrapper
+                        className="[&>svg]:text-primary-content"
+                        tooltip={
+                          "Approve if the dispute is invalid and the proposal should remain active."
+                        }
+                      >
+                        Approve
+                      </InfoWrapper>
+                    </Button>
+                    <Button
+                      color="danger"
+                      btnStyle="outline"
+                      onClick={() => handleSubmitRuling(REJECTED_RULING)}
+                      isLoading={rulingLoading === REJECTED_RULING}
+                      disabled={!!disableTribunalSafeButtons}
+                      tooltip={disableTribunalSafeButtons?.message}
+                      tooltipSide="tooltip-left"
                     >
-                      Reject
-                    </InfoWrapper>
-                  </Button>
-                </>
-              )}
-            </>
-          : <InfoBox
-              infoBoxType="info"
-              content="Waiting for dispute resolution"
-            />
-          }
-        </div>
-      : <div className="flex w-full justify-between items-end">
+                      <InfoWrapper
+                        className="[&>svg]:!text-danger-content tooltip-left"
+                        tooltip={
+                          "Reject if the proposal violates the rules outlined in the community covenant."
+                        }
+                      >
+                        Reject
+                      </InfoWrapper>
+                    </Button>
+                  </>
+                )}
+              </>
+            : <InfoBox
+                infoBoxType="info"
+                content="Waiting for dispute resolution"
+              />
+            }
+          </div>
+        </>
+      : <div className="flex w-full justify-between items-end flex-wrap gap-2">
           <div>
             {totalStake && (
               <WalletBalance
                 label="Dispute Stake"
                 token="native"
                 askedAmount={totalStake}
-                tooltip={`Collateral: ${formatEther(config.challengerCollateralAmount)} ETH \n Fee: ${formatEther(arbitrationCost ?? 0n)} ETH`}
+                tooltip={`Collateral: ${formatEther(arbitrationConfig.challengerCollateralAmount)} ETH \n Fee: ${formatEther(arbitrationCost ?? 0n)} ETH`}
                 setIsEnoughBalance={setIsEnoughBalance}
               />
             )}
@@ -376,15 +445,15 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
             <Button
               onClick={handleSubmit}
               color="danger"
-              tooltip={
-                isEnoughBalance ?
-                  isCooldown ?
-                    "Please wait 2 hours before submitting another dispute"
-                  : ""
-                : "Insufficient balance"
+              disabled={
+                !isConnected ||
+                missmatchUrl ||
+                !isMemberCommunity ||
+                !isEnoughBalance ||
+                isCooldown
               }
+              tooltip={tooltipMessage}
               tooltipSide="tooltip-left"
-              disabled={!isEnoughBalance || isCooldown}
               isLoading={isDisputeCreateLoading}
             >
               Dispute
@@ -403,8 +472,6 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
             color="danger"
             btnStyle="outline"
             onClick={() => setIsModalOpened(true)}
-            disabled={isDisconnected}
-            tooltip="Connect wallet"
           >
             {isDisputed ?? isProposalEnded ? "Open dispute" : "Dispute"}
           </Button>
@@ -412,6 +479,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
             title={`Disputed Proposal: ${proposalData.title} #${proposalData.proposalNumber}`}
             onClose={() => setIsModalOpened(false)}
             isOpen={isModalOpened}
+            size="extra-large"
           >
             {content}
             {!isProposalEnded && buttons}

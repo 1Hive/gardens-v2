@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { Fragment, useEffect, useRef, useState } from "react";
 import {
   CurrencyDollarIcon,
   PlusIcon,
@@ -31,10 +31,11 @@ import {
 } from "@/components";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import MarkdownWrapper from "@/components/MarkdownWrapper";
+import { Skeleton } from "@/components/Skeleton";
 import { TokenGardenFaucet } from "@/components/TokenGardenFaucet";
 import { isProd } from "@/configs/isProd";
 import { QUERY_PARAMS } from "@/constants/query-params";
-import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
+import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { PoolTypes } from "@/types";
@@ -65,13 +66,15 @@ export default function Page({
     refetch,
   } = useSubgraphQuery<getCommunityQuery>({
     query: getCommunityDocument,
-    variables: { communityAddr: communityAddr, tokenAddr: tokenAddr },
+    variables: {
+      communityAddr: communityAddr.toLowerCase(),
+      tokenAddr: tokenAddr.toLowerCase(),
+    },
     changeScope: [
       { topic: "community", id: communityAddr },
       { topic: "member", containerId: communityAddr },
     ],
   });
-
   const registryCommunity = result?.registryCommunity;
 
   let {
@@ -144,13 +147,42 @@ export default function Page({
 
   const poolsInReview = strategies.filter((strategy) => !strategy.isEnabled);
 
+  // const [tokenDataArray, setTokenDataArray] = useState([]);
+
+  // useEffect(() => {
+  //   // Initialize an empty array for holding token data for each pool
+  //   const newTokenDataArray = fundingPools.map((pool) => ({
+  //     poolId: pool.poolId,
+  //     tokenData: null ,
+  //   }));
+
+  //   // Iterate over each pool and use `useToken` to get token data
+  //   fundingPools.forEach((pool, index) => {
+  //     const { data } = useToken({
+  //       address: pool.token as Address,
+  //       chainId: +chain,
+  //     });
+
+  //     // Update the tokenData in the array for this specific pool
+  //     newTokenDataArray[index].tokenData = data;
+  //   });
+
+  //   // Once data is fetched, update the state
+  //   setTokenDataArray(newTokenDataArray);
+  // }, [fundingPools, chain]);
+
   useEffect(() => {
     const newPoolId = searchParams[QUERY_PARAMS.communityPage.newPool];
+    const fetchedPools = poolsInReview.some((c) => c.poolId === newPoolId);
     if (
       newPoolId &&
       result &&
-      !poolsInReview.some((c) => c.poolId === newPoolId)
+      !poolsInReview.some((p) => p.poolId === newPoolId)
     ) {
+      console.debug("Community: New pool not yet fetched, refetching...", {
+        newPoolId,
+        fetchedPools,
+      });
       refetch();
     }
   }, [searchParams, poolsInReview]);
@@ -219,7 +251,7 @@ export default function Page({
 
   return (
     <div className="page-layout">
-      <header className="section-layout flex flex-row items-center gap-10">
+      <header className="section-layout flex flex-row items-center gap-10 flex-wrap justify-end">
         <div>
           <Image
             src={commImg}
@@ -232,7 +264,11 @@ export default function Page({
         <div className="flex flex-1 flex-col gap-2">
           <div>
             <h2>{communityName}</h2>
-            <EthAddress icon={false} address={communityAddr as Address} />
+            <EthAddress
+              icon={false}
+              address={communityAddr as Address}
+              label="Community address"
+            />
           </div>
           <div className="flex flex-col gap-2">
             <Statistic
@@ -268,7 +304,7 @@ export default function Page({
             </div>
           </div>
         </div>
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 mt-auto">
           <RegisterMember
             memberData={isMemberResult}
             registrationCost={getTotalRegistrationCost()}
@@ -305,14 +341,9 @@ export default function Page({
           </h4>
           <div className="flex flex-row flex-wrap gap-10">
             {fundingPools.map((pool) => (
-              <PoolCard
-                key={pool.poolId}
-                tokenGarden={{
-                  decimals: tokenGarden?.decimals ?? 18,
-                  symbol: tokenGarden?.symbol ?? "",
-                }}
-                pool={pool}
-              />
+              <Fragment key={pool.poolId}>
+                <PoolCard token={pool.token} chainId={chain} pool={pool} />
+              </Fragment>
             ))}
           </div>
         </div>
@@ -324,10 +355,8 @@ export default function Page({
             {signalingPools.map((pool) => (
               <PoolCard
                 key={pool.poolId}
-                tokenGarden={{
-                  symbol: tokenGarden?.symbol ?? "",
-                  decimals: tokenGarden?.decimals ?? 18,
-                }}
+                token={pool.token}
+                chainId={chain}
                 pool={pool}
               />
             ))}
@@ -341,10 +370,8 @@ export default function Page({
             {poolsInReview.map((pool) => (
               <PoolCard
                 key={pool.poolId}
-                tokenGarden={{
-                  decimals: tokenGarden?.decimals ?? 18,
-                  symbol: tokenGarden?.symbol ?? "",
-                }}
+                token={pool.token}
+                chainId={chain}
                 pool={pool}
               />
             ))}
@@ -354,9 +381,9 @@ export default function Page({
       <section ref={covenantSectionRef} className="section-layout">
         <h2 className="mb-4">Covenant</h2>
         {registryCommunity?.covenantIpfsHash ?
-          covenant ?
-            <MarkdownWrapper>{covenant}</MarkdownWrapper>
-          : <LoadingSpinner />
+          <Skeleton isLoading={!covenant} rows={5}>
+            <MarkdownWrapper>{covenant!}</MarkdownWrapper>
+          </Skeleton>
         : <p className="italic">No covenant was submitted.</p>}
         <div className="mt-10 flex justify-center">
           <Image

@@ -121,12 +121,29 @@ export function useSubgraphQuery<
           value?.toLowerCase()
         : value;
     });
-    const res = await urqlClient.query<Data>(query, variables, {
-      ...context,
-      url: config?.subgraphUrl,
-      requestPolicy: "network-only",
-    });
-    return modifier && res.data ? { ...res, data: modifier(res.data) } : res;
+
+    const urqlQuery = (skipPublished: boolean) =>
+      urqlClient.query<Data>(query, variables, {
+        ...context,
+        url:
+          skipPublished || !config?.publishedSubgraphUrl ?
+            config?.subgraphUrl
+          : config?.publishedSubgraphUrl,
+        requestPolicy: "network-only",
+      });
+
+    let res;
+    try {
+      res = await urqlQuery(false);
+    } catch (err1) {
+      console.error(
+        "⚡ Error fetching through published subgraph, retrying with hosted:",
+        err1,
+      );
+      res = await urqlQuery(true);
+    }
+
+    return modifier && res?.data ? { ...res, data: modifier(res.data) } : res;
   };
 
   const refetchFromOutside = async () => {
@@ -142,7 +159,7 @@ export function useSubgraphQuery<
     }
     setFetching(true);
     fetchingRef.current = true;
-    const res = await refetch();
+    const res = await refetch(undefined);
     setResponse(res);
     setFetching(false);
     fetchingRef.current = false;
@@ -153,6 +170,7 @@ export function useSubgraphQuery<
     retryCount?: number,
   ): Promise<Awaited<ReturnType<typeof fetch>>> => {
     const result = await fetch();
+
     if (!retryCount) {
       retryCount = 0;
       toast.loading("Pulling new data", {

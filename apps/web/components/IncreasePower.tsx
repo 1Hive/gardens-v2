@@ -20,7 +20,6 @@ import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithC
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { useHandleAllowance } from "@/hooks/useHandleAllowance";
 import { registryCommunityABI } from "@/src/generated";
-import { abiWithErrors2 } from "@/utils/abiWithErrors";
 import { parseToken } from "@/utils/numbers";
 import { getTxMessage } from "@/utils/transactionMessages";
 
@@ -77,12 +76,12 @@ export const IncreasePower = ({
   const { data: accountTokenBalance } = useBalance({
     address: accountAddress,
     token: registerToken as Address,
-    chainId: urlChainId ?? 0,
+    chainId: urlChainId,
   });
 
   const registryContractCallConfig = {
     address: communityAddress as Address,
-    abi: abiWithErrors2(registryCommunityABI),
+    abi: registryCommunityABI,
     contractName: "Registry Community",
   };
 
@@ -119,7 +118,7 @@ export const IncreasePower = ({
     ...registryContractCallConfig,
     functionName: "decreasePower",
     args: [requestedAmount],
-    fallbackErrorMessage: "Error decreasing power. Please try again.",
+    fallbackErrorMessage: "Error decreasing power, please report a bug.",
     onConfirmations: () => {
       publish({
         topic: "member",
@@ -147,7 +146,7 @@ export const IncreasePower = ({
       status: "idle",
     }));
     setIsOpenModal(true);
-    handleAllowance();
+    handleAllowance({});
   }
 
   const isInputIncreaseGreaterThanBalance =
@@ -178,7 +177,8 @@ export const IncreasePower = ({
       condition:
         parseUnits(amount.toString(), tokenDecimals) >
         memberStakedTokens - registerStakeAmountBigInt,
-      message: "You can only decrease your added stake.",
+      message:
+        "You have the minimun tokens staked to be a member in this community.",
     },
   ];
 
@@ -201,7 +201,7 @@ export const IncreasePower = ({
     tokenSymbol,
     communityAddress as Address,
     parseUnits(amount, tokenDecimals),
-    writeIncreasePower,
+    () => writeIncreasePower(),
   );
 
   // useEffect(() => {
@@ -232,7 +232,7 @@ export const IncreasePower = ({
         </div>
       </TransactionModal>
 
-      <div className="flex justify-between gap-4">
+      <div className="flex justify-between gap-4 flex-wrap">
         <div className="flex flex-col justify-between gap-2">
           <div className="flex justify-between">
             <div className="flex-start flex gap-2">
@@ -253,7 +253,7 @@ export const IncreasePower = ({
           <InfoBox
             content="staking more tokens in the community can increase your voting power in pools to support proposals."
             infoBoxType="info"
-            classNames="max-w-xl"
+            className="max-w-xl"
           />
         </div>
         <div className="flex flex-col gap-4">

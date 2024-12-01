@@ -5,7 +5,6 @@ import {
     RegistryCommunityV0_0,
     RegistryCommunityInitializeParamsV0_0
 } from "@src/RegistryCommunity/RegistryCommunityV0_0.sol";
-import {RegistryCommunityV0_1 } from "@src/RegistryCommunity/RegistryCommunityV0_1.sol";
 import {ProxyOwnableUpgrader} from "@src/ProxyOwnableUpgrader.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {Clone} from "allo-v2-contracts/core/libraries/Clone.sol";

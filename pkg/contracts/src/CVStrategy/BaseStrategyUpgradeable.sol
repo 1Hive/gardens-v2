@@ -201,26 +201,24 @@ abstract contract BaseStrategyUpgradeable is ProxyOwnableUpgrader, IStrategy, Tr
     /// @dev The encoded '_data' will be determined by the strategy implementation.
     /// @param _recipientIds The IDs of the recipients
     /// @param _data The data to use to get the payout summary for the recipients
-    /// @return The payout summary for the recipients
     function getPayouts(address[] memory _recipientIds, bytes[] memory _data)
         external
         view
         virtual
         override
-        returns (PayoutSummary[] memory)
+        returns (PayoutSummary[] memory payouts)
     {
         uint256 recipientLength = _recipientIds.length;
         // check if the length of the recipient IDs and data arrays are equal, if they are not, revert
         if (recipientLength != _data.length) revert ARRAY_MISMATCH();
 
-        PayoutSummary[] memory payouts = new PayoutSummary[](recipientLength);
+        payouts = new PayoutSummary[](recipientLength);
         for (uint256 i; i < recipientLength;) {
             payouts[i] = _getPayout(_recipientIds[i], _data[i]);
             unchecked {
                 i++;
             }
         }
-        return payouts;
     }
 
     /// @notice Checks if the '_allocator' is a valid allocator.
