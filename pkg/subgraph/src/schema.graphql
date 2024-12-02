@@ -11,6 +11,8 @@ type CVStrategy @entity(immutable: false) {
   totalEffectiveActivePoints: BigInt!
   isEnabled: Boolean!
   token: String!
+  sybilScorer: PassportScorer
+  archived: Boolean!
 }
 
 type CVStrategyConfig @entity(immutable: false) {
@@ -37,7 +39,6 @@ type ArbitrableConfig @entity(immutable: false) {
   submitterCollateralAmount: BigInt!
   defaultRuling: BigInt!
   defaultRulingTimeout: BigInt!
-
   allowlist: [String!]
 }
 
@@ -88,11 +89,13 @@ type RegistryCommunity @entity(immutable: false) {
   profileId: String
   communityFee: BigInt!
   protocolFee: BigInt!
+  protocolFeeReceiver: String
   communityName: String
   covenantIpfsHash: String
   registryFactory: RegistryFactory
   strategies: [CVStrategy!] @derivedFrom(field: "registryCommunity")
   councilSafe: String
+  pendingNewCouncilSafe: String
   isKickEnabled: Boolean
   registerStakeAmount: BigInt
   registerToken: String
@@ -127,6 +130,7 @@ type MemberCommunity @entity(immutable: false) {
   isRegistered: Boolean
   member: Member!
   registryCommunity: RegistryCommunity!
+  covenantSignature: String
 }
 
 type MemberStrategy @entity(immutable: false) {
@@ -203,4 +207,21 @@ type ProposalMetadata @entity(immutable: false) {
   id: ID!
   title: String!
   description: String!
+}
+
+type CollateralVault @entity(immutable: false) {
+  id: ID!
+  strategy: CVStrategy!
+  collaterals: [CollateralVaultDeposit!] @derivedFrom(field: "collateralVault")
+}
+
+type CollateralVaultDeposit @entity(immutable: false) {
+  id: ID!
+  collateralVault: CollateralVault!
+  amount: BigInt!
+  depositor: Bytes!
+  createdAt: BigInt!
+  proposalId: BigInt!
+  withdrawnAt: BigInt
+  withdrawnTo: Bytes
 }

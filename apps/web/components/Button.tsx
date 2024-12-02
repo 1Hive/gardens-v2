@@ -12,15 +12,17 @@ type ButtonProps = {
   btnStyle?: BtnStyle;
   color?: Color;
   onClick?: React.DOMAttributes<HTMLButtonElement>["onClick"];
+  showToolTip?: boolean;
   className?: string;
   disabled?: boolean;
   tooltip?: string;
+  tooltipClassName?: string;
   tooltipSide?:
     | "tooltip-top"
     | "tooltip-bottom"
     | "tooltip-left"
     | "tooltip-right";
-  children: React.ReactNode;
+  children?: React.ReactNode;
   isLoading?: boolean;
   size?: Size;
   icon?: React.ReactNode;
@@ -55,7 +57,7 @@ const btnStyles: BtnStyles = {
     tertiary: "",
     danger:
       "text-danger-button border border-danger-button hover:text-danger-hover-content hover:outline-danger-hover-content",
-    disabled: "text-neutral-soft border border-neutral-soft",
+    disabled: "text-neutral-soft-content border border-neutral-soft-content",
   },
   link: {
     primary: "text-primary-content",
@@ -68,9 +70,11 @@ const btnStyles: BtnStyles = {
 
 export function Button({
   onClick,
-  className: styles,
+  className = "",
   disabled = false,
-  tooltip = "Connect wallet",
+  tooltip,
+  showToolTip = false,
+  tooltipClassName: tooltipStyles = "",
   tooltipSide = "tooltip-top",
   children,
   btnStyle = "filled",
@@ -82,8 +86,7 @@ export function Button({
   const buttonElement = (
     <button
       type={type}
-      className={`${btnStyles[btnStyle][disabled ? "disabled" : color]}
-      flex relative cursor-pointer  justify-center rounded-lg px-6 py-4 transition-all ease-out disabled:cursor-not-allowed ${styles}`}
+      className={`${btnStyles[btnStyle][disabled ? "disabled" : color]} flex relative cursor-pointer  justify-center rounded-lg px-6 py-4 transition-all ease-out disabled:cursor-not-allowed h-fit ${className}`}
       onClick={onClick}
       disabled={disabled || isLoading}
     >
@@ -98,8 +101,11 @@ export function Button({
     </button>
   );
 
-  return disabled ?
-      <div className={`tooltip ${tooltipSide} ${styles}`} data-tip={tooltip}>
+  return disabled || showToolTip ?
+      <div
+        className={`${tooltip ? "tooltip" : ""} ${tooltipSide} ${tooltipStyles}`}
+        data-tip={tooltip ?? ""}
+      >
         {buttonElement}
       </div>
     : buttonElement;

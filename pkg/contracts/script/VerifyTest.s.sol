@@ -7,14 +7,14 @@ import "forge-std/StdJson.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "@openzeppelin/contracts/utils/Strings.sol";
-import "../src/CVStrategy/CVStrategyV0_1.sol";
+import "../src/CVStrategy/CVStrategyV0_0.sol";
 import {SafeArbitrator} from "../src/SafeArbitrator.sol";
 import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import {Allo} from "allo-v2-contracts/core/Allo.sol";
 import {IRegistry} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 import {Registry} from "allo-v2-contracts/core/Registry.sol";
 import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
-import {CVStrategyHelpers, CVStrategyV0_1} from "../test/CVStrategyHelpers.sol";
+import {CVStrategyHelpers, CVStrategyV0_0} from "../test/CVStrategyHelpers.sol";
 import {GV2ERC20} from "./GV2ERC20.sol";
 import {SafeSetup} from "../test/shared/SafeSetup.sol";
 import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
@@ -22,7 +22,7 @@ import {Accounts} from "allo-v2-test/foundry/shared/Accounts.sol";
 
 import {RegistryFactoryV0_0} from "../src/RegistryFactory/RegistryFactoryV0_0.sol";
 
-import {RegistryCommunityV0_1} from "../src/RegistryCommunity/RegistryCommunityV0_1.sol";
+import {RegistryCommunityV0_0} from "../src/RegistryCommunity/RegistryCommunityV0_0.sol";
 import {ISafe as Safe, SafeProxyFactory, Enum} from "../src/interfaces/ISafe.sol";
 import {CollateralVault} from "../src/CollateralVault.sol";
 // import {SafeProxyFactory} from "safe-smart-account/contracts/proxies/SafeProxyFactory.sol";
@@ -60,8 +60,8 @@ contract VerifyTest is BaseMultiChain {
                 RegistryFactoryV0_0.initialize.selector,
                 address(SENDER),
                 address(SENDER),
-                new RegistryCommunityV0_1(),
-                new CVStrategyV0_1(),
+                new RegistryCommunityV0_0(),
+                new CVStrategyV0_0(),
                 new CollateralVault()
             )
         );

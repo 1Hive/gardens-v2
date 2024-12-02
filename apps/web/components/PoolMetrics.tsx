@@ -2,19 +2,20 @@
 
 import { FC, useEffect, useState } from "react";
 import { FetchTokenResult } from "@wagmi/core";
+import { useForm } from "react-hook-form";
 import { parseUnits } from "viem";
-import { Address, useAccount } from "wagmi";
+import { Address, useAccount, useBalance } from "wagmi";
 import { Allo } from "#/subgraph/.graphclient";
 import { Button } from "./Button";
 import { DisplayNumber } from "./DisplayNumber";
 import { FormInput } from "./Forms";
+import { Skeleton } from "./Skeleton";
 import { TransactionModal, TransactionProps } from "./TransactionModal";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useHandleAllowance } from "@/hooks/useHandleAllowance";
 import { alloABI } from "@/src/generated";
-import { abiWithErrors } from "@/utils/abiWithErrors";
 import { getTxMessage } from "@/utils/transactionMessages";
 
 interface PoolMetricsProps {
@@ -25,6 +26,7 @@ interface PoolMetricsProps {
   poolId: number;
   chainId: string;
 }
+type FormInputs = { amount: number };
 
 export const PoolMetrics: FC<PoolMetricsProps> = ({
   alloInfo,
@@ -34,26 +36,37 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
   poolId,
   chainId,
 }) => {
-  const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** poolToken.decimals;
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    watch,
+  } = useForm<FormInputs>();
 
   const [isOpenModal, setIsOpenModal] = useState(false);
-  const [amount, setAmount] = useState<string>("");
   const { address: accountAddress } = useAccount();
   const { publish } = usePubSubContext();
+  const { data: balance } = useBalance({
+    address: accountAddress,
+    formatUnits: poolToken.decimals,
+    token: poolToken.address,
+    watch: true,
+    chainId: Number(chainId),
+  });
 
-  const requestedAmount = parseUnits(amount, poolToken.decimals);
-
+  const amount = +(watch("amount") ?? 0);
+  const requestedAmount = parseUnits(amount.toString(), poolToken.decimals);
   const {
     write: writeFundPool,
     transactionStatus: fundPoolStatus,
     error: fundPoolError,
   } = useContractWriteWithConfirmations({
     address: alloInfo.id as Address,
-    abi: abiWithErrors(alloABI),
-    args: [BigInt(poolId), requestedAmount],
+    abi: alloABI,
     functionName: "fundPool",
     contractName: "Allo",
     showNotification: false,
+    args: [BigInt(poolId), requestedAmount],
     onConfirmations: () => {
       publish({
         topic: "pool",
@@ -72,10 +85,19 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     poolToken.symbol,
     alloInfo.id as Address,
     requestedAmount,
-    writeFundPool,
+    () => writeFundPool(),
   );
 
-  const { tooltipMessage, missmatchUrl } = useDisableButtons();
+  const { tooltipMessage, isButtonDisabled } = useDisableButtons([
+    {
+      message: "Connected account has insufficient balance",
+      condition: balance && balance.value < requestedAmount,
+    },
+    {
+      message: "Amount must be greater than 0",
+      condition: amount <= 0,
+    },
+  ]);
 
   const [addFundsTx, setAddFundsTx] = useState<TransactionProps>({
     contractName: "Add funds",
@@ -91,16 +113,17 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     }));
   }, [fundPoolStatus]);
 
-  const handleFundPool = () => {
-    setIsOpenModal(true);
+  const handleFundPool = (data: FormInputs) => {
     setAddFundsTx((prev) => ({
       ...prev,
       message: getTxMessage("idle"),
       status: "idle",
     }));
-    handleAllowance();
+    setIsOpenModal(true);
+    handleAllowance({
+      formAmount: parseUnits(data.amount.toString(), poolToken.decimals),
+    });
   };
-
   return (
     <>
       <TransactionModal
@@ -109,49 +132,64 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
         isOpen={isOpenModal}
         onClose={() => setIsOpenModal(false)}
       >
-        <div className="flex gap-2">
+        <div className="flex gap-2 mb-4">
           <p>Adding:</p>
-          <DisplayNumber number={amount} tokenSymbol={poolToken.symbol} />
+          <DisplayNumber
+            number={amount.toString()}
+            tokenSymbol={poolToken.symbol}
+          />
         </div>
       </TransactionModal>
       <section className="section-layout gap-4 flex flex-col">
         <h2>Pool Funds</h2>
-        <div className="flex justify-between items-center">
-          <div className="flex gap-3 items-baseline">
-            <p className="subtitle2">Funds available:</p>
-            <DisplayNumber
-              number={[BigInt(poolAmount), poolToken.decimals]}
-              tokenSymbol={poolToken.symbol}
-              compact={true}
-              className="subtitle2 text-primary-content"
-            />
+        <div className="flex justify-between items-center flex-wrap">
+          <div className="flex flex-col gap-2">
+            <div className="flex gap-3">
+              <p className="subtitle2">Funds in pool:</p>
+              <DisplayNumber
+                number={[BigInt(poolAmount), poolToken.decimals]}
+                tokenSymbol={poolToken.symbol}
+                compact={true}
+                className="subtitle2 text-primary-content"
+              />
+            </div>
+            <div className="flex gap-3">
+              <p className="subtitle2">Wallet balance:</p>
+              <Skeleton isLoading={!balance}>
+                <DisplayNumber
+                  number={[balance?.value ?? BigInt(0), poolToken.decimals]}
+                  tokenSymbol={poolToken.symbol}
+                  compact={true}
+                  className="subtitle2 text-primary-content"
+                />
+              </Skeleton>
+            </div>
           </div>
           <form
-            className="flex gap-2"
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleFundPool();
-            }}
+            className="flex gap-2 flex-wrap"
+            onSubmit={handleSubmit(handleFundPool)}
           >
             <FormInput
               type="number"
               placeholder="0"
               required
-              step={INPUT_TOKEN_MIN_VALUE}
-              onChange={(e) => setAmount(e.target.value)}
-              value={amount}
+              register={register}
+              registerKey="amount"
+              errors={errors}
+              suffix={poolToken.symbol}
               otherProps={{
-                step: INPUT_TOKEN_MIN_VALUE,
-                min: INPUT_TOKEN_MIN_VALUE,
+                max: balance?.formatted,
               }}
-            >
-              <span className="absolute right-4 top-4 text-black">
-                {poolToken.symbol}
-              </span>
-            </FormInput>
+              registerOptions={{
+                max: {
+                  value: balance?.formatted ?? 0,
+                  message: "Insufficient balance",
+                },
+              }}
+            />
             <Button
               type="submit"
-              disabled={missmatchUrl || !accountAddress}
+              disabled={isButtonDisabled}
               tooltip={tooltipMessage}
               className="min-w-[200px]"
             >

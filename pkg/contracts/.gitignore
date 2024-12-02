@@ -12,4 +12,5 @@ out/*Deploy*
 out/utils/*
 !out/*SafeArbitrator*
 !out/*IArbitrator*
+!out/*CollateralVault.sol*
 !out/utils/Mock*

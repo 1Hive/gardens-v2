@@ -3,11 +3,7 @@ pragma solidity ^0.8.19;
 
 import "forge-std/console.sol";
 import {Allo} from "allo-v2-contracts/core/Allo.sol";
-// import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
-// import {CVStrategyV0_1} from "../src/libraries/CVStrategyV0_1.sol";
-// import {CVStrategyV0_0} from "../src/CVStrategy/CVStrategyV0_0.sol";
 import {
-    CVStrategyV0_1,
     CVStrategyV0_0,
     ProposalType,
     PointSystem,
@@ -15,8 +11,7 @@ import {
     PointSystemConfig,
     ArbitrableConfig,
     CVStrategyInitializeParamsV0_1
-} from "../src/CVStrategy/CVStrategyV0_1.sol";
-import {CVStrategyInitializeParamsV0_0} from "../src/CVStrategy/CVStrategyV0_0.sol";
+} from "../src/CVStrategy/CVStrategyV0_0.sol";
 import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
 import {IRegistry, Metadata} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 
@@ -34,7 +29,7 @@ contract CVStrategyHelpers is Native, Accounts {
     uint256 internal constant TWO_128 = 2 ** 128;
     uint256 internal constant D = 10 ** 7;
 
-    // function poolProfile_id1(RegistryCommunityV0_1 registryCommunity) public virtual returns (bytes32) {
+    // function poolProfile_id1(RegistryCommunityV0_0 registryCommunity) public virtual returns (bytes32) {
     function poolProfile_id1(IRegistry registry, address pool_admin, address[] memory pool_managers)
         public
         virtual
@@ -53,7 +48,10 @@ contract CVStrategyHelpers is Native, Accounts {
         ProposalType proposalType,
         PointSystem pointSystem,
         PointSystemConfig memory pointConfig,
-        ArbitrableConfig memory arbitrableConfig
+        ArbitrableConfig memory arbitrableConfig,
+        address[] memory initialAllowlist,
+        address sybilScorer,
+        uint256 sybilScorerThreshold
     ) public pure returns (CVStrategyInitializeParamsV0_1 memory params) {
         // IAllo allo = IAllo(ALLO_PROXY_ADDRESS);
         params.cvParams.decay = _etherToFloat(0.9999799 ether); // alpha = decay
@@ -63,6 +61,8 @@ contract CVStrategyHelpers is Native, Accounts {
         params.registryCommunity = registryCommunity;
         params.proposalType = proposalType;
         params.pointSystem = pointSystem;
+        params.sybilScorer = sybilScorer;
+        params.sybilScorerThreshold = sybilScorerThreshold;
 
         if (pointConfig.maxAmount == 0) {
             // PointSystemConfig memory pointConfig;
@@ -71,8 +71,8 @@ contract CVStrategyHelpers is Native, Accounts {
         }
         params.pointConfig = pointConfig;
         params.arbitrableConfig = arbitrableConfig;
-        params.initialAllowlist = new address[](1);
-        params.initialAllowlist[0] = address(0);
+        // params.initialAllowlist = new address[](1);
+        params.initialAllowlist = initialAllowlist;
     }
 
     function createPool(
@@ -87,8 +87,9 @@ contract CVStrategyHelpers is Native, Accounts {
         ArbitrableConfig memory arbitrableConfig
     ) public returns (uint256 poolId) {
         // IAllo allo = IAllo(ALLO_PROXY_ADDRESS);
-        CVStrategyInitializeParamsV0_1 memory params =
-            getParams(registryCommunity, proposalType, pointSystem, pointConfig, arbitrableConfig);
+        CVStrategyInitializeParamsV0_1 memory params = getParams(
+            registryCommunity, proposalType, pointSystem, pointConfig, arbitrableConfig, new address[](1), address(0), 0
+        );
 
         address[] memory _pool_managers = new address[](2);
         _pool_managers[0] = address(this);
@@ -113,7 +114,7 @@ contract CVStrategyHelpers is Native, Accounts {
             _pool_managers
         );
 
-        assert(CVStrategyV0_1(payable(strategy)).proposalType() == proposalType);
+        assert(CVStrategyV0_0(payable(strategy)).proposalType() == proposalType);
     }
 
     function createPool(
@@ -173,5 +174,10 @@ contract CVStrategyHelpers is Native, Accounts {
         uint256 t = _timePassed;
         uint256 atTWO_128 = _pow((decay << 128) / D, t);
         return (((atTWO_128 * _lastConv) + ((_oldAmount * D * (TWO_128 - atTWO_128)) / (D - decay))) + TWO_127) >> 128;
+    }
+
+    function getDecay(CVStrategyV0_0 strategy) public view returns (uint256) {
+        (,, uint256 decay,) = strategy.cvParams();
+        return decay;
     }
 }

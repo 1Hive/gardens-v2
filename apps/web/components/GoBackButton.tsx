@@ -8,6 +8,17 @@ export const GoBackButton = () => {
   const router = useRouter();
   const path = usePathname();
 
+  const onBackClicked = () => {
+    const pathSegments = path.split("/");
+    pathSegments.pop();
+    // :empty:/:gardens:/:chaindId:/
+    if (pathSegments.length === 3) {
+      pathSegments.pop();
+    }
+    const newPath = pathSegments.join("/");
+    router.push(newPath);
+  };
+
   return (
     <>
       {path === "/gardens" ? null : (
@@ -15,7 +26,7 @@ export const GoBackButton = () => {
           aria-label="Go back"
           btnStyle="link"
           color="primary"
-          onClick={() => router.back()}
+          onClick={onBackClicked}
           className="subtitle2 w-fit !p-0"
           icon={<ArrowLeftIcon className="h-4 w-4" />}
         >

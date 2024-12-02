@@ -19,12 +19,18 @@
         - name: {{name}}
           file: ../contracts/out/{{name}}.sol/{{name}}.json
       eventHandlers:
-        - event: UserScoreAdded(indexed address,uint256,uint256)
+        - event: Initialized(uint8)
+          handler: handleInitialized
+        - event: UserScoreAdded(indexed address,uint256)
           handler: handleUserScoreAdded
         - event: UserRemoved(indexed address)
           handler: handleUserRemoved
         - event: StrategyAdded(indexed address,uint256,bool,address)
           handler: handleStrategyAdded
+        - event: StrategyRemoved(indexed address)
+          handler: handleStrategyRemoved
         - event: StrategyActivated(indexed address)
           handler: handleStrategyActivated
+        - event: ThresholdModified(indexed address,uint256)
+          handler: handleThresholdModified
       file: ./src/mappings/passport-scorer.ts

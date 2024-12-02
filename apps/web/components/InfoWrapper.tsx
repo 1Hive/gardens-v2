@@ -4,7 +4,7 @@ import { InformationCircleIcon } from "@heroicons/react/24/outline";
 type InfoWrapperProps = {
   tooltip: string;
   children?: React.ReactNode;
-  classNames?: string;
+  className?: string;
   customIcon?: React.ReactNode;
   size?: "sm" | "md" | "lg";
 };
@@ -18,19 +18,21 @@ const sizeMap = {
 export function InfoWrapper({
   tooltip,
   children,
-  classNames,
+  className,
   customIcon,
   size = "md",
 }: InfoWrapperProps): JSX.Element {
   const { width, height } = sizeMap[size];
 
   return (
-    <div
-      className={`tooltip flex gap-2 cursor-pointer items-center [&>svg]:text-primary-content max-w-sm [&>svg]:stroke-2 ${classNames}`}
-      data-tip={tooltip}
-    >
+    <div className="flex gap-1 items-center">
       {children}
-      {customIcon ?? <InformationCircleIcon width={width} height={height} />}
+      <div
+        className={`tooltip flex gap-2 cursor-pointer items-center [&>svg]:text-primary-content max-w-sm [&>svg]:stroke-2 ${className}`}
+        data-tip={tooltip}
+      >
+        {customIcon ?? <InformationCircleIcon width={width} height={height} />}
+      </div>
     </div>
   );
 }

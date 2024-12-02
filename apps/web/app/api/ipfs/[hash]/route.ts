@@ -15,6 +15,19 @@ export async function GET(req: NextRequest, { params }: Params) {
     },
   });
 
+  if (!res.ok) {
+    return Response.json(
+      {
+        message: "Error fetching IPFS content",
+        status: res.status,
+        details: await res.text(),
+      },
+      {
+        status: res.status ?? 500,
+      },
+    );
+  }
+
   if (searchParams.get("isText") === "true") {
     const text = await res.text();
     return Response.json({ text }, { status: 200 });

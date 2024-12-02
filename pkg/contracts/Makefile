@@ -43,6 +43,7 @@ deploy:
 	--broadcast -vvvvv
 
 add-strategy-local: #make add-strategy S=0x1234 
+
 	-forge script script/AddStrategy.s.sol:AddStrategy \
 	--rpc-url $(RPC_URL_LOCALHOST) \
 	--sender 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266 \
@@ -95,6 +96,18 @@ add-strategy-ethsep-pool: #make add-strategy S=0x1234
 	--legacy \
 	-vvvv
 
+# Optimism Sepolia
+deploy-testnet-multi-op: 
+	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
+	--rpc-url $(RPC_URL_OP_TESTNET) \
+	--account pkGarden \
+	--sig "run(string)" 'opsepolia' \
+	--ffi \
+	--etherscan-api-key $(ETHERSCAN_API_KEY) \
+	--broadcast \
+	--verify \
+	-vvv
+
 # Arbitrum Sepolia
 
 fork-testnet:
@@ -105,10 +118,9 @@ deploy-verify-arbsep:
   --rpc-url $(RPC_URL_ARB_TESTNET) \
   0xd7b72fcb6a4e2857685175f609d1498ff5392e46 \
   /home/corantin/Documents/GitHub/gardens-v2/main/pkg/contracts/src/RegistryFactoryV0_0.sol:RegistryFactoryV0_0 \
-  --verifier blockscout \
-	--verifier-url https://arb-sepolia.blockscout.com/api/
+	--etherscan-api-key $(ETHERSCAN_API_KEY)
 
-deploy-testnet-multi-arb: 
+deploy-arbsep: 
 	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
 	--rpc-url $(RPC_URL_ARB_TESTNET) \
 	--sig "run(string)" 'arbsepolia' \
@@ -120,27 +132,28 @@ deploy-testnet-multi-arb:
 	--legacy \
 	--via-ir \
 	--verify \
-	-vvvvv
+	-vv
 
-upgrade-testnet-multi-arb: 
-	-forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
+upgrade-arbsep: 
+	-forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
 	--rpc-url $(RPC_URL_ARB_TESTNET) \
 	--sig "run(string)" 'arbsepolia' \
 	--account pkGarden \
 	--etherscan-api-key $(ARBISCAN_API_KEY) \
 	--ffi \
-	--chain-id 421614 \
 	--broadcast \
+	--chain-id 421614 \
 	--legacy \
 	--via-ir \
 	--verify \
 	-vvv
 
-verify-testnet-multi-arb: 
-	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
+verify-blockscout-arbsep: 
+	-forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
 	--rpc-url $(RPC_URL_ARB_TESTNET) \
 	--account pkGarden \
-	--etherscan-api-key $(ARBISCAN_API_KEY) \
+	--verifier blockscout \
+	--verifier-url https://arbitrum.blockscout.com/api/ \
 	--verify \
 	--via-ir \
 	--slow
@@ -228,22 +241,88 @@ deploy-test-arb:
 	--verify \
 	-vvv
 
-# Optimism Sepolia
-
-deploy-testnet-multi-op: 
-	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
-	--rpc-url $(RPC_URL_OP_TESTNET) \
+deploy-new-collateral-vault-template-arbitrum-sepolia: 
+	-forge script script/DeployCollateralVaultTemplate.s.sol:DeployCollateralVaultTemplate \
+	--rpc-url $(RPC_URL_ARB_TESTNET) \
+	--sig "run(string)" 'arbsepolia' \
 	--account pkGarden \
-	--sig "run(string)" 'opsepolia' \
+	--etherscan-api-key $(ARBISCAN_API_KEY) \
 	--ffi \
-	--etherscan-api-key $(ETHERSCAN_API_KEY) \
+	--chain-id 421614 \
+	--legacy \
 	--broadcast \
+	--via-ir \
+	--with-gas-price 1301660000 \
 	--verify \
 	-vvv
+
+upgrade-and-verify-arbsep: upgrade-arbsep verify-blockscout-arbsep
+
+transfer-ownership-arbsep:
+	-forge script script/TransferOwnershipAllContracts.s.sol:TransferOwnershipAllContracts \
+	--rpc-url $(RPC_URL_ARB_TESTNET) \
+	--account pkGarden \
+	--sig "run(string)" 'arbsepolia' \
+	--chain-id 421614 \
+	--broadcast \
+	--via-ir \
+	--etherscan-api-key $(ARBISCAN_API_KEY) \
+	--verify \
+	-vvvv
+
+deploy-passport-scorer-arbsep:
+	-forge script script/DeployPassportScorer.s.sol:DeployPassportScorer \
+	--rpc-url $(RPC_URL_ARB_TESTNET) \
+	--sig "run(string)" 'arbsepolia' \
+	--chain-id 421614 \
+	--etherscan-api-key $(ARBISCAN_API_KEY) \
+	--account pkGarden \
+	--via-ir \
+	--verify \
+	--broadcast \
+	-vv
+
+deploy-safe-arbitrator-arbsep:
+	-forge script script/DeploySafeArbitrator.s.sol:DeploySafeArbitrator \
+	--rpc-url $(RPC_URL_ARB_TESTNET) \
+	--sig "run(string)" 'arbsepolia' \
+	--chain-id 421614 \
+	--etherscan-api-key $(ARBISCAN_API_KEY) \
+	--account pkGarden \
+	--via-ir \
+	--verify \
+	--broadcast \
+	-vv
 
 # Arbitrum
 
-deploy-multi-arbitrum: 
+transfer-ownership-arbitrum:
+	-forge script script/TransferOwnershipAllContracts.s.sol:TransferOwnershipAllContracts \
+	--rpc-url $(RPC_URL_ARB) \
+	--account pkGarden \
+	--sig "run(string)" 'arbitrum' \
+	--chain-id 42161 \
+	--broadcast \
+	--via-ir \
+	--etherscan-api-key $(ARBISCAN_API_KEY) \
+	--verify \
+	-vvv
+
+deploy-new-collateral-vault-template-arbitrum: 
+	-forge script script/DeployCollateralVaultTemplate.s.sol:DeployCollateralVaultTemplate \
+	--rpc-url $(RPC_URL_ARB) \
+	--sig "run(string)" 'arbitrum' \
+	--account pkGarden \
+	--etherscan-api-key $(ARBISCAN_API_KEY) \
+	--ffi \
+	--chain-id 42161 \
+	--legacy \
+	--broadcast \
+	--via-ir \
+	--verify \
+	-vvv
+
+deploy-arbitrum: 
 	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
 	--rpc-url $(RPC_URL_ARB) \
 	--sig "run(string)" 'arbitrum' \
@@ -255,8 +334,8 @@ deploy-multi-arbitrum:
 	--via-ir \
 	-vvv
 
-upgrade-multi-arbitrum: 
-	-forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
+upgrade-arbitrum: 
+	-forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
 	--rpc-url $(RPC_URL_ARB) \
 	--sig "run(string)" 'arbitrum' \
 	--account pkGarden \
@@ -269,12 +348,13 @@ upgrade-multi-arbitrum:
 	--verify \
 	-vvv
 
-verify-arbitrum: 
-	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
+verify-blockscout-arbitrum: 
+	-forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
 	--rpc-url $(RPC_URL_ARB) \
 	--sig "run(string)" 'arbitrum' \
 	--account pkGarden \
-	--etherscan-api-key $(ARBISCAN_API_KEY) \
+	--verifier blockscout \
+	--verifier-url https://arbitrum.blockscout.com/api/ \
 	--ffi \
 	--chain-id 42161 \
 	--legacy \
@@ -282,23 +362,74 @@ verify-arbitrum:
 	--via-ir \
 	-vvv \
 	--slow
+
+upgrade-and-verify-arbitrum: upgrade-arbitrum verify-blockscout-arbitrum
+
+change-passport-manager-arbitrum: 
+	-forge script script/PassportScorerWriter.s.sol:PassportScorerWriter \
+	--rpc-url $(RPC_URL_ARB) \
+	--sig "run(string)" 'arbitrum' \
+	--chain-id 42161 \
+	--account pkGarden \
+	--ffi \
+	--broadcast \
+	--legacy \
+	-vvv
+
+deploy-passport-scorer-arbitrum:
+	-forge script script/DeployPassportScorer.s.sol:DeployPassportScorer \
+	--rpc-url $(RPC_URL_ARB) \
+	--sig "run(string)" 'arbitrum' \
+	--chain-id 42161 \
+	--etherscan-api-key $(ARBISCAN_API_KEY) \
+	--account pkGarden \
+	--via-ir \
+	--verify \
+	--broadcast \
+	-vv
+
+deploy-safe-arbitrator-arbitrum:
+	-forge script script/DeploySafeArbitrator.s.sol:DeploySafeArbitrator \
+	--rpc-url $(RPC_URL_ARB) \
+	--sig "run(string)" 'arbitrum' \
+	--chain-id 42161 \
+	--etherscan-api-key $(ARBISCAN_API_KEY) \
+	--account pkGarden \
+	--via-ir \
+	--verify \
+	--broadcast \
+	-vv
 
 # Optimism
 
-deploy-multi-optimism: 
-	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
+transfer-ownership-optimism:
+	-forge script script/TransferOwnershipAllContracts.s.sol:TransferOwnershipAllContracts \
 	--rpc-url $(RPC_URL_OPT) \
 	--sig "run(string)" 'optimism' \
-	--account pkGarden \
-	--ffi \
+	--etherscan-api-key $(OPTIMISM_API_KEY) \
 	--chain-id 10 \
+	--account pkGarden \
 	--broadcast \
-	--legacy \
 	--via-ir \
+	--verify \
 	-vvv
 
-upgrade-multi-optimism: 
-	-forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
+deploy-new-collateral-vault-template-optimism: 
+	-forge script script/DeployCollateralVaultTemplate.s.sol:DeployCollateralVaultTemplate \
+	--rpc-url $(RPC_URL_OPT) \
+	--sig "run(string)" 'optimism' \
+	--etherscan-api-key $(OPTIMISM_API_KEY) \
+	--chain-id 10 \
+	--account pkGarden \
+	--ffi \
+	--legacy \
+	--broadcast \
+	--via-ir \
+	--verify \
+	-vvv
+
+deploy-optimism: 
+	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
 	--rpc-url $(RPC_URL_OPT) \
 	--sig "run(string)" 'optimism' \
 	--account pkGarden \
@@ -311,13 +442,27 @@ upgrade-multi-optimism:
 	--verify \
 	-vvv
 
-
-verify-optimism: 
-	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
+upgrade-optimism: 
+	-forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
 	--rpc-url $(RPC_URL_OPT) \
 	--sig "run(string)" 'optimism' \
 	--account pkGarden \
 	--etherscan-api-key $(OPTIMISM_API_KEY) \
+	--ffi \
+	--chain-id 10 \
+	--broadcast \
+	--legacy \
+	--via-ir \
+	--verify \
+	-vvv
+
+verify-blockscout-optimism: 
+	-forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
+	--rpc-url $(RPC_URL_OPT) \
+	--sig "run(string)" 'optimism' \
+	--account pkGarden \
+	--verifier blockscout \
+	--verifier-url https://optimism.blockscout.com/api/ \
 	--ffi \
 	--chain-id 10 \
 	--legacy \
@@ -325,10 +470,73 @@ verify-optimism:
 	--via-ir \
 	-vvv \
 	--slow
+
+upgrade-and-verify-optimism: upgrade-optimism verify-blockscout-optimism
+
+change-passport-manager-optimism: 
+	-forge script script/PassportScorerWriter.s.sol:PassportScorerWriter \
+	--rpc-url $(RPC_URL_OPT) \
+	--sig "run(string)" 'optimism' \
+	--chain-id 10 \
+	--account pkGarden \
+	--ffi \
+	--broadcast \
+	--legacy \
+	-vvv
+
+deploy-passport-scorer-optimism:
+	-forge script script/DeployPassportScorer.s.sol:DeployPassportScorer \
+	--rpc-url $(RPC_URL_OPT) \
+	--sig "run(string)" 'optimism' \
+	--chain-id 10 \
+	--etherscan-api-key $(OPTIMISM_API_KEY) \
+	--account pkGarden \
+	--via-ir \
+	--verify \
+	--broadcast \
+	-vv
+
+deploy-safe-arbitrator-optimism:
+	-forge script script/DeploySafeArbitrator.s.sol:DeploySafeArbitrator \
+	--rpc-url $(RPC_URL_OPT) \
+	--sig "run(string)" 'optimism' \
+	--chain-id 10 \
+	--etherscan-api-key $(OPTIMISM_API_KEY) \
+	--account pkGarden \
+	--via-ir \
+	--verify \
+	--broadcast \
+	-vv
 
 # Polygon
 
-deploy-multi-polygon: 
+transfer-ownership-polygon:
+	-forge script script/TransferOwnershipAllContracts.s.sol:TransferOwnershipAllContracts \
+	--rpc-url $(RPC_URL_POLYGON) \
+	--sig "run(string)" 'polygon' \
+	--etherscan-api-key $(POLYGONSCAN_API_KEY) \
+	--chain-id 137 \
+	--account pkGarden \
+	--broadcast \
+	--via-ir \
+	--verify \
+	-vvv
+
+deploy-new-collateral-vault-template-polygon: 
+	-forge script script/DeployCollateralVaultTemplate.s.sol:DeployCollateralVaultTemplate \
+	--rpc-url $(RPC_URL_POLYGON) \
+	--sig "run(string)" 'polygon' \
+	--etherscan-api-key $(POLYGONSCAN_API_KEY) \
+	--chain-id 137 \
+	--account pkGarden \
+	--ffi \
+	--legacy \
+	--broadcast \
+	--via-ir \
+	--verify \
+	-vvv
+
+deploy-polygon: 
 	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
 	--rpc-url $(RPC_URL_POLYGON) \
 	--sig "run(string)" 'polygon' \
@@ -340,8 +548,8 @@ deploy-multi-polygon:
 	--via-ir \
 	-vvv
 
-upgrade-multi-polygon: 
-	-forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
+upgrade-polygon: 
+	-forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
 	--rpc-url $(RPC_URL_POLYGON) \
 	--sig "run(string)" 'polygon' \
 	--account pkGarden \
@@ -354,12 +562,13 @@ upgrade-multi-polygon:
 	--verify \
 	-vvv
 
-verify-polygon: 
-	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
+verify-blockscout-polygon: 
+	-forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
 	--rpc-url $(RPC_URL_POLYGON) \
 	--sig "run(string)" 'polygon' \
 	--account pkGarden \
-	--etherscan-api-key $(POLYGONSCAN_API_KEY) \
+	--verifier blockscout \
+	--verifier-url https://polygon.blockscout.com/api/ \
 	--ffi \
 	--chain-id 137 \
 	--legacy \
@@ -368,49 +577,72 @@ verify-polygon:
 	-vvv \
 	--slow
 
-# Mainnet
+upgrade-and-verify-polygon: upgrade-polygon verify-blockscout-polygon
 
-deploy-multi-mainnet: 
-	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
-	--rpc-url $(RPC_URL_MAINNET) \
-	--sig "run(string)" 'mainnet' \
+change-passport-manager-polygon: 
+	-forge script script/PassportScorerWriter.s.sol:PassportScorerWriter \
+	--rpc-url $(RPC_URL_POLYGON) \
+	--sig "run(string)" 'polygon' \
+	--chain-id 137 \
 	--account pkGarden \
 	--ffi \
-	--chain-id 1 \
 	--broadcast \
 	--legacy \
-	--via-ir \
 	-vvv
 
-verify-mainnet: 
-	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
-	--rpc-url $(RPC_URL_MAINNET) \
-	--sig "run(string)" 'mainnet' \
+deploy-passport-scorer-polygon:
+	-forge script script/DeployPassportScorer.s.sol:DeployPassportScorer \
+	--rpc-url $(RPC_URL_POLYGON) \
+	--sig "run(string)" 'polygon' \
+	--chain-id 137 \
+	--etherscan-api-key $(POLYGONSCAN_API_KEY) \
 	--account pkGarden \
-	--etherscan-api-key $(ETHERSCAN_API_KEY) \
-	--ffi \
-	--chain-id 1 \
-	--legacy \
-	--verify \
 	--via-ir \
-	-vvv \
-	--slow
+	--verify \
+	--broadcast \
+	-vv
+
+deploy-safe-arbitrator-polygon:
+	-forge script script/DeploySafeArbitrator.s.sol:DeploySafeArbitrator \
+	--rpc-url $(RPC_URL_POLYGON) \
+	--sig "run(string)" 'polygon' \
+	--chain-id 137 \
+	--etherscan-api-key $(POLYGONSCAN_API_KEY) \
+	--account pkGarden \
+	--via-ir \
+	--verify \
+	--broadcast \
+	-vv
 
 # Gnosis
 
-deploy-multi-gnosis: 
-	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
+transfer-ownership-gnosis:
+	-forge script script/TransferOwnershipAllContracts.s.sol:TransferOwnershipAllContracts \
 	--rpc-url $(RPC_URL_GNOSIS) \
 	--sig "run(string)" 'gnosis' \
-	--account pkGarden \
-	--ffi \
+	--etherscan-api-key $(GNOSISSCAN_API_KEY) \
 	--chain-id 100 \
+	--account pkGarden \
 	--broadcast \
-	--legacy \
 	--via-ir \
+	--verify \
 	-vvv
 
-verify-gnosis: 
+deploy-new-collateral-vault-template-gnosis: 
+	-forge script script/DeployCollateralVaultTemplate.s.sol:DeployCollateralVaultTemplate \
+	--rpc-url $(RPC_URL_GNOSIS) \
+	--sig "run(string)" 'gnosis' \
+	--etherscan-api-key $(GNOSISSCAN_API_KEY) \
+	--chain-id 100 \
+	--account pkGarden \
+	--ffi \
+	--legacy \
+	--broadcast \
+	--via-ir \
+	--verify \
+	-vvv
+
+deploy-gnosis: 
 	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
 	--rpc-url $(RPC_URL_GNOSIS) \
 	--sig "run(string)" 'gnosis' \
@@ -418,8 +650,126 @@ verify-gnosis:
 	--etherscan-api-key $(GNOSISSCAN_API_KEY) \
 	--ffi \
 	--chain-id 100 \
+	--broadcast \
+	--legacy \
+	--verify \
+	--via-ir \
+	-vvv
+
+upgrade-gnosis: 
+	-forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
+	--rpc-url $(RPC_URL_GNOSIS) \
+	--sig "run(string)" 'gnosis' \
+	--account pkGarden \
+	--etherscan-api-key $(GNOSISSCAN_API_KEY) \
+	--ffi \
+	--chain-id 100 \
+	--broadcast \
+	--legacy \
+	--verify \
+	--via-ir \
+	-vvv
+
+verify-blockscout-gnosis: 
+	-forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
+	--rpc-url $(RPC_URL_GNOSIS) \
+	--sig "run(string)" 'gnosis' \
+	--chain-id 100 \
+	--account pkGarden \
+	--verifier blockscout \
+	--verifier-url https://gnosis.blockscout.com/api/ \
+	--ffi \
 	--legacy \
 	--verify \
 	--via-ir \
 	-vvv \
 	--slow
+
+deploy-passport-scorer-gnosis:
+	-forge script script/DeployPassportScorer.s.sol:DeployPassportScorer \
+	--rpc-url $(RPC_URL_GNOSIS) \
+	--sig "run(string)" 'gnosis' \
+	--chain-id 100 \
+	--etherscan-api-key $(GNOSISSCAN_API_KEY) \
+	--account pkGarden \
+	--via-ir \
+	--verify \
+	--broadcast \
+	-vv
+
+deploy-safe-arbitrator-gnosis:
+	-forge script script/DeploySafeArbitrator.s.sol:DeploySafeArbitrator \
+	--rpc-url $(RPC_URL_GNOSIS) \
+	--sig "run(string)" 'gnosis' \
+	--chain-id 100 \
+	--etherscan-api-key $(GNOSISSCAN_API_KEY) \
+	--account pkGarden \
+	--via-ir \
+	--verify \
+	--broadcast \
+	-vv
+
+# verify-tenderly-gnosis: 
+# 	-forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
+# 	--rpc-url $(RPC_URL_GNOSIS) \
+# 	--sig "run(string)" 'gnosis' \
+# 	--account pkGarden \
+# 	--verifier-url $(TENDERLY_VERIFIER_URL)/100/public \
+# 	--etherscan-api-key $(TENDERLY_ACCESS_TOKEN) \
+# 	--ffi \
+# 	--chain-id 100 \
+# 	--legacy \
+# 	--verify \
+# 	--via-ir \
+# 	-vvv \
+# 	--slow
+
+verify-tenderly-gnosis: 
+	-forge verify-contract \
+  0x853c80cce43c2f37d60c3679abc9966a346787f4 \
+  CVStrategyV0_0 \
+  --etherscan-api-key ZVbLp2Jg48fSiv9gNsqjjg2iEAmYwHO1 \
+  --verifier-url https://api.tenderly.co/api/v1/account/Gossman/project/project/etherscan/verify/network/100/public \
+  --watch \
+ 	--via-ir 
+
+upgrade-and-verify-gnosis: upgrade-gnosis verify-blockscout-gnosis
+
+change-passport-manager-gnosis: 
+	-forge script script/PassportScorerWriter.s.sol:PassportScorerWriter \
+	--rpc-url $(RPC_URL_GNOSIS) \
+	--sig "run(string)" 'gnosis' \
+	--account pkGarden \
+	--ffi \
+	--chain-id 100 \
+	--broadcast \
+	--legacy \
+	-vvv
+
+# Mainnet
+
+# deploy-mainnet: 
+# 	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
+# 	--rpc-url $(RPC_URL_MAINNET) \
+# 	--sig "run(string)" 'mainnet' \
+# 	--account pkGarden \
+# 	--ffi \
+# 	--chain-id 1 \
+# 	--broadcast \
+# 	--legacy \
+# 	--via-ir \
+# 	-vvv
+
+# verify-mainnet: 
+# 	-forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
+# 	--rpc-url $(RPC_URL_MAINNET) \
+# 	--sig "run(string)" 'mainnet' \
+# 	--account pkGarden \
+# 	--etherscan-api-key $(ETHERSCAN_API_KEY) \
+# 	--ffi \
+# 	--chain-id 1 \
+# 	--legacy \
+# 	--verify \
+# 	--via-ir \
+# 	-vvv \
+# 	--slow

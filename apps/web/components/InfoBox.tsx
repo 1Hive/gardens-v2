@@ -7,7 +7,7 @@ type InfoBoxProps = {
   infoBoxType: InfoBoxStyles;
   content?: string;
   contentStyle?: string;
-  classNames?: string;
+  className?: string;
   icon?: React.ReactNode;
   hideIcon?: boolean;
   children?: React.ReactNode;
@@ -28,14 +28,14 @@ export function InfoBox({
   infoBoxType,
   content,
   contentStyle,
-  classNames,
+  className,
   icon,
   hideIcon,
   children,
 }: InfoBoxProps): JSX.Element {
   return (
     <div
-      className={`${BASE_STYLES} ${infoBoxStyles[infoBoxType]} ${classNames}`}
+      className={`${BASE_STYLES} ${infoBoxStyles[infoBoxType]} ${className}`}
     >
       {!hideIcon && (
         <div className="h-9 w-9 text-inherit">

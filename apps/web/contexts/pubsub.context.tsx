@@ -210,10 +210,14 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
   };
 
   const publish = (payload: ChangeEventScope) => {
-    ablyClient.channels.get(CHANGE_EVENT_CHANNEL_NAME).publish(payload.topic, {
+    payload = {
       ...payload,
-      chainId: payload.chainId ?? chainId,
-    });
+      chainId: +(payload.chainId ?? chainId ?? "NaN"),
+    };
+    console.debug("⚡ WS: publish", payload);
+    ablyClient.channels
+      .get(CHANGE_EVENT_CHANNEL_NAME)
+      .publish(payload.topic, payload);
   };
 
   return (

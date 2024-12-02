@@ -1,30 +1,33 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { Address, encodeAbiParameters, parseUnits } from "viem";
-import { useToken } from "wagmi";
+import { useContractRead, useToken } from "wagmi";
 import {
   Allo,
   ArbitrableConfig,
   CVStrategy,
+  CVStrategyConfig,
   TokenGarden,
 } from "#/subgraph/.graphclient";
+import { FormAddressInput } from "./FormAddressInput";
 import { FormInput } from "./FormInput";
 import { FormPreview, FormRow } from "./FormPreview";
 import { LoadingSpinner } from "../LoadingSpinner";
 import { WalletBalance } from "../WalletBalance";
-import { Button } from "@/components";
+import { Button, EthAddress, InfoBox } from "@/components";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
+import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
-import { alloABI } from "@/src/generated";
+import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
+import { alloABI, cvStrategyABI } from "@/src/generated";
 import { PoolTypes } from "@/types";
-import { abiWithErrors } from "@/utils/abiWithErrors";
 import { getEventFromReceipt } from "@/utils/contracts";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
-import { formatTokenAmount } from "@/utils/numbers";
+import { calculatePercentageBigInt, formatTokenAmount } from "@/utils/numbers";
 
 //protocol : 1 => means ipfs!, to do some checks later
 type FormInputs = {
@@ -35,13 +38,17 @@ type FormInputs = {
 };
 
 type ProposalFormProps = {
-  strategy: Pick<CVStrategy, "id" | "token">;
+  strategy: Pick<
+    CVStrategy,
+    "id" | "token" | "maxCVSupply" | "totalEffectiveActivePoints"
+  > & {
+    config: Pick<CVStrategyConfig, "decay" | "proposalType">;
+  };
   arbitrableConfig: Pick<ArbitrableConfig, "submitterCollateralAmount">;
   poolId: number;
   proposalType: number;
   alloInfo: Pick<Allo, "id" | "chainId" | "tokenNative">;
   tokenGarden: Pick<TokenGarden, "symbol" | "decimals">;
-  tokenAddress: Address;
   spendingLimit: number;
   spendingLimitPct: number;
   poolAmount: number;
@@ -49,7 +56,7 @@ type ProposalFormProps = {
 
 type FormRowTypes = {
   label: string;
-  parse?: (value: any) => string;
+  parse?: (value: any) => React.ReactNode;
 };
 
 const abiParameters = [
@@ -71,8 +78,6 @@ const abiParameters = [
     ],
   },
 ];
-
-const ethereumAddressRegEx = /^(0x)?[0-9a-fA-F]{40}$/;
 
 function formatNumber(num: string | number): string {
   if (num == 0) {
@@ -115,7 +120,6 @@ export const ProposalForm = ({
   proposalType,
   alloInfo,
   tokenGarden,
-  tokenAddress,
   spendingLimit,
   spendingLimitPct,
 }: ProposalFormProps) => {
@@ -124,11 +128,14 @@ export const ProposalForm = ({
     handleSubmit,
     formState: { errors },
     getValues,
-  } = useForm<FormInputs>();
+    setValue,
+    watch,
+  } = useForm<FormInputs>({ mode: "onBlur" });
 
   const { publish } = usePubSubContext();
 
   const chainId = alloInfo.chainId;
+  const beneficiary = watch("beneficiary");
 
   const formRowTypes: Record<string, FormRowTypes> = {
     amount: {
@@ -137,6 +144,7 @@ export const ProposalForm = ({
     },
     beneficiary: {
       label: "Beneficiary:",
+      parse: (value: string) => <EthAddress address={value as Address} />,
     },
     proposalType: {
       label: "Proposal Type:",
@@ -146,16 +154,25 @@ export const ProposalForm = ({
 
   const [showPreview, setShowPreview] = useState<boolean>(false);
   const [previewData, setPreviewData] = useState<FormInputs>();
+  const [requestedAmount, setRequestedAmount] = useState<string>();
   const [loading, setLoading] = useState(false);
   const [isEnoughBalance, setIsEnoughBalance] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
 
-  const spendingLimitString = formatTokenAmount(
-    spendingLimit,
-    +tokenGarden?.decimals,
-    6,
+  const chainIdFromPath = useChainIdFromPath();
+
+  const disableSubmitBtn = useMemo<ConditionObject[]>(
+    () => [
+      {
+        condition: !isEnoughBalance,
+        message: "Insufficient balance",
+      },
+    ],
+    [isEnoughBalance],
   );
+  const { isConnected, missmatchUrl, tooltipMessage } =
+    useDisableButtons(disableSubmitBtn);
 
   const proposalTypeName = PoolTypes[proposalType];
 
@@ -185,10 +202,10 @@ export const ProposalForm = ({
 
   const { write } = useContractWriteWithConfirmations({
     address: alloInfo.id as Address,
-    abi: abiWithErrors(alloABI),
+    abi: alloABI,
     contractName: "Allo",
     functionName: "registerRecipient",
-    fallbackErrorMessage: "Error creating Proposal. Please try again.",
+    fallbackErrorMessage: "Error creating Proposal, please report a bug.",
     value: arbitrableConfig.submitterCollateralAmount,
     onConfirmations: (receipt) => {
       const proposalId = getEventFromReceipt(
@@ -204,30 +221,58 @@ export const ProposalForm = ({
         id: proposalId.toString(), // proposalId is a bigint
         chainId,
       });
+      setLoading(false);
       if (pathname) {
-        router.push(
-          pathname.replace(
-            "/create-proposal",
-            `?${QUERY_PARAMS.poolPage.newPropsoal}=${proposalId}`,
-          ),
+        const newPath = pathname.replace(
+          "/create-proposal",
+          `?${QUERY_PARAMS.poolPage.newProposal}=${proposalId}`,
         );
+        router.push(newPath);
       }
     },
-    onSettled: () => setLoading(false),
   });
 
   const poolTokenAddr = strategy?.token as Address;
   const { data: poolToken } = useToken({
     address: poolTokenAddr,
-    enabled: !!poolTokenAddr,
+    enabled: !!poolTokenAddr && PoolTypes[proposalType] === "funding",
+    chainId,
   });
 
+  const spendingLimitString = formatTokenAmount(
+    spendingLimit,
+    poolToken?.decimals ?? 18,
+    6,
+  );
+
   const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** (poolToken?.decimals ?? 0);
+
   const spendingLimitNumber = spendingLimit / 10 ** (poolToken?.decimals ?? 0);
 
-  if (!poolToken) {
+  const { data: thresholdFromContract } = useContractRead({
+    address: strategy.id as Address,
+    abi: cvStrategyABI,
+    chainId: chainIdFromPath,
+    functionName: "calculateThreshold",
+    args: [
+      requestedAmount ?
+        parseUnits(requestedAmount, poolToken?.decimals ?? 0)
+      : 0n,
+    ],
+    enabled:
+      requestedAmount !== undefined &&
+      PoolTypes[strategy?.config?.proposalType] === "funding",
+  });
+
+  const thresholdPct = calculatePercentageBigInt(
+    thresholdFromContract as bigint,
+    BigInt(strategy.maxCVSupply),
+    poolToken?.decimals ?? 18,
+  );
+
+  if (!poolToken && PoolTypes[proposalType] === "funding") {
     return (
-      <div className="mt-96">
+      <div className="m-40">
         <LoadingSpinner />
       </div>
     );
@@ -241,7 +286,7 @@ export const ProposalForm = ({
     const metadata = [1, metadataIpfs as string];
 
     const strAmount = previewData.amount?.toString() || "";
-    const requestedAmount = parseUnits(
+    const amount = parseUnits(
       strAmount,
       // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
       poolToken?.decimals || 0,
@@ -250,8 +295,8 @@ export const ProposalForm = ({
     console.debug([
       poolId,
       previewData.beneficiary,
-      requestedAmount,
-      tokenAddress,
+      amount,
+      poolTokenAddr,
       metadata,
     ]);
 
@@ -260,19 +305,11 @@ export const ProposalForm = ({
         poolId,
         previewData?.beneficiary ||
           "0x0000000000000000000000000000000000000000",
-        requestedAmount,
-        tokenAddress,
+        amount,
+        poolTokenAddr,
         metadata,
       ],
     ]);
-
-    console.debug(
-      poolId,
-      previewData.beneficiary,
-      requestedAmount,
-      tokenAddress,
-      metadata,
-    );
 
     return encodedData;
   };
@@ -313,7 +350,6 @@ export const ProposalForm = ({
           title={previewData?.title ?? ""}
           description={previewData?.description ?? ""}
           formRows={formatFormRows()}
-          previewTitle="Check proposals details"
         />
       : <div className="flex flex-col gap-2 overflow-hidden p-1">
           {proposalTypeName === "funding" && (
@@ -323,10 +359,13 @@ export const ProposalForm = ({
                 subLabel={`Max ${formatNumber(spendingLimitString)} ${poolToken?.symbol} (${spendingLimitPct.toFixed(2)}% of Pool Funds)`}
                 register={register}
                 required
+                onChange={(e) => {
+                  setRequestedAmount(e.target.value);
+                }}
                 registerOptions={{
                   max: {
                     value: spendingLimitNumber,
-                    message: `Max amount cannot exceed ${formatNumber(spendingLimitString)} ${poolToken?.symbol}`,
+                    message: `Max amount must remain under the spending limit of ${formatNumber(spendingLimitString)} ${poolToken?.symbol}`,
                   },
                   min: {
                     value: INPUT_TOKEN_MIN_VALUE,
@@ -342,29 +381,31 @@ export const ProposalForm = ({
                 registerKey="amount"
                 type="number"
                 placeholder="0"
-              >
-                <span className="absolute right-4 top-4 text-black">
-                  {poolToken?.symbol}
-                </span>
-              </FormInput>
+                suffix={poolToken?.symbol}
+              />
             </div>
+          )}
+
+          {requestedAmount && thresholdPct !== 0 && thresholdPct < 100 && (
+            <InfoBox infoBoxType={"warning"}>
+              The conviction required in order for the proposal to pass with the
+              requested amount is {thresholdPct}%.{" "}
+              {requestedAmount &&
+                thresholdPct > 50 &&
+                thresholdPct < 100 &&
+                "It may be difficult to pass"}
+            </InfoBox>
           )}
           {proposalTypeName !== "signaling" && (
             <div className="flex flex-col">
-              <FormInput
-                label="Beneficary address"
-                register={register}
-                registerOptions={{
-                  pattern: {
-                    value: ethereumAddressRegEx,
-                    message: "Invalid Eth Address",
-                  },
+              <FormAddressInput
+                label="Beneficiary address"
+                value={beneficiary}
+                onChange={(e) => {
+                  setValue("beneficiary", e.target.value);
                 }}
                 required
                 errors={errors}
-                registerKey="beneficiary"
-                type="text"
-                placeholder="0x000..."
               />
             </div>
           )}
@@ -386,22 +427,26 @@ export const ProposalForm = ({
               required
               errors={errors}
               registerKey="description"
-              type="textarea"
+              onChange={(e) => {
+                setValue("description", e.target.value);
+              }}
+              value={getValues("description")}
+              type="markdown"
               rows={10}
               placeholder="Proposal description"
             />
           </div>
         </div>
       }
-      <div className="flex w-full items-center justify-between py-6">
+      <div className="flex w-full items-center justify-between py-6 flex-wrap">
         <div>
           {arbitrableConfig && (
             <WalletBalance
               askedAmount={arbitrableConfig.submitterCollateralAmount}
-              label="Proposal stake"
+              label="Collateral deposit"
               setIsEnoughBalance={setIsEnoughBalance}
               token="native"
-              tooltip="A stake is required for proposal submission. It will be refunded upon proposal execution or cancellation, except in the case of disputes, where it is forfeited."
+              tooltip="A stake is required as collateral for proposal submission and is returned upon execution or cancellation, except in the case of disputed and found to be in violation of the Covenant by the Tribunal, where it is forfeited."
             />
           )}
         </div>
@@ -419,8 +464,8 @@ export const ProposalForm = ({
             <Button
               onClick={() => createProposal()}
               isLoading={loading}
-              disabled={!isEnoughBalance}
-              tooltip={isEnoughBalance ? "" : "Insufficient balance"}
+              disabled={!isEnoughBalance || !isConnected || missmatchUrl}
+              tooltip={tooltipMessage}
             >
               Submit
             </Button>

@@ -1,4 +1,4 @@
-d# Gardens v2
+# Gardens v2
 
 > Gardens is a **coordination platform**
 > that fosters **vibrant ecosystems of shared wealth**

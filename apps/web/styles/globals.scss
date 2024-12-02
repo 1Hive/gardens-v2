@@ -1,0 +1,230 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-primary: #82c837;
+  --color-secondary: #4dafd6;
+  --color-surface: #fcfff7;
+  --color-accent: #ffe236;
+  --color-red: #dc3030;
+  --border-neutral: #d5d5d5;
+  --border-hover: #ff9500;
+  --base-orange: #fff4e6;
+  /* add figma UI system color pallette light */
+  --color-grey-900: #000000;
+  --color-grey-500: #8c8c8c;
+  --color-grey-400: #acacac;
+  --color-grey-200: #eeeeee;
+  --color-grey-100: #f1f1f1;
+  --color-grey-0: #ffffff;
+  --color-green-600: #3e920f;
+  --color-green-500: #65ad18;
+  --color-green-50: #c7eb9a;
+  --color-green-25: #e2f5cb;
+  --color-red-600: #d03a3a;
+  --color-red-500: #eb4848;
+  --color-red-100: #ffcfcf;
+  --color-orange-500: #ff9500;
+  --color-orange-50: #fff4e6;
+  --color-cyan-500: #2baac7;
+  --color-cyan-50: #e5f7fa;
+
+  --tooltip-color: #8c8c8c;
+  --tooltip-text-color: #ffffff;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-background);
+  color: var(--color-grey-900);
+  line-height: 1.15;
+}
+
+h1 {
+  margin-bottom: 1rem;
+  margin-top: 0.5rem;
+  font-family: var(--font-chakra);
+  font-size: 52px;
+  font-weight: 700;
+  line-height: 56px;
+  text-align: left;
+
+  /* @media only screen and (max-width: 680px) {
+    font-size: 2.5rem;
+  } */
+}
+
+h2 {
+  font-family: var(--font-chakra);
+  font-size: 36px;
+  font-weight: 600;
+  line-height: 46px;
+  text-align: left;
+
+  /* @media only screen and (max-width: 680px) {
+    font-size: 2rem;
+  } */
+}
+
+h3,
+h4 {
+  font-family: var(--font-inter);
+  font-size: 24px;
+  font-weight: 500;
+  line-height: auto;
+  text-align: left;
+
+  /* @media only screen and (max-width: 680px) {
+    font-size: 1.75rem;
+  } */
+}
+
+/* subtitle 1 */
+h5,
+.subtitle {
+  font-family: var(--font-inter);
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 22px;
+  text-align: left;
+}
+
+/* subtitle 2 */
+h6,
+.subtitle2 {
+  font-family: var(--font-inter);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 20px;
+  text-align: left;
+}
+
+p {
+  font-family: var(--font-inter);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+  text-align: left;
+
+  /* @media only screen and (max-width: 680px) {
+    font-size: 1rem;
+  } */
+}
+
+span {
+  font-family: var(--font-inter);
+  font-size: 1rem;
+  font-weight: 400;
+}
+
+button {
+  font-family: var(--font-inter);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 18.4px;
+  text-align: left;
+}
+
+caption {
+  font-family: var(--font-inter);
+  font-size: 12px;
+  font-weight: 300;
+  line-height: 20px;
+  letter-spacing: 0.5px;
+  text-align: left;
+}
+
+.border2 {
+  border: 2px solid black;
+}
+
+.border1 {
+  border: 1px solid var(--border-neutral);
+}
+
+.section-layout {
+  @apply border1 relative rounded-3xl bg-neutral p-8;
+}
+
+.page-layout {
+  @apply flex w-full max-w-6xl flex-col gap-10 p-4 md:p-8 overflow-x-hidden;
+}
+
+.tooltip {
+  --tooltip-color: #1f2937;
+  --tooltip-text-color: #ffffff;
+}
+
+.tooltip:before {
+  white-space: pre-line;
+  text-align: left;
+}
+
+.banner {
+  @apply flex items-center gap-4 rounded-[20px] bg-secondary-soft p-4;
+}
+
+/* Hide number input arrows */
+.hide-input-arrows::-webkit-outer-spin-button,
+.hide-input-arrows::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.hide-input-arrows {
+  -moz-appearance: textfield; /* Firefox */
+}
+
+.no-icon .Toastify__toast-icon {
+  display: none;
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Adreth */
+.icon-only img {
+  width: 2rem;
+  height: 2rem;
+  & + span {
+    display: none;
+  }
+}
+
+// Markdown overrides
+
+.md-editor-preview,
+.wmde-markdown {
+  ol {
+    list-style-type: decimal !important;
+  }
+
+  ul {
+    list-style-type: unset !important;
+  }
+}
+
+.cm-gutters {
+  display: none !important;
+}
+
+/* input */
+dialog * {
+  scrollbar-width: thin;
+}

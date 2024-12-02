@@ -1,21 +1,12 @@
 "use client";
 
 import React from "react";
-import { usePathname } from "next/navigation";
-import { Banner } from "@/assets";
 import { GoBackButton, NavBar } from "@/components";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
   return (
-    <div
-      className="bg-fixed bg-cover min-h-screen"
-      style={{
-        backgroundImage:
-          pathname === "/gardens" ? `url('${Banner.src}')` : undefined,
-      }}
-    >
+    <div className="bg-fixed bg-cover min-h-screen">
       <NavBar />
       <main className="mt-10 flex flex-col items-center">
         <nav className="w-full max-w-6xl">
@@ -26,7 +17,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </nav>
         {children}
       </main>
-      {/* footer */}
     </div>
   );
 }

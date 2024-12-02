@@ -7,6 +7,7 @@ export const QUERY_PARAMS = {
     covenant: "covenant",
   },
   poolPage: {
-    newPropsoal: "newProposal",
+    newProposal: "newProposal",
+    allocationView: "allocationView",
   },
 } as const;

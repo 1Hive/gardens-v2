@@ -3,6 +3,7 @@ import React from "react";
 import { toast } from "react-toastify";
 import { useAccount } from "wagmi";
 import { Button } from "@/components/";
+import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 
 interface SubmitPassportResponse {
   data: any;
@@ -11,11 +12,12 @@ interface SubmitPassportResponse {
 
 export function SubmitPassport() {
   const { address: connectedAccount } = useAccount();
+  const chainFromPath = useChainIdFromPath();
 
   const submitPassport = async (
     address: string,
   ): Promise<SubmitPassportResponse> => {
-    const SUBMIT_SIGNED_PASSPORT_URI = "/api/passport/submitPassport";
+    const SUBMIT_SIGNED_PASSPORT_URI = "/api/passport/submit-passport";
 
     try {
       const response = await fetch(SUBMIT_SIGNED_PASSPORT_URI, {
@@ -47,7 +49,7 @@ export function SubmitPassport() {
   };
 
   const writeScorer = async (address: string, score: string): Promise<any> => {
-    const WRITE_SCORER_URI = "/api/passport-oracle/writeScore";
+    const WRITE_SCORER_URI = `/api/passport-oracle/writeScore/${chainFromPath}`;
 
     try {
       const response = await fetch(WRITE_SCORER_URI, {

@@ -12,8 +12,16 @@ contract CollateralVault is ReentrancyGuard, ICollateralVault {
     address public owner;
 
     event CollateralDeposited(uint256 proposalId, address indexed user, uint256 amount);
-    event CollateralWithdrawn(uint256 proposalId, address indexed user, uint256 amount);
-    event CollateralWithdrawn(uint256 proposalId, address indexed fromUser, address indexed toUser, uint256 amount);
+    event CollateralWithdrawn(
+        uint256 proposalId, address indexed user, uint256 amount, bool isInsufficientAvailableAmount
+    );
+    event CollateralWithdrawn(
+        uint256 proposalId,
+        address indexed fromUser,
+        address indexed toUser,
+        uint256 amount,
+        bool isInsufficientAvailableAmount
+    );
 
     error AlreadyInitialized();
     error NotAuthorized();
@@ -48,13 +56,18 @@ contract CollateralVault is ReentrancyGuard, ICollateralVault {
         // if (_amount == 0) {
         //     revert AmountCanNotBeZero();
         // }
+        bool isInsufficientAvailableAmount = false;
         if (_amount > availableAmount) {
-            revert InsufficientCollateral(_amount, availableAmount);
+            // revert InsufficientCollateral(_amount, availableAmount);
+            // Goss: When here, its most likely a bug from CVStrategy,
+            // so we should just return the available amount rather than blocking it forever
+            _amount = availableAmount;
+            isInsufficientAvailableAmount = true;
         }
         proposalCollateral[_proposalId][_user] -= _amount;
         (bool success,) = _user.call{value: _amount}("");
         require(success, "Transfer failed");
-        emit CollateralWithdrawn(_proposalId, _user, _amount);
+        emit CollateralWithdrawn(_proposalId, _user, _amount, isInsufficientAvailableAmount);
     }
 
     function withdrawCollateralFor(uint256 _proposalId, address _fromUser, address _toUser, uint256 _amount)
@@ -66,12 +79,17 @@ contract CollateralVault is ReentrancyGuard, ICollateralVault {
         // if (_amount == 0) {
         //     revert AmountCanNotBeZero();
         // }
+        bool isInsufficientAvailableAmount = false;
         if (_amount > availableAmount) {
-            revert InsufficientCollateral(_amount, availableAmount);
+            // revert InsufficientCollateral(_amount, availableAmount);
+            // Goss: When here, its most likely a bug from CVStrategy,
+            // so we should just return the available amount rather than blocking it forever
+            _amount = availableAmount;
+            isInsufficientAvailableAmount = true;
         }
         proposalCollateral[_proposalId][_fromUser] -= _amount;
         (bool success,) = _toUser.call{value: _amount}("");
         require(success, "Transfer failed");
-        emit CollateralWithdrawn(_proposalId, _fromUser, _toUser, _amount);
+        emit CollateralWithdrawn(_proposalId, _fromUser, _toUser, _amount, isInsufficientAvailableAmount);
     }
 }

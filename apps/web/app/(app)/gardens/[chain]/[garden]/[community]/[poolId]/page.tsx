@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Address } from "viem";
 import { useToken } from "wagmi";
 import {
@@ -12,11 +12,10 @@ import { PoolMetrics, Proposals } from "@/components";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import PoolHeader from "@/components/PoolHeader";
 import { QUERY_PARAMS } from "@/constants/query-params";
-import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
+import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { PoolTypes } from "@/types";
-import { CV_SCALE_PRECISION } from "@/utils/numbers";
 
 export const dynamic = "force-dynamic";
 
@@ -28,10 +27,11 @@ export default function Page({
   params: { chain: string; poolId: number; garden: string };
 }) {
   const searchParams = useCollectQueryParams();
+  const proposalSectionRef = useRef<HTMLDivElement>(null);
 
   const { data, refetch, error } = useSubgraphQuery<getPoolDataQuery>({
     query: getPoolDataDocument,
-    variables: { poolId: poolId, garden: garden },
+    variables: { poolId: poolId, garden: garden.toLowerCase() },
     changeScope: [
       {
         topic: "pool",
@@ -42,13 +42,27 @@ export default function Page({
         containerId: poolId,
         type: "update",
       },
+      {
+        topic: "member",
+        function: "activatePoints",
+        type: "update",
+        containerId: poolId,
+      },
+      {
+        topic: "member",
+        function: "deactivatePoints",
+        type: "update",
+        containerId: poolId,
+      },
     ],
   });
   const strategyObj = data?.cvstrategies?.[0];
   const poolTokenAddr = strategyObj?.token as Address;
+  const proposalType = strategyObj?.config.proposalType;
   const { data: poolToken } = useToken({
     address: poolTokenAddr,
-    enabled: !!poolTokenAddr,
+    enabled: !!poolTokenAddr && PoolTypes[proposalType] === "funding",
+    chainId: +chain,
   });
 
   useEffect(() => {
@@ -73,19 +87,42 @@ export default function Page({
   }, [strategyObj?.config, strategyObj?.config, strategyObj?.poolAmount]);
 
   useEffect(() => {
-    const newProposalId = searchParams[QUERY_PARAMS.poolPage.newPropsoal];
-    if (
-      newProposalId &&
-      data &&
-      !strategyObj?.proposals.some((c) => c.proposalNumber === newProposalId)
-    ) {
+    const newProposalId = searchParams[QUERY_PARAMS.poolPage.newProposal];
+    if (!strategyObj) {
+      return;
+    }
+    const fetchedProposals = strategyObj?.proposals.map((p) =>
+      p.proposalNumber.toString(),
+    );
+    if (newProposalId && !fetchedProposals.includes(newProposalId)) {
+      console.debug("Pool: New proposal not yet fetched, refetching...", {
+        newProposalId,
+        fetchedProposals,
+      });
       refetch();
     }
   }, [searchParams, strategyObj?.proposals]);
 
   const tokenGarden = data?.tokenGarden;
 
-  if (!tokenGarden || !poolToken) {
+  const maxAmount = strategyObj?.config?.maxAmount ?? 0;
+
+  useEffect(() => {
+    if (
+      searchParams[QUERY_PARAMS.poolPage.allocationView] !== undefined &&
+      proposalSectionRef.current
+    ) {
+      const elementTop =
+        proposalSectionRef.current.getBoundingClientRect().top + window.scrollY;
+      window.scrollTo({
+        top: elementTop - 130,
+        behavior: "smooth",
+      });
+    }
+    // setAllocationView(searchParams[QUERY_PARAMS.poolPage.allocationView]);
+  }, [proposalSectionRef.current, searchParams]);
+
+  if (!tokenGarden || (!poolToken && PoolTypes[proposalType] === "funding")) {
     return (
       <div className="mt-96">
         <LoadingSpinner />
@@ -97,13 +134,9 @@ export default function Page({
     return <div className="mt-52 text-center">Pool {poolId} not found</div>;
   }
 
-  const pointSystem = data.cvstrategies?.[0].config.pointSystem;
   const communityAddress = strategyObj.registryCommunity.id as Address;
   const alloInfo = data.allos[0];
-  const proposalType = strategyObj.config.proposalType;
   const poolAmount = strategyObj.poolAmount as number;
-  const spendingLimitPct =
-    (Number(strategyObj.config.maxRatio || 0) / CV_SCALE_PRECISION) * 100;
 
   const isEnabled = data.cvstrategies?.[0]?.isEnabled as boolean;
 
@@ -117,14 +150,11 @@ export default function Page({
         poolId={poolId}
         ipfsResult={ipfsResult}
         isEnabled={isEnabled}
-        pointSystem={pointSystem}
-        chainId={chain}
-        proposalType={proposalType}
-        spendingLimitPct={spendingLimitPct}
+        maxAmount={maxAmount}
       />
       {isEnabled && (
         <>
-          {PoolTypes[proposalType] !== "signaling" && (
+          {poolToken && PoolTypes[proposalType] !== "signaling" && (
             <PoolMetrics
               poolToken={poolToken}
               alloInfo={alloInfo}
@@ -134,14 +164,16 @@ export default function Page({
               chainId={chain}
             />
           )}
-          <Proposals
-            poolToken={poolToken}
-            strategy={strategyObj}
-            alloInfo={alloInfo}
-            communityAddress={communityAddress}
-            createProposalUrl={`/gardens/${chain}/${garden}/${communityAddress}/${poolId}/create-proposal`}
-            proposalType={proposalType}
-          />
+          <section ref={proposalSectionRef}>
+            <Proposals
+              poolToken={poolToken}
+              strategy={strategyObj}
+              alloInfo={alloInfo}
+              communityAddress={communityAddress}
+              createProposalUrl={`/gardens/${chain}/${garden}/${communityAddress}/${poolId}/create-proposal`}
+              proposalType={proposalType}
+            />
+          </section>
         </>
       )}
     </div>

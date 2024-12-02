@@ -6,7 +6,7 @@ import {
     RegistryCommunityInitializeParamsV0_0,
     RegistryCommunityV0_0
 } from "../RegistryCommunity/RegistryCommunityV0_0.sol";
-import {RegistryCommunityV0_1} from "../RegistryCommunity/RegistryCommunityV0_1.sol";
+import {RegistryCommunityV0_0} from "../RegistryCommunity/RegistryCommunityV0_0.sol";
 
 /// @custom:oz-upgrades-from RegistryFactoryV0_0
 contract RegistryFactoryV0_1 is RegistryFactoryV0_0 {
@@ -28,7 +28,7 @@ contract RegistryFactoryV0_1 is RegistryFactoryV0_0 {
             )
         );
 
-        RegistryCommunityV0_1 registryCommunity = RegistryCommunityV0_1(payable(address(proxy)));
+        RegistryCommunityV0_0 registryCommunity = RegistryCommunityV0_0(payable(address(proxy)));
 
         // registryCommunity.initialize(params);
         communityToInfo[address(registryCommunity)].valid = true;

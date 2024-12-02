@@ -159,7 +159,7 @@ export async function getTitlesFromUrlSegments(
       chainId: parseInt(segments[1]),
     };
     const tokenData = await fetchToken(tokenArgs)
-      .then((token) => token?.symbol)
+      .then((token) => token?.name)
       .catch(() => {
         console.error("Error fetching token from address: ", tokenArgs);
         toast.error("Token not found");

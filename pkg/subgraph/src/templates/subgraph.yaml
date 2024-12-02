@@ -9,10 +9,10 @@ dataSources:
 {{/dataSources}}
 templates:
   - kind: ethereum/contract
-    name: RegistryCommunityV0_1
+    name: RegistryCommunityV0_0
     network: {{network}}
     source:
-      abi: RegistryCommunityV0_1
+      abi: RegistryCommunityV0_0
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -24,12 +24,12 @@ templates:
         - TokenGarden
         - Member
       abis:
-        - name: RegistryCommunityV0_1
-          file: ../contracts/out/RegistryCommunityV0_1.sol/RegistryCommunityV0_1.json
+        - name: RegistryCommunityV0_0
+          file: ../contracts/out/RegistryCommunityV0_0.sol/RegistryCommunityV0_0.json
         - name: ERC20
           file: ../contracts/out/ERC20.sol/ERC20.json
-        - name: CVStrategyV0_1
-          file: ../contracts/out/CVStrategyV0_1.sol/CVStrategyV0_1.json
+        - name: CVStrategyV0_0
+          file: ../contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json
         - name: RegistryFactoryV0_0
           file: ../contracts/out/RegistryFactoryV0_0.sol/RegistryFactoryV0_0.json
      
@@ -38,14 +38,16 @@ templates:
           handler: handleInitialized
         - event: MemberRegistered(address,uint256)
           handler: handleMemberRegistered
+        - event: MemberRegisteredWithCovenant(address,uint256,string)
+          handler: handleMemberRegisteredWithCovenant
         - event: MemberUnregistered(address,uint256)
           handler: handleMemberUnregistered
         - event: PoolCreated(uint256,address,address,address,(uint256,string))
           handler: handlePoolCreated
         - event: MemberKicked(address,address,uint256)
           handler: handleMemberKicked
-        # - event: CommunityFeeUpdated(uint256)
-        #   handler: handleCommunityFeeUpdated
+        - event: CommunityFeeUpdated(uint256)
+          handler: handleCommunityFeeUpdated
         # - event: ProtocolFeeUpdated(uint256)
         #   handler: handleProtocolFeeUpdated
         - event: StrategyAdded(address)
@@ -60,21 +62,29 @@ templates:
           handler: handleMemberPowerDecreased
         - event: MemberPowerIncreased(address,uint256)
           handler: handleMemberPowerIncreased
-        # - event: BasisStakedAmountSet(uint256)
-          # handler: handleBasisStakedAmountSet
-        # - event: CouncilSafeSet(address)
-        #   handler: handleCouncilSafeSet
-        # - event: CouncilSafeChangeStarted(address,address)
-        #   handler: handleCouncilSafeChangeStarted
-        # - event: AlloSet(address)
-        #   handler: handleAlloSet
+        - event: BasisStakedAmountUpdated(uint256)
+          handler: handleBasisStakedAmountUpdated
+        - event: CouncilSafeUpdated(address)
+          handler: handleCouncilSafeUpdated
+        - event: CouncilSafeChangeStarted(address,address)
+          handler: handleCouncilSafeChangeStarted
+        - event: KickEnabledUpdated(bool)
+          handler: handleKickEnabledUpdated
+        - event: CovenantIpfsHashUpdated(string)
+          handler: handleCovenantIpfsHashUpdated
+        - event: CommunityNameUpdated(string)
+          handler: handleCommunityNameUpdated
+        - event: FeeReceiverChanged(address)
+          handler: handleFeeReceiverChanged
+        - event: PoolRejected(address)
+          handler: handlePoolRejected
       file: ./src/mappings/registry-community.ts
 
   - kind: ethereum/contract
-    name: CVStrategyV0_1
+    name: CVStrategyV0_0
     network: {{network}}
     source:
-      abi: CVStrategyV0_1
+      abi: CVStrategyV0_0
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -85,16 +95,16 @@ templates:
         - CVProposal
         - Allo
       abis:
-        - name: CVStrategyV0_1
-          file: ../contracts/out/CVStrategyV0_1.sol/CVStrategyV0_1.json
-        - name: RegistryCommunityV0_1
-          file: ../contracts/out/RegistryCommunityV0_1.sol/RegistryCommunityV0_1.json
+        - name: CVStrategyV0_0
+          file: ../contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json
+        - name: RegistryCommunityV0_0
+          file: ../contracts/out/RegistryCommunityV0_0.sol/RegistryCommunityV0_0.json
         - name: Allo
           file: ../contracts/out/Allo.sol/Allo.json
       eventHandlers:
         - event: InitializedCV(uint256,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address))
           handler: handleInitialized
-        - event: InitializedCV2(uint256,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address,address[]))
+        - event: InitializedCV2(uint256,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address,uint256,address[]))
           handler: handleInitializedV2
         - event: ProposalCreated(uint256,uint256)
           handler: handleProposalCreated
@@ -124,8 +134,34 @@ templates:
           handler: handleAllowlistMembersAdded
         - event: AllowlistMembersRemoved(uint256,address[])
           handler: handleAllowlistMembersRemoved
+        - event: SybilScorerUpdated(address)
+          handler: handleSybilScorerUpdated
  
       file: ./src/mappings/cv-strategy.ts
+
+  - kind: ethereum/contract
+    name: CollateralVault
+    network: {{network}}
+    source:
+      abi: CollateralVault
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - CollateralVault
+        - CollateralVaultDeposit
+      abis:
+        - name: CollateralVault
+          file: ../contracts/out/CollateralVault.sol/CollateralVault.json
+      eventHandlers:
+        - event: CollateralDeposited(uint256,indexed address,uint256)
+          handler: handleCollateralDeposited
+        - event: CollateralWithdrawn(uint256,indexed address,indexed address,uint256,bool)
+          handler: handleCollateralWithdrawnFor
+        - event: CollateralWithdrawn(uint256,indexed address,uint256,bool)
+          handler: handleCollateralWithdrawn
+      file: ./src/mappings/cv-strategy.ts  
   
   - name: ProposalDisputeMetadata
     kind: file/ipfs
@@ -137,8 +173,8 @@ templates:
       entities:
         - ProposalDisputeMetadata
       abis:
-        - name: CVStrategyV0_1
-          file: ../contracts/out/CVStrategyV0_1.sol/CVStrategyV0_1.json
+        - name: CVStrategyV0_0
+          file: ../contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json
   
   - name: ProposalMetadata
     kind: file/ipfs
@@ -150,5 +186,5 @@ templates:
       entities:
         - ProposalMetadata
       abis:
-        - name: CVStrategyV0_1
-          file: ../contracts/out/CVStrategyV0_1.sol/CVStrategyV0_1.json
+        - name: CVStrategyV0_0
+          file: ../contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json

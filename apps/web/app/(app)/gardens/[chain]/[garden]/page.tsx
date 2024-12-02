@@ -26,7 +26,7 @@ import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { TokenGardenFaucet } from "@/components/TokenGardenFaucet";
 import { isProd } from "@/configs/isProd";
 import { QUERY_PARAMS } from "@/constants/query-params";
-import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
+import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 
@@ -80,15 +80,19 @@ export default function Page({
   useEffect(() => {
     const newCommunityId =
       searchParams[QUERY_PARAMS.gardenPage.newCommunity]?.toLowerCase();
-
+    const fetchedCommunities = communities.map((c) => c.id.toLowerCase());
     if (
       newCommunityId &&
       result &&
-      !communities.some((c) => c.id.toLowerCase() === newCommunityId)
+      !fetchedCommunities.includes(newCommunityId)
     ) {
+      console.debug("Garden: New pool not yet fetched, refetching...", {
+        newCommunityId,
+        fetchedCommunities,
+      });
       refetch();
     }
-  }, [searchParams, result]);
+  }, [searchParams, communities]);
 
   if (!result) {
     return (
@@ -126,7 +130,7 @@ export default function Page({
             <div className="mb-2 flex flex-col">
               <div className="flex items-center gap-4">
                 <h2>{tokenGarden?.name}</h2>{" "}
-                <TokenLabel chainId={chain} classNames="bg-neutral-soft" />
+                <TokenLabel chainId={chain} className="bg-neutral-soft" />
               </div>
               <EthAddress
                 icon={false}
@@ -166,13 +170,14 @@ export default function Page({
           <div className="relative flex h-[219px] justify-center">
             <Link
               href={`/gardens/${chain}/${garden}/create-community`}
-              className="mt-6"
+              className="mt-6 z-10"
             >
               <Button
                 btnStyle="filled"
                 disabled={!isConnected || missmatchUrl}
                 tooltip={tooltipMessage}
                 icon={<PlusIcon height={24} width={24} />}
+                className="shadow-[0_9px_15px_-8px_rgba(0,0,0,0.75)]"
               >
                 Create a community
               </Button>

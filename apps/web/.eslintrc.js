@@ -79,7 +79,7 @@ module.exports = {
     "no-unused-expressions": "error",
     "no-unsafe-optional-chaining": "error",
     "import/extensions": "off",
-    "@typescript-eslint/quotes": ["error", "double"],
+    "@typescript-eslint/quotes": ["error", "double", { avoidEscape: true }],
     "@typescript-eslint/no-use-before-define": "off",
     "jsx-a11y/no-static-element-interactions": "off",
     "react/no-array-index-key": "warn",
