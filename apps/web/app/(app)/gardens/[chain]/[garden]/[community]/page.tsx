@@ -7,7 +7,7 @@ import {
   RectangleGroupIcon,
   UserGroupIcon,
 } from "@heroicons/react/24/outline";
-import { Dnum } from "dnum";
+import { Dnum, multiply } from "dnum";
 import Image from "next/image";
 import Link from "next/link";
 import { Address } from "viem";
@@ -41,7 +41,6 @@ import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { PoolTypes } from "@/types";
 import { fetchIpfs } from "@/utils/ipfsUtils";
 import {
-  dn,
   parseToken,
   SCALE_PRECISION,
   SCALE_PRECISION_DECIMALS,
@@ -214,17 +213,17 @@ export default function Page({
       const membership = [
         BigInt(registerStakeAmount),
         Number(tokenGarden!.decimals),
-      ] as dn.Dnum;
+      ] as Dnum;
       const feePercentage = [
         BigInt(communityFee),
         SCALE_PRECISION_DECIMALS, // adding 2 decimals because 1% == 10.000 == 1e4
-      ] as dn.Dnum;
+      ] as Dnum;
 
-      return dn.multiply(membership, feePercentage);
+      return multiply(membership, feePercentage);
     } catch (err) {
       console.error(err);
     }
-    return [0n, 0] as dn.Dnum;
+    return [0n, 0] as Dnum;
   };
 
   const registrationAmount = [
