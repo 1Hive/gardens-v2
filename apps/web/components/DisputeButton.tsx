@@ -146,7 +146,7 @@ export const DisputeButton: FC<Props> = ({
   const { data: isTribunalMember } = useContractRead({
     address: arbitrationConfig.tribunalSafe as Address,
     abi: safeABI,
-    functionName: "isOwner",
+    functionName: "isOwner" as any,
     chainId: Number(chainId),
     enabled: !!address,
     args: [address as Address],
@@ -473,7 +473,7 @@ export const DisputeButton: FC<Props> = ({
             btnStyle="outline"
             onClick={() => setIsModalOpened(true)}
           >
-            {isDisputed ?? isProposalEnded ? "Open dispute" : "Dispute"}
+            {(isDisputed ?? isProposalEnded) ? "Open dispute" : "Dispute"}
           </Button>
           <Modal
             title={`Disputed Proposal: ${proposalData.title} #${proposalData.proposalNumber}`}
