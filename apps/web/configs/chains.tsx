@@ -227,6 +227,8 @@ export const chainConfigMap: {
   // },
 };
 
+console.debug("ChainConfigMap", chainConfigMap);
+
 export function getConfigByChain(chainId: ChainId): ChainData | undefined {
   if (chainId in chainConfigMap) {
     return chainConfigMap[chainId];
