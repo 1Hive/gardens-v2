@@ -143,7 +143,7 @@ export const chainConfigMap: {
     confirmations: 7, // 7
     rpcUrl: process.env.RPC_URL_ARBITRUM!,
     ...getSubgraphUrls(
-      "4vsznmRkUGm9DZFBwvC6PDvGPVfVLQcUUr5ExdTNZiUc",
+      "9ejruFicuLT6hfuXNTnS8UCwxTWrHz4uinesdZu1dKmk",
       "gardens-v2---arbitrum",
       SUBGRAPH_PRODNET_VERSION,
     ),
@@ -162,7 +162,7 @@ export const chainConfigMap: {
     confirmations: 2, // 2
     rpcUrl: process.env.RPC_URL_OPTIMISM!,
     ...getSubgraphUrls(
-      "4vsznmRkUGm9DZFBwvC6PDvGPVfVLQcUUr5ExdTNZiUc",
+      "FmcVWeR9xdJyjM53DPuCvEdH24fSXARdq4K5K8EZRZVp",
       "gardens-v2---optimism",
       SUBGRAPH_PRODNET_VERSION,
     ),
