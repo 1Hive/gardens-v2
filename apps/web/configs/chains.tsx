@@ -65,7 +65,7 @@ const getSubgraphUrls = (
   subgraphSlug: string,
   subgraphVersion: string,
 ) => {
-  const versionedEndpoint = `https://api.studio.thegraph.com/query/70985/${subgraphSlug}`;
+  const versionedEndpoint = `https://api.studio.thegraph.com/query/40931/${subgraphSlug}`;
   return {
     publishedSubgraphUrl:
       process.env.NEXT_PUBLIC_SUBGRAPH_KEY ?
