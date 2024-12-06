@@ -230,6 +230,7 @@ export type ArbitrableConfig_orderBy =
   | 'strategy__totalEffectiveActivePoints'
   | 'strategy__isEnabled'
   | 'strategy__token'
+  | 'strategy__archived'
   | 'arbitrator'
   | 'tribunalSafe'
   | 'challengerCollateralAmount'
@@ -534,6 +535,7 @@ export type CVProposal_orderBy =
   | 'strategy__totalEffectiveActivePoints'
   | 'strategy__isEnabled'
   | 'strategy__token'
+  | 'strategy__archived'
   | 'beneficiary'
   | 'requestedAmount'
   | 'requestedToken'
@@ -570,6 +572,7 @@ export type CVStrategy = {
   isEnabled: Scalars['Boolean']['output'];
   token: Scalars['String']['output'];
   sybilScorer?: Maybe<PassportScorer>;
+  archived: Scalars['Boolean']['output'];
 };
 
 
@@ -701,6 +704,7 @@ export type CVStrategyConfig_orderBy =
   | 'strategy__totalEffectiveActivePoints'
   | 'strategy__isEnabled'
   | 'strategy__token'
+  | 'strategy__archived'
   | 'D'
   | 'decay'
   | 'maxRatio'
@@ -867,6 +871,10 @@ export type CVStrategy_filter = {
   sybilScorer_not_ends_with?: InputMaybe<Scalars['String']['input']>;
   sybilScorer_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
   sybilScorer_?: InputMaybe<PassportScorer_filter>;
+  archived?: InputMaybe<Scalars['Boolean']['input']>;
+  archived_not?: InputMaybe<Scalars['Boolean']['input']>;
+  archived_in?: InputMaybe<Array<Scalars['Boolean']['input']>>;
+  archived_not_in?: InputMaybe<Array<Scalars['Boolean']['input']>>;
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
   and?: InputMaybe<Array<InputMaybe<CVStrategy_filter>>>;
@@ -912,7 +920,8 @@ export type CVStrategy_orderBy =
   | 'isEnabled'
   | 'token'
   | 'sybilScorer'
-  | 'sybilScorer__id';
+  | 'sybilScorer__id'
+  | 'archived';
 
 export type CollateralVault = {
   id: Scalars['ID']['output'];
@@ -1087,6 +1096,7 @@ export type CollateralVault_orderBy =
   | 'strategy__totalEffectiveActivePoints'
   | 'strategy__isEnabled'
   | 'strategy__token'
+  | 'strategy__archived'
   | 'collaterals';
 
 export type Member = {
@@ -1352,6 +1362,7 @@ export type MemberStrategy_orderBy =
   | 'strategy__totalEffectiveActivePoints'
   | 'strategy__isEnabled'
   | 'strategy__token'
+  | 'strategy__archived'
   | 'totalStakedPoints'
   | 'activatedPoints';
 
@@ -1539,6 +1550,7 @@ export type PassportStrategy_orderBy =
   | 'strategy__totalEffectiveActivePoints'
   | 'strategy__isEnabled'
   | 'strategy__token'
+  | 'strategy__archived'
   | 'threshold'
   | 'councilSafe'
   | 'active';
