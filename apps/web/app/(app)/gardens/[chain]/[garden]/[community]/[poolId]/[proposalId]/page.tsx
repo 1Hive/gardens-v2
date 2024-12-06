@@ -13,6 +13,8 @@ import { useAccount, useToken } from "wagmi";
 import {
   getProposalDataDocument,
   getProposalDataQuery,
+  getProposalSupportersQuery,
+  getProposalSupportersDocument,
   isMemberDocument,
   isMemberQuery,
 } from "#/subgraph/.graphclient";
@@ -74,6 +76,16 @@ export default function Page({
     },
   });
 
+  //query to get proposal supporters
+  const { data: supportersData } = useSubgraphQuery<getProposalSupportersQuery>(
+    {
+      query: getProposalSupportersDocument,
+      variables: {
+        proposalId: proposalId.toLowerCase(),
+      },
+    },
+  );
+
   //query to get member registry in community
   const { data: memberData } = useSubgraphQuery<isMemberQuery>({
     query: isMemberDocument,
@@ -89,6 +101,7 @@ export default function Page({
   //
 
   const proposalData = data?.cvproposal;
+  const proposalSupporters = supportersData?.members;
   const proposalIdNumber =
     proposalData?.proposalNumber ?
       BigInt(proposalData.proposalNumber)
@@ -106,6 +119,8 @@ export default function Page({
   const metadata = proposalData?.metadata ?? ipfsResult;
   const isProposerConnected =
     proposalData?.submitter === address?.toLowerCase();
+
+  console.log(proposalSupporters);
 
   const proposalType = proposalData?.strategy.config?.proposalType;
   const isSignalingType = PoolTypes[proposalType] === "signaling";
@@ -204,6 +219,7 @@ export default function Page({
 
   if (
     !proposalData ||
+    !supportersData ||
     !metadata ||
     proposalIdNumber == null ||
     updatedConviction == null
@@ -345,7 +361,7 @@ export default function Page({
                   }
                   disabled={currentConvictionPct < thresholdPct || !isConnected}
                   tooltip={
-                    tooltipMessage ?? currentConvictionPct < thresholdPct ?
+                    (tooltipMessage ?? currentConvictionPct < thresholdPct) ?
                       "Proposal not executable"
                     : undefined
                   }
