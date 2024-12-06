@@ -64,8 +64,9 @@ const getSubgraphUrls = (
   publishedId: string,
   subgraphSlug: string,
   subgraphVersion: string,
+  accountNumber: number = 40931,
 ) => {
-  const versionedEndpoint = `https://api.studio.thegraph.com/query/40931/${subgraphSlug}`;
+  const versionedEndpoint = `https://api.studio.thegraph.com/query/${accountNumber}/${subgraphSlug}`;
   return {
     publishedSubgraphUrl:
       process.env.NEXT_PUBLIC_SUBGRAPH_KEY ?
@@ -104,6 +105,7 @@ export const chainConfigMap: {
       "BfZYwhZ1rTb22Nah1u6YyXtUtAdgGNtZhW1EBb4mFzAU",
       "gardens-v2---arbitrum-sepolia",
       SUBGRAPH_TESTNET_VERSION,
+      70985,
     ),
     globalTribunal: "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
