@@ -472,7 +472,7 @@ export function Proposals({
                         <AdjustmentsHorizontalIcon height={24} width={24} />
                       }
                       onClick={() => setAllocationView((prev) => !prev)}
-                      disabled={disableManSupportButton || !isAllowed}
+                      disabled={!isConnected || missmatchUrl || !isAllowed}
                       tooltip={tooltipMessage}
                     >
                       Manage support
@@ -582,13 +582,7 @@ export function Proposals({
                 <Button
                   icon={<PlusIcon height={24} width={24} />}
                   disabled={!isConnected || missmatchUrl || !isMemberCommunity}
-                  tooltip={
-                    isConnected ?
-                      isMemberCommunity ?
-                        undefined
-                      : "Register to community first"
-                    : "Connect wallet first"
-                  }
+                  tooltip={tooltipMessage}
                 >
                   Create a proposal
                 </Button>
