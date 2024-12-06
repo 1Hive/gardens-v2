@@ -49,7 +49,7 @@ export type ProposalCardProps = {
   poolToken?: FetchTokenResult;
   isAllocationView: boolean;
   memberActivatedPoints: bigint;
-  memberPoolWeight: number;
+  memberPoolWeight?: number;
   executeDisabled: boolean;
   tokenDecimals: number;
   alloInfo: Allo;
