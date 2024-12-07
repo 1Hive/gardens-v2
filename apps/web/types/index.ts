@@ -9,7 +9,7 @@ export const PoolTypes: Record<string, "signaling" | "funding" | "streaming"> =
 
 export const PointSystems: Record<
   string,
-  "fixed" | "capped" | "capped" | "unlimited" | "quadratic"
+  "fixed" | "capped" | "unlimited" | "quadratic"
 > = {
   0: "fixed",
   1: "capped",

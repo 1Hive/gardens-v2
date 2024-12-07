@@ -87,8 +87,9 @@ contract CVStrategyHelpers is Native, Accounts {
         ArbitrableConfig memory arbitrableConfig
     ) public returns (uint256 poolId) {
         // IAllo allo = IAllo(ALLO_PROXY_ADDRESS);
-        CVStrategyInitializeParamsV0_1 memory params =
-        getParams(registryCommunity, proposalType, pointSystem, pointConfig, arbitrableConfig, new address[](1), address(0), 0);
+        CVStrategyInitializeParamsV0_1 memory params = getParams(
+            registryCommunity, proposalType, pointSystem, pointConfig, arbitrableConfig, new address[](1), address(0), 0
+        );
 
         address[] memory _pool_managers = new address[](2);
         _pool_managers[0] = address(this);

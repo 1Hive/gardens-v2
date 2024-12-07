@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity ^0.8.19;
 
+import {ProxyOwnableUpgrader} from "./ProxyOwnableUpgrader.sol";
 import {ISybilScorer, Strategy} from "./ISybilScorer.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
-import {Initializable} from "openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol";
 import {CVStrategyV0_0} from "./CVStrategy/CVStrategyV0_0.sol";
 
 /// @custom:oz-upgrades-from PassportScorer
-contract PassportScorer is Initializable, UUPSUpgradeable, OwnableUpgradeable, ISybilScorer {
+contract PassportScorer is ISybilScorer, ProxyOwnableUpgrader {
     address public listManager;
 
     mapping(address => uint256) public userScores;
@@ -62,10 +62,10 @@ contract PassportScorer is Initializable, UUPSUpgradeable, OwnableUpgradeable, I
             revert ZeroAddress();
         }
     }
-    // slither-disable-next-line unprotected-upgrade
 
-    function initialize(address _listManager) public initializer {
-        __Ownable_init();
+    // slither-disable-next-line unprotected-upgrade
+    function initialize(address _listManager, address _owner) public initializer {
+        super.initialize(_owner);
         _revertZeroAddress(_listManager);
         listManager = _listManager;
     }
@@ -151,8 +151,6 @@ contract PassportScorer is Initializable, UUPSUpgradeable, OwnableUpgradeable, I
 
         return userScore >= strategy.threshold;
     }
-
-    function _authorizeUpgrade(address) internal override onlyOwner {}
 
     uint256[50] private __gap;
 }

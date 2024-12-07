@@ -180,7 +180,11 @@ query getCommunity($communityAddr: ID!, $tokenAddr: ID!) {
       id
       stakedTokens
     }
-    strategies(orderBy: poolId, orderDirection: desc) {
+    strategies(
+      orderBy: poolId
+      orderDirection: desc
+      where: { archived: false }
+    ) {
       id
       proposals {
         id
@@ -188,6 +192,7 @@ query getCommunity($communityAddr: ID!, $tokenAddr: ID!) {
       isEnabled
       poolAmount
       poolId
+      token
       metadata
       config {
         proposalType
@@ -239,6 +244,8 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
     poolId
     totalEffectiveActivePoints
     isEnabled
+    maxCVSupply
+    archived
     sybilScorer {
       id
     }
@@ -374,6 +381,7 @@ query getStrategyByPool($poolId: BigInt!) {
     poolId
     totalEffectiveActivePoints
     isEnabled
+    archived
     config {
       id
       proposalType

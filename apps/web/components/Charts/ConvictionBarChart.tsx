@@ -1,10 +1,13 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { ArrowPathIcon } from "@heroicons/react/24/solid";
 import type { EChartsOption, MarkLineComponentOption } from "echarts";
 import EChartsReact from "echarts-for-react";
 import { ChartWrapper } from "./ChartWrapper";
+import { Button } from "../Button";
 import { Countdown } from "../Countdown";
+import { Skeleton } from "../Skeleton";
 
 type ScenarioMapping = {
   condition: () => boolean;
@@ -19,7 +22,9 @@ type ConvictionBarChartProps = {
   proposalNumber: number;
   compact?: boolean;
   timeToPass?: number;
+  defaultChartMaxValue?: boolean;
   onReadyToExecute?: () => void;
+  refreshConviction?: () => Promise<any>;
 };
 
 export const ConvictionBarChart = ({
@@ -31,7 +36,10 @@ export const ConvictionBarChart = ({
   compact,
   timeToPass,
   onReadyToExecute,
+  defaultChartMaxValue = false,
+  refreshConviction,
 }: ConvictionBarChartProps) => {
+  const [convictionRefreshing, setConvictionRefreshing] = useState(true);
   const supportNeeded = (thresholdPct - proposalSupportPct).toFixed(2);
   const scenarioMappings: Record<string, ScenarioMapping> = {
     //1-SignalingType) Support > 0 && > Conviction
@@ -174,6 +182,20 @@ export const ConvictionBarChart = ({
     );
   }, [timeToPass, currentConvictionPct, proposalSupportPct, thresholdPct]);
 
+  useEffect(() => {
+    if (convictionRefreshing && currentConvictionPct != null) {
+      setConvictionRefreshing(false);
+    }
+  }, [convictionRefreshing, currentConvictionPct]);
+
+  const handleRefreshConviction = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setConvictionRefreshing(true);
+    await refreshConviction?.();
+    setConvictionRefreshing(false);
+  };
+
   const supportGtConv = proposalSupportPct > currentConvictionPct;
   const convEqSupport = proposalSupportPct === currentConvictionPct;
 
@@ -181,7 +203,7 @@ export const ConvictionBarChart = ({
     disabled: true,
   };
 
-  const borderRadius = [50, 0, 0, 50];
+  const borderRadius = defaultChartMaxValue ? [50, 50] : [50, 0, 0, 50];
 
   const markLine: MarkLineComponentOption = {
     symbol: "none",
@@ -213,6 +235,12 @@ export const ConvictionBarChart = ({
         },
         z: 50,
       };
+
+  const chartMaxValue =
+    defaultChartMaxValue ?
+      Math.max(currentConvictionPct, proposalSupportPct, thresholdPct)
+    : 100;
+
   const option: EChartsOption = {
     emphasis: emphasis,
     yAxis: {
@@ -228,12 +256,12 @@ export const ConvictionBarChart = ({
       axisLabel: {
         show: false,
         formatter: "{value}%",
-        fontSize: 10,
+        fontSize: 8,
       },
       axisLine: {
         show: false,
       },
-      max: 100,
+      max: chartMaxValue,
     },
     tooltip: {
       trigger: "axis",
@@ -273,7 +301,7 @@ export const ConvictionBarChart = ({
           show: !compact,
           position: "insideRight",
           color: "#191919",
-          fontSize: 10,
+          fontSize: 8,
           formatter: "{@score} %",
         },
         z:
@@ -294,7 +322,7 @@ export const ConvictionBarChart = ({
           show: !compact,
           position: "insideRight",
           color: "#FFFFFF",
-          fontSize: 10,
+          fontSize: 8,
           formatter: "{@score} %",
           width: 0,
         },
@@ -327,23 +355,37 @@ export const ConvictionBarChart = ({
     Number(supportNeeded) < 0 &&
     (currentConvictionPct ?? 0) < (thresholdPct ?? 0);
 
-  return (
+  const chart = (
     <>
-      {compact ?
+      <Skeleton isLoading={convictionRefreshing}>
         <EChartsReact
           option={option}
           style={{ height: "100%", width: "100%" }}
+          className="cursor-default"
         />
+      </Skeleton>
+      <Button
+        btnStyle="link"
+        onClick={handleRefreshConviction}
+        tooltip="Refresh conviction"
+        className="!p-3"
+      >
+        <ArrowPathIcon className="w-5" />
+      </Button>
+    </>
+  );
+
+  return (
+    <>
+      {compact ?
+        chart
       : <>
           <ChartWrapper
             message={isSignalingType ? undefined : message}
             growing={growing}
             isSignalingType={isSignalingType}
           >
-            <EChartsReact
-              option={option}
-              style={{ height: "100%", width: "100%" }}
-            />
+            {chart}
           </ChartWrapper>
           {scenarioMappings.supportLTConvictionLTThreshold &&
             proposalWillPass &&

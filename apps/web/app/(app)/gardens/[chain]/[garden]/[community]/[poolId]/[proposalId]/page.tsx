@@ -1,13 +1,20 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Hashicon } from "@emeraldpay/hashicon-react";
-import { InformationCircleIcon, UserIcon } from "@heroicons/react/24/outline";
+import {
+  AdjustmentsHorizontalIcon,
+  InformationCircleIcon,
+  UserIcon,
+} from "@heroicons/react/24/outline";
+import { usePathname, useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { Address, encodeAbiParameters, formatUnits } from "viem";
 import { useAccount, useToken } from "wagmi";
 import {
   getProposalDataDocument,
   getProposalDataQuery,
+  isMemberDocument,
+  isMemberQuery,
 } from "#/subgraph/.graphclient";
 import {
   Badge,
@@ -22,35 +29,42 @@ import { DisputeButton } from "@/components/DisputeButton";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import MarkdownWrapper from "@/components/MarkdownWrapper";
 import { Skeleton } from "@/components/Skeleton";
+import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useConvictionRead } from "@/hooks/useConvictionRead";
+import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { alloABI } from "@/src/generated";
 import { PoolTypes, ProposalStatus } from "@/types";
-import { abiWithErrors } from "@/utils/abi";
+
 import { useErrorDetails } from "@/utils/getErrorName";
 import { prettyTimestamp } from "@/utils/text";
 
 export default function Page({
-  params: { proposalId, garden, poolId },
+  params: { proposalId, garden, community: communityAddr, poolId },
 }: {
   params: {
     proposalId: string;
+    community: string;
     poolId: string;
     chain: string;
     garden: string;
   };
 }) {
-  const { isDisconnected, address } = useAccount();
+  const [convictionRefreshing, setConvictionRefreshing] = useState(true);
+  const router = useRouter();
+
+  const { address } = useAccount();
+
   const [, proposalNumber] = proposalId.split("-");
   const { data } = useSubgraphQuery<getProposalDataQuery>({
     query: getProposalDataDocument,
     variables: {
-      garden: garden,
-      proposalId: proposalId,
+      garden: garden.toLowerCase(),
+      proposalId: proposalId.toLowerCase(),
     },
     changeScope: {
       topic: "proposal",
@@ -60,11 +74,26 @@ export default function Page({
     },
   });
 
+  //query to get member registry in community
+  const { data: memberData } = useSubgraphQuery<isMemberQuery>({
+    query: isMemberDocument,
+    variables: {
+      me: address?.toLowerCase(),
+      comm: communityAddr?.toLowerCase(),
+    },
+    enabled: !!address,
+  });
+
+  const isMemberCommunity =
+    !!memberData?.member?.memberCommunity?.[0]?.isRegistered;
+  //
+
   const proposalData = data?.cvproposal;
   const proposalIdNumber =
     proposalData?.proposalNumber ?
       BigInt(proposalData.proposalNumber)
     : undefined;
+
   const poolTokenAddr = proposalData?.strategy.token as Address;
 
   const { publish } = usePubSubContext();
@@ -73,6 +102,7 @@ export default function Page({
     hash: proposalData?.metadataHash,
     enabled: !proposalData?.metadata,
   });
+  const path = usePathname();
   const metadata = proposalData?.metadata ?? ipfsResult;
   const isProposerConnected =
     proposalData?.submitter === address?.toLowerCase();
@@ -90,6 +120,19 @@ export default function Page({
     chainId,
   });
 
+  const disableManSupportBtn = useMemo<ConditionObject[]>(
+    () => [
+      {
+        condition: !isMemberCommunity,
+        message: "Join community to dispute",
+      },
+    ],
+    [address],
+  );
+
+  const { tooltipMessage, isConnected, missmatchUrl } =
+    useDisableButtons(disableManSupportBtn);
+
   const {
     currentConvictionPct,
     thresholdPct,
@@ -103,6 +146,12 @@ export default function Page({
     tokenData: data?.tokenGarden?.decimals,
     enabled: proposalData?.proposalNumber != null,
   });
+
+  useEffect(() => {
+    if (convictionRefreshing && currentConvictionPct != null) {
+      setConvictionRefreshing(false);
+    }
+  }, [convictionRefreshing, currentConvictionPct]);
 
   //encode proposal id to pass as argument to distribute function
   const encodedDataProposalId = (proposalId_: bigint) => {
@@ -121,7 +170,7 @@ export default function Page({
     isError: isErrorDistribute,
   } = useContractWriteWithConfirmations({
     address: data?.allos[0]?.id as Address,
-    abi: abiWithErrors(alloABI),
+    abi: alloABI,
     functionName: "distribute",
     contractName: "Allo",
     fallbackErrorMessage: "Error executing proposal, please report a bug.",
@@ -137,6 +186,15 @@ export default function Page({
     },
   });
 
+  const manageSupportClicked = () => {
+    const pathSegments = path.split("/");
+    pathSegments.pop();
+    if (pathSegments.length === 3) {
+      pathSegments.pop();
+    }
+    const newPath = pathSegments.join("/");
+    router.push(newPath + `?${QUERY_PARAMS.poolPage.allocationView}=true`);
+  };
   const distributeErrorName = useErrorDetails(errorDistribute);
   useEffect(() => {
     if (isErrorDistribute && distributeErrorName.errorName !== undefined) {
@@ -156,6 +214,14 @@ export default function Page({
       </div>
     );
   }
+
+  const handleRefreshConviction = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setConvictionRefreshing(true);
+    await triggerConvictionRefetch?.();
+    setConvictionRefreshing(false);
+  };
 
   const status = ProposalStatus[proposalData.proposalStatus];
 
@@ -225,6 +291,7 @@ export default function Page({
                     proposalData={{ ...proposalData, ...metadata }}
                   />
                 : <DisputeButton
+                    isMemberCommunity={isMemberCommunity}
                     proposalData={{ ...proposalData, ...metadata }}
                   />
                 }
@@ -245,6 +312,26 @@ export default function Page({
         : <>
             <div className="flex justify-between">
               <h2>Metrics</h2>
+              <Button
+                icon={<AdjustmentsHorizontalIcon height={24} width={24} />}
+                onClick={() => manageSupportClicked()}
+                disabled={!isConnected || missmatchUrl || !isMemberCommunity}
+                tooltip={tooltipMessage}
+              >
+                Manage support
+              </Button>
+            </div>
+            <ConvictionBarChart
+              currentConvictionPct={currentConvictionPct}
+              thresholdPct={thresholdPct}
+              proposalSupportPct={totalSupportPct}
+              isSignalingType={isSignalingType}
+              proposalNumber={Number(proposalIdNumber)}
+              timeToPass={Number(timeToPass)}
+              onReadyToExecute={triggerConvictionRefetch}
+              defaultChartMaxValue
+            />
+            <div className="flex justify-center w-full">
               {status === "active" && !isSignalingType && (
                 <Button
                   onClick={() =>
@@ -256,12 +343,9 @@ export default function Page({
                       ],
                     })
                   }
-                  disabled={
-                    currentConvictionPct < thresholdPct || isDisconnected
-                  }
+                  disabled={currentConvictionPct < thresholdPct || !isConnected}
                   tooltip={
-                    isDisconnected ? "Connect wallet"
-                    : currentConvictionPct < thresholdPct ?
+                    tooltipMessage ?? currentConvictionPct < thresholdPct ?
                       "Proposal not executable"
                     : undefined
                   }
@@ -270,15 +354,6 @@ export default function Page({
                 </Button>
               )}
             </div>
-            <ConvictionBarChart
-              currentConvictionPct={currentConvictionPct}
-              thresholdPct={thresholdPct}
-              proposalSupportPct={totalSupportPct}
-              isSignalingType={isSignalingType}
-              proposalNumber={Number(proposalIdNumber)}
-              timeToPass={Number(timeToPass)}
-              onReadyToExecute={triggerConvictionRefetch}
-            />
           </>
         }
       </section>

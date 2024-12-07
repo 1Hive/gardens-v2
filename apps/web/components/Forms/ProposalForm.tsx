@@ -4,29 +4,30 @@ import React, { useState, useMemo } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { Address, encodeAbiParameters, parseUnits } from "viem";
-import { useToken } from "wagmi";
+import { useContractRead, useToken } from "wagmi";
 import {
   Allo,
   ArbitrableConfig,
   CVStrategy,
+  CVStrategyConfig,
   TokenGarden,
 } from "#/subgraph/.graphclient";
+import { FormAddressInput } from "./FormAddressInput";
 import { FormInput } from "./FormInput";
 import { FormPreview, FormRow } from "./FormPreview";
 import { LoadingSpinner } from "../LoadingSpinner";
-import { FormAddressInput } from "./FormAddressInput";
 import { WalletBalance } from "../WalletBalance";
-import { Button, EthAddress } from "@/components";
+import { Button, EthAddress, InfoBox } from "@/components";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
+import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
-import { alloABI } from "@/src/generated";
+import { alloABI, cvStrategyABI } from "@/src/generated";
 import { PoolTypes } from "@/types";
-import { abiWithErrors } from "@/utils/abi";
 import { getEventFromReceipt } from "@/utils/contracts";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
-import { formatTokenAmount } from "@/utils/numbers";
+import { calculatePercentageBigInt, formatTokenAmount } from "@/utils/numbers";
 
 //protocol : 1 => means ipfs!, to do some checks later
 type FormInputs = {
@@ -37,7 +38,12 @@ type FormInputs = {
 };
 
 type ProposalFormProps = {
-  strategy: Pick<CVStrategy, "id" | "token">;
+  strategy: Pick<
+    CVStrategy,
+    "id" | "token" | "maxCVSupply" | "totalEffectiveActivePoints"
+  > & {
+    config: Pick<CVStrategyConfig, "decay" | "proposalType">;
+  };
   arbitrableConfig: Pick<ArbitrableConfig, "submitterCollateralAmount">;
   poolId: number;
   proposalType: number;
@@ -124,7 +130,7 @@ export const ProposalForm = ({
     getValues,
     setValue,
     watch,
-  } = useForm<FormInputs>();
+  } = useForm<FormInputs>({ mode: "onBlur" });
 
   const { publish } = usePubSubContext();
 
@@ -148,10 +154,13 @@ export const ProposalForm = ({
 
   const [showPreview, setShowPreview] = useState<boolean>(false);
   const [previewData, setPreviewData] = useState<FormInputs>();
+  const [requestedAmount, setRequestedAmount] = useState<string>();
   const [loading, setLoading] = useState(false);
   const [isEnoughBalance, setIsEnoughBalance] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
+
+  const chainIdFromPath = useChainIdFromPath();
 
   const disableSubmitBtn = useMemo<ConditionObject[]>(
     () => [
@@ -164,12 +173,6 @@ export const ProposalForm = ({
   );
   const { isConnected, missmatchUrl, tooltipMessage } =
     useDisableButtons(disableSubmitBtn);
-
-  const spendingLimitString = formatTokenAmount(
-    spendingLimit,
-    +tokenGarden?.decimals,
-    6,
-  );
 
   const proposalTypeName = PoolTypes[proposalType];
 
@@ -199,7 +202,7 @@ export const ProposalForm = ({
 
   const { write } = useContractWriteWithConfirmations({
     address: alloInfo.id as Address,
-    abi: abiWithErrors(alloABI),
+    abi: alloABI,
     contractName: "Allo",
     functionName: "registerRecipient",
     fallbackErrorMessage: "Error creating Proposal, please report a bug.",
@@ -236,8 +239,36 @@ export const ProposalForm = ({
     chainId,
   });
 
+  const spendingLimitString = formatTokenAmount(
+    spendingLimit,
+    poolToken?.decimals ?? 18,
+    6,
+  );
+
   const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** (poolToken?.decimals ?? 0);
+
   const spendingLimitNumber = spendingLimit / 10 ** (poolToken?.decimals ?? 0);
+
+  const { data: thresholdFromContract } = useContractRead({
+    address: strategy.id as Address,
+    abi: cvStrategyABI,
+    chainId: chainIdFromPath,
+    functionName: "calculateThreshold",
+    args: [
+      requestedAmount ?
+        parseUnits(requestedAmount, poolToken?.decimals ?? 0)
+      : 0n,
+    ],
+    enabled:
+      requestedAmount !== undefined &&
+      PoolTypes[strategy?.config?.proposalType] === "funding",
+  });
+
+  const thresholdPct = calculatePercentageBigInt(
+    thresholdFromContract as bigint,
+    BigInt(strategy.maxCVSupply),
+    poolToken?.decimals ?? 18,
+  );
 
   if (!poolToken && PoolTypes[proposalType] === "funding") {
     return (
@@ -255,7 +286,7 @@ export const ProposalForm = ({
     const metadata = [1, metadataIpfs as string];
 
     const strAmount = previewData.amount?.toString() || "";
-    const requestedAmount = parseUnits(
+    const amount = parseUnits(
       strAmount,
       // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
       poolToken?.decimals || 0,
@@ -264,7 +295,7 @@ export const ProposalForm = ({
     console.debug([
       poolId,
       previewData.beneficiary,
-      requestedAmount,
+      amount,
       poolTokenAddr,
       metadata,
     ]);
@@ -274,7 +305,7 @@ export const ProposalForm = ({
         poolId,
         previewData?.beneficiary ||
           "0x0000000000000000000000000000000000000000",
-        requestedAmount,
+        amount,
         poolTokenAddr,
         metadata,
       ],
@@ -328,6 +359,9 @@ export const ProposalForm = ({
                 subLabel={`Max ${formatNumber(spendingLimitString)} ${poolToken?.symbol} (${spendingLimitPct.toFixed(2)}% of Pool Funds)`}
                 register={register}
                 required
+                onChange={(e) => {
+                  setRequestedAmount(e.target.value);
+                }}
                 registerOptions={{
                   max: {
                     value: spendingLimitNumber,
@@ -350,6 +384,17 @@ export const ProposalForm = ({
                 suffix={poolToken?.symbol}
               />
             </div>
+          )}
+
+          {requestedAmount && thresholdPct !== 0 && thresholdPct < 100 && (
+            <InfoBox infoBoxType={"warning"}>
+              The conviction required in order for the proposal to pass with the
+              requested amount is {thresholdPct}%.{" "}
+              {requestedAmount &&
+                thresholdPct > 50 &&
+                thresholdPct < 100 &&
+                "It may be difficult to pass"}
+            </InfoBox>
           )}
           {proposalTypeName !== "signaling" && (
             <div className="flex flex-col">
