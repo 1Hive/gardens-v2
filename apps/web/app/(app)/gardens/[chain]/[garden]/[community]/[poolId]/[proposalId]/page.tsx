@@ -43,7 +43,13 @@ import { alloABI } from "@/src/generated";
 import { PoolTypes, ProposalStatus } from "@/types";
 
 import { useErrorDetails } from "@/utils/getErrorName";
+import { calculatePercentageBigInt } from "@/utils/numbers";
 import { prettyTimestamp } from "@/utils/text";
+
+type ProposalSupporter = {
+  id: string;
+  stakes: { amount: number }[];
+};
 
 export default function Page({
   params: { proposalId, garden, community: communityAddr, poolId },
@@ -356,42 +362,125 @@ export default function Page({
                 Manage support
               </Button>
             </div>
-            <ConvictionBarChart
-              currentConvictionPct={currentConvictionPct}
-              thresholdPct={thresholdPct}
-              proposalSupportPct={totalSupportPct}
-              isSignalingType={isSignalingType}
-              proposalNumber={Number(proposalIdNumber)}
-              timeToPass={Number(timeToPass)}
-              onReadyToExecute={triggerConvictionRefetch}
-              defaultChartMaxValue
-            />
-            <div className="flex justify-center w-full mt-2">
-              {status === "active" && !isSignalingType && (
-                <Button
-                  onClick={() =>
-                    writeDistribute?.({
-                      args: [
-                        BigInt(poolId),
-                        [proposalData?.strategy.id as Address],
-                        encodedDataProposalId(proposalIdNumber),
-                      ],
-                    })
-                  }
-                  disabled={currentConvictionPct < thresholdPct || !isConnected}
-                  tooltip={
-                    (tooltipMessage ?? currentConvictionPct < thresholdPct) ?
-                      "Proposal not executable"
-                    : undefined
-                  }
-                >
-                  Execute
-                </Button>
-              )}
+            <div className="flex flex-col gap-7">
+              <ConvictionBarChart
+                currentConvictionPct={currentConvictionPct}
+                thresholdPct={thresholdPct}
+                proposalSupportPct={totalSupportPct}
+                isSignalingType={isSignalingType}
+                proposalNumber={Number(proposalIdNumber)}
+                timeToPass={Number(timeToPass)}
+                onReadyToExecute={triggerConvictionRefetch}
+                defaultChartMaxValue
+              />
+              <div className="flex justify-center lg:justify-end w-full">
+                {status === "active" && !isSignalingType && (
+                  <Button
+                    onClick={() =>
+                      writeDistribute?.({
+                        args: [
+                          BigInt(poolId),
+                          [proposalData?.strategy.id as Address],
+                          encodedDataProposalId(proposalIdNumber),
+                        ],
+                      })
+                    }
+                    disabled={
+                      currentConvictionPct < thresholdPct || !isConnected
+                    }
+                    tooltip={
+                      (tooltipMessage ?? currentConvictionPct < thresholdPct) ?
+                        "Proposal not executable"
+                      : undefined
+                    }
+                  >
+                    Execute
+                  </Button>
+                )}
+              </div>
             </div>
           </>
         }
       </section>
+      {filteredAndSortedProposalSupporters.length > 0 && (
+        <ProposalSupportersTable
+          _proposalSupporters={
+            filteredAndSortedProposalSupporters as ProposalSupporter[]
+          }
+          _totalActivePoints={totalEffectiveActivePoints}
+        />
+      )}
+    </div>
+  );
+}
+
+export function ProposalSupportersTable({
+  _proposalSupporters,
+  _totalActivePoints,
+}: {
+  _proposalSupporters: ProposalSupporter[];
+  _totalActivePoints?: number;
+}) {
+  return (
+    <div className="px-2 section-layout">
+      <div className="sm:flex sm:items-center">
+        <div className="sm:flex-auto">
+          <h3>Supported By</h3>
+          <p className="mt-2 text-sm text-gray-700">
+            A list of all the members that are supporting this proposal.
+          </p>
+        </div>
+      </div>
+      <div className="mt-8 flow-root">
+        <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+          <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+            <table className="min-w-full divide-y divide-gray-300">
+              <thead>
+                <tr>
+                  <th scope="col" className="py-3.5 pl-4 pr-3  sm:pl-0">
+                    <h5>Supporter address</h5>
+                  </th>
+                  <th scope="col" className="px-3 py-3.5 ">
+                    <h5>% pool weigth allocated</h5>
+                  </th>
+
+                  <th scope="col" className="px-3 py-3.5 ">
+                    <h5>Role</h5>
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {_proposalSupporters.map((supporter: ProposalSupporter) => (
+                  <tr key={supporter.id}>
+                    <td className="whitespace-nowrap py-5 pl-4 pr-3 text-sm sm:pl-0">
+                      <div className="flex items-center">
+                        <div className="ml-4">
+                          <p className="">{supporter.id}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-3 py-5 text-sm text-neutral-soft-content">
+                      <p className="">
+                        {(_totalActivePoints ?? 0) > 0 ?
+                          calculatePercentageBigInt(
+                            BigInt(supporter?.stakes[0]?.amount),
+                            BigInt(_totalActivePoints ?? 0),
+                          )
+                        : undefined}{" "}
+                        %
+                      </p>{" "}
+                    </td>
+
+                    <td className="whitespace-nowrap px-3 py-5 text-sm text-neutral-soft-content">
+                      <p>role</p>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
