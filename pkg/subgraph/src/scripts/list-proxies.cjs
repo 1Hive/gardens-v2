@@ -8,16 +8,16 @@ const arbitrumSepoliaSubgraph =
   subgraphConfig.VERSION_TESTNET;
 
 const arbitrumSubgraph =
-  "https://api.studio.thegraph.com/query/70985/gardens-v2---arbitrum/" +
+  "https://api.studio.thegraph.com/query/40931/gardens-v2---arbitrum/" +
   subgraphConfig.VERSION_PROD;
 const maticSubgraph =
-  "https://api.studio.thegraph.com/query/70985/gardens-v2---polygon/" +
+  "https://api.studio.thegraph.com/query/40931/gardens-v2---polygon/" +
   subgraphConfig.VERSION_PROD;
 const optimismSubgraph =
-  "https://api.studio.thegraph.com/query/70985/gardens-v2---optimism/" +
+  "https://api.studio.thegraph.com/query/40931/gardens-v2---optimism/" +
   subgraphConfig.VERSION_PROD;
 const gnosisSubgraph =
-  "https://api.studio.thegraph.com/query/70985/gardens-v2---gnosis/" +
+  "https://api.studio.thegraph.com/query/40931/gardens-v2---gnosis/" +
   subgraphConfig.VERSION_PROD;
 
 // @ts-ignore

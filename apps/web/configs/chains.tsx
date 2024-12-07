@@ -64,8 +64,9 @@ const getSubgraphUrls = (
   publishedId: string,
   subgraphSlug: string,
   subgraphVersion: string,
+  accountNumber: number = 40931,
 ) => {
-  const versionedEndpoint = `https://api.studio.thegraph.com/query/70985/${subgraphSlug}`;
+  const versionedEndpoint = `https://api.studio.thegraph.com/query/${accountNumber}/${subgraphSlug}`;
   return {
     publishedSubgraphUrl:
       process.env.NEXT_PUBLIC_SUBGRAPH_KEY ?
@@ -104,6 +105,7 @@ export const chainConfigMap: {
       "BfZYwhZ1rTb22Nah1u6YyXtUtAdgGNtZhW1EBb4mFzAU",
       "gardens-v2---arbitrum-sepolia",
       SUBGRAPH_TESTNET_VERSION,
+      70985,
     ),
     globalTribunal: "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
@@ -143,7 +145,7 @@ export const chainConfigMap: {
     confirmations: 7, // 7
     rpcUrl: process.env.RPC_URL_ARBITRUM!,
     ...getSubgraphUrls(
-      "4vsznmRkUGm9DZFBwvC6PDvGPVfVLQcUUr5ExdTNZiUc",
+      "9ejruFicuLT6hfuXNTnS8UCwxTWrHz4uinesdZu1dKmk",
       "gardens-v2---arbitrum",
       SUBGRAPH_PRODNET_VERSION,
     ),
@@ -162,7 +164,7 @@ export const chainConfigMap: {
     confirmations: 2, // 2
     rpcUrl: process.env.RPC_URL_OPTIMISM!,
     ...getSubgraphUrls(
-      "4vsznmRkUGm9DZFBwvC6PDvGPVfVLQcUUr5ExdTNZiUc",
+      "FmcVWeR9xdJyjM53DPuCvEdH24fSXARdq4K5K8EZRZVp",
       "gardens-v2---optimism",
       SUBGRAPH_PRODNET_VERSION,
     ),
@@ -226,6 +228,8 @@ export const chainConfigMap: {
   //   isTestnet: false,
   // },
 };
+
+console.debug("ChainConfigMap", chainConfigMap);
 
 export function getConfigByChain(chainId: ChainId): ChainData | undefined {
   if (chainId in chainConfigMap) {
