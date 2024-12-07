@@ -102,6 +102,27 @@ export default function Page({
 
   const proposalData = data?.cvproposal;
   const proposalSupporters = supportersData?.members;
+
+  const filteredAndSortedProposalSupporters =
+    proposalSupporters ?
+      proposalSupporters
+        .filter((item) => item.stakes && item.stakes.length > 0)
+        .sort((a, b) => {
+          const maxStakeA = Math.max(
+            ...(a.stakes ?? []).map((stake) => stake.amount),
+          );
+          const maxStakeB = Math.max(
+            ...(b.stakes ?? []).map((stake) => stake.amount),
+          );
+          return maxStakeB - maxStakeA;
+        })
+    : [];
+  const stakedAmount = proposalData?.stakedAmount;
+  const totalEffectiveActivePoints =
+    proposalData?.strategy?.totalEffectiveActivePoints;
+
+  //
+
   const proposalIdNumber =
     proposalData?.proposalNumber ?
       BigInt(proposalData.proposalNumber)
@@ -119,8 +140,6 @@ export default function Page({
   const metadata = proposalData?.metadata ?? ipfsResult;
   const isProposerConnected =
     proposalData?.submitter === address?.toLowerCase();
-
-  console.log(proposalSupporters);
 
   const proposalType = proposalData?.strategy.config?.proposalType;
   const isSignalingType = PoolTypes[proposalType] === "signaling";
@@ -347,7 +366,7 @@ export default function Page({
               onReadyToExecute={triggerConvictionRefetch}
               defaultChartMaxValue
             />
-            <div className="flex justify-center w-full">
+            <div className="flex justify-center w-full mt-2">
               {status === "active" && !isSignalingType && (
                 <Button
                   onClick={() =>
