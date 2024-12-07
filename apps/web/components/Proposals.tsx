@@ -483,7 +483,7 @@ export function Proposals({
           {allocationView && <UserAllocationStats stats={stats} />}
         </div>
         <div className="flex flex-col gap-6">
-          {proposals && inputs && memberPoolWeight != null ?
+          {proposals && inputs ?
             <>
               {proposals
                 .filter(
@@ -500,7 +500,7 @@ export function Proposals({
                       stakedFilter={stakedFilters[proposalData.id]}
                       isAllocationView={allocationView}
                       memberActivatedPoints={memberActivatedPoints}
-                      memberPoolWeight={memberPoolWeight ?? 0}
+                      memberPoolWeight={memberPoolWeight}
                       executeDisabled={
                         proposalData.proposalStatus == 4 ||
                         !isConnected ||

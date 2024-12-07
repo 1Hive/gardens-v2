@@ -4,7 +4,7 @@ const subgraphConfig = require("../../../../apps/web/configs/subgraph.json");
 
 const localhostSubgraph = "http://localhost:8000/subgraphs/name/kamikazebr/gv2";
 const arbitrumSepoliaSubgraph =
-  "https://api.studio.thegraph.com/query/40931/gardens-v2---arbitrum-sepolia/" +
+  "https://api.studio.thegraph.com/query/70985/gardens-v2---arbitrum-sepolia/" +
   subgraphConfig.VERSION_TESTNET;
 
 const arbitrumSubgraph =
