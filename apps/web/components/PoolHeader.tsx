@@ -112,6 +112,7 @@ export default function PoolHeader({
   const { id: chainId, safePrefix } = useChainFromPath()!;
   const router = useRouter();
   const path = usePathname();
+  const isArchived = strategy.isEnabled;
 
   const { data: passportStrategyData } =
     useSubgraphQuery<getPassportStrategyQuery>({

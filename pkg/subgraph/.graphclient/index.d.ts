@@ -3737,7 +3737,7 @@ export type getStrategyByPoolQueryVariables = Exact<{
     poolId: Scalars['BigInt']['input'];
 }>;
 export type getStrategyByPoolQuery = {
-    cvstrategies: Array<(Pick<CVStrategy, 'id' | 'poolId' | 'totalEffectiveActivePoints' | 'isEnabled'> & {
+    cvstrategies: Array<(Pick<CVStrategy, 'id' | 'poolId' | 'totalEffectiveActivePoints' | 'isEnabled' | 'archived'> & {
         config: Pick<CVStrategyConfig, 'id' | 'proposalType' | 'pointSystem' | 'minThresholdPoints'>;
         memberActive?: Maybe<Array<Pick<Member, 'id'>>>;
         registryCommunity: (Pick<RegistryCommunity, 'id' | 'isValid'> & {
