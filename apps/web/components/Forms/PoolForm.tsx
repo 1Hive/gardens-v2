@@ -931,7 +931,6 @@ export function PoolForm({ token, communityAddr }: Props) {
                     tooltip="% of Pool's voting weight needed to pass the smallest funding proposal possible. Higher funding requests demand greater conviction to pass."
                     label="Minimum conviction"
                     register={register}
-                    required
                     errors={errors}
                     registerKey="minimumConviction"
                     type="number"
@@ -940,16 +939,11 @@ export function PoolForm({ token, communityAddr }: Props) {
                     className="pr-14"
                     otherProps={{
                       step: 1 / CV_SCALE_PRECISION,
-                      min: 1 / CV_SCALE_PRECISION,
                     }}
                     registerOptions={{
                       max: {
                         value: 99.9,
                         message: "Minimum conviction should be under 100%",
-                      },
-                      min: {
-                        value: 1 / CV_SCALE_PRECISION,
-                        message: "Minimum conviction must be greater than 0",
                       },
                     }}
                     suffix="%"
