@@ -77,13 +77,12 @@ export function PoolCard({ pool, token, chainId }: Props) {
           label="voting weight"
           count={capitalize(PointSystems[config?.pointSystem])}
         />
-        {isEnabled && (
-          <Statistic
-            icon={<HandRaisedIcon />}
-            count={proposals.length}
-            label="proposals"
-          />
-        )}
+        <Statistic
+          icon={<HandRaisedIcon />}
+          count={proposals.length}
+          label="proposals"
+          className={`${isEnabled ? "visible" : "invisible"}`}
+        />
         {isEnabled && poolType && PoolTypes[poolType] === "funding" && (
           <Statistic icon={<CurrencyDollarIcon />} label="funds">
             <DisplayNumber

@@ -47,10 +47,26 @@ export default function Page() {
       return (
         <>
           {tokenGardens
-            .sort(
-              (a, b) =>
-                (b.communities?.length ?? 0) - (a.communities?.length ?? 0),
-            )
+            .sort((a, b) => {
+              const communitiesDiff =
+                (b.communities?.length ?? 0) - (a.communities?.length ?? 0);
+
+              if (communitiesDiff === 0) {
+                const aTotalMembers =
+                  a.communities?.reduce(
+                    (sum, community) => sum + (community.members?.length ?? 0),
+                    0,
+                  ) ?? 0;
+                const bTotalMembers =
+                  b.communities?.reduce(
+                    (sum, community) => sum + (community.members?.length ?? 0),
+                    0,
+                  ) ?? 0;
+                return bTotalMembers - aTotalMembers;
+              }
+
+              return communitiesDiff;
+            })
             .map((garden) => (
               <div key={garden.id}>
                 <GardenCard garden={garden} />

@@ -230,6 +230,7 @@ export function PoolForm({ token, communityAddr }: Props) {
   const { isConnected, missmatchUrl, tooltipMessage } = useDisableButtons();
 
   const watchedAddress = watch("poolTokenAddress").toLowerCase() as Address;
+
   const { data: customTokenData } = useToken({
     address: watchedAddress ?? "0x",
     chainId: +chain,
