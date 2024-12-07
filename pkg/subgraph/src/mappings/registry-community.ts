@@ -251,7 +251,7 @@ export function handleMemberKicked(event: MemberKicked): void {
   memberCommunity.save();
 }
 
-// //  handleStrategyAdded
+// handleStrategyAdded
 export function handleStrategyAdded(event: StrategyAdded): void {
   log.debug("RegistryCommunity: handleStrategyAdded", [
     event.params._strategy.toHexString()
@@ -270,7 +270,7 @@ export function handleStrategyAdded(event: StrategyAdded): void {
   cvs.save();
 }
 
-// //  handleStrategyAdded
+// handleStrategyRemoved
 export function handleStrategyRemoved(event: StrategyRemoved): void {
   log.debug("RegistryCommunity: handleStrategyRemoved", [
     event.params._strategy.toHexString()

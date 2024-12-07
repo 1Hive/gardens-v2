@@ -51,12 +51,12 @@ const btnStyles: BtnStyles = {
   },
   outline: {
     primary:
-      "text-primary-content border border-primary-content hover:text-primary-hover-content hover:outline-primary-hover-content",
+      "text-primary-content border border-primary-content hover:text-primary-hover-content hover:border-primary-hover-content",
     secondary:
-      "text-secondary-content border border-secondary-content hover:text-secondary-hover-content hover:outline-secondary-hover-content",
+      "text-secondary-content border border-secondary-content hover:text-secondary-hover-content hover:border-secondary-hover-content",
     tertiary: "",
     danger:
-      "text-danger-button border border-danger-button hover:text-danger-hover-content hover:outline-danger-hover-content",
+      "text-danger-button border border-danger-button hover:text-danger-hover-content hover:border-danger-hover-content",
     disabled: "text-neutral-soft-content border border-neutral-soft-content",
   },
   link: {
