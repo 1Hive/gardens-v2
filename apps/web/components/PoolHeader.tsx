@@ -5,11 +5,15 @@ import {
   ChartBarIcon,
   CheckIcon,
   ClockIcon,
-  Cog6ToothIcon,
   InformationCircleIcon,
   Square3Stack3DIcon,
 } from "@heroicons/react/24/outline";
-import { StopIcon } from "@heroicons/react/24/solid";
+import {
+  ArchiveBoxIcon,
+  NoSymbolIcon,
+  StopIcon,
+  Cog6ToothIcon,
+} from "@heroicons/react/24/solid";
 import { FetchTokenResult } from "@wagmi/core";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
@@ -33,6 +37,7 @@ import { Skeleton } from "./Skeleton";
 import { Statistic } from "./Statistic";
 import { blueLand, grassLarge } from "@/assets";
 import { chainConfigMap } from "@/configs/chains";
+import { VOTING_POINT_SYSTEM_DESCRIPTION } from "@/configs/constants";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
@@ -112,7 +117,7 @@ export default function PoolHeader({
   const { id: chainId, safePrefix } = useChainFromPath()!;
   const router = useRouter();
   const path = usePathname();
-  const isArchived = strategy.isEnabled;
+  const isArchived = strategy.archived;
 
   const { data: passportStrategyData } =
     useSubgraphQuery<getPassportStrategyQuery>({
@@ -294,7 +299,6 @@ export default function PoolHeader({
       });
       const pathSegments = path.split("/");
       pathSegments.pop();
-      console.log("LENGTH", pathSegments.length);
       if (pathSegments.length === 6) {
         pathSegments.pop();
       }
@@ -366,22 +370,6 @@ export default function PoolHeader({
           </h2>
           {(!!isCouncilMember || isCouncilSafe) && (
             <div className="flex gap-2 flex-wrap">
-              <div className="flex flex-col gap-1 p-1 w-48">
-                <a
-                  href={`https://app.safe.global/transactions/queue?safe=${safePrefix}:${strategy.registryCommunity.councilSafe}`}
-                  className="text-info whitespace-nowrap flex flex-nowrap gap-1 items-center"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Council safe
-                  <ArrowTopRightOnSquareIcon width={16} height={16} />
-                </a>
-                <EthAddress
-                  address={strategy.registryCommunity.councilSafe as Address}
-                  shortenAddress={true}
-                  actions="copy"
-                />
-              </div>
               <Button
                 btnStyle="outline"
                 icon={<Cog6ToothIcon height={24} width={24} />}
@@ -393,52 +381,110 @@ export default function PoolHeader({
               >
                 Edit
               </Button>
-
-              <Button
-                icon={<StopIcon height={24} width={24} />}
-                disabled={
-                  !isConnected || missmatchUrl || disableCouncilSafeButtons
-                }
-                tooltip={tooltipMessage}
-                onClick={() => rejectPoolWrite()}
-                btnStyle="outline"
-                color="danger"
-              >
-                Reject Pool
-              </Button>
-              {isEnabled ?
+              {isArchived ?
                 <Button
-                  icon={<StopIcon height={24} width={24} />}
-                  disabled={
-                    !isConnected || missmatchUrl || disableCouncilSafeButtons
-                  }
-                  tooltip={tooltipMessage}
-                  onClick={() => removeStrategyByPoolId()}
-                  btnStyle="outline"
-                  color="danger"
-                >
-                  Disable
-                </Button>
-              : <Button
                   icon={<CheckIcon height={24} width={24} />}
                   disabled={
                     !isConnected || missmatchUrl || disableCouncilSafeButtons
                   }
-                  tooltip={tooltipMessage}
+                  tooltip={
+                    tooltipMessage ?? "Restore the pool will also enable it."
+                  }
+                  showToolTip={true}
                   onClick={() => addStrategyByPoolId()}
                 >
-                  Approve
+                  Restore
                 </Button>
+              : isEnabled ?
+                <>
+                  <Button
+                    icon={<StopIcon height={24} width={24} />}
+                    disabled={
+                      !isConnected || missmatchUrl || disableCouncilSafeButtons
+                    }
+                    tooltip={
+                      tooltipMessage ??
+                      "Disable pool will pause all interactions with this pool. It is possible to enable it back."
+                    }
+                    showToolTip={true}
+                    onClick={() => removeStrategyByPoolId()}
+                    btnStyle="outline"
+                    color="secondary"
+                  >
+                    Disable
+                  </Button>
+                  <Button
+                    icon={<ArchiveBoxIcon height={24} width={24} />}
+                    disabled={
+                      !isConnected || missmatchUrl || disableCouncilSafeButtons
+                    }
+                    tooltip={
+                      tooltipMessage ??
+                      "Archive pool will remove it from the list of pools. Need to contact the Gardens team to restore it."
+                    }
+                    showToolTip={true}
+                    onClick={() => rejectPoolWrite()}
+                    btnStyle="outline"
+                    color="danger"
+                  >
+                    Archive
+                  </Button>
+                </>
+              : <>
+                  <Button
+                    icon={<CheckIcon height={24} width={24} />}
+                    disabled={
+                      !isConnected || missmatchUrl || disableCouncilSafeButtons
+                    }
+                    tooltip={tooltipMessage ?? "Approve pool to enable it."}
+                    showToolTip={true}
+                    onClick={() => addStrategyByPoolId()}
+                  >
+                    Approve
+                  </Button>
+                  <Button
+                    icon={<NoSymbolIcon height={24} width={24} />}
+                    disabled={
+                      !isConnected || missmatchUrl || disableCouncilSafeButtons
+                    }
+                    tooltip={
+                      tooltipMessage ??
+                      "Reject pool will remove it from the list. \nNeed to contact the Gardens team to\n restore it."
+                    }
+                    showToolTip={true}
+                    onClick={() => rejectPoolWrite()}
+                    btnStyle="outline"
+                    color="danger"
+                  >
+                    Reject
+                  </Button>
+                </>
               }
             </div>
           )}
         </div>
-        <div>
+        <div className="w-full flex flex-col gap-2">
           <EthAddress
             icon={false}
             address={strategy.id as Address}
             label="Pool address"
           />
+          <div className="flex flex-col gap-1 p-1 w-48">
+            <a
+              href={`https://app.safe.global/transactions/queue?safe=${safePrefix}:${strategy.registryCommunity.councilSafe}`}
+              className="text-info whitespace-nowrap flex flex-nowrap gap-1 items-center"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Council safe
+              <ArrowTopRightOnSquareIcon width={16} height={16} />
+            </a>
+            <EthAddress
+              address={strategy.registryCommunity.councilSafe as Address}
+              shortenAddress={true}
+              actions="copy"
+            />
+          </div>
         </div>
         <Modal
           title={`Edit ${ipfsResult?.title} #${poolId}`}
@@ -496,7 +542,13 @@ export default function PoolHeader({
                 className="text-secondary-content"
                 icon={<ChartBarIcon />}
               />
-              <Badge label={PointSystems[pointSystem]} icon={<BoltIcon />} />
+              <Badge
+                label={PointSystems[pointSystem]}
+                tooltip={
+                  VOTING_POINT_SYSTEM_DESCRIPTION[PointSystems[pointSystem]]
+                }
+                icon={<BoltIcon />}
+              />
             </div>
           </Statistic>
         </div>
