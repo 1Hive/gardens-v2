@@ -246,7 +246,7 @@ export function Proposals({
   const disableManageSupportBtnCondition: ConditionObject[] = [
     {
       condition: !memberActivatedStrategy,
-      message: "Must have points activated to support proposals",
+      message: "You need to activate your governance first",
     },
     {
       condition: !isAllowed,
@@ -446,6 +446,7 @@ export function Proposals({
   const isEndedProposalActiveAllocation = endedProposals.some(
     (x) => stakedFilters[x.id]?.value,
   );
+
   // Render
   return (
     <>
@@ -472,7 +473,12 @@ export function Proposals({
                         <AdjustmentsHorizontalIcon height={24} width={24} />
                       }
                       onClick={() => setAllocationView((prev) => !prev)}
-                      disabled={!isConnected || missmatchUrl || !isAllowed}
+                      disabled={
+                        !isConnected ||
+                        missmatchUrl ||
+                        !memberActivatedStrategy ||
+                        !isAllowed
+                      }
                       tooltip={tooltipMessage}
                     >
                       Manage support
