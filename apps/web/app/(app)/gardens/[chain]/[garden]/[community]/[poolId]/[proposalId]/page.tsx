@@ -123,7 +123,6 @@ export default function Page({
           return maxStakeB - maxStakeA;
         })
     : [];
-  const stakedAmount = proposalData?.stakedAmount;
   const totalEffectiveActivePoints =
     proposalData?.strategy?.totalEffectiveActivePoints;
 
@@ -265,7 +264,6 @@ export default function Page({
   };
 
   const status = ProposalStatus[proposalData.proposalStatus];
-
   return (
     <div className="page-layout">
       <header
@@ -408,6 +406,9 @@ export default function Page({
             filteredAndSortedProposalSupporters as ProposalSupporter[]
           }
           _totalActivePoints={totalEffectiveActivePoints}
+          _totalStakedAmount={totalSupportPct}
+          _beneficiary={beneficiary}
+          _submitter={submitter}
         />
       )}
     </div>
@@ -417,50 +418,67 @@ export default function Page({
 export function ProposalSupportersTable({
   _proposalSupporters,
   _totalActivePoints,
+  _totalStakedAmount,
+  _beneficiary,
+  _submitter,
 }: {
   _proposalSupporters: ProposalSupporter[];
   _totalActivePoints?: number;
+  _totalStakedAmount?: number;
+  _beneficiary?: string;
+  _submitter?: string;
 }) {
   return (
     <div className="px-2 section-layout">
       <div className="sm:flex sm:items-center">
         <div className="sm:flex-auto">
           <h3>Supported By</h3>
-          <p className="mt-2 text-sm text-gray-700">
-            A list of all the members that are supporting this proposal.
+          <p className="mt-2 text-sm text-neutral-soft-content">
+            A list of all the community members that are supporting this
+            proposal.
           </p>
         </div>
       </div>
       <div className="mt-8 flow-root">
         <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
           <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-            <table className="min-w-full divide-y divide-gray-300">
+            <table className="min-w-full divide-y divide-neutral-soft">
               <thead>
                 <tr>
                   <th scope="col" className="py-3.5 pl-4 pr-3  sm:pl-0">
                     <h5>Supporter address</h5>
                   </th>
-                  <th scope="col" className="px-3 py-3.5 ">
-                    <h5>% pool weigth allocated</h5>
-                  </th>
-
-                  <th scope="col" className="px-3 py-3.5 ">
+                  <th scope="col" className="px-3 py-3.5">
                     <h5>Role</h5>
+                  </th>
+                  <th scope="col" className="px-3 py-3.5 text-center">
+                    <h5>Support</h5>
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-neutral-soft">
                 {_proposalSupporters.map((supporter: ProposalSupporter) => (
                   <tr key={supporter.id}>
-                    <td className="whitespace-nowrap py-5 pl-4 pr-3 text-sm sm:pl-0">
+                    <td className="whitespace-nowrap py-5 pl-4 pr-3 sm:pl-0 text-sm text-neutral-soft-content">
                       <div className="flex items-center">
                         <div className="ml-4">
                           <p className="">{supporter.id}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-3 py-5 text-sm text-neutral-soft-content">
-                      <p className="">
+                    {/* members role */}
+                    <td className="whitespace-nowrap px-3 py-5 text-sm text-neutral-soft-content">
+                      <p>
+                        {supporter.id === _beneficiary ?
+                          "Beneficiary"
+                        : supporter.id === _submitter ?
+                          "Submitter"
+                        : "Member"}
+                      </p>
+                    </td>
+                    {/* members support */}
+                    <td className="whitespace-nowrap px-3 py-5 text-sm text-neutral-soft-content">
+                      <p className="subtitle">
                         {(_totalActivePoints ?? 0) > 0 ?
                           calculatePercentageBigInt(
                             BigInt(supporter?.stakes[0]?.amount),
@@ -470,13 +488,24 @@ export function ProposalSupportersTable({
                         %
                       </p>{" "}
                     </td>
-
-                    <td className="whitespace-nowrap px-3 py-5 text-sm text-neutral-soft-content">
-                      <p>role</p>
-                    </td>
                   </tr>
                 ))}
               </tbody>
+              <tfoot>
+                <tr>
+                  <th
+                    scope="col"
+                    colSpan={2}
+                    className="pl-8 pr-3 pt-4 sm:table-cell sm:pl-0"
+                  >
+                    <p className="subtitle">Total Support:</p>
+                  </th>
+
+                  <td className="pl-3 pr-4 pt-4 text-left sm:pr-0">
+                    <p className="subtitle">{_totalStakedAmount} %</p>
+                  </td>
+                </tr>
+              </tfoot>
             </table>
           </div>
         </div>
