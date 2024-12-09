@@ -415,7 +415,7 @@ export default function Page({
   );
 }
 
-export function ProposalSupportersTable({
+function ProposalSupportersTable({
   _proposalSupporters,
   _totalActivePoints,
   _totalStakedAmount,
