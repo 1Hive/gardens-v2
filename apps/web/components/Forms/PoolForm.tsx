@@ -17,7 +17,10 @@ import { FormRadioButton } from "./FormRadioButton";
 import { FormSelect } from "./FormSelect";
 import { EthAddress } from "../EthAddress";
 import { Button } from "@/components/Button";
-import { DEFAULT_RULING_TIMEOUT_SEC } from "@/configs/constants";
+import {
+  DEFAULT_RULING_TIMEOUT_SEC,
+  VOTING_POINT_SYSTEM_DESCRIPTION,
+} from "@/configs/constants";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
@@ -227,6 +230,7 @@ export function PoolForm({ token, communityAddr }: Props) {
   const { isConnected, missmatchUrl, tooltipMessage } = useDisableButtons();
 
   const watchedAddress = watch("poolTokenAddress").toLowerCase() as Address;
+
   const { data: customTokenData } = useToken({
     address: watchedAddress ?? "0x",
     chainId: +chain,
@@ -595,14 +599,6 @@ export function PoolForm({ token, communityAddr }: Props) {
     }
   }, [customTokenData, watchedAddress, trigger]);
 
-  const votingWeightSystemDescriptions = {
-    fixed: "Everyone has the same voting weight, limited to registration stake",
-    capped: "Voting weight is equal to tokens staked, up to a limit",
-    unlimited: "Voting weight is equal to tokens staked, no limit.",
-    quadratic:
-      "Voting weight increases as more tokens are staked, following a quadratic curve.",
-  };
-
   return (
     <form onSubmit={handleSubmit(handlePreview)} className="w-full">
       {showPreview ?
@@ -676,18 +672,18 @@ export function PoolForm({ token, communityAddr }: Props) {
                 <span className="ml-1">*</span>
               </label>
               <div className="ml-2 flex flex-col gap-2">
-                {Object.entries(PointSystems).map(([value, label], i) => (
+                {Object.entries(PointSystems).map(([value, id], i) => (
                   <div key={value}>
                     <FormRadioButton
                       value={value}
-                      label={capitalize(label)}
+                      label={capitalize(id)}
                       inline={true}
                       onChange={() =>
                         setValue("pointSystemType", parseInt(value))
                       }
                       checked={parseInt(value) === pointSystemType}
                       registerKey="pointSystemType"
-                      description={votingWeightSystemDescriptions[label]}
+                      description={VOTING_POINT_SYSTEM_DESCRIPTION[id]}
                     />
                     {PointSystems[pointSystemType] === "capped" &&
                       i === Object.values(PointSystems).indexOf("capped") && (
