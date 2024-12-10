@@ -154,7 +154,7 @@ export default function Page({
   const proposalStatus = ProposalStatus[proposalData?.proposalStatus];
 
   const { data: isCouncilMember } = useContractRead({
-    address: proposalData?.strategy?.id as Address,
+    address: data?.registryCommunity?.councilSafe as Address,
     abi: safeABI,
     functionName: "isOwner",
     chainId: Number(chainId),

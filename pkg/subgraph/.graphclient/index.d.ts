@@ -3550,6 +3550,7 @@ export declare function getBuiltGraphSDK<TGlobalContext = any, TOperationContext
     getProposalData(variables: Exact<{
         garden: Scalars["ID"]["input"];
         proposalId: Scalars["ID"]["input"];
+        communityId: Scalars["ID"]["input"];
     }>, options?: TOperationContext): Promise<getProposalDataQuery>;
     getAllo(variables?: Exact<{
         [key: string]: never;
@@ -3728,10 +3729,12 @@ export type getPoolDataQuery = {
 export type getProposalDataQueryVariables = Exact<{
     garden: Scalars['ID']['input'];
     proposalId: Scalars['ID']['input'];
+    communityId: Scalars['ID']['input'];
 }>;
 export type getProposalDataQuery = {
     allos: Array<Pick<Allo, 'id' | 'chainId' | 'tokenNative'>>;
     tokenGarden?: Maybe<Pick<TokenGarden, 'name' | 'symbol' | 'decimals'>>;
+    registryCommunity?: Maybe<Pick<RegistryCommunity, 'councilSafe'>>;
     cvproposal?: Maybe<(Pick<CVProposal, 'id' | 'proposalNumber' | 'beneficiary' | 'blockLast' | 'convictionLast' | 'createdAt' | 'metadataHash' | 'proposalStatus' | 'requestedAmount' | 'requestedToken' | 'stakedAmount' | 'submitter' | 'threshold' | 'updatedAt' | 'version'> & {
         metadata?: Maybe<Pick<ProposalMetadata, 'title' | 'description'>>;
         strategy: (Pick<CVStrategy, 'id' | 'token' | 'maxCVSupply' | 'totalEffectiveActivePoints' | 'poolId'> & {
