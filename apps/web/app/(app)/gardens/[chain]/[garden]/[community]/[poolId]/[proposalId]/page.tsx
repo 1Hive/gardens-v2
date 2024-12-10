@@ -9,7 +9,7 @@ import {
 import { usePathname, useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { Address, encodeAbiParameters, formatUnits } from "viem";
-import { useAccount, useToken } from "wagmi";
+import { useAccount, useContractRead, useToken } from "wagmi";
 import {
   getProposalDataDocument,
   getProposalDataQuery,
@@ -39,7 +39,7 @@ import { useConvictionRead } from "@/hooks/useConvictionRead";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
-import { alloABI } from "@/src/generated";
+import { alloABI, safeABI } from "@/src/generated";
 import { PoolTypes, ProposalStatus } from "@/types";
 
 import { useErrorDetails } from "@/utils/getErrorName";
@@ -153,6 +153,18 @@ export default function Page({
   const submitter = proposalData?.submitter as Address | undefined;
   const proposalStatus = ProposalStatus[proposalData?.proposalStatus];
 
+  const { data: isCouncilMember } = useContractRead({
+    address: proposalData?.strategy?.id as Address,
+    abi: safeABI,
+    functionName: "isOwner",
+    chainId: Number(chainId),
+    enabled: !!address,
+    args: [address as Address],
+    onError: () => {
+      console.error("Error reading isOwner from Coucil Safe");
+    },
+  });
+
   const { data: poolToken } = useToken({
     address: poolTokenAddr,
     enabled: !!poolTokenAddr && !isSignalingType,
@@ -235,6 +247,7 @@ export default function Page({
     router.push(newPath + `?${QUERY_PARAMS.poolPage.allocationView}=true`);
   };
   const distributeErrorName = useErrorDetails(errorDistribute);
+
   useEffect(() => {
     if (isErrorDistribute && distributeErrorName.errorName !== undefined) {
       toast.error("NOT EXECUTABLE:" + "  " + distributeErrorName.errorName);
@@ -409,6 +422,7 @@ export default function Page({
           _totalStakedAmount={totalSupportPct}
           _beneficiary={beneficiary}
           _submitter={submitter}
+          _isCouncilMember={isCouncilMember}
         />
       )}
     </div>
@@ -421,12 +435,14 @@ function ProposalSupportersTable({
   _totalStakedAmount,
   _beneficiary,
   _submitter,
+  _isCouncilMember,
 }: {
   _proposalSupporters: ProposalSupporter[];
-  _totalActivePoints?: number;
-  _totalStakedAmount?: number;
-  _beneficiary?: string;
-  _submitter?: string;
+  _totalActivePoints: number;
+  _totalStakedAmount: number;
+  _beneficiary: string | undefined;
+  _submitter: string | undefined;
+  _isCouncilMember: boolean | undefined;
 }) {
   return (
     <div className="px-2 section-layout">
@@ -446,7 +462,11 @@ function ProposalSupportersTable({
               <thead>
                 <tr>
                   <th scope="col" className="py-3.5 pl-4 pr-3  sm:pl-0">
-                    <h5>Supporter address</h5>
+                    <h5>
+                      {_proposalSupporters.length > 1 ?
+                        "Supporters"
+                      : "Supporter"}
+                    </h5>
                   </th>
                   <th scope="col" className="px-3 py-3.5">
                     <h5>Role</h5>
@@ -462,7 +482,12 @@ function ProposalSupportersTable({
                     <td className="whitespace-nowrap py-5 pl-4 pr-3 sm:pl-0 text-sm text-neutral-soft-content">
                       <div className="flex items-center">
                         <div className="ml-4">
-                          <p className="">{supporter.id}</p>
+                          <EthAddress
+                            address={supporter.id as Address}
+                            actions="copy"
+                            shortenAddress={false}
+                            icon={"ens"}
+                          />
                         </div>
                       </div>
                     </td>
@@ -473,6 +498,8 @@ function ProposalSupportersTable({
                           "Beneficiary"
                         : supporter.id === _submitter ?
                           "Submitter"
+                        : _isCouncilMember ?
+                          "Council Member"
                         : "Member"}
                       </p>
                     </td>
