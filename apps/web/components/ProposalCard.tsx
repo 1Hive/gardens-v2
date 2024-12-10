@@ -207,7 +207,10 @@ export function ProposalCard({
             {isAllocationView ?
               <div className="flex w-full flex-wrap items-center justify-between gap-6">
                 <div className="flex items-center gap-8 flex-grow flex-wrap">
-                  <div className="flex-grow sm:max-w-[460px]">
+                  <div
+                    className={`flex-grow sm:max-w-[460px] ${isProposalEnded && "tooltip"}`}
+                    data-tip="Can't change support from ended proposals."
+                  >
                     <input
                       type="range"
                       min={0}
