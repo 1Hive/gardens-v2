@@ -73,6 +73,7 @@ export default function Page({
     variables: {
       garden: garden.toLowerCase(),
       proposalId: proposalId.toLowerCase(),
+      communityId: communityAddr.toLowerCase(),
     },
     changeScope: {
       topic: "proposal",
