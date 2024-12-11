@@ -9,7 +9,7 @@ import {
 import { usePathname, useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { Address, encodeAbiParameters, formatUnits } from "viem";
-import { useAccount, useContractRead, useToken } from "wagmi";
+import { useAccount, useToken } from "wagmi";
 import {
   getProposalDataDocument,
   getProposalDataQuery,
@@ -153,18 +153,6 @@ export default function Page({
   const beneficiary = proposalData?.beneficiary as Address | undefined;
   const submitter = proposalData?.submitter as Address | undefined;
   const proposalStatus = ProposalStatus[proposalData?.proposalStatus];
-
-  const { data: isCouncilMember } = useContractRead({
-    address: data?.registryCommunity?.councilSafe as Address,
-    abi: safeABI,
-    functionName: "isOwner",
-    chainId: Number(chainId),
-    enabled: !!address,
-    args: [address as Address],
-    onError: () => {
-      console.error("Error reading isOwner from Coucil Safe");
-    },
-  });
 
   const { data: poolToken } = useToken({
     address: poolTokenAddr,
@@ -423,7 +411,6 @@ export default function Page({
           _totalStakedAmount={totalSupportPct}
           _beneficiary={beneficiary}
           _submitter={submitter}
-          _isCouncilMember={isCouncilMember}
         />
       )}
     </div>
@@ -436,14 +423,12 @@ function ProposalSupportersTable({
   _totalStakedAmount,
   _beneficiary,
   _submitter,
-  _isCouncilMember,
 }: {
   _proposalSupporters: ProposalSupporter[];
   _totalActivePoints: number;
   _totalStakedAmount: number;
   _beneficiary: string | undefined;
   _submitter: string | undefined;
-  _isCouncilMember: boolean | undefined;
 }) {
   return (
     <div className="px-2 section-layout">
@@ -499,8 +484,6 @@ function ProposalSupportersTable({
                           "Beneficiary"
                         : supporter.id === _submitter ?
                           "Submitter"
-                        : _isCouncilMember ?
-                          "Council Member"
                         : "Member"}
                       </p>
                     </td>
