@@ -53,10 +53,10 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
 
     address BENEFICIARY = 0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD;
 
-    address public PROXY_OWNER = 0xD28473FbD87183864CAc0482DBEe1C54EE3d8Cd1;
+    address public PROXY_OWNER = 0x333837ec0D4F3D9b3dF0216996a148B46ce3541b;
     RegistryFactoryV0_0 public REGISTRY_FACTORY; // = RegistryFactoryV0_0(0xd7b72Fcb6A4e2857685175F609D1498ff5392E46);
-    PassportScorer PASSPORT_SCORER = PassportScorer(0x32Fe66622a4D4607241AC723e23Fef487ACDABb5);
-    SafeArbitrator ARBITRATOR = SafeArbitrator(0x5534FECacD5f84e22C0aBA9ea9813ff594D37262);
+    PassportScorer PASSPORT_SCORER = PassportScorer(0xD5a38e558582D32FfdC3b3a1A9f4D0D56e8b3115);
+    SafeArbitrator ARBITRATOR = SafeArbitrator(0x05EC011e0d8B4d2add98e1cc4AC7DF38a95EF4Ed);
 
     uint256 councilMemberPKEnv;
     address allo_proxy;
