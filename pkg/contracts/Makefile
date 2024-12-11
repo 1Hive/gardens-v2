@@ -126,8 +126,8 @@ deploy-arbsep:
 	--sig "run(string)" 'arbsepolia' \
 	--account pkGarden \
 	--etherscan-api-key $(ARBISCAN_API_KEY) \
-	--ffi \
 	--chain-id 421614 \
+	--ffi \
 	--broadcast \
 	--legacy \
 	--via-ir \
@@ -140,9 +140,9 @@ upgrade-arbsep:
 	--sig "run(string)" 'arbsepolia' \
 	--account pkGarden \
 	--etherscan-api-key $(ARBISCAN_API_KEY) \
+	--chain-id 421614 \
 	--ffi \
 	--broadcast \
-	--chain-id 421614 \
 	--legacy \
 	--via-ir \
 	--verify \
