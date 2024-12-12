@@ -154,7 +154,7 @@ export const chainConfigMap: {
     arbitrator: "0x10B469b23a47BC557daB81743af8A97Ef9e9f833",
     passportScorer: "0x8cd4bA4ad10d85A550fe45d567a49E49e1D23CE1",
     isTestnet: false,
-    safePrefix: "arb",
+    safePrefix: "arb1",
   },
   10: {
     name: optimism.name,
@@ -173,7 +173,7 @@ export const chainConfigMap: {
     arbitrator: "0x01b415E97310611EF5fea5c0b43470F6217456aA",
     passportScorer: "0x084a5504dCFeac0ec3E10517247639e50c8DcFFd",
     isTestnet: false,
-    safePrefix: "opt",
+    safePrefix: "oeth",
   },
   137: {
     name: polygon.name,
