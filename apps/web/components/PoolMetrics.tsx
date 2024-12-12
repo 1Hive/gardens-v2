@@ -153,17 +153,19 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                 className="subtitle2 text-primary-content"
               />
             </div>
-            <div className="flex gap-3">
-              <p className="subtitle2">Wallet balance:</p>
-              <Skeleton isLoading={!balance}>
-                <DisplayNumber
-                  number={[balance?.value ?? BigInt(0), poolToken.decimals]}
-                  tokenSymbol={poolToken.symbol}
-                  compact={true}
-                  className="subtitle2 text-primary-content"
-                />
-              </Skeleton>
-            </div>
+            {accountAddress && (
+              <div className="flex gap-3">
+                <p className="subtitle2">Wallet balance:</p>
+                <Skeleton isLoading={!balance}>
+                  <DisplayNumber
+                    number={[balance?.value ?? BigInt(0), poolToken.decimals]}
+                    tokenSymbol={poolToken.symbol}
+                    compact={true}
+                    className="subtitle2 text-primary-content"
+                  />
+                </Skeleton>
+              </div>
+            )}
           </div>
           <form
             className="flex gap-2 flex-wrap"

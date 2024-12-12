@@ -1061,12 +1061,16 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         ) >> 64;
 
         if (totalEffectiveActivePoints() != 0) {
-            uint256 thresholdOverride = (
-                ((cvParams.minThresholdPoints / totalEffectiveActivePoints()) * D)
-                    * (getMaxConviction(totalEffectiveActivePoints()))
-            ) / 10 ** 11;
+            uint256 thresholdOverride = calculateThresholdOverride();
             _threshold = _threshold > thresholdOverride ? _threshold : thresholdOverride;
         }
+    }
+
+    function calculateThresholdOverride() public view virtual returns (uint256) {
+        return (
+            (cvParams.minThresholdPoints * D * getMaxConviction(totalEffectiveActivePoints()))
+                / (totalEffectiveActivePoints())
+        ) / 10 ** 7;
     }
 
     /**
@@ -1227,7 +1231,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
 
     function setSybilScorer(address _sybilScorer, uint256 threshold) external virtual {
         if (msg.sender != address(registryCommunity.councilSafe()) && msg.sender != owner()) {
-          revert OnlyCouncilSafe();
+            revert OnlyCouncilSafe();
         }
         _revertZeroAddress(_sybilScorer);
         sybilScorer = ISybilScorer(_sybilScorer);
