@@ -189,8 +189,12 @@ query getCommunity($communityAddr: ID!, $tokenAddr: ID!) {
   registryCommunity(id: $communityAddr) {
     communityName
     id
-    members(where: { stakedTokens_gt: "0" }) {
-      id
+    members(
+      where: { stakedTokens_gt: "0" }
+      orderBy: stakedTokens
+      orderDirection: desc
+    ) {
+      memberAddress
       stakedTokens
     }
     strategies(
