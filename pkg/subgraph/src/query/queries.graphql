@@ -142,6 +142,19 @@ query getPoolCreationData($communityAddr: ID!, $tokenAddr: ID!) {
   }
 }
 
+query getProposalSupporters($proposalId: String!) {
+  members {
+    id
+    stakes(where: { proposal: $proposalId }) {
+      amount
+      proposal {
+        proposalNumber
+        id
+      }
+    }
+  }
+}
+
 query getGardenCommunities($chainId: BigInt!, $tokenGarden: ID!) {
   registryCommunities(
     where: { chainId: $chainId, garden_: { id: $tokenGarden } }
@@ -312,7 +325,7 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
   }
 }
 
-query getProposalData($garden: ID!, $proposalId: ID!) {
+query getProposalData($garden: ID!, $proposalId: ID!, $communityId: ID!) {
   allos {
     id
     chainId
@@ -322,6 +335,9 @@ query getProposalData($garden: ID!, $proposalId: ID!) {
     name
     symbol
     decimals
+  }
+  registryCommunity(id: $communityId) {
+    councilSafe
   }
   cvproposal(id: $proposalId) {
     id

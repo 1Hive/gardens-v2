@@ -13,6 +13,8 @@ import { useAccount, useToken } from "wagmi";
 import {
   getProposalDataDocument,
   getProposalDataQuery,
+  getProposalSupportersQuery,
+  getProposalSupportersDocument,
   isMemberDocument,
   isMemberQuery,
 } from "#/subgraph/.graphclient";
@@ -37,11 +39,17 @@ import { useConvictionRead } from "@/hooks/useConvictionRead";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
-import { alloABI } from "@/src/generated";
+import { alloABI, safeABI } from "@/src/generated";
 import { PoolTypes, ProposalStatus } from "@/types";
 
 import { useErrorDetails } from "@/utils/getErrorName";
+import { calculatePercentageBigInt } from "@/utils/numbers";
 import { prettyTimestamp } from "@/utils/text";
+
+type ProposalSupporter = {
+  id: string;
+  stakes: { amount: number }[];
+};
 
 export default function Page({
   params: { proposalId, garden, community: communityAddr, poolId },
@@ -65,6 +73,7 @@ export default function Page({
     variables: {
       garden: garden.toLowerCase(),
       proposalId: proposalId.toLowerCase(),
+      communityId: communityAddr.toLowerCase(),
     },
     changeScope: {
       topic: "proposal",
@@ -73,6 +82,16 @@ export default function Page({
       type: "update",
     },
   });
+
+  //query to get proposal supporters
+  const { data: supportersData } = useSubgraphQuery<getProposalSupportersQuery>(
+    {
+      query: getProposalSupportersDocument,
+      variables: {
+        proposalId: proposalId.toLowerCase(),
+      },
+    },
+  );
 
   //query to get member registry in community
   const { data: memberData } = useSubgraphQuery<isMemberQuery>({
@@ -89,6 +108,27 @@ export default function Page({
   //
 
   const proposalData = data?.cvproposal;
+  const proposalSupporters = supportersData?.members;
+
+  const filteredAndSortedProposalSupporters =
+    proposalSupporters ?
+      proposalSupporters
+        .filter((item) => item.stakes && item.stakes.length > 0)
+        .sort((a, b) => {
+          const maxStakeA = Math.max(
+            ...(a.stakes ?? []).map((stake) => stake.amount),
+          );
+          const maxStakeB = Math.max(
+            ...(b.stakes ?? []).map((stake) => stake.amount),
+          );
+          return maxStakeB - maxStakeA;
+        })
+    : [];
+  const totalEffectiveActivePoints =
+    proposalData?.strategy?.totalEffectiveActivePoints;
+
+  //
+
   const proposalIdNumber =
     proposalData?.proposalNumber ?
       BigInt(proposalData.proposalNumber)
@@ -196,6 +236,7 @@ export default function Page({
     router.push(newPath + `?${QUERY_PARAMS.poolPage.allocationView}=true`);
   };
   const distributeErrorName = useErrorDetails(errorDistribute);
+
   useEffect(() => {
     if (isErrorDistribute && distributeErrorName.errorName !== undefined) {
       toast.error("NOT EXECUTABLE:" + "  " + distributeErrorName.errorName);
@@ -204,6 +245,7 @@ export default function Page({
 
   if (
     !proposalData ||
+    !supportersData ||
     !metadata ||
     proposalIdNumber == null ||
     updatedConviction == null
@@ -224,7 +266,6 @@ export default function Page({
   };
 
   const status = ProposalStatus[proposalData.proposalStatus];
-
   return (
     <div className="page-layout">
       <header
@@ -321,42 +362,165 @@ export default function Page({
                 Manage support
               </Button>
             </div>
-            <ConvictionBarChart
-              currentConvictionPct={currentConvictionPct}
-              thresholdPct={thresholdPct}
-              proposalSupportPct={totalSupportPct}
-              isSignalingType={isSignalingType}
-              proposalNumber={Number(proposalIdNumber)}
-              timeToPass={Number(timeToPass)}
-              onReadyToExecute={triggerConvictionRefetch}
-              defaultChartMaxValue
-            />
-            <div className="flex justify-center w-full">
-              {status === "active" && !isSignalingType && (
-                <Button
-                  onClick={() =>
-                    writeDistribute?.({
-                      args: [
-                        BigInt(poolId),
-                        [proposalData?.strategy.id as Address],
-                        encodedDataProposalId(proposalIdNumber),
-                      ],
-                    })
-                  }
-                  disabled={currentConvictionPct < thresholdPct || !isConnected}
-                  tooltip={
-                    tooltipMessage ?? currentConvictionPct < thresholdPct ?
-                      "Proposal not executable"
-                    : undefined
-                  }
-                >
-                  Execute
-                </Button>
-              )}
+            <div className="flex flex-col gap-7">
+              <ConvictionBarChart
+                currentConvictionPct={currentConvictionPct}
+                thresholdPct={thresholdPct}
+                proposalSupportPct={totalSupportPct}
+                isSignalingType={isSignalingType}
+                proposalNumber={Number(proposalIdNumber)}
+                timeToPass={Number(timeToPass)}
+                onReadyToExecute={triggerConvictionRefetch}
+                defaultChartMaxValue
+              />
+              <div className="flex justify-center lg:justify-end w-full">
+                {status === "active" && !isSignalingType && (
+                  <Button
+                    onClick={() =>
+                      writeDistribute?.({
+                        args: [
+                          BigInt(poolId),
+                          [proposalData?.strategy.id as Address],
+                          encodedDataProposalId(proposalIdNumber),
+                        ],
+                      })
+                    }
+                    disabled={
+                      currentConvictionPct < thresholdPct || !isConnected
+                    }
+                    tooltip={
+                      (tooltipMessage ?? currentConvictionPct < thresholdPct) ?
+                        "Proposal not executable"
+                      : undefined
+                    }
+                  >
+                    Execute
+                  </Button>
+                )}
+              </div>
             </div>
           </>
         }
       </section>
+      {filteredAndSortedProposalSupporters.length > 0 && (
+        <ProposalSupportersTable
+          _proposalSupporters={
+            filteredAndSortedProposalSupporters as ProposalSupporter[]
+          }
+          _totalActivePoints={totalEffectiveActivePoints}
+          _totalStakedAmount={totalSupportPct}
+          _beneficiary={beneficiary}
+          _submitter={submitter}
+        />
+      )}
+    </div>
+  );
+}
+
+function ProposalSupportersTable({
+  _proposalSupporters,
+  _totalActivePoints,
+  _totalStakedAmount,
+  _beneficiary,
+  _submitter,
+}: {
+  _proposalSupporters: ProposalSupporter[];
+  _totalActivePoints: number;
+  _totalStakedAmount: number;
+  _beneficiary: string | undefined;
+  _submitter: string | undefined;
+}) {
+  return (
+    <div className="px-2 section-layout">
+      <div className="sm:flex sm:items-center">
+        <div className="sm:flex-auto">
+          <h3>Supported By</h3>
+          <p className="mt-2 text-sm text-neutral-soft-content">
+            A list of all the community members that are supporting this
+            proposal.
+          </p>
+        </div>
+      </div>
+      <div className="mt-8 flow-root">
+        <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+          <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+            <table className="min-w-full divide-y divide-neutral-soft">
+              <thead>
+                <tr>
+                  <th scope="col" className="py-3.5 pl-4 pr-3  sm:pl-0">
+                    <h5>
+                      {_proposalSupporters.length > 1 ?
+                        "Supporters"
+                      : "Supporter"}
+                    </h5>
+                  </th>
+                  <th scope="col" className="px-3 py-3.5">
+                    <h5>Role</h5>
+                  </th>
+                  <th scope="col" className="px-3 py-3.5 text-center">
+                    <h5>Support</h5>
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-neutral-soft">
+                {_proposalSupporters.map((supporter: ProposalSupporter) => (
+                  <tr key={supporter.id}>
+                    <td className="whitespace-nowrap py-5 pl-4 pr-3 sm:pl-0 text-sm text-neutral-soft-content">
+                      <div className="flex items-center">
+                        <div className="ml-4">
+                          <EthAddress
+                            address={supporter.id as Address}
+                            actions="copy"
+                            shortenAddress={false}
+                            icon={"ens"}
+                          />
+                        </div>
+                      </div>
+                    </td>
+                    {/* members role */}
+                    <td className="whitespace-nowrap px-3 py-5 text-sm text-neutral-soft-content">
+                      <p>
+                        {supporter.id === _beneficiary ?
+                          "Beneficiary"
+                        : supporter.id === _submitter ?
+                          "Submitter"
+                        : "Member"}
+                      </p>
+                    </td>
+                    {/* members support */}
+                    <td className="whitespace-nowrap px-3 py-5 text-sm text-neutral-soft-content">
+                      <p className="subtitle">
+                        {(_totalActivePoints ?? 0) > 0 ?
+                          calculatePercentageBigInt(
+                            BigInt(supporter?.stakes[0]?.amount),
+                            BigInt(_totalActivePoints ?? 0),
+                          )
+                        : undefined}{" "}
+                        %
+                      </p>{" "}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <th
+                    scope="col"
+                    colSpan={2}
+                    className="pl-8 pr-3 pt-4 sm:table-cell sm:pl-0"
+                  >
+                    <p className="subtitle">Total Support:</p>
+                  </th>
+
+                  <td className="pl-3 pr-4 pt-4 text-left sm:pr-0">
+                    <p className="subtitle">{_totalStakedAmount} %</p>
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
