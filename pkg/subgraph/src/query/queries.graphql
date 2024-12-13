@@ -54,6 +54,20 @@ query getTokenGardens {
   }
 }
 
+query getMembersStrategy($strategyId: String!) {
+  memberStrategies(where: { strategy: $strategyId }) {
+    activatedPoints
+    member {
+      memberCommunity {
+        memberAddress
+        isRegistered
+      }
+    }
+    totalStakedPoints
+    id
+  }
+}
+
 query getMemberStrategy($member_strategy: ID!) {
   memberStrategy(id: $member_strategy) {
     id
