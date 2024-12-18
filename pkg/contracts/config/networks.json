@@ -72,7 +72,9 @@
           "0x01a2c3c4e7c38885bf3d01e38847184ff2368fea",
           "0x0f143af46eef341b3f0dbf98c3ecb47f57067fef",
           "0x110f4a8153c04eace288e712eb4b975b46376b8c",
+          "0x2851b7e3d1ad8ba5637afe196968f1a4a9875e03",
           "0x400b3316447a4362abe36206c145550080046831",
+          "0x41a9ed5de7998583cd20bf738ca38e649e0eafe3",
           "0x5a48adf540cb5c79edb027bef3ebf551ce63661f",
           "0x625cb91ad17cf9b4a2b6b20b2b494ddf123c290c",
           "0x6dd6b0a9a9b94aa169e5ce31cff34a46c7bea9cd",
@@ -80,9 +82,12 @@
           "0x8281fd9c5f709a681813c49843a253a05d9b837c",
           "0x8c3e27f075bb82e8730660828a1159c9438f3e58",
           "0xa50d2ce829ea7b731c3b0a244032b639ff94cb92",
+          "0xab90f7d562edac4fdfcac4d1cd93a45ac4a1fdab",
           "0xbb8b8ddc3775d825b6cf33bfa9ddcd771b88c6ee",
           "0xc3ba42da1d9f6b09d4d1315ac04f873a5ba64d3c",
+          "0xdd65d3eac26d91f1040fe3beca11863cd354788e",
           "0xe0902356a984540ca097021dbd9e0650974c7f7d",
+          "0xee9cc69179697f3bf8172624c5803b58bf6bf73f",
           "0xf62a2e4ecf3bf73313b3bbbfb1563cb4433c8933",
           "0xfa1d8bdb95e0288779df13f40ff32567647e7ffa"
         ],
@@ -100,8 +105,9 @@
           "0xeefd5923d88bdcc74afa56943dcc163f1de2be4d",
           "0xf659101919e1de3dca2fd7aa47840189506055ff"
         ],
-        "PASSPORT_SCORER": "0x8cd4bA4ad10d85A550fe45d567a49E49e1D23CE1"
-      }
+        "PASSPORT_SCORER": "0x8cd4ba4ad10d85a550fe45d567a49e49e1d23ce1"
+      },
+      "hash": "4c2cb621dc2d06669e61d5ef4a2da8a8cdfb4317"
     },
     {
       "name": "optimism",
@@ -147,6 +153,7 @@
         "CV_STRATEGIES": [
           "0x1c720bfa4a2535fb6675b859a717b4cba56fd97b",
           "0x63e2b63072e131c0e5ad72205e03cbe6ca1484fa",
+          "0x6a27a7454bfbf17aa22566519778b58f3d4adcc2",
           "0x8f80c90ef85254bd1c401804058bb68f2eb7cfab",
           "0x94daa3f0e1380139e178f8cc523eea39395bcf78",
           "0x964251300e577801ce3e21897c6a335505fedee5",
@@ -155,8 +162,9 @@
           "0xd9cf1f7d077166236e260819257a567b1ca22c8c",
           "0xfeca5fc72deb98b41198a5dce90e00bbafbe5888"
         ],
-        "PASSPORT_SCORER": "0x084a5504dCFeac0ec3E10517247639e50c8DcFFd"
-      }
+        "PASSPORT_SCORER": "0x084a5504dcfeac0ec3e10517247639e50c8dcffd"
+      },
+      "hash": "a88d6273102f1c0026983ffda6f96c3d0f127790"
     },
     {
       "name": "polygon",
@@ -182,10 +190,13 @@
           "0x0eab3bf7f6c651fc645c70543f34c117a1615adc",
           "0x22a9bc80cf832393dc88fc564cfe97e3daa116db",
           "0x6138338450c5bfbd646e49cf9f8c68a9152cad17",
-          "0xd6f30d1f35069299e709bcac58fe7cda6bc9595f"
+          "0x81745dba1273411825f18b50ead84a3fc2c8fd2c",
+          "0xd6f30d1f35069299e709bcac58fe7cda6bc9595f",
+          "0xe8216b6a9e8b87560dbeb0f4dc0f256fb9fedf1b"
         ],
-        "PASSPORT_SCORER": "0x190Fa730E6FfC64Ebd0031bE59b3007cC9eE2bB3"
-      }
+        "PASSPORT_SCORER": "0x190fa730e6ffc64ebd0031be59b3007cc9ee2bb3"
+      },
+      "hash": "68e5f135e9bf9bea2550da401d0b656f883f0dcd"
     },
     {
       "name": "gnosis",
@@ -214,16 +225,20 @@
         ],
         "CV_STRATEGIES": [
           "0x1f6fd908db173f591aa6ea4a037d157ea4e31f68",
+          "0x74545010e013e5601009305288193cbd5c8702b4",
           "0xaa0195986ffe8f3371444fa77ee3ed04ac787eea",
           "0xac948bca716b080df41afc70f37b7a9f6f3d9c9a",
           "0xb1a275419c817273f470ee1a102cad7507a25b6f",
+          "0xb48fe96fcb6b3f7228247690f6a0f21d60002e52",
+          "0xba5c9429472e9e0aa1d4f0276c7fb45374e2af6c",
           "0xbf1d2e31fa3d927673d2e95bfb2d940f5cc8890e",
           "0xd12f4faab3a770175f5d7e19bd32b1a7aadc0a31",
-          "0xe652081deb52afa56fb2958994427c662356007b"
+          "0xe652081deb52afa56fb2958994427c662356007b",
+          "0xfbad687a935390ff59b36cd6c9462d0b1948e378"
         ],
-        "PASSPORT_SCORER": "0x20965C5C8a021ac6fFeD5dE7A402f7CEaC3b0A82"
+        "PASSPORT_SCORER": "0x20965c5c8a021ac6ffed5de7a402f7ceac3b0a82"
       },
-      "hash": "c37c4a86dad1f7757ef26d9719176c7ac4b82536"
+      "hash": "d844cea70c7b7f299046e6dc3da17626afed5c7b"
     },
     {
       "name": "mainnet",

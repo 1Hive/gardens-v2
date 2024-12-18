@@ -219,6 +219,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     event AllowlistMembersRemoved(uint256 poolId, address[] members);
     event AllowlistMembersAdded(uint256 poolId, address[] members);
     event SybilScorerUpdated(address sybilScorer);
+    event Logger(string message, uint256 value);
 
     /*|-------------------------------------/-------|*o
     /*|              STRUCTS/ENUMS                 |*/
@@ -281,20 +282,6 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         collateralVaultTemplate = _collateralVaultTemplate;
     }
 
-    function init2(address newSafeArbitrator) external virtual reinitializer(2) {
-        // New Arbitrator config with new safe arbitrator
-        arbitrableConfigs[currentArbitrableConfigVersion].arbitrator = IArbitrator(newSafeArbitrator);
-        emit ArbitrableConfigUpdated(
-            currentArbitrableConfigVersion,
-            arbitrableConfigs[currentArbitrableConfigVersion].arbitrator,
-            arbitrableConfigs[currentArbitrableConfigVersion].tribunalSafe,
-            arbitrableConfigs[currentArbitrableConfigVersion].submitterCollateralAmount,
-            arbitrableConfigs[currentArbitrableConfigVersion].challengerCollateralAmount,
-            arbitrableConfigs[currentArbitrableConfigVersion].defaultRuling,
-            arbitrableConfigs[currentArbitrableConfigVersion].defaultRulingTimeout
-        );
-    }
-
     function initialize(uint256 _poolId, bytes memory _data) external override onlyAllo {
         __BaseStrategy_init(_poolId);
 
@@ -306,7 +293,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         // if (ip.registryCommunity == address(0)) {
         //     revert RegistryCannotBeZero();
         // }
-        //Set councilsafe to whitelist admin
+        // Set councilsafe to whitelist admin
         registryCommunity = RegistryCommunityV0_0(ip.registryCommunity);
 
         proposalType = ip.proposalType;
@@ -1133,6 +1120,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         }
         _proposal.blockLast = blockNumber;
         _proposal.convictionLast = conviction;
+        emit Logger("Conviction set", conviction);
     }
 
     function _checkBlockAndCalculateConviction(Proposal storage _proposal, uint256 _oldStaked)
