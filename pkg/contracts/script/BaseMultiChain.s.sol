@@ -55,9 +55,10 @@ abstract contract BaseMultiChain is Native, CVStrategyHelpers, Script, SafeSetup
     address allo_proxy;
     Allo allo;
     GV2ERC20 token;
-    RegistryFactoryV0_0 registryFactory;
     IArbitrator arbitrator;
     ISybilScorer sybilScorer;
+    uint256 chainId;
+    string chainName;
 
     function pool_admin() public virtual override returns (address) {
         return address(SENDER);
@@ -105,11 +106,11 @@ abstract contract BaseMultiChain is Native, CVStrategyHelpers, Script, SafeSetup
 
         string memory json = getNetworkJson();
 
-        uint256 chainId = json.readUint(getKeyNetwork(".chainId"));
-        string memory name = json.readString(getKeyNetwork(".name"));
+        chainId = json.readUint(getKeyNetwork(".chainId"));
+        chainName = json.readString(getKeyNetwork(".name"));
         SENDER = json.readAddress(getKeyNetwork(".ENVS.SENDER"));
 
-        console2.log("name: %s", name);
+        console2.log("name: %s", chainName);
         console2.log("sender: %s", SENDER);
         console2.log("chainId : %s", chainId);
 
@@ -289,7 +290,7 @@ abstract contract BaseMultiChain is Native, CVStrategyHelpers, Script, SafeSetup
         // token.approve(address(registryCommunity), type(uint256).max);
         // // token.mint(address(pool_admin()), 100);
         // //@todo get correct value instead infinite approval
-        // registryCommunity.stakeAndRegisterMember();
+        // registryCommunity.stakeAndRegisterMember("");
 
         // assertEq(registryCommunity.isMember(address(pool_admin())), true, "Not a member");
         // // assertEq(token.balanceOf(address(this)), registryCommunity.getStakeAmountWithFees(), "Balance not correct");

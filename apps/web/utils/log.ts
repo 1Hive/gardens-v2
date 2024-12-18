@@ -1,9 +1,14 @@
+import { stringifyJson } from "./json";
+
 type LogLevel = "debug" | "info" | "warn" | "error";
 const logs = new Set<string>();
-export function logOnce(level: LogLevel = "debug", ...message: Parameters<typeof console.debug>) {
+export function logOnce(
+  level: LogLevel = "debug",
+  ...message: Parameters<typeof console.debug>
+) {
   let serializedMessage;
   try {
-    serializedMessage = JSON.stringify(message);
+    serializedMessage = stringifyJson(message);
   } catch (error) {
     serializedMessage = message.toString();
   }

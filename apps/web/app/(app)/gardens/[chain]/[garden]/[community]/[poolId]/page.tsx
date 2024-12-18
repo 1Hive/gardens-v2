@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Address } from "viem";
 import { useToken } from "wagmi";
 import {
@@ -27,10 +27,11 @@ export default function Page({
   params: { chain: string; poolId: number; garden: string };
 }) {
   const searchParams = useCollectQueryParams();
+  const proposalSectionRef = useRef<HTMLDivElement>(null);
 
   const { data, refetch, error } = useSubgraphQuery<getPoolDataQuery>({
     query: getPoolDataDocument,
-    variables: { poolId: poolId, garden: garden },
+    variables: { poolId: poolId, garden: garden.toLowerCase() },
     changeScope: [
       {
         topic: "pool",
@@ -55,7 +56,6 @@ export default function Page({
       },
     ],
   });
-
   const strategyObj = data?.cvstrategies?.[0];
   const poolTokenAddr = strategyObj?.token as Address;
   const proposalType = strategyObj?.config.proposalType;
@@ -105,6 +105,23 @@ export default function Page({
 
   const tokenGarden = data?.tokenGarden;
 
+  const maxAmount = strategyObj?.config?.maxAmount ?? 0;
+
+  useEffect(() => {
+    if (
+      searchParams[QUERY_PARAMS.poolPage.allocationView] !== undefined &&
+      proposalSectionRef.current
+    ) {
+      const elementTop =
+        proposalSectionRef.current.getBoundingClientRect().top + window.scrollY;
+      window.scrollTo({
+        top: elementTop - 130,
+        behavior: "smooth",
+      });
+    }
+    // setAllocationView(searchParams[QUERY_PARAMS.poolPage.allocationView]);
+  }, [proposalSectionRef.current, searchParams]);
+
   if (!tokenGarden || (!poolToken && PoolTypes[proposalType] === "funding")) {
     return (
       <div className="mt-96">
@@ -133,7 +150,7 @@ export default function Page({
         poolId={poolId}
         ipfsResult={ipfsResult}
         isEnabled={isEnabled}
-        chainId={chain}
+        maxAmount={maxAmount}
       />
       {isEnabled && (
         <>
@@ -147,6 +164,10 @@ export default function Page({
               chainId={chain}
             />
           )}
+        </>
+      )}
+      {strategyObj.proposals.length && (
+        <section ref={proposalSectionRef}>
           <Proposals
             poolToken={poolToken}
             strategy={strategyObj}
@@ -155,7 +176,7 @@ export default function Page({
             createProposalUrl={`/gardens/${chain}/${garden}/${communityAddress}/${poolId}/create-proposal`}
             proposalType={proposalType}
           />
-        </>
+        </section>
       )}
     </div>
   );

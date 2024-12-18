@@ -1,8 +1,14 @@
 import { useEffect, useMemo } from "react";
-
 import { WriteContractMode } from "@wagmi/core";
-import { Abi, TransactionReceipt } from "viem";
+import { AbiFunction } from "abitype";
 import {
+  Abi,
+  encodeFunctionData,
+  TransactionReceipt,
+  UserRejectedRequestError,
+} from "viem";
+import {
+  useAccount,
   useChainId,
   useContractWrite,
   UseContractWriteConfig,
@@ -11,6 +17,8 @@ import {
 import { useChainIdFromPath } from "./useChainIdFromPath";
 import { useTransactionNotification } from "./useTransactionNotification";
 import { chainConfigMap } from "@/configs/chains";
+import { abiWithErrors } from "@/utils/abi";
+import { stringifyJson } from "@/utils/json";
 
 export type ComputedStatus =
   | "loading"
@@ -41,19 +49,92 @@ export function useContractWriteWithConfirmations<
     fallbackErrorMessage?: string;
   },
 ) {
+  const { address: walletAddress } = useAccount();
   const toastId = props.contractName + "_" + props.functionName;
   const chainIdFromWallet = useChainId();
   const chainIdFromPath = useChainIdFromPath();
   let propsWithChainId = {
     ...props,
     chainId: props.chainId ?? chainIdFromPath ?? chainIdFromWallet,
+    abi: abiWithErrors(props.abi as Abi),
   };
 
-  function logError(error: any, variables: any, context: string) {
-    console.error(
-      `Error with transaction [${props.contractName} -> ${props.functionName}]`,
-      { error, variables, context },
-    );
+  async function logError(error: any, variables: any, context: string) {
+    // if (
+    //   process.env.NEXT_PUBLIC_TENDERLY_ACCESS_KEY &&
+    //   process.env.NEXT_PUBLIC_TENDERLY_ACCOUNT_NAME &&
+    //   process.env.NEXT_PUBLIC_TENDERLY_PROJECT_NAME &&
+    //   chainIdFromPath &&
+    //   walletAddress
+    // ) {
+    //   const encodedData = encodeFunctionData({
+    //     abi: props.abi as [AbiFunction],
+    //     functionName: props.functionName as string,
+    //     args: variables.args,
+    //   });
+    //   const tenderly = new Tenderly({
+    //     accessKey: process.env.NEXT_PUBLIC_TENDERLY_ACCESS_KEY,
+    //     network: +chainIdFromPath,
+    //     accountName: process.env.NEXT_PUBLIC_TENDERLY_ACCOUNT_NAME,
+    //     projectName: process.env.NEXT_PUBLIC_TENDERLY_PROJECT_NAME,
+    //   });
+    //   const blockNumber = await publicClient.getBlockNumber();
+    //   try {
+    //     const simulationResult = await tenderly.simulator.simulateTransaction({
+    //       transaction: {
+    //         from: walletAddress as Address,
+    //         to: props.address as Address,
+    //         gas: 20000000,
+    //         gas_price: "19419609232",
+    //         value: 0,
+    //         input: encodedData,
+    //       },
+    //       blockNumber: Number(blockNumber),
+    //     });
+    //     console.log({ simulationResult });
+    //     const simulationLink = `https://dashboard.tenderly.co/${tenderly.configuration.accountName}/${tenderly.configuration.projectName}/simulator/${simulationResult}`;
+    //     console.log({ simulationResult, simulationLink });
+    //   } catch (error) {
+    //     console.error("Error. Failed to simulate transaction: ", error);
+    //   }
+    // }
+    const encodedData = encodeFunctionData({
+      abi: props.abi as [AbiFunction],
+      functionName: props.functionName as string,
+      args: variables.args,
+    });
+    const rawData = encodedData;
+    let logPayload = {
+      error,
+      variables,
+      context,
+      rawData,
+      contract: props.address,
+      message: error.message,
+      from: walletAddress,
+    };
+    try {
+      logPayload = {
+        ...logPayload,
+        errorJson: stringifyJson(error),
+      } as any;
+    } catch (e) {
+      console.debug("Error parsing logPayload error: ", e);
+    }
+    try {
+      logPayload = {
+        ...logPayload,
+        variablesJson: stringifyJson(variables),
+      } as any;
+    } catch (e) {
+      console.debug("Error parsing logPayload variable: ", e);
+    }
+    if (!(error?.cause instanceof UserRejectedRequestError)) {
+      console.error(
+        `Error with transaction [${props.contractName} -> ${props.functionName}]`,
+        logPayload,
+      );
+    }
   }
 
   const txResult = useContractWrite(

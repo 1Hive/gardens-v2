@@ -105,11 +105,11 @@ export function useSubgraphQueryMultiChain<
       const chainSubgraphs = (chainsOverride ?? chainIds ?? allChains).map(
         (chain) => ({
           chainId: +chain,
-          url: getConfigByChain(chain)?.subgraphUrl,
+          chainConfig: getConfigByChain(chain),
         }),
       );
       await Promise.all(
-        chainSubgraphs.map(async ({ chainId, url }, i) => {
+        chainSubgraphs.map(async ({ chainId, chainConfig }, i) => {
           const fetchSubgraphChain = async (retryCount?: number) => {
             if (!retryCount && retryOnNoChange) {
               retryCount = 0;
@@ -124,19 +124,35 @@ export function useSubgraphQueryMultiChain<
               });
             }
             try {
-              const fetchQuery = async () => {
+              const fetchQuery = async (skipPublished: boolean) => {
                 const { urqlClient } = initUrqlClient({
                   chainId: (chainsOverride ?? allChains)[i],
                 });
                 return urqlClient.query<Data>(query, variables, {
                   ...queryContext,
-                  url,
+                  url:
+                    skipPublished || !chainConfig?.publishedSubgraphUrl ?
+                      chainConfig?.subgraphUrl
+                    : chainConfig?.publishedSubgraphUrl,
                   chainId,
                   requestPolicy: "network-only",
                 } as OperationContext & { _instance: any });
               };
 
-              const res = await fetchQuery();
+              let res;
+              try {
+                const shouldSkipPublished =
+                  (localStorage.getItem("skipPublished") === "true" ||
+                    process.env.NEXT_PUBLIC_SKIP_PUBLISHED === "true") &&
+                  localStorage.getItem("skipPublished") !== "false";
+                res = await fetchQuery(shouldSkipPublished);
+              } catch (err1) {
+                console.error(
+                  "⚡ Error fetching through published subgraph, retrying with hosted:",
+                  err1,
+                );
+                res = await fetchQuery(true);
+              }
 
               if (res.error) {
                 errorsMap.current.set(chainId, res.error);

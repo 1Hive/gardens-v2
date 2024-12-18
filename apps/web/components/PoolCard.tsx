@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  ArchiveBoxIcon,
   BoltIcon,
   ClockIcon,
   CurrencyDollarIcon,
@@ -8,11 +9,11 @@ import {
 } from "@heroicons/react/24/outline";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { Address, useToken } from "wagmi";
 import {
   CVProposal,
   CVStrategy,
   CVStrategyConfig,
-  TokenGarden,
 } from "#/subgraph/.graphclient";
 import { Skeleton } from "./Skeleton";
 import TooltipIfOverflow from "./TooltipIfOverflow";
@@ -25,17 +26,18 @@ import { PointSystems, PoolTypes } from "@/types";
 import { capitalize } from "@/utils/text";
 
 type Props = {
-  tokenGarden: Pick<TokenGarden, "decimals" | "symbol">;
+  token: string;
   pool: Pick<
     CVStrategy,
-    "id" | "isEnabled" | "poolAmount" | "poolId" | "metadata"
+    "id" | "isEnabled" | "poolAmount" | "poolId" | "metadata" | "archived"
   > & {
     proposals: Pick<CVProposal, "id">[];
     config: Pick<CVStrategyConfig, "proposalType" | "pointSystem">;
   };
+  chainId: number;
 };
 
-export function PoolCard({ pool, tokenGarden }: Props) {
+export function PoolCard({ pool, token, chainId }: Props) {
   const pathname = usePathname();
   const searchParams = useCollectQueryParams();
 
@@ -47,6 +49,10 @@ export function PoolCard({ pool, tokenGarden }: Props) {
 
   poolAmount = poolAmount || 0;
   const poolType = config?.proposalType as number | undefined;
+  const { data: tokenGarden } = useToken({
+    address: token as Address,
+    chainId: +chainId,
+  });
 
   const isNewPool =
     searchParams[QUERY_PARAMS.communityPage.newPool] === pool.poolId.toString();
@@ -62,11 +68,11 @@ export function PoolCard({ pool, tokenGarden }: Props) {
           </h3>
         </Skeleton>
         <div className="flex justify-between items-center w-full">
-          <h6>ID #{poolId}</h6>
+          <h6>POOL ID: #{poolId}</h6>
           <Badge type={poolType} />
         </div>
       </header>
-      <div className="mb-8 flex min-h-[60px] flex-col gap-2">
+      <div className="mb-8 flex flex-col gap-2">
         <Statistic
           icon={<BoltIcon />}
           label="voting weight"
@@ -76,23 +82,24 @@ export function PoolCard({ pool, tokenGarden }: Props) {
           icon={<HandRaisedIcon />}
           count={proposals.length}
           label="proposals"
+          className={`${isEnabled ? "visible" : "invisible"}`}
         />
-        <Statistic
-          icon={<CurrencyDollarIcon />}
-          label="funds"
-          className={`${poolType && PoolTypes[poolType] === "funding" ? "visible" : "invisible"}`}
-        >
-          <DisplayNumber
-            number={[BigInt(poolAmount), tokenGarden.decimals]}
-            compact={true}
-            tokenSymbol={tokenGarden.symbol}
-          />
-        </Statistic>
+        {isEnabled && poolType && PoolTypes[poolType] === "funding" && (
+          <Statistic icon={<CurrencyDollarIcon />} label="funds">
+            <DisplayNumber
+              number={[BigInt(poolAmount), tokenGarden?.decimals as number]}
+              compact={true}
+              tokenSymbol={tokenGarden?.symbol}
+            />
+          </Statistic>
+        )}
       </div>
       {!isEnabled ?
         <div className="banner md:min-w-[262px]">
-          <ClockIcon className="h-8 w-8 text-secondary-content" />
-          <h6>Waiting for approval</h6>
+          {pool.archived ?
+            <ArchiveBoxIcon className="h-8 w-8 text-secondary-content" />
+          : <ClockIcon className="h-8 w-8 text-secondary-content" />}
+          <h6>{pool.archived ? "Archived" : "Waiting for approval"}</h6>
         </div>
       : <Image
           src={poolType && PoolTypes[poolType] === "funding" ? blueLand : grass}

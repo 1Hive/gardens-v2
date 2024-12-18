@@ -17,14 +17,14 @@ import {
 } from "@/components/";
 
 export type PoolGovernanceProps = {
-  memberPoolWeight: number;
+  memberPoolWeight: number | undefined;
   tokenDecimals: number;
   strategy: Pick<CVStrategy, "id" | "sybilScorer" | "poolId"> & {
     registryCommunity: { garden: Pick<TokenGarden, "symbol"> };
     config: Pick<CVStrategyConfig, "pointSystem" | "allowlist">;
   };
   communityAddress: Address;
-  memberTokensInCommunity: number;
+  memberTokensInCommunity: bigint;
   isMemberCommunity: boolean;
   memberActivatedStrategy: boolean;
 };
@@ -89,7 +89,7 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
                 <div className="flex items-start gap-6">
                   <p className="subtitle2">Your voting weight:</p>
                   <p className="subtitle2 text-primary-content">
-                    {memberPoolWeight.toFixed(2)} %
+                    {memberPoolWeight?.toFixed(2)} %
                   </p>
                 </div>
               )}

@@ -1,22 +1,23 @@
 const viemChains = require("viem/chains");
+const hash = require("object-hash");
 const subgraphConfig = require("../../../../apps/web/configs/subgraph.json");
 
 const localhostSubgraph = "http://localhost:8000/subgraphs/name/kamikazebr/gv2";
 const arbitrumSepoliaSubgraph =
-  "https://api.studio.thegraph.com/query/70985/gv2-arbsepolia/" +
+  "https://api.studio.thegraph.com/query/70985/gardens-v2---arbitrum-sepolia/" +
   subgraphConfig.VERSION_TESTNET;
 
 const arbitrumSubgraph =
-  "https://api.studio.thegraph.com/query/70985/gv2-arbitrum/" +
+  "https://api.studio.thegraph.com/query/40931/gardens-v2---arbitrum/" +
   subgraphConfig.VERSION_PROD;
 const maticSubgraph =
-  "https://api.studio.thegraph.com/query/70985/gv2-matic/" +
+  "https://api.studio.thegraph.com/query/40931/gardens-v2---polygon/" +
   subgraphConfig.VERSION_PROD;
 const optimismSubgraph =
-  "https://api.studio.thegraph.com/query/70985/gv2-optimism/" +
+  "https://api.studio.thegraph.com/query/40931/gardens-v2---optimism/" +
   subgraphConfig.VERSION_PROD;
 const gnosisSubgraph =
-  "https://api.studio.thegraph.com/query/70985/gv2-gnosis/" +
+  "https://api.studio.thegraph.com/query/40931/gardens-v2---gnosis/" +
   subgraphConfig.VERSION_PROD;
 
 // @ts-ignore
@@ -31,12 +32,11 @@ const jsons = {
   // [viemChains.sepolia.id]: sepoliaLatest,
 
   // @ts-ignore
+  [viemChains.arbitrum.id]: arbitrumSubgraph,
   [viemChains.optimism.id]: optimismSubgraph,
+  [viemChains.polygon.id]: maticSubgraph,
   [viemChains.gnosis.id]: gnosisSubgraph,
   // @ts-ignore
-  [viemChains.polygon.id]: maticSubgraph,
-  // @ts-ignore
-  [viemChains.arbitrum.id]: arbitrumSubgraph,
   // [viemChains.mainnet.id]: mainnetLatest
 };
 
@@ -135,7 +135,11 @@ async function extractProxies(chainId) {
 
 extractProxies(chainArg)
   .then((proxies) => {
-    const json = JSON.stringify({ PROXIES: proxies }, null, 2);
+    const json = JSON.stringify(
+      { PROXIES: proxies, hash: hash(proxies) },
+      null,
+      2,
+    );
     console.debug(json);
   })
   .catch((err) => console.error(err));

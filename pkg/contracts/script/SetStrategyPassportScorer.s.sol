@@ -21,3 +21,4 @@ contract SetStrategyPassportScorer is BaseMultiChain {
         }
     }
 }
+

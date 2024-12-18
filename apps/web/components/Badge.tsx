@@ -12,6 +12,7 @@ type BadgeProps = {
   className?: string;
   icon?: React.ReactNode;
   isCapitalize?: boolean;
+  tooltip?: string;
 };
 
 // Styles for different pool badge types
@@ -39,6 +40,7 @@ export function Badge({
   status,
   label,
   className,
+  tooltip,
   icon,
 }: BadgeProps): JSX.Element {
   const isStatusBadge = status !== undefined;
@@ -70,7 +72,8 @@ export function Badge({
 
   return (
     <div
-      className={`${BASE_STYLES} ${styles} ${className} flex items-center gap-2`}
+      className={`${BASE_STYLES} ${styles} ${tooltip ? "tooltip" : ""} ${className} flex items-center gap-2`}
+      data-tip={tooltip}
     >
       {iconIncluded && (
         <div className="h-6 w-6 text-inherit">{iconIncluded}</div>

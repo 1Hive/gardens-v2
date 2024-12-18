@@ -32,14 +32,10 @@ export function abiWithErrors<TAbi extends Abi>(abi: TAbi) {
 export function filterFunctionFromABI<
   TAbi extends Abi,
   TAbiItem extends TAbi[number] & AbiFunction,
->(
-  abi: TAbi,
-  selector: (abiItem: TAbiItem) => boolean,
-  withErrors: boolean = true,
-): TAbi {
+>(abi: TAbi, selector: (abiItem: TAbiItem) => boolean): TAbi {
   const filtered = abi.filter((abiItem) => {
     if (abiItem.type !== "function") return false;
     return selector(abiItem as TAbiItem);
   }) as unknown as TAbi;
-  return withErrors ? (abiWithErrors(filtered) as unknown as TAbi) : filtered;
+  return filtered;
 }

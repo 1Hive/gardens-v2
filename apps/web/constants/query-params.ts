@@ -8,5 +8,6 @@ export const QUERY_PARAMS = {
   },
   poolPage: {
     newProposal: "newProposal",
+    allocationView: "allocationView",
   },
 } as const;
