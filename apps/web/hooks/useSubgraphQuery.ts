@@ -135,8 +135,9 @@ export function useSubgraphQuery<
     let res;
     try {
       const shouldSkipPublished =
-        localStorage.getItem("skipPublished") === "true" ||
-        process.env.NEXT_PUBLIC_SKIP_PUBLISHED === "true";
+        (localStorage.getItem("skipPublished") === "true" ||
+          process.env.NEXT_PUBLIC_SKIP_PUBLISHED === "true") &&
+        localStorage.getItem("skipPublished") !== "false";
       res = await urqlQuery(shouldSkipPublished);
     } catch (err1) {
       console.error(

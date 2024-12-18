@@ -142,8 +142,9 @@ export function useSubgraphQueryMultiChain<
               let res;
               try {
                 const shouldSkipPublished =
-                  localStorage.getItem("skipPublished") === "true" ||
-                  process.env.NEXT_PUBLIC_SKIP_PUBLISHED === "true";
+                  (localStorage.getItem("skipPublished") === "true" ||
+                    process.env.NEXT_PUBLIC_SKIP_PUBLISHED === "true") &&
+                  localStorage.getItem("skipPublished") !== "false";
                 res = await fetchQuery(shouldSkipPublished);
               } catch (err1) {
                 console.error(
