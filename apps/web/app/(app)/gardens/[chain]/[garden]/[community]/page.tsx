@@ -11,7 +11,7 @@ import { Dnum, multiply } from "dnum";
 import Image from "next/image";
 import Link from "next/link";
 import { Address } from "viem";
-import { useAccount, useToken } from "wagmi";
+import { useAccount, useContractRead, useToken } from "wagmi";
 import {
   getCommunityDocument,
   getCommunityQuery,
@@ -38,6 +38,7 @@ import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
+import { safeABI } from "@/src/generated";
 import { PoolTypes } from "@/types";
 import { fetchIpfs } from "@/utils/ipfsUtils";
 import {
@@ -68,6 +69,7 @@ export default function Page({
     variables: {
       communityAddr: communityAddr.toLowerCase(),
       tokenAddr: tokenAddr.toLowerCase(),
+      showArchived: true,
     },
     changeScope: [
       { topic: "community", id: communityAddr },
@@ -75,6 +77,18 @@ export default function Page({
     ],
   });
   const registryCommunity = result?.registryCommunity;
+
+  const { data: isCouncilMember } = useContractRead({
+    address: registryCommunity?.councilSafe as Address,
+    abi: safeABI,
+    functionName: "isOwner",
+    chainId: Number(chain),
+    enabled: !!accountAddress,
+    args: [accountAddress as Address],
+    onError: () => {
+      console.error("Error reading isOwner from Coucil Safe");
+    },
+  });
 
   let {
     communityName,
@@ -144,7 +158,11 @@ export default function Page({
   );
   const activePools = strategies?.filter((strategy) => strategy?.isEnabled);
 
-  const poolsInReview = strategies.filter((strategy) => !strategy.isEnabled);
+  const poolsInReview = strategies.filter(
+    (strategy) => !strategy.isEnabled && !strategy.archived,
+  );
+
+  const poolsArchived = strategies.filter((strategy) => strategy.archived);
 
   // const [tokenDataArray, setTokenDataArray] = useState([]);
 
@@ -376,6 +394,26 @@ export default function Page({
             ))}
           </div>
         </div>
+        {(!!isCouncilMember ||
+          accountAddress?.toLowerCase() ===
+            registryCommunity.councilSafe?.toLowerCase() ||
+          localStorage.getItem("showArchived") === "true") && (
+          <div className="flex flex-col gap-4">
+            <h4 className="text-secondary-content">
+              Pools archived ({poolsArchived.length})
+            </h4>
+            <div className="flex flex-row flex-wrap gap-10">
+              {poolsArchived.map((pool) => (
+                <PoolCard
+                  key={pool.poolId}
+                  token={pool.token}
+                  chainId={chain}
+                  pool={pool}
+                />
+              ))}
+            </div>
+          </div>
+        )}
       </section>
       <section ref={covenantSectionRef} className="section-layout">
         <h2 className="mb-4">Covenant</h2>

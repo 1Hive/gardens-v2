@@ -164,17 +164,19 @@ export default function Page({
               chainId={chain}
             />
           )}
-          <section ref={proposalSectionRef}>
-            <Proposals
-              poolToken={poolToken}
-              strategy={strategyObj}
-              alloInfo={alloInfo}
-              communityAddress={communityAddress}
-              createProposalUrl={`/gardens/${chain}/${garden}/${communityAddress}/${poolId}/create-proposal`}
-              proposalType={proposalType}
-            />
-          </section>
         </>
+      )}
+      {strategyObj.proposals.length && (
+        <section ref={proposalSectionRef}>
+          <Proposals
+            poolToken={poolToken}
+            strategy={strategyObj}
+            alloInfo={alloInfo}
+            communityAddress={communityAddress}
+            createProposalUrl={`/gardens/${chain}/${garden}/${communityAddress}/${poolId}/create-proposal`}
+            proposalType={proposalType}
+          />
+        </section>
       )}
     </div>
   );
