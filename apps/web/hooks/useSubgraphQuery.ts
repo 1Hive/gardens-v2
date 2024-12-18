@@ -134,7 +134,10 @@ export function useSubgraphQuery<
 
     let res;
     try {
-      res = await urqlQuery(false);
+      const shouldSkipPublished =
+        localStorage.getItem("skipPublished") === "true" ||
+        process.env.NEXT_PUBLIC_SKIP_PUBLISHED === "true";
+      res = await urqlQuery(shouldSkipPublished);
     } catch (err1) {
       console.error(
         "⚡ Error fetching through published subgraph, retrying with hosted:",
