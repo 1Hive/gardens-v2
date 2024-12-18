@@ -3539,6 +3539,7 @@ export declare function getBuiltGraphSDK<TGlobalContext = any, TOperationContext
     getCommunity(variables: Exact<{
         communityAddr: Scalars["ID"]["input"];
         tokenAddr: Scalars["ID"]["input"];
+        showArchived?: InputMaybe<Scalars["Boolean"]["input"]>;
     }>, options?: TOperationContext): Promise<getCommunityQuery>;
     getCommunityCreationData(variables?: Exact<{
         [key: string]: never;
@@ -3688,6 +3689,7 @@ export type getGardenCommunitiesQuery = {
 export type getCommunityQueryVariables = Exact<{
     communityAddr: Scalars['ID']['input'];
     tokenAddr: Scalars['ID']['input'];
+    showArchived?: InputMaybe<Scalars['Boolean']['input']>;
 }>;
 export type getCommunityQuery = {
     registryCommunity?: Maybe<(Pick<RegistryCommunity, 'communityName' | 'id' | 'councilSafe' | 'covenantIpfsHash' | 'communityFee' | 'protocolFee' | 'registerStakeAmount' | 'registerToken'> & {

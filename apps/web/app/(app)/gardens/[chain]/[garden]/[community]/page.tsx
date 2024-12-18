@@ -69,7 +69,6 @@ export default function Page({
     variables: {
       communityAddr: communityAddr.toLowerCase(),
       tokenAddr: tokenAddr.toLowerCase(),
-      showArchived: true,
     },
     changeScope: [
       { topic: "community", id: communityAddr },

@@ -185,7 +185,11 @@ query getGardenCommunities($chainId: BigInt!, $tokenGarden: ID!) {
   }
 }
 
-query getCommunity($communityAddr: ID!, $tokenAddr: ID!) {
+query getCommunity(
+  $communityAddr: ID!
+  $tokenAddr: ID!
+  $showArchived: Boolean
+) {
   registryCommunity(id: $communityAddr) {
     communityName
     id
