@@ -328,23 +328,23 @@ export default function Page({
                 </Statistic>
               </div>
               <div className="flex items-end">
-                {proposalData.strategy.isEnabled &&
-                  (isProposerConnected && proposalStatus === "active" ?
-                    <CancelButton
-                      proposalData={{ ...proposalData, ...metadata }}
-                    />
-                  : <DisputeButton
+                {isProposerConnected && proposalStatus === "active" ?
+                  <CancelButton
+                    proposalData={{ ...proposalData, ...metadata }}
+                  />
+                : proposalData.strategy.isEnabled && (
+                    <DisputeButton
                       isMemberCommunity={isMemberCommunity}
                       proposalData={{ ...proposalData, ...metadata }}
-                    />)}
+                    />
+                  )
+                }
               </div>
             </div>
           </div>
         </div>
         {!proposalData.strategy.isEnabled && (
-          <InfoBox infoBoxType="warning">
-            The pool is not enabled.
-          </InfoBox>
+          <InfoBox infoBoxType="warning">The pool is not enabled.</InfoBox>
         )}
       </header>
       {proposalData.strategy.isEnabled && (
