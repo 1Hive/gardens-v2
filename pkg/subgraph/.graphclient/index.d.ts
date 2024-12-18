@@ -3690,9 +3690,9 @@ export type getCommunityQueryVariables = Exact<{
     tokenAddr: Scalars['ID']['input'];
 }>;
 export type getCommunityQuery = {
-    registryCommunity?: Maybe<(Pick<RegistryCommunity, 'communityName' | 'id' | 'covenantIpfsHash' | 'communityFee' | 'protocolFee' | 'registerStakeAmount' | 'registerToken'> & {
+    registryCommunity?: Maybe<(Pick<RegistryCommunity, 'communityName' | 'id' | 'councilSafe' | 'covenantIpfsHash' | 'communityFee' | 'protocolFee' | 'registerStakeAmount' | 'registerToken'> & {
         members?: Maybe<Array<Pick<MemberCommunity, 'id' | 'stakedTokens'>>>;
-        strategies?: Maybe<Array<(Pick<CVStrategy, 'id' | 'isEnabled' | 'poolAmount' | 'poolId' | 'token' | 'metadata'> & {
+        strategies?: Maybe<Array<(Pick<CVStrategy, 'id' | 'archived' | 'isEnabled' | 'poolAmount' | 'poolId' | 'token' | 'metadata'> & {
             proposals: Array<Pick<CVProposal, 'id'>>;
             config: Pick<CVStrategyConfig, 'proposalType' | 'pointSystem'>;
         })>>;
@@ -3737,7 +3737,7 @@ export type getProposalDataQuery = {
     registryCommunity?: Maybe<Pick<RegistryCommunity, 'councilSafe'>>;
     cvproposal?: Maybe<(Pick<CVProposal, 'id' | 'proposalNumber' | 'beneficiary' | 'blockLast' | 'convictionLast' | 'createdAt' | 'metadataHash' | 'proposalStatus' | 'requestedAmount' | 'requestedToken' | 'stakedAmount' | 'submitter' | 'threshold' | 'updatedAt' | 'version'> & {
         metadata?: Maybe<Pick<ProposalMetadata, 'title' | 'description'>>;
-        strategy: (Pick<CVStrategy, 'id' | 'token' | 'maxCVSupply' | 'totalEffectiveActivePoints' | 'poolId'> & {
+        strategy: (Pick<CVStrategy, 'id' | 'token' | 'maxCVSupply' | 'totalEffectiveActivePoints' | 'poolId' | 'isEnabled'> & {
             config: Pick<CVStrategyConfig, 'proposalType' | 'pointSystem' | 'minThresholdPoints' | 'decay'>;
         });
         arbitrableConfig: Pick<ArbitrableConfig, 'arbitrator' | 'defaultRuling' | 'defaultRulingTimeout' | 'challengerCollateralAmount' | 'submitterCollateralAmount' | 'tribunalSafe'>;

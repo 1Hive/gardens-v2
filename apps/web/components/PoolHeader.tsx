@@ -5,11 +5,11 @@ import {
   ChartBarIcon,
   CheckIcon,
   ClockIcon,
+  ArchiveBoxIcon,
   InformationCircleIcon,
   Square3Stack3DIcon,
 } from "@heroicons/react/24/outline";
 import {
-  ArchiveBoxIcon,
   NoSymbolIcon,
   StopIcon,
   Cog6ToothIcon,
@@ -581,8 +581,14 @@ export default function PoolHeader({
       )}
       {!isEnabled ?
         <div className="banner">
-          <ClockIcon className="h-8 w-8 text-secondary-content" />
-          <h6>Waiting for council approval</h6>
+          {isArchived ?
+            <ArchiveBoxIcon className="h-8 w-8 text-secondary-content" />
+          : <ClockIcon className="h-8 w-8 text-secondary-content" />}
+          <h6>
+            {isArchived ?
+              "This pool has been archived"
+            : "Waiting for council approval"}
+          </h6>
         </div>
       : <Image
           src={PoolTypes[proposalType] === "funding" ? blueLand : grassLarge}

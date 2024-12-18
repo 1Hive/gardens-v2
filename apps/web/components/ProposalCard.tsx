@@ -53,6 +53,7 @@ export type ProposalCardProps = {
   executeDisabled: boolean;
   tokenDecimals: number;
   alloInfo: Allo;
+  isPoolEnabled: boolean;
   tokenData: Parameters<typeof useConvictionRead>[0]["tokenData"];
   inputHandler: (proposalId: string, value: bigint) => void;
 };
@@ -60,6 +61,7 @@ export type ProposalCardProps = {
 export function ProposalCard({
   proposalData,
   strategyConfig,
+  isPoolEnabled,
   inputData,
   stakedFilter,
   poolToken,
@@ -194,118 +196,125 @@ export function ProposalCard({
                 />
               </div>
             )}
-            <Badge
-              status={proposalStatus}
-              className="self-center justify-self-end"
-            />
+            {isPoolEnabled && (
+              <Badge
+                status={proposalStatus}
+                className="self-center justify-self-end"
+              />
+            )}
           </div>
         </div>
 
         {/* support description or slider */}
-        <div className="flex gap-12 flex-wrap w-full ">
-          <div className="mt-4 w-full">
-            {isAllocationView ?
-              <div className="flex w-full flex-wrap items-center justify-between gap-6">
-                <div className="flex items-center gap-8 flex-grow flex-wrap">
-                  <div
-                    className={`flex-grow sm:max-w-[460px] ${isProposalEnded && "tooltip"}`}
-                    data-tip="Can't change support from ended proposals."
-                  >
-                    <input
-                      type="range"
-                      min={0}
-                      max={Number(memberActivatedPoints)}
-                      value={inputData ? Number(inputData.value) : undefined}
-                      className={`range range-md cursor-pointer bg-neutral-soft [--range-shdw:var(--color-green-500)] ${isProposalEnded ? "grayscale !cursor-not-allowed" : ""}`}
-                      step={Number(memberActivatedPoints / 100n)}
-                      onChange={(e) => {
-                        inputHandler(
-                          proposalData.id,
-                          BigInt(Math.floor(Number(e.target.value))),
-                        );
-                      }}
-                      disabled={isProposalEnded}
-                    />
-
-                    <div className="flex w-full justify-between px-2.5">
-                      {[...Array(21)].map((_, i) => (
-                        // eslint-disable-next-line react/no-array-index-key
-                        <span className="text-[8px]" key={`span_${i}`}>
-                          |
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  {isProposalEnded && inputData?.value != 0n && (
-                    <Button
-                      className="mb-2 !p-2 !px-3"
-                      btnStyle="outline"
-                      onClick={() => inputHandler(proposalData.id, 0n)}
-                      tooltip="Clear allocation"
+        {isPoolEnabled && (
+          <div className="flex gap-12 flex-wrap w-full ">
+            <div className="mt-4 w-full">
+              {isAllocationView ?
+                <div className="flex w-full flex-wrap items-center justify-between gap-6">
+                  <div className="flex items-center gap-8 flex-grow flex-wrap">
+                    <div
+                      className={`flex-grow sm:max-w-[460px] ${isProposalEnded && "tooltip"}`}
+                      data-tip="Can't change support from ended proposals."
                     >
-                      &times;
-                    </Button>
-                  )}
-                  {inputValue > 0 && (
-                    <div className="mb-2">
-                      <>
-                        <div className="flex gap-10">
-                          <div className="flex flex-col items-center justify-center">
-                            <p className="subtitle2">
-                              <span className="text-2xl font-semibold text-primary-content">
-                                {poolWeightAllocatedInProposal}
-                              </span>
-                              /{memberPoolWeight}%{" "}
-                              <span className="text-neutral-soft-content text-sm">
-                                ({inputValue}% of your voting weight)
-                              </span>
-                            </p>
-                            {/* <p className="text-primary-content">Support</p> */}
+                      <input
+                        type="range"
+                        min={0}
+                        max={Number(memberActivatedPoints)}
+                        value={inputData ? Number(inputData.value) : undefined}
+                        className={`range range-md cursor-pointer bg-neutral-soft [--range-shdw:var(--color-green-500)] ${isProposalEnded ? "grayscale !cursor-not-allowed" : ""}`}
+                        step={Number(memberActivatedPoints / 100n)}
+                        onChange={(e) => {
+                          inputHandler(
+                            proposalData.id,
+                            BigInt(Math.floor(Number(e.target.value))),
+                          );
+                        }}
+                        disabled={isProposalEnded}
+                      />
+
+                      <div className="flex w-full justify-between px-2.5">
+                        {[...Array(21)].map((_, i) => (
+                          // eslint-disable-next-line react/no-array-index-key
+                          <span className="text-[8px]" key={`span_${i}`}>
+                            |
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    {isProposalEnded && inputData?.value != 0n && (
+                      <Button
+                        className="mb-2 !p-2 !px-3"
+                        btnStyle="outline"
+                        onClick={() => inputHandler(proposalData.id, 0n)}
+                        tooltip="Clear allocation"
+                      >
+                        &times;
+                      </Button>
+                    )}
+                    {inputValue > 0 && (
+                      <div className="mb-2">
+                        <>
+                          <div className="flex gap-10">
+                            <div className="flex flex-col items-center justify-center">
+                              <p className="subtitle2">
+                                <span className="text-2xl font-semibold text-primary-content">
+                                  {poolWeightAllocatedInProposal}
+                                </span>
+                                /{memberPoolWeight}%{" "}
+                                <span className="text-neutral-soft-content text-sm">
+                                  ({inputValue}% of your voting weight)
+                                </span>
+                              </p>
+                              {/* <p className="text-primary-content">Support</p> */}
+                            </div>
                           </div>
-                        </div>
-                      </>
-                    </div>
-                  )}
+                        </>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            : <div className="w-full">
-                {currentConvictionPct != null &&
-                  thresholdPct != null &&
-                  totalSupportPct != null && (
-                    <div>
-                      <div className="flex items-end gap-1 mb-2">
-                        <div>
-                          <p className="text-sm">
-                            Total Support: <span>{totalSupportPct}%</span> of
-                            pool weight.
-                          </p>
+              : <div className="w-full">
+                  {currentConvictionPct != null &&
+                    thresholdPct != null &&
+                    totalSupportPct != null && (
+                      <div>
+                        <div className="flex items-end gap-1 mb-2">
+                          <div>
+                            <p className="text-sm">
+                              Total Support: <span>{totalSupportPct}%</span> of
+                              pool weight.
+                            </p>
+                          </div>
+                          <ProposalCountDown />
                         </div>
-                        <ProposalCountDown />
+                        <div className="h-3 flex items-center">
+                          <ConvictionBarChart
+                            compact
+                            currentConvictionPct={currentConvictionPct}
+                            thresholdPct={isSignalingType ? 0 : thresholdPct}
+                            proposalSupportPct={totalSupportPct}
+                            isSignalingType={isSignalingType}
+                            proposalNumber={proposalNumber}
+                            refreshConviction={triggerConvictionRefetch}
+                          />
+                        </div>
                       </div>
-                      <div className="h-3 flex items-center">
-                        <ConvictionBarChart
-                          compact
-                          currentConvictionPct={currentConvictionPct}
-                          thresholdPct={isSignalingType ? 0 : thresholdPct}
-                          proposalSupportPct={totalSupportPct}
-                          isSignalingType={isSignalingType}
-                          proposalNumber={proposalNumber}
-                          refreshConviction={triggerConvictionRefetch}
-                        />
-                      </div>
-                    </div>
-                  )}
-              </div>
-            }
+                    )}
+                </div>
+              }
+            </div>
           </div>
-        </div>
+        )}
       </div>
-      {!isAllocationView && stakedFilter && stakedFilter?.value > 0 && (
-        <p className="flex items-baseline text-xs mt-2">
-          Your support: {poolWeightAllocatedInProposal}%
-        </p>
-      )}
+      {isPoolEnabled &&
+        !isAllocationView &&
+        stakedFilter &&
+        stakedFilter?.value > 0 && (
+          <p className="flex items-baseline text-xs mt-2">
+            Your support: {poolWeightAllocatedInProposal}%
+          </p>
+        )}
       {/* TODO: fetch every member stake */}
       {/* {!isAllocationView && <p className="text-sm mt-1">3 Supporters</p>} */}
     </>
