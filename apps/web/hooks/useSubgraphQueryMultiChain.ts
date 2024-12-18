@@ -141,7 +141,10 @@ export function useSubgraphQueryMultiChain<
 
               let res;
               try {
-                res = await fetchQuery(false);
+                const shouldSkipPublished =
+                  localStorage.getItem("skipPublished") === "true" ||
+                  process.env.NEXT_PUBLIC_SKIP_PUBLISHED === "true";
+                res = await fetchQuery(shouldSkipPublished);
               } catch (err1) {
                 console.error(
                   "⚡ Error fetching through published subgraph, retrying with hosted:",

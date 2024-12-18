@@ -3529,6 +3529,9 @@ export declare function getBuiltGraphSDK<TGlobalContext = any, TOperationContext
         communityAddr: Scalars["ID"]["input"];
         tokenAddr: Scalars["ID"]["input"];
     }>, options?: TOperationContext): Promise<getPoolCreationDataQuery>;
+    getProposalSupporters(variables: Exact<{
+        proposalId: Scalars["String"]["input"];
+    }>, options?: TOperationContext): Promise<getProposalSupportersQuery>;
     getGardenCommunities(variables: Exact<{
         chainId: Scalars["BigInt"]["input"];
         tokenGarden: Scalars["ID"]["input"];
@@ -3547,6 +3550,7 @@ export declare function getBuiltGraphSDK<TGlobalContext = any, TOperationContext
     getProposalData(variables: Exact<{
         garden: Scalars["ID"]["input"];
         proposalId: Scalars["ID"]["input"];
+        communityId: Scalars["ID"]["input"];
     }>, options?: TOperationContext): Promise<getProposalDataQuery>;
     getAllo(variables?: Exact<{
         [key: string]: never;
@@ -3660,6 +3664,16 @@ export type getPoolCreationDataQuery = {
     allos: Array<Pick<Allo, 'id'>>;
     registryCommunity?: Maybe<Pick<RegistryCommunity, 'communityName' | 'isValid'>>;
 };
+export type getProposalSupportersQueryVariables = Exact<{
+    proposalId: Scalars['String']['input'];
+}>;
+export type getProposalSupportersQuery = {
+    members: Array<(Pick<Member, 'id'> & {
+        stakes?: Maybe<Array<(Pick<Stake, 'amount'> & {
+            proposal: Pick<CVProposal, 'proposalNumber' | 'id'>;
+        })>>;
+    })>;
+};
 export type getGardenCommunitiesQueryVariables = Exact<{
     chainId: Scalars['BigInt']['input'];
     tokenGarden: Scalars['ID']['input'];
@@ -3715,10 +3729,12 @@ export type getPoolDataQuery = {
 export type getProposalDataQueryVariables = Exact<{
     garden: Scalars['ID']['input'];
     proposalId: Scalars['ID']['input'];
+    communityId: Scalars['ID']['input'];
 }>;
 export type getProposalDataQuery = {
     allos: Array<Pick<Allo, 'id' | 'chainId' | 'tokenNative'>>;
     tokenGarden?: Maybe<Pick<TokenGarden, 'name' | 'symbol' | 'decimals'>>;
+    registryCommunity?: Maybe<Pick<RegistryCommunity, 'councilSafe'>>;
     cvproposal?: Maybe<(Pick<CVProposal, 'id' | 'proposalNumber' | 'beneficiary' | 'blockLast' | 'convictionLast' | 'createdAt' | 'metadataHash' | 'proposalStatus' | 'requestedAmount' | 'requestedToken' | 'stakedAmount' | 'submitter' | 'threshold' | 'updatedAt' | 'version'> & {
         metadata?: Maybe<Pick<ProposalMetadata, 'title' | 'description'>>;
         strategy: (Pick<CVStrategy, 'id' | 'token' | 'maxCVSupply' | 'totalEffectiveActivePoints' | 'poolId'> & {
@@ -3839,6 +3855,7 @@ export declare const getMemberStrategyDocument: DocumentNode<getMemberStrategyQu
 export declare const isMemberDocument: DocumentNode<isMemberQuery, isMemberQueryVariables>;
 export declare const getMemberDocument: DocumentNode<getMemberQuery, getMemberQueryVariables>;
 export declare const getPoolCreationDataDocument: DocumentNode<getPoolCreationDataQuery, getPoolCreationDataQueryVariables>;
+export declare const getProposalSupportersDocument: DocumentNode<getProposalSupportersQuery, getProposalSupportersQueryVariables>;
 export declare const getGardenCommunitiesDocument: DocumentNode<getGardenCommunitiesQuery, getGardenCommunitiesQueryVariables>;
 export declare const getCommunityDocument: DocumentNode<getCommunityQuery, getCommunityQueryVariables>;
 export declare const getCommunityCreationDataDocument: DocumentNode<getCommunityCreationDataQuery, getCommunityCreationDataQueryVariables>;
@@ -3864,6 +3881,7 @@ export declare function getSdk<C, E>(requester: Requester<C, E>): {
     isMember(variables: isMemberQueryVariables, options?: C): Promise<isMemberQuery>;
     getMember(variables: getMemberQueryVariables, options?: C): Promise<getMemberQuery>;
     getPoolCreationData(variables: getPoolCreationDataQueryVariables, options?: C): Promise<getPoolCreationDataQuery>;
+    getProposalSupporters(variables: getProposalSupportersQueryVariables, options?: C): Promise<getProposalSupportersQuery>;
     getGardenCommunities(variables: getGardenCommunitiesQueryVariables, options?: C): Promise<getGardenCommunitiesQuery>;
     getCommunity(variables: getCommunityQueryVariables, options?: C): Promise<getCommunityQuery>;
     getCommunityCreationData(variables?: getCommunityCreationDataQueryVariables, options?: C): Promise<getCommunityCreationDataQuery>;

@@ -205,33 +205,28 @@ export function ProposalCard({
         <div className="flex gap-12 flex-wrap w-full ">
           <div className="mt-4 w-full">
             {isAllocationView ?
-              <div className=" flex w-full flex-wrap items-center justify-between gap-6">
+              <div className="flex w-full flex-wrap items-center justify-between gap-6">
                 <div className="flex items-center gap-8 flex-grow flex-wrap">
-                  <div className="flex-grow sm:max-w-[460px]">
-                    <div
-                      className={isProposalEnded ? "tooltip" : ""}
-                      data-tip={
-                        isProposalEnded ?
-                          "Cannot change allocation when a proposal is ended"
-                        : ""
-                      }
-                    >
-                      <input
-                        type="range"
-                        min={0}
-                        max={Number(memberActivatedPoints)}
-                        value={inputData ? Number(inputData.value) : undefined}
-                        className={`range range-md cursor-pointer bg-neutral-soft [--range-shdw:var(--color-green-500)] ${isProposalEnded ? "grayscale !cursor-not-allowed" : ""}`}
-                        step={Number(memberActivatedPoints / 100n)}
-                        onChange={(e) => {
-                          inputHandler(
-                            proposalData.id,
-                            BigInt(Math.floor(Number(e.target.value))),
-                          );
-                        }}
-                        disabled={isProposalEnded}
-                      />
-                    </div>
+                  <div
+                    className={`flex-grow sm:max-w-[460px] ${isProposalEnded && "tooltip"}`}
+                    data-tip="Can't change support from ended proposals."
+                  >
+                    <input
+                      type="range"
+                      min={0}
+                      max={Number(memberActivatedPoints)}
+                      value={inputData ? Number(inputData.value) : undefined}
+                      className={`range range-md cursor-pointer bg-neutral-soft [--range-shdw:var(--color-green-500)] ${isProposalEnded ? "grayscale !cursor-not-allowed" : ""}`}
+                      step={Number(memberActivatedPoints / 100n)}
+                      onChange={(e) => {
+                        inputHandler(
+                          proposalData.id,
+                          BigInt(Math.floor(Number(e.target.value))),
+                        );
+                      }}
+                      disabled={isProposalEnded}
+                    />
+
                     <div className="flex w-full justify-between px-2.5">
                       {[...Array(21)].map((_, i) => (
                         // eslint-disable-next-line react/no-array-index-key
