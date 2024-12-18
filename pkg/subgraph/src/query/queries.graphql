@@ -193,19 +193,17 @@ query getCommunity(
   registryCommunity(id: $communityAddr) {
     communityName
     id
+    councilSafe
     members(where: { stakedTokens_gt: "0" }) {
       id
       stakedTokens
     }
-    strategies(
-      orderBy: poolId
-      orderDirection: desc
-      where: { archived: $showArchived }
-    ) {
+    strategies(orderBy: poolId, orderDirection: desc) {
       id
       proposals {
         id
       }
+      archived
       isEnabled
       poolAmount
       poolId
@@ -369,6 +367,7 @@ query getProposalData($garden: ID!, $proposalId: ID!, $communityId: ID!) {
       maxCVSupply
       totalEffectiveActivePoints
       poolId
+      isEnabled
       config {
         proposalType
         pointSystem
