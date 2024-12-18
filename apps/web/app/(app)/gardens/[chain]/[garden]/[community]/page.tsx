@@ -31,6 +31,7 @@ import {
 } from "@/components";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import MarkdownWrapper from "@/components/MarkdownWrapper";
+import { Metrics } from "@/components/Metrics";
 import { Skeleton } from "@/components/Skeleton";
 import { TokenGardenFaucet } from "@/components/TokenGardenFaucet";
 import { isProd } from "@/configs/isProd";
@@ -312,6 +313,7 @@ export default function Page({
           />
         </div>
       </header>
+      <Metrics />
       <IncreasePower
         memberData={isMemberResult}
         registryCommunity={registryCommunity}
