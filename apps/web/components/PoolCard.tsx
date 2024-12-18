@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  ArchiveBoxIcon,
   BoltIcon,
   ClockIcon,
   CurrencyDollarIcon,
@@ -28,7 +29,7 @@ type Props = {
   token: string;
   pool: Pick<
     CVStrategy,
-    "id" | "isEnabled" | "poolAmount" | "poolId" | "metadata"
+    "id" | "isEnabled" | "poolAmount" | "poolId" | "metadata" | "archived"
   > & {
     proposals: Pick<CVProposal, "id">[];
     config: Pick<CVStrategyConfig, "proposalType" | "pointSystem">;
@@ -95,8 +96,10 @@ export function PoolCard({ pool, token, chainId }: Props) {
       </div>
       {!isEnabled ?
         <div className="banner md:min-w-[262px]">
-          <ClockIcon className="h-8 w-8 text-secondary-content" />
-          <h6>Waiting for approval</h6>
+          {pool.archived ?
+            <ArchiveBoxIcon className="h-8 w-8 text-secondary-content" />
+          : <ClockIcon className="h-8 w-8 text-secondary-content" />}
+          <h6>{pool.archived ? "Archived" : "Waiting for approval"}</h6>
         </div>
       : <Image
           src={poolType && PoolTypes[poolType] === "funding" ? blueLand : grass}
