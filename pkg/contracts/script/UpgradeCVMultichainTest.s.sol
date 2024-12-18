@@ -6,6 +6,8 @@ import {CVStrategyV0_0} from "../src/CVStrategy/CVStrategyV0_0.sol";
 import {RegistryCommunityV0_0} from "../src/RegistryCommunity/RegistryCommunityV0_0.sol";
 import {RegistryFactoryV0_0} from "../src/RegistryFactory/RegistryFactoryV0_0.sol";
 
+// EIP-1967 slot for proxy implementation:
+
 contract UpgradeCVMultichainTest is BaseMultiChain {
     using stdJson for string;
 
@@ -15,6 +17,7 @@ contract UpgradeCVMultichainTest is BaseMultiChain {
         address strategyImplementation = address(new CVStrategyV0_0());
         address passportScorer = networkJson.readAddress(getKeyNetwork(".PROXIES.PASSPORT_SCORER"));
         address safeArbitrator = networkJson.readAddress(getKeyNetwork(".ENVS.ARBITRATOR"));
+
         console.log("safeArbitrator", safeArbitrator);
         console.log("passportScorer", passportScorer);
         // PASSPORT SCORER UPGRADE
@@ -29,8 +32,8 @@ contract UpgradeCVMultichainTest is BaseMultiChain {
 
         // Upgrades.upgradeProxy(address(registryFactoryProxy), "RegistryFactoryV0_0.sol:RegistryFactoryV0_0", "");
         // abi.encodeWithSelector(RegistryFactoryV0_1.initializeV2.selector)
-        registryFactory.upgradeTo(registryFactoryImplementation); // DOESNT VALIDATE SAFE UPGRADING
-        registryFactory.setRegistryCommunityTemplate(registryImplementation);
+        // registryFactory.upgradeTo(registryFactoryImplementation); // DOESNT VALIDATE SAFE UPGRADING
+        // registryFactory.setRegistryCommunityTemplate(registryImplementation);
         registryFactory.setStrategyTemplate(strategyImplementation);
 
         // REGISTRY COMMUNITIES UPGRADES
@@ -43,7 +46,7 @@ contract UpgradeCVMultichainTest is BaseMultiChain {
             //     address(registryCommunityProxies[i]), "RegistryCommunityV0_0.sol:RegistryCommunityV0_0", ""
             // );
             // abi.encodeWithSelector(RegistryCommunityV0_0.initializeV2.selector)
-            registryCommunity.upgradeTo(registryImplementation); // DOESNT VALIDATE SAFE UPGRADING
+            // registryCommunity.upgradeTo(registryImplementation); // DOESNT VALIDATE SAFE UPGRADING
             registryCommunity.setStrategyTemplate(strategyImplementation);
         }
 
@@ -59,15 +62,28 @@ contract UpgradeCVMultichainTest is BaseMultiChain {
             CVStrategyV0_0 cvStrategy = CVStrategyV0_0(payable(address(cvStrategyProxies[i])));
             cvStrategy.upgradeTo(strategyImplementation); // DOESNT VALIDATE SAFE UPGRADING
 
-            (IArbitrator arbitrator,,,,,) = cvStrategy.arbitrableConfigs(cvStrategy.currentArbitrableConfigVersion());
-            if (address(arbitrator) != safeArbitrator) {
-                cvStrategy.init2(safeArbitrator);
-            }
-            address oldPassport = address(cvStrategy.sybilScorer());
-            if (oldPassport != address(0)) {
-                (uint256 threshold,,) = PassportScorer(oldPassport).strategies(address(cvStrategyProxies[i]));
-                cvStrategy.setSybilScorer(passportScorer, threshold);
-            }
+            // (IArbitrator arbitrator,,,,,) = cvStrategy.arbitrableConfigs(cvStrategy.currentArbitrableConfigVersion());
+            // if (address(arbitrator) != safeArbitrator) {
+            //     cvStrategy.init2(safeArbitrator);
+            // }
+            // address oldPassport = address(cvStrategy.sybilScorer());
+            // if (oldPassport != address(0)) {
+            //     (uint256 threshold,,) = PassportScorer(oldPassport).strategies(address(cvStrategyProxies[i]));
+            //     cvStrategy.setSybilScorer(passportScorer, threshold);
+            // }
+        }
+    }
+
+    bytes32 constant IMPLEMENTATION_SLOT = bytes32(uint256(keccak256("eip1967.proxy.implementation")) - 1);
+
+    function ensureSameStorageLayout(address proxy) internal view {
+        bytes32 slot = IMPLEMENTATION_SLOT;
+        address currentImpl;
+        // Low-level storage read at implementation slot
+        assembly {
+            let ptr := mload(0x40)
+            mstore(ptr, slot)
+            currentImpl := sload(add(ptr, 0))
         }
     }
 }

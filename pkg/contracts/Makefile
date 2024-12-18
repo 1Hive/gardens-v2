@@ -346,6 +346,7 @@ upgrade-arbitrum:
 	--legacy \
 	--via-ir \
 	--verify \
+	--priority-gas-price 1 \
 	-vvv
 
 verify-blockscout-arbitrum: 
