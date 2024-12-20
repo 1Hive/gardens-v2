@@ -166,7 +166,7 @@ export default function Page({
           )}
         </>
       )}
-      {strategyObj.proposals.length && (
+      {strategyObj && isEnabled && (
         <section ref={proposalSectionRef}>
           <Proposals
             poolToken={poolToken}
