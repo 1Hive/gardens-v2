@@ -1,7 +1,7 @@
 import React, { useRef, useState } from "react";
 import { ChartBarSquareIcon } from "@heroicons/react/24/outline";
 
-export function Metrics() {
+export function Metrics({ children }: { children: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -24,6 +24,7 @@ export function Metrics() {
         <div ref={panelRef} className="">
           <div className="h-60 section-layout">
             <h2>Community metrics</h2>
+            {children}
           </div>
         </div>
       )}

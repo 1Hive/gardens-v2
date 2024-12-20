@@ -7,6 +7,7 @@ import {
   RectangleGroupIcon,
   UserGroupIcon,
 } from "@heroicons/react/24/outline";
+
 import { Dnum, multiply } from "dnum";
 import Image from "next/image";
 import Link from "next/link";
@@ -28,6 +29,7 @@ import {
   RegisterMember,
   Statistic,
   InfoWrapper,
+  DataTable,
 } from "@/components";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import MarkdownWrapper from "@/components/MarkdownWrapper";
@@ -201,6 +203,8 @@ export default function Page({
     }
   }, [covenantSectionRef.current, searchParams]);
 
+  console.log(registryCommunity?.members);
+
   if (!tokenGarden || !registryCommunity) {
     return (
       <div className="mt-96">
@@ -313,7 +317,9 @@ export default function Page({
           />
         </div>
       </header>
-      <Metrics />
+      <Metrics>
+        <CommuityMetrics data={registryCommunity.members} />
+      </Metrics>
       <IncreasePower
         memberData={isMemberResult}
         registryCommunity={registryCommunity}
@@ -400,3 +406,30 @@ export default function Page({
     </div>
   );
 }
+
+type CommunityMetricsProps = {
+  data: any;
+};
+
+const CommuityMetrics = ({ data }: CommunityMetricsProps) => {
+  const columns = [
+    {
+      header: "Member",
+      render: (member: any) => (
+        <EthAddress
+          address={member.id as Address}
+          actions="copy"
+          shortenAddress={false}
+          icon="ens"
+        />
+      ),
+    },
+  ];
+
+  return (
+    <>
+      <p>test</p>
+    </>
+    // <DataTable title="Community metrics section" data={data} description="A list of all members" />
+  );
+};
