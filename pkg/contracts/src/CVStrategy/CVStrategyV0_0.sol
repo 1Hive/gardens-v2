@@ -155,6 +155,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     // error RegistryCannotBeZero(); // 0x5df4b1ef
     // error SupportUnderflow(uint256 _support, int256 _delta, int256 _result); // 0x3bbc7142
     error NotEnoughPointsToSupport(uint256 pointsSupport, uint256 pointsBalance); // 0xd64182fe
+    error CantDecreaseWhileSupporting();
 
     // error ProposalDataIsEmpty(); //0xc5f7c4c0
     // error ProposalIdCannotBeZero(); //0xf881a10d
@@ -510,12 +511,23 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     function decreasePower(address _member, uint256 _amountToUnstake) external virtual returns (uint256) {
         onlyRegistryCommunity();
         //requireMemberActivatedInStrategies
-
+        uint256 nbStakedProposals = voterStakedProposals[_member].length;
         uint256 pointsToDecrease = 0;
         if (pointSystem == PointSystem.Unlimited || pointSystem == PointSystem.Capped) {
             pointsToDecrease = _amountToUnstake; // from decreasePowerCappedUnlimited(_amountToUnstake)
         } else {
             pointsToDecrease = decreasePowerQuadratic(_member, _amountToUnstake);
+        }
+        uint256 unusedPower = registryCommunity.getMemberPowerInStrategy(_member, address(this)) - totalVoterStakePct(_member);
+        if (unusedPower < pointsToDecrease) {
+            uint256 stakedPointsToRemove = pointsToDecrease - unusedPower;
+            uint256 removedPointsRatio = 
+
+        }
+        uint256 removedRatio = (pointsToDecrease * 10 ** 4)/totalVoterStakedPct;
+        if(remainingPoints < totalVoterStakePct[_member]) {
+            uint256 stakeDifference = totalVoterStakePct[_member] - remainingPoints;
+            uint256 supportToRemovePerProposal = stakeDifference/nbStakedProposals;
         }
         totalPointsActivated -= pointsToDecrease;
         emit PowerDecreased(_member, _amountToUnstake, pointsToDecrease);
