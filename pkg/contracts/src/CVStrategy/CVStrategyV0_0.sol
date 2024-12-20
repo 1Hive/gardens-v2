@@ -520,14 +520,22 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         }
         uint256 unusedPower = registryCommunity.getMemberPowerInStrategy(_member, address(this)) - totalVoterStakePct(_member);
         if (unusedPower < pointsToDecrease) {
-            uint256 stakedPointsToRemove = pointsToDecrease - unusedPower;
-            uint256 removedPointsRatio = 
 
-        }
-        uint256 removedRatio = (pointsToDecrease * 10 ** 4)/totalVoterStakedPct;
-        if(remainingPoints < totalVoterStakePct[_member]) {
-            uint256 stakeDifference = totalVoterStakePct[_member] - remainingPoints;
-            uint256 supportToRemovePerProposal = stakeDifference/nbStakedProposals;
+            uint256 removedRatio = (pointsToDecrease * 10 ** 4)/totalVoterStakedPct;
+            for(uint256 i=0; i<nbStakedProposals; i++) {
+                uint256 proposalId = voterStakedProposals[_member][i];
+                Proposal storage proposal = proposals[proposalId];
+                uint256 stakedPoints = proposal.voterStakedPoints[_member];
+                //This calculation is right ?
+                uint256 newStakedPoints = stakedPoints - (stakedPoints * removedRatio)/10**4;
+                uint256 oldStake = proposal.stakedAmount;
+                proposal.stakedAmount -= stakedPoints - newStakedPoints;
+                proposal.voterStakedPoints[_member] = newStakedPoints;
+                totalStaked -= stakedPoints - newStakedPoints;
+                //Here we pass oldStake??
+                _calculateAndSetConviction(proposal, oldStake);
+                emit SupportAdded(_member, proposalId, 0, proposal.stakedAmount, proposal.convictionLast);
+            }
         }
         totalPointsActivated -= pointsToDecrease;
         emit PowerDecreased(_member, _amountToUnstake, pointsToDecrease);
