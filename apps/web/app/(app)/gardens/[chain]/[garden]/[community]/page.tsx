@@ -47,6 +47,7 @@ import {
   SCALE_PRECISION,
   SCALE_PRECISION_DECIMALS,
 } from "@/utils/numbers";
+import { FetchTokenResult } from "@wagmi/core";
 
 export default function Page({
   params: { chain, garden: tokenAddr, community: communityAddr },
@@ -329,7 +330,7 @@ export default function Page({
       {/* <Metrics> */}
       {openMetrics && (
         <CommunityDetailsTable
-          membersStaked={registryCommunity.members}
+          membersStaked={registryCommunity.members as MembersStaked[]}
           tokenGarden={tokenGarden}
           communityStakedTokens={communityStakedTokens}
         />
@@ -422,27 +423,32 @@ export default function Page({
   );
 }
 
+type MembersStaked = {
+  memberAddress: string;
+  stakedTokens: string;
+};
+
 type CommunityMetricsProps = {
-  membersStaked: any;
-  tokenGarden: any;
+  membersStaked: MembersStaked[] | undefined;
+  tokenGarden: FetchTokenResult;
   communityStakedTokens: number | bigint;
 };
 
-// interface Column {
-//   header: string | React.ReactNode;
-//   render: (supporter: ProposalSupporter) => React.ReactNode;
-//   className?: string;
-// }
+interface Column {
+  header: string | React.ReactNode;
+  render: (supporter: MembersStaked) => React.ReactNode;
+  className?: string;
+}
 
 const CommunityDetailsTable = ({
   membersStaked,
   tokenGarden,
   communityStakedTokens,
 }: CommunityMetricsProps) => {
-  const columns: any = [
+  const columns: Column[] = [
     {
       header: "Members",
-      render: (memberData: any) => (
+      render: (memberData: MembersStaked) => (
         <EthAddress
           address={memberData.memberAddress as Address}
           actions="copy"
@@ -453,7 +459,7 @@ const CommunityDetailsTable = ({
     },
     {
       header: "Staked tokens",
-      render: (memberData: any) => (
+      render: (memberData: MembersStaked) => (
         <DisplayNumber
           number={[BigInt(memberData.stakedTokens), tokenGarden.decimals]}
           compact={true}
@@ -467,9 +473,10 @@ const CommunityDetailsTable = ({
   return (
     <DataTable
       title="Community Details"
-      data={membersStaked}
-      description="A list of all members along with their total staked tokens in the community."
+      data={membersStaked as MembersStaked[]}
+      description="A detailed overview of all community members and the total number of tokens they have staked."
       columns={columns}
+      className="max-h-screen overflow-y-scroll"
       footer={
         <div className="flex justify-between py-2 border-neutral-soft-content">
           <p className="subtitle">Total Staked:</p>
