@@ -33,7 +33,6 @@ import {
 } from "@/components";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import MarkdownWrapper from "@/components/MarkdownWrapper";
-import { Metrics } from "@/components/Metrics";
 import { Skeleton } from "@/components/Skeleton";
 import { TokenGardenFaucet } from "@/components/TokenGardenFaucet";
 import { isProd } from "@/configs/isProd";
@@ -57,6 +56,8 @@ export default function Page({
   const searchParams = useCollectQueryParams();
   const { address: accountAddress } = useAccount();
   const [covenant, setCovenant] = useState<string | undefined>();
+  const [openMetrics, setOpenMetrics] = useState(false);
+
   const covenantSectionRef = useRef<HTMLDivElement>(null);
   const { data: tokenGarden } = useToken({
     address: tokenAddr as Address,
@@ -264,6 +265,13 @@ export default function Page({
             height={180}
             width={180}
           />
+          <Button
+            onClick={() => setOpenMetrics(true)}
+            btnStyle="outline"
+            className="mt-1 w-full"
+          >
+            See details
+          </Button>
         </div>
         <div className="flex flex-1 flex-col gap-2">
           <div>
@@ -317,9 +325,16 @@ export default function Page({
           />
         </div>
       </header>
-      <Metrics>
-        <CommuityMetrics data={registryCommunity.members} />
-      </Metrics>
+
+      {/* <Metrics> */}
+      {openMetrics && (
+        <CommunityDetailsTable
+          membersStaked={registryCommunity.members}
+          tokenGarden={tokenGarden}
+          communityStakedTokens={communityStakedTokens}
+        />
+      )}
+
       <IncreasePower
         memberData={isMemberResult}
         registryCommunity={registryCommunity}
@@ -408,28 +423,63 @@ export default function Page({
 }
 
 type CommunityMetricsProps = {
-  data: any;
+  membersStaked: any;
+  tokenGarden: any;
+  communityStakedTokens: number | bigint;
 };
 
-const CommuityMetrics = ({ data }: CommunityMetricsProps) => {
-  const columns = [
+// interface Column {
+//   header: string | React.ReactNode;
+//   render: (supporter: ProposalSupporter) => React.ReactNode;
+//   className?: string;
+// }
+
+const CommunityDetailsTable = ({
+  membersStaked,
+  tokenGarden,
+  communityStakedTokens,
+}: CommunityMetricsProps) => {
+  const columns: any = [
     {
-      header: "Member",
-      render: (member: any) => (
+      header: "Members",
+      render: (memberData: any) => (
         <EthAddress
-          address={member.id as Address}
+          address={memberData.memberAddress as Address}
           actions="copy"
           shortenAddress={false}
           icon="ens"
         />
       ),
     },
+    {
+      header: "Staked tokens",
+      render: (memberData: any) => (
+        <DisplayNumber
+          number={[BigInt(memberData.stakedTokens), tokenGarden.decimals]}
+          compact={true}
+          tokenSymbol={tokenGarden.symbol}
+        />
+      ),
+      className: "text-right",
+    },
   ];
 
   return (
-    <>
-      <p>test</p>
-    </>
-    // <DataTable title="Community metrics section" data={data} description="A list of all members" />
+    <DataTable
+      title="Community Details"
+      data={membersStaked}
+      description="A list of all members along with their total staked tokens in the community."
+      columns={columns}
+      footer={
+        <div className="flex justify-between py-2 border-neutral-soft-content">
+          <p className="subtitle">Total Staked:</p>
+          <DisplayNumber
+            number={[BigInt(communityStakedTokens), tokenGarden.decimals]}
+            compact={true}
+            tokenSymbol={tokenGarden.symbol}
+          />
+        </div>
+      }
+    />
   );
 };
