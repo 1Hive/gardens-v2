@@ -8,6 +8,7 @@ import {
   UserGroupIcon,
 } from "@heroicons/react/24/outline";
 
+import { FetchTokenResult } from "@wagmi/core";
 import { Dnum, multiply } from "dnum";
 import Image from "next/image";
 import Link from "next/link";
@@ -47,7 +48,6 @@ import {
   SCALE_PRECISION,
   SCALE_PRECISION_DECIMALS,
 } from "@/utils/numbers";
-import { FetchTokenResult } from "@wagmi/core";
 
 export default function Page({
   params: { chain, garden: tokenAddr, community: communityAddr },
@@ -57,7 +57,7 @@ export default function Page({
   const searchParams = useCollectQueryParams();
   const { address: accountAddress } = useAccount();
   const [covenant, setCovenant] = useState<string | undefined>();
-  const [openMetrics, setOpenMetrics] = useState(false);
+  const [openDetails, setOpenDetails] = useState(false);
 
   const covenantSectionRef = useRef<HTMLDivElement>(null);
   const { data: tokenGarden } = useToken({
@@ -267,7 +267,7 @@ export default function Page({
             width={180}
           />
           <Button
-            onClick={() => setOpenMetrics(true)}
+            onClick={() => setOpenDetails(true)}
             btnStyle="outline"
             className="mt-1 w-full"
           >
@@ -328,7 +328,7 @@ export default function Page({
       </header>
 
       {/* <Metrics> */}
-      {openMetrics && (
+      {openDetails && (
         <CommunityDetailsTable
           membersStaked={registryCommunity.members as MembersStaked[]}
           tokenGarden={tokenGarden}
@@ -466,7 +466,7 @@ const CommunityDetailsTable = ({
           tokenSymbol={tokenGarden.symbol}
         />
       ),
-      className: "text-right",
+      className: "flex justify-end",
     },
   ];
 
@@ -474,7 +474,7 @@ const CommunityDetailsTable = ({
     <DataTable
       title="Community Details"
       data={membersStaked as MembersStaked[]}
-      description="A detailed overview of all community members and the total number of tokens they have staked."
+      description="Overview of all community members and the total number of tokens they have staked."
       columns={columns}
       className="max-h-screen overflow-y-scroll"
       footer={

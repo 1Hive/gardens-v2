@@ -38,7 +38,7 @@ export const DataTable: React.FC<DataTableProps> = ({
       <div className="mt-8 flow-root">
         <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
           <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-            <table className="min-w-full divide-y divide-neutral-soft-content">
+            <table className="min-w-full divide-y divide-neutral-soft">
               <thead>
                 <tr>
                   {columns.map((col) => (
@@ -53,11 +53,11 @@ export const DataTable: React.FC<DataTableProps> = ({
                 </tr>
               </thead>
               <tbody className="">
-                {data.map((item, idx) => (
-                  <tr key={`${item.id}-${idx}`} className="even:bg-gray-50">
+                {data.map((item) => (
+                  <tr key={item.id} className="even:bg-gray-50">
                     {columns.map((col) => (
                       <td
-                        key={`${item.id}-${idx}`}
+                        key={item.id}
                         className={`whitespace-nowrap py-5 text-sm text-neutral-soft-content ${col.className ?? ""}`}
                       >
                         <p>{col.render(item)}</p>
