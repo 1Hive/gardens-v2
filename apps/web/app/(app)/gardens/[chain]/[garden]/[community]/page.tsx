@@ -49,6 +49,23 @@ import {
   SCALE_PRECISION_DECIMALS,
 } from "@/utils/numbers";
 
+type MembersStaked = {
+  memberAddress: string;
+  stakedTokens: string;
+};
+
+type CommunityMetricsProps = {
+  membersStaked: MembersStaked[] | undefined;
+  tokenGarden: FetchTokenResult;
+  communityStakedTokens: number | bigint;
+};
+
+interface Column {
+  header: string | React.ReactNode;
+  render: (supporter: MembersStaked) => React.ReactNode;
+  className?: string;
+}
+
 export default function Page({
   params: { chain, garden: tokenAddr, community: communityAddr },
 }: {
@@ -57,7 +74,7 @@ export default function Page({
   const searchParams = useCollectQueryParams();
   const { address: accountAddress } = useAccount();
   const [covenant, setCovenant] = useState<string | undefined>();
-  const [openDetails, setOpenDetails] = useState(false);
+  const [openCommDetails, setOpenCommDetails] = useState(false);
 
   const covenantSectionRef = useRef<HTMLDivElement>(null);
   const { data: tokenGarden } = useToken({
@@ -267,11 +284,11 @@ export default function Page({
             width={180}
           />
           <Button
-            onClick={() => setOpenDetails(true)}
+            onClick={() => setOpenCommDetails(!openCommDetails)}
             btnStyle="outline"
             className="mt-1 w-full"
           >
-            See details
+            {openCommDetails ? "Close" : "See"} Details
           </Button>
         </div>
         <div className="flex flex-1 flex-col gap-2">
@@ -328,7 +345,7 @@ export default function Page({
       </header>
 
       {/* <Metrics> */}
-      {openDetails && (
+      {openCommDetails && (
         <CommunityDetailsTable
           membersStaked={registryCommunity.members as MembersStaked[]}
           tokenGarden={tokenGarden}
@@ -421,23 +438,6 @@ export default function Page({
       {!isProd && tokenGarden && <TokenGardenFaucet token={tokenGarden} />}
     </div>
   );
-}
-
-type MembersStaked = {
-  memberAddress: string;
-  stakedTokens: string;
-};
-
-type CommunityMetricsProps = {
-  membersStaked: MembersStaked[] | undefined;
-  tokenGarden: FetchTokenResult;
-  communityStakedTokens: number | bigint;
-};
-
-interface Column {
-  header: string | React.ReactNode;
-  render: (supporter: MembersStaked) => React.ReactNode;
-  className?: string;
 }
 
 const CommunityDetailsTable = ({

@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Dnum } from "dnum";
 import { Address, useAccount } from "wagmi";
 import {
@@ -14,6 +14,9 @@ import {
   DisplayNumber,
   CheckPassport,
   InfoBox,
+  Button,
+  EthAddress,
+  DataTable,
 } from "@/components/";
 
 export type PoolGovernanceProps = {
@@ -27,6 +30,7 @@ export type PoolGovernanceProps = {
   memberTokensInCommunity: bigint;
   isMemberCommunity: boolean;
   memberActivatedStrategy: boolean;
+  membersStrategyData: any;
 };
 
 export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
@@ -37,9 +41,11 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
   memberTokensInCommunity,
   isMemberCommunity,
   memberActivatedStrategy,
+  membersStrategyData,
 }) => {
   const showPoolGovernanceData = isMemberCommunity && memberActivatedStrategy;
   const poolSystem = strategy.config.pointSystem;
+  const [openGovDetails, setOpenGovDetails] = useState(false);
   const { address } = useAccount();
 
   const poolSystemDefinition: { [key: number]: string } = {
@@ -53,55 +59,112 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
   };
 
   return (
-    <section className="section-layout flex flex-col gap-4">
-      <header className="flex justify-between flex-wrap">
-        <h2>Pool Governance</h2>
-        <div className="flex flex-col gap-2">
-          <CheckPassport
-            strategy={strategy}
-            enableCheck={!memberActivatedStrategy}
-          >
-            <ActivatePoints
+    <>
+      <section className="section-layout flex flex-col gap-4">
+        <header className="flex justify-between flex-wrap">
+          <h2>Pool Governance</h2>
+          <div className="flex flex-col gap-2">
+            <CheckPassport
               strategy={strategy}
-              communityAddress={communityAddress}
-              isMemberActivated={memberActivatedStrategy}
-              isMember={isMemberCommunity}
-            />
-          </CheckPassport>
-        </div>
-      </header>
-      {address && (
-        <div className="flex flex-col justify-between items-start">
-          <div className="flex flex-1 gap-10 flex-wrap">
-            <div className="flex flex-col items-start gap-2">
-              <div className="flex items-center gap-6 flex-wrap">
-                <p className="subtitle2">Your stake in the community:</p>
-                <DisplayNumber
-                  tokenSymbol={strategy.registryCommunity.garden.symbol}
-                  className="subtitle2 text-primary-content"
-                  number={
-                    [BigInt(memberTokensInCommunity), tokenDecimals] as Dnum
-                  }
-                />
-                <Badge status={memberActivatedStrategy ? 1 : 0} />
-              </div>
-              {showPoolGovernanceData && (
-                <div className="flex items-start gap-6">
-                  <p className="subtitle2">Your voting weight:</p>
-                  <p className="subtitle2 text-primary-content">
-                    {memberPoolWeight?.toFixed(2)} %
-                  </p>
+              enableCheck={!memberActivatedStrategy}
+            >
+              <ActivatePoints
+                strategy={strategy}
+                communityAddress={communityAddress}
+                isMemberActivated={memberActivatedStrategy}
+                isMember={isMemberCommunity}
+              />
+            </CheckPassport>
+          </div>
+        </header>
+        {address && (
+          <div className="flex flex-col justify-between items-start">
+            <div className="flex flex-1 gap-10 flex-wrap">
+              <div className="flex flex-col items-start gap-2">
+                <div className="flex items-center gap-6 flex-wrap">
+                  <p className="subtitle2">Your stake in the community:</p>
+                  <DisplayNumber
+                    tokenSymbol={strategy.registryCommunity.garden.symbol}
+                    className="subtitle2 text-primary-content"
+                    number={
+                      [BigInt(memberTokensInCommunity), tokenDecimals] as Dnum
+                    }
+                  />
+                  <Badge status={memberActivatedStrategy ? 1 : 0} />
                 </div>
-              )}
+                {showPoolGovernanceData && (
+                  <div className="flex items-start gap-6">
+                    <p className="subtitle2">Your voting weight:</p>
+                    <p className="subtitle2 text-primary-content">
+                      {memberPoolWeight?.toFixed(2)} %
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-        </div>
+        )}
+        <InfoBox
+          content={poolSystemDefinition[poolSystem]}
+          infoBoxType="info"
+          className="flex-1 w-full"
+        />
+        <Button
+          btnStyle="outline"
+          onClick={() => setOpenGovDetails(!openGovDetails)}
+        >
+          {openGovDetails ? "Close" : "See"} Details
+        </Button>
+      </section>
+      {openGovDetails && (
+        <PoolGovernanceDetails membersStrategyData={membersStrategyData} />
       )}
-      <InfoBox
-        content={poolSystemDefinition[poolSystem]}
-        infoBoxType="info"
-        className="flex-1 w-full"
+    </>
+  );
+};
+
+interface MemberStrategyData {
+  id: string;
+  memberStrategies?: {
+    member?: {
+      memberCommunity?: {
+        memberAddress: string;
+      };
+    };
+  };
+}
+
+interface PoolGovernanceDetailsProps {
+  membersStrategyData: MemberStrategyData[];
+}
+
+const PoolGovernanceDetails: React.FC<{
+  membersStrategyData: MemberStrategyData[];
+}> = ({ membersStrategyData }) => {
+  console.log("membersStrData", membersStrategyData);
+
+  const columns = [
+    {
+      header: "Member",
+      render: (row: any) => (
+        <EthAddress
+          address={row.memberStrategies?.member?.memberCommunity?.memberAddress}
+          actions="copy"
+          shortenAddress={false}
+          icon="ens"
+        />
+      ),
+    },
+  ];
+
+  return (
+    <>
+      <DataTable
+        title="Pool Governance Details"
+        description="A list of all the community members and their activity in the pool."
+        data={membersStrategyData}
+        columns={columns}
       />
-    </section>
+    </>
   );
 };

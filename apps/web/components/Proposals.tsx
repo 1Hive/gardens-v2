@@ -176,8 +176,6 @@ export function Proposals({
       enabled: !!wallet,
     });
 
-  console.log(membersStrategyData);
-
   const memberActivatedPoints: bigint = BigInt(
     memberStrategyData?.memberStrategy?.activatedPoints ?? 0,
   );
@@ -479,6 +477,7 @@ export function Proposals({
         memberTokensInCommunity={memberTokensInCommunity}
         isMemberCommunity={isMemberCommunity}
         memberActivatedStrategy={memberActivatedStrategy}
+        membersStrategyData={membersStrategyData}
       />
       <section className="section-layout flex flex-col gap-10 mt-10">
         <div>
