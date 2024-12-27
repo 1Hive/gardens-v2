@@ -372,10 +372,7 @@ export default function PoolEditForm({
 
     Object.entries(reorderedData).forEach(([key, value]) => {
       const formRow = formRowTypes[key];
-      if (
-        formRow
-        // && shouldRenderInPreview(key)
-      ) {
+      if (formRow && shouldRenderInput(key)) {
         const parsedValue = formRow.parse ? formRow.parse(value) : value;
         formattedRows.push({
           label: formRow.label,
@@ -481,7 +478,6 @@ export default function PoolEditForm({
                 )
               }
             </div>
-
             {/* pool settings section */}
             <div className="flex flex-col">
               <h6 className="mb-4">Conviction params</h6>
