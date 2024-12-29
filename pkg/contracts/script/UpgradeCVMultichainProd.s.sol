@@ -122,7 +122,7 @@ contract UpgradeCVMultichainProd is BaseMultiChain {
     function _upgradeCVStrategy(
         address cvStrategyProxy,
         address strategyImplementation,
-        address safeArbitrator,
+        address /*safeArbitrator*/,
         address passportScorer
     ) internal view returns (bytes memory, bytes memory) {
         CVStrategyV0_0 cvStrategy = CVStrategyV0_0(payable(cvStrategyProxy));
