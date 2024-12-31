@@ -1205,7 +1205,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         // if (proposal.proposalStatus != ProposalStatus.Active) {
         //     revert ProposalNotActive(proposalId);
         // }
-        console.log("updateProposal: stakedAmount", proposal.stakedAmount);
+        // console.log("updateProposal: stakedAmount", proposal.stakedAmount);
         _calculateAndSetConviction(proposal, proposal.stakedAmount);
         return proposal.convictionLast;
     }

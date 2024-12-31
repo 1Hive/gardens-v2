@@ -12,14 +12,11 @@ contract UpgradeCVMultichainTest is BaseMultiChain {
     using stdJson for string;
 
     function runCurrentNetwork(string memory networkJson) public override {
-        address registryFactoryImplementation = address(new RegistryFactoryV0_0());
-        address registryImplementation = address(new RegistryCommunityV0_0());
+        // address registryImplementation = address(new RegistryCommunityV0_0());
         address strategyImplementation = address(new CVStrategyV0_0());
         address passportScorer = networkJson.readAddress(getKeyNetwork(".PROXIES.PASSPORT_SCORER"));
         address safeArbitrator = networkJson.readAddress(getKeyNetwork(".ENVS.ARBITRATOR"));
 
-        console.log("safeArbitrator", safeArbitrator);
-        console.log("passportScorer", passportScorer);
         // PASSPORT SCORER UPGRADE
         // address passportScorerProxy = networkJson.readAddress(getKeyNetwork(".PROXIES.PASSPORT_SCORER"));
         // PassportScorer passportScorer = PassportScorer(address(passportScorerProxy));
@@ -31,6 +28,7 @@ contract UpgradeCVMultichainTest is BaseMultiChain {
         RegistryFactoryV0_0 registryFactory = RegistryFactoryV0_0(payable(address(registryFactoryProxy)));
 
         // 1.a -- Upgrade the Registry Factory --
+        // address registryFactoryImplementation = address(new RegistryFactoryV0_0());
         // Upgrades.upgradeProxy(address(registryFactoryProxy), "RegistryFactoryV0_0.sol:RegistryFactoryV0_0", "");
         // abi.encodeWithSelector(RegistryFactoryV0_1.initializeV2.selector)
         // registryFactory.upgradeTo(registryFactoryImplementation); // DOESNT VALIDATE SAFE UPGRADING
