@@ -224,156 +224,156 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
 
             RegistryCommunityV0_0 registryCommunity = RegistryCommunityV0_0(REGISTRY_FACTORY.createRegistry(params));
 
-            PointSystemConfig memory pointConfig;
-            pointConfig.maxAmount = MINIMUM_STAKE * 2;
+            // PointSystemConfig memory pointConfig;
+            // pointConfig.maxAmount = MINIMUM_STAKE * 2;
 
-            CVStrategyInitializeParamsV0_1 memory paramsCV = getParams(
-                address(registryCommunity),
-                ProposalType.Funding,
-                PointSystem.Fixed,
-                pointConfig,
-                ArbitrableConfig(
-                    IArbitrator(address(ARBITRATOR)), payable(COUNCIL_SAFE), 0.002 ether, 0.001 ether, 1, 300
-                ),
-                new address[](1),
-                address(0),
-                0
-            );
+            // CVStrategyInitializeParamsV0_1 memory paramsCV = getParams(
+            //     address(registryCommunity),
+            //     ProposalType.Funding,
+            //     PointSystem.Fixed,
+            //     pointConfig,
+            //     ArbitrableConfig(
+            //         IArbitrator(address(ARBITRATOR)), payable(COUNCIL_SAFE), 0.002 ether, 0.001 ether, 1, 300
+            //     ),
+            //     new address[](1),
+            //     address(0),
+            //     0
+            // );
 
-            (uint256 poolId, address _strategy1) = registryCommunity.createPool(
-                address(token),
-                paramsCV,
-                Metadata({protocol: 1, pointer: "QmVtM9MpAJLre2TZXqRc2FTeEdseeY1HTkQUe7QuwGcEAN"})
-            );
+            // (uint256 poolId, address _strategy1) = registryCommunity.createPool(
+            //     address(token),
+            //     paramsCV,
+            //     Metadata({protocol: 1, pointer: "QmVtM9MpAJLre2TZXqRc2FTeEdseeY1HTkQUe7QuwGcEAN"})
+            // );
 
-            paramsCV.proposalType = ProposalType.Signaling;
-            paramsCV.pointSystem = PointSystem.Unlimited;
-            paramsCV.sybilScorer = address(PASSPORT_SCORER);
+            // paramsCV.proposalType = ProposalType.Signaling;
+            // paramsCV.pointSystem = PointSystem.Unlimited;
+            // paramsCV.sybilScorer = address(PASSPORT_SCORER);
 
-            (uint256 poolIdSignaling, address _strategy2) = registryCommunity.createPool(
-                address(0), paramsCV, Metadata({protocol: 1, pointer: "QmReQ5dwWgVZTMKkJ4EWHSM6MBmKN21PQN45YtRRAUHiLG"})
-            );
+            // (uint256 poolIdSignaling, address _strategy2) = registryCommunity.createPool(
+            //     address(0), paramsCV, Metadata({protocol: 1, pointer: "QmReQ5dwWgVZTMKkJ4EWHSM6MBmKN21PQN45YtRRAUHiLG"})
+            // );
 
-            CVStrategyV0_0 strategy2 = CVStrategyV0_0(payable(_strategy2));
+            // CVStrategyV0_0 strategy2 = CVStrategyV0_0(payable(_strategy2));
 
-            CVStrategyV0_0 strategy1 = CVStrategyV0_0(payable(_strategy1));
+            // CVStrategyV0_0 strategy1 = CVStrategyV0_0(payable(_strategy1));
 
-            if (isNoSafe()) {
-                registryCommunity.addStrategy(_strategy1);
-            } else {
-                safeHelper(
-                    Safe(payable(COUNCIL_SAFE)),
-                    councilMemberPKEnv,
-                    address(registryCommunity),
-                    abi.encodeWithSelector(registryCommunity.addStrategy.selector, _strategy1)
-                );
-            }
+            // if (isNoSafe()) {
+            //     registryCommunity.addStrategy(_strategy1);
+            // } else {
+            //     safeHelper(
+            //         Safe(payable(COUNCIL_SAFE)),
+            //         councilMemberPKEnv,
+            //         address(registryCommunity),
+            //         abi.encodeWithSelector(registryCommunity.addStrategy.selector, _strategy1)
+            //     );
+            // }
 
-            if (isNoSafe()) {
-                registryCommunity.addStrategy(_strategy2);
-            } else {
-                safeHelper(
-                    Safe(payable(COUNCIL_SAFE)),
-                    councilMemberPKEnv,
-                    address(registryCommunity),
-                    abi.encodeWithSelector(registryCommunity.addStrategy.selector, _strategy2)
-                );
-            }
+            // if (isNoSafe()) {
+            //     registryCommunity.addStrategy(_strategy2);
+            // } else {
+            //     safeHelper(
+            //         Safe(payable(COUNCIL_SAFE)),
+            //         councilMemberPKEnv,
+            //         address(registryCommunity),
+            //         abi.encodeWithSelector(registryCommunity.addStrategy.selector, _strategy2)
+            //     );
+            // }
 
-            token.mint(address(pool_admin()), 10_000 ether);
-            token.approve(address(registryCommunity), type(uint256).max);
-            // token.mint(address(pool_admin()), 100);
-            //@todo get correct value instead infinite approval
-            registryCommunity.stakeAndRegisterMember("");
+            // token.mint(address(pool_admin()), 10_000 ether);
+            // token.approve(address(registryCommunity), type(uint256).max);
+            // // token.mint(address(pool_admin()), 100);
+            // //@todo get correct value instead infinite approval
+            // registryCommunity.stakeAndRegisterMember("");
 
-            assertEq(registryCommunity.isMember(address(pool_admin())), true, "Not a member");
+            // assertEq(registryCommunity.isMember(address(pool_admin())), true, "Not a member");
 
-            strategy1.activatePoints();
-            strategy2.activatePoints();
+            // strategy1.activatePoints();
+            // strategy2.activatePoints();
 
-            token.approve(address(allo), type(uint256).max);
-            allo.fundPool(poolId, 10_000 ether);
+            // token.approve(address(allo), type(uint256).max);
+            // allo.fundPool(poolId, 10_000 ether);
 
-            CreateProposal memory proposal = CreateProposal(
-                poolId,
-                BENEFICIARY,
-                500 ether,
-                address(token),
-                Metadata({protocol: 1, pointer: "QmVi1G1hQX4x8pb4W6KRroxsJjyP1gTkoqkGuyqoiGBPhS"})
-            );
-            bytes memory data = abi.encode(proposal);
-            allo.registerRecipient{value: 0.002 ether}(poolId, data);
+            // CreateProposal memory proposal = CreateProposal(
+            //     poolId,
+            //     BENEFICIARY,
+            //     500 ether,
+            //     address(token),
+            //     Metadata({protocol: 1, pointer: "QmVi1G1hQX4x8pb4W6KRroxsJjyP1gTkoqkGuyqoiGBPhS"})
+            // );
+            // bytes memory data = abi.encode(proposal);
+            // allo.registerRecipient{value: 0.002 ether}(poolId, data);
 
-            proposal = CreateProposal(
-                poolId,
-                BENEFICIARY,
-                1500 ether,
-                address(token),
-                Metadata({protocol: 1, pointer: "QmQfaGooGAWUHuHbYWzDp1ZHNJpreJP7oBiLjbKvxGwGuG"})
-            );
-            data = abi.encode(proposal);
-            allo.registerRecipient{value: 0.002 ether}(poolId, data);
+            // proposal = CreateProposal(
+            //     poolId,
+            //     BENEFICIARY,
+            //     1500 ether,
+            //     address(token),
+            //     Metadata({protocol: 1, pointer: "QmQfaGooGAWUHuHbYWzDp1ZHNJpreJP7oBiLjbKvxGwGuG"})
+            // );
+            // data = abi.encode(proposal);
+            // allo.registerRecipient{value: 0.002 ether}(poolId, data);
 
-            proposal = CreateProposal(
-                poolId,
-                BENEFICIARY,
-                1500 ether,
-                address(token),
-                Metadata({protocol: 1, pointer: "QmdGXx4Ff2W1eMZ8HiUg1GPSA4VBEtfTMpkustPNU5YKxp"})
-            );
-            data = abi.encode(proposal);
-            allo.registerRecipient{value: 0.002 ether}(poolId, data);
+            // proposal = CreateProposal(
+            //     poolId,
+            //     BENEFICIARY,
+            //     1500 ether,
+            //     address(token),
+            //     Metadata({protocol: 1, pointer: "QmdGXx4Ff2W1eMZ8HiUg1GPSA4VBEtfTMpkustPNU5YKxp"})
+            // );
+            // data = abi.encode(proposal);
+            // allo.registerRecipient{value: 0.002 ether}(poolId, data);
 
-            // Strategy with Signaling
-            CreateProposal memory proposal2 = CreateProposal(
-                poolIdSignaling,
-                address(0),
-                0,
-                address(0),
-                Metadata({protocol: 1, pointer: "QmSLYbgSsapjdp1VGj3LeQn1hp5jBs4JcWS1zQRRWLLkid"})
-            );
-            bytes memory data2 = abi.encode(proposal2);
-            allo.registerRecipient{value: 0.002 ether}(poolIdSignaling, data2);
+            // // Strategy with Signaling
+            // CreateProposal memory proposal2 = CreateProposal(
+            //     poolIdSignaling,
+            //     address(0),
+            //     0,
+            //     address(0),
+            //     Metadata({protocol: 1, pointer: "QmSLYbgSsapjdp1VGj3LeQn1hp5jBs4JcWS1zQRRWLLkid"})
+            // );
+            // bytes memory data2 = abi.encode(proposal2);
+            // allo.registerRecipient{value: 0.002 ether}(poolIdSignaling, data2);
 
-            proposal2 = CreateProposal(
-                poolIdSignaling,
-                address(0),
-                0,
-                address(0),
-                Metadata({protocol: 1, pointer: "QmXa5sb2uLiux8ewWt9pcCFdZERisSfY1FiUjEykYnySwz"})
-            );
+            // proposal2 = CreateProposal(
+            //     poolIdSignaling,
+            //     address(0),
+            //     0,
+            //     address(0),
+            //     Metadata({protocol: 1, pointer: "QmXa5sb2uLiux8ewWt9pcCFdZERisSfY1FiUjEykYnySwz"})
+            // );
 
-            data2 = abi.encode(proposal2);
-            allo.registerRecipient{value: 0.002 ether}(poolIdSignaling, data2);
+            // data2 = abi.encode(proposal2);
+            // allo.registerRecipient{value: 0.002 ether}(poolIdSignaling, data2);
 
-            proposal2 = CreateProposal(
-                poolIdSignaling,
-                address(0),
-                0,
-                address(0),
-                Metadata({protocol: 1, pointer: "QmTafMKt491NJp5GdcPZpg5SQ1gTsYS7vidCutWcW3KFVg"})
-            );
+            // proposal2 = CreateProposal(
+            //     poolIdSignaling,
+            //     address(0),
+            //     0,
+            //     address(0),
+            //     Metadata({protocol: 1, pointer: "QmTafMKt491NJp5GdcPZpg5SQ1gTsYS7vidCutWcW3KFVg"})
+            // );
 
-            data2 = abi.encode(proposal2);
-            allo.registerRecipient{value: 0.002 ether}(poolIdSignaling, data2);
+            // data2 = abi.encode(proposal2);
+            // allo.registerRecipient{value: 0.002 ether}(poolIdSignaling, data2);
 
-            if (isNoSafe()) {
-                registryCommunity.removeStrategy(_strategy1);
-                registryCommunity.removeStrategy(_strategy2);
-            } else {
-                safeHelper(
-                    Safe(payable(COUNCIL_SAFE)),
-                    councilMemberPKEnv,
-                    address(registryCommunity),
-                    abi.encodeWithSelector(registryCommunity.removeStrategy.selector, _strategy1)
-                );
-                safeHelper(
-                    Safe(payable(COUNCIL_SAFE)),
-                    councilMemberPKEnv,
-                    address(registryCommunity),
-                    abi.encodeWithSelector(registryCommunity.removeStrategy.selector, _strategy2)
-                );
-            }
+            // if (isNoSafe()) {
+            //     registryCommunity.removeStrategy(_strategy1);
+            //     registryCommunity.removeStrategy(_strategy2);
+            // } else {
+            //     safeHelper(
+            //         Safe(payable(COUNCIL_SAFE)),
+            //         councilMemberPKEnv,
+            //         address(registryCommunity),
+            //         abi.encodeWithSelector(registryCommunity.removeStrategy.selector, _strategy1)
+            //     );
+            //     safeHelper(
+            //         Safe(payable(COUNCIL_SAFE)),
+            //         councilMemberPKEnv,
+            //         address(registryCommunity),
+            //         abi.encodeWithSelector(registryCommunity.removeStrategy.selector, _strategy2)
+            //     );
+            // }
         }
         vm.stopBroadcast();
     }

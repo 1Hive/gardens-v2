@@ -129,7 +129,6 @@ deploy-arbsep:
 	--chain-id 421614 \
 	--ffi \
 	--broadcast \
-	--legacy \
 	--via-ir \
 	--verify \
 	-vv
