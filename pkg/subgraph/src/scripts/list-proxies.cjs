@@ -2,7 +2,7 @@ const fs = require("fs");
 const viemChains = require("viem/chains");
 const hash = require("object-hash");
 const subgraphConfig = require("../../../../apps/web/configs/subgraph.json");
-const  path  = require("path");
+const path = require("path");
 
 const localhostSubgraph = "http://localhost:8000/subgraphs/name/kamikazebr/gv2";
 const arbitrumSepoliaSubgraph =
@@ -68,8 +68,7 @@ async function extractProxies(chainId) {
   }
 
   if (!subgraphEndpoint) {
-    console.error("No subgraph endpoint found for chain", chain);
-    return;
+    throw `No subgraph endpoint found for chain: ${chain} `;
   }
 
   const query = `{
@@ -135,37 +134,38 @@ async function extractProxies(chainId) {
   };
 }
 
+const networksPath = path.resolve(
+  __dirname,
+  "../../../../pkg/contracts/config/networks.json",
+);
+console.log(networksPath);
 
-  networksPath = path.resolve(__dirname, "../../../../pkg/contracts/config/networks.json")
-  console.log(networksPath)
+async function main() {
+  if (fs.existsSync(networksPath)) {
+    const networkJson = JSON.parse(fs.readFileSync(networksPath).toString());
 
-async function main(){
-  if (fs.existsSync(networksPath)){
-    networkJson = JSON.parse(fs.readFileSync(networksPath))
+    const netArray = networkJson["networks"];
 
-    netArray = networkJson['networks']
-
-    netFound = netArray.find(net=>net.name == chainArg)
-    if (!netFound){
-      console.error(`Network ${chainArg} not found in networks.json`)
-      return
+    const netFound = netArray.find((net) => net.name == chainArg);
+    if (!netFound) {
+      console.error(`Network ${chainArg} not found in networks.json`);
+      return;
     }
-    proxies = await extractProxies(netFound.chainId)
-    netFound["PROXIES"] = proxies
-    netFound["hash"] = hash(proxies) 
-    
+    const proxies = await extractProxies(netFound.chainId);
+    netFound["PROXIES"] = proxies;
+    netFound["hash"] = hash(proxies);
+
     // console.log(netArray)
 
-    netStringToSave = JSON.stringify(networkJson, null, 2);
-    if (!netStringToSave || netStringToSave.trim() == ""){
-      console.error("Error parsing json")
-      return
+    const netStringToSave = JSON.stringify(networkJson, null, 2);
+    if (!netStringToSave || netStringToSave.trim() == "") {
+      console.error("Error parsing json");
+      return;
     }
-    fs.writeFileSync(networksPath, netStringToSave)
-
-  }else{
-    console.error(`networks.json in path ${networksPath} don't exists`)
+    fs.writeFileSync(networksPath, netStringToSave);
+  } else {
+    console.error(`networks.json in path ${networksPath} don't exists`);
   }
 }
-  
-main().catch(console.error)
+
+main().catch(console.error);
