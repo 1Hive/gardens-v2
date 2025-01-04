@@ -405,6 +405,51 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         allo().allocate(poolId, data);
     }
 
+    function test_decreasePower_supportRemoval() public {
+        (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
+        /**
+         * ASSERTS
+         *
+         */
+        int256 SUPPORT_PCT = int256(100);
+        ProposalSupport[] memory votes = new ProposalSupport[](1);
+        registryCommunity.increasePower(50 * DECIMALS);
+        votes[0] = ProposalSupport(proposalId, SUPPORT_PCT); // 0 + 100 = 100% = 50
+        bytes memory data = abi.encode(votes);
+        CVStrategyV0_0 cv = CVStrategyV0_0(payable(address(pool.strategy)));
+        //Note: Here it might not be staked amount but support percentage 
+        asserEq(cv.totalVoterStakePct(address(gardenMember)),100 * DECIMALS);
+        registryCommunity.decreasePower(50 * DECIMALS);
+        assertEq(cv.totalVoterStakePct(address(gardenMember)), 50 * DECIMALS);
+        Proposal proposal = cv.proposals(proposalId);
+        asserEq(proposal.stakedAmount, 50 * DECIMALS);
+    }
+
+    function test_decreasePower_supportRemoval_multipleProposals() public {
+        (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
+        (IAllo.Pool memory pool2, uint256 poolId2, uint256 proposalId2) = _createProposal(NATIVE, 0, 0);
+
+        /**
+         * ASSERTS
+         *
+         */
+        int256 SUPPORT_PCT = int256(50);
+        ProposalSupport[] memory votes = new ProposalSupport[](1);
+        registryCommunity.increasePower(50 * DECIMALS);
+        votes[0] = ProposalSupport(proposalId, SUPPORT_PCT); // 0 + 50 = 50% = 25
+        votes[0] = ProposalSupport(proposalId2, SUPPORT_PCT); // 0 + 50 = 50% = 25
+        bytes memory data = abi.encode(votes);
+        CVStrategyV0_0 cv = CVStrategyV0_0(payable(address(pool.strategy)));
+        //Note: Here it might not be staked amount but support percentage 
+        asserEq(cv.totalVoterStakePct(address(gardenMember)),100 * DECIMALS);
+        registryCommunity.decreasePower(50 * DECIMALS);
+        assertEq(cv.totalVoterStakePct(address(gardenMember)), 50 * DECIMALS);
+        Proposal proposal = cv.proposals(proposalId);
+        Proposal proposal2 = cv.proposals(proposalId2);
+        asserEq(proposal.stakedAmount, 25 * DECIMALS);
+        asserEq(proposal2.stakedAmount, 25 * DECIMALS);
+    }
+
     function testRevert_allocate_InsufficientPoints() public {
         (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
         /**
