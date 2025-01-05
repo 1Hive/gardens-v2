@@ -511,27 +511,27 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     function decreasePower(address _member, uint256 _amountToUnstake) external virtual returns (uint256) {
         onlyRegistryCommunity();
         //requireMemberActivatedInStrategies
-        uint256 nbStakedProposals = voterStakedProposals[_member].length;
         uint256 pointsToDecrease = 0;
         if (pointSystem == PointSystem.Unlimited || pointSystem == PointSystem.Capped) {
             pointsToDecrease = _amountToUnstake; // from decreasePowerCappedUnlimited(_amountToUnstake)
         } else {
             pointsToDecrease = decreasePowerQuadratic(_member, _amountToUnstake);
         }
-        uint256 unusedPower = registryCommunity.getMemberPowerInStrategy(_member, address(this)) - totalVoterStakePct(_member);
+        uint256 voterStake = totalVoterStakePct[_member];
+        uint256 unusedPower = registryCommunity.getMemberPowerInStrategy(_member, address(this)) - voterStake;
         if (unusedPower < pointsToDecrease) {
-
-            uint256 removedRatio = (pointsToDecrease * 10 ** 4)/totalVoterStakedPct;
-            for(uint256 i=0; i<nbStakedProposals; i++) {
+            uint256 removedRatio = (pointsToDecrease  << 128) / voterStake;
+            for(uint256 i=0; i < voterStakedProposals[_member].length; i++) {
                 uint256 proposalId = voterStakedProposals[_member][i];
                 Proposal storage proposal = proposals[proposalId];
                 uint256 stakedPoints = proposal.voterStakedPoints[_member];
                 //This calculation is right ?
-                uint256 newStakedPoints = stakedPoints - (stakedPoints * removedRatio)/10**4;
+                uint256 newStakedPoints = stakedPoints - ((stakedPoints * removedRatio + (1 << 127)) >> 128);
                 uint256 oldStake = proposal.stakedAmount;
                 proposal.stakedAmount -= stakedPoints - newStakedPoints;
                 proposal.voterStakedPoints[_member] = newStakedPoints;
                 totalStaked -= stakedPoints - newStakedPoints;
+                totalVoterStakePct[_member] -= stakedPoints - newStakedPoints;
                 //Here we pass oldStake??
                 _calculateAndSetConviction(proposal, oldStake);
                 emit SupportAdded(_member, proposalId, 0, proposal.stakedAmount, proposal.convictionLast);
@@ -835,9 +835,9 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     }
 
     // Goss: Commented because accessible through public fields
-    // function getProposalStakedAmount(uint256 _proposalId) external view virtual returns (uint256) {
-    //     return proposals[_proposalId].stakedAmount;
-    // }
+    function getProposalStakedAmount(uint256 _proposalId) external view virtual returns (uint256) {
+        return proposals[_proposalId].stakedAmount;
+    }
     //    do a internal function to get the total voter stake
 
     // Goss: Commented because accessible through public fields
@@ -966,6 +966,8 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
             // console.log("stakedPointsPct%", stakedPointsPct);
 
             proposal.voterStakedPoints[_sender] = stakedPoints;
+            console.log("proposal.voterStakedPoints[_sender]", proposal.voterStakedPoints[_sender]);
+
 
             // console.log("_sender", _sender);
             // uint2stakedPointsunt = stakedPoints;
@@ -997,6 +999,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
                 _calculateAndSetConviction(proposal, previousStakedPoints);
                 emit SupportAdded(_sender, proposalId, stakedPoints, proposal.stakedAmount, proposal.convictionLast);
             }
+            console.log("proposal.stakedAmount", proposal.stakedAmount);
         }
     }
 
