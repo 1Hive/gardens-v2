@@ -129,7 +129,6 @@ deploy-arbsep:
 	--chain-id 421614 \
 	--ffi \
 	--broadcast \
-	--legacy \
 	--via-ir \
 	--verify \
 	-vv
@@ -143,10 +142,9 @@ upgrade-arbsep:
 	--chain-id 421614 \
 	--ffi \
 	--broadcast \
-	--legacy \
 	--via-ir \
 	--verify \
-	-vvv
+	-vvv 
 
 verify-blockscout-arbsep: 
 	-forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
@@ -157,7 +155,6 @@ verify-blockscout-arbsep:
 	--verify \
 	--via-ir \
 	--slow
-
 	
 deploy-verify: 
 	-forge script script/DeployCVArbSepolia.s.sol:DeployCVArbSepolia \

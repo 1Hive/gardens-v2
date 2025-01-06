@@ -18,25 +18,28 @@ contract UpgradeCVMultichainProd is BaseMultiChain {
 
         string memory json = string(abi.encodePacked("["));
 
-        // REGISTRY FACTORY UPGRADE
+        // 1. REGISTRY FACTORY UPGRADE
         address registryFactoryProxy = networkJson.readAddress(getKeyNetwork(".PROXIES.REGISTRY_FACTORY"));
         RegistryFactoryV0_0 registryFactory = RegistryFactoryV0_0(payable(address(registryFactoryProxy)));
 
+        // 1.a -- Upgrade the Registry Factory --
         // bytes memory upgradeRegistryFactory =
         //     abi.encodeWithSelector(registryFactory.upgradeTo.selector, registryFactoryImplementation);
         // json = string(abi.encodePacked(json, _createTransactionJson(registryFactoryProxy, upgradeRegistryFactory), ","));
 
+        // 1.b -- Set the Registry Community Template --
         // bytes memory setRegistryCommunityTemplate =
         //     abi.encodeWithSelector(registryFactory.setRegistryCommunityTemplate.selector, registryImplementation);
         // json = string(
         //     abi.encodePacked(json, _createTransactionJson(registryFactoryProxy, setRegistryCommunityTemplate), ",")
         // );
 
+        // 1.c -- Set the Strategy Template --
         bytes memory setStrategyTemplate =
             abi.encodeWithSelector(registryFactory.setStrategyTemplate.selector, strategyImplementation);
         json = string(abi.encodePacked(json, _createTransactionJson(registryFactoryProxy, setStrategyTemplate), ","));
 
-        // REGISTRY COMMUNITIES UPGRADES
+        // 2. REGISTRY COMMUNITIES UPGRADES
         address[] memory registryCommunityProxies =
             networkJson.readAddressArray(getKeyNetwork(".PROXIES.REGISTRY_COMMUNITIES"));
         bytes[] memory upgradeRegistryCommunities = new bytes[](registryCommunityProxies.length * 2);
@@ -45,11 +48,14 @@ contract UpgradeCVMultichainProd is BaseMultiChain {
                 _upgradeRegistryCommunity(registryCommunityProxies[i], registryImplementation, strategyImplementation);
         }
         for (uint256 i = 0; i < registryCommunityProxies.length; i++) {
+            // 2.a -- Upgrade the Registry Community --
             // json = string(
             //     abi.encodePacked(
             //         json, _createTransactionJson(registryCommunityProxies[i], upgradeRegistryCommunities[i * 2]), ","
             //     )
             // );
+
+            // 2.b -- Set the Strategy Template --
             json = string(
                 abi.encodePacked(
                     json,
@@ -59,7 +65,7 @@ contract UpgradeCVMultichainProd is BaseMultiChain {
             );
         }
 
-        // CV STRATEGIES UPGRADES
+        // 3. CV STRATEGIES UPGRADES
         address[] memory cvStrategyProxies = networkJson.readAddressArray(getKeyNetwork(".PROXIES.CV_STRATEGIES"));
         bytes[] memory upgradeCVStrategies = new bytes[](cvStrategyProxies.length);
         // bytes[] memory initStategies = new bytes[](cvStrategyProxies.length);
@@ -69,23 +75,18 @@ contract UpgradeCVMultichainProd is BaseMultiChain {
                 _upgradeCVStrategy(cvStrategyProxies[i], strategyImplementation, safeArbitrator, passportScorer);
         }
         for (uint256 i = 0; i < cvStrategyProxies.length; i++) {
+            // 3.a -- Upgrade the CV Strategy --
             json = string(
                 abi.encodePacked(json, _createTransactionJson(cvStrategyProxies[i], upgradeCVStrategies[i]), ",")
             );
-            // json = string(abi.encodePacked(json, _createTransactionJson(cvStrategyProxies[i], initStategies[i]), ","));
-            // if (bytes(setSybilScorers[i]).length > 0) {
-            //     json = string(
-            //         abi.encodePacked(json, _createTransactionJson(cvStrategyProxies[i], setSybilScorers[i]), ",")
-            //     );
-            // }
         }
 
         // Remove the last comma and close the JSON array
-
         json = string(abi.encodePacked(_removeLastChar(json), "]"));
 
         console.log(json);
 
+        // WIP: Write the JSON into a file
         // Write the json into a file
         // string memory path = string(
         //     abi.encodePacked("/pkg/contracts/transaction-builder/", chainName, "-upgrade-cv-multichain-prod.json")
@@ -122,7 +123,7 @@ contract UpgradeCVMultichainProd is BaseMultiChain {
     function _upgradeCVStrategy(
         address cvStrategyProxy,
         address strategyImplementation,
-        address safeArbitrator,
+        address, /*safeArbitrator*/
         address passportScorer
     ) internal view returns (bytes memory, bytes memory) {
         CVStrategyV0_0 cvStrategy = CVStrategyV0_0(payable(cvStrategyProxy));
