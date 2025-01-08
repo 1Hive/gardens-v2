@@ -41,7 +41,7 @@ import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
-import { PoolTypes } from "@/types";
+import { PoolTypes, Column } from "@/types";
 import { fetchIpfs } from "@/utils/ipfsUtils";
 import {
   parseToken,
@@ -60,11 +60,7 @@ type CommunityMetricsProps = {
   communityStakedTokens: number | bigint;
 };
 
-interface Column {
-  header: string | React.ReactNode;
-  render: (supporter: MembersStaked) => React.ReactNode;
-  className?: string;
-}
+type MemberColumn = Column<MembersStaked>;
 
 export default function Page({
   params: { chain, garden: tokenAddr, community: communityAddr },
@@ -221,8 +217,6 @@ export default function Page({
       });
     }
   }, [covenantSectionRef.current, searchParams]);
-
-  console.log(registryCommunity?.members);
 
   if (!tokenGarden || !registryCommunity) {
     return (
@@ -445,9 +439,9 @@ const CommunityDetailsTable = ({
   tokenGarden,
   communityStakedTokens,
 }: CommunityMetricsProps) => {
-  const columns: Column[] = [
+  const columns: MemberColumn[] = [
     {
-      header: "Members",
+      header: `Members (${membersStaked?.length})`,
       render: (memberData: MembersStaked) => (
         <EthAddress
           address={memberData.memberAddress as Address}

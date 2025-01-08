@@ -8,6 +8,7 @@ import {
   CVStrategyConfig,
   TokenGarden,
 } from "#/subgraph/.graphclient";
+import { MemberStrategyData } from "./Proposals";
 import {
   ActivatePoints,
   Badge,
@@ -18,6 +19,7 @@ import {
   EthAddress,
   DataTable,
 } from "@/components/";
+import { Column } from "@/types";
 
 export type PoolGovernanceProps = {
   memberPoolWeight: number | undefined;
@@ -123,48 +125,58 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
   );
 };
 
-interface MemberStrategyData {
-  id: string;
-  memberStrategies?: {
-    member?: {
-      memberCommunity?: {
-        memberAddress: string;
-      };
-    };
-  };
-}
-
-interface PoolGovernanceDetailsProps {
-  membersStrategyData: MemberStrategyData[];
-}
+type MemberColumn = Column<MemberStrategyData>;
 
 const PoolGovernanceDetails: React.FC<{
-  membersStrategyData: MemberStrategyData[];
+  membersStrategyData: {
+    id: string;
+    activatedPoints: string;
+    totalStakedPoints: string;
+    member: {
+      memberCommunity: {
+        memberAddress: string;
+      }[];
+    };
+  }[];
 }> = ({ membersStrategyData }) => {
-  console.log("membersStrData", membersStrategyData);
-
-  const columns = [
+  const columns: MemberColumn[] = [
     {
       header: "Member",
-      render: (row: any) => (
+      render: (member) => (
         <EthAddress
-          address={row.memberStrategies?.member?.memberCommunity?.memberAddress}
+          address={
+            Array.isArray(member?.member?.memberCommunity) ?
+              (member.member.memberCommunity[0]?.memberAddress as Address)
+            : undefined
+          }
           actions="copy"
           shortenAddress={false}
           icon="ens"
         />
       ),
     },
+    {
+      header: "Registration Status",
+      render: (member) => (
+        <span>
+          {(
+            member.member?.memberCommunity &&
+            Array.isArray(member.member.memberCommunity) &&
+            member.member.memberCommunity[0]?.isRegistered
+          ) ?
+            "Registered"
+          : "Not Registered"}
+        </span>
+      ),
+    },
   ];
 
   return (
-    <>
-      <DataTable
-        title="Pool Governance Details"
-        description="A list of all the community members and their activity in the pool."
-        data={membersStrategyData}
-        columns={columns}
-      />
-    </>
+    <DataTable
+      title="Pool Governance Details"
+      description="A list of all the community members and their activity in the pool."
+      data={membersStrategyData}
+      columns={columns}
+    />
   );
 };

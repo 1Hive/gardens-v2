@@ -53,18 +53,19 @@ export const DataTable: React.FC<DataTableProps> = ({
                 </tr>
               </thead>
               <tbody className="">
-                {data.map((item) => (
-                  <tr key={item.id} className="even:bg-gray-50">
-                    {columns.map((col) => (
-                      <td
-                        key={item.id}
-                        className={`whitespace-nowrap py-5 text-sm text-neutral-soft-content ${col.className ?? ""}`}
-                      >
-                        <p>{col.render(item)}</p>
-                      </td>
-                    ))}
-                  </tr>
-                ))}
+                {data &&
+                  data.map((item) => (
+                    <tr key={item.id} className="even:bg-gray-50">
+                      {columns.map((col) => (
+                        <td
+                          key={item.id}
+                          className={`whitespace-nowrap py-5 text-sm text-neutral-soft-content ${col.className ?? ""}`}
+                        >
+                          <p>{col.render(item)}</p>
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
               </tbody>
               {footer && (
                 <tfoot>

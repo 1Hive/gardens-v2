@@ -53,6 +53,17 @@ export type ProposalInputItem = {
   value: bigint;
 };
 
+export type MemberStrategyData = {
+  activatedPoints: string;
+  id: string;
+  member?: {
+    memberCommunity?: {
+      isRegistered: boolean;
+      memberAddress: string;
+    };
+  };
+};
+
 // export type Strategy = getStrategyByPoolQuery["cvstrategies"][number];
 // export type Proposal = CVStrategy["proposals"][number];
 export type StakesMemberType = NonNullable<isMemberQuery["member"]>["stakes"];
@@ -466,6 +477,8 @@ export function Proposals({
     (x) => stakedFilters[x.id]?.value,
   );
 
+  const membersStrategies = membersStrategyData?.memberStrategies;
+
   // Render
   return (
     <>
@@ -477,7 +490,7 @@ export function Proposals({
         memberTokensInCommunity={memberTokensInCommunity}
         isMemberCommunity={isMemberCommunity}
         memberActivatedStrategy={memberActivatedStrategy}
-        membersStrategyData={membersStrategyData}
+        membersStrategyData={membersStrategies}
       />
       <section className="section-layout flex flex-col gap-10 mt-10">
         <div>

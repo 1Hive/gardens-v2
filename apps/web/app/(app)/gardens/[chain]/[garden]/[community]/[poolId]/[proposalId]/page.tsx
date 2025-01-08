@@ -40,8 +40,8 @@ import { useConvictionRead } from "@/hooks/useConvictionRead";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
-import { alloABI, safeABI } from "@/src/generated";
-import { PoolTypes, ProposalStatus } from "@/types";
+import { alloABI } from "@/src/generated";
+import { PoolTypes, ProposalStatus, Column } from "@/types";
 
 import { useErrorDetails } from "@/utils/getErrorName";
 import { calculatePercentageBigInt } from "@/utils/numbers";
@@ -51,6 +51,7 @@ type ProposalSupporter = {
   id: string;
   stakes: { amount: number }[];
 };
+type SupporterColumn = Column<ProposalSupporter>;
 
 export default function Page({
   params: { proposalId, garden, community: communityAddr, poolId },
@@ -433,13 +434,7 @@ const ProposalSupportersTable = ({
   totalActivePoints: number;
   totalStakedAmount: number;
 }) => {
-  interface Column {
-    header: string | React.ReactNode;
-    render: (supporter: ProposalSupporter) => React.ReactNode;
-    className?: string;
-  }
-
-  const columns: Column[] = [
+  const columns: SupporterColumn[] = [
     {
       header: supporters.length > 1 ? "Supporters" : "Supporter",
       render: (supporter: ProposalSupporter) => (
