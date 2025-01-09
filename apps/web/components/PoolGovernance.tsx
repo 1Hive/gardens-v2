@@ -20,6 +20,7 @@ import {
   DataTable,
 } from "@/components/";
 import { Column } from "@/types";
+import { calculatePercentageBigInt } from "@/utils/numbers";
 
 export type PoolGovernanceProps = {
   memberPoolWeight: number | undefined;
@@ -62,7 +63,7 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
 
   return (
     <>
-      <section className="section-layout flex flex-col gap-4">
+      <section className="section-layout flex flex-col gap-4 mb-10">
         <header className="flex justify-between flex-wrap">
           <h2>Pool Governance</h2>
           <div className="flex flex-col gap-2">
@@ -114,6 +115,9 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
         <Button
           btnStyle="outline"
           onClick={() => setOpenGovDetails(!openGovDetails)}
+          disabled={membersStrategyData?.length === 0 ? true : false}
+          tooltip="No activity in this pool yet."
+          className="w-full"
         >
           {openGovDetails ? "Close" : "See"} Details
         </Button>
@@ -156,18 +160,17 @@ const PoolGovernanceDetails: React.FC<{
       ),
     },
     {
-      header: "Registration Status",
+      header: "Voting weight used",
       render: (member) => (
         <span>
-          {(
-            member.member?.memberCommunity &&
-            Array.isArray(member.member.memberCommunity) &&
-            member.member.memberCommunity[0]?.isRegistered
-          ) ?
-            "Registered"
-          : "Not Registered"}
+          {calculatePercentageBigInt(
+            BigInt(member.totalStakedPoints),
+            BigInt(member.activatedPoints),
+          )}{" "}
+          %
         </span>
       ),
+      className: "flex justify-end pr-4",
     },
   ];
 

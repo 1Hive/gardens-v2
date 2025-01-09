@@ -62,6 +62,7 @@ export type MemberStrategyData = {
       memberAddress: string;
     };
   };
+  totalStakedPoints: string;
 };
 
 // export type Strategy = getStrategyByPoolQuery["cvstrategies"][number];
