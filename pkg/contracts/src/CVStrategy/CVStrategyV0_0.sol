@@ -846,28 +846,28 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     // }
 
     // Goss: Commented because accessible through public fields
-    // function getArbitrableConfig()
-    //     external
-    //     view
-    //     virtual
-    //     returns (
-    //         IArbitrator arbitrator,
-    //         address tribunalSafe,
-    //         uint256 submitterCollateralAmount,
-    //         uint256 challengerCollateralAmount,
-    //         uint256 defaultRuling,
-    //         uint256 defaultRulingTimeout
-    //     )
-    // {
-    //     return (
-    //         arbitrableConfigs[currentArbitrableConfigVersion].arbitrator,
-    //         arbitrableConfigs[currentArbitrableConfigVersion].tribunalSafe,
-    //         arbitrableConfigs[currentArbitrableConfigVersion].submitterCollateralAmount,
-    //         arbitrableConfigs[currentArbitrableConfigVersion].challengerCollateralAmount,
-    //         arbitrableConfigs[currentArbitrableConfigVersion].defaultRuling,
-    //         arbitrableConfigs[currentArbitrableConfigVersion].defaultRulingTimeout
-    //     );
-    // }
+    function getArbitrableConfig()
+        external
+        view
+        virtual
+        returns (
+            IArbitrator arbitrator,
+            address tribunalSafe,
+            uint256 submitterCollateralAmount,
+            uint256 challengerCollateralAmount,
+            uint256 defaultRuling,
+            uint256 defaultRulingTimeout
+        )
+    {
+        return (
+            arbitrableConfigs[currentArbitrableConfigVersion].arbitrator,
+            arbitrableConfigs[currentArbitrableConfigVersion].tribunalSafe,
+            arbitrableConfigs[currentArbitrableConfigVersion].submitterCollateralAmount,
+            arbitrableConfigs[currentArbitrableConfigVersion].challengerCollateralAmount,
+            arbitrableConfigs[currentArbitrableConfigVersion].defaultRuling,
+            arbitrableConfigs[currentArbitrableConfigVersion].defaultRulingTimeout
+        );
+    }
 
     function _internal_getProposalVoterStake(uint256 _proposalId, address _voter)
         internal
