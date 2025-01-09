@@ -52,7 +52,8 @@
         "RPC_URL_OPTIMISM",
         "RPC_URL_GNOSIS",
         "RPC_URL_MATIC",
-        "CRON_SECRET"
+        "CRON_SECRET",
+        "NEXT_PUBLIC_SKIP_PUBLISHED"
       ]
     },
     "test": {

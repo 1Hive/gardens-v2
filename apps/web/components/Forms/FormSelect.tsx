@@ -29,7 +29,10 @@ export function FormSelect({
   tooltip,
   readOnly,
   disabled,
+  errors,
 }: Props) {
+  const hasError = errors?.[registerKey];
+
   return (
     <div className="flex flex-col">
       <label htmlFor={registerKey} className="label w-fit cursor-pointer">
@@ -69,6 +72,11 @@ export function FormSelect({
           </option>
         ))}
       </select>
+      {hasError && (
+        <span className="text-danger-content text-sm mt-2">
+          {hasError.message || "This field is required"}
+        </span>
+      )}
     </div>
   );
 }

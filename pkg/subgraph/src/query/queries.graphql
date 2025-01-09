@@ -199,7 +199,11 @@ query getGardenCommunities($chainId: BigInt!, $tokenGarden: ID!) {
   }
 }
 
-query getCommunity($communityAddr: ID!, $tokenAddr: ID!) {
+query getCommunity(
+  $communityAddr: ID!
+  $tokenAddr: ID!
+  $showArchived: Boolean
+) {
   registryCommunity(id: $communityAddr) {
     communityName
     id
@@ -211,20 +215,18 @@ query getCommunity($communityAddr: ID!, $tokenAddr: ID!) {
       memberAddress
       stakedTokens
     }
-    strategies(
-      orderBy: poolId
-      orderDirection: desc
-      where: { archived: false }
-    ) {
+    strategies(orderBy: poolId, orderDirection: desc) {
       id
       proposals {
         id
       }
+      archived
       isEnabled
       poolAmount
       poolId
       token
       metadata
+      archived
       config {
         proposalType
         pointSystem
@@ -238,6 +240,7 @@ query getCommunity($communityAddr: ID!, $tokenAddr: ID!) {
     protocolFee
     registerStakeAmount
     registerToken
+    councilSafe
   }
   tokenGarden(id: $tokenAddr) {
     symbol
@@ -383,6 +386,7 @@ query getProposalData($garden: ID!, $proposalId: ID!, $communityId: ID!) {
       maxCVSupply
       totalEffectiveActivePoints
       poolId
+      isEnabled
       config {
         proposalType
         pointSystem

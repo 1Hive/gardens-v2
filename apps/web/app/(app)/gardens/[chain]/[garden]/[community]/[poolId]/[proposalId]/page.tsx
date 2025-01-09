@@ -23,6 +23,7 @@ import {
   Button,
   DisplayNumber,
   EthAddress,
+  InfoBox,
   Statistic,
   DataTable,
 } from "@/components";
@@ -263,13 +264,13 @@ export default function Page({
     );
   }
 
-  const handleRefreshConviction = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setConvictionRefreshing(true);
-    await triggerConvictionRefetch?.();
-    setConvictionRefreshing(false);
-  };
+  // const handleRefreshConviction = async (e: React.MouseEvent) => {
+  //   e.preventDefault();
+  //   e.stopPropagation();
+  //   setConvictionRefreshing(true);
+  //   await triggerConvictionRefetch?.();
+  //   setConvictionRefreshing(false);
+  // };
 
   const status = ProposalStatus[proposalData.proposalStatus];
   return (
@@ -337,77 +338,87 @@ export default function Page({
                   <CancelButton
                     proposalData={{ ...proposalData, ...metadata }}
                   />
-                : <DisputeButton
-                    isMemberCommunity={isMemberCommunity}
-                    proposalData={{ ...proposalData, ...metadata }}
-                  />
+                : proposalData.strategy.isEnabled && (
+                    <DisputeButton
+                      isMemberCommunity={isMemberCommunity}
+                      proposalData={{ ...proposalData, ...metadata }}
+                    />
+                  )
                 }
               </div>
             </div>
           </div>
         </div>
+        {!proposalData.strategy.isEnabled && (
+          <InfoBox infoBoxType="warning">The pool is not enabled.</InfoBox>
+        )}
       </header>
-      <section className="section-layout">
-        {status && status !== "active" && status !== "disputed" ?
-          <h4
-            className={`text-center ${status === "executed" ? "text-primary-content" : "text-error-content"}`}
-          >
-            {status === "executed" ?
-              "Proposal passed and executed successfully!"
-            : `Proposal has been ${status}.`}
-          </h4>
-        : <>
-            <div className="flex justify-between">
-              <h2>Metrics</h2>
-              <Button
-                icon={<AdjustmentsHorizontalIcon height={24} width={24} />}
-                onClick={() => manageSupportClicked()}
-                disabled={!isConnected || missmatchUrl || !isMemberCommunity}
-                tooltip={tooltipMessage}
-              >
-                Manage support
-              </Button>
-            </div>
-            <div className="flex flex-col gap-7">
-              <ConvictionBarChart
-                currentConvictionPct={currentConvictionPct}
-                thresholdPct={thresholdPct}
-                proposalSupportPct={totalSupportPct}
-                isSignalingType={isSignalingType}
-                proposalNumber={Number(proposalIdNumber)}
-                timeToPass={Number(timeToPass)}
-                onReadyToExecute={triggerConvictionRefetch}
-                defaultChartMaxValue
-              />
-              <div className="flex justify-center lg:justify-end w-full">
-                {status === "active" && !isSignalingType && (
-                  <Button
-                    onClick={() =>
-                      writeDistribute?.({
-                        args: [
-                          BigInt(poolId),
-                          [proposalData?.strategy.id as Address],
-                          encodedDataProposalId(proposalIdNumber),
-                        ],
-                      })
-                    }
-                    disabled={
-                      currentConvictionPct < thresholdPct || !isConnected
-                    }
-                    tooltip={
-                      (tooltipMessage ?? currentConvictionPct < thresholdPct) ?
-                        "Proposal not executable"
-                      : undefined
-                    }
-                  >
-                    Execute
-                  </Button>
-                )}
+      {proposalData.strategy.isEnabled && (
+        <section className="section-layout">
+          {status && status !== "active" && status !== "disputed" ?
+            <h4
+              className={`text-center ${status === "executed" ? "text-primary-content" : "text-error-content"}`}
+            >
+              {status === "executed" ?
+                "Proposal passed and executed successfully!"
+              : `Proposal has been ${status}.`}
+            </h4>
+          : <>
+              <div className="flex justify-between">
+                <h2>Metrics</h2>
+                <Button
+                  icon={<AdjustmentsHorizontalIcon height={24} width={24} />}
+                  onClick={() => manageSupportClicked()}
+                  disabled={!isConnected || missmatchUrl || !isMemberCommunity}
+                  tooltip={tooltipMessage}
+                >
+                  Manage support
+                </Button>
               </div>
-            </div>
-          </>
-        }
-      </section>
+              <div className="flex flex-col gap-7">
+                <ConvictionBarChart
+                  currentConvictionPct={currentConvictionPct}
+                  thresholdPct={thresholdPct}
+                  proposalSupportPct={totalSupportPct}
+                  isSignalingType={isSignalingType}
+                  proposalNumber={Number(proposalIdNumber)}
+                  timeToPass={Number(timeToPass)}
+                  onReadyToExecute={triggerConvictionRefetch}
+                  defaultChartMaxValue
+                />
+                <div className="flex justify-center lg:justify-end w-full">
+                  {status === "active" && !isSignalingType && (
+                    <Button
+                      onClick={() =>
+                        writeDistribute?.({
+                          args: [
+                            BigInt(poolId),
+                            [proposalData?.strategy.id as Address],
+                            encodedDataProposalId(proposalIdNumber),
+                          ],
+                        })
+                      }
+                      disabled={
+                        currentConvictionPct < thresholdPct || !isConnected
+                      }
+                      tooltip={
+                        (
+                          (tooltipMessage ??
+                          currentConvictionPct < thresholdPct)
+                        ) ?
+                          "Proposal not executable"
+                        : undefined
+                      }
+                    >
+                      Execute
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </>
+          }
+        </section>
+      )}
       {filteredAndSortedProposalSupporters.length > 0 && (
         <ProposalSupportersTable
           supporters={filteredAndSortedProposalSupporters}
