@@ -150,7 +150,7 @@ const PoolGovernanceDetails: React.FC<{
         <EthAddress
           address={
             Array.isArray(member?.member?.memberCommunity) ?
-              (member.member.memberCommunity[0]?.memberAddress as Address)
+              (member?.member?.memberCommunity[0]?.memberAddress as Address)
             : undefined
           }
           actions="copy"
