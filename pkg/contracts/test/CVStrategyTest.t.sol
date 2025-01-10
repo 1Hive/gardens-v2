@@ -408,6 +408,38 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
     //     allo().allocate(poolId, data);
     // }
 
+    function test_decreasePower_100_50_75_supportRemoval() public {
+      /* Params */
+      uint256 TOTAL_POWER = 100 ether;
+      uint256 STAKED_ON_PROPOSAL = 50 ether;
+      uint256 STAKE_TO_REMOVE = 75 ether;
+      
+      (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
+      ProposalSupport[] memory votes = new ProposalSupport[](1);
+      vm.startPrank(gardenMember);
+      token.approve(address(registryCommunity), STAKE_WITH_FEES);
+      console.log("STAKE_WITH_FEES",STAKE_WITH_FEES);
+      _registryCommunity().stakeAndRegisterMember("");
+      token.approve(address(registryCommunity), TOTAL_POWER - MINIMUM_STAKE);
+      registryCommunity.increasePower(TOTAL_POWER - MINIMUM_STAKE);
+      // 5 ether from regiterStake + 50 ether increase = 55 ether total staked
+      votes[0] = ProposalSupport(proposalId, int256(STAKED_ON_PROPOSAL));
+      bytes memory data = abi.encode(votes);
+      CVStrategyV0_0 cv = CVStrategyV0_0(payable(address(pool.strategy)));
+      cv.activatePoints();
+      allo().allocate(poolId, data);
+      //Note: Here it might not be staked amount but support percentage
+      //TODO: TotalVoterStakePct is actually TotalVoterStakePoints, need to refactor all pct for points
+      assertEq(registryCommunity.getMemberPowerInStrategy(gardenMember, address(cv)), TOTAL_POWER);
+      assertEq(cv.totalVoterStakePct(address(gardenMember)), STAKED_ON_PROPOSAL);
+      assertEq(cv.getProposalStakedAmount(proposalId), STAKED_ON_PROPOSAL);
+      assertEq(cv.totalStaked(), STAKED_ON_PROPOSAL);
+      registryCommunity.decreasePower(STAKE_TO_REMOVE); //decrease power by 75, so only 25 ether left should be on proposal
+      assertEq(cv.totalVoterStakePct(address(gardenMember)), TOTAL_POWER - STAKE_TO_REMOVE);
+      assertEq(cv.getProposalStakedAmount(proposalId), TOTAL_POWER - STAKE_TO_REMOVE);
+      vm.stopPrank();
+  }
+
     function test_decreasePower_supportRemoval() public {
         (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
         /**
