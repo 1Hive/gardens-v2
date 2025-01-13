@@ -250,16 +250,20 @@ export default function Page({
   ] as Dnum;
 
   const getTotalRegistrationCost = () => {
+    registerStakeAmount = +registerStakeAmount;
+    protocolFee = +protocolFee;
+    communityFee = +communityFee;
     if (registerStakeAmount == undefined) {
       registerStakeAmount = 0;
     }
     const res =
       BigInt(registerStakeAmount) + // Min stake
-      (+communityFee ?
-        BigInt(registerStakeAmount) /
-        (BigInt(SCALE_PRECISION) / BigInt(communityFee))
+      (communityFee ?
+        BigInt(registerStakeAmount * (communityFee / SCALE_PRECISION))
       : BigInt(0)) + // Commuity fee as % of min stake
-      (+communityFee ? BigInt(+protocolFee) : BigInt(0)); // Protocol fee as extra
+      (protocolFee ?
+        BigInt(registerStakeAmount * (protocolFee / SCALE_PRECISION))
+      : BigInt(0)); // Protocol fee as extra
     return res;
   };
 
