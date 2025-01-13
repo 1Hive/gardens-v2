@@ -256,9 +256,10 @@ export default function Page({
     const res =
       BigInt(registerStakeAmount) + // Min stake
       (+communityFee ?
-        BigInt(registerStakeAmount) / BigInt(SCALE_PRECISION / +communityFee)
+        BigInt(registerStakeAmount) /
+        (BigInt(SCALE_PRECISION) / BigInt(communityFee))
       : BigInt(0)) + // Commuity fee as % of min stake
-      (+communityFee ? BigInt(SCALE_PRECISION / +protocolFee) : BigInt(0)); // Protocol fee as extra
+      (+communityFee ? BigInt(+protocolFee) : BigInt(0)); // Protocol fee as extra
     return res;
   };
 
