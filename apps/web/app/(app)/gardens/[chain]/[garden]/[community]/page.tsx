@@ -113,6 +113,7 @@ export default function Page({
     strategies,
     communityFee,
     registerStakeAmount,
+    protocolFee,
   } = registryCommunity ?? {};
 
   const { data: isMemberResult } = useSubgraphQuery<isMemberQuery>({
@@ -267,20 +268,17 @@ export default function Page({
   ] as Dnum;
 
   const getTotalRegistrationCost = () => {
-    if (registerStakeAmount) {
-      // using == for type coercion because communityFee is actually a string
-      if (communityFee == 0 || communityFee === undefined) {
-        return BigInt(registerStakeAmount);
-      } else {
-        return (
-          BigInt(registerStakeAmount) +
-          BigInt(registerStakeAmount) /
-            (BigInt(SCALE_PRECISION) / BigInt(communityFee))
-        );
-      }
-    } else {
-      return 0n;
+    if (registerStakeAmount == undefined) {
+      registerStakeAmount = 0;
     }
+    const res =
+      BigInt(registerStakeAmount) + // Min stake
+      (+communityFee ?
+        BigInt(registerStakeAmount) /
+        (BigInt(SCALE_PRECISION) / BigInt(communityFee))
+      : BigInt(0)) + // Commuity fee as % of min stake
+      (+communityFee ? BigInt(+protocolFee) : BigInt(0)); // Protocol fee as extra
+    return res;
   };
 
   return (
