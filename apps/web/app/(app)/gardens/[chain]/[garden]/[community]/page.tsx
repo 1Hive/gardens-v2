@@ -253,12 +253,20 @@ export default function Page({
     if (registerStakeAmount == undefined) {
       registerStakeAmount = 0;
     }
+    console.log({
+      registerStakeAmount,
+      communityFee,
+      protocolFee,
+      comm: SCALE_PRECISION / +communityFee,
+    });
     const res =
       BigInt(registerStakeAmount) + // Min stake
       (+communityFee ?
-        BigInt(registerStakeAmount) / BigInt(SCALE_PRECISION / +communityFee)
+        BigInt(registerStakeAmount) /
+        (BigInt(SCALE_PRECISION) / BigInt(communityFee))
       : BigInt(0)) + // Commuity fee as % of min stake
-      (+communityFee ? BigInt(SCALE_PRECISION / +protocolFee) : BigInt(0)); // Protocol fee as extra
+      (+communityFee ? BigInt(+protocolFee) : BigInt(0)); // Protocol fee as extra
+    console.log("Total registration cost: ", res);
     return res;
   };
 
