@@ -483,16 +483,18 @@ export function Proposals({
   // Render
   return (
     <>
-      <PoolGovernance
-        memberPoolWeight={memberPoolWeight}
-        tokenDecimals={tokenDecimals}
-        strategy={strategy}
-        communityAddress={communityAddress}
-        memberTokensInCommunity={memberTokensInCommunity}
-        isMemberCommunity={isMemberCommunity}
-        memberActivatedStrategy={memberActivatedStrategy}
-        membersStrategyData={membersStrategies}
-      />
+      {strategy.isEnabled && (
+        <PoolGovernance
+          memberPoolWeight={memberPoolWeight}
+          tokenDecimals={tokenDecimals}
+          strategy={strategy}
+          communityAddress={communityAddress}
+          memberTokensInCommunity={memberTokensInCommunity}
+          isMemberCommunity={isMemberCommunity}
+          memberActivatedStrategy={memberActivatedStrategy}
+          membersStrategyData={membersStrategies}
+        />
+      )}
       <section className="section-layout flex flex-col gap-10 mt-10">
         <div>
           <header className="flex items-center justify-between gap-10 flex-wrap">

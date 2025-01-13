@@ -297,9 +297,9 @@ export default function Page({
           <Button
             onClick={() => setOpenCommDetails(!openCommDetails)}
             btnStyle="outline"
-            className="mt-1 w-full"
+            className="mt-1"
           >
-            {openCommDetails ? "Close" : "See"} Details
+            {openCommDetails ? "Close" : "View"} Members
           </Button>
         </div>
         <div className="flex flex-1 flex-col gap-2">
@@ -353,16 +353,14 @@ export default function Page({
             registryCommunity={registryCommunity}
           />
         </div>
+        {openCommDetails && (
+          <CommunityDetailsTable
+            membersStaked={registryCommunity.members as MembersStaked[]}
+            tokenGarden={tokenGarden}
+            communityStakedTokens={communityStakedTokens}
+          />
+        )}
       </header>
-
-      {/* <Metrics> */}
-      {openCommDetails && (
-        <CommunityDetailsTable
-          membersStaked={registryCommunity.members as MembersStaked[]}
-          tokenGarden={tokenGarden}
-          communityStakedTokens={communityStakedTokens}
-        />
-      )}
 
       <IncreasePower
         memberData={isMemberResult}
@@ -503,7 +501,7 @@ const CommunityDetailsTable = ({
 
   return (
     <DataTable
-      title="Community Details"
+      title="Community Members"
       data={membersStaked as MembersStaked[]}
       description="Overview of all community members and the total number of tokens they have staked."
       columns={columns}
