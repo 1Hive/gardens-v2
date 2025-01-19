@@ -1,0 +1,18 @@
+{
+  "network": "base",
+  "chainId": 8453,
+  "dataSources": [
+    {
+      "name": "RegistryFactoryV0_0",
+      "startBlock": 25264018,
+      "address": "0xba1c9Da92a4494966fF1d60cB1D2668BfD15C8Fb",
+      "customTemplate": "registryFactory"
+    },
+    {
+      "name": "PassportScorer",
+      "startBlock": 25264018,
+      "address": "0xD5a38e558582D32FfdC3b3a1A9f4D0D56e8b3115",
+      "customTemplate": "passportScorer"
+    }
+  ]
+}

@@ -10,6 +10,7 @@ import { Address } from "viem";
 import {
   arbitrum,
   arbitrumSepolia,
+  base,
   Chain,
   gnosis,
   localhost,
@@ -18,6 +19,7 @@ import {
   sepolia,
 } from "viem/chains";
 import Subgraph from "../configs/subgraph.json";
+import { BaseLogo } from "@/assets/BaseLogo";
 import { ChainId } from "@/types";
 
 type ChainIconProps = React.SVGProps<SVGSVGElement> & {
@@ -33,6 +35,7 @@ export const chains: Chain[] = [
   optimism,
   polygon,
   gnosis,
+  base,
   // mainnet,
 ];
 
@@ -142,7 +145,7 @@ export const chainConfigMap: {
     icon: Arbitrum,
     explorer: "https://arbitrum.blockscout.com",
     blockTime: 14,
-    confirmations: 7, // 7
+    confirmations: 2, // 7
     rpcUrl: process.env.RPC_URL_ARBITRUM!,
     ...getSubgraphUrls(
       "9ejruFicuLT6hfuXNTnS8UCwxTWrHz4uinesdZu1dKmk",
@@ -180,7 +183,7 @@ export const chainConfigMap: {
     icon: Polygon,
     explorer: "https://polygon.blockscout.com",
     blockTime: 2.1,
-    confirmations: 4, // 4
+    confirmations: 2, // 4
     rpcUrl: process.env.RPC_URL_MATIC!,
     ...getSubgraphUrls(
       "4vsznmRkUGm9DZFBwvC6PDvGPVfVLQcUUr5ExdTNZiUc",
@@ -199,7 +202,7 @@ export const chainConfigMap: {
     icon: GnosisGno,
     explorer: "https://gnosis.blockscout.com",
     blockTime: 5.2,
-    confirmations: 4, // 4
+    confirmations: 2, // 4
     rpcUrl: process.env.RPC_URL_GNOSIS!,
     ...getSubgraphUrls(
       "ELGHrYhvJJQrYkVsYWS5iDuFpQ1p834Q2k2kBmUAVZAi",
@@ -212,6 +215,25 @@ export const chainConfigMap: {
     passportScorer: "0x20965C5C8a021ac6fFeD5dE7A402f7CEaC3b0A82",
     isTestnet: false,
     safePrefix: "gno",
+  },
+  8453: {
+    name: base.name,
+    icon: BaseLogo,
+    explorer: "https://base.blockscout.com",
+    blockTime: 2,
+    confirmations: 2, // 4
+    rpcUrl: process.env.RPC_URL_BASE!,
+    ...getSubgraphUrls(
+      "TODO:publishedId",
+      "gardens-v2---base",
+      SUBGRAPH_PRODNET_VERSION,
+    ),
+    globalTribunal: "0x1B8C7f06F537711A7CAf6770051A43B4F3E69A7e",
+    allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
+    arbitrator: "0x05EC011e0d8B4d2add98e1cc4AC7DF38a95EF4Ed",
+    passportScorer: "0xD5a38e558582D32FfdC3b3a1A9f4D0D56e8b3115",
+    isTestnet: false,
+    safePrefix: "base",
   },
   // 1: {
   //   name: mainnet.name,
