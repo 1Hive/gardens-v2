@@ -16,7 +16,9 @@ import {
   optimism,
   polygon,
   sepolia,
+  base,
 } from "viem/chains";
+import { BaseLogo } from "@/assets";
 import { ChainId } from "@/types";
 
 type ChainIconProps = React.SVGProps<SVGSVGElement> & {
@@ -27,7 +29,7 @@ export const chains: Chain[] = [
   arbitrumSepolia,
   // optimismSepolia,
   sepolia,
-
+  base,
   arbitrum,
   polygon,
   // mainnet,
@@ -160,6 +162,20 @@ export const chainConfigMap: {
     icon: GnosisGno,
     explorer: "https://gnosis.blockscout.com",
     blockTime: 5.2,
+    confirmations: 4, // 4
+    rpcUrl: process.env.NEXT_PUBLIC_RPC_URL_GNOSIS!,
+    subgraphUrl: `${process.env.NEXT_PUBLIC_SUBGRAPH_URL_GNOSIS?.replace("/version/latest", "")}/${SUBGRAPH_PRODNET_VERSION}`,
+    globalTribunal: "0x1B8C7f06F537711A7CAf6770051A43B4F3E69A7e",
+    allo: "0x",
+    arbitrator: "0x",
+    passportScorer: "0x",
+    isTestnet: false,
+  },
+  8453: {
+    name: base.name,
+    icon: BaseLogo,
+    explorer: "https://base.blockscout.com",
+    blockTime: 2.0,
     confirmations: 4, // 4
     rpcUrl: process.env.NEXT_PUBLIC_RPC_URL_GNOSIS!,
     subgraphUrl: `${process.env.NEXT_PUBLIC_SUBGRAPH_URL_GNOSIS?.replace("/version/latest", "")}/${SUBGRAPH_PRODNET_VERSION}`,

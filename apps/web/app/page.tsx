@@ -13,7 +13,13 @@ import {
   ArrowRightIcon,
 } from "@heroicons/react/24/outline";
 import Image from "next/image";
-import { newLogo, commF, BrightIdLogo, PublicNounsLogo } from "@/assets";
+import {
+  newLogo,
+  commF,
+  BrightIdLogo,
+  PublicNounsLogo,
+  BaseLogo,
+} from "@/assets";
 import { Button } from "@/components";
 import { ChainIcon } from "@/configs/chains";
 
@@ -38,7 +44,7 @@ const Hero = () => {
   return (
     <div className="bg-primary-soft">
       <header className="absolute inset-x-0 top-0 z-50">
-        <Banner />
+        {/* <Banner /> */}
 
         <nav
           aria-label="Global"
@@ -208,49 +214,6 @@ const Hero = () => {
   );
 };
 
-const Banner = () => {
-  const [openBanner, setOpenBanner] = useState(true);
-  return (
-    <>
-      {openBanner && (
-        <div className="pointer-events-none fixed inset-x-0 bottom-0 sm:flex sm:justify-center sm:px-6 sm:pb-5 lg:px-8">
-          <div className="pointer-events-auto flex items-center justify-between gap-x-6 bg-primary-soft px-6 py-2.5 sm:rounded-xl sm:py-3 sm:pl-4 sm:pr-3.5 shadow-xl">
-            <p className="subtitle2">
-              {/* <a
-                href=" https://www.notion.so/1hive-gardens/Growing-the-Public-Gardens-GG22-Community-Round-118d6929d01480a1adf3f772880f72a1"
-                target="_blank"
-                rel="noreferrer"
-              > */}
-              <strong className="font-semibold">
-                Congratulations to the communities that joined GG22 – Growing
-                the Public Gardens!
-              </strong>
-              <svg
-                viewBox="0 0 2 2"
-                aria-hidden="true"
-                className="mx-2 inline h-0.5 w-0.5 fill-current"
-              >
-                <circle r={1} cx={1} cy={1} />
-              </svg>
-              Review in progress&nbsp;
-              {/* <span aria-hidden="true">&rarr;</span> */}
-              {/* </a> */}
-            </p>
-            <button
-              type="button"
-              className="-m-1.5 flex-none p-1.5"
-              onClick={() => setOpenBanner(false)}
-            >
-              <span className="sr-only">Dismiss</span>
-              <XMarkIcon aria-hidden="true" className="h-5 w-5" />
-            </button>
-          </div>
-        </div>
-      )}
-    </>
-  );
-};
-
 const whoIsFor = [
   {
     name: "Web3 token ecosystems",
@@ -403,6 +366,17 @@ const ChainsDeploy = () => {
               <ChainIcon chain={137} height={48} />
               <h5 className="text-center">Polygon</h5>
             </div>
+            <div className="flec-col flex w-full flex-col items-center justify-start gap-4 object-contain object-left lg:col-span-1">
+              {/* <ChainIcon chain={8453} height={48} /> */}
+              <Image
+                src={BaseLogo}
+                alt="logo"
+                height={48}
+                width={48}
+                loading="lazy"
+              />
+              <h5 className="text-center">Base</h5>
+            </div>
           </div>
         </div>
       </div>
@@ -412,9 +386,9 @@ const ChainsDeploy = () => {
 
 const SignUp = () => {
   return (
-    <div className="bg-white py-16 sm:py-16">
+    <div className="py-16 sm:py-16">
       <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
-        <div className="isolate overflow-hidden bg-primary px-6 py-16 border1 sm:rounded-3xl sm:px-24 xl:py-24 relative">
+        <div className="isolate overflow-hidden bg-primary px-6 py-16 sm:rounded-3xl sm:px-24 xl:py-24 relative">
           <h2 className="mx-auto max-w-2xl text-center text-3xl font-bold tracking-tight sm:text-4xl">
             Cultivate change with Gardens
           </h2>
