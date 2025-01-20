@@ -119,7 +119,7 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
           tooltip="No activity in this pool yet."
           className="w-full"
         >
-          {openGovDetails ? "Close" : "Open"} Governance Details
+          {openGovDetails ? "Close" : "View"} Governance Details
         </Button>
         {openGovDetails && (
           <PoolGovernanceDetails membersStrategyData={membersStrategyData} />

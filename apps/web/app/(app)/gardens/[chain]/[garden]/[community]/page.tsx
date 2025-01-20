@@ -501,9 +501,9 @@ const CommunityDetailsTable = ({
     <DataTable
       title="Community Members"
       data={membersStaked as MembersStaked[]}
-      description="Overview of all community members and the total number of tokens they have staked."
+      description="Overview of all community members and the total amount of tokens they have staked."
       columns={columns}
-      className="max-h-screen overflow-y-scroll"
+      className="max-h-screen overflow-y-scroll w-full"
       footer={
         <div className="flex justify-between py-2 border-neutral-soft-content">
           <p className="subtitle">Total Staked:</p>
