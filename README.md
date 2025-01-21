@@ -20,7 +20,7 @@ Community members and Public Goods builders can use Gardens to:
 
 For Communities building goods and services whose value subjective to its users (AKA "Public Goods"), Gardens offers a toolset capable of leveraging the _Wisdom of the Crowds_ and that resists value extraction by malicious, abusive, or apathetic parties.
 
-## Turborepo starter for wedadawawdwadb3 projects
+## Turborepo starter for web3 projects
 
 This turborepo uses [pnpm](https://pnpm.io) as a package manager. It includes the following packages/apps:
 
