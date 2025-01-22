@@ -67,7 +67,7 @@ const getSubgraphUrls = (
   publishedId: string,
   subgraphSlug: string,
   subgraphVersion: string,
-  accountNumber: number = 40931,
+  accountNumber: number = 102093,
 ) => {
   const versionedEndpoint = `https://api.studio.thegraph.com/query/${accountNumber}/${subgraphSlug}`;
   return {
@@ -152,7 +152,7 @@ export const chainConfigMap: {
       "gardens-v2---arbitrum",
       SUBGRAPH_PRODNET_VERSION,
     ),
-    globalTribunal: "0x9a17De1f0caD0c592F656410997E4B685d339029",
+    globalTribunal: "0x1B8C7f06F537711A7CAf6770051A43B4F3E69A7e",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0x10B469b23a47BC557daB81743af8A97Ef9e9f833",
     passportScorer: "0x8cd4bA4ad10d85A550fe45d567a49E49e1D23CE1",
@@ -171,7 +171,7 @@ export const chainConfigMap: {
       "gardens-v2---optimism",
       SUBGRAPH_PRODNET_VERSION,
     ),
-    globalTribunal: "0x9a17De1f0caD0c592F656410997E4B685d339029",
+    globalTribunal: "0x1B8C7f06F537711A7CAf6770051A43B4F3E69A7e",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0x01b415E97310611EF5fea5c0b43470F6217456aA",
     passportScorer: "0x084a5504dCFeac0ec3E10517247639e50c8DcFFd",
@@ -190,7 +190,7 @@ export const chainConfigMap: {
       "gardens-v2---polygon",
       SUBGRAPH_PRODNET_VERSION,
     ),
-    globalTribunal: "0x9a17De1f0caD0c592F656410997E4B685d339029",
+    globalTribunal: "0x1B8C7f06F537711A7CAf6770051A43B4F3E69A7e",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0x8cb85C8FF0be6802AF7aE7462A44cD2a4103688e",
     passportScorer: "0x190Fa730E6FfC64Ebd0031bE59b3007cC9eE2bB3",
@@ -209,7 +209,7 @@ export const chainConfigMap: {
       "gardens-v2---gnosis",
       SUBGRAPH_PRODNET_VERSION,
     ),
-    globalTribunal: "0x9a17De1f0caD0c592F656410997E4B685d339029",
+    globalTribunal: "0x1B8C7f06F537711A7CAf6770051A43B4F3E69A7e",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0x7dd4020A2344A9e039092F12e46ba4F1EF1e3c91",
     passportScorer: "0x20965C5C8a021ac6fFeD5dE7A402f7CEaC3b0A82",
@@ -224,7 +224,7 @@ export const chainConfigMap: {
     confirmations: 2, // 4
     rpcUrl: process.env.RPC_URL_BASE!,
     ...getSubgraphUrls(
-      "TODO:publishedId",
+      "HAjsxiYJEkV8oDZgVTaJE9NQ2XzgqekFbY99tMGu53eJ",
       "gardens-v2---base",
       SUBGRAPH_PRODNET_VERSION,
     ),
