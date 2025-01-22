@@ -25,7 +25,7 @@
     "deploy:matic": "pnpm manifest:matic && graph deploy --studio gardens-v2---polygon",
     "deploy:gnosis": "pnpm manifest:gnosis && graph deploy --studio gardens-v2---gnosis",
     "deploy:base": "pnpm manifest:base && graph deploy --studio gardens-v2---base",
-    "deploy:prod": "export SUB_PROD_VERSION=0.1.8 && pnpm deploy:arbitrum -l $SUB_PROD_VERSION && pnpm deploy:optimism -l $SUB_PROD_VERSION && pnpm deploy:matic -l $SUB_PROD_VERSION && pnpm deploy:gnosis -l $SUB_PROD_VERSION && pnpm deploy:base -l $SUB_PROD_VERSION",
+    "deploy:prod": "export SUB_PROD_VERSION=0.1.9 && pnpm deploy:arbitrum -l $SUB_PROD_VERSION && pnpm deploy:optimism -l $SUB_PROD_VERSION && pnpm deploy:matic -l $SUB_PROD_VERSION && pnpm deploy:gnosis -l $SUB_PROD_VERSION && pnpm deploy:base -l $SUB_PROD_VERSION",
     "build-deploy:arbsep": "pnpm build:arbsep && pnpm deploy:arbsep:last",
     "build-deploy:ethsep": "pnpm build:ethsep && pnpm deploy:ethsep:last",
     "local": "pnpm create-local && pnpm build && pnpm deploy:local",
