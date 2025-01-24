@@ -262,6 +262,27 @@
       "hash": "db581d3bf4af214d70f730b67cb712c47d851e97"
     },
     {
+      "name": "base",
+      "chainId": 8453,
+      "testnet": false,
+      "no-safe": false,
+      "ENVS": {
+        "SENDER": "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD",
+        "PROXY_OWNER": "0x333837ec0D4F3D9b3dF0216996a148B46ce3541b",
+        "ALLO_PROXY": "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
+        "ALLO_IMPL": "0xB087535DB0df98fC4327136e897A5985E5Cfbd66",
+        "REGISTRY": "0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3",
+        "ARBITRATOR": "0x83bDE2E2D8AcAAad2D300DA195dF3cf86b234bdd"
+      },
+      "PROXIES": {
+        "REGISTRY_FACTORY": "0xA71023bc64c9711C2037ab491DE80fd74504bd55",
+        "REGISTRY_COMMUNITIES": [],
+        "CV_STRATEGIES": [],
+        "PASSPORT_SCORER": "0xb39dFA15F96055664179e8EcaA890f3FA26c21e9"
+      },
+      "hash": ""
+    },
+    {
       "name": "mainnet",
       "chainId": 1,
       "testnet": false,

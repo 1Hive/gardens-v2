@@ -53,10 +53,10 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
 
     address BENEFICIARY = 0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD;
 
-    address public PROXY_OWNER = 0x333837ec0D4F3D9b3dF0216996a148B46ce3541b;
+    address public PROXY_OWNER;
     RegistryFactoryV0_0 public REGISTRY_FACTORY; // = RegistryFactoryV0_0(0xd7b72Fcb6A4e2857685175F609D1498ff5392E46);
-    PassportScorer PASSPORT_SCORER = PassportScorer(0xD5a38e558582D32FfdC3b3a1A9f4D0D56e8b3115);
-    SafeArbitrator ARBITRATOR = SafeArbitrator(0x05EC011e0d8B4d2add98e1cc4AC7DF38a95EF4Ed);
+    PassportScorer PASSPORT_SCORER;
+    SafeArbitrator ARBITRATOR;
 
     uint256 councilMemberPKEnv;
     address allo_proxy;
@@ -143,44 +143,57 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
         console2.log("Allo Addr: %s", address(allo));
 
         if (address(PROXY_OWNER) == address(0)) {
-            ERC1967Proxy proxyOwnerProxy = new ERC1967Proxy(
-                address(new ProxyOwner()), abi.encodeWithSelector(ProxyOwner.initialize.selector, SENDER)
-            );
+            PROXY_OWNER = json.readAddress(getKeyNetwork(".ENVS.PROXY_OWNER"));
+            if (address(PROXY_OWNER) == address(0)) {
+                ERC1967Proxy proxyOwnerProxy = new ERC1967Proxy(
+                    address(new ProxyOwner()), abi.encodeWithSelector(ProxyOwner.initialize.selector, SENDER)
+                );
 
-            PROXY_OWNER = address(proxyOwnerProxy);
+                PROXY_OWNER = address(proxyOwnerProxy);
+            }
         }
         console2.log("Proxy owner Addr: %s", PROXY_OWNER);
 
         if (address(PASSPORT_SCORER) == address(0)) {
-            ERC1967Proxy scorerProxy = new ERC1967Proxy(
-                address(new PassportScorer()), abi.encodeWithSelector(PassportScorer.initialize.selector, SENDER)
-            );
+            PROXY_OWNER = json.readAddress(getKeyNetwork(".PROXIES.PASSPORT_SCORER"));
+            if (address(PASSPORT_SCORER) == address(0)) {
+                ERC1967Proxy scorerProxy = new ERC1967Proxy(
+                    address(new PassportScorer()), abi.encodeWithSelector(PassportScorer.initialize.selector, SENDER)
+                );
 
-            PASSPORT_SCORER = PassportScorer(payable(address(scorerProxy)));
+                PASSPORT_SCORER = PassportScorer(payable(address(scorerProxy)));
+            }
         }
         console2.log("Passport Scorer Addr: %s", address(PASSPORT_SCORER));
 
         if (address(ARBITRATOR) == address(0)) {
-            proxy = new ERC1967Proxy(
-                address(new SafeArbitrator()), abi.encodeWithSelector(SafeArbitrator.initialize.selector, 0.001 ether)
-            );
-            ARBITRATOR = SafeArbitrator(payable(address(proxy)));
+            ARBITRATOR = SafeArbitrator(json.readAddress(getKeyNetwork(".ENVS.ARBITRATOR")));
+            if (address(ARBITRATOR) == address(0)) {
+                proxy = new ERC1967Proxy(
+                    address(new SafeArbitrator()),
+                    abi.encodeWithSelector(SafeArbitrator.initialize.selector, 0.001 ether)
+                );
+                ARBITRATOR = SafeArbitrator(payable(address(proxy)));
+            }
         }
         console2.log("Arbitrator Addr: %s", address(ARBITRATOR));
 
         if (address(REGISTRY_FACTORY) == address(0)) {
-            proxy = new ERC1967Proxy(
-                address(new RegistryFactoryV0_0()),
-                abi.encodeWithSelector(
-                    RegistryFactoryV0_0.initialize.selector,
-                    address(PROXY_OWNER),
-                    address(SENDER),
-                    address(new RegistryCommunityV0_0()),
-                    address(new CVStrategyV0_0()),
-                    address(new CollateralVault())
-                )
-            );
-            REGISTRY_FACTORY = RegistryFactoryV0_0(address(proxy));
+            REGISTRY_FACTORY = RegistryFactoryV0_0(json.readAddress(getKeyNetwork(".PROXIES.REGISTRY_FACTORY")));
+            if (address(REGISTRY_FACTORY) == address(0)) {
+                proxy = new ERC1967Proxy(
+                    address(new RegistryFactoryV0_0()),
+                    abi.encodeWithSelector(
+                        RegistryFactoryV0_0.initialize.selector,
+                        address(PROXY_OWNER),
+                        address(SENDER),
+                        address(new RegistryCommunityV0_0()),
+                        address(new CVStrategyV0_0()),
+                        address(new CollateralVault())
+                    )
+                );
+                REGISTRY_FACTORY = RegistryFactoryV0_0(address(proxy));
+            }
         }
         console2.log("Registry Factory Addr: %s", address(REGISTRY_FACTORY));
 

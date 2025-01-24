@@ -744,6 +744,143 @@ change-passport-manager-gnosis:
 	--legacy \
 	-vvv
 
+# Base
+
+transfer-ownership-base:
+	-forge script script/TransferOwnershipAllContracts.s.sol:TransferOwnershipAllContracts \
+	--rpc-url $(RPC_URL_BASE) \
+	--account pkGarden \
+	--sig "run(string)" 'base' \
+	--chain-id 8453 \
+	--broadcast \
+	--via-ir \
+	--etherscan-api-key $(BASESCAN_API_KEY) \
+	--verify \
+	-vvv
+
+deploy-new-collateral-vault-template-base: 
+	-forge script script/DeployCollateralVaultTemplate.s.sol:DeployCollateralVaultTemplate \
+	--rpc-url $(RPC_URL_BASE) \
+	--sig "run(string)" 'base' \
+	--account pkGarden \
+	--etherscan-api-key $(BASESCAN_API_KEY) \
+	--ffi \
+	--chain-id 8453 \
+	--legacy \
+	--broadcast \
+	--via-ir \
+	--verify \
+	-vvv
+
+deploy-base: 
+	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
+	--rpc-url $(RPC_URL_BASE) \
+	--sig "run(string)" 'base' \
+	--chain-id 8453 \
+	--account pkGarden \
+	--etherscan-api-key $(BASESCAN_API_KEY) \
+	--ffi \
+	--broadcast \
+	--legacy \
+	--via-ir \
+	--verify \
+	-vvv
+
+upgrade-base: 
+	-forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
+	--rpc-url $(RPC_URL_BASE) \
+	--sig "run(string)" 'base' \
+	--account pkGarden \
+	--etherscan-api-key $(BASESCAN_API_KEY) \
+	--ffi \
+	--chain-id 8453 \
+	--broadcast \
+	--legacy \
+	--via-ir \
+	--verify \
+	--priority-gas-price 1 \
+	-vvv
+
+verify-blockscout-base: 
+	-forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
+	--rpc-url $(RPC_URL_BASE) \
+	--sig "run(string)" 'base' \
+	--account pkGarden \
+	--verifier blockscout \
+	--verifier-url https://base.blockscout.com/api/ \
+	--ffi \
+	--chain-id 8453 \
+	--legacy \
+	--verify \
+	--via-ir \
+	-vvv \
+	--slow
+
+verify-deploy-blockscout-base: 
+	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
+	--rpc-url $(RPC_URL_BASE) \
+	--sig "run(string)" 'base' \
+	--account pkGarden \
+	--verifier blockscout \
+	--verifier-url https://base.blockscout.com/api/ \
+	--ffi \
+	--chain-id 8453 \
+	--legacy \
+	--verify \
+	--via-ir \
+	-vvv \
+	--slow
+
+deploy-and-verify-base: deploy-base verify-deploy-blockscout-base
+upgrade-and-verify-base: upgrade-base verify-blockscout-base
+
+change-passport-manager-base: 
+	-forge script script/PassportScorerWriter.s.sol:PassportScorerWriter \
+	--rpc-url $(RPC_URL_BASE) \
+	--sig "run(string)" 'base' \
+	--chain-id 8453 \
+	--account pkGarden \
+	--ffi \
+	--broadcast \
+	--legacy \
+	-vvv
+
+deploy-passport-scorer-base:
+	-forge script script/DeployPassportScorer.s.sol:DeployPassportScorer \
+	--rpc-url $(RPC_URL_BASE) \
+	--sig "run(string)" 'base' \
+	--chain-id 8453 \
+	--etherscan-api-key $(BASESCAN_API_KEY) \
+	--account pkGarden \
+	--via-ir \
+	--verify \
+	--broadcast \
+	-vv
+
+deploy-safe-arbitrator-base:
+	-forge script script/DeploySafeArbitrator.s.sol:DeploySafeArbitrator \
+	--rpc-url $(RPC_URL_BASE) \
+	--sig "run(string)" 'base' \
+	--chain-id 8453 \
+	--etherscan-api-key $(BASESCAN_API_KEY) \
+	--account pkGarden \
+	--via-ir \
+	--verify \
+	--broadcast \
+	-vv
+
+deploy-proxy-owner-base:
+	-forge script script/DeployProxyOwner.s.sol:DeployProxyOwner \
+	--rpc-url $(RPC_URL_BASE) \
+	--sig "run(string)" 'base' \
+	--chain-id 8453 \
+	--etherscan-api-key $(BASESCAN_API_KEY) \
+	--account pkGarden \
+	--via-ir \
+	--verify \
+	--broadcast \
+	-vv
+
 # Mainnet
 
 # deploy-mainnet: 
