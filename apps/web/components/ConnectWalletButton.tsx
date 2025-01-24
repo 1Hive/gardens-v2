@@ -9,10 +9,12 @@ import {
   ArrowsRightLeftIcon,
 } from "@heroicons/react/24/solid";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { blo } from "blo";
 import cn from "classnames";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
+  Address,
   useAccount,
   useBalance,
   useConnect,
@@ -101,7 +103,7 @@ export function ConnectWallet() {
                             <ExclamationTriangleIcon className="text-danger-content w-6" />
                           : <Image
                               alt={"Chain icon"}
-                              src={`https://effigy.im/a/${accountAddress.address}.png`}
+                              src={`${blo(accountAddress.address as Address)}`}
                               className="rounded-full"
                               width={34}
                               height={34}

@@ -54,6 +54,20 @@ query getTokenGardens {
   }
 }
 
+query getMembersStrategy($strategyId: String!) {
+  memberStrategies(where: { strategy: $strategyId }) {
+    activatedPoints
+    member {
+      memberCommunity {
+        memberAddress
+        isRegistered
+      }
+    }
+    totalStakedPoints
+    id
+  }
+}
+
 query getMemberStrategy($member_strategy: ID!) {
   memberStrategy(id: $member_strategy) {
     id
@@ -193,9 +207,12 @@ query getCommunity(
   registryCommunity(id: $communityAddr) {
     communityName
     id
-    councilSafe
-    members(where: { stakedTokens_gt: "0" }) {
-      id
+    members(
+      where: { stakedTokens_gt: "0" }
+      orderBy: stakedTokens
+      orderDirection: desc
+    ) {
+      memberAddress
       stakedTokens
     }
     strategies(orderBy: poolId, orderDirection: desc) {

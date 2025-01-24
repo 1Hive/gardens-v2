@@ -17,12 +17,28 @@
         "ARBITRATOR": "0x05EC011e0d8B4d2add98e1cc4AC7DF38a95EF4Ed"
       },
       "PROXIES": {
-        "REGISTRY_FACTORY": "0x2d5b61124DFf3c3bEDe39620b591b10325f629a2",
-        "REGISTRY_COMMUNITIES": [],
-        "CV_STRATEGIES": [],
-        "PASSPORT_SCORER": "0xD5a38e558582D32FfdC3b3a1A9f4D0D56e8b3115"
+        "REGISTRY_FACTORY": "0x2d5b61124dff3c3bede39620b591b10325f629a2",
+        "REGISTRY_COMMUNITIES": [
+          "0x00434c738a97f4923e2c5b924485841dfd578fdc",
+          "0x289ae94e0315a1ed33f8ecdeee614e4733ceea55",
+          "0x9c03928756e992fd632e6e05882d264146fff5a8"
+        ],
+        "CV_STRATEGIES": [
+          "0x020dbbeee6c5a50da661b3d525ad27e34d0507ae",
+          "0x0b23a695725a500ba6d9e3f15c0d31d9f1c15e97",
+          "0x0d42c1b1b6e847e03102378e01502d5c1364d7fe",
+          "0x2b3541678205e57414708187d7a3d0f602135b0a",
+          "0x2ca9cfd2ab5db78adbf2ab3cc44f0c6f8d10a65f",
+          "0x3e3de34224fd9dc81030bd7a32934120f67e55fb",
+          "0x4c87476f59bb108e4b89a0541c7d0c26c36c6dcb",
+          "0x595aa705270a284a05f18f5c9c942f520a5c6bb2",
+          "0x8354fbc3f625e55eb0db40b3b4fcd1d7c60fda7d",
+          "0xdc1aa7e2fca3912161a6c7a81f11e96b7fb43bb8",
+          "0xe44dac73ef088272daeb6a2ce26087326ea83948"
+        ],
+        "PASSPORT_SCORER": "0xd5a38e558582d32ffdc3b3a1a9f4d0d56e8b3115"
       },
-      "hash": "e596185446f651fa26c2f05b954d6c674e7888a0"
+      "hash": "a91c78dccac7d26edc9d52af6d17970a863cff61"
     },
     {
       "name": "opsepolia",
@@ -73,6 +89,7 @@
           "0x0f143af46eef341b3f0dbf98c3ecb47f57067fef",
           "0x110f4a8153c04eace288e712eb4b975b46376b8c",
           "0x2851b7e3d1ad8ba5637afe196968f1a4a9875e03",
+          "0x2e8b031ae32debce51126b17356f122e4c07e941",
           "0x400b3316447a4362abe36206c145550080046831",
           "0x41a9ed5de7998583cd20bf738ca38e649e0eafe3",
           "0x5a48adf540cb5c79edb027bef3ebf551ce63661f",
@@ -89,7 +106,8 @@
           "0xe0902356a984540ca097021dbd9e0650974c7f7d",
           "0xee9cc69179697f3bf8172624c5803b58bf6bf73f",
           "0xf62a2e4ecf3bf73313b3bbbfb1563cb4433c8933",
-          "0xfa1d8bdb95e0288779df13f40ff32567647e7ffa"
+          "0xfa1d8bdb95e0288779df13f40ff32567647e7ffa",
+          "0xfc2bb6b0824805cee6d7a4af90bd395f663651c8"
         ],
         "CV_STRATEGIES": [
           "0x19a0f3d7734dca40f1847c44ef717ef3ef5c50a5",
@@ -107,7 +125,7 @@
         ],
         "PASSPORT_SCORER": "0x8cd4ba4ad10d85a550fe45d567a49e49e1d23ce1"
       },
-      "hash": "4c2cb621dc2d06669e61d5ef4a2da8a8cdfb4317"
+      "hash": "a60a880a7980235097a0f97a43397b6570e49d90"
     },
     {
       "name": "optimism",
@@ -224,8 +242,11 @@
           "0xe2396fe2169ca026962971d3b2e373ba925b6257"
         ],
         "CV_STRATEGIES": [
+          "0x0fd15b2142a257fa8713cad2c14ec52c00f71865",
           "0x1f6fd908db173f591aa6ea4a037d157ea4e31f68",
+          "0x5f7e9967b940f47623ad7fce9d59c899a1a114e7",
           "0x74545010e013e5601009305288193cbd5c8702b4",
+          "0x7de5cd9bccd6d15ca7ebfd9cd37aafbef6b8d1ad",
           "0xaa0195986ffe8f3371444fa77ee3ed04ac787eea",
           "0xac948bca716b080df41afc70f37b7a9f6f3d9c9a",
           "0xb1a275419c817273f470ee1a102cad7507a25b6f",
@@ -238,7 +259,28 @@
         ],
         "PASSPORT_SCORER": "0x20965c5c8a021ac6ffed5de7a402f7ceac3b0a82"
       },
-      "hash": "d844cea70c7b7f299046e6dc3da17626afed5c7b"
+      "hash": "db581d3bf4af214d70f730b67cb712c47d851e97"
+    },
+    {
+      "name": "base",
+      "chainId": 8453,
+      "testnet": false,
+      "no-safe": false,
+      "ENVS": {
+        "SENDER": "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD",
+        "PROXY_OWNER": "0x333837ec0D4F3D9b3dF0216996a148B46ce3541b",
+        "ALLO_PROXY": "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
+        "ALLO_IMPL": "0xB087535DB0df98fC4327136e897A5985E5Cfbd66",
+        "REGISTRY": "0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3",
+        "ARBITRATOR": "0x83bDE2E2D8AcAAad2D300DA195dF3cf86b234bdd"
+      },
+      "PROXIES": {
+        "REGISTRY_FACTORY": "0xA71023bc64c9711C2037ab491DE80fd74504bd55",
+        "REGISTRY_COMMUNITIES": [],
+        "CV_STRATEGIES": [],
+        "PASSPORT_SCORER": "0xb39dFA15F96055664179e8EcaA890f3FA26c21e9"
+      },
+      "hash": ""
     },
     {
       "name": "mainnet",
