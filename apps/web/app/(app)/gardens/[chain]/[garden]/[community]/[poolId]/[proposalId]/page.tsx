@@ -25,6 +25,7 @@ import {
   EthAddress,
   InfoBox,
   Statistic,
+  DataTable,
 } from "@/components";
 import CancelButton from "@/components/CancelButton";
 import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
@@ -41,7 +42,7 @@ import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { alloABI } from "@/src/generated";
-import { PoolTypes, ProposalStatus } from "@/types";
+import { PoolTypes, ProposalStatus, Column } from "@/types";
 
 import { useErrorDetails } from "@/utils/getErrorName";
 import { calculatePercentageBigInt } from "@/utils/numbers";
@@ -51,6 +52,7 @@ type ProposalSupporter = {
   id: string;
   stakes: { amount: number }[];
 };
+type SupporterColumn = Column<ProposalSupporter>;
 
 export default function Page({
   params: { proposalId, garden, community: communityAddr, poolId },
@@ -111,10 +113,14 @@ export default function Page({
   const proposalData = data?.cvproposal;
   const proposalSupporters = supportersData?.members;
 
-  const filteredAndSortedProposalSupporters =
+  const filteredAndSortedProposalSupporters: ProposalSupporter[] =
     proposalSupporters ?
       proposalSupporters
         .filter((item) => item.stakes && item.stakes.length > 0)
+        .map((item) => ({
+          id: item.id,
+          stakes: item.stakes?.map((stake) => ({ amount: stake.amount })) ?? [],
+        }))
         .sort((a, b) => {
           const maxStakeA = Math.max(
             ...(a.stakes ?? []).map((stake) => stake.amount),
@@ -415,123 +421,77 @@ export default function Page({
       )}
       {filteredAndSortedProposalSupporters.length > 0 && (
         <ProposalSupportersTable
-          _proposalSupporters={
-            filteredAndSortedProposalSupporters as ProposalSupporter[]
-          }
-          _totalActivePoints={totalEffectiveActivePoints}
-          _totalStakedAmount={totalSupportPct}
-          _beneficiary={beneficiary}
-          _submitter={submitter}
+          supporters={filteredAndSortedProposalSupporters}
+          beneficiary={beneficiary}
+          submitter={submitter}
+          totalActivePoints={totalEffectiveActivePoints}
+          totalStakedAmount={totalSupportPct}
         />
       )}
     </div>
   );
 }
 
-function ProposalSupportersTable({
-  _proposalSupporters,
-  _totalActivePoints,
-  _totalStakedAmount,
-  _beneficiary,
-  _submitter,
+const ProposalSupportersTable = ({
+  supporters,
+  beneficiary,
+  submitter,
+  totalActivePoints,
+  totalStakedAmount,
 }: {
-  _proposalSupporters: ProposalSupporter[];
-  _totalActivePoints: number;
-  _totalStakedAmount: number;
-  _beneficiary: string | undefined;
-  _submitter: string | undefined;
-}) {
+  supporters: ProposalSupporter[];
+  beneficiary: string | undefined;
+  submitter: string | undefined;
+  totalActivePoints: number;
+  totalStakedAmount: number;
+}) => {
+  const columns: SupporterColumn[] = [
+    {
+      header: supporters.length > 1 ? "Supporters" : "Supporter",
+      render: (supporter: ProposalSupporter) => (
+        <EthAddress
+          address={supporter.id as Address}
+          actions="copy"
+          shortenAddress={false}
+          icon="ens"
+        />
+      ),
+    },
+    {
+      header: "Role",
+      render: (supporter: ProposalSupporter) =>
+        supporter.id === beneficiary ? "Beneficiary"
+        : supporter.id === submitter ? "Submitter"
+        : "Member",
+    },
+    {
+      header: "Support",
+      render: (supporter: ProposalSupporter) =>
+        totalActivePoints > 0 ?
+          `${calculatePercentageBigInt(
+            BigInt(supporter?.stakes[0]?.amount),
+            BigInt(totalActivePoints),
+          )} %`
+        : undefined,
+      className: "text-center",
+    },
+  ];
+
   return (
-    <div className="px-2 section-layout">
-      <div className="sm:flex sm:items-center">
-        <div className="sm:flex-auto">
-          <h3>Supported By</h3>
-          <p className="mt-2 text-sm text-neutral-soft-content">
-            A list of all the community members that are supporting this
-            proposal.
+    <DataTable
+      title="Supported By"
+      description="A list of all the community members that are supporting this proposal."
+      data={supporters}
+      columns={columns}
+      footer={
+        //
+        <div className="flex justify-between py-2 border-neutral-soft-content">
+          <p className="subtitle">Total Support:</p>
+          <p className="subtitle pr-0 sm:pr-14 lg:pr-16">
+            {totalStakedAmount} %
           </p>
         </div>
-      </div>
-      <div className="mt-8 flow-root">
-        <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-          <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-            <table className="min-w-full divide-y divide-neutral-soft">
-              <thead>
-                <tr>
-                  <th scope="col" className="py-3.5 pl-4 pr-3  sm:pl-0">
-                    <h5>
-                      {_proposalSupporters.length > 1 ?
-                        "Supporters"
-                      : "Supporter"}
-                    </h5>
-                  </th>
-                  <th scope="col" className="px-3 py-3.5">
-                    <h5>Role</h5>
-                  </th>
-                  <th scope="col" className="px-3 py-3.5 text-center">
-                    <h5>Support</h5>
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-neutral-soft">
-                {_proposalSupporters.map((supporter: ProposalSupporter) => (
-                  <tr key={supporter.id}>
-                    <td className="whitespace-nowrap py-5 pl-4 pr-3 sm:pl-0 text-sm text-neutral-soft-content">
-                      <div className="flex items-center">
-                        <div className="ml-4">
-                          <EthAddress
-                            address={supporter.id as Address}
-                            actions="copy"
-                            shortenAddress={false}
-                            icon={"ens"}
-                          />
-                        </div>
-                      </div>
-                    </td>
-                    {/* members role */}
-                    <td className="whitespace-nowrap px-3 py-5 text-sm text-neutral-soft-content">
-                      <p>
-                        {supporter.id === _beneficiary ?
-                          "Beneficiary"
-                        : supporter.id === _submitter ?
-                          "Submitter"
-                        : "Member"}
-                      </p>
-                    </td>
-                    {/* members support */}
-                    <td className="whitespace-nowrap px-3 py-5 text-sm text-neutral-soft-content">
-                      <p className="subtitle">
-                        {(_totalActivePoints ?? 0) > 0 ?
-                          calculatePercentageBigInt(
-                            BigInt(supporter?.stakes[0]?.amount),
-                            BigInt(_totalActivePoints ?? 0),
-                          )
-                        : undefined}{" "}
-                        %
-                      </p>{" "}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-              <tfoot>
-                <tr>
-                  <th
-                    scope="col"
-                    colSpan={2}
-                    className="pl-8 pr-3 pt-4 sm:table-cell sm:pl-0"
-                  >
-                    <p className="subtitle">Total Support:</p>
-                  </th>
-
-                  <td className="pl-3 pr-4 pt-4 text-left sm:pr-0">
-                    <p className="subtitle">{_totalStakedAmount} %</p>
-                  </td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
+      }
+    />
   );
-}
+};

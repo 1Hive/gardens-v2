@@ -3515,6 +3515,9 @@ export declare function getBuiltGraphSDK<TGlobalContext = any, TOperationContext
     getTokenGardens(variables?: Exact<{
         [key: string]: never;
     }>, options?: TOperationContext): Promise<getTokenGardensQuery>;
+    getMembersStrategy(variables: Exact<{
+        strategyId: Scalars["String"]["input"];
+    }>, options?: TOperationContext): Promise<getMembersStrategyQuery>;
     getMemberStrategy(variables: Exact<{
         member_strategy: Scalars["ID"]["input"];
     }>, options?: TOperationContext): Promise<getMemberStrategyQuery>;
@@ -3614,6 +3617,16 @@ export type getTokenGardensQuery = {
         })>>;
     })>;
 };
+export type getMembersStrategyQueryVariables = Exact<{
+    strategyId: Scalars['String']['input'];
+}>;
+export type getMembersStrategyQuery = {
+    memberStrategies: Array<(Pick<MemberStrategy, 'activatedPoints' | 'totalStakedPoints' | 'id'> & {
+        member: {
+            memberCommunity?: Maybe<Array<Pick<MemberCommunity, 'memberAddress' | 'isRegistered'>>>;
+        };
+    })>;
+};
 export type getMemberStrategyQueryVariables = Exact<{
     member_strategy: Scalars['ID']['input'];
 }>;
@@ -3692,8 +3705,8 @@ export type getCommunityQueryVariables = Exact<{
     showArchived?: InputMaybe<Scalars['Boolean']['input']>;
 }>;
 export type getCommunityQuery = {
-    registryCommunity?: Maybe<(Pick<RegistryCommunity, 'communityName' | 'id' | 'councilSafe' | 'covenantIpfsHash' | 'communityFee' | 'protocolFee' | 'registerStakeAmount' | 'registerToken'> & {
-        members?: Maybe<Array<Pick<MemberCommunity, 'id' | 'stakedTokens'>>>;
+    registryCommunity?: Maybe<(Pick<RegistryCommunity, 'communityName' | 'id' | 'covenantIpfsHash' | 'communityFee' | 'protocolFee' | 'registerStakeAmount' | 'registerToken' | 'councilSafe'> & {
+        members?: Maybe<Array<Pick<MemberCommunity, 'memberAddress' | 'stakedTokens'>>>;
         strategies?: Maybe<Array<(Pick<CVStrategy, 'id' | 'archived' | 'isEnabled' | 'poolAmount' | 'poolId' | 'token' | 'metadata'> & {
             proposals: Array<Pick<CVProposal, 'id'>>;
             config: Pick<CVStrategyConfig, 'proposalType' | 'pointSystem'>;
@@ -3853,6 +3866,7 @@ export type getMemberPassportAndCommunitiesQuery = {
 };
 export declare const getFactoriesDocument: DocumentNode<getFactoriesQuery, getFactoriesQueryVariables>;
 export declare const getTokenGardensDocument: DocumentNode<getTokenGardensQuery, getTokenGardensQueryVariables>;
+export declare const getMembersStrategyDocument: DocumentNode<getMembersStrategyQuery, getMembersStrategyQueryVariables>;
 export declare const getMemberStrategyDocument: DocumentNode<getMemberStrategyQuery, getMemberStrategyQueryVariables>;
 export declare const isMemberDocument: DocumentNode<isMemberQuery, isMemberQueryVariables>;
 export declare const getMemberDocument: DocumentNode<getMemberQuery, getMemberQueryVariables>;
@@ -3879,6 +3893,7 @@ export type Requester<C = {}, E = unknown> = <R, V>(doc: DocumentNode, vars?: V,
 export declare function getSdk<C, E>(requester: Requester<C, E>): {
     getFactories(variables?: getFactoriesQueryVariables, options?: C): Promise<getFactoriesQuery>;
     getTokenGardens(variables?: getTokenGardensQueryVariables, options?: C): Promise<getTokenGardensQuery>;
+    getMembersStrategy(variables: getMembersStrategyQueryVariables, options?: C): Promise<getMembersStrategyQuery>;
     getMemberStrategy(variables: getMemberStrategyQueryVariables, options?: C): Promise<getMemberStrategyQuery>;
     isMember(variables: isMemberQueryVariables, options?: C): Promise<isMemberQuery>;
     getMember(variables: getMemberQueryVariables, options?: C): Promise<getMemberQuery>;
