@@ -4,12 +4,12 @@ pragma solidity ^0.8.19;
 import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
 import {BaseStrategy, IAllo} from "allo-v2-contracts/strategies/BaseStrategy.sol";
 import {RegistryCommunityV0_0} from "../RegistryCommunity/RegistryCommunityV0_0.sol";
-import {ERC165, IERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+// import {ERC165, IERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IArbitrator} from "../interfaces/IArbitrator.sol";
 import {IArbitrable} from "../interfaces/IArbitrable.sol";
 import {Clone} from "allo-v2-contracts/core/libraries/Clone.sol";
-import {console} from "forge-std/console.sol";
+// import {console} from "forge-std/console.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {ISybilScorer} from "../ISybilScorer.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
@@ -137,8 +137,13 @@ struct CVStrategyInitializeParamsV0_1 {
     address[] initialAllowlist;
 }
 
+// TODO: Uncomment ERC165 when contract size fixed with diamond
 /// @custom:oz-upgrades-from CVStrategyV0_0
-contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy, ERC165 {
+contract CVStrategyV0_0 is
+    BaseStrategyUpgradeable,
+    IArbitrable,
+    IPointStrategy //, ERC165 {
+{
     /*|--------------------------------------------|*/
     /*|              CUSTOM ERRORS                 |*/
     /*|--------------------------------------------|*/
@@ -160,7 +165,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     // error ProposalDataIsEmpty(); //0xc5f7c4c0
     // error ProposalIdCannotBeZero(); //0xf881a10d
     error ProposalNotActive(uint256 _proposalId); // 0x44980d8f
-    error ProposalNotInList(uint256 _proposalId); // 0xc1d17bef
+    // error ProposalNotInList(uint256 _proposalId); // 0xc1d17bef
     error ProposalSupportDuplicated(uint256 _proposalId, uint256 index); //0xadebb154
     error ConvictionUnderMinimumThreshold(); // 0xcce79308
     error OnlyCommunityAllowed(); // 0xaf0916a2
@@ -177,9 +182,9 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     error DefaultRulingNotSet();
     // error DisputeCooldownNotPassed(uint256 _proposalId, uint256 _remainingSec);
     // error ProposalInvalidForAllocation(uint256 _proposalId, ProposalStatus _proposalStatus);
-    error AShouldBeUnderTwo_128();
-    error BShouldBeLessTwo_128();
-    error AShouldBeUnderOrEqTwo_128();
+    // error AShouldBeUnderTwo_128();
+    // error BShouldBeLessTwo_128();
+    // error AShouldBeUnderOrEqTwo_128();
 
     /*|--------------------------------------------|*/
     /*|              CUSTOM EVENTS                 |*/
@@ -220,7 +225,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     event AllowlistMembersRemoved(uint256 poolId, address[] members);
     event AllowlistMembersAdded(uint256 poolId, address[] members);
     event SybilScorerUpdated(address sybilScorer);
-    event Logger(string message, uint256 value);
+    // event Logger(string message, uint256 value);
 
     /*|-------------------------------------/-------|*o
     /*|              STRUCTS/ENUMS                 |*/
@@ -314,18 +319,19 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     /*|                 FALLBACK                  |*/
     /*|--------------------------------------------|*/
 
-    fallback() external payable {
-        // // surpressStateMutabilityWarning++;
-    }
+    // fallback() external payable {
+    // // surpressStateMutabilityWarning++;
+    // }
 
-    receive() external payable {
-        //@todo allow only allo protocol to fund it.
-        // // surpressStateMutabilityWarning++;
-    }
+    // receive() external payable {
+    //@todo allow only allo protocol to fund it.
+    // // surpressStateMutabilityWarning++;
+    // }
 
-    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165) returns (bool) {
-        return interfaceId == type(IPointStrategy).interfaceId || super.supportsInterface(interfaceId);
-    }
+    // TODO: uncomment when contract size fixed with diamond
+    // function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165) returns (bool) {
+    //     return interfaceId == type(IPointStrategy).interfaceId || super.supportsInterface(interfaceId);
+    // }
 
     /*|--------------------------------------------|*/
     /*|                 MODIFIERS                  |*/
@@ -457,19 +463,15 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     //     return cvParams.decay;
     // }
 
-    function _activatePoints(address _sender) public virtual {
-        if (!_canExecuteAction(_sender)) {
+    function activatePoints() external virtual {
+        if (!_canExecuteAction(msg.sender)) {
             revert UserCannotExecuteAction();
         }
-        registryCommunity.activateMemberInStrategy(_sender, address(this));
-        totalPointsActivated += registryCommunity.getMemberPowerInStrategy(_sender, address(this));
+        registryCommunity.activateMemberInStrategy(msg.sender, address(this));
+        totalPointsActivated += registryCommunity.getMemberPowerInStrategy(msg.sender, address(this));
     }
 
-    function activatePoints() external virtual {
-        _activatePoints(msg.sender);
-    }
-
-    function deactivatePoints() public virtual {
+    function deactivatePoints() external virtual {
         _deactivatePoints(msg.sender);
     }
 
@@ -656,17 +658,18 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         // }
 
         if (proposalType == ProposalType.Funding) {
-            if (proposals[proposalId].proposalId != proposalId) {
-                revert ProposalNotInList(proposalId);
+            // @todo take commented when contract size fixed with diamond
+            // if (proposals[proposalId].proposalId != proposalId) {
+            //     revert ProposalNotInList(proposalId);
+            // }
+
+            if (proposals[proposalId].proposalStatus != ProposalStatus.Active) {
+                revert ProposalNotActive(proposalId);
             }
 
             if (proposals[proposalId].requestedAmount > poolAmount) {
                 // revert PoolAmountNotEnough(proposalId, proposals[proposalId].requestedAmount, poolAmount);
                 revert(); // @todo take commented when contract size fixed with diamond
-            }
-
-            if (proposals[proposalId].proposalStatus != ProposalStatus.Active) {
-                revert ProposalNotActive(proposalId);
             }
 
             uint256 convictionLast = updateProposalConviction(proposalId);
@@ -838,10 +841,10 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         return _internal_getProposalVoterStake(_proposalId, _voter);
     }
 
-    // Goss: Commented because accessible through public fields
-    function getProposalStakedAmount(uint256 _proposalId) external view virtual returns (uint256) {
-        return proposals[_proposalId].stakedAmount;
-    }
+    // TODO :Goss: Commented because accessible through public fields
+    // function getProposalStakedAmount(uint256 _proposalId) external view virtual returns (uint256) {
+    //     return proposals[_proposalId].stakedAmount;
+    // }
     //    do a internal function to get the total voter stake
 
     // Goss: Commented because accessible through public fields
@@ -909,7 +912,8 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
             }
             uint256 proposalId = _proposalSupport[i].proposalId;
             if (!proposalExists(proposalId)) {
-                revert ProposalNotInList(proposalId); //@TODO: maybe we should skip emitting a event instead of revert
+                // revert ProposalNotInList(proposalId);
+                revert ProposalNotActive(proposalId); // TODO: Take commented when contract size fixed with diamond
             }
             deltaSupportSum += _proposalSupport[i].deltaSupport;
         }
@@ -972,7 +976,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
             // console.log("stakedPointsPct%", stakedPointsPct);
 
             proposal.voterStakedPoints[_sender] = stakedPoints;
-            console.log("proposal.voterStakedPoints[_sender]", proposal.voterStakedPoints[_sender]);
+            // console.log("proposal.voterStakedPoints[_sender]", proposal.voterStakedPoints[_sender]);
 
             // console.log("_sender", _sender);
             // uint2stakedPointsunt = stakedPoints;
@@ -1005,7 +1009,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
                 _calculateAndSetConviction(proposal, previousStakedAmount);
                 emit SupportAdded(_sender, proposalId, stakedPoints, proposal.stakedAmount, proposal.convictionLast);
             }
-            console.log("proposal.stakedAmount", proposal.stakedAmount);
+            // console.log("proposal.stakedAmount", proposal.stakedAmount);
         }
     }
 
@@ -1073,10 +1077,10 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         uint256 denom = (cvParams.maxRatio * 2 ** 64) / D - (_requestedAmount * 2 ** 64) / poolAmount;
         _threshold = (
             (((((cvParams.weight << 128) / D) / ((denom * denom) >> 64)) * D) / (D - cvParams.decay))
-                * totalEffectiveActivePoints()
+                * totalPointsActivated
         ) >> 64;
 
-        if (totalEffectiveActivePoints() != 0) {
+        if (totalPointsActivated != 0) {
             uint256 thresholdOverride = calculateThresholdOverride();
             _threshold = _threshold > thresholdOverride ? _threshold : thresholdOverride;
         }
@@ -1084,8 +1088,8 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
 
     function calculateThresholdOverride() public view virtual returns (uint256) {
         return (
-            (cvParams.minThresholdPoints * D * getMaxConviction(totalEffectiveActivePoints()))
-                / (totalEffectiveActivePoints())
+            (cvParams.minThresholdPoints * D * getMaxConviction(totalPointsActivated))
+                / (totalPointsActivated)
         ) / 10 ** 7;
     }
 
@@ -1097,12 +1101,13 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
      * @return _result _a * _b / 2^128
      */
     function _mul(uint256 _a, uint256 _b) internal pure virtual returns (uint256 _result) {
-        if (_a > TWO_128) {
-            revert AShouldBeUnderOrEqTwo_128();
-        }
-        if (_b > TWO_128) {
-            revert BShouldBeLessTwo_128();
-        }
+      // TODO: 
+        // if (_a > TWO_128) {
+        //     revert AShouldBeUnderOrEqTwo_128();
+        // }
+        // if (_b > TWO_128) {
+        //     revert BShouldBeLessTwo_128();
+        // }
 
         return ((_a * _b) + TWO_127) >> 128;
     }
@@ -1115,9 +1120,10 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
      * @return _result (_a / 2^128)^_b * 2^128
      */
     function _pow(uint256 _a, uint256 _b) internal pure virtual returns (uint256 _result) {
-        if (_a >= TWO_128) {
-            revert AShouldBeUnderTwo_128();
-        }
+        // TODO: Uncomment when contract size fixed with diamond
+        // if (_a >= TWO_128) {
+        //     revert AShouldBeUnderTwo_128();
+        // }
 
         uint256 a = _a;
         uint256 b = _b;
@@ -1133,9 +1139,10 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         }
     }
 
-    function totalEffectiveActivePoints() public view virtual returns (uint256) {
-        return totalPointsActivated;
-    }
+    // TODO: Goss commented because totalPointsActivated is public
+    // function totalEffectiveActivePoints public view virtual returns (uint256) {
+    //     return totalPointsActivated;
+    // }
 
     /**
      * @dev Calculate conviction and store it on the proposal
@@ -1149,7 +1156,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         }
         _proposal.blockLast = blockNumber;
         _proposal.convictionLast = conviction;
-        emit Logger("Conviction set", conviction);
+        // emit Logger("Conviction set", conviction);
     }
 
     function _checkBlockAndCalculateConviction(Proposal storage _proposal, uint256 _oldStaked)
@@ -1224,7 +1231,8 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         Proposal storage proposal = proposals[proposalId];
 
         if (proposal.proposalId != proposalId) {
-            revert ProposalNotInList(proposalId);
+            // revert ProposalNotInList(proposalId);
+            revert ProposalNotActive(proposalId); // @todo take commented when contract size fixed with diamond
         }
 
         // Goss: Remove it to have access to this when disputed or proposal closed (to see the chart)
@@ -1318,9 +1326,10 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         // if (address(collateralVault) == address(0)) {
         //     revert CollateralVaultCannotBeZero();
         // }
-        if (proposal.proposalId != proposalId) {
-            revert ProposalNotInList(proposalId);
-        }
+        // TODO: Uncoment when contract size fixed with diamond
+        // if (proposal.proposalId != proposalId) {
+        //     revert ProposalNotInList(proposalId);
+        // }
         if (proposal.proposalStatus != ProposalStatus.Active) {
             revert ProposalNotActive(proposalId);
         }
@@ -1369,9 +1378,9 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         Proposal storage proposal = proposals[proposalId];
         ArbitrableConfig memory arbitrableConfig = arbitrableConfigs[proposal.arbitrableConfigVersion];
 
-        if (proposalId == 0) {
-            revert ProposalNotInList(proposalId);
-        }
+        // if (proposalId == 0) {
+        //     revert ProposalNotInList(proposalId);
+        // }
         if (proposal.proposalStatus != ProposalStatus.Disputed) {
             revert ProposalNotDisputed(proposalId);
         }
