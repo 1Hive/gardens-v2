@@ -520,19 +520,23 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         uint256 voterStake = totalVoterStakePct[_member];
         uint256 unusedPower = registryCommunity.getMemberPowerInStrategy(_member, address(this)) - voterStake;
         if (unusedPower < pointsToDecrease) {
-            uint256 removedRatio = (pointsToDecrease  << 128) / voterStake;
+            uint256 balancingRatio = ((pointsToDecrease - unusedPower) << 128) / voterStake;
             for(uint256 i=0; i < voterStakedProposals[_member].length; i++) {
                 uint256 proposalId = voterStakedProposals[_member][i];
                 Proposal storage proposal = proposals[proposalId];
                 uint256 stakedPoints = proposal.voterStakedPoints[_member];
-                //This calculation is right ?
-                uint256 newStakedPoints = stakedPoints - ((stakedPoints * removedRatio + (1 << 127)) >> 128);
+                uint256 newStakedPoints;
+                if(unusedPower > 0){
+                    newStakedPoints = (stakedPoints * balancingRatio + (1 << 127)) >> 128;
+                }
+                else {
+                    newStakedPoints = stakedPoints - ((stakedPoints * balancingRatio + (1 << 127)) >> 128);
+                }
                 uint256 oldStake = proposal.stakedAmount;
                 proposal.stakedAmount -= stakedPoints - newStakedPoints;
                 proposal.voterStakedPoints[_member] = newStakedPoints;
                 totalStaked -= stakedPoints - newStakedPoints;
                 totalVoterStakePct[_member] -= stakedPoints - newStakedPoints;
-                //Here we pass oldStake??
                 _calculateAndSetConviction(proposal, oldStake);
                 emit SupportAdded(_member, proposalId, 0, proposal.stakedAmount, proposal.convictionLast);
             }
