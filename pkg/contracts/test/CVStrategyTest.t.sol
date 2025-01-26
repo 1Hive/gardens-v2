@@ -116,7 +116,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         vm.startPrank(factoryOwner);
 
         ERC1967Proxy arbitratorProxy = new ERC1967Proxy(
-            address(new SafeArbitrator()), abi.encodeWithSelector(SafeArbitrator.initialize.selector, 0.01 ether, factoryOwner)
+            address(new SafeArbitrator()),
+            abi.encodeWithSelector(SafeArbitrator.initialize.selector, 0.01 ether, factoryOwner)
         );
         safeArbitrator = SafeArbitrator(payable(address(arbitratorProxy)));
 
@@ -408,37 +409,149 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
     //     allo().allocate(poolId, data);
     // }
 
+    /**
+     * Test decrease power when half of the power is staked on a proposal
+     * 1. Increase power by 100
+     * 2. Stake 50 on proposal
+     * 3. Decrease power by 75
+     * Expect 25 left on proposal
+     */
     function test_decreasePower_100_50_75_supportRemoval() public {
-      /* Params */
-      uint256 TOTAL_POWER = 100 ether;
-      uint256 STAKED_ON_PROPOSAL = 50 ether;
-      uint256 STAKE_TO_REMOVE = 75 ether;
-      
-      (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
-      ProposalSupport[] memory votes = new ProposalSupport[](1);
-      vm.startPrank(gardenMember);
-      token.approve(address(registryCommunity), STAKE_WITH_FEES);
-      console.log("STAKE_WITH_FEES",STAKE_WITH_FEES);
-      _registryCommunity().stakeAndRegisterMember("");
-      token.approve(address(registryCommunity), TOTAL_POWER - MINIMUM_STAKE);
-      registryCommunity.increasePower(TOTAL_POWER - MINIMUM_STAKE);
-      // 5 ether from regiterStake + 50 ether increase = 55 ether total staked
-      votes[0] = ProposalSupport(proposalId, int256(STAKED_ON_PROPOSAL));
-      bytes memory data = abi.encode(votes);
-      CVStrategyV0_0 cv = CVStrategyV0_0(payable(address(pool.strategy)));
-      cv.activatePoints();
-      allo().allocate(poolId, data);
-      //Note: Here it might not be staked amount but support percentage
-      //TODO: TotalVoterStakePct is actually TotalVoterStakePoints, need to refactor all pct for points
-      assertEq(registryCommunity.getMemberPowerInStrategy(gardenMember, address(cv)), TOTAL_POWER);
-      assertEq(cv.totalVoterStakePct(address(gardenMember)), STAKED_ON_PROPOSAL);
-      assertEq(cv.getProposalStakedAmount(proposalId), STAKED_ON_PROPOSAL);
-      assertEq(cv.totalStaked(), STAKED_ON_PROPOSAL);
-      registryCommunity.decreasePower(STAKE_TO_REMOVE); //decrease power by 75, so only 25 ether left should be on proposal
-      assertEq(cv.totalVoterStakePct(address(gardenMember)), TOTAL_POWER - STAKE_TO_REMOVE);
-      assertEq(cv.getProposalStakedAmount(proposalId), TOTAL_POWER - STAKE_TO_REMOVE);
-      vm.stopPrank();
-  }
+        /* Params */
+        uint256 TOTAL_POWER = 100 ether;
+        uint256 STAKED_ON_PROPOSAL = 50 ether;
+        uint256 STAKE_TO_REMOVE = 75 ether;
+
+        (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
+        ProposalSupport[] memory votes = new ProposalSupport[](1);
+        vm.startPrank(gardenMember);
+        token.approve(address(registryCommunity), STAKE_WITH_FEES);
+        console.log("STAKE_WITH_FEES", STAKE_WITH_FEES);
+        _registryCommunity().stakeAndRegisterMember("");
+        token.approve(address(registryCommunity), TOTAL_POWER - MINIMUM_STAKE);
+        registryCommunity.increasePower(TOTAL_POWER - MINIMUM_STAKE);
+        // 5 ether from regiterStake + 50 ether increase = 55 ether total staked
+        votes[0] = ProposalSupport(proposalId, int256(STAKED_ON_PROPOSAL));
+        bytes memory data = abi.encode(votes);
+        CVStrategyV0_0 cv = CVStrategyV0_0(payable(address(pool.strategy)));
+        cv.activatePoints();
+        allo().allocate(poolId, data);
+        //Note: Here it might not be staked amount but support percentage
+        //TODO: TotalVoterStakePct is actually TotalVoterStakePoints, need to refactor all pct for points
+        assertEq(registryCommunity.getMemberPowerInStrategy(gardenMember, address(cv)), TOTAL_POWER);
+        assertEq(cv.totalVoterStakePct(address(gardenMember)), STAKED_ON_PROPOSAL);
+        assertEq(cv.getProposalStakedAmount(proposalId), STAKED_ON_PROPOSAL);
+        assertEq(cv.totalStaked(), STAKED_ON_PROPOSAL);
+        registryCommunity.decreasePower(STAKE_TO_REMOVE); //decrease power by 75, so only 25 ether left should be on proposal
+        assertEq(cv.totalVoterStakePct(address(gardenMember)), TOTAL_POWER - STAKE_TO_REMOVE);
+        assertEq(cv.getProposalStakedAmount(proposalId), TOTAL_POWER - STAKE_TO_REMOVE);
+        vm.stopPrank();
+    }
+
+    /**
+     * Test decrease power when all power is staked on a proposal
+     * 1. Increase power by 100
+     * 2. Stake 100 on proposal
+     * 3. Decrease power by 75
+     * Expect 25 points left on proposal
+     */
+    function test_decreasePower_100_100_75_supportRemoval() public {
+        /* Params */
+        uint256 TOTAL_POWER = 100 ether;
+        uint256 STAKED_ON_PROPOSAL = 100 ether;
+        uint256 STAKE_TO_REMOVE = 75 ether;
+
+        (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
+        ProposalSupport[] memory votes = new ProposalSupport[](1);
+        vm.startPrank(gardenMember);
+        token.approve(address(registryCommunity), STAKE_WITH_FEES);
+        console.log("STAKE_WITH_FEES", STAKE_WITH_FEES);
+        _registryCommunity().stakeAndRegisterMember("");
+        token.approve(address(registryCommunity), TOTAL_POWER - MINIMUM_STAKE);
+        registryCommunity.increasePower(TOTAL_POWER - MINIMUM_STAKE);
+        // 5 ether from regiterStake + 50 ether increase = 55 ether total staked
+        votes[0] = ProposalSupport(proposalId, int256(STAKED_ON_PROPOSAL));
+        bytes memory data = abi.encode(votes);
+        CVStrategyV0_0 cv = CVStrategyV0_0(payable(address(pool.strategy)));
+        cv.activatePoints();
+        allo().allocate(poolId, data);
+        //Note: Here it might not be staked amount but support percentage
+        //TODO: TotalVoterStakePct is actually TotalVoterStakePoints, need to refactor all pct for points
+        assertEq(registryCommunity.getMemberPowerInStrategy(gardenMember, address(cv)), TOTAL_POWER);
+        assertEq(cv.totalVoterStakePct(address(gardenMember)), STAKED_ON_PROPOSAL);
+        assertEq(cv.getProposalStakedAmount(proposalId), STAKED_ON_PROPOSAL);
+        assertEq(cv.totalStaked(), STAKED_ON_PROPOSAL);
+        registryCommunity.decreasePower(STAKE_TO_REMOVE); //decrease power by 75, so only 25 ether left should be on proposal
+        assertEq(cv.totalVoterStakePct(address(gardenMember)), TOTAL_POWER - STAKE_TO_REMOVE);
+        assertEq(cv.getProposalStakedAmount(proposalId), TOTAL_POWER - STAKE_TO_REMOVE);
+        vm.stopPrank();
+    }
+
+    /**
+     * Test decrease power when all power is staked on 2 proposals
+     * 1. Increase power by 100
+     * 2. Stake 30 and 70 on proposals
+     * 3. Decrease power by 50
+     * Expect 15 points left on proposal 1 and 35 points left on proposal 2
+     */
+    function test_decreasePower_power_fully_staked_2_proposals_supportRemoval() public {
+        /* Params */
+        uint256 TOTAL_POWER = 100 ether;
+        uint256 STAKED_ON_PROPOSAL_1 = 30 ether;
+        uint256 STAKED_ON_PROPOSAL_2 = 70 ether;
+        uint256 STAKE_TO_REMOVE = 50 ether; // decrease by 50%
+
+        // Create pool and proposals
+        (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId1) = _createProposal(NATIVE, 0, 0);
+        bytes memory createProposalData;
+        {
+            CreateProposal memory proposal2 = CreateProposal(
+                // proposalID2,
+                poolId,
+                gardenMember,
+                // ProposalType.Funding,
+                REQUESTED_AMOUNT,
+                NATIVE,
+                metadata
+            );
+            createProposalData = abi.encode(proposal2);
+        }
+        CVStrategyV0_0 cv = CVStrategyV0_0(payable(address(pool.strategy)));
+        uint256 proposalId2;
+        {
+            (,, uint256 submitterCollateralAmount,,,) = cv.getArbitrableConfig();
+            vm.startPrank(pool_admin());
+            vm.deal(pool_admin(), submitterCollateralAmount);
+            proposalId2 =
+                uint160(allo().registerRecipient{value: submitterCollateralAmount}(poolId, createProposalData));
+        }
+
+        {
+            ProposalSupport[] memory votes = new ProposalSupport[](2);
+            vm.startPrank(gardenMember);
+            token.approve(address(registryCommunity), STAKE_WITH_FEES);
+            console.log("STAKE_WITH_FEES", STAKE_WITH_FEES);
+            _registryCommunity().stakeAndRegisterMember("");
+            token.approve(address(registryCommunity), TOTAL_POWER - MINIMUM_STAKE);
+            registryCommunity.increasePower(TOTAL_POWER - MINIMUM_STAKE);
+            votes[0] = ProposalSupport(proposalId1, int256(STAKED_ON_PROPOSAL_1));
+            votes[1] = ProposalSupport(proposalId2, int256(STAKED_ON_PROPOSAL_2));
+            bytes memory stakingData = abi.encode(votes);
+            cv.activatePoints();
+            allo().allocate(poolId, stakingData);
+        }
+
+        assertEq(registryCommunity.getMemberPowerInStrategy(gardenMember, address(cv)), TOTAL_POWER);
+        assertEq(cv.totalVoterStakePct(address(gardenMember)), STAKED_ON_PROPOSAL_1 + STAKED_ON_PROPOSAL_2);
+        assertEq(cv.getProposalStakedAmount(proposalId1), STAKED_ON_PROPOSAL_1);
+        assertEq(cv.getProposalStakedAmount(proposalId2), STAKED_ON_PROPOSAL_2);
+        assertEq(cv.totalStaked(), STAKED_ON_PROPOSAL_1 + STAKED_ON_PROPOSAL_2);
+        registryCommunity.decreasePower(STAKE_TO_REMOVE);
+        assertEq(cv.totalVoterStakePct(address(gardenMember)), TOTAL_POWER - STAKE_TO_REMOVE);
+        assertEq(cv.getProposalStakedAmount(proposalId1), 15 ether);
+        assertEq(cv.getProposalStakedAmount(proposalId2), 35 ether);
+        vm.stopPrank();
+    }
 
     function test_decreasePower_supportRemoval() public {
         (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
@@ -454,14 +567,14 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         token.approve(address(registryCommunity), 50 * DECIMALS);
         registryCommunity.increasePower(50 * DECIMALS);
         // 5 ether from regiterStake + 50 ether increase = 55 ether total staked
-        votes[0] = ProposalSupport(proposalId, SUPPORT_POINTS); 
+        votes[0] = ProposalSupport(proposalId, SUPPORT_POINTS);
         bytes memory data = abi.encode(votes);
         CVStrategyV0_0 cv = CVStrategyV0_0(payable(address(pool.strategy)));
         cv.activatePoints();
         allo().allocate(poolId, data);
-        //Note: Here it might not be staked amount but support percentage 
+        //Note: Here it might not be staked amount but support percentage
         //TODO: TotalVoterStakePct is actually TotalVoterStakePoints, need to refactor all pct for points
-        assertEq(cv.totalVoterStakePct(address(gardenMember)),55 * DECIMALS);
+        assertEq(cv.totalVoterStakePct(address(gardenMember)), 55 * DECIMALS);
         assertEq(cv.getProposalStakedAmount(proposalId), 55 * DECIMALS);
         assertEq(cv.totalStaked(), 55 * DECIMALS);
         registryCommunity.decreasePower(50 * DECIMALS); //decrease power by 50, so only 5 ether left should be on proposal
@@ -489,10 +602,10 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         cv.activatePoints();
         allo().allocate(poolId, data);
         // 5 ether from regiterStake + 50 ether increase = 55 ether total staked
-        assertEq(cv.totalVoterStakePct(address(gardenMember)),55 * DECIMALS);
+        assertEq(cv.totalVoterStakePct(address(gardenMember)), 55 * DECIMALS);
         assertEq(cv.getProposalStakedAmount(proposalId), 55 * DECIMALS);
         assertEq(cv.totalStaked(), 55 * DECIMALS);
-        registryCommunity.decreasePower(28 * DECIMALS); // decrease by 28 ether, so only 27 ether left should still be staked 
+        registryCommunity.decreasePower(28 * DECIMALS); // decrease by 28 ether, so only 27 ether left should still be staked
         assertEq(cv.totalVoterStakePct(address(gardenMember)), 27 * DECIMALS);
         assertEq(cv.getProposalStakedAmount(proposalId), 27 * DECIMALS);
         vm.stopPrank();
@@ -510,7 +623,6 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         //     metadata
         // );
 
-        
         console.log("proposalId: ", proposalId);
 
         /**
@@ -526,41 +638,41 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         _registryCommunity().stakeAndRegisterMember("");
         token.approve(address(registryCommunity), 50 * DECIMALS);
         registryCommunity.increasePower(50 * DECIMALS);
-        votes[0] = ProposalSupport(proposalId, SUPPORT_POINTS); 
+        votes[0] = ProposalSupport(proposalId, SUPPORT_POINTS);
         bytes memory data = abi.encode(votes);
         CVStrategyV0_0 cv = CVStrategyV0_0(payable(address(pool.strategy)));
         cv.activatePoints();
         CreateProposal memory proposal = CreateProposal(
-        // proposalID2,
-        poolId,
-        gardenMember,
-        // ProposalType.Funding,
-        REQUESTED_AMOUNT,
-        NATIVE,
-        metadata
+            // proposalID2,
+            poolId,
+            gardenMember,
+            // ProposalType.Funding,
+            REQUESTED_AMOUNT,
+            NATIVE,
+            metadata
         );
         data = abi.encode(proposal);
         (,, uint256 submitterCollateralAmount,,,) = cv.getArbitrableConfig();
         vm.deal(gardenMember, submitterCollateralAmount);
-        uint256 proposalId2 = uint160(allo().registerRecipient{value: submitterCollateralAmount}(poolId, data));       
+        uint256 proposalId2 = uint160(allo().registerRecipient{value: submitterCollateralAmount}(poolId, data));
         console.log("proposalId2: ", proposalId2);
         // allo().allocate(poolId, data);
 
-        votes[1] = ProposalSupport(proposalId2, SUPPORT_POINTS2); 
+        votes[1] = ProposalSupport(proposalId2, SUPPORT_POINTS2);
         data = abi.encode(votes);
-        allo().allocate(poolId, data);  
+        allo().allocate(poolId, data);
         //Note: Here it might not be staked amount but support percentage
         //TODO: TotalVoterStakePct is actually TotalVoterStakePoints, need to refactor all pct for points
-        assertEq(cv.totalVoterStakePct(address(gardenMember)),55 * DECIMALS); // 55 ether total
+        assertEq(cv.totalVoterStakePct(address(gardenMember)), 55 * DECIMALS); // 55 ether total
         assertEq(cv.getProposalStakedAmount(proposalId), 30 * DECIMALS); // staked 30 on proposal 1
         assertEq(cv.getProposalStakedAmount(proposalId2), 25 * DECIMALS); //staked 25 on proposal 2
         assertEq(cv.totalStaked(), 55 * DECIMALS);
         registryCommunity.decreasePower(50 * DECIMALS); //decrease by 50
         assertEq(cv.totalVoterStakePct(address(gardenMember)), 5 * DECIMALS); // 55 - 50 = 5 ether total staked left
         // 50 / 55 = 90.9090909%, so remove this percentage from 30, only 2.727272727272727273 ether left
-        assertEq(cv.getProposalStakedAmount(proposalId), 2.727272727272727273 ether); 
+        assertEq(cv.getProposalStakedAmount(proposalId), 2.727272727272727273 ether);
         // 50 / 55 = 90.9090909%, so remove this percentage from 25, only 2.272727272727272727 ether left
-        assertEq(cv.getProposalStakedAmount(proposalId2), 2.272727272727272727 ether); 
+        assertEq(cv.getProposalStakedAmount(proposalId2), 2.272727272727272727 ether);
         vm.stopPrank();
     }
 

@@ -521,17 +521,17 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         uint256 unusedPower = registryCommunity.getMemberPowerInStrategy(_member, address(this)) - voterStake;
         if (unusedPower < pointsToDecrease) {
             uint256 balancingRatio = ((pointsToDecrease - unusedPower) << 128) / voterStake;
-            for(uint256 i=0; i < voterStakedProposals[_member].length; i++) {
+            for (uint256 i = 0; i < voterStakedProposals[_member].length; i++) {
                 uint256 proposalId = voterStakedProposals[_member][i];
                 Proposal storage proposal = proposals[proposalId];
                 uint256 stakedPoints = proposal.voterStakedPoints[_member];
                 uint256 newStakedPoints;
-                if(unusedPower > 0){
-                    newStakedPoints = (stakedPoints * balancingRatio + (1 << 127)) >> 128;
-                }
-                else {
-                    newStakedPoints = stakedPoints - ((stakedPoints * balancingRatio + (1 << 127)) >> 128);
-                }
+                // if(unusedPower > 0){
+                newStakedPoints = (stakedPoints * balancingRatio + (1 << 127)) >> 128;
+                // }
+                // else {
+                newStakedPoints = stakedPoints - ((stakedPoints * balancingRatio + (1 << 127)) >> 128);
+                // }
                 uint256 oldStake = proposal.stakedAmount;
                 proposal.stakedAmount -= stakedPoints - newStakedPoints;
                 proposal.voterStakedPoints[_member] = newStakedPoints;
@@ -973,7 +973,6 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
 
             proposal.voterStakedPoints[_sender] = stakedPoints;
             console.log("proposal.voterStakedPoints[_sender]", proposal.voterStakedPoints[_sender]);
-
 
             // console.log("_sender", _sender);
             // uint2stakedPointsunt = stakedPoints;
