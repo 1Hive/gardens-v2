@@ -7,6 +7,8 @@ import {
   RectangleGroupIcon,
   UserGroupIcon,
 } from "@heroicons/react/24/outline";
+
+import { FetchTokenResult } from "@wagmi/core";
 import { Dnum, multiply } from "dnum";
 import Image from "next/image";
 import Link from "next/link";
@@ -28,6 +30,7 @@ import {
   RegisterMember,
   Statistic,
   InfoWrapper,
+  DataTable,
 } from "@/components";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import MarkdownWrapper from "@/components/MarkdownWrapper";
@@ -39,13 +42,26 @@ import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { safeABI } from "@/src/generated";
-import { PoolTypes } from "@/types";
+import { PoolTypes, Column } from "@/types";
 import { fetchIpfs } from "@/utils/ipfsUtils";
 import {
   parseToken,
   SCALE_PRECISION,
   SCALE_PRECISION_DECIMALS,
 } from "@/utils/numbers";
+
+type MembersStaked = {
+  memberAddress: string;
+  stakedTokens: string;
+};
+
+type CommunityMetricsProps = {
+  membersStaked: MembersStaked[] | undefined;
+  tokenGarden: FetchTokenResult;
+  communityStakedTokens: number | bigint;
+};
+
+type MemberColumn = Column<MembersStaked>;
 
 export default function Page({
   params: { chain, garden: tokenAddr, community: communityAddr },
@@ -55,6 +71,8 @@ export default function Page({
   const searchParams = useCollectQueryParams();
   const { address: accountAddress } = useAccount();
   const [covenant, setCovenant] = useState<string | undefined>();
+  const [openCommDetails, setOpenCommDetails] = useState(false);
+
   const covenantSectionRef = useRef<HTMLDivElement>(null);
   const { data: tokenGarden } = useToken({
     address: tokenAddr as Address,
@@ -95,6 +113,7 @@ export default function Page({
     strategies,
     communityFee,
     registerStakeAmount,
+    protocolFee,
   } = registryCommunity ?? {};
 
   const { data: isMemberResult } = useSubgraphQuery<isMemberQuery>({
@@ -249,20 +268,21 @@ export default function Page({
   ] as Dnum;
 
   const getTotalRegistrationCost = () => {
-    if (registerStakeAmount) {
-      // using == for type coercion because communityFee is actually a string
-      if (communityFee == 0 || communityFee === undefined) {
-        return BigInt(registerStakeAmount);
-      } else {
-        return (
-          BigInt(registerStakeAmount) +
-          BigInt(registerStakeAmount) /
-            (BigInt(SCALE_PRECISION) / BigInt(communityFee))
-        );
-      }
-    } else {
-      return 0n;
+    registerStakeAmount = +registerStakeAmount;
+    protocolFee = +protocolFee;
+    communityFee = +communityFee;
+    if (registerStakeAmount == undefined) {
+      registerStakeAmount = 0;
     }
+    const res =
+      BigInt(registerStakeAmount) + // Min stake
+      (communityFee ?
+        BigInt(registerStakeAmount * (communityFee / SCALE_PRECISION))
+      : BigInt(0)) + // Commuity fee as % of min stake
+      (protocolFee ?
+        BigInt(registerStakeAmount * (protocolFee / SCALE_PRECISION))
+      : BigInt(0)); // Protocol fee as extra
+    return res;
   };
 
   return (
@@ -276,6 +296,13 @@ export default function Page({
             height={180}
             width={180}
           />
+          <Button
+            onClick={() => setOpenCommDetails(!openCommDetails)}
+            btnStyle="outline"
+            className="mt-1"
+          >
+            {openCommDetails ? "Close" : "View"} Members
+          </Button>
         </div>
         <div className="flex flex-1 flex-col gap-2">
           <div>
@@ -328,7 +355,15 @@ export default function Page({
             registryCommunity={registryCommunity}
           />
         </div>
+        {openCommDetails && (
+          <CommunityDetailsTable
+            membersStaked={registryCommunity.members as MembersStaked[]}
+            tokenGarden={tokenGarden}
+            communityStakedTokens={communityStakedTokens}
+          />
+        )}
       </header>
+
       <IncreasePower
         memberData={isMemberResult}
         registryCommunity={registryCommunity}
@@ -435,3 +470,54 @@ export default function Page({
     </div>
   );
 }
+
+const CommunityDetailsTable = ({
+  membersStaked,
+  tokenGarden,
+  communityStakedTokens,
+}: CommunityMetricsProps) => {
+  const columns: MemberColumn[] = [
+    {
+      header: `Members (${membersStaked?.length})`,
+      render: (memberData: MembersStaked) => (
+        <EthAddress
+          address={memberData.memberAddress as Address}
+          actions="copy"
+          shortenAddress={false}
+          icon="ens"
+        />
+      ),
+    },
+    {
+      header: "Staked tokens",
+      render: (memberData: MembersStaked) => (
+        <DisplayNumber
+          number={[BigInt(memberData.stakedTokens), tokenGarden.decimals]}
+          compact={true}
+          tokenSymbol={tokenGarden.symbol}
+        />
+      ),
+      className: "flex justify-end",
+    },
+  ];
+
+  return (
+    <DataTable
+      title="Community Members"
+      data={membersStaked as MembersStaked[]}
+      description="Overview of all community members and the total amount of tokens they have staked."
+      columns={columns}
+      className="max-h-screen overflow-y-scroll w-full"
+      footer={
+        <div className="flex justify-between py-2 border-neutral-soft-content">
+          <p className="subtitle">Total Staked:</p>
+          <DisplayNumber
+            number={[BigInt(communityStakedTokens), tokenGarden.decimals]}
+            compact={true}
+            tokenSymbol={tokenGarden.symbol}
+          />
+        </div>
+      }
+    />
+  );
+};

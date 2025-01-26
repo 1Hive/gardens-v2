@@ -372,10 +372,7 @@ export default function PoolEditForm({
 
     Object.entries(reorderedData).forEach(([key, value]) => {
       const formRow = formRowTypes[key];
-      if (
-        formRow
-        // && shouldRenderInPreview(key)
-      ) {
+      if (formRow && shouldRenderInput(key)) {
         const parsedValue = formRow.parse ? formRow.parse(value) : value;
         formattedRows.push({
           label: formRow.label,

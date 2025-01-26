@@ -56,3 +56,9 @@ export type SybilResistanceType =
   | "noSybilResist"
   | "gitcoinPassport"
   | "allowList";
+
+export type Column<T> = {
+  header: string | React.ReactNode;
+  render: (item: T) => React.ReactNode;
+  className?: string;
+};

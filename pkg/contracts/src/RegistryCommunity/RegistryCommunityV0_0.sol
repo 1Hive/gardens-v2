@@ -669,6 +669,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
 
     function setCommunityFee(uint256 _newCommunityFee) public virtual {
         onlyCouncilSafe();
+        // TODO: I dont think we want this to be restricted
         if (_newCommunityFee > MAX_FEE) {
             revert NewFeeGreaterThanMax();
         }

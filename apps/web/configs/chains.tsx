@@ -10,6 +10,7 @@ import { Address } from "viem";
 import {
   arbitrum,
   arbitrumSepolia,
+  base,
   Chain,
   gnosis,
   localhost,
@@ -18,6 +19,7 @@ import {
   sepolia,
 } from "viem/chains";
 import Subgraph from "../configs/subgraph.json";
+import { BaseLogo } from "@/assets/BaseLogo";
 import { ChainId } from "@/types";
 
 type ChainIconProps = React.SVGProps<SVGSVGElement> & {
@@ -33,6 +35,7 @@ export const chains: Chain[] = [
   optimism,
   polygon,
   gnosis,
+  base,
   // mainnet,
 ];
 
@@ -64,7 +67,7 @@ const getSubgraphUrls = (
   publishedId: string,
   subgraphSlug: string,
   subgraphVersion: string,
-  accountNumber: number = 40931,
+  accountNumber: number = 102093,
 ) => {
   const versionedEndpoint = `https://api.studio.thegraph.com/query/${accountNumber}/${subgraphSlug}`;
   return {
@@ -142,14 +145,14 @@ export const chainConfigMap: {
     icon: Arbitrum,
     explorer: "https://arbitrum.blockscout.com",
     blockTime: 14,
-    confirmations: 7, // 7
+    confirmations: 2, // 7
     rpcUrl: process.env.RPC_URL_ARBITRUM!,
     ...getSubgraphUrls(
       "9ejruFicuLT6hfuXNTnS8UCwxTWrHz4uinesdZu1dKmk",
       "gardens-v2---arbitrum",
       SUBGRAPH_PRODNET_VERSION,
     ),
-    globalTribunal: "0x1b8c7f06f537711a7caf6770051a43b4f3e69a7e",
+    globalTribunal: "0x1B8C7f06F537711A7CAf6770051A43B4F3E69A7e",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0x10B469b23a47BC557daB81743af8A97Ef9e9f833",
     passportScorer: "0x8cd4bA4ad10d85A550fe45d567a49E49e1D23CE1",
@@ -180,7 +183,7 @@ export const chainConfigMap: {
     icon: Polygon,
     explorer: "https://polygon.blockscout.com",
     blockTime: 2.1,
-    confirmations: 4, // 4
+    confirmations: 2, // 4
     rpcUrl: process.env.RPC_URL_MATIC!,
     ...getSubgraphUrls(
       "4vsznmRkUGm9DZFBwvC6PDvGPVfVLQcUUr5ExdTNZiUc",
@@ -199,7 +202,7 @@ export const chainConfigMap: {
     icon: GnosisGno,
     explorer: "https://gnosis.blockscout.com",
     blockTime: 5.2,
-    confirmations: 4, // 4
+    confirmations: 2, // 4
     rpcUrl: process.env.RPC_URL_GNOSIS!,
     ...getSubgraphUrls(
       "ELGHrYhvJJQrYkVsYWS5iDuFpQ1p834Q2k2kBmUAVZAi",
@@ -212,6 +215,25 @@ export const chainConfigMap: {
     passportScorer: "0x20965C5C8a021ac6fFeD5dE7A402f7CEaC3b0A82",
     isTestnet: false,
     safePrefix: "gno",
+  },
+  8453: {
+    name: base.name,
+    icon: BaseLogo,
+    explorer: "https://base.blockscout.com",
+    blockTime: 2,
+    confirmations: 2, // 4
+    rpcUrl: process.env.RPC_URL_BASE!,
+    ...getSubgraphUrls(
+      "HAjsxiYJEkV8oDZgVTaJE9NQ2XzgqekFbY99tMGu53eJ",
+      "gardens-v2---base",
+      SUBGRAPH_PRODNET_VERSION,
+    ),
+    globalTribunal: "0x9a17De1f0caD0c592F656410997E4B685d339029",
+    allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
+    arbitrator: "0x83bDE2E2D8AcAAad2D300DA195dF3cf86b234bdd",
+    passportScorer: "0xb39dFA15F96055664179e8EcaA890f3FA26c21e9",
+    isTestnet: false,
+    safePrefix: "base",
   },
   // 1: {
   //   name: mainnet.name,

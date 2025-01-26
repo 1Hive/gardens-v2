@@ -1,6 +1,8 @@
+const fs = require("fs");
 const viemChains = require("viem/chains");
 const hash = require("object-hash");
 const subgraphConfig = require("../../../../apps/web/configs/subgraph.json");
+const path = require("path");
 
 const localhostSubgraph = "http://localhost:8000/subgraphs/name/kamikazebr/gv2";
 const arbitrumSepoliaSubgraph =
@@ -19,7 +21,10 @@ const optimismSubgraph =
 const gnosisSubgraph =
   "https://api.studio.thegraph.com/query/40931/gardens-v2---gnosis/" +
   subgraphConfig.VERSION_PROD;
-
+const baseSubgraph =
+"https://api.studio.thegraph.com/query/40931/gardens-v2---base/" +
+subgraphConfig.VERSION_PROD;
+    
 // @ts-ignore
 const chainArg = process.argv[process.argv.length - 1];
 
@@ -36,6 +41,7 @@ const jsons = {
   [viemChains.optimism.id]: optimismSubgraph,
   [viemChains.polygon.id]: maticSubgraph,
   [viemChains.gnosis.id]: gnosisSubgraph,
+  [viemChains.base.id]: baseSubgraph,
   // @ts-ignore
   // [viemChains.mainnet.id]: mainnetLatest
 };
@@ -66,8 +72,7 @@ async function extractProxies(chainId) {
   }
 
   if (!subgraphEndpoint) {
-    console.error("No subgraph endpoint found for chain", chain);
-    return;
+    throw `No subgraph endpoint found for chain: ${chain} `;
   }
 
   const query = `{
@@ -133,13 +138,38 @@ async function extractProxies(chainId) {
   };
 }
 
-extractProxies(chainArg)
-  .then((proxies) => {
-    const json = JSON.stringify(
-      { PROXIES: proxies, hash: hash(proxies) },
-      null,
-      2,
-    );
-    console.debug(json);
-  })
-  .catch((err) => console.error(err));
+const networksPath = path.resolve(
+  __dirname,
+  "../../../../pkg/contracts/config/networks.json",
+);
+console.log(networksPath);
+
+async function main() {
+  if (fs.existsSync(networksPath)) {
+    const networkJson = JSON.parse(fs.readFileSync(networksPath).toString());
+
+    const netArray = networkJson["networks"];
+
+    const netFound = netArray.find((net) => net.name == chainArg);
+    if (!netFound) {
+      console.error(`Network ${chainArg} not found in networks.json`);
+      return;
+    }
+    const proxies = await extractProxies(netFound.chainId);
+    netFound["PROXIES"] = proxies;
+    netFound["hash"] = hash(proxies);
+
+    // console.log(netArray)
+
+    const netStringToSave = JSON.stringify(networkJson, null, 2);
+    if (!netStringToSave || netStringToSave.trim() == "") {
+      console.error("Error parsing json");
+      return;
+    }
+    fs.writeFileSync(networksPath, netStringToSave);
+  } else {
+    console.error(`networks.json in path ${networksPath} don't exists`);
+  }
+}
+
+main().catch(console.error);
