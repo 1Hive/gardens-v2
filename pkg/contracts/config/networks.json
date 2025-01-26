@@ -17,28 +17,18 @@
         "ARBITRATOR": "0x05EC011e0d8B4d2add98e1cc4AC7DF38a95EF4Ed"
       },
       "PROXIES": {
-        "REGISTRY_FACTORY": "0x2d5b61124dff3c3bede39620b591b10325f629a2",
+        "REGISTRY_FACTORY": "0xf42f88c13804147b2fdda13c093ce14219aea395",
         "REGISTRY_COMMUNITIES": [
-          "0x00434c738a97f4923e2c5b924485841dfd578fdc",
-          "0x289ae94e0315a1ed33f8ecdeee614e4733ceea55",
-          "0x9c03928756e992fd632e6e05882d264146fff5a8"
+          "0xc219730ec703c9525748c3b80184d57f1d57699b"
         ],
         "CV_STRATEGIES": [
-          "0x020dbbeee6c5a50da661b3d525ad27e34d0507ae",
-          "0x0b23a695725a500ba6d9e3f15c0d31d9f1c15e97",
-          "0x0d42c1b1b6e847e03102378e01502d5c1364d7fe",
-          "0x2b3541678205e57414708187d7a3d0f602135b0a",
-          "0x2ca9cfd2ab5db78adbf2ab3cc44f0c6f8d10a65f",
-          "0x3e3de34224fd9dc81030bd7a32934120f67e55fb",
-          "0x4c87476f59bb108e4b89a0541c7d0c26c36c6dcb",
-          "0x595aa705270a284a05f18f5c9c942f520a5c6bb2",
-          "0x8354fbc3f625e55eb0db40b3b4fcd1d7c60fda7d",
-          "0xdc1aa7e2fca3912161a6c7a81f11e96b7fb43bb8",
-          "0xe44dac73ef088272daeb6a2ce26087326ea83948"
+          "0x3bd8c9056a448c7ab3f398df2ffea114febd9139",
+          "0x61f0d03b1f00b872c7c9ee03a12224cb70e93ea2",
+          "0x6b999ed850de2c5c923eaafc3c15781bd2ccf9d6"
         ],
-        "PASSPORT_SCORER": "0xd5a38e558582d32ffdc3b3a1a9f4d0d56e8b3115"
+        "PASSPORT_SCORER": "0x6ad70508f44aa0e86e7af80ccc4fc1f160c2df46"
       },
-      "hash": "a91c78dccac7d26edc9d52af6d17970a863cff61"
+      "hash": "737f5a1b271b2ba260e0697cb5d800f0140afeb3"
     },
     {
       "name": "opsepolia",

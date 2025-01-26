@@ -339,7 +339,7 @@ export function handlePowerIncreased(event: PowerIncreased): void {
   }
 
   const cvc = CVStrategyContract.bind(event.address);
-  const totalEffectiveActivePoints = cvc.totalEffectiveActivePoints();
+  const totalEffectiveActivePoints = cvc.totalPointsActivated();
   cvs.totalEffectiveActivePoints = totalEffectiveActivePoints;
   cvs.maxCVSupply = cvc.getMaxConviction(totalEffectiveActivePoints);
 
@@ -372,7 +372,7 @@ export function handlePowerDecreased(event: PowerDecreased): void {
   }
 
   const cvc = CVStrategyContract.bind(event.address);
-  const totalEffectiveActivePoints = cvc.totalEffectiveActivePoints();
+  const totalEffectiveActivePoints = cvc.totalPointsActivated();
   cvs.totalEffectiveActivePoints = totalEffectiveActivePoints;
   cvs.maxCVSupply = cvc.getMaxConviction(totalEffectiveActivePoints);
 
@@ -406,7 +406,7 @@ export function handleCVParamsUpdated(event: CVParamsUpdated): void {
   }
 
   const cvc = CVStrategyContract.bind(event.address);
-  cvs.totalEffectiveActivePoints = cvc.totalEffectiveActivePoints();
+  cvs.totalEffectiveActivePoints = cvc.totalPointsActivated();
   cvs.maxCVSupply = cvc.getMaxConviction(cvs.totalEffectiveActivePoints);
   cvs.save();
 
@@ -689,7 +689,7 @@ function computeInitialize(
   );
   cvs.poolAmount = cvc.getPoolAmount();
   cvs.maxCVSupply = BigInt.fromI32(0);
-  cvs.totalEffectiveActivePoints = cvc.totalEffectiveActivePoints();
+  cvs.totalEffectiveActivePoints = cvc.totalPointsActivated();
   cvs.isEnabled = false;
   cvs.sybilScorer = data.sybilScorer.toHexString();
   cvs.archived = false;
