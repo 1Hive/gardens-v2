@@ -85,7 +85,18 @@ export const EthAddress = ({
           // shortenAddress={shortenAddress}
           actions={actions}
           icon={
-            avatarUrl ? () => <Image src={avatarUrl} alt="ENS Avatar" /> : icon
+            avatarUrl ?
+              () => (
+                <Image
+                  className="rounded-full"
+                  height={20}
+                  width={20}
+                  loading="lazy"
+                  src={avatarUrl}
+                  alt="ENS Avatar"
+                />
+              )
+            : icon
           }
           address={address as Address}
           popupNode={showPopup ? undefined : document.createElement("div")}
