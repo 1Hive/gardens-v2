@@ -53,8 +53,9 @@
         "RPC_URL_GNOSIS",
         "RPC_URL_MATIC",
         "RPC_URL_BASE",
-        "CRON_SECRET",
-        "NEXT_PUBLIC_SKIP_PUBLISHED"
+        "CRON_SECRET",  
+        "NEXT_PUBLIC_SKIP_PUBLISHED",
+        "CI"
       ]
     },
     "test": {
