@@ -20,6 +20,12 @@ module.exports = {
         port: "",
         pathname: "/a/**",
       },
+      {
+        protocol: "https",
+        hostname: "euc.li",
+        port: "",
+        pathname: "/**",
+      },
     ],
   },
   experimental: {

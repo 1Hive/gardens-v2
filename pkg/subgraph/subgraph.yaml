@@ -6,15 +6,15 @@ schema:
 dataSources:
   - kind: ethereum/contract
     name: RegistryFactoryV0_0
-    network: localhost
+    network: base
     context:
       chainId:
         type: Int
-        data: 1337
+        data: 8453
     source:
-      address: "0x2d5b61124DFf3c3bEDe39620b591b10325f629a2"
+      address: "0xba1c9Da92a4494966fF1d60cB1D2668BfD15C8Fb"
       abi: RegistryFactoryV0_0
-      startBlock: 105896653
+      startBlock: 25264018
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -40,15 +40,15 @@ dataSources:
 
   - kind: ethereum/contract
     name: PassportScorer
-    network: localhost
+    network: base
     context:
       chainId:
         type: Int
-        data: 1337
+        data: 8453
     source:
-      address: "0xD5a38e558582D32FfdC3b3a1A9f4D0D56e8b3115"
+      address: "0xb39dFA15F96055664179e8EcaA890f3FA26c21e9"
       abi: PassportScorer
-      startBlock: 105896653
+      startBlock: 25264018
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -78,7 +78,7 @@ dataSources:
 templates:
   - kind: ethereum/contract
     name: RegistryCommunityV0_0
-    network: localhost
+    network: base
     source:
       abi: RegistryCommunityV0_0
     mapping:
@@ -150,7 +150,7 @@ templates:
 
   - kind: ethereum/contract
     name: CVStrategyV0_0
-    network: localhost
+    network: base
     source:
       abi: CVStrategyV0_0
     mapping:
@@ -209,7 +209,7 @@ templates:
 
   - kind: ethereum/contract
     name: CollateralVault
-    network: localhost
+    network: base
     source:
       abi: CollateralVault
     mapping:

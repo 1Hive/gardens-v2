@@ -277,8 +277,8 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     /*|              CONSTRUCTORS                  |*/
     /*|--------------------------------------------|*/
     // constructor(address _allo) BaseStrategy(address(_allo), "CVStrategy") {}
-    function init(address _allo, address _collateralVaultTemplate, address owner) external virtual initializer {
-        super.init(_allo, "CVStrategy", owner);
+    function init(address _allo, address _collateralVaultTemplate, address _owner) external virtual initializer {
+        super.init(_allo, "CVStrategy", _owner);
         collateralVaultTemplate = _collateralVaultTemplate;
     }
 
@@ -936,9 +936,11 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
             Proposal storage proposal = proposals[proposalId];
 
             // uint256 beforeStakedPointsPct = proposal.voterStakedPointsPct[_sender];
+            uint256 previousStakedAmount = proposal.stakedAmount;
+
             uint256 previousStakedPoints = proposal.voterStakedPoints[_sender];
             // console.log("beforeStakedPointsPct", beforeStakedPointsPct);
-            // console.log("previousStakedAmount", previousStakedAmount);
+            // console.log("previousStakedAmount:      %s", previousStakedAmount);
 
             uint256 stakedPoints = _applyDelta(previousStakedPoints, delta);
 
@@ -974,7 +976,8 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
             if (proposal.blockLast == 0) {
                 proposal.blockLast = block.number;
             } else {
-                _calculateAndSetConviction(proposal, previousStakedPoints);
+                // _calculateAndSetConviction(proposal, previousStakedPoints);
+                _calculateAndSetConviction(proposal, previousStakedAmount);
                 emit SupportAdded(_sender, proposalId, stakedPoints, proposal.stakedAmount, proposal.convictionLast);
             }
         }
@@ -1202,7 +1205,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         // if (proposal.proposalStatus != ProposalStatus.Active) {
         //     revert ProposalNotActive(proposalId);
         // }
-
+        // console.log("updateProposal: stakedAmount", proposal.stakedAmount);
         _calculateAndSetConviction(proposal, proposal.stakedAmount);
         return proposal.convictionLast;
     }

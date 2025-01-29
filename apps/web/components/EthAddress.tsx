@@ -2,7 +2,9 @@
 
 import React from "react";
 import { Addreth } from "addreth/no-wagmi";
-import { Address } from "viem";
+import Image from "next/image";
+import { Address, isAddress } from "viem";
+import { useEnsName, useEnsAvatar } from "wagmi";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { shortenAddress as shortenAddressFn } from "@/utils/text";
@@ -12,7 +14,7 @@ type EthAddressProps = {
   actions?: "all" | "copy" | "explorer" | "none";
   icon?: false | "ens" | "identicon" | ((address: Address) => string);
   shortenAddress?: boolean;
-  label?: string;
+  label?: React.ReactNode;
   showPopup?: boolean;
 };
 
@@ -47,6 +49,20 @@ export const EthAddress = ({
   //   popupShadow: "black",
   // };
 
+  const { data: ensName } = useEnsName({
+    address: address as Address,
+    enabled: isAddress(address ?? ""),
+    chainId: 1,
+    cacheTime: 30_000,
+  });
+
+  const { data: avatarUrl } = useEnsAvatar({
+    name: ensName,
+    enabled: Boolean(ensName),
+    chainId: 1,
+    cacheTime: 30_000,
+  });
+
   return address && chain?.id ?
       <div ref={divParentRef}>
         <Addreth
@@ -61,12 +77,27 @@ export const EthAddress = ({
           fontMono={"monospace"}
           label={() => (
             <>
-              {label ?? (shortenAddress ? shortenAddressFn(address) : address)}
+              {label ??
+                ensName ??
+                (shortenAddress ? shortenAddressFn(address) : address)}
             </>
           )}
           // shortenAddress={shortenAddress}
           actions={actions}
-          icon={icon}
+          icon={
+            avatarUrl ?
+              () => (
+                <Image
+                  className="rounded-full"
+                  height={20}
+                  width={20}
+                  loading="lazy"
+                  src={avatarUrl}
+                  alt="ENS Avatar"
+                />
+              )
+            : icon
+          }
           address={address as Address}
           popupNode={showPopup ? undefined : document.createElement("div")}
           explorer={(addr: string) => ({
