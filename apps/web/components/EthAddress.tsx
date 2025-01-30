@@ -2,10 +2,10 @@
 
 import React from "react";
 import { Addreth } from "addreth/no-wagmi";
-import Image from "next/image";
 import { Address, isAddress } from "viem";
 import { useEnsName, useEnsAvatar } from "wagmi";
 import { LoadingSpinner } from "./LoadingSpinner";
+import { isSafeAvatarUrl } from "@/app/api/utils";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { shortenAddress as shortenAddressFn } from "@/utils/text";
 
@@ -85,14 +85,15 @@ export const EthAddress = ({
           // shortenAddress={shortenAddress}
           actions={actions}
           icon={
-            avatarUrl ?
+            isSafeAvatarUrl(avatarUrl) ?
               () => (
-                <Image
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
                   className="rounded-full"
                   height={20}
                   width={20}
                   loading="lazy"
-                  src={avatarUrl}
+                  src={avatarUrl!}
                   alt="ENS Avatar"
                 />
               )
