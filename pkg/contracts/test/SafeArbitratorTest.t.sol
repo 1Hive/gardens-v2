@@ -87,7 +87,7 @@
 //         // RegistryFactoryV0_0 registryFactory = new RegistryFactoryV0_0();
 
 //         vm.stopPrank();
-        
+
 //         RegistryCommunityInitializeParamsV0_0 memory params;
 //         params._allo = address(allo());
 //         params._gardenToken = IERC20(address(token));
@@ -228,7 +228,7 @@
 
 //         vm.deal(challenger, 1000 ether);
 //         vm.startPrank(challenger);
-        
+
 //         registryCommunity.stakeAndRegisterMember("");
 //         uint256 disputeID = cvStrategy.disputeProposal{value: 0.01 ether + ARBITRATION_FEE}(proposalId, "", "");
 
@@ -236,7 +236,6 @@
 //         safeArbitrator.executeRuling(disputeID, 2, address(cvStrategy));
 //         vm.stopPrank();
 //     }
-
 
 //     function testCannotExecuteRulingTwice() public {
 //         uint256 proposalId = createProposal();

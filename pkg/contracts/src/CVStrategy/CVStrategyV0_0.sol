@@ -405,7 +405,8 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         // console.log("proposalType", uint256(proposalType));
         if (proposalType == ProposalType.Funding) {
             // _revertZeroAddress(proposal.beneficiary);
-            // require(proposal.beneficiary == address(0)); // TODO: Take commented when contract size fixed with diamond
+            //We want != instead of == no ?
+            // require(proposal.beneficiary != address(0)); // TODO: Take commented when contract size fixed with diamond
             // getAllo().getPool(poolId).token;
             // if (proposal.requestedToken == address(0)) {
             //     revert TokenCannotBeZero();
@@ -512,18 +513,18 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         uint256 pointsToDecrease = 0;
         if (pointSystem == PointSystem.Unlimited) {
             pointsToDecrease = _amountToUnstake; // from decreasePowerCappedUnlimited(_amountToUnstake)
-        } else if(pointSystem == PointSystem.Quadratic) {
+        } else if (pointSystem == PointSystem.Quadratic) {
             pointsToDecrease = decreasePowerQuadratic(_member, _amountToUnstake);
-        } else {
-            
-            if(registryCommunity.getMemberPowerInStrategy(_member, address(this))< pointConfig.maxAmount){
+        } else if (pointSystem == PointSystem.Capped) {
+            if (registryCommunity.getMemberPowerInStrategy(_member, address(this)) < pointConfig.maxAmount) {
                 pointsToDecrease = _amountToUnstake;
             } else if (registryCommunity.getMemberStakedAmount(_member) - _amountToUnstake < pointConfig.maxAmount) {
-                pointsToDecrease = pointConfig.maxAmount - (registryCommunity.getMemberStakedAmount(_member) - _amountToUnstake);
-            } else {
-                pointsToDecrease = 0;
-            }
-
+                pointsToDecrease =
+                    pointConfig.maxAmount - (registryCommunity.getMemberStakedAmount(_member) - _amountToUnstake);
+            } 
+            // else {
+            //     pointsToDecrease = 0;
+            // }
         }
         uint256 voterStake = totalVoterStakePct[_member];
         uint256 unusedPower = registryCommunity.getMemberPowerInStrategy(_member, address(this)) - voterStake;

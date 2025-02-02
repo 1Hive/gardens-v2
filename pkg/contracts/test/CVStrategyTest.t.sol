@@ -177,13 +177,17 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         public
         returns (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId)
     {
-        (pool, poolId, proposalId) = _createProposal(_tokenPool, requestAmount, poolAmount, ProposalType.Funding, PointSystem.Unlimited);
+        (pool, poolId, proposalId) =
+            _createProposal(_tokenPool, requestAmount, poolAmount, ProposalType.Funding, PointSystem.Unlimited);
     }
 
-    function _createProposal(address _tokenPool, uint256 requestAmount, uint256 poolAmount, ProposalType proposalType, PointSystem pointSystem)
-        public
-        returns (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId)
-    {
+    function _createProposal(
+        address _tokenPool,
+        uint256 requestAmount,
+        uint256 poolAmount,
+        ProposalType proposalType,
+        PointSystem pointSystem
+    ) public returns (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) {
         if (requestAmount == 0) {
             requestAmount = REQUESTED_AMOUNT;
         }
@@ -487,8 +491,9 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         vm.stopPrank();
     }
 
-    function test_decreasePower_supportRemoval_Capped() public{
-        (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0, ProposalType.Funding, PointSystem.Capped); 
+    function test_decreasePower_supportRemoval_Capped() public {
+        (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) =
+            _createProposal(NATIVE, 0, 0, ProposalType.Funding, PointSystem.Capped);
         /**
          * ASSERTS
          *
@@ -513,8 +518,9 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         assertEq(registryCommunity.getMemberPowerInStrategy(gardenMember, address(cv)), 50 * DECIMALS);
     }
 
-    function test_decreasePower_supportRemoval_Capped_PowerLessThanMaxAmount() public{
-        (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0, ProposalType.Funding, PointSystem.Capped); 
+    function test_decreasePower_supportRemoval_Capped_PowerLessThanMaxAmount() public {
+        (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) =
+            _createProposal(NATIVE, 0, 0, ProposalType.Funding, PointSystem.Capped);
         /**
          * ASSERTS
          *
@@ -539,8 +545,9 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         assertEq(registryCommunity.getMemberPowerInStrategy(gardenMember, address(cv)), 55 * DECIMALS);
     }
 
-    function test_decreasePower_supportRemoval_Capped_no_points_removed() public{
-        (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0, ProposalType.Funding, PointSystem.Capped); 
+    function test_decreasePower_supportRemoval_Capped_no_points_removed() public {
+        (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) =
+            _createProposal(NATIVE, 0, 0, ProposalType.Funding, PointSystem.Capped);
         /**
          * ASSERTS
          *
@@ -571,6 +578,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
      * 3. Decrease power by 50
      * Expect 15 points left on proposal 1 and 35 points left on proposal 2
      */
+
     function test_decreasePower_power_fully_staked_2_proposals_supportRemoval() public {
         /* Params */
         uint256 TOTAL_POWER = 100 ether;

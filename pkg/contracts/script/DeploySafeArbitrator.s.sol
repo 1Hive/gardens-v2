@@ -22,7 +22,7 @@ contract DeploySafeArbitrator is BaseMultiChain {
 
         console.log("New Safe Arbitrator: ", newSafeArbitrator);
 
-         // CV STRATEGIES
+        // CV STRATEGIES
         //  address[] memory cvStrategyProxies = networkJson.readAddressArray(getKeyNetwork(".PROXIES.CV_STRATEGIES"));
         //  for (uint256 i = 0; i < cvStrategyProxies.length; i++) {
         //      CVStrategyV0_0 strategy = CVStrategyV0_0(payable(address(cvStrategyProxies[i])));
