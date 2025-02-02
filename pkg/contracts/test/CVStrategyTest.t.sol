@@ -177,10 +177,10 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         public
         returns (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId)
     {
-        (pool, poolId, proposalId) = _createProposal(_tokenPool, requestAmount, poolAmount, ProposalType.Funding);
+        (pool, poolId, proposalId) = _createProposal(_tokenPool, requestAmount, poolAmount, ProposalType.Funding, PointSystem.Unlimited);
     }
 
-    function _createProposal(address _tokenPool, uint256 requestAmount, uint256 poolAmount, ProposalType proposalType)
+    function _createProposal(address _tokenPool, uint256 requestAmount, uint256 poolAmount, ProposalType proposalType, PointSystem pointSystem)
         public
         returns (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId)
     {
@@ -203,7 +203,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         CVStrategyInitializeParamsV0_1 memory params = getParams(
             address(registryCommunity),
             proposalType,
-            PointSystem.Unlimited,
+            pointSystem,
             PointSystemConfig(200 * DECIMALS),
             arbitrableConfig,
             new address[](1),
@@ -487,6 +487,83 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         vm.stopPrank();
     }
 
+    function test_decreasePower_supportRemoval_Capped() public{
+        (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0, ProposalType.Funding, PointSystem.Capped); 
+        /**
+         * ASSERTS
+         *
+         */
+        int256 SUPPORT_POINTS = int256(200 ether);
+        ProposalSupport[] memory votes = new ProposalSupport[](1);
+        vm.startPrank(gardenMember);
+        token.approve(address(registryCommunity), STAKE_WITH_FEES);
+        _registryCommunity().stakeAndRegisterMember("");
+        token.approve(address(registryCommunity), 250 ether);
+        registryCommunity.increasePower(250 ether);
+        // 5 ether from regiterStake + 50 ether increase = 55 ether total staked
+        votes[0] = ProposalSupport(proposalId, SUPPORT_POINTS);
+        bytes memory data = abi.encode(votes);
+        CVStrategyV0_0 cv = CVStrategyV0_0(payable(address(pool.strategy)));
+        cv.activatePoints();
+        allo().allocate(poolId, data);
+        registryCommunity.decreasePower(205 ether);
+        assertEq(cv.totalVoterStakePct(address(gardenMember)), 50 * DECIMALS);
+        assertEq(cv.getProposalStakedAmount(proposalId), 50 * DECIMALS);
+        assertEq(cv.totalStaked(), 50 * DECIMALS);
+        assertEq(registryCommunity.getMemberPowerInStrategy(gardenMember, address(cv)), 50 * DECIMALS);
+    }
+
+    function test_decreasePower_supportRemoval_Capped_PowerLessThanMaxAmount() public{
+        (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0, ProposalType.Funding, PointSystem.Capped); 
+        /**
+         * ASSERTS
+         *
+         */
+        int256 SUPPORT_POINTS = int256(105 ether);
+        ProposalSupport[] memory votes = new ProposalSupport[](1);
+        vm.startPrank(gardenMember);
+        token.approve(address(registryCommunity), STAKE_WITH_FEES);
+        _registryCommunity().stakeAndRegisterMember("");
+        token.approve(address(registryCommunity), 100 ether);
+        registryCommunity.increasePower(100 ether);
+        // 5 ether from regiterStake + 50 ether increase = 55 ether total staked
+        votes[0] = ProposalSupport(proposalId, SUPPORT_POINTS);
+        bytes memory data = abi.encode(votes);
+        CVStrategyV0_0 cv = CVStrategyV0_0(payable(address(pool.strategy)));
+        cv.activatePoints();
+        allo().allocate(poolId, data);
+        registryCommunity.decreasePower(50 * DECIMALS);
+        assertEq(cv.totalVoterStakePct(address(gardenMember)), 55 * DECIMALS);
+        assertEq(cv.getProposalStakedAmount(proposalId), 55 * DECIMALS);
+        assertEq(cv.totalStaked(), 55 * DECIMALS);
+        assertEq(registryCommunity.getMemberPowerInStrategy(gardenMember, address(cv)), 55 * DECIMALS);
+    }
+
+    function test_decreasePower_supportRemoval_Capped_no_points_removed() public{
+        (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0, ProposalType.Funding, PointSystem.Capped); 
+        /**
+         * ASSERTS
+         *
+         */
+        int256 SUPPORT_POINTS = int256(200 ether);
+        ProposalSupport[] memory votes = new ProposalSupport[](1);
+        vm.startPrank(gardenMember);
+        token.approve(address(registryCommunity), STAKE_WITH_FEES);
+        _registryCommunity().stakeAndRegisterMember("");
+        token.approve(address(registryCommunity), 250 ether);
+        registryCommunity.increasePower(250 ether);
+        // 5 ether from regiterStake + 50 ether increase = 55 ether total staked
+        votes[0] = ProposalSupport(proposalId, SUPPORT_POINTS);
+        bytes memory data = abi.encode(votes);
+        CVStrategyV0_0 cv = CVStrategyV0_0(payable(address(pool.strategy)));
+        cv.activatePoints();
+        allo().allocate(poolId, data);
+        registryCommunity.decreasePower(50 ether);
+        assertEq(cv.totalVoterStakePct(address(gardenMember)), 200 * DECIMALS);
+        assertEq(cv.getProposalStakedAmount(proposalId), 200 * DECIMALS);
+        assertEq(cv.totalStaked(), 200 * DECIMALS);
+        assertEq(registryCommunity.getMemberPowerInStrategy(gardenMember, address(cv)), 200 * DECIMALS);
+    }
     /**
      * Test decrease power when all power is staked on 2 proposals
      * 1. Increase power by 100
