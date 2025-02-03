@@ -83,6 +83,7 @@ export async function POST(req: Request) {
       ] as const,
     };
 
+    //@ts-ignore
     const hash = await walletClient.writeContract(data);
 
     return NextResponse.json({
