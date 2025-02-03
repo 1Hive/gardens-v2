@@ -480,10 +480,23 @@ const Footer = () => {
             </a>
           ))}
         </div>
-        <div className="mt-8 md:mt-0">
+        <div className="mt-8 md:mt-0 flex items-center justify-center">
           <p className="text-center text-xs leading-5 text-gray-500">
-            &copy; 2024 Gardens. All rights reserved.
+            &copy; 2025 Gardens |{" "}
+            <a
+              className="text-xs hover:opacity-90"
+              target="_blank"
+              rel="noreferrer"
+              href="https://gardens.1hive.org/#/xdai/garden/0x8ccbeab14b5ac4a431fffc39f4bec4089020a155/covenant"
+            >
+              Our covenant{" "}
+            </a>
           </p>
+          <ArrowTopRightOnSquareIcon
+            width={16}
+            height={16}
+            className="text-neutral-soft-content ml-1"
+          />
         </div>
       </div>
     </footer>
