@@ -136,7 +136,7 @@ const updateScoresOnChain = async (
         },
       ] as const,
     };
-
+    // @ts-ignore
     const hash = await walletClient.writeContract(data);
     await client.waitForTransactionReceipt({ hash });
   }
