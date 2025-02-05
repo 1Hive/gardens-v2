@@ -4,14 +4,12 @@ pragma solidity ^0.8.19;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
-import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 
 import {ReentrancyGuardUpgradeable} from
     "openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
 import {AccessControlUpgradeable} from
     "openzeppelin-contracts-upgradeable/contracts/access/AccessControlUpgradeable.sol";
 
-import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import {Clone} from "allo-v2-contracts/core/libraries/Clone.sol";
 import {IRegistry, Metadata} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 import {FAllo} from "../interfaces/FAllo.sol";
@@ -145,8 +143,6 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
     uint256 public registerStakeAmount;
     /// @notice The fee charged to the community for each registration
     uint256 public communityFee;
-    /// @notice The nonce used to create new strategy clones
-    uint256 public cloneNonce;
     /// @notice The profileId of the community in the Allo Registry
     bytes32 public profileId;
     /// @notice Enable or disable the kick feature
@@ -476,6 +472,19 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         for (uint256 i = 0; i < memberStrategies.length; i++) {
             address strategy = memberStrategies[i];
             if (strategy.supportsInterface(type(IPointStrategy).interfaceId)) {
+                // PointSystem pointSystem = IPointStrategy(strategy).getPointSystem();
+                // (uint256 maxAmount) = CVStrategyV0_0(payable(strategy)).pointConfig();
+                // if (pointSystem == PointSystem.Unlimited) {
+                //     pointsToDecrease = _amountUnstaked;
+                // } else if (pointSystem == PointSystem.Quadratic) {
+                //     pointsToDecrease = CVStrategyV0_0(payable(strategy)).decreasePowerQuadratic(member, _amountUnstaked);
+                // } else if (pointSystem == PointSystem.Capped) {
+                //     if (getMemberPowerInStrategy(member, strategy) < maxAmount) {
+                //         pointsToDecrease = _amountUnstaked;
+                //     } else if (getMemberStakedAmount(member) - _amountUnstaked < maxAmount) {
+                //         pointsToDecrease = maxAmount - (getMemberStakedAmount(member) - _amountUnstaked);
+                //     }
+                // }
                 pointsToDecrease = IPointStrategy(strategy).decreasePower(member, _amountUnstaked);
                 uint256 currentPower = memberPowerInStrategy[member][memberStrategies[i]];
                 if (pointsToDecrease > currentPower) {

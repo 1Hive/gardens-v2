@@ -23,12 +23,15 @@
         ],
         "CV_STRATEGIES": [
           "0x3bd8c9056a448c7ab3f398df2ffea114febd9139",
+          "0x4440e05839eaacc4927178756faa48ecc23386f8",
+          "0x464f010f343bb52689e8579c84e76c8e04c7dbdc",
           "0x61f0d03b1f00b872c7c9ee03a12224cb70e93ea2",
-          "0x6b999ed850de2c5c923eaafc3c15781bd2ccf9d6"
+          "0x6b999ed850de2c5c923eaafc3c15781bd2ccf9d6",
+          "0xd682ff9fb3c4c28c35dfa8830280d9a1c5bbfee4"
         ],
         "PASSPORT_SCORER": "0x6ad70508f44aa0e86e7af80ccc4fc1f160c2df46"
       },
-      "hash": "737f5a1b271b2ba260e0697cb5d800f0140afeb3"
+      "hash": "5ddd9cd97f92f363a3eef3f7ceedd161a8a7a762"
     },
     {
       "name": "opsepolia",
