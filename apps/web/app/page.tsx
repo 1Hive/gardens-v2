@@ -345,11 +345,11 @@ const OurStack = () => {
 
 const ChainsDeploy = () => {
   return (
-    <div className="bg-neutral py-24 sm:py-32">
+    <div className="bg-neutral pt-24 sm:pt-32 pb-24">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="mx-auto max-w-2xl lg:max-w-none">
           <h2 className="font-semibold leading-8">Available networks: </h2>
-          <div className="mx-auto mt-10 grid grid-cols-2 items-center gap-x-8 gap-y-10 sm:gap-x-10 lg:mx-0 lg:grid-cols-4">
+          {/* <div className="mx-auto mt-10 grid grid-cols-3 items-center gap-x-8 gap-y-10 sm:gap-x-10 lg:mx-0 lg:grid-cols-3">
             <div className=" flex w-full flex-col items-center justify-start gap-4 object-contain object-left lg:col-span-1">
               <ChainIcon chain={100} height={48} />
               <h5 className="text-center">Gnosis</h5>
@@ -367,15 +367,34 @@ const ChainsDeploy = () => {
               <h5 className="text-center">Polygon</h5>
             </div>
             <div className="flec-col flex w-full flex-col items-center justify-start gap-4 object-contain object-left lg:col-span-1">
-              {/* <ChainIcon chain={8453} height={48} /> */}
-              <Image
-                src={BaseLogo}
-                alt="logo"
-                height={48}
-                width={48}
-                loading="lazy"
-              />
+              <ChainIcon chain={8453} height={48} />
               <h5 className="text-center">Base</h5>
+            </div>
+          </div> */}
+          <div className="flex flex-col items-center justify-center gap-16 mt-16">
+            <div className="flex w-full justify-evenly">
+              <div className="flex flex-col items-center justify-start gap-4">
+                <ChainIcon chain={100} height={64} />
+                <h5 className="text-center">Gnosis</h5>
+              </div>
+              <div className="flex flex-col items-center justify-start gap-4">
+                <ChainIcon chain={10} height={64} />
+                <h5 className="text-center"> Optimism</h5>
+              </div>
+              <div className="flex flex-col items-center justify-start gap-4">
+                <ChainIcon chain={42161} height={64} />
+                <h5 className="text-center">Arbitrum</h5>
+              </div>
+            </div>
+            <div className="flex w-full justify-evenly">
+              <div className="flex flex-col items-center justify-start gap-4">
+                <ChainIcon chain={137} height={64} />
+                <h5 className="text-center">Polygon</h5>
+              </div>
+              <div className="flex flex-col items-center justify-start gap-4">
+                <ChainIcon chain={8453} height={64} />
+                <h5 className="text-center">Base</h5>
+              </div>
             </div>
           </div>
         </div>
