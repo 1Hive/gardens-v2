@@ -1,6 +1,6 @@
-import React from "react";
+import React, { FC } from "react";
 
-export const BaseLogo = ({
+const BaseLogo = ({
   className,
   height,
 }: {
@@ -23,3 +23,5 @@ export const BaseLogo = ({
     </svg>
   );
 };
+
+export default BaseLogo as FC;

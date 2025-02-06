@@ -228,12 +228,12 @@ export function PoolForm({ token, communityAddr }: Props) {
     proposalCollateral: {
       label: "Proposal collateral:",
       parse: (value: string) =>
-        value + " " + chain.nativeCurrency?.symbol ?? "ETH",
+        value + " " + chain.nativeCurrency?.symbol || "ETH",
     },
     disputeCollateral: {
       label: "Dispute collateral:",
       parse: (value: string) =>
-        value + " " + chain.nativeCurrency?.symbol ?? "ETH",
+        value + " " + chain.nativeCurrency?.symbol || "ETH",
     },
     tribunalAddress: {
       label: "Tribunal safe:",
@@ -338,6 +338,8 @@ export function PoolForm({ token, communityAddr }: Props) {
           proposalType: previewData.strategyType,
           registryCommunity: communityAddr,
           sybilScorer: chain.passportScorer as Address,
+          initialAllowlist: [],
+          sybilScorerThreshold: BigInt(!previewData.passportThreshold),
         },
         {
           protocol: 1n,
