@@ -51,6 +51,7 @@
     "react-hook-form": "^7.50.1",
     "react-toastify": "^10.0.4",
     "sass": "^1.77.8",
+    "sharp": "^0.33.5",
     "ui": "workspace:*",
     "urql": "^4.0.6",
     "usehooks-ts": "^3.1.0",

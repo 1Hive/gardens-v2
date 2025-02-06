@@ -15,7 +15,8 @@ import {
   useSwitchNetwork,
 } from "wagmi";
 import { walletIcon } from "@/assets";
-import { Button, DisplayNumber } from "@/components";
+import { Button } from "@/components/Button";
+import { DisplayNumber } from "@/components/DisplayNumber";
 import { ChainIcon } from "@/configs/chains";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { formatAddress } from "@/utils/formatAddress";
@@ -42,12 +43,7 @@ export function ConnectWallet() {
 
   return (
     <ConnectButton.Custom>
-      {({
-        account: accountAddress,
-        chain,
-        openConnectModal,
-        mounted,
-      }) => {
+      {({ account: accountAddress, chain, openConnectModal, mounted }) => {
         const ready = mounted;
         const connected = ready && accountAddress && chain;
         return (

@@ -20,7 +20,7 @@ import {
   PublicNounsLogo,
   BaseLogo,
 } from "@/assets";
-import { Button } from "@/components";
+import { Button } from "@/components/Button";
 import { ChainIcon } from "@/configs/chains";
 
 export default function Page() {
