@@ -2,7 +2,7 @@
 
 import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 import { usePathname, useRouter } from "next/navigation";
-import { Button } from "@/components/Button";
+import { Button } from "@/components";
 
 export const GoBackButton = () => {
   const router = useRouter();

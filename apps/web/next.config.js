@@ -14,12 +14,6 @@ module.exports = {
         port: "",
         pathname: "/",
       },
-      {
-        protocol: "https",
-        hostname: "effigy.im",
-        port: "",
-        pathname: "/a/**",
-      },
     ],
   },
   experimental: {

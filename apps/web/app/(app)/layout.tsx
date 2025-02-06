@@ -1,8 +1,7 @@
 "use client";
 
 import React from "react";
-import { GoBackButton } from "@/components/GoBackButton";
-import { NavBar } from "@/components/NavBar";
+import { GoBackButton, NavBar } from "@/components";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 
 export default function Layout({ children }: { children: React.ReactNode }) {

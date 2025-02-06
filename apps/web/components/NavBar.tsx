@@ -10,7 +10,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { newLogo } from "@/assets";
-import { ConnectWallet } from "@/components/ConnectWalletButton";
+import { ConnectWallet } from "@/components";
 import { navItems } from "@/constants/navigation";
 
 export function NavBar() {
