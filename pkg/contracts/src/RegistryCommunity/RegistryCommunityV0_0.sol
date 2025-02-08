@@ -471,20 +471,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         gardenToken.safeTransfer(member, _amountUnstaked);
         for (uint256 i = 0; i < memberStrategies.length; i++) {
             address strategy = memberStrategies[i];
-            if (strategy.supportsInterface(type(IPointStrategy).interfaceId)) {
-                // PointSystem pointSystem = IPointStrategy(strategy).getPointSystem();
-                // (uint256 maxAmount) = CVStrategyV0_0(payable(strategy)).pointConfig();
-                // if (pointSystem == PointSystem.Unlimited) {
-                //     pointsToDecrease = _amountUnstaked;
-                // } else if (pointSystem == PointSystem.Quadratic) {
-                //     pointsToDecrease = CVStrategyV0_0(payable(strategy)).decreasePowerQuadratic(member, _amountUnstaked);
-                // } else if (pointSystem == PointSystem.Capped) {
-                //     if (getMemberPowerInStrategy(member, strategy) < maxAmount) {
-                //         pointsToDecrease = _amountUnstaked;
-                //     } else if (getMemberStakedAmount(member) - _amountUnstaked < maxAmount) {
-                //         pointsToDecrease = maxAmount - (getMemberStakedAmount(member) - _amountUnstaked);
-                //     }
-                // }
+            // if (strategy.supportsInterface(type(IPointStrategy).interfaceId)) {
                 pointsToDecrease = IPointStrategy(strategy).decreasePower(member, _amountUnstaked);
                 uint256 currentPower = memberPowerInStrategy[member][memberStrategies[i]];
                 if (pointsToDecrease > currentPower) {
@@ -492,12 +479,12 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
                 } else {
                     memberPowerInStrategy[member][memberStrategies[i]] -= pointsToDecrease;
                 }
-            } else {
-                // emit StrategyShouldBeRemoved(strategy, member);
-                memberStrategies[i] = memberStrategies[memberStrategies.length - 1];
-                memberStrategies.pop();
-                _removeStrategy(strategy);
-            }
+            // } else {
+            //     // emit StrategyShouldBeRemoved(strategy, member);
+            //     memberStrategies[i] = memberStrategies[memberStrategies.length - 1];
+            //     memberStrategies.pop();
+            //     _removeStrategy(strategy);
+            // }
             // }
         }
         addressToMemberInfo[member].stakedAmount -= _amountUnstaked;
@@ -516,9 +503,9 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         onlyCouncilSafe();
         address strategy = address(allo.getPool(poolId).strategy);
         // _revertZeroAddress(strategy);
-        if (strategy.supportsInterface(type(IPointStrategy).interfaceId)) {
+        // if (strategy.supportsInterface(type(IPointStrategy).interfaceId)) {
             _addStrategy(strategy);
-        }
+        // }
     }
 
     function addStrategy(address _newStrategy) public virtual {
