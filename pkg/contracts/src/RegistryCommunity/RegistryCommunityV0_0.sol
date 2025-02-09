@@ -143,6 +143,8 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
     uint256 public registerStakeAmount;
     /// @notice The fee charged to the community for each registration
     uint256 public communityFee;
+    /// @notice The nonce used to create new strategy clones
+    uint256 public cloneNonce;
     /// @notice The profileId of the community in the Allo Registry
     bytes32 public profileId;
     /// @notice Enable or disable the kick feature
@@ -472,13 +474,13 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         for (uint256 i = 0; i < memberStrategies.length; i++) {
             address strategy = memberStrategies[i];
             // if (strategy.supportsInterface(type(IPointStrategy).interfaceId)) {
-                pointsToDecrease = IPointStrategy(strategy).decreasePower(member, _amountUnstaked);
-                uint256 currentPower = memberPowerInStrategy[member][memberStrategies[i]];
-                if (pointsToDecrease > currentPower) {
-                    revert CantDecreaseMoreThanPower(pointsToDecrease, currentPower);
-                } else {
-                    memberPowerInStrategy[member][memberStrategies[i]] -= pointsToDecrease;
-                }
+            pointsToDecrease = IPointStrategy(strategy).decreasePower(member, _amountUnstaked);
+            uint256 currentPower = memberPowerInStrategy[member][memberStrategies[i]];
+            if (pointsToDecrease > currentPower) {
+                revert CantDecreaseMoreThanPower(pointsToDecrease, currentPower);
+            } else {
+                memberPowerInStrategy[member][memberStrategies[i]] -= pointsToDecrease;
+            }
             // } else {
             //     // emit StrategyShouldBeRemoved(strategy, member);
             //     memberStrategies[i] = memberStrategies[memberStrategies.length - 1];
@@ -504,7 +506,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         address strategy = address(allo.getPool(poolId).strategy);
         // _revertZeroAddress(strategy);
         // if (strategy.supportsInterface(type(IPointStrategy).interfaceId)) {
-            _addStrategy(strategy);
+        _addStrategy(strategy);
         // }
     }
 
@@ -698,7 +700,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         for (uint256 i = 0; i < memberStrategies.length; i++) {
             //FIX support interface check
             //if(memberStrategies[i].supportsInterface(interfaceId)){
-            IPointStrategy(memberStrategies[i]).deactivatePoints(_member);
+            CVStrategyV0_0(payable(memberStrategies[i])).deactivatePoints(_member);
         }
     }
 
