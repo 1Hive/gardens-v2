@@ -4,14 +4,12 @@ pragma solidity ^0.8.19;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
-import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 
 import {ReentrancyGuardUpgradeable} from
     "openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
 import {AccessControlUpgradeable} from
     "openzeppelin-contracts-upgradeable/contracts/access/AccessControlUpgradeable.sol";
 
-import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import {Clone} from "allo-v2-contracts/core/libraries/Clone.sol";
 import {IRegistry, Metadata} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 import {FAllo} from "../interfaces/FAllo.sol";
@@ -475,20 +473,20 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         gardenToken.safeTransfer(member, _amountUnstaked);
         for (uint256 i = 0; i < memberStrategies.length; i++) {
             address strategy = memberStrategies[i];
-            if (strategy.supportsInterface(type(IPointStrategy).interfaceId)) {
-                pointsToDecrease = IPointStrategy(strategy).decreasePower(member, _amountUnstaked);
-                uint256 currentPower = memberPowerInStrategy[member][memberStrategies[i]];
-                if (pointsToDecrease > currentPower) {
-                    revert CantDecreaseMoreThanPower(pointsToDecrease, currentPower);
-                } else {
-                    memberPowerInStrategy[member][memberStrategies[i]] -= pointsToDecrease;
-                }
+            // if (strategy.supportsInterface(type(IPointStrategy).interfaceId)) {
+            pointsToDecrease = IPointStrategy(strategy).decreasePower(member, _amountUnstaked);
+            uint256 currentPower = memberPowerInStrategy[member][memberStrategies[i]];
+            if (pointsToDecrease > currentPower) {
+                revert CantDecreaseMoreThanPower(pointsToDecrease, currentPower);
             } else {
-                // emit StrategyShouldBeRemoved(strategy, member);
-                memberStrategies[i] = memberStrategies[memberStrategies.length - 1];
-                memberStrategies.pop();
-                _removeStrategy(strategy);
+                memberPowerInStrategy[member][memberStrategies[i]] -= pointsToDecrease;
             }
+            // } else {
+            //     // emit StrategyShouldBeRemoved(strategy, member);
+            //     memberStrategies[i] = memberStrategies[memberStrategies.length - 1];
+            //     memberStrategies.pop();
+            //     _removeStrategy(strategy);
+            // }
             // }
         }
         addressToMemberInfo[member].stakedAmount -= _amountUnstaked;
@@ -507,9 +505,9 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         onlyCouncilSafe();
         address strategy = address(allo.getPool(poolId).strategy);
         // _revertZeroAddress(strategy);
-        if (strategy.supportsInterface(type(IPointStrategy).interfaceId)) {
-            _addStrategy(strategy);
-        }
+        // if (strategy.supportsInterface(type(IPointStrategy).interfaceId)) {
+        _addStrategy(strategy);
+        // }
     }
 
     function addStrategy(address _newStrategy) public virtual {
@@ -702,7 +700,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         for (uint256 i = 0; i < memberStrategies.length; i++) {
             //FIX support interface check
             //if(memberStrategies[i].supportsInterface(interfaceId)){
-            IPointStrategy(memberStrategies[i]).deactivatePoints(_member);
+            CVStrategyV0_0(payable(memberStrategies[i])).deactivatePoints(_member);
         }
     }
 

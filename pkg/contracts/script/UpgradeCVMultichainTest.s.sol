@@ -12,13 +12,13 @@ contract UpgradeCVMultichainTest is BaseMultiChain {
     using stdJson for string;
 
     function runCurrentNetwork(string memory networkJson) public override {
-        // address registryImplementation = address(new RegistryCommunityV0_0());
+        address registryImplementation = address(new RegistryCommunityV0_0());
         address strategyImplementation = address(new CVStrategyV0_0());
-        address passportScorer = networkJson.readAddress(getKeyNetwork(".PROXIES.PASSPORT_SCORER"));
+        address passportScorer = networkJson.readAddress(getKeyNetwork(".ENVS.PASSPORT_SCORER"));
         address safeArbitrator = networkJson.readAddress(getKeyNetwork(".ENVS.ARBITRATOR"));
 
         // PASSPORT SCORER UPGRADE
-        // address passportScorerProxy = networkJson.readAddress(getKeyNetwork(".PROXIES.PASSPORT_SCORER"));
+        // address passportScorerProxy = networkJson.readAddress(getKeyNetwork(".ENVS.PASSPORT_SCORER"));
         // PassportScorer passportScorer = PassportScorer(address(passportScorerProxy));
         // Upgrades.upgradeProxy(address(passportScorer), "PassportScorer.sol:PassportScorer", "");
         // passportScorer.upgradeTo(passportScorerImplementation); // DOESNT VALIDATE SAFE UPGRADING
@@ -34,7 +34,7 @@ contract UpgradeCVMultichainTest is BaseMultiChain {
         // registryFactory.upgradeTo(registryFactoryImplementation); // DOESNT VALIDATE SAFE UPGRADING
 
         // 1.b -- Set the Registry Community Template --
-        // registryFactory.setRegistryCommunityTemplate(registryImplementation);
+        registryFactory.setRegistryCommunityTemplate(registryImplementation);
 
         // 1.c -- Set the Strategy Template --
         registryFactory.setStrategyTemplate(strategyImplementation);
@@ -53,7 +53,7 @@ contract UpgradeCVMultichainTest is BaseMultiChain {
             // abi.encodeWithSelector(RegistryCommunityV0_0.initializeV2.selector)
 
             // 2.a -- Upgrade the Registry Community --
-            // registryCommunity.upgradeTo(registryImplementation); // DOESNT VALIDATE SAFE UPGRADING
+            registryCommunity.upgradeTo(registryImplementation); // DOESNT VALIDATE SAFE UPGRADING
 
             // 2.b -- Set the Strategy Template --
             registryCommunity.setStrategyTemplate(strategyImplementation);

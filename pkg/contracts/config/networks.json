@@ -14,31 +14,25 @@
         "ALLO_PROXY": "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
         "ALLO_IMPL": "0xB087535DB0df98fC4327136e897A5985E5Cfbd66",
         "REGISTRY": "0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3",
-        "ARBITRATOR": "0x05EC011e0d8B4d2add98e1cc4AC7DF38a95EF4Ed"
+        "ARBITRATOR": "0x05EC011e0d8B4d2add98e1cc4AC7DF38a95EF4Ed",
+        "PASSPORT_SCORER": "0x6ad70508f44aa0e86e7af80ccc4fc1f160c2df46"
       },
       "PROXIES": {
-        "REGISTRY_FACTORY": "0x2d5b61124dff3c3bede39620b591b10325f629a2",
+        "REGISTRY_FACTORY": "0xf42f88c13804147b2fdda13c093ce14219aea395",
         "REGISTRY_COMMUNITIES": [
-          "0x00434c738a97f4923e2c5b924485841dfd578fdc",
-          "0x289ae94e0315a1ed33f8ecdeee614e4733ceea55",
-          "0x9c03928756e992fd632e6e05882d264146fff5a8"
+          "0xc219730ec703c9525748c3b80184d57f1d57699b"
         ],
         "CV_STRATEGIES": [
-          "0x020dbbeee6c5a50da661b3d525ad27e34d0507ae",
-          "0x0b23a695725a500ba6d9e3f15c0d31d9f1c15e97",
-          "0x0d42c1b1b6e847e03102378e01502d5c1364d7fe",
-          "0x2b3541678205e57414708187d7a3d0f602135b0a",
-          "0x2ca9cfd2ab5db78adbf2ab3cc44f0c6f8d10a65f",
-          "0x3e3de34224fd9dc81030bd7a32934120f67e55fb",
-          "0x4c87476f59bb108e4b89a0541c7d0c26c36c6dcb",
-          "0x595aa705270a284a05f18f5c9c942f520a5c6bb2",
-          "0x8354fbc3f625e55eb0db40b3b4fcd1d7c60fda7d",
-          "0xdc1aa7e2fca3912161a6c7a81f11e96b7fb43bb8",
-          "0xe44dac73ef088272daeb6a2ce26087326ea83948"
+          "0x3bd8c9056a448c7ab3f398df2ffea114febd9139",
+          "0x4440e05839eaacc4927178756faa48ecc23386f8",
+          "0x464f010f343bb52689e8579c84e76c8e04c7dbdc",
+          "0x61f0d03b1f00b872c7c9ee03a12224cb70e93ea2",
+          "0x6b999ed850de2c5c923eaafc3c15781bd2ccf9d6",
+          "0xd682ff9fb3c4c28c35dfa8830280d9a1c5bbfee4"
         ],
-        "PASSPORT_SCORER": "0xd5a38e558582d32ffdc3b3a1a9f4d0d56e8b3115"
+        "PASSPORT_SCORER": "0x6ad70508f44aa0e86e7af80ccc4fc1f160c2df46"
       },
-      "hash": "a91c78dccac7d26edc9d52af6d17970a863cff61"
+      "hash": "5ddd9cd97f92f363a3eef3f7ceedd161a8a7a762"
     },
     {
       "name": "opsepolia",
@@ -80,7 +74,8 @@
         "ALLO_PROXY": "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
         "ALLO_IMPL": "0xB087535DB0df98fC4327136e897A5985E5Cfbd66",
         "REGISTRY": "0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3",
-        "ARBITRATOR": "0x10B469b23a47BC557daB81743af8A97Ef9e9f833"
+        "ARBITRATOR": "0x10B469b23a47BC557daB81743af8A97Ef9e9f833",
+        "PASSPORT_SCORER": "0x8cd4ba4ad10d85a550fe45d567a49e49e1d23ce1"
       },
       "PROXIES": {
         "REGISTRY_FACTORY": "0xc1c2e092b7dbc8413e1ac02e92c161b0bda783f6",
@@ -91,6 +86,7 @@
           "0x2851b7e3d1ad8ba5637afe196968f1a4a9875e03",
           "0x2e8b031ae32debce51126b17356f122e4c07e941",
           "0x400b3316447a4362abe36206c145550080046831",
+          "0x40f44e992cc53eff241f51c825c7a1853eedaeb0",
           "0x41a9ed5de7998583cd20bf738ca38e649e0eafe3",
           "0x5a48adf540cb5c79edb027bef3ebf551ce63661f",
           "0x625cb91ad17cf9b4a2b6b20b2b494ddf123c290c",
@@ -110,6 +106,7 @@
           "0xfc2bb6b0824805cee6d7a4af90bd395f663651c8"
         ],
         "CV_STRATEGIES": [
+          "0x083de9da44ebd145368440c9c88cad95536fc2b3",
           "0x19a0f3d7734dca40f1847c44ef717ef3ef5c50a5",
           "0x2e00fd8fff4417c9d76ac44e35f039861b7e8f86",
           "0x46408b210e77408c17c183470c4693f458f5aed8",
@@ -125,7 +122,7 @@
         ],
         "PASSPORT_SCORER": "0x8cd4ba4ad10d85a550fe45d567a49e49e1d23ce1"
       },
-      "hash": "a60a880a7980235097a0f97a43397b6570e49d90"
+      "hash": "342421428253a64d00582ebc37842233ca6a6ba3"
     },
     {
       "name": "optimism",
@@ -138,7 +135,8 @@
         "ALLO_PROXY": "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
         "ALLO_IMPL": "0xB087535DB0df98fC4327136e897A5985E5Cfbd66",
         "REGISTRY": "0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3",
-        "ARBITRATOR": "0x01b415E97310611EF5fea5c0b43470F6217456aA"
+        "ARBITRATOR": "0x01b415E97310611EF5fea5c0b43470F6217456aA",
+        "PASSPORT_SCORER": "0x084a5504dcfeac0ec3e10517247639e50c8dcffd"
       },
       "PROXIES": {
         "REGISTRY_FACTORY": "0x1fac47cf25f1ca9f20ba366099d26b28401f5715",
@@ -153,6 +151,7 @@
           "0x4e8b0da13f858b0c101a28b7a92e42ae28ace5a4",
           "0x5326f5264f547db8d3d6f39543f3767884dad3e5",
           "0x576cb81030cc47ccb7aef97e9e88d2648edb45db",
+          "0x5b1a1dcbf48c0f317102d05d10caa258b9c9d1c5",
           "0x6185357e28d2feb72a7606a3b66811f88279dd3d",
           "0x6cc78ed3a4d8aa94410a60f702235c85d584730f",
           "0x71566372033aafbd1a62430171ad698768d98dcc",
@@ -169,20 +168,23 @@
           "0xf515b83f7e0ab851f822e56b0fe63dfa973e74f0"
         ],
         "CV_STRATEGIES": [
+          "0x0a552942a6eb43d01c845f3a354b83ec30146950",
           "0x1c720bfa4a2535fb6675b859a717b4cba56fd97b",
           "0x63e2b63072e131c0e5ad72205e03cbe6ca1484fa",
           "0x6a27a7454bfbf17aa22566519778b58f3d4adcc2",
+          "0x8ace844a662569786a0d12b5364ba27fe4e74106",
           "0x8f80c90ef85254bd1c401804058bb68f2eb7cfab",
           "0x94daa3f0e1380139e178f8cc523eea39395bcf78",
           "0x964251300e577801ce3e21897c6a335505fedee5",
           "0xaeecbc91e44541204d0c784e4ac3e8eca6a47cc8",
           "0xb3551608e7833f517d77419f4035e1a6b14391b7",
           "0xd9cf1f7d077166236e260819257a567b1ca22c8c",
+          "0xf3772fcf3f172abd43ae9b1d11c87e3d5c265be8",
           "0xfeca5fc72deb98b41198a5dce90e00bbafbe5888"
         ],
         "PASSPORT_SCORER": "0x084a5504dcfeac0ec3e10517247639e50c8dcffd"
       },
-      "hash": "a88d6273102f1c0026983ffda6f96c3d0f127790"
+      "hash": "7ecdd9107ff5db6569f8dce9b56e2bb3ae3afcb0"
     },
     {
       "name": "polygon",
@@ -195,7 +197,8 @@
         "ALLO_PROXY": "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
         "ALLO_IMPL": "0xB087535DB0df98fC4327136e897A5985E5Cfbd66",
         "REGISTRY": "0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3",
-        "ARBITRATOR": "0x8cb85C8FF0be6802AF7aE7462A44cD2a4103688e"
+        "ARBITRATOR": "0x8cb85C8FF0be6802AF7aE7462A44cD2a4103688e",
+        "PASSPORT_SCORER": "0x190fa730e6ffc64ebd0031be59b3007cc9ee2bb3"
       },
       "PROXIES": {
         "REGISTRY_FACTORY": "0x57a9835b204dbcc101dbf981625a3625e8043b9c",
@@ -227,7 +230,8 @@
         "ALLO_PROXY": "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
         "ALLO_IMPL": "0xB087535DB0df98fC4327136e897A5985E5Cfbd66",
         "REGISTRY": "0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3",
-        "ARBITRATOR": "0x7dd4020A2344A9e039092F12e46ba4F1EF1e3c91"
+        "ARBITRATOR": "0x7dd4020A2344A9e039092F12e46ba4F1EF1e3c91",
+        "PASSPORT_SCORER": "0x20965c5c8a021ac6ffed5de7a402f7ceac3b0a82"
       },
       "PROXIES": {
         "REGISTRY_FACTORY": "0x08df82f74d1f56f650e98da2dd4240f1a31711bc",
@@ -237,16 +241,28 @@
           "0x8f3112bcee3fb967a06dcb245f78f25e638ad56a",
           "0x99a454785c9859e5b61647d77a05be1fa53f4d04",
           "0xa8935addabca48a9fc63a009f9313fc59417b20c",
+          "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
           "0xb8ad4b6ba0fde413fdee6f84fc989858c2894092",
           "0xda9bcf61d7cb66475c34784c328232d2e7e2f6cf",
           "0xe2396fe2169ca026962971d3b2e373ba925b6257"
         ],
         "CV_STRATEGIES": [
+          "0x0108617ca2e05546c49383d9392ed8db5d12304c",
           "0x0fd15b2142a257fa8713cad2c14ec52c00f71865",
+          "0x105900650fff3cf4fe52bce72f26572fe4fa1faf",
+          "0x107fbe971a1457a7a442a7fe3e2124d689a66e92",
           "0x1f6fd908db173f591aa6ea4a037d157ea4e31f68",
+          "0x2b64e4838bb7e0f4794fe3e40ad5cb71c2beddb5",
+          "0x5ab65facfc0ae022f65a5c64cb3bf38812bd042a",
+          "0x5ccb743c930271ebd7f254f3ccf909097532c7be",
           "0x5f7e9967b940f47623ad7fce9d59c899a1a114e7",
+          "0x67fea1ec7ed0adfb4026923b4779e4f830af8e1c",
+          "0x6cc78e32004429b39c1fb8d7c6620e8511832cc4",
+          "0x6e7e8b56d16c577ee9c765a756deb5e6959088af",
           "0x74545010e013e5601009305288193cbd5c8702b4",
           "0x7de5cd9bccd6d15ca7ebfd9cd37aafbef6b8d1ad",
+          "0x831fa1bbcdfe199d56213c40340544aeb7912349",
+          "0x9fb2f1813228a97f559e29a6492ee27357faf8a2",
           "0xaa0195986ffe8f3371444fa77ee3ed04ac787eea",
           "0xac948bca716b080df41afc70f37b7a9f6f3d9c9a",
           "0xb1a275419c817273f470ee1a102cad7507a25b6f",
@@ -259,7 +275,7 @@
         ],
         "PASSPORT_SCORER": "0x20965c5c8a021ac6ffed5de7a402f7ceac3b0a82"
       },
-      "hash": "db581d3bf4af214d70f730b67cb712c47d851e97"
+      "hash": "42e70e0a3d435a09d74900302962bb096b2e5075"
     },
     {
       "name": "base",
@@ -268,19 +284,28 @@
       "no-safe": false,
       "ENVS": {
         "SENDER": "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD",
-        "PROXY_OWNER": "0x333837ec0D4F3D9b3dF0216996a148B46ce3541b",
+        "PROXY_OWNER": "0x99ebef5e196a9e8e39d92b18663c9236661607b1",
         "ALLO_PROXY": "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
         "ALLO_IMPL": "0xB087535DB0df98fC4327136e897A5985E5Cfbd66",
         "REGISTRY": "0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3",
-        "ARBITRATOR": "0x83bDE2E2D8AcAAad2D300DA195dF3cf86b234bdd"
-      },
-      "PROXIES": {
-        "REGISTRY_FACTORY": "0xA71023bc64c9711C2037ab491DE80fd74504bd55",
-        "REGISTRY_COMMUNITIES": [],
-        "CV_STRATEGIES": [],
+        "ARBITRATOR": "0x83bDE2E2D8AcAAad2D300DA195dF3cf86b234bdd",
         "PASSPORT_SCORER": "0xb39dFA15F96055664179e8EcaA890f3FA26c21e9"
       },
-      "hash": ""
+      "PROXIES": {
+        "REGISTRY_FACTORY": "0xba1c9da92a4494966ff1d60cb1d2668bfd15c8fb",
+        "REGISTRY_COMMUNITIES": [
+          "0x0b9e3b889b55d22d5cfb992ec44e53f333a8a813",
+          "0x44cf2e335cf50f4da447b680192976aee855c203",
+          "0xdcf3366bfd2e5c76712160199ac938b2db0e3b73"
+        ],
+        "CV_STRATEGIES": [
+          "0x56a73294d8aa3a63e9cf2d8c2f8f71f0b3ee8f43",
+          "0x74fa25e7e96f38f6bfa1b47af42e9d80a8652e94",
+          "0x80c2ff2dc92dfb4980b62e600793500be674b0b4"
+        ],
+        "PASSPORT_SCORER": "0xb39dFA15F96055664179e8EcaA890f3FA26c21e9"
+      },
+      "hash": "e75e078d38093a41070b828001ef8d5fb3eb9264"
     },
     {
       "name": "mainnet",

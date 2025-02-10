@@ -155,7 +155,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
         console2.log("Proxy owner Addr: %s", PROXY_OWNER);
 
         if (address(PASSPORT_SCORER) == address(0)) {
-            PROXY_OWNER = json.readAddress(getKeyNetwork(".PROXIES.PASSPORT_SCORER"));
+            PASSPORT_SCORER = PassportScorer(json.readAddress(getKeyNetwork(".ENVS.PASSPORT_SCORER")));
             if (address(PASSPORT_SCORER) == address(0)) {
                 ERC1967Proxy scorerProxy = new ERC1967Proxy(
                     address(new PassportScorer()), abi.encodeWithSelector(PassportScorer.initialize.selector, SENDER)
@@ -179,7 +179,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
         console2.log("Arbitrator Addr: %s", address(ARBITRATOR));
 
         if (address(REGISTRY_FACTORY) == address(0)) {
-            REGISTRY_FACTORY = RegistryFactoryV0_0(json.readAddress(getKeyNetwork(".PROXIES.REGISTRY_FACTORY")));
+            // REGISTRY_FACTORY = RegistryFactoryV0_0(json.readAddress(getKeyNetwork(".PROXIES.REGISTRY_FACTORY")));
             if (address(REGISTRY_FACTORY) == address(0)) {
                 proxy = new ERC1967Proxy(
                     address(new RegistryFactoryV0_0()),

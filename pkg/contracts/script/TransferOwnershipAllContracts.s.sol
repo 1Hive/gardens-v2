@@ -27,7 +27,7 @@ contract TransferOwnershipAllContracts is BaseMultiChain {
         SafeArbitrator(payable(address(arbitratorScorerProxy))).transferOwnership(proxyOwner);
 
         // PASSPORT SCORER
-        address passportScorerProxy = networkJson.readAddress(getKeyNetwork(".PROXIES.PASSPORT_SCORER"));
+        address passportScorerProxy = networkJson.readAddress(getKeyNetwork(".ENVS.PASSPORT_SCORER"));
         PassportScorer(payable(address(passportScorerProxy))).transferOwnership(proxyOwner);
 
         // REGISTRY FACTORY

@@ -10,7 +10,7 @@ contract SetStrategyPassportScorer is BaseMultiChain {
     using stdJson for string;
 
     function runCurrentNetwork(string memory networkJson) public override {
-        address passportScorerProxy = networkJson.readAddress(getKeyNetwork(".PROXIES.PASSPORT_SCORER"));
+        address passportScorerProxy = networkJson.readAddress(getKeyNetwork(".ENVS.PASSPORT_SCORER"));
         PassportScorer passportScorer = PassportScorer(address(passportScorerProxy));
 
         address[] memory cvStrategyProxies = networkJson.readAddressArray(getKeyNetwork(".PROXIES.CV_STRATEGIES"));
@@ -21,4 +21,3 @@ contract SetStrategyPassportScorer is BaseMultiChain {
         }
     }
 }
-
