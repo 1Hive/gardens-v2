@@ -9,17 +9,23 @@ import {
   ArrowsRightLeftIcon,
 } from "@heroicons/react/24/solid";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { blo } from "blo";
 import cn from "classnames";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { isAddress } from "viem";
 import {
+  Address,
   useAccount,
   useBalance,
   useConnect,
   useDisconnect,
+  useEnsAvatar,
+  useEnsName,
   useSwitchNetwork,
 } from "wagmi";
 import TooltipIfOverflow from "./TooltipIfOverflow";
+import { isSafeAvatarUrl } from "@/app/api/utils";
 import { walletIcon } from "@/assets";
 import { Button, DisplayNumber } from "@/components";
 import { ChainIcon } from "@/configs/chains";
@@ -46,11 +52,25 @@ export function ConnectWallet() {
     enabled: !!account && !!urlChainId,
   });
 
+  const { data: ensName } = useEnsName({
+    address: account?.address as Address,
+    enabled: isAddress(account?.address ?? ""),
+    chainId: 1,
+    cacheTime: 30_000,
+  });
+
+  const { data: avatarUrl } = useEnsAvatar({
+    name: ensName,
+    enabled: Boolean(ensName),
+    chainId: 1,
+    cacheTime: 30_000,
+  });
+
   return (
     <ConnectButton.Custom>
-      {({ account: accountAddress, chain, openConnectModal, mounted }) => {
+      {({ account: acc, chain, openConnectModal, mounted }) => {
         const ready = mounted;
-        const connected = ready && accountAddress && chain;
+        const connected = ready && acc && chain;
         const isWrongNetwork =
           chain?.id != urlChainId && urlChainId && !isNaN(urlChainId);
 
@@ -100,8 +120,12 @@ export function ConnectWallet() {
                           {isWrongNetwork ?
                             <ExclamationTriangleIcon className="text-danger-content w-6" />
                           : <Image
-                              alt={"Chain icon"}
-                              src={`https://effigy.im/a/${accountAddress.address}.png`}
+                              alt="Wallet Avatar"
+                              src={
+                                avatarUrl && isSafeAvatarUrl(avatarUrl) ?
+                                  avatarUrl
+                                : `${blo(acc.address as Address)}`
+                              }
                               className="rounded-full"
                               width={34}
                               height={34}
@@ -110,7 +134,7 @@ export function ConnectWallet() {
                           }
                           <div className="hidden sm:flex flex-col">
                             <h5 className="text-left">
-                              {formatAddress(accountAddress.address)}
+                              {ensName ?? formatAddress(acc.address)}
                             </h5>
                             <div className="flex items-center">
                               {(

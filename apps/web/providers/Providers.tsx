@@ -46,7 +46,7 @@ const Providers = ({ children }: Props) => {
       [
         publicProvider(),
         alchemyProvider({
-          apiKey: process.env.NEXT_PUBLIC_RPC_URL_ARB_TESTNET ?? "",
+          apiKey: process.env.NEXT_PUBLIC_ALCHEMY_KEY ?? "",
         }),
       ],
     );

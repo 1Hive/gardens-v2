@@ -19,6 +19,8 @@ import {
   isMemberQuery,
   CVStrategy,
   RegistryCommunity,
+  getMembersStrategyQuery,
+  getMembersStrategyDocument,
 } from "#/subgraph/.graphclient";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { PoolGovernanceProps } from "./PoolGovernance";
@@ -49,6 +51,18 @@ export type ProposalInputItem = {
   proposalId: string;
   proposalNumber: number;
   value: bigint;
+};
+
+export type MemberStrategyData = {
+  activatedPoints: string;
+  id: string;
+  member?: {
+    memberCommunity?: {
+      isRegistered: boolean;
+      memberAddress: string;
+    };
+  };
+  totalStakedPoints: string;
 };
 
 // export type Strategy = getStrategyByPoolQuery["cvstrategies"][number];
@@ -156,6 +170,23 @@ export function Proposals({
       enabled: !!wallet,
     },
   );
+
+  const { data: membersStrategyData } =
+    useSubgraphQuery<getMembersStrategyQuery>({
+      query: getMembersStrategyDocument,
+      variables: {
+        strategyId: `${strategy.id.toLowerCase()}`,
+      },
+      changeScope: [
+        {
+          topic: "proposal",
+          containerId: strategy.poolId,
+          type: "update",
+        },
+        { topic: "member", id: wallet, containerId: strategy.poolId },
+      ],
+      enabled: !!wallet,
+    });
 
   const memberActivatedPoints: bigint = BigInt(
     memberStrategyData?.memberStrategy?.activatedPoints ?? 0,
@@ -447,6 +478,8 @@ export function Proposals({
     (x) => stakedFilters[x.id]?.value,
   );
 
+  const membersStrategies = membersStrategyData?.memberStrategies;
+
   // Render
   return (
     <>
@@ -459,6 +492,7 @@ export function Proposals({
           memberTokensInCommunity={memberTokensInCommunity}
           isMemberCommunity={isMemberCommunity}
           memberActivatedStrategy={memberActivatedStrategy}
+          membersStrategyData={membersStrategies}
         />
       )}
       <section className="section-layout flex flex-col gap-10 mt-10">

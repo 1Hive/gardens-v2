@@ -21,7 +21,10 @@ const optimismSubgraph =
 const gnosisSubgraph =
   "https://api.studio.thegraph.com/query/40931/gardens-v2---gnosis/" +
   subgraphConfig.VERSION_PROD;
-
+const baseSubgraph =
+"https://api.studio.thegraph.com/query/40931/gardens-v2---base/" +
+subgraphConfig.VERSION_PROD;
+    
 // @ts-ignore
 const chainArg = process.argv[process.argv.length - 1];
 
@@ -38,6 +41,7 @@ const jsons = {
   [viemChains.optimism.id]: optimismSubgraph,
   [viemChains.polygon.id]: maticSubgraph,
   [viemChains.gnosis.id]: gnosisSubgraph,
+  [viemChains.base.id]: baseSubgraph,
   // @ts-ignore
   // [viemChains.mainnet.id]: mainnetLatest
 };
