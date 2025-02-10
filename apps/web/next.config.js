@@ -7,24 +7,23 @@ module.exports = {
     return config;
   },
   images: {
+    domains: [
+      "metadata.ens.domains", // Official ENS metadata service (best choice)
+      "ipfs.io", // Public IPFS gateway
+      "arweave.net", // Arweave storage (some ENS avatars are hosted here)
+      "nftstorage.link", // NFT.Storage, used for IPFS images
+      "gateway.pinata.cloud", // Pinata IPFS Gateway (often used for ENS avatars)
+      "cloudflare-ipfs.com", // Cloudflare's IPFS gateway (faster alternative)
+      "euc.li", // ENS avatar gateway
+    ],
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "ipfs.io",
-        port: "",
-        pathname: "/",
+        hostname: "**.eth.link", // ENS domains with avatars stored on IPFS
       },
       {
         protocol: "https",
-        hostname: "effigy.im",
-        port: "",
-        pathname: "/a/**",
-      },
-      {
-        protocol: "https",
-        hostname: "euc.li",
-        port: "",
-        pathname: "/**",
+        hostname: "**.limo", // LIMO ENS gateway for decentralized websites
       },
     ],
   },

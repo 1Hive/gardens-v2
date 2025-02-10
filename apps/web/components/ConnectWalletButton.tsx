@@ -25,6 +25,7 @@ import {
   useSwitchNetwork,
 } from "wagmi";
 import TooltipIfOverflow from "./TooltipIfOverflow";
+import { isSafeAvatarUrl } from "@/app/api/utils";
 import { walletIcon } from "@/assets";
 import { Button, DisplayNumber } from "@/components";
 import { ChainIcon } from "@/configs/chains";
@@ -121,9 +122,9 @@ export function ConnectWallet() {
                           : <Image
                               alt="Wallet Avatar"
                               src={
-                                avatarUrl ? avatarUrl : (
-                                  `${blo(acc.address as Address)}`
-                                )
+                                avatarUrl && isSafeAvatarUrl(avatarUrl) ?
+                                  avatarUrl
+                                : `${blo(acc.address as Address)}`
                               }
                               className="rounded-full"
                               width={34}
