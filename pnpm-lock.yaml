@@ -86,7 +86,7 @@ importers:
         version: 1.3.7(@types/react@18.3.3)(react-dom@18.2.0)(react@18.2.0)(viem@1.21.4)(wagmi@1.4.13)
       '@sentry/nextjs':
         specifier: ^8
-        version: 8.17.0(@opentelemetry/api@1.9.0)(@opentelemetry/core@1.25.1)(@opentelemetry/instrumentation@0.52.1)(@opentelemetry/sdk-trace-base@1.25.1)(next@15.1.6)(react@18.2.0)(webpack@5.93.0)
+        version: 8.17.0(@opentelemetry/api@1.9.0)(@opentelemetry/core@1.25.1)(@opentelemetry/instrumentation@0.52.1)(@opentelemetry/sdk-trace-base@1.25.1)(next@14.2.23)(react@18.2.0)(webpack@5.93.0)
       '@tanstack/react-query':
         specifier: ^5.17.19
         version: 5.45.1(react@18.2.0)
@@ -101,7 +101,7 @@ importers:
         version: 6.1.2(@babel/runtime@7.24.7)(@codemirror/autocomplete@6.18.4)(@codemirror/language@6.10.8)(@codemirror/lint@6.8.4)(@codemirror/search@6.5.8)(@codemirror/state@6.5.2)(@codemirror/theme-one-dark@6.1.2)(@codemirror/view@6.36.2)(@types/react@18.3.3)(codemirror@6.0.1)(react-dom@18.2.0)(react@18.2.0)
       '@urql/next':
         specifier: ^1.1.0
-        version: 1.1.1(next@15.1.6)(react@18.2.0)(urql@4.1.0)
+        version: 1.1.1(next@14.2.23)(react@18.2.0)(urql@4.1.0)
       '@wagmi/cli':
         specifier: 1.5.2
         version: 1.5.2(@wagmi/core@1.4.13)(typescript@5.2.2)(wagmi@1.4.13)
@@ -148,11 +148,11 @@ importers:
         specifier: ^1.5.12
         version: 1.5.12
       next:
-        specifier: 15.1.6
-        version: 15.1.6(@babel/core@7.24.7)(@opentelemetry/api@1.9.0)(react-dom@18.2.0)(react@18.2.0)(sass@1.77.8)
+        specifier: 14.2.23
+        version: 14.2.23(@babel/core@7.24.7)(@opentelemetry/api@1.9.0)(react-dom@18.2.0)(react@18.2.0)(sass@1.77.8)
       next-themes:
         specifier: ^0.2.1
-        version: 0.2.1(next@15.1.6)(react-dom@18.2.0)(react@18.2.0)
+        version: 0.2.1(next@14.2.23)(react-dom@18.2.0)(react@18.2.0)
       pino-pretty:
         specifier: ^10.2.3
         version: 10.3.1
@@ -514,7 +514,7 @@ packages:
       response-iterator: 0.2.6
       symbol-observable: 4.0.0
       ts-invariant: 0.10.3
-      tslib: 2.6.3
+      tslib: 2.8.1
       zen-observable-ts: 1.2.5
     transitivePeerDependencies:
       - '@types/react'
@@ -1502,7 +1502,7 @@ packages:
     resolution: {integrity: sha512-kEBmG8KyqtxJZv+ygbEim+KCGtIq1fC22Ms3S4ziXmYKm8uyoLX0MHONVKwp+9opg390VaKRNt4a7A9NwmpNhw==}
     requiresBuild: true
     dependencies:
-      tslib: 2.6.3
+      tslib: 2.8.1
     dev: false
     optional: true
 
@@ -1527,7 +1527,7 @@ packages:
       '@envelop/core': 5.0.1
       '@graphql-tools/utils': 10.2.2(graphql@16.8.2)
       graphql: 16.8.2
-      tslib: 2.6.3
+      tslib: 2.8.1
 
   /@envelop/graphql-jit@8.0.3(@envelop/core@5.0.1)(graphql@16.8.2):
     resolution: {integrity: sha512-IZnKc7dVOQV9jEi5s5RkG8fVKqc6Ss/mBN9PRt2iYFa9o6XkL/haPLJRfWFsS/CSJfFOQuzLyxYuALA8DaoOYw==}
@@ -1539,14 +1539,14 @@ packages:
       '@envelop/core': 5.0.1
       graphql: 16.8.2
       graphql-jit: 0.8.6(graphql@16.8.2)
-      tslib: 2.6.3
+      tslib: 2.8.1
       value-or-promise: 1.0.12
 
   /@envelop/types@5.0.0:
     resolution: {integrity: sha512-IPjmgSc4KpQRlO4qbEDnBEixvtb06WDmjKfi/7fkZaryh5HuOmTtixe1EupQI5XfXO8joc3d27uUZ0QdC++euA==}
     engines: {node: '>=18.0.0'}
     dependencies:
-      tslib: 2.6.3
+      tslib: 2.8.1
 
   /@esbuild/android-arm64@0.16.17:
     resolution: {integrity: sha512-MIGl6p5sc3RDTLLkYL1MyL8BMRN4tLMRCn+yRJJmEDvYZ2M7tmAf80hx1kbNEUX2KJ50RRtxZ4JHLvCfuB6kBg==}
@@ -3031,7 +3031,7 @@ packages:
       '@graphql-tools/utils': 10.2.2(graphql@16.8.2)
       dataloader: 2.2.2
       graphql: 16.8.2
-      tslib: 2.6.3
+      tslib: 2.8.1
       value-or-promise: 1.0.12
 
   /@graphql-tools/batch-execute@9.0.4(graphql@16.8.2):
@@ -3056,7 +3056,7 @@ packages:
       '@graphql-tools/utils': 10.2.2(graphql@16.8.2)
       globby: 11.1.0
       graphql: 16.8.2
-      tslib: 2.6.3
+      tslib: 2.8.1
       unixify: 1.0.0
     transitivePeerDependencies:
       - supports-color
@@ -3106,7 +3106,7 @@ packages:
       extract-files: 11.0.0
       graphql: 16.8.2
       meros: 1.3.0(@types/node@20.14.4)
-      tslib: 2.6.3
+      tslib: 2.8.1
       value-or-promise: 1.0.12
     transitivePeerDependencies:
       - '@types/node'
@@ -3180,7 +3180,7 @@ packages:
       '@graphql-tools/utils': 10.2.2(graphql@16.8.2)
       globby: 11.1.0
       graphql: 16.8.2
-      tslib: 2.6.3
+      tslib: 2.8.1
       unixify: 1.0.0
     dev: true
 
@@ -3197,7 +3197,7 @@ packages:
       '@babel/types': 7.24.7
       '@graphql-tools/utils': 10.2.2(graphql@16.8.2)
       graphql: 16.8.2
-      tslib: 2.6.3
+      tslib: 2.8.1
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -3211,7 +3211,7 @@ packages:
       '@graphql-tools/utils': 10.2.2(graphql@16.8.2)
       graphql: 16.8.2
       resolve-from: 5.0.0
-      tslib: 2.6.3
+      tslib: 2.8.1
     dev: true
 
   /@graphql-tools/load@8.0.2(graphql@16.8.2):
@@ -3224,7 +3224,7 @@ packages:
       '@graphql-tools/utils': 10.2.2(graphql@16.8.2)
       graphql: 16.8.2
       p-limit: 3.1.0
-      tslib: 2.6.3
+      tslib: 2.8.1
     dev: true
 
   /@graphql-tools/merge@9.0.4(graphql@16.8.2):
@@ -3235,7 +3235,7 @@ packages:
     dependencies:
       '@graphql-tools/utils': 10.2.2(graphql@16.8.2)
       graphql: 16.8.2
-      tslib: 2.6.3
+      tslib: 2.8.1
 
   /@graphql-tools/optimize@1.4.0(graphql@16.8.2):
     resolution: {integrity: sha512-dJs/2XvZp+wgHH8T5J2TqptT9/6uVzIYvA6uFACha+ufvdMBedkfR4b4GbT8jAKLRARiqRTxy3dctnwkTM2tdw==}
@@ -3243,7 +3243,7 @@ packages:
       graphql: ^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0
     dependencies:
       graphql: 16.8.2
-      tslib: 2.6.3
+      tslib: 2.8.1
     dev: true
 
   /@graphql-tools/optimize@2.0.0(graphql@16.8.2):
@@ -3253,7 +3253,7 @@ packages:
       graphql: ^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0
     dependencies:
       graphql: 16.8.2
-      tslib: 2.6.3
+      tslib: 2.8.1
     dev: true
 
   /@graphql-tools/relay-operation-optimizer@6.5.18(graphql@16.8.2):
@@ -3264,7 +3264,7 @@ packages:
       '@ardatan/relay-compiler': 12.0.0(graphql@16.8.2)
       '@graphql-tools/utils': 9.2.1(graphql@16.8.2)
       graphql: 16.8.2
-      tslib: 2.6.3
+      tslib: 2.8.1
     transitivePeerDependencies:
       - encoding
       - supports-color
@@ -3279,7 +3279,7 @@ packages:
       '@ardatan/relay-compiler': 12.0.0(graphql@16.8.2)
       '@graphql-tools/utils': 10.2.2(graphql@16.8.2)
       graphql: 16.8.2
-      tslib: 2.6.3
+      tslib: 2.8.1
     transitivePeerDependencies:
       - encoding
       - supports-color
@@ -3311,7 +3311,7 @@ packages:
       '@graphql-tools/utils': 10.2.2(graphql@16.8.2)
       '@graphql-tools/wrap': 10.0.5(graphql@16.8.2)
       graphql: 16.8.2
-      tslib: 2.6.3
+      tslib: 2.8.1
       value-or-promise: 1.0.12
     dev: true
 
@@ -3364,7 +3364,7 @@ packages:
       cross-inspect: 1.0.0
       dset: 3.1.3
       graphql: 16.8.2
-      tslib: 2.6.3
+      tslib: 2.8.1
 
   /@graphql-tools/utils@8.13.1(graphql@16.8.2):
     resolution: {integrity: sha512-qIh9yYpdUFmctVqovwMdheVNJqFh+DQNWIhX87FJStfXYnmweBUDATok9fWPleKeFwxnW8IapKmY8m8toJEkAw==}
@@ -3372,7 +3372,7 @@ packages:
       graphql: ^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0
     dependencies:
       graphql: 16.8.2
-      tslib: 2.6.3
+      tslib: 2.8.1
     dev: true
 
   /@graphql-tools/utils@9.2.1(graphql@16.8.2):
@@ -3382,7 +3382,7 @@ packages:
     dependencies:
       '@graphql-typed-document-node/core': 3.2.0(graphql@16.8.2)
       graphql: 16.8.2
-      tslib: 2.6.3
+      tslib: 2.8.1
     dev: true
 
   /@graphql-tools/wrap@10.0.5(graphql@16.8.2):
@@ -3395,7 +3395,7 @@ packages:
       '@graphql-tools/schema': 10.0.4(graphql@16.8.2)
       '@graphql-tools/utils': 10.2.2(graphql@16.8.2)
       graphql: 16.8.2
-      tslib: 2.6.3
+      tslib: 2.8.1
       value-or-promise: 1.0.12
 
   /@graphql-typed-document-node/core@3.2.0(graphql@16.8.2):
@@ -3440,7 +3440,7 @@ packages:
     engines: {node: '>=18.0.0'}
     dependencies:
       '@repeaterjs/repeater': 3.0.6
-      tslib: 2.6.3
+      tslib: 2.8.1
     dev: true
 
   /@headlessui/react@1.7.19(react-dom@18.2.0)(react@18.2.0):
@@ -4060,7 +4060,7 @@ packages:
       '@motionone/easing': 10.18.0
       '@motionone/types': 10.17.1
       '@motionone/utils': 10.18.0
-      tslib: 2.6.3
+      tslib: 2.8.1
     dev: false
 
   /@motionone/dom@10.18.0:
@@ -4071,14 +4071,14 @@ packages:
       '@motionone/types': 10.17.1
       '@motionone/utils': 10.18.0
       hey-listen: 1.0.8
-      tslib: 2.6.3
+      tslib: 2.8.1
     dev: false
 
   /@motionone/easing@10.18.0:
     resolution: {integrity: sha512-VcjByo7XpdLS4o9T8t99JtgxkdMcNWD3yHU/n6CLEz3bkmKDRZyYQ/wmSf6daum8ZXqfUAgFeCZSpJZIMxaCzg==}
     dependencies:
       '@motionone/utils': 10.18.0
-      tslib: 2.6.3
+      tslib: 2.8.1
     dev: false
 
   /@motionone/generators@10.18.0:
@@ -4086,14 +4086,14 @@ packages:
     dependencies:
       '@motionone/types': 10.17.1
       '@motionone/utils': 10.18.0
-      tslib: 2.6.3
+      tslib: 2.8.1
     dev: false
 
   /@motionone/svelte@10.16.4:
     resolution: {integrity: sha512-zRVqk20lD1xqe+yEDZhMYgftsuHc25+9JSo+r0a0OWUJFocjSV9D/+UGhX4xgJsuwB9acPzXLr20w40VnY2PQA==}
     dependencies:
       '@motionone/dom': 10.18.0
-      tslib: 2.6.3
+      tslib: 2.8.1
     dev: false
 
   /@motionone/types@10.17.1:
@@ -4105,7 +4105,7 @@ packages:
     dependencies:
       '@motionone/types': 10.17.1
       hey-listen: 1.0.8
-      tslib: 2.6.3
+      tslib: 2.8.1
     dev: false
 
   /@motionone/vue@10.16.4:
@@ -4113,15 +4113,15 @@ packages:
     deprecated: Motion One for Vue is deprecated. Use Oku Motion instead https://oku-ui.com/motion
     dependencies:
       '@motionone/dom': 10.18.0
-      tslib: 2.6.3
+      tslib: 2.8.1
     dev: false
 
   /@next/env@14.0.3:
     resolution: {integrity: sha512-7xRqh9nMvP5xrW4/+L0jgRRX+HoNRGnfJpD+5Wq6/13j3dsdzxO3BCXn7D3hMqsDb+vjZnJq+vI7+EtgrYZTeA==}
     dev: false
 
-  /@next/env@15.1.6:
-    resolution: {integrity: sha512-d9AFQVPEYNr+aqokIiPLNK/MTyt3DWa/dpKveiAaVccUadFbhFEvY6FXYX2LJO2Hv7PHnLBu2oWwB4uBuHjr/w==}
+  /@next/env@14.2.23:
+    resolution: {integrity: sha512-CysUC9IO+2Bh0omJ3qrb47S8DtsTKbFidGm6ow4gXIG6reZybqxbkH2nhdEm1tC8SmgzDdpq3BIML0PWsmyUYA==}
     dev: false
 
   /@next/eslint-plugin-next@13.0.0:
@@ -4139,8 +4139,8 @@ packages:
     dev: false
     optional: true
 
-  /@next/swc-darwin-arm64@15.1.6:
-    resolution: {integrity: sha512-u7lg4Mpl9qWpKgy6NzEkz/w0/keEHtOybmIl0ykgItBxEM5mYotS5PmqTpo+Rhg8FiOiWgwr8USxmKQkqLBCrw==}
+  /@next/swc-darwin-arm64@14.2.23:
+    resolution: {integrity: sha512-WhtEntt6NcbABA8ypEoFd3uzq5iAnrl9AnZt9dXdO+PZLACE32z3a3qA5OoV20JrbJfSJ6Sd6EqGZTrlRnGxQQ==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [darwin]
@@ -4157,8 +4157,8 @@ packages:
     dev: false
     optional: true
 
-  /@next/swc-darwin-x64@15.1.6:
-    resolution: {integrity: sha512-x1jGpbHbZoZ69nRuogGL2MYPLqohlhnT9OCU6E6QFewwup+z+M6r8oU47BTeJcWsF2sdBahp5cKiAcDbwwK/lg==}
+  /@next/swc-darwin-x64@14.2.23:
+    resolution: {integrity: sha512-vwLw0HN2gVclT/ikO6EcE+LcIN+0mddJ53yG4eZd0rXkuEr/RnOaMH8wg/sYl5iz5AYYRo/l6XX7FIo6kwbw1Q==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [darwin]
@@ -4175,8 +4175,8 @@ packages:
     dev: false
     optional: true
 
-  /@next/swc-linux-arm64-gnu@15.1.6:
-    resolution: {integrity: sha512-jar9sFw0XewXsBzPf9runGzoivajeWJUc/JkfbLTC4it9EhU8v7tCRLH7l5Y1ReTMN6zKJO0kKAGqDk8YSO2bg==}
+  /@next/swc-linux-arm64-gnu@14.2.23:
+    resolution: {integrity: sha512-uuAYwD3At2fu5CH1wD7FpP87mnjAv4+DNvLaR9kiIi8DLStWSW304kF09p1EQfhcbUI1Py2vZlBO2VaVqMRtpg==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [linux]
@@ -4193,8 +4193,8 @@ packages:
     dev: false
     optional: true
 
-  /@next/swc-linux-arm64-musl@15.1.6:
-    resolution: {integrity: sha512-+n3u//bfsrIaZch4cgOJ3tXCTbSxz0s6brJtU3SzLOvkJlPQMJ+eHVRi6qM2kKKKLuMY+tcau8XD9CJ1OjeSQQ==}
+  /@next/swc-linux-arm64-musl@14.2.23:
+    resolution: {integrity: sha512-Mm5KHd7nGgeJ4EETvVgFuqKOyDh+UMXHXxye6wRRFDr4FdVRI6YTxajoV2aHE8jqC14xeAMVZvLqYqS7isHL+g==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [linux]
@@ -4211,8 +4211,8 @@ packages:
     dev: false
     optional: true
 
-  /@next/swc-linux-x64-gnu@15.1.6:
-    resolution: {integrity: sha512-SpuDEXixM3PycniL4iVCLyUyvcl6Lt0mtv3am08sucskpG0tYkW1KlRhTgj4LI5ehyxriVVcfdoxuuP8csi3kQ==}
+  /@next/swc-linux-x64-gnu@14.2.23:
+    resolution: {integrity: sha512-Ybfqlyzm4sMSEQO6lDksggAIxnvWSG2cDWnG2jgd+MLbHYn2pvFA8DQ4pT2Vjk3Cwrv+HIg7vXJ8lCiLz79qoQ==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [linux]
@@ -4229,8 +4229,8 @@ packages:
     dev: false
     optional: true
 
-  /@next/swc-linux-x64-musl@15.1.6:
-    resolution: {integrity: sha512-L4druWmdFSZIIRhF+G60API5sFB7suTbDRhYWSjiw0RbE+15igQvE2g2+S973pMGvwN3guw7cJUjA/TmbPWTHQ==}
+  /@next/swc-linux-x64-musl@14.2.23:
+    resolution: {integrity: sha512-OSQX94sxd1gOUz3jhhdocnKsy4/peG8zV1HVaW6DLEbEmRRtUCUQZcKxUD9atLYa3RZA+YJx+WZdOnTkDuNDNA==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [linux]
@@ -4247,8 +4247,8 @@ packages:
     dev: false
     optional: true
 
-  /@next/swc-win32-arm64-msvc@15.1.6:
-    resolution: {integrity: sha512-s8w6EeqNmi6gdvM19tqKKWbCyOBvXFbndkGHl+c9YrzsLARRdCHsD9S1fMj8gsXm9v8vhC8s3N8rjuC/XrtkEg==}
+  /@next/swc-win32-arm64-msvc@14.2.23:
+    resolution: {integrity: sha512-ezmbgZy++XpIMTcTNd0L4k7+cNI4ET5vMv/oqNfTuSXkZtSA9BURElPFyarjjGtRgZ9/zuKDHoMdZwDZIY3ehQ==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [win32]
@@ -4265,6 +4265,15 @@ packages:
     dev: false
     optional: true
 
+  /@next/swc-win32-ia32-msvc@14.2.23:
+    resolution: {integrity: sha512-zfHZOGguFCqAJ7zldTKg4tJHPJyJCOFhpoJcVxKL9BSUHScVDnMdDuOU1zPPGdOzr/GWxbhYTjyiEgLEpAoFPA==}
+    engines: {node: '>= 10'}
+    cpu: [ia32]
+    os: [win32]
+    requiresBuild: true
+    dev: false
+    optional: true
+
   /@next/swc-win32-x64-msvc@14.0.3:
     resolution: {integrity: sha512-ERhKPSJ1vQrPiwrs15Pjz/rvDHZmkmvbf/BjPN/UCOI++ODftT0GtasDPi0j+y6PPJi5HsXw+dpRaXUaw4vjuQ==}
     engines: {node: '>= 10'}
@@ -4274,8 +4283,8 @@ packages:
     dev: false
     optional: true
 
-  /@next/swc-win32-x64-msvc@15.1.6:
-    resolution: {integrity: sha512-6xomMuu54FAFxttYr5PJbEfu96godcxBTRk1OhAvJq0/EnmFU/Ybiax30Snis4vdWZ9LGpf7Roy5fSs7v/5ROQ==}
+  /@next/swc-win32-x64-msvc@14.2.23:
+    resolution: {integrity: sha512-xCtq5BD553SzOgSZ7UH5LH+OATQihydObTrCTvVzOro8QiWYKdBVwcB2Mn2MLMo6DGW9yH1LSPw7jS7HhgJgjw==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [win32]
@@ -5539,7 +5548,7 @@ packages:
       tslib: 1.14.1
     dev: false
 
-  /@sentry/nextjs@8.17.0(@opentelemetry/api@1.9.0)(@opentelemetry/core@1.25.1)(@opentelemetry/instrumentation@0.52.1)(@opentelemetry/sdk-trace-base@1.25.1)(next@15.1.6)(react@18.2.0)(webpack@5.93.0):
+  /@sentry/nextjs@8.17.0(@opentelemetry/api@1.9.0)(@opentelemetry/core@1.25.1)(@opentelemetry/instrumentation@0.52.1)(@opentelemetry/sdk-trace-base@1.25.1)(next@14.2.23)(react@18.2.0)(webpack@5.93.0):
     resolution: {integrity: sha512-VUmPDNW8jgCIe6rN9tYQNzgvFZ2V1jp4wHMI7LTC1tgxZHbyadUJnw5yNTxs0IyjzkFSDaaO879STPv3saeU1A==}
     engines: {node: '>=14.18'}
     peerDependencies:
@@ -5561,7 +5570,7 @@ packages:
       '@sentry/vercel-edge': 8.17.0
       '@sentry/webpack-plugin': 2.20.1(webpack@5.93.0)
       chalk: 3.0.0
-      next: 15.1.6(@babel/core@7.24.7)(@opentelemetry/api@1.9.0)(react-dom@18.2.0)(react@18.2.0)(sass@1.77.8)
+      next: 14.2.23(@babel/core@7.24.7)(@opentelemetry/api@1.9.0)(react-dom@18.2.0)(react@18.2.0)(sass@1.77.8)
       resolve: 1.22.8
       rollup: 3.29.4
       stacktrace-parser: 0.1.10
@@ -5932,16 +5941,17 @@ packages:
     resolution: {integrity: sha512-e2BR4lsJkkRlKZ/qCHPw9ZaSxc0MVUd7gtbtaB7aMvHeJVYe8sOB8DBZkP2DtISHGSku9sCK6T6cnY0CtXrOCQ==}
     dev: false
 
-  /@swc/helpers@0.5.15:
-    resolution: {integrity: sha512-JQ5TuMi45Owi4/BIMAJBoSQoOJu12oOk/gADqlcUL9JEdHB8vyjUSsxqeNXnmXHjYKMi2WcYtezGEEhqUI/E2g==}
-    dependencies:
-      tslib: 2.8.1
-    dev: false
-
   /@swc/helpers@0.5.2:
     resolution: {integrity: sha512-E4KcWTpoLHqwPHLxidpOqQbcrZVgi0rsmmZXUle1jXmJfuIf/UWpczUJ7MZZ5tlxytgJXyp0w4PGkkeLiuIdZw==}
     dependencies:
       tslib: 2.6.3
+    dev: false
+
+  /@swc/helpers@0.5.5:
+    resolution: {integrity: sha512-KGYxvIOXcceOAbEk4bi/dVLEK9z8sZ0uBB3Il5b1rhfClSpcX0yfRO0KmTkqR2cnQDymwLB+25ZyMzICg/cm/A==}
+    dependencies:
+      '@swc/counter': 0.1.3
+      tslib: 2.8.1
     dev: false
 
   /@szmarczak/http-timer@4.0.6:
@@ -6940,14 +6950,14 @@ packages:
       - graphql
     dev: false
 
-  /@urql/next@1.1.1(next@15.1.6)(react@18.2.0)(urql@4.1.0):
+  /@urql/next@1.1.1(next@14.2.23)(react@18.2.0)(urql@4.1.0):
     resolution: {integrity: sha512-dLk4npLZeWDCevua3gM5f8WS1IyyJUsjOvUU9tnFRSjTSn2fQcgYAYZbLfpneLTg+1rYNCLgSMJMuBr95PofTQ==}
     peerDependencies:
       next: '>=13.0.0'
       react: '>=18.0.0'
       urql: ^4.0.0
     dependencies:
-      next: 15.1.6(@babel/core@7.24.7)(@opentelemetry/api@1.9.0)(react-dom@18.2.0)(react@18.2.0)(sass@1.77.8)
+      next: 14.2.23(@babel/core@7.24.7)(@opentelemetry/api@1.9.0)(react-dom@18.2.0)(react@18.2.0)(sass@1.77.8)
       react: 18.2.0
       urql: 4.1.0(@urql/core@5.0.4)(react@18.2.0)
     dev: false
@@ -7809,7 +7819,7 @@ packages:
       '@whatwg-node/events': 0.1.1
       busboy: 1.6.0
       fast-querystring: 1.1.2
-      tslib: 2.6.3
+      tslib: 2.8.1
 
   /@whatwg-node/server@0.9.34:
     resolution: {integrity: sha512-1sHRjqUtZIyTR2m2dS/dJpzS5OcNDpPuUSVDa2PoEgzYVKr4GsqJaYtRaEXXFohvvyh6PkouYCc1rE7jMDWVCA==}
@@ -7824,7 +7834,7 @@ packages:
     engines: {node: '>=8'}
     requiresBuild: true
     dependencies:
-      tslib: 2.6.3
+      tslib: 2.8.1
     dev: true
     optional: true
 
@@ -7833,7 +7843,7 @@ packages:
     engines: {node: '>=8'}
     requiresBuild: true
     dependencies:
-      tslib: 2.6.3
+      tslib: 2.8.1
     dev: true
     optional: true
 
@@ -7842,7 +7852,7 @@ packages:
     engines: {node: '>=8'}
     requiresBuild: true
     dependencies:
-      tslib: 2.6.3
+      tslib: 2.8.1
     dev: true
     optional: true
 
@@ -7851,7 +7861,7 @@ packages:
     engines: {node: '>=8'}
     requiresBuild: true
     dependencies:
-      tslib: 2.6.3
+      tslib: 2.8.1
     dev: true
     optional: true
 
@@ -7860,7 +7870,7 @@ packages:
     engines: {node: '>=8'}
     requiresBuild: true
     dependencies:
-      tslib: 2.6.3
+      tslib: 2.8.1
     dev: true
     optional: true
 
@@ -9530,7 +9540,7 @@ packages:
     resolution: {integrity: sha512-4PFfn4b5ZN6FMNGSZlyb7wUhuN8wvj8t/VQHZdM4JsDcruGJ8L2kf9zao98QIrBPFCpdk27qst/AGTl7pL3ypQ==}
     engines: {node: '>=16.0.0'}
     dependencies:
-      tslib: 2.6.3
+      tslib: 2.8.1
 
   /cross-spawn@7.0.3:
     resolution: {integrity: sha512-iRDPJKUPVEND7dHPO8rkbOnPpyDygcDFtWjpeWNCgy8WP2rXcxXL8TskReQl6OrB2G7+UJrags1q15Fudc7G6w==}
@@ -11948,7 +11958,7 @@ packages:
       graphql: ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0
     dependencies:
       graphql: 16.8.2
-      tslib: 2.6.3
+      tslib: 2.8.1
     dev: true
 
   /graphql-ws@5.16.0(graphql@16.8.2):
@@ -12922,7 +12932,7 @@ packages:
   /is-lower-case@2.0.2:
     resolution: {integrity: sha512-bVcMJy4X5Og6VZfdOZstSexlEy20Sr0k/p/b2IlQJlfdKAQuMpiv5w2Ccxb8sKdRUNAG1PnHVHjFSdRDVS6NlQ==}
     dependencies:
-      tslib: 2.6.3
+      tslib: 2.8.1
     dev: true
 
   /is-map@2.0.3:
@@ -13056,7 +13066,7 @@ packages:
   /is-upper-case@2.0.2:
     resolution: {integrity: sha512-44pxmxAvnnAOwBg4tHPnkfvgjPwbc5QIsSstNU+YcJ1ovxVzCWpSGosPJOZh/a1tdl81fbgnLc9LLv+x2ywbPQ==}
     dependencies:
-      tslib: 2.6.3
+      tslib: 2.8.1
     dev: true
 
   /is-weakmap@2.0.2:
@@ -13838,7 +13848,7 @@ packages:
   /lower-case-first@2.0.2:
     resolution: {integrity: sha512-EVm/rR94FJTZi3zefZ82fLWab+GX14LJN4HrWBcuo6Evmsl9hEfnqxgcHCKb9q+mNf6EVdsjx/qucYFIIB84pg==}
     dependencies:
-      tslib: 2.6.3
+      tslib: 2.8.1
     dev: true
 
   /lower-case@2.0.2:
@@ -14856,14 +14866,14 @@ packages:
     resolution: {integrity: sha512-Yd3UES5mWCSqR+qNT93S3UoYUkqAZ9lLg8a7g9rimsWmYGK8cVToA4/sF3RrshdyV3sAGMXVUmpMYOw+dLpOuw==}
     dev: false
 
-  /next-themes@0.2.1(next@15.1.6)(react-dom@18.2.0)(react@18.2.0):
+  /next-themes@0.2.1(next@14.2.23)(react-dom@18.2.0)(react@18.2.0):
     resolution: {integrity: sha512-B+AKNfYNIzh0vqQQKqQItTS8evEouKD7H5Hj3kmuPERwddR2TxvDSFZuTj6T7Jfn1oyeUyJMydPl1Bkxkh0W7A==}
     peerDependencies:
       next: '*'
       react: '*'
       react-dom: '*'
     dependencies:
-      next: 15.1.6(@babel/core@7.24.7)(@opentelemetry/api@1.9.0)(react-dom@18.2.0)(react@18.2.0)(sass@1.77.8)
+      next: 14.2.23(@babel/core@7.24.7)(@opentelemetry/api@1.9.0)(react-dom@18.2.0)(react@18.2.0)(sass@1.77.8)
       react: 18.2.0
       react-dom: 18.2.0(react@18.2.0)
     dev: false
@@ -14907,48 +14917,45 @@ packages:
       - babel-plugin-macros
     dev: false
 
-  /next@15.1.6(@babel/core@7.24.7)(@opentelemetry/api@1.9.0)(react-dom@18.2.0)(react@18.2.0)(sass@1.77.8):
-    resolution: {integrity: sha512-Hch4wzbaX0vKQtalpXvUiw5sYivBy4cm5rzUKrBnUB/y436LGrvOUqYvlSeNVCWFO/770gDlltR9gqZH62ct4Q==}
-    engines: {node: ^18.18.0 || ^19.8.0 || >= 20.0.0}
+  /next@14.2.23(@babel/core@7.24.7)(@opentelemetry/api@1.9.0)(react-dom@18.2.0)(react@18.2.0)(sass@1.77.8):
+    resolution: {integrity: sha512-mjN3fE6u/tynneLiEg56XnthzuYw+kD7mCujgVqioxyPqbmiotUCGJpIZGS/VaPg3ZDT1tvWxiVyRzeqJFm/kw==}
+    engines: {node: '>=18.17.0'}
     hasBin: true
     peerDependencies:
       '@opentelemetry/api': ^1.1.0
       '@playwright/test': ^1.41.2
-      babel-plugin-react-compiler: '*'
-      react: ^18.2.0 || 19.0.0-rc-de68d2f4-20241204 || ^19.0.0
-      react-dom: ^18.2.0 || 19.0.0-rc-de68d2f4-20241204 || ^19.0.0
+      react: ^18.2.0
+      react-dom: ^18.2.0
       sass: ^1.3.0
     peerDependenciesMeta:
       '@opentelemetry/api':
         optional: true
       '@playwright/test':
         optional: true
-      babel-plugin-react-compiler:
-        optional: true
       sass:
         optional: true
     dependencies:
-      '@next/env': 15.1.6
+      '@next/env': 14.2.23
       '@opentelemetry/api': 1.9.0
-      '@swc/counter': 0.1.3
-      '@swc/helpers': 0.5.15
+      '@swc/helpers': 0.5.5
       busboy: 1.6.0
       caniuse-lite: 1.0.30001636
+      graceful-fs: 4.2.11
       postcss: 8.4.31
       react: 18.2.0
       react-dom: 18.2.0(react@18.2.0)
       sass: 1.77.8
-      styled-jsx: 5.1.6(@babel/core@7.24.7)(react@18.2.0)
+      styled-jsx: 5.1.1(@babel/core@7.24.7)(react@18.2.0)
     optionalDependencies:
-      '@next/swc-darwin-arm64': 15.1.6
-      '@next/swc-darwin-x64': 15.1.6
-      '@next/swc-linux-arm64-gnu': 15.1.6
-      '@next/swc-linux-arm64-musl': 15.1.6
-      '@next/swc-linux-x64-gnu': 15.1.6
-      '@next/swc-linux-x64-musl': 15.1.6
-      '@next/swc-win32-arm64-msvc': 15.1.6
-      '@next/swc-win32-x64-msvc': 15.1.6
-      sharp: 0.33.5
+      '@next/swc-darwin-arm64': 14.2.23
+      '@next/swc-darwin-x64': 14.2.23
+      '@next/swc-linux-arm64-gnu': 14.2.23
+      '@next/swc-linux-arm64-musl': 14.2.23
+      '@next/swc-linux-x64-gnu': 14.2.23
+      '@next/swc-linux-x64-musl': 14.2.23
+      '@next/swc-win32-arm64-msvc': 14.2.23
+      '@next/swc-win32-ia32-msvc': 14.2.23
+      '@next/swc-win32-x64-msvc': 14.2.23
     transitivePeerDependencies:
       - '@babel/core'
       - babel-plugin-macros
@@ -15316,7 +15323,7 @@ packages:
       '@wry/caches': 1.0.1
       '@wry/context': 0.7.4
       '@wry/trie': 0.4.3
-      tslib: 2.6.3
+      tslib: 2.8.1
     dev: true
     optional: true
 
@@ -17185,7 +17192,7 @@ packages:
   /sponge-case@1.0.1:
     resolution: {integrity: sha512-dblb9Et4DAtiZ5YSUZHLl4XhH4uK80GhAZrVXdN4O2P4gQ40Wa5UIOPUHlA/nFd2PLblBZWUioLMMAVrgpoYcA==}
     dependencies:
-      tslib: 2.6.3
+      tslib: 2.8.1
     dev: true
 
   /sprintf-js@1.0.3:
@@ -17449,24 +17456,6 @@ packages:
       react: 18.2.0
     dev: false
 
-  /styled-jsx@5.1.6(@babel/core@7.24.7)(react@18.2.0):
-    resolution: {integrity: sha512-qSVyDTeMotdvQYoHWLNGwRFJHC+i+ZvdBRYosOFgC+Wg1vx4frN2/RG/NA7SYqqvKNLf39P2LSRA2pu6n0XYZA==}
-    engines: {node: '>= 12.0.0'}
-    peerDependencies:
-      '@babel/core': '*'
-      babel-plugin-macros: '*'
-      react: '>= 16.8.0 || 17.x.x || ^18.0.0-0 || ^19.0.0-0'
-    peerDependenciesMeta:
-      '@babel/core':
-        optional: true
-      babel-plugin-macros:
-        optional: true
-    dependencies:
-      '@babel/core': 7.24.7
-      client-only: 0.0.1
-      react: 18.2.0
-    dev: false
-
   /sucrase@3.35.0:
     resolution: {integrity: sha512-8EbVDiu9iN/nESwxeSxDKe0dunta1GOlHufmSSXxMD2z2/tMZpDMpvXQGsc+ajGo8y2uYUmixaSRUc/QPoQ0GA==}
     engines: {node: '>=16 || 14 >=14.17'}
@@ -17525,7 +17514,7 @@ packages:
   /swap-case@2.0.2:
     resolution: {integrity: sha512-kc6S2YS/2yXbtkSMunBtKdah4VFETZ8Oh6ONSmSd9bRxhqTrtARUCBUiWXH3xVPpvR7tz2CSnkuXVE42EcGnMw==}
     dependencies:
-      tslib: 2.6.3
+      tslib: 2.8.1
     dev: true
 
   /symbol-observable@4.0.0:
@@ -17775,7 +17764,7 @@ packages:
   /title-case@3.0.3:
     resolution: {integrity: sha512-e1zGYRvbffpcHIrnuqT0Dh+gEJtDaxDSoG4JAIpq4oDFyooziLBIiYQv0GBT4FUAnUop5uZ1hiIAj7oAF6sOCA==}
     dependencies:
-      tslib: 2.6.3
+      tslib: 2.8.1
     dev: true
 
   /tmp-promise@3.0.3:
@@ -17896,7 +17885,7 @@ packages:
     engines: {node: '>=8'}
     requiresBuild: true
     dependencies:
-      tslib: 2.6.3
+      tslib: 2.8.1
     dev: true
     optional: true
 
@@ -18003,7 +17992,6 @@ packages:
 
   /tslib@2.8.1:
     resolution: {integrity: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==}
-    dev: false
 
   /tsort@0.0.1:
     resolution: {integrity: sha512-Tyrf5mxF8Ofs1tNoxA13lFeZ2Zrbd6cKbuH3V+MQ5sb6DtBj5FjrXVsRWT8YvNAQTqNoz66dz1WsbigI22aEnw==}
