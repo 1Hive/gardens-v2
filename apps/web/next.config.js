@@ -28,7 +28,7 @@ module.exports = {
     ],
   },
   experimental: {
-    serverComponentsExternalPackages: ["ably"],
+    serverExternalPackages: ["ably"],
   },
   productionBrowserSourceMaps: true,
   eslint: {

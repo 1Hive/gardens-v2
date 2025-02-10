@@ -44,7 +44,7 @@
     "graphql": "^16.8.1",
     "lodash-es": "^4.17.21",
     "lokijs": "^1.5.12",
-    "next": "14.0.3",
+    "next": "15.1.6",
     "next-themes": "^0.2.1",
     "pino-pretty": "^10.2.3",
     "react": "18.2.0",
