@@ -47,10 +47,26 @@ export default function Page() {
       return (
         <>
           {tokenGardens
-            .sort(
-              (a, b) =>
-                (a.communities?.length ?? 0) - (b.communities?.length ?? 0),
-            )
+            .sort((a, b) => {
+              const communitiesDiff =
+                (b.communities?.length ?? 0) - (a.communities?.length ?? 0);
+
+              if (communitiesDiff === 0) {
+                const aTotalMembers =
+                  a.communities?.reduce(
+                    (sum, community) => sum + (community.members?.length ?? 0),
+                    0,
+                  ) ?? 0;
+                const bTotalMembers =
+                  b.communities?.reduce(
+                    (sum, community) => sum + (community.members?.length ?? 0),
+                    0,
+                  ) ?? 0;
+                return bTotalMembers - aTotalMembers;
+              }
+
+              return communitiesDiff;
+            })
             .map((garden) => (
               <div key={garden.id}>
                 <GardenCard garden={garden} />
@@ -81,7 +97,7 @@ export default function Page() {
   return (
     <>
       <div className="flex flex-col items-center justify-center gap-8 relative">
-        <header className="flex flex-col items-center gap-8 2xl:mt-20">
+        <header className="flex flex-col items-center gap-8">
           <div className="flex items-center text-center">
             <div className="relative flex-1">
               <Image src={clouds1} alt="clouds" width={205} height={205} />

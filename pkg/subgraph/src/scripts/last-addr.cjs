@@ -7,6 +7,7 @@ const optimismLatest = require("../../../../broadcast/DeployCVMultiChain.s.sol/1
 const gnosisLatest = require("../../../../broadcast/DeployCVMultiChain.s.sol/100/run-latest.json");
 const polygonLatest = require("../../../../broadcast/DeployCVMultiChain.s.sol/137/run-latest.json");
 const arbitrumLatest = require("../../../../broadcast/DeployCVMultiChain.s.sol/42161/run-latest.json");
+const baseLatest = require("../../../../broadcast/DeployCVMultiChain.s.sol/8453/run-latest.json");
 // const mainnetLatest = require("../../../../broadcast/DeployCVMultiChain.s.sol/1/run-latest.json");
 const { fromHex } = require("viem");
 
@@ -22,6 +23,7 @@ const jsons = {
   [viemChains.gnosis.id]: gnosisLatest,
   [viemChains.polygon.id]: polygonLatest,
   [viemChains.arbitrum.id]: arbitrumLatest,
+  [viemChains.base.id]: baseLatest,
   // [viemChains.mainnet.id]: mainnetLatest
 };
 

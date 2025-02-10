@@ -30,7 +30,6 @@ export const getTxMessage = (
 };
 
 function parseErrorMessage(error: Error, fallbackErrorMessage?: string) {
-  console.debug(error);
   if (error?.cause instanceof UserRejectedRequestError) {
     return "User rejected the request";
   } else if (fallbackErrorMessage) {

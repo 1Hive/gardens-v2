@@ -53,6 +53,8 @@ export function FormInput({
   const registered = register?.(registerKey, {
     required,
     disabled,
+    onChange: onChange ?? registerOptions?.onChange,
+    value: value ?? registerOptions?.value,
     ...registerOptions,
   });
 
@@ -93,7 +95,6 @@ export function FormInput({
             disabled={disabled || readOnly}
             readOnly={readOnly || disabled}
             // value={value}
-            onChange={onChange}
             {...otherProps}
           />
         : type === "textarea" ?
