@@ -510,17 +510,41 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     function decreasePower(address _member, uint256 _amountToUnstake) external virtual returns (uint256) {
         onlyRegistryCommunity();
         //requireMemberActivatedInStrategies
-
         uint256 pointsToDecrease = 0;
         if (pointSystem == PointSystem.Unlimited || pointSystem == PointSystem.Capped) {
             pointsToDecrease = _amountToUnstake; // from decreasePowerCappedUnlimited(_amountToUnstake)
         } else {
             pointsToDecrease = decreasePowerQuadratic(_member, _amountToUnstake);
         }
+        uint256 voterStake = totalVoterStakePct[_member];
+        uint256 unusedPower = registryCommunity.getMemberPowerInStrategy(_member, address(this)) - voterStake;
+        if (unusedPower < pointsToDecrease) {
+            uint256 balancingRatio = ((pointsToDecrease - unusedPower) << 128) / voterStake;
+            for(uint256 i=0; i < voterStakedProposals[_member].length; i++) {
+                uint256 proposalId = voterStakedProposals[_member][i];
+                Proposal storage proposal = proposals[proposalId];
+                uint256 stakedPoints = proposal.voterStakedPoints[_member];
+                uint256 newStakedPoints;
+                if(unusedPower > 0){
+                    newStakedPoints = (stakedPoints * balancingRatio + (1 << 127)) >> 128;
+                }
+                else {
+                    newStakedPoints = stakedPoints - ((stakedPoints * balancingRatio + (1 << 127)) >> 128);
+                }
+                uint256 oldStake = proposal.stakedAmount;
+                proposal.stakedAmount -= stakedPoints - newStakedPoints;
+                proposal.voterStakedPoints[_member] = newStakedPoints;
+                totalStaked -= stakedPoints - newStakedPoints;
+                totalVoterStakePct[_member] -= stakedPoints - newStakedPoints;
+                _calculateAndSetConviction(proposal, oldStake);
+                emit SupportAdded(_member, proposalId, 0, proposal.stakedAmount, proposal.convictionLast);
+            }
+        }
         totalPointsActivated -= pointsToDecrease;
         emit PowerDecreased(_member, _amountToUnstake, pointsToDecrease);
         return pointsToDecrease;
     }
+
 
     function increasePowerCapped(address _member, uint256 _amountToStake) internal view virtual returns (uint256) {
         // console.log("POINTS TO INCREASE", _amountToStake);
