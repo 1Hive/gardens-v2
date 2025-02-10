@@ -55,7 +55,8 @@
         "RPC_URL_BASE",
         "CRON_SECRET",  
         "NEXT_PUBLIC_SKIP_PUBLISHED",
-        "CI"
+        "CI",
+        "NEXT_PUBLIC_SUBGRAPH_KEY"
       ]
     },
     "test": {

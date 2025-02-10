@@ -796,20 +796,20 @@ upgrade-base:
 	--chain-id 8453 \
 	--broadcast \
 	--legacy \
-	--via-ir \
 	--verify \
-	--priority-gas-price 1 \
+	--via-ir \
 	-vvv
+
 
 verify-blockscout-base: 
 	-forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
 	--rpc-url $(RPC_URL_BASE) \
 	--sig "run(string)" 'base' \
+	--chain-id 8453 \
 	--account pkGarden \
 	--verifier blockscout \
 	--verifier-url https://base.blockscout.com/api/ \
 	--ffi \
-	--chain-id 8453 \
 	--legacy \
 	--verify \
 	--via-ir \

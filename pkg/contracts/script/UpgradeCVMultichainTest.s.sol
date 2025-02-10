@@ -14,11 +14,11 @@ contract UpgradeCVMultichainTest is BaseMultiChain {
     function runCurrentNetwork(string memory networkJson) public override {
         address registryImplementation = address(new RegistryCommunityV0_0());
         address strategyImplementation = address(new CVStrategyV0_0());
-        address passportScorer = networkJson.readAddress(getKeyNetwork(".PROXIES.PASSPORT_SCORER"));
+        address passportScorer = networkJson.readAddress(getKeyNetwork(".ENVS.PASSPORT_SCORER"));
         address safeArbitrator = networkJson.readAddress(getKeyNetwork(".ENVS.ARBITRATOR"));
 
         // PASSPORT SCORER UPGRADE
-        // address passportScorerProxy = networkJson.readAddress(getKeyNetwork(".PROXIES.PASSPORT_SCORER"));
+        // address passportScorerProxy = networkJson.readAddress(getKeyNetwork(".ENVS.PASSPORT_SCORER"));
         // PassportScorer passportScorer = PassportScorer(address(passportScorerProxy));
         // Upgrades.upgradeProxy(address(passportScorer), "PassportScorer.sol:PassportScorer", "");
         // passportScorer.upgradeTo(passportScorerImplementation); // DOESNT VALIDATE SAFE UPGRADING

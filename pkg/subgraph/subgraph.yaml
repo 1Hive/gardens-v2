@@ -12,7 +12,7 @@ dataSources:
         type: Int
         data: 8453
     source:
-      address: "0xba1c9Da92a4494966fF1d60cB1D2668BfD15C8Fb"
+      address: "0xc93830dd463516ED5f28f6cd4F837173B87FF389"
       abi: RegistryFactoryV0_0
       startBlock: 25264018
     mapping:

@@ -10,21 +10,21 @@ const arbitrumSepoliaSubgraph =
   subgraphConfig.VERSION_TESTNET;
 
 const arbitrumSubgraph =
-  "https://api.studio.thegraph.com/query/40931/gardens-v2---arbitrum/" +
+  "https://api.studio.thegraph.com/query/102093/gardens-v2---arbitrum/" +
   subgraphConfig.VERSION_PROD;
 const maticSubgraph =
-  "https://api.studio.thegraph.com/query/40931/gardens-v2---polygon/" +
+  "https://api.studio.thegraph.com/query/102093/gardens-v2---polygon/" +
   subgraphConfig.VERSION_PROD;
 const optimismSubgraph =
-  "https://api.studio.thegraph.com/query/40931/gardens-v2---optimism/" +
+  "https://api.studio.thegraph.com/query/102093/gardens-v2---optimism/" +
   subgraphConfig.VERSION_PROD;
 const gnosisSubgraph =
-  "https://api.studio.thegraph.com/query/40931/gardens-v2---gnosis/" +
+  "https://api.studio.thegraph.com/query/102093/gardens-v2---gnosis/" +
   subgraphConfig.VERSION_PROD;
 const baseSubgraph =
-"https://api.studio.thegraph.com/query/40931/gardens-v2---base/" +
-subgraphConfig.VERSION_PROD;
-    
+  "https://api.studio.thegraph.com/query/102093/gardens-v2---base/" +
+  subgraphConfig.VERSION_PROD;
+
 // @ts-ignore
 const chainArg = process.argv[process.argv.length - 1];
 
@@ -128,13 +128,14 @@ async function extractProxies(chainId) {
     cvStrategiesProxies.push(strategy.id);
   });
 
-  passportScorerProxy = result.data.passportScorers?.[0]?.id;
+  if (result.data.passportScorers?.[0]?.id)
+    passportScorerProxy = result.data.passportScorers?.[0]?.id;
 
   return {
     REGISTRY_FACTORY: registryFactoryProxy,
     REGISTRY_COMMUNITIES: registryCommunityProxies,
     CV_STRATEGIES: cvStrategiesProxies,
-    PASSPORT_SCORER: passportScorerProxy,
+    PASSPORT_SCORER: passportScorerProxy ?? PASSPORT_SCORER,
   };
 }
 
