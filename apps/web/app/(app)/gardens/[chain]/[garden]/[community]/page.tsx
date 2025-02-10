@@ -6,6 +6,7 @@ import {
   PlusIcon,
   RectangleGroupIcon,
   UserGroupIcon,
+  ArrowTopRightOnSquareIcon,
 } from "@heroicons/react/24/outline";
 
 import { FetchTokenResult } from "@wagmi/core";
@@ -20,7 +21,7 @@ import {
   isMemberDocument,
   isMemberQuery,
 } from "#/subgraph/.graphclient";
-import { commImg, groupFlowers } from "@/assets";
+import { commImg, groupFlowers, BlockscoutLogo } from "@/assets";
 import {
   Button,
   DisplayNumber,
@@ -62,6 +63,8 @@ type CommunityMetricsProps = {
 };
 
 type MemberColumn = Column<MembersStaked>;
+
+const BLOCKSCOUT_ADDRESS = "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9";
 
 export default function Page({
   params: { chain, garden: tokenAddr, community: communityAddr },
@@ -288,6 +291,30 @@ export default function Page({
   return (
     <div className="page-layout">
       <header className="section-layout flex flex-row items-center gap-10 flex-wrap justify-end">
+        <div className="absolute top-5 right-10 flex flex-col">
+          {communityAddr == BLOCKSCOUT_ADDRESS && (
+            <>
+              <Image
+                src={BlockscoutLogo}
+                alt={`${communityName} community`}
+                className="h-[100px]"
+                height={210}
+                width={210}
+              />
+              <a
+                href="https://merits.blockscout.com/?tab=campaigns&id=rec66xiX71sN8y4q1&utm_source=landing-page&utm_medium=campaign&utm_campaign=gnosis"
+                className="text-tertiary-content text-sm -mt-8 flex items-center justify-center gap-1"
+                target="_external"
+                rel="noreferrer"
+              >
+                Learn more about Blockscout Merits{" "}
+                <span>
+                  <ArrowTopRightOnSquareIcon width={14} height={14} />
+                </span>
+              </a>
+            </>
+          )}
+        </div>
         <div>
           <Image
             src={commImg}
