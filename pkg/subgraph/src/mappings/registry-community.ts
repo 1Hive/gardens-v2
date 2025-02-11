@@ -323,7 +323,7 @@ export function handleMemberActivatedStrategy(
     return;
   }
   const cvc = CVStrategyContract.bind(strategyAddress);
-  const totalEffectiveActivePoints = cvc.totalEffectiveActivePoints();
+  const totalEffectiveActivePoints = cvc.totalPointsActivated();
   strategy.totalEffectiveActivePoints = totalEffectiveActivePoints;
   const maxCVSupply = cvc.getMaxConviction(totalEffectiveActivePoints);
   strategy.maxCVSupply = maxCVSupply;
@@ -392,7 +392,7 @@ export function handleMemberDeactivatedStrategy(
     membersActive.splice(index, 1);
   }
   const cvc = CVStrategyContract.bind(strategyAddress);
-  const totalEffectiveActivePoints = cvc.totalEffectiveActivePoints();
+  const totalEffectiveActivePoints = cvc.totalPointsActivated();
   strategy.totalEffectiveActivePoints = totalEffectiveActivePoints;
   const maxCVSupply = cvc.getMaxConviction(totalEffectiveActivePoints);
   strategy.maxCVSupply = maxCVSupply;

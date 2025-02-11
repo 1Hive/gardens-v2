@@ -326,7 +326,14 @@ abstract contract BaseStrategyUpgradeable is ProxyOwnableUpgrader, IStrategy, Tr
     /// @notice This will get the status of a recipient.
     /// @param _recipientId The ID of the recipient
     /// @return The status of the recipient
-    function _getRecipientStatus(address _recipientId) internal view virtual returns (Status);
+    // simply returns the status of a recipient
+    // probably tracked in a mapping, but will depend on the implementation
+    // for example, the OpenSelfRegistration only maps users to bool, and then assumes Accepted for those
+    // since there is no need for Pending or Rejected
+    function _getRecipientStatus(address _recipientId) internal pure virtual returns (Status) {
+        // surpressStateMutabilityWarning;
+        // return _recipientId == address(0) ? Status.Rejected : Status.Accepted;
+    }
 
     /// ===================================
     /// ============== Hooks ==============
@@ -371,4 +378,17 @@ abstract contract BaseStrategyUpgradeable is ProxyOwnableUpgrader, IStrategy, Tr
     /// @param _data The data to use to distribute to the recipients
     /// @param _sender The address of the sender
     function _afterDistribute(address[] memory _recipientIds, bytes memory _data, address _sender) internal virtual {}
+
+    /*|--------------------------------------------|*/
+    /*|                 FALLBACK                  |*/
+    /*|--------------------------------------------|*/
+
+    fallback() external payable virtual {
+        // surpressStateMutabilityWarning++;
+    }
+
+    receive() external payable virtual {
+        // @todo allow only allo protocol to fund it.
+        // surpressStateMutabilityWarning++;
+    }
 }

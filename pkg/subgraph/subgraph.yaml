@@ -8,11 +8,11 @@ dataSources:
     name: RegistryFactoryV0_0
     network: base
     context:
-      chainId:
+      chainId: 
         type: Int
         data: 8453
     source:
-      address: "0xba1c9Da92a4494966fF1d60cB1D2668BfD15C8Fb"
+      address: "0xc93830dd463516ED5f28f6cd4F837173B87FF389"
       abi: RegistryFactoryV0_0
       startBlock: 25264018
     mapping:
@@ -33,16 +33,16 @@ dataSources:
         - event: CommunityValiditySet(address,bool)
           handler: handleCommunityValiditySet
         - event: ProtocolFeeSet(address,uint256)
-          handler: handleProtocolFeeSet
+          handler: handleProtocolFeeSet  
         - event: Initialized(uint8)
-          handler: handleRegistryInitialized
+          handler: handleRegistryInitialized  
       file: ./src/mappings/registry-factory.ts
 
   - kind: ethereum/contract
     name: PassportScorer
     network: base
     context:
-      chainId:
+      chainId: 
         type: Int
         data: 8453
     source:
@@ -100,7 +100,7 @@ templates:
           file: ../contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json
         - name: RegistryFactoryV0_0
           file: ../contracts/out/RegistryFactoryV0_0.sol/RegistryFactoryV0_0.json
-
+     
       eventHandlers:
         - event: RegistryInitialized(bytes32,string,(uint256,string))
           handler: handleInitialized
@@ -204,7 +204,7 @@ templates:
           handler: handleAllowlistMembersRemoved
         - event: SybilScorerUpdated(address)
           handler: handleSybilScorerUpdated
-
+ 
       file: ./src/mappings/cv-strategy.ts
 
   - kind: ethereum/contract
@@ -229,8 +229,8 @@ templates:
           handler: handleCollateralWithdrawnFor
         - event: CollateralWithdrawn(uint256,indexed address,uint256,bool)
           handler: handleCollateralWithdrawn
-      file: ./src/mappings/cv-strategy.ts
-
+      file: ./src/mappings/cv-strategy.ts  
+  
   - name: ProposalDisputeMetadata
     kind: file/ipfs
     mapping:
@@ -243,7 +243,7 @@ templates:
       abis:
         - name: CVStrategyV0_0
           file: ../contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json
-
+  
   - name: ProposalMetadata
     kind: file/ipfs
     mapping:
