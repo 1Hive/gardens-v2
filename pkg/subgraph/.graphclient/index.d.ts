@@ -824,7 +824,7 @@ export type CVStrategy_filter = {
     and?: InputMaybe<Array<InputMaybe<CVStrategy_filter>>>;
     or?: InputMaybe<Array<InputMaybe<CVStrategy_filter>>>;
 };
-export type CVStrategy_orderBy = 'id' | 'poolId' | 'poolAmount' | 'metadata' | 'registryCommunity' | 'registryCommunity__id' | 'registryCommunity__chainId' | 'registryCommunity__strategyTemplate' | 'registryCommunity__profileId' | 'registryCommunity__communityFee' | 'registryCommunity__protocolFee' | 'registryCommunity__protocolFeeReceiver' | 'registryCommunity__communityName' | 'registryCommunity__covenantIpfsHash' | 'registryCommunity__councilSafe' | 'registryCommunity__pendingNewCouncilSafe' | 'registryCommunity__isKickEnabled' | 'registryCommunity__registerStakeAmount' | 'registryCommunity__registerToken' | 'registryCommunity__alloAddress' | 'registryCommunity__isValid' | 'config' | 'config__id' | 'config__D' | 'config__decay' | 'config__maxRatio' | 'config__minThresholdPoints' | 'config__weight' | 'config__proposalType' | 'config__pointSystem' | 'config__maxAmount' | 'proposals' | 'memberActive' | 'maxCVSupply' | 'totalEffectiveActivePoints' | 'isEnabled' | 'token' | 'sybilScorer' | 'sybilScorer__id' | 'archived';
+export type CVStrategy_orderBy = 'id' | 'poolId' | 'poolAmount' | 'metadata' | 'registryCommunity' | 'registryCommunity__id' | 'registryCommunity__chainId' | 'registryCommunity__strategyTemplate' | 'registryCommunity__profileId' | 'registryCommunity__communityFee' | 'registryCommunity__protocolFee' | 'registryCommunity__protocolFeeReceiver' | 'registryCommunity__communityName' | 'registryCommunity__covenantIpfsHash' | 'registryCommunity__councilSafe' | 'registryCommunity__pendingNewCouncilSafe' | 'registryCommunity__isKickEnabled' | 'registryCommunity__registerStakeAmount' | 'registryCommunity__registerToken' | 'registryCommunity__alloAddress' | 'registryCommunity__membersCount' | 'registryCommunity__isValid' | 'config' | 'config__id' | 'config__D' | 'config__decay' | 'config__maxRatio' | 'config__minThresholdPoints' | 'config__weight' | 'config__proposalType' | 'config__pointSystem' | 'config__maxAmount' | 'proposals' | 'memberActive' | 'maxCVSupply' | 'totalEffectiveActivePoints' | 'isEnabled' | 'token' | 'sybilScorer' | 'sybilScorer__id' | 'archived';
 export type CollateralVault = {
     id: Scalars['ID']['output'];
     strategy: CVStrategy;
@@ -1108,7 +1108,7 @@ export type MemberCommunity_filter = {
     and?: InputMaybe<Array<InputMaybe<MemberCommunity_filter>>>;
     or?: InputMaybe<Array<InputMaybe<MemberCommunity_filter>>>;
 };
-export type MemberCommunity_orderBy = 'id' | 'memberAddress' | 'stakedTokens' | 'isRegistered' | 'member' | 'member__id' | 'registryCommunity' | 'registryCommunity__id' | 'registryCommunity__chainId' | 'registryCommunity__strategyTemplate' | 'registryCommunity__profileId' | 'registryCommunity__communityFee' | 'registryCommunity__protocolFee' | 'registryCommunity__protocolFeeReceiver' | 'registryCommunity__communityName' | 'registryCommunity__covenantIpfsHash' | 'registryCommunity__councilSafe' | 'registryCommunity__pendingNewCouncilSafe' | 'registryCommunity__isKickEnabled' | 'registryCommunity__registerStakeAmount' | 'registryCommunity__registerToken' | 'registryCommunity__alloAddress' | 'registryCommunity__isValid' | 'covenantSignature';
+export type MemberCommunity_orderBy = 'id' | 'memberAddress' | 'stakedTokens' | 'isRegistered' | 'member' | 'member__id' | 'registryCommunity' | 'registryCommunity__id' | 'registryCommunity__chainId' | 'registryCommunity__strategyTemplate' | 'registryCommunity__profileId' | 'registryCommunity__communityFee' | 'registryCommunity__protocolFee' | 'registryCommunity__protocolFeeReceiver' | 'registryCommunity__communityName' | 'registryCommunity__covenantIpfsHash' | 'registryCommunity__councilSafe' | 'registryCommunity__pendingNewCouncilSafe' | 'registryCommunity__isKickEnabled' | 'registryCommunity__registerStakeAmount' | 'registryCommunity__registerToken' | 'registryCommunity__alloAddress' | 'registryCommunity__membersCount' | 'registryCommunity__isValid' | 'covenantSignature';
 export type MemberStrategy = {
     id: Scalars['ID']['output'];
     member: Member;
@@ -2013,6 +2013,7 @@ export type RegistryCommunity = {
     registerStakeAmount?: Maybe<Scalars['BigInt']['output']>;
     registerToken?: Maybe<Scalars['String']['output']>;
     alloAddress?: Maybe<Scalars['String']['output']>;
+    membersCount?: Maybe<Scalars['BigInt']['output']>;
     members?: Maybe<Array<MemberCommunity>>;
     garden: TokenGarden;
     isValid: Scalars['Boolean']['output'];
@@ -2278,6 +2279,14 @@ export type RegistryCommunity_filter = {
     alloAddress_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
     alloAddress_not_ends_with?: InputMaybe<Scalars['String']['input']>;
     alloAddress_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    membersCount?: InputMaybe<Scalars['BigInt']['input']>;
+    membersCount_not?: InputMaybe<Scalars['BigInt']['input']>;
+    membersCount_gt?: InputMaybe<Scalars['BigInt']['input']>;
+    membersCount_lt?: InputMaybe<Scalars['BigInt']['input']>;
+    membersCount_gte?: InputMaybe<Scalars['BigInt']['input']>;
+    membersCount_lte?: InputMaybe<Scalars['BigInt']['input']>;
+    membersCount_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+    membersCount_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
     members_?: InputMaybe<MemberCommunity_filter>;
     garden?: InputMaybe<Scalars['String']['input']>;
     garden_not?: InputMaybe<Scalars['String']['input']>;
@@ -2309,7 +2318,7 @@ export type RegistryCommunity_filter = {
     and?: InputMaybe<Array<InputMaybe<RegistryCommunity_filter>>>;
     or?: InputMaybe<Array<InputMaybe<RegistryCommunity_filter>>>;
 };
-export type RegistryCommunity_orderBy = 'id' | 'chainId' | 'strategyTemplate' | 'profileId' | 'communityFee' | 'protocolFee' | 'protocolFeeReceiver' | 'communityName' | 'covenantIpfsHash' | 'registryFactory' | 'registryFactory__id' | 'registryFactory__chainId' | 'strategies' | 'councilSafe' | 'pendingNewCouncilSafe' | 'isKickEnabled' | 'registerStakeAmount' | 'registerToken' | 'alloAddress' | 'members' | 'garden' | 'garden__id' | 'garden__name' | 'garden__description' | 'garden__chainId' | 'garden__totalBalance' | 'garden__ipfsCovenant' | 'garden__symbol' | 'garden__decimals' | 'garden__address' | 'isValid';
+export type RegistryCommunity_orderBy = 'id' | 'chainId' | 'strategyTemplate' | 'profileId' | 'communityFee' | 'protocolFee' | 'protocolFeeReceiver' | 'communityName' | 'covenantIpfsHash' | 'registryFactory' | 'registryFactory__id' | 'registryFactory__chainId' | 'strategies' | 'councilSafe' | 'pendingNewCouncilSafe' | 'isKickEnabled' | 'registerStakeAmount' | 'registerToken' | 'alloAddress' | 'membersCount' | 'members' | 'garden' | 'garden__id' | 'garden__name' | 'garden__description' | 'garden__chainId' | 'garden__totalBalance' | 'garden__ipfsCovenant' | 'garden__symbol' | 'garden__decimals' | 'garden__address' | 'isValid';
 export type RegistryFactory = {
     id: Scalars['ID']['output'];
     chainId: Scalars['BigInt']['output'];
@@ -3372,6 +3381,7 @@ export type RegistryCommunityResolvers<ContextType = MeshContext, ParentType ext
     registerStakeAmount?: Resolver<Maybe<ResolversTypes['BigInt']>, ParentType, ContextType>;
     registerToken?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
     alloAddress?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+    membersCount?: Resolver<Maybe<ResolversTypes['BigInt']>, ParentType, ContextType>;
     members?: Resolver<Maybe<Array<ResolversTypes['MemberCommunity']>>, ParentType, ContextType, RequireFields<RegistryCommunitymembersArgs, 'skip' | 'first'>>;
     garden?: Resolver<ResolversTypes['TokenGarden'], ParentType, ContextType>;
     isValid?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
@@ -3516,81 +3526,81 @@ export declare function getBuiltGraphSDK<TGlobalContext = any, TOperationContext
         [key: string]: never;
     }>, options?: TOperationContext): Promise<getTokenGardensQuery>;
     getMembersStrategy(variables: Exact<{
-        strategyId: Scalars["String"]["input"];
+        strategyId: string;
     }>, options?: TOperationContext): Promise<getMembersStrategyQuery>;
     getMemberStrategy(variables: Exact<{
-        member_strategy: Scalars["ID"]["input"];
+        member_strategy: string;
     }>, options?: TOperationContext): Promise<getMemberStrategyQuery>;
     isMember(variables: Exact<{
-        me: Scalars["ID"]["input"];
-        comm: Scalars["String"]["input"];
+        me: string;
+        comm: string;
     }>, options?: TOperationContext): Promise<isMemberQuery>;
     getMember(variables: Exact<{
-        me: Scalars["ID"]["input"];
+        me: string;
     }>, options?: TOperationContext): Promise<getMemberQuery>;
     getPoolCreationData(variables: Exact<{
-        communityAddr: Scalars["ID"]["input"];
-        tokenAddr: Scalars["ID"]["input"];
+        communityAddr: string;
+        tokenAddr: string;
     }>, options?: TOperationContext): Promise<getPoolCreationDataQuery>;
     getProposalSupporters(variables: Exact<{
-        proposalId: Scalars["String"]["input"];
+        proposalId: string;
     }>, options?: TOperationContext): Promise<getProposalSupportersQuery>;
     getGardenCommunities(variables: Exact<{
-        chainId: Scalars["BigInt"]["input"];
-        tokenGarden: Scalars["ID"]["input"];
+        chainId: any;
+        tokenGarden: string;
     }>, options?: TOperationContext): Promise<getGardenCommunitiesQuery>;
     getCommunity(variables: Exact<{
-        communityAddr: Scalars["ID"]["input"];
-        tokenAddr: Scalars["ID"]["input"];
-        showArchived?: InputMaybe<Scalars["Boolean"]["input"]>;
+        communityAddr: string;
+        tokenAddr: string;
+        showArchived?: boolean;
     }>, options?: TOperationContext): Promise<getCommunityQuery>;
     getCommunityCreationData(variables?: Exact<{
         [key: string]: never;
     }>, options?: TOperationContext): Promise<getCommunityCreationDataQuery>;
     getPoolData(variables: Exact<{
-        garden: Scalars["ID"]["input"];
-        poolId: Scalars["BigInt"]["input"];
+        garden: string;
+        poolId: any;
     }>, options?: TOperationContext): Promise<getPoolDataQuery>;
     getProposalData(variables: Exact<{
-        garden: Scalars["ID"]["input"];
-        proposalId: Scalars["ID"]["input"];
-        communityId: Scalars["ID"]["input"];
+        garden: string;
+        proposalId: string;
+        communityId: string;
     }>, options?: TOperationContext): Promise<getProposalDataQuery>;
     getAllo(variables?: Exact<{
         [key: string]: never;
     }>, options?: TOperationContext): Promise<getAlloQuery>;
     getStrategyByPool(variables: Exact<{
-        poolId: Scalars["BigInt"]["input"];
+        poolId: any;
     }>, options?: TOperationContext): Promise<getStrategyByPoolQuery>;
     getTokenTitle(variables: Exact<{
-        tokenAddr: Scalars["ID"]["input"];
+        tokenAddr: string;
     }>, options?: TOperationContext): Promise<getTokenTitleQuery>;
     getCommunityTitles(variables: Exact<{
-        communityAddr: Scalars["ID"]["input"];
+        communityAddr: string;
     }>, options?: TOperationContext): Promise<getCommunityTitlesQuery>;
     getPoolTitles(variables: Exact<{
-        poolId: Scalars["BigInt"]["input"];
+        poolId: any;
     }>, options?: TOperationContext): Promise<getPoolTitlesQuery>;
     getProposalTitles(variables: Exact<{
-        proposalId: Scalars["ID"]["input"];
+        proposalId: string;
     }>, options?: TOperationContext): Promise<getProposalTitlesQuery>;
     getPassportScorer(variables: Exact<{
-        scorerId: Scalars["ID"]["input"];
+        scorerId: string;
     }>, options?: TOperationContext): Promise<getPassportScorerQuery>;
     getPassportStrategy(variables: Exact<{
-        strategyId: Scalars["ID"]["input"];
+        strategyId: string;
     }>, options?: TOperationContext): Promise<getPassportStrategyQuery>;
     getPassportUser(variables: Exact<{
-        userId: Scalars["ID"]["input"];
+        userId: string;
     }>, options?: TOperationContext): Promise<getPassportUserQuery>;
     getProposalDisputes(variables: Exact<{
-        proposalId: Scalars["ID"]["input"];
+        proposalId: string;
     }>, options?: TOperationContext): Promise<getProposalDisputesQuery>;
     getArbitrableConfigs(variables: Exact<{
-        strategyId: Scalars["String"]["input"];
+        strategyId: string;
     }>, options?: TOperationContext): Promise<getArbitrableConfigsQuery>;
     getMemberPassportAndCommunities(variables: Exact<{
-        memberId: Scalars["ID"]["input"];
+        memberId: string;
     }>, options?: TOperationContext): Promise<getMemberPassportAndCommunitiesQuery>;
 };
 export type getFactoriesQueryVariables = Exact<{
@@ -3599,7 +3609,6 @@ export type getFactoriesQueryVariables = Exact<{
 export type getFactoriesQuery = {
     registryFactories: Array<(Pick<RegistryFactory, 'id'> & {
         registryCommunities?: Maybe<Array<(Pick<RegistryCommunity, 'id' | 'chainId' | 'isValid' | 'communityName' | 'covenantIpfsHash' | 'registerToken' | 'alloAddress'> & {
-            members?: Maybe<Array<Pick<MemberCommunity, 'memberAddress'>>>;
             strategies?: Maybe<Array<(Pick<CVStrategy, 'id' | 'poolId' | 'isEnabled'> & {
                 config: Pick<CVStrategyConfig, 'id' | 'decay' | 'maxRatio' | 'weight' | 'minThresholdPoints'>;
             })>>;
@@ -3611,9 +3620,8 @@ export type getTokenGardensQueryVariables = Exact<{
 }>;
 export type getTokenGardensQuery = {
     tokenGardens: Array<(Pick<TokenGarden, 'id' | 'chainId' | 'name' | 'symbol' | 'decimals' | 'totalBalance'> & {
-        communities?: Maybe<Array<(Pick<RegistryCommunity, 'id' | 'chainId' | 'covenantIpfsHash' | 'communityFee' | 'isValid' | 'communityName'> & {
+        communities?: Maybe<Array<(Pick<RegistryCommunity, 'id' | 'chainId' | 'covenantIpfsHash' | 'communityFee' | 'isValid' | 'communityName' | 'membersCount'> & {
             strategies?: Maybe<Array<Pick<CVStrategy, 'id'>>>;
-            members?: Maybe<Array<Pick<MemberCommunity, 'id' | 'memberAddress'>>>;
         })>>;
     })>;
 };
@@ -3695,7 +3703,7 @@ export type getGardenCommunitiesQueryVariables = Exact<{
 export type getGardenCommunitiesQuery = {
     registryCommunities: Array<(Pick<RegistryCommunity, 'id' | 'chainId' | 'isValid' | 'covenantIpfsHash' | 'communityName' | 'protocolFee' | 'communityFee' | 'registerToken' | 'registerStakeAmount' | 'alloAddress'> & {
         garden: Pick<TokenGarden, 'id'>;
-        members?: Maybe<Array<Pick<MemberCommunity, 'id' | 'memberAddress'>>>;
+        members?: Maybe<Array<Pick<MemberCommunity, 'memberAddress'>>>;
         strategies?: Maybe<Array<Pick<CVStrategy, 'id' | 'totalEffectiveActivePoints' | 'poolId' | 'poolAmount'>>>;
     })>;
 };
@@ -3864,31 +3872,89 @@ export type getMemberPassportAndCommunitiesQuery = {
     }>;
     passportUser?: Maybe<Pick<PassportUser, 'lastUpdated' | 'score'>>;
 };
-export declare const getFactoriesDocument: DocumentNode<getFactoriesQuery, getFactoriesQueryVariables>;
-export declare const getTokenGardensDocument: DocumentNode<getTokenGardensQuery, getTokenGardensQueryVariables>;
-export declare const getMembersStrategyDocument: DocumentNode<getMembersStrategyQuery, getMembersStrategyQueryVariables>;
-export declare const getMemberStrategyDocument: DocumentNode<getMemberStrategyQuery, getMemberStrategyQueryVariables>;
-export declare const isMemberDocument: DocumentNode<isMemberQuery, isMemberQueryVariables>;
-export declare const getMemberDocument: DocumentNode<getMemberQuery, getMemberQueryVariables>;
-export declare const getPoolCreationDataDocument: DocumentNode<getPoolCreationDataQuery, getPoolCreationDataQueryVariables>;
-export declare const getProposalSupportersDocument: DocumentNode<getProposalSupportersQuery, getProposalSupportersQueryVariables>;
-export declare const getGardenCommunitiesDocument: DocumentNode<getGardenCommunitiesQuery, getGardenCommunitiesQueryVariables>;
-export declare const getCommunityDocument: DocumentNode<getCommunityQuery, getCommunityQueryVariables>;
-export declare const getCommunityCreationDataDocument: DocumentNode<getCommunityCreationDataQuery, getCommunityCreationDataQueryVariables>;
-export declare const getPoolDataDocument: DocumentNode<getPoolDataQuery, getPoolDataQueryVariables>;
-export declare const getProposalDataDocument: DocumentNode<getProposalDataQuery, getProposalDataQueryVariables>;
-export declare const getAlloDocument: DocumentNode<getAlloQuery, getAlloQueryVariables>;
-export declare const getStrategyByPoolDocument: DocumentNode<getStrategyByPoolQuery, getStrategyByPoolQueryVariables>;
-export declare const getTokenTitleDocument: DocumentNode<getTokenTitleQuery, getTokenTitleQueryVariables>;
-export declare const getCommunityTitlesDocument: DocumentNode<getCommunityTitlesQuery, getCommunityTitlesQueryVariables>;
-export declare const getPoolTitlesDocument: DocumentNode<getPoolTitlesQuery, getPoolTitlesQueryVariables>;
-export declare const getProposalTitlesDocument: DocumentNode<getProposalTitlesQuery, getProposalTitlesQueryVariables>;
-export declare const getPassportScorerDocument: DocumentNode<getPassportScorerQuery, getPassportScorerQueryVariables>;
-export declare const getPassportStrategyDocument: DocumentNode<getPassportStrategyQuery, getPassportStrategyQueryVariables>;
-export declare const getPassportUserDocument: DocumentNode<getPassportUserQuery, getPassportUserQueryVariables>;
-export declare const getProposalDisputesDocument: DocumentNode<getProposalDisputesQuery, getProposalDisputesQueryVariables>;
-export declare const getArbitrableConfigsDocument: DocumentNode<getArbitrableConfigsQuery, getArbitrableConfigsQueryVariables>;
-export declare const getMemberPassportAndCommunitiesDocument: DocumentNode<getMemberPassportAndCommunitiesQuery, getMemberPassportAndCommunitiesQueryVariables>;
+export declare const getFactoriesDocument: DocumentNode<getFactoriesQuery, Exact<{
+    [key: string]: never;
+}>>;
+export declare const getTokenGardensDocument: DocumentNode<getTokenGardensQuery, Exact<{
+    [key: string]: never;
+}>>;
+export declare const getMembersStrategyDocument: DocumentNode<getMembersStrategyQuery, Exact<{
+    strategyId: Scalars['String']['input'];
+}>>;
+export declare const getMemberStrategyDocument: DocumentNode<getMemberStrategyQuery, Exact<{
+    member_strategy: Scalars['ID']['input'];
+}>>;
+export declare const isMemberDocument: DocumentNode<isMemberQuery, Exact<{
+    me: Scalars['ID']['input'];
+    comm: Scalars['String']['input'];
+}>>;
+export declare const getMemberDocument: DocumentNode<getMemberQuery, Exact<{
+    me: Scalars['ID']['input'];
+}>>;
+export declare const getPoolCreationDataDocument: DocumentNode<getPoolCreationDataQuery, Exact<{
+    communityAddr: Scalars['ID']['input'];
+    tokenAddr: Scalars['ID']['input'];
+}>>;
+export declare const getProposalSupportersDocument: DocumentNode<getProposalSupportersQuery, Exact<{
+    proposalId: Scalars['String']['input'];
+}>>;
+export declare const getGardenCommunitiesDocument: DocumentNode<getGardenCommunitiesQuery, Exact<{
+    chainId: Scalars['BigInt']['input'];
+    tokenGarden: Scalars['ID']['input'];
+}>>;
+export declare const getCommunityDocument: DocumentNode<getCommunityQuery, Exact<{
+    communityAddr: Scalars['ID']['input'];
+    tokenAddr: Scalars['ID']['input'];
+    showArchived?: InputMaybe<Scalars['Boolean']['input']>;
+}>>;
+export declare const getCommunityCreationDataDocument: DocumentNode<getCommunityCreationDataQuery, Exact<{
+    [key: string]: never;
+}>>;
+export declare const getPoolDataDocument: DocumentNode<getPoolDataQuery, Exact<{
+    garden: Scalars['ID']['input'];
+    poolId: Scalars['BigInt']['input'];
+}>>;
+export declare const getProposalDataDocument: DocumentNode<getProposalDataQuery, Exact<{
+    garden: Scalars['ID']['input'];
+    proposalId: Scalars['ID']['input'];
+    communityId: Scalars['ID']['input'];
+}>>;
+export declare const getAlloDocument: DocumentNode<getAlloQuery, Exact<{
+    [key: string]: never;
+}>>;
+export declare const getStrategyByPoolDocument: DocumentNode<getStrategyByPoolQuery, Exact<{
+    poolId: Scalars['BigInt']['input'];
+}>>;
+export declare const getTokenTitleDocument: DocumentNode<getTokenTitleQuery, Exact<{
+    tokenAddr: Scalars['ID']['input'];
+}>>;
+export declare const getCommunityTitlesDocument: DocumentNode<getCommunityTitlesQuery, Exact<{
+    communityAddr: Scalars['ID']['input'];
+}>>;
+export declare const getPoolTitlesDocument: DocumentNode<getPoolTitlesQuery, Exact<{
+    poolId: Scalars['BigInt']['input'];
+}>>;
+export declare const getProposalTitlesDocument: DocumentNode<getProposalTitlesQuery, Exact<{
+    proposalId: Scalars['ID']['input'];
+}>>;
+export declare const getPassportScorerDocument: DocumentNode<getPassportScorerQuery, Exact<{
+    scorerId: Scalars['ID']['input'];
+}>>;
+export declare const getPassportStrategyDocument: DocumentNode<getPassportStrategyQuery, Exact<{
+    strategyId: Scalars['ID']['input'];
+}>>;
+export declare const getPassportUserDocument: DocumentNode<getPassportUserQuery, Exact<{
+    userId: Scalars['ID']['input'];
+}>>;
+export declare const getProposalDisputesDocument: DocumentNode<getProposalDisputesQuery, Exact<{
+    proposalId: Scalars['ID']['input'];
+}>>;
+export declare const getArbitrableConfigsDocument: DocumentNode<getArbitrableConfigsQuery, Exact<{
+    strategyId: Scalars['String']['input'];
+}>>;
+export declare const getMemberPassportAndCommunitiesDocument: DocumentNode<getMemberPassportAndCommunitiesQuery, Exact<{
+    memberId: Scalars['ID']['input'];
+}>>;
 export type Requester<C = {}, E = unknown> = <R, V>(doc: DocumentNode, vars?: V, options?: C) => Promise<R> | AsyncIterable<R>;
 export declare function getSdk<C, E>(requester: Requester<C, E>): {
     getFactories(variables?: getFactoriesQueryVariables, options?: C): Promise<getFactoriesQuery>;

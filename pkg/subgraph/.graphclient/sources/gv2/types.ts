@@ -902,6 +902,7 @@ export type CVStrategy_orderBy =
   | 'registryCommunity__registerStakeAmount'
   | 'registryCommunity__registerToken'
   | 'registryCommunity__alloAddress'
+  | 'registryCommunity__membersCount'
   | 'registryCommunity__isValid'
   | 'config'
   | 'config__id'
@@ -1265,6 +1266,7 @@ export type MemberCommunity_orderBy =
   | 'registryCommunity__registerStakeAmount'
   | 'registryCommunity__registerToken'
   | 'registryCommunity__alloAddress'
+  | 'registryCommunity__membersCount'
   | 'registryCommunity__isValid'
   | 'covenantSignature';
 
@@ -2361,6 +2363,7 @@ export type RegistryCommunity = {
   registerStakeAmount?: Maybe<Scalars['BigInt']['output']>;
   registerToken?: Maybe<Scalars['String']['output']>;
   alloAddress?: Maybe<Scalars['String']['output']>;
+  membersCount?: Maybe<Scalars['BigInt']['output']>;
   members?: Maybe<Array<MemberCommunity>>;
   garden: TokenGarden;
   isValid: Scalars['Boolean']['output'];
@@ -2631,6 +2634,14 @@ export type RegistryCommunity_filter = {
   alloAddress_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
   alloAddress_not_ends_with?: InputMaybe<Scalars['String']['input']>;
   alloAddress_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  membersCount?: InputMaybe<Scalars['BigInt']['input']>;
+  membersCount_not?: InputMaybe<Scalars['BigInt']['input']>;
+  membersCount_gt?: InputMaybe<Scalars['BigInt']['input']>;
+  membersCount_lt?: InputMaybe<Scalars['BigInt']['input']>;
+  membersCount_gte?: InputMaybe<Scalars['BigInt']['input']>;
+  membersCount_lte?: InputMaybe<Scalars['BigInt']['input']>;
+  membersCount_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  membersCount_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
   members_?: InputMaybe<MemberCommunity_filter>;
   garden?: InputMaybe<Scalars['String']['input']>;
   garden_not?: InputMaybe<Scalars['String']['input']>;
@@ -2683,6 +2694,7 @@ export type RegistryCommunity_orderBy =
   | 'registerStakeAmount'
   | 'registerToken'
   | 'alloAddress'
+  | 'membersCount'
   | 'members'
   | 'garden'
   | 'garden__id'

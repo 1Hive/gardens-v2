@@ -54,12 +54,12 @@ export default function Page() {
               if (communitiesDiff === 0) {
                 const aTotalMembers =
                   a.communities?.reduce(
-                    (sum, community) => sum + (community.members?.length ?? 0),
+                    (sum, community) => sum + (community.membersCount ?? 0),
                     0,
                   ) ?? 0;
                 const bTotalMembers =
                   b.communities?.reduce(
-                    (sum, community) => sum + (community.members?.length ?? 0),
+                    (sum, community) => sum + (community.membersCount ?? 0),
                     0,
                   ) ?? 0;
                 return bTotalMembers - aTotalMembers;

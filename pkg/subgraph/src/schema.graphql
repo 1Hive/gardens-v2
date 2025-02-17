@@ -100,6 +100,7 @@ type RegistryCommunity @entity(immutable: false) {
   registerStakeAmount: BigInt
   registerToken: String
   alloAddress: String
+  membersCount: BigInt
   members: [MemberCommunity!] @derivedFrom(field: "registryCommunity")
   # members: [Member!] @derivedFrom(field: "registryCommunity")
   garden: TokenGarden!

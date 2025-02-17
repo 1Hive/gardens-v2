@@ -157,6 +157,17 @@ export function handleMemberRegisteredWithCovenant(
   newMemberCommunity.isRegistered = true;
   newMemberCommunity.covenantSignature = event.params._covenantSig;
   newMemberCommunity.save();
+
+  // Update community count
+  let communityEntity = RegistryCommunity.load(community);
+  if (communityEntity == null) {
+    log.error("RegistryCommunity: Community not found: {}", [community]);
+    return;
+  }
+  communityEntity.membersCount = communityEntity.membersCount
+    ? communityEntity.membersCount!.plus(BigInt.fromI32(1))
+    : BigInt.fromI32(1);
+  communityEntity.save();
 }
 
 export function handleMemberRegistered(event: MemberRegistered): void {
@@ -204,6 +215,17 @@ export function handleMemberRegistered(event: MemberRegistered): void {
 
   newMemberCommunity.isRegistered = true;
   newMemberCommunity.save();
+
+  // Update community count
+  let communityEntity = RegistryCommunity.load(community);
+  if (communityEntity == null) {
+    log.error("RegistryCommunity: Community not found: {}", [community]);
+    return;
+  }
+  communityEntity.membersCount = communityEntity.membersCount
+    ? communityEntity.membersCount!.plus(BigInt.fromI32(1))
+    : BigInt.fromI32(1);
+  communityEntity.save();
 }
 
 //handleMemberUnregistered
@@ -224,6 +246,19 @@ export function handleMemberUnregistered(event: MemberRegistered): void {
   memberCommunity.stakedTokens = BigInt.fromI32(0);
 
   memberCommunity.save();
+
+  // Update community count
+  let communityEntity = RegistryCommunity.load(event.address.toHexString());
+  if (communityEntity == null) {
+    log.error("RegistryCommunity: Community not found: {}", [
+      event.address.toHexString()
+    ]);
+    return;
+  }
+  communityEntity.membersCount = communityEntity.membersCount
+    ? communityEntity.membersCount!.minus(BigInt.fromI32(1))
+    : BigInt.fromI32(0);
+  communityEntity.save();
 }
 
 // handleMemberKicked
@@ -249,6 +284,20 @@ export function handleMemberKicked(event: MemberKicked): void {
   memberCommunity.isRegistered = false;
   memberCommunity.stakedTokens = BigInt.fromI32(0);
   memberCommunity.save();
+
+  // Handle community count
+  let communityEntity = RegistryCommunity.load(event.address.toHexString());
+  if (communityEntity == null) {
+    log.error("RegistryCommunity: Community not found: {}", [
+      event.address.toHexString()
+    ]);
+    return;
+  }
+  communityEntity.membersCount = communityEntity.membersCount
+    ? communityEntity.membersCount!.minus(BigInt.fromI32(1))
+    : BigInt.fromI32(0);
+
+  communityEntity.save();
 }
 
 // handleStrategyAdded
@@ -439,6 +488,23 @@ export function handleMemberPowerIncreased(event: MemberPowerIncreased): void {
     return;
   }
 
+  // If member is increasing from zero, we should increase the member count
+  if (
+    (!newMemberCommunity.stakedTokens ||
+      newMemberCommunity.stakedTokens!.isZero()) &&
+    !event.params._stakedAmount.isZero()
+  ) {
+    let communityEntity = RegistryCommunity.load(community);
+    if (communityEntity == null) {
+      log.error("RegistryCommunity: Community not found: {}", [community]);
+      return;
+    }
+    communityEntity.membersCount = communityEntity.membersCount
+      ? communityEntity.membersCount!.plus(BigInt.fromI32(1))
+      : BigInt.fromI32(1);
+    communityEntity.save();
+  }
+
   newMemberCommunity.stakedTokens = newMemberCommunity.stakedTokens
     ? newMemberCommunity.stakedTokens!.plus(event.params._stakedAmount)
     : event.params._stakedAmount;
@@ -458,6 +524,25 @@ export function handleMemberPowerDecreased(event: MemberPowerDecreased): void {
       memberCommunityId
     ]);
     return;
+  }
+
+  // If member is decreasing to zero, we should decrease the member count
+  if (
+    newMemberCommunity.stakedTokens &&
+    newMemberCommunity.stakedTokens!.isZero() &&
+    newMemberCommunity
+      .stakedTokens!.minus(event.params._unstakedAmount)
+      .isZero()
+  ) {
+    let communityEntity = RegistryCommunity.load(community);
+    if (communityEntity == null) {
+      log.error("RegistryCommunity: Community not found: {}", [community]);
+      return;
+    }
+    communityEntity.membersCount = communityEntity.membersCount
+      ? communityEntity.membersCount!.minus(BigInt.fromI32(1))
+      : BigInt.fromI32(0);
+    communityEntity.save();
   }
 
   newMemberCommunity.stakedTokens = newMemberCommunity.stakedTokens
