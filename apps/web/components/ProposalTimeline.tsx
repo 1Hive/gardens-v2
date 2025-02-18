@@ -146,7 +146,7 @@ export const ProposalTimeline: FC<Props> = ({
                       {!isTimeout && defaultRuling === "rejected" && (
                         <div
                           className="tooltip w-full"
-                          data-tip="Pool default ruling on timeout is to Reject"
+                          data-tip="Pool default ruling on abstain is to Reject"
                         >
                           <ClockIcon className="w-4 text-secondary-content" />
                         </div>
@@ -175,7 +175,7 @@ export const ProposalTimeline: FC<Props> = ({
                       {!isTimeout && defaultRuling === "approved" && (
                         <div
                           className="tooltip w-full"
-                          data-tip="Pool default ruling on timeout is to Approve"
+                          data-tip="Pool default ruling on abstain is to Approve"
                         >
                           <ClockIcon className="w-4 text-secondary-content" />
                         </div>
