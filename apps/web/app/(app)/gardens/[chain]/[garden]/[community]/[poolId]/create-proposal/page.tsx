@@ -4,9 +4,15 @@ import React from "react";
 import { getPoolDataDocument, getPoolDataQuery } from "#/subgraph/.graphclient";
 import { ProposalForm } from "@/components/Forms";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { calculateMinimumConviction } from "@/components/PoolHeader";
 import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
-import { CV_SCALE_PRECISION, MAX_RATIO_CONSTANT } from "@/utils/numbers";
+import {
+  calculatePercentage,
+  CV_SCALE_PRECISION,
+  formatTokenAmount,
+  MAX_RATIO_CONSTANT,
+} from "@/utils/numbers";
 
 export default function Page({
   params: { poolId, garden },
@@ -37,12 +43,29 @@ export default function Page({
   const proposalType = strategyObj.config?.proposalType as number;
   const poolAmount = strategyObj.poolAmount as number;
 
-  const maxRatioDivPrecision =
-    (Number(strategyObj.config?.maxRatio) / CV_SCALE_PRECISION) *
-    MAX_RATIO_CONSTANT;
+  const spendingLimitPctValue =
+    (Number(strategyObj.config.maxRatio || 0) / CV_SCALE_PRECISION) * 100;
 
-  const spendingLimitPct = maxRatioDivPrecision * 100;
-  const poolAmountSpendingLimit = poolAmount * maxRatioDivPrecision;
+  const minimumConviction = calculateMinimumConviction(
+    strategyObj.config.weight,
+    spendingLimitPctValue * MAX_RATIO_CONSTANT,
+  );
+
+  const spendingLimitValuePct =
+    (strategyObj.config.maxRatio / CV_SCALE_PRECISION) *
+    (1 - Math.sqrt(minimumConviction / 100)) *
+    100;
+
+  const poolAmountSpendingLimit = formatTokenAmount(
+    poolAmount,
+    +tokenGarden?.decimals,
+  );
+
+  const calculateSpendingLimitValue =
+    calculatePercentage(
+      +poolAmountSpendingLimit,
+      Math.round(spendingLimitValuePct),
+    ) / 100;
 
   return (
     <div className="page-layout">
@@ -60,8 +83,8 @@ export default function Page({
           proposalType={proposalType}
           alloInfo={alloInfo}
           tokenGarden={tokenGarden}
-          spendingLimit={poolAmountSpendingLimit}
-          spendingLimitPct={spendingLimitPct}
+          spendingLimit={calculateSpendingLimitValue}
+          spendingLimitPct={spendingLimitValuePct}
           poolAmount={poolAmount}
         />
       </section>
