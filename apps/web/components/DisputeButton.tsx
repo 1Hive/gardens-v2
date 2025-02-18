@@ -368,9 +368,7 @@ export const DisputeButton: FC<Props> = ({
                 >
                   <InfoWrapper
                     className={"[&>svg]:text-secondary-content"}
-                    tooltip={
-                      "Abstain to follow the pool's default resolution (approve/reject) and return collaterals to both parties."
-                    }
+                    tooltip={`Abstain to follow the pool's default resolution (${arbitrationConfig.defaultRuling === APPROVED_RULING ? "approved" : "rejected"}) and return collaterals to both parties.`}
                   >
                     Abstain
                   </InfoWrapper>
@@ -473,7 +471,7 @@ export const DisputeButton: FC<Props> = ({
             btnStyle="outline"
             onClick={() => setIsModalOpened(true)}
           >
-            {(isDisputed ?? isProposalEnded) ? "Open dispute" : "Dispute"}
+            {isDisputed ?? isProposalEnded ? "Open dispute" : "Dispute"}
           </Button>
           <Modal
             title={`Disputed Proposal: ${proposalData.title} #${proposalData.proposalNumber}`}
