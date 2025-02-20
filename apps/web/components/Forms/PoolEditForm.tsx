@@ -658,6 +658,7 @@ export default function PoolEditForm({
                   tooltip="Enter a Safe address to rule on proposal disputes in the Pool and determine if they are in violation of the Covenant."
                   label="Tribunal address"
                   required
+                  validateSafe
                   onChange={(ev) =>
                     setValue("tribunalAddress", ev.target.value)
                   }
@@ -675,9 +676,7 @@ export default function PoolEditForm({
                   }
                   onChange={() => {
                     setTribunalAddress((oldAddress) =>
-                      oldAddress === globalTribunal ? "" : (
-                        (globalTribunal ?? "")
-                      ),
+                      oldAddress === globalTribunal ? "" : globalTribunal ?? "",
                     );
                   }}
                 />

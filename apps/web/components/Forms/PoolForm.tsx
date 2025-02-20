@@ -840,6 +840,7 @@ export function PoolForm({ token, communityAddr }: Props) {
                 tooltip="Enter a Safe address to rule on proposal disputes in the Pool and determine if they are in violation of the Covenant."
                 label="Tribunal address"
                 required
+                validateSafe
                 value={tribunalAddress}
                 onChange={(e) => {
                   setValue("tribunalAddress", e.target.value);

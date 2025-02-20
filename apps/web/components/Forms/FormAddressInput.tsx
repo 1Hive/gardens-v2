@@ -4,12 +4,15 @@ import { uniqueId } from "lodash-es";
 import { Address, isAddress } from "viem";
 import { useEnsAddress, useEnsAvatar, useEnsName } from "wagmi";
 import { InfoWrapper } from "../InfoWrapper";
+import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useSafeValidation } from "@/hooks/useSafeValidation";
 import { isENS } from "@/utils/web3";
 
 type ValidationStatus = {
   isValid: boolean;
   message?: string;
+  isValidating?: boolean;
 };
 
 type Props = {
@@ -25,6 +28,7 @@ type Props = {
   tooltip?: string;
   onChange?: React.ChangeEventHandler<HTMLInputElement>;
   onValidationChange?: (status: ValidationStatus) => void;
+  validateSafe?: boolean;
 };
 
 export const FormAddressInput = ({
@@ -40,6 +44,7 @@ export const FormAddressInput = ({
   tooltip,
   onChange,
   onValidationChange,
+  validateSafe = false,
 }: Props) => {
   const id = uniqueId("address-input-");
   const debouncedValue = useDebounce(value, 500);
@@ -47,11 +52,13 @@ export const FormAddressInput = ({
     isValid: false,
   });
   const [shouldValidate, setShouldValidate] = useState(false);
+  const chain = useChainFromPath();
 
   const debouncedOrValue = isAddress(value ?? "") ? value : debouncedValue;
   const isDebouncedValueLive = debouncedOrValue === value;
   const settledValue = isDebouncedValueLive ? debouncedOrValue : undefined;
 
+  // ENS Resolution
   const { data: ensAddress, isError: ensError } = useEnsAddress({
     name: settledValue,
     enabled: isENS(debouncedOrValue),
@@ -73,7 +80,13 @@ export const FormAddressInput = ({
     cacheTime: 30_000,
   });
 
-  const validateAddress = useCallback(() => {
+  // SAFE Validation using the custom hook
+  const { isSafe, isLoading: isValidatingSafe } = useSafeValidation({
+    address: value as Address,
+    enabled: validateSafe && isAddress(value ?? "") && shouldValidate,
+  });
+
+  const validateAddress = useCallback(async () => {
     if (!value) {
       setValidationStatus({
         isValid: !required,
@@ -82,9 +95,15 @@ export const FormAddressInput = ({
       return;
     }
 
-    if (isAddress(value)) {
-      setValidationStatus({ isValid: true });
-    } else if (isENS(value)) {
+    if (!isAddress(value) && !isENS(value)) {
+      setValidationStatus({
+        isValid: false,
+        message: "Invalid Ethereum address or ENS name",
+      });
+      return;
+    }
+
+    if (isENS(value)) {
       if (ensError) {
         setValidationStatus({
           isValid: false,
@@ -98,22 +117,65 @@ export const FormAddressInput = ({
           message: "Resolving ENS name...",
         });
       }
+      return;
+    }
+
+    // SAFE validation if enabled
+    if (validateSafe) {
+      setValidationStatus((prev) => ({
+        ...prev,
+        isValidating: true,
+      }));
+
+      try {
+        if (isValidatingSafe) {
+          setValidationStatus({
+            isValid: false,
+            isValidating: true,
+            message: "Validating Safe address...",
+          });
+          return;
+        }
+
+        setValidationStatus({
+          isValid: isSafe,
+          message:
+            isSafe ? undefined : (
+              `Not a valid Safe address in ${chain?.name} network`
+            ),
+          isValidating: false,
+        });
+      } catch (error) {
+        setValidationStatus({
+          isValid: false,
+          message: "Error validating Safe address",
+          isValidating: false,
+        });
+      }
     } else {
+      // Regular address validation
       setValidationStatus({
-        isValid: false,
-        message: "Invalid Ethereum address or ENS name",
+        isValid: true,
+        isValidating: false,
       });
     }
-  }, [value, ensAddress, ensError, required]);
+  }, [
+    value,
+    ensAddress,
+    ensError,
+    required,
+    validateSafe,
+    chain?.name,
+    isSafe,
+    isValidatingSafe,
+  ]);
 
-  // Only validate when shouldValidate is true (after blur)
   useEffect(() => {
     if (shouldValidate) {
       validateAddress();
     }
   }, [shouldValidate, validateAddress]);
 
-  // Notify parent component of validation changes
   useEffect(() => {
     onValidationChange?.(validationStatus);
   }, [validationStatus, onValidationChange]);
@@ -148,7 +210,11 @@ export const FormAddressInput = ({
   } else if (readOnly) {
     modifier =
       "!border-gray-300 !focus-within:border-gray-300 focus-within:outline !outline-gray-300 cursor-not-allowed bg-transparent";
-  } else if (!validationStatus.isValid && shouldValidate) {
+  } else if (
+    !validationStatus.isValid &&
+    shouldValidate &&
+    !validationStatus.isValidating
+  ) {
     modifier = "border-error";
   }
 
@@ -175,7 +241,7 @@ export const FormAddressInput = ({
       >
         <input
           className={`input font-mono text-sm px-0 w-full border-none focus:border-none outline-none focus:outline-none ${
-            (readOnly ?? disabled) ? "cursor-not-allowed" : ""
+            readOnly ?? disabled ? "cursor-not-allowed" : ""
           }`}
           placeholder={placeholder || "Enter address or ENS name"}
           id={id}
@@ -188,7 +254,6 @@ export const FormAddressInput = ({
           value={value}
         />
         {value && (
-          // eslint-disable-next-line @next/next/no-img-element
           <img
             alt=""
             className="!rounded-full ml-2"

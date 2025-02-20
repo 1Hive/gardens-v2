@@ -4,19 +4,19 @@ import React, { useState } from "react";
 import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
 import { usePathname, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
-import { Address, Chain, createPublicClient, http, parseUnits } from "viem";
+import { Address, parseUnits } from "viem";
 import { TokenGarden } from "#/subgraph/.graphclient";
+import { FormAddressInput } from "./FormAddressInput";
 import { FormCheckBox } from "./FormCheckBox";
 import { FormInput } from "./FormInput";
 import { FormPreview, FormRow } from "./FormPreview";
 import { Button } from "@/components";
-import { getChain } from "@/configs/chains";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
-import { registryFactoryABI, safeABI } from "@/src/generated";
+import { registryFactoryABI } from "@/src/generated";
 import { getEventFromReceipt } from "@/utils/contracts";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 import {
@@ -60,6 +60,7 @@ export const CommunityForm = ({
     formState: { errors },
     getValues,
     setValue,
+    watch,
   } = useForm<FormInputs>();
 
   const { publish } = usePubSubContext();
@@ -70,15 +71,8 @@ export const CommunityForm = ({
   const router = useRouter();
   const pathname = usePathname();
   const { isConnected, missmatchUrl, tooltipMessage } = useDisableButtons();
-
+  const councilSafe = watch("councilSafe");
   const chainFromPath = useChainFromPath()!;
-
-  // const [file, setFile] = useState<File | null>(null);
-
-  const publicClient = createPublicClient({
-    chain: chainFromPath as Chain,
-    transport: http(),
-  });
 
   const formRowTypes: Record<string, FormRowTypes> = {
     stakeAmount: {
@@ -209,26 +203,6 @@ export const CommunityForm = ({
     return formattedRows;
   };
 
-  const addressIsSAFE = async (walletAddress: Address) => {
-    if (localStorage.getItem("bypassSafeCheck") === "true" || chainFromPath.isTestnet) {
-      return true;
-    }
-    let isSafe = false;
-    try {
-      const data = await publicClient.readContract({
-        address: walletAddress,
-        abi: safeABI,
-        functionName: "getOwners",
-      });
-      isSafe = !!data;
-    } catch (error) {
-      console.warn(
-        walletAddress + " is not a valid Safe address in the network",
-      );
-    }
-    return isSafe;
-  };
-
   return (
     <form onSubmit={handleSubmit(handlePreview)} className="w-full">
       {showPreview ?
@@ -317,24 +291,14 @@ export const CommunityForm = ({
             />
           </div>
           <div className="flex flex-col">
-            <FormInput
-              label="Council Safe address"
-              register={register}
-              required
-              registerOptions={{
-                pattern: {
-                  value: ethAddressRegEx,
-                  message: "Invalid Eth Address",
-                },
-                validate: async (value) =>
-                  (await addressIsSAFE(value)) ||
-                  `Not a valid Safe address in ${getChain(chainId)?.name} network`,
-              }}
-              errors={errors}
-              registerKey="councilSafe"
-              placeholder="0x.."
-              type="text"
+            <FormAddressInput
               tooltip="The moderators of the community. Choose a Safe address that can create pools and manage settings in the community."
+              label="Council Safe address"
+              required
+              validateSafe
+              onChange={(ev) => setValue("councilSafe", ev.target.value)}
+              value={councilSafe}
+              placeholder="0x.."
             />
           </div>
 
