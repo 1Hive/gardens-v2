@@ -8,6 +8,7 @@ import {
   ArchiveBoxIcon,
   InformationCircleIcon,
   Square3Stack3DIcon,
+  ScaleIcon,
 } from "@heroicons/react/24/outline";
 import {
   NoSymbolIcon,
@@ -552,6 +553,21 @@ export default function PoolHeader({
                 }
                 icon={<BoltIcon />}
               />
+            </div>
+          </Statistic>
+          <Statistic label="Dispute resolution">
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Badge
+                className="text-secondary-content"
+                icon={<ScaleIcon />}
+              >
+                <EthAddress
+                  address={tribunalAddress as Address}
+                  shortenAddress={true}
+                  actions="copy"
+                  label="Tribunal Safe"
+                />
+              </Badge>
             </div>
           </Statistic>
         </div>
