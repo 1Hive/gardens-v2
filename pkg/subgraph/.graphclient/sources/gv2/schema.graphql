@@ -886,7 +886,6 @@ enum CVStrategy_orderBy {
   registryCommunity__registerStakeAmount
   registryCommunity__registerToken
   registryCommunity__alloAddress
-  registryCommunity__membersCount
   registryCommunity__isValid
   config
   config__id
@@ -1232,7 +1231,6 @@ enum MemberCommunity_orderBy {
   registryCommunity__registerStakeAmount
   registryCommunity__registerToken
   registryCommunity__alloAddress
-  registryCommunity__membersCount
   registryCommunity__isValid
   covenantSignature
 }
@@ -2436,7 +2434,6 @@ type RegistryCommunity {
   registerStakeAmount: BigInt
   registerToken: String
   alloAddress: String
-  membersCount: BigInt
   members(skip: Int = 0, first: Int = 100, orderBy: MemberCommunity_orderBy, orderDirection: OrderDirection, where: MemberCommunity_filter): [MemberCommunity!]
   garden: TokenGarden!
   isValid: Boolean!
@@ -2689,14 +2686,6 @@ input RegistryCommunity_filter {
   alloAddress_ends_with_nocase: String
   alloAddress_not_ends_with: String
   alloAddress_not_ends_with_nocase: String
-  membersCount: BigInt
-  membersCount_not: BigInt
-  membersCount_gt: BigInt
-  membersCount_lt: BigInt
-  membersCount_gte: BigInt
-  membersCount_lte: BigInt
-  membersCount_in: [BigInt!]
-  membersCount_not_in: [BigInt!]
   members_: MemberCommunity_filter
   garden: String
   garden_not: String
@@ -2749,7 +2738,6 @@ enum RegistryCommunity_orderBy {
   registerStakeAmount
   registerToken
   alloAddress
-  membersCount
   members
   garden
   garden__id
