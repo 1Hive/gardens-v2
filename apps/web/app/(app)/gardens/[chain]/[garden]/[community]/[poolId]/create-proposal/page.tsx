@@ -1,12 +1,15 @@
 "use client";
 
 import React from "react";
+import { Address, useToken } from "wagmi";
 import { getPoolDataDocument, getPoolDataQuery } from "#/subgraph/.graphclient";
 import { ProposalForm } from "@/components/Forms";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { calculateMinimumConviction } from "@/components/PoolHeader";
+import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
+import { PoolTypes } from "@/types";
 import { CV_SCALE_PRECISION, MAX_RATIO_CONSTANT } from "@/utils/numbers";
 
 export default function Page({
@@ -25,6 +28,15 @@ export default function Page({
   });
 
   const tokenGarden = data?.tokenGarden;
+  const poolTokenAddr = strategyObj?.token;
+  const proposalType = strategyObj?.config?.proposalType as number;
+  const chainId = useChainIdFromPath();
+
+  const { data: poolToken } = useToken({
+    address: poolTokenAddr as Address,
+    enabled: !!poolTokenAddr && PoolTypes[proposalType] === "funding",
+    chainId,
+  });
 
   if (!tokenGarden || !metadata || !strategyObj) {
     return (
@@ -35,10 +47,8 @@ export default function Page({
   }
 
   const alloInfo = data?.allos[0];
-  const proposalType = strategyObj.config?.proposalType as number;
   const poolAmount = strategyObj.poolAmount as number;
 
-  // calculation taken from PoolHeader.tsx
   const spendingLimitPctValue =
     (Number(strategyObj.config.maxRatio || 0) / CV_SCALE_PRECISION) * 100;
 
@@ -60,10 +70,10 @@ export default function Page({
   }
   const formattedPoolAmount = formatTokenAmount(
     poolAmount,
-    +tokenGarden.decimals,
+    poolToken?.decimals ?? 18,
   );
 
-  const calculateSpendingLimitValue = (
+  const spendingLimitValueNum = (
     (+formattedPoolAmount * +Math.round(spendingLimitValuePct)) /
     100
   ).toFixed(2);
@@ -84,7 +94,7 @@ export default function Page({
           proposalType={proposalType}
           alloInfo={alloInfo}
           tokenGarden={tokenGarden}
-          spendingLimit={+calculateSpendingLimitValue}
+          spendingLimit={+spendingLimitValueNum}
           spendingLimitPct={spendingLimitValuePct}
           poolAmount={poolAmount}
         />
