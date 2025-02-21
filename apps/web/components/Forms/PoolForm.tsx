@@ -451,13 +451,15 @@ export function PoolForm({ token, communityAddr }: Props) {
               (chain.passportScorer as Address)
             : zeroAddress,
           sybilScorerThreshold: BigInt(
-            (
-              Array.isArray(sybilResistanceValue) ||
-                !previewData.sybilResistanceValue
-            ) ?
-              0
-            : (previewData.sybilResistanceValue as unknown as number) *
-                CV_PASSPORT_THRESHOLD_SCALE,
+            Math.round(
+              (
+                Array.isArray(sybilResistanceValue) ||
+                  !previewData.sybilResistanceValue
+              ) ?
+                0
+              : (previewData.sybilResistanceValue as unknown as number) *
+                  CV_PASSPORT_THRESHOLD_SCALE,
+            ),
           ),
           initialAllowlist: allowList,
         },
@@ -863,7 +865,7 @@ export function PoolForm({ token, communityAddr }: Props) {
                         chain.globalTribunal?.toLowerCase()
                     ) ?
                       ""
-                    : (chain.globalTribunal ?? ""),
+                    : chain.globalTribunal ?? "",
                   );
                 }}
               />

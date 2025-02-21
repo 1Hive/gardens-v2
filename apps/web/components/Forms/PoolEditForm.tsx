@@ -478,7 +478,6 @@ export default function PoolEditForm({
                 )
               }
             </div>
-
             {/* pool settings section */}
             <div className="flex flex-col">
               <h6 className="mb-4">Conviction params</h6>

@@ -214,7 +214,7 @@ export function ProposalCard({
                   <div className="flex items-center gap-8 flex-grow flex-wrap">
                     <div
                       className={`flex-grow sm:max-w-[460px] ${isProposalEnded && "tooltip"}`}
-                      data-tip="Can't change support from ended proposals."
+                      data-tip="Click X to remove your support from this proposal"
                     >
                       <input
                         type="range"

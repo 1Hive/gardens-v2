@@ -3609,6 +3609,7 @@ export type getFactoriesQueryVariables = Exact<{
 export type getFactoriesQuery = {
     registryFactories: Array<(Pick<RegistryFactory, 'id'> & {
         registryCommunities?: Maybe<Array<(Pick<RegistryCommunity, 'id' | 'chainId' | 'isValid' | 'communityName' | 'covenantIpfsHash' | 'registerToken' | 'alloAddress'> & {
+            members?: Maybe<Array<Pick<MemberCommunity, 'memberAddress'>>>;
             strategies?: Maybe<Array<(Pick<CVStrategy, 'id' | 'poolId' | 'isEnabled'> & {
                 config: Pick<CVStrategyConfig, 'id' | 'decay' | 'maxRatio' | 'weight' | 'minThresholdPoints'>;
             })>>;
@@ -3620,8 +3621,9 @@ export type getTokenGardensQueryVariables = Exact<{
 }>;
 export type getTokenGardensQuery = {
     tokenGardens: Array<(Pick<TokenGarden, 'id' | 'chainId' | 'name' | 'symbol' | 'decimals' | 'totalBalance'> & {
-        communities?: Maybe<Array<(Pick<RegistryCommunity, 'id' | 'chainId' | 'covenantIpfsHash' | 'communityFee' | 'isValid' | 'communityName' | 'membersCount'> & {
+        communities?: Maybe<Array<(Pick<RegistryCommunity, 'id' | 'chainId' | 'covenantIpfsHash' | 'communityFee' | 'isValid' | 'communityName'> & {
             strategies?: Maybe<Array<Pick<CVStrategy, 'id'>>>;
+            members?: Maybe<Array<Pick<MemberCommunity, 'id' | 'memberAddress'>>>;
         })>>;
     })>;
 };
@@ -3703,7 +3705,7 @@ export type getGardenCommunitiesQueryVariables = Exact<{
 export type getGardenCommunitiesQuery = {
     registryCommunities: Array<(Pick<RegistryCommunity, 'id' | 'chainId' | 'isValid' | 'covenantIpfsHash' | 'communityName' | 'protocolFee' | 'communityFee' | 'registerToken' | 'registerStakeAmount' | 'alloAddress'> & {
         garden: Pick<TokenGarden, 'id'>;
-        members?: Maybe<Array<Pick<MemberCommunity, 'memberAddress'>>>;
+        members?: Maybe<Array<Pick<MemberCommunity, 'id' | 'memberAddress'>>>;
         strategies?: Maybe<Array<Pick<CVStrategy, 'id' | 'totalEffectiveActivePoints' | 'poolId' | 'poolAmount'>>>;
     })>;
 };

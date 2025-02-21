@@ -9,6 +9,9 @@ query getFactories {
       covenantIpfsHash
       registerToken
       alloAddress
+      members(first: 1000) {
+        memberAddress
+      }
       strategies {
         id
         poolId
@@ -40,16 +43,19 @@ query getTokenGardens {
       communityFee
       isValid
       communityName
-      membersCount
       strategies {
         id
+      }
+      members(first: 1000) {
+        id
+        memberAddress
       }
     }
   }
 }
 
 query getMembersStrategy($strategyId: String!) {
-  memberStrategies(where: { strategy: $strategyId }) {
+  memberStrategies(first: 1000, where: { strategy: $strategyId }) {
     activatedPoints
     member {
       memberCommunity {
@@ -180,7 +186,8 @@ query getGardenCommunities($chainId: BigInt!, $tokenGarden: ID!) {
     registerToken
     registerStakeAmount
     alloAddress
-    members(first: 1000) {
+    members(first: 1000, where: { stakedTokens_gt: "0" }) {
+      id
       memberAddress
     }
     strategies(where: { isEnabled: true }) {
@@ -201,10 +208,10 @@ query getCommunity(
     communityName
     id
     members(
+      first: 1000
       where: { stakedTokens_gt: "0" }
       orderBy: stakedTokens
       orderDirection: desc
-      first: 1000
     ) {
       memberAddress
       stakedTokens
