@@ -89,7 +89,10 @@ function calculateConvictionGrowthInSeconds(
   return halfLifeInSeconds;
 }
 
-function calculateMinimumConviction(weight: number, spendingLimit: number) {
+export function calculateMinimumConviction(
+  weight: number,
+  spendingLimit: number,
+) {
   const weightNum = Number(weight) / CV_SCALE_PRECISION;
 
   const spendingLimitFraction = spendingLimit / 100;

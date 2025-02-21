@@ -1,5 +1,5 @@
 import { FC, Fragment } from "react";
-import { CheckIcon } from "@heroicons/react/24/outline";
+import { CheckIcon, ClockIcon } from "@heroicons/react/24/outline";
 import {
   ArbitrableConfig,
   CVProposal,
@@ -139,10 +139,18 @@ export const ProposalTimeline: FC<Props> = ({
                       tooltip={
                         isTimeout && defaultRuling === "approved" ?
                           "Pool default ruling on timeout is to Approve"
-                        : "The proposal will be closed as rejected."
+                        : `The proposal will be closed as rejected${defaultRuling === "rejected" ? " (default on abstain)" : ""}`
                       }
                       className={`[&>svg]:!text-error-content [&:before]:ml-[-26px] ${isTimeout && defaultRuling === "approved" && "[&>svg]:opacity-50"}`}
                     >
+                      {!isTimeout && defaultRuling === "rejected" && (
+                        <div
+                          className="tooltip w-full"
+                          data-tip="Pool default ruling on abstain is to Reject"
+                        >
+                          <ClockIcon className="w-4 text-secondary-content" />
+                        </div>
+                      )}
                       <span
                         className={`${isTimeout && defaultRuling === "approved" && "opacity-50"}`}
                       >
@@ -160,10 +168,18 @@ export const ProposalTimeline: FC<Props> = ({
                       tooltip={
                         isTimeout && defaultRuling === "rejected" ?
                           "Pool default ruling on timeout is to Reject"
-                        : "The proposal will keep the accumulated conviction growth and be back to active."
+                        : `The proposal will keep the accumulated conviction growth and be back to active ${defaultRuling === "approved" ? " (default on abstain)" : ""}`
                       }
                       className={`${isTimeout && defaultRuling === "rejected" && "[&>svg]:opacity-50 [&:before]:ml-[-38px]"}`}
                     >
+                      {!isTimeout && defaultRuling === "approved" && (
+                        <div
+                          className="tooltip w-full"
+                          data-tip="Pool default ruling on abstain is to Approve"
+                        >
+                          <ClockIcon className="w-4 text-secondary-content" />
+                        </div>
+                      )}
                       <span
                         className={`${isTimeout && defaultRuling === "rejected" && "opacity-50"}`}
                       >
