@@ -362,7 +362,7 @@ export const ProposalForm = ({
             <div className="relative flex flex-col">
               <FormInput
                 label="Requested amount"
-                subLabel={`Max ${spendingLimit} ${poolToken?.symbol} (${spendingLimitPct.toFixed(2)}% of Pool Funds)`}
+                subLabel={`Max ${spendingLimit} ${poolToken?.symbol} (${spendingLimit.toFixed(2)}% of Pool Funds)`}
                 register={register}
                 required
                 onChange={(e) => {
@@ -370,8 +370,8 @@ export const ProposalForm = ({
                 }}
                 registerOptions={{
                   max: {
-                    value: spendingLimitNumber,
-                    message: `Max amount must remain under the spending limit of ${formatNumber(spendingLimitString)} ${poolToken?.symbol}`,
+                    value: spendingLimit,
+                    message: `Max amount must remain under the spending limit of ${formatNumber(spendingLimit)} ${poolToken?.symbol}`,
                   },
                   min: {
                     value: INPUT_TOKEN_MIN_VALUE,
