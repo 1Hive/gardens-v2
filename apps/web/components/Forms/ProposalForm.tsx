@@ -27,7 +27,13 @@ import { alloABI, cvStrategyABI } from "@/src/generated";
 import { PoolTypes } from "@/types";
 import { getEventFromReceipt } from "@/utils/contracts";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
-import { calculatePercentageBigInt, formatTokenAmount } from "@/utils/numbers";
+import {
+  calculateMaxRatioNum,
+  calculatePercentageBigInt,
+  CV_SCALE_PRECISION,
+  formatTokenAmount,
+  MAX_RATIO_CONSTANT,
+} from "@/utils/numbers";
 
 //protocol : 1 => means ipfs!, to do some checks later
 type FormInputs = {
@@ -356,7 +362,7 @@ export const ProposalForm = ({
             <div className="relative flex flex-col">
               <FormInput
                 label="Requested amount"
-                subLabel={`Max ${formatNumber(spendingLimitString)} ${poolToken?.symbol} (${spendingLimitPct.toFixed(2)}% of Pool Funds)`}
+                subLabel={`Max ${spendingLimit} ${poolToken?.symbol} (${spendingLimitPct.toFixed(2)}% of Pool Funds)`}
                 register={register}
                 required
                 onChange={(e) => {
