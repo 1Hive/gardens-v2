@@ -7,12 +7,7 @@ import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { calculateMinimumConviction } from "@/components/PoolHeader";
 import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
-import {
-  calculatePercentage,
-  CV_SCALE_PRECISION,
-  formatTokenAmount,
-  MAX_RATIO_CONSTANT,
-} from "@/utils/numbers";
+import { CV_SCALE_PRECISION, MAX_RATIO_CONSTANT } from "@/utils/numbers";
 
 export default function Page({
   params: { poolId, garden },
@@ -43,6 +38,7 @@ export default function Page({
   const proposalType = strategyObj.config?.proposalType as number;
   const poolAmount = strategyObj.poolAmount as number;
 
+  // calculation taken from PoolHeader.tsx
   const spendingLimitPctValue =
     (Number(strategyObj.config.maxRatio || 0) / CV_SCALE_PRECISION) * 100;
 
@@ -56,16 +52,21 @@ export default function Page({
     (1 - Math.sqrt(minimumConviction / 100)) *
     100;
 
-  const poolAmountSpendingLimit = formatTokenAmount(
+  function formatTokenAmount(amount: string | number, decimals: number) {
+    const divisor = Math.pow(10, decimals);
+    const result = Number(amount) / divisor;
+
+    return result;
+  }
+  const formattedPoolAmount = formatTokenAmount(
     poolAmount,
-    +tokenGarden?.decimals,
+    +tokenGarden.decimals,
   );
 
-  const calculateSpendingLimitValue =
-    calculatePercentage(
-      +poolAmountSpendingLimit,
-      Math.round(spendingLimitValuePct),
-    ) / 100;
+  const calculateSpendingLimitValue = (
+    (+formattedPoolAmount * +Math.round(spendingLimitValuePct)) /
+    100
+  ).toFixed(2);
 
   return (
     <div className="page-layout">
@@ -83,7 +84,7 @@ export default function Page({
           proposalType={proposalType}
           alloInfo={alloInfo}
           tokenGarden={tokenGarden}
-          spendingLimit={calculateSpendingLimitValue}
+          spendingLimit={+calculateSpendingLimitValue}
           spendingLimitPct={spendingLimitValuePct}
           poolAmount={poolAmount}
         />
