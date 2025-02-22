@@ -2,13 +2,16 @@
 
 import React, { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
-import { CVStrategy, Maybe, RegistryCommunity } from "#/subgraph/.graphclient";
+import {
+  CVStrategy,
+  Maybe,
+  MemberCommunity,
+  RegistryCommunity,
+} from "#/subgraph/.graphclient";
 import { CommunityCard } from "./CommunityCard";
 
-export type LightCommunity = Pick<
-  RegistryCommunity,
-  "id" | "communityName" | "membersCount"
-> & {
+export type LightCommunity = Pick<RegistryCommunity, "id" | "communityName"> & {
+  members?: Maybe<Array<Pick<MemberCommunity, "id" | "memberAddress">>>;
   strategies?: Maybe<Array<Pick<CVStrategy, "id">>>;
 };
 
@@ -25,8 +28,8 @@ export function Communities({
   useEffect(() => {
     // Sort communities by length of members in descending order
     const sortedCommunities = [...communities].sort((a, b) => {
-      if (a?.membersCount && b?.membersCount) {
-        return b.membersCount - a.membersCount;
+      if (a?.members && b?.members) {
+        return b.members.length - a.members.length;
       } else {
         return 0;
       }
@@ -48,10 +51,10 @@ export function Communities({
   }, [address, communities]);
 
   function memberInCommunity(community: LightCommunity) {
-    if (!community?.membersCount) {
+    if (!community?.members) {
       return false;
     }
-    for (let member of community?.membersCount ?? []) {
+    for (let member of community?.members ?? []) {
       if (member?.memberAddress?.toLowerCase() === address?.toLowerCase()) {
         return true;
       }
@@ -69,11 +72,11 @@ export function Communities({
           <h4 className="mb-4 text-secondary-content">My communities</h4>
           <div className=" flex flex-row flex-wrap gap-10">
             {userCommunities.map(
-              ({ communityName, id, membersCount, strategies }) => (
+              ({ communityName, id, members, strategies }) => (
                 <CommunityCard
                   key={id}
                   name={communityName ?? ""}
-                  membersCount={membersCount ?? 0}
+                  membersCount={members?.length ?? 0}
                   poolsCount={strategies?.length ?? 0}
                   id={id}
                 />
@@ -87,11 +90,11 @@ export function Communities({
           <h4 className="mb-4 text-secondary-content">Join a new community</h4>
           <div className=" flex flex-row flex-wrap gap-10">
             {otherCommunities.map(
-              ({ communityName, id, membersCount, strategies }) => (
+              ({ communityName, id, members, strategies }) => (
                 <CommunityCard
                   key={id}
                   name={communityName ?? ""}
-                  membersCount={membersCount ?? 0}
+                  membersCount={members?.length ?? 0}
                   poolsCount={strategies?.length ?? 0}
                   id={id}
                 />

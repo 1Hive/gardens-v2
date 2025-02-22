@@ -87,6 +87,10 @@ export const DisputeButton: FC<Props> = ({
   const [error, setError] = useState("");
 
   const arbitrationConfig = proposalData.arbitrableConfig;
+  const defaultRuling =
+    arbitrationConfig.defaultRuling === APPROVED_RULING ?
+      "approved"
+    : "rejected";
 
   const { data: disputesResult } = useSubgraphQuery<getProposalDisputesQuery>({
     query: getProposalDisputesDocument,
@@ -363,11 +367,19 @@ export const DisputeButton: FC<Props> = ({
                   btnStyle="outline"
                   onClick={() => handleSubmitRuling(ABSTAINED_RULING)}
                   isLoading={rulingLoading === ABSTAINED_RULING}
-                  disabled={!!disableTribunalSafeButtons}
-                  tooltip={disableTribunalSafeButtons?.message}
+                  disabled={
+                    (!!disableTribunalSafeButtons && !isTimeout) || !isConnected
+                  }
+                  tooltip={
+                    isTimeout ?
+                      isConnected ?
+                        ""
+                      : "Connect your wallet"
+                    : disableTribunalSafeButtons?.message
+                  }
                 >
                   <InfoWrapper
-                    className={"[&>svg]:text-secondary-content"}
+                    className={`[&>svg]:text-secondary-content ${isTimeout ? "tooltip-left" : ""}`}
                     tooltip={`Abstain to follow the pool's default resolution (${arbitrationConfig.defaultRuling === APPROVED_RULING ? "approved" : "rejected"}) and return collaterals to both parties.`}
                   >
                     Abstain
