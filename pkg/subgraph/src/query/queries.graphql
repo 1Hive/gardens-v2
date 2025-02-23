@@ -199,6 +199,25 @@ query getGardenCommunities($chainId: BigInt!, $tokenGarden: ID!) {
   }
 }
 
+query getCommunities {
+  registryCommunities(where: { isValid: true }) {
+    id
+    chainId
+    communityName
+    registerToken
+    strategies(where: { isEnabled: true }) {
+      id
+      totalEffectiveActivePoints
+      poolId
+      poolAmount
+    }
+    members {
+      id
+      memberAddress
+    }
+  }
+}
+
 query getCommunity(
   $communityAddr: ID!
   $tokenAddr: ID!
