@@ -3,7 +3,7 @@
 import React from "react";
 import { RectangleGroupIcon, UserGroupIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { CVStrategy, Maybe, MemberCommunity } from "#/subgraph/.graphclient";
 import { Card } from "./Card";
 import { Statistic } from "./Statistic";
 import TooltipIfOverflow from "./TooltipIfOverflow";
@@ -12,19 +12,25 @@ import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 
 type CommunityCardProps = {
-  name: string;
-  membersCount: number;
-  poolsCount: number;
   id: string;
+  communityName?: Maybe<string> | undefined;
+  chainId: number;
+  registerToken?: Maybe<string> | undefined;
+  members?: Maybe<Pick<MemberCommunity, "id" | "memberAddress">[]> | undefined;
+  strategies?: Maybe<Pick<CVStrategy, "id">[]> | undefined;
 };
 
 export function CommunityCard({
-  name,
-  membersCount,
-  poolsCount,
   id,
+  communityName,
+  chainId,
+  registerToken,
+  members,
+  strategies,
 }: CommunityCardProps) {
-  const pathname = usePathname();
+  const membersCount = members?.length ?? 0;
+  const poolsCount = strategies?.length ?? 0;
+
   const searchParams = useCollectQueryParams();
   const isNewCommunity =
     searchParams[QUERY_PARAMS.gardenPage.newCommunity]?.toLowerCase() ===
@@ -33,7 +39,7 @@ export function CommunityCard({
   return (
     <Card
       key={id}
-      href={`${pathname}/${id}`}
+      href={`/gardens/${chainId}/${registerToken}/${id}`}
       className={`w-[275px] sm:min-w-[313px] ${isNewCommunity ? "shadow-2xl" : ""}`}
     >
       <Image
@@ -45,7 +51,7 @@ export function CommunityCard({
       />
       <div className="flex flex-col gap-2">
         <h3 className="flex items-start w-fit max-w-full">
-          <TooltipIfOverflow>{name}</TooltipIfOverflow>
+          <TooltipIfOverflow>{communityName ?? ""}</TooltipIfOverflow>
         </h3>
         <Statistic
           label="members"
