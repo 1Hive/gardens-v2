@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
 import Link from "next/link";
@@ -9,8 +9,8 @@ import {
   getCommunitiesQuery,
 } from "#/subgraph/.graphclient";
 import { clouds1, clouds2, grassLarge, tree2, tree3 } from "@/assets";
-import { Button, Communities } from "@/components";
-import { ChainIcon, getConfigByChain } from "@/configs/chains";
+import { Button } from "@/components";
+import { CommunitiesV2 } from "@/components/CommunitiesV2";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQueryMultiChain } from "@/hooks/useSubgraphQueryMultiChain";
 
@@ -84,42 +84,26 @@ export default function GardensPage() {
   const { data: communitiesSections, fetching } =
     useSubgraphQueryMultiChain<getCommunitiesQuery>({
       query: getCommunitiesDocument,
-
       changeScope: [
-        // {
-        //   topic: "garden",
-        // },
         {
           topic: "community",
         },
       ],
     });
 
+  // Combine all communities into a single array
+  const allCommunities = useMemo(() => {
+    if (!communitiesSections || communitiesSections.length === 0) return [];
+
+    return communitiesSections.flatMap(
+      (section) => section.registryCommunities || [],
+    );
+  }, [communitiesSections]);
+
   return (
     <div className="page-layout">
       <Header />
-      {communitiesSections?.map(({ registryCommunities }) => (
-        <Communities
-          communities={registryCommunities}
-          header={
-            <div className="align-start flex flex-col justify-start">
-              <p className="text-neutral-content text-sm">Network:</p>
-              <div className="flex gap-2.5 items-center mt-1">
-                <h5 className="text-neutral-content">
-                  {getConfigByChain(registryCommunities?.[0]?.chainId)?.name}
-                </h5>
-                <div className="flex content-center justify-center">
-                  <ChainIcon
-                    chain={registryCommunities?.[0]?.chainId}
-                    height={24}
-                  />
-                </div>
-              </div>
-            </div>
-          }
-          key={`section-${registryCommunities?.[0]?.chainId}`}
-        />
-      ))}
+      <CommunitiesV2 communities={allCommunities} />
       <Footer />
     </div>
   );
