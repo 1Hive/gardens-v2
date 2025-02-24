@@ -191,6 +191,7 @@ export function PoolForm({ token, communityAddr }: Props) {
     watch,
     trigger,
   } = useForm<FormInputs>({
+    mode: "onBlur",
     defaultValues: {
       strategyType: 1,
       pointSystemType: 0,
@@ -844,9 +845,9 @@ export function PoolForm({ token, communityAddr }: Props) {
                 required
                 validateSafe
                 value={tribunalAddress}
-                onChange={(e) => {
-                  setValue("tribunalAddress", e.target.value);
-                }}
+                registerKey="tribunalAddress"
+                register={register}
+                errors={errors}
               />
               <FormCheckBox
                 label="Use global tribunal"

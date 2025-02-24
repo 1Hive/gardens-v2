@@ -61,7 +61,7 @@ export const CommunityForm = ({
     getValues,
     setValue,
     watch,
-  } = useForm<FormInputs>();
+  } = useForm<FormInputs>({ mode: "onBlur" });
 
   const { publish } = usePubSubContext();
 
@@ -296,9 +296,11 @@ export const CommunityForm = ({
               label="Council Safe address"
               required
               validateSafe
-              onChange={(ev) => setValue("councilSafe", ev.target.value)}
               value={councilSafe}
               placeholder="0x.."
+              registerKey="councilSafe"
+              register={register}
+              errors={errors}
             />
           </div>
 

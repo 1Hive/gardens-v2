@@ -134,6 +134,7 @@ export default function PoolEditForm({
     watch,
     formState: { errors },
   } = useForm<FormInputs>({
+    mode: "onBlur",
     defaultValues:
       initValues ?
         {
@@ -658,10 +659,10 @@ export default function PoolEditForm({
                   label="Tribunal address"
                   required
                   validateSafe
-                  onChange={(ev) =>
-                    setValue("tribunalAddress", ev.target.value)
-                  }
                   value={tribunalAddress}
+                  registerKey="tribunalAddress"
+                  register={register}
+                  errors={errors}
                 />
                 <FormCheckBox
                   label="Use global tribunal"
