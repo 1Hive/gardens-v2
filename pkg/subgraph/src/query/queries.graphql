@@ -202,9 +202,13 @@ query getGardenCommunities($chainId: BigInt!, $tokenGarden: ID!) {
 query getCommunities {
   registryCommunities(where: { isValid: true }) {
     id
-    chainId
     communityName
-    registerToken
+    garden {
+      address
+      chainId
+      symbol
+      name
+    }
     strategies(where: { isEnabled: true }) {
       id
       totalEffectiveActivePoints

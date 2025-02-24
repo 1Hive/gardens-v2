@@ -3716,7 +3716,8 @@ export type getCommunitiesQueryVariables = Exact<{
     [key: string]: never;
 }>;
 export type getCommunitiesQuery = {
-    registryCommunities: Array<(Pick<RegistryCommunity, 'id' | 'chainId' | 'communityName' | 'registerToken'> & {
+    registryCommunities: Array<(Pick<RegistryCommunity, 'id' | 'communityName'> & {
+        garden: Pick<TokenGarden, 'address' | 'chainId' | 'symbol' | 'name'>;
         strategies?: Maybe<Array<Pick<CVStrategy, 'id' | 'totalEffectiveActivePoints' | 'poolId' | 'poolAmount'>>>;
         members?: Maybe<Array<Pick<MemberCommunity, 'id' | 'memberAddress'>>>;
     })>;
