@@ -215,7 +215,7 @@ query getCommunities {
       poolId
       poolAmount
     }
-    members {
+    members(first: 1000, where: { stakedTokens_gt: "0" }) {
       id
       memberAddress
     }
