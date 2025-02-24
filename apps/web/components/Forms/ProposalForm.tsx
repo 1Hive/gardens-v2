@@ -362,7 +362,7 @@ export const ProposalForm = ({
             <div className="relative flex flex-col">
               <FormInput
                 label="Requested amount"
-                subLabel={`Max ${spendingLimit} ${poolToken?.symbol} (${spendingLimit.toFixed(2)}% of Pool Funds)`}
+                subLabel={`Max ${spendingLimit} ${poolToken?.symbol} (${spendingLimitPct.toFixed(2)}% of Pool Funds)`}
                 register={register}
                 required
                 onChange={(e) => {
