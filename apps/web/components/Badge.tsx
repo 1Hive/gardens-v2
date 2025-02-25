@@ -13,6 +13,7 @@ type BadgeProps = {
   icon?: React.ReactNode;
   isCapitalize?: boolean;
   tooltip?: string;
+  children?: React.ReactNode;
 };
 
 // Styles for different pool badge types
@@ -42,6 +43,7 @@ export function Badge({
   className,
   tooltip,
   icon,
+  children,
 }: BadgeProps): JSX.Element {
   const isStatusBadge = status !== undefined;
   const ispoolTypeDefined = type !== undefined;
@@ -55,8 +57,9 @@ export function Badge({
 
   // Determine the label content
   const content =
-    isStatusBadge ? ProposalStatus[status]
-    : ispoolTypeDefined ? (PoolTypes[type] ?? label)
+    children ? children
+    : isStatusBadge ? ProposalStatus[status]
+    : ispoolTypeDefined ? PoolTypes[type] ?? label
     : label;
 
   //For type => conditionally set the icon based on type === poolTypes[type]
@@ -67,7 +70,7 @@ export function Badge({
         signaling: <HandThumbUpIcon className="h-6 w-6 text-inherit" />,
         funding: <CurrencyDollarIcon className="h-6 w-6 text-inherit" />,
       };
-      return type != null ? (iconMap[PoolTypes[type]] ?? null) : null;
+      return type != null ? iconMap[PoolTypes[type]] ?? null : null;
     })();
 
   return (

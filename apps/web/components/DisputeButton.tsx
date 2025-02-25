@@ -87,10 +87,6 @@ export const DisputeButton: FC<Props> = ({
   const [error, setError] = useState("");
 
   const arbitrationConfig = proposalData.arbitrableConfig;
-  const defaultRuling =
-    arbitrationConfig.defaultRuling === APPROVED_RULING ?
-      "approved"
-    : "rejected";
 
   const { data: disputesResult } = useSubgraphQuery<getProposalDisputesQuery>({
     query: getProposalDisputesDocument,
