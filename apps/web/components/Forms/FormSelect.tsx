@@ -16,8 +16,8 @@ interface Props {
   tooltip?: string;
   readOnly?: boolean;
   disabled?: boolean;
-  value: string;
-  onChange: (e: ChangeEvent<HTMLSelectElement>) => void;
+  value?: string;
+  onChange?: (e: ChangeEvent<HTMLSelectElement>) => void;
 }
 
 export function FormSelect({
