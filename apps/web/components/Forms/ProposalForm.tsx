@@ -27,13 +27,7 @@ import { alloABI, cvStrategyABI } from "@/src/generated";
 import { PoolTypes } from "@/types";
 import { getEventFromReceipt } from "@/utils/contracts";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
-import {
-  calculateMaxRatioNum,
-  calculatePercentageBigInt,
-  CV_SCALE_PRECISION,
-  formatTokenAmount,
-  MAX_RATIO_CONSTANT,
-} from "@/utils/numbers";
+import { calculatePercentageBigInt, formatTokenAmount } from "@/utils/numbers";
 
 //protocol : 1 => means ipfs!, to do some checks later
 type FormInputs = {
@@ -125,7 +119,6 @@ export const ProposalForm = ({
   poolId,
   proposalType,
   alloInfo,
-  tokenGarden,
   spendingLimit,
   spendingLimitPct,
 }: ProposalFormProps) => {

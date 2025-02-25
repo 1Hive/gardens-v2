@@ -81,15 +81,17 @@ const Footer = () => {
 
 // Main component
 export default function GardensPage() {
-  const { data: communitiesSections, fetching } =
-    useSubgraphQueryMultiChain<getCommunitiesQuery>({
-      query: getCommunitiesDocument,
-      changeScope: [
-        {
-          topic: "community",
-        },
-      ],
-    });
+  const {
+    data: communitiesSections,
+    // fetching
+  } = useSubgraphQueryMultiChain<getCommunitiesQuery>({
+    query: getCommunitiesDocument,
+    changeScope: [
+      {
+        topic: "community",
+      },
+    ],
+  });
 
   // Combine all communities into a single array
   const allCommunities = useMemo(() => {

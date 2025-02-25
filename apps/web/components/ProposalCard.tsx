@@ -26,10 +26,7 @@ import {
 } from "@/hooks/useConvictionRead";
 import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { PoolTypes, ProposalStatus } from "@/types";
-import {
-  calculatePercentage,
-  calculatePercentageBigInt,
-} from "@/utils/numbers";
+import { calculatePercentageBigInt } from "@/utils/numbers";
 import { prettyTimestamp } from "@/utils/text";
 
 export type ProposalCardProps = {
@@ -99,7 +96,7 @@ export function ProposalCard({
   });
   const inputValue =
     inputData ?
-      calculatePercentageBigInt(inputData.value, memberActivatedPoints)
+      Number(calculatePercentageBigInt(inputData.value, memberActivatedPoints))
     : 0;
 
   const poolWeightAllocatedInProposal = (
@@ -222,7 +219,7 @@ export function ProposalCard({
                         max={Number(memberActivatedPoints)}
                         value={inputData ? Number(inputData.value) : undefined}
                         className={`range range-md cursor-pointer bg-neutral-soft [--range-shdw:var(--color-green-500)] ${isProposalEnded ? "grayscale !cursor-not-allowed" : ""}`}
-                        step={Number(memberActivatedPoints / 100n)}
+                        step={Number(memberActivatedPoints) / 100}
                         onChange={(e) => {
                           inputHandler(
                             proposalData.id,

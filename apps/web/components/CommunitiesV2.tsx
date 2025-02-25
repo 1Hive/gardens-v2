@@ -87,7 +87,6 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
 
 export const CommunitiesV2: React.FC<CommunitiesV2Props> = ({
   communities,
-  header,
 }) => {
   const { address } = useAccount();
   const [otherCommunities, setOtherCommunities] = useState<LightCommunity[]>(

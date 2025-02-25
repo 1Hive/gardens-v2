@@ -20,7 +20,7 @@ import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 type CommunityCardProps = {
   id: string;
   communityName?: Maybe<string> | undefined;
-  garden: Pick<TokenGarden, "address" | "chainId" | "symbol" | "name">;
+  garden: Pick<TokenGarden, "address" | "chainId" | "symbol">;
   members?: Maybe<Pick<MemberCommunity, "id" | "memberAddress">[]> | undefined;
   strategies?: Maybe<Pick<CVStrategy, "id">[]> | undefined;
 };
@@ -32,12 +32,7 @@ export function CommunityCardV2({
   members,
   strategies,
 }: CommunityCardProps) {
-  const {
-    address: tokenAddr,
-    chainId,
-    symbol: tokenSymbol,
-    name: tokenName,
-  } = garden;
+  const { address: tokenAddr, chainId, symbol: tokenSymbol } = garden;
 
   const membersCount = members?.length ?? 0;
   const poolsCount = strategies?.length ?? 0;
