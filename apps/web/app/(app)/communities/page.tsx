@@ -45,7 +45,7 @@ const Footer = () => {
     <section className="section-layout">
       <div className="flex flex-col gap-10 overflow-x-hidden">
         <header>
-          <h4 className="text-secondary-content">Create your own community</h4>
+          <h4 className="text-neutral-content">Create your own community</h4>
         </header>
         <div className="relative flex h-[219px] justify-center">
           <Link href="/communities/create-community" className="mt-6 z-10">

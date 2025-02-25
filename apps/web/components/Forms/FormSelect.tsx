@@ -1,22 +1,24 @@
-import React from "react";
+import React, { ChangeEvent } from "react";
 import { RegisterOptions, UseFormRegister } from "react-hook-form";
 import { InfoWrapper } from "../InfoWrapper";
 
 export type Option = { label: string; value: string | number };
 
-type Props = {
+interface Props {
   label: string;
-  registerKey: any;
+  registerKey: string;
   register?: UseFormRegister<any>;
   errors?: any;
   required?: boolean;
   registerOptions?: RegisterOptions;
   placeholder?: string;
-  options: Option[];
+  options: { label: string; value: string }[];
   tooltip?: string;
   readOnly?: boolean;
   disabled?: boolean;
-};
+  value: string;
+  onChange: (e: ChangeEvent<HTMLSelectElement>) => void;
+}
 
 export function FormSelect({
   label = "",
@@ -30,6 +32,8 @@ export function FormSelect({
   readOnly,
   disabled,
   errors,
+  value,
+  onChange,
 }: Props) {
   const hasError = errors?.[registerKey];
 
@@ -59,15 +63,16 @@ export function FormSelect({
           ...registerOptions,
         })}
         disabled={disabled}
-        defaultValue={""}
+        defaultValue={value}
+        onChange={onChange}
       >
         {placeholder && (
           <option value="" disabled>
             {placeholder}
           </option>
         )}
-        {options.map(({ value, label: lab }) => (
-          <option value={value} key={value}>
+        {options.map(({ value: val, label: lab }) => (
+          <option value={val} key={val}>
             {lab}
           </option>
         ))}
