@@ -132,6 +132,7 @@ export default function PoolEditForm({
     handleSubmit,
     setValue,
     watch,
+    trigger,
     formState: { errors },
   } = useForm<FormInputs>({
     mode: "onBlur",
@@ -663,6 +664,7 @@ export default function PoolEditForm({
                   registerKey="tribunalAddress"
                   register={register}
                   errors={errors}
+                  trigger={trigger}
                 />
                 <FormCheckBox
                   label="Use global tribunal"

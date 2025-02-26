@@ -848,6 +848,7 @@ export function PoolForm({ token, communityAddr }: Props) {
                 registerKey="tribunalAddress"
                 register={register}
                 errors={errors}
+                trigger={trigger}
               />
               <FormCheckBox
                 label="Use global tribunal"

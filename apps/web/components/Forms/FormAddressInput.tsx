@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { blo } from "blo";
 import Image from "next/image";
+import { UseFormTrigger } from "react-hook-form";
 import { Address, isAddress } from "viem";
 import { useEnsAddress, useEnsAvatar, useEnsName } from "wagmi";
 import { FormInput } from "./FormInput";
@@ -25,6 +26,7 @@ type Props = {
   validateSafe?: boolean;
   registerOptions?: any;
   onChange?: React.ChangeEventHandler<HTMLInputElement>;
+  trigger?: UseFormTrigger<any>;
 };
 
 export const FormAddressInput = ({
@@ -42,6 +44,7 @@ export const FormAddressInput = ({
   validateSafe = false,
   onChange,
   registerOptions,
+  trigger,
   ...rest
 }: Props) => {
   const debouncedValue = useDebounce(value, 500);
@@ -83,8 +86,11 @@ export const FormAddressInput = ({
       onChange?.({
         target: { value: ensAddress },
       } as React.ChangeEvent<HTMLInputElement>);
+      if (trigger && registerKey) {
+        trigger(registerKey);
+      }
     }
-  }, [ensAddress, onChange]);
+  }, [ensAddress, onChange, trigger, registerKey]);
 
   const extendedRegisterOptions = {
     ...registerOptions,
@@ -130,7 +136,17 @@ export const FormAddressInput = ({
       readOnly={readOnly}
       className={`font-mono ${className ?? ""} pr-12`}
       value={inputValue}
-      registerOptions={extendedRegisterOptions}
+      registerOptions={{
+        ...extendedRegisterOptions,
+        onChange: async (e: React.ChangeEvent<HTMLInputElement>) => {
+          if (onChange) {
+            onChange(e);
+          }
+          if (trigger && registerKey) {
+            await trigger(registerKey);
+          }
+        },
+      }}
       suffix={
         debouncedValue && (
           <Image

@@ -61,6 +61,7 @@ export const CommunityForm = ({
     getValues,
     setValue,
     watch,
+    trigger,
   } = useForm<FormInputs>({ mode: "onBlur" });
 
   const { publish } = usePubSubContext();
@@ -301,6 +302,7 @@ export const CommunityForm = ({
               registerKey="councilSafe"
               register={register}
               errors={errors}
+              trigger={trigger}
             />
           </div>
 
