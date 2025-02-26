@@ -11,7 +11,6 @@ import {
 } from "#/subgraph/.graphclient";
 import { CommunityCard } from "./CommunityCard";
 import { CommunityFilters } from "./CommunityFilters";
-import { getConfigByChain } from "@/configs/chains";
 
 export type LightCommunity = Pick<RegistryCommunity, "id" | "communityName"> & {
   garden: Pick<TokenGarden, "address" | "chainId" | "symbol" | "name">;
@@ -44,25 +43,35 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
 }) => {
   const [isExpanded, setIsExpanded] = useState<boolean>(defaultExpanded);
 
+  const { isConnected } = useAccount();
+
+  useEffect(() => {
+    if (!isConnected) {
+      setIsExpanded(true);
+    }
+  }, [communities]);
+
   if (communities.length === 0) return null;
 
   return (
     <div>
-      <div className="flex items-center gap-2">
-        <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="flex items-center text-secondary-content gap-1"
-          aria-label={isExpanded ? "Collapse" : "Expand"}
-        >
-          <h4 className="text-secondary-content">{title}</h4>
-          <motion.div
-            animate={{ rotate: isExpanded ? 0 : 180 }}
-            transition={{ duration: 0.3 }}
+      {isConnected && (
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="flex items-center text-secondary-content gap-1"
+            aria-label={isExpanded ? "Collapse" : "Expand"}
           >
-            <ChevronUpIcon className="w-5 h-5" strokeWidth={3} />
-          </motion.div>
-        </button>
-      </div>
+            <h4 className="text-secondary-content">{title}</h4>
+            <motion.div
+              animate={{ rotate: isExpanded ? 0 : 180 }}
+              transition={{ duration: 0.3 }}
+            >
+              <ChevronUpIcon className="w-5 h-5" strokeWidth={3} />
+            </motion.div>
+          </button>
+        </div>
+      )}
 
       <AnimatePresence>
         {isExpanded && (
