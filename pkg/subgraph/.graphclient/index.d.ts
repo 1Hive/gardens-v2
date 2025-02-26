@@ -3560,6 +3560,9 @@ export declare function getBuiltGraphSDK<TGlobalContext = any, TOperationContext
     getCommunityCreationData(variables?: Exact<{
         [key: string]: never;
     }>, options?: TOperationContext): Promise<getCommunityCreationDataQuery>;
+    getRegistryFactoryData(variables?: Exact<{
+        [key: string]: never;
+    }>, options?: TOperationContext): Promise<getRegistryFactoryDataQuery>;
     getPoolData(variables: Exact<{
         garden: string;
         poolId: any;
@@ -3742,6 +3745,12 @@ export type getCommunityCreationDataQueryVariables = Exact<{
 }>;
 export type getCommunityCreationDataQuery = {
     registryFactories: Array<Pick<RegistryFactory, 'id'>>;
+};
+export type getRegistryFactoryDataQueryVariables = Exact<{
+    [key: string]: never;
+}>;
+export type getRegistryFactoryDataQuery = {
+    registryFactories: Array<Pick<RegistryFactory, 'id' | 'chainId'>>;
 };
 export type getPoolDataQueryVariables = Exact<{
     garden: Scalars['ID']['input'];
@@ -3928,6 +3937,9 @@ export declare const getCommunityDocument: DocumentNode<getCommunityQuery, Exact
 export declare const getCommunityCreationDataDocument: DocumentNode<getCommunityCreationDataQuery, Exact<{
     [key: string]: never;
 }>>;
+export declare const getRegistryFactoryDataDocument: DocumentNode<getRegistryFactoryDataQuery, Exact<{
+    [key: string]: never;
+}>>;
 export declare const getPoolDataDocument: DocumentNode<getPoolDataQuery, Exact<{
     garden: Scalars['ID']['input'];
     poolId: Scalars['BigInt']['input'];
@@ -3987,6 +3999,7 @@ export declare function getSdk<C, E>(requester: Requester<C, E>): {
     getCommunities(variables?: getCommunitiesQueryVariables, options?: C): Promise<getCommunitiesQuery>;
     getCommunity(variables: getCommunityQueryVariables, options?: C): Promise<getCommunityQuery>;
     getCommunityCreationData(variables?: getCommunityCreationDataQueryVariables, options?: C): Promise<getCommunityCreationDataQuery>;
+    getRegistryFactoryData(variables?: getRegistryFactoryDataQueryVariables, options?: C): Promise<getRegistryFactoryDataQuery>;
     getPoolData(variables: getPoolDataQueryVariables, options?: C): Promise<getPoolDataQuery>;
     getProposalData(variables: getProposalDataQueryVariables, options?: C): Promise<getProposalDataQuery>;
     getAllo(variables?: getAlloQueryVariables, options?: C): Promise<getAlloQuery>;

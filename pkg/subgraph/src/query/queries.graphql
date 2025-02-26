@@ -279,6 +279,13 @@ query getCommunityCreationData {
   }
 }
 
+query getRegistryFactoryData {
+  registryFactories {
+    id
+    chainId
+  }
+}
+
 query getPoolData($garden: ID!, $poolId: BigInt!) {
   allos {
     id
