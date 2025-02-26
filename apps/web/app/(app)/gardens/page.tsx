@@ -47,10 +47,10 @@ const Footer = () => {
           <h4 className="text-neutral-content">Create your own community</h4>
         </header>
         <div className="relative flex h-[219px] justify-center">
-          <Link href="/communities/create-community" className="mt-6 z-10">
+          <Link href="/gardens/create-community" className="mt-6 z-10">
             <Button
               btnStyle="filled"
-              disabled={!isConnected || missmatchUrl}
+              disabled={!isConnected}
               tooltip={tooltipMessage}
               icon={<PlusIcon height={24} width={24} />}
             >
