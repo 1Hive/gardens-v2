@@ -2,10 +2,14 @@ import React, { ChangeEvent } from "react";
 import { RegisterOptions, UseFormRegister } from "react-hook-form";
 import { InfoWrapper } from "../InfoWrapper";
 
-export type Option = { label: string; value: string | number };
+export type Option = {
+  label: string;
+  value: string | number;
+  icon?: React.ReactNode;
+};
 
 interface Props {
-  label: string;
+  label?: string;
   registerKey: string;
   register?: UseFormRegister<any>;
   errors?: any;
@@ -18,41 +22,47 @@ interface Props {
   disabled?: boolean;
   value?: string;
   onChange?: (e: ChangeEvent<HTMLSelectElement>) => void;
+  className?: string;
+  renderOption?: (option: Option) => React.ReactNode;
 }
 
 export function FormSelect({
-  label = "",
+  label,
   registerKey,
   register,
   required = false,
   registerOptions,
   placeholder,
   options,
+  className,
   tooltip,
   readOnly,
   disabled,
   errors,
   value,
   onChange,
+  renderOption,
 }: Props) {
   const hasError = errors?.[registerKey];
 
   return (
     <div className="flex flex-col">
-      <label htmlFor={registerKey} className="label w-fit cursor-pointer">
-        {tooltip ?
-          <InfoWrapper tooltip={tooltip}>
-            {label}
-            {required && <span className="ml-1">*</span>}
-          </InfoWrapper>
-        : <>
-            {label}
-            {required && <span className="ml-1">*</span>}
-          </>
-        }
-      </label>
+      {label && (
+        <label htmlFor={registerKey} className="label w-fit cursor-pointer">
+          {tooltip ?
+            <InfoWrapper tooltip={tooltip}>
+              {label}
+              {required && <span className="ml-1">*</span>}
+            </InfoWrapper>
+          : <>
+              {label}
+              {required && <span className="ml-1">*</span>}
+            </>
+          }
+        </label>
+      )}
       <select
-        className={`select select-info w-full max-w-md ${
+        className={`select select-info w-full max-w-md ${className} ${
           readOnly &&
           "!border-gray-300 focus:none !outline-gray-300 !pointer-events-none bg-transparent !cursor-not-allowed"
         }`}
@@ -71,9 +81,9 @@ export function FormSelect({
             {placeholder}
           </option>
         )}
-        {options.map(({ value: val, label: lab }) => (
-          <option value={val} key={val}>
-            {lab}
+        {options.map((option) => (
+          <option value={option.value} key={option.value}>
+            {renderOption ? renderOption(option) : option.label}
           </option>
         ))}
       </select>
