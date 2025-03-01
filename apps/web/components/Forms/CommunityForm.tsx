@@ -1,22 +1,30 @@
+/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
 import { usePathname, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
-import { Address, Chain, createPublicClient, http, parseUnits } from "viem";
-import { TokenGarden } from "#/subgraph/.graphclient";
+import { Address, parseUnits } from "viem";
+import { useChainId, useSwitchNetwork } from "wagmi";
+import { getRegistryFactoryDataDocument } from "#/subgraph/.graphclient";
+import { getRegistryFactoryDataQuery } from "#/subgraph/.graphclient";
 import { FormCheckBox } from "./FormCheckBox";
 import { FormInput } from "./FormInput";
 import { FormPreview, FormRow } from "./FormPreview";
+import { FormSelect } from "./FormSelect";
 import { Button } from "@/components";
-import { getChain } from "@/configs/chains";
+import { chainConfigMap, ChainIcon } from "@/configs/chains";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
-import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
-import { registryFactoryABI, safeABI } from "@/src/generated";
+import { useERC20Validation } from "@/hooks/useERC20TokenValidation";
+import {
+  allChains,
+  useSubgraphQueryMultiChain,
+} from "@/hooks/useSubgraphQueryMultiChain";
+import { registryFactoryABI } from "@/src/generated";
 import { getEventFromReceipt } from "@/utils/contracts";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 import {
@@ -36,6 +44,8 @@ type FormInputs = {
   feeAmount: number;
   councilSafe: string;
   ipfsHash: string;
+  chainId: number;
+  tokenAddress: string;
 };
 
 type FormRowTypes = {
@@ -43,16 +53,8 @@ type FormRowTypes = {
   parse?: (value: any) => string;
 };
 
-export const CommunityForm = ({
-  chainId,
-  tokenGarden,
-  registryFactoryAddr,
-}: {
-  chainId: number;
-  tokenGarden: Pick<TokenGarden, "address" | "symbol" | "decimals">;
-  registryFactoryAddr: Address;
-}) => {
-  const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** (tokenGarden?.decimals ?? 0);
+export const CommunityForm = () => {
+  const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** 18;
 
   const {
     register,
@@ -60,7 +62,38 @@ export const CommunityForm = ({
     formState: { errors },
     getValues,
     setValue,
-  } = useForm<FormInputs>();
+    trigger,
+    watch,
+  } = useForm<FormInputs>({ mode: "onBlur" });
+
+  const selectedChainId = getValues("chainId");
+  const connectedChainId = useChainId();
+
+  const tokenAddress = watch("tokenAddress");
+
+  const { isToken, tokenData } = useERC20Validation({
+    address: tokenAddress,
+    // enabled: !!selectedChainId,
+    chainId: selectedChainId,
+  });
+
+  useEffect(() => {
+    if (tokenAddress) {
+      trigger("tokenAddress");
+    }
+    console.log(tokenAddress, "trigger");
+  }, [tokenAddress]);
+
+  const {
+    data: registryFactoryData,
+    // fetching
+  } = useSubgraphQueryMultiChain<getRegistryFactoryDataQuery>({
+    query: getRegistryFactoryDataDocument,
+  });
+
+  const registryFactories = registryFactoryData?.map(
+    (factory) => factory.registryFactories[0],
+  );
 
   const { publish } = usePubSubContext();
 
@@ -69,21 +102,27 @@ export const CommunityForm = ({
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
-  const { isConnected, missmatchUrl, tooltipMessage } = useDisableButtons();
+  const { isConnected, tooltipMessage } = useDisableButtons();
 
-  const chainFromPath = useChainFromPath()!;
+  const registryFactoryAddr = registryFactories?.find(
+    (factory) => factory.chainId === getValues("chainId"),
+  )?.id as Address;
 
-  // const [file, setFile] = useState<File | null>(null);
-
-  const publicClient = createPublicClient({
-    chain: chainFromPath as Chain,
-    transport: http(),
-  });
+  const SUPPORTED_CHAINS = Object.entries(chainConfigMap)
+    .filter(([chainId, _]) => allChains.find((id) => id === Number(chainId))) // filters for enabled supported chains
+    .filter(([chainId, _]) =>
+      registryFactories?.find((factory) => factory.chainId === Number(chainId)),
+    ) // filters for registryFactories
+    .map(([chainId, chainConfig]) => ({
+      name: chainConfig.name,
+      chainId: chainId,
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   const formRowTypes: Record<string, FormRowTypes> = {
     stakeAmount: {
       label: "Member Stake Amount:",
-      parse: (value: number) => `${value} ${tokenGarden.symbol}`,
+      parse: (value: number) => `${value} ${tokenData.symbol || ""}`,
     },
     isKickMemberEnabled: {
       label: "Council can expel members:",
@@ -98,12 +137,39 @@ export const CommunityForm = ({
       parse: (value: string) => value || "0x",
     },
     councilSafe: { label: "Council Safe:" },
+    chainId: {
+      label: "Chain:",
+      parse: (value: number) =>
+        // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+        SUPPORTED_CHAINS.find((c) => c.chainId === value.toString())?.name ||
+        "",
+    },
+    tokenAddress: {
+      label: "Community Token Address:",
+      parse: (value: string) => value,
+    },
   };
 
   const createCommunity = async () => {
     setLoading(true);
+
+    if (
+      selectedChainId &&
+      switchNetwork &&
+      selectedChainId !== connectedChainId
+    ) {
+      try {
+        await switchNetwork(selectedChainId);
+        // Wait a moment for the network switch to complete
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      } catch (error) {
+        console.error("Failed to switch networks:", error);
+        setLoading(false);
+        return;
+      }
+    }
+
     const json = {
-      // image: getValues("image IPFS"), ???
       covenant: getValues("covenant"),
     };
 
@@ -112,11 +178,11 @@ export const CommunityForm = ({
       if (previewData === undefined) {
         throw new Error("No preview data");
       }
-      const gardenTokenAddress = tokenGarden.address;
+      const govTokenAddr = getValues("tokenAddress") as Address;
       const communityName = previewData?.title;
       const stakeAmount = parseUnits(
         previewData?.stakeAmount.toString() as string,
-        tokenGarden.decimals,
+        tokenData.decimals || 18,
       );
       const communityFeeAmount = parseUnits(
         previewData?.feeAmount.toString() as string,
@@ -134,13 +200,13 @@ export const CommunityForm = ({
       write?.({
         args: [
           {
-            _allo: chainFromPath.allo as Address,
+            _allo: chainConfigMap[selectedChainId]?.allo as Address,
             _feeReceiver: communityFeeReceiver as Address,
             _communityName: communityName,
             _registerStakeAmount: stakeAmount,
             _communityFee: communityFeeAmount,
             _councilSafe: councilSafeAddress as Address,
-            _gardenToken: gardenTokenAddress as Address,
+            _gardenToken: govTokenAddr as Address,
             _isKickEnabled: isKickMemberEnabled,
             _nonce: 0n,
             _registryFactory: registryFactoryAddr,
@@ -169,8 +235,8 @@ export const CommunityForm = ({
         topic: "community",
         type: "add",
         function: "createRegistry",
-        containerId: tokenGarden.address,
-        id: newCommunityAddr, // new community address
+        containerId: getValues("tokenAddress"),
+        id: newCommunityAddr,
       });
       if (pathname) {
         router.push(
@@ -182,6 +248,8 @@ export const CommunityForm = ({
       }
     },
     onSettled: () => setLoading(false),
+    // enabled: !!selectedChainId,
+    chainId: selectedChainId,
   });
 
   const handlePreview = (data: FormInputs) => {
@@ -209,24 +277,22 @@ export const CommunityForm = ({
     return formattedRows;
   };
 
-  const addressIsSAFE = async (walletAddress: Address) => {
-    if (localStorage.getItem("bypassSafeCheck") === "true" || chainFromPath.isTestnet) {
-      return true;
+  const chainOptions = [
+    { label: "Select Chain", value: "" },
+    ...SUPPORTED_CHAINS.map((network) => ({
+      label: network.name,
+      value: network.chainId,
+      icon: <ChainIcon chain={network.chainId} height={20} />,
+    })),
+  ];
+
+  const { switchNetwork } = useSwitchNetwork();
+
+  const handleChainChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const chainId = Number(e.target.value);
+    if (chainId) {
+      switchNetwork?.(chainId);
     }
-    let isSafe = false;
-    try {
-      const data = await publicClient.readContract({
-        address: walletAddress,
-        abi: safeABI,
-        functionName: "getOwners",
-      });
-      isSafe = !!data;
-    } catch (error) {
-      console.warn(
-        walletAddress + " is not a valid Safe address in the network",
-      );
-    }
-    return isSafe;
   };
 
   return (
@@ -238,6 +304,42 @@ export const CommunityForm = ({
           formRows={formatFormRows()}
         />
       : <div className="flex flex-col gap-2 p-1">
+          <FormSelect
+            label="Chain"
+            register={register}
+            required
+            registerKey="chainId"
+            options={chainOptions}
+            errors={errors}
+            tooltip="Select the blockchain network for your community"
+            onChange={handleChainChange}
+          />
+
+          <div className="flex flex-col">
+            <FormInput
+              label="Governance Token Address"
+              register={register}
+              required
+              // onChange={() => trigger("tokenAddress")}
+              registerOptions={{
+                pattern: {
+                  value: ethAddressRegEx,
+                  message: "Invalid Token Address",
+                },
+                validate: () =>
+                  isToken ||
+                  `Not a valid ERC20 token in ${chainConfigMap[selectedChainId]?.name} network`,
+              }}
+              errors={errors}
+              registerKey="tokenAddress"
+              placeholder="0x..."
+              type="text"
+              className="pr-14 font-mono text-sm"
+              suffix={tokenData.symbol}
+              tooltip="ERC20 token address that will be used for the governance of the community"
+            />
+          </div>
+
           <div className="flex flex-col">
             <FormInput
               label="Community Name"
@@ -268,7 +370,7 @@ export const CommunityForm = ({
                 step: INPUT_TOKEN_MIN_VALUE,
                 min: INPUT_TOKEN_MIN_VALUE,
               }}
-              suffix={tokenGarden.symbol}
+              suffix={tokenData.symbol}
               tooltip="Amount of tokens user must stake to join and participate in community governance. Refundable upon leaving the community."
             />
           </div>
@@ -326,9 +428,9 @@ export const CommunityForm = ({
                   value: ethAddressRegEx,
                   message: "Invalid Eth Address",
                 },
-                validate: async (value) =>
-                  (await addressIsSAFE(value)) ||
-                  `Not a valid Safe address in ${getChain(chainId)?.name} network`,
+                // validate: async (value) =>
+                //   (await addressIsSAFE(value)) ||
+                //   `Not a valid Safe address in ${getChain(getValues("chainId"))?.name} network`,
               }}
               errors={errors}
               registerKey="councilSafe"
@@ -396,7 +498,7 @@ export const CommunityForm = ({
             <Button
               onClick={() => createCommunity()}
               isLoading={loading}
-              disabled={!isConnected || missmatchUrl}
+              disabled={!isConnected}
               tooltip={tooltipMessage}
             >
               Submit
