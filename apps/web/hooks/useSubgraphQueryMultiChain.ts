@@ -7,10 +7,9 @@ import {
 } from "@urql/next";
 import { debounce, isEqual } from "lodash-es";
 import { toast } from "react-toastify";
-import { localhost } from "viem/chains";
 import { useIsMounted } from "./useIsMounted";
 import { HTTP_CODES } from "@/app/api/utils";
-import { chains, getConfigByChain } from "@/configs/chains";
+import { chainConfigMap, getConfigByChain } from "@/configs/chains";
 import { isProd } from "@/configs/isProd";
 import {
   ChangeEventScope,
@@ -32,13 +31,13 @@ try {
   // ignore when not browser side
 }
 
-const allChains: ChainId[] = Object.values(chains)
+export const allChains: ChainId[] = Object.entries(chainConfigMap)
   .filter(
-    (x) =>
+    ([_, chainConfig]) =>
       isQueryAllChains ||
-      (isProd ? !x.testnet : !!x.testnet || x.id === localhost.id),
+      (isProd ? !chainConfig.isTestnet : !!chainConfig.isTestnet),
   )
-  .map((x) => x.id);
+  .map(([chainId]) => Number(chainId));
 
 const pendingRefreshToastId = "pending-refresh";
 
@@ -199,7 +198,6 @@ export function useSubgraphQueryMultiChain<
           await fetchSubgraphChain(retryOnNoChange ? 0 : undefined);
         }),
       );
-
       // Make sure unique values are returned
       const result = Array.from(new Set(responseMap.current.values()));
       setResponse(modifier ? modifier(result) : result);

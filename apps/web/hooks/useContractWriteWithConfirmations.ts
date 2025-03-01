@@ -55,7 +55,7 @@ export function useContractWriteWithConfirmations<
   const chainIdFromPath = useChainIdFromPath();
   let propsWithChainId = {
     ...props,
-    chainId: props.chainId ?? chainIdFromPath ?? chainIdFromWallet,
+    chainId: Number(props.chainId ?? chainIdFromPath ?? chainIdFromWallet), // damn js i had to force this
     abi: abiWithErrors(props.abi as Abi),
   };
 
@@ -153,7 +153,7 @@ export function useContractWriteWithConfirmations<
     chainId: +propsWithChainId.chainId,
     confirmations:
       propsWithChainId.confirmations ??
-      chainConfigMap[+propsWithChainId.chainId].confirmations,
+      (chainConfigMap[+propsWithChainId.chainId]?.confirmations || 1),
   });
 
   const computedStatus = useMemo(() => {

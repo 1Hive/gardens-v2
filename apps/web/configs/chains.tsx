@@ -26,11 +26,10 @@ type ChainIconProps = React.SVGProps<SVGSVGElement> & {
   chain: number | string;
 };
 
-export const chains: Chain[] = [
+export const CHAINS: Chain[] = [
   arbitrumSepolia,
   // optimismSepolia,
   sepolia,
-
   arbitrum,
   optimism,
   polygon,
@@ -40,7 +39,7 @@ export const chains: Chain[] = [
 ];
 
 if (process.env.NODE_ENV === "development") {
-  chains.push(localhost);
+  CHAINS.push(localhost);
 }
 
 type ChainData = {
@@ -262,7 +261,7 @@ export function getConfigByChain(chainId: ChainId): ChainData | undefined {
 }
 
 export function getChain(chainId: ChainId): Chain | undefined {
-  return chains.find((chain) => chain.id == chainId);
+  return CHAINS.find((chain) => chain.id == chainId);
 }
 
 export const ChainIcon: FC<ChainIconProps> = ({ chain, ...props }) => {

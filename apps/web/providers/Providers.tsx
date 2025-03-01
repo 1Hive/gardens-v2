@@ -42,9 +42,9 @@ const createCustomConfig = (chain: Chain | undefined) => {
       .filter(([_, chainConfig]) =>
         isProd ? !chainConfig.isTestnet : !!chainConfig.isTestnet,
       )
-      .map(([chainId]) => chainId);
+      .map(([chainId]) => Number(chainId));
     usedChains = [
-      ...CHAINS.filter((elem) => usedChainIds.includes(elem.id.toString())),
+      ...CHAINS.filter((elem) => usedChainIds.includes(elem.id)),
       mainnet,
     ];
   }
