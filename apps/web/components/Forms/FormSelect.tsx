@@ -23,7 +23,6 @@ interface Props {
   value?: string;
   onChange?: (e: ChangeEvent<HTMLSelectElement>) => void;
   className?: string;
-  renderOption?: (option: Option) => React.ReactNode;
 }
 
 export function FormSelect({
@@ -41,7 +40,6 @@ export function FormSelect({
   errors,
   value,
   onChange,
-  renderOption,
 }: Props) {
   const hasError = errors?.[registerKey];
 
@@ -65,13 +63,14 @@ export function FormSelect({
         className={`select select-info w-full max-w-md ${className} ${
           readOnly &&
           "!border-gray-300 focus:none !outline-gray-300 !pointer-events-none bg-transparent !cursor-not-allowed"
-        }`}
+        } ${hasError && "!border-danger-content focus:!border-danger-content"}`}
         id={registerKey}
         {...register?.(registerKey, {
           required,
           disabled,
           ...registerOptions,
         })}
+        required={required}
         disabled={disabled}
         defaultValue={value}
         onChange={onChange}
@@ -83,7 +82,7 @@ export function FormSelect({
         )}
         {options.map((option) => (
           <option value={option.value} key={option.value}>
-            {renderOption ? renderOption(option) : option.label}
+            {option.label}
           </option>
         ))}
       </select>
