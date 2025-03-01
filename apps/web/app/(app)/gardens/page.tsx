@@ -38,7 +38,7 @@ const Header = () => (
 );
 
 const Footer = () => {
-  const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons();
+  const { tooltipMessage, isConnected } = useDisableButtons();
 
   return (
     <section className="section-layout">
