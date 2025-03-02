@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
 import { usePathname, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
-import { Address, parseUnits } from "viem";
+import { Address, isAddress, parseUnits } from "viem";
 import { useChainId, useSwitchNetwork } from "wagmi";
 import { getRegistryFactoryDataDocument } from "#/subgraph/.graphclient";
 import { getRegistryFactoryDataQuery } from "#/subgraph/.graphclient";
@@ -33,7 +33,9 @@ import {
 } from "@/utils/numbers";
 import { ethAddressRegEx } from "@/utils/text";
 
-//protocol : 1 => means ipfs!, to do some checks later
+// Constants
+const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** 18;
+const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 type FormInputs = {
   title: string;
@@ -54,8 +56,7 @@ type FormRowTypes = {
 };
 
 export const CommunityForm = () => {
-  const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** 18;
-
+  // Form hooks
   const {
     register,
     handleSubmit,
@@ -66,159 +67,118 @@ export const CommunityForm = () => {
     watch,
   } = useForm<FormInputs>({ mode: "onBlur" });
 
-  const selectedChainId = getValues("chainId");
+  // States and contexts
+  const selectedChainId = watch("chainId");
   const connectedChainId = useChainId();
-
   const tokenAddress = watch("tokenAddress");
-
-  const { isToken, tokenData } = useERC20Validation({
-    address: tokenAddress,
-    // enabled: !!selectedChainId,
-    chainId: selectedChainId,
-  });
-
-  useEffect(() => {
-    if (tokenAddress) {
-      trigger("tokenAddress");
-    }
-    console.log(tokenAddress, "trigger");
-  }, [tokenAddress]);
-
-  const {
-    data: registryFactoryData,
-    // fetching
-  } = useSubgraphQueryMultiChain<getRegistryFactoryDataQuery>({
-    query: getRegistryFactoryDataDocument,
-  });
-
-  const registryFactories = registryFactoryData?.map(
-    (factory) => factory.registryFactories[0],
-  );
-
   const { publish } = usePubSubContext();
-
   const [showPreview, setShowPreview] = useState<boolean>(false);
   const [previewData, setPreviewData] = useState<FormInputs>();
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
   const { isConnected, tooltipMessage } = useDisableButtons();
+  const { switchNetwork } = useSwitchNetwork();
 
-  const registryFactoryAddr = registryFactories?.find(
-    (factory) => factory.chainId === getValues("chainId"),
-  )?.id as Address;
+  // ERC20 token validation
+  const { isToken, tokenData } = useERC20Validation({
+    address: tokenAddress,
+    chainId: selectedChainId,
+  });
 
-  const SUPPORTED_CHAINS = Object.entries(chainConfigMap)
-    .filter(([chainId, _]) => allChains.find((id) => id === Number(chainId))) // filters for enabled supported chains
-    .filter(([chainId, _]) =>
-      registryFactories?.find((factory) => factory.chainId === Number(chainId)),
-    ) // filters for registryFactories
-    .map(([chainId, chainConfig]) => ({
-      name: chainConfig.name,
-      chainId: chainId,
-    }))
-    .sort((a, b) => a.name.localeCompare(b.name));
-
-  const formRowTypes: Record<string, FormRowTypes> = {
-    stakeAmount: {
-      label: "Member Stake Amount:",
-      parse: (value: number) => `${value} ${tokenData.symbol || ""}`,
-    },
-    isKickMemberEnabled: {
-      label: "Council can expel members:",
-      parse: (value: boolean) => (value ? "Yes" : "No"),
-    },
-    feeAmount: {
-      label: "Community Fee Amount:",
-      parse: (value: number) => `${value || "0"}%`,
-    },
-    feeReceiver: {
-      label: "Fee Receiver:",
-      parse: (value: string) => value || "0x",
-    },
-    councilSafe: { label: "Council Safe:" },
-    chainId: {
-      label: "Chain:",
-      parse: (value: number) =>
-        // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-        SUPPORTED_CHAINS.find((c) => c.chainId === value.toString())?.name ||
-        "",
-    },
-    tokenAddress: {
-      label: "Community Token Address:",
-      parse: (value: string) => value,
-    },
-  };
-
-  const createCommunity = async () => {
-    setLoading(true);
-
-    if (
-      selectedChainId &&
-      switchNetwork &&
-      selectedChainId !== connectedChainId
-    ) {
-      try {
-        await switchNetwork(selectedChainId);
-        // Wait a moment for the network switch to complete
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-      } catch (error) {
-        console.error("Failed to switch networks:", error);
-        setLoading(false);
-        return;
-      }
+  // Effect to validate token address when it changes
+  useEffect(() => {
+    if (tokenAddress) {
+      trigger("tokenAddress");
     }
+  }, [tokenAddress, selectedChainId, trigger]);
 
-    const json = {
-      covenant: getValues("covenant"),
-    };
+  // Registry factory data query
+  const { data: registryFactoryData } =
+    useSubgraphQueryMultiChain<getRegistryFactoryDataQuery>({
+      query: getRegistryFactoryDataDocument,
+    });
 
-    const ipfsHash = await ipfsJsonUpload(json);
-    if (ipfsHash) {
-      if (previewData === undefined) {
-        throw new Error("No preview data");
-      }
-      const govTokenAddr = getValues("tokenAddress") as Address;
-      const communityName = previewData?.title;
-      const stakeAmount = parseUnits(
-        previewData?.stakeAmount.toString() as string,
-        tokenData.decimals || 18,
-      );
-      const communityFeeAmount = parseUnits(
-        previewData?.feeAmount.toString() as string,
-        CV_PERCENTAGE_SCALE_DECIMALS,
-      );
+  // Memoization of derived values
+  const registryFactories = useMemo(
+    () => registryFactoryData?.map((factory) => factory.registryFactories[0]),
+    [registryFactoryData],
+  );
 
-      const communityFeeReceiver =
-        previewData?.feeReceiver ||
-        "0x0000000000000000000000000000000000000000";
-      const councilSafeAddress = previewData?.councilSafe;
-      // arb safe 0xda7bdebd79833a5e0c027fab1b1b9b874ddcbd10
-      const isKickMemberEnabled = previewData?.isKickMemberEnabled;
-      const covenantIpfsHash = ipfsHash;
+  const registryFactoryAddr = useMemo(
+    () =>
+      registryFactories?.find(
+        (factory) => factory.chainId === getValues("chainId"),
+      )?.id as Address,
+    [registryFactories, getValues],
+  );
 
-      write?.({
-        args: [
-          {
-            _allo: chainConfigMap[selectedChainId]?.allo as Address,
-            _feeReceiver: communityFeeReceiver as Address,
-            _communityName: communityName,
-            _registerStakeAmount: stakeAmount,
-            _communityFee: communityFeeAmount,
-            _councilSafe: councilSafeAddress as Address,
-            _gardenToken: govTokenAddr as Address,
-            _isKickEnabled: isKickMemberEnabled,
-            _nonce: 0n,
-            _registryFactory: registryFactoryAddr,
-            covenantIpfsHash: covenantIpfsHash,
-            _metadata: { protocol: 1n, pointer: "" },
-          },
-        ],
-      });
-    }
-    setLoading(false);
-  };
+  const SUPPORTED_CHAINS = useMemo(
+    () =>
+      Object.entries(chainConfigMap)
+        .filter(([chainId, _]) =>
+          allChains.find((id) => id === Number(chainId)),
+        )
+        .filter(([chainId, _]) =>
+          registryFactories?.find(
+            (factory) => (factory.chainId as string) === chainId,
+          ),
+        )
+        .map(([chainId, chainConfig]) => ({
+          name: chainConfig.name,
+          chainId: chainId,
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name)),
+    [registryFactories],
+  );
 
+  const chainOptions = useMemo(
+    () => [
+      { label: "Select Chain", value: "" },
+      ...SUPPORTED_CHAINS.map((network) => ({
+        label: network.name,
+        value: network.chainId,
+        icon: <ChainIcon chain={network.chainId} height={20} />,
+      })),
+    ],
+    [SUPPORTED_CHAINS],
+  );
+
+  // Form row types definition
+  const formRowTypes: Record<string, FormRowTypes> = useMemo(
+    () => ({
+      stakeAmount: {
+        label: "Member Stake Amount:",
+        parse: (value: number) => `${value} ${tokenData.symbol || ""}`,
+      },
+      isKickMemberEnabled: {
+        label: "Council can expel members:",
+        parse: (value: boolean) => (value ? "Yes" : "No"),
+      },
+      feeAmount: {
+        label: "Community Fee Amount:",
+        parse: (value: number) => `${value || "0"}%`,
+      },
+      feeReceiver: {
+        label: "Fee Receiver:",
+        parse: (value: string) => value || "0x",
+      },
+      councilSafe: { label: "Council Safe:" },
+      chainId: {
+        label: "Chain:",
+        parse: (value: number) =>
+          SUPPORTED_CHAINS.find((c) => c.chainId === value.toString())?.name ||
+          "",
+      },
+      tokenAddress: {
+        label: "Community Token Address:",
+        parse: (value: string) => value,
+      },
+    }),
+    [SUPPORTED_CHAINS, tokenData.symbol],
+  );
+
+  // Contract write with confirmations
   const { write } = useContractWriteWithConfirmations({
     address: registryFactoryAddr,
     abi: registryFactoryABI,
@@ -248,53 +208,139 @@ export const CommunityForm = () => {
       }
     },
     onSettled: () => setLoading(false),
-    // enabled: !!selectedChainId,
     chainId: selectedChainId,
   });
 
-  const handlePreview = (data: FormInputs) => {
+  // Event handlers
+  const handleChainChange = useCallback(
+    (e: React.ChangeEvent<HTMLSelectElement>) => {
+      const chainId = Number(e.target.value);
+      setValue("chainId", chainId);
+      if (chainId) {
+        switchNetwork?.(chainId);
+      }
+    },
+    [setValue, switchNetwork],
+  );
+
+  const handlePreview = useCallback((data: FormInputs) => {
     setPreviewData(data);
     setShowPreview(true);
-  };
+  }, []);
 
-  const formatFormRows = () => {
+  const handleBackToEdit = useCallback(() => {
+    setShowPreview(false);
+    setLoading(false);
+  }, []);
+
+  // Function to create community
+  const createCommunity = useCallback(async () => {
+    if (!previewData) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      // Switch network if necessary
+      if (
+        selectedChainId &&
+        switchNetwork &&
+        selectedChainId !== connectedChainId
+      ) {
+        try {
+          await switchNetwork(selectedChainId);
+          // Wait for network switch to complete
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+        } catch (error) {
+          console.error("Failed to switch networks:", error);
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Upload covenant to IPFS
+      const json = {
+        covenant: getValues("covenant"),
+      };
+
+      const ipfsHash = await ipfsJsonUpload(json);
+      if (!ipfsHash) {
+        throw new Error("Failed to upload to IPFS");
+      }
+
+      // Prepare transaction data
+      const govTokenAddr = getValues("tokenAddress") as Address;
+      const communityName = previewData.title;
+      const stakeAmount = parseUnits(
+        previewData.stakeAmount.toString(),
+        tokenData.decimals || 18,
+      );
+      const communityFeeAmount = parseUnits(
+        previewData.feeAmount.toString(),
+        CV_PERCENTAGE_SCALE_DECIMALS,
+      );
+
+      const communityFeeReceiver = previewData.feeReceiver || ZERO_ADDRESS;
+      const councilSafeAddress = previewData.councilSafe;
+      const isKickMemberEnabled = previewData.isKickMemberEnabled;
+
+      // Execute transaction
+      write?.({
+        args: [
+          {
+            _allo: chainConfigMap[selectedChainId]?.allo as Address,
+            _feeReceiver: communityFeeReceiver as Address,
+            _communityName: communityName,
+            _registerStakeAmount: stakeAmount,
+            _communityFee: communityFeeAmount,
+            _councilSafe: councilSafeAddress as Address,
+            _gardenToken: govTokenAddr as Address,
+            _isKickEnabled: isKickMemberEnabled,
+            _nonce: 0n,
+            _registryFactory: registryFactoryAddr,
+            covenantIpfsHash: ipfsHash,
+            _metadata: { protocol: 1n, pointer: "" },
+          },
+        ],
+      });
+    } catch (error) {
+      console.error("Error creating community:", error);
+    } finally {
+      if (!write) {
+        setLoading(false);
+      }
+    }
+  }, [
+    previewData,
+    selectedChainId,
+    connectedChainId,
+    switchNetwork,
+    getValues,
+    tokenData.decimals,
+    registryFactoryAddr,
+    write,
+  ]);
+
+  // Format form rows for preview
+  const formatFormRows = useCallback((): FormRow[] => {
     if (!previewData) {
       return [];
     }
-    let formattedRows: FormRow[] = [];
 
-    Object.entries(previewData).forEach(([key, value]) => {
-      const formRow = formRowTypes[key];
-      if (formRow) {
+    return Object.entries(previewData)
+      .filter(([key]) => formRowTypes[key])
+      .map(([key, value]) => {
+        const formRow = formRowTypes[key];
         const parsedValue = formRow.parse ? formRow.parse(value) : value;
-        formattedRows.push({
+        return {
           label: formRow.label,
           data: parsedValue,
-        });
-      }
-    });
+        };
+      });
+  }, [previewData, formRowTypes]);
 
-    return formattedRows;
-  };
-
-  const chainOptions = [
-    { label: "Select Chain", value: "" },
-    ...SUPPORTED_CHAINS.map((network) => ({
-      label: network.name,
-      value: network.chainId,
-      icon: <ChainIcon chain={network.chainId} height={20} />,
-    })),
-  ];
-
-  const { switchNetwork } = useSwitchNetwork();
-
-  const handleChainChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const chainId = Number(e.target.value);
-    if (chainId) {
-      switchNetwork?.(chainId);
-    }
-  };
-
+  // Conditional rendering
   return (
     <form onSubmit={handleSubmit(handlePreview)} className="w-full">
       {showPreview ?
@@ -320,15 +366,20 @@ export const CommunityForm = () => {
               label="Governance Token Address"
               register={register}
               required
-              // onChange={() => trigger("tokenAddress")}
               registerOptions={{
                 pattern: {
                   value: ethAddressRegEx,
                   message: "Invalid Token Address",
                 },
-                validate: () =>
-                  isToken ||
-                  `Not a valid ERC20 token in ${chainConfigMap[selectedChainId]?.name} network`,
+                validate: (value) => {
+                  if (!isAddress(value)) return "Invalid Token Address";
+                  if (!selectedChainId) return "Please select a chain first";
+                  if (isToken) {
+                    return true;
+                  } else {
+                    return `Not a valid ERC20 token in ${chainConfigMap[selectedChainId]?.name} network`;
+                  }
+                },
               }}
               errors={errors}
               registerKey="tokenAddress"
@@ -428,9 +479,6 @@ export const CommunityForm = () => {
                   value: ethAddressRegEx,
                   message: "Invalid Eth Address",
                 },
-                // validate: async (value) =>
-                //   (await addressIsSAFE(value)) ||
-                //   `Not a valid Safe address in ${getChain(getValues("chainId"))?.name} network`,
               }}
               errors={errors}
               registerKey="councilSafe"
@@ -486,17 +534,11 @@ export const CommunityForm = () => {
       <div className="flex w-full items-center justify-center py-6">
         {showPreview ?
           <div className="flex items-center gap-10">
-            <Button
-              onClick={() => {
-                setShowPreview(false);
-                setLoading(false);
-              }}
-              btnStyle="outline"
-            >
+            <Button onClick={handleBackToEdit} btnStyle="outline">
               Edit
             </Button>
             <Button
-              onClick={() => createCommunity()}
+              onClick={createCommunity}
               isLoading={loading}
               disabled={!isConnected}
               tooltip={tooltipMessage}
