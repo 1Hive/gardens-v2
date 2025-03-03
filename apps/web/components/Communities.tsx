@@ -9,7 +9,7 @@ import {
   RegistryCommunity,
   TokenGarden,
 } from "#/subgraph/.graphclient";
-import { CommunityCard } from "./CommunityCard";
+import { CommunityCard, CommunityCardSkeleton } from "./CommunityCard";
 import { CommunityFilters } from "./CommunityFilters";
 
 export type LightCommunity = Pick<RegistryCommunity, "id" | "communityName"> & {
@@ -29,6 +29,7 @@ interface CommunitySectionProps {
   title: string;
   communities: LightCommunity[];
   defaultExpanded?: boolean;
+  skeletonLoading?: boolean;
 }
 
 interface CommunitiesProps {
@@ -40,6 +41,7 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
   title,
   communities,
   defaultExpanded = true,
+  skeletonLoading = false,
 }) => {
   const [isExpanded, setIsExpanded] = useState<boolean>(defaultExpanded);
 
@@ -51,7 +53,7 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
     }
   }, [communities]);
 
-  if (communities.length === 0) return null;
+  if (communities.length === 0 && !skeletonLoading) return null;
 
   return (
     <div>
@@ -83,9 +85,14 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
             className="overflow-hidden mt-4"
           >
             <div className="flex flex-row flex-wrap gap-10">
-              {communities.map(({ id, ...communityProps }) => (
-                <CommunityCard key={id} id={id} {...communityProps} />
-              ))}
+              {communities.length === 0 && skeletonLoading ?
+                Array(9)
+                  .fill(0)
+                  .map((_, i) => <CommunityCardSkeleton key={i} />)
+              : communities.map(({ id, ...communityProps }) => (
+                  <CommunityCard key={id} id={id} {...communityProps} />
+                ))
+              }
             </div>
           </motion.div>
         )}
@@ -188,6 +195,7 @@ export const Communities: React.FC<CommunitiesProps> = ({ communities }) => {
         title="Join a new community"
         communities={otherCommunities}
         defaultExpanded={true}
+        skeletonLoading={true}
       />
     </section>
   );
