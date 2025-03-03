@@ -134,12 +134,6 @@ export function CommunityFilters({
                   value={chainIdFilter}
                   onChange={handleNetworkChange}
                   className="h-10 min-h-10"
-                  renderOption={(option) => (
-                    <div className="flex items-center gap-2">
-                      {option.icon}
-                      <span>{option.label}</span>
-                    </div>
-                  )}
                 />
               </div>
             </div>

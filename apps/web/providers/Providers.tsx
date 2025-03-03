@@ -31,14 +31,13 @@ import { isProd } from "@/configs/isProd";
 import { QueryParamsProvider } from "@/contexts/collectQueryParams.context";
 import { PubSubProvider } from "@/contexts/pubsub.context";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
-import { ChainId } from "@/types";
 
 const createCustomConfig = (chain: Chain | undefined) => {
   let usedChains: Chain[] = [];
   if (chain) {
     usedChains = [chain, mainnet];
   } else {
-    const usedChainIds: ChainId[] = Object.entries(chainConfigMap)
+    const usedChainIds = Object.entries(chainConfigMap)
       .filter(([_, chainConfig]) =>
         isProd ? !chainConfig.isTestnet : !!chainConfig.isTestnet,
       )

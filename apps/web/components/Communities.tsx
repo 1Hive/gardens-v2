@@ -88,7 +88,9 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
               {communities.length === 0 && skeletonLoading ?
                 Array(9)
                   .fill(0)
-                  .map((_, i) => <CommunityCardSkeleton key={i} />)
+                  .map((_, i) => (
+                    <CommunityCardSkeleton key={`skeleton-${i}`} />
+                  ))
               : communities.map(({ id, ...communityProps }) => (
                   <CommunityCard key={id} id={id} {...communityProps} />
                 ))
