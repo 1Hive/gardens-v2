@@ -134,7 +134,7 @@ export const CommunityForm = () => {
 
   const chainOptions = useMemo(
     () => [
-      { label: "Select Chain", value: "" },
+      { label: "Select Network", value: "" },
       ...SUPPORTED_CHAINS.map((network) => ({
         label: network.name,
         value: network.chainId,
@@ -165,7 +165,7 @@ export const CommunityForm = () => {
       },
       councilSafe: { label: "Council Safe:" },
       chainId: {
-        label: "Chain:",
+        label: "Network:",
         parse: (value: number) =>
           SUPPORTED_CHAINS.find((c) => c.chainId === value.toString())?.name ||
           "",
@@ -350,17 +350,29 @@ export const CommunityForm = () => {
           formRows={formatFormRows()}
         />
       : <div className="flex flex-col gap-2 p-1">
-          <FormSelect
-            label="Chain"
-            register={register}
-            required
-            registerKey="chainId"
-            options={chainOptions}
-            errors={errors}
-            tooltip="Select the blockchain network for your community"
-            onChange={handleChainChange}
-          />
-
+          <div className="flex flex-col">
+            <FormInput
+              label="Community Name"
+              register={register}
+              required
+              errors={errors}
+              registerKey="title"
+              type="text"
+              placeholder="1hive"
+            />
+          </div>
+          <div className="flex flex-col">
+            <FormSelect
+              label="Governance Token Network"
+              register={register}
+              required
+              registerKey="chainId"
+              options={chainOptions}
+              errors={errors}
+              tooltip="Select the blockchain network for your community governance token"
+              onChange={handleChainChange}
+            />
+          </div>
           <div className="flex flex-col">
             <FormInput
               label="Governance Token Address"
@@ -388,18 +400,6 @@ export const CommunityForm = () => {
               className="pr-14 font-mono text-sm"
               suffix={tokenData.symbol}
               tooltip="ERC20 token address that will be used for the governance of the community"
-            />
-          </div>
-
-          <div className="flex flex-col">
-            <FormInput
-              label="Community Name"
-              register={register}
-              required
-              errors={errors}
-              registerKey="title"
-              type="text"
-              placeholder="1hive"
             />
           </div>
           <div className="flex flex-col">

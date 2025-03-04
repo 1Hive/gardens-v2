@@ -6,7 +6,7 @@ export default function Page() {
     <div className="page-layout">
       <section className="section-layout">
         <div className="text-center sm:mt-5 mb-12">
-          <h2 className="mb-2">Welcome to Gardens Community Form!</h2>
+          <h2 className="mb-2">Create your community on Gardens</h2>
         </div>
         <CommunityForm />
       </section>
