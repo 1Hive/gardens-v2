@@ -190,9 +190,7 @@ export default function PoolEditForm({
 
   const [showPreview, setShowPreview] = useState<boolean>(false);
   const [previewData, setPreviewData] = useState<FormInputs>();
-  const [tribunalAddress, setTribunalAddress] = useState(
-    initValues?.tribunalAddress ?? "",
-  );
+  const tribunalAddress = watch("tribunalAddress");
 
   const [loading, setLoading] = useState(false);
   const { publish } = usePubSubContext();
@@ -668,17 +666,22 @@ export default function PoolEditForm({
                 />
                 <FormCheckBox
                   label="Use global tribunal"
-                  register={register}
                   registerKey="useGlobalTribunal"
                   type="checkbox"
                   tooltip="Check this box to use the Gardens global tribunal Safe to rule on proposal disputes in the Pool, a service we offer if your community does not have an impartial 3rd party that can rule on violations of the Covenant."
                   value={
-                    tribunalAddress.toLowerCase() ===
+                    tribunalAddress?.toLowerCase() ===
                     globalTribunal?.toLowerCase()
                   }
                   onChange={() => {
-                    setTribunalAddress((oldAddress) =>
-                      oldAddress === globalTribunal ? "" : globalTribunal ?? "",
+                    setValue(
+                      "tribunalAddress",
+                      (
+                        tribunalAddress.toLowerCase() ===
+                          globalTribunal?.toLowerCase()
+                      ) ?
+                        ""
+                      : globalTribunal ?? "",
                     );
                   }}
                 />
