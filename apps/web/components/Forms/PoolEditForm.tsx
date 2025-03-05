@@ -132,8 +132,10 @@ export default function PoolEditForm({
     handleSubmit,
     setValue,
     watch,
+    trigger,
     formState: { errors },
   } = useForm<FormInputs>({
+    mode: "onBlur",
     defaultValues:
       initValues ?
         {
@@ -655,10 +657,12 @@ export default function PoolEditForm({
                   tooltip="Enter a Safe address to rule on proposal disputes in the Pool and determine if they are in violation of the Covenant."
                   label="Tribunal address"
                   required
+                  validateSafe
                   value={tribunalAddress}
-                  onChange={(e) => {
-                    setValue("tribunalAddress", e.target.value);
-                  }}
+                  registerKey="tribunalAddress"
+                  register={register}
+                  errors={errors}
+                  trigger={trigger}
                 />
                 <FormCheckBox
                   label="Use global tribunal"
