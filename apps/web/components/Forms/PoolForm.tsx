@@ -191,6 +191,7 @@ export function PoolForm({ token, communityAddr }: Props) {
     watch,
     trigger,
   } = useForm<FormInputs>({
+    mode: "onBlur",
     defaultValues: {
       strategyType: 1,
       pointSystemType: 0,
@@ -842,10 +843,12 @@ export function PoolForm({ token, communityAddr }: Props) {
                 tooltip="Enter a Safe address to rule on proposal disputes in the Pool and determine if they are in violation of the Covenant."
                 label="Tribunal address"
                 required
+                validateSafe
                 value={tribunalAddress}
-                onChange={(e) => {
-                  setValue("tribunalAddress", e.target.value);
-                }}
+                registerKey="tribunalAddress"
+                register={register}
+                errors={errors}
+                trigger={trigger}
               />
               <FormCheckBox
                 label="Use global tribunal"

@@ -132,8 +132,10 @@ export default function PoolEditForm({
     handleSubmit,
     setValue,
     watch,
+    trigger,
     formState: { errors },
   } = useForm<FormInputs>({
+    mode: "onBlur",
     defaultValues:
       initValues ?
         {
@@ -188,9 +190,7 @@ export default function PoolEditForm({
 
   const [showPreview, setShowPreview] = useState<boolean>(false);
   const [previewData, setPreviewData] = useState<FormInputs>();
-  const [tribunalAddress, setTribunalAddress] = useState(
-    initValues?.tribunalAddress ?? "",
-  );
+  const tribunalAddress = watch("tribunalAddress");
 
   const [loading, setLoading] = useState(false);
   const { publish } = usePubSubContext();
@@ -657,26 +657,31 @@ export default function PoolEditForm({
                   tooltip="Enter a Safe address to rule on proposal disputes in the Pool and determine if they are in violation of the Covenant."
                   label="Tribunal address"
                   required
-                  onChange={(ev) =>
-                    setValue("tribunalAddress", ev.target.value)
-                  }
+                  validateSafe
                   value={tribunalAddress}
+                  registerKey="tribunalAddress"
+                  register={register}
+                  errors={errors}
+                  trigger={trigger}
                 />
                 <FormCheckBox
                   label="Use global tribunal"
-                  register={register}
                   registerKey="useGlobalTribunal"
                   type="checkbox"
                   tooltip="Check this box to use the Gardens global tribunal Safe to rule on proposal disputes in the Pool, a service we offer if your community does not have an impartial 3rd party that can rule on violations of the Covenant."
                   value={
-                    tribunalAddress.toLowerCase() ===
+                    tribunalAddress?.toLowerCase() ===
                     globalTribunal?.toLowerCase()
                   }
                   onChange={() => {
-                    setTribunalAddress((oldAddress) =>
-                      oldAddress === globalTribunal ? "" : (
-                        (globalTribunal ?? "")
-                      ),
+                    setValue(
+                      "tribunalAddress",
+                      (
+                        tribunalAddress.toLowerCase() ===
+                          globalTribunal?.toLowerCase()
+                      ) ?
+                        ""
+                      : globalTribunal ?? "",
                     );
                   }}
                 />
