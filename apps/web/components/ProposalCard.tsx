@@ -222,7 +222,7 @@ export function ProposalCard({
                         max={Number(memberActivatedPoints)}
                         value={inputData ? Number(inputData.value) : undefined}
                         className={`range range-md cursor-pointer bg-neutral-soft [--range-shdw:var(--color-green-500)] ${isProposalEnded ? "grayscale !cursor-not-allowed" : ""}`}
-                        step={Number(memberActivatedPoints / 100n)}
+                        step={Number(memberActivatedPoints) / 100}
                         onChange={(e) => {
                           inputHandler(
                             proposalData.id,
