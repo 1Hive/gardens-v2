@@ -116,7 +116,9 @@ export function FormInput({
         : <div data-color-mode="light">
             <MarkdownEditor
               {...registered}
-              className="textarea textarea-info p-0 ![--color-canvas-subtle:white] ![--color-neutral-muted:#cceeff44]"
+              className={`textarea p-0 ![--color-canvas-subtle:white] ![--color-neutral-muted:#cceeff44] rounded-2xl ${
+                errors[registerKey] ? "textarea-error" : "textarea-info"
+              }`}
               id={registerKey}
               style={{
                 resize: "vertical",
@@ -139,7 +141,9 @@ export function FormInput({
           </div>
         }
         {suffix && (
-          <span className="absolute right-4 top-4 text-black">{suffix}</span>
+          <span className="absolute right-[10px] top-1/2 -translate-y-1/2 text-black">
+            {suffix}
+          </span>
         )}
       </div>
       {errors && (

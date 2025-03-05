@@ -9,6 +9,7 @@ import { Address, isAddress, parseUnits } from "viem";
 import { useChainId, useSwitchNetwork } from "wagmi";
 import { getRegistryFactoryDataDocument } from "#/subgraph/.graphclient";
 import { getRegistryFactoryDataQuery } from "#/subgraph/.graphclient";
+import FormAddressInput from "./FormAddressInput";
 import { FormCheckBox } from "./FormCheckBox";
 import { FormInput } from "./FormInput";
 import { FormPreview, FormRow } from "./FormPreview";
@@ -71,6 +72,7 @@ export const CommunityForm = () => {
   const selectedChainId = watch("chainId");
   const connectedChainId = useChainId();
   const tokenAddress = watch("tokenAddress");
+  const councilSafe = watch("councilSafe");
   const { publish } = usePubSubContext();
   const [showPreview, setShowPreview] = useState<boolean>(false);
   const [previewData, setPreviewData] = useState<FormInputs>();
@@ -470,21 +472,17 @@ export const CommunityForm = () => {
             />
           </div>
           <div className="flex flex-col">
-            <FormInput
-              label="Council Safe address"
-              register={register}
-              required
-              registerOptions={{
-                pattern: {
-                  value: ethAddressRegEx,
-                  message: "Invalid Eth Address",
-                },
-              }}
-              errors={errors}
-              registerKey="councilSafe"
-              placeholder="0x.."
-              type="text"
+            <FormAddressInput
               tooltip="The moderators of the community. Choose a Safe address that can create pools and manage settings in the community."
+              label="Council Safe address"
+              required
+              validateSafe
+              value={councilSafe}
+              placeholder="0x.."
+              registerKey="councilSafe"
+              register={register}
+              errors={errors}
+              trigger={trigger}
             />
           </div>
 
