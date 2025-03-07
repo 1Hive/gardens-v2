@@ -30,11 +30,13 @@ interface CommunitySectionProps {
   communities: LightCommunity[];
   defaultExpanded?: boolean;
   skeletonLoading?: boolean;
+  isFetching?: boolean;
 }
 
 interface CommunitiesProps {
   communities: LightCommunity[];
   header?: React.ReactNode;
+  isFetching: boolean;
 }
 
 const CommunitySection: React.FC<CommunitySectionProps> = ({
@@ -42,6 +44,7 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
   communities,
   defaultExpanded = true,
   skeletonLoading = false,
+  isFetching,
 }) => {
   const [isExpanded, setIsExpanded] = useState<boolean>(defaultExpanded);
 
@@ -53,7 +56,7 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
     }
   }, [communities]);
 
-  if (communities.length === 0 && !skeletonLoading) return null;
+  if (!skeletonLoading && communities.length === 0) return null;
 
   return (
     <div>
@@ -85,7 +88,7 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
             className="overflow-hidden mt-4"
           >
             <div className="flex flex-row flex-wrap gap-10">
-              {communities.length === 0 && skeletonLoading ?
+              {isFetching ?
                 Array(9)
                   .fill(0)
                   .map((_, i) => (
@@ -103,7 +106,10 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
   );
 };
 
-export const Communities: React.FC<CommunitiesProps> = ({ communities }) => {
+export const Communities: React.FC<CommunitiesProps> = ({
+  communities,
+  isFetching,
+}) => {
   const { address } = useAccount();
   const [otherCommunities, setOtherCommunities] = useState<LightCommunity[]>(
     [],
@@ -188,6 +194,7 @@ export const Communities: React.FC<CommunitiesProps> = ({ communities }) => {
             title="My communities"
             communities={userCommunities}
             defaultExpanded={true}
+            isFetching={isFetching}
           />
           <div className="divider h-1 border-b border-border-neutral mx-2" />
         </>
@@ -197,6 +204,7 @@ export const Communities: React.FC<CommunitiesProps> = ({ communities }) => {
         title="Join a new community"
         communities={otherCommunities}
         defaultExpanded={true}
+        isFetching={isFetching}
         skeletonLoading={true}
       />
     </section>
