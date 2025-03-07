@@ -406,6 +406,8 @@ export const ProposalForm = ({
             <div className="flex flex-col">
               <FormAddressInput
                 label="Beneficiary address"
+                register={register}
+                registerKey="beneficiary"
                 value={beneficiary}
                 onChange={(e) => {
                   setValue("beneficiary", e.target.value);
