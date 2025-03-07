@@ -370,8 +370,8 @@ export const ProposalForm = ({
                 }}
                 registerOptions={{
                   max: {
-                    value: spendingLimitNumber,
-                    message: `Max amount must remain under the spending limit of ${formatNumber(spendingLimitString)} ${poolToken?.symbol}`,
+                    value: spendingLimit,
+                    message: `Max amount must remain under the spending limit of ${formatNumber(spendingLimit)} ${poolToken?.symbol}`,
                   },
                   min: {
                     value: INPUT_TOKEN_MIN_VALUE,
