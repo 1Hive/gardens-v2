@@ -363,8 +363,8 @@ export const ProposalForm = ({
                 }}
                 registerOptions={{
                   max: {
-                    value: spendingLimitNumber,
-                    message: `Max amount must remain under the spending limit of ${formatNumber(spendingLimitString)} ${poolToken?.symbol}`,
+                    value: spendingLimit,
+                    message: `Max amount must remain under the spending limit of ${formatNumber(spendingLimit)} ${poolToken?.symbol}`,
                   },
                   min: {
                     value: INPUT_TOKEN_MIN_VALUE,
@@ -399,6 +399,8 @@ export const ProposalForm = ({
             <div className="flex flex-col">
               <FormAddressInput
                 label="Beneficiary address"
+                register={register}
+                registerKey="beneficiary"
                 value={beneficiary}
                 onChange={(e) => {
                   setValue("beneficiary", e.target.value);
