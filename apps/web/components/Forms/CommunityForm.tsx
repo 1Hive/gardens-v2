@@ -347,6 +347,8 @@ export const CommunityForm = () => {
   const validateTokenAddress = async (address: string) => {
     if (!isAddress(address)) return "Invalid Token Address";
     if (!selectedChainId) return "Please select a chain first";
+    if (selectedChainId !== connectedChainId)
+      return `Please connect to ${chainConfigMap[selectedChainId]?.name} network`;
     try {
       setTokenIsFetching(true);
       const [symbol, decimals] = await Promise.all([

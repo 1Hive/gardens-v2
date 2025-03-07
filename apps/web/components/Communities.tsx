@@ -92,7 +92,8 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
                 Array(9)
                   .fill(0)
                   .map((_, i) => (
-                    <CommunityCardSkeleton key={`skeleton-${i}`} />
+                    // eslint-disable-next-line react/no-array-index-key
+                    <CommunityCardSkeleton key={`CommunityCardSkeleton-${i}`} />
                   ))
               : communities.map(({ id, ...communityProps }) => (
                   <CommunityCard key={id} id={id} {...communityProps} />
