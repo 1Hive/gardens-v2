@@ -6,7 +6,7 @@ import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
 import { usePathname, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { Address, isAddress, parseUnits } from "viem";
-import { useChainId, useSwitchNetwork } from "wagmi";
+import { erc20ABI, useChainId, usePublicClient, useSwitchNetwork } from "wagmi";
 import { getRegistryFactoryDataDocument } from "#/subgraph/.graphclient";
 import { getRegistryFactoryDataQuery } from "#/subgraph/.graphclient";
 import FormAddressInput from "./FormAddressInput";
@@ -14,13 +14,13 @@ import { FormCheckBox } from "./FormCheckBox";
 import { FormInput } from "./FormInput";
 import { FormPreview, FormRow } from "./FormPreview";
 import { FormSelect } from "./FormSelect";
+import { LoadingSpinner } from "../LoadingSpinner";
 import { Button } from "@/components";
 import { chainConfigMap, ChainIcon } from "@/configs/chains";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
-import { useERC20Validation } from "@/hooks/useERC20TokenValidation";
 import {
   allChains,
   useSubgraphQueryMultiChain,
@@ -56,6 +56,11 @@ type FormRowTypes = {
   parse?: (value: any) => string;
 };
 
+type TokenData = {
+  symbol: string;
+  decimals: number;
+};
+
 export const CommunityForm = () => {
   // Form hooks
   const {
@@ -79,21 +84,18 @@ export const CommunityForm = () => {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+  const publicClient = usePublicClient();
   const { isConnected, tooltipMessage } = useDisableButtons();
-  const { switchNetwork } = useSwitchNetwork();
-
-  // ERC20 token validation
-  const { isToken, tokenData } = useERC20Validation({
-    address: tokenAddress,
-    chainId: selectedChainId,
-  });
+  const { switchNetwork, data: switchNetworkData } = useSwitchNetwork();
+  const [tokenData, setTokenData] = useState<TokenData | null>(null);
+  const [tokenIsFetching, setTokenIsFetching] = useState<boolean>(false);
 
   // Effect to validate token address when it changes
   useEffect(() => {
-    if (tokenAddress) {
+    if (tokenAddress && switchNetworkData?.id) {
       trigger("tokenAddress");
     }
-  }, [tokenAddress, selectedChainId, trigger]);
+  }, [switchNetworkData?.id]);
 
   // Registry factory data query
   const { data: registryFactoryData } =
@@ -151,7 +153,7 @@ export const CommunityForm = () => {
     () => ({
       stakeAmount: {
         label: "Member Stake Amount:",
-        parse: (value: number) => `${value} ${tokenData.symbol || ""}`,
+        parse: (value: number) => `${value} ${tokenData?.symbol || ""}`,
       },
       isKickMemberEnabled: {
         label: "Council can expel members:",
@@ -177,7 +179,7 @@ export const CommunityForm = () => {
         parse: (value: string) => value,
       },
     }),
-    [SUPPORTED_CHAINS, tokenData.symbol],
+    [SUPPORTED_CHAINS, tokenData?.symbol],
   );
 
   // Contract write with confirmations
@@ -276,7 +278,7 @@ export const CommunityForm = () => {
       const communityName = previewData.title;
       const stakeAmount = parseUnits(
         previewData.stakeAmount.toString(),
-        tokenData.decimals || 18,
+        tokenData?.decimals || 18,
       );
       const communityFeeAmount = parseUnits(
         previewData.feeAmount.toString(),
@@ -319,7 +321,7 @@ export const CommunityForm = () => {
     connectedChainId,
     switchNetwork,
     getValues,
-    tokenData.decimals,
+    tokenData?.decimals,
     registryFactoryAddr,
     write,
   ]);
@@ -341,6 +343,43 @@ export const CommunityForm = () => {
         };
       });
   }, [previewData, formRowTypes]);
+
+  const validateTokenAddress = async (address: string) => {
+    if (!isAddress(address)) return "Invalid Token Address";
+    if (!selectedChainId) return "Please select a chain first";
+    try {
+      setTokenIsFetching(true);
+      const [symbol, decimals] = await Promise.all([
+        publicClient?.readContract({
+          address: address as `0x${string}`,
+          abi: erc20ABI,
+          functionName: "symbol",
+        }),
+        publicClient?.readContract({
+          address: address as `0x${string}`,
+          abi: erc20ABI,
+          functionName: "decimals",
+        }),
+      ]);
+
+      if (symbol && typeof decimals === "number") {
+        setTokenData({
+          symbol: symbol as string,
+          decimals: decimals,
+        });
+        return true;
+      } else {
+        setTokenData(null);
+        return `Not a valid ERC20 token in ${chainConfigMap[selectedChainId]?.name} network`;
+      }
+    } catch (err) {
+      console.error(err);
+      setTokenData(null);
+      return `Not a valid ERC20 token in ${chainConfigMap[selectedChainId]?.name} network`;
+    } finally {
+      setTokenIsFetching(false);
+    }
+  };
 
   // Conditional rendering
   return (
@@ -381,26 +420,20 @@ export const CommunityForm = () => {
               register={register}
               required
               registerOptions={{
-                pattern: {
-                  value: ethAddressRegEx,
-                  message: "Invalid Token Address",
-                },
-                validate: (value) => {
-                  if (!isAddress(value)) return "Invalid Token Address";
-                  if (!selectedChainId) return "Please select a chain first";
-                  if (isToken) {
-                    return true;
-                  } else {
-                    return `Not a valid ERC20 token in ${chainConfigMap[selectedChainId]?.name} network`;
-                  }
-                },
+                validate: validateTokenAddress,
               }}
               errors={errors}
               registerKey="tokenAddress"
               placeholder="0x..."
               type="text"
               className="pr-14 font-mono text-sm"
-              suffix={tokenData.symbol}
+              suffix={
+                tokenIsFetching ?
+                  <LoadingSpinner className="text-neutral-soft-content" />
+                : tokenData ?
+                  tokenData?.symbol
+                : null
+              }
               tooltip="ERC20 token address that will be used for the governance of the community"
             />
           </div>
@@ -423,7 +456,7 @@ export const CommunityForm = () => {
                 step: INPUT_TOKEN_MIN_VALUE,
                 min: INPUT_TOKEN_MIN_VALUE,
               }}
-              suffix={tokenData.symbol}
+              suffix={tokenData?.symbol}
               tooltip="Amount of tokens user must stake to join and participate in community governance. Refundable upon leaving the community."
             />
           </div>
