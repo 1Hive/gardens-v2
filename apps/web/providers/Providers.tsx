@@ -37,9 +37,17 @@ const createCustomConfig = (chain: Chain | undefined) => {
   if (chain) {
     usedChains = [chain, mainnet];
   } else {
+    const isClient = typeof window !== "undefined";
+    const queryAllChains =
+      isClient ?
+        window.localStorage?.getItem("queryAllChains") === "true"
+      : false;
+
     const usedChainIds = Object.entries(chainConfigMap)
       .filter(([_, chainConfig]) =>
-        isProd ? !chainConfig.isTestnet : !!chainConfig.isTestnet,
+        queryAllChains ? true
+        : isProd ? !chainConfig.isTestnet
+        : !!chainConfig.isTestnet,
       )
       .map(([chainId]) => Number(chainId));
     usedChains = [
@@ -85,16 +93,11 @@ const Providers = ({ children }: Props) => {
   const [mounted, setMounted] = useState(false);
   const chain = useChainFromPath() as Chain | undefined;
 
-  const [wagmiConfig, setWagmiConfig] = useState(() =>
-    createCustomConfig(chain),
-  );
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const [wagmiConfig, setWagmiConfig] = useState<any>(null);
 
   useEffect(() => {
     setWagmiConfig(createCustomConfig(chain));
+    setMounted(true);
   }, [chain]);
 
   if (!mounted || !wagmiConfig) {

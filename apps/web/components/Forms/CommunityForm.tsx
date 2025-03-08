@@ -6,7 +6,7 @@ import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
 import { usePathname, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { Address, isAddress, parseUnits } from "viem";
-import { erc20ABI, useChainId, usePublicClient, useSwitchNetwork } from "wagmi";
+import { erc20ABI, useNetwork, usePublicClient, useSwitchNetwork } from "wagmi";
 import { getRegistryFactoryDataDocument } from "#/subgraph/.graphclient";
 import { getRegistryFactoryDataQuery } from "#/subgraph/.graphclient";
 import FormAddressInput from "./FormAddressInput";
@@ -75,7 +75,8 @@ export const CommunityForm = () => {
 
   // States and contexts
   const selectedChainId = watch("chainId");
-  const connectedChainId = useChainId();
+  const { chain } = useNetwork();
+  const connectedChainId = chain?.id;
   const tokenAddress = watch("tokenAddress");
   const councilSafe = watch("councilSafe");
   const { publish } = usePubSubContext();
@@ -92,10 +93,10 @@ export const CommunityForm = () => {
 
   // Effect to validate token address when it changes
   useEffect(() => {
-    if (tokenAddress && switchNetworkData?.id) {
+    if ((tokenAddress && switchNetworkData?.id) || selectedChainId) {
       trigger("tokenAddress");
     }
-  }, [switchNetworkData?.id]);
+  }, [switchNetworkData?.id, connectedChainId, selectedChainId]);
 
   // Registry factory data query
   const { data: registryFactoryData } =
@@ -347,7 +348,7 @@ export const CommunityForm = () => {
   const validateTokenAddress = async (address: string) => {
     if (!isAddress(address)) return "Invalid Token Address";
     if (!selectedChainId) return "Please select a chain first";
-    if (selectedChainId !== connectedChainId)
+    if (+selectedChainId !== Number(connectedChainId))
       return `Please connect to ${chainConfigMap[selectedChainId]?.name} network`;
     try {
       setTokenIsFetching(true);
