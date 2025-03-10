@@ -56,12 +56,15 @@ export const DataTable: React.FC<DataTableProps> = ({
                 {data &&
                   data.map((item) => (
                     <tr key={item.id} className="even:bg-gray-50">
-                      {columns.map((col) => (
+                      {columns.map((col, i) => (
                         <td
-                          key={item.id}
+                          // eslint-disable-next-line react/no-array-index-key
+                          key={`col-${i}-${item.id}`}
                           className={`whitespace-nowrap py-5 text-sm text-neutral-soft-content ${col.className ?? ""}`}
                         >
-                          <p>{col.render(item)}</p>
+                          <div className="font-inter text-base font-normal leading-6 text-left">
+                            {col.render(item)}
+                          </div>
                         </td>
                       ))}
                     </tr>
