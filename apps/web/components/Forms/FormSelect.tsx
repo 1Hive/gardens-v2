@@ -43,6 +43,27 @@ export function FormSelect({
 }: Props) {
   const hasError = errors?.[registerKey];
 
+  // Create a combined onChange handler
+  const handleChange = (e: ChangeEvent<HTMLSelectElement>) => {
+    if (onChange) {
+      onChange(e);
+    }
+  };
+
+  // Register with react-hook-form
+  const registered = register?.(registerKey, {
+    required,
+    disabled,
+    onChange: (e) => {
+      handleChange(e);
+      if (registerOptions?.onChange) {
+        registerOptions.onChange(e);
+      }
+    },
+    value: value ?? registerOptions?.value,
+    ...registerOptions,
+  });
+
   return (
     <div className="flex flex-col">
       {label && (
@@ -65,15 +86,10 @@ export function FormSelect({
           "!border-gray-300 focus:none !outline-gray-300 !pointer-events-none bg-transparent !cursor-not-allowed"
         } ${hasError && "!border-danger-content focus:!border-danger-content"}`}
         id={registerKey}
-        {...register?.(registerKey, {
-          required,
-          disabled,
-          ...registerOptions,
-        })}
+        {...registered}
         required={required}
         disabled={disabled}
         defaultValue={value}
-        onChange={onChange}
       >
         {placeholder && (
           <option value="" disabled>
