@@ -2,7 +2,7 @@
  * @type {import('eslint').Linter.Config}
  */
 module.exports = {
-  extends: ["turbo", "prettier"],
+  extends: ["prettier"],
   ignorePatterns: ["node_modules", "dist"],
   parser: "@typescript-eslint/parser",
   plugins: ["@typescript-eslint"],
