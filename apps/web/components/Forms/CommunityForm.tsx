@@ -115,7 +115,7 @@ export const CommunityForm = () => {
       registryFactories?.find(
         (factory) => factory.chainId === getValues("chainId"),
       )?.id as Address,
-    [registryFactories, getValues],
+    [registryFactories, getValues("chainId")],
   );
 
   const SUPPORTED_CHAINS = useMemo(
@@ -290,7 +290,6 @@ export const CommunityForm = () => {
       const councilSafeAddress = previewData.councilSafe;
       const isKickMemberEnabled = previewData.isKickMemberEnabled;
 
-      // Execute transaction
       write?.({
         args: [
           {
@@ -518,7 +517,6 @@ export const CommunityForm = () => {
               registerKey="councilSafe"
               register={register}
               errors={errors}
-              trigger={trigger}
             />
           </div>
 
