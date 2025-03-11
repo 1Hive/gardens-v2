@@ -87,6 +87,7 @@ export function FormSelect({
         } ${hasError && "!border-danger-content focus:!border-danger-content"}`}
         id={registerKey}
         {...registered}
+        onChange={onChange}
         required={required}
         disabled={disabled}
         defaultValue={value}
