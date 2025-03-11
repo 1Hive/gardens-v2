@@ -174,7 +174,6 @@ export function useSubgraphQueryMultiChain<
                     );
                   }
                   responseMap.current.set(chainId, res.data!);
-                  setFetching(false);
                   fetchingRef.current = false;
                   try {
                     toast.dismiss(pendingRefreshToastId);
@@ -206,7 +205,6 @@ export function useSubgraphQueryMultiChain<
     },
     HTTP_CODES.SUCCESS,
   );
-
   return {
     data: response,
     errors: errorsMap.current,
