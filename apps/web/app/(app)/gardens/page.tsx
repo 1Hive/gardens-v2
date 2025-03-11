@@ -14,28 +14,41 @@ import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQueryMultiChain } from "@/hooks/useSubgraphQueryMultiChain";
 
 // Components
-const Header = () => (
-  <header className="flex flex-col items-center gap-8">
-    <div className="flex items-center text-center">
-      <div className="relative flex-1">
-        <Image src={clouds1} alt="clouds" width={205} height={205} />
-      </div>
-      <div className="mx-10 flex flex-col items-center gap-5">
-        <div className="flex flex-col items-center">
-          <h1 className="max-w-xl text-center text-neutral-content">
-            Welcome to Gardens
-          </h1>
-          <p className="text-xl text-primary-content text-center">
-            A place where communities grow through collective decision-making
-          </p>
+const Header = () => {
+  const { tooltipMessage, isConnected } = useDisableButtons();
+  return (
+    <header className="flex flex-col items-center gap-8">
+      <div className="flex items-center text-center">
+        <div className="relative flex-1">
+          <Image src={clouds1} alt="clouds" width={205} height={205} />
+        </div>
+        <div className="mx-10 flex flex-col items-center gap-5">
+          <div className="flex flex-col items-center">
+            <h1 className="max-w-xl text-center text-neutral-content">
+              Welcome to Gardens
+            </h1>
+            <p className="text-xl text-primary-content text-center">
+              A place where communities grow through collective decision-making
+            </p>
+            <Link href="/gardens/create-community" className="mt-6 z-10">
+              <Button
+                btnStyle="filled"
+                disabled={!isConnected}
+                tooltip={tooltipMessage}
+                icon={<PlusIcon height={24} width={24} />}
+              >
+                Create a community
+              </Button>
+            </Link>
+          </div>
+        </div>
+        <div className="relative flex-1">
+          <Image src={clouds2} alt="clouds" width={205} height={205} />
         </div>
       </div>
-      <div className="relative flex-1">
-        <Image src={clouds2} alt="clouds" width={205} height={205} />
-      </div>
-    </div>
-  </header>
-);
+    </header>
+  );
+};
 
 const Footer = () => {
   const { tooltipMessage, isConnected } = useDisableButtons();
