@@ -26,10 +26,7 @@ import {
 } from "@/hooks/useConvictionRead";
 import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { PoolTypes, ProposalStatus } from "@/types";
-import {
-  calculatePercentage,
-  calculatePercentageBigInt,
-} from "@/utils/numbers";
+import { calculatePercentageBigInt } from "@/utils/numbers";
 import { prettyTimestamp } from "@/utils/text";
 
 export type ProposalCardProps = {
@@ -99,7 +96,7 @@ export function ProposalCard({
   });
   const inputValue =
     inputData ?
-      calculatePercentageBigInt(inputData.value, memberActivatedPoints)
+      Number(calculatePercentageBigInt(inputData.value, memberActivatedPoints))
     : 0;
 
   const poolWeightAllocatedInProposal = (

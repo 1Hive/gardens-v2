@@ -1,14 +1,21 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { blo } from "blo";
 import Image from "next/image";
 import { UseFormTrigger } from "react-hook-form";
 import { Address, isAddress } from "viem";
-import { useEnsAddress, useEnsAvatar, useEnsName } from "wagmi";
+import {
+  useEnsAddress,
+  useEnsAvatar,
+  useEnsName,
+  useNetwork,
+  usePublicClient,
+} from "wagmi";
 import { FormInput } from "./FormInput";
-import { useChainFromPath } from "@/hooks/useChainFromPath";
+import { LoadingSpinner } from "../LoadingSpinner";
+import { getChain, getConfigByChain } from "@/configs/chains";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useSafeValidation } from "@/hooks/useSafeValidation";
-import { ethAddressRegEx } from "@/utils/text";
+import { safeABI } from "@/src/generated";
 import { isENS } from "@/utils/web3";
 
 type Props = {
@@ -26,7 +33,7 @@ type Props = {
   validateSafe?: boolean;
   registerOptions?: any;
   onChange?: React.ChangeEventHandler<HTMLInputElement>;
-  trigger?: UseFormTrigger<any>;
+  // trigger?: UseFormTrigger<any>;
 };
 
 export const FormAddressInput = ({
@@ -44,13 +51,16 @@ export const FormAddressInput = ({
   validateSafe = false,
   onChange,
   registerOptions,
-  trigger,
+  // trigger,
   ...rest
 }: Props) => {
   const debouncedValue = useDebounce(value, 500);
-  const chain = useChainFromPath();
+  const { chain } = useNetwork();
+  // const connectedChainId = chain?.id;
+  const publicClient = usePublicClient();
 
   const [inputValue, setInputValue] = useState<string>("");
+  const [isValidatingSafe, setIsValidatingSafe] = useState<boolean>(false);
 
   // ENS Resolution
   const { data: ensAddress, isError: ensError } = useEnsAddress({
@@ -74,30 +84,37 @@ export const FormAddressInput = ({
     cacheTime: 30_000,
   });
 
-  // SAFE Validation
-  const { isSafe, isLoading: isValidatingSafe } = useSafeValidation({
-    address: debouncedValue as Address,
-    enabled: validateSafe && isAddress(debouncedValue ?? ""),
-  });
-
-  useEffect(() => {
-    if (ensAddress) {
-      setInputValue(ensAddress);
-      onChange?.({
-        target: { value: ensAddress },
-      } as React.ChangeEvent<HTMLInputElement>);
-      if (trigger && registerKey) {
-        trigger(registerKey);
-      }
+  const validateSafeAddress = async (address: string) => {
+    if (
+      localStorage.getItem("bypassSafeCheck") === "true" ||
+      !getConfigByChain(publicClient.chain.id)?.safePrefix
+    ) {
+      return true;
     }
-  }, [ensAddress, onChange, trigger, registerKey]);
+    try {
+      setIsValidatingSafe(true);
+      const owners = await Promise.all([
+        publicClient?.readContract({
+          address: address as Address,
+          abi: safeABI,
+          functionName: "getOwners",
+        }),
+      ]);
+      if (!!owners) {
+        return true;
+      } else {
+        return `Not a valid Safe address in ${chain?.name} network`;
+      }
+    } catch (err) {
+      console.error(err);
+      return `Not a valid Safe address in ${chain?.name} network`;
+    } finally {
+      setIsValidatingSafe(false);
+    }
+  };
 
   const extendedRegisterOptions = {
     ...registerOptions,
-    pattern: {
-      value: ethAddressRegEx,
-      message: "Invalid Ethereum address",
-    },
     validate: async (validateValue: string) => {
       // ENS validation
       if (isENS(validateValue)) {
@@ -113,8 +130,8 @@ export const FormAddressInput = ({
 
       // SAFE validation if required
       if (validateSafe) {
-        if (isValidatingSafe) return "Validating Safe address...";
-        return isSafe || `Not a valid Safe address in ${chain?.name} network`;
+        const isValid = await validateSafeAddress(validateValue);
+        return isValid;
       }
 
       return true;
@@ -134,29 +151,27 @@ export const FormAddressInput = ({
       errors={errors}
       disabled={disabled}
       readOnly={readOnly}
-      className={`font-mono ${className ?? ""} pr-12`}
+      className={`${className} pr-12`}
       value={inputValue}
       registerOptions={{
         ...extendedRegisterOptions,
-        onChange: async (e: React.ChangeEvent<HTMLInputElement>) => {
-          if (onChange) {
-            onChange(e);
-          }
-          if (trigger && registerKey) {
-            await trigger(registerKey);
-          }
-        },
+      }}
+      onChange={(e) => {
+        onChange?.(e);
+        setInputValue(e.target.value);
       }}
       suffix={
-        debouncedValue && (
-          <Image
-            alt=""
-            className="rounded-full"
-            src={avatarUrl ? avatarUrl : blo(debouncedValue as Address)}
-            width="30"
-            height="30"
-          />
-        )
+        isValidatingSafe ?
+          <LoadingSpinner className="text-neutral-soft-content" />
+        : debouncedValue && (
+            <Image
+              alt=""
+              className="rounded-full"
+              src={avatarUrl ? avatarUrl : blo(debouncedValue as Address)}
+              width="30"
+              height="30"
+            />
+          )
       }
     />
   );
