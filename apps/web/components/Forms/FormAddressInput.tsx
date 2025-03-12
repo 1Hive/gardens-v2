@@ -12,7 +12,9 @@ import {
 } from "wagmi";
 import { FormInput } from "./FormInput";
 import { LoadingSpinner } from "../LoadingSpinner";
+import { getChain, getConfigByChain } from "@/configs/chains";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useSafeValidation } from "@/hooks/useSafeValidation";
 import { safeABI } from "@/src/generated";
 import { isENS } from "@/utils/web3";
 
@@ -83,6 +85,12 @@ export const FormAddressInput = ({
   });
 
   const validateSafeAddress = async (address: string) => {
+    if (
+      localStorage.getItem("bypassSafeCheck") === "true" ||
+      !getConfigByChain(publicClient.chain.id)?.safePrefix
+    ) {
+      return true;
+    }
     try {
       setIsValidatingSafe(true);
       const owners = await Promise.all([
