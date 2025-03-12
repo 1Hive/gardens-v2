@@ -637,21 +637,24 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     // this contract will need to track the amount paid already, so that it doesn't double pay
     function _distribute(address[] memory, bytes memory _data, address) internal virtual override {
         // surpressStateMutabilityWarning++;
-        // if (_data.length <= 0) {
-        //     revert ProposalDataIsEmpty();
-        // }
+        if (_data.length <= 0) {
+            // revert ProposalDataIsEmpty();
+            revert(); // @todo take commented when contract size fixed with diamond
+        }
+
+        if (poolAmount <= 0) {
+            // revert PoolIsEmpty();
+            revert(); // @todo take commented when contract size fixed with diamond
+        }
 
         uint256 proposalId = abi.decode(_data, (uint256));
 
-        // if (proposalId == 0) {
-        //     revert ProposalIdCannotBeZero();
-        // }
-
         if (proposalType == ProposalType.Funding) {
-            // @todo take commented when contract size fixed with diamond
-            // if (proposals[proposalId].proposalId != proposalId) {
-            //     revert ProposalNotInList(proposalId);
-            // }
+            if (proposals[proposalId].proposalId != proposalId && proposalId != 0) {
+                // @todo take commented when contract size fixed with diamond
+                //  revert ProposalNotInList(proposalId);
+                revert();
+            }
 
             if (proposals[proposalId].proposalStatus != ProposalStatus.Active) {
                 // revert ProposalNotActive(proposalId);
@@ -663,11 +666,19 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
                 revert(); // @todo take commented when contract size fixed with diamond
             }
 
+            if (_isOverMaxRatio(proposals[proposalId].requestedAmount)) {
+                // revert AmountOverMaxRatio();
+                revert(); // @todo take commented when contract size fixed with diamond
+            }
+
             uint256 convictionLast = updateProposalConviction(proposalId);
+
             uint256 threshold = calculateThreshold(proposals[proposalId].requestedAmount);
 
-            if (convictionLast < threshold && proposals[proposalId].requestedAmount > 0) {
+            // <= for when threshold being zero
+            if (convictionLast <= threshold && proposals[proposalId].requestedAmount > 0) {
                 // revert ConvictionUnderMinimumThreshold();
+                revert();
             }
 
             poolAmount -= proposals[proposalId].requestedAmount; // CEI
@@ -687,22 +698,23 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         } //signaling do nothing @todo write tests @todo add end date
     }
 
-    function canExecuteProposal(uint256 proposalId) public view virtual returns (bool canBeExecuted) {
-        Proposal storage proposal = proposals[proposalId];
+    // GOSS: NEVER CALLED
+    // function canExecuteProposal(uint256 proposalId) public view virtual returns (bool canBeExecuted) {
+    //     Proposal storage proposal = proposals[proposalId];
 
-        // uint256 convictionLast = updateProposalConviction(proposalId);
-        (uint256 convictionLast, uint256 blockNumber) =
-            _checkBlockAndCalculateConviction(proposal, proposal.stakedAmount);
+    //     // uint256 convictionLast = updateProposalConviction(proposalId);
+    //     (uint256 convictionLast, uint256 blockNumber) =
+    //         _checkBlockAndCalculateConviction(proposal, proposal.stakedAmount);
 
-        if (convictionLast == 0 && blockNumber == 0) {
-            convictionLast = proposal.convictionLast;
-        }
-        uint256 threshold = calculateThreshold(proposal.requestedAmount);
+    //     if (convictionLast == 0 && blockNumber == 0) {
+    //         convictionLast = proposal.convictionLast;
+    //     }
+    //     uint256 threshold = calculateThreshold(proposal.requestedAmount);
 
-        // console.log("convictionLast", convictionLast);
-        // console.log("threshold", threshold);
-        canBeExecuted = convictionLast >= threshold;
-    }
+    //     // console.log("convictionLast", convictionLast);
+    //     // console.log("threshold", threshold);
+    //     canBeExecuted = convictionLast >= threshold;
+    // }
 
     /// @return Input the values you would send to distribute(), get the amounts each recipient in the array would receive
     function getPayouts(address[] memory, bytes[] memory) external pure override returns (PayoutSummary[] memory) {
@@ -1047,18 +1059,6 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
      * executed it.
      */
     function calculateThreshold(uint256 _requestedAmount) public view virtual returns (uint256 _threshold) {
-        //       @todo: we should replace it with
-        //        uint256 funds = fundsManager.balance(requestToken);
-        if (poolAmount <= 0) {
-            // revert PoolIsEmpty();
-            revert(); // @todo take commented when contract size fixed with diamond
-        }
-
-        if (_isOverMaxRatio(_requestedAmount)) {
-            // revert AmountOverMaxRatio();
-            revert(); // @todo take commented when contract size fixed with diamond
-        }
-
         uint256 denom = (cvParams.maxRatio * 2 ** 64) / D - (_requestedAmount * 2 ** 64) / poolAmount;
         _threshold = (
             (((((cvParams.weight << 128) / D) / ((denom * denom) >> 64)) * D) / (D - cvParams.decay))
