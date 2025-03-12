@@ -209,9 +209,9 @@ export const CommunityForm = () => {
             `/${selectedChainId}/${tokenAddress}/${newCommunityAddr}`,
           ),
         );
+        setLoading(false);
       }
     },
-    onSettled: () => setLoading(false),
     chainId: selectedChainId,
   });
 
