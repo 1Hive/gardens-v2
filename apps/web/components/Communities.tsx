@@ -60,7 +60,7 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
 
   return (
     <div>
-      {isConnected && (
+      {isConnected && !isFetching && (
         <div className="flex items-center gap-2">
           <button
             onClick={() => setIsExpanded(!isExpanded)}
