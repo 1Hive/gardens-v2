@@ -43,6 +43,12 @@ import { Address, BigInt, ethereum, log } from "@graphprotocol/graph-ts";
 // export const CTX_PROPOSAL_ID = "proposalId";
 // export const CTX_METADATA_ID = "metadataId";
 
+const PROPOSAL_STATUS_ACTIVE = BigInt.fromI32(1);
+const PROPOSAL_STATUS_CANCELLED = BigInt.fromI32(3);
+const PROPOSAL_STATUS_EXECUTED = BigInt.fromI32(4);
+const PROPOSAL_STATUS_DISPUTED = BigInt.fromI32(5);
+const PROPOSAL_STATUS_REJECTED = BigInt.fromI32(6);
+
 const DISPUTE_STATUS_WAITING = BigInt.fromI32(0);
 const DISPUTE_STATUS_SOLVED = BigInt.fromI32(1);
 
@@ -99,8 +105,10 @@ export function handleProposalCreated(event: ProposalCreated): void {
   newProposal.maxCVStaked = maxConviction;
   newProposal.arbitrableConfig = `${event.address.toHex()}-${proposal.getArbitrableConfigVersion().toString()}`;
 
-  newProposal.proposalStatus = BigInt.fromI32(
-    cvc.getProposal(event.params.proposalId).getProposalStatus()
+  newProposal.proposalStatus = getProposalStatus(
+    event.address,
+    event.params.proposalId,
+    PROPOSAL_STATUS_ACTIVE
   );
   // newProposal.proposalType = BigInt.fromI32(proposal.proposalType());
   newProposal.submitter = proposal.getSubmitter().toHex();
@@ -318,11 +326,15 @@ export function handleDistributed(event: Distributed): void {
   }
 
   const cvc = CVStrategyContract.bind(event.address);
-  const proposalStatus = cvc
-    .getProposal(event.params.proposalId)
-    .getProposalStatus();
 
-  cvp.proposalStatus = BigInt.fromI32(proposalStatus);
+  const proposalStatus = getProposalStatus(
+    event.address,
+    event.params.proposalId,
+    PROPOSAL_STATUS_EXECUTED
+  );
+
+  cvp.proposalStatus = proposalStatus;
+
   cvp.save();
 
   cvs.poolAmount = cvc.getPoolAmount();
@@ -485,10 +497,10 @@ export function handleProposalDisputed(event: ProposalDisputed): void {
     return;
   }
 
-  let cvc = CVStrategyContract.bind(event.address);
-
-  proposal.proposalStatus = BigInt.fromI32(
-    cvc.getProposal(event.params.proposalId).getProposalStatus()
+  proposal.proposalStatus = getProposalStatus(
+    event.address,
+    event.params.proposalId,
+    PROPOSAL_STATUS_DISPUTED
   );
   proposal.save();
 }
@@ -523,11 +535,38 @@ export function handleDisputeRuled(event: Ruling): void {
 
   dispute.save();
 
-  let cvc = CVStrategyContract.bind(event.address);
+  // Default status is the ruling outcome and if abstain its the default pool value
+  let defaultStatus: BigInt;
 
-  proposal.proposalStatus = BigInt.fromI32(
-    cvc.getProposal(proposal.proposalNumber).getProposalStatus()
+  if (event.params._ruling.equals(BigInt.fromI32(1))) {
+    // Approved
+    defaultStatus = PROPOSAL_STATUS_ACTIVE;
+  } else if (event.params._ruling.equals(BigInt.fromI32(2))) {
+    // Rejected
+    defaultStatus = PROPOSAL_STATUS_REJECTED;
+  } else {
+    let arbConfig = ArbitrableConfig.load(proposal.arbitrableConfig);
+    if (arbConfig == null) {
+      log.error("CvStrategy: ArbitrableConfig not found with: {}", [
+        proposal.arbitrableConfig
+      ]);
+      return;
+    }
+    defaultStatus = arbConfig.defaultRuling;
+  }
+
+  proposal.proposalStatus = getProposalStatus(
+    event.address,
+    proposal.proposalNumber,
+    defaultStatus
   );
+
+  if (proposal.proposalStatus) {
+    log.error(
+      "CvStrategy: handleDisputeRuled: not able to determine proposal {} status",
+      [proposal.proposalNumber.toString()]
+    );
+  }
 
   proposal.save();
 }
@@ -544,10 +583,10 @@ export function handleProposalCancelled(event: ProposalCancelled): void {
     return;
   }
 
-  let cvc = CVStrategyContract.bind(event.address);
-
-  proposal.proposalStatus = BigInt.fromI32(
-    cvc.getProposal(event.params.proposalId).getProposalStatus()
+  proposal.proposalStatus = getProposalStatus(
+    event.address,
+    proposal.proposalNumber,
+    PROPOSAL_STATUS_CANCELLED
   );
 
   proposal.save();
@@ -710,4 +749,20 @@ function computeInitialize(
   config.save();
   cvs.config = config.id;
   cvs.save();
+}
+
+function getProposalStatus(
+  contractAddress: Address,
+  proposalId: BigInt,
+  defaultStatus: BigInt
+): BigInt {
+  const cvc = CVStrategyContract.bind(contractAddress);
+  const proposal = cvc.try_getProposal(proposalId);
+  if (proposal.reverted) {
+    log.error("CVStrategy: handleDistributed proposal not found: {}", [
+      proposalId.toString()
+    ]);
+    return defaultStatus;
+  }
+  return BigInt.fromI32(proposal.value.getProposalStatus());
 }
