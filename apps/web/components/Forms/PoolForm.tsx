@@ -195,6 +195,7 @@ export function PoolForm({ token, communityAddr }: Props) {
     defaultValues: {
       strategyType: 1,
       pointSystemType: 0,
+      sybilResistanceType: "allowList",
       rulingTime: parseTimeUnit(DEFAULT_RULING_TIMEOUT_SEC, "seconds", "days"),
       defaultResolution: 1,
       minThresholdPoints: 0,
@@ -245,6 +246,9 @@ export function PoolForm({ token, communityAddr }: Props) {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { noSybilResist, ...rest } = fullSybilResistanceOptions;
       setSybilResistanceOptions(rest);
+      if (sybilResistanceType === "noSybilResist") {
+        setValue("sybilResistanceType", "allowList");
+      }
     } else {
       setSybilResistanceOptions(fullSybilResistanceOptions);
     }
@@ -848,7 +852,6 @@ export function PoolForm({ token, communityAddr }: Props) {
                 registerKey="tribunalAddress"
                 register={register}
                 errors={errors}
-                trigger={trigger}
               />
               <FormCheckBox
                 label="Use global tribunal"

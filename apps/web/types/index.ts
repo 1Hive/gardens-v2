@@ -50,7 +50,7 @@ export const DisputeOutcome: Record<
   2: "rejected",
 };
 
-export type ChainId = string | number;
+export type ChainId = number | string;
 
 export type SybilResistanceType =
   | "noSybilResist"

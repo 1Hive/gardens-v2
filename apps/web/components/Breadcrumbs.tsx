@@ -35,7 +35,7 @@ export function Breadcrumbs() {
 
     return segments
       .map((segment, index) => {
-        if (index < 2) {
+        if (index < 3) {
           return undefined;
         }
 

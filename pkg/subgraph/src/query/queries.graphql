@@ -199,6 +199,29 @@ query getGardenCommunities($chainId: BigInt!, $tokenGarden: ID!) {
   }
 }
 
+query getCommunities {
+  registryCommunities(where: { isValid: true }) {
+    id
+    communityName
+    garden {
+      address
+      chainId
+      symbol
+      name
+    }
+    strategies(where: { isEnabled: true }) {
+      id
+      totalEffectiveActivePoints
+      poolId
+      poolAmount
+    }
+    members(first: 1000, where: { stakedTokens_gt: "0" }) {
+      id
+      memberAddress
+    }
+  }
+}
+
 query getCommunity(
   $communityAddr: ID!
   $tokenAddr: ID!
@@ -253,6 +276,13 @@ query getCommunity(
 query getCommunityCreationData {
   registryFactories {
     id
+  }
+}
+
+query getRegistryFactoryData {
+  registryFactories {
+    id
+    chainId
   }
 }
 

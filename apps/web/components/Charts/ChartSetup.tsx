@@ -1,11 +1,20 @@
 "use client";
 
 import React, { useMemo } from "react";
-import type { EChartsOption } from "echarts";
+import type { EChartsOption, TooltipComponentOption } from "echarts";
 import EChartsReact from "echarts-for-react";
 
 export const ChartSetup = ({ options }: { options?: EChartsOption }) => {
-  const DEFAULT_OPTIONS = {
+  const DEFAULT_OPTIONS: {
+    tooltip: TooltipComponentOption;
+    emphasis: {
+      itemStyle: {
+        shadowBlur: number;
+        shadowOffsetX: number;
+        shadowColor: string;
+      };
+    };
+  } = {
     tooltip: {
       trigger: "item",
     },
@@ -25,7 +34,7 @@ export const ChartSetup = ({ options }: { options?: EChartsOption }) => {
 
   const processedSeries = useMemo(
     () =>
-    // @ts-ignore
+      // @ts-ignore
       options?.series?.map((series: { data: unknown[] }) => {
         const { data } = series;
         let newData = data;
@@ -37,26 +46,19 @@ export const ChartSetup = ({ options }: { options?: EChartsOption }) => {
       }),
     [options],
   );
-
   return (
     <EChartsReact
       option={{
         ...DEFAULT_OPTIONS,
-        tooltip: {
-          ...DEFAULT_OPTIONS.tooltip,
-          ...(options?.tooltip ?? {}),
-        },
+        tooltip:
+          (options?.tooltip as TooltipComponentOption) ||
+          DEFAULT_OPTIONS.tooltip,
         // legend: {
         //   ...DEFAULT_OPTIONS["legend"],
         //   ...(options?.legend ?? {}),
         // },
-        xAxis: {
-          ...DEFAULT_OPTIONS,
-          ...(options?.xAxis ?? { show: false }),
-        },
-        yAxis: {
-          ...(options?.yAxis ?? { show: false }),
-        },
+        xAxis: options?.xAxis ?? { show: false },
+        yAxis: options?.yAxis ?? { show: false },
         series: processedSeries,
       }}
       style={{ height: "100%", width: "100%" }}
