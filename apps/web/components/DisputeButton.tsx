@@ -3,6 +3,7 @@ import { FC, Fragment, useMemo, useState } from "react";
 import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
 import { blo } from "blo";
 import { formatEther } from "viem";
+import { gnosis } from "viem/chains";
 import {
   Address,
   mainnet,
@@ -140,6 +141,18 @@ export const DisputeButton: FC<Props> = ({
       Date.now() / 1000;
   const disputes = disputesResult?.proposalDisputes ?? [];
   const isProposalEnded = proposalStatus !== "active" && !isDisputed;
+
+  // TODO: Remove hardcoded when no more disputes with this query: https://api.studio.thegraph.com/query/102093/gardens-v2---gnosis/0.1.13/graphql?query=query+getActiveProposalDisputes+%7B%0A++proposalDisputes%28where%3A+%7Bstatus%3A0%2C+disputeId_gte%3A+62%7D%29+%7B%0A++++disputeId%0A++++%0A++++proposal+%7B%0A++++++id%0A++++++arbitrableConfig+%7B%0A++++++++tribunalSafe%0A++++++%7D%0A++++++strategy%7B%0A++++++++registryCommunity+%7B%0A++++++++++id%0A++++++++++garden+%7B%0A++++++++++++id%0A++++++++++%7D%0A++++++++%7D%0A++++++%7D%0A++++%7D%0A++%7D%0A%7D
+  if (
+    chainId === gnosis.id &&
+    lastDispute &&
+    lastDispute &&
+    +lastDispute.disputeId >= 62 &&
+    +lastDispute.disputeId <= 69
+  )
+    arbitrationConfig.tribunalSafe =
+      "0xD8a63B2F234b487cEAddc422C8246adD2C814203";
+
   const isTribunalSafe =
     arbitrationConfig.tribunalSafe === address?.toLowerCase();
 
