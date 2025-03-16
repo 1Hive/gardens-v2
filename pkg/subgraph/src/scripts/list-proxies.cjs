@@ -135,7 +135,6 @@ async function extractProxies(chainId) {
     REGISTRY_FACTORY: registryFactoryProxy,
     REGISTRY_COMMUNITIES: registryCommunityProxies,
     CV_STRATEGIES: cvStrategiesProxies,
-    PASSPORT_SCORER: passportScorerProxy ?? PASSPORT_SCORER,
   };
 }
 

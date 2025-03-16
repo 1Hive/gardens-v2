@@ -11,10 +11,12 @@ import {RegistryFactoryV0_0} from "../src/RegistryFactory/RegistryFactoryV0_0.so
 contract UpgradeCVMultichainTest is BaseMultiChain {
     using stdJson for string;
 
+    bytes32 constant IMPLEMENTATION_SLOT = bytes32(uint256(keccak256("eip1967.proxy.implementation")) - 1);
+
     function runCurrentNetwork(string memory networkJson) public override {
-        address registryImplementation = address(new RegistryCommunityV0_0());
+        // address registryImplementation = address(new RegistryCommunityV0_0());
         address strategyImplementation = address(new CVStrategyV0_0());
-        address passportScorer = networkJson.readAddress(getKeyNetwork(".ENVS.PASSPORT_SCORER"));
+        // address passportScorer = networkJson.readAddress(getKeyNetwork(".ENVS.PASSPORT_SCORER"));
         address safeArbitrator = networkJson.readAddress(getKeyNetwork(".ENVS.ARBITRATOR"));
 
         // PASSPORT SCORER UPGRADE
@@ -34,7 +36,7 @@ contract UpgradeCVMultichainTest is BaseMultiChain {
         // registryFactory.upgradeTo(registryFactoryImplementation); // DOESNT VALIDATE SAFE UPGRADING
 
         // 1.b -- Set the Registry Community Template --
-        registryFactory.setRegistryCommunityTemplate(registryImplementation);
+        // registryFactory.setRegistryCommunityTemplate(registryImplementation);
 
         // 1.c -- Set the Strategy Template --
         registryFactory.setStrategyTemplate(strategyImplementation);
@@ -43,8 +45,8 @@ contract UpgradeCVMultichainTest is BaseMultiChain {
         address[] memory registryCommunityProxies =
             networkJson.readAddressArray(getKeyNetwork(".PROXIES.REGISTRY_COMMUNITIES"));
         for (uint256 i = 0; i < registryCommunityProxies.length; i++) {
-            RegistryCommunityV0_0 registryCommunity =
-                RegistryCommunityV0_0(payable(address(registryCommunityProxies[i])));
+            // RegistryCommunityV0_0 registryCommunity =
+            //     RegistryCommunityV0_0(payable(address(registryCommunityProxies[i])));
 
             // WIP: Upgrade with safety
             // Upgrades.upgradeProxy(
@@ -53,10 +55,10 @@ contract UpgradeCVMultichainTest is BaseMultiChain {
             // abi.encodeWithSelector(RegistryCommunityV0_0.initializeV2.selector)
 
             // 2.a -- Upgrade the Registry Community --
-            registryCommunity.upgradeTo(registryImplementation); // DOESNT VALIDATE SAFE UPGRADING
+            // registryCommunity.upgradeTo(registryImplementation); // DOESNT VALIDATE SAFE UPGRADING
 
             // 2.b -- Set the Strategy Template --
-            registryCommunity.setStrategyTemplate(strategyImplementation);
+            // registryCommunity.setStrategyTemplate(strategyImplementation);
         }
 
         // 3. CV STRATEGIES UPGRADES
@@ -72,10 +74,28 @@ contract UpgradeCVMultichainTest is BaseMultiChain {
             // 3.a -- Upgrade the CV Strategy --
             CVStrategyV0_0 cvStrategy = CVStrategyV0_0(payable(address(cvStrategyProxies[i])));
             cvStrategy.upgradeTo(strategyImplementation); // DOESNT VALIDATE SAFE UPGRADING
+            (
+                ,
+                address tribunalSafe,
+                uint256 submitterCollateralAmount,
+                uint256 challengerCollateralAmount,
+                uint256 defaultRuling,
+                uint256 defaultRulingTimeout
+            ) = cvStrategy.arbitrableConfigs(cvStrategy.currentArbitrableConfigVersion());
+            (uint256 maxRatio, uint256 weight, uint256 decay, uint256 minThresholdPoints) = cvStrategy.cvParams();
+            cvStrategy.setPoolParams(
+                ArbitrableConfig(
+                    IArbitrator(safeArbitrator),
+                    tribunalSafe,
+                    submitterCollateralAmount,
+                    challengerCollateralAmount,
+                    defaultRuling,
+                    defaultRulingTimeout
+                ),
+                CVParams(maxRatio, weight, decay, minThresholdPoints)
+            );
         }
     }
-
-    bytes32 constant IMPLEMENTATION_SLOT = bytes32(uint256(keccak256("eip1967.proxy.implementation")) - 1);
 
     // WIP: Upgrade with safety
     // function ensureSameStorageLayout(address proxy) internal view {
