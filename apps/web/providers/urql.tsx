@@ -108,7 +108,10 @@ export async function queryByChain<
     throw new Error("Chain not supported");
   }
   return urqlClient.query<Data>(query, variables, {
-    url: config.publishedSubgraphUrl ?? config.subgraphUrl,
+    url:
+      process.env.NEXT_PUBLIC_SKIP_PUBLISHED ?
+        config.subgraphUrl
+      : config.publishedSubgraphUrl ?? config.subgraphUrl,
     ...context,
   });
 }
