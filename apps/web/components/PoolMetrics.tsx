@@ -1,8 +1,7 @@
 "use client";
 
-import { FC, useEffect, useState } from "react";
+import { FC, FormEvent, useEffect, useState } from "react";
 import { FetchTokenResult } from "@wagmi/core";
-import { useForm } from "react-hook-form";
 import { parseUnits } from "viem";
 import { Address, useAccount, useBalance } from "wagmi";
 import { Allo } from "#/subgraph/.graphclient";
@@ -26,7 +25,6 @@ interface PoolMetricsProps {
   poolId: number;
   chainId: string;
 }
-type FormInputs = { amount: number };
 
 export const PoolMetrics: FC<PoolMetricsProps> = ({
   alloInfo,
@@ -36,12 +34,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
   poolId,
   chainId,
 }) => {
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    watch,
-  } = useForm<FormInputs>();
+  const [amount, setAmount] = useState(0);
 
   const [isOpenModal, setIsOpenModal] = useState(false);
   const { address: accountAddress } = useAccount();
@@ -54,7 +47,6 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     chainId: Number(chainId),
   });
 
-  const amount = +(watch("amount") ?? 0);
   const requestedAmount = parseUnits(amount.toString(), poolToken.decimals);
   const {
     write: writeFundPool,
@@ -113,7 +105,8 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     }));
   }, [fundPoolStatus]);
 
-  const handleFundPool = (data: FormInputs) => {
+  const handleFundPool = (ev: FormEvent<HTMLFormElement>) => {
+    ev.preventDefault();
     setAddFundsTx((prev) => ({
       ...prev,
       message: getTxMessage("idle"),
@@ -121,7 +114,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     }));
     setIsOpenModal(true);
     handleAllowance({
-      formAmount: parseUnits(data.amount.toString(), poolToken.decimals),
+      formAmount: parseUnits(amount.toString(), poolToken.decimals),
     });
   };
   return (
@@ -167,17 +160,13 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
               </div>
             )}
           </div>
-          <form
-            className="flex gap-2 flex-wrap"
-            onSubmit={handleSubmit(handleFundPool)}
-          >
+          <form className="flex gap-2 flex-wrap" onSubmit={handleFundPool}>
             <FormInput
               type="number"
               placeholder="0"
               required
-              register={register}
-              registerKey="amount"
-              errors={errors}
+              value={amount}
+              onChange={(e) => setAmount(Number(e.target.value))}
               suffix={poolToken.symbol}
               otherProps={{
                 max: balance?.formatted,
