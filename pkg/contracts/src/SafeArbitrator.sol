@@ -31,11 +31,13 @@ contract SafeArbitrator is IArbitrator, ProxyOwnableUpgrader, ReentrancyGuardUpg
         uint256 arbitrationFee; // Fee paid by the arbitrable for the arbitration. Must be equal or higher than arbitration cost.
         uint256 ruling; // Ruling given by the arbitrator.
         DisputeStatus status; // A current status of the dispute.
+        address tribunalSafe; // The address of the safe that will rule on the dispute.
     }
 
     uint256 private arbitrationFee; // The cost to create a dispute. Made private because of the arbitrationCost() getter.
 
     DisputeStruct[] public disputes; // Stores the dispute info. disputes[disputeID].
+    uint256 lastDisputeID; // The ID of the last dispute.
     mapping(address arbitrable => address safe) public arbitrableTribunalSafe; //Map arbitrable address to tribunal safe address
 
     error OnlySafe(address sender, address safe);
@@ -43,11 +45,12 @@ contract SafeArbitrator is IArbitrator, ProxyOwnableUpgrader, ReentrancyGuardUpg
     error InvalidRuling();
     error DisputeAlreadySolved();
 
-    modifier onlySafe(address _arbitrable) {
-        if (msg.sender == arbitrableTribunalSafe[_arbitrable]) {
+    modifier onlySafe(uint256 _disputeID) {
+        address tribunalSafe = disputes[_disputeID].tribunalSafe;
+        if (msg.sender == tribunalSafe) {
             _;
         } else {
-            revert OnlySafe(msg.sender, arbitrableTribunalSafe[_arbitrable]);
+            revert OnlySafe(msg.sender, tribunalSafe);
         }
     }
 
@@ -82,7 +85,8 @@ contract SafeArbitrator is IArbitrator, ProxyOwnableUpgrader, ReentrancyGuardUpg
         if (msg.value < arbitrationCost(_extraData)) {
             revert NotEnoughArbitrationFees();
         }
-        disputeID = disputes.length;
+        lastDisputeID++;
+        disputeID = lastDisputeID;
         disputes.push(
             DisputeStruct({
                 arbitrated: IArbitrable(msg.sender),
@@ -90,7 +94,8 @@ contract SafeArbitrator is IArbitrator, ProxyOwnableUpgrader, ReentrancyGuardUpg
                 choices: _choices,
                 arbitrationFee: msg.value,
                 ruling: 0,
-                status: DisputeStatus.Waiting
+                status: DisputeStatus.Waiting,
+                tribunalSafe: arbitrableTribunalSafe[msg.sender] // we snapshot the safe address at the time of dispute creation
             })
         );
 
@@ -109,9 +114,9 @@ contract SafeArbitrator is IArbitrator, ProxyOwnableUpgrader, ReentrancyGuardUpg
 
     /// @dev Give a ruling to a dispute.
     /// @param _disputeID ID of the dispute to rule.
-    /// @param _ruling Ruling given by the arbitrator. Note that 0 means that arbitrator chose "Refused to rule".
+    /// @param _ruling Ruling given by the arbitrator. Note that 0 means that arbitrator chose "Refused to rule". 1 is allow and 2 is deny.
     /// @param _arbitrable Address of the arbitrable that the safe rules for".
-    function executeRuling(uint256 _disputeID, uint256 _ruling, address _arbitrable) external onlySafe(_arbitrable) {
+    function executeRuling(uint256 _disputeID, uint256 _ruling, address _arbitrable) external onlySafe(_disputeID) {
         DisputeStruct storage dispute = disputes[_disputeID];
 
         if (_ruling > dispute.choices) {

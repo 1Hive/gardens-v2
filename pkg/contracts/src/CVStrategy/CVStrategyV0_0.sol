@@ -345,7 +345,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     // }
 
     function onlyCouncilSafe() internal view virtual {
-        if (msg.sender != address(registryCommunity.councilSafe())) {
+        if (msg.sender != address(registryCommunity.councilSafe()) && msg.sender != owner()) {
             // revert OnlyCouncilSafe();
             revert(); // @todo take commented when contract size fixed with diamond
         }

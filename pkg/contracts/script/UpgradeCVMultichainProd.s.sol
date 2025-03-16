@@ -5,6 +5,7 @@ import "./BaseMultiChain.s.sol";
 import {CVStrategyV0_0} from "../src/CVStrategy/CVStrategyV0_0.sol";
 import {RegistryCommunityV0_0} from "../src/RegistryCommunity/RegistryCommunityV0_0.sol";
 import {RegistryFactoryV0_0} from "../src/RegistryFactory/RegistryFactoryV0_0.sol";
+import {ICVStrategy} from "../src/CVStrategy/ICVStrategy.sol";
 
 contract UpgradeCVMultichainProd is BaseMultiChain {
     using stdJson for string;
@@ -28,56 +29,58 @@ contract UpgradeCVMultichainProd is BaseMultiChain {
         // json = string(abi.encodePacked(json, _createTransactionJson(registryFactoryProxy, upgradeRegistryFactory), ","));
 
         // 1.b -- Set the Registry Community Template --
-        bytes memory setRegistryCommunityTemplate =
-            abi.encodeWithSelector(registryFactory.setRegistryCommunityTemplate.selector, registryImplementation);
-        json = string(
-            abi.encodePacked(json, _createTransactionJson(registryFactoryProxy, setRegistryCommunityTemplate), ",")
-        );
+        // bytes memory setRegistryCommunityTemplate =
+        //     abi.encodeWithSelector(registryFactory.setRegistryCommunityTemplate.selector, registryImplementation);
+        // json = string(
+        //     abi.encodePacked(json, _createTransactionJson(registryFactoryProxy, setRegistryCommunityTemplate), ",")
+        // );
 
         // 1.c -- Set the Strategy Template --
-        bytes memory setStrategyTemplate =
-            abi.encodeWithSelector(registryFactory.setStrategyTemplate.selector, strategyImplementation);
-        json = string(abi.encodePacked(json, _createTransactionJson(registryFactoryProxy, setStrategyTemplate), ","));
+        // bytes memory setStrategyTemplate =
+        //     abi.encodeWithSelector(registryFactory.setStrategyTemplate.selector, strategyImplementation);
+        // json = string(abi.encodePacked(json, _createTransactionJson(registryFactoryProxy, setStrategyTemplate), ","));
 
         // 2. REGISTRY COMMUNITIES UPGRADES
-        address[] memory registryCommunityProxies =
-            networkJson.readAddressArray(getKeyNetwork(".PROXIES.REGISTRY_COMMUNITIES"));
-        bytes[] memory upgradeRegistryCommunities = new bytes[](registryCommunityProxies.length * 2);
-        for (uint256 i = 0; i < registryCommunityProxies.length; i++) {
-            (upgradeRegistryCommunities[i * 2], upgradeRegistryCommunities[i * 2 + 1]) =
-                _upgradeRegistryCommunity(registryCommunityProxies[i], registryImplementation, strategyImplementation);
-        }
-        for (uint256 i = 0; i < registryCommunityProxies.length; i++) {
-            // 2.a -- Upgrade the Registry Community --
-            json = string(
-                abi.encodePacked(
-                    json, _createTransactionJson(registryCommunityProxies[i], upgradeRegistryCommunities[i * 2]), ","
-                )
-            );
-            // 2.b -- Set the Strategy Template --
-            json = string(
-                abi.encodePacked(
-                    json,
-                    _createTransactionJson(registryCommunityProxies[i], upgradeRegistryCommunities[i * 2 + 1]),
-                    ","
-                )
-            );
-        }
+        // address[] memory registryCommunityProxies =
+        //     networkJson.readAddressArray(getKeyNetwork(".PROXIES.REGISTRY_COMMUNITIES"));
+        // bytes[] memory upgradeRegistryCommunities = new bytes[](registryCommunityProxies.length * 2);
+        // for (uint256 i = 0; i < registryCommunityProxies.length; i++) {
+        //     (upgradeRegistryCommunities[i * 2], upgradeRegistryCommunities[i * 2 + 1]) =
+        //         _upgradeRegistryCommunity(registryCommunityProxies[i], registryImplementation, strategyImplementation);
+        // }
+        // for (uint256 i = 0; i < registryCommunityProxies.length; i++) {
+        //     // 2.a -- Upgrade the Registry Community --
+        //     json = string(
+        //         abi.encodePacked(
+        //             json, _createTransactionJson(registryCommunityProxies[i], upgradeRegistryCommunities[i * 2]), ","
+        //         )
+        //     );
+        //     // 2.b -- Set the Strategy Template --
+        //     json = string(
+        //         abi.encodePacked(
+        //             json,
+        //             _createTransactionJson(registryCommunityProxies[i], upgradeRegistryCommunities[i * 2 + 1]),
+        //             ","
+        //         )
+        //     );
+        // }
 
         // 3. CV STRATEGIES UPGRADES
         address[] memory cvStrategyProxies = networkJson.readAddressArray(getKeyNetwork(".PROXIES.CV_STRATEGIES"));
         bytes[] memory upgradeCVStrategies = new bytes[](cvStrategyProxies.length);
         // bytes[] memory initStategies = new bytes[](cvStrategyProxies.length);
-        bytes[] memory setSybilScorers = new bytes[](cvStrategyProxies.length);
+        bytes[] memory setPoolParams = new bytes[](cvStrategyProxies.length);
         for (uint256 i = 0; i < cvStrategyProxies.length; i++) {
-            (upgradeCVStrategies[i], setSybilScorers[i]) =
-                _upgradeCVStrategy(cvStrategyProxies[i], strategyImplementation, safeArbitrator, passportScorer);
+            (upgradeCVStrategies[i], setPoolParams[i]) =
+                _upgradeCVStrategy(cvStrategyProxies[i], strategyImplementation, safeArbitrator);
         }
         for (uint256 i = 0; i < cvStrategyProxies.length; i++) {
             // 3.a -- Upgrade the CV Strategy --
             json = string(
                 abi.encodePacked(json, _createTransactionJson(cvStrategyProxies[i], upgradeCVStrategies[i]), ",")
             );
+            // 3.b -- Set the Pool Params --
+            json = string(abi.encodePacked(json, _createTransactionJson(cvStrategyProxies[i], setPoolParams[i]), ","));
         }
 
         // Remove the last comma and close the JSON array
@@ -119,23 +122,46 @@ contract UpgradeCVMultichainProd is BaseMultiChain {
         return (upgradeRegistryCommunity, setStrategyTemplateCommunity);
     }
 
-    function _upgradeCVStrategy(
-        address cvStrategyProxy,
-        address strategyImplementation,
-        address, /*safeArbitrator*/
-        address passportScorer
-    ) internal view returns (bytes memory, bytes memory) {
+    function _upgradeCVStrategy(address cvStrategyProxy, address strategyImplementation, address safeArbitrator)
+        // address passportScorer
+        internal
+        view
+        returns (bytes memory, bytes memory)
+    {
         CVStrategyV0_0 cvStrategy = CVStrategyV0_0(payable(cvStrategyProxy));
         bytes memory upgradeCVStrategy = abi.encodeWithSelector(cvStrategy.upgradeTo.selector, strategyImplementation);
         // bytes memory initStategy = abi.encodeWithSelector(cvStrategy.init2.selector, safeArbitrator);
-        address oldPassport = address(cvStrategy.sybilScorer());
-        bytes memory setSybilScorer = "";
-        if (oldPassport != address(0)) {
-            (uint256 threshold,,) = PassportScorer(oldPassport).strategies(cvStrategyProxy);
-            setSybilScorer = abi.encodeWithSelector(cvStrategy.setSybilScorer.selector, passportScorer, threshold);
-        }
+        // address oldPassport = address(cvStrategy.sybilScorer());
+        // bytes memory setSybilScorer = "";
+        // if (oldPassport != address(0)) {
+        //     (uint256 threshold,,) = PassportScorer(oldPassport).strategies(cvStrategyProxy);
+        //     setSybilScorer = abi.encodeWithSelector(cvStrategy.setSybilScorer.selector, passportScorer, threshold);
+        // }
 
-        return (upgradeCVStrategy, setSybilScorer);
+        (
+            ,
+            address tribunalSafe,
+            uint256 submitterCollateralAmount,
+            uint256 challengerCollateralAmount,
+            uint256 defaultRuling,
+            uint256 defaultRulingTimeout
+        ) = cvStrategy.arbitrableConfigs(cvStrategy.currentArbitrableConfigVersion());
+        (uint256 maxRatio, uint256 weight, uint256 decay, uint256 minThresholdPoints) = cvStrategy.cvParams();
+
+        bytes memory setPoolParams = abi.encodeWithSelector(
+            ICVStrategy.setPoolParams.selector,
+            ArbitrableConfig(
+                IArbitrator(safeArbitrator),
+                tribunalSafe,
+                submitterCollateralAmount,
+                challengerCollateralAmount,
+                defaultRuling,
+                defaultRulingTimeout
+            ),
+            CVParams(maxRatio, weight, decay, minThresholdPoints)
+        );
+
+        return (upgradeCVStrategy, setPoolParams);
     }
 
     function _createTransactionJson(address to, bytes memory data) internal pure returns (string memory) {

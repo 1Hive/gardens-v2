@@ -14,12 +14,15 @@
         "ALLO_PROXY": "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
         "ALLO_IMPL": "0xB087535DB0df98fC4327136e897A5985E5Cfbd66",
         "REGISTRY": "0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3",
-        "ARBITRATOR": "0x05EC011e0d8B4d2add98e1cc4AC7DF38a95EF4Ed",
+        "ARBITRATOR": "0x49222C53695C77a0F8b78Eb42606B893E98DfE6a",
         "PASSPORT_SCORER": "0x6ad70508f44aa0e86e7af80ccc4fc1f160c2df46"
       },
       "PROXIES": {
         "REGISTRY_FACTORY": "0xf42f88c13804147b2fdda13c093ce14219aea395",
         "REGISTRY_COMMUNITIES": [
+          "0x2f8a9454de2e74bc9a0761703b3f7da0470b1e56",
+          "0x8b8732dac9c30ac89bf660b99fb90000d826ab83",
+          "0xb1f9ed8b752e81fcb0b9482e475c7035043f5994",
           "0xc219730ec703c9525748c3b80184d57f1d57699b"
         ],
         "CV_STRATEGIES": [
@@ -29,10 +32,9 @@
           "0x61f0d03b1f00b872c7c9ee03a12224cb70e93ea2",
           "0x6b999ed850de2c5c923eaafc3c15781bd2ccf9d6",
           "0xd682ff9fb3c4c28c35dfa8830280d9a1c5bbfee4"
-        ],
-        "PASSPORT_SCORER": "0x6ad70508f44aa0e86e7af80ccc4fc1f160c2df46"
+        ]
       },
-      "hash": "5ddd9cd97f92f363a3eef3f7ceedd161a8a7a762"
+      "hash": "53e68e51fcba07d96709cdfffd09105fb196d621"
     },
     {
       "name": "opsepolia",
@@ -74,7 +76,7 @@
         "ALLO_PROXY": "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
         "ALLO_IMPL": "0xB087535DB0df98fC4327136e897A5985E5Cfbd66",
         "REGISTRY": "0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3",
-        "ARBITRATOR": "0x10B469b23a47BC557daB81743af8A97Ef9e9f833",
+        "ARBITRATOR": "0x1c62F449058BbeeD546823A1a581D28233f7A69c",
         "PASSPORT_SCORER": "0x8cd4ba4ad10d85a550fe45d567a49e49e1d23ce1"
       },
       "PROXIES": {
@@ -85,15 +87,19 @@
           "0x110f4a8153c04eace288e712eb4b975b46376b8c",
           "0x2851b7e3d1ad8ba5637afe196968f1a4a9875e03",
           "0x2e8b031ae32debce51126b17356f122e4c07e941",
+          "0x2ed599a96ea90c5c777abb0a13dfb6af1d5fbe76",
           "0x400b3316447a4362abe36206c145550080046831",
           "0x40f44e992cc53eff241f51c825c7a1853eedaeb0",
           "0x41a9ed5de7998583cd20bf738ca38e649e0eafe3",
+          "0x561f7c4c65f42af17eab52b7065a5d2c080a3904",
           "0x5a48adf540cb5c79edb027bef3ebf551ce63661f",
           "0x625cb91ad17cf9b4a2b6b20b2b494ddf123c290c",
+          "0x6a34be42b61698ba8a103cf9c3d022f59bf8f4f2",
           "0x6dd6b0a9a9b94aa169e5ce31cff34a46c7bea9cd",
           "0x7508c3bcc2ce964ef858762cfbfa8bbbcf406ec9",
           "0x8281fd9c5f709a681813c49843a253a05d9b837c",
           "0x8c3e27f075bb82e8730660828a1159c9438f3e58",
+          "0x98d84697794f4aae7540c1f85433e2ab39ab1206",
           "0xa50d2ce829ea7b731c3b0a244032b639ff94cb92",
           "0xab90f7d562edac4fdfcac4d1cd93a45ac4a1fdab",
           "0xbb8b8ddc3775d825b6cf33bfa9ddcd771b88c6ee",
@@ -106,6 +112,7 @@
           "0xfc2bb6b0824805cee6d7a4af90bd395f663651c8"
         ],
         "CV_STRATEGIES": [
+          "0x020885a90d7c72079856c3ee7f7bb1e1d30c6e71",
           "0x083de9da44ebd145368440c9c88cad95536fc2b3",
           "0x19a0f3d7734dca40f1847c44ef717ef3ef5c50a5",
           "0x2e00fd8fff4417c9d76ac44e35f039861b7e8f86",
@@ -118,11 +125,11 @@
           "0xbd0c6aa5a670ebe77bd0225f345abe0058ece703",
           "0xea03978db787d89572cb7a07b60ac65b98111143",
           "0xeefd5923d88bdcc74afa56943dcc163f1de2be4d",
+          "0xf474d3d714b89ca0ada658a8105838f34cbbe1fa",
           "0xf659101919e1de3dca2fd7aa47840189506055ff"
-        ],
-        "PASSPORT_SCORER": "0x8cd4ba4ad10d85a550fe45d567a49e49e1d23ce1"
+        ]
       },
-      "hash": "342421428253a64d00582ebc37842233ca6a6ba3"
+      "hash": "f2fcd0376a7163617efc86736e13841822fefff7"
     },
     {
       "name": "optimism",
@@ -135,7 +142,7 @@
         "ALLO_PROXY": "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
         "ALLO_IMPL": "0xB087535DB0df98fC4327136e897A5985E5Cfbd66",
         "REGISTRY": "0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3",
-        "ARBITRATOR": "0x01b415E97310611EF5fea5c0b43470F6217456aA",
+        "ARBITRATOR": "0xaf6628d7347fc4D65F1D5C69663C875a00c56d9F",
         "PASSPORT_SCORER": "0x084a5504dcfeac0ec3e10517247639e50c8dcffd"
       },
       "PROXIES": {
@@ -158,17 +165,20 @@
           "0x87665484460f587a145eca5ce1e769da9ab8abf9",
           "0x888e2fbc7e7afe3a8f9b54030d0cb0eed896f955",
           "0x9175dc03307d8f91bc757334959906731f2b60ef",
+          "0x9b0d2fbc6a0efacb69d716bfd15db8734c550a7c",
           "0xa8cb166fd9e10103a6dbabefcf942d7b8026f735",
           "0xaecc747c84205e21832fc924fe61ca12b313a8e6",
           "0xbbb2313aeb8b1ff309790e20e61280aecd548db4",
           "0xbc5a25bf2eeb5941dd3531a0ab8857c9f0c3b6a5",
           "0xcee4e641af10b05c17a657d038c2a0071e1ec051",
+          "0xd3345828914b740fddd1b8ae4f4d2ce03d1e0960",
           "0xe5b10de982897a60cfae8481bac5848816c0f705",
           "0xee1a9cf8625c2f1f25201ac1a9a9e81f53d5e846",
           "0xf515b83f7e0ab851f822e56b0fe63dfa973e74f0"
         ],
         "CV_STRATEGIES": [
           "0x0a552942a6eb43d01c845f3a354b83ec30146950",
+          "0x0a9d78ea6de07fddbc71f1181d52f78052654b15",
           "0x1c720bfa4a2535fb6675b859a717b4cba56fd97b",
           "0x63e2b63072e131c0e5ad72205e03cbe6ca1484fa",
           "0x6a27a7454bfbf17aa22566519778b58f3d4adcc2",
@@ -181,10 +191,9 @@
           "0xd9cf1f7d077166236e260819257a567b1ca22c8c",
           "0xf3772fcf3f172abd43ae9b1d11c87e3d5c265be8",
           "0xfeca5fc72deb98b41198a5dce90e00bbafbe5888"
-        ],
-        "PASSPORT_SCORER": "0x084a5504dcfeac0ec3e10517247639e50c8dcffd"
+        ]
       },
-      "hash": "7ecdd9107ff5db6569f8dce9b56e2bb3ae3afcb0"
+      "hash": "73a32cbebe36116667baa9f5098e97bbbd040aff"
     },
     {
       "name": "polygon",
@@ -197,7 +206,7 @@
         "ALLO_PROXY": "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
         "ALLO_IMPL": "0xB087535DB0df98fC4327136e897A5985E5Cfbd66",
         "REGISTRY": "0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3",
-        "ARBITRATOR": "0x8cb85C8FF0be6802AF7aE7462A44cD2a4103688e",
+        "ARBITRATOR": "0x8D9EAed9D3D23EF30ADAA706c8352c5655AEd814",
         "PASSPORT_SCORER": "0x190fa730e6ffc64ebd0031be59b3007cc9ee2bb3"
       },
       "PROXIES": {
@@ -214,10 +223,9 @@
           "0x81745dba1273411825f18b50ead84a3fc2c8fd2c",
           "0xd6f30d1f35069299e709bcac58fe7cda6bc9595f",
           "0xe8216b6a9e8b87560dbeb0f4dc0f256fb9fedf1b"
-        ],
-        "PASSPORT_SCORER": "0x190fa730e6ffc64ebd0031be59b3007cc9ee2bb3"
+        ]
       },
-      "hash": "68e5f135e9bf9bea2550da401d0b656f883f0dcd"
+      "hash": "bfc41198aae4f09072b15b4e398c47fa028dd53d"
     },
     {
       "name": "gnosis",
@@ -230,52 +238,82 @@
         "ALLO_PROXY": "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
         "ALLO_IMPL": "0xB087535DB0df98fC4327136e897A5985E5Cfbd66",
         "REGISTRY": "0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3",
-        "ARBITRATOR": "0x7dd4020A2344A9e039092F12e46ba4F1EF1e3c91",
+        "ARBITRATOR": "0x92bc0af737f55FF7B677cd942Aafd52934Fc751d",
         "PASSPORT_SCORER": "0x20965c5c8a021ac6ffed5de7a402f7ceac3b0a82"
       },
       "PROXIES": {
         "REGISTRY_FACTORY": "0x08df82f74d1f56f650e98da2dd4240f1a31711bc",
         "REGISTRY_COMMUNITIES": [
           "0x2038f3b00ce19261fa558b2bd06404c912da3e85",
+          "0x4d7a042b2fb2504dd98e4c871cc134a8ded712da",
           "0x6221d5e286cce0d22fc6e0b2597d5d3ca98dacb1",
+          "0x62ce2d154d34b5aefb9be02525cfffdbf934ff27",
           "0x8f3112bcee3fb967a06dcb245f78f25e638ad56a",
           "0x99a454785c9859e5b61647d77a05be1fa53f4d04",
           "0xa8935addabca48a9fc63a009f9313fc59417b20c",
           "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
+          "0xaeb5c6c69cc5b9c10dd5c5176af83e632320fcea",
           "0xb8ad4b6ba0fde413fdee6f84fc989858c2894092",
           "0xda9bcf61d7cb66475c34784c328232d2e7e2f6cf",
           "0xe2396fe2169ca026962971d3b2e373ba925b6257"
         ],
         "CV_STRATEGIES": [
           "0x0108617ca2e05546c49383d9392ed8db5d12304c",
+          "0x051e8d96d4e9cde57d584b8d59a5116784f0d3c7",
+          "0x0a2ecc1f687ec4e1c19d337a5ac926865e30e818",
           "0x0fd15b2142a257fa8713cad2c14ec52c00f71865",
           "0x105900650fff3cf4fe52bce72f26572fe4fa1faf",
           "0x107fbe971a1457a7a442a7fe3e2124d689a66e92",
+          "0x149e1d84858993b6ec3a41e11488c86c289620ef",
+          "0x1c265d5392dbfc0f43c85384c925f8d147e4d6bc",
+          "0x1e595cd639d9a835e3cf5dcef8e740e2bfe15494",
           "0x1f6fd908db173f591aa6ea4a037d157ea4e31f68",
           "0x2b64e4838bb7e0f4794fe3e40ad5cb71c2beddb5",
+          "0x2e3ab6f45e407283e719da6eeb7844a2f6bccd07",
+          "0x36f9176031e7de875659a3d1044cb62d1c2a9d2d",
+          "0x48ed3db635557079f8e1d0b83b37097abe78d6f1",
+          "0x48fdb39d6dc7064f6a3f5f48369fe26f2e434f5b",
           "0x5ab65facfc0ae022f65a5c64cb3bf38812bd042a",
           "0x5ccb743c930271ebd7f254f3ccf909097532c7be",
           "0x5f7e9967b940f47623ad7fce9d59c899a1a114e7",
+          "0x61cbd792c9310fc2d9fa03e99118bd163301cd0a",
           "0x67fea1ec7ed0adfb4026923b4779e4f830af8e1c",
+          "0x681d02f86578922d33a5e3b7954abdedf4e3064d",
+          "0x69bcabc41dae5ddc5cb2370f7ba472612115e8ce",
           "0x6cc78e32004429b39c1fb8d7c6620e8511832cc4",
+          "0x6d3e7d4271cdc083609fae18461ea1e1589e4e8d",
+          "0x6d5accc797cc20414f1206ceb2e7665ef777480a",
           "0x6e7e8b56d16c577ee9c765a756deb5e6959088af",
+          "0x6e7ed4a6ac5665d55ed779595f2cdb689f205f0f",
+          "0x7336ab83ec05ccb0d328390e50ac8b59b1229da1",
           "0x74545010e013e5601009305288193cbd5c8702b4",
+          "0x777ddf053fb46a48cccf5b91d3417d4daf3ec9e2",
+          "0x7c86c9a368324f51c6ef2fe88a1f5a332cac3c2d",
           "0x7de5cd9bccd6d15ca7ebfd9cd37aafbef6b8d1ad",
+          "0x7fe71a32d39954844d1954acae5191116ad116ac",
           "0x831fa1bbcdfe199d56213c40340544aeb7912349",
           "0x9fb2f1813228a97f559e29a6492ee27357faf8a2",
+          "0xa65228c5661bba89532b2941ea86853eeba8a4b9",
+          "0xa774b5c30fc203811d41dfc6edbc5d295f2aff86",
+          "0xa7ff31bba33d421c2fb3aa3688cf64ea60ab4199",
+          "0xa8116d32a742e2323de416808a9768ebc2a8d179",
+          "0xa840a7506b866ee71d487bf76a8f698249ea9836",
           "0xaa0195986ffe8f3371444fa77ee3ed04ac787eea",
           "0xac948bca716b080df41afc70f37b7a9f6f3d9c9a",
           "0xb1a275419c817273f470ee1a102cad7507a25b6f",
           "0xb48fe96fcb6b3f7228247690f6a0f21d60002e52",
           "0xba5c9429472e9e0aa1d4f0276c7fb45374e2af6c",
           "0xbf1d2e31fa3d927673d2e95bfb2d940f5cc8890e",
+          "0xcdd52a838b602910d582ebebe91f24cf284fddd2",
           "0xd12f4faab3a770175f5d7e19bd32b1a7aadc0a31",
           "0xe652081deb52afa56fb2958994427c662356007b",
+          "0xe8320380d56c4319aab593e45de868b002b3e357",
+          "0xf1ec3cb9a862844aad68df495955832a242e39e7",
+          "0xfb075fad5f629124f27787fda26a774c727661c9",
           "0xfbad687a935390ff59b36cd6c9462d0b1948e378"
-        ],
-        "PASSPORT_SCORER": "0x20965c5c8a021ac6ffed5de7a402f7ceac3b0a82"
+        ]
       },
-      "hash": "42e70e0a3d435a09d74900302962bb096b2e5075"
+      "hash": "511f42d34a30bd75e6141ea81e2c18cba92bfc42"
     },
     {
       "name": "base",
@@ -288,24 +326,20 @@
         "ALLO_PROXY": "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
         "ALLO_IMPL": "0xB087535DB0df98fC4327136e897A5985E5Cfbd66",
         "REGISTRY": "0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3",
-        "ARBITRATOR": "0x83bDE2E2D8AcAAad2D300DA195dF3cf86b234bdd",
+        "ARBITRATOR": "0xab98D1D6Ce18e537715126614278d1A4D26bbc7d",
         "PASSPORT_SCORER": "0xb39dFA15F96055664179e8EcaA890f3FA26c21e9"
       },
       "PROXIES": {
-        "REGISTRY_FACTORY": "0xba1c9da92a4494966ff1d60cb1d2668bfd15c8fb",
+        "REGISTRY_FACTORY": "0xc93830dd463516ed5f28f6cd4f837173b87ff389",
         "REGISTRY_COMMUNITIES": [
-          "0x0b9e3b889b55d22d5cfb992ec44e53f333a8a813",
-          "0x44cf2e335cf50f4da447b680192976aee855c203",
-          "0xdcf3366bfd2e5c76712160199ac938b2db0e3b73"
+          "0xacc779d8cf69e64d016c1c79895851f139bc7c2b",
+          "0xdac6e19e4fd51d48cae4e25e7604d7ab83935278"
         ],
         "CV_STRATEGIES": [
-          "0x56a73294d8aa3a63e9cf2d8c2f8f71f0b3ee8f43",
-          "0x74fa25e7e96f38f6bfa1b47af42e9d80a8652e94",
-          "0x80c2ff2dc92dfb4980b62e600793500be674b0b4"
-        ],
-        "PASSPORT_SCORER": "0xb39dFA15F96055664179e8EcaA890f3FA26c21e9"
+          "0xabf6f3e646056218bc857fa9ea313aa31a03454b"
+        ]
       },
-      "hash": "e75e078d38093a41070b828001ef8d5fb3eb9264"
+      "hash": "9f6c9e199a409e72346dfdbaa6503a56c7443e76"
     },
     {
       "name": "mainnet",
