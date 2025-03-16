@@ -17,7 +17,10 @@ import { FormRadioButton } from "./FormRadioButton";
 import { FormSelect } from "./FormSelect";
 import { EthAddress } from "../EthAddress";
 import { Button } from "@/components/Button";
-import { DEFAULT_RULING_TIMEOUT_SEC } from "@/configs/constants";
+import {
+  DEFAULT_RULING_TIMEOUT_SEC,
+  VOTING_POINT_SYSTEM_DESCRIPTION,
+} from "@/configs/constants";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
@@ -141,7 +144,7 @@ const sybilResistancePreview = (
   value?: string | Address[],
 ): ReactNode => {
   const previewMap: Record<SybilResistanceType, ReactNode> = {
-    noSybilResist: "No restrictions (anyone can vote)",
+    noSybilResist: "No protections (anyone can vote)",
     allowList: (() => {
       if (addresses.length === 0) {
         return "Allow list (no addresses submitted)";
@@ -188,13 +191,15 @@ export function PoolForm({ token, communityAddr }: Props) {
     watch,
     trigger,
   } = useForm<FormInputs>({
+    mode: "onBlur",
     defaultValues: {
       strategyType: 1,
       pointSystemType: 0,
+      sybilResistanceType: "allowList",
       rulingTime: parseTimeUnit(DEFAULT_RULING_TIMEOUT_SEC, "seconds", "days"),
       defaultResolution: 1,
       minThresholdPoints: 0,
-      poolTokenAddress: token.id,
+      poolTokenAddress: "",
       proposalCollateral:
         chain.id === polygon.id ?
           defaultMaticProposalColateral
@@ -227,6 +232,7 @@ export function PoolForm({ token, communityAddr }: Props) {
   const { isConnected, missmatchUrl, tooltipMessage } = useDisableButtons();
 
   const watchedAddress = watch("poolTokenAddress").toLowerCase() as Address;
+
   const { data: customTokenData } = useToken({
     address: watchedAddress ?? "0x",
     chainId: +chain,
@@ -240,6 +246,9 @@ export function PoolForm({ token, communityAddr }: Props) {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { noSybilResist, ...rest } = fullSybilResistanceOptions;
       setSybilResistanceOptions(rest);
+      if (sybilResistanceType === "noSybilResist") {
+        setValue("sybilResistanceType", "allowList");
+      }
     } else {
       setSybilResistanceOptions(fullSybilResistanceOptions);
     }
@@ -323,7 +332,11 @@ export function PoolForm({ token, communityAddr }: Props) {
     tribunalAddress: {
       label: "Tribunal safe:",
       parse: (value: string) => (
-        <EthAddress address={value as Address} icon={"ens"} />
+        <EthAddress
+          address={value as Address}
+          icon={"ens"}
+          shortenAddress={false}
+        />
       ),
     },
     poolTokenAddress: {
@@ -443,13 +456,15 @@ export function PoolForm({ token, communityAddr }: Props) {
               (chain.passportScorer as Address)
             : zeroAddress,
           sybilScorerThreshold: BigInt(
-            (
-              Array.isArray(sybilResistanceValue) ||
-                !previewData.sybilResistanceValue
-            ) ?
-              0
-            : (previewData.sybilResistanceValue as unknown as number) *
-                CV_PASSPORT_THRESHOLD_SCALE,
+            Math.round(
+              (
+                Array.isArray(sybilResistanceValue) ||
+                  !previewData.sybilResistanceValue
+              ) ?
+                0
+              : (previewData.sybilResistanceValue as unknown as number) *
+                  CV_PASSPORT_THRESHOLD_SCALE,
+            ),
           ),
           initialAllowlist: allowList,
         },
@@ -591,14 +606,6 @@ export function PoolForm({ token, communityAddr }: Props) {
     }
   }, [customTokenData, watchedAddress, trigger]);
 
-  const votingWeightSystemDescriptions = {
-    fixed: "Everyone has the same voting weight, limited to registration stake",
-    capped: "Voting weight is equal to tokens staked, up to a limit",
-    unlimited: "Voting weight is equal to tokens staked, no limit.",
-    quadratic:
-      "Voting weight increases as more tokens are staked, following a quadratic curve.",
-  };
-
   return (
     <form onSubmit={handleSubmit(handlePreview)} className="w-full">
       {showPreview ?
@@ -672,18 +679,18 @@ export function PoolForm({ token, communityAddr }: Props) {
                 <span className="ml-1">*</span>
               </label>
               <div className="ml-2 flex flex-col gap-2">
-                {Object.entries(PointSystems).map(([value, label], i) => (
+                {Object.entries(PointSystems).map(([value, id], i) => (
                   <div key={value}>
                     <FormRadioButton
                       value={value}
-                      label={capitalize(label)}
+                      label={capitalize(id)}
                       inline={true}
                       onChange={() =>
                         setValue("pointSystemType", parseInt(value))
                       }
                       checked={parseInt(value) === pointSystemType}
                       registerKey="pointSystemType"
-                      description={votingWeightSystemDescriptions[label]}
+                      description={VOTING_POINT_SYSTEM_DESCRIPTION[id]}
                     />
                     {PointSystems[pointSystemType] === "capped" &&
                       i === Object.values(PointSystems).indexOf("capped") && (
@@ -707,7 +714,7 @@ export function PoolForm({ token, communityAddr }: Props) {
                             registerKey="maxAmount"
                             type="number"
                             placeholder="0"
-                            suffix={token.symbol}
+                            suffix={customTokenData?.symbol}
                           />
                         </div>
                       )}
@@ -726,7 +733,7 @@ export function PoolForm({ token, communityAddr }: Props) {
                 required
                 registerKey="sybilResistanceType"
                 placeholder="Who can vote in this pool ?"
-                tooltip="Select the restriction type to prevent voting abuse for this pool."
+                tooltip="Select the protection type to prevent voting abuse for this pool."
                 options={Object.entries(sybilResistanceOptions).map(
                   ([value, text]) => ({
                     label: text,
@@ -840,10 +847,11 @@ export function PoolForm({ token, communityAddr }: Props) {
                 tooltip="Enter a Safe address to rule on proposal disputes in the Pool and determine if they are in violation of the Covenant."
                 label="Tribunal address"
                 required
+                validateSafe
                 value={tribunalAddress}
-                onChange={(e) => {
-                  setValue("tribunalAddress", e.target.value);
-                }}
+                registerKey="tribunalAddress"
+                register={register}
+                errors={errors}
               />
               <FormCheckBox
                 label="Use global tribunal"
@@ -862,7 +870,7 @@ export function PoolForm({ token, communityAddr }: Props) {
                         chain.globalTribunal?.toLowerCase()
                     ) ?
                       ""
-                    : (chain.globalTribunal ?? ""),
+                    : chain.globalTribunal ?? "",
                   );
                 }}
               />
@@ -927,7 +935,6 @@ export function PoolForm({ token, communityAddr }: Props) {
                     tooltip="% of Pool's voting weight needed to pass the smallest funding proposal possible. Higher funding requests demand greater conviction to pass."
                     label="Minimum conviction"
                     register={register}
-                    required
                     errors={errors}
                     registerKey="minimumConviction"
                     type="number"
@@ -936,16 +943,11 @@ export function PoolForm({ token, communityAddr }: Props) {
                     className="pr-14"
                     otherProps={{
                       step: 1 / CV_SCALE_PRECISION,
-                      min: 1 / CV_SCALE_PRECISION,
                     }}
                     registerOptions={{
                       max: {
                         value: 99.9,
                         message: "Minimum conviction should be under 100%",
-                      },
-                      min: {
-                        value: 1 / CV_SCALE_PRECISION,
-                        message: "Minimum conviction must be greater than 0",
                       },
                     }}
                     suffix="%"

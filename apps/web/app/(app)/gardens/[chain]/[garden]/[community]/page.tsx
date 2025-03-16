@@ -1,24 +1,27 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { Fragment, useEffect, useRef, useState } from "react";
 import {
   CurrencyDollarIcon,
   PlusIcon,
   RectangleGroupIcon,
   UserGroupIcon,
+  ArrowTopRightOnSquareIcon,
 } from "@heroicons/react/24/outline";
-import { Dnum } from "dnum";
+
+import { FetchTokenResult } from "@wagmi/core";
+import { Dnum, multiply } from "dnum";
 import Image from "next/image";
 import Link from "next/link";
 import { Address } from "viem";
-import { useAccount, useToken } from "wagmi";
+import { useAccount, useContractRead, useToken } from "wagmi";
 import {
   getCommunityDocument,
   getCommunityQuery,
   isMemberDocument,
   isMemberQuery,
 } from "#/subgraph/.graphclient";
-import { commImg, groupFlowers } from "@/assets";
+import { commImg, groupFlowers, BlockscoutLogo } from "@/assets";
 import {
   Button,
   DisplayNumber,
@@ -28,6 +31,7 @@ import {
   RegisterMember,
   Statistic,
   InfoWrapper,
+  DataTable,
 } from "@/components";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import MarkdownWrapper from "@/components/MarkdownWrapper";
@@ -38,14 +42,29 @@ import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
-import { PoolTypes } from "@/types";
+import { safeABI } from "@/src/generated";
+import { PoolTypes, Column } from "@/types";
 import { fetchIpfs } from "@/utils/ipfsUtils";
 import {
-  dn,
   parseToken,
   SCALE_PRECISION,
   SCALE_PRECISION_DECIMALS,
 } from "@/utils/numbers";
+
+type MembersStaked = {
+  memberAddress: string;
+  stakedTokens: string;
+};
+
+type CommunityMetricsProps = {
+  membersStaked: MembersStaked[] | undefined;
+  tokenGarden: FetchTokenResult;
+  communityStakedTokens: number | bigint;
+};
+
+type MemberColumn = Column<MembersStaked>;
+
+const BLOCKSCOUT_ADDRESS = "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9";
 
 export default function Page({
   params: { chain, garden: tokenAddr, community: communityAddr },
@@ -55,6 +74,8 @@ export default function Page({
   const searchParams = useCollectQueryParams();
   const { address: accountAddress } = useAccount();
   const [covenant, setCovenant] = useState<string | undefined>();
+  const [openCommDetails, setOpenCommDetails] = useState(false);
+
   const covenantSectionRef = useRef<HTMLDivElement>(null);
   const { data: tokenGarden } = useToken({
     address: tokenAddr as Address,
@@ -66,14 +87,28 @@ export default function Page({
     refetch,
   } = useSubgraphQuery<getCommunityQuery>({
     query: getCommunityDocument,
-    variables: { communityAddr: communityAddr, tokenAddr: tokenAddr },
+    variables: {
+      communityAddr: communityAddr.toLowerCase(),
+      tokenAddr: tokenAddr.toLowerCase(),
+    },
     changeScope: [
       { topic: "community", id: communityAddr },
       { topic: "member", containerId: communityAddr },
     ],
   });
-
   const registryCommunity = result?.registryCommunity;
+
+  const { data: isCouncilMember } = useContractRead({
+    address: registryCommunity?.councilSafe as Address,
+    abi: safeABI,
+    functionName: "isOwner",
+    chainId: Number(chain),
+    enabled: !!accountAddress,
+    args: [accountAddress as Address],
+    onError: () => {
+      console.error("Error reading isOwner from Coucil Safe");
+    },
+  });
 
   let {
     communityName,
@@ -81,6 +116,7 @@ export default function Page({
     strategies,
     communityFee,
     registerStakeAmount,
+    protocolFee,
   } = registryCommunity ?? {};
 
   const { data: isMemberResult } = useSubgraphQuery<isMemberQuery>({
@@ -143,7 +179,35 @@ export default function Page({
   );
   const activePools = strategies?.filter((strategy) => strategy?.isEnabled);
 
-  const poolsInReview = strategies.filter((strategy) => !strategy.isEnabled);
+  const poolsInReview = strategies.filter(
+    (strategy) => !strategy.isEnabled && !strategy.archived,
+  );
+
+  const poolsArchived = strategies.filter((strategy) => strategy.archived);
+
+  // const [tokenDataArray, setTokenDataArray] = useState([]);
+
+  // useEffect(() => {
+  //   // Initialize an empty array for holding token data for each pool
+  //   const newTokenDataArray = fundingPools.map((pool) => ({
+  //     poolId: pool.poolId,
+  //     tokenData: null ,
+  //   }));
+
+  //   // Iterate over each pool and use `useToken` to get token data
+  //   fundingPools.forEach((pool, index) => {
+  //     const { data } = useToken({
+  //       address: pool.token as Address,
+  //       chainId: +chain,
+  //     });
+
+  //     // Update the tokenData in the array for this specific pool
+  //     newTokenDataArray[index].tokenData = data;
+  //   });
+
+  //   // Once data is fetched, update the state
+  //   setTokenDataArray(newTokenDataArray);
+  // }, [fundingPools, chain]);
 
   useEffect(() => {
     const newPoolId = searchParams[QUERY_PARAMS.communityPage.newPool];
@@ -188,17 +252,17 @@ export default function Page({
       const membership = [
         BigInt(registerStakeAmount),
         Number(tokenGarden!.decimals),
-      ] as dn.Dnum;
+      ] as Dnum;
       const feePercentage = [
         BigInt(communityFee),
         SCALE_PRECISION_DECIMALS, // adding 2 decimals because 1% == 10.000 == 1e4
-      ] as dn.Dnum;
+      ] as Dnum;
 
-      return dn.multiply(membership, feePercentage);
+      return multiply(membership, feePercentage);
     } catch (err) {
       console.error(err);
     }
-    return [0n, 0] as dn.Dnum;
+    return [0n, 0] as Dnum;
   };
 
   const registrationAmount = [
@@ -207,25 +271,50 @@ export default function Page({
   ] as Dnum;
 
   const getTotalRegistrationCost = () => {
-    if (registerStakeAmount) {
-      // using == for type coercion because communityFee is actually a string
-      if (communityFee == 0 || communityFee === undefined) {
-        return BigInt(registerStakeAmount);
-      } else {
-        return (
-          BigInt(registerStakeAmount) +
-          BigInt(registerStakeAmount) /
-            (BigInt(SCALE_PRECISION) / BigInt(communityFee))
-        );
-      }
-    } else {
-      return 0n;
+    registerStakeAmount = +registerStakeAmount;
+    protocolFee = +protocolFee;
+    communityFee = +communityFee;
+    if (registerStakeAmount == undefined) {
+      registerStakeAmount = 0;
     }
+    const res =
+      BigInt(registerStakeAmount) + // Min stake
+      (communityFee ?
+        BigInt(registerStakeAmount * (communityFee / SCALE_PRECISION))
+      : BigInt(0)) + // Commuity fee as % of min stake
+      (protocolFee ?
+        BigInt(registerStakeAmount * (protocolFee / SCALE_PRECISION))
+      : BigInt(0)); // Protocol fee as extra
+    return res;
   };
 
   return (
     <div className="page-layout">
       <header className="section-layout flex flex-row items-center gap-10 flex-wrap justify-end">
+        <div className="absolute top-5 right-10 flex flex-col">
+          {communityAddr == BLOCKSCOUT_ADDRESS && (
+            <>
+              <Image
+                src={BlockscoutLogo}
+                alt={`${communityName} community`}
+                className="h-[100px]"
+                height={210}
+                width={210}
+              />
+              <a
+                href="https://merits.blockscout.com/?tab=campaigns&id=rec66xiX71sN8y4q1&utm_source=landing-page&utm_medium=campaign&utm_campaign=gnosis"
+                className="text-tertiary-content text-sm -mt-8 flex items-center justify-center gap-1"
+                target="_external"
+                rel="noreferrer"
+              >
+                Learn more about Blockscout Merits{" "}
+                <span>
+                  <ArrowTopRightOnSquareIcon width={14} height={14} />
+                </span>
+              </a>
+            </>
+          )}
+        </div>
         <div>
           <Image
             src={commImg}
@@ -234,11 +323,22 @@ export default function Page({
             height={180}
             width={180}
           />
+          <Button
+            onClick={() => setOpenCommDetails(!openCommDetails)}
+            btnStyle="outline"
+            className="mt-1"
+          >
+            {openCommDetails ? "Close" : "View"} Members
+          </Button>
         </div>
         <div className="flex flex-1 flex-col gap-2">
           <div>
             <h2>{communityName}</h2>
-            <EthAddress icon={false} address={communityAddr as Address} />
+            <EthAddress
+              icon={false}
+              address={communityAddr as Address}
+              label="Community address"
+            />
           </div>
           <div className="flex flex-col gap-2">
             <Statistic
@@ -282,7 +382,15 @@ export default function Page({
             registryCommunity={registryCommunity}
           />
         </div>
+        {openCommDetails && (
+          <CommunityDetailsTable
+            membersStaked={registryCommunity.members as MembersStaked[]}
+            tokenGarden={tokenGarden}
+            communityStakedTokens={communityStakedTokens}
+          />
+        )}
       </header>
+
       <IncreasePower
         memberData={isMemberResult}
         registryCommunity={registryCommunity}
@@ -311,14 +419,9 @@ export default function Page({
           </h4>
           <div className="flex flex-row flex-wrap gap-10">
             {fundingPools.map((pool) => (
-              <PoolCard
-                key={pool.poolId}
-                tokenGarden={{
-                  decimals: tokenGarden?.decimals ?? 18,
-                  symbol: tokenGarden?.symbol ?? "",
-                }}
-                pool={pool}
-              />
+              <Fragment key={pool.poolId}>
+                <PoolCard token={pool.token} chainId={chain} pool={pool} />
+              </Fragment>
             ))}
           </div>
         </div>
@@ -330,10 +433,8 @@ export default function Page({
             {signalingPools.map((pool) => (
               <PoolCard
                 key={pool.poolId}
-                tokenGarden={{
-                  symbol: tokenGarden?.symbol ?? "",
-                  decimals: tokenGarden?.decimals ?? 18,
-                }}
+                token={pool.token}
+                chainId={chain}
                 pool={pool}
               />
             ))}
@@ -347,15 +448,33 @@ export default function Page({
             {poolsInReview.map((pool) => (
               <PoolCard
                 key={pool.poolId}
-                tokenGarden={{
-                  decimals: tokenGarden?.decimals ?? 18,
-                  symbol: tokenGarden?.symbol ?? "",
-                }}
+                token={pool.token}
+                chainId={chain}
                 pool={pool}
               />
             ))}
           </div>
         </div>
+        {(!!isCouncilMember ||
+          accountAddress?.toLowerCase() ===
+            registryCommunity.councilSafe?.toLowerCase() ||
+          localStorage.getItem("showArchived") === "true") && (
+          <div className="flex flex-col gap-4">
+            <h4 className="text-secondary-content">
+              Pools archived ({poolsArchived.length})
+            </h4>
+            <div className="flex flex-row flex-wrap gap-10">
+              {poolsArchived.map((pool) => (
+                <PoolCard
+                  key={pool.poolId}
+                  token={pool.token}
+                  chainId={chain}
+                  pool={pool}
+                />
+              ))}
+            </div>
+          </div>
+        )}
       </section>
       <section ref={covenantSectionRef} className="section-layout">
         <h2 className="mb-4">Covenant</h2>
@@ -378,3 +497,54 @@ export default function Page({
     </div>
   );
 }
+
+const CommunityDetailsTable = ({
+  membersStaked,
+  tokenGarden,
+  communityStakedTokens,
+}: CommunityMetricsProps) => {
+  const columns: MemberColumn[] = [
+    {
+      header: `Members (${membersStaked?.length})`,
+      render: (memberData: MembersStaked) => (
+        <EthAddress
+          address={memberData.memberAddress as Address}
+          actions="copy"
+          shortenAddress={false}
+          icon="ens"
+        />
+      ),
+    },
+    {
+      header: "Staked tokens",
+      render: (memberData: MembersStaked) => (
+        <DisplayNumber
+          number={[BigInt(memberData.stakedTokens), tokenGarden.decimals]}
+          compact={true}
+          tokenSymbol={tokenGarden.symbol}
+        />
+      ),
+      className: "flex justify-end",
+    },
+  ];
+
+  return (
+    <DataTable
+      title="Community Members"
+      data={membersStaked as MembersStaked[]}
+      description="Overview of all community members and the total amount of tokens they have staked."
+      columns={columns}
+      className="max-h-screen overflow-y-scroll w-full"
+      footer={
+        <div className="flex justify-between py-2 border-neutral-soft-content">
+          <p className="subtitle">Total Staked:</p>
+          <DisplayNumber
+            number={[BigInt(communityStakedTokens), tokenGarden.decimals]}
+            compact={true}
+            tokenSymbol={tokenGarden.symbol}
+          />
+        </div>
+      }
+    />
+  );
+};

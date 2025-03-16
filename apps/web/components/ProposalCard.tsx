@@ -26,7 +26,7 @@ import {
 } from "@/hooks/useConvictionRead";
 import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { PoolTypes, ProposalStatus } from "@/types";
-import { calculatePercentage } from "@/utils/numbers";
+import { calculatePercentageBigInt } from "@/utils/numbers";
 import { prettyTimestamp } from "@/utils/text";
 
 export type ProposalCardProps = {
@@ -45,18 +45,20 @@ export type ProposalCardProps = {
   stakedFilter: ProposalInputItem;
   poolToken?: FetchTokenResult;
   isAllocationView: boolean;
-  memberActivatedPoints: number;
-  memberPoolWeight: number;
+  memberActivatedPoints: bigint;
+  memberPoolWeight?: number;
   executeDisabled: boolean;
   tokenDecimals: number;
   alloInfo: Allo;
+  isPoolEnabled: boolean;
   tokenData: Parameters<typeof useConvictionRead>[0]["tokenData"];
-  inputHandler: (proposalId: string, value: number) => void;
+  inputHandler: (proposalId: string, value: bigint) => void;
 };
 
 export function ProposalCard({
   proposalData,
   strategyConfig,
+  isPoolEnabled,
   inputData,
   stakedFilter,
   poolToken,
@@ -92,17 +94,13 @@ export function ProposalCard({
     strategyConfig,
     tokenData,
   });
-
   const inputValue =
-    inputData ? calculatePercentage(inputData.value, memberActivatedPoints) : 0;
-
-  const allocatedInProposal = calculatePercentage(
-    stakedFilter?.value,
-    memberActivatedPoints,
-  );
+    inputData ?
+      Number(calculatePercentageBigInt(inputData.value, memberActivatedPoints))
+    : 0;
 
   const poolWeightAllocatedInProposal = (
-    (inputValue * memberPoolWeight) /
+    (inputValue * Number(memberPoolWeight)) /
     100
   ).toFixed(2);
 
@@ -159,32 +157,32 @@ export function ProposalCard({
   const proposalCardContent = (
     <>
       <div
-        className={`flex gap-3 justify-between py-3 flex-wrap ${isAllocationView ? `section-layout ${isNewProposal ? "shadow-2xl" : ""}` : ""}`}
+        className={`flex gap-3 justify-between flex-wrap ${isAllocationView ? `section-layout ${isNewProposal ? "shadow-2xl" : ""}` : ""}`}
       >
-        <div className="flex flex-col sm:flex-row w-full">
+        <div className="flex flex-col sm:flex-row w-full justify-between gap-2">
           {/* icon title and id */}
-          <div className="flex gap-6 flex-1">
-            <div className="hidden sm:block">
+          <header className="flex justify-between items-start gap-2">
+            <div className="hidden xl:block">
               <Hashicon value={id} size={45} />
             </div>
-            <div>
-              <h4 className="sm:max-w-md lg:max-w-lg">
-                <Skeleton isLoading={!metadata} className="w-96 h-5">
-                  <TooltipIfOverflow className="first-letter:uppercase">
-                    {metadata?.title}
-                  </TooltipIfOverflow>
-                </Skeleton>
-              </h4>
-              <div className="flex items-baseline gap-3">
-                <h6 className="text-sm">ID {proposalNumber}</h6>
-                <p className="text-sm text-neutral-soft-content">
-                  {prettyTimestamp(proposalData.createdAt ?? 0)}
-                </p>
+            <div className="flex w-full items-start flex-col gap-1">
+              <Skeleton isLoading={!metadata}>
+                <h3 className="flex items-start max-w-full sm:max-w-md lg:max-w-lg">
+                  <TooltipIfOverflow>{metadata?.title}</TooltipIfOverflow>
+                </h3>
+              </Skeleton>
+              <div className="flex justify-between items-center">
+                <div className="flex items-baseline gap-3">
+                  <h6 className="text-sm">ID {proposalNumber}</h6>
+                  <p className="text-sm text-neutral-soft-content">
+                    {prettyTimestamp(proposalData.createdAt ?? 0)}
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
+          </header>
           {/* amount requested and proposal status */}
-          <div className="flex gap-6 text-neutral-soft-content">
+          <div className="flex gap-6 text-neutral-soft-content justify-end">
             {!isSignalingType && poolToken && (
               <div className="flex items-center gap-1 justify-self-end">
                 <p>Requested amount: </p>
@@ -195,119 +193,125 @@ export function ProposalCard({
                 />
               </div>
             )}
-            <Badge
-              status={proposalStatus}
-              className="self-center justify-self-end"
-            />
+            {isPoolEnabled && (
+              <Badge
+                status={proposalStatus}
+                className="self-center justify-self-end"
+              />
+            )}
           </div>
         </div>
 
         {/* support description or slider */}
-        <div className="flex gap-12 flex-wrap w-full ">
-          <div className="mt-4 w-full">
-            {isAllocationView ?
-              <div className=" flex w-full flex-wrap items-center justify-between gap-6">
-                <div className="flex items-center gap-8">
-                  <div>
+        {isPoolEnabled && (
+          <div className="flex gap-12 flex-wrap w-full ">
+            <div className="mt-4 w-full">
+              {isAllocationView ?
+                <div className="flex w-full flex-wrap items-center justify-between gap-6">
+                  <div className="flex items-center gap-8 flex-grow flex-wrap">
                     <div
-                      className={isProposalEnded ? "tooltip" : ""}
-                      data-tip={
-                        isProposalEnded ?
-                          "Cannot change allocation when a proposal is ended"
-                        : ""
-                      }
+                      className={`flex-grow sm:max-w-[460px] ${isProposalEnded && "tooltip"}`}
+                      data-tip="Click X to remove your support from this proposal"
                     >
                       <input
                         type="range"
                         min={0}
-                        max={memberActivatedPoints}
-                        value={inputData?.value}
-                        className={`range range-md min-w-[460px] cursor-pointer bg-neutral-soft [--range-shdw:var(--color-green-500)] ${isProposalEnded ? "grayscale !cursor-not-allowed" : ""}`}
-                        step={memberActivatedPoints / 100}
-                        onChange={(e) =>
-                          inputHandler(proposalData.id, Number(e.target.value))
-                        }
+                        max={Number(memberActivatedPoints)}
+                        value={inputData ? Number(inputData.value) : undefined}
+                        className={`range range-md cursor-pointer bg-neutral-soft [--range-shdw:var(--color-green-500)] ${isProposalEnded ? "grayscale !cursor-not-allowed" : ""}`}
+                        step={Number(memberActivatedPoints) / 100}
+                        onChange={(e) => {
+                          inputHandler(
+                            proposalData.id,
+                            BigInt(Math.floor(Number(e.target.value))),
+                          );
+                        }}
                         disabled={isProposalEnded}
                       />
-                    </div>
-                    <div className="flex w-full justify-between px-2.5">
-                      {[...Array(21)].map((_, i) => (
-                        // eslint-disable-next-line react/no-array-index-key
-                        <span className="text-[8px]" key={`span_${i}`}>
-                          |
-                        </span>
-                      ))}
-                    </div>
-                  </div>
 
-                  {isProposalEnded && inputData?.value != 0 && (
-                    <Button
-                      className="mb-2 !p-2 !px-3"
-                      btnStyle="outline"
-                      onClick={() => inputHandler(proposalData.id, 0)}
-                      tooltip="Clear allocation"
-                    >
-                      &times;
-                    </Button>
-                  )}
-                  <div className="mb-2">
+                      <div className="flex w-full justify-between px-2.5">
+                        {[...Array(21)].map((_, i) => (
+                          // eslint-disable-next-line react/no-array-index-key
+                          <span className="text-[8px]" key={`span_${i}`}>
+                            |
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    {isProposalEnded && inputData?.value != 0n && (
+                      <Button
+                        className="mb-2 !p-2 !px-3"
+                        btnStyle="outline"
+                        onClick={() => inputHandler(proposalData.id, 0n)}
+                        tooltip="Clear allocation"
+                      >
+                        &times;
+                      </Button>
+                    )}
                     {inputValue > 0 && (
-                      <>
-                        <div className="flex gap-10">
-                          <div className="flex flex-col items-center justify-center">
-                            <p className="subtitle2">
-                              <span className="text-2xl font-semibold text-primary-content">
-                                {poolWeightAllocatedInProposal}
-                              </span>
-                              /{memberPoolWeight}%{" "}
-                              <span className="text-neutral-soft-content text-sm">
-                                ({allocatedInProposal}% of your total support)
-                              </span>
-                            </p>
-                            {/* <p className="text-primary-content">Support</p> */}
+                      <div className="mb-2">
+                        <>
+                          <div className="flex gap-10">
+                            <div className="flex flex-col items-center justify-center">
+                              <p className="subtitle2">
+                                <span className="text-2xl font-semibold text-primary-content">
+                                  {poolWeightAllocatedInProposal}
+                                </span>
+                                /{memberPoolWeight}%{" "}
+                                <span className="text-neutral-soft-content text-sm">
+                                  ({inputValue}% of your voting weight)
+                                </span>
+                              </p>
+                              {/* <p className="text-primary-content">Support</p> */}
+                            </div>
                           </div>
-                        </div>
-                      </>
+                        </>
+                      </div>
                     )}
                   </div>
                 </div>
-              </div>
-            : <div className="w-full">
-                {currentConvictionPct != null &&
-                  thresholdPct != null &&
-                  totalSupportPct != null && (
-                    <div>
-                      <div className="flex items-end gap-1 mb-2">
-                        <div>
-                          <p className="text-sm">
-                            Total Support: <span>{totalSupportPct}%</span> of
-                            pool weight.
-                          </p>
+              : <div className="w-full">
+                  {currentConvictionPct != null &&
+                    thresholdPct != null &&
+                    totalSupportPct != null && (
+                      <div>
+                        <div className="flex items-end gap-1 mb-2">
+                          <div>
+                            <p className="text-sm">
+                              Total Support: <span>{totalSupportPct}%</span> of
+                              pool weight.
+                            </p>
+                          </div>
+                          <ProposalCountDown />
                         </div>
-                        <ProposalCountDown />
+                        <div className="h-3 flex items-center">
+                          <ConvictionBarChart
+                            compact
+                            currentConvictionPct={currentConvictionPct}
+                            thresholdPct={isSignalingType ? 0 : thresholdPct}
+                            proposalSupportPct={totalSupportPct}
+                            isSignalingType={isSignalingType}
+                            proposalNumber={proposalNumber}
+                            refreshConviction={triggerConvictionRefetch}
+                          />
+                        </div>
                       </div>
-                      <div className="h-3">
-                        <ConvictionBarChart
-                          compact
-                          currentConvictionPct={currentConvictionPct}
-                          thresholdPct={isSignalingType ? 0 : thresholdPct}
-                          proposalSupportPct={totalSupportPct}
-                          isSignalingType={isSignalingType}
-                          proposalNumber={proposalNumber}
-                        />
-                      </div>
-                    </div>
-                  )}
-              </div>
-            }
+                    )}
+                </div>
+              }
+            </div>
           </div>
-        </div>
+        )}
       </div>
-      {!isAllocationView && stakedFilter && stakedFilter?.value > 0 && (
-        <p className="flex items-baseline text-xs">
-          Your support: {poolWeightAllocatedInProposal}%
-        </p>
-      )}
+      {isPoolEnabled &&
+        !isAllocationView &&
+        stakedFilter &&
+        stakedFilter?.value > 0 && (
+          <p className="flex items-baseline text-xs mt-2">
+            Your support: {poolWeightAllocatedInProposal}%
+          </p>
+        )}
       {/* TODO: fetch every member stake */}
       {/* {!isAllocationView && <p className="text-sm mt-1">3 Supporters</p>} */}
     </>

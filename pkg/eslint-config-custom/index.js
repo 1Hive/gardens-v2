@@ -2,13 +2,10 @@
  * @type {import('eslint').Linter.Config}
  */
 module.exports = {
-  extends: ["next/core-web-vitals", "turbo", "prettier"],
+  extends: ["prettier"],
   ignorePatterns: ["node_modules", "dist"],
-  // parserOptions: {
-  //   babelOptions: {
-  //     presets: [require.resolve("next/babel")],
-  //   },
-  // },
+  parser: "@typescript-eslint/parser",
+  plugins: ["@typescript-eslint"],
   rules: {
     "@typescript-eslint/no-deprecated": "off",
   },

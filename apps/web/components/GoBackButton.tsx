@@ -11,9 +11,11 @@ export const GoBackButton = () => {
   const onBackClicked = () => {
     const pathSegments = path.split("/");
     pathSegments.pop();
-    // :empty:/:gardens:/:chaindId:/
-    if (pathSegments.length === 3) {
-      pathSegments.pop();
+
+    if (pathSegments.length === 4) {
+      // case => :empty:/:gardens:/:chaindId:/:communityId:/
+      // remove the last two segments
+      pathSegments.splice(-2);
     }
     const newPath = pathSegments.join("/");
     router.push(newPath);

@@ -1,44 +1,161 @@
-"use client";
-
 import React, { useEffect, useState } from "react";
+import { ChevronUpIcon } from "@heroicons/react/24/outline";
+import { motion, AnimatePresence } from "motion/react";
 import { useAccount } from "wagmi";
 import {
   CVStrategy,
   Maybe,
   MemberCommunity,
   RegistryCommunity,
+  TokenGarden,
 } from "#/subgraph/.graphclient";
-import { CommunityCard } from "./CommunityCard";
+import { CommunityCard, CommunityCardSkeleton } from "./CommunityCard";
+import { CommunityFilters } from "./CommunityFilters";
 
 export type LightCommunity = Pick<RegistryCommunity, "id" | "communityName"> & {
+  garden: Pick<TokenGarden, "address" | "chainId" | "symbol" | "name">;
+  strategies?: Maybe<
+    Array<
+      Pick<
+        CVStrategy,
+        "id" | "totalEffectiveActivePoints" | "poolId" | "poolAmount"
+      >
+    >
+  >;
   members?: Maybe<Array<Pick<MemberCommunity, "id" | "memberAddress">>>;
-  strategies?: Maybe<Array<Pick<CVStrategy, "id">>>;
 };
 
-export function Communities({
-  communities,
-}: {
+interface CommunitySectionProps {
+  title: string;
   communities: LightCommunity[];
-}) {
-  const { address } = useAccount();
-  const [otherCommunities, setOtherCommunities] =
-    useState<LightCommunity[]>(communities);
-  const [userCommunities, setUserCommunities] = useState<LightCommunity[]>([]);
+  defaultExpanded?: boolean;
+  skeletonLoading?: boolean;
+  isFetching?: boolean;
+}
+
+interface CommunitiesProps {
+  communities: LightCommunity[];
+  header?: React.ReactNode;
+  isFetching: boolean;
+}
+
+const CommunitySection: React.FC<CommunitySectionProps> = ({
+  title,
+  communities,
+  defaultExpanded = true,
+  skeletonLoading = false,
+  isFetching,
+}) => {
+  const [isExpanded, setIsExpanded] = useState<boolean>(defaultExpanded);
+
+  const { isConnected } = useAccount();
 
   useEffect(() => {
+    if (!isConnected) {
+      setIsExpanded(true);
+    }
+  }, [communities]);
+
+  if (!skeletonLoading && communities.length === 0) return null;
+
+  return (
+    <div>
+      {isConnected && !isFetching && (
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="flex items-center text-secondary-content gap-1"
+            aria-label={isExpanded ? "Collapse" : "Expand"}
+          >
+            <h4 className="text-secondary-content">{title}</h4>
+            <motion.div
+              animate={{ rotate: isExpanded ? 0 : 180 }}
+              transition={{ duration: 0.3 }}
+            >
+              <ChevronUpIcon className="w-5 h-5" strokeWidth={3} />
+            </motion.div>
+          </button>
+        </div>
+      )}
+
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
+            className="overflow-hidden mt-4"
+          >
+            <div className="flex flex-row flex-wrap gap-10">
+              {isFetching ?
+                Array(9)
+                  .fill(0)
+                  .map((_, i) => (
+                    // eslint-disable-next-line react/no-array-index-key
+                    <CommunityCardSkeleton key={`CommunityCardSkeleton-${i}`} />
+                  ))
+              : communities.map(({ id, ...communityProps }) => (
+                  <CommunityCard key={id} id={id} {...communityProps} />
+                ))
+              }
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+export const Communities: React.FC<CommunitiesProps> = ({
+  communities,
+  isFetching,
+}) => {
+  const { address } = useAccount();
+  const [otherCommunities, setOtherCommunities] = useState<LightCommunity[]>(
+    [],
+  );
+  const [userCommunities, setUserCommunities] = useState<LightCommunity[]>([]);
+  const [nameFilter, setNameFilter] = useState<string>("");
+  const [tokenFilter, setTokenFilter] = useState<string>("");
+  const [chainIdFilter, setchainIdFilter] = useState<string>("");
+
+  // Get unique token symbols and networks
+  const availableTokens = Array.from(
+    new Set(communities.map((c) => c.garden.symbol)),
+  ).sort();
+
+  useEffect(() => {
+    // Filter communities based on search criteria
+    const filterCommunities = (
+      communityList: LightCommunity[],
+    ): LightCommunity[] => {
+      return communityList.filter((community) => {
+        const nameMatch =
+          community.communityName
+            ?.toLowerCase()
+            .includes(nameFilter.toLowerCase()) ?? true;
+        const tokenMatch =
+          !tokenFilter || community.garden.symbol === tokenFilter;
+        const networkMatch =
+          !chainIdFilter ||
+          community.garden.chainId.toString() === chainIdFilter;
+        return nameMatch && tokenMatch && networkMatch;
+      });
+    };
+
     // Sort communities by length of members in descending order
     const sortedCommunities = [...communities].sort((a, b) => {
       if (a?.members && b?.members) {
         return b.members.length - a.members.length;
-      } else {
-        return 0;
       }
+      return 0;
     });
 
     const auxOtherCommunities: LightCommunity[] = [];
     const auxUserCommunities: LightCommunity[] = [];
 
-    for (let community of sortedCommunities) {
+    for (const community of sortedCommunities) {
       if (memberInCommunity(community)) {
         auxUserCommunities.push(community);
       } else {
@@ -46,63 +163,51 @@ export function Communities({
       }
     }
 
-    setUserCommunities(auxUserCommunities);
-    setOtherCommunities(auxOtherCommunities);
-  }, [address, communities]);
+    setUserCommunities(filterCommunities(auxUserCommunities));
+    setOtherCommunities(filterCommunities(auxOtherCommunities));
+  }, [address, communities, nameFilter, tokenFilter, chainIdFilter]);
 
-  function memberInCommunity(community: LightCommunity) {
+  const memberInCommunity = (community: LightCommunity): boolean => {
     if (!community?.members) {
       return false;
     }
-    for (let member of community?.members ?? []) {
-      if (member?.memberAddress?.toLowerCase() === address?.toLowerCase()) {
-        return true;
-      }
-    }
-    return false;
-  }
+    return community.members.some(
+      (member) =>
+        member?.memberAddress?.toLowerCase() === address?.toLowerCase(),
+    );
+  };
 
   return (
-    <section className="section-layout flex flex-col gap-10">
-      <header>
-        <h2>Communities</h2>
-      </header>
+    <section className="section-layout flex flex-col gap-2">
+      <CommunityFilters
+        nameFilter={nameFilter}
+        setNameFilter={setNameFilter}
+        tokenFilter={tokenFilter}
+        setTokenFilter={setTokenFilter}
+        chainIdFilter={chainIdFilter}
+        setchainIdFilter={setchainIdFilter}
+        availableTokens={availableTokens}
+      />
+
       {userCommunities.length > 0 && (
-        <div>
-          <h4 className="mb-4 text-secondary-content">My communities</h4>
-          <div className=" flex flex-row flex-wrap gap-10">
-            {userCommunities.map(
-              ({ communityName, id, members, strategies }) => (
-                <CommunityCard
-                  key={id}
-                  name={communityName ?? ""}
-                  membersCount={members?.length ?? 0}
-                  poolsCount={strategies?.length ?? 0}
-                  id={id}
-                />
-              ),
-            )}
-          </div>
-        </div>
+        <>
+          <CommunitySection
+            title="My communities"
+            communities={userCommunities}
+            defaultExpanded={true}
+            isFetching={isFetching}
+          />
+          <div className="divider h-1 border-b border-border-neutral mx-2" />
+        </>
       )}
-      {otherCommunities.length > 0 && (
-        <div>
-          <h4 className="mb-4 text-secondary-content">Join a new community</h4>
-          <div className=" flex flex-row flex-wrap gap-10">
-            {otherCommunities.map(
-              ({ communityName, id, members, strategies }) => (
-                <CommunityCard
-                  key={id}
-                  name={communityName ?? ""}
-                  membersCount={members?.length ?? 0}
-                  poolsCount={strategies?.length ?? 0}
-                  id={id}
-                />
-              ),
-            )}
-          </div>
-        </div>
-      )}
+
+      <CommunitySection
+        title="Join a new community"
+        communities={otherCommunities}
+        defaultExpanded={true}
+        isFetching={isFetching}
+        skeletonLoading={true}
+      />
     </section>
   );
-}
+};

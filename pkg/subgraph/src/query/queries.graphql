@@ -9,7 +9,7 @@ query getFactories {
       covenantIpfsHash
       registerToken
       alloAddress
-      members {
+      members(first: 1000) {
         memberAddress
       }
       strategies {
@@ -46,11 +46,25 @@ query getTokenGardens {
       strategies {
         id
       }
-      members {
+      members(first: 1000) {
         id
         memberAddress
       }
     }
+  }
+}
+
+query getMembersStrategy($strategyId: String!) {
+  memberStrategies(first: 1000, where: { strategy: $strategyId }) {
+    activatedPoints
+    member {
+      memberCommunity {
+        memberAddress
+        isRegistered
+      }
+    }
+    totalStakedPoints
+    id
   }
 }
 
@@ -142,6 +156,19 @@ query getPoolCreationData($communityAddr: ID!, $tokenAddr: ID!) {
   }
 }
 
+query getProposalSupporters($proposalId: String!) {
+  members(first: 1000) {
+    id
+    stakes(where: { proposal: $proposalId }) {
+      amount
+      proposal {
+        proposalNumber
+        id
+      }
+    }
+  }
+}
+
 query getGardenCommunities($chainId: BigInt!, $tokenGarden: ID!) {
   registryCommunities(
     where: { chainId: $chainId, garden_: { id: $tokenGarden } }
@@ -159,7 +186,7 @@ query getGardenCommunities($chainId: BigInt!, $tokenGarden: ID!) {
     registerToken
     registerStakeAmount
     alloAddress
-    members(where: { stakedTokens_gt: "0" }) {
+    members(first: 1000, where: { stakedTokens_gt: "0" }) {
       id
       memberAddress
     }
@@ -172,12 +199,44 @@ query getGardenCommunities($chainId: BigInt!, $tokenGarden: ID!) {
   }
 }
 
-query getCommunity($communityAddr: ID!, $tokenAddr: ID!) {
+query getCommunities {
+  registryCommunities(where: { isValid: true }) {
+    id
+    communityName
+    garden {
+      address
+      chainId
+      symbol
+      name
+    }
+    strategies(where: { isEnabled: true }) {
+      id
+      totalEffectiveActivePoints
+      poolId
+      poolAmount
+    }
+    members(first: 1000, where: { stakedTokens_gt: "0" }) {
+      id
+      memberAddress
+    }
+  }
+}
+
+query getCommunity(
+  $communityAddr: ID!
+  $tokenAddr: ID!
+  $showArchived: Boolean
+) {
   registryCommunity(id: $communityAddr) {
     communityName
     id
-    members(where: { stakedTokens_gt: "0" }) {
-      id
+    members(
+      first: 1000
+      where: { stakedTokens_gt: "0" }
+      orderBy: stakedTokens
+      orderDirection: desc
+    ) {
+      memberAddress
       stakedTokens
     }
     strategies(orderBy: poolId, orderDirection: desc) {
@@ -185,10 +244,13 @@ query getCommunity($communityAddr: ID!, $tokenAddr: ID!) {
       proposals {
         id
       }
+      archived
       isEnabled
       poolAmount
       poolId
+      token
       metadata
+      archived
       config {
         proposalType
         pointSystem
@@ -202,6 +264,7 @@ query getCommunity($communityAddr: ID!, $tokenAddr: ID!) {
     protocolFee
     registerStakeAmount
     registerToken
+    councilSafe
   }
   tokenGarden(id: $tokenAddr) {
     symbol
@@ -213,6 +276,13 @@ query getCommunity($communityAddr: ID!, $tokenAddr: ID!) {
 query getCommunityCreationData {
   registryFactories {
     id
+  }
+}
+
+query getRegistryFactoryData {
+  registryFactories {
+    id
+    chainId
   }
 }
 
@@ -239,6 +309,8 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
     poolId
     totalEffectiveActivePoints
     isEnabled
+    maxCVSupply
+    archived
     sybilScorer {
       id
     }
@@ -305,7 +377,7 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
   }
 }
 
-query getProposalData($garden: ID!, $proposalId: ID!) {
+query getProposalData($garden: ID!, $proposalId: ID!, $communityId: ID!) {
   allos {
     id
     chainId
@@ -315,6 +387,9 @@ query getProposalData($garden: ID!, $proposalId: ID!) {
     name
     symbol
     decimals
+  }
+  registryCommunity(id: $communityId) {
+    councilSafe
   }
   cvproposal(id: $proposalId) {
     id
@@ -342,6 +417,7 @@ query getProposalData($garden: ID!, $proposalId: ID!) {
       maxCVSupply
       totalEffectiveActivePoints
       poolId
+      isEnabled
       config {
         proposalType
         pointSystem
@@ -374,6 +450,7 @@ query getStrategyByPool($poolId: BigInt!) {
     poolId
     totalEffectiveActivePoints
     isEnabled
+    archived
     config {
       id
       proposalType

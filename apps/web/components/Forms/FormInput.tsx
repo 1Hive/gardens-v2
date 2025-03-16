@@ -53,6 +53,8 @@ export function FormInput({
   const registered = register?.(registerKey, {
     required,
     disabled,
+    onChange: onChange ?? registerOptions?.onChange,
+    value: value ?? registerOptions?.value,
     ...registerOptions,
   });
 
@@ -60,7 +62,7 @@ export function FormInput({
     "!border-gray-300 focus:border-gray-300 focus:outline-gray-300 cursor-not-allowed bg-transparent";
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col w-full">
       {label && (
         <label htmlFor={registerKey} className="label cursor-pointer w-fit">
           {tooltip ?
@@ -92,7 +94,6 @@ export function FormInput({
             step={step}
             disabled={disabled || readOnly}
             readOnly={readOnly || disabled}
-            // value={value}
             onChange={onChange}
             {...otherProps}
           />
@@ -115,7 +116,9 @@ export function FormInput({
         : <div data-color-mode="light">
             <MarkdownEditor
               {...registered}
-              className="textarea textarea-info p-0 ![--color-canvas-subtle:white] ![--color-neutral-muted:#cceeff44]"
+              className={`textarea p-0 ![--color-canvas-subtle:white] ![--color-neutral-muted:#cceeff44] rounded-2xl ${
+                errors[registerKey] ? "textarea-error" : "textarea-info"
+              }`}
               id={registerKey}
               style={{
                 resize: "vertical",
@@ -138,7 +141,9 @@ export function FormInput({
           </div>
         }
         {suffix && (
-          <span className="absolute right-4 top-4 text-black">{suffix}</span>
+          <span className="absolute right-[10px] top-1/2 -translate-y-1/2 text-black">
+            {suffix}
+          </span>
         )}
       </div>
       {errors && (

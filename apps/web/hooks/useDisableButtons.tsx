@@ -16,6 +16,7 @@ export interface DisableButtonsHookProps {
   tooltipMessage: string | undefined;
   isConnected: boolean;
   missmatchUrl: boolean;
+  isButtonDisabled: boolean;
 }
 
 export function useDisableButtons(
@@ -46,5 +47,6 @@ export function useDisableButtons(
     tooltipMessage,
     isConnected,
     missmatchUrl: missmatchUrlAndWalletChain,
+    isButtonDisabled: !!tooltipMessage,
   };
 }

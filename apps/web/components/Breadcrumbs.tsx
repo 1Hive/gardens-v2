@@ -10,13 +10,10 @@ import { usePathname } from "next/navigation";
 import { Button } from "./Button";
 import { getTitlesFromUrlSegments } from "@/services/getTitlesFromUrlSegments";
 import { truncateString } from "@/utils/text";
-
 interface Breadcrumb {
   href: string;
   label: string;
 }
-
-
 
 export function Breadcrumbs() {
   const path = usePathname();
@@ -38,7 +35,7 @@ export function Breadcrumbs() {
 
     return segments
       .map((segment, index) => {
-        if (index < 2) {
+        if (index < 3) {
           return undefined;
         }
 

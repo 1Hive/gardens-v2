@@ -54,10 +54,17 @@ contract CVStrategyHelpers is Native, Accounts {
         uint256 sybilScorerThreshold
     ) public pure returns (CVStrategyInitializeParamsV0_1 memory params) {
         // IAllo allo = IAllo(ALLO_PROXY_ADDRESS);
-        params.cvParams.decay = _etherToFloat(0.9999799 ether); // alpha = decay
-        params.cvParams.maxRatio = _etherToFloat(0.2 ether); // beta = maxRatio
-        params.cvParams.weight = _etherToFloat(0.001 ether); // RHO = p  = weight
-        params.cvParams.minThresholdPoints = 0.2 ether; // 20%
+        // params.cvParams.decay = _etherToFloat(0.9999799 ether); // alpha = decay
+        params.cvParams.decay = 9940581; // alpha = decay
+        params.cvParams.maxRatio = 3656188; // beta = maxRatio
+        // params.cvParams.weight = _etherToFloat(0.001 ether); // RHO = p  = weight
+        params.cvParams.weight = 133677; // RHO = p  = weight
+        // params.cvParams.minThresholdPoints = 0.2 ether; // 20%
+        // cv.setDecay(); // alpha = decay
+        // cv.setMaxRatio(); // beta = maxRatio
+        // cv.setWeight(); // RHO = p  = weight
+
+        params.cvParams.minThresholdPoints = 0;
         params.registryCommunity = registryCommunity;
         params.proposalType = proposalType;
         params.pointSystem = pointSystem;
@@ -87,8 +94,9 @@ contract CVStrategyHelpers is Native, Accounts {
         ArbitrableConfig memory arbitrableConfig
     ) public returns (uint256 poolId) {
         // IAllo allo = IAllo(ALLO_PROXY_ADDRESS);
-        CVStrategyInitializeParamsV0_1 memory params =
-        getParams(registryCommunity, proposalType, pointSystem, pointConfig, arbitrableConfig, new address[](1), address(0), 0);
+        CVStrategyInitializeParamsV0_1 memory params = getParams(
+            registryCommunity, proposalType, pointSystem, pointConfig, arbitrableConfig, new address[](1), address(0), 0
+        );
 
         address[] memory _pool_managers = new address[](2);
         _pool_managers[0] = address(this);

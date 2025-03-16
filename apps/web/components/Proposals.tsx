@@ -7,6 +7,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { FetchTokenResult } from "@wagmi/core";
 import Link from "next/link";
+import { Id, toast } from "react-toastify";
 import { parseAbiParameters, encodeAbiParameters } from "viem";
 import { Address, useAccount, useContractRead } from "wagmi";
 import {
@@ -18,6 +19,8 @@ import {
   isMemberQuery,
   CVStrategy,
   RegistryCommunity,
+  getMembersStrategyQuery,
+  getMembersStrategyDocument,
 } from "#/subgraph/.graphclient";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { PoolGovernanceProps } from "./PoolGovernance";
@@ -30,6 +33,8 @@ import {
   PoolGovernance,
   ProposalCard,
 } from "@/components";
+import { QUERY_PARAMS } from "@/constants/query-params";
+import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import { SubscriptionId, usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import useCheckAllowList from "@/hooks/useCheckAllowList";
@@ -38,15 +43,26 @@ import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { alloABI, registryCommunityABI } from "@/src/generated";
 import { ProposalStatus } from "@/types";
-import { abiWithErrors } from "@/utils/abi";
 import { useErrorDetails } from "@/utils/getErrorName";
-import { calculatePercentage } from "@/utils/numbers";
+import { bigIntMin, calculatePercentageBigInt } from "@/utils/numbers";
 
 // Types
 export type ProposalInputItem = {
   proposalId: string;
   proposalNumber: number;
-  value: number;
+  value: bigint;
+};
+
+export type MemberStrategyData = {
+  activatedPoints: string;
+  id: string;
+  member?: {
+    memberCommunity?: {
+      isRegistered: boolean;
+      memberAddress: string;
+    };
+  };
+  totalStakedPoints: string;
 };
 
 // export type Strategy = getStrategyByPoolQuery["cvstrategies"][number];
@@ -61,7 +77,7 @@ export type ProposalTypeVoter = CVProposal & {
 type Stats = {
   id: number;
   name: string;
-  stat: number | string;
+  stat: number | undefined;
   className: string;
   info: string;
 };
@@ -69,7 +85,7 @@ type Stats = {
 interface ProposalsProps {
   strategy: Pick<
     CVStrategy,
-    "id" | "poolId" | "totalEffectiveActivePoints" | "sybilScorer"
+    "id" | "poolId" | "totalEffectiveActivePoints" | "sybilScorer" | "isEnabled"
   > & {
     registryCommunity: Pick<RegistryCommunity, "id"> & {
       garden: Pick<RegistryCommunity["garden"], "decimals">;
@@ -96,11 +112,10 @@ export function Proposals({
 }: ProposalsProps) {
   // State
   const [allocationView, setAllocationView] = useState(false);
-  const [inputAllocatedTokens, setInputAllocatedTokens] = useState<number>(0);
+  const [inputAllocatedTokens, setInputAllocatedTokens] = useState<bigint>(0n);
   const [inputs, setInputs] = useState<{ [key: string]: ProposalInputItem }>(
     {},
   );
-  const [memberActivatedPoints, setMemberActivatedPoints] = useState<number>(0);
   const [stakedFilters, setStakedFilters] = useState<{
     [key: string]: ProposalInputItem;
   }>({});
@@ -114,6 +129,7 @@ export function Proposals({
   const { subscribe, unsubscribe, connected } = usePubSubContext();
 
   const tokenDecimals = strategy.registryCommunity.garden.decimals;
+  const searchParams = useCollectQueryParams();
 
   // Queries
   const { data: memberData, error } = useSubgraphQuery<isMemberQuery>({
@@ -127,7 +143,6 @@ export function Proposals({
         topic: "member",
         id: wallet,
         containerId: strategy.poolId,
-        type: ["add", "delete"],
       },
       {
         topic: "proposal",
@@ -154,6 +169,27 @@ export function Proposals({
       ],
       enabled: !!wallet,
     },
+  );
+
+  const { data: membersStrategyData } =
+    useSubgraphQuery<getMembersStrategyQuery>({
+      query: getMembersStrategyDocument,
+      variables: {
+        strategyId: `${strategy.id.toLowerCase()}`,
+      },
+      changeScope: [
+        {
+          topic: "proposal",
+          containerId: strategy.poolId,
+          type: "update",
+        },
+        { topic: "member", id: wallet, containerId: strategy.poolId },
+      ],
+      enabled: !!wallet,
+    });
+
+  const memberActivatedPoints: bigint = BigInt(
+    memberStrategyData?.memberStrategy?.activatedPoints ?? 0,
   );
 
   // Contract reads
@@ -190,7 +226,10 @@ export function Proposals({
   const isMemberCommunity =
     !!memberData?.member?.memberCommunity?.[0]?.isRegistered;
   const memberActivatedStrategy =
-    Number(memberStrategyData?.memberStrategy?.activatedPoints) > 0;
+    memberStrategyData?.memberStrategy?.activatedPoints > 0n;
+  const memberTokensInCommunity = BigInt(
+    memberData?.member?.memberCommunity?.[0]?.stakedTokens ?? 0,
+  );
 
   const proposals = strategy.proposals;
 
@@ -203,14 +242,16 @@ export function Proposals({
 
   useEffect(() => {
     const stakesFiltered =
-      memberData?.member?.stakes?.filter(
-        (stake) =>
-          stake.proposal.strategy.id.toLowerCase() ===
-          strategy.id.toLowerCase(),
-      ) ?? [];
+      memberData?.member?.stakes
+        ?.filter(
+          (stake) =>
+            stake.proposal.strategy.id.toLowerCase() ===
+            strategy.id.toLowerCase(),
+        )
+        .map((x) => ({ ...x, amount: BigInt(x.amount) })) ?? [];
 
     const totalStaked = stakesFiltered.reduce(
-      (acc, curr) => acc + BigInt(curr.amount),
+      (acc, curr) => acc + curr.amount,
       0n,
     );
 
@@ -218,26 +259,47 @@ export function Proposals({
     stakesFiltered.forEach((item) => {
       memberStakes[item.proposal.id] = {
         proposalId: item.proposal.id,
-        value: Number(item.amount),
+        value: item.amount,
         proposalNumber: item.proposal.proposalNumber,
       };
     });
 
-    setInputAllocatedTokens(Number(totalStaked));
+    setInputAllocatedTokens(totalStaked);
     setStakedFilters(memberStakes);
   }, [memberData?.member?.stakes, strategy.id]);
-
-  useEffect(() => {
-    setMemberActivatedPoints(
-      Number(memberData?.member?.memberCommunity?.[0]?.stakedTokens ?? 0n),
-    );
-  }, [memberData?.member?.memberCommunity?.[0]?.stakedTokens]);
 
   useEffect(() => {
     if (memberActivatedStrategy === false) {
       setAllocationView(false);
     }
   }, [memberActivatedStrategy]);
+
+  const disableManageSupportBtnCondition: ConditionObject[] = [
+    {
+      condition: !memberActivatedStrategy,
+      message: "You need to activate your governance first",
+    },
+    {
+      condition: !isAllowed,
+      message: "Address not in allowlist",
+    },
+  ];
+
+  const disableManSupportButton = disableManageSupportBtnCondition.some(
+    (cond) => cond.condition,
+  );
+  const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons(
+    disableManageSupportBtnCondition,
+  );
+  useEffect(() => {
+    if (
+      searchParams[QUERY_PARAMS.poolPage.allocationView] === "true" &&
+      !disableManSupportButton &&
+      isConnected
+    ) {
+      setAllocationView(true);
+    }
+  }, [disableManSupportButton, isConnected, searchParams]);
 
   useEffect(() => {
     if (!proposals) return;
@@ -246,7 +308,7 @@ export function Proposals({
     proposals.forEach(({ id, proposalNumber }) => {
       newInputs[id] = {
         proposalId: id,
-        value: stakedFilters[id]?.value ?? 0,
+        value: stakedFilters[id]?.value ?? 0n,
         proposalNumber,
       };
     });
@@ -257,12 +319,12 @@ export function Proposals({
     inputData: { [key: string]: ProposalInputItem },
     currentData: { [key: string]: ProposalInputItem },
   ) => {
+    // log maximum stakable tokens
     return Object.values(inputData).reduce<
       { proposalId: bigint; deltaSupport: bigint }[]
     >((acc, input) => {
       const current = currentData[input.proposalId];
-      const diff =
-        BigInt(Math.floor(input.value)) - BigInt(current?.value ?? 0);
+      const diff = BigInt(input.value) - BigInt(current?.value ?? 0);
       if (diff !== 0n) {
         acc.push({
           proposalId: BigInt(input.proposalNumber),
@@ -276,7 +338,7 @@ export function Proposals({
   const calculateTotalTokens = (exceptProposalId?: string) => {
     if (!inputs) {
       console.error("Inputs not yet computed");
-      return 0;
+      return 0n;
     }
     return Object.values(inputs).reduce((acc, curr) => {
       if (
@@ -285,21 +347,24 @@ export function Proposals({
       ) {
         return acc;
       } else {
-        return acc + Number(curr.value);
+        return acc + curr.value;
       }
-    }, 0);
+    }, 0n);
   };
 
-  const inputHandler = (proposalId: string, value: number) => {
+  const inputHandler = (proposalId: string, value: bigint) => {
     const currentPoints = calculateTotalTokens(proposalId);
+
     const maxAllowableValue = memberActivatedPoints - currentPoints;
-    value = Math.min(value, maxAllowableValue);
+    const minValue = (value = bigIntMin(value, maxAllowableValue));
 
     const input = inputs[proposalId];
-    input.value = value;
+    input.value = minValue;
     setInputs((prev) => ({ ...prev, [proposalId]: input }));
-    setInputAllocatedTokens(currentPoints + value);
+    setInputAllocatedTokens(currentPoints + minValue);
   };
+
+  const toastId = useRef<Id | null>(null);
 
   // Contract interaction
   const {
@@ -308,7 +373,7 @@ export function Proposals({
     status: allocateStatus,
   } = useContractWriteWithConfirmations({
     address: alloInfo.id as Address,
-    abi: abiWithErrors(alloABI),
+    abi: alloABI,
     functionName: "allocate",
     contractName: "Allo",
     fallbackErrorMessage: "Error allocating points, please report a bug.",
@@ -322,6 +387,10 @@ export function Proposals({
         containerId: strategy.poolId,
         function: "allocate",
       });
+      if (toastId.current) {
+        toast.dismiss(toastId.current);
+        toastId.current = null;
+      }
     },
   });
 
@@ -330,11 +399,11 @@ export function Proposals({
       console.error("Inputs not yet computed");
       return;
     }
+
     const proposalsDifferencesArr = getProposalsInputsDifferences(
       inputs,
       stakedFilters,
     );
-
     const abiTypes = parseAbiParameters(
       "(uint256 proposalId, int256 deltaSupport)[]",
     );
@@ -350,22 +419,29 @@ export function Proposals({
   useErrorDetails(errorAllocate, "errorAllocate");
 
   // Computed values
-  const memberSupportedProposalsPct = calculatePercentage(
+  const memberSupportedProposalsPct = calculatePercentageBigInt(
     inputAllocatedTokens,
     memberActivatedPoints,
   );
-  const memberPoolWeight = calculatePercentage(
-    Number(memberPower),
-    strategy.totalEffectiveActivePoints,
-  );
 
-  const calcPoolWeightUsed = (number: number) => {
-    if (memberPoolWeight == 0) return 0;
-    return ((number / 100) * memberPoolWeight).toFixed(2);
-  };
+  const memberPoolWeight =
+    memberPower != null && +strategy.totalEffectiveActivePoints > 0 ?
+      calculatePercentageBigInt(
+        memberPower,
+        BigInt(strategy.totalEffectiveActivePoints),
+      )
+    : undefined;
+
+  const calcPoolWeightUsed =
+    memberPoolWeight ?
+      (number: number) => {
+        if (memberPoolWeight == 0) return 0;
+        return ((number / 100) * memberPoolWeight).toFixed(2);
+      }
+    : undefined;
 
   const poolWeightClassName = `${
-    calcPoolWeightUsed(memberSupportedProposalsPct) === memberPoolWeight ?
+    calcPoolWeightUsed?.(memberSupportedProposalsPct) === memberPoolWeight ?
       "bg-secondary-soft text-secondary-content"
     : "bg-primary-soft text-primary-content"
   }`;
@@ -381,13 +457,6 @@ export function Proposals({
     {
       id: 2,
       name: "Voting weight used",
-      stat: calcPoolWeightUsed(memberSupportedProposalsPct),
-      className: poolWeightClassName,
-      info: "Indicates the portion of your pool weight currently allocated in proposals.",
-    },
-    {
-      id: 3,
-      name: "Total support",
       stat: memberSupportedProposalsPct,
       className: `${
         memberSupportedProposalsPct >= 100 ?
@@ -398,25 +467,6 @@ export function Proposals({
     },
   ];
 
-  const disableManageSupportBtnCondition: ConditionObject[] = [
-    {
-      condition: !memberActivatedStrategy,
-      message: "Must have points activated to support proposals",
-    },
-    {
-      condition: !isAllowed,
-      message: "Address not in allowlist",
-    },
-  ];
-
-  const disableManSupportButton = disableManageSupportBtnCondition.some(
-    (cond) => cond.condition,
-  );
-
-  const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons(
-    disableManageSupportBtnCondition,
-  );
-
   const endedProposals = proposals.filter(
     (x) =>
       ProposalStatus[x.proposalStatus] === "cancelled" ||
@@ -425,25 +475,32 @@ export function Proposals({
   );
 
   const isEndedProposalActiveAllocation = endedProposals.some(
-    (x) => stakedFilters[x.id] !== undefined,
+    (x) => stakedFilters[x.id]?.value,
   );
+
+  const membersStrategies = membersStrategyData?.memberStrategies;
+
   // Render
   return (
     <>
-      <PoolGovernance
-        memberPoolWeight={memberPoolWeight}
-        tokenDecimals={tokenDecimals}
-        strategy={strategy}
-        communityAddress={communityAddress}
-        memberTokensInCommunity={memberActivatedPoints}
-        isMemberCommunity={isMemberCommunity}
-        memberActivatedStrategy={memberActivatedStrategy}
-      />
-      <section className="section-layout flex flex-col gap-10">
+      {strategy.isEnabled && (
+        <PoolGovernance
+          memberPoolWeight={memberPoolWeight}
+          tokenDecimals={tokenDecimals}
+          strategy={strategy}
+          communityAddress={communityAddress}
+          memberTokensInCommunity={memberTokensInCommunity}
+          isMemberCommunity={isMemberCommunity}
+          memberActivatedStrategy={memberActivatedStrategy}
+          membersStrategyData={membersStrategies}
+        />
+      )}
+      <section className="section-layout flex flex-col gap-10 mt-10">
         <div>
           <header className="flex items-center justify-between gap-10 flex-wrap">
             <h2>Proposals</h2>
             {!!proposals &&
+              strategy.isEnabled &&
               (proposals.length === 0 ?
                 <h4 className="text-2xl">No submitted proposals to support</h4>
               : !allocationView && (
@@ -453,7 +510,12 @@ export function Proposals({
                         <AdjustmentsHorizontalIcon height={24} width={24} />
                       }
                       onClick={() => setAllocationView((prev) => !prev)}
-                      disabled={disableManSupportButton || !isAllowed}
+                      disabled={
+                        !isConnected ||
+                        missmatchUrl ||
+                        !memberActivatedStrategy ||
+                        !isAllowed
+                      }
                       tooltip={tooltipMessage}
                     >
                       Manage support
@@ -492,6 +554,7 @@ export function Proposals({
                       alloInfo={alloInfo}
                       inputHandler={inputHandler}
                       tokenData={strategy.registryCommunity.garden}
+                      isPoolEnabled={strategy.isEnabled}
                     />
                   </Fragment>
                 ))}
@@ -527,6 +590,7 @@ export function Proposals({
                           alloInfo={alloInfo}
                           inputHandler={inputHandler}
                           tokenData={strategy.registryCommunity.garden}
+                          isPoolEnabled={strategy.isEnabled}
                         />
                       </Fragment>
                     ))}
@@ -536,43 +600,43 @@ export function Proposals({
             </>
           : <LoadingSpinner />}
         </div>
-        {allocationView ?
-          <div className="flex justify-end gap-4">
-            <Button
-              btnStyle="outline"
-              color="danger"
-              onClick={() => setAllocationView((prev) => !prev)}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={submit}
-              isLoading={allocateStatus === "loading"}
-              disabled={
-                !inputs ||
-                !getProposalsInputsDifferences(inputs, stakedFilters).length
-              }
-              tooltip="Make changes in proposals support first"
-            >
-              Save changes
-            </Button>
-          </div>
-        : <div>
-            <div className="flex items-center justify-center gap-6">
-              <CheckPassport strategy={strategy}>
+        {strategy.isEnabled &&
+          (allocationView ?
+            <div className="flex justify-end gap-4">
+              <Button
+                btnStyle="outline"
+                color="danger"
+                onClick={() => setAllocationView((prev) => !prev)}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={submit}
+                isLoading={allocateStatus === "loading"}
+                disabled={
+                  !inputs ||
+                  !getProposalsInputsDifferences(inputs, stakedFilters).length
+                }
+                tooltip="Make changes in proposals support first"
+              >
+                Submit your support
+              </Button>
+            </div>
+          : <div>
+              <div className="flex items-center justify-center gap-6">
                 <Link href={createProposalUrl}>
                   <Button
                     icon={<PlusIcon height={24} width={24} />}
-                    disabled={!isConnected || missmatchUrl || !isAllowed}
-                    tooltip="Address not in allowlist"
+                    disabled={
+                      !isConnected || missmatchUrl || !isMemberCommunity
+                    }
+                    tooltip={tooltipMessage}
                   >
                     Create a proposal
                   </Button>
                 </Link>
-              </CheckPassport>
-            </div>
-          </div>
-        }
+              </div>
+            </div>)}
       </section>
     </>
   );
@@ -582,34 +646,28 @@ function UserAllocationStats({ stats }: { stats: Stats[] }) {
   return (
     <div className="mt-10">
       <h3>Support Overview</h3>
-      <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-5 grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-2">
         {stats.map((stat) => (
-          <div
-            key={`stat_${stat.id}`}
-            className="section-layout sm:px-6 sm:pt-6"
-          >
-            <div>
-              <div
-                className={`radial-progress absolute rounded-full border-4 border-neutral transition-all duration-300 ease-in-out ${stat.className}`}
-                style={{
-                  // @ts-ignore
-                  "--value": stat.stat,
-                  "--size": "4rem",
-                  "--thickness": "0.35rem",
-                }}
-                role="progressbar"
-              >
-                <span className="text-xs">{stat.stat} %</span>
-              </div>
-
-              <InfoWrapper tooltip={stat.info}>
-                <p className="ml-20">
-                  <TooltipIfOverflow>{stat.name}</TooltipIfOverflow>
-                </p>
-              </InfoWrapper>
+          <div key={`stat_${stat.id}`} className="section-layout flex gap-4">
+            <div
+              className={`radial-progress rounded-full border-4 border-neutral transition-all duration-300 ease-in-out ${stat.className}`}
+              style={{
+                // @ts-ignore
+                "--value": stat.stat,
+                "--size": "4.2rem",
+                "--thickness": "0.35rem",
+              }}
+              role="progressbar"
+            >
+              <span className="text-xs">{stat.stat} %</span>
             </div>
-            <div className="ml-20">
-              <p className="text-2xl font-semibold">{stat.stat} %</p>
+            <div className="flex flex-col items-start justify-center">
+              <InfoWrapper tooltip={stat.info}>
+                <h5>
+                  <TooltipIfOverflow>{stat.name}</TooltipIfOverflow>
+                </h5>
+              </InfoWrapper>
+              <p className="text-2xl font-semibold text-right">{stat.stat} %</p>
             </div>
           </div>
         ))}

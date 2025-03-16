@@ -18,7 +18,9 @@ let urqlRecord: Record<
 const isServer = typeof window === "undefined";
 
 //Subgraph URL
-const subgraphArbSepURL = process.env.NEXT_PUBLIC_SUBGRAPH_URL_ARB_SEP ?? "";
+const arbsepConfig = getConfigByChain(421614);
+const subgraphArbSepURL =
+  arbsepConfig?.publishedSubgraphUrl ?? arbsepConfig?.subgraphUrl;
 
 /**
  * Function to initialize urql client. can be used both on client and server
@@ -38,7 +40,7 @@ export function initUrqlClient(
     //fill the client with initial state from the server.
     const ssr = ssrExchange({ initialState, isClient: !isServer });
     const urqlClient = createClient({
-      url: subgraphArbSepURL,
+      url: subgraphArbSepURL!,
       exchanges: [
         // cacheExchange,
         // authExchange(async (util) => {
@@ -106,7 +108,10 @@ export async function queryByChain<
     throw new Error("Chain not supported");
   }
   return urqlClient.query<Data>(query, variables, {
-    url: config.subgraphUrl,
+    url:
+      process.env.NEXT_PUBLIC_SKIP_PUBLISHED ?
+        config.subgraphUrl
+      : config.publishedSubgraphUrl ?? config.subgraphUrl,
     ...context,
   });
 }

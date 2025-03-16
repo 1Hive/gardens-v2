@@ -7,10 +7,9 @@ import {
 } from "@urql/next";
 import { debounce, isEqual } from "lodash-es";
 import { toast } from "react-toastify";
-import { localhost } from "viem/chains";
 import { useIsMounted } from "./useIsMounted";
 import { HTTP_CODES } from "@/app/api/utils";
-import { chains, getConfigByChain } from "@/configs/chains";
+import { chainConfigMap, getConfigByChain } from "@/configs/chains";
 import { isProd } from "@/configs/isProd";
 import {
   ChangeEventScope,
@@ -32,13 +31,13 @@ try {
   // ignore when not browser side
 }
 
-const allChains: ChainId[] = Object.values(chains)
+export const allChains: ChainId[] = Object.entries(chainConfigMap)
   .filter(
-    (x) =>
+    ([_, chainConfig]) =>
       isQueryAllChains ||
-      (isProd ? !x.testnet : !!x.testnet || x.id === localhost.id),
+      (isProd ? !chainConfig.isTestnet : !!chainConfig.isTestnet),
   )
-  .map((x) => x.id);
+  .map(([chainId]) => Number(chainId));
 
 const pendingRefreshToastId = "pending-refresh";
 
@@ -105,11 +104,11 @@ export function useSubgraphQueryMultiChain<
       const chainSubgraphs = (chainsOverride ?? chainIds ?? allChains).map(
         (chain) => ({
           chainId: +chain,
-          url: getConfigByChain(chain)?.subgraphUrl,
+          chainConfig: getConfigByChain(chain),
         }),
       );
       await Promise.all(
-        chainSubgraphs.map(async ({ chainId, url }, i) => {
+        chainSubgraphs.map(async ({ chainId, chainConfig }, i) => {
           const fetchSubgraphChain = async (retryCount?: number) => {
             if (!retryCount && retryOnNoChange) {
               retryCount = 0;
@@ -124,19 +123,35 @@ export function useSubgraphQueryMultiChain<
               });
             }
             try {
-              const fetchQuery = async () => {
+              const fetchQuery = async (skipPublished: boolean) => {
                 const { urqlClient } = initUrqlClient({
                   chainId: (chainsOverride ?? allChains)[i],
                 });
                 return urqlClient.query<Data>(query, variables, {
                   ...queryContext,
-                  url,
+                  url:
+                    skipPublished || !chainConfig?.publishedSubgraphUrl ?
+                      chainConfig?.subgraphUrl
+                    : chainConfig?.publishedSubgraphUrl,
                   chainId,
                   requestPolicy: "network-only",
                 } as OperationContext & { _instance: any });
               };
 
-              const res = await fetchQuery();
+              let res;
+              try {
+                const shouldSkipPublished =
+                  (localStorage.getItem("skipPublished") === "true" ||
+                    process.env.NEXT_PUBLIC_SKIP_PUBLISHED === "true") &&
+                  localStorage.getItem("skipPublished") !== "false";
+                res = await fetchQuery(shouldSkipPublished);
+              } catch (err1) {
+                console.error(
+                  "⚡ Error fetching through published subgraph, retrying with hosted:",
+                  err1,
+                );
+                res = await fetchQuery(true);
+              }
 
               if (res.error) {
                 errorsMap.current.set(chainId, res.error);
@@ -159,7 +174,6 @@ export function useSubgraphQueryMultiChain<
                     );
                   }
                   responseMap.current.set(chainId, res.data!);
-                  setFetching(false);
                   fetchingRef.current = false;
                   try {
                     toast.dismiss(pendingRefreshToastId);
@@ -183,7 +197,6 @@ export function useSubgraphQueryMultiChain<
           await fetchSubgraphChain(retryOnNoChange ? 0 : undefined);
         }),
       );
-
       // Make sure unique values are returned
       const result = Array.from(new Set(responseMap.current.values()));
       setResponse(modifier ? modifier(result) : result);
@@ -192,7 +205,6 @@ export function useSubgraphQueryMultiChain<
     },
     HTTP_CODES.SUCCESS,
   );
-
   return {
     data: response,
     errors: errorsMap.current,

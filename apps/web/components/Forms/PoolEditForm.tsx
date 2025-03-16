@@ -1,7 +1,11 @@
 import React, { ReactNode, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Address, formatUnits, parseUnits } from "viem";
-import { CVStrategy, TokenGarden } from "#/subgraph/.graphclient";
+import { Address, formatUnits, parseUnits, zeroAddress } from "viem";
+import {
+  CVStrategy,
+  RegistryCommunity,
+  TokenGarden,
+} from "#/subgraph/.graphclient";
 import { AllowListInput } from "./AllowListInput";
 import { FormAddressInput } from "./FormAddressInput";
 import { FormCheckBox } from "./FormCheckBox";
@@ -46,9 +50,10 @@ type FormInputs = {
 } & ArbitrationSettings;
 
 type Props = {
-  strategy: Pick<CVStrategy, "id" | "poolId" | "sybilScorer">;
+  strategy: Pick<CVStrategy, "id" | "poolId" | "sybilScorer"> & {
+    registryCommunity: Pick<RegistryCommunity, "councilSafe">;
+  };
   token: TokenGarden["decimals"];
-  chainId: string;
   initValues: FormInputs;
   proposalType: string;
   pointSystemType: number;
@@ -62,21 +67,21 @@ const sybilResistancePreview = (
   value?: string | Address[],
 ): ReactNode => {
   const previewMap: Record<SybilResistanceType, ReactNode> = {
-    noSybilResist: "No restrictions (anyone can vote)",
+    noSybilResist: "No protections (anyone can vote)",
     allowList: (() => {
       if (addresses.length === 0) {
         return "Allow list (no addresses submitted)";
       }
+      if (addresses.length === 1 && addresses[0] === zeroAddress) {
+        return "No protections (anyone can vote)";
+      }
       return (
         <div className="flex flex-col">
           <div className="w-fit text-nowrap flex-nowrap">Allow list:</div>
-          <ul className="space-y-2 overflow-y-auto border1 p-2 rounded-xl w-fit resize-y">
+          <ul className="space-y-2 border1 p-2 rounded-xl w-fit resize-y">
             {addresses.map((address) => (
               <li key={address}>
-                <EthAddress
-                  address={address as Address}
-                  shortenAddress={false}
-                />
+                <EthAddress address={address as Address} showPopup={false} />
               </li>
             ))}
           </ul>
@@ -117,7 +122,6 @@ const parseAllowListMembers = (
 export default function PoolEditForm({
   token,
   strategy,
-  chainId,
   initValues,
   proposalType,
   pointSystemType,
@@ -128,8 +132,10 @@ export default function PoolEditForm({
     handleSubmit,
     setValue,
     watch,
+    trigger,
     formState: { errors },
   } = useForm<FormInputs>({
+    mode: "onBlur",
     defaultValues:
       initValues ?
         {
@@ -173,7 +179,9 @@ export default function PoolEditForm({
   const shouldRenderInput = (key: string): boolean => {
     if (
       PoolTypes[proposalType] === "signaling" &&
-      (key === "spendingLimit" || key === "minThresholdPoints")
+      (key === "spendingLimit" ||
+        key === "minThresholdPoints" ||
+        key === "minimumConviction")
     ) {
       return false;
     }
@@ -182,13 +190,16 @@ export default function PoolEditForm({
 
   const [showPreview, setShowPreview] = useState<boolean>(false);
   const [previewData, setPreviewData] = useState<FormInputs>();
-  const [tribunalAddress, setTribunalAddress] = useState(
-    initValues?.tribunalAddress ?? "",
-  );
+  const tribunalAddress = watch("tribunalAddress");
 
   const [loading, setLoading] = useState(false);
   const { publish } = usePubSubContext();
-  const chain = useChainFromPath()!;
+  const {
+    id: chainId,
+    nativeCurrency,
+    arbitrator,
+    globalTribunal,
+  } = useChainFromPath()!;
 
   const formRowTypes: Record<string, any> = {
     spendingLimit: {
@@ -240,18 +251,16 @@ export default function PoolEditForm({
     },
     proposalCollateral: {
       label: "Proposal collateral:",
-      parse: (value: string) =>
-        value + " " + chain.nativeCurrency?.symbol || "",
+      parse: (value: string) => value + " " + nativeCurrency?.symbol || "",
     },
     disputeCollateral: {
       label: "Dispute collateral:",
-      parse: (value: string) =>
-        value + " " + chain.nativeCurrency?.symbol || "",
+      parse: (value: string) => value + " " + nativeCurrency?.symbol || "",
     },
     tribunalAddress: {
       label: "Tribunal safe:",
       parse: (value: string) => (
-        <EthAddress address={value as Address} icon={"ens"} />
+        <EthAddress address={value as Address} icon={"ens"} showPopup={false} />
       ),
     },
   };
@@ -276,7 +285,7 @@ export default function PoolEditForm({
     const maxRatioNum = calculateMaxRatioNum(spendingLimit, minimumConviction);
 
     const weightNum = minimumConviction * maxRatioNum ** 2;
-    const blockTime = chainConfigMap[chainId].blockTime;
+    const blockTime = chainConfigMap[chainId!].blockTime;
 
     // pool settings
     const maxRatio = BigInt(Math.round(maxRatioNum * CV_SCALE_PRECISION));
@@ -305,7 +314,7 @@ export default function PoolEditForm({
 
     const coreArgs = [
       {
-        arbitrator: chain.arbitrator as Address,
+        arbitrator: arbitrator as Address,
         tribunalSafe: tribunalAddress as Address,
         submitterCollateralAmount: parseUnits(
           previewData.proposalCollateral.toString(),
@@ -363,10 +372,7 @@ export default function PoolEditForm({
 
     Object.entries(reorderedData).forEach(([key, value]) => {
       const formRow = formRowTypes[key];
-      if (
-        formRow
-        // && shouldRenderInPreview(key)
-      ) {
+      if (formRow && shouldRenderInput(key)) {
         const parsedValue = formRow.parse ? formRow.parse(value) : value;
         formattedRows.push({
           label: formRow.label,
@@ -433,7 +439,7 @@ export default function PoolEditForm({
 
   return (
     <>
-      <form onSubmit={handleSubmit(handlePreview)} className="max-w-4xl px-14">
+      <form onSubmit={handleSubmit(handlePreview)}>
         {showPreview ?
           <FormPreview formRows={formatFormRows()} />
         : <div className="flex flex-col gap-6">
@@ -472,7 +478,6 @@ export default function PoolEditForm({
                 )
               }
             </div>
-
             {/* pool settings section */}
             <div className="flex flex-col">
               <h6 className="mb-4">Conviction params</h6>
@@ -603,7 +608,7 @@ export default function PoolEditForm({
                   step: 1 / 10 ** ETH_DECIMALS,
                   min: 1 / 10 ** ETH_DECIMALS,
                 }}
-                suffix={chain.nativeCurrency?.symbol ?? ""}
+                suffix={nativeCurrency?.symbol ?? ""}
               />
               <FormInput
                 tooltip={
@@ -618,7 +623,7 @@ export default function PoolEditForm({
                   step: 1 / 10 ** ETH_DECIMALS,
                   min: 1 / 10 ** ETH_DECIMALS,
                 }}
-                suffix={chain.nativeCurrency?.symbol ?? ""}
+                suffix={nativeCurrency?.symbol ?? ""}
               />
               <FormInput
                 label="Ruling Time"
@@ -652,26 +657,30 @@ export default function PoolEditForm({
                   tooltip="Enter a Safe address to rule on proposal disputes in the Pool and determine if they are in violation of the Covenant."
                   label="Tribunal address"
                   required
-                  onChange={(ev) =>
-                    setValue("tribunalAddress", ev.target.value)
-                  }
+                  validateSafe
                   value={tribunalAddress}
+                  registerKey="tribunalAddress"
+                  register={register}
+                  errors={errors}
                 />
                 <FormCheckBox
                   label="Use global tribunal"
-                  register={register}
                   registerKey="useGlobalTribunal"
                   type="checkbox"
                   tooltip="Check this box to use the Gardens global tribunal Safe to rule on proposal disputes in the Pool, a service we offer if your community does not have an impartial 3rd party that can rule on violations of the Covenant."
                   value={
-                    tribunalAddress.toLowerCase() ===
-                    chain.globalTribunal?.toLowerCase()
+                    tribunalAddress?.toLowerCase() ===
+                    globalTribunal?.toLowerCase()
                   }
                   onChange={() => {
-                    setTribunalAddress((oldAddress) =>
-                      oldAddress === chain.globalTribunal ?
+                    setValue(
+                      "tribunalAddress",
+                      (
+                        tribunalAddress.toLowerCase() ===
+                          globalTribunal?.toLowerCase()
+                      ) ?
                         ""
-                      : (chain.globalTribunal ?? ""),
+                      : globalTribunal ?? "",
                     );
                   }}
                 />
@@ -679,38 +688,38 @@ export default function PoolEditForm({
             </div>
           </div>
         }
+        <div className="flex w-full items-center justify-end pt-6">
+          {showPreview ?
+            <div className="flex items-center gap-4">
+              <Button
+                onClick={() => {
+                  setShowPreview(false);
+                  setLoading(false);
+                }}
+                btnStyle="outline"
+              >
+                Edit
+              </Button>
+              <Button onClick={() => contractWrite()} isLoading={loading}>
+                Submit
+              </Button>
+            </div>
+          : <div className="flex items-center gap-4">
+              <Button
+                className="flex-1"
+                btnStyle="outline"
+                color="danger"
+                onClick={() => setModalOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button className="flex-1" type="submit">
+                Preview
+              </Button>
+            </div>
+          }
+        </div>
       </form>
-      <div className="flex w-full items-center justify-end pt-6">
-        {showPreview ?
-          <div className="flex items-center gap-4">
-            <Button
-              onClick={() => {
-                setShowPreview(false);
-                setLoading(false);
-              }}
-              btnStyle="outline"
-            >
-              Edit
-            </Button>
-            <Button onClick={() => contractWrite()} isLoading={loading}>
-              Submit
-            </Button>
-          </div>
-        : <div className="flex items-center gap-4">
-            <Button
-              className="flex-1"
-              btnStyle="outline"
-              color="danger"
-              onClick={() => setModalOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button className="flex-1" type="submit">
-              Preview
-            </Button>
-          </div>
-        }
-      </div>
     </>
   );
 }
