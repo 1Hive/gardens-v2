@@ -154,7 +154,7 @@ export const DisputeButton: FC<Props> = ({
       "0xD8a63B2F234b487cEAddc422C8246adD2C814203";
 
   const isTribunalSafe =
-    arbitrationConfig.tribunalSafe === address?.toLowerCase();
+    arbitrationConfig.tribunalSafe?.toLowerCase() === address?.toLowerCase();
 
   const { data: isTribunalMember } = useContractRead({
     address: arbitrationConfig.tribunalSafe as Address,
