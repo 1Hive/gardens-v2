@@ -402,10 +402,7 @@ export default function Page({
                         currentConvictionPct < thresholdPct || !isConnected
                       }
                       tooltip={
-                        (
-                          (tooltipMessage ??
-                          currentConvictionPct < thresholdPct)
-                        ) ?
+                        tooltipMessage ?? currentConvictionPct < thresholdPct ?
                           "Proposal not executable"
                         : undefined
                       }
