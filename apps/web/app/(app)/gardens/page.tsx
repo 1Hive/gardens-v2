@@ -28,7 +28,7 @@ const Header = () => {
               Welcome to Gardens
             </h1>
             <p className="text-xl text-primary-content text-center">
-              A place where communities grow through collective decision-making
+              Where communities grow through collective decision-making
             </p>
             <Link href="/gardens/create-community" className="mt-6 z-10">
               <Button
