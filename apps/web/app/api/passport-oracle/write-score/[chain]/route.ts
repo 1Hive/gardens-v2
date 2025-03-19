@@ -14,6 +14,7 @@ import {
   getMemberPassportAndCommunitiesDocument,
   getMemberPassportAndCommunitiesQuery,
 } from "#/subgraph/.graphclient";
+import { fetchPassportScore } from "@/app/api/passport/[account]/route";
 import { getConfigByChain } from "@/configs/chains";
 import { initUrqlClient } from "@/providers/urql";
 import { passportScorerABI } from "@/src/generated";
@@ -22,26 +23,8 @@ import { getViemChain } from "@/utils/web3";
 const LIST_MANAGER_PRIVATE_KEY = process.env.LIST_MANAGER_PRIVATE_KEY;
 const LOCAL_RPC = "http://127.0.0.1:8545";
 
-const fetchScoreFromGitcoin = async (user: string) => {
-  const url = `${process.env.VERCEL_URL ? "https://" + process.env.VERCEL_URL : "http://localhost:3000"}/api/passport`;
-  const response = await fetch(`${url}/${user}`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-
-  if (response.ok) {
-    const data = await response.json();
-    return data.score;
-  } else {
-    const errorData = await response.json();
-    throw new Error(errorData.message || "Failed to fetch score from Gitcoin");
-  }
-};
-
 export async function POST(req: Request, { params }: Params) {
-  const { chain } = params;
+  const { chain: chainId } = params as { chain: string };
   const { user } = await req.json();
 
   if (typeof user !== "string") {
@@ -53,11 +36,12 @@ export async function POST(req: Request, { params }: Params) {
     );
   }
 
-  const chainConfig = getConfigByChain(chain);
+  const chain = getViemChain(chainId);
+  const chainConfig = getConfigByChain(chainId);
 
   try {
     const subgraphUrl = chainConfig?.subgraphUrl as string;
-    const { urqlClient } = initUrqlClient({ chainId: chain });
+    const { urqlClient } = initUrqlClient({ chainId });
     const subgraphResponse = await urqlClient
       .query<getMemberPassportAndCommunitiesQuery>(
         getMemberPassportAndCommunitiesDocument,
@@ -112,7 +96,7 @@ export async function POST(req: Request, { params }: Params) {
 
   try {
     const client = createPublicClient({
-      chain: getViemChain(chain),
+      chain: chain,
       transport: http(chainConfig?.rpcUrl ?? LOCAL_RPC),
     });
 
@@ -120,12 +104,12 @@ export async function POST(req: Request, { params }: Params) {
       account: privateKeyToAccount(
         (`${LIST_MANAGER_PRIVATE_KEY}` as Address) || "",
       ),
-      chain: getViemChain(chain),
+      chain: chain,
       transport: custom(client.transport),
     });
 
-    const score = await fetchScoreFromGitcoin(user);
-    const integerScore = Number(score) * CV_PASSPORT_THRESHOLD_SCALE;
+    const score = await fetchPassportScore(user);
+    const integerScore = Math.round(score * CV_PASSPORT_THRESHOLD_SCALE);
 
     if (!chainConfig?.passportScorer) {
       console.error("Passport scorer contract address is missing");
@@ -139,6 +123,7 @@ export async function POST(req: Request, { params }: Params) {
       abi: passportScorerABI,
       address: chainConfig.passportScorer,
       functionName: "addUserScore",
+      chain: chain,
       args: [user as Address, BigInt(integerScore)],
     });
 

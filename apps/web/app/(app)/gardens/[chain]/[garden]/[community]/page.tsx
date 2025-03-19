@@ -358,18 +358,32 @@ export default function Page({
                 tokenSymbol={tokenGarden.symbol}
               />
             </Statistic>
-            <div className="flex gap-2">
+            <div className="flex gap-2 items-center">
               <p className="font-medium">Registration stake:</p>
               <InfoWrapper
                 tooltip={`Registration amount: ${parseToken(registrationAmount)} ${tokenGarden.symbol}\nCommunity fee: ${parseToken(parsedCommunityFee())} ${tokenGarden.symbol}`}
               >
-                <DisplayNumber
-                  number={[getTotalRegistrationCost(), tokenGarden?.decimals]}
-                  className="subtitle2 text-primary-content"
-                  disableTooltip={true}
-                  compact={true}
-                  tokenSymbol={tokenGarden.symbol}
-                />
+                <div className="flex">
+                  <EthAddress
+                    address={tokenGarden.address as Address}
+                    shortenAddress={true}
+                    actions="none"
+                    icon={false}
+                    label={
+                      <DisplayNumber
+                        number={[
+                          getTotalRegistrationCost(),
+                          tokenGarden?.decimals,
+                        ]}
+                        className="subtitle2"
+                        disableTooltip={true}
+                        compact={true}
+                        copiable={false}
+                        tokenSymbol={tokenGarden.symbol}
+                      />
+                    }
+                  />
+                </div>
               </InfoWrapper>
             </div>
           </div>
