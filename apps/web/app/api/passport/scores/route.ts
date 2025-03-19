@@ -1,41 +1,7 @@
 // api/passport/scores
 
 import { NextResponse } from "next/server";
-
-export interface ApiScore {
-  address: string;
-  score: string;
-  status: string;
-  last_score_timestamp: string;
-  expiration_date: string | null;
-  evidence: string | null;
-  error: string | null;
-  stamp_scores: Record<string, number>;
-}
-
-export async function fetchAllPassportScores() {
-  const apiKey = process.env.GITCOIN_PASSPORT_API_KEY;
-  const scorerId = process.env.SCORER_ID;
-  const endpoint = `https://api.scorer.gitcoin.co/registry/score/${scorerId}`;
-
-  if (!apiKey) {
-    throw Error("API key is missing");
-  }
-
-  const response = await fetch(endpoint, {
-    method: "GET",
-    headers: {
-      "X-API-KEY": apiKey,
-      "Content-Type": "application/json",
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error((await response.json()) || "Failed to fetch scores");
-  }
-
-  return response.json() as Promise<ApiScore[]>;
-}
+import { fetchAllPassportScores } from "@/utils/gitcoin-passport";
 
 export async function GET() {
   try {

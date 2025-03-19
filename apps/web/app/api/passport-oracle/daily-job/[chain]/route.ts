@@ -11,13 +11,10 @@ import {
   Address,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import {
-  ApiScore,
-  fetchAllPassportScores,
-} from "@/app/api/passport/scores/route";
 import { getConfigByChain } from "@/configs/chains";
 import { initUrqlClient } from "@/providers/urql";
 import { passportScorerABI } from "@/src/generated";
+import { ApiScore, fetchAllPassportScores } from "@/utils/gitcoin-passport";
 import { CV_PASSPORT_THRESHOLD_SCALE } from "@/utils/numbers";
 import { getViemChain } from "@/utils/web3";
 
