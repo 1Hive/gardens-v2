@@ -11,6 +11,7 @@ import {
 } from "#/subgraph/.graphclient";
 import { Button } from "./Button";
 import { DisplayNumber } from "./DisplayNumber";
+import { EthAddress } from "./EthAddress";
 import { InfoBox } from "./InfoBox";
 import { InfoWrapper } from "./InfoWrapper";
 import { TransactionModal, TransactionProps } from "./TransactionModal";
@@ -235,17 +236,25 @@ export const IncreasePower = ({
       <div className="flex justify-between gap-4 flex-wrap">
         <div className="flex flex-col justify-between gap-2">
           <div className="flex justify-between">
-            <div className="flex-start flex gap-2">
+            <div className="flex-start flex gap-2 items-center">
               <p className="subtitle2">Total Staked in the community:</p>
               <InfoWrapper
                 tooltip={`Registration stake: ${parseToken(registrationAmount)} ${tokenGarden.symbol}\n Added stake: ${parseToken(AddedStake)} ${tokenGarden.symbol}`}
               >
-                <DisplayNumber
-                  number={[memberStakedTokens, tokenDecimals]}
-                  tokenSymbol={tokenSymbol}
-                  compact={true}
-                  className="subtitle2 text-primary-content"
-                  disableTooltip
+                <EthAddress
+                  address={registerToken as Address}
+                  shortenAddress={true}
+                  actions="none"
+                  icon={false}
+                  label={
+                    <DisplayNumber
+                      number={[memberStakedTokens, tokenDecimals]}
+                      tokenSymbol={tokenSymbol}
+                      compact={true}
+                      className="subtitle2 text-primary-content"
+                      disableTooltip
+                    />
+                  }
                 />
               </InfoWrapper>
             </div>
