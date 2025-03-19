@@ -318,7 +318,10 @@ export default function Page({
                       icon={<InformationCircleIcon />}
                     >
                       <DisplayNumber
-                        number={formatUnits(requestedAmount, 18)}
+                        number={formatUnits(
+                          requestedAmount,
+                          poolToken?.decimals ?? 18,
+                        )}
                         tokenSymbol={poolToken?.symbol}
                         compact={true}
                         className="font-bold text-black"

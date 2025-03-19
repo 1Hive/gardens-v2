@@ -356,7 +356,7 @@ export const ConvictionBarChart = ({
     (currentConvictionPct ?? 0) < (thresholdPct ?? 0);
 
   const chart = (
-    <div className="flex items-center justify-between w-full">
+    <>
       <Skeleton isLoading={convictionRefreshing}>
         <EChartsReact
           option={option}
@@ -368,11 +368,11 @@ export const ConvictionBarChart = ({
         btnStyle="link"
         onClick={handleRefreshConviction}
         tooltip="Refresh conviction"
-        className="!p-3"
+        className="p-3"
       >
         <ArrowPathIcon className="w-5" />
       </Button>
-    </div>
+    </>
   );
 
   return (
