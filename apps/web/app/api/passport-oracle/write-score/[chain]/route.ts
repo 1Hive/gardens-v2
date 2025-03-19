@@ -14,10 +14,10 @@ import {
   getMemberPassportAndCommunitiesDocument,
   getMemberPassportAndCommunitiesQuery,
 } from "#/subgraph/.graphclient";
-import { fetchPassportScore } from "@/app/api/passport/[account]/route";
 import { getConfigByChain } from "@/configs/chains";
 import { initUrqlClient } from "@/providers/urql";
 import { passportScorerABI } from "@/src/generated";
+import { fetchPassportScore } from "@/utils/gitcoin-passport";
 import { CV_PASSPORT_THRESHOLD_SCALE } from "@/utils/numbers";
 import { getViemChain } from "@/utils/web3";
 const LIST_MANAGER_PRIVATE_KEY = process.env.LIST_MANAGER_PRIVATE_KEY;
