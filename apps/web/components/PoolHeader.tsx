@@ -205,7 +205,7 @@ export default function PoolHeader({
   const poolConfig = [
     {
       label: "Spending limit",
-      value: `${spendingLimit.toPrecision(2)} %`,
+      value: `${spendingLimit > 99 ? "100" : spendingLimit.toPrecision(2)} %`,
       info: "Max percentage of the pool funds that can be spent in a single proposal.",
     },
     {
@@ -557,10 +557,7 @@ export default function PoolHeader({
           </Statistic>
           <Statistic label="Dispute resolution">
             <div className="flex flex-col gap-3 sm:flex-row">
-              <Badge
-                className="text-secondary-content"
-                icon={<ScaleIcon />}
-              >
+              <Badge className="text-secondary-content" icon={<ScaleIcon />}>
                 <EthAddress
                   address={tribunalAddress as Address}
                   shortenAddress={true}
