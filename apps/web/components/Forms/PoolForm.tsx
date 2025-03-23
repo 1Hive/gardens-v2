@@ -242,7 +242,8 @@ export function PoolForm({ token, communityAddr }: Props) {
   const pointSystemType = watch("pointSystemType");
   const strategyType = watch("strategyType");
 
-  const allowNoProtection = useCheat("allowNoProtection");
+  const { value: allowNoProtection } = useCheat("allowNoProtection");
+  console.log({ allowNoProtection });
 
   useEffect(() => {
     if (PointSystems[pointSystemType] !== "unlimited" && !allowNoProtection) {
@@ -255,7 +256,7 @@ export function PoolForm({ token, communityAddr }: Props) {
     } else {
       setSybilResistanceOptions(fullSybilResistanceOptions);
     }
-  }, [pointSystemType]);
+  }, [pointSystemType, allowNoProtection]);
 
   const formRowTypes: Record<
     string,

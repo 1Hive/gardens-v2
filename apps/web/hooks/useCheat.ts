@@ -13,18 +13,20 @@ export const cheats = [
 type Cheat = (typeof cheats)[number];
 
 export const useCheat = (cheat: Cheat) => {
-  const [value] = useLocalStorage(cheat, "false");
+  const [value] = useLocalStorage(cheat, false, {
+    deserializer: (v) => v === "true",
+    serializer: (v) => (v ? "true" : "false"),
+  });
 
   useEffect(() => {
     (window as any).cheats = () => {
       console.log("Cheats commands:");
       cheats.forEach((c) => {
-        console.log(`localStorage.setItem("${c}", "true")`);
+        console.log(`localStorage.setItem("${c}", true)`);
       });
     };
   }, []);
-
-  return value === "true";
+  return value;
 };
 
 export const getCheat = (cheat: Cheat) => {
