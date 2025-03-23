@@ -8,3 +8,11 @@ export const VOTING_POINT_SYSTEM_DESCRIPTION = {
   quadratic:
     "Voting weight increases as more tokens are staked, following a quadratic curve.",
 } as const;
+
+export const cheats = [
+  "showArchived",
+  "bypassSafeCheck",
+  "allowNoProtection",
+  "skipPublished",
+  "queryAllChains",
+];

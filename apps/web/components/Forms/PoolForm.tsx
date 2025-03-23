@@ -24,6 +24,7 @@ import {
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
+import { useCheat } from "@/hooks/useCheat";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { registryCommunityABI } from "@/src/generated";
@@ -241,8 +242,10 @@ export function PoolForm({ token, communityAddr }: Props) {
   const pointSystemType = watch("pointSystemType");
   const strategyType = watch("strategyType");
 
+  const allowNoProtection = useCheat("allowNoProtection");
+
   useEffect(() => {
-    if (PointSystems[pointSystemType] !== "unlimited") {
+    if (PointSystems[pointSystemType] !== "unlimited" && !allowNoProtection) {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { noSybilResist, ...rest } = fullSybilResistanceOptions;
       setSybilResistanceOptions(rest);

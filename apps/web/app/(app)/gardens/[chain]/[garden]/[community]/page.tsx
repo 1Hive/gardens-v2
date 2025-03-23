@@ -40,6 +40,7 @@ import { TokenGardenFaucet } from "@/components/TokenGardenFaucet";
 import { isProd } from "@/configs/isProd";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
+import { useCheat } from "@/hooks/useCheat";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { safeABI } from "@/src/generated";
@@ -74,6 +75,7 @@ export default function Page({
   const searchParams = useCollectQueryParams();
   const { address: accountAddress } = useAccount();
   const [covenant, setCovenant] = useState<string | undefined>();
+  const showArchived = useCheat("showArchived");
   const [openCommDetails, setOpenCommDetails] = useState(false);
 
   const covenantSectionRef = useRef<HTMLDivElement>(null);
@@ -472,7 +474,7 @@ export default function Page({
         {(!!isCouncilMember ||
           accountAddress?.toLowerCase() ===
             registryCommunity.councilSafe?.toLowerCase() ||
-          localStorage.getItem("showArchived") === "true") && (
+          showArchived) && (
           <div className="flex flex-col gap-4">
             <h4 className="text-secondary-content">
               Pools archived ({poolsArchived.length})

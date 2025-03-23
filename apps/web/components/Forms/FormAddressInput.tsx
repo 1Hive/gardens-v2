@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { blo } from "blo";
 import Image from "next/image";
-import { UseFormTrigger } from "react-hook-form";
+import { RegisterOptions, UseFormTrigger } from "react-hook-form";
 import { Address, isAddress } from "viem";
 import {
   useEnsAddress,
@@ -13,6 +13,7 @@ import {
 import { FormInput } from "./FormInput";
 import { LoadingSpinner } from "../LoadingSpinner";
 import { getChain, getConfigByChain } from "@/configs/chains";
+import { useCheat } from "@/hooks/useCheat";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useSafeValidation } from "@/hooks/useSafeValidation";
 import { safeABI } from "@/src/generated";
@@ -31,7 +32,7 @@ type Props = {
   value?: string;
   tooltip?: string;
   validateSafe?: boolean;
-  registerOptions?: any;
+  registerOptions?: RegisterOptions;
   onChange?: React.ChangeEventHandler<HTMLInputElement>;
   // trigger?: UseFormTrigger<any>;
 };
@@ -61,6 +62,7 @@ export const FormAddressInput = ({
 
   const [inputValue, setInputValue] = useState<string>("");
   const [isValidatingSafe, setIsValidatingSafe] = useState<boolean>(false);
+  const bypassSafeCheck = useCheat("bypassSafeCheck");
 
   // ENS Resolution
   const { data: ensAddress, isError: ensError } = useEnsAddress({
@@ -86,7 +88,7 @@ export const FormAddressInput = ({
 
   const validateSafeAddress = async (address: string) => {
     if (
-      localStorage.getItem("bypassSafeCheck") === "true" ||
+      bypassSafeCheck ||
       !getConfigByChain(publicClient.chain.id)?.safePrefix
     ) {
       return true;
@@ -157,7 +159,7 @@ export const FormAddressInput = ({
         ...extendedRegisterOptions,
       }}
       onChange={(e) => {
-        onChange?.(e);
+        (onChange ?? registerOptions?.onChange)?.(e);
         setInputValue(e.target.value);
       }}
       suffix={

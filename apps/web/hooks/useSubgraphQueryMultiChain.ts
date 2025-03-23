@@ -7,6 +7,7 @@ import {
 } from "@urql/next";
 import { debounce, isEqual } from "lodash-es";
 import { toast } from "react-toastify";
+import { getCheat, useCheat } from "./useCheat";
 import { useIsMounted } from "./useIsMounted";
 import { HTTP_CODES } from "@/app/api/utils";
 import { chainConfigMap, getConfigByChain } from "@/configs/chains";
@@ -26,7 +27,7 @@ import { delayAsync } from "@/utils/delayAsync";
 
 let isQueryAllChains = false;
 try {
-  isQueryAllChains = localStorage.getItem("queryAllChains") === "true";
+  isQueryAllChains = getCheat("queryAllChains");
 } catch (error) {
   // ignore when not browser side
 }
@@ -68,6 +69,7 @@ export function useSubgraphQueryMultiChain<
   const errorsMap = useRef(new Map<ChainId, CombinedError>());
   const subscritionId = useRef<SubscriptionId>();
   const fetchingRef = useRef(false);
+  const skipPublished = useCheat("skipPublished");
 
   useEffect(() => {
     const init = async () => {
@@ -123,14 +125,14 @@ export function useSubgraphQueryMultiChain<
               });
             }
             try {
-              const fetchQuery = async (skipPublished: boolean) => {
+              const fetchQuery = async (useDev: boolean) => {
                 const { urqlClient } = initUrqlClient({
                   chainId: (chainsOverride ?? allChains)[i],
                 });
                 return urqlClient.query<Data>(query, variables, {
                   ...queryContext,
                   url:
-                    skipPublished || !chainConfig?.publishedSubgraphUrl ?
+                    useDev || !chainConfig?.publishedSubgraphUrl ?
                       chainConfig?.subgraphUrl
                     : chainConfig?.publishedSubgraphUrl,
                   chainId,
@@ -141,9 +143,8 @@ export function useSubgraphQueryMultiChain<
               let res;
               try {
                 const shouldSkipPublished =
-                  (localStorage.getItem("skipPublished") === "true" ||
-                    process.env.NEXT_PUBLIC_SKIP_PUBLISHED === "true") &&
-                  localStorage.getItem("skipPublished") !== "false";
+                  skipPublished ||
+                  process.env.NEXT_PUBLIC_SKIP_PUBLISHED === "true";
                 res = await fetchQuery(shouldSkipPublished);
               } catch (err1) {
                 console.error(
