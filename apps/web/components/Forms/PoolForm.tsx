@@ -242,8 +242,7 @@ export function PoolForm({ token, communityAddr }: Props) {
   const pointSystemType = watch("pointSystemType");
   const strategyType = watch("strategyType");
 
-  const { value: allowNoProtection } = useCheat("allowNoProtection");
-  console.log({ allowNoProtection });
+  const allowNoProtection = useCheat("allowNoProtection");
 
   useEffect(() => {
     if (PointSystems[pointSystemType] !== "unlimited" && !allowNoProtection) {
