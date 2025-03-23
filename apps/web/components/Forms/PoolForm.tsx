@@ -169,7 +169,9 @@ const sybilResistancePreview = (
     gitcoinPassport: `Passport score required: ${value}`,
   };
 
-  return previewMap[sybilType];
+  return previewMap[
+    addresses?.[0] === zeroAddress ? "noSybilResist" : sybilType
+  ];
 };
 
 const shouldRenderInputMap = (key: string, value: number): boolean => {

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { blo } from "blo";
 import Image from "next/image";
-import { RegisterOptions, UseFormTrigger } from "react-hook-form";
+import { RegisterOptions } from "react-hook-form";
 import { Address, isAddress } from "viem";
 import {
   useEnsAddress,
@@ -12,10 +12,9 @@ import {
 } from "wagmi";
 import { FormInput } from "./FormInput";
 import { LoadingSpinner } from "../LoadingSpinner";
-import { getChain, getConfigByChain } from "@/configs/chains";
+import { getConfigByChain } from "@/configs/chains";
 import { useCheat } from "@/hooks/useCheat";
 import { useDebounce } from "@/hooks/useDebounce";
-import { useSafeValidation } from "@/hooks/useSafeValidation";
 import { safeABI } from "@/src/generated";
 import { isENS } from "@/utils/web3";
 

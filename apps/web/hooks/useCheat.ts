@@ -8,7 +8,7 @@ export const cheats = [
   "allowNoProtection",
   "skipPublished",
   "queryAllChains",
-];
+] as const;
 
 type Cheat = (typeof cheats)[number];
 
