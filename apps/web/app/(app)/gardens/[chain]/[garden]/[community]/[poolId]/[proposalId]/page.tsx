@@ -378,7 +378,7 @@ export default function Page({
                   Manage support
                 </Button>
               </div>
-              <div className="flex flex-col gap-7">
+              <div className="flex flex-col gap-7 relative">
                 <ConvictionBarChart
                   currentConvictionPct={currentConvictionPct}
                   thresholdPct={thresholdPct}
