@@ -64,6 +64,7 @@ export function RegisterMember({
     address: accountAddress,
     token: token.address as Address,
     chainId: urlChainId,
+    watch: true,
   });
 
   const accountHasBalance = useMemo(
@@ -174,6 +175,7 @@ export function RegisterMember({
       missmatchUrl,
       disableRegMemberBtnCondition,
       tooltipMessage,
+      accountHasBalance,
     ],
   );
 

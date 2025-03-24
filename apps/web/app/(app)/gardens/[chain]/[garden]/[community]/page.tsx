@@ -40,6 +40,7 @@ import { TokenGardenFaucet } from "@/components/TokenGardenFaucet";
 import { isProd } from "@/configs/isProd";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
+import { useCheat } from "@/hooks/useCheat";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { safeABI } from "@/src/generated";
@@ -74,6 +75,7 @@ export default function Page({
   const searchParams = useCollectQueryParams();
   const { address: accountAddress } = useAccount();
   const [covenant, setCovenant] = useState<string | undefined>();
+  const showArchived = useCheat("showArchived");
   const [openCommDetails, setOpenCommDetails] = useState(false);
 
   const covenantSectionRef = useRef<HTMLDivElement>(null);
@@ -358,18 +360,32 @@ export default function Page({
                 tokenSymbol={tokenGarden.symbol}
               />
             </Statistic>
-            <div className="flex gap-2">
+            <div className="flex gap-2 items-center">
               <p className="font-medium">Registration stake:</p>
               <InfoWrapper
                 tooltip={`Registration amount: ${parseToken(registrationAmount)} ${tokenGarden.symbol}\nCommunity fee: ${parseToken(parsedCommunityFee())} ${tokenGarden.symbol}`}
               >
-                <DisplayNumber
-                  number={[getTotalRegistrationCost(), tokenGarden?.decimals]}
-                  className="subtitle2 text-primary-content"
-                  disableTooltip={true}
-                  compact={true}
-                  tokenSymbol={tokenGarden.symbol}
-                />
+                <div className="flex">
+                  <EthAddress
+                    address={tokenGarden.address as Address}
+                    shortenAddress={true}
+                    actions="none"
+                    icon={false}
+                    label={
+                      <DisplayNumber
+                        number={[
+                          getTotalRegistrationCost(),
+                          tokenGarden?.decimals,
+                        ]}
+                        className="subtitle2"
+                        disableTooltip={true}
+                        compact={true}
+                        copiable={false}
+                        tokenSymbol={tokenGarden.symbol}
+                      />
+                    }
+                  />
+                </div>
               </InfoWrapper>
             </div>
           </div>
@@ -458,7 +474,7 @@ export default function Page({
         {(!!isCouncilMember ||
           accountAddress?.toLowerCase() ===
             registryCommunity.councilSafe?.toLowerCase() ||
-          localStorage.getItem("showArchived") === "true") && (
+          showArchived) && (
           <div className="flex flex-col gap-4">
             <h4 className="text-secondary-content">
               Pools archived ({poolsArchived.length})

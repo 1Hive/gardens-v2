@@ -43,25 +43,15 @@ export function FormSelect({
 }: Props) {
   const hasError = errors?.[registerKey];
 
-  // Create a combined onChange handler
-  const handleChange = (e: ChangeEvent<HTMLSelectElement>) => {
-    if (onChange) {
-      onChange(e);
-    }
-  };
-
   // Register with react-hook-form
   const registered = register?.(registerKey, {
-    required,
-    disabled,
+    ...registerOptions,
+    required: required ?? registerOptions?.required,
+    disabled: disabled ?? registerOptions?.disabled,
     onChange: (e) => {
-      handleChange(e);
-      if (registerOptions?.onChange) {
-        registerOptions.onChange(e);
-      }
+      (onChange ?? registerOptions?.onChange)?.(e);
     },
     value: value ?? registerOptions?.value,
-    ...registerOptions,
   });
 
   return (
@@ -87,7 +77,7 @@ export function FormSelect({
         } ${hasError && "!border-danger-content focus:!border-danger-content"}`}
         id={registerKey}
         {...registered}
-        onChange={onChange}
+        onChange={onChange ?? registered?.onChange}
         required={required}
         disabled={disabled}
         defaultValue={value}

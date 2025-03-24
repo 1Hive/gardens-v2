@@ -532,11 +532,15 @@ export default function PoolHeader({
           </Statistic>
           {PoolTypes[proposalType] === "funding" && (
             <Statistic label="funding token">
-              <Badge
-                isCapitalize
-                label={poolToken?.symbol}
-                icon={<Square3Stack3DIcon />}
-              />
+              <Badge icon={<Square3Stack3DIcon />}>
+                <EthAddress
+                  address={poolToken?.address as Address}
+                  shortenAddress={true}
+                  icon={false}
+                  actions="copy"
+                  label={poolToken?.symbol}
+                />
+              </Badge>
             </Statistic>
           )}
           <Statistic label="voting weight">
