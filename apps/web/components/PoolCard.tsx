@@ -17,12 +17,13 @@ import {
 } from "#/subgraph/.graphclient";
 import { Skeleton } from "./Skeleton";
 import TooltipIfOverflow from "./TooltipIfOverflow";
-import { blueLand, grass } from "@/assets";
+import { blueLand, grass, GitcoinMatchingLogo } from "@/assets";
 import { Badge, Card, DisplayNumber, Statistic } from "@/components";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { PointSystems, PoolTypes } from "@/types";
+import { elegibleGG23pools } from "@/utils/matchingPools";
 import { capitalize } from "@/utils/text";
 
 type Props = {
@@ -62,11 +63,21 @@ export function PoolCard({ pool, token, chainId }: Props) {
       className={`w-[275px] sm:min-w-[313px] ${isNewPool ? "shadow-2xl" : ""}`}
     >
       <header className="mb-4 flex flex-col w-full justify-between items-start gap-2">
-        <Skeleton isLoading={!ipfsResult}>
-          <h3 className="flex items-start w-fit max-w-full">
-            <TooltipIfOverflow>{ipfsResult?.title}</TooltipIfOverflow>
-          </h3>
-        </Skeleton>
+        <div className="flex w-full justify-between items-center">
+          <Skeleton isLoading={!ipfsResult}>
+            <h3 className="flex items-start w-fit max-w-full">
+              <TooltipIfOverflow>{ipfsResult?.title}</TooltipIfOverflow>
+            </h3>
+          </Skeleton>
+          {poolId && elegibleGG23pools.includes(Number(poolId)) && (
+            <Image
+              src={GitcoinMatchingLogo}
+              alt="Gitcoin Matching Logo"
+              width={70}
+              height={50}
+            />
+          )}
+        </div>
         <div className="flex justify-between items-center w-full">
           <h6>POOL ID: #{poolId}</h6>
           <Badge type={poolType} />

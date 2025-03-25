@@ -36,7 +36,7 @@ import MarkdownWrapper from "./MarkdownWrapper";
 import { Modal } from "./Modal";
 import { Skeleton } from "./Skeleton";
 import { Statistic } from "./Statistic";
-import { blueLand, grassLarge } from "@/assets";
+import { blueLand, grassLarge, GitcoinMatchingLogo } from "@/assets";
 import { chainConfigMap } from "@/configs/chains";
 import { VOTING_POINT_SYSTEM_DESCRIPTION } from "@/configs/constants";
 import { usePubSubContext } from "@/contexts/pubsub.context";
@@ -45,6 +45,7 @@ import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithC
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { MetadataV1 } from "@/hooks/useIpfsFetch";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
+
 import { registryCommunityABI, safeABI } from "@/src/generated";
 import {
   PointSystems,
@@ -52,6 +53,7 @@ import {
   ProposalStatus,
   SybilResistanceType,
 } from "@/types";
+import { elegibleGG23pools } from "@/utils/matchingPools";
 import {
   convertSecondsToReadableTime,
   CV_PASSPORT_THRESHOLD_SCALE,
@@ -367,11 +369,26 @@ export default function PoolHeader({
     <section className="section-layout flex flex-col gap-0">
       <header className="mb-4 flex flex-col">
         <div className="flex justify-between flex-wrap">
-          <h2>
-            <Skeleton isLoading={!ipfsResult} className="sm:!w-96 h-8">
-              {ipfsResult?.title}
-            </Skeleton>
-          </h2>
+          <div className="flex items-center justify-between w-full">
+            <h2>
+              <Skeleton isLoading={!ipfsResult} className="sm:!w-96 h-8">
+                {ipfsResult?.title}
+              </Skeleton>
+            </h2>
+            {poolId && elegibleGG23pools.includes(Number(poolId)) && (
+              <div className="flex flex-col items-center gap-2">
+                <Image
+                  src={GitcoinMatchingLogo}
+                  alt="Gitcoin Matching Logo"
+                  width={100}
+                  height={60}
+                />
+                <p className="text-primary-content text-md font-bold">
+                  Eligible for GG23 matching
+                </p>
+              </div>
+            )}
+          </div>
           {(!!isCouncilMember || isCouncilSafe) && (
             <div className="flex gap-2 flex-wrap">
               <Button
