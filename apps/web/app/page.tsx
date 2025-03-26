@@ -13,25 +13,20 @@ import {
   ArrowRightIcon,
 } from "@heroicons/react/24/outline";
 import Image from "next/image";
-import {
-  newLogo,
-  commF,
-  BrightIdLogo,
-  PublicNounsLogo,
-  BaseLogo,
-} from "@/assets";
+import { newLogo, commF, BrightIdLogo, PublicNounsLogo } from "@/assets";
 import { Button } from "@/components";
+import { ToolkitFeatures, CultivateChange } from "@/components/LandingPage";
 import { ChainIcon } from "@/configs/chains";
 
 export default function Page() {
   return (
     <>
       <Hero />
-      <WhoIsFor />
-      <OurStack />
+      <ToolkitFeatures />
+      {/* <OurStack /> */}
       <ChainsDeploy />
       <Protopians />
-      <SignUp />
+      <CultivateChange />
       <Footer />
     </>
   );
@@ -195,7 +190,6 @@ const Hero = () => {
                   target="_blank"
                   rel="noreferrer"
                 >
-                  {/* TODO: point to our url docs */}
                   <Button btnStyle="outline">Book Demo</Button>
                 </a>
               </div>
@@ -214,67 +208,67 @@ const Hero = () => {
   );
 };
 
-const whoIsFor = [
-  {
-    name: "Web3 token ecosystems",
-    description:
-      "Grow a diverse, healthy network of communities and public goods for your entire token economy.",
-  },
-  {
-    name: "Public goods organizations",
-    description:
-      "Coordinate a group of people to create value around a shared covenant.",
-  },
-  {
-    name: "Open source software",
-    description:
-      "Reward contributors and source community decisions to help grow your project.",
-  },
-  {
-    name: "Web3 communities and DAO's",
-    description:
-      "Harness collective intelligence to fund initiatives, make decisions and growth.",
-  },
-  {
-    name: "Doers and Dreamers",
-    description:
-      "Participate in the communities you care about by supporting proposals or flagging abuse.",
-  },
-];
+// const whoIsFor = [
+//   {
+//     name: "Web3 token ecosystems",
+//     description:
+//       "Grow a diverse, healthy network of communities and public goods for your entire token economy.",
+//   },
+//   {
+//     name: "Public goods organizations",
+//     description:
+//       "Coordinate a group of people to create value around a shared covenant.",
+//   },
+//   {
+//     name: "Open source software",
+//     description:
+//       "Reward contributors and source community decisions to help grow your project.",
+//   },
+//   {
+//     name: "Web3 communities and DAO's",
+//     description:
+//       "Harness collective intelligence to fund initiatives, make decisions and growth.",
+//   },
+//   {
+//     name: "Doers and Dreamers",
+//     description:
+//       "Participate in the communities you care about by supporting proposals or flagging abuse.",
+//   },
+// ];
 
-const WhoIsFor = () => {
-  return (
-    <div className="bg-white py-24 sm:py-32">
-      <div className="mx-auto max-w-7xl px-6 lg:px-8">
-        <div className="mx-auto grid max-w-2xl grid-cols-1 gap-x-8 gap-y-16 sm:gap-y-20 lg:mx-0 lg:max-w-none lg:grid-cols-3">
-          <div>
-            <h2 className="font-semibold leading-7">Who is Gardens for?</h2>
-            <p className="mt-6 text-base leading-7 text-gray-600">
-              Gardens is designed for organizations that create value beyond
-              conventional private goods or services. It offers a better ROI on
-              investments in shared resources and ecosystem growth compared to
-              traditional governance structures.
-            </p>
-          </div>
-          <div className="col-span-2 grid grid-cols-1 gap-x-8 gap-y-10 text-base leading-7 text-gray-600 sm:grid-cols-2 lg:gap-y-16">
-            {whoIsFor.map((feature) => (
-              <div key={feature.name} className="relative pl-9">
-                <h3 className="font-chakra font-semibold text-gray-900">
-                  <CheckIcon
-                    aria-hidden="true"
-                    className="absolute left-0 top-1 h-5 w-5 text-primary-content"
-                  />
-                  {feature.name}
-                </h3>
-                <p className="mt-2">{feature.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
+// const WhoIsFor = () => {
+//   return (
+//     <div className="bg-white py-24 sm:py-32">
+//       <div className="mx-auto max-w-7xl px-6 lg:px-8">
+//         <div className="mx-auto grid max-w-2xl grid-cols-1 gap-x-8 gap-y-16 sm:gap-y-20 lg:mx-0 lg:max-w-none lg:grid-cols-3">
+//           <div>
+//             <h2 className="font-semibold leading-7">Who is Gardens for?</h2>
+//             <p className="mt-6 text-base leading-7 text-gray-600">
+//               Gardens is designed for organizations that create value beyond
+//               conventional private goods or services. It offers a better ROI on
+//               investments in shared resources and ecosystem growth compared to
+//               traditional governance structures.
+//             </p>
+//           </div>
+//           <div className="col-span-2 grid grid-cols-1 gap-x-8 gap-y-10 text-base leading-7 text-gray-600 sm:grid-cols-2 lg:gap-y-16">
+//             {whoIsFor.map((feature) => (
+//               <div key={feature.name} className="relative pl-9">
+//                 <h3 className="font-chakra font-semibold text-gray-900">
+//                   <CheckIcon
+//                     aria-hidden="true"
+//                     className="absolute left-0 top-1 h-5 w-5 text-primary-content"
+//                   />
+//                   {feature.name}
+//                 </h3>
+//                 <p className="mt-2">{feature.description}</p>
+//               </div>
+//             ))}
+//           </div>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// };
 
 const ourStack = [
   {
