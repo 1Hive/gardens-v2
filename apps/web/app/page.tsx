@@ -15,7 +15,11 @@ import {
 import Image from "next/image";
 import { newLogo, commF, BrightIdLogo, PublicNounsLogo } from "@/assets";
 import { Button } from "@/components";
-import { ToolkitFeatures, CultivateChange } from "@/components/LandingPage";
+import {
+  ToolkitFeatures,
+  CultivateChange,
+  Footer,
+} from "@/components/LandingPage";
 import { ChainIcon } from "@/configs/chains";
 
 export default function Page() {
@@ -475,46 +479,46 @@ const navigation = [
   },
 ];
 
-const Footer = () => {
-  return (
-    <footer className="bg-neutral">
-      <div className="mx-auto max-w-7xl px-6 py-12 md:flex md:flex-col md:items-center md:justify-between lg:px-8 gap-8">
-        <div className="flex justify-center space-x-6">
-          {navigation.map((item) => (
-            <a
-              key={item.name}
-              href={item.href}
-              className="easy-in-out text-neutral-soft-content transition-colors duration-300 hover:text-primary-content"
-              target="_blank"
-              rel="noreferrer"
-            >
-              <span className="sr-only">{item.name}</span>
-              <item.icon aria-hidden="true" className="h-6 w-6" />
-            </a>
-          ))}
-        </div>
-        <div className="mt-8 md:mt-0 flex items-center justify-center">
-          <p className="text-center text-xs leading-5 text-gray-500">
-            &copy; 2025 Gardens |{" "}
-            <a
-              className="text-xs hover:opacity-90"
-              target="_blank"
-              rel="noreferrer"
-              href="https://gardens.1hive.org/#/xdai/garden/0x8ccbeab14b5ac4a431fffc39f4bec4089020a155/covenant"
-            >
-              Our covenant{" "}
-            </a>
-          </p>
-          <ArrowTopRightOnSquareIcon
-            width={16}
-            height={16}
-            className="text-neutral-soft-content ml-1"
-          />
-        </div>
-      </div>
-    </footer>
-  );
-};
+// const Footer = () => {
+//   return (
+//     <footer className="bg-neutral">
+//       <div className="mx-auto max-w-7xl px-6 py-12 md:flex md:flex-col md:items-center md:justify-between lg:px-8 gap-8">
+//         <div className="flex justify-center space-x-6">
+//           {navigation.map((item) => (
+//             <a
+//               key={item.name}
+//               href={item.href}
+//               className="easy-in-out text-neutral-soft-content transition-colors duration-300 hover:text-primary-content"
+//               target="_blank"
+//               rel="noreferrer"
+//             >
+//               <span className="sr-only">{item.name}</span>
+//               <item.icon aria-hidden="true" className="h-6 w-6" />
+//             </a>
+//           ))}
+//         </div>
+//         <div className="mt-8 md:mt-0 flex items-center justify-center">
+//           <p className="text-center text-xs leading-5 text-gray-500">
+//             &copy; 2025 Gardens |{" "}
+//             <a
+//               className="text-xs hover:opacity-90"
+//               target="_blank"
+//               rel="noreferrer"
+//               href="https://gardens.1hive.org/#/xdai/garden/0x8ccbeab14b5ac4a431fffc39f4bec4089020a155/covenant"
+//             >
+//               Our covenant{" "}
+//             </a>
+//           </p>
+//           <ArrowTopRightOnSquareIcon
+//             width={16}
+//             height={16}
+//             className="text-neutral-soft-content ml-1"
+//           />
+//         </div>
+//       </div>
+//     </footer>
+//   );
+// };
 
 const Protopians = () => {
   return (
