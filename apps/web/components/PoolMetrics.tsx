@@ -1,6 +1,10 @@
 "use client";
 
 import { FC, FormEvent, useEffect, useState } from "react";
+import {
+  ExclamationCircleIcon,
+  ExclamationTriangleIcon,
+} from "@heroicons/react/24/outline";
 import { FetchTokenResult } from "@wagmi/core";
 import { parseUnits } from "viem";
 import { Address, useAccount, useBalance } from "wagmi";
@@ -180,6 +184,8 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
             />
             <Button
               type="submit"
+              btnStyle="outline"
+              color="primary"
               disabled={isButtonDisabled}
               tooltip={tooltipMessage}
               className="min-w-[200px]"
