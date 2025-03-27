@@ -32,7 +32,7 @@ export default function Page() {
       {/* <OurStack /> */}
       <Communities />
       {/* <ChainsDeploy /> */}
-      {/* <Networks /> */}
+      <Networks />
       {/* <Protopians /> */}
       <CultivateChange />
       <Footer />
