@@ -13,7 +13,7 @@ export const Networks = () => {
       title="Get the furthest reach"
       description="Bypass those inconvenient privacy laws to source leads from the most unexpected places."
       graphic={<LogoCluster />}
-      className="lg:col-span-2 border2"
+      className="lg:col-span-2"
     />
   );
 };
@@ -41,7 +41,7 @@ function Container({
       variants={{ idle: {}, active: {} }}
       data-dark={dark ? "true" : undefined}
       className=" group relative flex flex-col overflow-hidden rounded-lg 
-        bg-primary ring-1 shadow-xs ring-black/5"
+        bg-primary ring-1 shadow-xs ring-black/5 border2"
     >
       <div className="relative h-80 shrink-0">
         {graphic}
@@ -51,15 +51,6 @@ function Container({
         {fade.includes("bottom") && (
           <div className="absolute inset-0 bg-linear-to-t from-white to-50% group-data-dark:from-gray-800 group-data-dark:from-[-25%]" />
         )}
-      </div>
-      <div className="relative p-10">
-        <h3>Subheading</h3>
-        <p className="mt-1 text-2xl/8 font-medium tracking-tight text-gray-950 group-data-dark:text-white">
-          {title}
-        </p>
-        <p className="mt-2 max-w-[600px] text-sm/6 text-gray-600 group-data-dark:text-gray-400">
-          {description}
-        </p>
       </div>
     </motion.div>
   );

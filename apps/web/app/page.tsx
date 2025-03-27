@@ -21,22 +21,21 @@ import {
   Footer,
   Communities,
   Networks,
+  HowItWorks,
 } from "@/components/LandingPage";
 import { ChainIcon } from "@/configs/chains";
 
 export default function Page() {
   return (
-    <>
+    <div className="border2">
       <Hero />
       <ToolkitFeatures />
-      {/* <OurStack /> */}
+      <HowItWorks />
       <Communities />
-      {/* <ChainsDeploy /> */}
       <Networks />
-      {/* <Protopians /> */}
       <CultivateChange />
       <Footer />
-    </>
+    </div>
   );
 }
 
@@ -45,7 +44,7 @@ export default function Page() {
 const Hero = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   return (
-    <div className="bg-primary-soft">
+    <div className="bg-primary-soft border2">
       <header className="absolute inset-x-0 top-0 z-50">
         {/* <Banner /> */}
 

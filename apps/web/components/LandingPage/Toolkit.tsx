@@ -5,7 +5,7 @@ import { motion, useScroll, useTransform } from "motion/react";
 
 export const ToolkitFeatures = () => {
   return (
-    <section className="mx-auto max-w-7xl px-4 py-16 text-neutral-content">
+    <section className="mx-auto max-w-7xl px-4 text-neutral-content border2">
       <SectionTitle />
       <div className="mb-4 grid grid-cols-12 gap-4">
         <BounceCard className="col-span-12 md:col-span-4">

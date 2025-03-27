@@ -66,7 +66,7 @@ interface CommunityCardProps {
 export const Communities = () => {
   return (
     <motion.section
-      className="mx-auto md:mx-2 bg-primary-content py-4 px-2 lg:px-24 lg:py-14 mb-36 rounded-3xl"
+      className="mx-auto md:mx-16 bg-primary-content py-4 px-2 lg:px-24 lg:py-14 rounded-3xl"
       initial={{ opacity: 0.5 }}
       whileInView={{ opacity: 1 }}
       transition={{ ease: "easeInOut", duration: 0.45 }}

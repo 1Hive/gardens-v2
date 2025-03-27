@@ -68,7 +68,7 @@ const navigation = {
 export const Footer = () => {
   return (
     <motion.footer
-      className="bg-white mt-14"
+      className="bg-white border2"
       initial={{ opacity: 0, scaleY: 0 }}
       whileInView={{ opacity: 1, scaleY: 1 }}
       transition={{
