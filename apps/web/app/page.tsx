@@ -20,6 +20,7 @@ import {
   CultivateChange,
   Footer,
   Communities,
+  Networks,
 } from "@/components/LandingPage";
 import { ChainIcon } from "@/configs/chains";
 
@@ -30,8 +31,9 @@ export default function Page() {
       <ToolkitFeatures />
       {/* <OurStack /> */}
       <Communities />
-      <ChainsDeploy />
-      <Protopians />
+      {/* <ChainsDeploy /> */}
+      <Networks />
+      {/* <Protopians /> */}
       <CultivateChange />
       <Footer />
     </>
