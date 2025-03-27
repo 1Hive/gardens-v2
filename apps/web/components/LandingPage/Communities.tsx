@@ -65,22 +65,27 @@ interface CommunityCardProps {
 
 export const Communities = () => {
   return (
-    <section id="launch-schedule" className="mx-auto px-24 py-16">
+    <motion.section
+      className="mx-auto md:mx-24 bg-primary-content px-4 lg:px-24 lg:py-14 mb-36 rounded-3xl"
+      initial={{ opacity: 0.5 }}
+      whileInView={{ opacity: 1 }}
+      transition={{ ease: "easeInOut", duration: 0.45 }}
+    >
       <motion.h1
         initial={{ y: 48, opacity: 0 }}
         whileInView={{ y: 0, opacity: 1 }}
         transition={{ ease: "easeInOut", duration: 0.75 }}
-        className="mb-16 font-black text-center"
+        className="mb-16 text-neutral-soft text-center"
       >
         Communities
       </motion.h1>
 
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-8">
         {communities.map((community) => (
           <CommunityCard {...community} />
         ))}
       </div>
-    </section>
+    </motion.section>
   );
 };
 
@@ -97,7 +102,7 @@ const CommunityCard = ({
       initial={{ y: 48, opacity: 0 }}
       whileInView={{ y: 0, opacity: 1 }}
       transition={{ ease: "easeInOut", duration: 0.75 }}
-      className="flex w-full origin-top gap-7 rounded-xl bg-primary-soft p-4 backdrop-blur-md backdrop-filter max-md:flex-col md:py-6 md:pr-10"
+      className="flex w-full origin-top gap-7 rounded-xl bg-primary-soft p-4 backdrop-blur-md backdrop-filter max-md:flex-col md:py-6"
     >
       <Image
         alt="communityLogo"
