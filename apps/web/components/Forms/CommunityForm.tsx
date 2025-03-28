@@ -17,6 +17,7 @@ import { FormSelect } from "./FormSelect";
 import { LoadingSpinner } from "../LoadingSpinner";
 import { Button } from "@/components";
 import { chainConfigMap, ChainIcon } from "@/configs/chains";
+import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
@@ -206,7 +207,7 @@ export const CommunityForm = () => {
         router.push(
           pathname?.replace(
             "/create-community",
-            `/${selectedChainId}/${tokenAddress}/${newCommunityAddr}`,
+            `/${selectedChainId}/${tokenAddress}/${newCommunityAddr}?${QUERY_PARAMS.communityPage.newCommunity}=true`,
           ),
         );
         setLoading(false);

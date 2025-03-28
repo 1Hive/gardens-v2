@@ -131,7 +131,7 @@ export function FormInput({
               value={value}
               onChange={(v) => {
                 const e = {
-                  target: { value: v },
+                  target: { value: v, name: registerKey },
                 } as ChangeEvent<HTMLInputElement>;
                 (registered?.onChange ?? onChange)?.(e);
               }}
