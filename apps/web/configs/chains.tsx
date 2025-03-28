@@ -241,8 +241,8 @@ export const chainConfigMap: {
     name: celo.name,
     icon: CeloLogo,
     explorer: "https://celo.blockscout.com",
-    blockTime: 2,
-    confirmations: 2, // 4
+    blockTime: 3.8,
+    confirmations: 4, // 4
     rpcUrl: process.env.RPC_URL_BASE!,
     ...getSubgraphUrls("TODO", "gardens-v2---celo", SUBGRAPH_PRODNET_VERSION),
     globalTribunal: "0x9a17De1f0caD0c592F656410997E4B685d339029",
