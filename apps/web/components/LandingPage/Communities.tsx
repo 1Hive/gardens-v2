@@ -5,6 +5,7 @@ import { XCircleIcon } from "@heroicons/react/24/outline";
 import { Statistic } from "../Statistic";
 import { newLogo } from "../../assets";
 import { Button } from "../Button";
+import { Title } from "./Titles";
 
 const communities = [
   {
@@ -66,23 +67,16 @@ interface CommunityCardProps {
 export const Communities = () => {
   return (
     <motion.section
-      className="mx-auto md:mx-16 bg-primary-content py-4 px-2 lg:px-24 lg:py-14 rounded-3xl"
+      className="mx-auto md:mx-16 bg-primary-soft py-4 px-2 lg:px-24 lg:py-14 rounded-3xl"
       initial={{ opacity: 0.5 }}
       whileInView={{ opacity: 1 }}
       transition={{ ease: "easeInOut", duration: 0.45 }}
     >
-      <motion.h1
-        initial={{ y: 48, opacity: 0 }}
-        whileInView={{ y: 0, opacity: 1 }}
-        transition={{ ease: "easeInOut", duration: 0.75 }}
-        className="mb-16 text-neutral-soft text-center"
-      >
-        Communities
-      </motion.h1>
+      <Title heading="Communities" subHeading="Join a community today" />
 
       <div className="flex flex-col gap-8">
         {communities.map((community) => (
-          <CommunityCard {...community} />
+          <CommunityCard key={community.name} {...community} />
         ))}
       </div>
     </motion.section>
@@ -102,7 +96,7 @@ const CommunityCard = ({
       initial={{ y: 48, opacity: 0 }}
       whileInView={{ y: 0, opacity: 1 }}
       transition={{ ease: "easeInOut", duration: 0.75 }}
-      className="flex w-full origin-top gap-7 rounded-xl bg-primary-soft p-4 backdrop-blur-md backdrop-filter max-md:flex-col md:py-6"
+      className="flex w-full origin-top gap-7 rounded-xl bg-neutral p-4 backdrop-blur-md backdrop-filter max-md:flex-col md:py-6"
     >
       <Image
         alt="communityLogo"

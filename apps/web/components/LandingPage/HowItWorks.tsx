@@ -3,6 +3,8 @@
 import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
 import { newLogo } from "@/assets";
+import { useScroll, useTransform, motion } from "motion/react";
+import { Title } from "./Titles";
 
 export function HowItWorks() {
   const data = [
@@ -63,7 +65,7 @@ export function HowItWorks() {
       ),
     },
     {
-      title: "Proposal",
+      title: "Proposals",
       content: (
         <div>
           <p className="text-neutral-800 dark:text-neutral-200 text-xs md:text-sm font-normal mb-4">
@@ -73,19 +75,10 @@ export function HowItWorks() {
           </p>
           <div className="mb-8">
             <div className="flex gap-2 items-center text-neutral-700 dark:text-neutral-300 text-xs md:text-sm">
-              ✅ Card grid component
+              ✅ Ask for funding for a project or idea
             </div>
             <div className="flex gap-2 items-center text-neutral-700 dark:text-neutral-300 text-xs md:text-sm">
-              ✅ Startup template Aceternity
-            </div>
-            <div className="flex gap-2 items-center text-neutral-700 dark:text-neutral-300 text-xs md:text-sm">
-              ✅ Random file upload lol
-            </div>
-            <div className="flex gap-2 items-center text-neutral-700 dark:text-neutral-300 text-xs md:text-sm">
-              ✅ Himesh Reshammiya Music CD
-            </div>
-            <div className="flex gap-2 items-center text-neutral-700 dark:text-neutral-300 text-xs md:text-sm">
-              ✅ Salman Bhai Fan Club registrations open
+              ✅ See conviction grow overtime
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -142,13 +135,6 @@ export function HowItWorks() {
   );
 }
 
-import {
-  useMotionValueEvent,
-  useScroll,
-  useTransform,
-  motion,
-} from "motion/react";
-
 interface TimelineEntry {
   title: string;
   content: React.ReactNode;
@@ -179,11 +165,7 @@ export const Timeline = ({ data }: { data: TimelineEntry[] }) => {
       className="w-full bg-white dark:bg-neutral-950 font-sans md:px-10"
       ref={containerRef}
     >
-      <div className="max-w-7xl mx-auto py-20 px-4 md:px-8 lg:px-10 border2">
-        <h2 className="text-4xl md:text-6xl font-bold text-neutral-500 dark:text-neutral-500 text-center">
-          How it works
-        </h2>
-      </div>
+      <Title heading="How it works" subHeading="A step by step guide" />
 
       <div ref={ref} className="relative max-w-7xl mx-auto pb-20 border2">
         {data.map((item, index) => (
@@ -219,7 +201,7 @@ export const Timeline = ({ data }: { data: TimelineEntry[] }) => {
               height: heightTransform,
               opacity: opacityTransform,
             }}
-            className="absolute inset-x-0 top-0  w-[2px] bg-gradient-to-t from-purple-500 via-blue-500 to-transparent from-[0%] via-[10%] rounded-full"
+            className="absolute inset-x-0 top-0  w-[2px] bg-gradient-to-t from-[#2AAAE5] via-[#49A612] to-transparent from-[0%] via-[10%] rounded-full"
           />
         </div>
       </div>

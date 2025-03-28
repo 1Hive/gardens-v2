@@ -16,18 +16,19 @@ import Image from "next/image";
 import { newLogo, commF, BrightIdLogo, PublicNounsLogo } from "@/assets";
 import { Button } from "@/components";
 import {
+  Hero,
   ToolkitFeatures,
-  CultivateChange,
-  Footer,
+  HowItWorks,
   Communities,
   Networks,
-  HowItWorks,
+  CultivateChange,
+  Footer,
 } from "@/components/LandingPage";
 import { ChainIcon } from "@/configs/chains";
 
 export default function Page() {
   return (
-    <div className="border2">
+    <>
       <Hero />
       <ToolkitFeatures />
       <HowItWorks />
@@ -35,185 +36,11 @@ export default function Page() {
       <Networks />
       <CultivateChange />
       <Footer />
-    </div>
+    </>
   );
 }
 
 //TODO: route app buttons to app.gardens ..
-
-const Hero = () => {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  return (
-    <div className="bg-primary-soft border2">
-      <header className="absolute inset-x-0 top-0 z-50">
-        {/* <Banner /> */}
-
-        <nav
-          aria-label="Global"
-          className="mx-auto flex max-w-7xl items-center justify-between p-6 lg:px-8"
-        >
-          <div className="flex lg:flex-1">
-            <span className="sr-only">Gardens logo</span>
-            <div className="-m-1.5 flex items-center gap-3 p-1.5">
-              <Image
-                src={newLogo}
-                alt="logo"
-                height={40}
-                width={40}
-                loading="lazy"
-              />
-              <span className="text-2xl font-medium">Gardens</span>
-            </div>
-          </div>
-          <div className="flex lg:hidden">
-            <button
-              type="button"
-              onClick={() => setMobileMenuOpen(true)}
-              className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5"
-            >
-              <span className="sr-only">Open main menu</span>
-              <Bars3Icon aria-hidden="true" className="h-6 w-6" />
-            </button>
-          </div>
-          <div className="hidden lg:flex lg:gap-x-12">
-            {/* {navigation.map((item) => (
-              <a
-                key={item.name}
-                href={item.href}
-                className="text-sm font-semibold leading-6 text-gray-900"
-              >
-                {item.name}
-              </a>
-            ))} */}{" "}
-            <a
-              href="https://docs.gardens.fund"
-              target="_blank"
-              rel="noreferrer"
-              className="text-primary-content subtitle2 flex items-center gap-1 hover:opacity-90"
-            >
-              Documentation
-              <ArrowTopRightOnSquareIcon
-                width={16}
-                height={16}
-                className="text-primary-content"
-              />
-            </a>
-          </div>
-        </nav>
-        <Dialog
-          open={mobileMenuOpen}
-          onClose={setMobileMenuOpen}
-          className="lg:hidden"
-        >
-          <div className="fixed inset-0 z-50" />
-          <Dialog.Panel className="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-white px-6 py-6 sm:max-w-sm sm:ring-1 sm:ring-gray-900/10">
-            <div className="flex items-center justify-between">
-              <div className="-m-1.5 p-1.5">
-                <span className="sr-only">Gardens</span>
-                <Image
-                  src={newLogo}
-                  alt="logo"
-                  height={40}
-                  width={40}
-                  loading="lazy"
-                />
-              </div>
-              <button
-                type="button"
-                onClick={() => setMobileMenuOpen(false)}
-                className="-m-2.5 rounded-md p-2.5 text-gray-700"
-              >
-                <span className="sr-only">Close menu</span>
-                <XMarkIcon aria-hidden="true" className="h-6 w-6" />
-              </button>
-            </div>
-            <div className="mt-6 flow-root">
-              <div className="-my-6 divide-y divide-gray-500/10">
-                <div className="space-y-2 py-6">
-                  {/* {navigation.map((item) => (
-                    <a
-                      key={item.name}
-                      href={item.href}
-                      className="-mx-3 block rounded-lg px-3 py-2 text-base font-semibold leading-7 text-gray-900 hover:bg-gray-50"
-                    >
-                      {item.name}
-                    </a>
-                  ))} */}
-                </div>
-                <div className="py-6">
-                  <a
-                    href="https://docs.gardens.fund"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-primary-content subtitle2 flex items-center gap-1 hover:opacity-90"
-                  >
-                    Documentation
-                    <ArrowTopRightOnSquareIcon
-                      width={16}
-                      height={16}
-                      className="text-primary-content"
-                    />
-                  </a>
-                </div>
-              </div>
-            </div>
-          </Dialog.Panel>
-        </Dialog>
-      </header>
-
-      <div className="relative isolate overflow-hidden bg-gradient-to-b from-indigo-100/20 pt-14">
-        <div
-          aria-hidden="true"
-          className="absolute inset-y-0 right-1/2 -z-10 -mr-96 w-[200%] origin-top-right skew-x-[-30deg] bg-neutral shadow-xl shadow-indigo-600/10 ring-1 ring-neutral-inverted-content sm:-mr-80 lg:-mr-96"
-        />
-        <div className="mx-auto max-w-7xl px-6 py-32 sm:py-40 lg:px-8">
-          <div className="mx-auto max-w-2xl lg:mx-0 lg:grid lg:max-w-none lg:grid-cols-2 lg:gap-x-16 lg:gap-y-6 xl:grid-cols-1 xl:grid-rows-1 xl:gap-x-8">
-            <h1 className="tracking-tigh max-w-2xl text-4xl font-bold opacity-90 sm:text-6xl lg:col-span-2 xl:col-auto">
-              Planting the seeds for the public economy
-            </h1>
-            <div className="mt-6 max-w-xl lg:-mt-2 xl:col-end-1 xl:row-start-1">
-              <p className="text-lg leading-8">
-                Gardens is a coordination platform giving communities
-                streamlined access to web3’s best decision-sourcing mechanisms.
-              </p>
-              <p className="mt-2 text-lg leading-8">
-                Our emphasis is on a community experience that’s{" "}
-                <span className="text-lg font-bold text-primary-content">
-                  healthy, fun, intuitive, secure, and open.
-                </span>
-              </p>
-              <div className="mt-10 flex items-center gap-x-6">
-                <a
-                  href="https://app.gardens.fund/"
-                  className="flex items-center justify-center text-sm font-semibold leading-6 text-gray-900"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  <Button>Launch App</Button>
-                </a>
-                <a
-                  href="https://calendly.com/gardens-demo"
-                  className="flex items-center justify-center text-sm font-semibold leading-6 text-gray-900"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  <Button btnStyle="outline">Book Demo</Button>
-                </a>
-              </div>
-            </div>
-
-            <Image
-              src={commF}
-              alt={"ecosystem img"}
-              className="mx-auto mt-10 aspect-[6/5] w-full max-w-lg rounded-2xl object-cover sm:mt-16 lg:mt-0 lg:max-w-none xl:row-span-2 xl:row-end-2 xl:mt-36"
-            />
-          </div>
-        </div>
-        <div className="absolute inset-x-0 bottom-0 -z-10 h-24 bg-gradient-to-t from-white sm:h-32" />
-      </div>
-    </div>
-  );
-};
 
 // const whoIsFor = [
 //   {

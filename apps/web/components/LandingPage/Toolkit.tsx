@@ -2,11 +2,15 @@
 import React, { useRef } from "react";
 import { ReactNode } from "react";
 import { motion, useScroll, useTransform } from "motion/react";
+import { Title } from "./Titles";
 
 export const ToolkitFeatures = () => {
   return (
     <section className="mx-auto max-w-7xl px-4 text-neutral-content border2">
-      <SectionTitle />
+      <Title
+        heading="Grow faster with our"
+        subHeading="curated governance toolkit"
+      />
       <div className="mb-4 grid grid-cols-12 gap-4">
         <BounceCard className="col-span-12 md:col-span-4">
           <CardTitle>Gnosis Safe</CardTitle>
@@ -78,37 +82,5 @@ const CardTitle = ({ children }: { children: ReactNode }) => {
     <h3 className="mx-auto text-center text-3xl font-semibold text-neutral-content">
       {children}
     </h3>
-  );
-};
-
-const SectionTitle = () => {
-  const targetRef = useRef(null);
-  const { scrollYProgress } = useScroll({
-    target: targetRef,
-    offset: ["start end", "end start"],
-  });
-
-  const y = useTransform(scrollYProgress, [0, 1], [50, -50]);
-  const opacity = useTransform(scrollYProgress, [0.25, 0.5, 0.75], [0, 1, 1]);
-
-  return (
-    <motion.h3
-      ref={targetRef}
-      className="mx-auto text-center text-3xl font-semibold text-neutral-content"
-      style={{
-        y,
-        opacity,
-      }}
-    >
-      <div className="mb-12 flex flex-col items-center justify-between gap-4 md:px-8">
-        <h2 className="max-w-lg text-3xl font-bold md:text-5xl">
-          Grow faster with our
-        </h2>
-        <h3 className="text-neutral-soft-content font-chakra text-2xl md:text-4xl">
-          {" "}
-          curated governance toolkit
-        </h3>
-      </div>
-    </motion.h3>
   );
 };
