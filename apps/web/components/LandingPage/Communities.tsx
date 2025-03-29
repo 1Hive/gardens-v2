@@ -11,7 +11,7 @@ const communities = [
   {
     name: "1Hive",
     description: "A community for gardening enthusiasts.",
-    members: 21,
+    members: 22,
     link: "https://app.gardens.fund/gardens/100/0x71850b7e9ee3f13ab46d67167341e4bdc905eef9/0xe2396fe2169ca026962971d3b2e373ba925b6257",
     socials: {
       twitter: "https://twitter.com/gardenersunited",
@@ -21,7 +21,7 @@ const communities = [
   {
     name: "Gitcoin Grants Gardens",
     description: "A community for gardening enthusiasts.",
-    members: 18,
+    members: 22,
     link: "https://app.gardens.fund/gardens/10/0x1eba7a6a72c894026cd654ac5cdcf83a46445b08/0xd3345828914b740fddd1b8ae4f4d2ce03d1e0960",
     socials: {
       twitter: "https://twitter.com/gardenersunited",
@@ -72,7 +72,11 @@ export const Communities = () => {
       whileInView={{ opacity: 1 }}
       transition={{ ease: "easeInOut", duration: 0.45 }}
     >
-      <Title heading="Communities" subHeading="Join a community today" />
+      <Title
+        heading="Communities"
+        subHeading="Join a community today!"
+        inverted
+      />
 
       <div className="flex flex-col gap-8">
         {communities.map((community) => (

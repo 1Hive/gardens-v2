@@ -17,7 +17,7 @@ import { AnimatePresence, motion } from "motion/react";
 export const Hero = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   return (
-    <div className="bg-primary-soft relative min-h-screen">
+    <div className="bg-primary-soft relative min-h-screen overflow-hidden">
       <header className="absolute inset-x-0 top-0 z-50">
         {/* <Banner /> */}
 
@@ -30,8 +30,9 @@ export const Hero = () => {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{
-              duration: 0.2,
-              scale: { type: "spring", visualDuration: 0.2, bounce: 0.5 },
+              delay: 0.5,
+              duration: 0.3,
+              scale: { type: "spring", visualDuration: 0.3, bounce: 0.35 },
             }}
           >
             <span className="sr-only">Gardens logo</span>
@@ -103,7 +104,7 @@ export const Hero = () => {
         </Dialog>
       </header>
 
-      <div className="relative isolate overflow-hidden pt-20">
+      <div className="relative isolate overflow-hidden py-20">
         <div aria-hidden="true" className="" />
         <div className="mx-auto max-w-7xl px-6 py-8 lg:px-8 ">
           <motion.div
@@ -111,9 +112,8 @@ export const Hero = () => {
             initial={{ opacity: 0, scale: 0 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{
-              delay: 0.2,
-              duration: 0.2,
-              scale: { type: "spring", visualDuration: 0.2, bounce: 0.7 },
+              duration: 0.3,
+              scale: { type: "spring", visualDuration: 0.3, bounce: 0.5 },
             }}
           >
             <h1 className="tracking-tigh max-w-2xl text-3xl font-bold opacity-90 sm:text-5xl uppercase">
@@ -150,8 +150,8 @@ export const Hero = () => {
       </div>
       <Image
         src={PoweredBy}
-        width={125}
-        height={125}
+        width={100}
+        height={100}
         alt={"poweredBy img"}
         className="absolute bottom-5 right-5"
       />
@@ -159,6 +159,20 @@ export const Hero = () => {
   );
 };
 
+const draw = {
+  hidden: { pathLength: 0, opacity: 0 },
+  visible: (i: number) => {
+    const delay = i * 0.3;
+    return {
+      pathLength: 1,
+      opacity: 1,
+      transition: {
+        pathLength: { delay, type: "spring", duration: 1.5, bounce: 0 },
+        opacity: { delay, duration: 0.01 },
+      },
+    };
+  },
+};
 function FlipWordsDemo() {
   const words = ["healthy", "fun", "intuitive", "secure", "open"];
 

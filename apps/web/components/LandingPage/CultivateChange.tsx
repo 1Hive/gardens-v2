@@ -12,7 +12,7 @@ export const CultivateChange = () => {
         scale: { type: "spring", visualDuration: 0.75, bounce: 0.35 },
       }}
     >
-      <div className="isolate overflow-hidden px-6 py-16 sm:rounded-3xl sm:px-24 xl:py-24 relative bg-primary-soft">
+      <div className="isolate overflow-hidden px-6 py-16 sm:rounded-3xl sm:px-24 xl:py-24 relative bg-primary-soft mb-20">
         <h2 className="mx-auto max-w-2xl text-center font-bold tracking-tight sm:text-4xl font-chakra">
           Cultivate change with Gardens
         </h2>

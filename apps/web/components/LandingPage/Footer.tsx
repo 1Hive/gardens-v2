@@ -4,29 +4,16 @@ import { newLogo } from "@/assets";
 import { JSX, SVGProps } from "react";
 
 const navigation = {
-  solutions: [
-    { name: "Marketing", href: "#" },
-    { name: "Analytics", href: "#" },
-    { name: "Automation", href: "#" },
-    { name: "Commerce", href: "#" },
-    { name: "Insights", href: "#" },
-  ],
   support: [
-    { name: "Submit ticket", href: "#" },
-    { name: "Documentation", href: "#" },
-    { name: "Guides", href: "#" },
+    { name: "Github", href: "https://github.com/1Hive/gardens-v2" },
+    { name: "Documentation", href: "https://docs.gardens.fund/" },
+    {
+      name: "GG23 Gitcoin Grant",
+      href: "https://app.gardens.fund/gardens/10/0x1eba7a6a72c894026cd654ac5cdcf83a46445b08/0xd3345828914b740fddd1b8ae4f4d2ce03d1e0960",
+    },
   ],
-  company: [
-    { name: "About", href: "#" },
-    { name: "Blog", href: "#" },
-    { name: "Jobs", href: "#" },
-    { name: "Press", href: "#" },
-  ],
-  legal: [
-    { name: "Terms of service", href: "#" },
-    { name: "Privacy policy", href: "#" },
-    { name: "License", href: "#" },
-  ],
+  company: [{ name: "Report a bug", href: "#" }],
+
   social: [
     {
       name: "X",
@@ -69,7 +56,7 @@ const navigation = {
 export const Footer = () => {
   return (
     <motion.footer
-      className="bg-white border2"
+      className="bg-white"
       initial={{ opacity: 0, scaleY: 0 }}
       whileInView={{ opacity: 1, scaleY: 1 }}
       transition={{

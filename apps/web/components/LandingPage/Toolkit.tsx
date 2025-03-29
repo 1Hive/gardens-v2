@@ -6,7 +6,7 @@ import { Title } from "./Titles";
 
 export const ToolkitFeatures = () => {
   return (
-    <section className="mx-auto max-w-7xl px-4 text-neutral-content border2">
+    <section className="mx-auto max-w-7xl px-4 text-neutral-content">
       <Title
         heading="Grow faster with our"
         subHeading="curated governance toolkit"

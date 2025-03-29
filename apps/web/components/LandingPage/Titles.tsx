@@ -4,9 +4,11 @@ import { ReactNode, useRef } from "react";
 export const Title = ({
   heading,
   subHeading,
+  inverted = false,
 }: {
   heading: string;
   subHeading: string;
+  inverted?: boolean;
 }) => {
   const targetRef = useRef(null);
   const { scrollYProgress } = useScroll({
@@ -20,16 +22,21 @@ export const Title = ({
   return (
     <motion.h3
       ref={targetRef}
-      className="mx-auto text-center text-3xl font-semibold text-neutral-content py-20 mb-2"
+      className="mx-auto text-center text-3xl font-semibold py-14 mb-2"
       style={{
         y,
         opacity,
       }}
     >
-      <div className="flex flex-col items-center justify-between gap-4 md:px-8">
-        <h2 className="max-w-lg text-3xl font-bold md:text-5xl">{heading}</h2>
-        <h3 className="text-neutral-soft-content font-chakra text-2xl md:text-4xl">
-          {" "}
+      <div className="flex flex-col items-center justify-between gap-2 md:px-8">
+        <h2
+          className={`text-3xl font-bold md:text-5xl lg:text-6xl ${inverted ? "text-neutral-soft-content" : "text-neutral-content"}`}
+        >
+          {heading}
+        </h2>
+        <h3
+          className={`font-chakra text-2xl md:text-4xl lg:text-5xl ${inverted ? "" : "text-neutral-soft-content"}`}
+        >
           {subHeading}
         </h3>
       </div>

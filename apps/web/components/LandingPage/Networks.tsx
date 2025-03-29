@@ -40,8 +40,8 @@ function Container({
       whileHover="active"
       variants={{ idle: {}, active: {} }}
       data-dark={dark ? "true" : undefined}
-      className=" group relative flex flex-col overflow-hidden rounded-lg 
-        bg-primary ring-1 shadow-xs ring-black/5 border2"
+      className="group relative flex flex-col overflow-hidden rounded-lg 
+        bg-primary  my-20"
     >
       <div className="relative h-80 shrink-0">
         {graphic}
