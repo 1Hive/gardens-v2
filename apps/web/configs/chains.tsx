@@ -11,6 +11,7 @@ import {
   arbitrum,
   arbitrumSepolia,
   base,
+  celo,
   Chain,
   gnosis,
   localhost,
@@ -20,6 +21,7 @@ import {
 } from "viem/chains";
 import Subgraph from "../configs/subgraph.json";
 import { BaseLogo } from "@/assets/BaseLogo";
+import { CeloLogo } from "@/assets/CeloLogo";
 import { ChainId } from "@/types";
 
 type ChainIconProps = React.SVGProps<SVGSVGElement> & {
@@ -35,6 +37,7 @@ export const CHAINS: Chain[] = [
   polygon,
   gnosis,
   base,
+  celo,
   // mainnet,
 ];
 
@@ -233,6 +236,21 @@ export const chainConfigMap: {
     passportScorer: "0xb39dFA15F96055664179e8EcaA890f3FA26c21e9",
     isTestnet: false,
     safePrefix: "base",
+  },
+  42220: {
+    name: celo.name,
+    icon: CeloLogo,
+    explorer: "https://celo.blockscout.com",
+    blockTime: 3.8,
+    confirmations: 4, // 4
+    rpcUrl: process.env.RPC_URL_BASE!,
+    ...getSubgraphUrls("TODO", "gardens-v2---celo", SUBGRAPH_PRODNET_VERSION),
+    globalTribunal: "0x9a17De1f0caD0c592F656410997E4B685d339029",
+    allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
+    arbitrator: "0x83bDE2E2D8AcAAad2D300DA195dF3cf86b234bdd",
+    passportScorer: "0xb39dfa15f96055664179e8ecaa890f3fa26c21e9",
+    isTestnet: false,
+    safePrefix: "celo",
   },
   // 1: {
   //   name: mainnet.name,
