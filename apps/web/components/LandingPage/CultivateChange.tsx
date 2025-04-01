@@ -19,7 +19,7 @@ export const CultivateChange = () => {
         <h4 className="mx-auto mt-2 max-w-xl text-center leading-8 text-neutral-soft-content">
           Start growing your community today.
         </h4>
-        <div className="mx-auto mt-10 flex max-w-md items-center justify-center gap-x-10 rounded-xl">
+        <div className="mx-auto mt-10 flex max-w-md items-center justify-center gap-x-6 rounded-xl">
           <a
             href="/"
             className="flex items-center justify-center text-sm font-semibold leading-6 text-neutral-soft"

@@ -21,7 +21,7 @@ const communities = [
   {
     name: "Gitcoin Grants Gardens",
     description: "A community for gardening enthusiasts.",
-    members: 22,
+    members: 27,
     link: "https://app.gardens.fund/gardens/10/0x1eba7a6a72c894026cd654ac5cdcf83a46445b08/0xd3345828914b740fddd1b8ae4f4d2ce03d1e0960",
     socials: {
       twitter: "https://twitter.com/gardenersunited",
@@ -32,7 +32,7 @@ const communities = [
     name: "Blockscout",
     description:
       "A community for gardening enthusiasts gardening enthusiasts gardening enthusiasts.",
-    members: 374,
+    members: 380,
     link: "https://app.gardens.fund/gardens/100/0xe91d153e0b41518a2ce8dd3d7944fa863463a97d/0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
     socials: {
       twitter: "https://twitter.com/gardenersunited",

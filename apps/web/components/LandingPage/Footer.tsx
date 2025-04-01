@@ -55,16 +55,8 @@ const navigation = {
 
 export const Footer = () => {
   return (
-    <motion.footer
-      className="bg-white"
-      initial={{ opacity: 0, scaleY: 0 }}
-      whileInView={{ opacity: 1, scaleY: 1 }}
-      transition={{
-        duration: 0.6,
-        scale: { type: "spring", visualDuration: 0.6, bounce: 0.65 },
-      }}
-    >
-      <div className="mx-auto max-w-7xl px-6 pb-8 pt-16 sm:pt-24 lg:px-8 lg:pt-24">
+    <footer className="bg-white">
+      <div className="mx-auto max-w-7xl px-6 pb-8 pt-16 sm:pt-20 lg:px-8 lg:pt-24">
         <div className="xl:grid xl:grid-cols-3 xl:gap-8">
           <div className="flex flex-col gap-6">
             <span className="sr-only">Gardens logo</span>
@@ -137,6 +129,6 @@ export const Footer = () => {
           </div>
         </div>
       </div>
-    </motion.footer>
+    </footer>
   );
 };
