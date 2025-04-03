@@ -11,7 +11,7 @@ contract DeploySafeArbitrator is BaseMultiChain {
 
     function runCurrentNetwork(string memory networkJson) public override {
         address proxyOwner = networkJson.readAddress(getKeyNetwork(".ENVS.PROXY_OWNER"));
-        address sender = 0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD;
+        // address sender = networkJson.readAddress(getKeyNetwork(".ENVS.SENDER"));
 
         address newSafeArbitrator = address(
             new ERC1967Proxy(

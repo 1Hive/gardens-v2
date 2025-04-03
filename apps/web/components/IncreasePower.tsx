@@ -227,8 +227,8 @@ export const IncreasePower = ({
         isOpen={isOpenModal}
         onClose={() => setIsOpenModal(false)}
       >
-        <div className="flex gap-2">
-          <p>Adding:</p>
+        <div className="flex gap-2 mb-2">
+          <p className="">Adding:</p>
           <DisplayNumber number={amount} tokenSymbol={tokenSymbol} />
         </div>
       </TransactionModal>

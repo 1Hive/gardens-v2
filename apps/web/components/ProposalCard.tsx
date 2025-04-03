@@ -203,22 +203,21 @@ export function ProposalCard({
         </div>
 
         {/* support description or slider */}
-        {isPoolEnabled && (
+        {isPoolEnabled && !isProposalEnded && (
           <div className="flex gap-12 flex-wrap w-full ">
             <div className="mt-4 w-full">
               {isAllocationView ?
                 <div className="flex w-full flex-wrap items-center justify-between gap-6">
                   <div className="flex items-center gap-8 flex-grow flex-wrap">
-                    <div
-                      className={`flex-grow sm:max-w-[460px] ${isProposalEnded && "tooltip"}`}
-                      data-tip="Click X to remove your support from this proposal"
-                    >
+                    <div className={"flex-grow sm:max-w-[460px]"}>
                       <input
                         type="range"
                         min={0}
                         max={Number(memberActivatedPoints)}
                         value={inputData ? Number(inputData.value) : undefined}
-                        className={`range range-md cursor-pointer bg-neutral-soft [--range-shdw:var(--color-green-500)] ${isProposalEnded ? "grayscale !cursor-not-allowed" : ""}`}
+                        className={
+                          "range range-md cursor-pointer bg-neutral-soft [--range-shdw:var(--color-green-500)] "
+                        }
                         step={Number(memberActivatedPoints) / 100}
                         onChange={(e) => {
                           inputHandler(
@@ -226,7 +225,6 @@ export function ProposalCard({
                             BigInt(Math.floor(Number(e.target.value))),
                           );
                         }}
-                        disabled={isProposalEnded}
                       />
 
                       <div className="flex w-full justify-between px-2.5">
@@ -239,16 +237,6 @@ export function ProposalCard({
                       </div>
                     </div>
 
-                    {isProposalEnded && inputData?.value != 0n && (
-                      <Button
-                        className="mb-2 !p-2 !px-3"
-                        btnStyle="outline"
-                        onClick={() => inputHandler(proposalData.id, 0n)}
-                        tooltip="Clear allocation"
-                      >
-                        &times;
-                      </Button>
-                    )}
                     {inputValue > 0 && (
                       <div className="mb-2">
                         <>

@@ -318,7 +318,10 @@ export default function Page({
                       icon={<InformationCircleIcon />}
                     >
                       <DisplayNumber
-                        number={formatUnits(requestedAmount, 18)}
+                        number={formatUnits(
+                          requestedAmount,
+                          poolToken?.decimals ?? 18,
+                        )}
                         tokenSymbol={poolToken?.symbol}
                         compact={true}
                         className="font-bold text-black"
@@ -375,7 +378,7 @@ export default function Page({
                   Manage support
                 </Button>
               </div>
-              <div className="flex flex-col gap-7">
+              <div className="flex flex-col gap-7 relative">
                 <ConvictionBarChart
                   currentConvictionPct={currentConvictionPct}
                   thresholdPct={thresholdPct}
@@ -402,10 +405,7 @@ export default function Page({
                         currentConvictionPct < thresholdPct || !isConnected
                       }
                       tooltip={
-                        (
-                          (tooltipMessage ??
-                          currentConvictionPct < thresholdPct)
-                        ) ?
+                        tooltipMessage ?? currentConvictionPct < thresholdPct ?
                           "Proposal not executable"
                         : undefined
                       }

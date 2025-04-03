@@ -5,6 +5,7 @@ export const QUERY_PARAMS = {
   communityPage: {
     newPool: "newPool",
     covenant: "covenant",
+    newCommunity: "newCommunity", // directly on the new community page
   },
   poolPage: {
     newProposal: "newProposal",

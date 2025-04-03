@@ -51,11 +51,11 @@ export function FormInput({
   suffix,
 }: Props) {
   const registered = register?.(registerKey, {
+    ...registerOptions,
     required,
     disabled,
-    onChange: onChange ?? registerOptions?.onChange,
     value: value ?? registerOptions?.value,
-    ...registerOptions,
+    onChange: onChange ?? registerOptions?.onChange,
   });
 
   const fixedInputClassname =
@@ -94,7 +94,7 @@ export function FormInput({
             step={step}
             disabled={disabled || readOnly}
             readOnly={readOnly || disabled}
-            onChange={onChange}
+            onChange={registered?.onChange ?? onChange}
             {...otherProps}
           />
         : type === "textarea" ?
@@ -109,7 +109,7 @@ export function FormInput({
             rows={rows}
             disabled={disabled || readOnly}
             readOnly={readOnly || disabled}
-            onChange={onChange}
+            onChange={registered?.onChange ?? onChange}
             value={value}
             {...otherProps}
           />
@@ -131,10 +131,9 @@ export function FormInput({
               value={value}
               onChange={(v) => {
                 const e = {
-                  target: { value: v },
+                  target: { value: v, name: registerKey },
                 } as ChangeEvent<HTMLInputElement>;
-                registered?.onChange(e);
-                onChange?.(e);
+                (registered?.onChange ?? onChange)?.(e);
               }}
               {...otherProps}
             />

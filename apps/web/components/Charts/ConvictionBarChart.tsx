@@ -364,11 +364,16 @@ export const ConvictionBarChart = ({
           className="cursor-default"
         />
       </Skeleton>
+
       <Button
         btnStyle="link"
         onClick={handleRefreshConviction}
         tooltip="Refresh conviction"
-        className="!p-3"
+        className={
+          !compact ?
+            "absolute -mt-36 lg:-mt-[66px] left-[250px] sm:left-[550px] lg:left-[985px]"
+          : ""
+        }
       >
         <ArrowPathIcon className="w-5" />
       </Button>

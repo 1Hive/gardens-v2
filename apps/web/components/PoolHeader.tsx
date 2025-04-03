@@ -36,7 +36,7 @@ import MarkdownWrapper from "./MarkdownWrapper";
 import { Modal } from "./Modal";
 import { Skeleton } from "./Skeleton";
 import { Statistic } from "./Statistic";
-import { blueLand, grassLarge } from "@/assets";
+import { blueLand, grassLarge, GitcoinMatchingLogo } from "@/assets";
 import { chainConfigMap } from "@/configs/chains";
 import { VOTING_POINT_SYSTEM_DESCRIPTION } from "@/configs/constants";
 import { usePubSubContext } from "@/contexts/pubsub.context";
@@ -45,6 +45,7 @@ import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithC
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { MetadataV1 } from "@/hooks/useIpfsFetch";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
+
 import { registryCommunityABI, safeABI } from "@/src/generated";
 import {
   PointSystems,
@@ -52,6 +53,7 @@ import {
   ProposalStatus,
   SybilResistanceType,
 } from "@/types";
+import { elegibleGG23pools } from "@/utils/matchingPools";
 import {
   convertSecondsToReadableTime,
   CV_PASSPORT_THRESHOLD_SCALE,
@@ -205,7 +207,7 @@ export default function PoolHeader({
   const poolConfig = [
     {
       label: "Spending limit",
-      value: `${spendingLimit.toPrecision(2)} %`,
+      value: `${spendingLimit > 99 ? "100" : spendingLimit.toPrecision(2)} %`,
       info: "Max percentage of the pool funds that can be spent in a single proposal.",
     },
     {
@@ -372,6 +374,7 @@ export default function PoolHeader({
               {ipfsResult?.title}
             </Skeleton>
           </h2>
+
           {(!!isCouncilMember || isCouncilSafe) && (
             <div className="flex gap-2 flex-wrap">
               <Button

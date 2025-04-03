@@ -1,0 +1,18 @@
+{
+  "network": "celo",
+  "chainId": 42220,
+  "dataSources": [
+    {
+      "name": "RegistryFactoryV0_0",
+      "startBlock": 31270470,
+      "address": "0xA71023bc64c9711C2037ab491DE80fd74504bd55",
+      "customTemplate": "registryFactory"
+    },
+    {
+      "name": "PassportScorer",
+      "startBlock": 31270470,
+      "address": "0xb39dfa15f96055664179e8ecaa890f3fa26c21e9",
+      "customTemplate": "passportScorer"
+    }
+  ]
+}

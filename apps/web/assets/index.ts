@@ -30,3 +30,4 @@ export { default as HomeBanner } from "./HomeBanner.png";
 export { default as BrightIdLogo } from "./BrightId-logo.svg";
 export { default as PublicNounsLogo } from "./publicnouns-logo.svg";
 export { default as BlockscoutLogo } from "./blockscout-logo.svg";
+export { default as GitcoinMatchingLogo } from "./Gitcoin.svg";

@@ -305,10 +305,15 @@ export function Proposals({
     if (!proposals) return;
 
     const newInputs: { [key: string]: ProposalInputItem } = {};
-    proposals.forEach(({ id, proposalNumber }) => {
+
+    proposals.forEach(({ id, proposalNumber, proposalStatus }) => {
+      const proposalEnded =
+        ProposalStatus[proposalStatus] !== "active" &&
+        ProposalStatus[proposalStatus] !== "disputed";
       newInputs[id] = {
         proposalId: id,
-        value: stakedFilters[id]?.value ?? 0n,
+        value:
+          !proposalEnded && stakedFilters[id] ? stakedFilters[id]?.value : 0n,
         proposalNumber,
       };
     });

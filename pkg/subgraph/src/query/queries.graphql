@@ -92,6 +92,7 @@ query isMember($me: ID!, $comm: String!) {
         id
         proposalNumber
         stakedAmount
+        proposalStatus
         strategy {
           id
           poolId

@@ -61,12 +61,12 @@ function CancelButton({ proposalData }: Props) {
       >
         <div>
           <div>
-            This action cannot be undone and will permanently prevent this
-            proposal from being executed.
+            This action cannot be undone.
+            <span className="font-semibold ml-1">
+              Are you sure you want to cancel?
+            </span>
           </div>
-          <p className="font-bold mt-1">
-            Are you absolutely sure you want to cancel?
-          </p>
+
           <div className="modal-action">
             <Button
               btnStyle="outline"
