@@ -388,6 +388,7 @@ export default function Page({
                   timeToPass={Number(timeToPass)}
                   onReadyToExecute={triggerConvictionRefetch}
                   defaultChartMaxValue
+                  proposalStatus={proposalStatus}
                 />
                 <div className="flex justify-center lg:justify-end w-full">
                   {status === "active" && !isSignalingType && (
@@ -402,11 +403,13 @@ export default function Page({
                         })
                       }
                       disabled={
-                        currentConvictionPct < thresholdPct || !isConnected
+                        currentConvictionPct <= thresholdPct ||
+                        !isConnected ||
+                        proposalStatus === "disputed"
                       }
                       tooltip={
-                        tooltipMessage ?? currentConvictionPct < thresholdPct ?
-                          "Proposal not executable"
+                        tooltipMessage ?? currentConvictionPct <= thresholdPct ?
+                          "Proposal has not reached the threshold yet"
                         : undefined
                       }
                     >
