@@ -10,7 +10,7 @@ RPC_URL_LOCALHOST = http://127.0.0.1:8545
 print : 
 	@echo $(RPC_URL)
 
-# Localhost
+### LOCLAHOST ###
 
 fork:
 	anvil --chain-id 1337
@@ -53,7 +53,7 @@ add-strategy-local: #make add-strategy S=0x1234
 	-vvvv
 
 
-# Sepolia
+### SEPOLIA ###
 
 deploy-testnet-multi-sep: 
 	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
@@ -96,7 +96,7 @@ add-strategy-ethsep-pool: #make add-strategy S=0x1234
 	--legacy \
 	-vvvv
 
-# Optimism Sepolia
+### OPTIMISM SEPOLIA ###
 deploy-testnet-multi-op: 
 	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
 	--rpc-url $(RPC_URL_OP_TESTNET) \
@@ -108,7 +108,7 @@ deploy-testnet-multi-op:
 	--verify \
 	-vvv
 
-# Arbitrum Sepolia
+### ARBITRUM SEPOLIA ###
 
 fork-testnet:
 	anvil --host=0.0.0.0 -f $(RPC_URL_ARB_TESTNET)
@@ -291,7 +291,11 @@ deploy-safe-arbitrator-arbsep:
 	--broadcast \
 	-vv
 
-# Arbitrum
+########################  PROD ##################################
+
+
+
+### ARBITRUM ###
 
 transfer-ownership-arbitrum:
 	-forge script script/TransferOwnershipAllContracts.s.sol:TransferOwnershipAllContracts \
@@ -398,7 +402,7 @@ deploy-safe-arbitrator-arbitrum:
 	--broadcast \
 	-vv
 
-# Optimism
+### OPTIMISM ###
 
 transfer-ownership-optimism:
 	-forge script script/TransferOwnershipAllContracts.s.sol:TransferOwnershipAllContracts \
@@ -506,7 +510,7 @@ deploy-safe-arbitrator-optimism:
 	--broadcast \
 	-vv
 
-# Polygon
+### POLYGON ###
 
 transfer-ownership-polygon:
 	-forge script script/TransferOwnershipAllContracts.s.sol:TransferOwnershipAllContracts \
@@ -612,7 +616,7 @@ deploy-safe-arbitrator-polygon:
 	--broadcast \
 	-vv
 
-# Gnosis
+### GNOSIS ###
 
 transfer-ownership-gnosis:
 	-forge script script/TransferOwnershipAllContracts.s.sol:TransferOwnershipAllContracts \
@@ -744,7 +748,7 @@ change-passport-manager-gnosis:
 	--legacy \
 	-vvv
 
-# Base
+### BASE ###
 
 transfer-ownership-base:
 	-forge script script/TransferOwnershipAllContracts.s.sol:TransferOwnershipAllContracts \
@@ -879,6 +883,156 @@ deploy-proxy-owner-base:
 	--via-ir \
 	--verify \
 	--broadcast \
+	-vv
+
+### CELO ###
+
+transfer-ownership-celo:
+	-forge script script/TransferOwnershipAllContracts.s.sol:TransferOwnershipAllContracts \
+	--rpc-url $(RPC_URL_CELO) \
+	--account pkGarden \
+	--sig "run(string)" 'celo' \
+	--chain-id 42220 \
+	--broadcast \
+	--via-ir \
+	--etherscan-api-key $(CELOSCAN_API_KEY) \
+	--verify \
+	-vvv
+
+deploy-new-collateral-vault-template-celo: 
+	-forge script script/DeployCollateralVaultTemplate.s.sol:DeployCollateralVaultTemplate \
+	--rpc-url $(RPC_URL_CELO) \
+	--sig "run(string)" 'celo' \
+	--account pkGarden \
+	--etherscan-api-key $(CELOSCAN_API_KEY) \
+	--ffi \
+	--chain-id 42220 \
+	--legacy \
+	--broadcast \
+	--via-ir \
+	--verify \
+	-vvv
+
+deploy-celo: 
+	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
+	--rpc-url $(RPC_URL_CELO) \
+	--sig "run(string)" 'celo' \
+	--chain-id 42220 \
+	--account pkGarden \
+	--etherscan-api-key $(CELOSCAN_API_KEY) \
+	--ffi \
+	--broadcast \
+	--legacy \
+	--via-ir \
+	--verify \
+	-vvv
+
+upgrade-celo: 
+	-forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
+	--rpc-url $(RPC_URL_CELO) \
+	--sig "run(string)" 'celo' \
+	--account pkGarden \
+	--etherscan-api-key $(CELOSCAN_API_KEY) \
+	--ffi \
+	--chain-id 42220 \
+	--broadcast \
+	--legacy \
+	--verify \
+	--via-ir \
+	-vvv
+
+
+verify-blockscout-celo: 
+	-forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
+	--rpc-url $(RPC_URL_CELO) \
+	--sig "run(string)" 'celo' \
+	--chain-id 42220 \
+	--account pkGarden \
+	--verifier blockscout \
+	--verifier-url https://celo.blockscout.com/api/ \
+	--ffi \
+	--legacy \
+	--verify \
+	--via-ir \
+	-vvv \
+	--slow
+
+verify-deploy-blockscout-celo: 
+	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
+	--rpc-url $(RPC_URL_CELO) \
+	--sig "run(string)" 'base' \
+	--account pkGarden \
+	--verifier blockscout \
+	--verifier-url https://celo.blockscout.com/api/ \
+	--ffi \
+	--chain-id 42220 \
+	--legacy \
+	--verify \
+	--via-ir \
+	-vvv \
+	--slow
+
+deploy-and-verify-celo: deploy-celo verify-deploy-blockscout-celo
+upgrade-and-verify-celo: upgrade-celo verify-blockscout-celo
+
+change-passport-manager-celo: 
+	-forge script script/PassportScorerWriter.s.sol:PassportScorerWriter \
+	--rpc-url $(RPC_URL_CELO) \
+	--sig "run(string)" 'celo' \
+	--chain-id 42220 \
+	--account pkGarden \
+	--ffi \
+	--broadcast \
+	--legacy \
+	-vvv
+
+deploy-passport-scorer-celo:
+	-forge script script/DeployPassportScorer.s.sol:DeployPassportScorer \
+	--rpc-url $(RPC_URL_CELO) \
+	--sig "run(string)" 'celo' \
+	--chain-id 42220 \
+	--etherscan-api-key $(CELOSCAN_API_KEY) \
+	--account pkGarden \
+	--via-ir \
+	--verify \
+	--broadcast \
+	-vv
+
+verify-blockscout-passport-scorer-celo:
+	-forge script script/DeployPassportScorer.s.sol:DeployPassportScorer \
+	--rpc-url $(RPC_URL_CELO) \
+	--sig "run(string)" 'celo' \
+	--chain-id 42220 \
+	--verifier blockscout \
+	--verifier-url https://celo.blockscout.com/api/ \
+	--account pkGarden \
+	--via-ir \
+	--verify \
+	-vv
+
+verify-blockscout-safe-arbitrator-celo:
+	-forge script script/DeploySafeArbitrator.s.sol:DeploySafeArbitrator \
+	--rpc-url $(RPC_URL_CELO) \
+	--sig "run(string)" 'celo' \
+	--chain-id 42220 \
+	--verifier blockscout \
+	--verifier-url https://celo.blockscout.com/api/ \
+	--account pkGarden \
+	--via-ir \
+	--verify \
+	-vv \ 
+	
+
+verify-blockscout-proxy-owner-celo:
+	-forge script script/DeployProxyOwner.s.sol:DeployProxyOwner \
+	--rpc-url $(RPC_URL_CELO) \
+	--sig "run(string)" 'celo' \
+	--chain-id 42220 \
+	--verifier blockscout \
+	--verifier-url https://celo.blockscout.com/api/ \
+	--account pkGarden \
+	--via-ir \
+	--verify \
 	-vv
 
 # Mainnet

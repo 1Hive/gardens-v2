@@ -6,6 +6,7 @@ import {
   ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
 import { FetchTokenResult } from "@wagmi/core";
+import Image from "next/image";
 import { parseUnits } from "viem";
 import { Address, useAccount, useBalance } from "wagmi";
 import { Allo } from "#/subgraph/.graphclient";
@@ -14,11 +15,13 @@ import { DisplayNumber } from "./DisplayNumber";
 import { FormInput } from "./Forms";
 import { Skeleton } from "./Skeleton";
 import { TransactionModal, TransactionProps } from "./TransactionModal";
+import { GitcoinMatchingLogo } from "@/assets";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useHandleAllowance } from "@/hooks/useHandleAllowance";
 import { alloABI } from "@/src/generated";
+import { elegibleGG23pools } from "@/utils/matchingPools";
 import { getTxMessage } from "@/utils/transactionMessages";
 
 interface PoolMetricsProps {
@@ -137,8 +140,23 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
           />
         </div>
       </TransactionModal>
-      <section className="section-layout gap-4 flex flex-col">
-        <h2>Pool Funds</h2>
+      <section className="section-layout gap-2 flex flex-col">
+        <div className="flex items-center justify-between">
+          <h2>Pool Funds</h2>
+          {poolId && elegibleGG23pools.includes(Number(poolId)) && (
+            <div className="flex flex-col items-center gap-2 py-2">
+              <Image
+                src={GitcoinMatchingLogo}
+                alt="Gitcoin Matching Logo"
+                width={100}
+                height={60}
+              />
+              <p className="text-primary-content text-md font-bold">
+                Eligible for GG23 matching
+              </p>
+            </div>
+          )}
+        </div>
         <div className="flex justify-between items-center flex-wrap">
           <div className="flex flex-col gap-2">
             <div className="flex gap-3">

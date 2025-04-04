@@ -342,6 +342,27 @@
       "hash": "9f6c9e199a409e72346dfdbaa6503a56c7443e76"
     },
     {
+      "name": "celo",
+      "chainId": 42220,
+      "testnet": false,
+      "no-safe": false,
+      "ENVS": {
+        "SENDER": "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD",
+        "PROXY_OWNER": "0x99EBeF5E196a9e8e39d92B18663C9236661607b1",
+        "ALLO_PROXY": "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
+        "ALLO_IMPL": "0xB087535DB0df98fC4327136e897A5985E5Cfbd66",
+        "REGISTRY": "0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3",
+        "ARBITRATOR": "0x83bDE2E2D8AcAAad2D300DA195dF3cf86b234bdd",
+        "PASSPORT_SCORER": "0xb39dfa15f96055664179e8ecaa890f3fa26c21e9"
+      },
+      "PROXIES": {
+        "REGISTRY_FACTORY": "0xA71023bc64c9711C2037ab491DE80fd74504bd55",
+        "REGISTRY_COMMUNITIES": [],
+        "CV_STRATEGIES": []
+      },
+      "hash": "9f6c9e199a409e72346dfdbaa6503a56c7443e76"
+    },
+    {
       "name": "mainnet",
       "chainId": 1,
       "testnet": false,

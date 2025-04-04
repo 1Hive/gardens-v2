@@ -213,8 +213,13 @@ export default function Page({
 
   useEffect(() => {
     const newPoolId = searchParams[QUERY_PARAMS.communityPage.newPool];
+    const isNewCommunity =
+      searchParams[QUERY_PARAMS.communityPage.newCommunity];
     const fetchedPools = poolsInReview.some((c) => c.poolId === newPoolId);
-    if (
+    if (isNewCommunity) {
+      console.debug("Community: New community, refetching...");
+      refetch();
+    } else if (
       newPoolId &&
       result &&
       !poolsInReview.some((p) => p.poolId === newPoolId)

@@ -369,26 +369,12 @@ export default function PoolHeader({
     <section className="section-layout flex flex-col gap-0">
       <header className="mb-4 flex flex-col">
         <div className="flex justify-between flex-wrap">
-          <div className="flex items-center justify-between w-full">
-            <h2>
-              <Skeleton isLoading={!ipfsResult} className="sm:!w-96 h-8">
-                {ipfsResult?.title}
-              </Skeleton>
-            </h2>
-            {poolId && elegibleGG23pools.includes(Number(poolId)) && (
-              <div className="flex flex-col items-center gap-2">
-                <Image
-                  src={GitcoinMatchingLogo}
-                  alt="Gitcoin Matching Logo"
-                  width={100}
-                  height={60}
-                />
-                <p className="text-primary-content text-md font-bold">
-                  Eligible for GG23 matching
-                </p>
-              </div>
-            )}
-          </div>
+          <h2>
+            <Skeleton isLoading={!ipfsResult} className="sm:!w-96 h-8">
+              {ipfsResult?.title}
+            </Skeleton>
+          </h2>
+
           {(!!isCouncilMember || isCouncilSafe) && (
             <div className="flex gap-2 flex-wrap">
               <Button

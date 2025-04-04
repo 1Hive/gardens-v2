@@ -244,7 +244,8 @@ export const ProposalForm = ({
     6,
   );
 
-  const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** (poolToken?.decimals ?? 0);
+  const INPUT_TOKEN_MIN_VALUE =
+    Number(requestedAmount) == 0 ? 0 : 1 / 10 ** (poolToken?.decimals ?? 0);
 
   const spendingLimitNumber = spendingLimit / 10 ** (poolToken?.decimals ?? 0);
 
