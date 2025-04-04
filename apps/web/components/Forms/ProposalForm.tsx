@@ -386,7 +386,7 @@ export const ProposalForm = ({
           )}
 
           {requestedAmount && thresholdPct !== 0 && thresholdPct < 100 && (
-            <InfoBox infoBoxType={"warning"}>
+            <InfoBox infoBoxType={"info"}>
               The conviction required in order for the proposal to pass with the
               requested amount is {thresholdPct}%.{" "}
               {requestedAmount &&
