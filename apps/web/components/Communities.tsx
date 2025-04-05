@@ -11,6 +11,7 @@ import {
 } from "#/subgraph/.graphclient";
 import { CommunityCard, CommunityCardSkeleton } from "./CommunityCard";
 import { CommunityFilters } from "./CommunityFilters";
+import { useCheat } from "@/hooks/useCheat";
 
 export type LightCommunity = Pick<RegistryCommunity, "id" | "communityName"> & {
   garden: Pick<TokenGarden, "address" | "chainId" | "symbol" | "name">;
@@ -119,6 +120,7 @@ export const Communities: React.FC<CommunitiesProps> = ({
   const [nameFilter, setNameFilter] = useState<string>("");
   const [tokenFilter, setTokenFilter] = useState<string>("");
   const [chainIdFilter, setchainIdFilter] = useState<string>("");
+  const showExcludedCommunities = useCheat("showExcludedCommunities");
 
   // Get unique token symbols and networks
   const availableTokens = Array.from(
@@ -140,7 +142,21 @@ export const Communities: React.FC<CommunitiesProps> = ({
         const networkMatch =
           !chainIdFilter ||
           community.garden.chainId.toString() === chainIdFilter;
-        return nameMatch && tokenMatch && networkMatch;
+
+        // Filter out excluded communities from environment variable
+        let isExcluded = false;
+        if (
+          !showExcludedCommunities &&
+          process.env.NEXT_PUBLIC_EXCLUDED_COMMUNITIES
+        ) {
+          const excludedCommunities =
+            process.env.NEXT_PUBLIC_EXCLUDED_COMMUNITIES.split(",").map((id) =>
+              id.trim().toLowerCase(),
+            );
+          isExcluded = excludedCommunities.includes(community.id.toLowerCase());
+        }
+
+        return nameMatch && tokenMatch && networkMatch && !isExcluded;
       });
     };
 
