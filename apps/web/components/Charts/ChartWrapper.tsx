@@ -11,6 +11,7 @@ type ChartWrapperProps = {
   message?: string;
   growing?: boolean | null;
   isSignalingType?: boolean;
+  proposalStatus?: string;
 };
 
 export const ChartWrapper = ({
@@ -18,6 +19,7 @@ export const ChartWrapper = ({
   message,
   growing,
   isSignalingType,
+  proposalStatus,
 }: ChartWrapperProps) => {
   const growthClassname =
     growing ? "text-primary-content" : "text-danger-content";
@@ -83,7 +85,11 @@ export const ChartWrapper = ({
               </p>
             </>
           )}
-          <p>{message}</p>
+          <p>
+            {proposalStatus === "disputed" ?
+              "Proposal is awaiting dispute resolution."
+            : message}
+          </p>
         </div>
       </div>
     </>

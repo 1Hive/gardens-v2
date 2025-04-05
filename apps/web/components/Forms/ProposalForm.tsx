@@ -16,18 +16,23 @@ import { FormAddressInput } from "./FormAddressInput";
 import { FormInput } from "./FormInput";
 import { FormPreview, FormRow } from "./FormPreview";
 import { LoadingSpinner } from "../LoadingSpinner";
+import { calculateConvictionGrowthInSeconds } from "../PoolHeader";
 import { WalletBalance } from "../WalletBalance";
-import { Button, EthAddress, InfoBox } from "@/components";
+import { Button, EthAddress, InfoBox, InfoWrapper } from "@/components";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
-import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
+import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { alloABI, cvStrategyABI } from "@/src/generated";
 import { PoolTypes } from "@/types";
 import { getEventFromReceipt } from "@/utils/contracts";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
-import { calculatePercentageBigInt, formatTokenAmount } from "@/utils/numbers";
+import {
+  calculatePercentageBigInt,
+  convertSecondsToReadableTime,
+  formatTokenAmount,
+} from "@/utils/numbers";
 
 //protocol : 1 => means ipfs!, to do some checks later
 type FormInputs = {
@@ -47,6 +52,7 @@ type ProposalFormProps = {
   arbitrableConfig: Pick<ArbitrableConfig, "submitterCollateralAmount">;
   poolId: number;
   proposalType: number;
+  poolParams: Pick<CVStrategyConfig, "decay">;
   alloInfo: Pick<Allo, "id" | "chainId" | "tokenNative">;
   tokenGarden: Pick<TokenGarden, "symbol" | "decimals">;
   spendingLimit: number;
@@ -118,6 +124,7 @@ export const ProposalForm = ({
   arbitrableConfig,
   poolId,
   proposalType,
+  poolParams,
   alloInfo,
   spendingLimit,
   spendingLimitPct,
@@ -159,7 +166,14 @@ export const ProposalForm = ({
   const router = useRouter();
   const pathname = usePathname();
 
-  const chainIdFromPath = useChainIdFromPath();
+  const { blockTime, id: chainIdFromPath } = useChainFromPath()!;
+
+  const convictionGrowthSec = calculateConvictionGrowthInSeconds(
+    poolParams.decay,
+    blockTime,
+  );
+  const { value: convictionGrowth, unit: convictionGrowthUnit } =
+    convertSecondsToReadableTime(convictionGrowthSec);
 
   const disableSubmitBtn = useMemo<ConditionObject[]>(
     () => [
@@ -387,13 +401,34 @@ export const ProposalForm = ({
           )}
 
           {requestedAmount && thresholdPct !== 0 && thresholdPct <= 100 && (
-            <InfoBox infoBoxType={"warning"}>
-              The conviction required in order for the proposal to pass with the
-              requested amount is {thresholdPct}%.{" "}
-              {requestedAmount &&
-                thresholdPct > 50 &&
-                thresholdPct < 100 &&
-                "It may be difficult to pass"}
+            <InfoBox
+              infoBoxType={
+                thresholdPct < 50 ? "info"
+                : thresholdPct < 100 ?
+                  "warning"
+                : "error"
+              }
+            >
+              <div className="flex w-full justify-between">
+                The{" "}
+                <InfoWrapper
+                  tooltip={`Conviction accumulates over time based on both the level of support on a proposal and the duration defined by the Conviction Growth parameter (${convictionGrowth} ${convictionGrowthUnit}).`}
+                  size="sm"
+                  hoverOnChildren={true}
+                  hideIcon={true}
+                >
+                  <span className="border-b border-dashed border-info">
+                    conviction
+                  </span>
+                </InfoWrapper>{" "}
+                required in order for the proposal to pass with the requested
+                amount is {thresholdPct}%.{" "}
+                {requestedAmount &&
+                  thresholdPct > 50 &&
+                  (thresholdPct < 100 ?
+                    "It may be difficult to pass."
+                  : "Its unlikely to pass.")}
+              </div>
             </InfoBox>
           )}
           {proposalTypeName !== "signaling" && (

@@ -91,6 +91,7 @@ export default function Page({
           arbitrableConfig={data.arbitrableConfigs[0]}
           strategy={strategyObj}
           poolId={poolId}
+          poolParams={data.cvstrategies[0].config}
           proposalType={proposalType}
           alloInfo={alloInfo}
           tokenGarden={tokenGarden}

@@ -749,7 +749,7 @@ export function PoolForm({ token, communityAddr }: Props) {
               <div className="flex flex-col gap-2 my-2">
                 <hr />
                 <span className="text-neutral-soft-content mx-auto pt-2">
-                  Council can edit this section once the pool is created.
+                  Coucil safe can edit this section once the pool is created.
                 </span>
               </div>
               {sybilResistanceType === "gitcoinPassport" && (

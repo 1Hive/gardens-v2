@@ -15,7 +15,7 @@ import { Countdown } from "./Countdown";
 import { DisplayNumber } from "./DisplayNumber";
 import { ProposalInputItem } from "./Proposals";
 import TooltipIfOverflow from "./TooltipIfOverflow";
-import { Badge, Button, Card } from "@/components";
+import { Badge, Card } from "@/components";
 import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
 import { Skeleton } from "@/components/Skeleton";
 import { QUERY_PARAMS } from "@/constants/query-params";
@@ -282,6 +282,7 @@ export function ProposalCard({
                             isSignalingType={isSignalingType}
                             proposalNumber={proposalNumber}
                             refreshConviction={triggerConvictionRefetch}
+                            proposalStatus={proposalStatus}
                           />
                         </div>
                       </div>

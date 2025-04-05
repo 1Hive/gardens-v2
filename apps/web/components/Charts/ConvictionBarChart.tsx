@@ -23,6 +23,7 @@ type ConvictionBarChartProps = {
   compact?: boolean;
   timeToPass?: number;
   defaultChartMaxValue?: boolean;
+  proposalStatus: string;
   onReadyToExecute?: () => void;
   refreshConviction?: () => Promise<any>;
 };
@@ -37,6 +38,7 @@ export const ConvictionBarChart = ({
   timeToPass,
   onReadyToExecute,
   defaultChartMaxValue = false,
+  proposalStatus,
   refreshConviction,
 }: ConvictionBarChartProps) => {
   const [convictionRefreshing, setConvictionRefreshing] = useState(true);
@@ -174,7 +176,7 @@ export const ConvictionBarChart = ({
       Object.values(scenarioMappings).find(({ condition }) => condition())
         ?.details[0] ?? {
         message:
-          proposalSupportPct == 0 ?
+          proposalSupportPct === 0 ?
             "Proposal waiting for support"
           : "Scenario not found",
         growing: null,
@@ -389,6 +391,7 @@ export const ConvictionBarChart = ({
             message={isSignalingType ? undefined : message}
             growing={growing}
             isSignalingType={isSignalingType}
+            proposalStatus={proposalStatus}
           >
             {chart}
           </ChartWrapper>

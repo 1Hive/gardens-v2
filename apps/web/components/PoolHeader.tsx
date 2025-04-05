@@ -36,7 +36,7 @@ import MarkdownWrapper from "./MarkdownWrapper";
 import { Modal } from "./Modal";
 import { Skeleton } from "./Skeleton";
 import { Statistic } from "./Statistic";
-import { blueLand, grassLarge, GitcoinMatchingLogo } from "@/assets";
+import { blueLand, grassLarge } from "@/assets";
 import { chainConfigMap } from "@/configs/chains";
 import { VOTING_POINT_SYSTEM_DESCRIPTION } from "@/configs/constants";
 import { usePubSubContext } from "@/contexts/pubsub.context";
@@ -53,7 +53,6 @@ import {
   ProposalStatus,
   SybilResistanceType,
 } from "@/types";
-import { elegibleGG23pools } from "@/utils/matchingPools";
 import {
   convertSecondsToReadableTime,
   CV_PASSPORT_THRESHOLD_SCALE,
@@ -81,7 +80,7 @@ type Props = {
   maxAmount: number;
 };
 
-function calculateConvictionGrowthInSeconds(
+export function calculateConvictionGrowthInSeconds(
   decay: number,
   blockTime: number,
 ): number {
