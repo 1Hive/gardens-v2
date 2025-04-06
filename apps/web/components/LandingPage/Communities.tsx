@@ -15,8 +15,7 @@ const communities = [
     members: 22,
     link: "https://app.gardens.fund/gardens/100/0x71850b7e9ee3f13ab46d67167341e4bdc905eef9/0xe2396fe2169ca026962971d3b2e373ba925b6257",
     socials: {
-      twitter: "https://twitter.com/gardenersunited",
-      facebook: "https://facebook.com/gardenersunited",
+      x: "https://x.com/1HiveOrg",
     },
   },
   {
@@ -26,8 +25,7 @@ const communities = [
     members: 38,
     link: "https://app.gardens.fund/gardens/10/0x1eba7a6a72c894026cd654ac5cdcf83a46445b08/0xd3345828914b740fddd1b8ae4f4d2ce03d1e0960",
     socials: {
-      twitter: "https://twitter.com/gardenersunited",
-      facebook: "https://facebook.com/gardenersunited",
+      x: "https://x.com/gitcoin",
     },
   },
   {
@@ -37,8 +35,7 @@ const communities = [
     members: 380,
     link: "https://app.gardens.fund/gardens/100/0xe91d153e0b41518a2ce8dd3d7944fa863463a97d/0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
     socials: {
-      twitter: "https://twitter.com/gardenersunited",
-      facebook: "https://facebook.com/gardenersunited",
+      x: "https://x.com/blockscout",
     },
   },
   {
@@ -48,8 +45,7 @@ const communities = [
     members: 14,
     link: "https://app.gardens.fund/gardens/42161/0xf1588798b3b8de0f297b87a1196dd4c57a0194ab/0x98d84697794f4aae7540c1f85433e2ab39ab1206",
     socials: {
-      twitter: "https://twitter.com/gardenersunited",
-      facebook: "https://facebook.com/gardenersunited",
+      x: "/",
     },
   },
 ];
@@ -60,8 +56,7 @@ interface CommunityCardProps {
   members: number;
   link: string;
   socials: {
-    twitter: string;
-    facebook: string;
+    x: string;
   };
   // img?: string;
 }
@@ -121,12 +116,23 @@ const CommunityCard = ({
         </div>
         <div className="grid grid-cols-1 gap-10 max-lg:flex-col max-lg:gap-3 md:w-[20%] lg:w-[30%] lg:grid-cols-2">
           <div className="flex flex-col gap-4 max-lg:gap-1">
-            <span className="text-caption1">Active Members:</span>
+            <span className="text-caption1">Community Members:</span>
             <span className="whitespace-pre text-xl">{members}</span>
           </div>
-          <div className="flex flex-col gap-4 max-lg:gap-1">
-            <span className="text-caption1">Socials:</span>
-            <span className="whitespace-pre text-xl">X Y Z</span>
+          <div className="flex flex-col max-lg:gap-1 gap-8">
+            <span className="text-caption1">Socials:</span>{" "}
+            {socials.x && (
+              <a href={socials.x} target="_blank" rel="noreferrer" className="">
+                <svg
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                  width={25}
+                  height={25}
+                >
+                  <path d="M13.6823 10.6218L20.2391 3H18.6854L12.9921 9.61788L8.44486 3H3.2002L10.0765 13.0074L3.2002 21H4.75404L10.7663 14.0113L15.5685 21H20.8131L13.6819 10.6218H13.6823ZM11.5541 13.0956L10.8574 12.0991L5.31391 4.16971H7.70053L12.1742 10.5689L12.8709 11.5655L18.6861 19.8835H16.2995L11.5541 13.096V13.0956Z" />
+                </svg>
+              </a>
+            )}
           </div>
         </div>
         <div className="flex justify-end md:w-[20%] lg:w-[20%]">

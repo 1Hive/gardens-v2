@@ -51,7 +51,7 @@ function Container({
           <div className="absolute inset-0 bg-linear-to-t from-white to-50% group-data-dark:from-gray-800 group-data-dark:from-[-25%]" />
         )}
       </div>
-      <h4 className="text-center mt-4 text-2xl">
+      <h4 className="text-center mt-4 text-2xl font-chakra">
         GNOSIS - ARBITRUM - OPTIMISM - POLYGON - BASE
       </h4>
     </motion.div>
