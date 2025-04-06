@@ -1,10 +1,9 @@
 "use client";
 
 import { motion } from "motion/react";
-import { newLogo, TxInProgress } from "@/assets";
+import { newLogo } from "@/assets";
 import { ChainIcon } from "@/configs/chains";
 import Image from "next/image";
-import { StaticImport } from "next/dist/shared/lib/get-img-props";
 
 export const Networks = () => {
   return (
@@ -52,6 +51,9 @@ function Container({
           <div className="absolute inset-0 bg-linear-to-t from-white to-50% group-data-dark:from-gray-800 group-data-dark:from-[-25%]" />
         )}
       </div>
+      <h4 className="text-center mt-4 text-2xl">
+        GNOSIS - ARBITRUM - OPTIMISM - POLYGON - BASE
+      </h4>
     </motion.div>
   );
 }
@@ -179,12 +181,13 @@ function LogoCluster() {
           top={56}
           hover={{ x: -4, y: -5, rotate: -6, delay: 0.35 }}
         />
-        <Logo
+        {/* here goes the Celo chain logo */}
+        {/* <Logo
           chain={8453}
           left={96}
           top={176}
           hover={{ x: -3, y: 5, rotate: 3, delay: 0.15 }}
-        />
+        /> */}
       </div>
     </div>
   );

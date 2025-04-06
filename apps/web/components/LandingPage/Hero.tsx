@@ -148,13 +148,16 @@ export const Hero = () => {
           </motion.div>
         </div>
       </div>
-      <Image
+      <div className="absolute bottom-5 right-5 border2 bg-neutral-soft-2 rounded-3xl py-2 px-6">
+        <p className="text-center">Powered by 1hive</p>
+      </div>
+      {/* <Image
         src={PoweredBy}
         width={100}
         height={100}
         alt={"poweredBy img"}
         className="absolute bottom-5 right-5"
-      />
+      /> */}
     </div>
   );
 };
@@ -186,7 +189,7 @@ function FlipWordsDemo() {
 
 const FlipWords = ({
   words,
-  duration = 1000,
+  duration = 1300,
   className,
 }: {
   words: string[];
@@ -218,7 +221,7 @@ const FlipWords = ({
     >
       <motion.div
         initial={{
-          opacity: 0,
+          opacity: 0.5,
           y: 10,
         }}
         animate={{

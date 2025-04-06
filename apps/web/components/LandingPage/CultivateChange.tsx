@@ -21,7 +21,7 @@ export const CultivateChange = () => {
         </h4>
         <div className="mx-auto mt-10 flex max-w-md items-center justify-center gap-x-6 rounded-xl">
           <a
-            href="/"
+            href="https://app.gardens.fund/gardens"
             className="flex items-center justify-center text-sm font-semibold leading-6 text-neutral-soft"
             target="_blank"
             rel="noreferrer"

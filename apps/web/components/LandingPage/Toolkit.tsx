@@ -8,6 +8,7 @@ export const ToolkitFeatures = () => {
   return (
     <section className="mx-auto max-w-7xl px-4 text-neutral-content">
       <Title
+        inverted
         heading="Grow faster with our"
         subHeading="curated governance toolkit"
       />
