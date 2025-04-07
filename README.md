@@ -94,11 +94,7 @@ Our documentation follows these core principles:
 
 ### Contributing to Documentation
 
-We welcome documentation improvements! See our [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines on how to help improve our docs.
-
-### Documentation Roadmap
-
-We're continuously improving our documentation. For documentation issues or suggestions, please [open an issue](https://github.com/1Hive/gardens-v2/issues/new?labels=documentation) with the "documentation" label.
+We welcome documentation improvements! For documentation issues or suggestions, please [open an issue](https://github.com/1Hive/gardens-v2/issues/new?labels=documentation) with the "documentation" label.
 
 ## License
 
