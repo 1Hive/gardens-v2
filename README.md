@@ -75,6 +75,31 @@ pnpm dev
 
 We welcome contributions! Please see our [New Contributor Onboarding](https://1hive-gardens.notion.site/Gardens-New-Contributor-Onboarding-8ab2e08a585c46e3bcb36482d006c9e9?pvs=4) for details on how to get started.
 
+## 📚 Documentation
+
+Gardens is fully open source - always has been, always will be. We're committed to comprehensive documentation to help communities implement and contribute to the platform.
+
+### Documentation Resources
+
+- **[Gardens documentation](https://docs.gardens.fund)
+- **[How to grow using Gardens](https://1hive-gardens.notion.site/How-to-grow-using-Gardens-84be339e761d462085dcb27db12d1c4c)
+
+### Documentation Principles
+
+Our documentation follows these core principles:
+- **Accessibility**: Documentation for users of all technical levels
+- **Completeness**: Covering all aspects of the platform
+- **Currency**: Regularly updated to reflect the latest changes
+- **Community-driven**: Welcoming contributions from all users
+
+### Contributing to Documentation
+
+We welcome documentation improvements! See our [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines on how to help improve our docs.
+
+### Documentation Roadmap
+
+We're continuously improving our documentation. For documentation issues or suggestions, please [open an issue](https://github.com/1Hive/gardens-v2/issues/new?labels=documentation) with the "documentation" label.
+
 ## License
 
 [GPL-3.0](https://github.com/1Hive/gardens-v2?tab=GPL-3.0-1-ov-file#readme)
