@@ -65,7 +65,7 @@ export function PoolCard({ pool, token, chainId }: Props) {
       <header className="mb-4 flex flex-col w-full justify-between items-start gap-2">
         <div className="flex w-full justify-between items-center">
           <Skeleton isLoading={!ipfsResult}>
-            <h3 className="flex items-start w-fit max-w-full">
+            <h3 className="flex items-start max-w-[190px]">
               <TooltipIfOverflow>{ipfsResult?.title}</TooltipIfOverflow>
             </h3>
           </Skeleton>
