@@ -100,7 +100,7 @@ contract PassportScorerTest is Test {
         (uint256 storedThreshold, bool storedActive, address storedCouncilSafe) = passportScorer.strategies(strategy);
         assertEq(storedThreshold, 0);
         assertEq(storedActive, false);
-        // assertEq(storedCouncilSafe, councilSafe); // councilSafe should remain the same // Goss: Commented because we also want to wipe the coucil safe to allow the strategy to be readed
+        // assertEq(storedCouncilSafe, councilSafe); // councilSafe should remain the same // Goss: Commented because we also want to wipe the council safe to allow the strategy to be readed
     }
 
     function testModifyThresholdByAuthorized() public {
