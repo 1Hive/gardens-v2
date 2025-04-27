@@ -403,12 +403,12 @@ export default function Page({
                         })
                       }
                       disabled={
-                        currentConvictionPct < thresholdPct ||
+                        currentConvictionPct <= thresholdPct ||
                         !isConnected ||
                         proposalStatus === "disputed"
                       }
                       tooltip={
-                        tooltipMessage ?? currentConvictionPct < thresholdPct ?
+                        tooltipMessage ?? currentConvictionPct <= thresholdPct ?
                           "Proposal has not reached the threshold yet"
                         : undefined
                       }
