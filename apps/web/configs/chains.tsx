@@ -244,7 +244,7 @@ export const chainConfigMap: {
     blockTime: 3.8,
     confirmations: 4, // 4
     rpcUrl: process.env.RPC_URL_BASE!,
-    ...getSubgraphUrls("TODO", "gardens-v2---celo", SUBGRAPH_PRODNET_VERSION),
+    ...getSubgraphUrls("BsXEnGaXdj3CkGRn95bswGcv2mQX7m8kNq7M7WBxxPx8", "gardens-v2---celo", SUBGRAPH_PRODNET_VERSION),
     globalTribunal: "0x9a17De1f0caD0c592F656410997E4B685d339029",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0x83bDE2E2D8AcAAad2D300DA195dF3cf86b234bdd",

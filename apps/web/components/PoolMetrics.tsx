@@ -190,6 +190,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
               value={amount}
               onChange={(e) => setAmount(Number(e.target.value))}
               suffix={poolToken.symbol}
+              step={0.000000000000000001}
               otherProps={{
                 max: balance?.formatted,
               }}
