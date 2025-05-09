@@ -3,7 +3,7 @@ import { motion } from "motion/react";
 import Image from "next/image";
 import { XCircleIcon } from "@heroicons/react/24/outline";
 import { Statistic } from "../Statistic";
-import { newLogo } from "../../assets";
+import { newLogo, commImg } from "../../assets";
 import { Button } from "../Button";
 import { Title } from "./Titles";
 
@@ -22,7 +22,7 @@ const communities = [
     name: "Gitcoin Grants Gardens",
     description:
       "Gitcoin empowers communities to fund, build, and protect shared needs.",
-    members: 38,
+    members: 79,
     link: "https://app.gardens.fund/gardens/10/0x1eba7a6a72c894026cd654ac5cdcf83a46445b08/0xd3345828914b740fddd1b8ae4f4d2ce03d1e0960",
     socials: {
       x: "https://x.com/gitcoin",
@@ -107,7 +107,7 @@ const CommunityCard = ({
         decoding="async"
         data-nimg="1"
         className="w-full rounded-xl md:h-20 md:w-20"
-        src={newLogo}
+        src={commImg}
       />{" "}
       <div className="flex flex-1 justify-between gap-10 max-md:flex-col md:items-center">
         <div className="flex flex-col gap-2 md:w-[45%]">

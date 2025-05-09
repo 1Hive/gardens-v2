@@ -12,9 +12,10 @@ export function HowItWorks() {
       title: "Create or Join a Community",
       content: (
         <div>
-          <p className="text-neutral-800 text-xs md:text-sm font-normal mb-8">
-            Some description of community does here.
-          </p>
+          <h5 className="font-bold mb-8">
+            Start by joining a community you like or create a new with your own
+            values and covenant.
+          </h5>
           <div className="grid grid-cols-2 gap-4">
             <Image
               src={newLogo}
@@ -38,12 +39,17 @@ export function HowItWorks() {
       title: "Pools",
       content: (
         <div>
+          <h5 className="font-bold mb-8">
+            Different Pools that can be set up in a community to meet the need
+            specific applications.
+          </h5>
           <p className="text-neutral-800  text-xs md:text-sm font-normal mb-8">
-            Talk about params - etc - the activate and manage support section
-            and funding section
+            Funding Pools are linked to a pool of tokens, which can be
+            requested.
           </p>
           <p className="text-neutral-800  text-xs md:text-sm font-normal mb-8">
-            Talk about funding and signaling pools and how they can be used
+            Signaling Pools do not link Proposals to any executable onchain
+            actions, they simply accumulate conviction to make decisions.
           </p>
           <div className="grid grid-cols-2 gap-4">
             <Image
@@ -68,17 +74,20 @@ export function HowItWorks() {
       title: "Proposals",
       content: (
         <div>
-          <p className="text-neutral-800  text-xs md:text-sm font-normal mb-4">
-            A check list of proposals features, good behavior and bad thing to
-            do, they can be disputed. How much they can ask in fundings. Why
-            conviction grows slowslowly.
-          </p>
+          <h5 className="mb-4 font-bold">
+            Pitch Your Ideas and Gather Community Support!.
+          </h5>
           <div className="mb-8">
             <div className="flex gap-2 items-center text-neutral-700 dark:text-neutral-300 text-xs md:text-sm">
-              ✅ Ask for funding for a project or idea
+              ✅ Have an idea to improve your community but need funds to make
+              it happen? Create a Funding Proposal!
             </div>
             <div className="flex gap-2 items-center text-neutral-700 dark:text-neutral-300 text-xs md:text-sm">
-              ✅ See conviction grow overtime
+              ✅ Or do you have a suggestion and want to see what the community
+              thinks about it? Create a Signaling Proposal!
+            </div>
+            <div className="flex gap-2 items-center text-neutral-700 dark:text-neutral-300 text-xs md:text-sm">
+              ✅ See conviction grow overtime if Community Supporst it
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -104,9 +113,7 @@ export function HowItWorks() {
       title: "Tribunal and Council safe",
       content: (
         <div>
-          <p className="text-neutral-800  text-xs md:text-sm font-normal mb-4">
-            What they do - who are those people - what else ?
-          </p>
+          <h5 className="font-normal mb-4"></h5>
 
           <div className="grid grid-cols-2 gap-4">
             <Image
