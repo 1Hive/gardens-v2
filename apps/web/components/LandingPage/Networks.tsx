@@ -52,7 +52,7 @@ function Container({
         )}
       </div>
       <h4 className="text-center mt-4 text-2xl font-chakra">
-        GNOSIS - ARBITRUM - OPTIMISM - POLYGON - BASE
+        GNOSIS - ARBITRUM - OPTIMISM - POLYGON - BASE - CELO
       </h4>
     </motion.div>
   );

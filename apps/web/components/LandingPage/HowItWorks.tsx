@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
-import { newLogo } from "@/assets";
+import { newLogo, grassLarge } from "@/assets";
 import { useScroll, useTransform, motion } from "motion/react";
 import { Title } from "./Titles";
 
@@ -17,19 +17,14 @@ export function HowItWorks() {
             values and covenant.
           </h5>
           <div className="grid grid-cols-2 gap-4">
-            <Image
-              src={newLogo}
-              alt="startup template"
-              width={500}
-              height={500}
-              className="rounded-lg object-cover h-20 md:h-44 lg:h-60 w-full shadow-[0_0_24px_rgba(34,_42,_53,_0.06),_0_1px_1px_rgba(0,_0,_0,_0.05),_0_0_0_1px_rgba(34,_42,_53,_0.04),_0_0_4px_rgba(34,_42,_53,_0.08),_0_16px_68px_rgba(47,_48,_55,_0.05),_0_1px_0_rgba(255,_255,_255,_0.1)_inset]"
+            <Card
+              title="Covenant"
+              description="The Covenant is a foundational agreement that governs the operations and decision-making processes within a Community. It outlines the rules and responsibilities of participants. "
             />
-            <Image
-              src={newLogo}
-              alt="startup template"
-              width={500}
-              height={500}
-              className="rounded-lg object-cover h-20 md:h-44 lg:h-60 w-full shadow-[0_0_24px_rgba(34,_42,_53,_0.06),_0_1px_1px_rgba(0,_0,_0,_0.05),_0_0_0_1px_rgba(34,_42,_53,_0.04),_0_0_4px_rgba(34,_42,_53,_0.08),_0_16px_68px_rgba(47,_48,_55,_0.05),_0_1px_0_rgba(255,_255,_255,_0.1)_inset]"
+            <Card
+              title="Community & Protocol Fee"
+              description="Community Fees are optionally set by the Council Safe. 
+Protocol Fees (is a % of the community fee) go to the Gardens platform and are also paid by users when joining a community."
             />
           </div>
         </div>
@@ -40,31 +35,20 @@ export function HowItWorks() {
       content: (
         <div>
           <h5 className="font-bold mb-8">
-            Different Pools that can be set up in a community to meet the need
-            specific applications.
+            Different Pools that can be set up in a community to meet specific
+            applications.
           </h5>
-          <p className="text-neutral-800  text-xs md:text-sm font-normal mb-8">
-            Funding Pools are linked to a pool of tokens, which can be
-            requested.
-          </p>
-          <p className="text-neutral-800  text-xs md:text-sm font-normal mb-8">
-            Signaling Pools do not link Proposals to any executable onchain
-            actions, they simply accumulate conviction to make decisions.
-          </p>
+
           <div className="grid grid-cols-2 gap-4">
-            <Image
-              src={newLogo}
-              alt="hero template"
-              width={500}
-              height={500}
-              className="rounded-lg object-cover h-20 md:h-44 lg:h-60 w-full shadow-[0_0_24px_rgba(34,_42,_53,_0.06),_0_1px_1px_rgba(0,_0,_0,_0.05),_0_0_0_1px_rgba(34,_42,_53,_0.04),_0_0_4px_rgba(34,_42,_53,_0.08),_0_16px_68px_rgba(47,_48,_55,_0.05),_0_1px_0_rgba(255,_255,_255,_0.1)_inset]"
+            <Card
+              title="Funding Pools"
+              description="Funding Pools are linked to a pool of tokens, which can be
+            requested. An execution threshold is based on the requested amount relative to the total funds available in the  pool."
             />
-            <Image
-              src={newLogo}
-              alt="feature template"
-              width={500}
-              height={500}
-              className="rounded-lg object-cover h-20 md:h-44 lg:h-60 w-full shadow-[0_0_24px_rgba(34,_42,_53,_0.06),_0_1px_1px_rgba(0,_0,_0,_0.05),_0_0_0_1px_rgba(34,_42,_53,_0.04),_0_0_4px_rgba(34,_42,_53,_0.08),_0_16px_68px_rgba(47,_48,_55,_0.05),_0_1px_0_rgba(255,_255,_255,_0.1)_inset]"
+            <Card
+              title="Signaling Pools"
+              description="Signaling Pools do not link to any executable onchain actions, they
+            simply accumulate conviction to make decisions."
             />
           </div>
         </div>
@@ -77,33 +61,15 @@ export function HowItWorks() {
           <h5 className="mb-4 font-bold">
             Pitch Your Ideas and Gather Community Support!.
           </h5>
-          <div className="mb-8">
-            <div className="flex gap-2 items-center text-neutral-700 dark:text-neutral-300 text-xs md:text-sm">
-              ✅ Have an idea to improve your community but need funds to make
-              it happen? Create a Funding Proposal!
-            </div>
-            <div className="flex gap-2 items-center text-neutral-700 dark:text-neutral-300 text-xs md:text-sm">
-              ✅ Or do you have a suggestion and want to see what the community
-              thinks about it? Create a Signaling Proposal!
-            </div>
-            <div className="flex gap-2 items-center text-neutral-700 dark:text-neutral-300 text-xs md:text-sm">
-              ✅ See conviction grow overtime if Community Supporst it
-            </div>
-          </div>
+
           <div className="grid grid-cols-2 gap-4">
-            <Image
-              src={newLogo}
-              alt="hero template"
-              width={500}
-              height={500}
-              className="rounded-lg object-cover h-20 md:h-44 lg:h-60 w-full shadow-[0_0_24px_rgba(34,_42,_53,_0.06),_0_1px_1px_rgba(0,_0,_0,_0.05),_0_0_0_1px_rgba(34,_42,_53,_0.04),_0_0_4px_rgba(34,_42,_53,_0.08),_0_16px_68px_rgba(47,_48,_55,_0.05),_0_1px_0_rgba(255,_255,_255,_0.1)_inset]"
+            <Card
+              title="Funding Proposals"
+              description="Funding  proposals are designed to request financial support from the Community Pool for specific community projects or initiatives. "
             />
-            <Image
-              src={newLogo}
-              alt="feature template"
-              width={500}
-              height={500}
-              className="rounded-lg object-cover h-20 md:h-44 lg:h-60 w-full shadow-[0_0_24px_rgba(34,_42,_53,_0.06),_0_1px_1px_rgba(0,_0,_0,_0.05),_0_0_0_1px_rgba(34,_42,_53,_0.04),_0_0_4px_rgba(34,_42,_53,_0.08),_0_16px_68px_rgba(47,_48,_55,_0.05),_0_1px_0_rgba(255,_255,_255,_0.1)_inset]"
+            <Card
+              title="Siganling Proposals"
+              description="Signaling proposals are used to gauge community sentiment regarding changes or initiatives without requesting financial resources."
             />
           </div>
         </div>
@@ -113,22 +79,21 @@ export function HowItWorks() {
       title: "Tribunal and Council safe",
       content: (
         <div>
-          <h5 className="font-normal mb-4"></h5>
-
+          <h5 className="font-bold mb-4">
+            Tribunal and Council Safe are the two main governance bodies of a
+            community.
+          </h5>
           <div className="grid grid-cols-2 gap-4">
-            <Image
-              src={newLogo}
-              alt="hero template"
-              width={500}
-              height={500}
-              className="rounded-lg object-cover h-20 md:h-44 lg:h-60 w-full shadow-[0_0_24px_rgba(34,_42,_53,_0.06),_0_1px_1px_rgba(0,_0,_0,_0.05),_0_0_0_1px_rgba(34,_42,_53,_0.04),_0_0_4px_rgba(34,_42,_53,_0.08),_0_16px_68px_rgba(47,_48,_55,_0.05),_0_1px_0_rgba(255,_255,_255,_0.1)_inset]"
+            <Card
+              title="Council Safe"
+              description="Safe is to manage the settings of Pools
+            and the community as a whole."
             />
-            <Image
-              src={newLogo}
-              alt="feature template"
-              width={500}
-              height={500}
-              className="rounded-lg object-cover h-20 md:h-44 lg:h-60 w-full shadow-[0_0_24px_rgba(34,_42,_53,_0.06),_0_1px_1px_rgba(0,_0,_0,_0.05),_0_0_0_1px_rgba(34,_42,_53,_0.04),_0_0_4px_rgba(34,_42,_53,_0.08),_0_16px_68px_rgba(47,_48,_55,_0.05),_0_1px_0_rgba(255,_255,_255,_0.1)_inset]"
+            <Card
+              title="Tribunal Safe"
+              description="Serves as a dispute resolution body within a Community.
+            Members can dispute proposals and the Tribunal will adjudicate
+            based on established guidelines and covenant"
             />
           </div>
         </div>
@@ -146,6 +111,29 @@ interface TimelineEntry {
   title: string;
   content: React.ReactNode;
 }
+
+const Card = ({
+  title,
+  description,
+}: {
+  title: string;
+  description: string;
+}) => {
+  return (
+    <>
+      <div className="relative rounded-2xl p-4 h-[323px] flex flex-col gap-6 bg-primary-soft overflow-hidden">
+        <h4>{title}</h4>
+        <p>{description}</p>
+
+        <Image
+          src={grassLarge}
+          alt="Garden Land"
+          className="absolute bottom-0 inset-x-0 w-full object-cover h-6"
+        />
+      </div>
+    </>
+  );
+};
 
 export const Timeline = ({ data }: { data: TimelineEntry[] }) => {
   const ref = useRef<HTMLDivElement>(null);
