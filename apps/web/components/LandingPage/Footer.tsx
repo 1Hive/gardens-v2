@@ -71,7 +71,15 @@ export const Footer = () => {
               <span className="text-2xl font-medium">Gardens</span>
             </div>
             <p className="text-balance text-sm/6 text-neutral-content">
-              Gardens is a <span className="text-md underline">1hive</span>{" "}
+              Gardens is a{" "}
+              <a
+                href="https://x.com/1HiveOrg"
+                target="_blank"
+                className="text-neutral-content hover:text-primary-content font-bold"
+                rel="noreferrer"
+              >
+                1Hive
+              </a>{" "}
               featured project.
             </p>
             <div className="flex gap-x-6">
