@@ -31,3 +31,4 @@ export { default as BrightIdLogo } from "./BrightId-logo.svg";
 export { default as PublicNounsLogo } from "./publicnouns-logo.svg";
 export { default as BaseLogo } from "./BaseLogo";
 export { default as PoweredBy } from "./PoweredBy.png";
+export { default as CeloLogo } from "./CeloLogo";

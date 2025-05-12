@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
-import { newLogo } from "@/assets";
+import { newLogo, CeloLogo } from "@/assets";
 import { ChainIcon } from "@/configs/chains";
 import Image from "next/image";
 
@@ -181,6 +181,13 @@ function LogoCluster() {
           top={56}
           hover={{ x: -4, y: -5, rotate: -6, delay: 0.35 }}
         />
+        <Logo
+          chain={4442}
+          left={86}
+          top={226}
+          hover={{ x: -4, y: -5, rotate: -6, delay: 0.4 }}
+        />
+
         {/* here goes the Celo chain logo */}
         {/* <Logo
           chain={8453}
