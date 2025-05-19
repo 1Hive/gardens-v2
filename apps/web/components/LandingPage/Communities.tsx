@@ -12,7 +12,7 @@ const communities = [
     name: "1Hive",
     description:
       "1Hive builds fairer futures by funding public goods with Honey tokens.",
-    members: 22,
+    members: 23,
     link: "https://app.gardens.fund/gardens/100/0x71850b7e9ee3f13ab46d67167341e4bdc905eef9/0xe2396fe2169ca026962971d3b2e373ba925b6257",
     socials: {
       x: "https://x.com/1HiveOrg",
@@ -22,7 +22,7 @@ const communities = [
     name: "Gitcoin Grants Gardens",
     description:
       "Gitcoin empowers communities to fund, build, and protect shared needs.",
-    members: 79,
+    members: 85,
     link: "https://app.gardens.fund/gardens/10/0x1eba7a6a72c894026cd654ac5cdcf83a46445b08/0xd3345828914b740fddd1b8ae4f4d2ce03d1e0960",
     socials: {
       x: "https://x.com/gitcoin",
@@ -32,7 +32,7 @@ const communities = [
     name: "Blockscout",
     description:
       "Blockscout is a fully open-source blockchain explorer embodying the principles of transparency.",
-    members: 380,
+    members: 382,
     link: "https://app.gardens.fund/gardens/100/0xe91d153e0b41518a2ce8dd3d7944fa863463a97d/0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
     socials: {
       x: "https://x.com/blockscout",
@@ -42,7 +42,7 @@ const communities = [
     name: "Mars Garden",
     description:
       "Mars Gardens funds impactful, communal projects within the Mars College collective.",
-    members: 14,
+    members: 16,
     link: "https://app.gardens.fund/gardens/42161/0xf1588798b3b8de0f297b87a1196dd4c57a0194ab/0x98d84697794f4aae7540c1f85433e2ab39ab1206",
     socials: {
       x: "/",

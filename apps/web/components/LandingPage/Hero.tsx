@@ -6,11 +6,10 @@ import Image from "next/image";
 import {
   Bars3Icon,
   XMarkIcon,
-  ArrowTopRightOnSquareIcon,
+  ChevronDoubleDownIcon,
 } from "@heroicons/react/24/outline";
 import { Dialog } from "@headlessui/react";
 import { Button } from "@/components/Button";
-import { commF } from "@/assets";
 import cn from "classnames";
 import { AnimatePresence, motion } from "motion/react";
 
@@ -102,15 +101,6 @@ export const Hero = () => {
             fill="#FFE236"
           />
         </svg>
-        {/* <div className="right-5 border2 bg-neutral-soft-2 rounded-3xl py-2 px-6 h-fit hover:text-primary-content hover:bg-neutral-soft-3 transition-all duration-300 ease-in-out">
-          <a
-            href="https://x.com/1HiveOrg"
-            target="_blank"
-            className="text-center"
-          >
-            Powered by 1Hive
-          </a>
-        </div> */}
       </div>
     );
   };
@@ -248,6 +238,9 @@ export const Hero = () => {
         </div>
       </div>
       <AnimatedSvg />
+      <div className="flex items0-center justify-center w-full">
+        <ChevronDoubleDownIcon className="w-5 h-5 animate-bounce mt-4" />
+      </div>
       <div className="right-5 absolute bottom-5 border2 bg-neutral-soft-2 rounded-3xl py-2 px-6 h-fit hover:text-primary-content hover:bg-neutral-soft-3 transition-all duration-300 ease-in-out">
         <a
           href="https://x.com/1HiveOrg"
@@ -257,14 +250,6 @@ export const Hero = () => {
           Powered by 1Hive
         </a>
       </div>
-
-      {/* <Image
-        src={PoweredBy}
-        width={100}
-        height={100}
-        alt={"poweredBy img"}
-        className="absolute bottom-5 right-5"
-      /> */}
     </div>
   );
 };
