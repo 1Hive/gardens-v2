@@ -1,42 +1,16 @@
-import { useEffect, useMemo } from "react";
-import { WriteContractMode } from "@wagmi/core";
-import { AbiFunction } from "abitype";
-import {
-  Abi,
-  encodeFunctionData,
-  TransactionReceipt,
-  UserRejectedRequestError,
-} from "viem";
-import {
-  useAccount,
-  useChainId,
-  useContractWrite,
-  UseContractWriteConfig,
-  useWaitForTransaction,
-} from "wagmi";
-import { useChainIdFromPath } from "./useChainIdFromPath";
-import { useTransactionNotification } from "./useTransactionNotification";
-import { chainConfigMap } from "@/configs/chains";
-import { abiWithErrors } from "@/utils/abi";
-import { stringifyJson } from "@/utils/json";
-
-export type ComputedStatus =
-  | "loading"
-  | "success"
-  | "error"
-  | "waiting"
-  | undefined;
+// hooks/useDivviContractWrite.ts
+import { useCallback, useEffect } from 'react';
+import { Abi, TransactionReceipt } from 'viem';
+import { WriteContractMode } from '@wagmi/core';
+import { UseContractWriteConfig } from 'wagmi';
+import { useContractWriteWithConfirmations, ComputedStatus } from './useContractWriteWithConfirmations';
+import { getDivviDataSuffix, trackDivviReferral, isUserTrackedWithDivvi } from '@/utils/divvi';
 
 /**
- * this hook is used to write to a contract and wait for confirmations.
- * @param props
- * - onConfirmations: callback function to run after waited blocks
- * - confirmations: amount of block confirmations to wait for
- * - contractName: name of the contract to show in notification
- * - showNotification: to show status update with toast
- * @returns
+ * This hook extends useContractWriteWithConfirmations to include Divvi referral tracking
+ * for the first transaction a user makes.
  */
-export function useContractWriteWithConfirmations<
+export function useDivviContractWrite
   TAbi extends Abi | readonly unknown[],
   TFunctionName extends string,
   TMode extends WriteContractMode = undefined,
@@ -49,151 +23,50 @@ export function useContractWriteWithConfirmations<
     fallbackErrorMessage?: string;
   },
 ) {
-  const { address: walletAddress } = useAccount();
-  const toastId = props.contractName + "_" + props.functionName;
-  const chainIdFromWallet = useChainId();
-  const chainIdFromPath = useChainIdFromPath();
-  let propsWithChainId = {
-    ...props,
-    chainId: Number(props.chainId ?? chainIdFromPath ?? chainIdFromWallet), // damn js i had to force this
-    abi: abiWithErrors(props.abi as Abi),
-  };
-
-  async function logError(error: any, variables: any, context: string) {
-    // if (
-    //   process.env.NEXT_PUBLIC_TENDERLY_ACCESS_KEY &&
-    //   process.env.NEXT_PUBLIC_TENDERLY_ACCOUNT_NAME &&
-    //   process.env.NEXT_PUBLIC_TENDERLY_PROJECT_NAME &&
-    //   chainIdFromPath &&
-    //   walletAddress
-    // ) {
-    //   const encodedData = encodeFunctionData({
-    //     abi: props.abi as [AbiFunction],
-    //     functionName: props.functionName as string,
-    //     args: variables.args,
-    //   });
-    //   const tenderly = new Tenderly({
-    //     accessKey: process.env.NEXT_PUBLIC_TENDERLY_ACCESS_KEY,
-    //     network: +chainIdFromPath,
-    //     accountName: process.env.NEXT_PUBLIC_TENDERLY_ACCOUNT_NAME,
-    //     projectName: process.env.NEXT_PUBLIC_TENDERLY_PROJECT_NAME,
-    //   });
-    //   const blockNumber = await publicClient.getBlockNumber();
-    //   try {
-    //     const simulationResult = await tenderly.simulator.simulateTransaction({
-    //       transaction: {
-    //         from: walletAddress as Address,
-    //         to: props.address as Address,
-    //         gas: 20000000,
-    //         gas_price: "19419609232",
-    //         value: 0,
-    //         input: encodedData,
-    //       },
-    //       blockNumber: Number(blockNumber),
-    //     });
-    //     console.log({ simulationResult });
-    //     const simulationLink = `https://dashboard.tenderly.co/${tenderly.configuration.accountName}/${tenderly.configuration.projectName}/simulator/${simulationResult}`;
-    //     console.log({ simulationResult, simulationLink });
-    //   } catch (error) {
-    //     console.error("Error. Failed to simulate transaction: ", error);
-    //   }
-    // }
-    const encodedData = encodeFunctionData({
-      abi: props.abi as [AbiFunction],
-      functionName: props.functionName as string,
-      args: variables.args,
-    });
-    const rawData = encodedData;
-    let logPayload = {
-      error,
-      variables,
-      context,
-      rawData,
-      contract: props.address,
-      message: error.message,
-      from: walletAddress,
-    };
-    try {
-      logPayload = {
-        ...logPayload,
-        errorJson: stringifyJson(error),
-      } as any;
-    } catch (e) {
-      console.debug("Error parsing logPayload error: ", e);
-    }
-    try {
-      logPayload = {
-        ...logPayload,
-        variablesJson: stringifyJson(variables),
-      } as any;
-    } catch (e) {
-      console.debug("Error parsing logPayload variable: ", e);
-    }
-    if (!(error?.cause instanceof UserRejectedRequestError)) {
-      console.error(
-        `Error with transaction [${props.contractName} -> ${props.functionName}]`,
-        logPayload,
-      );
-    }
-  }
-
-  const txResult = useContractWrite(
-    propsWithChainId as UseContractWriteConfig<TAbi, TFunctionName, TMode>,
-  );
-
-  propsWithChainId.onError = (
-    ...params: Parameters<NonNullable<typeof props.onError>>
-  ) => {
-    props.onError?.(...params);
-  };
-
-  // Hook does not run unless hash is defined.
-  const txWaitResult = useWaitForTransaction({
-    hash: txResult.data?.hash,
-    chainId: +propsWithChainId.chainId,
-    confirmations:
-      propsWithChainId.confirmations ??
-      (chainConfigMap[+propsWithChainId.chainId]?.confirmations || 1),
-  });
-
-  const computedStatus = useMemo(() => {
-    if (txResult.status === "idle") {
-      return undefined;
-    } else if (txWaitResult.status === "loading") {
-      return "loading";
-    } else if (txResult.status === "success" || txResult.status === "error") {
-      if (txResult.error) {
-        logError(txResult.error, txResult.variables, "wait for tx");
+  // Create a wrapped onConfirmations callback that also tracks with Divvi
+  const originalOnConfirmations = props.onConfirmations;
+  
+  const divviOnConfirmations = useCallback(
+    (receipt: TransactionReceipt) => {
+      // Call the original callback if it exists
+      if (originalOnConfirmations) {
+        originalOnConfirmations(receipt);
       }
-      return txResult.status;
-    } else if (txWaitResult.status === "idle") {
-      return "waiting";
-    }
-    return txWaitResult.status;
-  }, [txResult.status, txWaitResult.status]);
-
-  useTransactionNotification({
-    toastId,
-    transactionData: txResult.data,
-    transactionStatus: computedStatus,
-    transactionError: txResult.error,
-    enabled: props.showNotification ?? true, // default to true
-    fallbackErrorMessage: props.fallbackErrorMessage,
+      
+      // Track the transaction with Divvi if this is the user's first transaction
+      if (!isUserTrackedWithDivvi() && receipt.transactionHash && props.chainId) {
+        trackDivviReferral(receipt.transactionHash as `0x${string}`, +props.chainId);
+      }
+    },
+    [originalOnConfirmations, props.chainId]
+  );
+  
+  // Use the original hook with our enhanced onConfirmations
+  const result = useContractWriteWithConfirmations({
+    ...props,
+    onConfirmations: divviOnConfirmations,
   });
-
-  useEffect(() => {
-    if (txWaitResult.isSuccess && txWaitResult.data) {
-      propsWithChainId.onConfirmations?.(txWaitResult.data);
-    }
-  }, [txResult.isSuccess, txWaitResult.data]);
-
+  
+  // Enhance the write function to append Divvi referral data for first-time users
+  const originalWrite = result.write;
+  
+  const writeWithDivvi = useCallback(
+    (...args: Parameters<typeof originalWrite>) => {
+      // Only append Divvi data for users who haven't been tracked yet
+      if (!isUserTrackedWithDivvi() && originalWrite) {
+        // Unfortunately we can't directly modify the transaction data here
+        // because wagmi's useContractWrite doesn't expose that capability
+        // We'll track the tx after it's confirmed instead
+        originalWrite(...args);
+      } else if (originalWrite) {
+        originalWrite(...args);
+      }
+    },
+    [originalWrite]
+  );
+  
   return {
-    ...txResult,
-    ...txWaitResult,
-    isLoading: txResult.isLoading || txWaitResult.isLoading,
-    transactionStatus: computedStatus as ComputedStatus | undefined,
-    transactionData: txResult.data,
-    confirmationsStatus: txWaitResult.status,
-    confirmed: !!txWaitResult.isSuccess,
+    ...result,
+    write: writeWithDivvi,
   };
 }
