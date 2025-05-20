@@ -1,99 +1,107 @@
 # Gardens v2
 
-> Gardens is a **coordination platform**
-> that fosters **vibrant ecosystems of shared wealth**
-> by providing **healthy funding mechanisms to communities in web3**
+Gardens v2 is a modular governance framework that enables communities to create and manage multiple governance pools with customizable parameters and voting mechanisms. Our smart contracts are built to optimize for secure, flexible, intuitive, multi-network governance solutions.
 
-As a modular governance mechdwaawdadwdwadawdawanism, Gardens strategically mixes centralized and decentralized components to take advantage of the efficiency and security benefits of both when needed.
-daawd
-Project and Ecosystem leaderdwadwadwas can use Gardens to:
+🌐 **[Launch Gardens v2 App](https://app.gardens.fund/)**
 
-- Publish a Covenant to IPFS and Create a Community pinned to its values and purpose.
-- Appoint a Council Safe as admin for the Community and a Tribunal Safe to rule on disputes
-- Create funding pools and strategies to allocate funding and source collective decisions
+## Features
 
-Community members and Public Goods builders can use Gardens to:
+### Modular Governance Pools
+Create multiple governance pools within your community, each serving a distinct purpose with customizable parameters and terms of use. This modular approach allows for more granular and focused onchain governance decisions.
 
-- Support Communities by staking in their Covenant
-- Create proposals in funding pools and strategies they're eligible for
-- Take part in collective decision-making by voting on Proposals.
+### Pool Types
+- **Funding Pools**: Allocate funds from a shared token pool
+- **Signaling Pools**: Source other types of decisions, both onchain and offchain
 
-For Communities building goods and services whose value subjective to its users (AKA "Public Goods"), Gardens offers a toolset capable of leveraging the _Wisdom of the Crowds_ and that resists value extraction by malicious, abusive, or apathetic parties.
+### Flexible Voting Weight Systems
+Choose from multiple voting weight mechanisms to best suit your community's needs:
+- **Token-weighted**: Traditional 1 token = 1 vote
+- **Fixed**: Equal voting power for all members
+- **Quadratic**: Voting weight = square root of tokens staked
+- **Capped**: 1 token = 1 vote up to a maximum threshold
 
-## Turborepo starter for wedadawawdwadb3 projects
+### Multi-Network Support
+Currently deployed on:
+- Gnosis Chain
+- Polygon
+- Arbitrum
+- Optimism
+- Base
 
-This turborepo uses [pnpm](https://pnpm.io) as a package manager. It includes the following packages/apps:
+*More networks coming soon!*
 
-### Apps and Packages
+### Enhanced User Experience
+Significant UI improvements make conviction voting more intuitive and easier to understand compared to v1, enabling broader participation in governance decisions.
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `ui`: a stub React component library shared by both `web` and `docs` applications
-- `eslint-config-custom`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `tsconfig`: `tsconfig.json`s used throughout the monorepo
-- `contracts`: a `Ethereum` smart contract development using Foundry
-- `subgraph`: a subgraph development environment using `The Graph`
-- `services`: a preconfigured Docker image for running a `Graph Node`
+## Dependencies
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+Gardens v2 relies on the following apps and frameworks to be deployed:
 
-If this is your first time with Foundry, check out the [installation](https://github.com/foundry-rs/foundry#installation) instructions.
+- [Allo Protocol v2](https://allo.gitcoin.co/)
+- [The Graph](https://thegraph.com/)
+- [Safe](https://safe.global/)
 
-### Utilities
+## Getting Started
 
-This turborepo has some additional tools already setup for you:
+### Using Gardens v2
 
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
+1. Visit [https://app.gardens.fund/](https://app.gardens.fund/)
+2. Connect your wallet
+3. Choose your network
+4. Create or join a community
+5. Activate your governance in governance pools to vote
+6. Increase your stake in the community to grow your voting power
+7. Create or dispute propoosals in pools
+8. Create governance pools in your community
 
-### Build
 
-To build all apps and packages, run the following command:
+### Local Development
 
-```
-cd my-turborepo
-pnpm run build
-```
+Please message us in Discord for help with your own local deployment of Gardens.
 
-### Develop
+```bash
+# Clone the repository
+git clone https://github.com/your-org/gardens-v2.git
 
-To develop all apps and packadawdwadawawdges, run the following command:
+# Install dependencies
+cd gardens-v2
+pnpm install
 
-```
-cd my-turborepo
-pnpm run dev
-```
-
-### Remote Caching
-
-Turborepo can use a technique known as [Remote Caching](https://turbo.build/repo/docs/core-concepts/remote-caching) to share cache artifacdwadawts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an accountddwaaaaaaaaaaawdawdw you can [create one](https://vercel.com/signup), then enter the following commands:
-
-```
-cd my-turborepo
-pnpm dlx turbo login
+# Start the development server
+pnpm dev
 ```
 
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
+## Contributing
 
-Next, you can link yourdawdwdwa Turborepo to your Remote Cache by running the following command from the root of your turborepo:
+We welcome contributions! Please see our [New Contributor Onboarding](https://1hive-gardens.notion.site/Gardens-New-Contributor-Onboarding-8ab2e08a585c46e3bcb36482d006c9e9?pvs=4) for details on how to get started.
 
-```
-pnpm dlx turbo link
-```
+## 📚 Documentation
 
-## Useful Links
+Gardens is fully open source - always has been, always will be. We're committed to comprehensive documentation to help communities implement and contribute to the platform.
 
-Learn more about the pdwadawdower of Turborepo:
+### Documentation Resources
 
-- [Pipelines](https://turbo.build/repo/docs/core-concepts/monorepos/running-tasks)
-- [Caching](https://turbo.build/repo/docs/core-concepts/caching)
-- [Remote Caching](https://turbo.build/repo/docs/core-concepts/remote-caching)
-- [Filtering](https://turbo.build/repo/docs/core-concepts/monorepos/filtering)
-- [Configuration Options](https://turbo.build/repo/docs/reference/configuration)
-- [CLI Usage](https://turbo.build/repo/docs/reference/command-line-reference)
-- [Foundry book](https://book.getfoundry.sh)
-- [Creating a Subgraph](https://thegraph.com/docs/en/developing/creating-a-subgraph/)
-- [Graph Node](./pkg/services/graph-node/README.md)
+- **[Gardens documentation](https://docs.gardens.fund)
+- **[How to grow using Gardens](https://1hive-gardens.notion.site/How-to-grow-using-Gardens-84be339e761d462085dcb27db12d1c4c)
+
+### Documentation Principles
+
+Our documentation follows these core principles:
+- **Accessibility**: Documentation for users of all technical levels
+- **Completeness**: Covering all aspects of the platform
+- **Currency**: Regularly updated to reflect the latest changes
+- **Community-driven**: Welcoming contributions from all users
+
+### Contributing to Documentation
+
+We welcome documentation improvements! For documentation issues or suggestions, please [open an issue](https://github.com/1Hive/gardens-v2/issues/new?labels=documentation) with the "documentation" label.
+
+## License
+
+[GPL-3.0](https://github.com/1Hive/gardens-v2?tab=GPL-3.0-1-ov-file#readme)
+
+## Support
+
+- 📚 [Documentation](https://docs.gardens.fund)
+- 💬 [Discord Community](https://discord.gg/tJWPg69ZWG)
+- 🐦 [Twitter](https://twitter.com/gardens_fund)
