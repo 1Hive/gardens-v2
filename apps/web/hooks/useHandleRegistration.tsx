@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
-import { toast } from "react-toastify";
 import { Address } from "wagmi";
 import { TransactionProps } from "@/components/TransactionModal";
 import { usePubSubContext } from "@/contexts/pubsub.context";
-import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
+import { useDivviContractWrite } from "@/hooks/useDivviContractWrite"; 
 import { registryCommunityABI } from "@/src/generated";
+import { abiWithErrors } from "@/utils/abi";
 import { getTxMessage } from "@/utils/transactionMessages";
 
 export function useHandleRegistration(
@@ -13,7 +13,7 @@ export function useHandleRegistration(
   urlChainId: number | undefined,
 ): {
   registrationTxProps: TransactionProps;
-  handleRegistration: (covenantSignature: `0x${string}` | undefined) => void;
+  handleRegistration: () => void;
   resetState: () => void;
 } {
   const [registrationTxProps, setRegistrationTxProps] =
@@ -22,18 +22,19 @@ export function useHandleRegistration(
       message: getTxMessage("idle"),
       status: "idle",
     }));
-
   const { publish } = usePubSubContext();
-
+  
   const {
     write: writeRegisterMember,
     transactionStatus: registerMemberTxStatus,
     error: registerMemberTxError,
-  } = useContractWriteWithConfirmations({
+    transactionData,
+  } = useDivviContractWrite({
     address: communityAddress,
-    abi: registryCommunityABI,
+    abi: abiWithErrors(registryCommunityABI),
     functionName: "stakeAndRegisterMember",
     contractName: "Registry Community",
+    chainId: urlChainId,
     showNotification: false,
     onConfirmations: useCallback(() => {
       publish({
@@ -46,28 +47,20 @@ export function useHandleRegistration(
       });
     }, [publish, communityAddress, urlChainId]),
   });
-
+  
   useEffect(() => {
     setRegistrationTxProps((prev) => ({
       ...prev,
       message: getTxMessage(registerMemberTxStatus, registerMemberTxError),
       status: registerMemberTxStatus ?? "idle",
+      txHash: transactionData?.hash, // Add transaction hash to props
     }));
-  }, [registerMemberTxStatus, registerMemberTxError]);
-
-  const handleRegistration = useCallback(
-    (covenantSignature: `0x${string}` | undefined) => {
-      if (!covenantSignature) {
-        toast.error("Covenant signature is required");
-        return;
-      }
-      writeRegisterMember({
-        args: [covenantSignature],
-      });
-    },
-    [writeRegisterMember],
-  );
-
+  }, [registerMemberTxStatus, registerMemberTxError, transactionData?.hash]);
+  
+  const handleRegistration = useCallback(() => {
+    writeRegisterMember();
+  }, [writeRegisterMember]);
+  
   const resetState = useCallback(() => {
     setRegistrationTxProps({
       contractName: `Register in ${communityName}`,
@@ -75,7 +68,7 @@ export function useHandleRegistration(
       status: "idle",
     });
   }, [communityName]);
-
+  
   return {
     registrationTxProps,
     handleRegistration,
