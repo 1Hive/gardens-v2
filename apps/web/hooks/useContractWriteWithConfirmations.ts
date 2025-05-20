@@ -5,11 +5,7 @@ import { UseContractWriteConfig } from 'wagmi';
 import { useContractWriteWithConfirmations, ComputedStatus } from './useContractWriteWithConfirmations';
 import { getDivviDataSuffix, trackDivviReferral, isUserTrackedWithDivvi } from '@/utils/divvi';
 
-export function useDivviContractWrite
-  TAbi extends Abi | readonly unknown[],
-  TFunctionName extends string,
-  TMode extends WriteContractMode = undefined,
->(
+export function useDivviContractWrite<TAbi extends Abi | readonly unknown[], TFunctionName extends string, TMode extends WriteContractMode = undefined>(
   props: UseContractWriteConfig<TAbi, TFunctionName, TMode> & {
     onConfirmations?: (receipt: TransactionReceipt) => void;
     confirmations?: number;
