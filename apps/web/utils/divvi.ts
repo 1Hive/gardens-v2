@@ -52,12 +52,10 @@ export const getDivviDataSuffix = (): string => {
   });
 };
 
-// Append Divvi referral data suffix to transaction data
-export const appendDivviReferral = (originalData: `0x${string}`): `0x${string}` => {
-  const dataSuffix = getDivviDataSuffix();
-  // Remove '0x' prefix from the suffix if it exists
-  const cleanSuffix = dataSuffix.startsWith('0x') ? dataSuffix.slice(2) : dataSuffix;
-  return `${originalData}${cleanSuffix}` as `0x${string}`;
+// Check if a user has already been tracked with Divvi
+export const isUserTrackedWithDivvi = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  return localStorage.getItem('divvi_tracked') === 'true';
 };
 
 // Track a transaction with Divvi
@@ -77,11 +75,6 @@ export const trackDivviReferral = async (txHash: Hash, chainId: number): Promise
   }
 };
 
-// Check if a user has already been tracked with Divvi
-export const isUserTrackedWithDivvi = (): boolean => {
-  if (typeof window === 'undefined') return false;
-  return localStorage.getItem('divvi_tracked') === 'true';
-};
 // Send a transaction with Divvi referral tracking
 export const sendDivviTransaction = async (
   chainId: number,
@@ -89,7 +82,6 @@ export const sendDivviTransaction = async (
     to: `0x${string}`;
     data: `0x${string}`;
     value?: bigint;
-    [key: string]: any;
   }
 ): Promise<Hash> => {
   try {
@@ -105,22 +97,23 @@ export const sendDivviTransaction = async (
     // Check if user has already been tracked
     const isTracked = isUserTrackedWithDivvi();
     
-    // Append Divvi data suffix if this is the user's first transaction
-    const enhancedData = isTracked 
-      ? txParams.data 
-      : appendDivviReferral(txParams.data);
+    // Get the data suffix for Divvi
+    const dataSuffix = isTracked ? '' : getDivviDataSuffix();
     
-    // Create a clean transaction object without spreading txParams directly
-    // This avoids potential type conflicts from additional properties
-    const transaction = {
+    // Create transaction parameters
+    const tx = {
       account,
       to: txParams.to,
-      data: enhancedData,
-      value: txParams.value
+      data: `${txParams.data}${dataSuffix}` as `0x${string}`,
     };
     
+    // Add value if it exists
+    if (txParams.value !== undefined) {
+      Object.assign(tx, { value: txParams.value });
+    }
+    
     // Send transaction
-    const txHash = await walletClient.sendTransaction(transaction);
+    const txHash = await walletClient.sendTransaction(tx);
     
     // Track the transaction with Divvi if this is the user's first transaction
     if (!isTracked) {
