@@ -35,11 +35,7 @@ const trackDivviReferral = async (txHash: `0x${string}`, chainId: number): Promi
   }
 };
 
-export function useDivviContractWrite
-  TAbi extends Abi | readonly unknown[], 
-  TFunctionName extends string, 
-  TMode extends WriteContractMode = undefined
->(props: UseContractWriteConfig<TAbi, TFunctionName, TMode> & {
+export function useDivviContractWrite <TAbi extends Abi | readonly unknown[], TFunctionName extends string, TMode extends WriteContractMode = undefined>(props: UseContractWriteConfig<TAbi, TFunctionName, TMode> & {
   onConfirmations?: (receipt: TransactionReceipt) => void;
   confirmations?: number;
   contractName: string;
