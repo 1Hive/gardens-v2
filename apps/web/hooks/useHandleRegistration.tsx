@@ -1,8 +1,9 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { Address } from "wagmi";
 import { TransactionProps } from "@/components/TransactionModal";
 import { usePubSubContext } from "@/contexts/pubsub.context";
-import { useDivviContractWrite } from "@/hooks/useDivviContractWrite"; 
+import { useDivviContractWrite } from "@/hooks/useDivviContractWrite";
 import { registryCommunityABI } from "@/src/generated";
 import { abiWithErrors } from "@/utils/abi";
 import { getTxMessage } from "@/utils/transactionMessages";
@@ -53,7 +54,7 @@ export function useHandleRegistration(
       ...prev,
       message: getTxMessage(registerMemberTxStatus, registerMemberTxError),
       status: registerMemberTxStatus ?? "idle",
-      txHash: transactionData?.hash, // Add transaction hash to props
+      txHash: transactionData?.hash,
     }));
   }, [registerMemberTxStatus, registerMemberTxError, transactionData?.hash]);
   
