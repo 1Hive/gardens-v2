@@ -1,14 +1,10 @@
 import { useEffect, useMemo } from "react";
+
+import { getDataSuffix, submitReferral } from "@divvi/referral-sdk";
 import { WriteContractMode } from "@wagmi/core";
-import { AbiFunction } from "abitype";
+import { Abi, Address, TransactionReceipt } from "viem";
+import { celo } from "viem/chains";
 import {
-  Abi,
-  encodeFunctionData,
-  TransactionReceipt,
-  UserRejectedRequestError,
-} from "viem";
-import {
-  useAccount,
   useChainId,
   useContractWrite,
   UseContractWriteConfig,
@@ -17,8 +13,6 @@ import {
 import { useChainIdFromPath } from "./useChainIdFromPath";
 import { useTransactionNotification } from "./useTransactionNotification";
 import { chainConfigMap } from "@/configs/chains";
-import { abiWithErrors } from "@/utils/abi";
-import { stringifyJson } from "@/utils/json";
 
 export type ComputedStatus =
   | "loading"
@@ -26,6 +20,22 @@ export type ComputedStatus =
   | "error"
   | "waiting"
   | undefined;
+
+// Divvi configuration constants
+const DIVVI_CONSUMER =
+  process.env.NEXT_PUBLIC_DIVVI_CONSUMER ??
+  "0x3c4d7f1a2b5e8c6f9e4b5a2c3d4e5f6a7b8c9d0e";
+const DIVVI_PROVIDERS = process.env.NEXT_PUBLIC_DIVVI_PROVIDERS?.split(",") ?? [
+  "0x0423189886d7966f0dd7e7d256898daeee625dca",
+  "0x5f0a55fad9424ac99429f635dfb9bf20c3360ab8",
+];
+
+const DIVVI_TRACKED_STORAGE_KEY = "divvi_tracked";
+// Check if a user has already been tracked with Divvi
+const isUserTrackedWithDivvi = (): boolean => {
+  if (typeof window === "undefined") return false;
+  return localStorage.getItem(DIVVI_TRACKED_STORAGE_KEY) === "true";
+};
 
 /**
  * this hook is used to write to a contract and wait for confirmations.
@@ -49,92 +59,38 @@ export function useContractWriteWithConfirmations<
     fallbackErrorMessage?: string;
   },
 ) {
-  const { address: walletAddress } = useAccount();
   const toastId = props.contractName + "_" + props.functionName;
   const chainIdFromWallet = useChainId();
   const chainIdFromPath = useChainIdFromPath();
+  const resolvedChaindId =
+    props.chainId ?? chainIdFromPath ?? chainIdFromWallet;
+
+  const shouldDivviTrack = useMemo(() => {
+    return !isUserTrackedWithDivvi() && resolvedChaindId === celo.id;
+  }, []);
+
   let propsWithChainId = {
     ...props,
-    chainId: Number(props.chainId ?? chainIdFromPath ?? chainIdFromWallet), // damn js i had to force this
-    abi: abiWithErrors(props.abi as Abi),
+    chainId: resolvedChaindId,
+    dataSuffix:
+      shouldDivviTrack ?
+        getDataSuffix({
+          consumer: DIVVI_CONSUMER as Address,
+          providers: DIVVI_PROVIDERS as Address[],
+        })
+      : undefined,
+    confirmations:
+      props.confirmations ??
+      chainConfigMap[+resolvedChaindId]?.confirmations ??
+      1,
+    onConfirmations: props.onConfirmations,
   };
 
-  async function logError(error: any, variables: any, context: string) {
-    // if (
-    //   process.env.NEXT_PUBLIC_TENDERLY_ACCESS_KEY &&
-    //   process.env.NEXT_PUBLIC_TENDERLY_ACCOUNT_NAME &&
-    //   process.env.NEXT_PUBLIC_TENDERLY_PROJECT_NAME &&
-    //   chainIdFromPath &&
-    //   walletAddress
-    // ) {
-    //   const encodedData = encodeFunctionData({
-    //     abi: props.abi as [AbiFunction],
-    //     functionName: props.functionName as string,
-    //     args: variables.args,
-    //   });
-    //   const tenderly = new Tenderly({
-    //     accessKey: process.env.NEXT_PUBLIC_TENDERLY_ACCESS_KEY,
-    //     network: +chainIdFromPath,
-    //     accountName: process.env.NEXT_PUBLIC_TENDERLY_ACCOUNT_NAME,
-    //     projectName: process.env.NEXT_PUBLIC_TENDERLY_PROJECT_NAME,
-    //   });
-    //   const blockNumber = await publicClient.getBlockNumber();
-    //   try {
-    //     const simulationResult = await tenderly.simulator.simulateTransaction({
-    //       transaction: {
-    //         from: walletAddress as Address,
-    //         to: props.address as Address,
-    //         gas: 20000000,
-    //         gas_price: "19419609232",
-    //         value: 0,
-    //         input: encodedData,
-    //       },
-    //       blockNumber: Number(blockNumber),
-    //     });
-    //     console.log({ simulationResult });
-    //     const simulationLink = `https://dashboard.tenderly.co/${tenderly.configuration.accountName}/${tenderly.configuration.projectName}/simulator/${simulationResult}`;
-    //     console.log({ simulationResult, simulationLink });
-    //   } catch (error) {
-    //     console.error("Error. Failed to simulate transaction: ", error);
-    //   }
-    // }
-    const encodedData = encodeFunctionData({
-      abi: props.abi as [AbiFunction],
-      functionName: props.functionName as string,
-      args: variables.args,
-    });
-    const rawData = encodedData;
-    let logPayload = {
-      error,
-      variables,
-      context,
-      rawData,
-      contract: props.address,
-      message: error.message,
-      from: walletAddress,
-    };
-    try {
-      logPayload = {
-        ...logPayload,
-        errorJson: stringifyJson(error),
-      } as any;
-    } catch (e) {
-      console.debug("Error parsing logPayload error: ", e);
-    }
-    try {
-      logPayload = {
-        ...logPayload,
-        variablesJson: stringifyJson(variables),
-      } as any;
-    } catch (e) {
-      console.debug("Error parsing logPayload variable: ", e);
-    }
-    if (!(error?.cause instanceof UserRejectedRequestError)) {
-      console.error(
-        `Error with transaction [${props.contractName} -> ${props.functionName}]`,
-        logPayload,
-      );
-    }
+  function logError(error: any, variables: any, context: string) {
+    console.error(
+      `Error with transaction [${props.contractName} -> ${props.functionName}]`,
+      { error, variables, context },
+    );
   }
 
   const txResult = useContractWrite(
@@ -150,10 +106,8 @@ export function useContractWriteWithConfirmations<
   // Hook does not run unless hash is defined.
   const txWaitResult = useWaitForTransaction({
     hash: txResult.data?.hash,
-    chainId: +propsWithChainId.chainId,
-    confirmations:
-      propsWithChainId.confirmations ??
-      (chainConfigMap[+propsWithChainId.chainId]?.confirmations || 1),
+    chainId: +resolvedChaindId,
+    confirmations: propsWithChainId.confirmations,
   });
 
   const computedStatus = useMemo(() => {
@@ -183,6 +137,24 @@ export function useContractWriteWithConfirmations<
 
   useEffect(() => {
     if (txWaitResult.isSuccess && txWaitResult.data) {
+      const hash = txResult.data?.hash;
+      // Referral tracking only for Celo
+      if (hash && shouldDivviTrack) {
+        try {
+          submitReferral({
+            txHash: hash,
+            chainId: resolvedChaindId,
+          }).then(() => {
+            // Mark user as tracked in localStorage
+            if (typeof window !== "undefined") {
+              localStorage.setItem(DIVVI_TRACKED_STORAGE_KEY, "true");
+            }
+            console.info("Successfully tracked referral with Divvi:", hash);
+          });
+        } catch (error) {
+          logError(error, { hash }, "track divvi referral");
+        }
+      }
       propsWithChainId.onConfirmations?.(txWaitResult.data);
     }
   }, [txResult.isSuccess, txWaitResult.data]);
