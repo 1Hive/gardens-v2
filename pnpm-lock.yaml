@@ -26,6 +26,9 @@ importers:
       '@allo-team/allo-v2-sdk':
         specifier: ^1.0.34
         version: 1.0.76(@typechain/ethers-v6@0.5.1)(ethers@6.13.1)(typechain@8.3.2)(typescript@5.2.2)
+      '@divvi/referral-sdk':
+        specifier: ^1.0.0
+        version: 1.0.0
       '@emeraldpay/hashicon-react':
         specifier: ^0.5.2
         version: 0.5.2
@@ -1354,6 +1357,10 @@ packages:
     dependencies:
       '@jridgewell/trace-mapping': 0.3.9
 
+  /@divvi/referral-sdk@1.0.0:
+    resolution: {integrity: sha512-X1i66AFQMJCu5jdOjg6mruSZ70YXolTNE1VHDr9tSHRnoR3EWki1Wtgb+A5fyE0AVl73uWZClqXlEGivyZbQ1w==}
+    dev: false
+
   /@emeraldpay/hashicon-react@0.5.2:
     resolution: {integrity: sha512-XCoYKpq8QQOniiSZf5ouzdvXbKfG6q4ICHRqCO/GNofiF0Ra+LR/7+tomHlXVcLPBS9sDAoZQQw/Sr24KRAbJg==}
     engines: {node: '>=8'}
@@ -2339,7 +2346,7 @@ packages:
       yargs: 17.7.2
     optionalDependencies:
       node-libcurl: 4.0.0
-      uWebSockets.js: github.com/uNetworking/uWebSockets.js/6609a88ffa9a16ac5158046761356ce03250a0df
+      uWebSockets.js: github.com/uNetworking/uWebSockets.js/cfc9a40d8132a34881813cec3d5f8e3a185b3ce3
     transitivePeerDependencies:
       - '@swc/core'
       - '@swc/wasm'
@@ -17829,10 +17836,10 @@ packages:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
     dev: false
 
-  github.com/uNetworking/uWebSockets.js/6609a88ffa9a16ac5158046761356ce03250a0df:
-    resolution: {tarball: https://codeload.github.com/uNetworking/uWebSockets.js/tar.gz/6609a88ffa9a16ac5158046761356ce03250a0df}
+  github.com/uNetworking/uWebSockets.js/cfc9a40d8132a34881813cec3d5f8e3a185b3ce3:
+    resolution: {tarball: https://codeload.github.com/uNetworking/uWebSockets.js/tar.gz/cfc9a40d8132a34881813cec3d5f8e3a185b3ce3}
     name: uWebSockets.js
-    version: 20.51.0
+    version: 20.52.0
     requiresBuild: true
     dev: true
     optional: true
