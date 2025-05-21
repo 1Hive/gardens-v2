@@ -5,7 +5,7 @@ import { UseContractWriteConfig } from 'wagmi';
 import { useContractWriteWithConfirmations } from '@/hooks/useContractWriteWithConfirmations';
 import { trackDivviReferral, isUserTrackedWithDivvi } from '@/utils/divvi';
 
-export function useDivviContractWrite
+export function useDivviContractWrite <
   TAbi extends Abi | readonly unknown[],
   TFunctionName extends string,
   TMode extends WriteContractMode = undefined,
