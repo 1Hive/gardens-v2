@@ -34,17 +34,15 @@ export function useDivviContractWrite<TAbi extends Abi | readonly unknown[], TFu
   });
   
   const originalWrite = result.write;
-  
-  const writeWithDivvi = useCallback(
-    (...args: Parameters<typeof originalWrite>) => {
-      if (!isUserTrackedWithDivvi() && originalWrite) {
-        originalWrite(...args);
-      } else if (originalWrite) {
-        originalWrite(...args);
-      }
-    },
-    [originalWrite]
-  );
+
+    const writeWithDivvi = useCallback(
+      (config?: any) => {
+        if (originalWrite) {
+          originalWrite(config);
+        }
+      },
+      [originalWrite]
+    );
   
   return {
     ...result,
