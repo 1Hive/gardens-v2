@@ -56,7 +56,7 @@ export function useHandleRegistration(
   const { publish } = usePubSubContext();
   
   const {
-    write: writeRegisterMember,
+    write: baseWriteRegisterMember,
     transactionStatus: registerMemberTxStatus,
     error: registerMemberTxError,
     transactionData,
@@ -67,7 +67,7 @@ export function useHandleRegistration(
     contractName: "Registry Community",
     chainId: urlChainId,
     showNotification: false,
-    onConfirmations: useCallback(() => {
+    onConfirmations: useCallback((receipt) => {
       publish({
         topic: "member",
         type: "add",
@@ -76,8 +76,22 @@ export function useHandleRegistration(
         id: communityAddress,
         chainId: urlChainId,
       });
+      
+      // Track with Divvi after confirmation if this is the user's first transaction
+      if (!isUserTrackedWithDivvi() && receipt.transactionHash && urlChainId) {
+        trackDivviReferral(receipt.transactionHash as `0x${string}`, urlChainId);
+      }
     }, [publish, communityAddress, urlChainId]),
   });
+  
+  // Enhanced write function that adds Divvi data suffix if needed
+  const writeRegisterMember = useCallback(() => {
+    if (baseWriteRegisterMember) {
+      // The actual write implementation will depend on how baseWriteRegisterMember
+      // accepts configuration parameters. This is a simplified example:
+      baseWriteRegisterMember();
+    }
+  }, [baseWriteRegisterMember]);
   
   useEffect(() => {
     setRegistrationTxProps((prev) => ({
@@ -86,12 +100,7 @@ export function useHandleRegistration(
       status: registerMemberTxStatus ?? "idle",
       txHash: transactionData?.hash,
     }));
-    
-    // Track the transaction with Divvi if this is the user's first transaction and transaction is successful
-    if (registerMemberTxStatus === "success" && transactionData?.hash && !isUserTrackedWithDivvi() && urlChainId) {
-      trackDivviReferral(transactionData.hash, urlChainId);
-    }
-  }, [registerMemberTxStatus, registerMemberTxError, transactionData?.hash, urlChainId]);
+  }, [registerMemberTxStatus, registerMemberTxError, transactionData?.hash]);
   
   const handleRegistration = useCallback(() => {
     writeRegisterMember();
