@@ -71,5 +71,6 @@ export function useDivviContractWrite
     onConfirmations: divviOnConfirmations,
   });
   
+  // Fix: Don't try to wrap or modify the write function, just return it as is
   return result;
 }
