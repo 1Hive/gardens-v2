@@ -1481,6 +1481,8 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
             if (registryCommunity.hasRole(keccak256(abi.encodePacked("ALLOWLIST", poolId)), members[i])) {
                 registryCommunity.revokeRole(keccak256(abi.encodePacked("ALLOWLIST", poolId)), members[i]);
             }
+
+            _deactivatePoints(members[i]);
         }
 
         emit AllowlistMembersRemoved(poolId, members);
