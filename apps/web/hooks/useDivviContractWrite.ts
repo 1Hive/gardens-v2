@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { Abi, TransactionReceipt } from 'viem';
 import { WriteContractMode } from '@wagmi/core';
 import { UseContractWriteConfig } from 'wagmi';
-import { useContractWriteWithConfirmations, ComputedStatus } from './useContractWriteWithConfirmations';
+import { useContractWriteWithConfirmations } from '@/hooks/useContractWriteWithConfirmations';
 import { trackDivviReferral, isUserTrackedWithDivvi } from '@/utils/divvi';
 
 export function useDivviContractWrite<TAbi extends Abi | readonly unknown[], TFunctionName extends string, TMode extends WriteContractMode = undefined>(
