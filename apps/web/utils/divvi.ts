@@ -82,7 +82,6 @@ export const isUserTrackedWithDivvi = (): boolean => {
   if (typeof window === 'undefined') return false;
   return localStorage.getItem('divvi_tracked') === 'true';
 };
-
 // Send a transaction with Divvi referral tracking
 export const sendDivviTransaction = async (
   chainId: number,
@@ -109,14 +108,19 @@ export const sendDivviTransaction = async (
     // Append Divvi data suffix if this is the user's first transaction
     const enhancedData = isTracked 
       ? txParams.data 
-      : appendDivviReferral(txParams.data) as `0x${string}`;
+      : appendDivviReferral(txParams.data);
+    
+    // Create a clean transaction object without spreading txParams directly
+    // This avoids potential type conflicts from additional properties
+    const transaction = {
+      account,
+      to: txParams.to,
+      data: enhancedData,
+      value: txParams.value
+    };
     
     // Send transaction
-    const txHash = await walletClient.sendTransaction({
-      account,
-      ...txParams,
-      data: enhancedData,
-    });
+    const txHash = await walletClient.sendTransaction(transaction);
     
     // Track the transaction with Divvi if this is the user's first transaction
     if (!isTracked) {
