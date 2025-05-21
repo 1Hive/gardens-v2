@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { Address } from "wagmi";
+import { useContractWriteWithConfirmations } from "./useContractWriteWithConfirmations";
 import { TransactionProps } from "@/components/TransactionModal";
 import { usePubSubContext } from "@/contexts/pubsub.context";
-import { useDivviContractWrite } from "@/hooks/useDivviContractWrite";
 import { registryCommunityABI } from "@/src/generated";
 import { abiWithErrors } from "@/utils/abi";
 import { getTxMessage } from "@/utils/transactionMessages";
@@ -22,15 +22,15 @@ export function useHandleRegistration(
       message: getTxMessage("idle"),
       status: "idle",
     }));
-    
+
   const { publish } = usePubSubContext();
-  
+
   const {
     write: writeRegisterMember,
     transactionStatus: registerMemberTxStatus,
     error: registerMemberTxError,
     transactionData,
-  } = useDivviContractWrite({
+  } = useContractWriteWithConfirmations({
     address: communityAddress,
     abi: abiWithErrors(registryCommunityABI),
     functionName: "stakeAndRegisterMember",
@@ -49,7 +49,7 @@ export function useHandleRegistration(
       });
     }, [publish, communityAddress, urlChainId]),
   });
-  
+
   useEffect(() => {
     setRegistrationTxProps((prev) => ({
       ...prev,
@@ -58,13 +58,13 @@ export function useHandleRegistration(
       txHash: transactionData?.hash,
     }));
   }, [registerMemberTxStatus, registerMemberTxError, transactionData?.hash]);
-  
+
   const handleRegistration = useCallback(() => {
     writeRegisterMember({
       args: [""], // Pass covenant signature here if needed
     });
   }, [writeRegisterMember]);
-  
+
   const resetState = useCallback(() => {
     setRegistrationTxProps({
       contractName: `Register in ${communityName}`,
@@ -72,7 +72,7 @@ export function useHandleRegistration(
       status: "idle",
     });
   }, [communityName]);
-  
+
   return {
     registrationTxProps,
     handleRegistration,
