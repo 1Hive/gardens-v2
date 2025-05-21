@@ -45,6 +45,7 @@ export function useDivviContractWrite
   contractName: string;
   showNotification?: boolean;
   fallbackErrorMessage?: string;
+  chainId?: number;
 }) {
   // Wrap the original onConfirmations to add Divvi tracking
   const originalOnConfirmations = props.onConfirmations;
@@ -58,7 +59,7 @@ export function useDivviContractWrite
       
       // Track the transaction with Divvi if this is the user's first transaction
       if (!isUserTrackedWithDivvi() && receipt.transactionHash && props.chainId) {
-        trackDivviReferral(receipt.transactionHash as `0x${string}`, +props.chainId);
+        trackDivviReferral(receipt.transactionHash as `0x${string}`, props.chainId);
       }
     },
     [originalOnConfirmations, props.chainId]
