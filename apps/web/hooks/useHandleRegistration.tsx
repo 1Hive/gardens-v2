@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
-import { toast } from "react-toastify";
 import { Address } from "wagmi";
+import { useContractWriteWithConfirmations } from "./useContractWriteWithConfirmations";
 import { TransactionProps } from "@/components/TransactionModal";
 import { usePubSubContext } from "@/contexts/pubsub.context";
-import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { registryCommunityABI } from "@/src/generated";
+import { abiWithErrors } from "@/utils/abi";
 import { getTxMessage } from "@/utils/transactionMessages";
 
 export function useHandleRegistration(
@@ -13,7 +13,7 @@ export function useHandleRegistration(
   urlChainId: number | undefined,
 ): {
   registrationTxProps: TransactionProps;
-  handleRegistration: (covenantSignature: `0x${string}` | undefined) => void;
+  handleRegistration: () => void;
   resetState: () => void;
 } {
   const [registrationTxProps, setRegistrationTxProps] =
@@ -29,11 +29,14 @@ export function useHandleRegistration(
     write: writeRegisterMember,
     transactionStatus: registerMemberTxStatus,
     error: registerMemberTxError,
+    transactionData,
   } = useContractWriteWithConfirmations({
     address: communityAddress,
-    abi: registryCommunityABI,
+    abi: abiWithErrors(registryCommunityABI),
     functionName: "stakeAndRegisterMember",
+    args: [""], // Empty covenant signature as a default value
     contractName: "Registry Community",
+    chainId: urlChainId,
     showNotification: false,
     onConfirmations: useCallback(() => {
       publish({
@@ -52,21 +55,15 @@ export function useHandleRegistration(
       ...prev,
       message: getTxMessage(registerMemberTxStatus, registerMemberTxError),
       status: registerMemberTxStatus ?? "idle",
+      txHash: transactionData?.hash,
     }));
-  }, [registerMemberTxStatus, registerMemberTxError]);
+  }, [registerMemberTxStatus, registerMemberTxError, transactionData?.hash]);
 
-  const handleRegistration = useCallback(
-    (covenantSignature: `0x${string}` | undefined) => {
-      if (!covenantSignature) {
-        toast.error("Covenant signature is required");
-        return;
-      }
-      writeRegisterMember({
-        args: [covenantSignature],
-      });
-    },
-    [writeRegisterMember],
-  );
+  const handleRegistration = useCallback(() => {
+    writeRegisterMember({
+      args: [""], // Pass covenant signature here if needed
+    });
+  }, [writeRegisterMember]);
 
   const resetState = useCallback(() => {
     setRegistrationTxProps({
