@@ -2,7 +2,15 @@
 
 import React from "react";
 import { useState } from "react";
-import { Bars3BottomLeftIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import {
+  Bars3BottomLeftIcon,
+  XMarkIcon,
+  EllipsisHorizontalCircleIcon,
+} from "@heroicons/react/24/outline";
+import Image from "next/image";
+import Link from "next/link";
+import { newLogo } from "@/assets";
+import { ConnectWallet } from "@/components";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -14,16 +22,17 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-white">
       {/* Left Sidebar - Fixed with higher z-index */}
-      <aside className="hidden lg:flex fixed top-0 left-0 h-full w-20 bg-white border-r border-gray-200 flex-col items-center py-6 gap-4 z-50">
-        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center relative">
-          <h5>s</h5>
-        </div>
-        <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-          <h5>s</h5>
-        </div>
-        <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
-          <span className="text-lg">🐝</span>
-        </div>
+      <aside className="hidden lg:flex fixed top-0 left-0 h-full w-[71px] bg-white border-r border-gray-200 flex-col items-center py-4 gap-4 z-50 justify-between">
+        <Link href="/gardens" className="flex items-center gap-3 text-sm">
+          <Image
+            src={newLogo}
+            alt="logo"
+            height={40}
+            width={40}
+            loading="lazy"
+          />
+        </Link>
+        <EllipsisHorizontalCircleIcon className="w-6 h-6 text-black hover:text-primary-button cursor-pointer" />
       </aside>
 
       {/* Mobile Sidebar Overlay */}
@@ -49,7 +58,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* Top Navigation Bar - Fixed with lower z-index */}
-      <header className="fixed top-0 left-0 lg:left-20 right-0 z-40 flex items-center justify-between px-4 lg:px-6 py-4 border-b border-gray-200 bg-white">
+      <nav className="fixed top-0 left-0 lg:left-20 right-0 z-40 flex items-center justify-between px-4 lg:px-6 py-2 border-b border-gray-200 bg-white min-h-[71px]">
         <div className="flex items-center gap-4">
           {/* Mobile Menu Button */}
           <button
@@ -61,23 +70,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             : <Bars3BottomLeftIcon className="w-5 h-5" />}
           </button>
 
-          <div className="flex items-center gap-2">
-            <span className="font-semibold">Gardens</span>
-          </div>
+          {/* <div className="flex items-center gap-2">
+            <h4 className="">Gardens</h4>
+          </div> */}
         </div>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-              <span className="text-white text-xs font-bold">M</span>
-            </div>
-            <span className="font-medium hidden sm:block">mati0x.eth</span>
-          </div>
-        </div>
-      </header>
+        <ConnectWallet />
+      </nav>
 
-      <div className="flex justify-center items-start pt-[80px] lg:ml-20 min-h-screen">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="border border-gray-200 rounded-lg p-6 min-h-[400px]">
+      <div className="flex justify-center items-start pt-[71px] lg:ml-[71px] min-h-screen">
+        <div className="max-w-7xl mx-auto">
+          <div className="p-2 min-h-[400px] border-2 border-blue-600">
             {/* Main content */}
             {children}
           </div>
