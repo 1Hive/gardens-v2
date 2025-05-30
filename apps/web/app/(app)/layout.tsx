@@ -5,7 +5,7 @@ import { useState } from "react";
 import {
   Bars3BottomLeftIcon,
   XMarkIcon,
-  EllipsisHorizontalCircleIcon,
+  EllipsisHorizontalIcon,
 } from "@heroicons/react/24/outline";
 import Image from "next/image";
 import Link from "next/link";
@@ -32,7 +32,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             loading="lazy"
           />
         </Link>
-        <EllipsisHorizontalCircleIcon className="w-6 h-6 text-black hover:text-primary-button cursor-pointer" />
+        <div className="w-10 h-10 bg-tertiary-soft rounded-full flex items-center justify-center relative hover:border-2 hover:border-tertiary-content transition-colors duration-200 group cursor-pointer">
+          <EllipsisHorizontalIcon className="w-6 h-6 text-black group-hover:text-tertiary-content transition-colors duration-200" />
+        </div>
       </aside>
 
       {/* Mobile Sidebar Overlay */}
@@ -79,7 +81,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       <div className="flex justify-center items-start pt-[71px] lg:ml-[71px] min-h-screen">
         <div className="max-w-7xl mx-auto">
-          <div className="p-2 min-h-[400px] border-2 border-blue-600">
+          <div className="p-2 min-h-[400px]">
             {/* Main content */}
             {children}
           </div>

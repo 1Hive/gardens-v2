@@ -17,7 +17,7 @@ import { useSubgraphQueryMultiChain } from "@/hooks/useSubgraphQueryMultiChain";
 const Header = () => {
   const { tooltipMessage, isConnected } = useDisableButtons();
   return (
-    <header className="flex flex-col items-center gap-8">
+    <header className="flex flex-col items-center gap-8 ">
       <div className="flex items-center text-center">
         <div className="relative flex-1">
           <Image src={clouds1} alt="clouds" width={205} height={205} />
@@ -54,8 +54,8 @@ const Footer = () => {
   const { tooltipMessage, isConnected } = useDisableButtons();
 
   return (
-    <section className="section-layout">
-      <div className="flex flex-col gap-10 overflow-x-hidden">
+    <section>
+      <div className="flex flex-col gap-10 overflow-x-hidden ">
         <header>
           <h4 className="text-neutral-content">Create your own community</h4>
         </header>
