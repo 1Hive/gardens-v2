@@ -23,6 +23,8 @@ type CommunityCardProps = {
   garden: Pick<TokenGarden, "address" | "chainId" | "symbol">;
   members?: Maybe<Pick<MemberCommunity, "id" | "memberAddress">[]> | undefined;
   strategies?: Maybe<Pick<CVStrategy, "id">[]> | undefined;
+  onHover?: (id: string) => void;
+  onUnhover?: () => void;
 };
 
 export function CommunityCard({
@@ -31,6 +33,8 @@ export function CommunityCard({
   garden,
   members,
   strategies,
+  onHover,
+  onUnhover,
 }: CommunityCardProps) {
   const { address: tokenAddr, chainId, symbol: tokenSymbol } = garden;
 
@@ -47,6 +51,8 @@ export function CommunityCard({
       key={id}
       href={`/gardens/${chainId}/${tokenAddr}/${id}`}
       className={`w-[275px] sm:min-w-[313px] ${isNewCommunity ? "shadow-2xl" : ""}`}
+      onHover={() => onHover?.(id)}
+      onUnhover={onUnhover}
     >
       <div className="flex justify-between text-neutral-content text-sm">
         <Image
