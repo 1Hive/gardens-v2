@@ -98,14 +98,14 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
                   return (
                     <div
                       key={key}
-                      className="relative group block h-full w-full p-1"
+                      className="relative group block h-full w-full"
                       onMouseEnter={() => setHoveredIndex(index)}
                       onMouseLeave={() => setHoveredIndex(null)}
                     >
-                      <AnimatePresence>
+                      {/* <AnimatePresence>
                         {hoveredIndex === index && (
                           <motion.span
-                            className="absolute inset-0 h-full w-full bg-secondary-hover-content block rounded-2xl z-10"
+                            className="absolute inset-0 h-full w-full bg-secondary-soft block rounded-2xl z-10"
                             layoutId="hoverBackground"
                             initial={{ opacity: 0 }}
                             animate={{
@@ -118,7 +118,7 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
                             }}
                           />
                         )}
-                      </AnimatePresence>
+                      </AnimatePresence> */}
 
                       <div className="relative z-20">
                         {isFetching ?

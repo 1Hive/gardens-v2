@@ -56,10 +56,7 @@ const Footer = () => {
   return (
     <section>
       <div className="flex flex-col gap-10 overflow-x-hidden ">
-        <header>
-          <h4 className="text-neutral-content">Create your own community</h4>
-        </header>
-        <div className="relative flex h-[219px] justify-center">
+        <div className="relative flex h-[240px] justify-center">
           <Link href="/gardens/create-community" className="mt-6 z-10">
             <Button
               btnStyle="filled"
