@@ -20,9 +20,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-primary relative">
       {/* Left Sidebar - Fixed with higher z-index */}
-      <aside className="hidden lg:flex fixed top-0 left-0 h-full w-[71px] bg-white border-r border-gray-200 flex-col items-center py-4 gap-4 z-50 justify-between">
+      <aside className="hidden lg:flex fixed top-0 left-0 h-full w-[75px] bg-white border-r border-gray-200 flex-col items-center py-4 gap-4 z-50 justify-between">
         <Link href="/gardens" className="flex items-center gap-3 text-sm">
           <Image
             src={newLogo}
@@ -32,9 +32,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             loading="lazy"
           />
         </Link>
-        <div className="w-10 h-10 bg-tertiary-soft rounded-full flex items-center justify-center relative hover:border-2 hover:border-tertiary-content transition-colors duration-200 group cursor-pointer">
+        {/* <div className="w-10 h-10 bg-tertiary-soft rounded-full flex items-center justify-center relative hover:border-2 hover:border-tertiary-content transition-colors duration-200 group cursor-pointer">
           <EllipsisHorizontalIcon className="w-6 h-6 text-black group-hover:text-tertiary-content transition-colors duration-200" />
-        </div>
+        </div> */}
       </aside>
 
       {/* Mobile Sidebar Overlay */}

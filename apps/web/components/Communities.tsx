@@ -85,7 +85,7 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.3 }}
-            className="overflow-hidden mt-4"
+            className="overflow-hidden"
           >
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 py-10 relative">
               {(isFetching ? Array(9).fill(0) : communities).map(
@@ -98,7 +98,7 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
                   return (
                     <div
                       key={key}
-                      className="relative group block p-2 h-full w-full"
+                      className="relative group block h-full w-full p-1"
                       onMouseEnter={() => setHoveredIndex(index)}
                       onMouseLeave={() => setHoveredIndex(null)}
                     >
@@ -214,7 +214,7 @@ export const Communities: React.FC<CommunitiesProps> = ({
   }, [address, communities, nameFilter, tokenFilter, chainIdFilter]);
 
   return (
-    <section className="section-layout flex flex-col gap-2">
+    <section className="flex flex-col gap-2">
       <CommunityFilters
         nameFilter={nameFilter}
         setNameFilter={setNameFilter}

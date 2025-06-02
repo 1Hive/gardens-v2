@@ -50,7 +50,7 @@ export function CommunityCard({
     <Card
       key={id}
       href={`/gardens/${chainId}/${tokenAddr}/${id}`}
-      className={`w-[275px] sm:min-w-[313px] ${isNewCommunity ? "shadow-2xl" : ""}`}
+      className={` ${isNewCommunity ? "shadow-2xl" : ""}`}
       onHover={() => onHover?.(id)}
       onUnhover={onUnhover}
     >
