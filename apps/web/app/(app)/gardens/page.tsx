@@ -57,7 +57,7 @@ const Footer = () => {
     <section>
       <div className="flex flex-col gap-10 overflow-x-hidden ">
         <div className="relative flex h-[240px] justify-center">
-          <Link href="/gardens/create-community" className="mt-6 z-10">
+          <Link href="/gardens/create-community" className="mt-10 z-10">
             <Button
               btnStyle="filled"
               disabled={!isConnected}
