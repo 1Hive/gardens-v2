@@ -296,7 +296,7 @@ export default function Page({
   };
 
   return (
-    <div className="page-layout">
+    <div>
       <header className="section-layout flex flex-row items-center gap-10 flex-wrap justify-end">
         <div className="absolute top-5 right-10 flex flex-col">
           {communityAddr == BLOCKSCOUT_ADDRESS && (

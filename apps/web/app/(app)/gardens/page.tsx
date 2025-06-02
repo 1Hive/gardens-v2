@@ -110,7 +110,7 @@ export default function GardensPage() {
   }, [communitiesSections]);
 
   return (
-    <div className="page-layout">
+    <div className="page-layout max-w-7xl mx-auto">
       <Header />
       <Communities communities={allCommunities} isFetching={isFetching} />
       <Footer />

@@ -80,8 +80,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </nav>
 
       <div className="flex justify-center items-start pt-[71px] lg:ml-[71px] min-h-screen">
-        <div className="max-w-7xl mx-auto">
-          <div className="p-2 min-h-[400px]">
+        <div className="w-full mx-auto">
+          <div className="min-h-[400px]">
             {/* Main content */}
             {children}
           </div>

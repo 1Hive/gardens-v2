@@ -100,7 +100,7 @@ export function Breadcrumbs() {
         </ol>
       </div>
       {openDisclaimer && (
-        <div className="pointer-events-none fixed inset-x-0 bottom-0 px-6 pb-6 z-10">
+        <div className="pointer-events-none fixed inset-x-0 bottom-0 px-6 pb-6 z-50">
           <div className="border1 pointer-events-auto max-w-xl rounded-xl bg-neutral p-6 shadow-lg flex flex-col gap-4 items-start justify-start">
             <div className="flex gap-2 items-center">
               <ExclamationTriangleIcon className="w-8 h-8 text-danger-button" />
