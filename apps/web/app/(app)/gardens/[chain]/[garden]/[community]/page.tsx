@@ -297,10 +297,11 @@ export default function Page({
 
   return (
     <>
-      <div className="col-span-12 md:col-span-3 lg:col-span-2">
-        <div className="bg-slate-900/50 border border-slate-700/50 backdrop-blur-sm rounded-lg h-96">
-          <h5 className="text-orange-300">left side</h5>
-          <h6>icon + covenant page</h6>
+      <div className="col-span-12 md:col-span-3 lg:col-span-2 border2">
+        {/* Left sidebar content goes here */}
+        <div className="bg-slate-500/50 border border-slate-700/50 backdrop-blur-sm rounded-lg flex flex-col gap-2 sticky top-28">
+          <h5 className="text-orange-600">left side</h5>
+          <h6>icon + covenant link page</h6>
           <h6>icon + metrics link page</h6>
           <h6>
             icon + Members overview - quick acces to all memebers stakes with
@@ -310,27 +311,30 @@ export default function Page({
             it has an entire column for itself, so it can be used for adding
             more component
           </h6>
-          {/* Left sidebar content goes here */}
+          <h6>* we can have nice filters section here also</h6>
+          <h6>* have some important banner annoucments or NFTs campaigns</h6>
         </div>
       </div>
 
-      <div className="col-span-12 md:col-span-9 lg:col-span-7">
-        <div className="bg-slate-900/50 border border-slate-700/50 backdrop-blur-sm rounded-lg h-96">
-          <h5 className="text-orange-300">main section</h5>
+      <div className="col-span-12 md:col-span-9 lg:col-span-8 ">
+        <div className="bg-slate-500/50 border border-slate-700/50 backdrop-blur-sm rounded-lg h-[800px] flex flex-col gap-2">
+          <h5 className="text-orange-600">main section</h5>
           <h6>community header</h6>
           <h6>pools</h6>
           <h6>covenant</h6>
         </div>
       </div>
 
-      <div className="col-span-12 lg:col-span-3">
-        <div className="bg-slate-900/50 border border-slate-700/50 backdrop-blur-sm rounded-lg h-96">
-          <h5 className="text-orange-300">right side</h5>
-          <h5>stake component</h5>
+      <div className="col-span-12 lg:col-span-2">
+        <div className="bg-slate-500/50 border border-slate-700/50 backdrop-blur-sm rounded-lg flex flex-col gap-2 sticky top-28 border2">
+          <h5 className="text-orange-600">right side</h5>
+          <h5>* stake component</h5>
           <h6>
             it has an entire column for itself, so it can be used for adding
             more component
           </h6>
+          <h6>* pool funds compoenent when we are in pool page</h6>
+          <h6>* governance component when we are in pool page</h6>
         </div>
       </div>
     </>
