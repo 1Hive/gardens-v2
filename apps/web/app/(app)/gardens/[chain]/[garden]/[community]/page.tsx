@@ -296,226 +296,264 @@ export default function Page({
   };
 
   return (
-    <div>
-      <header className="section-layout flex flex-row items-center gap-10 flex-wrap justify-end">
-        <div className="absolute top-5 right-10 flex flex-col">
-          {communityAddr == BLOCKSCOUT_ADDRESS && (
-            <>
-              <Image
-                src={BlockscoutLogo}
-                alt={`${communityName} community`}
-                className="h-[100px]"
-                height={210}
-                width={210}
-              />
-              <a
-                href="https://merits.blockscout.com/?tab=campaigns&id=rec66xiX71sN8y4q1&utm_source=landing-page&utm_medium=campaign&utm_campaign=gnosis"
-                className="text-tertiary-content text-sm -mt-8 flex items-center justify-center gap-1"
-                target="_external"
-                rel="noreferrer"
-              >
-                Learn more about Blockscout Merits{" "}
-                <span>
-                  <ArrowTopRightOnSquareIcon width={14} height={14} />
-                </span>
-              </a>
-            </>
-          )}
+    <>
+      <div className="col-span-12 md:col-span-3 lg:col-span-2">
+        <div className="bg-slate-900/50 border border-slate-700/50 backdrop-blur-sm rounded-lg h-96">
+          <h5 className="text-orange-300">left side</h5>
+          <h6>icon + covenant page</h6>
+          <h6>icon + metrics link page</h6>
+          <h6>
+            icon + Members overview - quick acces to all memebers stakes with
+            graphs
+          </h6>
+          <h6>
+            it has an entire column for itself, so it can be used for adding
+            more component
+          </h6>
+          {/* Left sidebar content goes here */}
         </div>
-        <div>
-          <Image
-            src={commImg}
-            alt={`${communityName} community`}
-            className="h-[180px]"
-            height={180}
-            width={180}
-          />
-          <Button
-            onClick={() => setOpenCommDetails(!openCommDetails)}
-            btnStyle="outline"
-            className="mt-1"
-          >
-            {openCommDetails ? "Close" : "View"} Members
-          </Button>
-        </div>
-        <div className="flex flex-1 flex-col gap-2">
-          <div>
-            <h2>{communityName}</h2>
-            <EthAddress
-              icon={false}
-              address={communityAddr as Address}
-              label="Community address"
-            />
-          </div>
-          <div className="flex flex-col gap-2">
-            <Statistic
-              label="members"
-              count={members?.length ?? 0}
-              icon={<UserGroupIcon />}
-            />
-            <Statistic
-              label="pools"
-              icon={<RectangleGroupIcon />}
-              count={activePools.length ?? 0}
-            />
-            <Statistic label="staked tokens" icon={<CurrencyDollarIcon />}>
-              <DisplayNumber
-                number={[BigInt(communityStakedTokens), tokenGarden.decimals]}
-                compact={true}
-                tokenSymbol={tokenGarden.symbol}
-              />
-            </Statistic>
-            <div className="flex gap-2 items-center">
-              <p className="font-medium">Registration stake:</p>
-              <InfoWrapper
-                tooltip={`Registration amount: ${parseToken(registrationAmount)} ${tokenGarden.symbol}\nCommunity fee: ${parseToken(parsedCommunityFee())} ${tokenGarden.symbol}`}
-              >
-                <div className="flex">
-                  <EthAddress
-                    address={tokenGarden.address as Address}
-                    shortenAddress={true}
-                    actions="none"
-                    icon={false}
-                    label={
-                      <DisplayNumber
-                        number={[
-                          getTotalRegistrationCost(),
-                          tokenGarden?.decimals,
-                        ]}
-                        className="subtitle2"
-                        disableTooltip={true}
-                        compact={true}
-                        copiable={false}
-                        tokenSymbol={tokenGarden.symbol}
-                      />
-                    }
-                  />
-                </div>
-              </InfoWrapper>
-            </div>
-          </div>
-        </div>
-        <div className="flex flex-col gap-4 mt-auto">
-          <RegisterMember
-            memberData={isMemberResult}
-            registrationCost={getTotalRegistrationCost()}
-            token={tokenGarden}
-            registryCommunity={registryCommunity}
-          />
-        </div>
-        {openCommDetails && (
-          <CommunityDetailsTable
-            membersStaked={registryCommunity.members as MembersStaked[]}
-            tokenGarden={tokenGarden}
-            communityStakedTokens={communityStakedTokens}
-          />
-        )}
-      </header>
+      </div>
 
-      <IncreasePower
-        memberData={isMemberResult}
-        registryCommunity={registryCommunity}
-        tokenGarden={tokenGarden}
-        registrationAmount={registrationAmount}
-      />
-      <section className="section-layout flex flex-col gap-10">
-        <header className="flex justify-between">
-          <h2>Pools</h2>
-          <Link
-            href={`/gardens/${chain}/${tokenAddr}/${communityAddr}/create-pool`}
-          >
-            <Button
-              btnStyle="filled"
-              disabled={!isConnected || missmatchUrl}
-              tooltip={tooltipMessage}
-              icon={<PlusIcon height={24} width={24} />}
-            >
-              Create Pool
-            </Button>
-          </Link>
-        </header>
-        <div className="flex flex-col gap-4">
-          <h4 className="text-secondary-content">
-            Funding pools ({fundingPools.length})
-          </h4>
-          <div className="flex flex-row flex-wrap gap-10">
-            {fundingPools.map((pool) => (
-              <Fragment key={pool.poolId}>
-                <PoolCard token={pool.token} chainId={chain} pool={pool} />
-              </Fragment>
-            ))}
-          </div>
+      <div className="col-span-12 md:col-span-9 lg:col-span-7">
+        <div className="bg-slate-900/50 border border-slate-700/50 backdrop-blur-sm rounded-lg h-96">
+          <h5 className="text-orange-300">main section</h5>
+          <h6>community header</h6>
+          <h6>pools</h6>
+          <h6>covenant</h6>
         </div>
-        <div className="flex flex-col gap-4">
-          <h4 className="text-secondary-content">
-            Signaling pools ({signalingPools.length})
-          </h4>
-          <div className="flex flex-row flex-wrap gap-10">
-            {signalingPools.map((pool) => (
-              <PoolCard
-                key={pool.poolId}
-                token={pool.token}
-                chainId={chain}
-                pool={pool}
-              />
-            ))}
-          </div>
+      </div>
+
+      <div className="col-span-12 lg:col-span-3">
+        <div className="bg-slate-900/50 border border-slate-700/50 backdrop-blur-sm rounded-lg h-96">
+          <h5 className="text-orange-300">right side</h5>
+          <h5>stake component</h5>
+          <h6>
+            it has an entire column for itself, so it can be used for adding
+            more component
+          </h6>
         </div>
-        <div className="flex flex-col gap-4">
-          <h4 className="text-secondary-content">
-            Pools in Review ({poolsInReview.length})
-          </h4>
-          <div className="flex flex-row flex-wrap gap-10">
-            {poolsInReview.map((pool) => (
-              <PoolCard
-                key={pool.poolId}
-                token={pool.token}
-                chainId={chain}
-                pool={pool}
-              />
-            ))}
-          </div>
-        </div>
-        {(!!isCouncilMember ||
-          accountAddress?.toLowerCase() ===
-            registryCommunity.councilSafe?.toLowerCase() ||
-          showArchived) && (
-          <div className="flex flex-col gap-4">
-            <h4 className="text-secondary-content">
-              Pools archived ({poolsArchived.length})
-            </h4>
-            <div className="flex flex-row flex-wrap gap-10">
-              {poolsArchived.map((pool) => (
-                <PoolCard
-                  key={pool.poolId}
-                  token={pool.token}
-                  chainId={chain}
-                  pool={pool}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-      </section>
-      <section ref={covenantSectionRef} className="section-layout">
-        <h2 className="mb-4">Covenant</h2>
-        {registryCommunity?.covenantIpfsHash ?
-          <Skeleton isLoading={!covenant} rows={5}>
-            <MarkdownWrapper>{covenant!}</MarkdownWrapper>
-          </Skeleton>
-        : <p className="italic">No covenant was submitted.</p>}
-        <div className="mt-10 flex justify-center">
-          <Image
-            src={groupFlowers}
-            alt="flowers"
-            className="w-[265px]"
-            width={265}
-            height={70}
-          />
-        </div>
-      </section>
-      {!isProd && tokenGarden && <TokenGardenFaucet token={tokenGarden} />}
-    </div>
+      </div>
+    </>
+    // <div>
+    //   <header className="section-layout flex flex-row items-center gap-10 flex-wrap justify-end">
+    //     <div className="absolute top-5 right-10 flex flex-col">
+    //       {communityAddr == BLOCKSCOUT_ADDRESS && (
+    //         <>
+    //           <Image
+    //             src={BlockscoutLogo}
+    //             alt={`${communityName} community`}
+    //             className="h-[100px]"
+    //             height={210}
+    //             width={210}
+    //           />
+    //           <a
+    //             href="https://merits.blockscout.com/?tab=campaigns&id=rec66xiX71sN8y4q1&utm_source=landing-page&utm_medium=campaign&utm_campaign=gnosis"
+    //             className="text-tertiary-content text-sm -mt-8 flex items-center justify-center gap-1"
+    //             target="_external"
+    //             rel="noreferrer"
+    //           >
+    //             Learn more about Blockscout Merits{" "}
+    //             <span>
+    //               <ArrowTopRightOnSquareIcon width={14} height={14} />
+    //             </span>
+    //           </a>
+    //         </>
+    //       )}
+    //     </div>
+    //     <div>
+    //       <Image
+    //         src={commImg}
+    //         alt={`${communityName} community`}
+    //         className="h-[180px]"
+    //         height={180}
+    //         width={180}
+    //       />
+    //       <Button
+    //         onClick={() => setOpenCommDetails(!openCommDetails)}
+    //         btnStyle="outline"
+    //         className="mt-1"
+    //       >
+    //         {openCommDetails ? "Close" : "View"} Members
+    //       </Button>
+    //     </div>
+    //     <div className="flex flex-1 flex-col gap-2">
+    //       <div>
+    //         <h2>{communityName}</h2>
+    //         <EthAddress
+    //           icon={false}
+    //           address={communityAddr as Address}
+    //           label="Community address"
+    //         />
+    //       </div>
+    //       <div className="flex flex-col gap-2">
+    //         <Statistic
+    //           label="members"
+    //           count={members?.length ?? 0}
+    //           icon={<UserGroupIcon />}
+    //         />
+    //         <Statistic
+    //           label="pools"
+    //           icon={<RectangleGroupIcon />}
+    //           count={activePools.length ?? 0}
+    //         />
+    //         <Statistic label="staked tokens" icon={<CurrencyDollarIcon />}>
+    //           <DisplayNumber
+    //             number={[BigInt(communityStakedTokens), tokenGarden.decimals]}
+    //             compact={true}
+    //             tokenSymbol={tokenGarden.symbol}
+    //           />
+    //         </Statistic>
+    //         <div className="flex gap-2 items-center">
+    //           <p className="font-medium">Registration stake:</p>
+    //           <InfoWrapper
+    //             tooltip={`Registration amount: ${parseToken(registrationAmount)} ${tokenGarden.symbol}\nCommunity fee: ${parseToken(parsedCommunityFee())} ${tokenGarden.symbol}`}
+    //           >
+    //             <div className="flex">
+    //               <EthAddress
+    //                 address={tokenGarden.address as Address}
+    //                 shortenAddress={true}
+    //                 actions="none"
+    //                 icon={false}
+    //                 label={
+    //                   <DisplayNumber
+    //                     number={[
+    //                       getTotalRegistrationCost(),
+    //                       tokenGarden?.decimals,
+    //                     ]}
+    //                     className="subtitle2"
+    //                     disableTooltip={true}
+    //                     compact={true}
+    //                     copiable={false}
+    //                     tokenSymbol={tokenGarden.symbol}
+    //                   />
+    //                 }
+    //               />
+    //             </div>
+    //           </InfoWrapper>
+    //         </div>
+    //       </div>
+    //     </div>
+    //     <div className="flex flex-col gap-4 mt-auto">
+    //       <RegisterMember
+    //         memberData={isMemberResult}
+    //         registrationCost={getTotalRegistrationCost()}
+    //         token={tokenGarden}
+    //         registryCommunity={registryCommunity}
+    //       />
+    //     </div>
+    //     {openCommDetails && (
+    //       <CommunityDetailsTable
+    //         membersStaked={registryCommunity.members as MembersStaked[]}
+    //         tokenGarden={tokenGarden}
+    //         communityStakedTokens={communityStakedTokens}
+    //       />
+    //     )}
+    //   </header>
+
+    //   <IncreasePower
+    //     memberData={isMemberResult}
+    //     registryCommunity={registryCommunity}
+    //     tokenGarden={tokenGarden}
+    //     registrationAmount={registrationAmount}
+    //   />
+    //   <section className="section-layout flex flex-col gap-10">
+    //     <header className="flex justify-between">
+    //       <h2>Pools</h2>
+    //       <Link
+    //         href={`/gardens/${chain}/${tokenAddr}/${communityAddr}/create-pool`}
+    //       >
+    //         <Button
+    //           btnStyle="filled"
+    //           disabled={!isConnected || missmatchUrl}
+    //           tooltip={tooltipMessage}
+    //           icon={<PlusIcon height={24} width={24} />}
+    //         >
+    //           Create Pool
+    //         </Button>
+    //       </Link>
+    //     </header>
+    //     <div className="flex flex-col gap-4">
+    //       <h4 className="text-secondary-content">
+    //         Funding pools ({fundingPools.length})
+    //       </h4>
+    //       <div className="flex flex-row flex-wrap gap-10">
+    //         {fundingPools.map((pool) => (
+    //           <Fragment key={pool.poolId}>
+    //             <PoolCard token={pool.token} chainId={chain} pool={pool} />
+    //           </Fragment>
+    //         ))}
+    //       </div>
+    //     </div>
+    //     <div className="flex flex-col gap-4">
+    //       <h4 className="text-secondary-content">
+    //         Signaling pools ({signalingPools.length})
+    //       </h4>
+    //       <div className="flex flex-row flex-wrap gap-10">
+    //         {signalingPools.map((pool) => (
+    //           <PoolCard
+    //             key={pool.poolId}
+    //             token={pool.token}
+    //             chainId={chain}
+    //             pool={pool}
+    //           />
+    //         ))}
+    //       </div>
+    //     </div>
+    //     <div className="flex flex-col gap-4">
+    //       <h4 className="text-secondary-content">
+    //         Pools in Review ({poolsInReview.length})
+    //       </h4>
+    //       <div className="flex flex-row flex-wrap gap-10">
+    //         {poolsInReview.map((pool) => (
+    //           <PoolCard
+    //             key={pool.poolId}
+    //             token={pool.token}
+    //             chainId={chain}
+    //             pool={pool}
+    //           />
+    //         ))}
+    //       </div>
+    //     </div>
+    //     {(!!isCouncilMember ||
+    //       accountAddress?.toLowerCase() ===
+    //         registryCommunity.councilSafe?.toLowerCase() ||
+    //       showArchived) && (
+    //       <div className="flex flex-col gap-4">
+    //         <h4 className="text-secondary-content">
+    //           Pools archived ({poolsArchived.length})
+    //         </h4>
+    //         <div className="flex flex-row flex-wrap gap-10">
+    //           {poolsArchived.map((pool) => (
+    //             <PoolCard
+    //               key={pool.poolId}
+    //               token={pool.token}
+    //               chainId={chain}
+    //               pool={pool}
+    //             />
+    //           ))}
+    //         </div>
+    //       </div>
+    //     )}
+    //   </section>
+    //   <section ref={covenantSectionRef} className="section-layout">
+    //     <h2 className="mb-4">Covenant</h2>
+    //     {registryCommunity?.covenantIpfsHash ?
+    //       <Skeleton isLoading={!covenant} rows={5}>
+    //         <MarkdownWrapper>{covenant!}</MarkdownWrapper>
+    //       </Skeleton>
+    //     : <p className="italic">No covenant was submitted.</p>}
+    //     <div className="mt-10 flex justify-center">
+    //       <Image
+    //         src={groupFlowers}
+    //         alt="flowers"
+    //         className="w-[265px]"
+    //         width={265}
+    //         height={70}
+    //       />
+    //     </div>
+    //   </section>
+    //   {!isProd && tokenGarden && <TokenGardenFaucet token={tokenGarden} />}
+    // </div>
   );
 }
 
