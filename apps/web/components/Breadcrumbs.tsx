@@ -73,7 +73,7 @@ export function Breadcrumbs() {
 
   return (
     <>
-      <div className="my-[2px] border-l-2 border-solid border-neutral-soft-content" />
+      <div className="my-[2px] border-l-2 border-solid border-neutral-soft-content h-5" />
       <div aria-label="Breadcrumbs" className="flex w-full items-center">
         <ol className="flex w-full items-center overflow-hidden">
           {breadcrumbs.map(({ href, label }, index) => (
