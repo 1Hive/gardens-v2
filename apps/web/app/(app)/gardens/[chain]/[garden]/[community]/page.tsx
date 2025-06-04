@@ -326,9 +326,9 @@ export default function Page({
                   />
                 </div>
 
-                {/* Stataistic + Register component */}
+                {/* Statistic + Register/Leave Button */}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
-                  <div className="flex flex-col sm:flex-row gap-6">
+                  <div className="flex flex-col sm:flex-row gap-2 md:gap-6">
                     <Statistic
                       label="members"
                       count={members?.length ?? 0}
@@ -355,7 +355,7 @@ export default function Page({
                       />
                     </Statistic>
                   </div>
-                  <div>
+                  <div className="absolute top-12 md:top-7 right-5">
                     <RegisterMember
                       memberData={isMemberResult}
                       registrationCost={getTotalRegistrationCost()}
@@ -365,7 +365,7 @@ export default function Page({
                   </div>
                 </div>
 
-                {/* Registration Stake + View members Button*/}
+                {/* Registration Stake Value + View members Button*/}
                 <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center mt-2">
                   <div className="flex gap-1 items-center ">
                     <p className="font-medium">Registration stake:</p>
@@ -384,7 +384,7 @@ export default function Page({
                                 getTotalRegistrationCost(),
                                 tokenGarden?.decimals,
                               ]}
-                              className="subtitle2"
+                              valueClassName="subtitle2"
                               disableTooltip={true}
                               compact={true}
                               copiable={false}

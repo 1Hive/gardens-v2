@@ -270,7 +270,7 @@ export const IncreasePower = ({
           title="Staking benefits"
           content="staking more tokens increases your voting power in pools to support proposals."
           infoBoxType="info"
-          className="max-w-xl"
+          className="w-full"
         />
 
         {/* Available to stake*/}
@@ -286,12 +286,12 @@ export const IncreasePower = ({
         </div>
 
         {/* Input */}
-        <div className="border2 relative flex-1">
+        <div className="relative w-full">
           <input
             type="number"
             value={amount}
             placeholder="Amount"
-            className="input input-bordered input-info w-fill"
+            className="input input-bordered input-info w-full"
             onChange={(e) => setAmount(e.target.value)}
           />
           <span className="absolute top-4 right-4 text-black">
@@ -300,12 +300,13 @@ export const IncreasePower = ({
         </div>
 
         {/* Stake & Unstake Buttons */}
-        <div className="flex-1 flex items-center justify-between">
+        <div className="flex-1 flex items-center justify-between ">
           <Button
             onClick={handleClick}
             disabled={disabledIncPowerButton}
             tooltip={tooltipMessage}
             icon={<ArrowTrendingUpIcon className="h-5 w-5" />}
+            className="w-full"
           >
             Stake
             <span className="loading-spinner" />
