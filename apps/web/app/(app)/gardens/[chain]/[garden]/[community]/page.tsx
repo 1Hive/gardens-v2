@@ -4,12 +4,15 @@ import React, { Fragment, useEffect, useRef, useState } from "react";
 import {
   CurrencyDollarIcon,
   PlusIcon,
-  RectangleGroupIcon,
+  CircleStackIcon,
   UserGroupIcon,
   ArrowTopRightOnSquareIcon,
+  ChevronUpIcon,
 } from "@heroicons/react/24/outline";
 
 import { FetchTokenResult } from "@wagmi/core";
+import cn from "classnames";
+
 import { Dnum, multiply } from "dnum";
 import Image from "next/image";
 import Link from "next/link";
@@ -295,11 +298,16 @@ export default function Page({
     return res;
   };
 
+  {
+    /* Community Header */
+  }
+
   return (
     <>
       <div className="col-span-12 lg:col-span-9">
         <div className="backdrop-blur-sm rounded-lg flex flex-col gap-10">
-          <header className="section-layout flex flex-row items-center gap-10 flex-wrap justify-end ">
+          <header className="bg-white border border-gray-200 shadow-sm relative">
+            {/* Blocklscout community only banner */}
             <div className="absolute top-5 right-10 flex flex-col">
               {communityAddr == BLOCKSCOUT_ADDRESS && (
                 <>
@@ -324,90 +332,118 @@ export default function Page({
                 </>
               )}
             </div>
-            <div>
-              <Image
-                src={commImg}
-                alt={`${communityName} community`}
-                className="h-[180px]"
-                height={180}
-                width={180}
-              />
-              <Button
-                onClick={() => setOpenCommDetails(!openCommDetails)}
-                btnStyle="outline"
-                className="mt-1"
-              >
-                {openCommDetails ? "Close" : "View"} Members
-              </Button>
-            </div>
-            <div className="flex flex-1 flex-col gap-2">
-              <div>
-                <h2>{communityName}</h2>
-                <EthAddress
-                  icon={false}
-                  address={communityAddr as Address}
-                  label="Community address"
-                />
-              </div>
-              <div className="flex flex-col gap-2">
-                <Statistic
-                  label="members"
-                  count={members?.length ?? 0}
-                  icon={<UserGroupIcon />}
-                />
-                <Statistic
-                  label="pools"
-                  icon={<RectangleGroupIcon />}
-                  count={activePools.length ?? 0}
-                />
-                <Statistic label="staked tokens" icon={<CurrencyDollarIcon />}>
-                  <DisplayNumber
-                    number={[
-                      BigInt(communityStakedTokens),
-                      tokenGarden.decimals,
-                    ]}
-                    compact={true}
-                    tokenSymbol={tokenGarden.symbol}
-                  />
-                </Statistic>
-                <div className="flex gap-2 items-center">
-                  <p className="font-medium">Registration stake:</p>
-                  <InfoWrapper
-                    tooltip={`Registration amount: ${parseToken(registrationAmount)} ${tokenGarden.symbol}\nCommunity fee: ${parseToken(parsedCommunityFee())} ${tokenGarden.symbol}`}
-                  >
-                    <div className="flex">
-                      <EthAddress
-                        address={tokenGarden.address as Address}
-                        shortenAddress={true}
-                        actions="none"
-                        icon={false}
-                        label={
-                          <DisplayNumber
-                            number={[
-                              getTotalRegistrationCost(),
-                              tokenGarden?.decimals,
-                            ]}
-                            className="subtitle2"
-                            disableTooltip={true}
-                            compact={true}
-                            copiable={false}
-                            tokenSymbol={tokenGarden.symbol}
-                          />
-                        }
+
+            <div className="p-4 lg:p-6">
+              <div className="flex flex-col sm:flex-row items-start space-y-4 sm:space-y-0 sm:space-x-4">
+                {/* Image */}
+                <div className="relative flex-shrink-0">
+                  <div className="w-20 h-20 lg:w-24 lg:h-24 bg-primary-soft rounded-xl flex items-center justify-center shadow-sm p-1">
+                    <Image src={commImg} alt={`${communityName} community`} />
+                  </div>
+                </div>
+
+                <div className="flex-1 flex-col lg:items-start lg:justify-between gap-2">
+                  {/* Community name + Address */}
+                  <div className="mb-3 ">
+                    <h2>{communityName}</h2>
+                    <EthAddress
+                      icon={false}
+                      address={communityAddr as Address}
+                      label="Community address"
+                    />
+                  </div>
+
+                  {/* Stataistic + Register component */}
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
+                    <div className="flex flex-col sm:flex-row gap-6">
+                      <Statistic
+                        label="members"
+                        count={members?.length ?? 0}
+                        icon={<UserGroupIcon />}
+                      />
+
+                      <Statistic
+                        label="pools"
+                        icon={<CircleStackIcon />}
+                        count={activePools.length ?? 0}
+                      />
+
+                      <Statistic
+                        label="staked tokens"
+                        icon={<CurrencyDollarIcon />}
+                      >
+                        <DisplayNumber
+                          number={[
+                            BigInt(communityStakedTokens),
+                            tokenGarden.decimals,
+                          ]}
+                          compact={true}
+                          tokenSymbol={tokenGarden.symbol}
+                        />
+                      </Statistic>
+                    </div>
+                    <div>
+                      <RegisterMember
+                        memberData={isMemberResult}
+                        registrationCost={getTotalRegistrationCost()}
+                        token={tokenGarden}
+                        registryCommunity={registryCommunity}
                       />
                     </div>
-                  </InfoWrapper>
+                  </div>
+
+                  {/* Registration Stake + View members Button*/}
+                  <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center mt-2">
+                    <div className="flex gap-1 items-center ">
+                      <p className="font-medium">Registration stake:</p>
+                      <InfoWrapper
+                        tooltip={`Registration amount: ${parseToken(registrationAmount)} ${tokenGarden.symbol}\nCommunity fee: ${parseToken(parsedCommunityFee())} ${tokenGarden.symbol}`}
+                      >
+                        <div className="flex">
+                          <EthAddress
+                            address={tokenGarden.address as Address}
+                            shortenAddress={true}
+                            actions="none"
+                            icon={false}
+                            label={
+                              <DisplayNumber
+                                number={[
+                                  getTotalRegistrationCost(),
+                                  tokenGarden?.decimals,
+                                ]}
+                                className="subtitle2"
+                                disableTooltip={true}
+                                compact={true}
+                                copiable={false}
+                                tokenSymbol={tokenGarden.symbol}
+                              />
+                            }
+                          />
+                        </div>
+                      </InfoWrapper>
+                    </div>
+                    <Button
+                      onClick={() => setOpenCommDetails(!openCommDetails)}
+                      btnStyle="outline"
+                      className="w-full sm:w-auto border-none"
+                      icon={
+                        <ChevronUpIcon
+                          className={`h-4 w-4 font-bold text-primary-content transition-transform duration-200 ease-in-out ${cn(
+                            {
+                              "rotate-180": !openCommDetails,
+                            },
+                          )} `}
+                        />
+                      }
+                    >
+                      {openCommDetails ? "Close" : "View"} Members
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
-            <div className="flex flex-col gap-4 mt-auto">
-              <RegisterMember
-                memberData={isMemberResult}
-                registrationCost={getTotalRegistrationCost()}
-                token={tokenGarden}
-                registryCommunity={registryCommunity}
-              />
-            </div>
+
+            {/* Community members stats */}
             {openCommDetails && (
               <CommunityDetailsTable
                 membersStaked={registryCommunity.members as MembersStaked[]}
