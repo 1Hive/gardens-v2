@@ -21,7 +21,12 @@ import {
   isMemberDocument,
   isMemberQuery,
 } from "#/subgraph/.graphclient";
-import { commImg, groupFlowers, BlockscoutLogo } from "@/assets";
+import {
+  CommunityLogo,
+  groupFlowers,
+  BlockscoutLogo,
+  ProtopianLogo,
+} from "@/assets";
 import {
   Button,
   DisplayNumber,
@@ -98,17 +103,21 @@ export default function Page({
       { topic: "member", containerId: communityAddr },
     ],
   });
-  const registryCommunity = result?.registryCommunity;
 
-  const { data: isCouncilMember } = useContractRead({
-    address: registryCommunity?.councilSafe as Address,
+  const registryCommunity = result?.registryCommunity;
+  const isCouncilMember =
+    registryCommunity?.councilSafe &&
+    accountAddress?.toLowerCase() ===
+      registryCommunity.councilSafe.toLowerCase();
+
+  const { data: councilMembers } = useContractRead({
     abi: safeABI,
-    functionName: "isOwner",
+    address: registryCommunity?.councilSafe as Address,
+    functionName: "getOwners",
     chainId: Number(chain),
-    enabled: !!accountAddress,
-    args: [accountAddress as Address],
-    onError: () => {
-      console.error("Error reading isOwner from Coucil Safe");
+    enabled: !!registryCommunity?.councilSafe,
+    onError: (err) => {
+      console.error("Error reading council safe owners:", err);
     },
   });
 
@@ -120,6 +129,14 @@ export default function Page({
     registerStakeAmount,
     protocolFee,
   } = registryCommunity ?? {};
+
+  const isProtopianCommunity = !!members?.find(
+    (x) =>
+      x.member.isProtopian &&
+      councilMembers?.find(
+        (c) => c.toLowerCase() === x.memberAddress?.toLowerCase(),
+      ),
+  );
 
   const { data: isMemberResult } = useSubgraphQuery<isMemberQuery>({
     query: isMemberDocument,
@@ -324,7 +341,7 @@ export default function Page({
         </div>
         <div>
           <Image
-            src={commImg}
+            src={isProtopianCommunity ? ProtopianLogo : CommunityLogo}
             alt={`${communityName} community`}
             className="h-[180px]"
             height={180}

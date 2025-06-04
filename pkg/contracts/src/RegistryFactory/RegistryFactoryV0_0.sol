@@ -7,7 +7,9 @@ import {
 } from "../RegistryCommunity/RegistryCommunityV0_0.sol";
 import {ProxyOwnableUpgrader} from "../ProxyOwnableUpgrader.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {ISafe} from "../interfaces/ISafe.sol";
 import {Clone} from "allo-v2-contracts/core/libraries/Clone.sol";
+import {console} from "forge-std/console.sol";
 
 struct CommunityInfo {
     uint256 fee;
@@ -24,6 +26,8 @@ contract RegistryFactoryV0_0 is ProxyOwnableUpgrader {
     address public registryCommunityTemplate;
     address public strategyTemplate;
     address public collateralVaultTemplate;
+    mapping(address => bool) public protopiansAddresses;
+    mapping(address => bool) public keepersAddresses;
 
     /*|--------------------------------------------|*/
     /*|                 EVENTS                     |*/
@@ -33,6 +37,8 @@ contract RegistryFactoryV0_0 is ProxyOwnableUpgrader {
     event ProtocolFeeSet(address _community, uint256 _newProtocolFee);
     event CommunityCreated(address _registryCommunity);
     event CommunityValiditySet(address _community, bool _isValid);
+    event ProtopiansChanged(address[] _new, address[] _removed);
+    event KeepersChanged(address[] _new, address[] _removed);
 
     /*|--------------------------------------------|*/
     /*|                 ERRORS                     |*/
@@ -132,9 +138,47 @@ contract RegistryFactoryV0_0 is ProxyOwnableUpgrader {
         return communityToInfo[_community].valid;
     }
 
+    function setProtopianAddress(address[] memory _protopians, bool _isProtopian) public virtual onlyOwner {
+        for (uint256 i = 0; i < _protopians.length; i++) {
+            protopiansAddresses[_protopians[i]] = _isProtopian;
+        }
+
+        if (_isProtopian) {
+            emit ProtopiansChanged(_protopians, new address[](0));
+        } else {
+            emit ProtopiansChanged(new address[](0), _protopians);
+        }
+    }
+
+    function setKeeperAddress(address[] memory _keepers, bool _isKeeper) public virtual onlyOwner {
+        for (uint256 i = 0; i < _keepers.length; i++) {
+            keepersAddresses[_keepers[i]] = _isKeeper;
+        }
+
+        if (_isKeeper) {
+            emit KeepersChanged(_keepers, new address[](0));
+        } else {
+            emit KeepersChanged(new address[](0), _keepers);
+        }
+    }
+
     function getProtocolFee(address _community) external view virtual returns (uint256) {
         if (!communityToInfo[_community].valid) {
             revert CommunityInvalid(_community);
+        }
+
+        // Check for keepers (free if keeper)
+        if (keepersAddresses[_community]) {
+            return 0;
+        }
+
+        // Check for protopians (free if they are owners of the community)
+        address[] memory communityOwners = ISafe(RegistryCommunityV0_0(_community).councilSafe()).getOwners();
+        console.log("Community owners:", communityOwners.length);
+        for (uint256 i = 0; i < communityOwners.length; i++) {
+            if (protopiansAddresses[communityOwners[i]]) {
+                return 0;
+            }
         }
 
         return communityToInfo[_community].fee;

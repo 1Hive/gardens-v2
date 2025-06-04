@@ -1,6 +1,6 @@
 export { default as clouds1 } from "./clouds1.svg";
 export { default as clouds2 } from "./clouds2.svg";
-export { default as commImg } from "./CommunityImage.png";
+export { default as CommunityLogo } from "./CommunityImage.png";
 export { default as commF } from "./GardenF.png";
 export { default as ecosystem } from "./ecosystem.png";
 export { default as gardenFlower } from "./garden-flower.svg";
@@ -31,3 +31,7 @@ export { default as BrightIdLogo } from "./BrightId-logo.svg";
 export { default as PublicNounsLogo } from "./publicnouns-logo.svg";
 export { default as BlockscoutLogo } from "./blockscout-logo.svg";
 export { default as GitcoinMatchingLogo } from "./Gitcoin.svg";
+export { default as BeeKeeperNFT } from "./Beekeeper.png";
+export { default as ProtopianNFT } from "./Protopian.png";
+export { default as ProtopianLogo } from "./ProtopianLogo.png";
+export { default as GreenWave } from "./GreenWave.png";

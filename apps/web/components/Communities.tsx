@@ -24,6 +24,7 @@ export type LightCommunity = Pick<RegistryCommunity, "id" | "communityName"> & {
     >
   >;
   members?: Maybe<Array<Pick<MemberCommunity, "id" | "memberAddress">>>;
+  isProtopian: boolean;
 };
 
 interface CommunitySectionProps {
@@ -162,6 +163,11 @@ export const Communities: React.FC<CommunitiesProps> = ({
 
     // Sort communities by length of members in descending order
     const sortedCommunities = [...communities].sort((a, b) => {
+      // Show isProtopian communities first
+      if (a.isProtopian && !b.isProtopian) return -1;
+      if (!a.isProtopian && b.isProtopian) return 1;
+
+      // Then sort by member count in descending order
       if (a?.members && b?.members) {
         return b.members.length - a.members.length;
       }

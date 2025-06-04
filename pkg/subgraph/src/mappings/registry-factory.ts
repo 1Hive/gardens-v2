@@ -1,5 +1,9 @@
 import { RegistryCommunityV0_0 as CommunityTemplate } from "../../generated/templates";
-import { RegistryFactory, RegistryCommunity } from "../../generated/schema";
+import {
+  RegistryFactory,
+  RegistryCommunity,
+  Member
+} from "../../generated/schema";
 
 import {
   BigInt,
@@ -11,7 +15,9 @@ import {
   CommunityCreated,
   CommunityValiditySet,
   ProtocolFeeSet,
-  Initialized
+  Initialized,
+  KeepersChanged,
+  ProtopiansChanged
 } from "../../generated/RegistryFactoryV0_0/RegistryFactoryV0_0";
 // import {RegistryCommunity}from "../../generated/RegistryCommunity/RegistryCommunity";
 
@@ -70,4 +76,64 @@ export function handleCommunityValiditySet(event: CommunityValiditySet): void {
   }
   community.isValid = event.params._isValid;
   community.save();
+}
+
+export function handleKeepersChanged(event: KeepersChanged): void {
+  log.debug("RegistryFactory: handleKeepersChanged: {}", [
+    event.address.toHexString()
+  ]);
+
+  // New keepers
+  for (let i = 0; i < event.params._new.length; i++) {
+    let memberAddress = event.params._new[i].toHexString();
+    let member = Member.load(memberAddress);
+    if (member == null) {
+      member = new Member(memberAddress);
+    }
+
+    member.isKeeper = true;
+    member.save();
+  }
+
+  // Old keepers
+  for (let i = 0; i < event.params._removed.length; i++) {
+    let memberAddress = event.params._removed[i].toHexString();
+    let member = Member.load(memberAddress);
+    if (member == null) {
+      member = new Member(memberAddress);
+    }
+
+    member.isKeeper = false;
+    member.save();
+  }
+}
+
+export function handleProtopiansChanged(event: ProtopiansChanged): void {
+  log.debug("RegistryFactory: handleProtopiansChanged: {}", [
+    event.address.toHexString()
+  ]);
+
+  // New keepers
+  for (let i = 0; i < event.params._new.length; i++) {
+    let memberAddress = event.params._new[i].toHexString();
+    let member = Member.load(memberAddress);
+    if (member == null) {
+      member = new Member(memberAddress);
+    }
+
+    member.isProtopian = true;
+    member.save();
+  }
+
+  // Old keepers
+  for (let i = 0; i < event.params._removed.length; i++) {
+    let memberAddress = event.params._removed[i].toHexString();
+    let member = Member.load(memberAddress);
+    if (member == null) {
+      member = new Member(memberAddress);
+    }
+
+    member.isProtopian = false;
+    member.save();
+  }
 }

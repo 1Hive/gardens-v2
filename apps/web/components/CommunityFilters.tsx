@@ -99,8 +99,8 @@ export function CommunityFilters({
       <AnimatePresence>
         {isExpanded && (
           <motion.div
-            initial={{ opacity: 0, height: 0, width: 0 }}
-            animate={{ opacity: 1, height: "auto", width: "auto" }}
+            initial={{ opacity: 0, width: 0 }}
+            animate={{ opacity: 1, width: "auto" }}
             exit={{ opacity: 0, height: 0, width: 0 }}
             transition={{ duration: 0.3 }}
             className="flex-1"

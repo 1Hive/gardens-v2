@@ -6,15 +6,15 @@ schema:
 dataSources:
   - kind: ethereum/contract
     name: RegistryFactoryV0_0
-    network: celo
+    network: localhost
     context:
       chainId: 
         type: Int
-        data: 42220
+        data: 1337
     source:
-      address: "0xA71023bc64c9711C2037ab491DE80fd74504bd55"
+      address: "0xb7f8bc63bbcad18155201308c8f3540b07f84f5e"
       abi: RegistryFactoryV0_0
-      startBlock: 31270470
+      startBlock: 0
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -34,21 +34,25 @@ dataSources:
           handler: handleCommunityValiditySet
         - event: ProtocolFeeSet(address,uint256)
           handler: handleProtocolFeeSet  
+        - event: ProtopiansChanged(address[],address[])
+          handler: handleProtopiansChanged  
+        - event: KeepersChanged(address[],address[])
+          handler: handleKeepersChanged
         - event: Initialized(uint8)
           handler: handleRegistryInitialized  
       file: ./src/mappings/registry-factory.ts
 
   - kind: ethereum/contract
     name: PassportScorer
-    network: celo
+    network: localhost
     context:
       chainId: 
         type: Int
-        data: 42220
+        data: 1337
     source:
-      address: "0xb39dfa15f96055664179e8ecaa890f3fa26c21e9"
+      address: "0x0165878a594ca255338adfa4d48449f69242eb8f"
       abi: PassportScorer
-      startBlock: 31270470
+      startBlock: 0
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -78,7 +82,7 @@ dataSources:
 templates:
   - kind: ethereum/contract
     name: RegistryCommunityV0_0
-    network: celo
+    network: localhost
     source:
       abi: RegistryCommunityV0_0
     mapping:
@@ -150,7 +154,7 @@ templates:
 
   - kind: ethereum/contract
     name: CVStrategyV0_0
-    network: celo
+    network: localhost
     source:
       abi: CVStrategyV0_0
     mapping:
@@ -209,7 +213,7 @@ templates:
 
   - kind: ethereum/contract
     name: CollateralVault
-    network: celo
+    network: localhost
     source:
       abi: CollateralVault
     mapping:

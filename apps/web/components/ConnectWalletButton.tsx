@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Fragment } from "react";
+import React, { Fragment, useMemo, useState } from "react";
 import { Menu, Transition } from "@headlessui/react";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import {
@@ -14,6 +14,7 @@ import cn from "classnames";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { isAddress } from "viem";
+import { arbitrum, arbitrumSepolia } from "viem/chains";
 import {
   Address,
   useAccount,
@@ -24,12 +25,16 @@ import {
   useEnsName,
   useSwitchNetwork,
 } from "wagmi";
+import { getMemberDocument, getMemberQuery } from "#/subgraph/.graphclient";
 import TooltipIfOverflow from "./TooltipIfOverflow";
 import { isSafeAvatarUrl } from "@/app/api/utils";
+import { BeeKeeperNFT, ProtopianNFT } from "@/assets";
 import { walletIcon } from "@/assets";
 import { Button, DisplayNumber } from "@/components";
 import { ChainIcon } from "@/configs/chains";
+import { isProd } from "@/configs/isProd";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
+import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { formatAddress } from "@/utils/formatAddress";
 
 export function ConnectWallet() {
@@ -42,6 +47,34 @@ export function ConnectWallet() {
   const { switchNetwork } = useSwitchNetwork();
   const { disconnect } = useDisconnect();
   const { connectors } = useConnect();
+
+  const { data: result } = useSubgraphQuery<getMemberQuery>({
+    chainId: isProd ? arbitrum.id : arbitrumSepolia.id,
+    query: getMemberDocument,
+    variables: {
+      me: account.address?.toLowerCase(),
+    },
+    enabled: account.isConnected,
+  });
+
+  const nfts = useMemo(
+    () =>
+      [
+        {
+          image: ProtopianNFT,
+          title: "Protopian NFT",
+          hasNFT: result?.member?.isProtopian,
+        },
+        {
+          image: BeeKeeperNFT,
+          title: "Bee Keeper NFT",
+          hasNFT: result?.member?.isKeeper,
+        },
+      ].filter((nft) => nft.hasNFT),
+    [result],
+  );
+
+  const [selectedNFTIndex, setSelectedNFTIndex] = useState(0);
 
   const wallet = connectors[0].name;
 
@@ -172,6 +205,40 @@ export function ConnectWallet() {
                         leaveTo="transform opacity-0 scale-95"
                       >
                         <Menu.Items className="border1 bg-neutral rounded-3xl absolute right-0 top-16 z-10 focus:outline-none">
+                          {nfts.map(({ title, image }, i) => (
+                            <div
+                              key={title}
+                              className={`relative w-full ${selectedNFTIndex !== i ? "hidden" : ""}`}
+                            >
+                              <Image
+                                src={image}
+                                width={500}
+                                height={500}
+                                alt={title}
+                                className="rounded-t-[18px]"
+                                title={title}
+                              />
+                            </div>
+                          ))}
+
+                          <div className="flex w-full justify-center gap-2 py-2">
+                            {nfts.map(({ title }, i) => (
+                              <span
+                                key={title}
+                                className={`cursor-pointer w-3 h-3 bg-gray-600 rounded-full inline-block mx-1 ${selectedNFTIndex !== i ? "opacity-25" : ""}`}
+                                aria-label="View Protopian NFT"
+                                onClick={() => setSelectedNFTIndex(i)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") {
+                                    setSelectedNFTIndex(i);
+                                  }
+                                }}
+                              >
+                                <span className="sr-only">View {title}</span>
+                              </span>
+                            ))}
+                          </div>
+
                           <div className="flex flex-col gap-4 rounded-lg p-4 min-w-[300px]">
                             {/* wallet and token balance info */}
                             <Menu.Item as="div" className="flex flex-col gap-2">
