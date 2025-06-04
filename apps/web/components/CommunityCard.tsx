@@ -16,7 +16,7 @@ import {
 import { Card } from "./Card";
 import { Statistic } from "./Statistic";
 import TooltipIfOverflow from "./TooltipIfOverflow";
-import { CommunityLogo, ProtopianLogo, GreenWave } from "@/assets";
+import { CommunityLogo, ProtopianLogo } from "@/assets";
 import { ChainIcon } from "@/configs/chains";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
@@ -53,9 +53,6 @@ export function CommunityCard({
       key={id}
       href={`/gardens/${chainId}/${tokenAddr}/${id}`}
       className={`w-[275px] sm:min-w-[313px] ${isNewCommunity ? "shadow-2xl" : ""} ${isProtopian ? "bg-cover bg-bottom" : ""}`}
-      style={{
-        backgroundImage: isProtopian ? `url(${GreenWave.src})` : undefined,
-      }}
     >
       <div className="flex justify-between text-neutral-content text-sm">
         {isProtopian && (
