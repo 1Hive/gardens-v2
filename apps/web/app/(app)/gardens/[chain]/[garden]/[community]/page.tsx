@@ -305,140 +305,112 @@ export default function Page({
   return (
     <>
       <div className="col-span-12 lg:col-span-9">
-        <div className="backdrop-blur-sm rounded-lg flex flex-col gap-10">
-          <header className="bg-white border border-gray-200 shadow-sm relative">
-            {/* Blocklscout community only banner */}
-            <div className="absolute top-5 right-10 flex flex-col">
-              {communityAddr == BLOCKSCOUT_ADDRESS && (
-                <>
-                  <Image
-                    src={BlockscoutLogo}
-                    alt={`${communityName} community`}
-                    className="h-[100px]"
-                    height={210}
-                    width={210}
-                  />
-                  <a
-                    href="https://merits.blockscout.com/?tab=campaigns&id=rec66xiX71sN8y4q1&utm_source=landing-page&utm_medium=campaign&utm_campaign=gnosis"
-                    className="text-tertiary-content text-sm -mt-8 flex items-center justify-center gap-1"
-                    target="_external"
-                    rel="noreferrer"
-                  >
-                    Learn more about Blockscout Merits{" "}
-                    <span>
-                      <ArrowTopRightOnSquareIcon width={14} height={14} />
-                    </span>
-                  </a>
-                </>
-              )}
-            </div>
+        <div className="backdrop-blur-sm flex flex-col gap-10">
+          <header className="bg-white border border-gray-200 shadow-sm section-layout">
+            <div className="flex flex-col sm:flex-row items-start space-y-4 sm:space-y-0 sm:space-x-4">
+              {/* Image */}
+              <div className="flex-shrink-0">
+                <div className="w-20 h-20 lg:w-24 lg:h-24 bg-primary-soft rounded-xl flex items-center justify-center shadow-sm p-1">
+                  <Image src={commImg} alt={`${communityName} community`} />
+                </div>
+              </div>
 
-            <div className="p-4 lg:p-6">
-              <div className="flex flex-col sm:flex-row items-start space-y-4 sm:space-y-0 sm:space-x-4">
-                {/* Image */}
-                <div className="relative flex-shrink-0">
-                  <div className="w-20 h-20 lg:w-24 lg:h-24 bg-primary-soft rounded-xl flex items-center justify-center shadow-sm p-1">
-                    <Image src={commImg} alt={`${communityName} community`} />
+              <div className="flex-1 flex-col lg:items-start lg:justify-between gap-2">
+                {/* Community name + Address */}
+                <div className="mb-3 ">
+                  <h2>{communityName}</h2>
+                  <EthAddress
+                    icon={false}
+                    address={communityAddr as Address}
+                    label="Community address"
+                  />
+                </div>
+
+                {/* Stataistic + Register component */}
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
+                  <div className="flex flex-col sm:flex-row gap-6">
+                    <Statistic
+                      label="members"
+                      count={members?.length ?? 0}
+                      icon={<UserGroupIcon />}
+                    />
+
+                    <Statistic
+                      label="pools"
+                      icon={<CircleStackIcon />}
+                      count={activePools.length ?? 0}
+                    />
+
+                    <Statistic
+                      label="staked tokens"
+                      icon={<CurrencyDollarIcon />}
+                    >
+                      <DisplayNumber
+                        number={[
+                          BigInt(communityStakedTokens),
+                          tokenGarden.decimals,
+                        ]}
+                        compact={true}
+                        tokenSymbol={tokenGarden.symbol}
+                      />
+                    </Statistic>
+                  </div>
+                  <div>
+                    <RegisterMember
+                      memberData={isMemberResult}
+                      registrationCost={getTotalRegistrationCost()}
+                      token={tokenGarden}
+                      registryCommunity={registryCommunity}
+                    />
                   </div>
                 </div>
 
-                <div className="flex-1 flex-col lg:items-start lg:justify-between gap-2">
-                  {/* Community name + Address */}
-                  <div className="mb-3 ">
-                    <h2>{communityName}</h2>
-                    <EthAddress
-                      icon={false}
-                      address={communityAddr as Address}
-                      label="Community address"
-                    />
-                  </div>
-
-                  {/* Stataistic + Register component */}
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
-                    <div className="flex flex-col sm:flex-row gap-6">
-                      <Statistic
-                        label="members"
-                        count={members?.length ?? 0}
-                        icon={<UserGroupIcon />}
-                      />
-
-                      <Statistic
-                        label="pools"
-                        icon={<CircleStackIcon />}
-                        count={activePools.length ?? 0}
-                      />
-
-                      <Statistic
-                        label="staked tokens"
-                        icon={<CurrencyDollarIcon />}
-                      >
-                        <DisplayNumber
-                          number={[
-                            BigInt(communityStakedTokens),
-                            tokenGarden.decimals,
-                          ]}
-                          compact={true}
-                          tokenSymbol={tokenGarden.symbol}
-                        />
-                      </Statistic>
-                    </div>
-                    <div>
-                      <RegisterMember
-                        memberData={isMemberResult}
-                        registrationCost={getTotalRegistrationCost()}
-                        token={tokenGarden}
-                        registryCommunity={registryCommunity}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Registration Stake + View members Button*/}
-                  <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center mt-2">
-                    <div className="flex gap-1 items-center ">
-                      <p className="font-medium">Registration stake:</p>
-                      <InfoWrapper
-                        tooltip={`Registration amount: ${parseToken(registrationAmount)} ${tokenGarden.symbol}\nCommunity fee: ${parseToken(parsedCommunityFee())} ${tokenGarden.symbol}`}
-                      >
-                        <div className="flex">
-                          <EthAddress
-                            address={tokenGarden.address as Address}
-                            shortenAddress={true}
-                            actions="none"
-                            icon={false}
-                            label={
-                              <DisplayNumber
-                                number={[
-                                  getTotalRegistrationCost(),
-                                  tokenGarden?.decimals,
-                                ]}
-                                className="subtitle2"
-                                disableTooltip={true}
-                                compact={true}
-                                copiable={false}
-                                tokenSymbol={tokenGarden.symbol}
-                              />
-                            }
-                          />
-                        </div>
-                      </InfoWrapper>
-                    </div>
-                    <Button
-                      onClick={() => setOpenCommDetails(!openCommDetails)}
-                      btnStyle="outline"
-                      className="w-full sm:w-auto border-none"
-                      icon={
-                        <ChevronUpIcon
-                          className={`h-4 w-4 font-bold text-primary-content transition-transform duration-200 ease-in-out ${cn(
-                            {
-                              "rotate-180": !openCommDetails,
-                            },
-                          )} `}
-                        />
-                      }
+                {/* Registration Stake + View members Button*/}
+                <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center mt-2">
+                  <div className="flex gap-1 items-center ">
+                    <p className="font-medium">Registration stake:</p>
+                    <InfoWrapper
+                      tooltip={`Registration amount: ${parseToken(registrationAmount)} ${tokenGarden.symbol}\nCommunity fee: ${parseToken(parsedCommunityFee())} ${tokenGarden.symbol}`}
                     >
-                      {openCommDetails ? "Close" : "View"} Members
-                    </Button>
+                      <div className="flex">
+                        <EthAddress
+                          address={tokenGarden.address as Address}
+                          shortenAddress={true}
+                          actions="none"
+                          icon={false}
+                          label={
+                            <DisplayNumber
+                              number={[
+                                getTotalRegistrationCost(),
+                                tokenGarden?.decimals,
+                              ]}
+                              className="subtitle2"
+                              disableTooltip={true}
+                              compact={true}
+                              copiable={false}
+                              tokenSymbol={tokenGarden.symbol}
+                            />
+                          }
+                        />
+                      </div>
+                    </InfoWrapper>
                   </div>
+                  <Button
+                    onClick={() => setOpenCommDetails(!openCommDetails)}
+                    btnStyle="outline"
+                    className="absolute top-0 right-0 md:block w-full sm:w-auto border-none"
+                    icon={
+                      <ChevronUpIcon
+                        className={`h-4 w-4 font-bold text-primary-content transition-transform duration-200 ease-in-out ${cn(
+                          {
+                            "rotate-180": !openCommDetails,
+                          },
+                        )} `}
+                      />
+                    }
+                  >
+                    {openCommDetails ? "Close" : "View"} Members
+                  </Button>
                 </div>
               </div>
             </div>
@@ -532,6 +504,7 @@ export default function Page({
               </div>
             )}
           </section>
+
           <section ref={covenantSectionRef} className=" p-8">
             <h2 className="mb-4">Covenant</h2>
             {registryCommunity?.covenantIpfsHash ?
@@ -553,8 +526,9 @@ export default function Page({
         </div>
       </div>
 
+      {/* Right Sidebar - Stake component */}
       <div className="col-span-12 lg:col-span-3">
-        <div className="backdrop-blur-sm rounded-lg flex flex-col gap-2 sticky top-32 ">
+        <div className="backdrop-blur-sm rounded-lg flex flex-col gap-2 sticky top-32">
           <IncreasePower
             memberData={isMemberResult}
             registryCommunity={registryCommunity}
