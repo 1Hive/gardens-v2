@@ -35,3 +35,4 @@ export { default as BeeKeeperNFT } from "./Beekeeper.png";
 export { default as ProtopianNFT } from "./Protopian.png";
 export { default as ProtopianLogo } from "./ProtopianLogo.png";
 export { default as GreenWave } from "./GreenWave.png";
+export { default as OneHiveLogo } from "./OneHiveLogo.png";

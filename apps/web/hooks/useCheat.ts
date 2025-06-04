@@ -11,9 +11,9 @@ export const cheats = [
   "showExcludedCommunities",
 ] as const;
 
-type Cheat = (typeof cheats)[number];
+export type CheatName = (typeof cheats)[number];
 
-export const useCheat = (cheat: Cheat) => {
+export const useCheat = (cheat: CheatName) => {
   const [value] = useLocalStorage(cheat, false, {
     deserializer: (v) => v === "true",
     serializer: (v) => (v ? "true" : "false"),
@@ -30,6 +30,6 @@ export const useCheat = (cheat: Cheat) => {
   return value;
 };
 
-export const getCheat = (cheat: Cheat) => {
+export const getCheat = (cheat: CheatName) => {
   return localStorage.getItem(cheat) === "true";
 };

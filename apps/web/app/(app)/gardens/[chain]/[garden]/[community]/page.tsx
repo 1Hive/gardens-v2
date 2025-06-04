@@ -26,6 +26,7 @@ import {
   groupFlowers,
   BlockscoutLogo,
   ProtopianLogo,
+  OneHiveLogo,
 } from "@/assets";
 import {
   Button,
@@ -45,6 +46,10 @@ import { TokenGardenFaucet } from "@/components/TokenGardenFaucet";
 import { isProd } from "@/configs/isProd";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
+import {
+  FAKE_PROTOPIAN_COMMUNITIES,
+  ONE_HIVE_COMMUNITY_ADDRESS,
+} from "@/globals";
 import { useCheat } from "@/hooks/useCheat";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
@@ -130,13 +135,20 @@ export default function Page({
     protocolFee,
   } = registryCommunity ?? {};
 
-  const isProtopianCommunity = !!members?.find(
-    (x) =>
-      x.member.isProtopian &&
-      councilMembers?.find(
-        (c) => c.toLowerCase() === x.memberAddress?.toLowerCase(),
-      ),
-  );
+  const is1hive =
+    registryCommunity?.id.toLowerCase() === ONE_HIVE_COMMUNITY_ADDRESS;
+
+  const isProtopianCommunity =
+    !!members?.find(
+      (x) =>
+        x.member.isProtopian &&
+        councilMembers?.find(
+          (c) => c.toLowerCase() === x.memberAddress?.toLowerCase(),
+        ),
+    ) ||
+    !!FAKE_PROTOPIAN_COMMUNITIES.find(
+      (x) => x.toLowerCase() === communityAddr.toLowerCase(),
+    );
 
   const { data: isMemberResult } = useSubgraphQuery<isMemberQuery>({
     query: isMemberDocument,
@@ -341,7 +353,12 @@ export default function Page({
         </div>
         <div>
           <Image
-            src={isProtopianCommunity ? ProtopianLogo : CommunityLogo}
+            src={
+              is1hive ? OneHiveLogo
+              : isProtopianCommunity ?
+                ProtopianLogo
+              : CommunityLogo
+            }
             alt={`${communityName} community`}
             className="h-[180px]"
             height={180}

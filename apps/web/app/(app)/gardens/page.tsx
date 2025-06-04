@@ -12,6 +12,7 @@ import {
 import { clouds1, clouds2, grassLarge, tree2, tree3 } from "@/assets";
 import { Button, Communities } from "@/components";
 import { LightCommunity } from "@/components/Communities";
+import { FAKE_PROTOPIAN_COMMUNITIES } from "@/globals";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQueryMultiChain } from "@/hooks/useSubgraphQueryMultiChain";
@@ -129,10 +130,9 @@ export default function GardensPage() {
 
               return {
                 ...x,
-                isProtopian: !![
-                  "0xc219730ec703c9525748c3b80184d57f1d57699b",
-                  "0x8b8732dac9c30ac89bf660b99fb90000d826ab83",
-                ].find((add) => add.toLowerCase() === x.id),
+                isProtopian: !!FAKE_PROTOPIAN_COMMUNITIES.find(
+                  (add) => add.toLowerCase() === x.id,
+                ),
               };
             }),
         );

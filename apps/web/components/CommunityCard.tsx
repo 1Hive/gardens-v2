@@ -16,10 +16,11 @@ import {
 import { Card } from "./Card";
 import { Statistic } from "./Statistic";
 import TooltipIfOverflow from "./TooltipIfOverflow";
-import { CommunityLogo, ProtopianLogo } from "@/assets";
+import { CommunityLogo, ProtopianLogo, OneHiveLogo } from "@/assets";
 import { ChainIcon } from "@/configs/chains";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
+import { ONE_HIVE_COMMUNITY_ADDRESS } from "@/globals";
 
 type CommunityCardProps = {
   id: string;
@@ -48,6 +49,8 @@ export function CommunityCard({
     searchParams[QUERY_PARAMS.gardenPage.newCommunity]?.toLowerCase() ===
     id.toLowerCase();
 
+  const is1hive = id.toLowerCase() === ONE_HIVE_COMMUNITY_ADDRESS;
+
   return (
     <Card
       key={id}
@@ -62,7 +65,12 @@ export function CommunityCard({
           </div>
         )}
         <Image
-          src={isProtopian ? ProtopianLogo : CommunityLogo}
+          src={
+            is1hive ? OneHiveLogo
+            : isProtopian ?
+              ProtopianLogo
+            : CommunityLogo
+          }
           alt={`${communityName} community`}
           className="mb-2 h-[100px]"
           height={100}

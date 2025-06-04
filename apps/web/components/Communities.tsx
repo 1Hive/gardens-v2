@@ -12,6 +12,7 @@ import {
 import { CommunityCard, CommunityCardSkeleton } from "./CommunityCard";
 import { CommunityFilters } from "./CommunityFilters";
 import { useCheat } from "@/hooks/useCheat";
+import { ONE_HIVE_COMMUNITY_ADDRESS } from "@/globals";
 
 export type LightCommunity = Pick<RegistryCommunity, "id" | "communityName"> & {
   garden: Pick<TokenGarden, "address" | "chainId" | "symbol" | "name">;
@@ -163,7 +164,18 @@ export const Communities: React.FC<CommunitiesProps> = ({
 
     // Sort communities by length of members in descending order
     const sortedCommunities = [...communities].sort((a, b) => {
-      // Show isProtopian communities first
+      // Show isProtopian communities on top and 1hive first
+      if (
+        a.id.toLowerCase() === ONE_HIVE_COMMUNITY_ADDRESS &&
+        b.id.toLowerCase() !== ONE_HIVE_COMMUNITY_ADDRESS
+      )
+        return -1;
+      if (
+        b.id.toLowerCase() === ONE_HIVE_COMMUNITY_ADDRESS &&
+        a.id.toLowerCase() !== ONE_HIVE_COMMUNITY_ADDRESS
+      )
+        return 1;
+
       if (a.isProtopian && !b.isProtopian) return -1;
       if (!a.isProtopian && b.isProtopian) return 1;
 
