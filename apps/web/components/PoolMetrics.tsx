@@ -140,13 +140,13 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
       <section className="section-layout gap-2 flex flex-col">
         <h3>Pool Funds</h3>
         <div className="flex flex-col gap-2">
-          <div className="flex justify-between gap-3">
+          <div className="flex justify-between items-center gap-3">
             <p className="subtitle2">Funds in pool:</p>
             <DisplayNumber
               number={[BigInt(poolAmount), poolToken.decimals]}
               tokenSymbol={poolToken.symbol}
               compact={true}
-              valueClassName="text-3xl mr-1 font-bold text-primary-content"
+              valueClassName="text-2xl mr-1 font-bold text-primary-content"
               symbolClassName="text-primary-content"
             />
           </div>
@@ -167,7 +167,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
         </div>
 
         {/* Input + Add funds Button */}
-        <form className="flex gap-2 flex-wrap " onSubmit={handleFundPool}>
+        <form className="flex gap-2 flex-wrap w-full" onSubmit={handleFundPool}>
           <FormInput
             type="number"
             placeholder="0"
@@ -186,17 +186,18 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
               },
             }}
           />
-          <Button
-            type="submit"
-            btnStyle="outline"
-            color="primary"
-            disabled={isButtonDisabled}
-            tooltip={tooltipMessage}
-            className="w-full"
-            icon={<PlusIcon className="w-5 h-5" />}
-          >
-            Add Funds
-          </Button>
+          <div className="flex items-stretch">
+            <Button
+              type="submit"
+              btnStyle="outline"
+              color="primary"
+              disabled={isButtonDisabled}
+              tooltip={tooltipMessage}
+              icon={<PlusIcon className="w-5 h-5" />}
+            >
+              Add Funds
+            </Button>
+          </div>
         </form>
       </section>
     </>

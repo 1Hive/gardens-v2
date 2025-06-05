@@ -2,13 +2,11 @@ import { useState } from "react";
 import {
   ArrowTopRightOnSquareIcon,
   BoltIcon,
-  ChartBarIcon,
+  Battery50Icon,
   CheckIcon,
   ClockIcon,
   ArchiveBoxIcon,
   InformationCircleIcon,
-  Square3Stack3DIcon,
-  ScaleIcon,
 } from "@heroicons/react/24/outline";
 import {
   NoSymbolIcon,
@@ -216,7 +214,7 @@ export default function PoolHeader({
     },
     {
       label: "Conviction growth",
-      value: `${value} ${unit}${value !== 1 ? "s" : ""}`,
+      value: `${value} ${unit}`,
       info: "It's the time for conviction to reach proposal support. This parameter is logarithmic, represented as a half life and may vary slightly over time depending on network block times.",
     },
     {
@@ -365,15 +363,18 @@ export default function PoolHeader({
   );
 
   return (
-    <section className="section-layout flex flex-col gap-0">
-      <header className="mb-4 flex flex-col">
-        <div className="flex justify-between flex-wrap">
+    <section className="section-layout flex flex-col gap-4">
+      {/* Title - Badge poolType - Addresses and Button(when council memeber is connected) */}
+      <header className="flex flex-col gap-2">
+        <div className="flex justify-between items-center flex-wrap">
           <h2>
             <Skeleton isLoading={!ipfsResult} className="sm:!w-96 h-8">
               {ipfsResult?.title}
             </Skeleton>
           </h2>
-
+          <div>
+            <Badge type={parseInt(proposalType)} />
+          </div>
           {(!!isCouncilMember || isCouncilSafe) && (
             <div className="flex gap-2 flex-wrap">
               <Button
@@ -469,26 +470,29 @@ export default function PoolHeader({
             </div>
           )}
         </div>
-        <div className="w-full flex flex-col gap-2">
+        <div className="flex flex-col">
           <EthAddress
             icon={false}
             address={strategy.id as Address}
             label="Pool address"
+            textColor="var(--color-grey-500)"
           />
-          <div className="flex flex-col gap-1 p-1 w-48">
+          <div className="flex gap-1 p-1">
             <a
               href={`https://app.safe.global/transactions/queue?safe=${safePrefix}:${strategy.registryCommunity.councilSafe}`}
-              className="text-info whitespace-nowrap flex flex-nowrap gap-1 items-center"
+              className="text-neutral-soft-content whitespace-nowrap flex flex-nowrap gap-1 items-center"
               target="_blank"
               rel="noreferrer"
             >
               Council safe
-              <ArrowTopRightOnSquareIcon width={16} height={16} />
+              <ArrowTopRightOnSquareIcon width={16} height={16} />:
             </a>
             <EthAddress
               address={strategy.registryCommunity.councilSafe as Address}
               shortenAddress={true}
               actions="copy"
+              icon={false}
+              textColor="var(--color-grey-500)"
             />
           </div>
         </div>
@@ -522,78 +526,67 @@ export default function PoolHeader({
           )}
         </Modal>
       </header>
+
+      {/* Description */}
       <Skeleton rows={5} isLoading={!ipfsResult}>
         <MarkdownWrapper>
           {ipfsResult?.description ?? "No description found"}
         </MarkdownWrapper>
       </Skeleton>
-      <div className="mb-10 mt-8 flex items-start justify-between gap-8 flex-wrap">
-        <div className="flex flex-col gap-2 max-w-fit">
-          <Statistic label="pool type">
-            <Badge type={parseInt(proposalType)} />
-          </Statistic>
-          {PoolTypes[proposalType] === "funding" && (
-            <Statistic label="funding token">
-              <Badge icon={<Square3Stack3DIcon />}>
-                <EthAddress
-                  address={poolToken?.address as Address}
-                  shortenAddress={true}
-                  icon={false}
-                  actions="copy"
-                  label={poolToken?.symbol}
+
+      {/* Pool Params */}
+      <div className="grid grid-cols-3 gap-2 ">
+        {filteredPoolConfig.map((config) => (
+          <div
+            key={config.label}
+            className="flex items-center gap-4  bg-primary px-2 py-4 rounded-lg"
+          >
+            <Statistic
+              label={config.label}
+              icon={
+                <InformationCircleIcon
+                  className="stroke-2 text-primary-content"
+                  width={22}
+                  height={22}
                 />
-              </Badge>
+              }
+              tooltip={config.info}
+            >
+              <p className="text-neutral-content subtitle">{config.value}</p>
             </Statistic>
-          )}
-          <Statistic label="voting weight">
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <Badge
-                label="conviction voting"
-                className="text-secondary-content"
-                icon={<ChartBarIcon />}
-              />
-              <Badge
-                label={PointSystems[pointSystem]}
-                tooltip={
-                  VOTING_POINT_SYSTEM_DESCRIPTION[PointSystems[pointSystem]]
-                }
-                icon={<BoltIcon />}
-              />
-            </div>
-          </Statistic>
-          <Statistic label="Dispute resolution">
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <Badge className="text-secondary-content" icon={<ScaleIcon />}>
-                <EthAddress
-                  address={tribunalAddress as Address}
-                  shortenAddress={true}
-                  actions="copy"
-                  label="Tribunal Safe"
-                />
-              </Badge>
-            </div>
-          </Statistic>
-        </div>
-        <div className="flex flex-col gap-4">
-          {filteredPoolConfig.map((config) => (
-            <div key={config.label} className="flex items-center gap-4">
-              <Statistic
-                label={config.label}
-                icon={
-                  <InformationCircleIcon
-                    className="stroke-2 text-primary-content"
-                    width={22}
-                    height={22}
-                  />
-                }
-                tooltip={config.info}
-              >
-                <p className="text-neutral-content subtitle">{config.value}</p>
-              </Statistic>
-            </div>
-          ))}
-        </div>
+          </div>
+        ))}
       </div>
+
+      {/* Voting weight + Dispute Address */}
+      <div className="flex items-center justify-between gap-4 flex-wrap ">
+        <Statistic label="voting weight">
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Badge
+              label="conviction voting"
+              className="text-secondary-content"
+              icon={<Battery50Icon />}
+            />
+            <Badge
+              label={PointSystems[pointSystem]}
+              tooltip={
+                VOTING_POINT_SYSTEM_DESCRIPTION[PointSystems[pointSystem]]
+              }
+              icon={<BoltIcon />}
+            />
+          </div>
+        </Statistic>
+
+        <EthAddress
+          address={tribunalAddress as Address}
+          icon={false}
+          shortenAddress={true}
+          label="Dispute Resolution: Tribunal Safe"
+          textColor="var(--color-grey-500)"
+        />
+      </div>
+
+      {/* InfoBox - Banner or Image */}
       {minThGtTotalEffPoints && isEnabled && (
         <InfoBox
           infoBoxType="warning"
