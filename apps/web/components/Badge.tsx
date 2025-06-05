@@ -34,7 +34,7 @@ const PROPOSAL_STATUS_STYLES = [
 ];
 
 const BASE_STYLES =
-  "border-none rounded-full leading-5 py-2 px-4 text-base cursor-default";
+  "border-none rounded-full leading-5 py-1 px-2 cursor-default";
 
 export function Badge({
   type,
@@ -67,8 +67,8 @@ export function Badge({
     icon ??
     (() => {
       const iconMap: { [key: string]: React.ReactNode } = {
-        signaling: <HandThumbUpIcon className="h-6 w-6 text-inherit" />,
-        funding: <CurrencyDollarIcon className="h-6 w-6 text-inherit" />,
+        signaling: <HandThumbUpIcon className="h-5 w-5" />,
+        funding: <CurrencyDollarIcon className="h-5 w-5" />,
       };
       return type != null ? iconMap[PoolTypes[type]] ?? null : null;
     })();
@@ -78,10 +78,8 @@ export function Badge({
       className={`${BASE_STYLES} ${styles} ${tooltip ? "tooltip" : ""} ${className} flex items-center gap-2`}
       data-tip={tooltip}
     >
-      {iconIncluded && (
-        <div className="h-6 w-6 text-inherit">{iconIncluded}</div>
-      )}
-      <h6 className="first-letter:uppercase">{content}</h6>
+      {iconIncluded && <div className="h-5 w-5">{iconIncluded}</div>}
+      <p className="first-letter:uppercase text-sm font-semibold">{content}</p>
     </div>
   );
 }

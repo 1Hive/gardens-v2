@@ -88,7 +88,7 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
                   <p className="subtitle2">Your stake in the community:</p>
                   <DisplayNumber
                     tokenSymbol={strategy.registryCommunity.garden.symbol}
-                    className="subtitle2 text-primary-content"
+                    valueClassName="subtitle2 text-primary-content"
                     number={
                       [BigInt(memberTokensInCommunity), tokenDecimals] as Dnum
                     }

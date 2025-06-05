@@ -1,6 +1,8 @@
 "use client";
 
 import React, { Fragment, useEffect, useRef, useState } from "react";
+import { Switch } from "@headlessui/react";
+
 import {
   CurrencyDollarIcon,
   PlusIcon,
@@ -425,8 +427,9 @@ export default function Page({
             )}
           </header>
 
-          <section className="flex flex-col gap-10">
-            <header className="flex justify-between">
+          {/* Pools Section */}
+          <section className="flex flex-col gap-10 p-6">
+            <header className="flex  items-center justify-between ">
               <h2>Pools</h2>
               <Link
                 href={`/gardens/${chain}/${tokenAddr}/${communityAddr}/create-pool`}
@@ -441,11 +444,12 @@ export default function Page({
                 </Button>
               </Link>
             </header>
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-4 ">
               <h4 className="text-secondary-content">
                 Funding pools ({fundingPools.length})
               </h4>
-              <div className="flex flex-row flex-wrap gap-10">
+              {/* Funding Pools */}
+              <div className="pool-layout">
                 {fundingPools.map((pool) => (
                   <Fragment key={pool.poolId}>
                     <PoolCard token={pool.token} chainId={chain} pool={pool} />
@@ -453,11 +457,12 @@ export default function Page({
                 ))}
               </div>
             </div>
+            {/* Signaling Pools */}
             <div className="flex flex-col gap-4">
               <h4 className="text-secondary-content">
                 Signaling pools ({signalingPools.length})
               </h4>
-              <div className="flex flex-row flex-wrap gap-10">
+              <div className="pool-layout">
                 {signalingPools.map((pool) => (
                   <PoolCard
                     key={pool.poolId}
@@ -468,11 +473,12 @@ export default function Page({
                 ))}
               </div>
             </div>
+            {/* Pools in Review */}
             <div className="flex flex-col gap-4">
               <h4 className="text-secondary-content">
                 Pools in Review ({poolsInReview.length})
               </h4>
-              <div className="flex flex-row flex-wrap gap-10">
+              <div className="pool-layout">
                 {poolsInReview.map((pool) => (
                   <PoolCard
                     key={pool.poolId}
@@ -483,6 +489,7 @@ export default function Page({
                 ))}
               </div>
             </div>
+
             {(!!isCouncilMember ||
               accountAddress?.toLowerCase() ===
                 registryCommunity.councilSafe?.toLowerCase() ||
@@ -491,7 +498,8 @@ export default function Page({
                 <h4 className="text-secondary-content">
                   Pools archived ({poolsArchived.length})
                 </h4>
-                <div className="flex flex-row flex-wrap gap-10">
+                {/* Archived Pools */}
+                <div className="pool-layout">
                   {poolsArchived.map((pool) => (
                     <PoolCard
                       key={pool.poolId}

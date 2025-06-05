@@ -60,27 +60,19 @@ export function PoolCard({ pool, token, chainId }: Props) {
   return (
     <Card
       href={`${pathname}/${poolId}`}
-      className={`w-[275px] sm:min-w-[313px] ${isNewPool ? "shadow-2xl" : ""}`}
+      className={`w-full ${isNewPool ? "shadow-2xl" : ""}`}
     >
-      <header className="mb-4 flex flex-col w-full justify-between items-start gap-2">
-        <div className="flex w-full justify-between items-center">
+      <header className="mb-4 flex flex-col w-full justify-between items-start gap-2 ">
+        <div className="flex w-full justify-between items-center ">
           <Skeleton isLoading={!ipfsResult}>
-            <h3 className="flex items-start max-w-[190px]">
+            <h3 className="flex items-center justify-between max-w-[190px]">
               <TooltipIfOverflow>{ipfsResult?.title}</TooltipIfOverflow>
             </h3>
           </Skeleton>
-          {poolId && elegibleGG23pools.includes(Number(poolId)) && (
-            <Image
-              src={GitcoinMatchingLogo}
-              alt="Gitcoin Matching Logo"
-              width={70}
-              height={50}
-            />
-          )}
-        </div>
-        <div className="flex justify-between items-center w-full">
-          <h6>POOL ID: #{poolId}</h6>
           <Badge type={poolType} />
+        </div>
+        <div>
+          <h6>POOL ID: #{poolId}</h6>
         </div>
       </header>
       <div className="mb-8 flex flex-col gap-2">
