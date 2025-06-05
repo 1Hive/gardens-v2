@@ -55,7 +55,7 @@ export function CommunityCard({
     <Card
       key={id}
       href={`/gardens/${chainId}/${tokenAddr}/${id}`}
-      className={`w-[275px] sm:min-w-[313px] ${isNewCommunity ? "shadow-2xl" : ""} ${isProtopian ? "bg-cover bg-bottom" : ""}`}
+      className={`w-[275px] sm:min-w-[313px] ${isNewCommunity ? "shadow-2xl" : ""}`}
     >
       <div className="flex justify-between text-neutral-content text-sm">
         {isProtopian && (
