@@ -103,7 +103,7 @@ const parseAllowListMembers = (
   if (
     initialList.length === 1 &&
     initialList[0] === zeroAddress &&
-    currentList.length > 0
+    currentList.length > 1 // more than just zeroAddress
   ) {
     // We should remove currently staking users (to deactive them from the pool)
     return {
