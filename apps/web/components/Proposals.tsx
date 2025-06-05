@@ -500,6 +500,7 @@ export function Proposals({
           membersStrategyData={membersStrategies}
         />
       )}
+
       <section className="section-layout flex flex-col gap-10 mt-10">
         <div>
           <header className="flex items-center justify-between gap-10 flex-wrap">

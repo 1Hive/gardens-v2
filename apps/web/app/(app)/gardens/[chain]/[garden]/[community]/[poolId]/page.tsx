@@ -141,43 +141,51 @@ export default function Page({
   const isEnabled = data.cvstrategies?.[0]?.isEnabled as boolean;
 
   return (
-    <div className="page-layout">
-      <PoolHeader
-        poolToken={poolToken}
-        token={tokenGarden}
-        strategy={strategyObj}
-        arbitrableConfig={data.arbitrableConfigs[0]}
-        poolId={poolId}
-        ipfsResult={ipfsResult}
-        isEnabled={isEnabled}
-        maxAmount={maxAmount}
-      />
-      {isEnabled && (
-        <>
-          {poolToken && PoolTypes[proposalType] !== "signaling" && (
-            <PoolMetrics
+    <>
+      <div className="col-span-12 lg:col-span-9">
+        <PoolHeader
+          poolToken={poolToken}
+          token={tokenGarden}
+          strategy={strategyObj}
+          arbitrableConfig={data.arbitrableConfigs[0]}
+          poolId={poolId}
+          ipfsResult={ipfsResult}
+          isEnabled={isEnabled}
+          maxAmount={maxAmount}
+        />
+        {strategyObj && isEnabled && (
+          <section ref={proposalSectionRef}>
+            <Proposals
               poolToken={poolToken}
+              strategy={strategyObj}
               alloInfo={alloInfo}
-              poolId={poolId}
-              poolAmount={poolAmount}
               communityAddress={communityAddress}
-              chainId={chain}
+              createProposalUrl={`/gardens/${chain}/${garden}/${communityAddress}/${poolId}/create-proposal`}
+              proposalType={proposalType}
             />
+          </section>
+        )}
+      </div>
+
+      {/* Right Sidebar - Stake component */}
+      <div className="col-span-12 lg:col-span-3">
+        <div className="backdrop-blur-sm rounded-lg flex flex-col gap-2 sticky top-32">
+          {isEnabled && (
+            <>
+              {poolToken && PoolTypes[proposalType] !== "signaling" && (
+                <PoolMetrics
+                  poolToken={poolToken}
+                  alloInfo={alloInfo}
+                  poolId={poolId}
+                  poolAmount={poolAmount}
+                  communityAddress={communityAddress}
+                  chainId={chain}
+                />
+              )}
+            </>
           )}
-        </>
-      )}
-      {strategyObj && isEnabled && (
-        <section ref={proposalSectionRef}>
-          <Proposals
-            poolToken={poolToken}
-            strategy={strategyObj}
-            alloInfo={alloInfo}
-            communityAddress={communityAddress}
-            createProposalUrl={`/gardens/${chain}/${garden}/${communityAddress}/${poolId}/create-proposal`}
-            proposalType={proposalType}
-          />
-        </section>
-      )}
-    </div>
+        </div>
+      </div>
+    </>
   );
 }
