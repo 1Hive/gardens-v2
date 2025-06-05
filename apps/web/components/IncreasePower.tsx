@@ -215,8 +215,6 @@ export const IncreasePower = ({
   //   }
   // }, [votingPowerTx.status]);
 
-  if (!isMember) return null;
-
   const AddedStake = [
     BigInt(memberStakedTokens - registerStakeAmountBigInt),
     tokenDecimals,
@@ -224,7 +222,7 @@ export const IncreasePower = ({
 
   return (
     <section className="section-layout space-y-5">
-      <h4>Your stake</h4>
+      <h3>Your stake</h3>
       <TransactionModal
         label={`Stake ${tokenSymbol} in ${communityName}`}
         transactions={[allowanceTx, votingPowerTx]}
@@ -280,50 +278,58 @@ export const IncreasePower = ({
             number={[accountTokenBalance?.value ?? BigInt(0), tokenDecimals]}
             tokenSymbol={tokenSymbol}
             compact={true}
-            valueClassName="text-primary-content text-lg"
-            symbolClassName="text-sm text-primary-content"
+            valueClassName="text-black text-lg"
+            symbolClassName="text-sm text-black"
           />
         </div>
 
         {/* Input */}
-        <div className="relative w-full">
-          <input
-            type="number"
-            value={amount}
-            placeholder="Amount"
-            className="input input-bordered input-info w-full"
-            onChange={(e) => setAmount(e.target.value)}
-          />
-          <span className="absolute top-4 right-4 text-black">
-            {tokenSymbol}
-          </span>
-        </div>
+        {!isMember ?
+          <p className="subtitle2 text-neutral-soft-content">
+            Join community to Stake
+          </p>
+        : <>
+            <div className="relative w-full">
+              <input
+                type="number"
+                value={amount}
+                placeholder="Amount"
+                className="input input-bordered input-info w-full"
+                onChange={(e) => setAmount(e.target.value)}
+              />
+              <span className="absolute top-4 right-4 text-black">
+                {tokenSymbol}
+              </span>
+            </div>
 
-        {/* Stake & Unstake Buttons */}
-        <div className="flex-1 flex items-center justify-between ">
-          <Button
-            onClick={handleClick}
-            disabled={disabledIncPowerButton}
-            tooltip={tooltipMessage}
-            icon={<ArrowTrendingUpIcon className="h-5 w-5" />}
-            className="w-full"
-          >
-            Stake
-            <span className="loading-spinner" />
-          </Button>
+            {/* Stake & Unstake Buttons */}
 
-          <Button
-            onClick={() => writeDecreasePower?.()}
-            btnStyle="outline"
-            color="danger"
-            disabled={disabledDecPowerButton}
-            tooltip={decreaseTooltipMsg}
-            icon={<ArrowTrendingDownIcon className="h-5 w-5" />}
-          >
-            Unstake
-            <span className="loading-spinner" />
-          </Button>
-        </div>
+            <div className="flex-1 flex items-center gap-1 justify-between ">
+              <Button
+                onClick={handleClick}
+                disabled={disabledIncPowerButton}
+                tooltip={tooltipMessage}
+                icon={<ArrowTrendingUpIcon className="h-5 w-5" />}
+                className="w-full"
+              >
+                Stake
+                <span className="loading-spinner" />
+              </Button>
+
+              <Button
+                onClick={() => writeDecreasePower?.()}
+                btnStyle="outline"
+                color="danger"
+                disabled={disabledDecPowerButton}
+                tooltip={decreaseTooltipMsg}
+                icon={<ArrowTrendingDownIcon className="h-5 w-5" />}
+              >
+                Unstake
+                <span className="loading-spinner" />
+              </Button>
+            </div>
+          </>
+        }
       </div>
     </section>
   );

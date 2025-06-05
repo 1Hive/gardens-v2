@@ -107,7 +107,7 @@ export function PoolCard({ pool, token, chainId }: Props) {
       : <Image
           src={poolType && PoolTypes[poolType] === "funding" ? blueLand : grass}
           alt="Garden land"
-          className="h-12 w-full rounded-lg object-cover"
+          className="h-14 w-full rounded-lg object-cover"
         />
       }
     </Card>

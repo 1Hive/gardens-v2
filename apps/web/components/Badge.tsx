@@ -18,8 +18,8 @@ type BadgeProps = {
 
 // Styles for different pool badge types
 const POOL_TYPE_STYLES = [
-  "bg-secondary-soft text-secondary-content",
-  "bg-secondary-soft text-secondary-content",
+  "bg-primary-soft text-primary-content",
+  "bg-tertiary-soft text-tertiary-content",
 ];
 
 // Styles for different proposal status badge

@@ -1,14 +1,12 @@
 "use client";
 
 import React, { Fragment, useEffect, useRef, useState } from "react";
-import { Switch } from "@headlessui/react";
 
 import {
   CurrencyDollarIcon,
   PlusIcon,
   CircleStackIcon,
   UserGroupIcon,
-  ArrowTopRightOnSquareIcon,
   ChevronUpIcon,
 } from "@heroicons/react/24/outline";
 
@@ -26,7 +24,7 @@ import {
   isMemberDocument,
   isMemberQuery,
 } from "#/subgraph/.graphclient";
-import { commImg, groupFlowers, BlockscoutLogo } from "@/assets";
+import { commImg, groupFlowers } from "@/assets";
 import {
   Button,
   DisplayNumber,
@@ -69,8 +67,6 @@ type CommunityMetricsProps = {
 };
 
 type MemberColumn = Column<MembersStaked>;
-
-const BLOCKSCOUT_ADDRESS = "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9";
 
 export default function Page({
   params: { chain, garden: tokenAddr, community: communityAddr },
@@ -325,6 +321,7 @@ export default function Page({
                     icon={false}
                     address={communityAddr as Address}
                     label="Community address"
+                    textColor="var(--color-grey-900)"
                   />
                 </div>
 
@@ -370,7 +367,7 @@ export default function Page({
                 {/* Registration Stake Value + View members Button*/}
                 <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center mt-2">
                   <div className="flex gap-1 items-center ">
-                    <p className="font-medium">Registration stake:</p>
+                    <p className="subtitle2">Registration stake:</p>
                     <InfoWrapper
                       tooltip={`Registration amount: ${parseToken(registrationAmount)} ${tokenGarden.symbol}\nCommunity fee: ${parseToken(parsedCommunityFee())} ${tokenGarden.symbol}`}
                     >
@@ -386,7 +383,8 @@ export default function Page({
                                 getTotalRegistrationCost(),
                                 tokenGarden?.decimals,
                               ]}
-                              valueClassName="subtitle2"
+                              valueClassName="text-xl font-bold text-primary-content"
+                              symbolClassName="text-primary-content"
                               disableTooltip={true}
                               compact={true}
                               copiable={false}
@@ -400,10 +398,11 @@ export default function Page({
                   <Button
                     onClick={() => setOpenCommDetails(!openCommDetails)}
                     btnStyle="outline"
-                    className="absolute top-0 right-0 md:block w-full sm:w-auto border-none"
+                    color="disabled"
+                    className="absolute top-0 right-0 md:block w-full sm:w-auto border-none hover:opacity-75"
                     icon={
                       <ChevronUpIcon
-                        className={`h-4 w-4 font-bold text-primary-content transition-transform duration-200 ease-in-out ${cn(
+                        className={`h-4 w-4 font-bold text-black transition-transform duration-200 ease-in-out ${cn(
                           {
                             "rotate-180": !openCommDetails,
                           },
@@ -440,14 +439,12 @@ export default function Page({
                   tooltip={tooltipMessage}
                   icon={<PlusIcon height={24} width={24} />}
                 >
-                  Create Pool
+                  Create New Pool
                 </Button>
               </Link>
             </header>
             <div className="flex flex-col gap-4 ">
-              <h4 className="text-secondary-content">
-                Funding pools ({fundingPools.length})
-              </h4>
+              <h4 className="">Funding ({fundingPools.length})</h4>
               {/* Funding Pools */}
               <div className="pool-layout">
                 {fundingPools.map((pool) => (
@@ -459,9 +456,7 @@ export default function Page({
             </div>
             {/* Signaling Pools */}
             <div className="flex flex-col gap-4">
-              <h4 className="text-secondary-content">
-                Signaling pools ({signalingPools.length})
-              </h4>
+              <h4>Signaling ({signalingPools.length})</h4>
               <div className="pool-layout">
                 {signalingPools.map((pool) => (
                   <PoolCard
@@ -475,9 +470,7 @@ export default function Page({
             </div>
             {/* Pools in Review */}
             <div className="flex flex-col gap-4">
-              <h4 className="text-secondary-content">
-                Pools in Review ({poolsInReview.length})
-              </h4>
+              <h4>In Review ({poolsInReview.length})</h4>
               <div className="pool-layout">
                 {poolsInReview.map((pool) => (
                   <PoolCard
@@ -495,9 +488,7 @@ export default function Page({
                 registryCommunity.councilSafe?.toLowerCase() ||
               showArchived) && (
               <div className="flex flex-col gap-4">
-                <h4 className="text-secondary-content">
-                  Pools archived ({poolsArchived.length})
-                </h4>
+                <h4>Archived ({poolsArchived.length})</h4>
                 {/* Archived Pools */}
                 <div className="pool-layout">
                   {poolsArchived.map((pool) => (
