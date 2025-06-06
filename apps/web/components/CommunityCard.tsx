@@ -57,9 +57,10 @@ export function CommunityCard({
   const queryAllChains = useCheat("queryAllChains");
 
   const is1hive =
-    id.toLowerCase() === (isProd || queryAllChains) ?
+    id.toLowerCase() ===
+    (isProd || queryAllChains ?
       ONE_HIVE_COMMUNITY_ADDRESS
-    : ONE_HIVE_FAKE_COMMUNITY_ADDRESS;
+    : ONE_HIVE_FAKE_COMMUNITY_ADDRESS);
 
   return (
     <Card

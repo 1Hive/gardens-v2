@@ -44,8 +44,7 @@ import { isProd } from "@/configs/isProd";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { formatAddress } from "@/utils/formatAddress";
-import { FIRST_HOLDER_NFT_ADDRESS } from "@/globals";
-import { getPublicClient, readContract } from "@wagmi/core";
+import { useOwnerOfNFT } from "@/hooks/useOwnerOfNFT";
 
 export function ConnectWallet() {
   const path = usePathname();
@@ -57,7 +56,11 @@ export function ConnectWallet() {
   const { switchNetwork } = useSwitchNetwork();
   const { disconnect } = useDisconnect();
   const { connectors } = useConnect();
-  const [hasFirstOwnerNFT, setHasFirstOwnerNFT] = useState(false);
+  const { isOwner: hasFirstHolderNFT } = useOwnerOfNFT({
+    nft: "FirstHolder",
+    chains: [optimism, arbitrum, base, mainnet],
+    enabled: account.isConnected,
+  });
 
   const { data: result } = useSubgraphQuery<getMemberQuery>({
     chainId: isProd ? arbitrum.id : arbitrumSepolia.id,
@@ -67,43 +70,6 @@ export function ConnectWallet() {
     },
     enabled: account.isConnected,
   });
-
-  useEffect(() => {
-    // Using viem to read the First Holder NFT balance
-    if (!account.address) return;
-    void fetchFirstHolderNFTBalance();
-
-    async function fetchFirstHolderNFTBalance() {
-      let lastError: any = null;
-      for (const chain of [optimism, arbitrum, base, mainnet]) {
-        try {
-          const publicClient = createPublicClient({
-            chain: chain,
-            transport: http(),
-          });
-          if (
-            await publicClient.readContract({
-              address: FIRST_HOLDER_NFT_ADDRESS,
-              abi: erc721ABI,
-              functionName: "balanceOf",
-              args: [account.address!],
-            })
-          ) {
-            setHasFirstOwnerNFT(true);
-            return; // Stop checking other chains if we found the NFT
-          }
-        } catch (error) {
-          // Ignore cause NFT can not exist on this chain
-          lastError = error;
-        }
-      }
-
-      console.error(
-        "Error checking First Holder NFT balance:",
-        lastError || "Unknown error",
-      );
-    }
-  }, [account.isConnected]);
 
   const nfts = useMemo(
     () =>
@@ -121,13 +87,11 @@ export function ConnectWallet() {
         {
           image: FirstHolderNFT,
           title: "First Holder NFT",
-          hasNFT: !!hasFirstOwnerNFT,
+          hasNFT: !!hasFirstHolderNFT,
         },
       ].filter((nft) => nft.hasNFT),
-    [result, hasFirstOwnerNFT],
+    [result, hasFirstHolderNFT],
   );
-
-  console.log("nfts", nfts);
 
   const [selectedNFTIndex, setSelectedNFTIndex] = useState(0);
 

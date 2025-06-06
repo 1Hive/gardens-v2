@@ -62,6 +62,7 @@ import {
   SCALE_PRECISION,
   SCALE_PRECISION_DECIMALS,
 } from "@/utils/numbers";
+import { useChainFromPath } from "@/hooks/useChainFromPath";
 
 type MembersStaked = {
   memberAddress: string;
@@ -79,9 +80,9 @@ type MemberColumn = Column<MembersStaked>;
 const BLOCKSCOUT_ADDRESS = "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9";
 
 export default function Page({
-  params: { chain, garden: tokenAddr, community: communityAddr },
+  params: { garden: tokenAddr, community: communityAddr },
 }: {
-  params: { chain: number; garden: string; community: string };
+  params: { garden: string; community: string };
 }) {
   const searchParams = useCollectQueryParams();
   const { address: accountAddress } = useAccount();
@@ -89,11 +90,14 @@ export default function Page({
   const showArchived = useCheat("showArchived");
   const [openCommDetails, setOpenCommDetails] = useState(false);
 
+  const chain = useChainFromPath();
+
   const covenantSectionRef = useRef<HTMLDivElement>(null);
   const { data: tokenGarden } = useToken({
     address: tokenAddr as Address,
-    chainId: +chain,
+    chainId: chain?.id,
   });
+
   const {
     data: result,
     error,
@@ -120,8 +124,8 @@ export default function Page({
     abi: safeABI,
     address: registryCommunity?.councilSafe as Address,
     functionName: "getOwners",
-    chainId: Number(chain),
-    enabled: !!registryCommunity?.councilSafe,
+    chainId: chain?.id,
+    enabled: !!registryCommunity?.councilSafe && !!chain?.safePrefix,
     onError: (err) => {
       console.error("Error reading council safe owners:", err);
     },
@@ -139,9 +143,10 @@ export default function Page({
   } = registryCommunity ?? {};
 
   const is1hive =
-    registryCommunity?.id.toLowerCase() === (isProd || queryAllChains) ?
+    registryCommunity?.id.toLowerCase() ===
+    (isProd || queryAllChains ?
       ONE_HIVE_COMMUNITY_ADDRESS
-    : ONE_HIVE_FAKE_COMMUNITY_ADDRESS;
+    : ONE_HIVE_FAKE_COMMUNITY_ADDRESS);
 
   const isProtopianCommunity =
     !!members?.find(
@@ -234,7 +239,7 @@ export default function Page({
   //   fundingPools.forEach((pool, index) => {
   //     const { data } = useToken({
   //       address: pool.token as Address,
-  //       chainId: +chain,
+  //       chainId: chain.id,
   //     });
 
   //     // Update the tokenData in the array for this specific pool
@@ -480,7 +485,7 @@ export default function Page({
           <div className="flex flex-row flex-wrap gap-10">
             {fundingPools.map((pool) => (
               <Fragment key={pool.poolId}>
-                <PoolCard token={pool.token} chainId={chain} pool={pool} />
+                <PoolCard token={pool.token} chainId={chain!.id!} pool={pool} />
               </Fragment>
             ))}
           </div>
@@ -494,7 +499,7 @@ export default function Page({
               <PoolCard
                 key={pool.poolId}
                 token={pool.token}
-                chainId={chain}
+                chainId={chain!.id!}
                 pool={pool}
               />
             ))}
@@ -509,7 +514,7 @@ export default function Page({
               <PoolCard
                 key={pool.poolId}
                 token={pool.token}
-                chainId={chain}
+                chainId={chain!.id!}
                 pool={pool}
               />
             ))}
@@ -528,7 +533,7 @@ export default function Page({
                 <PoolCard
                   key={pool.poolId}
                   token={pool.token}
-                  chainId={chain}
+                  chainId={chain!.id!}
                   pool={pool}
                 />
               ))}
