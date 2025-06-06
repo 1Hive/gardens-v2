@@ -15,7 +15,7 @@ import { Countdown } from "./Countdown";
 import { DisplayNumber } from "./DisplayNumber";
 import { ProposalInputItem } from "./Proposals";
 import TooltipIfOverflow from "./TooltipIfOverflow";
-import { Badge, Card } from "@/components";
+import { Badge, Card, EthAddress } from "@/components";
 import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
 import { Skeleton } from "@/components/Skeleton";
 import { QUERY_PARAMS } from "@/constants/query-params";
@@ -157,49 +157,62 @@ export function ProposalCard({
   const proposalCardContent = (
     <>
       <div
-        className={`flex gap-3 justify-between flex-wrap ${isAllocationView ? `section-layout ${isNewProposal ? "shadow-2xl" : ""}` : ""}`}
+        className={`flex flex-wrap ${isAllocationView ? `section-layout ${isNewProposal ? "shadow-2xl" : ""}` : ""}`}
       >
-        <div className="flex flex-col sm:flex-row w-full justify-between gap-2">
+        <div className="flex flex-col sm:flex-row w-full">
           {/* icon title and id */}
-          <header className="flex justify-between items-start gap-2">
-            <div className="hidden xl:block">
-              <Hashicon value={id} size={45} />
-            </div>
-            <div className="flex w-full items-start flex-col gap-1">
-              <Skeleton isLoading={!metadata}>
-                <h3 className="flex items-start max-w-full sm:max-w-md lg:max-w-lg">
-                  <TooltipIfOverflow>{metadata?.title}</TooltipIfOverflow>
-                </h3>
-              </Skeleton>
-              <div className="flex justify-between items-center">
-                <div className="flex items-baseline gap-3">
-                  <h6 className="text-sm">ID {proposalNumber}</h6>
-                  <p className="text-sm text-neutral-soft-content">
-                    {prettyTimestamp(proposalData.createdAt ?? 0)}
-                  </p>
+          <header className="flex-1 justify-between items-start gap-3">
+            <div className="flex-1 items-start flex-col gap-1 ">
+              <div className="flex items-center justify-between ">
+                <Skeleton isLoading={!metadata}>
+                  <h3 className="flex items-start max-w-md">
+                    <TooltipIfOverflow>{metadata?.title}</TooltipIfOverflow>
+                  </h3>
+                </Skeleton>
+                {isPoolEnabled && (
+                  <div className="flex items-center gap-4">
+                    <h6 className="text-sm">
+                      ID: <span className="text-lg">{proposalNumber}</span>
+                    </h6>
+                    <Badge
+                      status={proposalStatus}
+                      className="self-center justify-self-end"
+                    />
+                  </div>
+                )}
+              </div>
+              <div className="flex justify-between items-center ">
+                <div className="flex items-center gap-2">
+                  <div>
+                    <p>By paul.eth</p>
+                  </div>
+                  <div className="flex gap-6 text-neutral-soft-content justify-end">
+                    {!isSignalingType && poolToken && (
+                      <div className="flex items-center gap-1 justify-self-end">
+                        <div className="w-1 h-1 rounded-full bg-neutral-soft-content" />
+                        <p className="text-sm ml-1">Requesting: </p>
+                        <DisplayNumber
+                          number={formatUnits(
+                            requestedAmount,
+                            poolToken.decimals,
+                          )}
+                          tokenSymbol={poolToken.symbol}
+                          compact={true}
+                        />
+                      </div>
+                    )}
+                  </div>
+                  <div className="w-1 h-1 rounded-full bg-neutral-soft-content" />
+                  <div>
+                    <p className="text-sm text-neutral-soft-content">
+                      {prettyTimestamp(proposalData.createdAt ?? 0)}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
           </header>
           {/* amount requested and proposal status */}
-          <div className="flex gap-6 text-neutral-soft-content justify-end">
-            {!isSignalingType && poolToken && (
-              <div className="flex items-center gap-1 justify-self-end">
-                <p>Requested amount: </p>
-                <DisplayNumber
-                  number={formatUnits(requestedAmount, poolToken.decimals)}
-                  tokenSymbol={poolToken.symbol}
-                  compact={true}
-                />
-              </div>
-            )}
-            {isPoolEnabled && (
-              <Badge
-                status={proposalStatus}
-                className="self-center justify-self-end"
-              />
-            )}
-          </div>
         </div>
 
         {/* support description or slider */}
