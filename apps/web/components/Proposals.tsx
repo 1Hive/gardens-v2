@@ -72,6 +72,7 @@ export type StakesMemberType = NonNullable<isMemberQuery["member"]>["stakes"];
 export type ProposalTypeVoter = CVProposal & {
   title: string;
   type: number;
+  beneficiary: Address;
 };
 
 type Stats = {
@@ -488,7 +489,7 @@ export function Proposals({
   // Render
   return (
     <>
-      {strategy.isEnabled && (
+      {/* {strategy.isEnabled && (
         <PoolGovernance
           memberPoolWeight={memberPoolWeight}
           tokenDecimals={tokenDecimals}
@@ -499,7 +500,7 @@ export function Proposals({
           memberActivatedStrategy={memberActivatedStrategy}
           membersStrategyData={membersStrategies}
         />
-      )}
+      )} */}
 
       <section className="flex flex-col gap-10 mt-10">
         <div>

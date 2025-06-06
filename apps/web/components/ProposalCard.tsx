@@ -1,9 +1,8 @@
 "use client";
 
-import { Hashicon } from "@emeraldpay/hashicon-react";
 import { FetchTokenResult } from "@wagmi/core";
 import { usePathname } from "next/navigation";
-import { formatUnits } from "viem";
+import { Address, formatUnits } from "viem";
 import {
   Allo,
   CVProposal,
@@ -75,7 +74,8 @@ export function ProposalCard({
 
   const metadata = proposalData.metadata ?? metadataResult;
 
-  const { id, proposalNumber, proposalStatus, requestedAmount } = proposalData;
+  const { id, proposalNumber, proposalStatus, requestedAmount, beneficiary } =
+    proposalData;
   const pathname = usePathname();
 
   const searchParams = useCollectQueryParams();
@@ -171,9 +171,12 @@ export function ProposalCard({
                 </Skeleton>
                 {isPoolEnabled && (
                   <div className="flex items-center gap-4">
-                    <h6 className="text-sm">
-                      ID: <span className="text-lg">{proposalNumber}</span>
-                    </h6>
+                    <p className="text-sm flex items-center bg-neutral-soft rounded-md px-2 py-1">
+                      ID:{" "}
+                      <span className="text-md ml-1 font-medium">
+                        {proposalNumber}
+                      </span>
+                    </p>
                     <Badge
                       status={proposalStatus}
                       className="self-center justify-self-end"
@@ -183,8 +186,14 @@ export function ProposalCard({
               </div>
               <div className="flex justify-between items-center ">
                 <div className="flex items-center gap-2">
-                  <div>
-                    <p>By paul.eth</p>
+                  <div className="flex items-center ">
+                    <p>By</p>
+                    <EthAddress
+                      address={beneficiary as Address}
+                      shortenAddress={true}
+                      actions="copy"
+                      textColor="var(--color-grey-900)"
+                    />
                   </div>
                   <div className="flex gap-6 text-neutral-soft-content justify-end">
                     {!isSignalingType && poolToken && (
@@ -212,13 +221,13 @@ export function ProposalCard({
               </div>
             </div>
           </header>
-          {/* amount requested and proposal status */}
         </div>
 
         {/* support description or slider */}
         {isPoolEnabled && !isProposalEnded && (
           <div className="flex gap-12 flex-wrap w-full ">
             <div className="mt-4 w-full">
+              {/* manage support view */}
               {isAllocationView ?
                 <div className="flex w-full flex-wrap items-center justify-between gap-6">
                   <div className="flex items-center gap-8 flex-grow flex-wrap">
@@ -272,21 +281,27 @@ export function ProposalCard({
                     )}
                   </div>
                 </div>
-              : <div className="w-full">
+              : <div className="w-full ">
                   {currentConvictionPct != null &&
                     thresholdPct != null &&
                     totalSupportPct != null && (
                       <div>
-                        <div className="flex items-end gap-1 mb-2">
+                        <div className="flex items-center gap-2 mb-2">
                           <div>
                             <p className="text-sm">
-                              Total Support: <span>{totalSupportPct}%</span> of
-                              pool weight.
+                              Total Support:{" "}
+                              <span className="font-medium">
+                                {totalSupportPct}% of pool weight
+                              </span>{" "}
                             </p>
                           </div>
+                          {!isSignalingType && poolToken && (
+                            <div className="w-1 h-1 rounded-full bg-neutral-soft-content" />
+                          )}
+
                           <ProposalCountDown />
                         </div>
-                        <div className="h-3 flex items-center">
+                        <div className="h-3 flex items-center mb-2">
                           <ConvictionBarChart
                             compact
                             currentConvictionPct={currentConvictionPct}
@@ -309,10 +324,13 @@ export function ProposalCard({
       {isPoolEnabled &&
         !isAllocationView &&
         stakedFilter &&
-        stakedFilter?.value > 0 && (
-          <p className="flex items-baseline text-xs mt-2">
-            Your support: {poolWeightAllocatedInProposal}%
-          </p>
+        stakedFilter?.value > 0 &&
+        Number(poolWeightAllocatedInProposal) > 0 && (
+          <Badge status={2} className="self-center justify-self-start">
+            <p className="text-xs font-semibold">
+              Your support: {poolWeightAllocatedInProposal}%
+            </p>
+          </Badge>
         )}
       {/* TODO: fetch every member stake */}
       {/* {!isAllocationView && <p className="text-sm mt-1">3 Supporters</p>} */}

@@ -16,7 +16,10 @@ import { logOnce } from "@/utils/log";
 import { calculatePercentageBigInt, CV_SCALE_PRECISION } from "@/utils/numbers";
 
 export type ProposalDataLight = Maybe<
-  Pick<CVProposal, "proposalNumber" | "stakedAmount" | "requestedAmount"> & {
+  Pick<
+    CVProposal,
+    "proposalNumber" | "stakedAmount" | "requestedAmount" | "beneficiary"
+  > & {
     strategy: Pick<
       CVStrategy,
       "id" | "maxCVSupply" | "totalEffectiveActivePoints"
