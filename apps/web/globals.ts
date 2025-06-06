@@ -1,6 +1,3 @@
-import { isProd } from "./configs/isProd";
-import { CheatName } from "./hooks/useCheat";
-
 export const CHANGE_EVENT_INITIAL_DELAY = 2000;
 export const CHANGE_EVENT_MAX_RETRIES = 6; // Max retries for change event subscription
 export const CHANGE_EVENT_CHANNEL_NAME = "change-events";
@@ -10,9 +7,8 @@ export const FAKE_PROTOPIAN_COMMUNITIES = [
   "0x8b8732dac9c30ac89bf660b99fb90000d826ab83",
 ];
 export const ONE_HIVE_COMMUNITY_ADDRESS =
-  (
-    isProd &&
-    localStorage.getItem("queryAllChains" satisfies CheatName) === "true"
-  ) ?
-    "0xe2396fe2169ca026962971d3b2e373ba925b6257".toLowerCase() // Actual 1hive community address
-  : "0xa502fffb9082700cad62366bc6ce37b15207680f".toLowerCase(); // Fake 1hive community address for testing
+  "0xe2396fe2169ca026962971d3b2e373ba925b6257".toLowerCase();
+export const ONE_HIVE_FAKE_COMMUNITY_ADDRESS =
+  "0xa502fffb9082700cad62366bc6ce37b15207680f".toLowerCase();
+export const FIRST_HOLDER_NFT_ADDRESS =
+  "0x0c04af0f06d5762151245d0b7ef48170c49a1441";

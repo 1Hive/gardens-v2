@@ -49,6 +49,7 @@ import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import {
   FAKE_PROTOPIAN_COMMUNITIES,
   ONE_HIVE_COMMUNITY_ADDRESS,
+  ONE_HIVE_FAKE_COMMUNITY_ADDRESS,
 } from "@/globals";
 import { useCheat } from "@/hooks/useCheat";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
@@ -126,6 +127,8 @@ export default function Page({
     },
   });
 
+  const queryAllChains = useCheat("queryAllChains");
+
   let {
     communityName,
     members,
@@ -136,7 +139,9 @@ export default function Page({
   } = registryCommunity ?? {};
 
   const is1hive =
-    registryCommunity?.id.toLowerCase() === ONE_HIVE_COMMUNITY_ADDRESS;
+    registryCommunity?.id.toLowerCase() === (isProd || queryAllChains) ?
+      ONE_HIVE_COMMUNITY_ADDRESS
+    : ONE_HIVE_FAKE_COMMUNITY_ADDRESS;
 
   const isProtopianCommunity =
     !!members?.find(

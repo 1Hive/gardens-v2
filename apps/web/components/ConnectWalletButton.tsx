@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Fragment, useMemo, useState } from "react";
+import React, { Fragment, useEffect, useMemo, useState } from "react";
 import { Menu, Transition } from "@headlessui/react";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import {
@@ -13,13 +13,21 @@ import { blo } from "blo";
 import cn from "classnames";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { isAddress } from "viem";
-import { arbitrum, arbitrumSepolia } from "viem/chains";
+import { createPublicClient, http, isAddress } from "viem";
+import {
+  arbitrum,
+  arbitrumSepolia,
+  base,
+  mainnet,
+  optimism,
+} from "viem/chains";
 import {
   Address,
+  erc721ABI,
   useAccount,
   useBalance,
   useConnect,
+  useContractRead,
   useDisconnect,
   useEnsAvatar,
   useEnsName,
@@ -28,7 +36,7 @@ import {
 import { getMemberDocument, getMemberQuery } from "#/subgraph/.graphclient";
 import TooltipIfOverflow from "./TooltipIfOverflow";
 import { isSafeAvatarUrl } from "@/app/api/utils";
-import { BeeKeeperNFT, ProtopianNFT } from "@/assets";
+import { BeeKeeperNFT, FirstHolderNFT, ProtopianNFT } from "@/assets";
 import { walletIcon } from "@/assets";
 import { Button, DisplayNumber } from "@/components";
 import { ChainIcon } from "@/configs/chains";
@@ -36,6 +44,8 @@ import { isProd } from "@/configs/isProd";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { formatAddress } from "@/utils/formatAddress";
+import { FIRST_HOLDER_NFT_ADDRESS } from "@/globals";
+import { getPublicClient, readContract } from "@wagmi/core";
 
 export function ConnectWallet() {
   const path = usePathname();
@@ -47,6 +57,7 @@ export function ConnectWallet() {
   const { switchNetwork } = useSwitchNetwork();
   const { disconnect } = useDisconnect();
   const { connectors } = useConnect();
+  const [hasFirstOwnerNFT, setHasFirstOwnerNFT] = useState(false);
 
   const { data: result } = useSubgraphQuery<getMemberQuery>({
     chainId: isProd ? arbitrum.id : arbitrumSepolia.id,
@@ -56,6 +67,43 @@ export function ConnectWallet() {
     },
     enabled: account.isConnected,
   });
+
+  useEffect(() => {
+    // Using viem to read the First Holder NFT balance
+    if (!account.address) return;
+    void fetchFirstHolderNFTBalance();
+
+    async function fetchFirstHolderNFTBalance() {
+      let lastError: any = null;
+      for (const chain of [optimism, arbitrum, base, mainnet]) {
+        try {
+          const publicClient = createPublicClient({
+            chain: chain,
+            transport: http(),
+          });
+          if (
+            await publicClient.readContract({
+              address: FIRST_HOLDER_NFT_ADDRESS,
+              abi: erc721ABI,
+              functionName: "balanceOf",
+              args: [account.address!],
+            })
+          ) {
+            setHasFirstOwnerNFT(true);
+            return; // Stop checking other chains if we found the NFT
+          }
+        } catch (error) {
+          // Ignore cause NFT can not exist on this chain
+          lastError = error;
+        }
+      }
+
+      console.error(
+        "Error checking First Holder NFT balance:",
+        lastError || "Unknown error",
+      );
+    }
+  }, [account.isConnected]);
 
   const nfts = useMemo(
     () =>
@@ -70,9 +118,16 @@ export function ConnectWallet() {
           title: "Bee Keeper NFT",
           hasNFT: result?.member?.isKeeper,
         },
+        {
+          image: FirstHolderNFT,
+          title: "First Holder NFT",
+          hasNFT: !!hasFirstOwnerNFT,
+        },
       ].filter((nft) => nft.hasNFT),
-    [result],
+    [result, hasFirstOwnerNFT],
   );
+
+  console.log("nfts", nfts);
 
   const [selectedNFTIndex, setSelectedNFTIndex] = useState(0);
 
@@ -221,23 +276,25 @@ export function ConnectWallet() {
                             </div>
                           ))}
 
-                          <div className="flex w-full justify-center gap-2 py-2">
-                            {nfts.map(({ title }, i) => (
-                              <span
-                                key={title}
-                                className={`cursor-pointer w-3 h-3 bg-gray-600 rounded-full inline-block mx-1 ${selectedNFTIndex !== i ? "opacity-25" : ""}`}
-                                aria-label="View Protopian NFT"
-                                onClick={() => setSelectedNFTIndex(i)}
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter") {
-                                    setSelectedNFTIndex(i);
-                                  }
-                                }}
-                              >
-                                <span className="sr-only">View {title}</span>
-                              </span>
-                            ))}
-                          </div>
+                          {nfts.length > 1 && (
+                            <div className="flex w-full justify-center gap-2 py-2">
+                              {nfts.map(({ title }, i) => (
+                                <span
+                                  key={title}
+                                  className={`cursor-pointer w-3 h-3 bg-gray-600 rounded-full inline-block mx-1 ${selectedNFTIndex !== i ? "opacity-25" : ""}`}
+                                  aria-label="View Protopian NFT"
+                                  onClick={() => setSelectedNFTIndex(i)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") {
+                                      setSelectedNFTIndex(i);
+                                    }
+                                  }}
+                                >
+                                  <span className="sr-only">View {title}</span>
+                                </span>
+                              ))}
+                            </div>
+                          )}
 
                           <div className="flex flex-col gap-4 rounded-lg p-4 min-w-[300px]">
                             {/* wallet and token balance info */}

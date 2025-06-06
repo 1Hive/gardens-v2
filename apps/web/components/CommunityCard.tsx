@@ -20,7 +20,12 @@ import { CommunityLogo, ProtopianLogo, OneHiveLogo } from "@/assets";
 import { ChainIcon } from "@/configs/chains";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
-import { ONE_HIVE_COMMUNITY_ADDRESS } from "@/globals";
+import {
+  ONE_HIVE_COMMUNITY_ADDRESS,
+  ONE_HIVE_FAKE_COMMUNITY_ADDRESS,
+} from "@/globals";
+import { isProd } from "@/configs/isProd";
+import { useCheat } from "@/hooks/useCheat";
 
 type CommunityCardProps = {
   id: string;
@@ -49,7 +54,12 @@ export function CommunityCard({
     searchParams[QUERY_PARAMS.gardenPage.newCommunity]?.toLowerCase() ===
     id.toLowerCase();
 
-  const is1hive = id.toLowerCase() === ONE_HIVE_COMMUNITY_ADDRESS;
+  const queryAllChains = useCheat("queryAllChains");
+
+  const is1hive =
+    id.toLowerCase() === (isProd || queryAllChains) ?
+      ONE_HIVE_COMMUNITY_ADDRESS
+    : ONE_HIVE_FAKE_COMMUNITY_ADDRESS;
 
   return (
     <Card
@@ -59,7 +69,7 @@ export function CommunityCard({
     >
       <div className="flex justify-between text-neutral-content text-sm">
         {isProtopian && (
-          <div className="absolute bottom-2 right-2 badge badge-soft badge-success bg-[#9ae7c3] text-[#9ae7c3">
+          <div className="absolute bottom-2 right-2 badge badge-soft badge-success bg-[#9ae7c3] text-[#0c7b0c]">
             <CheckBadgeIcon className="h-4 w-4 mr-1" />
             Protopian
           </div>
