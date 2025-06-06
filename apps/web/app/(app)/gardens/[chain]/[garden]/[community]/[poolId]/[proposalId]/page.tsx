@@ -1,10 +1,10 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
-import { Hashicon } from "@emeraldpay/hashicon-react";
 import {
   AdjustmentsHorizontalIcon,
   InformationCircleIcon,
   UserIcon,
+  CheckCircleIcon,
 } from "@heroicons/react/24/outline";
 import { usePathname, useRouter } from "next/navigation";
 import { toast } from "react-toastify";
@@ -274,164 +274,200 @@ export default function Page({
 
   const status = ProposalStatus[proposalData.proposalStatus];
   return (
-    <div className="page-layout">
-      <header
-        className={`section-layout flex flex-col gap-8 border ${status === "disputed" ? "!border-error-content" : ""} ${status === "executed" ? "!border-primary-content" : ""}`}
-      >
-        <div className="flex flex-col items-start gap-10 sm:flex-row">
-          <div className="flex w-full items-center justify-center sm:w-auto">
-            <Hashicon value={proposalId} size={90} />
-          </div>
-          <div className="flex w-full flex-col gap-8">
-            <div>
-              <div className="mb-4 flex flex-col items-start gap-4 sm:mb-2 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
-                <Skeleton isLoading={!metadata} className="!w-96 h-8">
-                  <h2>
-                    {metadata?.title} #{proposalIdNumber.toString()}
-                  </h2>
+    <>
+      <section className="col-span-12 lg:col-span-9">
+        {/* Main Section */}
+        <div
+          className={`section-layout flex flex-col gap-8 ${status === "disputed" ? "!border-error-content" : ""} ${status === "executed" ? "!border-primary-content" : ""}`}
+        >
+          <div className="flex flex-col items-start gap-10 sm:flex-row">
+            <div className="flex w-full flex-col gap-8">
+              <div>
+                <header className="mb-4 flex flex-col items-start gap-4 sm:mb-2 ">
+                  <div className=" flex items-center justify-between w-full gap-4 sm:gap-8">
+                    <Skeleton isLoading={!metadata} className="!w-96 h-8">
+                      <h2>{metadata?.title}</h2>
+                    </Skeleton>
+
+                    <Badge type={proposalType} />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <p className="text-md flex items-center bg-neutral-soft-2 rounded-md px-2 py-1 text-neutral-soft-content">
+                      ID:{" "}
+                      <span className="text-md ml-1 font-medium text-black">
+                        {proposalIdNumber.toString()}
+                      </span>
+                    </p>
+                    <Statistic label={"Created"}>
+                      <span className="text-black font-medium">
+                        {prettyTimestamp(proposalData?.createdAt ?? 0)}
+                      </span>
+                    </Statistic>
+                  </div>
+                  <div className=" w-full flex items-start justify-between">
+                    <div className="flex flex-col gap-1 ">
+                      <Statistic label={"Author"}>
+                        <EthAddress
+                          address={submitter}
+                          actions="none"
+                          textColor="var(--color-grey-900)"
+                        />
+                      </Statistic>
+                      <Statistic label={"beneficiary"}>
+                        <EthAddress
+                          address={beneficiary}
+                          actions="none"
+                          textColor="var(--color-grey-900)"
+                        />
+                      </Statistic>
+                    </div>
+
+                    <div className="flex flex-col gap-1 ">
+                      {!isSignalingType && (
+                        <>
+                          <Statistic label={"request amount"} className="pt-2">
+                            <DisplayNumber
+                              number={formatUnits(
+                                requestedAmount,
+                                poolToken?.decimals ?? 18,
+                              )}
+                              tokenSymbol={poolToken?.symbol}
+                              compact={true}
+                              valueClassName="text-black font-medium"
+                              symbolClassName="text-black font-medium"
+                            />
+                          </Statistic>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </header>
+              </div>
+              <div>
+                <Skeleton rows={5} isLoading={!metadata}>
+                  <MarkdownWrapper>
+                    {metadata?.description ?? "No description found"}
+                  </MarkdownWrapper>
                 </Skeleton>
-                <Badge type={proposalType} />
-              </div>
-              <div className="flex items-center justify-between gap-4 sm:justify-start">
-                <Badge status={proposalData.proposalStatus} />
-                <p className="">
-                  Created:{" "}
-                  <span className="font-semibold">
-                    {prettyTimestamp(proposalData?.createdAt ?? 0)}
-                  </span>
-                </p>
               </div>
             </div>
-            <div>
-              <Skeleton rows={5} isLoading={!metadata}>
-                <MarkdownWrapper>
-                  {metadata?.description ?? "No description found"}
-                </MarkdownWrapper>
-              </Skeleton>
-            </div>
-            <div className="flex justify-between flex-wrap gap-2">
-              <div className="flex flex-col gap-2">
-                {!isSignalingType && (
-                  <>
-                    <Statistic
-                      label={"request amount"}
-                      icon={<InformationCircleIcon />}
-                    >
-                      <DisplayNumber
-                        number={formatUnits(
-                          requestedAmount,
-                          poolToken?.decimals ?? 18,
-                        )}
-                        tokenSymbol={poolToken?.symbol}
-                        compact={true}
-                        valueClassName="font-bold text-black"
-                      />
-                    </Statistic>
-                    <Statistic label={"beneficiary"} icon={<UserIcon />}>
-                      <EthAddress address={beneficiary} actions="copy" />
-                    </Statistic>
-                  </>
-                )}
-                <Statistic label={"created by"} icon={<UserIcon />}>
-                  <EthAddress address={submitter} actions="copy" />
-                </Statistic>
-              </div>
-              <div className="flex items-end">
-                {isProposerConnected && proposalStatus === "active" ?
-                  <CancelButton
+          </div>
+          {!proposalData.strategy.isEnabled && (
+            <InfoBox infoBoxType="warning">The pool is not enabled.</InfoBox>
+          )}
+        </div>
+
+        {proposalData.strategy.isEnabled && (
+          <section className="section-layout">
+            {status && status !== "active" && status !== "disputed" ?
+              <h4
+                className={`text-center ${status === "executed" ? "text-primary-content" : "text-error-content"}`}
+              >
+                {status === "executed" ?
+                  "Proposal passed and executed successfully!"
+                : `Proposal has been ${status}.`}
+              </h4>
+            : <>
+                <div className="">
+                  <h2>Metrics</h2>
+                  <Button
+                    icon={<AdjustmentsHorizontalIcon height={24} width={24} />}
+                    onClick={() => manageSupportClicked()}
+                    disabled={
+                      !isConnected || missmatchUrl || !isMemberCommunity
+                    }
+                    tooltip={tooltipMessage}
+                  >
+                    Manage support
+                  </Button>
+                </div>
+                <div className="flex flex-col gap-7 relative">
+                  <ConvictionBarChart
+                    currentConvictionPct={currentConvictionPct}
+                    thresholdPct={thresholdPct}
+                    proposalSupportPct={totalSupportPct}
+                    isSignalingType={isSignalingType}
+                    proposalNumber={Number(proposalIdNumber)}
+                    timeToPass={Number(timeToPass)}
+                    onReadyToExecute={triggerConvictionRefetch}
+                    defaultChartMaxValue
+                    proposalStatus={proposalStatus}
+                  />
+                  <div className="flex justify-center lg:justify-end w-full">
+                    {status === "active" && !isSignalingType && (
+                      <Button
+                        onClick={() =>
+                          writeDistribute?.({
+                            args: [
+                              BigInt(poolId),
+                              [proposalData?.strategy.id as Address],
+                              encodedDataProposalId(proposalIdNumber),
+                            ],
+                          })
+                        }
+                        disabled={
+                          currentConvictionPct <= thresholdPct ||
+                          !isConnected ||
+                          proposalStatus === "disputed"
+                        }
+                        tooltip={
+                          (
+                            tooltipMessage ??
+                            currentConvictionPct <= thresholdPct
+                          ) ?
+                            "Proposal has not reached the threshold yet"
+                          : undefined
+                        }
+                      >
+                        Execute
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </>
+            }
+          </section>
+        )}
+      </section>
+
+      {/* Right side */}
+      <div className="col-span-12 lg:col-span-3">
+        <div className="backdrop-blur-sm rounded-lg flex flex-col gap-4 sticky top-32">
+          <section className="section-layout gap-4 flex flex-col">
+            <h5>Status</h5>
+            <Badge
+              status={proposalData.proposalStatus}
+              icon={
+                <CheckCircleIcon className="w-5 h-5 text-primary-content" />
+              }
+            />
+            <div className="flex items-end ">
+              {isProposerConnected && proposalStatus === "active" ?
+                <CancelButton proposalData={{ ...proposalData, ...metadata }} />
+              : proposalData.strategy.isEnabled && (
+                  <DisputeButton
+                    isMemberCommunity={isMemberCommunity}
                     proposalData={{ ...proposalData, ...metadata }}
                   />
-                : proposalData.strategy.isEnabled && (
-                    <DisputeButton
-                      isMemberCommunity={isMemberCommunity}
-                      proposalData={{ ...proposalData, ...metadata }}
-                    />
-                  )
-                }
-              </div>
+                )
+              }
             </div>
-          </div>
+          </section>
+
+          {/* {filteredAndSortedProposalSupporters.length > 0 && (
+            <section className="section-layout col-span-12 lg:col-span-3">
+              <ProposalSupportersTable
+                supporters={filteredAndSortedProposalSupporters}
+                beneficiary={beneficiary}
+                submitter={submitter}
+                totalActivePoints={totalEffectiveActivePoints}
+                totalStakedAmount={totalSupportPct}
+              />
+            </section>
+          )} */}
         </div>
-        {!proposalData.strategy.isEnabled && (
-          <InfoBox infoBoxType="warning">The pool is not enabled.</InfoBox>
-        )}
-      </header>
-      {proposalData.strategy.isEnabled && (
-        <section className="section-layout">
-          {status && status !== "active" && status !== "disputed" ?
-            <h4
-              className={`text-center ${status === "executed" ? "text-primary-content" : "text-error-content"}`}
-            >
-              {status === "executed" ?
-                "Proposal passed and executed successfully!"
-              : `Proposal has been ${status}.`}
-            </h4>
-          : <>
-              <div className="flex justify-between">
-                <h2>Metrics</h2>
-                <Button
-                  icon={<AdjustmentsHorizontalIcon height={24} width={24} />}
-                  onClick={() => manageSupportClicked()}
-                  disabled={!isConnected || missmatchUrl || !isMemberCommunity}
-                  tooltip={tooltipMessage}
-                >
-                  Manage support
-                </Button>
-              </div>
-              <div className="flex flex-col gap-7 relative">
-                <ConvictionBarChart
-                  currentConvictionPct={currentConvictionPct}
-                  thresholdPct={thresholdPct}
-                  proposalSupportPct={totalSupportPct}
-                  isSignalingType={isSignalingType}
-                  proposalNumber={Number(proposalIdNumber)}
-                  timeToPass={Number(timeToPass)}
-                  onReadyToExecute={triggerConvictionRefetch}
-                  defaultChartMaxValue
-                  proposalStatus={proposalStatus}
-                />
-                <div className="flex justify-center lg:justify-end w-full">
-                  {status === "active" && !isSignalingType && (
-                    <Button
-                      onClick={() =>
-                        writeDistribute?.({
-                          args: [
-                            BigInt(poolId),
-                            [proposalData?.strategy.id as Address],
-                            encodedDataProposalId(proposalIdNumber),
-                          ],
-                        })
-                      }
-                      disabled={
-                        currentConvictionPct <= thresholdPct ||
-                        !isConnected ||
-                        proposalStatus === "disputed"
-                      }
-                      tooltip={
-                        tooltipMessage ?? currentConvictionPct <= thresholdPct ?
-                          "Proposal has not reached the threshold yet"
-                        : undefined
-                      }
-                    >
-                      Execute
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </>
-          }
-        </section>
-      )}
-      {filteredAndSortedProposalSupporters.length > 0 && (
-        <ProposalSupportersTable
-          supporters={filteredAndSortedProposalSupporters}
-          beneficiary={beneficiary}
-          submitter={submitter}
-          totalActivePoints={totalEffectiveActivePoints}
-          totalStakedAmount={totalSupportPct}
-        />
-      )}
-    </div>
+      </div>
+    </>
   );
 }
 

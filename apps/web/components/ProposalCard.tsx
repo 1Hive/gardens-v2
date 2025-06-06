@@ -186,7 +186,7 @@ export function ProposalCard({
               </div>
               <div className="flex justify-between items-center ">
                 <div className="flex items-center gap-2">
-                  <div className="flex items-center ">
+                  <div className="flex items-center gap-1">
                     <p>By</p>
                     <EthAddress
                       address={beneficiary as Address}
