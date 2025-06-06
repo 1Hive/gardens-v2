@@ -231,10 +231,10 @@ export function ConnectWallet() {
                             >
                               <Image
                                 src={image}
-                                width={500}
-                                height={500}
+                                width={300}
+                                height={300}
                                 alt={title}
-                                className="rounded-t-[18px]"
+                                className="rounded-t-[18px] w-[300px] h-[300px]"
                                 title={title}
                               />
                             </div>
