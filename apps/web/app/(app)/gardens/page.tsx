@@ -112,18 +112,21 @@ export default function GardensPage() {
               );
               if (protopianMembers?.length && chain?.safePrefix) {
                 // Council Safe supported
+                const councilSafeAddress = x.councilSafe as Address;
                 const communityCouncil = await readContract({
-                  address: x.councilSafe as Address,
+                  address: councilSafeAddress,
                   abi: safeABI,
                   functionName: "getOwners",
                 });
 
                 return {
                   ...x,
-                  isProtopian: !!communityCouncil.find((owner) =>
-                    protopianMembers
-                      .map((p) => p.memberAddress?.toLowerCase())
-                      .includes(owner.toLowerCase()),
+                  // Consider Protopian can be transferred to councilSafe
+                  isProtopian: !![...communityCouncil, councilSafeAddress].find(
+                    (owner) =>
+                      protopianMembers
+                        .map((p) => p.memberAddress?.toLowerCase())
+                        .includes(owner.toLowerCase()),
                   ),
                 };
               }

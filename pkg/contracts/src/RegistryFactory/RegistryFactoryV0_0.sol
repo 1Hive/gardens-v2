@@ -9,7 +9,6 @@ import {ProxyOwnableUpgrader} from "../ProxyOwnableUpgrader.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {ISafe} from "../interfaces/ISafe.sol";
 import {Clone} from "allo-v2-contracts/core/libraries/Clone.sol";
-import {console} from "forge-std/console.sol";
 
 struct CommunityInfo {
     uint256 fee;
@@ -173,8 +172,12 @@ contract RegistryFactoryV0_0 is ProxyOwnableUpgrader {
         }
 
         // Check for protopians (free if they are owners of the community)
-        address[] memory communityOwners = ISafe(RegistryCommunityV0_0(_community).councilSafe()).getOwners();
-        console.log("Community owners:", communityOwners.length);
+        ISafe councilSafe = ISafe(RegistryCommunityV0_0(_community).councilSafe());
+        if (protopiansAddresses[address(councilSafe)]) {
+            return 0;
+        }
+
+        address[] memory communityOwners = councilSafe.getOwners();
         for (uint256 i = 0; i < communityOwners.length; i++) {
             if (protopiansAddresses[communityOwners[i]]) {
                 return 0;
