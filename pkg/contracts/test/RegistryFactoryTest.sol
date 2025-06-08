@@ -34,11 +34,15 @@ contract RegistryFactoryTest is Test {
 
         // Set up a keeper
         vm.prank(owner);
-        registryFactory.setKeeperAddress(keeper, true);
+        address[] memory keepers = new address[](1);
+        keepers[0] = keeper;
+        registryFactory.setKeeperAddress(keepers, true);
 
         // Set up a protopian
         vm.prank(owner);
-        registryFactory.setProtopianAddress(protopian, true);
+        address[] memory protopians = new address[](1);
+        protopians[0] = protopian;
+        registryFactory.setProtopianAddress(protopians, true);
 
         // Mock the councilSafe() and getOwners() for the community
         vm.mockCall(community, abi.encodeWithSignature("councilSafe()"), abi.encode(address(this)));
@@ -68,7 +72,9 @@ contract RegistryFactoryTest is Test {
     function testGetProtocolFee_CommunityWithKeeper() public {
         // Set the community as a keeper
         vm.prank(owner);
-        registryFactory.setKeeperAddress(community, true);
+        address[] memory communityAsKeeper = new address[](1);
+        communityAsKeeper[0] = community;
+        registryFactory.setKeeperAddress(communityAsKeeper, true);
 
         uint256 fee = registryFactory.getProtocolFee(community);
         assertEq(fee, 0, "Fee should be 0 for a keeper community");

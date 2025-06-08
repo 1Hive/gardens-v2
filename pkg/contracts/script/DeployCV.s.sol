@@ -235,8 +235,8 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         vm.startBroadcast(pool_admin());
 
         token.approve(address(allo), type(uint256).max);
-        allo.fundPool(poolId, 3_000 ether); // ether
-        allo.fundPool(poolIdFixed, 1_000 ether); // ether
+        // allo.fundPool(poolId, 3_000 ether); // ether
+        // allo.fundPool(poolIdFixed, 1_000 ether); // ether
 
         // CreateProposal memory proposal =
         //     CreateProposal(poolId, membersStaked[0], 50 ether, address(token), metadata);
@@ -428,8 +428,8 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         vm.startBroadcast(pool_admin());
 
         token.approve(address(allo), type(uint256).max);
-        allo.fundPool(poolId, 3_000 ether); // ether
-        allo.fundPool(poolIdFixed, 1_000 ether); // ether
+        // allo.fundPool(poolId, 3_000 ether); // ether
+        // allo.fundPool(poolIdFixed, 1_000 ether); // ether
 
         CreateProposal memory proposal = CreateProposal(poolId, membersStaked[0], 50 ether, address(token), metadata);
         bytes memory data = abi.encode(proposal);
