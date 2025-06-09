@@ -489,8 +489,8 @@ export function Proposals({
   // Render
   return (
     <>
-      {/* Proposal section */}
-      <section className="col-span-12 lg:col-span-9 border2">
+      {/* Proposals section */}
+      <section className="col-span-12 lg:col-span-9 flex flex-col gap-10">
         <header className="flex items-center justify-between gap-10 flex-wrap">
           <h2>Proposals</h2>
           {!!proposals &&

@@ -11,7 +11,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </div>
       {/* Main Content */}
       <main className="p-6 mt-10 z-10 min-h-screen container xl:max-w-7xl mx-auto">
-        <div className="grid grid-cols-12 gap-6 border2">{children}</div>
+        <div className="grid grid-cols-12 gap-6">{children}</div>
       </main>
     </div>
   );
