@@ -142,50 +142,44 @@ export default function Page({
 
   return (
     <>
-      <div className="col-span-12 lg:col-span-9">
-        <PoolHeader
-          poolToken={poolToken}
-          token={tokenGarden}
-          strategy={strategyObj}
-          arbitrableConfig={data.arbitrableConfigs[0]}
-          poolId={poolId}
-          ipfsResult={ipfsResult}
-          isEnabled={isEnabled}
-          maxAmount={maxAmount}
-        />
-        {strategyObj && isEnabled && (
-          <section ref={proposalSectionRef}>
-            <Proposals
-              poolToken={poolToken}
-              strategy={strategyObj}
-              alloInfo={alloInfo}
-              communityAddress={communityAddress}
-              createProposalUrl={`/gardens/${chain}/${garden}/${communityAddress}/${poolId}/create-proposal`}
-              proposalType={proposalType}
-            />
-          </section>
-        )}
-      </div>
+      <PoolHeader
+        poolToken={poolToken}
+        token={tokenGarden}
+        strategy={strategyObj}
+        arbitrableConfig={data.arbitrableConfigs[0]}
+        poolId={poolId}
+        ipfsResult={ipfsResult}
+        isEnabled={isEnabled}
+        maxAmount={maxAmount}
+      />
 
-      {/* Right Sidebar - Stake component */}
-      <div className="col-span-12 lg:col-span-3">
-        <div className="backdrop-blur-sm rounded-lg flex flex-col gap-2 sticky top-32">
-          {isEnabled && (
-            <>
-              {poolToken && PoolTypes[proposalType] !== "signaling" && (
-                <PoolMetrics
-                  poolToken={poolToken}
-                  alloInfo={alloInfo}
-                  poolId={poolId}
-                  poolAmount={poolAmount}
-                  communityAddress={communityAddress}
-                  chainId={chain}
-                />
-              )}
-            </>
+      {isEnabled && (
+        <>
+          {poolToken && PoolTypes[proposalType] !== "signaling" && (
+            <PoolMetrics
+              poolToken={poolToken}
+              alloInfo={alloInfo}
+              poolId={poolId}
+              poolAmount={poolAmount}
+              communityAddress={communityAddress}
+              chainId={chain}
+            />
           )}
-        </div>
-      </div>
+        </>
+      )}
+
+      {strategyObj && isEnabled && (
+        // <div ref={proposalSectionRef}>
+        <Proposals
+          poolToken={poolToken}
+          strategy={strategyObj}
+          alloInfo={alloInfo}
+          communityAddress={communityAddress}
+          createProposalUrl={`/gardens/${chain}/${garden}/${communityAddress}/${poolId}/create-proposal`}
+          proposalType={proposalType}
+        />
+        // </div>
+      )}
     </>
   );
 }

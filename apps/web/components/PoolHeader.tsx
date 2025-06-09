@@ -363,254 +363,264 @@ export default function PoolHeader({
   );
 
   return (
-    <section className="section-layout flex flex-col gap-4">
-      {/* Title - Badge poolType - Addresses and Button(when council memeber is connected) */}
-      <header className="flex flex-col gap-2">
-        <div className="flex justify-between items-center flex-wrap">
-          <h2>
-            <Skeleton isLoading={!ipfsResult} className="sm:!w-96 h-8">
-              {ipfsResult?.title}
-            </Skeleton>
-          </h2>
-          <div>
-            <Badge type={parseInt(proposalType)} />
-          </div>
-          {(!!isCouncilMember || isCouncilSafe) && (
-            <div className="flex gap-2 flex-wrap">
-              <Button
-                btnStyle="outline"
-                icon={<Cog6ToothIcon height={24} width={24} />}
-                disabled={
-                  !isConnected || missmatchUrl || disableCouncilSafeButtons
-                }
-                tooltip={tooltipMessage}
-                onClick={() => setIsOpenModal(true)}
-              >
-                Edit
-              </Button>
-              {isArchived ?
+    <div className="col-span-12 lg:col-span-9">
+      <section className="section-layout flex flex-col gap-4">
+        {/* Title - Badge poolType - Addresses and Button(when council memeber is connected) */}
+        <header className="flex flex-col gap-2">
+          <div className="flex justify-between items-center flex-wrap">
+            <h2>
+              <Skeleton isLoading={!ipfsResult} className="sm:!w-96 h-8">
+                {ipfsResult?.title}
+              </Skeleton>
+            </h2>
+            <div>
+              <Badge type={parseInt(proposalType)} />
+            </div>
+            {(!!isCouncilMember || isCouncilSafe) && (
+              <div className="flex gap-2 flex-wrap">
                 <Button
-                  icon={<CheckIcon height={24} width={24} />}
+                  btnStyle="outline"
+                  icon={<Cog6ToothIcon height={24} width={24} />}
                   disabled={
                     !isConnected || missmatchUrl || disableCouncilSafeButtons
                   }
-                  tooltip={
-                    tooltipMessage ?? "Restore the pool will also enable it."
-                  }
-                  showToolTip={true}
-                  onClick={() => addStrategyByPoolId()}
+                  tooltip={tooltipMessage}
+                  onClick={() => setIsOpenModal(true)}
                 >
-                  Restore
+                  Edit
                 </Button>
-              : isEnabled ?
-                <>
-                  <Button
-                    icon={<StopIcon height={24} width={24} />}
-                    disabled={
-                      !isConnected || missmatchUrl || disableCouncilSafeButtons
-                    }
-                    tooltip={
-                      tooltipMessage ??
-                      "Disable pool will pause all interactions with this pool. It is possible to enable it back."
-                    }
-                    showToolTip={true}
-                    onClick={() => removeStrategyByPoolId()}
-                    btnStyle="outline"
-                    color="secondary"
-                  >
-                    Disable
-                  </Button>
-                  <Button
-                    icon={<ArchiveBoxIcon height={24} width={24} />}
-                    disabled={
-                      !isConnected || missmatchUrl || disableCouncilSafeButtons
-                    }
-                    tooltip={
-                      tooltipMessage ??
-                      "Archive pool will remove it from the list of pools. Need to contact the Gardens team to restore it."
-                    }
-                    showToolTip={true}
-                    onClick={() => rejectPoolWrite()}
-                    btnStyle="outline"
-                    color="danger"
-                  >
-                    Archive
-                  </Button>
-                </>
-              : <>
+                {isArchived ?
                   <Button
                     icon={<CheckIcon height={24} width={24} />}
                     disabled={
                       !isConnected || missmatchUrl || disableCouncilSafeButtons
                     }
-                    tooltip={tooltipMessage ?? "Approve pool to enable it."}
+                    tooltip={
+                      tooltipMessage ?? "Restore the pool will also enable it."
+                    }
                     showToolTip={true}
                     onClick={() => addStrategyByPoolId()}
                   >
-                    Approve
+                    Restore
                   </Button>
-                  <Button
-                    icon={<NoSymbolIcon height={24} width={24} />}
-                    disabled={
-                      !isConnected || missmatchUrl || disableCouncilSafeButtons
-                    }
-                    tooltip={
-                      tooltipMessage ??
-                      "Reject pool will remove it from the list. \nNeed to contact the Gardens team to\n restore it."
-                    }
-                    showToolTip={true}
-                    onClick={() => rejectPoolWrite()}
-                    btnStyle="outline"
-                    color="danger"
-                  >
-                    Reject
-                  </Button>
-                </>
-              }
-            </div>
-          )}
-        </div>
-        <div className="flex flex-col">
-          <EthAddress
-            icon={false}
-            address={strategy.id as Address}
-            label="Pool address"
-            textColor="var(--color-grey-500)"
-          />
-          <div className="flex gap-1 p-1">
-            <a
-              href={`https://app.safe.global/transactions/queue?safe=${safePrefix}:${strategy.registryCommunity.councilSafe}`}
-              className="text-neutral-soft-content whitespace-nowrap flex flex-nowrap gap-1 items-center"
-              target="_blank"
-              rel="noreferrer"
-            >
-              Council safe
-              <ArrowTopRightOnSquareIcon width={16} height={16} />:
-            </a>
+                : isEnabled ?
+                  <>
+                    <Button
+                      icon={<StopIcon height={24} width={24} />}
+                      disabled={
+                        !isConnected ||
+                        missmatchUrl ||
+                        disableCouncilSafeButtons
+                      }
+                      tooltip={
+                        tooltipMessage ??
+                        "Disable pool will pause all interactions with this pool. It is possible to enable it back."
+                      }
+                      showToolTip={true}
+                      onClick={() => removeStrategyByPoolId()}
+                      btnStyle="outline"
+                      color="secondary"
+                    >
+                      Disable
+                    </Button>
+                    <Button
+                      icon={<ArchiveBoxIcon height={24} width={24} />}
+                      disabled={
+                        !isConnected ||
+                        missmatchUrl ||
+                        disableCouncilSafeButtons
+                      }
+                      tooltip={
+                        tooltipMessage ??
+                        "Archive pool will remove it from the list of pools. Need to contact the Gardens team to restore it."
+                      }
+                      showToolTip={true}
+                      onClick={() => rejectPoolWrite()}
+                      btnStyle="outline"
+                      color="danger"
+                    >
+                      Archive
+                    </Button>
+                  </>
+                : <>
+                    <Button
+                      icon={<CheckIcon height={24} width={24} />}
+                      disabled={
+                        !isConnected ||
+                        missmatchUrl ||
+                        disableCouncilSafeButtons
+                      }
+                      tooltip={tooltipMessage ?? "Approve pool to enable it."}
+                      showToolTip={true}
+                      onClick={() => addStrategyByPoolId()}
+                    >
+                      Approve
+                    </Button>
+                    <Button
+                      icon={<NoSymbolIcon height={24} width={24} />}
+                      disabled={
+                        !isConnected ||
+                        missmatchUrl ||
+                        disableCouncilSafeButtons
+                      }
+                      tooltip={
+                        tooltipMessage ??
+                        "Reject pool will remove it from the list. \nNeed to contact the Gardens team to\n restore it."
+                      }
+                      showToolTip={true}
+                      onClick={() => rejectPoolWrite()}
+                      btnStyle="outline"
+                      color="danger"
+                    >
+                      Reject
+                    </Button>
+                  </>
+                }
+              </div>
+            )}
+          </div>
+          <div className="flex flex-col">
             <EthAddress
-              address={strategy.registryCommunity.councilSafe as Address}
-              shortenAddress={true}
-              actions="copy"
               icon={false}
+              address={strategy.id as Address}
+              label="Pool address"
               textColor="var(--color-grey-500)"
             />
+            <div className="flex gap-1 p-1">
+              <a
+                href={`https://app.safe.global/transactions/queue?safe=${safePrefix}:${strategy.registryCommunity.councilSafe}`}
+                className="text-neutral-soft-content whitespace-nowrap flex flex-nowrap gap-1 items-center"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Council safe
+                <ArrowTopRightOnSquareIcon width={16} height={16} />:
+              </a>
+              <EthAddress
+                address={strategy.registryCommunity.councilSafe as Address}
+                shortenAddress={true}
+                actions="copy"
+                icon={false}
+                textColor="var(--color-grey-500)"
+              />
+            </div>
           </div>
-        </div>
-        <Modal
-          title={`Edit ${ipfsResult?.title} #${poolId}`}
-          isOpen={isOpenModal}
-          onClose={() => setIsOpenModal(false)}
-        >
-          {!!passportStrategyData && (
-            <PoolEditForm
-              strategy={strategy}
-              pointSystemType={pointSystemType}
-              token={token}
-              proposalType={proposalType}
-              proposalOnDispute={proposalOnDispute}
-              initValues={{
-                sybilResistanceValue: sybilResistanceValue,
-                sybilResistanceType: sybilResistanceType,
-                spendingLimit: spendingLimit.toFixed(2),
-                minimumConviction: minimumConviction.toFixed(2),
-                convictionGrowth: convictionGrowthSec.toFixed(4),
-                minThresholdPoints: minThresholdPoints,
-                defaultResolution: defaultResolution,
-                proposalCollateral: proposalCollateral,
-                disputeCollateral: disputeCollateral,
-                tribunalAddress: tribunalAddress,
-                rulingTime,
-              }}
-              setModalOpen={setIsOpenModal}
-            />
-          )}
-        </Modal>
-      </header>
-
-      {/* Description */}
-      <Skeleton rows={5} isLoading={!ipfsResult}>
-        <MarkdownWrapper>
-          {ipfsResult?.description ?? "No description found"}
-        </MarkdownWrapper>
-      </Skeleton>
-
-      {/* Pool Params */}
-      <div className="grid grid-cols-3 gap-2 ">
-        {filteredPoolConfig.map((config) => (
-          <div
-            key={config.label}
-            className="flex items-center gap-4  bg-primary px-2 py-4 rounded-lg"
+          <Modal
+            title={`Edit ${ipfsResult?.title} #${poolId}`}
+            isOpen={isOpenModal}
+            onClose={() => setIsOpenModal(false)}
           >
-            <Statistic
-              label={config.label}
-              icon={
-                <InformationCircleIcon
-                  className="stroke-2 text-primary-content"
-                  width={22}
-                  height={22}
-                />
-              }
-              tooltip={config.info}
+            {!!passportStrategyData && (
+              <PoolEditForm
+                strategy={strategy}
+                pointSystemType={pointSystemType}
+                token={token}
+                proposalType={proposalType}
+                proposalOnDispute={proposalOnDispute}
+                initValues={{
+                  sybilResistanceValue: sybilResistanceValue,
+                  sybilResistanceType: sybilResistanceType,
+                  spendingLimit: spendingLimit.toFixed(2),
+                  minimumConviction: minimumConviction.toFixed(2),
+                  convictionGrowth: convictionGrowthSec.toFixed(4),
+                  minThresholdPoints: minThresholdPoints,
+                  defaultResolution: defaultResolution,
+                  proposalCollateral: proposalCollateral,
+                  disputeCollateral: disputeCollateral,
+                  tribunalAddress: tribunalAddress,
+                  rulingTime,
+                }}
+                setModalOpen={setIsOpenModal}
+              />
+            )}
+          </Modal>
+        </header>
+
+        {/* Description */}
+        <Skeleton rows={5} isLoading={!ipfsResult}>
+          <MarkdownWrapper>
+            {ipfsResult?.description ?? "No description found"}
+          </MarkdownWrapper>
+        </Skeleton>
+
+        {/* Pool Params */}
+        <div className="grid grid-cols-3 gap-2 ">
+          {filteredPoolConfig.map((config) => (
+            <div
+              key={config.label}
+              className="flex items-center gap-4  bg-primary px-2 py-4 rounded-lg"
             >
-              <p className="text-neutral-content subtitle">{config.value}</p>
-            </Statistic>
-          </div>
-        ))}
-      </div>
-
-      {/* Voting weight + Dispute Address */}
-      <div className="flex items-center justify-between gap-4 flex-wrap ">
-        <Statistic label="voting weight">
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <Badge
-              label="conviction voting"
-              className="text-secondary-content"
-              icon={<Battery50Icon />}
-            />
-            <Badge
-              label={PointSystems[pointSystem]}
-              tooltip={
-                VOTING_POINT_SYSTEM_DESCRIPTION[PointSystems[pointSystem]]
-              }
-              icon={<BoltIcon />}
-            />
-          </div>
-        </Statistic>
-
-        <EthAddress
-          address={tribunalAddress as Address}
-          icon={false}
-          shortenAddress={true}
-          label="Dispute Resolution: Tribunal Safe"
-          textColor="var(--color-grey-500)"
-        />
-      </div>
-
-      {/* InfoBox - Banner or Image */}
-      {minThGtTotalEffPoints && isEnabled && (
-        <InfoBox
-          infoBoxType="warning"
-          content="Activated governance in this pool is too low. No proposals will pass unless more members activate their governance. You can still create and support proposals."
-          className="mb-4"
-        />
-      )}
-      {!isEnabled ?
-        <div className="banner">
-          {isArchived ?
-            <ArchiveBoxIcon className="h-8 w-8 text-secondary-content" />
-          : <ClockIcon className="h-8 w-8 text-secondary-content" />}
-          <h6>
-            {isArchived ?
-              "This pool has been archived"
-            : "Waiting for council approval"}
-          </h6>
+              <Statistic
+                label={config.label}
+                icon={
+                  <InformationCircleIcon
+                    className="stroke-2 text-primary-content"
+                    width={22}
+                    height={22}
+                  />
+                }
+                tooltip={config.info}
+              >
+                <p className="text-neutral-content subtitle">{config.value}</p>
+              </Statistic>
+            </div>
+          ))}
         </div>
-      : <Image
-          src={PoolTypes[proposalType] === "funding" ? blueLand : grassLarge}
-          alt="pool image"
-          className="h-12 w-full rounded-lg object-cover"
-        />
-      }
-    </section>
+
+        {/* Voting weight + Dispute Address */}
+        <div className="flex items-center justify-between gap-4 flex-wrap ">
+          <Statistic label="voting weight">
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Badge
+                label="conviction voting"
+                className="text-secondary-content"
+                icon={<Battery50Icon />}
+              />
+              <Badge
+                label={PointSystems[pointSystem]}
+                tooltip={
+                  VOTING_POINT_SYSTEM_DESCRIPTION[PointSystems[pointSystem]]
+                }
+                icon={<BoltIcon />}
+              />
+            </div>
+          </Statistic>
+
+          <EthAddress
+            address={tribunalAddress as Address}
+            icon={false}
+            shortenAddress={true}
+            label="Dispute Resolution: Tribunal Safe"
+            textColor="var(--color-grey-500)"
+          />
+        </div>
+
+        {/* InfoBox - Banner or Image */}
+        {minThGtTotalEffPoints && isEnabled && (
+          <InfoBox
+            infoBoxType="warning"
+            content="Activated governance in this pool is too low. No proposals will pass unless more members activate their governance. You can still create and support proposals."
+            className="mb-4"
+          />
+        )}
+        {!isEnabled ?
+          <div className="banner">
+            {isArchived ?
+              <ArchiveBoxIcon className="h-8 w-8 text-secondary-content" />
+            : <ClockIcon className="h-8 w-8 text-secondary-content" />}
+            <h6>
+              {isArchived ?
+                "This pool has been archived"
+              : "Waiting for council approval"}
+            </h6>
+          </div>
+        : <Image
+            src={PoolTypes[proposalType] === "funding" ? blueLand : grassLarge}
+            alt="pool image"
+            className="h-12 w-full rounded-lg object-cover"
+          />
+        }
+      </section>
+    </div>
   );
 }
