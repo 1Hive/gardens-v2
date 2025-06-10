@@ -154,7 +154,8 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
         cvStrategy.activatePoints();
 
         vm.deal(address(this), POOL_AMOUNT);
-        allo().fundPool{value: POOL_AMOUNT}(_poolId, POOL_AMOUNT);
+        (bool success,) = address(allo()).call{value: POOL_AMOUNT}("");
+        require(success, "Transfer failed");
     }
 
     function createProposal() public returns (uint256 proposalId) {

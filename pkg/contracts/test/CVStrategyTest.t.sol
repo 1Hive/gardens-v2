@@ -43,6 +43,7 @@ import {
     ProposalSupport,
     CVParams
 } from "../src/CVStrategy/CVStrategyV0_0.sol";
+import {ConvictionsUtils} from "../src/CVStrategy/ConvictionsUtils.sol";
 
 import {ISybilScorer} from "../src/ISybilScorer.sol";
 import {PassportScorer} from "../src/PassportScorer.sol";
@@ -243,13 +244,15 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
 
         vm.deal(address(this), poolAmount);
         if (useTokenPool == NATIVE) {
-            allo().fundPool{value: poolAmount}(poolId, poolAmount);
+            // allo().fundPool{value: poolAmount}(poolId, poolAmount);
             // ERC20 transfer
-            // GV2ERC20(useTokenPool).transfer(address(allo()), poolAmount);
+            (bool success,) = address(allo()).call{value: poolAmount}("");
+            require(success, "Transfer failed");
         } else {
             GV2ERC20(useTokenPool).mint(address(this), poolAmount);
-            // GV2ERC20(useTokenPool).transfer(address(allo()), poolAmount);
-            allo().fundPool(poolId, poolAmount);
+            // ERC20 transfer
+            GV2ERC20(useTokenPool).transfer(address(allo()), poolAmount);
+            // allo().fundPool(poolId, poolAmount);
         }
 
         assertEq(pool.profileId, _registryCommunity().profileId(), "poolProfileID");
@@ -1150,7 +1153,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         assertEq(cv.getProposalStakedAmount(proposalId), AMOUNT_STAKED);
 
         uint256 AMOUNT_STAKED_1 = 15000;
-        uint256 cv_amount = cv.calculateConviction(10, 0, AMOUNT_STAKED_1);
+        uint256 cv_amount = ConvictionsUtils.calculateConviction(10, 0, AMOUNT_STAKED_1, getDecay(cv));
 
         console.log("cv_amount: %s", cv_amount);
         uint256 cv_cmp = _calculateConviction(10, 0, AMOUNT_STAKED_1, 0.9 ether / 10 ** 11);
@@ -1414,7 +1417,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
 
         // console.log("before block.number", block.number);
 
-        // assertEq(cv.getMaxConviction(cv.getProposalStakedAmount(proposalId)), 57806809642175848314931, "maxCVStaked");
+        // assertEq(ConvictionsUtils.getMaxConviction(cv.getProposalStakedAmount(proposalId),getDecay(cv)), 57806809642175848314931, "maxCVStaked");
 
         uint256 rollTo100 =
             calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(getDecay(cv), 1e7));
@@ -1458,7 +1461,9 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
 
         {
             uint256 totalEffectiveActivePoints = cv.totalPointsActivated();
-            console.log("maxCVSupply:       %s", cv.getMaxConviction(totalEffectiveActivePoints));
+            console.log(
+                "maxCVSupply:       %s", ConvictionsUtils.getMaxConviction(totalEffectiveActivePoints, getDecay(cv))
+            );
             console.log("totalEffectiveActivePoints:    %s", totalEffectiveActivePoints);
         }
         if (block.number >= rollTo100 * 2) {
@@ -1538,7 +1543,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
 
         // console.log("before block.number", block.number);
 
-        // assertEq(cv.getMaxConviction(cv.getProposalStakedAmount(proposalId)), 57806809642175848314931, "maxCVStaked");
+        // assertEq(ConvictionsUtils.getMaxConviction(cv.getProposalStakedAmount(proposalId),getDecay(cv)), 57806809642175848314931, "maxCVStaked");
 
         uint256 rollTo100 =
             calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(getDecay(cv), 1e7));
@@ -1671,7 +1676,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
          */
         // console.log("before block.number", block.number);
 
-        // assertEq(cv.getMaxConviction(cv.getProposalStakedAmount(proposalId)), 57806809642175848314931, "maxCVStaked");
+        // assertEq(ConvictionsUtils.getMaxConviction(cv.getProposalStakedAmount(proposalId),getDecay(cv)), 57806809642175848314931, "maxCVStaked");
 
         // console2.log(getDecay(cv));
         vm.roll(10);
@@ -1814,7 +1819,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
          */
         // console.log("before block.number", block.number);
 
-        // assertEq(cv.getMaxConviction(cv.getProposalStakedAmount(proposalId)), 57806809642175848314931, "maxCVStaked");
+        // assertEq(ConvictionsUtils.getMaxConviction(cv.getProposalStakedAmount(proposalId),getDecay(cv)), 57806809642175848314931, "maxCVStaked");
 
         // console2.log(getDecay(cv));
         vm.roll(10);
@@ -1961,14 +1966,16 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         // console.log("before block.number", block.number);
         uint256 totalEffectiveActivePoints = cv.totalPointsActivated();
         console.log("totalEffectiveActivePoints:    %s", totalEffectiveActivePoints);
-        console.log("maxCVSupply", cv.getMaxConviction(totalEffectiveActivePoints));
-        console.log("maxCVStaked", cv.getMaxConviction(cv.getProposalStakedAmount(proposalId)));
+        console.log("maxCVSupply", ConvictionsUtils.getMaxConviction(totalEffectiveActivePoints, getDecay(cv)));
+        console.log(
+            "maxCVStaked", ConvictionsUtils.getMaxConviction(cv.getProposalStakedAmount(proposalId), getDecay(cv))
+        );
 
-        // assertEq(cv.getMaxConviction(totalEffectiveActivePoints), 57806809642175848314931, "maxCVSupply");
-        // assertEq(cv.getMaxConviction(cv.getProposalStakedAmount(proposalId)), 57806809642175848314931, "maxCVStaked");
+        // assertEq(ConvictionsUtils.getMaxConviction(totalEffectiveActivePoints,getDecay(cv)), 57806809642175848314931, "maxCVSupply");
+        // assertEq(ConvictionsUtils.getMaxConviction(cv.getProposalStakedAmount(proposalId),getDecay(cv)), 57806809642175848314931, "maxCVStaked");
         assertEq(
-            cv.getMaxConviction(cv.getProposalStakedAmount(proposalId)),
-            cv.getMaxConviction(totalEffectiveActivePoints),
+            ConvictionsUtils.getMaxConviction(cv.getProposalStakedAmount(proposalId), getDecay(cv)),
+            ConvictionsUtils.getMaxConviction(totalEffectiveActivePoints, getDecay(cv)),
             "maxCVStaked"
         );
 
@@ -2094,8 +2101,10 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         assertEq(cv.getProposalVoterStake(proposalId, address(pool_admin())), STAKED_AMOUNT2);
         assertEq(cv.getProposalStakedAmount(proposalId), STAKED_AMOUNT + STAKED_AMOUNT2);
 
-        console.log("maxCVSupply", cv.getMaxConviction(cv.totalPointsActivated()));
-        console.log("maxCVStaked", cv.getMaxConviction(cv.getProposalStakedAmount(proposalId)));
+        console.log("maxCVSupply", ConvictionsUtils.getMaxConviction(cv.totalPointsActivated(), getDecay(cv)));
+        console.log(
+            "maxCVStaked", ConvictionsUtils.getMaxConviction(cv.getProposalStakedAmount(proposalId), getDecay(cv))
+        );
 
         assertTrue(cvLast < cv.updateProposalConviction(proposalId), "growing2");
 
@@ -2221,9 +2230,9 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
          */
         // console.log("before block.number", block.number);
         // console.log("totalStaked", cv.totalStaked());
-        // console.log("maxCVSupply-totalStaked", cv.getMaxConviction(cv.totalStaked()));
-        // console.log("maxCVSupply-EffectiveActivePoints", cv.getMaxConviction(cv.totalEffectiveActivePoints()));
-        // console.log("maxCVStaked", cv.getMaxConviction(cv.getProposalStakedAmount(proposalId)));
+        // console.log("maxCVSupply-totalStaked", ConvictionsUtils.getMaxConviction(cv.totalStaked(),getDecay(cv)));
+        // console.log("maxCVSupply-EffectiveActivePoints", ConvictionsUtils.getMaxConviction(cv.totalEffectiveActivePoints(),getDecay(cv)));
+        // console.log("maxCVStaked", ConvictionsUtils.getMaxConviction(cv.getProposalStakedAmount(proposalId),getDecay(cv)));
         vm.roll(10);
         console.log("after block.number", block.number);
 
@@ -2285,8 +2294,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
 
         // uint256 totalEffectiveActivePoints = cv.totalEffectiveActivePoints();
         // console.log("totalEffectiveActivePoints", totalEffectiveActivePoints);
-        // console.log("maxCVSupply:   %s", cv.getMaxConviction(cv.totalEffectiveActivePoints()));
-        // console.log("maxCVStaked:   %s", cv.getMaxConviction(cv.getProposalStakedAmount(proposalId)));
+        // console.log("maxCVSupply:   %s", ConvictionsUtils.getMaxConviction(cv.totalEffectiveActivePoints(),getDecay(cv)));
+        // console.log("maxCVStaked:   %s", ConvictionsUtils.getMaxConviction(cv.getProposalStakedAmount(proposalId),getDecay(cv)));
         // uint256 STAKED_AMOUNT = uint256(SUPPORT_PCT) * MINIMUM_STAKE / 100e4;
         assertEq(cv.getProposalVoterStake(proposalId, address(this)), uint256(SUPPORT_PCT)); // 80% of 50 = 40
         assertEq(cv.getProposalStakedAmount(proposalId), uint256(SUPPORT_PCT)); // 80% of 50 = 40
@@ -2364,8 +2373,10 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
 
         // uint256 totalEffectiveActivePoints = cv.totalEffectiveActivePoints();
         // console.log("totalEffectiveActivePoints", totalEffectiveActivePoints);
-        console.log("maxCVSupply:   %s", cv.getMaxConviction(cv.totalPointsActivated()));
-        console.log("maxCVStaked:   %s", cv.getMaxConviction(cv.getProposalStakedAmount(proposalId)));
+        console.log("maxCVSupply:   %s", ConvictionsUtils.getMaxConviction(cv.totalPointsActivated(), getDecay(cv)));
+        console.log(
+            "maxCVStaked:   %s", ConvictionsUtils.getMaxConviction(cv.getProposalStakedAmount(proposalId), getDecay(cv))
+        );
         // uint256 STAKED_AMOUNT = uint256(SUPPORT_PCT) * MINIMUM_STAKE / 100e4;
         assertEq(cv.getProposalVoterStake(proposalId, address(this)), uint256(SUPPORT_PCT)); // 80% of 50 = 40
         assertEq(cv.getProposalStakedAmount(proposalId), uint256(SUPPORT_PCT)); // 80% of 50 = 40
@@ -2448,8 +2459,10 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
 
         // uint256 totalEffectiveActivePoints = cv.totalEffectiveActivePoints();
         // console.log("totalEffectiveActivePoints", totalEffectiveActivePoints);
-        console.log("maxCVSupply:   %s", cv.getMaxConviction(cv.totalPointsActivated()));
-        console.log("maxCVStaked:   %s", cv.getMaxConviction(cv.getProposalStakedAmount(proposalId)));
+        console.log("maxCVSupply:   %s", ConvictionsUtils.getMaxConviction(cv.totalPointsActivated(), getDecay(cv)));
+        console.log(
+            "maxCVStaked:   %s", ConvictionsUtils.getMaxConviction(cv.getProposalStakedAmount(proposalId), getDecay(cv))
+        );
         // uint256 STAKED_AMOUNT = uint256(SUPPORT_PCT) * MINIMUM_STAKE / 100e4;
         assertEq(cv.getProposalVoterStake(proposalId, address(this)), uint256(SUPPORT_PCT)); // 80% of 50 = 40
         assertEq(cv.getProposalStakedAmount(proposalId), uint256(SUPPORT_PCT)); // 80% of 50 = 40

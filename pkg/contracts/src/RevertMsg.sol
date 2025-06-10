@@ -7,10 +7,8 @@ library RevertMsg {
         return s;
     }
 
-    // Uncomment when Prod
-    // function reason(string memory s) internal pure returns (string memory) {
-    //     assembly {
-    //         revert(0, 0)
-    //     }
+    // // Uncomment when Prod
+    // function reason(string memory) internal pure returns (string memory) {
+    //     revert();
     // }
 }
