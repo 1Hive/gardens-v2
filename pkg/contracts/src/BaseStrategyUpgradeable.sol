@@ -107,7 +107,7 @@ abstract contract BaseStrategyUpgradeable is ProxyOwnableUpgrader, IStrategy, Tr
 
     /// @notice Getter for the 'strategyId'.
     /// @return The ID of the strategy
-    function getStrategyId() external view override returns (bytes32) {
+    function getStrategyId() external view  returns (bytes32) {
         return strategyId;
     }
 
@@ -150,7 +150,7 @@ abstract contract BaseStrategyUpgradeable is ProxyOwnableUpgrader, IStrategy, Tr
     /// @notice Increases the pool amount.
     /// @dev Increases the 'poolAmount' by '_amount'. Only 'Allo' contract can call this.
     /// @param _amount The amount to increase the pool by
-    function increasePoolAmount(uint256 _amount) external override onlyAllo {
+    function increasePoolAmount(uint256 _amount) external  onlyAllo {
         _beforeIncreasePoolAmount(_amount);
         poolAmount += _amount;
         _afterIncreasePoolAmount(_amount);
@@ -209,7 +209,7 @@ abstract contract BaseStrategyUpgradeable is ProxyOwnableUpgrader, IStrategy, Tr
         external
         view
         virtual
-        override
+        
         returns (PayoutSummary[] memory payouts)
     {
         uint256 recipientLength = _recipientIds.length;
@@ -229,7 +229,7 @@ abstract contract BaseStrategyUpgradeable is ProxyOwnableUpgrader, IStrategy, Tr
     /// @dev How the allocator is determined is up to the strategy implementation.
     /// @param _allocator The address to check if it is a valid allocator for the strategy.
     /// @return 'true' if the address is a valid allocator, 'false' otherwise
-    function isValidAllocator(address _allocator) external view virtual override returns (bool) {
+    function isValidAllocator(address _allocator) external view virtual  returns (bool) {
         return _isValidAllocator(_allocator);
     }
 

@@ -9,7 +9,7 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IArbitrator} from "../interfaces/IArbitrator.sol";
 import {IArbitrable} from "../interfaces/IArbitrable.sol";
 import {Clone} from "allo-v2-contracts/core/libraries/Clone.sol";
-// import {console} from "forge-std/console.sol";
+import {console} from "forge-std/console.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {ISybilScorer} from "../ISybilScorer.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
@@ -17,6 +17,7 @@ import {BaseStrategyUpgradeable} from "../BaseStrategyUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {ICollateralVault} from "../interfaces/ICollateralVault.sol";
 import {PassportScorer} from "../PassportScorer.sol";
+import {RevertMsg} from "../RevertMsg.sol";
 
 /*|--------------------------------------------|*/
 /*|              STRUCTS/ENUMS                 |*/
@@ -327,7 +328,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         // }
         if (!registryCommunity.isMember(_sender)) {
             // revert UserNotInRegistry();
-            revert(); // @todo take commented when contract size fixed with diamond
+            revert(RevertMsg.reason("UserNotInRegistry")); // @todo take commented when contract size fixed with diamond
         }
         // _;
     }
@@ -335,7 +336,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     function onlyRegistryCommunity() internal view virtual {
         if (msg.sender != address(registryCommunity)) {
             // revert OnlyCommunityAllowed();
-            revert(); // @todo take commented when contract size fixed with diamond
+            revert(RevertMsg.reason("OnlyCommunityAllowed")); // @todo take commented when contract size fixed with diamond
         }
     }
 
@@ -347,7 +348,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     function onlyCouncilSafe() internal view virtual {
         if (msg.sender != address(registryCommunity.councilSafe()) && msg.sender != owner()) {
             // revert OnlyCouncilSafe();
-            revert(); // @todo take commented when contract size fixed with diamond
+            revert(RevertMsg.reason("OnlyCouncilSafe")); // @todo take commented when contract size fixed with diamond
         }
     }
 
@@ -373,7 +374,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
                 )
         ) {
             // revert ProposalInvalidForAllocation(_proposalId, p.proposalStatus);
-            revert(); // @todo take commented when contract size fixed with diamond
+            revert(RevertMsg.reason("ProposalInvalidForAllocation")); // @todo take commented when contract size fixed with diamond
         }
     }
 
@@ -406,11 +407,11 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
                 // console.log("::requestedToken", proposal.requestedToken);
                 // console.log("::PookToken", poolToken);
                 // revert TokenNotAllowed();
-                revert(); // @todo take commented when contract size fixed with diamond
+                revert(RevertMsg.reason("TokenNotAllowed")); // @todo take commented when contract size fixed with diamond
             }
             if (_isOverMaxRatio(proposal.amountRequested)) {
                 // revert AmountOverMaxRatio();
-                revert(); // @todo take commented when contract size fixed with diamond
+                revert(RevertMsg.reason("AmountOverMaxRatio")); // @todo take commented when contract size fixed with diamond
             }
         }
 
@@ -421,7 +422,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
             // revert InsufficientCollateral(
             //     msg.value, arbitrableConfigs[currentArbitrableConfigVersion].submitterCollateralAmount
             // );
-            revert(); // @todo take commented when contract size fixed with diamond
+            revert(RevertMsg.reason("InsufficientCollateral")); // @todo take commented when contract size fixed with diamond
         }
 
         uint256 proposalId = ++proposalCounter;
@@ -453,7 +454,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     function activatePoints() external virtual {
         if (!_canExecuteAction(msg.sender)) {
             // revert UserCannotExecuteAction();
-            revert(); // @todo take commented when contract size fixed with diamond
+            revert(RevertMsg.reason("UserCannotExecuteAction")); // @todo take commented when contract size fixed with diamond
         }
         registryCommunity.activateMemberInStrategy(msg.sender, address(this));
         totalPointsActivated += registryCommunity.getMemberPowerInStrategy(msg.sender, address(this));
@@ -481,7 +482,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         onlyRegistryCommunity();
         if (!_canExecuteAction(_member)) {
             // revert UserCannotExecuteAction();
-            revert(); // @todo take commented when contract size fixed with diamond
+            revert(RevertMsg.reason("UserCannotExecuteAction")); // @todo take commented when contract size fixed with diamond
         }
         uint256 pointsToIncrease = 0;
         if (pointSystem == PointSystem.Unlimited) {
@@ -619,13 +620,13 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
             for (uint256 i = 0; i < pv.length; i++) {
                 if (pv[i].deltaSupport > 0) {
                     // revert UserCannotExecuteAction();
-                    revert(); // @todo take commented when contract size fixed with diamond
+                    revert(RevertMsg.reason("UserCannotExecuteAction")); // @todo take commented when contract size fixed with diamond
                 }
             }
         }
         if (!registryCommunity.memberActivatedInStrategies(_sender, address(this))) {
             // revert UserIsInactive();
-            revert(); // @todo take commented when contract size fixed with diamond
+            revert(RevertMsg.reason("UserIsInactive")); // @todo take commented when contract size fixed with diamond
         }
         // ProposalSupport[] memory pv = abi.decode(_data, (ProposalSupport[]));
         _check_before_addSupport(_sender, pv);
@@ -639,12 +640,12 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         // surpressStateMutabilityWarning++;
         if (_data.length <= 0) {
             // revert ProposalDataIsEmpty();
-            revert(); // @todo take commented when contract size fixed with diamond
+            revert(RevertMsg.reason("ProposalDataIsEmpty")); // @todo take commented when contract size fixed with diamond
         }
 
         if (poolAmount <= 0) {
             // revert PoolIsEmpty();
-            revert(); // @todo take commented when contract size fixed with diamond
+            revert(RevertMsg.reason("PoolIsEmpty")); // @todo take commented when contract size fixed with diamond
         }
 
         uint256 proposalId = abi.decode(_data, (uint256));
@@ -653,22 +654,22 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
             if (proposals[proposalId].proposalId != proposalId && proposalId != 0) {
                 // @todo take commented when contract size fixed with diamond
                 //  revert ProposalNotInList(proposalId);
-                revert();
+                revert(RevertMsg.reason("ProposalNotInList"));
             }
 
             if (proposals[proposalId].proposalStatus != ProposalStatus.Active) {
                 // revert ProposalNotActive(proposalId);
-                revert(); // @todo take commented when contract size fixed with diamond
+                revert(RevertMsg.reason("ProposalNotActive")); // @todo take commented when contract size fixed with diamond
             }
 
             if (proposals[proposalId].requestedAmount > poolAmount) {
                 // revert PoolAmountNotEnough(proposalId, proposals[proposalId].requestedAmount, poolAmount);
-                revert(); // @todo take commented when contract size fixed with diamond
+                revert(RevertMsg.reason("PoolAmountNotEnough")); // @todo take commented when contract size fixed with diamond
             }
 
             if (_isOverMaxRatio(proposals[proposalId].requestedAmount)) {
                 // revert AmountOverMaxRatio();
-                revert(); // @todo take commented when contract size fixed with diamond
+                revert(RevertMsg.reason("AmountOverMaxRatio")); // @todo take commented when contract size fixed with diamond
             }
 
             uint256 convictionLast = updateProposalConviction(proposalId);
@@ -678,7 +679,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
             // <= for when threshold being zero
             if (convictionLast <= threshold && proposals[proposalId].requestedAmount > 0) {
                 // revert ConvictionUnderMinimumThreshold();
-                revert();
+                revert(RevertMsg.reason("ConvictionUnderMinimumThreshold"));
             }
 
             poolAmount -= proposals[proposalId].requestedAmount; // CEI
@@ -722,7 +723,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         // PayoutSummary[] memory payouts = new PayoutSummary[](0);
         // return payouts;
         // revert NotImplemented();
-        revert();
+        revert(RevertMsg.reason("NotImplemented"));
     }
 
     function _getPayout(address _recipientId, bytes memory _data)
@@ -798,7 +799,8 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
             uint256 convictionLast,
             uint256 threshold,
             uint256 voterStakedPoints,
-            uint256 arbitrableConfigVersion
+            uint256 arbitrableConfigVersion,
+            uint256 protocol
         )
     {
         Proposal storage proposal = proposals[_proposalId];
@@ -815,7 +817,8 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
             proposal.convictionLast,
             threshold,
             proposal.voterStakedPoints[msg.sender],
-            proposal.arbitrableConfigVersion
+            proposal.arbitrableConfigVersion,
+            proposal.metadata.protocol
         );
     }
 
@@ -898,7 +901,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
             // check if _proposalSupport index i exist
             if (!canAddSupport && _proposalSupport[i].deltaSupport > 0) {
                 // revert UserCannotExecuteAction();
-                revert(); // @todo take commented when contract size fixed with diamond
+                revert(RevertMsg.reason("UserCannotExecuteAction")); // @todo take commented when contract size fixed with diamond
             }
             if (_proposalSupport[i].proposalId == 0) {
                 //@todo: check better way to do that.
@@ -908,7 +911,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
             uint256 proposalId = _proposalSupport[i].proposalId;
             if (!proposalExists(proposalId)) {
                 // revert ProposalNotInList(proposalId);
-                revert(); // @todo take commented when contract size fixed with diamond
+                revert(RevertMsg.reason("ProposalNotInList")); // @todo take commented when contract size fixed with diamond
             }
             deltaSupportSum += _proposalSupport[i].deltaSupport;
         }
@@ -920,9 +923,11 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
 
         // console.log("participantBalance", participantBalance);
         // Check that the sum of support is not greater than the participant balance
+        // console.log("newTotalVotingSupport", newTotalVotingSupport);
+        // console.log("participantBalance", participantBalance);
         if (newTotalVotingSupport > participantBalance) {
             // revert NotEnoughPointsToSupport(newTotalVotingSupport, participantBalance);
-            revert(); // @todo take commented when contract size fixed with diamond
+            revert(RevertMsg.reason("NotEnoughPointsToSupport")); // @todo take commented when contract size fixed with diamond
         }
 
         totalVoterStakePct[_sender] = newTotalVotingSupport;
@@ -1014,7 +1019,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
 
         if (result < 0) {
             // revert SupportUnderflow(_support, _delta, result);
-            revert(); // @todo take commented when contract size fixed with diamond
+            revert(RevertMsg.reason("SupportUnderflow")); // @todo take commented when contract size fixed with diamond
         }
         return uint256(result);
     }
@@ -1059,6 +1064,11 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
      * executed it.
      */
     function calculateThreshold(uint256 _requestedAmount) public view virtual returns (uint256 _threshold) {
+        if (_isOverMaxRatio(_requestedAmount)) {
+            // revert AmountOverMaxRatio();
+            revert(RevertMsg.reason("AmountOverMaxRatio")); // @todo take commented when contract size fixed with diamond
+        }
+        console.log("_requestedAmount", _requestedAmount);
         uint256 denom = (cvParams.maxRatio * 2 ** 64) / D - (_requestedAmount * 2 ** 64) / poolAmount;
         _threshold = (
             (((((cvParams.weight << 128) / D) / ((denom * denom) >> 64)) * D) / (D - cvParams.decay))
@@ -1216,7 +1226,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
 
         if (proposal.proposalId != proposalId) {
             // revert ProposalNotInList(proposalId);
-            revert(); // @todo take commented when contract size fixed with diamond
+            revert(RevertMsg.reason("ProposalNotInList")); // @todo take commented when contract size fixed with diamond
         }
 
         // Goss: Remove it to have access to this when disputed or proposal closed (to see the chart)
@@ -1241,7 +1251,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     function setSybilScorer(address _sybilScorer, uint256 threshold) external virtual {
         if (msg.sender != address(registryCommunity.councilSafe()) && msg.sender != owner()) {
             // revert OnlyCouncilSafe();
-            revert(); // @todo take commented when contract size fixed with diamond
+            revert(RevertMsg.reason("OnlyCouncilSafe")); // @todo take commented when contract size fixed with diamond
         }
         // _revertZeroAddress(_sybilScorer);
         require(_sybilScorer != address(0)); // TODO: Take commented when contract size fixed with diamond
@@ -1318,11 +1328,11 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         // }
         if (proposal.proposalStatus != ProposalStatus.Active) {
             // revert ProposalNotActive(proposalId);
-            revert(); // @todo take commented when contract size fixed with diamond
+            revert(RevertMsg.reason("ProposalNotActive")); // @todo take commented when contract size fixed with diamond
         }
         if (msg.value < arbitrableConfig.challengerCollateralAmount) {
             // revert InsufficientCollateral(msg.value, arbitrableConfig.challengerCollateralAmount);
-            revert(); // @todo take commented when contract size fixed with diamond
+            revert(RevertMsg.reason("InsufficientCollateral")); // @todo take commented when contract size fixed with diamond
         }
 
         // if the lastDisputeCompletion is less than DISPUTE_COOLDOWN_SEC, we should revert
@@ -1333,7 +1343,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
             // revert DisputeCooldownNotPassed(
             //     proposalId, proposal.lastDisputeCompletion + DISPUTE_COOLDOWN_SEC - block.timestamp
             // );
-            revert(); // @todo take commented when contract size fixed with diamond
+            revert(RevertMsg.reason("DisputeCooldownNotPassed")); // @todo take commented when contract size fixed with diamond
         }
 
         uint256 arbitrationFee = msg.value - arbitrableConfig.challengerCollateralAmount;
@@ -1370,21 +1380,21 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         // }
         if (proposal.proposalStatus != ProposalStatus.Disputed) {
             // revert ProposalNotDisputed(proposalId);
-            revert(); // @todo take commented when contract size fixed with diamond
+            revert(RevertMsg.reason("ProposalNotDisputed")); // @todo take commented when contract size fixed with diamond
         }
 
         bool isTimeOut = block.timestamp > proposal.disputeInfo.disputeTimestamp + arbitrableConfig.defaultRulingTimeout;
 
         if (!isTimeOut && msg.sender != address(arbitrableConfig.arbitrator)) {
             // revert OnlyArbitrator();
-            revert(); // @todo take commented when contract size fixed with diamond
+            revert(RevertMsg.reason("OnlyArbitrator")); // @todo take commented when contract size fixed with diamond
         }
 
         if (isTimeOut || _ruling == 0) {
             if (arbitrableConfig.defaultRuling == 0) {
                 // TODO: Take commented when contract size fixed with diamond
                 // revert DefaultRulingNotSet();
-                revert();
+                revert(RevertMsg.reason("DefaultRulingNotSet"));
             }
             if (arbitrableConfig.defaultRuling == 1) {
                 proposal.proposalStatus = ProposalStatus.Active;
@@ -1433,12 +1443,12 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     function cancelProposal(uint256 proposalId) external virtual {
         if (proposals[proposalId].proposalStatus != ProposalStatus.Active) {
             // revert ProposalNotActive(proposalId);
-            revert(); // @todo take commented when contract size fixed with diamond
+            revert(RevertMsg.reason("ProposalNotActive")); // @todo take commented when contract size fixed with diamond
         }
 
         if (proposals[proposalId].submitter != msg.sender) {
             // revert OnlySubmitter(proposals[proposalId].submitter, msg.sender);
-            revert(); // @todo take commented when contract size fixed with diamond
+            revert(RevertMsg.reason("OnlySubmitter")); // @todo take commented when contract size fixed with diamond
         }
 
         collateralVault.withdrawCollateral(

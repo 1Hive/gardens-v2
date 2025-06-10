@@ -10,6 +10,7 @@ import {ReentrancyGuardUpgradeable} from
     "openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
 import {IArbitrable} from "./interfaces/IArbitrable.sol";
 import {IArbitrator} from "./interfaces/IArbitrator.sol";
+import {console} from "forge-std/console.sol";
 
 /// @title Safe Arbitrator
 /// @dev This is an arbitrator middleware that will allow a safe to decide on the result of disputes.
@@ -129,8 +130,9 @@ contract SafeArbitrator is IArbitrator, ProxyOwnableUpgrader, ReentrancyGuardUpg
         dispute.ruling = _ruling;
         dispute.status = DisputeStatus.Solved;
 
-        (bool success,) = payable(msg.sender).call{value: dispute.arbitrationFee}("");
-        require(success, "Transfer failed");
+        // (bool success,) = payable(msg.sender).call{value: dispute.arbitrationFee}("");
+        // require(success, "Transfer failed");
+        console.log("dispute.arbitrated: ", address(dispute.arbitrated));
         dispute.arbitrated.rule(_disputeID, dispute.ruling);
         emit Ruling(IArbitrable(_arbitrable), _disputeID, _ruling);
     }
