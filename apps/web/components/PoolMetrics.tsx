@@ -137,8 +137,8 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
           />
         </div>
       </TransactionModal>
-      <div className="col-span-12 lg:col-span-3">
-        <div className="backdrop-blur-sm rounded-lg flex flex-col gap-2 sticky top-32 border2">
+      <div className="col-span-12 lg:col-span-3 h-fit">
+        <div className="backdrop-blur-sm rounded-lg">
           <section className="section-layout gap-2 flex flex-col">
             <h3>Pool Funds</h3>
             <div className="flex flex-col gap-2">

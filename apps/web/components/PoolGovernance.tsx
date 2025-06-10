@@ -66,7 +66,8 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
     <>
       <section className="section-layout flex flex-col gap-4 mb-10 ">
         <header className="flex justify-between flex-wrap">
-          <h3>Pool Governance</h3>
+          <h3>Governance</h3>
+          <Badge status={memberActivatedStrategy ? 1 : 0} />
         </header>
         {address && (
           <div className="flex-1 flex flex-col items-start gap-1">
@@ -83,13 +84,15 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
                   }
                 />
                 <InfoWrapper
-                  tooltip={`${poolSystem > 0 ? "Stake more tokens to increase your governance weight in this pool." : "Fixed voting weight"}`}
+                  tooltip={`${poolSystem > 0 ? "Stake more tokens to increase your\ngovernance weight in this pool." : "Fixed voting weight"}`}
                   className="text-black"
                   size="sm"
                 />
               </div>
+
               {/* <Badge status={memberActivatedStrategy ? 1 : 0} /> */}
             </div>
+
             {showPoolGovernanceData && (
               <div className="w-full flex items-center justify-between">
                 <h4 className="subtitle2">Voting weight:</h4>

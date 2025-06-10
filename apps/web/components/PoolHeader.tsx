@@ -364,7 +364,7 @@ export default function PoolHeader({
 
   return (
     <div className="col-span-12 lg:col-span-9">
-      <section className="section-layout flex flex-col gap-4">
+      <section className="section-layout flex flex-col gap-6">
         {/* Title - Badge poolType - Addresses and Button(when council memeber is connected) */}
         <header className="flex flex-col gap-2">
           <div className="flex justify-between items-center flex-wrap">
@@ -544,11 +544,11 @@ export default function PoolHeader({
         </Skeleton>
 
         {/* Pool Params */}
-        <div className="grid grid-cols-3 gap-2 ">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
           {filteredPoolConfig.map((config) => (
             <div
               key={config.label}
-              className="flex items-center gap-4  bg-primary px-2 py-4 rounded-lg"
+              className="flex items-center gap-4 bg-primary px-2 py-4 rounded-lg"
             >
               <Statistic
                 label={config.label}
@@ -568,8 +568,9 @@ export default function PoolHeader({
         </div>
 
         {/* Voting weight + Dispute Address */}
-        <div className="flex items-center justify-between gap-4 flex-wrap ">
-          <Statistic label="voting weight">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-2 flex-wrap ">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <h4>Voting System:</h4>
             <div className="flex flex-col gap-3 sm:flex-row">
               <Badge
                 label="conviction voting"
@@ -584,7 +585,7 @@ export default function PoolHeader({
                 icon={<BoltIcon />}
               />
             </div>
-          </Statistic>
+          </div>
 
           <EthAddress
             address={tribunalAddress as Address}
