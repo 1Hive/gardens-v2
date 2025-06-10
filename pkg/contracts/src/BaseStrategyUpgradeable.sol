@@ -115,7 +115,13 @@ abstract contract BaseStrategyUpgradeable is ProxyOwnableUpgrader, IStrategy, Tr
     /// @notice Getter for the 'poolAmount'.
     /// @return The balance of the pool
     function getPoolAmount() public view override returns (uint256) {
-        return ERC20(allo.getPool(poolId).token).balanceOf(address(this));
+        address token = allo.getPool(poolId).token;
+
+        if (token == NATIVE) {
+            return address(this).balance;
+        }
+
+        return ERC20(token).balanceOf(address(this));
     }
 
     /// @notice Getter for whether or not the pool is active.

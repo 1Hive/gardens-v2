@@ -246,12 +246,12 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         if (useTokenPool == NATIVE) {
             // allo().fundPool{value: poolAmount}(poolId, poolAmount);
             // ERC20 transfer
-            (bool success,) = address(allo()).call{value: poolAmount}("");
+            (bool success,) = address(strategy).call{value: poolAmount}("");
             require(success, "Transfer failed");
         } else {
             GV2ERC20(useTokenPool).mint(address(this), poolAmount);
             // ERC20 transfer
-            GV2ERC20(useTokenPool).transfer(address(allo()), poolAmount);
+            GV2ERC20(useTokenPool).transfer(address(strategy), poolAmount);
             // allo().fundPool(poolId, poolAmount);
         }
 
