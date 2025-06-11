@@ -1,5 +1,6 @@
 "use client";
 
+import { CheckCircleIcon, HandRaisedIcon } from "@heroicons/react/24/outline";
 import { FetchTokenResult } from "@wagmi/core";
 import { usePathname } from "next/navigation";
 import { Address, formatUnits } from "viem";
@@ -179,12 +180,12 @@ export function ProposalCard({
                     </p>
                     <Badge
                       status={proposalStatus}
-                      className="self-center justify-self-end"
+                      icon={<HandRaisedIcon className="w-5 h-5" />}
                     />
                   </div>
                 )}
               </div>
-              <div className="flex justify-between items-center ">
+              <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2">
                   <EthAddress
                     address={beneficiary as Address}

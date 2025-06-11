@@ -191,7 +191,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                   },
                 }}
               />
-              <div className="flex items-stretch">
+              <div className="w-full">
                 <Button
                   type="submit"
                   btnStyle="outline"
@@ -199,6 +199,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                   disabled={isButtonDisabled}
                   tooltip={tooltipMessage}
                   icon={<PlusIcon className="w-5 h-5" />}
+                  className="w-full"
                 >
                   Add Funds
                 </Button>

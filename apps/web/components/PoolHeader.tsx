@@ -363,7 +363,9 @@ export default function PoolHeader({
   );
 
   return (
-    <div className="col-span-12 lg:col-span-9">
+    <div
+      className={`col-span-12 ${PoolTypes[proposalType] === "funding" ? "lg:col-span-9" : "lg:col-span-12"}`}
+    >
       <section className="section-layout flex flex-col gap-6">
         {/* Title - Badge poolType - Addresses and Button(when council memeber is connected) */}
         <header className="flex flex-col gap-2">
@@ -376,109 +378,101 @@ export default function PoolHeader({
             <div>
               <Badge type={parseInt(proposalType)} />
             </div>
-            {(!!isCouncilMember || isCouncilSafe) && (
-              <div className="flex gap-2 flex-wrap">
+          </div>
+          {(!!isCouncilMember || isCouncilSafe) && (
+            <div className="flex gap-2 flex-wrap">
+              <Button
+                btnStyle="outline"
+                icon={<Cog6ToothIcon height={24} width={24} />}
+                disabled={
+                  !isConnected || missmatchUrl || disableCouncilSafeButtons
+                }
+                tooltip={tooltipMessage}
+                onClick={() => setIsOpenModal(true)}
+              >
+                Edit
+              </Button>
+              {isArchived ?
                 <Button
-                  btnStyle="outline"
-                  icon={<Cog6ToothIcon height={24} width={24} />}
+                  icon={<CheckIcon height={24} width={24} />}
                   disabled={
                     !isConnected || missmatchUrl || disableCouncilSafeButtons
                   }
-                  tooltip={tooltipMessage}
-                  onClick={() => setIsOpenModal(true)}
+                  tooltip={
+                    tooltipMessage ?? "Restore the pool will also enable it."
+                  }
+                  showToolTip={true}
+                  onClick={() => addStrategyByPoolId()}
                 >
-                  Edit
+                  Restore
                 </Button>
-                {isArchived ?
+              : isEnabled ?
+                <>
+                  <Button
+                    icon={<StopIcon height={24} width={24} />}
+                    disabled={
+                      !isConnected || missmatchUrl || disableCouncilSafeButtons
+                    }
+                    tooltip={
+                      tooltipMessage ??
+                      "Disable pool will pause all interactions with this pool. It is possible to enable it back."
+                    }
+                    showToolTip={true}
+                    onClick={() => removeStrategyByPoolId()}
+                    btnStyle="outline"
+                    color="secondary"
+                  >
+                    Disable
+                  </Button>
+                  <Button
+                    icon={<ArchiveBoxIcon height={24} width={24} />}
+                    disabled={
+                      !isConnected || missmatchUrl || disableCouncilSafeButtons
+                    }
+                    tooltip={
+                      tooltipMessage ??
+                      "Archive pool will remove it from the list of pools. Need to contact the Gardens team to restore it."
+                    }
+                    showToolTip={true}
+                    onClick={() => rejectPoolWrite()}
+                    btnStyle="outline"
+                    color="danger"
+                  >
+                    Archive
+                  </Button>
+                </>
+              : <>
                   <Button
                     icon={<CheckIcon height={24} width={24} />}
                     disabled={
                       !isConnected || missmatchUrl || disableCouncilSafeButtons
                     }
-                    tooltip={
-                      tooltipMessage ?? "Restore the pool will also enable it."
-                    }
+                    tooltip={tooltipMessage ?? "Approve pool to enable it."}
                     showToolTip={true}
                     onClick={() => addStrategyByPoolId()}
                   >
-                    Restore
+                    Approve
                   </Button>
-                : isEnabled ?
-                  <>
-                    <Button
-                      icon={<StopIcon height={24} width={24} />}
-                      disabled={
-                        !isConnected ||
-                        missmatchUrl ||
-                        disableCouncilSafeButtons
-                      }
-                      tooltip={
-                        tooltipMessage ??
-                        "Disable pool will pause all interactions with this pool. It is possible to enable it back."
-                      }
-                      showToolTip={true}
-                      onClick={() => removeStrategyByPoolId()}
-                      btnStyle="outline"
-                      color="secondary"
-                    >
-                      Disable
-                    </Button>
-                    <Button
-                      icon={<ArchiveBoxIcon height={24} width={24} />}
-                      disabled={
-                        !isConnected ||
-                        missmatchUrl ||
-                        disableCouncilSafeButtons
-                      }
-                      tooltip={
-                        tooltipMessage ??
-                        "Archive pool will remove it from the list of pools. Need to contact the Gardens team to restore it."
-                      }
-                      showToolTip={true}
-                      onClick={() => rejectPoolWrite()}
-                      btnStyle="outline"
-                      color="danger"
-                    >
-                      Archive
-                    </Button>
-                  </>
-                : <>
-                    <Button
-                      icon={<CheckIcon height={24} width={24} />}
-                      disabled={
-                        !isConnected ||
-                        missmatchUrl ||
-                        disableCouncilSafeButtons
-                      }
-                      tooltip={tooltipMessage ?? "Approve pool to enable it."}
-                      showToolTip={true}
-                      onClick={() => addStrategyByPoolId()}
-                    >
-                      Approve
-                    </Button>
-                    <Button
-                      icon={<NoSymbolIcon height={24} width={24} />}
-                      disabled={
-                        !isConnected ||
-                        missmatchUrl ||
-                        disableCouncilSafeButtons
-                      }
-                      tooltip={
-                        tooltipMessage ??
-                        "Reject pool will remove it from the list. \nNeed to contact the Gardens team to\n restore it."
-                      }
-                      showToolTip={true}
-                      onClick={() => rejectPoolWrite()}
-                      btnStyle="outline"
-                      color="danger"
-                    >
-                      Reject
-                    </Button>
-                  </>
-                }
-              </div>
-            )}
-          </div>
+                  <Button
+                    icon={<NoSymbolIcon height={24} width={24} />}
+                    disabled={
+                      !isConnected || missmatchUrl || disableCouncilSafeButtons
+                    }
+                    tooltip={
+                      tooltipMessage ??
+                      "Reject pool will remove it from the list. \nNeed to contact the Gardens team to\n restore it."
+                    }
+                    showToolTip={true}
+                    onClick={() => rejectPoolWrite()}
+                    btnStyle="outline"
+                    color="danger"
+                  >
+                    Reject
+                  </Button>
+                </>
+              }
+            </div>
+          )}
           <div className="flex flex-col">
             <EthAddress
               icon={false}
@@ -568,10 +562,10 @@ export default function PoolHeader({
         </div>
 
         {/* Voting weight + Dispute Address */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-2 flex-wrap ">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <div className="flex flex-col sm:flex-row items-start justify-between gap-2 flex-wrap border2">
+          <div className="flex  gap-2 flex-row items-center">
             <h4>Voting System:</h4>
-            <div className="flex flex-col gap-3 sm:flex-row">
+            <div className="flex gap-2 items-center">
               <Badge
                 label="conviction voting"
                 className="text-secondary-content"
