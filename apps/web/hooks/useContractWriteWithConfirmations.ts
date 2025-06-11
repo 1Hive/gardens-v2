@@ -63,7 +63,7 @@ export function useContractWriteWithConfirmations<
   const chainIdFromWallet = useChainId();
   const chainIdFromPath = useChainIdFromPath();
   const resolvedChaindId =
-    props.chainId ?? chainIdFromPath ?? chainIdFromWallet;
+    +(props.chainId ?? chainIdFromPath ?? chainIdFromWallet);
 
   const shouldDivviTrack = useMemo(() => {
     return !isUserTrackedWithDivvi() && resolvedChaindId === celo.id;
