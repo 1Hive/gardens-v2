@@ -79,7 +79,9 @@ export function Badge({
       data-tip={tooltip}
     >
       {iconIncluded && <div className="h-5 w-5">{iconIncluded}</div>}
-      <p className="first-letter:uppercase text-sm font-semibold">{content}</p>
+      <p className="hidden sm:block first-letter:uppercase text-sm font-semibold">
+        {content}
+      </p>
     </div>
   );
 }

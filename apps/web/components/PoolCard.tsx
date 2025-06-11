@@ -62,8 +62,8 @@ export function PoolCard({ pool, token, chainId }: Props) {
       href={`${pathname}/${poolId}`}
       className={`w-full ${isNewPool ? "shadow-2xl" : ""}`}
     >
-      <header className="mb-4 flex flex-col w-full justify-between items-start gap-2 ">
-        <div className="flex w-full justify-between items-center ">
+      <header className="mb-4 flex flex-col w-full justify-between items-start gap-2">
+        <div className="flex flex-wrap w-full justify-between items-center gap-1">
           <Skeleton isLoading={!ipfsResult}>
             <h3 className="flex items-center justify-between max-w-[190px]">
               <TooltipIfOverflow>{ipfsResult?.title}</TooltipIfOverflow>
