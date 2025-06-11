@@ -165,7 +165,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                 number={[BigInt(poolAmount), poolToken.decimals]}
                 tokenSymbol={poolToken.symbol}
                 compact={true}
-                className="subtitle2 text-primary-content"
+                valueClassName="subtitle2 text-primary-content"
               />
             </div>
             {accountAddress && (
@@ -176,7 +176,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                     number={[balance?.value ?? BigInt(0), poolToken.decimals]}
                     tokenSymbol={poolToken.symbol}
                     compact={true}
-                    className="subtitle2 text-primary-content"
+                    valueClassName="subtitle2 text-primary-content"
                   />
                 </Skeleton>
               </div>

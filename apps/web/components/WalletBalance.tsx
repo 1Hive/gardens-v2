@@ -65,7 +65,7 @@ export const WalletBalance: FC<Props> = ({
             >
               <DisplayNumber
                 number={askedFormated}
-                className="font-semibold text-primary-content"
+                valueClassName="font-semibold text-primary-content"
                 disableTooltip={true}
                 compact={true}
                 tokenSymbol={data?.symbol}
@@ -85,7 +85,7 @@ export const WalletBalance: FC<Props> = ({
             >
               <DisplayNumber
                 number={(+(data?.formatted ?? 0)).toPrecision(2)}
-                className={`font-semibold ${isEnoughBalanceRef.current ? "text-primary-content" : "text-neutral-soft-content"}`}
+                valueClassName={`font-semibold ${isEnoughBalanceRef.current ? "text-primary-content" : "text-neutral-soft-content"}`}
                 disableTooltip={true}
                 compact={true}
                 tokenSymbol={data?.symbol}

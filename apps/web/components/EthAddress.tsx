@@ -16,6 +16,7 @@ type EthAddressProps = {
   shortenAddress?: boolean;
   label?: React.ReactNode;
   showPopup?: boolean;
+  textColor?: string;
 };
 
 //TODO: handle theme change by create a theme object and pass it to Addre
@@ -29,6 +30,7 @@ export const EthAddress = ({
   shortenAddress = true,
   showPopup = true,
   label,
+  textColor = "var(--color-green-500)",
 }: EthAddressProps) => {
   const divParentRef = React.useRef<HTMLDivElement>(null);
   const chain = useChainFromPath();
@@ -69,7 +71,7 @@ export const EthAddress = ({
           // theme={theme}
           theme={{
             base: "simple-light",
-            textColor: "var(--color-green-500)",
+            textColor: textColor,
             badgeIconRadius: 12,
             badgeHeight: 32,
             fontSize: 14,

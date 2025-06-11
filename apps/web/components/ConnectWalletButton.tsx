@@ -184,7 +184,7 @@ export function ConnectWallet() {
                                 <DisplayNumber
                                   number={(token?.formatted ?? 0).toString()}
                                   tokenSymbol={token?.symbol}
-                                  className="text-primary-content"
+                                  valueClassName="text-primary-content"
                                 />
                               </div>
                             </Menu.Item>
