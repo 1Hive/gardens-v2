@@ -399,7 +399,7 @@ export default function Page({
                     onClick={() => setOpenCommDetails(!openCommDetails)}
                     btnStyle="outline"
                     color="disabled"
-                    className="absolute top-0 right-0 md:block w-full sm:w-auto border-none hover:opacity-75"
+                    className="absolute top-0 right-0 md:flex items-start sm:w-auto border-none hover:opacity-75"
                     icon={
                       <ChevronUpIcon
                         className={`h-4 w-4 font-bold text-black transition-transform duration-200 ease-in-out ${cn(
@@ -504,7 +504,7 @@ export default function Page({
             )}
           </section>
 
-          <section ref={covenantSectionRef} className=" p-8">
+          <section ref={covenantSectionRef} className="p-8">
             <h2 className="mb-4">Covenant</h2>
             {registryCommunity?.covenantIpfsHash ?
               <Skeleton isLoading={!covenant} rows={5}>
