@@ -20,7 +20,7 @@ const Header = () => {
     <header className="flex flex-col items-center gap-8 ">
       <div className="flex items-center text-center">
         <div className="relative flex-1">
-          <Image src={clouds1} alt="clouds" width={205} height={205} />
+          <Image src={clouds1} alt="clouds" width={175} height={175} />
         </div>
         <div className="mx-10 flex flex-col items-center gap-5">
           <div className="flex flex-col items-center">
@@ -43,7 +43,7 @@ const Header = () => {
           </div>
         </div>
         <div className="relative flex-1">
-          <Image src={clouds2} alt="clouds" width={205} height={205} />
+          <Image src={clouds2} alt="clouds" width={175} height={175} />
         </div>
       </div>
     </header>
