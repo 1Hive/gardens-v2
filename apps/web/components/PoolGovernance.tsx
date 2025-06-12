@@ -85,7 +85,7 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
                 />
                 <InfoWrapper
                   tooltip={`${poolSystem > 0 ? "Stake more tokens to increase your\ngovernance weight in this pool." : "Fixed voting weight"}`}
-                  className="text-black"
+                  className="hidden md:block text-black"
                   size="sm"
                 />
               </div>

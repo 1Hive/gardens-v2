@@ -562,8 +562,8 @@ export default function PoolHeader({
         </div>
 
         {/* Voting weight + Dispute Address */}
-        <div className="flex flex-col sm:flex-row items-start justify-between gap-2 flex-wrap border2">
-          <div className="flex  gap-2 flex-row items-center">
+        <div className="flex flex-col sm:flex-row items-start justify-between gap-2 flex-wrap">
+          <div className="flex flex-col gap-2 sm:flex-row items-center">
             <h4>Voting System:</h4>
             <div className="flex gap-2 items-center">
               <Badge

@@ -124,7 +124,7 @@ export function ProposalCard({
   const ProposalCountDown = () => {
     return (
       <>
-        <p className="text-neutral-soft-content text-sm">
+        <p className="text-neutral-soft-content text-xs sm:text-sm">
           {(
             Number(supportNeededToPass) > 0 &&
             !alreadyExecuted &&
@@ -141,7 +141,7 @@ export function ProposalCard({
           <Countdown
             endTimestamp={Number(timeToPass)}
             display="inline"
-            className="text-neutral-soft-content text-sm"
+            className="text-neutral-soft-content text-xs sm:text-sm"
             onTimeout={triggerConvictionRefetch}
             showTimeout={false}
           />
@@ -164,19 +164,16 @@ export function ProposalCard({
           {/* icon title and id */}
           <header className="flex-1 justify-between items-start gap-3">
             <div className="flex-1 items-start flex-col gap-1 ">
-              <div className="flex items-center justify-between ">
+              <div className="flex items-center justify-between">
                 <Skeleton isLoading={!metadata}>
-                  <h3 className="flex items-start max-w-md">
+                  <h3 className="flex items-start max-w-[165px] sm:max-w-md">
                     <TooltipIfOverflow>{metadata?.title}</TooltipIfOverflow>
                   </h3>
                 </Skeleton>
                 {isPoolEnabled && (
                   <div className="flex items-center gap-4">
-                    <p className="text-sm flex items-center bg-neutral-soft rounded-md px-2 py-1">
-                      ID:{" "}
-                      <span className="text-md ml-1 font-medium">
-                        {proposalNumber}
-                      </span>
+                    <p className="hidden sm:flex text-sm  items-center bg-neutral-soft-2 rounded-md px-2 py-1">
+                      ID: <span className="text-md ml-1">{proposalNumber}</span>
                     </p>
                     <Badge
                       status={proposalStatus}
@@ -287,7 +284,7 @@ export function ProposalCard({
                       <div>
                         <div className="flex items-center gap-2 mb-2">
                           <div>
-                            <p className="text-sm">
+                            <p className="text-xs sm:text-sm">
                               Total Support:{" "}
                               <span className="font-medium">
                                 {totalSupportPct}% of pool weight
