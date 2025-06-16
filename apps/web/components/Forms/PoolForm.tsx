@@ -20,7 +20,7 @@ import { FormRadioButton } from "./FormRadioButton";
 import { FormSelect } from "./FormSelect";
 import { EthAddress } from "../EthAddress";
 import { InfoWrapper } from "../InfoWrapper";
-import { SupefluidStream } from "@/assets";
+import { SuperfluidStream } from "@/assets";
 import { Button } from "@/components/Button";
 import {
   DEFAULT_RULING_TIMEOUT_SEC,
@@ -745,7 +745,7 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
                         <InfoWrapper tooltip="This pool supports Superfluid streaming — allowing continuous fund transfers over time.">
                           <div className="flex items-center">
                             <Image
-                              src={SupefluidStream}
+                              src={SuperfluidStream}
                               alt="Incoming Stream"
                               width={40}
                               height={40}

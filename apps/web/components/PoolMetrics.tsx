@@ -13,7 +13,7 @@ import { DisplayNumber } from "./DisplayNumber";
 import { FormInput } from "./Forms";
 import { Skeleton } from "./Skeleton";
 import { TransactionModal, TransactionProps } from "./TransactionModal";
-import { SupefluidStream } from "@/assets";
+import { SuperfluidStream } from "@/assets";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useHandleAllowance } from "@/hooks/useHandleAllowance";
@@ -169,7 +169,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
         (old) =>
           (old ?? 0n) +
           BigInt(
-            (currentUserFlowRate ?? 0 - streamingAmountPerSecond).toFixed(0),
+            ((currentUserFlowRate ?? 0) - streamingAmountPerSecond).toFixed(0),
           ),
       );
       setCurrentUserFlowRate(streamingAmountPerSecond);
@@ -349,7 +349,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                     data-tip={`Incoming Superfluid stream (+${currentFlowPerMonth}/month)`}
                   >
                     <Image
-                      src={SupefluidStream}
+                      src={SuperfluidStream}
                       alt="Incoming Stream"
                       width={40}
                       height={40}

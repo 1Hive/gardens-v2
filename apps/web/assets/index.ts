@@ -37,4 +37,4 @@ export { default as FirstHolderNFT } from "./FirstHolderNFT.gif";
 export { default as ProtopianLogo } from "./ProtopianLogo.png";
 export { default as GreenWave } from "./GreenWave.png";
 export { default as OneHiveLogo } from "./OneHiveLogo.png";
-export { default as SupefluidStream } from "./ReceivingStream-green.png";
+export { default as SuperfluidStream } from "./ReceivingStream-green.png";

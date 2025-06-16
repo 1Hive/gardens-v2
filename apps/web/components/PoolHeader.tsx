@@ -36,7 +36,7 @@ import MarkdownWrapper from "./MarkdownWrapper";
 import { Modal } from "./Modal";
 import { Skeleton } from "./Skeleton";
 import { Statistic } from "./Statistic";
-import { blueLand, grassLarge, SupefluidStream } from "@/assets";
+import { blueLand, grassLarge, SuperfluidStream } from "@/assets";
 import { chainConfigMap } from "@/configs/chains";
 import { VOTING_POINT_SYSTEM_DESCRIPTION } from "@/configs/constants";
 import { usePubSubContext } from "@/contexts/pubsub.context";
@@ -61,7 +61,6 @@ import {
   MAX_RATIO_CONSTANT,
 } from "@/utils/numbers";
 import { shortenAddress } from "@/utils/text";
-import { toast } from "react-toastify";
 import { delayAsync } from "@/utils/delayAsync";
 
 type Props = {
@@ -574,7 +573,7 @@ export default function PoolHeader({
                             <CheckIcon className="w-4 h-4" />
                           </div>
                         : <Image
-                            src={SupefluidStream}
+                            src={SuperfluidStream}
                             alt="Incoming Stream"
                             width={32}
                             height={32}
