@@ -34,7 +34,7 @@ import {
     CVStrategyV0_0,
     ProposalType,
     ProposalStatus,
-    CVStrategyInitializeParamsV0_1,
+    CVStrategyInitializeParamsV0_2,
     ArbitrableConfig,
     PointSystemConfig,
     PointSystem,
@@ -210,7 +210,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         // allo().addToCloneableStrategies(address(strategy));
         ArbitrableConfig memory arbitrableConfig =
             ArbitrableConfig(safeArbitrator, payable(tribunalSafe), 0.02 ether, 0.01 ether, 1, 300);
-        CVStrategyInitializeParamsV0_1 memory params = getParams(
+        CVStrategyInitializeParamsV0_2 memory params = getParams(
             address(registryCommunity),
             proposalType,
             pointSystem,
@@ -218,7 +218,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
             arbitrableConfig,
             new address[](1),
             address(0),
-            0
+            0,
+            address(0)
         );
 
         // CVStrategyV0_0 strategy = new CVStrategyV0_0(address(allo()));
@@ -242,12 +243,13 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
 
         pool = allo().getPool(poolId);
 
-        vm.deal(address(this), poolAmount);
         if (useTokenPool == NATIVE) {
             // allo().fundPool{value: poolAmount}(poolId, poolAmount);
             // ERC20 transfer
-            (bool success,) = address(strategy).call{value: poolAmount}("");
-            require(success, "Transfer failed");
+            vm.deal(address(this), poolAmount);
+            allo().fundPool{value: poolAmount}(poolId, poolAmount);
+            // (bool success,) = address(strategy).call{value: poolAmount}("");
+            // require(success, "Transfer failed");
         } else {
             GV2ERC20(useTokenPool).mint(address(this), poolAmount);
             // ERC20 transfer
@@ -2735,7 +2737,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
     //     address collateralVaultTemplate = address(new CollateralVault());
     //     ArbitrableConfig memory arbitrableConfig =
     //         ArbitrableConfig(safeArbitrator, payable(address(_councilSafe())), 3 ether, 2 ether, 1, 300);
-    //     CVStrategyInitializeParamsV0_1 memory params = getParams(
+    //     CVStrategyInitializeParamsV0_2 memory params = getParams(
     //         address(0),
     //         ProposalType.Funding,
     //         PointSystem.Unlimited,

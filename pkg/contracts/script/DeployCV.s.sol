@@ -33,7 +33,7 @@ import {
     ProposalType,
     CreateProposal
 } from "../src/CVStrategy/CVStrategyV0_0.sol";
-import {CVStrategyInitializeParamsV0_1} from "../src/CVStrategy/CVStrategyV0_0.sol";
+import {CVStrategyInitializeParamsV0_2} from "../src/CVStrategy/CVStrategyV0_0.sol";
 import {Upgrades} from "@openzeppelin/foundry/LegacyUpgrades.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
@@ -120,7 +120,7 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         RegistryCommunityV0_0 registryCommunity = RegistryCommunityV0_0(registryFactory.createRegistry(params));
         token.mint(address(pool_admin()), 10_000 ether);
 
-        CVStrategyInitializeParamsV0_1 memory paramsCV;
+        CVStrategyInitializeParamsV0_2 memory paramsCV;
 
         // CVParams
         paramsCV.cvParams.decay = _etherToFloat(0.9999799 ether); // alpha = decay
