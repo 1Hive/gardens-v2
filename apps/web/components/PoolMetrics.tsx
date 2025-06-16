@@ -22,8 +22,7 @@ import { useSuperfluidStream } from "@/hooks/useSuperfluidStream";
 import { getTxMessage } from "@/utils/transactionMessages";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import sfMeta from "@superfluid-finance/metadata";
-import { superTokenABI } from "@/src/generated";
-import { superfluidCFAv1ForwarderAbi } from "@/src/customAbis";
+import { superfluidCFAv1ForwarderAbi, superTokenABI } from "@/src/customAbis";
 import { delayAsync } from "@/utils/delayAsync";
 
 interface PoolMetricsProps {
