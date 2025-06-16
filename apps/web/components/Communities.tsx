@@ -12,6 +12,11 @@ import {
 } from "#/subgraph/.graphclient";
 import { CommunityCard, CommunityCardSkeleton } from "./CommunityCard";
 import { CommunityFilters } from "./CommunityFilters";
+import { isProd } from "@/configs/isProd";
+import {
+  ONE_HIVE_COMMUNITY_ADDRESS,
+  ONE_HIVE_FAKE_COMMUNITY_ADDRESS,
+} from "@/globals";
 import { useCheat } from "@/hooks/useCheat";
 
 export type LightCommunity = Pick<RegistryCommunity, "id" | "communityName"> & {
@@ -25,6 +30,7 @@ export type LightCommunity = Pick<RegistryCommunity, "id" | "communityName"> & {
     >
   >;
   members?: Maybe<Array<Pick<MemberCommunity, "id" | "memberAddress">>>;
+  isProtopian: boolean;
 };
 
 interface CommunitySectionProps {
@@ -154,6 +160,7 @@ export const Communities: React.FC<CommunitiesProps> = ({
   const [tokenFilter, setTokenFilter] = useState<string>("");
   const [chainIdFilter, setchainIdFilter] = useState<string>("");
   const showExcludedCommunities = useCheat("showExcludedCommunities");
+  const queryAllChains = useCheat("queryAllChains");
 
   const availableTokens = Array.from(
     new Set(communities.map((c) => c.garden.symbol)),
@@ -189,15 +196,39 @@ export const Communities: React.FC<CommunitiesProps> = ({
       });
     };
 
-    const sorted = [...communities].sort((a, b) => {
-      if (a?.members && b?.members) return b.members.length - a.members.length;
+    // Sort communities by length of members in descending order
+    const sortedCommunities = [...communities].sort((a, b) => {
+      // Show isProtopian communities on top and 1hive first
+      const oneHiveEffectiveAddress =
+        isProd || queryAllChains ?
+          ONE_HIVE_COMMUNITY_ADDRESS
+        : ONE_HIVE_FAKE_COMMUNITY_ADDRESS;
+
+      if (
+        a.id.toLowerCase() === oneHiveEffectiveAddress &&
+        b.id.toLowerCase() !== oneHiveEffectiveAddress
+      )
+        return -1;
+      if (
+        b.id.toLowerCase() === oneHiveEffectiveAddress &&
+        a.id.toLowerCase() !== oneHiveEffectiveAddress
+      )
+        return 1;
+
+      if (a.isProtopian && !b.isProtopian) return -1;
+      if (!a.isProtopian && b.isProtopian) return 1;
+
+      // Then sort by member count in descending order
+      if (a?.members && b?.members) {
+        return b.members.length - a.members.length;
+      }
       return 0;
     });
 
     const auxUser: LightCommunity[] = [];
     const auxOther: LightCommunity[] = [];
 
-    for (const c of sorted) {
+    for (const c of sortedCommunities) {
       if (
         c?.members?.some(
           (m) => m.memberAddress?.toLowerCase() === address?.toLowerCase(),

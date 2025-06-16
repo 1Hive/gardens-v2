@@ -11,7 +11,7 @@ contract UpgradeCVMultichainProd is BaseMultiChain {
     using stdJson for string;
 
     function runCurrentNetwork(string memory networkJson) public override {
-        // address registryFactoryImplementation = address(new RegistryFactoryV0_0());
+        address registryFactoryImplementation = address(new RegistryFactoryV0_0());
         address registryImplementation = address(new RegistryCommunityV0_0());
         address strategyImplementation = address(new CVStrategyV0_0());
         address passportScorer = networkJson.readAddress(getKeyNetwork(".ENVS.PASSPORT_SCORER"));
@@ -24,9 +24,9 @@ contract UpgradeCVMultichainProd is BaseMultiChain {
         RegistryFactoryV0_0 registryFactory = RegistryFactoryV0_0(payable(address(registryFactoryProxy)));
 
         // 1.a -- Upgrade the Registry Factory --
-        // bytes memory upgradeRegistryFactory =
-        //     abi.encodeWithSelector(registryFactory.upgradeTo.selector, registryFactoryImplementation);
-        // json = string(abi.encodePacked(json, _createTransactionJson(registryFactoryProxy, upgradeRegistryFactory), ","));
+        bytes memory upgradeRegistryFactory =
+            abi.encodeWithSelector(registryFactory.upgradeTo.selector, registryFactoryImplementation);
+        json = string(abi.encodePacked(json, _createTransactionJson(registryFactoryProxy, upgradeRegistryFactory), ","));
 
         // 1.b -- Set the Registry Community Template --
         // bytes memory setRegistryCommunityTemplate =
@@ -36,34 +36,32 @@ contract UpgradeCVMultichainProd is BaseMultiChain {
         // );
 
         // 1.c -- Set the Strategy Template --
-        // bytes memory setStrategyTemplate =
-        //     abi.encodeWithSelector(registryFactory.setStrategyTemplate.selector, strategyImplementation);
-        // json = string(abi.encodePacked(json, _createTransactionJson(registryFactoryProxy, setStrategyTemplate), ","));
+        bytes memory setStrategyTemplate =
+            abi.encodeWithSelector(registryFactory.setStrategyTemplate.selector, strategyImplementation);
+        json = string(abi.encodePacked(json, _createTransactionJson(registryFactoryProxy, setStrategyTemplate), ","));
 
         // 2. REGISTRY COMMUNITIES UPGRADES
-        // address[] memory registryCommunityProxies =
-        //     networkJson.readAddressArray(getKeyNetwork(".PROXIES.REGISTRY_COMMUNITIES"));
-        // bytes[] memory upgradeRegistryCommunities = new bytes[](registryCommunityProxies.length * 2);
-        // for (uint256 i = 0; i < registryCommunityProxies.length; i++) {
-        //     (upgradeRegistryCommunities[i * 2], upgradeRegistryCommunities[i * 2 + 1]) =
-        //         _upgradeRegistryCommunity(registryCommunityProxies[i], registryImplementation, strategyImplementation);
-        // }
-        // for (uint256 i = 0; i < registryCommunityProxies.length; i++) {
-        //     // 2.a -- Upgrade the Registry Community --
-        //     json = string(
-        //         abi.encodePacked(
-        //             json, _createTransactionJson(registryCommunityProxies[i], upgradeRegistryCommunities[i * 2]), ","
-        //         )
-        //     );
-        //     // 2.b -- Set the Strategy Template --
-        //     json = string(
-        //         abi.encodePacked(
-        //             json,
-        //             _createTransactionJson(registryCommunityProxies[i], upgradeRegistryCommunities[i * 2 + 1]),
-        //             ","
-        //         )
-        //     );
-        // }
+        address[] memory registryCommunityProxies =
+            networkJson.readAddressArray(getKeyNetwork(".PROXIES.REGISTRY_COMMUNITIES"));
+        bytes[] memory registryTransactions = new bytes[](registryCommunityProxies.length * 2);
+        for (uint256 i = 0; i < registryCommunityProxies.length; i++) {
+            (registryTransactions[i * 2], registryTransactions[i * 2 + 1]) =
+                _upgradeRegistryCommunity(registryCommunityProxies[i], registryImplementation, strategyImplementation);
+        }
+        for (uint256 i = 0; i < registryCommunityProxies.length; i++) {
+            //     // 2.a -- Upgrade the Registry Community --
+            //     json = string(
+            //         abi.encodePacked(
+            //             json, _createTransactionJson(registryCommunityProxies[i], upgradeRegistryCommunities[i * 2]), ","
+            //         )
+            //     );
+            // 2.b -- Set the Strategy Template --
+            json = string(
+                abi.encodePacked(
+                    json, _createTransactionJson(registryCommunityProxies[i], registryTransactions[i * 2 + 1]), ","
+                )
+            );
+        }
 
         // 3. CV STRATEGIES UPGRADES
         address[] memory cvStrategyProxies = networkJson.readAddressArray(getKeyNetwork(".PROXIES.CV_STRATEGIES"));
@@ -80,7 +78,7 @@ contract UpgradeCVMultichainProd is BaseMultiChain {
                 abi.encodePacked(json, _createTransactionJson(cvStrategyProxies[i], upgradeCVStrategies[i]), ",")
             );
             // 3.b -- Set the Pool Params --
-            json = string(abi.encodePacked(json, _createTransactionJson(cvStrategyProxies[i], setPoolParams[i]), ","));
+            // json = string(abi.encodePacked(json, _createTransactionJson(cvStrategyProxies[i], setPoolParams[i]), ","));
         }
 
         // Remove the last comma and close the JSON array

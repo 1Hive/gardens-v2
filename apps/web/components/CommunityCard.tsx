@@ -1,7 +1,11 @@
 "use client";
 
 import React from "react";
-import { RectangleGroupIcon, UserGroupIcon } from "@heroicons/react/24/outline";
+import {
+  CheckBadgeIcon,
+  RectangleGroupIcon,
+  UserGroupIcon,
+} from "@heroicons/react/24/outline";
 import Image from "next/image";
 import {
   CVStrategy,
@@ -12,10 +16,16 @@ import {
 import { Card } from "./Card";
 import { Statistic } from "./Statistic";
 import TooltipIfOverflow from "./TooltipIfOverflow";
-import { commImg } from "@/assets";
+import { CommunityLogo, ProtopianLogo, OneHiveLogo } from "@/assets";
 import { ChainIcon } from "@/configs/chains";
+import { isProd } from "@/configs/isProd";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
+import {
+  ONE_HIVE_COMMUNITY_ADDRESS,
+  ONE_HIVE_FAKE_COMMUNITY_ADDRESS,
+} from "@/globals";
+import { useCheat } from "@/hooks/useCheat";
 
 type CommunityCardProps = {
   id: string;
@@ -23,8 +33,7 @@ type CommunityCardProps = {
   garden: Pick<TokenGarden, "address" | "chainId" | "symbol">;
   members?: Maybe<Pick<MemberCommunity, "id" | "memberAddress">[]> | undefined;
   strategies?: Maybe<Pick<CVStrategy, "id">[]> | undefined;
-  onHover?: (id: string) => void;
-  onUnhover?: () => void;
+  isProtopian?: boolean;
 };
 
 export function CommunityCard({
@@ -33,8 +42,7 @@ export function CommunityCard({
   garden,
   members,
   strategies,
-  onHover,
-  onUnhover,
+  isProtopian = false,
 }: CommunityCardProps) {
   const { address: tokenAddr, chainId, symbol: tokenSymbol } = garden;
 
@@ -46,18 +54,35 @@ export function CommunityCard({
     searchParams[QUERY_PARAMS.gardenPage.newCommunity]?.toLowerCase() ===
     id.toLowerCase();
 
+  const queryAllChains = useCheat("queryAllChains");
+
+  const is1hive =
+    id.toLowerCase() ===
+    (isProd || queryAllChains ?
+      ONE_HIVE_COMMUNITY_ADDRESS
+    : ONE_HIVE_FAKE_COMMUNITY_ADDRESS);
+
   return (
     <Card
       key={id}
       href={`/gardens/${chainId}/${tokenAddr}/${id}`}
       className={` ${isNewCommunity ? "shadow-2xl" : ""}`}
-      onHover={() => onHover?.(id)}
-      onUnhover={onUnhover}
     >
       <div className="flex justify-between text-neutral-content text-sm">
+        {isProtopian && (
+          <div className="absolute bottom-2 right-2 badge badge-soft badge-success bg-[#9ae7c3] text-[#0c7b0c]">
+            <CheckBadgeIcon className="h-4 w-4 mr-1" />
+            Protopian
+          </div>
+        )}
         <Image
-          src={commImg}
-          alt={`${name} community`}
+          src={
+            is1hive ? OneHiveLogo
+            : isProtopian ?
+              ProtopianLogo
+            : CommunityLogo
+          }
+          alt={`${communityName} community`}
           className="mb-2 h-[100px]"
           height={100}
           width={100}

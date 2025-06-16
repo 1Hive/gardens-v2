@@ -1,11 +1,7 @@
 import React, { ReactNode, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Address, formatUnits, parseUnits, zeroAddress } from "viem";
-import {
-  CVStrategy,
-  RegistryCommunity,
-  TokenGarden,
-} from "#/subgraph/.graphclient";
+import { getPoolDataQuery, TokenGarden } from "#/subgraph/.graphclient";
 import { AllowListInput } from "./AllowListInput";
 import { FormAddressInput } from "./FormAddressInput";
 import { FormCheckBox } from "./FormCheckBox";
@@ -50,9 +46,7 @@ type FormInputs = {
 } & ArbitrationSettings;
 
 type Props = {
-  strategy: Pick<CVStrategy, "id" | "poolId" | "sybilScorer"> & {
-    registryCommunity: Pick<RegistryCommunity, "councilSafe">;
-  };
+  strategy: getPoolDataQuery["cvstrategies"][0];
   token: TokenGarden["decimals"];
   initValues: FormInputs;
   proposalType: string;
@@ -95,6 +89,7 @@ const sybilResistancePreview = (
 };
 
 const parseAllowListMembers = (
+  activeMembers: Address[],
   initialList: Address[],
   currentList: Address[],
 ) => {
@@ -103,6 +98,22 @@ const parseAllowListMembers = (
 
   const membersToAdd: Address[] = [];
   const membersToRemove: Address[] = [];
+
+  // Check if transitioning from everyone allowed to allow list
+  if (
+    initialList.length === 1 &&
+    initialList[0] === zeroAddress &&
+    currentList.length > 1 // more than just zeroAddress
+  ) {
+    // We should remove currently staking users (to deactive them from the pool)
+    return {
+      membersToAdd,
+      membersToRemove: [
+        zeroAddress,
+        ...activeMembers.filter((x) => !membersToAdd.includes(x)), // Force deactive all currently active but excluded members
+      ],
+    };
+  }
 
   for (const address of initialSet) {
     if (!currentSet.has(address)) {
@@ -132,7 +143,6 @@ export default function PoolEditForm({
     handleSubmit,
     setValue,
     watch,
-    trigger,
     formState: { errors },
   } = useForm<FormInputs>({
     mode: "onBlur",
@@ -308,6 +318,7 @@ export default function PoolEditForm({
       : [];
 
     const { membersToAdd, membersToRemove } = parseAllowListMembers(
+      strategy.memberActive?.map((x) => x.id as Address) ?? [],
       initialAllowList,
       currentAllowList,
     );

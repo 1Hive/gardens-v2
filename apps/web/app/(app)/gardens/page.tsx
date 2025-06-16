@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React from "react";
 import { PlusIcon } from "@heroicons/react/24/outline";
+import { Address, readContract } from "@wagmi/core";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -10,8 +11,12 @@ import {
 } from "#/subgraph/.graphclient";
 import { clouds1, clouds2, grassLarge, tree2, tree3 } from "@/assets";
 import { Button, Communities } from "@/components";
+import { LightCommunity } from "@/components/Communities";
+import { FAKE_PROTOPIAN_COMMUNITIES } from "@/globals";
+import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQueryMultiChain } from "@/hooks/useSubgraphQueryMultiChain";
+import { safeABI } from "@/src/generated";
 
 // Components
 const Header = () => {
@@ -90,9 +95,48 @@ const Footer = () => {
 
 // Main component
 export default function GardensPage() {
+  const chain = useChainFromPath();
   const { data: communitiesSections, fetching: isFetching } =
     useSubgraphQueryMultiChain<getCommunitiesQuery>({
       query: getCommunitiesDocument,
+      modifier: async (data) => {
+        return Promise.all(
+          data
+            .flatMap((section) => section.registryCommunities || [])
+            .map(async (x) => {
+              const protopianMembers = x.members?.filter(
+                (m) => m.member.isProtopian,
+              );
+              if (protopianMembers?.length && chain?.safePrefix) {
+                // Council Safe supported
+                const councilSafeAddress = x.councilSafe as Address;
+                const communityCouncil = await readContract({
+                  address: councilSafeAddress,
+                  abi: safeABI,
+                  functionName: "getOwners",
+                });
+
+                return {
+                  ...x,
+                  // Consider Protopian can be transferred to councilSafe
+                  isProtopian: !![...communityCouncil, councilSafeAddress].find(
+                    (owner) =>
+                      protopianMembers
+                        .map((p) => p.memberAddress?.toLowerCase())
+                        .includes(owner.toLowerCase()),
+                  ),
+                };
+              }
+
+              return {
+                ...x,
+                isProtopian: !!FAKE_PROTOPIAN_COMMUNITIES.find(
+                  (add) => add.toLowerCase() === x.id,
+                ),
+              };
+            }),
+        );
+      },
       changeScope: [
         {
           topic: "community",
@@ -100,19 +144,13 @@ export default function GardensPage() {
       ],
     });
 
-  // Combine all communities into a single array
-  const allCommunities = useMemo(() => {
-    if (!communitiesSections || communitiesSections.length === 0) return [];
-
-    return communitiesSections.flatMap(
-      (section) => section.registryCommunities || [],
-    );
-  }, [communitiesSections]);
-
   return (
     <div className="page-layout max-w-7xl mx-auto">
       <Header />
-      <Communities communities={allCommunities} isFetching={isFetching} />
+      <Communities
+        communities={(communitiesSections as unknown as LightCommunity[]) ?? []}
+        isFetching={isFetching}
+      />
       <Footer />
     </div>
   );
