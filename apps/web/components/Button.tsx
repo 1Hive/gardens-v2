@@ -27,6 +27,7 @@ type ButtonProps = {
   size?: Size;
   icon?: React.ReactNode;
   walletConnected?: boolean;
+  style?: React.CSSProperties;
 };
 
 export type Color =
@@ -82,22 +83,20 @@ export function Button({
   isLoading = false,
   icon,
   type = "button",
+  style,
 }: ButtonProps) {
   const buttonElement = (
     <button
       type={type}
-      className={`${btnStyles[btnStyle][disabled ? "disabled" : color]} flex relative cursor-pointer  justify-center rounded-lg px-6 py-4 transition-all ease-out disabled:cursor-not-allowed h-fit ${className}`}
+      className={`${btnStyles[btnStyle][disabled ? "disabled" : color]} flex relative cursor-pointer  justify-center rounded-lg px-6 py-4 transition-all ease-out disabled:cursor-not-allowed h-fit gap-2 ${className}`}
       onClick={onClick}
       disabled={disabled || isLoading}
+      style={style}
     >
-      <div
-        className={`${isLoading ? "invisible" : "visible"} flex gap-2 items-center`}
-      >
+      {isLoading && <span className={`loading loading-spinner loading-sm`} />}
+      <div className={`flex gap-2 items-center`}>
         {icon && icon} {children}
       </div>
-      <span
-        className={`loading loading-spinner absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 ${isLoading ? "block" : "hidden"}`}
-      />
     </button>
   );
 

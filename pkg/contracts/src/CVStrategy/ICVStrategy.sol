@@ -123,6 +123,22 @@ struct CVStrategyInitializeParamsV0_1 {
     address[] initialAllowlist;
 }
 
+struct CVStrategyInitializeParamsV0_2 {
+    CVParams cvParams;
+    ProposalType proposalType;
+    PointSystem pointSystem;
+    PointSystemConfig pointConfig;
+    ArbitrableConfig arbitrableConfig;
+    address registryCommunity;
+    address sybilScorer;
+    uint256 sybilScorerThreshold;
+    address[] initialAllowlist;
+    address superfluidToken;
+}
+
 interface ICVStrategy {
-    function setPoolParams(ArbitrableConfig memory _arbitrableConfig, CVParams memory _cvParams) external;
+    function setPoolParams(ArbitrableConfig memory _arbitrableConfig, CVParams memory _cvParams, uint256 _sybilScoreThreshold,
+      address[] memory _membersToAdd,
+      address[] memory _membersToRemove,
+      address _superfluidToken) external;
 }

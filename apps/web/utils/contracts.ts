@@ -6,6 +6,7 @@ import type {
   AbiParameterToPrimitiveType,
 } from "abitype";
 import { TransactionReceipt, decodeEventLog, getEventSelector } from "viem";
+import { superTokenFactoryAbi } from "@/src/customAbis";
 import {
   alloABI,
   cvStrategyABI,
@@ -22,6 +23,7 @@ export const ContractABIs = {
   Allo: alloABI,
   PassportScorer: passportScorerABI,
   SafeArbitrator: safeArbitratorABI,
+  SuperTokenFactory: superTokenFactoryAbi,
 };
 
 export type ContractName = keyof typeof ContractABIs;

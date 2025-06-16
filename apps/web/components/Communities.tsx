@@ -11,22 +11,17 @@ import {
 } from "#/subgraph/.graphclient";
 import { CommunityCard, CommunityCardSkeleton } from "./CommunityCard";
 import { CommunityFilters } from "./CommunityFilters";
-import { useCheat } from "@/hooks/useCheat";
+import { isProd } from "@/configs/isProd";
 import {
   ONE_HIVE_COMMUNITY_ADDRESS,
   ONE_HIVE_FAKE_COMMUNITY_ADDRESS,
 } from "@/globals";
-import { isProd } from "@/configs/isProd";
+import { useCheat } from "@/hooks/useCheat";
 
 export type LightCommunity = Pick<RegistryCommunity, "id" | "communityName"> & {
   garden: Pick<TokenGarden, "address" | "chainId" | "symbol" | "name">;
   strategies?: Maybe<
-    Array<
-      Pick<
-        CVStrategy,
-        "id" | "totalEffectiveActivePoints" | "poolId" | "poolAmount"
-      >
-    >
+    Array<Pick<CVStrategy, "id" | "totalEffectiveActivePoints" | "poolId">>
   >;
   members?: Maybe<Array<Pick<MemberCommunity, "id" | "memberAddress">>>;
   isProtopian: boolean;

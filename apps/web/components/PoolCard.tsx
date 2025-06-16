@@ -22,6 +22,7 @@ import { Badge, Card, DisplayNumber, Statistic } from "@/components";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
+import { usePoolAmount } from "@/hooks/usePoolAmount";
 import { PointSystems, PoolTypes } from "@/types";
 import { elegibleGG23pools } from "@/utils/matchingPools";
 import { capitalize } from "@/utils/text";
@@ -30,7 +31,7 @@ type Props = {
   token: string;
   pool: Pick<
     CVStrategy,
-    "id" | "isEnabled" | "poolAmount" | "poolId" | "metadata" | "archived"
+    "id" | "isEnabled" | "poolId" | "metadata" | "archived"
   > & {
     proposals: Pick<CVProposal, "id">[];
     config: Pick<CVStrategyConfig, "proposalType" | "pointSystem">;
@@ -42,13 +43,16 @@ export function PoolCard({ pool, token, chainId }: Props) {
   const pathname = usePathname();
   const searchParams = useCollectQueryParams();
 
-  let { poolAmount, poolId, proposals, isEnabled, config, metadata } = pool;
+  let { id, poolId, proposals, isEnabled, config, metadata } = pool;
 
   const { metadata: ipfsResult } = useMetadataIpfsFetch({
     hash: metadata,
   });
 
-  poolAmount = poolAmount || 0;
+  const poolAmount = usePoolAmount({
+    poolAddress: id,
+  });
+
   const poolType = config?.proposalType as number | undefined;
   const { data: tokenGarden } = useToken({
     address: token as Address,
@@ -97,11 +101,13 @@ export function PoolCard({ pool, token, chainId }: Props) {
         />
         {isEnabled && poolType && PoolTypes[poolType] === "funding" && (
           <Statistic icon={<CurrencyDollarIcon />} label="funds">
-            <DisplayNumber
-              number={[BigInt(poolAmount), tokenGarden?.decimals as number]}
-              compact={true}
-              tokenSymbol={tokenGarden?.symbol}
-            />
+            <Skeleton className="w-32 h-6" isLoading={poolAmount == undefined}>
+              <DisplayNumber
+                number={[poolAmount!, tokenGarden?.decimals as number]}
+                compact={true}
+                tokenSymbol={tokenGarden?.symbol}
+              />
+            </Skeleton>
           </Statistic>
         )}
       </div>

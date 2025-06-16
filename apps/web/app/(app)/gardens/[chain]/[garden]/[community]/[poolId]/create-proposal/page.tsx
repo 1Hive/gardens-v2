@@ -8,6 +8,7 @@ import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { calculateMinimumConviction } from "@/components/PoolHeader";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
+import { usePoolAmount } from "@/hooks/usePoolAmount";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { PoolTypes } from "@/types";
 import { CV_SCALE_PRECISION, MAX_RATIO_CONSTANT } from "@/utils/numbers";
@@ -38,7 +39,11 @@ export default function Page({
     chainId,
   });
 
-  if (!tokenGarden || !metadata || !strategyObj) {
+  const poolAmount = usePoolAmount({
+    poolAddress: strategyObj?.id,
+  });
+
+  if (!tokenGarden || !metadata || !strategyObj || poolAmount == undefined) {
     return (
       <div className="mt-96">
         <LoadingSpinner />
@@ -47,7 +52,6 @@ export default function Page({
   }
 
   const alloInfo = data?.allos[0];
-  const poolAmount = strategyObj.poolAmount as number;
 
   const spendingLimitPctValue =
     (Number(strategyObj.config.maxRatio || 0) / CV_SCALE_PRECISION) * 100;
@@ -62,7 +66,7 @@ export default function Page({
     (1 - Math.sqrt(minimumConviction / 100)) *
     100;
 
-  function formatTokenAmount(amount: string | number, decimals: number) {
+  function formatTokenAmount(amount: bigint | number, decimals: number) {
     const divisor = Math.pow(10, decimals);
     const result = Number(amount) / divisor;
 

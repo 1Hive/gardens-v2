@@ -254,7 +254,7 @@ export type ArbitrableConfig_filter = {
     and?: InputMaybe<Array<InputMaybe<ArbitrableConfig_filter>>>;
     or?: InputMaybe<Array<InputMaybe<ArbitrableConfig_filter>>>;
 };
-export type ArbitrableConfig_orderBy = 'id' | 'version' | 'strategy' | 'strategy__id' | 'strategy__poolId' | 'strategy__poolAmount' | 'strategy__metadata' | 'strategy__maxCVSupply' | 'strategy__totalEffectiveActivePoints' | 'strategy__isEnabled' | 'strategy__token' | 'strategy__archived' | 'arbitrator' | 'tribunalSafe' | 'challengerCollateralAmount' | 'submitterCollateralAmount' | 'defaultRuling' | 'defaultRulingTimeout' | 'allowlist';
+export type ArbitrableConfig_orderBy = 'id' | 'version' | 'strategy' | 'strategy__id' | 'strategy__poolId' | 'strategy__metadata' | 'strategy__maxCVSupply' | 'strategy__totalEffectiveActivePoints' | 'strategy__isEnabled' | 'strategy__token' | 'strategy__archived' | 'arbitrator' | 'tribunalSafe' | 'challengerCollateralAmount' | 'submitterCollateralAmount' | 'defaultRuling' | 'defaultRulingTimeout' | 'allowlist';
 export type BlockChangedFilter = {
     number_gte: Scalars['Int']['input'];
 };
@@ -529,11 +529,10 @@ export type CVProposal_filter = {
     and?: InputMaybe<Array<InputMaybe<CVProposal_filter>>>;
     or?: InputMaybe<Array<InputMaybe<CVProposal_filter>>>;
 };
-export type CVProposal_orderBy = 'id' | 'proposalNumber' | 'metadata' | 'metadata__id' | 'metadata__title' | 'metadata__description' | 'metadataHash' | 'version' | 'strategy' | 'strategy__id' | 'strategy__poolId' | 'strategy__poolAmount' | 'strategy__metadata' | 'strategy__maxCVSupply' | 'strategy__totalEffectiveActivePoints' | 'strategy__isEnabled' | 'strategy__token' | 'strategy__archived' | 'beneficiary' | 'requestedAmount' | 'requestedToken' | 'proposalStatus' | 'blockLast' | 'convictionLast' | 'threshold' | 'maxCVStaked' | 'stakedAmount' | 'submitter' | 'createdAt' | 'updatedAt' | 'arbitrableConfig' | 'arbitrableConfig__id' | 'arbitrableConfig__version' | 'arbitrableConfig__arbitrator' | 'arbitrableConfig__tribunalSafe' | 'arbitrableConfig__challengerCollateralAmount' | 'arbitrableConfig__submitterCollateralAmount' | 'arbitrableConfig__defaultRuling' | 'arbitrableConfig__defaultRulingTimeout';
+export type CVProposal_orderBy = 'id' | 'proposalNumber' | 'metadata' | 'metadata__id' | 'metadata__title' | 'metadata__description' | 'metadataHash' | 'version' | 'strategy' | 'strategy__id' | 'strategy__poolId' | 'strategy__metadata' | 'strategy__maxCVSupply' | 'strategy__totalEffectiveActivePoints' | 'strategy__isEnabled' | 'strategy__token' | 'strategy__archived' | 'beneficiary' | 'requestedAmount' | 'requestedToken' | 'proposalStatus' | 'blockLast' | 'convictionLast' | 'threshold' | 'maxCVStaked' | 'stakedAmount' | 'submitter' | 'createdAt' | 'updatedAt' | 'arbitrableConfig' | 'arbitrableConfig__id' | 'arbitrableConfig__version' | 'arbitrableConfig__arbitrator' | 'arbitrableConfig__tribunalSafe' | 'arbitrableConfig__challengerCollateralAmount' | 'arbitrableConfig__submitterCollateralAmount' | 'arbitrableConfig__defaultRuling' | 'arbitrableConfig__defaultRulingTimeout';
 export type CVStrategy = {
     id: Scalars['ID']['output'];
     poolId: Scalars['BigInt']['output'];
-    poolAmount: Scalars['BigInt']['output'];
     metadata?: Maybe<Scalars['String']['output']>;
     registryCommunity: RegistryCommunity;
     config: CVStrategyConfig;
@@ -572,6 +571,7 @@ export type CVStrategyConfig = {
     pointSystem: Scalars['BigInt']['output'];
     maxAmount?: Maybe<Scalars['BigInt']['output']>;
     allowlist?: Maybe<Array<Scalars['String']['output']>>;
+    superfluidToken?: Maybe<Scalars['String']['output']>;
 };
 export type CVStrategyConfig_filter = {
     id?: InputMaybe<Scalars['ID']['input']>;
@@ -653,12 +653,32 @@ export type CVStrategyConfig_filter = {
     allowlist_contains_nocase?: InputMaybe<Array<Scalars['String']['input']>>;
     allowlist_not_contains?: InputMaybe<Array<Scalars['String']['input']>>;
     allowlist_not_contains_nocase?: InputMaybe<Array<Scalars['String']['input']>>;
+    superfluidToken?: InputMaybe<Scalars['String']['input']>;
+    superfluidToken_not?: InputMaybe<Scalars['String']['input']>;
+    superfluidToken_gt?: InputMaybe<Scalars['String']['input']>;
+    superfluidToken_lt?: InputMaybe<Scalars['String']['input']>;
+    superfluidToken_gte?: InputMaybe<Scalars['String']['input']>;
+    superfluidToken_lte?: InputMaybe<Scalars['String']['input']>;
+    superfluidToken_in?: InputMaybe<Array<Scalars['String']['input']>>;
+    superfluidToken_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
+    superfluidToken_contains?: InputMaybe<Scalars['String']['input']>;
+    superfluidToken_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+    superfluidToken_not_contains?: InputMaybe<Scalars['String']['input']>;
+    superfluidToken_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+    superfluidToken_starts_with?: InputMaybe<Scalars['String']['input']>;
+    superfluidToken_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    superfluidToken_not_starts_with?: InputMaybe<Scalars['String']['input']>;
+    superfluidToken_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    superfluidToken_ends_with?: InputMaybe<Scalars['String']['input']>;
+    superfluidToken_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    superfluidToken_not_ends_with?: InputMaybe<Scalars['String']['input']>;
+    superfluidToken_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
     /** Filter for the block changed event. */
     _change_block?: InputMaybe<BlockChangedFilter>;
     and?: InputMaybe<Array<InputMaybe<CVStrategyConfig_filter>>>;
     or?: InputMaybe<Array<InputMaybe<CVStrategyConfig_filter>>>;
 };
-export type CVStrategyConfig_orderBy = 'id' | 'strategy' | 'strategy__id' | 'strategy__poolId' | 'strategy__poolAmount' | 'strategy__metadata' | 'strategy__maxCVSupply' | 'strategy__totalEffectiveActivePoints' | 'strategy__isEnabled' | 'strategy__token' | 'strategy__archived' | 'D' | 'decay' | 'maxRatio' | 'minThresholdPoints' | 'weight' | 'proposalType' | 'pointSystem' | 'maxAmount' | 'allowlist';
+export type CVStrategyConfig_orderBy = 'id' | 'strategy' | 'strategy__id' | 'strategy__poolId' | 'strategy__metadata' | 'strategy__maxCVSupply' | 'strategy__totalEffectiveActivePoints' | 'strategy__isEnabled' | 'strategy__token' | 'strategy__archived' | 'D' | 'decay' | 'maxRatio' | 'minThresholdPoints' | 'weight' | 'proposalType' | 'pointSystem' | 'maxAmount' | 'allowlist' | 'superfluidToken';
 export type CVStrategy_filter = {
     id?: InputMaybe<Scalars['ID']['input']>;
     id_not?: InputMaybe<Scalars['ID']['input']>;
@@ -676,14 +696,6 @@ export type CVStrategy_filter = {
     poolId_lte?: InputMaybe<Scalars['BigInt']['input']>;
     poolId_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
     poolId_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
-    poolAmount?: InputMaybe<Scalars['BigInt']['input']>;
-    poolAmount_not?: InputMaybe<Scalars['BigInt']['input']>;
-    poolAmount_gt?: InputMaybe<Scalars['BigInt']['input']>;
-    poolAmount_lt?: InputMaybe<Scalars['BigInt']['input']>;
-    poolAmount_gte?: InputMaybe<Scalars['BigInt']['input']>;
-    poolAmount_lte?: InputMaybe<Scalars['BigInt']['input']>;
-    poolAmount_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
-    poolAmount_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
     metadata?: InputMaybe<Scalars['String']['input']>;
     metadata_not?: InputMaybe<Scalars['String']['input']>;
     metadata_gt?: InputMaybe<Scalars['String']['input']>;
@@ -824,7 +836,7 @@ export type CVStrategy_filter = {
     and?: InputMaybe<Array<InputMaybe<CVStrategy_filter>>>;
     or?: InputMaybe<Array<InputMaybe<CVStrategy_filter>>>;
 };
-export type CVStrategy_orderBy = 'id' | 'poolId' | 'poolAmount' | 'metadata' | 'registryCommunity' | 'registryCommunity__id' | 'registryCommunity__chainId' | 'registryCommunity__strategyTemplate' | 'registryCommunity__profileId' | 'registryCommunity__communityFee' | 'registryCommunity__protocolFee' | 'registryCommunity__protocolFeeReceiver' | 'registryCommunity__communityName' | 'registryCommunity__covenantIpfsHash' | 'registryCommunity__councilSafe' | 'registryCommunity__pendingNewCouncilSafe' | 'registryCommunity__isKickEnabled' | 'registryCommunity__registerStakeAmount' | 'registryCommunity__registerToken' | 'registryCommunity__alloAddress' | 'registryCommunity__isValid' | 'config' | 'config__id' | 'config__D' | 'config__decay' | 'config__maxRatio' | 'config__minThresholdPoints' | 'config__weight' | 'config__proposalType' | 'config__pointSystem' | 'config__maxAmount' | 'proposals' | 'memberActive' | 'maxCVSupply' | 'totalEffectiveActivePoints' | 'isEnabled' | 'token' | 'sybilScorer' | 'sybilScorer__id' | 'archived';
+export type CVStrategy_orderBy = 'id' | 'poolId' | 'metadata' | 'registryCommunity' | 'registryCommunity__id' | 'registryCommunity__chainId' | 'registryCommunity__strategyTemplate' | 'registryCommunity__profileId' | 'registryCommunity__communityFee' | 'registryCommunity__protocolFee' | 'registryCommunity__protocolFeeReceiver' | 'registryCommunity__communityName' | 'registryCommunity__covenantIpfsHash' | 'registryCommunity__councilSafe' | 'registryCommunity__pendingNewCouncilSafe' | 'registryCommunity__isKickEnabled' | 'registryCommunity__registerStakeAmount' | 'registryCommunity__registerToken' | 'registryCommunity__alloAddress' | 'registryCommunity__isValid' | 'registryCommunity__archived' | 'config' | 'config__id' | 'config__D' | 'config__decay' | 'config__maxRatio' | 'config__minThresholdPoints' | 'config__weight' | 'config__proposalType' | 'config__pointSystem' | 'config__maxAmount' | 'config__superfluidToken' | 'proposals' | 'memberActive' | 'maxCVSupply' | 'totalEffectiveActivePoints' | 'isEnabled' | 'token' | 'sybilScorer' | 'sybilScorer__id' | 'archived';
 export type CollateralVault = {
     id: Scalars['ID']['output'];
     strategy: CVStrategy;
@@ -971,7 +983,7 @@ export type CollateralVault_filter = {
     and?: InputMaybe<Array<InputMaybe<CollateralVault_filter>>>;
     or?: InputMaybe<Array<InputMaybe<CollateralVault_filter>>>;
 };
-export type CollateralVault_orderBy = 'id' | 'strategy' | 'strategy__id' | 'strategy__poolId' | 'strategy__poolAmount' | 'strategy__metadata' | 'strategy__maxCVSupply' | 'strategy__totalEffectiveActivePoints' | 'strategy__isEnabled' | 'strategy__token' | 'strategy__archived' | 'collaterals';
+export type CollateralVault_orderBy = 'id' | 'strategy' | 'strategy__id' | 'strategy__poolId' | 'strategy__metadata' | 'strategy__maxCVSupply' | 'strategy__totalEffectiveActivePoints' | 'strategy__isEnabled' | 'strategy__token' | 'strategy__archived' | 'collaterals';
 export type Member = {
     id: Scalars['ID']['output'];
     memberCommunity?: Maybe<Array<MemberCommunity>>;
@@ -1110,7 +1122,7 @@ export type MemberCommunity_filter = {
     and?: InputMaybe<Array<InputMaybe<MemberCommunity_filter>>>;
     or?: InputMaybe<Array<InputMaybe<MemberCommunity_filter>>>;
 };
-export type MemberCommunity_orderBy = 'id' | 'memberAddress' | 'stakedTokens' | 'isRegistered' | 'member' | 'member__id' | 'member__isProtopian' | 'member__isKeeper' | 'registryCommunity' | 'registryCommunity__id' | 'registryCommunity__chainId' | 'registryCommunity__strategyTemplate' | 'registryCommunity__profileId' | 'registryCommunity__communityFee' | 'registryCommunity__protocolFee' | 'registryCommunity__protocolFeeReceiver' | 'registryCommunity__communityName' | 'registryCommunity__covenantIpfsHash' | 'registryCommunity__councilSafe' | 'registryCommunity__pendingNewCouncilSafe' | 'registryCommunity__isKickEnabled' | 'registryCommunity__registerStakeAmount' | 'registryCommunity__registerToken' | 'registryCommunity__alloAddress' | 'registryCommunity__isValid' | 'covenantSignature';
+export type MemberCommunity_orderBy = 'id' | 'memberAddress' | 'stakedTokens' | 'isRegistered' | 'member' | 'member__id' | 'member__isProtopian' | 'member__isKeeper' | 'registryCommunity' | 'registryCommunity__id' | 'registryCommunity__chainId' | 'registryCommunity__strategyTemplate' | 'registryCommunity__profileId' | 'registryCommunity__communityFee' | 'registryCommunity__protocolFee' | 'registryCommunity__protocolFeeReceiver' | 'registryCommunity__communityName' | 'registryCommunity__covenantIpfsHash' | 'registryCommunity__councilSafe' | 'registryCommunity__pendingNewCouncilSafe' | 'registryCommunity__isKickEnabled' | 'registryCommunity__registerStakeAmount' | 'registryCommunity__registerToken' | 'registryCommunity__alloAddress' | 'registryCommunity__isValid' | 'registryCommunity__archived' | 'covenantSignature';
 export type MemberStrategy = {
     id: Scalars['ID']['output'];
     member: Member;
@@ -1190,7 +1202,7 @@ export type MemberStrategy_filter = {
     and?: InputMaybe<Array<InputMaybe<MemberStrategy_filter>>>;
     or?: InputMaybe<Array<InputMaybe<MemberStrategy_filter>>>;
 };
-export type MemberStrategy_orderBy = 'id' | 'member' | 'member__id' | 'member__isProtopian' | 'member__isKeeper' | 'strategy' | 'strategy__id' | 'strategy__poolId' | 'strategy__poolAmount' | 'strategy__metadata' | 'strategy__maxCVSupply' | 'strategy__totalEffectiveActivePoints' | 'strategy__isEnabled' | 'strategy__token' | 'strategy__archived' | 'totalStakedPoints' | 'activatedPoints';
+export type MemberStrategy_orderBy = 'id' | 'member' | 'member__id' | 'member__isProtopian' | 'member__isKeeper' | 'strategy' | 'strategy__id' | 'strategy__poolId' | 'strategy__metadata' | 'strategy__maxCVSupply' | 'strategy__totalEffectiveActivePoints' | 'strategy__isEnabled' | 'strategy__token' | 'strategy__archived' | 'totalStakedPoints' | 'activatedPoints';
 export type Member_filter = {
     id?: InputMaybe<Scalars['ID']['input']>;
     id_not?: InputMaybe<Scalars['ID']['input']>;
@@ -1350,7 +1362,7 @@ export type PassportStrategy_filter = {
     and?: InputMaybe<Array<InputMaybe<PassportStrategy_filter>>>;
     or?: InputMaybe<Array<InputMaybe<PassportStrategy_filter>>>;
 };
-export type PassportStrategy_orderBy = 'id' | 'passportScorer' | 'passportScorer__id' | 'strategy' | 'strategy__id' | 'strategy__poolId' | 'strategy__poolAmount' | 'strategy__metadata' | 'strategy__maxCVSupply' | 'strategy__totalEffectiveActivePoints' | 'strategy__isEnabled' | 'strategy__token' | 'strategy__archived' | 'threshold' | 'councilSafe' | 'active';
+export type PassportStrategy_orderBy = 'id' | 'passportScorer' | 'passportScorer__id' | 'strategy' | 'strategy__id' | 'strategy__poolId' | 'strategy__metadata' | 'strategy__maxCVSupply' | 'strategy__totalEffectiveActivePoints' | 'strategy__isEnabled' | 'strategy__token' | 'strategy__archived' | 'threshold' | 'councilSafe' | 'active';
 export type PassportUser = {
     id: Scalars['ID']['output'];
     passportScorer: PassportScorer;
@@ -2026,6 +2038,7 @@ export type RegistryCommunity = {
     members?: Maybe<Array<MemberCommunity>>;
     garden: TokenGarden;
     isValid: Scalars['Boolean']['output'];
+    archived: Scalars['Boolean']['output'];
 };
 export type RegistryCommunitystrategiesArgs = {
     skip?: InputMaybe<Scalars['Int']['input']>;
@@ -2314,12 +2327,16 @@ export type RegistryCommunity_filter = {
     isValid_not?: InputMaybe<Scalars['Boolean']['input']>;
     isValid_in?: InputMaybe<Array<Scalars['Boolean']['input']>>;
     isValid_not_in?: InputMaybe<Array<Scalars['Boolean']['input']>>;
+    archived?: InputMaybe<Scalars['Boolean']['input']>;
+    archived_not?: InputMaybe<Scalars['Boolean']['input']>;
+    archived_in?: InputMaybe<Array<Scalars['Boolean']['input']>>;
+    archived_not_in?: InputMaybe<Array<Scalars['Boolean']['input']>>;
     /** Filter for the block changed event. */
     _change_block?: InputMaybe<BlockChangedFilter>;
     and?: InputMaybe<Array<InputMaybe<RegistryCommunity_filter>>>;
     or?: InputMaybe<Array<InputMaybe<RegistryCommunity_filter>>>;
 };
-export type RegistryCommunity_orderBy = 'id' | 'chainId' | 'strategyTemplate' | 'profileId' | 'communityFee' | 'protocolFee' | 'protocolFeeReceiver' | 'communityName' | 'covenantIpfsHash' | 'registryFactory' | 'registryFactory__id' | 'registryFactory__chainId' | 'strategies' | 'councilSafe' | 'pendingNewCouncilSafe' | 'isKickEnabled' | 'registerStakeAmount' | 'registerToken' | 'alloAddress' | 'members' | 'garden' | 'garden__id' | 'garden__name' | 'garden__description' | 'garden__chainId' | 'garden__totalBalance' | 'garden__ipfsCovenant' | 'garden__symbol' | 'garden__decimals' | 'garden__address' | 'isValid';
+export type RegistryCommunity_orderBy = 'id' | 'chainId' | 'strategyTemplate' | 'profileId' | 'communityFee' | 'protocolFee' | 'protocolFeeReceiver' | 'communityName' | 'covenantIpfsHash' | 'registryFactory' | 'registryFactory__id' | 'registryFactory__chainId' | 'strategies' | 'councilSafe' | 'pendingNewCouncilSafe' | 'isKickEnabled' | 'registerStakeAmount' | 'registerToken' | 'alloAddress' | 'members' | 'garden' | 'garden__id' | 'garden__name' | 'garden__description' | 'garden__chainId' | 'garden__totalBalance' | 'garden__ipfsCovenant' | 'garden__symbol' | 'garden__decimals' | 'garden__address' | 'isValid' | 'archived';
 export type RegistryFactory = {
     id: Scalars['ID']['output'];
     chainId: Scalars['BigInt']['output'];
@@ -2873,7 +2890,6 @@ export type CVProposalResolvers<ContextType = MeshContext, ParentType extends Re
 export type CVStrategyResolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['CVStrategy'] = ResolversParentTypes['CVStrategy']> = ResolversObject<{
     id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
     poolId?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
-    poolAmount?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
     metadata?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
     registryCommunity?: Resolver<ResolversTypes['RegistryCommunity'], ParentType, ContextType>;
     config?: Resolver<ResolversTypes['CVStrategyConfig'], ParentType, ContextType>;
@@ -2899,6 +2915,7 @@ export type CVStrategyConfigResolvers<ContextType = MeshContext, ParentType exte
     pointSystem?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
     maxAmount?: Resolver<Maybe<ResolversTypes['BigInt']>, ParentType, ContextType>;
     allowlist?: Resolver<Maybe<Array<ResolversTypes['String']>>, ParentType, ContextType>;
+    superfluidToken?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
 export type CollateralVaultResolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['CollateralVault'] = ResolversParentTypes['CollateralVault']> = ResolversObject<{
@@ -3058,6 +3075,7 @@ export type RegistryCommunityResolvers<ContextType = MeshContext, ParentType ext
     members?: Resolver<Maybe<Array<ResolversTypes['MemberCommunity']>>, ParentType, ContextType, RequireFields<RegistryCommunitymembersArgs, 'skip' | 'first'>>;
     garden?: Resolver<ResolversTypes['TokenGarden'], ParentType, ContextType>;
     isValid?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+    archived?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
 export type RegistryFactoryResolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['RegistryFactory'] = ResolversParentTypes['RegistryFactory']> = ResolversObject<{
@@ -3341,7 +3359,7 @@ export type getGardenCommunitiesQuery = {
     registryCommunities: Array<(Pick<RegistryCommunity, 'id' | 'chainId' | 'isValid' | 'covenantIpfsHash' | 'communityName' | 'protocolFee' | 'communityFee' | 'registerToken' | 'registerStakeAmount' | 'alloAddress'> & {
         garden: Pick<TokenGarden, 'id'>;
         members?: Maybe<Array<Pick<MemberCommunity, 'id' | 'memberAddress'>>>;
-        strategies?: Maybe<Array<Pick<CVStrategy, 'id' | 'totalEffectiveActivePoints' | 'poolId' | 'poolAmount'>>>;
+        strategies?: Maybe<Array<Pick<CVStrategy, 'id' | 'totalEffectiveActivePoints' | 'poolId'>>>;
     })>;
 };
 export type getCommunitiesQueryVariables = Exact<{
@@ -3350,7 +3368,7 @@ export type getCommunitiesQueryVariables = Exact<{
 export type getCommunitiesQuery = {
     registryCommunities: Array<(Pick<RegistryCommunity, 'id' | 'councilSafe' | 'communityName'> & {
         garden: Pick<TokenGarden, 'address' | 'chainId' | 'symbol' | 'name'>;
-        strategies?: Maybe<Array<Pick<CVStrategy, 'id' | 'totalEffectiveActivePoints' | 'poolId' | 'poolAmount'>>>;
+        strategies?: Maybe<Array<Pick<CVStrategy, 'id' | 'totalEffectiveActivePoints' | 'poolId'>>>;
         members?: Maybe<Array<(Pick<MemberCommunity, 'id' | 'memberAddress'> & {
             member: Pick<Member, 'isProtopian'>;
         })>>;
@@ -3366,7 +3384,7 @@ export type getCommunityQuery = {
         members?: Maybe<Array<(Pick<MemberCommunity, 'memberAddress' | 'stakedTokens'> & {
             member: Pick<Member, 'isProtopian'>;
         })>>;
-        strategies?: Maybe<Array<(Pick<CVStrategy, 'id' | 'archived' | 'isEnabled' | 'poolAmount' | 'poolId' | 'token' | 'metadata'> & {
+        strategies?: Maybe<Array<(Pick<CVStrategy, 'id' | 'archived' | 'isEnabled' | 'poolId' | 'token' | 'metadata'> & {
             proposals: Array<Pick<CVProposal, 'id'>>;
             config: Pick<CVStrategyConfig, 'proposalType' | 'pointSystem'>;
         })>>;
@@ -3392,10 +3410,10 @@ export type getPoolDataQueryVariables = Exact<{
 export type getPoolDataQuery = {
     allos: Array<Pick<Allo, 'id' | 'chainId' | 'tokenNative'>>;
     tokenGarden?: Maybe<Pick<TokenGarden, 'address' | 'name' | 'symbol' | 'description' | 'totalBalance' | 'ipfsCovenant' | 'decimals'>>;
-    cvstrategies: Array<(Pick<CVStrategy, 'token' | 'poolAmount' | 'metadata' | 'id' | 'poolId' | 'totalEffectiveActivePoints' | 'isEnabled' | 'maxCVSupply' | 'archived'> & {
+    cvstrategies: Array<(Pick<CVStrategy, 'token' | 'metadata' | 'id' | 'poolId' | 'totalEffectiveActivePoints' | 'isEnabled' | 'maxCVSupply' | 'archived'> & {
         sybilScorer?: Maybe<Pick<PassportScorer, 'id'>>;
         memberActive?: Maybe<Array<Pick<Member, 'id'>>>;
-        config: Pick<CVStrategyConfig, 'id' | 'weight' | 'decay' | 'maxAmount' | 'maxRatio' | 'minThresholdPoints' | 'pointSystem' | 'proposalType' | 'allowlist'>;
+        config: Pick<CVStrategyConfig, 'id' | 'weight' | 'decay' | 'maxAmount' | 'maxRatio' | 'minThresholdPoints' | 'pointSystem' | 'proposalType' | 'allowlist' | 'superfluidToken'>;
         registryCommunity: (Pick<RegistryCommunity, 'id' | 'councilSafe' | 'isValid'> & {
             garden: Pick<TokenGarden, 'id' | 'symbol' | 'decimals'>;
         });

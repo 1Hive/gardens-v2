@@ -57,7 +57,7 @@ type ProposalFormProps = {
   tokenGarden: Pick<TokenGarden, "symbol" | "decimals">;
   spendingLimit: number;
   spendingLimitPct: number;
-  poolAmount: number;
+  poolAmount: bigint;
 };
 
 type FormRowTypes = {

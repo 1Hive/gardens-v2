@@ -112,18 +112,6 @@ abstract contract BaseStrategyUpgradeable is ProxyOwnableUpgrader, IStrategy, Tr
     //     return strategyId;
     // }
 
-    /// @notice Getter for the 'poolAmount'.
-    /// @return The balance of the pool
-    function getPoolAmount() public view override returns (uint256) {
-        address token = allo.getPool(poolId).token;
-
-        if (token == NATIVE) {
-            return address(this).balance;
-        }
-
-        return ERC20(token).balanceOf(address(this));
-    }
-
     /// @notice Getter for whether or not the pool is active.
     /// @return 'true' if the pool is active, otherwise 'false'
     function isPoolActive() external view override returns (bool) {
@@ -162,28 +150,28 @@ abstract contract BaseStrategyUpgradeable is ProxyOwnableUpgrader, IStrategy, Tr
     /// @param _data The data to use to register the recipient
     /// @param _sender The address of the sender
     /// @return recipientId The recipientId
-    function registerRecipient(bytes memory _data, address _sender)
-        external
-        payable
-        onlyAllo
-        onlyInitialized
-        returns (address recipientId)
-    {
-        _beforeRegisterRecipient(_data, _sender);
-        recipientId = _registerRecipient(_data, _sender);
-        _afterRegisterRecipient(_data, _sender);
-    }
+    // function registerRecipient(bytes memory _data, address _sender)
+    //     external
+    //     payable
+    //     onlyAllo
+    //     onlyInitialized
+    //     returns (address recipientId)
+    // {
+    //     _beforeRegisterRecipient(_data, _sender);
+    //     recipientId = _registerRecipient(_data, _sender);
+    //     _afterRegisterRecipient(_data, _sender);
+    // }
 
     /// @notice Allocates to a recipient.
     /// @dev The encoded '_data' will be determined by the strategy implementation. Only 'Allo' contract can
     ///      call this when it is initialized.
     /// @param _data The data to use to allocate to the recipient
     /// @param _sender The address of the sender
-    function allocate(bytes memory _data, address _sender) external payable onlyAllo onlyInitialized {
-        _beforeAllocate(_data, _sender);
-        _allocate(_data, _sender);
-        _afterAllocate(_data, _sender);
-    }
+    // function allocate(bytes memory _data, address _sender) external payable onlyAllo onlyInitialized {
+    //     _beforeAllocate(_data, _sender);
+    //     _allocate(_data, _sender);
+    //     _afterAllocate(_data, _sender);
+    // }
 
     /// @notice Distributes funds (tokens) to recipients.
     /// @dev The encoded '_data' will be determined by the strategy implementation. Only 'Allo' contract can
@@ -191,15 +179,15 @@ abstract contract BaseStrategyUpgradeable is ProxyOwnableUpgrader, IStrategy, Tr
     /// @param _recipientIds The IDs of the recipients
     /// @param _data The data to use to distribute to the recipients
     /// @param _sender The address of the sender
-    function distribute(address[] memory _recipientIds, bytes memory _data, address _sender)
-        external
-        onlyAllo
-        onlyInitialized
-    {
-        _beforeDistribute(_recipientIds, _data, _sender);
-        _distribute(_recipientIds, _data, _sender);
-        _afterDistribute(_recipientIds, _data, _sender);
-    }
+    // function distribute(address[] memory _recipientIds, bytes memory _data, address _sender)
+    //     external
+    //     onlyAllo
+    //     onlyInitialized
+    // {
+    //     _beforeDistribute(_recipientIds, _data, _sender);
+    //     _distribute(_recipientIds, _data, _sender);
+    //     _afterDistribute(_recipientIds, _data, _sender);
+    // }
 
     /// @notice Gets the payout summary for recipients.
     /// @dev The encoded '_data' will be determined by the strategy implementation.
@@ -295,13 +283,13 @@ abstract contract BaseStrategyUpgradeable is ProxyOwnableUpgrader, IStrategy, Tr
     /// @param _data The data to use to register the recipient
     /// @param _sender The address of the sender
     /// @return The ID of the recipient
-    function _registerRecipient(bytes memory _data, address _sender) internal virtual returns (address);
+    // function _registerRecipient(bytes memory _data, address _sender) internal virtual returns (address);
 
     /// @notice This will allocate to a recipient.
     /// @dev The encoded '_data' will be determined by the strategy implementation.
     /// @param _data The data to use to allocate to the recipient
     /// @param _sender The address of the sender
-    function _allocate(bytes memory _data, address _sender) internal virtual;
+    // function _allocate(bytes memory _data, address _sender) internal virtual;
 
     /// @notice This will distribute funds (tokens) to recipients.
     /// @dev most strategies will track a TOTAL amount per recipient, and a PAID amount, and pay the difference
@@ -309,7 +297,7 @@ abstract contract BaseStrategyUpgradeable is ProxyOwnableUpgrader, IStrategy, Tr
     /// @param _recipientIds The ids of the recipients to distribute to
     /// @param _data Data required will depend on the strategy implementation
     /// @param _sender The address of the sender
-    function _distribute(address[] memory _recipientIds, bytes memory _data, address _sender) internal virtual;
+    // function _distribute(address[] memory _recipientIds, bytes memory _data, address _sender) internal virtual;
 
     /// @notice This will get the payout summary for a recipient.
     /// @dev The encoded '_data' will be determined by the strategy implementation.
@@ -349,45 +337,32 @@ abstract contract BaseStrategyUpgradeable is ProxyOwnableUpgrader, IStrategy, Tr
     /// @notice Hook called before registering a recipient.
     /// @param _data The data to use to register the recipient
     /// @param _sender The address of the sender
-    function _beforeRegisterRecipient(bytes memory _data, address _sender) internal {}
+    // function _beforeRegisterRecipient(bytes memory _data, address _sender) internal {}
 
     /// @notice Hook called after registering a recipient.
     /// @param _data The data to use to register the recipient
     /// @param _sender The address of the sender
-    function _afterRegisterRecipient(bytes memory _data, address _sender) internal {}
+    // function _afterRegisterRecipient(bytes memory _data, address _sender) internal {}
 
     /// @notice Hook called before allocating to a recipient.
     /// @param _data The data to use to allocate to the recipient
     /// @param _sender The address of the sender
-    function _beforeAllocate(bytes memory _data, address _sender) internal virtual {}
+    // function _beforeAllocate(bytes memory _data, address _sender) internal virtual {}
 
     /// @notice Hook called after allocating to a recipient.
     /// @param _data The data to use to allocate to the recipient
     /// @param _sender The address of the sender
-    function _afterAllocate(bytes memory _data, address _sender) internal {}
+    // function _afterAllocate(bytes memory _data, address _sender) internal {}
 
     /// @notice Hook called before distributing funds (tokens) to recipients.
     /// @param _recipientIds The IDs of the recipients
     /// @param _data The data to use to distribute to the recipients
     /// @param _sender The address of the sender
-    function _beforeDistribute(address[] memory _recipientIds, bytes memory _data, address _sender) internal {}
+    // function _beforeDistribute(address[] memory _recipientIds, bytes memory _data, address _sender) internal virtual {}
 
     /// @notice Hook called after distributing funds (tokens) to recipients.
     /// @param _recipientIds The IDs of the recipients
     /// @param _data The data to use to distribute to the recipients
     /// @param _sender The address of the sender
-    function _afterDistribute(address[] memory _recipientIds, bytes memory _data, address _sender) internal {}
-
-    /*|--------------------------------------------|*/
-    /*|                 FALLBACK                  |*/
-    /*|--------------------------------------------|*/
-
-    fallback() external payable {
-        // surpressStateMutabilityWarning++;
-    }
-
-    receive() external payable {
-        // @todo allow only allo protocol to fund it.
-        // surpressStateMutabilityWarning++;
-    }
+    // function _afterDistribute(address[] memory _recipientIds, bytes memory _data, address _sender) internal {}
 }

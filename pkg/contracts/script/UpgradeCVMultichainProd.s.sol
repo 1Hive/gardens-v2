@@ -29,11 +29,11 @@ contract UpgradeCVMultichainProd is BaseMultiChain {
         json = string(abi.encodePacked(json, _createTransactionJson(registryFactoryProxy, upgradeRegistryFactory), ","));
 
         // 1.b -- Set the Registry Community Template --
-        // bytes memory setRegistryCommunityTemplate =
-        //     abi.encodeWithSelector(registryFactory.setRegistryCommunityTemplate.selector, registryImplementation);
-        // json = string(
-        //     abi.encodePacked(json, _createTransactionJson(registryFactoryProxy, setRegistryCommunityTemplate), ",")
-        // );
+        bytes memory setRegistryCommunityTemplate =
+            abi.encodeWithSelector(registryFactory.setRegistryCommunityTemplate.selector, registryImplementation);
+        json = string(
+            abi.encodePacked(json, _createTransactionJson(registryFactoryProxy, setRegistryCommunityTemplate), ",")
+        );
 
         // 1.c -- Set the Strategy Template --
         bytes memory setStrategyTemplate =
@@ -49,12 +49,12 @@ contract UpgradeCVMultichainProd is BaseMultiChain {
                 _upgradeRegistryCommunity(registryCommunityProxies[i], registryImplementation, strategyImplementation);
         }
         for (uint256 i = 0; i < registryCommunityProxies.length; i++) {
-            //     // 2.a -- Upgrade the Registry Community --
-            //     json = string(
-            //         abi.encodePacked(
-            //             json, _createTransactionJson(registryCommunityProxies[i], upgradeRegistryCommunities[i * 2]), ","
-            //         )
-            //     );
+            // 2.a -- Upgrade the Registry Community --
+            json = string(
+                abi.encodePacked(
+                    json, _createTransactionJson(registryCommunityProxies[i], registryTransactions[i * 2]), ","
+                )
+            );
             // 2.b -- Set the Strategy Template --
             json = string(
                 abi.encodePacked(

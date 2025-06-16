@@ -82,9 +82,8 @@ export default function Page({
     console.debug(
       "maxRatio: " + strategyObj?.config?.maxRatio,
       "minThresholdPoints: " + strategyObj?.config?.minThresholdPoints,
-      "poolAmount: " + strategyObj?.poolAmount,
     );
-  }, [strategyObj?.config, strategyObj?.config, strategyObj?.poolAmount]);
+  }, [strategyObj?.config, strategyObj?.config]);
 
   useEffect(() => {
     const newProposalId = searchParams[QUERY_PARAMS.poolPage.newProposal];
@@ -136,7 +135,6 @@ export default function Page({
 
   const communityAddress = strategyObj.registryCommunity.id as Address;
   const alloInfo = data.allos[0];
-  const poolAmount = strategyObj.poolAmount as number;
 
   const isEnabled = data.cvstrategies?.[0]?.isEnabled as boolean;
 
@@ -156,10 +154,9 @@ export default function Page({
         <>
           {poolToken && PoolTypes[proposalType] !== "signaling" && (
             <PoolMetrics
+              strategy={strategyObj}
               poolToken={poolToken}
               alloInfo={alloInfo}
-              poolId={poolId}
-              poolAmount={poolAmount}
               communityAddress={communityAddress}
               chainId={chain}
             />

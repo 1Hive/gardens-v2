@@ -51,6 +51,7 @@ import {
   ONE_HIVE_COMMUNITY_ADDRESS,
   ONE_HIVE_FAKE_COMMUNITY_ADDRESS,
 } from "@/globals";
+import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useCheat } from "@/hooks/useCheat";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
@@ -62,7 +63,6 @@ import {
   SCALE_PRECISION,
   SCALE_PRECISION_DECIMALS,
 } from "@/utils/numbers";
-import { useChainFromPath } from "@/hooks/useChainFromPath";
 
 type MembersStaked = {
   memberAddress: string;
@@ -466,7 +466,7 @@ export default function Page({
         <header className="flex justify-between">
           <h2>Pools</h2>
           <Link
-            href={`/gardens/${chain}/${tokenAddr}/${communityAddr}/create-pool`}
+            href={`/gardens/${chain?.id}/${tokenAddr}/${communityAddr}/create-pool`}
           >
             <Button
               btnStyle="filled"

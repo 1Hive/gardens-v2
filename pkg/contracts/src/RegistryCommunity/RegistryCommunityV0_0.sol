@@ -15,7 +15,7 @@ import {IRegistry, Metadata} from "allo-v2-contracts/core/interfaces/IRegistry.s
 import {FAllo} from "../interfaces/FAllo.sol";
 import {ISafe} from "../interfaces/ISafe.sol";
 import {IRegistryFactory} from "../IRegistryFactory.sol";
-import {CVStrategyInitializeParamsV0_1, PointSystem} from "../CVStrategy/ICVStrategy.sol";
+import {CVStrategyInitializeParamsV0_2, PointSystem} from "../CVStrategy/ICVStrategy.sol";
 import {CVStrategyV0_0} from "../CVStrategy/CVStrategyV0_0.sol";
 import {Upgrades} from "@openzeppelin/foundry/LegacyUpgrades.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
@@ -101,6 +101,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
     event FeeReceiverChanged(address _feeReceiver);
     event PoolCreated(uint256 _poolId, address _strategy, address _community, address _token, Metadata _metadata); // 0x778cac0a
     event PoolRejected(address _strategy);
+    event CommunityArchived(bool _archived);
 
     /*|--------------------------------------------|*/
     /*|              CUSTOM ERRORS                 |*/
@@ -324,7 +325,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         emit RegistryInitialized(profileId, communityName, params._metadata);
     }
 
-    function createPool(address _token, CVStrategyInitializeParamsV0_1 memory _params, Metadata memory _metadata)
+    function createPool(address _token, CVStrategyInitializeParamsV0_2 memory _params, Metadata memory _metadata)
         public
         virtual
         returns (uint256 poolId, address strategy)
@@ -359,7 +360,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
     function createPool(
         address _strategy,
         address _token,
-        CVStrategyInitializeParamsV0_1 memory _params,
+        CVStrategyInitializeParamsV0_2 memory _params,
         Metadata memory _metadata
     ) public virtual returns (uint256 poolId, address strategy) {
         address token = NATIVE;
@@ -373,6 +374,11 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         );
 
         emit PoolCreated(poolId, strategy, address(this), _token, _metadata);
+    }
+
+    function setArchived(bool _isArchived) external {
+        onlyCouncilSafe();
+        emit CommunityArchived(_isArchived);
     }
 
     function activateMemberInStrategy(address _member, address _strategy) public virtual nonReentrant {

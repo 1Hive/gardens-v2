@@ -15,7 +15,7 @@ import {
   StopIcon,
   Cog6ToothIcon,
 } from "@heroicons/react/24/solid";
-import { FetchTokenResult } from "@wagmi/core";
+import { erc20ABI, FetchTokenResult } from "@wagmi/core";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { Address, zeroAddress } from "viem";
@@ -36,7 +36,7 @@ import MarkdownWrapper from "./MarkdownWrapper";
 import { Modal } from "./Modal";
 import { Skeleton } from "./Skeleton";
 import { Statistic } from "./Statistic";
-import { blueLand, grassLarge } from "@/assets";
+import { blueLand, grassLarge, SupefluidStream } from "@/assets";
 import { chainConfigMap } from "@/configs/chains";
 import { VOTING_POINT_SYSTEM_DESCRIPTION } from "@/configs/constants";
 import { usePubSubContext } from "@/contexts/pubsub.context";
@@ -61,6 +61,8 @@ import {
   MAX_RATIO_CONSTANT,
 } from "@/utils/numbers";
 import { shortenAddress } from "@/utils/text";
+import { toast } from "react-toastify";
+import { delayAsync } from "@/utils/delayAsync";
 
 type Props = {
   ipfsResult: MetadataV1 | null;
@@ -123,6 +125,7 @@ export default function PoolHeader({
   const router = useRouter();
   const path = usePathname();
   const isArchived = strategy.archived;
+  const [superTokenCopied, setSuperTokenCopied] = useState(false);
 
   const { data: passportStrategyData } =
     useSubgraphQuery<getPassportStrategyQuery>({
@@ -348,6 +351,13 @@ export default function PoolHeader({
     },
   });
 
+  const { data: superTokenSymbol } = useContractRead({
+    address: strategy.config.superfluidToken as Address,
+    abi: erc20ABI,
+    functionName: "symbol",
+    enabled: !!strategy.config.superfluidToken,
+  });
+
   //Disable Council Safe Buttons: Edit, Disable and Approve
   const disableCouncilSafeBtnCondition: ConditionObject[] = [
     {
@@ -535,13 +545,45 @@ export default function PoolHeader({
           {PoolTypes[proposalType] === "funding" && (
             <Statistic label="funding token">
               <Badge icon={<Square3Stack3DIcon />}>
-                <EthAddress
-                  address={poolToken?.address as Address}
-                  shortenAddress={true}
-                  icon={false}
-                  actions="copy"
-                  label={poolToken?.symbol}
-                />
+                <div className="flex items-center">
+                  <EthAddress
+                    address={poolToken?.address as Address}
+                    shortenAddress={true}
+                    icon={false}
+                    actions="copy"
+                    label={poolToken?.symbol}
+                  />
+                  {strategy.config.superfluidToken && (
+                    <div
+                      className="tooltip"
+                      data-tip={`This pool is superfluid enabled. \nYou can stream ${superTokenSymbol ?? token.symbol + "x"} tokens to this pool. Click to copy address.`}
+                    >
+                      <button
+                        className="btn btn-ghost btn-xs p-0"
+                        onClick={async () => {
+                          setSuperTokenCopied(true);
+                          navigator.clipboard.writeText(
+                            strategy.config.superfluidToken!,
+                          );
+                          await delayAsync(1000);
+                          setSuperTokenCopied(false);
+                        }}
+                      >
+                        {superTokenCopied ?
+                          <div className="w-8 h-8 p-2">
+                            <CheckIcon className="w-4 h-4" />
+                          </div>
+                        : <Image
+                            src={SupefluidStream}
+                            alt="Incoming Stream"
+                            width={32}
+                            height={32}
+                          />
+                        }
+                      </button>
+                    </div>
+                  )}
+                </div>
               </Badge>
             </Statistic>
           )}
