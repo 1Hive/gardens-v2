@@ -266,7 +266,7 @@ export const IncreasePower = ({
         {/* Staking description */}
         <InfoBox
           title="Staking benefits"
-          content="staking more tokens increases your voting power in pools to support proposals."
+          content="staking more tokens can increase your voting power."
           infoBoxType="info"
           className="w-full"
         />
@@ -304,13 +304,13 @@ export const IncreasePower = ({
 
             {/* Stake & Unstake Buttons */}
 
-            <div className="flex-1 flex items-center gap-1 justify-between ">
+            <div className="flex-1 flex items-center gap-1 justify-between flex-wrap">
               <Button
                 onClick={handleClick}
                 disabled={disabledIncPowerButton}
                 tooltip={tooltipMessage}
                 icon={<ArrowTrendingUpIcon className="h-5 w-5" />}
-                className="w-full"
+                className="w-full lg:w-auto"
               >
                 Stake
                 <span className="loading-spinner" />
@@ -323,6 +323,7 @@ export const IncreasePower = ({
                 disabled={disabledDecPowerButton}
                 tooltip={decreaseTooltipMsg}
                 icon={<ArrowTrendingDownIcon className="h-5 w-5" />}
+                className="w-full lg:w-auto"
               >
                 Unstake
                 <span className="loading-spinner" />

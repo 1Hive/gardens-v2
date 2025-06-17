@@ -489,49 +489,34 @@ export function Proposals({
   // Render
   return (
     <>
-      {/* {strategy.isEnabled && (
-        <PoolGovernance
-          memberPoolWeight={memberPoolWeight}
-          tokenDecimals={tokenDecimals}
-          strategy={strategy}
-          communityAddress={communityAddress}
-          memberTokensInCommunity={memberTokensInCommunity}
-          isMemberCommunity={isMemberCommunity}
-          memberActivatedStrategy={memberActivatedStrategy}
-          membersStrategyData={membersStrategies}
-        />
-      )} */}
+      {/* Proposals section */}
+      <section className="col-span-12 lg:col-span-9 flex flex-col gap-10">
+        <header className="flex items-center justify-between gap-10 flex-wrap">
+          <h2>Proposals</h2>
+          {!!proposals &&
+            strategy.isEnabled &&
+            (proposals.length === 0 ?
+              <h4 className="text-2xl">No submitted proposals to support</h4>
+            : !allocationView && (
+                <CheckPassport strategy={strategy}>
+                  <Button
+                    icon={<AdjustmentsHorizontalIcon height={24} width={24} />}
+                    onClick={() => setAllocationView((prev) => !prev)}
+                    disabled={
+                      !isConnected ||
+                      missmatchUrl ||
+                      !memberActivatedStrategy ||
+                      !isAllowed
+                    }
+                    tooltip={tooltipMessage}
+                  >
+                    Manage support
+                  </Button>
+                </CheckPassport>
+              ))}
+        </header>
+        {allocationView && <UserAllocationStats stats={stats} />}
 
-      <section className="flex flex-col gap-10 mt-10">
-        <div>
-          <header className="flex items-center justify-between gap-10 flex-wrap">
-            <h2>Proposals</h2>
-            {!!proposals &&
-              strategy.isEnabled &&
-              (proposals.length === 0 ?
-                <h4 className="text-2xl">No submitted proposals to support</h4>
-              : !allocationView && (
-                  <CheckPassport strategy={strategy}>
-                    <Button
-                      icon={
-                        <AdjustmentsHorizontalIcon height={24} width={24} />
-                      }
-                      onClick={() => setAllocationView((prev) => !prev)}
-                      disabled={
-                        !isConnected ||
-                        missmatchUrl ||
-                        !memberActivatedStrategy ||
-                        !isAllowed
-                      }
-                      tooltip={tooltipMessage}
-                    >
-                      Manage support
-                    </Button>
-                  </CheckPassport>
-                ))}
-          </header>
-          {allocationView && <UserAllocationStats stats={stats} />}
-        </div>
         <div className="flex flex-col gap-6">
           {proposals && inputs ?
             <>
@@ -607,6 +592,7 @@ export function Proposals({
             </>
           : <LoadingSpinner />}
         </div>
+
         {strategy.isEnabled &&
           (allocationView ?
             <div className="flex justify-end gap-4">
@@ -645,6 +631,24 @@ export function Proposals({
               </div>
             </div>)}
       </section>
+
+      {/* Pool Governace */}
+      {strategy.isEnabled && (
+        <div className="col-span-12 lg:col-span-3">
+          <div className="backdrop-blur-sm rounded-lg flex flex-col gap-2 sticky top-32">
+            <PoolGovernance
+              memberPoolWeight={memberPoolWeight}
+              tokenDecimals={tokenDecimals}
+              strategy={strategy}
+              communityAddress={communityAddress}
+              memberTokensInCommunity={memberTokensInCommunity}
+              isMemberCommunity={isMemberCommunity}
+              memberActivatedStrategy={memberActivatedStrategy}
+              membersStrategyData={membersStrategies}
+            />
+          </div>
+        </div>
+      )}
     </>
   );
 }
