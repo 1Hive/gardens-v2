@@ -322,6 +322,11 @@ export default function Page({
                     </div>
 
                     <div className="flex flex-col items-start justify-between gap-2">
+                      <Statistic label={"Created"}>
+                        <span className="text-black font-medium">
+                          {prettyTimestamp(proposalData?.createdAt ?? 0)}
+                        </span>
+                      </Statistic>
                       {!isSignalingType && (
                         <>
                           <Statistic label={"request amount"} className="pt-2">
@@ -338,11 +343,6 @@ export default function Page({
                           </Statistic>
                         </>
                       )}
-                      <Statistic label={"Created"}>
-                        <span className="text-black font-medium">
-                          {prettyTimestamp(proposalData?.createdAt ?? 0)}
-                        </span>
-                      </Statistic>
                     </div>
                   </div>
                 </header>
@@ -350,7 +350,7 @@ export default function Page({
 
               {/* Conviction Progress */}
               {proposalData.strategy.isEnabled && (
-                <div className="border2">
+                <div className="">
                   {status && status !== "active" && status !== "disputed" ?
                     <h4
                       className={`text-center ${status === "executed" ? "text-primary-content" : "text-error-content"}`}
@@ -362,7 +362,7 @@ export default function Page({
                   : <>
                       <div className="flex items-center justify-between">
                         <h4>Progress</h4>
-                        <Button
+                        {/* <Button
                           icon={
                             <AdjustmentsHorizontalIcon height={24} width={24} />
                           }
@@ -373,9 +373,9 @@ export default function Page({
                           tooltip={tooltipMessage}
                         >
                           Manage support
-                        </Button>
+                        </Button> */}
                       </div>
-                      <div className="flex flex-col gap-7  border2">
+                      <div className="flex flex-col gap-2 mt-2">
                         <ConvictionBarChart
                           currentConvictionPct={currentConvictionPct}
                           thresholdPct={thresholdPct}
@@ -387,7 +387,7 @@ export default function Page({
                           defaultChartMaxValue
                           proposalStatus={proposalStatus}
                         />
-                        <div className="flex justify-center lg:justify-end w-full border2 py-1">
+                        {/* <div className="flex justify-center lg:justify-end w-full  py-1">
                           {status === "active" && !isSignalingType && (
                             <Button
                               className="w-full"
@@ -417,7 +417,7 @@ export default function Page({
                               Execute
                             </Button>
                           )}
-                        </div>
+                        </div> */}
                       </div>
                     </>
                   }
