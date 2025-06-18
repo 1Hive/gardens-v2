@@ -54,14 +54,6 @@ export function CommunityCard({
     searchParams[QUERY_PARAMS.gardenPage.newCommunity]?.toLowerCase() ===
     id.toLowerCase();
 
-  const queryAllChains = useCheat("queryAllChains");
-
-  const is1hive =
-    id.toLowerCase() ===
-    (isProd || queryAllChains ?
-      ONE_HIVE_COMMUNITY_ADDRESS
-    : ONE_HIVE_FAKE_COMMUNITY_ADDRESS);
-
   return (
     <Card
       key={id}
@@ -76,12 +68,7 @@ export function CommunityCard({
           </div>
         )}
         <Image
-          src={
-            is1hive ? OneHiveLogo
-            : isProtopian ?
-              ProtopianLogo
-            : CommunityLogo
-          }
+          src={isProtopian ? ProtopianLogo : CommunityLogo}
           alt={`${communityName} community`}
           className="mb-2 h-[100px]"
           height={100}
