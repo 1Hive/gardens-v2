@@ -282,29 +282,28 @@ export default function Page({
         >
           <div className="flex flex-col items-start gap-10 sm:flex-row">
             <div className="flex w-full flex-col gap-8">
+              {/* Title - author - beneficairy - request - created - type */}
               <div>
                 <header className="mb-4 flex flex-col items-start gap-4 sm:mb-2 ">
                   <div className=" flex items-center justify-between w-full gap-4 sm:gap-8">
                     <Skeleton isLoading={!metadata} className="!w-96 h-8">
                       <h2>{metadata?.title}</h2>
                     </Skeleton>
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2">
+                        <p className="text-md flex items-center bg-neutral-soft-2 rounded-md px-2 py-1 text-neutral-soft-content">
+                          ID:{" "}
+                          <span className="text-md ml-1 font-medium text-black">
+                            {proposalIdNumber.toString()}
+                          </span>
+                        </p>
+                      </div>
 
-                    <Badge type={proposalType} />
+                      <Badge type={proposalType} />
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <p className="text-md flex items-center bg-neutral-soft-2 rounded-md px-2 py-1 text-neutral-soft-content">
-                      ID:{" "}
-                      <span className="text-md ml-1 font-medium text-black">
-                        {proposalIdNumber.toString()}
-                      </span>
-                    </p>
-                    <Statistic label={"Created"}>
-                      <span className="text-black font-medium">
-                        {prettyTimestamp(proposalData?.createdAt ?? 0)}
-                      </span>
-                    </Statistic>
-                  </div>
-                  <div className=" w-full flex items-start justify-between">
+
+                  <div className="w-full flex items-start justify-between">
                     <div className="flex flex-col gap-1 ">
                       <Statistic label={"Author"}>
                         <EthAddress
@@ -322,7 +321,7 @@ export default function Page({
                       </Statistic>
                     </div>
 
-                    <div className="flex flex-col gap-1 ">
+                    <div className="flex flex-col items-start justify-between gap-2">
                       {!isSignalingType && (
                         <>
                           <Statistic label={"request amount"} className="pt-2">
@@ -339,95 +338,97 @@ export default function Page({
                           </Statistic>
                         </>
                       )}
+                      <Statistic label={"Created"}>
+                        <span className="text-black font-medium">
+                          {prettyTimestamp(proposalData?.createdAt ?? 0)}
+                        </span>
+                      </Statistic>
                     </div>
                   </div>
                 </header>
               </div>
-              <div>
-                <Skeleton rows={5} isLoading={!metadata}>
-                  <MarkdownWrapper>
-                    {metadata?.description ?? "No description found"}
-                  </MarkdownWrapper>
-                </Skeleton>
-              </div>
+
+              {/* Conviction Progress */}
+              {proposalData.strategy.isEnabled && (
+                <div className="border2">
+                  {status && status !== "active" && status !== "disputed" ?
+                    <h4
+                      className={`text-center ${status === "executed" ? "text-primary-content" : "text-error-content"}`}
+                    >
+                      {status === "executed" ?
+                        "Proposal passed and executed successfully!"
+                      : `Proposal has been ${status}.`}
+                    </h4>
+                  : <>
+                      <div className="flex items-center justify-between">
+                        <h4>Progress</h4>
+                        <Button
+                          icon={
+                            <AdjustmentsHorizontalIcon height={24} width={24} />
+                          }
+                          onClick={() => manageSupportClicked()}
+                          disabled={
+                            !isConnected || missmatchUrl || !isMemberCommunity
+                          }
+                          tooltip={tooltipMessage}
+                        >
+                          Manage support
+                        </Button>
+                      </div>
+                      <div className="flex flex-col gap-7  border2">
+                        <ConvictionBarChart
+                          currentConvictionPct={currentConvictionPct}
+                          thresholdPct={thresholdPct}
+                          proposalSupportPct={totalSupportPct}
+                          isSignalingType={isSignalingType}
+                          proposalNumber={Number(proposalIdNumber)}
+                          timeToPass={Number(timeToPass)}
+                          onReadyToExecute={triggerConvictionRefetch}
+                          defaultChartMaxValue
+                          proposalStatus={proposalStatus}
+                        />
+                        <div className="flex justify-center lg:justify-end w-full border2 py-1">
+                          {status === "active" && !isSignalingType && (
+                            <Button
+                              className="w-full"
+                              onClick={() =>
+                                writeDistribute?.({
+                                  args: [
+                                    BigInt(poolId),
+                                    [proposalData?.strategy.id as Address],
+                                    encodedDataProposalId(proposalIdNumber),
+                                  ],
+                                })
+                              }
+                              disabled={
+                                currentConvictionPct <= thresholdPct ||
+                                !isConnected ||
+                                proposalStatus === "disputed"
+                              }
+                              tooltip={
+                                (
+                                  tooltipMessage ??
+                                  currentConvictionPct <= thresholdPct
+                                ) ?
+                                  "Proposal has not reached the threshold yet"
+                                : undefined
+                              }
+                            >
+                              Execute
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </>
+                  }
+                </div>
+              )}
             </div>
           </div>
           {!proposalData.strategy.isEnabled && (
             <InfoBox infoBoxType="warning">The pool is not enabled.</InfoBox>
           )}
         </div>
-
-        {proposalData.strategy.isEnabled && (
-          <section className="section-layout">
-            {status && status !== "active" && status !== "disputed" ?
-              <h4
-                className={`text-center ${status === "executed" ? "text-primary-content" : "text-error-content"}`}
-              >
-                {status === "executed" ?
-                  "Proposal passed and executed successfully!"
-                : `Proposal has been ${status}.`}
-              </h4>
-            : <>
-                <div className="">
-                  <h2>Metrics</h2>
-                  <Button
-                    icon={<AdjustmentsHorizontalIcon height={24} width={24} />}
-                    onClick={() => manageSupportClicked()}
-                    disabled={
-                      !isConnected || missmatchUrl || !isMemberCommunity
-                    }
-                    tooltip={tooltipMessage}
-                  >
-                    Manage support
-                  </Button>
-                </div>
-                <div className="flex flex-col gap-7 relative">
-                  <ConvictionBarChart
-                    currentConvictionPct={currentConvictionPct}
-                    thresholdPct={thresholdPct}
-                    proposalSupportPct={totalSupportPct}
-                    isSignalingType={isSignalingType}
-                    proposalNumber={Number(proposalIdNumber)}
-                    timeToPass={Number(timeToPass)}
-                    onReadyToExecute={triggerConvictionRefetch}
-                    defaultChartMaxValue
-                    proposalStatus={proposalStatus}
-                  />
-                  <div className="flex justify-center lg:justify-end w-full">
-                    {status === "active" && !isSignalingType && (
-                      <Button
-                        onClick={() =>
-                          writeDistribute?.({
-                            args: [
-                              BigInt(poolId),
-                              [proposalData?.strategy.id as Address],
-                              encodedDataProposalId(proposalIdNumber),
-                            ],
-                          })
-                        }
-                        disabled={
-                          currentConvictionPct <= thresholdPct ||
-                          !isConnected ||
-                          proposalStatus === "disputed"
-                        }
-                        tooltip={
-                          (
-                            tooltipMessage ??
-                            currentConvictionPct <= thresholdPct
-                          ) ?
-                            "Proposal has not reached the threshold yet"
-                          : undefined
-                        }
-                      >
-                        Execute
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </>
-            }
-          </section>
-        )}
       </section>
 
       {/* Right side */}
@@ -467,6 +468,17 @@ export default function Page({
           )} */}
         </div>
       </div>
+
+      <section className="p-2 col-span-12 lg:col-span-9 mt-10 flex flex-col gap-4">
+        <h4>Proposal Description</h4>
+        <div>
+          <Skeleton rows={5} isLoading={!metadata}>
+            <MarkdownWrapper>
+              {metadata?.description ?? "No description found"}
+            </MarkdownWrapper>
+          </Skeleton>
+        </div>
+      </section>
     </>
   );
 }

@@ -475,8 +475,9 @@ export const DisputeButton: FC<Props> = ({
               tooltip={tooltipMessage}
               tooltipSide="tooltip-left"
               isLoading={isDisputeCreateLoading}
+              className="w-full"
             >
-              Dispute
+              Dispute proposal
             </Button>
           </div>
         </div>
@@ -492,6 +493,7 @@ export const DisputeButton: FC<Props> = ({
             color="danger"
             btnStyle="outline"
             onClick={() => setIsModalOpened(true)}
+            className="w-full"
           >
             {isDisputed ?? isProposalEnded ? "Open dispute" : "Dispute"}
           </Button>
