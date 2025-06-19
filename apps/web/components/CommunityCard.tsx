@@ -7,6 +7,7 @@ import {
   UserGroupIcon,
 } from "@heroicons/react/24/outline";
 import Image from "next/image";
+import { mainnet } from "wagmi";
 import {
   CVStrategy,
   Maybe,
@@ -16,16 +17,11 @@ import {
 import { Card } from "./Card";
 import { Statistic } from "./Statistic";
 import TooltipIfOverflow from "./TooltipIfOverflow";
-import { CommunityLogo, ProtopianLogo, OneHiveLogo } from "@/assets";
+import { CommunityLogo, ProtopianLogo } from "@/assets";
 import { ChainIcon } from "@/configs/chains";
-import { isProd } from "@/configs/isProd";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
-import {
-  ONE_HIVE_COMMUNITY_ADDRESS,
-  ONE_HIVE_FAKE_COMMUNITY_ADDRESS,
-} from "@/globals";
-import { useCheat } from "@/hooks/useCheat";
+import { useOwnerOfNFT } from "@/hooks/useOwnerOfNFT";
 
 type CommunityCardProps = {
   id: string;
