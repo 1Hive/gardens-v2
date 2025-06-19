@@ -5,6 +5,8 @@ import {
   InformationCircleIcon,
   UserIcon,
   CheckCircleIcon,
+  XMarkIcon,
+  CheckIcon,
   BoltIcon,
 } from "@heroicons/react/24/outline";
 import { usePathname, useRouter } from "next/navigation";
@@ -312,13 +314,15 @@ export default function Page({
                         textColor="var(--color-grey-900)"
                       />
                     </Statistic>
-                    <Statistic label={"beneficiary"}>
-                      <EthAddress
-                        address={beneficiary}
-                        actions="none"
-                        textColor="var(--color-grey-900)"
-                      />
-                    </Statistic>
+                    {!isSignalingType && (
+                      <Statistic label={"beneficiary"}>
+                        <EthAddress
+                          address={beneficiary}
+                          actions="none"
+                          textColor="var(--color-grey-900)"
+                        />
+                      </Statistic>
+                    )}
                   </div>
 
                   <div className="flex flex-col items-start justify-between gap-2">
@@ -347,36 +351,30 @@ export default function Page({
                 </div>
               </header>
               {/* Divider */}
-              <div className="w-full h-[0.10px] bg-neutral-soft-content" />
+
+              {/* <div className="w-full h-[0.10px] bg-neutral-soft-content" /> */}
               {/* Conviction Progress */}
               {proposalData.strategy.isEnabled && (
                 <div className=" mt-2">
-                  {status && status !== "active" && status !== "disputed" ?
-                    <h4
-                      className={`text-center ${status === "executed" ? "text-primary-content" : "text-error-content"}`}
-                    >
-                      {status === "executed" ?
-                        "Proposal passed and executed successfully!"
-                      : `Proposal has been ${status}.`}
-                    </h4>
-                  : <>
-                      <h4>Progress</h4>
-
-                      <div className="flex flex-col gap-2">
-                        <ConvictionBarChart
-                          currentConvictionPct={currentConvictionPct}
-                          thresholdPct={thresholdPct}
-                          proposalSupportPct={totalSupportPct}
-                          isSignalingType={isSignalingType}
-                          proposalNumber={Number(proposalIdNumber)}
-                          timeToPass={Number(timeToPass)}
-                          onReadyToExecute={triggerConvictionRefetch}
-                          defaultChartMaxValue
-                          proposalStatus={proposalStatus}
-                        />
-                      </div>
-                    </>
-                  }
+                  {status === "active" ||
+                    (status === "disputed" && (
+                      <>
+                        <h4>Progress</h4>
+                        <div className="flex flex-col gap-2">
+                          <ConvictionBarChart
+                            currentConvictionPct={currentConvictionPct}
+                            thresholdPct={thresholdPct}
+                            proposalSupportPct={totalSupportPct}
+                            isSignalingType={isSignalingType}
+                            proposalNumber={Number(proposalIdNumber)}
+                            timeToPass={Number(timeToPass)}
+                            onReadyToExecute={triggerConvictionRefetch}
+                            defaultChartMaxValue
+                            proposalStatus={proposalStatus}
+                          />
+                        </div>
+                      </>
+                    ))}
                 </div>
               )}
             </div>
@@ -388,10 +386,10 @@ export default function Page({
 
           <div className="w-full h-[0.10px] bg-neutral-soft-content" />
 
-          {/* Buttons */}
+          {/* Action Buttons */}
           <div className="flex flex-col gap-2 -mt-2">
             <h6>Actions</h6>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 w-full">
               <Button
                 icon={<AdjustmentsHorizontalIcon height={18} width={18} />}
                 onClick={() => manageSupportClicked()}
@@ -401,36 +399,34 @@ export default function Page({
               >
                 Manage support
               </Button>
-              <div className="flex justify-center lg:justify-end w-full  py-1">
-                {status === "active" && !isSignalingType && (
-                  <Button
-                    icon={<BoltIcon height={18} width={18} />}
-                    className="w-full"
-                    onClick={() =>
-                      writeDistribute?.({
-                        args: [
-                          BigInt(poolId),
-                          [proposalData?.strategy.id as Address],
-                          encodedDataProposalId(proposalIdNumber),
-                        ],
-                      })
-                    }
-                    disabled={
-                      !isConnected ||
-                      missmatchUrl ||
-                      currentConvictionPct <= thresholdPct ||
-                      proposalStatus === "disputed"
-                    }
-                    tooltip={
-                      tooltipMessage ?? currentConvictionPct <= thresholdPct ?
-                        "Proposal has not reached the threshold yet"
-                      : undefined
-                    }
-                  >
-                    Execute
-                  </Button>
-                )}
-              </div>
+              {status === "active" && !isSignalingType && (
+                <Button
+                  icon={<BoltIcon height={18} width={18} />}
+                  className="w-full"
+                  onClick={() =>
+                    writeDistribute?.({
+                      args: [
+                        BigInt(poolId),
+                        [proposalData?.strategy.id as Address],
+                        encodedDataProposalId(proposalIdNumber),
+                      ],
+                    })
+                  }
+                  disabled={
+                    !isConnected ||
+                    missmatchUrl ||
+                    currentConvictionPct <= thresholdPct ||
+                    proposalStatus === "disputed"
+                  }
+                  tooltip={
+                    tooltipMessage ?? currentConvictionPct <= thresholdPct ?
+                      "Proposal has not reached the threshold yet"
+                    : undefined
+                  }
+                >
+                  Execute
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -449,34 +445,62 @@ export default function Page({
       </section>
 
       {/* Right side */}
-      <div className="col-span-12 lg:col-span-3 lg:-mt-[600px]">
+      <div className="col-span-12 lg:col-span-3 lg:-mt-[500px]">
         <div className="backdrop-blur-sm rounded-lg flex flex-col gap-4 sticky top-32">
           <section className="section-layout gap-4 flex flex-col">
             <div className="flex items-center justify-between">
               <h5>Status</h5>
-              <Badge
-                status={proposalData.proposalStatus}
-                icon={
-                  <CheckCircleIcon className="w-5 h-5 text-primary-content" />
-                }
-              />
+              <Badge status={proposalData.proposalStatus} />
             </div>
             <div>
               <div className="flex flex-col gap-2">
-                <h6>ESTIMATED TIME UNTIL PASS</h6>
-                <span className="text-primary-content">WILL PASS</span>
-                <Statistic className="text-2xl font-bold">
-                  {timeToPass ?
-                    <span className="text-black">
-                      {prettyTimestamp(timeToPass)}
-                    </span>
-                  : <span className="text-neutral-soft-content">N/A</span>}
-                </Statistic>
-                <InfoBox
-                  infoBoxType="info"
-                  contentStyle="text-tertiary-content"
-                  content="This proposal is currently open. It will pass if nobody successfully challenges it and it receives enough support."
-                />
+                {!isSignalingType && (
+                  <>
+                    {status === "executed" ?
+                      <div className="flex items-center gap-2">
+                        <CheckIcon className="w-5 h-5 text-primary-content" />
+                        <p className="text-primary-content subtitle2">
+                          Passed and Executed
+                        </p>
+                      </div>
+                    : status === "cancelled" ?
+                      <div className="flex items-center gap-2">
+                        <XMarkIcon className="w-5 h-5 text-error-content" />
+                        <p className="text-error-content subtitle2">
+                          Cancelled
+                        </p>
+                      </div>
+                    : <>
+                        <p className="subtitle2">ESTIMATED TIME UNTIL PASS</p>
+                        <div className="flex items-center gap-2">
+                          <span>
+                            {currentConvictionPct > thresholdPct ?
+                              <CheckIcon className="w-5 h-5 text-primary-content" />
+                            : <XMarkIcon className="w-5 h-5 text-error-content" />
+                            }
+                          </span>
+                          <span
+                            className={`${currentConvictionPct > thresholdPct ? "text-primary-content" : "text-error-content"} `}
+                          >{`${currentConvictionPct > thresholdPct ? "WILL" : "WONT"} PASS`}</span>
+                        </div>
+                        <Statistic className="text-2xl font-bold">
+                          {timeToPass && (
+                            <span className="text-black">
+                              {prettyTimestamp(timeToPass)}
+                            </span>
+                          )}
+                        </Statistic>
+                      </>
+                    }
+                  </>
+                )}
+                {status !== "executed" && status !== "cancelled" && (
+                  <InfoBox
+                    infoBoxType="info"
+                    contentStyle="text-tertiary-content"
+                    content="This proposal is currently open. It will pass if nobody successfully challenges it and it receives enough support."
+                  />
+                )}
               </div>
             </div>
             <div className="flex items-end ">
@@ -581,3 +605,11 @@ const ProposalSupportersTable = ({
     />
   );
 };
+
+//  <h4
+//                     className={`text-center ${status === "executed" ? "text-primary-content" : "text-error-content"}`}
+//                   >
+//                     {status === "executed" ?
+//                       "Proposal passed and executed successfully!"
+//                     : `Proposal has been ${status}.`}
+//                   </h4>
