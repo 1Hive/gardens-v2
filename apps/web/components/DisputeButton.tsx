@@ -477,7 +477,7 @@ export const DisputeButton: FC<Props> = ({
               isLoading={isDisputeCreateLoading}
               className="w-full"
             >
-              Dispute proposal
+              Dispute
             </Button>
           </div>
         </div>
@@ -495,7 +495,9 @@ export const DisputeButton: FC<Props> = ({
             onClick={() => setIsModalOpened(true)}
             className="w-full"
           >
-            {isDisputed ?? isProposalEnded ? "Open dispute" : "Dispute"}
+            {isDisputed ?? isProposalEnded ?
+              "Open dispute"
+            : "Dispute Proposal"}
           </Button>
           <Modal
             title={`Disputed Proposal: ${proposalData.title} #${proposalData.proposalNumber}`}

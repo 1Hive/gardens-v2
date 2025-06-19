@@ -5,6 +5,7 @@ import {
   InformationCircleIcon,
   UserIcon,
   CheckCircleIcon,
+  BoltIcon,
 } from "@heroicons/react/24/outline";
 import { usePathname, useRouter } from "next/navigation";
 import { toast } from "react-toastify";
@@ -278,79 +279,78 @@ export default function Page({
       <section className="col-span-12 lg:col-span-9">
         {/* Main Section */}
         <div
-          className={`section-layout flex flex-col gap-8 ${status === "disputed" ? "!border-error-content" : ""} ${status === "executed" ? "!border-primary-content" : ""}`}
+          className={`section-layout flex flex-col gap-8  ${status === "disputed" ? "!border-error-content" : ""} ${status === "executed" ? "!border-primary-content" : ""}`}
         >
-          <div className="flex flex-col items-start gap-10 sm:flex-row">
-            <div className="flex w-full flex-col gap-8">
+          <div className="flex flex-col items-start gap-10  sm:flex-row">
+            <div className="flex w-full flex-col gap-6">
               {/* Title - author - beneficairy - request - created - type */}
-              <div>
-                <header className="mb-4 flex flex-col items-start gap-4 sm:mb-2 ">
-                  <div className=" flex items-center justify-between w-full gap-4 sm:gap-8">
-                    <Skeleton isLoading={!metadata} className="!w-96 h-8">
-                      <h2>{metadata?.title}</h2>
-                    </Skeleton>
+              <header className="flex flex-col items-start gap-4">
+                <div className=" flex items-center justify-between w-full gap-4 sm:gap-8">
+                  <Skeleton isLoading={!metadata} className="!w-96 h-8">
+                    <h2>{metadata?.title}</h2>
+                  </Skeleton>
+                  <div className="flex items-center gap-2">
                     <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-2">
-                        <p className="text-md flex items-center bg-neutral-soft-2 rounded-md px-2 py-1 text-neutral-soft-content">
-                          ID:{" "}
-                          <span className="text-md ml-1 font-medium text-black">
-                            {proposalIdNumber.toString()}
-                          </span>
-                        </p>
-                      </div>
-
-                      <Badge type={proposalType} />
-                    </div>
-                  </div>
-
-                  <div className="w-full flex items-start justify-between">
-                    <div className="flex flex-col gap-1 ">
-                      <Statistic label={"Author"}>
-                        <EthAddress
-                          address={submitter}
-                          actions="none"
-                          textColor="var(--color-grey-900)"
-                        />
-                      </Statistic>
-                      <Statistic label={"beneficiary"}>
-                        <EthAddress
-                          address={beneficiary}
-                          actions="none"
-                          textColor="var(--color-grey-900)"
-                        />
-                      </Statistic>
-                    </div>
-
-                    <div className="flex flex-col items-start justify-between gap-2">
-                      <Statistic label={"Created"}>
-                        <span className="text-black font-medium">
-                          {prettyTimestamp(proposalData?.createdAt ?? 0)}
+                      <p className="text-md flex items-center bg-neutral-soft-2 rounded-md px-2 py-1 text-neutral-soft-content">
+                        ID:{" "}
+                        <span className="text-md ml-1 font-medium text-black">
+                          {proposalIdNumber.toString()}
                         </span>
-                      </Statistic>
-                      {!isSignalingType && (
-                        <>
-                          <Statistic label={"request amount"} className="pt-2">
-                            <DisplayNumber
-                              number={formatUnits(
-                                requestedAmount,
-                                poolToken?.decimals ?? 18,
-                              )}
-                              tokenSymbol={poolToken?.symbol}
-                              compact={true}
-                              valueClassName="text-black font-medium"
-                              symbolClassName="text-black font-medium"
-                            />
-                          </Statistic>
-                        </>
-                      )}
+                      </p>
                     </div>
-                  </div>
-                </header>
-              </div>
 
+                    <Badge type={proposalType} />
+                  </div>
+                </div>
+
+                <div className="w-full flex items-start justify-between">
+                  <div className="flex flex-col gap-1 ">
+                    <Statistic label={"Author"}>
+                      <EthAddress
+                        address={submitter}
+                        actions="none"
+                        textColor="var(--color-grey-900)"
+                      />
+                    </Statistic>
+                    <Statistic label={"beneficiary"}>
+                      <EthAddress
+                        address={beneficiary}
+                        actions="none"
+                        textColor="var(--color-grey-900)"
+                      />
+                    </Statistic>
+                  </div>
+
+                  <div className="flex flex-col items-start justify-between gap-2">
+                    <Statistic label={"Created"}>
+                      <span className="text-black font-medium">
+                        {prettyTimestamp(proposalData?.createdAt ?? 0)}
+                      </span>
+                    </Statistic>
+                    {!isSignalingType && (
+                      <>
+                        <Statistic label={"request amount"} className="pt-2">
+                          <DisplayNumber
+                            number={formatUnits(
+                              requestedAmount,
+                              poolToken?.decimals ?? 18,
+                            )}
+                            tokenSymbol={poolToken?.symbol}
+                            compact={true}
+                            valueClassName="text-black font-medium"
+                            symbolClassName="text-black font-medium"
+                          />
+                        </Statistic>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </header>
+              {/* Divider */}
+              <div className="w-full h-[0.10px] bg-neutral-soft-content" />
               {/* Conviction Progress */}
               {proposalData.strategy.isEnabled && (
-                <div className="">
+                <div className=" mt-2">
                   {status && status !== "active" && status !== "disputed" ?
                     <h4
                       className={`text-center ${status === "executed" ? "text-primary-content" : "text-error-content"}`}
@@ -360,22 +360,9 @@ export default function Page({
                       : `Proposal has been ${status}.`}
                     </h4>
                   : <>
-                      <div className="flex items-center justify-between">
-                        <h4>Progress</h4>
-                        {/* <Button
-                          icon={
-                            <AdjustmentsHorizontalIcon height={24} width={24} />
-                          }
-                          onClick={() => manageSupportClicked()}
-                          disabled={
-                            !isConnected || missmatchUrl || !isMemberCommunity
-                          }
-                          tooltip={tooltipMessage}
-                        >
-                          Manage support
-                        </Button> */}
-                      </div>
-                      <div className="flex flex-col gap-2 mt-2">
+                      <h4>Progress</h4>
+
+                      <div className="flex flex-col gap-2">
                         <ConvictionBarChart
                           currentConvictionPct={currentConvictionPct}
                           thresholdPct={thresholdPct}
@@ -387,37 +374,6 @@ export default function Page({
                           defaultChartMaxValue
                           proposalStatus={proposalStatus}
                         />
-                        {/* <div className="flex justify-center lg:justify-end w-full  py-1">
-                          {status === "active" && !isSignalingType && (
-                            <Button
-                              className="w-full"
-                              onClick={() =>
-                                writeDistribute?.({
-                                  args: [
-                                    BigInt(poolId),
-                                    [proposalData?.strategy.id as Address],
-                                    encodedDataProposalId(proposalIdNumber),
-                                  ],
-                                })
-                              }
-                              disabled={
-                                currentConvictionPct <= thresholdPct ||
-                                !isConnected ||
-                                proposalStatus === "disputed"
-                              }
-                              tooltip={
-                                (
-                                  tooltipMessage ??
-                                  currentConvictionPct <= thresholdPct
-                                ) ?
-                                  "Proposal has not reached the threshold yet"
-                                : undefined
-                              }
-                            >
-                              Execute
-                            </Button>
-                          )}
-                        </div> */}
                       </div>
                     </>
                   }
@@ -425,38 +381,128 @@ export default function Page({
               )}
             </div>
           </div>
+
           {!proposalData.strategy.isEnabled && (
             <InfoBox infoBoxType="warning">The pool is not enabled.</InfoBox>
           )}
+
+          <div className="w-full h-[0.10px] bg-neutral-soft-content" />
+
+          {/* Buttons */}
+          <div className="flex flex-col gap-2 -mt-2">
+            <h6>Actions</h6>
+            <div className="flex items-center gap-4">
+              <Button
+                icon={<AdjustmentsHorizontalIcon height={18} width={18} />}
+                onClick={() => manageSupportClicked()}
+                disabled={!isConnected || missmatchUrl || !isMemberCommunity}
+                tooltip={tooltipMessage}
+                className="w-full"
+              >
+                Manage support
+              </Button>
+              <div className="flex justify-center lg:justify-end w-full  py-1">
+                {status === "active" && !isSignalingType && (
+                  <Button
+                    icon={<BoltIcon height={18} width={18} />}
+                    className="w-full"
+                    onClick={() =>
+                      writeDistribute?.({
+                        args: [
+                          BigInt(poolId),
+                          [proposalData?.strategy.id as Address],
+                          encodedDataProposalId(proposalIdNumber),
+                        ],
+                      })
+                    }
+                    disabled={
+                      !isConnected ||
+                      missmatchUrl ||
+                      currentConvictionPct <= thresholdPct ||
+                      proposalStatus === "disputed"
+                    }
+                    tooltip={
+                      tooltipMessage ?? currentConvictionPct <= thresholdPct ?
+                        "Proposal has not reached the threshold yet"
+                      : undefined
+                    }
+                  >
+                    Execute
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Proposal Description */}
+      <section className="px-8 col-span-12 lg:col-span-9 mt-6 flex flex-col gap-6">
+        <h3>Proposal Description</h3>
+        <div>
+          <Skeleton rows={5} isLoading={!metadata}>
+            <MarkdownWrapper>
+              {metadata?.description ?? "No description found"}
+            </MarkdownWrapper>
+          </Skeleton>
         </div>
       </section>
 
       {/* Right side */}
-      <div className="col-span-12 lg:col-span-3">
+      <div className="col-span-12 lg:col-span-3 lg:-mt-[600px]">
         <div className="backdrop-blur-sm rounded-lg flex flex-col gap-4 sticky top-32">
           <section className="section-layout gap-4 flex flex-col">
-            <h5>Status</h5>
-            <Badge
-              status={proposalData.proposalStatus}
-              icon={
-                <CheckCircleIcon className="w-5 h-5 text-primary-content" />
-              }
-            />
+            <div className="flex items-center justify-between">
+              <h5>Status</h5>
+              <Badge
+                status={proposalData.proposalStatus}
+                icon={
+                  <CheckCircleIcon className="w-5 h-5 text-primary-content" />
+                }
+              />
+            </div>
+            <div>
+              <div className="flex flex-col gap-2">
+                <h6>ESTIMATED TIME UNTIL PASS</h6>
+                <span className="text-primary-content">WILL PASS</span>
+                <Statistic className="text-2xl font-bold">
+                  {timeToPass ?
+                    <span className="text-black">
+                      {prettyTimestamp(timeToPass)}
+                    </span>
+                  : <span className="text-neutral-soft-content">N/A</span>}
+                </Statistic>
+                <InfoBox
+                  infoBoxType="info"
+                  contentStyle="text-tertiary-content"
+                  content="This proposal is currently open. It will pass if nobody successfully challenges it and it receives enough support."
+                />
+              </div>
+            </div>
             <div className="flex items-end ">
-              {isProposerConnected && proposalStatus === "active" ?
-                <CancelButton proposalData={{ ...proposalData, ...metadata }} />
-              : proposalData.strategy.isEnabled && (
+              {proposalStatus === "active" &&
+                proposalData.strategy.isEnabled && (
                   <DisputeButton
                     isMemberCommunity={isMemberCommunity}
                     proposalData={{ ...proposalData, ...metadata }}
                   />
-                )
-              }
+                )}
             </div>
           </section>
 
+          {isProposerConnected && proposalStatus === "active" && (
+            <section className="section-layout gap-4 flex flex-col">
+              <InfoBox
+                infoBoxType="info"
+                contentStyle="text-tertiary-content"
+                content="As the original author, you can remove this proposal from consideration."
+              />
+              <CancelButton proposalData={{ ...proposalData, ...metadata }} />
+            </section>
+          )}
+
           {/* {filteredAndSortedProposalSupporters.length > 0 && (
-            <section className="section-layout col-span-12 lg:col-span-3">
+            <section className="max-h-10">
               <ProposalSupportersTable
                 supporters={filteredAndSortedProposalSupporters}
                 beneficiary={beneficiary}
@@ -468,17 +514,6 @@ export default function Page({
           )} */}
         </div>
       </div>
-
-      <section className="p-2 col-span-12 lg:col-span-9 mt-10 flex flex-col gap-4">
-        <h4>Proposal Description</h4>
-        <div>
-          <Skeleton rows={5} isLoading={!metadata}>
-            <MarkdownWrapper>
-              {metadata?.description ?? "No description found"}
-            </MarkdownWrapper>
-          </Skeleton>
-        </div>
-      </section>
     </>
   );
 }
