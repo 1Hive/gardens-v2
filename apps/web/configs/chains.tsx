@@ -58,6 +58,7 @@ type ChainData = {
   allo: Address;
   isTestnet: boolean;
   safePrefix?: string;
+  alchemyApiBaseUrl?: string; // Optional, used for fetching NFTs
 };
 
 const SUBGRAPH_TESTNET_VERSION = Subgraph.VERSION_TESTNET;

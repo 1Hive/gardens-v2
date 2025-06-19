@@ -477,7 +477,7 @@ export default function Page({
             <header className="flex  items-center justify-between ">
               <h2>Pools</h2>
               <Link
-                href={`/gardens/${chain}/${tokenAddr}/${communityAddr}/create-pool`}
+                href={`/gardens/${chain?.id}/${tokenAddr}/${communityAddr}/create-pool`}
               >
                 <Button
                   btnStyle="filled"

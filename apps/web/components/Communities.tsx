@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { ChevronUpIcon } from "@heroicons/react/24/outline";
 import cn from "classnames";
 import { motion, AnimatePresence } from "motion/react";
-import { useAccount } from "wagmi";
+import { mainnet, useAccount } from "wagmi";
 import {
   CVStrategy,
   Maybe,
@@ -18,6 +18,7 @@ import {
   ONE_HIVE_FAKE_COMMUNITY_ADDRESS,
 } from "@/globals";
 import { useCheat } from "@/hooks/useCheat";
+import { useOwnerOfNFT } from "@/hooks/useOwnerOfNFT";
 
 export type LightCommunity = Pick<RegistryCommunity, "id" | "communityName"> & {
   garden: Pick<TokenGarden, "address" | "chainId" | "symbol" | "name">;

@@ -2,7 +2,7 @@
 
 import React from "react";
 import { PlusIcon } from "@heroicons/react/24/outline";
-import { Address, readContract } from "@wagmi/core";
+import { Address, mainnet, readContract } from "@wagmi/core";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -15,6 +15,7 @@ import { LightCommunity } from "@/components/Communities";
 import { FAKE_PROTOPIAN_COMMUNITIES } from "@/globals";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
+import { useOwnerOfNFT } from "@/hooks/useOwnerOfNFT";
 import { useSubgraphQueryMultiChain } from "@/hooks/useSubgraphQueryMultiChain";
 import { safeABI } from "@/src/generated";
 
@@ -96,6 +97,10 @@ const Footer = () => {
 // Main component
 export default function GardensPage() {
   const chain = useChainFromPath();
+  const isProtopianHolder = useOwnerOfNFT({
+    chains: [mainnet],
+    nft: "Protopian",
+  });
   const { data: communitiesSections, fetching: isFetching } =
     useSubgraphQueryMultiChain<getCommunitiesQuery>({
       query: getCommunitiesDocument,
