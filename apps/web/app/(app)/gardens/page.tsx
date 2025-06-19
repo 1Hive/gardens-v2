@@ -32,7 +32,7 @@ const Header = () => {
             <h1 className="max-w-xl text-center text-neutral-content">
               Welcome to Gardens
             </h1>
-            <p className="text-xl text-primary-content text-center">
+            <p className="text-xl  text-center">
               Where communities grow through collective decision-making
             </p>
             <Link href="/gardens/create-community" className="mt-6 z-10">

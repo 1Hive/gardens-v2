@@ -70,10 +70,10 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
         <div className="flex items-center gap-2">
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="flex items-center text-secondary-content gap-1"
+            className="flex items-center  gap-1"
             aria-label={isExpanded ? "Collapse" : "Expand"}
           >
-            <h4 className="text-secondary-content">{title}</h4>
+            <h4 className="">{title}</h4>
             <motion.div
               animate={{ rotate: isExpanded ? 0 : 180 }}
               transition={{ duration: 0.3 }}
