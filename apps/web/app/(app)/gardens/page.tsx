@@ -1,8 +1,8 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { PlusIcon } from "@heroicons/react/24/outline";
-import { Address, mainnet, readContract } from "@wagmi/core";
+import { Address, readContract } from "@wagmi/core";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -13,10 +13,9 @@ import { clouds1, clouds2, grassLarge, tree2, tree3 } from "@/assets";
 import { Button, Communities } from "@/components";
 import { LightCommunity } from "@/components/Communities";
 import { FAKE_PROTOPIAN_COMMUNITIES } from "@/globals";
-import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
-import { useOwnerOfNFT } from "@/hooks/useOwnerOfNFT";
 import { useSubgraphQueryMultiChain } from "@/hooks/useSubgraphQueryMultiChain";
+import { getProtopiansOwners } from "@/services/alchemy";
 import { safeABI } from "@/src/generated";
 
 // Components
@@ -96,41 +95,68 @@ const Footer = () => {
 
 // Main component
 export default function GardensPage() {
-  const chain = useChainFromPath();
-  const isProtopianHolder = useOwnerOfNFT({
-    chains: [mainnet],
-    nft: "Protopian",
-  });
+  const [protopianOwners, setProtopianOwners] = useState<Address[] | undefined>(
+    undefined,
+  );
+
+  useEffect(() => {
+    getProtopiansOwners()
+      .then((owners) => {
+        setProtopianOwners(owners);
+        console.log("### owners", owners);
+      })
+      .catch((err) => {
+        console.error("Error fetching Protopian community data:", err);
+        setProtopianOwners([]);
+      });
+  }, []);
+
   const { data: communitiesSections, fetching: isFetching } =
     useSubgraphQueryMultiChain<getCommunitiesQuery>({
       query: getCommunitiesDocument,
+      enabled: !!protopianOwners,
       modifier: async (data) => {
         return Promise.all(
           data
-            .flatMap((section) => section.registryCommunities || [])
+            .flatMap(
+              (section) =>
+                section.registryCommunities.map((x) => ({
+                  ...x,
+                  chain: section.chain,
+                })) || [],
+            )
             .map(async (x) => {
-              const protopianMembers = x.members?.filter(
-                (m) => m.member.isProtopian,
-              );
-              if (protopianMembers?.length && chain?.safePrefix) {
+              if (protopianOwners?.length && x.chain.safePrefix) {
                 // Council Safe supported
                 const councilSafeAddress = x.councilSafe as Address;
-                const communityCouncil = await readContract({
-                  address: councilSafeAddress,
-                  abi: safeABI,
-                  functionName: "getOwners",
-                });
+                try {
+                  const communityCouncil = await readContract({
+                    address: councilSafeAddress,
+                    abi: safeABI,
+                    functionName: "getOwners",
+                    chainId: x.chain.id,
+                  });
 
-                return {
-                  ...x,
-                  // Consider Protopian can be transferred to councilSafe
-                  isProtopian: !![...communityCouncil, councilSafeAddress].find(
-                    (owner) =>
-                      protopianMembers
-                        .map((p) => p.memberAddress?.toLowerCase())
-                        .includes(owner.toLowerCase()),
-                  ),
-                };
+                  return {
+                    ...x,
+                    // Consider Protopian can be transferred to councilSafe
+                    isProtopian: !![
+                      ...communityCouncil,
+                      councilSafeAddress,
+                    ].find(
+                      (owner) =>
+                        !!protopianOwners!.find(
+                          (p) => owner.toLowerCase() === p.toLowerCase(),
+                        ),
+                    ),
+                  };
+                } catch (error) {
+                  console.error(
+                    `Error reading council safe for community ${x.communityName}:`,
+                    error,
+                  );
+                  return x;
+                }
               }
 
               return {

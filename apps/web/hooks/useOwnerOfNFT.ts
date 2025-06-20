@@ -1,18 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { Address, Chain, createPublicClient, http } from "viem";
 import { erc721ABI, useAccount } from "wagmi";
-
-const NFTs = {
-  FirstHolder: "0x0c04af0f06d5762151245d0b7ef48170c49a1441",
-  Protopian: [
-    "0xCCac0bc52BF35d8F72d8dBEb780EEB9A4C1C5433",
-    (tokenId: string) => tokenId.startsWith("2"),
-  ],
-  Keeper: [
-    "0xCCac0bc52BF35d8F72d8dBEb780EEB9A4C1C5433",
-    (tokenId: string) => tokenId.startsWith("1"),
-  ],
-} as const;
+import { NFTs } from "@/configs/constants";
+import { getNFTsForWallet } from "@/services/alchemy";
 
 interface UseOwnerOfNFTParams {
   chains: Chain[];
@@ -57,28 +47,8 @@ export function useOwnerOfNFT({
             if (Array.isArray(nftSelector)) {
               // Use alchemy to fetch all NFTs for the address
               // TODO: Unhardcode for testnets
-              const alchemyApiBase =
-                "https://eth-mainnet.g.alchemy.com/nft/v3/" +
-                process.env.NEXT_PUBLIC_ALCHEMY_KEY;
-
               const [collectionAddress, tokenIdSelector] = nftSelector;
-
-              const response = await fetch(
-                `${alchemyApiBase}/getNFTsForOwner?owner=${address}`,
-              );
-
-              if (!response.ok) {
-                throw new Error("Failed to fetch NFTs from Alchemy");
-              }
-
-              const data = (await response.json()) as {
-                ownedNfts: Array<{
-                  tokenId: string;
-                  contract: { address: string };
-                }>;
-              };
-
-              const nfts = data.ownedNfts || [];
+              const nfts = await getNFTsForWallet(address);
               const hasNFT = nfts.some(
                 (x) =>
                   x.contract.address.toLowerCase() ===

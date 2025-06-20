@@ -14,8 +14,8 @@ type Option = {
 };
 
 type CommunityFiltersProps = {
-  nameFilter: string;
-  setNameFilter: (value: string) => void;
+  searchFilter: string;
+  setSearchFilter: (value: string) => void;
   tokenFilter: string;
   setTokenFilter: (value: string) => void;
   chainIdFilter: string;
@@ -24,8 +24,8 @@ type CommunityFiltersProps = {
 };
 
 export function CommunityFilters({
-  nameFilter,
-  setNameFilter,
+  searchFilter,
+  setSearchFilter,
   tokenFilter,
   setTokenFilter,
   chainIdFilter,
@@ -63,15 +63,21 @@ export function CommunityFilters({
   ];
 
   const handleNameChange = (e: ChangeEvent<HTMLInputElement>): void => {
-    setNameFilter(e.target.value);
+    const value = e.target.value;
+    // router.push(pathWithQuery("search", value || null));
+    setSearchFilter(value);
   };
 
   const handleTokenChange = (e: ChangeEvent<HTMLSelectElement>): void => {
-    setTokenFilter(e.target.value);
+    const value = e.target.value;
+    // router.push(pathWithQuery("token", value || null));
+    setTokenFilter(value);
   };
 
   const handleNetworkChange = (e: ChangeEvent<HTMLSelectElement>): void => {
-    setchainIdFilter(e.target.value);
+    const value = e.target.value;
+    // router.push(pathWithQuery("chainId", value || null));
+    setchainIdFilter(value);
   };
 
   return (
@@ -108,11 +114,11 @@ export function CommunityFilters({
             <div className="flex flex-col sm:flex-row gap-2 md:gap-3">
               <div className="flex-1 w-full">
                 <FormInput
-                  // label="Community Name"
+                  // label="Search"
                   type="text"
-                  value={nameFilter}
+                  value={searchFilter}
                   onChange={handleNameChange}
-                  placeholder="Community name..."
+                  placeholder="Search"
                   className="w-full h-10"
                 />
               </div>

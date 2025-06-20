@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { ChevronUpIcon } from "@heroicons/react/24/outline";
-import cn from "classnames";
 import { motion, AnimatePresence } from "motion/react";
-import { mainnet, useAccount } from "wagmi";
+import { useSearchParams } from "next/navigation";
+import { useAccount } from "wagmi";
 import {
   CVStrategy,
   Maybe,
@@ -18,7 +18,6 @@ import {
   ONE_HIVE_FAKE_COMMUNITY_ADDRESS,
 } from "@/globals";
 import { useCheat } from "@/hooks/useCheat";
-import { useOwnerOfNFT } from "@/hooks/useOwnerOfNFT";
 
 export type LightCommunity = Pick<RegistryCommunity, "id" | "communityName"> & {
   garden: Pick<TokenGarden, "address" | "chainId" | "symbol" | "name">;
@@ -157,9 +156,16 @@ export const Communities: React.FC<CommunitiesProps> = ({
     [],
   );
   const [userCommunities, setUserCommunities] = useState<LightCommunity[]>([]);
-  const [nameFilter, setNameFilter] = useState<string>("");
-  const [tokenFilter, setTokenFilter] = useState<string>("");
-  const [chainIdFilter, setchainIdFilter] = useState<string>("");
+  const searchParams = useSearchParams();
+  const [searchFilter, setSearchFilter] = useState<string>(
+    searchParams.get("search") ?? "",
+  );
+  const [tokenFilter, setTokenFilter] = useState<string>(
+    searchParams.get("token") ?? "",
+  );
+  const [chainIdFilter, setchainIdFilter] = useState<string>(
+    searchParams.get("chainId") ?? "",
+  );
   const showExcludedCommunities = useCheat("showExcludedCommunities");
   const queryAllChains = useCheat("queryAllChains");
 
@@ -175,9 +181,12 @@ export const Communities: React.FC<CommunitiesProps> = ({
         const nameMatch =
           community.communityName
             ?.toLowerCase()
-            .includes(nameFilter.toLowerCase()) ?? true;
+            .includes(searchFilter.toLowerCase()) ?? true;
         const tokenMatch =
-          !tokenFilter || community.garden.symbol === tokenFilter;
+          !tokenFilter ||
+          community.garden.symbol === tokenFilter ||
+          searchFilter === community.garden.symbol ||
+          searchFilter === community.garden.address;
         const networkMatch =
           !chainIdFilter ||
           community.garden.chainId.toString() === chainIdFilter;
@@ -243,13 +252,13 @@ export const Communities: React.FC<CommunitiesProps> = ({
 
     setUserCommunities(filterCommunities(auxUser));
     setOtherCommunities(filterCommunities(auxOther));
-  }, [address, communities, nameFilter, tokenFilter, chainIdFilter]);
+  }, [address, communities, searchFilter, tokenFilter, chainIdFilter]);
 
   return (
     <section className="flex flex-col gap-2">
       <CommunityFilters
-        nameFilter={nameFilter}
-        setNameFilter={setNameFilter}
+        searchFilter={searchFilter}
+        setSearchFilter={setSearchFilter}
         tokenFilter={tokenFilter}
         setTokenFilter={setTokenFilter}
         chainIdFilter={chainIdFilter}

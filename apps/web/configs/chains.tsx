@@ -43,7 +43,8 @@ export const CHAINS: Chain[] = [
 //   CHAINS.push(localhost);
 // }
 
-type ChainData = {
+export type ChainData = {
+  id: number;
   name: string;
   icon: FC;
   explorer: string;
@@ -99,6 +100,7 @@ export const chainConfigMap: {
   //   isTestnet: true,
   // },
   421614: {
+    id: 421614,
     name: arbitrumSepolia.name,
     icon: Arbitrum,
     explorer: "https://sepolia.arbiscan.io/",
@@ -118,6 +120,7 @@ export const chainConfigMap: {
     isTestnet: true,
   },
   // 11155111: {
+  //   id: 11155111,
   //   name: sepolia.name,
   //   icon: Ethereum,
   //   explorer: "https://eth-sepolia.blockscout.com",
@@ -142,6 +145,7 @@ export const chainConfigMap: {
 
   // Prodnets
   42161: {
+    id: 42161,
     name: arbitrum.name,
     icon: Arbitrum,
     explorer: "https://arbitrum.blockscout.com",
@@ -161,6 +165,7 @@ export const chainConfigMap: {
     safePrefix: "arb1",
   },
   10: {
+    id: 10,
     name: optimism.name,
     icon: Optimism,
     explorer: "https://optimism.blockscout.com",
@@ -180,6 +185,7 @@ export const chainConfigMap: {
     safePrefix: "oeth",
   },
   137: {
+    id: 137,
     name: polygon.name,
     icon: Polygon,
     explorer: "https://polygon.blockscout.com",
@@ -199,6 +205,7 @@ export const chainConfigMap: {
     safePrefix: "matic",
   },
   100: {
+    id: 100,
     name: gnosis.name,
     icon: GnosisGno,
     explorer: "https://gnosis.blockscout.com",
@@ -218,6 +225,7 @@ export const chainConfigMap: {
     safePrefix: "gno",
   },
   8453: {
+    id: 8453,
     name: base.name,
     icon: BaseLogo,
     explorer: "https://base.blockscout.com",
@@ -237,6 +245,7 @@ export const chainConfigMap: {
     safePrefix: "base",
   },
   42220: {
+    id: 42220,
     name: celo.name,
     icon: CeloLogo,
     explorer: "https://celo.blockscout.com",
@@ -256,6 +265,7 @@ export const chainConfigMap: {
     safePrefix: "celo",
   },
   // 1: {
+  //   id: 1,
   //   name: mainnet.name,
   //   icon: Ethereum,
   //   explorer: "https://eth.blockscout.com",
