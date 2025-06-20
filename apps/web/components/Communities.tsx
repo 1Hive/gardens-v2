@@ -22,12 +22,7 @@ import { useCheat } from "@/hooks/useCheat";
 export type LightCommunity = Pick<RegistryCommunity, "id" | "communityName"> & {
   garden: Pick<TokenGarden, "address" | "chainId" | "symbol" | "name">;
   strategies?: Maybe<
-    Array<
-      Pick<
-        CVStrategy,
-        "id" | "totalEffectiveActivePoints" | "poolId" | "poolAmount"
-      >
-    >
+    Array<Pick<CVStrategy, "id" | "totalEffectiveActivePoints" | "poolId">>
   >;
   members?: Maybe<Array<Pick<MemberCommunity, "id" | "memberAddress">>>;
   isProtopian: boolean;
@@ -55,7 +50,7 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
   isFetching,
 }) => {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  // const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const { isConnected } = useAccount();
 
   useEffect(() => {
@@ -105,8 +100,8 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
                     <div
                       key={key}
                       className="relative group block h-full w-full"
-                      onMouseEnter={() => setHoveredIndex(index)}
-                      onMouseLeave={() => setHoveredIndex(null)}
+                      // onMouseEnter={() => setHoveredIndex(index)}
+                      // onMouseLeave={() => setHoveredIndex(null)}
                     >
                       {/* <AnimatePresence>
                         {hoveredIndex === index && (

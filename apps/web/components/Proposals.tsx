@@ -5,7 +5,6 @@ import {
   AdjustmentsHorizontalIcon,
   PlusIcon,
 } from "@heroicons/react/24/outline";
-import { FetchTokenResult } from "@wagmi/core";
 import Link from "next/link";
 import { Id, toast } from "react-toastify";
 import { parseAbiParameters, encodeAbiParameters } from "viem";
@@ -97,7 +96,13 @@ interface ProposalsProps {
     config: ProposalCardProps["strategyConfig"];
   } & PoolGovernanceProps["strategy"];
   alloInfo: Allo;
-  poolToken?: FetchTokenResult;
+  poolToken?: {
+    address: Address;
+    symbol: string;
+    decimals: number;
+    balance: bigint;
+    formatted: string;
+  };
   communityAddress: Address;
   createProposalUrl: string;
   proposalType: number;

@@ -197,7 +197,6 @@ query getGardenCommunities($chainId: BigInt!, $tokenGarden: ID!) {
       id
       totalEffectiveActivePoints
       poolId
-      poolAmount
     }
   }
 }
@@ -217,7 +216,6 @@ query getCommunities {
       id
       totalEffectiveActivePoints
       poolId
-      poolAmount
     }
     members(first: 1000, where: { stakedTokens_gt: "0" }) {
       id
@@ -256,7 +254,6 @@ query getCommunity(
       }
       archived
       isEnabled
-      poolAmount
       poolId
       token
       metadata
@@ -313,7 +310,6 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
   }
   cvstrategies(where: { poolId: $poolId }) {
     token
-    poolAmount
     metadata
     id
     poolId

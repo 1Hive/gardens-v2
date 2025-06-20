@@ -31,7 +31,6 @@ import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 import {
   calculatePercentageBigInt,
   convertSecondsToReadableTime,
-  formatTokenAmount,
 } from "@/utils/numbers";
 
 //protocol : 1 => means ipfs!, to do some checks later
@@ -55,9 +54,8 @@ type ProposalFormProps = {
   poolParams: Pick<CVStrategyConfig, "decay">;
   alloInfo: Pick<Allo, "id" | "chainId" | "tokenNative">;
   tokenGarden: Pick<TokenGarden, "symbol" | "decimals">;
-  spendingLimit: number;
+  spendingLimit: number | string | undefined;
   spendingLimitPct: number;
-  poolAmount: number;
 };
 
 type FormRowTypes = {
@@ -252,16 +250,17 @@ export const ProposalForm = ({
     chainId,
   });
 
-  const spendingLimitString = formatTokenAmount(
-    spendingLimit,
-    poolToken?.decimals ?? 18,
-    6,
-  );
+  // const spendingLimitString = formatTokenAmount(
+  //   spendingLimit,
+  //   poolToken?.decimals ?? 18,
+  //   6,
+  // );
 
   const INPUT_TOKEN_MIN_VALUE =
     Number(requestedAmount) == 0 ? 0 : 1 / 10 ** (poolToken?.decimals ?? 0);
 
-  const spendingLimitNumber = spendingLimit / 10 ** (poolToken?.decimals ?? 0);
+  const spendingLimitNumber =
+    spendingLimit ? +spendingLimit / 10 ** (poolToken?.decimals ?? 0) : 0;
 
   const { data: thresholdFromContract } = useContractRead({
     address: strategy.id as Address,
@@ -378,8 +377,8 @@ export const ProposalForm = ({
                 }}
                 registerOptions={{
                   max: {
-                    value: spendingLimit,
-                    message: `Max amount must remain under the spending limit of ${formatNumber(spendingLimit)} ${poolToken?.symbol}`,
+                    value: spendingLimit ? +spendingLimitNumber : 0,
+                    message: `Max amount must remain under the spending limit of ${formatNumber(spendingLimit ? +spendingLimitNumber : 0)} ${poolToken?.symbol}`,
                   },
                   min: {
                     value: INPUT_TOKEN_MIN_VALUE,

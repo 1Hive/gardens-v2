@@ -207,11 +207,11 @@ export function useSubgraphQueryMultiChain<
         }),
       );
       // Make sure unique values are returned
-      const result = [
-        ...responseMap.current
-          .entries()
-          .map(([key, value]) => ({ ...value, chain: chainConfigMap[key] })),
-      ];
+      const result = [...responseMap.current.entries()].map(([key, value]) => ({
+        ...value,
+        chain: chainConfigMap[key],
+      }));
+
       setResponse(modifier ? await modifier(result) : result);
       setFetching(false);
       fetchingRef.current = false;

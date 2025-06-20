@@ -224,7 +224,6 @@ export type ArbitrableConfig_orderBy =
   | 'strategy'
   | 'strategy__id'
   | 'strategy__poolId'
-  | 'strategy__poolAmount'
   | 'strategy__metadata'
   | 'strategy__maxCVSupply'
   | 'strategy__totalEffectiveActivePoints'
@@ -529,7 +528,6 @@ export type CVProposal_orderBy =
   | 'strategy'
   | 'strategy__id'
   | 'strategy__poolId'
-  | 'strategy__poolAmount'
   | 'strategy__metadata'
   | 'strategy__maxCVSupply'
   | 'strategy__totalEffectiveActivePoints'
@@ -561,7 +559,6 @@ export type CVProposal_orderBy =
 export type CVStrategy = {
   id: Scalars['ID']['output'];
   poolId: Scalars['BigInt']['output'];
-  poolAmount: Scalars['BigInt']['output'];
   metadata?: Maybe<Scalars['String']['output']>;
   registryCommunity: RegistryCommunity;
   config: CVStrategyConfig;
@@ -605,6 +602,7 @@ export type CVStrategyConfig = {
   pointSystem: Scalars['BigInt']['output'];
   maxAmount?: Maybe<Scalars['BigInt']['output']>;
   allowlist?: Maybe<Array<Scalars['String']['output']>>;
+  superfluidToken?: Maybe<Scalars['String']['output']>;
 };
 
 export type CVStrategyConfig_filter = {
@@ -687,6 +685,26 @@ export type CVStrategyConfig_filter = {
   allowlist_contains_nocase?: InputMaybe<Array<Scalars['String']['input']>>;
   allowlist_not_contains?: InputMaybe<Array<Scalars['String']['input']>>;
   allowlist_not_contains_nocase?: InputMaybe<Array<Scalars['String']['input']>>;
+  superfluidToken?: InputMaybe<Scalars['String']['input']>;
+  superfluidToken_not?: InputMaybe<Scalars['String']['input']>;
+  superfluidToken_gt?: InputMaybe<Scalars['String']['input']>;
+  superfluidToken_lt?: InputMaybe<Scalars['String']['input']>;
+  superfluidToken_gte?: InputMaybe<Scalars['String']['input']>;
+  superfluidToken_lte?: InputMaybe<Scalars['String']['input']>;
+  superfluidToken_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  superfluidToken_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  superfluidToken_contains?: InputMaybe<Scalars['String']['input']>;
+  superfluidToken_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  superfluidToken_not_contains?: InputMaybe<Scalars['String']['input']>;
+  superfluidToken_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  superfluidToken_starts_with?: InputMaybe<Scalars['String']['input']>;
+  superfluidToken_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  superfluidToken_not_starts_with?: InputMaybe<Scalars['String']['input']>;
+  superfluidToken_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  superfluidToken_ends_with?: InputMaybe<Scalars['String']['input']>;
+  superfluidToken_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  superfluidToken_not_ends_with?: InputMaybe<Scalars['String']['input']>;
+  superfluidToken_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
   and?: InputMaybe<Array<InputMaybe<CVStrategyConfig_filter>>>;
@@ -698,7 +716,6 @@ export type CVStrategyConfig_orderBy =
   | 'strategy'
   | 'strategy__id'
   | 'strategy__poolId'
-  | 'strategy__poolAmount'
   | 'strategy__metadata'
   | 'strategy__maxCVSupply'
   | 'strategy__totalEffectiveActivePoints'
@@ -713,7 +730,8 @@ export type CVStrategyConfig_orderBy =
   | 'proposalType'
   | 'pointSystem'
   | 'maxAmount'
-  | 'allowlist';
+  | 'allowlist'
+  | 'superfluidToken';
 
 export type CVStrategy_filter = {
   id?: InputMaybe<Scalars['ID']['input']>;
@@ -732,14 +750,6 @@ export type CVStrategy_filter = {
   poolId_lte?: InputMaybe<Scalars['BigInt']['input']>;
   poolId_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
   poolId_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
-  poolAmount?: InputMaybe<Scalars['BigInt']['input']>;
-  poolAmount_not?: InputMaybe<Scalars['BigInt']['input']>;
-  poolAmount_gt?: InputMaybe<Scalars['BigInt']['input']>;
-  poolAmount_lt?: InputMaybe<Scalars['BigInt']['input']>;
-  poolAmount_gte?: InputMaybe<Scalars['BigInt']['input']>;
-  poolAmount_lte?: InputMaybe<Scalars['BigInt']['input']>;
-  poolAmount_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
-  poolAmount_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
   metadata?: InputMaybe<Scalars['String']['input']>;
   metadata_not?: InputMaybe<Scalars['String']['input']>;
   metadata_gt?: InputMaybe<Scalars['String']['input']>;
@@ -884,7 +894,6 @@ export type CVStrategy_filter = {
 export type CVStrategy_orderBy =
   | 'id'
   | 'poolId'
-  | 'poolAmount'
   | 'metadata'
   | 'registryCommunity'
   | 'registryCommunity__id'
@@ -903,6 +912,7 @@ export type CVStrategy_orderBy =
   | 'registryCommunity__registerToken'
   | 'registryCommunity__alloAddress'
   | 'registryCommunity__isValid'
+  | 'registryCommunity__archived'
   | 'config'
   | 'config__id'
   | 'config__D'
@@ -913,6 +923,7 @@ export type CVStrategy_orderBy =
   | 'config__proposalType'
   | 'config__pointSystem'
   | 'config__maxAmount'
+  | 'config__superfluidToken'
   | 'proposals'
   | 'memberActive'
   | 'maxCVSupply'
@@ -1090,7 +1101,6 @@ export type CollateralVault_orderBy =
   | 'strategy'
   | 'strategy__id'
   | 'strategy__poolId'
-  | 'strategy__poolAmount'
   | 'strategy__metadata'
   | 'strategy__maxCVSupply'
   | 'strategy__totalEffectiveActivePoints'
@@ -1270,6 +1280,7 @@ export type MemberCommunity_orderBy =
   | 'registryCommunity__registerToken'
   | 'registryCommunity__alloAddress'
   | 'registryCommunity__isValid'
+  | 'registryCommunity__archived'
   | 'covenantSignature';
 
 export type MemberStrategy = {
@@ -1362,7 +1373,6 @@ export type MemberStrategy_orderBy =
   | 'strategy'
   | 'strategy__id'
   | 'strategy__poolId'
-  | 'strategy__poolAmount'
   | 'strategy__metadata'
   | 'strategy__maxCVSupply'
   | 'strategy__totalEffectiveActivePoints'
@@ -1560,7 +1570,6 @@ export type PassportStrategy_orderBy =
   | 'strategy'
   | 'strategy__id'
   | 'strategy__poolId'
-  | 'strategy__poolAmount'
   | 'strategy__metadata'
   | 'strategy__maxCVSupply'
   | 'strategy__totalEffectiveActivePoints'
@@ -2380,6 +2389,7 @@ export type RegistryCommunity = {
   members?: Maybe<Array<MemberCommunity>>;
   garden: TokenGarden;
   isValid: Scalars['Boolean']['output'];
+  archived: Scalars['Boolean']['output'];
 };
 
 
@@ -2673,6 +2683,10 @@ export type RegistryCommunity_filter = {
   isValid_not?: InputMaybe<Scalars['Boolean']['input']>;
   isValid_in?: InputMaybe<Array<Scalars['Boolean']['input']>>;
   isValid_not_in?: InputMaybe<Array<Scalars['Boolean']['input']>>;
+  archived?: InputMaybe<Scalars['Boolean']['input']>;
+  archived_not?: InputMaybe<Scalars['Boolean']['input']>;
+  archived_in?: InputMaybe<Array<Scalars['Boolean']['input']>>;
+  archived_not_in?: InputMaybe<Array<Scalars['Boolean']['input']>>;
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
   and?: InputMaybe<Array<InputMaybe<RegistryCommunity_filter>>>;
@@ -2710,7 +2724,8 @@ export type RegistryCommunity_orderBy =
   | 'garden__symbol'
   | 'garden__decimals'
   | 'garden__address'
-  | 'isValid';
+  | 'isValid'
+  | 'archived';
 
 export type RegistryFactory = {
   id: Scalars['ID']['output'];

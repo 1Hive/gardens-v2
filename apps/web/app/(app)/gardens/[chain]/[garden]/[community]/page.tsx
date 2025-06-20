@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Fragment, use, useEffect, useRef, useState } from "react";
+import React, { Fragment, useEffect, useRef, useState } from "react";
 
 import {
   CurrencyDollarIcon,
@@ -527,11 +527,7 @@ export default function Page({
               <div className="pool-layout">
                 {fundingPools.map((pool) => (
                   <Fragment key={pool.poolId}>
-                    <PoolCard
-                      token={pool.token}
-                      chainId={chain!.id!}
-                      pool={pool}
-                    />
+                    <PoolCard token={pool.token} pool={pool} />
                   </Fragment>
                 ))}
               </div>
@@ -541,12 +537,7 @@ export default function Page({
               <h4>Signaling ({signalingPools.length})</h4>
               <div className="pool-layout">
                 {signalingPools.map((pool) => (
-                  <PoolCard
-                    key={pool.poolId}
-                    token={pool.token}
-                    chainId={chain!.id!}
-                    pool={pool}
-                  />
+                  <PoolCard key={pool.poolId} token={pool.token} pool={pool} />
                 ))}
               </div>
             </div>
@@ -555,12 +546,7 @@ export default function Page({
               <h4>In Review ({poolsInReview.length})</h4>
               <div className="pool-layout">
                 {poolsInReview.map((pool) => (
-                  <PoolCard
-                    key={pool.poolId}
-                    token={pool.token}
-                    chainId={chain!.id!}
-                    pool={pool}
-                  />
+                  <PoolCard key={pool.poolId} token={pool.token} pool={pool} />
                 ))}
               </div>
             </div>
@@ -577,7 +563,6 @@ export default function Page({
                     <PoolCard
                       key={pool.poolId}
                       token={pool.token}
-                      chainId={chain!.id!}
                       pool={pool}
                     />
                   ))}

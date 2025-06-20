@@ -1,9 +1,8 @@
 "use client";
 
 import { Hashicon } from "@emeraldpay/hashicon-react";
-import { FetchTokenResult } from "@wagmi/core";
 import { usePathname } from "next/navigation";
-import { formatUnits } from "viem";
+import { Address, formatUnits } from "viem";
 import {
   Allo,
   CVProposal,
@@ -43,7 +42,13 @@ export type ProposalCardProps = {
   >;
   inputData?: ProposalInputItem;
   stakedFilter: ProposalInputItem;
-  poolToken?: FetchTokenResult;
+  poolToken?: {
+    address: Address;
+    symbol: string;
+    decimals: number;
+    balance: bigint;
+    formatted: string;
+  };
   isAllocationView: boolean;
   memberActivatedPoints: bigint;
   memberPoolWeight?: number;

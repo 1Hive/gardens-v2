@@ -103,7 +103,6 @@ export default function GardensPage() {
     getProtopiansOwners()
       .then((owners) => {
         setProtopianOwners(owners);
-        console.log("### owners", owners);
       })
       .catch((err) => {
         console.error("Error fetching Protopian community data:", err);

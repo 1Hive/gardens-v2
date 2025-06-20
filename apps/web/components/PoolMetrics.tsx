@@ -1,22 +1,17 @@
 "use client";
 
 import { FC, FormEvent, useEffect, useState } from "react";
-import {
-  ExclamationCircleIcon,
-  ExclamationTriangleIcon,
-} from "@heroicons/react/24/outline";
-import { FetchTokenResult } from "@wagmi/core";
 import Image from "next/image";
 import { parseUnits } from "viem";
-import { Address, useAccount, useBalance } from "wagmi";
+import { Address, useAccount } from "wagmi";
 import { Allo } from "#/subgraph/.graphclient";
 import { Button } from "./Button";
 import { DisplayNumber } from "./DisplayNumber";
 import { FormInput } from "./Forms";
-import { Skeleton } from "./Skeleton";
 import { TransactionModal, TransactionProps } from "./TransactionModal";
 import { GitcoinMatchingLogo } from "@/assets";
 import { usePubSubContext } from "@/contexts/pubsub.context";
+import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useHandleAllowance } from "@/hooks/useHandleAllowance";
@@ -25,34 +20,29 @@ import { elegibleGG23pools } from "@/utils/matchingPools";
 import { getTxMessage } from "@/utils/transactionMessages";
 
 interface PoolMetricsProps {
-  poolAmount: number;
+  poolToken: {
+    address: Address;
+    symbol: string;
+    decimals: number;
+    balance: bigint;
+    formatted: string;
+  };
   communityAddress: Address;
-  poolToken: FetchTokenResult;
   alloInfo: Allo;
   poolId: number;
-  chainId: string;
 }
 
 export const PoolMetrics: FC<PoolMetricsProps> = ({
   alloInfo,
-  poolAmount,
-  communityAddress,
   poolToken,
+  communityAddress,
   poolId,
-  chainId,
 }) => {
   const [amount, setAmount] = useState(0);
-
+  const chainId = useChainIdFromPath();
   const [isOpenModal, setIsOpenModal] = useState(false);
   const { address: accountAddress } = useAccount();
   const { publish } = usePubSubContext();
-  const { data: balance } = useBalance({
-    address: accountAddress,
-    formatUnits: poolToken.decimals,
-    token: poolToken.address,
-    watch: true,
-    chainId: Number(chainId),
-  });
 
   const requestedAmount = parseUnits(amount.toString(), poolToken.decimals);
   const {
@@ -90,7 +80,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
   const { tooltipMessage, isButtonDisabled } = useDisableButtons([
     {
       message: "Connected account has insufficient balance",
-      condition: balance && balance.value < requestedAmount,
+      condition: !!poolToken.balance && poolToken.balance < requestedAmount,
     },
     {
       message: "Amount must be greater than 0",
@@ -162,7 +152,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
             <div className="flex gap-3">
               <p className="subtitle2">Funds in pool:</p>
               <DisplayNumber
-                number={[BigInt(poolAmount), poolToken.decimals]}
+                number={[poolToken.balance, poolToken.decimals]}
                 tokenSymbol={poolToken.symbol}
                 compact={true}
                 valueClassName="subtitle2 text-primary-content"
@@ -171,14 +161,12 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
             {accountAddress && (
               <div className="flex gap-3">
                 <p className="subtitle2">Wallet balance:</p>
-                <Skeleton isLoading={!balance}>
-                  <DisplayNumber
-                    number={[balance?.value ?? BigInt(0), poolToken.decimals]}
-                    tokenSymbol={poolToken.symbol}
-                    compact={true}
-                    valueClassName="subtitle2 text-primary-content"
-                  />
-                </Skeleton>
+                <DisplayNumber
+                  number={[poolToken.balance, poolToken.decimals]}
+                  tokenSymbol={poolToken.symbol}
+                  compact={true}
+                  valueClassName="subtitle2 text-primary-content"
+                />
               </div>
             )}
           </div>
@@ -192,11 +180,11 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
               suffix={poolToken.symbol}
               step={0.000000000000000001}
               otherProps={{
-                max: balance?.formatted,
+                max: +poolToken.formatted,
               }}
               registerOptions={{
                 max: {
-                  value: balance?.formatted ?? 0,
+                  value: +poolToken.formatted || 0,
                   message: "Insufficient balance",
                 },
               }}

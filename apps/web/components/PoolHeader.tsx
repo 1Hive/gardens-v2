@@ -15,7 +15,6 @@ import {
   StopIcon,
   Cog6ToothIcon,
 } from "@heroicons/react/24/solid";
-import { FetchTokenResult } from "@wagmi/core";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { Address, zeroAddress } from "viem";
@@ -76,7 +75,12 @@ type Props = {
     | "defaultRulingTimeout"
   >;
   token: Pick<TokenGarden, "address" | "name" | "symbol" | "decimals">;
-  poolToken?: FetchTokenResult;
+  poolToken?: {
+    address: Address;
+    symbol: string | undefined;
+    decimals: number | undefined;
+    balance: bigint | undefined;
+  };
   maxAmount: number;
 };
 
