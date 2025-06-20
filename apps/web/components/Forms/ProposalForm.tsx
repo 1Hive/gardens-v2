@@ -285,7 +285,7 @@ export const ProposalForm = ({
 
   if (!poolToken && PoolTypes[proposalType] === "funding") {
     return (
-      <div className="m-40">
+      <div className="m-40 col-span-12">
         <LoadingSpinner />
       </div>
     );

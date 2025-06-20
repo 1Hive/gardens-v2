@@ -319,7 +319,7 @@ export default function Page({
 
   if (!tokenGarden || !registryCommunity) {
     return (
-      <div className="mt-96">
+      <div className="mt-96 col-span-12">
         <LoadingSpinner />
       </div>
     );

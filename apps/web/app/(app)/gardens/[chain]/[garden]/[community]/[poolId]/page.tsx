@@ -136,7 +136,7 @@ export default function Page({
 
   if (!tokenGarden || (!poolToken && PoolTypes[proposalType] === "funding")) {
     return (
-      <div className="mt-96">
+      <div className="mt-96 col-span-12">
         <LoadingSpinner />
       </div>
     );
@@ -152,7 +152,7 @@ export default function Page({
   const isEnabled = data.cvstrategies?.[0]?.isEnabled as boolean;
 
   return (
-    <div className="page-layout">
+    <>
       <PoolHeader
         poolToken={poolToken}
         token={tokenGarden}
@@ -163,6 +163,7 @@ export default function Page({
         isEnabled={isEnabled}
         maxAmount={maxAmount}
       />
+
       {isEnabled && (
         <>
           {poolToken && PoolTypes[proposalType] !== "signaling" && (
@@ -175,18 +176,19 @@ export default function Page({
           )}
         </>
       )}
+
       {strategyObj && isEnabled && (
-        <section ref={proposalSectionRef}>
-          <Proposals
-            poolToken={poolToken}
-            strategy={strategyObj}
-            alloInfo={alloInfo}
-            communityAddress={communityAddress}
-            createProposalUrl={`/gardens/${chain}/${garden}/${communityAddress}/${poolId}/create-proposal`}
-            proposalType={proposalType}
-          />
-        </section>
+        // <div ref={proposalSectionRef}>
+        <Proposals
+          poolToken={poolToken}
+          strategy={strategyObj}
+          alloInfo={alloInfo}
+          communityAddress={communityAddress}
+          createProposalUrl={`/gardens/${chain}/${garden}/${communityAddress}/${poolId}/create-proposal`}
+          proposalType={proposalType}
+        />
+        // </div>
       )}
-    </div>
+    </>
   );
 }
