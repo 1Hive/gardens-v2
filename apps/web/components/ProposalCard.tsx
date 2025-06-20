@@ -184,13 +184,15 @@ export function ProposalCard({
               </div>
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2">
-                  <EthAddress
-                    address={beneficiary as Address}
-                    shortenAddress={true}
-                    actions="copy"
-                    textColor="var(--color-grey-900)"
-                  />
-
+                  <div className="flex items-center gap-1">
+                    <p>By</p>
+                    <EthAddress
+                      address={beneficiary as Address}
+                      shortenAddress={true}
+                      actions="copy"
+                      textColor="var(--color-grey-900)"
+                    />
+                  </div>
                   <div className="flex gap-6 text-neutral-soft-content justify-end">
                     {!isSignalingType && poolToken && (
                       <div className="flex items-center gap-1 justify-self-end">

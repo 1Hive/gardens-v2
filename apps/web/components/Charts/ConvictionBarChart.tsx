@@ -278,7 +278,7 @@ export const ConvictionBarChart = ({
     grid: {
       show: false,
       left: "0%",
-      right: "3%",
+      right: "0%",
       top: compact ? "0%" : "25%",
       bottom: compact ? "0%" : "25%",
       containLabel: false,
@@ -310,7 +310,7 @@ export const ConvictionBarChart = ({
           supportGtConv ? 1
           : convEqSupport ? 1
           : 2,
-        barWidth: 23,
+        barWidth: 18,
         data: [proposalSupportPct],
       },
       {
@@ -328,7 +328,7 @@ export const ConvictionBarChart = ({
           formatter: "{@score} %",
           width: 0,
         },
-        barWidth: 23,
+        barWidth: 18,
         z: 1,
         data: [currentConvictionPct],
       },
@@ -337,7 +337,7 @@ export const ConvictionBarChart = ({
       : {
           type: "bar",
           name: "Threshold",
-          barWidth: 23,
+          barWidth: 18,
           data: [thresholdPct],
           itemStyle: {
             borderRadius: borderRadius,
@@ -367,18 +367,14 @@ export const ConvictionBarChart = ({
         />
       </Skeleton>
 
-      <Button
+      {/* <Button
         btnStyle="link"
         onClick={handleRefreshConviction}
         tooltip="Refresh conviction"
-        className={
-          !compact ?
-            "absolute -mt-36 lg:-mt-[66px] left-[250px] sm:left-[550px] lg:left-[985px]"
-          : ""
-        }
+        className={!compact ? "border2" : ""}
       >
         <ArrowPathIcon className="w-5" />
-      </Button>
+      </Button> */}
     </>
   );
 
