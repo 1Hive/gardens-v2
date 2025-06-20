@@ -2,7 +2,6 @@
 
 import { FC, FormEvent, useEffect, useState } from "react";
 import { PlusIcon } from "@heroicons/react/24/outline";
-import Image from "next/image";
 import { parseUnits } from "viem";
 import { Address, useAccount } from "wagmi";
 import { Allo } from "#/subgraph/.graphclient";
@@ -10,14 +9,11 @@ import { Button } from "./Button";
 import { DisplayNumber } from "./DisplayNumber";
 import { FormInput } from "./Forms";
 import { TransactionModal, TransactionProps } from "./TransactionModal";
-import { GitcoinMatchingLogo } from "@/assets";
-import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useHandleAllowance } from "@/hooks/useHandleAllowance";
 import { alloABI } from "@/src/generated";
-import { elegibleGG23pools } from "@/utils/matchingPools";
 import { getTxMessage } from "@/utils/transactionMessages";
 
 interface PoolMetricsProps {
@@ -43,7 +39,6 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
   const chainId = useChainIdFromPath();
   const [isOpenModal, setIsOpenModal] = useState(false);
   const { address: accountAddress } = useAccount();
-  const { publish } = usePubSubContext();
 
   const requestedAmount = parseUnits(amount.toString(), poolToken.decimals);
   const {
@@ -57,16 +52,6 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     contractName: "Allo",
     showNotification: false,
     args: [BigInt(poolId), requestedAmount],
-    onConfirmations: () => {
-      publish({
-        topic: "pool",
-        type: "update",
-        function: "fundPool",
-        id: poolId,
-        containerId: communityAddress,
-        chainId,
-      });
-    },
   });
 
   const { allowanceTxProps: allowanceTx, handleAllowance } = useHandleAllowance(
