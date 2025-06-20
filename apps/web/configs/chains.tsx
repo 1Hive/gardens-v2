@@ -1,7 +1,6 @@
 import React, { FC } from "react";
 import {
   Arbitrum,
-  Ethereum,
   GnosisGno,
   Optimism,
   Polygon,
@@ -14,7 +13,6 @@ import {
   celo,
   Chain,
   gnosis,
-  localhost,
   optimism,
   polygon,
   sepolia,
@@ -41,9 +39,9 @@ export const CHAINS: Chain[] = [
   // mainnet,
 ];
 
-if (process.env.NODE_ENV === "development") {
-  CHAINS.push(localhost);
-}
+// if (process.env.NODE_ENV === "development") {
+//   CHAINS.push(localhost);
+// }
 
 type ChainData = {
   name: string;
@@ -60,6 +58,7 @@ type ChainData = {
   allo: Address;
   isTestnet: boolean;
   safePrefix?: string;
+  alchemyApiBaseUrl?: string; // Optional, used for fetching NFTs
 };
 
 const SUBGRAPH_TESTNET_VERSION = Subgraph.VERSION_TESTNET;
@@ -85,20 +84,20 @@ export const chainConfigMap: {
   [key: number | string]: ChainData;
 } = {
   // Testnets
-  1337: {
-    name: localhost.name,
-    icon: Ethereum,
-    explorer: "",
-    blockTime: 0.23,
-    confirmations: 1,
-    rpcUrl: "http://127.0.0.1:8545",
-    subgraphUrl: "http://localhost:8000/subgraphs/name/kamikazebr/gv2",
-    globalTribunal: "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD",
-    allo: "0x",
-    arbitrator: "0x",
-    passportScorer: "0x",
-    isTestnet: true,
-  },
+  // 1337: {
+  //   name: localhost.name,
+  //   icon: Ethereum,
+  //   explorer: "",
+  //   blockTime: 0.23,
+  //   confirmations: 1,
+  //   rpcUrl: "http://127.0.0.1:8545",
+  //   subgraphUrl: "http://localhost:8000/subgraphs/name/kamikazebr/gv2",
+  //   globalTribunal: "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD",
+  //   allo: "0x",
+  //   arbitrator: "0x",
+  //   passportScorer: "0x",
+  //   isTestnet: true,
+  // },
   421614: {
     name: arbitrumSepolia.name,
     icon: Arbitrum,
@@ -244,7 +243,11 @@ export const chainConfigMap: {
     blockTime: 3.8,
     confirmations: 4, // 4
     rpcUrl: process.env.RPC_URL_BASE!,
-    ...getSubgraphUrls("BsXEnGaXdj3CkGRn95bswGcv2mQX7m8kNq7M7WBxxPx8", "gardens-v2---celo", SUBGRAPH_PRODNET_VERSION),
+    ...getSubgraphUrls(
+      "BsXEnGaXdj3CkGRn95bswGcv2mQX7m8kNq7M7WBxxPx8",
+      "gardens-v2---celo",
+      SUBGRAPH_PRODNET_VERSION,
+    ),
     globalTribunal: "0x9a17De1f0caD0c592F656410997E4B685d339029",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0x83bDE2E2D8AcAAad2D300DA195dF3cf86b234bdd",

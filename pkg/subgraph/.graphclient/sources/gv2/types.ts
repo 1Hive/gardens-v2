@@ -1103,6 +1103,8 @@ export type Member = {
   id: Scalars['ID']['output'];
   memberCommunity?: Maybe<Array<MemberCommunity>>;
   stakes?: Maybe<Array<Stake>>;
+  isProtopian?: Maybe<Scalars['Boolean']['output']>;
+  isKeeper?: Maybe<Scalars['Boolean']['output']>;
 };
 
 
@@ -1249,6 +1251,8 @@ export type MemberCommunity_orderBy =
   | 'isRegistered'
   | 'member'
   | 'member__id'
+  | 'member__isProtopian'
+  | 'member__isKeeper'
   | 'registryCommunity'
   | 'registryCommunity__id'
   | 'registryCommunity__chainId'
@@ -1353,6 +1357,8 @@ export type MemberStrategy_orderBy =
   | 'id'
   | 'member'
   | 'member__id'
+  | 'member__isProtopian'
+  | 'member__isKeeper'
   | 'strategy'
   | 'strategy__id'
   | 'strategy__poolId'
@@ -1377,6 +1383,14 @@ export type Member_filter = {
   id_not_in?: InputMaybe<Array<Scalars['ID']['input']>>;
   memberCommunity_?: InputMaybe<MemberCommunity_filter>;
   stakes_?: InputMaybe<Stake_filter>;
+  isProtopian?: InputMaybe<Scalars['Boolean']['input']>;
+  isProtopian_not?: InputMaybe<Scalars['Boolean']['input']>;
+  isProtopian_in?: InputMaybe<Array<Scalars['Boolean']['input']>>;
+  isProtopian_not_in?: InputMaybe<Array<Scalars['Boolean']['input']>>;
+  isKeeper?: InputMaybe<Scalars['Boolean']['input']>;
+  isKeeper_not?: InputMaybe<Scalars['Boolean']['input']>;
+  isKeeper_in?: InputMaybe<Array<Scalars['Boolean']['input']>>;
+  isKeeper_not_in?: InputMaybe<Array<Scalars['Boolean']['input']>>;
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
   and?: InputMaybe<Array<InputMaybe<Member_filter>>>;
@@ -1386,7 +1400,9 @@ export type Member_filter = {
 export type Member_orderBy =
   | 'id'
   | 'memberCommunity'
-  | 'stakes';
+  | 'stakes'
+  | 'isProtopian'
+  | 'isKeeper';
 
 /** Defines the order direction, either ascending or descending */
 export type OrderDirection =
@@ -2834,6 +2850,8 @@ export type Stake_orderBy =
   | 'id'
   | 'member'
   | 'member__id'
+  | 'member__isProtopian'
+  | 'member__isKeeper'
   | 'poolId'
   | 'proposal'
   | 'proposal__id'
@@ -2854,416 +2872,6 @@ export type Stake_orderBy =
   | 'proposal__updatedAt'
   | 'amount'
   | 'createdAt';
-
-export type Subscription = {
-  cvstrategy?: Maybe<CVStrategy>;
-  cvstrategies: Array<CVStrategy>;
-  cvstrategyConfig?: Maybe<CVStrategyConfig>;
-  cvstrategyConfigs: Array<CVStrategyConfig>;
-  arbitrableConfig?: Maybe<ArbitrableConfig>;
-  arbitrableConfigs: Array<ArbitrableConfig>;
-  cvproposal?: Maybe<CVProposal>;
-  cvproposals: Array<CVProposal>;
-  registryFactory?: Maybe<RegistryFactory>;
-  registryFactories: Array<RegistryFactory>;
-  registryCommunity?: Maybe<RegistryCommunity>;
-  registryCommunities: Array<RegistryCommunity>;
-  member?: Maybe<Member>;
-  members: Array<Member>;
-  stake?: Maybe<Stake>;
-  stakes: Array<Stake>;
-  memberCommunity?: Maybe<MemberCommunity>;
-  memberCommunities: Array<MemberCommunity>;
-  memberStrategy?: Maybe<MemberStrategy>;
-  memberStrategies: Array<MemberStrategy>;
-  tokenGarden?: Maybe<TokenGarden>;
-  tokenGardens: Array<TokenGarden>;
-  allo?: Maybe<Allo>;
-  allos: Array<Allo>;
-  passportScorer?: Maybe<PassportScorer>;
-  passportScorers: Array<PassportScorer>;
-  passportStrategy?: Maybe<PassportStrategy>;
-  passportStrategies: Array<PassportStrategy>;
-  passportUser?: Maybe<PassportUser>;
-  passportUsers: Array<PassportUser>;
-  proposalDispute?: Maybe<ProposalDispute>;
-  proposalDisputes: Array<ProposalDispute>;
-  proposalDisputeMetadata?: Maybe<ProposalDisputeMetadata>;
-  proposalDisputeMetadata_collection: Array<ProposalDisputeMetadata>;
-  proposalMetadata?: Maybe<ProposalMetadata>;
-  proposalMetadata_collection: Array<ProposalMetadata>;
-  collateralVault?: Maybe<CollateralVault>;
-  collateralVaults: Array<CollateralVault>;
-  collateralVaultDeposit?: Maybe<CollateralVaultDeposit>;
-  collateralVaultDeposits: Array<CollateralVaultDeposit>;
-  /** Access to subgraph metadata */
-  _meta?: Maybe<_Meta_>;
-};
-
-
-export type SubscriptioncvstrategyArgs = {
-  id: Scalars['ID']['input'];
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptioncvstrategiesArgs = {
-  skip?: InputMaybe<Scalars['Int']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  orderBy?: InputMaybe<CVStrategy_orderBy>;
-  orderDirection?: InputMaybe<OrderDirection>;
-  where?: InputMaybe<CVStrategy_filter>;
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptioncvstrategyConfigArgs = {
-  id: Scalars['ID']['input'];
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptioncvstrategyConfigsArgs = {
-  skip?: InputMaybe<Scalars['Int']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  orderBy?: InputMaybe<CVStrategyConfig_orderBy>;
-  orderDirection?: InputMaybe<OrderDirection>;
-  where?: InputMaybe<CVStrategyConfig_filter>;
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptionarbitrableConfigArgs = {
-  id: Scalars['ID']['input'];
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptionarbitrableConfigsArgs = {
-  skip?: InputMaybe<Scalars['Int']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  orderBy?: InputMaybe<ArbitrableConfig_orderBy>;
-  orderDirection?: InputMaybe<OrderDirection>;
-  where?: InputMaybe<ArbitrableConfig_filter>;
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptioncvproposalArgs = {
-  id: Scalars['ID']['input'];
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptioncvproposalsArgs = {
-  skip?: InputMaybe<Scalars['Int']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  orderBy?: InputMaybe<CVProposal_orderBy>;
-  orderDirection?: InputMaybe<OrderDirection>;
-  where?: InputMaybe<CVProposal_filter>;
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptionregistryFactoryArgs = {
-  id: Scalars['ID']['input'];
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptionregistryFactoriesArgs = {
-  skip?: InputMaybe<Scalars['Int']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  orderBy?: InputMaybe<RegistryFactory_orderBy>;
-  orderDirection?: InputMaybe<OrderDirection>;
-  where?: InputMaybe<RegistryFactory_filter>;
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptionregistryCommunityArgs = {
-  id: Scalars['ID']['input'];
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptionregistryCommunitiesArgs = {
-  skip?: InputMaybe<Scalars['Int']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  orderBy?: InputMaybe<RegistryCommunity_orderBy>;
-  orderDirection?: InputMaybe<OrderDirection>;
-  where?: InputMaybe<RegistryCommunity_filter>;
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptionmemberArgs = {
-  id: Scalars['ID']['input'];
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptionmembersArgs = {
-  skip?: InputMaybe<Scalars['Int']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  orderBy?: InputMaybe<Member_orderBy>;
-  orderDirection?: InputMaybe<OrderDirection>;
-  where?: InputMaybe<Member_filter>;
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptionstakeArgs = {
-  id: Scalars['ID']['input'];
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptionstakesArgs = {
-  skip?: InputMaybe<Scalars['Int']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  orderBy?: InputMaybe<Stake_orderBy>;
-  orderDirection?: InputMaybe<OrderDirection>;
-  where?: InputMaybe<Stake_filter>;
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptionmemberCommunityArgs = {
-  id: Scalars['ID']['input'];
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptionmemberCommunitiesArgs = {
-  skip?: InputMaybe<Scalars['Int']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  orderBy?: InputMaybe<MemberCommunity_orderBy>;
-  orderDirection?: InputMaybe<OrderDirection>;
-  where?: InputMaybe<MemberCommunity_filter>;
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptionmemberStrategyArgs = {
-  id: Scalars['ID']['input'];
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptionmemberStrategiesArgs = {
-  skip?: InputMaybe<Scalars['Int']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  orderBy?: InputMaybe<MemberStrategy_orderBy>;
-  orderDirection?: InputMaybe<OrderDirection>;
-  where?: InputMaybe<MemberStrategy_filter>;
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptiontokenGardenArgs = {
-  id: Scalars['ID']['input'];
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptiontokenGardensArgs = {
-  skip?: InputMaybe<Scalars['Int']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  orderBy?: InputMaybe<TokenGarden_orderBy>;
-  orderDirection?: InputMaybe<OrderDirection>;
-  where?: InputMaybe<TokenGarden_filter>;
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptionalloArgs = {
-  id: Scalars['ID']['input'];
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptionallosArgs = {
-  skip?: InputMaybe<Scalars['Int']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  orderBy?: InputMaybe<Allo_orderBy>;
-  orderDirection?: InputMaybe<OrderDirection>;
-  where?: InputMaybe<Allo_filter>;
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptionpassportScorerArgs = {
-  id: Scalars['ID']['input'];
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptionpassportScorersArgs = {
-  skip?: InputMaybe<Scalars['Int']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  orderBy?: InputMaybe<PassportScorer_orderBy>;
-  orderDirection?: InputMaybe<OrderDirection>;
-  where?: InputMaybe<PassportScorer_filter>;
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptionpassportStrategyArgs = {
-  id: Scalars['ID']['input'];
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptionpassportStrategiesArgs = {
-  skip?: InputMaybe<Scalars['Int']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  orderBy?: InputMaybe<PassportStrategy_orderBy>;
-  orderDirection?: InputMaybe<OrderDirection>;
-  where?: InputMaybe<PassportStrategy_filter>;
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptionpassportUserArgs = {
-  id: Scalars['ID']['input'];
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptionpassportUsersArgs = {
-  skip?: InputMaybe<Scalars['Int']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  orderBy?: InputMaybe<PassportUser_orderBy>;
-  orderDirection?: InputMaybe<OrderDirection>;
-  where?: InputMaybe<PassportUser_filter>;
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptionproposalDisputeArgs = {
-  id: Scalars['ID']['input'];
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptionproposalDisputesArgs = {
-  skip?: InputMaybe<Scalars['Int']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  orderBy?: InputMaybe<ProposalDispute_orderBy>;
-  orderDirection?: InputMaybe<OrderDirection>;
-  where?: InputMaybe<ProposalDispute_filter>;
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptionproposalDisputeMetadataArgs = {
-  id: Scalars['ID']['input'];
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptionproposalDisputeMetadata_collectionArgs = {
-  skip?: InputMaybe<Scalars['Int']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  orderBy?: InputMaybe<ProposalDisputeMetadata_orderBy>;
-  orderDirection?: InputMaybe<OrderDirection>;
-  where?: InputMaybe<ProposalDisputeMetadata_filter>;
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptionproposalMetadataArgs = {
-  id: Scalars['ID']['input'];
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptionproposalMetadata_collectionArgs = {
-  skip?: InputMaybe<Scalars['Int']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  orderBy?: InputMaybe<ProposalMetadata_orderBy>;
-  orderDirection?: InputMaybe<OrderDirection>;
-  where?: InputMaybe<ProposalMetadata_filter>;
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptioncollateralVaultArgs = {
-  id: Scalars['ID']['input'];
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptioncollateralVaultsArgs = {
-  skip?: InputMaybe<Scalars['Int']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  orderBy?: InputMaybe<CollateralVault_orderBy>;
-  orderDirection?: InputMaybe<OrderDirection>;
-  where?: InputMaybe<CollateralVault_filter>;
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptioncollateralVaultDepositArgs = {
-  id: Scalars['ID']['input'];
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptioncollateralVaultDepositsArgs = {
-  skip?: InputMaybe<Scalars['Int']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  orderBy?: InputMaybe<CollateralVaultDeposit_orderBy>;
-  orderDirection?: InputMaybe<OrderDirection>;
-  where?: InputMaybe<CollateralVaultDeposit_filter>;
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type Subscription_metaArgs = {
-  block?: InputMaybe<Block_height>;
-};
 
 export type TokenGarden = {
   id: Scalars['ID']['output'];
@@ -3562,88 +3170,7 @@ export type _SubgraphErrorPolicy_ =
   };
 
   export type SubscriptionSdk = {
-      /** null **/
-  cvstrategy: InContextSdkMethod<Subscription['cvstrategy'], SubscriptioncvstrategyArgs, MeshContext>,
-  /** null **/
-  cvstrategies: InContextSdkMethod<Subscription['cvstrategies'], SubscriptioncvstrategiesArgs, MeshContext>,
-  /** null **/
-  cvstrategyConfig: InContextSdkMethod<Subscription['cvstrategyConfig'], SubscriptioncvstrategyConfigArgs, MeshContext>,
-  /** null **/
-  cvstrategyConfigs: InContextSdkMethod<Subscription['cvstrategyConfigs'], SubscriptioncvstrategyConfigsArgs, MeshContext>,
-  /** null **/
-  arbitrableConfig: InContextSdkMethod<Subscription['arbitrableConfig'], SubscriptionarbitrableConfigArgs, MeshContext>,
-  /** null **/
-  arbitrableConfigs: InContextSdkMethod<Subscription['arbitrableConfigs'], SubscriptionarbitrableConfigsArgs, MeshContext>,
-  /** null **/
-  cvproposal: InContextSdkMethod<Subscription['cvproposal'], SubscriptioncvproposalArgs, MeshContext>,
-  /** null **/
-  cvproposals: InContextSdkMethod<Subscription['cvproposals'], SubscriptioncvproposalsArgs, MeshContext>,
-  /** null **/
-  registryFactory: InContextSdkMethod<Subscription['registryFactory'], SubscriptionregistryFactoryArgs, MeshContext>,
-  /** null **/
-  registryFactories: InContextSdkMethod<Subscription['registryFactories'], SubscriptionregistryFactoriesArgs, MeshContext>,
-  /** null **/
-  registryCommunity: InContextSdkMethod<Subscription['registryCommunity'], SubscriptionregistryCommunityArgs, MeshContext>,
-  /** null **/
-  registryCommunities: InContextSdkMethod<Subscription['registryCommunities'], SubscriptionregistryCommunitiesArgs, MeshContext>,
-  /** null **/
-  member: InContextSdkMethod<Subscription['member'], SubscriptionmemberArgs, MeshContext>,
-  /** null **/
-  members: InContextSdkMethod<Subscription['members'], SubscriptionmembersArgs, MeshContext>,
-  /** null **/
-  stake: InContextSdkMethod<Subscription['stake'], SubscriptionstakeArgs, MeshContext>,
-  /** null **/
-  stakes: InContextSdkMethod<Subscription['stakes'], SubscriptionstakesArgs, MeshContext>,
-  /** null **/
-  memberCommunity: InContextSdkMethod<Subscription['memberCommunity'], SubscriptionmemberCommunityArgs, MeshContext>,
-  /** null **/
-  memberCommunities: InContextSdkMethod<Subscription['memberCommunities'], SubscriptionmemberCommunitiesArgs, MeshContext>,
-  /** null **/
-  memberStrategy: InContextSdkMethod<Subscription['memberStrategy'], SubscriptionmemberStrategyArgs, MeshContext>,
-  /** null **/
-  memberStrategies: InContextSdkMethod<Subscription['memberStrategies'], SubscriptionmemberStrategiesArgs, MeshContext>,
-  /** null **/
-  tokenGarden: InContextSdkMethod<Subscription['tokenGarden'], SubscriptiontokenGardenArgs, MeshContext>,
-  /** null **/
-  tokenGardens: InContextSdkMethod<Subscription['tokenGardens'], SubscriptiontokenGardensArgs, MeshContext>,
-  /** null **/
-  allo: InContextSdkMethod<Subscription['allo'], SubscriptionalloArgs, MeshContext>,
-  /** null **/
-  allos: InContextSdkMethod<Subscription['allos'], SubscriptionallosArgs, MeshContext>,
-  /** null **/
-  passportScorer: InContextSdkMethod<Subscription['passportScorer'], SubscriptionpassportScorerArgs, MeshContext>,
-  /** null **/
-  passportScorers: InContextSdkMethod<Subscription['passportScorers'], SubscriptionpassportScorersArgs, MeshContext>,
-  /** null **/
-  passportStrategy: InContextSdkMethod<Subscription['passportStrategy'], SubscriptionpassportStrategyArgs, MeshContext>,
-  /** null **/
-  passportStrategies: InContextSdkMethod<Subscription['passportStrategies'], SubscriptionpassportStrategiesArgs, MeshContext>,
-  /** null **/
-  passportUser: InContextSdkMethod<Subscription['passportUser'], SubscriptionpassportUserArgs, MeshContext>,
-  /** null **/
-  passportUsers: InContextSdkMethod<Subscription['passportUsers'], SubscriptionpassportUsersArgs, MeshContext>,
-  /** null **/
-  proposalDispute: InContextSdkMethod<Subscription['proposalDispute'], SubscriptionproposalDisputeArgs, MeshContext>,
-  /** null **/
-  proposalDisputes: InContextSdkMethod<Subscription['proposalDisputes'], SubscriptionproposalDisputesArgs, MeshContext>,
-  /** null **/
-  proposalDisputeMetadata: InContextSdkMethod<Subscription['proposalDisputeMetadata'], SubscriptionproposalDisputeMetadataArgs, MeshContext>,
-  /** null **/
-  proposalDisputeMetadata_collection: InContextSdkMethod<Subscription['proposalDisputeMetadata_collection'], SubscriptionproposalDisputeMetadata_collectionArgs, MeshContext>,
-  /** null **/
-  proposalMetadata: InContextSdkMethod<Subscription['proposalMetadata'], SubscriptionproposalMetadataArgs, MeshContext>,
-  /** null **/
-  proposalMetadata_collection: InContextSdkMethod<Subscription['proposalMetadata_collection'], SubscriptionproposalMetadata_collectionArgs, MeshContext>,
-  /** null **/
-  collateralVault: InContextSdkMethod<Subscription['collateralVault'], SubscriptioncollateralVaultArgs, MeshContext>,
-  /** null **/
-  collateralVaults: InContextSdkMethod<Subscription['collateralVaults'], SubscriptioncollateralVaultsArgs, MeshContext>,
-  /** null **/
-  collateralVaultDeposit: InContextSdkMethod<Subscription['collateralVaultDeposit'], SubscriptioncollateralVaultDepositArgs, MeshContext>,
-  /** null **/
-  collateralVaultDeposits: InContextSdkMethod<Subscription['collateralVaultDeposits'], SubscriptioncollateralVaultDepositsArgs, MeshContext>,
-  /** Access to subgraph metadata **/
-  _meta: InContextSdkMethod<Subscription['_meta'], Subscription_metaArgs, MeshContext>
+    
   };
 
   export type Context = {

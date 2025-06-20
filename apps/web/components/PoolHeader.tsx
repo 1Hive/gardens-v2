@@ -278,7 +278,7 @@ export default function PoolHeader({
     abi: safeABI,
     functionName: "isOwner",
     chainId: Number(chainId),
-    enabled: !!address,
+    enabled: !!address && !!safePrefix, // SafePrefix undefined means not supported
     args: [address as Address],
     onError: () => {
       console.error("Error reading isOwner from Coucil Safe");

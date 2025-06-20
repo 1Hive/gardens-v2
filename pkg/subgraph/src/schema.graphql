@@ -111,10 +111,12 @@ type Member @entity(immutable: false) {
   # registryCommunity: [RegistryCommunity!]
   memberCommunity: [MemberCommunity!] @derivedFrom(field: "member")
   stakes: [Stake!] @derivedFrom(field: "member")
+  isProtopian: Boolean
+  isKeeper: Boolean
   # isRegistered: Boolean
 }
 
-type Stake @entity {
+type Stake @entity(immutable: false) {
   id: ID!
   member: Member!
   poolId: BigInt!

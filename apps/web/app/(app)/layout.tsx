@@ -70,8 +70,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               width={40}
               loading="lazy"
             />
+            <h5>Gardens</h5>
           </Link>
-          <h5>Gardens</h5>
           {/* Mobile Menu Button */}
           {/* <button
             className="lg:hidden btn btn-ghost"

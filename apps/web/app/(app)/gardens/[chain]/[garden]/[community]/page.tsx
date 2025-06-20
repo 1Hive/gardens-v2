@@ -24,7 +24,12 @@ import {
   isMemberDocument,
   isMemberQuery,
 } from "#/subgraph/.graphclient";
-import { commImg, groupFlowers } from "@/assets";
+import {
+  CommunityLogo,
+  groupFlowers,
+  ProtopianLogo,
+  OneHiveLogo,
+} from "@/assets";
 import {
   Button,
   DisplayNumber,
@@ -43,6 +48,12 @@ import { TokenGardenFaucet } from "@/components/TokenGardenFaucet";
 import { isProd } from "@/configs/isProd";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
+import {
+  FAKE_PROTOPIAN_COMMUNITIES,
+  ONE_HIVE_COMMUNITY_ADDRESS,
+  ONE_HIVE_FAKE_COMMUNITY_ADDRESS,
+} from "@/globals";
+import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useCheat } from "@/hooks/useCheat";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
@@ -69,9 +80,9 @@ type CommunityMetricsProps = {
 type MemberColumn = Column<MembersStaked>;
 
 export default function Page({
-  params: { chain, garden: tokenAddr, community: communityAddr },
+  params: { garden: tokenAddr, community: communityAddr },
 }: {
-  params: { chain: number; garden: string; community: string };
+  params: { garden: string; community: string };
 }) {
   const searchParams = useCollectQueryParams();
   const { address: accountAddress } = useAccount();
@@ -79,11 +90,14 @@ export default function Page({
   const showArchived = useCheat("showArchived");
   const [openCommDetails, setOpenCommDetails] = useState(false);
 
+  const chain = useChainFromPath();
+
   const covenantSectionRef = useRef<HTMLDivElement>(null);
   const { data: tokenGarden } = useToken({
     address: tokenAddr as Address,
-    chainId: +chain,
+    chainId: chain?.id,
   });
+
   const {
     data: result,
     error,
@@ -99,19 +113,25 @@ export default function Page({
       { topic: "member", containerId: communityAddr },
     ],
   });
-  const registryCommunity = result?.registryCommunity;
 
-  const { data: isCouncilMember } = useContractRead({
-    address: registryCommunity?.councilSafe as Address,
+  const registryCommunity = result?.registryCommunity;
+  const isCouncilMember =
+    registryCommunity?.councilSafe &&
+    accountAddress?.toLowerCase() ===
+      registryCommunity.councilSafe.toLowerCase();
+
+  const { data: councilMembers } = useContractRead({
     abi: safeABI,
-    functionName: "isOwner",
-    chainId: Number(chain),
-    enabled: !!accountAddress,
-    args: [accountAddress as Address],
-    onError: () => {
-      console.error("Error reading isOwner from Coucil Safe");
+    address: registryCommunity?.councilSafe as Address,
+    functionName: "getOwners",
+    chainId: chain?.id,
+    enabled: !!registryCommunity?.councilSafe && !!chain?.safePrefix,
+    onError: (err) => {
+      console.error("Error reading council safe owners:", err);
     },
   });
+
+  const queryAllChains = useCheat("queryAllChains");
 
   let {
     communityName,
@@ -121,6 +141,24 @@ export default function Page({
     registerStakeAmount,
     protocolFee,
   } = registryCommunity ?? {};
+
+  const is1hive =
+    registryCommunity?.id.toLowerCase() ===
+    (isProd || queryAllChains ?
+      ONE_HIVE_COMMUNITY_ADDRESS
+    : ONE_HIVE_FAKE_COMMUNITY_ADDRESS);
+
+  const isProtopianCommunity =
+    !!members?.find(
+      (x) =>
+        x.member.isProtopian &&
+        councilMembers?.find(
+          (c) => c.toLowerCase() === x.memberAddress?.toLowerCase(),
+        ),
+    ) ||
+    !!FAKE_PROTOPIAN_COMMUNITIES.find(
+      (x) => x.toLowerCase() === communityAddr.toLowerCase(),
+    );
 
   const { data: isMemberResult } = useSubgraphQuery<isMemberQuery>({
     query: isMemberDocument,
@@ -201,7 +239,7 @@ export default function Page({
   //   fundingPools.forEach((pool, index) => {
   //     const { data } = useToken({
   //       address: pool.token as Address,
-  //       chainId: +chain,
+  //       chainId: chain.id,
   //     });
 
   //     // Update the tokenData in the array for this specific pool
@@ -309,7 +347,15 @@ export default function Page({
               {/* Image */}
               <div className="flex-shrink-0">
                 <div className="w-20 h-20 lg:w-24 lg:h-24 bg-primary-soft rounded-xl flex items-center justify-center shadow-sm p-1">
-                  <Image src={commImg} alt={`${communityName} community`} />
+                  <Image
+                    src={
+                      is1hive ? OneHiveLogo
+                      : isProtopianCommunity ?
+                        ProtopianLogo
+                      : CommunityLogo
+                    }
+                    alt={`${communityName} community`}
+                  />
                 </div>
               </div>
 
@@ -431,7 +477,7 @@ export default function Page({
             <header className="flex  items-center justify-between ">
               <h2>Pools</h2>
               <Link
-                href={`/gardens/${chain}/${tokenAddr}/${communityAddr}/create-pool`}
+                href={`/gardens/${chain?.id}/${tokenAddr}/${communityAddr}/create-pool`}
               >
                 <Button
                   btnStyle="filled"
@@ -449,7 +495,11 @@ export default function Page({
               <div className="pool-layout">
                 {fundingPools.map((pool) => (
                   <Fragment key={pool.poolId}>
-                    <PoolCard token={pool.token} chainId={chain} pool={pool} />
+                    <PoolCard
+                      token={pool.token}
+                      chainId={chain!.id!}
+                      pool={pool}
+                    />
                   </Fragment>
                 ))}
               </div>
@@ -462,7 +512,7 @@ export default function Page({
                   <PoolCard
                     key={pool.poolId}
                     token={pool.token}
-                    chainId={chain}
+                    chainId={chain!.id!}
                     pool={pool}
                   />
                 ))}
@@ -476,7 +526,7 @@ export default function Page({
                   <PoolCard
                     key={pool.poolId}
                     token={pool.token}
-                    chainId={chain}
+                    chainId={chain!.id!}
                     pool={pool}
                   />
                 ))}
@@ -495,7 +545,7 @@ export default function Page({
                     <PoolCard
                       key={pool.poolId}
                       token={pool.token}
-                      chainId={chain}
+                      chainId={chain!.id!}
                       pool={pool}
                     />
                   ))}

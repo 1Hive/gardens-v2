@@ -80,7 +80,7 @@ export default function Page({
       return;
     }
     console.debug(
-      "maxRatio: " + strategyObj?.config?.maxRatio,
+      "maxRatio: " + strategyObj?.config?.maxRatio, 
       "minThresholdPoints: " + strategyObj?.config?.minThresholdPoints,
       "poolAmount: " + strategyObj?.poolAmount,
     );
