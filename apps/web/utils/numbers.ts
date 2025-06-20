@@ -20,7 +20,7 @@ export const ETH_DECIMALS = 18;
 
 export function convertSecondsToReadableTime(totalSeconds: number): {
   value: number;
-  unit: "second" | "minute" | "hour" | "day";
+  unit: "sec." | "min." | "hour" | "day";
 } {
   const days = totalSeconds / (24 * 60 * 60);
   const hours = totalSeconds / (60 * 60);
@@ -31,9 +31,9 @@ export function convertSecondsToReadableTime(totalSeconds: number): {
   } else if (hours >= 1) {
     return { value: Number(hours.toPrecision(2)), unit: "hour" };
   } else if (minutes >= 1) {
-    return { value: Number(minutes.toPrecision(2)), unit: "minute" };
+    return { value: Number(minutes.toPrecision(2)), unit: "min." };
   } else {
-    return { value: Number(totalSeconds.toPrecision(2)), unit: "second" };
+    return { value: Number(totalSeconds.toPrecision(2)), unit: "sec." };
   }
 }
 
