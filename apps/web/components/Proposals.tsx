@@ -237,7 +237,9 @@ export function Proposals({
     memberData?.member?.memberCommunity?.[0]?.stakedTokens ?? 0,
   );
 
-  const proposals = strategy.proposals;
+  const proposals = strategy.proposals.sort(
+    (a, b) => a.stakedAmount - b.stakedAmount,
+  );
 
   // Effects
   useEffect(() => {
