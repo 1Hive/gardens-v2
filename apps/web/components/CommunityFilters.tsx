@@ -79,11 +79,11 @@ export function CommunityFilters({
       <div className="flex items-center gap-2 mb-1">
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="flex items-center text-secondary-content gap-1"
+          className="flex items-center text-tertiary-content gap-1"
           aria-label={isExpanded ? "Collapse filters" : "Expand filters"}
         >
           <FunnelIcon
-            className="w-6 h-6 text-secondary-content"
+            className="w-6 h-6 text-tertiary-content"
             strokeWidth={2}
           />
           <motion.div
@@ -99,8 +99,8 @@ export function CommunityFilters({
       <AnimatePresence>
         {isExpanded && (
           <motion.div
-            initial={{ opacity: 0, height: 0, width: 0 }}
-            animate={{ opacity: 1, height: "auto", width: "auto" }}
+            initial={{ opacity: 0, width: 0 }}
+            animate={{ opacity: 1, width: "auto" }}
             exit={{ opacity: 0, height: 0, width: 0 }}
             transition={{ duration: 0.3 }}
             className="flex-1"

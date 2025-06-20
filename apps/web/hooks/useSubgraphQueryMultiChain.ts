@@ -58,7 +58,7 @@ export function useSubgraphQueryMultiChain<
   queryContext?: Partial<OperationContext>;
   changeScope?: ChangeEventScope[] | ChangeEventScope;
   chainIds?: ChainId[];
-  modifier?: (data: Data[]) => Data[];
+  modifier?: (data: Data[]) => any[] | Promise<any[]>;
 }) {
   const { connected, subscribe, unsubscribe } = usePubSubContext();
   const mounted = useIsMounted();
@@ -129,6 +129,11 @@ export function useSubgraphQueryMultiChain<
                 const { urqlClient } = initUrqlClient({
                   chainId: (chainsOverride ?? allChains)[i],
                 });
+                if (!urqlClient) {
+                  throw new Error(
+                    `Urql client not initialized for chain ${chainId}`,
+                  );
+                }
                 return urqlClient.query<Data>(query, variables, {
                   ...queryContext,
                   url:
@@ -200,7 +205,7 @@ export function useSubgraphQueryMultiChain<
       );
       // Make sure unique values are returned
       const result = Array.from(new Set(responseMap.current.values()));
-      setResponse(modifier ? modifier(result) : result);
+      setResponse(modifier ? await modifier(result) : result);
       setFetching(false);
       fetchingRef.current = false;
     },

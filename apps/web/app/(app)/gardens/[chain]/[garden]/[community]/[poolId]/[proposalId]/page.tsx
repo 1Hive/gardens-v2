@@ -324,7 +324,7 @@ export default function Page({
                         )}
                         tokenSymbol={poolToken?.symbol}
                         compact={true}
-                        className="font-bold text-black"
+                        valueClassName="font-bold text-black"
                       />
                     </Statistic>
                     <Statistic label={"beneficiary"} icon={<UserIcon />}>

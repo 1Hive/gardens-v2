@@ -5,6 +5,7 @@ type InfoBoxStyles = "success" | "warning" | "error" | "info";
 
 type InfoBoxProps = {
   infoBoxType: InfoBoxStyles;
+  title?: string;
   content?: string;
   contentStyle?: string;
   className?: string;
@@ -14,7 +15,7 @@ type InfoBoxProps = {
 };
 
 const BASE_STYLES =
-  "border-none rounded-[20px] p-4 flex items-center justify-center gap-4";
+  "rounded-md p-2 flex flex-col items-start justify-center gap-2";
 // Styles for different info box types
 
 const infoBoxStyles = {
@@ -27,6 +28,7 @@ const infoBoxStyles = {
 export function InfoBox({
   infoBoxType,
   content,
+  title,
   contentStyle,
   className,
   icon,
@@ -37,14 +39,17 @@ export function InfoBox({
     <div
       className={`${BASE_STYLES} ${infoBoxStyles[infoBoxType]} ${className}`}
     >
-      {!hideIcon && (
-        <div className="h-9 w-9 text-inherit">
-          {" "}
-          {icon ?? <InformationCircleIcon className="h-9 w-9" />}
-        </div>
-      )}
+      <div className="flex items-center gap-2">
+        {!hideIcon && (
+          <div className="h-5 w-5 text-inherit flex-items-center justify-center">
+            {" "}
+            {icon ?? <InformationCircleIcon className="h-5 w-5" />}
+          </div>
+        )}
+        <h6>{title}</h6>
+      </div>
       <p
-        className={`leading-5 text-neutral-content first-letter:uppercase ${contentStyle}`}
+        className={`text-sm leading-5 text-neutral-content first-letter:uppercase ${contentStyle}`}
       >
         {children ?? content}
       </p>

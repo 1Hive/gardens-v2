@@ -121,6 +121,8 @@ query isMember($me: ID!, $comm: String!) {
 query getMember($me: ID!) {
   member(id: $me) {
     id
+    isProtopian
+    isKeeper
     memberCommunity {
       id
       stakedTokens
@@ -203,6 +205,7 @@ query getGardenCommunities($chainId: BigInt!, $tokenGarden: ID!) {
 query getCommunities {
   registryCommunities(where: { isValid: true }) {
     id
+    councilSafe
     communityName
     garden {
       address
@@ -219,6 +222,9 @@ query getCommunities {
     members(first: 1000, where: { stakedTokens_gt: "0" }) {
       id
       memberAddress
+      member {
+        isProtopian
+      }
     }
   }
 }
@@ -239,6 +245,9 @@ query getCommunity(
     ) {
       memberAddress
       stakedTokens
+      member {
+        isProtopian
+      }
     }
     strategies(orderBy: poolId, orderDirection: desc) {
       id

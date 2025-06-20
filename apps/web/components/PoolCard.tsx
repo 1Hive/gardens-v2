@@ -60,27 +60,19 @@ export function PoolCard({ pool, token, chainId }: Props) {
   return (
     <Card
       href={`${pathname}/${poolId}`}
-      className={`w-[275px] sm:min-w-[313px] ${isNewPool ? "shadow-2xl" : ""}`}
+      className={`w-full ${isNewPool ? "shadow-2xl" : ""}`}
     >
       <header className="mb-4 flex flex-col w-full justify-between items-start gap-2">
-        <div className="flex w-full justify-between items-center">
+        <div className="flex flex-wrap w-full justify-between items-center gap-1">
           <Skeleton isLoading={!ipfsResult}>
-            <h3 className="flex items-start max-w-[190px]">
+            <h3 className="flex items-center justify-between max-w-[190px]">
               <TooltipIfOverflow>{ipfsResult?.title}</TooltipIfOverflow>
             </h3>
           </Skeleton>
-          {poolId && elegibleGG23pools.includes(Number(poolId)) && (
-            <Image
-              src={GitcoinMatchingLogo}
-              alt="Gitcoin Matching Logo"
-              width={70}
-              height={50}
-            />
-          )}
-        </div>
-        <div className="flex justify-between items-center w-full">
-          <h6>POOL ID: #{poolId}</h6>
           <Badge type={poolType} />
+        </div>
+        <div>
+          <h6>POOL ID: #{poolId}</h6>
         </div>
       </header>
       <div className="mb-8 flex flex-col gap-2">
@@ -115,7 +107,7 @@ export function PoolCard({ pool, token, chainId }: Props) {
       : <Image
           src={poolType && PoolTypes[poolType] === "funding" ? blueLand : grass}
           alt="Garden land"
-          className="h-12 w-full rounded-lg object-cover"
+          className="h-14 w-full rounded-lg object-cover"
         />
       }
     </Card>
