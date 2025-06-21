@@ -69,7 +69,7 @@ export default function Page({
     ).toFixed(2);
 
   return (
-    <div className="page-layout">
+    <div className="page-layout col-span-12 mx-auto">
       <section className="section-layout">
         <div className="text-center sm:mt-5 mb-12">
           <h2 className="mb-2">Create a Proposal in Pool #{poolId}</h2>
