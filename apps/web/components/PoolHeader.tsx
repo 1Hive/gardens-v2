@@ -53,6 +53,7 @@ import {
   ProposalStatus,
   SybilResistanceType,
 } from "@/types";
+import { delayAsync } from "@/utils/delayAsync";
 import {
   convertSecondsToReadableTime,
   CV_PASSPORT_THRESHOLD_SCALE,
@@ -61,7 +62,6 @@ import {
   MAX_RATIO_CONSTANT,
 } from "@/utils/numbers";
 import { shortenAddress } from "@/utils/text";
-import { delayAsync } from "@/utils/delayAsync";
 
 type Props = {
   ipfsResult: MetadataV1 | null;
