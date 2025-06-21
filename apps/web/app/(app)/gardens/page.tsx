@@ -136,19 +136,18 @@ export default function GardensPage() {
                     chainId: x.chain.id,
                   });
 
-                  const is1hive = x.id === ONE_HIVE_COMMUNITY_ADDRESS;
-
                   return {
                     ...x,
                     // Consider Protopian can be transferred to councilSafe
-                    isProtopian:
-                      is1hive ||
-                      !![...communityCouncil, councilSafeAddress].find(
-                        (owner) =>
-                          !!protopianOwners!.find(
-                            (p) => owner.toLowerCase() === p.toLowerCase(),
-                          ),
-                      ),
+                    isProtopian: !![
+                      ...communityCouncil,
+                      councilSafeAddress,
+                    ].find(
+                      (owner) =>
+                        !!protopianOwners!.find(
+                          (p) => owner.toLowerCase() === p.toLowerCase(),
+                        ),
+                    ),
                   };
                 } catch (error) {
                   console.error(
