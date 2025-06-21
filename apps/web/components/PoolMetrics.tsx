@@ -9,7 +9,6 @@ import { Button } from "./Button";
 import { DisplayNumber } from "./DisplayNumber";
 import { FormInput } from "./Forms";
 import { TransactionModal, TransactionProps } from "./TransactionModal";
-import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useHandleAllowance } from "@/hooks/useHandleAllowance";
@@ -24,7 +23,6 @@ interface PoolMetricsProps {
     balance: bigint;
     formatted: string;
   };
-  communityAddress: Address;
   alloInfo: Allo;
   poolId: number;
 }
@@ -32,11 +30,9 @@ interface PoolMetricsProps {
 export const PoolMetrics: FC<PoolMetricsProps> = ({
   alloInfo,
   poolToken,
-  communityAddress,
   poolId,
 }) => {
   const [amount, setAmount] = useState(0);
-  const chainId = useChainIdFromPath();
   const [isOpenModal, setIsOpenModal] = useState(false);
   const { address: accountAddress } = useAccount();
 

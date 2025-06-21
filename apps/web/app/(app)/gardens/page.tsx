@@ -12,7 +12,7 @@ import {
 import { clouds1, clouds2, grassLarge, tree2, tree3 } from "@/assets";
 import { Button, Communities } from "@/components";
 import { LightCommunity } from "@/components/Communities";
-import { FAKE_PROTOPIAN_COMMUNITIES } from "@/globals";
+import { ONE_HIVE_COMMUNITY_ADDRESS } from "@/globals";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQueryMultiChain } from "@/hooks/useSubgraphQueryMultiChain";
 import { getProtopiansOwners } from "@/services/alchemy";
@@ -136,18 +136,19 @@ export default function GardensPage() {
                     chainId: x.chain.id,
                   });
 
+                  const is1hive = x.id === ONE_HIVE_COMMUNITY_ADDRESS;
+
                   return {
                     ...x,
                     // Consider Protopian can be transferred to councilSafe
-                    isProtopian: !![
-                      ...communityCouncil,
-                      councilSafeAddress,
-                    ].find(
-                      (owner) =>
-                        !!protopianOwners!.find(
-                          (p) => owner.toLowerCase() === p.toLowerCase(),
-                        ),
-                    ),
+                    isProtopian:
+                      is1hive ||
+                      !![...communityCouncil, councilSafeAddress].find(
+                        (owner) =>
+                          !!protopianOwners!.find(
+                            (p) => owner.toLowerCase() === p.toLowerCase(),
+                          ),
+                      ),
                   };
                 } catch (error) {
                   console.error(
@@ -158,12 +159,7 @@ export default function GardensPage() {
                 }
               }
 
-              return {
-                ...x,
-                isProtopian: !!FAKE_PROTOPIAN_COMMUNITIES.find(
-                  (add) => add.toLowerCase() === x.id,
-                ),
-              };
+              return x;
             }),
         );
       },
