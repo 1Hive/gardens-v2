@@ -97,8 +97,6 @@ export default function Page({
     }
   }, [searchParams, strategyObj?.proposals]);
 
-  const tokenGarden = data?.tokenGarden;
-
   const maxAmount = strategyObj?.config?.maxAmount ?? 0;
 
   useEffect(() => {
@@ -134,7 +132,7 @@ export default function Page({
       }
     : undefined;
 
-  if (!tokenGarden || (!poolToken && PoolTypes[proposalType] === "funding")) {
+  if (!poolToken || (!poolToken && PoolTypes[proposalType] === "funding")) {
     return (
       <div className="mt-96 col-span-12">
         <LoadingSpinner />
@@ -155,7 +153,6 @@ export default function Page({
     <>
       <PoolHeader
         poolToken={poolToken}
-        token={tokenGarden}
         strategy={strategyObj}
         arbitrableConfig={data.arbitrableConfigs[0]}
         poolId={poolId}
@@ -171,7 +168,6 @@ export default function Page({
               alloInfo={alloInfo}
               poolId={poolId}
               poolToken={poolToken}
-              communityAddress={communityAddress}
             />
           )}
         </>
