@@ -12,7 +12,6 @@ import {
 import { clouds1, clouds2, grassLarge, tree2, tree3 } from "@/assets";
 import { Button, Communities } from "@/components";
 import { LightCommunity } from "@/components/Communities";
-import { ONE_HIVE_COMMUNITY_ADDRESS } from "@/globals";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQueryMultiChain } from "@/hooks/useSubgraphQueryMultiChain";
 import { getProtopiansOwners } from "@/services/alchemy";
