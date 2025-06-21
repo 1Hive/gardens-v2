@@ -61,6 +61,7 @@ type ChainData = {
   allo: Address;
   isTestnet: boolean;
   safePrefix?: string;
+  alchemyApiBaseUrl?: string; // Optional, used for fetching NFTs
 };
 
 const SUBGRAPH_ARBSEP_VERSION = Subgraph.VERSION_ARBSEP;

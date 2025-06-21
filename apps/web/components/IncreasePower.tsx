@@ -1,6 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import {
+  ArrowTrendingDownIcon,
+  ArrowTrendingUpIcon,
+} from "@heroicons/react/24/outline";
 import { Dnum } from "dnum";
 import { parseUnits } from "viem";
 import { Address, useAccount, useBalance } from "wagmi";
@@ -211,8 +215,6 @@ export const IncreasePower = ({
   //   }
   // }, [votingPowerTx.status]);
 
-  if (!isMember) return null;
-
   const AddedStake = [
     BigInt(memberStakedTokens - registerStakeAmountBigInt),
     tokenDecimals,
@@ -220,7 +222,7 @@ export const IncreasePower = ({
 
   return (
     <section className="section-layout space-y-5">
-      <h2>Your stake</h2>
+      <h3>Your stake</h3>
       <TransactionModal
         label={`Stake ${tokenSymbol} in ${communityName}`}
         transactions={[allowanceTx, votingPowerTx]}
@@ -234,73 +236,101 @@ export const IncreasePower = ({
       </TransactionModal>
 
       <div className="flex justify-between gap-4 flex-wrap">
+        {/* Title + Member staked */}
         <div className="flex flex-col justify-between gap-2">
           <div className="flex justify-between">
             <div className="flex-start flex gap-2 items-center">
-              <p className="subtitle2">Total Staked in the community:</p>
+              <p className="subtitle2">Total Staked in community:</p>
               <InfoWrapper
                 tooltip={`Registration stake: ${parseToken(registrationAmount)} ${tokenGarden.symbol}\n Added stake: ${parseToken(AddedStake)} ${tokenGarden.symbol}`}
-              >
-                <EthAddress
-                  address={registerToken as Address}
-                  shortenAddress={true}
-                  actions="none"
-                  icon={false}
-                  label={
-                    <DisplayNumber
-                      number={[memberStakedTokens, tokenDecimals]}
-                      tokenSymbol={tokenSymbol}
-                      compact={true}
-                      className="subtitle2 text-primary-content"
-                      disableTooltip
-                    />
-                  }
-                />
-              </InfoWrapper>
+              />
             </div>
           </div>
-          <InfoBox
-            content="staking more tokens in the community can increase your voting power in pools to support proposals."
-            infoBoxType="info"
-            className="max-w-xl"
+          <EthAddress
+            address={registerToken as Address}
+            shortenAddress={true}
+            actions="none"
+            icon={false}
+            label={
+              <DisplayNumber
+                number={[memberStakedTokens, tokenDecimals]}
+                tokenSymbol={tokenSymbol}
+                compact={true}
+                valueClassName="text-primary-content font-bold text-3xl mr-1"
+                disableTooltip
+              />
+            }
           />
         </div>
-        <div className="flex flex-col gap-4">
-          <div className="relative">
-            <input
-              type="number"
-              value={amount}
-              placeholder="Amount"
-              className="input input-bordered input-info w-full"
-              onChange={(e) => setAmount(e.target.value)}
-            />
-            <span className="absolute right-8 top-3.5 text-black">
-              {tokenSymbol}
-            </span>
-          </div>
 
-          <div className="flex gap-4">
-            <Button
-              onClick={handleClick}
-              disabled={disabledIncPowerButton}
-              tooltip={tooltipMessage}
-            >
-              Increase stake
-              <span className="loading-spinner" />
-            </Button>
+        {/* Staking description */}
+        <InfoBox
+          title="Staking benefits"
+          content="staking more tokens can increase your voting power."
+          infoBoxType="info"
+          className="w-full"
+        />
 
-            <Button
-              onClick={() => writeDecreasePower?.()}
-              btnStyle="outline"
-              color="danger"
-              disabled={disabledDecPowerButton}
-              tooltip={decreaseTooltipMsg}
-            >
-              Decrease stake
-              <span className="loading-spinner" />
-            </Button>
-          </div>
+        {/* Available to stake*/}
+        <div className="flex-1 flex items-baseline justify-between">
+          <p className="text-sm">Available to Stake</p>
+          <DisplayNumber
+            number={[accountTokenBalance?.value ?? BigInt(0), tokenDecimals]}
+            tokenSymbol={tokenSymbol}
+            compact={true}
+            valueClassName="text-black text-lg"
+            symbolClassName="text-sm text-black"
+          />
         </div>
+
+        {/* Input */}
+        {!isMember ?
+          <p className="subtitle2 text-neutral-soft-content">
+            Join community to Stake
+          </p>
+        : <>
+            <div className="relative w-full">
+              <input
+                type="number"
+                value={amount}
+                placeholder="Amount"
+                className="input input-bordered input-info w-full"
+                onChange={(e) => setAmount(e.target.value)}
+              />
+              <span className="absolute top-4 right-4 text-black">
+                {tokenSymbol}
+              </span>
+            </div>
+
+            {/* Stake & Unstake Buttons */}
+
+            <div className="flex-1 flex items-center gap-1 justify-between flex-wrap">
+              <Button
+                onClick={handleClick}
+                disabled={disabledIncPowerButton}
+                tooltip={tooltipMessage}
+                icon={<ArrowTrendingUpIcon className="h-5 w-5" />}
+                className="w-full lg:w-auto"
+              >
+                Stake
+                <span className="loading-spinner" />
+              </Button>
+
+              <Button
+                onClick={() => writeDecreasePower?.()}
+                btnStyle="outline"
+                color="danger"
+                disabled={disabledDecPowerButton}
+                tooltip={decreaseTooltipMsg}
+                icon={<ArrowTrendingDownIcon className="h-5 w-5" />}
+                className="w-full lg:w-auto"
+              >
+                Unstake
+                <span className="loading-spinner" />
+              </Button>
+            </div>
+          </>
+        }
       </div>
     </section>
   );

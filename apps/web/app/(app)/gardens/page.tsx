@@ -2,7 +2,7 @@
 
 import React from "react";
 import { PlusIcon } from "@heroicons/react/24/outline";
-import { Address, readContract } from "@wagmi/core";
+import { Address, mainnet, readContract } from "@wagmi/core";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -15,6 +15,7 @@ import { LightCommunity } from "@/components/Communities";
 import { FAKE_PROTOPIAN_COMMUNITIES } from "@/globals";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
+import { useOwnerOfNFT } from "@/hooks/useOwnerOfNFT";
 import { useSubgraphQueryMultiChain } from "@/hooks/useSubgraphQueryMultiChain";
 import { safeABI } from "@/src/generated";
 
@@ -22,17 +23,17 @@ import { safeABI } from "@/src/generated";
 const Header = () => {
   const { tooltipMessage, isConnected } = useDisableButtons();
   return (
-    <header className="flex flex-col items-center gap-8">
+    <header className="flex flex-col items-center gap-8 ">
       <div className="flex items-center text-center">
         <div className="relative flex-1">
-          <Image src={clouds1} alt="clouds" width={205} height={205} />
+          <Image src={clouds1} alt="clouds" width={175} height={175} />
         </div>
         <div className="mx-10 flex flex-col items-center gap-5">
           <div className="flex flex-col items-center">
             <h1 className="max-w-xl text-center text-neutral-content">
               Welcome to Gardens
             </h1>
-            <p className="text-xl text-primary-content text-center">
+            <p className="text-xl  text-center">
               Where communities grow through collective decision-making
             </p>
             <Link href="/gardens/create-community" className="mt-6 z-10">
@@ -48,7 +49,7 @@ const Header = () => {
           </div>
         </div>
         <div className="relative flex-1">
-          <Image src={clouds2} alt="clouds" width={205} height={205} />
+          <Image src={clouds2} alt="clouds" width={175} height={175} />
         </div>
       </div>
     </header>
@@ -59,13 +60,10 @@ const Footer = () => {
   const { tooltipMessage, isConnected } = useDisableButtons();
 
   return (
-    <section className="section-layout">
-      <div className="flex flex-col gap-10 overflow-x-hidden">
-        <header>
-          <h4 className="text-neutral-content">Create your own community</h4>
-        </header>
-        <div className="relative flex h-[219px] justify-center">
-          <Link href="/gardens/create-community" className="mt-6 z-10">
+    <section>
+      <div className="flex flex-col gap-10 overflow-x-hidden ">
+        <div className="relative flex h-[240px] justify-center">
+          <Link href="/gardens/create-community" className="mt-10 z-10">
             <Button
               btnStyle="filled"
               disabled={!isConnected}
@@ -99,6 +97,10 @@ const Footer = () => {
 // Main component
 export default function GardensPage() {
   const chain = useChainFromPath();
+  const isProtopianHolder = useOwnerOfNFT({
+    chains: [mainnet],
+    nft: "Protopian",
+  });
   const { data: communitiesSections, fetching: isFetching } =
     useSubgraphQueryMultiChain<getCommunitiesQuery>({
       query: getCommunitiesDocument,
@@ -148,7 +150,7 @@ export default function GardensPage() {
     });
 
   return (
-    <div className="page-layout">
+    <div className="page-layout max-w-7xl mx-auto">
       <Header />
       <Communities
         communities={(communitiesSections as unknown as LightCommunity[]) ?? []}

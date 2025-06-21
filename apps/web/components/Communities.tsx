@@ -53,9 +53,7 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
   const { isConnected } = useAccount();
 
   useEffect(() => {
-    if (!isConnected) {
-      setIsExpanded(true);
-    }
+    if (!isConnected) setIsExpanded(true);
   }, [communities]);
 
   if (!skeletonLoading && communities.length === 0) return null;
@@ -66,10 +64,10 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
         <div className="flex items-center gap-2">
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="flex items-center text-secondary-content gap-1"
+            className="flex items-center  gap-1"
             aria-label={isExpanded ? "Collapse" : "Expand"}
           >
-            <h4 className="text-secondary-content">{title}</h4>
+            <h4 className="">{title}</h4>
             <motion.div
               animate={{ rotate: isExpanded ? 0 : 180 }}
               transition={{ duration: 0.3 }}
@@ -87,20 +85,54 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.3 }}
-            className="overflow-hidden mt-4"
+            className="overflow-hidden"
           >
-            <div className="flex flex-row flex-wrap gap-10">
-              {isFetching ?
-                Array(9)
-                  .fill(0)
-                  .map((_, i) => (
-                    // eslint-disable-next-line react/no-array-index-key
-                    <CommunityCardSkeleton key={`CommunityCardSkeleton-${i}`} />
-                  ))
-              : communities.map(({ id, ...communityProps }) => (
-                  <CommunityCard key={id} id={id} {...communityProps} />
-                ))
-              }
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 py-10 relative">
+              {(isFetching ? Array(9).fill(0) : communities).map(
+                (communityOrIndex, index) => {
+                  const key =
+                    isFetching ?
+                      `CommunityCardSkeleton-${index}`
+                    : `CommunityCard-${(communityOrIndex as LightCommunity).id}`;
+
+                  return (
+                    <div
+                      key={key}
+                      className="relative group block h-full w-full"
+                      // onMouseEnter={() => setHoveredIndex(index)}
+                      // onMouseLeave={() => setHoveredIndex(null)}
+                    >
+                      {/* <AnimatePresence>
+                          {hoveredIndex === index && (
+                            <motion.span
+                              className="absolute inset-0 h-full w-full bg-secondary-soft block rounded-2xl z-10"
+                              layoutId="hoverBackground"
+                              initial={{ opacity: 0 }}
+                              animate={{
+                                opacity: 1,
+                                transition: { duration: 0.15 },
+                              }}
+                              exit={{
+                                opacity: 0,
+                                transition: { duration: 0.15, delay: 0.2 },
+                              }}
+                            />
+                          )}
+                        </AnimatePresence> */}
+
+                      <div className="relative z-20">
+                        {isFetching ?
+                          <CommunityCardSkeleton />
+                        : <CommunityCard
+                            key={(communityOrIndex as LightCommunity).id}
+                            {...(communityOrIndex as LightCommunity)}
+                          />
+                        }
+                      </div>
+                    </div>
+                  );
+                },
+              )}
             </div>
           </motion.div>
         )}
@@ -124,13 +156,11 @@ export const Communities: React.FC<CommunitiesProps> = ({
   const showExcludedCommunities = useCheat("showExcludedCommunities");
   const queryAllChains = useCheat("queryAllChains");
 
-  // Get unique token symbols and networks
   const availableTokens = Array.from(
     new Set(communities.map((c) => c.garden.symbol)),
   ).sort();
 
   useEffect(() => {
-    // Filter communities based on search criteria
     const filterCommunities = (
       communityList: LightCommunity[],
     ): LightCommunity[] => {
@@ -145,17 +175,15 @@ export const Communities: React.FC<CommunitiesProps> = ({
           !chainIdFilter ||
           community.garden.chainId.toString() === chainIdFilter;
 
-        // Filter out excluded communities from environment variable
         let isExcluded = false;
         if (
           !showExcludedCommunities &&
           process.env.NEXT_PUBLIC_EXCLUDED_COMMUNITIES
         ) {
-          const excludedCommunities =
-            process.env.NEXT_PUBLIC_EXCLUDED_COMMUNITIES.split(",").map((id) =>
-              id.trim().toLowerCase(),
-            );
-          isExcluded = excludedCommunities.includes(community.id.toLowerCase());
+          const excluded = process.env.NEXT_PUBLIC_EXCLUDED_COMMUNITIES.split(
+            ",",
+          ).map((id) => id.trim().toLowerCase());
+          isExcluded = excluded.includes(community.id.toLowerCase());
         }
 
         return nameMatch && tokenMatch && networkMatch && !isExcluded;
@@ -191,33 +219,27 @@ export const Communities: React.FC<CommunitiesProps> = ({
       return 0;
     });
 
-    const auxOtherCommunities: LightCommunity[] = [];
-    const auxUserCommunities: LightCommunity[] = [];
+    const auxUser: LightCommunity[] = [];
+    const auxOther: LightCommunity[] = [];
 
-    for (const community of sortedCommunities) {
-      if (memberInCommunity(community)) {
-        auxUserCommunities.push(community);
+    for (const c of sortedCommunities) {
+      if (
+        c?.members?.some(
+          (m) => m.memberAddress?.toLowerCase() === address?.toLowerCase(),
+        )
+      ) {
+        auxUser.push(c);
       } else {
-        auxOtherCommunities.push(community);
+        auxOther.push(c);
       }
     }
 
-    setUserCommunities(filterCommunities(auxUserCommunities));
-    setOtherCommunities(filterCommunities(auxOtherCommunities));
+    setUserCommunities(filterCommunities(auxUser));
+    setOtherCommunities(filterCommunities(auxOther));
   }, [address, communities, nameFilter, tokenFilter, chainIdFilter]);
 
-  const memberInCommunity = (community: LightCommunity): boolean => {
-    if (!community?.members) {
-      return false;
-    }
-    return community.members.some(
-      (member) =>
-        member?.memberAddress?.toLowerCase() === address?.toLowerCase(),
-    );
-  };
-
   return (
-    <section className="section-layout flex flex-col gap-2">
+    <section className="flex flex-col gap-2">
       <CommunityFilters
         nameFilter={nameFilter}
         setNameFilter={setNameFilter}

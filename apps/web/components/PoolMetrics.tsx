@@ -1,11 +1,12 @@
 "use client";
 
 import { FC, useEffect, useState } from "react";
-import { erc20ABI, FetchTokenResult } from "@wagmi/core";
+// eslint-disable-next-line import/no-extraneous-dependencies
+import sfMeta from "@superfluid-finance/metadata";
+import { erc20ABI } from "@wagmi/core";
 import { round } from "lodash-es";
 import Image from "next/image";
 import { parseUnits } from "viem";
-import { arbitrum } from "viem/chains";
 import { Address, useAccount, useBalance } from "wagmi";
 import { Allo, CVStrategy } from "#/subgraph/.graphclient";
 import { Button } from "./Button";
@@ -19,17 +20,20 @@ import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useHandleAllowance } from "@/hooks/useHandleAllowance";
 import { usePoolAmount } from "@/hooks/usePoolAmount";
 import { useSuperfluidStream } from "@/hooks/useSuperfluidStream";
-import { getTxMessage } from "@/utils/transactionMessages";
-// eslint-disable-next-line import/no-extraneous-dependencies
-import sfMeta from "@superfluid-finance/metadata";
 import { superfluidCFAv1ForwarderAbi, superTokenABI } from "@/src/customAbis";
 import { delayAsync } from "@/utils/delayAsync";
+import { getTxMessage } from "@/utils/transactionMessages";
 
 interface PoolMetricsProps {
   strategy: Pick<CVStrategy, "id" | "poolId" | "token"> & {
     config: Pick<CVStrategy["config"], "superfluidToken">;
   };
-  poolToken: FetchTokenResult;
+  poolToken: {
+    address: Address;
+    symbol: string;
+    decimals: number;
+    balance: bigint;
+  };
   communityAddress: Address;
   alloInfo: Allo;
   chainId: string;
@@ -333,30 +337,26 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
           <div className="flex flex-col gap-2">
             <div className="flex gap-3 items-center">
               <p className="subtitle2">Funds in pool:</p>
-              <div className="flex items-center ">
-                <Skeleton className="w-32 h-6" isLoading={poolAmount == null}>
-                  <DisplayNumber
-                    number={[poolAmount!, poolToken.decimals]}
-                    tokenSymbol={poolToken.symbol}
-                    compact={true}
-                    className="subtitle2 text-primary-content"
+              <DisplayNumber
+                number={[poolToken.balance, poolToken.decimals]}
+                tokenSymbol={poolToken.symbol}
+                compact={true}
+                valueClassName="subtitle2 text-primary-content"
+              />
+              {currentFlowRate && currentFlowRate > 0n && (
+                <div
+                  className="tooltip"
+                  data-tip={`Incoming Superfluid stream (+${currentFlowPerMonth}/month)`}
+                >
+                  <Image
+                    src={SuperfluidStream}
+                    alt="Incoming Stream"
+                    width={40}
+                    height={40}
+                    className="mb-1"
                   />
-                </Skeleton>
-                {currentFlowRate && currentFlowRate > 0n && (
-                  <div
-                    className="tooltip"
-                    data-tip={`Incoming Superfluid stream (+${currentFlowPerMonth}/month)`}
-                  >
-                    <Image
-                      src={SuperfluidStream}
-                      alt="Incoming Stream"
-                      width={40}
-                      height={40}
-                      className="mb-1"
-                    />
-                  </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
             {accountAddress && (
               <div className="flex gap-3">
@@ -366,7 +366,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                     number={[balance?.value ?? BigInt(0), poolToken.decimals]}
                     tokenSymbol={poolToken.symbol}
                     compact={true}
-                    className="subtitle2 text-primary-content"
+                    valueClassName="subtitle2 text-primary-content"
                   />
                 </Skeleton>
               </div>

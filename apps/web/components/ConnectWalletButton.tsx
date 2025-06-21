@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Fragment, useEffect, useMemo, useState } from "react";
+import React, { Fragment, useMemo, useState } from "react";
 import { Menu, Transition } from "@headlessui/react";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import {
@@ -13,7 +13,7 @@ import { blo } from "blo";
 import cn from "classnames";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { createPublicClient, http, isAddress } from "viem";
+import { isAddress } from "viem";
 import {
   arbitrum,
   arbitrumSepolia,
@@ -23,11 +23,9 @@ import {
 } from "viem/chains";
 import {
   Address,
-  erc721ABI,
   useAccount,
   useBalance,
   useConnect,
-  useContractRead,
   useDisconnect,
   useEnsAvatar,
   useEnsName,
@@ -42,9 +40,9 @@ import { Button, DisplayNumber } from "@/components";
 import { ChainIcon } from "@/configs/chains";
 import { isProd } from "@/configs/isProd";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
+import { useOwnerOfNFT } from "@/hooks/useOwnerOfNFT";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { formatAddress } from "@/utils/formatAddress";
-import { useOwnerOfNFT } from "@/hooks/useOwnerOfNFT";
 
 export function ConnectWallet() {
   const path = usePathname();
@@ -56,8 +54,18 @@ export function ConnectWallet() {
   const { switchNetwork } = useSwitchNetwork();
   const { disconnect } = useDisconnect();
   const { connectors } = useConnect();
-  const { isOwner: hasFirstHolderNFT } = useOwnerOfNFT({
+  const { isOwner: isFirstHolder } = useOwnerOfNFT({
     nft: "FirstHolder",
+    chains: [optimism, arbitrum, base, mainnet],
+    enabled: account.isConnected,
+  });
+  const { isOwner: isProtopianHolder } = useOwnerOfNFT({
+    nft: "Protopian",
+    chains: [optimism, arbitrum, base, mainnet],
+    enabled: account.isConnected,
+  });
+  const { isOwner: isBeekperHolder } = useOwnerOfNFT({
+    nft: "Keeper",
     chains: [optimism, arbitrum, base, mainnet],
     enabled: account.isConnected,
   });
@@ -77,20 +85,20 @@ export function ConnectWallet() {
         {
           image: ProtopianNFT,
           title: "Protopian NFT",
-          hasNFT: result?.member?.isProtopian,
+          hasNFT: isProtopianHolder,
         },
         {
           image: BeeKeeperNFT,
           title: "Bee Keeper NFT",
-          hasNFT: result?.member?.isKeeper,
+          hasNFT: isBeekperHolder,
         },
         {
           image: FirstHolderNFT,
           title: "First Holder NFT",
-          hasNFT: !!hasFirstHolderNFT,
+          hasNFT: !!isFirstHolder,
         },
       ].filter((nft) => nft.hasNFT),
-    [result, hasFirstHolderNFT],
+    [result, isFirstHolder],
   );
 
   const [selectedNFTIndex, setSelectedNFTIndex] = useState(0);
@@ -272,7 +280,7 @@ export function ConnectWallet() {
                                 <DisplayNumber
                                   number={(token?.formatted ?? 0).toString()}
                                   tokenSymbol={token?.symbol}
-                                  className="text-primary-content"
+                                  valueClassName="text-primary-content"
                                 />
                               </div>
                             </Menu.Item>

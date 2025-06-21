@@ -88,7 +88,7 @@ export function Button({
   const buttonElement = (
     <button
       type={type}
-      className={`${btnStyles[btnStyle][disabled ? "disabled" : color]} flex relative cursor-pointer  justify-center rounded-lg px-6 py-4 transition-all ease-out disabled:cursor-not-allowed h-fit gap-2 ${className}`}
+      className={`${btnStyles[btnStyle][disabled ? "disabled" : color]} flex relative cursor-pointer justify-center rounded-lg px-4 py-2 transition-all ease-out disabled:cursor-not-allowed h-fit text-sm gap-2 ${className}`}
       onClick={onClick}
       disabled={disabled || isLoading}
       style={style}
@@ -102,7 +102,7 @@ export function Button({
 
   return disabled || showToolTip ?
       <div
-        className={`${tooltip ? "tooltip" : ""} ${tooltipSide} ${tooltipStyles}`}
+        className={`${className} ${tooltip ? "tooltip" : ""} ${tooltipSide} ${tooltipStyles}`}
         data-tip={tooltip ?? ""}
       >
         {buttonElement}

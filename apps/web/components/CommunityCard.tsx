@@ -7,6 +7,7 @@ import {
   UserGroupIcon,
 } from "@heroicons/react/24/outline";
 import Image from "next/image";
+import { mainnet } from "wagmi";
 import {
   CVStrategy,
   Maybe,
@@ -16,16 +17,11 @@ import {
 import { Card } from "./Card";
 import { Statistic } from "./Statistic";
 import TooltipIfOverflow from "./TooltipIfOverflow";
-import { CommunityLogo, ProtopianLogo, OneHiveLogo } from "@/assets";
+import { CommunityLogo, ProtopianLogo } from "@/assets";
 import { ChainIcon } from "@/configs/chains";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
-import {
-  ONE_HIVE_COMMUNITY_ADDRESS,
-  ONE_HIVE_FAKE_COMMUNITY_ADDRESS,
-} from "@/globals";
-import { isProd } from "@/configs/isProd";
-import { useCheat } from "@/hooks/useCheat";
+import { useOwnerOfNFT } from "@/hooks/useOwnerOfNFT";
 
 type CommunityCardProps = {
   id: string;
@@ -54,19 +50,11 @@ export function CommunityCard({
     searchParams[QUERY_PARAMS.gardenPage.newCommunity]?.toLowerCase() ===
     id.toLowerCase();
 
-  const queryAllChains = useCheat("queryAllChains");
-
-  const is1hive =
-    id.toLowerCase() ===
-    (isProd || queryAllChains ?
-      ONE_HIVE_COMMUNITY_ADDRESS
-    : ONE_HIVE_FAKE_COMMUNITY_ADDRESS);
-
   return (
     <Card
       key={id}
       href={`/gardens/${chainId}/${tokenAddr}/${id}`}
-      className={`w-[275px] sm:min-w-[313px] ${isNewCommunity ? "shadow-2xl" : ""}`}
+      className={` ${isNewCommunity ? "shadow-2xl" : ""}`}
     >
       <div className="flex justify-between text-neutral-content text-sm">
         {isProtopian && (
@@ -76,12 +64,7 @@ export function CommunityCard({
           </div>
         )}
         <Image
-          src={
-            is1hive ? OneHiveLogo
-            : isProtopian ?
-              ProtopianLogo
-            : CommunityLogo
-          }
+          src={isProtopian ? ProtopianLogo : CommunityLogo}
           alt={`${communityName} community`}
           className="mb-2 h-[100px]"
           height={100}
