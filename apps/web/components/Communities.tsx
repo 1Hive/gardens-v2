@@ -11,11 +11,7 @@ import {
 } from "#/subgraph/.graphclient";
 import { CommunityCard, CommunityCardSkeleton } from "./CommunityCard";
 import { CommunityFilters } from "./CommunityFilters";
-import { isProd } from "@/configs/isProd";
-import {
-  ONE_HIVE_COMMUNITY_ADDRESS,
-  ONE_HIVE_FAKE_COMMUNITY_ADDRESS,
-} from "@/globals";
+import { ONE_HIVE_COMMUNITY_ADDRESS } from "@/globals";
 import { useCheat } from "@/hooks/useCheat";
 
 export type LightCommunity = Pick<RegistryCommunity, "id" | "communityName"> & {
@@ -48,8 +44,8 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
   skeletonLoading = false,
   isFetching,
 }) => {
-  const [isExpanded, setIsExpanded] = useState<boolean>(defaultExpanded);
-
+  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
+  // const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const { isConnected } = useAccount();
 
   useEffect(() => {
@@ -150,11 +146,10 @@ export const Communities: React.FC<CommunitiesProps> = ({
     [],
   );
   const [userCommunities, setUserCommunities] = useState<LightCommunity[]>([]);
-  const [nameFilter, setNameFilter] = useState<string>("");
+  const [searchFilter, setSearchFilter] = useState<string>("");
   const [tokenFilter, setTokenFilter] = useState<string>("");
   const [chainIdFilter, setchainIdFilter] = useState<string>("");
   const showExcludedCommunities = useCheat("showExcludedCommunities");
-  const queryAllChains = useCheat("queryAllChains");
 
   const availableTokens = Array.from(
     new Set(communities.map((c) => c.garden.symbol)),
@@ -168,9 +163,12 @@ export const Communities: React.FC<CommunitiesProps> = ({
         const nameMatch =
           community.communityName
             ?.toLowerCase()
-            .includes(nameFilter.toLowerCase()) ?? true;
+            .includes(searchFilter.toLowerCase()) ?? true;
         const tokenMatch =
-          !tokenFilter || community.garden.symbol === tokenFilter;
+          !tokenFilter ||
+          community.garden.symbol === tokenFilter ||
+          searchFilter === community.garden.symbol ||
+          searchFilter === community.garden.address;
         const networkMatch =
           !chainIdFilter ||
           community.garden.chainId.toString() === chainIdFilter;
@@ -193,10 +191,7 @@ export const Communities: React.FC<CommunitiesProps> = ({
     // Sort communities by length of members in descending order
     const sortedCommunities = [...communities].sort((a, b) => {
       // Show isProtopian communities on top and 1hive first
-      const oneHiveEffectiveAddress =
-        isProd || queryAllChains ?
-          ONE_HIVE_COMMUNITY_ADDRESS
-        : ONE_HIVE_FAKE_COMMUNITY_ADDRESS;
+      const oneHiveEffectiveAddress = ONE_HIVE_COMMUNITY_ADDRESS;
 
       if (
         a.id.toLowerCase() === oneHiveEffectiveAddress &&
@@ -236,13 +231,13 @@ export const Communities: React.FC<CommunitiesProps> = ({
 
     setUserCommunities(filterCommunities(auxUser));
     setOtherCommunities(filterCommunities(auxOther));
-  }, [address, communities, nameFilter, tokenFilter, chainIdFilter]);
+  }, [address, communities, searchFilter, tokenFilter, chainIdFilter]);
 
   return (
     <section className="flex flex-col gap-2">
       <CommunityFilters
-        nameFilter={nameFilter}
-        setNameFilter={setNameFilter}
+        searchFilter={searchFilter}
+        setSearchFilter={setSearchFilter}
         tokenFilter={tokenFilter}
         setTokenFilter={setTokenFilter}
         chainIdFilter={chainIdFilter}

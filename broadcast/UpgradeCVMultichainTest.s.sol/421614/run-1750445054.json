@@ -144,7 +144,7 @@
     {
       "hash": "0x2b30895c567f282132b5320bfd5b33a94c40095cef5859b216361208f4f9e332",
       "transactionType": "CALL",
-      "contractName": "ERC1967Proxy",
+      "contractName": null,
       "contractAddress": "0xa488ac456c7c5964af7d323b7ce795d02e7c5154",
       "function": "setStrategyTemplate(address)",
       "arguments": [
@@ -165,26 +165,7 @@
     {
       "hash": "0x16baa6e9bcca5711016bedaa9e8d6b2a4d8f95e9f7a1e79d0207377ff4be2122",
       "transactionType": "CALL",
-      "contractName": "ERC1967Proxy",
-      "contractAddress": "0xa488ac456c7c5964af7d323b7ce795d02e7c5154",
-      "function": null,
-      "arguments": null,
-      "transaction": {
-        "from": "0xb05a948b5c1b057b88d381bde3a375efea87ebad",
-        "to": "0xa488ac456c7c5964af7d323b7ce795d02e7c5154",
-        "gas": "0xe2cc",
-        "value": "0x0",
-        "input": "0x1b71f0e40000000000000000000000007c50d71de614d21115f09b51d003dfe91eac74d3",
-        "nonce": "0xfa5",
-        "chainId": "0x66eee"
-      },
-      "additionalContracts": [],
-      "isFixedGasLimit": false
-    },
-    {
-      "hash": "0x7a0f2ee8d2c9764ecc147b6c7b31678a993b5e4f755d13fc665b666ed7ce0c54",
-      "transactionType": "CALL",
-      "contractName": "ERC1967Proxy",
+      "contractName": null,
       "contractAddress": "0xa502fffb9082700cad62366bc6ce37b15207680f",
       "function": "setStrategyTemplate(address)",
       "arguments": [
@@ -287,7 +268,7 @@
     {
       "hash": "0xc29958075354480692f3e140d6b1f86659173f8f4bbea2ce70c01f6933f1a9b1",
       "transactionType": "CALL",
-      "contractName": "ERC1967Proxy",
+      "contractName": null,
       "contractAddress": "0x07563fce80b58a67f5d4a5332ee84747bfb829b9",
       "function": "upgradeTo(address)",
       "arguments": [
@@ -1279,12 +1260,10 @@
       "timeboosted": false
     }
   ],
-  "libraries": [
-    "pkg/contracts/src/CVStrategy/ConvictionsUtils.sol:ConvictionsUtils:0x466e08b2a5328f08A4c7E929396809C5f78827F2"
-  ],
+  "libraries": [],
   "pending": [],
   "returns": {},
-  "timestamp": 1750445121,
+  "timestamp": 1750445054,
   "chain": 421614,
   "commit": "39558fa8"
 }

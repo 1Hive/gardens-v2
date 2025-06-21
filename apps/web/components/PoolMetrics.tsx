@@ -12,13 +12,11 @@ import { Allo, CVStrategy } from "#/subgraph/.graphclient";
 import { Button } from "./Button";
 import { DisplayNumber } from "./DisplayNumber";
 import { FormInput } from "./Forms";
-import { Skeleton } from "./Skeleton";
 import { TransactionModal, TransactionProps } from "./TransactionModal";
 import { SuperfluidStream } from "@/assets";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useHandleAllowance } from "@/hooks/useHandleAllowance";
-import { usePoolAmount } from "@/hooks/usePoolAmount";
 import { useSuperfluidStream } from "@/hooks/useSuperfluidStream";
 import { superfluidCFAv1ForwarderAbi, superTokenABI } from "@/src/customAbis";
 import { delayAsync } from "@/utils/delayAsync";
@@ -79,11 +77,6 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
   } = useSuperfluidStream({
     receiver: poolAddress,
     superToken: config.superfluidToken as Address,
-  });
-
-  const poolAmount = usePoolAmount({
-    poolAddress: poolAddress,
-    watch: true,
   });
 
   const { write: writeFundPool, isLoading: isSendFundsLoading } =
@@ -212,7 +205,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
   const { tooltipMessage, isButtonDisabled } = useDisableButtons([
     {
       message: "Connected account has insufficient balance",
-      condition: balance && balance.value < requestedAmountBn,
+      condition: !!poolToken.balance && poolToken.balance < requestedAmountBn,
     },
     {
       message: "Amount must be greater than 0",
@@ -300,7 +293,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
   );
 
   return (
-    <>
+    <section>
       <TransactionModal
         label={`Stream funds in pool #${poolId}`}
         transactions={[allowanceTx, wrapFundsTx, streamFundsTx]}
@@ -361,14 +354,13 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
             {accountAddress && (
               <div className="flex gap-3">
                 <p className="subtitle2">Wallet balance:</p>
-                <Skeleton isLoading={!balance}>
-                  <DisplayNumber
-                    number={[balance?.value ?? BigInt(0), poolToken.decimals]}
-                    tokenSymbol={poolToken.symbol}
-                    compact={true}
-                    valueClassName="subtitle2 text-primary-content"
-                  />
-                </Skeleton>
+                <DisplayNumber
+                  number={[poolToken.balance, poolToken.decimals]}
+                  tokenSymbol={poolToken.symbol}
+                  compact={true}
+                  valueClassName="text-black text-lg"
+                  symbolClassName="text-sm text-black"
+                />
               </div>
             )}
           </div>
@@ -467,6 +459,6 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
           </div>
         </div>
       </section>
-    </>
+    </section>
   );
 };

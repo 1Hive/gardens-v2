@@ -7,7 +7,6 @@ import {
   UserGroupIcon,
 } from "@heroicons/react/24/outline";
 import Image from "next/image";
-import { mainnet } from "wagmi";
 import {
   CVStrategy,
   Maybe,
@@ -21,7 +20,6 @@ import { CommunityLogo, ProtopianLogo } from "@/assets";
 import { ChainIcon } from "@/configs/chains";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
-import { useOwnerOfNFT } from "@/hooks/useOwnerOfNFT";
 
 type CommunityCardProps = {
   id: string;

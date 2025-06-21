@@ -374,6 +374,7 @@ export const DisputeButton: FC<Props> = ({
                 <Button
                   color="secondary"
                   btnStyle="outline"
+                  className="w-10"
                   onClick={() => handleSubmitRuling(ABSTAINED_RULING)}
                   isLoading={rulingLoading === ABSTAINED_RULING}
                   disabled={
@@ -474,6 +475,7 @@ export const DisputeButton: FC<Props> = ({
               tooltip={tooltipMessage}
               tooltipSide="tooltip-left"
               isLoading={isDisputeCreateLoading}
+              className="w-full"
             >
               Dispute
             </Button>
@@ -491,8 +493,11 @@ export const DisputeButton: FC<Props> = ({
             color="danger"
             btnStyle="outline"
             onClick={() => setIsModalOpened(true)}
+            className="w-full"
           >
-            {isDisputed ?? isProposalEnded ? "Open dispute" : "Dispute"}
+            {isDisputed ?? isProposalEnded ?
+              "Open dispute"
+            : "Dispute Proposal"}
           </Button>
           <Modal
             title={`Disputed Proposal: ${proposalData.title} #${proposalData.proposalNumber}`}

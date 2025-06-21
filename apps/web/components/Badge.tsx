@@ -75,13 +75,11 @@ export function Badge({
 
   return (
     <div
-      className={`${BASE_STYLES} ${styles} ${tooltip ? "tooltip" : ""} ${className} flex items-center gap-2`}
+      className={`${BASE_STYLES} ${styles} ${tooltip ? "tooltip" : ""} ${className} flex items-center gap-1`}
       data-tip={tooltip}
     >
-      {iconIncluded && <div className="h-5 w-5">{iconIncluded}</div>}
-      <p className="hidden sm:block first-letter:uppercase text-sm font-semibold">
-        {content}
-      </p>
+      {iconIncluded && <span className="h-5 w-5">{iconIncluded}</span>}
+      <p className="first-letter:uppercase text-sm font-semibold">{content}</p>
     </div>
   );
 }

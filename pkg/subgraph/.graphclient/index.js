@@ -480,8 +480,6 @@ export const getMemberDocument = gql `
     query getMember($me: ID!) {
   member(id: $me) {
     id
-    isProtopian
-    isKeeper
     memberCommunity {
       id
       stakedTokens
@@ -581,9 +579,6 @@ export const getCommunitiesDocument = gql `
     members(first: 1000, where: {stakedTokens_gt: "0"}) {
       id
       memberAddress
-      member {
-        isProtopian
-      }
     }
   }
 }
@@ -601,9 +596,6 @@ export const getCommunityDocument = gql `
     ) {
       memberAddress
       stakedTokens
-      member {
-        isProtopian
-      }
     }
     strategies(orderBy: poolId, orderDirection: desc) {
       id

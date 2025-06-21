@@ -28,7 +28,7 @@ export default function Page({
 
   if (!token) {
     return (
-      <div className="my-40">
+      <div className="my-40 col-span-12">
         <LoadingSpinner />
       </div>
     );
@@ -47,7 +47,7 @@ export default function Page({
           />
         </section>
       </div>
-    : <div className="mt-96">
+    : <div className="mt-96 col-span-12">
         <LoadingSpinner />
       </div>;
 }

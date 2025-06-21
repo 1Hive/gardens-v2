@@ -9,7 +9,7 @@ import {
 } from "@heroicons/react/24/outline";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Address, useToken } from "wagmi";
+import { useBalance } from "wagmi";
 import {
   CVProposal,
   CVStrategy,
@@ -17,14 +17,12 @@ import {
 } from "#/subgraph/.graphclient";
 import { Skeleton } from "./Skeleton";
 import TooltipIfOverflow from "./TooltipIfOverflow";
-import { blueLand, grass, GitcoinMatchingLogo } from "@/assets";
+import { blueLand, grass } from "@/assets";
 import { Badge, Card, DisplayNumber, Statistic } from "@/components";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
-import { usePoolAmount } from "@/hooks/usePoolAmount";
 import { PointSystems, PoolTypes } from "@/types";
-import { elegibleGG23pools } from "@/utils/matchingPools";
 import { capitalize } from "@/utils/text";
 
 type Props = {
@@ -36,27 +34,23 @@ type Props = {
     proposals: Pick<CVProposal, "id">[];
     config: Pick<CVStrategyConfig, "proposalType" | "pointSystem">;
   };
-  chainId: number;
 };
 
-export function PoolCard({ pool, token, chainId }: Props) {
+export function PoolCard({ pool, token }: Props) {
   const pathname = usePathname();
   const searchParams = useCollectQueryParams();
 
-  let { id, poolId, proposals, isEnabled, config, metadata } = pool;
+  let { poolId, proposals, isEnabled, config, metadata } = pool;
 
   const { metadata: ipfsResult } = useMetadataIpfsFetch({
     hash: metadata,
   });
 
-  const poolAmount = usePoolAmount({
-    poolAddress: id,
-  });
-
   const poolType = config?.proposalType as number | undefined;
-  const { data: tokenGarden } = useToken({
-    address: token as Address,
-    chainId: +chainId,
+
+  const { data: poolAmount } = useBalance({
+    address: token as `0x${string}`,
+    enabled: isEnabled && !!poolType && PoolTypes[poolType] === "funding",
   });
 
   const isNewPool =
@@ -91,17 +85,19 @@ export function PoolCard({ pool, token, chainId }: Props) {
           label="proposals"
           className={`${isEnabled ? "visible" : "invisible"}`}
         />
-        {isEnabled && poolType && PoolTypes[poolType] === "funding" && (
-          <Statistic icon={<CurrencyDollarIcon />} label="funds">
-            <Skeleton className="w-32 h-6" isLoading={poolAmount == undefined}>
+        {isEnabled &&
+          poolAmount &&
+          poolAmount.value &&
+          poolType &&
+          PoolTypes[poolType] === "funding" && (
+            <Statistic icon={<CurrencyDollarIcon />} label="funds">
               <DisplayNumber
-                number={[poolAmount!, tokenGarden?.decimals as number]}
+                number={[poolAmount.value, poolAmount.decimals]}
                 compact={true}
-                tokenSymbol={tokenGarden?.symbol}
+                tokenSymbol={poolAmount.symbol}
               />
-            </Skeleton>
-          </Statistic>
-        )}
+            </Statistic>
+          )}
       </div>
       {!isEnabled ?
         <div className="banner md:min-w-[262px]">

@@ -93,8 +93,8 @@ export function Button({
       disabled={disabled || isLoading}
       style={style}
     >
-      {isLoading && <span className={`loading loading-spinner loading-sm`} />}
-      <div className={`flex gap-2 items-center`}>
+      {isLoading && <span className={"loading loading-spinner loading-sm"} />}
+      <div className={"flex gap-2 items-center"}>
         {icon && icon} {children}
       </div>
     </button>

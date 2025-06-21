@@ -15,7 +15,7 @@ import {
   StopIcon,
   Cog6ToothIcon,
 } from "@heroicons/react/24/solid";
-import { erc20ABI, FetchTokenResult } from "@wagmi/core";
+import { erc20ABI } from "@wagmi/core";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { Address, zeroAddress } from "viem";
@@ -38,8 +38,8 @@ import { Skeleton } from "./Skeleton";
 import { Statistic } from "./Statistic";
 import { blueLand, grassLarge, SuperfluidStream } from "@/assets";
 import { chainConfigMap } from "@/configs/chains";
-import { VOTING_POINT_SYSTEM_DESCRIPTION } from "@/configs/constants";
 import { usePubSubContext } from "@/contexts/pubsub.context";
+import { VOTING_POINT_SYSTEM_DESCRIPTION } from "@/globals";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
@@ -77,7 +77,10 @@ type Props = {
     | "defaultRulingTimeout"
   >;
   token: Pick<TokenGarden, "address" | "name" | "symbol" | "decimals">;
-  poolToken?: FetchTokenResult;
+  poolToken?: {
+    address: Address;
+    symbol: string;
+  };
   maxAmount: number;
 };
 

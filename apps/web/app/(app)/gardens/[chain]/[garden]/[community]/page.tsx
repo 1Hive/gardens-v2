@@ -48,15 +48,12 @@ import { TokenGardenFaucet } from "@/components/TokenGardenFaucet";
 import { isProd } from "@/configs/isProd";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
-import {
-  FAKE_PROTOPIAN_COMMUNITIES,
-  ONE_HIVE_COMMUNITY_ADDRESS,
-  ONE_HIVE_FAKE_COMMUNITY_ADDRESS,
-} from "@/globals";
+import { ONE_HIVE_COMMUNITY_ADDRESS } from "@/globals";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useCheat } from "@/hooks/useCheat";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
+import { getProtopiansOwners } from "@/services/alchemy";
 import { safeABI } from "@/src/generated";
 import { PoolTypes, Column } from "@/types";
 import { fetchIpfs } from "@/utils/ipfsUtils";
@@ -89,6 +86,7 @@ export default function Page({
   const [covenant, setCovenant] = useState<string | undefined>();
   const showArchived = useCheat("showArchived");
   const [openCommDetails, setOpenCommDetails] = useState(false);
+  const isFetchingNFT = useRef<boolean>(false);
 
   const chain = useChainFromPath();
 
@@ -131,8 +129,6 @@ export default function Page({
     },
   });
 
-  const queryAllChains = useCheat("queryAllChains");
-
   let {
     communityName,
     members,
@@ -143,22 +139,44 @@ export default function Page({
   } = registryCommunity ?? {};
 
   const is1hive =
-    registryCommunity?.id.toLowerCase() ===
-    (isProd || queryAllChains ?
-      ONE_HIVE_COMMUNITY_ADDRESS
-    : ONE_HIVE_FAKE_COMMUNITY_ADDRESS);
+    registryCommunity?.id.toLowerCase() === ONE_HIVE_COMMUNITY_ADDRESS;
 
-  const isProtopianCommunity =
-    !!members?.find(
-      (x) =>
-        x.member.isProtopian &&
-        councilMembers?.find(
-          (c) => c.toLowerCase() === x.memberAddress?.toLowerCase(),
-        ),
-    ) ||
-    !!FAKE_PROTOPIAN_COMMUNITIES.find(
-      (x) => x.toLowerCase() === communityAddr.toLowerCase(),
-    );
+  const [isProtopianCommunity, setIsProtopianCommunity] = useState<
+    boolean | undefined
+  >(undefined);
+
+  useEffect(() => {
+    if (
+      !councilMembers ||
+      isProtopianCommunity != undefined ||
+      isFetchingNFT.current ||
+      !result?.registryCommunity?.councilSafe
+    )
+      return;
+
+    isFetchingNFT.current = true;
+
+    // Fetch alchemy data to determine if the community is Protopian
+
+    getProtopiansOwners()
+      .then((protopianOwners) => {
+        setIsProtopianCommunity(
+          // Consider Protopian can be transferred to councilSafe
+          !!protopianOwners.find((x) =>
+            [...councilMembers, result!.registryCommunity!.councilSafe!]?.find(
+              (cm) => cm.toLowerCase() === x.toLowerCase(),
+            ),
+          ),
+        );
+      })
+      .catch((err) => {
+        console.error("Error fetching Protopian community data:", err);
+        setIsProtopianCommunity(false);
+      })
+      .finally(() => {
+        isFetchingNFT.current = false;
+      });
+  }, [councilMembers, result?.registryCommunity!.councilSafe]);
 
   const { data: isMemberResult } = useSubgraphQuery<isMemberQuery>({
     query: isMemberDocument,
@@ -287,7 +305,7 @@ export default function Page({
 
   if (!tokenGarden || !registryCommunity) {
     return (
-      <div className="mt-96">
+      <div className="mt-96 col-span-12">
         <LoadingSpinner />
       </div>
     );
@@ -495,11 +513,7 @@ export default function Page({
               <div className="pool-layout">
                 {fundingPools.map((pool) => (
                   <Fragment key={pool.poolId}>
-                    <PoolCard
-                      token={pool.token}
-                      chainId={chain!.id!}
-                      pool={pool}
-                    />
+                    <PoolCard token={pool.token} pool={pool} />
                   </Fragment>
                 ))}
               </div>
@@ -509,12 +523,7 @@ export default function Page({
               <h4>Signaling ({signalingPools.length})</h4>
               <div className="pool-layout">
                 {signalingPools.map((pool) => (
-                  <PoolCard
-                    key={pool.poolId}
-                    token={pool.token}
-                    chainId={chain!.id!}
-                    pool={pool}
-                  />
+                  <PoolCard key={pool.poolId} token={pool.token} pool={pool} />
                 ))}
               </div>
             </div>
@@ -523,12 +532,7 @@ export default function Page({
               <h4>In Review ({poolsInReview.length})</h4>
               <div className="pool-layout">
                 {poolsInReview.map((pool) => (
-                  <PoolCard
-                    key={pool.poolId}
-                    token={pool.token}
-                    chainId={chain!.id!}
-                    pool={pool}
-                  />
+                  <PoolCard key={pool.poolId} token={pool.token} pool={pool} />
                 ))}
               </div>
             </div>
@@ -545,7 +549,6 @@ export default function Page({
                     <PoolCard
                       key={pool.poolId}
                       token={pool.token}
-                      chainId={chain!.id!}
                       pool={pool}
                     />
                   ))}

@@ -22,12 +22,12 @@ import { EthAddress } from "../EthAddress";
 import { InfoWrapper } from "../InfoWrapper";
 import { SuperfluidStream } from "@/assets";
 import { Button } from "@/components/Button";
+import { QUERY_PARAMS } from "@/constants/query-params";
+import { usePubSubContext } from "@/contexts/pubsub.context";
 import {
   DEFAULT_RULING_TIMEOUT_SEC,
   VOTING_POINT_SYSTEM_DESCRIPTION,
-} from "@/configs/constants";
-import { QUERY_PARAMS } from "@/constants/query-params";
-import { usePubSubContext } from "@/contexts/pubsub.context";
+} from "@/globals";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useCheat } from "@/hooks/useCheat";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";

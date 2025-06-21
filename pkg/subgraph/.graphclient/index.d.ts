@@ -3323,7 +3323,7 @@ export type getMemberQueryVariables = Exact<{
     me: Scalars['ID']['input'];
 }>;
 export type getMemberQuery = {
-    member?: Maybe<(Pick<Member, 'id' | 'isProtopian' | 'isKeeper'> & {
+    member?: Maybe<(Pick<Member, 'id'> & {
         memberCommunity?: Maybe<Array<(Pick<MemberCommunity, 'id' | 'stakedTokens' | 'isRegistered'> & {
             registryCommunity: Pick<RegistryCommunity, 'id' | 'isValid'>;
         })>>;
