@@ -22,7 +22,6 @@ import {
   getPassportStrategyDocument,
   getPassportStrategyQuery,
   getPoolDataQuery,
-  TokenGarden,
 } from "#/subgraph/.graphclient";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
