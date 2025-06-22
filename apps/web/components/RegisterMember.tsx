@@ -95,7 +95,7 @@ export function RegisterMember({
     () => [
       {
         condition: !isMember && !accountHasBalance,
-        message: "Connected account has insufficient balance",
+        message: "Insufficient balance",
       },
     ],
     [isMember, accountHasBalance],
