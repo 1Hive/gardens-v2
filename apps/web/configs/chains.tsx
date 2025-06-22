@@ -1,7 +1,6 @@
 import React, { FC } from "react";
 import {
   Arbitrum,
-  Ethereum,
   GnosisGno,
   Optimism,
   Polygon,
@@ -14,7 +13,6 @@ import {
   celo,
   Chain,
   gnosis,
-  localhost,
   optimism,
   polygon,
   sepolia,
@@ -41,11 +39,12 @@ export const CHAINS: Chain[] = [
   // mainnet,
 ];
 
-if (process.env.NODE_ENV === "development") {
-  CHAINS.push(localhost);
-}
+// if (process.env.NODE_ENV === "development") {
+//   CHAINS.push(localhost);
+// }
 
-type ChainData = {
+export type ChainData = {
+  id: number;
   name: string;
   icon: FC;
   explorer: string;
@@ -60,6 +59,7 @@ type ChainData = {
   allo: Address;
   isTestnet: boolean;
   safePrefix?: string;
+  alchemyApiBaseUrl?: string; // Optional, used for fetching NFTs
 };
 
 const SUBGRAPH_TESTNET_VERSION = Subgraph.VERSION_TESTNET;
@@ -85,21 +85,22 @@ export const chainConfigMap: {
   [key: number | string]: ChainData;
 } = {
   // Testnets
-  1337: {
-    name: localhost.name,
-    icon: Ethereum,
-    explorer: "",
-    blockTime: 0.23,
-    confirmations: 1,
-    rpcUrl: "http://127.0.0.1:8545",
-    subgraphUrl: "http://localhost:8000/subgraphs/name/kamikazebr/gv2",
-    globalTribunal: "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD",
-    allo: "0x",
-    arbitrator: "0x",
-    passportScorer: "0x",
-    isTestnet: true,
-  },
+  // 1337: {
+  //   name: localhost.name,
+  //   icon: Ethereum,
+  //   explorer: "",
+  //   blockTime: 0.23,
+  //   confirmations: 1,
+  //   rpcUrl: "http://127.0.0.1:8545",
+  //   subgraphUrl: "http://localhost:8000/subgraphs/name/kamikazebr/gv2",
+  //   globalTribunal: "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD",
+  //   allo: "0x",
+  //   arbitrator: "0x",
+  //   passportScorer: "0x",
+  //   isTestnet: true,
+  // },
   421614: {
+    id: 421614,
     name: arbitrumSepolia.name,
     icon: Arbitrum,
     explorer: "https://sepolia.arbiscan.io/",
@@ -119,6 +120,7 @@ export const chainConfigMap: {
     isTestnet: true,
   },
   // 11155111: {
+  //   id: 11155111,
   //   name: sepolia.name,
   //   icon: Ethereum,
   //   explorer: "https://eth-sepolia.blockscout.com",
@@ -143,6 +145,7 @@ export const chainConfigMap: {
 
   // Prodnets
   42161: {
+    id: 42161,
     name: arbitrum.name,
     icon: Arbitrum,
     explorer: "https://arbitrum.blockscout.com",
@@ -162,6 +165,7 @@ export const chainConfigMap: {
     safePrefix: "arb1",
   },
   10: {
+    id: 10,
     name: optimism.name,
     icon: Optimism,
     explorer: "https://optimism.blockscout.com",
@@ -181,6 +185,7 @@ export const chainConfigMap: {
     safePrefix: "oeth",
   },
   137: {
+    id: 137,
     name: polygon.name,
     icon: Polygon,
     explorer: "https://polygon.blockscout.com",
@@ -200,6 +205,7 @@ export const chainConfigMap: {
     safePrefix: "matic",
   },
   100: {
+    id: 100,
     name: gnosis.name,
     icon: GnosisGno,
     explorer: "https://gnosis.blockscout.com",
@@ -219,6 +225,7 @@ export const chainConfigMap: {
     safePrefix: "gno",
   },
   8453: {
+    id: 8453,
     name: base.name,
     icon: BaseLogo,
     explorer: "https://base.blockscout.com",
@@ -238,13 +245,18 @@ export const chainConfigMap: {
     safePrefix: "base",
   },
   42220: {
+    id: 42220,
     name: celo.name,
     icon: CeloLogo,
     explorer: "https://celo.blockscout.com",
     blockTime: 3.8,
     confirmations: 4, // 4
     rpcUrl: process.env.RPC_URL_BASE!,
-    ...getSubgraphUrls("BsXEnGaXdj3CkGRn95bswGcv2mQX7m8kNq7M7WBxxPx8", "gardens-v2---celo", SUBGRAPH_PRODNET_VERSION),
+    ...getSubgraphUrls(
+      "BsXEnGaXdj3CkGRn95bswGcv2mQX7m8kNq7M7WBxxPx8",
+      "gardens-v2---celo",
+      SUBGRAPH_PRODNET_VERSION,
+    ),
     globalTribunal: "0x9a17De1f0caD0c592F656410997E4B685d339029",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0x83bDE2E2D8AcAAad2D300DA195dF3cf86b234bdd",
@@ -253,6 +265,7 @@ export const chainConfigMap: {
     safePrefix: "celo",
   },
   // 1: {
+  //   id: 1,
   //   name: mainnet.name,
   //   icon: Ethereum,
   //   explorer: "https://eth.blockscout.com",

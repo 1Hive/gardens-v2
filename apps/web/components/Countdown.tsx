@@ -16,8 +16,8 @@ export const Countdown = ({
   className?: string;
   onTimeout?: () => void;
 }) => {
-  const [remainingTimeMs, setRemainingTime] = useState<number | undefined>();
   const [isInitializing, setIsInitializing] = useState(true);
+  const [remainingTimeMs, setRemainingTime] = useState<number | undefined>();
   let timerRef = useRef<NodeJS.Timeout | null>(null);
   useEffect(() => {
     timerRef.current = setInterval(() => {

@@ -1,4 +1,5 @@
 import * as dn from "dnum";
+import { round } from "lodash-es";
 import { formatUnits } from "viem";
 
 export const INPUT_MIN_VALUE = 0.000000000001;
@@ -20,7 +21,7 @@ export const ETH_DECIMALS = 18;
 
 export function convertSecondsToReadableTime(totalSeconds: number): {
   value: number;
-  unit: "second" | "minute" | "hour" | "day";
+  unit: "sec." | "min." | "hour" | "day";
 } {
   const days = totalSeconds / (24 * 60 * 60);
   const hours = totalSeconds / (60 * 60);
@@ -31,9 +32,9 @@ export function convertSecondsToReadableTime(totalSeconds: number): {
   } else if (hours >= 1) {
     return { value: Number(hours.toPrecision(2)), unit: "hour" };
   } else if (minutes >= 1) {
-    return { value: Number(minutes.toPrecision(2)), unit: "minute" };
+    return { value: Number(minutes.toPrecision(2)), unit: "min." };
   } else {
-    return { value: Number(totalSeconds.toPrecision(2)), unit: "second" };
+    return { value: Number(totalSeconds.toPrecision(2)), unit: "sec." };
   }
 }
 
@@ -205,4 +206,38 @@ export function calculateMaxRatioNum(
 
 export function bigIntMin(a: bigint, b: bigint) {
   return a < b ? a : b;
+}
+
+/**
+ *
+ * @param n  Number to auto-round
+ * @description Automatically rounds a number based on its magnitude.
+ * - If the absolute value is >= 1, rounds to 2 decimal places.
+ * - If the absolute value is >= 0.1, rounds to 3 decimal places.
+ * - If the absolute value is >= 0.01, rounds to 4 decimal places.
+ * - If the absolute value is >= 0.001, rounds to 5 decimal places.
+ * - For very small numbers, uses logarithmic scaling to determine the number of decimal places.
+ * @returns  The rounded number.
+ * @example
+ * autoRound(123.456789) // returns 123.46
+ * autoRound(0.123456789) // returns 0.123
+ * autoRound(0.00123456789) // returns 0.00123
+ * autoRound(0.0000123456789) // returns 0.0000123457
+ * autoRound(0.000000123456789) // returns 0.0000001235
+ * autoRound(0) // returns 0
+ */
+export function autoRound(n: number): number {
+  if (n === 0) return 0;
+
+  const abs = Math.abs(n);
+
+  let decimals: number;
+
+  if (abs >= 1) decimals = 2;
+  if (abs >= 0.1) decimals = 3;
+  if (abs >= 0.01) decimals = 4;
+  if (abs >= 0.001) decimals = 5;
+  // Logarithmic fallback for very small numbers
+  else decimals = Math.min(10, Math.ceil(Math.abs(Math.log10(abs))) + 2);
+  return round(n, decimals);
 }

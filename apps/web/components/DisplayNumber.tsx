@@ -6,14 +6,16 @@ import * as dn from "dnum";
 export const DisplayNumber = ({
   number,
   tokenSymbol,
-  className,
+  valueClassName,
+  symbolClassName,
   disableTooltip = false,
   compact,
   copiable,
 }: {
   number: dn.Dnum | string;
   tokenSymbol?: string;
-  className?: string;
+  valueClassName?: string;
+  symbolClassName?: string;
   disableTooltip?: boolean;
   compact?: boolean;
   copiable?: boolean;
@@ -35,6 +37,9 @@ export const DisplayNumber = ({
     const charsLength = 3;
     const prefixLength = 2; // "0."
 
+    // Trim leading zeros
+    str = str?.replace(/^0+/, "");
+
     if (!str) {
       setShowTooltip(false);
       return "";
@@ -52,6 +57,7 @@ export const DisplayNumber = ({
         str.slice(-charsLength)
       );
     }
+
     if (typeof number === "string") {
       return dn.format(dn.from(number), {
         compact: compact,
@@ -84,7 +90,7 @@ export const DisplayNumber = ({
   };
 
   return (
-    <div className="relative flex items-center gap-1">
+    <div className="relative flex items-baseline gap-1">
       <div
         onClick={handleCopy}
         onKeyDown={(ev) => {
@@ -95,9 +101,9 @@ export const DisplayNumber = ({
         className={`${!disableTooltip && showTooltip && "tooltip"} ${copiable && "cursor-pointer"}`}
         data-tip={isCopied ? "Copied!" : fullNumberStr}
       >
-        <p className={className}>{shortNumber}</p>
+        <p className={valueClassName}>{shortNumber}</p>
       </div>
-      <p className={className}>{tokenSymbol}</p>
+      <p className={symbolClassName}>{tokenSymbol}</p>
     </div>
   );
 };

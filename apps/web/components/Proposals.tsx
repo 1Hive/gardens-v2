@@ -5,7 +5,6 @@ import {
   AdjustmentsHorizontalIcon,
   PlusIcon,
 } from "@heroicons/react/24/outline";
-import { FetchTokenResult } from "@wagmi/core";
 import Link from "next/link";
 import { Id, toast } from "react-toastify";
 import { parseAbiParameters, encodeAbiParameters } from "viem";
@@ -72,6 +71,7 @@ export type StakesMemberType = NonNullable<isMemberQuery["member"]>["stakes"];
 export type ProposalTypeVoter = CVProposal & {
   title: string;
   type: number;
+  beneficiary: Address;
 };
 
 type Stats = {
@@ -97,7 +97,13 @@ interface ProposalsProps {
     config: ProposalCardProps["strategyConfig"];
   } & PoolGovernanceProps["strategy"];
   alloInfo: Allo;
-  poolToken?: FetchTokenResult;
+  poolToken?: {
+    address: Address;
+    symbol: string;
+    decimals: number;
+    balance: bigint;
+    formatted: string;
+  };
   communityAddress: Address;
   createProposalUrl: string;
   proposalType: number;
@@ -231,7 +237,9 @@ export function Proposals({
     memberData?.member?.memberCommunity?.[0]?.stakedTokens ?? 0,
   );
 
-  const proposals = strategy.proposals;
+  const proposals = strategy.proposals.sort(
+    (a, b) => a.stakedAmount - b.stakedAmount,
+  );
 
   // Effects
   useEffect(() => {
@@ -276,7 +284,7 @@ export function Proposals({
 
   const disableManageSupportBtnCondition: ConditionObject[] = [
     {
-      condition: !memberActivatedStrategy,
+      condition: !isMemberCommunity,
       message: "You need to activate your governance first",
     },
     {
@@ -488,48 +496,34 @@ export function Proposals({
   // Render
   return (
     <>
-      {strategy.isEnabled && (
-        <PoolGovernance
-          memberPoolWeight={memberPoolWeight}
-          tokenDecimals={tokenDecimals}
-          strategy={strategy}
-          communityAddress={communityAddress}
-          memberTokensInCommunity={memberTokensInCommunity}
-          isMemberCommunity={isMemberCommunity}
-          memberActivatedStrategy={memberActivatedStrategy}
-          membersStrategyData={membersStrategies}
-        />
-      )}
-      <section className="section-layout flex flex-col gap-10 mt-10">
-        <div>
-          <header className="flex items-center justify-between gap-10 flex-wrap">
-            <h2>Proposals</h2>
-            {!!proposals &&
-              strategy.isEnabled &&
-              (proposals.length === 0 ?
-                <h4 className="text-2xl">No submitted proposals to support</h4>
-              : !allocationView && (
-                  <CheckPassport strategy={strategy}>
-                    <Button
-                      icon={
-                        <AdjustmentsHorizontalIcon height={24} width={24} />
-                      }
-                      onClick={() => setAllocationView((prev) => !prev)}
-                      disabled={
-                        !isConnected ||
-                        missmatchUrl ||
-                        !memberActivatedStrategy ||
-                        !isAllowed
-                      }
-                      tooltip={tooltipMessage}
-                    >
-                      Manage support
-                    </Button>
-                  </CheckPassport>
-                ))}
-          </header>
-          {allocationView && <UserAllocationStats stats={stats} />}
-        </div>
+      {/* Proposals section */}
+      <section className="col-span-12 lg:col-span-9 flex flex-col gap-10">
+        <header className="flex items-center justify-between gap-10 flex-wrap">
+          <h2>Proposals</h2>
+          {!!proposals &&
+            strategy.isEnabled &&
+            (proposals.length === 0 ?
+              <h4 className="text-2xl">No submitted proposals to support</h4>
+            : !allocationView && (
+                <CheckPassport strategy={strategy}>
+                  <Button
+                    icon={<AdjustmentsHorizontalIcon height={24} width={24} />}
+                    onClick={() => setAllocationView((prev) => !prev)}
+                    disabled={
+                      !isConnected ||
+                      missmatchUrl ||
+                      !memberActivatedStrategy ||
+                      !isAllowed
+                    }
+                    tooltip={tooltipMessage}
+                  >
+                    Manage support
+                  </Button>
+                </CheckPassport>
+              ))}
+        </header>
+        {allocationView && <UserAllocationStats stats={stats} />}
+
         <div className="flex flex-col gap-6">
           {proposals && inputs ?
             <>
@@ -605,6 +599,7 @@ export function Proposals({
             </>
           : <LoadingSpinner />}
         </div>
+
         {strategy.isEnabled &&
           (allocationView ?
             <div className="flex justify-end gap-4">
@@ -635,7 +630,12 @@ export function Proposals({
                     disabled={
                       !isConnected || missmatchUrl || !isMemberCommunity
                     }
-                    tooltip={tooltipMessage}
+                    tooltip={
+                      !isConnected ? "Connect your wallet"
+                      : !isMemberCommunity ?
+                        "Join the community first"
+                      : "Create a proposal"
+                    }
                   >
                     Create a proposal
                   </Button>
@@ -643,6 +643,24 @@ export function Proposals({
               </div>
             </div>)}
       </section>
+
+      {/* Pool Governace */}
+      {strategy.isEnabled && (
+        <div className="col-span-12 lg:col-span-3">
+          <div className="backdrop-blur-sm rounded-lg flex flex-col gap-2 sticky top-32">
+            <PoolGovernance
+              memberPoolWeight={memberPoolWeight}
+              tokenDecimals={tokenDecimals}
+              strategy={strategy}
+              communityAddress={communityAddress}
+              memberTokensInCommunity={memberTokensInCommunity}
+              isMemberCommunity={isMemberCommunity}
+              memberActivatedStrategy={memberActivatedStrategy}
+              membersStrategyData={membersStrategies}
+            />
+          </div>
+        </div>
+      )}
     </>
   );
 }

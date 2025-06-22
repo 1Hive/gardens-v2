@@ -30,10 +30,10 @@ contract UpgradeCVMultichainTest is BaseMultiChain {
         RegistryFactoryV0_0 registryFactory = RegistryFactoryV0_0(payable(address(registryFactoryProxy)));
 
         // 1.a -- Upgrade the Registry Factory --
-        // address registryFactoryImplementation = address(new RegistryFactoryV0_0());
+        address registryFactoryImplementation = address(new RegistryFactoryV0_0());
         // Upgrades.upgradeProxy(address(registryFactoryProxy), "RegistryFactoryV0_0.sol:RegistryFactoryV0_0", "");
         // abi.encodeWithSelector(RegistryFactoryV0_1.initializeV2.selector)
-        // registryFactory.upgradeTo(registryFactoryImplementation); // DOESNT VALIDATE SAFE UPGRADING
+        registryFactory.upgradeTo(registryFactoryImplementation); // DOESNT VALIDATE SAFE UPGRADING
 
         // 1.b -- Set the Registry Community Template --
         // registryFactory.setRegistryCommunityTemplate(registryImplementation);
@@ -45,8 +45,8 @@ contract UpgradeCVMultichainTest is BaseMultiChain {
         address[] memory registryCommunityProxies =
             networkJson.readAddressArray(getKeyNetwork(".PROXIES.REGISTRY_COMMUNITIES"));
         for (uint256 i = 0; i < registryCommunityProxies.length; i++) {
-            // RegistryCommunityV0_0 registryCommunity =
-            //     RegistryCommunityV0_0(payable(address(registryCommunityProxies[i])));
+            RegistryCommunityV0_0 registryCommunity =
+                RegistryCommunityV0_0(payable(address(registryCommunityProxies[i])));
 
             // WIP: Upgrade with safety
             // Upgrades.upgradeProxy(
@@ -58,7 +58,7 @@ contract UpgradeCVMultichainTest is BaseMultiChain {
             // registryCommunity.upgradeTo(registryImplementation); // DOESNT VALIDATE SAFE UPGRADING
 
             // 2.b -- Set the Strategy Template --
-            // registryCommunity.setStrategyTemplate(strategyImplementation);
+            registryCommunity.setStrategyTemplate(strategyImplementation);
         }
 
         // 3. CV STRATEGIES UPGRADES
@@ -74,26 +74,28 @@ contract UpgradeCVMultichainTest is BaseMultiChain {
             // 3.a -- Upgrade the CV Strategy --
             CVStrategyV0_0 cvStrategy = CVStrategyV0_0(payable(address(cvStrategyProxies[i])));
             cvStrategy.upgradeTo(strategyImplementation); // DOESNT VALIDATE SAFE UPGRADING
-            (
-                ,
-                address tribunalSafe,
-                uint256 submitterCollateralAmount,
-                uint256 challengerCollateralAmount,
-                uint256 defaultRuling,
-                uint256 defaultRulingTimeout
-            ) = cvStrategy.arbitrableConfigs(cvStrategy.currentArbitrableConfigVersion());
-            (uint256 maxRatio, uint256 weight, uint256 decay, uint256 minThresholdPoints) = cvStrategy.cvParams();
-            cvStrategy.setPoolParams(
-                ArbitrableConfig(
-                    IArbitrator(safeArbitrator),
-                    tribunalSafe,
-                    submitterCollateralAmount,
-                    challengerCollateralAmount,
-                    defaultRuling,
-                    defaultRulingTimeout
-                ),
-                CVParams(maxRatio, weight, decay, minThresholdPoints)
-            );
+
+            // 3.b -- Set the Pool Params --
+            // (
+            //     ,
+            //     address tribunalSafe,
+            //     uint256 submitterCollateralAmount,
+            //     uint256 challengerCollateralAmount,
+            //     uint256 defaultRuling,
+            //     uint256 defaultRulingTimeout
+            // ) = cvStrategy.arbitrableConfigs(cvStrategy.currentArbitrableConfigVersion());
+            // (uint256 maxRatio, uint256 weight, uint256 decay, uint256 minThresholdPoints) = cvStrategy.cvParams();
+            // cvStrategy.setPoolParams(
+            //     ArbitrableConfig(
+            //         IArbitrator(safeArbitrator),
+            //         tribunalSafe,
+            //         submitterCollateralAmount,
+            //         challengerCollateralAmount,
+            //         defaultRuling,
+            //         defaultRulingTimeout
+            //     ),
+            //     CVParams(maxRatio, weight, decay, minThresholdPoints)
+            // );
         }
     }
 

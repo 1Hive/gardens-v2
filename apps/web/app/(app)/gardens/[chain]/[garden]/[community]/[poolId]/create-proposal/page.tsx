@@ -1,12 +1,11 @@
 "use client";
 
 import React from "react";
-import { Address, useToken } from "wagmi";
+import { Address, useBalance } from "wagmi";
 import { getPoolDataDocument, getPoolDataQuery } from "#/subgraph/.graphclient";
 import { ProposalForm } from "@/components/Forms";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { calculateMinimumConviction } from "@/components/PoolHeader";
-import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { PoolTypes } from "@/types";
@@ -30,24 +29,26 @@ export default function Page({
   const tokenGarden = data?.tokenGarden;
   const poolTokenAddr = strategyObj?.token;
   const proposalType = strategyObj?.config?.proposalType as number;
-  const chainId = useChainIdFromPath();
 
-  const { data: poolToken } = useToken({
-    address: poolTokenAddr as Address,
-    enabled: !!poolTokenAddr && PoolTypes[proposalType] === "funding",
-    chainId,
+  const { data: poolAmount } = useBalance({
+    address: strategyObj?.id as Address,
+    token: poolTokenAddr as Address,
+    enabled:
+      !!poolTokenAddr &&
+      !!strategyObj?.id &&
+      data &&
+      PoolTypes[data.cvstrategies[0].config.proposalType] === "funding",
   });
 
   if (!tokenGarden || !metadata || !strategyObj) {
     return (
-      <div className="mt-96">
+      <div className="mt-96 col-span-12">
         <LoadingSpinner />
       </div>
     );
   }
 
   const alloInfo = data?.allos[0];
-  const poolAmount = strategyObj.poolAmount as number;
 
   const spendingLimitPctValue =
     (Number(strategyObj.config.maxRatio || 0) / CV_SCALE_PRECISION) * 100;
@@ -62,24 +63,15 @@ export default function Page({
     (1 - Math.sqrt(minimumConviction / 100)) *
     100;
 
-  function formatTokenAmount(amount: string | number, decimals: number) {
-    const divisor = Math.pow(10, decimals);
-    const result = Number(amount) / divisor;
-
-    return result;
-  }
-  const formattedPoolAmount = formatTokenAmount(
-    poolAmount,
-    poolToken?.decimals ?? 18,
-  );
-
-  const spendingLimitValueNum = (
-    (+formattedPoolAmount * +Math.round(spendingLimitValuePct)) /
-    100
-  ).toFixed(2);
+  const spendingLimitValueNum =
+    poolAmount &&
+    (
+      (+poolAmount.formatted * +Math.round(spendingLimitValuePct)) /
+      100
+    ).toFixed(2);
 
   return (
-    <div className="page-layout">
+    <div className="page-layout col-span-12 mx-auto">
       <section className="section-layout">
         <div className="text-center sm:mt-5 mb-12">
           <h2 className="mb-2">Create a Proposal in Pool #{poolId}</h2>
@@ -95,9 +87,8 @@ export default function Page({
           proposalType={proposalType}
           alloInfo={alloInfo}
           tokenGarden={tokenGarden}
-          spendingLimit={+spendingLimitValueNum}
+          spendingLimit={spendingLimitValueNum}
           spendingLimitPct={spendingLimitValuePct}
-          poolAmount={poolAmount}
         />
       </section>
     </div>

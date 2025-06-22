@@ -11,25 +11,27 @@ export const cheats = [
   "showExcludedCommunities",
 ] as const;
 
-type Cheat = (typeof cheats)[number];
+export type CheatName = (typeof cheats)[number];
 
-export const useCheat = (cheat: Cheat) => {
+export const useCheat = (cheat: CheatName) => {
   const [value] = useLocalStorage(cheat, false, {
     deserializer: (v) => v === "true",
     serializer: (v) => (v ? "true" : "false"),
   });
 
   useEffect(() => {
-    (window as any).cheats = () => {
+    (window as any).useCheats = () => {
       console.log("Cheats commands:");
       cheats.forEach((c) => {
-        console.log(`localStorage.setItem("${c}", true)`);
+        console.log(
+          `localStorage.setItem("${c}", true) => currently ${localStorage.getItem(c) === "true" ? "enabled" : "disabled"}`,
+        );
       });
     };
   }, []);
   return value;
 };
 
-export const getCheat = (cheat: Cheat) => {
+export const getCheat = (cheat: CheatName) => {
   return localStorage.getItem(cheat) === "true";
 };

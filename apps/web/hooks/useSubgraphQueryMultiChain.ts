@@ -10,7 +10,7 @@ import { toast } from "react-toastify";
 import { getCheat, useCheat } from "./useCheat";
 import { useIsMounted } from "./useIsMounted";
 import { HTTP_CODES } from "@/app/api/utils";
-import { chainConfigMap, getConfigByChain } from "@/configs/chains";
+import { chainConfigMap, ChainData, getConfigByChain } from "@/configs/chains";
 import { isProd } from "@/configs/isProd";
 import {
   ChangeEventScope,
@@ -52,13 +52,15 @@ export function useSubgraphQueryMultiChain<
   changeScope,
   chainIds,
   modifier,
+  enabled = true,
 }: {
   query: DocumentInput<any, Variables>;
   variables?: Variables;
   queryContext?: Partial<OperationContext>;
   changeScope?: ChangeEventScope[] | ChangeEventScope;
   chainIds?: ChainId[];
-  modifier?: (data: Data[]) => Data[];
+  modifier?: (data: (Data & { chain: ChainData })[]) => any[] | Promise<any[]>;
+  enabled?: boolean;
 }) {
   const { connected, subscribe, unsubscribe } = usePubSubContext();
   const mounted = useIsMounted();
@@ -72,13 +74,14 @@ export function useSubgraphQueryMultiChain<
   const skipPublished = useCheat("skipPublished");
 
   useEffect(() => {
+    if (!enabled) return;
     const init = async () => {
       setFetching(true);
       fetchingRef.current = true;
       await fetchDebounce();
     };
     init();
-  }, []);
+  }, [enabled]);
 
   useEffect(() => {
     if (!connected || !changeScope || changeScope.length === 0) {
@@ -129,6 +132,11 @@ export function useSubgraphQueryMultiChain<
                 const { urqlClient } = initUrqlClient({
                   chainId: (chainsOverride ?? allChains)[i],
                 });
+                if (!urqlClient) {
+                  throw new Error(
+                    `Urql client not initialized for chain ${chainId}`,
+                  );
+                }
                 return urqlClient.query<Data>(query, variables, {
                   ...queryContext,
                   url:
@@ -146,6 +154,9 @@ export function useSubgraphQueryMultiChain<
                   skipPublished ||
                   process.env.NEXT_PUBLIC_SKIP_PUBLISHED === "true";
                 res = await fetchQuery(shouldSkipPublished);
+                if (!res.data && res.error) {
+                  throw res.error;
+                }
               } catch (err1) {
                 console.error(
                   "⚡ Error fetching through published subgraph, retrying with hosted:",
@@ -199,8 +210,12 @@ export function useSubgraphQueryMultiChain<
         }),
       );
       // Make sure unique values are returned
-      const result = Array.from(new Set(responseMap.current.values()));
-      setResponse(modifier ? modifier(result) : result);
+      const result = [...responseMap.current.entries()].map(([key, value]) => ({
+        ...value,
+        chain: chainConfigMap[key],
+      }));
+
+      setResponse(modifier ? await modifier(result) : result);
       setFetching(false);
       fetchingRef.current = false;
     },
