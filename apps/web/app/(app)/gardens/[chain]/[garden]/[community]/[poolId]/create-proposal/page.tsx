@@ -68,6 +68,8 @@ export default function Page({
       100
     ).toFixed(2);
 
+  console.log({ poolAmount, spendingLimitValuePct, spendingLimitValueNum });
+
   return (
     <div className="page-layout">
       <section className="section-layout">
