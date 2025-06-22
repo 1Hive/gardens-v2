@@ -31,16 +31,16 @@ export function InfoWrapper({
   const { width, height } = sizeMap[size];
 
   return (
-    <div className="flex gap-1 items-center mx-1">
+    <div className="flex gap-1 items-center mx-1 h-fit">
       {!hoverOnChildren && (
-        <span className={`${contentFlex ? "flex-1" : ""}`}>{children}</span>
+        <div className={`${contentFlex ? "flex-1" : ""}`}>{children}</div>
       )}
       <div
         className={`tooltip flex gap-1 cursor-pointer items-center [&>svg]:text-primary-content max-w-sm [&>svg]:stroke-2 ${className}`}
         data-tip={tooltip}
       >
         {hoverOnChildren && (
-          <span className={`${contentFlex ? "flex-1" : ""}`}>{children}</span>
+          <div className={`${contentFlex ? "flex-1" : ""}`}>{children}</div>
         )}
         {!hideIcon &&
           (customIcon ?? (
