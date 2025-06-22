@@ -342,7 +342,7 @@ export const IncreasePower = ({
                   stakeDifference == 0 ||
                   !isMember ||
                   +stakedAmount < registerStakeAmount ||
-                  (accountTokenBalancePlusStakeAmount &&
+                  (!!accountTokenBalancePlusStakeAmount &&
                     +stakedAmount > accountTokenBalancePlusStakeAmount)
                 }
                 tooltip={
