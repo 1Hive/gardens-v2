@@ -189,7 +189,7 @@ export const IncreasePower = ({
         100
       ).toString(),
     );
-  }, [memberData?.member?.memberCommunity?.[0]?.stakedTokens]);
+  }, [accountTokenBalancePlusStakeAmount]);
 
   const { allowanceTxProps: allowanceTx, handleAllowance } = useHandleAllowance(
     accountAddress,
