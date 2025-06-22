@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { Address } from "viem";
+import { Address, zeroAddress } from "viem";
 import { useBalance } from "wagmi";
 import {
   getAlloQuery,
@@ -117,7 +117,10 @@ export default function Page({
   const { data: poolAmount } = useBalance({
     address: strategyObj?.id as Address,
     token: poolTokenAddr,
-    enabled: !!strategyObj?.id,
+    enabled:
+      (!!strategyObj?.id &&
+        poolTokenAddr !== "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee") ||
+      poolTokenAddr !== zeroAddress,
     watch: true,
   });
 
