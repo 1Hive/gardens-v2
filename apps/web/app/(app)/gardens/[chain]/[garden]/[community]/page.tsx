@@ -491,7 +491,7 @@ export default function Page({
           </header>
 
           {/* Pools Section */}
-          <section className="flex flex-col gap-10 p-6">
+          <section className="flex flex-col gap-10 py-4">
             <header className="flex  items-center justify-between ">
               <h2>Pools</h2>
               <Link
