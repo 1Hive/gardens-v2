@@ -133,6 +133,7 @@ export const chainConfigMap: {
     isTestnet: true,
   },
   11155420: {
+    id: 11155420,
     name: optimismSepolia.name,
     icon: Optimism,
     explorer: "https://sepolia-optimism.etherscan.io/",
