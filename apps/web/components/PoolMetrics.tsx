@@ -139,6 +139,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
               <div className="flex justify-between items-center gap-3">
                 <p className="subtitle2">Funds in pool:</p>
                 <DisplayNumber
+                  copiable
                   number={[poolToken.balance, poolToken.decimals]}
                   tokenSymbol={poolToken.symbol}
                   compact={true}
@@ -147,7 +148,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                 />
               </div>
               {accountAddress && (
-                <div className="flex justify-between items-center ">
+                <div className="flex justify-between items-center">
                   <p className="text-sm">Wallet balance:</p>
                   <DisplayNumber
                     number={[poolToken.balance, poolToken.decimals]}

@@ -286,7 +286,7 @@ export const IncreasePower = ({
         {/* Input */}
         {!isMember ?
           <p className="subtitle2 text-neutral-soft-content">
-            Join community to Stake
+            Join community to stake more.
           </p>
         : <>
             <div className="relative w-full">

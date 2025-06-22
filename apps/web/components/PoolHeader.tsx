@@ -482,12 +482,12 @@ export default function PoolHeader({
               icon={false}
               address={strategy.id as Address}
               label="Pool address"
-              textColor="var(--color-grey-500)"
+              textColor="var(--color-grey-800)"
             />
             <div className="flex gap-1 p-1">
               <a
                 href={`https://app.safe.global/transactions/queue?safe=${safePrefix}:${strategy.registryCommunity.councilSafe}`}
-                className="text-neutral-soft-content whitespace-nowrap flex flex-nowrap gap-1 items-center"
+                className="whitespace-nowrap flex flex-nowrap gap-1 items-center"
                 target="_blank"
                 rel="noreferrer"
               >
@@ -499,7 +499,7 @@ export default function PoolHeader({
                 shortenAddress={true}
                 actions="copy"
                 icon={false}
-                textColor="var(--color-grey-500)"
+                textColor="var(--color-grey-800)"
               />
             </div>
           </div>
@@ -590,7 +590,7 @@ export default function PoolHeader({
             icon={false}
             shortenAddress={true}
             label="Dispute Resolution: Tribunal Safe"
-            textColor="var(--color-grey-500)"
+            textColor="var(--color-grey-800)"
           />
         </div>
 
