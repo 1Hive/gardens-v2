@@ -12,7 +12,7 @@ const communities = [
     name: "1Hive",
     description:
       "1Hive builds fairer futures by funding public goods with Honey tokens.",
-    members: 23,
+    members: 31,
     link: "https://app.gardens.fund/gardens/100/0x71850b7e9ee3f13ab46d67167341e4bdc905eef9/0xe2396fe2169ca026962971d3b2e373ba925b6257",
     socials: {
       x: "https://x.com/1HiveOrg",
@@ -64,7 +64,7 @@ interface CommunityCardProps {
 export const Communities = () => {
   return (
     <motion.section
-      className="mx-auto md:mx-16 bg-primary-soft py-4 px-2 lg:px-24 lg:py-14 rounded-3xl"
+      className="mx-auto  bg-primary-soft py-4 px-2 lg:px-24 lg:py-14 rounded-3xl max-w-7xl"
       initial={{ opacity: 0.5 }}
       whileInView={{ opacity: 1 }}
       transition={{ ease: "easeInOut", duration: 0.45 }}
