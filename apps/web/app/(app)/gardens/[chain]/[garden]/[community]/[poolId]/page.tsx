@@ -118,8 +118,8 @@ export default function Page({
     address: strategyObj?.id as Address,
     token: poolTokenAddr,
     enabled:
-      (!!strategyObj?.id &&
-        poolTokenAddr !== "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee") ||
+      !!strategyObj?.id &&
+      PoolTypes[strategyObj.config.proposalType] !== "signaling" &&
       poolTokenAddr !== zeroAddress,
     watch: true,
   });
@@ -135,7 +135,7 @@ export default function Page({
       }
     : undefined;
 
-  if (!poolToken || (!poolToken && PoolTypes[proposalType] === "funding")) {
+  if (!strategyObj || (!poolToken && PoolTypes[proposalType] === "funding")) {
     return (
       <div className="mt-96 col-span-12">
         <LoadingSpinner />
