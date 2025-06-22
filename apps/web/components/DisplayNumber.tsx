@@ -37,6 +37,9 @@ export const DisplayNumber = ({
     const charsLength = 3;
     const prefixLength = 2; // "0."
 
+    // Trim leading zeros
+    str = str?.replace(/^0+/, "");
+
     if (!str) {
       setShowTooltip(false);
       return "";
@@ -54,6 +57,7 @@ export const DisplayNumber = ({
         str.slice(-charsLength)
       );
     }
+
     if (typeof number === "string") {
       return dn.format(dn.from(number), {
         compact: compact,
