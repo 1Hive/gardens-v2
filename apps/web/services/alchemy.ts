@@ -1,5 +1,5 @@
 import { Address } from "viem";
-import { NFTs } from "@/configs/constants";
+import { NFTs } from "@/globals";
 
 export async function getNFTsForWallet(ownerAddress: Address) {
   const alchemyApiBase =

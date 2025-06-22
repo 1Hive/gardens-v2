@@ -12,11 +12,7 @@ import {
 } from "#/subgraph/.graphclient";
 import { CommunityCard, CommunityCardSkeleton } from "./CommunityCard";
 import { CommunityFilters } from "./CommunityFilters";
-import { isProd } from "@/configs/isProd";
-import {
-  ONE_HIVE_COMMUNITY_ADDRESS,
-  ONE_HIVE_FAKE_COMMUNITY_ADDRESS,
-} from "@/globals";
+import { ONE_HIVE_COMMUNITY_ADDRESS } from "@/globals";
 import { useCheat } from "@/hooks/useCheat";
 
 export type LightCommunity = Pick<RegistryCommunity, "id" | "communityName"> & {
@@ -162,7 +158,6 @@ export const Communities: React.FC<CommunitiesProps> = ({
     searchParams.get("chainId") ?? "",
   );
   const showExcludedCommunities = useCheat("showExcludedCommunities");
-  const queryAllChains = useCheat("queryAllChains");
 
   const availableTokens = Array.from(
     new Set(communities.map((c) => c.garden.symbol)),
@@ -204,10 +199,7 @@ export const Communities: React.FC<CommunitiesProps> = ({
     // Sort communities by length of members in descending order
     const sortedCommunities = [...communities].sort((a, b) => {
       // Show isProtopian communities on top and 1hive first
-      const oneHiveEffectiveAddress =
-        isProd || queryAllChains ?
-          ONE_HIVE_COMMUNITY_ADDRESS
-        : ONE_HIVE_FAKE_COMMUNITY_ADDRESS;
+      const oneHiveEffectiveAddress = ONE_HIVE_COMMUNITY_ADDRESS;
 
       if (
         a.id.toLowerCase() === oneHiveEffectiveAddress &&

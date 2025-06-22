@@ -22,7 +22,6 @@ import {
   getPassportStrategyDocument,
   getPassportStrategyQuery,
   getPoolDataQuery,
-  TokenGarden,
 } from "#/subgraph/.graphclient";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
@@ -35,8 +34,8 @@ import { Skeleton } from "./Skeleton";
 import { Statistic } from "./Statistic";
 import { blueLand, grassLarge } from "@/assets";
 import { chainConfigMap } from "@/configs/chains";
-import { VOTING_POINT_SYSTEM_DESCRIPTION } from "@/configs/constants";
 import { usePubSubContext } from "@/contexts/pubsub.context";
+import { VOTING_POINT_SYSTEM_DESCRIPTION } from "@/globals";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
@@ -72,12 +71,11 @@ type Props = {
     | "challengerCollateralAmount"
     | "defaultRulingTimeout"
   >;
-  token: Pick<TokenGarden, "address" | "name" | "symbol" | "decimals">;
   poolToken?: {
     address: Address;
-    symbol: string | undefined;
-    decimals: number | undefined;
-    balance: bigint | undefined;
+    symbol: string;
+    decimals: number;
+    balance: bigint;
   };
   maxAmount: number;
 };
@@ -114,7 +112,6 @@ export default function PoolHeader({
   isEnabled,
   strategy,
   arbitrableConfig,
-  token,
   poolToken,
   maxAmount,
 }: Props) {
@@ -161,16 +158,21 @@ export default function PoolHeader({
     blockTime,
   );
 
-  const minThresholdPoints = formatTokenAmount(
-    strategy.config.minThresholdPoints,
-    +token.decimals,
-  );
+  const minThresholdPoints =
+    poolToken ?
+      formatTokenAmount(strategy.config.minThresholdPoints, +poolToken.decimals)
+    : "0";
 
-  const totalPointsActivatedInPool = formatTokenAmount(
-    strategy.totalEffectiveActivePoints,
-    +token.decimals,
-  );
+  const totalPointsActivatedInPool =
+    poolToken ?
+      formatTokenAmount(
+        strategy.totalEffectiveActivePoints,
+        +poolToken.decimals,
+      )
+    : 0;
 
+  const maxVotingWeight =
+    poolToken ? formatTokenAmount(maxAmount, poolToken.decimals) : 0;
   const minThGtTotalEffPoints =
     +minThresholdPoints > +totalPointsActivatedInPool;
 
@@ -224,11 +226,11 @@ export default function PoolHeader({
     {
       label: "Min threshold",
       value: `${minThresholdPoints}`,
-      info: `A fixed amount of ${token.symbol} that overrides Minimum Conviction when the Pool's activated governance is low.`,
+      info: `A fixed amount of ${poolToken?.symbol} that overrides Minimum Conviction when the Pool's activated governance is low.`,
     },
     {
       label: "Max voting weight",
-      value: `${formatTokenAmount(maxAmount, token.decimals)} ${token.symbol}`,
+      value: `${maxVotingWeight} ${poolToken?.symbol}`,
       info: "Staking above this specified limit won’t increase your voting weight.",
     },
     {
@@ -508,11 +510,11 @@ export default function PoolHeader({
             isOpen={isOpenModal}
             onClose={() => setIsOpenModal(false)}
           >
-            {!!passportStrategyData && (
+            {!!passportStrategyData && poolToken && (
               <PoolEditForm
                 strategy={strategy}
                 pointSystemType={pointSystemType}
-                token={token}
+                token={poolToken}
                 proposalType={proposalType}
                 proposalOnDispute={proposalOnDispute}
                 initValues={{

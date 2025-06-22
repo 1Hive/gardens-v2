@@ -20,10 +20,12 @@ export const useCheat = (cheat: CheatName) => {
   });
 
   useEffect(() => {
-    (window as any).cheats = () => {
+    (window as any).useCheats = () => {
       console.log("Cheats commands:");
       cheats.forEach((c) => {
-        console.log(`localStorage.setItem("${c}", true)`);
+        console.log(
+          `localStorage.setItem("${c}", true) => currently ${localStorage.getItem(c) === "true" ? "enabled" : "disabled"}`,
+        );
       });
     };
   }, []);

@@ -48,11 +48,7 @@ import { TokenGardenFaucet } from "@/components/TokenGardenFaucet";
 import { isProd } from "@/configs/isProd";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
-import {
-  FAKE_PROTOPIAN_COMMUNITIES,
-  ONE_HIVE_COMMUNITY_ADDRESS,
-  ONE_HIVE_FAKE_COMMUNITY_ADDRESS,
-} from "@/globals";
+import { ONE_HIVE_COMMUNITY_ADDRESS } from "@/globals";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useCheat } from "@/hooks/useCheat";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
@@ -133,8 +129,6 @@ export default function Page({
     },
   });
 
-  const queryAllChains = useCheat("queryAllChains");
-
   let {
     communityName,
     members,
@@ -145,10 +139,7 @@ export default function Page({
   } = registryCommunity ?? {};
 
   const is1hive =
-    registryCommunity?.id.toLowerCase() ===
-    (isProd || queryAllChains ?
-      ONE_HIVE_COMMUNITY_ADDRESS
-    : ONE_HIVE_FAKE_COMMUNITY_ADDRESS);
+    registryCommunity?.id.toLowerCase() === ONE_HIVE_COMMUNITY_ADDRESS;
 
   const [isProtopianCommunity, setIsProtopianCommunity] = useState<
     boolean | undefined
@@ -166,30 +157,25 @@ export default function Page({
     isFetchingNFT.current = true;
 
     // Fetch alchemy data to determine if the community is Protopian
-    if (FAKE_PROTOPIAN_COMMUNITIES.includes(communityAddr.toLowerCase())) {
-      setIsProtopianCommunity(true);
-      isFetchingNFT.current = false;
-    } else {
-      getProtopiansOwners()
-        .then((protopianOwners) => {
-          setIsProtopianCommunity(
-            // Consider Protopian can be transferred to councilSafe
-            !!protopianOwners.find((x) =>
-              [
-                ...councilMembers,
-                result!.registryCommunity!.councilSafe!,
-              ]?.find((cm) => cm.toLowerCase() === x.toLowerCase()),
+
+    getProtopiansOwners()
+      .then((protopianOwners) => {
+        setIsProtopianCommunity(
+          // Consider Protopian can be transferred to councilSafe
+          !!protopianOwners.find((x) =>
+            [...councilMembers, result!.registryCommunity!.councilSafe!]?.find(
+              (cm) => cm.toLowerCase() === x.toLowerCase(),
             ),
-          );
-        })
-        .catch((err) => {
-          console.error("Error fetching Protopian community data:", err);
-          setIsProtopianCommunity(false);
-        })
-        .finally(() => {
-          isFetchingNFT.current = false;
-        });
-    }
+          ),
+        );
+      })
+      .catch((err) => {
+        console.error("Error fetching Protopian community data:", err);
+        setIsProtopianCommunity(false);
+      })
+      .finally(() => {
+        isFetchingNFT.current = false;
+      });
   }, [councilMembers, result?.registryCommunity!.councilSafe]);
 
   const { data: isMemberResult } = useSubgraphQuery<isMemberQuery>({

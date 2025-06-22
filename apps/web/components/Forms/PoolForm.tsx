@@ -17,12 +17,12 @@ import { FormRadioButton } from "./FormRadioButton";
 import { FormSelect } from "./FormSelect";
 import { EthAddress } from "../EthAddress";
 import { Button } from "@/components/Button";
+import { QUERY_PARAMS } from "@/constants/query-params";
+import { usePubSubContext } from "@/contexts/pubsub.context";
 import {
   DEFAULT_RULING_TIMEOUT_SEC,
   VOTING_POINT_SYSTEM_DESCRIPTION,
-} from "@/configs/constants";
-import { QUERY_PARAMS } from "@/constants/query-params";
-import { usePubSubContext } from "@/contexts/pubsub.context";
+} from "@/globals";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useCheat } from "@/hooks/useCheat";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";

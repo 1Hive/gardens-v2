@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Address, Chain, createPublicClient, http } from "viem";
 import { erc721ABI, useAccount } from "wagmi";
-import { NFTs } from "@/configs/constants";
+import { NFTs } from "@/globals";
 import { getNFTsForWallet } from "@/services/alchemy";
 
 interface UseOwnerOfNFTParams {

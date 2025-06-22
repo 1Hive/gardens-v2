@@ -119,7 +119,7 @@ export function ProposalCard({
     (thresholdPct ?? 0) - (totalSupportPct ?? 0)
   ).toFixed(2);
 
-  const readyToBeExecuted = (currentConvictionPct ?? 0) >= (thresholdPct ?? 0);
+  const readyToBeExecuted = (currentConvictionPct ?? 0) > (thresholdPct ?? 0);
 
   const proposalWillPass =
     Number(supportNeededToPass) < 0 &&

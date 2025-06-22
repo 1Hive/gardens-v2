@@ -83,39 +83,39 @@ const abiParameters = [
   },
 ];
 
-function formatNumber(num: string | number): string {
-  if (num == 0) {
-    return "0";
-  }
-  // Convert to number if it's a string
-  const number = typeof num === "string" ? parseFloat(num) : num;
+// function formatNumber(num: string | number): string {
+//   if (num == 0) {
+//     return "0";
+//   }
+//   // Convert to number if it's a string
+//   const number = typeof num === "string" ? parseFloat(num) : num;
 
-  // Check if the number is NaN
-  if (isNaN(number)) {
-    return "Invalid Number";
-  }
+//   // Check if the number is NaN
+//   if (isNaN(number)) {
+//     return "Invalid Number";
+//   }
 
-  // If the absolute value is greater than or equal to 1, use toFixed(2)
-  if (Math.abs(number) >= 1) {
-    return number.toFixed(2);
-  }
+//   // If the absolute value is greater than or equal to 1, use toFixed(2)
+//   if (Math.abs(number) >= 1) {
+//     return number.toFixed(2);
+//   }
 
-  // For numbers between 0 and 1 (exclusive)
-  const parts = number.toString().split("e");
-  const exponent = parts[1] ? parseInt(parts[1]) : 0;
+//   // For numbers between 0 and 1 (exclusive)
+//   const parts = number.toString().split("e");
+//   const exponent = parts[1] ? parseInt(parts[1]) : 0;
 
-  if (exponent < -3) {
-    // For very small numbers, use exponential notation with 4 significant digits
-    return number.toPrecision(4);
-  } else {
-    // For numbers between 0.001 and 1, show at least 4 decimal places
-    const decimalPlaces = Math.max(
-      4,
-      -Math.floor(Math.log10(Math.abs(number))) + 3,
-    );
-    return number.toFixed(decimalPlaces);
-  }
-}
+//   if (exponent < -3) {
+//     // For very small numbers, use exponential notation with 4 significant digits
+//     return number.toPrecision(4);
+//   } else {
+//     // For numbers between 0.001 and 1, show at least 4 decimal places
+//     const decimalPlaces = Math.max(
+//       4,
+//       -Math.floor(Math.log10(Math.abs(number))) + 3,
+//     );
+//     return number.toFixed(decimalPlaces);
+//   }
+// }
 
 export const ProposalForm = ({
   strategy,
@@ -250,17 +250,8 @@ export const ProposalForm = ({
     chainId,
   });
 
-  // const spendingLimitString = formatTokenAmount(
-  //   spendingLimit,
-  //   poolToken?.decimals ?? 18,
-  //   6,
-  // );
-
   const INPUT_TOKEN_MIN_VALUE =
     Number(requestedAmount) == 0 ? 0 : 1 / 10 ** (poolToken?.decimals ?? 0);
-
-  const spendingLimitNumber =
-    spendingLimit ? +spendingLimit / 10 ** (poolToken?.decimals ?? 0) : 0;
 
   const { data: thresholdFromContract } = useContractRead({
     address: strategy.id as Address,
@@ -304,14 +295,6 @@ export const ProposalForm = ({
       // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
       poolToken?.decimals || 0,
     );
-
-    console.debug([
-      poolId,
-      previewData.beneficiary,
-      amount,
-      poolTokenAddr,
-      metadata,
-    ]);
 
     const encodedData = encodeAbiParameters(abiParameters, [
       [
@@ -377,8 +360,8 @@ export const ProposalForm = ({
                 }}
                 registerOptions={{
                   max: {
-                    value: spendingLimit ? +spendingLimitNumber : 0,
-                    message: `Max amount must remain under the spending limit of ${formatNumber(spendingLimit ? +spendingLimitNumber : 0)} ${poolToken?.symbol}`,
+                    value: spendingLimit ? +spendingLimit : 0,
+                    message: `Max amount must remain under the spending limit of ${spendingLimit} ${poolToken?.symbol}`,
                   },
                   min: {
                     value: INPUT_TOKEN_MIN_VALUE,
