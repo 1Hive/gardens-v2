@@ -2,9 +2,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   AdjustmentsHorizontalIcon,
-  InformationCircleIcon,
-  UserIcon,
-  CheckCircleIcon,
   XMarkIcon,
   CheckIcon,
   BoltIcon,

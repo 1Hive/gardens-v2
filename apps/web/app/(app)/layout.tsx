@@ -2,11 +2,7 @@
 
 import React from "react";
 import { useState } from "react";
-import {
-  Bars3BottomLeftIcon,
-  XMarkIcon,
-  EllipsisHorizontalIcon,
-} from "@heroicons/react/24/outline";
+import {} from "@heroicons/react/24/outline";
 import Image from "next/image";
 import Link from "next/link";
 import { newLogo } from "@/assets";
@@ -95,6 +91,18 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             {/* Main content */}
             {children}
           </div>
+        </div>
+      </div>
+      {/* Bootom right floating div */}
+
+      <div className="fixed bottom-4 left-4 z-50">
+        <div
+          className="tooltip tooltip-top-right tooltip-warning"
+          data-tip="️️⚠️ Disclaimer: The
+            underlying smart contracts have undergone extensive internal testing
+            but have NOT YET BEEN AUDITED."
+        >
+          <div className="badge badge-warning">Beta</div>
         </div>
       </div>
     </div>
