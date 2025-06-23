@@ -43,6 +43,7 @@
     "lodash-es": "^4.17.21",
     "lokijs": "^1.5.12",
     "markdown-to-jsx": "^7.4.7",
+    "motion": "^12.6.2",
     "next": "14.0.3",
     "next-themes": "^0.2.1",
     "pino-pretty": "^10.2.3",
