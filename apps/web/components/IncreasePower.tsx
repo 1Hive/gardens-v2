@@ -324,7 +324,7 @@ export const IncreasePower = ({
               className={`${+stakedAmount === registerStakeAmount || minAmountPercentage == 100 ? "tooltip " : ""} w-full`}
               data-tip={
                 +stakedAmount === registerStakeAmount ?
-                  "Cannot stake less than the community registration stake"
+                  "Cannot stake less than registration stake"
                 : minAmountPercentage == 100 ?
                   "Available stake is already the minimal stake to register"
                 : undefined
