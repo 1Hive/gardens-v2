@@ -15,6 +15,7 @@ export function useHandleAllowance(
   spenderAddr: Address,
   amount: bigint,
   triggerNextTx: (covenantSignature: `0x${string}` | undefined) => void,
+  transactionLabel?: string,
 ): {
   allowanceTxProps: TransactionProps;
   handleAllowance: (args: {
@@ -25,7 +26,7 @@ export function useHandleAllowance(
 } {
   const chainId = useChainIdFromPath();
   const [allowanceTxProps, setAllowanceTxProps] = useState<TransactionProps>({
-    contractName: `${tokenSymbol} expenditure approval`,
+    contractName: transactionLabel ?? `${tokenSymbol} expenditure approval`,
     message: "",
     status: "idle",
   });

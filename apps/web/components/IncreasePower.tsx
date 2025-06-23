@@ -114,7 +114,7 @@ export const IncreasePower = ({
   const { publish } = usePubSubContext();
 
   const [votingPowerTx, setVotingPowerTx] = useState<TransactionProps>({
-    contractName: "Increase voting power",
+    contractName: `Stake ${tokenGarden.symbol} in ${communityName}`,
     message: `Stake ${roundedStakedAmount} ${tokenSymbol} in ${communityName}`,
     status: "idle",
   });
@@ -198,6 +198,7 @@ export const IncreasePower = ({
     communityAddress as Address,
     stakedAmountBn,
     () => writeIncreasePower(),
+    `Approve ${tokenSymbol} to be staked in ${communityName}`,
   );
 
   const AddedStake = [
@@ -262,7 +263,7 @@ export const IncreasePower = ({
             icon={false}
             label={
               <DisplayNumber
-                number={(roundedStakedAmount ?? 0).toString()}
+                number={(initialStakedAmount ?? 0).toString()}
                 tokenSymbol={tokenSymbol}
                 compact={true}
                 valueClassName="text-primary-content font-bold text-3xl mr-1"
