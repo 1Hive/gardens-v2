@@ -22,7 +22,7 @@ import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithC
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useHandleAllowance } from "@/hooks/useHandleAllowance";
 import { registryCommunityABI } from "@/src/generated";
-import { autoRound, parseToken } from "@/utils/numbers";
+import { parseToken } from "@/utils/numbers";
 import { getTxMessage } from "@/utils/transactionMessages";
 
 type IncreasePowerProps = {
@@ -75,7 +75,7 @@ export const IncreasePower = ({
   const stakedAmountBn = BigInt(
     Math.round(+stakedAmount * 10 ** tokenDecimals),
   );
-  const roundedStakedAmount = autoRound(+stakedAmount);
+  const roundedStakedAmount = (+stakedAmount).toPrecision(4);
 
   const { data: accountTokenBalance } = useBalance({
     address: accountAddress,
@@ -103,7 +103,7 @@ export const IncreasePower = ({
 
   const stakeDifferenceBn = stakedAmountBn - initialStakedAmountBn;
   const stakeDifference = +stakedAmount - initialStakedAmount;
-  const stakeDifferenceRounded = autoRound(stakeDifference);
+  const stakeDifferenceRounded = stakeDifference.toPrecision(4);
 
   const registryContractCallConfig = {
     address: communityAddress as Address,
@@ -218,7 +218,7 @@ export const IncreasePower = ({
       condition:
         !!accountTokenBalancePlusStakeAmount &&
         +stakedAmount > accountTokenBalancePlusStakeAmount,
-      message: `You cannot stake more than your available balance of ${autoRound(accountTokenBalancePlusStakeAmount ?? 0)} ${tokenSymbol}`,
+      message: `You cannot stake more than your available balance of ${accountTokenBalancePlusStakeAmount?.toPrecision() ?? 0} ${tokenSymbol}`,
     },
     { condition: stakeDifference == 0, message: "Make a change to apply" },
   ]);
@@ -231,7 +231,7 @@ export const IncreasePower = ({
 
   return (
     <section className="section-layout space-y-5">
-      <h3>Your stake</h3>
+      <h3>Stakes</h3>
       <TransactionModal
         label={`Stake ${tokenSymbol} in ${communityName}`}
         transactions={[allowanceTx, votingPowerTx]}
@@ -241,31 +241,38 @@ export const IncreasePower = ({
 
       <div className="flex justify-between gap-4 flex-wrap">
         {/* Title + Member staked */}
-        <div className="flex flex-col justify-between gap-2">
-          <div className="flex justify-between">
-            <div className="flex-start flex gap-2 items-center">
-              <p className="subtitle2">Total Staked in community:</p>
-              <InfoWrapper
-                tooltip={`Registration stake: ${parseToken(registrationAmount)} ${tokenGarden.symbol} ${isMember ? `\n Added stake: ${parseToken(AddedStake)} ${tokenGarden.symbol}` : ""}`}
-              />
+        {isMember ?
+          <div className="flex flex-col justify-between gap-2">
+            <div className="flex justify-between">
+              <div className="flex-start flex gap-2 items-center">
+                <p className="subtitle2">Total Staked in community:</p>
+                <InfoWrapper
+                  tooltip={`Registration stake: ${parseToken(registrationAmount)} ${tokenGarden.symbol} ${isMember ? `\n Added stake: ${parseToken(AddedStake)} ${tokenGarden.symbol}` : ""}`}
+                />
+              </div>
             </div>
+            <EthAddress
+              address={registerToken as Address}
+              shortenAddress={true}
+              actions="none"
+              icon={false}
+              label={
+                <DisplayNumber
+                  number={(initialStakedAmount ?? 0).toString()}
+                  tokenSymbol={tokenSymbol}
+                  compact={true}
+                  valueClassName="text-primary-content font-bold text-3xl mr-1"
+                  disableTooltip
+                />
+              }
+            />
           </div>
-          <EthAddress
-            address={registerToken as Address}
-            shortenAddress={true}
-            actions="none"
-            icon={false}
-            label={
-              <DisplayNumber
-                number={(initialStakedAmount ?? 0).toString()}
-                tokenSymbol={tokenSymbol}
-                compact={true}
-                valueClassName="text-primary-content font-bold text-3xl mr-1"
-                disableTooltip
-              />
-            }
-          />
-        </div>
+        : <>
+            <p className="subtitle2 text-neutral-soft-content">
+              Join community to stake.
+            </p>
+          </>
+        }
 
         {/* Staking description */}
         <InfoBox
@@ -277,18 +284,15 @@ export const IncreasePower = ({
 
         {/* Input */}
 
-        {!isMember ?
-          <p className="subtitle2 text-neutral-soft-content">
-            Join community to stake.
-          </p>
-        : <>
+        {isMember && (
+          <>
             {/* Available to stake*/}
             <div className="flex-1 flex items-baseline justify-between">
               <p className="text-sm">Available</p>
               <DisplayNumber
-                number={autoRound(
-                  accountTokenBalancePlusStakeAmount ?? 0,
-                ).toString()}
+                number={
+                  accountTokenBalancePlusStakeAmount?.toPrecision(4) ?? "0"
+                }
                 tokenSymbol={tokenSymbol}
                 compact={true}
                 valueClassName="text-black text-lg"
@@ -321,37 +325,32 @@ export const IncreasePower = ({
             </div>
 
             <div
-              className={`${+stakedAmount === registerStakeAmount || minAmountPercentage == 100 ? "tooltip " : ""} w-full`}
+              className={`${minAmountPercentage == 100 ? "tooltip " : ""} w-full`}
               data-tip={
-                +stakedAmount === registerStakeAmount ?
-                  "Cannot stake less than registration stake"
-                : minAmountPercentage == 100 ?
+                minAmountPercentage == 100 ?
                   "Available stake is already the minimal stake to register"
                 : undefined
               }
             >
               <input
                 type="range"
-                max={100}
+                min={minAmountPercentage}
+                max={101}
                 value={amountPerc}
                 disabled={minAmountPercentage === 100}
                 title=""
                 onChange={(e) => {
                   const percentage = e.target.value;
-                  if (+percentage < minAmountPercentage) {
-                    setStakedAmount(registerStakeAmount.toString());
-                    return;
-                  }
                   if (accountTokenBalancePlusStakeAmount) {
+                    console.log(percentage);
                     setStakedAmount(
-                      (+percentage === 100 ?
-                        accountTokenBalancePlusStakeAmount
+                      +percentage >= 100 ?
+                        accountTokenBalancePlusStakeAmount.toString()
                       : Math.max(
                           registerStakeAmount, // Minimum stake amount
                           (+percentage * accountTokenBalancePlusStakeAmount) /
                             100,
-                        )
-                      ).toString(),
+                        ).toPrecision(4),
                     );
                   }
                   setAmountPerc(percentage);
@@ -359,8 +358,6 @@ export const IncreasePower = ({
                 className={`range range-md cursor-pointer bg-neutral-soft [--range-shdw:var(--color-green-500)] ${
                   minAmountPercentage === 100 ?
                     "[--range-shdw:var(--color-grey-400)]"
-                  : +stakedAmount === registerStakeAmount ?
-                    "[--range-shdw:var(--color-orange-500)]"
                   : ""
                 }`}
               />
@@ -375,7 +372,7 @@ export const IncreasePower = ({
                   isButtonDisabled ? tooltipMessage
                   : stakeDifference > 0 ?
                     `Staking ${stakeDifferenceRounded} ${tokenSymbol} more in ${communityName}`
-                  : `Unstaking ${stakeDifferenceRounded * -1} ${tokenSymbol} from ${communityName}`
+                  : `Unstaking ${+stakeDifferenceRounded * -1} ${tokenSymbol} from ${communityName}`
 
                 }
                 showToolTip={true}
@@ -387,7 +384,7 @@ export const IncreasePower = ({
               </Button>
             </div>
           </>
-        }
+        )}
       </div>
     </section>
   );
