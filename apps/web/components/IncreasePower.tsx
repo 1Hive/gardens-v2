@@ -128,6 +128,8 @@ export const IncreasePower = ({
     functionName: "increasePower",
     args: [stakeDifferenceBn],
     showNotification: false,
+    fallbackErrorMessage:
+      "Error staking governance token, please report a bug.",
     onConfirmations: () => {
       publish({
         topic: "member",
@@ -198,7 +200,7 @@ export const IncreasePower = ({
     communityAddress as Address,
     stakedAmountBn,
     () => writeIncreasePower(),
-    `Approve ${tokenSymbol} to be staked in ${communityName}`,
+    `Approve ${tokenSymbol}`,
   );
 
   const AddedStake = [
@@ -235,15 +237,7 @@ export const IncreasePower = ({
         transactions={[allowanceTx, votingPowerTx]}
         isOpen={isOpenModal}
         onClose={() => setIsOpenModal(false)}
-      >
-        <div className="flex gap-2 mb-2">
-          <p className="">Adding:</p>
-          <DisplayNumber
-            number={stakeDifferenceRounded.toString()}
-            tokenSymbol={tokenSymbol}
-          />
-        </div>
-      </TransactionModal>
+      />
 
       <div className="flex justify-between gap-4 flex-wrap">
         {/* Title + Member staked */}
