@@ -268,3 +268,22 @@ dialog * {
 .wmde-markdown.wmde-markdown-color {
   background: transparent;
 }
+
+@layer utilities {
+  .tooltip-top-right::before {
+    transform: translateX(-10%);
+    top: auto;
+    left: 50%;
+    right: auto;
+    bottom: var(--tooltip-offset);
+  }
+
+  .tooltip-top-right::after {
+    transform: translateX(-50%);
+    border-color: var(--tooltip-color) transparent transparent transparent;
+    top: auto;
+    left: 50%;
+    right: auto;
+    bottom: var(--tooltip-tail-offset);
+  }
+}

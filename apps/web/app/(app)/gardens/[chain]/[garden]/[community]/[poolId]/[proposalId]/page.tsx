@@ -2,9 +2,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   AdjustmentsHorizontalIcon,
-  InformationCircleIcon,
-  UserIcon,
-  CheckCircleIcon,
   XMarkIcon,
   CheckIcon,
   BoltIcon,
@@ -356,25 +353,24 @@ export default function Page({
               {/* Conviction Progress */}
               {proposalData.strategy.isEnabled && (
                 <div className=" mt-2">
-                  {status === "active" ||
-                    (status === "disputed" && (
-                      <>
-                        <h4>Progress</h4>
-                        <div className="flex flex-col gap-2">
-                          <ConvictionBarChart
-                            currentConvictionPct={currentConvictionPct}
-                            thresholdPct={thresholdPct}
-                            proposalSupportPct={totalSupportPct}
-                            isSignalingType={isSignalingType}
-                            proposalNumber={Number(proposalIdNumber)}
-                            timeToPass={Number(timeToPass)}
-                            onReadyToExecute={triggerConvictionRefetch}
-                            defaultChartMaxValue
-                            proposalStatus={proposalStatus}
-                          />
-                        </div>
-                      </>
-                    ))}
+                  {(status === "active" || status === "disputed") && (
+                    <>
+                      <h4>Progress</h4>
+                      <div className="flex flex-col gap-2">
+                        <ConvictionBarChart
+                          currentConvictionPct={currentConvictionPct}
+                          thresholdPct={thresholdPct}
+                          proposalSupportPct={totalSupportPct}
+                          isSignalingType={isSignalingType}
+                          proposalNumber={Number(proposalIdNumber)}
+                          timeToPass={Number(timeToPass)}
+                          onReadyToExecute={triggerConvictionRefetch}
+                          defaultChartMaxValue
+                          proposalStatus={proposalStatus}
+                        />
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
             </div>

@@ -398,10 +398,9 @@ export const ProposalForm = ({
                   size="sm"
                   hoverOnChildren={true}
                   hideIcon={true}
+                  className="tooltip-top-right border-b border-dashed border-info text-sm"
                 >
-                  <span className="border-b border-dashed border-info">
-                    conviction
-                  </span>
+                  conviction
                 </InfoWrapper>{" "}
                 required in order for the proposal to pass with the requested
                 amount is {thresholdPct}%.{" "}
