@@ -38,13 +38,11 @@ export const useConvictionRead = ({
   tokenData: Maybe<Pick<TokenGarden, "decimals">> | undefined;
   enabled?: boolean;
 }) => {
-  const chainIdFromPath = useChainIdFromPath();
   const chain = useChainFromPath();
 
   const cvStrategyContract = {
     address: proposalData?.strategy.id as Address,
     abi: cvStrategyABI,
-    chainId: chainIdFromPath,
     enabled: !!proposalData,
   };
 

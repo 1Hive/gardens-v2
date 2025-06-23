@@ -98,9 +98,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <div className="fixed bottom-4 left-4 z-50">
         <div
           className="tooltip tooltip-top-right tooltip-warning"
-          data-tip="️️⚠️ Disclaimer: The
-            underlying smart contracts have undergone extensive internal testing
-            but have NOT YET BEEN AUDITED."
+          data-tip="️️Disclaimer: our smart contracts have not undergone a third party security audit, use at your own risk."
         >
           <div className="badge badge-warning">Beta</div>
         </div>

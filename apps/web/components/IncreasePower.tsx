@@ -1,13 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  ArrowTrendingDownIcon,
-  ArrowTrendingUpIcon,
-} from "@heroicons/react/24/outline";
+import { ArrowTrendingUpIcon } from "@heroicons/react/24/outline";
 import { Dnum } from "dnum";
-import { round } from "lodash-es";
-import { formatUnits, parseUnits } from "viem";
+import { formatUnits } from "viem";
 import { Address, useAccount, useBalance } from "wagmi";
 import {
   isMemberQuery,
@@ -101,6 +97,9 @@ export const IncreasePower = ({
     initialStakedAmount &&
     +accountTokenBalance.formatted + initialStakedAmount;
 
+  const minAmountPercentage =
+    (registerStakeAmount / (accountTokenBalancePlusStakeAmount ?? 1)) * 100;
+
   const stakeDifferenceBn = stakedAmountBn - initialStakedAmountBn;
   const stakeDifference = +stakedAmount - initialStakedAmount;
   const stakeDifferenceRounded = autoRound(stakeDifference);
@@ -114,7 +113,7 @@ export const IncreasePower = ({
   const { publish } = usePubSubContext();
 
   const [votingPowerTx, setVotingPowerTx] = useState<TransactionProps>({
-    contractName: "Strategy",
+    contractName: "Increase voting power",
     message: `Stake ${roundedStakedAmount} ${tokenSymbol} in ${communityName}`,
     status: "idle",
   });
@@ -158,6 +157,12 @@ export const IncreasePower = ({
     },
   });
 
+  console.log({
+    stakeDifferenceBn,
+    stakedAmountBn,
+    initialStakedAmountBn,
+  });
+
   useEffect(() => {
     setVotingPowerTx((prev) => ({
       ...prev,
@@ -173,11 +178,11 @@ export const IncreasePower = ({
         message: getTxMessage("idle"),
         status: "idle",
       }));
+      setIsOpenModal(true);
+      handleAllowance({});
     } else {
       writeDecreasePower();
     }
-    setIsOpenModal(true);
-    handleAllowance({});
   }
 
   useEffect(() => {
@@ -236,7 +241,7 @@ export const IncreasePower = ({
             <div className="flex-start flex gap-2 items-center">
               <p className="subtitle2">Total Staked in community:</p>
               <InfoWrapper
-                tooltip={`Registration stake: ${parseToken(registrationAmount)} ${tokenGarden.symbol}\n Added stake: ${parseToken(AddedStake)} ${tokenGarden.symbol}`}
+                tooltip={`Registration stake: ${parseToken(registrationAmount)} ${tokenGarden.symbol} ${isMember ? `\n Added stake: ${parseToken(AddedStake)} ${tokenGarden.symbol}` : ""}`}
               />
             </div>
           </div>
@@ -247,7 +252,7 @@ export const IncreasePower = ({
             icon={false}
             label={
               <DisplayNumber
-                number={roundedStakedAmount.toString()}
+                number={(roundedStakedAmount ?? 0).toString()}
                 tokenSymbol={tokenSymbol}
                 compact={true}
                 valueClassName="text-primary-content font-bold text-3xl mr-1"
@@ -265,27 +270,26 @@ export const IncreasePower = ({
           className="w-full"
         />
 
-        {/* Available to stake*/}
-        <div className="flex-1 flex items-baseline justify-between">
-          <p className="text-sm">Available</p>
-          <DisplayNumber
-            number={autoRound(
-              accountTokenBalancePlusStakeAmount ?? 0,
-            ).toString()}
-            tokenSymbol={tokenSymbol}
-            compact={true}
-            valueClassName="text-black text-lg"
-            symbolClassName="text-sm text-black"
-          />
-        </div>
-
         {/* Input */}
 
         {!isMember ?
           <p className="subtitle2 text-neutral-soft-content">
-            Join community to stake more.
+            Join community to stake.
           </p>
         : <>
+            {/* Available to stake*/}
+            <div className="flex-1 flex items-baseline justify-between">
+              <p className="text-sm">Available</p>
+              <DisplayNumber
+                number={autoRound(
+                  accountTokenBalancePlusStakeAmount ?? 0,
+                ).toString()}
+                tokenSymbol={tokenSymbol}
+                compact={true}
+                valueClassName="text-black text-lg"
+                symbolClassName="text-sm text-black"
+              />
+            </div>
             <div className="relative w-full">
               <label className="input input-bordered input-info flex items-center gap-2 w-full">
                 <input
@@ -311,28 +315,37 @@ export const IncreasePower = ({
               </label>
             </div>
 
-            <input
-              type="range"
-              min={
-                (registerStakeAmount /
-                  (accountTokenBalancePlusStakeAmount ?? 1)) *
-                100
+            <div
+              className="tooltip w-full"
+              data-tip={
+                minAmountPercentage == 100 ?
+                  "Available stake is already the minimal stake to register"
+                : undefined
               }
-              max={100}
-              value={amountPerc}
-              onChange={(e) => {
-                const percentage = e.target.value;
-                if (accountTokenBalancePlusStakeAmount)
-                  setStakedAmount(
-                    (
-                      (+percentage * accountTokenBalancePlusStakeAmount) /
-                      100
-                    ).toString(),
-                  );
-                setAmountPerc(percentage);
-              }}
-              className="range range-md cursor-pointer bg-neutral-soft [--range-shdw:var(--color-green-500)]"
-            />
+            >
+              <input
+                type="range"
+                min={minAmountPercentage < 100 ? minAmountPercentage : 0}
+                max={100}
+                value={amountPerc}
+                disabled={minAmountPercentage === 100}
+                title=""
+                onChange={(e) => {
+                  const percentage = e.target.value;
+                  if (accountTokenBalancePlusStakeAmount) {
+                    setStakedAmount(
+                      Math.max(
+                        registerStakeAmount, // Minimum stake amount
+                        (+percentage * accountTokenBalancePlusStakeAmount) /
+                          100,
+                      ).toString(),
+                    );
+                  }
+                  setAmountPerc(percentage);
+                }}
+                className={`range range-md cursor-pointer bg-neutral-soft [--range-shdw:var(--color-green-500)] ${minAmountPercentage === 100 ? "[--range-shdw:var(--color-grey-400)]" : ""}`}
+              />
+            </div>
 
             {/* Apply Buttons */}
             <div className="flex-1 flex items-center gap-1 justify-between flex-wrap">
