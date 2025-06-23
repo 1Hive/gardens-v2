@@ -27,7 +27,7 @@ export function useHandleAllowance(
   const chainId = useChainIdFromPath();
   const [allowanceTxProps, setAllowanceTxProps] = useState<TransactionProps>({
     contractName: transactionLabel ?? `${tokenSymbol} expenditure approval`,
-    message: "",
+    message: transactionLabel ?? "",
     status: "idle",
   });
   const [onSuccess, setOnSuccess] = useState<() => void>(noop);
@@ -67,32 +67,32 @@ export function useHandleAllowance(
       writeAllowToken({ args: [spenderAddr, amount] });
     } else {
       await delayAsync(1000);
-      setAllowanceTxProps({
-        contractName: `${tokenSymbol} expenditure approval`,
+      setAllowanceTxProps((x) => ({
+        ...x,
         message: getTxMessage("success"),
         status: "success",
-      });
+      }));
       triggerNextTx(args.covenantSignature);
     }
   };
 
   useEffect(() => {
-    setAllowanceTxProps({
-      contractName: `${tokenSymbol} expenditure approval`,
+    setAllowanceTxProps((x) => ({
+      ...x,
       message: getTxMessage(transactionStatus, allowanceError),
       status: transactionStatus ?? "idle",
-    });
+    }));
     if (transactionStatus === "success") {
       delayAsync(2000).then(() => onSuccess());
     }
   }, [transactionStatus]);
 
   const resetState = () =>
-    setAllowanceTxProps({
-      contractName: `${tokenSymbol} expenditure approval`,
+    setAllowanceTxProps((x) => ({
+      ...x,
       message: getTxMessage("idle"),
       status: "idle",
-    });
+    }));
 
   return {
     allowanceTxProps,

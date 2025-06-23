@@ -146,7 +146,7 @@ export const chainConfigMap: {
   // Prodnets
   42161: {
     id: 42161,
-    name: arbitrum.name,
+    name: "Arbitrum",
     icon: Arbitrum,
     explorer: "https://arbiscan.io",
     blockTime: 14,
@@ -166,7 +166,7 @@ export const chainConfigMap: {
   },
   10: {
     id: 10,
-    name: optimism.name,
+    name: "Optimism",
     icon: Optimism,
     explorer: "http://optimistic.etherscan.io",
     blockTime: 14,

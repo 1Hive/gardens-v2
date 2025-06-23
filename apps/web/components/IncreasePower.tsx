@@ -345,10 +345,13 @@ export const IncreasePower = ({
                   const percentage = e.target.value;
                   if (accountTokenBalancePlusStakeAmount) {
                     setStakedAmount(
-                      Math.max(
-                        registerStakeAmount, // Minimum stake amount
-                        (+percentage * accountTokenBalancePlusStakeAmount) /
-                          100,
+                      (+percentage === 100 ?
+                        accountTokenBalancePlusStakeAmount
+                      : Math.max(
+                          registerStakeAmount, // Minimum stake amount
+                          (+percentage * accountTokenBalancePlusStakeAmount) /
+                            100,
+                        )
                       ).toString(),
                     );
                   }
