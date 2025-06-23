@@ -19,6 +19,7 @@ import { TransactionModal, TransactionProps } from "./TransactionModal";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
+import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useHandleAllowance } from "@/hooks/useHandleAllowance";
 import { registryCommunityABI } from "@/src/generated";
 import { autoRound, parseToken } from "@/utils/numbers";
@@ -157,12 +158,6 @@ export const IncreasePower = ({
     },
   });
 
-  console.log({
-    stakeDifferenceBn,
-    stakedAmountBn,
-    initialStakedAmountBn,
-  });
-
   useEffect(() => {
     setVotingPowerTx((prev) => ({
       ...prev,
@@ -209,6 +204,21 @@ export const IncreasePower = ({
     stakedAmountBn - registerStakeAmountBigInt,
     tokenDecimals,
   ] as Dnum;
+
+  const { isButtonDisabled, tooltipMessage } = useDisableButtons([
+    { condition: !isMember, message: "Join this community first" },
+    {
+      condition: +stakedAmount < registerStakeAmount,
+      message: `Minimum stake amount is ${registerStakeAmount} ${tokenSymbol} (${communityName} registration stake)`,
+    },
+    {
+      condition:
+        !!accountTokenBalancePlusStakeAmount &&
+        +stakedAmount > accountTokenBalancePlusStakeAmount,
+      message: `You cannot stake more than your available balance of ${autoRound(accountTokenBalancePlusStakeAmount ?? 0)} ${tokenSymbol}`,
+    },
+    { condition: stakeDifference == 0, message: "Make a change to apply" },
+  ]);
 
   // useEffect(() => {
   //   if (votingPowerTx.status === "success") {
@@ -351,27 +361,9 @@ export const IncreasePower = ({
             <div className="flex-1 flex items-center gap-1 justify-between flex-wrap">
               <Button
                 onClick={handleClick}
-                disabled={
-                  stakeDifference == 0 ||
-                  !isMember ||
-                  +stakedAmount < registerStakeAmount ||
-                  (!!accountTokenBalancePlusStakeAmount &&
-                    +stakedAmount > accountTokenBalancePlusStakeAmount)
-                }
+                disabled={isButtonDisabled}
                 tooltip={
-                  (
-                    accountTokenBalancePlusStakeAmount &&
-                    +stakedAmount > accountTokenBalancePlusStakeAmount
-                  ) ?
-                    `You cannot stake more than your available balance of ${autoRound(
-                      accountTokenBalancePlusStakeAmount,
-                    )} ${tokenSymbol}`
-                  : +stakedAmount < registerStakeAmount ?
-                    `Minimum stake amount is ${registerStakeAmount} ${tokenSymbol} (${communityName} registration stake)`
-                  : stakeDifference == 0 ?
-                    "Make a change to apply"
-                  : !isMember ?
-                    "Join this community first"
+                  isButtonDisabled ? tooltipMessage
                   : stakeDifference > 0 ?
                     `Staking ${stakeDifferenceRounded} ${tokenSymbol} more in ${communityName}`
                   : `Unstaking ${stakeDifferenceRounded * -1} ${tokenSymbol} from ${communityName}`
