@@ -321,22 +321,27 @@ export const IncreasePower = ({
             </div>
 
             <div
-              className="tooltip w-full"
+              className={`${+stakedAmount === registerStakeAmount || minAmountPercentage == 100 ? "tooltip " : ""} w-full`}
               data-tip={
-                minAmountPercentage == 100 ?
+                +stakedAmount === registerStakeAmount ?
+                  "Cannot stake less than the community registration stake"
+                : minAmountPercentage == 100 ?
                   "Available stake is already the minimal stake to register"
                 : undefined
               }
             >
               <input
                 type="range"
-                min={minAmountPercentage < 100 ? minAmountPercentage : 0}
                 max={100}
                 value={amountPerc}
                 disabled={minAmountPercentage === 100}
                 title=""
                 onChange={(e) => {
                   const percentage = e.target.value;
+                  if (+percentage < minAmountPercentage) {
+                    setStakedAmount(registerStakeAmount.toString());
+                    return;
+                  }
                   if (accountTokenBalancePlusStakeAmount) {
                     setStakedAmount(
                       (+percentage === 100 ?
@@ -351,7 +356,13 @@ export const IncreasePower = ({
                   }
                   setAmountPerc(percentage);
                 }}
-                className={`range range-md cursor-pointer bg-neutral-soft [--range-shdw:var(--color-green-500)] ${minAmountPercentage === 100 ? "[--range-shdw:var(--color-grey-400)]" : ""}`}
+                className={`range range-md cursor-pointer bg-neutral-soft [--range-shdw:var(--color-green-500)] ${
+                  minAmountPercentage === 100 ?
+                    "[--range-shdw:var(--color-grey-400)]"
+                  : +stakedAmount === registerStakeAmount ?
+                    "[--range-shdw:var(--color-orange-500)]"
+                  : ""
+                }`}
               />
             </div>
 
