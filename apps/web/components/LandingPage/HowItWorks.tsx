@@ -16,7 +16,7 @@ export function HowItWorks() {
             Start by joining a community you like or create a new with your own
             values and covenant.
           </h5>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Card
               title="Covenant"
               description="The Covenant is a foundational agreement that governs the operations and decision-making processes within a Community. It outlines the rules and responsibilities of participants. "
@@ -39,7 +39,7 @@ Protocol Fees (is a % of the community fee) go to the Gardens platform and are a
             applications.
           </h5>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Card
               title="Funding Pools"
               description="Funding Pools are linked to a pool of tokens, which can be
@@ -62,13 +62,13 @@ Protocol Fees (is a % of the community fee) go to the Gardens platform and are a
             Pitch Your Ideas and Gather Community Support!.
           </h5>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Card
               title="Funding Proposals"
               description="Funding  proposals are designed to request financial support from the Community Pool for specific community projects or initiatives. "
             />
             <Card
-              title="Siganling Proposals"
+              title="Signaling Proposals"
               description="Signaling proposals are used to gauge community sentiment regarding changes or initiatives without requesting financial resources."
             />
           </div>
@@ -83,7 +83,7 @@ Protocol Fees (is a % of the community fee) go to the Gardens platform and are a
             Tribunal and Council Safe are the two main governance bodies of a
             community.
           </h5>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Card
               title="Council Safe"
               description="Safe is to manage the settings of Pools
@@ -121,9 +121,9 @@ const Card = ({
 }) => {
   return (
     <>
-      <div className="relative rounded-2xl p-4 h-[323px] flex flex-col gap-6 bg-primary-soft overflow-hidden">
+      <div className="relative rounded-2xl p-4 h-[250px] flex flex-col gap-6 bg-primary-soft overflow-hidden">
         <h4>{title}</h4>
-        <p>{description}</p>
+        <p className="text-sm sm:text-md">{description}</p>
 
         <Image
           src={grassLarge}

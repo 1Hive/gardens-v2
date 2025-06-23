@@ -12,7 +12,9 @@ const navigation = {
       href: "https://app.gardens.fund/gardens/10/0x1eba7a6a72c894026cd654ac5cdcf83a46445b08/0xd3345828914b740fddd1b8ae4f4d2ce03d1e0960",
     },
   ],
-  company: [{ name: "Report a bug", href: "#" }],
+  company: [
+    { name: "Report a bug", href: "https://discord.com/invite/6U8YGwVRWG" },
+  ],
 
   social: [
     {

@@ -136,7 +136,7 @@ export const Hero = () => {
               <span className="text-2xl font-medium">Gardens</span>
             </div>
           </motion.div>
-          <div className="flex lg:hidden">
+          {/* <div className="flex lg:hidden">
             <button
               type="button"
               onClick={() => setMobileMenuOpen(true)}
@@ -145,52 +145,8 @@ export const Hero = () => {
               <span className="sr-only">Open main menu</span>
               <Bars3Icon aria-hidden="true" className="h-6 w-6" />
             </button>
-          </div>
+          </div> */}
         </nav>
-        <Dialog
-          open={mobileMenuOpen}
-          onClose={setMobileMenuOpen}
-          className="lg:hidden"
-        >
-          <div className="fixed inset-0 z-50" />
-          <Dialog.Panel className="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-white px-6 py-6 sm:max-w-sm sm:ring-1 sm:ring-gray-900/10">
-            <div className="flex items-center justify-between">
-              <div className="-m-1.5 p-1.5">
-                <span className="sr-only">Gardens</span>
-                <Image
-                  src={newLogo}
-                  alt="logo"
-                  height={40}
-                  width={40}
-                  loading="lazy"
-                />
-              </div>
-              <button
-                type="button"
-                onClick={() => setMobileMenuOpen(false)}
-                className="-m-2.5 rounded-md p-2.5 text-gray-700"
-              >
-                <span className="sr-only">Close menu</span>
-                <XMarkIcon aria-hidden="true" className="h-6 w-6" />
-              </button>
-            </div>
-            <div className="mt-6 flow-root">
-              <div className="-my-6 divide-y divide-gray-500/10">
-                <div className="space-y-2 py-6">
-                  {/* {navigation.map((item) => (
-                    <a
-                      key={item.name}
-                      href={item.href}
-                      className="-mx-3 block rounded-lg px-3 py-2 text-base font-semibold leading-7 text-gray-900 hover:bg-gray-50"
-                    >
-                      {item.name}
-                    </a>
-                  ))} */}
-                </div>
-              </div>
-            </div>
-          </Dialog.Panel>
-        </Dialog>
       </header>
 
       <div className="isolate overflow-hidden bg-linear-to-b from-indigo-100/20 pt-2 ">
@@ -328,7 +284,7 @@ function FlipWordsDemo() {
 
   return (
     <p className="text-md lg:text-lg leading-2 mt-2">
-      Our emphasis is on a community experience that’s
+      Our emphasis is on a community experience that’s{" "}
       <FlipWords words={words} />
     </p>
   );
@@ -388,7 +344,7 @@ const FlipWords = ({
           scale: 2,
           position: "absolute",
         }}
-        className={cn("z-10 inline-block relative text-left px-2", className)}
+        className={cn("z-10 inline-block relative text-left", className)}
         key={currentWord}
       >
         {currentWord.split(" ").map((word, wordIndex) => (
