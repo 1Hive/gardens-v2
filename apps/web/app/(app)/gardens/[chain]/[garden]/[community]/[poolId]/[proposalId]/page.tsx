@@ -275,6 +275,7 @@ export default function Page({
   const status = ProposalStatus[proposalData.proposalStatus];
   return (
     <>
+      {/* main section */}
       <section className="col-span-12 lg:col-span-9">
         {/* Main Section */}
         <div
@@ -380,68 +381,57 @@ export default function Page({
             <InfoBox infoBoxType="warning">The pool is not enabled.</InfoBox>
           )}
 
-          <div className="w-full h-[0.10px] bg-neutral-soft-content" />
-
           {/* Action Buttons */}
-          <div className="flex flex-col gap-2 -mt-2">
-            <h6>Actions</h6>
-            <div className="flex items-center gap-4 w-full">
-              <Button
-                icon={<AdjustmentsHorizontalIcon height={18} width={18} />}
-                onClick={() => manageSupportClicked()}
-                disabled={!isConnected || missmatchUrl || !isMemberCommunity}
-                tooltip={tooltipMessage}
-                className="w-full"
-              >
-                Manage support
-              </Button>
-              {status === "active" && !isSignalingType && (
+          {status && status === "active" && (
+            <div className="flex flex-col gap-2 -mt-2">
+              <div className="w-full h-[0.10px] bg-neutral-soft-content" />
+              <h6>Actions</h6>
+              <div className="flex items-center gap-4 w-full">
                 <Button
-                  icon={<BoltIcon height={18} width={18} />}
+                  icon={<AdjustmentsHorizontalIcon height={18} width={18} />}
+                  onClick={() => manageSupportClicked()}
+                  disabled={!isConnected || missmatchUrl || !isMemberCommunity}
+                  tooltip={tooltipMessage}
                   className="w-full"
-                  onClick={() =>
-                    writeDistribute?.({
-                      args: [
-                        BigInt(poolId),
-                        [proposalData?.strategy.id as Address],
-                        encodedDataProposalId(proposalIdNumber),
-                      ],
-                    })
-                  }
-                  disabled={
-                    !isConnected ||
-                    missmatchUrl ||
-                    currentConvictionPct <= thresholdPct ||
-                    proposalStatus === "disputed"
-                  }
-                  tooltip={
-                    tooltipMessage ?? currentConvictionPct <= thresholdPct ?
-                      "Proposal has not reached the threshold yet"
-                    : undefined
-                  }
                 >
-                  Execute
+                  Manage support
                 </Button>
-              )}
+                {!isSignalingType && (
+                  <Button
+                    icon={<BoltIcon height={18} width={18} />}
+                    className="w-full"
+                    onClick={() =>
+                      writeDistribute?.({
+                        args: [
+                          BigInt(poolId),
+                          [proposalData?.strategy.id as Address],
+                          encodedDataProposalId(proposalIdNumber),
+                        ],
+                      })
+                    }
+                    disabled={
+                      !isConnected ||
+                      missmatchUrl ||
+                      currentConvictionPct <= thresholdPct ||
+                      proposalStatus === "disputed"
+                    }
+                    tooltip={
+                      tooltipMessage ?? currentConvictionPct <= thresholdPct ?
+                        "Proposal has not reached the threshold yet"
+                      : undefined
+                    }
+                  >
+                    Execute
+                  </Button>
+                )}
+              </div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Proposal Description */}
-      <section className="px-8 col-span-12 lg:col-span-9 mt-6 flex flex-col gap-6">
-        <h3>Proposal Description</h3>
-        <div>
-          <Skeleton rows={5} isLoading={!metadata}>
-            <MarkdownWrapper>
-              {metadata?.description ?? "No description found"}
-            </MarkdownWrapper>
-          </Skeleton>
+          )}
         </div>
       </section>
 
       {/* Right side */}
-      <div className="col-span-12 lg:col-span-3 lg:-mt-[500px]">
+      <div className="col-span-12 lg:col-span-3">
         <div className="backdrop-blur-sm rounded-lg flex flex-col gap-4 sticky top-32">
           <section className="section-layout gap-4 flex flex-col">
             <div className="flex items-center justify-between">
@@ -452,41 +442,41 @@ export default function Page({
               <div className="flex flex-col gap-2">
                 {!isSignalingType && (
                   <>
-                    {status === "executed" ?
-                      <div className="flex items-center gap-2">
-                        <CheckIcon className="w-5 h-5 text-primary-content" />
-                        <p className="text-primary-content subtitle2">
-                          Passed and Executed
-                        </p>
-                      </div>
-                    : status === "cancelled" ?
-                      <div className="flex items-center gap-2">
-                        <XMarkIcon className="w-5 h-5 text-error-content" />
-                        <p className="text-error-content subtitle2">
-                          Cancelled
-                        </p>
-                      </div>
-                    : <>
-                        <p className="subtitle2">ESTIMATED TIME UNTIL PASS</p>
+                    {
+                      status === "executed" ?
                         <div className="flex items-center gap-2">
-                          <span>
-                            {currentConvictionPct > thresholdPct ?
-                              <CheckIcon className="w-5 h-5 text-primary-content" />
-                            : <XMarkIcon className="w-5 h-5 text-error-content" />
-                            }
-                          </span>
-                          <span
-                            className={`${currentConvictionPct > thresholdPct ? "text-primary-content" : "text-error-content"} `}
-                          >{`${currentConvictionPct > thresholdPct ? "WILL" : "WONT"} PASS`}</span>
+                          <CheckIcon className="w-5 h-5 text-primary-content" />
+                          <p className="text-primary-content subtitle2">
+                            Passed and Executed
+                          </p>
                         </div>
-                        <Statistic className="text-2xl font-bold">
-                          {timeToPass && (
-                            <span className="text-black">
-                              {prettyTimestamp(timeToPass)}
-                            </span>
-                          )}
-                        </Statistic>
-                      </>
+                      : status === "cancelled" ?
+                        <div className="flex items-center gap-2">
+                          <XMarkIcon className="w-5 h-5 text-error-content" />
+                          <p className="text-error-content subtitle2">
+                            Cancelled
+                          </p>
+                        </div>
+                      : null
+                      // <p className="subtitle2">ESTIMATED TIME UNTIL PASS</p>
+                      // <div className="flex items-center gap-2">
+                      //   <span>
+                      //     {currentConvictionPct > thresholdPct ?
+                      //       <CheckIcon className="w-5 h-5 text-primary-content" />
+                      //     : <XMarkIcon className="w-5 h-5 text-error-content" />
+                      //     }
+                      //   </span>
+                      //   <span
+                      //     className={`${currentConvictionPct > thresholdPct ? "text-primary-content" : "text-error-content"} `}
+                      //   >{`${currentConvictionPct > thresholdPct ? "WILL" : "WONT"} PASS`}</span>
+                      // </div>
+                      // <Statistic className="text-2xl font-bold">
+                      //   {timeToPass && (
+                      //     <span className="text-black">
+                      //       {prettyTimestamp(timeToPass)}
+                      //     </span>
+                      //   )}
+                      // </Statistic>
                     }
                   </>
                 )}
@@ -534,6 +524,18 @@ export default function Page({
           )} */}
         </div>
       </div>
+
+      {/* Proposal Description */}
+      <section className="px-8 col-span-12 lg:col-span-9 mt-6 flex flex-col gap-6">
+        <h3>Proposal Description</h3>
+        <div>
+          <Skeleton rows={5} isLoading={!metadata}>
+            <MarkdownWrapper>
+              {metadata?.description ?? "No description found"}
+            </MarkdownWrapper>
+          </Skeleton>
+        </div>
+      </section>
     </>
   );
 }
@@ -601,11 +603,3 @@ const ProposalSupportersTable = ({
     />
   );
 };
-
-//  <h4
-//                     className={`text-center ${status === "executed" ? "text-primary-content" : "text-error-content"}`}
-//                   >
-//                     {status === "executed" ?
-//                       "Proposal passed and executed successfully!"
-//                     : `Proposal has been ${status}.`}
-//                   </h4>
