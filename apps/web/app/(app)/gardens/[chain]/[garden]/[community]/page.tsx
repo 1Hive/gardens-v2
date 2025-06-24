@@ -605,8 +605,9 @@ const CommunityDetailsTable = ({
         <EthAddress
           address={memberData.memberAddress as Address}
           actions="copy"
-          shortenAddress={false}
+          shortenAddress={true}
           icon="ens"
+          textColor="var(--color-grey-900)"
         />
       ),
     },

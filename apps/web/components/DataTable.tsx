@@ -24,8 +24,8 @@ export const DataTable: React.FC<DataTableProps> = ({
   className = "",
 }) => {
   return (
-    <div className={`px-2 section-layout ${className}`}>
-      <div className="sm:flex sm:items-center">
+    <div className={`mt-4 ${className}`}>
+      <div className="sm:flex sm:items-center py-2 sm:px-4 lg:px-6">
         <div className="sm:flex-auto">
           <h3>{title}</h3>
           {description && (
@@ -35,9 +35,9 @@ export const DataTable: React.FC<DataTableProps> = ({
           )}
         </div>
       </div>
-      <div className="mt-8 flow-root">
-        <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-          <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+      <div className="mt-4 flow-root">
+        <div className="overflow-x-hidden max-h-[500px]">
+          <div className="inline-block min-w-full py-2 align-middle sm:px-4 lg:px-6">
             <table className="min-w-full divide-y divide-neutral-soft">
               <thead>
                 <tr>
@@ -45,14 +45,14 @@ export const DataTable: React.FC<DataTableProps> = ({
                     <th
                       key={(col.header ?? "").toString()}
                       scope="col"
-                      className={`py-3.5 pl-4 pr-3  sm:pl-0 ${col.className ?? ""}`}
+                      className={`py-3.5  ${col.className ?? ""}`}
                     >
                       <h5>{col.header}</h5>
                     </th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="">
+              <tbody>
                 {data &&
                   data.map((item) => (
                     <tr key={item.id} className="even:bg-gray-50">
@@ -60,9 +60,9 @@ export const DataTable: React.FC<DataTableProps> = ({
                         <td
                           // eslint-disable-next-line react/no-array-index-key
                           key={`col-${i}-${item.id}`}
-                          className={`whitespace-nowrap py-5 text-sm text-neutral-soft-content ${col.className ?? ""}`}
+                          className={`whitespace-nowrap py-2 pr-1 text-sm text-neutral-soft-content ${col.className ?? ""}`}
                         >
-                          <div className="font-inter text-base font-normal leading-6 text-left">
+                          <div className="text-base font-normal leading-6 text-left ">
                             {col.render(item)}
                           </div>
                         </td>
@@ -73,10 +73,7 @@ export const DataTable: React.FC<DataTableProps> = ({
               {footer && (
                 <tfoot>
                   <tr>
-                    <td
-                      className="p pt-4 sm:table-cell sm:pl-0"
-                      colSpan={columns.length}
-                    >
+                    <td className="pt-2 sm:table-cel" colSpan={columns.length}>
                       {footer}
                     </td>
                   </tr>

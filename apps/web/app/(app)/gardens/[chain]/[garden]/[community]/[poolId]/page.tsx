@@ -171,6 +171,7 @@ export default function Page({
               alloInfo={alloInfo}
               poolId={poolId}
               poolToken={poolToken}
+              chainId={Number(chain)}
             />
           )}
         </>

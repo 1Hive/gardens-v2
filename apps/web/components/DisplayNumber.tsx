@@ -43,17 +43,18 @@ export const DisplayNumber = ({
     const charsLength = 3;
     const prefixLength = 2; // "0."
 
-    // Trim leading zeros
-    str = str?.replace(/^0+/, "");
+    if (!str) return "0";
 
-    if (!str) {
+    if (str === "0" || str === "0.0" || str === "0.00") {
       setShowTooltip(false);
-      return "";
+      return "0";
     }
+
     if (str.length < charsLength * 2 + prefixLength) {
       setShowTooltip(false);
       return str;
     }
+
     setShowTooltip(true);
 
     if (str.slice(0, 2) === "0.") {
