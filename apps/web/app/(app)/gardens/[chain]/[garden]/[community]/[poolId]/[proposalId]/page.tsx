@@ -511,7 +511,7 @@ export default function Page({
             </section>
           )}
 
-          {/* {filteredAndSortedProposalSupporters.length > 0 && (
+          {filteredAndSortedProposalSupporters.length > 0 && (
             <section className="max-h-10">
               <ProposalSupportersTable
                 supporters={filteredAndSortedProposalSupporters}
@@ -521,7 +521,7 @@ export default function Page({
                 totalStakedAmount={totalSupportPct}
               />
             </section>
-          )} */}
+          )}
         </div>
       </div>
 
@@ -559,21 +559,22 @@ const ProposalSupportersTable = ({
       render: (supporter: ProposalSupporter) => (
         <EthAddress
           address={supporter.id as Address}
-          actions="copy"
-          shortenAddress={false}
+          actions="none"
+          shortenAddress={true}
           icon="ens"
+          textColor="var(--color-grey-900)"
         />
       ),
     },
+    // {
+    //   header: "Role",
+    //   render: (supporter: ProposalSupporter) =>
+    //     supporter.id === beneficiary ? "Beneficiary"
+    //     : supporter.id === submitter ? "Submitter"
+    //     : "Member",
+    // },
     {
-      header: "Role",
-      render: (supporter: ProposalSupporter) =>
-        supporter.id === beneficiary ? "Beneficiary"
-        : supporter.id === submitter ? "Submitter"
-        : "Member",
-    },
-    {
-      header: "Support",
+      header: "",
       render: (supporter: ProposalSupporter) =>
         totalActivePoints > 0 ?
           `${calculatePercentageBigInt(
@@ -581,25 +582,24 @@ const ProposalSupportersTable = ({
             BigInt(totalActivePoints),
           )} %`
         : undefined,
-      className: "text-center",
+      className: "flex items-center justify-center",
     },
   ];
 
   return (
     <DataTable
-      title="Supported By"
-      description="A list of all the community members that are supporting this proposal."
+      // title="Supported By"
+      // description="A list of all the community members that are supporting this proposal."
       data={supporters}
       columns={columns}
       footer={
         //
-        <div className="flex justify-between py-2 border-neutral-soft-content">
-          <p className="subtitle">Total Support:</p>
-          <p className="subtitle pr-0 sm:pr-14 lg:pr-16">
-            {totalStakedAmount} %
-          </p>
+        <div className="flex justify-between">
+          <p className="">Total Support:</p>
+          <p className="">{totalStakedAmount} %</p>
         </div>
       }
+      className="border1 rounded-lg bg-neutral"
     />
   );
 };
