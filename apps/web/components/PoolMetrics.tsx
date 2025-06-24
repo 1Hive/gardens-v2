@@ -3,7 +3,7 @@
 import { FC, FormEvent, useEffect, useState } from "react";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import { parseUnits } from "viem";
-import { Address, useAccount } from "wagmi";
+import { Address, useAccount, useBalance } from "wagmi";
 import { Allo } from "#/subgraph/.graphclient";
 import { Button } from "./Button";
 import { DisplayNumber } from "./DisplayNumber";
@@ -26,12 +26,14 @@ interface PoolMetricsProps {
   };
   alloInfo: Allo;
   poolId: number;
+  chainId: number;
 }
 
 export const PoolMetrics: FC<PoolMetricsProps> = ({
   alloInfo,
   poolToken,
   poolId,
+  chainId,
 }) => {
   const [amount, setAmount] = useState(0);
   const [isOpenModal, setIsOpenModal] = useState(false);
@@ -60,10 +62,20 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     () => writeFundPool(),
   );
 
+  const { data: walletBalance } = useBalance({
+    address: accountAddress,
+    formatUnits: poolToken.decimals,
+    token: poolToken.address as Address,
+    watch: true,
+    chainId: chainId,
+  });
+  const hasInsufficientBalance =
+    !!walletBalance?.formatted && +walletBalance.formatted < amount;
+
   const { tooltipMessage, isButtonDisabled } = useDisableButtons([
     {
       message: "Connected account has insufficient balance",
-      condition: !!poolToken.balance && poolToken.balance < requestedAmount,
+      condition: hasInsufficientBalance,
     },
     {
       message: "Amount must be greater than 0",
@@ -97,6 +109,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
       formAmount: parseUnits(amount.toString(), poolToken.decimals),
     });
   };
+
   return (
     <>
       <TransactionModal
@@ -141,12 +154,15 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                 <div className="flex justify-between items-center">
                   <p className="text-sm">Wallet balance:</p>
                   <DisplayNumber
-                    number={[poolToken.balance, poolToken.decimals]}
+                    number={[
+                      walletBalance?.value ?? BigInt(0),
+                      poolToken.decimals,
+                    ]}
                     tokenSymbol={poolToken.symbol}
                     compact={true}
                     valueClassName="text-black text-lg"
                     symbolClassName="text-sm text-black"
-                    tooltipClass="tooltip-left"
+                    //tooltipClass="tooltip-left"
                   />
                 </div>
               )}
@@ -166,11 +182,11 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                 suffix={poolToken.symbol}
                 step={0.000000000000000001}
                 otherProps={{
-                  max: +poolToken.formatted || undefined,
+                  max: walletBalance?.formatted ? +walletBalance.formatted : 0,
                 }}
                 registerOptions={{
                   max: {
-                    value: +poolToken.formatted || 0,
+                    value: +hasInsufficientBalance,
                     message: "Insufficient balance",
                   },
                 }}
@@ -183,7 +199,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                   disabled={isButtonDisabled}
                   tooltip={tooltipMessage}
                   icon={<PlusIcon className="w-5 h-5" />}
-                  className="w-full"
+                  className="w-full mt-1"
                 >
                   Add Funds
                 </Button>
