@@ -1,7 +1,7 @@
 import React from "react";
 
 interface DataTableProps {
-  title: string;
+  title?: string;
   description?: string;
   data: any[];
   columns: TableColumn[];
@@ -25,17 +25,18 @@ export const DataTable: React.FC<DataTableProps> = ({
 }) => {
   return (
     <div className={`mt-4 ${className}`}>
-      <div className="sm:flex sm:items-center py-2 sm:px-4 lg:px-6">
-        <div className="sm:flex-auto">
-          <h3>{title}</h3>
+      {title && description && (
+        <div className="sm:flex-auto py-2 sm:px-4 lg:px-6">
+          <h4>{title}</h4>
           {description && (
             <p className="mt-2 text-sm text-neutral-soft-content">
               {description}
             </p>
           )}
         </div>
-      </div>
-      <div className="mt-4 flow-root">
+      )}
+
+      <div className="flow-root">
         <div className="overflow-x-hidden max-h-[500px]">
           <div className="inline-block min-w-full py-2 align-middle sm:px-4 lg:px-6">
             <table className="min-w-full divide-y divide-neutral-soft">
@@ -47,7 +48,7 @@ export const DataTable: React.FC<DataTableProps> = ({
                       scope="col"
                       className={`py-3.5  ${col.className ?? ""}`}
                     >
-                      <h5>{col.header}</h5>
+                      <h6>{col.header}</h6>
                     </th>
                   ))}
                 </tr>
@@ -62,7 +63,7 @@ export const DataTable: React.FC<DataTableProps> = ({
                           key={`col-${i}-${item.id}`}
                           className={`whitespace-nowrap py-2 pr-1 text-sm text-neutral-soft-content ${col.className ?? ""}`}
                         >
-                          <div className="text-base font-normal leading-6 text-left ">
+                          <div className="text-base font-normal leading-6 text-left">
                             {col.render(item)}
                           </div>
                         </td>

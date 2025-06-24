@@ -1,5 +1,4 @@
 import * as dn from "dnum";
-import { round } from "lodash-es";
 import { formatUnits } from "viem";
 
 export const INPUT_MIN_VALUE = 0.000000000001;

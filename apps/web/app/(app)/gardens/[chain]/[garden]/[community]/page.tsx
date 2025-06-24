@@ -61,6 +61,7 @@ import {
   parseToken,
   SCALE_PRECISION,
   SCALE_PRECISION_DECIMALS,
+  calculatePercentageBigInt,
 } from "@/utils/numbers";
 
 type MembersStaked = {
@@ -614,11 +615,21 @@ const CommunityDetailsTable = ({
     {
       header: "Staked tokens",
       render: (memberData: MembersStaked) => (
-        <DisplayNumber
-          number={[BigInt(memberData.stakedTokens), tokenGarden.decimals]}
-          compact={true}
-          tokenSymbol={tokenGarden.symbol}
-        />
+        <div className="flex items-baseline gap-2">
+          <p className="text-xs">
+            (
+            {calculatePercentageBigInt(
+              BigInt(memberData.stakedTokens),
+              BigInt(communityStakedTokens),
+            )}
+            %)
+          </p>
+          <DisplayNumber
+            number={[BigInt(memberData.stakedTokens), tokenGarden.decimals]}
+            compact={true}
+            tokenSymbol={tokenGarden.symbol}
+          />
+        </div>
       ),
       className: "flex justify-end",
     },
@@ -632,7 +643,7 @@ const CommunityDetailsTable = ({
       columns={columns}
       className="max-h-screen overflow-y-scroll w-full"
       footer={
-        <div className="flex justify-between py-2 border-neutral-soft-content">
+        <div className="flex justify-between py-2">
           <p className="subtitle">Total Staked:</p>
           <DisplayNumber
             number={[BigInt(communityStakedTokens), tokenGarden.decimals]}
