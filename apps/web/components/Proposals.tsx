@@ -238,7 +238,7 @@ export function Proposals({
   );
 
   const proposals = strategy.proposals.sort(
-    (a, b) => a.stakedAmount - b.stakedAmount,
+    (a, b) => b.stakedAmount - a.stakedAmount,
   );
 
   // Effects

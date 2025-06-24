@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowTrendingUpIcon } from "@heroicons/react/24/outline";
+import {
+  ArrowTrendingDownIcon,
+  ArrowTrendingUpIcon,
+} from "@heroicons/react/24/outline";
 import { Dnum } from "dnum";
 import { formatUnits } from "viem";
 import { Address, useAccount, useBalance } from "wagmi";
@@ -72,9 +75,7 @@ export const IncreasePower = ({
   const registerStakeAmount = +registerStakeAmountStr / 10 ** tokenDecimals;
 
   const urlChainId = useChainIdFromPath();
-  const stakedAmountBn = BigInt(
-    Math.round(+stakedAmount * 10 ** tokenDecimals),
-  );
+
   const roundedStakedAmount = (+stakedAmount).toPrecision(4);
 
   const { data: accountTokenBalance } = useBalance({
@@ -98,10 +99,17 @@ export const IncreasePower = ({
     initialStakedAmount &&
     +accountTokenBalance.formatted + initialStakedAmount;
 
+  const stakedAmountBn = BigInt(
+    Math.round(+stakedAmount * 10 ** tokenDecimals),
+  );
+
   const minAmountPercentage =
     (registerStakeAmount / (accountTokenBalancePlusStakeAmount ?? 1)) * 100;
 
-  const stakeDifferenceBn = stakedAmountBn - initialStakedAmountBn;
+  const stakeDifferenceBn =
+    +amountPerc >= 100 && accountTokenBalance ?
+      accountTokenBalance.value
+    : stakedAmountBn - initialStakedAmountBn;
   const stakeDifference = +stakedAmount - initialStakedAmount;
   const stakeDifferenceRounded = stakeDifference.toPrecision(4);
 
@@ -110,6 +118,12 @@ export const IncreasePower = ({
     abi: registryCommunityABI,
     contractName: "Registry Community",
   };
+
+  console.log({
+    stakeDifferenceBn,
+    accountTokenBalance: accountTokenBalance?.value,
+    diff: accountTokenBalance && stakeDifferenceBn - accountTokenBalance.value,
+  });
 
   const { publish } = usePubSubContext();
 
@@ -142,23 +156,24 @@ export const IncreasePower = ({
     },
   });
 
-  const { write: writeDecreasePower } = useContractWriteWithConfirmations({
-    ...registryContractCallConfig,
-    functionName: "decreasePower",
-    // Difference between staked amount and initial amount
-    args: [stakeDifferenceBn * -1n],
-    fallbackErrorMessage: "Error decreasing power, please report a bug.",
-    onConfirmations: () => {
-      publish({
-        topic: "member",
-        type: "update",
-        containerId: communityAddress,
-        function: "decreasePower",
-        id: accountAddress,
-        chainId: urlChainId,
-      });
-    },
-  });
+  const { write: writeDecreasePower, status: decreaseStatus } =
+    useContractWriteWithConfirmations({
+      ...registryContractCallConfig,
+      functionName: "decreasePower",
+      // Difference between staked amount and initial amount
+      args: [stakeDifferenceBn * -1n],
+      fallbackErrorMessage: "Error decreasing power, please report a bug.",
+      onConfirmations: () => {
+        publish({
+          topic: "member",
+          type: "update",
+          containerId: communityAddress,
+          function: "decreasePower",
+          id: accountAddress,
+          chainId: urlChainId,
+        });
+      },
+    });
 
   useEffect(() => {
     setVotingPowerTx((prev) => ({
@@ -184,11 +199,12 @@ export const IncreasePower = ({
 
   useEffect(() => {
     if (accountTokenBalancePlusStakeAmount == null) return;
-    setStakedAmount((initialStakedAmount ?? 0).toString());
+    setStakedAmount((initialStakedAmount ?? 0).toPrecision(4));
+    console.log({ accountTokenBalance });
     setAmountPerc(
-      (
-        (initialStakedAmount / accountTokenBalancePlusStakeAmount) *
+      (accountTokenBalance?.value == 0n ?
         100
+      : (initialStakedAmount / accountTokenBalancePlusStakeAmount) * 100
       ).toString(),
     );
   }, [accountTokenBalancePlusStakeAmount]);
@@ -198,7 +214,7 @@ export const IncreasePower = ({
     registerToken as Address,
     tokenSymbol,
     communityAddress as Address,
-    stakedAmountBn,
+    stakeDifferenceBn,
     () => writeIncreasePower(),
     `Approve ${tokenSymbol}`,
   );
@@ -220,7 +236,7 @@ export const IncreasePower = ({
         +stakedAmount > accountTokenBalancePlusStakeAmount,
       message: `You cannot stake more than your available balance of ${accountTokenBalancePlusStakeAmount?.toPrecision() ?? 0} ${tokenSymbol}`,
     },
-    { condition: stakeDifference == 0, message: "Make a change to apply" },
+    { condition: stakeDifferenceBn == 0n, message: "Make a change to apply" },
   ]);
 
   // useEffect(() => {
@@ -303,7 +319,7 @@ export const IncreasePower = ({
               <label className="input input-bordered input-info flex items-center gap-2 w-full">
                 <input
                   type="number"
-                  value={roundedStakedAmount}
+                  value={stakedAmount}
                   placeholder="Amount"
                   className="flex-1 w-full"
                   min={registerStakeAmount}
@@ -342,10 +358,9 @@ export const IncreasePower = ({
                 onChange={(e) => {
                   const percentage = e.target.value;
                   if (accountTokenBalancePlusStakeAmount) {
-                    console.log(percentage);
                     setStakedAmount(
                       +percentage >= 100 ?
-                        accountTokenBalancePlusStakeAmount.toString()
+                        accountTokenBalancePlusStakeAmount.toPrecision(4)
                       : Math.max(
                           registerStakeAmount, // Minimum stake amount
                           (+percentage * accountTokenBalancePlusStakeAmount) /
@@ -376,11 +391,20 @@ export const IncreasePower = ({
 
                 }
                 showToolTip={true}
-                icon={<ArrowTrendingUpIcon className="h-5 w-5" />}
+                icon={
+                  stakeDifference >= 0 ?
+                    <ArrowTrendingUpIcon className="h-5 w-5" />
+                  : <ArrowTrendingDownIcon className="h-5 w-5" />
+                }
                 className="w-full"
+                isLoading={
+                  increasePowerStatus === "loading" ||
+                  decreaseStatus === "loading"
+                }
               >
-                Stake
-                <span className="loading-spinner" />
+                <span className="w-14">
+                  {stakeDifference >= 0 ? "Stake" : "Unstake"}
+                </span>
               </Button>
             </div>
           </>

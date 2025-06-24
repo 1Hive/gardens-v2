@@ -7,6 +7,7 @@ import { Address, useAccount } from "wagmi";
 import { Allo } from "#/subgraph/.graphclient";
 import { Button } from "./Button";
 import { DisplayNumber } from "./DisplayNumber";
+import { EthAddress } from "./EthAddress";
 import { FormInput } from "./Forms";
 import { TransactionModal, TransactionProps } from "./TransactionModal";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
@@ -117,15 +118,23 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
           <section className="section-layout gap-2 flex flex-col">
             <h3>Pool Funds</h3>
             <div className="flex flex-col gap-2">
-              <div className="flex justify-between items-center gap-3">
+              <div className="flex justify-between items-center gap-3 z-o">
                 <p className="subtitle2">Funds in pool:</p>
-                <DisplayNumber
-                  copiable
-                  number={[poolToken.balance, poolToken.decimals]}
-                  tokenSymbol={poolToken.symbol}
-                  compact={true}
-                  valueClassName="text-2xl mr-1 font-bold text-primary-content"
-                  symbolClassName="text-primary-content"
+                <EthAddress
+                  address={poolToken.address as Address}
+                  shortenAddress={true}
+                  actions="none"
+                  icon={false}
+                  label={
+                    <DisplayNumber
+                      copiable
+                      number={[poolToken.balance, poolToken.decimals]}
+                      tokenSymbol={poolToken.symbol}
+                      compact={true}
+                      valueClassName="text-2xl mr-1 font-bold text-primary-content"
+                      symbolClassName="text-primary-content"
+                    />
+                  }
                 />
               </div>
               {accountAddress && (
@@ -137,6 +146,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                     compact={true}
                     valueClassName="text-black text-lg"
                     symbolClassName="text-sm text-black"
+                    tooltipClass="tooltip-left"
                   />
                 </div>
               )}
