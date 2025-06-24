@@ -49,7 +49,8 @@ export function PoolCard({ pool, token }: Props) {
   const poolType = config?.proposalType as number | undefined;
 
   const { data: poolAmount } = useBalance({
-    address: token as `0x${string}`,
+    address: pool.id as `0x${string}`,
+    token: token as `0x${string}`,
     enabled: isEnabled && !!poolType && PoolTypes[poolType] === "funding",
   });
 
@@ -69,9 +70,9 @@ export function PoolCard({ pool, token }: Props) {
           </Skeleton>
           <Badge type={poolType} />
         </div>
-        <div>
+        {/* <div>
           <h6>POOL ID: #{poolId}</h6>
-        </div>
+        </div> */}
       </header>
       <div className="mb-8 flex flex-col gap-2">
         <Statistic

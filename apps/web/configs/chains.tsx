@@ -146,9 +146,9 @@ export const chainConfigMap: {
   // Prodnets
   42161: {
     id: 42161,
-    name: arbitrum.name,
+    name: "Arbitrum",
     icon: Arbitrum,
-    explorer: "https://arbitrum.blockscout.com",
+    explorer: "https://arbiscan.io",
     blockTime: 14,
     confirmations: 2, // 7
     rpcUrl: process.env.RPC_URL_ARBITRUM!,
@@ -166,9 +166,9 @@ export const chainConfigMap: {
   },
   10: {
     id: 10,
-    name: optimism.name,
+    name: "Optimism",
     icon: Optimism,
-    explorer: "https://optimism.blockscout.com",
+    explorer: "http://optimistic.etherscan.io",
     blockTime: 14,
     confirmations: 2, // 2
     rpcUrl: process.env.RPC_URL_OPTIMISM!,
@@ -188,7 +188,7 @@ export const chainConfigMap: {
     id: 137,
     name: polygon.name,
     icon: Polygon,
-    explorer: "https://polygon.blockscout.com",
+    explorer: "https://polygonscan.com",
     blockTime: 2.1,
     confirmations: 2, // 4
     rpcUrl: process.env.RPC_URL_MATIC!,
@@ -208,7 +208,7 @@ export const chainConfigMap: {
     id: 100,
     name: gnosis.name,
     icon: GnosisGno,
-    explorer: "https://gnosis.blockscout.com",
+    explorer: "https://gnosisscan.io",
     blockTime: 5.2,
     confirmations: 2, // 4
     rpcUrl: process.env.RPC_URL_GNOSIS!,
@@ -228,7 +228,7 @@ export const chainConfigMap: {
     id: 8453,
     name: base.name,
     icon: BaseLogo,
-    explorer: "https://base.blockscout.com",
+    explorer: "https://basescan.org",
     blockTime: 2,
     confirmations: 2, // 4
     rpcUrl: process.env.RPC_URL_BASE!,
@@ -248,7 +248,7 @@ export const chainConfigMap: {
     id: 42220,
     name: celo.name,
     icon: CeloLogo,
-    explorer: "https://celo.blockscout.com",
+    explorer: "https://celoscan.io/",
     blockTime: 3.8,
     confirmations: 4, // 4
     rpcUrl: process.env.RPC_URL_BASE!,

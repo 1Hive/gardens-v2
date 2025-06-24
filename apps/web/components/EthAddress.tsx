@@ -68,6 +68,7 @@ export const EthAddress = ({
   return address && chain?.id ?
       <div ref={divParentRef}>
         <Addreth
+          
           // theme={theme}
           theme={{
             base: "simple-light",
