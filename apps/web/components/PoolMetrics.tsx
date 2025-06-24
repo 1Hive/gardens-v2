@@ -1,16 +1,15 @@
 "use client";
 
 import { FC, FormEvent, useEffect, useState } from "react";
-import { FetchTokenResult } from "@wagmi/core";
+import { PlusIcon } from "@heroicons/react/24/outline";
 import { parseUnits } from "viem";
-import { Address, useAccount, useBalance } from "wagmi";
+import { Address, useAccount } from "wagmi";
 import { Allo } from "#/subgraph/.graphclient";
 import { Button } from "./Button";
 import { DisplayNumber } from "./DisplayNumber";
+import { EthAddress } from "./EthAddress";
 import { FormInput } from "./Forms";
-import { Skeleton } from "./Skeleton";
 import { TransactionModal, TransactionProps } from "./TransactionModal";
-import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useHandleAllowance } from "@/hooks/useHandleAllowance";
@@ -18,34 +17,25 @@ import { alloABI } from "@/src/generated";
 import { getTxMessage } from "@/utils/transactionMessages";
 
 interface PoolMetricsProps {
-  poolAmount: number;
-  communityAddress: Address;
-  poolToken: FetchTokenResult;
+  poolToken: {
+    address: Address;
+    symbol: string;
+    decimals: number;
+    balance: bigint;
+    formatted: string;
+  };
   alloInfo: Allo;
   poolId: number;
-  chainId: string;
 }
 
 export const PoolMetrics: FC<PoolMetricsProps> = ({
   alloInfo,
-  poolAmount,
-  communityAddress,
   poolToken,
   poolId,
-  chainId,
 }) => {
   const [amount, setAmount] = useState(0);
-
   const [isOpenModal, setIsOpenModal] = useState(false);
   const { address: accountAddress } = useAccount();
-  const { publish } = usePubSubContext();
-  const { data: balance } = useBalance({
-    address: accountAddress,
-    formatUnits: poolToken.decimals,
-    token: poolToken.address,
-    watch: true,
-    chainId: Number(chainId),
-  });
 
   const requestedAmount = parseUnits(amount.toString(), poolToken.decimals);
   const {
@@ -59,16 +49,6 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     contractName: "Allo",
     showNotification: false,
     args: [BigInt(poolId), requestedAmount],
-    onConfirmations: () => {
-      publish({
-        topic: "pool",
-        type: "update",
-        function: "fundPool",
-        id: poolId,
-        containerId: communityAddress,
-        chainId,
-      });
-    },
   });
 
   const { allowanceTxProps: allowanceTx, handleAllowance } = useHandleAllowance(
@@ -83,7 +63,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
   const { tooltipMessage, isButtonDisabled } = useDisableButtons([
     {
       message: "Connected account has insufficient balance",
-      condition: balance && balance.value < requestedAmount,
+      condition: !!poolToken.balance && poolToken.balance < requestedAmount,
     },
     {
       message: "Amount must be greater than 0",
@@ -133,62 +113,85 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
           />
         </div>
       </TransactionModal>
-      <section className="section-layout gap-4 flex flex-col">
-        <h2>Pool Funds</h2>
-        <div className="flex justify-between items-center flex-wrap">
-          <div className="flex flex-col gap-2">
-            <div className="flex gap-3">
-              <p className="subtitle2">Funds in pool:</p>
-              <DisplayNumber
-                number={[BigInt(poolAmount), poolToken.decimals]}
-                tokenSymbol={poolToken.symbol}
-                compact={true}
-                className="subtitle2 text-primary-content"
-              />
-            </div>
-            {accountAddress && (
-              <div className="flex gap-3">
-                <p className="subtitle2">Wallet balance:</p>
-                <Skeleton isLoading={!balance}>
+      <div className="col-span-12 lg:col-span-3 h-fit">
+        <div className="backdrop-blur-sm rounded-lg">
+          <section className="section-layout gap-2 flex flex-col">
+            <h3>Pool Funds</h3>
+            <div className="flex flex-col gap-2">
+              <div className="flex justify-between items-center gap-3 z-o">
+                <p className="subtitle2">Funds in pool:</p>
+                <EthAddress
+                  address={poolToken.address as Address}
+                  shortenAddress={true}
+                  actions="none"
+                  icon={false}
+                  label={
+                    <DisplayNumber
+                      copiable
+                      number={[poolToken.balance, poolToken.decimals]}
+                      tokenSymbol={poolToken.symbol}
+                      compact={true}
+                      valueClassName="text-2xl mr-1 font-bold text-primary-content"
+                      symbolClassName="text-primary-content"
+                    />
+                  }
+                />
+              </div>
+              {accountAddress && (
+                <div className="flex justify-between items-center">
+                  <p className="text-sm">Wallet balance:</p>
                   <DisplayNumber
-                    number={[balance?.value ?? BigInt(0), poolToken.decimals]}
+                    number={[poolToken.balance, poolToken.decimals]}
                     tokenSymbol={poolToken.symbol}
                     compact={true}
-                    className="subtitle2 text-primary-content"
+                    valueClassName="text-black text-lg"
+                    symbolClassName="text-sm text-black"
+                    tooltipClass="tooltip-left"
                   />
-                </Skeleton>
-              </div>
-            )}
-          </div>
-          <form className="flex gap-2 flex-wrap" onSubmit={handleFundPool}>
-            <FormInput
-              type="number"
-              placeholder="0"
-              required
-              value={amount}
-              onChange={(e) => setAmount(Number(e.target.value))}
-              suffix={poolToken.symbol}
-              otherProps={{
-                max: balance?.formatted,
-              }}
-              registerOptions={{
-                max: {
-                  value: balance?.formatted ?? 0,
-                  message: "Insufficient balance",
-                },
-              }}
-            />
-            <Button
-              type="submit"
-              disabled={isButtonDisabled}
-              tooltip={tooltipMessage}
-              className="min-w-[200px]"
+                </div>
+              )}
+            </div>
+
+            {/* Input + Add funds Button */}
+            <form
+              className="flex gap-2 flex-wrap w-full"
+              onSubmit={handleFundPool}
             >
-              Add Funds
-            </Button>
-          </form>
+              <FormInput
+                type="number"
+                placeholder="0"
+                required
+                value={amount}
+                onChange={(e) => setAmount(Number(e.target.value))}
+                suffix={poolToken.symbol}
+                step={0.000000000000000001}
+                otherProps={{
+                  max: +poolToken.formatted || undefined,
+                }}
+                registerOptions={{
+                  max: {
+                    value: +poolToken.formatted || 0,
+                    message: "Insufficient balance",
+                  },
+                }}
+              />
+              <div className="w-full">
+                <Button
+                  type="submit"
+                  btnStyle="outline"
+                  color="primary"
+                  disabled={isButtonDisabled}
+                  tooltip={tooltipMessage}
+                  icon={<PlusIcon className="w-5 h-5" />}
+                  className="w-full"
+                >
+                  Add Funds
+                </Button>
+              </div>
+            </form>
+          </section>
         </div>
-      </section>
+      </div>
     </>
   );
 };

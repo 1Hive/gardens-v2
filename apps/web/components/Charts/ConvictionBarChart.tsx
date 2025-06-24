@@ -23,6 +23,7 @@ type ConvictionBarChartProps = {
   compact?: boolean;
   timeToPass?: number;
   defaultChartMaxValue?: boolean;
+  proposalStatus: string;
   onReadyToExecute?: () => void;
   refreshConviction?: () => Promise<any>;
 };
@@ -37,6 +38,7 @@ export const ConvictionBarChart = ({
   timeToPass,
   onReadyToExecute,
   defaultChartMaxValue = false,
+  proposalStatus,
   refreshConviction,
 }: ConvictionBarChartProps) => {
   const [convictionRefreshing, setConvictionRefreshing] = useState(true);
@@ -174,7 +176,7 @@ export const ConvictionBarChart = ({
       Object.values(scenarioMappings).find(({ condition }) => condition())
         ?.details[0] ?? {
         message:
-          proposalSupportPct == 0 ?
+          proposalSupportPct === 0 ?
             "Proposal waiting for support"
           : "Scenario not found",
         growing: null,
@@ -276,7 +278,7 @@ export const ConvictionBarChart = ({
     grid: {
       show: false,
       left: "0%",
-      right: "3%",
+      right: "0%",
       top: compact ? "0%" : "25%",
       bottom: compact ? "0%" : "25%",
       containLabel: false,
@@ -308,7 +310,7 @@ export const ConvictionBarChart = ({
           supportGtConv ? 1
           : convEqSupport ? 1
           : 2,
-        barWidth: 23,
+        barWidth: 18,
         data: [proposalSupportPct],
       },
       {
@@ -326,7 +328,7 @@ export const ConvictionBarChart = ({
           formatter: "{@score} %",
           width: 0,
         },
-        barWidth: 23,
+        barWidth: 18,
         z: 1,
         data: [currentConvictionPct],
       },
@@ -335,7 +337,7 @@ export const ConvictionBarChart = ({
       : {
           type: "bar",
           name: "Threshold",
-          barWidth: 23,
+          barWidth: 18,
           data: [thresholdPct],
           itemStyle: {
             borderRadius: borderRadius,
@@ -364,14 +366,15 @@ export const ConvictionBarChart = ({
           className="cursor-default"
         />
       </Skeleton>
-      <Button
+
+      {/* <Button
         btnStyle="link"
         onClick={handleRefreshConviction}
         tooltip="Refresh conviction"
-        className="!p-3"
+        className={!compact ? "border2" : ""}
       >
         <ArrowPathIcon className="w-5" />
-      </Button>
+      </Button> */}
     </>
   );
 
@@ -384,6 +387,7 @@ export const ConvictionBarChart = ({
             message={isSignalingType ? undefined : message}
             growing={growing}
             isSignalingType={isSignalingType}
+            proposalStatus={proposalStatus}
           >
             {chart}
           </ChartWrapper>

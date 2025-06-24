@@ -9,7 +9,7 @@ import {
 } from "@heroicons/react/24/outline";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Address, useToken } from "wagmi";
+import { useBalance } from "wagmi";
 import {
   CVProposal,
   CVStrategy,
@@ -29,29 +29,29 @@ type Props = {
   token: string;
   pool: Pick<
     CVStrategy,
-    "id" | "isEnabled" | "poolAmount" | "poolId" | "metadata" | "archived"
+    "id" | "isEnabled" | "poolId" | "metadata" | "archived"
   > & {
     proposals: Pick<CVProposal, "id">[];
     config: Pick<CVStrategyConfig, "proposalType" | "pointSystem">;
   };
-  chainId: number;
 };
 
-export function PoolCard({ pool, token, chainId }: Props) {
+export function PoolCard({ pool, token }: Props) {
   const pathname = usePathname();
   const searchParams = useCollectQueryParams();
 
-  let { poolAmount, poolId, proposals, isEnabled, config, metadata } = pool;
+  let { poolId, proposals, isEnabled, config, metadata } = pool;
 
   const { metadata: ipfsResult } = useMetadataIpfsFetch({
     hash: metadata,
   });
 
-  poolAmount = poolAmount || 0;
   const poolType = config?.proposalType as number | undefined;
-  const { data: tokenGarden } = useToken({
-    address: token as Address,
-    chainId: +chainId,
+
+  const { data: poolAmount } = useBalance({
+    address: pool.id as `0x${string}`,
+    token: token as `0x${string}`,
+    enabled: isEnabled && !!poolType && PoolTypes[poolType] === "funding",
   });
 
   const isNewPool =
@@ -59,18 +59,20 @@ export function PoolCard({ pool, token, chainId }: Props) {
   return (
     <Card
       href={`${pathname}/${poolId}`}
-      className={`w-[275px] sm:min-w-[313px] ${isNewPool ? "shadow-2xl" : ""}`}
+      className={`w-full ${isNewPool ? "shadow-2xl" : ""}`}
     >
       <header className="mb-4 flex flex-col w-full justify-between items-start gap-2">
-        <Skeleton isLoading={!ipfsResult}>
-          <h3 className="flex items-start w-fit max-w-full">
-            <TooltipIfOverflow>{ipfsResult?.title}</TooltipIfOverflow>
-          </h3>
-        </Skeleton>
-        <div className="flex justify-between items-center w-full">
-          <h6>POOL ID: #{poolId}</h6>
+        <div className="flex flex-wrap w-full justify-between items-center gap-1">
+          <Skeleton isLoading={!ipfsResult}>
+            <h3 className="flex items-center justify-between max-w-[190px]">
+              <TooltipIfOverflow>{ipfsResult?.title}</TooltipIfOverflow>
+            </h3>
+          </Skeleton>
           <Badge type={poolType} />
         </div>
+        {/* <div>
+          <h6>POOL ID: #{poolId}</h6>
+        </div> */}
       </header>
       <div className="mb-8 flex flex-col gap-2">
         <Statistic
@@ -84,15 +86,19 @@ export function PoolCard({ pool, token, chainId }: Props) {
           label="proposals"
           className={`${isEnabled ? "visible" : "invisible"}`}
         />
-        {isEnabled && poolType && PoolTypes[poolType] === "funding" && (
-          <Statistic icon={<CurrencyDollarIcon />} label="funds">
-            <DisplayNumber
-              number={[BigInt(poolAmount), tokenGarden?.decimals as number]}
-              compact={true}
-              tokenSymbol={tokenGarden?.symbol}
-            />
-          </Statistic>
-        )}
+        {isEnabled &&
+          poolAmount &&
+          poolAmount.value &&
+          poolType &&
+          PoolTypes[poolType] === "funding" && (
+            <Statistic icon={<CurrencyDollarIcon />} label="funds">
+              <DisplayNumber
+                number={[poolAmount.value, poolAmount.decimals]}
+                compact={true}
+                tokenSymbol={poolAmount.symbol}
+              />
+            </Statistic>
+          )}
       </div>
       {!isEnabled ?
         <div className="banner md:min-w-[262px]">
@@ -104,7 +110,7 @@ export function PoolCard({ pool, token, chainId }: Props) {
       : <Image
           src={poolType && PoolTypes[poolType] === "funding" ? blueLand : grass}
           alt="Garden land"
-          className="h-12 w-full rounded-lg object-cover"
+          className="h-14 w-full rounded-lg object-cover"
         />
       }
     </Card>

@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from "react";
 import { Address, isAddress } from "viem";
 import { useContractRead } from "wagmi";
+import { useCheat } from "./useCheat";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { safeABI } from "@/src/generated";
 
@@ -27,16 +28,13 @@ export function useSafeValidation({
 }: UseSafeValidationProps): UseSafeValidationReturn {
   const chain = useChainFromPath();
 
-  // Check if validation should be bypassed
-  const shouldBypass = useMemo(() => {
-    return localStorage.getItem("bypassSafeCheck") === "true";
-  }, []);
-
   // Prepare the address for validation
   const validAddress = useMemo(() => {
     if (!address || !isAddress(address)) return undefined;
     return address as Address;
   }, [address]);
+
+  const bypassSafeCheck = useCheat("bypassSafeCheck");
 
   // Contract read hook for Safe validation
   const {
@@ -48,14 +46,14 @@ export function useSafeValidation({
     address: validAddress,
     abi: safeABI,
     functionName: "getOwners",
-    enabled: !shouldBypass && !!validAddress && enabled,
+    enabled: !bypassSafeCheck && !!validAddress && enabled,
     chainId: chain?.id,
   });
 
   // Validation function that can be called manually
   const validate = useCallback(
     async (addressToValidate: Address): Promise<boolean> => {
-      if (localStorage.getItem("bypassSafeCheck") === "true") {
+      if (bypassSafeCheck) {
         return true;
       }
 
@@ -74,7 +72,7 @@ export function useSafeValidation({
   );
 
   return {
-    isSafe: shouldBypass || !!owners,
+    isSafe: bypassSafeCheck || !!owners,
     isLoading,
     error: error as Error | null,
     validate,

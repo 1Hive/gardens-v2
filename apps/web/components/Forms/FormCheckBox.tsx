@@ -29,6 +29,12 @@ export function FormCheckBox({
   tooltip,
   readOnly,
 }: Props) {
+  const registered = register?.(registerKey, {
+    ...registerOptions,
+    required: required ?? registerOptions?.required,
+    value: value ?? registerOptions?.value,
+    onChange: onChange ?? registerOptions?.onChange,
+  });
   return (
     <div className="my-3 flex items-center">
       <input
@@ -36,13 +42,10 @@ export function FormCheckBox({
         type="checkbox"
         checked={value}
         id={registerKey}
-        {...register?.(registerKey, {
-          required,
-          ...registerOptions,
-        })}
+        {...registered}
+        onChange={registered?.onChange ?? onChange}
         readOnly={readOnly}
         className="checkbox-info checkbox"
-        onChange={onChange}
       />
       <label htmlFor={registerKey} className="ms-2 text-sm font-medium ">
         {tooltip ?

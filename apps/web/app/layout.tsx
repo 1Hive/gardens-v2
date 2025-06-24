@@ -26,9 +26,9 @@ export default function RootLayout({
     <html
       suppressHydrationWarning
       lang="en"
-      className={`${inter.variable} ${chakra.variable} bg-primary`}
+      className={`${inter.variable} ${chakra.variable} bg-white`}
     >
-      <body className="min-h-screen bg-primary font-chakra">
+      <body className="min-h-screen bg-white font-chakra">
         <div id="modal-root" />
         <Providers>
           <>{children}</>

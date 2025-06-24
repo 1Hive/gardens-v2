@@ -17,13 +17,14 @@ import { FormRadioButton } from "./FormRadioButton";
 import { FormSelect } from "./FormSelect";
 import { EthAddress } from "../EthAddress";
 import { Button } from "@/components/Button";
+import { QUERY_PARAMS } from "@/constants/query-params";
+import { usePubSubContext } from "@/contexts/pubsub.context";
 import {
   DEFAULT_RULING_TIMEOUT_SEC,
   VOTING_POINT_SYSTEM_DESCRIPTION,
-} from "@/configs/constants";
-import { QUERY_PARAMS } from "@/constants/query-params";
-import { usePubSubContext } from "@/contexts/pubsub.context";
+} from "@/globals";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
+import { useCheat } from "@/hooks/useCheat";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { registryCommunityABI } from "@/src/generated";
@@ -168,7 +169,9 @@ const sybilResistancePreview = (
     gitcoinPassport: `Passport score required: ${value}`,
   };
 
-  return previewMap[sybilType];
+  return previewMap[
+    addresses?.[0] === zeroAddress ? "noSybilResist" : sybilType
+  ];
 };
 
 const shouldRenderInputMap = (key: string, value: number): boolean => {
@@ -241,8 +244,10 @@ export function PoolForm({ token, communityAddr }: Props) {
   const pointSystemType = watch("pointSystemType");
   const strategyType = watch("strategyType");
 
+  const allowNoProtection = useCheat("allowNoProtection");
+
   useEffect(() => {
-    if (PointSystems[pointSystemType] !== "unlimited") {
+    if (PointSystems[pointSystemType] !== "unlimited" && !allowNoProtection) {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { noSybilResist, ...rest } = fullSybilResistanceOptions;
       setSybilResistanceOptions(rest);
@@ -252,7 +257,7 @@ export function PoolForm({ token, communityAddr }: Props) {
     } else {
       setSybilResistanceOptions(fullSybilResistanceOptions);
     }
-  }, [pointSystemType]);
+  }, [pointSystemType, allowNoProtection]);
 
   const formRowTypes: Record<
     string,
@@ -744,7 +749,7 @@ export function PoolForm({ token, communityAddr }: Props) {
               <div className="flex flex-col gap-2 my-2">
                 <hr />
                 <span className="text-neutral-soft-content mx-auto pt-2">
-                  Council can edit this section once the pool is created.
+                  Council safe can edit this section once the pool is created.
                 </span>
               </div>
               {sybilResistanceType === "gitcoinPassport" && (

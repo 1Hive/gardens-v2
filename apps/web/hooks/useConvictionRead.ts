@@ -16,7 +16,10 @@ import { logOnce } from "@/utils/log";
 import { calculatePercentageBigInt, CV_SCALE_PRECISION } from "@/utils/numbers";
 
 export type ProposalDataLight = Maybe<
-  Pick<CVProposal, "proposalNumber" | "stakedAmount" | "requestedAmount"> & {
+  Pick<
+    CVProposal,
+    "proposalNumber" | "stakedAmount" | "requestedAmount" | "beneficiary"
+  > & {
     strategy: Pick<
       CVStrategy,
       "id" | "maxCVSupply" | "totalEffectiveActivePoints"
@@ -35,13 +38,11 @@ export const useConvictionRead = ({
   tokenData: Maybe<Pick<TokenGarden, "decimals">> | undefined;
   enabled?: boolean;
 }) => {
-  const chainIdFromPath = useChainIdFromPath();
   const chain = useChainFromPath();
 
   const cvStrategyContract = {
     address: proposalData?.strategy.id as Address,
     abi: cvStrategyABI,
-    chainId: chainIdFromPath,
     enabled: !!proposalData,
   };
 

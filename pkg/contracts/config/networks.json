@@ -20,21 +20,33 @@
       "PROXIES": {
         "REGISTRY_FACTORY": "0xf42f88c13804147b2fdda13c093ce14219aea395",
         "REGISTRY_COMMUNITIES": [
+          "0x0418f78ec03c974ca5b88463f4a5da3e2333c4ab",
           "0x2f8a9454de2e74bc9a0761703b3f7da0470b1e56",
           "0x8b8732dac9c30ac89bf660b99fb90000d826ab83",
+          "0xa488ac456c7c5964af7d323b7ce795d02e7c5154",
+          "0xa502fffb9082700cad62366bc6ce37b15207680f",
           "0xb1f9ed8b752e81fcb0b9482e475c7035043f5994",
+          "0xbe7b830623707babc4b46ff73279c73e2d1bc177",
           "0xc219730ec703c9525748c3b80184d57f1d57699b"
         ],
         "CV_STRATEGIES": [
+          "0x00d33e504517a03fe14e05863bb95983660b0c2c",
+          "0x07563fce80b58a67f5d4a5332ee84747bfb829b9",
+          "0x15f3e3c557f0a9bed0eba3eadcc5837d964c50fd",
+          "0x194a593887a27200bf5a2b6713c1072882136b6c",
+          "0x2155378db737b5382d05bdc204f335b7da88af2b",
           "0x3bd8c9056a448c7ab3f398df2ffea114febd9139",
           "0x4440e05839eaacc4927178756faa48ecc23386f8",
           "0x464f010f343bb52689e8579c84e76c8e04c7dbdc",
+          "0x565f8f945d08a7dd3c67a926b2b0b25704718d8a",
           "0x61f0d03b1f00b872c7c9ee03a12224cb70e93ea2",
           "0x6b999ed850de2c5c923eaafc3c15781bd2ccf9d6",
+          "0x9dca528cd12c62cec0d37c17a9d23a4b8777d329",
+          "0x9e9321526d2f36d521ad4f70786b1adba73023a2",
           "0xd682ff9fb3c4c28c35dfa8830280d9a1c5bbfee4"
         ]
       },
-      "hash": "53e68e51fcba07d96709cdfffd09105fb196d621"
+      "hash": "c91de779094856d958da0d97a2f2d020fd68995a"
     },
     {
       "name": "opsepolia",
@@ -338,6 +350,27 @@
         "CV_STRATEGIES": [
           "0xabf6f3e646056218bc857fa9ea313aa31a03454b"
         ]
+      },
+      "hash": "9f6c9e199a409e72346dfdbaa6503a56c7443e76"
+    },
+    {
+      "name": "celo",
+      "chainId": 42220,
+      "testnet": false,
+      "no-safe": false,
+      "ENVS": {
+        "SENDER": "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD",
+        "PROXY_OWNER": "0x99EBeF5E196a9e8e39d92B18663C9236661607b1",
+        "ALLO_PROXY": "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
+        "ALLO_IMPL": "0xB087535DB0df98fC4327136e897A5985E5Cfbd66",
+        "REGISTRY": "0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3",
+        "ARBITRATOR": "0x83bDE2E2D8AcAAad2D300DA195dF3cf86b234bdd",
+        "PASSPORT_SCORER": "0xb39dfa15f96055664179e8ecaa890f3fa26c21e9"
+      },
+      "PROXIES": {
+        "REGISTRY_FACTORY": "0xA71023bc64c9711C2037ab491DE80fd74504bd55",
+        "REGISTRY_COMMUNITIES": [],
+        "CV_STRATEGIES": []
       },
       "hash": "9f6c9e199a409e72346dfdbaa6503a56c7443e76"
     },

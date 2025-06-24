@@ -1059,7 +1059,8 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
      * executed it.
      */
     function calculateThreshold(uint256 _requestedAmount) public view virtual returns (uint256 _threshold) {
-        uint256 denom = (cvParams.maxRatio * 2 ** 64) / D - (_requestedAmount * 2 ** 64) / poolAmount;
+      uint256 denom = (cvParams.maxRatio * 2 ** 64) / D - (_requestedAmount * 2 ** 64) / poolAmount;
+
         _threshold = (
             (((((cvParams.weight << 128) / D) / ((denom * denom) >> 64)) * D) / (D - cvParams.decay))
                 * totalPointsActivated
@@ -1480,6 +1481,10 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         for (uint256 i = 0; i < members.length; i++) {
             if (registryCommunity.hasRole(keccak256(abi.encodePacked("ALLOWLIST", poolId)), members[i])) {
                 registryCommunity.revokeRole(keccak256(abi.encodePacked("ALLOWLIST", poolId)), members[i]);
+            }
+
+            if (members[i] != address(0)) {
+                _deactivatePoints(members[i]);
             }
         }
 

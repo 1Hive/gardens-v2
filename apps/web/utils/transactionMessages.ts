@@ -17,7 +17,7 @@ export const getTxMessage = (
       message = "Transaction in progress...";
       break;
     case "success":
-      message = "Approved";
+      message = "Confirmed";
       break;
     case "error":
       message =

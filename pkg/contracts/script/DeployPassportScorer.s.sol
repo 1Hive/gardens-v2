@@ -11,8 +11,8 @@ contract DeployPassportScorer is BaseMultiChain {
 
     function runCurrentNetwork(string memory networkJson) public override {
         address proxyOwner = networkJson.readAddress(getKeyNetwork(".ENVS.PROXY_OWNER"));
-        address listManager = 0xA718ACA8Eb8f01EcfE929BF16c19e562B57b053b;
-        address sender = 0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD;
+        address listManager = 0xA718ACA8Eb8f01EcfE929BF16c19e562B57b053b; // Multichain EOA
+        // address sender = networkJson.readAddress(getKeyNetwork(".ENVS.SENDER"));
 
         address newPassportScorer = address(
             new ERC1967Proxy(

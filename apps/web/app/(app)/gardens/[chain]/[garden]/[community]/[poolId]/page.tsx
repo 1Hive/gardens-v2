@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { Address } from "viem";
-import { useToken } from "wagmi";
+import { Address, zeroAddress } from "viem";
+import { useBalance } from "wagmi";
 import {
   getAlloQuery,
   getPoolDataDocument,
@@ -59,11 +59,6 @@ export default function Page({
   const strategyObj = data?.cvstrategies?.[0];
   const poolTokenAddr = strategyObj?.token as Address;
   const proposalType = strategyObj?.config.proposalType;
-  const { data: poolToken } = useToken({
-    address: poolTokenAddr,
-    enabled: !!poolTokenAddr && PoolTypes[proposalType] === "funding",
-    chainId: +chain,
-  });
 
   useEffect(() => {
     if (error) {
@@ -82,9 +77,8 @@ export default function Page({
     console.debug(
       "maxRatio: " + strategyObj?.config?.maxRatio,
       "minThresholdPoints: " + strategyObj?.config?.minThresholdPoints,
-      "poolAmount: " + strategyObj?.poolAmount,
     );
-  }, [strategyObj?.config, strategyObj?.config, strategyObj?.poolAmount]);
+  }, [strategyObj?.config, strategyObj?.config]);
 
   useEffect(() => {
     const newProposalId = searchParams[QUERY_PARAMS.poolPage.newProposal];
@@ -103,8 +97,6 @@ export default function Page({
     }
   }, [searchParams, strategyObj?.proposals]);
 
-  const tokenGarden = data?.tokenGarden;
-
   const maxAmount = strategyObj?.config?.maxAmount ?? 0;
 
   useEffect(() => {
@@ -122,9 +114,30 @@ export default function Page({
     // setAllocationView(searchParams[QUERY_PARAMS.poolPage.allocationView]);
   }, [proposalSectionRef.current, searchParams]);
 
-  if (!tokenGarden || (!poolToken && PoolTypes[proposalType] === "funding")) {
+  const { data: poolAmount } = useBalance({
+    address: strategyObj?.id as Address,
+    token: poolTokenAddr,
+    enabled:
+      !!strategyObj?.id &&
+      PoolTypes[strategyObj.config.proposalType] !== "signaling" &&
+      poolTokenAddr !== zeroAddress,
+    watch: true,
+  });
+
+  const poolToken =
+    poolAmount ?
+      {
+        address: poolTokenAddr,
+        symbol: poolAmount.symbol,
+        decimals: poolAmount.decimals,
+        balance: poolAmount.value,
+        formatted: poolAmount.formatted,
+      }
+    : undefined;
+
+  if (!strategyObj || (!poolToken && PoolTypes[proposalType] === "funding")) {
     return (
-      <div className="mt-96">
+      <div className="mt-96 col-span-12">
         <LoadingSpinner />
       </div>
     );
@@ -136,15 +149,13 @@ export default function Page({
 
   const communityAddress = strategyObj.registryCommunity.id as Address;
   const alloInfo = data.allos[0];
-  const poolAmount = strategyObj.poolAmount as number;
 
   const isEnabled = data.cvstrategies?.[0]?.isEnabled as boolean;
 
   return (
-    <div className="page-layout">
+    <>
       <PoolHeader
         poolToken={poolToken}
-        token={tokenGarden}
         strategy={strategyObj}
         arbitrableConfig={data.arbitrableConfigs[0]}
         poolId={poolId}
@@ -152,32 +163,31 @@ export default function Page({
         isEnabled={isEnabled}
         maxAmount={maxAmount}
       />
+
       {isEnabled && (
         <>
           {poolToken && PoolTypes[proposalType] !== "signaling" && (
             <PoolMetrics
-              poolToken={poolToken}
               alloInfo={alloInfo}
               poolId={poolId}
-              poolAmount={poolAmount}
-              communityAddress={communityAddress}
-              chainId={chain}
+              poolToken={poolToken}
             />
           )}
         </>
       )}
+
       {strategyObj && isEnabled && (
-        <section ref={proposalSectionRef}>
-          <Proposals
-            poolToken={poolToken}
-            strategy={strategyObj}
-            alloInfo={alloInfo}
-            communityAddress={communityAddress}
-            createProposalUrl={`/gardens/${chain}/${garden}/${communityAddress}/${poolId}/create-proposal`}
-            proposalType={proposalType}
-          />
-        </section>
+        // <div ref={proposalSectionRef}>
+        <Proposals
+          poolToken={poolToken}
+          strategy={strategyObj}
+          alloInfo={alloInfo}
+          communityAddress={communityAddress}
+          createProposalUrl={`/gardens/${chain}/${garden}/${communityAddress}/${poolId}/create-proposal`}
+          proposalType={proposalType}
+        />
+        // </div>
       )}
-    </div>
+    </>
   );
 }

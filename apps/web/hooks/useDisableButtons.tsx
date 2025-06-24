@@ -1,16 +1,11 @@
 import { useMemo } from "react";
 import { useAccount, useNetwork } from "wagmi";
-import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
+import { useChainFromPath } from "./useChainFromPath";
 
 export interface ConditionObject {
   condition?: boolean;
   message: string;
 }
-
-const supportedChains: { [key: number]: string } = {
-  421614: "Arbitrum Sepolia",
-  1337: "Localhost",
-};
 
 export interface DisableButtonsHookProps {
   tooltipMessage: string | undefined;
@@ -23,16 +18,16 @@ export function useDisableButtons(
   conditions?: ConditionObject[],
 ): DisableButtonsHookProps {
   const { isConnected } = useAccount();
-  const urlChainId = useChainIdFromPath();
+  const urlChain = useChainFromPath();
   const { chain } = useNetwork(); // wallet connected chain object
-  const missmatchUrlAndWalletChain = chain?.id !== urlChainId;
+  const missmatchUrlAndWalletChain = chain?.id !== urlChain?.id;
 
   const tooltipMessage = useMemo(() => {
     if (!isConnected) {
       return "Connect Wallet";
     }
-    if (missmatchUrlAndWalletChain && urlChainId) {
-      return `Switch to ${supportedChains[urlChainId] ?? ""} Network`;
+    if (missmatchUrlAndWalletChain && urlChain) {
+      return `Switch to ${urlChain.name} Network`;
     }
     if (conditions && conditions.length > 0) {
       const activeCondition = conditions.find((cond) => cond.condition);

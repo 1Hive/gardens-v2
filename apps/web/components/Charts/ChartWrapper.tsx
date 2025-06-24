@@ -11,6 +11,7 @@ type ChartWrapperProps = {
   message?: string;
   growing?: boolean | null;
   isSignalingType?: boolean;
+  proposalStatus?: string;
 };
 
 export const ChartWrapper = ({
@@ -18,21 +19,22 @@ export const ChartWrapper = ({
   message,
   growing,
   isSignalingType,
+  proposalStatus,
 }: ChartWrapperProps) => {
   const growthClassname =
     growing ? "text-primary-content" : "text-danger-content";
-  const iconClassname = `h-6 w-6 text-bold ${growthClassname}`;
+  const iconClassname = `h-3 w-3 ${growthClassname}`;
 
   const legend = [
     {
       name: "Support",
       // TODO: missing color in Design system: ask designer
-      className: "bg-[#A8E066] h-4 w-4 rounded-full",
+      className: "bg-[#A8E066] h-3 w-8 rounded-md",
       info: "Represents the total pool weight currently allocated to a proposal.",
     },
     {
       name: "Conviction",
-      className: "bg-primary-content  h-4 w-4 rounded-full",
+      className: "bg-primary-content  h-3 w-8 rounded-md",
       info: "Accumulated pool weight for a proposal, increasing over time, based on the conviction growth.",
     },
     {
@@ -45,8 +47,7 @@ export const ChartWrapper = ({
 
   return (
     <>
-      <div className="mt-7 flex flex-col gap-12">
-        <h3>Conviction voting chart</h3>
+      <div className="flex flex-col gap-6 mt-2">
         <div className="flex gap-4 flex-wrap">
           {legend
             .filter((item) => !(isSignalingType && item.name === "Threshold"))
@@ -60,7 +61,7 @@ export const ChartWrapper = ({
                         <FlagIcon className="absolute -left-[3.5px] -top-5 h-3 w-3 text-black" />
                       </div>
                     : <div className={`${item.className}`} />}
-                    <p className="subtitle2">{item.name}</p>
+                    <p className="text-sm">{item.name}</p>
                   </div>
                 </InfoWrapper>
               </Fragment>
@@ -83,7 +84,11 @@ export const ChartWrapper = ({
               </p>
             </>
           )}
-          <p>{message}</p>
+          <p>
+            {proposalStatus === "disputed" ?
+              "Proposal is awaiting dispute resolution."
+            : message}
+          </p>
         </div>
       </div>
     </>

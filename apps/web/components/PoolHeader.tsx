@@ -2,20 +2,17 @@ import { useState } from "react";
 import {
   ArrowTopRightOnSquareIcon,
   BoltIcon,
-  ChartBarIcon,
+  Battery50Icon,
   CheckIcon,
   ClockIcon,
   ArchiveBoxIcon,
   InformationCircleIcon,
-  Square3Stack3DIcon,
-  ScaleIcon,
 } from "@heroicons/react/24/outline";
 import {
   NoSymbolIcon,
   StopIcon,
   Cog6ToothIcon,
 } from "@heroicons/react/24/solid";
-import { FetchTokenResult } from "@wagmi/core";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { Address, zeroAddress } from "viem";
@@ -25,7 +22,6 @@ import {
   getPassportStrategyDocument,
   getPassportStrategyQuery,
   getPoolDataQuery,
-  TokenGarden,
 } from "#/subgraph/.graphclient";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
@@ -38,13 +34,14 @@ import { Skeleton } from "./Skeleton";
 import { Statistic } from "./Statistic";
 import { blueLand, grassLarge } from "@/assets";
 import { chainConfigMap } from "@/configs/chains";
-import { VOTING_POINT_SYSTEM_DESCRIPTION } from "@/configs/constants";
 import { usePubSubContext } from "@/contexts/pubsub.context";
+import { VOTING_POINT_SYSTEM_DESCRIPTION } from "@/globals";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { MetadataV1 } from "@/hooks/useIpfsFetch";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
+
 import { registryCommunityABI, safeABI } from "@/src/generated";
 import {
   PointSystems,
@@ -74,12 +71,16 @@ type Props = {
     | "challengerCollateralAmount"
     | "defaultRulingTimeout"
   >;
-  token: Pick<TokenGarden, "address" | "name" | "symbol" | "decimals">;
-  poolToken?: FetchTokenResult;
+  poolToken?: {
+    address: Address;
+    symbol: string;
+    decimals: number;
+    balance: bigint;
+  };
   maxAmount: number;
 };
 
-function calculateConvictionGrowthInSeconds(
+export function calculateConvictionGrowthInSeconds(
   decay: number,
   blockTime: number,
 ): number {
@@ -111,7 +112,6 @@ export default function PoolHeader({
   isEnabled,
   strategy,
   arbitrableConfig,
-  token,
   poolToken,
   maxAmount,
 }: Props) {
@@ -158,16 +158,21 @@ export default function PoolHeader({
     blockTime,
   );
 
-  const minThresholdPoints = formatTokenAmount(
-    strategy.config.minThresholdPoints,
-    +token.decimals,
-  );
+  const minThresholdPoints =
+    poolToken ?
+      formatTokenAmount(strategy.config.minThresholdPoints, +poolToken.decimals)
+    : "0";
 
-  const totalPointsActivatedInPool = formatTokenAmount(
-    strategy.totalEffectiveActivePoints,
-    +token.decimals,
-  );
+  const totalPointsActivatedInPool =
+    poolToken ?
+      formatTokenAmount(
+        strategy.totalEffectiveActivePoints,
+        +poolToken.decimals,
+      )
+    : 0;
 
+  const maxVotingWeight =
+    poolToken ? formatTokenAmount(maxAmount, poolToken.decimals) : 0;
   const minThGtTotalEffPoints =
     +minThresholdPoints > +totalPointsActivatedInPool;
 
@@ -205,7 +210,7 @@ export default function PoolHeader({
   const poolConfig = [
     {
       label: "Spending limit",
-      value: `${spendingLimit.toPrecision(2)} %`,
+      value: `${spendingLimit > 99 ? "100" : spendingLimit.toPrecision(2)} %`,
       info: "Max percentage of the pool funds that can be spent in a single proposal.",
     },
     {
@@ -215,17 +220,17 @@ export default function PoolHeader({
     },
     {
       label: "Conviction growth",
-      value: `${value} ${unit}${value !== 1 ? "s" : ""}`,
+      value: `${value} ${unit}`,
       info: "It's the time for conviction to reach proposal support. This parameter is logarithmic, represented as a half life and may vary slightly over time depending on network block times.",
     },
     {
       label: "Min threshold",
       value: `${minThresholdPoints}`,
-      info: `A fixed amount of ${token.symbol} that overrides Minimum Conviction when the Pool's activated governance is low.`,
+      info: `A fixed amount of ${poolToken?.symbol} that overrides Minimum Conviction when the Pool's activated governance is low.`,
     },
     {
       label: "Max voting weight",
-      value: `${formatTokenAmount(maxAmount, token.decimals)} ${token.symbol}`,
+      value: `${maxVotingWeight} ${poolToken?.symbol}`,
       info: "Staking above this specified limit won’t increase your voting weight.",
     },
     {
@@ -279,7 +284,7 @@ export default function PoolHeader({
     abi: safeABI,
     functionName: "isOwner",
     chainId: Number(chainId),
-    enabled: !!address,
+    enabled: !!address && !!safePrefix, // SafePrefix undefined means not supported
     args: [address as Address],
     onError: () => {
       console.error("Error reading isOwner from Coucil Safe");
@@ -364,14 +369,22 @@ export default function PoolHeader({
   );
 
   return (
-    <section className="section-layout flex flex-col gap-0">
-      <header className="mb-4 flex flex-col">
-        <div className="flex justify-between flex-wrap">
-          <h2>
-            <Skeleton isLoading={!ipfsResult} className="sm:!w-96 h-8">
-              {ipfsResult?.title}
-            </Skeleton>
-          </h2>
+    <div
+      className={`col-span-12 ${PoolTypes[proposalType] === "funding" ? "lg:col-span-9" : "lg:col-span-12"}`}
+    >
+      <section className="section-layout flex flex-col gap-6">
+        {/* Title - Badge poolType - Addresses and Button(when council memeber is connected) */}
+        <header className="flex flex-col gap-2">
+          <div className="flex justify-between items-center flex-wrap">
+            <h2>
+              <Skeleton isLoading={!ipfsResult} className="sm:!w-96 h-8">
+                {ipfsResult?.title}
+              </Skeleton>
+            </h2>
+            <div>
+              <Badge type={parseInt(proposalType)} />
+            </div>
+          </div>
           {(!!isCouncilMember || isCouncilSafe) && (
             <div className="flex gap-2 flex-wrap">
               <Button
@@ -466,115 +479,77 @@ export default function PoolHeader({
               }
             </div>
           )}
-        </div>
-        <div className="w-full flex flex-col gap-2">
-          <EthAddress
-            icon={false}
-            address={strategy.id as Address}
-            label="Pool address"
-          />
-          <div className="flex flex-col gap-1 p-1 w-48">
-            <a
-              href={`https://app.safe.global/transactions/queue?safe=${safePrefix}:${strategy.registryCommunity.councilSafe}`}
-              className="text-info whitespace-nowrap flex flex-nowrap gap-1 items-center"
-              target="_blank"
-              rel="noreferrer"
-            >
-              Council safe
-              <ArrowTopRightOnSquareIcon width={16} height={16} />
-            </a>
+          <div className="flex flex-col">
             <EthAddress
-              address={strategy.registryCommunity.councilSafe as Address}
-              shortenAddress={true}
-              actions="copy"
+              icon={false}
+              address={strategy.id as Address}
+              label="Pool address"
+              textColor="var(--color-grey-800)"
             />
+            <div className="flex gap-1 p-1">
+              <a
+                href={`https://app.safe.global/transactions/queue?safe=${safePrefix}:${strategy.registryCommunity.councilSafe}`}
+                className="whitespace-nowrap flex flex-nowrap gap-1 items-center"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Council safe
+                <ArrowTopRightOnSquareIcon width={16} height={16} />:
+              </a>
+              <EthAddress
+                address={strategy.registryCommunity.councilSafe as Address}
+                shortenAddress={true}
+                actions="copy"
+                icon={false}
+                textColor="var(--color-grey-800)"
+              />
+            </div>
           </div>
-        </div>
-        <Modal
-          title={`Edit ${ipfsResult?.title} #${poolId}`}
-          isOpen={isOpenModal}
-          onClose={() => setIsOpenModal(false)}
-        >
-          {!!passportStrategyData && (
-            <PoolEditForm
-              strategy={strategy}
-              pointSystemType={pointSystemType}
-              token={token}
-              proposalType={proposalType}
-              proposalOnDispute={proposalOnDispute}
-              initValues={{
-                sybilResistanceValue: sybilResistanceValue,
-                sybilResistanceType: sybilResistanceType,
-                spendingLimit: spendingLimit.toFixed(2),
-                minimumConviction: minimumConviction.toFixed(2),
-                convictionGrowth: convictionGrowthSec.toFixed(4),
-                minThresholdPoints: minThresholdPoints,
-                defaultResolution: defaultResolution,
-                proposalCollateral: proposalCollateral,
-                disputeCollateral: disputeCollateral,
-                tribunalAddress: tribunalAddress,
-                rulingTime,
-              }}
-              setModalOpen={setIsOpenModal}
-            />
-          )}
-        </Modal>
-      </header>
-      <Skeleton rows={5} isLoading={!ipfsResult}>
-        <MarkdownWrapper>
-          {ipfsResult?.description ?? "No description found"}
-        </MarkdownWrapper>
-      </Skeleton>
-      <div className="mb-10 mt-8 flex items-start justify-between gap-8 flex-wrap">
-        <div className="flex flex-col gap-2 max-w-fit">
-          <Statistic label="pool type">
-            <Badge type={parseInt(proposalType)} />
-          </Statistic>
-          {PoolTypes[proposalType] === "funding" && (
-            <Statistic label="funding token">
-              <Badge icon={<Square3Stack3DIcon />}>
-                <EthAddress
-                  address={poolToken?.address as Address}
-                  shortenAddress={true}
-                  icon={false}
-                  actions="copy"
-                  label={poolToken?.symbol}
-                />
-              </Badge>
-            </Statistic>
-          )}
-          <Statistic label="voting weight">
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <Badge
-                label="conviction voting"
-                className="text-secondary-content"
-                icon={<ChartBarIcon />}
+          <Modal
+            title={`Edit ${ipfsResult?.title} #${poolId}`}
+            isOpen={isOpenModal}
+            onClose={() => setIsOpenModal(false)}
+          >
+            {!!passportStrategyData && poolToken && (
+              <PoolEditForm
+                strategy={strategy}
+                pointSystemType={pointSystemType}
+                token={poolToken}
+                proposalType={proposalType}
+                proposalOnDispute={proposalOnDispute}
+                initValues={{
+                  sybilResistanceValue: sybilResistanceValue,
+                  sybilResistanceType: sybilResistanceType,
+                  spendingLimit: spendingLimit.toFixed(2),
+                  minimumConviction: minimumConviction.toFixed(2),
+                  convictionGrowth: convictionGrowthSec.toFixed(4),
+                  minThresholdPoints: minThresholdPoints,
+                  defaultResolution: defaultResolution,
+                  proposalCollateral: proposalCollateral,
+                  disputeCollateral: disputeCollateral,
+                  tribunalAddress: tribunalAddress,
+                  rulingTime,
+                }}
+                setModalOpen={setIsOpenModal}
               />
-              <Badge
-                label={PointSystems[pointSystem]}
-                tooltip={
-                  VOTING_POINT_SYSTEM_DESCRIPTION[PointSystems[pointSystem]]
-                }
-                icon={<BoltIcon />}
-              />
-            </div>
-          </Statistic>
-          <Statistic label="Dispute resolution">
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <Badge className="text-secondary-content" icon={<ScaleIcon />}>
-                <EthAddress
-                  address={tribunalAddress as Address}
-                  shortenAddress={true}
-                  actions="copy"
-                  label="Tribunal Safe"
-                />
-              </Badge>
-            </div>
-          </Statistic>
-        </div>
-        <div className="flex flex-col gap-4">
+            )}
+          </Modal>
+        </header>
+
+        {/* Description */}
+        <Skeleton rows={5} isLoading={!ipfsResult}>
+          <MarkdownWrapper>
+            {ipfsResult?.description ?? "No description found"}
+          </MarkdownWrapper>
+        </Skeleton>
+
+        {/* Pool Params */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
           {filteredPoolConfig.map((config) => (
-            <div key={config.label} className="flex items-center gap-4">
+            <div
+              key={config.label}
+              className="flex items-center gap-4 bg-primary px-2 py-4 rounded-lg"
+            >
               <Statistic
                 label={config.label}
                 icon={
@@ -591,31 +566,62 @@ export default function PoolHeader({
             </div>
           ))}
         </div>
-      </div>
-      {minThGtTotalEffPoints && isEnabled && (
-        <InfoBox
-          infoBoxType="warning"
-          content="Activated governance in this pool is too low. No proposals will pass unless more members activate their governance. You can still create and support proposals."
-          className="mb-4"
-        />
-      )}
-      {!isEnabled ?
-        <div className="banner">
-          {isArchived ?
-            <ArchiveBoxIcon className="h-8 w-8 text-secondary-content" />
-          : <ClockIcon className="h-8 w-8 text-secondary-content" />}
-          <h6>
-            {isArchived ?
-              "This pool has been archived"
-            : "Waiting for council approval"}
-          </h6>
+
+        {/* Voting weight + Dispute Address */}
+        <div className="flex flex-col sm:flex-row items-start justify-between gap-2 flex-wrap">
+          <div className="flex flex-col gap-2 sm:flex-row items-center">
+            <h4>Voting System:</h4>
+            <div className="flex gap-2 items-center">
+              <Badge
+                label="conviction voting"
+                className="text-secondary-content"
+                icon={<Battery50Icon />}
+              />
+              <Badge
+                label={PointSystems[pointSystem]}
+                tooltip={
+                  VOTING_POINT_SYSTEM_DESCRIPTION[PointSystems[pointSystem]]
+                }
+                icon={<BoltIcon />}
+              />
+            </div>
+          </div>
+
+          <EthAddress
+            address={tribunalAddress as Address}
+            icon={false}
+            shortenAddress={true}
+            label="Dispute Resolution: Tribunal Safe"
+            textColor="var(--color-grey-800)"
+          />
         </div>
-      : <Image
-          src={PoolTypes[proposalType] === "funding" ? blueLand : grassLarge}
-          alt="pool image"
-          className="h-12 w-full rounded-lg object-cover"
-        />
-      }
-    </section>
+
+        {/* InfoBox - Banner or Image */}
+        {minThGtTotalEffPoints && isEnabled && (
+          <InfoBox
+            infoBoxType="warning"
+            content="Activated governance in this pool is too low. No proposals will pass unless more members activate their governance. You can still create and support proposals."
+            className="mb-4"
+          />
+        )}
+        {!isEnabled ?
+          <div className="banner">
+            {isArchived ?
+              <ArchiveBoxIcon className="h-8 w-8 text-secondary-content" />
+            : <ClockIcon className="h-8 w-8 text-secondary-content" />}
+            <h6>
+              {isArchived ?
+                "This pool has been archived"
+              : "Waiting for council approval"}
+            </h6>
+          </div>
+        : <Image
+            src={PoolTypes[proposalType] === "funding" ? blueLand : grassLarge}
+            alt="pool image"
+            className="h-12 w-full rounded-lg object-cover"
+          />
+        }
+      </section>
+    </div>
   );
 }

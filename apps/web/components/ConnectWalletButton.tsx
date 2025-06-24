@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Fragment } from "react";
+import React, { Fragment, useMemo, useState } from "react";
 import { Menu, Transition } from "@headlessui/react";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import {
@@ -14,6 +14,7 @@ import cn from "classnames";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { isAddress } from "viem";
+import { arbitrum, base, mainnet, optimism } from "viem/chains";
 import {
   Address,
   useAccount,
@@ -26,10 +27,12 @@ import {
 } from "wagmi";
 import TooltipIfOverflow from "./TooltipIfOverflow";
 import { isSafeAvatarUrl } from "@/app/api/utils";
+import { BeeKeeperNFT, FirstHolderNFT, ProtopianNFT } from "@/assets";
 import { walletIcon } from "@/assets";
 import { Button, DisplayNumber } from "@/components";
 import { ChainIcon } from "@/configs/chains";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
+import { useOwnerOfNFT } from "@/hooks/useOwnerOfNFT";
 import { formatAddress } from "@/utils/formatAddress";
 
 export function ConnectWallet() {
@@ -42,6 +45,45 @@ export function ConnectWallet() {
   const { switchNetwork } = useSwitchNetwork();
   const { disconnect } = useDisconnect();
   const { connectors } = useConnect();
+  const { isOwner: isFirstHolder } = useOwnerOfNFT({
+    nft: "FirstHolder",
+    chains: [optimism, arbitrum, base, mainnet],
+    enabled: account.isConnected,
+  });
+  const { isOwner: isProtopianHolder } = useOwnerOfNFT({
+    nft: "Protopian",
+    chains: [optimism, arbitrum, base, mainnet],
+    enabled: account.isConnected,
+  });
+  const { isOwner: isBeekperHolder } = useOwnerOfNFT({
+    nft: "Keeper",
+    chains: [optimism, arbitrum, base, mainnet],
+    enabled: account.isConnected,
+  });
+
+  const nfts = useMemo(
+    () =>
+      [
+        {
+          image: ProtopianNFT,
+          title: "Protopian NFT",
+          hasNFT: isProtopianHolder,
+        },
+        {
+          image: BeeKeeperNFT,
+          title: "Bee Keeper NFT",
+          hasNFT: isBeekperHolder,
+        },
+        {
+          image: FirstHolderNFT,
+          title: "First Holder NFT",
+          hasNFT: !!isFirstHolder,
+        },
+      ].filter((nft) => nft.hasNFT),
+    [isFirstHolder],
+  );
+
+  const [selectedNFTIndex, setSelectedNFTIndex] = useState(0);
 
   const wallet = connectors[0].name;
 
@@ -172,6 +214,42 @@ export function ConnectWallet() {
                         leaveTo="transform opacity-0 scale-95"
                       >
                         <Menu.Items className="border1 bg-neutral rounded-3xl absolute right-0 top-16 z-10 focus:outline-none">
+                          {nfts.map(({ title, image }, i) => (
+                            <div
+                              key={title}
+                              className={`relative w-full ${selectedNFTIndex !== i ? "hidden" : ""}`}
+                            >
+                              <Image
+                                src={image}
+                                width={300}
+                                height={300}
+                                alt={title}
+                                className="rounded-t-[18px] w-[300px] h-[300px]"
+                                title={title}
+                              />
+                            </div>
+                          ))}
+
+                          {nfts.length > 1 && (
+                            <div className="flex w-full justify-center gap-2 py-2">
+                              {nfts.map(({ title }, i) => (
+                                <span
+                                  key={title}
+                                  className={`cursor-pointer w-3 h-3 bg-gray-600 rounded-full inline-block mx-1 ${selectedNFTIndex !== i ? "opacity-25" : ""}`}
+                                  aria-label="View Protopian NFT"
+                                  onClick={() => setSelectedNFTIndex(i)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") {
+                                      setSelectedNFTIndex(i);
+                                    }
+                                  }}
+                                >
+                                  <span className="sr-only">View {title}</span>
+                                </span>
+                              ))}
+                            </div>
+                          )}
+
                           <div className="flex flex-col gap-4 rounded-lg p-4 min-w-[300px]">
                             {/* wallet and token balance info */}
                             <Menu.Item as="div" className="flex flex-col gap-2">
@@ -184,7 +262,7 @@ export function ConnectWallet() {
                                 <DisplayNumber
                                   number={(token?.formatted ?? 0).toString()}
                                   tokenSymbol={token?.symbol}
-                                  className="text-primary-content"
+                                  valueClassName="text-primary-content"
                                 />
                               </div>
                             </Menu.Item>

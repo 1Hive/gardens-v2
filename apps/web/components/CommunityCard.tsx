@@ -1,7 +1,11 @@
 "use client";
 
 import React from "react";
-import { RectangleGroupIcon, UserGroupIcon } from "@heroicons/react/24/outline";
+import {
+  CheckBadgeIcon,
+  RectangleGroupIcon,
+  UserGroupIcon,
+} from "@heroicons/react/24/outline";
 import Image from "next/image";
 import {
   CVStrategy,
@@ -12,7 +16,7 @@ import {
 import { Card } from "./Card";
 import { Statistic } from "./Statistic";
 import TooltipIfOverflow from "./TooltipIfOverflow";
-import { commImg } from "@/assets";
+import { CommunityLogo, ProtopianLogo } from "@/assets";
 import { ChainIcon } from "@/configs/chains";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
@@ -23,6 +27,7 @@ type CommunityCardProps = {
   garden: Pick<TokenGarden, "address" | "chainId" | "symbol">;
   members?: Maybe<Pick<MemberCommunity, "id" | "memberAddress">[]> | undefined;
   strategies?: Maybe<Pick<CVStrategy, "id">[]> | undefined;
+  isProtopian?: boolean;
 };
 
 export function CommunityCard({
@@ -31,6 +36,7 @@ export function CommunityCard({
   garden,
   members,
   strategies,
+  isProtopian = false,
 }: CommunityCardProps) {
   const { address: tokenAddr, chainId, symbol: tokenSymbol } = garden;
 
@@ -46,12 +52,18 @@ export function CommunityCard({
     <Card
       key={id}
       href={`/gardens/${chainId}/${tokenAddr}/${id}`}
-      className={`w-[275px] sm:min-w-[313px] ${isNewCommunity ? "shadow-2xl" : ""}`}
+      className={` ${isNewCommunity ? "shadow-2xl" : ""}`}
     >
       <div className="flex justify-between text-neutral-content text-sm">
+        {isProtopian && (
+          <div className="absolute bottom-2 right-2 badge badge-soft badge-success bg-[#9ae7c3] text-[#0c7b0c]">
+            <CheckBadgeIcon className="h-4 w-4 mr-1" />
+            Protopian
+          </div>
+        )}
         <Image
-          src={commImg}
-          alt={`${name} community`}
+          src={isProtopian ? ProtopianLogo : CommunityLogo}
+          alt={`${communityName} community`}
           className="mb-2 h-[100px]"
           height={100}
           width={100}
@@ -90,7 +102,7 @@ export function CommunityCard({
 
 export function CommunityCardSkeleton() {
   return (
-    <Card href="#" className="w-[275px] sm:min-w-[313px]">
+    <Card href="#" className="min-w-[313px]">
       <div className="flex justify-between text-neutral-content text-sm">
         <div className="skeleton [--fallback-b3:#f0f0f0] mb-2 h-[100px] w-[100px]" />
         <div className="flex flex-col gap-1">

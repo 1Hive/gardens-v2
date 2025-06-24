@@ -16,18 +16,22 @@ import { FormAddressInput } from "./FormAddressInput";
 import { FormInput } from "./FormInput";
 import { FormPreview, FormRow } from "./FormPreview";
 import { LoadingSpinner } from "../LoadingSpinner";
+import { calculateConvictionGrowthInSeconds } from "../PoolHeader";
 import { WalletBalance } from "../WalletBalance";
-import { Button, EthAddress, InfoBox } from "@/components";
+import { Button, EthAddress, InfoBox, InfoWrapper } from "@/components";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
-import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
+import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { alloABI, cvStrategyABI } from "@/src/generated";
 import { PoolTypes } from "@/types";
 import { getEventFromReceipt } from "@/utils/contracts";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
-import { calculatePercentageBigInt, formatTokenAmount } from "@/utils/numbers";
+import {
+  calculatePercentageBigInt,
+  convertSecondsToReadableTime,
+} from "@/utils/numbers";
 
 //protocol : 1 => means ipfs!, to do some checks later
 type FormInputs = {
@@ -47,11 +51,11 @@ type ProposalFormProps = {
   arbitrableConfig: Pick<ArbitrableConfig, "submitterCollateralAmount">;
   poolId: number;
   proposalType: number;
+  poolParams: Pick<CVStrategyConfig, "decay">;
   alloInfo: Pick<Allo, "id" | "chainId" | "tokenNative">;
   tokenGarden: Pick<TokenGarden, "symbol" | "decimals">;
-  spendingLimit: number;
+  spendingLimit: number | string | undefined;
   spendingLimitPct: number;
-  poolAmount: number;
 };
 
 type FormRowTypes = {
@@ -79,45 +83,46 @@ const abiParameters = [
   },
 ];
 
-function formatNumber(num: string | number): string {
-  if (num == 0) {
-    return "0";
-  }
-  // Convert to number if it's a string
-  const number = typeof num === "string" ? parseFloat(num) : num;
+// function formatNumber(num: string | number): string {
+//   if (num == 0) {
+//     return "0";
+//   }
+//   // Convert to number if it's a string
+//   const number = typeof num === "string" ? parseFloat(num) : num;
 
-  // Check if the number is NaN
-  if (isNaN(number)) {
-    return "Invalid Number";
-  }
+//   // Check if the number is NaN
+//   if (isNaN(number)) {
+//     return "Invalid Number";
+//   }
 
-  // If the absolute value is greater than or equal to 1, use toFixed(2)
-  if (Math.abs(number) >= 1) {
-    return number.toFixed(2);
-  }
+//   // If the absolute value is greater than or equal to 1, use toFixed(2)
+//   if (Math.abs(number) >= 1) {
+//     return number.toFixed(2);
+//   }
 
-  // For numbers between 0 and 1 (exclusive)
-  const parts = number.toString().split("e");
-  const exponent = parts[1] ? parseInt(parts[1]) : 0;
+//   // For numbers between 0 and 1 (exclusive)
+//   const parts = number.toString().split("e");
+//   const exponent = parts[1] ? parseInt(parts[1]) : 0;
 
-  if (exponent < -3) {
-    // For very small numbers, use exponential notation with 4 significant digits
-    return number.toPrecision(4);
-  } else {
-    // For numbers between 0.001 and 1, show at least 4 decimal places
-    const decimalPlaces = Math.max(
-      4,
-      -Math.floor(Math.log10(Math.abs(number))) + 3,
-    );
-    return number.toFixed(decimalPlaces);
-  }
-}
+//   if (exponent < -3) {
+//     // For very small numbers, use exponential notation with 4 significant digits
+//     return number.toPrecision(4);
+//   } else {
+//     // For numbers between 0.001 and 1, show at least 4 decimal places
+//     const decimalPlaces = Math.max(
+//       4,
+//       -Math.floor(Math.log10(Math.abs(number))) + 3,
+//     );
+//     return number.toFixed(decimalPlaces);
+//   }
+// }
 
 export const ProposalForm = ({
   strategy,
   arbitrableConfig,
   poolId,
   proposalType,
+  poolParams,
   alloInfo,
   spendingLimit,
   spendingLimitPct,
@@ -159,7 +164,14 @@ export const ProposalForm = ({
   const router = useRouter();
   const pathname = usePathname();
 
-  const chainIdFromPath = useChainIdFromPath();
+  const { blockTime, id: chainIdFromPath } = useChainFromPath()!;
+
+  const convictionGrowthSec = calculateConvictionGrowthInSeconds(
+    poolParams.decay,
+    blockTime,
+  );
+  const { value: convictionGrowth, unit: convictionGrowthUnit } =
+    convertSecondsToReadableTime(convictionGrowthSec);
 
   const disableSubmitBtn = useMemo<ConditionObject[]>(
     () => [
@@ -238,15 +250,8 @@ export const ProposalForm = ({
     chainId,
   });
 
-  const spendingLimitString = formatTokenAmount(
-    spendingLimit,
-    poolToken?.decimals ?? 18,
-    6,
-  );
-
-  const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** (poolToken?.decimals ?? 0);
-
-  const spendingLimitNumber = spendingLimit / 10 ** (poolToken?.decimals ?? 0);
+  const INPUT_TOKEN_MIN_VALUE =
+    Number(requestedAmount) == 0 ? 0 : 1 / 10 ** (poolToken?.decimals ?? 0);
 
   const { data: thresholdFromContract } = useContractRead({
     address: strategy.id as Address,
@@ -271,7 +276,7 @@ export const ProposalForm = ({
 
   if (!poolToken && PoolTypes[proposalType] === "funding") {
     return (
-      <div className="m-40">
+      <div className="m-40 col-span-12">
         <LoadingSpinner />
       </div>
     );
@@ -290,14 +295,6 @@ export const ProposalForm = ({
       // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
       poolToken?.decimals || 0,
     );
-
-    console.debug([
-      poolId,
-      previewData.beneficiary,
-      amount,
-      poolTokenAddr,
-      metadata,
-    ]);
 
     const encodedData = encodeAbiParameters(abiParameters, [
       [
@@ -363,8 +360,8 @@ export const ProposalForm = ({
                 }}
                 registerOptions={{
                   max: {
-                    value: spendingLimit,
-                    message: `Max amount must remain under the spending limit of ${formatNumber(spendingLimit)} ${poolToken?.symbol}`,
+                    value: spendingLimit ? +spendingLimit : 0,
+                    message: `Max amount must remain under the spending limit of ${spendingLimit} ${poolToken?.symbol}`,
                   },
                   min: {
                     value: INPUT_TOKEN_MIN_VALUE,
@@ -385,14 +382,34 @@ export const ProposalForm = ({
             </div>
           )}
 
-          {requestedAmount && thresholdPct !== 0 && thresholdPct < 100 && (
-            <InfoBox infoBoxType={"warning"}>
-              The conviction required in order for the proposal to pass with the
-              requested amount is {thresholdPct}%.{" "}
-              {requestedAmount &&
-                thresholdPct > 50 &&
-                thresholdPct < 100 &&
-                "It may be difficult to pass"}
+          {requestedAmount && thresholdPct !== 0 && thresholdPct <= 100 && (
+            <InfoBox
+              infoBoxType={
+                thresholdPct < 50 ? "info"
+                : thresholdPct < 100 ?
+                  "warning"
+                : "error"
+              }
+            >
+              <div className="flex w-full justify-between">
+                The{" "}
+                <InfoWrapper
+                  tooltip={`Conviction accumulates over time based on both the level of support on a proposal and the duration defined by the Conviction Growth parameter (${convictionGrowth} ${convictionGrowthUnit}).`}
+                  size="sm"
+                  hoverOnChildren={true}
+                  hideIcon={true}
+                  className="tooltip-top-right border-b border-dashed border-info text-sm"
+                >
+                  conviction
+                </InfoWrapper>{" "}
+                required in order for the proposal to pass with the requested
+                amount is {thresholdPct}%.{" "}
+                {requestedAmount &&
+                  thresholdPct > 50 &&
+                  (thresholdPct < 100 ?
+                    "It may be difficult to pass."
+                  : "Its unlikely to pass.")}
+              </div>
             </InfoBox>
           )}
           {proposalTypeName !== "signaling" && (
