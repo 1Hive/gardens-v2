@@ -251,7 +251,7 @@ export const chainConfigMap: {
     explorer: "https://celoscan.io/",
     blockTime: 3.8,
     confirmations: 4, // 4
-    rpcUrl: process.env.RPC_URL_BASE!,
+    rpcUrl: process.env.RPC_URL_CELO!,
     ...getSubgraphUrls(
       "BsXEnGaXdj3CkGRn95bswGcv2mQX7m8kNq7M7WBxxPx8",
       "gardens-v2---celo",

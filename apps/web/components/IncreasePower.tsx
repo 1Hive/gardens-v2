@@ -119,12 +119,6 @@ export const IncreasePower = ({
     contractName: "Registry Community",
   };
 
-  console.log({
-    stakeDifferenceBn,
-    accountTokenBalance: accountTokenBalance?.value,
-    diff: accountTokenBalance && stakeDifferenceBn - accountTokenBalance.value,
-  });
-
   const { publish } = usePubSubContext();
 
   const [votingPowerTx, setVotingPowerTx] = useState<TransactionProps>({
@@ -200,7 +194,6 @@ export const IncreasePower = ({
   useEffect(() => {
     if (accountTokenBalancePlusStakeAmount == null) return;
     setStakedAmount((initialStakedAmount ?? 0).toPrecision(4));
-    console.log({ accountTokenBalance });
     setAmountPerc(
       (accountTokenBalance?.value == 0n ?
         100
