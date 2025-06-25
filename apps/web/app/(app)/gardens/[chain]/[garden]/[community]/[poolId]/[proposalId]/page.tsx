@@ -393,6 +393,7 @@ export default function Page({
                   disabled={!isConnected || missmatchUrl || !isMemberCommunity}
                   tooltip={tooltipMessage}
                   className="w-full"
+                  btnStyle="outline"
                 >
                   Manage support
                 </Button>

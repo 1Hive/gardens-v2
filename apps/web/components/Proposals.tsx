@@ -646,7 +646,7 @@ export function Proposals({
 
       {/* Pool Governace */}
       {strategy.isEnabled && (
-        <div className="col-span-12 lg:col-span-3">
+        <div className="col-span-12 lg:col-span-3 lg:-mt-[600px]">
           <div className="backdrop-blur-sm rounded-lg flex flex-col gap-2 sticky top-32">
             <PoolGovernance
               memberPoolWeight={memberPoolWeight}

@@ -1,8 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
+import { ChevronUpIcon } from "@heroicons/react/24/outline";
+import cn from "classnames";
 import { Dnum } from "dnum";
 import { Address, useAccount } from "wagmi";
+
 import {
   CVStrategy,
   CVStrategyConfig,
@@ -124,18 +127,26 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
             />
           </CheckPassport>
         </div>
-        {/* <Button
-          btnStyle="outline"
+        <Button
           onClick={() => setOpenGovDetails(!openGovDetails)}
-          disabled={membersStrategyData?.length === 0 ? true : false}
-          tooltip="No activity in this pool yet."
-          className="w-full"
+          btnStyle="outline"
+          color="disabled"
+          className="absolute top-0 right-0 md:flex items-start sm:w-auto border-none hover:opacity-75"
+          icon={
+            <ChevronUpIcon
+              className={`h-4 w-4 font-bold text-black transition-transform duration-200 ease-in-out ${cn(
+                {
+                  "rotate-180": !openGovDetails,
+                },
+              )} `}
+            />
+          }
         >
-          {openGovDetails ? "Close" : "View"} Governance Details
+          {openGovDetails ? "Close" : "View"} governance details
         </Button>
         {openGovDetails && (
           <PoolGovernanceDetails membersStrategyData={membersStrategyData} />
-        )} */}
+        )}
       </section>
     </>
   );
@@ -165,9 +176,10 @@ const PoolGovernanceDetails: React.FC<{
               (member?.member?.memberCommunity[0]?.memberAddress as Address)
             : undefined
           }
-          actions="copy"
-          shortenAddress={false}
+          shortenAddress={true}
+          actions="none"
           icon="ens"
+          textColor="var(--color-grey-900)"
         />
       ),
     },
@@ -182,14 +194,13 @@ const PoolGovernanceDetails: React.FC<{
           %
         </span>
       ),
-      className: "flex justify-end pr-4",
+      className: "flex justify-end",
     },
   ];
 
   return (
     <DataTable
-      title="Pool Governance Details"
-      description="A list of all the community members and their activity in the pool."
+      description="A list of all the community members and their activity in this pool."
       data={membersStrategyData}
       columns={columns}
     />
