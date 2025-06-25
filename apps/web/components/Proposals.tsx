@@ -41,7 +41,7 @@ import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithC
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { alloABI, registryCommunityABI } from "@/src/generated";
-import { ProposalStatus } from "@/types";
+import { PoolTypes, ProposalStatus } from "@/types";
 import { useErrorDetails } from "@/utils/getErrorName";
 import { bigIntMin, calculatePercentageBigInt } from "@/utils/numbers";
 
@@ -646,7 +646,9 @@ export function Proposals({
 
       {/* Pool Governace */}
       {strategy.isEnabled && (
-        <div className="col-span-12 lg:col-span-3 lg:-mt-[600px]">
+        <div
+          className={`col-span-12 lg:col-span-3 ${strategy?.config?.proposalType == 1 ? "lg:-mt-[600px]" : ""} `}
+        >
           <div className="backdrop-blur-sm rounded-lg flex flex-col gap-2 sticky top-32">
             <PoolGovernance
               memberPoolWeight={memberPoolWeight}
