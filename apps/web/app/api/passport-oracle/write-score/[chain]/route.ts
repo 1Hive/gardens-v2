@@ -40,7 +40,7 @@ export async function POST(req: Request, { params }: Params) {
   const chainConfig = getConfigByChain(chainId);
 
   try {
-    const subgraphUrl = chainConfig?.subgraphUrl as string;
+    const subgraphUrl = chainConfig?.publishedSubgraphUrl as string;
     const { urqlClient } = initUrqlClient({ chainId });
     const subgraphResponse = await urqlClient
       .query<getMemberPassportAndCommunitiesQuery>(
