@@ -55,8 +55,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
 
   const { allowanceTxProps: allowanceTx, handleAllowance } = useHandleAllowance(
     accountAddress,
-    poolToken.address as Address,
-    poolToken.symbol,
+    poolToken,
     alloInfo.id as Address,
     requestedAmount,
     () => writeFundPool(),

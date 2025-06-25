@@ -165,8 +165,9 @@ export function CheckPassport({
       if (passportResponse?.data?.score) {
         const result = await writeScorer(_walletAddr);
         if (result.error) {
-          console.error("Error writing scorer:", result.errorMessage);
-          toast.error("Error writing scorer, please report a bug.");
+          const message = JSON.parse(result.errorMessage).error;
+          console.error("Error writing scorer:", message);
+          toast.error(message);
         } else {
           checkScoreRequirement(passportResponse?.data?.score);
         }

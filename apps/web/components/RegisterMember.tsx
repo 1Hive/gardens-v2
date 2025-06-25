@@ -121,8 +121,7 @@ export function RegisterMember({
     resetState: handleAllowanceResetState,
   } = useHandleAllowance(
     accountAddress,
-    token.address as Address,
-    token.symbol,
+    token,
     communityAddress as Address,
     registrationCost,
     handleRegistration,

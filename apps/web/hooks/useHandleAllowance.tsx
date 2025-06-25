@@ -10,8 +10,7 @@ import { getTxMessage } from "@/utils/transactionMessages";
 
 export function useHandleAllowance(
   accountAddr: Address | undefined,
-  tokenAddr: Address | undefined,
-  tokenSymbol: string,
+  token: { address: string; decimals: number; symbol: string } | undefined,
   spenderAddr: Address,
   amount: bigint,
   triggerNextTx: (covenantSignature: `0x${string}` | undefined) => void,
@@ -26,7 +25,7 @@ export function useHandleAllowance(
 } {
   const chainId = useChainIdFromPath();
   const [allowanceTxProps, setAllowanceTxProps] = useState<TransactionProps>({
-    contractName: transactionLabel ?? `${tokenSymbol} expenditure approval`,
+    contractName: transactionLabel ?? `${token?.symbol} expenditure approval`,
     message: "",
     status: "idle",
   });
@@ -34,11 +33,11 @@ export function useHandleAllowance(
 
   const { refetch: refetchAllowance } = useContractRead({
     chainId,
-    address: tokenAddr,
+    address: token?.address as Address,
     abi: erc20ABI,
     args: [accountAddr as Address, spenderAddr],
     functionName: "allowance",
-    enabled: !!tokenAddr && accountAddr !== undefined,
+    enabled: !!token && accountAddr !== undefined,
   });
 
   const {
@@ -46,7 +45,7 @@ export function useHandleAllowance(
     transactionStatus,
     error: allowanceError,
   } = useContractWriteWithConfirmations({
-    address: tokenAddr,
+    address: token?.address as Address,
     abi: erc20ABI,
     // args: [spenderAddr, amount],
     functionName: "approve",
@@ -74,16 +73,16 @@ export function useHandleAllowance(
     } else {
       if (currentAllowance?.data) {
         // Already found allowance but not enough, need to reset allowance
-        setAllowanceTxProps((x) => ({
-          contractName: `${tokenSymbol} allowance reset`,
-          message: `Resetting allowance for ${tokenSymbol} to 0`,
+        setAllowanceTxProps({
+          contractName: `${token?.symbol} allowance reset`,
+          message: `Resetting allowance for ${token?.symbol} to 0`,
           status: "loading",
-        }));
+        });
         await writeAllowTokenAsync({ args: [spenderAddr, 0n] });
         setAllowanceTxProps({
           contractName:
-            transactionLabel ?? `${tokenSymbol} expenditure approval`,
-          message: `Setting allowance for ${tokenSymbol} to ${amount}`,
+            transactionLabel ?? `${token?.symbol} expenditure approval`,
+          message: `Setting allowance for ${token} of ${token ? (Number(amount) / 10 ** token.decimals).toPrecision(4) : ""}`,
           status: "idle",
         });
       }
