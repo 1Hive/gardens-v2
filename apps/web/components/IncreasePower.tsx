@@ -204,8 +204,7 @@ export const IncreasePower = ({
 
   const { allowanceTxProps: allowanceTx, handleAllowance } = useHandleAllowance(
     accountAddress,
-    registerToken as Address,
-    tokenSymbol,
+    tokenGarden,
     communityAddress as Address,
     stakeDifferenceBn,
     () => writeIncreasePower(),

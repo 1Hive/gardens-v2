@@ -62,10 +62,7 @@ export async function POST(req: Request, { params }: Params) {
     const { member, passportUser } = subgraphResponse.data;
 
     if (!member?.memberCommunity || member.memberCommunity.length === 0) {
-      return NextResponse.json(
-        { error: "User has no communities" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "Not a member" }, { status: 400 });
     }
 
     // Throttle the score update to once per day
@@ -78,7 +75,7 @@ export async function POST(req: Request, { params }: Params) {
       return NextResponse.json(
         {
           error:
-            "User score cannot be updated before " +
+            "Score cannot be updated before " +
             new Date(
               passportUser.lastUpdated * 1000 + twoHoursMs,
             ).toUTCString(),
@@ -110,6 +107,13 @@ export async function POST(req: Request, { params }: Params) {
 
     const score = await fetchPassportScore(user);
     const integerScore = Math.round(score * CV_PASSPORT_THRESHOLD_SCALE);
+
+    if (!integerScore || isNaN(integerScore)) {
+      return NextResponse.json(
+        { error: "Passport has no score" },
+        { status: 400 },
+      );
+    }
 
     if (!chainConfig?.passportScorer) {
       console.error("Passport scorer contract address is missing");
