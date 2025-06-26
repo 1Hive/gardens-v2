@@ -286,9 +286,6 @@ importers:
 
   pkg/subgraph:
     dependencies:
-      '@dotenvx/dotenvx':
-        specifier: ^1.45.1
-        version: 1.45.1
       '@graphprotocol/graph-cli':
         specifier: ^0.69.2
         version: 0.69.2(@types/node@20.14.4)(node-fetch@3.3.2)(typescript@5.2.2)
@@ -298,9 +295,6 @@ importers:
       '@types/node':
         specifier: '*'
         version: 20.14.4
-      dotenv-cli:
-        specifier: ^8.0.0
-        version: 8.0.0
       node-fetch:
         specifier: '*'
         version: 3.3.2
@@ -1499,30 +1493,6 @@ packages:
 
   /@divvi/referral-sdk@1.0.0:
     resolution: {integrity: sha512-X1i66AFQMJCu5jdOjg6mruSZ70YXolTNE1VHDr9tSHRnoR3EWki1Wtgb+A5fyE0AVl73uWZClqXlEGivyZbQ1w==}
-    dev: false
-
-  /@dotenvx/dotenvx@1.45.1:
-    resolution: {integrity: sha512-wKHPD+/NMMJVBPg3i98uD9jsURDy+Ck6RQRiWf39TlOAzC+Ge1FkmDk3sgeljYZxA3qF6E7SJmvRqC70XQuuVA==}
-    hasBin: true
-    dependencies:
-      commander: 11.1.0
-      dotenv: 16.4.5
-      eciesjs: 0.4.15
-      execa: 5.1.1
-      fdir: 6.4.6(picomatch@4.0.2)
-      ignore: 5.3.1
-      object-treeify: 1.1.33
-      picomatch: 4.0.2
-      which: 4.0.0
-    dev: false
-
-  /@ecies/ciphers@0.2.3(@noble/ciphers@1.3.0):
-    resolution: {integrity: sha512-tapn6XhOueMwht3E2UzY0ZZjYokdaw9XtL9kEyjhQ/Fb9vL9xTFbOaI+fV0AWvTpYu4BNloC6getKW6NtSg4mA==}
-    engines: {bun: '>=1', deno: '>=2', node: '>=16'}
-    peerDependencies:
-      '@noble/ciphers': ^1.0.0
-    dependencies:
-      '@noble/ciphers': 1.3.0
     dev: false
 
   /@emeraldpay/hashicon-react@0.5.2:
@@ -4334,11 +4304,6 @@ packages:
     dev: false
     optional: true
 
-  /@noble/ciphers@1.3.0:
-    resolution: {integrity: sha512-2I0gnIVPtfnMw9ee9h1dJG7tp81+8Ob3OJb3Mv37rx5L40/b0i7djjCVvGOVqc9AEIQyvyu1i6ypKdFw8R8gQw==}
-    engines: {node: ^14.21.3 || >=16}
-    dev: false
-
   /@noble/curves@1.2.0:
     resolution: {integrity: sha512-oYclrNgRaM9SsBUBVbb8M6DTV7ZHRTKugureoYEncY5c65HOmRzvSiTE3y5CYaPYJA/GVkrhXEoF0M3Ya9PMnw==}
     dependencies:
@@ -4348,13 +4313,6 @@ packages:
     resolution: {integrity: sha512-p+4cb332SFCrReJkCYe8Xzm0OWi4Jji5jVdIZRL/PmacmDkFNw6MrrV+gGpiPxLHbV+zKFRywUWbaseT+tZRXg==}
     dependencies:
       '@noble/hashes': 1.4.0
-    dev: false
-
-  /@noble/curves@1.9.2:
-    resolution: {integrity: sha512-HxngEd2XUcg9xi20JkwlLCtYwfoFw4JGkuZpT+WlsPD4gB/cxkvTD8fSsoAnphGZhFdZYKeQIPCuFlWPm1uE0g==}
-    engines: {node: ^14.21.3 || >=16}
-    dependencies:
-      '@noble/hashes': 1.8.0
     dev: false
 
   /@noble/hashes@1.2.0:
@@ -5184,7 +5142,7 @@ packages:
   /@pinata/sdk@2.1.0:
     resolution: {integrity: sha512-hkS0tcKtsjf9xhsEBs2Nbey5s+Db7x5rlOH9TaWHBXkJ7IwwOs2xnEDigNaxAHKjYAwcw+m2hzpO5QgOfeF7Zw==}
     dependencies:
-      axios: 0.21.4
+      axios: 0.21.4(debug@4.3.4)
       form-data: 2.5.1
       is-ipfs: 0.6.3
       path: 0.12.7
@@ -8336,14 +8294,6 @@ packages:
     engines: {node: '>=4'}
     dev: true
 
-  /axios@0.21.4:
-    resolution: {integrity: sha512-ut5vewkiu8jjGBdqpM44XxjuCjq9LAKeHVmoVfHVzy8eHgxxq8SbAVQNovDA8mVi05kP0Ea/n/UzcSHcTJQfNg==}
-    dependencies:
-      follow-redirects: 1.15.6(debug@4.3.5)
-    transitivePeerDependencies:
-      - debug
-    dev: false
-
   /axios@0.21.4(debug@4.3.4):
     resolution: {integrity: sha512-ut5vewkiu8jjGBdqpM44XxjuCjq9LAKeHVmoVfHVzy8eHgxxq8SbAVQNovDA8mVi05kP0Ea/n/UzcSHcTJQfNg==}
     dependencies:
@@ -8355,7 +8305,7 @@ packages:
   /axios@1.7.9:
     resolution: {integrity: sha512-LhLcE7Hbiryz8oMDdDptSrWowmB4Bl6RCt6sIJKpRB4XtVf0iEgewX3au/pJqm+Py1kCASkb/FFKjxQaLtxJvw==}
     dependencies:
-      follow-redirects: 1.15.6(debug@4.3.5)
+      follow-redirects: 1.15.6(debug@4.3.4)
       form-data: 4.0.0
       proxy-from-env: 1.1.0
     transitivePeerDependencies:
@@ -9198,11 +9148,6 @@ packages:
       typical: 5.2.0
     dev: false
 
-  /commander@11.1.0:
-    resolution: {integrity: sha512-yPVavfyCcRhmorC7rWlkHn15b4wDVgVmBA7kV4QVBsF7kv/9TKJAbAXVTxvTnwP8HHKjRCJDClKbciiYS7p0DQ==}
-    engines: {node: '>=16'}
-    dev: false
-
   /commander@2.13.0:
     resolution: {integrity: sha512-MVuS359B+YzaWqjCL/c+22gfryv+mCBPHAv3zyVI2GN8EY6IRP8VwtasXn8jyyhvvq84R4ImN1OKRtcbIasjYA==}
     dev: true
@@ -9378,15 +9323,6 @@ packages:
       path-key: 3.1.1
       shebang-command: 2.0.0
       which: 2.0.2
-
-  /cross-spawn@7.0.6:
-    resolution: {integrity: sha512-uV2QOWP2nWzsy2aMp8aRibhi9dlzF5Hgh5SHaB9OiTGEyDTiJJyx0uy51QXdyWbtAHNua4XJzUKca3OzKUd3vA==}
-    engines: {node: '>= 8'}
-    dependencies:
-      path-key: 3.1.1
-      shebang-command: 2.0.0
-      which: 2.0.2
-    dev: false
 
   /crossws@0.2.4:
     resolution: {integrity: sha512-DAxroI2uSOgUKLz00NX6A8U/8EE3SZHmIND+10jkVSaypvyt57J5JEOxAQOL6lQxyzi/wZbTIwssU1uy69h5Vg==}
@@ -9811,16 +9747,6 @@ packages:
       no-case: 3.0.4
       tslib: 2.6.3
 
-  /dotenv-cli@8.0.0:
-    resolution: {integrity: sha512-aLqYbK7xKOiTMIRf1lDPbI+Y+Ip/wo5k3eyp6ePysVaSqbyxjyK3dK35BTxG+rmd7djf5q2UPs4noPNH+cj0Qw==}
-    hasBin: true
-    dependencies:
-      cross-spawn: 7.0.6
-      dotenv: 16.4.5
-      dotenv-expand: 10.0.0
-      minimist: 1.2.8
-    dev: false
-
   /dotenv-expand@10.0.0:
     resolution: {integrity: sha512-GopVGCpVS1UKH75VKHGuQFqS1Gusej0z4FyQkPdwjil2gNIv+LNsqBlboOzpJFZKVT95GkCyWJbBSdFEFUWI2A==}
     engines: {node: '>=12'}
@@ -9881,16 +9807,6 @@ packages:
     dependencies:
       tslib: 2.3.0
       zrender: 5.5.0
-    dev: false
-
-  /eciesjs@0.4.15:
-    resolution: {integrity: sha512-r6kEJXDKecVOCj2nLMuXK/FCPeurW33+3JRpfXVbjLja3XUYFfD9I/JBreH6sUyzcm3G/YQboBjMla6poKeSdA==}
-    engines: {bun: '>=1', deno: '>=2', node: '>=16'}
-    dependencies:
-      '@ecies/ciphers': 0.2.3(@noble/ciphers@1.3.0)
-      '@noble/ciphers': 1.3.0
-      '@noble/curves': 1.9.2
-      '@noble/hashes': 1.8.0
     dev: false
 
   /ejs@3.1.10:
@@ -11037,17 +10953,6 @@ packages:
     transitivePeerDependencies:
       - encoding
     dev: true
-
-  /fdir@6.4.6(picomatch@4.0.2):
-    resolution: {integrity: sha512-hiFoqpyZcfNm1yc4u8oWCf9A2c4D3QjCrks3zmoVKVxpQRzmPNar1hUJcBG2RQHvEVGDN+Jm81ZheVLAQMK6+w==}
-    peerDependencies:
-      picomatch: ^3 || ^4
-    peerDependenciesMeta:
-      picomatch:
-        optional: true
-    dependencies:
-      picomatch: 4.0.2
-    dev: false
 
   /fetch-blob@3.2.0:
     resolution: {integrity: sha512-7yAQpD2UMJzLi1Dqv7qFYnPbaPx7ZfFK6PiIxQ4PfkGPyNyl2Ugx+a/umUonmKqjhM4DnfbMvdX6otXq83soQQ==}
@@ -12909,6 +12814,8 @@ packages:
     resolution: {integrity: sha512-LpB/54B+/2J5hqQ7imZHfdU31OlgQqx7ZicVlkm9kzg9/w8GKLEcFfJl/t7DCEDueOyBAD6zCCwTO6Fzs0NoEQ==}
     engines: {node: '>=16'}
     requiresBuild: true
+    dev: true
+    optional: true
 
   /iso-url@1.2.1:
     resolution: {integrity: sha512-9JPDgCN4B7QPkLtYAAOrEuAWvP9rWvR5offAr0/SeF046wIkglqH3VXgYYP6NcsKslH80UIVgmPqNe3j7tG2ng==}
@@ -15292,6 +15199,7 @@ packages:
   /picomatch@4.0.2:
     resolution: {integrity: sha512-M7BAV6Rlcy5u+m6oPhAPFgJTzAioX/6B0DxyvDlo9l8+T3nLKbrczg2WLUyzd45L8RqfUMyGPzekbMvX2Ldkwg==}
     engines: {node: '>=12'}
+    dev: true
 
   /pify@2.3.0:
     resolution: {integrity: sha512-udgsAY+fTnvv7kI7aaxbqwWNb0AHiB0qBO89PZKPkoTmGOgdbrHDKD+0B2X4uTfJ/FT1R09r9gTsjUjNJotuog==}
@@ -18379,6 +18287,8 @@ packages:
     requiresBuild: true
     dependencies:
       isexe: 3.1.1
+    dev: true
+    optional: true
 
   /wide-align@1.1.5:
     resolution: {integrity: sha512-eDMORYaPNZ4sQIuuYPDHdQvf4gyCF9rEEV/yPxGfwPkRodwEgiMUUXTx/dex+Me0wxx53S+NgUHaP7y3MGlDmg==}

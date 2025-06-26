@@ -74,7 +74,16 @@ export function handleInitialized(event: RegistryInitialized): void {
     newRC.alloAddress = rcc.allo().toHexString();
     newRC.isKickEnabled = rcc.isKickEnabled();
     newRC.communityFee = rcc.communityFee();
-    newRC.protocolFee = rfc.getProtocolFee(event.address);
+    const protocolFeeResult = rfc.try_getProtocolFee(event.address);
+    if (protocolFeeResult.reverted) {
+      log.error(
+        "RegistryCommunity: handleInitialized: protocolFee reverted for community: {}",
+        [event.address.toHexString()]
+      );
+      newRC.protocolFee = BigInt.fromI32(0);
+    } else {
+      newRC.protocolFee = protocolFeeResult.value;
+    }
     const token = rcc.gardenToken();
     newRC.registerToken = token.toHexString();
     newRC.registryFactory = factoryAddress;
