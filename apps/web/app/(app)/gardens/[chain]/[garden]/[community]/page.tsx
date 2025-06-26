@@ -177,7 +177,7 @@ export default function Page({
       .finally(() => {
         isFetchingNFT.current = false;
       });
-  }, [councilMembers, result?.registryCommunity!.councilSafe]);
+  }, [councilMembers, result?.registryCommunity?.councilSafe]);
 
   const { data: isMemberResult } = useSubgraphQuery<isMemberQuery>({
     query: isMemberDocument,
