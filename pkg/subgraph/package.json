@@ -19,7 +19,7 @@
     "create-local": "graph create --node http://localhost:8020/ kamikazebr/gv2",
     "remove-local": "graph remove --node http://localhost:8020/ kamikazebr/gv2",
     "deploy:local": "pnpm manifest:local && graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 kamikazebr/gv2 -l v0.0.3",
-    "deploy:arbsep": "pnpm manifest:arbsep && graph deploy --studio gardens-v2---arbitrum-sepolia",
+    "deploy:arbsep": "pnpm auth:dev && pnpm manifest:arbsep && graph deploy --studio gardens-v2---arbitrum-sepolia",
     "deploy:ethsep": "pnpm manifest:ethsep && graph deploy --studio gv2-ethsepolia",
     "deploy:arbitrum": "pnpm manifest:arbitrum && graph deploy --studio gardens-v2---arbitrum",
     "deploy:optimism": "pnpm manifest:optimism && graph deploy --studio gardens-v2---optimism",
@@ -27,7 +27,7 @@
     "deploy:gnosis": "pnpm manifest:gnosis && graph deploy --studio gardens-v2---gnosis",
     "deploy:base": "pnpm manifest:base && graph deploy --studio gardens-v2---base",
     "deploy:celo": "pnpm manifest:celo && graph deploy --studio gardens-v2---celo",
-    "deploy:prod": "export SUB_PROD_VERSION=0.1.14 && pnpm deploy:arbitrum -l $SUB_PROD_VERSION && pnpm deploy:optimism -l $SUB_PROD_VERSION && pnpm deploy:matic -l $SUB_PROD_VERSION && pnpm deploy:gnosis -l $SUB_PROD_VERSION && pnpm deploy:base -l $SUB_PROD_VERSION && pnpm deploy:celo -l $SUB_PROD_VERSION",
+    "deploy:prod": "export SUB_PROD_VERSION=0.1.15 && pnpm deploy:arbitrum -l $SUB_PROD_VERSION && pnpm deploy:optimism -l $SUB_PROD_VERSION && pnpm deploy:matic -l $SUB_PROD_VERSION && pnpm deploy:gnosis -l $SUB_PROD_VERSION && pnpm deploy:base -l $SUB_PROD_VERSION && pnpm deploy:celo -l $SUB_PROD_VERSION",
     "build-deploy:arbsep": "pnpm build:arbsep && pnpm deploy:arbsep:last",
     "build-deploy:ethsep": "pnpm build:ethsep && pnpm deploy:ethsep:last",
     "local": "pnpm create-local && pnpm build && pnpm deploy:local",
@@ -41,8 +41,8 @@
     "codegen": "graph codegen",
     "graph": "graph",
     "tsc": "tsc",
-    "auth:prod": "graph auth 331af6df4ad01f2b1ce36d8d0010da42 --studio",
-    "auth:dev": "graph auth b3107442718f6b784afe1940708e3b54 --studio"
+    "auth:prod": "bash -c 'source .env && graph auth \"$SUBGRAPH_PROD_AUTH_KEY\" --studio'",
+    "auth:dev": "bash -c 'source .env && graph auth \"$SUBGRAPH_DEV_AUTH_KEY\" --studio'"
   },
   "dependencies": {
     "@graphprotocol/graph-cli": "^0.69.2",
@@ -56,8 +56,8 @@
     "graphql": "^16.8.1",
     "minimist": "^1.2.8",
     "mustache": "^4.2.0",
+    "object-hash": "^3.0.0",
     "ts-node": "^10.9.2",
-    "viem": "~1.21.4",
-    "object-hash": "^3.0.0"
+    "viem": "~1.21.4"
   }
 }
