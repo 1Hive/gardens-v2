@@ -172,15 +172,19 @@ contract RegistryFactoryV0_0 is ProxyOwnableUpgrader {
         }
 
         // Check for protopians (free if they are owners of the community)
+
         ISafe councilSafe = ISafe(RegistryCommunityV0_0(_community).councilSafe());
         if (protopiansAddresses[address(councilSafe)]) {
             return 0;
         }
 
-        address[] memory communityOwners = councilSafe.getOwners();
-        for (uint256 i = 0; i < communityOwners.length; i++) {
-            if (protopiansAddresses[communityOwners[i]]) {
-                return 0;
+        // Make sure council address is not EOA
+        if (address(councilSafe).code.length != 0) {
+            address[] memory communityOwners = councilSafe.getOwners();
+            for (uint256 i = 0; i < communityOwners.length; i++) {
+                if (protopiansAddresses[communityOwners[i]]) {
+                    return 0;
+                }
             }
         }
 
