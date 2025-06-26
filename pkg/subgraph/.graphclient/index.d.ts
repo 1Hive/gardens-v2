@@ -3369,9 +3369,7 @@ export type getCommunitiesQuery = {
     registryCommunities: Array<(Pick<RegistryCommunity, 'id' | 'councilSafe' | 'communityName'> & {
         garden: Pick<TokenGarden, 'address' | 'chainId' | 'symbol' | 'name'>;
         strategies?: Maybe<Array<Pick<CVStrategy, 'id' | 'totalEffectiveActivePoints' | 'poolId'>>>;
-        members?: Maybe<Array<(Pick<MemberCommunity, 'id' | 'memberAddress'> & {
-            member: Pick<Member, 'isProtopian'>;
-        })>>;
+        members?: Maybe<Array<Pick<MemberCommunity, 'id' | 'memberAddress'>>>;
     })>;
 };
 export type getCommunityQueryVariables = Exact<{
@@ -3381,9 +3379,7 @@ export type getCommunityQueryVariables = Exact<{
 }>;
 export type getCommunityQuery = {
     registryCommunity?: Maybe<(Pick<RegistryCommunity, 'communityName' | 'id' | 'covenantIpfsHash' | 'communityFee' | 'protocolFee' | 'registerStakeAmount' | 'registerToken' | 'councilSafe'> & {
-        members?: Maybe<Array<(Pick<MemberCommunity, 'memberAddress' | 'stakedTokens'> & {
-            member: Pick<Member, 'isProtopian'>;
-        })>>;
+        members?: Maybe<Array<Pick<MemberCommunity, 'memberAddress' | 'stakedTokens'>>>;
         strategies?: Maybe<Array<(Pick<CVStrategy, 'id' | 'archived' | 'isEnabled' | 'poolId' | 'token' | 'metadata'> & {
             proposals: Array<Pick<CVProposal, 'id'>>;
             config: Pick<CVStrategyConfig, 'proposalType' | 'pointSystem'>;

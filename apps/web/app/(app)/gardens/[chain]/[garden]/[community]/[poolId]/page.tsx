@@ -170,7 +170,6 @@ export default function Page({
             <PoolMetrics
               communityAddress={communityAddress}
               strategy={strategyObj}
-              alloInfo={alloInfo}
               poolId={poolId}
               poolToken={poolToken}
               chainId={Number(chain)}

@@ -6,15 +6,15 @@ schema:
 dataSources:
   - kind: ethereum/contract
     name: RegistryFactoryV0_0
-    network: celo
+    network: arbitrum-sepolia
     context:
       chainId: 
         type: Int
-        data: 42220
+        data: 421614
     source:
-      address: "0xA71023bc64c9711C2037ab491DE80fd74504bd55"
+      address: "0xf42f88c13804147b2fdda13c093ce14219aea395"
       abi: RegistryFactoryV0_0
-      startBlock: 31270470
+      startBlock: 112011139
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -44,15 +44,15 @@ dataSources:
 
   - kind: ethereum/contract
     name: PassportScorer
-    network: celo
+    network: arbitrum-sepolia
     context:
       chainId: 
         type: Int
-        data: 42220
+        data: 421614
     source:
-      address: "0xb39dfa15f96055664179e8ecaa890f3fa26c21e9"
+      address: "0x6ad70508F44aa0e86E7Af80Ccc4fc1f160C2df46"
       abi: PassportScorer
-      startBlock: 31270470
+      startBlock: 112011139
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -82,7 +82,7 @@ dataSources:
 templates:
   - kind: ethereum/contract
     name: RegistryCommunityV0_0
-    network: celo
+    network: arbitrum-sepolia
     source:
       abi: RegistryCommunityV0_0
     mapping:
@@ -156,7 +156,7 @@ templates:
 
   - kind: ethereum/contract
     name: CVStrategyV0_0
-    network: celo
+    network: arbitrum-sepolia
     source:
       abi: CVStrategyV0_0
     mapping:
@@ -217,7 +217,7 @@ templates:
 
   - kind: ethereum/contract
     name: CollateralVault
-    network: celo
+    network: arbitrum-sepolia
     source:
       abi: CollateralVault
     mapping:
