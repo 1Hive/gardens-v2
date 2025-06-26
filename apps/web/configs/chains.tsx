@@ -169,7 +169,7 @@ export const chainConfigMap: {
     name: "Optimism",
     icon: Optimism,
     explorer: "http://optimistic.etherscan.io",
-    blockTime: 2,
+    blockTime: 14,
     confirmations: 2, // 2
     rpcUrl: process.env.RPC_URL_OPTIMISM!,
     ...getSubgraphUrls(
