@@ -79,6 +79,7 @@ export const EthAddress = ({
         }}
       >
         <Addreth
+          
           // theme={theme}
           theme={{
             base: "simple-light",

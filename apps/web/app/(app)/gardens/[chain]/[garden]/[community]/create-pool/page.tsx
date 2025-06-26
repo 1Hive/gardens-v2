@@ -35,7 +35,7 @@ export default function Page({
   }
 
   return result ?
-      <div className="page-layout">
+      <div className="page-layout mx-auto col-span-12">
         <section className="section-layout">
           <div className="text-center sm:mt-5 mb-12">
             <h2 className="">Create a Pool in {communityName} community</h2>

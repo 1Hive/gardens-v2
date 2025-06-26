@@ -238,7 +238,7 @@ export function Proposals({
   );
 
   const proposals = strategy.proposals.sort(
-    (a, b) => a.stakedAmount - b.stakedAmount,
+    (a, b) => b.stakedAmount - a.stakedAmount,
   );
 
   // Effects
@@ -284,7 +284,7 @@ export function Proposals({
 
   const disableManageSupportBtnCondition: ConditionObject[] = [
     {
-      condition: !memberActivatedStrategy,
+      condition: !isMemberCommunity,
       message: "You need to activate your governance first",
     },
     {
@@ -630,7 +630,12 @@ export function Proposals({
                     disabled={
                       !isConnected || missmatchUrl || !isMemberCommunity
                     }
-                    tooltip={tooltipMessage}
+                    tooltip={
+                      !isConnected ? "Connect your wallet"
+                      : !isMemberCommunity ?
+                        "Join the community first"
+                      : "Create a proposal"
+                    }
                   >
                     Create a proposal
                   </Button>

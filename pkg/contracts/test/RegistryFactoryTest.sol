@@ -70,12 +70,10 @@ contract RegistryFactoryTest is Test {
     }
 
     function testGetProtocolFee_CommunityWithKeeper() public {
-        // Set the community as a keeper
         vm.prank(owner);
-        address[] memory communityAsKeeper = new address[](1);
-        communityAsKeeper[0] = community;
-        registryFactory.setKeeperAddress(communityAsKeeper, true);
-
+        address[] memory keepers = new address[](1);
+        keepers[0] = community;
+        registryFactory.setKeeperAddress(keepers, true);
         uint256 fee = registryFactory.getProtocolFee(community);
         assertEq(fee, 0, "Fee should be 0 for a keeper community");
     }

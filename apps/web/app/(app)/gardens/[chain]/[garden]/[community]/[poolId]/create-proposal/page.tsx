@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useBalance } from "wagmi";
+import { Address, useBalance } from "wagmi";
 import { getPoolDataDocument, getPoolDataQuery } from "#/subgraph/.graphclient";
 import { ProposalForm } from "@/components/Forms";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
@@ -31,10 +31,12 @@ export default function Page({
   const proposalType = strategyObj?.config?.proposalType as number;
 
   const { data: poolAmount } = useBalance({
-    address: poolTokenAddr as `0x${string}`,
+    address: strategyObj?.id as Address,
+    token: poolTokenAddr as Address,
     enabled:
       !!poolTokenAddr &&
-      !!data &&
+      !!strategyObj?.id &&
+      data &&
       PoolTypes[data.cvstrategies[0].config.proposalType] === "funding",
   });
 
@@ -71,7 +73,7 @@ export default function Page({
   console.log({ poolAmount, spendingLimitValuePct, spendingLimitValueNum });
 
   return (
-    <div className="page-layout">
+    <div className="page-layout col-span-12 mx-auto">
       <section className="section-layout">
         <div className="text-center sm:mt-5 mb-12">
           <h2 className="mb-2">Create a Proposal in Pool #{poolId}</h2>

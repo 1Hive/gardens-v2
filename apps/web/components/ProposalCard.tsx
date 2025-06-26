@@ -1,3 +1,4 @@
+/* eslint-disable jsx-a11y/click-events-have-key-events */
 "use client";
 
 import { HandRaisedIcon } from "@heroicons/react/24/outline";
@@ -31,7 +32,7 @@ import { prettyTimestamp } from "@/utils/text";
 export type ProposalCardProps = {
   proposalData: Pick<
     CVProposal,
-    "id" | "proposalStatus" | "metadataHash" | "createdAt"
+    "id" | "proposalStatus" | "metadataHash" | "createdAt" | "submitter"
   > &
     ProposalDataLight & {
       metadata?: Maybe<Pick<ProposalMetadata, "title">>;
@@ -80,7 +81,7 @@ export function ProposalCard({
 
   const metadata = proposalData.metadata ?? metadataResult;
 
-  const { id, proposalNumber, proposalStatus, requestedAmount, beneficiary } =
+  const { id, proposalNumber, proposalStatus, requestedAmount, submitter } =
     proposalData;
   const pathname = usePathname();
 
@@ -119,7 +120,7 @@ export function ProposalCard({
     (thresholdPct ?? 0) - (totalSupportPct ?? 0)
   ).toFixed(2);
 
-  const readyToBeExecuted = (currentConvictionPct ?? 0) >= (thresholdPct ?? 0);
+  const readyToBeExecuted = (currentConvictionPct ?? 0) > (thresholdPct ?? 0);
 
   const proposalWillPass =
     Number(supportNeededToPass) < 0 &&
@@ -189,10 +190,16 @@ export function ProposalCard({
               </div>
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1">
+                  <div
+                    className="flex items-center gap-1"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                    }}
+                  >
                     <p>By</p>
                     <EthAddress
-                      address={beneficiary as Address}
+                      address={submitter as Address}
                       shortenAddress={true}
                       actions="copy"
                       textColor="var(--color-grey-900)"

@@ -2,15 +2,11 @@
 
 import React from "react";
 import { useState } from "react";
-import {
-  Bars3BottomLeftIcon,
-  XMarkIcon,
-  EllipsisHorizontalIcon,
-} from "@heroicons/react/24/outline";
+import {} from "@heroicons/react/24/outline";
 import Image from "next/image";
 import Link from "next/link";
 import { newLogo } from "@/assets";
-import { ConnectWallet } from "@/components";
+import { Badge, ConnectWallet } from "@/components";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -95,6 +91,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             {/* Main content */}
             {children}
           </div>
+        </div>
+      </div>
+      {/* Bootom right floating div */}
+
+      <div className="fixed bottom-4 left-4 z-50">
+        <div
+          className="tooltip tooltip-top-right tooltip-warning"
+          data-tip="️️Disclaimer: our smart contracts have not undergone a third party security audit, use at your own risk."
+        >
+          <Badge status={2}>Beta</Badge>
         </div>
       </div>
     </div>

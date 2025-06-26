@@ -354,6 +354,7 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
       createdAt
       blockLast
       threshold
+      submitter
       strategy {
         id
         maxCVSupply

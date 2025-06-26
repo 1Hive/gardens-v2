@@ -95,7 +95,7 @@ export function RegisterMember({
     () => [
       {
         condition: !isMember && !accountHasBalance,
-        message: "Connected account has insufficient balance",
+        message: "Insufficient balance",
       },
     ],
     [isMember, accountHasBalance],
@@ -121,8 +121,7 @@ export function RegisterMember({
     resetState: handleAllowanceResetState,
   } = useHandleAllowance(
     accountAddress,
-    token.address as Address,
-    token.symbol,
+    token,
     communityAddress as Address,
     registrationCost,
     handleRegistration,
@@ -190,7 +189,7 @@ export function RegisterMember({
       <div className="flex gap-4">
         <div className="flex items-center justify-center">
           <Button {...buttonProps} className="">
-            {isMember ? "Leave community" : "Register in community"}
+            {isMember ? "Leave" : "Join"}
           </Button>
         </div>
       </div>

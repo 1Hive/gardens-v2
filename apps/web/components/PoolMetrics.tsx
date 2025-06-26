@@ -1,19 +1,18 @@
 "use client";
 
 import { FC, useEffect, useState } from "react";
+import { PlusIcon } from "@heroicons/react/24/outline";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import sfMeta from "@superfluid-finance/metadata";
 import { erc20ABI } from "@wagmi/core";
 import { round } from "lodash-es";
-import Image from "next/image";
 import { parseUnits } from "viem";
 import { Address, useAccount, useBalance } from "wagmi";
-import { Allo, CVStrategy } from "#/subgraph/.graphclient";
+import { CVStrategy } from "#/subgraph/.graphclient";
 import { Button } from "./Button";
 import { DisplayNumber } from "./DisplayNumber";
 import { FormInput } from "./Forms";
 import { TransactionModal, TransactionProps } from "./TransactionModal";
-import { SuperfluidStream } from "@/assets";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useHandleAllowance } from "@/hooks/useHandleAllowance";
@@ -33,8 +32,8 @@ interface PoolMetricsProps {
     balance: bigint;
   };
   communityAddress: Address;
-  alloInfo: Allo;
-  chainId: string;
+  poolId: number;
+  chainId: number;
 }
 
 const secondsToMonth = 60 * 60 * 24 * 30;
@@ -193,19 +192,31 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     },
   });
 
-  const { allowanceTxProps: allowanceTx, handleAllowance } = useHandleAllowance(
+  const {
+    allowanceTxProps: wrapAllowanceTx,
+    handleAllowance: handleWrapAllowance,
+  } = useHandleAllowance(
     accountAddress,
-    poolToken.address as Address,
-    poolToken.symbol,
+    poolToken,
     config.superfluidToken as Address,
     requestedAmountBn,
-    () => writeWrapFunds(),
+    () => writeFundPool(),
   );
+
+  const { data: walletBalance } = useBalance({
+    address: accountAddress,
+    formatUnits: poolToken.decimals,
+    token: poolToken.address as Address,
+    watch: true,
+    chainId: chainId,
+  });
+  const hasInsufficientBalance =
+    !!walletBalance?.formatted && +walletBalance.formatted < amount;
 
   const { tooltipMessage, isButtonDisabled } = useDisableButtons([
     {
       message: "Connected account has insufficient balance",
-      condition: !!poolToken.balance && poolToken.balance < requestedAmountBn,
+      condition: hasInsufficientBalance,
     },
     {
       message: "Amount must be greater than 0",
@@ -261,7 +272,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
       status: "idle",
     }));
     setIsStreamModalOpen(true);
-    handleAllowance({
+    handleWrapAllowance({
       formAmount: parseUnits(amount.toString(), poolToken.decimals),
     });
   };
@@ -278,7 +289,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
       status: "idle",
     }));
     setIsStreamModalOpen(true);
-    handleAllowance({
+    handleWrapAllowance({
       formAmount: parseUnits(amount.toString(), poolToken.decimals),
     });
   };
@@ -296,7 +307,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     <section>
       <TransactionModal
         label={`Stream funds in pool #${poolId}`}
-        transactions={[allowanceTx, wrapFundsTx, streamFundsTx]}
+        transactions={[wrapAllowanceTx, wrapFundsTx, streamFundsTx]}
         isOpen={isStreamModalOpen}
         onClose={() => setIsStreamModalOpen(false)}
       >
@@ -309,156 +320,137 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
           <p>for 1 month</p>
         </div>
       </TransactionModal>
-      <section className="section-layout gap-2 flex flex-col">
-        <div className="flex items-center justify-between">
-          <h2>Pool Funds</h2>
-          {/* {poolId && elegibleGG23pools.includes(Number(poolId)) && (
-            <div className="flex flex-col items-center gap-2 py-2">
-              <Image
-                src={GitcoinMatchingLogo}
-                alt="Gitcoin Matching Logo"
-                width={100}
-                height={60}
-              />
-              <p className="text-primary-content text-md font-bold">
-                Eligible for GG23 matching
-              </p>
-            </div>
-          )} */}
-        </div>
-        <div className="flex justify-between items-center flex-wrap">
-          <div className="flex flex-col gap-2">
-            <div className="flex gap-3 items-center">
-              <p className="subtitle2">Funds in pool:</p>
-              <DisplayNumber
-                number={[poolToken.balance, poolToken.decimals]}
-                tokenSymbol={poolToken.symbol}
-                compact={true}
-                valueClassName="subtitle2 text-primary-content"
-              />
-              {currentFlowRate && currentFlowRate > 0n && (
-                <div
-                  className="tooltip"
-                  data-tip={`Incoming Superfluid stream (+${currentFlowPerMonth}/month)`}
-                >
-                  <Image
-                    src={SuperfluidStream}
-                    alt="Incoming Stream"
-                    width={40}
-                    height={40}
-                    className="mb-1"
-                  />
-                </div>
-              )}
-            </div>
-            {accountAddress && (
-              <div className="flex gap-3">
-                <p className="subtitle2">Wallet balance:</p>
-                <DisplayNumber
-                  number={[poolToken.balance, poolToken.decimals]}
-                  tokenSymbol={poolToken.symbol}
-                  compact={true}
-                  valueClassName="text-black text-lg"
-                  symbolClassName="text-sm text-black"
-                />
-              </div>
-            )}
-          </div>
-          <div className="flex gap-2 flex-wrap">
-            <FormInput
-              type="number"
-              placeholder="0"
-              required
-              value={amount}
-              onChange={(e) => setAmount(Number(e.target.value))}
-              suffix={poolToken.symbol}
-              step={0.000000000000000001}
-              otherProps={{
-                max: balance?.formatted,
-              }}
-              registerOptions={{
-                max: {
-                  value: balance?.formatted ?? 0,
-                  message: "Insufficient balance",
-                },
-              }}
-            />
+      <div className="col-span-12 lg:col-span-3 h-fit">
+        <div className="backdrop-blur-sm rounded-lg">
+          <h3>Pool Funds</h3>
+          {/* Input + Add funds Button */}
+
+          <FormInput
+            type="number"
+            placeholder="0"
+            required
+            value={amount}
+            onChange={(e) => setAmount(Number(e.target.value))}
+            suffix={poolToken.symbol}
+            step={0.000000000000000001}
+            otherProps={{
+              max: walletBalance?.formatted ? +walletBalance.formatted : 0,
+            }}
+            registerOptions={{
+              max: {
+                value: +hasInsufficientBalance,
+                message: "Insufficient balance",
+              },
+            }}
+          />
+          <div className="w-full">
             <Button
-              type="button"
+              type="submit"
               btnStyle="outline"
               color="primary"
               disabled={isButtonDisabled}
               tooltip={tooltipMessage}
-              isLoading={isSendFundsLoading}
-              onClick={(ev) => {
-                ev.preventDefault();
-                writeFundPool();
-              }}
+              icon={<PlusIcon className="w-5 h-5" />}
+              className="w-full mt-1"
             >
               Add Funds
             </Button>
-            {config.superfluidToken &&
-              (currentUserFlowRate ?
-                amount ?
-                  <Button
-                    type="button"
-                    btnStyle="outline"
-                    color="secondary"
-                    disabled={!accountAddress}
-                    tooltip={
-                      !accountAddress ?
-                        "Connect your wallet"
-                      : `Connected wallet is already streaming funds to this pool (${currentUserFlowPerMonth}/month). Click to replace stream with new amount.`
-                    }
-                    showToolTip={true}
-                    isLoading={isEditStreamLoading}
-                    onClick={async (ev) => {
-                      ev.preventDefault();
-                      handleStreamEdit();
-                    }}
-                  >
-                    Replace stream
-                  </Button>
-                : <Button
-                    type="button"
-                    btnStyle="outline"
-                    color="danger"
-                    disabled={!accountAddress}
-                    tooltip={
-                      !accountAddress ?
-                        "Connect your wallet"
-                      : `Connected wallet is already streaming funds to this pool (${currentUserFlowPerMonth}/month). Click to stop the stream.`
-                    }
-                    showToolTip={true}
-                    onClick={async (ev) => {
-                      ev.preventDefault();
-                      writeStopStream();
-                    }}
-                    isLoading={isStopStreamLoading}
-                  >
-                    Stop stream
-                  </Button>
-              : <Button
+          </div>
+        </div>
+        <div className="flex gap-2 flex-wrap">
+          <FormInput
+            type="number"
+            placeholder="0"
+            required
+            value={amount}
+            onChange={(e) => setAmount(Number(e.target.value))}
+            suffix={poolToken.symbol}
+            step={0.000000000000000001}
+            otherProps={{
+              max: balance?.formatted,
+            }}
+            registerOptions={{
+              max: {
+                value: balance?.formatted ?? 0,
+                message: "Insufficient balance",
+              },
+            }}
+          />
+          <Button
+            type="button"
+            btnStyle="outline"
+            color="primary"
+            disabled={isButtonDisabled}
+            tooltip={tooltipMessage}
+            isLoading={isSendFundsLoading}
+            onClick={(ev) => {
+              ev.preventDefault();
+              writeFundPool();
+            }}
+          >
+            Add Funds
+          </Button>
+          {config.superfluidToken &&
+            (currentUserFlowRate ?
+              amount ?
+                <Button
                   type="button"
                   btnStyle="outline"
                   color="secondary"
-                  disabled={isButtonDisabled}
+                  disabled={!accountAddress}
                   tooltip={
-                    tooltipMessage ??
-                    `Click to stream funds to this pool (${amount}/month)`
+                    !accountAddress ?
+                      "Connect your wallet"
+                    : `Connected wallet is already streaming funds to this pool (${currentUserFlowPerMonth}/month). Click to replace stream with new amount.`
+                  }
+                  showToolTip={true}
+                  isLoading={isEditStreamLoading}
+                  onClick={async (ev) => {
+                    ev.preventDefault();
+                    handleStreamEdit();
+                  }}
+                >
+                  Replace stream
+                </Button>
+              : <Button
+                  type="button"
+                  btnStyle="outline"
+                  color="danger"
+                  disabled={!accountAddress}
+                  tooltip={
+                    !accountAddress ?
+                      "Connect your wallet"
+                    : `Connected wallet is already streaming funds to this pool (${currentUserFlowPerMonth}/month). Click to stop the stream.`
                   }
                   showToolTip={true}
                   onClick={async (ev) => {
                     ev.preventDefault();
-                    handleStreamFunds();
+                    writeStopStream();
                   }}
-                  isLoading={isStreamFundsLoading}
+                  isLoading={isStopStreamLoading}
                 >
-                  Stream funds
-                </Button>)}
-          </div>
+                  Stop stream
+                </Button>
+            : <Button
+                type="button"
+                btnStyle="outline"
+                color="secondary"
+                disabled={isButtonDisabled}
+                tooltip={
+                  tooltipMessage ??
+                  `Click to stream funds to this pool (${amount}/month)`
+                }
+                showToolTip={true}
+                onClick={async (ev) => {
+                  ev.preventDefault();
+                  handleStreamFunds();
+                }}
+                isLoading={isStreamFundsLoading}
+              >
+                Stream funds
+              </Button>)}
         </div>
-      </section>
+      </div>
     </section>
   );
 };

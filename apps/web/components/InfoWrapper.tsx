@@ -9,6 +9,7 @@ type InfoWrapperProps = {
   size?: "sm" | "md" | "lg";
   hoverOnChildren?: boolean;
   hideIcon?: boolean;
+  contentFlex?: boolean;
 };
 
 const sizeMap = {
@@ -25,17 +26,22 @@ export function InfoWrapper({
   size = "md",
   hoverOnChildren = false,
   hideIcon = false,
+  contentFlex = false,
 }: InfoWrapperProps): JSX.Element {
   const { width, height } = sizeMap[size];
 
   return (
-    <div className="flex gap-1 items-center mx-1">
-      {!hoverOnChildren && <span>{children}</span>}
+    <div className="flex gap-1 items-center mx-1 h-fit">
+      {!hoverOnChildren && (
+        <div className={`${contentFlex ? "flex-1" : ""}`}>{children}</div>
+      )}
       <div
         className={`tooltip flex gap-1 cursor-pointer items-center [&>svg]:text-primary-content max-w-sm [&>svg]:stroke-2 ${className}`}
         data-tip={tooltip}
       >
-        {hoverOnChildren && <span>{children}</span>}
+        {hoverOnChildren && (
+          <div className={`${contentFlex ? "flex-1" : ""}`}>{children}</div>
+        )}
         {!hideIcon &&
           (customIcon ?? (
             <InformationCircleIcon width={width} height={height} />

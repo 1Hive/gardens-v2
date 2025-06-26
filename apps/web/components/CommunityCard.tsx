@@ -102,7 +102,7 @@ export function CommunityCard({
 
 export function CommunityCardSkeleton() {
   return (
-    <Card href="#" className="w-[275px] sm:min-w-[313px]">
+    <Card href="#" className="min-w-[313px]">
       <div className="flex justify-between text-neutral-content text-sm">
         <div className="skeleton [--fallback-b3:#f0f0f0] mb-2 h-[100px] w-[100px]" />
         <div className="flex flex-col gap-1">

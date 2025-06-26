@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { Address } from "viem";
+import { Address, zeroAddress } from "viem";
 import { useBalance } from "wagmi";
 import {
   getAlloQuery,
@@ -117,7 +117,10 @@ export default function Page({
   const { data: poolAmount } = useBalance({
     address: strategyObj?.id as Address,
     token: poolTokenAddr,
-    enabled: !!strategyObj?.id,
+    enabled:
+      !!strategyObj?.id &&
+      PoolTypes[strategyObj.config.proposalType] !== "signaling" &&
+      poolTokenAddr !== zeroAddress,
     watch: true,
   });
 
@@ -132,7 +135,7 @@ export default function Page({
       }
     : undefined;
 
-  if (!poolToken || (!poolToken && PoolTypes[proposalType] === "funding")) {
+  if (!strategyObj || (!poolToken && PoolTypes[proposalType] === "funding")) {
     return (
       <div className="mt-96 col-span-12">
         <LoadingSpinner />
@@ -170,6 +173,7 @@ export default function Page({
               alloInfo={alloInfo}
               poolId={poolId}
               poolToken={poolToken}
+              chainId={Number(chain)}
             />
           )}
         </>

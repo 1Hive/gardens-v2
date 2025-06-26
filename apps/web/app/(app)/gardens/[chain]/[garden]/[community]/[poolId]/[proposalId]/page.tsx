@@ -2,9 +2,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   AdjustmentsHorizontalIcon,
-  InformationCircleIcon,
-  UserIcon,
-  CheckCircleIcon,
   XMarkIcon,
   CheckIcon,
   BoltIcon,
@@ -278,6 +275,7 @@ export default function Page({
   const status = ProposalStatus[proposalData.proposalStatus];
   return (
     <>
+      {/* main section */}
       <section className="col-span-12 lg:col-span-9">
         {/* Main Section */}
         <div
@@ -356,25 +354,24 @@ export default function Page({
               {/* Conviction Progress */}
               {proposalData.strategy.isEnabled && (
                 <div className=" mt-2">
-                  {status === "active" ||
-                    (status === "disputed" && (
-                      <>
-                        <h4>Progress</h4>
-                        <div className="flex flex-col gap-2">
-                          <ConvictionBarChart
-                            currentConvictionPct={currentConvictionPct}
-                            thresholdPct={thresholdPct}
-                            proposalSupportPct={totalSupportPct}
-                            isSignalingType={isSignalingType}
-                            proposalNumber={Number(proposalIdNumber)}
-                            timeToPass={Number(timeToPass)}
-                            onReadyToExecute={triggerConvictionRefetch}
-                            defaultChartMaxValue
-                            proposalStatus={proposalStatus}
-                          />
-                        </div>
-                      </>
-                    ))}
+                  {(status === "active" || status === "disputed") && (
+                    <>
+                      <h4>Progress</h4>
+                      <div className="flex flex-col gap-2">
+                        <ConvictionBarChart
+                          currentConvictionPct={currentConvictionPct}
+                          thresholdPct={thresholdPct}
+                          proposalSupportPct={totalSupportPct}
+                          isSignalingType={isSignalingType}
+                          proposalNumber={Number(proposalIdNumber)}
+                          timeToPass={Number(timeToPass)}
+                          onReadyToExecute={triggerConvictionRefetch}
+                          defaultChartMaxValue
+                          proposalStatus={proposalStatus}
+                        />
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
             </div>
@@ -384,68 +381,57 @@ export default function Page({
             <InfoBox infoBoxType="warning">The pool is not enabled.</InfoBox>
           )}
 
-          <div className="w-full h-[0.10px] bg-neutral-soft-content" />
-
           {/* Action Buttons */}
-          <div className="flex flex-col gap-2 -mt-2">
-            <h6>Actions</h6>
-            <div className="flex items-center gap-4 w-full">
-              <Button
-                icon={<AdjustmentsHorizontalIcon height={18} width={18} />}
-                onClick={() => manageSupportClicked()}
-                disabled={!isConnected || missmatchUrl || !isMemberCommunity}
-                tooltip={tooltipMessage}
-                className="w-full"
-              >
-                Manage support
-              </Button>
-              {status === "active" && !isSignalingType && (
+          {status && status === "active" && (
+            <div className="flex flex-col gap-2 -mt-2">
+              <div className="w-full h-[0.10px] bg-neutral-soft-content" />
+              <h6>Actions</h6>
+              <div className="flex items-center gap-4 w-full">
                 <Button
-                  icon={<BoltIcon height={18} width={18} />}
+                  icon={<AdjustmentsHorizontalIcon height={18} width={18} />}
+                  onClick={() => manageSupportClicked()}
+                  disabled={!isConnected || missmatchUrl || !isMemberCommunity}
+                  tooltip={tooltipMessage}
                   className="w-full"
-                  onClick={() =>
-                    writeDistribute?.({
-                      args: [
-                        BigInt(poolId),
-                        [proposalData?.strategy.id as Address],
-                        encodedDataProposalId(proposalIdNumber),
-                      ],
-                    })
-                  }
-                  disabled={
-                    !isConnected ||
-                    missmatchUrl ||
-                    currentConvictionPct <= thresholdPct ||
-                    proposalStatus === "disputed"
-                  }
-                  tooltip={
-                    tooltipMessage ?? currentConvictionPct <= thresholdPct ?
-                      "Proposal has not reached the threshold yet"
-                    : undefined
-                  }
                 >
-                  Execute
+                  Manage support
                 </Button>
-              )}
+                {!isSignalingType && (
+                  <Button
+                    icon={<BoltIcon height={18} width={18} />}
+                    className="w-full"
+                    onClick={() =>
+                      writeDistribute?.({
+                        args: [
+                          BigInt(poolId),
+                          [proposalData?.strategy.id as Address],
+                          encodedDataProposalId(proposalIdNumber),
+                        ],
+                      })
+                    }
+                    disabled={
+                      !isConnected ||
+                      missmatchUrl ||
+                      currentConvictionPct <= thresholdPct ||
+                      proposalStatus === "disputed"
+                    }
+                    tooltip={
+                      tooltipMessage ?? currentConvictionPct <= thresholdPct ?
+                        "Proposal has not reached the threshold yet"
+                      : undefined
+                    }
+                  >
+                    Execute
+                  </Button>
+                )}
+              </div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Proposal Description */}
-      <section className="px-8 col-span-12 lg:col-span-9 mt-6 flex flex-col gap-6">
-        <h3>Proposal Description</h3>
-        <div>
-          <Skeleton rows={5} isLoading={!metadata}>
-            <MarkdownWrapper>
-              {metadata?.description ?? "No description found"}
-            </MarkdownWrapper>
-          </Skeleton>
+          )}
         </div>
       </section>
 
       {/* Right side */}
-      <div className="col-span-12 lg:col-span-3 lg:-mt-[500px]">
+      <div className="col-span-12 lg:col-span-3">
         <div className="backdrop-blur-sm rounded-lg flex flex-col gap-4 sticky top-32">
           <section className="section-layout gap-4 flex flex-col">
             <div className="flex items-center justify-between">
@@ -456,41 +442,41 @@ export default function Page({
               <div className="flex flex-col gap-2">
                 {!isSignalingType && (
                   <>
-                    {status === "executed" ?
-                      <div className="flex items-center gap-2">
-                        <CheckIcon className="w-5 h-5 text-primary-content" />
-                        <p className="text-primary-content subtitle2">
-                          Passed and Executed
-                        </p>
-                      </div>
-                    : status === "cancelled" ?
-                      <div className="flex items-center gap-2">
-                        <XMarkIcon className="w-5 h-5 text-error-content" />
-                        <p className="text-error-content subtitle2">
-                          Cancelled
-                        </p>
-                      </div>
-                    : <>
-                        <p className="subtitle2">ESTIMATED TIME UNTIL PASS</p>
+                    {
+                      status === "executed" ?
                         <div className="flex items-center gap-2">
-                          <span>
-                            {currentConvictionPct > thresholdPct ?
-                              <CheckIcon className="w-5 h-5 text-primary-content" />
-                            : <XMarkIcon className="w-5 h-5 text-error-content" />
-                            }
-                          </span>
-                          <span
-                            className={`${currentConvictionPct > thresholdPct ? "text-primary-content" : "text-error-content"} `}
-                          >{`${currentConvictionPct > thresholdPct ? "WILL" : "WONT"} PASS`}</span>
+                          <CheckIcon className="w-5 h-5 text-primary-content" />
+                          <p className="text-primary-content subtitle2">
+                            Passed and Executed
+                          </p>
                         </div>
-                        <Statistic className="text-2xl font-bold">
-                          {timeToPass && (
-                            <span className="text-black">
-                              {prettyTimestamp(timeToPass)}
-                            </span>
-                          )}
-                        </Statistic>
-                      </>
+                      : status === "cancelled" ?
+                        <div className="flex items-center gap-2">
+                          <XMarkIcon className="w-5 h-5 text-error-content" />
+                          <p className="text-error-content subtitle2">
+                            Cancelled
+                          </p>
+                        </div>
+                      : null
+                      // <p className="subtitle2">ESTIMATED TIME UNTIL PASS</p>
+                      // <div className="flex items-center gap-2">
+                      //   <span>
+                      //     {currentConvictionPct > thresholdPct ?
+                      //       <CheckIcon className="w-5 h-5 text-primary-content" />
+                      //     : <XMarkIcon className="w-5 h-5 text-error-content" />
+                      //     }
+                      //   </span>
+                      //   <span
+                      //     className={`${currentConvictionPct > thresholdPct ? "text-primary-content" : "text-error-content"} `}
+                      //   >{`${currentConvictionPct > thresholdPct ? "WILL" : "WONT"} PASS`}</span>
+                      // </div>
+                      // <Statistic className="text-2xl font-bold">
+                      //   {timeToPass && (
+                      //     <span className="text-black">
+                      //       {prettyTimestamp(timeToPass)}
+                      //     </span>
+                      //   )}
+                      // </Statistic>
                     }
                   </>
                 )}
@@ -525,7 +511,7 @@ export default function Page({
             </section>
           )}
 
-          {/* {filteredAndSortedProposalSupporters.length > 0 && (
+          {filteredAndSortedProposalSupporters.length > 0 && (
             <section className="max-h-10">
               <ProposalSupportersTable
                 supporters={filteredAndSortedProposalSupporters}
@@ -535,9 +521,21 @@ export default function Page({
                 totalStakedAmount={totalSupportPct}
               />
             </section>
-          )} */}
+          )}
         </div>
       </div>
+
+      {/* Proposal Description */}
+      <section className="px-8 col-span-12 lg:col-span-9 mt-6 flex flex-col gap-6">
+        <h3>Proposal Description</h3>
+        <div>
+          <Skeleton rows={5} isLoading={!metadata}>
+            <MarkdownWrapper>
+              {metadata?.description ?? "No description found"}
+            </MarkdownWrapper>
+          </Skeleton>
+        </div>
+      </section>
     </>
   );
 }
@@ -561,21 +559,22 @@ const ProposalSupportersTable = ({
       render: (supporter: ProposalSupporter) => (
         <EthAddress
           address={supporter.id as Address}
-          actions="copy"
-          shortenAddress={false}
+          actions="none"
+          shortenAddress={true}
           icon="ens"
+          textColor="var(--color-grey-900)"
         />
       ),
     },
+    // {
+    //   header: "Role",
+    //   render: (supporter: ProposalSupporter) =>
+    //     supporter.id === beneficiary ? "Beneficiary"
+    //     : supporter.id === submitter ? "Submitter"
+    //     : "Member",
+    // },
     {
-      header: "Role",
-      render: (supporter: ProposalSupporter) =>
-        supporter.id === beneficiary ? "Beneficiary"
-        : supporter.id === submitter ? "Submitter"
-        : "Member",
-    },
-    {
-      header: "Support",
+      header: "",
       render: (supporter: ProposalSupporter) =>
         totalActivePoints > 0 ?
           `${calculatePercentageBigInt(
@@ -583,33 +582,24 @@ const ProposalSupportersTable = ({
             BigInt(totalActivePoints),
           )} %`
         : undefined,
-      className: "text-center",
+      className: "flex items-center justify-center",
     },
   ];
 
   return (
     <DataTable
-      title="Supported By"
-      description="A list of all the community members that are supporting this proposal."
+      // title="Supported By"
+      // description="A list of all the community members that are supporting this proposal."
       data={supporters}
       columns={columns}
       footer={
         //
-        <div className="flex justify-between py-2 border-neutral-soft-content">
-          <p className="subtitle">Total Support:</p>
-          <p className="subtitle pr-0 sm:pr-14 lg:pr-16">
-            {totalStakedAmount} %
-          </p>
+        <div className="flex justify-between">
+          <p className="">Total Support:</p>
+          <p className="">{totalStakedAmount} %</p>
         </div>
       }
+      className="border1 rounded-lg bg-neutral"
     />
   );
 };
-
-//  <h4
-//                     className={`text-center ${status === "executed" ? "text-primary-content" : "text-error-content"}`}
-//                   >
-//                     {status === "executed" ?
-//                       "Proposal passed and executed successfully!"
-//                     : `Proposal has been ${status}.`}
-//                   </h4>

@@ -61,6 +61,7 @@ import {
   parseToken,
   SCALE_PRECISION,
   SCALE_PRECISION_DECIMALS,
+  calculatePercentageBigInt,
 } from "@/utils/numbers";
 
 type MembersStaked = {
@@ -176,7 +177,7 @@ export default function Page({
       .finally(() => {
         isFetchingNFT.current = false;
       });
-  }, [councilMembers, result?.registryCommunity!.councilSafe]);
+  }, [councilMembers, result?.registryCommunity?.councilSafe]);
 
   const { data: isMemberResult } = useSubgraphQuery<isMemberQuery>({
     query: isMemberDocument,
@@ -491,7 +492,7 @@ export default function Page({
           </header>
 
           {/* Pools Section */}
-          <section className="flex flex-col gap-10 p-6">
+          <section className="flex flex-col gap-10 py-4">
             <header className="flex  items-center justify-between ">
               <h2>Pools</h2>
               <Link
@@ -605,19 +606,30 @@ const CommunityDetailsTable = ({
         <EthAddress
           address={memberData.memberAddress as Address}
           actions="copy"
-          shortenAddress={false}
+          shortenAddress={true}
           icon="ens"
+          textColor="var(--color-grey-900)"
         />
       ),
     },
     {
       header: "Staked tokens",
       render: (memberData: MembersStaked) => (
-        <DisplayNumber
-          number={[BigInt(memberData.stakedTokens), tokenGarden.decimals]}
-          compact={true}
-          tokenSymbol={tokenGarden.symbol}
-        />
+        <div className="flex items-baseline gap-2">
+          <p className="text-xs">
+            (
+            {calculatePercentageBigInt(
+              BigInt(memberData.stakedTokens),
+              BigInt(communityStakedTokens),
+            )}
+            %)
+          </p>
+          <DisplayNumber
+            number={[BigInt(memberData.stakedTokens), tokenGarden.decimals]}
+            compact={true}
+            tokenSymbol={tokenGarden.symbol}
+          />
+        </div>
       ),
       className: "flex justify-end",
     },
@@ -631,7 +643,7 @@ const CommunityDetailsTable = ({
       columns={columns}
       className="max-h-screen overflow-y-scroll w-full"
       footer={
-        <div className="flex justify-between py-2 border-neutral-soft-content">
+        <div className="flex justify-between py-2">
           <p className="subtitle">Total Staked:</p>
           <DisplayNumber
             number={[BigInt(communityStakedTokens), tokenGarden.decimals]}

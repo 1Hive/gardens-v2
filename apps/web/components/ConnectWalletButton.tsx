@@ -14,13 +14,7 @@ import cn from "classnames";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { isAddress } from "viem";
-import {
-  arbitrum,
-  arbitrumSepolia,
-  base,
-  mainnet,
-  optimism,
-} from "viem/chains";
+import { arbitrum, base, mainnet, optimism } from "viem/chains";
 import {
   Address,
   useAccount,
@@ -31,17 +25,14 @@ import {
   useEnsName,
   useSwitchNetwork,
 } from "wagmi";
-import { getMemberDocument, getMemberQuery } from "#/subgraph/.graphclient";
 import TooltipIfOverflow from "./TooltipIfOverflow";
 import { isSafeAvatarUrl } from "@/app/api/utils";
 import { BeeKeeperNFT, FirstHolderNFT, ProtopianNFT } from "@/assets";
 import { walletIcon } from "@/assets";
 import { Button, DisplayNumber } from "@/components";
 import { ChainIcon } from "@/configs/chains";
-import { isProd } from "@/configs/isProd";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useOwnerOfNFT } from "@/hooks/useOwnerOfNFT";
-import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { formatAddress } from "@/utils/formatAddress";
 
 export function ConnectWallet() {
@@ -70,15 +61,6 @@ export function ConnectWallet() {
     enabled: account.isConnected,
   });
 
-  const { data: result } = useSubgraphQuery<getMemberQuery>({
-    chainId: isProd ? arbitrum.id : arbitrumSepolia.id,
-    query: getMemberDocument,
-    variables: {
-      me: account.address?.toLowerCase(),
-    },
-    enabled: account.isConnected,
-  });
-
   const nfts = useMemo(
     () =>
       [
@@ -98,7 +80,7 @@ export function ConnectWallet() {
           hasNFT: !!isFirstHolder,
         },
       ].filter((nft) => nft.hasNFT),
-    [result, isFirstHolder],
+    [isFirstHolder],
   );
 
   const [selectedNFTIndex, setSelectedNFTIndex] = useState(0);
