@@ -3,7 +3,7 @@
 import React from "react";
 import {
   CheckBadgeIcon,
-  RectangleGroupIcon,
+  CircleStackIcon,
   UserGroupIcon,
 } from "@heroicons/react/24/outline";
 import Image from "next/image";
@@ -92,7 +92,7 @@ export function CommunityCard({
         />
         <Statistic
           label="pools"
-          icon={<RectangleGroupIcon />}
+          icon={<CircleStackIcon />}
           count={poolsCount}
         />
       </div>

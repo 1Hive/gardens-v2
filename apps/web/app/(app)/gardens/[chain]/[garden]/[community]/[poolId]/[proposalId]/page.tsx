@@ -350,12 +350,12 @@ export default function Page({
               </header>
               {/* Divider */}
 
-              {/* <div className="w-full h-[0.10px] bg-neutral-soft-content" /> */}
               {/* Conviction Progress */}
               {proposalData.strategy.isEnabled && (
-                <div className=" mt-2">
+                <div className="">
                   {(status === "active" || status === "disputed") && (
-                    <>
+                    <div className="flex flex-col gap-2">
+                      <div className="w-full h-[0.10px] bg-neutral-soft-content" />
                       <h4>Progress</h4>
                       <div className="flex flex-col gap-2">
                         <ConvictionBarChart
@@ -370,7 +370,7 @@ export default function Page({
                           proposalStatus={proposalStatus}
                         />
                       </div>
-                    </>
+                    </div>
                   )}
                 </div>
               )}
@@ -385,7 +385,7 @@ export default function Page({
           {status && status === "active" && (
             <div className="flex flex-col gap-2 -mt-2">
               <div className="w-full h-[0.10px] bg-neutral-soft-content" />
-              <h6>Actions</h6>
+              <h6 className="mt-4">Actions</h6>
               <div className="flex items-center gap-4 w-full">
                 <Button
                   icon={<AdjustmentsHorizontalIcon height={18} width={18} />}

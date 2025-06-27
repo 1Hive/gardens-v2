@@ -60,14 +60,14 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
 
     1: "Capped voting system. Your governance weight increase with more tokens staked, but only up to a limit.",
 
-    2: "Unlimited voting system. Your governance weight is equal to your tokens staked tokens in the community.",
+    2: "Unlimited voting system. Your governance weight is equal to your total staked tokens in the community.",
 
     3: "Quadratic voting system. Your governance weight is equal to the square root of your stake in the community.",
   };
 
   return (
     <>
-      <section className="section-layout flex flex-col gap-4 mb-10 ">
+      <section className={"section-layout flex flex-col gap-4"}>
         <header className="flex justify-between flex-wrap">
           <h3>Governance</h3>
           <Badge status={memberActivatedStrategy ? 1 : 0} />
@@ -114,7 +114,7 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
         />
 
         {/* Activate-Deactivate Button */}
-        <div className="flex flex-col gap-2">
+        <div className="flex items-center flex-col gap-2">
           <CheckPassport
             strategy={strategy}
             enableCheck={!memberActivatedStrategy}
