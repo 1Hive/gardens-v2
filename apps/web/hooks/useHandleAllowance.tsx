@@ -62,7 +62,7 @@ export function useHandleAllowance(
     if (args.formAmount) {
       amount = args.formAmount;
     }
-    if (currentAllowance?.data && currentAllowance.data > amount) {
+    if (currentAllowance?.data && currentAllowance.data >= amount) {
       await delayAsync(1000);
       setAllowanceTxProps((x) => ({
         ...x,

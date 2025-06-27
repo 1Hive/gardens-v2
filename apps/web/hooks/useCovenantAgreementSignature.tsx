@@ -41,7 +41,11 @@ export function useCovenantAgreementSignature(
       status: "idle",
     }));
 
-  const { signMessage, isLoading } = useSignMessage({
+  const {
+    signMessage,
+    isLoading,
+    data: signedMessage,
+  } = useSignMessage({
     message: message,
     onSettled(data, error) {
       const customError = error as CustomError;
@@ -74,6 +78,20 @@ export function useCovenantAgreementSignature(
 
   return {
     covenantAgreementTxProps,
-    handleSignature: signMessage,
+    handleSignature: () => {
+      setCovenantAgreementTxProps({
+        contractName: CovenantTitle,
+        message: getTxMessage("idle"),
+        status: "idle",
+      });
+      if (signedMessage) {
+        setCovenantAgreementTxProps({
+          contractName: CovenantTitle,
+          message: getTxMessage("success"),
+          status: "success",
+        });
+        triggerNextTx({ covenantSignature: signedMessage });
+      } else signMessage();
+    },
   };
 }
