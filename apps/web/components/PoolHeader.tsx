@@ -190,6 +190,7 @@ export default function PoolHeader({
   const pointSystem = strategy.config.pointSystem;
   const allowList = strategy.config.allowlist;
   const rulingTime = arbitrableConfig.defaultRulingTimeout;
+  const isFundingPool = PoolTypes[proposalType] === "funding";
 
   const proposalOnDispute = strategy.proposals?.some(
     (proposal) => ProposalStatus[proposal.proposalStatus] === "disputed",
@@ -253,10 +254,7 @@ export default function PoolHeader({
     },
   ];
   const filteredPoolConfig =
-    (
-      PoolTypes[proposalType] === "signaling" &&
-      PointSystems[pointSystem] !== "capped"
-    ) ?
+    !isFundingPool && PointSystems[pointSystem] !== "capped" ?
       poolConfig.filter(
         (config) =>
           !!config.value &&
@@ -267,7 +265,7 @@ export default function PoolHeader({
             "Max voting weight",
           ].includes(config.label),
       )
-    : PoolTypes[proposalType] === "signaling" ?
+    : !isFundingPool ?
       poolConfig.filter(
         (config) =>
           !!config.value &&
@@ -370,7 +368,7 @@ export default function PoolHeader({
 
   return (
     <div
-      className={`col-span-12 ${PoolTypes[proposalType] === "funding" ? "lg:col-span-9" : "lg:col-span-12"}`}
+      className={`col-span-12 ${!isFundingPool ? "lg:col-span-9" : "lg:col-span-12"}`}
     >
       <section className="section-layout flex flex-col gap-6">
         {/* Title - Badge poolType - Addresses and Button(when council memeber is connected) */}
@@ -510,7 +508,7 @@ export default function PoolHeader({
             isOpen={isOpenModal}
             onClose={() => setIsOpenModal(false)}
           >
-            {!!passportStrategyData && poolToken && (
+            {!!passportStrategyData && (!isFundingPool || poolToken) && (
               <PoolEditForm
                 strategy={strategy}
                 pointSystemType={pointSystemType}
@@ -616,7 +614,7 @@ export default function PoolHeader({
             </h6>
           </div>
         : <Image
-            src={PoolTypes[proposalType] === "funding" ? blueLand : grassLarge}
+            src={isFundingPool ? blueLand : grassLarge}
             alt="pool image"
             className="h-12 w-full rounded-lg object-cover"
           />
