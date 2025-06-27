@@ -13,7 +13,7 @@ export function useHandleRegistration(
   urlChainId: number | undefined,
 ): {
   registrationTxProps: TransactionProps;
-  handleRegistration: () => void;
+  handleRegistration: (covenantSig?: `0x${string}`) => void;
   resetState: () => void;
 } {
   const [registrationTxProps, setRegistrationTxProps] =
@@ -59,11 +59,14 @@ export function useHandleRegistration(
     }));
   }, [registerMemberTxStatus, registerMemberTxError, transactionData?.hash]);
 
-  const handleRegistration = useCallback(() => {
-    writeRegisterMember({
-      args: [""], // Pass covenant signature here if needed
-    });
-  }, [writeRegisterMember]);
+  const handleRegistration = useCallback(
+    (covenantSig?: `0x${string}`) => {
+      writeRegisterMember({
+        args: [covenantSig ?? "0x"], // Use empty string if covenantSig is undefined
+      });
+    },
+    [writeRegisterMember],
+  );
 
   const resetState = useCallback(() => {
     setRegistrationTxProps({
