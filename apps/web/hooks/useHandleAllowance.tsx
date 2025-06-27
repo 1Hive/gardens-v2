@@ -82,7 +82,7 @@ export function useHandleAllowance(
         setAllowanceTxProps({
           contractName:
             transactionLabel ?? `${token?.symbol} expenditure approval`,
-          message: `Setting allowance for ${token} of ${token ? (Number(amount) / 10 ** token.decimals).toPrecision(4) : ""}`,
+          message: `Setting allowance for ${token?.symbol} of ${token ? (Number(amount) / 10 ** token.decimals).toPrecision(4) : ""}`,
           status: "idle",
         });
       }
