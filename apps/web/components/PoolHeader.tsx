@@ -488,14 +488,14 @@ export default function PoolHeader({
                 }
               </div>
             )}
-            <div className="flex flex-col">
+            <div className="flex px-1 flex-col sm:flex-row bg-neutral-soft-2 py-2 rounded-lg items-baseline justify-between">
               <EthAddress
                 icon={false}
                 address={strategy.id as Address}
                 label="Pool address"
                 textColor="var(--color-grey-800)"
               />
-              <div className="flex bg-neutral-soft-2 p-2 rounded-lg items-baseline gap-2">
+              <div className="flex">
                 <a
                   href={`https://app.safe.global/transactions/queue?safe=${safePrefix}:${strategy.registryCommunity.councilSafe}`}
                   className="whitespace-nowrap flex flex-nowrap gap-1 items-center"
@@ -512,13 +512,22 @@ export default function PoolHeader({
                   icon={false}
                   textColor="var(--color-grey-800)"
                 />
-
+              </div>
+              <div className="flex">
+                <a
+                  href={`https://app.safe.global/transactions/queue?safe=${safePrefix}:${tribunalAddress}`}
+                  className="whitespace-nowrap flex flex-nowrap gap-1 items-center"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Tribunal safe
+                  <ArrowTopRightOnSquareIcon width={16} height={16} />:
+                </a>
                 <EthAddress
                   address={tribunalAddress as Address}
-                  icon={false}
-                  actions="copy"
                   shortenAddress={true}
-                  label="Tribunal Safe"
+                  actions="copy"
+                  icon={false}
                   textColor="var(--color-grey-800)"
                 />
               </div>
@@ -590,8 +599,8 @@ export default function PoolHeader({
 
           {/* Voting weight + Dispute Address */}
           <div className="flex flex-col sm:flex-row items-start justify-between gap-2 flex-wrap">
-            <div className="flex flex-col gap-2 sm:flex-row items-center">
-              <h4>Voting System:</h4>
+            <div className="flex flex-col gap-2 sm:flex-row items-start sm:items-center">
+              <h4>Voting System</h4>
               <div className="flex gap-2 items-center">
                 <Badge
                   label="conviction voting"
