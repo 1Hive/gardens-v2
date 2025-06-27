@@ -47,7 +47,7 @@ type FormInputs = {
 
 type Props = {
   strategy: getPoolDataQuery["cvstrategies"][0];
-  token: Pick<TokenGarden, "decimals">;
+  token?: Pick<TokenGarden, "decimals">;
   initValues: FormInputs;
   proposalType: string;
   pointSystemType: number;
@@ -184,7 +184,7 @@ export default function PoolEditForm({
     strategy.sybilScorer == null ? "allowList" : "gitcoinPassport";
   const sybilResistanceValue = watch("sybilResistanceValue");
 
-  const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** token.decimals;
+  const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** (token?.decimals ?? 18);
   const INPUT_MIN_THRESHOLD_VALUE = 0;
   const shouldRenderInput = (key: string): boolean => {
     if (
@@ -330,7 +330,7 @@ export default function PoolEditForm({
 
     const minThresholdPoints = parseUnits(
       (previewData?.minThresholdPoints ?? 0).toString(),
-      token.decimals,
+      token?.decimals ?? 18,
     );
 
     const initialAllowList =
