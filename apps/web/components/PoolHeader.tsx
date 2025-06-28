@@ -417,7 +417,7 @@ export default function PoolHeader({
                   tooltip={
                     tooltipMessage ?? "Restore the pool will also enable it."
                   }
-                  showToolTip={true}
+                  forceTooltip={true}
                   onClick={() => addStrategyByPoolId()}
                 >
                   Restore
@@ -433,7 +433,7 @@ export default function PoolHeader({
                       tooltipMessage ??
                       "Disable pool will pause all interactions with this pool. It is possible to enable it back."
                     }
-                    showToolTip={true}
+                    forceTooltip={true}
                     onClick={() => removeStrategyByPoolId()}
                     btnStyle="outline"
                     color="secondary"
@@ -449,7 +449,7 @@ export default function PoolHeader({
                       tooltipMessage ??
                       "Archive pool will remove it from the list of pools. Need to contact the Gardens team to restore it."
                     }
-                    showToolTip={true}
+                    forceTooltip={true}
                     onClick={() => rejectPoolWrite()}
                     btnStyle="outline"
                     color="danger"
@@ -464,7 +464,7 @@ export default function PoolHeader({
                       !isConnected || missmatchUrl || disableCouncilSafeButtons
                     }
                     tooltip={tooltipMessage ?? "Approve pool to enable it."}
-                    showToolTip={true}
+                    forceTooltip={true}
                     onClick={() => addStrategyByPoolId()}
                   >
                     Approve
@@ -478,7 +478,7 @@ export default function PoolHeader({
                       tooltipMessage ??
                       "Reject pool will remove it from the list. \nNeed to contact the Gardens team to\n restore it."
                     }
-                    showToolTip={true}
+                    forceTooltip={true}
                     onClick={() => rejectPoolWrite()}
                     btnStyle="outline"
                     color="danger"

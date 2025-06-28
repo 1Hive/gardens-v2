@@ -206,3 +206,42 @@ export function calculateMaxRatioNum(
 export function bigIntMin(a: bigint, b: bigint) {
   return a < b ? a : b;
 }
+
+/**
+ * Same as `Number.toPrecision`, but handles exponential notation
+ * and converts it to fixed decimal notation.
+ * @param value
+ * @param precision
+ * @returns String representation of the number with specified precision.
+ * If the number is NaN, Infinity, or -Infinity, it returns the string representation
+ * of the number.
+ */
+export function toPrecision(value: number | string, precision: number) {
+  const num = Number(value);
+  if (!isFinite(num)) return String(num); // Handle NaN, Infinity, -Infinity
+
+  const output = num.toPrecision(precision);
+  if (output.includes("e") || output.includes("E")) {
+    // Convert from exponential to fixed decimal
+    const [mantissa, exponent] = output.split(/[eE]/);
+    const exp = parseInt(exponent, 10);
+
+    let [intPart, fracPart = ""] = mantissa.split(".");
+    const digits = intPart + fracPart;
+
+    if (exp >= 0) {
+      const decimalShift = digits + "0".repeat(exp - fracPart.length);
+      return decimalShift;
+    } else {
+      const leadingZeros = "0".repeat(Math.abs(exp) - 1);
+      return `0.${leadingZeros}${digits}`;
+    }
+  }
+
+  // Trim trailing zeros but keep at least one digit after the decimal point
+  const trimmed = output.replace(/(\.\d*?[1-9])0+$/, "$1").replace(/\.0+$/, "");
+  if (trimmed === "") {
+    return "0"; // If the result is empty, return "0"
+  }
+  return trimmed;
+}

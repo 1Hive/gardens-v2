@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { gql } from "urql";
-import { ChainId } from "@/types";
-import { useSuperfluidSugraphClient as useSuperfluidSugraphClient } from "./useSuperfluidSubgraphClient";
 import { useAccount } from "wagmi";
+import { useSuperfluidSugraphClient as useSuperfluidSugraphClient } from "./useSuperfluidSubgraphClient";
+import { ChainId } from "@/types";
 
 export const STREAM_TO_TARGET_QUERY = gql`
   query streamToTarget($receiver: String!, $token: String!) {
@@ -29,10 +29,12 @@ export function useSuperfluidStream({
   const client = useSuperfluidSugraphClient({ chainId });
   const { address } = useAccount();
 
-  const [currentFlowRate, setCurrentFlowRate] = useState<bigint | null>(null);
-  const [currentUserFlowRate, setCurrentUserFlowRate] = useState<number | null>(
+  const [currentFlowRateBn, setCurrentFlowRateBn] = useState<bigint | null>(
     null,
   );
+  const [currentUserFlowRateBn, setCurrentUserFlowRateBn] = useState<
+    number | null
+  >(null);
   const fetch = async () => {
     const result = await client?.query(STREAM_TO_TARGET_QUERY, {
       receiver: receiver.toLowerCase(),
@@ -49,9 +51,9 @@ export function useSuperfluidStream({
           acc + BigInt(flow.currentFlowRate),
         0n,
       );
-      setCurrentFlowRate(totalFlowRate);
+      setCurrentFlowRateBn(totalFlowRate);
 
-      setCurrentUserFlowRate(
+      setCurrentUserFlowRateBn(
         address ?
           Number(
             result.data.streams.find(
@@ -70,10 +72,10 @@ export function useSuperfluidStream({
   }, [client]);
 
   return {
-    currentFlowRate,
-    setCurrentFlowRate,
+    currentFlowRateBn,
+    setCurrentFlowRateBn,
     refetch: fetch,
-    currentUserFlowRate,
-    setCurrentUserFlowRate,
+    currentUserFlowRateBn,
+    setCurrentUserFlowRateBn,
   };
 }
