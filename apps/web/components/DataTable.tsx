@@ -48,7 +48,7 @@ export const DataTable: React.FC<DataTableProps> = ({
                       scope="col"
                       className={`py-3.5  ${col.className ?? ""}`}
                     >
-                      <h6>{col.header}</h6>
+                      <h6 className="text-md">{col.header}</h6>
                     </th>
                   ))}
                 </tr>

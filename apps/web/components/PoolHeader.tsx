@@ -542,6 +542,7 @@ export default function PoolHeader({
         </Skeleton>
 
         {/* Pool Params */}
+        <h4>Pool Settings</h4>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
           {filteredPoolConfig.map((config) => (
             <div
@@ -567,8 +568,8 @@ export default function PoolHeader({
 
         {/* Voting weight + Dispute Address */}
         <div className="flex flex-col sm:flex-row items-start justify-between gap-2 flex-wrap">
-          <div className="flex flex-col gap-2 sm:flex-row items-center">
-            <h4>Voting System:</h4>
+          <div className="flex flex-col gap-2 sm:flex-row items-start sm:items-center">
+            <h4>Voting System</h4>
             <div className="flex gap-2 items-center">
               <Badge
                 label="conviction voting"
@@ -584,14 +585,6 @@ export default function PoolHeader({
               />
             </div>
           </div>
-
-          <EthAddress
-            address={tribunalAddress as Address}
-            icon={false}
-            shortenAddress={true}
-            label="Dispute Resolution: Tribunal Safe"
-            textColor="var(--color-grey-800)"
-          />
         </div>
 
         {/* InfoBox - Banner or Image */}
@@ -602,22 +595,26 @@ export default function PoolHeader({
             className="mb-4"
           />
         )}
-        {!isEnabled ?
-          <div className="banner">
-            {isArchived ?
-              <ArchiveBoxIcon className="h-8 w-8 text-secondary-content" />
-            : <ClockIcon className="h-8 w-8 text-secondary-content" />}
-            <h6>
+        {
+          !isEnabled && (
+            <div className="banner">
               {isArchived ?
-                "This pool has been archived"
-              : "Waiting for council approval"}
-            </h6>
-          </div>
-        : <Image
-            src={isFundingPool ? blueLand : grassLarge}
-            alt="pool image"
-            className="h-12 w-full rounded-lg object-cover"
-          />
+                <ArchiveBoxIcon className="h-8 w-8 text-secondary-content" />
+              : <ClockIcon className="h-8 w-8 text-secondary-content" />}
+              <h6>
+                {isArchived ?
+                  "This pool has been archived"
+                : "Waiting for council approval"}
+              </h6>
+            </div>
+          )
+          // : <Image
+          //     src={
+          //       isFundingPool ? blueLand : grassLarge
+          //     }
+          //     alt="pool image"
+          //     className="h-12 w-full rounded-lg object-cover"
+          //   />
         }
       </section>
     </div>

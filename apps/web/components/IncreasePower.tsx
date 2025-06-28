@@ -239,7 +239,7 @@ export const IncreasePower = ({
 
   return (
     <section className="section-layout space-y-5">
-      <h3>Stakes</h3>
+      <h3>Staking</h3>
       <TransactionModal
         label={`Stake ${tokenSymbol} in ${communityName}`}
         transactions={[allowanceTx, votingPowerTx]}
@@ -253,7 +253,7 @@ export const IncreasePower = ({
           <div className="flex flex-col justify-between gap-2">
             <div className="flex justify-between">
               <div className="flex-start flex gap-2 items-center">
-                <p className="subtitle2">Total Staked in community:</p>
+                <p className="subtitle2">Your stake in the community:</p>
                 <InfoWrapper
                   tooltip={`Registration stake: ${parseToken(registrationAmount)} ${tokenGarden.symbol} ${isMember ? `\n Added stake: ${parseToken(AddedStake)} ${tokenGarden.symbol}` : ""}`}
                 />
@@ -285,7 +285,7 @@ export const IncreasePower = ({
         {/* Staking description */}
         <InfoBox
           title="Staking benefits"
-          content="staking more tokens can increase your voting power."
+          content="Stake more tokens to increase your voting weight in the community’s governance pools"
           infoBoxType="info"
           className="w-full"
         />
