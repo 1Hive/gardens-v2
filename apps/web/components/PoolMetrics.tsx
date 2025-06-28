@@ -495,7 +495,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                 isLoading={isEditStreamLoading}
                 disabled={isStreamButtonDisabled}
                 tooltip={streamTooltipMessage ?? "Replace current stream"}
-                forceTooltip={true}
+                forceShowTooltip={true}
                 className="w-full"
               >
                 Stream {amount} {poolToken.symbol}
@@ -547,7 +547,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                 </p>
                 <div
                   className="tooltip"
-                  data-tip={`This pool is receiving ${toPrecision(currentFlowPerMonth, 4)} ${poolToken.symbol}/month through streaming`}
+                  data-tip={`This pool is receiving ${toPrecision(currentFlowPerMonth, 4)} ${poolToken.symbol}/month through Superfluid streaming`}
                 >
                   <Image
                     src={SuperfluidStream}

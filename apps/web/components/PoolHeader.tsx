@@ -263,14 +263,15 @@ export default function PoolHeader({
     },
     {
       label: "Token",
+      info: "The token used to fund this pool.",
       value: (
         <div className="flex items-center">
           <EthAddress
-            address={strategy.config.superfluidToken as Address}
+            address={poolToken?.address as Address}
             shortenAddress={true}
             icon={false}
-            actions="copy"
-            label={superTokenSymbol}
+            actions="none"
+            label={poolToken?.symbol}
           />
           {strategy.config.superfluidToken && (
             <div
@@ -309,31 +310,25 @@ export default function PoolHeader({
 
   const filteredPoolConfig =
     !isFundingPool && PointSystems[pointSystem] !== "capped" ?
-      poolConfig.filter(
-        (config) =>
-          !!config.value &&
-          !(
-            [
-              "Spending limit",
-              "Min threshold",
-              "Min conviction",
-              "Max voting weight",
-              "Token",
-            ] satisfies (typeof poolConfig)[number]["label"][]
-          ).includes(config.label),
-      )
+      poolConfig.filter((config) => {
+        const filter: (typeof poolConfig)[number]["label"][] = [
+          "Spending limit",
+          "Min threshold",
+          "Min conviction",
+          "Max voting weight",
+          "Token",
+        ];
+        return !!config.value && !filter.includes(config.label);
+      })
     : !isFundingPool ?
-      poolConfig.filter(
-        (config) =>
-          !!config.value &&
-          !(
-            [
-              "Spending limit",
-              "Min threshold",
-              "Min conviction",
-            ] satisfies (typeof poolConfig)[number]["label"][]
-          ).includes(config.label),
-      )
+      poolConfig.filter((config) => {
+        const filteredLabels: (typeof poolConfig)[number]["label"][] = [
+          "Spending limit",
+          "Min threshold",
+          "Min conviction",
+        ];
+        return !!config.value && !filteredLabels.includes(config.label);
+      })
     : PointSystems[pointSystem] === "capped" ? poolConfig
     : poolConfig.filter((config) => config.label !== "Max voting weight");
 

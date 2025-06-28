@@ -382,7 +382,7 @@ export const IncreasePower = ({
                   : `Unstaking ${+stakeDifferenceRounded * -1} ${tokenSymbol} from ${communityName}`
 
                 }
-                forceTooltip={true}
+                forceShowTooltip={true}
                 icon={
                   stakeDifference >= 0 ?
                     <ArrowTrendingUpIcon className="h-5 w-5" />

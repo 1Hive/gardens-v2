@@ -12,7 +12,7 @@ type ButtonProps = {
   btnStyle?: BtnStyle;
   color?: Color;
   onClick?: React.DOMAttributes<HTMLButtonElement>["onClick"];
-  forceTooltip?: boolean;
+  forceShowTooltip?: boolean;
   className?: string;
   disabled?: boolean;
   tooltip?: string;
@@ -76,7 +76,7 @@ export function Button({
   className = "",
   disabled = false,
   tooltip,
-  forceTooltip: showToolTip = false,
+  forceShowTooltip = false,
   tooltipClassName: tooltipStyles = "",
   tooltipSide = "tooltip-top",
   children,
@@ -102,7 +102,7 @@ export function Button({
     </button>
   );
 
-  return disabled || showToolTip ?
+  return disabled || forceShowTooltip ?
       <div
         className={`${className} ${tooltip ? "tooltip" : ""} ${tooltipSide} ${tooltipStyles}`}
         data-tip={tooltip ?? ""}
