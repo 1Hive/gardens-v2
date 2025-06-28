@@ -286,4 +286,21 @@ dialog * {
     right: auto;
     bottom: var(--tooltip-tail-offset);
   }
+
+  .tooltip-top-left::before {
+    transform: translateX(-80%);
+    top: auto;
+    left: 50%;
+    right: auto;
+    bottom: var(--tooltip-offset);
+  }
+
+  .tooltip-top-left::after {
+    transform: translateX(-50%);
+    border-color: var(--tooltip-color) transparent transparent transparent;
+    top: auto;
+    left: 50%;
+    right: auto;
+    bottom: var(--tooltip-tail-offset);
+  }
 }

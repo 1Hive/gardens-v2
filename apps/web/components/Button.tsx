@@ -21,7 +21,9 @@ type ButtonProps = {
     | "tooltip-top"
     | "tooltip-bottom"
     | "tooltip-left"
-    | "tooltip-right";
+    | "tooltip-right"
+    | "tooltip-top-right"
+    | "tooltip-top-left";
   children?: React.ReactNode;
   isLoading?: boolean;
   size?: Size;
