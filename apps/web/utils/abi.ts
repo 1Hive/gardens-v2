@@ -1,6 +1,11 @@
 import { AbiFunction } from "abitype";
 import { Abi } from "viem";
 import {
+  superfluidCFAv1ForwarderAbi,
+  superTokenABI,
+  superTokenFactoryAbi,
+} from "@/src/customAbis";
+import {
   alloABI,
   cvStrategyABI,
   erc20ABI,
@@ -21,6 +26,9 @@ const errorsABI = [
   ...erc20ABI.filter(FuncFilterError),
   ...safeABI.filter(FuncFilterError),
   ...passportScorerABI.filter(FuncFilterError),
+  ...superTokenABI.filter(FuncFilterError),
+  ...superfluidCFAv1ForwarderAbi.filter(FuncFilterError),
+  ...superTokenFactoryAbi.filter(FuncFilterError),
 ];
 
 // console.log("errorsABI", errorsABI);

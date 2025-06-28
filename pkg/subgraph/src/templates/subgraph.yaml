@@ -78,6 +78,8 @@ templates:
           handler: handleFeeReceiverChanged
         - event: PoolRejected(address)
           handler: handlePoolRejected
+        - event: CommunityArchived(bool)
+          handler: handleCommunityArchived
       file: ./src/mappings/registry-community.ts
 
   - kind: ethereum/contract
@@ -106,10 +108,10 @@ templates:
           handler: handleInitialized
         - event: InitializedCV2(uint256,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address,uint256,address[]))
           handler: handleInitializedV2
+        - event: InitializedCV3(uint256,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address,uint256,address[],address))
+          handler: handleInitializedV3
         - event: ProposalCreated(uint256,uint256)
           handler: handleProposalCreated
-        - event: PoolAmountIncreased(uint256)
-          handler: handlePoolAmountIncreased
         - event: SupportAdded(address,uint256,uint256,uint256,uint256)
           handler: handleSupportAdded
         - event: Distributed(uint256,address,uint256)
@@ -136,6 +138,8 @@ templates:
           handler: handleAllowlistMembersRemoved
         - event: SybilScorerUpdated(address)
           handler: handleSybilScorerUpdated
+        - event: SuperfluidTokenUpdated(address)
+          handler: handleSuperfluidTokenUpdated
  
       file: ./src/mappings/cv-strategy.ts
 

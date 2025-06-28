@@ -265,7 +265,7 @@ export function AllowListInput({
             btnStyle="outline"
             className="!p-2 !text-black !border-black"
             onClick={clearAllAddresses}
-            showToolTip
+            forceTooltip
             tooltip="Clear All"
           >
             <TrashIcon className="w-4 h-4" />
@@ -275,7 +275,7 @@ export function AllowListInput({
             btnStyle="outline"
             className="!p-2"
             onClick={() => exportAddresses(addresses)}
-            showToolTip
+            forceTooltip
             tooltip="Export"
           >
             <ArrowDownTrayIcon className="w-4 h-4" />

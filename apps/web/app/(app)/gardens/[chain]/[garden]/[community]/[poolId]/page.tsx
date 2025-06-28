@@ -168,7 +168,8 @@ export default function Page({
         <>
           {poolToken && PoolTypes[proposalType] !== "signaling" && (
             <PoolMetrics
-              alloInfo={alloInfo}
+              communityAddress={communityAddress}
+              strategy={strategyObj}
               poolId={poolId}
               poolToken={poolToken}
               chainId={Number(chain)}

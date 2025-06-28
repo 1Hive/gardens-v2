@@ -14,9 +14,9 @@ import { chainConfigMap } from "@/configs/chains";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
+import { useSuperfluidToken } from "@/hooks/useSuperfluidToken";
 import { cvStrategyABI } from "@/src/generated";
 import { DisputeOutcome, PoolTypes, SybilResistanceType } from "@/types";
-import { filterFunctionFromABI } from "@/utils/abi";
 import {
   calculateDecay,
   CV_PASSPORT_THRESHOLD_SCALE,
@@ -201,6 +201,9 @@ export default function PoolEditForm({
   const [showPreview, setShowPreview] = useState<boolean>(false);
   const [previewData, setPreviewData] = useState<FormInputs>();
   const tribunalAddress = watch("tribunalAddress");
+  const { superToken } = useSuperfluidToken({
+    token: strategy.token,
+  });
 
   const [loading, setLoading] = useState(false);
   const { publish } = usePubSubContext();
@@ -274,6 +277,29 @@ export default function PoolEditForm({
       ),
     },
   };
+
+  const { write: setPoolParamsWrite } = useContractWriteWithConfirmations({
+    address: strategy.id as Address,
+    contractName: "CV Strategy",
+    functionName: "setPoolParams",
+    fallbackErrorMessage: "Error editing a pool, please report a bug.",
+    onConfirmations: () => {
+      publish({
+        topic: "pool",
+        function: "setPoolParams",
+        type: "update",
+        id: strategy.poolId,
+        chainId: chainId,
+      });
+    },
+    onSettled: () => {
+      setLoading(false);
+    },
+    onSuccess: () => {
+      setModalOpen(false);
+    },
+    abi: cvStrategyABI,
+  });
 
   const contractWrite = () => {
     setLoading(true);
@@ -351,12 +377,16 @@ export default function PoolEditForm({
     if (sybilResistanceType === "gitcoinPassport") {
       const sybilValue =
         +(previewData.sybilResistanceValue ?? 0) * CV_PASSPORT_THRESHOLD_SCALE;
-      writeEditPoolWithScoreThreshold({
-        args: [...coreArgs, BigInt(sybilValue)],
-      });
-    } else {
-      writeEditPoolWithAllowlist({
-        args: [...coreArgs, membersToAdd, membersToRemove],
+      setPoolParamsWrite({
+        args: [
+          ...coreArgs,
+          BigInt(sybilValue),
+          membersToAdd,
+          membersToRemove,
+          (strategy.config.superfluidToken as Address) ??
+            superToken?.id ??
+            zeroAddress,
+        ],
       });
     }
   };
@@ -396,52 +426,6 @@ export default function PoolEditForm({
 
     return formattedRows;
   };
-
-  const setPoolParamsWritePayload = {
-    address: strategy.id as Address,
-    contractName: "CV Strategy",
-    functionName: "setPoolParams",
-    fallbackErrorMessage: "Error editing a pool, please report a bug.",
-    onConfirmations: () => {
-      publish({
-        topic: "pool",
-        function: "setPoolParams",
-        type: "update",
-        id: strategy.poolId,
-        chainId: chainId,
-      });
-    },
-    onSettled: () => {
-      setLoading(false);
-    },
-    onSuccess: () => {
-      setModalOpen(false);
-    },
-  } as const;
-
-  const { write: writeEditPoolWithAllowlist } =
-    useContractWriteWithConfirmations({
-      ...setPoolParamsWritePayload,
-      abi: filterFunctionFromABI(
-        cvStrategyABI,
-        (abiItem) =>
-          abiItem.name === "setPoolParams" &&
-          !!abiItem.inputs.find((param) => param.name === "membersToAdd"),
-      ),
-    });
-
-  const { write: writeEditPoolWithScoreThreshold } =
-    useContractWriteWithConfirmations({
-      ...setPoolParamsWritePayload,
-      abi: filterFunctionFromABI(
-        cvStrategyABI,
-        (abiItem) =>
-          abiItem.name === "setPoolParams" &&
-          !!abiItem.inputs.find(
-            (param) => param.name === "sybilScoreThreshold",
-          ),
-      ),
-    });
 
   const handlePreview = (data: FormInputs) => {
     setPreviewData(data);

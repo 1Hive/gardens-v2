@@ -9,7 +9,7 @@ interface ModalProps {
   children: ReactNode;
   isOpen: boolean;
   className?: string;
-  size?: "small" | "medium" | "large" | "extra-large";
+  size?: "extra-small" | "small" | "medium" | "large" | "extra-large";
 }
 
 export function Modal({
@@ -51,6 +51,7 @@ export function Modal({
   };
 
   const sizeMap = {
+    "extra-small": "max-w-sm",
     small: "max-w-lg",
     medium: "max-w-xl",
     large: "max-w-2xl",

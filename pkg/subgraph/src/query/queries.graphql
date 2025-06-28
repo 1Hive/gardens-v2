@@ -325,6 +325,7 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
       pointSystem
       proposalType
       allowlist
+      superfluidToken
     }
     registryCommunity {
       id

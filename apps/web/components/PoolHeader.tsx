@@ -7,6 +7,9 @@ import {
   ClockIcon,
   ArchiveBoxIcon,
   InformationCircleIcon,
+  ChartBarIcon,
+  ScaleIcon,
+  Square3Stack3DIcon,
 } from "@heroicons/react/24/outline";
 import {
   NoSymbolIcon,
@@ -16,7 +19,7 @@ import {
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { Address, zeroAddress } from "viem";
-import { useAccount, useContractRead } from "wagmi";
+import { erc20ABI, useAccount, useContractRead } from "wagmi";
 import {
   ArbitrableConfig,
   getPassportStrategyDocument,
@@ -32,7 +35,7 @@ import MarkdownWrapper from "./MarkdownWrapper";
 import { Modal } from "./Modal";
 import { Skeleton } from "./Skeleton";
 import { Statistic } from "./Statistic";
-import { blueLand, grassLarge } from "@/assets";
+import { blueLand, grassLarge, SuperfluidStream } from "@/assets";
 import { chainConfigMap } from "@/configs/chains";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { VOTING_POINT_SYSTEM_DESCRIPTION } from "@/globals";
@@ -49,6 +52,7 @@ import {
   ProposalStatus,
   SybilResistanceType,
 } from "@/types";
+import { delayAsync } from "@/utils/delayAsync";
 import {
   convertSecondsToReadableTime,
   CV_PASSPORT_THRESHOLD_SCALE,
@@ -122,6 +126,7 @@ export default function PoolHeader({
   const router = useRouter();
   const path = usePathname();
   const isArchived = strategy.archived;
+  const [superTokenCopied, setSuperTokenCopied] = useState(false);
 
   const { data: passportStrategyData } =
     useSubgraphQuery<getPassportStrategyQuery>({
@@ -350,6 +355,13 @@ export default function PoolHeader({
     },
   });
 
+  const { data: superTokenSymbol } = useContractRead({
+    address: strategy.config.superfluidToken as Address,
+    abi: erc20ABI,
+    functionName: "symbol",
+    enabled: !!strategy.config.superfluidToken,
+  });
+
   //Disable Council Safe Buttons: Edit, Disable and Approve
   const disableCouncilSafeBtnCondition: ConditionObject[] = [
     {
@@ -405,7 +417,7 @@ export default function PoolHeader({
                   tooltip={
                     tooltipMessage ?? "Restore the pool will also enable it."
                   }
-                  showToolTip={true}
+                  forceTooltip={true}
                   onClick={() => addStrategyByPoolId()}
                 >
                   Restore
@@ -421,7 +433,7 @@ export default function PoolHeader({
                       tooltipMessage ??
                       "Disable pool will pause all interactions with this pool. It is possible to enable it back."
                     }
-                    showToolTip={true}
+                    forceTooltip={true}
                     onClick={() => removeStrategyByPoolId()}
                     btnStyle="outline"
                     color="secondary"
@@ -437,7 +449,7 @@ export default function PoolHeader({
                       tooltipMessage ??
                       "Archive pool will remove it from the list of pools. Need to contact the Gardens team to restore it."
                     }
-                    showToolTip={true}
+                    forceTooltip={true}
                     onClick={() => rejectPoolWrite()}
                     btnStyle="outline"
                     color="danger"
@@ -452,7 +464,7 @@ export default function PoolHeader({
                       !isConnected || missmatchUrl || disableCouncilSafeButtons
                     }
                     tooltip={tooltipMessage ?? "Approve pool to enable it."}
-                    showToolTip={true}
+                    forceTooltip={true}
                     onClick={() => addStrategyByPoolId()}
                   >
                     Approve
@@ -466,7 +478,7 @@ export default function PoolHeader({
                       tooltipMessage ??
                       "Reject pool will remove it from the list. \nNeed to contact the Gardens team to\n restore it."
                     }
-                    showToolTip={true}
+                    forceTooltip={true}
                     onClick={() => rejectPoolWrite()}
                     btnStyle="outline"
                     color="danger"
@@ -544,6 +556,84 @@ export default function PoolHeader({
         {/* Pool Params */}
         <h4>Pool Settings</h4>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+          <div className="flex flex-col gap-2 max-w-fit">
+            <Statistic label="pool type">
+              <Badge type={parseInt(proposalType)} />
+            </Statistic>
+            {PoolTypes[proposalType] === "funding" && (
+              <Statistic label="funding token">
+                <Badge icon={<Square3Stack3DIcon />}>
+                  <div className="flex items-center">
+                    <EthAddress
+                      address={poolToken?.address as Address}
+                      shortenAddress={true}
+                      icon={false}
+                      actions="copy"
+                      label={poolToken?.symbol}
+                    />
+                    {strategy.config.superfluidToken && (
+                      <div
+                        className="tooltip"
+                        data-tip={`This pool supports funding through stream. \n${superTokenSymbol ?? poolToken?.symbol + "x"} tokens to this pool. Click to copy address.`}
+                      >
+                        <button
+                          className="btn btn-ghost btn-xs p-0"
+                          onClick={async () => {
+                            setSuperTokenCopied(true);
+                            navigator.clipboard.writeText(
+                              strategy.config.superfluidToken!,
+                            );
+                            await delayAsync(1000);
+                            setSuperTokenCopied(false);
+                          }}
+                        >
+                          {superTokenCopied ?
+                            <div className="w-8 h-8 p-2">
+                              <CheckIcon className="w-4 h-4" />
+                            </div>
+                          : <Image
+                              src={SuperfluidStream}
+                              alt="Incoming Stream"
+                              width={32}
+                              height={32}
+                            />
+                          }
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </Badge>
+              </Statistic>
+            )}
+            <Statistic label="voting weight">
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <Badge
+                  label="conviction voting"
+                  className="text-secondary-content"
+                  icon={<ChartBarIcon />}
+                />
+                <Badge
+                  label={PointSystems[pointSystem]}
+                  tooltip={
+                    VOTING_POINT_SYSTEM_DESCRIPTION[PointSystems[pointSystem]]
+                  }
+                  icon={<BoltIcon />}
+                />
+              </div>
+            </Statistic>
+            <Statistic label="Dispute resolution">
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <Badge className="text-secondary-content" icon={<ScaleIcon />}>
+                  <EthAddress
+                    address={tribunalAddress as Address}
+                    shortenAddress={true}
+                    actions="copy"
+                    label="Tribunal Safe"
+                  />
+                </Badge>
+              </div>
+            </Statistic>
+          </div>
           {filteredPoolConfig.map((config) => (
             <div
               key={config.label}

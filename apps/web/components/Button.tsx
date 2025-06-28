@@ -12,7 +12,7 @@ type ButtonProps = {
   btnStyle?: BtnStyle;
   color?: Color;
   onClick?: React.DOMAttributes<HTMLButtonElement>["onClick"];
-  showToolTip?: boolean;
+  forceTooltip?: boolean;
   className?: string;
   disabled?: boolean;
   tooltip?: string;
@@ -21,12 +21,15 @@ type ButtonProps = {
     | "tooltip-top"
     | "tooltip-bottom"
     | "tooltip-left"
-    | "tooltip-right";
+    | "tooltip-right"
+    | "tooltip-top-right"
+    | "tooltip-top-left";
   children?: React.ReactNode;
   isLoading?: boolean;
   size?: Size;
   icon?: React.ReactNode;
   walletConnected?: boolean;
+  style?: React.CSSProperties;
 };
 
 export type Color =
@@ -73,7 +76,7 @@ export function Button({
   className = "",
   disabled = false,
   tooltip,
-  showToolTip = false,
+  forceTooltip: showToolTip = false,
   tooltipClassName: tooltipStyles = "",
   tooltipSide = "tooltip-top",
   children,
@@ -82,22 +85,20 @@ export function Button({
   isLoading = false,
   icon,
   type = "button",
+  style,
 }: ButtonProps) {
   const buttonElement = (
     <button
       type={type}
-      className={`${btnStyles[btnStyle][disabled ? "disabled" : color]} flex relative cursor-pointer justify-center rounded-lg px-4 py-2 transition-all ease-out disabled:cursor-not-allowed text-sm ${className}`}
+      className={`${btnStyles[btnStyle][disabled ? "disabled" : color]} flex relative cursor-pointer justify-center rounded-lg px-4 py-2 transition-all ease-out disabled:cursor-not-allowed h-fit text-sm gap-2 ${className}`}
       onClick={onClick}
       disabled={disabled || isLoading}
+      style={style}
     >
-      <div
-        className={`${isLoading ? "invisible" : "visible"} flex gap-2 items-center`}
-      >
+      {isLoading && <span className={"loading loading-spinner loading-sm"} />}
+      <div className={"flex gap-2 items-center"}>
         {icon && icon} {children}
       </div>
-      <span
-        className={`loading loading-spinner absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 ${isLoading ? "block" : "hidden"}`}
-      />
     </button>
   );
 

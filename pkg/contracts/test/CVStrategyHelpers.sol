@@ -10,7 +10,7 @@ import {
     CreateProposal,
     PointSystemConfig,
     ArbitrableConfig,
-    CVStrategyInitializeParamsV0_1
+    CVStrategyInitializeParamsV0_2
 } from "../src/CVStrategy/CVStrategyV0_0.sol";
 import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
 import {IRegistry, Metadata} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
@@ -51,8 +51,9 @@ contract CVStrategyHelpers is Native, Accounts {
         ArbitrableConfig memory arbitrableConfig,
         address[] memory initialAllowlist,
         address sybilScorer,
-        uint256 sybilScorerThreshold
-    ) public pure returns (CVStrategyInitializeParamsV0_1 memory params) {
+        uint256 sybilScorerThreshold,
+        address superfluidToken
+    ) public pure returns (CVStrategyInitializeParamsV0_2 memory params) {
         // IAllo allo = IAllo(ALLO_PROXY_ADDRESS);
         // params.cvParams.decay = _etherToFloat(0.9999799 ether); // alpha = decay
         params.cvParams.decay = 9940581; // alpha = decay
@@ -70,6 +71,7 @@ contract CVStrategyHelpers is Native, Accounts {
         params.pointSystem = pointSystem;
         params.sybilScorer = sybilScorer;
         params.sybilScorerThreshold = sybilScorerThreshold;
+        params.superfluidToken = superfluidToken;
 
         if (pointConfig.maxAmount == 0) {
             // PointSystemConfig memory pointConfig;
@@ -94,8 +96,16 @@ contract CVStrategyHelpers is Native, Accounts {
         ArbitrableConfig memory arbitrableConfig
     ) public returns (uint256 poolId) {
         // IAllo allo = IAllo(ALLO_PROXY_ADDRESS);
-        CVStrategyInitializeParamsV0_1 memory params = getParams(
-            registryCommunity, proposalType, pointSystem, pointConfig, arbitrableConfig, new address[](1), address(0), 0
+        CVStrategyInitializeParamsV0_2 memory params = getParams(
+            registryCommunity,
+            proposalType,
+            pointSystem,
+            pointConfig,
+            arbitrableConfig,
+            new address[](1),
+            address(0),
+            0,
+            address(0)
         );
 
         address[] memory _pool_managers = new address[](2);

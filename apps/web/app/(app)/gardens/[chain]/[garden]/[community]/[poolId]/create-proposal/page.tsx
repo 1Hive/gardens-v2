@@ -40,7 +40,7 @@ export default function Page({
       PoolTypes[data.cvstrategies[0].config.proposalType] === "funding",
   });
 
-  if (!tokenGarden || !metadata || !strategyObj) {
+  if (!tokenGarden || !metadata || !strategyObj || poolAmount == undefined) {
     return (
       <div className="mt-96 col-span-12">
         <LoadingSpinner />
@@ -69,6 +69,8 @@ export default function Page({
       (+poolAmount.formatted * +Math.round(spendingLimitValuePct)) /
       100
     ).toFixed(2);
+
+  console.log({ poolAmount, spendingLimitValuePct, spendingLimitValueNum });
 
   return (
     <div className="page-layout col-span-12 mx-auto">
