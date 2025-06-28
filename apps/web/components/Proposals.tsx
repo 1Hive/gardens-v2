@@ -41,7 +41,7 @@ import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithC
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { alloABI, registryCommunityABI } from "@/src/generated";
-import { ProposalStatus } from "@/types";
+import { PoolTypes, ProposalStatus } from "@/types";
 import { useErrorDetails } from "@/utils/getErrorName";
 import { bigIntMin, calculatePercentageBigInt } from "@/utils/numbers";
 
@@ -498,12 +498,26 @@ export function Proposals({
     <>
       {/* Proposals section */}
       <section className="col-span-12 lg:col-span-9 flex flex-col gap-10">
-        <header className="flex items-center justify-between gap-10 flex-wrap">
-          <h2>Proposals</h2>
+        <header className="flex items-center justify-between gap-10 flex-wrap pl-6">
+          <h3>Proposals ({proposals.length})</h3>
           {!!proposals &&
             strategy.isEnabled &&
             (proposals.length === 0 ?
-              <h4 className="text-2xl">No submitted proposals to support</h4>
+              <Link href={createProposalUrl}>
+                <Button
+                  icon={<PlusIcon height={24} width={24} />}
+                  disabled={!isConnected || missmatchUrl || !isMemberCommunity}
+                  tooltip={
+                    !isConnected ? "Connect your wallet"
+                    : !isMemberCommunity ?
+                      "Join the community first"
+                    : "Create a proposal"
+                  }
+                >
+                  Create a proposal
+                </Button>
+              </Link>
+              // <h4 className="text-2xl">No submitted proposals to support</h4>
             : !allocationView && (
                 <CheckPassport strategy={strategy}>
                   <Button
@@ -600,8 +614,8 @@ export function Proposals({
           : <LoadingSpinner />}
         </div>
 
-        {strategy.isEnabled &&
-          (allocationView ?
+        {strategy.isEnabled && allocationView && proposals.length > 0 && (
+          <>
             <div className="flex justify-end gap-4">
               <Button
                 btnStyle="outline"
@@ -622,7 +636,7 @@ export function Proposals({
                 Submit your support
               </Button>
             </div>
-          : <div>
+            <div>
               <div className="flex items-center justify-center gap-6">
                 <Link href={createProposalUrl}>
                   <Button
@@ -641,7 +655,9 @@ export function Proposals({
                   </Button>
                 </Link>
               </div>
-            </div>)}
+            </div>
+          </>
+        )}
       </section>
 
       {/* Pool Governace */}
