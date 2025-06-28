@@ -536,22 +536,29 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                     compact={true}
                   />
                 </Skeleton>
-                {currentFlowRateBn && currentFlowRateBn > 0n && (
-                  <div
-                    className="tooltip"
-                    data-tip={`Incoming Superfluid stream (+${toPrecision(currentFlowPerMonth, 4)}/month)`}
-                  >
-                    <Image
-                      src={SuperfluidStream}
-                      alt="Incoming Stream"
-                      width={40}
-                      height={40}
-                      className="mb-1"
-                    />
-                  </div>
-                )}
               </div>
             </div>
+            {currentFlowRateBn && currentFlowRateBn > 0n && (
+              <div className="flex gap-3 items-center">
+                <p className="subtitle2">Streamed:</p>
+                <p className="flex items-center whitespace-nowrap">
+                  {toPrecision(currentFlowPerMonth, 4)} {poolToken.symbol}
+                  /mo
+                </p>
+                <div
+                  className="tooltip"
+                  data-tip={`This pool is receiving ${toPrecision(currentFlowPerMonth, 4)} ${poolToken.symbol}/month through streaming`}
+                >
+                  <Image
+                    src={SuperfluidStream}
+                    alt="Incoming Stream"
+                    width={36}
+                    height={36}
+                    className="mb-1"
+                  />
+                </div>
+              </div>
+            )}
             {accountAddress && (
               <div className="flex gap-3">
                 <p className="subtitle2">Wallet balance:</p>

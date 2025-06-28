@@ -573,7 +573,7 @@ export default function PoolHeader({
                     {strategy.config.superfluidToken && (
                       <div
                         className="tooltip"
-                        data-tip={`This pool is superfluid enabled. \nYou can stream ${superTokenSymbol ?? poolToken?.symbol + "x"} tokens to this pool. Click to copy address.`}
+                        data-tip={`This pool supports funding through stream. \n${superTokenSymbol ?? poolToken?.symbol + "x"} tokens to this pool. Click to copy address.`}
                       >
                         <button
                           className="btn btn-ghost btn-xs p-0"

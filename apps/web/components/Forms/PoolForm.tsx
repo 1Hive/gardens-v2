@@ -626,8 +626,6 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
       superfluidEnabled: !!effectiveSuperToken,
     };
 
-    console.log({ effectiveSuperToken });
-
     Object.entries(reorderedData).forEach(([key, value]) => {
       const formRow = formRowTypes[key];
       if (formRow && shouldRenderInPreview(key)) {
@@ -715,8 +713,8 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
                 }))}
             />
             {PoolTypes[strategyType] === "funding" && (
-              <div className="flex items-center gap-4 flex-wrap">
-                <FormInput
+              <div className="flex items-end gap-4 flex-wrap md:flex-nowrap">
+                <FormAddressInput
                   label="Pool token ERC20 address"
                   register={register}
                   required
@@ -732,26 +730,25 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
                   errors={errors}
                   registerKey="poolTokenAddress"
                   placeholder="0x.."
-                  type="text"
-                  className="pr-14 font-mono text-sm"
+                  className="font-mono text-sm"
                   suffix={customTokenData?.symbol}
                 />
                 {networkSfMetadata && poolTokenAddress && customTokenData && (
-                  <div className="mt-8">
+                  <div className="mb-2">
                     {isFetching ?
                       <span className="loading loading-spinner loading-md" />
                     : effectiveSuperToken ?
                       <div className="flex gap-1">
-                        <InfoWrapper tooltip="This pool supports Superfluid streaming — allowing continuous fund transfers over time.">
+                        <InfoWrapper tooltip="This pool will support streaming through Superfluid — allowing continuous funding over time.">
                           <div className="flex items-center">
                             <Image
                               src={SuperfluidStream}
                               alt="Incoming Stream"
-                              width={40}
-                              height={40}
-                              className="mb-1"
+                              width={36}
+                              height={36}
+                              className="mb-2"
                             />
-                            Superfluid supported with
+                            Streaming enabled with{" "}
                             <EthAddress
                               address={effectiveSuperToken?.id as Address}
                               shortenAddress={true}
