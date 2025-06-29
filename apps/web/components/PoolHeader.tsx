@@ -263,7 +263,7 @@ export default function PoolHeader({
     },
     {
       label: "Token",
-      info: "The token used to fund this pool.",
+      info: "The token used in this pool to fund proposals.",
       value: (
         <div className="flex items-center">
           <EthAddress
