@@ -290,20 +290,20 @@ export default function Page({
                     <h2>{metadata?.title}</h2>
                   </Skeleton>
                   <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-2">
+                    {/* <div className="flex items-center gap-2">
                       <p className="text-md flex items-center bg-neutral-soft-2 rounded-md px-2 py-1 text-neutral-soft-content">
                         ID:{" "}
                         <span className="text-md ml-1 font-medium text-black">
                           {proposalIdNumber.toString()}
                         </span>
                       </p>
-                    </div>
+                    </div> */}
 
                     <Badge type={proposalType} />
                   </div>
                 </div>
 
-                <div className="w-full flex items-start justify-between">
+                <div className="w-full flex flex-col sm:flex-row items-start justify-between gap-2">
                   <div className="flex flex-col gap-1 ">
                     <Statistic label={"Author"}>
                       <EthAddress
@@ -356,7 +356,7 @@ export default function Page({
                   {(status === "active" || status === "disputed") && (
                     <div className="flex flex-col gap-2">
                       <div className="w-full h-[0.10px] bg-neutral-soft-content" />
-                      <h4>Progress</h4>
+                      <h4 className="mt-4">Progress</h4>
                       <div className="flex flex-col gap-2">
                         <ConvictionBarChart
                           currentConvictionPct={currentConvictionPct}
@@ -385,8 +385,8 @@ export default function Page({
           {status && status === "active" && (
             <div className="flex flex-col gap-2 -mt-2">
               <div className="w-full h-[0.10px] bg-neutral-soft-content" />
-              <h6 className="mt-4">Actions</h6>
-              <div className="flex items-center gap-4 w-full">
+              <h6 className="mt-4 mb-2">Actions</h6>
+              <div className="flex flex-col sm:flex-row items-center gap-4 w-full">
                 <Button
                   icon={<AdjustmentsHorizontalIcon height={18} width={18} />}
                   onClick={() => manageSupportClicked()}
