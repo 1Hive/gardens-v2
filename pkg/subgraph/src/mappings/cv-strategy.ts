@@ -759,7 +759,8 @@ function getProposalStatus(
   const cvc = CVStrategyContract.bind(contractAddress);
   const proposal = cvc.try_getProposal(proposalId);
   if (proposal.reverted) {
-    log.error("CVStrategy: handleDistributed proposal not found: {}", [
+    log.warning("CVStrategy: proposal not found: {}-{}", [
+      contractAddress.toHexString(),
       proposalId.toString()
     ]);
     return defaultStatus;
