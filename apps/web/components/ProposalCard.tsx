@@ -188,8 +188,8 @@ export function ProposalCard({
                   </div>
                 )}
               </div>
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-2">
+              <div className="flex  justify-between items-center">
+                <div className="flex sm:items-center flex-col items-start sm:flex-row gap-2">
                   <div
                     className="flex items-center gap-1"
                     onClick={(e) => {
@@ -208,7 +208,7 @@ export function ProposalCard({
                   <div className="flex gap-6 text-neutral-soft-content justify-end">
                     {!isSignalingType && poolToken && (
                       <div className="flex items-center gap-1 justify-self-end">
-                        <div className="w-1 h-1 rounded-full bg-neutral-soft-content" />
+                        <div className="hidden sm:block w-1 h-1 rounded-full bg-neutral-soft-content" />
                         <p className="text-sm ml-1">Requesting: </p>
                         <DisplayNumber
                           number={formatUnits(
@@ -221,7 +221,7 @@ export function ProposalCard({
                       </div>
                     )}
                   </div>
-                  <div className="w-1 h-1 rounded-full bg-neutral-soft-content" />
+                  <div className="hidden sm:block w-1 h-1 rounded-full bg-neutral-soft-content" />
                   <div>
                     <p className="text-sm text-neutral-soft-content">
                       {prettyTimestamp(proposalData.createdAt ?? 0)}
