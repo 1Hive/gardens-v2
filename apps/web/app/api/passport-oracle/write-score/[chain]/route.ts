@@ -40,7 +40,8 @@ export async function POST(req: Request, { params }: Params) {
   const chainConfig = getConfigByChain(chainId);
 
   try {
-    const subgraphUrl = chainConfig?.publishedSubgraphUrl as string;
+    const subgraphUrl =
+      (chainConfig?.publishedSubgraphUrl as string) ?? chainConfig?.subgraphUrl;
     const { urqlClient } = initUrqlClient({ chainId });
     const subgraphResponse = await urqlClient
       .query<getMemberPassportAndCommunitiesQuery>(
@@ -53,7 +54,22 @@ export async function POST(req: Request, { params }: Params) {
           requestPolicy: "network-only",
         },
       )
-      .toPromise();
+      .toPromise()
+      .catch((error) => {
+        console.error("Error fetching subgraph data:", {
+          error,
+          url: subgraphUrl,
+        });
+        return { data: null, error: "Failed to fetch subgraph data" };
+      });
+
+    if (!subgraphResponse || subgraphResponse.error) {
+      console.error("Subgraph query error:", subgraphResponse?.error);
+      return NextResponse.json(
+        { error: "Failed to fetch user data" },
+        { status: 500 },
+      );
+    }
 
     if (subgraphResponse.data == null) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
