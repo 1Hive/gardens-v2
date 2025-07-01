@@ -15,6 +15,7 @@ import {
   getMemberPassportAndCommunitiesQuery,
 } from "#/subgraph/.graphclient";
 import { getConfigByChain } from "@/configs/chains";
+import { isProd } from "@/configs/isProd";
 import { initUrqlClient } from "@/providers/urql";
 import { passportScorerABI } from "@/src/generated";
 import { fetchPassportScore } from "@/utils/gitcoin-passport";
@@ -40,28 +41,47 @@ export async function POST(req: Request, { params }: Params) {
   const chainConfig = getConfigByChain(chainId);
 
   try {
-    const subgraphUrl =
-      (chainConfig?.publishedSubgraphUrl as string) ?? chainConfig?.subgraphUrl;
+    const publishedSubgraphUrl = chainConfig?.publishedSubgraphUrl as string;
+    const subgraphUrl = chainConfig?.subgraphUrl as string;
     const { urqlClient } = initUrqlClient({ chainId });
-    const subgraphResponse = await urqlClient
-      .query<getMemberPassportAndCommunitiesQuery>(
-        getMemberPassportAndCommunitiesDocument,
-        {
-          memberId: user.toLowerCase(),
-        },
-        {
-          url: subgraphUrl,
-          requestPolicy: "network-only",
-        },
-      )
-      .toPromise()
-      .catch((error) => {
-        console.error("Error fetching subgraph data:", {
-          error,
-          url: subgraphUrl,
+    const fetchUser = (_subgraphUrl: string) =>
+      urqlClient
+        .query<getMemberPassportAndCommunitiesQuery>(
+          getMemberPassportAndCommunitiesDocument,
+          {
+            memberId: user.toLowerCase(),
+          },
+          {
+            url: _subgraphUrl,
+            fetchOptions: {
+              headers: [
+                ["origin", isProd ? "app.gardens.fund" : ""],
+                ["referer", isProd ? "https://app.gardens.fund/" : ""],
+              ],
+            },
+            requestPolicy: "network-only",
+          },
+        )
+        .toPromise()
+        .catch((error) => {
+          console.error("Error fetching subgraph data:", {
+            error,
+            url: _subgraphUrl,
+          });
+          return { data: null, error: "Failed to fetch subgraph data" };
         });
-        return { data: null, error: "Failed to fetch subgraph data" };
-      });
+    let subgraphResponse = await fetchUser(publishedSubgraphUrl);
+    if (!subgraphResponse || subgraphResponse.error) {
+      console.warn(
+        "Subgraph query failed with published query, trying dev subgraph",
+        {
+          subgraphUrl,
+          publishedSubgraphUrl,
+          error: subgraphResponse?.error,
+        },
+      );
+      subgraphResponse = await fetchUser(subgraphUrl);
+    }
 
     if (!subgraphResponse || subgraphResponse.error) {
       console.error("Subgraph query error:", subgraphResponse?.error);
