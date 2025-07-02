@@ -41,7 +41,7 @@ import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithC
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { alloABI, registryCommunityABI } from "@/src/generated";
-import { PoolTypes, ProposalStatus } from "@/types";
+import { ProposalStatus } from "@/types";
 import { useErrorDetails } from "@/utils/getErrorName";
 import { bigIntMin, calculatePercentageBigInt } from "@/utils/numbers";
 

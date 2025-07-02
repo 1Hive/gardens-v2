@@ -6,7 +6,7 @@ import { TrashIcon } from "@heroicons/react/24/outline";
 import sfMeta from "@superfluid-finance/metadata";
 import { erc20ABI } from "@wagmi/core";
 import Image from "next/image";
-import { Address, useAccount, useBalance } from "wagmi";
+import { Address, useAccount, useBalance, useContractRead } from "wagmi";
 import { CVStrategy } from "#/subgraph/.graphclient";
 import { Button } from "./Button";
 import { DisplayNumber } from "./DisplayNumber";
@@ -19,6 +19,7 @@ import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useHandleAllowance } from "@/hooks/useHandleAllowance";
 import { useSuperfluidStream } from "@/hooks/useSuperfluidStream";
 import { superfluidCFAv1ForwarderAbi, superTokenABI } from "@/src/customAbis";
+import { cvStrategyABI } from "@/src/generated";
 import { abiWithErrors } from "@/utils/abi";
 import { delayAsync } from "@/utils/delayAsync";
 import { toPrecision } from "@/utils/numbers";
@@ -227,6 +228,13 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     () => writeWrapFunds(),
   );
 
+  const { data: poolBalance } = useContractRead({
+    abi: cvStrategyABI,
+    address: poolAddress as Address,
+    functionName: "getPoolAmount",
+    watch: true,
+  });
+
   const { data: walletBalance } = useBalance({
     address: accountAddress,
     formatUnits: poolToken.decimals,
@@ -393,10 +401,12 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
       >
         <div className="flex items-center gap-2 mb-4">
           <p>Streaming:</p>
-          <DisplayNumber
-            number={amount.toString()}
-            tokenSymbol={poolToken.symbol}
-          />
+          <Skeleton isLoading={poolBalance == undefined}>
+            <DisplayNumber
+              number={[poolBalance!, poolToken.decimals]}
+              tokenSymbol={poolToken.symbol}
+            />
+          </Skeleton>
           <p>for 1 month</p>
         </div>
       </TransactionModal>

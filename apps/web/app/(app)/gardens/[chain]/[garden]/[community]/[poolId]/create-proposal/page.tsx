@@ -1,12 +1,13 @@
 "use client";
 
 import React from "react";
-import { Address, useBalance } from "wagmi";
+import { Address } from "wagmi";
 import { getPoolDataDocument, getPoolDataQuery } from "#/subgraph/.graphclient";
 import { ProposalForm } from "@/components/Forms";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { calculateMinimumConviction } from "@/components/PoolHeader";
 import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
+import { usePoolToken } from "@/hooks/usePoolToken";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { PoolTypes } from "@/types";
 import { CV_SCALE_PRECISION, MAX_RATIO_CONSTANT } from "@/utils/numbers";
@@ -30,9 +31,9 @@ export default function Page({
   const poolTokenAddr = strategyObj?.token;
   const proposalType = strategyObj?.config?.proposalType as number;
 
-  const { data: poolAmount } = useBalance({
-    address: strategyObj?.id as Address,
-    token: poolTokenAddr as Address,
+  const poolToken = usePoolToken({
+    poolAddress: strategyObj?.id as Address,
+    poolTokenAddr: poolTokenAddr as Address,
     enabled:
       !!poolTokenAddr &&
       !!strategyObj?.id &&
@@ -40,7 +41,7 @@ export default function Page({
       PoolTypes[data.cvstrategies[0].config.proposalType] === "funding",
   });
 
-  if (!tokenGarden || !metadata || !strategyObj || poolAmount == undefined) {
+  if (!tokenGarden || !metadata || !strategyObj || poolToken == undefined) {
     return (
       <div className="mt-96 col-span-12">
         <LoadingSpinner />
@@ -64,13 +65,10 @@ export default function Page({
     100;
 
   const spendingLimitValueNum =
-    poolAmount &&
-    (
-      (+poolAmount.formatted * +Math.round(spendingLimitValuePct)) /
-      100
-    ).toFixed(2);
-
-  console.log({ poolAmount, spendingLimitValuePct, spendingLimitValueNum });
+    poolToken &&
+    ((+poolToken.formatted * +Math.round(spendingLimitValuePct)) / 100).toFixed(
+      2,
+    );
 
   return (
     <div className="page-layout col-span-12 mx-auto">
