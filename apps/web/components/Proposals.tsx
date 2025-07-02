@@ -500,7 +500,7 @@ export function Proposals({
   return (
     <>
       {/* Proposals section */}
-      <section className="col-span-12 lg:col-span-9 flex flex-col gap-10">
+      <section className="col-span-12 xl:col-span-9 flex flex-col gap-10">
         <header
           className={`flex ${proposals.length === 0 ? "flex-col items-start justify-start" : "items-center justify-between"} gap-10 flex-wrap`}
         >
@@ -592,7 +592,7 @@ export function Proposals({
               {!!endedProposals.length && (
                 <div className="collapse collapse-arrow">
                   <input type="checkbox" />
-                  <div className="collapse-title text-xl font-medium">
+                  <div className="collapse-title text-lg font-medium">
                     Click to show/hide ended proposals{" "}
                     {allocationView && isEndedProposalActiveAllocation ?
                       <span className="text-primary-content">
@@ -676,11 +676,29 @@ export function Proposals({
             </div>
           </>
         )}
+        {proposals.length > 0 && (
+          <div className="flex items-center justify-center gap-6">
+            <Link href={createProposalUrl}>
+              <Button
+                icon={<PlusIcon height={24} width={24} />}
+                disabled={!isConnected || missmatchUrl || !isMemberCommunity}
+                tooltip={
+                  !isConnected ? "Connect your wallet"
+                  : !isMemberCommunity ?
+                    "Join the community first"
+                  : "Create a proposal"
+                }
+              >
+                Create a proposal
+              </Button>
+            </Link>
+          </div>
+        )}
       </section>
 
       {/* Pool Governace */}
       {strategy.isEnabled && (
-        <div className="col-span-12 lg:col-span-3">
+        <div className="col-span-12 xl:col-span-3">
           <div className="backdrop-blur-sm rounded-lg flex flex-col gap-2 sticky top-32">
             <PoolGovernance
               memberPoolWeight={memberPoolWeight}
@@ -702,7 +720,7 @@ export function Proposals({
 function UserAllocationStats({ stats }: { stats: Stats[] }) {
   return (
     <div className="mt-10">
-      <h3>Support Overview</h3>
+      <h5>Support Overview</h5>
       <div className="mt-5 grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-2">
         {stats.map((stat) => (
           <div key={`stat_${stat.id}`} className="section-layout flex gap-4">

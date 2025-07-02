@@ -276,8 +276,7 @@ export default function Page({
   return (
     <>
       {/* main section */}
-      <section className="col-span-12 lg:col-span-9">
-        {/* Main Section */}
+      <section className="col-span-12 xl:col-span-9">
         <div
           className={`section-layout flex flex-col gap-8  ${status === "disputed" ? "!border-error-content" : ""} ${status === "executed" ? "!border-primary-content" : ""}`}
         >
@@ -432,7 +431,7 @@ export default function Page({
       </section>
 
       {/* Right side */}
-      <div className="col-span-12 lg:col-span-3">
+      <div className="col-span-12 xl:col-span-3">
         <div className="backdrop-blur-sm rounded-lg flex flex-col gap-4 sticky top-32">
           <section className="section-layout gap-4 flex flex-col">
             <div className="flex items-center justify-between">
@@ -513,7 +512,7 @@ export default function Page({
           )}
 
           {filteredAndSortedProposalSupporters.length > 0 && (
-            <section className="max-h-10">
+            <section className="xl:max-h-10">
               <ProposalSupportersTable
                 supporters={filteredAndSortedProposalSupporters}
                 beneficiary={beneficiary}
@@ -527,7 +526,7 @@ export default function Page({
       </div>
 
       {/* Proposal Description */}
-      <section className="px-8 col-span-12 lg:col-span-9 mt-6 flex flex-col gap-6">
+      <section className="px-8 col-span-12 xl:col-span-9 mt-6 flex flex-col gap-6">
         <h3>Proposal Description</h3>
         <div>
           <Skeleton rows={5} isLoading={!metadata}>
