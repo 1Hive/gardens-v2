@@ -144,7 +144,6 @@ export function CheckPassport({
     e?: React.MouseEvent<HTMLDivElement, MouseEvent>,
   ) => {
     _score = Number(_score);
-    setScore(_score);
     if (_score >= threshold) {
       console.debug("Score meets threshold, moving forward...");
     } else {
@@ -163,6 +162,7 @@ export function CheckPassport({
       console.debug(passportResponse);
       // gitcoin passport score does not need formating
       if (passportResponse?.data?.score) {
+        setScore(Number(passportResponse.data.score));
         const result = await writeScorer(_walletAddr);
         if (result.error) {
           const message = JSON.parse(result.errorMessage).error;
@@ -264,12 +264,12 @@ export function CheckPassport({
       >
         <div className="flex flex-col gap-8">
           <div>
-            <div>
+            <p>
               Passport score:{" "}
-              <Skeleton isLoading={passportUserFetching}>
+              <Skeleton isLoading={passportUserFetching && !score}>
                 <span className="font-semibold w-12">{score.toFixed(2)}</span>
               </Skeleton>
-            </div>
+            </p>
             <p>
               Pool requirement:{" "}
               <span className="font-semibold">{threshold.toFixed(2)}</span>

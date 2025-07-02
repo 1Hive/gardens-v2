@@ -192,7 +192,6 @@ export default function PoolHeader({
   const pointSystem = strategy.config.pointSystem;
   const allowList = strategy.config.allowlist;
   const rulingTime = arbitrableConfig.defaultRulingTimeout;
-  const isFundingPool = PoolTypes[proposalType] === "funding";
 
   const proposalOnDispute = strategy.proposals?.some(
     (proposal) => ProposalStatus[proposal.proposalStatus] === "disputed",
@@ -309,7 +308,10 @@ export default function PoolHeader({
   ] as const;
 
   const filteredPoolConfig =
-    !isFundingPool && PointSystems[pointSystem] !== "capped" ?
+    (
+      PoolTypes[proposalType] === "signaling" &&
+      PointSystems[pointSystem] !== "capped"
+    ) ?
       poolConfig.filter((config) => {
         const filter: (typeof poolConfig)[number]["label"][] = [
           "Spending limit",
@@ -320,7 +322,7 @@ export default function PoolHeader({
         ];
         return !!config.value && !filter.includes(config.label);
       })
-    : !isFundingPool ?
+    : PoolTypes[proposalType] === "signaling" ?
       poolConfig.filter((config) => {
         const filteredLabels: (typeof poolConfig)[number]["label"][] = [
           "Spending limit",
@@ -625,7 +627,7 @@ export default function PoolHeader({
           </Skeleton>
 
           {/* Pool Params */}
-          <h4>Pool Settings</h4>
+          <h4>Pool Settings:</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
             {filteredPoolConfig.map((config) => (
               <div
@@ -654,7 +656,7 @@ export default function PoolHeader({
           {/* Voting weight + Dispute Address */}
           <div className="flex flex-col sm:flex-row items-start justify-between gap-2 flex-wrap">
             <div className="flex flex-col gap-2 sm:flex-row items-start sm:items-center">
-              <h4>Voting System</h4>
+              <h4>Voting System:</h4>
               <div className="flex gap-2 items-center">
                 <Badge
                   label="conviction voting"

@@ -4,6 +4,9 @@ import React, { Fragment, useEffect, useRef, useState } from "react";
 import {
   AdjustmentsHorizontalIcon,
   PlusIcon,
+  UserIcon,
+  PlusCircleIcon,
+  UsersIcon,
 } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { Id, toast } from "react-toastify";
@@ -498,26 +501,41 @@ export function Proposals({
     <>
       {/* Proposals section */}
       <section className="col-span-12 lg:col-span-9 flex flex-col gap-10">
-        <header className="flex items-center justify-between gap-10 flex-wrap pl-6">
-          <h3>Proposals ({proposals.length})</h3>
+        <header
+          className={`flex ${proposals.length === 0 ? "flex-col items-start justify-start" : "items-center justify-between"} gap-10 flex-wrap`}
+        >
+          <h3 className=" text-left">Proposals</h3>
           {!!proposals &&
             strategy.isEnabled &&
             (proposals.length === 0 ?
-              <Link href={createProposalUrl}>
-                <Button
-                  icon={<PlusIcon height={24} width={24} />}
-                  disabled={!isConnected || missmatchUrl || !isMemberCommunity}
-                  tooltip={
-                    !isConnected ? "Connect your wallet"
-                    : !isMemberCommunity ?
-                      "Join the community first"
-                    : "Create a proposal"
-                  }
-                >
-                  Create a proposal
-                </Button>
-              </Link>
-              // <h4 className="text-2xl">No submitted proposals to support</h4>
+              <div className="text-center py-12  w-full flex flex-col items-center justify-center">
+                <div className="w-16 h-16 bg-neutral-soft-2 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <UsersIcon className="w-8 h-8 text-gray-400" />
+                </div>
+                <h5 className="text-lg font-medium text-gray-900 mb-2">
+                  No proposals yet
+                </h5>
+                <p className="text-neutral-content text-center mb-6">
+                  Submit the first proposal to kickstart pool governance.
+                </p>
+                <Link href={createProposalUrl}>
+                  <Button
+                    btnStyle="outline"
+                    icon={<PlusIcon height={24} width={24} />}
+                    disabled={
+                      !isConnected || missmatchUrl || !isMemberCommunity
+                    }
+                    tooltip={
+                      !isConnected ? "Connect your wallet"
+                      : !isMemberCommunity ?
+                        "Join the community first"
+                      : "Create a proposal"
+                    }
+                  >
+                    Create a proposal
+                  </Button>
+                </Link>
+              </div>
             : !allocationView && (
                 <CheckPassport strategy={strategy}>
                   <Button
