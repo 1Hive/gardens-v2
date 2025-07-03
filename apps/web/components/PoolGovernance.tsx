@@ -67,7 +67,7 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
 
   return (
     <>
-      <section className={"section-layout flex flex-col gap-4"}>
+      <section className={"section-layout flex flex-wrap flex-col gap-4"}>
         <header className="flex justify-between flex-wrap">
           <h3>Governance</h3>
           <Badge status={memberActivatedStrategy ? 1 : 0} />

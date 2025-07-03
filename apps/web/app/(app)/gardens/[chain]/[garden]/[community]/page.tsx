@@ -359,7 +359,7 @@ export default function Page({
 
   return (
     <>
-      <div className="col-span-12 lg:col-span-9">
+      <div className="col-span-12 xl:col-span-9">
         <div className="backdrop-blur-sm flex flex-col gap-10">
           <header className="bg-white border border-gray-200 shadow-sm section-layout">
             <div className="flex flex-col sm:flex-row items-start space-y-4 sm:space-y-0 sm:space-x-4">
@@ -580,7 +580,7 @@ export default function Page({
       </div>
 
       {/* Right Sidebar - Stake component */}
-      <div className="col-span-12 lg:col-span-3">
+      <div className="col-span-12 xl:col-span-3">
         <div className="backdrop-blur-sm rounded-lg flex flex-col gap-2 sticky top-32">
           <IncreasePower
             memberData={isMemberResult}
