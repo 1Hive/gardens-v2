@@ -676,7 +676,7 @@ export function Proposals({
             </div>
           </>
         )}
-        {proposals.length > 0 && (
+        {proposals.length > 0 && !allocationView && (
           <div className="flex items-center justify-center gap-6">
             <Link href={createProposalUrl}>
               <Button
