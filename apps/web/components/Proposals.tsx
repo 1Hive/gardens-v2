@@ -595,12 +595,7 @@ export function Proposals({
                 <div className="collapse collapse-arrow">
                   <input type="checkbox" />
                   <div className="collapse-title text-lg font-medium">
-                    Click to show/hide ended proposals{" "}
-                    {allocationView && isEndedProposalActiveAllocation ?
-                      <span className="text-primary-content">
-                        (active allocation)
-                      </span>
-                    : ""}
+                    Click to show/hide ended proposals
                   </div>
                   <div className="collapse-content flex flex-col gap-6 px-0">
                     {endedProposals.map((proposalData) => (
