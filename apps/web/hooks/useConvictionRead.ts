@@ -92,7 +92,8 @@ export const useConvictionRead = ({
     proposalData &&
     updatedConviction != null &&
     chain != null &&
-    strategyConfig;
+    strategyConfig &&
+    enabled;
 
   const timeToPass =
     initialized ?
