@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { Address, useContractRead } from "wagmi";
 import {
   CVProposal,
@@ -88,50 +88,59 @@ export const useConvictionRead = ({
   );
   const blockTime = chain?.blockTime;
 
+  const initialized =
+    proposalData &&
+    updatedConviction != null &&
+    chain != null &&
+    strategyConfig;
+
   const timeToPass =
-    Date.now() / 1000 + remainingBlocksToPass * (blockTime ?? 0);
+    initialized ?
+      Date.now() / 1000 + remainingBlocksToPass * (blockTime ?? 0)
+    : undefined;
 
-  if (!enabled) {
-    return {
-      thresholdPct: undefined,
-      totalSupportPct: undefined,
-      currentConvictionPct: undefined,
-      updatedConviction: undefined,
-      timeToPass: undefined,
-    };
-  }
-
-  if (
-    !proposalData ||
-    updatedConviction == null ||
-    chain == undefined ||
-    !strategyConfig
-  ) {
-    return {
-      thresholdPct: undefined,
-      totalSupportPct: undefined,
-      currentConvictionPct: undefined,
-      updatedConviction: undefined,
-      timeToPass: undefined,
-    };
-  }
-
-  let thresholdPct = calculatePercentageBigInt(
-    thresholdFromContract as bigint,
-    proposalData.strategy.maxCVSupply,
-    token?.decimals ?? 18,
+  let thresholdPct = useMemo(
+    () =>
+      initialized ?
+        calculatePercentageBigInt(
+          thresholdFromContract as bigint,
+          proposalData.strategy.maxCVSupply,
+          token?.decimals ?? 18,
+        )
+      : undefined,
+    [
+      thresholdFromContract,
+      proposalData?.strategy.maxCVSupply,
+      token?.decimals,
+    ],
   );
 
-  let totalSupportPct = calculatePercentageBigInt(
-    proposalData.stakedAmount,
-    proposalData.strategy.totalEffectiveActivePoints,
-    token?.decimals ?? 18,
+  let totalSupportPct = useMemo(
+    () =>
+      initialized ?
+        calculatePercentageBigInt(
+          proposalData.stakedAmount,
+          proposalData.strategy.totalEffectiveActivePoints,
+          token?.decimals ?? 18,
+        )
+      : undefined,
+    [
+      proposalData?.stakedAmount,
+      proposalData?.strategy.totalEffectiveActivePoints,
+      token?.decimals,
+    ],
   );
 
-  let currentConvictionPct = calculatePercentageBigInt(
-    BigInt(updatedConviction.toString()),
-    proposalData.strategy.maxCVSupply,
-    token?.decimals ?? 18,
+  let currentConvictionPct = useMemo(
+    () =>
+      initialized ?
+        calculatePercentageBigInt(
+          BigInt(updatedConviction.toString()),
+          proposalData.strategy.maxCVSupply,
+          token?.decimals ?? 18,
+        )
+      : undefined,
+    [updatedConviction, proposalData?.strategy.maxCVSupply, token?.decimals],
   );
 
   logOnce("debug", "Conviction computed numbers", {
@@ -141,12 +150,20 @@ export const useConvictionRead = ({
     currentConvictionPct,
   });
 
-  return {
-    thresholdPct,
-    totalSupportPct,
-    currentConvictionPct,
-    updatedConviction,
-    timeToPass,
-    triggerConvictionRefetch: () => triggerConvictionRefetch(),
-  };
+  return initialized ?
+      {
+        thresholdPct,
+        totalSupportPct,
+        currentConvictionPct,
+        updatedConviction,
+        timeToPass,
+        triggerConvictionRefetch: () => triggerConvictionRefetch(),
+      }
+    : {
+        thresholdPct: undefined,
+        totalSupportPct: undefined,
+        currentConvictionPct: undefined,
+        updatedConviction: undefined,
+        timeToPass: undefined,
+      };
 };

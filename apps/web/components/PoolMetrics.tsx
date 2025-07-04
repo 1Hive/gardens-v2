@@ -1,7 +1,10 @@
 "use client";
 
 import { FC, useEffect, useState } from "react";
-import { TrashIcon } from "@heroicons/react/24/outline";
+import {
+  ArrowTopRightOnSquareIcon,
+  TrashIcon,
+} from "@heroicons/react/24/outline";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import sfMeta from "@superfluid-finance/metadata";
 import { erc20ABI } from "@wagmi/core";
@@ -10,6 +13,7 @@ import { Address, useAccount, useBalance, useContractRead } from "wagmi";
 import { CVStrategy } from "#/subgraph/.graphclient";
 import { Button } from "./Button";
 import { DisplayNumber } from "./DisplayNumber";
+import { EthAddress } from "./EthAddress";
 import { Modal } from "./Modal";
 import { Skeleton } from "./Skeleton";
 import { TransactionModal, TransactionProps } from "./TransactionModal";
@@ -112,8 +116,8 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     Math.round(streamRequestedAmountPerSec * 10 ** poolToken.decimals),
   );
 
-  const isSuperTokenBalanceSufficient =
-    superTokenBalance && superTokenBalance.value >= requestedAmountBn;
+  // const isSuperTokenBalanceSufficient =
+  //   superTokenBalance && superTokenBalance.value >= requestedAmountBn;
 
   const {
     writeAsync: writeStreamFundsAsync,
@@ -126,7 +130,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     abi: abiWithErrors(superfluidCFAv1ForwarderAbi),
     functionName: "createFlow",
     contractName: "SuperFluid Constant Flow Agreement",
-    showNotification: isSuperTokenBalanceSufficient,
+    // showNotification: isSuperTokenBalanceSufficient,
     onConfirmations: () => {
       setCurrentFlowRateBn((old) => (old ?? 0n) + requestedAmountBn);
       setCurrentUserFlowRateBn(amount);
@@ -151,7 +155,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     abi: abiWithErrors(superfluidCFAv1ForwarderAbi),
     functionName: "updateFlow",
     contractName: "SuperFluid Constant Flow Agreement",
-    showNotification: isSuperTokenBalanceSufficient,
+    // showNotification: isSuperTokenBalanceSufficient,
     onConfirmations: () => {
       setCurrentFlowRateBn(
         (old) =>
@@ -332,11 +336,11 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
   const handleStreamFunds = async () => {
     resetTxsStatus();
     // Check if super token balance is already sufficient
-    if (isSuperTokenBalanceSufficient) {
-      await writeStreamFundsAsync();
-      setIsStreamModalOpened(false);
-      return;
-    }
+    // if (isSuperTokenBalanceSufficient) {
+    //   await writeStreamFundsAsync();
+    //   setIsStreamModalOpened(false);
+    //   return;
+    // }
     setWrapFundsTx((prev) => ({
       ...prev,
       message: getTxMessage("idle"),
@@ -352,11 +356,11 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
   const handleStreamEdit = async () => {
     resetTxsStatus();
     // Check if super token balance is already sufficient
-    if (isSuperTokenBalanceSufficient) {
-      await writeEditStreamAsync();
-      setIsStreamModalOpened(false);
-      return;
-    }
+    // if (isSuperTokenBalanceSufficient) {
+    //   await writeEditStreamAsync();
+    //   setIsStreamModalOpened(false);
+    //   return;
+    // }
     setWrapFundsTx((prev) => ({
       ...prev,
       message: getTxMessage("idle"),
@@ -421,7 +425,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
             <>
               <div className="border border-l-primary-button border-l-4 rounded-md p-2 flex items-center gap-2 justify-between">
                 <div className="flex flex-col gap-1">
-                  Currently streaming:
+                  You are currently streaming:
                   <div>
                     {toPrecision(currentUserFlowPerMonth, 4)} {poolToken.symbol}
                     /month
@@ -430,13 +434,18 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                 <button className="btn btn-ghost">
                   {isStopStreamLoading ?
                     <div className="loading loading-spinner text-error-content" />
-                  : <TrashIcon
-                      className="w-5 h-5 text-error"
-                      onClick={async () => {
-                        await writeStopStreamAsync();
-                        setIsStreamModalOpened(false);
-                      }}
-                    />
+                  : <div
+                      className="tooltip"
+                      data-tip="Stop streaming to this pool"
+                    >
+                      <TrashIcon
+                        className="w-5 h-5 text-error"
+                        onClick={async () => {
+                          await writeStopStreamAsync();
+                          setIsStreamModalOpened(false);
+                        }}
+                      />
+                    </div>
                   }
                 </button>
               </div>
@@ -445,7 +454,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
           )}
 
           <label className="flex flex-col gap-2">
-            Total streamed amount
+            Create a new stream on top:
             {fundAmountInput}
           </label>
           <div className="border rounded-md flex flex-col p-4 gap-4 bg-base-200">
@@ -508,10 +517,41 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                 forceShowTooltip={true}
                 className="w-full"
               >
-                Stream {amount} {poolToken.symbol}
+                Replace stream with {amount} {poolToken.symbol}
               </Button>
             }
           </div>
+
+          {superTokenBalance && superTokenBalance.value > 0 && (
+            <>
+              <hr className="w-full" />
+              <div className="flex items-center gap-2 justify-between">
+                <div className="flex flex-col gap-1 w-full">
+                  <div className="flex items-center gap-2 w-full">
+                    <div className="whitespace-nowrap">
+                      Super token balance:
+                    </div>
+                    <div className="flex items-center gap-1 w-full">
+                      {toPrecision(superTokenBalance.formatted, 4)}{" "}
+                      {superTokenBalance.symbol}
+                    </div>
+                  </div>
+                  <div className="text-sm text-neutral-content flex items-center gap-1">
+                    Manage it on{" "}
+                    <a
+                      className="text-primary-content hover:text-primary-hover-content flex items-center gap-1"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      href="https://app.superfluid.org/"
+                    >
+                      Superfluid app
+                      <ArrowTopRightOnSquareIcon className="w-4 h-4 inline-block" />
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </Modal>
       <section className="section-layout gap-2 flex flex-col w-fit">
@@ -551,21 +591,23 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
             {currentFlowRateBn && currentFlowRateBn > 0n && (
               <div className="flex gap-3 items-center">
                 <p className="subtitle2">Streamed:</p>
-                <p className="flex items-center whitespace-nowrap">
-                  {toPrecision(currentFlowPerMonth, 4)} {poolToken.symbol}
-                  /mo
-                </p>
-                <div
-                  className="tooltip"
-                  data-tip={`This pool is receiving ${toPrecision(currentFlowPerMonth, 4)} ${poolToken.symbol}/month through Superfluid streaming`}
-                >
-                  <Image
-                    src={SuperfluidStream}
-                    alt="Incoming Stream"
-                    width={36}
-                    height={36}
-                    className="mb-1"
-                  />
+                <div className="flex items-center gap-1">
+                  <p className="flex items-center whitespace-nowrap">
+                    {toPrecision(currentFlowPerMonth, 4)} {poolToken.symbol}
+                    /mo
+                  </p>
+                  <div
+                    className="tooltip"
+                    data-tip={`This pool is receiving ${toPrecision(currentFlowPerMonth, 4)} ${poolToken.symbol}/month through Superfluid streaming`}
+                  >
+                    <Image
+                      src={SuperfluidStream}
+                      alt="Incoming Stream"
+                      width={36}
+                      height={36}
+                      className="mb-1"
+                    />
+                  </div>
                 </div>
               </div>
             )}

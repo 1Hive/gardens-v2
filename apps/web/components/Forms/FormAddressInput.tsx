@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { blo } from "blo";
 import Image from "next/image";
 import { RegisterOptions } from "react-hook-form";
@@ -86,6 +86,15 @@ export const FormAddressInput = ({
     chainId: 1,
     cacheTime: 30_000,
   });
+
+  useEffect(() => {
+    if (ensAddress) {
+      setInputValue(ensAddress);
+      (onChange ?? registerOptions?.onChange)?.({
+        target: { value: ensAddress },
+      } as React.ChangeEvent<HTMLInputElement>);
+    }
+  }, [ensAddress]);
 
   const validateSafeAddress = async (address: string) => {
     if (

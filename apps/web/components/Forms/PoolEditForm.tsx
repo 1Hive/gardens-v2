@@ -374,21 +374,19 @@ export default function PoolEditForm({
       },
     ] as const;
 
-    if (sybilResistanceType === "gitcoinPassport") {
-      const sybilValue =
-        +(previewData.sybilResistanceValue ?? 0) * CV_PASSPORT_THRESHOLD_SCALE;
-      setPoolParamsWrite({
-        args: [
-          ...coreArgs,
-          BigInt(sybilValue),
-          membersToAdd,
-          membersToRemove,
-          (strategy.config.superfluidToken as Address) ??
-            superToken?.id ??
-            zeroAddress,
-        ],
-      });
-    }
+    const sybilValue =
+      +(previewData.sybilResistanceValue ?? 0) * CV_PASSPORT_THRESHOLD_SCALE;
+    setPoolParamsWrite({
+      args: [
+        ...coreArgs,
+        BigInt(sybilValue),
+        membersToAdd,
+        membersToRemove,
+        (strategy.config.superfluidToken as Address) ??
+          superToken?.id ??
+          zeroAddress,
+      ],
+    });
   };
 
   const formatFormRows = () => {

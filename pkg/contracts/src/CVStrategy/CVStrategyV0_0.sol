@@ -1069,8 +1069,10 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         }
 
         if (
-            _cvParams.decay == 0 && _cvParams.weight == 0 && _cvParams.maxRatio == 0
-                && _cvParams.minThresholdPoints == 0
+            !(
+                _cvParams.decay == 0 && _cvParams.weight == 0 && _cvParams.maxRatio == 0
+                    && _cvParams.minThresholdPoints == 0
+            )
         ) {
             cvParams = _cvParams;
             emit CVParamsUpdated(_cvParams);
@@ -1313,7 +1315,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         }
         for (uint256 i = 0; i < members.length; i++) {
             if (!registryCommunity.hasRole(allowlistRole, members[i])) {
-                registryCommunity.grantRole(keccak256(abi.encodePacked("ALLOWLIST", poolId)), members[i]);
+                registryCommunity.grantRole(allowlistRole, members[i]);
             }
         }
 

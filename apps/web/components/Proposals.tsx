@@ -4,8 +4,6 @@ import React, { Fragment, useEffect, useRef, useState } from "react";
 import {
   AdjustmentsHorizontalIcon,
   PlusIcon,
-  UserIcon,
-  PlusCircleIcon,
   UsersIcon,
 } from "@heroicons/react/24/outline";
 import Link from "next/link";
@@ -288,6 +286,10 @@ export function Proposals({
   const disableManageSupportBtnCondition: ConditionObject[] = [
     {
       condition: !isMemberCommunity,
+      message: "You need to join the community first",
+    },
+    {
+      condition: !memberActivatedStrategy,
       message: "You need to activate your governance first",
     },
     {

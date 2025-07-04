@@ -336,6 +336,9 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
         symbol
         decimals
       }
+      members {
+        memberAddress
+      }
     }
     proposals(orderBy: createdAt, orderDirection: desc) {
       id

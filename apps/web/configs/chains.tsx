@@ -141,7 +141,7 @@ export const chainConfigMap: {
     confirmations: 1,
     rpcUrl: process.env.NEXT_PUBLIC_RPC_URL_OP_TESTNET!,
     ...getSubgraphUrls(
-      "9ejruFicuLT6hfuXNTnS8UCwxTWrHz4uinesdZu1dKmk",
+      "5B7swx86RJEpywgvS63kMLVx9U6RKfERfU5tWYnUuGXe",
       "gardens-v-2-optimism-sepolia",
       SUBGRAPH_OPSEP_VERSION,
       70985,
