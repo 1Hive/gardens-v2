@@ -2,7 +2,10 @@
 
 import { FC, useEffect, useState } from "react";
 import {
+  ArrowPathRoundedSquareIcon,
   ArrowTopRightOnSquareIcon,
+  BanknotesIcon,
+  PlusIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
 // eslint-disable-next-line import/no-extraneous-dependencies
@@ -58,6 +61,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
   const [isStreamTxModalOpen, setIsStreamTxModalOpen] = useState(false);
   const { address: accountAddress } = useAccount();
   const [isStreamModalOpened, setIsStreamModalOpened] = useState(false);
+  const [isTransferModalOpened, setIsTransferModalOpened] = useState(false);
   const { data: balance } = useBalance({
     address: accountAddress,
     formatUnits: poolToken.decimals,
@@ -88,7 +92,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     Math.round(amount * 10 ** poolToken.decimals),
   );
 
-  const { write: writeFundPool, isLoading: isSendFundsLoading } =
+  const { writeAsync: writeFundPoolAsync, isLoading: isSendFundsLoading } =
     useContractWriteWithConfirmations({
       address: poolToken.address,
       abi: abiWithErrors(erc20ABI),
@@ -254,16 +258,17 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     superTokenBalance &&
     superTokenBalance.value < requestedAmountBn;
 
-  const { tooltipMessage, isButtonDisabled } = useDisableButtons([
-    {
-      message: `Connected account has insufficient ${poolToken.symbol} balance`,
-      condition: hasInsufficientBalance,
-    },
-    {
-      message: "Amount must be greater than 0",
-      condition: amount <= 0,
-    },
-  ]);
+  const { tooltipMessage, isButtonDisabled, isConnected, missmatchUrl } =
+    useDisableButtons([
+      {
+        message: `Connected account has insufficient ${poolToken.symbol} balance`,
+        condition: hasInsufficientBalance,
+      },
+      {
+        message: "Amount must be greater than 0",
+        condition: amount <= 0,
+      },
+    ]);
 
   const {
     tooltipMessage: streamTooltipMessage,
@@ -405,17 +410,19 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
       >
         <div className="flex items-center gap-2 mb-4">
           <p>Streaming:</p>
-          <Skeleton isLoading={poolBalance == undefined}>
+          <Skeleton isLoading={requestedStreamPerMonth == undefined}>
             <DisplayNumber
-              number={[poolBalance!, poolToken.decimals]}
+              number={toPrecision(requestedStreamPerMonth, 2)}
               tokenSymbol={poolToken.symbol}
             />
           </Skeleton>
-          <p>for 1 month</p>
+          <p>
+            for {streamDuration} month{streamDuration > 1 ? "s" : ""}
+          </p>
         </div>
       </TransactionModal>
       <Modal
-        title="Stream"
+        title="Stream Funds"
         isOpen={isStreamModalOpened}
         size="extra-small"
         onClose={() => setIsStreamModalOpened(false)}
@@ -454,7 +461,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
           )}
 
           <label className="flex flex-col gap-2">
-            Create a new stream on top:
+            Change stream amount:
             {fundAmountInput}
           </label>
           <div className="border rounded-md flex flex-col p-4 gap-4 bg-base-200">
@@ -554,111 +561,181 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
           )}
         </div>
       </Modal>
-      <section className="section-layout gap-2 flex flex-col w-fit">
-        <div className="flex items-center justify-between">
-          <h2>Pool Funds</h2>
-          {/* {poolId && elegibleGG23pools.includes(Number(poolId)) && (
-            <div className="flex flex-col items-center gap-2 py-2">
-              <Image
-                src={GitcoinMatchingLogo}
-                alt="Gitcoin Matching Logo"
-                width={100}
-                height={60}
-              />
-              <p className="text-primary-content text-md font-bold">
-                Eligible for GG23 matching
-              </p>
-            </div>
-          )} */}
-        </div>
-        <div className="flex justify-between items-center flex-wrap">
-          <div className="flex flex-col gap-2">
-            <div className="flex gap-3 items-center">
-              <p className="subtitle2">Funds in pool:</p>
-              <div className="flex items-center ">
-                <Skeleton
-                  className="w-32 h-6"
-                  isLoading={poolToken.balance == null}
-                >
-                  <DisplayNumber
-                    number={[poolToken.balance, poolToken.decimals]}
-                    tokenSymbol={poolToken.symbol}
-                    compact={true}
-                  />
-                </Skeleton>
-              </div>
-            </div>
-            {currentFlowRateBn && currentFlowRateBn > 0n && (
-              <div className="flex gap-3 items-center">
-                <p className="subtitle2">Streamed:</p>
-                <div className="flex items-center gap-1">
-                  <p className="flex items-center whitespace-nowrap">
-                    {toPrecision(currentFlowPerMonth, 4)} {poolToken.symbol}
-                    /mo
-                  </p>
-                  <div
-                    className="tooltip"
-                    data-tip={`This pool is receiving ${toPrecision(currentFlowPerMonth, 4)} ${poolToken.symbol}/month through Superfluid streaming`}
-                  >
-                    <Image
-                      src={SuperfluidStream}
-                      alt="Incoming Stream"
-                      width={36}
-                      height={36}
-                      className="mb-1"
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-            {accountAddress && (
-              <div className="flex gap-3">
-                <p className="subtitle2">Wallet balance:</p>
-                <Skeleton isLoading={!balance}>
-                  <DisplayNumber
-                    number={[balance?.value ?? BigInt(0), poolToken.decimals]}
-                    tokenSymbol={poolToken.symbol}
-                    compact={true}
-                  />
-                </Skeleton>
-              </div>
-            )}
-          </div>
-          <div className="flex gap-2 flex-wrap">
+
+      <Modal
+        title="Transfer Funds"
+        isOpen={isTransferModalOpened}
+        size="extra-small"
+        onClose={() => setIsTransferModalOpened(false)}
+      >
+        <div className="flex flex-col gap-6">
+          <label className="flex flex-col gap-2">
+            Amount to transfer:
             {fundAmountInput}
+          </label>
+          <div className="w-full flex justify-end mt-4">
             <Button
-              type="button"
-              btnStyle="outline"
+              onClick={async () => {
+                await writeFundPoolAsync();
+                setIsTransferModalOpened(false);
+              }}
               color="primary"
+              isLoading={isSendFundsLoading}
               disabled={isButtonDisabled}
               tooltip={tooltipMessage}
-              isLoading={isSendFundsLoading}
-              onClick={(ev) => {
-                ev.preventDefault();
-                writeFundPool();
+              className="w-full"
+            >
+              Transfer {amount} {poolToken.symbol}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+      <div className="col-span-12 xl:col-span-3 h-fit">
+        <div className="backdrop-blur-sm rounded-lg">
+          <section className="section-layout gap-2 flex flex-col">
+            <h3>Pool Funds</h3>
+            <div className="flex flex-col gap-2">
+              <div className="flex justify-between items-center gap-3 z-o">
+                <p className="subtitle2">Funds in pool:</p>
+                <EthAddress
+                  address={poolToken.address as Address}
+                  shortenAddress={true}
+                  actions="none"
+                  icon={false}
+                  label={
+                    <DisplayNumber
+                      copiable
+                      number={[poolToken.balance, poolToken.decimals]}
+                      tokenSymbol={poolToken.symbol}
+                      compact={true}
+                      valueClassName="text-2xl mr-1 font-bold text-primary-content"
+                      symbolClassName="text-primary-content"
+                    />
+                  }
+                />
+              </div>
+              {currentFlowRateBn && currentFlowRateBn > 0n && (
+                <div className="flex justify-between gap-3 items-center">
+                  <p className="subtitle2">Streamed:</p>
+                  <div className="flex items-center gap-1">
+                    <p className="flex items-center whitespace-nowrap">
+                      {toPrecision(currentFlowPerMonth, 4)} {poolToken.symbol}
+                      /mo
+                    </p>
+                    <div
+                      className="tooltip tooltip-bottom cursor-pointer"
+                      data-tip={`This pool is receiving ${toPrecision(currentFlowPerMonth, 4)} ${poolToken.symbol}/month through Superfluid streaming`}
+                    >
+                      <Image
+                        src={SuperfluidStream}
+                        alt="Incoming Stream"
+                        width={36}
+                        height={36}
+                        className="mb-1"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+              {accountAddress && (
+                <div className="flex justify-between items-center">
+                  <p className="text-sm">Wallet:</p>
+                  <DisplayNumber
+                    number={[
+                      walletBalance?.value ?? BigInt(0),
+                      poolToken.decimals,
+                    ]}
+                    tokenSymbol={poolToken.symbol}
+                    compact={true}
+                    valueClassName="text-black text-lg"
+                    symbolClassName="text-sm text-black"
+                    //tooltipClass="tooltip-left"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* <Button
+              type="submit"
+              btnStyle="outline"
+              color="primary"
+              disabled={missmatchUrl || !isConnected}
+              tooltip={
+                missmatchUrl || !isConnected ? tooltipMessage : undefined
+              }
+              icon={}
+              className="w-full mt-1"
+              onClick={() => {
+                setIsStreamModalOpened(true);
+                setAmount(0);
+                setStreamDuration(1);
               }}
             >
               Add Funds
-            </Button>
-            {config.superfluidToken && (
+            </Button> */}
+            <div
+              className={`w-full dropdown dropdown-hover dropdown-end ${missmatchUrl || !isConnected ? "" : "tooltip"}`}
+            >
               <Button
-                type="button"
+                type="submit"
                 btnStyle="outline"
-                color="secondary"
-                disabled={!accountAddress}
-                tooltip={accountAddress ? "" : "Connect your wallet"}
-                isLoading={isEditStreamLoading}
-                onClick={async (ev) => {
-                  ev.preventDefault();
-                  setIsStreamModalOpened(true);
-                }}
+                color="primary"
+                disabled={missmatchUrl || !isConnected}
+                tooltip={
+                  missmatchUrl || !isConnected ? tooltipMessage : undefined
+                }
+                icon={<PlusIcon className="w-5 h-5" />}
+                className="w-full mt-1"
               >
-                Stream funds
+                Add Funds
               </Button>
-            )}
-          </div>
+              {!missmatchUrl && isConnected && (
+                <ul
+                  tabIndex={0}
+                  className="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow"
+                >
+                  <li>
+                    <Button
+                      type="submit"
+                      btnStyle="ghost"
+                      color="primary"
+                      disabled={missmatchUrl || !isConnected}
+                      tooltip={
+                        missmatchUrl || !isConnected ? tooltipMessage : (
+                          undefined
+                        )
+                      }
+                      icon={<BanknotesIcon className="w-5 h-5" />}
+                      className="w-full mt-1 !justify-start"
+                      onClick={() => setIsTransferModalOpened(true)}
+                    >
+                      Transfer Funds
+                    </Button>
+                  </li>
+                  <li>
+                    <Button
+                      type="submit"
+                      btnStyle="ghost"
+                      color="secondary"
+                      disabled={missmatchUrl || !isConnected}
+                      tooltip={
+                        missmatchUrl || !isConnected ? tooltipMessage : (
+                          undefined
+                        )
+                      }
+                      icon={<ArrowPathRoundedSquareIcon className="w-5 h-5" />}
+                      className="w-full mt-1 !justify-start"
+                      onClick={() => setIsStreamModalOpened(true)}
+                    >
+                      Stream Funds
+                    </Button>
+                  </li>
+                </ul>
+              )}
+            </div>
+          </section>
         </div>
-      </section>
+      </div>
     </>
   );
 };

@@ -38,7 +38,7 @@ export type Color =
   | "tertiary"
   | "danger"
   | "disabled";
-export type BtnStyle = "filled" | "outline" | "link";
+export type BtnStyle = "filled" | "outline" | "link" | "ghost";
 
 type BtnStyles = Record<BtnStyle, Record<Color, string>>;
 
@@ -69,6 +69,17 @@ const btnStyles: BtnStyles = {
     danger: "text-danger-button",
     disabled: "text-neutral-soft",
   },
+  ghost: {
+    primary:
+      "text-primary-content hover:text-primary-hover-content hover:border border-primary-content",
+    secondary:
+      "text-secondary-content hover:text-secondary-hover-content hover:border border-secondary-content",
+    tertiary:
+      "text-tertiary-content hover:text-tertiary-hover-content hover:border border-tertiary-content",
+    danger:
+      "text-danger-button hover:text-danger-hover-content hover:border border-danger-button",
+    disabled: "text-neutral-soft",
+  },
 };
 
 export function Button({
@@ -94,6 +105,15 @@ export function Button({
       onClick={onClick}
       disabled={disabled || isLoading}
       style={style}
+      role="button"
+      aria-disabled={disabled || isLoading ? "true" : "false"}
+      aria-label={
+        children ?
+          typeof children === "string" ?
+            children
+          : ""
+        : ""
+      }
     >
       {isLoading && <span className={"loading loading-spinner loading-sm"} />}
       <div className={"flex gap-2 items-center"}>
