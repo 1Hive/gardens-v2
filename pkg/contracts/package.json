@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "make deploy",
     "fork": "make fork",
-    "_build": "forge build --sizes",
+    "build": "forge build --sizes",
+    "build:ir": "forge build --sizes --via-ir",
     "lint": "forge fmt",
     "test": "forge test -vvv",
     "test:force": "forge test -vvv --force",

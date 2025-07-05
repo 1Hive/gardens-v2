@@ -70,7 +70,6 @@ contract RegistryFactoryTest is Test {
     }
 
     function testGetProtocolFee_CommunityWithKeeper() public {
-        // Set the community as a keeper
         vm.prank(owner);
         address[] memory keepers = new address[](1);
         keepers[0] = community;

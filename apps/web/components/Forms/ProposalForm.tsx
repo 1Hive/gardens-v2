@@ -4,12 +4,14 @@ import React, { useState, useMemo } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { Address, encodeAbiParameters, parseUnits } from "viem";
-import { useContractRead, useToken } from "wagmi";
+import { useAccount, useContractRead, useToken } from "wagmi";
 import {
   Allo,
   ArbitrableConfig,
   CVStrategy,
   CVStrategyConfig,
+  Maybe,
+  MemberCommunity,
   TokenGarden,
 } from "#/subgraph/.graphclient";
 import { FormAddressInput } from "./FormAddressInput";
@@ -47,6 +49,9 @@ type ProposalFormProps = {
     "id" | "token" | "maxCVSupply" | "totalEffectiveActivePoints"
   > & {
     config: Pick<CVStrategyConfig, "decay" | "proposalType">;
+    registryCommunity: {
+      members?: Maybe<Pick<MemberCommunity, "memberAddress">[]>;
+    };
   };
   arbitrableConfig: Pick<ArbitrableConfig, "submitterCollateralAmount">;
   poolId: number;
@@ -138,6 +143,8 @@ export const ProposalForm = ({
 
   const { publish } = usePubSubContext();
 
+  const { address: connectedWallet } = useAccount();
+
   const chainId = alloInfo.chainId;
   const beneficiary = watch("beneficiary");
 
@@ -179,10 +186,16 @@ export const ProposalForm = ({
         condition: !isEnoughBalance,
         message: "Insufficient balance",
       },
+      {
+        condition: !strategy.registryCommunity.members?.find(
+          (x) => x.memberAddress === connectedWallet?.toLowerCase(),
+        ),
+        message: "Join the community to create a proposal",
+      },
     ],
-    [isEnoughBalance],
+    [isEnoughBalance, connectedWallet, strategy.registryCommunity.members],
   );
-  const { isConnected, missmatchUrl, tooltipMessage } =
+  const { tooltipMessage, isButtonDisabled } =
     useDisableButtons(disableSubmitBtn);
 
   const proposalTypeName = PoolTypes[proposalType];
@@ -482,7 +495,7 @@ export const ProposalForm = ({
             <Button
               onClick={() => createProposal()}
               isLoading={loading}
-              disabled={!isEnoughBalance || !isConnected || missmatchUrl}
+              disabled={isButtonDisabled}
               tooltip={tooltipMessage}
             >
               Submit

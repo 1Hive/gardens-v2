@@ -20,7 +20,7 @@ export function useHandleAllowance(
   handleAllowance: (args: {
     formAmount?: bigint;
     covenantSignature?: `0x${string}`;
-  }) => void;
+  }) => Promise<void>;
   resetState: () => void;
 } {
   const chainId = useChainIdFromPath();

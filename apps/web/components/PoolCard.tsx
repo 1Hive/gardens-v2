@@ -9,7 +9,6 @@ import {
 } from "@heroicons/react/24/outline";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useBalance } from "wagmi";
 import {
   CVProposal,
   CVStrategy,
@@ -22,6 +21,7 @@ import { Badge, Card, DisplayNumber, Statistic } from "@/components";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
+import { usePoolToken } from "@/hooks/usePoolToken";
 import { PointSystems, PoolTypes } from "@/types";
 import { capitalize } from "@/utils/text";
 
@@ -48,9 +48,9 @@ export function PoolCard({ pool, token }: Props) {
 
   const poolType = config?.proposalType as number | undefined;
 
-  const { data: poolAmount } = useBalance({
-    address: pool.id as `0x${string}`,
-    token: token as `0x${string}`,
+  const poolToken = usePoolToken({
+    poolAddress: pool.id,
+    poolTokenAddr: token,
     enabled: isEnabled && !!poolType && PoolTypes[poolType] === "funding",
   });
 
@@ -87,15 +87,15 @@ export function PoolCard({ pool, token }: Props) {
           className={`${isEnabled ? "visible" : "invisible"}`}
         />
         {isEnabled &&
-          poolAmount &&
-          poolAmount.value &&
+          poolToken &&
+          poolToken.balance &&
           poolType &&
           PoolTypes[poolType] === "funding" && (
             <Statistic icon={<CurrencyDollarIcon />} label="funds">
               <DisplayNumber
-                number={[poolAmount.value, poolAmount.decimals]}
+                number={poolToken.formatted}
                 compact={true}
-                tokenSymbol={poolAmount.symbol}
+                tokenSymbol={poolToken.symbol}
               />
             </Statistic>
           )}

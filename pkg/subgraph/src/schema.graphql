@@ -1,7 +1,6 @@
 type CVStrategy @entity(immutable: false) {
   id: ID!
   poolId: BigInt!
-  poolAmount: BigInt!
   metadata: String
   registryCommunity: RegistryCommunity!
   config: CVStrategyConfig!
@@ -27,6 +26,7 @@ type CVStrategyConfig @entity(immutable: false) {
   pointSystem: BigInt!
   maxAmount: BigInt
   allowlist: [String!]
+  superfluidToken: String
 }
 
 type ArbitrableConfig @entity(immutable: false) {
@@ -104,6 +104,7 @@ type RegistryCommunity @entity(immutable: false) {
   # members: [Member!] @derivedFrom(field: "registryCommunity")
   garden: TokenGarden!
   isValid: Boolean!
+  archived: Boolean!
 }
 
 type Member @entity(immutable: false) {
