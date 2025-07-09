@@ -612,15 +612,15 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                       /mo
                     </p>
                     <div
-                      className="tooltip tooltip-top-left cursor-pointer"
+                      className="tooltip tooltip-top-left cursor-pointer w-8"
                       data-tip={`This pool is receiving ${toPrecision(currentFlowPerMonth, 4)} ${poolToken.symbol}/month through Superfluid streaming`}
                     >
                       <Image
                         src={SuperfluidStream}
                         alt="Incoming Stream"
-                        width={36}
-                        height={36}
-                        className="mb-1"
+                        width={32}
+                        height={32}
+                        className="mb-[1.6px]"
                       />
                     </div>
                   </div>
