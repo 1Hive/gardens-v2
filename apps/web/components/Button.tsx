@@ -63,10 +63,10 @@ const btnStyles: BtnStyles = {
     disabled: "text-neutral-soft-content border border-neutral-soft-content",
   },
   link: {
-    primary: "text-primary-content",
-    secondary: "",
-    tertiary: "",
-    danger: "text-danger-button",
+    primary: "text-primary-content hover:text-primary-hover-content",
+    secondary: "text-secondary-content hover:text-secondary-hover-content",
+    tertiary: "text-tertiary-content hover:text-tertiary-hover-content",
+    danger: "text-danger-button hover:text-danger-hover-content",
     disabled: "text-neutral-soft",
   },
   ghost: {
@@ -105,7 +105,6 @@ export function Button({
       onClick={onClick}
       disabled={disabled || isLoading}
       style={style}
-      role="button"
       aria-disabled={disabled || isLoading ? "true" : "false"}
       aria-label={
         children ?
@@ -125,7 +124,7 @@ export function Button({
   return disabled || forceShowTooltip ?
       <div
         className={`${className} ${tooltip ? "tooltip" : ""} ${tooltipSide} ${tooltipStyles}`}
-        data-tip={tooltip ?? ""}
+        data-tip={tooltip}
       >
         {buttonElement}
       </div>

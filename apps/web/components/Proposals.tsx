@@ -506,7 +506,7 @@ export function Proposals({
         <header
           className={`flex ${proposals.length === 0 ? "flex-col items-start justify-start" : "items-center justify-between"} gap-10 flex-wrap`}
         >
-          <h3 className=" text-left">Proposals</h3>
+          <h3 className="text-left w-52">Proposals</h3>
           {!!proposals &&
             strategy.isEnabled &&
             (proposals.length === 0 ?
