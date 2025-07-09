@@ -287,7 +287,7 @@ export default function PoolHeader({
     enabled: !!address && !!safePrefix, // SafePrefix undefined means not supported
     args: [address as Address],
     onError: () => {
-      console.error("Error reading isOwner from Coucil Safe");
+      console.error("Error reading isOwner from Council Safe");
     },
   });
 

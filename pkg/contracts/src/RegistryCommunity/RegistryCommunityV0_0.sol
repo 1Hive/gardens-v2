@@ -301,7 +301,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         registry = IRegistry(allo.getRegistry());
 
         address[] memory pool_initialMembers;
-        // Support EOA as coucil safe
+        // Support EOA as council safe
         if (address(councilSafe).code.length == 0) {
             pool_initialMembers = new address[](3);
             pool_initialMembers[0] = msg.sender;
