@@ -62,7 +62,7 @@ export function useContractWriteWithConfirmations<
 
   const shouldDivviTrack = useMemo(() => {
     return resolvedChaindId === celo.id;
-  }, []);
+  }, [resolvedChaindId]);
 
   let propsWithChainId = {
     ...props,
