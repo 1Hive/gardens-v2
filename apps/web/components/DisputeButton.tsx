@@ -374,7 +374,7 @@ export const DisputeButton: FC<Props> = ({
                 <Button
                   color="secondary"
                   btnStyle="outline"
-                  className="w-10"
+                  className=""
                   onClick={() => handleSubmitRuling(ABSTAINED_RULING)}
                   isLoading={rulingLoading === ABSTAINED_RULING}
                   disabled={

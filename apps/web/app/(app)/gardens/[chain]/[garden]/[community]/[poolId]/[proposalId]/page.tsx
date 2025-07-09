@@ -489,14 +489,15 @@ export default function Page({
                 )}
               </div>
             </div>
-            <div className="flex items-end ">
-              {proposalStatus === "active" &&
-                proposalData.strategy.isEnabled && (
-                  <DisputeButton
-                    isMemberCommunity={isMemberCommunity}
-                    proposalData={{ ...proposalData, ...metadata }}
-                  />
-                )}
+            <div className="flex items-end">
+              {proposalStatus === "active" ||
+                (proposalStatus === "disputed" &&
+                  proposalData.strategy.isEnabled && (
+                    <DisputeButton
+                      isMemberCommunity={isMemberCommunity}
+                      proposalData={{ ...proposalData, ...metadata }}
+                    />
+                  ))}
             </div>
           </section>
 
