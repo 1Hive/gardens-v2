@@ -1,11 +1,14 @@
 "use client";
 
 import React from "react";
+import { Address, useBalance } from "wagmi";
 import { getPoolDataDocument, getPoolDataQuery } from "#/subgraph/.graphclient";
 import { ProposalForm } from "@/components/Forms";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { calculateMinimumConviction } from "@/components/PoolHeader";
 import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
+import { PoolTypes } from "@/types";
 import { CV_SCALE_PRECISION, MAX_RATIO_CONSTANT } from "@/utils/numbers";
 
 export default function Page({
@@ -15,7 +18,7 @@ export default function Page({
 }) {
   const { data } = useSubgraphQuery<getPoolDataQuery>({
     query: getPoolDataDocument,
-    variables: { poolId: poolId, garden: garden },
+    variables: { poolId: poolId, garden: garden.toLowerCase() },
   });
   const strategyObj = data?.cvstrategies?.[0];
 
@@ -24,28 +27,51 @@ export default function Page({
   });
 
   const tokenGarden = data?.tokenGarden;
+  const poolTokenAddr = strategyObj?.token;
+  const proposalType = strategyObj?.config?.proposalType as number;
+
+  const { data: poolAmount } = useBalance({
+    address: strategyObj?.id as Address,
+    token: poolTokenAddr as Address,
+    enabled:
+      !!poolTokenAddr &&
+      !!strategyObj?.id &&
+      data &&
+      PoolTypes[data.cvstrategies[0].config.proposalType] === "funding",
+  });
 
   if (!tokenGarden || !metadata || !strategyObj) {
     return (
-      <div className="mt-96">
+      <div className="mt-96 col-span-12">
         <LoadingSpinner />
       </div>
     );
   }
 
   const alloInfo = data?.allos[0];
-  const proposalType = strategyObj.config?.proposalType as number;
-  const poolAmount = strategyObj.poolAmount as number;
 
-  const maxRatioDivPrecision =
-    (Number(strategyObj.config?.maxRatio) / CV_SCALE_PRECISION) *
-    MAX_RATIO_CONSTANT;
+  const spendingLimitPctValue =
+    (Number(strategyObj.config.maxRatio || 0) / CV_SCALE_PRECISION) * 100;
 
-  const spendingLimitPct = maxRatioDivPrecision * 100;
-  const poolAmountSpendingLimit = poolAmount * maxRatioDivPrecision;
+  const minimumConviction = calculateMinimumConviction(
+    strategyObj.config.weight,
+    spendingLimitPctValue * MAX_RATIO_CONSTANT,
+  );
+
+  const spendingLimitValuePct =
+    (strategyObj.config.maxRatio / CV_SCALE_PRECISION) *
+    (1 - Math.sqrt(minimumConviction / 100)) *
+    100;
+
+  const spendingLimitValueNum =
+    poolAmount &&
+    (
+      (+poolAmount.formatted * +Math.round(spendingLimitValuePct)) /
+      100
+    ).toFixed(2);
 
   return (
-    <div className="page-layout">
+    <div className="page-layout col-span-12 mx-auto">
       <section className="section-layout">
         <div className="text-center sm:mt-5 mb-12">
           <h2 className="mb-2">Create a Proposal in Pool #{poolId}</h2>
@@ -57,12 +83,12 @@ export default function Page({
           arbitrableConfig={data.arbitrableConfigs[0]}
           strategy={strategyObj}
           poolId={poolId}
+          poolParams={data.cvstrategies[0].config}
           proposalType={proposalType}
           alloInfo={alloInfo}
           tokenGarden={tokenGarden}
-          spendingLimit={poolAmountSpendingLimit}
-          spendingLimitPct={spendingLimitPct}
-          poolAmount={poolAmount}
+          spendingLimit={spendingLimitValueNum}
+          spendingLimitPct={spendingLimitValuePct}
         />
       </section>
     </div>

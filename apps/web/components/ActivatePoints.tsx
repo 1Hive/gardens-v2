@@ -11,7 +11,6 @@ import useCheckAllowList from "@/hooks/useCheckAllowList";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { cvStrategyABI } from "@/src/generated";
-import { abiWithErrors } from "@/utils/abi";
 import { useErrorDetails } from "@/utils/getErrorName";
 
 type ActiveMemberProps = {
@@ -40,7 +39,7 @@ export function ActivatePoints({
       chainId,
       address: strategy.id as Address,
       contractName: "CV Strategy",
-      abi: abiWithErrors(cvStrategyABI),
+      abi: cvStrategyABI,
       functionName: "activatePoints",
       fallbackErrorMessage: "Error activating points, please report a bug.",
       onConfirmations: () => {
@@ -58,7 +57,7 @@ export function ActivatePoints({
   const { write: writeDeactivatePoints, error: errorDeactivatePoints } =
     useContractWriteWithConfirmations({
       address: strategy.id as Address,
-      abi: abiWithErrors(cvStrategyABI),
+      abi: cvStrategyABI,
       contractName: "CV Strategy",
       functionName: "deactivatePoints",
       fallbackErrorMessage: "Error deactivating points, please report a bug.",
@@ -117,7 +116,7 @@ export function ActivatePoints({
       btnStyle={isMemberActivated ? "outline" : "filled"}
       color={isMemberActivated ? "danger" : "primary"}
       disabled={missmatchUrl || disableActiveBtn || !isAllowed}
-      tooltip={String(tooltipMessage)}
+      tooltip={tooltipMessage}
     >
       {isMemberActivated ? "Deactivate governance" : "Activate governance"}
     </Button>

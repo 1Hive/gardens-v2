@@ -20,7 +20,7 @@ export const ETH_DECIMALS = 18;
 
 export function convertSecondsToReadableTime(totalSeconds: number): {
   value: number;
-  unit: "second" | "minute" | "hour" | "day";
+  unit: "sec." | "min." | "hour" | "day";
 } {
   const days = totalSeconds / (24 * 60 * 60);
   const hours = totalSeconds / (60 * 60);
@@ -31,9 +31,9 @@ export function convertSecondsToReadableTime(totalSeconds: number): {
   } else if (hours >= 1) {
     return { value: Number(hours.toPrecision(2)), unit: "hour" };
   } else if (minutes >= 1) {
-    return { value: Number(minutes.toPrecision(2)), unit: "minute" };
+    return { value: Number(minutes.toPrecision(2)), unit: "min." };
   } else {
-    return { value: Number(totalSeconds.toPrecision(2)), unit: "second" };
+    return { value: Number(totalSeconds.toPrecision(2)), unit: "sec." };
   }
 }
 
@@ -69,7 +69,7 @@ export function parseToken(value: dn.Dnum | string, compact?: boolean) {
   return dn.format(value, { compact: compact, digits: 2 });
 }
 
-function formatTokenAmount(
+export function formatTokenAmount(
   value: string | number | bigint | undefined,
   decimals: number,
   digits?: number,
@@ -85,7 +85,7 @@ function formatTokenAmount(
   return dn.format(num, { digits: digits });
 }
 
-function calculateFees(
+export function calculateFees(
   stakeAmount: string,
   fee: string,
   tokenDecimals: number,
@@ -99,7 +99,7 @@ function calculateFees(
   return dn.format(num);
 }
 
-function gte(
+export function gte(
   value1: bigint | undefined,
   value2: bigint | undefined,
   decimals: number | string,
@@ -113,10 +113,10 @@ function gte(
   return dn.greaterThan(v1, v2) || dn.equal(v1, v2);
 }
 
-function calculatePercentageBigInt(
+export function calculatePercentageBigInt(
   value1: bigint,
   value2: bigint,
-  tokenDecimals: number,
+  tokenDecimals: number = 0,
 ): number {
   if (!value1 || !value2) {
     // console.log("divideWithDecimals: value1 or value2 is undefined");
@@ -135,7 +135,7 @@ function calculatePercentageBigInt(
     ).toFixed(2),
   );
 }
-function calculatePercentage(value1: number, value2: number): number {
+export function calculatePercentage(value1: number, value2: number): number {
   if (!value1 || !value2) {
     // console.log("divideWithDecimals: value1 or value2 is undefined");
     return 0;
@@ -152,7 +152,7 @@ function calculatePercentage(value1: number, value2: number): number {
   return parseFloat(divided.toFixed(2));
 }
 
-function calculatePercentageDecimals(
+export function calculatePercentageDecimals(
   value1: number | bigint,
   value2: number | bigint,
   decimals: number,
@@ -187,7 +187,7 @@ function calculatePercentageDecimals(
   return Number(formattedPercentage);
 }
 
-function calculateDecay(blockTime: number, convictionGrowth: number) {
+export function calculateDecay(blockTime: number, convictionGrowth: number) {
   const halfLifeInSeconds = convictionGrowth * 24 * 60 * 60;
 
   const result =
@@ -196,21 +196,13 @@ function calculateDecay(blockTime: number, convictionGrowth: number) {
   return Math.floor(result);
 }
 
-function calculateMaxRatioNum(
+export function calculateMaxRatioNum(
   spendingLimit: number,
   minimumConviction: number,
 ) {
   return spendingLimit / (1 - Math.sqrt(minimumConviction));
 }
 
-export {
-  calculateFees,
-  formatTokenAmount,
-  gte,
-  dn,
-  calculatePercentageDecimals,
-  calculatePercentageBigInt,
-  calculatePercentage,
-  calculateDecay,
-  calculateMaxRatioNum,
-};
+export function bigIntMin(a: bigint, b: bigint) {
+  return a < b ? a : b;
+}

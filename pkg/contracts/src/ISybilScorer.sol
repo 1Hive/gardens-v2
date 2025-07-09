@@ -8,7 +8,6 @@ struct Strategy {
 }
 
 interface ISybilScorer {
-    function initialize(address _listManager) external;
     function addUserScore(address _user, uint256 _score) external;
     function removeUser(address _user) external;
     function changeListManager(address _newManager) external;

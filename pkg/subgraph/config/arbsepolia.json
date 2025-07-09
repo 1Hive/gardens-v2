@@ -4,14 +4,14 @@
   "dataSources": [
     {
       "name": "RegistryFactoryV0_0",
-      "startBlock": 73590780,
-      "address": "0x7a603877488db46c0f6b40c2c770becfd7a65593",
+      "startBlock": 112011139,
+      "address": "0xf42f88c13804147b2fdda13c093ce14219aea395",
       "customTemplate": "registryFactory"
     },
     {
       "name": "PassportScorer",
-      "startBlock": 73590780,
-      "address": "0xfF53a163e43EccC00d8FdE7acA24aa9FA4da7356",
+      "startBlock": 112011139,
+      "address": "0x6ad70508F44aa0e86E7Af80Ccc4fc1f160C2df46",
       "customTemplate": "passportScorer"
     }
   ]

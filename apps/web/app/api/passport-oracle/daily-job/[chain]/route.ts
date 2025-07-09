@@ -14,6 +14,7 @@ import { privateKeyToAccount } from "viem/accounts";
 import { getConfigByChain } from "@/configs/chains";
 import { initUrqlClient } from "@/providers/urql";
 import { passportScorerABI } from "@/src/generated";
+import { ApiScore, fetchAllPassportScores } from "@/utils/gitcoin-passport";
 import { CV_PASSPORT_THRESHOLD_SCALE } from "@/utils/numbers";
 import { getViemChain } from "@/utils/web3";
 
@@ -27,17 +28,6 @@ interface PassportUser {
   lastUpdated: string;
 }
 
-interface ApiScore {
-  address: string;
-  score: string;
-  status: string;
-  last_score_timestamp: string;
-  expiration_date: string | null;
-  evidence: string | null;
-  error: string | null;
-  stamp_scores: Record<string, number>;
-}
-
 const query = gql`
   query {
     passportUsers {
@@ -48,25 +38,6 @@ const query = gql`
     }
   }
 `;
-
-const fetchScoresFromService = async (): Promise<ApiScore[]> => {
-  const url = `${process.env.VERCEL_URL ? "https://" + process.env.VERCEL_URL : "http://localhost:3000"}/api/passport/scores/`;
-
-  const response = await fetch(url, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-
-  if (response.ok) {
-    const data = await response.json();
-    return data.items;
-  } else {
-    const errorData = await response.json();
-    throw new Error(errorData.message || "Failed to fetch scores from service");
-  }
-};
 
 const compareScores = (
   subgraphUsers: PassportUser[],
@@ -150,7 +121,8 @@ const updateScores = async (chain: string) => {
 
   const subgraphUsers = subgraphResponse.data.passportUsers ?? [];
 
-  const apiScores = await fetchScoresFromService();
+  const apiScores = await fetchAllPassportScores();
+
   const updates = compareScores(subgraphUsers, apiScores);
 
   if (updates.length > 0) {

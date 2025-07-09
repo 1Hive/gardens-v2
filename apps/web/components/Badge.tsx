@@ -12,12 +12,14 @@ type BadgeProps = {
   className?: string;
   icon?: React.ReactNode;
   isCapitalize?: boolean;
+  tooltip?: string;
+  children?: React.ReactNode;
 };
 
 // Styles for different pool badge types
 const POOL_TYPE_STYLES = [
-  "bg-secondary-soft text-secondary-content",
-  "bg-secondary-soft text-secondary-content",
+  "bg-primary-soft text-primary-content",
+  "bg-tertiary-soft text-tertiary-content",
 ];
 
 // Styles for different proposal status badge
@@ -32,14 +34,16 @@ const PROPOSAL_STATUS_STYLES = [
 ];
 
 const BASE_STYLES =
-  "border-none rounded-full leading-5 py-2 px-4 text-base cursor-default";
+  "border-none rounded-full leading-5 py-1 px-2 cursor-default";
 
 export function Badge({
   type,
   status,
   label,
   className,
+  tooltip,
   icon,
+  children,
 }: BadgeProps): JSX.Element {
   const isStatusBadge = status !== undefined;
   const ispoolTypeDefined = type !== undefined;
@@ -53,8 +57,9 @@ export function Badge({
 
   // Determine the label content
   const content =
-    isStatusBadge ? ProposalStatus[status]
-    : ispoolTypeDefined ? (PoolTypes[type] ?? label)
+    children ? children
+    : isStatusBadge ? ProposalStatus[status]
+    : ispoolTypeDefined ? PoolTypes[type] ?? label
     : label;
 
   //For type => conditionally set the icon based on type === poolTypes[type]
@@ -62,20 +67,19 @@ export function Badge({
     icon ??
     (() => {
       const iconMap: { [key: string]: React.ReactNode } = {
-        signaling: <HandThumbUpIcon className="h-6 w-6 text-inherit" />,
-        funding: <CurrencyDollarIcon className="h-6 w-6 text-inherit" />,
+        signaling: <HandThumbUpIcon className="h-5 w-5" />,
+        funding: <CurrencyDollarIcon className="h-5 w-5" />,
       };
-      return type != null ? (iconMap[PoolTypes[type]] ?? null) : null;
+      return type != null ? iconMap[PoolTypes[type]] ?? null : null;
     })();
 
   return (
     <div
-      className={`${BASE_STYLES} ${styles} ${className} flex items-center gap-2`}
+      className={`${BASE_STYLES} ${styles} ${tooltip ? "tooltip" : ""} ${className} flex items-center gap-1`}
+      data-tip={tooltip}
     >
-      {iconIncluded && (
-        <div className="h-6 w-6 text-inherit">{iconIncluded}</div>
-      )}
-      <h6 className="first-letter:uppercase">{content}</h6>
+      {iconIncluded && <span className="h-5 w-5">{iconIncluded}</span>}
+      <p className="first-letter:uppercase text-sm font-semibold">{content}</p>
     </div>
   );
 }

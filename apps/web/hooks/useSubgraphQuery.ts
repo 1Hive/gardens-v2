@@ -3,6 +3,7 @@ import { AnyVariables, DocumentInput, OperationContext } from "@urql/next";
 import { isEqual } from "lodash-es";
 import { toast } from "react-toastify";
 import { useChainIdFromPath } from "./useChainIdFromPath";
+import { useCheat } from "./useCheat";
 import { useIsMounted } from "./useIsMounted";
 import { getConfigByChain } from "@/configs/chains";
 import {
@@ -68,6 +69,7 @@ export function useSubgraphQuery<
   const latestResponse = useRef({ variables, response });
   const subscritionId = useRef<SubscriptionId>();
   const fetchingRef = useRef(false);
+  const skipPublished = useCheat("skipPublished");
 
   useEffect(() => {
     latestResponse.current.response = response; // Update ref on every response change
@@ -121,12 +123,34 @@ export function useSubgraphQuery<
           value?.toLowerCase()
         : value;
     });
-    const res = await urqlClient.query<Data>(query, variables, {
-      ...context,
-      url: config?.subgraphUrl,
-      requestPolicy: "network-only",
-    });
-    return modifier && res.data ? { ...res, data: modifier(res.data) } : res;
+
+    const urqlQuery = (useDev: boolean) =>
+      urqlClient.query<Data>(query, variables, {
+        ...context,
+        url:
+          useDev || !config?.publishedSubgraphUrl ?
+            config?.subgraphUrl
+          : config?.publishedSubgraphUrl,
+        requestPolicy: "network-only",
+      });
+
+    let res;
+    try {
+      const shouldSkipPublished =
+        skipPublished || process.env.NEXT_PUBLIC_SKIP_PUBLISHED === "true";
+      res = await urqlQuery(shouldSkipPublished);
+      if (!res.data && res.error) {
+        throw res.error;
+      }
+    } catch (err1) {
+      console.error(
+        "⚡ Error fetching through published subgraph, retrying with hosted:",
+        err1,
+      );
+      res = await urqlQuery(true);
+    }
+
+    return modifier && res?.data ? { ...res, data: modifier(res.data) } : res;
   };
 
   const refetchFromOutside = async () => {

@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
-import { Address } from "viem";
-import { useToken } from "wagmi";
+import { useEffect, useRef } from "react";
+import { Address, zeroAddress } from "viem";
+import { useBalance } from "wagmi";
 import {
   getAlloQuery,
   getPoolDataDocument,
@@ -27,10 +27,11 @@ export default function Page({
   params: { chain: string; poolId: number; garden: string };
 }) {
   const searchParams = useCollectQueryParams();
+  const proposalSectionRef = useRef<HTMLDivElement>(null);
 
   const { data, refetch, error } = useSubgraphQuery<getPoolDataQuery>({
     query: getPoolDataDocument,
-    variables: { poolId: poolId, garden: garden },
+    variables: { poolId: poolId, garden: garden.toLowerCase() },
     changeScope: [
       {
         topic: "pool",
@@ -55,15 +56,9 @@ export default function Page({
       },
     ],
   });
-
   const strategyObj = data?.cvstrategies?.[0];
   const poolTokenAddr = strategyObj?.token as Address;
   const proposalType = strategyObj?.config.proposalType;
-  const { data: poolToken } = useToken({
-    address: poolTokenAddr,
-    enabled: !!poolTokenAddr && PoolTypes[proposalType] === "funding",
-    chainId: +chain,
-  });
 
   useEffect(() => {
     if (error) {
@@ -82,9 +77,8 @@ export default function Page({
     console.debug(
       "maxRatio: " + strategyObj?.config?.maxRatio,
       "minThresholdPoints: " + strategyObj?.config?.minThresholdPoints,
-      "poolAmount: " + strategyObj?.poolAmount,
     );
-  }, [strategyObj?.config, strategyObj?.config, strategyObj?.poolAmount]);
+  }, [strategyObj?.config, strategyObj?.config]);
 
   useEffect(() => {
     const newProposalId = searchParams[QUERY_PARAMS.poolPage.newProposal];
@@ -103,11 +97,47 @@ export default function Page({
     }
   }, [searchParams, strategyObj?.proposals]);
 
-  const tokenGarden = data?.tokenGarden;
+  const maxAmount = strategyObj?.config?.maxAmount ?? 0;
 
-  if (!tokenGarden || (!poolToken && PoolTypes[proposalType] === "funding")) {
+  useEffect(() => {
+    if (
+      searchParams[QUERY_PARAMS.poolPage.allocationView] !== undefined &&
+      proposalSectionRef.current
+    ) {
+      const elementTop =
+        proposalSectionRef.current.getBoundingClientRect().top + window.scrollY;
+      window.scrollTo({
+        top: elementTop - 130,
+        behavior: "smooth",
+      });
+    }
+    // setAllocationView(searchParams[QUERY_PARAMS.poolPage.allocationView]);
+  }, [proposalSectionRef.current, searchParams]);
+
+  const { data: poolAmount } = useBalance({
+    address: strategyObj?.id as Address,
+    token: poolTokenAddr,
+    enabled:
+      !!strategyObj?.id &&
+      PoolTypes[strategyObj.config.proposalType] !== "signaling" &&
+      poolTokenAddr !== zeroAddress,
+    watch: true,
+  });
+
+  const poolToken =
+    poolAmount ?
+      {
+        address: poolTokenAddr,
+        symbol: poolAmount.symbol,
+        decimals: poolAmount.decimals,
+        balance: poolAmount.value,
+        formatted: poolAmount.formatted,
+      }
+    : undefined;
+
+  if (!strategyObj || (!poolToken && PoolTypes[proposalType] === "funding")) {
     return (
-      <div className="mt-96">
+      <div className="mt-96 col-span-12">
         <LoadingSpinner />
       </div>
     );
@@ -119,44 +149,46 @@ export default function Page({
 
   const communityAddress = strategyObj.registryCommunity.id as Address;
   const alloInfo = data.allos[0];
-  const poolAmount = strategyObj.poolAmount as number;
 
   const isEnabled = data.cvstrategies?.[0]?.isEnabled as boolean;
 
   return (
-    <div className="page-layout">
+    <>
       <PoolHeader
         poolToken={poolToken}
-        token={tokenGarden}
         strategy={strategyObj}
         arbitrableConfig={data.arbitrableConfigs[0]}
         poolId={poolId}
         ipfsResult={ipfsResult}
         isEnabled={isEnabled}
-        chainId={chain}
+        maxAmount={maxAmount}
       />
+
       {isEnabled && (
         <>
           {poolToken && PoolTypes[proposalType] !== "signaling" && (
             <PoolMetrics
-              poolToken={poolToken}
               alloInfo={alloInfo}
               poolId={poolId}
-              poolAmount={poolAmount}
-              communityAddress={communityAddress}
-              chainId={chain}
+              poolToken={poolToken}
+              chainId={Number(chain)}
             />
           )}
-          <Proposals
-            poolToken={poolToken}
-            strategy={strategyObj}
-            alloInfo={alloInfo}
-            communityAddress={communityAddress}
-            createProposalUrl={`/gardens/${chain}/${garden}/${communityAddress}/${poolId}/create-proposal`}
-            proposalType={proposalType}
-          />
         </>
       )}
-    </div>
+
+      {strategyObj && isEnabled && (
+        // <div ref={proposalSectionRef}>
+        <Proposals
+          poolToken={poolToken}
+          strategy={strategyObj}
+          alloInfo={alloInfo}
+          communityAddress={communityAddress}
+          createProposalUrl={`/gardens/${chain}/${garden}/${communityAddress}/${poolId}/create-proposal`}
+          proposalType={proposalType}
+        />
+        // </div>
+      )}
+    </>
   );
 }

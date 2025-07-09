@@ -224,12 +224,12 @@ export type ArbitrableConfig_orderBy =
   | 'strategy'
   | 'strategy__id'
   | 'strategy__poolId'
-  | 'strategy__poolAmount'
   | 'strategy__metadata'
   | 'strategy__maxCVSupply'
   | 'strategy__totalEffectiveActivePoints'
   | 'strategy__isEnabled'
   | 'strategy__token'
+  | 'strategy__archived'
   | 'arbitrator'
   | 'tribunalSafe'
   | 'challengerCollateralAmount'
@@ -528,12 +528,12 @@ export type CVProposal_orderBy =
   | 'strategy'
   | 'strategy__id'
   | 'strategy__poolId'
-  | 'strategy__poolAmount'
   | 'strategy__metadata'
   | 'strategy__maxCVSupply'
   | 'strategy__totalEffectiveActivePoints'
   | 'strategy__isEnabled'
   | 'strategy__token'
+  | 'strategy__archived'
   | 'beneficiary'
   | 'requestedAmount'
   | 'requestedToken'
@@ -559,7 +559,6 @@ export type CVProposal_orderBy =
 export type CVStrategy = {
   id: Scalars['ID']['output'];
   poolId: Scalars['BigInt']['output'];
-  poolAmount: Scalars['BigInt']['output'];
   metadata?: Maybe<Scalars['String']['output']>;
   registryCommunity: RegistryCommunity;
   config: CVStrategyConfig;
@@ -570,6 +569,7 @@ export type CVStrategy = {
   isEnabled: Scalars['Boolean']['output'];
   token: Scalars['String']['output'];
   sybilScorer?: Maybe<PassportScorer>;
+  archived: Scalars['Boolean']['output'];
 };
 
 
@@ -602,6 +602,7 @@ export type CVStrategyConfig = {
   pointSystem: Scalars['BigInt']['output'];
   maxAmount?: Maybe<Scalars['BigInt']['output']>;
   allowlist?: Maybe<Array<Scalars['String']['output']>>;
+  superfluidToken?: Maybe<Scalars['String']['output']>;
 };
 
 export type CVStrategyConfig_filter = {
@@ -684,6 +685,26 @@ export type CVStrategyConfig_filter = {
   allowlist_contains_nocase?: InputMaybe<Array<Scalars['String']['input']>>;
   allowlist_not_contains?: InputMaybe<Array<Scalars['String']['input']>>;
   allowlist_not_contains_nocase?: InputMaybe<Array<Scalars['String']['input']>>;
+  superfluidToken?: InputMaybe<Scalars['String']['input']>;
+  superfluidToken_not?: InputMaybe<Scalars['String']['input']>;
+  superfluidToken_gt?: InputMaybe<Scalars['String']['input']>;
+  superfluidToken_lt?: InputMaybe<Scalars['String']['input']>;
+  superfluidToken_gte?: InputMaybe<Scalars['String']['input']>;
+  superfluidToken_lte?: InputMaybe<Scalars['String']['input']>;
+  superfluidToken_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  superfluidToken_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  superfluidToken_contains?: InputMaybe<Scalars['String']['input']>;
+  superfluidToken_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  superfluidToken_not_contains?: InputMaybe<Scalars['String']['input']>;
+  superfluidToken_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  superfluidToken_starts_with?: InputMaybe<Scalars['String']['input']>;
+  superfluidToken_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  superfluidToken_not_starts_with?: InputMaybe<Scalars['String']['input']>;
+  superfluidToken_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  superfluidToken_ends_with?: InputMaybe<Scalars['String']['input']>;
+  superfluidToken_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  superfluidToken_not_ends_with?: InputMaybe<Scalars['String']['input']>;
+  superfluidToken_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
   and?: InputMaybe<Array<InputMaybe<CVStrategyConfig_filter>>>;
@@ -695,12 +716,12 @@ export type CVStrategyConfig_orderBy =
   | 'strategy'
   | 'strategy__id'
   | 'strategy__poolId'
-  | 'strategy__poolAmount'
   | 'strategy__metadata'
   | 'strategy__maxCVSupply'
   | 'strategy__totalEffectiveActivePoints'
   | 'strategy__isEnabled'
   | 'strategy__token'
+  | 'strategy__archived'
   | 'D'
   | 'decay'
   | 'maxRatio'
@@ -709,7 +730,8 @@ export type CVStrategyConfig_orderBy =
   | 'proposalType'
   | 'pointSystem'
   | 'maxAmount'
-  | 'allowlist';
+  | 'allowlist'
+  | 'superfluidToken';
 
 export type CVStrategy_filter = {
   id?: InputMaybe<Scalars['ID']['input']>;
@@ -728,14 +750,6 @@ export type CVStrategy_filter = {
   poolId_lte?: InputMaybe<Scalars['BigInt']['input']>;
   poolId_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
   poolId_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
-  poolAmount?: InputMaybe<Scalars['BigInt']['input']>;
-  poolAmount_not?: InputMaybe<Scalars['BigInt']['input']>;
-  poolAmount_gt?: InputMaybe<Scalars['BigInt']['input']>;
-  poolAmount_lt?: InputMaybe<Scalars['BigInt']['input']>;
-  poolAmount_gte?: InputMaybe<Scalars['BigInt']['input']>;
-  poolAmount_lte?: InputMaybe<Scalars['BigInt']['input']>;
-  poolAmount_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
-  poolAmount_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
   metadata?: InputMaybe<Scalars['String']['input']>;
   metadata_not?: InputMaybe<Scalars['String']['input']>;
   metadata_gt?: InputMaybe<Scalars['String']['input']>;
@@ -867,6 +881,10 @@ export type CVStrategy_filter = {
   sybilScorer_not_ends_with?: InputMaybe<Scalars['String']['input']>;
   sybilScorer_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
   sybilScorer_?: InputMaybe<PassportScorer_filter>;
+  archived?: InputMaybe<Scalars['Boolean']['input']>;
+  archived_not?: InputMaybe<Scalars['Boolean']['input']>;
+  archived_in?: InputMaybe<Array<Scalars['Boolean']['input']>>;
+  archived_not_in?: InputMaybe<Array<Scalars['Boolean']['input']>>;
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
   and?: InputMaybe<Array<InputMaybe<CVStrategy_filter>>>;
@@ -876,7 +894,6 @@ export type CVStrategy_filter = {
 export type CVStrategy_orderBy =
   | 'id'
   | 'poolId'
-  | 'poolAmount'
   | 'metadata'
   | 'registryCommunity'
   | 'registryCommunity__id'
@@ -885,14 +902,17 @@ export type CVStrategy_orderBy =
   | 'registryCommunity__profileId'
   | 'registryCommunity__communityFee'
   | 'registryCommunity__protocolFee'
+  | 'registryCommunity__protocolFeeReceiver'
   | 'registryCommunity__communityName'
   | 'registryCommunity__covenantIpfsHash'
   | 'registryCommunity__councilSafe'
+  | 'registryCommunity__pendingNewCouncilSafe'
   | 'registryCommunity__isKickEnabled'
   | 'registryCommunity__registerStakeAmount'
   | 'registryCommunity__registerToken'
   | 'registryCommunity__alloAddress'
   | 'registryCommunity__isValid'
+  | 'registryCommunity__archived'
   | 'config'
   | 'config__id'
   | 'config__D'
@@ -903,6 +923,7 @@ export type CVStrategy_orderBy =
   | 'config__proposalType'
   | 'config__pointSystem'
   | 'config__maxAmount'
+  | 'config__superfluidToken'
   | 'proposals'
   | 'memberActive'
   | 'maxCVSupply'
@@ -910,7 +931,8 @@ export type CVStrategy_orderBy =
   | 'isEnabled'
   | 'token'
   | 'sybilScorer'
-  | 'sybilScorer__id';
+  | 'sybilScorer__id'
+  | 'archived';
 
 export type CollateralVault = {
   id: Scalars['ID']['output'];
@@ -1079,18 +1101,20 @@ export type CollateralVault_orderBy =
   | 'strategy'
   | 'strategy__id'
   | 'strategy__poolId'
-  | 'strategy__poolAmount'
   | 'strategy__metadata'
   | 'strategy__maxCVSupply'
   | 'strategy__totalEffectiveActivePoints'
   | 'strategy__isEnabled'
   | 'strategy__token'
+  | 'strategy__archived'
   | 'collaterals';
 
 export type Member = {
   id: Scalars['ID']['output'];
   memberCommunity?: Maybe<Array<MemberCommunity>>;
   stakes?: Maybe<Array<Stake>>;
+  isProtopian?: Maybe<Scalars['Boolean']['output']>;
+  isKeeper?: Maybe<Scalars['Boolean']['output']>;
 };
 
 
@@ -1118,6 +1142,7 @@ export type MemberCommunity = {
   isRegistered?: Maybe<Scalars['Boolean']['output']>;
   member: Member;
   registryCommunity: RegistryCommunity;
+  covenantSignature?: Maybe<Scalars['String']['output']>;
 };
 
 export type MemberCommunity_filter = {
@@ -1203,6 +1228,26 @@ export type MemberCommunity_filter = {
   registryCommunity_not_ends_with?: InputMaybe<Scalars['String']['input']>;
   registryCommunity_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
   registryCommunity_?: InputMaybe<RegistryCommunity_filter>;
+  covenantSignature?: InputMaybe<Scalars['String']['input']>;
+  covenantSignature_not?: InputMaybe<Scalars['String']['input']>;
+  covenantSignature_gt?: InputMaybe<Scalars['String']['input']>;
+  covenantSignature_lt?: InputMaybe<Scalars['String']['input']>;
+  covenantSignature_gte?: InputMaybe<Scalars['String']['input']>;
+  covenantSignature_lte?: InputMaybe<Scalars['String']['input']>;
+  covenantSignature_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  covenantSignature_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  covenantSignature_contains?: InputMaybe<Scalars['String']['input']>;
+  covenantSignature_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  covenantSignature_not_contains?: InputMaybe<Scalars['String']['input']>;
+  covenantSignature_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  covenantSignature_starts_with?: InputMaybe<Scalars['String']['input']>;
+  covenantSignature_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  covenantSignature_not_starts_with?: InputMaybe<Scalars['String']['input']>;
+  covenantSignature_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  covenantSignature_ends_with?: InputMaybe<Scalars['String']['input']>;
+  covenantSignature_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  covenantSignature_not_ends_with?: InputMaybe<Scalars['String']['input']>;
+  covenantSignature_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
   and?: InputMaybe<Array<InputMaybe<MemberCommunity_filter>>>;
@@ -1216,6 +1261,8 @@ export type MemberCommunity_orderBy =
   | 'isRegistered'
   | 'member'
   | 'member__id'
+  | 'member__isProtopian'
+  | 'member__isKeeper'
   | 'registryCommunity'
   | 'registryCommunity__id'
   | 'registryCommunity__chainId'
@@ -1223,14 +1270,18 @@ export type MemberCommunity_orderBy =
   | 'registryCommunity__profileId'
   | 'registryCommunity__communityFee'
   | 'registryCommunity__protocolFee'
+  | 'registryCommunity__protocolFeeReceiver'
   | 'registryCommunity__communityName'
   | 'registryCommunity__covenantIpfsHash'
   | 'registryCommunity__councilSafe'
+  | 'registryCommunity__pendingNewCouncilSafe'
   | 'registryCommunity__isKickEnabled'
   | 'registryCommunity__registerStakeAmount'
   | 'registryCommunity__registerToken'
   | 'registryCommunity__alloAddress'
-  | 'registryCommunity__isValid';
+  | 'registryCommunity__isValid'
+  | 'registryCommunity__archived'
+  | 'covenantSignature';
 
 export type MemberStrategy = {
   id: Scalars['ID']['output'];
@@ -1317,15 +1368,17 @@ export type MemberStrategy_orderBy =
   | 'id'
   | 'member'
   | 'member__id'
+  | 'member__isProtopian'
+  | 'member__isKeeper'
   | 'strategy'
   | 'strategy__id'
   | 'strategy__poolId'
-  | 'strategy__poolAmount'
   | 'strategy__metadata'
   | 'strategy__maxCVSupply'
   | 'strategy__totalEffectiveActivePoints'
   | 'strategy__isEnabled'
   | 'strategy__token'
+  | 'strategy__archived'
   | 'totalStakedPoints'
   | 'activatedPoints';
 
@@ -1340,6 +1393,14 @@ export type Member_filter = {
   id_not_in?: InputMaybe<Array<Scalars['ID']['input']>>;
   memberCommunity_?: InputMaybe<MemberCommunity_filter>;
   stakes_?: InputMaybe<Stake_filter>;
+  isProtopian?: InputMaybe<Scalars['Boolean']['input']>;
+  isProtopian_not?: InputMaybe<Scalars['Boolean']['input']>;
+  isProtopian_in?: InputMaybe<Array<Scalars['Boolean']['input']>>;
+  isProtopian_not_in?: InputMaybe<Array<Scalars['Boolean']['input']>>;
+  isKeeper?: InputMaybe<Scalars['Boolean']['input']>;
+  isKeeper_not?: InputMaybe<Scalars['Boolean']['input']>;
+  isKeeper_in?: InputMaybe<Array<Scalars['Boolean']['input']>>;
+  isKeeper_not_in?: InputMaybe<Array<Scalars['Boolean']['input']>>;
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
   and?: InputMaybe<Array<InputMaybe<Member_filter>>>;
@@ -1349,7 +1410,9 @@ export type Member_filter = {
 export type Member_orderBy =
   | 'id'
   | 'memberCommunity'
-  | 'stakes';
+  | 'stakes'
+  | 'isProtopian'
+  | 'isKeeper';
 
 /** Defines the order direction, either ascending or descending */
 export type OrderDirection =
@@ -1507,12 +1570,12 @@ export type PassportStrategy_orderBy =
   | 'strategy'
   | 'strategy__id'
   | 'strategy__poolId'
-  | 'strategy__poolAmount'
   | 'strategy__metadata'
   | 'strategy__maxCVSupply'
   | 'strategy__totalEffectiveActivePoints'
   | 'strategy__isEnabled'
   | 'strategy__token'
+  | 'strategy__archived'
   | 'threshold'
   | 'councilSafe'
   | 'active';
@@ -2312,11 +2375,13 @@ export type RegistryCommunity = {
   profileId?: Maybe<Scalars['String']['output']>;
   communityFee: Scalars['BigInt']['output'];
   protocolFee: Scalars['BigInt']['output'];
+  protocolFeeReceiver?: Maybe<Scalars['String']['output']>;
   communityName?: Maybe<Scalars['String']['output']>;
   covenantIpfsHash?: Maybe<Scalars['String']['output']>;
   registryFactory?: Maybe<RegistryFactory>;
   strategies?: Maybe<Array<CVStrategy>>;
   councilSafe?: Maybe<Scalars['String']['output']>;
+  pendingNewCouncilSafe?: Maybe<Scalars['String']['output']>;
   isKickEnabled?: Maybe<Scalars['Boolean']['output']>;
   registerStakeAmount?: Maybe<Scalars['BigInt']['output']>;
   registerToken?: Maybe<Scalars['String']['output']>;
@@ -2324,6 +2389,7 @@ export type RegistryCommunity = {
   members?: Maybe<Array<MemberCommunity>>;
   garden: TokenGarden;
   isValid: Scalars['Boolean']['output'];
+  archived: Scalars['Boolean']['output'];
 };
 
 
@@ -2417,6 +2483,26 @@ export type RegistryCommunity_filter = {
   protocolFee_lte?: InputMaybe<Scalars['BigInt']['input']>;
   protocolFee_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
   protocolFee_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  protocolFeeReceiver?: InputMaybe<Scalars['String']['input']>;
+  protocolFeeReceiver_not?: InputMaybe<Scalars['String']['input']>;
+  protocolFeeReceiver_gt?: InputMaybe<Scalars['String']['input']>;
+  protocolFeeReceiver_lt?: InputMaybe<Scalars['String']['input']>;
+  protocolFeeReceiver_gte?: InputMaybe<Scalars['String']['input']>;
+  protocolFeeReceiver_lte?: InputMaybe<Scalars['String']['input']>;
+  protocolFeeReceiver_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  protocolFeeReceiver_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  protocolFeeReceiver_contains?: InputMaybe<Scalars['String']['input']>;
+  protocolFeeReceiver_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  protocolFeeReceiver_not_contains?: InputMaybe<Scalars['String']['input']>;
+  protocolFeeReceiver_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  protocolFeeReceiver_starts_with?: InputMaybe<Scalars['String']['input']>;
+  protocolFeeReceiver_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  protocolFeeReceiver_not_starts_with?: InputMaybe<Scalars['String']['input']>;
+  protocolFeeReceiver_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  protocolFeeReceiver_ends_with?: InputMaybe<Scalars['String']['input']>;
+  protocolFeeReceiver_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  protocolFeeReceiver_not_ends_with?: InputMaybe<Scalars['String']['input']>;
+  protocolFeeReceiver_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
   communityName?: InputMaybe<Scalars['String']['input']>;
   communityName_not?: InputMaybe<Scalars['String']['input']>;
   communityName_gt?: InputMaybe<Scalars['String']['input']>;
@@ -2499,6 +2585,26 @@ export type RegistryCommunity_filter = {
   councilSafe_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
   councilSafe_not_ends_with?: InputMaybe<Scalars['String']['input']>;
   councilSafe_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  pendingNewCouncilSafe?: InputMaybe<Scalars['String']['input']>;
+  pendingNewCouncilSafe_not?: InputMaybe<Scalars['String']['input']>;
+  pendingNewCouncilSafe_gt?: InputMaybe<Scalars['String']['input']>;
+  pendingNewCouncilSafe_lt?: InputMaybe<Scalars['String']['input']>;
+  pendingNewCouncilSafe_gte?: InputMaybe<Scalars['String']['input']>;
+  pendingNewCouncilSafe_lte?: InputMaybe<Scalars['String']['input']>;
+  pendingNewCouncilSafe_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  pendingNewCouncilSafe_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  pendingNewCouncilSafe_contains?: InputMaybe<Scalars['String']['input']>;
+  pendingNewCouncilSafe_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  pendingNewCouncilSafe_not_contains?: InputMaybe<Scalars['String']['input']>;
+  pendingNewCouncilSafe_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  pendingNewCouncilSafe_starts_with?: InputMaybe<Scalars['String']['input']>;
+  pendingNewCouncilSafe_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  pendingNewCouncilSafe_not_starts_with?: InputMaybe<Scalars['String']['input']>;
+  pendingNewCouncilSafe_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  pendingNewCouncilSafe_ends_with?: InputMaybe<Scalars['String']['input']>;
+  pendingNewCouncilSafe_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  pendingNewCouncilSafe_not_ends_with?: InputMaybe<Scalars['String']['input']>;
+  pendingNewCouncilSafe_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
   isKickEnabled?: InputMaybe<Scalars['Boolean']['input']>;
   isKickEnabled_not?: InputMaybe<Scalars['Boolean']['input']>;
   isKickEnabled_in?: InputMaybe<Array<Scalars['Boolean']['input']>>;
@@ -2577,6 +2683,10 @@ export type RegistryCommunity_filter = {
   isValid_not?: InputMaybe<Scalars['Boolean']['input']>;
   isValid_in?: InputMaybe<Array<Scalars['Boolean']['input']>>;
   isValid_not_in?: InputMaybe<Array<Scalars['Boolean']['input']>>;
+  archived?: InputMaybe<Scalars['Boolean']['input']>;
+  archived_not?: InputMaybe<Scalars['Boolean']['input']>;
+  archived_in?: InputMaybe<Array<Scalars['Boolean']['input']>>;
+  archived_not_in?: InputMaybe<Array<Scalars['Boolean']['input']>>;
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
   and?: InputMaybe<Array<InputMaybe<RegistryCommunity_filter>>>;
@@ -2590,6 +2700,7 @@ export type RegistryCommunity_orderBy =
   | 'profileId'
   | 'communityFee'
   | 'protocolFee'
+  | 'protocolFeeReceiver'
   | 'communityName'
   | 'covenantIpfsHash'
   | 'registryFactory'
@@ -2597,6 +2708,7 @@ export type RegistryCommunity_orderBy =
   | 'registryFactory__chainId'
   | 'strategies'
   | 'councilSafe'
+  | 'pendingNewCouncilSafe'
   | 'isKickEnabled'
   | 'registerStakeAmount'
   | 'registerToken'
@@ -2612,7 +2724,8 @@ export type RegistryCommunity_orderBy =
   | 'garden__symbol'
   | 'garden__decimals'
   | 'garden__address'
-  | 'isValid';
+  | 'isValid'
+  | 'archived';
 
 export type RegistryFactory = {
   id: Scalars['ID']['output'];
@@ -2752,6 +2865,8 @@ export type Stake_orderBy =
   | 'id'
   | 'member'
   | 'member__id'
+  | 'member__isProtopian'
+  | 'member__isKeeper'
   | 'poolId'
   | 'proposal'
   | 'proposal__id'
@@ -2772,416 +2887,6 @@ export type Stake_orderBy =
   | 'proposal__updatedAt'
   | 'amount'
   | 'createdAt';
-
-export type Subscription = {
-  cvstrategy?: Maybe<CVStrategy>;
-  cvstrategies: Array<CVStrategy>;
-  cvstrategyConfig?: Maybe<CVStrategyConfig>;
-  cvstrategyConfigs: Array<CVStrategyConfig>;
-  arbitrableConfig?: Maybe<ArbitrableConfig>;
-  arbitrableConfigs: Array<ArbitrableConfig>;
-  cvproposal?: Maybe<CVProposal>;
-  cvproposals: Array<CVProposal>;
-  registryFactory?: Maybe<RegistryFactory>;
-  registryFactories: Array<RegistryFactory>;
-  registryCommunity?: Maybe<RegistryCommunity>;
-  registryCommunities: Array<RegistryCommunity>;
-  member?: Maybe<Member>;
-  members: Array<Member>;
-  stake?: Maybe<Stake>;
-  stakes: Array<Stake>;
-  memberCommunity?: Maybe<MemberCommunity>;
-  memberCommunities: Array<MemberCommunity>;
-  memberStrategy?: Maybe<MemberStrategy>;
-  memberStrategies: Array<MemberStrategy>;
-  tokenGarden?: Maybe<TokenGarden>;
-  tokenGardens: Array<TokenGarden>;
-  allo?: Maybe<Allo>;
-  allos: Array<Allo>;
-  passportScorer?: Maybe<PassportScorer>;
-  passportScorers: Array<PassportScorer>;
-  passportStrategy?: Maybe<PassportStrategy>;
-  passportStrategies: Array<PassportStrategy>;
-  passportUser?: Maybe<PassportUser>;
-  passportUsers: Array<PassportUser>;
-  proposalDispute?: Maybe<ProposalDispute>;
-  proposalDisputes: Array<ProposalDispute>;
-  proposalDisputeMetadata?: Maybe<ProposalDisputeMetadata>;
-  proposalDisputeMetadata_collection: Array<ProposalDisputeMetadata>;
-  proposalMetadata?: Maybe<ProposalMetadata>;
-  proposalMetadata_collection: Array<ProposalMetadata>;
-  collateralVault?: Maybe<CollateralVault>;
-  collateralVaults: Array<CollateralVault>;
-  collateralVaultDeposit?: Maybe<CollateralVaultDeposit>;
-  collateralVaultDeposits: Array<CollateralVaultDeposit>;
-  /** Access to subgraph metadata */
-  _meta?: Maybe<_Meta_>;
-};
-
-
-export type SubscriptioncvstrategyArgs = {
-  id: Scalars['ID']['input'];
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptioncvstrategiesArgs = {
-  skip?: InputMaybe<Scalars['Int']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  orderBy?: InputMaybe<CVStrategy_orderBy>;
-  orderDirection?: InputMaybe<OrderDirection>;
-  where?: InputMaybe<CVStrategy_filter>;
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptioncvstrategyConfigArgs = {
-  id: Scalars['ID']['input'];
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptioncvstrategyConfigsArgs = {
-  skip?: InputMaybe<Scalars['Int']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  orderBy?: InputMaybe<CVStrategyConfig_orderBy>;
-  orderDirection?: InputMaybe<OrderDirection>;
-  where?: InputMaybe<CVStrategyConfig_filter>;
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptionarbitrableConfigArgs = {
-  id: Scalars['ID']['input'];
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptionarbitrableConfigsArgs = {
-  skip?: InputMaybe<Scalars['Int']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  orderBy?: InputMaybe<ArbitrableConfig_orderBy>;
-  orderDirection?: InputMaybe<OrderDirection>;
-  where?: InputMaybe<ArbitrableConfig_filter>;
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptioncvproposalArgs = {
-  id: Scalars['ID']['input'];
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptioncvproposalsArgs = {
-  skip?: InputMaybe<Scalars['Int']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  orderBy?: InputMaybe<CVProposal_orderBy>;
-  orderDirection?: InputMaybe<OrderDirection>;
-  where?: InputMaybe<CVProposal_filter>;
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptionregistryFactoryArgs = {
-  id: Scalars['ID']['input'];
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptionregistryFactoriesArgs = {
-  skip?: InputMaybe<Scalars['Int']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  orderBy?: InputMaybe<RegistryFactory_orderBy>;
-  orderDirection?: InputMaybe<OrderDirection>;
-  where?: InputMaybe<RegistryFactory_filter>;
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptionregistryCommunityArgs = {
-  id: Scalars['ID']['input'];
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptionregistryCommunitiesArgs = {
-  skip?: InputMaybe<Scalars['Int']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  orderBy?: InputMaybe<RegistryCommunity_orderBy>;
-  orderDirection?: InputMaybe<OrderDirection>;
-  where?: InputMaybe<RegistryCommunity_filter>;
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptionmemberArgs = {
-  id: Scalars['ID']['input'];
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptionmembersArgs = {
-  skip?: InputMaybe<Scalars['Int']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  orderBy?: InputMaybe<Member_orderBy>;
-  orderDirection?: InputMaybe<OrderDirection>;
-  where?: InputMaybe<Member_filter>;
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptionstakeArgs = {
-  id: Scalars['ID']['input'];
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptionstakesArgs = {
-  skip?: InputMaybe<Scalars['Int']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  orderBy?: InputMaybe<Stake_orderBy>;
-  orderDirection?: InputMaybe<OrderDirection>;
-  where?: InputMaybe<Stake_filter>;
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptionmemberCommunityArgs = {
-  id: Scalars['ID']['input'];
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptionmemberCommunitiesArgs = {
-  skip?: InputMaybe<Scalars['Int']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  orderBy?: InputMaybe<MemberCommunity_orderBy>;
-  orderDirection?: InputMaybe<OrderDirection>;
-  where?: InputMaybe<MemberCommunity_filter>;
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptionmemberStrategyArgs = {
-  id: Scalars['ID']['input'];
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptionmemberStrategiesArgs = {
-  skip?: InputMaybe<Scalars['Int']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  orderBy?: InputMaybe<MemberStrategy_orderBy>;
-  orderDirection?: InputMaybe<OrderDirection>;
-  where?: InputMaybe<MemberStrategy_filter>;
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptiontokenGardenArgs = {
-  id: Scalars['ID']['input'];
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptiontokenGardensArgs = {
-  skip?: InputMaybe<Scalars['Int']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  orderBy?: InputMaybe<TokenGarden_orderBy>;
-  orderDirection?: InputMaybe<OrderDirection>;
-  where?: InputMaybe<TokenGarden_filter>;
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptionalloArgs = {
-  id: Scalars['ID']['input'];
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptionallosArgs = {
-  skip?: InputMaybe<Scalars['Int']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  orderBy?: InputMaybe<Allo_orderBy>;
-  orderDirection?: InputMaybe<OrderDirection>;
-  where?: InputMaybe<Allo_filter>;
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptionpassportScorerArgs = {
-  id: Scalars['ID']['input'];
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptionpassportScorersArgs = {
-  skip?: InputMaybe<Scalars['Int']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  orderBy?: InputMaybe<PassportScorer_orderBy>;
-  orderDirection?: InputMaybe<OrderDirection>;
-  where?: InputMaybe<PassportScorer_filter>;
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptionpassportStrategyArgs = {
-  id: Scalars['ID']['input'];
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptionpassportStrategiesArgs = {
-  skip?: InputMaybe<Scalars['Int']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  orderBy?: InputMaybe<PassportStrategy_orderBy>;
-  orderDirection?: InputMaybe<OrderDirection>;
-  where?: InputMaybe<PassportStrategy_filter>;
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptionpassportUserArgs = {
-  id: Scalars['ID']['input'];
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptionpassportUsersArgs = {
-  skip?: InputMaybe<Scalars['Int']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  orderBy?: InputMaybe<PassportUser_orderBy>;
-  orderDirection?: InputMaybe<OrderDirection>;
-  where?: InputMaybe<PassportUser_filter>;
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptionproposalDisputeArgs = {
-  id: Scalars['ID']['input'];
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptionproposalDisputesArgs = {
-  skip?: InputMaybe<Scalars['Int']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  orderBy?: InputMaybe<ProposalDispute_orderBy>;
-  orderDirection?: InputMaybe<OrderDirection>;
-  where?: InputMaybe<ProposalDispute_filter>;
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptionproposalDisputeMetadataArgs = {
-  id: Scalars['ID']['input'];
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptionproposalDisputeMetadata_collectionArgs = {
-  skip?: InputMaybe<Scalars['Int']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  orderBy?: InputMaybe<ProposalDisputeMetadata_orderBy>;
-  orderDirection?: InputMaybe<OrderDirection>;
-  where?: InputMaybe<ProposalDisputeMetadata_filter>;
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptionproposalMetadataArgs = {
-  id: Scalars['ID']['input'];
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptionproposalMetadata_collectionArgs = {
-  skip?: InputMaybe<Scalars['Int']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  orderBy?: InputMaybe<ProposalMetadata_orderBy>;
-  orderDirection?: InputMaybe<OrderDirection>;
-  where?: InputMaybe<ProposalMetadata_filter>;
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptioncollateralVaultArgs = {
-  id: Scalars['ID']['input'];
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptioncollateralVaultsArgs = {
-  skip?: InputMaybe<Scalars['Int']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  orderBy?: InputMaybe<CollateralVault_orderBy>;
-  orderDirection?: InputMaybe<OrderDirection>;
-  where?: InputMaybe<CollateralVault_filter>;
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptioncollateralVaultDepositArgs = {
-  id: Scalars['ID']['input'];
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptioncollateralVaultDepositsArgs = {
-  skip?: InputMaybe<Scalars['Int']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  orderBy?: InputMaybe<CollateralVaultDeposit_orderBy>;
-  orderDirection?: InputMaybe<OrderDirection>;
-  where?: InputMaybe<CollateralVaultDeposit_filter>;
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type Subscription_metaArgs = {
-  block?: InputMaybe<Block_height>;
-};
 
 export type TokenGarden = {
   id: Scalars['ID']['output'];
@@ -3480,88 +3185,7 @@ export type _SubgraphErrorPolicy_ =
   };
 
   export type SubscriptionSdk = {
-      /** null **/
-  cvstrategy: InContextSdkMethod<Subscription['cvstrategy'], SubscriptioncvstrategyArgs, MeshContext>,
-  /** null **/
-  cvstrategies: InContextSdkMethod<Subscription['cvstrategies'], SubscriptioncvstrategiesArgs, MeshContext>,
-  /** null **/
-  cvstrategyConfig: InContextSdkMethod<Subscription['cvstrategyConfig'], SubscriptioncvstrategyConfigArgs, MeshContext>,
-  /** null **/
-  cvstrategyConfigs: InContextSdkMethod<Subscription['cvstrategyConfigs'], SubscriptioncvstrategyConfigsArgs, MeshContext>,
-  /** null **/
-  arbitrableConfig: InContextSdkMethod<Subscription['arbitrableConfig'], SubscriptionarbitrableConfigArgs, MeshContext>,
-  /** null **/
-  arbitrableConfigs: InContextSdkMethod<Subscription['arbitrableConfigs'], SubscriptionarbitrableConfigsArgs, MeshContext>,
-  /** null **/
-  cvproposal: InContextSdkMethod<Subscription['cvproposal'], SubscriptioncvproposalArgs, MeshContext>,
-  /** null **/
-  cvproposals: InContextSdkMethod<Subscription['cvproposals'], SubscriptioncvproposalsArgs, MeshContext>,
-  /** null **/
-  registryFactory: InContextSdkMethod<Subscription['registryFactory'], SubscriptionregistryFactoryArgs, MeshContext>,
-  /** null **/
-  registryFactories: InContextSdkMethod<Subscription['registryFactories'], SubscriptionregistryFactoriesArgs, MeshContext>,
-  /** null **/
-  registryCommunity: InContextSdkMethod<Subscription['registryCommunity'], SubscriptionregistryCommunityArgs, MeshContext>,
-  /** null **/
-  registryCommunities: InContextSdkMethod<Subscription['registryCommunities'], SubscriptionregistryCommunitiesArgs, MeshContext>,
-  /** null **/
-  member: InContextSdkMethod<Subscription['member'], SubscriptionmemberArgs, MeshContext>,
-  /** null **/
-  members: InContextSdkMethod<Subscription['members'], SubscriptionmembersArgs, MeshContext>,
-  /** null **/
-  stake: InContextSdkMethod<Subscription['stake'], SubscriptionstakeArgs, MeshContext>,
-  /** null **/
-  stakes: InContextSdkMethod<Subscription['stakes'], SubscriptionstakesArgs, MeshContext>,
-  /** null **/
-  memberCommunity: InContextSdkMethod<Subscription['memberCommunity'], SubscriptionmemberCommunityArgs, MeshContext>,
-  /** null **/
-  memberCommunities: InContextSdkMethod<Subscription['memberCommunities'], SubscriptionmemberCommunitiesArgs, MeshContext>,
-  /** null **/
-  memberStrategy: InContextSdkMethod<Subscription['memberStrategy'], SubscriptionmemberStrategyArgs, MeshContext>,
-  /** null **/
-  memberStrategies: InContextSdkMethod<Subscription['memberStrategies'], SubscriptionmemberStrategiesArgs, MeshContext>,
-  /** null **/
-  tokenGarden: InContextSdkMethod<Subscription['tokenGarden'], SubscriptiontokenGardenArgs, MeshContext>,
-  /** null **/
-  tokenGardens: InContextSdkMethod<Subscription['tokenGardens'], SubscriptiontokenGardensArgs, MeshContext>,
-  /** null **/
-  allo: InContextSdkMethod<Subscription['allo'], SubscriptionalloArgs, MeshContext>,
-  /** null **/
-  allos: InContextSdkMethod<Subscription['allos'], SubscriptionallosArgs, MeshContext>,
-  /** null **/
-  passportScorer: InContextSdkMethod<Subscription['passportScorer'], SubscriptionpassportScorerArgs, MeshContext>,
-  /** null **/
-  passportScorers: InContextSdkMethod<Subscription['passportScorers'], SubscriptionpassportScorersArgs, MeshContext>,
-  /** null **/
-  passportStrategy: InContextSdkMethod<Subscription['passportStrategy'], SubscriptionpassportStrategyArgs, MeshContext>,
-  /** null **/
-  passportStrategies: InContextSdkMethod<Subscription['passportStrategies'], SubscriptionpassportStrategiesArgs, MeshContext>,
-  /** null **/
-  passportUser: InContextSdkMethod<Subscription['passportUser'], SubscriptionpassportUserArgs, MeshContext>,
-  /** null **/
-  passportUsers: InContextSdkMethod<Subscription['passportUsers'], SubscriptionpassportUsersArgs, MeshContext>,
-  /** null **/
-  proposalDispute: InContextSdkMethod<Subscription['proposalDispute'], SubscriptionproposalDisputeArgs, MeshContext>,
-  /** null **/
-  proposalDisputes: InContextSdkMethod<Subscription['proposalDisputes'], SubscriptionproposalDisputesArgs, MeshContext>,
-  /** null **/
-  proposalDisputeMetadata: InContextSdkMethod<Subscription['proposalDisputeMetadata'], SubscriptionproposalDisputeMetadataArgs, MeshContext>,
-  /** null **/
-  proposalDisputeMetadata_collection: InContextSdkMethod<Subscription['proposalDisputeMetadata_collection'], SubscriptionproposalDisputeMetadata_collectionArgs, MeshContext>,
-  /** null **/
-  proposalMetadata: InContextSdkMethod<Subscription['proposalMetadata'], SubscriptionproposalMetadataArgs, MeshContext>,
-  /** null **/
-  proposalMetadata_collection: InContextSdkMethod<Subscription['proposalMetadata_collection'], SubscriptionproposalMetadata_collectionArgs, MeshContext>,
-  /** null **/
-  collateralVault: InContextSdkMethod<Subscription['collateralVault'], SubscriptioncollateralVaultArgs, MeshContext>,
-  /** null **/
-  collateralVaults: InContextSdkMethod<Subscription['collateralVaults'], SubscriptioncollateralVaultsArgs, MeshContext>,
-  /** null **/
-  collateralVaultDeposit: InContextSdkMethod<Subscription['collateralVaultDeposit'], SubscriptioncollateralVaultDepositArgs, MeshContext>,
-  /** null **/
-  collateralVaultDeposits: InContextSdkMethod<Subscription['collateralVaultDeposits'], SubscriptioncollateralVaultDepositsArgs, MeshContext>,
-  /** Access to subgraph metadata **/
-  _meta: InContextSdkMethod<Subscription['_meta'], Subscription_metaArgs, MeshContext>
+    
   };
 
   export type Context = {

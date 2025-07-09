@@ -39,22 +39,6 @@
   padding: 0;
 }
 
-html {
-  scroll-behavior: smooth;
-}
-
-html::-webkit-scrollbar {
-  width: 0.5rem;
-}
-
-html::-webkit-scrollbar-track {
-  background-color: #eee;
-}
-
-html::-webkit-scrollbar-thumb {
-  background-color: #171717;
-}
-
 body {
   margin: 0;
   background-color: var(--color-background);
@@ -66,7 +50,7 @@ h1 {
   margin-bottom: 1rem;
   margin-top: 0.5rem;
   font-family: var(--font-chakra);
-  font-size: 52px;
+  font-size: 44px;
   font-weight: 700;
   line-height: 56px;
   text-align: left;
@@ -78,7 +62,7 @@ h1 {
 
 h2 {
   font-family: var(--font-chakra);
-  font-size: 36px;
+  font-size: 32px;
   font-weight: 600;
   line-height: 46px;
   text-align: left;
@@ -88,10 +72,21 @@ h2 {
   } */
 }
 
-h3,
+h3 {
+  font-family: var(--font-inter);
+  font-size: 20px;
+  font-weight: 500;
+  line-height: auto;
+  text-align: left;
+
+  /* @media only screen and (max-width: 680px) {
+    font-size: 1.75rem;
+  } */
+}
+
 h4 {
   font-family: var(--font-inter);
-  font-size: 24px;
+  font-size: 16px;
   font-weight: 500;
   line-height: auto;
   text-align: left;
@@ -165,11 +160,15 @@ caption {
 }
 
 .section-layout {
-  @apply border1 relative rounded-3xl bg-neutral p-8;
+  @apply border1 relative rounded-lg bg-neutral p-6;
 }
 
 .page-layout {
-  @apply flex w-full max-w-6xl flex-col gap-10 p-4 md:p-8;
+  @apply flex w-full max-w-6xl flex-col gap-10 p-4 md:p-8 overflow-x-visible;
+}
+
+.pool-layout {
+  @apply grid grid-cols-1 md:grid-cols-2 gap-4;
 }
 
 .tooltip {
@@ -240,39 +239,51 @@ caption {
   display: none !important;
 }
 
-/* Firefox (uncomment to work in Firefox, although other properties will not work!)  */
-/** {
+/* input */
+dialog * {
   scrollbar-width: thin;
-  scrollbar-color: #4C5356 #DFE9EB;
-}*/
-
-/* Chrome, Edge and Safari */
-*::-webkit-scrollbar {
-  height: 10px;
-  width: 10px;
-}
-*::-webkit-scrollbar-track {
-  border-radius: 5px;
-  background-color: #dfe9eb;
 }
 
-*::-webkit-scrollbar-track:hover {
-  background-color: #b8c0c2;
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
 
-*::-webkit-scrollbar-track:active {
-  background-color: #b8c0c2;
+::-webkit-scrollbar-thumb {
+  background-color: var(--color-grey-500);
+  border-radius: 10px;
 }
 
-*::-webkit-scrollbar-thumb {
-  border-radius: 5px;
-  background-color: #4c5356;
+::-webkit-scrollbar-track {
+  background-color: var(--color-grey-200);
+  border-radius: 10px;
 }
 
-*::-webkit-scrollbar-thumb:hover {
-  background-color: #62a34b;
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-grey-500) var(--color-grey-200);
 }
 
-*::-webkit-scrollbar-thumb:active {
-  background-color: #62a34b;
+.wmde-markdown.wmde-markdown-color {
+  background: transparent;
+}
+
+@layer utilities {
+  .tooltip-top-right::before {
+    transform: translateX(-10%);
+    top: auto;
+    left: 50%;
+    right: auto;
+    bottom: var(--tooltip-offset);
+  }
+
+  .tooltip-top-right::after {
+    transform: translateX(-50%);
+    border-color: var(--tooltip-color) transparent transparent transparent;
+    top: auto;
+    left: 50%;
+    right: auto;
+    bottom: var(--tooltip-tail-offset);
+  }
 }

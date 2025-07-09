@@ -199,7 +199,7 @@ export const TransactionStatusNotification = ({
         </div>
         {chain?.blockExplorers?.default.url && showClickToExplorer && (
           <div className="w-full text-sm italic">
-            Click to see in Blockscout
+            Click to see in block explorer
           </div>
         )}
       </div>

@@ -18,6 +18,7 @@ import { Address, zeroAddress } from "viem";
 import { FormAddressInput } from "./FormAddressInput";
 import { Button } from "../Button";
 import { InfoWrapper } from "../InfoWrapper";
+import { useCheat } from "@/hooks/useCheat";
 import { PointSystems } from "@/types";
 
 type AllowListInputProps = {
@@ -72,6 +73,10 @@ export function AllowListInput({
   const [bulkAddresses, setBulkAddresses] = useState("");
   const [inputMode, setInputMode] = useState<"single" | "bulk">("single");
   const [errorMessage, setErrorMessage] = useState("");
+  const allowNoProtectionCheat = useCheat("allowNoProtection");
+
+  const allowNoProtection =
+    PointSystems[pointSystemType] === "unlimited" || allowNoProtectionCheat;
 
   const isValidEthereumAddress = (address: string) => {
     return /^0x[a-fA-F0-9]{40}$/.test(address);
@@ -135,8 +140,6 @@ export function AllowListInput({
       setErrorMessage("");
     }
   }, [errors[registerKey], addresses.length]);
-
-  const isUnlimited = PointSystems[pointSystemType] === "unlimited";
 
   return (
     <div className="flex flex-col max-w-md">
@@ -234,21 +237,23 @@ export function AllowListInput({
 
       <div className="flex justify-between items-center my-3">
         <label className="font-semibold">
-          List ({addresses.length} address
-          {addresses.length !== 1 && "es"})
+          List (
+          {addresses?.[0] === zeroAddress ?
+            "All"
+          : `${addresses.length} address${addresses.length !== 1 ? "es" : ""}`}
+          )
         </label>
         <div className="flex space-x-1">
           <Button
             type="button"
             btnStyle="outline"
             className={`!p-2 font-normal text-[14px] leading-4 
-              ${!isUnlimited ? "" : "!text-black !border-black"}`}
+              ${!allowNoProtection ? "" : "!text-black !border-black"}`}
             onClick={handleAllowEveryone}
-            showToolTip
-            disabled={!isUnlimited}
+            disabled={!allowNoProtection}
             icon={<UserGroupIcon className="w-4 h-4" />}
             tooltip={
-              !isUnlimited ?
+              !allowNoProtection ?
                 "Only unlimited points system pools\n can allow everyone"
               : "Allow everyone in the pool"
             }
@@ -301,14 +306,16 @@ export function AllowListInput({
                   </div>
                 }
               </div>
-              <Button
-                type="button"
-                btnStyle="link"
-                className="!p-[2px] !text-black !border-black"
-                onClick={() => removeAddress(index)}
-              >
-                <XMarkIcon className="w-5 h-5" />
-              </Button>
+              {address !== zeroAddress && (
+                <Button
+                  type="button"
+                  btnStyle="link"
+                  className="!p-[2px] !text-black !border-black"
+                  onClick={() => removeAddress(index)}
+                >
+                  <XMarkIcon className="w-5 h-5" />
+                </Button>
+              )}
             </li>
           ))}
         </ul>

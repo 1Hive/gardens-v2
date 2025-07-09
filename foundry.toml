@@ -14,7 +14,10 @@ extra_output = ["storageLayout"]
 optimizer = true
 optimizer-runs = 0
 # prompt_timeout = 120
-fs_permissions = [{ access = "read", path = "./"}]
+fs_permissions = [{ access = "read-write", path = "./"}]
+
+celo = { key = "${CELOSCAN_API_KEY}", url = "https://api.celoscan.io/api"}
+
 # fs_permissions = []
 # auto_detect_remappings = true # recursive auto-detection of remappings
 # remappings = ["ds-test/=lib/forge-std/lib/ds-test/src/",

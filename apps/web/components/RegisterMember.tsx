@@ -17,7 +17,6 @@ import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { useHandleAllowance } from "@/hooks/useHandleAllowance";
 import { useHandleRegistration } from "@/hooks/useHandleRegistration";
 import { registryCommunityABI } from "@/src/generated";
-import { abiWithErrors } from "@/utils/abi";
 import { useErrorDetails } from "@/utils/getErrorName";
 import { gte } from "@/utils/numbers";
 
@@ -55,7 +54,7 @@ export function RegisterMember({
   const registryContractCallConfig = useMemo(
     () => ({
       address: communityAddress as Address,
-      abi: abiWithErrors(registryCommunityABI),
+      abi: registryCommunityABI,
       contractName: "Registry Community",
     }),
     [communityAddress],
@@ -65,6 +64,7 @@ export function RegisterMember({
     address: accountAddress,
     token: token.address as Address,
     chainId: urlChainId,
+    watch: true,
   });
 
   const accountHasBalance = useMemo(
@@ -95,7 +95,7 @@ export function RegisterMember({
     () => [
       {
         condition: !isMember && !accountHasBalance,
-        message: "Connected account has insufficient balance",
+        message: "Insufficient balance",
       },
     ],
     [isMember, accountHasBalance],
@@ -121,8 +121,7 @@ export function RegisterMember({
     resetState: handleAllowanceResetState,
   } = useHandleAllowance(
     accountAddress,
-    token.address as Address,
-    token.symbol,
+    token,
     communityAddress as Address,
     registrationCost,
     handleRegistration,
@@ -175,6 +174,7 @@ export function RegisterMember({
       missmatchUrl,
       disableRegMemberBtnCondition,
       tooltipMessage,
+      accountHasBalance,
     ],
   );
 
@@ -188,8 +188,8 @@ export function RegisterMember({
       />
       <div className="flex gap-4">
         <div className="flex items-center justify-center">
-          <Button {...buttonProps}>
-            {isMember ? "Leave community" : "Register in community"}
+          <Button {...buttonProps} className="">
+            {isMember ? "Leave" : "Join"}
           </Button>
         </div>
       </div>

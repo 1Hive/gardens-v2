@@ -77,7 +77,7 @@ export function CheckPassport({
   const { data: passportStrategyData } =
     useSubgraphQuery<getPassportStrategyQuery>({
       query: getPassportStrategyDocument,
-      variables: { strategyId: strategy.id },
+      variables: { strategyId: strategy.id.toLowerCase() },
       enabled: enableCheck,
       changeScope: {
         topic: "member",
@@ -144,7 +144,6 @@ export function CheckPassport({
     e?: React.MouseEvent<HTMLDivElement, MouseEvent>,
   ) => {
     _score = Number(_score);
-    setScore(_score);
     if (_score >= threshold) {
       console.debug("Score meets threshold, moving forward...");
     } else {
@@ -163,10 +162,12 @@ export function CheckPassport({
       console.debug(passportResponse);
       // gitcoin passport score does not need formating
       if (passportResponse?.data?.score) {
+        setScore(Number(passportResponse.data.score));
         const result = await writeScorer(_walletAddr);
         if (result.error) {
-          console.error("Error writing scorer:", result.errorMessage);
-          toast.error("Error writing scorer, please report a bug.");
+          const message = JSON.parse(result.errorMessage).error;
+          console.error("Error writing scorer:", message);
+          toast.error(message);
         } else {
           checkScoreRequirement(passportResponse?.data?.score);
         }
@@ -259,12 +260,13 @@ export function CheckPassport({
         title="Gitcoin passport"
         isOpen={isOpenModal}
         onClose={() => setIsOpenModal(false)}
+        size="small"
       >
-        <div className="flex flex-col gap-8 max-w-96">
+        <div className="flex flex-col gap-8">
           <div>
             <p>
               Passport score:{" "}
-              <Skeleton isLoading={passportUserFetching}>
+              <Skeleton isLoading={passportUserFetching && !score}>
                 <span className="font-semibold w-12">{score.toFixed(2)}</span>
               </Skeleton>
             </p>

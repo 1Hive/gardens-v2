@@ -7,64 +7,46 @@
       "no-safe": true,
       "ENVS": {
         "SENDER": "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD",
+        "PROXY_OWNER": "0x333837ec0D4F3D9b3dF0216996a148B46ce3541b",
         "COUNCIL_SAFE": "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD",
         "SAFE_PROXY_FACTORY": "0xC22834581EbC8527d974F8a1c97E1bEA4EF910BC",
         "TOKEN": "0xcc6c8B9f745dB2277f7aaC1Bc026d5C2Ea7bD88D",
         "ALLO_PROXY": "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
         "ALLO_IMPL": "0xB087535DB0df98fC4327136e897A5985E5Cfbd66",
-        "REGISTRY": "0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3"
+        "REGISTRY": "0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3",
+        "ARBITRATOR": "0x49222C53695C77a0F8b78Eb42606B893E98DfE6a",
+        "PASSPORT_SCORER": "0x6ad70508f44aa0e86e7af80ccc4fc1f160c2df46"
       },
       "PROXIES": {
-        "REGISTRY_FACTORY": "0x7a603877488db46c0f6b40c2c770becfd7a65593",
+        "REGISTRY_FACTORY": "0xf42f88c13804147b2fdda13c093ce14219aea395",
         "REGISTRY_COMMUNITIES": [
-          "0x17a3d80b587202999243aca5e7938537d090d420",
-          "0x20731544b8c29c17c42a1cb1278371af5c08142f",
-          "0x4d434729b80c95b0454a77fc152464b2f196abf0",
-          "0x5a044599606c86e14e085f4bada529242d28e5e8",
-          "0x622255fc131da4294cabfb7f08cc3add78fd728f",
-          "0xc2b5443ccb8aa0b8f2b93b560beaee1b5bb964e5",
-          "0xf17e005599813f626ff6b4ff8189105b1306af94",
-          "0xf6d60f30eed6e3ec588242cff30d9c8f596370cb",
-          "0xffa2e39cce305c82ffa70f7da0333e5f172be5f6"
+          "0x0418f78ec03c974ca5b88463f4a5da3e2333c4ab",
+          "0x2f8a9454de2e74bc9a0761703b3f7da0470b1e56",
+          "0x8b8732dac9c30ac89bf660b99fb90000d826ab83",
+          "0xa488ac456c7c5964af7d323b7ce795d02e7c5154",
+          "0xa502fffb9082700cad62366bc6ce37b15207680f",
+          "0xb1f9ed8b752e81fcb0b9482e475c7035043f5994",
+          "0xbe7b830623707babc4b46ff73279c73e2d1bc177",
+          "0xc219730ec703c9525748c3b80184d57f1d57699b"
         ],
         "CV_STRATEGIES": [
-          "0x17769fb86708abf03d7083ea7dc6b01976a91c47",
-          "0x233105f07593424866adeaa27a4045dcb6301844",
-          "0x271c5834f61901623c00ca274dc0911131e3865d",
-          "0x2a309fc9b3d3031826fae08254c3eb3fb3e136a9",
-          "0x2b7e64cf97cb0ad9f074e941f29e99899cad6f00",
-          "0x2c3adb40206952738927b6648c14de835d3a87d9",
-          "0x39db23696c0ad7a4afc5db891154a426193d3046",
-          "0x45cbefe5f9f0df5f76c8bdd07003724ec100497f",
-          "0x5ba5c0d3908c12773adf3a8c2aa504339b537011",
-          "0x5d63ec43e1ac82d0bb4434f2d2202eec7bb05d69",
-          "0x6500599270e13fbed12c1de58904e0358937a66c",
-          "0x768a7ce48322a6360db94a4c3eae3e50babb032c",
-          "0x769e1039322c9516581849485f9780390c2fac9c",
-          "0x7932c33f0a0dd335aecbe83a3d88b2435543a0fb",
-          "0x7cebd57140c10e81fb283fb3dee28f98a6a1f3e7",
-          "0x84b9c9d4f40e3c05278b6f688c5c78c89c7c95a8",
-          "0x876e104878b6dfdda13d717b5c9aec91439bc45b",
-          "0xa999227ef53b685cd0a91ca2301e550e6373d03c",
-          "0xaf83df434a976e7e4620e44b474c40f6fa7dbe18",
-          "0xb4a340406311a6baf6d0ca84059ca69bb3b02a07",
-          "0xb9540d3e9dff4de30ae19a96c604d261d3919a21",
-          "0xbd7474ca99a439d2926526a0168e3e948d2987c6",
-          "0xbf647db7c6bbacaab6a1e956f97c1c4df5ca0d3e",
-          "0xc0410861dbae69dbe94ab2db56ef988625dcd322",
-          "0xc5ae99a250617a875abc9bbb485dfde746cf3ba9",
-          "0xd76cd68881ad9c95000ad0a8d2f332374e91d23b",
-          "0xd8e2fc7ddc06e67b039cfaf2e1255de55e0789a0",
-          "0xdc3a597e60297bf51627918019ba7252b844970c",
-          "0xdd02fe21984aef0d8d3fa46d545b2dece39749b4",
-          "0xe0eb96a8c31d95ccca8f7fa52ee38d0d42b4167b",
-          "0xe57e7f0707bdb9c826a7c6da352dfb2be1275c21",
-          "0xee81fb9c0a60dfc69a7922bc3472418dd46f7dd3",
-          "0xfbaecc060d6a9051eb13c824b9eaff825976d44f",
-          "0xfd71d94f892670d3085cfaf1d93d0e4eb0b8963b"
-        ],
-        "PASSPORT_SCORER": "0xff53a163e43eccc00d8fde7aca24aa9fa4da7356"
-      }
+          "0x00d33e504517a03fe14e05863bb95983660b0c2c",
+          "0x07563fce80b58a67f5d4a5332ee84747bfb829b9",
+          "0x15f3e3c557f0a9bed0eba3eadcc5837d964c50fd",
+          "0x194a593887a27200bf5a2b6713c1072882136b6c",
+          "0x2155378db737b5382d05bdc204f335b7da88af2b",
+          "0x3bd8c9056a448c7ab3f398df2ffea114febd9139",
+          "0x4440e05839eaacc4927178756faa48ecc23386f8",
+          "0x464f010f343bb52689e8579c84e76c8e04c7dbdc",
+          "0x565f8f945d08a7dd3c67a926b2b0b25704718d8a",
+          "0x61f0d03b1f00b872c7c9ee03a12224cb70e93ea2",
+          "0x6b999ed850de2c5c923eaafc3c15781bd2ccf9d6",
+          "0x9dca528cd12c62cec0d37c17a9d23a4b8777d329",
+          "0x9e9321526d2f36d521ad4f70786b1adba73023a2",
+          "0xd682ff9fb3c4c28c35dfa8830280d9a1c5bbfee4"
+        ]
+      },
+      "hash": "c91de779094856d958da0d97a2f2d020fd68995a"
     },
     {
       "name": "opsepolia",
@@ -102,25 +84,64 @@
       "no-safe": false,
       "ENVS": {
         "SENDER": "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD",
+        "PROXY_OWNER": "0x5Bbeb8eBa98dDB8fD0D91965748D23Ca5C8bbad6",
         "ALLO_PROXY": "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
         "ALLO_IMPL": "0xB087535DB0df98fC4327136e897A5985E5Cfbd66",
-        "REGISTRY": "0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3"
+        "REGISTRY": "0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3",
+        "ARBITRATOR": "0x1c62F449058BbeeD546823A1a581D28233f7A69c",
+        "PASSPORT_SCORER": "0x8cd4ba4ad10d85a550fe45d567a49e49e1d23ce1"
       },
       "PROXIES": {
         "REGISTRY_FACTORY": "0xc1c2e092b7dbc8413e1ac02e92c161b0bda783f6",
         "REGISTRY_COMMUNITIES": [
+          "0x01a2c3c4e7c38885bf3d01e38847184ff2368fea",
+          "0x0f143af46eef341b3f0dbf98c3ecb47f57067fef",
+          "0x110f4a8153c04eace288e712eb4b975b46376b8c",
+          "0x2851b7e3d1ad8ba5637afe196968f1a4a9875e03",
+          "0x2e8b031ae32debce51126b17356f122e4c07e941",
+          "0x2ed599a96ea90c5c777abb0a13dfb6af1d5fbe76",
+          "0x400b3316447a4362abe36206c145550080046831",
+          "0x40f44e992cc53eff241f51c825c7a1853eedaeb0",
+          "0x41a9ed5de7998583cd20bf738ca38e649e0eafe3",
+          "0x561f7c4c65f42af17eab52b7065a5d2c080a3904",
+          "0x5a48adf540cb5c79edb027bef3ebf551ce63661f",
+          "0x625cb91ad17cf9b4a2b6b20b2b494ddf123c290c",
+          "0x6a34be42b61698ba8a103cf9c3d022f59bf8f4f2",
+          "0x6dd6b0a9a9b94aa169e5ce31cff34a46c7bea9cd",
+          "0x7508c3bcc2ce964ef858762cfbfa8bbbcf406ec9",
           "0x8281fd9c5f709a681813c49843a253a05d9b837c",
+          "0x8c3e27f075bb82e8730660828a1159c9438f3e58",
+          "0x98d84697794f4aae7540c1f85433e2ab39ab1206",
+          "0xa50d2ce829ea7b731c3b0a244032b639ff94cb92",
+          "0xab90f7d562edac4fdfcac4d1cd93a45ac4a1fdab",
+          "0xbb8b8ddc3775d825b6cf33bfa9ddcd771b88c6ee",
           "0xc3ba42da1d9f6b09d4d1315ac04f873a5ba64d3c",
-          "0xf62a2e4ecf3bf73313b3bbbfb1563cb4433c8933"
+          "0xdd65d3eac26d91f1040fe3beca11863cd354788e",
+          "0xe0902356a984540ca097021dbd9e0650974c7f7d",
+          "0xee9cc69179697f3bf8172624c5803b58bf6bf73f",
+          "0xf62a2e4ecf3bf73313b3bbbfb1563cb4433c8933",
+          "0xfa1d8bdb95e0288779df13f40ff32567647e7ffa",
+          "0xfc2bb6b0824805cee6d7a4af90bd395f663651c8"
         ],
         "CV_STRATEGIES": [
+          "0x020885a90d7c72079856c3ee7f7bb1e1d30c6e71",
+          "0x083de9da44ebd145368440c9c88cad95536fc2b3",
+          "0x19a0f3d7734dca40f1847c44ef717ef3ef5c50a5",
+          "0x2e00fd8fff4417c9d76ac44e35f039861b7e8f86",
+          "0x46408b210e77408c17c183470c4693f458f5aed8",
+          "0x5b7d4523862981219c74b9e081221011e4f45182",
           "0x7749aee50faeca5d7eed53bcbcf07db5aaf72e51",
           "0xad3d78ed1b03f26238845612eeb3c5b2677fa359",
+          "0xaf893ffeb244ada520e842eea4a6f3864113f1f5",
           "0xb9739585e54374268c231f042d384bfa57e41c95",
-          "0xea03978db787d89572cb7a07b60ac65b98111143"
-        ],
-        "PASSPORT_SCORER": "0xa2d5900d53a548637dd61312d02b90f3ff1d6a5e"
-      }
+          "0xbd0c6aa5a670ebe77bd0225f345abe0058ece703",
+          "0xea03978db787d89572cb7a07b60ac65b98111143",
+          "0xeefd5923d88bdcc74afa56943dcc163f1de2be4d",
+          "0xf474d3d714b89ca0ada658a8105838f34cbbe1fa",
+          "0xf659101919e1de3dca2fd7aa47840189506055ff"
+        ]
+      },
+      "hash": "f2fcd0376a7163617efc86736e13841822fefff7"
     },
     {
       "name": "optimism",
@@ -129,29 +150,62 @@
       "no-safe": false,
       "ENVS": {
         "SENDER": "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD",
+        "PROXY_OWNER": "0x129f253F78E33A0312EF8E59fae7699Ef6e8Dbef",
         "ALLO_PROXY": "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
         "ALLO_IMPL": "0xB087535DB0df98fC4327136e897A5985E5Cfbd66",
-        "REGISTRY": "0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3"
+        "REGISTRY": "0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3",
+        "ARBITRATOR": "0xaf6628d7347fc4D65F1D5C69663C875a00c56d9F",
+        "PASSPORT_SCORER": "0x084a5504dcfeac0ec3e10517247639e50c8dcffd"
       },
       "PROXIES": {
         "REGISTRY_FACTORY": "0x1fac47cf25f1ca9f20ba366099d26b28401f5715",
         "REGISTRY_COMMUNITIES": [
+          "0x0497390bb09a642500f77534167e6742c403cfe9",
+          "0x0d3e216236e9f7271dabf652ca43d9c9eb489734",
+          "0x10bbcd5e4cf147e67abab8a24ee31599cb022993",
+          "0x1ef94b88720b6aa0649e43a96f3be16588e3e5f4",
           "0x2088bbe7e70acfaf643e834c96aa4c277be6653e",
+          "0x2171ec78778dda68a993704b607f23e6e4f17783",
           "0x3da181b922a890ec30c41ebe764c49f28f890e77",
+          "0x4e8b0da13f858b0c101a28b7a92e42ae28ace5a4",
+          "0x5326f5264f547db8d3d6f39543f3767884dad3e5",
+          "0x576cb81030cc47ccb7aef97e9e88d2648edb45db",
+          "0x5b1a1dcbf48c0f317102d05d10caa258b9c9d1c5",
+          "0x6185357e28d2feb72a7606a3b66811f88279dd3d",
+          "0x6cc78ed3a4d8aa94410a60f702235c85d584730f",
+          "0x71566372033aafbd1a62430171ad698768d98dcc",
+          "0x87665484460f587a145eca5ce1e769da9ab8abf9",
           "0x888e2fbc7e7afe3a8f9b54030d0cb0eed896f955",
-          "0xcee4e641af10b05c17a657d038c2a0071e1ec051"
+          "0x9175dc03307d8f91bc757334959906731f2b60ef",
+          "0x9b0d2fbc6a0efacb69d716bfd15db8734c550a7c",
+          "0xa8cb166fd9e10103a6dbabefcf942d7b8026f735",
+          "0xaecc747c84205e21832fc924fe61ca12b313a8e6",
+          "0xbbb2313aeb8b1ff309790e20e61280aecd548db4",
+          "0xbc5a25bf2eeb5941dd3531a0ab8857c9f0c3b6a5",
+          "0xcee4e641af10b05c17a657d038c2a0071e1ec051",
+          "0xd3345828914b740fddd1b8ae4f4d2ce03d1e0960",
+          "0xe5b10de982897a60cfae8481bac5848816c0f705",
+          "0xee1a9cf8625c2f1f25201ac1a9a9e81f53d5e846",
+          "0xf515b83f7e0ab851f822e56b0fe63dfa973e74f0"
         ],
         "CV_STRATEGIES": [
+          "0x0a552942a6eb43d01c845f3a354b83ec30146950",
+          "0x0a9d78ea6de07fddbc71f1181d52f78052654b15",
           "0x1c720bfa4a2535fb6675b859a717b4cba56fd97b",
           "0x63e2b63072e131c0e5ad72205e03cbe6ca1484fa",
+          "0x6a27a7454bfbf17aa22566519778b58f3d4adcc2",
+          "0x8ace844a662569786a0d12b5364ba27fe4e74106",
           "0x8f80c90ef85254bd1c401804058bb68f2eb7cfab",
           "0x94daa3f0e1380139e178f8cc523eea39395bcf78",
           "0x964251300e577801ce3e21897c6a335505fedee5",
           "0xaeecbc91e44541204d0c784e4ac3e8eca6a47cc8",
-          "0xd9cf1f7d077166236e260819257a567b1ca22c8c"
-        ],
-        "PASSPORT_SCORER": "0xc93830dd463516ed5f28f6cd4f837173b87ff389"
-      }
+          "0xb3551608e7833f517d77419f4035e1a6b14391b7",
+          "0xd9cf1f7d077166236e260819257a567b1ca22c8c",
+          "0xf3772fcf3f172abd43ae9b1d11c87e3d5c265be8",
+          "0xfeca5fc72deb98b41198a5dce90e00bbafbe5888"
+        ]
+      },
+      "hash": "73a32cbebe36116667baa9f5098e97bbbd040aff"
     },
     {
       "name": "polygon",
@@ -160,18 +214,30 @@
       "no-safe": false,
       "ENVS": {
         "SENDER": "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD",
+        "PROXY_OWNER": "0x7d0E4223f987FbedE709842BfD273f7cea393f24",
         "ALLO_PROXY": "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
         "ALLO_IMPL": "0xB087535DB0df98fC4327136e897A5985E5Cfbd66",
-        "REGISTRY": "0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3"
+        "REGISTRY": "0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3",
+        "ARBITRATOR": "0x8D9EAed9D3D23EF30ADAA706c8352c5655AEd814",
+        "PASSPORT_SCORER": "0x190fa730e6ffc64ebd0031be59b3007cc9ee2bb3"
       },
       "PROXIES": {
         "REGISTRY_FACTORY": "0x57a9835b204dbcc101dbf981625a3625e8043b9c",
         "REGISTRY_COMMUNITIES": [
+          "0x4aa4677ea4ab3e52aad99741b90c76c677739d24",
+          "0x65bf57a410ed5fa69669f307c2da65eae06279f4",
           "0x9eee52873350c26d6c7fa23d048d22c4ab82db09"
         ],
-        "CV_STRATEGIES": [],
-        "PASSPORT_SCORER": "0x1fac47cf25f1ca9f20ba366099d26b28401f5715"
-      }
+        "CV_STRATEGIES": [
+          "0x0eab3bf7f6c651fc645c70543f34c117a1615adc",
+          "0x22a9bc80cf832393dc88fc564cfe97e3daa116db",
+          "0x6138338450c5bfbd646e49cf9f8c68a9152cad17",
+          "0x81745dba1273411825f18b50ead84a3fc2c8fd2c",
+          "0xd6f30d1f35069299e709bcac58fe7cda6bc9595f",
+          "0xe8216b6a9e8b87560dbeb0f4dc0f256fb9fedf1b"
+        ]
+      },
+      "hash": "bfc41198aae4f09072b15b4e398c47fa028dd53d"
     },
     {
       "name": "gnosis",
@@ -180,18 +246,133 @@
       "no-safe": false,
       "ENVS": {
         "SENDER": "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD",
+        "PROXY_OWNER": "0x91ab7A20cC3AeE799dF908fa1B2571fE8e07394A",
         "ALLO_PROXY": "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
         "ALLO_IMPL": "0xB087535DB0df98fC4327136e897A5985E5Cfbd66",
-        "REGISTRY": "0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3"
+        "REGISTRY": "0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3",
+        "ARBITRATOR": "0x92bc0af737f55FF7B677cd942Aafd52934Fc751d",
+        "PASSPORT_SCORER": "0x20965c5c8a021ac6ffed5de7a402f7ceac3b0a82"
       },
       "PROXIES": {
         "REGISTRY_FACTORY": "0x08df82f74d1f56f650e98da2dd4240f1a31711bc",
         "REGISTRY_COMMUNITIES": [
+          "0x2038f3b00ce19261fa558b2bd06404c912da3e85",
+          "0x4d7a042b2fb2504dd98e4c871cc134a8ded712da",
+          "0x6221d5e286cce0d22fc6e0b2597d5d3ca98dacb1",
+          "0x62ce2d154d34b5aefb9be02525cfffdbf934ff27",
+          "0x8f3112bcee3fb967a06dcb245f78f25e638ad56a",
+          "0x99a454785c9859e5b61647d77a05be1fa53f4d04",
+          "0xa8935addabca48a9fc63a009f9313fc59417b20c",
+          "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
+          "0xaeb5c6c69cc5b9c10dd5c5176af83e632320fcea",
+          "0xb8ad4b6ba0fde413fdee6f84fc989858c2894092",
+          "0xda9bcf61d7cb66475c34784c328232d2e7e2f6cf",
           "0xe2396fe2169ca026962971d3b2e373ba925b6257"
         ],
-        "CV_STRATEGIES": [],
-        "PASSPORT_SCORER": "0xd7b72fcb6a4e2857685175f609d1498ff5392e46"
-      }
+        "CV_STRATEGIES": [
+          "0x0108617ca2e05546c49383d9392ed8db5d12304c",
+          "0x051e8d96d4e9cde57d584b8d59a5116784f0d3c7",
+          "0x0a2ecc1f687ec4e1c19d337a5ac926865e30e818",
+          "0x0fd15b2142a257fa8713cad2c14ec52c00f71865",
+          "0x105900650fff3cf4fe52bce72f26572fe4fa1faf",
+          "0x107fbe971a1457a7a442a7fe3e2124d689a66e92",
+          "0x149e1d84858993b6ec3a41e11488c86c289620ef",
+          "0x1c265d5392dbfc0f43c85384c925f8d147e4d6bc",
+          "0x1e595cd639d9a835e3cf5dcef8e740e2bfe15494",
+          "0x1f6fd908db173f591aa6ea4a037d157ea4e31f68",
+          "0x2b64e4838bb7e0f4794fe3e40ad5cb71c2beddb5",
+          "0x2e3ab6f45e407283e719da6eeb7844a2f6bccd07",
+          "0x36f9176031e7de875659a3d1044cb62d1c2a9d2d",
+          "0x48ed3db635557079f8e1d0b83b37097abe78d6f1",
+          "0x48fdb39d6dc7064f6a3f5f48369fe26f2e434f5b",
+          "0x5ab65facfc0ae022f65a5c64cb3bf38812bd042a",
+          "0x5ccb743c930271ebd7f254f3ccf909097532c7be",
+          "0x5f7e9967b940f47623ad7fce9d59c899a1a114e7",
+          "0x61cbd792c9310fc2d9fa03e99118bd163301cd0a",
+          "0x67fea1ec7ed0adfb4026923b4779e4f830af8e1c",
+          "0x681d02f86578922d33a5e3b7954abdedf4e3064d",
+          "0x69bcabc41dae5ddc5cb2370f7ba472612115e8ce",
+          "0x6cc78e32004429b39c1fb8d7c6620e8511832cc4",
+          "0x6d3e7d4271cdc083609fae18461ea1e1589e4e8d",
+          "0x6d5accc797cc20414f1206ceb2e7665ef777480a",
+          "0x6e7e8b56d16c577ee9c765a756deb5e6959088af",
+          "0x6e7ed4a6ac5665d55ed779595f2cdb689f205f0f",
+          "0x7336ab83ec05ccb0d328390e50ac8b59b1229da1",
+          "0x74545010e013e5601009305288193cbd5c8702b4",
+          "0x777ddf053fb46a48cccf5b91d3417d4daf3ec9e2",
+          "0x7c86c9a368324f51c6ef2fe88a1f5a332cac3c2d",
+          "0x7de5cd9bccd6d15ca7ebfd9cd37aafbef6b8d1ad",
+          "0x7fe71a32d39954844d1954acae5191116ad116ac",
+          "0x831fa1bbcdfe199d56213c40340544aeb7912349",
+          "0x9fb2f1813228a97f559e29a6492ee27357faf8a2",
+          "0xa65228c5661bba89532b2941ea86853eeba8a4b9",
+          "0xa774b5c30fc203811d41dfc6edbc5d295f2aff86",
+          "0xa7ff31bba33d421c2fb3aa3688cf64ea60ab4199",
+          "0xa8116d32a742e2323de416808a9768ebc2a8d179",
+          "0xa840a7506b866ee71d487bf76a8f698249ea9836",
+          "0xaa0195986ffe8f3371444fa77ee3ed04ac787eea",
+          "0xac948bca716b080df41afc70f37b7a9f6f3d9c9a",
+          "0xb1a275419c817273f470ee1a102cad7507a25b6f",
+          "0xb48fe96fcb6b3f7228247690f6a0f21d60002e52",
+          "0xba5c9429472e9e0aa1d4f0276c7fb45374e2af6c",
+          "0xbf1d2e31fa3d927673d2e95bfb2d940f5cc8890e",
+          "0xcdd52a838b602910d582ebebe91f24cf284fddd2",
+          "0xd12f4faab3a770175f5d7e19bd32b1a7aadc0a31",
+          "0xe652081deb52afa56fb2958994427c662356007b",
+          "0xe8320380d56c4319aab593e45de868b002b3e357",
+          "0xf1ec3cb9a862844aad68df495955832a242e39e7",
+          "0xfb075fad5f629124f27787fda26a774c727661c9",
+          "0xfbad687a935390ff59b36cd6c9462d0b1948e378"
+        ]
+      },
+      "hash": "511f42d34a30bd75e6141ea81e2c18cba92bfc42"
+    },
+    {
+      "name": "base",
+      "chainId": 8453,
+      "testnet": false,
+      "no-safe": false,
+      "ENVS": {
+        "SENDER": "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD",
+        "PROXY_OWNER": "0x99ebef5e196a9e8e39d92b18663c9236661607b1",
+        "ALLO_PROXY": "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
+        "ALLO_IMPL": "0xB087535DB0df98fC4327136e897A5985E5Cfbd66",
+        "REGISTRY": "0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3",
+        "ARBITRATOR": "0xab98D1D6Ce18e537715126614278d1A4D26bbc7d",
+        "PASSPORT_SCORER": "0xb39dFA15F96055664179e8EcaA890f3FA26c21e9"
+      },
+      "PROXIES": {
+        "REGISTRY_FACTORY": "0xc93830dd463516ed5f28f6cd4f837173b87ff389",
+        "REGISTRY_COMMUNITIES": [
+          "0xacc779d8cf69e64d016c1c79895851f139bc7c2b",
+          "0xdac6e19e4fd51d48cae4e25e7604d7ab83935278"
+        ],
+        "CV_STRATEGIES": [
+          "0xabf6f3e646056218bc857fa9ea313aa31a03454b"
+        ]
+      },
+      "hash": "9f6c9e199a409e72346dfdbaa6503a56c7443e76"
+    },
+    {
+      "name": "celo",
+      "chainId": 42220,
+      "testnet": false,
+      "no-safe": false,
+      "ENVS": {
+        "SENDER": "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD",
+        "PROXY_OWNER": "0x99EBeF5E196a9e8e39d92B18663C9236661607b1",
+        "ALLO_PROXY": "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
+        "ALLO_IMPL": "0xB087535DB0df98fC4327136e897A5985E5Cfbd66",
+        "REGISTRY": "0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3",
+        "ARBITRATOR": "0x83bDE2E2D8AcAAad2D300DA195dF3cf86b234bdd",
+        "PASSPORT_SCORER": "0xb39dfa15f96055664179e8ecaa890f3fa26c21e9"
+      },
+      "PROXIES": {
+        "REGISTRY_FACTORY": "0xA71023bc64c9711C2037ab491DE80fd74504bd55",
+        "REGISTRY_COMMUNITIES": [],
+        "CV_STRATEGIES": []
+      },
+      "hash": "9f6c9e199a409e72346dfdbaa6503a56c7443e76"
     },
     {
       "name": "mainnet",
@@ -200,6 +381,7 @@
       "no-safe": false,
       "ENVS": {
         "SENDER": "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD",
+        "PROXY_OWNER": "",
         "ALLO_PROXY": "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
         "ALLO_IMPL": "0xB087535DB0df98fC4327136e897A5985E5Cfbd66",
         "REGISTRY": "0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3"

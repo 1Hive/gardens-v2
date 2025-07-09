@@ -1,30 +1,48 @@
 "use client";
 
 import React from "react";
-import { RectangleGroupIcon, UserGroupIcon } from "@heroicons/react/24/outline";
+import {
+  CheckBadgeIcon,
+  CircleStackIcon,
+  UserGroupIcon,
+} from "@heroicons/react/24/outline";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import {
+  CVStrategy,
+  Maybe,
+  MemberCommunity,
+  TokenGarden,
+} from "#/subgraph/.graphclient";
 import { Card } from "./Card";
 import { Statistic } from "./Statistic";
 import TooltipIfOverflow from "./TooltipIfOverflow";
-import { commImg } from "@/assets";
+import { CommunityLogo, ProtopianLogo } from "@/assets";
+import { ChainIcon } from "@/configs/chains";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 
 type CommunityCardProps = {
-  name: string;
-  membersCount: number;
-  poolsCount: number;
   id: string;
+  communityName?: Maybe<string> | undefined;
+  garden: Pick<TokenGarden, "address" | "chainId" | "symbol">;
+  members?: Maybe<Pick<MemberCommunity, "id" | "memberAddress">[]> | undefined;
+  strategies?: Maybe<Pick<CVStrategy, "id">[]> | undefined;
+  isProtopian?: boolean;
 };
 
 export function CommunityCard({
-  name,
-  membersCount,
-  poolsCount,
   id,
+  communityName,
+  garden,
+  members,
+  strategies,
+  isProtopian = false,
 }: CommunityCardProps) {
-  const pathname = usePathname();
+  const { address: tokenAddr, chainId, symbol: tokenSymbol } = garden;
+
+  const membersCount = members?.length ?? 0;
+  const poolsCount = strategies?.length ?? 0;
+
   const searchParams = useCollectQueryParams();
   const isNewCommunity =
     searchParams[QUERY_PARAMS.gardenPage.newCommunity]?.toLowerCase() ===
@@ -33,20 +51,40 @@ export function CommunityCard({
   return (
     <Card
       key={id}
-      href={`${pathname}/${id}`}
-      className={`w-[275px] sm:min-w-[313px] ${isNewCommunity ? "shadow-2xl" : ""}`}
+      href={`/gardens/${chainId}/${tokenAddr}/${id}`}
+      className={` ${isNewCommunity ? "shadow-2xl" : ""}`}
     >
-      <Image
-        src={commImg}
-        alt={`${name} community`}
-        className="mb-2 h-[100px]"
-        height={100}
-        width={100}
-      />
+      <div className="flex justify-between text-neutral-content text-sm">
+        {isProtopian && (
+          <div className="absolute bottom-2 right-2 badge badge-soft badge-success bg-[#9ae7c3] text-[#0c7b0c]">
+            <CheckBadgeIcon className="h-4 w-4 mr-1" />
+            Protopian
+          </div>
+        )}
+        <Image
+          src={isProtopian ? ProtopianLogo : CommunityLogo}
+          alt={`${communityName} community`}
+          className="mb-2 h-[100px]"
+          height={100}
+          width={100}
+        />
+        <div className="flex flex-col gap-1">
+          <div className="flex gap-2 items-center">
+            <ChainIcon chain={chainId} height={24} />
+          </div>
+        </div>
+      </div>
+
       <div className="flex flex-col gap-2">
         <h3 className="flex items-start w-fit max-w-full">
-          <TooltipIfOverflow>{name}</TooltipIfOverflow>
+          <TooltipIfOverflow>{communityName ?? ""}</TooltipIfOverflow>
         </h3>
+        <div className="flex gap-2 items-center">
+          <p className="text-base font-normal">
+            Governance Token:
+            <span className="text-base font-normal"> {tokenSymbol}</span>
+          </p>
+        </div>
         <Statistic
           label="members"
           count={membersCount}
@@ -54,9 +92,39 @@ export function CommunityCard({
         />
         <Statistic
           label="pools"
-          icon={<RectangleGroupIcon />}
+          icon={<CircleStackIcon />}
           count={poolsCount}
         />
+      </div>
+    </Card>
+  );
+}
+
+export function CommunityCardSkeleton() {
+  return (
+    <Card href="#" className="min-w-[313px]">
+      <div className="flex justify-between text-neutral-content text-sm">
+        <div className="skeleton [--fallback-b3:#f0f0f0] mb-2 h-[100px] w-[100px]" />
+        <div className="flex flex-col gap-1">
+          <div className="flex gap-2 items-center">
+            <div className="skeleton [--fallback-b3:#f0f0f0] h-6 w-6 rounded-full" />
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <div className="skeleton [--fallback-b3:#f0f0f0] h-7 w-48" />
+        <div className="flex gap-2 items-center">
+          <div className="skeleton [--fallback-b3:#f0f0f0] h-6 w-40" />
+        </div>
+        <div className="flex gap-2 items-center">
+          <div className="skeleton [--fallback-b3:#f0f0f0] h-6 w-6" />
+          <div className="skeleton [--fallback-b3:#f0f0f0] h-6 w-24" />
+        </div>
+        <div className="flex gap-2 items-center">
+          <div className="skeleton [--fallback-b3:#f0f0f0] h-6 w-6" />
+          <div className="skeleton [--fallback-b3:#f0f0f0] h-6 w-24" />
+        </div>
       </div>
     </Card>
   );

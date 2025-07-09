@@ -37,7 +37,7 @@ Significant UI improvements make conviction voting more intuitive and easier to 
 
 Gardens v2 relies on the following apps and frameworks to be deployed:
 
-- [Allo Protocol](https://www.gitcoin.co/blog/allo-gitcoins-newest-protocol)
+- [Allo Protocol v2](https://www.gitcoin.co/blog/allo-gitcoins-newest-protocol)
 - [The Graph](https://thegraph.com/)
 - [Safe](https://safe.global/)
 

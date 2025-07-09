@@ -41,7 +41,7 @@ export const WalletBalance: FC<Props> = ({
   });
 
   const balance = data && data.value;
-  const askedFormated = (+formatEther(askedAmount)).toPrecision(2);
+  const askedFormated = (+formatEther(askedAmount)).toFixed(4);
 
   useEffect(() => {
     if (balance != null) {
@@ -65,7 +65,7 @@ export const WalletBalance: FC<Props> = ({
             >
               <DisplayNumber
                 number={askedFormated}
-                className="font-semibold text-primary-content"
+                valueClassName="font-semibold text-primary-content"
                 disableTooltip={true}
                 compact={true}
                 tokenSymbol={data?.symbol}
@@ -81,13 +81,12 @@ export const WalletBalance: FC<Props> = ({
             <p className="font-medium">Your balance:</p>
             <div
               className={`tooltip ml-2 flex cursor-pointer items-center ${isEnoughBalanceRef.current ? "text-primary-content" : "text-neutral-soft-content"} `}
-              data-tip={`${isEnoughBalanceRef.current ? `${(+formatEther(data?.value ?? 0n)).toPrecision(2)} ETH` : "Insufficient balance"}`}
+              data-tip={`${isEnoughBalanceRef.current ? `${(+formatEther(data?.value ?? 0n)).toPrecision(2)} ${data.symbol}` : "Insufficient balance"}`}
             >
               <DisplayNumber
-                number={(+(data?.formatted ?? 0)).toPrecision(2)}
-                className={`font-semibold ${isEnoughBalanceRef.current ? "text-primary-content" : "text-neutral-soft-content"}`}
+                number={(+data?.formatted || 0).toFixed(4)}
+                valueClassName={`font-semibold ${isEnoughBalanceRef.current ? "text-primary-content" : "text-neutral-soft-content"}`}
                 disableTooltip={true}
-                compact={true}
                 tokenSymbol={data?.symbol}
               />
               <InformationCircleIcon

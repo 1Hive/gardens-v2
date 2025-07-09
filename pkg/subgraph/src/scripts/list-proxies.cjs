@@ -1,22 +1,32 @@
+const fs = require("fs");
 const viemChains = require("viem/chains");
+const hash = require("object-hash");
 const subgraphConfig = require("../../../../apps/web/configs/subgraph.json");
+const path = require("path");
 
 const localhostSubgraph = "http://localhost:8000/subgraphs/name/kamikazebr/gv2";
 const arbitrumSepoliaSubgraph =
-  "https://api.studio.thegraph.com/query/70985/gv2-arbsepolia/" +
+  "https://api.studio.thegraph.com/query/70985/gardens-v2---arbitrum-sepolia/" +
   subgraphConfig.VERSION_TESTNET;
 
 const arbitrumSubgraph =
-  "https://api.studio.thegraph.com/query/70985/gv2-arbitrum/" +
+  "https://api.studio.thegraph.com/query/102093/gardens-v2---arbitrum/" +
   subgraphConfig.VERSION_PROD;
 const maticSubgraph =
-  "https://api.studio.thegraph.com/query/70985/gv2-matic/" +
+  "https://api.studio.thegraph.com/query/102093/gardens-v2---polygon/" +
   subgraphConfig.VERSION_PROD;
 const optimismSubgraph =
-  "https://api.studio.thegraph.com/query/70985/gv2-optimism/" +
+  "https://api.studio.thegraph.com/query/102093/gardens-v2---optimism/" +
   subgraphConfig.VERSION_PROD;
 const gnosisSubgraph =
-  "https://api.studio.thegraph.com/query/70985/gv2-gnosis/" +
+  "https://api.studio.thegraph.com/query/102093/gardens-v2---gnosis/" +
+  subgraphConfig.VERSION_PROD;
+const baseSubgraph =
+  "https://api.studio.thegraph.com/query/102093/gardens-v2---base/" +
+  subgraphConfig.VERSION_PROD;
+
+const celoSubgraph =
+  "https://api.studio.thegraph.com/query/102093/gardens-v2---celo/" +
   subgraphConfig.VERSION_PROD;
 
 // @ts-ignore
@@ -31,12 +41,13 @@ const jsons = {
   // [viemChains.sepolia.id]: sepoliaLatest,
 
   // @ts-ignore
-  [viemChains.optimism.id]: optimismSubgraph,
-  [viemChains.gnosis.id]: gnosisSubgraph,
-  // @ts-ignore
-  [viemChains.polygon.id]: maticSubgraph,
-  // @ts-ignore
   [viemChains.arbitrum.id]: arbitrumSubgraph,
+  [viemChains.optimism.id]: optimismSubgraph,
+  [viemChains.polygon.id]: maticSubgraph,
+  [viemChains.gnosis.id]: gnosisSubgraph,
+  [viemChains.base.id]: baseSubgraph,
+  [viemChains.celo.id]: celoSubgraph,
+  // @ts-ignore
   // [viemChains.mainnet.id]: mainnetLatest
 };
 
@@ -66,8 +77,7 @@ async function extractProxies(chainId) {
   }
 
   if (!subgraphEndpoint) {
-    console.error("No subgraph endpoint found for chain", chain);
-    return;
+    throw `No subgraph endpoint found for chain: ${chain} `;
   }
 
   const query = `{
@@ -123,19 +133,48 @@ async function extractProxies(chainId) {
     cvStrategiesProxies.push(strategy.id);
   });
 
-  passportScorerProxy = result.data.passportScorers?.[0]?.id;
+  if (result.data.passportScorers?.[0]?.id)
+    passportScorerProxy = result.data.passportScorers?.[0]?.id;
 
   return {
     REGISTRY_FACTORY: registryFactoryProxy,
     REGISTRY_COMMUNITIES: registryCommunityProxies,
     CV_STRATEGIES: cvStrategiesProxies,
-    PASSPORT_SCORER: passportScorerProxy,
   };
 }
 
-extractProxies(chainArg)
-  .then((proxies) => {
-    const json = JSON.stringify({ PROXIES: proxies }, null, 2);
-    console.debug(json);
-  })
-  .catch((err) => console.error(err));
+const networksPath = path.resolve(
+  __dirname,
+  "../../../../pkg/contracts/config/networks.json",
+);
+console.log(networksPath);
+
+async function main() {
+  if (fs.existsSync(networksPath)) {
+    const networkJson = JSON.parse(fs.readFileSync(networksPath).toString());
+
+    const netArray = networkJson["networks"];
+
+    const netFound = netArray.find((net) => net.name == chainArg);
+    if (!netFound) {
+      console.error(`Network ${chainArg} not found in networks.json`);
+      return;
+    }
+    const proxies = await extractProxies(netFound.chainId);
+    netFound["PROXIES"] = proxies;
+    netFound["hash"] = hash(proxies);
+
+    // console.log(netArray)
+
+    const netStringToSave = JSON.stringify(networkJson, null, 2);
+    if (!netStringToSave || netStringToSave.trim() == "") {
+      console.error("Error parsing json");
+      return;
+    }
+    fs.writeFileSync(networksPath, netStringToSave);
+  } else {
+    console.error(`networks.json in path ${networksPath} don't exists`);
+  }
+}
+
+main().catch(console.error);

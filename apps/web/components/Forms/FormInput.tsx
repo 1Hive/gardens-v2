@@ -51,16 +51,18 @@ export function FormInput({
   suffix,
 }: Props) {
   const registered = register?.(registerKey, {
+    ...registerOptions,
     required,
     disabled,
-    ...registerOptions,
+    value: value ?? registerOptions?.value,
+    onChange: onChange ?? registerOptions?.onChange,
   });
 
   const fixedInputClassname =
     "!border-gray-300 focus:border-gray-300 focus:outline-gray-300 cursor-not-allowed bg-transparent";
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col w-full">
       {label && (
         <label htmlFor={registerKey} className="label cursor-pointer w-fit">
           {tooltip ?
@@ -92,8 +94,7 @@ export function FormInput({
             step={step}
             disabled={disabled || readOnly}
             readOnly={readOnly || disabled}
-            // value={value}
-            onChange={onChange}
+            onChange={registered?.onChange ?? onChange}
             {...otherProps}
           />
         : type === "textarea" ?
@@ -108,14 +109,16 @@ export function FormInput({
             rows={rows}
             disabled={disabled || readOnly}
             readOnly={readOnly || disabled}
-            onChange={onChange}
+            onChange={registered?.onChange ?? onChange}
             value={value}
             {...otherProps}
           />
         : <div data-color-mode="light">
             <MarkdownEditor
               {...registered}
-              className="textarea textarea-info p-0 ![--color-canvas-subtle:white] ![--color-neutral-muted:#cceeff44]"
+              className={`textarea p-0 ![--color-canvas-subtle:white] ![--color-neutral-muted:#cceeff44] rounded-2xl ${
+                errors[registerKey] ? "textarea-error" : "textarea-info"
+              }`}
               id={registerKey}
               style={{
                 resize: "vertical",
@@ -128,17 +131,18 @@ export function FormInput({
               value={value}
               onChange={(v) => {
                 const e = {
-                  target: { value: v },
+                  target: { value: v, name: registerKey },
                 } as ChangeEvent<HTMLInputElement>;
-                registered?.onChange(e);
-                onChange?.(e);
+                (registered?.onChange ?? onChange)?.(e);
               }}
               {...otherProps}
             />
           </div>
         }
         {suffix && (
-          <span className="absolute right-4 top-4 text-black">{suffix}</span>
+          <span className="absolute right-[10px] top-1/2 -translate-y-1/2 text-black">
+            {suffix}
+          </span>
         )}
       </div>
       {errors && (
