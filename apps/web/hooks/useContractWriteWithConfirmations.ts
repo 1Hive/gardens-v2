@@ -30,7 +30,6 @@ const DIVVI_PROVIDERS = process.env.NEXT_PUBLIC_DIVVI_PROVIDERS?.split(",") ?? [
   "0x5f0a55fad9424ac99429f635dfb9bf20c3360ab8",
 ];
 
-const DIVVI_TRACKED_STORAGE_KEY = "divvi_tracked";
 
 /**
  * this hook is used to write to a contract and wait for confirmations.
