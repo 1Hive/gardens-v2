@@ -234,7 +234,7 @@ export const DisputeModal: FC<Props> = ({
     functionName: "rule",
     abi: cvStrategyABI,
     address: proposalData.strategy.id as Address,
-    args: [BigInt(+(lastDispute?.disputeId)-1 ?? 0), BigInt(ABSTAINED_RULING)],
+    args: [BigInt(lastDispute?.disputeId), BigInt(ABSTAINED_RULING)],
     onSuccess: () => {
       setIsModalOpened(false);
     },
@@ -258,7 +258,7 @@ export const DisputeModal: FC<Props> = ({
     } else {
       writeSubmitRuling({
         args: [
-          BigInt(+(lastDispute?.disputeId)-1),
+          BigInt(lastDispute?.disputeId),
           BigInt(ruling),
           proposalData.strategy.id as Address,
         ],
