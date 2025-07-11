@@ -27,6 +27,7 @@ type Props = {
   tooltip?: string;
   onChange?: React.ChangeEventHandler<HTMLInputElement>;
   suffix?: React.ReactNode;
+  wide?: boolean;
 };
 
 export function FormInput({
@@ -49,6 +50,7 @@ export function FormInput({
   tooltip,
   onChange,
   suffix,
+  wide = true,
 }: Props) {
   const registered = register?.(registerKey, {
     ...registerOptions,
@@ -62,7 +64,7 @@ export function FormInput({
     "!border-gray-300 focus:border-gray-300 focus:outline-gray-300 cursor-not-allowed bg-transparent";
 
   return (
-    <div className="flex flex-col w-full">
+    <div className={`flex flex-col ${wide ? "w-full" : ""}`}>
       {label && (
         <label htmlFor={registerKey} className="label cursor-pointer w-fit">
           {tooltip ?

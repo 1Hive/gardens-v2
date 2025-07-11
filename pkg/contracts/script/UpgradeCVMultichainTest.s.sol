@@ -14,7 +14,7 @@ contract UpgradeCVMultichainTest is BaseMultiChain {
     bytes32 constant IMPLEMENTATION_SLOT = bytes32(uint256(keccak256("eip1967.proxy.implementation")) - 1);
 
     function runCurrentNetwork(string memory networkJson) public override {
-        // address registryImplementation = address(new RegistryCommunityV0_0());
+        address registryImplementation = address(new RegistryCommunityV0_0());
         address strategyImplementation = address(new CVStrategyV0_0());
         // address passportScorer = networkJson.readAddress(getKeyNetwork(".ENVS.PASSPORT_SCORER"));
         address safeArbitrator = networkJson.readAddress(getKeyNetwork(".ENVS.ARBITRATOR"));
@@ -36,7 +36,7 @@ contract UpgradeCVMultichainTest is BaseMultiChain {
         registryFactory.upgradeTo(registryFactoryImplementation); // DOESNT VALIDATE SAFE UPGRADING
 
         // 1.b -- Set the Registry Community Template --
-        // registryFactory.setRegistryCommunityTemplate(registryImplementation);
+        registryFactory.setRegistryCommunityTemplate(registryImplementation);
 
         // 1.c -- Set the Strategy Template --
         registryFactory.setStrategyTemplate(strategyImplementation);
@@ -55,7 +55,7 @@ contract UpgradeCVMultichainTest is BaseMultiChain {
             // abi.encodeWithSelector(RegistryCommunityV0_0.initializeV2.selector)
 
             // 2.a -- Upgrade the Registry Community --
-            // registryCommunity.upgradeTo(registryImplementation); // DOESNT VALIDATE SAFE UPGRADING
+            registryCommunity.upgradeTo(registryImplementation); // DOESNT VALIDATE SAFE UPGRADING
 
             // 2.b -- Set the Strategy Template --
             registryCommunity.setStrategyTemplate(strategyImplementation);

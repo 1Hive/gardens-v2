@@ -56,8 +56,11 @@ export function useContractWriteWithConfirmations<
   const toastId = props.contractName + "_" + props.functionName;
   const chainIdFromWallet = useChainId();
   const chainIdFromPath = useChainIdFromPath();
-  const resolvedChaindId =
-    +(props.chainId ?? chainIdFromPath ?? chainIdFromWallet);
+  const resolvedChaindId = +(
+    props.chainId ??
+    chainIdFromPath ??
+    chainIdFromWallet
+  );
 
   const shouldDivviTrack = useMemo(() => {
     return resolvedChaindId === celo.id;

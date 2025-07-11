@@ -350,29 +350,32 @@ export default function Page({
               {/* Divider */}
 
               {/* Conviction Progress */}
-              {proposalData.strategy.isEnabled && (
-                <div className="">
-                  {(status === "active" || status === "disputed") && (
-                    <div className="flex flex-col gap-2">
-                      <div className="w-full h-[0.10px] bg-neutral-soft-content" />
-                      <h4 className="mt-4">Progress</h4>
+              {proposalData.strategy.isEnabled &&
+                currentConvictionPct != null &&
+                thresholdPct != null &&
+                totalSupportPct != null && (
+                  <div className="">
+                    {(status === "active" || status === "disputed") && (
                       <div className="flex flex-col gap-2">
-                        <ConvictionBarChart
-                          currentConvictionPct={currentConvictionPct}
-                          thresholdPct={thresholdPct}
-                          proposalSupportPct={totalSupportPct}
-                          isSignalingType={isSignalingType}
-                          proposalNumber={Number(proposalIdNumber)}
-                          timeToPass={Number(timeToPass)}
-                          onReadyToExecute={triggerConvictionRefetch}
-                          defaultChartMaxValue
-                          proposalStatus={proposalStatus}
-                        />
+                        <div className="w-full h-[0.10px] bg-neutral-soft-content" />
+                        <h4 className="mt-4">Progress</h4>
+                        <div className="flex flex-col gap-2">
+                          <ConvictionBarChart
+                            currentConvictionPct={currentConvictionPct}
+                            thresholdPct={thresholdPct}
+                            proposalSupportPct={totalSupportPct}
+                            isSignalingType={isSignalingType}
+                            proposalNumber={Number(proposalIdNumber)}
+                            timeToPass={Number(timeToPass)}
+                            onReadyToExecute={triggerConvictionRefetch}
+                            defaultChartMaxValue
+                            proposalStatus={proposalStatus}
+                          />
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </div>
-              )}
+                    )}
+                  </div>
+                )}
             </div>
           </div>
 
@@ -412,11 +415,18 @@ export default function Page({
                     disabled={
                       !isConnected ||
                       missmatchUrl ||
+                      thresholdPct == null ||
+                      currentConvictionPct == null ||
                       currentConvictionPct <= thresholdPct ||
                       proposalStatus === "disputed"
                     }
                     tooltip={
-                      tooltipMessage ?? currentConvictionPct <= thresholdPct ?
+                      (
+                        tooltipMessage ??
+                        (thresholdPct != null &&
+                          currentConvictionPct != null &&
+                          currentConvictionPct <= thresholdPct)
+                      ) ?
                         "Proposal has not reached the threshold yet"
                       : undefined
                     }
@@ -512,17 +522,18 @@ export default function Page({
             </section>
           )}
 
-          {filteredAndSortedProposalSupporters.length > 0 && (
-            <section className="xl:max-h-10">
-              <ProposalSupportersTable
-                supporters={filteredAndSortedProposalSupporters}
-                beneficiary={beneficiary}
-                submitter={submitter}
-                totalActivePoints={totalEffectiveActivePoints}
-                totalStakedAmount={totalSupportPct}
-              />
-            </section>
-          )}
+          {filteredAndSortedProposalSupporters.length > 0 &&
+            totalSupportPct != null && (
+              <section className="xl:max-h-10">
+                <ProposalSupportersTable
+                  supporters={filteredAndSortedProposalSupporters}
+                  beneficiary={beneficiary}
+                  submitter={submitter}
+                  totalActivePoints={totalEffectiveActivePoints}
+                  totalStakedAmount={totalSupportPct}
+                />
+              </section>
+            )}
         </div>
       </div>
 

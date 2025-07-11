@@ -97,16 +97,116 @@ add-strategy-ethsep-pool: #make add-strategy S=0x1234
 	-vvvv
 
 ### OPTIMISM SEPOLIA ###
-deploy-testnet-multi-op: 
+deploy-token-opsep: 
+	-forge script script/DeployERC20.s.sol:DeployERC20 \
+	--rpc-url $(RPC_URL_OP_TESTNET) \
+	--account pkGarden \
+	--etherscan-api-key $(OPTIMISM_API_KEY) \
+	--sig "run(string,string)" 'Honey' 'HNY' \
+	--ffi \
+	--broadcast \
+	--chain-id 11155420 \
+	--verify
+
+fork-testnet:
+	anvil --host=0.0.0.0 -f $(RPC_URL_OP_TESTNET)
+
+deploy-verify-opsep: 
+	-forge verify-contract \
+  --rpc-url $(RPC_URL_OP_TESTNET) \
+  0xd7b72fcb6a4e2857685175f609d1498ff5392e46 \
+  /home/corantin/Documents/GitHub/gardens-v2/main/pkg/contracts/src/RegistryFactoryV0_0.sol:RegistryFactoryV0_0 \
+	--etherscan-api-key $(OPTIMISM_API_KEY)
+
+deploy-opsep: 
 	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
+	--rpc-url $(RPC_URL_OP_TESTNET) \
+	--sig "run(string)" 'opsepolia' \
+	--account pkGarden \
+	--etherscan-api-key $(OPTIMISM_API_KEY) \
+	--chain-id 11155420 \
+	--ffi \
+	--broadcast \
+	--via-ir \
+	--verify \
+	-vv
+
+upgrade-opsep: 
+	-forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
+	--rpc-url $(RPC_URL_OP_TESTNET) \
+	--sig "run(string)" 'opsepolia' \
+	--account pkGarden \
+	--etherscan-api-key $(OPTIMISM_API_KEY) \
+	--chain-id 11155420 \
+	--ffi \
+	--broadcast \
+	--via-ir \
+	--verify \
+	-vvv 
+
+verify-blockscout-opsep: 
+	-forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
+	--rpc-url $(RPC_URL_OP_TESTNET) \
+	--account pkGarden \
+	--verifier blockscout \
+	--verifier-url https://arbitrum.blockscout.com/api/ \
+	--verify \
+	--via-ir \
+	--slow
+	
+
+deploy-new-collateral-vault-template-opsep: 
+	-forge script script/DeployCollateralVaultTemplate.s.sol:DeployCollateralVaultTemplate \
+	--rpc-url $(RPC_URL_OP_TESTNET) \
+	--sig "run(string)" 'opsepolia' \
+	--account pkGarden \
+	--etherscan-api-key $(OPTIMISM_API_KEY) \
+	--ffi \
+	--chain-id 11155420 \
+	--legacy \
+	--broadcast \
+	--via-ir \
+	--with-gas-price 1301660000 \
+	--verify \
+	-vvv
+
+upgrade-and-verify-opsep: upgrade-opsep verify-blockscout-opsep
+
+transfer-ownership-opsep:
+	-forge script script/TransferOwnershipAllContracts.s.sol:TransferOwnershipAllContracts \
 	--rpc-url $(RPC_URL_OP_TESTNET) \
 	--account pkGarden \
 	--sig "run(string)" 'opsepolia' \
-	--ffi \
-	--etherscan-api-key $(ETHERSCAN_API_KEY) \
+	--chain-id 11155420 \
 	--broadcast \
+	--via-ir \
+	--etherscan-api-key $(OPTIMISM_API_KEY) \
 	--verify \
-	-vvv
+	-vvvv
+
+deploy-passport-scorer-opsep:
+	-forge script script/DeployPassportScorer.s.sol:DeployPassportScorer \
+	--rpc-url $(RPC_URL_OP_TESTNET) \
+	--sig "run(string)" 'opsepolia' \
+	--chain-id 11155420 \
+	--etherscan-api-key $(OPTIMISM_API_KEY) \
+	--account pkGarden \
+	--via-ir \
+	--verify \
+	--broadcast \
+	-vv
+
+deploy-safe-arbitrator-opsep:
+	-forge script script/DeploySafeArbitrator.s.sol:DeploySafeArbitrator \
+	--rpc-url $(RPC_URL_OP_TESTNET) \
+	--sig "run(string)" 'opsepolia' \
+	--chain-id 11155420 \
+	--etherscan-api-key $(OPTIMISM_API_KEY) \
+	--account pkGarden \
+	--via-ir \
+	--verify \
+	--broadcast \
+	-vv
 
 ### ARBITRUM SEPOLIA ###
 

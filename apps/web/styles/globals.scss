@@ -286,4 +286,57 @@ dialog * {
     right: auto;
     bottom: var(--tooltip-tail-offset);
   }
+
+  .tooltip-top-left::before {
+    transform: translateX(-80%);
+    top: auto;
+    left: 50%;
+    right: auto;
+    bottom: var(--tooltip-offset);
+  }
+
+  .tooltip-top-left::after {
+    transform: translateX(-50%);
+    border-color: var(--tooltip-color) transparent transparent transparent;
+    top: auto;
+    left: 50%;
+    right: auto;
+    bottom: var(--tooltip-tail-offset);
+  }
+
+  .tooltip-bottom-right::before {
+    transform: translateX(-10%);
+    top: var(--tooltip-offset);
+    top: auto;
+    left: 50%;
+    right: auto;
+    bottom: auto;
+  }
+
+  .tooltip-bottom-right::after {
+    transform: translateX(-50%);
+    border-color: var(--tooltip-color) transparent transparent transparent;
+    top: var(--tooltip-tail-offset);
+    left: 50%;
+    right: auto;
+    bottom: auto;
+  }
+
+  .tooltip-bottom-left::before {
+    transform: translateX(-80%);
+    top: var(--tooltip-offset);
+    top: auto;
+    left: 50%;
+    right: auto;
+    bottom: auto;
+  }
+
+  .tooltip-bottom-left::after {
+    transform: translateX(-50%);
+    border-color: var(--tooltip-color) transparent transparent transparent;
+    top: var(--tooltip-tail-offset);
+    left: 50%;
+    right: auto;
+    bottom: auto;
+  }
 }

@@ -42,7 +42,7 @@ export default function Page({
           </div>
           <PoolForm
             alloAddr={alloAddr}
-            token={token}
+            governanceToken={token}
             communityAddr={community as Address}
           />
         </section>
