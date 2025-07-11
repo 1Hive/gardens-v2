@@ -143,19 +143,21 @@ export const ProposalTimeline: FC<Props> = ({
                       }
                       className={`[&>svg]:!text-error-content [&:before]:ml-[-26px] ${isTimeout && defaultRuling === "approved" && "[&>svg]:opacity-50"}`}
                     >
-                      {!isTimeout && defaultRuling === "rejected" && (
-                        <div
-                          className="tooltip w-full"
-                          data-tip="Pool default ruling on abstain is to Reject"
+                      <div className="flex items-center gap-1">
+                        {!isTimeout && defaultRuling === "rejected" && (
+                          <div
+                            className="tooltip w-full"
+                            data-tip="Pool default ruling on abstain is to Reject"
+                          >
+                            <ClockIcon className="w-4 text-secondary-content" />
+                          </div>
+                        )}
+                        <span
+                          className={`${isTimeout && defaultRuling === "approved" && "opacity-50"}`}
                         >
-                          <ClockIcon className="w-4 text-secondary-content" />
-                        </div>
-                      )}
-                      <span
-                        className={`${isTimeout && defaultRuling === "approved" && "opacity-50"}`}
-                      >
-                        Rejected
-                      </span>
+                          Rejected
+                        </span>
+                      </div>
                     </InfoWrapper>
                   }
                 </div>
@@ -172,19 +174,21 @@ export const ProposalTimeline: FC<Props> = ({
                       }
                       className={`${isTimeout && defaultRuling === "rejected" && "[&>svg]:opacity-50 [&:before]:ml-[-38px]"}`}
                     >
-                      {!isTimeout && defaultRuling === "approved" && (
-                        <div
-                          className="tooltip w-full"
-                          data-tip="Pool default ruling on abstain is to Approve"
+                      <div className="flex items-center gap-1">
+                        {!isTimeout && defaultRuling === "approved" && (
+                          <div
+                            className="tooltip w-full"
+                            data-tip="Pool default ruling on abstain is to Approve"
+                          >
+                            <ClockIcon className="w-4 text-secondary-content" />
+                          </div>
+                        )}
+                        <span
+                          className={`${isTimeout && defaultRuling === "rejected" && "opacity-50"}`}
                         >
-                          <ClockIcon className="w-4 text-secondary-content" />
-                        </div>
-                      )}
-                      <span
-                        className={`${isTimeout && defaultRuling === "rejected" && "opacity-50"}`}
-                      >
-                        Approved
-                      </span>
+                          Approved
+                        </span>
+                      </div>
                     </InfoWrapper>
                   }
                 </div>
