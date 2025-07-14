@@ -208,7 +208,7 @@ export const chainConfigMap: {
       SUBGRAPH_PRODNET_VERSION,
     ),
     ...getSuperfluidSubgraphUrls(
-      "7hoLgMuj3LcWkUfH5iNWqVn69rmVbk4mrdgx1FX3sa3M",
+      "48YRvi7PHbX4RJChq4nF8DpmJGZxcvUgwfdf8QoHBXxT",
     ),
     globalTribunal: "0x1B8C7f06F537711A7CAf6770051A43B4F3E69A7e",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
