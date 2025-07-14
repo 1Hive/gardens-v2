@@ -24,7 +24,8 @@ export const usePoolToken = ({
     enabled: enabled && poolTokenAddr !== zeroAddress,
   });
 
-  return poolAmount && poolToken ?
+  return (
+    poolAmount && poolToken ?
       {
         address: poolTokenAddr as Address,
         symbol: poolToken.symbol,
@@ -32,5 +33,14 @@ export const usePoolToken = ({
         balance: poolAmount,
         formatted: (poolAmount / 10n ** BigInt(poolToken.decimals)).toString(),
       }
-    : undefined;
+    : !poolAmount && poolToken ?
+      {
+        address: poolTokenAddr as Address,
+        symbol: poolToken.symbol,
+        decimals: poolToken.decimals,
+        balance: 0n,
+        formatted: "0",
+      }
+    : undefined
+  );
 };

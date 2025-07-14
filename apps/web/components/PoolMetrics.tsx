@@ -105,7 +105,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     if (!accountAddress || !poolAddress) return;
     // Refetch superfluid stream when account address or pool address changes
     refetchSuperfluidStream();
-  }, [accountAddress, refetchSuperfluidStream]);
+  }, [accountAddress]);
 
   const currentFlowPerMonth =
     (Number(currentFlowRateBn) / 10 ** poolToken.decimals) * secondsToMonth;

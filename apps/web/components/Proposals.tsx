@@ -492,10 +492,6 @@ export function Proposals({
       ProposalStatus[x.proposalStatus] === "executed",
   );
 
-  const isEndedProposalActiveAllocation = endedProposals.some(
-    (x) => stakedFilters[x.id]?.value,
-  );
-
   const membersStrategies = membersStrategyData?.memberStrategies;
 
   // Render
@@ -586,7 +582,7 @@ export function Proposals({
                       tokenDecimals={tokenDecimals}
                       alloInfo={alloInfo}
                       inputHandler={inputHandler}
-                      tokenData={strategy.registryCommunity.garden}
+                      communityToken={strategy.registryCommunity.garden}
                       isPoolEnabled={strategy.isEnabled}
                     />
                   </Fragment>
@@ -617,7 +613,7 @@ export function Proposals({
                           tokenDecimals={tokenDecimals}
                           alloInfo={alloInfo}
                           inputHandler={inputHandler}
-                          tokenData={strategy.registryCommunity.garden}
+                          communityToken={strategy.registryCommunity.garden}
                           isPoolEnabled={strategy.isEnabled}
                         />
                       </Fragment>

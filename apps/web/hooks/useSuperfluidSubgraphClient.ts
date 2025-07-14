@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { createClient, fetchExchange, gql } from "urql";
+import { createClient, fetchExchange } from "urql";
 import { useChainFromPath } from "./useChainFromPath";
 import { chainConfigMap } from "@/configs/chains";
 import { ChainId } from "@/types";

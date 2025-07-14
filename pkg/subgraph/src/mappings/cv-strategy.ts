@@ -654,7 +654,7 @@ export function handleSuperfluidTokenUpdated(
   let config = CVStrategyConfig.load(`${event.address.toHex()}-config`);
 
   if (config == null) {
-    log.error("CVStrategy: handleAllowlistMembersAdded config not found: {}", [
+    log.error("CVStrategy: handleSuperfluidTokenUpdated config not found: {}", [
       `${event.address.toHex()}-config`
     ]);
     return;

@@ -57,7 +57,7 @@ export type ProposalCardProps = {
   tokenDecimals: number;
   alloInfo: Allo;
   isPoolEnabled: boolean;
-  tokenData: Parameters<typeof useConvictionRead>[0]["tokenData"];
+  communityToken: Parameters<typeof useConvictionRead>[0]["tokenData"];
   inputHandler: (proposalId: string, value: bigint) => void;
 };
 
@@ -71,7 +71,7 @@ export function ProposalCard({
   isAllocationView,
   memberActivatedPoints,
   memberPoolWeight,
-  tokenData,
+  communityToken: tokenData,
   inputHandler,
 }: ProposalCardProps) {
   const { data: metadataResult } = useMetadataIpfsFetch({
@@ -127,34 +127,32 @@ export function ProposalCard({
     (currentConvictionPct ?? 0) < (thresholdPct ?? 0) &&
     !alreadyExecuted;
 
-  const ProposalCountDown = () => {
-    return (
-      <>
-        <p className="text-neutral-soft-content text-xs sm:text-sm">
-          {(
-            Number(supportNeededToPass) > 0 &&
-            !alreadyExecuted &&
-            !readyToBeExecuted
-          ) ?
-            `At least ${supportNeededToPass}% needed`
-          : proposalWillPass ?
-            "Estimated time to pass:"
-          : !alreadyExecuted && readyToBeExecuted && !isSignalingType ?
-            "Ready to be executed"
-          : ""}
-        </p>
-        {proposalWillPass && !readyToBeExecuted && (
-          <Countdown
-            endTimestamp={Number(timeToPass)}
-            display="inline"
-            className="text-neutral-soft-content text-xs sm:text-sm"
-            onTimeout={triggerConvictionRefetch}
-            showTimeout={false}
-          />
-        )}
-      </>
-    );
-  };
+  const ProposalCountDown = (
+    <>
+      <p className="text-neutral-soft-content text-xs sm:text-sm">
+        {(
+          Number(supportNeededToPass) > 0 &&
+          !alreadyExecuted &&
+          !readyToBeExecuted
+        ) ?
+          `At least ${supportNeededToPass}% needed`
+        : proposalWillPass ?
+          "Estimated time to pass:"
+        : !alreadyExecuted && readyToBeExecuted && !isSignalingType ?
+          "Ready to be executed"
+        : ""}
+      </p>
+      {proposalWillPass && !readyToBeExecuted ?
+        <Countdown
+          endTimestamp={Number(timeToPass)}
+          display="inline"
+          className="text-neutral-soft-content text-xs sm:text-sm"
+          onTimeout={triggerConvictionRefetch}
+          showTimeout={false}
+        />
+      : "llll"}
+    </>
+  );
 
   const isProposalEnded =
     ProposalStatus[proposalStatus] === "cancelled" ||
@@ -309,7 +307,7 @@ export function ProposalCard({
                             <div className="w-1 h-1 rounded-full bg-neutral-soft-content" />
                           )}
 
-                          <ProposalCountDown />
+                          {ProposalCountDown}
                         </div>
                         <div className="h-3 flex items-center mb-2">
                           <ConvictionBarChart

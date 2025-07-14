@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Client, gql } from "urql";
 import { Address } from "viem";
-import { ChainId } from "@/types";
 import { useSuperfluidSugraphClient } from "./useSuperfluidSubgraphClient";
+import { ChainId } from "@/types";
 
 export const SUPER_TOKEN_QUERY = gql`
   query superToken($token: String!) {
