@@ -279,7 +279,7 @@ deploy-passport-scorer-arbsep:
 	--broadcast \
 	-vv
 
-deploy-safe-arbitrator-arbsep:
+deploy-or-upgrade-if-exists-safe-arbitrator-arbsep:
 	-forge script script/DeploySafeArbitrator.s.sol:DeploySafeArbitrator \
 	--rpc-url $(RPC_URL_ARB_TESTNET) \
 	--sig "run(string)" 'arbsepolia' \
@@ -390,7 +390,7 @@ deploy-passport-scorer-arbitrum:
 	--broadcast \
 	-vv
 
-deploy-safe-arbitrator-arbitrum:
+deploy-or-upgrade-if-exists-safe-arbitrator-arbitrum:
 	-forge script script/DeploySafeArbitrator.s.sol:DeploySafeArbitrator \
 	--rpc-url $(RPC_URL_ARB) \
 	--sig "run(string)" 'arbitrum' \
@@ -498,7 +498,7 @@ deploy-passport-scorer-optimism:
 	--broadcast \
 	-vv
 
-deploy-safe-arbitrator-optimism:
+deploy-or-upgrade-if-exists-safe-arbitrator-optimism:
 	-forge script script/DeploySafeArbitrator.s.sol:DeploySafeArbitrator \
 	--rpc-url $(RPC_URL_OPT) \
 	--sig "run(string)" 'optimism' \
@@ -604,7 +604,7 @@ deploy-passport-scorer-polygon:
 	--broadcast \
 	-vv
 
-deploy-safe-arbitrator-polygon:
+deploy-or-upgrade-if-exists-safe-arbitrator-polygon:
 	-forge script script/DeploySafeArbitrator.s.sol:DeploySafeArbitrator \
 	--rpc-url $(RPC_URL_POLYGON) \
 	--sig "run(string)" 'polygon' \
@@ -699,7 +699,7 @@ deploy-passport-scorer-gnosis:
 	--broadcast \
 	-vv
 
-deploy-safe-arbitrator-gnosis:
+deploy-or-upgrade-if-exists-safe-arbitrator-gnosis:
 	-forge script script/DeploySafeArbitrator.s.sol:DeploySafeArbitrator \
 	--rpc-url $(RPC_URL_GNOSIS) \
 	--sig "run(string)" 'gnosis' \
@@ -861,7 +861,7 @@ deploy-passport-scorer-base:
 	--broadcast \
 	-vv
 
-deploy-safe-arbitrator-base:
+deploy-or-upgrade-if-exists-safe-arbitrator-base:
 	-forge script script/DeploySafeArbitrator.s.sol:DeploySafeArbitrator \
 	--rpc-url $(RPC_URL_BASE) \
 	--sig "run(string)" 'base' \
@@ -1010,7 +1010,7 @@ verify-blockscout-passport-scorer-celo:
 	--verify \
 	-vv
 
-verify-blockscout-safe-arbitrator-celo:
+deploy-or-upgrade-if-exists-safe-arbitrator-celo:
 	-forge script script/DeploySafeArbitrator.s.sol:DeploySafeArbitrator \
 	--rpc-url $(RPC_URL_CELO) \
 	--sig "run(string)" 'celo' \
