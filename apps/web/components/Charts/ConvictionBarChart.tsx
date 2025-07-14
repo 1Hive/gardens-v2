@@ -212,7 +212,7 @@ export const ConvictionBarChart = ({
     label: {
       position: "start",
       formatter: "{@score} %",
-      fontSize: compact ? 10 : 16,
+      fontSize: compact ? 10 : 14,
     },
   };
 
@@ -278,7 +278,7 @@ export const ConvictionBarChart = ({
     grid: {
       show: false,
       left: "0%",
-      right: "0%",
+      right: "3%",
       top: compact ? "0%" : "25%",
       bottom: compact ? "0%" : "25%",
       containLabel: false,

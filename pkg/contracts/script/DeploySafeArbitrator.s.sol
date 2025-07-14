@@ -5,22 +5,29 @@ import "./BaseMultiChain.s.sol";
 import "forge-std/Script.sol";
 import {SafeArbitrator} from "../src/SafeArbitrator.sol";
 import {CVStrategyV0_0, ArbitrableConfig} from "../src/CVStrategy/CVStrategyV0_0.sol";
+import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 contract DeploySafeArbitrator is BaseMultiChain {
     using stdJson for string;
 
     function runCurrentNetwork(string memory networkJson) public override {
         address proxyOwner = networkJson.readAddress(getKeyNetwork(".ENVS.PROXY_OWNER"));
+        address safeArbitrator = networkJson.readAddress(getKeyNetwork(".ENVS.ARBITRATOR"));
         // address sender = networkJson.readAddress(getKeyNetwork(".ENVS.SENDER"));
+        address newImplementation = address(new SafeArbitrator());
 
-        address newSafeArbitrator = address(
-            new ERC1967Proxy(
-                address(new SafeArbitrator()),
-                abi.encodeWithSelector(SafeArbitrator.initialize.selector, 0.001 ether, address(proxyOwner))
-            )
-        );
-
-        console.log("New Safe Arbitrator: ", newSafeArbitrator);
+        if (safeArbitrator == address(0)) {
+            address newSafeArbitrator = address(
+                new ERC1967Proxy(
+                    newImplementation,
+                    abi.encodeWithSelector(SafeArbitrator.initialize.selector, 0.001 ether, address(proxyOwner))
+                )
+            );
+            console.log("New Safe Arbitrator: ", newSafeArbitrator);
+        } else {
+            SafeArbitrator(safeArbitrator).upgradeTo(newImplementation);
+            console.log("Safe Arbitrator upgraded: ", safeArbitrator);
+        }
 
         // CV STRATEGIES
         //  address[] memory cvStrategyProxies = networkJson.readAddressArray(getKeyNetwork(".PROXIES.CV_STRATEGIES"));

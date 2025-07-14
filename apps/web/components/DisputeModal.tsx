@@ -73,7 +73,7 @@ const ABSTAINED_RULING = 0;
 const APPROVED_RULING = 1;
 const REJECTED_RULING = 2;
 
-export const DisputeButton: FC<Props> = ({
+export const DisputeModal: FC<Props> = ({
   proposalData,
   isMemberCommunity,
 }) => {
@@ -234,7 +234,7 @@ export const DisputeButton: FC<Props> = ({
     functionName: "rule",
     abi: cvStrategyABI,
     address: proposalData.strategy.id as Address,
-    args: [BigInt(lastDispute?.disputeId ?? 0), BigInt(ABSTAINED_RULING)],
+    args: [BigInt(lastDispute?.disputeId), BigInt(ABSTAINED_RULING)],
     onSuccess: () => {
       setIsModalOpened(false);
     },
@@ -374,7 +374,6 @@ export const DisputeButton: FC<Props> = ({
                 <Button
                   color="secondary"
                   btnStyle="outline"
-                  className="w-10"
                   onClick={() => handleSubmitRuling(ABSTAINED_RULING)}
                   isLoading={rulingLoading === ABSTAINED_RULING}
                   disabled={

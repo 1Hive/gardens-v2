@@ -30,12 +30,6 @@ const DIVVI_PROVIDERS = process.env.NEXT_PUBLIC_DIVVI_PROVIDERS?.split(",") ?? [
   "0x5f0a55fad9424ac99429f635dfb9bf20c3360ab8",
 ];
 
-const DIVVI_TRACKED_STORAGE_KEY = "divvi_tracked";
-// Check if a user has already been tracked with Divvi
-const isUserTrackedWithDivvi = (): boolean => {
-  if (typeof window === "undefined") return false;
-  return localStorage.getItem(DIVVI_TRACKED_STORAGE_KEY) === "true";
-};
 
 /**
  * this hook is used to write to a contract and wait for confirmations.
@@ -69,8 +63,8 @@ export function useContractWriteWithConfirmations<
   );
 
   const shouldDivviTrack = useMemo(() => {
-    return !isUserTrackedWithDivvi() && resolvedChaindId === celo.id;
-  }, []);
+    return resolvedChaindId === celo.id;
+  }, [resolvedChaindId]);
 
   let propsWithChainId = {
     ...props,
@@ -148,10 +142,6 @@ export function useContractWriteWithConfirmations<
             txHash: hash,
             chainId: resolvedChaindId,
           }).then(() => {
-            // Mark user as tracked in localStorage
-            if (typeof window !== "undefined") {
-              localStorage.setItem(DIVVI_TRACKED_STORAGE_KEY, "true");
-            }
             console.info("Successfully tracked referral with Divvi:", hash);
           });
         } catch (error) {

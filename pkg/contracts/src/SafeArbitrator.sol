@@ -47,7 +47,7 @@ contract SafeArbitrator is IArbitrator, ProxyOwnableUpgrader, ReentrancyGuardUpg
     error DisputeAlreadySolved();
 
     modifier onlySafe(uint256 _disputeID) {
-        address tribunalSafe = disputes[_disputeID].tribunalSafe;
+        address tribunalSafe = disputes[_disputeID - 1].tribunalSafe;
         if (msg.sender == tribunalSafe) {
             _;
         } else {
@@ -118,7 +118,7 @@ contract SafeArbitrator is IArbitrator, ProxyOwnableUpgrader, ReentrancyGuardUpg
     /// @param _ruling Ruling given by the arbitrator. Note that 0 means that arbitrator chose "Refused to rule". 1 is allow and 2 is deny.
     /// @param _arbitrable Address of the arbitrable that the safe rules for".
     function executeRuling(uint256 _disputeID, uint256 _ruling, address _arbitrable) external onlySafe(_disputeID) {
-        DisputeStruct storage dispute = disputes[_disputeID];
+        DisputeStruct storage dispute = disputes[_disputeID - 1]; // Dispute IDs start from 1, but the array is 0-indexed.
 
         if (_ruling > dispute.choices) {
             revert InvalidRuling();

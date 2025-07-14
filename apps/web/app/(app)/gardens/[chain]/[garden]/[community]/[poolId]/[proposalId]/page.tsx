@@ -29,7 +29,7 @@ import {
 } from "@/components";
 import CancelButton from "@/components/CancelButton";
 import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
-import { DisputeButton } from "@/components/DisputeButton";
+import { DisputeModal } from "@/components/DisputeModal";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import MarkdownWrapper from "@/components/MarkdownWrapper";
 import { Skeleton } from "@/components/Skeleton";
@@ -499,14 +499,15 @@ export default function Page({
                 )}
               </div>
             </div>
-            <div className="flex items-end ">
-              {proposalStatus === "active" &&
-                proposalData.strategy.isEnabled && (
-                  <DisputeButton
-                    isMemberCommunity={isMemberCommunity}
-                    proposalData={{ ...proposalData, ...metadata }}
-                  />
-                )}
+            <div className="flex items-end">
+              {proposalStatus === "active" ||
+                (proposalStatus === "disputed" &&
+                  proposalData.strategy.isEnabled && (
+                    <DisputeModal
+                      isMemberCommunity={isMemberCommunity}
+                      proposalData={{ ...proposalData, ...metadata }}
+                    />
+                  ))}
             </div>
           </section>
 
