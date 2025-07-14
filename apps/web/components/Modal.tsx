@@ -10,6 +10,7 @@ interface ModalProps {
   isOpen: boolean;
   className?: string;
   size?: "extra-small" | "small" | "medium" | "large" | "extra-large";
+  footer?: ReactNode | null;
 }
 
 export function Modal({
@@ -20,6 +21,7 @@ export function Modal({
   isOpen,
   className = "",
   size = "medium",
+  footer = null,
 }: ModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
 
@@ -84,6 +86,11 @@ export function Modal({
         <div className={"p-8 overflow-auto overflow-x-hidden w-full"}>
           {children}
         </div>
+        {footer && (
+          <div className="modal-action flex justify-end p-4 mt-0 border-t border-t-[#80808021]">
+            {footer}
+          </div>
+        )}
       </div>
 
       <form method="dialog" className="modal-backdrop">

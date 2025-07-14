@@ -27,6 +27,7 @@ import { DateComponent } from "./DateComponent";
 import { EthAddress } from "./EthAddress";
 import { InfoBox } from "./InfoBox";
 import { InfoWrapper } from "./InfoWrapper";
+import MarkdownWrapper from "./MarkdownWrapper";
 import { Modal } from "./Modal";
 import { ProposalTimeline } from "./ProposalTimeline";
 import { WalletBalance } from "./WalletBalance";
@@ -234,7 +235,7 @@ export const DisputeModal: FC<Props> = ({
     functionName: "rule",
     abi: cvStrategyABI,
     address: proposalData.strategy.id as Address,
-    args: [BigInt(lastDispute?.disputeId), BigInt(ABSTAINED_RULING)],
+    args: [BigInt(lastDispute?.disputeId ?? 0), BigInt(ABSTAINED_RULING)],
     onSuccess: () => {
       setIsModalOpened(false);
     },
@@ -298,8 +299,9 @@ export const DisputeModal: FC<Props> = ({
 
   const content = (
     <div className="flex md:flex-col gap-10 flex-wrap overflow-x-hidden">
+      <ProposalTimeline proposalData={proposalData} disputes={disputes} />
       {proposalStatus !== "active" ?
-        <div className="p-16 rounded-lg">
+        <div className="p-8 pt-0 rounded-lg">
           {disputes.map((dispute) => (
             <Fragment key={dispute.id}>
               <DisputeMessage dispute={dispute} />
@@ -325,7 +327,6 @@ export const DisputeModal: FC<Props> = ({
           />
         </div>
       }
-      <ProposalTimeline proposalData={proposalData} disputes={disputes} />
     </div>
   );
 
@@ -342,7 +343,7 @@ export const DisputeModal: FC<Props> = ({
   );
 
   const buttons = (
-    <div className="modal-action w-full">
+    <div className="w-full">
       {isDisputed ?
         <>
           {DisputeStatus[+lastDispute.status] === "waiting" &&
@@ -503,9 +504,9 @@ export const DisputeModal: FC<Props> = ({
             onClose={() => setIsModalOpened(false)}
             isOpen={isModalOpened}
             size="extra-large"
+            footer={!isProposalEnded ? buttons : undefined}
           >
-            {content}
-            {!isProposalEnded && buttons}
+            <div className="">{content}</div>
           </Modal>
         </>
       )}
@@ -582,7 +583,11 @@ const DisputeMessage = ({
         )}
       </div>
       <div className="chat-bubble shadow-lg bg-neutral-200">
-        {dispute.metadata?.reason ?? disputeMetadata?.reason}
+        <MarkdownWrapper>
+          {dispute.metadata?.reason ??
+            disputeMetadata?.reason ??
+            "No reason provided."}
+        </MarkdownWrapper>
       </div>
     </div>
   );
