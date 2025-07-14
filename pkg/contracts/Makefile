@@ -447,7 +447,7 @@ upgrade-arbitrum:
 	--legacy \
 	--via-ir \
 	--verify \
-	--priority-gas-price 1 \
+	--base-fee 10158000 \
 	-vvv
 
 verify-blockscout-arbitrum: 
