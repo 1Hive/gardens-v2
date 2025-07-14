@@ -115,7 +115,7 @@ export const Countdown = ({
 
   return (
     <>
-      {(!!remainingTimeMs && (remainingTimeMs > 0 || showTimeout)) && (
+      {!!remainingTimeMs && (remainingTimeMs > 0 || showTimeout) && (
         <Skeleton isLoading={isInitializing} className="w-20">
           {remainingTimeMs === 0 ?
             <div>Timeout</div>

@@ -2,9 +2,12 @@
 
 import "viem/window";
 import React, { ReactNode, useEffect, useState } from "react";
+// eslint-disable-next-line import/no-extraneous-dependencies
+import sfMeta from "@superfluid-finance/metadata";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
-import { Address, parseUnits, zeroAddress } from "viem";
+import { Address, isAddress, parseUnits, zeroAddress } from "viem";
 import { polygon } from "viem/chains";
 import { useToken } from "wagmi";
 import { TokenGarden } from "#/subgraph/.graphclient";
@@ -16,6 +19,8 @@ import { FormPreview, FormRow } from "./FormPreview";
 import { FormRadioButton } from "./FormRadioButton";
 import { FormSelect } from "./FormSelect";
 import { EthAddress } from "../EthAddress";
+import { InfoWrapper } from "../InfoWrapper";
+import { SuperfluidStream } from "@/assets";
 import { Button } from "@/components/Button";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
@@ -27,6 +32,8 @@ import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useCheat } from "@/hooks/useCheat";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
+import { useSuperfluidToken } from "@/hooks/useSuperfluidToken";
+import { superTokenFactoryAbi } from "@/src/customAbis";
 import { registryCommunityABI } from "@/src/generated";
 import {
   DisputeOutcome,
@@ -79,7 +86,7 @@ type FormInputs = {
 type Props = {
   communityAddr: `0x${string}`;
   alloAddr: `0x${string}`;
-  token: Pick<TokenGarden, "decimals" | "id" | "symbol">;
+  governanceToken: Pick<TokenGarden, "decimals" | "id" | "symbol">;
 };
 
 const poolSettingValues: Record<
@@ -131,6 +138,7 @@ const proposalInputMap: Record<string, number[]> = {
   disputeCollateral: [0, 1],
   tribunalAddress: [0, 1],
   poolTokenAddress: [0, 1],
+  superfluidEnabled: [0, 1],
 };
 
 const fullSybilResistanceOptions: Record<SybilResistanceType, string> = {
@@ -183,7 +191,7 @@ const defaultEthChallengeColateral = 0.001;
 const defaultMaticProposalColateral = 10;
 const defaultMaticChallengeColateral = 5;
 
-export function PoolForm({ token, communityAddr }: Props) {
+export function PoolForm({ governanceToken, communityAddr }: Props) {
   const chain = useChainFromPath()!;
   const {
     register,
@@ -192,7 +200,6 @@ export function PoolForm({ token, communityAddr }: Props) {
     getValues,
     setValue,
     watch,
-    trigger,
   } = useForm<FormInputs>({
     mode: "onBlur",
     defaultValues: {
@@ -217,7 +224,26 @@ export function PoolForm({ token, communityAddr }: Props) {
   const sybilResistanceType = watch("sybilResistanceType");
   const sybilResistanceValue = watch("sybilResistanceValue");
   const tribunalAddress = watch("tribunalAddress");
-  const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** token.decimals;
+  const poolTokenAddress = watch("poolTokenAddress").toLowerCase() as Address;
+
+  const [createdSuperToken, setCreatedSuperToken] = useState<{
+    name: string;
+    symbol: string;
+    id: Address;
+  } | null>(null);
+
+  const { superToken, isFetching } = useSuperfluidToken({
+    token: poolTokenAddress,
+  });
+
+  const effectiveSuperToken = superToken ?? createdSuperToken;
+
+  const { data: customTokenData } = useToken({
+    address: poolTokenAddress,
+    enabled: !!poolTokenAddress && isAddress(poolTokenAddress),
+  });
+
+  const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** governanceToken.decimals;
   const INPUT_MIN_THRESHOLD_VALUE = 0;
 
   const [showPreview, setShowPreview] = useState<boolean>(false);
@@ -233,13 +259,6 @@ export function PoolForm({ token, communityAddr }: Props) {
   const pathname = usePathname();
   const { publish } = usePubSubContext();
   const { isConnected, missmatchUrl, tooltipMessage } = useDisableButtons();
-
-  const watchedAddress = watch("poolTokenAddress").toLowerCase() as Address;
-
-  const { data: customTokenData } = useToken({
-    address: watchedAddress ?? "0x",
-    chainId: +chain,
-  });
 
   const pointSystemType = watch("pointSystemType");
   const strategyType = watch("strategyType");
@@ -353,6 +372,10 @@ export function PoolForm({ token, communityAddr }: Props) {
         </div>
       ),
     },
+    superfluidEnabled: {
+      label: "Superfluid enabled",
+      parse: (value: boolean) => (value ? "✅" : "❌"),
+    },
   } as const;
 
   useEffect(() => {
@@ -402,7 +425,7 @@ export function PoolForm({ token, communityAddr }: Props) {
 
     const minThresholdPoints = parseUnits(
       (previewData?.minThresholdPoints ?? 0).toString(),
-      token.decimals,
+      governanceToken.decimals,
     );
 
     const maxAmountStr = (previewData?.maxAmount ?? 0).toString();
@@ -452,7 +475,9 @@ export function PoolForm({ token, communityAddr }: Props) {
             tribunalSafe: previewData.tribunalAddress as Address,
             arbitrator: chain.arbitrator as Address,
           },
-          pointConfig: { maxAmount: parseUnits(maxAmountStr, token.decimals) },
+          pointConfig: {
+            maxAmount: parseUnits(maxAmountStr, governanceToken.decimals),
+          },
           pointSystem: previewData.pointSystemType,
           proposalType: previewData.strategyType,
           registryCommunity: communityAddr,
@@ -472,6 +497,7 @@ export function PoolForm({ token, communityAddr }: Props) {
             ),
           ),
           initialAllowlist: allowList,
+          superfluidToken: effectiveSuperToken?.id ?? zeroAddress,
         },
         {
           protocol: 1n,
@@ -518,6 +544,30 @@ export function PoolForm({ token, communityAddr }: Props) {
       );
     },
   });
+
+  const networkSfMetadata =
+    chain.id ? sfMeta.getNetworkByChainId(chain.id) : undefined;
+
+  const { writeAsync: writeCreateSuperTokenAsync } =
+    useContractWriteWithConfirmations({
+      abi: superTokenFactoryAbi,
+      address: networkSfMetadata?.contractsV1.superTokenFactory as Address,
+      functionName: "createERC20Wrapper",
+      contractName: "SuperTokenFactory",
+      onConfirmations: async (receipt) => {
+        const newSuperToken = getEventFromReceipt(
+          receipt,
+          "SuperTokenFactory",
+          "SuperTokenCreated",
+        ).args;
+
+        setCreatedSuperToken({
+          name: "Super" + customTokenData?.name,
+          symbol: customTokenData?.symbol + "x",
+          id: newSuperToken.token,
+        });
+      },
+    });
 
   const handleOptionTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedOptionType = parseInt(e.target.value);
@@ -573,6 +623,7 @@ export function PoolForm({ token, communityAddr }: Props) {
       proposalCollateral: previewData.proposalCollateral,
       disputeCollateral: previewData.disputeCollateral,
       tribunalAddress: previewData.tribunalAddress,
+      superfluidEnabled: !!effectiveSuperToken,
     };
 
     Object.entries(reorderedData).forEach(([key, value]) => {
@@ -605,11 +656,16 @@ export function PoolForm({ token, communityAddr }: Props) {
     }
   };
 
-  useEffect(() => {
-    if (watchedAddress) {
-      trigger("poolTokenAddress");
-    }
-  }, [customTokenData, watchedAddress, trigger]);
+  const handleEnableStreaming = async () => {
+    writeCreateSuperTokenAsync({
+      args: [
+        poolTokenAddress,
+        1,
+        "Super" + customTokenData!.name,
+        customTokenData!.symbol + "x",
+      ],
+    });
+  };
 
   return (
     <form onSubmit={handleSubmit(handlePreview)} className="w-full">
@@ -657,26 +713,72 @@ export function PoolForm({ token, communityAddr }: Props) {
                 }))}
             />
             {PoolTypes[strategyType] === "funding" && (
-              <FormInput
-                label="Pool token ERC20 address"
-                register={register}
-                required
-                registerOptions={{
-                  pattern: {
-                    value: ethAddressRegEx,
-                    message: "Invalid Eth Address",
-                  },
-                  validate: () =>
-                    customTokenData?.symbol !== undefined ||
-                    "Not a supported ERC20 token",
-                }}
-                errors={errors}
-                registerKey="poolTokenAddress"
-                placeholder="0x.."
-                type="text"
-                className="pr-14 font-mono text-sm"
-                suffix={customTokenData?.symbol}
-              />
+              <div className="flex items-end gap-4 flex-wrap md:flex-nowrap">
+                <FormAddressInput
+                  label="Pool token ERC20 address"
+                  register={register}
+                  required
+                  registerOptions={{
+                    pattern: {
+                      value: ethAddressRegEx,
+                      message: "Invalid Eth Address",
+                    },
+                    validate: () =>
+                      customTokenData?.symbol !== undefined ||
+                      "Not a supported ERC20 token",
+                  }}
+                  errors={errors}
+                  registerKey="poolTokenAddress"
+                  placeholder="0x.."
+                  className="font-mono text-sm"
+                  suffix={customTokenData?.symbol}
+                />
+                {networkSfMetadata && poolTokenAddress && customTokenData && (
+                  <div className="mb-2">
+                    {isFetching ?
+                      <span className="loading loading-spinner loading-md" />
+                    : effectiveSuperToken ?
+                      <div className="flex gap-1">
+                        <InfoWrapper tooltip="This pool will support streaming through Superfluid — allowing continuous funding over time.">
+                          <div className="flex items-center">
+                            <Image
+                              src={SuperfluidStream}
+                              alt="Incoming Stream"
+                              width={36}
+                              height={36}
+                              className="mb-2"
+                            />
+                            Streaming enabled with{" "}
+                            <EthAddress
+                              address={effectiveSuperToken?.id as Address}
+                              shortenAddress={true}
+                              icon={false}
+                              actions="copy"
+                              label={effectiveSuperToken?.symbol}
+                            />
+                          </div>
+                        </InfoWrapper>
+                      </div>
+                    : <div className="flex gap-2 items-center">
+                        <input
+                          type="checkbox"
+                          id="enableStreaming"
+                          className="checkbox checkbox-success ml-2"
+                          onChange={handleEnableStreaming}
+                          disabled={
+                            !poolTokenAddress || !isAddress(poolTokenAddress)
+                          }
+                        />
+                        <InfoWrapper tooltip="Create a Superfluid wrapper to fund this pool through streaming.">
+                          <label htmlFor="enableStreaming">
+                            Enable superfluid
+                          </label>
+                        </InfoWrapper>
+                      </div>
+                    }
+                  </div>
+                )}
+              </div>
             )}
             <div>
               <label className="label w-fit">
@@ -993,7 +1095,7 @@ export function PoolForm({ token, communityAddr }: Props) {
               {shouldRenderInputMap("minThresholdPoints", strategyType) && (
                 <div className="flex flex-col">
                   <FormInput
-                    tooltip={`A fixed amount of ${token.symbol} that overrides Minimum Conviction when the Pool's activated governance is low.`}
+                    tooltip={`A fixed amount of ${governanceToken.symbol} that overrides Minimum Conviction when the Pool's activated governance is low.`}
                     label="Minimum threshold points"
                     register={register}
                     registerOptions={{

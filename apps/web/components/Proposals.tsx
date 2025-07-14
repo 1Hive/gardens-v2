@@ -4,8 +4,6 @@ import React, { Fragment, useEffect, useRef, useState } from "react";
 import {
   AdjustmentsHorizontalIcon,
   PlusIcon,
-  UserIcon,
-  PlusCircleIcon,
   UsersIcon,
 } from "@heroicons/react/24/outline";
 import Link from "next/link";
@@ -44,7 +42,7 @@ import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithC
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { alloABI, registryCommunityABI } from "@/src/generated";
-import { PoolTypes, ProposalStatus } from "@/types";
+import { ProposalStatus } from "@/types";
 import { useErrorDetails } from "@/utils/getErrorName";
 import { bigIntMin, calculatePercentageBigInt } from "@/utils/numbers";
 
@@ -288,6 +286,10 @@ export function Proposals({
   const disableManageSupportBtnCondition: ConditionObject[] = [
     {
       condition: !isMemberCommunity,
+      message: "You need to join the community first",
+    },
+    {
+      condition: !memberActivatedStrategy,
       message: "You need to activate your governance first",
     },
     {
@@ -490,10 +492,6 @@ export function Proposals({
       ProposalStatus[x.proposalStatus] === "executed",
   );
 
-  const isEndedProposalActiveAllocation = endedProposals.some(
-    (x) => stakedFilters[x.id]?.value,
-  );
-
   const membersStrategies = membersStrategyData?.memberStrategies;
 
   // Render
@@ -504,7 +502,7 @@ export function Proposals({
         <header
           className={`flex ${proposals.length === 0 ? "flex-col items-start justify-start" : "items-center justify-between"} gap-10 flex-wrap`}
         >
-          <h3 className=" text-left">Proposals</h3>
+          <h3 className="text-left w-52">Proposals</h3>
           {!!proposals &&
             strategy.isEnabled &&
             (proposals.length === 0 ?
@@ -584,7 +582,7 @@ export function Proposals({
                       tokenDecimals={tokenDecimals}
                       alloInfo={alloInfo}
                       inputHandler={inputHandler}
-                      tokenData={strategy.registryCommunity.garden}
+                      communityToken={strategy.registryCommunity.garden}
                       isPoolEnabled={strategy.isEnabled}
                     />
                   </Fragment>
@@ -593,12 +591,7 @@ export function Proposals({
                 <div className="collapse collapse-arrow">
                   <input type="checkbox" />
                   <div className="collapse-title text-lg font-medium">
-                    Click to show/hide ended proposals{" "}
-                    {allocationView && isEndedProposalActiveAllocation ?
-                      <span className="text-primary-content">
-                        (active allocation)
-                      </span>
-                    : ""}
+                    Click to show/hide ended proposals
                   </div>
                   <div className="collapse-content flex flex-col gap-6 px-0">
                     {endedProposals.map((proposalData) => (
@@ -620,7 +613,7 @@ export function Proposals({
                           tokenDecimals={tokenDecimals}
                           alloInfo={alloInfo}
                           inputHandler={inputHandler}
-                          tokenData={strategy.registryCommunity.garden}
+                          communityToken={strategy.registryCommunity.garden}
                           isPoolEnabled={strategy.isEnabled}
                         />
                       </Fragment>

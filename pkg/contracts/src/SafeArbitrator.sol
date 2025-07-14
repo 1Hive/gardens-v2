@@ -131,6 +131,7 @@ contract SafeArbitrator is IArbitrator, ProxyOwnableUpgrader, ReentrancyGuardUpg
 
         (bool success,) = payable(msg.sender).call{value: dispute.arbitrationFee}("");
         require(success, "Transfer failed");
+        // console.log("dispute.arbitrated: ", address(dispute.arbitrated));
         dispute.arbitrated.rule(_disputeID, dispute.ruling);
         emit Ruling(IArbitrable(_arbitrable), _disputeID, _ruling);
     }

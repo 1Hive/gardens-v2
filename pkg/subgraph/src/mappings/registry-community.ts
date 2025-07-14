@@ -33,7 +33,8 @@ import {
   CovenantIpfsHashUpdated,
   FeeReceiverChanged,
   KickEnabledUpdated,
-  PoolRejected
+  PoolRejected,
+  CommunityArchived
 } from "../../generated/templates/RegistryCommunityV0_0/RegistryCommunityV0_0";
 
 import { RegistryFactoryV0_0 as RegistryFactoryContract } from "../../generated/RegistryFactoryV0_0/RegistryFactoryV0_0";
@@ -44,6 +45,11 @@ import { ERC20 as ERC20Contract } from "../../generated/templates/RegistryCommun
 import { CTX_CHAIN_ID, CTX_FACTORY_ADDRESS } from "./registry-factory";
 
 const TOKEN_NATIVE = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
+const D = BigInt.fromI32(10000000);
+
+function getMaxConviction(staked: BigInt, _decay: BigInt): BigInt {
+  return staked.times(D).div(D.minus(_decay));
+}
 
 export function handleInitialized(event: RegistryInitialized): void {
   const communityAddr = event.address.toHexString();
@@ -104,6 +110,7 @@ export function handleInitialized(event: RegistryInitialized): void {
       tg.save();
     }
     newRC.garden = tg.id;
+    newRC.archived = false;
 
     newRC.save();
 
@@ -334,7 +341,10 @@ export function handleMemberActivatedStrategy(
   const cvc = CVStrategyContract.bind(strategyAddress);
   const totalEffectiveActivePoints = cvc.totalPointsActivated();
   strategy.totalEffectiveActivePoints = totalEffectiveActivePoints;
-  const maxCVSupply = cvc.getMaxConviction(totalEffectiveActivePoints);
+  const maxCVSupply = getMaxConviction(
+    totalEffectiveActivePoints,
+    cvc.cvParams().getDecay()
+  );
   strategy.maxCVSupply = maxCVSupply;
 
   let membersActive: string[] = [];
@@ -403,7 +413,10 @@ export function handleMemberDeactivatedStrategy(
   const cvc = CVStrategyContract.bind(strategyAddress);
   const totalEffectiveActivePoints = cvc.totalPointsActivated();
   strategy.totalEffectiveActivePoints = totalEffectiveActivePoints;
-  const maxCVSupply = cvc.getMaxConviction(totalEffectiveActivePoints);
+  const maxCVSupply = getMaxConviction(
+    totalEffectiveActivePoints,
+    cvc.cvParams().getDecay()
+  );
   strategy.maxCVSupply = maxCVSupply;
 
   const memberStrategyId = `${memberAddress.toHexString()}-${strategyAddress.toHexString()}`;
@@ -659,6 +672,23 @@ export function handlePoolRejected(event: PoolRejected): void {
   }
   strategy.archived = true;
   strategy.save();
+}
+
+export function handleCommunityArchived(event: CommunityArchived): void {
+  log.debug("RegistryCommunity: handleCommunityArchived: {}", [
+    event.address.toHexString()
+  ]);
+
+  const community = RegistryCommunity.load(event.address.toHexString());
+  if (community == null) {
+    log.error("RegistryCommunity: Community not found: {}", [
+      event.address.toHexString()
+    ]);
+    return;
+  }
+
+  community.archived = event.params._archived;
+  community.save();
 }
 
 // handler: handleMemberPowerDecreased

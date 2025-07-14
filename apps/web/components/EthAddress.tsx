@@ -66,7 +66,18 @@ export const EthAddress = ({
   });
 
   return address && chain?.id ?
-      <div ref={divParentRef}>
+      // eslint-disable-next-line jsx-a11y/click-events-have-key-events
+      <div
+        ref={divParentRef}
+        onClick={(e) => {
+          // check if ancestors has a form element
+          const formElement = divParentRef.current?.closest("form");
+          if (formElement) {
+            // Prevent Addreth click to propagate a form submit
+            e.preventDefault();
+          }
+        }}
+      >
         <Addreth
           
           // theme={theme}

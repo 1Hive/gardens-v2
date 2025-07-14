@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { ChevronUpIcon } from "@heroicons/react/24/outline";
 import { motion, AnimatePresence } from "motion/react";
-import { useSearchParams } from "next/navigation";
 import { useAccount } from "wagmi";
 import {
   CVStrategy,
@@ -100,22 +99,22 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
                       // onMouseLeave={() => setHoveredIndex(null)}
                     >
                       {/* <AnimatePresence>
-                        {hoveredIndex === index && (
-                          <motion.span
-                            className="absolute inset-0 h-full w-full bg-secondary-soft block rounded-2xl z-10"
-                            layoutId="hoverBackground"
-                            initial={{ opacity: 0 }}
-                            animate={{
-                              opacity: 1,
-                              transition: { duration: 0.15 },
-                            }}
-                            exit={{
-                              opacity: 0,
-                              transition: { duration: 0.15, delay: 0.2 },
-                            }}
-                          />
-                        )}
-                      </AnimatePresence> */}
+                          {hoveredIndex === index && (
+                            <motion.span
+                              className="absolute inset-0 h-full w-full bg-secondary-soft block rounded-2xl z-10"
+                              layoutId="hoverBackground"
+                              initial={{ opacity: 0 }}
+                              animate={{
+                                opacity: 1,
+                                transition: { duration: 0.15 },
+                              }}
+                              exit={{
+                                opacity: 0,
+                                transition: { duration: 0.15, delay: 0.2 },
+                              }}
+                            />
+                          )}
+                        </AnimatePresence> */}
 
                       <div className="relative z-20">
                         {isFetching ?
@@ -147,16 +146,9 @@ export const Communities: React.FC<CommunitiesProps> = ({
     [],
   );
   const [userCommunities, setUserCommunities] = useState<LightCommunity[]>([]);
-  const searchParams = useSearchParams();
-  const [searchFilter, setSearchFilter] = useState<string>(
-    searchParams.get("search") ?? "",
-  );
-  const [tokenFilter, setTokenFilter] = useState<string>(
-    searchParams.get("token") ?? "",
-  );
-  const [chainIdFilter, setchainIdFilter] = useState<string>(
-    searchParams.get("chainId") ?? "",
-  );
+  const [searchFilter, setSearchFilter] = useState<string>("");
+  const [tokenFilter, setTokenFilter] = useState<string>("");
+  const [chainIdFilter, setchainIdFilter] = useState<string>("");
   const showExcludedCommunities = useCheat("showExcludedCommunities");
 
   const availableTokens = Array.from(

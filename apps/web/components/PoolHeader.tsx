@@ -16,7 +16,7 @@ import {
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { Address, zeroAddress } from "viem";
-import { useAccount, useContractRead } from "wagmi";
+import { erc20ABI, useAccount, useContractRead } from "wagmi";
 import {
   ArbitrableConfig,
   getPassportStrategyDocument,
@@ -32,7 +32,7 @@ import MarkdownWrapper from "./MarkdownWrapper";
 import { Modal } from "./Modal";
 import { Skeleton } from "./Skeleton";
 import { Statistic } from "./Statistic";
-import { blueLand, grassLarge } from "@/assets";
+import { SuperfluidStream } from "@/assets";
 import { chainConfigMap } from "@/configs/chains";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { VOTING_POINT_SYSTEM_DESCRIPTION } from "@/globals";
@@ -49,6 +49,7 @@ import {
   ProposalStatus,
   SybilResistanceType,
 } from "@/types";
+import { delayAsync } from "@/utils/delayAsync";
 import {
   convertSecondsToReadableTime,
   CV_PASSPORT_THRESHOLD_SCALE,
@@ -122,6 +123,7 @@ export default function PoolHeader({
   const router = useRouter();
   const path = usePathname();
   const isArchived = strategy.archived;
+  const [superTokenCopied, setSuperTokenCopied] = useState(false);
 
   const { data: passportStrategyData } =
     useSubgraphQuery<getPassportStrategyQuery>({
@@ -207,6 +209,13 @@ export default function PoolHeader({
     sybilResistanceValue = allowList as Address[] | undefined;
   }
 
+  const { data: superTokenSymbol } = useContractRead({
+    address: strategy.config.superfluidToken as Address,
+    abi: erc20ABI,
+    functionName: "symbol",
+    enabled: !!strategy.config.superfluidToken,
+  });
+
   const poolConfig = [
     {
       label: "Spending limit",
@@ -251,30 +260,77 @@ export default function PoolHeader({
           : `Only users in the allowlist can interact with this pool: \n -${(sybilResistanceValue as Array<string>).map((x) => shortenAddress(x)).join("\n- ")}`
         : "",
     },
-  ];
+    {
+      label: "Token",
+      info: "The token used in this pool to fund proposals.",
+      value: (
+        <div className="flex items-center">
+          <EthAddress
+            address={poolToken?.address as Address}
+            shortenAddress={true}
+            icon={false}
+            actions="none"
+            label={poolToken?.symbol}
+          />
+          {strategy.config.superfluidToken && (
+            <div
+              className="tooltip"
+              data-tip={`This pool is superfluid enabled. \nYou can stream ${superTokenSymbol ?? poolToken?.symbol + "x"} tokens to this pool. Click to copy address.`}
+            >
+              <button
+                className="btn btn-ghost btn-xs p-0"
+                onClick={async () => {
+                  setSuperTokenCopied(true);
+                  navigator.clipboard.writeText(
+                    strategy.config.superfluidToken!,
+                  );
+                  await delayAsync(1000);
+                  setSuperTokenCopied(false);
+                }}
+              >
+                {superTokenCopied ?
+                  <div className="w-8 h-8 p-2">
+                    <CheckIcon className="w-4 h-4" />
+                  </div>
+                : <Image
+                    src={SuperfluidStream}
+                    alt="Incoming Stream"
+                    width={32}
+                    height={32}
+                  />
+                }
+              </button>
+            </div>
+          )}
+        </div>
+      ),
+    },
+  ] as const;
+
   const filteredPoolConfig =
     (
       PoolTypes[proposalType] === "signaling" &&
       PointSystems[pointSystem] !== "capped"
     ) ?
-      poolConfig.filter(
-        (config) =>
-          !!config.value &&
-          ![
-            "Spending limit",
-            "Min threshold",
-            "Min conviction",
-            "Max voting weight",
-          ].includes(config.label),
-      )
+      poolConfig.filter((config) => {
+        const filter: (typeof poolConfig)[number]["label"][] = [
+          "Spending limit",
+          "Min threshold",
+          "Min conviction",
+          "Max voting weight",
+          "Token",
+        ];
+        return !!config.value && !filter.includes(config.label);
+      })
     : PoolTypes[proposalType] === "signaling" ?
-      poolConfig.filter(
-        (config) =>
-          !!config.value &&
-          !["Spending limit", "Min threshold", "Min conviction"].includes(
-            config.label,
-          ),
-      )
+      poolConfig.filter((config) => {
+        const filteredLabels: (typeof poolConfig)[number]["label"][] = [
+          "Spending limit",
+          "Min threshold",
+          "Min conviction",
+        ];
+        return !!config.value && !filteredLabels.includes(config.label);
+      })
     : PointSystems[pointSystem] === "capped" ? poolConfig
     : poolConfig.filter((config) => config.label !== "Max voting weight");
 
@@ -408,7 +464,7 @@ export default function PoolHeader({
                     tooltip={
                       tooltipMessage ?? "Restore the pool will also enable it."
                     }
-                    showToolTip={true}
+                    forceShowTooltip={true}
                     onClick={() => addStrategyByPoolId()}
                   >
                     Restore
@@ -426,7 +482,7 @@ export default function PoolHeader({
                         tooltipMessage ??
                         "Disable pool will pause all interactions with this pool. It is possible to enable it back."
                       }
-                      showToolTip={true}
+                      forceShowTooltip={true}
                       onClick={() => removeStrategyByPoolId()}
                       btnStyle="outline"
                       color="secondary"
@@ -444,7 +500,7 @@ export default function PoolHeader({
                         tooltipMessage ??
                         "Archive pool will remove it from the list of pools. Need to contact the Gardens team to restore it."
                       }
-                      showToolTip={true}
+                      forceShowTooltip={true}
                       onClick={() => rejectPoolWrite()}
                       btnStyle="outline"
                       color="danger"
@@ -461,7 +517,7 @@ export default function PoolHeader({
                         disableCouncilSafeButtons
                       }
                       tooltip={tooltipMessage ?? "Approve pool to enable it."}
-                      showToolTip={true}
+                      forceShowTooltip={true}
                       onClick={() => addStrategyByPoolId()}
                     >
                       Approve
@@ -477,7 +533,7 @@ export default function PoolHeader({
                         tooltipMessage ??
                         "Reject pool will remove it from the list. \nNeed to contact the Gardens team to\n restore it."
                       }
-                      showToolTip={true}
+                      forceShowTooltip={true}
                       onClick={() => rejectPoolWrite()}
                       btnStyle="outline"
                       color="danger"

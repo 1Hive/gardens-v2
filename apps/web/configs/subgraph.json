@@ -1,4 +1,5 @@
 {
-  "VERSION_TESTNET": "0.5.4",
-  "VERSION_PROD": "0.1.16"
+  "VERSION_ARBSEP": "0.5.4",
+  "VERSION_OPSEP": "0.5.5",
+  "VERSION_PROD": "0.1.17"
 }
