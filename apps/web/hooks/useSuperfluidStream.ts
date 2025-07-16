@@ -33,7 +33,7 @@ export function useSuperfluidStream({
     null,
   );
   const [currentUserFlowRateBn, setCurrentUserFlowRateBn] = useState<
-    number | null
+    bigint | null
   >(null);
   const fetch = async () => {
     const result = await client?.query(STREAM_TO_TARGET_QUERY, {
@@ -55,11 +55,11 @@ export function useSuperfluidStream({
 
       setCurrentUserFlowRateBn(
         address ?
-          Number(
+          BigInt(
             result.data.streams.find(
               (flow: { sender: { id: string } }) =>
                 flow.sender.id.toLowerCase() === address.toLowerCase(),
-            )?.currentFlowRate,
+            )?.currentFlowRate ?? "0",
           ) || null
         : null,
       );

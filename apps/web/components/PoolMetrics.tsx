@@ -134,8 +134,10 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     contractName: "SuperFluid Constant Flow Agreement",
     // showNotification: isSuperTokenBalanceSufficient,
     onConfirmations: () => {
-      setCurrentFlowRateBn((old) => (old ?? 0n) + requestedAmountBn);
-      setCurrentUserFlowRateBn(amount);
+      setCurrentFlowRateBn(
+        (old) => (old ?? 0n) + streamRequestedAmountPerSecBn,
+      );
+      setCurrentUserFlowRateBn(streamRequestedAmountPerSecBn);
     },
     args: [
       config.superfluidToken as Address,
@@ -161,13 +163,10 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
       setCurrentFlowRateBn(
         (old) =>
           (old ?? 0n) +
-          BigInt(
-            (
-              (currentUserFlowRateBn ?? 0) - streamRequestedAmountPerSec
-            ).toFixed(0),
-          ),
+          streamRequestedAmountPerSecBn -
+          (currentUserFlowRateBn ?? 0n),
       );
-      setCurrentUserFlowRateBn(streamRequestedAmountPerSec);
+      setCurrentUserFlowRateBn(streamRequestedAmountPerSecBn);
     },
     args: [
       config.superfluidToken as Address,
@@ -193,8 +192,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
       ],
       onConfirmations: () => {
         setCurrentFlowRateBn(
-          (old) =>
-            (old ?? 0n) - BigInt((currentUserFlowRateBn ?? 0).toFixed(0)),
+          (old) => (old ?? 0n) - (currentUserFlowRateBn ?? 0n),
         );
         setCurrentUserFlowRateBn(null);
       },
@@ -432,7 +430,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                   {isStopStreamLoading ?
                     <div className="loading loading-spinner text-error-content" />
                   : <div
-                      className="tooltip"
+                      className="tooltip tooltip-top-left"
                       data-tip="Stop streaming to this pool"
                     >
                       <TrashIcon
