@@ -55,7 +55,6 @@ type CVProposal @entity(immutable: false) {
   proposalStatus: BigInt!
   blockLast: BigInt!
   convictionLast: BigInt!
-  threshold: BigInt!
   maxCVStaked: BigInt!
   # proposalType: BigInt!
   stakedAmount: BigInt!

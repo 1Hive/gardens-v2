@@ -30,7 +30,7 @@
     "deploy:gnosis": "pnpm manifest:gnosis && graph deploy --studio gardens-v2---gnosis",
     "deploy:base": "pnpm manifest:base && graph deploy --studio gardens-v2---base",
     "deploy:celo": "pnpm manifest:celo && graph deploy --studio gardens-v2---celo",
-    "deploy:prod": "export SUB_PROD_VERSION=0.1.17 && pnpm deploy:arbitrum -l $SUB_PROD_VERSION && pnpm deploy:optimism -l $SUB_PROD_VERSION && pnpm deploy:matic -l $SUB_PROD_VERSION && pnpm deploy:gnosis -l $SUB_PROD_VERSION && pnpm deploy:base -l $SUB_PROD_VERSION && pnpm deploy:celo -l $SUB_PROD_VERSION",
+    "deploy:prod": "pnpm auth:prod && export SUB_PROD_VERSION=0.1.22 && pnpm deploy:celo -l $SUB_PROD_VERSION",
     "build-deploy:arbsep": "pnpm build:arbsep && pnpm deploy:arbsep:last",
     "build-deploy:ethsep": "pnpm build:ethsep && pnpm deploy:ethsep:last",
     "local": "pnpm create-local && pnpm build && pnpm deploy:local",
