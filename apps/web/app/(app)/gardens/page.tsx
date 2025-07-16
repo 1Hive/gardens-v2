@@ -12,6 +12,7 @@ import {
 import { clouds1, clouds2, grassLarge, tree2, tree3 } from "@/assets";
 import { Button, Communities } from "@/components";
 import { LightCommunity } from "@/components/Communities";
+import { useCheat } from "@/hooks/useCheat";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQueryMultiChain } from "@/hooks/useSubgraphQueryMultiChain";
 import { getProtopiansOwners } from "@/services/alchemy";
@@ -98,6 +99,8 @@ export default function GardensPage() {
     undefined,
   );
 
+  const showArchived = useCheat("showArchived");
+
   useEffect(() => {
     getProtopiansOwners()
       .then((owners) => {
@@ -123,7 +126,7 @@ export default function GardensPage() {
                   chain: section.chain,
                 })) || [],
             )
-            .filter((x) => !x.archived)
+            .filter((x) => !x.archived || showArchived)
             .map(async (x) => {
               if (protopianOwners?.length && x.chain.safePrefix) {
                 // Council Safe supported
