@@ -567,13 +567,6 @@ export function handleDisputeRuled(event: Ruling): void {
     defaultStatus
   );
 
-  if (proposal.proposalStatus) {
-    log.error(
-      "CvStrategy: handleDisputeRuled: not able to determine proposal {} status",
-      [proposal.proposalNumber.toString()]
-    );
-  }
-
   proposal.save();
 }
 
