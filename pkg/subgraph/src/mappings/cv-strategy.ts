@@ -91,11 +91,12 @@ export function handleProposalCreated(event: ProposalCreated): void {
     cvsId
   ]);
 
-  let p = cvc.try_getProposal(event.params.proposalId);
+  let p = cvc.try_proposals(event.params.proposalId);
   if (p.reverted) {
-    log.error("CvStrategy: handleProposalCreated proposal reverted:{}", [
-      proposalIdString
-    ]);
+    log.error(
+      "CvStrategy: handleProposalCreated proposal reverted:{} (block:{})",
+      [proposalIdString, event.block.number.toString()]
+    );
     return;
   }
   let proposal = p.value;
@@ -118,7 +119,6 @@ export function handleProposalCreated(event: ProposalCreated): void {
 
   newProposal.blockLast = proposal.getBlockLast();
   newProposal.convictionLast = proposal.getConvictionLast();
-  newProposal.threshold = proposal.getThreshold();
   newProposal.stakedAmount = proposal.getStakedAmount();
 
   newProposal.requestedAmount = proposal.getRequestedAmount();
@@ -252,9 +252,7 @@ export function handlePointsDeactivated(event: PointsDeactivated): void {
               proposal.stakedAmount = proposal.stakedAmount.minus(stakedAmount);
               const cvc = CVStrategyContract.bind(event.address);
 
-              let contractProposal = cvc.try_getProposal(
-                proposal.proposalNumber
-              );
+              let contractProposal = cvc.try_proposals(proposal.proposalNumber);
               if (contractProposal.reverted) {
                 log.error(
                   "handlePointsDeactivated contractProposal reverted:{}",
@@ -495,7 +493,10 @@ export function handleProposalDisputed(event: ProposalDisputed): void {
   // Change proposal status to disputed
   let proposal = CVProposal.load(proposalId);
   if (proposal == null) {
-    log.error("CvStrategy: Proposal not found with: {}", [proposalId]);
+    log.error("CvStrategy: Proposal not found with: {} (block:)", [
+      proposalId,
+      event.block.number.toString()
+    ]);
     return;
   }
 
@@ -531,7 +532,10 @@ export function handleDisputeRuled(event: Ruling): void {
 
   let proposal = CVProposal.load(dispute.proposal);
   if (proposal == null) {
-    log.error("CvStrategy: Proposal not found with: {}", [dispute.proposal]);
+    log.error("CvStrategy: Proposal not found with: {} (block: {})", [
+      dispute.proposal,
+      event.block.number.toString()
+    ]);
     return;
   }
 
@@ -581,7 +585,10 @@ export function handleProposalCancelled(event: ProposalCancelled): void {
     event.address.toHexString() + "-" + event.params.proposalId.toString();
   let proposal = CVProposal.load(proposalId);
   if (proposal == null) {
-    log.error("CvStrategy: Proposal not found with: {}", [proposalId]);
+    log.error("CvStrategy: Proposal not found with: {} (block: {})", [
+      proposalId,
+      event.block.number.toString()
+    ]);
     return;
   }
 
@@ -604,9 +611,10 @@ export function handleAllowlistMembersAdded(
   let config = CVStrategyConfig.load(`${event.address.toHex()}-config`);
 
   if (config == null) {
-    log.error("CVStrategy: handleAllowlistMembersAdded config not found: {}", [
-      `${event.address.toHex()}-config`
-    ]);
+    log.error(
+      "CVStrategy: handleAllowlistMembersAdded config not found: {} (block: {})",
+      [`${event.address.toHex()}-config`, event.block.number.toString()]
+    );
     return;
   }
 
@@ -638,9 +646,10 @@ export function handleAllowlistMembersRemoved(
 export function handleSybilScorerUpdated(event: SybilScorerUpdated): void {
   let cvs = CVStrategy.load(event.address.toHexString());
   if (cvs == null) {
-    log.error("CVStrategy: handleSybilScorerUpdated cvs not found: {}", [
-      event.address.toHexString()
-    ]);
+    log.error(
+      "CVStrategy: handleSybilScorerUpdated cvs not found: {} (block: {})",
+      [event.address.toHexString(), event.block.number.toString()]
+    );
     return;
   }
 
@@ -654,9 +663,10 @@ export function handleSuperfluidTokenUpdated(
   let config = CVStrategyConfig.load(`${event.address.toHex()}-config`);
 
   if (config == null) {
-    log.error("CVStrategy: handleSuperfluidTokenUpdated config not found: {}", [
-      `${event.address.toHex()}-config`
-    ]);
+    log.error(
+      "CVStrategy: handleSuperfluidTokenUpdated config not found: {} (block: {})",
+      [`${event.address.toHex()}-config`, event.block.number.toString()]
+    );
     return;
   }
   const token = event.params.superfluidToken;
@@ -780,7 +790,7 @@ function getProposalStatus(
   defaultStatus: BigInt
 ): BigInt {
   const cvc = CVStrategyContract.bind(contractAddress);
-  const proposal = cvc.try_getProposal(proposalId);
+  const proposal = cvc.try_proposals(proposalId);
   if (proposal.reverted) {
     log.warning("CVStrategy: proposal not found: {}-{}", [
       contractAddress.toHexString(),
