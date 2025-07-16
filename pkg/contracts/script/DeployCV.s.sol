@@ -33,7 +33,7 @@ import {
     ProposalType,
     CreateProposal
 } from "../src/CVStrategy/CVStrategyV0_0.sol";
-import {CVStrategyInitializeParamsV0_1} from "../src/CVStrategy/CVStrategyV0_0.sol";
+import {CVStrategyInitializeParamsV0_2} from "../src/CVStrategy/CVStrategyV0_0.sol";
 import {Upgrades} from "@openzeppelin/foundry/LegacyUpgrades.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
@@ -120,7 +120,7 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         RegistryCommunityV0_0 registryCommunity = RegistryCommunityV0_0(registryFactory.createRegistry(params));
         token.mint(address(pool_admin()), 10_000 ether);
 
-        CVStrategyInitializeParamsV0_1 memory paramsCV;
+        CVStrategyInitializeParamsV0_2 memory paramsCV;
 
         // CVParams
         paramsCV.cvParams.decay = _etherToFloat(0.9999799 ether); // alpha = decay
@@ -235,8 +235,8 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         vm.startBroadcast(pool_admin());
 
         token.approve(address(allo), type(uint256).max);
-        allo.fundPool(poolId, 3_000 ether); // ether
-        allo.fundPool(poolIdFixed, 1_000 ether); // ether
+        // allo.fundPool(poolId, 3_000 ether); // ether
+        // allo.fundPool(poolIdFixed, 1_000 ether); // ether
 
         // CreateProposal memory proposal =
         //     CreateProposal(poolId, membersStaked[0], 50 ether, address(token), metadata);
@@ -428,8 +428,8 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         vm.startBroadcast(pool_admin());
 
         token.approve(address(allo), type(uint256).max);
-        allo.fundPool(poolId, 3_000 ether); // ether
-        allo.fundPool(poolIdFixed, 1_000 ether); // ether
+        // allo.fundPool(poolId, 3_000 ether); // ether
+        // allo.fundPool(poolIdFixed, 1_000 ether); // ether
 
         CreateProposal memory proposal = CreateProposal(poolId, membersStaked[0], 50 ether, address(token), metadata);
         bytes memory data = abi.encode(proposal);

@@ -20,7 +20,6 @@ import {
   InitializedCV2,
   ProposalCreated,
   CVStrategyV0_0 as CVStrategyContract,
-  PoolAmountIncreased,
   SupportAdded,
   PowerIncreased,
   PowerDecreased,
@@ -33,7 +32,10 @@ import {
   AllowlistMembersAdded,
   AllowlistMembersRemoved,
   InitializedCV2DataStruct,
-  SybilScorerUpdated
+  SybilScorerUpdated,
+  InitializedCV3,
+  InitializedCV3DataStruct,
+  SuperfluidTokenUpdated
 } from "../../generated/templates/CVStrategyV0_0/CVStrategyV0_0";
 
 import { Allo as AlloContract } from "../../generated/templates/CVStrategyV0_0/Allo";
@@ -52,14 +54,29 @@ const PROPOSAL_STATUS_REJECTED = BigInt.fromI32(6);
 const DISPUTE_STATUS_WAITING = BigInt.fromI32(0);
 const DISPUTE_STATUS_SOLVED = BigInt.fromI32(1);
 
+// 10**7
+const D = BigInt.fromI32(10000000);
+
+function getMaxConviction(staked: BigInt, _decay: BigInt): BigInt {
+  return staked.times(D).div(D.minus(_decay));
+}
+
 export function handleInitialized(event: InitializedCV): void {
   // @ts-ignore
-  const data2 = changetype<InitializedCV2DataStruct>(event.params.data);
-  data2[8] = ethereum.Value.fromAddressArray([Address.zero()]); // Initialize allowlist to everyone allowed
-  computeInitialize(event.address, event.params.poolId, data2);
+  const data3 = changetype<InitializedCV3DataStruct>(event.params.data);
+  data3[8] = ethereum.Value.fromAddressArray([Address.zero()]); // Initialize allowlist to everyone allowed
+  data3[9] = ethereum.Value.fromAddress(Address.zero()); // Initialize allowlist to everyone allowed
+  computeInitialize(event.address, event.params.poolId, data3);
 }
 
 export function handleInitializedV2(event: InitializedCV2): void {
+  // @ts-ignore
+  const data3 = changetype<InitializedCV3DataStruct>(event.params.data);
+  data3[9] = ethereum.Value.fromAddress(Address.zero()); // Initialize allowlist to everyone allowed
+  computeInitialize(event.address, event.params.poolId, data3);
+}
+
+export function handleInitializedV3(event: InitializedCV3): void {
   computeInitialize(event.address, event.params.poolId, event.params.data);
 }
 
@@ -74,11 +91,12 @@ export function handleProposalCreated(event: ProposalCreated): void {
     cvsId
   ]);
 
-  let p = cvc.try_getProposal(event.params.proposalId);
+  let p = cvc.try_proposals(event.params.proposalId);
   if (p.reverted) {
-    log.error("CvStrategy: handleProposalCreated proposal reverted:{}", [
-      proposalIdString
-    ]);
+    log.error(
+      "CvStrategy: handleProposalCreated proposal reverted:{} (block:{})",
+      [proposalIdString, event.block.number.toString()]
+    );
     return;
   }
   let proposal = p.value;
@@ -86,7 +104,10 @@ export function handleProposalCreated(event: ProposalCreated): void {
   const proposalStakedAmount = cvc
     .proposals(event.params.proposalId)
     .getStakedAmount();
-  const maxConviction = cvc.getMaxConviction(proposalStakedAmount);
+  const maxConviction = getMaxConviction(
+    proposalStakedAmount,
+    cvc.cvParams().getDecay()
+  );
 
   let newProposal = new CVProposal(proposalIdString);
   newProposal.strategy = cvsId;
@@ -98,7 +119,6 @@ export function handleProposalCreated(event: ProposalCreated): void {
 
   newProposal.blockLast = proposal.getBlockLast();
   newProposal.convictionLast = proposal.getConvictionLast();
-  newProposal.threshold = proposal.getThreshold();
   newProposal.stakedAmount = proposal.getStakedAmount();
 
   newProposal.requestedAmount = proposal.getRequestedAmount();
@@ -135,24 +155,6 @@ export function handleProposalCreated(event: ProposalCreated): void {
   // }
 
   newProposal.save();
-}
-// handlePoolAmountIncreased
-export function handlePoolAmountIncreased(event: PoolAmountIncreased): void {
-  log.debug("CVStrategy: handlePoolAmountIncreased: amount: {}", [
-    event.params.amount.toString()
-  ]);
-  let cvs = CVStrategy.load(event.address.toHexString());
-  if (cvs == null) {
-    log.debug("CVStrategy: handlePoolAmountIncreased cvs not found: {}", [
-      event.address.toHexString()
-    ]);
-    return;
-  }
-
-  cvs.poolAmount = cvs.poolAmount
-    ? cvs.poolAmount.plus(event.params.amount)
-    : event.params.amount;
-  cvs.save();
 }
 
 export function handleSupportAdded(event: SupportAdded): void {
@@ -216,7 +218,11 @@ export function handleSupportAdded(event: SupportAdded): void {
   const proposalStakedAmount = cvc
     .proposals(event.params.proposalId)
     .getStakedAmount();
-  const maxConviction = cvc.getMaxConviction(proposalStakedAmount);
+
+  const maxConviction = getMaxConviction(
+    proposalStakedAmount,
+    cvc.cvParams().getDecay()
+  );
 
   memberStrategy.save();
   cvp.maxCVStaked = maxConviction;
@@ -246,9 +252,7 @@ export function handlePointsDeactivated(event: PointsDeactivated): void {
               proposal.stakedAmount = proposal.stakedAmount.minus(stakedAmount);
               const cvc = CVStrategyContract.bind(event.address);
 
-              let contractProposal = cvc.try_getProposal(
-                proposal.proposalNumber
-              );
+              let contractProposal = cvc.try_proposals(proposal.proposalNumber);
               if (contractProposal.reverted) {
                 log.error(
                   "handlePointsDeactivated contractProposal reverted:{}",
@@ -257,8 +261,9 @@ export function handlePointsDeactivated(event: PointsDeactivated): void {
                 return;
               }
               let prop = contractProposal.value;
-              const maxConviction = cvc.getMaxConviction(
-                prop.getStakedAmount()
+              const maxConviction = getMaxConviction(
+                prop.getStakedAmount(),
+                cvc.cvParams().getDecay()
               );
               proposal.maxCVStaked = maxConviction;
               proposal.convictionLast = prop.getConvictionLast();
@@ -317,16 +322,6 @@ export function handleDistributed(event: Distributed): void {
     return;
   }
 
-  let cvs = CVStrategy.load(cvp.strategy);
-  if (cvs == null) {
-    log.debug("CVStrategy: handleDistributed cvs not found: {}", [
-      cvp.strategy.toString()
-    ]);
-    return;
-  }
-
-  const cvc = CVStrategyContract.bind(event.address);
-
   const proposalStatus = getProposalStatus(
     event.address,
     event.params.proposalId,
@@ -334,11 +329,7 @@ export function handleDistributed(event: Distributed): void {
   );
 
   cvp.proposalStatus = proposalStatus;
-
   cvp.save();
-
-  cvs.poolAmount = cvc.getPoolAmount();
-  cvs.save();
 }
 
 export function handlePowerIncreased(event: PowerIncreased): void {
@@ -353,7 +344,10 @@ export function handlePowerIncreased(event: PowerIncreased): void {
   const cvc = CVStrategyContract.bind(event.address);
   const totalEffectiveActivePoints = cvc.totalPointsActivated();
   cvs.totalEffectiveActivePoints = totalEffectiveActivePoints;
-  cvs.maxCVSupply = cvc.getMaxConviction(totalEffectiveActivePoints);
+  cvs.maxCVSupply = getMaxConviction(
+    totalEffectiveActivePoints,
+    cvc.cvParams().getDecay()
+  );
 
   cvs.save();
 
@@ -386,7 +380,10 @@ export function handlePowerDecreased(event: PowerDecreased): void {
   const cvc = CVStrategyContract.bind(event.address);
   const totalEffectiveActivePoints = cvc.totalPointsActivated();
   cvs.totalEffectiveActivePoints = totalEffectiveActivePoints;
-  cvs.maxCVSupply = cvc.getMaxConviction(totalEffectiveActivePoints);
+  cvs.maxCVSupply = getMaxConviction(
+    totalEffectiveActivePoints,
+    cvc.cvParams().getDecay()
+  );
 
   cvs.save();
 
@@ -419,7 +416,10 @@ export function handleCVParamsUpdated(event: CVParamsUpdated): void {
 
   const cvc = CVStrategyContract.bind(event.address);
   cvs.totalEffectiveActivePoints = cvc.totalPointsActivated();
-  cvs.maxCVSupply = cvc.getMaxConviction(cvs.totalEffectiveActivePoints);
+  cvs.maxCVSupply = getMaxConviction(
+    cvs.totalEffectiveActivePoints,
+    cvc.cvParams().getDecay()
+  );
   cvs.save();
 
   let config = CVStrategyConfig.load(cvs.config);
@@ -493,7 +493,10 @@ export function handleProposalDisputed(event: ProposalDisputed): void {
   // Change proposal status to disputed
   let proposal = CVProposal.load(proposalId);
   if (proposal == null) {
-    log.error("CvStrategy: Proposal not found with: {}", [proposalId]);
+    log.error("CvStrategy: Proposal not found with: {} (block:)", [
+      proposalId,
+      event.block.number.toString()
+    ]);
     return;
   }
 
@@ -529,7 +532,10 @@ export function handleDisputeRuled(event: Ruling): void {
 
   let proposal = CVProposal.load(dispute.proposal);
   if (proposal == null) {
-    log.error("CvStrategy: Proposal not found with: {}", [dispute.proposal]);
+    log.error("CvStrategy: Proposal not found with: {} (block: {})", [
+      dispute.proposal,
+      event.block.number.toString()
+    ]);
     return;
   }
 
@@ -561,13 +567,6 @@ export function handleDisputeRuled(event: Ruling): void {
     defaultStatus
   );
 
-  if (proposal.proposalStatus) {
-    log.error(
-      "CvStrategy: handleDisputeRuled: not able to determine proposal {} status",
-      [proposal.proposalNumber.toString()]
-    );
-  }
-
   proposal.save();
 }
 
@@ -579,7 +578,10 @@ export function handleProposalCancelled(event: ProposalCancelled): void {
     event.address.toHexString() + "-" + event.params.proposalId.toString();
   let proposal = CVProposal.load(proposalId);
   if (proposal == null) {
-    log.error("CvStrategy: Proposal not found with: {}", [proposalId]);
+    log.error("CvStrategy: Proposal not found with: {} (block: {})", [
+      proposalId,
+      event.block.number.toString()
+    ]);
     return;
   }
 
@@ -599,14 +601,13 @@ export function handleAllowlistMembersAdded(
     return;
   }
 
-  let config = CVStrategyConfig.load(
-    `${event.address.toHex()}-${event.params.poolId.toString()}-config`
-  );
+  let config = CVStrategyConfig.load(`${event.address.toHex()}-config`);
 
   if (config == null) {
-    log.error("CVStrategy: handleAllowlistMembersAdded config not found: {}", [
-      `${event.address.toHex()}-${event.params.poolId.toString()}-config`
-    ]);
+    log.error(
+      "CVStrategy: handleAllowlistMembersAdded config not found: {} (block: {})",
+      [`${event.address.toHex()}-config`, event.block.number.toString()]
+    );
     return;
   }
 
@@ -621,14 +622,12 @@ export function handleAllowlistMembersRemoved(
     return;
   }
 
-  let config = CVStrategyConfig.load(
-    `${event.address.toHex()}-${event.params.poolId.toString()}-config`
-  );
+  let config = CVStrategyConfig.load(`${event.address.toHex()}-config`);
 
   if (config == null) {
     log.error(
       "CVStrategy: handleAllowlistMembersRemoved config not found: {}",
-      [`${event.address.toHex()}-${event.params.poolId.toString()}-config`]
+      [`${event.address.toHex()}-config`]
     );
     return;
   }
@@ -640,15 +639,40 @@ export function handleAllowlistMembersRemoved(
 export function handleSybilScorerUpdated(event: SybilScorerUpdated): void {
   let cvs = CVStrategy.load(event.address.toHexString());
   if (cvs == null) {
-    log.error("CVStrategy: handleSybilScorerUpdated cvs not found: {}", [
-      event.address.toHexString()
-    ]);
+    log.error(
+      "CVStrategy: handleSybilScorerUpdated cvs not found: {} (block: {})",
+      [event.address.toHexString(), event.block.number.toString()]
+    );
     return;
   }
 
   cvs.sybilScorer = event.params.sybilScorer.toHexString();
   cvs.save();
 }
+
+export function handleSuperfluidTokenUpdated(
+  event: SuperfluidTokenUpdated
+): void {
+  let config = CVStrategyConfig.load(`${event.address.toHex()}-config`);
+
+  if (config == null) {
+    log.error(
+      "CVStrategy: handleSuperfluidTokenUpdated config not found: {} (block: {})",
+      [`${event.address.toHex()}-config`, event.block.number.toString()]
+    );
+    return;
+  }
+  const token = event.params.superfluidToken;
+
+  if (token == Address.zero()) {
+    config.superfluidToken = null;
+  } else {
+    config.superfluidToken = token.toHexString();
+  }
+
+  config.save();
+}
+
 /// -- Privates -- ///
 
 function computeConfig(
@@ -698,7 +722,7 @@ function computeAllowList(
 function computeInitialize(
   contractAddress: Address,
   poolId: BigInt,
-  data: InitializedCV2DataStruct
+  data: InitializedCV3DataStruct
 ): void {
   log.debug("CVStrategy: handleInitialized {}", [poolId.toString()]);
   const registryCommunity = data.registryCommunity.toHexString();
@@ -723,10 +747,7 @@ function computeInitialize(
   cvs.token = alloPool.token.toHexString();
   cvs.poolId = poolId;
   cvs.registryCommunity = registryCommunity;
-  let config = new CVStrategyConfig(
-    `${contractAddress.toHex()}-${poolId.toString()}-config`
-  );
-  cvs.poolAmount = cvc.getPoolAmount();
+  let config = new CVStrategyConfig(`${contractAddress.toHex()}-config`);
   cvs.maxCVSupply = BigInt.fromI32(0);
   cvs.totalEffectiveActivePoints = cvc.totalPointsActivated();
   cvs.isEnabled = false;
@@ -735,8 +756,13 @@ function computeInitialize(
   config.proposalType = BigInt.fromI32(pType);
   config.pointSystem = BigInt.fromI32(pointSystem);
   config.maxAmount = maxAmount;
+  const superfluidToken = data.superfluidToken;
+  if (superfluidToken == Address.zero()) {
+    config.superfluidToken = null;
+  } else {
+    config.superfluidToken = superfluidToken.toHexString();
+  }
 
-  log.debug("handleInitialized changetypes", []);
   // @ts-ignore
   let cvParams = changetype<CVParamsUpdatedCvParamsStruct>(data.cvParams);
 
@@ -745,7 +771,7 @@ function computeInitialize(
   // With allowlist
   computeAllowList(config, data.initialAllowlist, []);
 
-  config.D = cvc.D();
+  config.D = D;
   config.save();
   cvs.config = config.id;
   cvs.save();
@@ -757,7 +783,7 @@ function getProposalStatus(
   defaultStatus: BigInt
 ): BigInt {
   const cvc = CVStrategyContract.bind(contractAddress);
-  const proposal = cvc.try_getProposal(proposalId);
+  const proposal = cvc.try_proposals(proposalId);
   if (proposal.reverted) {
     log.warning("CVStrategy: proposal not found: {}-{}", [
       contractAddress.toHexString(),

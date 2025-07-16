@@ -14,6 +14,7 @@ import {
   Chain,
   gnosis,
   optimism,
+  optimismSepolia,
   polygon,
   sepolia,
 } from "viem/chains";
@@ -28,7 +29,7 @@ type ChainIconProps = React.SVGProps<SVGSVGElement> & {
 
 export const CHAINS: Chain[] = [
   arbitrumSepolia,
-  // optimismSepolia,
+  optimismSepolia,
   sepolia,
   arbitrum,
   optimism,
@@ -53,6 +54,8 @@ export type ChainData = {
   rpcUrl: string;
   subgraphUrl: string;
   publishedSubgraphUrl?: string;
+  superfluidSubgraphUrl?: string;
+  publishedSuperfluidSubgraphUrl?: string;
   globalTribunal?: Address;
   arbitrator: Address;
   passportScorer: Address;
@@ -62,8 +65,18 @@ export type ChainData = {
   alchemyApiBaseUrl?: string; // Optional, used for fetching NFTs
 };
 
-const SUBGRAPH_TESTNET_VERSION = Subgraph.VERSION_TESTNET;
+const SUBGRAPH_ARBSEP_VERSION = Subgraph.VERSION_ARBSEP;
+const SUBGRAPH_OPSEP_VERSION = Subgraph.VERSION_OPSEP;
 const SUBGRAPH_PRODNET_VERSION = Subgraph.VERSION_PROD;
+
+const getSuperfluidSubgraphUrls = (publishedId: string) => {
+  return {
+    publishedSuperfluidSubgraphUrl:
+      process.env.NEXT_PUBLIC_SUBGRAPH_KEY ?
+        `https://gateway.thegraph.com/api/${process.env.NEXT_PUBLIC_SUBGRAPH_KEY}/subgraphs/id/${publishedId}`
+      : undefined,
+  };
+};
 
 const getSubgraphUrls = (
   publishedId: string,
@@ -105,18 +118,40 @@ export const chainConfigMap: {
     icon: Arbitrum,
     explorer: "https://sepolia.arbiscan.io/",
     blockTime: 14,
-    confirmations: 7,
-    rpcUrl: process.env.RPC_URL_ARB_TESTNET!,
+    confirmations: 2,
+    rpcUrl: process.env.NEXT_PUBLIC_RPC_URL_ARB_TESTNET!,
     ...getSubgraphUrls(
       "BfZYwhZ1rTb22Nah1u6YyXtUtAdgGNtZhW1EBb4mFzAU",
       "gardens-v2---arbitrum-sepolia",
-      SUBGRAPH_TESTNET_VERSION,
+      SUBGRAPH_ARBSEP_VERSION,
       70985,
     ),
     globalTribunal: "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0x49222C53695C77a0F8b78Eb42606B893E98DfE6a",
     passportScorer: "0x2053E225672776deb23Af0A3EBa9CE2c87838a72",
+    isTestnet: true,
+  },
+  11155420: {
+    id: 11155420,
+    name: optimismSepolia.name,
+    icon: Optimism,
+    explorer: "https://sepolia-optimism.etherscan.io/",
+    blockTime: 2,
+    confirmations: 1,
+    rpcUrl: process.env.NEXT_PUBLIC_RPC_URL_OP_TESTNET!,
+    ...getSubgraphUrls(
+      "5B7swx86RJEpywgvS63kMLVx9U6RKfERfU5tWYnUuGXe",
+      "gardens-v-2-optimism-sepolia",
+      SUBGRAPH_OPSEP_VERSION,
+      70985,
+    ),
+    superfluidSubgraphUrl:
+      "https://subgraph-endpoints.superfluid.dev/optimism-sepolia/protocol-v1",
+    globalTribunal: "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD",
+    allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
+    arbitrator: "0xCcbAc15Eb0D8C241D4b6A74E650dE089c292D131",
+    passportScorer: "0xe3DC6e82B599cD80904aCf0a3cd9f7401d92CC37",
     isTestnet: true,
   },
   // 11155111: {
@@ -134,14 +169,6 @@ export const chainConfigMap: {
   //   passportScorer: "0xc137c30ac0f21ce75bb484e88fb8701024f82d25",
   //   isTestnet: true,
   // },
-  // 11155420: {
-  //   name: optimismSepolia.name,
-  //   icon: Optimism,
-  //   explorer: "https://optimism-sepolia.blockscout.com",
-  //   blockTime: 2,
-  //   confirmations: 1, // 2
-  //   isTestnet: true,
-  // },
 
   // Prodnets
   42161: {
@@ -156,6 +183,9 @@ export const chainConfigMap: {
       "9ejruFicuLT6hfuXNTnS8UCwxTWrHz4uinesdZu1dKmk",
       "gardens-v2---arbitrum",
       SUBGRAPH_PRODNET_VERSION,
+    ),
+    ...getSuperfluidSubgraphUrls(
+      "7hoLgMuj3LcWkUfH5iNWqVn69rmVbk4mrdgx1FX3sa3M",
     ),
     globalTribunal: "0x1B8C7f06F537711A7CAf6770051A43B4F3E69A7e",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
@@ -177,6 +207,9 @@ export const chainConfigMap: {
       "gardens-v2---optimism",
       SUBGRAPH_PRODNET_VERSION,
     ),
+    ...getSuperfluidSubgraphUrls(
+      "48YRvi7PHbX4RJChq4nF8DpmJGZxcvUgwfdf8QoHBXxT",
+    ),
     globalTribunal: "0x1B8C7f06F537711A7CAf6770051A43B4F3E69A7e",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0xaf6628d7347fc4D65F1D5C69663C875a00c56d9F",
@@ -196,6 +229,9 @@ export const chainConfigMap: {
       "4vsznmRkUGm9DZFBwvC6PDvGPVfVLQcUUr5ExdTNZiUc",
       "gardens-v2---polygon",
       SUBGRAPH_PRODNET_VERSION,
+    ),
+    ...getSuperfluidSubgraphUrls(
+      "CvVf1MiypnZhwWZjbxMH9A8nR2qdcfTozC5DQ1cw4X9n",
     ),
     globalTribunal: "0x1B8C7f06F537711A7CAf6770051A43B4F3E69A7e",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
@@ -217,6 +253,10 @@ export const chainConfigMap: {
       "gardens-v2---gnosis",
       SUBGRAPH_PRODNET_VERSION,
     ),
+    ...getSuperfluidSubgraphUrls(
+      "CFe2JWsPy9eiT9B49m2E2gwxdCzWdm5kfYHRXi5VseXV",
+    ),
+
     globalTribunal: "0x1B8C7f06F537711A7CAf6770051A43B4F3E69A7e",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0x92bc0af737f55FF7B677cd942Aafd52934Fc751d",
@@ -237,6 +277,10 @@ export const chainConfigMap: {
       "gardens-v2---base",
       SUBGRAPH_PRODNET_VERSION,
     ),
+    ...getSuperfluidSubgraphUrls(
+      "5P6vRdU8BQUKMSc9v5sVDMczBRvURyK7hnrQCKf24PXW",
+    ),
+
     globalTribunal: "0x9a17De1f0caD0c592F656410997E4B685d339029",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0xab98D1D6Ce18e537715126614278d1A4D26bbc7d",
@@ -257,6 +301,10 @@ export const chainConfigMap: {
       "gardens-v2---celo",
       SUBGRAPH_PRODNET_VERSION,
     ),
+    ...getSuperfluidSubgraphUrls(
+      "DnAAo2aA676F8DYkcUPrRTgpH4smc1Yo7D7BnzC3ErBh",
+    ),
+
     globalTribunal: "0x9a17De1f0caD0c592F656410997E4B685d339029",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0x83bDE2E2D8AcAAad2D300DA195dF3cf86b234bdd",

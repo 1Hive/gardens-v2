@@ -7,7 +7,11 @@ const path = require("path");
 const localhostSubgraph = "http://localhost:8000/subgraphs/name/kamikazebr/gv2";
 const arbitrumSepoliaSubgraph =
   "https://api.studio.thegraph.com/query/70985/gardens-v2---arbitrum-sepolia/" +
-  subgraphConfig.VERSION_TESTNET;
+  subgraphConfig.VERSION_ARBSEP;
+
+const optimismSepoliaSubgraph =
+  "https://api.studio.thegraph.com/query/70985/gardens-v-2-optimism-sepolia/" +
+  subgraphConfig.VERSION_OPSEP;
 
 const arbitrumSubgraph =
   "https://api.studio.thegraph.com/query/102093/gardens-v2---arbitrum/" +
@@ -37,7 +41,7 @@ const jsons = {
   [viemChains.localhost.id]: localhostSubgraph,
   // @ts-ignore
   [viemChains.arbitrumSepolia.id]: arbitrumSepoliaSubgraph,
-  // [viemChains.optimismSepolia.id]: optimismSepoliaLatest,
+  [viemChains.optimismSepolia.id]: optimismSepoliaSubgraph,
   // [viemChains.sepolia.id]: sepoliaLatest,
 
   // @ts-ignore

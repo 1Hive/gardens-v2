@@ -20,6 +20,7 @@ export const DisplayNumber = ({
   disableTooltip?: boolean;
   compact?: boolean;
   copiable?: boolean;
+  forceTooltip?: boolean;
   tooltipClass?:
     | "tooltip-top"
     | "tooltip-bottom"
@@ -28,7 +29,10 @@ export const DisplayNumber = ({
 }) => {
   const fullNumberStr =
     typeof number === "string" ? number : (
-      dn.format([BigInt(number[0]), Number(number[1])])
+      dn.format(number, {
+        trailingZeros: false,
+        digits: 4,
+      })
     );
 
   const [isCopied, setIsCopied] = useState(false);

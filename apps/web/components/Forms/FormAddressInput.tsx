@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { blo } from "blo";
 import Image from "next/image";
 import { RegisterOptions } from "react-hook-form";
@@ -33,6 +33,7 @@ type Props = {
   validateSafe?: boolean;
   registerOptions?: RegisterOptions;
   onChange?: React.ChangeEventHandler<HTMLInputElement>;
+  suffix?: React.ReactNode;
   // trigger?: UseFormTrigger<any>;
 };
 
@@ -52,6 +53,7 @@ export const FormAddressInput = ({
   onChange,
   registerOptions,
   // trigger,
+  suffix,
   ...rest
 }: Props) => {
   const debouncedValue = useDebounce(value, 500);
@@ -84,6 +86,15 @@ export const FormAddressInput = ({
     chainId: 1,
     cacheTime: 30_000,
   });
+
+  useEffect(() => {
+    if (ensAddress) {
+      setInputValue(ensAddress);
+      (onChange ?? registerOptions?.onChange)?.({
+        target: { value: ensAddress },
+      } as React.ChangeEvent<HTMLInputElement>);
+    }
+  }, [ensAddress]);
 
   const validateSafeAddress = async (address: string) => {
     if (
@@ -140,41 +151,45 @@ export const FormAddressInput = ({
   };
 
   return (
-    <FormInput
-      {...rest}
-      label={label}
-      tooltip={tooltip}
-      type="text"
-      registerKey={registerKey}
-      register={register}
-      required={required}
-      placeholder={placeholder}
-      errors={errors}
-      disabled={disabled}
-      readOnly={readOnly}
-      className={`${className} pr-12`}
-      value={inputValue}
-      registerOptions={{
-        ...extendedRegisterOptions,
-      }}
-      onChange={(e) => {
-        (onChange ?? registerOptions?.onChange)?.(e);
-        setInputValue(e.target.value);
-      }}
-      suffix={
-        isValidatingSafe ?
-          <LoadingSpinner className="text-neutral-soft-content" />
-        : debouncedValue && (
-            <Image
-              alt=""
-              className="rounded-full"
-              src={avatarUrl ? avatarUrl : blo(debouncedValue as Address)}
-              width="30"
-              height="30"
-            />
-          )
-      }
-    />
+    <div className="w-[448px]">
+      <FormInput
+        {...rest}
+        label={label}
+        tooltip={tooltip}
+        type="text"
+        registerKey={registerKey}
+        register={register}
+        required={required}
+        placeholder={placeholder}
+        errors={errors}
+        disabled={disabled}
+        readOnly={readOnly}
+        className={`${className} pr-12`}
+        value={inputValue}
+        registerOptions={{
+          ...extendedRegisterOptions,
+        }}
+        onChange={(e) => {
+          (onChange ?? registerOptions?.onChange)?.(e);
+          setInputValue(e.target.value);
+        }}
+        wide={true}
+        suffix={
+          suffix ??
+          (isValidatingSafe ?
+            <LoadingSpinner className="text-neutral-soft-content" />
+          : debouncedValue && (
+              <Image
+                alt=""
+                className="rounded-full"
+                src={avatarUrl ? avatarUrl : blo(debouncedValue as Address)}
+                width="30"
+                height="30"
+              />
+            ))
+        }
+      />
+    </div>
   );
 };
 

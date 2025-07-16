@@ -48,13 +48,15 @@ import { TokenGardenFaucet } from "@/components/TokenGardenFaucet";
 import { isProd } from "@/configs/isProd";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
+import { usePubSubContext } from "@/contexts/pubsub.context";
 import { ONE_HIVE_COMMUNITY_ADDRESS } from "@/globals";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useCheat } from "@/hooks/useCheat";
+import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { getProtopiansOwners } from "@/services/alchemy";
-import { safeABI } from "@/src/generated";
+import { registryCommunityABI, safeABI } from "@/src/generated";
 import { PoolTypes, Column } from "@/types";
 import { fetchIpfs } from "@/utils/ipfsUtils";
 import {
@@ -88,7 +90,7 @@ export default function Page({
   const showArchived = useCheat("showArchived");
   const [openCommDetails, setOpenCommDetails] = useState(false);
   const isFetchingNFT = useRef<boolean>(false);
-
+  const { publish } = usePubSubContext();
   const chain = useChainFromPath();
 
   const covenantSectionRef = useRef<HTMLDivElement>(null);
@@ -114,10 +116,12 @@ export default function Page({
   });
 
   const registryCommunity = result?.registryCommunity;
-  const isCouncilMember =
+
+  const isCouncilSafe = !!(
     registryCommunity?.councilSafe &&
     accountAddress?.toLowerCase() ===
-      registryCommunity.councilSafe.toLowerCase();
+      registryCommunity.councilSafe.toLowerCase()
+  );
 
   const { data: councilMembers } = useContractRead({
     abi: safeABI,
@@ -129,6 +133,13 @@ export default function Page({
       console.error("Error reading council safe owners:", err);
     },
   });
+
+  const isCouncilMember = !!(
+    councilMembers &&
+    councilMembers.find(
+      (x) => x.toLowerCase() === accountAddress?.toLowerCase(),
+    )
+  );
 
   let {
     communityName,
@@ -191,6 +202,23 @@ export default function Page({
     ],
     enabled: accountAddress !== undefined,
   });
+
+  const { write: writeSetArchive, isLoading: isSetArchiveLoading } =
+    useContractWriteWithConfirmations({
+      address: registryCommunity?.id as Address,
+      abi: registryCommunityABI,
+      contractName: "Registry Community",
+      functionName: "setArchived",
+      onConfirmations: () => {
+        publish({
+          topic: "community",
+          type: "update",
+          id: communityAddr,
+          function: "setArchived",
+          containerId: communityAddr,
+        });
+      },
+    });
 
   const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons();
 
@@ -419,7 +447,31 @@ export default function Page({
                       />
                     </Statistic>
                   </div>
-                  <div className="absolute top-12 md:top-7 right-5">
+                  <div className="absolute top-12 md:top-7 right-5 flex items-center gap-2">
+                    {(isCouncilMember || isCouncilSafe) && (
+                      <Button
+                        btnStyle="outline"
+                        color="secondary"
+                        disabled={isCouncilMember}
+                        tooltipSide="tooltip-bottom"
+                        tooltip={
+                          isCouncilMember ?
+                            "Archive this pool will hide it from being listed in the home page but will remain accessible through a link."
+                          : "Connect with Council safe"
+                        }
+                        forceShowTooltip={result.registryCommunity?.archived}
+                        onClick={() =>
+                          writeSetArchive({
+                            args: [!result.registryCommunity?.archived],
+                          })
+                        }
+                        isLoading={isSetArchiveLoading}
+                      >
+                        {result.registryCommunity?.archived ?
+                          "Unarchive"
+                        : "Archive"}
+                      </Button>
+                    )}
                     <RegisterMember
                       memberData={isMemberResult}
                       registrationCost={getTotalRegistrationCost()}

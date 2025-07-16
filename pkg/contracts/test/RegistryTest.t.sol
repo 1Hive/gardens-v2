@@ -172,7 +172,8 @@
 //                 arbitrableConfig,
 //                 new address[](1),
 //                 address(0),
-//                 0
+//                 0,
+//                 address(0)
 //             ),
 //             metadata
 //         );
@@ -419,7 +420,8 @@
 //                 arbitrableConfig,
 //                 new address[](1),
 //                 address(0),
-//                 0
+//                 0,
+//                 address(0)
 //             ),
 //             metadata
 //         );
@@ -466,7 +468,8 @@
 //                 arbitrableConfig,
 //                 new address[](1),
 //                 address(0),
-//                 0
+//                 0,
+//                 address(0)
 //             ),
 //             metadata
 //         );
@@ -504,8 +507,8 @@
 //     function testFuzz_increasePower(uint256 tokenAmount) public {
 //         vm.assume(tokenAmount > 2 && tokenAmount < 100);
 //         vm.startPrank(pool_admin());
-
-//         assertEq(strategy.getMaxAmount(), 200 * DECIMALS);
+//         (uint256 maxAmount) = strategy.pointConfig();
+//         assertEq(maxAmount, 200 * DECIMALS);
 //         vm.stopPrank();
 //         vm.startPrank(address(councilSafe));
 //         _registryCommunity().addStrategy(address(strategy));
@@ -549,7 +552,8 @@
 //                 arbitrableConfig,
 //                 new address[](1),
 //                 address(0),
-//                 0
+//                 0,
+//                 address(0)
 //             ),
 //             metadata
 //         );
@@ -602,7 +606,8 @@
 //                 arbitrableConfig,
 //                 new address[](1),
 //                 address(0),
-//                 0
+//                 0,
+//                 address(0)
 //             ),
 //             metadata
 //         );
@@ -660,7 +665,8 @@
 //                 arbitrableConfig,
 //                 new address[](1),
 //                 address(0),
-//                 0
+//                 0,
+//                 address(0)
 //             ),
 //             metadata
 //         );
@@ -762,7 +768,8 @@
 //                 arbitrableConfig,
 //                 new address[](1),
 //                 address(0),
-//                 0
+//                 0,
+//                 address(0)
 //             ),
 //             metadata
 //         );
@@ -937,7 +944,8 @@
 //                 arbitrableConfig,
 //                 allowlist,
 //                 address(0),
-//                 0
+//                 0,
+//                 address(0)
 //             ),
 //             metadata
 //         );
@@ -980,7 +988,8 @@
 //                 arbitrableConfig,
 //                 allowlist,
 //                 address(0),
-//                 0
+//                 0,
+//                 address(0)
 //             ),
 //             metadata
 //         );

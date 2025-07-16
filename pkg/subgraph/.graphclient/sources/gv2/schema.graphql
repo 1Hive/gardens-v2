@@ -260,7 +260,6 @@ type CVProposal {
   proposalStatus: BigInt!
   blockLast: BigInt!
   convictionLast: BigInt!
-  threshold: BigInt!
   maxCVStaked: BigInt!
   stakedAmount: BigInt!
   submitter: String!
@@ -428,14 +427,6 @@ input CVProposal_filter {
   convictionLast_lte: BigInt
   convictionLast_in: [BigInt!]
   convictionLast_not_in: [BigInt!]
-  threshold: BigInt
-  threshold_not: BigInt
-  threshold_gt: BigInt
-  threshold_lt: BigInt
-  threshold_gte: BigInt
-  threshold_lte: BigInt
-  threshold_in: [BigInt!]
-  threshold_not_in: [BigInt!]
   maxCVStaked: BigInt
   maxCVStaked_not: BigInt
   maxCVStaked_gt: BigInt
@@ -539,7 +530,6 @@ enum CVProposal_orderBy {
   proposalStatus
   blockLast
   convictionLast
-  threshold
   maxCVStaked
   stakedAmount
   submitter
@@ -1832,7 +1822,6 @@ enum ProposalDispute_orderBy {
   proposal__proposalStatus
   proposal__blockLast
   proposal__convictionLast
-  proposal__threshold
   proposal__maxCVStaked
   proposal__stakedAmount
   proposal__submitter
@@ -2926,7 +2915,6 @@ enum Stake_orderBy {
   proposal__proposalStatus
   proposal__blockLast
   proposal__convictionLast
-  proposal__threshold
   proposal__maxCVStaked
   proposal__stakedAmount
   proposal__submitter

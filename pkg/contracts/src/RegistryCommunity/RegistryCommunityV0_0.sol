@@ -15,12 +15,8 @@ import {IRegistry, Metadata} from "allo-v2-contracts/core/interfaces/IRegistry.s
 import {FAllo} from "../interfaces/FAllo.sol";
 import {ISafe} from "../interfaces/ISafe.sol";
 import {IRegistryFactory} from "../IRegistryFactory.sol";
-import {
-    CVStrategyV0_0,
-    IPointStrategy,
-    CVStrategyInitializeParamsV0_1,
-    PointSystem
-} from "../CVStrategy/CVStrategyV0_0.sol";
+import {CVStrategyInitializeParamsV0_2, PointSystem} from "../CVStrategy/ICVStrategy.sol";
+import {CVStrategyV0_0} from "../CVStrategy/CVStrategyV0_0.sol";
 import {Upgrades} from "@openzeppelin/foundry/LegacyUpgrades.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {ProxyOwnableUpgrader} from "../ProxyOwnableUpgrader.sol";
@@ -105,6 +101,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
     event FeeReceiverChanged(address _feeReceiver);
     event PoolCreated(uint256 _poolId, address _strategy, address _community, address _token, Metadata _metadata); // 0x778cac0a
     event PoolRejected(address _strategy);
+    event CommunityArchived(bool _archived);
 
     /*|--------------------------------------------|*/
     /*|              CUSTOM ERRORS                 |*/
@@ -328,7 +325,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         emit RegistryInitialized(profileId, communityName, params._metadata);
     }
 
-    function createPool(address _token, CVStrategyInitializeParamsV0_1 memory _params, Metadata memory _metadata)
+    function createPool(address _token, CVStrategyInitializeParamsV0_2 memory _params, Metadata memory _metadata)
         public
         virtual
         returns (uint256 poolId, address strategy)
@@ -363,7 +360,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
     function createPool(
         address _strategy,
         address _token,
-        CVStrategyInitializeParamsV0_1 memory _params,
+        CVStrategyInitializeParamsV0_2 memory _params,
         Metadata memory _metadata
     ) public virtual returns (uint256 poolId, address strategy) {
         address token = NATIVE;
@@ -377,6 +374,11 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         );
 
         emit PoolCreated(poolId, strategy, address(this), _token, _metadata);
+    }
+
+    function setArchived(bool _isArchived) external {
+        onlyCouncilSafe();
+        emit CommunityArchived(_isArchived);
     }
 
     function activateMemberInStrategy(address _member, address _strategy) public virtual nonReentrant {
@@ -394,10 +396,10 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         uint256 totalStakedAmount = member.stakedAmount;
         uint256 pointsToIncrease = registerStakeAmount;
 
-        if (IPointStrategy(_strategy).getPointSystem() == PointSystem.Quadratic) {
-            pointsToIncrease = IPointStrategy(_strategy).increasePower(_member, 0);
-        } else if (IPointStrategy(_strategy).getPointSystem() != PointSystem.Fixed) {
-            pointsToIncrease = IPointStrategy(_strategy).increasePower(_member, totalStakedAmount);
+        if (CVStrategyV0_0(payable(_strategy)).getPointSystem() == PointSystem.Quadratic) {
+            pointsToIncrease = CVStrategyV0_0(payable(_strategy)).increasePower(_member, 0);
+        } else if (CVStrategyV0_0(payable(_strategy)).getPointSystem() != PointSystem.Fixed) {
+            pointsToIncrease = CVStrategyV0_0(payable(_strategy)).increasePower(_member, totalStakedAmount);
         }
 
         memberPowerInStrategy[_member][_strategy] = pointsToIncrease; // can be all zero
@@ -443,7 +445,8 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         for (uint256 i = 0; i < strategiesByMember[member].length; i++) {
             //FIX support interface check
             //if (address(strategiesByMember[member][i]) == _strategy) {
-            pointsToIncrease = IPointStrategy(strategiesByMember[member][i]).increasePower(member, _amountStaked);
+            pointsToIncrease =
+                CVStrategyV0_0(payable(strategiesByMember[member][i])).increasePower(member, _amountStaked);
             if (pointsToIncrease != 0) {
                 memberPowerInStrategy[member][strategiesByMember[member][i]] += pointsToIncrease;
                 // console.log("Strategy power", memberPowerInStrategy[member][strategiesByMember[member][i]]);
@@ -473,8 +476,8 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         gardenToken.safeTransfer(member, _amountUnstaked);
         for (uint256 i = 0; i < memberStrategies.length; i++) {
             address strategy = memberStrategies[i];
-            // if (strategy.supportsInterface(type(IPointStrategy).interfaceId)) {
-            pointsToDecrease = IPointStrategy(strategy).decreasePower(member, _amountUnstaked);
+            // if (strategy.supportsInterface(type(CVStrategyV0_0).interfaceId)) {
+            pointsToDecrease = CVStrategyV0_0(payable(strategy)).decreasePower(member, _amountUnstaked);
             uint256 currentPower = memberPowerInStrategy[member][memberStrategies[i]];
             if (pointsToDecrease > currentPower) {
                 revert CantDecreaseMoreThanPower(pointsToDecrease, currentPower);

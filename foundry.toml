@@ -17,6 +17,7 @@ optimizer-runs = 0
 fs_permissions = [{ access = "read-write", path = "./"}]
 
 celo = { key = "${CELOSCAN_API_KEY}", url = "https://api.celoscan.io/api"}
+bytecode_hash = "none"
 
 # fs_permissions = []
 # auto_detect_remappings = true # recursive auto-detection of remappings

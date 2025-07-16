@@ -123,6 +123,7 @@ export default function GardensPage() {
                   chain: section.chain,
                 })) || [],
             )
+            .filter((x) => !x.archived)
             .map(async (x) => {
               if (protopianOwners?.length && x.chain.safePrefix) {
                 // Council Safe supported

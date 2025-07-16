@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { Address, zeroAddress } from "viem";
-import { useBalance } from "wagmi";
+import { Address } from "viem";
 import {
   getAlloQuery,
   getPoolDataDocument,
@@ -14,6 +13,7 @@ import PoolHeader from "@/components/PoolHeader";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
+import { usePoolToken } from "@/hooks/usePoolToken";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { PoolTypes } from "@/types";
 
@@ -114,26 +114,14 @@ export default function Page({
     // setAllocationView(searchParams[QUERY_PARAMS.poolPage.allocationView]);
   }, [proposalSectionRef.current, searchParams]);
 
-  const { data: poolAmount } = useBalance({
-    address: strategyObj?.id as Address,
-    token: poolTokenAddr,
+  const poolToken = usePoolToken({
+    poolAddress: strategyObj?.id,
+    poolTokenAddr: poolTokenAddr,
     enabled:
-      !!strategyObj?.id &&
-      PoolTypes[strategyObj.config.proposalType] !== "signaling" &&
-      poolTokenAddr !== zeroAddress,
+      !!strategyObj &&
+      PoolTypes[strategyObj.config.proposalType] !== "signaling",
     watch: true,
   });
-
-  const poolToken =
-    poolAmount ?
-      {
-        address: poolTokenAddr,
-        symbol: poolAmount.symbol,
-        decimals: poolAmount.decimals,
-        balance: poolAmount.value,
-        formatted: poolAmount.formatted,
-      }
-    : undefined;
 
   if (!strategyObj || (!poolToken && PoolTypes[proposalType] === "funding")) {
     return (
@@ -168,7 +156,8 @@ export default function Page({
         <>
           {poolToken && PoolTypes[proposalType] !== "signaling" && (
             <PoolMetrics
-              alloInfo={alloInfo}
+              communityAddress={communityAddress}
+              strategy={strategyObj}
               poolId={poolId}
               poolToken={poolToken}
               chainId={Number(chain)}

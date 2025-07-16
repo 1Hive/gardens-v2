@@ -6,15 +6,15 @@ schema:
 dataSources:
   - kind: ethereum/contract
     name: RegistryFactoryV0_0
-    network: celo
+    network: optimism-sepolia
     context:
       chainId: 
         type: Int
-        data: 42220
+        data: 11155420
     source:
-      address: "0xA71023bc64c9711C2037ab491DE80fd74504bd55"
+      address: "0xEC8824e9a9498520891ec678e98c5bd3e65229c2"
       abi: RegistryFactoryV0_0
-      startBlock: 31270470
+      startBlock: 29036730
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -44,15 +44,15 @@ dataSources:
 
   - kind: ethereum/contract
     name: PassportScorer
-    network: celo
+    network: optimism-sepolia
     context:
       chainId: 
         type: Int
-        data: 42220
+        data: 11155420
     source:
-      address: "0xb39dfa15f96055664179e8ecaa890f3fa26c21e9"
+      address: "0xe3DC6e82B599cD80904aCf0a3cd9f7401d92CC37"
       abi: PassportScorer
-      startBlock: 31270470
+      startBlock: 29036730
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -82,7 +82,7 @@ dataSources:
 templates:
   - kind: ethereum/contract
     name: RegistryCommunityV0_0
-    network: celo
+    network: optimism-sepolia
     source:
       abi: RegistryCommunityV0_0
     mapping:
@@ -150,11 +150,13 @@ templates:
           handler: handleFeeReceiverChanged
         - event: PoolRejected(address)
           handler: handlePoolRejected
+        - event: CommunityArchived(bool)
+          handler: handleCommunityArchived
       file: ./src/mappings/registry-community.ts
 
   - kind: ethereum/contract
     name: CVStrategyV0_0
-    network: celo
+    network: optimism-sepolia
     source:
       abi: CVStrategyV0_0
     mapping:
@@ -178,10 +180,10 @@ templates:
           handler: handleInitialized
         - event: InitializedCV2(uint256,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address,uint256,address[]))
           handler: handleInitializedV2
+        - event: InitializedCV3(uint256,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address,uint256,address[],address))
+          handler: handleInitializedV3
         - event: ProposalCreated(uint256,uint256)
           handler: handleProposalCreated
-        - event: PoolAmountIncreased(uint256)
-          handler: handlePoolAmountIncreased
         - event: SupportAdded(address,uint256,uint256,uint256,uint256)
           handler: handleSupportAdded
         - event: Distributed(uint256,address,uint256)
@@ -208,12 +210,14 @@ templates:
           handler: handleAllowlistMembersRemoved
         - event: SybilScorerUpdated(address)
           handler: handleSybilScorerUpdated
+        - event: SuperfluidTokenUpdated(address)
+          handler: handleSuperfluidTokenUpdated
  
       file: ./src/mappings/cv-strategy.ts
 
   - kind: ethereum/contract
     name: CollateralVault
-    network: celo
+    network: optimism-sepolia
     source:
       abi: CollateralVault
     mapping:
