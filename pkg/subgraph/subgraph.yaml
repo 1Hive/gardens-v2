@@ -6,15 +6,15 @@ schema:
 dataSources:
   - kind: ethereum/contract
     name: RegistryFactoryV0_0
-    network: celo
+    network: optimism
     context:
       chainId: 
         type: Int
-        data: 42220
+        data: 10
     source:
-      address: "0xA71023bc64c9711C2037ab491DE80fd74504bd55"
+      address: "0x1fac47cf25f1ca9f20ba366099d26b28401f5715"
       abi: RegistryFactoryV0_0
-      startBlock: 31270470
+      startBlock: 125112015
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -44,15 +44,15 @@ dataSources:
 
   - kind: ethereum/contract
     name: PassportScorer
-    network: celo
+    network: optimism
     context:
       chainId: 
         type: Int
-        data: 42220
+        data: 10
     source:
-      address: "0xb39dfa15f96055664179e8ecaa890f3fa26c21e9"
+      address: "0x084a5504dCFeac0ec3E10517247639e50c8DcFFd"
       abi: PassportScorer
-      startBlock: 31270470
+      startBlock: 125112015
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -82,7 +82,7 @@ dataSources:
 templates:
   - kind: ethereum/contract
     name: RegistryCommunityV0_0
-    network: celo
+    network: optimism
     source:
       abi: RegistryCommunityV0_0
     mapping:
@@ -156,7 +156,7 @@ templates:
 
   - kind: ethereum/contract
     name: CVStrategyV0_0
-    network: celo
+    network: optimism
     source:
       abi: CVStrategyV0_0
     mapping:
@@ -217,7 +217,7 @@ templates:
 
   - kind: ethereum/contract
     name: CollateralVault
-    network: celo
+    network: optimism
     source:
       abi: CollateralVault
     mapping:
