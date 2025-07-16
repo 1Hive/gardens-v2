@@ -204,6 +204,7 @@ query getCommunities {
     id
     councilSafe
     communityName
+    archived
     garden {
       address
       chainId
@@ -222,14 +223,11 @@ query getCommunities {
   }
 }
 
-query getCommunity(
-  $communityAddr: ID!
-  $tokenAddr: ID!
-  $showArchived: Boolean
-) {
+query getCommunity($communityAddr: ID!, $tokenAddr: ID!) {
   registryCommunity(id: $communityAddr) {
     communityName
     id
+    archived
     members(
       first: 1000
       where: { stakedTokens_gt: "0" }
@@ -249,7 +247,6 @@ query getCommunity(
       poolId
       token
       metadata
-      archived
       config {
         proposalType
         pointSystem
@@ -356,7 +353,6 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
       convictionLast
       createdAt
       blockLast
-      threshold
       submitter
       strategy {
         id
@@ -411,7 +407,6 @@ query getProposalData($garden: ID!, $proposalId: ID!, $communityId: ID!) {
     requestedToken
     stakedAmount
     submitter
-    threshold
     updatedAt
     version
     strategy {

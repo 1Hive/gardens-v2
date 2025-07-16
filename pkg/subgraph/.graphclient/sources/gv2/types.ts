@@ -261,7 +261,6 @@ export type CVProposal = {
   proposalStatus: Scalars['BigInt']['output'];
   blockLast: Scalars['BigInt']['output'];
   convictionLast: Scalars['BigInt']['output'];
-  threshold: Scalars['BigInt']['output'];
   maxCVStaked: Scalars['BigInt']['output'];
   stakedAmount: Scalars['BigInt']['output'];
   submitter: Scalars['String']['output'];
@@ -429,14 +428,6 @@ export type CVProposal_filter = {
   convictionLast_lte?: InputMaybe<Scalars['BigInt']['input']>;
   convictionLast_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
   convictionLast_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
-  threshold?: InputMaybe<Scalars['BigInt']['input']>;
-  threshold_not?: InputMaybe<Scalars['BigInt']['input']>;
-  threshold_gt?: InputMaybe<Scalars['BigInt']['input']>;
-  threshold_lt?: InputMaybe<Scalars['BigInt']['input']>;
-  threshold_gte?: InputMaybe<Scalars['BigInt']['input']>;
-  threshold_lte?: InputMaybe<Scalars['BigInt']['input']>;
-  threshold_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
-  threshold_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
   maxCVStaked?: InputMaybe<Scalars['BigInt']['input']>;
   maxCVStaked_not?: InputMaybe<Scalars['BigInt']['input']>;
   maxCVStaked_gt?: InputMaybe<Scalars['BigInt']['input']>;
@@ -540,7 +531,6 @@ export type CVProposal_orderBy =
   | 'proposalStatus'
   | 'blockLast'
   | 'convictionLast'
-  | 'threshold'
   | 'maxCVStaked'
   | 'stakedAmount'
   | 'submitter'
@@ -1877,7 +1867,6 @@ export type ProposalDispute_orderBy =
   | 'proposal__proposalStatus'
   | 'proposal__blockLast'
   | 'proposal__convictionLast'
-  | 'proposal__threshold'
   | 'proposal__maxCVStaked'
   | 'proposal__stakedAmount'
   | 'proposal__submitter'
@@ -2879,7 +2868,6 @@ export type Stake_orderBy =
   | 'proposal__proposalStatus'
   | 'proposal__blockLast'
   | 'proposal__convictionLast'
-  | 'proposal__threshold'
   | 'proposal__maxCVStaked'
   | 'proposal__stakedAmount'
   | 'proposal__submitter'
