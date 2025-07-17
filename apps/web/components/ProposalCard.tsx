@@ -101,6 +101,7 @@ export function ProposalCard({
     strategyConfig,
     tokenData,
   });
+
   const inputValue =
     inputData ?
       Number(calculatePercentageBigInt(inputData.value, memberActivatedPoints))

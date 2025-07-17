@@ -36,6 +36,7 @@ export function useSuperfluidStream({
     bigint | null
   >(null);
   const fetch = async () => {
+    if (!!receiver || !superToken) return;
     const result = await client?.query(STREAM_TO_TARGET_QUERY, {
       receiver: receiver.toLowerCase(),
       token: superToken?.toLowerCase(),
@@ -67,7 +68,7 @@ export function useSuperfluidStream({
   };
 
   useEffect(() => {
-    if (!client || !receiver || !superToken) return;
+    if (!client) return;
     fetch();
   }, [client]);
 

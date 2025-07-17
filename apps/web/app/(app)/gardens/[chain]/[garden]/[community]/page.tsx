@@ -416,6 +416,14 @@ export default function Page({
                     label="Community address"
                     textColor="var(--color-grey-900)"
                   />
+                  {registryCommunity?.councilSafe && (
+                    <EthAddress
+                      icon={false}
+                      address={registryCommunity.councilSafe as Address}
+                      label="Council safe"
+                      textColor="var(--color-grey-900)"
+                    />
+                  )}
                 </div>
 
                 {/* Statistic + Register/Leave Button */}
@@ -456,8 +464,8 @@ export default function Page({
                         tooltipSide="tooltip-bottom"
                         tooltip={
                           isCouncilMember ?
-                            "Archive this pool will hide it from being listed in the home page but will remain accessible through a link."
-                          : "Connect with Council safe"
+                            "Connect with Council safe"
+                          : "Archive this pool will hide it from being listed in the home page but will remain accessible through a link."
                         }
                         forceShowTooltip={result.registryCommunity?.archived}
                         onClick={() =>
