@@ -238,6 +238,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     watch: true,
     chainId: chainId,
   });
+
   const hasInsufficientBalance =
     !!walletBalance?.formatted && +walletBalance.formatted < amount;
 
@@ -681,10 +682,14 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                       type="submit"
                       btnStyle="ghost"
                       color="secondary"
-                      disabled={missmatchUrl || !isConnected}
+                      disabled={
+                        missmatchUrl ||
+                        !isConnected ||
+                        !strategy.config.superfluidToken
+                      }
                       tooltip={
                         missmatchUrl || !isConnected ? tooltipMessage : (
-                          undefined
+                          "This pool did not enabled stream funding yet. Ask a pool council member to enable it."
                         )
                       }
                       icon={<ArrowPathRoundedSquareIcon className="w-5 h-5" />}

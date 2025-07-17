@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ArrowTopRightOnSquareIcon,
   BoltIcon,
@@ -7,14 +7,17 @@ import {
   ClockIcon,
   ArchiveBoxIcon,
   InformationCircleIcon,
+  ArrowPathRoundedSquareIcon,
 } from "@heroicons/react/24/outline";
 import {
   NoSymbolIcon,
   StopIcon,
   Cog6ToothIcon,
 } from "@heroicons/react/24/solid";
+import sfMeta from "@superfluid-finance/metadata";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
+import { toast } from "react-toastify";
 import { Address, zeroAddress } from "viem";
 import { erc20ABI, useAccount, useContractRead } from "wagmi";
 import {
@@ -32,6 +35,7 @@ import MarkdownWrapper from "./MarkdownWrapper";
 import { Modal } from "./Modal";
 import { Skeleton } from "./Skeleton";
 import { Statistic } from "./Statistic";
+import { TransactionModal, TransactionProps } from "./TransactionModal";
 import { SuperfluidStream } from "@/assets";
 import { chainConfigMap } from "@/configs/chains";
 import { usePubSubContext } from "@/contexts/pubsub.context";
@@ -42,13 +46,16 @@ import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { MetadataV1 } from "@/hooks/useIpfsFetch";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 
-import { registryCommunityABI, safeABI } from "@/src/generated";
+import { useSuperfluidToken } from "@/hooks/useSuperfluidToken";
+import { superTokenFactoryAbi } from "@/src/customAbis";
+import { cvStrategyABI, registryCommunityABI, safeABI } from "@/src/generated";
 import {
   PointSystems,
   PoolTypes,
   ProposalStatus,
   SybilResistanceType,
 } from "@/types";
+import { getEventFromReceipt } from "@/utils/contracts";
 import { delayAsync } from "@/utils/delayAsync";
 import {
   convertSecondsToReadableTime,
@@ -58,6 +65,7 @@ import {
   MAX_RATIO_CONSTANT,
 } from "@/utils/numbers";
 import { shortenAddress } from "@/utils/text";
+import { getTxMessage } from "@/utils/transactionMessages";
 
 type Props = {
   ipfsResult: MetadataV1 | null;
@@ -77,6 +85,7 @@ type Props = {
     symbol: string;
     decimals: number;
     balance: bigint;
+    name?: string;
   };
   maxAmount: number;
 };
@@ -124,6 +133,22 @@ export default function PoolHeader({
   const path = usePathname();
   const isArchived = strategy.archived;
   const [superTokenCopied, setSuperTokenCopied] = useState(false);
+  const [isEnableStreamTxModalOpened, setIsEnableStreamTxModalOpened] =
+    useState(false);
+
+  const [createSuperTokenTx, setCreateSuperTokenTx] =
+    useState<TransactionProps>({
+      contractName: `Create ${poolToken?.symbol}x super token`,
+      message: `Create ${poolToken?.symbol}x super token`,
+      status: "idle",
+    });
+
+  const [enableStreamFundingTx, setEnableStreamFundingTx] =
+    useState<TransactionProps>({
+      contractName: "Enable stream funding",
+      message: "Enable stream funding this pool",
+      status: "idle",
+    });
 
   const { data: passportStrategyData } =
     useSubgraphQuery<getPassportStrategyQuery>({
@@ -214,6 +239,11 @@ export default function PoolHeader({
     abi: erc20ABI,
     functionName: "symbol",
     enabled: !!strategy.config.superfluidToken,
+  });
+
+  const { superToken } = useSuperfluidToken({
+    token: strategy.token,
+    enabled: !strategy.config.superfluidToken,
   });
 
   const poolConfig = [
@@ -408,6 +438,92 @@ export default function PoolHeader({
     },
   });
 
+  const {
+    write: writeEnableStreamFunding,
+    isLoading: isEnableStreamFundingLoading,
+    status: enableStreamFundingStatus,
+    error: enableStreamFundingError,
+  } = useContractWriteWithConfirmations({
+    address: strategy.id as Address,
+    contractName: "CV Strategy",
+    functionName: "setPoolParams",
+    fallbackErrorMessage: "Error enabling stream funding. Please report it.",
+    onConfirmations: () => {
+      publish({
+        topic: "pool",
+        function: "setPoolParams",
+        type: "update",
+        id: strategy.poolId,
+        chainId: chainId,
+      });
+    },
+    abi: cvStrategyABI,
+  });
+
+  const emptySetPoolParamsCore = [
+    {
+      arbitrator: zeroAddress,
+      tribunalSafe: zeroAddress,
+      submitterCollateralAmount: 0n,
+      challengerCollateralAmount: 0n,
+      defaultRuling: 0n,
+      defaultRulingTimeout: 0n,
+    },
+    {
+      maxRatio: 0n,
+      weight: 0n,
+      decay: 0n,
+      minThresholdPoints: 0n,
+    },
+    0n,
+    [],
+    [],
+  ] as const;
+
+  const networkSfMetadata =
+    chainId ? sfMeta.getNetworkByChainId(chainId) : undefined;
+
+  const {
+    writeAsync: writeCreateSuperTokenAsync,
+    isLoading: isCreateSuperTokenLoading,
+    status: createSuperTokenStatus,
+    error: createSuperTokenError,
+  } = useContractWriteWithConfirmations({
+    abi: superTokenFactoryAbi,
+    address: networkSfMetadata?.contractsV1.superTokenFactory as Address,
+    functionName: "createERC20Wrapper",
+    contractName: "SuperTokenFactory",
+    onConfirmations: async (receipt) => {
+      const newSuperToken = getEventFromReceipt(
+        receipt,
+        "SuperTokenFactory",
+        "SuperTokenCreated",
+      ).args;
+      writeEnableStreamFunding({
+        args: [...emptySetPoolParamsCore, newSuperToken.token as Address],
+      });
+    },
+  });
+
+  useEffect(() => {
+    setCreateSuperTokenTx((prev) => ({
+      ...prev,
+      message: getTxMessage(createSuperTokenStatus, createSuperTokenError),
+      status: createSuperTokenStatus ?? "idle",
+    }));
+  }, [createSuperTokenStatus]);
+
+  useEffect(() => {
+    setEnableStreamFundingTx((prev) => ({
+      ...prev,
+      message: getTxMessage(
+        enableStreamFundingStatus,
+        enableStreamFundingError,
+      ),
+      status: enableStreamFundingStatus ?? "idle",
+    }));
+  }, [enableStreamFundingStatus]);
+
   //Disable Council Safe Buttons: Edit, Disable and Approve
   const disableCouncilSafeBtnCondition: ConditionObject[] = [
     {
@@ -423,6 +539,32 @@ export default function PoolHeader({
   const { tooltipMessage, missmatchUrl, isConnected } = useDisableButtons(
     disableCouncilSafeBtnCondition,
   );
+
+  const handleEnableStreamFunding = () => {
+    let superTokenAddress = superToken?.id;
+    if (!superTokenAddress) {
+      if (!poolToken) {
+        console.error("Pool token is required to create a super token.");
+        toast.error(
+          "Pool token is required to create a super token. Please contact the Gardens team.",
+        );
+        return;
+      }
+      setIsEnableStreamTxModalOpened(true);
+      writeCreateSuperTokenAsync({
+        args: [
+          poolToken!.address as Address,
+          1,
+          "Super" + poolToken!.name,
+          poolToken!.symbol + "x",
+        ],
+      });
+    } else {
+      writeEnableStreamFunding({
+        args: [...emptySetPoolParamsCore, superTokenAddress ?? zeroAddress],
+      });
+    }
+  };
 
   return (
     <>
@@ -542,6 +684,44 @@ export default function PoolHeader({
                     </Button>
                   </>
                 }
+                {!strategy.config.superfluidToken &&
+                  networkSfMetadata?.contractsV1.superTokenFactory && (
+                    <>
+                      <TransactionModal
+                        label={"Enable stream funding"}
+                        transactions={[
+                          createSuperTokenTx,
+                          enableStreamFundingTx,
+                        ]}
+                        isOpen={isEnableStreamTxModalOpened}
+                        onClose={() => setIsEnableStreamTxModalOpened(false)}
+                      />
+                      <Button
+                        btnStyle="outline"
+                        color="secondary"
+                        icon={
+                          <ArrowPathRoundedSquareIcon height={24} width={24} />
+                        }
+                        disabled={
+                          !isConnected ||
+                          missmatchUrl ||
+                          disableCouncilSafeButtons
+                        }
+                        tooltip={
+                          tooltipMessage ??
+                          "Enable stream funding will allow this pool to be funded continuously through Superfluid protocol."
+                        }
+                        forceShowTooltip={true}
+                        onClick={() => handleEnableStreamFunding()}
+                        isLoading={
+                          isEnableStreamFundingLoading ||
+                          isCreateSuperTokenLoading
+                        }
+                      >
+                        Enable stream funding
+                      </Button>
+                    </>
+                  )}
               </div>
             )}
             <div className="flex px-1 flex-col sm:flex-row bg-neutral-soft-2 py-2 rounded-lg items-baseline justify-between">

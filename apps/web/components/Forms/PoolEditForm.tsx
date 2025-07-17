@@ -203,6 +203,7 @@ export default function PoolEditForm({
   const tribunalAddress = watch("tribunalAddress");
   const { superToken } = useSuperfluidToken({
     token: strategy.token,
+    enabled: !strategy.config.superfluidToken,
   });
 
   const [loading, setLoading] = useState(false);
@@ -349,37 +350,35 @@ export default function PoolEditForm({
       currentAllowList,
     );
 
-    const coreArgs = [
-      {
-        arbitrator: arbitrator as Address,
-        tribunalSafe: tribunalAddress as Address,
-        submitterCollateralAmount: parseUnits(
-          previewData.proposalCollateral.toString(),
-          token?.decimals,
-        ),
-        challengerCollateralAmount: parseUnits(
-          previewData.disputeCollateral.toString(),
-          token?.decimals,
-        ),
-        defaultRuling: BigInt(previewData.defaultResolution),
-        defaultRulingTimeout: BigInt(
-          Math.round(parseTimeUnit(previewData.rulingTime, "days", "seconds")),
-        ),
-      },
-      {
-        maxRatio: maxRatio,
-        weight: weight,
-        decay: decay,
-        minThresholdPoints: minThresholdPoints,
-      },
-    ] as const;
-
     const sybilValue =
       +(previewData.sybilResistanceValue ?? 0) * CV_PASSPORT_THRESHOLD_SCALE;
     setPoolParamsWrite({
       args: [
-        ...coreArgs,
-        BigInt(sybilValue),
+        {
+          arbitrator: arbitrator as Address,
+          tribunalSafe: tribunalAddress as Address,
+          submitterCollateralAmount: parseUnits(
+            previewData.proposalCollateral.toString(),
+            token?.decimals,
+          ),
+          challengerCollateralAmount: parseUnits(
+            previewData.disputeCollateral.toString(),
+            token?.decimals,
+          ),
+          defaultRuling: BigInt(previewData.defaultResolution),
+          defaultRulingTimeout: BigInt(
+            Math.round(
+              parseTimeUnit(previewData.rulingTime, "days", "seconds"),
+            ),
+          ),
+        },
+        {
+          maxRatio: maxRatio,
+          weight: weight,
+          decay: decay,
+          minThresholdPoints: minThresholdPoints,
+        },
+        BigInt(sybilValue || 0),
         membersToAdd,
         membersToRemove,
         (strategy.config.superfluidToken as Address) ??

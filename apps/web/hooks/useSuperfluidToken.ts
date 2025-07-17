@@ -24,14 +24,17 @@ type SuperToken = {
   symbol: string;
   id: Address;
   isListed: boolean;
+  underlyingToken: Address;
 };
 
 export function useSuperfluidToken({
   token,
   chainId,
+  enabled = true,
 }: {
   token: string;
   chainId?: ChainId;
+  enabled?: boolean;
 }) {
   const [superToken, setSuperToken] = useState<SuperToken | null>(null);
   const [isFetching, setIsFetching] = useState(false);
@@ -56,7 +59,9 @@ export function useSuperfluidToken({
           console.debug("Superfluid token not found");
         }
         setSuperToken(
-          returnedTokens.length > 0 ? (foundSuperToken as SuperToken) : null,
+          returnedTokens.length > 0 ?
+            ({ ...foundSuperToken, underlyingToken: token } as SuperToken)
+          : null,
         );
       }
     } catch (error) {
@@ -67,9 +72,9 @@ export function useSuperfluidToken({
   };
 
   useEffect(() => {
-    if (!client || !token) return;
+    if (!client || !token || !enabled) return;
     fetch(client, token);
-  }, [client, token]);
+  }, [client, token, enabled]);
 
   return { superToken, refetch: fetch, isFetching };
 }
