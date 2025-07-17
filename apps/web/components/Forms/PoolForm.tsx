@@ -227,18 +227,9 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
   const tribunalAddress = watch("tribunalAddress");
   const poolTokenAddress = watch("poolTokenAddress").toLowerCase() as Address;
 
-  const [createdSuperToken, setCreatedSuperToken] = useState<{
-    name: string;
-    symbol: string;
-    id: Address;
-    underlyingToken: Address;
-  } | null>(null);
-
-  const { superToken, isFetching } = useSuperfluidToken({
+  const { superToken, setSuperToken, isFetching } = useSuperfluidToken({
     token: poolTokenAddress,
   });
-
-  const effectiveSuperToken = superToken ?? createdSuperToken;
 
   const { data: customTokenData } = useToken({
     address: poolTokenAddress,
@@ -375,7 +366,7 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
       ),
     },
     superfluidEnabled: {
-      label: "Superfluid enabled",
+      label: "Stream funding",
       parse: (value: boolean) => (value ? "✅" : "❌"),
     },
   } as const;
@@ -499,7 +490,7 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
             ),
           ),
           initialAllowlist: allowList,
-          superfluidToken: effectiveSuperToken?.id ?? zeroAddress,
+          superfluidToken: superToken?.id ?? zeroAddress,
         },
         {
           protocol: 1n,
@@ -565,7 +556,7 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
         "SuperTokenCreated",
       ).args;
 
-      setCreatedSuperToken({
+      setSuperToken({
         name: "Super" + customTokenData?.name,
         symbol: customTokenData?.symbol + "x",
         id: newSuperToken.token,
@@ -628,7 +619,7 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
       proposalCollateral: previewData.proposalCollateral,
       disputeCollateral: previewData.disputeCollateral,
       tribunalAddress: previewData.tribunalAddress,
-      superfluidEnabled: !!effectiveSuperToken,
+      superfluidEnabled: !!superToken,
     };
 
     Object.entries(reorderedData).forEach(([key, value]) => {
@@ -743,8 +734,8 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
                     {isFetching ?
                       <span className="loading loading-spinner loading-md" />
                     : (
-                      effectiveSuperToken &&
-                      effectiveSuperToken.underlyingToken === poolTokenAddress
+                      superToken &&
+                      superToken.underlyingToken === poolTokenAddress
                     ) ?
                       <div className="flex gap-1">
                         <InfoWrapper tooltip="This pool will support streaming through Superfluid — allowing continuous funding over time.">
@@ -758,11 +749,11 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
                             />
                             Fund streaming enabled with{" "}
                             <EthAddress
-                              address={effectiveSuperToken?.id as Address}
+                              address={superToken?.id as Address}
                               shortenAddress={true}
                               icon={false}
                               actions="copy"
-                              label={effectiveSuperToken?.symbol}
+                              label={superToken?.symbol}
                             />
                           </div>
                         </InfoWrapper>

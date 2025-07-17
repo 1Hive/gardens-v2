@@ -23,7 +23,7 @@ type SuperToken = {
   name: string;
   symbol: string;
   id: Address;
-  isListed: boolean;
+  isListed?: boolean;
   underlyingToken: Address;
 };
 
@@ -41,7 +41,10 @@ export function useSuperfluidToken({
 
   const client = useSuperfluidSugraphClient({ chainId });
 
-  const fetch = async (_client: Client, _token: string) => {
+  const fetch: (client: Client, token: string) => Promise<void> = async (
+    _client: Client,
+    _token: string,
+  ): Promise<void> => {
     setIsFetching(true);
     try {
       const result = await _client.query(SUPER_TOKEN_QUERY, {
@@ -76,5 +79,5 @@ export function useSuperfluidToken({
     fetch(client, token);
   }, [client, token, enabled]);
 
-  return { superToken, refetch: fetch, isFetching };
+  return { superToken, refetch: fetch, isFetching, setSuperToken };
 }
