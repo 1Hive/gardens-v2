@@ -266,7 +266,13 @@ export default function Page({
         message: "Proposal is being disputed",
       },
     ],
-    [address, thresholdPct, currentConvictionPct],
+    [
+      address,
+      thresholdPct,
+      currentConvictionPct,
+      convictionPctLessThanSupport,
+      proposalStatus,
+    ],
   );
 
   const { tooltipMessage: executeBtnTooltipMessage } =
@@ -294,9 +300,6 @@ export default function Page({
   //   setConvictionRefreshing(false);
 
   // };
-
-  console.log(proposalType);
-
   const status = ProposalStatus[proposalData.proposalStatus];
 
   return (
