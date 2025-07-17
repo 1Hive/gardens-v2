@@ -701,7 +701,7 @@ export default function PoolHeader({
                         tooltip={
                           // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
                           (isCouncilMember && superToken && tooltipMessage) ||
-                          "Enable stream funding will allow this pool to be funded continuously through Superfluid protocol."
+                          "Allow this pool to be funded continuously with token streaming on Superfluid"
                         }
                         forceShowTooltip={true}
                         onClick={() => handleEnableStreamFunding()}
@@ -710,7 +710,7 @@ export default function PoolHeader({
                           isCreateSuperTokenLoading
                         }
                       >
-                        Enable stream funding
+                        Enable Streaming
                       </Button>
                     </>
                   )}
