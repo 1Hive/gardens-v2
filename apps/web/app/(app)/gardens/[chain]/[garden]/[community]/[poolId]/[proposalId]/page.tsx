@@ -295,7 +295,7 @@ export default function Page({
 
   // };
 
-  console.log(proposalType);
+  
 
   const status = ProposalStatus[proposalData.proposalStatus];
 
