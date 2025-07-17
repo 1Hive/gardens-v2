@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ArrowTopRightOnSquareIcon,
   BoltIcon,
@@ -47,6 +47,7 @@ import { MetadataV1 } from "@/hooks/useIpfsFetch";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 
 import { useSuperfluidToken } from "@/hooks/useSuperfluidToken";
+import { TransactionStatusNotification } from "@/hooks/useTransactionNotification";
 import { superTokenFactoryAbi } from "@/src/customAbis";
 import { cvStrategyABI, registryCommunityABI, safeABI } from "@/src/generated";
 import {
@@ -135,20 +136,7 @@ export default function PoolHeader({
   const [superTokenCopied, setSuperTokenCopied] = useState(false);
   const [isEnableStreamTxModalOpened, setIsEnableStreamTxModalOpened] =
     useState(false);
-
-  const [createSuperTokenTx, setCreateSuperTokenTx] =
-    useState<TransactionProps>({
-      contractName: `Create ${poolToken?.symbol}x super token`,
-      message: `Create ${poolToken?.symbol}x super token`,
-      status: "idle",
-    });
-
-  const [enableStreamFundingTx, setEnableStreamFundingTx] =
-    useState<TransactionProps>({
-      contractName: "Enable stream funding",
-      message: "Enable stream funding this pool",
-      status: "idle",
-    });
+  const toastRef = useRef<ReturnType<typeof toast>>();
 
   const { data: passportStrategyData } =
     useSubgraphQuery<getPassportStrategyQuery>({
@@ -241,7 +229,7 @@ export default function PoolHeader({
     enabled: !!strategy.config.superfluidToken,
   });
 
-  const { superToken } = useSuperfluidToken({
+  const { superToken, setSuperToken } = useSuperfluidToken({
     token: strategy.token,
     enabled: !strategy.config.superfluidToken,
   });
@@ -305,7 +293,7 @@ export default function PoolHeader({
           {strategy.config.superfluidToken && (
             <div
               className="tooltip"
-              data-tip={`This pool is superfluid enabled. \nYou can stream ${superTokenSymbol ?? poolToken?.symbol + "x"} tokens to this pool. Click to copy address.`}
+              data-tip={`Stream funding enabled on this pool. \nYou can stream ${superTokenSymbol ?? poolToken?.symbol + "x"} tokens to this pool. Click to copy address.`}
             >
               <button
                 className="btn btn-ghost btn-xs p-0"
@@ -442,7 +430,6 @@ export default function PoolHeader({
     write: writeEnableStreamFunding,
     isLoading: isEnableStreamFundingLoading,
     status: enableStreamFundingStatus,
-    error: enableStreamFundingError,
   } = useContractWriteWithConfirmations({
     address: strategy.id as Address,
     contractName: "CV Strategy",
@@ -483,11 +470,24 @@ export default function PoolHeader({
   const networkSfMetadata =
     chainId ? sfMeta.getNetworkByChainId(chainId) : undefined;
 
+  useEffect(() => {
+    if (
+      isEnableStreamTxModalOpened &&
+      isCouncilSafe &&
+      toastRef.current &&
+      superToken
+    ) {
+      toast.dismiss(toastRef.current);
+      toastRef.current = undefined;
+      writeEnableStreamFunding({
+        args: [...emptySetPoolParamsCore, superToken.id],
+      });
+    }
+  }, [isCouncilSafe, superToken]);
+
   const {
     writeAsync: writeCreateSuperTokenAsync,
     isLoading: isCreateSuperTokenLoading,
-    status: createSuperTokenStatus,
-    error: createSuperTokenError,
   } = useContractWriteWithConfirmations({
     abi: superTokenFactoryAbi,
     address: networkSfMetadata?.contractsV1.superTokenFactory as Address,
@@ -499,30 +499,30 @@ export default function PoolHeader({
         "SuperTokenFactory",
         "SuperTokenCreated",
       ).args;
-      writeEnableStreamFunding({
-        args: [...emptySetPoolParamsCore, newSuperToken.token as Address],
+      setSuperToken({
+        name: "Super" + poolToken!.name,
+        symbol: poolToken!.symbol + "x",
+        id: newSuperToken.token,
+        underlyingToken: poolToken!.address,
       });
+      if (!isCouncilSafe) {
+        toast(
+          <TransactionStatusNotification
+            status="waiting"
+            message={`Please connect with Council Safe to continue (${shortenAddress(strategy.registryCommunity.councilSafe!)})`}
+          />,
+          {
+            autoClose: false,
+            closeOnClick: false,
+          },
+        );
+      } else {
+        writeEnableStreamFunding({
+          args: [...emptySetPoolParamsCore, newSuperToken.token as Address],
+        });
+      }
     },
   });
-
-  useEffect(() => {
-    setCreateSuperTokenTx((prev) => ({
-      ...prev,
-      message: getTxMessage(createSuperTokenStatus, createSuperTokenError),
-      status: createSuperTokenStatus ?? "idle",
-    }));
-  }, [createSuperTokenStatus]);
-
-  useEffect(() => {
-    setEnableStreamFundingTx((prev) => ({
-      ...prev,
-      message: getTxMessage(
-        enableStreamFundingStatus,
-        enableStreamFundingError,
-      ),
-      status: enableStreamFundingStatus ?? "idle",
-    }));
-  }, [enableStreamFundingStatus]);
 
   //Disable Council Safe Buttons: Edit, Disable and Approve
   const disableCouncilSafeBtnCondition: ConditionObject[] = [
@@ -687,15 +687,6 @@ export default function PoolHeader({
                 {!strategy.config.superfluidToken &&
                   networkSfMetadata?.contractsV1.superTokenFactory && (
                     <>
-                      <TransactionModal
-                        label={"Enable stream funding"}
-                        transactions={[
-                          createSuperTokenTx,
-                          enableStreamFundingTx,
-                        ]}
-                        isOpen={isEnableStreamTxModalOpened}
-                        onClose={() => setIsEnableStreamTxModalOpened(false)}
-                      />
                       <Button
                         btnStyle="outline"
                         color="secondary"
@@ -705,10 +696,11 @@ export default function PoolHeader({
                         disabled={
                           !isConnected ||
                           missmatchUrl ||
-                          disableCouncilSafeButtons
+                          !!(isCouncilMember && superToken)
                         }
                         tooltip={
-                          tooltipMessage ??
+                          // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+                          (isCouncilMember && superToken && tooltipMessage) ||
                           "Enable stream funding will allow this pool to be funded continuously through Superfluid protocol."
                         }
                         forceShowTooltip={true}
