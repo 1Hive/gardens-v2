@@ -491,7 +491,7 @@ export default function Page({
                   <InfoBox
                     infoBoxType="info"
                     contentStyle="text-tertiary-content"
-                    content={`${isSignalingType ? "This proposal is open and can be supported or disputed by the community. Only the proposal creator can cancel" : "This proposal is currently open. It will pass if nobody successfully challenges it and it receives enough support."} `}
+                    content={`${isSignalingType ? "This proposal is open and can be supported or disputed by the community. Only the proposal creator can cancel" : "This proposal is currently open. It will pass if nobody successfully challenges it and it receives enough support."}`}
                   />
                 )}
               </div>
