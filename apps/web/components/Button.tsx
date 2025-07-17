@@ -116,7 +116,7 @@ export function Button({
     >
       {isLoading && <span className={"loading loading-spinner loading-sm"} />}
       <div className={"flex gap-2 items-center"}>
-        {icon && icon} {children}
+        {icon && !isLoading && icon} {children}
       </div>
     </button>
   );

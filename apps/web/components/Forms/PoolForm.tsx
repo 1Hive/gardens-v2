@@ -3,6 +3,7 @@
 import "viem/window";
 import React, { ReactNode, useEffect, useState } from "react";
 // eslint-disable-next-line import/no-extraneous-dependencies
+import { ArrowPathRoundedSquareIcon } from "@heroicons/react/24/solid";
 import sfMeta from "@superfluid-finance/metadata";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
@@ -230,6 +231,7 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
     name: string;
     symbol: string;
     id: Address;
+    underlyingToken: Address;
   } | null>(null);
 
   const { superToken, isFetching } = useSuperfluidToken({
@@ -548,26 +550,29 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
   const networkSfMetadata =
     chain.id ? sfMeta.getNetworkByChainId(chain.id) : undefined;
 
-  const { writeAsync: writeCreateSuperTokenAsync } =
-    useContractWriteWithConfirmations({
-      abi: superTokenFactoryAbi,
-      address: networkSfMetadata?.contractsV1.superTokenFactory as Address,
-      functionName: "createERC20Wrapper",
-      contractName: "SuperTokenFactory",
-      onConfirmations: async (receipt) => {
-        const newSuperToken = getEventFromReceipt(
-          receipt,
-          "SuperTokenFactory",
-          "SuperTokenCreated",
-        ).args;
+  const {
+    writeAsync: writeCreateSuperTokenAsync,
+    isLoading: isCreateSuperTokenLoading,
+  } = useContractWriteWithConfirmations({
+    abi: superTokenFactoryAbi,
+    address: networkSfMetadata?.contractsV1.superTokenFactory as Address,
+    functionName: "createERC20Wrapper",
+    contractName: "SuperTokenFactory",
+    onConfirmations: async (receipt) => {
+      const newSuperToken = getEventFromReceipt(
+        receipt,
+        "SuperTokenFactory",
+        "SuperTokenCreated",
+      ).args;
 
-        setCreatedSuperToken({
-          name: "Super" + customTokenData?.name,
-          symbol: customTokenData?.symbol + "x",
-          id: newSuperToken.token,
-        });
-      },
-    });
+      setCreatedSuperToken({
+        name: "Super" + customTokenData?.name,
+        symbol: customTokenData?.symbol + "x",
+        id: newSuperToken.token,
+        underlyingToken: poolTokenAddress,
+      });
+    },
+  });
 
   const handleOptionTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedOptionType = parseInt(e.target.value);
@@ -737,7 +742,10 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
                   <div className="mb-2">
                     {isFetching ?
                       <span className="loading loading-spinner loading-md" />
-                    : effectiveSuperToken ?
+                    : (
+                      effectiveSuperToken &&
+                      effectiveSuperToken.underlyingToken === poolTokenAddress
+                    ) ?
                       <div className="flex gap-1">
                         <InfoWrapper tooltip="This pool will support streaming through Superfluid — allowing continuous funding over time.">
                           <div className="flex items-center">
@@ -748,7 +756,7 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
                               height={36}
                               className="mb-2"
                             />
-                            Streaming enabled with{" "}
+                            Fund streaming enabled with{" "}
                             <EthAddress
                               address={effectiveSuperToken?.id as Address}
                               shortenAddress={true}
@@ -759,22 +767,24 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
                           </div>
                         </InfoWrapper>
                       </div>
-                    : <div className="flex gap-2 items-center">
-                        <input
-                          type="checkbox"
-                          id="enableStreaming"
-                          className="checkbox checkbox-success ml-2"
-                          onChange={handleEnableStreaming}
-                          disabled={
-                            !poolTokenAddress || !isAddress(poolTokenAddress)
-                          }
-                        />
-                        <InfoWrapper tooltip="Create a Superfluid wrapper to fund this pool through streaming.">
-                          <label htmlFor="enableStreaming">
-                            Enable superfluid
-                          </label>
-                        </InfoWrapper>
-                      </div>
+                    : <Button
+                        btnStyle="outline"
+                        color="primary"
+                        icon={
+                          <ArrowPathRoundedSquareIcon height={24} width={24} />
+                        }
+                        disabled={!isConnected || missmatchUrl}
+                        tooltip={
+                          tooltipMessage ??
+                          "Enable stream funding will allow this pool to be funded continuously through Superfluid protocol."
+                        }
+                        forceShowTooltip={true}
+                        onClick={() => handleEnableStreaming()}
+                        isLoading={isCreateSuperTokenLoading}
+                        className="mb-0.5"
+                      >
+                        Enable stream funding
+                      </Button>
                     }
                   </div>
                 )}

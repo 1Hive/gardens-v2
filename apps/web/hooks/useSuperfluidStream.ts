@@ -38,7 +38,7 @@ export function useSuperfluidStream({
   const fetch = async () => {
     const result = await client?.query(STREAM_TO_TARGET_QUERY, {
       receiver: receiver.toLowerCase(),
-      token: superToken.toLowerCase(),
+      token: superToken?.toLowerCase(),
     });
     if (!result || result?.error)
       console.error(

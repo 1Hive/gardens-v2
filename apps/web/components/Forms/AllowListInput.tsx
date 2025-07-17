@@ -243,7 +243,7 @@ export function AllowListInput({
           : `${addresses.length} address${addresses.length !== 1 ? "es" : ""}`}
           )
         </label>
-        <div className="flex space-x-1">
+        <div className="flex space-x-1 items-center">
           <Button
             type="button"
             btnStyle="outline"
