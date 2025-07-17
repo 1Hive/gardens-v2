@@ -167,19 +167,6 @@ export default function Page({
     chainId,
   });
 
-  const disableManSupportBtn = useMemo<ConditionObject[]>(
-    () => [
-      {
-        condition: !isMemberCommunity,
-        message: "Join community to dispute",
-      },
-    ],
-    [address],
-  );
-
-  const { tooltipMessage, isConnected, missmatchUrl } =
-    useDisableButtons(disableManSupportBtn);
-
   const {
     currentConvictionPct,
     thresholdPct,
@@ -250,6 +237,41 @@ export default function Page({
     }
   }, [isErrorDistribute]);
 
+  const disableManSupportBtn = useMemo<ConditionObject[]>(
+    () => [
+      {
+        condition: !isMemberCommunity,
+        message: "Join community to dispute",
+      },
+    ],
+    [address],
+  );
+
+  const { tooltipMessage, isConnected, missmatchUrl } =
+    useDisableButtons(disableManSupportBtn);
+
+  const convictionPctLessThanSupport =
+    thresholdPct != null &&
+    currentConvictionPct != null &&
+    currentConvictionPct <= thresholdPct;
+
+  const disableExecuteButton = useMemo<ConditionObject[]>(
+    () => [
+      {
+        condition: convictionPctLessThanSupport,
+        message: "Proposal has not reached the threshold yet",
+      },
+      {
+        condition: proposalStatus === "disputed",
+        message: "Proposal is being disputed",
+      },
+    ],
+    [address, thresholdPct, currentConvictionPct],
+  );
+
+  const { tooltipMessage: executeBtnTooltipMessage } =
+    useDisableButtons(disableExecuteButton);
+
   if (
     !proposalData ||
     !supportersData ||
@@ -270,9 +292,13 @@ export default function Page({
   //   setConvictionRefreshing(true);
   //   await triggerConvictionRefetch?.();
   //   setConvictionRefreshing(false);
+
   // };
 
+  console.log(proposalType);
+
   const status = ProposalStatus[proposalData.proposalStatus];
+
   return (
     <>
       {/* main section */}
@@ -415,21 +441,10 @@ export default function Page({
                     disabled={
                       !isConnected ||
                       missmatchUrl ||
-                      thresholdPct == null ||
-                      currentConvictionPct == null ||
-                      currentConvictionPct <= thresholdPct ||
+                      convictionPctLessThanSupport ||
                       proposalStatus === "disputed"
                     }
-                    tooltip={
-                      (
-                        tooltipMessage ??
-                        (thresholdPct != null &&
-                          currentConvictionPct != null &&
-                          currentConvictionPct <= thresholdPct)
-                      ) ?
-                        "Proposal has not reached the threshold yet"
-                      : undefined
-                    }
+                    tooltip={executeBtnTooltipMessage}
                   >
                     Execute
                   </Button>
@@ -452,62 +467,40 @@ export default function Page({
               <div className="flex flex-col gap-2">
                 {!isSignalingType && (
                   <>
-                    {
-                      status === "executed" ?
-                        <div className="flex items-center gap-2">
-                          <CheckIcon className="w-5 h-5 text-primary-content" />
-                          <p className="text-primary-content subtitle2">
-                            Passed and Executed
-                          </p>
-                        </div>
-                      : status === "cancelled" ?
-                        <div className="flex items-center gap-2">
-                          <XMarkIcon className="w-5 h-5 text-error-content" />
-                          <p className="text-error-content subtitle2">
-                            Cancelled
-                          </p>
-                        </div>
-                      : null
-                      // <p className="subtitle2">ESTIMATED TIME UNTIL PASS</p>
-                      // <div className="flex items-center gap-2">
-                      //   <span>
-                      //     {currentConvictionPct > thresholdPct ?
-                      //       <CheckIcon className="w-5 h-5 text-primary-content" />
-                      //     : <XMarkIcon className="w-5 h-5 text-error-content" />
-                      //     }
-                      //   </span>
-                      //   <span
-                      //     className={`${currentConvictionPct > thresholdPct ? "text-primary-content" : "text-error-content"} `}
-                      //   >{`${currentConvictionPct > thresholdPct ? "WILL" : "WONT"} PASS`}</span>
-                      // </div>
-                      // <Statistic className="text-2xl font-bold">
-                      //   {timeToPass && (
-                      //     <span className="text-black">
-                      //       {prettyTimestamp(timeToPass)}
-                      //     </span>
-                      //   )}
-                      // </Statistic>
-                    }
+                    {status === "executed" ?
+                      <div className="flex items-center gap-2">
+                        <CheckIcon className="w-5 h-5 text-primary-content" />
+                        <p className="text-primary-content subtitle2">
+                          Passed and Executed
+                        </p>
+                      </div>
+                    : status === "cancelled" ?
+                      <div className="flex items-center gap-2">
+                        <XMarkIcon className="w-5 h-5 text-error-content" />
+                        <p className="text-error-content subtitle2">
+                          Cancelled
+                        </p>
+                      </div>
+                    : null}
                   </>
                 )}
                 {status !== "executed" && status !== "cancelled" && (
                   <InfoBox
                     infoBoxType="info"
                     contentStyle="text-tertiary-content"
-                    content="This proposal is currently open. It will pass if nobody successfully challenges it and it receives enough support."
+                    content={`${isSignalingType ? "This proposal is open and can be supported or disputed by the community. Only the proposal creator can cancel" : "This proposal is currently open. It will pass if nobody successfully challenges it and it receives enough support."} `}
                   />
                 )}
               </div>
             </div>
             <div className="flex items-end">
-              {proposalStatus === "active" ||
-                (proposalStatus === "disputed" &&
-                  proposalData.strategy.isEnabled && (
-                    <DisputeModal
-                      isMemberCommunity={isMemberCommunity}
-                      proposalData={{ ...proposalData, ...metadata }}
-                    />
-                  ))}
+              {(status === "active" || status === "disputed") &&
+                proposalData.strategy.isEnabled && (
+                  <DisputeModal
+                    isMemberCommunity={isMemberCommunity}
+                    proposalData={{ ...proposalData, ...metadata }}
+                  />
+                )}
             </div>
           </section>
 
