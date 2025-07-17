@@ -266,7 +266,7 @@ export default function Page({
         message: "Proposal is being disputed",
       },
     ],
-    [address, thresholdPct, currentConvictionPct],
+    [address, thresholdPct, currentConvictionPct, proposalStatus, convictionPctLessThanSupport],
   );
 
   const { tooltipMessage: executeBtnTooltipMessage } =
