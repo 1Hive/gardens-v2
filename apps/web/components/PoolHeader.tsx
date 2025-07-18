@@ -35,7 +35,6 @@ import MarkdownWrapper from "./MarkdownWrapper";
 import { Modal } from "./Modal";
 import { Skeleton } from "./Skeleton";
 import { Statistic } from "./Statistic";
-import { TransactionModal, TransactionProps } from "./TransactionModal";
 import { SuperfluidStream } from "@/assets";
 import { chainConfigMap } from "@/configs/chains";
 import { usePubSubContext } from "@/contexts/pubsub.context";
@@ -46,7 +45,7 @@ import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { MetadataV1 } from "@/hooks/useIpfsFetch";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 
-import { useSuperfluidToken } from "@/hooks/useSuperfluidToken";
+import { SuperToken, useSuperfluidToken } from "@/hooks/useSuperfluidToken";
 import { TransactionStatusNotification } from "@/hooks/useTransactionNotification";
 import { superTokenFactoryAbi } from "@/src/customAbis";
 import { cvStrategyABI, registryCommunityABI, safeABI } from "@/src/generated";
@@ -66,7 +65,6 @@ import {
   MAX_RATIO_CONSTANT,
 } from "@/utils/numbers";
 import { shortenAddress } from "@/utils/text";
-import { getTxMessage } from "@/utils/transactionMessages";
 
 type Props = {
   ipfsResult: MetadataV1 | null;
@@ -89,6 +87,8 @@ type Props = {
     name?: string;
   };
   maxAmount: number;
+  superToken: SuperToken | null;
+  setSuperToken: (token: SuperToken | null) => void;
 };
 
 export function calculateConvictionGrowthInSeconds(
@@ -125,6 +125,8 @@ export default function PoolHeader({
   arbitrableConfig,
   poolToken,
   maxAmount,
+  superToken,
+  setSuperToken,
 }: Props) {
   const [isOpenModal, setIsOpenModal] = useState(false);
   const { address } = useAccount();
@@ -222,16 +224,15 @@ export default function PoolHeader({
     sybilResistanceValue = allowList as Address[] | undefined;
   }
 
+  const effectiveSuperToken =
+    strategy.config.superfluidToken ??
+    (superToken && superToken.sameAsUnderlying ? superToken.id : null);
+
   const { data: superTokenSymbol } = useContractRead({
-    address: strategy.config.superfluidToken as Address,
+    address: effectiveSuperToken as Address,
     abi: erc20ABI,
     functionName: "symbol",
-    enabled: !!strategy.config.superfluidToken,
-  });
-
-  const { superToken, setSuperToken } = useSuperfluidToken({
-    token: strategy.token,
-    enabled: !strategy.config.superfluidToken,
+    enabled: !!effectiveSuperToken,
   });
 
   const poolConfig = [
@@ -290,7 +291,7 @@ export default function PoolHeader({
             actions="none"
             label={poolToken?.symbol}
           />
-          {strategy.config.superfluidToken && (
+          {effectiveSuperToken && (
             <div
               className="tooltip"
               data-tip={`Stream funding enabled on this pool. \nYou can stream ${superTokenSymbol ?? poolToken?.symbol + "x"} tokens to this pool. Click to copy address.`}
@@ -299,9 +300,7 @@ export default function PoolHeader({
                 className="btn btn-ghost btn-xs p-0"
                 onClick={async () => {
                   setSuperTokenCopied(true);
-                  navigator.clipboard.writeText(
-                    strategy.config.superfluidToken!,
-                  );
+                  navigator.clipboard.writeText(effectiveSuperToken!);
                   await delayAsync(1000);
                   setSuperTokenCopied(false);
                 }}
@@ -429,7 +428,6 @@ export default function PoolHeader({
   const {
     write: writeEnableStreamFunding,
     isLoading: isEnableStreamFundingLoading,
-    status: enableStreamFundingStatus,
   } = useContractWriteWithConfirmations({
     address: strategy.id as Address,
     contractName: "CV Strategy",
@@ -684,7 +682,7 @@ export default function PoolHeader({
                     </Button>
                   </>
                 }
-                {!strategy.config.superfluidToken &&
+                {!effectiveSuperToken &&
                   networkSfMetadata?.contractsV1.superTokenFactory && (
                     <>
                       <Button

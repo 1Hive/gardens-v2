@@ -15,6 +15,7 @@ import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { usePoolToken } from "@/hooks/usePoolToken";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
+import { useSuperfluidToken } from "@/hooks/useSuperfluidToken";
 import { PoolTypes } from "@/types";
 
 export const dynamic = "force-dynamic";
@@ -66,8 +67,13 @@ export default function Page({
     }
   }, [error]);
 
+  const { superToken, setSuperToken } = useSuperfluidToken({
+    token: strategyObj?.token,
+    enabled: !strategyObj?.config.superfluidToken,
+  });
+
   const { metadata: ipfsResult } = useMetadataIpfsFetch({
-    hash: data?.cvstrategies?.[0]?.metadata,
+    hash: strategyObj?.metadata,
   });
 
   useEffect(() => {
@@ -150,6 +156,8 @@ export default function Page({
         ipfsResult={ipfsResult}
         isEnabled={isEnabled}
         maxAmount={maxAmount}
+        superToken={superToken}
+        setSuperToken={setSuperToken}
       />
 
       {isEnabled && (
@@ -161,6 +169,7 @@ export default function Page({
               poolId={poolId}
               poolToken={poolToken}
               chainId={Number(chain)}
+              superToken={superToken}
             />
           )}
         </>

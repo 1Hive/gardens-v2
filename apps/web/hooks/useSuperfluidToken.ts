@@ -7,7 +7,7 @@ import { ChainId } from "@/types";
 export const SUPER_TOKEN_QUERY = gql`
   query superToken($token: String!) {
     tokens(
-      where: { underlyingToken: $token }
+      where: { or: [{ underlyingToken: $token }, { id: $token }] }
       orderBy: isListed
       orderDirection: desc
     ) {
@@ -19,12 +19,13 @@ export const SUPER_TOKEN_QUERY = gql`
   }
 `;
 
-type SuperToken = {
+export type SuperToken = {
   name: string;
   symbol: string;
   id: Address;
   isListed?: boolean;
   underlyingToken: Address;
+  sameAsUnderlying?: boolean;
 };
 
 export function useSuperfluidToken({
@@ -32,7 +33,7 @@ export function useSuperfluidToken({
   chainId,
   enabled = true,
 }: {
-  token: string;
+  token?: string;
   chainId?: ChainId;
   enabled?: boolean;
 }) {
@@ -63,7 +64,12 @@ export function useSuperfluidToken({
         }
         setSuperToken(
           returnedTokens.length > 0 ?
-            ({ ...foundSuperToken, underlyingToken: token } as SuperToken)
+            ({
+              ...foundSuperToken,
+              underlyingToken: token,
+              sameAsUnderlying:
+                foundSuperToken.id.toLowerCase() === token?.toLowerCase(),
+            } as SuperToken)
           : null,
         );
       }
@@ -79,5 +85,10 @@ export function useSuperfluidToken({
     fetch(client, token);
   }, [client, token, enabled]);
 
-  return { superToken, refetch: fetch, isFetching, setSuperToken };
+  return {
+    superToken,
+    refetch: fetch,
+    isFetching,
+    setSuperToken,
+  };
 }

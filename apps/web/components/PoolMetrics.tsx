@@ -24,6 +24,7 @@ import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithC
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useHandleAllowance } from "@/hooks/useHandleAllowance";
 import { useSuperfluidStream } from "@/hooks/useSuperfluidStream";
+import { SuperToken } from "@/hooks/useSuperfluidToken";
 import { superfluidCFAv1ForwarderAbi, superTokenABI } from "@/src/customAbis";
 import { abiWithErrors } from "@/utils/abi";
 import { delayAsync } from "@/utils/delayAsync";
@@ -43,6 +44,7 @@ interface PoolMetricsProps {
   communityAddress: Address;
   poolId: number;
   chainId: number;
+  superToken: SuperToken | null;
 }
 
 const secondsToMonth = 60 * 60 * 24 * 30;
@@ -52,6 +54,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
   strategy,
   poolToken,
   chainId,
+  superToken,
 }) => {
   const { config, id: poolAddress, poolId } = strategy;
   const [amountInput, setAmount] = useState<string>("");
@@ -67,12 +70,16 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     watch: true,
     enabled: !!accountAddress,
   });
+  // Also support for natively superfluid tokens
+  const effectiveSuperToken =
+    config.superfluidToken ??
+    (superToken && superToken.sameAsUnderlying ? superToken.id : null);
   const { data: superTokenBalance } = useBalance({
     address: accountAddress,
     formatUnits: poolToken.decimals,
-    token: config.superfluidToken as Address,
+    token: effectiveSuperToken as Address,
     watch: true,
-    enabled: !!config.superfluidToken && !!accountAddress,
+    enabled: !!effectiveSuperToken && !!accountAddress,
   });
 
   const {
@@ -83,7 +90,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     refetch: refetchSuperfluidStream,
   } = useSuperfluidStream({
     receiver: poolAddress,
-    superToken: config.superfluidToken as Address,
+    superToken: effectiveSuperToken as Address,
   });
 
   const amount = +(+amountInput) || 0;
@@ -140,7 +147,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
       setCurrentUserFlowRateBn(streamRequestedAmountPerSecBn);
     },
     args: [
-      config.superfluidToken as Address,
+      effectiveSuperToken as Address,
       accountAddress as Address,
       poolAddress as Address,
       streamRequestedAmountPerSecBn,
@@ -169,7 +176,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
       setCurrentUserFlowRateBn(streamRequestedAmountPerSecBn);
     },
     args: [
-      config.superfluidToken as Address,
+      effectiveSuperToken as Address,
       accountAddress as Address,
       poolAddress as Address,
       streamRequestedAmountPerSecBn,
@@ -185,7 +192,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
       functionName: "deleteFlow",
       contractName: "SuperFluid Constant Flow Agreement",
       args: [
-        config.superfluidToken as Address,
+        effectiveSuperToken as Address,
         accountAddress as Address,
         poolAddress as Address,
         "0x",
@@ -203,7 +210,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     transactionStatus: wrapFundsStatus,
     error: wrapFundsError,
   } = useContractWriteWithConfirmations({
-    address: config.superfluidToken as Address,
+    address: effectiveSuperToken as Address,
     abi: superTokenABI,
     functionName: "upgrade",
     contractName: "SuperToken",
@@ -226,7 +233,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
   } = useHandleAllowance(
     accountAddress,
     poolToken,
-    config.superfluidToken as Address,
+    effectiveSuperToken as Address,
     requestedAmountBn,
     () => writeWrapFunds(),
   );
@@ -329,6 +336,17 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
 
   const handleStreamFunds = async () => {
     resetTxsStatus();
+    if (superToken?.sameAsUnderlying) {
+      // If super token is the same as underlying token, we can directly stream funds
+      setStreamFundsTx((prev) => ({
+        ...prev,
+        message: getTxMessage("idle"),
+        status: "idle",
+      }));
+      await writeStreamFundsAsync();
+      setIsStreamModalOpened(false);
+      return;
+    }
     // Check if super token balance is already sufficient
     // if (isSuperTokenBalanceSufficient) {
     //   await writeStreamFundsAsync();
@@ -393,7 +411,9 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     <>
       <TransactionModal
         label={`Stream funds in pool #${poolId}`}
-        transactions={[wrapAllowanceTx, wrapFundsTx, streamFundsTx]}
+        transactions={[wrapAllowanceTx, wrapFundsTx, streamFundsTx].filter(
+          (x) => !!x,
+        )}
         isOpen={isStreamTxModalOpen}
         onClose={() => setIsStreamTxModalOpen(false)}
       >
@@ -683,9 +703,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                       btnStyle="ghost"
                       color="secondary"
                       disabled={
-                        missmatchUrl ||
-                        !isConnected ||
-                        !strategy.config.superfluidToken
+                        missmatchUrl || !isConnected || !effectiveSuperToken
                       }
                       tooltip={
                         missmatchUrl || !isConnected ? tooltipMessage : (
