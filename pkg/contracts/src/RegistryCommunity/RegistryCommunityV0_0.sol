@@ -113,7 +113,6 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
     error UserNotInCouncil(address _user);
     error UserNotInRegistry();
     error UserAlreadyActivated();
-    error UserAlreadyDeactivated();
     error StrategyExists();
     error StrategyDisabled();
     error SenderNotNewOwner();
@@ -411,13 +410,13 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
     }
 
     function deactivateMemberInStrategy(address _member, address _strategy) public virtual {
+        if (!memberActivatedInStrategies[_member][_strategy]) {
+            return;
+        }
+
         onlyRegistryMemberAddress(_member);
         // _revertZeroAddress(_strategy);
         onlyStrategyAddress(msg.sender, _strategy);
-
-        if (!memberActivatedInStrategies[_member][_strategy]) {
-            revert UserAlreadyDeactivated();
-        }
 
         memberActivatedInStrategies[_member][_strategy] = false;
         memberPowerInStrategy[_member][_strategy] = 0;
