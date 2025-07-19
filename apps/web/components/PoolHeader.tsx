@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ArrowTopRightOnSquareIcon,
   BoltIcon,
@@ -45,7 +45,7 @@ import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { MetadataV1 } from "@/hooks/useIpfsFetch";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 
-import { SuperToken, useSuperfluidToken } from "@/hooks/useSuperfluidToken";
+import { SuperToken } from "@/hooks/useSuperfluidToken";
 import { TransactionStatusNotification } from "@/hooks/useTransactionNotification";
 import { superTokenFactoryAbi } from "@/src/customAbis";
 import { cvStrategyABI, registryCommunityABI, safeABI } from "@/src/generated";
@@ -138,7 +138,7 @@ export default function PoolHeader({
   const [superTokenCopied, setSuperTokenCopied] = useState(false);
   const [isEnableStreamTxModalOpened, setIsEnableStreamTxModalOpened] =
     useState(false);
-  const toastRef = useRef<ReturnType<typeof toast>>();
+  const [toastId, setToastId] = useState<ReturnType<typeof toast>>();
 
   const { data: passportStrategyData } =
     useSubgraphQuery<getPassportStrategyQuery>({
@@ -469,14 +469,9 @@ export default function PoolHeader({
     chainId ? sfMeta.getNetworkByChainId(chainId) : undefined;
 
   useEffect(() => {
-    if (
-      isEnableStreamTxModalOpened &&
-      isCouncilSafe &&
-      toastRef.current &&
-      superToken
-    ) {
-      toast.dismiss(toastRef.current);
-      toastRef.current = undefined;
+    if (isEnableStreamTxModalOpened && isCouncilSafe && toastId && superToken) {
+      toast.dismiss(toastId);
+      setToastId(undefined);
       writeEnableStreamFunding({
         args: [...emptySetPoolParamsCore, superToken.id],
       });
@@ -504,15 +499,29 @@ export default function PoolHeader({
         underlyingToken: poolToken!.address,
       });
       if (!isCouncilSafe) {
-        toast(
-          <TransactionStatusNotification
-            status="waiting"
-            message={`Please connect with Council Safe to continue (${shortenAddress(strategy.registryCommunity.councilSafe!)})`}
-          />,
-          {
-            autoClose: false,
-            closeOnClick: false,
-          },
+        setToastId(
+          toast(
+            <TransactionStatusNotification
+              status="waiting"
+              message={`Connect with Council Safe to continue (${shortenAddress(strategy.registryCommunity.councilSafe!)})`}
+            />,
+            {
+              autoClose: false,
+              closeOnClick: false,
+              className: isCouncilSafe ? "!cursor-pointer" : "",
+              onClick: async () => {
+                if (!isCouncilSafe) return;
+                toast.dismiss(toastId);
+                setToastId(undefined);
+                writeEnableStreamFunding({
+                  args: [
+                    ...emptySetPoolParamsCore,
+                    newSuperToken.token as Address,
+                  ],
+                });
+              },
+            },
+          ),
         );
       } else {
         writeEnableStreamFunding({
@@ -586,7 +595,7 @@ export default function PoolHeader({
               <div className="flex gap-2 flex-wrap">
                 <Button
                   btnStyle="outline"
-                  icon={<Cog6ToothIcon height={24} width={24} />}
+                  icon={<Cog6ToothIcon height={20} width={20} />}
                   disabled={
                     !isConnected || missmatchUrl || disableCouncilSafeButtons
                   }
@@ -597,7 +606,7 @@ export default function PoolHeader({
                 </Button>
                 {isArchived ?
                   <Button
-                    icon={<CheckIcon height={24} width={24} />}
+                    icon={<CheckIcon height={20} width={20} />}
                     disabled={
                       !isConnected || missmatchUrl || disableCouncilSafeButtons
                     }
@@ -612,7 +621,7 @@ export default function PoolHeader({
                 : isEnabled ?
                   <>
                     <Button
-                      icon={<StopIcon height={24} width={24} />}
+                      icon={<StopIcon height={20} width={20} />}
                       disabled={
                         !isConnected ||
                         missmatchUrl ||
@@ -630,7 +639,7 @@ export default function PoolHeader({
                       Disable
                     </Button>
                     <Button
-                      icon={<ArchiveBoxIcon height={24} width={24} />}
+                      icon={<ArchiveBoxIcon height={20} width={20} />}
                       disabled={
                         !isConnected ||
                         missmatchUrl ||
@@ -650,7 +659,7 @@ export default function PoolHeader({
                   </>
                 : <>
                     <Button
-                      icon={<CheckIcon height={24} width={24} />}
+                      icon={<CheckIcon height={20} width={20} />}
                       disabled={
                         !isConnected ||
                         missmatchUrl ||
@@ -663,7 +672,7 @@ export default function PoolHeader({
                       Approve
                     </Button>
                     <Button
-                      icon={<NoSymbolIcon height={24} width={24} />}
+                      icon={<NoSymbolIcon height={20} width={20} />}
                       disabled={
                         !isConnected ||
                         missmatchUrl ||
@@ -687,9 +696,9 @@ export default function PoolHeader({
                     <>
                       <Button
                         btnStyle="outline"
-                        color="secondary"
+                        color="tertiary"
                         icon={
-                          <ArrowPathRoundedSquareIcon height={24} width={24} />
+                          <ArrowPathRoundedSquareIcon height={20} width={20} />
                         }
                         disabled={
                           !isConnected ||
@@ -699,7 +708,7 @@ export default function PoolHeader({
                         tooltip={
                           // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
                           (isCouncilMember && superToken && tooltipMessage) ||
-                          "Allow this pool to be funded continuously with token streaming on Superfluid"
+                          "This allows people to add funds to the pool via streaming (Superfluid)."
                         }
                         forceShowTooltip={true}
                         onClick={() => handleEnableStreamFunding()}
@@ -708,7 +717,9 @@ export default function PoolHeader({
                           isCreateSuperTokenLoading
                         }
                       >
-                        Enable Streaming
+                        {superToken ?
+                          "Enable Streaming"
+                        : "Create Stream Token"}
                       </Button>
                     </>
                   )}

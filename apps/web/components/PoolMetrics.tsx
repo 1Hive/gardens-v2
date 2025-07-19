@@ -707,7 +707,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                       }
                       tooltip={
                         missmatchUrl || !isConnected ? tooltipMessage : (
-                          "This pool did not enabled stream funding yet. Ask a council member to enable it."
+                          "Not enabled yet, reach out to community to enable adding streaming funds into the pool"
                         )
                       }
                       icon={<ArrowPathRoundedSquareIcon className="w-5 h-5" />}
