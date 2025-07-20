@@ -19,7 +19,6 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { Address, zeroAddress } from "viem";
-import { useAccount, useContractRead } from "wagmi";
 import {
   ArbitrableConfig,
   getPassportStrategyDocument,
@@ -41,6 +40,7 @@ import { usePubSubContext } from "@/contexts/pubsub.context";
 import { VOTING_POINT_SYSTEM_DESCRIPTION } from "@/globals";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
+import { useCouncil } from "@/hooks/useCouncil";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { MetadataV1 } from "@/hooks/useIpfsFetch";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
@@ -48,7 +48,7 @@ import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { SuperToken } from "@/hooks/useSuperfluidToken";
 import { TransactionStatusNotification } from "@/hooks/useTransactionNotification";
 import { superTokenFactoryAbi } from "@/src/customAbis";
-import { cvStrategyABI, registryCommunityABI, safeABI } from "@/src/generated";
+import { cvStrategyABI, registryCommunityABI } from "@/src/generated";
 import {
   PointSystems,
   PoolTypes,
@@ -137,7 +137,6 @@ export default function PoolHeader({
   setSuperToken,
 }: Props) {
   const [isOpenModal, setIsOpenModal] = useState(false);
-  const { address } = useAccount();
   const { publish } = usePubSubContext();
   const { id: chainId, safePrefix } = useChainFromPath()!;
   const router = useRouter();
@@ -169,9 +168,10 @@ export default function PoolHeader({
   const spendingLimitPct =
     (Number(strategy.config.maxRatio || 0) / CV_SCALE_PRECISION) * 100;
 
-  const isCouncilSafe =
-    address?.toLowerCase() ===
-    strategy.registryCommunity.councilSafe?.toLowerCase();
+  const { isCouncilSafe, isCouncilMember } = useCouncil({
+    strategyOrCommunity: strategy,
+    detectCouncilMember: true,
+  });
 
   const minimumConviction = calculateMinimumConviction(
     strategy.config.weight,
@@ -348,19 +348,6 @@ export default function PoolHeader({
     : PointSystems[pointSystem] === "capped" ? poolConfig
     : poolConfig.filter((config) => config.label !== "Max voting weight");
 
-  //hooks
-  // const { data: isCouncilMember } = useContractRead({
-  //   address: strategy.registryCommunity.councilSafe as Address,
-  //   abi: safeABI,
-  //   functionName: "isOwner",
-  //   chainId: Number(chainId),
-  //   enabled: !!address && !!safePrefix, // SafePrefix undefined means not supported
-  //   args: [address as Address],
-  //   onError: () => {
-  //     console.error("Error reading isOwner from Council Safe");
-  //   },
-  // });
-  const isCouncilMember = false;
   const { write: rejectPoolWrite } = useContractWriteWithConfirmations({
     address: communityAddr,
     abi: registryCommunityABI,

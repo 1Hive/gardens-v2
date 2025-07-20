@@ -9,6 +9,7 @@ export const cheats = [
   "skipPublished",
   "queryAllChains",
   "showExcludedCommunities",
+  "showAsCouncilSafe",
 ] as const;
 
 export type CheatName = (typeof cheats)[number];
