@@ -24,7 +24,6 @@ import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithC
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useHandleAllowance } from "@/hooks/useHandleAllowance";
 import { useSuperfluidStream } from "@/hooks/useSuperfluidStream";
-import { SuperToken } from "@/hooks/useSuperfluidToken";
 import { superfluidCFAv1ForwarderAbi, superTokenABI } from "@/src/customAbis";
 import { abiWithErrors } from "@/utils/abi";
 import { delayAsync } from "@/utils/delayAsync";
@@ -44,7 +43,16 @@ interface PoolMetricsProps {
   communityAddress: Address;
   poolId: number;
   chainId: number;
-  superToken: SuperToken | null;
+  superToken:
+    | {
+        value: bigint;
+        symbol: string;
+        decimals: number;
+        address: Address;
+        formatted?: string;
+        sameAsUnderlying?: boolean;
+      }
+    | undefined;
 }
 
 const secondsToMonth = 60 * 60 * 24 * 30;
@@ -56,7 +64,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
   chainId,
   superToken,
 }) => {
-  const { config, id: poolAddress, poolId } = strategy;
+  const { id: poolAddress, poolId } = strategy;
   const [amountInput, setAmount] = useState<string>("");
   const [streamDuration, setStreamDuration] = useState("1"); // in months
   const [isStreamTxModalOpen, setIsStreamTxModalOpen] = useState(false);
@@ -70,17 +78,6 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     watch: true,
     enabled: !!accountAddress,
   });
-  // Also support for natively superfluid tokens
-  const effectiveSuperToken =
-    config.superfluidToken ??
-    (superToken && superToken.sameAsUnderlying ? superToken.id : null);
-  const { data: superTokenBalance } = useBalance({
-    address: accountAddress,
-    formatUnits: poolToken.decimals,
-    token: effectiveSuperToken as Address,
-    watch: true,
-    enabled: !!effectiveSuperToken && !!accountAddress,
-  });
 
   const {
     currentFlowRateBn,
@@ -90,7 +87,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     refetch: refetchSuperfluidStream,
   } = useSuperfluidStream({
     receiver: poolAddress,
-    superToken: effectiveSuperToken as Address,
+    superToken: superToken?.address as Address,
   });
 
   const amount = +(+amountInput) || 0;
@@ -139,7 +136,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     abi: abiWithErrors(superfluidCFAv1ForwarderAbi),
     functionName: "createFlow",
     contractName: "SuperFluid Constant Flow Agreement",
-    // showNotification: isSuperTokenBalanceSufficient,
+    // showNotification: isSuperTokenSufficient,
     onConfirmations: () => {
       setCurrentFlowRateBn(
         (old) => (old ?? 0n) + streamRequestedAmountPerSecBn,
@@ -147,7 +144,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
       setCurrentUserFlowRateBn(streamRequestedAmountPerSecBn);
     },
     args: [
-      effectiveSuperToken as Address,
+      superToken?.address as Address,
       accountAddress as Address,
       poolAddress as Address,
       streamRequestedAmountPerSecBn,
@@ -176,7 +173,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
       setCurrentUserFlowRateBn(streamRequestedAmountPerSecBn);
     },
     args: [
-      effectiveSuperToken as Address,
+      superToken?.address as Address,
       accountAddress as Address,
       poolAddress as Address,
       streamRequestedAmountPerSecBn,
@@ -192,7 +189,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
       functionName: "deleteFlow",
       contractName: "SuperFluid Constant Flow Agreement",
       args: [
-        effectiveSuperToken as Address,
+        superToken?.address as Address,
         accountAddress as Address,
         poolAddress as Address,
         "0x",
@@ -210,7 +207,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     transactionStatus: wrapFundsStatus,
     error: wrapFundsError,
   } = useContractWriteWithConfirmations({
-    address: effectiveSuperToken as Address,
+    address: superToken?.address as Address,
     abi: superTokenABI,
     functionName: "upgrade",
     contractName: "SuperToken",
@@ -233,7 +230,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
   } = useHandleAllowance(
     accountAddress,
     poolToken,
-    effectiveSuperToken as Address,
+    superToken?.address as Address,
     requestedAmountBn,
     () => writeWrapFunds(),
   );
@@ -244,6 +241,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     token: poolToken.address as Address,
     watch: true,
     chainId: chainId,
+    enabled: !!accountAddress && !!poolToken.address,
   });
 
   const hasInsufficientBalance =
@@ -251,8 +249,8 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
 
   const hasInsufficientStreamBalance =
     hasInsufficientBalance &&
-    superTokenBalance &&
-    superTokenBalance.value < requestedAmountBn;
+    superToken &&
+    superToken.value < requestedAmountBn;
 
   const { tooltipMessage, isButtonDisabled, isConnected, missmatchUrl } =
     useDisableButtons([
@@ -348,7 +346,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
       return;
     }
     // Check if super token balance is already sufficient
-    // if (isSuperTokenBalanceSufficient) {
+    // if (isSuperTokenSufficient) {
     //   await writeStreamFundsAsync();
     //   setIsStreamModalOpened(false);
     //   return;
@@ -368,7 +366,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
   const handleStreamEdit = async () => {
     resetTxsStatus();
     // Check if super token balance is already sufficient
-    // if (isSuperTokenBalanceSufficient) {
+    // if (isSuperTokenSufficient) {
     //   await writeEditStreamAsync();
     //   setIsStreamModalOpened(false);
     //   return;
@@ -544,7 +542,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
             }
           </div>
 
-          {superTokenBalance && superTokenBalance.value > 0 && (
+          {superToken && superToken.value > 0 && (
             <>
               <hr className="w-full" />
               <div className="flex items-center gap-2 justify-between">
@@ -554,8 +552,8 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                       Super token balance:
                     </div>
                     <div className="flex items-center gap-1 w-full">
-                      {toPrecision(superTokenBalance.formatted, 4)}{" "}
-                      {superTokenBalance.symbol}
+                      {toPrecision(+(superToken.formatted ?? 0), 4)}{" "}
+                      {superToken.symbol}
                     </div>
                   </div>
                   <div className="text-sm text-neutral-content flex items-center gap-1">
@@ -614,7 +612,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                 <p className="subtitle2">Funds in pool:</p>
                 <div className="flex items-center gap-1">
                   <DisplayNumber
-                    copiable
+                    copiable={true}
                     number={[poolToken.balance, poolToken.decimals]}
                     tokenSymbol={poolToken.symbol}
                     compact={true}
@@ -702,9 +700,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                       type="submit"
                       btnStyle="ghost"
                       color="secondary"
-                      disabled={
-                        missmatchUrl || !isConnected || !effectiveSuperToken
-                      }
+                      disabled={missmatchUrl || !isConnected || !superToken}
                       tooltip={
                         missmatchUrl || !isConnected ? tooltipMessage : (
                           "Not enabled yet, reach out to community to enable adding streaming funds into the pool"

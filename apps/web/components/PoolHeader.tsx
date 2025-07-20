@@ -19,7 +19,7 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { Address, zeroAddress } from "viem";
-import { erc20ABI, useAccount, useContractRead } from "wagmi";
+import { useAccount, useContractRead } from "wagmi";
 import {
   ArbitrableConfig,
   getPassportStrategyDocument,
@@ -87,7 +87,15 @@ type Props = {
     name?: string;
   };
   maxAmount: number;
-  superToken: SuperToken | null;
+  superToken:
+    | {
+        value: bigint;
+        symbol: string;
+        decimals: number;
+        address: Address;
+        sameAsUnderlying?: boolean;
+      }
+    | undefined;
   setSuperToken: (token: SuperToken | null) => void;
 };
 
@@ -224,17 +232,6 @@ export default function PoolHeader({
     sybilResistanceValue = allowList as Address[] | undefined;
   }
 
-  const effectiveSuperToken =
-    strategy.config.superfluidToken ??
-    (superToken && superToken.sameAsUnderlying ? superToken.id : null);
-
-  const { data: superTokenSymbol } = useContractRead({
-    address: effectiveSuperToken as Address,
-    abi: erc20ABI,
-    functionName: "symbol",
-    enabled: !!effectiveSuperToken,
-  });
-
   const poolConfig = [
     {
       label: "Spending limit",
@@ -291,16 +288,16 @@ export default function PoolHeader({
             actions="none"
             label={poolToken?.symbol}
           />
-          {effectiveSuperToken && (
+          {superToken && (
             <div
               className="tooltip"
-              data-tip={`Stream funding enabled on this pool. \nYou can stream ${superTokenSymbol ?? poolToken?.symbol + "x"} tokens to this pool. Click to copy address.`}
+              data-tip={`Stream funding enabled on this pool. \nYou can stream ${superToken.symbol + "x"} tokens to this pool. Click to copy address.`}
             >
               <button
                 className="btn btn-ghost btn-xs p-0"
                 onClick={async () => {
                   setSuperTokenCopied(true);
-                  navigator.clipboard.writeText(effectiveSuperToken!);
+                  navigator.clipboard.writeText(superToken.address!);
                   await delayAsync(1000);
                   setSuperTokenCopied(false);
                 }}
@@ -352,18 +349,18 @@ export default function PoolHeader({
     : poolConfig.filter((config) => config.label !== "Max voting weight");
 
   //hooks
-  const { data: isCouncilMember } = useContractRead({
-    address: strategy.registryCommunity.councilSafe as Address,
-    abi: safeABI,
-    functionName: "isOwner",
-    chainId: Number(chainId),
-    enabled: !!address && !!safePrefix, // SafePrefix undefined means not supported
-    args: [address as Address],
-    onError: () => {
-      console.error("Error reading isOwner from Council Safe");
-    },
-  });
-
+  // const { data: isCouncilMember } = useContractRead({
+  //   address: strategy.registryCommunity.councilSafe as Address,
+  //   abi: safeABI,
+  //   functionName: "isOwner",
+  //   chainId: Number(chainId),
+  //   enabled: !!address && !!safePrefix, // SafePrefix undefined means not supported
+  //   args: [address as Address],
+  //   onError: () => {
+  //     console.error("Error reading isOwner from Council Safe");
+  //   },
+  // });
+  const isCouncilMember = false;
   const { write: rejectPoolWrite } = useContractWriteWithConfirmations({
     address: communityAddr,
     abi: registryCommunityABI,
@@ -473,7 +470,7 @@ export default function PoolHeader({
       toast.dismiss(toastId);
       setToastId(undefined);
       writeEnableStreamFunding({
-        args: [...emptySetPoolParamsCore, superToken.id],
+        args: [...emptySetPoolParamsCore, superToken.address],
       });
     }
   }, [isCouncilSafe, superToken]);
@@ -548,7 +545,7 @@ export default function PoolHeader({
   );
 
   const handleEnableStreamFunding = () => {
-    let superTokenAddress = superToken?.id;
+    let superTokenAddress = superToken?.address;
     if (!superTokenAddress) {
       if (!poolToken) {
         console.error("Pool token is required to create a super token.");
@@ -691,7 +688,7 @@ export default function PoolHeader({
                     </Button>
                   </>
                 }
-                {!effectiveSuperToken &&
+                {!superToken &&
                   networkSfMetadata?.contractsV1.superTokenFactory && (
                     <>
                       <Button
