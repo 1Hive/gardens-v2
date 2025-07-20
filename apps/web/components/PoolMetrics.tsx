@@ -617,7 +617,6 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                     tokenSymbol={poolToken.symbol}
                     compact={true}
                     valueClassName="text-2xl mr-1 font-bold text-primary-content"
-                    forceTooltip={true}
                   />
                 </div>
               </div>

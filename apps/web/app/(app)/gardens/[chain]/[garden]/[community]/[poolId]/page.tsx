@@ -126,8 +126,12 @@ export default function Page({
     poolAddress: strategy?.id,
     poolTokenAddr: poolTokenAddr,
     enabled:
-      !!strategy && PoolTypes[strategy.config.proposalType] !== "signaling" && !!poolTokenAddr,
+      !!strategy &&
+      PoolTypes[strategy.config.proposalType] !== "signaling" &&
+      !!poolTokenAddr &&
+      (!effectiveSuperToken || !!superToken),
     watch: true,
+    throughBalanceOf: superToken?.sameAsUnderlying,
   });
 
   if (!strategy || (!poolToken && PoolTypes[proposalType] === "funding")) {
