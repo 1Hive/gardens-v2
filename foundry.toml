@@ -20,6 +20,10 @@ celo = { key = "${CELOSCAN_API_KEY}", url = "https://api.celoscan.io/api"}
 bytecode_hash = "none"
 
 # fs_permissions = []
+remappings = [
+  "solady/=lib/allo-v2/lib/solady/src",
+  "allo-v2/=lib/allo-v2/contracts/"
+]
 # auto_detect_remappings = true # recursive auto-detection of remappings
 # remappings = ["ds-test/=lib/forge-std/lib/ds-test/src/",
 # "forge-std/=lib/forge-std/src/",
