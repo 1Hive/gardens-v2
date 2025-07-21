@@ -2,7 +2,7 @@ import { Address, useAccount, useContractRead } from "wagmi";
 import { Maybe, RegistryCommunity } from "#/subgraph/.graphclient";
 import { useChainFromPath } from "./useChainFromPath";
 import { useCheat } from "./useCheat";
-import { safeABI } from "@/src/generated";
+import { safeABI } from "@/src/customAbis";
 
 type StrategyOrCommunity =
   | {

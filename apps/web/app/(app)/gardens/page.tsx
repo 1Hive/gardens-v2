@@ -16,7 +16,7 @@ import { useCheat } from "@/hooks/useCheat";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQueryMultiChain } from "@/hooks/useSubgraphQueryMultiChain";
 import { getProtopiansOwners } from "@/services/alchemy";
-import { safeABI } from "@/src/generated";
+import { safeABI } from "@/src/customAbis";
 
 // Components
 const Header = () => {
