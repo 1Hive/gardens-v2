@@ -33,6 +33,26 @@ export const usePoolToken = ({
     watch,
   });
 
+  if (!enabled) {
+    console.debug("usePoolToken: Hook is disabled, returning undefined");
+    return undefined;
+  }
+
+  if (throughBalanceOf && !balanceResult) {
+    console.debug("Waiting for", {
+      balanceResult,
+    });
+    return undefined;
+  }
+
+  if (!poolAmount && !poolToken) {
+    console.debug("Waiting for", {
+      poolAmount,
+      poolToken,
+    });
+    return undefined;
+  }
+
   return (
     (poolAmount != undefined && !!poolToken) || balanceResult ?
       {

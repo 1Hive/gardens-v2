@@ -128,13 +128,17 @@ export default function Page({
     enabled:
       !!strategy &&
       PoolTypes[strategy.config.proposalType] !== "signaling" &&
-      !!poolTokenAddr &&
-      (!effectiveSuperToken || !!superToken),
+      !!poolTokenAddr,
     watch: true,
     throughBalanceOf: superToken?.sameAsUnderlying,
   });
 
   if (!strategy || (!poolToken && PoolTypes[proposalType] === "funding")) {
+    console.debug("Loading pool data, waiting for", {
+      strategy,
+      poolTokenIfFundingPool: poolToken,
+      isFundingPool: PoolTypes[proposalType] === "funding",
+    });
     return (
       <div className="mt-96 col-span-12">
         <LoadingSpinner />
