@@ -4,7 +4,6 @@ import { Abi } from "viem";
 import { abi as alloABI } from "#/contracts/out/Allo.sol/Allo.json";
 import { abi as CVStrategyABI } from "#/contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json";
 import { abi as ArbitratorAbi } from "#/contracts/out/IArbitrator.sol/IArbitrator.json";
-import { abi as SafeABI } from "#/contracts/out/ISafe.sol/ISafe.json";
 import { abi as mockERC20ABI } from "#/contracts/out/MockERC20.sol/MockERC20.json";
 import { abi as PassportScorerABI } from "#/contracts/out/PassportScorer.sol/PassportScorer.json";
 import { abi as registryComityABI } from "#/contracts/out/RegistryCommunityV0_0.sol/RegistryCommunityV0_0.json";
@@ -33,10 +32,6 @@ export default defineConfig({
     {
       name: "Allo",
       abi: alloABI as Abi,
-    },
-    {
-      name: "Safe",
-      abi: SafeABI as Abi,
     },
     {
       name: "PassportScorer",
