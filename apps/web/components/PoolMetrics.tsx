@@ -74,6 +74,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
   const [isStreamModalOpened, setIsStreamModalOpened] = useState(false);
   const [isTransferModalOpened, setIsTransferModalOpened] = useState(false);
   const [useExistingBalance, setUseExistingBalance] = useState(false);
+  const showUseSuperTokenBalance = useCheat("showUseSuperTokenBalance");
   const { data: balance } = useBalance({
     address: accountAddress,
     formatUnits: poolToken.decimals,
@@ -578,22 +579,26 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                       {superToken.symbol}
                     </div>
                   </div>
-                  <div>
-                    <FormCheckBox
-                      registerKey="useExistingBalance"
-                      label="Include existing balance"
-                      tooltip="Please make sure this balance isn't used for another stream."
-                      value={useExistingBalance}
-                      onChange={(e) => setUseExistingBalance(e.target.checked)}
-                      customTooltipIcon={
-                        <ExclamationTriangleIcon
-                          width={20}
-                          height={20}
-                          className="!text-warning-content"
-                        />
-                      }
-                    />
-                  </div>
+                  {showUseSuperTokenBalance && (
+                    <div>
+                      <FormCheckBox
+                        registerKey="useExistingBalance"
+                        label="Include existing balance"
+                        tooltip="Please make sure this balance isn't used for another stream."
+                        value={useExistingBalance}
+                        onChange={(e) =>
+                          setUseExistingBalance(e.target.checked)
+                        }
+                        customTooltipIcon={
+                          <ExclamationTriangleIcon
+                            width={20}
+                            height={20}
+                            className="!text-warning-content"
+                          />
+                        }
+                      />
+                    </div>
+                  )}
                   <div className="text-sm text-neutral-content flex items-center gap-1">
                     Check it on{" "}
                     <a

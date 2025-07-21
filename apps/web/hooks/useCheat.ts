@@ -10,6 +10,7 @@ export const cheats = [
   "queryAllChains",
   "showExcludedCommunities",
   "showAsCouncilSafe",
+  "showUseSuperTokenBalance",
 ] as const;
 
 export type CheatName = (typeof cheats)[number];
