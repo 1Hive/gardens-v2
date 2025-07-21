@@ -24,8 +24,9 @@ export const useCheat = (cheat: CheatName) => {
     (window as any).useCheats = () => {
       console.log("Cheats commands:");
       cheats.forEach((c) => {
+        const enabled = localStorage.getItem(c) === "true";
         console.log(
-          `localStorage.setItem("${c}", true) => currently ${localStorage.getItem(c) === "true" ? "enabled" : "disabled"}`,
+          `localStorage.setItem("${c}", ${!enabled}) => currently ${enabled ? "enabled" : "disabled"}`,
         );
       });
     };
