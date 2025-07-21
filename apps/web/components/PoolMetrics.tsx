@@ -562,17 +562,19 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                       Wrapped token balance:
                     </div>
                     <div className="flex items-center gap-1 w-full">
-                      <Button
-                        btnStyle="link"
-                        color="primary"
-                        size="sm"
-                        className="!p-0"
-                        onClick={() => {
-                          setAmount(superToken.formatted ?? "0");
-                        }}
-                      >
-                        {toPrecision(+(superToken.formatted ?? 0), 4)}
-                      </Button>
+                      {superToken.value > 0n && useExistingBalance ?
+                        <Button
+                          btnStyle="link"
+                          color="primary"
+                          size="sm"
+                          className="!p-0"
+                          onClick={() => {
+                            setAmount(superToken.formatted ?? "0");
+                          }}
+                        >
+                          {toPrecision(+(superToken.formatted ?? 0), 4)}
+                        </Button>
+                      : toPrecision(+(superToken.formatted ?? 0), 4)}{" "}
                       {superToken.symbol}
                     </div>
                   </div>
