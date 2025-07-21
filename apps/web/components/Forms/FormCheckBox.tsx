@@ -42,7 +42,6 @@ export function FormCheckBox({
     <div className={`my-2 flex items-center ${className}`}>
       <input
         defaultChecked={defaultChecked}
-        type="checkbox"
         checked={value}
         id={registerKey}
         {...registered}

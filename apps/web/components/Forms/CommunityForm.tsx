@@ -526,7 +526,6 @@ export const CommunityForm = () => {
               register={register}
               errors={errors}
               registerKey="isKickMemberEnabled"
-              type="checkbox"
               tooltip="If enabled, the council can remove members from the community. Removed members will receive their staked tokens back and can rejoin later."
             />
           </div>

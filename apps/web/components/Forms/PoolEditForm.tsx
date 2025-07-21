@@ -658,7 +658,6 @@ export default function PoolEditForm({
                 <FormCheckBox
                   label="Use global tribunal"
                   registerKey="useGlobalTribunal"
-                  type="checkbox"
                   tooltip="Check this box to use the Gardens global tribunal Safe to rule on proposal disputes in the Pool, a service we offer if your community does not have an impartial 3rd party that can rule on violations of the Covenant."
                   value={
                     tribunalAddress?.toLowerCase() ===
