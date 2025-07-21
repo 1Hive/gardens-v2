@@ -22,6 +22,7 @@ import { Modal } from "./Modal";
 import { Skeleton } from "./Skeleton";
 import { TransactionModal, TransactionProps } from "./TransactionModal";
 import { SuperfluidStream } from "@/assets";
+import { useCheat } from "@/hooks/useCheat";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useHandleAllowance } from "@/hooks/useHandleAllowance";
