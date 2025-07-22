@@ -43,6 +43,7 @@ export function FormCheckBox({
       <input
         defaultChecked={defaultChecked}
         checked={value}
+        type="checkbox"
         id={registerKey}
         {...registered}
         onChange={registered?.onChange ?? onChange}
