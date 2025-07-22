@@ -8,8 +8,10 @@ export const SUPER_TOKEN_QUERY = gql`
   query superToken($token: String!) {
     tokens(
       where: {
-        isListed: true
-        or: [{ underlyingToken: $token }, { id: $token }]
+        and: [
+          { isListed: true }
+          { or: [{ underlyingToken: $token }, { id: $token }] }
+        ]
       }
       orderBy: isListed
       orderDirection: desc
