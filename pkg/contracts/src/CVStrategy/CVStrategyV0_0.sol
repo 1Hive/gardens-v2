@@ -287,7 +287,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     }
 
     function onlyCouncilSafeOrMember() internal view {
-        if (msg.sender != address(registryCommunity.councilSafe()) && false == registryCommunity.isMember(msg.sender)) {
+        if (msg.sender != address(registryCommunity.councilSafe()) && false == _canExecuteAction(msg.sender)) {
             // revert OnlyCouncilSafeOrMember();
             revert(); // @todo take commented when contract size fixed with diamond
         }
@@ -1105,14 +1105,18 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
 
     function connectSuperfluidGDA(address gda) external {
         onlyCouncilSafeOrMember();
-        bool success = superfluidToken.connectPool(ISuperfluidPool(gda));
+        ISuperToken supertoken =
+            address(superfluidToken) != address(0) ? superfluidToken : ISuperToken(allo.getPool(poolId).token);
+        bool success = supertoken.connectPool(ISuperfluidPool(gda));
         require(success, "Superfluid GDA connect failed");
         emit SuperfluidGDAConnected(gda, msg.sender);
     }
 
     function disconnectSuperfluidGDA(address gda) external {
         onlyCouncilSafeOrMember();
-        bool success = superfluidToken.disconnectPool(ISuperfluidPool(gda));
+        ISuperToken supertoken =
+            address(superfluidToken) != address(0) ? superfluidToken : ISuperToken(allo.getPool(poolId).token);
+        bool success = supertoken.disconnectPool(ISuperfluidPool(gda));
         require(success, "Superfluid GDA disconnect failed");
         emit SuperfluidGDADisconnected(gda, msg.sender);
     }
@@ -1280,6 +1284,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     function _addToAllowList(address[] memory members) internal {
         bytes32 allowlistRole = keccak256(abi.encodePacked("ALLOWLIST", poolId));
 
+        // we expect the UI to add address(0) back to the allowlist in case of removing all members
         if (registryCommunity.hasRole(allowlistRole, address(0))) {
             registryCommunity.revokeRole(allowlistRole, address(0));
         }
