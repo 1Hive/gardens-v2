@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useMemo } from "react";
 import { Address, useContractRead } from "wagmi";
 import {
   CVProposal,
@@ -8,7 +8,6 @@ import {
   TokenGarden,
 } from "#/subgraph/.graphclient";
 import { useChainFromPath } from "./useChainFromPath";
-import { useChainIdFromPath } from "./useChainIdFromPath";
 import { cvStrategyABI } from "@/src/generated";
 import { PoolTypes } from "@/types";
 import { getRemainingBlocksToPass } from "@/utils/convictionFormulas";
@@ -113,6 +112,7 @@ export const useConvictionRead = ({
       thresholdFromContract,
       proposalData?.strategy.maxCVSupply,
       token?.decimals,
+      initialized,
     ],
   );
 
@@ -129,6 +129,7 @@ export const useConvictionRead = ({
       proposalData?.stakedAmount,
       proposalData?.strategy.totalEffectiveActivePoints,
       token?.decimals,
+      initialized,
     ],
   );
 
@@ -141,7 +142,12 @@ export const useConvictionRead = ({
           token?.decimals ?? 18,
         )
       : undefined,
-    [updatedConviction, proposalData?.strategy.maxCVSupply, token?.decimals],
+    [
+      updatedConviction,
+      proposalData?.strategy.maxCVSupply,
+      token?.decimals,
+      initialized,
+    ],
   );
 
   logOnce("debug", "Conviction computed numbers", {
