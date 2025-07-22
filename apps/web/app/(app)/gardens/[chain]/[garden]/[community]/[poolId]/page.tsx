@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { Address } from "viem";
-import { useBalance } from "wagmi";
+import { useBalance, useAccount } from "wagmi";
 import {
   getAlloQuery,
   getPoolDataDocument,
@@ -77,11 +77,12 @@ export default function Page({
     strategy?.config.superfluidToken ??
     (superToken && superToken.sameAsUnderlying ? superToken.id : null);
 
+  const { address } = useAccount();
   const { data: superTokenInfo } = useBalance({
-    address: strategy?.id as Address,
+    address: address as Address,
     token: effectiveSuperToken as Address,
     watch: true,
-    enabled: !!effectiveSuperToken && !!strategy,
+    enabled: !!effectiveSuperToken && !!address,
   });
 
   const { metadata: ipfsResult } = useMetadataIpfsFetch({
