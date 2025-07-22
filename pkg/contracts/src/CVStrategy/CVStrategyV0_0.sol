@@ -34,11 +34,14 @@ import {
 } from "./ICVStrategy.sol";
 
 import {ConvictionsUtils} from "./ConvictionsUtils.sol";
+import {PowerManagementUtils} from "./PowerManagementUtils.sol";
+
 import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Library.sol";
 
 /// @custom:oz-upgrades-from CVStrategyV0_0
 contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     using SuperTokenV1Library for ISuperToken;
+
     /*|--------------------------------------------|*/
     /*|              CUSTOM ERRORS                 |*/
     /*|--------------------------------------------|*/
@@ -400,14 +403,10 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
             // revert(("UserCannotExecuteAction")); // @todo take commented when contract size fixed with diamond
             revert();
         }
-        uint256 pointsToIncrease = 0;
-        if (pointSystem == PointSystem.Unlimited) {
-            pointsToIncrease = _amountToStake; // from increasePowerUnlimited(_amountToUnstake)
-        } else if (pointSystem == PointSystem.Capped) {
-            pointsToIncrease = increasePowerCapped(_member, _amountToStake);
-        } else if (pointSystem == PointSystem.Quadratic) {
-            pointsToIncrease = increasePowerQuadratic(_member, _amountToStake);
-        }
+        uint256 pointsToIncrease = PowerManagementUtils.increasePower(
+            registryCommunity, _member, _amountToStake, pointSystem, pointConfig.maxAmount
+        );
+
         bool isActivated = registryCommunity.memberActivatedInStrategies(_member, address(this));
         if (isActivated) {
             totalPointsActivated += pointsToIncrease;
@@ -420,19 +419,10 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         onlyRegistryCommunity();
         //requireMemberActivatedInStrategies
 
-        uint256 pointsToDecrease = 0;
-        if (pointSystem == PointSystem.Unlimited) {
-            pointsToDecrease = _amountToUnstake;
-        } else if (pointSystem == PointSystem.Quadratic) {
-            pointsToDecrease = decreasePowerQuadratic(_member, _amountToUnstake);
-        } else if (pointSystem == PointSystem.Capped) {
-            if (registryCommunity.getMemberPowerInStrategy(_member, address(this)) < pointConfig.maxAmount) {
-                pointsToDecrease = _amountToUnstake;
-            } else if (registryCommunity.getMemberStakedAmount(_member) - _amountToUnstake < pointConfig.maxAmount) {
-                pointsToDecrease =
-                    pointConfig.maxAmount - (registryCommunity.getMemberStakedAmount(_member) - _amountToUnstake);
-            }
-        }
+        uint256 pointsToDecrease = PowerManagementUtils.decreasePower(
+            registryCommunity, _member, _amountToUnstake, pointSystem, pointConfig.maxAmount
+        );
+
         uint256 voterStake = totalVoterStakePct[_member];
         uint256 unusedPower = registryCommunity.getMemberPowerInStrategy(_member, address(this)) - voterStake;
         if (unusedPower < pointsToDecrease) {
@@ -455,50 +445,6 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         totalPointsActivated -= pointsToDecrease;
         emit PowerDecreased(_member, _amountToUnstake, pointsToDecrease);
 
-        return pointsToDecrease;
-    }
-
-    function increasePowerCapped(address _member, uint256 _amountToStake) internal view returns (uint256) {
-        // console.log("POINTS TO INCREASE", _amountToStake);
-        uint256 memberPower = registryCommunity.getMemberPowerInStrategy(_member, address(this));
-        // console.log("MEMBERPOWER", memberPower);
-        if (memberPower + _amountToStake > pointConfig.maxAmount) {
-            _amountToStake = pointConfig.maxAmount - memberPower;
-        }
-        // console.log("POINTS TO INCREASE END", _amountToStake);
-
-        return _amountToStake;
-    }
-
-    function increasePowerQuadratic(address _member, uint256 _amountToStake) internal view returns (uint256) {
-        uint256 totalStake = registryCommunity.getMemberStakedAmount(_member) + _amountToStake;
-
-        uint256 decimal = 18;
-        try ERC20(address(registryCommunity.gardenToken())).decimals() returns (uint8 _decimal) {
-            decimal = uint256(_decimal);
-        } catch {
-            // console.log("Error getting decimal");
-        }
-        uint256 newTotalPoints = Math.sqrt(totalStake * 10 ** decimal);
-        uint256 currentPoints = registryCommunity.getMemberPowerInStrategy(_member, address(this));
-
-        uint256 pointsToIncrease = newTotalPoints - currentPoints;
-
-        return pointsToIncrease;
-    }
-
-    function decreasePowerQuadratic(address _member, uint256 _amountToUnstake) public view returns (uint256) {
-        uint256 decimal = 18;
-        try ERC20(address(registryCommunity.gardenToken())).decimals() returns (uint8 _decimal) {
-            decimal = uint256(_decimal);
-        } catch {
-            // console.log("Error getting decimal");
-        }
-        // console.log("_amountToUnstake", _amountToUnstake);
-        uint256 newTotalStake = registryCommunity.getMemberStakedAmount(_member) - _amountToUnstake;
-        // console.log("newTotalStake", newTotalStake);
-        uint256 newTotalPoints = Math.sqrt(newTotalStake * 10 ** decimal);
-        uint256 pointsToDecrease = registryCommunity.getMemberPowerInStrategy(_member, address(this)) - newTotalPoints;
         return pointsToDecrease;
     }
 
