@@ -657,7 +657,7 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
       args: [
         poolTokenAddress,
         1,
-        "Super" + customTokenData!.name,
+        "Super " + customTokenData!.name,
         customTokenData!.symbol + "x",
       ],
     });
