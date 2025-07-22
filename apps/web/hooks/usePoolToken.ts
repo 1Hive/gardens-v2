@@ -23,7 +23,7 @@ export const usePoolToken = ({
 
   const { data: poolToken } = useToken({
     address: poolTokenAddr as Address,
-    enabled: enabled && poolTokenAddr !== zeroAddress && !throughBalanceOf,
+    enabled: enabled && poolTokenAddr !== zeroAddress,
   });
 
   const { data: balanceResult } = useBalance({
@@ -63,6 +63,7 @@ export const usePoolToken = ({
         formatted:
           balanceResult?.formatted ??
           (poolAmount! / 10n ** BigInt(poolToken!.decimals)).toString(),
+        name: poolToken!.name,
       }
     : !poolAmount && poolToken ?
       {
@@ -71,6 +72,7 @@ export const usePoolToken = ({
         decimals: poolToken.decimals,
         balance: 0n,
         formatted: "0",
+        name: poolToken.name,
       }
     : undefined
   );

@@ -546,7 +546,7 @@ export default function PoolHeader({
         args: [
           poolToken!.address as Address,
           1,
-          "Super" + poolToken!.name,
+          "Super " + poolToken!.name,
           poolToken!.symbol + "x",
         ],
       });
