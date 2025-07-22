@@ -475,15 +475,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
             _checkProposalAllocationValidity(pv[i].proposalId, pv[i].deltaSupport);
         }
         checkSenderIsMember(_sender);
-        if (!_canExecuteAction(_sender)) {
-            for (uint256 i = 0; i < pv.length; i++) {
-                if (pv[i].deltaSupport > 0) {
-                    // revert UserCannotExecuteAction();
-                    // revert(("UserCannotExecuteAction")); // @todo take commented when contract size fixed with diamond
-                    revert();
-                }
-            }
-        }
+        
         if (!registryCommunity.memberActivatedInStrategies(_sender, address(this))) {
             // revert UserIsInactive();
             // revert(("UserIsInactive")); // @todo take commented when contract size fixed with diamond
