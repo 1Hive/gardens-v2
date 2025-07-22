@@ -136,6 +136,9 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     : requestedAmountBn;
 
   const isSuperTokenSufficient = effectiveRequestedAmountBn <= 0n;
+  console.debug({
+    superToken,
+  });
 
   const {
     writeAsync: writeStreamFundsAsync,

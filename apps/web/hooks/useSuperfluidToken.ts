@@ -7,14 +7,16 @@ import { ChainId } from "@/types";
 export const SUPER_TOKEN_QUERY = gql`
   query superToken($token: String!) {
     tokens(
-      where: { or: [{ underlyingToken: $token }, { id: $token }] }
+      where: {
+        isListed: true
+        or: [{ underlyingToken: $token }, { id: $token }]
+      }
       orderBy: isListed
       orderDirection: desc
     ) {
       name
       symbol
       id
-      isListed
     }
   }
 `;
@@ -23,7 +25,6 @@ export type SuperToken = {
   name: string;
   symbol: string;
   id: Address;
-  isListed?: boolean;
   underlyingToken: Address;
   sameAsUnderlying?: boolean;
 };
