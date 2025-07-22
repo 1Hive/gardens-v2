@@ -17,7 +17,6 @@ import {BaseStrategyUpgradeable} from "../BaseStrategyUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {ICollateralVault} from "../interfaces/ICollateralVault.sol";
 import {PassportScorer} from "../PassportScorer.sol";
-import {ISuperToken} from "../interfaces/ISuperToken.sol";
 import {
     ProposalType,
     PointSystem,
@@ -35,9 +34,11 @@ import {
 } from "./ICVStrategy.sol";
 
 import {ConvictionsUtils} from "./ConvictionsUtils.sol";
+import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Library.sol";
 
 /// @custom:oz-upgrades-from CVStrategyV0_0
 contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
+    using SuperTokenV1Library for ISuperToken;
     /*|--------------------------------------------|*/
     /*|              CUSTOM ERRORS                 |*/
     /*|--------------------------------------------|*/
@@ -120,6 +121,8 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     event AllowlistMembersAdded(uint256 poolId, address[] members);
     event SybilScorerUpdated(address sybilScorer);
     event SuperfluidTokenUpdated(address superfluidToken);
+    event SuperfluidGDAConnected(address indexed gda, address indexed by);
+    event SuperfluidGDADisconnected(address indexed gda, address indexed by);
     // event Logger(string message, uint256 value);
 
     /*|-------------------------------------/-------|*o
@@ -276,6 +279,13 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
                 )
         ) {
             // revert ProposalInvalidForAllocation(_proposalId, p.proposalStatus);
+            revert(); // @todo take commented when contract size fixed with diamond
+        }
+    }
+
+    function onlyCouncilSafeOrMember() internal view {
+        if (msg.sender != address(registryCommunity.councilSafe()) && false == registryCommunity.isMember(msg.sender)) {
+            // revert OnlyCouncilSafeOrMember();
             revert(); // @todo take commented when contract size fixed with diamond
         }
     }
@@ -1145,6 +1155,20 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         if (address(sybilScorer) != address(0) && _sybilScoreThreshold > 0) {
             sybilScorer.modifyThreshold(address(this), _sybilScoreThreshold);
         }
+    }
+
+    function connectSuperfluidGDA(address gda) external {
+        onlyCouncilSafeOrMember();
+        bool success = superfluidToken.connectPool(ISuperfluidPool(gda));
+        require(success, "Superfluid GDA connect failed");
+        emit SuperfluidGDAConnected(gda, msg.sender);
+    }
+
+    function disconnectSuperfluidGDA(address gda) external {
+        onlyCouncilSafeOrMember();
+        bool success = superfluidToken.disconnectPool(ISuperfluidPool(gda));
+        require(success, "Superfluid GDA disconnect failed");
+        emit SuperfluidGDADisconnected(gda, msg.sender);
     }
 
     function disputeProposal(uint256 proposalId, string calldata context, bytes calldata _extraData)
