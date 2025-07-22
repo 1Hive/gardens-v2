@@ -58,7 +58,7 @@ interface PoolMetricsProps {
     | undefined;
 }
 
-const secondsToMonth = 60 * 60 * 24 * 30;
+const secondsToMonth = 2628000;
 const monthToSeconds = 1 / secondsToMonth;
 
 export const PoolMetrics: FC<PoolMetricsProps> = ({
