@@ -3,7 +3,7 @@ import { Address, isAddress } from "viem";
 import { useContractRead } from "wagmi";
 import { useCheat } from "./useCheat";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
-import { safeABI } from "@/src/generated";
+import { safeABI } from "@/src/customAbis";
 
 interface UseSafeValidationProps {
   address?: Address | string;

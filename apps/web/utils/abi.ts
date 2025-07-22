@@ -4,6 +4,7 @@ import {
   superfluidCFAv1ForwarderAbi,
   superTokenABI,
   superTokenFactoryAbi,
+  safeABI,
 } from "@/src/customAbis";
 import {
   alloABI,
@@ -12,7 +13,6 @@ import {
   passportScorerABI,
   registryCommunityABI,
   registryFactoryABI,
-  safeABI,
 } from "@/src/generated";
 
 const FuncFilterError = (item: { type: string }) => item.type === "error";

@@ -1362,5 +1362,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         return ERC20(token).balanceOf(address(this)) + superfluidBalance;
     }
 
+    receive() external payable {}
+
     uint256[49] private __gap;
 }

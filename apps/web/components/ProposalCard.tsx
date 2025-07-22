@@ -143,7 +143,7 @@ export function ProposalCard({
           "Ready to be executed"
         : ""}
       </p>
-      {proposalWillPass && !readyToBeExecuted ?
+      {proposalWillPass && !readyToBeExecuted && timeToPass && (
         <Countdown
           endTimestamp={Number(timeToPass)}
           display="inline"
@@ -151,7 +151,7 @@ export function ProposalCard({
           onTimeout={triggerConvictionRefetch}
           showTimeout={false}
         />
-      : "llll"}
+      )}
     </>
   );
 

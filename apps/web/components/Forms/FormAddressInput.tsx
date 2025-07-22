@@ -15,7 +15,7 @@ import { LoadingSpinner } from "../LoadingSpinner";
 import { getConfigByChain } from "@/configs/chains";
 import { useCheat } from "@/hooks/useCheat";
 import { useDebounce } from "@/hooks/useDebounce";
-import { safeABI } from "@/src/generated";
+import { safeABI } from "@/src/customAbis";
 import { isENS } from "@/utils/web3";
 
 type Props = {

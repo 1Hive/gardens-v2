@@ -46,8 +46,10 @@ const btnStyles: BtnStyles = {
   filled: {
     primary:
       "bg-primary-button text-neutral-inverted-content hover:bg-primary-hover-content",
-    secondary: "",
-    tertiary: "",
+    secondary:
+      "bg-secondary-button text-neutral-inverted-content hover:bg-secondary-hover-content",
+    tertiary:
+      "bg-tertiary-button text-neutral-inverted-content hover:bg-tertiary-hover-content",
     danger:
       "bg-danger-button text-neutral-inverted-content hover:bg-danger-hover-content",
     disabled: "bg-neutral-button text-neutral-inverted-content",
@@ -57,7 +59,8 @@ const btnStyles: BtnStyles = {
       "text-primary-content border border-primary-content hover:text-primary-hover-content hover:border-primary-hover-content",
     secondary:
       "text-secondary-content border border-secondary-content hover:text-secondary-hover-content hover:border-secondary-hover-content",
-    tertiary: "",
+    tertiary:
+      "text-tertiary-content border border-tertiary-content hover:text-tertiary-hover-content hover:border-tertiary-hover-content",
     danger:
       "text-danger-button border border-danger-button hover:text-danger-hover-content hover:border-danger-hover-content",
     disabled: "text-neutral-soft-content border border-neutral-soft-content",

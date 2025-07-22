@@ -139,7 +139,7 @@ const proposalInputMap: Record<string, number[]> = {
   disputeCollateral: [0, 1],
   tribunalAddress: [0, 1],
   poolTokenAddress: [0, 1],
-  superfluidEnabled: [0, 1],
+  superfluidEnabled: [1],
 };
 
 const fullSybilResistanceOptions: Record<SybilResistanceType, string> = {
@@ -732,7 +732,7 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
                 {networkSfMetadata && poolTokenAddress && customTokenData && (
                   <div className="mb-2">
                     {isFetching ?
-                      <span className="loading loading-spinner loading-md" />
+                      <span className="loading loading-spinner loading-md mb-2" />
                     : (
                       superToken &&
                       superToken.underlyingToken === poolTokenAddress
@@ -760,21 +760,21 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
                       </div>
                     : <Button
                         btnStyle="outline"
-                        color="primary"
+                        color="tertiary"
                         icon={
-                          <ArrowPathRoundedSquareIcon height={24} width={24} />
+                          <ArrowPathRoundedSquareIcon height={20} width={20} />
                         }
                         disabled={!isConnected || missmatchUrl}
                         tooltip={
                           tooltipMessage ??
-                          "Enable stream funding will allow this pool to be funded continuously through Superfluid protocol."
+                          "This allows people to add funds to the pool via streaming (Superfluid)."
                         }
                         forceShowTooltip={true}
                         onClick={() => handleEnableStreaming()}
                         isLoading={isCreateSuperTokenLoading}
                         className="mb-0.5"
                       >
-                        Enable stream funding
+                        Create Stream Token
                       </Button>
                     }
                   </div>
@@ -964,7 +964,6 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
               <FormCheckBox
                 label="Use global tribunal"
                 registerKey="useGlobalTribunal"
-                type="checkbox"
                 tooltip="Check this box to use the Gardens global tribunal Safe to rule on proposal disputes in the Pool, a service we offer if your community does not have an impartial 3rd party that can rule on violations of the Covenant."
                 value={
                   tribunalAddress?.toLowerCase() ===

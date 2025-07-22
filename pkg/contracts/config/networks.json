@@ -35,6 +35,7 @@
           "0x15f3e3c557f0a9bed0eba3eadcc5837d964c50fd",
           "0x194a593887a27200bf5a2b6713c1072882136b6c",
           "0x2155378db737b5382d05bdc204f335b7da88af2b",
+          "0x2c668e36496b2acd69e46418d5c1de0f43c9c4d2",
           "0x3bd8c9056a448c7ab3f398df2ffea114febd9139",
           "0x4440e05839eaacc4927178756faa48ecc23386f8",
           "0x464f010f343bb52689e8579c84e76c8e04c7dbdc",
@@ -47,7 +48,7 @@
           "0xe6dedd7a954c51ddb283b751db6970a75d067cad"
         ]
       },
-      "hash": "0ea3fcdf814b88649ed41e0df349d9a1fb8566f4"
+      "hash": "492e8f7cb13dcee0aa5743e3018e947032a7672b"
     },
     {
       "name": "opsepolia",
@@ -142,6 +143,7 @@
           "0xc3ba42da1d9f6b09d4d1315ac04f873a5ba64d3c",
           "0xdd65d3eac26d91f1040fe3beca11863cd354788e",
           "0xe0902356a984540ca097021dbd9e0650974c7f7d",
+          "0xe8cb705f0f29c554e71972af1bfbe16bb2673683",
           "0xee9cc69179697f3bf8172624c5803b58bf6bf73f",
           "0xf62a2e4ecf3bf73313b3bbbfb1563cb4433c8933",
           "0xfa1d8bdb95e0288779df13f40ff32567647e7ffa",
@@ -156,6 +158,7 @@
           "0x424fc753af82bff026b839a2e8f92709242dec97",
           "0x457027fef40d9894e8ae33b25b60b5116ecf3014",
           "0x46408b210e77408c17c183470c4693f458f5aed8",
+          "0x4d2c9571bd9f157fb558fe6ca3cf366067e7515e",
           "0x5b7d4523862981219c74b9e081221011e4f45182",
           "0x7749aee50faeca5d7eed53bcbcf07db5aaf72e51",
           "0xad3d78ed1b03f26238845612eeb3c5b2677fa359",
@@ -170,7 +173,7 @@
           "0xfa7299335e6b6d1305ec968ef23471d27002d682"
         ]
       },
-      "hash": "f4e968e12df5eb0725be87f2635063d00435c5cb"
+      "hash": "4073af04fd645359c8bb9f49b0cafe198dc85f3a"
     },
     {
       "name": "optimism",
@@ -216,6 +219,7 @@
           "0xb1f32397d6db17db39f625f14286e6e620c3cdc0",
           "0xbbb2313aeb8b1ff309790e20e61280aecd548db4",
           "0xbc5a25bf2eeb5941dd3531a0ab8857c9f0c3b6a5",
+          "0xbec85d99c6f4ec34af0a9222cdd280127e06ab44",
           "0xcee4e641af10b05c17a657d038c2a0071e1ec051",
           "0xd3345828914b740fddd1b8ae4f4d2ce03d1e0960",
           "0xe5b10de982897a60cfae8481bac5848816c0f705",
@@ -224,6 +228,7 @@
           "0xf515b83f7e0ab851f822e56b0fe63dfa973e74f0"
         ],
         "CV_STRATEGIES": [
+          "0x0323015258478a030a655e75a63a73106d5e3f26",
           "0x0a552942a6eb43d01c845f3a354b83ec30146950",
           "0x0a9d78ea6de07fddbc71f1181d52f78052654b15",
           "0x0df82861284051ed49c2eb5ef9dd626724f63ad1",
@@ -237,6 +242,8 @@
           "0x3715bac18af8f0d27aa2121abc70c8051c632799",
           "0x442f6424f5b533dff6da469334dc3b81c80a7aca",
           "0x4ceda4f34d3512900cc03c813e7eff4619ce5cfa",
+          "0x528bfb7875a7134bb14b02a96d1e8e97d886e5c5",
+          "0x557f7f22a3f6aa38f17d00ae1ec161d2f41f5850",
           "0x56c014f23380d1c4e15438904d66de8e4555533c",
           "0x5b977869aea25fa0c49c6d3ea044e5140a83c144",
           "0x62592b50c68fc511862e96d861a81048fb19ac8f",
@@ -262,12 +269,13 @@
           "0xed6704f988ffe321be99cf2a8625ec2551fbe36c",
           "0xee9a549fe93e06c0291dc89fcfcd224c9245d6c9",
           "0xf3772fcf3f172abd43ae9b1d11c87e3d5c265be8",
+          "0xf4a3e1883fd7ba75def1b56e307e90c90d200200",
           "0xf793cfaa35ce36c213bd0e226d9c14afa8cfd8f8",
           "0xfeca5fc72deb98b41198a5dce90e00bbafbe5888",
           "0xfed43acfa82e0e924d507124892878b6086b581d"
         ]
       },
-      "hash": "60351537050526e8142a14ba38cd5d4ce8696bfb"
+      "hash": "fa2bc7056bbfd6159247a1244161b0960d9892f3"
     },
     {
       "name": "polygon",
@@ -406,6 +414,7 @@
           "0xcdd52a838b602910d582ebebe91f24cf284fddd2",
           "0xd12f4faab3a770175f5d7e19bd32b1a7aadc0a31",
           "0xd59884c190277f56a3dbf4b094e5fe9327150c24",
+          "0xd7cd912eed8e0d8b9f16f362b5239e9419ce9db9",
           "0xe652081deb52afa56fb2958994427c662356007b",
           "0xe8320380d56c4319aab593e45de868b002b3e357",
           "0xf1ec3cb9a862844aad68df495955832a242e39e7",
@@ -413,7 +422,7 @@
           "0xfbad687a935390ff59b36cd6c9462d0b1948e378"
         ]
       },
-      "hash": "6298a2e69f8938a2016cc41fed19e4f75015dd7a"
+      "hash": "6fee9fa950fbaf0a32ef149cee9fef47548f7309"
     },
     {
       "name": "base",
@@ -487,7 +496,8 @@
           "0xb499593950aa6b45afdad3dc237c72da09292bbb",
           "0xb5f19cef9efda3cec99ea0242e972d04cea44e87",
           "0xc42b34e33160fd5d5257d89e283436df2c71f1f0",
-          "0xca60f3370795a22dcd1c13bfe85cd6a2ff0e6954"
+          "0xca60f3370795a22dcd1c13bfe85cd6a2ff0e6954",
+          "0xf42c9ca2b10010142e2bac34ebdddb0b82177684"
         ],
         "CV_STRATEGIES": [
           "0x0f52002482c3188575f2e751dc948ab2fdd39d10",
@@ -495,8 +505,10 @@
           "0x2085aa46b04ba20f93f24cc51e26e4fc3f0b631d",
           "0x255ced14c5380a4995338491c85ce7de8558f1a0",
           "0x33080d27f98747f092021bdee4a006eda42ff2f7",
+          "0x3764607a0a721981780b798a02c2b1691d6baa39",
           "0x3f39af5c2d5356c1c0a8d0d67c2c4cf68374b59e",
           "0x432952e34729f92b08443a573b8a9cd60557cea7",
+          "0x4d28599ddcba0b041dca0cfee3337048120405cf",
           "0x4db6295640c3d87e3fae7bd150b4ac58e33870fa",
           "0x57db3264a363379b2c66a6914c0bf1d70f4763f6",
           "0x6a8c3a4da74b18e01594be66d43fdc32762456fd",
@@ -516,7 +528,7 @@
           "0xf3d67757c2a3b68c090572962113d7e5db530425"
         ]
       },
-      "hash": "46663ecc1e7f9e54c97ddf638c286c94860da8b3"
+      "hash": "8b712f6e815680becb2038673033880905a50546"
     },
     {
       "name": "mainnet",

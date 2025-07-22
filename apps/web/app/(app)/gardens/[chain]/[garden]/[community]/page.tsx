@@ -17,7 +17,7 @@ import { Dnum, multiply } from "dnum";
 import Image from "next/image";
 import Link from "next/link";
 import { Address } from "viem";
-import { useAccount, useContractRead, useToken } from "wagmi";
+import { useAccount, useToken } from "wagmi";
 import {
   getCommunityDocument,
   getCommunityQuery,
@@ -53,10 +53,11 @@ import { ONE_HIVE_COMMUNITY_ADDRESS } from "@/globals";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useCheat } from "@/hooks/useCheat";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
+import { useCouncil } from "@/hooks/useCouncil";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { getProtopiansOwners } from "@/services/alchemy";
-import { registryCommunityABI, safeABI } from "@/src/generated";
+import { registryCommunityABI } from "@/src/generated";
 import { PoolTypes, Column } from "@/types";
 import { fetchIpfs } from "@/utils/ipfsUtils";
 import {
@@ -117,29 +118,10 @@ export default function Page({
 
   const registryCommunity = result?.registryCommunity;
 
-  const isCouncilSafe = !!(
-    registryCommunity?.councilSafe &&
-    accountAddress?.toLowerCase() ===
-      registryCommunity.councilSafe.toLowerCase()
-  );
-
-  const { data: councilMembers } = useContractRead({
-    abi: safeABI,
-    address: registryCommunity?.councilSafe as Address,
-    functionName: "getOwners",
-    chainId: chain?.id,
-    enabled: !!registryCommunity?.councilSafe && !!chain?.safePrefix,
-    onError: (err) => {
-      console.error("Error reading council safe owners:", err);
-    },
+  const { isCouncilSafe, isCouncilMember, councilMembers } = useCouncil({
+    strategyOrCommunity: registryCommunity,
+    detectCouncilMember: true,
   });
-
-  const isCouncilMember = !!(
-    councilMembers &&
-    councilMembers.find(
-      (x) => x.toLowerCase() === accountAddress?.toLowerCase(),
-    )
-  );
 
   let {
     communityName,
@@ -598,10 +580,7 @@ export default function Page({
               </div>
             </div>
 
-            {(!!isCouncilMember ||
-              accountAddress?.toLowerCase() ===
-                registryCommunity.councilSafe?.toLowerCase() ||
-              showArchived) && (
+            {(!!isCouncilMember || isCouncilSafe || showArchived) && (
               <div className="flex flex-col gap-4">
                 <h4>Archived ({poolsArchived.length})</h4>
                 {/* Archived Pools */}

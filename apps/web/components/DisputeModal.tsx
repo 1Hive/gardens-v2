@@ -37,10 +37,10 @@ import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithC
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { MetadataV1, useIpfsFetch } from "@/hooks/useIpfsFetch";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
+import { safeABI } from "@/src/customAbis";
 import {
   cvStrategyABI,
   iArbitratorABI,
-  safeABI,
   safeArbitratorABI,
 } from "@/src/generated";
 import { DisputeStatus, ProposalStatus } from "@/types";

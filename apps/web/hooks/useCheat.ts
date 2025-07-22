@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 import { useEffect } from "react";
-import { useLocalStorage } from "usehooks-ts";
+import { useWatchLocalStorage } from "./useWatchLocalStorage";
 
 export const cheats = [
   "showArchived",
@@ -9,12 +9,16 @@ export const cheats = [
   "skipPublished",
   "queryAllChains",
   "showExcludedCommunities",
+  "showAsCouncilSafe",
+  "showUseSuperTokenBalance",
 ] as const;
 
 export type CheatName = (typeof cheats)[number];
 
 export const useCheat = (cheat: CheatName) => {
-  const [value] = useLocalStorage(cheat, false, {
+  const [value] = useWatchLocalStorage({
+    key: cheat,
+    initialValue: false,
     deserializer: (v) => v === "true",
     serializer: (v) => (v ? "true" : "false"),
   });
@@ -23,13 +27,16 @@ export const useCheat = (cheat: CheatName) => {
     (window as any).useCheats = () => {
       console.log("Cheats commands:");
       cheats.forEach((c) => {
+        const enabled = localStorage.getItem(c) === "true";
         console.log(
-          `localStorage.setItem("${c}", true) => currently ${localStorage.getItem(c) === "true" ? "enabled" : "disabled"}`,
+          `localStorage.setItem("${c}", ${!enabled})`,
+          enabled ? "enabled" : "disabled",
         );
       });
     };
   }, []);
-  return value;
+
+  return value as boolean;
 };
 
 export const getCheat = (cheat: CheatName) => {
