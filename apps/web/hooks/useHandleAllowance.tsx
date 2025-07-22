@@ -37,7 +37,7 @@ export function useHandleAllowance(
     abi: erc20ABI,
     args: [accountAddr as Address, spenderAddr],
     functionName: "allowance",
-    enabled: !!token && accountAddr !== undefined,
+    enabled: !!token?.address && !!accountAddr && !!spenderAddr,
   });
 
   const {

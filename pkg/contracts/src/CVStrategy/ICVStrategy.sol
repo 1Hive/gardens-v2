@@ -137,8 +137,12 @@ struct CVStrategyInitializeParamsV0_2 {
 }
 
 interface ICVStrategy {
-    function setPoolParams(ArbitrableConfig memory _arbitrableConfig, CVParams memory _cvParams, uint256 _sybilScoreThreshold,
-      address[] memory _membersToAdd,
-      address[] memory _membersToRemove,
-      address _superfluidToken) external;
+    function setPoolParams(
+        ArbitrableConfig memory _arbitrableConfig,
+        CVParams memory _cvParams,
+        uint256 _sybilScoreThreshold,
+        address[] memory _membersToAdd,
+        address[] memory _membersToRemove,
+        address _superfluidToken
+    ) external;
 }

@@ -12,6 +12,7 @@ export const DisplayNumber = ({
   compact,
   copiable,
   tooltipClass = "tooltip-top",
+  forceTooltip,
 }: {
   number: dn.Dnum | string;
   tokenSymbol?: string;
@@ -115,7 +116,7 @@ export const DisplayNumber = ({
             handleCopy(ev);
           }
         }}
-        className={`${!disableTooltip && showTooltip && "tooltip"} ${copiable && "cursor-pointer"} ${tooltipClass}`}
+        className={`${!disableTooltip && (showTooltip || forceTooltip) && "tooltip"} ${copiable && "cursor-pointer"} ${tooltipClass}`}
         data-tip={isCopied ? "Copied!" : fullNumberStr}
       >
         <p className={valueClassName}>{shortNumber}</p>

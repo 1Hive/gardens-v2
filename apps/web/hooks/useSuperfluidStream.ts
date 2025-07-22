@@ -36,17 +36,18 @@ export function useSuperfluidStream({
     bigint | null
   >(null);
   const fetch = async () => {
-    if (!!receiver || !superToken) return;
-    const result = await client?.query(STREAM_TO_TARGET_QUERY, {
-      receiver: receiver.toLowerCase(),
-      token: superToken?.toLowerCase(),
-    });
-    if (!result || result?.error)
-      console.error(
-        "Something wrong while fetching superfluid stream",
-        result?.error,
-      );
-    else {
+    if (!receiver || !superToken || !client) return;
+    const result = await client
+      .query(STREAM_TO_TARGET_QUERY, {
+        receiver: receiver.toLowerCase(),
+        token: superToken?.toLowerCase(),
+      })
+      .toPromise()
+      .catch((error) => {
+        console.error("Error fetching superfluid stream:", error);
+        return null;
+      });
+    if (result) {
       const totalFlowRate = result.data.streams.reduce(
         (acc: bigint, flow: { currentFlowRate: bigint }) =>
           acc + BigInt(flow.currentFlowRate),
@@ -70,7 +71,7 @@ export function useSuperfluidStream({
   useEffect(() => {
     if (!client) return;
     fetch();
-  }, [client]);
+  }, [client, superToken]);
 
   return {
     currentFlowRateBn,

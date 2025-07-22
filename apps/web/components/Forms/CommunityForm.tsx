@@ -348,7 +348,7 @@ export const CommunityForm = () => {
     if (!isAddress(address)) return "Invalid Token Address";
     if (!selectedChainId) return "Please select a chain first";
     if (+selectedChainId !== Number(connectedChainId))
-      return `Please connect to ${chainConfigMap[selectedChainId]?.name} network`;
+      return `Connect to ${chainConfigMap[selectedChainId]?.name} network`;
     try {
       setTokenIsFetching(true);
       const [symbol, decimals] = await Promise.all([
@@ -526,7 +526,6 @@ export const CommunityForm = () => {
               register={register}
               errors={errors}
               registerKey="isKickMemberEnabled"
-              type="checkbox"
               tooltip="If enabled, the council can remove members from the community. Removed members will receive their staked tokens back and can rejoin later."
             />
           </div>

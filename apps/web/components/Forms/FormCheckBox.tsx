@@ -1,10 +1,9 @@
-import React, { HTMLInputTypeAttribute } from "react";
+import React from "react";
 import { RegisterOptions, UseFormRegister } from "react-hook-form";
 import { InfoWrapper } from "../InfoWrapper";
 
 type Props = {
   label: string;
-  type: HTMLInputTypeAttribute;
   registerKey: string;
   register?: UseFormRegister<any>;
   errors?: any;
@@ -15,6 +14,8 @@ type Props = {
   defaultChecked?: boolean;
   onChange?: React.ChangeEventHandler<HTMLInputElement>;
   readOnly?: boolean;
+  customTooltipIcon?: React.ReactNode;
+  className?: string;
 };
 
 export function FormCheckBox({
@@ -28,6 +29,8 @@ export function FormCheckBox({
   onChange,
   tooltip,
   readOnly,
+  customTooltipIcon,
+  className = "",
 }: Props) {
   const registered = register?.(registerKey, {
     ...registerOptions,
@@ -36,20 +39,23 @@ export function FormCheckBox({
     onChange: onChange ?? registerOptions?.onChange,
   });
   return (
-    <div className="my-3 flex items-center">
+    <div className={`my-2 flex items-center ${className}`}>
       <input
         defaultChecked={defaultChecked}
-        type="checkbox"
         checked={value}
+        type="checkbox"
         id={registerKey}
         {...registered}
         onChange={registered?.onChange ?? onChange}
         readOnly={readOnly}
         className="checkbox-info checkbox"
       />
-      <label htmlFor={registerKey} className="ms-2 text-sm font-medium ">
+      <label
+        htmlFor={registerKey}
+        className="ms-2 text-sm font-medium cursor-pointer"
+      >
         {tooltip ?
-          <InfoWrapper tooltip={tooltip}>
+          <InfoWrapper tooltip={tooltip} customIcon={customTooltipIcon}>
             {label}
             {required && <span className="ml-1">*</span>}
           </InfoWrapper>

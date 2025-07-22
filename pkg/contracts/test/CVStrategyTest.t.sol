@@ -247,9 +247,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
             // allo().fundPool{value: poolAmount}(poolId, poolAmount);
             // ERC20 transfer
             vm.deal(address(this), poolAmount);
-            allo().fundPool{value: poolAmount}(poolId, poolAmount);
-            // (bool success,) = address(strategy).call{value: poolAmount}("");
-            // require(success, "Transfer failed");
+            // allo().fundPool{value: poolAmount}(poolId, poolAmount);
+            payable(address(strategy)).transfer(poolAmount);
         } else {
             GV2ERC20(useTokenPool).mint(address(this), poolAmount);
             // ERC20 transfer
@@ -1284,25 +1283,26 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         // );
     }
 
-    function testRevert_allocate_proposalSupport_empty_array() public {
-        (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
+    // @todo commented because of this check is commented in the contract to save space
+    // function testRevert_allocate_proposalSupport_empty_array() public {
+    //     (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
 
-        /**
-         * ASSERTS
-         *
-         */
-        // startMeasuringGas("Support a Proposal");
-        ProposalSupport[] memory votes = new ProposalSupport[](2);
-        votes[0] = ProposalSupport(proposalId, 100e4);
-        votes[1];
-        bytes memory data = abi.encode(votes);
-        // will revert for proposalId 0 because votes[1] is empty so default proposalId value will be 0
-        vm.expectRevert();
-        // // vm.expectRevert(
-        // //     abi.encodeWithSelector(CVStrategyV0_0.ProposalInvalidForAllocation.selector, 0, ProposalStatus.Inactive)
-        // );
-        allo().allocate(proposalId, data);
-    }
+    //     /**
+    //      * ASSERTS
+    //      *
+    //      */
+    //     // startMeasuringGas("Support a Proposal");
+    //     ProposalSupport[] memory votes = new ProposalSupport[](2);
+    //     votes[0] = ProposalSupport(proposalId, 100e4);
+    //     votes[1];
+    //     bytes memory data = abi.encode(votes);
+    //     // will revert for proposalId 0 because votes[1] is empty so default proposalId value will be 0
+    //     vm.expectRevert();
+    //     // // vm.expectRevert(
+    //     // //     abi.encodeWithSelector(CVStrategyV0_0.ProposalInvalidForAllocation.selector, 0, ProposalStatus.Inactive)
+    //     // );
+    //     allo().allocate(proposalId, data);
+    // }
 
     // @todo commented because of this check is commented in the contract to save space
     // function testRevert_allocate_senderZero() public {

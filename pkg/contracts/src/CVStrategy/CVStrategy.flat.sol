@@ -12119,7 +12119,6 @@
 //     //     _;
 //     // }
 
-
 //     /// ================================
 //     /// =========== Views ==============
 //     /// ================================
@@ -13502,11 +13501,11 @@
 //     // if there are more steps, additional functions should be added to allow the owner to check
 //     // this could also check attestations directly and then Accept
 
-//     function registerRecipient(bytes memory _data, address _sender) 
+//     function registerRecipient(bytes memory _data, address _sender)
 //       payable
-//       external 
+//       external
 //      returns (address) {
-//         _checkOnlyAllo(); 
+//         _checkOnlyAllo();
 //         _checkOnlyInitialized();
 //         checkSenderIsMember(_sender);
 //         registryCommunity.onlyStrategyEnabled(address(this));

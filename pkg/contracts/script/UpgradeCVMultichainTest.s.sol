@@ -17,7 +17,7 @@ contract UpgradeCVMultichainTest is BaseMultiChain {
         address registryImplementation = address(new RegistryCommunityV0_0());
         address strategyImplementation = address(new CVStrategyV0_0());
         // address passportScorer = networkJson.readAddress(getKeyNetwork(".ENVS.PASSPORT_SCORER"));
-        address safeArbitrator = networkJson.readAddress(getKeyNetwork(".ENVS.ARBITRATOR"));
+        // address safeArbitrator = networkJson.readAddress(getKeyNetwork(".ENVS.ARBITRATOR"));
 
         // PASSPORT SCORER UPGRADE
         // address passportScorerProxy = networkJson.readAddress(getKeyNetwork(".ENVS.PASSPORT_SCORER"));
@@ -30,16 +30,16 @@ contract UpgradeCVMultichainTest is BaseMultiChain {
         RegistryFactoryV0_0 registryFactory = RegistryFactoryV0_0(payable(address(registryFactoryProxy)));
 
         // 1.a -- Upgrade the Registry Factory --
-        address registryFactoryImplementation = address(new RegistryFactoryV0_0());
+        // address registryFactoryImplementation = address(new RegistryFactoryV0_0());
         // Upgrades.upgradeProxy(address(registryFactoryProxy), "RegistryFactoryV0_0.sol:RegistryFactoryV0_0", "");
         // abi.encodeWithSelector(RegistryFactoryV0_1.initializeV2.selector)
-        registryFactory.upgradeTo(registryFactoryImplementation); // DOESNT VALIDATE SAFE UPGRADING
+        // registryFactory.upgradeTo(registryFactoryImplementation); // DOESNT VALIDATE SAFE UPGRADING
 
         // 1.b -- Set the Registry Community Template --
         registryFactory.setRegistryCommunityTemplate(registryImplementation);
 
         // 1.c -- Set the Strategy Template --
-        registryFactory.setStrategyTemplate(strategyImplementation);
+        // registryFactory.setStrategyTemplate(strategyImplementation);
 
         // 2. REGISTRY COMMUNITIES UPGRADES
         address[] memory registryCommunityProxies =
@@ -58,7 +58,7 @@ contract UpgradeCVMultichainTest is BaseMultiChain {
             registryCommunity.upgradeTo(registryImplementation); // DOESNT VALIDATE SAFE UPGRADING
 
             // 2.b -- Set the Strategy Template --
-            registryCommunity.setStrategyTemplate(strategyImplementation);
+            // registryCommunity.setStrategyTemplate(strategyImplementation);
         }
 
         // 3. CV STRATEGIES UPGRADES
@@ -72,8 +72,8 @@ contract UpgradeCVMultichainTest is BaseMultiChain {
             // abi.encodeWithSelector(CVStrategyV0_0initializeV2.selector)
 
             // 3.a -- Upgrade the CV Strategy --
-            CVStrategyV0_0 cvStrategy = CVStrategyV0_0(payable(address(cvStrategyProxies[i])));
-            cvStrategy.upgradeTo(strategyImplementation); // DOESNT VALIDATE SAFE UPGRADING
+            // CVStrategyV0_0 cvStrategy = CVStrategyV0_0(payable(address(cvStrategyProxies[i])));
+            // cvStrategy.upgradeTo(strategyImplementation); // DOESNT VALIDATE SAFE UPGRADING
 
             // 3.b -- Set the Pool Params --
             // (

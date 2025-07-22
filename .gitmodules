@@ -3,7 +3,7 @@
 	url = https://github.com/foundry-rs/forge-std
 [submodule "lib/allo-v2"]
 	path = lib/allo-v2
-	url = https://github.com/allo-protocol/allo-v2
+	url = https://github.com/1Hive/allo-v2
 [submodule "lib/openzeppelin-foundry-upgrades"]
 	path = lib/openzeppelin-foundry-upgrades
 	url = https://github.com/OpenZeppelin/openzeppelin-foundry-upgrades
