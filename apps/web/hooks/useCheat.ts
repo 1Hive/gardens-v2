@@ -36,7 +36,7 @@ export const useCheat = (cheat: CheatName) => {
     };
   }, []);
 
-  return value;
+  return value as boolean;
 };
 
 export const getCheat = (cheat: CheatName) => {
