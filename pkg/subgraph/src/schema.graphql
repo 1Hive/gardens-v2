@@ -27,6 +27,7 @@ type CVStrategyConfig @entity(immutable: false) {
   maxAmount: BigInt
   allowlist: [String!]
   superfluidToken: String
+  superfluidGDA: [String!]!
 }
 
 type ArbitrableConfig @entity(immutable: false) {
