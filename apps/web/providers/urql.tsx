@@ -44,10 +44,8 @@ export function initUrqlClient(
       exchanges: [
         // cacheExchange,
         // authExchange(async (util) => {
-        //   // console.log("util", util);
         //   return {
         //     didAuthError() {
-        //       console.log("didAuthError");
         //       return false;
         //     },
         //     async refreshAuth() {},

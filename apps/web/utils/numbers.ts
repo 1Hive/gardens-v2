@@ -119,7 +119,6 @@ export function calculatePercentageBigInt(
   tokenDecimals: number = 0,
 ): number {
   if (!value1 || !value2) {
-    // console.log("divideWithDecimals: value1 or value2 is undefined");
     return 0;
   }
 
@@ -137,17 +136,14 @@ export function calculatePercentageBigInt(
 }
 export function calculatePercentage(value1: number, value2: number): number {
   if (!value1 || !value2) {
-    // console.log("divideWithDecimals: value1 or value2 is undefined");
     return 0;
   }
 
   if (value2 == 0) {
-    // console.log("divideWithDecimals: value2 is 0");
     return 0;
   }
 
   const divided = (value1 * 100) / value2;
-  // console.log("divideWithDecimals: ", divided);
 
   return parseFloat(divided.toFixed(2));
 }
