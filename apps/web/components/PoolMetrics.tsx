@@ -98,7 +98,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
   const amount = +(+amountInput) || 0;
 
   const requestedAmountBn = BigInt(
-    Math.round(amount * 10 ** poolToken.decimals),
+    Math.floor(amount * 10 ** poolToken.decimals),
   );
 
   const { writeAsync: writeFundPoolAsync, isLoading: isSendFundsLoading } =
@@ -127,7 +127,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
 
   const streamRequestedAmountPerSec = requestedStreamPerMonth * monthToSeconds;
   const streamRequestedAmountPerSecBn = BigInt(
-    Math.round(streamRequestedAmountPerSec * 10 ** poolToken.decimals),
+    Math.floor(streamRequestedAmountPerSec * 10 ** poolToken.decimals),
   );
 
   const effectiveRequestedAmountBn =
