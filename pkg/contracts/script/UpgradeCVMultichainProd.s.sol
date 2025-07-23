@@ -46,13 +46,13 @@ contract UpgradeCVMultichainProd is BaseMultiChain {
             }
 
             // 1.c -- Set the Strategy Template --
-            // {
-            //     bytes memory setStrategyTemplate =
-            //         abi.encodeWithSelector(registryFactory.setStrategyTemplate.selector, strategyImplementation);
-            //     json = string(
-            //         abi.encodePacked(json, _createTransactionJson(registryFactoryProxy, setStrategyTemplate), ",")
-            //     );
-            // }
+            {
+                bytes memory setStrategyTemplate =
+                    abi.encodeWithSelector(registryFactory.setStrategyTemplate.selector, strategyImplementation);
+                json = string(
+                    abi.encodePacked(json, _createTransactionJson(registryFactoryProxy, setStrategyTemplate), ",")
+                );
+            }
         }
 
         // 2. REGISTRY COMMUNITIES UPGRADES
@@ -73,11 +73,11 @@ contract UpgradeCVMultichainProd is BaseMultiChain {
                     )
                 );
                 // 2.b -- Set the Strategy Template --
-                // json = string(
-                //     abi.encodePacked(
-                //         json, _createTransactionJson(registryCommunityProxies[i], registryTransactions[i * 2 + 1]), ","
-                //     )
-                // );
+                json = string(
+                    abi.encodePacked(
+                        json, _createTransactionJson(registryCommunityProxies[i], registryTransactions[i * 2 + 1]), ","
+                    )
+                );
             }
         }
 
@@ -93,9 +93,9 @@ contract UpgradeCVMultichainProd is BaseMultiChain {
             }
             for (uint256 i = 0; i < cvStrategyProxies.length; i++) {
                 // 3.a -- Upgrade the CV Strategy --
-                // json = string(
-                //     abi.encodePacked(json, _createTransactionJson(cvStrategyProxies[i], upgradeCVStrategies[i]), ",")
-                // );
+                json = string(
+                    abi.encodePacked(json, _createTransactionJson(cvStrategyProxies[i], upgradeCVStrategies[i]), ",")
+                );
                 // 3.b -- Set the Pool Params --
                 // json = string(abi.encodePacked(json, _createTransactionJson(cvStrategyProxies[i], setPoolParams[i]), ","));
             }

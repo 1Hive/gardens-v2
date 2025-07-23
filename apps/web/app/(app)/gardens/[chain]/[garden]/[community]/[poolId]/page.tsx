@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { Address } from "viem";
-import { useBalance } from "wagmi";
+import { useBalance, useAccount } from "wagmi";
 import {
   getAlloQuery,
   getPoolDataDocument,
@@ -68,20 +68,26 @@ export default function Page({
     }
   }, [error]);
 
-  const { superToken, setSuperToken } = useSuperfluidToken({
+  const {
+    superToken: superTokenCandidate,
+    setSuperToken: setSuperTokenCandidate,
+  } = useSuperfluidToken({
     token: strategy?.token,
     enabled: !strategy?.config.superfluidToken,
   });
 
   const effectiveSuperToken =
     strategy?.config.superfluidToken ??
-    (superToken && superToken.sameAsUnderlying ? superToken.id : null);
+    (superTokenCandidate && superTokenCandidate.sameAsUnderlying ?
+      superTokenCandidate.id
+    : null);
 
+  const { address } = useAccount();
   const { data: superTokenInfo } = useBalance({
-    address: strategy?.id as Address,
+    address: address as Address,
     token: effectiveSuperToken as Address,
     watch: true,
-    enabled: !!effectiveSuperToken && !!strategy,
+    enabled: !!effectiveSuperToken && !!address,
   });
 
   const { metadata: ipfsResult } = useMetadataIpfsFetch({
@@ -130,7 +136,7 @@ export default function Page({
       PoolTypes[strategy.config.proposalType] !== "signaling" &&
       !!poolTokenAddr,
     watch: true,
-    throughBalanceOf: superToken?.sameAsUnderlying,
+    throughBalanceOf: superTokenCandidate?.sameAsUnderlying,
   });
 
   if (!strategy || (!poolToken && PoolTypes[proposalType] === "funding")) {
@@ -165,14 +171,15 @@ export default function Page({
         ipfsResult={ipfsResult}
         isEnabled={isEnabled}
         maxAmount={maxAmount}
+        superTokenCandidate={superTokenCandidate}
         superToken={
           superTokenInfo && {
             ...superTokenInfo,
-            sameAsUnderlying: superToken?.sameAsUnderlying,
+            sameAsUnderlying: superTokenCandidate?.sameAsUnderlying,
             address: effectiveSuperToken as Address,
           }
         }
-        setSuperToken={setSuperToken}
+        setSuperTokenCandidate={setSuperTokenCandidate}
       />
 
       {isEnabled && (
@@ -187,7 +194,7 @@ export default function Page({
               superToken={
                 superTokenInfo && {
                   ...superTokenInfo,
-                  sameAsUnderlying: superToken?.sameAsUnderlying,
+                  sameAsUnderlying: superTokenCandidate?.sameAsUnderlying,
                   address: effectiveSuperToken as Address,
                 }
               }

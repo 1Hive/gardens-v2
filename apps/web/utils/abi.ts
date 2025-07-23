@@ -31,8 +31,6 @@ const errorsABI = [
   ...superTokenFactoryAbi.filter(FuncFilterError),
 ];
 
-// console.log("errorsABI", errorsABI);
-
 export function abiWithErrors<TAbi extends Abi>(abi: TAbi) {
   return [...abi, ...errorsABI];
 }

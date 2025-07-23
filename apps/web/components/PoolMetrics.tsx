@@ -58,7 +58,7 @@ interface PoolMetricsProps {
     | undefined;
 }
 
-const secondsToMonth = 60 * 60 * 24 * 30;
+const secondsToMonth = 2628000;
 const monthToSeconds = 1 / secondsToMonth;
 
 export const PoolMetrics: FC<PoolMetricsProps> = ({
@@ -136,9 +136,6 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     : requestedAmountBn;
 
   const isSuperTokenSufficient = effectiveRequestedAmountBn <= 0n;
-  console.debug({
-    superToken,
-  });
 
   const {
     writeAsync: writeStreamFundsAsync,
@@ -750,7 +747,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                       disabled={missmatchUrl || !isConnected || !superToken}
                       tooltip={
                         missmatchUrl || !isConnected ? tooltipMessage : (
-                          "Not enabled yet, reach out to community to enable adding streaming funds into the pool"
+                          "Not enabled yet, the community's Council Safe can connect to enable streaming for this Pool"
                         )
                       }
                       icon={<ArrowPathRoundedSquareIcon className="w-5 h-5" />}

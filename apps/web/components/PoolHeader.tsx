@@ -96,7 +96,8 @@ type Props = {
         sameAsUnderlying?: boolean;
       }
     | undefined;
-  setSuperToken: (token: SuperToken | null) => void;
+  superTokenCandidate: SuperToken | null;
+  setSuperTokenCandidate: (token: SuperToken | null) => void;
 };
 
 export function calculateConvictionGrowthInSeconds(
@@ -134,7 +135,8 @@ export default function PoolHeader({
   poolToken,
   maxAmount,
   superToken,
-  setSuperToken,
+  superTokenCandidate,
+  setSuperTokenCandidate,
 }: Props) {
   const [isOpenModal, setIsOpenModal] = useState(false);
   const { publish } = usePubSubContext();
@@ -453,14 +455,19 @@ export default function PoolHeader({
     chainId ? sfMeta.getNetworkByChainId(chainId) : undefined;
 
   useEffect(() => {
-    if (isEnableStreamTxModalOpened && isCouncilSafe && toastId && superToken) {
+    if (
+      isEnableStreamTxModalOpened &&
+      isCouncilSafe &&
+      toastId &&
+      superTokenCandidate
+    ) {
       toast.dismiss(toastId);
       setToastId(undefined);
       writeEnableStreamFunding({
-        args: [...emptySetPoolParamsCore, superToken.address],
+        args: [...emptySetPoolParamsCore, superTokenCandidate.id],
       });
     }
-  }, [isCouncilSafe, superToken]);
+  }, [isCouncilSafe, superTokenCandidate]);
 
   const {
     writeAsync: writeCreateSuperTokenAsync,
@@ -476,7 +483,7 @@ export default function PoolHeader({
         "SuperTokenFactory",
         "SuperTokenCreated",
       ).args;
-      setSuperToken({
+      setSuperTokenCandidate({
         name: "Super" + poolToken!.name,
         symbol: poolToken!.symbol + "x",
         id: newSuperToken.token,
@@ -532,7 +539,7 @@ export default function PoolHeader({
   );
 
   const handleEnableStreamFunding = () => {
-    let superTokenAddress = superToken?.address;
+    let superTokenAddress = superTokenCandidate?.id;
     if (!superTokenAddress) {
       if (!poolToken) {
         console.error("Pool token is required to create a super token.");
@@ -687,11 +694,11 @@ export default function PoolHeader({
                         disabled={
                           !isConnected ||
                           missmatchUrl ||
-                          !!(isCouncilMember && superToken)
+                          !!(isCouncilMember && superTokenCandidate)
                         }
                         tooltip={
                           // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-                          (isCouncilMember && superToken && tooltipMessage) ||
+                          (isCouncilMember && superTokenCandidate && tooltipMessage) ||
                           "This allows people to add funds to the pool via streaming (Superfluid)."
                         }
                         forceShowTooltip={true}
@@ -701,7 +708,7 @@ export default function PoolHeader({
                           isCreateSuperTokenLoading
                         }
                       >
-                        {superToken ?
+                        {superTokenCandidate ?
                           "Enable Streaming"
                         : "Create Stream Token"}
                       </Button>
