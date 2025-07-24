@@ -690,7 +690,7 @@ export function handleSuperfluidGDAConnected(
 }
 
 export function handleSuperfluidGDADisconnected(
-  event: SuperfluidGDAConnected
+  event: SuperfluidGDADisconnected
 ): void {
   let config = CVStrategyConfig.load(`${event.address.toHex()}-config`);
   if (config == null) {
