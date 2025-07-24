@@ -70,6 +70,8 @@ export default function Page({
       2,
     );
 
+  console.log(poolToken.formatted);
+
   return (
     <div className="page-layout col-span-12 mx-auto">
       <section className="section-layout">
@@ -81,6 +83,7 @@ export default function Page({
         </div>
         <ProposalForm
           arbitrableConfig={data.arbitrableConfigs[0]}
+          poolBalance={poolToken?.formatted}
           strategy={strategyObj}
           poolId={poolId}
           poolParams={data.cvstrategies[0].config}
