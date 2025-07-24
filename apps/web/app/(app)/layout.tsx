@@ -2,11 +2,11 @@
 
 import React from "react";
 import { useState } from "react";
-import {} from "@heroicons/react/24/outline";
+import { ChatBubbleOvalLeftEllipsisIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
 import Link from "next/link";
 import { newLogo } from "@/assets";
-import { Badge, ConnectWallet } from "@/components";
+import { Badge, Button, ConnectWallet } from "@/components";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -95,13 +95,21 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </div>
       {/* Bootom right floating div */}
 
-      <div className="fixed bottom-4 left-4 z-50">
+      <div className="fixed bottom-4 left-0 z-50 w-full px-6 flex items-center justify-between">
         <div
           className="tooltip tooltip-top-right tooltip-warning"
           data-tip="️️Disclaimer: our smart contracts have not undergone a third party security audit, use at your own risk."
         >
           <Badge status={2}>Beta</Badge>
         </div>
+        <a href="https://discord.gg/6U8YGwVRWG" target="_blanck">
+          <Button
+            btnStyle="outline"
+            forceShowTooltip
+            tooltip={"Discord\n support"}
+            icon={<ChatBubbleOvalLeftEllipsisIcon height={24} width={24} />}
+          />
+        </a>
       </div>
     </div>
   );
