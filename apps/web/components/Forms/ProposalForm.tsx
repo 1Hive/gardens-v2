@@ -61,7 +61,7 @@ type ProposalFormProps = {
   tokenGarden: Pick<TokenGarden, "symbol" | "decimals">;
   spendingLimit: number | string | undefined;
   spendingLimitPct: number;
-  poolBalance:string
+  poolBalance: string;
 };
 
 type FormRowTypes = {
@@ -368,7 +368,7 @@ export const ProposalForm = ({
             <div className="relative flex flex-col">
               <FormInput
                 label="Requested amount"
-                subLabel={`Max ${spendingLimit} ${poolToken?.symbol} (${spendingLimitPct.toFixed(2)}% of Pool Funds)`}
+                subLabel={`Pool Funds: ${poolBalance} ${poolToken?.symbol}`}
                 register={register}
                 required
                 onChange={(e) => {

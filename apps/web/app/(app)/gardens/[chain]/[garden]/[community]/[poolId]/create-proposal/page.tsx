@@ -70,8 +70,6 @@ export default function Page({
       2,
     );
 
-  console.log(poolToken.formatted);
-
   return (
     <div className="page-layout col-span-12 mx-auto">
       <section className="section-layout">
