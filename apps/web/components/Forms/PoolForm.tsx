@@ -20,6 +20,7 @@ import { FormPreview, FormRow } from "./FormPreview";
 import { FormRadioButton } from "./FormRadioButton";
 import { FormSelect } from "./FormSelect";
 import { EthAddress } from "../EthAddress";
+import { InfoBox } from "../InfoBox";
 import { InfoWrapper } from "../InfoWrapper";
 import { SuperfluidStream } from "@/assets";
 import { Button } from "@/components/Button";
@@ -248,6 +249,8 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
   >(fullSybilResistanceOptions);
 
   const [loading, setLoading] = useState(false);
+  const [warningMessage, setWarningMessage] = useState(false);
+
   const router = useRouter();
   const pathname = usePathname();
   const { publish } = usePubSubContext();
@@ -256,20 +259,13 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
   const pointSystemType = watch("pointSystemType");
   const strategyType = watch("strategyType");
 
-  const allowNoProtection = useCheat("allowNoProtection");
-
   useEffect(() => {
-    if (PointSystems[pointSystemType] !== "unlimited" && !allowNoProtection) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { noSybilResist, ...rest } = fullSybilResistanceOptions;
-      setSybilResistanceOptions(rest);
-      if (sybilResistanceType === "noSybilResist") {
-        setValue("sybilResistanceType", "allowList");
-      }
-    } else {
-      setSybilResistanceOptions(fullSybilResistanceOptions);
-    }
-  }, [pointSystemType, allowNoProtection]);
+    const isUnlimited = PointSystems[pointSystemType] === "unlimited";
+    const isUnprotected =
+      sybilResistanceType !== "allowList" &&
+      sybilResistanceType !== "gitcoinPassport";
+    setWarningMessage(!isUnlimited && isUnprotected);
+  }, [pointSystemType, sybilResistanceType]);
 
   const formRowTypes: Record<
     string,
@@ -800,6 +796,7 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
                       registerKey="pointSystemType"
                       description={VOTING_POINT_SYSTEM_DESCRIPTION[id]}
                     />
+
                     {PointSystems[pointSystemType] === "capped" &&
                       i === Object.values(PointSystems).indexOf("capped") && (
                         <div className="flex flex-col ml-8 ">
@@ -831,7 +828,6 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
               </div>
             </div>
           </div>
-
           {shouldRenderInputMap("sybilResistanceType", strategyType) && (
             <div className="flex flex-col gap-4">
               <FormSelect
@@ -849,6 +845,19 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
                   }),
                 )}
               />
+              {warningMessage && (
+                <div className="mt-6">
+                  <InfoBox
+                    title="Warning"
+                    content="This setup
+                    may be vulnerable to Sybil attacks (duplicated accounts
+                    gaining unfair influence). To ensure fair governance,
+                    consider enabling voting protection (e.g. allowlist or
+                    Gitcoin Passport)."
+                    infoBoxType="warning"
+                  />
+                </div>
+              )}
               <div className="flex flex-col gap-2 my-2">
                 <hr />
                 <span className="text-neutral-soft-content mx-auto pt-2">
@@ -888,6 +897,7 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
               )}
             </div>
           )}
+
           {/* arbitration section */}
           <div className="flex flex-col gap-4">
             <div className="flex flex-col">
