@@ -18,7 +18,8 @@ export type CheatName = (typeof cheats)[number];
 export const useCheat = (cheat: CheatName) => {
   const [value] = useWatchLocalStorage({
     key: cheat,
-    initialValue: false,
+    initialValue:
+      process.env[`REACT_APP_CHEAT_${cheat.toUpperCase()}`] === "true",
     deserializer: (v) => v === "true",
     serializer: (v) => (v ? "true" : "false"),
   });

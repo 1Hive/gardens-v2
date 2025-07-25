@@ -15,7 +15,6 @@ type ProposalStatsProps = {
 
 export const ProposalStats: FC<ProposalStatsProps> = ({ proposals }) => {
   const proposalsDistributionPoints = proposals.map(({ title }) => {
-    // console.log("voterStakedPointsPct", voterStakedPointsPct);
     return {
       value: 0,
       name: title,
@@ -26,8 +25,6 @@ export const ProposalStats: FC<ProposalStatsProps> = ({ proposals }) => {
     value: 0,
     name: title,
   }));
-
-  // console.log(proposalsTotalSupport, proposalsDistributionPoints);
 
   return (
     <div className="w-full space-y-8 p-2">
