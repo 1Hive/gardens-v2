@@ -81,7 +81,7 @@ export function FormInput({
       )}
       {subLabel && <p className="mb-1 text-xs">{subLabel}</p>}
       <div
-        className={`relative ${type !== "textarea" && type !== "markdown" && "max-w-md"}`}
+        className={`relative ${type !== "textarea" && type !== "markdown" && "max-w-[29rem]"}`}
       >
         {type !== "textarea" && type !== "markdown" ?
           <input

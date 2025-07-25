@@ -142,7 +142,7 @@ export function AllowListInput({
   }, [errors[registerKey], addresses.length]);
 
   return (
-    <div className="flex flex-col max-w-md">
+    <div className="flex flex-col max-w-[29rem]">
       {label && (
         <label htmlFor={registerKey} className="label cursor-pointer w-fit">
           {tooltip ?

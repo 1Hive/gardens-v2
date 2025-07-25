@@ -747,14 +747,19 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
                               height={36}
                               className="mb-2"
                             />
-                            Fund streaming enabled with{" "}
-                            <EthAddress
-                              address={superToken?.id as Address}
-                              shortenAddress={true}
-                              icon={false}
-                              actions="copy"
-                              label={superToken?.symbol}
-                            />
+                            {superToken.sameAsUnderlying ?
+                              "Natively supports streaming"
+                            : <>
+                                Fund streaming enabled with{" "}
+                                <EthAddress
+                                  address={superToken?.id as Address}
+                                  shortenAddress={true}
+                                  icon={false}
+                                  actions="copy"
+                                  label={superToken?.symbol}
+                                />
+                              </>
+                            }
                           </div>
                         </InfoWrapper>
                       </div>
