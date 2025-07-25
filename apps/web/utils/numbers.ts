@@ -204,40 +204,61 @@ export function bigIntMin(a: bigint, b: bigint) {
 }
 
 /**
- * Same as `Number.toPrecision`, but handles exponential notation
- * and converts it to fixed decimal notation.
- * @param value
- * @param precision
- * @returns String representation of the number with specified precision.
- * If the number is NaN, Infinity, or -Infinity, it returns the string representation
- * of the number.
+ * Rounds a number or numeric string to the given number of significant digits,
+ * preserving the full integer part if it already exceeds the precision.
+ * Converts to fixed-point decimal notation and avoids scientific notation.
+ * If the original value had a decimal but the output doesn't, a trailing dot is added.
+ *
+ * @param value - The number or numeric string to round.
+ * @param precision - Number of significant digits to retain.
+ * @returns A string representation of the rounded number.
  */
-export function toPrecision(value: number | string, precision: number) {
-  const num = Number(value);
-  if (!isFinite(num)) return String(num); // Handle NaN, Infinity, -Infinity
+export function roundToSignificant(
+  value: number | string,
+  precision: number,
+  options?: { truncate?: boolean },
+): string {
+  const num: number = Number(value);
+  if (!isFinite(num)) return String(num);
 
-  const output = num.toPrecision(precision);
-  if (output.includes("e") || output.includes("E")) {
-    // Convert from exponential to fixed decimal
-    const [mantissa, exponent] = output.split(/[eE]/);
-    const exp = parseInt(exponent, 10);
+  const hadDecimal: boolean = String(value).includes(".");
+  const absNum: number = Math.abs(num);
 
-    let [intPart, fracPart = ""] = mantissa.split(".");
-    const digits = intPart + fracPart;
-
-    if (exp >= 0) {
-      const decimalShift = digits + "0".repeat(exp - fracPart.length);
-      return decimalShift;
-    } else {
-      const leadingZeros = "0".repeat(Math.abs(exp) - 1);
-      return `0.${leadingZeros}${digits}`;
-    }
+  if (absNum === 0) {
+    return precision > 1 ? "0." + "0".repeat(precision - 1) : "0";
   }
 
-  // Trim trailing zeros but keep at least one digit after the decimal point
-  const trimmed = output.replace(/(\.\d*?[1-9])0+$/, "$1").replace(/\.0+$/, "");
-  if (trimmed === "") {
-    return "0"; // If the result is empty, return "0"
+  const intPartStr: string = Math.trunc(absNum).toString();
+  const intDigits: number = intPartStr.length;
+
+  if (intDigits >= precision) {
+    // Integer part already fills precision; round or truncate accordingly
+    let adjustedInt = options?.truncate ? Math.trunc(num) : Math.round(num);
+
+    const result = adjustedInt.toString();
+    return hadDecimal ? `${result}.` : result;
   }
-  return trimmed;
+
+  // Significant digits needed beyond integer part
+  const scale = Math.pow(10, precision - intDigits);
+  const adjusted =
+    options?.truncate ?
+      Math.trunc(num * scale) / scale
+    : Math.round(num * scale) / scale;
+
+  let resultStr = adjusted.toString();
+
+  // Convert scientific notation to fixed-point
+  if (resultStr.includes("e") || resultStr.includes("E")) {
+    resultStr = adjusted.toLocaleString("en-US", {
+      useGrouping: false,
+      maximumFractionDigits: 100,
+    });
+  }
+
+  if (!resultStr.includes(".") && hadDecimal) {
+    return resultStr + ".";
+  }
+
+  return resultStr;
 }
