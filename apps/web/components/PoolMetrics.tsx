@@ -12,6 +12,7 @@ import {
 // eslint-disable-next-line import/no-extraneous-dependencies
 import sfMeta from "@superfluid-finance/metadata";
 import { erc20ABI } from "@wagmi/core";
+import { trimEnd } from "lodash-es";
 import Image from "next/image";
 import { Address, useAccount, useBalance } from "wagmi";
 import { CVStrategy } from "#/subgraph/.graphclient";
@@ -30,7 +31,7 @@ import { useSuperfluidStream } from "@/hooks/useSuperfluidStream";
 import { superfluidCFAv1ForwarderAbi, superTokenABI } from "@/src/customAbis";
 import { abiWithErrors } from "@/utils/abi";
 import { delayAsync } from "@/utils/delayAsync";
-import { toPrecision } from "@/utils/numbers";
+import { roundToSignificant } from "@/utils/numbers";
 import { getTxMessage } from "@/utils/transactionMessages";
 
 interface PoolMetricsProps {
@@ -98,7 +99,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
   const amount = +(+amountInput) || 0;
 
   const requestedAmountBn = BigInt(
-    Math.round(amount * 10 ** poolToken.decimals),
+    Math.floor(amount * 10 ** poolToken.decimals),
   );
 
   const { writeAsync: writeFundPoolAsync, isLoading: isSendFundsLoading } =
@@ -127,7 +128,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
 
   const streamRequestedAmountPerSec = requestedStreamPerMonth * monthToSeconds;
   const streamRequestedAmountPerSecBn = BigInt(
-    Math.round(streamRequestedAmountPerSec * 10 ** poolToken.decimals),
+    Math.floor(streamRequestedAmountPerSec * 10 ** poolToken.decimals),
   );
 
   const effectiveRequestedAmountBn =
@@ -377,6 +378,17 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
 
   const handleStreamEdit = async () => {
     resetTxsStatus();
+    if (superToken?.sameAsUnderlying) {
+      // If super token is the same as underlying token, we can directly stream funds
+      setStreamFundsTx((prev) => ({
+        ...prev,
+        message: getTxMessage("idle"),
+        status: "idle",
+      }));
+      await writeStreamFundsAsync();
+      setIsStreamModalOpened(false);
+      return;
+    }
     // Check if super token balance is already sufficient
     if (useExistingBalance && isSuperTokenSufficient) {
       await writeEditStreamAsync();
@@ -400,7 +412,6 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
       <input
         max={balance?.formatted}
         min={0}
-        maxLength={20}
         value={amountInput}
         onChange={(e) => {
           const value = e.target.value;
@@ -431,7 +442,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
           <p>Streaming:</p>
           <Skeleton isLoading={requestedStreamPerMonth == undefined}>
             <DisplayNumber
-              number={toPrecision(requestedStreamPerMonth, 2)}
+              number={roundToSignificant(requestedStreamPerMonth, 2)}
               tokenSymbol={poolToken.symbol}
             />
           </Skeleton>
@@ -453,7 +464,13 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                 <div className="flex flex-col gap-1">
                   You are currently streaming:
                   <div>
-                    {toPrecision(currentUserFlowPerMonth, 4)} {poolToken.symbol}
+                    <div
+                      data-tip={`${currentUserFlowPerMonth} ${poolToken.symbol}/mo`}
+                      className="tooltip tooltip-top-right text-left"
+                    >
+                      {roundToSignificant(currentUserFlowPerMonth, 4)}
+                    </div>{" "}
+                    {poolToken.symbol}
                     /month
                   </div>
                 </div>
@@ -520,7 +537,13 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
             <div className="w-full flex justify-between">
               <div>Monthly funding</div>
               <div>
-                {toPrecision(requestedStreamPerMonth, 2)} {poolToken.symbol}
+                <div
+                  className="tooltip tooltip-top-left"
+                  data-tip={`${requestedStreamPerMonth} ${poolToken.symbol}/mo`}
+                >
+                  {roundToSignificant(requestedStreamPerMonth, 4)}
+                </div>{" "}
+                {poolToken.symbol}
               </div>
             </div>
           </div>
@@ -536,7 +559,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                 tooltip={streamTooltipMessage}
                 className="w-full"
               >
-                Stream {amount} {poolToken.symbol}
+                Stream {roundToSignificant(amount, 4)} {poolToken.symbol}
               </Button>
             : <Button
                 onClick={() => {
@@ -549,7 +572,8 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                 forceShowTooltip={true}
                 className="w-full"
               >
-                Replace stream with {amount} {poolToken.symbol}
+                Replace stream with {roundToSignificant(amount, 4)}{" "}
+                {poolToken.symbol}
               </Button>
             }
           </div>
@@ -564,19 +588,37 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                       Wrapped token balance:
                     </div>
                     <div className="flex items-center gap-1 w-full">
-                      {superToken.value > 0n && useExistingBalance ?
-                        <Button
-                          btnStyle="link"
-                          color="primary"
-                          size="sm"
-                          className="!p-0"
-                          onClick={() => {
-                            setAmount(superToken.formatted ?? "0");
-                          }}
-                        >
-                          {toPrecision(+(superToken.formatted ?? 0), 4)}
-                        </Button>
-                      : toPrecision(+(superToken.formatted ?? 0), 4)}{" "}
+                      <div
+                        className="tooltip tooltip-top-left"
+                        data-tip={`${superToken.formatted ?? 0} ${superToken.symbol}`}
+                      >
+                        {superToken.value > 0n && useExistingBalance ?
+                          <Button
+                            btnStyle="link"
+                            color="primary"
+                            size="sm"
+                            className="!p-0"
+                            onClick={() => {
+                              setAmount(
+                                trimEnd(
+                                  roundToSignificant(
+                                    superToken.formatted ?? 0,
+                                    4,
+                                    { truncate: true },
+                                  ),
+                                  ".",
+                                ),
+                              );
+                            }}
+                          >
+                            {roundToSignificant(
+                              +(superToken.formatted ?? 0),
+                              4,
+                              { truncate: true },
+                            )}
+                          </Button>
+                        : roundToSignificant(+(superToken.formatted ?? 0), 4)}
+                      </div>{" "}
                       {superToken.symbol}
                     </div>
                   </div>
@@ -618,7 +660,6 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
           )}
         </div>
       </Modal>
-
       <Modal
         title="1-time Transfer"
         isOpen={isTransferModalOpened}
@@ -647,7 +688,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
           </div>
         </div>
       </Modal>
-      <div className="col-span-12 xl:col-span-3 h-fit">
+      <div className="col-span-12 xl:col-span-3 h-fit mb-16">
         <div className="backdrop-blur-sm rounded-lg">
           <section className="section-layout gap-2 flex flex-col">
             <h3>Pool Funds</h3>
@@ -668,13 +709,19 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                 <div className="flex justify-between gap-3 items-center">
                   <p className="subtitle2">Incoming Stream:</p>
                   <div className="flex items-center gap-1">
-                    <p className="flex items-center whitespace-nowrap">
-                      {toPrecision(currentFlowPerMonth, 4)} {poolToken.symbol}
+                    <p className="flex items-center whitespace-nowrap tooltip">
+                      <div
+                        data-tip={`${currentFlowPerMonth} ${poolToken.symbol}/mo`}
+                        className="tooltip"
+                      >
+                        {roundToSignificant(currentFlowPerMonth, 4)}
+                      </div>{" "}
+                      {poolToken.symbol}
                       /mo
                     </p>
                     <div
                       className="tooltip tooltip-top-left cursor-pointer w-8"
-                      data-tip={`This pool is receiving ${toPrecision(currentFlowPerMonth, 4)} ${poolToken.symbol}/month through Superfluid streaming`}
+                      data-tip={`This pool is receiving ${roundToSignificant(currentFlowPerMonth, 4)} ${poolToken.symbol}/month through Superfluid streaming`}
                     >
                       <Image
                         src={SuperfluidStream}
