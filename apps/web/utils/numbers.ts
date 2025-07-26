@@ -225,6 +225,9 @@ export function roundToSignificant(
   const absNum: number = Math.abs(num);
 
   if (absNum === 0) {
+    if (precision <= 0) {
+      return "0";
+    }
     return precision > 1 ? "0." + "0".repeat(precision - 1) : "0";
   }
 
