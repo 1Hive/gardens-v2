@@ -13,7 +13,7 @@ export const VOTING_POINT_SYSTEM_DESCRIPTION = {
   capped: "Voting weight is equal to tokens staked, up to a limit",
   unlimited: "Voting weight is equal to tokens staked, no limit.",
   quadratic:
-    "Voting weight is the square root of staked token minimizing powers of bigger holders.",
+    "Voting weight is the square root of staked tokens, reducing power of bigger holders.",
 } as const;
 
 export const NFTs = {
