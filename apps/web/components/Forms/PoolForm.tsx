@@ -12,7 +12,7 @@ import { Address, isAddress, parseUnits, zeroAddress } from "viem";
 import { polygon } from "viem/chains";
 import { useToken } from "wagmi";
 import { TokenGarden } from "#/subgraph/.graphclient";
-import { AllowListInput } from "./AllowListInput";
+import { AddressListInput } from "./AddressListInput";
 import { FormAddressInput } from "./FormAddressInput";
 import { FormCheckBox } from "./FormCheckBox";
 import { FormInput } from "./FormInput";
@@ -882,7 +882,7 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
                 />
               )}
               {sybilResistanceType === "allowList" && (
-                <AllowListInput
+                <AddressListInput
                   register={register}
                   registerKey="sybilResistanceValue"
                   addresses={sybilResistanceValue}

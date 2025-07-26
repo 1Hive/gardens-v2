@@ -15,7 +15,8 @@ import {
   UseFormRegister,
   UseFormSetValue,
 } from "react-hook-form";
-import { Address, namehash, zeroAddress } from "viem";
+import { Address, ContractFunctionConfig, namehash, zeroAddress } from "viem";
+import { normalize } from "viem/ens";
 import { mainnet } from "wagmi";
 import { FormAddressInput } from "./FormAddressInput";
 import { Button } from "../Button";
@@ -24,7 +25,7 @@ import { useCheat } from "@/hooks/useCheat";
 import { PointSystems } from "@/types";
 import { isENS } from "@/utils/web3";
 
-type AllowListInputProps = {
+type AddressListInputProps = {
   label?: string;
   subLabel?: string;
   registerKey: string;
@@ -40,21 +41,7 @@ type AllowListInputProps = {
   pointSystemType: number;
 };
 
-export const exportAddresses = (addresses: string[]) => {
-  const csvContent = addresses.join(",");
-  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.setAttribute("href", url);
-  link.setAttribute("download", "pool_allowlist.csv");
-  link.style.visibility = "hidden";
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
-};
-
-export function AllowListInput({
+export function AddressListInput({
   label,
   subLabel,
   registerKey,
@@ -67,7 +54,7 @@ export function AllowListInput({
   className,
   tooltip,
   pointSystemType,
-}: AllowListInputProps) {
+}: AddressListInputProps) {
   const [addresses, setAddresses] = useState<Address[]>(
     Array.isArray(initialAddresses) ? initialAddresses : [],
   );
@@ -85,84 +72,111 @@ export function AllowListInput({
     return /^0x[a-fA-F0-9]{40}$/.test(address);
   };
 
+  const exportAddresses = () => {
+    const csvContent = addresses.join(",");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `${registerKey}_addresslist.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const addAddresses = async (newAddressesInput: string) => {
     const newAddresses = newAddressesInput
       .split(/[\n,]+/)
       .map((addr) => addr.trim());
 
-    // ENS resolution and validation
-    const ensAddresses = newAddresses.reduce(
-      (acc, x, i) => {
-        if (isENS(x)) acc.push({ index: i, name: x });
-        return acc;
-      },
-      [] as { index: number; name: string }[],
+    const ensAddresses = newAddresses.flatMap((value, idx) =>
+      isENS(value) ? [{ index: idx, name: normalize(value) }] : [],
     );
 
     if (ensAddresses.length) {
       setEnsLoading(true);
-      const client = getPublicClient({ chainId: mainnet.id });
 
-      const ENS_REGISTRY = mainnet.contracts.ensRegistry.address;
-      const resolverCalls = ensAddresses.map(
-        ({ name }) =>
-          ({
-            address: ENS_REGISTRY,
-            functionName: "resolver",
-            args: [namehash(name)],
-            abi: [
-              {
-                name: "resolver",
-                type: "function",
-                stateMutability: "view",
-                inputs: [{ name: "node", type: "bytes32" }],
-                outputs: [{ name: "", type: "address" }],
-              },
-            ],
-          }) as const,
+      const client = getPublicClient({ chainId: mainnet.id });
+      const ENS_REGISTRY = mainnet.contracts.ensRegistry.address as Address;
+
+      /* -------------------------------------------------- *
+       * 1️⃣  Registry  ➜  Resolver
+       * -------------------------------------------------- */
+      const resolverCalls: ContractFunctionConfig[] = ensAddresses.map(
+        ({ name }) => ({
+          address: ENS_REGISTRY,
+          functionName: "resolver",
+          args: [namehash(name)],
+          abi: [
+            {
+              name: "resolver",
+              type: "function",
+              stateMutability: "view",
+              inputs: [{ name: "node", type: "bytes32" }],
+              outputs: [{ type: "address" }],
+            },
+          ],
+        }),
       );
 
       const resolverResults = await client.multicall({
         contracts: resolverCalls,
       });
 
-      const addrCalls = resolverResults
-        .map((r, i) => {
-          if (r.status !== "success") return null; // skip failures
-          const resolverAddr = r.result as Address;
-          if (resolverAddr === zeroAddress) return null; // skip names with no resolver
+      /* -------------------------------------------------- *
+       * Build addr() calls _and_ remember where to put them
+       * -------------------------------------------------- */
+      type AddrMeta = { slot: number; contract: ContractFunctionConfig };
 
-          return {
-            address: resolverAddr,
-            functionName: "addr",
-            args: [namehash(ensAddresses[i].name)],
-            abi: [
-              {
-                name: "addr",
-                type: "function",
-                stateMutability: "view",
-                inputs: [{ name: "node", type: "bytes32" }],
-                outputs: [{ name: "", type: "address" }],
-              },
-            ],
-          } as const;
-        })
-        .filter(Boolean);
+      const addrMeta: AddrMeta[] = resolverResults.flatMap((r, i) => {
+        if (r.status !== "success") return [];
+        const resolverAddr = r.result as Address;
+        if (resolverAddr === zeroAddress) return []; // name has no resolver
 
-      const addrResults = await client.multicall({
-        contracts: addrCalls as NonNullable<(typeof addrCalls)[number]>[],
+        const { name, index: slot } = ensAddresses[i];
+
+        return [
+          {
+            slot,
+            contract: {
+              address: resolverAddr,
+              functionName: "addr",
+              args: [namehash(name)],
+              abi: [
+                {
+                  name: "addr",
+                  type: "function",
+                  stateMutability: "view",
+                  inputs: [{ name: "node", type: "bytes32" }],
+                  outputs: [{ type: "address" }],
+                },
+              ],
+            } as const,
+          },
+        ];
       });
 
-      addrResults.forEach((result, i) => {
-        if (result.status === "success" && result.result) {
-          const resolvedAddress = result.result as Address;
-          newAddresses[ensAddresses[i].index] = resolvedAddress;
+      /* -------------------------------------------------- *
+       * 2️⃣  Resolver  ➜  Address
+       * -------------------------------------------------- */
+      const addrResults = await client.multicall({
+        contracts: addrMeta.map((m) => m.contract),
+      });
+
+      /* -------------------------------------------------- *
+       * Patch newAddresses using the saved slot
+       * -------------------------------------------------- */
+      addrResults.forEach((res, i) => {
+        const { slot } = addrMeta[i];
+
+        if (res.status === "success" && res.result !== zeroAddress) {
+          newAddresses[slot] = res.result as Address;
         } else {
-          if (result.status === "failure") {
-            console.error(
-              `ENS resolution failed for ${ensAddresses[i].name}`,
-              result.error,
-            );
+          newAddresses[slot] = ""; // keep empty on failure / unset addr()
+          if (res.status === "failure") {
+            console.error("ENS resolution failed", res.error);
           }
         }
       });
@@ -365,7 +379,7 @@ export function AllowListInput({
             type="button"
             btnStyle="outline"
             className="!p-2"
-            onClick={() => exportAddresses(addresses)}
+            onClick={exportAddresses}
             forceShowTooltip
             tooltip="Export"
           >

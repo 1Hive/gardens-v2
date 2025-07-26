@@ -465,7 +465,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                   You are currently streaming:
                   <div>
                     <div
-                      data-tip={`${currentFlowPerMonth} ${poolToken.symbol}/mo`}
+                      data-tip={`${currentUserFlowPerMonth} ${poolToken.symbol}/mo`}
                       className="tooltip tooltip-top-right text-left"
                     >
                       {roundToSignificant(currentUserFlowPerMonth, 4)}
