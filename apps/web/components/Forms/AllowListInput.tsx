@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { KeyboardEventHandler, useEffect, useState } from "react";
 import {
   ArrowUpTrayIcon,
   ArrowDownTrayIcon,
@@ -8,18 +8,21 @@ import {
   PlusIcon,
   UserGroupIcon,
 } from "@heroicons/react/24/outline";
+import { getPublicClient } from "@wagmi/core";
 import { blo } from "blo";
 import {
   RegisterOptions,
   UseFormRegister,
   UseFormSetValue,
 } from "react-hook-form";
-import { Address, zeroAddress } from "viem";
+import { Address, namehash, zeroAddress } from "viem";
+import { mainnet } from "wagmi";
 import { FormAddressInput } from "./FormAddressInput";
 import { Button } from "../Button";
 import { InfoWrapper } from "../InfoWrapper";
 import { useCheat } from "@/hooks/useCheat";
 import { PointSystems } from "@/types";
+import { isENS } from "@/utils/web3";
 
 type AllowListInputProps = {
   label?: string;
@@ -59,7 +62,6 @@ export function AllowListInput({
   addresses: initialAddresses,
   register,
   setValue,
-  errors,
   required = false,
   registerOptions,
   className,
@@ -73,6 +75,7 @@ export function AllowListInput({
   const [bulkAddresses, setBulkAddresses] = useState("");
   const [inputMode, setInputMode] = useState<"single" | "bulk">("single");
   const [errorMessage, setErrorMessage] = useState("");
+  const [ensLoading, setEnsLoading] = useState(false);
   const allowNoProtectionCheat = useCheat("allowNoProtection");
 
   const allowNoProtection =
@@ -82,10 +85,89 @@ export function AllowListInput({
     return /^0x[a-fA-F0-9]{40}$/.test(address);
   };
 
-  const addAddresses = (newAddressesInput: string) => {
+  const addAddresses = async (newAddressesInput: string) => {
     const newAddresses = newAddressesInput
       .split(/[\n,]+/)
       .map((addr) => addr.trim());
+
+    // ENS resolution and validation
+    const ensAddresses = newAddresses.reduce(
+      (acc, x, i) => {
+        if (isENS(x)) acc.push({ index: i, name: x });
+        return acc;
+      },
+      [] as { index: number; name: string }[],
+    );
+
+    if (ensAddresses.length) {
+      setEnsLoading(true);
+      const client = getPublicClient({ chainId: mainnet.id });
+
+      const ENS_REGISTRY = mainnet.contracts.ensRegistry.address;
+      const resolverCalls = ensAddresses.map(
+        ({ name }) =>
+          ({
+            address: ENS_REGISTRY,
+            functionName: "resolver",
+            args: [namehash(name)],
+            abi: [
+              {
+                name: "resolver",
+                type: "function",
+                stateMutability: "view",
+                inputs: [{ name: "node", type: "bytes32" }],
+                outputs: [{ name: "", type: "address" }],
+              },
+            ],
+          }) as const,
+      );
+
+      const resolverResults = await client.multicall({
+        contracts: resolverCalls,
+      });
+
+      const addrCalls = resolverResults
+        .map((r, i) => {
+          if (r.status !== "success") return null; // skip failures
+          const resolverAddr = r.result as Address;
+          if (resolverAddr === zeroAddress) return null; // skip names with no resolver
+
+          return {
+            address: resolverAddr,
+            functionName: "addr",
+            args: [namehash(ensAddresses[i].name)],
+            abi: [
+              {
+                name: "addr",
+                type: "function",
+                stateMutability: "view",
+                inputs: [{ name: "node", type: "bytes32" }],
+                outputs: [{ name: "", type: "address" }],
+              },
+            ],
+          } as const;
+        })
+        .filter(Boolean);
+
+      const addrResults = await client.multicall({
+        contracts: addrCalls as NonNullable<(typeof addrCalls)[number]>[],
+      });
+
+      addrResults.forEach((result, i) => {
+        if (result.status === "success" && result.result) {
+          const resolvedAddress = result.result as Address;
+          newAddresses[ensAddresses[i].index] = resolvedAddress;
+        } else {
+          if (result.status === "failure") {
+            console.error(
+              `ENS resolution failed for ${ensAddresses[i].name}`,
+              result.error,
+            );
+          }
+        }
+      });
+    }
+
     const validNewAddresses = newAddresses.filter(
       isValidEthereumAddress,
     ) as Address[];
@@ -97,7 +179,10 @@ export function AllowListInput({
     setAddresses(updatedAddresses as Address[]);
     setValue(registerKey, updatedAddresses); // Update form value
     setNewAddress("");
-    setBulkAddresses("");
+    const invalidAddresses = newAddresses.filter(
+      (x) => !validNewAddresses.includes(x as Address),
+    );
+    setBulkAddresses(invalidAddresses.join("\n"));
 
     if (
       newAddresses.length > 0 &&
@@ -110,6 +195,8 @@ export function AllowListInput({
     } else {
       setErrorMessage("");
     }
+
+    setEnsLoading(false);
   };
 
   const removeAddress = (index: number) => {
@@ -133,13 +220,13 @@ export function AllowListInput({
     register(registerKey, { ...registerOptions, required });
   }, [register, registerKey, registerOptions, required]);
 
-  useEffect(() => {
-    if (errors[registerKey] && addresses.length === 0 && required) {
-      setErrorMessage("At least one address is required");
-    } else {
-      setErrorMessage("");
+  const handleSubmit: KeyboardEventHandler<HTMLTextAreaElement> = (ev) => {
+    // Ctrl+Enter should call addAddresses(bulkAddresses)
+    if (ev.ctrlKey && ev.key === "Enter") {
+      ev.preventDefault();
+      addAddresses(bulkAddresses);
     }
-  }, [errors[registerKey], addresses.length]);
+  };
 
   return (
     <div className="flex flex-col max-w-[29rem]">
@@ -216,12 +303,16 @@ export function AllowListInput({
             className={`textarea textarea-info w-full h-24 mb-2 ${
               className ?? ""
             }`}
+            onKeyDown={handleSubmit}
           />
           <Button
             type="button"
             btnStyle="outline"
             className=""
             onClick={() => addAddresses(bulkAddresses)}
+            disabled={!bulkAddresses.trim()}
+            tooltip="Add Bulk Addresses"
+            isLoading={ensLoading}
           >
             <ArrowUpTrayIcon className="w-5 h-5 stroke-2" /> Add Bulk Addresses
           </Button>
