@@ -88,12 +88,11 @@ export function PoolCard({ pool, token }: Props) {
         />
         {isEnabled &&
           poolToken &&
-          poolToken.balance &&
           poolType &&
           PoolTypes[poolType] === "funding" && (
             <Statistic icon={<CurrencyDollarIcon />} label="funds">
               <DisplayNumber
-                number={poolToken.formatted}
+                number={poolToken.formatted || "0"}
                 compact={true}
                 tokenSymbol={poolToken.symbol}
               />

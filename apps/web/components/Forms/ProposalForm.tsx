@@ -354,7 +354,6 @@ export const ProposalForm = ({
     return formattedRows;
   };
 
-  console.log("Threshold", thresholdPct);
   return (
     <form onSubmit={handleSubmit(handlePreview)} className="w-full">
       {showPreview ?
