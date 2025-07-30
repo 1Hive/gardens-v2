@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useState } from "react";
-import { BugAntIcon } from "@heroicons/react/24/outline";
+import { MegaphoneIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
 import Link from "next/link";
 import { newLogo } from "@/assets";
@@ -110,8 +110,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <Button
             btnStyle="outline"
             forceShowTooltip
-            tooltip={"Report Bug"}
-            icon={<BugAntIcon height={24} width={24} />}
+            tooltip={"Discord\n Support"}
+            icon={<MegaphoneIcon height={24} width={24} />}
           />
         </a>
       </div>
