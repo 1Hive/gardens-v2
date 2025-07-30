@@ -58,7 +58,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     error ProposalDataIsEmpty(); //0xc5f7c4c0
     error ProposalIdCannotBeZero(); //0xf881a10d
     error ProposalNotActive(uint256 _proposalId); // 0x44980d8f
-    error ProposalNotInList(uint256 _proposalId); // 0xc1d17bef
+    error ProposalNotdInList(uint256 _proposalId); // 0xc1d17bef
     error ProposalSupportDuplicated(uint256 _proposalId, uint256 index); //0xadebb154
     error ConvictionUnderMinimumThreshold(); // 0xcce79308
     error OnlyCommunityAllowed(); // 0xaf0916a2
