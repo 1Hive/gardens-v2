@@ -136,7 +136,6 @@ export default function Page({
       PoolTypes[strategy.config.proposalType] !== "signaling" &&
       !!poolTokenAddr,
     watch: true,
-    throughBalanceOf: superTokenCandidate?.sameAsUnderlying,
   });
 
   if (!strategy || (!poolToken && PoolTypes[proposalType] === "funding")) {
