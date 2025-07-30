@@ -849,11 +849,8 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
                 <div className="mt-6">
                   <InfoBox
                     title="Warning"
-                    content="This setup
-                    may be vulnerable to Sybil attacks (duplicated accounts
-                    gaining unfair influence). To ensure fair governance,
-                    consider enabling voting protection (e.g. allowlist or
-                    Gitcoin Passport)."
+                    content={`This setup may be vulnerable to Sybil attacks (duplicated accounts gaining unfair influence). 
+                    To ensure fair governance, consider enabling voting protection (e.g. allowlist or Gitcoin Passport).`}
                     infoBoxType="warning"
                   />
                 </div>
