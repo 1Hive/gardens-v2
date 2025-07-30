@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { gql } from "urql";
-import { readContracts, useAccount } from "wagmi";
+import { useAccount } from "wagmi";
 import { useSuperfluidSugraphClient as useSuperfluidSugraphClient } from "./useSuperfluidSubgraphClient";
-import { superfluidPoolAbi } from "@/src/customAbis";
 import { ChainId } from "@/types";
 
 export const STREAM_TO_TARGET_QUERY = gql`
@@ -12,11 +11,6 @@ export const STREAM_TO_TARGET_QUERY = gql`
     ) {
       currentFlowRate
       sender {
-        id
-      }
-    }
-    poolMembers(where: { account: $receiver, pool_: { token: $token } }) {
-      pool {
         id
       }
     }
@@ -41,7 +35,6 @@ export function useSuperfluidStream({
   const [currentUserFlowRateBn, setCurrentUserFlowRateBn] = useState<
     bigint | null
   >(null);
-
   const fetch = async () => {
     if (!receiver || !superToken || !client) return;
     const result = await client
@@ -55,31 +48,11 @@ export function useSuperfluidStream({
         return null;
       });
     if (result) {
-      let totalFlowRate: bigint = result.data.streams.reduce(
+      const totalFlowRate = result.data.streams.reduce(
         (acc: bigint, flow: { currentFlowRate: bigint }) =>
           acc + BigInt(flow.currentFlowRate),
         0n,
       );
-
-      if (result.data.poolMembers.length > 0) {
-        const memberFlows = await readContracts({
-          contracts: result.data.poolMembers.map((member: any) => ({
-            address: member.pool.id,
-            abi: superfluidPoolAbi,
-            functionName: "getMemberFlowRate",
-            args: [receiver],
-          })),
-        });
-
-        totalFlowRate = memberFlows.reduce((acc: bigint, flow) => {
-          if (flow.error) {
-            console.error("Error fetching member flow rate:", flow.error);
-            return acc;
-          }
-          return acc + BigInt((flow.result as any).toString());
-        }, totalFlowRate);
-      }
-
       setCurrentFlowRateBn(totalFlowRate);
 
       setCurrentUserFlowRateBn(

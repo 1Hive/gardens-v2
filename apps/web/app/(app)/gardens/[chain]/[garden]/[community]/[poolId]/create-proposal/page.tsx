@@ -39,7 +39,6 @@ export default function Page({
       !!strategyObj?.id &&
       data &&
       PoolTypes[data.cvstrategies[0].config.proposalType] === "funding",
-    watch: true,
   });
 
   if (!tokenGarden || !metadata || !strategyObj || poolToken == undefined) {

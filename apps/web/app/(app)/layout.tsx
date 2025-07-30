@@ -96,13 +96,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* Bootom right floating div */}
 
       <div className="fixed bottom-4 left-4 z-50">
-        <Badge
-          status={2}
-          tooltip="Disclaimer: our smart contracts have not undergone a third party security audit, use at your own risk."
-          className="tooltip-top-right"
+        <div
+          className="tooltip tooltip-top-right tooltip-warning"
+          data-tip="️️Disclaimer: our smart contracts have not undergone a third party security audit, use at your own risk."
         >
-          Beta
-        </Badge>
+          <Badge status={2}>Beta</Badge>
+        </div>
       </div>
     </div>
   );

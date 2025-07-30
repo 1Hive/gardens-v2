@@ -75,7 +75,7 @@ export function Badge({
 
   return (
     <div
-      className={`${BASE_STYLES} ${styles} ${tooltip ? "tooltip cursor-pointer" : ""} ${className} flex items-center gap-1`}
+      className={`${BASE_STYLES} ${styles} ${tooltip ? "tooltip" : ""} ${className} flex items-center gap-1`}
       data-tip={tooltip}
     >
       {iconIncluded && <span className="h-5 w-5">{iconIncluded}</span>}

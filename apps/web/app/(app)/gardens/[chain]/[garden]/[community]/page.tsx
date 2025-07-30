@@ -494,7 +494,7 @@ export default function Page({
                               symbolClassName="text-primary-content"
                               disableTooltip={true}
                               compact={true}
-                              copiable={true}
+                              copiable={false}
                               tokenSymbol={tokenGarden.symbol}
                             />
                           }

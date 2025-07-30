@@ -117,7 +117,7 @@ export const DisplayNumber = ({
           }
         }}
         className={`${!disableTooltip && (showTooltip || forceTooltip) && "tooltip"} ${copiable && "cursor-pointer"} ${tooltipClass}`}
-        data-tip={isCopied ? "Copied" : fullNumberStr}
+        data-tip={isCopied ? "Copied!" : fullNumberStr}
       >
         <p className={valueClassName}>{shortNumber}</p>
       </div>
