@@ -32,19 +32,19 @@ export const usePoolToken = ({
     return undefined;
   }
 
-  const balance = poolToken &&
+  const balanceInfo = poolToken &&
     poolAmount && {
       value: poolAmount,
       formatted: (poolAmount / 10n ** BigInt(poolToken.decimals)).toString(),
     };
 
-  return balance && !!poolToken ?
+  return balanceInfo ?
       {
         address: poolTokenAddr as Address,
         symbol: poolToken.symbol,
         decimals: poolToken.decimals,
-        balance: balance.value,
-        formatted: balance.formatted,
+        balance: balanceInfo.value,
+        formatted: balanceInfo.formatted,
         name: poolToken.name,
       }
     : undefined;
