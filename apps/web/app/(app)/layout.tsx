@@ -102,7 +102,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         >
           <Badge status={2}>Beta</Badge>
         </div>
-        <a href="https://discord.gg/6U8YGwVRWG" target="_blanck">
+        <a href="https://discord.gg/6U8YGwVRWG" target="_blank">
           <Button
             btnStyle="outline"
             forceShowTooltip
