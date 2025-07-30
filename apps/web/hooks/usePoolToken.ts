@@ -1,5 +1,5 @@
 import { zeroAddress } from "viem";
-import { Address, useBalance, useToken } from "wagmi";
+import { Address, useToken } from "wagmi";
 import { usePoolAmount } from "./usePoolAmount";
 
 export const usePoolToken = ({
@@ -24,20 +24,6 @@ export const usePoolToken = ({
     enabled: enabled && poolTokenAddr !== zeroAddress,
   });
 
-  const { data: balanceResult } = useBalance({
-    address: poolAddress as Address,
-    token: poolTokenAddr as Address,
-    enabled: enabled && !!poolTokenAddr,
-    watch,
-  });
-
-  if (!balanceResult) {
-    console.debug("Waiting for", {
-      balanceResult,
-    });
-    return undefined;
-  }
-
   if (!poolAmount && !poolToken) {
     console.debug("Waiting for", {
       poolAmount,
@@ -46,27 +32,20 @@ export const usePoolToken = ({
     return undefined;
   }
 
-  return (
-    (poolAmount != undefined && !!poolToken) || balanceResult ?
-      {
-        address: poolTokenAddr as Address,
-        symbol: balanceResult?.symbol ?? poolToken!.symbol,
-        decimals: balanceResult?.decimals ?? poolToken!.decimals,
-        balance: balanceResult?.value ?? poolAmount!,
-        formatted:
-          balanceResult?.formatted ??
-          (poolAmount! / 10n ** BigInt(poolToken!.decimals)).toString(),
-        name: poolToken!.name,
-      }
-    : !poolAmount && poolToken ?
+  const balance = poolToken &&
+    poolAmount && {
+      value: poolAmount,
+      formatted: (poolAmount / 10n ** BigInt(poolToken.decimals)).toString(),
+    };
+
+  return balance && !!poolToken ?
       {
         address: poolTokenAddr as Address,
         symbol: poolToken.symbol,
         decimals: poolToken.decimals,
-        balance: 0n,
-        formatted: "0",
+        balance: balance.value,
+        formatted: balance.formatted,
         name: poolToken.name,
       }
-    : undefined
-  );
+    : undefined;
 };
