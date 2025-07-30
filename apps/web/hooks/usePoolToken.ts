@@ -6,18 +6,16 @@ export const usePoolToken = ({
   poolAddress,
   poolTokenAddr,
   enabled = true,
-  throughBalanceOf = false,
   watch = false,
 }: {
   poolAddress: string | undefined;
   poolTokenAddr: string | undefined;
   enabled?: boolean;
   watch?: boolean;
-  throughBalanceOf?: boolean;
 }) => {
   const poolAmount = usePoolAmount({
     poolAddress,
-    enabled: enabled && !throughBalanceOf && !!poolAddress && !!poolTokenAddr,
+    enabled: enabled && !!poolAddress && !!poolTokenAddr,
     watch,
   });
 
@@ -29,16 +27,11 @@ export const usePoolToken = ({
   const { data: balanceResult } = useBalance({
     address: poolAddress as Address,
     token: poolTokenAddr as Address,
-    enabled: enabled && !!poolTokenAddr && throughBalanceOf,
+    enabled: enabled && !!poolTokenAddr,
     watch,
   });
 
-  if (!enabled) {
-    console.debug("usePoolToken: Hook is disabled, returning undefined");
-    return undefined;
-  }
-
-  if (throughBalanceOf && !balanceResult) {
+  if (!balanceResult) {
     console.debug("Waiting for", {
       balanceResult,
     });
