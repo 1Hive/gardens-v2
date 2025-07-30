@@ -423,8 +423,7 @@ export const ProposalForm = ({
                 {requestedAmount &&
                   thresholdPct > 50 &&
                   (thresholdPct < 100 ? "It may be difficult to pass."
-                  : thresholdPct >= 100 ? "It will not pass"
-                  : "It is unlikely to pass")}
+                  : "It will not pass.")}
               </div>
             </InfoBox>
           )}
