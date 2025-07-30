@@ -849,7 +849,7 @@ export default function PoolHeader({
           </div>
 
           {/* InfoBox - Banner or Image */}
-          {!minThGtTotalEffPoints && isEnabled && (
+          {minThGtTotalEffPoints && isEnabled && (
             <InfoBox
               title="Min threshold"
               infoBoxType="warning"
