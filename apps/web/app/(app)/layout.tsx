@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useState } from "react";
-import { ChatBubbleOvalLeftEllipsisIcon } from "@heroicons/react/24/outline";
+import { BugAntIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
 import Link from "next/link";
 import { newLogo } from "@/assets";
@@ -102,12 +102,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         >
           <Badge status={2}>Beta</Badge>
         </div>
-        <a href="https://discord.gg/6U8YGwVRWG" target="_blank">
+        <a
+          href="https://discord.gg/6U8YGwVRWG"
+          target="_blank"
+          rel="noreferrer"
+        >
           <Button
             btnStyle="outline"
             forceShowTooltip
-            tooltip={"Discord\n support"}
-            icon={<ChatBubbleOvalLeftEllipsisIcon height={24} width={24} />}
+            tooltip={"Report Bug"}
+            icon={<BugAntIcon height={24} width={24} />}
           />
         </a>
       </div>
