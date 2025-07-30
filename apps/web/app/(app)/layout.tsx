@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useState } from "react";
-import { MegaphoneIcon } from "@heroicons/react/24/outline";
+import { MegaphoneIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import Link from "next/link";
 import { newLogo } from "@/assets";
@@ -108,10 +108,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           rel="noreferrer"
         >
           <Button
-            btnStyle="outline"
             forceShowTooltip
             tooltip={"Discord\n Support"}
-            icon={<MegaphoneIcon height={24} width={24} />}
+            icon={
+              <MegaphoneIcon height={24} width={24} className="text-white" />
+            }
           />
         </a>
       </div>
