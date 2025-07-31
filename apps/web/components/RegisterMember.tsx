@@ -188,7 +188,7 @@ export function RegisterMember({
       />
       <div className="flex gap-4">
         <div className="flex items-center justify-center">
-          <Button {...buttonProps} className="">
+          <Button {...buttonProps} testId="register-member-button">
             {isMember ? "Leave" : "Join"}
           </Button>
         </div>

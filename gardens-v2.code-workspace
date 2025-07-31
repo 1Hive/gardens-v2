@@ -17,6 +17,10 @@
       "path": "./pkg/services",
     },
     {
+      "name": "E2E Tests",
+      "path": "./pkg/e2e",
+    },
+    {
       "name": "Root",
       "path": ".",
     },

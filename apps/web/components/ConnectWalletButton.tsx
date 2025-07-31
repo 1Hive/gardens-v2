@@ -122,7 +122,7 @@ export function ConnectWallet() {
               //button to connect wallet
               if (!connected) {
                 return (
-                  <Button onClick={openConnectModal}>
+                  <Button onClick={openConnectModal} testId="connectButton">
                     <Image
                       src={walletIcon}
                       alt="wallet"
@@ -175,7 +175,7 @@ export function ConnectWallet() {
                             />
                           }
                           <div className="hidden sm:flex flex-col">
-                            <h5 className="text-left">
+                            <h5 className="text-left" data-testid="accounts">
                               {ensName ?? formatAddress(acc.address)}
                             </h5>
                             <div className="flex items-center">
@@ -188,7 +188,10 @@ export function ConnectWallet() {
                                   <ChainIcon chain={chain.id} height={14} />
                                   <p className="text-xs ml-1">{chain.name}</p>
                                 </>
-                              : <p className="text-danger-content text-xs">
+                              : <p
+                                  className="text-danger-content text-xs"
+                                  data-testid="wrong-network"
+                                >
                                   Switch to network {chainFromPath?.name ?? ""}
                                 </p>
                               }
@@ -281,6 +284,7 @@ export function ConnectWallet() {
                                       strokeWidth={10}
                                     />
                                   }
+                                  testId="switch-network-button"
                                 >
                                   <TooltipIfOverflow>
                                     {`Switch to ${chainFromPath?.name ?? ""}`}
