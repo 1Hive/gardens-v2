@@ -94,7 +94,7 @@ export function Modal({
       </div>
 
       <form method="dialog" className="modal-backdrop">
-        <button>close</button>
+        <button data-testid="modal-close-button">close</button>
       </form>
     </dialog>
   );

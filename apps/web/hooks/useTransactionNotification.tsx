@@ -172,7 +172,10 @@ export const TransactionStatusNotification = ({
   }
 
   return (
-    <div className="flex flex-row items-center gap-2">
+    <div
+      className="flex flex-row items-center gap-2"
+      data-testid="transaction-status-notification"
+    >
       {icon && (
         <div className="relative flex items-center justify-center">
           <Image

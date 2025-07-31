@@ -1,10 +1,66 @@
 import { testWithSynpress } from "@synthetixio/synpress";
-import { MetaMask, metaMaskFixtures } from "@synthetixio/synpress/playwright";
+import {
+  getExtensionId,
+  MetaMask,
+  metaMaskFixtures
+} from "@synthetixio/synpress/playwright";
 import basicSetup from "../test/wallet-setup/basic.setup";
+import { BrowserContext, Page } from "@playwright/test";
 
 const test = testWithSynpress(metaMaskFixtures(basicSetup));
 
 const { expect } = test;
+
+async function approveTokenAllowance({
+  context,
+  page,
+  metamask
+}: {
+  context: BrowserContext;
+  page: Page;
+  metamask: MetaMask;
+}) {
+  metamask.approveTokenPermission;
+  // Need to wait for Metamask Notification page to exist, does not exist immediately after clicking 'Approve' button.
+  // In Synpress source code, they use this logic in every method interacting with the Metamask notification page.
+  const extensionId = await getExtensionId(context, "MetaMask");
+  const notificationPageUrl = `chrome-extension://${extensionId}/notification.html`;
+  while (
+    metamask.page
+      .context()
+      .pages()
+      .find((page) => page.url().includes(notificationPageUrl)) === undefined
+  ) {
+    await page.waitForTimeout(250);
+  }
+  const notificationPage = metamask.page
+    .context()
+    .pages()
+    .find((page) => page.url().includes(notificationPageUrl)) as Page;
+  await notificationPage.waitForLoadState("domcontentloaded", {
+    timeout: 10000
+  });
+  await notificationPage.waitForLoadState("networkidle", {
+    timeout: 10000
+  });
+  await metamask.page.reload();
+  // Unsure if commented out below are required to mitigate flakiness
+  // await metamask.page.waitForLoadState("domcontentloaded", { timeout: PAGE_TIMEOUT });
+  // await metamask.page.waitForLoadState("networkidle", { timeout: PAGE_TIMEOUT });
+  const nextBtn = metamask.page.getByRole("button", {
+    name: "Next",
+    exact: true
+  });
+  // Unsure if commented out below are required to mitigate flakiness
+  // await expect(nextBtn).toBeVisible();
+  // await expect(nextBtn).toBeEnabled();
+  await nextBtn.click();
+  const approveMMBtn = metamask.page.getByRole("button", {
+    name: "Approve",
+    exact: true
+  });
+  await approveMMBtn.click();
+}
 
 // Define a basic test case
 test("should connect wallet to the MetaMask Test Dapp", async ({
@@ -70,19 +126,30 @@ test("should connect wallet to the MetaMask Test Dapp", async ({
   //   await metamaskPage.keyboard.press("Tab");
   // }
   // await metamaskPage.keyboard.press("Enter");
-  await metamask.approveTokenPermission({
-    spendLimit: "max"
+  // await metamask.approveTokenPermission({
+  //   spendLimit: "max"
+  // });
+  await approveTokenAllowance({
+    context,
+    page,
+    metamask
+  });
+  // Wait for next tx to launch
+  await page.waitForTimeout(1000);
+
+  // Wait for join tx waiting for signature
+  await page.getByText("Waiting for signature").isVisible({
+    timeout: 10000
   });
 
   // 3. Join the community
   await metamask.confirmTransactionAndWaitForMining();
 
+  // Close the modal
+  await page.keyboard.press("Escape");
+
   // 4. Leave the community
+  await page.getByTestId("register-member-button").getByText("Leave").click();
   await page.getByTestId("register-member-button").click();
   await metamask.confirmTransactionAndWaitForMining();
-
-  // Additional test steps can be added here, such as:
-  // - Sending transactions
-  // - Interacting with smart contracts
-  // - Testing dapp-specific functionality
 });

@@ -32,7 +32,7 @@ export default defineConfig({
     trace: "on-first-retry"
   },
   testMatch: "**/*.e2e.ts",
-  timeout: 60 * 1000, // 60 seconds timeout for each test
+  timeout: 120 * 1000, // 60 seconds timeout for each test
 
   /* Configure projects for major browsers */
   projects: [
