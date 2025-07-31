@@ -42,7 +42,12 @@ export default function Page({
     watch: true,
   });
 
-  if (!tokenGarden || !metadata || !strategyObj || poolToken == undefined) {
+  if (
+    !tokenGarden ||
+    !metadata ||
+    !strategyObj ||
+    (poolToken == undefined && PoolTypes[proposalType] === "funding")
+  ) {
     return (
       <div className="mt-96 col-span-12">
         <LoadingSpinner />

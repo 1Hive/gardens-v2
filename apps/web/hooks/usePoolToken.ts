@@ -24,7 +24,7 @@ export const usePoolToken = ({
     enabled: enabled && poolTokenAddr !== zeroAddress,
   });
 
-  if (!poolAmount && !poolToken) {
+  if (!poolAmount && !poolToken && enabled) {
     console.debug("Waiting for", {
       poolAmount,
       poolToken,
