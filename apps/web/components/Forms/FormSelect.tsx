@@ -71,7 +71,7 @@ export function FormSelect({
         </label>
       )}
       <select
-        className={`select select-info w-full max-w-md ${className} ${
+        className={`select select-info w-full max-w-[29rem] ${className} ${
           readOnly &&
           "!border-gray-300 focus:none !outline-gray-300 !pointer-events-none bg-transparent !cursor-not-allowed"
         } ${hasError && "!border-danger-content focus:!border-danger-content"}`}

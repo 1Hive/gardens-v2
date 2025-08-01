@@ -151,7 +151,7 @@ export const FormAddressInput = ({
   };
 
   return (
-    <div className="w-[448px]">
+    <div className="w-[29rem]">
       <FormInput
         {...rest}
         label={label}

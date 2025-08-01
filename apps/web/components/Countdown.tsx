@@ -29,7 +29,7 @@ export const Countdown = ({
         clearInterval(timerRef.current);
       }
     };
-  }, []);
+  }, [endTimestamp]);
 
   useEffect(() => {
     if (remainingTimeMs === 0 && onTimeout && timerRef.current) {

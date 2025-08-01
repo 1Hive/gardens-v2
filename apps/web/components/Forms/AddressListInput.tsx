@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { KeyboardEventHandler, useEffect, useState } from "react";
 import {
   ArrowUpTrayIcon,
   ArrowDownTrayIcon,
@@ -8,20 +8,24 @@ import {
   PlusIcon,
   UserGroupIcon,
 } from "@heroicons/react/24/outline";
+import { getPublicClient } from "@wagmi/core";
 import { blo } from "blo";
 import {
   RegisterOptions,
   UseFormRegister,
   UseFormSetValue,
 } from "react-hook-form";
-import { Address, zeroAddress } from "viem";
+import { Address, ContractFunctionConfig, namehash, zeroAddress } from "viem";
+import { normalize } from "viem/ens";
+import { mainnet } from "wagmi";
 import { FormAddressInput } from "./FormAddressInput";
 import { Button } from "../Button";
 import { InfoWrapper } from "../InfoWrapper";
 import { useCheat } from "@/hooks/useCheat";
 import { PointSystems } from "@/types";
+import { isENS } from "@/utils/web3";
 
-type AllowListInputProps = {
+type AddressListInputProps = {
   label?: string;
   subLabel?: string;
   registerKey: string;
@@ -37,21 +41,7 @@ type AllowListInputProps = {
   pointSystemType: number;
 };
 
-export const exportAddresses = (addresses: string[]) => {
-  const csvContent = addresses.join(",");
-  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.setAttribute("href", url);
-  link.setAttribute("download", "pool_allowlist.csv");
-  link.style.visibility = "hidden";
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
-};
-
-export function AllowListInput({
+export function AddressListInput({
   label,
   subLabel,
   registerKey,
@@ -59,13 +49,12 @@ export function AllowListInput({
   addresses: initialAddresses,
   register,
   setValue,
-  errors,
   required = false,
   registerOptions,
   className,
   tooltip,
   pointSystemType,
-}: AllowListInputProps) {
+}: AddressListInputProps) {
   const [addresses, setAddresses] = useState<Address[]>(
     Array.isArray(initialAddresses) ? initialAddresses : [],
   );
@@ -73,6 +62,7 @@ export function AllowListInput({
   const [bulkAddresses, setBulkAddresses] = useState("");
   const [inputMode, setInputMode] = useState<"single" | "bulk">("single");
   const [errorMessage, setErrorMessage] = useState("");
+  const [ensLoading, setEnsLoading] = useState(false);
   const allowNoProtectionCheat = useCheat("allowNoProtection");
 
   const allowNoProtection =
@@ -82,10 +72,113 @@ export function AllowListInput({
     return /^0x[a-fA-F0-9]{40}$/.test(address);
   };
 
-  const addAddresses = (newAddressesInput: string) => {
+  const exportAddresses = () => {
+    const csvContent = addresses.join(",");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `${registerKey}_addresslist.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const addAddresses = async (newAddressesInput: string) => {
     const newAddresses = newAddressesInput
       .split(/[\n,]+/)
       .map((addr) => addr.trim());
+
+    const ensAddresses = newAddresses.flatMap((value, idx) =>
+      isENS(value) ? [{ index: idx, name: normalize(value) }] : [],
+    );
+
+    if (ensAddresses.length) {
+      setEnsLoading(true);
+
+      const client = getPublicClient({ chainId: mainnet.id });
+      const ENS_REGISTRY = mainnet.contracts.ensRegistry.address as Address;
+
+      const resolverCalls: ContractFunctionConfig[] = ensAddresses.map(
+        ({ name }) => ({
+          address: ENS_REGISTRY,
+          functionName: "resolver",
+          args: [namehash(name)],
+          abi: [
+            {
+              name: "resolver",
+              type: "function",
+              stateMutability: "view",
+              inputs: [{ name: "node", type: "bytes32" }],
+              outputs: [{ type: "address" }],
+            },
+          ],
+        }),
+      );
+
+      const resolverResults = await client.multicall({
+        contracts: resolverCalls,
+      });
+
+      type AddrMeta = { slot: number; contract: ContractFunctionConfig };
+
+      const addrMeta: AddrMeta[] = resolverResults.flatMap((r, i) => {
+        if (r.status !== "success") return [];
+        const resolverAddr = r.result as Address;
+
+        const { name, index: slot } = ensAddresses[i];
+
+        return [
+          {
+            slot,
+            contract: {
+              address: resolverAddr,
+              functionName: "addr",
+              args: [namehash(name)],
+              abi: [
+                {
+                  name: "addr",
+                  type: "function",
+                  stateMutability: "view",
+                  inputs: [{ name: "node", type: "bytes32" }],
+                  outputs: [{ type: "address" }],
+                },
+              ],
+            } as const,
+          },
+        ];
+      });
+
+      const addrResults = await client.multicall({
+        contracts: addrMeta.map((m) => m.contract),
+      });
+
+      await Promise.all(
+        addrResults.map(async (res, i) => {
+          const { slot } = addrMeta[i];
+
+          if (res.status === "success" && res.result !== zeroAddress) {
+            newAddresses[slot] = res.result as Address;
+          } else {
+            // Try resolve with universal resolver
+            const name = ensAddresses[addrMeta[i].slot].name;
+            const resolved = await client.getEnsAddress({
+              name,
+            });
+            if (resolved) {
+              newAddresses[slot] = resolved;
+            } else {
+              if (res.status === "failure") {
+                console.error(`ENS resolution failed for: ${name}`, res.error);
+              }
+            }
+          }
+        }),
+      );
+    }
+
     const validNewAddresses = newAddresses.filter(
       isValidEthereumAddress,
     ) as Address[];
@@ -97,7 +190,10 @@ export function AllowListInput({
     setAddresses(updatedAddresses as Address[]);
     setValue(registerKey, updatedAddresses); // Update form value
     setNewAddress("");
-    setBulkAddresses("");
+    const invalidAddresses = newAddresses.filter(
+      (x) => !validNewAddresses.includes(x as Address),
+    );
+    setBulkAddresses(invalidAddresses.join("\n"));
 
     if (
       newAddresses.length > 0 &&
@@ -110,6 +206,8 @@ export function AllowListInput({
     } else {
       setErrorMessage("");
     }
+
+    setEnsLoading(false);
   };
 
   const removeAddress = (index: number) => {
@@ -133,16 +231,16 @@ export function AllowListInput({
     register(registerKey, { ...registerOptions, required });
   }, [register, registerKey, registerOptions, required]);
 
-  useEffect(() => {
-    if (errors[registerKey] && addresses.length === 0 && required) {
-      setErrorMessage("At least one address is required");
-    } else {
-      setErrorMessage("");
+  const handleSubmit: KeyboardEventHandler<HTMLTextAreaElement> = (ev) => {
+    // Ctrl+Enter should call addAddresses(bulkAddresses)
+    if (ev.ctrlKey && ev.key === "Enter") {
+      ev.preventDefault();
+      addAddresses(bulkAddresses);
     }
-  }, [errors[registerKey], addresses.length]);
+  };
 
   return (
-    <div className="flex flex-col max-w-md">
+    <div className="flex flex-col max-w-[29rem]">
       {label && (
         <label htmlFor={registerKey} className="label cursor-pointer w-fit">
           {tooltip ?
@@ -216,12 +314,16 @@ export function AllowListInput({
             className={`textarea textarea-info w-full h-24 mb-2 ${
               className ?? ""
             }`}
+            onKeyDown={handleSubmit}
           />
           <Button
             type="button"
             btnStyle="outline"
             className=""
             onClick={() => addAddresses(bulkAddresses)}
+            disabled={!bulkAddresses.trim()}
+            tooltip="Add Bulk Addresses"
+            isLoading={ensLoading}
           >
             <ArrowUpTrayIcon className="w-5 h-5 stroke-2" /> Add Bulk Addresses
           </Button>
@@ -274,7 +376,7 @@ export function AllowListInput({
             type="button"
             btnStyle="outline"
             className="!p-2"
-            onClick={() => exportAddresses(addresses)}
+            onClick={exportAddresses}
             forceShowTooltip
             tooltip="Export"
           >

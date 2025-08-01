@@ -293,7 +293,7 @@ export default function PoolHeader({
           {superToken && (
             <div
               className="tooltip"
-              data-tip={`Stream funding enabled on this pool. \nYou can stream ${superToken.symbol + "x"} tokens to this pool. Click to copy address.`}
+              data-tip={`Stream funding enabled on this pool. \nYou can stream ${superToken.symbol} tokens to this pool. Click to copy address.`}
             >
               <button
                 className="btn btn-ghost btn-xs p-0"
