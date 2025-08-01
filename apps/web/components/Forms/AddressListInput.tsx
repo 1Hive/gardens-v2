@@ -163,17 +163,15 @@ export function AddressListInput({
             newAddresses[slot] = res.result as Address;
           } else {
             // Try resolve with universal resolver
+            const name = ensAddresses[addrMeta[i].slot].name;
             const resolved = await client.getEnsAddress({
-              name: ensAddresses[i].name,
+              name,
             });
             if (resolved) {
               newAddresses[slot] = resolved;
             } else {
               if (res.status === "failure") {
-                console.error(
-                  `ENS resolution failed for: ${ensAddresses[i].name}`,
-                  res.error,
-                );
+                console.error(`ENS resolution failed for: ${name}`, res.error);
               }
             }
           }
@@ -186,9 +184,7 @@ export function AddressListInput({
     ) as Address[];
 
     let updatedAddresses = [...new Set([...addresses, ...validNewAddresses])];
-    updatedAddresses = updatedAddresses.filter(
-      (addr) => addr !== zeroAddress && addr,
-    );
+    updatedAddresses = updatedAddresses.filter((addr) => addr !== zeroAddress);
     const addedAddressesCount = updatedAddresses.length - addresses.length;
 
     setAddresses(updatedAddresses as Address[]);
