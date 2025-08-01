@@ -63,7 +63,7 @@ async function approveTokenAllowance({
 }
 
 // Define a basic test case
-test("should connect wallet to the MetaMask Test Dapp", async ({
+test("should join and leave community", async ({
   context,
   page,
   metamaskPage,
@@ -143,6 +143,7 @@ test("should connect wallet to the MetaMask Test Dapp", async ({
   });
 
   // 3. Join the community
+  await page.waitForTimeout(1000); // Wait for the tx to open
   await metamask.confirmTransactionAndWaitForMining();
 
   // Close the modal
@@ -151,5 +152,6 @@ test("should connect wallet to the MetaMask Test Dapp", async ({
   // 4. Leave the community
   await page.getByTestId("register-member-button").getByText("Leave").click();
   await page.getByTestId("register-member-button").click();
+  await page.waitForTimeout(1000); // Wait for the tx to open
   await metamask.confirmTransactionAndWaitForMining();
 });
