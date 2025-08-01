@@ -61,7 +61,7 @@ type ProposalFormProps = {
   tokenGarden: Pick<TokenGarden, "symbol" | "decimals">;
   spendingLimit: number | string | undefined;
   spendingLimitPct: number;
-  poolBalance: string;
+  poolBalance: string | undefined;
 };
 
 type FormRowTypes = {
@@ -422,7 +422,8 @@ export const ProposalForm = ({
                 amount is {thresholdPct}%.{" "}
                 {requestedAmount &&
                   thresholdPct > 50 &&
-                  (thresholdPct < 100 ? "It may be difficult to pass."
+                  (thresholdPct < 100 ?
+                    "It may be difficult to pass."
                   : "It will not pass.")}
               </div>
             </InfoBox>
