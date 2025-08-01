@@ -249,7 +249,7 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
   >(fullSybilResistanceOptions);
 
   const [loading, setLoading] = useState(false);
-  const [warningMessage, setWarningMessage] = useState(false);
+  const [showWarningMessage, setShowWarningMessage] = useState(false);
 
   const router = useRouter();
   const pathname = usePathname();
@@ -264,7 +264,7 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
     const isUnprotected =
       sybilResistanceType !== "allowList" &&
       sybilResistanceType !== "gitcoinPassport";
-    setWarningMessage(!isUnlimited && isUnprotected);
+    setShowWarningMessage(!isUnlimited && isUnprotected);
   }, [pointSystemType, sybilResistanceType]);
 
   const formRowTypes: Record<
@@ -850,7 +850,7 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
                   }),
                 )}
               />
-              {warningMessage && (
+              {showWarningMessage && (
                 <div className="mt-6">
                   <InfoBox
                     title="Warning"
