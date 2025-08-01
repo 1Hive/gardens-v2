@@ -101,9 +101,6 @@ export function AddressListInput({
       const client = getPublicClient({ chainId: mainnet.id });
       const ENS_REGISTRY = mainnet.contracts.ensRegistry.address as Address;
 
-      /* -------------------------------------------------- *
-       * 1️⃣  Registry  ➜  Resolver
-       * -------------------------------------------------- */
       const resolverCalls: ContractFunctionConfig[] = ensAddresses.map(
         ({ name }) => ({
           address: ENS_REGISTRY,
@@ -125,15 +122,11 @@ export function AddressListInput({
         contracts: resolverCalls,
       });
 
-      /* -------------------------------------------------- *
-       * Build addr() calls _and_ remember where to put them
-       * -------------------------------------------------- */
       type AddrMeta = { slot: number; contract: ContractFunctionConfig };
 
       const addrMeta: AddrMeta[] = resolverResults.flatMap((r, i) => {
         if (r.status !== "success") return [];
         const resolverAddr = r.result as Address;
-        if (resolverAddr === zeroAddress) return []; // name has no resolver
 
         const { name, index: slot } = ensAddresses[i];
 
@@ -158,28 +151,34 @@ export function AddressListInput({
         ];
       });
 
-      /* -------------------------------------------------- *
-       * 2️⃣  Resolver  ➜  Address
-       * -------------------------------------------------- */
       const addrResults = await client.multicall({
         contracts: addrMeta.map((m) => m.contract),
       });
 
-      /* -------------------------------------------------- *
-       * Patch newAddresses using the saved slot
-       * -------------------------------------------------- */
-      addrResults.forEach((res, i) => {
-        const { slot } = addrMeta[i];
+      await Promise.all(
+        addrResults.map(async (res, i) => {
+          const { slot } = addrMeta[i];
 
-        if (res.status === "success" && res.result !== zeroAddress) {
-          newAddresses[slot] = res.result as Address;
-        } else {
-          newAddresses[slot] = ""; // keep empty on failure / unset addr()
-          if (res.status === "failure") {
-            console.error("ENS resolution failed", res.error);
+          if (res.status === "success" && res.result !== zeroAddress) {
+            newAddresses[slot] = res.result as Address;
+          } else {
+            // Try resolve with universal resolver
+            const resolved = await client.getEnsAddress({
+              name: ensAddresses[i].name,
+            });
+            if (resolved) {
+              newAddresses[slot] = resolved;
+            } else {
+              if (res.status === "failure") {
+                console.error(
+                  `ENS resolution failed for: ${ensAddresses[i].name}`,
+                  res.error,
+                );
+              }
+            }
           }
-        }
-      });
+        }),
+      );
     }
 
     const validNewAddresses = newAddresses.filter(
@@ -187,7 +186,9 @@ export function AddressListInput({
     ) as Address[];
 
     let updatedAddresses = [...new Set([...addresses, ...validNewAddresses])];
-    updatedAddresses = updatedAddresses.filter((addr) => addr !== zeroAddress);
+    updatedAddresses = updatedAddresses.filter(
+      (addr) => addr !== zeroAddress && addr,
+    );
     const addedAddressesCount = updatedAddresses.length - addresses.length;
 
     setAddresses(updatedAddresses as Address[]);
