@@ -22,7 +22,7 @@ const infoBoxStyles = {
   info: "bg-tertiary-soft text-tertiary-content",
   success: "bg-primary-soft text-primary-content",
   warning: "bg-secondary-soft text-secondary-content",
-  error: "bg-danger-soft text-danger-contentt",
+  error: "bg-danger-soft text-danger-content",
 };
 
 export function InfoBox({
@@ -49,7 +49,7 @@ export function InfoBox({
         <h6>{title}</h6>
       </div>
       <p
-        className={`text-sm leading-5 text-neutral-content first-letter:uppercase ${contentStyle}`}
+        className={`text-sm leading-5 text-neutral-content first-letter:uppercase text-left ${contentStyle}`}
       >
         {children ?? content}
       </p>

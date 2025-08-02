@@ -61,6 +61,7 @@ type ProposalFormProps = {
   tokenGarden: Pick<TokenGarden, "symbol" | "decimals">;
   spendingLimit: number | string | undefined;
   spendingLimitPct: number;
+  poolBalance: string | undefined;
 };
 
 type FormRowTypes = {
@@ -131,6 +132,7 @@ export const ProposalForm = ({
   alloInfo,
   spendingLimit,
   spendingLimitPct,
+  poolBalance,
 }: ProposalFormProps) => {
   const {
     register,
@@ -365,17 +367,17 @@ export const ProposalForm = ({
             <div className="relative flex flex-col">
               <FormInput
                 label="Requested amount"
-                subLabel={`Max ${spendingLimit} ${poolToken?.symbol} (${spendingLimitPct.toFixed(2)}% of Pool Funds)`}
+                subLabel={`Pool Funds: ${poolBalance} ${poolToken?.symbol}`}
                 register={register}
                 required
                 onChange={(e) => {
                   setRequestedAmount(e.target.value);
                 }}
                 registerOptions={{
-                  max: {
-                    value: spendingLimit ? +spendingLimit : 0,
-                    message: `Max amount must remain under the spending limit of ${spendingLimit} ${poolToken?.symbol}`,
-                  },
+                  // max: {
+                  //   value: spendingLimit ? +spendingLimit : 0,
+                  //   message: `Max amount must remain under the spending limit of ${spendingLimit} ${poolToken?.symbol}`,
+                  // },
                   min: {
                     value: INPUT_TOKEN_MIN_VALUE,
                     message: `Amount must be greater than ${INPUT_TOKEN_MIN_VALUE}`,
@@ -395,8 +397,9 @@ export const ProposalForm = ({
             </div>
           )}
 
-          {requestedAmount && thresholdPct !== 0 && thresholdPct <= 100 && (
+          {requestedAmount && thresholdPct !== 0 && (
             <InfoBox
+              title="Conviction required"
               infoBoxType={
                 thresholdPct < 50 ? "info"
                 : thresholdPct < 100 ?
@@ -421,7 +424,7 @@ export const ProposalForm = ({
                   thresholdPct > 50 &&
                   (thresholdPct < 100 ?
                     "It may be difficult to pass."
-                  : "Its unlikely to pass.")}
+                  : "It will not pass.")}
               </div>
             </InfoBox>
           )}

@@ -298,12 +298,25 @@ export function Proposals({
     },
   ];
 
+  const disableCreateProposalBtnCondition: ConditionObject[] = [
+    {
+      condition: !isMemberCommunity,
+      message: "Join community first",
+    },
+  ];
+
   const disableManSupportButton = disableManageSupportBtnCondition.some(
     (cond) => cond.condition,
   );
+
   const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons(
     disableManageSupportBtnCondition,
   );
+
+  const { tooltipMessage: createProposalTooltipMessage } = useDisableButtons(
+    disableCreateProposalBtnCondition,
+  );
+
   useEffect(() => {
     if (
       searchParams[QUERY_PARAMS.poolPage.allocationView] === "true" &&
@@ -675,12 +688,7 @@ export function Proposals({
               <Button
                 icon={<PlusIcon height={24} width={24} />}
                 disabled={!isConnected || missmatchUrl || !isMemberCommunity}
-                tooltip={
-                  !isConnected ? "Connect your wallet"
-                  : !isMemberCommunity ?
-                    "Join the community first"
-                  : "Create a proposal"
-                }
+                tooltip={createProposalTooltipMessage}
               >
                 Create a proposal
               </Button>

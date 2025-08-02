@@ -241,7 +241,7 @@ export default function Page({
     () => [
       {
         condition: !isMemberCommunity,
-        message: "Join community to dispute",
+        message: "Join community to support",
       },
     ],
     [address],
@@ -426,7 +426,7 @@ export default function Page({
                   className="w-full"
                   btnStyle="outline"
                 >
-                  Manage support
+                  Go to manage support
                 </Button>
                 {!isSignalingType && (
                   <Button

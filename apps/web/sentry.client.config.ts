@@ -26,11 +26,11 @@ Sentry.init({
       blockAllMedia: true,
     }),
     Sentry.captureConsoleIntegration({ levels: ["error"] }),
-    Sentry.feedbackIntegration({
-      // Additional SDK configuration goes in here, for example:
-      colorScheme: "light",
-      showBranding: false,
-    }),
+    // Sentry.feedbackIntegration({
+    //   // Additional SDK configuration goes in here, for example:
+    //   colorScheme: "light",
+    //   showBranding: false,
+    // }),
     Sentry.extraErrorDataIntegration({
       depth: 3,
       captureErrorCause: true,
