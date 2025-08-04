@@ -852,6 +852,7 @@ export default function PoolHeader({
           {/* InfoBox - Banner or Image */}
           {minThGtTotalEffPoints && isEnabled && (
             <InfoBox
+              title="Min threshold"
               infoBoxType="warning"
               content="Activated governance in this pool is too low. No proposals will pass unless more members activate their governance. You can still create and support proposals."
               className="mb-4"

@@ -140,7 +140,11 @@ templates:
           handler: handleSybilScorerUpdated
         - event: SuperfluidTokenUpdated(address)
           handler: handleSuperfluidTokenUpdated
- 
+        - event: SuperfluidGDAConnected(indexed address,indexed address)
+          handler: handleSuperfluidGDAConnected
+        - event: SuperfluidGDADisconnected(indexed address,indexed address)
+          handler: handleSuperfluidGDADisconnected
+
       file: ./src/mappings/cv-strategy.ts
 
   - kind: ethereum/contract
