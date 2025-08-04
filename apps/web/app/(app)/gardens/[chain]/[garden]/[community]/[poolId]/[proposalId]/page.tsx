@@ -227,7 +227,7 @@ export default function Page({
       pathSegments.pop();
     }
     const newPath = pathSegments.join("/");
-    router.push(newPath + `?${QUERY_PARAMS.poolPage.allocationView}=true`);
+    router.push(newPath + `?${QUERY_PARAMS.poolPage.allocationView}=false`);
   };
   const distributeErrorName = useErrorDetails(errorDistribute);
 
