@@ -19,6 +19,3 @@
 [submodule "lib/protocol-monorepo"]
 	path = lib/protocol-monorepo
 	url = https://github.com/superfluid-org/protocol-monorepo
-[submodule "lib/protocol-monorepo2"]
-	path = lib/protocol-monorepo2
-	url = https://github.com/superfluid-finance/protocol-monorepo
