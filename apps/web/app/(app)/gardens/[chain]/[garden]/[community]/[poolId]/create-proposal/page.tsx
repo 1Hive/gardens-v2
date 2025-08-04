@@ -87,6 +87,7 @@ export default function Page({
         </div>
         <ProposalForm
           arbitrableConfig={data.arbitrableConfigs[0]}
+          poolBalance={poolToken?.formatted}
           strategy={strategyObj}
           poolId={poolId}
           poolParams={data.cvstrategies[0].config}

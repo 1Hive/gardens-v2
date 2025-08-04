@@ -75,17 +75,11 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
   const { address: accountAddress } = useAccount();
   const [isStreamModalOpened, setIsStreamModalOpened] = useState(false);
   const [isTransferModalOpened, setIsTransferModalOpened] = useState(false);
-  const [useExistingBalance, setUseExistingBalance] = useState(false);
-  const showUseSuperTokenBalance = useCheat("showUseSuperTokenBalance");
-  const { data: balance } = useBalance({
-    address: accountAddress,
-    formatUnits: poolToken.decimals,
-    token: poolToken.address,
-    watch: true,
-    enabled: !!accountAddress,
-  });
+  const [forceAllBalanceUsage, setForceAllBalanceUsage] = useState(false);
 
+  const showUseSuperTokenBalance = useCheat("showUseSuperTokenBalance");
   const {
+    currentUserOtherFlowRateBn,
     currentFlowRateBn,
     currentUserFlowRateBn,
     setCurrentUserFlowRateBn,
@@ -131,12 +125,25 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     Math.floor(streamRequestedAmountPerSec * 10 ** poolToken.decimals),
   );
 
-  const effectiveRequestedAmountBn =
-    useExistingBalance ?
-      requestedAmountBn - (superToken?.value ?? 0n)
-    : requestedAmountBn;
+  // If user is streaming super same token to other recipient, we can deduct from balance a 3 month budget for each stream
+  const secsTo3Months = BigInt(3 * secondsToMonth);
+  const reservedSuperTokenBn =
+    currentUserOtherFlowRateBn != null ?
+      currentUserOtherFlowRateBn * secsTo3Months
+    : 0n;
+  const reservedSuperToken =
+    Number(reservedSuperTokenBn) / 10 ** poolToken.decimals;
+  const userSuperTokenAvailableBudgetBn =
+    currentUserOtherFlowRateBn != null && !!superToken ?
+      superToken.value - reservedSuperTokenBn
+    : 0n;
 
-  const isSuperTokenSufficient = effectiveRequestedAmountBn <= 0n;
+  const effectiveRequestedAmountBn =
+    forceAllBalanceUsage ?
+      requestedAmountBn - (superToken?.value ?? 0n)
+    : requestedAmountBn - userSuperTokenAvailableBudgetBn;
+
+  const isSuperTokenEnoughBalance = effectiveRequestedAmountBn <= 0n;
 
   const {
     writeAsync: writeStreamFundsAsync,
@@ -149,7 +156,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     abi: abiWithErrors(superfluidCFAv1ForwarderAbi),
     functionName: "createFlow",
     contractName: "SuperFluid Constant Flow Agreement",
-    showNotification: isSuperTokenSufficient,
+    showNotification: isSuperTokenEnoughBalance,
     onConfirmations: () => {
       setCurrentFlowRateBn(
         (old) => (old ?? 0n) + streamRequestedAmountPerSecBn,
@@ -260,10 +267,22 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
   const hasInsufficientBalance =
     !!walletBalance?.formatted && +walletBalance.formatted < amount;
 
+  const effectiveAvailableBalanceBn =
+    !!userSuperTokenAvailableBudgetBn && !!walletBalance ?
+      (forceAllBalanceUsage ?
+        superToken?.value ?? 0n
+      : userSuperTokenAvailableBudgetBn) + walletBalance.value
+    : null;
+
+  const effectiveAvailableBalance =
+    !!effectiveAvailableBalanceBn && poolToken ?
+      Number(effectiveAvailableBalanceBn) / 10 ** (poolToken?.decimals ?? 18)
+    : null;
+
   const hasInsufficientStreamBalance =
     hasInsufficientBalance &&
-    superToken &&
-    superToken.value < requestedAmountBn;
+    !!effectiveAvailableBalanceBn &&
+    effectiveAvailableBalanceBn < requestedAmountBn;
 
   const { tooltipMessage, isButtonDisabled, isConnected, missmatchUrl } =
     useDisableButtons([
@@ -359,7 +378,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
       return;
     }
     // Check if super token balance is already sufficient
-    if (useExistingBalance && isSuperTokenSufficient) {
+    if (isSuperTokenEnoughBalance) {
       await writeStreamFundsAsync();
       setIsStreamModalOpened(false);
       return;
@@ -371,7 +390,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     }));
     setIsStreamTxModalOpen(true);
     await handleWrapAllowance({
-      formAmount: requestedAmountBn,
+      formAmount: effectiveRequestedAmountBn,
     });
     setIsStreamModalOpened(false);
   };
@@ -389,8 +408,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
       setIsStreamModalOpened(false);
       return;
     }
-    // Check if super token balance is already sufficient
-    if (useExistingBalance && isSuperTokenSufficient) {
+    if (isSuperTokenEnoughBalance) {
       await writeEditStreamAsync();
       setIsStreamModalOpened(false);
       return;
@@ -402,7 +420,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     }));
     setIsStreamTxModalOpen(true);
     await handleWrapAllowance({
-      formAmount: requestedAmountBn,
+      formAmount: effectiveRequestedAmountBn,
     });
     setIsStreamModalOpened(false);
   };
@@ -410,7 +428,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
   const fundAmountInput = (
     <label className="input input-bordered input-info flex items-center gap-2">
       <input
-        max={balance?.formatted}
+        max={walletBalance?.formatted}
         min={0}
         value={amountInput}
         onChange={(e) => {
@@ -578,86 +596,76 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
             }
           </div>
 
-          {superToken && superToken.value > 0 && (
-            <>
-              <hr className="w-full" />
-              <div className="flex items-center gap-2 justify-between">
-                <div className="flex flex-col gap-1 w-full">
-                  <div className="flex items-center gap-2 w-full">
-                    <div className="whitespace-nowrap">
-                      Wrapped token balance:
-                    </div>
-                    <div className="flex items-center gap-1 w-full">
-                      <div
-                        className="tooltip tooltip-top-left"
-                        data-tip={`${superToken.formatted ?? 0} ${superToken.symbol}`}
+          <hr className="w-full" />
+          <div className="flex items-center gap-2 justify-between">
+            <div className="flex flex-col gap-1 w-full">
+              <div className="flex items-center gap-2 w-full">
+                <div className="whitespace-nowrap">Available balance:</div>
+                <div className="flex items-center gap-1 w-full">
+                  <div
+                    className="tooltip"
+                    data-tip={`${roundToSignificant(walletBalance?.formatted ?? 0, 4, { truncate: true }) ?? 0} ${poolToken?.symbol} + ${roundToSignificant(superToken?.formatted ?? 0, 4, { truncate: true }) ?? 0} ${superToken?.symbol} - ${roundToSignificant(reservedSuperToken, 4, { truncate: true })} ${superToken?.symbol} reserved for other streams`}
+                  >
+                    {forceAllBalanceUsage ?
+                      <Button
+                        btnStyle="link"
+                        color="primary"
+                        size="sm"
+                        className="!p-0"
+                        onClick={() => {
+                          setAmount(
+                            trimEnd(
+                              roundToSignificant(
+                                effectiveAvailableBalance ?? 0,
+                                4,
+                                { truncate: true },
+                              ),
+                              ".",
+                            ),
+                          );
+                        }}
                       >
-                        {superToken.value > 0n && useExistingBalance ?
-                          <Button
-                            btnStyle="link"
-                            color="primary"
-                            size="sm"
-                            className="!p-0"
-                            onClick={() => {
-                              setAmount(
-                                trimEnd(
-                                  roundToSignificant(
-                                    superToken.formatted ?? 0,
-                                    4,
-                                    { truncate: true },
-                                  ),
-                                  ".",
-                                ),
-                              );
-                            }}
-                          >
-                            {roundToSignificant(
-                              +(superToken.formatted ?? 0),
-                              4,
-                              { truncate: true },
-                            )}
-                          </Button>
-                        : roundToSignificant(+(superToken.formatted ?? 0), 4)}
-                      </div>{" "}
-                      {superToken.symbol}
-                    </div>
-                  </div>
-                  {showUseSuperTokenBalance && (
-                    <div>
-                      <FormCheckBox
-                        registerKey="useExistingBalance"
-                        label="Include existing balance"
-                        tooltip="Please make sure this balance isn't used for another stream."
-                        value={useExistingBalance}
-                        onChange={(e) =>
-                          setUseExistingBalance(e.target.checked)
-                        }
-                        customTooltipIcon={
-                          <ExclamationTriangleIcon
-                            width={20}
-                            height={20}
-                            className="!text-warning-content"
-                          />
-                        }
-                      />
-                    </div>
-                  )}
-                  <div className="text-sm text-neutral-content flex items-center gap-1">
-                    Check it on{" "}
-                    <a
-                      className="text-primary-content hover:text-primary-hover-content flex items-center gap-1"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      href="https://app.superfluid.org/"
-                    >
-                      Superfluid app
-                      <ArrowTopRightOnSquareIcon className="w-4 h-4 inline-block" />
-                    </a>
-                  </div>
+                        {roundToSignificant(effectiveAvailableBalance ?? 0, 4, {
+                          truncate: true,
+                        })}
+                      </Button>
+                    : roundToSignificant(effectiveAvailableBalance ?? 0, 4)}
+                  </div>{" "}
+                  {poolToken?.symbol}
                 </div>
               </div>
-            </>
-          )}
+              {showUseSuperTokenBalance && (
+                <div>
+                  <FormCheckBox
+                    registerKey="useExistingBalance"
+                    label="Include existing balance"
+                    tooltip="Please make sure this balance isn't used for another stream."
+                    value={forceAllBalanceUsage}
+                    onChange={(e) => setForceAllBalanceUsage(e.target.checked)}
+                    customTooltipIcon={
+                      <ExclamationTriangleIcon
+                        width={20}
+                        height={20}
+                        className="!text-warning-content"
+                      />
+                    }
+                  />
+                </div>
+              )}
+              <div className="text-sm text-neutral-content flex items-center gap-1">
+                Check it on{" "}
+                <a
+                  className="text-primary-content hover:text-primary-hover-content flex items-center gap-1"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  href="https://app.superfluid.org/"
+                >
+                  Superfluid app
+                  <ArrowTopRightOnSquareIcon className="w-4 h-4 inline-block" />
+                </a>
+              </div>
+            </div>
+          </div>
         </div>
       </Modal>
       <Modal
