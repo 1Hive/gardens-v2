@@ -683,6 +683,7 @@ export default function PoolHeader({
                   </>
                 }
                 {!superToken &&
+                  PoolTypes[proposalType] !== "signaling" &&
                   networkSfMetadata?.contractsV1.superTokenFactory && (
                     <>
                       <Button
