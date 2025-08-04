@@ -268,10 +268,12 @@
           "0xaeecbc91e44541204d0c784e4ac3e8eca6a47cc8",
           "0xb3551608e7833f517d77419f4035e1a6b14391b7",
           "0xba1b0de347da5b4f50b9fb0840c957081b74ad2d",
+          "0xc12cb9c057c708eeeca45164a120ad1971e52eec",
           "0xcec4c6ca57b3494a8fd0abdc4604d534d451d8a2",
           "0xd6620f7576894543f5225ab44f9eb32133710db3",
           "0xd9cf1f7d077166236e260819257a567b1ca22c8c",
           "0xe1e19cab1c84b3d3123af8c49b26e141a8ac4163",
+          "0xe2aee72d564f933f12fb13b2694d1ac49b93ba34",
           "0xed6704f988ffe321be99cf2a8625ec2551fbe36c",
           "0xee9a549fe93e06c0291dc89fcfcd224c9245d6c9",
           "0xf11ea19ca2d6dbd9aea9075f8b899093f1a5593e",
@@ -284,7 +286,7 @@
           "0xfed43acfa82e0e924d507124892878b6086b581d"
         ]
       },
-      "hash": "b97970da38893c5a4d0ef45da8916f07cf60ff98"
+      "hash": "c84322a8ac54d96c95cdc86951f36c5c243935ae"
     },
     {
       "name": "polygon",
@@ -366,6 +368,7 @@
         ],
         "CV_STRATEGIES": [
           "0x0108617ca2e05546c49383d9392ed8db5d12304c",
+          "0x0421da9346e4dcb1f9dacd64dd791d13e5ce2a8f",
           "0x051e8d96d4e9cde57d584b8d59a5116784f0d3c7",
           "0x0a2ecc1f687ec4e1c19d337a5ac926865e30e818",
           "0x0fd15b2142a257fa8713cad2c14ec52c00f71865",
@@ -431,7 +434,7 @@
           "0xfbad687a935390ff59b36cd6c9462d0b1948e378"
         ]
       },
-      "hash": "6fee9fa950fbaf0a32ef149cee9fef47548f7309"
+      "hash": "1d3a53e9a4665d8ac3ce3a115f29c866f1a4aea4"
     },
     {
       "name": "base",

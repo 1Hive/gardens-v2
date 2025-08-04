@@ -683,6 +683,7 @@ export default function PoolHeader({
                   </>
                 }
                 {!superToken &&
+                  PoolTypes[proposalType] !== "signaling" &&
                   networkSfMetadata?.contractsV1.superTokenFactory && (
                     <>
                       <Button
@@ -697,9 +698,9 @@ export default function PoolHeader({
                           !!(isCouncilMember && superTokenCandidate)
                         }
                         tooltip={
-                          // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
                           (isCouncilMember &&
                             superTokenCandidate &&
+                            // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
                             tooltipMessage) ||
                           "This allows people to add funds to the pool via streaming (Superfluid)."
                         }
