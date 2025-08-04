@@ -138,6 +138,8 @@ export function Proposals({
   const tokenDecimals = strategy.registryCommunity.garden.decimals;
   const searchParams = useCollectQueryParams();
 
+  const proposalSectionRef = useRef<HTMLDivElement>(null);
+
   // Queries
   const { data: memberData, error } = useSubgraphQuery<isMemberQuery>({
     query: isMemberDocument,
@@ -328,6 +330,20 @@ export function Proposals({
   }, [disableManSupportButton, isConnected, searchParams]);
 
   useEffect(() => {
+    if (
+      searchParams[QUERY_PARAMS.poolPage.allocationView] !== undefined &&
+      proposalSectionRef.current
+    ) {
+      const elementTop =
+        proposalSectionRef.current.getBoundingClientRect().top + window.scrollY;
+      window.scrollTo({
+        top: elementTop - 150,
+        behavior: "smooth",
+      });
+    }
+  }, [proposalSectionRef.current, searchParams]);
+
+  useEffect(() => {
     if (!proposals) return;
 
     const newInputs: { [key: string]: ProposalInputItem } = {};
@@ -513,6 +529,7 @@ export function Proposals({
       {/* Proposals section */}
       <section className="col-span-12 xl:col-span-9 flex flex-col gap-10">
         <header
+          ref={proposalSectionRef}
           className={`flex ${proposals.length === 0 ? "flex-col items-start justify-start" : "items-center justify-between"} gap-10 flex-wrap`}
         >
           <h3 className="text-left w-52">Proposals</h3>

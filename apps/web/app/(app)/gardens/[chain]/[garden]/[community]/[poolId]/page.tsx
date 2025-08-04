@@ -29,7 +29,6 @@ export default function Page({
   params: { chain: string; poolId: number; garden: string };
 }) {
   const searchParams = useCollectQueryParams();
-  const proposalSectionRef = useRef<HTMLDivElement>(null);
 
   const { data, refetch, error } = useSubgraphQuery<getPoolDataQuery>({
     query: getPoolDataDocument,
@@ -113,21 +112,6 @@ export default function Page({
 
   const maxAmount = strategy?.config?.maxAmount ?? 0;
 
-  useEffect(() => {
-    if (
-      searchParams[QUERY_PARAMS.poolPage.allocationView] !== undefined &&
-      proposalSectionRef.current
-    ) {
-      const elementTop =
-        proposalSectionRef.current.getBoundingClientRect().top + window.scrollY;
-      window.scrollTo({
-        top: elementTop - 130,
-        behavior: "smooth",
-      });
-    }
-    // setAllocationView(searchParams[QUERY_PARAMS.poolPage.allocationView]);
-  }, [proposalSectionRef.current, searchParams]);
-
   const poolToken = usePoolToken({
     poolAddress: strategy?.id,
     poolTokenAddr: poolTokenAddr,
@@ -203,7 +187,6 @@ export default function Page({
       )}
 
       {strategy && isEnabled && (
-        // <div ref={proposalSectionRef}>
         <Proposals
           poolToken={poolToken}
           strategy={strategy}
@@ -212,7 +195,6 @@ export default function Page({
           createProposalUrl={`/gardens/${chain}/${garden}/${communityAddress}/${poolId}/create-proposal`}
           proposalType={proposalType}
         />
-        // </div>
       )}
     </>
   );
