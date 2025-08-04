@@ -39,9 +39,15 @@ export default function Page({
       !!strategyObj?.id &&
       data &&
       PoolTypes[data.cvstrategies[0].config.proposalType] === "funding",
+    watch: true,
   });
 
-  if (!tokenGarden || !metadata || !strategyObj || poolToken == undefined) {
+  if (
+    !tokenGarden ||
+    !metadata ||
+    !strategyObj ||
+    (poolToken == undefined && PoolTypes[proposalType] === "funding")
+  ) {
     return (
       <div className="mt-96 col-span-12">
         <LoadingSpinner />
@@ -81,6 +87,7 @@ export default function Page({
         </div>
         <ProposalForm
           arbitrableConfig={data.arbitrableConfigs[0]}
+          poolBalance={poolToken?.formatted}
           strategy={strategyObj}
           poolId={poolId}
           poolParams={data.cvstrategies[0].config}

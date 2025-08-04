@@ -697,9 +697,9 @@ export default function PoolHeader({
                           !!(isCouncilMember && superTokenCandidate)
                         }
                         tooltip={
+                          // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
                           (isCouncilMember &&
                             superTokenCandidate &&
-                            // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
                             tooltipMessage) ||
                           "This allows people to add funds to the pool via streaming (Superfluid)."
                         }
@@ -851,6 +851,7 @@ export default function PoolHeader({
           {/* InfoBox - Banner or Image */}
           {minThGtTotalEffPoints && isEnabled && (
             <InfoBox
+              title="Min threshold"
               infoBoxType="warning"
               content="Activated governance in this pool is too low. No proposals will pass unless more members activate their governance. You can still create and support proposals."
               className="mb-4"

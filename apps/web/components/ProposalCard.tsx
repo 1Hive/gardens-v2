@@ -128,10 +128,14 @@ export function ProposalCard({
     (currentConvictionPct ?? 0) < (thresholdPct ?? 0) &&
     !alreadyExecuted;
 
+  const impossibleToPass = thresholdPct && thresholdPct >= 100;
+
   const ProposalCountDown = (
     <>
       <p className="text-neutral-soft-content text-xs sm:text-sm">
-        {(
+        {impossibleToPass ?
+          "Threshold over 100%. It will not pass"
+        : (
           Number(supportNeededToPass) > 0 &&
           !alreadyExecuted &&
           !readyToBeExecuted

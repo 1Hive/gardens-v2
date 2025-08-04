@@ -2,7 +2,7 @@ import React, { ReactNode, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Address, formatUnits, parseUnits, zeroAddress } from "viem";
 import { getPoolDataQuery, TokenGarden } from "#/subgraph/.graphclient";
-import { AllowListInput } from "./AllowListInput";
+import { AddressListInput } from "./AddressListInput";
 import { FormAddressInput } from "./FormAddressInput";
 import { FormCheckBox } from "./FormCheckBox";
 import { FormInput } from "./FormInput";
@@ -457,7 +457,7 @@ export default function PoolEditForm({
                   placeholder="0"
                 />
               : sybilResistanceType === "allowList" && (
-                  <AllowListInput
+                  <AddressListInput
                     label="Allow list"
                     register={register}
                     registerKey="sybilResistanceValue"
