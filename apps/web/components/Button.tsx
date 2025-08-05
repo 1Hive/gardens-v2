@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Size } from "@/types";
 
 type ButtonProps = {
@@ -13,6 +13,7 @@ type ButtonProps = {
   color?: Color;
   onClick?: React.DOMAttributes<HTMLButtonElement>["onClick"];
   forceShowTooltip?: boolean;
+  popTooltip?: boolean; // Allows to display the tooltip programmatically
   className?: string;
   disabled?: boolean;
   tooltip?: string;
@@ -91,6 +92,7 @@ export function Button({
   disabled = false,
   tooltip,
   forceShowTooltip = false,
+  popTooltip = false,
   tooltipClassName: tooltipStyles = "",
   tooltipSide = "tooltip-top",
   children,
@@ -126,7 +128,7 @@ export function Button({
 
   return disabled || forceShowTooltip ?
       <div
-        className={`${className} ${tooltip ? "tooltip" : ""} ${tooltipSide} ${tooltipStyles}`}
+        className={`${className} ${tooltip ? "tooltip" : ""} ${tooltipSide} ${tooltipStyles} ${popTooltip ? "tooltip-open" : ""}`}
         data-tip={tooltip}
       >
         {buttonElement}

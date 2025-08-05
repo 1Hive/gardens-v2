@@ -1,3 +1,4 @@
+/* eslint-disable jsx-a11y/click-events-have-key-events */
 "use client";
 
 import React, { Fragment, useEffect, useRef, useState } from "react";
@@ -126,6 +127,8 @@ export function Proposals({
   const [stakedFilters, setStakedFilters] = useState<{
     [key: string]: ProposalInputItem;
   }>({});
+  const [showManageSupportTooltip, setShowManageSupportTooltip] =
+    useState(false);
 
   // Hooks
   const { address: wallet } = useAccount();
@@ -320,12 +323,27 @@ export function Proposals({
   );
 
   useEffect(() => {
-    if (
-      searchParams[QUERY_PARAMS.poolPage.allocationView] === "true" &&
-      !disableManageSupportButton &&
-      isConnected
-    ) {
-      setAllocationView(true);
+    if (disableManageSupportButton) {
+      // Used to dismiss the Manage support tooltip in case it was shown
+      const handleClickOutside = () => {
+        setShowManageSupportTooltip(false);
+        document.removeEventListener("click", handleClickOutside);
+      };
+      document.addEventListener("click", handleClickOutside);
+
+      return () => {
+        document.removeEventListener("click", handleClickOutside);
+      };
+    }
+  }, [disableManageSupportButton]);
+
+  useEffect(() => {
+    if (searchParams[QUERY_PARAMS.poolPage.allocationView] === "true") {
+      if (!disableManageSupportButton && isConnected) {
+        setAllocationView(true);
+      } else {
+        setShowManageSupportTooltip(true);
+      }
     }
   }, [disableManageSupportButton, isConnected, searchParams]);
 
@@ -565,21 +583,26 @@ export function Proposals({
                 </Link>
               </div>
             : !allocationView && (
-                <CheckPassport strategy={strategy}>
-                  <Button
-                    icon={<AdjustmentsHorizontalIcon height={24} width={24} />}
-                    onClick={() => setAllocationView((prev) => !prev)}
-                    disabled={
-                      !isConnected ||
-                      missmatchUrl ||
-                      !memberActivatedStrategy ||
-                      !isAllowed
-                    }
-                    tooltip={tooltipMessage}
-                  >
-                    Manage support
-                  </Button>
-                </CheckPassport>
+                <div onMouseLeave={() => setShowManageSupportTooltip(false)}>
+                  <CheckPassport strategy={strategy}>
+                    <Button
+                      icon={
+                        <AdjustmentsHorizontalIcon height={24} width={24} />
+                      }
+                      onClick={() => setAllocationView((prev) => !prev)}
+                      popTooltip={showManageSupportTooltip}
+                      disabled={
+                        !isConnected ||
+                        missmatchUrl ||
+                        !memberActivatedStrategy ||
+                        !isAllowed
+                      }
+                      tooltip={tooltipMessage}
+                    >
+                      Manage support
+                    </Button>
+                  </CheckPassport>
+                </div>
               ))}
         </header>
         {allocationView && <UserAllocationStats stats={stats} />}

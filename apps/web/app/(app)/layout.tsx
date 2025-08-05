@@ -109,8 +109,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       >
         <Button
           forceShowTooltip
-          tooltipSide="tooltip-top-left"
-          tooltip={"Discord support"}
+          tooltip={"Discord\nSupport"}
           icon={<MegaphoneIcon height={24} width={24} className="text-white" />}
         />
       </a>
