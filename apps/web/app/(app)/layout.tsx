@@ -93,29 +93,27 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       </div>
-      {/* Bootom right floating div */}
 
-      <div className="fixed bottom-4 left-0 z-50 w-full px-6 flex items-center justify-between">
-        <div
-          className="tooltip tooltip-top-right tooltip-warning"
-          data-tip="️️Disclaimer: our smart contracts have not undergone a third party security audit, use at your own risk."
-        >
-          <Badge status={2}>Beta</Badge>
-        </div>
-        <a
-          href="https://discord.gg/6U8YGwVRWG"
-          target="_blank"
-          rel="noreferrer"
-        >
-          <Button
-            forceShowTooltip
-            tooltip={"Discord\n Support"}
-            icon={
-              <MegaphoneIcon height={24} width={24} className="text-white" />
-            }
-          />
-        </a>
+      {/* Bootom floating divs */}
+      <div
+        className="fixed bottom-4 left-4 tooltip tooltip-top-right tooltip-warning z-50"
+        data-tip="️️Disclaimer: our smart contracts have not undergone a third party security audit, use at your own risk."
+      >
+        <Badge status={2}>Beta</Badge>
       </div>
+      <a
+        href="https://discord.gg/6U8YGwVRWG"
+        target="_blank"
+        rel="noreferrer"
+        className="fixed bottom-4 right-4 z-50"
+      >
+        <Button
+          forceShowTooltip
+          tooltipSide="tooltip-top-left"
+          tooltip={"Discord support"}
+          icon={<MegaphoneIcon height={24} width={24} className="text-white" />}
+        />
+      </a>
     </div>
   );
 }

@@ -352,7 +352,7 @@ export const IncreasePower = ({
                   if (accountTokenBalancePlusStakeAmount) {
                     setStakedAmount(
                       +percentage >= 100 ?
-                        accountTokenBalancePlusStakeAmount.toPrecision(4)
+                        accountTokenBalancePlusStakeAmount.toString()
                       : Math.max(
                           registerStakeAmount, // Minimum stake amount
                           (+percentage * accountTokenBalancePlusStakeAmount) /
