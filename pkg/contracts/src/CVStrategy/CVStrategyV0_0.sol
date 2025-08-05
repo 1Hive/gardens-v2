@@ -328,11 +328,13 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
                 // revert(("TokenNotAllowed")); // @todo take commented when contract size fixed with diamond
                 revert(); // @todo take commented when contract size fixed with diamond
             }
-            if (_isOverMaxRatio(proposal.amountRequested)) {
-                // revert AmountOverMaxRatio();
-                // revert(("AmountOverMaxRatio")); // @todo take commented when contract size fixed with diamond
-                revert();
-            }
+
+            // Commented out to allow creating a proposal requesting more than the pool available balance
+            // if (_isOverMaxRatio(proposal.amountRequested)) {
+            //     // revert AmountOverMaxRatio();
+            //     // revert(("AmountOverMaxRatio")); // @todo take commented when contract size fixed with diamond
+            //     revert();
+            // }
         }
 
         if (
@@ -424,7 +426,8 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         );
 
         uint256 voterStake = totalVoterStakePct[_member];
-        uint256 unusedPower = registryCommunity.getMemberPowerInStrategy(_member, address(this)) - voterStake;
+        uint256 memberPower = registryCommunity.getMemberPowerInStrategy(_member, address(this));
+        uint256 unusedPower = memberPower > voterStake ? memberPower - voterStake : 0;
         if (unusedPower < pointsToDecrease) {
             uint256 balancingRatio = ((pointsToDecrease - unusedPower) << 128) / voterStake;
             for (uint256 i = 0; i < voterStakedProposals[_member].length; i++) {
@@ -475,7 +478,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
             _checkProposalAllocationValidity(pv[i].proposalId, pv[i].deltaSupport);
         }
         checkSenderIsMember(_sender);
-        
+
         if (!registryCommunity.memberActivatedInStrategies(_sender, address(this))) {
             // revert UserIsInactive();
             // revert(("UserIsInactive")); // @todo take commented when contract size fixed with diamond
@@ -602,7 +605,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         }
     }
 
-    function distribute(address[] memory _recipientIds, bytes memory _data, address _sender) external override {
+    function distribute(address[] memory /*_recipientIds */, bytes memory _data, address /*_sender */ ) external override {
         _checkOnlyAllo();
         _checkOnlyInitialized();
 
