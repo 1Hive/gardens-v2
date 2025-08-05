@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { Address } from "viem";
 import { useBalance, useAccount } from "wagmi";
 import {

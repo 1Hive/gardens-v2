@@ -307,7 +307,7 @@ export function Proposals({
     },
   ];
 
-  const disableManSupportButton = disableManageSupportBtnCondition.some(
+  const disableManageSupportButton = disableManageSupportBtnCondition.some(
     (cond) => cond.condition,
   );
 
@@ -322,12 +322,12 @@ export function Proposals({
   useEffect(() => {
     if (
       searchParams[QUERY_PARAMS.poolPage.allocationView] === "true" &&
-      !disableManSupportButton &&
+      !disableManageSupportButton &&
       isConnected
     ) {
       setAllocationView(true);
     }
-  }, [disableManSupportButton, isConnected, searchParams]);
+  }, [disableManageSupportButton, isConnected, searchParams]);
 
   useEffect(() => {
     if (
