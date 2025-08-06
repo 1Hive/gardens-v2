@@ -268,7 +268,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     !!walletBalance?.formatted && +walletBalance.formatted < amount;
 
   const effectiveAvailableBalanceBn =
-    !!userSuperTokenAvailableBudgetBn != null && walletBalance != null ?
+    userSuperTokenAvailableBudgetBn != null && walletBalance != null ?
       (forceAllBalanceUsage ?
         superToken?.value ?? 0n
       : userSuperTokenAvailableBudgetBn) + walletBalance.value
