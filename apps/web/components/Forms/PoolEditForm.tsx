@@ -48,7 +48,7 @@ type FormInputs = {
 type Props = {
   strategy: getPoolDataQuery["cvstrategies"][0];
   token?: Pick<TokenGarden, "decimals">;
-  initValues: FormInputs;
+  initValues: FormInputs | undefined;
   proposalType: string;
   pointSystemType: number;
   proposalOnDispute: boolean;

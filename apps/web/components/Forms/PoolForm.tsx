@@ -473,7 +473,7 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
             Math.round(
               (
                 Array.isArray(sybilResistanceValue) ||
-                  !previewData.sybilResistanceValue
+                  previewData.sybilResistanceValue != null
               ) ?
                 0
               : (previewData.sybilResistanceValue as unknown as number) *
@@ -615,7 +615,7 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
 
     Object.entries(reorderedData).forEach(([key, value]) => {
       const formRow = formRowTypes[key];
-      if (formRow && shouldRenderInPreview(key)) {
+      if (shouldRenderInPreview(key)) {
         const parsedValue = formRow.parse ? formRow.parse(value) : value;
         formattedRows.push({
           label: formRow.label,
@@ -631,7 +631,7 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
 
   const shouldRenderInPreview = (key: string) => {
     if (key === "maxAmount") {
-      if (previewData?.pointSystemType) {
+      if (previewData?.pointSystemType != null) {
         return PointSystems[previewData?.pointSystemType] === "capped";
       } else {
         return false;

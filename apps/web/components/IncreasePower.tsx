@@ -224,7 +224,7 @@ export const IncreasePower = ({
     },
     {
       condition:
-        !!accountTokenBalancePlusStakeAmount &&
+        accountTokenBalancePlusStakeAmount != null &&
         +stakedAmount > accountTokenBalancePlusStakeAmount,
       message: `You cannot stake more than your available balance of ${accountTokenBalancePlusStakeAmount?.toPrecision() ?? 0} ${tokenSymbol}`,
     },
@@ -319,10 +319,10 @@ export const IncreasePower = ({
                   onChange={(e) => {
                     const amount = e.target.value;
                     setStakedAmount(amount);
-                    if (accountTokenBalancePlusStakeAmount)
+                    if (Boolean(accountTokenBalancePlusStakeAmount))
                       setAmountPerc(
                         (
-                          (+amount / accountTokenBalancePlusStakeAmount) *
+                          (+amount / accountTokenBalancePlusStakeAmount!) *
                           100
                         ).toString(),
                       );
@@ -349,13 +349,13 @@ export const IncreasePower = ({
                 title=""
                 onChange={(e) => {
                   const percentage = e.target.value;
-                  if (accountTokenBalancePlusStakeAmount) {
+                  if (Boolean(accountTokenBalancePlusStakeAmount)) {
                     setStakedAmount(
                       +percentage >= 100 ?
-                        accountTokenBalancePlusStakeAmount.toString()
+                        accountTokenBalancePlusStakeAmount!.toString()
                       : Math.max(
                           registerStakeAmount, // Minimum stake amount
-                          (+percentage * accountTokenBalancePlusStakeAmount) /
+                          (+percentage * accountTokenBalancePlusStakeAmount!) /
                             100,
                         ).toPrecision(4),
                     );

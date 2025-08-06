@@ -123,6 +123,9 @@ export default function Page({
   });
 
   if (!strategy || (!poolToken && PoolTypes[proposalType] === "funding")) {
+    if (!data) {
+      return <div className="mt-52 text-center">Pool {poolId} not found</div>;
+    }
     console.debug("Loading pool data, waiting for", {
       strategy,
       poolTokenIfFundingPool: poolToken,
@@ -133,10 +136,6 @@ export default function Page({
         <LoadingSpinner />
       </div>
     );
-  }
-
-  if (!data || !strategy) {
-    return <div className="mt-52 text-center">Pool {poolId} not found</div>;
   }
 
   const communityAddress = strategy.registryCommunity.id as Address;
@@ -186,7 +185,7 @@ export default function Page({
         </>
       )}
 
-      {strategy && isEnabled && (
+      {isEnabled && (
         <Proposals
           poolToken={poolToken}
           strategy={strategy}

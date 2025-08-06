@@ -105,14 +105,14 @@ export const FormAddressInput = ({
     }
     try {
       setIsValidatingSafe(true);
-      const owners = await Promise.all([
+      const [owners] = await Promise.all([
         publicClient?.readContract({
           address: address as Address,
           abi: safeABI,
           functionName: "getOwners",
         }),
       ]);
-      if (!!owners) {
+      if (!!owners?.length) {
         return true;
       } else {
         return `Not a valid Safe address in ${chain?.name} network`;

@@ -362,7 +362,7 @@ export function Proposals({
   }, [proposalSectionRef.current, searchParams]);
 
   useEffect(() => {
-    if (!proposals) return;
+    if (proposals == null) return;
 
     const newInputs: { [key: string]: ProposalInputItem } = {};
 
@@ -373,7 +373,9 @@ export function Proposals({
       newInputs[id] = {
         proposalId: id,
         value:
-          !proposalEnded && stakedFilters[id] ? stakedFilters[id]?.value : 0n,
+          !proposalEnded && stakedFilters[id] != null ?
+            stakedFilters[id]?.value
+          : 0n,
         proposalNumber,
       };
     });
@@ -401,7 +403,7 @@ export function Proposals({
   };
 
   const calculateTotalTokens = (exceptProposalId?: string) => {
-    if (!inputs) {
+    if (!Object.keys(inputs).length) {
       console.error("Inputs not yet computed");
       return 0n;
     }
@@ -452,7 +454,7 @@ export function Proposals({
         containerId: strategy.poolId,
         function: "allocate",
       });
-      if (toastId.current) {
+      if (toastId.current != null) {
         toast.dismiss(toastId.current);
         toastId.current = null;
       }
@@ -460,7 +462,7 @@ export function Proposals({
   });
 
   const submit = async () => {
-    if (!inputs) {
+    if (!Object.keys(inputs).length) {
       console.error("Inputs not yet computed");
       return;
     }
@@ -498,7 +500,7 @@ export function Proposals({
     : undefined;
 
   const calcPoolWeightUsed =
-    memberPoolWeight ?
+    memberPoolWeight != null ?
       (number: number) => {
         if (memberPoolWeight == 0) return 0;
         return ((number / 100) * memberPoolWeight).toFixed(2);
@@ -551,8 +553,7 @@ export function Proposals({
           className={`flex ${proposals.length === 0 ? "flex-col items-start justify-start" : "items-center justify-between"} gap-10 flex-wrap`}
         >
           <h3 className="text-left w-52">Proposals</h3>
-          {!!proposals &&
-            strategy.isEnabled &&
+          {strategy.isEnabled &&
             (proposals.length === 0 ?
               <div className="text-center py-12  w-full flex flex-col items-center justify-center">
                 <div className="w-16 h-16 bg-neutral-soft-2 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -608,7 +609,7 @@ export function Proposals({
         {allocationView && <UserAllocationStats stats={stats} />}
 
         <div className="flex flex-col gap-6">
-          {proposals && inputs ?
+          {Object.keys(inputs).length ?
             <>
               {proposals
                 .filter(
@@ -692,7 +693,7 @@ export function Proposals({
                 onClick={submit}
                 isLoading={allocateStatus === "loading"}
                 disabled={
-                  !inputs ||
+                  inputs != null ||
                   !getProposalsInputsDifferences(inputs, stakedFilters).length
                 }
                 tooltip="Make changes in proposals support first"

@@ -90,7 +90,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     superToken: superToken?.address as Address,
   });
 
-  const amount = +(+amountInput) || 0;
+  const amount = +(amountInput || 0);
 
   const requestedAmountBn = BigInt(
     Math.floor(amount * 10 ** poolToken.decimals),
@@ -118,7 +118,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     (Number(currentUserFlowRateBn) / 10 ** poolToken.decimals) * secondsToMonth;
 
   const requestedStreamPerMonth =
-    +streamDuration ? amount / +streamDuration : 0;
+    streamDuration != null ? amount / +streamDuration : 0;
 
   const streamRequestedAmountPerSec = requestedStreamPerMonth * monthToSeconds;
   const streamRequestedAmountPerSecBn = BigInt(
@@ -234,7 +234,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     showNotification: false,
     onConfirmations: async () => {
       await delayAsync(2000);
-      if (currentUserFlowRateBn) {
+      if (currentUserFlowRateBn != null) {
         writeEditStreamAsync();
       } else {
         writeStreamFundsAsync();
@@ -275,7 +275,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     : null;
 
   const effectiveAvailableBalance =
-    effectiveAvailableBalanceBn != null && poolToken ?
+    effectiveAvailableBalanceBn != null && poolToken?.decimals != null ?
       Number(effectiveAvailableBalanceBn) / 10 ** (poolToken?.decimals ?? 18)
     : null;
 
@@ -450,7 +450,6 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     walletBalance && +walletBalance.formatted > 0 ?
       `${roundToSignificant(walletBalance.formatted, 4, { truncate: true })} ${poolToken?.symbol}`
     : null,
-    superToken && +superToken.formatted! > 0 ?
     superToken && superToken.formatted != null && +superToken.formatted > 0 ?
       `${roundToSignificant(superToken.formatted, 4, { truncate: true })} ${superToken.symbol}`
     : null,
@@ -467,7 +466,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
       <TransactionModal
         label={`Stream funds in pool #${poolId}`}
         transactions={[wrapAllowanceTx, wrapFundsTx, streamFundsTx].filter(
-          (x) => !!x,
+          Boolean,
         )}
         isOpen={isStreamTxModalOpen}
         onClose={() => setIsStreamTxModalOpen(false)}
@@ -541,7 +540,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                 <button
                   onClick={() =>
                     setStreamDuration((prev) =>
-                      Math.max((+prev || 0) - 1, 1).toString(),
+                      Math.max(+(prev || 0) - 1, 1).toString(),
                     )
                   }
                 >
@@ -561,7 +560,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                 </span>
                 <button
                   onClick={() =>
-                    setStreamDuration((prev) => ((+prev || 0) + 1).toString())
+                    setStreamDuration((prev) => (+(prev || 0) + 1).toString())
                   }
                 >
                   +
@@ -582,7 +581,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
             </div>
           </div>
           <div className="w-full flex justify-end mt-4">
-            {!currentUserFlowRateBn ?
+            {currentUserFlowRateBn == null ?
               <Button
                 onClick={() => {
                   handleStreamFunds();
@@ -729,7 +728,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                   />
                 </div>
               </div>
-              {currentFlowRateBn && currentFlowRateBn > 0n && (
+              {currentFlowRateBn != null && currentFlowRateBn > 0n && (
                 <div className="flex justify-between gap-3 items-center">
                   <p className="subtitle2">Incoming Stream:</p>
                   <div className="flex items-center gap-1">

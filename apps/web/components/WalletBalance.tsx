@@ -45,7 +45,7 @@ export const WalletBalance: FC<Props> = ({
 
   useEffect(() => {
     if (balance != null) {
-      isEnoughBalanceRef.current = !!balance && balance >= askedAmount;
+      isEnoughBalanceRef.current = balance != null && balance >= askedAmount;
       setIsEnoughBalance(isEnoughBalanceRef.current);
     }
   }, [balance, askedAmount, setIsEnoughBalance]);
@@ -84,7 +84,7 @@ export const WalletBalance: FC<Props> = ({
               data-tip={`${isEnoughBalanceRef.current ? `${(+formatEther(data?.value ?? 0n)).toPrecision(2)} ${data.symbol}` : "Insufficient balance"}`}
             >
               <DisplayNumber
-                number={(+data?.formatted || 0).toFixed(4)}
+                number={(+(data?.formatted || 0)).toFixed(4)}
                 valueClassName={`font-semibold ${isEnoughBalanceRef.current ? "text-primary-content" : "text-neutral-soft-content"}`}
                 disableTooltip={true}
                 tokenSymbol={data?.symbol}
