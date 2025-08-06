@@ -142,7 +142,7 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
             />
           }
         >
-          {openGovDetails ? "Close" : "View"} governance details
+          {openGovDetails ? "Hide" : "View"} governance details
         </Button>
         {openGovDetails && (
           <PoolGovernanceDetails membersStrategyData={membersStrategyData} />
