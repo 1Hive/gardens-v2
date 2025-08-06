@@ -7,30 +7,37 @@ Gardens v2 is a modular governance framework that enables communities to create 
 ## Features
 
 ### Modular Governance Pools
+
 Create multiple governance pools within your community, each serving a distinct purpose with customizable parameters and terms of use. This modular approach allows for more granular and focused onchain governance decisions.
 
 ### Pool Types
+
 - **Funding Pools**: Allocate funds from a shared token pool
 - **Signaling Pools**: Source other types of decisions, both onchain and offchain
 
 ### Flexible Voting Weight Systems
+
 Choose from multiple voting weight mechanisms to best suit your community's needs:
+
 - **Token-weighted**: Traditional 1 token = 1 vote
 - **Fixed**: Equal voting power for all members
 - **Quadratic**: Voting weight = square root of tokens staked
 - **Capped**: 1 token = 1 vote up to a maximum threshold
 
 ### Multi-Network Support
+
 Currently deployed on:
+
 - Gnosis Chain
 - Polygon
 - Arbitrum
 - Optimism
 - Base
 
-*More networks coming soon!*
+_More networks coming soon!_
 
 ### Enhanced User Experience
+
 Significant UI improvements make conviction voting more intuitive and easier to understand compared to v1, enabling broader participation in governance decisions.
 
 ## Dependencies
@@ -54,22 +61,45 @@ Gardens v2 relies on the following apps and frameworks to be deployed:
 7. Create or dispute propoosals in pools
 8. Create governance pools in your community
 
-
-### Local Development
+### Local Frontend Development
 
 Please message us in Discord for help with your own local deployment of Gardens.
 
+1. Requirements
+
+- [Node.js](https://nodejs.org/en/download/) (v18)
+- [pnpm](https://pnpm.io/installation) (v8.14)
+
+2. Clone the repository
+
 ```bash
-# Clone the repository
-git clone https://github.com/your-org/gardens-v2.git
+git clone https://github.com/1Hive/gardens-v2.git
+```
 
-# Install dependencies
-cd gardens-v2
+3. Install dependencies
+
+```bash
 pnpm install
+```
 
-# Start the development server
+4. Open the workspace (gardens-v2.code-workspace) in VSCode
+
+5. Open a terminal in the `apps/web` directory (Frontend package)
+
+6. Set up environment variables
+   -> Copy `.env.example` to `.env` and fill in the required environment variables (<KEY_NAME> placeholders)
+
+7. Start the development server
+
+```bash
 pnpm dev
 ```
+
+8. Open http://localhost:3000 with your browser
+
+### Contracts Development
+
+🔜 Comming soon!
 
 ## Contributing
 
@@ -81,12 +111,13 @@ Gardens is fully open source - always has been, always will be. We're committed 
 
 ### Documentation Resources
 
-- **[Gardens documentation](https://docs.gardens.fund)
-- **[How to grow using Gardens](https://1hive-gardens.notion.site/How-to-grow-using-Gardens-84be339e761d462085dcb27db12d1c4c)
+- \*\*[Gardens documentation](https://docs.gardens.fund)
+- \*\*[How to grow using Gardens](https://1hive-gardens.notion.site/How-to-grow-using-Gardens-84be339e761d462085dcb27db12d1c4c)
 
 ### Documentation Principles
 
 Our documentation follows these core principles:
+
 - **Accessibility**: Documentation for users of all technical levels
 - **Completeness**: Covering all aspects of the platform
 - **Currency**: Regularly updated to reflect the latest changes
@@ -105,3 +136,7 @@ We welcome documentation improvements! For documentation issues or suggestions, 
 - 📚 [Documentation](https://docs.gardens.fund)
 - 💬 [Discord Community](https://discord.gg/tJWPg69ZWG)
 - 🐦 [Twitter](https://twitter.com/gardens_fund)
+
+```
+
+```
