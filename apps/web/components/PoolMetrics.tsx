@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, useEffect, useState } from "react";
+import { FC, useEffect, useMemo, useState } from "react";
 import {
   ArrowPathRoundedSquareIcon,
   ArrowTopRightOnSquareIcon,
@@ -268,20 +268,20 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     !!walletBalance?.formatted && +walletBalance.formatted < amount;
 
   const effectiveAvailableBalanceBn =
-    !!userSuperTokenAvailableBudgetBn && !!walletBalance ?
+    !!userSuperTokenAvailableBudgetBn != null && walletBalance != null ?
       (forceAllBalanceUsage ?
         superToken?.value ?? 0n
       : userSuperTokenAvailableBudgetBn) + walletBalance.value
     : null;
 
   const effectiveAvailableBalance =
-    !!effectiveAvailableBalanceBn && poolToken ?
+    effectiveAvailableBalanceBn != null && poolToken ?
       Number(effectiveAvailableBalanceBn) / 10 ** (poolToken?.decimals ?? 18)
     : null;
 
   const hasInsufficientStreamBalance =
     hasInsufficientBalance &&
-    !!effectiveAvailableBalanceBn &&
+    effectiveAvailableBalanceBn != null &&
     effectiveAvailableBalanceBn < requestedAmountBn;
 
   const { tooltipMessage, isButtonDisabled, isConnected, missmatchUrl } =
@@ -446,6 +446,21 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     </label>
   );
 
+  const availableBalanceTooltipMessage = [
+    walletBalance && +walletBalance.formatted > 0 ?
+      `${roundToSignificant(walletBalance.formatted, 4, { truncate: true })} ${poolToken?.symbol}`
+    : null,
+    superToken && +superToken.formatted! > 0 ?
+      `${roundToSignificant(superToken.formatted!, 4, { truncate: true })} ${superToken.symbol}`
+    : null,
+    reservedSuperToken > 0 ?
+      `- ${roundToSignificant(reservedSuperToken, 4, { truncate: true })} ${superToken?.symbol} reserved for other streams`
+    : null,
+  ]
+    .filter(Boolean)
+    .join(" + ")
+    .replace(" + -", " - ");
+
   return (
     <>
       <TransactionModal
@@ -604,7 +619,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                 <div className="flex items-center gap-1 w-full">
                   <div
                     className="tooltip"
-                    data-tip={`${roundToSignificant(walletBalance?.formatted ?? 0, 4, { truncate: true }) ?? 0} ${poolToken?.symbol} + ${roundToSignificant(superToken?.formatted ?? 0, 4, { truncate: true }) ?? 0} ${superToken?.symbol} - ${roundToSignificant(reservedSuperToken, 4, { truncate: true })} ${superToken?.symbol} reserved for other streams`}
+                    data-tip={availableBalanceTooltipMessage}
                   >
                     {forceAllBalanceUsage ?
                       <Button

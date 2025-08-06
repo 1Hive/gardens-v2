@@ -31,7 +31,6 @@ import {
   VOTING_POINT_SYSTEM_DESCRIPTION,
 } from "@/globals";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
-import { useCheat } from "@/hooks/useCheat";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSuperfluidToken } from "@/hooks/useSuperfluidToken";
@@ -243,10 +242,6 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
   const [showPreview, setShowPreview] = useState<boolean>(false);
   const [previewData, setPreviewData] = useState<FormInputs>();
   const [optionType, setOptionType] = useState(1);
-
-  const [sybilResistanceOptions, setSybilResistanceOptions] = useState<
-    Partial<Record<SybilResistanceType, string>>
-  >(fullSybilResistanceOptions);
 
   const [loading, setLoading] = useState(false);
   const [showWarningMessage, setShowWarningMessage] = useState(false);
@@ -843,7 +838,7 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
                 registerKey="sybilResistanceType"
                 placeholder="Who can vote in this pool ?"
                 tooltip="Select the protection type to prevent voting abuse for this pool."
-                options={Object.entries(sybilResistanceOptions).map(
+                options={Object.entries(fullSybilResistanceOptions).map(
                   ([value, text]) => ({
                     label: text,
                     value: value,
