@@ -1035,10 +1035,6 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
                       min: 1 / CV_SCALE_PRECISION,
                     }}
                     registerOptions={{
-                      max: {
-                        value: 100,
-                        message: "Max amount cannot exceed 100%",
-                      },
                       min: {
                         value: 1 / CV_SCALE_PRECISION,
                         message: "Amount must be greater than 0",
