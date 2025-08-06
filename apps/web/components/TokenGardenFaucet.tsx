@@ -50,7 +50,7 @@ export function TokenGardenFaucet({ token }: FaucetProps) {
       const tx = await writeAsync?.({
         args: [connectedAccount, mintAmount],
       });
-      if (tx) {
+      if (tx?.hash) {
         console.debug(`⛽: Transaction sent: ${tx.hash}`);
       } else {
         console.warn("⛽: Transaction could not be prepared.");

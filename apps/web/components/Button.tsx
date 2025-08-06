@@ -13,6 +13,7 @@ type ButtonProps = {
   color?: Color;
   onClick?: React.DOMAttributes<HTMLButtonElement>["onClick"];
   forceShowTooltip?: boolean;
+  popTooltip?: boolean; // Allows to display the tooltip programmatically
   className?: string;
   disabled?: boolean;
   tooltip?: string;
@@ -91,6 +92,7 @@ export function Button({
   disabled = false,
   tooltip,
   forceShowTooltip = false,
+  popTooltip = false,
   tooltipClassName: tooltipStyles = "",
   tooltipSide = "tooltip-top",
   children,
@@ -110,7 +112,7 @@ export function Button({
       style={style}
       aria-disabled={disabled || isLoading ? "true" : "false"}
       aria-label={
-        children ?
+        children != null ?
           typeof children === "string" ?
             children
           : ""
@@ -119,14 +121,14 @@ export function Button({
     >
       {isLoading && <span className={"loading loading-spinner loading-sm"} />}
       <div className={"flex gap-2 items-center"}>
-        {icon && !isLoading && icon} {children}
+        {icon != null && !isLoading && icon} {children}
       </div>
     </button>
   );
 
   return disabled || forceShowTooltip ?
       <div
-        className={`${className} ${tooltip ? "tooltip" : ""} ${tooltipSide} ${tooltipStyles}`}
+        className={`${className} ${tooltip ? "tooltip" : ""} ${tooltipSide} ${tooltipStyles} ${popTooltip ? "tooltip-open" : ""}`}
         data-tip={tooltip}
       >
         {buttonElement}

@@ -1,13 +1,9 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import {
-  ChevronRightIcon,
-  ExclamationTriangleIcon,
-} from "@heroicons/react/24/solid";
+import { ChevronRightIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Button } from "./Button";
 import { getTitlesFromUrlSegments } from "@/services/getTitlesFromUrlSegments";
 import { truncateString } from "@/utils/text";
 interface Breadcrumb {
@@ -18,7 +14,6 @@ interface Breadcrumb {
 export function Breadcrumbs() {
   const path = usePathname();
   const [breadcrumbs, setBreadcrumbs] = useState<Breadcrumb[]>([]);
-  const [openDisclaimer, setOpenDisclaimer] = useState(false);
 
   const fetchBreadcrumbs = async (): Promise<Breadcrumb[]> => {
     const segments = path.split("/").filter((segment) => segment !== "");

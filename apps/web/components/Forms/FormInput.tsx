@@ -141,7 +141,7 @@ export function FormInput({
             />
           </div>
         }
-        {suffix && (
+        {Boolean(suffix) && (
           <span className="absolute right-[10px] top-1/2 -translate-y-1/2 text-black">
             {suffix}
           </span>

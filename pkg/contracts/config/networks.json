@@ -21,6 +21,7 @@
         "REGISTRY_FACTORY": "0xf42f88c13804147b2fdda13c093ce14219aea395",
         "REGISTRY_COMMUNITIES": [
           "0x0418f78ec03c974ca5b88463f4a5da3e2333c4ab",
+          "0x0dce74cf0ccef1fff89469f3befc08806f8e4a3b",
           "0x2f8a9454de2e74bc9a0761703b3f7da0470b1e56",
           "0x8b8732dac9c30ac89bf660b99fb90000d826ab83",
           "0xa488ac456c7c5964af7d323b7ce795d02e7c5154",
@@ -44,11 +45,12 @@
           "0x6b999ed850de2c5c923eaafc3c15781bd2ccf9d6",
           "0x9dca528cd12c62cec0d37c17a9d23a4b8777d329",
           "0x9e9321526d2f36d521ad4f70786b1adba73023a2",
+          "0xd37fa4ad1791ac2c27b8dec1fdea5b318b9a444e",
           "0xd682ff9fb3c4c28c35dfa8830280d9a1c5bbfee4",
           "0xe6dedd7a954c51ddb283b751db6970a75d067cad"
         ]
       },
-      "hash": "492e8f7cb13dcee0aa5743e3018e947032a7672b"
+      "hash": "ce5ada4bc6b763300ea09bfd1da672c00eb7e5c6"
     },
     {
       "name": "opsepolia",
@@ -233,6 +235,7 @@
           "0x0a9d78ea6de07fddbc71f1181d52f78052654b15",
           "0x0df82861284051ed49c2eb5ef9dd626724f63ad1",
           "0x0e09df5ea5c0a93f7acfc03148e26fb246cdc68e",
+          "0x115c61ce04720cba6c647fedaa694ebbac3f201a",
           "0x15a4ec8c5bf8fa1da8a911aad5c4260be73b9059",
           "0x1644457dcdb45e6bb07b100ad0837b021ca1319a",
           "0x1c720bfa4a2535fb6675b859a717b4cba56fd97b",
@@ -247,12 +250,14 @@
           "0x557f7f22a3f6aa38f17d00ae1ec161d2f41f5850",
           "0x56c014f23380d1c4e15438904d66de8e4555533c",
           "0x5b977869aea25fa0c49c6d3ea044e5140a83c144",
+          "0x5e53068c175107564a751f3fc2baadac59d69043",
           "0x62592b50c68fc511862e96d861a81048fb19ac8f",
           "0x63e2b63072e131c0e5ad72205e03cbe6ca1484fa",
           "0x677ba2d56852bbf1eef22a234b14a91b0638dda5",
           "0x6a27a7454bfbf17aa22566519778b58f3d4adcc2",
           "0x6b22c89287ae0e6bf68436000699690d0ec57f7c",
           "0x700068416593a3da20cd7b8488961d3421079212",
+          "0x757e04b47663d1f0b2605d843cad0cef248b9372",
           "0x84e67b84709ae4473cff1141a083a24f80518570",
           "0x8ace844a662569786a0d12b5364ba27fe4e74106",
           "0x8d87fb19181a480828f70eaed7eb85b05b7355ae",
@@ -268,10 +273,12 @@
           "0xaeecbc91e44541204d0c784e4ac3e8eca6a47cc8",
           "0xb3551608e7833f517d77419f4035e1a6b14391b7",
           "0xba1b0de347da5b4f50b9fb0840c957081b74ad2d",
+          "0xc12cb9c057c708eeeca45164a120ad1971e52eec",
           "0xcec4c6ca57b3494a8fd0abdc4604d534d451d8a2",
           "0xd6620f7576894543f5225ab44f9eb32133710db3",
           "0xd9cf1f7d077166236e260819257a567b1ca22c8c",
           "0xe1e19cab1c84b3d3123af8c49b26e141a8ac4163",
+          "0xe2aee72d564f933f12fb13b2694d1ac49b93ba34",
           "0xed6704f988ffe321be99cf2a8625ec2551fbe36c",
           "0xee9a549fe93e06c0291dc89fcfcd224c9245d6c9",
           "0xf11ea19ca2d6dbd9aea9075f8b899093f1a5593e",
@@ -284,7 +291,7 @@
           "0xfed43acfa82e0e924d507124892878b6086b581d"
         ]
       },
-      "hash": "b97970da38893c5a4d0ef45da8916f07cf60ff98"
+      "hash": "09282c9824292e00bb756d5b15c4a7d729a99a8a"
     },
     {
       "name": "polygon",
@@ -366,6 +373,7 @@
         ],
         "CV_STRATEGIES": [
           "0x0108617ca2e05546c49383d9392ed8db5d12304c",
+          "0x0421da9346e4dcb1f9dacd64dd791d13e5ce2a8f",
           "0x051e8d96d4e9cde57d584b8d59a5116784f0d3c7",
           "0x0a2ecc1f687ec4e1c19d337a5ac926865e30e818",
           "0x0fd15b2142a257fa8713cad2c14ec52c00f71865",
@@ -431,7 +439,7 @@
           "0xfbad687a935390ff59b36cd6c9462d0b1948e378"
         ]
       },
-      "hash": "6fee9fa950fbaf0a32ef149cee9fef47548f7309"
+      "hash": "1d3a53e9a4665d8ac3ce3a115f29c866f1a4aea4"
     },
     {
       "name": "base",

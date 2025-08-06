@@ -17,7 +17,6 @@ import {BaseStrategyUpgradeable} from "../BaseStrategyUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {ICollateralVault} from "../interfaces/ICollateralVault.sol";
 import {PassportScorer} from "../PassportScorer.sol";
-import {ISuperToken} from "../interfaces/ISuperToken.sol";
 import {
     ProposalType,
     PointSystem,
@@ -35,9 +34,14 @@ import {
 } from "./ICVStrategy.sol";
 
 import {ConvictionsUtils} from "./ConvictionsUtils.sol";
+import {PowerManagementUtils} from "./PowerManagementUtils.sol";
+
+import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Library.sol";
 
 /// @custom:oz-upgrades-from CVStrategyV0_0
 contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
+    using SuperTokenV1Library for ISuperToken;
+
     /*|--------------------------------------------|*/
     /*|              CUSTOM ERRORS                 |*/
     /*|--------------------------------------------|*/
@@ -58,7 +62,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     error ProposalDataIsEmpty(); //0xc5f7c4c0
     error ProposalIdCannotBeZero(); //0xf881a10d
     error ProposalNotActive(uint256 _proposalId); // 0x44980d8f
-    error ProposalNotdInList(uint256 _proposalId); // 0xc1d17bef
+    error ProposalNotInList(uint256 _proposalId); // 0xc1d17bef
     error ProposalSupportDuplicated(uint256 _proposalId, uint256 index); //0xadebb154
     error ConvictionUnderMinimumThreshold(); // 0xcce79308
     error OnlyCommunityAllowed(); // 0xaf0916a2
@@ -120,6 +124,8 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     event AllowlistMembersAdded(uint256 poolId, address[] members);
     event SybilScorerUpdated(address sybilScorer);
     event SuperfluidTokenUpdated(address superfluidToken);
+    event SuperfluidGDAConnected(address indexed gda, address indexed by);
+    event SuperfluidGDADisconnected(address indexed gda, address indexed by);
     // event Logger(string message, uint256 value);
 
     /*|-------------------------------------/-------|*o
@@ -280,6 +286,13 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         }
     }
 
+    function onlyCouncilSafeOrMember() internal view {
+        if (msg.sender != address(registryCommunity.councilSafe()) && false == _canExecuteAction(msg.sender)) {
+            // revert OnlyCouncilSafeOrMember();
+            revert(); // @todo take commented when contract size fixed with diamond
+        }
+    }
+
     function setCollateralVaultTemplate(address template) external {
         _checkOwner();
         collateralVaultTemplate = template;
@@ -315,11 +328,13 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
                 // revert(("TokenNotAllowed")); // @todo take commented when contract size fixed with diamond
                 revert(); // @todo take commented when contract size fixed with diamond
             }
-            if (_isOverMaxRatio(proposal.amountRequested)) {
-                // revert AmountOverMaxRatio();
-                // revert(("AmountOverMaxRatio")); // @todo take commented when contract size fixed with diamond
-                revert();
-            }
+
+            // Commented out to allow creating a proposal requesting more than the pool available balance
+            // if (_isOverMaxRatio(proposal.amountRequested)) {
+            //     // revert AmountOverMaxRatio();
+            //     // revert(("AmountOverMaxRatio")); // @todo take commented when contract size fixed with diamond
+            //     revert();
+            // }
         }
 
         if (
@@ -390,14 +405,10 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
             // revert(("UserCannotExecuteAction")); // @todo take commented when contract size fixed with diamond
             revert();
         }
-        uint256 pointsToIncrease = 0;
-        if (pointSystem == PointSystem.Unlimited) {
-            pointsToIncrease = _amountToStake; // from increasePowerUnlimited(_amountToUnstake)
-        } else if (pointSystem == PointSystem.Capped) {
-            pointsToIncrease = increasePowerCapped(_member, _amountToStake);
-        } else if (pointSystem == PointSystem.Quadratic) {
-            pointsToIncrease = increasePowerQuadratic(_member, _amountToStake);
-        }
+        uint256 pointsToIncrease = PowerManagementUtils.increasePower(
+            registryCommunity, _member, _amountToStake, pointSystem, pointConfig.maxAmount
+        );
+
         bool isActivated = registryCommunity.memberActivatedInStrategies(_member, address(this));
         if (isActivated) {
             totalPointsActivated += pointsToIncrease;
@@ -410,21 +421,13 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         onlyRegistryCommunity();
         //requireMemberActivatedInStrategies
 
-        uint256 pointsToDecrease = 0;
-        if (pointSystem == PointSystem.Unlimited) {
-            pointsToDecrease = _amountToUnstake;
-        } else if (pointSystem == PointSystem.Quadratic) {
-            pointsToDecrease = decreasePowerQuadratic(_member, _amountToUnstake);
-        } else if (pointSystem == PointSystem.Capped) {
-            if (registryCommunity.getMemberPowerInStrategy(_member, address(this)) < pointConfig.maxAmount) {
-                pointsToDecrease = _amountToUnstake;
-            } else if (registryCommunity.getMemberStakedAmount(_member) - _amountToUnstake < pointConfig.maxAmount) {
-                pointsToDecrease =
-                    pointConfig.maxAmount - (registryCommunity.getMemberStakedAmount(_member) - _amountToUnstake);
-            }
-        }
+        uint256 pointsToDecrease = PowerManagementUtils.decreasePower(
+            registryCommunity, _member, _amountToUnstake, pointSystem, pointConfig.maxAmount
+        );
+
         uint256 voterStake = totalVoterStakePct[_member];
-        uint256 unusedPower = registryCommunity.getMemberPowerInStrategy(_member, address(this)) - voterStake;
+        uint256 memberPower = registryCommunity.getMemberPowerInStrategy(_member, address(this));
+        uint256 unusedPower = memberPower > voterStake ? memberPower - voterStake : 0;
         if (unusedPower < pointsToDecrease) {
             uint256 balancingRatio = ((pointsToDecrease - unusedPower) << 128) / voterStake;
             for (uint256 i = 0; i < voterStakedProposals[_member].length; i++) {
@@ -445,50 +448,6 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         totalPointsActivated -= pointsToDecrease;
         emit PowerDecreased(_member, _amountToUnstake, pointsToDecrease);
 
-        return pointsToDecrease;
-    }
-
-    function increasePowerCapped(address _member, uint256 _amountToStake) internal view returns (uint256) {
-        // console.log("POINTS TO INCREASE", _amountToStake);
-        uint256 memberPower = registryCommunity.getMemberPowerInStrategy(_member, address(this));
-        // console.log("MEMBERPOWER", memberPower);
-        if (memberPower + _amountToStake > pointConfig.maxAmount) {
-            _amountToStake = pointConfig.maxAmount - memberPower;
-        }
-        // console.log("POINTS TO INCREASE END", _amountToStake);
-
-        return _amountToStake;
-    }
-
-    function increasePowerQuadratic(address _member, uint256 _amountToStake) internal view returns (uint256) {
-        uint256 totalStake = registryCommunity.getMemberStakedAmount(_member) + _amountToStake;
-
-        uint256 decimal = 18;
-        try ERC20(address(registryCommunity.gardenToken())).decimals() returns (uint8 _decimal) {
-            decimal = uint256(_decimal);
-        } catch {
-            // console.log("Error getting decimal");
-        }
-        uint256 newTotalPoints = Math.sqrt(totalStake * 10 ** decimal);
-        uint256 currentPoints = registryCommunity.getMemberPowerInStrategy(_member, address(this));
-
-        uint256 pointsToIncrease = newTotalPoints - currentPoints;
-
-        return pointsToIncrease;
-    }
-
-    function decreasePowerQuadratic(address _member, uint256 _amountToUnstake) public view returns (uint256) {
-        uint256 decimal = 18;
-        try ERC20(address(registryCommunity.gardenToken())).decimals() returns (uint8 _decimal) {
-            decimal = uint256(_decimal);
-        } catch {
-            // console.log("Error getting decimal");
-        }
-        // console.log("_amountToUnstake", _amountToUnstake);
-        uint256 newTotalStake = registryCommunity.getMemberStakedAmount(_member) - _amountToUnstake;
-        // console.log("newTotalStake", newTotalStake);
-        uint256 newTotalPoints = Math.sqrt(newTotalStake * 10 ** decimal);
-        uint256 pointsToDecrease = registryCommunity.getMemberPowerInStrategy(_member, address(this)) - newTotalPoints;
         return pointsToDecrease;
     }
 
@@ -519,15 +478,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
             _checkProposalAllocationValidity(pv[i].proposalId, pv[i].deltaSupport);
         }
         checkSenderIsMember(_sender);
-        if (!_canExecuteAction(_sender)) {
-            for (uint256 i = 0; i < pv.length; i++) {
-                if (pv[i].deltaSupport > 0) {
-                    // revert UserCannotExecuteAction();
-                    // revert(("UserCannotExecuteAction")); // @todo take commented when contract size fixed with diamond
-                    revert();
-                }
-            }
-        }
+
         if (!registryCommunity.memberActivatedInStrategies(_sender, address(this))) {
             // revert UserIsInactive();
             // revert(("UserIsInactive")); // @todo take commented when contract size fixed with diamond
@@ -654,7 +605,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         }
     }
 
-    function distribute(address[] memory _recipientIds, bytes memory _data, address _sender) external override {
+    function distribute(address[] memory /*_recipientIds */, bytes memory _data, address /*_sender */ ) external override {
         _checkOnlyAllo();
         _checkOnlyInitialized();
 
@@ -1147,6 +1098,24 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         }
     }
 
+    function connectSuperfluidGDA(address gda) external {
+        onlyCouncilSafeOrMember();
+        ISuperToken supertoken =
+            address(superfluidToken) != address(0) ? superfluidToken : ISuperToken(allo.getPool(poolId).token);
+        bool success = supertoken.connectPool(ISuperfluidPool(gda));
+        require(success, "Superfluid GDA connect failed");
+        emit SuperfluidGDAConnected(gda, msg.sender);
+    }
+
+    function disconnectSuperfluidGDA(address gda) external {
+        onlyCouncilSafeOrMember();
+        ISuperToken supertoken =
+            address(superfluidToken) != address(0) ? superfluidToken : ISuperToken(allo.getPool(poolId).token);
+        bool success = supertoken.disconnectPool(ISuperfluidPool(gda));
+        require(success, "Superfluid GDA disconnect failed");
+        emit SuperfluidGDADisconnected(gda, msg.sender);
+    }
+
     function disputeProposal(uint256 proposalId, string calldata context, bytes calldata _extraData)
         external
         payable
@@ -1310,6 +1279,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     function _addToAllowList(address[] memory members) internal {
         bytes32 allowlistRole = keccak256(abi.encodePacked("ALLOWLIST", poolId));
 
+        // we expect the UI to add address(0) back to the allowlist in case of removing all members
         if (registryCommunity.hasRole(allowlistRole, address(0))) {
             registryCommunity.revokeRole(allowlistRole, address(0));
         }

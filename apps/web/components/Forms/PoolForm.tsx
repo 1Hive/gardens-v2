@@ -20,6 +20,7 @@ import { FormPreview, FormRow } from "./FormPreview";
 import { FormRadioButton } from "./FormRadioButton";
 import { FormSelect } from "./FormSelect";
 import { EthAddress } from "../EthAddress";
+import { InfoBox } from "../InfoBox";
 import { InfoWrapper } from "../InfoWrapper";
 import { SuperfluidStream } from "@/assets";
 import { Button } from "@/components/Button";
@@ -30,7 +31,6 @@ import {
   VOTING_POINT_SYSTEM_DESCRIPTION,
 } from "@/globals";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
-import { useCheat } from "@/hooks/useCheat";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSuperfluidToken } from "@/hooks/useSuperfluidToken";
@@ -243,11 +243,9 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
   const [previewData, setPreviewData] = useState<FormInputs>();
   const [optionType, setOptionType] = useState(1);
 
-  const [sybilResistanceOptions, setSybilResistanceOptions] = useState<
-    Partial<Record<SybilResistanceType, string>>
-  >(fullSybilResistanceOptions);
-
   const [loading, setLoading] = useState(false);
+  const [showWarningMessage, setShowWarningMessage] = useState(false);
+
   const router = useRouter();
   const pathname = usePathname();
   const { publish } = usePubSubContext();
@@ -256,20 +254,13 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
   const pointSystemType = watch("pointSystemType");
   const strategyType = watch("strategyType");
 
-  const allowNoProtection = useCheat("allowNoProtection");
-
   useEffect(() => {
-    if (PointSystems[pointSystemType] !== "unlimited" && !allowNoProtection) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { noSybilResist, ...rest } = fullSybilResistanceOptions;
-      setSybilResistanceOptions(rest);
-      if (sybilResistanceType === "noSybilResist") {
-        setValue("sybilResistanceType", "allowList");
-      }
-    } else {
-      setSybilResistanceOptions(fullSybilResistanceOptions);
-    }
-  }, [pointSystemType, allowNoProtection]);
+    const isUnlimited = PointSystems[pointSystemType] === "unlimited";
+    const isUnprotected =
+      sybilResistanceType !== "allowList" &&
+      sybilResistanceType !== "gitcoinPassport";
+    setShowWarningMessage(!isUnlimited && isUnprotected);
+  }, [pointSystemType, sybilResistanceType]);
 
   const formRowTypes: Record<
     string,
@@ -482,7 +473,7 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
             Math.round(
               (
                 Array.isArray(sybilResistanceValue) ||
-                  !previewData.sybilResistanceValue
+                  previewData.sybilResistanceValue != null
               ) ?
                 0
               : (previewData.sybilResistanceValue as unknown as number) *
@@ -624,7 +615,7 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
 
     Object.entries(reorderedData).forEach(([key, value]) => {
       const formRow = formRowTypes[key];
-      if (formRow && shouldRenderInPreview(key)) {
+      if (shouldRenderInPreview(key)) {
         const parsedValue = formRow.parse ? formRow.parse(value) : value;
         formattedRows.push({
           label: formRow.label,
@@ -640,7 +631,7 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
 
   const shouldRenderInPreview = (key: string) => {
     if (key === "maxAmount") {
-      if (previewData?.pointSystemType) {
+      if (previewData?.pointSystemType != null) {
         return PointSystems[previewData?.pointSystemType] === "capped";
       } else {
         return false;
@@ -805,6 +796,7 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
                       registerKey="pointSystemType"
                       description={VOTING_POINT_SYSTEM_DESCRIPTION[id]}
                     />
+
                     {PointSystems[pointSystemType] === "capped" &&
                       i === Object.values(PointSystems).indexOf("capped") && (
                         <div className="flex flex-col ml-8 ">
@@ -836,7 +828,6 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
               </div>
             </div>
           </div>
-
           {shouldRenderInputMap("sybilResistanceType", strategyType) && (
             <div className="flex flex-col gap-4">
               <FormSelect
@@ -847,13 +838,23 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
                 registerKey="sybilResistanceType"
                 placeholder="Who can vote in this pool ?"
                 tooltip="Select the protection type to prevent voting abuse for this pool."
-                options={Object.entries(sybilResistanceOptions).map(
+                options={Object.entries(fullSybilResistanceOptions).map(
                   ([value, text]) => ({
                     label: text,
                     value: value,
                   }),
                 )}
               />
+              {showWarningMessage && (
+                <div className="mt-6">
+                  <InfoBox
+                    title="Warning"
+                    content={`This setup may be vulnerable to Sybil attacks (duplicated accounts gaining unfair influence). 
+                    To ensure fair governance, consider enabling voting protection (e.g. Allowlist or Gitcoin Passport).`}
+                    infoBoxType="warning"
+                  />
+                </div>
+              )}
               <div className="flex flex-col gap-2 my-2">
                 <hr />
                 <span className="text-neutral-soft-content mx-auto pt-2">
@@ -893,6 +894,7 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
               )}
             </div>
           )}
+
           {/* arbitration section */}
           <div className="flex flex-col gap-4">
             <div className="flex flex-col">
@@ -1028,10 +1030,6 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
                       min: 1 / CV_SCALE_PRECISION,
                     }}
                     registerOptions={{
-                      max: {
-                        value: 100,
-                        message: "Max amount cannot exceed 100%",
-                      },
                       min: {
                         value: 1 / CV_SCALE_PRECISION,
                         message: "Amount must be greater than 0",

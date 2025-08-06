@@ -1,3 +1,4 @@
+/* eslint-disable jsx-a11y/click-events-have-key-events */
 "use client";
 
 import React, { Fragment, useEffect, useRef, useState } from "react";
@@ -126,6 +127,8 @@ export function Proposals({
   const [stakedFilters, setStakedFilters] = useState<{
     [key: string]: ProposalInputItem;
   }>({});
+  const [showManageSupportTooltip, setShowManageSupportTooltip] =
+    useState(false);
 
   // Hooks
   const { address: wallet } = useAccount();
@@ -137,6 +140,8 @@ export function Proposals({
 
   const tokenDecimals = strategy.registryCommunity.garden.decimals;
   const searchParams = useCollectQueryParams();
+
+  const proposalSectionRef = useRef<HTMLDivElement>(null);
 
   // Queries
   const { data: memberData, error } = useSubgraphQuery<isMemberQuery>({
@@ -298,24 +303,66 @@ export function Proposals({
     },
   ];
 
-  const disableManSupportButton = disableManageSupportBtnCondition.some(
+  const disableCreateProposalBtnCondition: ConditionObject[] = [
+    {
+      condition: !isMemberCommunity,
+      message: "Join community first",
+    },
+  ];
+
+  const disableManageSupportButton = disableManageSupportBtnCondition.some(
     (cond) => cond.condition,
   );
+
   const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons(
     disableManageSupportBtnCondition,
   );
-  useEffect(() => {
-    if (
-      searchParams[QUERY_PARAMS.poolPage.allocationView] === "true" &&
-      !disableManSupportButton &&
-      isConnected
-    ) {
-      setAllocationView(true);
-    }
-  }, [disableManSupportButton, isConnected, searchParams]);
+
+  const { tooltipMessage: createProposalTooltipMessage } = useDisableButtons(
+    disableCreateProposalBtnCondition,
+  );
 
   useEffect(() => {
-    if (!proposals) return;
+    if (disableManageSupportButton) {
+      // Used to dismiss the Manage support tooltip in case it was shown
+      const handleClickOutside = () => {
+        setShowManageSupportTooltip(false);
+        document.removeEventListener("click", handleClickOutside);
+      };
+      document.addEventListener("click", handleClickOutside);
+
+      return () => {
+        document.removeEventListener("click", handleClickOutside);
+      };
+    }
+  }, [disableManageSupportButton]);
+
+  useEffect(() => {
+    if (searchParams[QUERY_PARAMS.poolPage.allocationView] === "true") {
+      if (!disableManageSupportButton && isConnected) {
+        setAllocationView(true);
+      } else {
+        setShowManageSupportTooltip(true);
+      }
+    }
+  }, [disableManageSupportButton, isConnected, searchParams]);
+
+  useEffect(() => {
+    if (
+      searchParams[QUERY_PARAMS.poolPage.allocationView] !== undefined &&
+      proposalSectionRef.current
+    ) {
+      const elementTop =
+        proposalSectionRef.current.getBoundingClientRect().top + window.scrollY;
+      window.scrollTo({
+        top: elementTop - 150,
+        behavior: "smooth",
+      });
+    }
+  }, [proposalSectionRef.current, searchParams]);
+
+  useEffect(() => {
+    if (proposals == null) return;
 
     const newInputs: { [key: string]: ProposalInputItem } = {};
 
@@ -326,7 +373,9 @@ export function Proposals({
       newInputs[id] = {
         proposalId: id,
         value:
-          !proposalEnded && stakedFilters[id] ? stakedFilters[id]?.value : 0n,
+          !proposalEnded && stakedFilters[id] != null ?
+            stakedFilters[id]?.value
+          : 0n,
         proposalNumber,
       };
     });
@@ -354,7 +403,7 @@ export function Proposals({
   };
 
   const calculateTotalTokens = (exceptProposalId?: string) => {
-    if (!inputs) {
+    if (!Object.keys(inputs).length) {
       console.error("Inputs not yet computed");
       return 0n;
     }
@@ -405,7 +454,7 @@ export function Proposals({
         containerId: strategy.poolId,
         function: "allocate",
       });
-      if (toastId.current) {
+      if (toastId.current != null) {
         toast.dismiss(toastId.current);
         toastId.current = null;
       }
@@ -413,7 +462,7 @@ export function Proposals({
   });
 
   const submit = async () => {
-    if (!inputs) {
+    if (!Object.keys(inputs).length) {
       console.error("Inputs not yet computed");
       return;
     }
@@ -451,7 +500,7 @@ export function Proposals({
     : undefined;
 
   const calcPoolWeightUsed =
-    memberPoolWeight ?
+    memberPoolWeight != null ?
       (number: number) => {
         if (memberPoolWeight == 0) return 0;
         return ((number / 100) * memberPoolWeight).toFixed(2);
@@ -500,11 +549,11 @@ export function Proposals({
       {/* Proposals section */}
       <section className="col-span-12 xl:col-span-9 flex flex-col gap-10">
         <header
+          ref={proposalSectionRef}
           className={`flex ${proposals.length === 0 ? "flex-col items-start justify-start" : "items-center justify-between"} gap-10 flex-wrap`}
         >
           <h3 className="text-left w-52">Proposals</h3>
-          {!!proposals &&
-            strategy.isEnabled &&
+          {strategy.isEnabled &&
             (proposals.length === 0 ?
               <div className="text-center py-12  w-full flex flex-col items-center justify-center">
                 <div className="w-16 h-16 bg-neutral-soft-2 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -535,27 +584,32 @@ export function Proposals({
                 </Link>
               </div>
             : !allocationView && (
-                <CheckPassport strategy={strategy}>
-                  <Button
-                    icon={<AdjustmentsHorizontalIcon height={24} width={24} />}
-                    onClick={() => setAllocationView((prev) => !prev)}
-                    disabled={
-                      !isConnected ||
-                      missmatchUrl ||
-                      !memberActivatedStrategy ||
-                      !isAllowed
-                    }
-                    tooltip={tooltipMessage}
-                  >
-                    Manage support
-                  </Button>
-                </CheckPassport>
+                <div onMouseLeave={() => setShowManageSupportTooltip(false)}>
+                  <CheckPassport strategy={strategy}>
+                    <Button
+                      icon={
+                        <AdjustmentsHorizontalIcon height={24} width={24} />
+                      }
+                      onClick={() => setAllocationView((prev) => !prev)}
+                      popTooltip={showManageSupportTooltip}
+                      disabled={
+                        !isConnected ||
+                        missmatchUrl ||
+                        !memberActivatedStrategy ||
+                        !isAllowed
+                      }
+                      tooltip={tooltipMessage}
+                    >
+                      Manage support
+                    </Button>
+                  </CheckPassport>
+                </div>
               ))}
         </header>
         {allocationView && <UserAllocationStats stats={stats} />}
 
         <div className="flex flex-col gap-6">
-          {proposals && inputs ?
+          {Object.keys(inputs).length ?
             <>
               {proposals
                 .filter(
@@ -639,7 +693,7 @@ export function Proposals({
                 onClick={submit}
                 isLoading={allocateStatus === "loading"}
                 disabled={
-                  !inputs ||
+                  inputs != null ||
                   !getProposalsInputsDifferences(inputs, stakedFilters).length
                 }
                 tooltip="Make changes in proposals support first"
@@ -675,12 +729,7 @@ export function Proposals({
               <Button
                 icon={<PlusIcon height={24} width={24} />}
                 disabled={!isConnected || missmatchUrl || !isMemberCommunity}
-                tooltip={
-                  !isConnected ? "Connect your wallet"
-                  : !isMemberCommunity ?
-                    "Join the community first"
-                  : "Create a proposal"
-                }
+                tooltip={createProposalTooltipMessage}
               >
                 Create a proposal
               </Button>

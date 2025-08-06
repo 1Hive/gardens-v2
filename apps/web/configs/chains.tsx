@@ -119,7 +119,7 @@ export const chainConfigMap: {
     explorer: "https://sepolia.arbiscan.io/",
     blockTime: 14,
     confirmations: 2,
-    rpcUrl: process.env.NEXT_PUBLIC_RPC_URL_ARB_TESTNET!,
+    rpcUrl: process.env.RPC_URL_ARB_TESTNET!,
     ...getSubgraphUrls(
       "BfZYwhZ1rTb22Nah1u6YyXtUtAdgGNtZhW1EBb4mFzAU",
       "gardens-v2---arbitrum-sepolia",
@@ -139,7 +139,7 @@ export const chainConfigMap: {
     explorer: "https://sepolia-optimism.etherscan.io/",
     blockTime: 2,
     confirmations: 1,
-    rpcUrl: process.env.NEXT_PUBLIC_RPC_URL_OP_TESTNET!,
+    rpcUrl: process.env.RPC_URL_OP_TESTNET!,
     ...getSubgraphUrls(
       "5B7swx86RJEpywgvS63kMLVx9U6RKfERfU5tWYnUuGXe",
       "gardens-v-2-optimism-sepolia",
