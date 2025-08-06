@@ -268,7 +268,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     !!walletBalance?.formatted && +walletBalance.formatted < amount;
 
   const effectiveAvailableBalanceBn =
-    !!userSuperTokenAvailableBudgetBn != null && walletBalance != null ?
+    userSuperTokenAvailableBudgetBn != null && walletBalance != null ?
       (forceAllBalanceUsage ?
         superToken?.value ?? 0n
       : userSuperTokenAvailableBudgetBn) + walletBalance.value
@@ -451,7 +451,8 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
       `${roundToSignificant(walletBalance.formatted, 4, { truncate: true })} ${poolToken?.symbol}`
     : null,
     superToken && +superToken.formatted! > 0 ?
-      `${roundToSignificant(superToken.formatted!, 4, { truncate: true })} ${superToken.symbol}`
+    superToken && superToken.formatted != null && +superToken.formatted > 0 ?
+      `${roundToSignificant(superToken.formatted, 4, { truncate: true })} ${superToken.symbol}`
     : null,
     reservedSuperToken > 0 ?
       `- ${roundToSignificant(reservedSuperToken, 4, { truncate: true })} ${superToken?.symbol} reserved for other streams`
