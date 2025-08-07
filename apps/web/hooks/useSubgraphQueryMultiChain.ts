@@ -1,14 +1,3 @@
-import { useEffect, useRef, useState } from "react";
-import {
-  AnyVariables,
-  CombinedError,
-  DocumentInput,
-  OperationContext,
-} from "@urql/next";
-import { debounce, isEqual } from "lodash-es";
-import { toast } from "react-toastify";
-import { getCheat, useCheat } from "./useCheat";
-import { useIsMounted } from "./useIsMounted";
 import { HTTP_CODES } from "@/app/api/utils";
 import { chainConfigMap, ChainData, getConfigByChain } from "@/configs/chains";
 import { isProd } from "@/configs/isProd";
@@ -24,6 +13,17 @@ import {
 import { initUrqlClient } from "@/providers/urql";
 import { ChainId } from "@/types";
 import { delayAsync } from "@/utils/delayAsync";
+import {
+  AnyVariables,
+  CombinedError,
+  DocumentInput,
+  OperationContext,
+} from "@urql/next";
+import { debounce, isEqual } from "lodash-es";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "react-toastify";
+import { getCheat, useCheat } from "./useCheat";
+import { useIsMounted } from "./useIsMounted";
 
 let isQueryAllChains = false;
 try {
@@ -89,7 +89,10 @@ export function useSubgraphQueryMultiChain<
     }
 
     subscritionId.current = subscribe(changeScope, (payload) => {
-      fetchDebounce(payload.chainId ? [payload.chainId] : undefined, true);
+      fetchDebounce(
+        payload.chainId != null ? [payload.chainId] : undefined,
+        true,
+      );
     });
 
     return () => {
@@ -115,7 +118,7 @@ export function useSubgraphQueryMultiChain<
       await Promise.all(
         chainSubgraphs.map(async ({ chainId, chainConfig }, i) => {
           const fetchSubgraphChain = async (retryCount?: number) => {
-            if (!retryCount && retryOnNoChange) {
+            if (retryCount == null && retryOnNoChange) {
               retryCount = 0;
               toast.loading("Pulling new data", {
                 toastId: pendingRefreshToastId,
@@ -132,7 +135,7 @@ export function useSubgraphQueryMultiChain<
                 const { urqlClient } = initUrqlClient({
                   chainId: (chainsOverride ?? allChains)[i],
                 });
-                if (!urqlClient) {
+                if (urqlClient == null) {
                   throw new Error(
                     `Urql client not initialized for chain ${chainId}`,
                   );
@@ -154,7 +157,7 @@ export function useSubgraphQueryMultiChain<
                   skipPublished ||
                   process.env.NEXT_PUBLIC_SKIP_PUBLISHED === "true";
                 res = await fetchQuery(shouldSkipPublished);
-                if (!res.data && res.error) {
+                if (res.data == null && res.error) {
                   throw res.error;
                 }
               } catch (err1) {

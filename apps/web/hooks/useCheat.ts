@@ -19,7 +19,7 @@ export const useCheat = (cheat: CheatName) => {
   const [value] = useWatchLocalStorage({
     key: cheat,
     initialValue:
-      process.env[`REACT_APP_CHEAT_${cheat.toUpperCase()}`] === "true",
+      process.env[`NEXT_PUBLIC_CHEAT_${cheat.toUpperCase()}`] === "true",
     deserializer: (v) => v === "true",
     serializer: (v) => (v ? "true" : "false"),
   });
@@ -41,5 +41,13 @@ export const useCheat = (cheat: CheatName) => {
 };
 
 export const getCheat = (cheat: CheatName) => {
-  return localStorage.getItem(cheat) === "true";
+  console.log({
+    storage: localStorage.getItem(cheat),
+    envKey: `NEXT_PUBLIC_CHEAT_${cheat.toUpperCase()}`,
+    env: process.env[`NEXT_PUBLIC_CHEAT_${cheat.toUpperCase()}`],
+  });
+  const value =
+    localStorage.getItem(cheat) ??
+    process.env[`NEXT_PUBLIC_CHEAT_${cheat.toUpperCase()}`];
+  return value === "true";
 };
