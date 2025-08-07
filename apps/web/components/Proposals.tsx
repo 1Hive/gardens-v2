@@ -29,7 +29,7 @@ import { ProposalCardProps } from "./ProposalCard";
 import TooltipIfOverflow from "./TooltipIfOverflow";
 import {
   Button,
-  CheckPassport,
+  CheckSybil,
   InfoWrapper,
   PoolGovernance,
   ProposalCard,
@@ -585,7 +585,7 @@ export function Proposals({
               </div>
             : !allocationView && (
                 <div onMouseLeave={() => setShowManageSupportTooltip(false)}>
-                  <CheckPassport strategy={strategy}>
+                  <CheckSybil strategy={strategy}>
                     <Button
                       icon={
                         <AdjustmentsHorizontalIcon height={24} width={24} />
@@ -602,7 +602,7 @@ export function Proposals({
                     >
                       Manage support
                     </Button>
-                  </CheckPassport>
+                  </CheckSybil>
                 </div>
               ))}
         </header>

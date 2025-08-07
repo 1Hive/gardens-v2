@@ -1,5 +1,6 @@
 "use client";
 import React, { ReactElement, useEffect, useState } from "react";
+import { useIdentitySDK } from "@goodsdks/citizen-sdk";
 import { toast } from "react-toastify";
 import { Address } from "viem";
 import { useAccount } from "wagmi";
@@ -16,6 +17,7 @@ import { Modal } from "@/components";
 import { isProd } from "@/configs/isProd";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
+
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { CV_PASSPORT_THRESHOLD_SCALE } from "@/utils/numbers";
 
@@ -34,7 +36,7 @@ type CheckPassportProps = {
 
 // CheckPassport component should only wrap a Button or similar component
 
-export function CheckPassport({
+export function CheckSybil({
   strategy,
   children,
   enableCheck = true,
@@ -47,7 +49,23 @@ export function CheckPassport({
   const chainFromPath = useChainIdFromPath();
   const { publish } = usePubSubContext();
 
-  //pool threshold should be ready on!
+  const CheckGoodDollar = () => {
+    const identitySDK = useIdentitySDK("production");
+
+    useEffect(() => {
+      if (!walletAddr || !identitySDK) return;
+      identitySDK
+        .getWhitelistedRoot(walletAddr as Address)
+        .then(({ isWhitelisted, root }) => {
+          console.log(`Is Whitelisted: ${isWhitelisted}, Root: ${root}`);
+        })
+        .catch((error) => {
+          console.error("Error checking whitelisted root:", error);
+        });
+    }, [identitySDK, walletAddr]);
+
+    return <></>;
+  };
 
   useEffect(() => {
     if (!enableCheck) {
@@ -255,7 +273,7 @@ export function CheckPassport({
       <div onClickCapture={(e) => handleCheckPassport(e)} className="w-fit">
         {children}
       </div>
-
+      {walletAddr && <CheckGoodDollar />}
       <Modal
         title="Gitcoin passport"
         isOpen={isOpenModal}
