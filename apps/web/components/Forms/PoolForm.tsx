@@ -615,7 +615,7 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
 
     Object.entries(reorderedData).forEach(([key, value]) => {
       const formRow = formRowTypes[key];
-      if (shouldRenderInPreview(key)) {
+      if (formRow && shouldRenderInPreview(key)) {
         const parsedValue = formRow.parse ? formRow.parse(value) : value;
         formattedRows.push({
           label: formRow.label,
