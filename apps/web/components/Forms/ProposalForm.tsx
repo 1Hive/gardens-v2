@@ -333,7 +333,13 @@ export const ProposalForm = ({
       formattedRows.push({
         label: formRow.label,
         data: parsedValue,
-      });
+      if (formRow) {
+        const parsedValue = formRow.parse ? formRow.parse(value) : value;
+        formattedRows.push({
+          label: formRow.label,
+          data: parsedValue,
+        });
+      }
     });
 
     formattedRows.push({
