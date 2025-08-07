@@ -450,7 +450,6 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     walletBalance && +walletBalance.formatted > 0 ?
       `${roundToSignificant(walletBalance.formatted, 4, { truncate: true })} ${poolToken?.symbol}`
     : null,
-    superToken && +superToken.formatted! > 0 ?
     superToken && superToken.formatted != null && +superToken.formatted > 0 ?
       `${roundToSignificant(superToken.formatted, 4, { truncate: true })} ${superToken.symbol}`
     : null,
