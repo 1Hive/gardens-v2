@@ -247,7 +247,11 @@ export default function PoolHeader({
     },
     {
       label: "Conviction growth",
-      value: `${value} ${unit}`,
+      value:
+        `${value} ${unit}` +
+        (value > 1 && !unit.includes("sec") && !unit.includes("min") ?
+          "s"
+        : ""),
       info: "It's the time for conviction to reach proposal support. This parameter is logarithmic, represented as a half life and may vary slightly over time depending on network block times.",
     },
     {
