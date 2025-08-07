@@ -58,7 +58,7 @@ export const ProposalTimeline: FC<Props> = ({
 
   const lastDispute = disputes[disputes.length - 1];
   const isLastDisputeTimeout =
-    lastDispute &&
+    lastDispute != null &&
     +lastDispute.createdAt + +arbitrationConfig.defaultRulingTimeout <
       Date.now() / 1000;
 

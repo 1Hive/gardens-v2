@@ -614,7 +614,7 @@ export default function Page({
               />
             </div>
           </section>
-          {!isProd && tokenGarden && <TokenGardenFaucet token={tokenGarden} />}
+          {!isProd && <TokenGardenFaucet token={tokenGarden} />}
         </div>
       </div>
 

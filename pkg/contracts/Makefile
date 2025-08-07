@@ -149,7 +149,7 @@ verify-blockscout-opsep:
 	--rpc-url $(RPC_URL_OP_TESTNET) \
 	--account pkGarden \
 	--verifier blockscout \
-	--verifier-url https://arbitrum.blockscout.com/api/ \
+	--verifier-url https://optimism.blockscout.com/api/ \
 	--verify \
 	--via-ir \
 	--slow
@@ -447,7 +447,6 @@ upgrade-arbitrum:
 	--legacy \
 	--via-ir \
 	--verify \
-	--base-fee 10158000 \
 	-vvv
 
 verify-blockscout-arbitrum: 

@@ -53,7 +53,9 @@ type ProposalFormProps = {
       members?: Maybe<Pick<MemberCommunity, "memberAddress">[]>;
     };
   };
-  arbitrableConfig: Pick<ArbitrableConfig, "submitterCollateralAmount">;
+  arbitrableConfig:
+    | Pick<ArbitrableConfig, "submitterCollateralAmount">
+    | undefined;
   poolId: number;
   proposalType: number;
   poolParams: Pick<CVStrategyConfig, "decay">;
@@ -61,6 +63,7 @@ type ProposalFormProps = {
   tokenGarden: Pick<TokenGarden, "symbol" | "decimals">;
   spendingLimit: number | string | undefined;
   spendingLimitPct: number;
+  poolBalance: string | undefined;
 };
 
 type FormRowTypes = {
@@ -129,8 +132,7 @@ export const ProposalForm = ({
   proposalType,
   poolParams,
   alloInfo,
-  spendingLimit,
-  spendingLimitPct,
+  poolBalance,
 }: ProposalFormProps) => {
   const {
     register,
@@ -230,7 +232,7 @@ export const ProposalForm = ({
     contractName: "Allo",
     functionName: "registerRecipient",
     fallbackErrorMessage: "Error creating Proposal, please report a bug.",
-    value: arbitrableConfig.submitterCollateralAmount,
+    value: arbitrableConfig?.submitterCollateralAmount,
     onConfirmations: (receipt) => {
       const proposalId = getEventFromReceipt(
         receipt,
@@ -303,11 +305,7 @@ export const ProposalForm = ({
     const metadata = [1, metadataIpfs as string];
 
     const strAmount = previewData.amount?.toString() || "";
-    const amount = parseUnits(
-      strAmount,
-      // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-      poolToken?.decimals || 0,
-    );
+    const amount = parseUnits(strAmount, poolToken?.decimals ?? 0);
 
     const encodedData = encodeAbiParameters(abiParameters, [
       [
@@ -331,13 +329,11 @@ export const ProposalForm = ({
 
     Object.entries(previewData).forEach(([key, value]) => {
       const formRow = formRowTypes[key];
-      if (formRow) {
-        const parsedValue = formRow.parse ? formRow.parse(value) : value;
-        formattedRows.push({
-          label: formRow.label,
-          data: parsedValue,
-        });
-      }
+      const parsedValue = formRow.parse ? formRow.parse(value) : value;
+      formattedRows.push({
+        label: formRow.label,
+        data: parsedValue,
+      });
     });
 
     formattedRows.push({
@@ -365,17 +361,17 @@ export const ProposalForm = ({
             <div className="relative flex flex-col">
               <FormInput
                 label="Requested amount"
-                subLabel={`Max ${spendingLimit} ${poolToken?.symbol} (${spendingLimitPct.toFixed(2)}% of Pool Funds)`}
+                subLabel={`Pool Funds: ${poolBalance} ${poolToken?.symbol}`}
                 register={register}
                 required
                 onChange={(e) => {
                   setRequestedAmount(e.target.value);
                 }}
                 registerOptions={{
-                  max: {
-                    value: spendingLimit ? +spendingLimit : 0,
-                    message: `Max amount must remain under the spending limit of ${spendingLimit} ${poolToken?.symbol}`,
-                  },
+                  // max: {
+                  //   value: spendingLimit ? +spendingLimit : 0,
+                  //   message: `Max amount must remain under the spending limit of ${spendingLimit} ${poolToken?.symbol}`,
+                  // },
                   min: {
                     value: INPUT_TOKEN_MIN_VALUE,
                     message: `Amount must be greater than ${INPUT_TOKEN_MIN_VALUE}`,
@@ -395,8 +391,9 @@ export const ProposalForm = ({
             </div>
           )}
 
-          {requestedAmount && thresholdPct !== 0 && thresholdPct <= 100 && (
+          {requestedAmount && thresholdPct !== 0 && (
             <InfoBox
+              title="Conviction required"
               infoBoxType={
                 thresholdPct < 50 ? "info"
                 : thresholdPct < 100 ?
@@ -421,7 +418,7 @@ export const ProposalForm = ({
                   thresholdPct > 50 &&
                   (thresholdPct < 100 ?
                     "It may be difficult to pass."
-                  : "Its unlikely to pass.")}
+                  : "It will not pass.")}
               </div>
             </InfoBox>
           )}

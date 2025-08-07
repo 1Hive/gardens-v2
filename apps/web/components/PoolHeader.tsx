@@ -226,7 +226,7 @@ export default function PoolHeader({
 
   let sybilResistanceType: SybilResistanceType;
   let sybilResistanceValue: Address[] | number | undefined;
-  if (passportScore && passportScore > 0) {
+  if (passportScore != null && passportScore > 0) {
     sybilResistanceType = "gitcoinPassport";
     sybilResistanceValue = passportScore;
   } else {
@@ -336,7 +336,7 @@ export default function PoolHeader({
           "Max voting weight",
           "Token",
         ];
-        return !!config.value && !filter.includes(config.label);
+        return config.value != null && !filter.includes(config.label);
       })
     : PoolTypes[proposalType] === "signaling" ?
       poolConfig.filter((config) => {
@@ -345,7 +345,7 @@ export default function PoolHeader({
           "Min threshold",
           "Min conviction",
         ];
-        return !!config.value && !filteredLabels.includes(config.label);
+        return config.value != null && !filteredLabels.includes(config.label);
       })
     : PointSystems[pointSystem] === "capped" ? poolConfig
     : poolConfig.filter((config) => config.label !== "Max voting weight");
@@ -458,7 +458,7 @@ export default function PoolHeader({
     if (
       isEnableStreamTxModalOpened &&
       isCouncilSafe &&
-      toastId &&
+      toastId != null &&
       superTokenCandidate
     ) {
       toast.dismiss(toastId);
@@ -683,6 +683,7 @@ export default function PoolHeader({
                   </>
                 }
                 {!superToken &&
+                  PoolTypes[proposalType] !== "signaling" &&
                   networkSfMetadata?.contractsV1.superTokenFactory && (
                     <>
                       <Button
@@ -851,6 +852,7 @@ export default function PoolHeader({
           {/* InfoBox - Banner or Image */}
           {minThGtTotalEffPoints && isEnabled && (
             <InfoBox
+              title="Min threshold"
               infoBoxType="warning"
               content="Activated governance in this pool is too low. No proposals will pass unless more members activate their governance. You can still create and support proposals."
               className="mb-4"

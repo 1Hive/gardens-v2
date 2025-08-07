@@ -93,7 +93,7 @@ export const CommunityForm = () => {
 
   // Effect to validate token address when it changes
   useEffect(() => {
-    if ((tokenAddress && switchNetworkData?.id) || selectedChainId) {
+    if ((tokenAddress && switchNetworkData?.id != null) || selectedChainId) {
       trigger("tokenAddress");
     }
   }, [switchNetworkData?.id, connectedChainId, selectedChainId]);
@@ -279,7 +279,7 @@ export const CommunityForm = () => {
       const communityName = previewData.title;
       const stakeAmount = parseUnits(
         previewData.stakeAmount.toString(),
-        tokenData?.decimals || 18,
+        tokenData?.decimals ?? 18,
       );
       const communityFeeAmount = parseUnits(
         previewData.feeAmount.toString(),
@@ -290,7 +290,7 @@ export const CommunityForm = () => {
       const councilSafeAddress = previewData.councilSafe;
       const isKickMemberEnabled = previewData.isKickMemberEnabled;
 
-      write?.({
+      write({
         args: [
           {
             _allo: chainConfigMap[selectedChainId]?.allo as Address,
@@ -311,9 +311,7 @@ export const CommunityForm = () => {
     } catch (error) {
       console.error("Error creating community:", error);
     } finally {
-      if (!write) {
-        setLoading(false);
-      }
+      setLoading(false);
     }
   }, [
     previewData,

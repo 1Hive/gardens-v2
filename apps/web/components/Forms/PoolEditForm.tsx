@@ -48,7 +48,7 @@ type FormInputs = {
 type Props = {
   strategy: getPoolDataQuery["cvstrategies"][0];
   token?: Pick<TokenGarden, "decimals">;
-  initValues: FormInputs;
+  initValues: FormInputs | undefined;
   proposalType: string;
   pointSystemType: number;
   proposalOnDispute: boolean;
@@ -489,10 +489,6 @@ export default function PoolEditForm({
                       min: 1 / CV_SCALE_PRECISION,
                     }}
                     registerOptions={{
-                      max: {
-                        value: 100,
-                        message: "Max amount cannot exceed 100%",
-                      },
                       min: {
                         value: 1 / CV_SCALE_PRECISION,
                         message: "Amount must be greater than 0",

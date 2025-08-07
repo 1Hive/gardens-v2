@@ -31,11 +31,11 @@ import {
   ProposalCancelled,
   AllowlistMembersAdded,
   AllowlistMembersRemoved,
-  InitializedCV2DataStruct,
   SybilScorerUpdated,
   InitializedCV3,
   InitializedCV3DataStruct,
-  SuperfluidTokenUpdated
+  SuperfluidTokenUpdated,
+  SuperfluidGDAConnected
 } from "../../generated/templates/CVStrategyV0_0/CVStrategyV0_0";
 
 import { Allo as AlloContract } from "../../generated/templates/CVStrategyV0_0/Allo";
@@ -673,6 +673,46 @@ export function handleSuperfluidTokenUpdated(
   config.save();
 }
 
+export function handleSuperfluidGDAConnected(
+  event: SuperfluidGDAConnected
+): void {
+  let config = CVStrategyConfig.load(`${event.address.toHex()}-config`);
+  if (config == null) {
+    log.error(
+      "CVStrategy: handleSuperfluidGDAConnected config not found: {} (block: {})",
+      [`${event.address.toHex()}-config`, event.block.number.toString()]
+    );
+    return;
+  }
+
+  config.superfluidGDA.push(event.params.gda.toHexString());
+  config.save();
+}
+
+export function handleSuperfluidGDADisconnected(
+  event: SuperfluidGDADisconnected
+): void {
+  let config = CVStrategyConfig.load(`${event.address.toHex()}-config`);
+  if (config == null) {
+    log.error(
+      "CVStrategy: handleSuperfluidGDADisconnected config not found: {} (block: {})",
+      [`${event.address.toHex()}-config`, event.block.number.toString()]
+    );
+    return;
+  }
+
+  const index = config.superfluidGDA.indexOf(event.params.gda.toHexString());
+  if (index > -1) {
+    config.superfluidGDA.splice(index, 1);
+    config.save();
+  } else {
+    log.warning(
+      "CVStrategy: handleSuperfluidGDADisconnected gda not found in config: {} (block: {})",
+      [`${event.address.toHex()}-config`, event.block.number.toString()]
+    );
+  }
+}
+
 /// -- Privates -- ///
 
 function computeConfig(
@@ -748,6 +788,7 @@ function computeInitialize(
   cvs.poolId = poolId;
   cvs.registryCommunity = registryCommunity;
   let config = new CVStrategyConfig(`${contractAddress.toHex()}-config`);
+  config.superfluidGDA = [];
   cvs.maxCVSupply = BigInt.fromI32(0);
   cvs.totalEffectiveActivePoints = cvc.totalPointsActivated();
   cvs.isEnabled = false;

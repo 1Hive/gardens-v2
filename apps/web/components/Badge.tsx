@@ -45,20 +45,18 @@ export function Badge({
   icon,
   children,
 }: BadgeProps): JSX.Element {
-  const isStatusBadge = status !== undefined;
   const ispoolTypeDefined = type !== undefined;
 
   // Determine the appropriate styles based on whether it's a proposal status badge or a pool type badge
   const styles =
-    isStatusBadge ? `${PROPOSAL_STATUS_STYLES[status] ?? "bg-secondary-soft"}`
+    status != null ? `${PROPOSAL_STATUS_STYLES[status] ?? "bg-secondary-soft"}`
     : ispoolTypeDefined ?
       `${POOL_TYPE_STYLES[type] ?? "bg-tertiary-soft text-tertiary-content"}`
     : "bg-tertiary-soft text-tertiary-content";
 
   // Determine the label content
   const content =
-    children ? children
-    : isStatusBadge ? ProposalStatus[status]
+    children != null && status != null ? ProposalStatus[status]
     : ispoolTypeDefined ? PoolTypes[type] ?? label
     : label;
 
@@ -78,7 +76,7 @@ export function Badge({
       className={`${BASE_STYLES} ${styles} ${tooltip ? "tooltip cursor-pointer" : ""} ${className} flex items-center gap-1`}
       data-tip={tooltip}
     >
-      {iconIncluded && <span className="h-5 w-5">{iconIncluded}</span>}
+      {Boolean(iconIncluded) && <span className="h-5 w-5">{iconIncluded}</span>}
       <p className="first-letter:uppercase text-sm font-semibold">{content}</p>
     </div>
   );

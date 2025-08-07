@@ -24,7 +24,7 @@ export const usePoolToken = ({
     enabled: enabled && poolTokenAddr !== zeroAddress,
   });
 
-  if (!poolAmount && !poolToken) {
+  if (!poolAmount != null && !poolToken && enabled) {
     console.debug("Waiting for", {
       poolAmount,
       poolToken,
@@ -33,7 +33,7 @@ export const usePoolToken = ({
   }
 
   const balanceInfo = poolToken &&
-    poolAmount && {
+    poolAmount != null && {
       value: poolAmount,
       formatted: (poolAmount / 10n ** BigInt(poolToken.decimals)).toString(),
     };
