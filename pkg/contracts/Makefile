@@ -391,6 +391,18 @@ deploy-or-upgrade-if-exists-safe-arbitrator-arbsep:
 	--broadcast \
 	-vv
 
+deploy-good-dollar-sybil-arbsep:
+	-forge script script/DeployGoodDollarSybil.s.sol:DeployGoodDollarSybil \
+	--rpc-url $(RPC_URL_ARB_TESTNET) \
+	--sig "run(string)" 'arbsepolia' \
+	--chain-id 421614 \
+	--etherscan-api-key $(ARBISCAN_API_KEY) \
+	--account pkGarden \
+	--via-ir \
+	--verify \
+	--broadcast \
+	-vv
+
 ########################  PROD ##################################
 
 
