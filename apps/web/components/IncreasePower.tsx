@@ -319,10 +319,10 @@ export const IncreasePower = ({
                   onChange={(e) => {
                     const amount = e.target.value;
                     setStakedAmount(amount);
-                    if (Boolean(accountTokenBalancePlusStakeAmount))
+                    if (accountTokenBalancePlusStakeAmount != null)
                       setAmountPerc(
                         (
-                          (+amount / accountTokenBalancePlusStakeAmount!) *
+                          (+amount / accountTokenBalancePlusStakeAmount) *
                           100
                         ).toString(),
                       );
