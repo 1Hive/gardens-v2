@@ -98,6 +98,7 @@ type Props = {
     | undefined;
   superTokenCandidate: SuperToken | null;
   setSuperTokenCandidate: (token: SuperToken | null) => void;
+  minThGtTotalEffPoints: boolean;
 };
 
 export function calculateConvictionGrowthInSeconds(
@@ -137,6 +138,7 @@ export default function PoolHeader({
   superToken,
   superTokenCandidate,
   setSuperTokenCandidate,
+  minThGtTotalEffPoints,
 }: Props) {
   const [isOpenModal, setIsOpenModal] = useState(false);
   const { publish } = usePubSubContext();
@@ -190,18 +192,8 @@ export default function PoolHeader({
       formatTokenAmount(strategy.config.minThresholdPoints, +poolToken.decimals)
     : "0";
 
-  const totalPointsActivatedInPool =
-    poolToken ?
-      formatTokenAmount(
-        strategy.totalEffectiveActivePoints,
-        +poolToken.decimals,
-      )
-    : 0;
-
   const maxVotingWeight =
     poolToken ? formatTokenAmount(maxAmount, poolToken.decimals) : 0;
-  const minThGtTotalEffPoints =
-    +minThresholdPoints > +totalPointsActivatedInPool;
 
   const spendingLimit =
     (strategy.config.maxRatio / CV_SCALE_PRECISION) *
@@ -253,7 +245,7 @@ export default function PoolHeader({
     {
       label: "Min threshold",
       value: `${minThresholdPoints}`,
-      info: `A fixed amount of ${poolToken?.symbol} that overrides Minimum Conviction when the Pool's activated governance is low.`,
+      info: "A fixed amount of voting weight that overrides minimum conviction when not enough members have activated their governance.",
     },
     {
       label: "Max voting weight",

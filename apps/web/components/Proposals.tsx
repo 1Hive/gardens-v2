@@ -109,6 +109,7 @@ interface ProposalsProps {
   communityAddress: Address;
   createProposalUrl: string;
   proposalType: number;
+  minThGtTotalEffPoints: boolean;
 }
 
 export function Proposals({
@@ -117,6 +118,7 @@ export function Proposals({
   poolToken,
   communityAddress,
   createProposalUrl,
+  minThGtTotalEffPoints,
 }: ProposalsProps) {
   // State
   const [allocationView, setAllocationView] = useState(false);
@@ -669,6 +671,7 @@ export function Proposals({
                           inputHandler={inputHandler}
                           communityToken={strategy.registryCommunity.garden}
                           isPoolEnabled={strategy.isEnabled}
+                          minThGtTotalEffPoints={minThGtTotalEffPoints}
                         />
                       </Fragment>
                     ))}
