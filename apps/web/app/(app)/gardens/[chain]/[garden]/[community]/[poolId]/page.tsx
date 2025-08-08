@@ -142,8 +142,6 @@ export default function Page({
   const minThGtTotalEffPoints =
     +minThresholdPoints > +totalPointsActivatedInPool;
 
-  console.log(minThGtTotalEffPoints);
-
   if (!strategy || (!poolToken && PoolTypes[proposalType] === "funding")) {
     if (!data) {
       return <div className="mt-52 text-center">Pool {poolId} not found</div>;

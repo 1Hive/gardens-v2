@@ -133,19 +133,28 @@ export function ProposalCard({
     (currentConvictionPct ?? 0) < (thresholdPct ?? 0) &&
     !alreadyExecuted;
 
-  const impossibleToPass = thresholdPct != null && thresholdPct >= 100;
+  const impossibleToPass =
+    (thresholdPct != null && thresholdPct >= 100) || thresholdPct === 0;
 
   const ProposalCountDown = (
     <>
       <div className="text-neutral-soft-content text-xs sm:text-sm">
-        {impossibleToPass != null ?
+        {!isSignalingType && impossibleToPass ?
           <div
             className="flex items-center justify-center gap-1 tooltip"
-            data-tip={`This proposal will not pass unless more ${minThGtTotalEffPoints ? "eligible members activate their governance" : " funds are added"} `}
+            data-tip={`${
+              thresholdPct === 0 ?
+                "No eligible members in this pool have activated their governance."
+              : `This proposal will not pass unless more ${
+                  minThGtTotalEffPoints ?
+                    "eligible members activate their governance"
+                  : "funds are added"
+                }`
+            }`}
           >
             <ExclamationTriangleIcon className="w-5 h-5 text-secondary-content" />
             <span className="text-xs sm:text-sm text-secondary-content">
-              Threshold over 100%.{" "}
+              {thresholdPct === 0 ? "Threshold is 0%." : "Threshold over 100%."}
             </span>
           </div>
         : (

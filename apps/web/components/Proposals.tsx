@@ -640,6 +640,7 @@ export function Proposals({
                       inputHandler={inputHandler}
                       communityToken={strategy.registryCommunity.garden}
                       isPoolEnabled={strategy.isEnabled}
+                      minThGtTotalEffPoints={minThGtTotalEffPoints}
                     />
                   </Fragment>
                 ))}
