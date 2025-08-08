@@ -135,10 +135,6 @@ export default function Page({
     );
   }
 
-  if (!data || !strategy) {
-    return <div className="mt-52 text-center">Pool {poolId} not found</div>;
-  }
-
   const communityAddress = strategy.registryCommunity.id as Address;
   const alloInfo = data.allos[0];
 
@@ -186,7 +182,7 @@ export default function Page({
         </>
       )}
 
-      {strategy && isEnabled && (
+      {isEnabled && (
         <Proposals
           poolToken={poolToken}
           strategy={strategy}

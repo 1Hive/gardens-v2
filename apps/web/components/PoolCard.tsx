@@ -51,7 +51,7 @@ export function PoolCard({ pool, token }: Props) {
   const poolToken = usePoolToken({
     poolAddress: pool.id,
     poolTokenAddr: token,
-    enabled: isEnabled && !!poolType && PoolTypes[poolType] === "funding",
+    enabled: isEnabled && poolType != null && PoolTypes[poolType] === "funding",
   });
 
   const isNewPool =
@@ -88,7 +88,7 @@ export function PoolCard({ pool, token }: Props) {
         />
         {isEnabled &&
           poolToken &&
-          poolType &&
+          poolType != null &&
           PoolTypes[poolType] === "funding" && (
             <Statistic icon={<CurrencyDollarIcon />} label="funds">
               <DisplayNumber
@@ -107,7 +107,11 @@ export function PoolCard({ pool, token }: Props) {
           <h6>{pool.archived ? "Archived" : "Waiting for approval"}</h6>
         </div>
       : <Image
-          src={poolType && PoolTypes[poolType] === "funding" ? blueLand : grass}
+          src={
+            poolType != null && PoolTypes[poolType] === "funding" ?
+              blueLand
+            : grass
+          }
           alt="Garden land"
           className="h-14 w-full rounded-lg object-cover"
         />

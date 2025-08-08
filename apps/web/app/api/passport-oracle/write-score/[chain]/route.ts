@@ -71,7 +71,7 @@ export async function POST(req: Request, { params }: Params) {
           return { data: null, error: "Failed to fetch subgraph data" };
         });
     let subgraphResponse = await fetchUser(publishedSubgraphUrl);
-    if (!subgraphResponse || subgraphResponse.error) {
+    if (subgraphResponse == null || subgraphResponse.error != null) {
       console.warn(
         "Subgraph query failed with published query, trying dev subgraph",
         {
@@ -83,7 +83,7 @@ export async function POST(req: Request, { params }: Params) {
       subgraphResponse = await fetchUser(subgraphUrl);
     }
 
-    if (!subgraphResponse || subgraphResponse.error) {
+    if (subgraphResponse == null || subgraphResponse.error != null) {
       console.error("Subgraph query error:", subgraphResponse?.error);
       return NextResponse.json(
         { error: "Failed to fetch user data" },

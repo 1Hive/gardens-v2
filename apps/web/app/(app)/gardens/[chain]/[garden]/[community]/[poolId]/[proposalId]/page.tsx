@@ -150,7 +150,7 @@ export default function Page({
     enabled: !proposalData?.metadata,
   });
   const path = usePathname();
-  const metadata = proposalData?.metadata ?? ipfsResult;
+  const metadata = proposalData?.metadata ?? ipfsResult ?? null;
   const isProposerConnected =
     proposalData?.submitter === address?.toLowerCase();
 
@@ -314,7 +314,7 @@ export default function Page({
               {/* Title - author - beneficairy - request - created - type */}
               <header className="flex flex-col items-start gap-4">
                 <div className=" flex items-center justify-between w-full gap-4 sm:gap-8">
-                  <Skeleton isLoading={!metadata} className="!w-96 h-8">
+                  <Skeleton isLoading={metadata == null} className="!w-96 h-8">
                     <h2>{metadata?.title}</h2>
                   </Skeleton>
                   <div className="flex items-center gap-2">
@@ -537,7 +537,7 @@ export default function Page({
       <section className="px-8 col-span-12 xl:col-span-9 mt-6 flex flex-col gap-6">
         <h3>Proposal Description</h3>
         <div>
-          <Skeleton rows={5} isLoading={!metadata}>
+          <Skeleton rows={5} isLoading={!Boolean(metadata)}>
             <MarkdownWrapper>
               {metadata?.description ?? "No description found"}
             </MarkdownWrapper>
@@ -550,8 +550,6 @@ export default function Page({
 
 const ProposalSupportersTable = ({
   supporters,
-  beneficiary,
-  submitter,
   totalActivePoints,
   totalStakedAmount,
 }: {

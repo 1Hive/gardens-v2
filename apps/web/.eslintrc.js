@@ -86,5 +86,18 @@ module.exports = {
     indent: "off",
     "@typescript-eslint/indent": "off",
     "jsx-a11y/label-has-associated-control": "off",
+    "@typescript-eslint/strict-boolean-expressions": [
+      "warn",
+      {
+        allowString: true,
+        allowNumber: true,
+        allowNullableEnum: false,
+        allowNullableObject: true,
+        allowNullableBoolean: true,
+        allowNullableString: true,
+        allowNullableNumber: false,
+        allowAny: true,
+      },
+    ],
   },
 };

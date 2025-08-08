@@ -91,7 +91,7 @@ export function ConnectWallet() {
     address: account?.address,
     token: tokenUrlAddress as `0x${string}` | undefined,
     chainId: urlChainId,
-    enabled: !!account && !!urlChainId,
+    enabled: !!account.address && urlChainId != null,
   });
 
   const { data: ensName } = useEnsName({
@@ -112,9 +112,9 @@ export function ConnectWallet() {
     <ConnectButton.Custom>
       {({ account: acc, chain, openConnectModal, mounted }) => {
         const ready = mounted;
-        const connected = ready && acc && chain;
+        const connected = ready && !!acc && !!chain;
         const isWrongNetwork =
-          chain?.id != urlChainId && urlChainId && !isNaN(urlChainId);
+          chain?.id != urlChainId && urlChainId != null && !isNaN(urlChainId);
 
         return (
           <>
@@ -156,7 +156,7 @@ export function ConnectWallet() {
                       <Menu.Button>
                         <div
                           className={`flex w-fit cursor-pointer items-center gap-4 rounded-2xl pl-4 py-2 hover:opacity-85 pr-2 
-                             ${cn({ "bg-danger-soft": urlChainId && urlChainId !== chain.id }, { "bg-primary": !urlChainId || urlChainId === chain.id })}      
+                             ${cn({ "bg-danger-soft": urlChainId != null && urlChainId !== chain.id }, { "bg-primary": urlChainId == null || urlChainId === chain.id })}      
                           `}
                         >
                           {isWrongNetwork ?
@@ -180,7 +180,7 @@ export function ConnectWallet() {
                             </h5>
                             <div className="flex items-center">
                               {(
-                                !urlChainId ||
+                                urlChainId == null ||
                                 isNaN(urlChainId!) ||
                                 chain.id === urlChainId
                               ) ?

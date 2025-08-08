@@ -5,6 +5,5 @@ try {
   // ignore when not browser side
 }
 export const isProd =
-  envFromStorage ? envFromStorage : (
-    process.env.NEXT_PUBLIC_ENV_GARDENS === "prod"
-  );
+  (envFromStorage ? envFromStorage : process.env.NEXT_PUBLIC_ENV_GARDENS) ===
+  "prod";

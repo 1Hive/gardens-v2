@@ -1,11 +1,9 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { ArrowPathIcon } from "@heroicons/react/24/solid";
 import type { EChartsOption, MarkLineComponentOption } from "echarts";
 import EChartsReact from "echarts-for-react";
 import { ChartWrapper } from "./ChartWrapper";
-import { Button } from "../Button";
 import { Countdown } from "../Countdown";
 import { Skeleton } from "../Skeleton";
 
@@ -39,7 +37,6 @@ export const ConvictionBarChart = ({
   onReadyToExecute,
   defaultChartMaxValue = false,
   proposalStatus,
-  refreshConviction,
 }: ConvictionBarChartProps) => {
   const [convictionRefreshing, setConvictionRefreshing] = useState(true);
   const supportNeeded = (thresholdPct - proposalSupportPct).toFixed(2);
@@ -189,14 +186,6 @@ export const ConvictionBarChart = ({
       setConvictionRefreshing(false);
     }
   }, [convictionRefreshing, currentConvictionPct]);
-
-  const handleRefreshConviction = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setConvictionRefreshing(true);
-    await refreshConviction?.();
-    setConvictionRefreshing(false);
-  };
 
   const supportGtConv = proposalSupportPct > currentConvictionPct;
   const convEqSupport = proposalSupportPct === currentConvictionPct;
@@ -391,7 +380,7 @@ export const ConvictionBarChart = ({
           >
             {chart}
           </ChartWrapper>
-          {scenarioMappings.supportLTConvictionLTThreshold &&
+          {scenarioMappings.supportLTConvictionLTThreshold != null &&
             proposalWillPass &&
             !readyToBeExecuted && (
               <div className="flex items-center gap-2">

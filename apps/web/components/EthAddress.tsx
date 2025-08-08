@@ -65,7 +65,7 @@ export const EthAddress = ({
     cacheTime: 30_000,
   });
 
-  return address && chain?.id ?
+  return address && chain?.id != null ?
       // eslint-disable-next-line jsx-a11y/click-events-have-key-events
       <div
         ref={divParentRef}
@@ -79,7 +79,6 @@ export const EthAddress = ({
         }}
       >
         <Addreth
-          
           // theme={theme}
           theme={{
             base: "simple-light",

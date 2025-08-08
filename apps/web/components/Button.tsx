@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { Size } from "@/types";
 
 type ButtonProps = {
@@ -112,7 +112,7 @@ export function Button({
       style={style}
       aria-disabled={disabled || isLoading ? "true" : "false"}
       aria-label={
-        children ?
+        children != null ?
           typeof children === "string" ?
             children
           : ""
@@ -121,7 +121,7 @@ export function Button({
     >
       {isLoading && <span className={"loading loading-spinner loading-sm"} />}
       <div className={"flex gap-2 items-center"}>
-        {icon && !isLoading && icon} {children}
+        {icon != null && !isLoading && icon} {children}
       </div>
     </button>
   );

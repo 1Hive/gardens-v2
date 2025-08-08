@@ -51,8 +51,9 @@ export const ChartSetup = ({ options }: { options?: EChartsOption }) => {
       option={{
         ...DEFAULT_OPTIONS,
         tooltip:
-          (options?.tooltip as TooltipComponentOption) ||
-          DEFAULT_OPTIONS.tooltip,
+          options?.tooltip ?
+            (options?.tooltip as TooltipComponentOption)
+          : DEFAULT_OPTIONS.tooltip,
         // legend: {
         //   ...DEFAULT_OPTIONS["legend"],
         //   ...(options?.legend ?? {}),

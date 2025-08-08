@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "lint:fix": "next lint --fix",
     "query-passport-account": "curl -X GET http://localhost:3000/api/passport/0x584ddfb0bdd922ff1fbf3e85e7e781d5816b4f23",
     "query-all-scorer": "curl -X GET http://localhost:3000/api/passport/scores",
     "get-sign-message": "curl -X GET http://localhost:3000/api/passport/signMessage",

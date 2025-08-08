@@ -70,7 +70,7 @@ export function Modal({
       >
         <div className="flex items-center justify-between w-full p-2 shadow">
           <div className="flex gap-4 items-center p-2">
-            {icon && (
+            {icon != null && (
               <div className="flex h-12 w-12 items-center justify-center">
                 {icon}
               </div>
@@ -86,7 +86,7 @@ export function Modal({
         <div className={"p-8 overflow-auto overflow-x-hidden w-full"}>
           {children}
         </div>
-        {footer && (
+        {footer != null && (
           <div className="modal-action flex justify-end p-4 mt-0 border-t border-t-[#80808021]">
             {footer}
           </div>
