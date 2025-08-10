@@ -14,7 +14,6 @@ import sfMeta from "@superfluid-finance/metadata";
 import { erc20ABI } from "@wagmi/core";
 import { trimEnd } from "lodash-es";
 import Image from "next/image";
-import { formatUnits } from "viem";
 import { Address, useAccount, useBalance } from "wagmi";
 import { CVStrategy } from "#/subgraph/.graphclient";
 import { Button } from "./Button";
@@ -32,14 +31,7 @@ import { useSuperfluidStream } from "@/hooks/useSuperfluidStream";
 import { superfluidCFAv1ForwarderAbi, superTokenABI } from "@/src/customAbis";
 import { abiWithErrors } from "@/utils/abi";
 import { delayAsync } from "@/utils/delayAsync";
-import {
-  ceilDiv,
-  roundToSignificant,
-  safeParseUnits,
-  scaleDownRoundUp,
-  scaleTo,
-  SECS_PER_MONTH,
-} from "@/utils/numbers";
+import { roundToSignificant } from "@/utils/numbers";
 import { getTxMessage } from "@/utils/transactionMessages";
 
 interface PoolMetricsProps {
@@ -55,9 +47,9 @@ interface PoolMetricsProps {
   communityAddress: Address;
   poolId: number;
   chainId: number;
-  superToken?:
+  superToken:
     | {
-        value: bigint; // balance in super token units
+        value: bigint;
         symbol: string;
         decimals: number;
         address: Address;
@@ -67,6 +59,9 @@ interface PoolMetricsProps {
     | undefined;
 }
 
+const secondsToMonth = 2628000;
+const monthToSeconds = 1 / secondsToMonth;
+
 export const PoolMetrics: FC<PoolMetricsProps> = ({
   strategy,
   poolToken,
@@ -75,7 +70,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
 }) => {
   const { id: poolAddress, poolId } = strategy;
   const [amountInput, setAmount] = useState<string>("");
-  const [streamDuration, setStreamDuration] = useState("1"); // months
+  const [streamDuration, setStreamDuration] = useState("1"); // in months
   const [isStreamTxModalOpen, setIsStreamTxModalOpen] = useState(false);
   const { address: accountAddress } = useAccount();
   const [isStreamModalOpened, setIsStreamModalOpened] = useState(false);
@@ -95,71 +90,60 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     superToken: superToken?.address as Address,
   });
 
-  useEffect(() => {
-    if (!accountAddress || !poolAddress) return;
-    refetchSuperfluidStream();
-  }, [accountAddress, poolAddress, refetchSuperfluidStream]);
+  const amount = +(amountInput || 0);
 
-  // ---------- units ----------
-  const underlyingDec = poolToken.decimals;
-  const superDec = superToken?.decimals ?? underlyingDec;
-
-  // ---------- inputs as bigint ----------
-  const amount = Number(amountInput || "0");
-
-  // ---------- flow rates (super units/sec) ----------
-  const amountUnderlyingBn = safeParseUnits(amountInput, underlyingDec);
-  const monthsBn = BigInt(Math.max(1, +streamDuration || 1));
-
-  // total to stream in SUPER units
-  const totalSuperBn = scaleTo(amountUnderlyingBn, underlyingDec, superDec);
-
-  // ceil divide helper
-
-  // per-second flow rate in SUPER units (int96 > 0)
-  const denom = monthsBn * SECS_PER_MONTH;
-  const streamRequestedAmountPerSecBn =
-    totalSuperBn === 0n ? 0n : ceilDiv(totalSuperBn, denom);
-
-  // ---------- super balance budgeting ----------
-  const reservedSuperTokenBn =
-    (currentUserOtherFlowRateBn ?? 0n) * (SECS_PER_MONTH * 3n); // super units
-  const superBalanceBn = superToken?.value ?? 0n;
-  const availableSuperBn =
-    superBalanceBn > reservedSuperTokenBn ?
-      superBalanceBn - reservedSuperTokenBn
-    : 0n;
-  const availableUsedSuperBn =
-    forceAllBalanceUsage ? superBalanceBn : availableSuperBn;
-
-  // how much super is needed to cover total requested amount
-  const requestedTotalSuperBn = scaleTo(
-    amountUnderlyingBn,
-    underlyingDec,
-    superDec,
-  );
-  const netNeededSuperBn =
-    requestedTotalSuperBn > availableUsedSuperBn ?
-      requestedTotalSuperBn - availableUsedSuperBn
-    : 0n;
-  const isSuperTokenEnoughBalance = netNeededSuperBn === 0n;
-
-  // amount to upgrade() in UNDERLYING units (round up)
-  const upgradeAmountUnderlyingBn = scaleDownRoundUp(
-    netNeededSuperBn,
-    superDec,
-    underlyingDec,
+  const requestedAmountBn = BigInt(
+    Math.floor(amount * 10 ** poolToken.decimals),
   );
 
-  // ---------- wagmi writes ----------
   const { writeAsync: writeFundPoolAsync, isLoading: isSendFundsLoading } =
     useContractWriteWithConfirmations({
       address: poolToken.address,
       abi: abiWithErrors(erc20ABI),
       functionName: "transfer",
       contractName: "ERC20",
-      args: [poolAddress as Address, amountUnderlyingBn],
+      args: [poolAddress as Address, requestedAmountBn],
     });
+
+  useEffect(() => {
+    if (!accountAddress || !poolAddress) return;
+    // Refetch superfluid stream when account address or pool address changes
+    refetchSuperfluidStream();
+  }, [accountAddress]);
+
+  const currentFlowPerMonth =
+    (Number(currentFlowRateBn) / 10 ** poolToken.decimals) * secondsToMonth;
+
+  const currentUserFlowPerMonth =
+    (Number(currentUserFlowRateBn) / 10 ** poolToken.decimals) * secondsToMonth;
+
+  const requestedStreamPerMonth =
+    streamDuration != null ? amount / +streamDuration : 0;
+
+  const streamRequestedAmountPerSec = requestedStreamPerMonth * monthToSeconds;
+  const streamRequestedAmountPerSecBn = BigInt(
+    Math.floor(streamRequestedAmountPerSec * 10 ** poolToken.decimals),
+  );
+
+  // If user is streaming super same token to other recipient, we can deduct from balance a 3 month budget for each stream
+  const secsTo3Months = BigInt(3 * secondsToMonth);
+  const reservedSuperTokenBn =
+    currentUserOtherFlowRateBn != null ?
+      currentUserOtherFlowRateBn * secsTo3Months
+    : 0n;
+  const reservedSuperToken =
+    Number(reservedSuperTokenBn) / 10 ** poolToken.decimals;
+  const userSuperTokenAvailableBudgetBn =
+    currentUserOtherFlowRateBn != null && !!superToken ?
+      superToken.value - reservedSuperTokenBn
+    : 0n;
+
+  const effectiveRequestedAmountBn =
+    forceAllBalanceUsage ?
+      requestedAmountBn - (superToken?.value ?? 0n)
+    : requestedAmountBn - userSuperTokenAvailableBudgetBn;
+
+  const isSuperTokenEnoughBalance = effectiveRequestedAmountBn <= 0n;
 
   const {
     writeAsync: writeStreamFundsAsync,
@@ -251,12 +235,12 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     onConfirmations: async () => {
       await delayAsync(2000);
       if (currentUserFlowRateBn != null) {
-        await writeEditStreamAsync();
+        writeEditStreamAsync();
       } else {
-        await writeStreamFundsAsync();
+        writeStreamFundsAsync();
       }
     },
-    args: [netNeededSuperBn],
+    args: [effectiveRequestedAmountBn],
   });
 
   const {
@@ -267,11 +251,10 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     accountAddress,
     poolToken,
     superToken?.address as Address,
-    upgradeAmountUnderlyingBn,
+    effectiveRequestedAmountBn,
     () => writeWrapFunds(),
   );
 
-  // ---------- balances ----------
   const { data: walletBalance } = useBalance({
     address: accountAddress,
     formatUnits: poolToken.decimals,
@@ -284,58 +267,23 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
   const hasInsufficientBalance =
     !!walletBalance?.formatted && +walletBalance.formatted < amount;
 
-  // effective available in UNDERLYING units
-  const effectiveAvailableUnderlyingBn =
-    (walletBalance?.value ?? 0n) +
-    scaleTo(availableUsedSuperBn, superDec, underlyingDec);
+  const effectiveAvailableBalanceBn =
+    userSuperTokenAvailableBudgetBn != null && walletBalance != null ?
+      (forceAllBalanceUsage ?
+        superToken?.value ?? 0n
+      : userSuperTokenAvailableBudgetBn) + walletBalance.value
+    : null;
 
-  const effectiveAvailableBalance = Number(
-    formatUnits(effectiveAvailableUnderlyingBn, underlyingDec),
-  );
+  const effectiveAvailableBalance =
+    effectiveAvailableBalanceBn != null && poolToken?.decimals != null ?
+      Number(effectiveAvailableBalanceBn) / 10 ** (poolToken?.decimals ?? 18)
+    : null;
 
   const hasInsufficientStreamBalance =
     hasInsufficientBalance &&
-    effectiveAvailableUnderlyingBn < amountUnderlyingBn;
+    effectiveAvailableBalanceBn != null &&
+    effectiveAvailableBalanceBn < requestedAmountBn;
 
-  // ---------- display numbers ----------
-  const requestedStreamPerMonthUnderlying = Number(
-    formatUnits(
-      scaleTo(
-        streamRequestedAmountPerSecBn * SECS_PER_MONTH,
-        superDec,
-        underlyingDec,
-      ),
-      underlyingDec,
-    ),
-  );
-
-  const currentFlowPerMonthUnderlying = Number(
-    formatUnits(
-      scaleTo(
-        (currentFlowRateBn ?? 0n) * SECS_PER_MONTH,
-        superDec,
-        underlyingDec,
-      ),
-      underlyingDec,
-    ),
-  );
-
-  const currentUserFlowPerMonthUnderlying = Number(
-    formatUnits(
-      scaleTo(
-        (currentUserFlowRateBn ?? 0n) * SECS_PER_MONTH,
-        superDec,
-        underlyingDec,
-      ),
-      underlyingDec,
-    ),
-  );
-
-  const reservedSuperToken = Number(
-    formatUnits(reservedSuperTokenBn, superDec),
-  );
-
-  // ---------- buttons/tooltips ----------
   const { tooltipMessage, isButtonDisabled, isConnected, missmatchUrl } =
     useDisableButtons([
       {
@@ -366,7 +314,6 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     },
   ]);
 
-  // ---------- tx state ----------
   const [wrapFundsTx, setWrapFundsTx] = useState<TransactionProps>({
     contractName: "Wrap funds",
     message: getTxMessage("idle"),
@@ -393,7 +340,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
       message: getTxMessage(editStreamStatus, editStreamError),
       status: editStreamStatus ?? "idle",
     }));
-  }, [editStreamStatus, editStreamError]);
+  }, [editStreamStatus, streamFundsError]);
 
   useEffect(() => {
     setWrapFundsTx((prev) => ({
@@ -401,7 +348,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
       message: getTxMessage(wrapFundsStatus, wrapFundsError),
       status: wrapFundsStatus ?? "idle",
     }));
-  }, [wrapFundsStatus, wrapFundsError]);
+  }, [wrapFundsStatus]);
 
   const resetTxsStatus = () => {
     setWrapFundsTx((prev) => ({
@@ -417,27 +364,46 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     resetWrapAllowanceState();
   };
 
-  // ---------- actions ----------
   const handleStreamFunds = async () => {
     resetTxsStatus();
     if (superToken?.sameAsUnderlying) {
+      // If super token is the same as underlying token, we can directly stream funds
+      setStreamFundsTx((prev) => ({
+        ...prev,
+        message: getTxMessage("idle"),
+        status: "idle",
+      }));
       await writeStreamFundsAsync();
       setIsStreamModalOpened(false);
       return;
     }
+    // Check if super token balance is already sufficient
     if (isSuperTokenEnoughBalance) {
       await writeStreamFundsAsync();
       setIsStreamModalOpened(false);
       return;
     }
+    setWrapFundsTx((prev) => ({
+      ...prev,
+      message: getTxMessage("idle"),
+      status: "idle",
+    }));
     setIsStreamTxModalOpen(true);
-    await handleWrapAllowance({ formAmount: upgradeAmountUnderlyingBn });
+    await handleWrapAllowance({
+      formAmount: effectiveRequestedAmountBn,
+    });
     setIsStreamModalOpened(false);
   };
 
   const handleStreamEdit = async () => {
     resetTxsStatus();
     if (superToken?.sameAsUnderlying) {
+      // If super token is the same as underlying token, we can directly stream funds
+      setStreamFundsTx((prev) => ({
+        ...prev,
+        message: getTxMessage("idle"),
+        status: "idle",
+      }));
       await writeStreamFundsAsync();
       setIsStreamModalOpened(false);
       return;
@@ -447,12 +413,18 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
       setIsStreamModalOpened(false);
       return;
     }
+    setWrapFundsTx((prev) => ({
+      ...prev,
+      message: getTxMessage("idle"),
+      status: "idle",
+    }));
     setIsStreamTxModalOpen(true);
-    await handleWrapAllowance({ formAmount: upgradeAmountUnderlyingBn });
+    await handleWrapAllowance({
+      formAmount: effectiveRequestedAmountBn,
+    });
     setIsStreamModalOpened(false);
   };
 
-  // ---------- UI ----------
   const fundAmountInput = (
     <label className="input input-bordered input-info flex items-center gap-2">
       <input
@@ -461,7 +433,9 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
         value={amountInput}
         onChange={(e) => {
           const value = e.target.value;
-          if (+value >= 0) setAmount(value);
+          if (+value >= 0) {
+            setAmount(value);
+          }
         }}
         required
         type="number"
@@ -474,7 +448,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
 
   const availableBalanceTooltipMessage = [
     walletBalance && +walletBalance.formatted > 0 ?
-      `${roundToSignificant(walletBalance.formatted, 4, { truncate: true })} ${poolToken.symbol}`
+      `${roundToSignificant(walletBalance.formatted, 4, { truncate: true })} ${poolToken?.symbol}`
     : null,
     superToken && superToken.formatted != null && +superToken.formatted > 0 ?
       `${roundToSignificant(superToken.formatted, 4, { truncate: true })} ${superToken.symbol}`
@@ -499,9 +473,9 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
       >
         <div className="flex items-center gap-2 mb-4">
           <p>Streaming:</p>
-          <Skeleton isLoading={requestedStreamPerMonthUnderlying == null}>
+          <Skeleton isLoading={requestedStreamPerMonth == undefined}>
             <DisplayNumber
-              number={roundToSignificant(requestedStreamPerMonthUnderlying, 2)}
+              number={roundToSignificant(requestedStreamPerMonth, 2)}
               tokenSymbol={poolToken.symbol}
             />
           </Skeleton>
@@ -510,7 +484,6 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
           </p>
         </div>
       </TransactionModal>
-
       <Modal
         title="Stream Funds"
         isOpen={isStreamModalOpened}
@@ -518,17 +491,17 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
         onClose={() => setIsStreamModalOpened(false)}
       >
         <div className="flex flex-col gap-6">
-          {currentUserFlowPerMonthUnderlying > 0 && (
+          {currentUserFlowPerMonth > 0 && (
             <>
               <div className="border border-l-primary-button border-l-4 rounded-md p-2 flex items-center gap-2 justify-between">
                 <div className="flex flex-col gap-1">
                   You are currently streaming:
                   <div>
                     <div
-                      data-tip={`${currentUserFlowPerMonthUnderlying} ${poolToken.symbol}/mo`}
+                      data-tip={`${currentUserFlowPerMonth} ${poolToken.symbol}/mo`}
                       className="tooltip tooltip-top-right text-left"
                     >
-                      {roundToSignificant(currentUserFlowPerMonthUnderlying, 4)}
+                      {roundToSignificant(currentUserFlowPerMonth, 4)}
                     </div>{" "}
                     {poolToken.symbol}
                     /month
@@ -560,7 +533,6 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
             Change stream amount:
             {fundAmountInput}
           </label>
-
           <div className="border rounded-md flex flex-col p-4 gap-4 bg-base-200">
             <div className="flex items-center gap-2 w-full justify-between">
               <label htmlFor="duration">Duration</label>
@@ -600,19 +572,20 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
               <div>
                 <div
                   className="tooltip tooltip-top-left"
-                  data-tip={`${requestedStreamPerMonthUnderlying} ${poolToken.symbol}/mo`}
+                  data-tip={`${requestedStreamPerMonth} ${poolToken.symbol}/mo`}
                 >
-                  {roundToSignificant(requestedStreamPerMonthUnderlying, 4)}
+                  {roundToSignificant(requestedStreamPerMonth, 4)}
                 </div>{" "}
                 {poolToken.symbol}
               </div>
             </div>
           </div>
-
           <div className="w-full flex justify-end mt-4">
             {currentUserFlowRateBn == null ?
               <Button
-                onClick={handleStreamFunds}
+                onClick={() => {
+                  handleStreamFunds();
+                }}
                 color="primary"
                 isLoading={isStreamFundsLoading}
                 disabled={isStreamButtonDisabled}
@@ -622,7 +595,9 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                 Stream {roundToSignificant(amount, 4)} {poolToken.symbol}
               </Button>
             : <Button
-                onClick={handleStreamEdit}
+                onClick={() => {
+                  handleStreamEdit();
+                }}
                 color="primary"
                 isLoading={isEditStreamLoading}
                 disabled={isStreamButtonDisabled}
@@ -658,9 +633,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                               roundToSignificant(
                                 effectiveAvailableBalance ?? 0,
                                 4,
-                                {
-                                  truncate: true,
-                                },
+                                { truncate: true },
                               ),
                               ".",
                             ),
@@ -676,7 +649,6 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                   {poolToken?.symbol}
                 </div>
               </div>
-
               {showUseSuperTokenBalance && (
                 <div>
                   <FormCheckBox
@@ -695,7 +667,6 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                   />
                 </div>
               )}
-
               <div className="text-sm text-neutral-content flex items-center gap-1">
                 Check it on{" "}
                 <a
@@ -712,7 +683,6 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
           </div>
         </div>
       </Modal>
-
       <Modal
         title="1-time Transfer"
         isOpen={isTransferModalOpened}
@@ -741,7 +711,6 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
           </div>
         </div>
       </Modal>
-
       <div className="col-span-12 xl:col-span-3 h-fit mb-16">
         <div className="backdrop-blur-sm rounded-lg">
           <section className="section-layout gap-2 flex flex-col">
@@ -759,27 +728,23 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                   />
                 </div>
               </div>
-
               {currentFlowRateBn != null && currentFlowRateBn > 0n && (
                 <div className="flex justify-between gap-3 items-center">
                   <p className="subtitle2">Incoming Stream:</p>
                   <div className="flex items-center gap-1">
                     <p className="flex items-center whitespace-nowrap tooltip">
                       <div
-                        data-tip={`${currentFlowPerMonthUnderlying} ${poolToken.symbol}/mo`}
+                        data-tip={`${currentFlowPerMonth} ${poolToken.symbol}/mo`}
                         className="tooltip"
                       >
-                        {roundToSignificant(currentFlowPerMonthUnderlying, 3)}
+                        {roundToSignificant(currentFlowPerMonth, 3)}
                       </div>{" "}
                       {poolToken.symbol}
                       /mo
                     </p>
                     <div
                       className="tooltip tooltip-top-left cursor-pointer w-8"
-                      data-tip={`This pool is receiving ${roundToSignificant(
-                        currentFlowPerMonthUnderlying,
-                        4,
-                      )} ${poolToken.symbol}/month through Superfluid streaming`}
+                      data-tip={`This pool is receiving ${roundToSignificant(currentFlowPerMonth, 4)} ${poolToken.symbol}/month through Superfluid streaming`}
                     >
                       <Image
                         src={SuperfluidStream}
@@ -792,12 +757,14 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                   </div>
                 </div>
               )}
-
               {accountAddress && (
                 <div className="flex justify-between items-center">
                   <p className="text-sm">Wallet:</p>
                   <DisplayNumber
-                    number={[walletBalance?.value ?? 0n, poolToken.decimals]}
+                    number={[
+                      walletBalance?.value ?? BigInt(0),
+                      poolToken.decimals,
+                    ]}
                     tokenSymbol={poolToken.symbol}
                     compact={true}
                     valueClassName="text-black text-lg"
@@ -806,11 +773,8 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                 </div>
               )}
             </div>
-
             <div
-              className={`w-full dropdown dropdown-hover dropdown-start ${
-                missmatchUrl || !isConnected ? "" : "tooltip"
-              } z-50`}
+              className={`w-full dropdown dropdown-hover dropdown-start ${missmatchUrl || !isConnected ? "" : "tooltip"} z-50`}
             >
               <Button
                 type="submit"
