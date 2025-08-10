@@ -444,7 +444,6 @@ upgrade-arbitrum:
 	--ffi \
 	--chain-id 42161 \
 	--broadcast \
-	--legacy \
 	--via-ir \
 	--verify \
 	-vvv

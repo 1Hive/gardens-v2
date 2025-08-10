@@ -18,6 +18,7 @@ contract UpgradeCVMultichainProd is BaseMultiChain {
         // address passportScorer = networkJson.readAddress(getKeyNetwork(".ENVS.PASSPORT_SCORER"));
         address safeArbitrator = networkJson.readAddress(getKeyNetwork(".ENVS.ARBITRATOR"));
         address proxyOwner = networkJson.readAddress(getKeyNetwork(".ENVS.PROXY_OWNER"));
+        address allContractsAddressesHash = networkJson.readAddress(getKeyNetwork(".hash"));
         address safeOwner = ProxyOwner(proxyOwner).owner();
 
         string memory json = string(abi.encodePacked("["));
@@ -136,6 +137,8 @@ contract UpgradeCVMultichainProd is BaseMultiChain {
             '"createdFromOwnerAddress":"',
             _addressToString(msg.sender),
             '"',
+            '"hash":"',
+            allContractsAddressesHash,
             "},",
             '"transactions":',
             json,
@@ -147,6 +150,8 @@ contract UpgradeCVMultichainProd is BaseMultiChain {
         // write file at ./transaction-builder/arbitrum-payload.json
         string memory path =
             string.concat(vm.projectRoot(), "/pkg/contracts/transaction-builder/", CURRENT_NETWORK, "-payload.json");
+        // [read the file and compare hash first]
+
         vm.writeJson(payload, path);
 
         console2.log("Wrote %s", path);
