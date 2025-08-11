@@ -319,10 +319,10 @@ export const IncreasePower = ({
                   onChange={(e) => {
                     const amount = e.target.value;
                     setStakedAmount(amount);
-                    if (Boolean(accountTokenBalancePlusStakeAmount))
+                    if (accountTokenBalancePlusStakeAmount != null)
                       setAmountPerc(
                         (
-                          (+amount / accountTokenBalancePlusStakeAmount!) *
+                          (+amount / accountTokenBalancePlusStakeAmount) *
                           100
                         ).toString(),
                       );
@@ -349,13 +349,16 @@ export const IncreasePower = ({
                 title=""
                 onChange={(e) => {
                   const percentage = e.target.value;
-                  if (Boolean(accountTokenBalancePlusStakeAmount)) {
+                  if (
+                    accountTokenBalancePlusStakeAmount != null &&
+                    accountTokenBalancePlusStakeAmount > 0
+                  ) {
                     setStakedAmount(
                       +percentage >= 100 ?
-                        accountTokenBalancePlusStakeAmount!.toString()
+                        accountTokenBalancePlusStakeAmount.toString()
                       : Math.max(
                           registerStakeAmount, // Minimum stake amount
-                          (+percentage * accountTokenBalancePlusStakeAmount!) /
+                          (+percentage * accountTokenBalancePlusStakeAmount) /
                             100,
                         ).toPrecision(4),
                     );

@@ -1,5 +1,5 @@
 import * as dn from "dnum";
-import { formatUnits } from "viem";
+import { formatUnits, parseUnits } from "viem";
 
 export const INPUT_MIN_VALUE = 0.000000000001;
 export const MAX_RATIO_CONSTANT = 0.77645;
@@ -77,7 +77,7 @@ export function formatTokenAmount(
   if (digits === undefined) {
     digits = 2;
   }
-  if (!value) {
+  if (value == null) {
     return "0";
   }
   const num = [BigInt(Math.floor(Number(value))), decimals] as const;
@@ -104,7 +104,7 @@ export function gte(
   value2: bigint | undefined,
   decimals: number | string,
 ): boolean {
-  if (!value1 || !value2 || !decimals) {
+  if (value1 == null || value2 == null || decimals == null) {
     return false;
   }
   const v1 = [value1, Number(decimals)] as dn.Numberish;
@@ -265,3 +265,29 @@ export function roundToSignificant(
 
   return resultStr;
 }
+
+export const TEN = (n: number) => 10n ** BigInt(n);
+
+export const scaleTo = (x: bigint, from: number, to: number) =>
+  from === to ? x
+  : from < to ? x * TEN(to - from)
+  : x / TEN(from - to);
+
+// scale down with round-up to avoid underfunding
+export const scaleDownRoundUp = (x: bigint, fromDec: number, toDec: number) => {
+  if (fromDec <= toDec) return x * TEN(toDec - fromDec);
+  const f = TEN(fromDec - toDec);
+  return (x + f - 1n) / f;
+};
+
+export const safeParseUnits = (v: string, d: number) => {
+  try {
+    return parseUnits(v || "0", d);
+  } catch {
+    return 0n;
+  }
+};
+
+export const ceilDiv = (a: bigint, b: bigint) => (a + b - 1n) / b;
+
+export const SECS_PER_MONTH = 2_628_000n;

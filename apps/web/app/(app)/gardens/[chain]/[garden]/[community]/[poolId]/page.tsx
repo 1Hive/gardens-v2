@@ -143,9 +143,6 @@ export default function Page({
     +minThresholdPoints > +totalPointsActivatedInPool;
 
   if (!strategy || (!poolToken && PoolTypes[proposalType] === "funding")) {
-    if (!data) {
-      return <div className="mt-52 text-center">Pool {poolId} not found</div>;
-    }
     console.debug("Loading pool data, waiting for", {
       strategy,
       poolTokenIfFundingPool: poolToken,

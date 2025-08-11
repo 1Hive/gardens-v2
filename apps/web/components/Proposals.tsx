@@ -697,7 +697,7 @@ export function Proposals({
                 onClick={submit}
                 isLoading={allocateStatus === "loading"}
                 disabled={
-                  inputs != null ||
+                  inputs == null ||
                   !getProposalsInputsDifferences(inputs, stakedFilters).length
                 }
                 tooltip="Make changes in proposals support first"

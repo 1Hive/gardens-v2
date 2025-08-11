@@ -473,7 +473,7 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
             Math.round(
               (
                 Array.isArray(sybilResistanceValue) ||
-                  previewData.sybilResistanceValue != null
+                  !Boolean(previewData.sybilResistanceValue)
               ) ?
                 0
               : (previewData.sybilResistanceValue as unknown as number) *
@@ -615,7 +615,7 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
 
     Object.entries(reorderedData).forEach(([key, value]) => {
       const formRow = formRowTypes[key];
-      if (formRow && shouldRenderInPreview(key)) {
+      if (Boolean(formRow) && shouldRenderInPreview(key)) {
         const parsedValue = formRow.parse ? formRow.parse(value) : value;
         formattedRows.push({
           label: formRow.label,
