@@ -133,6 +133,8 @@ export const ProposalForm = ({
   poolParams,
   alloInfo,
   poolBalance,
+  spendingLimitPct,
+  spendingLimit,
 }: ProposalFormProps) => {
   const {
     register,
