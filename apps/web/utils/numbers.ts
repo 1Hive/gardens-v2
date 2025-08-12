@@ -211,12 +211,15 @@ export function bigIntMin(a: bigint, b: bigint) {
  *
  * @param value - The number or numeric string to round.
  * @param precision - Number of significant digits to retain.
+ * @param options - Optional settings:
+ *   - truncate: If true, truncates instead of rounding. (default: false)
+ *   - precisionMissIndicator: If true, adds a trailing dot if the original had a decimal but the output does not. (default: true)
  * @returns A string representation of the rounded number.
  */
 export function roundToSignificant(
   value: number | string,
   precision: number,
-  options?: { truncate?: boolean },
+  options?: { truncate?: boolean; showPrecisionMissIndicator?: boolean },
 ): string {
   const num: number = Number(value);
   if (!isFinite(num)) return String(num);
@@ -239,7 +242,9 @@ export function roundToSignificant(
     let adjustedInt = options?.truncate ? Math.trunc(num) : Math.round(num);
 
     const result = adjustedInt.toString();
-    return hadDecimal ? `${result}.` : result;
+    return hadDecimal && options?.showPrecisionMissIndicator !== false ?
+        `${result}.`
+      : result;
   }
 
   // Significant digits needed beyond integer part
@@ -259,7 +264,11 @@ export function roundToSignificant(
     });
   }
 
-  if (!resultStr.includes(".") && hadDecimal) {
+  if (
+    !resultStr.includes(".") &&
+    hadDecimal &&
+    options?.showPrecisionMissIndicator !== false
+  ) {
     return resultStr + ".";
   }
 

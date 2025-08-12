@@ -111,7 +111,9 @@ export const IncreasePower = ({
       accountTokenBalance.value
     : stakedAmountBn - initialStakedAmountBn;
   const stakeDifference = +stakedAmount - initialStakedAmount;
-  const stakeDifferenceRounded = roundToSignificant(stakeDifference, 4);
+  const stakeDifferenceRounded = roundToSignificant(stakeDifference, 4, {
+    showPrecisionMissIndicator: false,
+  });
 
   const registryContractCallConfig = {
     address: communityAddress as Address,
@@ -193,7 +195,11 @@ export const IncreasePower = ({
 
   useEffect(() => {
     if (accountTokenBalancePlusStakeAmount == null) return;
-    setStakedAmount(roundToSignificant(initialStakedAmount ?? 0, 4));
+    setStakedAmount(
+      roundToSignificant(initialStakedAmount ?? 0, 4, {
+        showPrecisionMissIndicator: false,
+      }),
+    );
     setAmountPerc(
       (accountTokenBalance?.value == 0n ?
         100
@@ -354,22 +360,22 @@ export const IncreasePower = ({
                     accountTokenBalancePlusStakeAmount != null &&
                     accountTokenBalancePlusStakeAmount > 0
                   ) {
+                    const stake = Math.max(
+                      registerStakeAmount, // Minimum stake amount
+                      (+percentage * accountTokenBalancePlusStakeAmount) / 100,
+                    );
+
                     setStakedAmount(
                       +percentage >= 100 ?
                         accountTokenBalancePlusStakeAmount.toString()
-                      : roundToSignificant(
-                          Math.max(
-                            registerStakeAmount, // Minimum stake amount
-                            (+percentage * accountTokenBalancePlusStakeAmount) /
-                              100,
-                          ),
-                          4,
-                        ),
+                      : roundToSignificant(stake, 4, {
+                          showPrecisionMissIndicator: false,
+                        }),
                     );
                   }
-                  setAmountPerc(percentage);
+                  setAmountPerc(+percentage >= 100 ? "101" : percentage);
                 }}
-                className={`range range-md cursor-pointer bg-neutral-soft [--range-shdw:var(--color-green-500)] ${
+                className={`range range-md cursor-pointer bg-neutral-soft [--range-shdw:var(--color-green-500)] [--range-thumb-size:14px] ${
                   minAmountPercentage === 100 ?
                     "[--range-shdw:var(--color-grey-400)]"
                   : ""
