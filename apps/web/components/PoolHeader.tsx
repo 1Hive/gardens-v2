@@ -63,6 +63,7 @@ import {
   CV_SCALE_PRECISION,
   formatTokenAmount,
   MAX_RATIO_CONSTANT,
+  roundToSignificant,
 } from "@/utils/numbers";
 import { shortenAddress } from "@/utils/text";
 
@@ -226,7 +227,7 @@ export default function PoolHeader({
 
   let sybilResistanceType: SybilResistanceType;
   let sybilResistanceValue: Address[] | number | undefined;
-  if (passportScore && passportScore > 0) {
+  if (passportScore != null && passportScore > 0) {
     sybilResistanceType = "gitcoinPassport";
     sybilResistanceValue = passportScore;
   } else {
@@ -237,12 +238,12 @@ export default function PoolHeader({
   const poolConfig = [
     {
       label: "Spending limit",
-      value: `${spendingLimit > 99 ? "100" : spendingLimit.toPrecision(2)} %`,
+      value: `${spendingLimit > 99 ? "100" : roundToSignificant(spendingLimit, 2)} %`,
       info: "Max percentage of the pool funds that can be spent in a single proposal.",
     },
     {
       label: "Min conviction",
-      value: `${minimumConviction.toPrecision(2)} %`,
+      value: `${roundToSignificant(minimumConviction, 2)} %`,
       info: "% of Pool's voting weight needed to pass the smallest funding proposal possible. Higher funding requests demand greater conviction to pass.",
     },
     {
@@ -336,7 +337,7 @@ export default function PoolHeader({
           "Max voting weight",
           "Token",
         ];
-        return !!config.value && !filter.includes(config.label);
+        return config.value != null && !filter.includes(config.label);
       })
     : PoolTypes[proposalType] === "signaling" ?
       poolConfig.filter((config) => {
@@ -345,7 +346,7 @@ export default function PoolHeader({
           "Min threshold",
           "Min conviction",
         ];
-        return !!config.value && !filteredLabels.includes(config.label);
+        return config.value != null && !filteredLabels.includes(config.label);
       })
     : PointSystems[pointSystem] === "capped" ? poolConfig
     : poolConfig.filter((config) => config.label !== "Max voting weight");
@@ -458,7 +459,7 @@ export default function PoolHeader({
     if (
       isEnableStreamTxModalOpened &&
       isCouncilSafe &&
-      toastId &&
+      toastId != null &&
       superTokenCandidate
     ) {
       toast.dismiss(toastId);

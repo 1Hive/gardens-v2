@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
   } else if (contentType?.startsWith("multipart/form-data")) {
     try {
       const data = await req.formData();
-      const file: File | null = data.get("file") as File;
+      const file: File | null = data.get("file") as File | null;
 
       if (!file) {
         return NextResponse.json({ success: false });

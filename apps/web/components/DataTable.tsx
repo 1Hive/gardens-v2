@@ -3,7 +3,7 @@ import React from "react";
 interface DataTableProps {
   title?: string;
   description?: string;
-  data: any[];
+  data: any[] | undefined;
   columns: TableColumn[];
   footer?: React.ReactNode;
   className?: string;
@@ -71,7 +71,7 @@ export const DataTable: React.FC<DataTableProps> = ({
                     </tr>
                   ))}
               </tbody>
-              {footer && (
+              {footer != null && (
                 <tfoot>
                   <tr>
                     <td className="pt-2 sm:table-cel" colSpan={columns.length}>

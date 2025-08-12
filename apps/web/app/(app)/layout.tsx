@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import { useState } from "react";
 import { MegaphoneIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import Link from "next/link";
@@ -9,12 +8,6 @@ import { newLogo } from "@/assets";
 import { Badge, Button, ConnectWallet } from "@/components";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  const toggleMobileMenu = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
-
   return (
     <div className="min-h-screen bg-primary relative">
       {/* Left Sidebar - Fixed with higher z-index */}

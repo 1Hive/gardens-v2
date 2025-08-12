@@ -101,7 +101,7 @@ export const DisputeModal: FC<Props> = ({
       containerId: proposalData?.strategy.poolId,
       type: "update",
     },
-    enabled: !!proposalData,
+    enabled: proposalData != null,
   });
 
   const { data: arbitrationCost } = useContractRead({
@@ -121,7 +121,7 @@ export const DisputeModal: FC<Props> = ({
   });
 
   const totalStake =
-    arbitrationCost != null && arbitrationConfig ?
+    arbitrationCost != null ?
       arbitrationCost + BigInt(arbitrationConfig.challengerCollateralAmount)
     : undefined;
   const lastDispute =
@@ -130,14 +130,14 @@ export const DisputeModal: FC<Props> = ({
     ];
   const isCooldown =
     !!lastDispute &&
-    !!disputeCooldown &&
+    disputeCooldown != null &&
     +lastDispute.ruledAt + Number(disputeCooldown) > Date.now() / 1000;
   const proposalStatus = ProposalStatus[proposalData.proposalStatus];
   const isDisputed =
-    proposalData && lastDispute && proposalStatus === "disputed";
+    proposalData != null && lastDispute && proposalStatus === "disputed";
   const isTimeout =
     lastDispute &&
-    arbitrationConfig &&
+    arbitrationConfig != null &&
     +lastDispute.createdAt + +arbitrationConfig.defaultRulingTimeout <
       Date.now() / 1000;
   const disputes = disputesResult?.proposalDisputes ?? [];
@@ -147,7 +147,7 @@ export const DisputeModal: FC<Props> = ({
   if (
     chainId === gnosis.id &&
     lastDispute &&
-    lastDispute &&
+    lastDispute != null &&
     +lastDispute.disputeId >= 62 &&
     +lastDispute.disputeId <= 69
   )
@@ -347,7 +347,7 @@ export const DisputeModal: FC<Props> = ({
       {isDisputed ?
         <>
           {DisputeStatus[+lastDispute.status] === "waiting" &&
-            (!!isTribunalMember || isTribunalSafe) && (
+            (Boolean(isTribunalMember) || isTribunalSafe) && (
               <div className="flex flex-col gap-1 p-1 w-48">
                 <a
                   href={`https://app.safe.global/transactions/queue?safe=${safePrefix}:${arbitrationConfig.tribunalSafe}`}
@@ -369,7 +369,7 @@ export const DisputeModal: FC<Props> = ({
           <div className="w-full flex justify-end gap-4 flex-wrap">
             {(
               DisputeStatus[+lastDispute.status] === "waiting" &&
-              (!!isTribunalMember || isTribunalSafe || isTimeout)
+              (Boolean(isTribunalMember) || isTribunalSafe || isTimeout)
             ) ?
               <>
                 <Button
@@ -444,7 +444,7 @@ export const DisputeModal: FC<Props> = ({
         </>
       : <div className="flex w-full justify-between items-end flex-wrap gap-2">
           <div>
-            {totalStake && (
+            {totalStake != null && (
               <WalletBalance
                 label="Dispute Stake"
                 token="native"

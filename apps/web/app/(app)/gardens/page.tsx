@@ -119,16 +119,15 @@ export default function GardensPage() {
       modifier: async (data) => {
         return Promise.all(
           data
-            .flatMap(
-              (section) =>
-                section.registryCommunities.map((x) => ({
-                  ...x,
-                  chain: section.chain,
-                })) || [],
+            .flatMap((section) =>
+              section.registryCommunities.map((x) => ({
+                ...x,
+                chain: section.chain,
+              })),
             )
             .filter((x) => !x.archived || showArchived)
             .map(async (x) => {
-              if (protopianOwners?.length && x.chain.safePrefix) {
+              if ((protopianOwners && protopianOwners.length > 0) && x.chain.safePrefix) {
                 // Council Safe supported
                 const councilSafeAddress = x.councilSafe as Address;
                 try {

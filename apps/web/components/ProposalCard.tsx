@@ -128,7 +128,7 @@ export function ProposalCard({
     (currentConvictionPct ?? 0) < (thresholdPct ?? 0) &&
     !alreadyExecuted;
 
-  const impossibleToPass = thresholdPct && thresholdPct >= 100;
+  const impossibleToPass = thresholdPct != null && thresholdPct >= 100;
 
   const ProposalCountDown = (
     <>
@@ -147,7 +147,7 @@ export function ProposalCard({
           "Ready to be executed"
         : ""}
       </p>
-      {proposalWillPass && !readyToBeExecuted && timeToPass && (
+      {proposalWillPass && !readyToBeExecuted && timeToPass != null && (
         <Countdown
           endTimestamp={Number(timeToPass)}
           display="inline"
@@ -336,7 +336,7 @@ export function ProposalCard({
       </div>
       {isPoolEnabled &&
         !isAllocationView &&
-        stakedFilter &&
+        stakedFilter != null &&
         stakedFilter?.value > 0 &&
         Number(poolWeightAllocatedInProposal) > 0 && (
           <Badge status={2} className="self-center justify-self-start">

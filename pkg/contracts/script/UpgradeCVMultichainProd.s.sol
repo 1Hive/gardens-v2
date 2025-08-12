@@ -6,6 +6,7 @@ import {CVStrategyV0_0} from "../src/CVStrategy/CVStrategyV0_0.sol";
 import {RegistryCommunityV0_0} from "../src/RegistryCommunity/RegistryCommunityV0_0.sol";
 import {RegistryFactoryV0_0} from "../src/RegistryFactory/RegistryFactoryV0_0.sol";
 import {ICVStrategy} from "../src/CVStrategy/ICVStrategy.sol";
+import {ProxyOwner} from "../src/ProxyOwner.sol";
 
 contract UpgradeCVMultichainProd is BaseMultiChain {
     using stdJson for string;
@@ -16,6 +17,9 @@ contract UpgradeCVMultichainProd is BaseMultiChain {
         address strategyImplementation = address(new CVStrategyV0_0());
         // address passportScorer = networkJson.readAddress(getKeyNetwork(".ENVS.PASSPORT_SCORER"));
         address safeArbitrator = networkJson.readAddress(getKeyNetwork(".ENVS.ARBITRATOR"));
+        address proxyOwner = networkJson.readAddress(getKeyNetwork(".ENVS.PROXY_OWNER"));
+        address allContractsAddressesHash = networkJson.readAddress(getKeyNetwork(".hash"));
+        address safeOwner = ProxyOwner(proxyOwner).owner();
 
         string memory json = string(abi.encodePacked("["));
 
@@ -101,18 +105,56 @@ contract UpgradeCVMultichainProd is BaseMultiChain {
             }
         }
 
+        // Console log how many factory / registry / strategy has been upgraded in 3 lines
+        console2.log("Upgraded Registry Factory: %s", registryFactoryProxy);
+        console2.log(
+            "Upgraded Registry Communities: %s",
+            networkJson.readAddressArray(getKeyNetwork(".PROXIES.REGISTRY_COMMUNITIES")).length
+        );
+        console2.log(
+            "Upgraded CV Strategies: %s", networkJson.readAddressArray(getKeyNetwork(".PROXIES.CV_STRATEGIES")).length
+        );
+
         // Remove the last comma and close the JSON array
         json = string(abi.encodePacked(_removeLastChar(json), "]"));
 
-        console.log(json);
+        string memory payload = string.concat(
+            "{",
+            '"version":"1.0",',
+            '"chainId":"',
+            vm.toString(block.chainid),
+            '",',
+            '"createdAt":',
+            vm.toString(block.timestamp * 1000),
+            ",",
+            '"meta":{',
+            '"name":"Contracts Upgrades Batch",',
+            '"description":"Safe Transaction Builder payload to upgrade contracts from Safe owner",',
+            '"txBuilderVersion":"1.18.0",',
+            '"createdFromSafeAddress":"',
+            _addressToString(safeOwner),
+            '",',
+            '"createdFromOwnerAddress":"',
+            _addressToString(msg.sender),
+            '"',
+            '"hash":"',
+            allContractsAddressesHash,
+            "},",
+            '"transactions":',
+            json,
+            "}"
+        );
 
-        // WIP: Write the JSON into a file
-        // Write the json into a file
-        // string memory path = string(
-        //     abi.encodePacked("/pkg/contracts/transaction-builder/", chainName, "-upgrade-cv-multichain-prod.json")
-        // );
-        // vm.writeFile(path, json);
-        // console.log("Payload written to: ", path);
+        // ensure folder exists
+        vm.createDir("transaction-builder", true);
+        // write file at ./transaction-builder/arbitrum-payload.json
+        string memory path =
+            string.concat(vm.projectRoot(), "/pkg/contracts/transaction-builder/", CURRENT_NETWORK, "-payload.json");
+        // [read the file and compare hash first]
+
+        vm.writeJson(payload, path);
+
+        console2.log("Wrote %s", path);
     }
 
     function _removeLastChar(string memory input) internal pure returns (string memory) {
