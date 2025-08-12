@@ -17,7 +17,7 @@ export function useHandleAllowance(
   transactionLabel?: string,
 ): {
   allowanceTxProps: TransactionProps;
-  handleAllowance: (args: {
+  handleAllowance: (args?: {
     formAmount?: bigint;
     covenantSignature?: `0x${string}`;
   }) => Promise<void>;
@@ -53,25 +53,25 @@ export function useHandleAllowance(
     showNotification: false,
   });
 
-  const handleAllowance = async (args: {
+  const handleAllowance = async (args?: {
     formAmount?: bigint;
     covenantSignature?: `0x${string}`;
   }) => {
     const currentAllowance = await refetchAllowance();
 
-    if (args.formAmount) {
+    if (args?.formAmount != null) {
       amount = args.formAmount;
     }
-    if (currentAllowance?.data && currentAllowance.data >= amount) {
+    if (currentAllowance?.data != null && currentAllowance.data >= amount) {
       await delayAsync(1000);
       setAllowanceTxProps((x) => ({
         ...x,
         message: getTxMessage("success"),
         status: "success",
       }));
-      triggerNextTx(args.covenantSignature);
+      triggerNextTx(args?.covenantSignature);
     } else {
-      if (currentAllowance?.data) {
+      if (currentAllowance?.data != null) {
         // Already found allowance but not enough, need to reset allowance
         setAllowanceTxProps({
           contractName: `${token?.symbol} allowance reset`,
@@ -83,10 +83,10 @@ export function useHandleAllowance(
           contractName:
             transactionLabel ?? `${token?.symbol} expenditure approval`,
           message: `Setting allowance for ${token?.symbol} of ${token ? (Number(amount) / 10 ** token.decimals).toPrecision(4) : ""}`,
-          status: "idle",
+          status: "waiting",
         });
       }
-      setOnSuccess(() => () => triggerNextTx(args.covenantSignature));
+      setOnSuccess(() => () => triggerNextTx(args?.covenantSignature));
       await writeAllowTokenAsync({ args: [spenderAddr, amount] });
     }
   };

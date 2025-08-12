@@ -280,14 +280,15 @@ export const scaleDownRoundUp = (x: bigint, fromDec: number, toDec: number) => {
   return (x + f - 1n) / f;
 };
 
-export const safeParseUnits = (v: string, d: number) => {
+export const safeParseUnits = (v: string | number, d: number) => {
   try {
-    return parseUnits(v || "0", d);
+    return parseUnits(v.toString() || "0", d);
   } catch {
-    return 0n;
+    return BigInt(Math.floor(+v * 10 ** d));
   }
 };
 
 export const ceilDiv = (a: bigint, b: bigint) => (a + b - 1n) / b;
 
-export const SECS_PER_MONTH = 2_628_000n;
+export const SEC_TO_MONTH = 2628000; // 3600 secs * 24 hours * 30.41667 days
+export const MONTH_TO_SEC = 1 / SEC_TO_MONTH;

@@ -609,7 +609,7 @@ export function Proposals({
         {allocationView && <UserAllocationStats stats={stats} />}
 
         <div className="flex flex-col gap-6">
-          {Object.keys(inputs).length ?
+          {inputs != null ?
             <>
               {proposals
                 .filter(
