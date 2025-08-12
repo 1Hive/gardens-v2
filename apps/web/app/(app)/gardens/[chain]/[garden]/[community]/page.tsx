@@ -202,7 +202,8 @@ export default function Page({
       },
     });
 
-  const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons();
+  const { tooltipMessage, isConnected, missmatchUrl, isButtonDisabled } =
+    useDisableButtons();
 
   useEffect(() => {
     if (error) {
@@ -446,12 +447,14 @@ export default function Page({
                       <Button
                         btnStyle="outline"
                         color="secondary"
-                        disabled={isCouncilMember}
+                        disabled={isButtonDisabled || isCouncilMember}
                         tooltipSide="tooltip-bottom"
                         tooltip={
-                          isCouncilMember ?
-                            "Connect with Council safe"
+                          tooltipMessage ? tooltipMessage
+                          : isCouncilMember ?
+                            "Connect with Council Safe"
                           : "Archive this pool will hide it from being listed in the home page but will remain accessible through a link."
+
                         }
                         forceShowTooltip={result.registryCommunity?.archived}
                         onClick={() =>

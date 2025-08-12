@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { noop } from "lodash-es";
+import { formatUnits } from "viem";
 import { Address, useContractRead } from "wagmi";
 import { useChainIdFromPath } from "./useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "./useContractWriteWithConfirmations";
 import { TransactionProps } from "@/components/TransactionModal";
 import { erc20ABI } from "@/src/generated";
 import { delayAsync } from "@/utils/delayAsync";
+import { roundToSignificant } from "@/utils/numbers";
 import { getTxMessage } from "@/utils/transactionMessages";
 
 export function useHandleAllowance(
@@ -82,7 +84,7 @@ export function useHandleAllowance(
         setAllowanceTxProps({
           contractName:
             transactionLabel ?? `${token?.symbol} expenditure approval`,
-          message: `Setting allowance for ${token?.symbol} of ${token ? (Number(amount) / 10 ** token.decimals).toPrecision(4) : ""}`,
+          message: `Setting allowance for ${token?.symbol} of ${token ? roundToSignificant(formatUnits(amount, token.decimals), 4) : ""}`,
           status: "waiting",
         });
       }

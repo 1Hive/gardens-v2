@@ -27,13 +27,13 @@ export function convertSecondsToReadableTime(totalSeconds: number): {
   const minutes = totalSeconds / 60;
 
   if (days >= 1) {
-    return { value: Number(days.toPrecision(2)), unit: "day" };
+    return { value: Number(roundToSignificant(days, 2)), unit: "day" };
   } else if (hours >= 1) {
-    return { value: Number(hours.toPrecision(2)), unit: "hour" };
+    return { value: Number(roundToSignificant(hours, 2)), unit: "hour" };
   } else if (minutes >= 1) {
-    return { value: Number(minutes.toPrecision(2)), unit: "min." };
+    return { value: Number(roundToSignificant(minutes, 2)), unit: "min." };
   } else {
-    return { value: Number(totalSeconds.toPrecision(2)), unit: "sec." };
+    return { value: Number(roundToSignificant(totalSeconds, 2)), unit: "sec." };
   }
 }
 

@@ -25,7 +25,7 @@ import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithC
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useHandleAllowance } from "@/hooks/useHandleAllowance";
 import { registryCommunityABI } from "@/src/generated";
-import { parseToken } from "@/utils/numbers";
+import { parseToken, roundToSignificant } from "@/utils/numbers";
 import { getTxMessage } from "@/utils/transactionMessages";
 
 type IncreasePowerProps = {
@@ -76,7 +76,7 @@ export const IncreasePower = ({
 
   const urlChainId = useChainIdFromPath();
 
-  const roundedStakedAmount = (+stakedAmount).toPrecision(4);
+  const roundedStakedAmount = roundToSignificant(+stakedAmount, 4);
 
   const { data: accountTokenBalance } = useBalance({
     address: accountAddress,
@@ -111,7 +111,7 @@ export const IncreasePower = ({
       accountTokenBalance.value
     : stakedAmountBn - initialStakedAmountBn;
   const stakeDifference = +stakedAmount - initialStakedAmount;
-  const stakeDifferenceRounded = stakeDifference.toPrecision(4);
+  const stakeDifferenceRounded = roundToSignificant(stakeDifference, 4);
 
   const registryContractCallConfig = {
     address: communityAddress as Address,
@@ -193,7 +193,7 @@ export const IncreasePower = ({
 
   useEffect(() => {
     if (accountTokenBalancePlusStakeAmount == null) return;
-    setStakedAmount((initialStakedAmount ?? 0).toPrecision(4));
+    setStakedAmount(roundToSignificant(initialStakedAmount ?? 0, 4));
     setAmountPerc(
       (accountTokenBalance?.value == 0n ?
         100
@@ -226,7 +226,7 @@ export const IncreasePower = ({
       condition:
         accountTokenBalancePlusStakeAmount != null &&
         +stakedAmount > accountTokenBalancePlusStakeAmount,
-      message: `You cannot stake more than your available balance of ${accountTokenBalancePlusStakeAmount?.toPrecision() ?? 0} ${tokenSymbol}`,
+      message: `You cannot stake more than your available balance of ${roundToSignificant(accountTokenBalancePlusStakeAmount ?? 0, 4)} ${tokenSymbol}`,
     },
     { condition: stakeDifferenceBn == 0n, message: "Make a change to apply" },
   ]);
@@ -298,9 +298,10 @@ export const IncreasePower = ({
             <div className="flex-1 flex items-baseline justify-between">
               <p className="text-sm">Available</p>
               <DisplayNumber
-                number={
-                  accountTokenBalancePlusStakeAmount?.toPrecision(4) ?? "0"
-                }
+                number={roundToSignificant(
+                  accountTokenBalancePlusStakeAmount ?? 0,
+                  4,
+                )}
                 tokenSymbol={tokenSymbol}
                 compact={true}
                 valueClassName="text-black text-lg"
@@ -356,11 +357,14 @@ export const IncreasePower = ({
                     setStakedAmount(
                       +percentage >= 100 ?
                         accountTokenBalancePlusStakeAmount.toString()
-                      : Math.max(
-                          registerStakeAmount, // Minimum stake amount
-                          (+percentage * accountTokenBalancePlusStakeAmount) /
-                            100,
-                        ).toPrecision(4),
+                      : roundToSignificant(
+                          Math.max(
+                            registerStakeAmount, // Minimum stake amount
+                            (+percentage * accountTokenBalancePlusStakeAmount) /
+                              100,
+                          ),
+                          4,
+                        ),
                     );
                   }
                   setAmountPerc(percentage);
