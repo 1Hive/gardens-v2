@@ -609,7 +609,7 @@ export function Proposals({
         {allocationView && <UserAllocationStats stats={stats} />}
 
         <div className="flex flex-col gap-6">
-          {Object.keys(inputs).length ?
+          {inputs != null ?
             <>
               {proposals
                 .filter(
@@ -693,7 +693,7 @@ export function Proposals({
                 onClick={submit}
                 isLoading={allocateStatus === "loading"}
                 disabled={
-                  inputs != null ||
+                  inputs == null ||
                   !getProposalsInputsDifferences(inputs, stakedFilters).length
                 }
                 tooltip="Make changes in proposals support first"

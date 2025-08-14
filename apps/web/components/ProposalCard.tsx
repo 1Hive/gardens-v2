@@ -133,7 +133,7 @@ export function ProposalCard({
   const ProposalCountDown = (
     <>
       <p className="text-neutral-soft-content text-xs sm:text-sm">
-        {impossibleToPass != null ?
+        {impossibleToPass ?
           "Threshold over 100%. It will not pass"
         : (
           Number(supportNeededToPass) > 0 &&

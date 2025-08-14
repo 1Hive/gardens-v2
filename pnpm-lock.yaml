@@ -33,8 +33,8 @@ importers:
         specifier: ^0.5.2
         version: 0.5.2
       '@goodsdks/citizen-sdk':
-        specifier: ^1.0.1
-        version: 1.0.1(postcss@8.4.38)(typescript@5.2.2)(viem@1.21.4)(wagmi@1.4.13)
+        specifier: ^1.2.0
+        version: 1.2.0(postcss@8.4.38)(typescript@5.2.2)(viem@1.21.4)(wagmi@1.4.13)
       '@graphprotocol/client-urql':
         specifier: ^2.0.0
         version: 2.0.3(@graphql-mesh/runtime@0.99.8)(@graphql-tools/utils@10.8.6)(@urql/core@5.0.4)(graphql@16.8.2)(wonka@6.3.4)
@@ -2324,8 +2324,8 @@ packages:
       js-yaml: 4.1.0
     dev: false
 
-  /@goodsdks/citizen-sdk@1.0.1(postcss@8.4.38)(typescript@5.2.2)(viem@1.21.4)(wagmi@1.4.13):
-    resolution: {integrity: sha512-hKAeLt+z1T67akEagWsBL4IhCBc7IWomG3nIQqTT25gHin3nmXpYQlFAkB7t55vsduRTl9zONMfFqQQdhRXC1g==}
+  /@goodsdks/citizen-sdk@1.2.0(postcss@8.4.38)(typescript@5.2.2)(viem@1.21.4)(wagmi@1.4.13):
+    resolution: {integrity: sha512-m8ez08VP5wLki/ouSQBcpXoTgtuLproKI64Na6Z3B5YhaQq3NctHrpFoRtpifAj0D0bNkeAXEju8X0KQYBu1Dw==}
     peerDependencies:
       viem: '*'
       wagmi: '*'
@@ -6584,7 +6584,7 @@ packages:
     resolution: {integrity: sha512-MzMFlSLBqNF2gcHWO0G1vP/YQyfvrxZ0bF+u7mzUdZ1/xK4A4sru+nraZz5i3iEIk1l1uyicaDVTB4QbbEkAYg==}
     dependencies:
       '@types/eslint': 8.56.10
-      '@types/estree': 1.0.5
+      '@types/estree': 1.0.8
     dev: false
 
   /@types/eslint@8.56.10:
@@ -8265,6 +8265,14 @@ packages:
       acorn: ^8
     dependencies:
       acorn: 8.12.0
+    dev: false
+
+  /acorn-import-attributes@1.9.5(acorn@8.15.0):
+    resolution: {integrity: sha512-n02Vykv5uA3eHGM/Z2dQrcD56kL8TyDb2p1+0P83PClMnC/nc+anbQRhIOWnSq4Ke/KvDPrY3C9hDtC/A3eHnQ==}
+    peerDependencies:
+      acorn: ^8
+    dependencies:
+      acorn: 8.15.0
     dev: false
 
   /acorn-jsx@5.3.2(acorn@8.12.0):
@@ -17744,7 +17752,7 @@ packages:
     hasBin: true
     dependencies:
       '@jridgewell/source-map': 0.3.6
-      acorn: 8.12.0
+      acorn: 8.15.0
       commander: 2.20.3
       source-map-support: 0.5.21
     dev: false
@@ -18875,12 +18883,12 @@ packages:
         optional: true
     dependencies:
       '@types/eslint-scope': 3.7.7
-      '@types/estree': 1.0.5
+      '@types/estree': 1.0.8
       '@webassemblyjs/ast': 1.12.1
       '@webassemblyjs/wasm-edit': 1.12.1
       '@webassemblyjs/wasm-parser': 1.12.1
-      acorn: 8.12.0
-      acorn-import-attributes: 1.9.5(acorn@8.12.0)
+      acorn: 8.15.0
+      acorn-import-attributes: 1.9.5(acorn@8.15.0)
       browserslist: 4.24.5
       chrome-trace-event: 1.0.4
       enhanced-resolve: 5.17.0

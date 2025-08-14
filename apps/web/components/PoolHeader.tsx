@@ -63,6 +63,7 @@ import {
   CV_SCALE_PRECISION,
   formatTokenAmount,
   MAX_RATIO_CONSTANT,
+  roundToSignificant,
 } from "@/utils/numbers";
 import { shortenAddress } from "@/utils/text";
 
@@ -237,12 +238,12 @@ export default function PoolHeader({
   const poolConfig = [
     {
       label: "Spending limit",
-      value: `${spendingLimit > 99 ? "100" : spendingLimit.toPrecision(2)} %`,
+      value: `${spendingLimit > 99 ? "100" : roundToSignificant(spendingLimit, 2)} %`,
       info: "Max percentage of the pool funds that can be spent in a single proposal.",
     },
     {
       label: "Min conviction",
-      value: `${minimumConviction.toPrecision(2)} %`,
+      value: `${roundToSignificant(minimumConviction, 2)} %`,
       info: "% of Pool's voting weight needed to pass the smallest funding proposal possible. Higher funding requests demand greater conviction to pass.",
     },
     {

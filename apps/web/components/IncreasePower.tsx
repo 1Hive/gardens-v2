@@ -25,7 +25,7 @@ import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithC
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useHandleAllowance } from "@/hooks/useHandleAllowance";
 import { registryCommunityABI } from "@/src/generated";
-import { parseToken } from "@/utils/numbers";
+import { parseToken, roundToSignificant } from "@/utils/numbers";
 import { getTxMessage } from "@/utils/transactionMessages";
 
 type IncreasePowerProps = {
@@ -76,7 +76,7 @@ export const IncreasePower = ({
 
   const urlChainId = useChainIdFromPath();
 
-  const roundedStakedAmount = (+stakedAmount).toPrecision(4);
+  const roundedStakedAmount = roundToSignificant(+stakedAmount, 4);
 
   const { data: accountTokenBalance } = useBalance({
     address: accountAddress,
@@ -111,7 +111,9 @@ export const IncreasePower = ({
       accountTokenBalance.value
     : stakedAmountBn - initialStakedAmountBn;
   const stakeDifference = +stakedAmount - initialStakedAmount;
-  const stakeDifferenceRounded = stakeDifference.toPrecision(4);
+  const stakeDifferenceRounded = roundToSignificant(stakeDifference, 4, {
+    showPrecisionMissIndicator: false,
+  });
 
   const registryContractCallConfig = {
     address: communityAddress as Address,
@@ -193,7 +195,11 @@ export const IncreasePower = ({
 
   useEffect(() => {
     if (accountTokenBalancePlusStakeAmount == null) return;
-    setStakedAmount((initialStakedAmount ?? 0).toPrecision(4));
+    setStakedAmount(
+      roundToSignificant(initialStakedAmount ?? 0, 4, {
+        showPrecisionMissIndicator: false,
+      }),
+    );
     setAmountPerc(
       (accountTokenBalance?.value == 0n ?
         100
@@ -226,7 +232,7 @@ export const IncreasePower = ({
       condition:
         accountTokenBalancePlusStakeAmount != null &&
         +stakedAmount > accountTokenBalancePlusStakeAmount,
-      message: `You cannot stake more than your available balance of ${accountTokenBalancePlusStakeAmount?.toPrecision() ?? 0} ${tokenSymbol}`,
+      message: `You cannot stake more than your available balance of ${roundToSignificant(accountTokenBalancePlusStakeAmount ?? 0, 4)} ${tokenSymbol}`,
     },
     { condition: stakeDifferenceBn == 0n, message: "Make a change to apply" },
   ]);
@@ -298,9 +304,10 @@ export const IncreasePower = ({
             <div className="flex-1 flex items-baseline justify-between">
               <p className="text-sm">Available</p>
               <DisplayNumber
-                number={
-                  accountTokenBalancePlusStakeAmount?.toPrecision(4) ?? "0"
-                }
+                number={roundToSignificant(
+                  accountTokenBalancePlusStakeAmount ?? 0,
+                  4,
+                )}
                 tokenSymbol={tokenSymbol}
                 compact={true}
                 valueClassName="text-black text-lg"
@@ -319,10 +326,10 @@ export const IncreasePower = ({
                   onChange={(e) => {
                     const amount = e.target.value;
                     setStakedAmount(amount);
-                    if (Boolean(accountTokenBalancePlusStakeAmount))
+                    if (accountTokenBalancePlusStakeAmount != null)
                       setAmountPerc(
                         (
-                          (+amount / accountTokenBalancePlusStakeAmount!) *
+                          (+amount / accountTokenBalancePlusStakeAmount) *
                           100
                         ).toString(),
                       );
@@ -349,20 +356,26 @@ export const IncreasePower = ({
                 title=""
                 onChange={(e) => {
                   const percentage = e.target.value;
-                  if (Boolean(accountTokenBalancePlusStakeAmount)) {
+                  if (
+                    accountTokenBalancePlusStakeAmount != null &&
+                    accountTokenBalancePlusStakeAmount > 0
+                  ) {
+                    const stake = Math.max(
+                      registerStakeAmount, // Minimum stake amount
+                      (+percentage * accountTokenBalancePlusStakeAmount) / 100,
+                    );
+
                     setStakedAmount(
                       +percentage >= 100 ?
-                        accountTokenBalancePlusStakeAmount!.toString()
-                      : Math.max(
-                          registerStakeAmount, // Minimum stake amount
-                          (+percentage * accountTokenBalancePlusStakeAmount!) /
-                            100,
-                        ).toPrecision(4),
+                        accountTokenBalancePlusStakeAmount.toString()
+                      : roundToSignificant(stake, 4, {
+                          showPrecisionMissIndicator: false,
+                        }),
                     );
                   }
-                  setAmountPerc(percentage);
+                  setAmountPerc(+percentage >= 100 ? "101" : percentage);
                 }}
-                className={`range range-md cursor-pointer bg-neutral-soft [--range-shdw:var(--color-green-500)] ${
+                className={`range range-md cursor-pointer bg-neutral-soft [--range-shdw:var(--color-green-500)] [--range-thumb-size:14px] ${
                   minAmountPercentage === 100 ?
                     "[--range-shdw:var(--color-grey-400)]"
                   : ""

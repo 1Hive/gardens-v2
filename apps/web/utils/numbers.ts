@@ -1,5 +1,5 @@
 import * as dn from "dnum";
-import { formatUnits } from "viem";
+import { formatUnits, parseUnits } from "viem";
 
 export const INPUT_MIN_VALUE = 0.000000000001;
 export const MAX_RATIO_CONSTANT = 0.77645;
@@ -27,13 +27,13 @@ export function convertSecondsToReadableTime(totalSeconds: number): {
   const minutes = totalSeconds / 60;
 
   if (days >= 1) {
-    return { value: Number(days.toPrecision(2)), unit: "day" };
+    return { value: Number(roundToSignificant(days, 2)), unit: "day" };
   } else if (hours >= 1) {
-    return { value: Number(hours.toPrecision(2)), unit: "hour" };
+    return { value: Number(roundToSignificant(hours, 2)), unit: "hour" };
   } else if (minutes >= 1) {
-    return { value: Number(minutes.toPrecision(2)), unit: "min." };
+    return { value: Number(roundToSignificant(minutes, 2)), unit: "min." };
   } else {
-    return { value: Number(totalSeconds.toPrecision(2)), unit: "sec." };
+    return { value: Number(roundToSignificant(totalSeconds, 2)), unit: "sec." };
   }
 }
 
@@ -77,7 +77,7 @@ export function formatTokenAmount(
   if (digits === undefined) {
     digits = 2;
   }
-  if (!value) {
+  if (value == null) {
     return "0";
   }
   const num = [BigInt(Math.floor(Number(value))), decimals] as const;
@@ -104,7 +104,7 @@ export function gte(
   value2: bigint | undefined,
   decimals: number | string,
 ): boolean {
-  if (!value1 || !value2 || !decimals) {
+  if (value1 == null || value2 == null || decimals == null) {
     return false;
   }
   const v1 = [value1, Number(decimals)] as dn.Numberish;
@@ -211,12 +211,15 @@ export function bigIntMin(a: bigint, b: bigint) {
  *
  * @param value - The number or numeric string to round.
  * @param precision - Number of significant digits to retain.
+ * @param options - Optional settings:
+ *   - truncate: If true, truncates instead of rounding. (default: false)
+ *   - precisionMissIndicator: If true, adds a trailing dot if the original had a decimal but the output does not. (default: true)
  * @returns A string representation of the rounded number.
  */
 export function roundToSignificant(
   value: number | string,
   precision: number,
-  options?: { truncate?: boolean },
+  options?: { truncate?: boolean; showPrecisionMissIndicator?: boolean },
 ): string {
   const num: number = Number(value);
   if (!isFinite(num)) return String(num);
@@ -239,7 +242,9 @@ export function roundToSignificant(
     let adjustedInt = options?.truncate ? Math.trunc(num) : Math.round(num);
 
     const result = adjustedInt.toString();
-    return hadDecimal ? `${result}.` : result;
+    return hadDecimal && options?.showPrecisionMissIndicator !== false ?
+        `${result}.`
+      : result;
   }
 
   // Significant digits needed beyond integer part
@@ -259,9 +264,40 @@ export function roundToSignificant(
     });
   }
 
-  if (!resultStr.includes(".") && hadDecimal) {
+  if (
+    !resultStr.includes(".") &&
+    hadDecimal &&
+    options?.showPrecisionMissIndicator !== false
+  ) {
     return resultStr + ".";
   }
 
   return resultStr;
 }
+
+export const TEN = (n: number) => 10n ** BigInt(n);
+
+export const scaleTo = (x: bigint, from: number, to: number) =>
+  from === to ? x
+  : from < to ? x * TEN(to - from)
+  : x / TEN(from - to);
+
+// scale down with round-up to avoid underfunding
+export const scaleDownRoundUp = (x: bigint, fromDec: number, toDec: number) => {
+  if (fromDec <= toDec) return x * TEN(toDec - fromDec);
+  const f = TEN(fromDec - toDec);
+  return (x + f - 1n) / f;
+};
+
+export const safeParseUnits = (v: string | number, d: number) => {
+  try {
+    return parseUnits(v.toString() || "0", d);
+  } catch {
+    return BigInt(Math.floor(+v * 10 ** d));
+  }
+};
+
+export const ceilDiv = (a: bigint, b: bigint) => (a + b - 1n) / b;
+
+export const SEC_TO_MONTH = 2628000; // 3600 secs * 24 hours * 30.41667 days
+export const MONTH_TO_SEC = 1 / SEC_TO_MONTH;

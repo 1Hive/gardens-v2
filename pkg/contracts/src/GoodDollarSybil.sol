@@ -3,8 +3,6 @@ pragma solidity ^0.8.19;
 
 import {ProxyOwnableUpgrader} from "./ProxyOwnableUpgrader.sol";
 import {ISybilScorer, Strategy} from "./ISybilScorer.sol";
-import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
-import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import {CVStrategyV0_0} from "./CVStrategy/CVStrategyV0_0.sol";
 
 /// @custom:oz-upgrades-from PassportScorer

@@ -2,14 +2,14 @@
 pragma solidity ^0.8.19;
 
 import "forge-std/Test.sol";
-import "../src/GooddollarSybil.sol";
+import "../src/GoodDollarSybil.sol";
 
 import {Upgrades} from "@openzeppelin/foundry/LegacyUpgrades.sol";
 
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 contract GooddollarTest is Test {
-    GooddollarSybil public gooddollarSybil;
+    GoodDollarSybil public goodDollarSybil;
     address public listManager = address(1);
     address public user = address(2);
     address public strategy = address(3);
@@ -19,39 +19,39 @@ contract GooddollarTest is Test {
 
     function setUp() public {
         ERC1967Proxy proxy = new ERC1967Proxy(
-            address(new GooddollarSybil()),
-            abi.encodeWithSelector(GooddollarSybil.initialize.selector, address(listManager), address(listManager))
+            address(new GoodDollarSybil()),
+            abi.encodeWithSelector(GoodDollarSybil.initialize.selector, address(listManager), address(listManager))
         );
 
-        gooddollarSybil = GooddollarSybil(payable(address(proxy)));
+        goodDollarSybil = GoodDollarSybil(payable(address(proxy)));
 
         // passportScore = 100;
     }
 
     function testValidate() public {
         vm.prank(listManager);
-        gooddollarSybil.validateUser(user);
+        goodDollarSybil.validateUser(user);
 
-        bool storedValidity = gooddollarSybil.userValidity(user);
+        bool storedValidity = goodDollarSybil.userValidity(user);
         assertEq(storedValidity, true);
     }
 
     function testInvalidate() public {
         vm.prank(listManager);
-        gooddollarSybil.validateUser(user);
+        goodDollarSybil.validateUser(user);
 
-        bool storedValidity = gooddollarSybil.userValidity(user);
+        bool storedValidity = goodDollarSybil.userValidity(user);
         assertEq(storedValidity, true);
         vm.prank(listManager);
-        gooddollarSybil.invalidateUser(user);
-        storedValidity = gooddollarSybil.userValidity(user);
+        goodDollarSybil.invalidateUser(user);
+        storedValidity = goodDollarSybil.userValidity(user);
         assertEq(storedValidity, false);
     }
 
     function testRevertOnlyListManger() public {
         // vm.prank(listManager); : not List manager: should revert
-        vm.expectRevert(GooddollarSybil.OnlyAuthorized.selector);
-        gooddollarSybil.validateUser(user);
+        vm.expectRevert(GoodDollarSybil.OnlyAuthorized.selector);
+        goodDollarSybil.validateUser(user);
     }
 
     // function testRemoveUser() public {

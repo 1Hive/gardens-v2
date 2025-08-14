@@ -3,11 +3,11 @@
 import React, { Fragment, useEffect, useRef, useState } from "react";
 
 import {
+  ChevronUpIcon,
+  CircleStackIcon,
   CurrencyDollarIcon,
   PlusIcon,
-  CircleStackIcon,
   UserGroupIcon,
-  ChevronUpIcon,
 } from "@heroicons/react/24/outline";
 
 import { FetchTokenResult } from "@wagmi/core";
@@ -27,19 +27,19 @@ import {
 import {
   CommunityLogo,
   groupFlowers,
-  ProtopianLogo,
   OneHiveLogo,
+  ProtopianLogo,
 } from "@/assets";
 import {
   Button,
+  DataTable,
   DisplayNumber,
   EthAddress,
   IncreasePower,
+  InfoWrapper,
   PoolCard,
   RegisterMember,
   Statistic,
-  InfoWrapper,
-  DataTable,
 } from "@/components";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import MarkdownWrapper from "@/components/MarkdownWrapper";
@@ -58,13 +58,13 @@ import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { getProtopiansOwners } from "@/services/alchemy";
 import { registryCommunityABI } from "@/src/generated";
-import { PoolTypes, Column } from "@/types";
+import { Column, PoolTypes } from "@/types";
 import { fetchIpfs } from "@/utils/ipfsUtils";
 import {
+  calculatePercentageBigInt,
   parseToken,
   SCALE_PRECISION,
   SCALE_PRECISION_DECIMALS,
-  calculatePercentageBigInt,
 } from "@/utils/numbers";
 
 type MembersStaked = {
@@ -202,7 +202,8 @@ export default function Page({
       },
     });
 
-  const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons();
+  const { tooltipMessage, isConnected, missmatchUrl, isButtonDisabled } =
+    useDisableButtons();
 
   useEffect(() => {
     if (error) {
@@ -346,19 +347,23 @@ export default function Page({
   ] as Dnum;
 
   const getTotalRegistrationCost = () => {
-    registerStakeAmount = +registerStakeAmount;
-    protocolFee = +protocolFee;
-    communityFee = +communityFee;
     if (registerStakeAmount == undefined) {
       registerStakeAmount = 0;
     }
+
+    const registerStakeAmountBn = BigInt(registerStakeAmount);
+    const protocolFeeBn =
+      protocolFee && BigInt(protocolFee * 100) / BigInt(SCALE_PRECISION);
+    const communityFeeBn =
+      communityFee && BigInt(communityFee * 100) / BigInt(SCALE_PRECISION);
+
     const res =
-      BigInt(registerStakeAmount) + // Min stake
+      registerStakeAmountBn + // Min stake
       (communityFee ?
-        BigInt(registerStakeAmount * (communityFee / SCALE_PRECISION))
+        (registerStakeAmountBn * communityFeeBn) / 100n
       : BigInt(0)) + // Commuity fee as % of min stake
-      (protocolFee ?
-        BigInt(registerStakeAmount * (protocolFee / SCALE_PRECISION))
+      (protocolFeeBn ?
+        (registerStakeAmountBn * protocolFeeBn) / 100n
       : BigInt(0)); // Protocol fee as extra
     return res;
   };
@@ -442,12 +447,14 @@ export default function Page({
                       <Button
                         btnStyle="outline"
                         color="secondary"
-                        disabled={isCouncilMember}
+                        disabled={isButtonDisabled || isCouncilMember}
                         tooltipSide="tooltip-bottom"
                         tooltip={
-                          isCouncilMember ?
-                            "Connect with Council safe"
+                          tooltipMessage ? tooltipMessage
+                          : isCouncilMember ?
+                            "Connect with Council Safe"
                           : "Archive this pool will hide it from being listed in the home page but will remain accessible through a link."
+
                         }
                         forceShowTooltip={result.registryCommunity?.archived}
                         onClick={() =>

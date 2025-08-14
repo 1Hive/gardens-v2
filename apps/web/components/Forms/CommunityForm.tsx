@@ -290,7 +290,7 @@ export const CommunityForm = () => {
       const councilSafeAddress = previewData.councilSafe;
       const isKickMemberEnabled = previewData.isKickMemberEnabled;
 
-      write({
+      write?.({
         args: [
           {
             _allo: chainConfigMap[selectedChainId]?.allo as Address,

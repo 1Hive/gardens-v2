@@ -329,11 +329,13 @@ export const ProposalForm = ({
 
     Object.entries(previewData).forEach(([key, value]) => {
       const formRow = formRowTypes[key];
-      const parsedValue = formRow.parse ? formRow.parse(value) : value;
-      formattedRows.push({
-        label: formRow.label,
-        data: parsedValue,
-      });
+      if (Boolean(formRow)) {
+        const parsedValue = formRow.parse ? formRow.parse(value) : value;
+        formattedRows.push({
+          label: formRow.label,
+          data: parsedValue,
+        });
+      }
     });
 
     formattedRows.push({

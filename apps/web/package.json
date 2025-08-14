@@ -20,7 +20,7 @@
     "@allo-team/allo-v2-sdk": "^1.0.34",
     "@divvi/referral-sdk": "^1.0.0",
     "@emeraldpay/hashicon-react": "^0.5.2",
-    "@goodsdks/citizen-sdk": "^1.0.1",
+    "@goodsdks/citizen-sdk": "^1.2.0",
     "@graphprotocol/client-urql": "^2.0.0",
     "@headlessui/react": "^1.7.17",
     "@heroicons/react": "^2.1.1",
