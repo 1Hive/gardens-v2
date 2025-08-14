@@ -1,7 +1,10 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 "use client";
 
-import { HandRaisedIcon } from "@heroicons/react/24/outline";
+import {
+  HandRaisedIcon,
+  ExclamationTriangleIcon,
+} from "@heroicons/react/24/outline";
 import { usePathname } from "next/navigation";
 import { Address, formatUnits } from "viem";
 import {
@@ -59,6 +62,7 @@ export type ProposalCardProps = {
   isPoolEnabled: boolean;
   communityToken: Parameters<typeof useConvictionRead>[0]["tokenData"];
   inputHandler: (proposalId: string, value: bigint) => void;
+  minThGtTotalEffPoints: boolean;
 };
 
 export function ProposalCard({
@@ -73,6 +77,7 @@ export function ProposalCard({
   memberPoolWeight,
   communityToken: tokenData,
   inputHandler,
+  minThGtTotalEffPoints,
 }: ProposalCardProps) {
   const { data: metadataResult } = useMetadataIpfsFetch({
     hash: proposalData.metadataHash,
@@ -128,13 +133,30 @@ export function ProposalCard({
     (currentConvictionPct ?? 0) < (thresholdPct ?? 0) &&
     !alreadyExecuted;
 
-  const impossibleToPass = thresholdPct != null && thresholdPct >= 100;
+  const impossibleToPass =
+    (thresholdPct != null && thresholdPct >= 100) || thresholdPct === 0;
 
   const ProposalCountDown = (
     <>
-      <p className="text-neutral-soft-content text-xs sm:text-sm">
-        {impossibleToPass ?
-          "Threshold over 100%. It will not pass"
+      <div className="text-neutral-soft-content text-xs sm:text-sm">
+        {!isSignalingType && impossibleToPass ?
+          <div
+            className="flex items-center justify-center gap-1 tooltip"
+            data-tip={`${
+              thresholdPct === 0 ?
+                "No eligible members in this pool have activated their governance."
+              : `This proposal will not pass unless more ${
+                  minThGtTotalEffPoints ?
+                    "eligible members activate their governance"
+                  : "funds are added"
+                }`
+            }`}
+          >
+            <ExclamationTriangleIcon className="w-5 h-5 text-secondary-content" />
+            <span className="text-xs sm:text-sm text-secondary-content">
+              {thresholdPct === 0 ? "Threshold is 0%." : "Threshold over 100%."}
+            </span>
+          </div>
         : (
           Number(supportNeededToPass) > 0 &&
           !alreadyExecuted &&
@@ -146,7 +168,7 @@ export function ProposalCard({
         : !alreadyExecuted && readyToBeExecuted && !isSignalingType ?
           "Ready to be executed"
         : ""}
-      </p>
+      </div>
       {proposalWillPass && !readyToBeExecuted && timeToPass != null && (
         <Countdown
           endTimestamp={Number(timeToPass)}

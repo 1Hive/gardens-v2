@@ -133,6 +133,8 @@ export const ProposalForm = ({
   poolParams,
   alloInfo,
   poolBalance,
+  spendingLimitPct,
+  spendingLimit,
 }: ProposalFormProps) => {
   const {
     register,
@@ -363,7 +365,7 @@ export const ProposalForm = ({
             <div className="relative flex flex-col">
               <FormInput
                 label="Requested amount"
-                subLabel={`Pool Funds: ${poolBalance} ${poolToken?.symbol}`}
+                subLabel={`Pool Funds: ${poolBalance} ${poolToken?.symbol} - Spending limit: ${spendingLimitPct.toFixed(1)}% = ${spendingLimit} ${poolToken?.symbol}`}
                 register={register}
                 required
                 onChange={(e) => {
@@ -395,7 +397,7 @@ export const ProposalForm = ({
 
           {requestedAmount && thresholdPct !== 0 && (
             <InfoBox
-              title="Conviction required"
+              title={`Conviction required:${" "} ${thresholdPct > 100 ? "Over 100" : thresholdPct}%`}
               infoBoxType={
                 thresholdPct < 50 ? "info"
                 : thresholdPct < 100 ?
@@ -414,13 +416,13 @@ export const ProposalForm = ({
                 >
                   conviction
                 </InfoWrapper>{" "}
-                required in order for the proposal to pass with the requested
-                amount is {thresholdPct}%.{" "}
+                required for the proposal to pass within the request amount is{" "}
+                {thresholdPct}%.{" "}
                 {requestedAmount &&
                   thresholdPct > 50 &&
                   (thresholdPct < 100 ?
                     "It may be difficult to pass."
-                  : "It will not pass.")}
+                  : "It will not pass unless more funds are added to the pool")}
               </div>
             </InfoBox>
           )}
