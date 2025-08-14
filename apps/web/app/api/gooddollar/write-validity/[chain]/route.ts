@@ -28,7 +28,6 @@ const LOCAL_RPC = "http://127.0.0.1:8545";
 export async function POST(req: Request, { params }: Params) {
   const { chain: chainId } = params as { chain: string };
   const { user } = await req.json();
-  console.log("CAAAALLLLLEEEEDDDDD");
   if (typeof user !== "string") {
     return NextResponse.json(
       {
@@ -143,7 +142,6 @@ export async function POST(req: Request, { params }: Params) {
     });
 
     const isWhitelisted = await fetchGooddollarWhitelisted(user);
-    console.log("IS WHITELISTED", isWhitelisted);
     // const integerScore = Math.round(score * CV_PASSPORT_THRESHOLD_SCALE);
 
     // if (!integerScore || isNaN(integerScore)) {

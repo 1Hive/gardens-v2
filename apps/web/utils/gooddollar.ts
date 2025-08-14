@@ -20,7 +20,6 @@ export async function fetchGooddollarWhitelisted(
     celoWalletClient,
     "production",
   );
-  console.log("CALLED");
   const { isWhitelisted, root } = await celoIdentitySDK!.getWhitelistedRoot(
     account as AddressType,
   );
