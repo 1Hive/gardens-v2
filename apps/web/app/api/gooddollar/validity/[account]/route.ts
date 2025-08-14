@@ -1,7 +1,7 @@
 // api/passport/[account]
 
 import { NextResponse } from "next/server";
-import { fetchGooddollarWhitelisted } from "@/utils/gooddollar";
+import { fetchGooddollarWhitelisted } from "@/utils/goodDollar";
 
 interface Params {
   params: {

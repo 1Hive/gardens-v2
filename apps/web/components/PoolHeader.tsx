@@ -235,6 +235,13 @@ export default function PoolHeader({
     sybilResistanceValue = allowList as Address[] | undefined;
   }
 
+  const sybilResistanceLabel: Record<SybilResistanceType, string> = {
+    allowList: "Allowlist",
+    gitcoinPassport: "Gitcoin Passport",
+    goodDollar: "GoodDollar",
+    noSybilResist: "None",
+  };
+
   const poolConfig = [
     {
       label: "Spending limit",
@@ -267,13 +274,7 @@ export default function PoolHeader({
     },
     {
       label: "Protection",
-      value:
-        sybilResistanceType ?
-          sybilResistanceType === "gitcoinPassport" ? "Gitcoin Passport"
-          : (sybilResistanceValue as Array<Address>)?.[0] === zeroAddress ?
-            "None"
-          : "Allowlist"
-        : "",
+      value: sybilResistanceLabel[sybilResistanceType] || "",
       info:
         sybilResistanceType ?
           sybilResistanceType === "gitcoinPassport" ?

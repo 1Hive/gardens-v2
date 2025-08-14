@@ -59,6 +59,7 @@ export type ChainData = {
   globalTribunal?: Address;
   arbitrator: Address;
   passportScorer: Address;
+  goodDollar: Address;
   allo: Address;
   isTestnet: boolean;
   safePrefix?: string;
@@ -131,7 +132,7 @@ export const chainConfigMap: {
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0x49222C53695C77a0F8b78Eb42606B893E98DfE6a",
     passportScorer: "0x2053E225672776deb23Af0A3EBa9CE2c87838a72",
-    goodDollarSybil: "0x9DdE3cE47cC11ee04Ea1e2C440116B3De6f11Ed8",
+    goodDollar: "0x9DdE3cE47cC11ee04Ea1e2C440116B3De6f11Ed8",
     isTestnet: true,
   },
   11155420: {
@@ -154,6 +155,7 @@ export const chainConfigMap: {
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0xCcbAc15Eb0D8C241D4b6A74E650dE089c292D131",
     passportScorer: "0xe3DC6e82B599cD80904aCf0a3cd9f7401d92CC37",
+    goodDollar: "0x0000000000000000000000000000000000000000",
     isTestnet: true,
   },
   // 11155111: {
@@ -193,6 +195,7 @@ export const chainConfigMap: {
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0x1c62F449058BbeeD546823A1a581D28233f7A69c",
     passportScorer: "0x8cd4bA4ad10d85A550fe45d567a49E49e1D23CE1",
+    goodDollar: "0x0000000000000000000000000000000000000000",
     isTestnet: false,
     safePrefix: "arb1",
   },
@@ -216,6 +219,7 @@ export const chainConfigMap: {
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0xaf6628d7347fc4D65F1D5C69663C875a00c56d9F",
     passportScorer: "0x084a5504dCFeac0ec3E10517247639e50c8DcFFd",
+    goodDollar: "0x0000000000000000000000000000000000000000",
     isTestnet: false,
     safePrefix: "oeth",
   },
@@ -239,6 +243,7 @@ export const chainConfigMap: {
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0x8D9EAed9D3D23EF30ADAA706c8352c5655AEd814",
     passportScorer: "0x190Fa730E6FfC64Ebd0031bE59b3007cC9eE2bB3",
+    goodDollar: "0x0000000000000000000000000000000000000000",
     isTestnet: false,
     safePrefix: "matic",
   },
@@ -263,6 +268,7 @@ export const chainConfigMap: {
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0x92bc0af737f55FF7B677cd942Aafd52934Fc751d",
     passportScorer: "0x20965C5C8a021ac6fFeD5dE7A402f7CEaC3b0A82",
+    goodDollar: "0x0000000000000000000000000000000000000000",
     isTestnet: false,
     safePrefix: "gno",
   },
@@ -287,6 +293,7 @@ export const chainConfigMap: {
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0xab98D1D6Ce18e537715126614278d1A4D26bbc7d",
     passportScorer: "0xb39dFA15F96055664179e8EcaA890f3FA26c21e9",
+    goodDollar: "0x0000000000000000000000000000000000000000",
     isTestnet: false,
     safePrefix: "base",
   },
@@ -311,6 +318,7 @@ export const chainConfigMap: {
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0x83bDE2E2D8AcAAad2D300DA195dF3cf86b234bdd",
     passportScorer: "0xb39dfa15f96055664179e8ecaa890f3fa26c21e9",
+    goodDollar: "0x0000000000000000000000000000000000000000",
     isTestnet: false,
     safePrefix: "celo",
   },

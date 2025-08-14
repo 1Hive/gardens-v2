@@ -1,6 +1,5 @@
 "use client";
 import React, { ReactElement, useEffect, useState } from "react";
-import { useIdentitySDK } from "@goodsdks/citizen-sdk";
 import { toast } from "react-toastify";
 import { Address } from "viem";
 import { useAccount } from "wagmi";
@@ -18,7 +17,9 @@ import { isProd } from "@/configs/isProd";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 
+import { useGoodDollarSdk } from "@/hooks/useGoodDollar";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
+import { fetchGooddollarWhitelisted } from "@/utils/goodDollar";
 import { CV_PASSPORT_THRESHOLD_SCALE } from "@/utils/numbers";
 
 type SubmitPassportResponse = {
@@ -48,24 +49,14 @@ export function CheckSybil({
   const [isSubmiting, setIsSubmiting] = useState<boolean>(false);
   const chainFromPath = useChainIdFromPath();
   const { publish } = usePubSubContext();
+  const { isWalletVerified } = useGoodDollarSdk({
+    enabled: strategy. === "goodDollar" && enableCheck,
+  });
 
-  const CheckGoodDollar = () => {
-    const identitySDK = useIdentitySDK("production");
-
-    useEffect(() => {
-      if (!walletAddr || !identitySDK) return;
-      identitySDK
-        .getWhitelistedRoot(walletAddr as Address)
-        .then(({ isWhitelisted, root }) => {
-          console.log(`Is Whitelisted: ${isWhitelisted}, Root: ${root}`);
-        })
-        .catch((error) => {
-          console.error("Error checking whitelisted root:", error);
-        });
-    }, [identitySDK, walletAddr]);
-
-    return <></>;
-  };
+  useEffect(() => {
+    if (!walletAddr) return;
+    console.log("Is whitelisted:", isWalletVerified);
+  }, [isWalletVerified]);
 
   useEffect(() => {
     if (!enableCheck) {
@@ -273,7 +264,6 @@ export function CheckSybil({
       <div onClickCapture={(e) => handleCheckPassport(e)} className="w-fit">
         {children}
       </div>
-      {walletAddr && <CheckGoodDollar />}
       <Modal
         title="Gitcoin passport"
         isOpen={isOpenModal}
