@@ -1,16 +1,13 @@
 // api/passport/[account]
 
 import { NextResponse } from "next/server";
-import { fetchPassportScore } from "@/utils/gitcoin-passport";
-import { IdentitySDK } from '@goodsdks/citizen-sdk';
+import { fetchGooddollarWhitelisted } from "@/utils/gooddollar";
 
 interface Params {
   params: {
     account: string;
   };
 }
-
-
 
 export async function GET(request: Request, { params }: Params) {
   const { account } = params;
@@ -21,7 +18,7 @@ export async function GET(request: Request, { params }: Params) {
     );
   }
   try {
-    const data = await fetchPassportScore(account);
+    const data = await fetchGooddollarWhitelisted(account);
     return NextResponse.json(data, { status: 200 });
   } catch (error) {
     console.error("Request error:", error);

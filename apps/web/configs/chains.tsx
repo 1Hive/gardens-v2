@@ -62,6 +62,7 @@ export type ChainData = {
   allo: Address;
   isTestnet: boolean;
   safePrefix?: string;
+  goodDollarSybil?: Address;
   alchemyApiBaseUrl?: string; // Optional, used for fetching NFTs
 };
 
@@ -130,6 +131,7 @@ export const chainConfigMap: {
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0x49222C53695C77a0F8b78Eb42606B893E98DfE6a",
     passportScorer: "0x2053E225672776deb23Af0A3EBa9CE2c87838a72",
+    goodDollarSybil: "0x9DdE3cE47cC11ee04Ea1e2C440116B3De6f11Ed8",
     isTestnet: true,
   },
   11155420: {
