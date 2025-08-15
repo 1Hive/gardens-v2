@@ -15,7 +15,7 @@ contract GoodDollarSybil is ISybilScorer, ProxyOwnableUpgrader {
     event UserValidated(address user);
     event UserInvalidated(address indexed user);
     event ListManagerChanged(address indexed oldManager, address indexed newManager);
-    event GoodDollarStrategyAdded(address indexed strategy);
+    event GoodDollarStrategyAdded(address indexed strategy, address councilSafe);
 
     error OnlyAuthorized();
     // error OnlyAuthorizedOrUser();
@@ -84,8 +84,13 @@ contract GoodDollarSybil is ISybilScorer, ProxyOwnableUpgrader {
         emit ListManagerChanged(oldManager, _newManager);
     }
 
-    function addStrategy(address _strategy, uint256, address) external override onlyCouncilOrAuthorized(_strategy) {
-        emit GoodDollarStrategyAdded(_strategy);
+    function addStrategy(address _strategy, uint256, address _councilSafe)
+        external
+        override
+        onlyCouncilOrAuthorized(_strategy)
+    {
+        strategies[_strategy] = Strategy({active: false, threshold: 0, councilSafe: _councilSafe});
+        emit GoodDollarStrategyAdded(_strategy, _councilSafe);
     }
 
     function activateStrategy(address) external pure override {

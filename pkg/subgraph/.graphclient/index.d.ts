@@ -563,6 +563,7 @@ export type CVStrategyConfig = {
     maxAmount?: Maybe<Scalars['BigInt']['output']>;
     allowlist?: Maybe<Array<Scalars['String']['output']>>;
     superfluidToken?: Maybe<Scalars['String']['output']>;
+    superfluidGDA: Array<Scalars['String']['output']>;
 };
 export type CVStrategyConfig_filter = {
     id?: InputMaybe<Scalars['ID']['input']>;
@@ -664,12 +665,18 @@ export type CVStrategyConfig_filter = {
     superfluidToken_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
     superfluidToken_not_ends_with?: InputMaybe<Scalars['String']['input']>;
     superfluidToken_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    superfluidGDA?: InputMaybe<Array<Scalars['String']['input']>>;
+    superfluidGDA_not?: InputMaybe<Array<Scalars['String']['input']>>;
+    superfluidGDA_contains?: InputMaybe<Array<Scalars['String']['input']>>;
+    superfluidGDA_contains_nocase?: InputMaybe<Array<Scalars['String']['input']>>;
+    superfluidGDA_not_contains?: InputMaybe<Array<Scalars['String']['input']>>;
+    superfluidGDA_not_contains_nocase?: InputMaybe<Array<Scalars['String']['input']>>;
     /** Filter for the block changed event. */
     _change_block?: InputMaybe<BlockChangedFilter>;
     and?: InputMaybe<Array<InputMaybe<CVStrategyConfig_filter>>>;
     or?: InputMaybe<Array<InputMaybe<CVStrategyConfig_filter>>>;
 };
-export type CVStrategyConfig_orderBy = 'id' | 'strategy' | 'strategy__id' | 'strategy__poolId' | 'strategy__metadata' | 'strategy__maxCVSupply' | 'strategy__totalEffectiveActivePoints' | 'strategy__isEnabled' | 'strategy__token' | 'strategy__archived' | 'D' | 'decay' | 'maxRatio' | 'minThresholdPoints' | 'weight' | 'proposalType' | 'pointSystem' | 'maxAmount' | 'allowlist' | 'superfluidToken';
+export type CVStrategyConfig_orderBy = 'id' | 'strategy' | 'strategy__id' | 'strategy__poolId' | 'strategy__metadata' | 'strategy__maxCVSupply' | 'strategy__totalEffectiveActivePoints' | 'strategy__isEnabled' | 'strategy__token' | 'strategy__archived' | 'D' | 'decay' | 'maxRatio' | 'minThresholdPoints' | 'weight' | 'proposalType' | 'pointSystem' | 'maxAmount' | 'allowlist' | 'superfluidToken' | 'superfluidGDA';
 export type CVStrategy_filter = {
     id?: InputMaybe<Scalars['ID']['input']>;
     id_not?: InputMaybe<Scalars['ID']['input']>;
@@ -2906,6 +2913,7 @@ export type CVStrategyConfigResolvers<ContextType = MeshContext, ParentType exte
     maxAmount?: Resolver<Maybe<ResolversTypes['BigInt']>, ParentType, ContextType>;
     allowlist?: Resolver<Maybe<Array<ResolversTypes['String']>>, ParentType, ContextType>;
     superfluidToken?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+    superfluidGDA?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
 export type CollateralVaultResolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['CollateralVault'] = ResolversParentTypes['CollateralVault']> = ResolversObject<{

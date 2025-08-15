@@ -39,7 +39,7 @@ export async function POST(req: Request, { params }: Params) {
 
   const chain = getViemChain(chainId);
   const chainConfig = getConfigByChain(chainId);
-
+  //TODO: check with subgraph instead of wagmi if we add to subgraph in the future
   // try {
   // const publishedSubgraphUrl = chainConfig?.publishedSubgraphUrl as string;
   // const subgraphUrl = chainConfig?.subgraphUrl as string;
@@ -159,6 +159,20 @@ export async function POST(req: Request, { params }: Params) {
       );
     }
     if (isWhitelisted) {
+      const isAlreadyValid = (await client.readContract({
+        abi: goodDollarABI,
+        address: chainConfig.goodDollarSybil,
+        functionName: "userValidity",
+        args: [user as Address],
+      })) as boolean;
+
+      if (isAlreadyValid) {
+        return NextResponse.json({
+          message: "User already validated on Gooddollar Sybil smart contract",
+          isValid: true,
+        });
+      }
+
       const hash = await walletClient.writeContract({
         abi: goodDollarABI,
         // abi: goodDollarABI,

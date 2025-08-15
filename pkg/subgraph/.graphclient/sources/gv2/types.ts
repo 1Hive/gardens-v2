@@ -593,6 +593,7 @@ export type CVStrategyConfig = {
   maxAmount?: Maybe<Scalars['BigInt']['output']>;
   allowlist?: Maybe<Array<Scalars['String']['output']>>;
   superfluidToken?: Maybe<Scalars['String']['output']>;
+  superfluidGDA: Array<Scalars['String']['output']>;
 };
 
 export type CVStrategyConfig_filter = {
@@ -695,6 +696,12 @@ export type CVStrategyConfig_filter = {
   superfluidToken_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
   superfluidToken_not_ends_with?: InputMaybe<Scalars['String']['input']>;
   superfluidToken_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  superfluidGDA?: InputMaybe<Array<Scalars['String']['input']>>;
+  superfluidGDA_not?: InputMaybe<Array<Scalars['String']['input']>>;
+  superfluidGDA_contains?: InputMaybe<Array<Scalars['String']['input']>>;
+  superfluidGDA_contains_nocase?: InputMaybe<Array<Scalars['String']['input']>>;
+  superfluidGDA_not_contains?: InputMaybe<Array<Scalars['String']['input']>>;
+  superfluidGDA_not_contains_nocase?: InputMaybe<Array<Scalars['String']['input']>>;
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
   and?: InputMaybe<Array<InputMaybe<CVStrategyConfig_filter>>>;
@@ -721,7 +728,8 @@ export type CVStrategyConfig_orderBy =
   | 'pointSystem'
   | 'maxAmount'
   | 'allowlist'
-  | 'superfluidToken';
+  | 'superfluidToken'
+  | 'superfluidGDA';
 
 export type CVStrategy_filter = {
   id?: InputMaybe<Scalars['ID']['input']>;

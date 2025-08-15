@@ -1,0 +1,30 @@
+- kind: ethereum/contract
+    name: {{name}}
+    network: {{network}}
+    context:
+      chainId: 
+        type: Int
+        data: {{chainId}}
+    source:
+      address: "{{address}}"
+      abi: {{name}}
+      startBlock: {{startBlock}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - {{name}}
+      abis:
+        - name: {{name}}
+          file: ../contracts/out/{{name}}.sol/{{name}}.json
+      eventHandlers:
+        - event: Initialized(uint8)
+          handler: handleInitialized
+        - event: UserValidated(address)
+          handler: handleUserValidated
+        - event: UserInvalidated(indexed address)
+          handler: handleUserInvalidated
+        - event: GoodDollarStrategyAdded(indexed address,address)
+          handler: handleGoodDollarStrategyAdded
+      file: ./src/mappings/passport-scorer.ts
