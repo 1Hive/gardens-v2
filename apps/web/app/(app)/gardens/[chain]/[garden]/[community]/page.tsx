@@ -351,17 +351,18 @@ export default function Page({
     }
 
     const registerStakeAmountBn = BigInt(registerStakeAmount);
-    const protocolFeeBn = protocolFee && BigInt(protocolFee);
-    const communityFeeBn = communityFee && BigInt(communityFee);
-    const SCALE_PRECISION_BN = BigInt(SCALE_PRECISION);
+    const protocolFeeBn =
+      protocolFee && BigInt(protocolFee * 100) / BigInt(SCALE_PRECISION);
+    const communityFeeBn =
+      communityFee && BigInt(communityFee * 100) / BigInt(SCALE_PRECISION);
 
     const res =
       registerStakeAmountBn + // Min stake
       (communityFee ?
-        registerStakeAmountBn * (communityFeeBn / SCALE_PRECISION_BN)
+        (registerStakeAmountBn * communityFeeBn) / 100n
       : BigInt(0)) + // Commuity fee as % of min stake
       (protocolFeeBn ?
-        registerStakeAmountBn * (protocolFeeBn / SCALE_PRECISION_BN)
+        (registerStakeAmountBn * protocolFeeBn) / 100n
       : BigInt(0)); // Protocol fee as extra
     return res;
   };

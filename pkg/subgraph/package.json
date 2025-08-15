@@ -45,7 +45,8 @@
     "graph": "graph",
     "tsc": "tsc",
     "auth:prod": "bash -c 'source .env && graph auth \"$SUBGRAPH_PROD_AUTH_KEY\" --studio'",
-    "auth:dev": "bash -c 'source .env && graph auth \"$SUBGRAPH_DEV_AUTH_KEY\" --studio'"
+    "auth:dev": "bash -c 'source .env && graph auth \"$SUBGRAPH_DEV_AUTH_KEY\" --studio'",
+    "staked": "node ./src/scripts/staked-tokens.cjs"
   },
   "dependencies": {
     "@graphprotocol/graph-cli": "^0.69.2",
