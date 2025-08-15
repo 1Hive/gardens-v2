@@ -109,6 +109,7 @@ interface ProposalsProps {
   communityAddress: Address;
   createProposalUrl: string;
   proposalType: number;
+  minThGtTotalEffPoints: boolean;
 }
 
 export function Proposals({
@@ -117,6 +118,7 @@ export function Proposals({
   poolToken,
   communityAddress,
   createProposalUrl,
+  minThGtTotalEffPoints,
 }: ProposalsProps) {
   // State
   const [allocationView, setAllocationView] = useState(false);
@@ -609,7 +611,7 @@ export function Proposals({
         {allocationView && <UserAllocationStats stats={stats} />}
 
         <div className="flex flex-col gap-6">
-          {Object.keys(inputs).length ?
+          {inputs != null ?
             <>
               {proposals
                 .filter(
@@ -638,6 +640,7 @@ export function Proposals({
                       inputHandler={inputHandler}
                       communityToken={strategy.registryCommunity.garden}
                       isPoolEnabled={strategy.isEnabled}
+                      minThGtTotalEffPoints={minThGtTotalEffPoints}
                     />
                   </Fragment>
                 ))}
@@ -669,6 +672,7 @@ export function Proposals({
                           inputHandler={inputHandler}
                           communityToken={strategy.registryCommunity.garden}
                           isPoolEnabled={strategy.isEnabled}
+                          minThGtTotalEffPoints={minThGtTotalEffPoints}
                         />
                       </Fragment>
                     ))}
@@ -693,7 +697,7 @@ export function Proposals({
                 onClick={submit}
                 isLoading={allocateStatus === "loading"}
                 disabled={
-                  inputs != null ||
+                  inputs == null ||
                   !getProposalsInputsDifferences(inputs, stakedFilters).length
                 }
                 tooltip="Make changes in proposals support first"

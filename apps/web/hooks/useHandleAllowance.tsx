@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { noop } from "lodash-es";
+import { formatUnits } from "viem";
 import { Address, useContractRead } from "wagmi";
 import { useChainIdFromPath } from "./useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "./useContractWriteWithConfirmations";
 import { TransactionProps } from "@/components/TransactionModal";
 import { erc20ABI } from "@/src/generated";
 import { delayAsync } from "@/utils/delayAsync";
+import { roundToSignificant } from "@/utils/numbers";
 import { getTxMessage } from "@/utils/transactionMessages";
 
 export function useHandleAllowance(
@@ -17,7 +19,7 @@ export function useHandleAllowance(
   transactionLabel?: string,
 ): {
   allowanceTxProps: TransactionProps;
-  handleAllowance: (args: {
+  handleAllowance: (args?: {
     formAmount?: bigint;
     covenantSignature?: `0x${string}`;
   }) => Promise<void>;
@@ -53,25 +55,25 @@ export function useHandleAllowance(
     showNotification: false,
   });
 
-  const handleAllowance = async (args: {
+  const handleAllowance = async (args?: {
     formAmount?: bigint;
     covenantSignature?: `0x${string}`;
   }) => {
     const currentAllowance = await refetchAllowance();
 
-    if (args.formAmount) {
+    if (args?.formAmount != null) {
       amount = args.formAmount;
     }
-    if (currentAllowance?.data && currentAllowance.data >= amount) {
+    if (currentAllowance?.data != null && currentAllowance.data >= amount) {
       await delayAsync(1000);
       setAllowanceTxProps((x) => ({
         ...x,
         message: getTxMessage("success"),
         status: "success",
       }));
-      triggerNextTx(args.covenantSignature);
+      triggerNextTx(args?.covenantSignature);
     } else {
-      if (currentAllowance?.data) {
+      if (currentAllowance?.data != null) {
         // Already found allowance but not enough, need to reset allowance
         setAllowanceTxProps({
           contractName: `${token?.symbol} allowance reset`,
@@ -82,11 +84,11 @@ export function useHandleAllowance(
         setAllowanceTxProps({
           contractName:
             transactionLabel ?? `${token?.symbol} expenditure approval`,
-          message: `Setting allowance for ${token?.symbol} of ${token ? (Number(amount) / 10 ** token.decimals).toPrecision(4) : ""}`,
-          status: "idle",
+          message: `Setting allowance for ${token?.symbol} of ${token ? roundToSignificant(formatUnits(amount, token.decimals), 4) : ""}`,
+          status: "waiting",
         });
       }
-      setOnSuccess(() => () => triggerNextTx(args.covenantSignature));
+      setOnSuccess(() => () => triggerNextTx(args?.covenantSignature));
       await writeAllowTokenAsync({ args: [spenderAddr, amount] });
     }
   };

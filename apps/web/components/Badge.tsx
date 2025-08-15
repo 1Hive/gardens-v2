@@ -56,9 +56,10 @@ export function Badge({
 
   // Determine the label content
   const content =
-    children != null && status != null ? ProposalStatus[status]
-    : ispoolTypeDefined ? PoolTypes[type] ?? label
-    : label;
+    children ??
+    (status != null ? ProposalStatus[status] : undefined) ??
+    (ispoolTypeDefined ? PoolTypes[type] : undefined) ??
+    label;
 
   //For type => conditionally set the icon based on type === poolTypes[type]
   const iconIncluded =

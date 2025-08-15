@@ -18,6 +18,7 @@ import { usePoolToken } from "@/hooks/usePoolToken";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { useSuperfluidToken } from "@/hooks/useSuperfluidToken";
 import { PoolTypes } from "@/types";
+import { formatTokenAmount } from "@/utils/numbers";
 
 export const dynamic = "force-dynamic";
 
@@ -122,10 +123,26 @@ export default function Page({
     watch: true,
   });
 
+  const totalPointsActivatedInPool =
+    poolToken ?
+      formatTokenAmount(
+        strategy?.totalEffectiveActivePoints,
+        +poolToken.decimals,
+      )
+    : 0;
+
+  const minThresholdPoints =
+    poolToken ?
+      formatTokenAmount(
+        strategy?.config.minThresholdPoints,
+        +poolToken.decimals,
+      )
+    : "0";
+
+  const minThGtTotalEffPoints =
+    +minThresholdPoints > +totalPointsActivatedInPool;
+
   if (!strategy || (!poolToken && PoolTypes[proposalType] === "funding")) {
-    if (!data) {
-      return <div className="mt-52 text-center">Pool {poolId} not found</div>;
-    }
     console.debug("Loading pool data, waiting for", {
       strategy,
       poolTokenIfFundingPool: poolToken,
@@ -162,6 +179,7 @@ export default function Page({
           }
         }
         setSuperTokenCandidate={setSuperTokenCandidate}
+        minThGtTotalEffPoints={minThGtTotalEffPoints}
       />
 
       {isEnabled && (
@@ -193,6 +211,7 @@ export default function Page({
           communityAddress={communityAddress}
           createProposalUrl={`/gardens/${chain}/${garden}/${communityAddress}/${poolId}/create-proposal`}
           proposalType={proposalType}
+          minThGtTotalEffPoints={minThGtTotalEffPoints}
         />
       )}
     </>

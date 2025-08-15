@@ -605,7 +605,10 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         }
     }
 
-    function distribute(address[] memory /*_recipientIds */, bytes memory _data, address /*_sender */ ) external override {
+    function distribute(address[] memory, /*_recipientIds */ bytes memory _data, address /*_sender */ )
+        external
+        override
+    {
         _checkOnlyAllo();
         _checkOnlyInitialized();
 
@@ -1324,12 +1327,16 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
             return address(this).balance;
         }
 
-        uint256 superfluidBalance;
-        if (address(superfluidToken) != address(0)) {
-            superfluidBalance = superfluidToken.balanceOf(address(this));
-        }
+        uint256 base = ERC20(token).balanceOf(address(this));
+        uint256 sf = address(superfluidToken) == address(0) ? 0 : superfluidToken.balanceOf(address(this));
 
-        return ERC20(token).balanceOf(address(this)) + superfluidBalance;
+        uint8 d = ERC20(token).decimals();
+        if (d < 18) {
+            sf /= 10 ** (18 - d); // downscale 18 -> d
+        } else if (d > 18) {
+            sf *= 10 ** (d - 18); // upscale 18 -> d  (unlikely)
+        }
+        return base + sf;
     }
 
     receive() external payable {}
