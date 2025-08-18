@@ -165,6 +165,7 @@ type Allo @entity(immutable: false) {
 
 type PassportScorer @entity(immutable: false) {
   id: ID!
+  type: "gitcoinPassport" | "goodDollar"
   strategies: [PassportStrategy!] @derivedFrom(field: "passportScorer")
   users: [PassportUser!] @derivedFrom(field: "passportScorer")
 }

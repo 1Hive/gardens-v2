@@ -83,6 +83,7 @@ const sybilResistancePreview = (
       );
     })(),
     gitcoinPassport: `Passport score required: ${value}`,
+    goodDollar: "GoodDollar verification required",
   };
 
   return previewMap[sybilType];
@@ -180,9 +181,12 @@ export default function PoolEditForm({
         }
       : undefined,
   });
-  const sybilResistanceType =
-    strategy.sybilScorer == null ? "allowList" : "gitcoinPassport";
   const sybilResistanceValue = watch("sybilResistanceValue");
+
+  const sybilResistanceType =
+    strategy.sybilScorer == null ? "allowList"
+    : sybilResistanceValue != null ? "gitcoinPassport"
+    : "goodDollar";
 
   const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** (token?.decimals ?? 18);
   const INPUT_MIN_THRESHOLD_VALUE = 0;

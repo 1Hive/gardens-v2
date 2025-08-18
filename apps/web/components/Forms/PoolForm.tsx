@@ -425,10 +425,7 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
       Array.isArray(sybilResistanceValue)
     ) {
       allowList = sybilResistanceValue;
-    } else if (
-      sybilResistanceType === "noSybilResist" ||
-      sybilResistanceType === "gitcoinPassport"
-    ) {
+    } else {
       allowList = [zeroAddress];
     }
     writeCreatePool({

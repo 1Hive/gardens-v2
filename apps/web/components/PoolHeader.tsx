@@ -227,9 +227,14 @@ export default function PoolHeader({
 
   let sybilResistanceType: SybilResistanceType;
   let sybilResistanceValue: Address[] | number | undefined;
-  if (passportScore != null && passportScore > 0) {
-    sybilResistanceType = "gitcoinPassport";
-    sybilResistanceValue = passportScore;
+  if (strategy.sybilScorer != null) {
+    if (passportScore != null) {
+      sybilResistanceType = "gitcoinPassport";
+      sybilResistanceValue = passportScore;
+    } else {
+      sybilResistanceType = "goodDollar";
+      sybilResistanceValue = undefined;
+    }
   } else {
     sybilResistanceType = "allowList";
     sybilResistanceValue = allowList as Address[] | undefined;
@@ -240,6 +245,17 @@ export default function PoolHeader({
     gitcoinPassport: "Gitcoin Passport",
     goodDollar: "GoodDollar",
     noSybilResist: "None",
+  };
+
+  const sybilResistanceInfo: Record<SybilResistanceType, string> = {
+    allowList: `Only users in the allowlist can interact with this pool: \n -${(sybilResistanceValue as Array<string>).map((x) => shortenAddress(x)).join("\n- ")}`,
+    gitcoinPassport:
+      typeof sybilResistanceValue === "number" ?
+        `Only users with a Gitcoin Passport above the threshold can interact with this pool: \n Threshold: ${sybilResistanceValue.toFixed(2)}`
+      : "",
+    goodDollar:
+      "Only users with a GoodDollar balance above the threshold can interact with this pool.",
+    noSybilResist: "Any wallet can interact with this pool.",
   };
 
   const poolConfig = [
@@ -275,14 +291,7 @@ export default function PoolHeader({
     {
       label: "Protection",
       value: sybilResistanceLabel[sybilResistanceType] || "",
-      info:
-        sybilResistanceType ?
-          sybilResistanceType === "gitcoinPassport" ?
-            `Only users with a Gitcoin Passport above the threshold can interact with this pool: \n Threshold: ${(sybilResistanceValue as number).toFixed(2)}`
-          : (sybilResistanceValue as Array<Address>)?.[0] === zeroAddress ?
-            "Any wallet can interact with this pool"
-          : `Only users in the allowlist can interact with this pool: \n -${(sybilResistanceValue as Array<string>).map((x) => shortenAddress(x)).join("\n- ")}`
-        : "",
+      info: sybilResistanceInfo[sybilResistanceType] || "",
     },
     {
       label: "Token",

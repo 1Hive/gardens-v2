@@ -1,7 +1,7 @@
 "use client";
 import React, { ReactElement, useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import { Address } from "viem";
+import { Address, zeroAddress } from "viem";
 import { useAccount } from "wagmi";
 import {
   CVStrategy,
@@ -50,7 +50,10 @@ export function CheckSybil({
   const chainFromPath = useChainIdFromPath();
   const { publish } = usePubSubContext();
   const { isWalletVerified } = useGoodDollarSdk({
-    enabled: strategy. === "goodDollar" && enableCheck,
+    enabled:
+      strategy.sybilScorer !== null &&
+      // strategy.sybilScorer.type === "GoodDollar" &&
+      enableCheck,
   });
 
   useEffect(() => {
@@ -121,7 +124,9 @@ export function CheckSybil({
   const handleCheckPassport = (
     e: React.MouseEvent<HTMLDivElement, MouseEvent>,
   ) => {
-    if (!!passportStrategy && passportStrategy.active) {
+    if (strategy.sybilScorer.type === "GoodDollar" && !isWalletVerified) { 
+
+    } else if (strategy.sybilScorer.type === "Passport" && passportStrategy.active) {
       if (walletAddr) {
         checkPassportRequirements(walletAddr, e);
       }

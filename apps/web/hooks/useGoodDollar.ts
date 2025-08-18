@@ -47,7 +47,6 @@ export const useGoodDollarSdk = ({ enabled }: Props) => {
 
   return {
     isWalletVerified,
-    verificationLink,
     identitySDK,
   };
 };
