@@ -11,6 +11,10 @@ const base =
 const celo =
   "https://api.studio.thegraph.com/query/102093/gardens-v2---celo/version/latest";
 
+if (!process.argv[2]) {
+  console.error("Error: Missing wallet argument.\nUsage: node staked-tokens.cjs <wallet-address>");
+  process.exit(1);
+}
 const wallet = process.argv[2].toLowerCase();
 
 const query = `
