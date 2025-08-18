@@ -64,6 +64,8 @@ export function useHandleAllowance(
     if (args?.formAmount != null) {
       amount = args.formAmount;
     }
+    // Increase the amount to be at least 1 wei more than current allowance
+    amount += 10n;
     if (currentAllowance?.data != null && currentAllowance.data >= amount) {
       await delayAsync(1000);
       setAllowanceTxProps((x) => ({
