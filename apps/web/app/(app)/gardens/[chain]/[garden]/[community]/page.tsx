@@ -13,11 +13,6 @@ import {
 import { FetchTokenResult } from "@wagmi/core";
 import cn from "classnames";
 
-import { Dnum, multiply } from "dnum";
-import Image from "next/image";
-import Link from "next/link";
-import { Address } from "viem";
-import { useAccount, useToken } from "wagmi";
 import {
   getCommunityDocument,
   getCommunityQuery,
@@ -66,6 +61,11 @@ import {
   SCALE_PRECISION,
   SCALE_PRECISION_DECIMALS,
 } from "@/utils/numbers";
+import { Dnum, multiply } from "dnum";
+import Image from "next/image";
+import Link from "next/link";
+import { Address } from "viem";
+import { useAccount, useToken } from "wagmi";
 
 type MembersStaked = {
   memberAddress: string;
