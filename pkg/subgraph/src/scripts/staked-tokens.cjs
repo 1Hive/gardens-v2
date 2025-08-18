@@ -93,7 +93,7 @@ async function fetchStakedTokens() {
   // Pretty format tokens
   console.log("Staked tokens:");
   for (const t of Object.values(tokens)) {
-    console.log(`${t.symbol.trim()} -> ${t.stakedTokensTotal.toPrecision(5)}:`);
+    console.log(`${(t.symbol ?? "").toString().trim()} -> ${t.stakedTokensTotal.toPrecision(5)}:`);
     for (const c of t.communities) {
       console.log(
         `  - ${c.chain} - ${c.community}: ${c.stakedTokens.toPrecision(5)} ${t.symbol}`,
