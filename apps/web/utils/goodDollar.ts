@@ -1,3 +1,4 @@
+// eslint-disable-next-line import/no-extraneous-dependencies
 import { IdentitySDK } from "@goodsdks/citizen-sdk";
 import { createPublicClient, http, createWalletClient, custom } from "viem";
 import { Address as AddressType } from "viem";
@@ -15,12 +16,13 @@ export async function fetchGooddollarWhitelisted(
     chain: celo,
     transport: custom(celoPublicClient.transport),
   });
+
   const celoIdentitySDK = new IdentitySDK(
-    celoPublicClient,
-    celoWalletClient,
+    celoPublicClient as any,
+    celoWalletClient as any,
     "production",
   );
-  const { isWhitelisted, root } = await celoIdentitySDK!.getWhitelistedRoot(
+  const { isWhitelisted } = await celoIdentitySDK!.getWhitelistedRoot(
     account as AddressType,
   );
   return isWhitelisted;

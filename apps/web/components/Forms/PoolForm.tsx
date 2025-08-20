@@ -146,6 +146,7 @@ const fullSybilResistanceOptions: Record<SybilResistanceType, string> = {
   noSybilResist: "Any member can vote",
   allowList: "Members in Allow List only",
   gitcoinPassport: "Members with Gitcoin Passport score",
+  goodDollar: "Members verified with GoodDollar",
 };
 
 const sybilResistancePreview = (
@@ -176,6 +177,7 @@ const sybilResistancePreview = (
       );
     })(),
     gitcoinPassport: `Passport score required: ${value}`,
+    goodDollar: "GoodDollar verification required",
   };
 
   return previewMap[
@@ -256,9 +258,7 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
 
   useEffect(() => {
     const isUnlimited = PointSystems[pointSystemType] === "unlimited";
-    const isUnprotected =
-      sybilResistanceType !== "allowList" &&
-      sybilResistanceType !== "gitcoinPassport";
+    const isUnprotected = sybilResistanceType === "noSybilResist";
     setShowWarningMessage(!isUnlimited && isUnprotected);
   }, [pointSystemType, sybilResistanceType]);
 
@@ -425,10 +425,7 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
       Array.isArray(sybilResistanceValue)
     ) {
       allowList = sybilResistanceValue;
-    } else if (
-      sybilResistanceType === "noSybilResist" ||
-      sybilResistanceType === "gitcoinPassport"
-    ) {
+    } else {
       allowList = [zeroAddress];
     }
     writeCreatePool({
@@ -882,6 +879,7 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
                   placeholder="0"
                 />
               )}
+
               {sybilResistanceType === "allowList" && (
                 <AddressListInput
                   register={register}
