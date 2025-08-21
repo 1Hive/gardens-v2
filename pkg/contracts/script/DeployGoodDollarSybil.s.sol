@@ -12,15 +12,22 @@ contract DeployGoodDollarSybil is BaseMultiChain {
     function runCurrentNetwork(string memory networkJson) public override {
         address proxyOwner = networkJson.readAddress(getKeyNetwork(".ENVS.PROXY_OWNER"));
         address listManager = 0xA718ACA8Eb8f01EcfE929BF16c19e562B57b053b; // Multichain EOA
-        // address sender = networkJson.readAddress(getKeyNetwork(".ENVS.SENDER"));
+        address goodDollar = networkJson.readAddress(getKeyNetwork(".ENVS.GOOD_DOLLAR_SYBIL"));
 
-        address newGoodDollar = address(
-            new ERC1967Proxy(
-                address(new GoodDollarSybil()),
-                abi.encodeWithSelector(GoodDollarSybil.initialize.selector, address(listManager), address(proxyOwner))
-            )
-        );
+        address newImplementation = address(new GoodDollarSybil());
 
-        console.log("New GoodDollar: ", newGoodDollar);
+        if (goodDollar != address(0)) {
+            GoodDollarSybil(goodDollar).upgradeTo(newImplementation);
+        } else {
+            goodDollar = address(
+                new ERC1967Proxy(
+                    newImplementation,
+                    abi.encodeWithSelector(
+                        GoodDollarSybil.initialize.selector, address(listManager), address(proxyOwner)
+                    )
+                )
+            );
+        }
+        console.log("GoodDollar address: ", goodDollar);
     }
 }

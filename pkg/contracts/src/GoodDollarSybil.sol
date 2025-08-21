@@ -93,8 +93,8 @@ contract GoodDollarSybil is ISybilScorer, ProxyOwnableUpgrader {
         emit GoodDollarStrategyAdded(_strategy, _councilSafe);
     }
 
-    function activateStrategy(address) external pure override {
-        revert NotSupported();
+    function activateStrategy(address _address) external override {
+        strategies[_address].active = true;
     }
 
     function modifyThreshold(address, uint256) external pure {

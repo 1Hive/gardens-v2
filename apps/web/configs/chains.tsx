@@ -63,7 +63,6 @@ export type ChainData = {
   allo: Address;
   isTestnet: boolean;
   safePrefix?: string;
-  goodDollarSybil?: Address;
   alchemyApiBaseUrl?: string; // Optional, used for fetching NFTs
 };
 
@@ -155,7 +154,7 @@ export const chainConfigMap: {
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0xCcbAc15Eb0D8C241D4b6A74E650dE089c292D131",
     passportScorer: "0xe3DC6e82B599cD80904aCf0a3cd9f7401d92CC37",
-    goodDollar: "0x0000000000000000000000000000000000000000",
+    goodDollar: "0xb01AC9015E04ecC424E646eBAb32dfa7670Ae8a6",
     isTestnet: true,
   },
   // 11155111: {
@@ -356,5 +355,5 @@ export function getChain(chainId: ChainId): Chain | undefined {
 export const ChainIcon: FC<ChainIconProps> = ({ chain, ...props }) => {
   const numericChainId = Number(chain);
   const IconComponent = chainConfigMap[numericChainId]?.icon;
-  return IconComponent ? <IconComponent {...props} /> : null;
+  return IconComponent != null ? <IconComponent {...props} /> : null;
 };

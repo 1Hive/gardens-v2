@@ -87,7 +87,7 @@ type Stats = {
 interface ProposalsProps {
   strategy: Pick<
     CVStrategy,
-    "id" | "poolId" | "totalEffectiveActivePoints" | "sybilScorer" | "isEnabled"
+    "id" | "poolId" | "totalEffectiveActivePoints" | "sybil" | "isEnabled"
   > & {
     registryCommunity: Pick<RegistryCommunity, "id"> & {
       garden: Pick<RegistryCommunity["garden"], "decimals">;

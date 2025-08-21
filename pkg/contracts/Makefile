@@ -208,6 +208,19 @@ deploy-safe-arbitrator-opsep:
 	--broadcast \
 	-vv
 
+deploy-or-upgrade-good-dollar-sybil-opsep:
+	-forge script script/DeployGoodDollarSybil.s.sol:DeployGoodDollarSybil \
+	--rpc-url $(RPC_URL_OP_TESTNET) \
+	--sig "run(string)" 'opsepolia' \
+	--chain-id 11155420 \
+	--etherscan-api-key $(OPTIMISM_API_KEY) \
+	--account pkGarden \
+	--via-ir \
+	--verify \
+	--broadcast \
+	-vv
+
+
 ### ARBITRUM SEPOLIA ###
 
 fork-testnet:
@@ -391,7 +404,7 @@ deploy-or-upgrade-if-exists-safe-arbitrator-arbsep:
 	--broadcast \
 	-vv
 
-deploy-good-dollar-sybil-arbsep:
+deploy-or-upgrade-good-dollar-sybil-arbsep:
 	-forge script script/DeployGoodDollarSybil.s.sol:DeployGoodDollarSybil \
 	--rpc-url $(RPC_URL_ARB_TESTNET) \
 	--sig "run(string)" 'arbsepolia' \

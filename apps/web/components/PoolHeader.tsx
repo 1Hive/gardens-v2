@@ -15,6 +15,7 @@ import {
   Cog6ToothIcon,
 } from "@heroicons/react/24/solid";
 import sfMeta from "@superfluid-finance/metadata";
+import { isArray } from "lodash-es";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { toast } from "react-toastify";
@@ -225,13 +226,13 @@ export default function PoolHeader({
 
   const { value, unit } = convertSecondsToReadableTime(convictionGrowthSec);
 
-  let sybilResistanceType: SybilResistanceType;
+  let sybilResistanceType: SybilResistanceType = "noSybilResist";
   let sybilResistanceValue: Address[] | number | undefined;
-  if (strategy.sybilScorer != null) {
-    if (passportScore != null) {
+  if (strategy.sybil != null) {
+    if (strategy.sybil.type === "Passport" && passportScore != null) {
       sybilResistanceType = "gitcoinPassport";
       sybilResistanceValue = passportScore;
-    } else {
+    } else if (strategy.sybil.type === "GoodDollar") {
       sybilResistanceType = "goodDollar";
       sybilResistanceValue = undefined;
     }
@@ -248,7 +249,7 @@ export default function PoolHeader({
   };
 
   const sybilResistanceInfo: Record<SybilResistanceType, string> = {
-    allowList: `Only users in the allowlist can interact with this pool: \n -${(sybilResistanceValue as Array<string>).map((x) => shortenAddress(x)).join("\n- ")}`,
+    allowList: `Only users in the allowlist can interact with this pool: \n -${(isArray(sybilResistanceValue) ? (sybilResistanceValue as Array<string>) : []).map((x) => shortenAddress(x)).join("\n- ")}`,
     gitcoinPassport:
       typeof sybilResistanceValue === "number" ?
         `Only users with a Gitcoin Passport above the threshold can interact with this pool: \n Threshold: ${sybilResistanceValue.toFixed(2)}`

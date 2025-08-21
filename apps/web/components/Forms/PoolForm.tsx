@@ -465,6 +465,8 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
           sybilScorer:
             sybilResistanceType === "gitcoinPassport" ?
               (chain.passportScorer as Address)
+            : sybilResistanceType === "goodDollar" ?
+              (chain.goodDollar as Address)
             : zeroAddress,
           sybilScorerThreshold: BigInt(
             Math.round(

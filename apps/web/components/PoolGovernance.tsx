@@ -29,7 +29,7 @@ import { calculatePercentageBigInt } from "@/utils/numbers";
 export type PoolGovernanceProps = {
   memberPoolWeight: number | undefined;
   tokenDecimals: number;
-  strategy: Pick<CVStrategy, "id" | "sybilScorer" | "poolId"> & {
+  strategy: Pick<CVStrategy, "id" | "sybil" | "poolId"> & {
     registryCommunity: { garden: Pick<TokenGarden, "symbol"> };
     config: Pick<CVStrategyConfig, "pointSystem" | "allowlist">;
   };

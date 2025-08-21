@@ -10,16 +10,9 @@ import {
   Address,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import {
-  getMemberPassportAndCommunitiesDocument,
-  getMemberPassportAndCommunitiesQuery,
-} from "#/subgraph/.graphclient";
 import { getConfigByChain } from "@/configs/chains";
-import { isProd } from "@/configs/isProd";
-import { initUrqlClient } from "@/providers/urql";
-import { goodDollarABI, passportScorerABI } from "@/src/generated";
-import { fetchGooddollarWhitelisted } from "@/utils/gooddollar";
-import { CV_PASSPORT_THRESHOLD_SCALE } from "@/utils/numbers";
+import { goodDollarABI } from "@/src/generated";
+import { fetchGooddollarWhitelisted } from "@/utils/goodDollar";
 import { getViemChain } from "@/utils/web3";
 
 const LIST_MANAGER_PRIVATE_KEY = process.env.LIST_MANAGER_PRIVATE_KEY;
@@ -151,7 +144,7 @@ export async function POST(req: Request, { params }: Params) {
     //   );
     // }
 
-    if (!chainConfig?.goodDollarSybil) {
+    if (!chainConfig?.goodDollar) {
       console.error("Gooddoll Sybil contract address is missing");
       return NextResponse.json(
         { error: "Internal server error" },
@@ -161,7 +154,7 @@ export async function POST(req: Request, { params }: Params) {
     if (isWhitelisted) {
       const isAlreadyValid = (await client.readContract({
         abi: goodDollarABI,
-        address: chainConfig.goodDollarSybil,
+        address: chainConfig.goodDollar,
         functionName: "userValidity",
         args: [user as Address],
       })) as boolean;
@@ -175,8 +168,7 @@ export async function POST(req: Request, { params }: Params) {
 
       const hash = await walletClient.writeContract({
         abi: goodDollarABI,
-        // abi: goodDollarABI,
-        address: chainConfig.goodDollarSybil,
+        address: chainConfig.goodDollar,
         functionName: "validateUser",
         chain: chain,
         args: [user as Address],

@@ -17,11 +17,13 @@ export async function fetchGooddollarWhitelisted(
     transport: custom(celoPublicClient.transport),
   });
 
-  const celoIdentitySDK = new IdentitySDK(
-    celoPublicClient as any,
-    celoWalletClient as any,
-    "production",
-  );
+  // @ts-ignore
+  const celoIdentitySDK = new IdentitySDK({
+    publicClient: celoPublicClient,
+    walletClient: celoWalletClient,
+    chain: celo,
+    env: process.env.NEXT_PUBLIC_CHEAT_GOODDOLLAR_ENV ?? "production",
+  });
   const { isWhitelisted } = await celoIdentitySDK!.getWhitelistedRoot(
     account as AddressType,
   );

@@ -33,8 +33,8 @@ importers:
         specifier: ^0.5.2
         version: 0.5.2
       '@goodsdks/citizen-sdk':
-        specifier: 1.0.1
-        version: 1.0.1(postcss@8.4.38)(typescript@5.2.2)(viem@1.21.4)(wagmi@1.4.13)
+        specifier: 1.2.0
+        version: 1.2.0(postcss@8.4.38)(typescript@5.2.2)(viem@1.21.4)(wagmi@1.4.13)
       '@graphprotocol/client-urql':
         specifier: ^2.0.0
         version: 2.0.3(@graphql-mesh/runtime@0.99.8)(@graphql-tools/utils@10.8.6)(@urql/core@5.0.4)(graphql@16.8.2)(wonka@6.3.4)
@@ -2324,8 +2324,8 @@ packages:
       js-yaml: 4.1.0
     dev: false
 
-  /@goodsdks/citizen-sdk@1.0.1(postcss@8.4.38)(typescript@5.2.2)(viem@1.21.4)(wagmi@1.4.13):
-    resolution: {integrity: sha512-hKAeLt+z1T67akEagWsBL4IhCBc7IWomG3nIQqTT25gHin3nmXpYQlFAkB7t55vsduRTl9zONMfFqQQdhRXC1g==}
+  /@goodsdks/citizen-sdk@1.2.0(postcss@8.4.38)(typescript@5.2.2)(viem@1.21.4)(wagmi@1.4.13):
+    resolution: {integrity: sha512-m8ez08VP5wLki/ouSQBcpXoTgtuLproKI64Na6Z3B5YhaQq3NctHrpFoRtpifAj0D0bNkeAXEju8X0KQYBu1Dw==}
     peerDependencies:
       viem: '*'
       wagmi: '*'

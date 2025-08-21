@@ -26,5 +26,5 @@
         - event: UserInvalidated(indexed address)
           handler: handleUserInvalidated
         - event: GoodDollarStrategyAdded(indexed address,address)
-          handler: handleGoodDollarStrategyAdded
-      file: ./src/mappings/passport-scorer.ts
+          handler: handleStrategyAdded
+      file: ./src/mappings/good-dollar-sybil.ts

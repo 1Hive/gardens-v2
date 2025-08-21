@@ -16,7 +16,7 @@
     },
     {
       "name": "GoodDollarSybil",
-      "startBlock": 112011139,
+      "startBlock": 181411130,
       "address": "0x9DdE3cE47cC11ee04Ea1e2C440116B3De6f11Ed8",
       "customTemplate": "goodDollarSybil"
     }

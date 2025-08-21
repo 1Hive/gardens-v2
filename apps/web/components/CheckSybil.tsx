@@ -1,25 +1,35 @@
 "use client";
 import React, { ReactElement, useEffect, useState } from "react";
+import { IdentitySDK } from "@goodsdks/citizen-sdk";
 import { toast } from "react-toastify";
-import { Address, zeroAddress } from "viem";
-import { useAccount } from "wagmi";
+import { Address } from "viem";
+import { celo } from "viem/chains";
+import {
+  useAccount,
+  usePublicClient,
+  useSwitchNetwork,
+  useWalletClient,
+} from "wagmi";
 import {
   CVStrategy,
+  getGoodDollarStrategyDocument,
+  getGoodDollarStrategyQuery,
+  getGoodDollarUserDocument,
+  getGoodDollarUserQuery,
   getPassportStrategyDocument,
   getPassportStrategyQuery,
   getPassportUserDocument,
   getPassportUserQuery,
 } from "#/subgraph/.graphclient";
 import { Button } from "./Button";
+import { LoadingSpinner } from "./LoadingSpinner";
 import { Skeleton } from "./Skeleton";
 import { Modal } from "@/components";
 import { isProd } from "@/configs/isProd";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
-
 import { useGoodDollarSdk } from "@/hooks/useGoodDollar";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
-import { fetchGooddollarWhitelisted } from "@/utils/goodDollar";
 import { CV_PASSPORT_THRESHOLD_SCALE } from "@/utils/numbers";
 
 type SubmitPassportResponse = {
@@ -28,7 +38,7 @@ type SubmitPassportResponse = {
 };
 
 type CheckPassportProps = {
-  strategy: Pick<CVStrategy, "id" | "sybilScorer" | "poolId">;
+  strategy: Pick<CVStrategy, "id" | "sybil" | "poolId">;
   children: ReactElement<{
     onClick: (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
   }>;
@@ -47,19 +57,17 @@ export function CheckSybil({
   const [score, setScore] = useState<number>(0);
   const [shouldOpenModal, setShouldOpenModal] = useState(false);
   const [isSubmiting, setIsSubmiting] = useState<boolean>(false);
+  const publicClient = usePublicClient({ chainId: celo.id });
+  const { data: walletClient } = useWalletClient({ chainId: celo.id });
   const chainFromPath = useChainIdFromPath();
   const { publish } = usePubSubContext();
+  const { switchNetworkAsync } = useSwitchNetwork();
   const { isWalletVerified } = useGoodDollarSdk({
     enabled:
-      strategy.sybilScorer !== null &&
-      // strategy.sybilScorer.type === "GoodDollar" &&
+      strategy.sybil != null &&
+      strategy.sybil.type === "GoodDollar" &&
       enableCheck,
   });
-
-  useEffect(() => {
-    if (!walletAddr) return;
-    console.log("Is whitelisted:", isWalletVerified);
-  }, [isWalletVerified]);
 
   useEffect(() => {
     if (!enableCheck) {
@@ -75,7 +83,8 @@ export function CheckSybil({
     useSubgraphQuery<getPassportUserQuery>({
       query: getPassportUserDocument,
       variables: { userId: walletAddr?.toLowerCase() },
-      enabled: !!walletAddr && enableCheck,
+      enabled:
+        !!walletAddr && strategy.sybil?.type === "Passport" && enableCheck,
       changeScope: {
         topic: "member",
         id: walletAddr?.toLowerCase(),
@@ -84,13 +93,26 @@ export function CheckSybil({
       },
     });
 
-  const passportUser = passportUserData?.passportUser;
+  const { data: goodDollarUserData } = useSubgraphQuery<getGoodDollarUserQuery>(
+    {
+      query: getGoodDollarUserDocument,
+      variables: { userId: walletAddr?.toLowerCase() },
+      enabled:
+        !!walletAddr && strategy.sybil?.type === "GoodDollar" && enableCheck,
+      changeScope: {
+        topic: "member",
+        id: walletAddr?.toLowerCase(),
+        chainId: chainFromPath,
+        type: "update",
+      },
+    },
+  );
 
   const { data: passportStrategyData } =
     useSubgraphQuery<getPassportStrategyQuery>({
       query: getPassportStrategyDocument,
       variables: { strategyId: strategy.id.toLowerCase() },
-      enabled: enableCheck,
+      enabled: enableCheck && strategy.sybil?.type === "Passport",
       changeScope: {
         topic: "member",
         id: strategy.poolId,
@@ -99,10 +121,29 @@ export function CheckSybil({
       },
     });
 
-  const passportStrategy = passportStrategyData?.passportStrategy;
+  const { data: goodDollarStrategyData } =
+    useSubgraphQuery<getGoodDollarStrategyQuery>({
+      query: getGoodDollarStrategyDocument,
+      variables: { strategyId: strategy.id.toLowerCase() },
+      enabled: enableCheck && strategy.sybil?.type === "GoodDollar",
+      changeScope: {
+        topic: "member",
+        id: strategy.poolId,
+        chainId: chainFromPath,
+        type: "update",
+      },
+    });
+
+  const sybilStrategy =
+    passportStrategyData?.passportStrategy ??
+    goodDollarStrategyData?.goodDollarStrategy;
   const threshold =
-    passportStrategy?.threshold ?
-      Number(passportStrategy?.threshold) / CV_PASSPORT_THRESHOLD_SCALE
+    (
+      sybilStrategy != null &&
+      "threshold" in sybilStrategy &&
+      sybilStrategy?.threshold
+    ) ?
+      Number(sybilStrategy?.threshold) / CV_PASSPORT_THRESHOLD_SCALE
     : 10000;
 
   if (!enableCheck) {
@@ -112,8 +153,8 @@ export function CheckSybil({
   //force active passport for testing
   if (!isProd) {
     (window as any).togglePassportEnable = (enable: boolean): string => {
-      if (passportStrategy) {
-        passportStrategy.active = enable;
+      if (sybilStrategy) {
+        sybilStrategy.active = enable;
         return "passportStrategy.active set to " + enable;
       } else {
         return "No passportStrategy found";
@@ -121,12 +162,32 @@ export function CheckSybil({
     };
   }
 
-  const handleCheckPassport = (
+  const handleCheckSybil = (
     e: React.MouseEvent<HTMLDivElement, MouseEvent>,
   ) => {
-    if (strategy.sybilScorer.type === "GoodDollar" && !isWalletVerified) { 
-
-    } else if (strategy.sybilScorer.type === "Passport" && passportStrategy.active) {
+    if (strategy.sybil?.type === "GoodDollar") {
+      if (walletAddr) {
+        if (
+          goodDollarUserData?.goodDollarUser &&
+          goodDollarUserData.goodDollarUser.verified
+        ) {
+          console.debug("GoodDollar user is verified, moving forward...");
+          setIsOpenModal(false);
+        } else if (isWalletVerified) {
+          console.debug(
+            "Wallet is whitelisted in GoodDollar, submiting verification...",
+          );
+          writeScorer(walletAddr);
+        } else {
+          console.debug(
+            "Wallet is not whitelisted in GoodDollar, opening modal...",
+          );
+          e.preventDefault();
+          e.stopPropagation();
+          setShouldOpenModal(true);
+        }
+      }
+    } else if (strategy.sybil?.type === "Passport" && sybilStrategy?.active) {
       if (walletAddr) {
         checkPassportRequirements(walletAddr, e);
       }
@@ -140,16 +201,21 @@ export function CheckSybil({
     _walletAddr: Address,
     e: React.MouseEvent<HTMLDivElement, MouseEvent>,
   ) => {
-    if (passportUser) {
-      checkScoreRequirement(
-        Number(passportUser?.score) / CV_PASSPORT_THRESHOLD_SCALE,
-        e,
-      );
+    if (strategy.sybil?.type === "Passport") {
+      if (passportUserData?.passportUser) {
+        checkScoreRequirement(
+          Number(passportUserData.passportUser.score) /
+            CV_PASSPORT_THRESHOLD_SCALE,
+          e,
+        );
+      } else {
+        console.debug("No passport found, Submitting passport...");
+        e.preventDefault();
+        e.stopPropagation();
+        submitAndWriteScorer(_walletAddr);
+      }
     } else {
-      console.debug("No passport found, Submitting passport...");
-      e.preventDefault();
-      e.stopPropagation();
-      submitAndWriteScorer(_walletAddr);
+      console.debug("No GoodDollarUser, submiting one...");
     }
   };
 
@@ -226,16 +292,32 @@ export function CheckSybil({
 
   const writeScorer = async (address: string): Promise<any> => {
     try {
-      const response = await fetch(
-        `/api/passport-oracle/write-score/${chainFromPath}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
+      let response;
+      if (strategy.sybil?.type === "GoodDollar") {
+        response = await fetch(
+          `/api/good-dollar/write-validity/${chainFromPath}`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ user: address }),
           },
-          body: JSON.stringify({ user: address }),
-        },
-      );
+        );
+      } else if (strategy.sybil?.type === "Passport") {
+        response = await fetch(
+          `/api/passport-oracle/write-score/${chainFromPath}`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ user: address }),
+          },
+        );
+      } else {
+        throw new Error("Invalid sybil strategy type");
+      }
 
       if (!response.ok) {
         return {
@@ -266,66 +348,132 @@ export function CheckSybil({
   };
   return (
     <>
-      <div onClickCapture={(e) => handleCheckPassport(e)} className="w-fit">
+      <div onClickCapture={(e) => handleCheckSybil(e)} className="w-fit">
         {children}
       </div>
       <Modal
-        title="Gitcoin passport"
+        title={
+          strategy.sybil?.type === "GoodDollar" ?
+            "Good Dollar"
+          : "Gitcoin passport"
+        }
         isOpen={isOpenModal}
         onClose={() => setIsOpenModal(false)}
         size="small"
       >
-        <div className="flex flex-col gap-8">
-          <div>
-            <p>
-              Passport score:{" "}
-              <Skeleton isLoading={passportUserFetching && !score}>
-                <span className="font-semibold w-12">{score.toFixed(2)}</span>
-              </Skeleton>
-            </p>
-            <p>
-              Pool requirement:{" "}
-              <span className="font-semibold">{threshold.toFixed(2)}</span>
-            </p>
-            {score > threshold ?
-              <div>
-                <h5 className="mt-6">Congratulations!</h5>
-                <p>Your score meets the pool requirement. You can proceed.</p>
-              </div>
-            : <p className="mt-6">
-                Your score is too low, please go to Gitcoin passport{" "}
-                <a
-                  href="https://passport.gitcoin.co/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary-content underline hover:text-primary-hover-content"
-                >
-                  website
-                </a>{" "}
-                to increment it before continuing.
-              </p>
+        {isWalletVerified == null ?
+          <LoadingSpinner className="w-12 h-12" />
+        : <div className="flex flex-col gap-8">
+            {strategy.sybil?.type === "GoodDollar" ?
+              <>
+                Please verify with GoodDollar to proceed.
+                {walletAddr && isWalletVerified === false ?
+                  <div className="flex justify-end">
+                    <Button
+                      className="w-fit"
+                      btnStyle="outline"
+                      onClick={async () => {
+                        if (!walletClient || !switchNetworkAsync) {
+                          console.error("No wallet client found");
+                          return;
+                        }
+                        await switchNetworkAsync(celo.id);
+                        setTimeout(async () => {
+                          try {
+                            // @ts-ignore
+                            const sdk = new IdentitySDK({
+                              account: walletClient?.account,
+                              publicClient,
+                              walletClient,
+                              chain: celo,
+                              env:
+                                process.env.NEXT_PUBLIC_CHEAT_GOODDOLLAR_ENV ??
+                                "production",
+                            });
+                            const link = await sdk?.generateFVLink();
+                            window.open(link, "_blank");
+                          } catch (error) {
+                            console.error(
+                              "Error generating GoodDollar link:",
+                              error,
+                            );
+                          }
+                          await switchNetworkAsync(chainFromPath);
+                        }, 500);
+                      }}
+                    >
+                      Verify with GoodDollar
+                    </Button>
+                  </div>
+                : <>
+                    <p className="text-center">
+                      You are verified with GoodDollar, you can proceed.
+                    </p>
+                  </>
+                }
+              </>
+            : <>
+                <div>
+                  <p>
+                    Passport score:{" "}
+                    <Skeleton isLoading={passportUserFetching && !score}>
+                      <span className="font-semibold w-12">
+                        {score.toFixed(2)}
+                      </span>
+                    </Skeleton>
+                  </p>
+                  <p>
+                    Pool requirement:{" "}
+                    <span className="font-semibold">
+                      {threshold.toFixed(2)}
+                    </span>
+                  </p>
+                  {score > threshold ?
+                    <div>
+                      <h5 className="mt-6">Congratulations!</h5>
+                      <p>
+                        Your score meets the pool requirement. You can proceed.
+                      </p>
+                    </div>
+                  : <p className="mt-6">
+                      Your score is too low, please go to Gitcoin passport{" "}
+                      <a
+                        href="https://passport.gitcoin.co/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary-content underline hover:text-primary-hover-content"
+                      >
+                        website
+                      </a>{" "}
+                      to increment it before continuing.
+                    </p>
+                  }
+                </div>
+                {walletAddr && (
+                  <div className="flex justify-end">
+                    {score > threshold ?
+                      children
+                    : <Button
+                        onClick={() => submitAndWriteScorer(walletAddr)}
+                        className="w-fit"
+                        btnStyle="outline"
+                        isLoading={isSubmiting || passportUserFetching}
+                        disabled={passportUserFetching}
+                        tooltip={
+                          passportUserFetching ?
+                            "Fetching passport score..."
+                          : ""
+                        }
+                      >
+                        Check again
+                      </Button>
+                    }
+                  </div>
+                )}
+              </>
             }
           </div>
-          {walletAddr && (
-            <div className="flex justify-end">
-              {score > threshold ?
-                children
-              : <Button
-                  onClick={() => submitAndWriteScorer(walletAddr)}
-                  className="w-fit"
-                  btnStyle="outline"
-                  isLoading={isSubmiting || passportUserFetching}
-                  disabled={passportUserFetching}
-                  tooltip={
-                    passportUserFetching ? "Fetching passport score..." : ""
-                  }
-                >
-                  Check again
-                </Button>
-              }
-            </div>
-          )}
-        </div>
+        }
       </Modal>
     </>
   );
