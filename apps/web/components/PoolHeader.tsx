@@ -268,7 +268,7 @@ export default function PoolHeader({
             `Only users with a Gitcoin Passport above the threshold can interact with this pool: \n Threshold: ${(sybilResistanceValue as number).toFixed(2)}`
           : (sybilResistanceValue as Array<Address>)?.[0] === zeroAddress ?
             "Any wallet can interact with this pool"
-          : `Only users in the allowlist can interact with this pool: \n -${(sybilResistanceValue as Array<string>).map((x) => shortenAddress(x)).join("\n- ")}`
+          : `Only users in the allowlist can interact with this pool: \n - ${(sybilResistanceValue as Array<string>).length ? (sybilResistanceValue as Array<string>).map((x) => shortenAddress(x)).join("\n- ") : "No addresses in allowlist"}`
         : "",
     },
     {
