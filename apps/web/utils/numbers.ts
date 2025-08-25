@@ -301,3 +301,6 @@ export const ceilDiv = (a: bigint, b: bigint) => (a + b - 1n) / b;
 
 export const SEC_TO_MONTH = 2628000; // 3600 secs * 24 hours * 30.41667 days
 export const MONTH_TO_SEC = 1 / SEC_TO_MONTH;
+
+export const bigNumberMax = (a: bigint, b: bigint) => (a > b ? a : b);
+export const bigNumberMin = (a: bigint, b: bigint) => (a < b ? a : b);
