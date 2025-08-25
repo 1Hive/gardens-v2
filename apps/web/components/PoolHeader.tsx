@@ -272,6 +272,7 @@ export default function PoolHeader({
               const allowlist = sybilResistanceValue as Array<string>;
               return `Only users in the allowlist can interact with this pool: \n - ${allowlist.length ? allowlist.map((x) => shortenAddress(x)).join("\n- ") : "No addresses in allowlist"}`;
             })()
+          : ""
     },
     {
       label: "Token",
