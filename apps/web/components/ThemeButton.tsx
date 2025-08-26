@@ -15,12 +15,14 @@ export function ThemeButton() {
 
   return (
     <button
-      className="text-icon-light hover:text-iconHighlight-light dark:text-icon-dark hover:dark:text-iconHighlight-dark"
-      onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+      className="text-black"
+      onClick={() =>
+        setTheme(resolvedTheme === "lightTheme" ? "darkTheme" : "lightTheme")
+      }
     >
       {resolvedTheme === "dark" ?
-        <SunIcon className="h-5 w-5" aria-hidden="true" />
-      : <MoonIcon className="h-5 w-5" aria-hidden="true" />}
+        <SunIcon className="h-5 w-5 text-red-400" aria-hidden="true" />
+      : <MoonIcon className="h-5 w-5 text-red-400" aria-hidden="true" />}
     </button>
   );
 }

@@ -5,7 +5,7 @@ import { MegaphoneIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import Link from "next/link";
 import { newLogo } from "@/assets";
-import { Badge, Button, ConnectWallet } from "@/components";
+import { Badge, Button, ConnectWallet, ThemeButton } from "@/components";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -75,6 +75,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <h4 className="">Gardens</h4>
           </div> */}
         </div>
+        <ThemeButton />
         <ConnectWallet />
       </nav>
 
