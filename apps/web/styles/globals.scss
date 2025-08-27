@@ -11,8 +11,8 @@
   --border-neutral: #d5d5d5;
   --border-hover: #ff9500;
   --base-orange: #fff4e6;
-  /* add figma UI system color pallette light */
-  --color-grey-900: #000000;
+  --color-text: #000000 /* add figma UI system color pallette light */
+    --color-grey-900: #000000;
   --color-grey-500: #8c8c8c;
   --color-grey-400: #acacac;
   --color-grey-200: #eeeeee;
@@ -34,6 +34,10 @@
   --tooltip-text-color: #ffffff;
 }
 
+[data-theme="darkTheme"] {
+  --color-text: #eeeeee;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -42,7 +46,7 @@
 body {
   margin: 0;
   background-color: var(--color-background);
-  color: var(--color-grey-900);
+  color: var(--color-text);
   line-height: 1.15;
 }
 
@@ -54,6 +58,7 @@ h1 {
   font-weight: 700;
   line-height: 56px;
   text-align: left;
+  color: var(--color-text);
 
   /* @media only screen and (max-width: 680px) {
     font-size: 2.5rem;
@@ -66,6 +71,7 @@ h2 {
   font-weight: 600;
   line-height: 46px;
   text-align: left;
+  color: var(--color-text);
 
   /* @media only screen and (max-width: 680px) {
     font-size: 2rem;
@@ -78,6 +84,7 @@ h3 {
   font-weight: 500;
   line-height: auto;
   text-align: left;
+  color: var(--color-text);
 
   /* @media only screen and (max-width: 680px) {
     font-size: 1.75rem;
@@ -90,6 +97,7 @@ h4 {
   font-weight: 500;
   line-height: auto;
   text-align: left;
+  color: var(--color-text);
 
   /* @media only screen and (max-width: 680px) {
     font-size: 1.75rem;
@@ -104,6 +112,7 @@ h5,
   font-weight: 500;
   line-height: 22px;
   text-align: left;
+  color: var(--color-text);
 }
 
 /* subtitle 2 */
@@ -114,6 +123,7 @@ h6,
   font-weight: 500;
   line-height: 20px;
   text-align: left;
+  color: var(--color-text);
 }
 
 p {
@@ -122,6 +132,7 @@ p {
   font-weight: 400;
   line-height: 24px;
   text-align: left;
+  color: var(--color-text);
 
   /* @media only screen and (max-width: 680px) {
     font-size: 1rem;
@@ -132,6 +143,7 @@ span {
   font-family: var(--font-inter);
   font-size: 1rem;
   font-weight: 400;
+  color: var(--color-text);
 }
 
 button {
