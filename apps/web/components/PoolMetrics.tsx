@@ -35,6 +35,7 @@ import { delayAsync } from "@/utils/delayAsync";
 import {
   MONTH_TO_SEC,
   SEC_TO_MONTH,
+  bigNumberMin,
   roundToSignificant,
   safeParseUnits,
   scaleDownRoundUp,
@@ -138,10 +139,14 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
   const secsTo3MonthsBn = 3n * BigInt(SEC_TO_MONTH);
   const reservedSuperTokenBn =
     currentUserOtherFlowRateBn != null ?
-      currentUserOtherFlowRateBn * secsTo3MonthsBn
+      bigNumberMin(
+        currentUserOtherFlowRateBn * secsTo3MonthsBn,
+        superToken?.value ?? 0n,
+      )
     : 0n;
   const reservedSuperToken =
     superToken && +formatUnits(reservedSuperTokenBn, superToken.decimals);
+
   const userSuperTokenAvailableBudgetBn =
     currentUserOtherFlowRateBn != null && !!superToken ?
       superToken.value - reservedSuperTokenBn
@@ -654,7 +659,11 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                 <div className="flex items-center gap-1 w-full">
                   <div
                     className="tooltip"
-                    data-tip={availableBalanceTooltipMessage}
+                    data-tip={
+                      availableBalanceTooltipMessage.length ?
+                        availableBalanceTooltipMessage
+                      : "No available balance"
+                    }
                   >
                     {forceAllBalanceUsage ?
                       <Button
