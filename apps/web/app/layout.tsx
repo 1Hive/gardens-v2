@@ -5,7 +5,6 @@ import { Bounce, ToastContainer } from "react-toastify";
 import Providers from "@/providers/Providers";
 import "react-toastify/dist/ReactToastify.css";
 import "@mdxeditor/editor/style.css";
-import "remark-admonitions/styles/classic.css";
 
 const inter = Inter({
   variable: "--font-inter",
