@@ -37,18 +37,11 @@ export default function MarkdownEditor({
   ...rest
 }: {
   registerKey: string;
-  value: string;
+  value: string | undefined;
   className?: string;
-  errors?: any;
+  errors?: Record<string, string>;
   onChange?: React.ChangeEventHandler<HTMLInputElement>;
 } & Omit<React.ComponentProps<typeof MDXEditor>, "onChange" | "markdown">) {
-  // const localRef = useRef<MDXEditorMethods>(null);
-
-  // // keep editor in sync if outer value changes (form reset, etc.)
-  // useEffect(() => {
-  //   localRef.current?.setMarkdown(markdown ?? "");
-  // }, [markdown]);
-
   return (
     <div
       className={`p-2 resize-y overflow-auto min-h-60 rounded-2xl border ${
@@ -59,11 +52,6 @@ export default function MarkdownEditor({
       <MDXEditor
         markdown={value ?? ""}
         className="rounded-2xl !h-full"
-        // ref={(inst) => {
-        //   localRef.current = inst!;
-        //   if (typeof editorRef === "function") editorRef(inst!);
-        //   else if (editorRef && "current" in editorRef) editorRef.current = inst!;
-        // }}
         plugins={[
           headingsPlugin({
             allowedHeadingLevels: [1, 2, 3, 4, 5, 6],

@@ -34,7 +34,6 @@ module.exports = {
   eslint: {
     ignoreDuringBuilds: true,
   },
-  transpilePackages: ["next-mdx-remote"],
 };
 
 // Injected content via Sentry wizard below
