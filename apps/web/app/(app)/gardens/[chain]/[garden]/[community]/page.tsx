@@ -13,6 +13,11 @@ import {
 import { FetchTokenResult } from "@wagmi/core";
 import cn from "classnames";
 
+import { Dnum, multiply } from "dnum";
+import Image from "next/image";
+import Link from "next/link";
+import { Address } from "viem";
+import { useAccount, useToken } from "wagmi";
 import {
   getCommunityDocument,
   getCommunityQuery,
@@ -61,11 +66,6 @@ import {
   SCALE_PRECISION,
   SCALE_PRECISION_DECIMALS,
 } from "@/utils/numbers";
-import { Dnum, multiply } from "dnum";
-import Image from "next/image";
-import Link from "next/link";
-import { Address } from "viem";
-import { useAccount, useToken } from "wagmi";
 
 type MembersStaked = {
   memberAddress: string;
@@ -608,7 +608,7 @@ export default function Page({
             <h2 className="mb-4">Covenant</h2>
             {registryCommunity?.covenantIpfsHash ?
               <Skeleton isLoading={!covenant} rows={5}>
-                <MarkdownWrapper>{covenant!}</MarkdownWrapper>
+                <MarkdownWrapper source={covenant!} />
               </Skeleton>
             : <p className="italic">No covenant was submitted.</p>}
             <div className="mt-10 flex justify-center">
