@@ -13,6 +13,11 @@ import {
 import { FetchTokenResult } from "@wagmi/core";
 import cn from "classnames";
 
+import { Dnum, multiply } from "dnum";
+import Image from "next/image";
+import Link from "next/link";
+import { Address } from "viem";
+import { useAccount, useToken } from "wagmi";
 import {
   getCommunityDocument,
   getCommunityQuery,
@@ -61,11 +66,6 @@ import {
   SCALE_PRECISION,
   SCALE_PRECISION_DECIMALS,
 } from "@/utils/numbers";
-import { Dnum, multiply } from "dnum";
-import Image from "next/image";
-import Link from "next/link";
-import { Address } from "viem";
-import { useAccount, useToken } from "wagmi";
 
 type MembersStaked = {
   memberAddress: string;
@@ -376,7 +376,7 @@ export default function Page({
     <>
       <div className="col-span-12 xl:col-span-9">
         <div className="backdrop-blur-sm flex flex-col gap-10">
-          <header className="bg-white border border-gray-200 shadow-sm section-layout">
+          <header className="border border-gray-200 shadow-sm section-layout">
             <div className="flex flex-col sm:flex-row items-start space-y-4 sm:space-y-0 sm:space-x-4">
               {/* Image */}
               <div className="flex-shrink-0">
@@ -516,7 +516,7 @@ export default function Page({
                     className="absolute top-0 right-0 md:flex items-start sm:w-auto border-none hover:opacity-75"
                     icon={
                       <ChevronUpIcon
-                        className={`h-4 w-4 font-bold text-black transition-transform duration-200 ease-in-out ${cn(
+                        className={`h-4 w-4 font-bold text-neutral-button transition-transform duration-200 ease-in-out ${cn(
                           {
                             "rotate-180": !openCommDetails,
                           },

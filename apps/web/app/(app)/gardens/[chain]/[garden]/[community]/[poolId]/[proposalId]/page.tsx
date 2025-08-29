@@ -480,8 +480,8 @@ export default function Page({
                 )}
                 {status !== "executed" && status !== "cancelled" && (
                   <InfoBox
+                  title="Information"
                     infoBoxType="info"
-                    contentStyle="text-tertiary-content"
                     content={`${isSignalingType ? "This proposal is open and can be supported or disputed by the community. Only the proposal creator can cancel" : "This proposal is currently open. It will pass if nobody successfully challenges it and it receives enough support."}`}
                   />
                 )}
