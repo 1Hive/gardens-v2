@@ -194,7 +194,7 @@ caption {
 }
 
 .banner {
-  @apply flex items-center gap-4 rounded-[20px] bg-secondary-soft p-4;
+  @apply flex items-center gap-4 rounded-[20px] bg-secondary-soft dark:bg-secondary-soft-dark p-4;
 }
 
 /* Hide number input arrows */

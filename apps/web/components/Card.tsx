@@ -12,10 +12,7 @@ export const Card = ({ children, href, className, style }: CardProps) => {
   return (
     <Link href={href}>
       <div
-        className={`border1 group relative cursor-pointer rounded-2xl bg-neutral p-6 transition-all duration-200 ease-in-out hover:border-secondary-content hover:bg-secondary-soft
-          dark:hover:bg-secondary-content 
-          dark:hover:border-secondary-soft
-          overflow-visible ${className}`}
+        className={`border1 group relative cursor-pointer rounded-2xl bg-neutral p-6 transition-all duration-200 ease-in-out hover:border-secondary-content hover:bg-secondary-soft  dark:hover:bg-secondary-soft-dark overflow-visible ${className}`}
         style={style}
       >
         {children}

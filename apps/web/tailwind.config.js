@@ -39,8 +39,8 @@ module.exports = {
         darkTheme: {
           primary: "#1A1A1A",
           "primary-content": "#49A612",
-          "secondary-soft": "#FFF4E6",
-          "secondary-content": "#E28400",
+          "secondary-soft-dark": "#362510",
+          "secondary-content": "#FF9500",
           "neutral-button": "#ACACAC",
           "neutral-content": "#EEEEEE",
           "border-neutral": "#d5d5d5",
@@ -88,6 +88,7 @@ module.exports = {
         "neutral-soft": "#eeeeee",
         "neutral-soft-2": "#F9F9F9",
         "secondary-soft": "#FFF4E6",
+        "secondary-soft-dark": "#362510",
         "secondary-hover-content": "#d27c03",
         "tertiary-content": "#2AAAE5",
         "border-neutral": "#d5d5d5",

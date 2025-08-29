@@ -43,7 +43,9 @@ export function InfoBox({
         {!hideIcon && (
           <div className="h-5 w-5 text-inherit flex-items-center justify-center">
             {" "}
-            {icon ?? <InformationCircleIcon className="h-5 w-5" />}
+            {icon ?? (
+              <InformationCircleIcon className="h-5 w-5 dark:text-tertiary-soft" />
+            )}
           </div>
         )}
         <h6>{title}</h6>

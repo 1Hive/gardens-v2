@@ -66,8 +66,10 @@ export function Badge({
     icon ??
     (() => {
       const iconMap: { [key: string]: React.ReactNode } = {
-        signaling: <HandThumbUpIcon className="h-5 w-5" />,
-        funding: <CurrencyDollarIcon className="h-5 w-5" />,
+        signaling: <HandThumbUpIcon className="h-5 w-5 text-primary-content" />,
+        funding: (
+          <CurrencyDollarIcon className="h-5 w-5 dark:text-tertiary-content" />
+        ),
       };
       return type != null ? iconMap[PoolTypes[type]] ?? null : null;
     })();
