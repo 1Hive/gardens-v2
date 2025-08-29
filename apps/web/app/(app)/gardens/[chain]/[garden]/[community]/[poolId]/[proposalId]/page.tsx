@@ -318,15 +318,6 @@ export default function Page({
                     <h2>{metadata?.title}</h2>
                   </Skeleton>
                   <div className="flex items-center gap-2">
-                    {/* <div className="flex items-center gap-2">
-                      <p className="text-md flex items-center bg-neutral-soft-2 rounded-md px-2 py-1 text-neutral-soft-content">
-                        ID:{" "}
-                        <span className="text-md ml-1 font-medium text-black">
-                          {proposalIdNumber.toString()}
-                        </span>
-                      </p>
-                    </div> */}
-
                     <Badge type={proposalType} />
                   </div>
                 </div>
@@ -353,7 +344,7 @@ export default function Page({
 
                   <div className="flex flex-col items-start justify-between gap-2">
                     <Statistic label={"Created"}>
-                      <span className="text-black font-medium">
+                      <span className="font-medium">
                         {prettyTimestamp(proposalData?.createdAt ?? 0)}
                       </span>
                     </Statistic>
@@ -367,8 +358,8 @@ export default function Page({
                             )}
                             tokenSymbol={poolToken?.symbol}
                             compact={true}
-                            valueClassName="text-black font-medium"
-                            symbolClassName="text-black font-medium"
+                            valueClassName="font-medium"
+                            symbolClassName="font-medium"
                           />
                         </Statistic>
                       </>

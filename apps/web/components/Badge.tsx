@@ -26,7 +26,7 @@ const POOL_TYPE_STYLES = [
 const PROPOSAL_STATUS_STYLES = [
   "bg-danger-soft text-danger-content",
   "bg-primary-soft text-primary-content",
-  "bg-secondary-soft text-secondary-content",
+  "bg-secondary-soft dark:bg-secondary-soft-dark text-secondary-content",
   "bg-danger-soft text-danger-content",
   "bg-tertiary-soft text-tertiary-content",
   "bg-danger-soft text-danger-content",

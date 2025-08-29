@@ -272,7 +272,7 @@ export default function PoolHeader({
               const allowlist = sybilResistanceValue as Array<string>;
               return `Only users in the allowlist can interact with this pool: \n - ${allowlist.length ? allowlist.map((x) => shortenAddress(x)).join("\n- ") : "No addresses in allowlist"}`;
             })()
-          : ""
+        : "",
     },
     {
       label: "Token",
@@ -715,7 +715,7 @@ export default function PoolHeader({
                   )}
               </div>
             )}
-            <div className="flex px-1 flex-col sm:flex-row bg-neutral-soft-2 py-2 rounded-lg items-baseline justify-between">
+            <div className="flex px-1 flex-col sm:flex-row bg-primary py-2 rounded-lg items-baseline justify-between">
               <EthAddress
                 icon={false}
                 address={strategy.id as Address}
@@ -816,9 +816,7 @@ export default function PoolHeader({
                   }
                   tooltip={config.info}
                 >
-                  <p className="text-neutral-content subtitle">
-                    {config.value}
-                  </p>
+                  <p className="subtitle">{config.value}</p>
                 </Statistic>
               </div>
             ))}
@@ -832,14 +830,14 @@ export default function PoolHeader({
                 <Badge
                   label="conviction voting"
                   className="text-secondary-content"
-                  icon={<Battery50Icon />}
+                  icon={<Battery50Icon className="text-tertiary-content" />}
                 />
                 <Badge
                   label={PointSystems[pointSystem]}
                   tooltip={
                     VOTING_POINT_SYSTEM_DESCRIPTION[PointSystems[pointSystem]]
                   }
-                  icon={<BoltIcon />}
+                  icon={<BoltIcon className="text-tertiary-content" />}
                 />
               </div>
             </div>

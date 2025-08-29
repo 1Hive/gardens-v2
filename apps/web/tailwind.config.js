@@ -57,7 +57,7 @@ module.exports = {
           //additions:
           "neutral-soft-content": "#ACACAC",
           "primary-hover-content": "#389508",
-          "primary-soft": "#1A1A1A",
+          "primary-soft-dark": "#1A1A1A",
           "primary-button": "#49A612",
           "danger-hover-content": "#D03A3A",
           "danger-soft": "#FFE6E6",
@@ -96,6 +96,7 @@ module.exports = {
         "primary-hover-content": "#307707",
         "primary-button": "#65ad18",
         "primary-soft": "#EBFBD8",
+        "primary-soft-dark": "#1A1A1A",
         "danger-hover-content": "#ad0000",
         "danger-button": "#eb4848",
         "danger-content": "#EB4848",

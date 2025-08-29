@@ -813,8 +813,8 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                     ]}
                     tokenSymbol={poolToken.symbol}
                     compact={true}
-                    valueClassName="text-black text-lg"
-                    symbolClassName="text-sm text-black"
+                    valueClassName="text-lg"
+                    symbolClassName="text-sm"
                   />
                 </div>
               )}

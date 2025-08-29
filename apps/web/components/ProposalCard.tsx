@@ -203,7 +203,7 @@ export function ProposalCard({
                 </Skeleton>
                 {isPoolEnabled && (
                   <div className="flex items-center gap-4">
-                    <p className="hidden sm:flex text-sm  items-center bg-neutral-soft-2 rounded-md px-2 py-1">
+                    <p className="hidden sm:flex text-sm  items-center bg-neutral-soft-2 rounded-md px-2 dark:bg-primary-soft-dark py-1">
                       ID: <span className="text-md ml-1">{proposalNumber}</span>
                     </p>
                     <Badge
