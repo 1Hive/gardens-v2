@@ -608,7 +608,7 @@ export default function Page({
             <h2 className="mb-4">Covenant</h2>
             {registryCommunity?.covenantIpfsHash ?
               <Skeleton isLoading={!covenant} rows={5}>
-                <MarkdownWrapper>{covenant!}</MarkdownWrapper>
+                <MarkdownWrapper source={covenant!} />
               </Skeleton>
             : <p className="italic">No covenant was submitted.</p>}
             <div className="mt-10 flex justify-center">

@@ -100,6 +100,7 @@ type Props = {
     | undefined;
   superTokenCandidate: SuperToken | null;
   setSuperTokenCandidate: (token: SuperToken | null) => void;
+  minThGtTotalEffPoints: boolean;
 };
 
 export function calculateConvictionGrowthInSeconds(
@@ -139,6 +140,7 @@ export default function PoolHeader({
   superToken,
   superTokenCandidate,
   setSuperTokenCandidate,
+  minThGtTotalEffPoints,
 }: Props) {
   const [isOpenModal, setIsOpenModal] = useState(false);
   const { publish } = usePubSubContext();
@@ -192,18 +194,8 @@ export default function PoolHeader({
       formatTokenAmount(strategy.config.minThresholdPoints, +poolToken.decimals)
     : "0";
 
-  const totalPointsActivatedInPool =
-    poolToken ?
-      formatTokenAmount(
-        strategy.totalEffectiveActivePoints,
-        +poolToken.decimals,
-      )
-    : 0;
-
   const maxVotingWeight =
     poolToken ? formatTokenAmount(maxAmount, poolToken.decimals) : 0;
-  const minThGtTotalEffPoints =
-    +minThresholdPoints > +totalPointsActivatedInPool;
 
   const spendingLimit =
     (strategy.config.maxRatio / CV_SCALE_PRECISION) *
@@ -282,7 +274,7 @@ export default function PoolHeader({
     {
       label: "Min threshold",
       value: `${minThresholdPoints}`,
-      info: `A fixed amount of ${poolToken?.symbol} that overrides Minimum Conviction when the Pool's activated governance is low.`,
+      info: "A fixed amount of voting weight that overrides minimum conviction when not enough members have activated their governance.",
     },
     {
       label: "Max voting weight",
@@ -291,8 +283,24 @@ export default function PoolHeader({
     },
     {
       label: "Protection",
-      value: sybilResistanceLabel[sybilResistanceType] || "",
-      info: sybilResistanceInfo[sybilResistanceType] || "",
+      value:
+        sybilResistanceType ?
+          sybilResistanceType === "gitcoinPassport" ? "Gitcoin Passport"
+          : (sybilResistanceValue as Array<Address>)?.[0] === zeroAddress ?
+            "None"
+          : "Allowlist"
+        : "",
+      info:
+        sybilResistanceType ?
+          sybilResistanceType === "gitcoinPassport" ?
+            `Only users with a Gitcoin Passport above the threshold can interact with this pool: \n Threshold: ${(sybilResistanceValue as number).toFixed(2)}`
+          : (sybilResistanceValue as Array<Address>)?.[0] === zeroAddress ?
+            "Any wallet can interact with this pool"
+          : (() => {
+              const allowlist = sybilResistanceValue as Array<string>;
+              return `Only users in the allowlist can interact with this pool: \n - ${allowlist.length ? allowlist.map((x) => shortenAddress(x)).join("\n- ") : "No addresses in allowlist"}`;
+            })()
+        : "",
     },
     {
       label: "Token",
@@ -812,9 +820,7 @@ export default function PoolHeader({
 
           {/* Description */}
           <Skeleton rows={5} isLoading={!ipfsResult}>
-            <MarkdownWrapper>
-              {ipfsResult?.description ?? "No description found"}
-            </MarkdownWrapper>
+            <MarkdownWrapper source={ipfsResult?.description ?? ""} />
           </Skeleton>
 
           {/* Pool Params */}
