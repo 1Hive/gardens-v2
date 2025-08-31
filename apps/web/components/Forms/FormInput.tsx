@@ -1,21 +1,10 @@
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 "use client";
 
-import { ChangeEvent, HTMLInputTypeAttribute } from "react";
+import { HTMLInputTypeAttribute } from "react";
 import React from "react";
-import {
-  headingsPlugin,
-  listsPlugin,
-  MDXEditor,
-  MDXEditorMethods,
-  quotePlugin,
-  thematicBreakPlugin,
-  toolbarPlugin,
-} from "@mdxeditor/editor";
-
 import { RegisterOptions, UseFormRegister } from "react-hook-form";
 import { InfoWrapper } from "../InfoWrapper";
-
 import MarkdownEditor from "../MarkdownEditor";
 
 type Props = {
@@ -132,6 +121,7 @@ export function FormInput({
             placeholder={placeholder}
             required={required}
             rows={rows}
+            errors={errors}
             disabled={disabled || readOnly}
             readOnly={readOnly || disabled}
             onChange={registered?.onChange ?? onChange}

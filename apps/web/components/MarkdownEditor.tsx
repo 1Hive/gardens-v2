@@ -29,14 +29,14 @@ import { ipfsFileUpload } from "@/utils/ipfsUtils";
 import "@mdxeditor/editor/style.css";
 
 export default function MarkdownEditor({
-  registerKey,
+  id,
   value,
   onChange,
   className,
   errors,
   ...rest
 }: {
-  registerKey: string;
+  id: string;
   value: string | undefined;
   className?: string;
   errors?: Record<string, string>;
@@ -45,7 +45,7 @@ export default function MarkdownEditor({
   return (
     <div
       className={`p-2 resize-y overflow-auto min-h-60 rounded-2xl border ${
-        registerKey && errors?.[registerKey] ? "input-error" : "input-info"
+        id && errors?.[id] ? "input-error" : "input-info"
       } ${className}`}
       style={{ minHeight: 200 }}
     >
@@ -118,10 +118,9 @@ export default function MarkdownEditor({
           const syntheticEvent = {
             target: {
               value: md,
-              name: registerKey,
+              name: id,
             } as HTMLInputElement,
           } as React.ChangeEvent<HTMLInputElement>;
-
           onChange?.(syntheticEvent);
         }}
         {...rest}
