@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 "use client";
 
-import { ChangeEvent, HTMLInputTypeAttribute } from "react";
-import MarkdownEditor from "@uiw/react-markdown-editor";
+import { HTMLInputTypeAttribute } from "react";
+import React from "react";
 import { RegisterOptions, UseFormRegister } from "react-hook-form";
-import {} from "react-hook-form";
 import { InfoWrapper } from "../InfoWrapper";
+import MarkdownEditor from "../MarkdownEditor";
 
 type Props = {
   label?: string;
@@ -115,31 +115,19 @@ export function FormInput({
             value={value}
             {...otherProps}
           />
-        : <div data-color-mode="light">
-            <MarkdownEditor
-              {...registered}
-              className={`textarea p-0 ![--color-canvas-subtle:white] ![--color-neutral-muted:#cceeff44] rounded-2xl ${
-                errors[registerKey] ? "textarea-error" : "textarea-info"
-              }`}
-              id={registerKey}
-              style={{
-                resize: "vertical",
-                overflow: "auto",
-                minHeight: "200px",
-              }}
-              disabled={disabled || readOnly}
-              readOnly={readOnly || disabled}
-              required={required}
-              value={value}
-              onChange={(v) => {
-                const e = {
-                  target: { value: v, name: registerKey },
-                } as ChangeEvent<HTMLInputElement>;
-                (registered?.onChange ?? onChange)?.(e);
-              }}
-              {...otherProps}
-            />
-          </div>
+        : <MarkdownEditor
+            {...registered}
+            id={registerKey}
+            placeholder={placeholder}
+            required={required}
+            rows={rows}
+            errors={errors}
+            disabled={disabled || readOnly}
+            readOnly={readOnly || disabled}
+            onChange={registered?.onChange ?? onChange}
+            value={value}
+            {...otherProps}
+          />
         }
         {Boolean(suffix) && (
           <span className="absolute right-[10px] top-1/2 -translate-y-1/2 text-black">
