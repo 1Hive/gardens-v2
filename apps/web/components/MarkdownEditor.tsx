@@ -24,7 +24,6 @@ import {
   InsertCodeBlock,
   ChangeCodeMirrorLanguage,
   InsertThematicBreak,
-  Button,
   StrikeThroughSupSubToggles,
   ButtonWithTooltip,
 } from "@mdxeditor/editor";
@@ -105,12 +104,11 @@ export default function MarkdownEditor({
                   <UndoRedo />
                   <Separator />
                   <BoldItalicUnderlineToggles />
-                  <CodeToggle />
-                  <StrikeThroughSupSubToggles />
                   <Separator />
                   <ListsToggle />
                   <Separator />
-                  <BlockTypeSelect />
+                  <CodeToggle />
+                  <StrikeThroughSupSubToggles />
                   <Separator />
                   <InsertThematicBreak />
                   <InsertTable />
@@ -131,6 +129,8 @@ export default function MarkdownEditor({
                       },
                     ]}
                   />
+                  <Separator />
+                  <BlockTypeSelect />
                   <div className="ml-auto">
                     <ButtonWithTooltip
                       title="Toggle fullscreen"
