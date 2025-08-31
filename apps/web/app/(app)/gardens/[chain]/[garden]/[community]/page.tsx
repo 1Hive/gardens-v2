@@ -13,11 +13,6 @@ import {
 import { FetchTokenResult } from "@wagmi/core";
 import cn from "classnames";
 
-import { Dnum, multiply } from "dnum";
-import Image from "next/image";
-import Link from "next/link";
-import { Address } from "viem";
-import { useAccount, useToken } from "wagmi";
 import {
   getCommunityDocument,
   getCommunityQuery,
@@ -66,6 +61,11 @@ import {
   SCALE_PRECISION,
   SCALE_PRECISION_DECIMALS,
 } from "@/utils/numbers";
+import { Dnum, multiply } from "dnum";
+import Image from "next/image";
+import Link from "next/link";
+import { Address } from "viem";
+import { useAccount, useToken } from "wagmi";
 
 type MembersStaked = {
   memberAddress: string;
@@ -202,7 +202,8 @@ export default function Page({
       },
     });
 
-  const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons();
+  const { tooltipMessage, isConnected, missmatchUrl, isButtonDisabled } =
+    useDisableButtons();
 
   useEffect(() => {
     if (error) {
@@ -446,12 +447,14 @@ export default function Page({
                       <Button
                         btnStyle="outline"
                         color="secondary"
-                        disabled={isCouncilMember}
+                        disabled={isButtonDisabled || isCouncilMember}
                         tooltipSide="tooltip-bottom"
                         tooltip={
-                          isCouncilMember ?
-                            "Connect with Council safe"
+                          tooltipMessage ? tooltipMessage
+                          : isCouncilMember ?
+                            "Connect with Council Safe"
                           : "Archive this pool will hide it from being listed in the home page but will remain accessible through a link."
+
                         }
                         forceShowTooltip={result.registryCommunity?.archived}
                         onClick={() =>
@@ -618,7 +621,7 @@ export default function Page({
               />
             </div>
           </section>
-          {!isProd && tokenGarden && <TokenGardenFaucet token={tokenGarden} />}
+          {!isProd && <TokenGardenFaucet token={tokenGarden} />}
         </div>
       </div>
 

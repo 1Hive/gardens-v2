@@ -10,7 +10,11 @@ import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { usePoolToken } from "@/hooks/usePoolToken";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { PoolTypes } from "@/types";
-import { CV_SCALE_PRECISION, MAX_RATIO_CONSTANT } from "@/utils/numbers";
+import {
+  CV_SCALE_PRECISION,
+  formatTokenAmount,
+  MAX_RATIO_CONSTANT,
+} from "@/utils/numbers";
 
 export default function Page({
   params: { poolId, garden },
@@ -76,6 +80,12 @@ export default function Page({
       2,
     );
 
+  const poolBalanceFormatted = formatTokenAmount(
+    poolToken?.balance,
+    poolToken?.decimals ?? 18,
+    2,
+  );
+
   return (
     <div className="page-layout col-span-12 mx-auto">
       <section className="section-layout">
@@ -87,7 +97,7 @@ export default function Page({
         </div>
         <ProposalForm
           arbitrableConfig={data.arbitrableConfigs[0]}
-          poolBalance={poolToken?.formatted}
+          poolBalance={poolBalanceFormatted}
           strategy={strategyObj}
           poolId={poolId}
           poolParams={data.cvstrategies[0].config}

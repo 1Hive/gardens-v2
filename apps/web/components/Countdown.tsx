@@ -40,7 +40,7 @@ export const Countdown = ({
   }, [remainingTimeMs]);
 
   const computedMode = useMemo(() => {
-    if (!remainingTimeMs) {
+    if (remainingTimeMs == null || remainingTimeMs === 0) {
       return "time";
     }
     if (format !== "auto") return format;
@@ -50,17 +50,19 @@ export const Countdown = ({
   }, [format, remainingTimeMs]);
 
   const seconds =
-    !!remainingTimeMs ? (Math.floor(remainingTimeMs / 1000) % 60) * 3 + 1 : 0;
+    remainingTimeMs != null ?
+      (Math.floor(remainingTimeMs / 1000) % 60) * 3 + 1
+    : 0;
   const minutes =
-    !!remainingTimeMs ?
+    remainingTimeMs != null ?
       (Math.floor(remainingTimeMs / (1000 * 60)) % 60) * 3 + 1
     : 0;
   const hours =
-    !!remainingTimeMs ?
+    remainingTimeMs != null ?
       (Math.floor(remainingTimeMs / (1000 * 60 * 60)) % 24) * 3 + 1
     : 0;
   const days =
-    !!remainingTimeMs ?
+    remainingTimeMs != null ?
       Math.floor(remainingTimeMs / (1000 * 60 * 60 * 24)) * 3 + 1
     : 0;
 
@@ -115,7 +117,7 @@ export const Countdown = ({
 
   return (
     <>
-      {!!remainingTimeMs && (remainingTimeMs > 0 || showTimeout) && (
+      {remainingTimeMs != null && (remainingTimeMs > 0 || showTimeout) && (
         <Skeleton isLoading={isInitializing} className="w-20">
           {remainingTimeMs === 0 ?
             <div>Timeout</div>

@@ -48,7 +48,7 @@ type FormInputs = {
 type Props = {
   strategy: getPoolDataQuery["cvstrategies"][0];
   token?: Pick<TokenGarden, "decimals">;
-  initValues: FormInputs;
+  initValues: FormInputs | undefined;
   proposalType: string;
   pointSystemType: number;
   proposalOnDispute: boolean;
@@ -311,9 +311,9 @@ export default function PoolEditForm({
     let minimumConviction;
     let convictionGrowth;
 
-    spendingLimit = previewData?.spendingLimit as number;
-    minimumConviction = previewData?.minimumConviction as number;
-    convictionGrowth = previewData?.convictionGrowth as number;
+    spendingLimit = previewData.spendingLimit as number;
+    minimumConviction = previewData.minimumConviction as number;
+    convictionGrowth = previewData.convictionGrowth as number;
 
     // parse to percentage fraction
     spendingLimit = spendingLimit / 100;
@@ -330,17 +330,17 @@ export default function PoolEditForm({
     const decay = BigInt(calculateDecay(blockTime, convictionGrowth));
 
     const minThresholdPoints = parseUnits(
-      (previewData?.minThresholdPoints ?? 0).toString(),
+      (previewData.minThresholdPoints ?? 0).toString(),
       token?.decimals ?? 18,
     );
 
     const initialAllowList =
-      Array.isArray(initValues?.sybilResistanceValue) ?
+      initValues && Array.isArray(initValues?.sybilResistanceValue) ?
         initValues.sybilResistanceValue
       : [];
 
     const currentAllowList =
-      Array.isArray(previewData?.sybilResistanceValue) ?
+      Array.isArray(previewData.sybilResistanceValue) ?
         previewData.sybilResistanceValue
       : [];
 
