@@ -396,7 +396,7 @@ export function CheckSybil({
           "production",
       });
       const callbackUrl = `${window.location.href}?${QUERY_PARAMS.poolPage.goodDollar}=true`;
-      const link = await sdk?.generateFVLink(true, callbackUrl);
+      const link = await sdk?.generateFVLink(false, callbackUrl, celo.id);
 
       await switchNetworkAsync(chainFromPath?.id);
       window.location.href = link;
