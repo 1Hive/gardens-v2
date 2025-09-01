@@ -11,5 +11,6 @@ export const QUERY_PARAMS = {
     newProposal: "newProposal",
     allocationView: "allocationView",
     goodDollar: "goodDollar",
+    goodDollarVerified: "verified",
   },
 } as const;

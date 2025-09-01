@@ -77,7 +77,8 @@ export function CheckSybil({
   });
 
   const isGoodDollarCallback =
-    searchParams[QUERY_PARAMS.poolPage.goodDollar] === "true";
+    searchParams[QUERY_PARAMS.poolPage.goodDollar] === "true" &&
+    searchParams[QUERY_PARAMS.poolPage.goodDollarVerified] === "dHJ1ZQ=="; // base64 of 'true'
 
   useEffect(() => {
     if (isGoodDollarCallback && isModalOpened === false) {
