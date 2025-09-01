@@ -1,6 +1,6 @@
 "use client";
 import React, { ReactElement, useEffect, useState } from "react";
-import { IdentitySDK } from "@goodsdks/citizen-sdk";
+import { contractEnv, IdentitySDK } from "@goodsdks/citizen-sdk";
 import { toast } from "react-toastify";
 import { Address } from "viem";
 import { celo } from "viem/chains";
@@ -382,12 +382,13 @@ export function CheckSybil({
                           try {
                             // @ts-ignore
                             const sdk = new IdentitySDK({
-                              account: walletClient?.account,
+                              account: walletClient.account
+                                .address as `0x${string}`,
                               publicClient,
                               walletClient,
-                              chain: celo,
                               env:
-                                process.env.NEXT_PUBLIC_CHEAT_GOODDOLLAR_ENV ??
+                                (process.env
+                                  .NEXT_PUBLIC_CHEAT_GOODDOLLAR_ENV as contractEnv) ??
                                 "production",
                             });
                             const link = await sdk?.generateFVLink();
