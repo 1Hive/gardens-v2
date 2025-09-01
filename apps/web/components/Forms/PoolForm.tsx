@@ -480,7 +480,9 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
             ),
           ),
           initialAllowlist: allowList,
-          superfluidToken: superToken?.id ?? zeroAddress,
+          superfluidToken:
+            (superToken?.sameAsUnderlying ? undefined : superToken?.id) ??
+            zeroAddress,
         },
         {
           protocol: 1n,
