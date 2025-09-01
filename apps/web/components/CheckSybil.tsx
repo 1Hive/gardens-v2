@@ -15,8 +15,6 @@ import {
   CVStrategy,
   getGoodDollarStrategyDocument,
   getGoodDollarStrategyQuery,
-  getGoodDollarUserDocument,
-  getGoodDollarUserQuery,
   getPassportStrategyDocument,
   getPassportStrategyQuery,
   getPassportUserDocument,
@@ -64,6 +62,7 @@ export function CheckSybil({
   const { data: walletClient, refetch: refetchWalletClient } = useWalletClient({
     chainId: celo.id,
   });
+  const [forceIsVerified, setForceIsVerified] = useState(false);
   const publicClient = usePublicClient({ chainId: celo.id });
   const chainFromPath = useChainFromPath();
   const { publish } = usePubSubContext();
@@ -109,21 +108,6 @@ export function CheckSybil({
         type: "update",
       },
     });
-
-  const { data: goodDollarUserData } = useSubgraphQuery<getGoodDollarUserQuery>(
-    {
-      query: getGoodDollarUserDocument,
-      variables: { userId: walletAddr?.toLowerCase() },
-      enabled:
-        !!walletAddr && strategy.sybil?.type === "GoodDollar" && enableCheck,
-      changeScope: {
-        topic: "member",
-        id: walletAddr?.toLowerCase(),
-        chainId: chainFromPath?.id,
-        type: "update",
-      },
-    },
-  );
 
   const {
     data: isGoodDollarVerifiedInGardens,
@@ -191,22 +175,25 @@ export function CheckSybil({
     };
   }
 
-  const handleCheckSybil = (
+  const handleCheckSybil = async (
     e: React.MouseEvent<HTMLDivElement, MouseEvent>,
   ) => {
     if (strategy.sybil?.type === "GoodDollar") {
       if (walletAddr) {
-        if (
-          goodDollarUserData?.goodDollarUser &&
-          goodDollarUserData.goodDollarUser.verified
-        ) {
+        if (isGoodDollarVerifiedInGardens) {
           console.debug("GoodDollar user is verified, moving forward...");
           setIsModalOpen(false);
         } else if (isWalletVerified) {
           console.debug(
             "Wallet is whitelisted in GoodDollar, submiting verification...",
           );
-          writeSybil(walletAddr);
+          e.preventDefault();
+          e.stopPropagation();
+          setShouldOpenModal(true);
+          setIsGoodDollarVerifying(true);
+          await writeSybil(walletAddr);
+          setForceIsVerified(true);
+          setIsGoodDollarVerifying(false);
         } else {
           console.debug(
             "Wallet is not whitelisted in GoodDollar, opening modal...",
@@ -324,7 +311,7 @@ export function CheckSybil({
       let response;
       if (strategy.sybil?.type === "GoodDollar") {
         response = await fetch(
-          `/api/good-dollar/write-validity/${chainFromPath}`,
+          `/api/good-dollar/write-validity/${chainFromPath?.id}`,
           {
             method: "POST",
             headers: {
@@ -335,7 +322,7 @@ export function CheckSybil({
         );
       } else if (strategy.sybil?.type === "Passport") {
         response = await fetch(
-          `/api/passport-oracle/write-score/${chainFromPath}`,
+          `/api/passport-oracle/write-score/${chainFromPath?.id}`,
           {
             method: "POST",
             headers: {
@@ -440,9 +427,9 @@ export function CheckSybil({
             isWalletVerified == null ?
               <LoadingSpinner className="w-12 h-12" />
             : <>
-                {!isGoodDollarCallback ?
+                {!isWalletVerified && !isGoodDollarCallback ?
                   <>
-                    <p className="text-center">
+                    <p className="text-left">
                       Please verify with GoodDollar to proceed.
                     </p>
                     <div className="flex justify-end">
@@ -456,15 +443,22 @@ export function CheckSybil({
                       </Button>
                     </div>
                   </>
-                : isWalletVerified && isGoodDollarVerifiedInGardens ?
+                : (
+                  (isWalletVerified && isGoodDollarVerifiedInGardens) ??
+                  forceIsVerified
+                ) ?
                   <>
-                    <p className="text-center">
+                    <p className="text-left">
                       You are verified with GoodDollar, you can proceed.
                     </p>
                     <div className="flex justify-end">{children}</div>
                   </>
                 : <>
-                    <p className="text-center">Verification in progress...</p>
+                    <p className="text-left">
+                      {isWalletVerified && !isGoodDollarVerifiedInGardens ?
+                        "You are verified with GoodDollar, need to submit to Gardens."
+                      : "GoodDollar verification pending..."}
+                    </p>
                     <div className="flex justify-end">
                       <Button
                         className="w-fit"
@@ -476,14 +470,17 @@ export function CheckSybil({
                           if (isVerified) {
                             const { data: isGardensVerified } =
                               await refetchGoodDollarIsVerifiedInGardens();
-                            if (isGardensVerified) {
+                            if (!isGardensVerified) {
                               await writeSybil(walletAddr as Address);
+                              setForceIsVerified(true);
                             }
                           }
                           setIsGoodDollarVerifying(false);
                         }}
                       >
-                        Check again
+                        {isWalletVerified && !isGoodDollarVerifiedInGardens ?
+                          "Submit"
+                        : "Check again"}
                       </Button>
                     </div>
                   </>

@@ -14,6 +14,7 @@ export async function fetchGooddollarWhitelisted(
 
   const celoWalletClient = createWalletClient({
     chain: celo,
+    account: account as AddressType,
     transport: custom(celoPublicClient.transport),
   });
 
