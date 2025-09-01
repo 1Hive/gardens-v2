@@ -315,12 +315,12 @@ export const IncreasePower = ({
               />
             </div>
             <div className="relative w-full">
-              <label className="input input-bordered input-info flex items-center gap-2 w-full">
+              <label className="input input-bordered input-info flex items-center gap-2 w-full dark:bg-primary-soft-dark">
                 <input
                   type="number"
                   value={stakedAmount}
                   placeholder="Amount"
-                  className="flex-1 w-full"
+                  className="flex-1 w-full dark:bg-primary-soft-dark"
                   min={registerStakeAmount}
                   max={accountTokenBalancePlusStakeAmount}
                   onChange={(e) => {

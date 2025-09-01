@@ -89,7 +89,7 @@ export function FormInput({
             id={registerKey}
             type={type}
             placeholder={placeholder}
-            className={`hide-input-arrows input input-bordered ${
+            className={`hide-input-arrows input dark:bg-primary-soft-dark input-bordered ${
               errors[registerKey] ? "input-error" : "input-info"
             } w-full ${readOnly && fixedInputClassname} ${className}`}
             required={required}
@@ -142,7 +142,7 @@ export function FormInput({
           </div>
         }
         {Boolean(suffix) && (
-          <span className="absolute right-[10px] top-1/2 -translate-y-1/2 text-black">
+          <span className="absolute right-[10px] top-1/2 -translate-y-1/2 text-neutral">
             {suffix}
           </span>
         )}

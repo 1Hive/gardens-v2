@@ -208,7 +208,17 @@ export function ProposalCard({
                     </p>
                     <Badge
                       status={proposalStatus}
-                      icon={<HandRaisedIcon className="w-5 h-5" />}
+                      icon={
+                        <HandRaisedIcon
+                          className={`w-5 h-5 ${
+                            ProposalStatus[proposalStatus] === "active" ?
+                              "text-primary-content"
+                            : ProposalStatus[proposalStatus] === "executed" ?
+                              "text-tertiary-content"
+                            : "text-danger-content"
+                          }`}
+                        />
+                      }
                     />
                   </div>
                 )}
