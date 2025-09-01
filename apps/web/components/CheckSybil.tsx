@@ -6,6 +6,7 @@ import { Address } from "viem";
 import { celo } from "viem/chains";
 import {
   useAccount,
+  useContractRead,
   usePublicClient,
   useSwitchNetwork,
   useWalletClient,
@@ -29,9 +30,10 @@ import { isProd } from "@/configs/isProd";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import { usePubSubContext } from "@/contexts/pubsub.context";
-import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
+import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useGoodDollarSdk } from "@/hooks/useGoodDollar";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
+import { goodDollarABI } from "@/src/generated";
 import { CV_PASSPORT_THRESHOLD_SCALE } from "@/utils/numbers";
 
 type SubmitPassportResponse = {
@@ -63,7 +65,7 @@ export function CheckSybil({
     chainId: celo.id,
   });
   const publicClient = usePublicClient({ chainId: celo.id });
-  const chainIdFromPath = useChainIdFromPath();
+  const chainFromPath = useChainFromPath();
   const { publish } = usePubSubContext();
   const { switchNetworkAsync } = useSwitchNetwork();
   const searchParams = useCollectQueryParams();
@@ -103,7 +105,7 @@ export function CheckSybil({
       changeScope: {
         topic: "member",
         id: walletAddr?.toLowerCase(),
-        chainId: chainIdFromPath,
+        chainId: chainFromPath?.id,
         type: "update",
       },
     });
@@ -117,11 +119,23 @@ export function CheckSybil({
       changeScope: {
         topic: "member",
         id: walletAddr?.toLowerCase(),
-        chainId: chainIdFromPath,
+        chainId: chainFromPath?.id,
         type: "update",
       },
     },
   );
+
+  const {
+    data: isGoodDollarVerifiedInGardens,
+    refetch: refetchGoodDollarIsVerifiedInGardens,
+  } = useContractRead({
+    address: chainFromPath?.goodDollar,
+    abi: goodDollarABI,
+    functionName: "userValidity",
+    args: [walletAddr as Address],
+    enabled:
+      !!walletAddr && strategy.sybil?.type === "GoodDollar" && enableCheck,
+  });
 
   const { data: passportStrategyData } =
     useSubgraphQuery<getPassportStrategyQuery>({
@@ -131,7 +145,7 @@ export function CheckSybil({
       changeScope: {
         topic: "member",
         id: strategy.poolId,
-        chainId: chainIdFromPath,
+        chainId: chainFromPath?.id,
         type: "update",
       },
     });
@@ -144,7 +158,7 @@ export function CheckSybil({
       changeScope: {
         topic: "member",
         id: strategy.poolId,
-        chainId: chainIdFromPath,
+        chainId: chainFromPath?.id,
         type: "update",
       },
     });
@@ -192,7 +206,7 @@ export function CheckSybil({
           console.debug(
             "Wallet is whitelisted in GoodDollar, submiting verification...",
           );
-          writeScorer(walletAddr);
+          writeSybil(walletAddr);
         } else {
           console.debug(
             "Wallet is not whitelisted in GoodDollar, opening modal...",
@@ -258,7 +272,7 @@ export function CheckSybil({
       // gitcoin passport score does not need formating
       if (passportResponse?.data?.score) {
         setScore(Number(passportResponse.data.score));
-        const result = await writeScorer(_walletAddr);
+        const result = await writeSybil(_walletAddr);
         if (result.error) {
           const message = JSON.parse(result.errorMessage).error;
           console.error("Error writing scorer:", message);
@@ -305,12 +319,12 @@ export function CheckSybil({
     }
   };
 
-  const writeScorer = async (address: string): Promise<any> => {
+  const writeSybil = async (address: string): Promise<any> => {
     try {
       let response;
       if (strategy.sybil?.type === "GoodDollar") {
         response = await fetch(
-          `/api/good-dollar/write-validity/${chainIdFromPath}`,
+          `/api/good-dollar/write-validity/${chainFromPath}`,
           {
             method: "POST",
             headers: {
@@ -321,7 +335,7 @@ export function CheckSybil({
         );
       } else if (strategy.sybil?.type === "Passport") {
         response = await fetch(
-          `/api/passport-oracle/write-score/${chainIdFromPath}`,
+          `/api/passport-oracle/write-score/${chainFromPath}`,
           {
             method: "POST",
             headers: {
@@ -348,7 +362,7 @@ export function CheckSybil({
         topic: "member",
         type: "update",
         id: address,
-        chainId: chainIdFromPath,
+        chainId: chainFromPath?.id,
       });
 
       console.debug("Response from writeScorer API:", data);
@@ -397,12 +411,12 @@ export function CheckSybil({
       const callbackUrl = `${window.location.href}?${QUERY_PARAMS.poolPage.goodDollar}=true`;
       const link = await sdk?.generateFVLink(true, callbackUrl);
 
-      await switchNetworkAsync(chainIdFromPath);
+      await switchNetworkAsync(chainFromPath?.id);
       window.location.href = link;
     } catch (error) {
       console.error("Error generating GoodDollar link:", error);
       setIsGoodDollarVerifying(false);
-      await switchNetworkAsync(chainIdFromPath);
+      await switchNetworkAsync(chainFromPath?.id);
     }
   };
 
@@ -442,7 +456,7 @@ export function CheckSybil({
                       </Button>
                     </div>
                   </>
-                : isWalletVerified ?
+                : isWalletVerified && isGoodDollarVerifiedInGardens ?
                   <>
                     <p className="text-center">
                       You are verified with GoodDollar, you can proceed.
@@ -458,7 +472,14 @@ export function CheckSybil({
                         isLoading={isGoodDollarVerifying}
                         onClick={async () => {
                           setIsGoodDollarVerifying(true);
-                          await refetchGoodDollar();
+                          const isVerified = await refetchGoodDollar();
+                          if (isVerified) {
+                            const { data: isGardensVerified } =
+                              await refetchGoodDollarIsVerifiedInGardens();
+                            if (isGardensVerified) {
+                              await writeSybil(walletAddr as Address);
+                            }
+                          }
                           setIsGoodDollarVerifying(false);
                         }}
                       >
