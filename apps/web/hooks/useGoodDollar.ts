@@ -23,12 +23,11 @@ export const useGoodDollarSdk = ({ enabled }: Props) => {
       account: walletClient.account.address,
       transport: custom(celoPublicClient.transport),
     });
-    // @ts-ignore
+
     return new IdentitySDK({
       account: walletClient.account.address,
-      publicClient: celoPublicClient,
+      publicClient: celoPublicClient as any,
       walletClient: celoWalletClient,
-      chain: celo,
       env:
         (process.env.NEXT_PUBLIC_CHEAT_GOODDOLLAR_ENV as contractEnv) ??
         "production",

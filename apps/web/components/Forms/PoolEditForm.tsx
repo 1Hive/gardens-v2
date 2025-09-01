@@ -184,7 +184,7 @@ export default function PoolEditForm({
   const sybilResistanceValue = watch("sybilResistanceValue");
 
   const sybilResistanceType =
-    strategy.sybilScorer == null ? "allowList"
+    strategy.sybil == null ? "allowList"
     : sybilResistanceValue != null ? "gitcoinPassport"
     : "goodDollar";
 

@@ -386,7 +386,6 @@ export function CheckSybil({
     } as typeof raw;
 
     try {
-      // @ts-ignore
       const sdk = new IdentitySDK({
         account: celoClient?.account.address as `0x${string}`,
         publicClient,
