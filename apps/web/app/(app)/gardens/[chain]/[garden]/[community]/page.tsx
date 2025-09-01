@@ -439,6 +439,8 @@ export default function Page({
                         ]}
                         compact={true}
                         tokenSymbol={tokenGarden.symbol}
+                        valueClassName="text-inherit"
+                        symbolClassName="text-inherit"
                       />
                     </Statistic>
                   </div>

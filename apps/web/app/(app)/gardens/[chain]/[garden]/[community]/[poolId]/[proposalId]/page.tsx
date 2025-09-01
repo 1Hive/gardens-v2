@@ -344,7 +344,7 @@ export default function Page({
 
                   <div className="flex flex-col items-start justify-between gap-2">
                     <Statistic label={"Created"}>
-                      <span className="font-medium">
+                      <span className="font-medium dark:text-neutral-content">
                         {prettyTimestamp(proposalData?.createdAt ?? 0)}
                       </span>
                     </Statistic>
@@ -358,8 +358,8 @@ export default function Page({
                             )}
                             tokenSymbol={poolToken?.symbol}
                             compact={true}
-                            valueClassName="font-medium"
-                            symbolClassName="font-medium"
+                            valueClassName="font-medium dark:text-neutral-content"
+                            symbolClassName="font-medium dark:text-neutral-content"
                           />
                         </Statistic>
                       </>
@@ -480,7 +480,7 @@ export default function Page({
                 )}
                 {status !== "executed" && status !== "cancelled" && (
                   <InfoBox
-                  title="Information"
+                    title="Information"
                     infoBoxType="info"
                     content={`${isSignalingType ? "This proposal is open and can be supported or disputed by the community. Only the proposal creator can cancel" : "This proposal is currently open. It will pass if nobody successfully challenges it and it receives enough support."}`}
                   />

@@ -816,7 +816,9 @@ export default function PoolHeader({
                   }
                   tooltip={config.info}
                 >
-                  <p className="subtitle">{config.value}</p>
+                  <p className="subtitle dark:text-neutral-soft-content">
+                    {config.value}
+                  </p>
                 </Statistic>
               </div>
             ))}
@@ -853,27 +855,18 @@ export default function PoolHeader({
               className="mb-4"
             />
           )}
-          {
-            !isEnabled && (
-              <div className="banner">
+          {!isEnabled && (
+            <div className="banner">
+              {isArchived ?
+                <ArchiveBoxIcon className="h-8 w-8 text-secondary-content" />
+              : <ClockIcon className="h-8 w-8 text-secondary-content" />}
+              <h6>
                 {isArchived ?
-                  <ArchiveBoxIcon className="h-8 w-8 text-secondary-content" />
-                : <ClockIcon className="h-8 w-8 text-secondary-content" />}
-                <h6>
-                  {isArchived ?
-                    "This pool has been archived"
-                  : "Waiting for council approval"}
-                </h6>
-              </div>
-            )
-            // : <Image
-            //     src={
-            //       PoolTypes[proposalType] === "funding" ? blueLand : grassLarge
-            //     }
-            //     alt="pool image"
-            //     className="h-12 w-full rounded-lg object-cover"
-            //   />
-          }
+                  "This pool has been archived"
+                : "Waiting for council approval"}
+              </h6>
+            </div>
+          )}
         </section>
       </div>
     </>

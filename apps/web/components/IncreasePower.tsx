@@ -276,6 +276,7 @@ export const IncreasePower = ({
                   tokenSymbol={tokenSymbol}
                   compact={true}
                   valueClassName="text-primary-content font-bold text-3xl mr-1"
+                  symbolClassName="text-primary-content"
                   disableTooltip
                 />
               }
@@ -311,7 +312,7 @@ export const IncreasePower = ({
                 tokenSymbol={tokenSymbol}
                 compact={true}
                 valueClassName=" text-lg"
-                symbolClassName="text-sm "
+                symbolClassName="text-sm"
               />
             </div>
             <div className="relative w-full">

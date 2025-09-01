@@ -244,7 +244,9 @@ export function ProposalCard({
                     {!isSignalingType && poolToken && (
                       <div className="flex items-center gap-1 justify-self-end">
                         <div className="hidden sm:block w-1 h-1 rounded-full bg-neutral-soft-content" />
-                        <p className="text-sm ml-1">Requesting: </p>
+                        <p className="text-sm ml-1 dark:text-neutral-soft-content">
+                          Requesting:{" "}
+                        </p>
                         <DisplayNumber
                           number={formatUnits(
                             requestedAmount,
@@ -252,6 +254,8 @@ export function ProposalCard({
                           )}
                           tokenSymbol={poolToken.symbol}
                           compact={true}
+                          valueClassName="dark:text-neutral-soft-content"
+                          symbolClassName="dark:text-neutral-soft-content"
                         />
                       </div>
                     )}
