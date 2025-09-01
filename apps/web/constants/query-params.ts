@@ -10,5 +10,6 @@ export const QUERY_PARAMS = {
   poolPage: {
     newProposal: "newProposal",
     allocationView: "allocationView",
+    goodDollar: "goodDollar",
   },
 } as const;

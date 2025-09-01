@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 // eslint-disable-next-line import/no-extraneous-dependencies
-import { IdentitySDK } from "@goodsdks/citizen-sdk";
+import { contractEnv, IdentitySDK } from "@goodsdks/citizen-sdk";
 import { createPublicClient, createWalletClient, custom, http } from "viem";
 import { celo } from "viem/chains";
 import { useAccount, usePublicClient, useWalletClient } from "wagmi";
@@ -16,38 +16,45 @@ export const useGoodDollarSdk = ({ enabled }: Props) => {
     if (!enabled || !address || !walletClient?.account) return;
     const celoPublicClient = createPublicClient({
       chain: celo,
-
       transport: http("https://forno.celo.org"),
     });
     const celoWalletClient = createWalletClient({
       chain: celo,
-      account: walletClient.account,
+      account: walletClient.account.address,
       transport: custom(celoPublicClient.transport),
     });
     // @ts-ignore
     return new IdentitySDK({
-      account: walletClient.account,
+      account: walletClient.account.address,
       publicClient: celoPublicClient,
       walletClient: celoWalletClient,
       chain: celo,
-      env: process.env.NEXT_PUBLIC_CHEAT_GOODDOLLAR_ENV ?? "production",
+      env:
+        (process.env.NEXT_PUBLIC_CHEAT_GOODDOLLAR_ENV as contractEnv) ??
+        "production",
     });
   }, [enabled, address, publicClient, walletClient]);
 
   useEffect(() => {
+    fetchIsWalletVerified();
+  }, [identitySDK, address]);
+
+  const fetchIsWalletVerified = () => {
     if (address && identitySDK) {
-      identitySDK
+      return identitySDK
         .getWhitelistedRoot(address)
         .then(({ isWhitelisted, root }) => {
-          setIsWalletVerified(
-            isWhitelisted && root.toLowerCase() === address.toLowerCase(),
-          );
+          const isVerified =
+            isWhitelisted && root.toLowerCase() === address.toLowerCase();
+          setIsWalletVerified(isVerified);
+          return isVerified;
         });
     }
-  }, [identitySDK, address]);
+  };
 
   return {
     isWalletVerified,
     identitySDK,
+    refetch: fetchIsWalletVerified,
   };
 };

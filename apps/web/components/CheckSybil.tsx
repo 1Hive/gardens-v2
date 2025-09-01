@@ -26,6 +26,8 @@ import { LoadingSpinner } from "./LoadingSpinner";
 import { Skeleton } from "./Skeleton";
 import { Modal } from "@/components";
 import { isProd } from "@/configs/isProd";
+import { QUERY_PARAMS } from "@/constants/query-params";
+import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useGoodDollarSdk } from "@/hooks/useGoodDollar";
@@ -53,28 +55,41 @@ export function CheckSybil({
   enableCheck = true,
 }: CheckPassportProps) {
   const { address: walletAddr } = useAccount();
-  const [isOpenModal, setIsOpenModal] = useState(false);
+  const [isModalOpened, setIsModalOpen] = useState(false);
   const [score, setScore] = useState<number>(0);
   const [shouldOpenModal, setShouldOpenModal] = useState(false);
   const [isSubmiting, setIsSubmiting] = useState<boolean>(false);
+  const { data: walletClient, refetch: refetchWalletClient } = useWalletClient({
+    chainId: celo.id,
+  });
   const publicClient = usePublicClient({ chainId: celo.id });
-  const { data: walletClient } = useWalletClient({ chainId: celo.id });
-  const chainFromPath = useChainIdFromPath();
+  const chainIdFromPath = useChainIdFromPath();
   const { publish } = usePubSubContext();
   const { switchNetworkAsync } = useSwitchNetwork();
-  const { isWalletVerified } = useGoodDollarSdk({
+  const searchParams = useCollectQueryParams();
+  const [isGoodDollarVerifying, setIsGoodDollarVerifying] = useState(false);
+  const { isWalletVerified, refetch: refetchGoodDollar } = useGoodDollarSdk({
     enabled:
       strategy.sybil != null &&
       strategy.sybil.type === "GoodDollar" &&
       enableCheck,
   });
 
+  const isGoodDollarCallback =
+    searchParams[QUERY_PARAMS.poolPage.goodDollar] === "true";
+
+  useEffect(() => {
+    if (isGoodDollarCallback && isModalOpened === false) {
+      setShouldOpenModal(true);
+    }
+  }, [searchParams]);
+
   useEffect(() => {
     if (!enableCheck) {
       return;
     }
     if (shouldOpenModal) {
-      setIsOpenModal(true);
+      setIsModalOpen(true);
       setShouldOpenModal(false);
     }
   }, [shouldOpenModal]);
@@ -88,7 +103,7 @@ export function CheckSybil({
       changeScope: {
         topic: "member",
         id: walletAddr?.toLowerCase(),
-        chainId: chainFromPath,
+        chainId: chainIdFromPath,
         type: "update",
       },
     });
@@ -102,7 +117,7 @@ export function CheckSybil({
       changeScope: {
         topic: "member",
         id: walletAddr?.toLowerCase(),
-        chainId: chainFromPath,
+        chainId: chainIdFromPath,
         type: "update",
       },
     },
@@ -116,7 +131,7 @@ export function CheckSybil({
       changeScope: {
         topic: "member",
         id: strategy.poolId,
-        chainId: chainFromPath,
+        chainId: chainIdFromPath,
         type: "update",
       },
     });
@@ -129,7 +144,7 @@ export function CheckSybil({
       changeScope: {
         topic: "member",
         id: strategy.poolId,
-        chainId: chainFromPath,
+        chainId: chainIdFromPath,
         type: "update",
       },
     });
@@ -172,7 +187,7 @@ export function CheckSybil({
           goodDollarUserData.goodDollarUser.verified
         ) {
           console.debug("GoodDollar user is verified, moving forward...");
-          setIsOpenModal(false);
+          setIsModalOpen(false);
         } else if (isWalletVerified) {
           console.debug(
             "Wallet is whitelisted in GoodDollar, submiting verification...",
@@ -193,7 +208,7 @@ export function CheckSybil({
       }
     } else {
       console.debug("No passport required, moving forward...");
-      setIsOpenModal(false);
+      setIsModalOpen(false);
     }
   };
 
@@ -235,7 +250,7 @@ export function CheckSybil({
   };
 
   const submitAndWriteScorer = async (_walletAddr: Address) => {
-    setIsOpenModal(true);
+    setIsModalOpen(true);
     setIsSubmiting(true);
     try {
       const passportResponse = await submitPassport(_walletAddr);
@@ -295,7 +310,7 @@ export function CheckSybil({
       let response;
       if (strategy.sybil?.type === "GoodDollar") {
         response = await fetch(
-          `/api/good-dollar/write-validity/${chainFromPath}`,
+          `/api/good-dollar/write-validity/${chainIdFromPath}`,
           {
             method: "POST",
             headers: {
@@ -306,7 +321,7 @@ export function CheckSybil({
         );
       } else if (strategy.sybil?.type === "Passport") {
         response = await fetch(
-          `/api/passport-oracle/write-score/${chainFromPath}`,
+          `/api/passport-oracle/write-score/${chainIdFromPath}`,
           {
             method: "POST",
             headers: {
@@ -333,7 +348,7 @@ export function CheckSybil({
         topic: "member",
         type: "update",
         id: address,
-        chainId: chainFromPath,
+        chainId: chainIdFromPath,
       });
 
       console.debug("Response from writeScorer API:", data);
@@ -346,6 +361,52 @@ export function CheckSybil({
       };
     }
   };
+
+  const handleGoodDollarVerification = async () => {
+    if (!walletClient || !switchNetworkAsync) {
+      toast.error("Wallet not connected");
+      console.error("WalletClient not found");
+      return;
+    }
+    setIsGoodDollarVerifying(true);
+
+    if (walletClient.chain?.id !== celo.id) {
+      await switchNetworkAsync?.(celo.id);
+    }
+    const { data: raw } = await refetchWalletClient();
+    if (!raw) {
+      toast.error("Celo client not found");
+      console.error("Celo client not found");
+      return;
+    }
+
+    const celoClient = {
+      ...raw,
+      chain: celo,
+    } as typeof raw;
+
+    try {
+      // @ts-ignore
+      const sdk = new IdentitySDK({
+        account: celoClient?.account.address as `0x${string}`,
+        publicClient,
+        walletClient: celoClient,
+        env:
+          (process.env.NEXT_PUBLIC_CHEAT_GOODDOLLAR_ENV as contractEnv) ??
+          "production",
+      });
+      const callbackUrl = `${window.location.href}?${QUERY_PARAMS.poolPage.goodDollar}=true`;
+      const link = await sdk?.generateFVLink(true, callbackUrl);
+
+      await switchNetworkAsync(chainIdFromPath);
+      window.location.href = link;
+    } catch (error) {
+      console.error("Error generating GoodDollar link:", error);
+      setIsGoodDollarVerifying(false);
+      await switchNetworkAsync(chainIdFromPath);
+    }
+  };
+
   return (
     <>
       <div onClickCapture={(e) => handleCheckSybil(e)} className="w-fit">
@@ -357,124 +418,115 @@ export function CheckSybil({
             "Good Dollar"
           : "Gitcoin passport"
         }
-        isOpen={isOpenModal}
-        onClose={() => setIsOpenModal(false)}
+        isOpen={isModalOpened}
+        onClose={() => setIsModalOpen(false)}
         size="small"
       >
-        {isWalletVerified == null ?
-          <LoadingSpinner className="w-12 h-12" />
-        : <div className="flex flex-col gap-8">
-            {strategy.sybil?.type === "GoodDollar" ?
-              <>
-                Please verify with GoodDollar to proceed.
-                {walletAddr && isWalletVerified === false ?
-                  <div className="flex justify-end">
-                    <Button
-                      className="w-fit"
-                      btnStyle="outline"
-                      onClick={async () => {
-                        if (!walletClient || !switchNetworkAsync) {
-                          console.error("No wallet client found");
-                          return;
-                        }
-                        await switchNetworkAsync(celo.id);
-                        setTimeout(async () => {
-                          try {
-                            // @ts-ignore
-                            const sdk = new IdentitySDK({
-                              account: walletClient.account
-                                .address as `0x${string}`,
-                              publicClient,
-                              walletClient,
-                              env:
-                                (process.env
-                                  .NEXT_PUBLIC_CHEAT_GOODDOLLAR_ENV as contractEnv) ??
-                                "production",
-                            });
-                            const link = await sdk?.generateFVLink();
-                            window.open(link, "_blank");
-                          } catch (error) {
-                            console.error(
-                              "Error generating GoodDollar link:",
-                              error,
-                            );
-                          }
-                          await switchNetworkAsync(chainFromPath);
-                        }, 500);
-                      }}
-                    >
-                      Verify with GoodDollar
-                    </Button>
-                  </div>
-                : <>
+        <div className="flex flex-col gap-8">
+          {strategy.sybil?.type === "GoodDollar" ?
+            isWalletVerified == null ?
+              <LoadingSpinner className="w-12 h-12" />
+            : <>
+                {!isGoodDollarCallback ?
+                  <>
+                    <p className="text-center">
+                      Please verify with GoodDollar to proceed.
+                    </p>
+                    <div className="flex justify-end">
+                      <Button
+                        className="w-fit"
+                        btnStyle="outline"
+                        onClick={handleGoodDollarVerification}
+                        isLoading={isGoodDollarVerifying}
+                      >
+                        Verify with GoodDollar
+                      </Button>
+                    </div>
+                  </>
+                : isWalletVerified ?
+                  <>
                     <p className="text-center">
                       You are verified with GoodDollar, you can proceed.
                     </p>
+                    <div className="flex justify-end">{children}</div>
                   </>
-                }
-              </>
-            : <>
-                <div>
-                  <p>
-                    Passport score:{" "}
-                    <Skeleton isLoading={passportUserFetching && !score}>
-                      <span className="font-semibold w-12">
-                        {score.toFixed(2)}
-                      </span>
-                    </Skeleton>
-                  </p>
-                  <p>
-                    Pool requirement:{" "}
-                    <span className="font-semibold">
-                      {threshold.toFixed(2)}
-                    </span>
-                  </p>
-                  {score > threshold ?
-                    <div>
-                      <h5 className="mt-6">Congratulations!</h5>
-                      <p>
-                        Your score meets the pool requirement. You can proceed.
-                      </p>
-                    </div>
-                  : <p className="mt-6">
-                      Your score is too low, please go to Gitcoin passport{" "}
-                      <a
-                        href="https://passport.gitcoin.co/"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary-content underline hover:text-primary-hover-content"
-                      >
-                        website
-                      </a>{" "}
-                      to increment it before continuing.
-                    </p>
-                  }
-                </div>
-                {walletAddr && (
-                  <div className="flex justify-end">
-                    {score > threshold ?
-                      children
-                    : <Button
-                        onClick={() => submitAndWriteScorer(walletAddr)}
+                : <>
+                    <p className="text-center">Verification in progress...</p>
+                    <div className="flex justify-end">
+                      <Button
                         className="w-fit"
                         btnStyle="outline"
-                        isLoading={isSubmiting || passportUserFetching}
-                        disabled={passportUserFetching}
-                        tooltip={
-                          passportUserFetching ?
-                            "Fetching passport score..."
-                          : ""
-                        }
+                        isLoading={isGoodDollarVerifying}
+                        onClick={async () => {
+                          setIsGoodDollarVerifying(true);
+                          await refetchGoodDollar();
+                          setIsGoodDollarVerifying(false);
+                        }}
                       >
                         Check again
                       </Button>
-                    }
-                  </div>
-                )}
+                    </div>
+                  </>
+                }
               </>
-            }
-          </div>
-        }
+
+          : <>
+              <div>
+                <p>
+                  Passport score:{" "}
+                  <Skeleton isLoading={passportUserFetching && !score}>
+                    <span className="font-semibold w-12">
+                      {score.toFixed(2)}
+                    </span>
+                  </Skeleton>
+                </p>
+                <p>
+                  Pool requirement:{" "}
+                  <span className="font-semibold">{threshold.toFixed(2)}</span>
+                </p>
+                {score > threshold ?
+                  <div>
+                    <h5 className="mt-6">Congratulations!</h5>
+                    <p>
+                      Your score meets the pool requirement. You can proceed.
+                    </p>
+                  </div>
+                : <p className="mt-6">
+                    Your score is too low, please go to Gitcoin passport{" "}
+                    <a
+                      href="https://passport.gitcoin.co/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary-content underline hover:text-primary-hover-content"
+                    >
+                      website
+                    </a>{" "}
+                    to increment it before continuing.
+                  </p>
+                }
+              </div>
+              {walletAddr && (
+                <div className="flex justify-end">
+                  {score > threshold ?
+                    children
+                  : <Button
+                      onClick={() => submitAndWriteScorer(walletAddr)}
+                      className="w-fit"
+                      btnStyle="outline"
+                      isLoading={isSubmiting || passportUserFetching}
+                      disabled={passportUserFetching}
+                      tooltip={
+                        passportUserFetching ? "Fetching passport score..." : ""
+                      }
+                    >
+                      Check again
+                    </Button>
+                  }
+                </div>
+              )}
+            </>
+          }
+        </div>
       </Modal>
     </>
   );
