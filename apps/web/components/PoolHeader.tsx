@@ -829,7 +829,7 @@ export default function PoolHeader({
               <div className="flex gap-2 items-center">
                 <Badge
                   label="conviction voting"
-                  className="text-secondary-content"
+                  className="text-secondary-content dark:bg-tertiary-dark"
                   icon={<Battery50Icon className="text-tertiary-content" />}
                 />
                 <Badge
@@ -837,6 +837,7 @@ export default function PoolHeader({
                   tooltip={
                     VOTING_POINT_SYSTEM_DESCRIPTION[PointSystems[pointSystem]]
                   }
+                  className="text-secondary-content dark:bg-tertiary-dark"
                   icon={<BoltIcon className="text-tertiary-content" />}
                 />
               </div>

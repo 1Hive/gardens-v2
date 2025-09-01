@@ -18,19 +18,19 @@ type BadgeProps = {
 
 // Styles for different pool badge types
 const POOL_TYPE_STYLES = [
-  "bg-primary-soft text-primary-content",
-  "bg-tertiary-soft text-tertiary-content",
+  "bg-primary-soft text-primary-content dark:bg-primary-soft-dark",
+  "bg-tertiary-soft dark:bg-tertiary-dark text-tertiary-content",
 ];
 
 // Styles for different proposal status badge
 const PROPOSAL_STATUS_STYLES = [
-  "bg-danger-soft text-danger-content",
-  "bg-primary-soft text-primary-content",
+  "bg-danger-soft dark:bg-danger-soft-dark text-danger-content",
+  "bg-primary-soft text-primary-content dark:bg-primary-soft-dark",
   "bg-secondary-soft dark:bg-secondary-soft-dark text-secondary-content",
-  "bg-danger-soft text-danger-content",
-  "bg-tertiary-soft text-tertiary-content",
-  "bg-danger-soft text-danger-content",
-  "bg-danger-soft text-danger-content",
+  "bg-danger-soft dark:bg-danger-soft-dark text-danger-content",
+  "bg-tertiary-soft dark:bg-tertiary-dark text-tertiary-content",
+  "bg-danger-soft dark:bg-danger-soft-dark text-danger-content",
+  "bg-danger-soft dark:bg-danger-soft-dark text-danger-content",
 ];
 
 const BASE_STYLES =

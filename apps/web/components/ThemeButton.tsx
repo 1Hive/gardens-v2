@@ -7,11 +7,11 @@ import { useIsMounted } from "@/hooks/useIsMounted";
 
 export function ThemeButton() {
   const { resolvedTheme, setTheme } = useTheme();
-  const isMounted = useIsMounted();
+  // const isMounted = useIsMounted();
 
-  if (!isMounted.current) {
-    return <></>;
-  }
+  // if (!isMounted.current) {
+  //   return <></>;
+  // }
 
   const SunIcon = () => {
     return (

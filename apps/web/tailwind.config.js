@@ -91,6 +91,7 @@ module.exports = {
         "secondary-soft-dark": "#362510",
         "secondary-hover-content": "#d27c03",
         "tertiary-content": "#2AAAE5",
+        "tertiary-dark": "#083137",
         "border-neutral": "#d5d5d5",
         "tertiary-soft": "#e5f7fa",
         "primary-hover-content": "#307707",
@@ -101,6 +102,7 @@ module.exports = {
         "danger-button": "#eb4848",
         "danger-content": "#EB4848",
         "danger-soft": "#FFE6E6",
+        "danger-soft-dark": "#360C0A",
       },
       transitionProperty: {
         height: "height",

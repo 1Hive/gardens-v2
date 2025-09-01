@@ -90,7 +90,9 @@ export function FormInput({
             type={type}
             placeholder={placeholder}
             className={`hide-input-arrows input dark:bg-primary-soft-dark input-bordered ${
-              errors[registerKey] ? "input-error" : "input-info"
+              errors[registerKey] ?
+                "input-error dark:dark:bg-primary-soft-dark"
+              : "input-info dark:bg-primary-soft-dark"
             } w-full ${readOnly && fixedInputClassname} ${className}`}
             required={required}
             step={step}
@@ -104,7 +106,7 @@ export function FormInput({
             {...registered}
             id={registerKey}
             placeholder={placeholder}
-            className={`${className} textarea textarea-info line-clamp-5 w-full overflow-auto h-24 ${
+            className={`${className} textarea textarea-info line-clamp-5 w-full overflow-auto h-24 dark:bg-primary-soft-dark ${
               errors[registerKey] ? "input-error" : "input-info"
             }`}
             required={required}
@@ -118,7 +120,7 @@ export function FormInput({
         : <div data-color-mode="light">
             <MarkdownEditor
               {...registered}
-              className={`textarea p-0 ![--color-canvas-subtle:white] ![--color-neutral-muted:#cceeff44] rounded-2xl ${
+              className={`textarea p-0 ![--color-canvas-subtle:white] ![--color-neutral-muted:#cceeff44] dark:bg-primary-soft-dark  rounded-2xl ${
                 errors[registerKey] ? "textarea-error" : "textarea-info"
               }`}
               id={registerKey}

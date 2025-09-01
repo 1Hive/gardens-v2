@@ -19,7 +19,7 @@ const BASE_STYLES =
 // Styles for different info box types
 
 const infoBoxStyles = {
-  info: "bg-tertiary-soft text-tertiary-content dark:bg-tertiary-content",
+  info: "bg-tertiary-soft text-tertiary-content dark:bg-tertiary-dark",
   success: "bg-primary-soft text-primary-content",
   warning: "bg-secondary-soft text-secondary-content",
   error: "bg-danger-soft text-danger-content",
