@@ -233,7 +233,7 @@ export const Communities: React.FC<CommunitiesProps> = ({
             defaultExpanded={true}
             isFetching={isFetching}
           />
-          <div className="divider h-1 border-b border-border-neutral mx-2" />
+          <div className="divider h-1 border-b border-border-neutral dark:border-opacity-50 mx-2" />
         </>
       )}
 

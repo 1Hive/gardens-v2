@@ -198,6 +198,11 @@ caption {
   text-align: left;
 }
 
+/* dark mode */
+[data-theme="darkTheme"] .skeleton {
+  background-color: #1f1f1f;
+}
+
 .banner {
   @apply flex items-center gap-4 rounded-[20px] bg-secondary-soft dark:bg-secondary-soft-dark p-4;
 }

@@ -80,9 +80,12 @@ export function CommunityCard({
           <TooltipIfOverflow>{communityName ?? ""}</TooltipIfOverflow>
         </h3>
         <div className="flex gap-2 items-center">
-          <p className=" font-normal">
+          <p className=" font-normal dark:text-opacity-80">
             Governance Token:
-            <span className="font-normal"> {tokenSymbol}</span>
+            <span className="font-normal dark:text-opacity-80">
+              {" "}
+              {tokenSymbol}
+            </span>
           </p>
         </div>
         <Statistic
