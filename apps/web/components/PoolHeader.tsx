@@ -272,7 +272,7 @@ export default function PoolHeader({
               const allowlist = sybilResistanceValue as Array<string>;
               return `Only users in the allowlist can interact with this pool: \n - ${allowlist.length ? allowlist.map((x) => shortenAddress(x)).join("\n- ") : "No addresses in allowlist"}`;
             })()
-          : ""
+        : "",
     },
     {
       label: "Token",
@@ -792,9 +792,7 @@ export default function PoolHeader({
 
           {/* Description */}
           <Skeleton rows={5} isLoading={!ipfsResult}>
-            <MarkdownWrapper>
-              {ipfsResult?.description ?? "No description found"}
-            </MarkdownWrapper>
+            <MarkdownWrapper source={ipfsResult?.description ?? ""} />
           </Skeleton>
 
           {/* Pool Params */}

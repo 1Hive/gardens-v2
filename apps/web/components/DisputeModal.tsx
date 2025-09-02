@@ -583,11 +583,13 @@ const DisputeMessage = ({
         )}
       </div>
       <div className="chat-bubble shadow-lg bg-neutral-200">
-        <MarkdownWrapper>
-          {dispute.metadata?.reason ??
+        <MarkdownWrapper
+          source={
+            dispute.metadata?.reason ??
             disputeMetadata?.reason ??
-            "No reason provided."}
-        </MarkdownWrapper>
+            "No reason provided."
+          }
+        />
       </div>
     </div>
   );

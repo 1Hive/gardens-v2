@@ -222,23 +222,6 @@ caption {
   }
 }
 
-// Markdown overrides
-
-.md-editor-preview,
-.wmde-markdown {
-  ol {
-    list-style-type: decimal !important;
-  }
-
-  ul {
-    list-style-type: unset !important;
-  }
-}
-
-.cm-gutters {
-  display: none !important;
-}
-
 /* input */
 dialog * {
   scrollbar-width: thin;
@@ -339,4 +322,34 @@ dialog * {
     right: auto;
     bottom: auto;
   }
+}
+
+/* MDXMarkdown */
+
+.mdxeditor-root-contenteditable {
+  ul {
+    @apply list-disc ml-2;
+  }
+  ol {
+    @apply list-decimal ml-2;
+  }
+  h1 span {
+    @apply text-3xl font-bold;
+  }
+  h2 span {
+    @apply text-2xl font-bold;
+  }
+  h3 span {
+    @apply text-xl font-bold;
+  }
+  h4 span {
+    @apply text-lg font-bold;
+  }
+  h5 span {
+    @apply text-base font-bold;
+  }
+}
+
+.mdxeditor-popup-container {
+  z-index: 999999999 !important;
 }

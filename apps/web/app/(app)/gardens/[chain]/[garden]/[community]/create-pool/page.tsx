@@ -8,6 +8,7 @@ import {
 } from "#/subgraph/.graphclient";
 import { PoolForm } from "@/components/Forms/PoolForm";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import MarkdownEditor from "@/components/MarkdownEditor";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 
 export default function Page({
@@ -26,7 +27,7 @@ export default function Page({
   let alloAddr = result?.allos[0]?.id as Address;
   let communityName = result?.registryCommunity?.communityName as string;
 
-  if (!token) {
+  if (!token || !result) {
     return (
       <div className="my-40 col-span-12">
         <LoadingSpinner />
@@ -34,7 +35,8 @@ export default function Page({
     );
   }
 
-  return result ?
+  return (
+    <>
       <div className="page-layout mx-auto col-span-12">
         <section className="section-layout">
           <div className="text-center sm:mt-5 mb-12">
@@ -47,7 +49,6 @@ export default function Page({
           />
         </section>
       </div>
-    : <div className="mt-96 col-span-12">
-        <LoadingSpinner />
-      </div>;
+    </>
+  );
 }

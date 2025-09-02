@@ -538,9 +538,7 @@ export default function Page({
         <h3>Proposal Description</h3>
         <div>
           <Skeleton rows={5} isLoading={!Boolean(metadata)}>
-            <MarkdownWrapper>
-              {metadata?.description ?? "No description found"}
-            </MarkdownWrapper>
+            <MarkdownWrapper source={metadata?.description} />
           </Skeleton>
         </div>
       </section>

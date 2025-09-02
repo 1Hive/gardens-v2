@@ -10,11 +10,7 @@ type Props = {
   description?: string;
 };
 
-export function FormPreview({
-  title,
-  description,
-  formRows,
-}: Props) {
+export function FormPreview({ title, description, formRows }: Props) {
   if (!formRows) {
     return <>Error no Data</>;
   }
@@ -28,7 +24,7 @@ export function FormPreview({
           </h3>
 
           <div className="block">
-            <MarkdownWrapper>{description}</MarkdownWrapper>
+            <MarkdownWrapper source={description} />
           </div>
         </div>
       )}
