@@ -408,9 +408,7 @@ export const IncreasePower = ({
                   decreaseStatus === "loading"
                 }
               >
-                <span className="w-14">
-                  {stakeDifference >= 0 ? "Stake" : "Unstake"}
-                </span>
+                {stakeDifference >= 0 ? "Stake" : "Unstake"}
               </Button>
             </div>
           </>

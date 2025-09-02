@@ -36,6 +36,7 @@
 
 [data-theme="darkTheme"] {
   --color-text: #eeeeee;
+  --border-neutral: #d5d5d550;
 }
 
 * {
@@ -186,6 +187,10 @@ caption {
 .tooltip {
   --tooltip-color: #1f2937;
   --tooltip-text-color: #ffffff;
+}
+
+[data-theme="darkTheme"] .tooltip {
+  --tooltip-color: #111827;
 }
 
 .tooltip:before {

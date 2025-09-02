@@ -5,7 +5,7 @@ import { Breadcrumbs, GoBackButton } from "@/components";
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-primary flex flex-col gap-4 overflow-x-visible">
-      <div className="fixed top-[71px] left-0 right-0 z-20 flex items-center gap-4 px-4 lg:px-6 py-2 border-t border-b border-border-neutral bg-neutral">
+      <div className="fixed top-[71px] left-0 right-0 z-20 flex items-center gap-4 px-4 lg:px-6 py-2 border-t border-b border-border-neutral dark:border-border-neutral/50 bg-neutral">
         <GoBackButton />
         <Breadcrumbs />
       </div>
