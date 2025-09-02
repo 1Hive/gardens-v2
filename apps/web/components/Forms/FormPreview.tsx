@@ -24,7 +24,7 @@ export function FormPreview({ title, description, formRows }: Props) {
           </h3>
 
           <div className="block">
-            <MarkdownWrapper>{description}</MarkdownWrapper>
+            <MarkdownWrapper source={description} />
           </div>
         </div>
       )}

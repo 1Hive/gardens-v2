@@ -792,9 +792,7 @@ export default function PoolHeader({
 
           {/* Description */}
           <Skeleton rows={5} isLoading={!ipfsResult}>
-            <MarkdownWrapper>
-              {ipfsResult?.description ?? "No description found"}
-            </MarkdownWrapper>
+            <MarkdownWrapper source={ipfsResult?.description ?? ""} />
           </Skeleton>
 
           {/* Pool Params */}

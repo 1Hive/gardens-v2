@@ -382,7 +382,7 @@ export default function PoolEditForm({
         membersToAdd,
         membersToRemove,
         (strategy.config.superfluidToken as Address) ??
-          superToken?.id ??
+          (superToken?.sameAsUnderlying ? undefined : superToken?.id) ??
           zeroAddress,
       ],
     });
