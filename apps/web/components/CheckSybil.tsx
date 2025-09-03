@@ -47,8 +47,6 @@ type CheckPassportProps = {
   enableCheck?: boolean;
 };
 
-// CheckPassport component should only wrap a Button or similar component
-
 export function CheckSybil({
   strategy,
   children,
@@ -57,7 +55,6 @@ export function CheckSybil({
   const { address: walletAddr } = useAccount();
   const [isModalOpened, setIsModalOpen] = useState(false);
   const [score, setScore] = useState<number>(0);
-  const [shouldOpenModal, setShouldOpenModal] = useState(false);
   const [isSubmiting, setIsSubmiting] = useState<boolean>(false);
   const { data: walletClient, refetch: refetchWalletClient } = useWalletClient({
     chainId: celo.id,
@@ -81,20 +78,12 @@ export function CheckSybil({
     searchParams[QUERY_PARAMS.poolPage.goodDollarVerified] === "dHJ1ZQ=="; // base64 of 'true'
 
   useEffect(() => {
-    if (isGoodDollarCallback && isModalOpened === false) {
-      setShouldOpenModal(true);
-    }
-  }, [searchParams]);
+    if (!enableCheck) return;
+    if (isModalOpened) return;
+    if (!isGoodDollarCallback) return;
 
-  useEffect(() => {
-    if (!enableCheck) {
-      return;
-    }
-    if (shouldOpenModal) {
-      setIsModalOpen(true);
-      setShouldOpenModal(false);
-    }
-  }, [shouldOpenModal]);
+    setIsModalOpen(true);
+  }, [enableCheck, isModalOpened, isGoodDollarCallback]);
 
   const { data: passportUserData, fetching: passportUserFetching } =
     useSubgraphQuery<getPassportUserQuery>({
@@ -190,18 +179,14 @@ export function CheckSybil({
           );
           e.preventDefault();
           e.stopPropagation();
-          setShouldOpenModal(true);
-          setIsGoodDollarVerifying(true);
-          await writeSybil(walletAddr);
-          setForceIsVerified(true);
-          setIsGoodDollarVerifying(false);
+          setIsModalOpen(true);
         } else {
           console.debug(
             "Wallet is not whitelisted in GoodDollar, opening modal...",
           );
           e.preventDefault();
           e.stopPropagation();
-          setShouldOpenModal(true);
+          setIsModalOpen(true);
         }
       }
     } else if (strategy.sybil?.type === "Passport" && sybilStrategy?.active) {
@@ -247,7 +232,7 @@ export function CheckSybil({
       console.debug("Score is too low, opening modal...");
       e?.preventDefault();
       e?.stopPropagation();
-      setShouldOpenModal(true);
+      setIsModalOpen(true);
     }
   };
 
@@ -408,17 +393,28 @@ export function CheckSybil({
     }
   };
 
+  const modalTitle = () => {
+    if (strategy.sybil?.type === "GoodDollar") {
+      if (!isWalletVerified) {
+        return "Verify you're human";
+      }
+
+      if (!isGoodDollarVerifiedInGardens && !forceIsVerified) {
+        return "Connect to Gardens";
+      }
+
+      return "Activate Governance";
+    }
+    return "Gitcoin passport";
+  };
+
   return (
     <>
       <div onClickCapture={(e) => handleCheckSybil(e)} className="w-fit">
         {children}
       </div>
       <Modal
-        title={
-          strategy.sybil?.type === "GoodDollar" ?
-            "Good Dollar"
-          : "Gitcoin passport"
-        }
+        title={modalTitle()}
         isOpen={isModalOpened}
         onClose={() => setIsModalOpen(false)}
         size="small"
@@ -431,12 +427,12 @@ export function CheckSybil({
                 {!isWalletVerified && !isGoodDollarCallback ?
                   <>
                     <p className="text-left">
-                      Please verify with GoodDollar to proceed.
+                      Please confirm you&apos;re a unique human with a secure,
+                      encrypted face scan on GoodDollar.
                     </p>
                     <div className="flex justify-end">
                       <Button
                         className="w-fit"
-                        btnStyle="outline"
                         onClick={handleGoodDollarVerification}
                         isLoading={isGoodDollarVerifying}
                       >
@@ -445,25 +441,30 @@ export function CheckSybil({
                     </div>
                   </>
                 : (
-                  (isWalletVerified && isGoodDollarVerifiedInGardens) ??
+                  (isWalletVerified &&
+                    (isGoodDollarVerifiedInGardens ?? false)) ||
                   forceIsVerified
                 ) ?
                   <>
                     <p className="text-left">
-                      You are verified with GoodDollar, you can proceed.
+                      Sign to activate your governance in the pool.
                     </p>
                     <div className="flex justify-end">{children}</div>
                   </>
                 : <>
                     <p className="text-left">
                       {isWalletVerified && !isGoodDollarVerifiedInGardens ?
-                        "You are verified with GoodDollar, need to submit to Gardens."
+                        "Click to connect your verified GoodDollar account to Gardens."
                       : "GoodDollar verification pending..."}
                     </p>
                     <div className="flex justify-end">
                       <Button
                         className="w-fit"
-                        btnStyle="outline"
+                        btnStyle={
+                          isWalletVerified && !isGoodDollarVerifiedInGardens ?
+                            "filled"
+                          : "outline"
+                        }
                         isLoading={isGoodDollarVerifying}
                         onClick={async () => {
                           setIsGoodDollarVerifying(true);
@@ -480,7 +481,7 @@ export function CheckSybil({
                         }}
                       >
                         {isWalletVerified && !isGoodDollarVerifiedInGardens ?
-                          "Submit"
+                          "Connect"
                         : "Check again"}
                       </Button>
                     </div>

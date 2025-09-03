@@ -587,7 +587,10 @@ export function Proposals({
               </div>
             : !allocationView && (
                 <div onMouseLeave={() => setShowManageSupportTooltip(false)}>
-                  <CheckSybil strategy={strategy}>
+                  <CheckSybil
+                    strategy={strategy}
+                    enableCheck={strategy.sybil?.type === "Passport"}
+                  >
                     <Button
                       icon={
                         <AdjustmentsHorizontalIcon height={24} width={24} />
