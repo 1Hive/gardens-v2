@@ -1,5 +1,6 @@
 export { default as clouds1 } from "./clouds1.svg";
 export { default as clouds2 } from "./clouds2.svg";
+export { default as gardensNight } from "./gardens-night.svg";
 export { default as CommunityLogo } from "./CommunityImage.png";
 export { default as commF } from "./GardenF.png";
 export { default as ecosystem } from "./ecosystem.png";

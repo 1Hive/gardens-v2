@@ -89,8 +89,10 @@ export function FormInput({
             id={registerKey}
             type={type}
             placeholder={placeholder}
-            className={`hide-input-arrows input input-bordered ${
-              errors[registerKey] ? "input-error" : "input-info"
+            className={`hide-input-arrows input dark:bg-primary-soft-dark input-bordered ${
+              errors[registerKey] ?
+                "input-error dark:dark:bg-primary-soft-dark"
+              : "input-info dark:bg-primary-soft-dark"
             } w-full ${readOnly && fixedInputClassname} ${className}`}
             required={required}
             step={step}
@@ -104,7 +106,7 @@ export function FormInput({
             {...registered}
             id={registerKey}
             placeholder={placeholder}
-            className={`${className} textarea textarea-info line-clamp-5 w-full overflow-auto h-24 ${
+            className={`${className} textarea textarea-info line-clamp-5 w-full overflow-auto h-24 dark:bg-primary-soft-dark ${
               errors[registerKey] ? "input-error" : "input-info"
             }`}
             required={required}
@@ -130,7 +132,7 @@ export function FormInput({
           />
         }
         {Boolean(suffix) && (
-          <span className="absolute right-[10px] top-1/2 -translate-y-1/2 text-black">
+          <span className="absolute right-[10px] top-1/2 -translate-y-1/2 text-neutral">
             {suffix}
           </span>
         )}

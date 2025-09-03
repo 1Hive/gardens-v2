@@ -56,7 +56,7 @@ export const WalletBalance: FC<Props> = ({
       {!data ?
         isDisconnected ?
           <div />
-        : <div className="skeleton h-14 w-56 bg-neutral-soft" />
+        : <div className="skeleton h-14 w-56 bg-neutral" />
       : <div className="flex flex-col gap-1">
           <div className="flex">
             <p className="font-medium">{label}:</p>
@@ -70,6 +70,7 @@ export const WalletBalance: FC<Props> = ({
                 disableTooltip={true}
                 compact={true}
                 tokenSymbol={data?.symbol}
+                symbolClassName="text-primary-content"
               />
               <InformationCircleIcon
                 className="ml-2 stroke-2"
@@ -81,14 +82,15 @@ export const WalletBalance: FC<Props> = ({
           <div className="flex">
             <p className="font-medium">Your balance:</p>
             <div
-              className={`tooltip ml-2 flex cursor-pointer items-center ${isEnoughBalanceRef.current ? "text-primary-content" : "text-neutral-soft-content"} `}
+              className={`tooltip ml-2 flex cursor-pointer items-center ${isEnoughBalanceRef.current ? "text-primary-content" : "text-neutral"} `}
               data-tip={`${isEnoughBalanceRef.current ? `${roundToSignificant(+formatEther(data?.value ?? 0n), 2)} ${data.symbol}` : "Insufficient balance"}`}
             >
               <DisplayNumber
                 number={roundToSignificant(+(data?.formatted || 0), 4)}
-                valueClassName={`font-semibold ${isEnoughBalanceRef.current ? "text-primary-content" : "text-neutral-soft-content"}`}
+                valueClassName={`font-semibold ${isEnoughBalanceRef.current ? "text-primary-content" : "text-neutral"}`}
                 disableTooltip={true}
                 tokenSymbol={data?.symbol}
+                symbolClassName="text-primary-content"
               />
               <InformationCircleIcon
                 className={`ml-2 stroke-2 ${isEnoughBalanceRef.current ? "text-primary-content" : "text-neutral-soft-content"}`}

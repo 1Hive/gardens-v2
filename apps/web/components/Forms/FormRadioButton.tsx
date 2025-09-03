@@ -28,7 +28,7 @@ export function FormRadioButton({
           onChange={onChange}
           value={value}
           type="radio"
-          className="radio radio-info"
+          className="radio radio-info dark:bg-primary-soft-dark selec"
           name={registerKey}
         />
         <label htmlFor={label} className="label font-semibold cursor-pointer">
