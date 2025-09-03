@@ -94,7 +94,7 @@ export default function MarkdownEditor({
             imagePlugin({
               imageUploadHandler: async (x) => {
                 const hash = await ipfsFileUpload(x);
-                return `https://${process.env.NEXT_PUBLIC_IPFS_GATEWAY}/ipfs/${hash}?pinataGatewayToken=${process.env.NEXT_PUBLIC_PINATA_KEY}`;
+                return `${location.protocol}//${location.hostname}:${location.port}/api/ipfs/${hash}`;
               },
             }),
             toolbarPlugin({
