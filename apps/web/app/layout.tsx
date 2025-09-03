@@ -18,6 +18,24 @@ const chakra = Chakra_Petch({
   weight: ["400", "500", "600", "700"],
 });
 
+export const metadata = {
+  title: "Community Page",
+  description: "Preview info for sharing links to this page.",
+  openGraph: {
+    title: "Community Page",
+    description: "Your custom OG description here.",
+    url: "https://yourdomain.com/...", // dynamic if possible
+    images: [
+      {
+        url: "https://yourdomain.com/preview.jpg",
+        width: 1200,
+        height: 630,
+      },
+    ],
+    type: "website",
+  },
+};
+
 export default function RootLayout({
   children,
 }: {
