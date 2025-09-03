@@ -14,6 +14,7 @@ import { FetchTokenResult } from "@wagmi/core";
 import cn from "classnames";
 
 import { Dnum, multiply } from "dnum";
+import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
 import { Address } from "viem";
@@ -374,6 +375,12 @@ export default function Page({
 
   return (
     <>
+      <Head>
+        <title>My Page Title</title>
+        <meta property="og:title" content="My Page Title" />
+        <meta property="og:description" content="My description" />
+        <meta property="og:image" content="https://example.com/image.jpg" />
+      </Head>
       <div className="col-span-12 xl:col-span-9">
         <div className="backdrop-blur-sm flex flex-col gap-10">
           <header className="bg-white border border-gray-200 shadow-sm section-layout">
