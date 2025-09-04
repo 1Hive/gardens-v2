@@ -26,6 +26,10 @@ import {
   InsertThematicBreak,
   StrikeThroughSupSubToggles,
   ButtonWithTooltip,
+  diffSourcePlugin,
+  linkDialogPlugin,
+  CreateLink,
+  DiffSourceToggleWrapper,
 } from "@mdxeditor/editor";
 import { ipfsFileUpload } from "@/utils/ipfsUtils";
 import "@mdxeditor/editor/style.css";
@@ -81,6 +85,7 @@ export default function MarkdownEditor({
             thematicBreakPlugin(),
             tablePlugin(),
             linkPlugin(),
+            linkDialogPlugin(),
             codeBlockPlugin({ defaultCodeBlockLanguage: "js" }),
             codeMirrorPlugin({
               codeBlockLanguages: {
@@ -101,36 +106,39 @@ export default function MarkdownEditor({
               toolbarClassName: "my-classname",
               toolbarContents: () => (
                 <>
-                  <UndoRedo />
-                  <Separator />
-                  <BoldItalicUnderlineToggles />
-                  <Separator />
-                  <ListsToggle />
-                  <Separator />
-                  <CodeToggle />
-                  <StrikeThroughSupSubToggles />
-                  <Separator />
-                  <InsertThematicBreak />
-                  <InsertTable />
-                  <InsertImage />
-                  <Separator />
-                  <ConditionalContents
-                    options={[
-                      {
-                        when: (editor) => editor?.editorType === "codeblock",
-                        contents: () => <ChangeCodeMirrorLanguage />,
-                      },
-                      {
-                        fallback: () => (
-                          <>
-                            <InsertCodeBlock />
-                          </>
-                        ),
-                      },
-                    ]}
-                  />
-                  <Separator />
-                  <BlockTypeSelect />
+                  <DiffSourceToggleWrapper>
+                    <UndoRedo />
+                    <Separator />
+                    <BoldItalicUnderlineToggles />
+                    <Separator />
+                    <ListsToggle />
+                    <Separator />
+                    <CodeToggle />
+                    <StrikeThroughSupSubToggles />
+                    <Separator />
+                    <InsertThematicBreak />
+                    <InsertTable />
+                    <CreateLink />
+                    <InsertImage />
+                    <Separator />
+                    <ConditionalContents
+                      options={[
+                        {
+                          when: (editor) => editor?.editorType === "codeblock",
+                          contents: () => <ChangeCodeMirrorLanguage />,
+                        },
+                        {
+                          fallback: () => (
+                            <>
+                              <InsertCodeBlock />
+                            </>
+                          ),
+                        },
+                      ]}
+                    />
+                    <Separator />
+                    <BlockTypeSelect />
+                  </DiffSourceToggleWrapper>
                   <div className="ml-auto">
                     <ButtonWithTooltip
                       title="Toggle fullscreen"
@@ -147,6 +155,9 @@ export default function MarkdownEditor({
             }),
             listsPlugin(),
             markdownShortcutPlugin(),
+            diffSourcePlugin({
+              viewMode: "rich-text",
+            }),
           ]}
           onChange={(md) => {
             const syntheticEvent = {
