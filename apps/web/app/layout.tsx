@@ -18,11 +18,11 @@ const chakra = Chakra_Petch({
   weight: ["400", "500", "600", "700"],
 });
 
-export const metadata = {
-  title: "Explore Gardens",
-  description: "Discover and join community gardens.",
-  // ... different metadata
-};
+// export const metadata = {
+//   title: "Explore Gardens",
+//   description: "Discover and join community gardens.",
+//   // ... different metadata
+// };
 
 export default function RootLayout({
   children,
