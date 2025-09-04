@@ -375,10 +375,6 @@ export default function Page({
 
   return (
     <>
-      <title>My Page Title</title>
-      <meta name="og:title" content="My Page Title" />
-      <meta name="og:description" content="My description" />
-      <meta name="og:image" content="https://example.com/image.jpg" />
       <div className="col-span-12 xl:col-span-9">
         <div className="backdrop-blur-sm flex flex-col gap-10">
           <header className="bg-white border border-gray-200 shadow-sm section-layout">
