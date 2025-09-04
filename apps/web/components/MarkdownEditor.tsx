@@ -99,7 +99,7 @@ export default function MarkdownEditor({
             imagePlugin({
               imageUploadHandler: async (x) => {
                 const hash = await ipfsFileUpload(x);
-                return `${location.protocol}//${location.hostname}:${location.port}/api/ipfs/${hash}`;
+                return `${location.protocol}//${location.hostname}${location.port ? `:${location.port}` : ""}/api/ipfs/${hash}`;
               },
             }),
             toolbarPlugin({
