@@ -67,7 +67,7 @@ export function handleStrategyAdded(event: GoodDollarStrategyAdded): void {
     goodDollarUser.type = GoodDollarType;
     goodDollarUser.save();
     log.error(
-      "PassportScorer: handleStrategyAdded, PassportScorer not found: {}",
+      "GoodDollar: handleStrategyAdded, SybilProtection not found: {}",
       [event.address.toHexString()]
     );
   }
