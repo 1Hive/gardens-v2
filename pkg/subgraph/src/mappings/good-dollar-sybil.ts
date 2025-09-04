@@ -52,7 +52,7 @@ export function handleUserInvalidated(event: UserInvalidated): void {
   if (goodDollarUser == null) {
     goodDollarUser = new GoodDollarUser(event.params.user.toHexString());
     goodDollarUser.save();
-    log.debug("PassportScorer: PassportUser not found: {}", [
+    log.debug("GoodDollar: GoodDollarUser not found: {}", [
       event.params.user.toHexString()
     ]);
   }
