@@ -14,9 +14,6 @@ export const contentType = "image/png";
 // Image generation
 export default async function Image() {
   // Font loading, process.cwd() is Next.js project directory
-  const interSemiBold = await readFile(
-    join(process.cwd(), "assets/Inter-SemiBold.ttf"),
-  );
 
   return new ImageResponse(
     (
@@ -40,14 +37,14 @@ export default async function Image() {
       // For convenience, we can re-use the exported opengraph-image
       // size config to also set the ImageResponse's width and height.
       ...size,
-      fonts: [
-        {
-          name: "Inter",
-          data: interSemiBold,
-          style: "normal",
-          weight: 400,
-        },
-      ],
+      // fonts: [
+      //   {
+      //     name: "Inter",
+      //     data: interSemiBold,
+      //     style: "normal",
+      //     weight: 400,
+      //   },
+      // ],
     },
   );
 }
