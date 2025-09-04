@@ -166,6 +166,19 @@ export const ConvictionBarChart = ({
         },
       ],
     },
+    //9) Conviction = Threshold  < Support
+    CovictionEqThresholLTSupport: {
+      condition: () =>
+        thresholdPct == currentConvictionPct &&
+        proposalSupportPct !== 0 &&
+        proposalSupportPct > thresholdPct,
+      details: [
+        {
+          message: "This proposal needs conviction to grow!",
+          growing: true,
+        },
+      ],
+    },
   };
 
   const { message, growing } = useMemo(() => {
