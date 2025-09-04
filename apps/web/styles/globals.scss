@@ -326,7 +326,8 @@ dialog * {
 
 /* MDXMarkdown */
 
-.mdxeditor-root-contenteditable {
+.mdxeditor-root-contenteditable,
+.wmde-markdown {
   ul {
     @apply list-disc ml-2;
   }
