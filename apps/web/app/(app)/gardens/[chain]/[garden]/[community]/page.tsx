@@ -316,40 +316,6 @@ export default function Page({
     }
   }, [covenantSectionRef.current, searchParams]);
 
-  useEffect(() => {
-    // const { chain, garden, community } = params;
-    // const title = `${community} - ${garden} Community`;
-    const title = "TEST Community";
-    // const description = `Discussion for ${community} in ${garden} on ${chain}`;
-    const description = "Discussion for COMMUNITY";
-
-    // Update document title
-    document.title = title;
-
-    // Update meta description
-    let metaDescription = document.querySelector('meta[name="description"]');
-    if (!metaDescription) {
-      metaDescription = document.createElement("meta");
-      metaDescription.setAttribute("name", "description");
-      document.head.appendChild(metaDescription);
-    }
-    metaDescription.setAttribute("content", description);
-
-    // Update OG tags
-    const updateMetaTag = (property: any, content: any) => {
-      let meta = document.querySelector(`meta[property="${property}"]`);
-      if (!meta) {
-        meta = document.createElement("meta");
-        meta.setAttribute("property", property);
-        document.head.appendChild(meta);
-      }
-      meta.setAttribute("content", content);
-    };
-
-    updateMetaTag("og:title", title);
-    updateMetaTag("og:description", description);
-  }, []);
-
   if (!tokenGarden || !registryCommunity) {
     return (
       <div className="mt-96 col-span-12">
