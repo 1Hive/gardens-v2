@@ -142,13 +142,6 @@ const proposalInputMap: Record<string, number[]> = {
   superfluidEnabled: [1],
 };
 
-const fullSybilResistanceOptions: Record<SybilResistanceType, string> = {
-  noSybilResist: "Any member can vote",
-  allowList: "Members in Allow List only",
-  gitcoinPassport: "Members with Gitcoin Passport score",
-  goodDollar: "Members verified with GoodDollar",
-};
-
 const sybilResistancePreview = (
   sybilType: SybilResistanceType,
   addresses: string[],
@@ -830,22 +823,84 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
             </div>
           </div>
           {shouldRenderInputMap("sybilResistanceType", strategyType) && (
-            <div className="flex flex-col gap-4">
-              <FormSelect
-                label="Pool voting protection"
-                register={register}
-                errors={errors}
-                required
-                registerKey="sybilResistanceType"
-                placeholder="Who can vote in this pool ?"
-                tooltip="Select the protection type to prevent voting abuse for this pool."
-                options={Object.entries(fullSybilResistanceOptions).map(
-                  ([value, text]) => ({
-                    label: text,
-                    value: value,
-                  }),
+            <div>
+              <label className="label w-fit">
+                <InfoWrapper tooltip="Select the protection type to prevent voting abuse for this pool. Who can vote ?">
+                  Pool voting protection
+                  <span className="ml-1">*</span>
+                </InfoWrapper>
+              </label>
+
+              <div className="flex flex-col gap-2 ml-2">
+                <FormRadioButton
+                  label="All members"
+                  value={"noSybilResist"}
+                  inline={true}
+                  onChange={() =>
+                    setValue("sybilResistanceType", "noSybilResist")
+                  }
+                  checked={sybilResistanceType === "noSybilResist"}
+                  registerKey="sybilResistanceType"
+                  description="Anyone in the community can vote"
+                />
+                <FormRadioButton
+                  label="Allow list"
+                  value={"allowList"}
+                  inline={true}
+                  onChange={() => setValue("sybilResistanceType", "allowList")}
+                  checked={sybilResistanceType === "allowList"}
+                  registerKey="sybilResistanceType"
+                  description="Add a list of addresses that can vote"
+                />
+                <FormRadioButton
+                  label="Human Passport"
+                  value={"gitcoinPassport"}
+                  inline={true}
+                  onChange={() =>
+                    setValue("sybilResistanceType", "gitcoinPassport")
+                  }
+                  checked={sybilResistanceType === "gitcoinPassport"}
+                  registerKey="SybilResistanceType"
+                  description={
+                    <>
+                      set a minimum score on{" "}
+                      <a
+                        href="https://passport.xyz/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Passport
+                      </a>{" "}
+                      needed for members to vote
+                    </>
+                  }
+                />
+                {chain.goodDollar && (
+                  <FormRadioButton
+                    label="GoodDollar"
+                    value={"goodDollar"}
+                    inline={true}
+                    onChange={() =>
+                      setValue("sybilResistanceType", "goodDollar")
+                    }
+                    checked={sybilResistanceType === "goodDollar"}
+                    registerKey="sybilResistanceType"
+                    description={
+                      <>
+                        members verify uniqueness with a secure face scan on{" "}
+                        <a
+                          href="https://www.gooddollar.org/"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          GoodDollar
+                        </a>
+                      </>
+                    }
+                  />
                 )}
-              />
+              </div>
+
               {showWarningMessage && (
                 <div className="mt-6">
                   <InfoBox

@@ -5,7 +5,7 @@ type Props = {
   registerKey: any;
   checked: boolean;
   label: string;
-  description?: string;
+  description?: React.ReactNode;
   inline?: boolean;
   onChange: React.ChangeEventHandler<HTMLInputElement>;
 };
