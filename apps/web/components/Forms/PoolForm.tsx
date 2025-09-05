@@ -825,10 +825,8 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
           {shouldRenderInputMap("sybilResistanceType", strategyType) && (
             <div>
               <label className="label w-fit">
-                <InfoWrapper tooltip="Select the protection type to prevent voting abuse for this pool. Who can vote ?">
-                  Pool voting protection
-                  <span className="ml-1">*</span>
-                </InfoWrapper>
+                Who can vote?
+                <span className="ml-1">*</span>
               </label>
 
               <div className="flex flex-col gap-2 ml-2">
@@ -863,11 +861,12 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
                   registerKey="SybilResistanceType"
                   description={
                     <>
-                      set a minimum score on{" "}
+                      Set a minimum score on{" "}
                       <a
                         href="https://passport.xyz/"
                         target="_blank"
                         rel="noopener noreferrer"
+                        className="underline"
                       >
                         Passport
                       </a>{" "}
@@ -887,11 +886,12 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
                     registerKey="sybilResistanceType"
                     description={
                       <>
-                        members verify uniqueness with a secure face scan on{" "}
+                        Members verify uniqueness with a secure face scan on{" "}
                         <a
                           href="https://www.gooddollar.org/"
                           target="_blank"
                           rel="noopener noreferrer"
+                          className="underline"
                         >
                           GoodDollar
                         </a>
