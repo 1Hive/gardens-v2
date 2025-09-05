@@ -50,9 +50,9 @@ export function handleUserValidated(event: UserValidated): void {
 export function handleUserInvalidated(event: UserInvalidated): void {
   let goodDollarUser = GoodDollarUser.load(event.params.user.toHexString());
   if (goodDollarUser == null) {
-    goodDollarUser = new GoodDollarUser(event.address.toHexString());
+    goodDollarUser = new GoodDollarUser(event.params.user.toHexString());
     goodDollarUser.save();
-    log.debug("PassportScorer: PassportUser not found: {}", [
+    log.debug("GoodDollar: GoodDollarUser not found: {}", [
       event.params.user.toHexString()
     ]);
   }
@@ -67,7 +67,7 @@ export function handleStrategyAdded(event: GoodDollarStrategyAdded): void {
     goodDollarUser.type = GoodDollarType;
     goodDollarUser.save();
     log.error(
-      "PassportScorer: handleStrategyAdded, PassportScorer not found: {}",
+      "GoodDollar: handleStrategyAdded, SybilProtection not found: {}",
       [event.address.toHexString()]
     );
   }

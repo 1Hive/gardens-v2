@@ -247,7 +247,7 @@ export default function PoolHeader({
         `Only users with a Gitcoin Passport above the threshold can interact with this pool: \n Threshold: ${sybilResistanceValue.toFixed(2)}`
       : "",
     goodDollar:
-      "Only users with a GoodDollar balance above the threshold can interact with this pool.",
+      "Only users verified with GoodDollar Sybil-Resistance can interact with this pool.",
     noSybilResist: "Any wallet can interact with this pool.",
   };
 
