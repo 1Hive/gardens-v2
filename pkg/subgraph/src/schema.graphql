@@ -10,7 +10,7 @@ type CVStrategy @entity(immutable: false) {
   totalEffectiveActivePoints: BigInt!
   isEnabled: Boolean!
   token: String!
-  sybilScorer: PassportScorer
+  sybil: SybilProtection
   archived: Boolean!
 }
 
@@ -162,27 +162,48 @@ type Allo @entity(immutable: false) {
   chainId: BigInt!
   tokenNative: String!
 }
+enum SybilProtectionType {
+  GoodDollar
+  Passport
+}
 
-type PassportScorer @entity(immutable: false) {
+type SybilProtection @entity(immutable: false) {
   id: ID!
+  type: SybilProtectionType!
   strategies: [PassportStrategy!] @derivedFrom(field: "passportScorer")
   users: [PassportUser!] @derivedFrom(field: "passportScorer")
 }
 
 type PassportStrategy @entity(immutable: false) {
   id: ID!
-  passportScorer: PassportScorer!
+  passportScorer: SybilProtection!
   strategy: CVStrategy!
   threshold: BigInt!
   councilSafe: String!
   active: Boolean!
 }
 
+type GoodDollarStrategy @entity(immutable: false) {
+  id: ID!
+  sybilProtection: SybilProtection!
+  strategy: CVStrategy!
+  councilSafe: String!
+  active: Boolean!
+}
+
 type PassportUser @entity(immutable: false) {
   id: ID!
-  passportScorer: PassportScorer!
+  passportScorer: SybilProtection!
   userAddress: String!
   score: BigInt!
+  lastUpdated: BigInt!
+}
+
+type GoodDollarUser @entity(immutable: false) {
+  id: ID!
+  sybilProtection: SybilProtection!
+  verified: Boolean!
+  userAddress: String!
   lastUpdated: BigInt!
 }
 

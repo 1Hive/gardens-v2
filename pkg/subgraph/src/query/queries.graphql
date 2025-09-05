@@ -306,8 +306,9 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
     isEnabled
     maxCVSupply
     archived
-    sybilScorer {
+    sybil {
       id
+      type
     }
     memberActive {
       id
@@ -534,32 +535,12 @@ query getProposalTitles($proposalId: ID!) {
   }
 }
 
-query getPassportScorer($scorerId: ID!) {
-  passportScorer(id: $scorerId) {
-    id
-    strategies {
-      id
-      strategy {
-        id
-      }
-      threshold
-      councilSafe
-      active
-    }
-    users {
-      id
-      userAddress
-      score
-      lastUpdated
-    }
-  }
-}
-
 query getPassportStrategy($strategyId: ID!) {
   passportStrategy(id: $strategyId) {
     id
-    strategy {
+    passportScorer {
       id
+      type
     }
     threshold
     councilSafe
@@ -572,6 +553,27 @@ query getPassportUser($userId: ID!) {
     id
     userAddress
     score
+    lastUpdated
+  }
+}
+
+query getGoodDollarStrategy($strategyId: ID!) {
+  goodDollarStrategy(id: $strategyId) {
+    id
+    sybilProtection {
+      id
+      type
+    }
+    councilSafe
+    active
+  }
+}
+
+query getGoodDollarUser($userId: ID!) {
+  goodDollarUser(id: $userId) {
+    id
+    userAddress
+    verified
     lastUpdated
   }
 }

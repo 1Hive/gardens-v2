@@ -16,7 +16,7 @@ import {
   ActivatePoints,
   Badge,
   DisplayNumber,
-  CheckPassport,
+  CheckSybil,
   InfoBox,
   Button,
   EthAddress,
@@ -29,7 +29,7 @@ import { calculatePercentageBigInt } from "@/utils/numbers";
 export type PoolGovernanceProps = {
   memberPoolWeight: number | undefined;
   tokenDecimals: number;
-  strategy: Pick<CVStrategy, "id" | "sybilScorer" | "poolId"> & {
+  strategy: Pick<CVStrategy, "id" | "sybil" | "poolId"> & {
     registryCommunity: { garden: Pick<TokenGarden, "symbol"> };
     config: Pick<CVStrategyConfig, "pointSystem" | "allowlist">;
   };
@@ -115,7 +115,7 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
 
         {/* Activate-Deactivate Button */}
         <div className="flex items-center flex-col gap-2">
-          <CheckPassport
+          <CheckSybil
             strategy={strategy}
             enableCheck={!memberActivatedStrategy}
           >
@@ -125,7 +125,7 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
               isMemberActivated={memberActivatedStrategy}
               isMember={isMemberCommunity}
             />
-          </CheckPassport>
+          </CheckSybil>
         </div>
         <Button
           onClick={() => setOpenGovDetails(!openGovDetails)}

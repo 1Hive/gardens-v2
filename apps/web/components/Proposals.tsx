@@ -29,7 +29,7 @@ import { ProposalCardProps } from "./ProposalCard";
 import TooltipIfOverflow from "./TooltipIfOverflow";
 import {
   Button,
-  CheckPassport,
+  CheckSybil,
   InfoWrapper,
   PoolGovernance,
   ProposalCard,
@@ -87,7 +87,7 @@ type Stats = {
 interface ProposalsProps {
   strategy: Pick<
     CVStrategy,
-    "id" | "poolId" | "totalEffectiveActivePoints" | "sybilScorer" | "isEnabled"
+    "id" | "poolId" | "totalEffectiveActivePoints" | "sybil" | "isEnabled"
   > & {
     registryCommunity: Pick<RegistryCommunity, "id"> & {
       garden: Pick<RegistryCommunity["garden"], "decimals">;
@@ -587,7 +587,10 @@ export function Proposals({
               </div>
             : !allocationView && (
                 <div onMouseLeave={() => setShowManageSupportTooltip(false)}>
-                  <CheckPassport strategy={strategy}>
+                  <CheckSybil
+                    strategy={strategy}
+                    enableCheck={strategy.sybil?.type === "Passport"}
+                  >
                     <Button
                       icon={
                         <AdjustmentsHorizontalIcon height={24} width={24} />
@@ -604,7 +607,7 @@ export function Proposals({
                     >
                       Manage support
                     </Button>
-                  </CheckPassport>
+                  </CheckSybil>
                 </div>
               ))}
         </header>

@@ -142,12 +142,6 @@ const proposalInputMap: Record<string, number[]> = {
   superfluidEnabled: [1],
 };
 
-const fullSybilResistanceOptions: Record<SybilResistanceType, string> = {
-  noSybilResist: "Any member can vote",
-  allowList: "Members in Allow List only",
-  gitcoinPassport: "Members with Gitcoin Passport score",
-};
-
 const sybilResistancePreview = (
   sybilType: SybilResistanceType,
   addresses: string[],
@@ -176,6 +170,7 @@ const sybilResistancePreview = (
       );
     })(),
     gitcoinPassport: `Passport score required: ${value}`,
+    goodDollar: "GoodDollar verification required",
   };
 
   return previewMap[
@@ -256,9 +251,7 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
 
   useEffect(() => {
     const isUnlimited = PointSystems[pointSystemType] === "unlimited";
-    const isUnprotected =
-      sybilResistanceType !== "allowList" &&
-      sybilResistanceType !== "gitcoinPassport";
+    const isUnprotected = sybilResistanceType === "noSybilResist";
     setShowWarningMessage(!isUnlimited && isUnprotected);
   }, [pointSystemType, sybilResistanceType]);
 
@@ -425,10 +418,7 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
       Array.isArray(sybilResistanceValue)
     ) {
       allowList = sybilResistanceValue;
-    } else if (
-      sybilResistanceType === "noSybilResist" ||
-      sybilResistanceType === "gitcoinPassport"
-    ) {
+    } else {
       allowList = [zeroAddress];
     }
     writeCreatePool({
@@ -468,6 +458,8 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
           sybilScorer:
             sybilResistanceType === "gitcoinPassport" ?
               (chain.passportScorer as Address)
+            : sybilResistanceType === "goodDollar" ?
+              (chain.goodDollar as Address)
             : zeroAddress,
           sybilScorerThreshold: BigInt(
             Math.round(
@@ -831,22 +823,84 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
             </div>
           </div>
           {shouldRenderInputMap("sybilResistanceType", strategyType) && (
-            <div className="flex flex-col gap-4">
-              <FormSelect
-                label="Pool voting protection"
-                register={register}
-                errors={errors}
-                required
-                registerKey="sybilResistanceType"
-                placeholder="Who can vote in this pool ?"
-                tooltip="Select the protection type to prevent voting abuse for this pool."
-                options={Object.entries(fullSybilResistanceOptions).map(
-                  ([value, text]) => ({
-                    label: text,
-                    value: value,
-                  }),
+            <div>
+              <label className="label w-fit">
+                Who can vote?
+                <span className="ml-1">*</span>
+              </label>
+
+              <div className="flex flex-col gap-2 ml-2">
+                <FormRadioButton
+                  label="All members"
+                  value={"noSybilResist"}
+                  inline={true}
+                  onChange={() =>
+                    setValue("sybilResistanceType", "noSybilResist")
+                  }
+                  checked={sybilResistanceType === "noSybilResist"}
+                  registerKey="sybilResistanceType"
+                  description="Anyone in the community can vote"
+                />
+                <FormRadioButton
+                  label="Allow list"
+                  value={"allowList"}
+                  inline={true}
+                  onChange={() => setValue("sybilResistanceType", "allowList")}
+                  checked={sybilResistanceType === "allowList"}
+                  registerKey="sybilResistanceType"
+                  description="Add a list of addresses that can vote"
+                />
+                <FormRadioButton
+                  label="Human Passport"
+                  value={"gitcoinPassport"}
+                  inline={true}
+                  onChange={() =>
+                    setValue("sybilResistanceType", "gitcoinPassport")
+                  }
+                  checked={sybilResistanceType === "gitcoinPassport"}
+                  registerKey="SybilResistanceType"
+                  description={
+                    <>
+                      Set a minimum score on{" "}
+                      <a
+                        href="https://passport.xyz/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="underline"
+                      >
+                        Passport
+                      </a>{" "}
+                      needed for members to vote
+                    </>
+                  }
+                />
+                {chain.goodDollar && (
+                  <FormRadioButton
+                    label="GoodDollar"
+                    value={"goodDollar"}
+                    inline={true}
+                    onChange={() =>
+                      setValue("sybilResistanceType", "goodDollar")
+                    }
+                    checked={sybilResistanceType === "goodDollar"}
+                    registerKey="sybilResistanceType"
+                    description={
+                      <>
+                        Members verify uniqueness with a secure face scan on{" "}
+                        <a
+                          href="https://www.gooddollar.org/"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="underline"
+                        >
+                          GoodDollar
+                        </a>
+                      </>
+                    }
+                  />
                 )}
-              />
+              </div>
+
               {showWarningMessage && (
                 <div className="mt-6">
                   <InfoBox
@@ -884,6 +938,7 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
                   placeholder="0"
                 />
               )}
+
               {sybilResistanceType === "allowList" && (
                 <AddressListInput
                   register={register}
