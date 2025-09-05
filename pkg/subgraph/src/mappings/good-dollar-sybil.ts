@@ -1,12 +1,9 @@
 import {
-  CVStrategy,
   SybilProtection,
-  PassportStrategy,
-  PassportUser,
   GoodDollarUser,
   GoodDollarStrategy
 } from "../../generated/schema";
-import { log, BigInt } from "@graphprotocol/graph-ts";
+import { log } from "@graphprotocol/graph-ts";
 import {
   Initialized,
   UserValidated,
@@ -48,9 +45,24 @@ export function handleUserValidated(event: UserValidated): void {
 }
 
 export function handleUserInvalidated(event: UserInvalidated): void {
+  let goodDollarSybil = SybilProtection.load(event.address.toHexString());
+
+  if (goodDollarSybil == null) {
+    goodDollarSybil = new SybilProtection(event.address.toHexString());
+    goodDollarSybil.type = GoodDollarType;
+    goodDollarSybil.save();
+    log.error(
+      "GoodDollar protection: handleUserInvalidated, SybilProtection not found: {}",
+      [event.address.toHexString()]
+    );
+  }
+
   let goodDollarUser = GoodDollarUser.load(event.params.user.toHexString());
   if (goodDollarUser == null) {
     goodDollarUser = new GoodDollarUser(event.params.user.toHexString());
+    goodDollarUser.userAddress = event.params.user.toHexString();
+    goodDollarUser.sybilProtection = goodDollarSybil.id;
+    goodDollarUser.lastUpdated = event.block.timestamp;
     goodDollarUser.save();
     log.debug("GoodDollar: GoodDollarUser not found: {}", [
       event.params.user.toHexString()
