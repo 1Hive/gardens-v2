@@ -1,10 +1,13 @@
-import React, { FC } from "react";
+import { BaseLogo } from "@/assets/BaseLogo";
+import { CeloLogo } from "@/assets/CeloLogo";
+import { ChainId } from "@/types";
 import {
   Arbitrum,
   GnosisGno,
   Optimism,
   Polygon,
 } from "@thirdweb-dev/chain-icons";
+import React, { FC } from "react";
 import { Address } from "viem";
 import {
   arbitrum,
@@ -19,9 +22,6 @@ import {
   sepolia,
 } from "viem/chains";
 import Subgraph from "../configs/subgraph.json";
-import { BaseLogo } from "@/assets/BaseLogo";
-import { CeloLogo } from "@/assets/CeloLogo";
-import { ChainId } from "@/types";
 
 type ChainIconProps = React.SVGProps<SVGSVGElement> & {
   chain: number | string;
@@ -117,7 +117,7 @@ export const chainConfigMap: {
     name: arbitrumSepolia.name,
     icon: Arbitrum,
     explorer: "https://sepolia.arbiscan.io/",
-    blockTime: 14,
+    blockTime: 12,
     confirmations: 2,
     rpcUrl: process.env.RPC_URL_ARB_TESTNET!,
     ...getSubgraphUrls(
@@ -176,7 +176,7 @@ export const chainConfigMap: {
     name: "Arbitrum",
     icon: Arbitrum,
     explorer: "https://arbiscan.io",
-    blockTime: 14,
+    blockTime: 12,
     confirmations: 2, // 7
     rpcUrl: process.env.RPC_URL_ARBITRUM!,
     ...getSubgraphUrls(
@@ -293,7 +293,7 @@ export const chainConfigMap: {
     name: celo.name,
     icon: CeloLogo,
     explorer: "https://celoscan.io/",
-    blockTime: 3.8,
+    blockTime: 1,
     confirmations: 4, // 4
     rpcUrl: process.env.RPC_URL_CELO!,
     ...getSubgraphUrls(

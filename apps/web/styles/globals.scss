@@ -348,7 +348,8 @@ dialog * {
 
 /* MDXMarkdown */
 
-.mdxeditor-root-contenteditable {
+.mdxeditor-root-contenteditable,
+.wmde-markdown {
   ul {
     @apply list-disc ml-2;
   }
@@ -370,8 +371,16 @@ dialog * {
   h5 span {
     @apply text-base font-bold;
   }
+  a {
+    @apply text-accent underline;
+  }
 }
 
 .mdxeditor-popup-container {
   z-index: 999999999 !important;
+}
+
+// Hide diff source button
+._ggDiffSourceToggle_1e2ox_994 ._toolbarToggleItem_1e2ox_208:nth-of-type(2) {
+  display: none !important;
 }
