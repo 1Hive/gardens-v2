@@ -349,6 +349,9 @@ dialog * {
   h5 span {
     @apply text-base font-bold;
   }
+  a {
+    @apply text-accent underline;
+  }
 }
 
 .mdxeditor-popup-container {
