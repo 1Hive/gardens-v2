@@ -117,7 +117,7 @@ export const chainConfigMap: {
     name: arbitrumSepolia.name,
     icon: Arbitrum,
     explorer: "https://sepolia.arbiscan.io/",
-    blockTime: 14,
+    blockTime: 12,
     confirmations: 2,
     rpcUrl: process.env.RPC_URL_ARB_TESTNET!,
     ...getSubgraphUrls(
@@ -176,7 +176,7 @@ export const chainConfigMap: {
     name: "Arbitrum",
     icon: Arbitrum,
     explorer: "https://arbiscan.io",
-    blockTime: 14,
+    blockTime: 12,
     confirmations: 2, // 7
     rpcUrl: process.env.RPC_URL_ARBITRUM!,
     ...getSubgraphUrls(
