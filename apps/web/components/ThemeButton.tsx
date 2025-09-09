@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { ComputerDesktopIcon } from "@heroicons/react/24/outline";
 import { useTheme } from "next-themes";
 
 export function ThemeButton() {
@@ -9,29 +10,26 @@ export function ThemeButton() {
   const themes = [
     { id: "lightTheme", label: "Light", icon: SunIcon },
     { id: "darkTheme", label: "Dark", icon: MoonIcon },
-    { id: "system", label: "System", icon: SystemIcon },
+    { id: "system", label: "System", icon: ComputerDesktopIcon },
   ];
 
   const current = themes.find((t) => t.id === resolvedTheme) ?? themes[2];
 
   return (
-    <div className="dropdown dropdown-hover bg-primary dropdown-left">
-      <button className="btn btn-ghost">
+    <div className="dropdown dropdown-hover bg-primary dropdown-end">
+      <button className="rounded-md p-1.5 hover:bg-neutral-soft dark:hover:bg-neutral">
         <current.icon className="h-6 w-6" />
       </button>
-      <ul className="dropdown-content menu bg-primary rounded-box shadow-md mt-2 w-32 p-2">
+      <ul className="dropdown-content menu bg-primary border1 w-48 mt-2.5 p-1 flex flex-row items-center justify-around rounded-md">
         {themes.map((t) => {
           const Icon = t.icon;
           return (
             <li key={t.id}>
               <button
                 onClick={() => setTheme(t.id)}
-                className={`flex items-center gap-2 ${
-                  resolvedTheme === t.id ? "bg-neutral/20 font-semibold" : ""
-                }`}
+                className="hover:bg-neutral-soft dark:hover:bg-neutral"
               >
-                <Icon className="h-5 w-5" />
-                {t.label}
+                <Icon className="h-6 w-6" />
               </button>
             </li>
           );
@@ -53,14 +51,6 @@ function MoonIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg {...props} fill="currentColor" viewBox="0 0 24 24">
       <path d="M21.64,13a1,1,0,0,0-1.05-.14,8.05,8.05,0,0,1-3.37.73A8.15,8.15,0,0,1,9.08,5.49a8.59,8.59,0,0,1,.25-2A1,1,0,0,0,8,2.36,10.14,10.14,0,1,0,22,14.05,1,1,0,0,0,21.64,13Zm-9.5,6.69A8.14,8.14,0,0,1,7.08,5.22v.27A10.15,10.15,0,0,0,17.22,15.63a9.79,9.79,0,0,0,2.1-.22A8.11,8.11,0,0,1,12.14,19.73Z" />
-    </svg>
-  );
-}
-
-function SystemIcon(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg {...props} fill="currentColor" viewBox="0 0 24 24">
-      <path d="M4 5a2 2 0 012-2h12a2 2 0 012 2v11a2 2 0 01-2 2H8l-4 4V5z" />
     </svg>
   );
 }
