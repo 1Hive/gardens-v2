@@ -1,11 +1,12 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { ComputerDesktopIcon } from "@heroicons/react/24/outline";
 import { useTheme } from "next-themes";
 
 export function ThemeButton() {
   const { resolvedTheme, setTheme } = useTheme();
+  const [open, setOpen] = useState(false);
 
   const themes = [
     { id: "lightTheme", label: "Light", icon: SunIcon },
@@ -13,28 +14,45 @@ export function ThemeButton() {
     { id: "system", label: "System", icon: ComputerDesktopIcon },
   ];
 
-  const current = themes.find((t) => t.id === resolvedTheme) ?? themes[2];
+  const CurrentIcon = resolvedTheme === "darkTheme" ? MoonIcon : SunIcon;
+
+  const handleThemeClick = (themeId: string) => {
+    setTheme(themeId);
+    setOpen(false);
+  };
 
   return (
-    <div className="dropdown dropdown-hover bg-primary dropdown-end">
-      <button className="rounded-md p-1.5 hover:bg-neutral-soft dark:hover:bg-neutral">
-        <current.icon className="h-6 w-6" />
+    <div className="dropdown dropdown-click bg-primary dropdown-end relative">
+      {/* Hidden checkbox to control dropdown state */}
+      <input
+        type="checkbox"
+        className="hidden"
+        checked={open}
+        onChange={() => setOpen(!open)}
+      />
+      <button
+        className="rounded-md p-1.5 hover:bg-neutral-soft dark:hover:bg-neutral"
+        onClick={() => setOpen(!open)}
+      >
+        <CurrentIcon className="h-6 w-6" />
       </button>
-      <ul className="dropdown-content menu bg-primary border1 w-48 mt-2.5 p-1 flex flex-row items-center justify-around rounded-md">
-        {themes.map((t) => {
-          const Icon = t.icon;
-          return (
-            <li key={t.id}>
-              <button
-                onClick={() => setTheme(t.id)}
-                className="hover:bg-neutral-soft dark:hover:bg-neutral"
-              >
-                <Icon className="h-6 w-6" />
-              </button>
-            </li>
-          );
-        })}
-      </ul>
+      {open && (
+        <ul className="dropdown-content menu bg-primary border1 w-48 mt-2.5 p-1 flex flex-row items-center justify-around rounded-md absolute right-0">
+          {themes.map((t) => {
+            const Icon = t.icon;
+            return (
+              <li key={t.id}>
+                <button
+                  onClick={() => handleThemeClick(t.id)}
+                  className="hover:bg-neutral-soft dark:hover:bg-neutral"
+                >
+                  <Icon className="h-6 w-6" />
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </div>
   );
 }

@@ -6,7 +6,7 @@ const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   return (
     <NextThemeProvider
       attribute="data-theme"
-      defaultTheme="lightTheme"
+      defaultTheme="system"
       themes={["lightTheme", "darkTheme"]}
       enableSystem={true}
     >
