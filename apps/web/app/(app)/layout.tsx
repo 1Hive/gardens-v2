@@ -75,8 +75,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <h4 className="">Gardens</h4>
           </div> */}
         </div>
-        <ThemeButton />
-        <ConnectWallet />
+        <div className="flex items-center gap-4">
+          <ConnectWallet />
+          <ThemeButton />
+        </div>
       </nav>
 
       <div className="flex justify-center items-start pt-[71px] min-h-screen">
