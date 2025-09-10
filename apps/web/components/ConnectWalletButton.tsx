@@ -175,7 +175,7 @@ export function ConnectWallet() {
                             />
                           }
                           <div className="hidden sm:flex flex-col">
-                            <h5 className="text-left">
+                            <h5 className="text-left subtitle">
                               {ensName ?? formatAddress(acc.address)}
                             </h5>
                             <div className="flex items-center">
