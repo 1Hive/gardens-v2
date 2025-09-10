@@ -63,7 +63,6 @@ export function handleUserInvalidated(event: UserInvalidated): void {
     goodDollarUser.userAddress = event.params.user.toHexString();
     goodDollarUser.sybilProtection = goodDollarSybil.id;
     goodDollarUser.lastUpdated = event.block.timestamp;
-    goodDollarUser.save();
     log.debug("GoodDollar: GoodDollarUser not found: {}", [
       event.params.user.toHexString()
     ]);
