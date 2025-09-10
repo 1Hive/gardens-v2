@@ -326,7 +326,8 @@ dialog * {
 
 /* MDXMarkdown */
 
-.mdxeditor-root-contenteditable {
+.mdxeditor-root-contenteditable,
+.wmde-markdown {
   ul {
     @apply list-disc ml-2;
   }
@@ -347,6 +348,9 @@ dialog * {
   }
   h5 span {
     @apply text-base font-bold;
+  }
+  a {
+    @apply text-accent underline;
   }
 }
 
