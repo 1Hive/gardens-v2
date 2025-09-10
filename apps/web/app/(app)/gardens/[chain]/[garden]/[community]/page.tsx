@@ -470,7 +470,7 @@ export default function Page({
                       </Button>
                     )}
                     <RegisterMember
-                      memberData={isMemberResult}
+                      memberData={accountAddress ? isMemberResult : undefined}
                       registrationCost={getTotalRegistrationCost()}
                       token={tokenGarden}
                       registryCommunity={registryCommunity}
@@ -629,7 +629,7 @@ export default function Page({
       <div className="col-span-12 xl:col-span-3">
         <div className="backdrop-blur-sm rounded-lg flex flex-col gap-2 sticky top-32">
           <IncreasePower
-            memberData={isMemberResult}
+            memberData={accountAddress ? isMemberResult : undefined}
             registryCommunity={registryCommunity}
             tokenGarden={tokenGarden}
             registrationAmount={registrationAmount}
