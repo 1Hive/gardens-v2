@@ -167,7 +167,7 @@ export const ConvictionBarChart = ({
       ],
     },
     //9) Conviction = Threshold  < Support
-    CovictionEqThresholLTSupport: {
+    ConvictionEqThresholdLTSupport: {
       condition: () =>
         thresholdPct == currentConvictionPct &&
         proposalSupportPct !== 0 &&

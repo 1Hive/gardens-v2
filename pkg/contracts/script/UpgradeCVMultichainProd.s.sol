@@ -18,7 +18,6 @@ contract UpgradeCVMultichainProd is BaseMultiChain {
         // address passportScorer = networkJson.readAddress(getKeyNetwork(".ENVS.PASSPORT_SCORER"));
         address safeArbitrator = networkJson.readAddress(getKeyNetwork(".ENVS.ARBITRATOR"));
         address proxyOwner = networkJson.readAddress(getKeyNetwork(".ENVS.PROXY_OWNER"));
-        address allContractsAddressesHash = networkJson.readAddress(getKeyNetwork(".hash"));
         address safeOwner = ProxyOwner(proxyOwner).owner();
 
         string memory json = string(abi.encodePacked("["));
@@ -118,33 +117,6 @@ contract UpgradeCVMultichainProd is BaseMultiChain {
         // Remove the last comma and close the JSON array
         json = string(abi.encodePacked(_removeLastChar(json), "]"));
 
-        string memory payload = string.concat(
-            "{",
-            '"version":"1.0",',
-            '"chainId":"',
-            vm.toString(block.chainid),
-            '",',
-            '"createdAt":',
-            vm.toString(block.timestamp * 1000),
-            ",",
-            '"meta":{',
-            '"name":"Contracts Upgrades Batch",',
-            '"description":"Safe Transaction Builder payload to upgrade contracts from Safe owner",',
-            '"txBuilderVersion":"1.18.0",',
-            '"createdFromSafeAddress":"',
-            _addressToString(safeOwner),
-            '",',
-            '"createdFromOwnerAddress":"',
-            _addressToString(msg.sender),
-            '"',
-            '"hash":"',
-            allContractsAddressesHash,
-            "},",
-            '"transactions":',
-            json,
-            "}"
-        );
-
         // ensure folder exists
         vm.createDir("transaction-builder", true);
         // write file at ./transaction-builder/arbitrum-payload.json
@@ -152,7 +124,35 @@ contract UpgradeCVMultichainProd is BaseMultiChain {
             string.concat(vm.projectRoot(), "/pkg/contracts/transaction-builder/", CURRENT_NETWORK, "-payload.json");
         // [read the file and compare hash first]
 
-        vm.writeJson(payload, path);
+        vm.writeJson(
+            string.concat(
+                "{",
+                '"version":"1.0",',
+                '"chainId":"',
+                vm.toString(block.chainid),
+                '",',
+                '"createdAt":',
+                vm.toString(block.timestamp * 1000),
+                ",",
+                '"meta":{',
+                '"name":"Contracts Upgrades Batch",',
+                '"description":"Safe Transaction Builder payload to upgrade contracts from Safe owner",',
+                '"txBuilderVersion":"1.18.0",',
+                '"createdFromSafeAddress":"',
+                _addressToString(safeOwner),
+                '",',
+                '"createdFromOwnerAddress":"',
+                _addressToString(msg.sender),
+                '"',
+                '"hash":"',
+                networkJson.readString(getKeyNetwork(".hash")),
+                "},",
+                '"transactions":',
+                json,
+                "}"
+            ),
+            path
+        );
 
         console2.log("Wrote %s", path);
     }
