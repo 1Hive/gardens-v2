@@ -134,18 +134,6 @@ export function ConnectWallet() {
                   </Button>
                 );
               }
-              //WRONG NETWORK! button if wallet is connected to unsupported chains
-              // if (chain.unsupported) {
-              //   return (
-              //     <Button
-              //       onClick={openChainModal}
-              //       btnStyle="outline"
-              //       color="danger"
-              //     >
-              //       Wrong network
-              //     </Button>
-              //   );
-              // }
 
               //Is CONNECTED to a supported chains with condition => urlChainId(urlChain) === chainId(wallet)
               //Dropdown menu with wallet, balance, switch network and disconnect buttons
@@ -175,7 +163,9 @@ export function ConnectWallet() {
                             />
                           }
                           <div className="hidden sm:flex flex-col">
-                            <h5 className="text-left subtitle">
+                            <h5
+                              className={`text-left ${isWrongNetwork ? "dark:text-neutral" : ""}`}
+                            >
                               {ensName ?? formatAddress(acc.address)}
                             </h5>
                             <div className="flex items-center">
