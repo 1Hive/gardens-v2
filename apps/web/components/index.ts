@@ -28,7 +28,7 @@ export { TokenLabel } from "./TokenLabel";
 export { Communities } from "./Communities";
 export { Breadcrumbs } from "./Breadcrumbs";
 export { SubmitPassport } from "./SubmitPassport";
-export { CheckPassport } from "./CheckPassport";
+export { CheckSybil } from "./CheckSybil";
 export { Modal } from "./Modal";
 export { InfoBox } from "./InfoBox";
 export { InfoWrapper } from "./InfoWrapper";
