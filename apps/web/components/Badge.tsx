@@ -18,19 +18,19 @@ type BadgeProps = {
 
 // Styles for different pool badge types
 const POOL_TYPE_STYLES = [
-  "bg-primary-soft text-primary-content",
-  "bg-tertiary-soft text-tertiary-content",
+  "bg-primary-soft text-primary-content dark:bg-primary-soft-dark",
+  "bg-tertiary-soft dark:bg-tertiary-dark text-tertiary-content",
 ];
 
 // Styles for different proposal status badge
 const PROPOSAL_STATUS_STYLES = [
-  "bg-danger-soft text-danger-content",
-  "bg-primary-soft text-primary-content",
-  "bg-secondary-soft text-secondary-content",
-  "bg-danger-soft text-danger-content",
-  "bg-tertiary-soft text-tertiary-content",
-  "bg-danger-soft text-danger-content",
-  "bg-danger-soft text-danger-content",
+  "bg-danger-soft dark:bg-danger-soft-dark text-danger-content",
+  "bg-primary-soft text-primary-content dark:bg-primary-soft-dark",
+  "bg-secondary-soft dark:bg-secondary-soft-dark text-secondary-content",
+  "bg-danger-soft dark:bg-danger-soft-dark text-danger-content",
+  "bg-tertiary-soft dark:bg-tertiary-dark text-tertiary-content",
+  "bg-danger-soft dark:bg-danger-soft-dark text-danger-content",
+  "bg-danger-soft dark:bg-danger-soft-dark text-danger-content",
 ];
 
 const BASE_STYLES =
@@ -66,8 +66,10 @@ export function Badge({
     icon ??
     (() => {
       const iconMap: { [key: string]: React.ReactNode } = {
-        signaling: <HandThumbUpIcon className="h-5 w-5" />,
-        funding: <CurrencyDollarIcon className="h-5 w-5" />,
+        signaling: <HandThumbUpIcon className="h-5 w-5 text-primary-content" />,
+        funding: (
+          <CurrencyDollarIcon className="h-5 w-5 dark:text-tertiary-content" />
+        ),
       };
       return type != null ? iconMap[PoolTypes[type]] ?? null : null;
     })();
@@ -78,7 +80,9 @@ export function Badge({
       data-tip={tooltip}
     >
       {Boolean(iconIncluded) && <span className="h-5 w-5">{iconIncluded}</span>}
-      <p className="first-letter:uppercase text-sm font-semibold">{content}</p>
+      <p className="first-letter:uppercase text-sm font-semibold text-inherit">
+        {content}
+      </p>
     </div>
   );
 }

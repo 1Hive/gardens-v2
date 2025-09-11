@@ -783,7 +783,7 @@ function UserAllocationStats({ stats }: { stats: Stats[] }) {
               }}
               role="progressbar"
             >
-              <span className="text-xs">{stat.stat} %</span>
+              <span className="text-xs dark:text-black">{stat.stat} %</span>
             </div>
             <div className="flex flex-col items-start justify-center">
               <InfoWrapper tooltip={stat.info}>

@@ -266,7 +266,7 @@ export function AddressListInput({
           type="button"
           className={`w-full py-2 rounded-lg text-center px-4 text-semibold ${
             inputMode === "single" ?
-              "border border-border-neutral bg-neutral-soft text-black -m-[1px]"
+              "border border-border-neutral bg-neutral-soft text-neutral-content dark:text-neutral -m-[1px]"
             : ""
           }`}
           onClick={() => setInputMode("single")}
@@ -277,7 +277,7 @@ export function AddressListInput({
           type="button"
           className={`w-full py-2 rounded-lg text-center px-4 text-semibold ${
             inputMode === "bulk" ?
-              "border border-border-neutral bg-neutral-soft text-black -m-[1px]"
+              "border border-border-neutral bg-neutral-soft text-neutral-content dark:text-neutral -m-[1px]"
             : ""
           }`}
           onClick={() => setInputMode("bulk")}
@@ -311,7 +311,7 @@ export function AddressListInput({
             onChange={(e) => setBulkAddresses(e.target.value)}
             placeholder={`Enter multiple Ethereum addresses 
 (one per line or comma-separated)`}
-            className={`textarea textarea-info w-full h-24 mb-2 ${
+            className={`textarea textarea-info dark:bg-primary-soft-dark w-full h-24 mb-2 ${
               className ?? ""
             }`}
             onKeyDown={handleSubmit}
@@ -350,7 +350,7 @@ export function AddressListInput({
             type="button"
             btnStyle="outline"
             className={`!p-2 font-normal text-[14px] leading-4 
-              ${!allowNoProtection ? "" : "!text-black !border-black"}`}
+              ${!allowNoProtection ? "" : "!text-neutral !border-neutral"}`}
             onClick={handleAllowEveryone}
             disabled={!allowNoProtection}
             icon={<UserGroupIcon className="w-4 h-4" />}
@@ -365,7 +365,8 @@ export function AddressListInput({
           <Button
             type="button"
             btnStyle="outline"
-            className="!p-2 !text-black !border-black"
+            color="danger"
+            // className="!p-2 !text-neutral !border-neutral"
             onClick={clearAllAddresses}
             forceShowTooltip
             tooltip="Clear All"
@@ -412,7 +413,7 @@ export function AddressListInput({
                 <Button
                   type="button"
                   btnStyle="link"
-                  className="!p-[2px] !text-black !border-black"
+                  className="!p-[2px] !text-neutral !border-neutral"
                   onClick={() => removeAddress(index)}
                 >
                   <XMarkIcon className="w-5 h-5" />

@@ -95,6 +95,8 @@ export function PoolCard({ pool, token }: Props) {
                 number={poolToken.formatted || "0"}
                 compact={true}
                 tokenSymbol={poolToken.symbol}
+                valueClassName="text-inherit"
+                symbolClassName="text-inherit"
               />
             </Statistic>
           )}

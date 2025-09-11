@@ -276,6 +276,7 @@ export const IncreasePower = ({
                   tokenSymbol={tokenSymbol}
                   compact={true}
                   valueClassName="text-primary-content font-bold text-3xl mr-1"
+                  symbolClassName="text-primary-content"
                   disableTooltip
                 />
               }
@@ -310,17 +311,17 @@ export const IncreasePower = ({
                 )}
                 tokenSymbol={tokenSymbol}
                 compact={true}
-                valueClassName="text-black text-lg"
-                symbolClassName="text-sm text-black"
+                valueClassName=" text-lg"
+                symbolClassName="text-sm"
               />
             </div>
             <div className="relative w-full">
-              <label className="input input-bordered input-info flex items-center gap-2 w-full">
+              <label className="input input-bordered input-info flex items-center gap-2 w-full dark:bg-primary-soft-dark">
                 <input
                   type="number"
                   value={stakedAmount}
                   placeholder="Amount"
-                  className="flex-1 w-full"
+                  className="flex-1 w-full dark:bg-primary-soft-dark"
                   min={registerStakeAmount}
                   max={accountTokenBalancePlusStakeAmount}
                   onChange={(e) => {
@@ -407,9 +408,7 @@ export const IncreasePower = ({
                   decreaseStatus === "loading"
                 }
               >
-                <span className="w-14">
-                  {stakeDifference >= 0 ? "Stake" : "Unstake"}
-                </span>
+                {stakeDifference >= 0 ? "Stake" : "Unstake"}
               </Button>
             </div>
           </>

@@ -727,7 +727,7 @@ export default function PoolHeader({
                   )}
               </div>
             )}
-            <div className="flex px-1 flex-col sm:flex-row bg-neutral-soft-2 py-2 rounded-lg items-baseline justify-between">
+            <div className="flex px-1 flex-col sm:flex-row bg-primary py-2 rounded-lg items-baseline justify-between">
               <EthAddress
                 icon={false}
                 address={strategy.id as Address}
@@ -826,7 +826,7 @@ export default function PoolHeader({
                   }
                   tooltip={config.info}
                 >
-                  <p className="text-neutral-content subtitle">
+                  <p className="subtitle dark:text-neutral-soft-content">
                     {config.value}
                   </p>
                 </Statistic>
@@ -841,15 +841,16 @@ export default function PoolHeader({
               <div className="flex gap-2 items-center">
                 <Badge
                   label="conviction voting"
-                  className="text-secondary-content"
-                  icon={<Battery50Icon />}
+                  className="text-secondary-content dark:bg-tertiary-dark"
+                  icon={<Battery50Icon className="text-tertiary-content" />}
                 />
                 <Badge
                   label={PointSystems[pointSystem]}
                   tooltip={
                     VOTING_POINT_SYSTEM_DESCRIPTION[PointSystems[pointSystem]]
                   }
-                  icon={<BoltIcon />}
+                  className="text-secondary-content dark:bg-tertiary-dark"
+                  icon={<BoltIcon className="text-tertiary-content" />}
                 />
               </div>
             </div>
@@ -864,27 +865,18 @@ export default function PoolHeader({
               className="mb-4"
             />
           )}
-          {
-            !isEnabled && (
-              <div className="banner">
+          {!isEnabled && (
+            <div className="banner">
+              {isArchived ?
+                <ArchiveBoxIcon className="h-8 w-8 text-secondary-content" />
+              : <ClockIcon className="h-8 w-8 text-secondary-content" />}
+              <h6>
                 {isArchived ?
-                  <ArchiveBoxIcon className="h-8 w-8 text-secondary-content" />
-                : <ClockIcon className="h-8 w-8 text-secondary-content" />}
-                <h6>
-                  {isArchived ?
-                    "This pool has been archived"
-                  : "Waiting for council approval"}
-                </h6>
-              </div>
-            )
-            // : <Image
-            //     src={
-            //       PoolTypes[proposalType] === "funding" ? blueLand : grassLarge
-            //     }
-            //     alt="pool image"
-            //     className="h-12 w-full rounded-lg object-cover"
-            //   />
-          }
+                  "This pool has been archived"
+                : "Waiting for council approval"}
+              </h6>
+            </div>
+          )}
         </section>
       </div>
     </>

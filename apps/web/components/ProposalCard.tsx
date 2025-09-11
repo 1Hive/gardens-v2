@@ -203,12 +203,22 @@ export function ProposalCard({
                 </Skeleton>
                 {isPoolEnabled && (
                   <div className="flex items-center gap-4">
-                    <p className="hidden sm:flex text-sm  items-center bg-neutral-soft-2 rounded-md px-2 py-1">
+                    <p className="hidden sm:flex text-sm  items-center bg-neutral-soft-2 rounded-md px-2 dark:bg-primary-soft-dark py-1">
                       ID: <span className="text-md ml-1">{proposalNumber}</span>
                     </p>
                     <Badge
                       status={proposalStatus}
-                      icon={<HandRaisedIcon className="w-5 h-5" />}
+                      icon={
+                        <HandRaisedIcon
+                          className={`w-5 h-5 ${
+                            ProposalStatus[proposalStatus] === "active" ?
+                              "text-primary-content"
+                            : ProposalStatus[proposalStatus] === "executed" ?
+                              "text-tertiary-content"
+                            : "text-danger-content"
+                          }`}
+                        />
+                      }
                     />
                   </div>
                 )}
@@ -234,7 +244,9 @@ export function ProposalCard({
                     {!isSignalingType && poolToken && (
                       <div className="flex items-center gap-1 justify-self-end">
                         <div className="hidden sm:block w-1 h-1 rounded-full bg-neutral-soft-content" />
-                        <p className="text-sm ml-1">Requesting: </p>
+                        <p className="text-sm ml-1 dark:text-neutral-soft-content">
+                          Requesting:{" "}
+                        </p>
                         <DisplayNumber
                           number={formatUnits(
                             requestedAmount,
@@ -242,6 +254,8 @@ export function ProposalCard({
                           )}
                           tokenSymbol={poolToken.symbol}
                           compact={true}
+                          valueClassName="dark:text-neutral-soft-content"
+                          symbolClassName="dark:text-neutral-soft-content"
                         />
                       </div>
                     )}

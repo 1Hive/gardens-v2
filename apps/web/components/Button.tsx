@@ -53,7 +53,8 @@ const btnStyles: BtnStyles = {
       "bg-tertiary-button text-neutral-inverted-content hover:bg-tertiary-hover-content",
     danger:
       "bg-danger-button text-neutral-inverted-content hover:bg-danger-hover-content",
-    disabled: "bg-neutral-button text-neutral-inverted-content",
+    disabled:
+      "bg-neutral-button text-neutral-inverted-content dark:text-neutral-inverted-content-dark",
   },
   outline: {
     primary:
@@ -71,7 +72,7 @@ const btnStyles: BtnStyles = {
     secondary: "text-secondary-content hover:text-secondary-hover-content",
     tertiary: "text-tertiary-content hover:text-tertiary-hover-content",
     danger: "text-danger-button hover:text-danger-hover-content",
-    disabled: "text-neutral-soft",
+    disabled: "text-neutral-soft dark:text-neutral-inverted-content-dark",
   },
   ghost: {
     primary:
@@ -82,7 +83,7 @@ const btnStyles: BtnStyles = {
       "text-tertiary-content hover:text-tertiary-hover-content hover:border border-tertiary-content",
     danger:
       "text-danger-button hover:text-danger-hover-content hover:border border-danger-button",
-    disabled: "text-neutral-soft",
+    disabled: "text-neutral-soft dark:text-neutral-inverted-content-dark",
   },
 };
 
