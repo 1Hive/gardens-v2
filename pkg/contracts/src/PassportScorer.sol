@@ -73,7 +73,7 @@ contract PassportScorer is ISybilScorer, ProxyOwnableUpgrader {
     /// @notice Add a userScore to the list
     /// @param _user address of the user to add
     /// @param _score score to assign to the user
-    function addUserScore(address _user, uint256 _score) external override onlyAuthorized {
+    function addUserScore(address _user, uint256 _score) external onlyAuthorized {
         _revertZeroAddress(_user);
         userScores[_user] = _score;
         emit UserScoreAdded(_user, _score);
@@ -81,7 +81,7 @@ contract PassportScorer is ISybilScorer, ProxyOwnableUpgrader {
 
     /// @notice Remove a user from the list
     /// @param _user address of the user to remove
-    function removeUser(address _user) external override onlyAuthorized {
+    function removeUser(address _user) external onlyAuthorized {
         _revertZeroAddress(_user);
         delete userScores[_user];
         emit UserRemoved(_user);
@@ -89,7 +89,7 @@ contract PassportScorer is ISybilScorer, ProxyOwnableUpgrader {
 
     /// @notice Change the list manager address
     /// @param _newManager address of the new list manager
-    function changeListManager(address _newManager) external override onlyOwner {
+    function changeListManager(address _newManager) external onlyOwner {
         _revertZeroAddress(_newManager);
         address oldManager = listManager;
         listManager = _newManager;
@@ -115,7 +115,7 @@ contract PassportScorer is ISybilScorer, ProxyOwnableUpgrader {
 
     /// @notice Remove a strategy from the contract
     /// @param _strategy address of the strategy to remove
-    function removeStrategy(address _strategy) external override onlyCouncilOrAuthorized(_strategy) {
+    function removeStrategy(address _strategy) external onlyCouncilOrAuthorized(_strategy) {
         _revertZeroAddress(_strategy);
         delete strategies[_strategy];
         emit StrategyRemoved(_strategy);

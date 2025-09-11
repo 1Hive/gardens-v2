@@ -34,49 +34,55 @@ export function ActivatePoints({
   const allowList = (strategy?.config?.allowlist as Address[]) ?? [];
   const isAllowed = useCheckAllowList(allowList, connectedAccount);
 
-  const { write: writeActivatePoints, error: errorActivatePoints } =
-    useContractWriteWithConfirmations({
-      chainId,
-      address: strategy.id as Address,
-      contractName: "CV Strategy",
-      abi: cvStrategyABI,
-      functionName: "activatePoints",
-      fallbackErrorMessage: "Error activating points, please report a bug.",
-      onConfirmations: () => {
-        publish({
-          topic: "member",
-          id: connectedAccount,
-          type: "update",
-          function: "activatePoints",
-          containerId: strategy.poolId,
-          chainId,
-        });
-      },
-    });
+  const {
+    write: writeActivatePoints,
+    error: errorActivatePoints,
+    isLoading: isLoadingActivatePoints,
+  } = useContractWriteWithConfirmations({
+    chainId,
+    address: strategy.id as Address,
+    contractName: "CV Strategy",
+    abi: cvStrategyABI,
+    functionName: "activatePoints",
+    fallbackErrorMessage: "Error activating points, please report a bug.",
+    onConfirmations: () => {
+      publish({
+        topic: "member",
+        id: connectedAccount,
+        type: "update",
+        function: "activatePoints",
+        containerId: strategy.poolId,
+        chainId,
+      });
+    },
+  });
 
-  const { write: writeDeactivatePoints, error: errorDeactivatePoints } =
-    useContractWriteWithConfirmations({
-      address: strategy.id as Address,
-      abi: cvStrategyABI,
-      contractName: "CV Strategy",
-      functionName: "deactivatePoints",
-      fallbackErrorMessage: "Error deactivating points, please report a bug.",
-      onConfirmations: () => {
-        publish({
-          topic: "member",
-          id: connectedAccount,
-          containerId: strategy.poolId,
-          type: "update",
-          function: "deactivatePoints",
-          chainId,
-        });
-      },
-    });
+  const {
+    write: writeDeactivatePoints,
+    error: errorDeactivatePoints,
+    isLoading: isLoadingDeactivatePoints,
+  } = useContractWriteWithConfirmations({
+    address: strategy.id as Address,
+    abi: cvStrategyABI,
+    contractName: "CV Strategy",
+    functionName: "deactivatePoints",
+    fallbackErrorMessage: "Error deactivating points, please report a bug.",
+    onConfirmations: () => {
+      publish({
+        topic: "member",
+        id: connectedAccount,
+        containerId: strategy.poolId,
+        type: "update",
+        function: "deactivatePoints",
+        chainId,
+      });
+    },
+  });
 
   useErrorDetails(errorActivatePoints, "activatePoints");
   useErrorDetails(errorDeactivatePoints, "deactivatePoints");
 
-  async function handleChange() {
+  async function handleClick() {
     if (connectedAccount) {
       if (isMemberActivated) {
         writeDeactivatePoints?.({ args: [] });
@@ -112,11 +118,12 @@ export function ActivatePoints({
 
   return (
     <Button
-      onClick={handleChange}
+      onClick={handleClick}
       btnStyle={isMemberActivated ? "outline" : "filled"}
       color={isMemberActivated ? "danger" : "primary"}
       disabled={missmatchUrl || disableActiveBtn || !isAllowed}
       tooltip={tooltipMessage}
+      isLoading={isLoadingActivatePoints || isLoadingDeactivatePoints}
     >
       {isMemberActivated ? "Deactivate governance" : "Activate governance"}
     </Button>
