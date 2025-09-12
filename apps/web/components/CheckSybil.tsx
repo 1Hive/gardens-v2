@@ -78,7 +78,7 @@ export function CheckSybil({
   const isGoodDollarCallback =
     searchParams[QUERY_PARAMS.poolPage.goodDollar] === "true" &&
     searchParams[QUERY_PARAMS.poolPage.goodDollarVerified] === "dHJ1ZQ=="; // base64 of 'true'
-  
+
   useEffect(() => {
     if (triggerClose) {
       setIsModalOpen(false);
@@ -402,12 +402,16 @@ export function CheckSybil({
       const callbackUrl = `${window.location.href}?${QUERY_PARAMS.poolPage.goodDollar}=true`;
       const link = await sdk?.generateFVLink(false, callbackUrl, celo.id);
 
-      await switchNetworkAsync(chainFromPath?.id);
+      if (walletClient.chain?.id !== celo.id) {
+        await switchNetworkAsync(chainFromPath?.id);
+      }
       window.location.href = link;
     } catch (error) {
       console.error("Error generating GoodDollar link:", error);
       setIsGoodDollarVerifying(false);
-      await switchNetworkAsync(chainFromPath?.id);
+      if (walletClient.chain?.id !== celo.id) {
+        await switchNetworkAsync(chainFromPath?.id);
+      }
     }
   };
 
