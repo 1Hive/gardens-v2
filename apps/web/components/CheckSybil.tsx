@@ -45,12 +45,14 @@ type CheckPassportProps = {
     onClick: (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
   }>;
   enableCheck?: boolean;
+  triggerClose?: boolean;
 };
 
 export function CheckSybil({
   strategy,
   children,
   enableCheck = true,
+  triggerClose,
 }: CheckPassportProps) {
   const { address: walletAddr } = useAccount();
   const [isModalOpened, setIsModalOpen] = useState(false);
@@ -76,6 +78,12 @@ export function CheckSybil({
   const isGoodDollarCallback =
     searchParams[QUERY_PARAMS.poolPage.goodDollar] === "true" &&
     searchParams[QUERY_PARAMS.poolPage.goodDollarVerified] === "dHJ1ZQ=="; // base64 of 'true'
+  
+  useEffect(() => {
+    if (triggerClose) {
+      setIsModalOpen(false);
+    }
+  }, [triggerClose]);
 
   useEffect(() => {
     if (!enableCheck) return;
@@ -306,6 +314,14 @@ export function CheckSybil({
             body: JSON.stringify({ user: address }),
           },
         );
+        if (!response.ok) {
+          toast.error("Error connecting to Gardens");
+          console.error("Error writing GoodDollar validity", response);
+          return {
+            error: true,
+            errorMessage: response.statusText,
+          };
+        }
       } else if (strategy.sybil?.type === "Passport") {
         response = await fetch(
           `/api/passport-oracle/write-score/${chainFromPath?.id}`,
@@ -331,12 +347,14 @@ export function CheckSybil({
 
       const data = await response.json();
 
-      publish({
-        topic: "member",
-        type: "update",
-        id: address,
-        chainId: chainFromPath?.id,
-      });
+      if (strategy.sybil?.type === "Passport") {
+        publish({
+          topic: "member",
+          type: "update",
+          id: address,
+          chainId: chainFromPath?.id,
+        });
+      }
 
       console.debug("Response from writeScorer API:", data);
       return data;
@@ -473,8 +491,12 @@ export function CheckSybil({
                             const { data: isGardensVerified } =
                               await refetchGoodDollarIsVerifiedInGardens();
                             if (!isGardensVerified) {
-                              await writeSybil(walletAddr as Address);
-                              setForceIsVerified(true);
+                              const resp = await writeSybil(
+                                walletAddr as Address,
+                              );
+                              if (!resp.error) {
+                                setForceIsVerified(true);
+                              }
                             }
                           }
                           setIsGoodDollarVerifying(false);

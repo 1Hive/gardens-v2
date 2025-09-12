@@ -54,6 +54,8 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
   const poolSystem = strategy.config.pointSystem;
   const [openGovDetails, setOpenGovDetails] = useState(false);
   const { address } = useAccount();
+  const [triggerSybilCheckModalClose, setTriggerSybilCheckModalClose] =
+    useState(false);
 
   const poolSystemDefinition: { [key: number]: string } = {
     0: "Fixed voting system. Every member has the same governance weight, limited to their registration stake.",
@@ -118,12 +120,14 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
           <CheckSybil
             strategy={strategy}
             enableCheck={!memberActivatedStrategy}
+            triggerClose={triggerSybilCheckModalClose}
           >
             <ActivatePoints
               strategy={strategy}
               communityAddress={communityAddress}
               isMemberActivated={memberActivatedStrategy}
               isMember={isMemberCommunity}
+              handleTxSuccess={() => setTriggerSybilCheckModalClose(true)}
             />
           </CheckSybil>
         </div>

@@ -20,12 +20,14 @@ type ActiveMemberProps = {
   communityAddress: Address;
   isMemberActivated: boolean | undefined;
   isMember: boolean | undefined;
+  handleTxSuccess?: () => void;
 };
 
 export function ActivatePoints({
   strategy,
   isMember,
   isMemberActivated,
+  handleTxSuccess = () => {},
 }: ActiveMemberProps) {
   const { address: connectedAccount } = useAccount();
   const { openConnectModal } = useConnectModal();
@@ -45,6 +47,9 @@ export function ActivatePoints({
     abi: cvStrategyABI,
     functionName: "activatePoints",
     fallbackErrorMessage: "Error activating points, please report a bug.",
+    onSuccess: () => {
+      handleTxSuccess?.();
+    },
     onConfirmations: () => {
       publish({
         topic: "member",
@@ -67,6 +72,9 @@ export function ActivatePoints({
     contractName: "CV Strategy",
     functionName: "deactivatePoints",
     fallbackErrorMessage: "Error deactivating points, please report a bug.",
+    onSuccess: () => {
+      handleTxSuccess?.();
+    },
     onConfirmations: () => {
       publish({
         topic: "member",
