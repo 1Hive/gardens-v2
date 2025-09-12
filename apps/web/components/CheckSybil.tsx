@@ -76,7 +76,8 @@ export function CheckSybil({
   });
 
   const isGoodDollarCallback =
-    searchParams[QUERY_PARAMS.poolPage.goodDollar] === "true" &&
+    searchParams[QUERY_PARAMS.poolPage.goodDollar] === "true";
+  const isGoodDollarSuccess =
     searchParams[QUERY_PARAMS.poolPage.goodDollarVerified] === "dHJ1ZQ=="; // base64 of 'true'
 
   useEffect(() => {
@@ -446,7 +447,10 @@ export function CheckSybil({
             isWalletVerified == null ?
               <LoadingSpinner className="w-12 h-12" />
             : <>
-                {!isWalletVerified && !isGoodDollarCallback ?
+                {(
+                  (!isWalletVerified && !isGoodDollarCallback) ||
+                  !isGoodDollarSuccess
+                ) ?
                   <>
                     <p className="text-left">
                       Please confirm you&apos;re a unique human with a secure,
