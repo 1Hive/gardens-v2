@@ -2,13 +2,13 @@
 
 import React from "react";
 import { Addreth } from "addreth/no-wagmi";
-import { useTheme } from "next-themes";
 import { Address, isAddress } from "viem";
 import { useEnsName, useEnsAvatar } from "wagmi";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { isSafeAvatarUrl } from "@/app/api/utils";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { shortenAddress as shortenAddressFn } from "@/utils/text";
+import { useTheme } from "@/providers/ThemeProvider";
 
 type EthAddressProps = {
   address?: Address;

@@ -5,7 +5,6 @@ import { PlusIcon } from "@heroicons/react/24/outline";
 import { Address, readContract } from "@wagmi/core";
 import Image from "next/image";
 import Link from "next/link";
-import { useTheme } from "next-themes";
 import {
   getCommunitiesDocument,
   getCommunitiesQuery,
@@ -25,6 +24,7 @@ import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQueryMultiChain } from "@/hooks/useSubgraphQueryMultiChain";
 import { getProtopiansOwners } from "@/services/alchemy";
 import { safeABI } from "@/src/customAbis";
+import { useTheme } from "@/providers/ThemeProvider";
 
 // Components
 const Header = () => {

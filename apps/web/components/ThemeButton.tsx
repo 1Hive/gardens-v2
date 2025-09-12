@@ -1,50 +1,72 @@
 "use client";
 
-import React, { useState } from "react";
-import { ComputerDesktopIcon } from "@heroicons/react/24/outline";
-import { useTheme } from "next-themes";
+import React, { useEffect, useRef, useState } from "react";
+import { GardensTheme, useTheme } from "@/providers/ThemeProvider";
 
 export function ThemeButton() {
-  const { resolvedTheme, setTheme } = useTheme();
+  const { systemTheme, theme, setTheme, isSystemTheme } = useTheme();
   const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
 
-  const themes = [
-    { id: "lightTheme", label: "Light", icon: SunIcon },
-    { id: "darkTheme", label: "Dark", icon: MoonIcon },
-    { id: "system", label: "System", icon: ComputerDesktopIcon },
-  ];
+  const themes = {
+    lightTheme: { id: "lightTheme", label: "Light", icon: SunIcon },
+    darkTheme: { id: "darkTheme", label: "Dark", icon: MoonIcon },
+    system: {
+      id: "system",
+      label: "System",
+      icon: () => <IconWithAuto systemTheme={systemTheme}></IconWithAuto>,
+    },
+  } as const;
 
-  const CurrentIcon = resolvedTheme === "darkTheme" ? MoonIcon : SunIcon;
+  const CurrentIcon = themes[theme]?.icon ?? SunIcon;
 
   const handleThemeClick = (themeId: string) => {
     setTheme(themeId);
     setOpen(false);
   };
 
+  useEffect(() => {
+    const onDocDown = (e: PointerEvent) => {
+      if (!rootRef.current) return;
+      if (!rootRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("pointerdown", onDocDown, true);
+    return () => document.removeEventListener("pointerdown", onDocDown, true);
+  }, []);
+
+  useEffect(() => {
+    const onEsc = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    document.addEventListener("keydown", onEsc);
+    return () => document.removeEventListener("keydown", onEsc);
+  }, []);
+
   return (
-    <div className="dropdown dropdown-click bg-primary dropdown-end relative">
-      {/* Hidden checkbox to control dropdown state */}
-      <input
-        type="checkbox"
-        className="hidden"
-        checked={open}
-        onChange={() => setOpen(!open)}
-      />
+    <div
+      className={`rounded-md dropdown dropdown-click dropdown-end ${open ? "dropdown-open" : ""} relative hover:bg-neutral-soft dark:hover:bg-primary`}
+      ref={rootRef}
+    >
       <button
-        className="rounded-md p-1.5 hover:bg-neutral-soft dark:hover:bg-neutral"
-        onClick={() => setOpen(!open)}
+        className={`p-2 ${isSystemTheme ? "pr-3" : ""} rounded-md`}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onMouseDown={(e) => {
+          e.stopPropagation();
+          setOpen((wasOpen) => !wasOpen);
+        }}
       >
         <CurrentIcon className="h-6 w-6" />
       </button>
       {open && (
         <ul className="dropdown-content menu bg-primary border1 w-48 mt-2.5 p-1 flex flex-row items-center justify-around rounded-md absolute right-0">
-          {themes.map((t) => {
+          {Object.entries(themes).map(([key, t]) => {
             const Icon = t.icon;
+            const active = theme === key;
             return (
-              <li key={t.id}>
+              <li key={key} role="none">
                 <button
-                  onClick={() => handleThemeClick(t.id)}
-                  className="hover:bg-neutral-soft dark:hover:bg-neutral"
+                  role="menuitem"
+                  onClick={() => handleThemeClick(key)}
+                  className={`rounded-md hover:bg-neutral-soft dark:hover:bg-neutral ${active ? "bg-neutral-soft dark:bg-neutral" : ""}`}
                 >
                   <Icon className="h-6 w-6" />
                 </button>
@@ -70,5 +92,21 @@ function MoonIcon(props: React.SVGProps<SVGSVGElement>) {
     <svg {...props} fill="currentColor" viewBox="0 0 24 24">
       <path d="M21.64,13a1,1,0,0,0-1.05-.14,8.05,8.05,0,0,1-3.37.73A8.15,8.15,0,0,1,9.08,5.49a8.59,8.59,0,0,1,.25-2A1,1,0,0,0,8,2.36,10.14,10.14,0,1,0,22,14.05,1,1,0,0,0,21.64,13Zm-9.5,6.69A8.14,8.14,0,0,1,7.08,5.22v.27A10.15,10.15,0,0,0,17.22,15.63a9.79,9.79,0,0,0,2.1-.22A8.11,8.11,0,0,1,12.14,19.73Z" />
     </svg>
+  );
+}
+
+export function IconWithAuto({ systemTheme }: { systemTheme: GardensTheme }) {
+  return (
+    <span className="relative inline-flex">
+      {systemTheme === "darkTheme" ?
+        <MoonIcon className="h-6 w-6" />
+      : <SunIcon className="h-6 w-6" />}
+      <span
+        aria-label="Automatic"
+        className="pointer-events-none absolute -right-1 font-semibold leading-none text-[var(--color-text)] text-xs"
+      >
+        A
+      </span>
+    </span>
   );
 }
