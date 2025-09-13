@@ -66,7 +66,7 @@ export default function MarkdownEditor({
     !!wrapRef.current &&
     // @ts-ignore safari old
     (wrapRef.current.requestFullscreen ||
-      wrapRef.current.webkitRequestFullscreen);
+      (wrapRef.current as any).webkitRequestFullscreen);
 
   useEffect(() => {
     const onFsChange = () => setIsFs(Boolean(document.fullscreenElement));
