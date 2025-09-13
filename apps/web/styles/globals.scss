@@ -377,10 +377,57 @@ dialog * {
 }
 
 .mdxeditor-popup-container {
+  position: fixed !important;
   z-index: 999999999 !important;
+
+  button {
+    cursor: pointer;
+  }
 }
 
 // Hide diff source button
 ._ggDiffSourceToggle_1e2ox_994 ._toolbarToggleItem_1e2ox_208:nth-of-type(2) {
   display: none !important;
+}
+
+.mdxeditor-toolbar {
+  button {
+    cursor: pointer;
+  }
+}
+
+.mdxeditor-select-content {
+  div[role="option"] {
+    cursor: pointer;
+  }
+}
+
+.dark-editor {
+  --basePageBg: var(--p);
+  --baseTextColor: var(--color-text);
+
+  ._selectTrigger_1e2ox_308 {
+    background-color: var(--baseBase);
+    color: var(--color-text);
+  }
+
+  ._placeholder_1e2ox_1106 {
+    color: #9f9f9f;
+  }
+
+  &.mdxeditor-popup-container {
+    --basePageBg: var(--p);
+    --baseTextColor: var(--color-text);
+
+    div {
+      background-color: var(--baseBase);
+      color: var(--color-text);
+
+      .mdxeditor-select-content {
+        div[role="option"]:hover {
+          background-color: var(--baseBg);
+        }
+      }
+    }
+  }
 }
