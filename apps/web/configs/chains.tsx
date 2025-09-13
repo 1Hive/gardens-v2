@@ -1,13 +1,10 @@
-import { BaseLogo } from "@/assets/BaseLogo";
-import { CeloLogo } from "@/assets/CeloLogo";
-import { ChainId } from "@/types";
+import React, { FC } from "react";
 import {
   Arbitrum,
   GnosisGno,
   Optimism,
   Polygon,
 } from "@thirdweb-dev/chain-icons";
-import React, { FC } from "react";
 import { Address } from "viem";
 import {
   arbitrum,
@@ -22,6 +19,9 @@ import {
   sepolia,
 } from "viem/chains";
 import Subgraph from "../configs/subgraph.json";
+import { BaseLogo } from "@/assets/BaseLogo";
+import { CeloLogo } from "@/assets/CeloLogo";
+import { ChainId } from "@/types";
 
 type ChainIconProps = React.SVGProps<SVGSVGElement> & {
   chain: number | string;
@@ -262,7 +262,6 @@ export const chainConfigMap: {
     ...getSuperfluidSubgraphUrls(
       "CFe2JWsPy9eiT9B49m2E2gwxdCzWdm5kfYHRXi5VseXV",
     ),
-
     globalTribunal: "0x1B8C7f06F537711A7CAf6770051A43B4F3E69A7e",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0x92bc0af737f55FF7B677cd942Aafd52934Fc751d",
@@ -287,7 +286,6 @@ export const chainConfigMap: {
     ...getSuperfluidSubgraphUrls(
       "5P6vRdU8BQUKMSc9v5sVDMczBRvURyK7hnrQCKf24PXW",
     ),
-
     globalTribunal: "0x9a17De1f0caD0c592F656410997E4B685d339029",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0xab98D1D6Ce18e537715126614278d1A4D26bbc7d",
@@ -312,7 +310,6 @@ export const chainConfigMap: {
     ...getSuperfluidSubgraphUrls(
       "DnAAo2aA676F8DYkcUPrRTgpH4smc1Yo7D7BnzC3ErBh",
     ),
-
     globalTribunal: "0x9a17De1f0caD0c592F656410997E4B685d339029",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0x83bDE2E2D8AcAAad2D300DA195dF3cf86b234bdd",
