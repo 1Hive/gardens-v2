@@ -7,6 +7,7 @@ import {RegistryCommunityV0_0} from "../src/RegistryCommunity/RegistryCommunityV
 import {RegistryFactoryV0_0} from "../src/RegistryFactory/RegistryFactoryV0_0.sol";
 import {ICVStrategy} from "../src/CVStrategy/ICVStrategy.sol";
 import {ProxyOwner} from "../src/ProxyOwner.sol";
+import {DecayRescale} from "./DecayRescaler.sol";
 
 contract UpgradeCVMultichainProd is BaseMultiChain {
     using stdJson for string;
@@ -49,13 +50,13 @@ contract UpgradeCVMultichainProd is BaseMultiChain {
             // }
 
             // 1.c -- Set the Strategy Template --
-            {
-                bytes memory setStrategyTemplate =
-                    abi.encodeWithSelector(registryFactory.setStrategyTemplate.selector, strategyImplementation);
-                json = string(
-                    abi.encodePacked(json, _createTransactionJson(registryFactoryProxy, setStrategyTemplate), ",")
-                );
-            }
+            // {
+            //     bytes memory setStrategyTemplate =
+            //         abi.encodeWithSelector(registryFactory.setStrategyTemplate.selector, strategyImplementation);
+            //     json = string(
+            //         abi.encodePacked(json, _createTransactionJson(registryFactoryProxy, setStrategyTemplate), ",")
+            //     );
+            // }
         }
 
         // 2. REGISTRY COMMUNITIES UPGRADES
@@ -76,11 +77,11 @@ contract UpgradeCVMultichainProd is BaseMultiChain {
                 //     )
                 // );
                 // 2.b -- Set the Strategy Template --
-                json = string(
-                    abi.encodePacked(
-                        json, _createTransactionJson(registryCommunityProxies[i], registryTransactions[i * 2 + 1]), ","
-                    )
-                );
+                // json = string(
+                //     abi.encodePacked(
+                //         json, _createTransactionJson(registryCommunityProxies[i], registryTransactions[i * 2 + 1]), ","
+                //     )
+                // );
             }
         }
 
@@ -88,19 +89,25 @@ contract UpgradeCVMultichainProd is BaseMultiChain {
         {
             address[] memory cvStrategyProxies = networkJson.readAddressArray(getKeyNetwork(".PROXIES.CV_STRATEGIES"));
             bytes[] memory upgradeCVStrategies = new bytes[](cvStrategyProxies.length);
-            // bytes[] memory initStategies = new bytes[](cvStrategyProxies.length);
+            bytes[] memory initStategies = new bytes[](cvStrategyProxies.length);
             bytes[] memory setPoolParams = new bytes[](cvStrategyProxies.length);
             for (uint256 i = 0; i < cvStrategyProxies.length; i++) {
-                (upgradeCVStrategies[i], setPoolParams[i]) =
+                (upgradeCVStrategies[i], initStategies[i], setPoolParams[i]) =
                     _upgradeCVStrategy(cvStrategyProxies[i], strategyImplementation, safeArbitrator);
             }
             for (uint256 i = 0; i < cvStrategyProxies.length; i++) {
                 // 3.a -- Upgrade the CV Strategy --
-                json = string(
-                    abi.encodePacked(json, _createTransactionJson(cvStrategyProxies[i], upgradeCVStrategies[i]), ",")
-                );
-                // 3.b -- Set the Pool Params --
-                // json = string(abi.encodePacked(json, _createTransactionJson(cvStrategyProxies[i], setPoolParams[i]), ","));
+                // json = string(
+                //     abi.encodePacked(json, _createTransactionJson(cvStrategyProxies[i], upgradeCVStrategies[i]), ",")
+                // );
+
+                // 3.b -- Init the Strategy --
+                // json =
+                //     string(abi.encodePacked(json, _createTransactionJson(cvStrategyProxies[i], initStategies[i]), ","));
+
+                // 3.c -- Set the Pool Params --
+                json =
+                    string(abi.encodePacked(json, _createTransactionJson(cvStrategyProxies[i], setPoolParams[i]), ","));
             }
         }
 
@@ -182,15 +189,15 @@ contract UpgradeCVMultichainProd is BaseMultiChain {
         return (upgradeRegistryCommunity, setStrategyTemplateCommunity);
     }
 
-    function _upgradeCVStrategy(address cvStrategyProxy, address strategyImplementation, address safeArbitrator)
+    function _upgradeCVStrategy(address _cvStrategyProxy, address _strategyImplementation, address _safeArbitrator)
         // address passportScorer
         internal
         view
-        returns (bytes memory, bytes memory)
+        returns (bytes memory, bytes memory, bytes memory)
     {
-        CVStrategyV0_0 cvStrategy = CVStrategyV0_0(payable(cvStrategyProxy));
-        bytes memory upgradeCVStrategy = abi.encodeWithSelector(cvStrategy.upgradeTo.selector, strategyImplementation);
-        // bytes memory initStategy = abi.encodeWithSelector(cvStrategy.init2.selector, safeArbitrator);
+        CVStrategyV0_0 cvStrategy = CVStrategyV0_0(payable(_cvStrategyProxy));
+        bytes memory upgradeCVStrategy = abi.encodeWithSelector(cvStrategy.upgradeTo.selector, _strategyImplementation);
+        bytes memory initStrategy = abi.encodeWithSelector(CVStrategyV0_0.init.selector);
         // address oldPassport = address(cvStrategy.sybilScorer());
         // bytes memory setSybilScorer = "";
         // if (oldPassport != address(0)) {
@@ -200,7 +207,7 @@ contract UpgradeCVMultichainProd is BaseMultiChain {
         ArbitrableConfig memory arbitrableConfig;
         {
             (
-                ,
+                IArbitrator safeArbitrator,
                 address tribunalSafe,
                 uint256 submitterCollateralAmount,
                 uint256 challengerCollateralAmount,
@@ -208,7 +215,7 @@ contract UpgradeCVMultichainProd is BaseMultiChain {
                 uint256 defaultRulingTimeout
             ) = cvStrategy.arbitrableConfigs(cvStrategy.currentArbitrableConfigVersion());
             arbitrableConfig = ArbitrableConfig(
-                IArbitrator(safeArbitrator),
+                safeArbitrator,
                 tribunalSafe,
                 submitterCollateralAmount,
                 challengerCollateralAmount,
@@ -219,12 +226,14 @@ contract UpgradeCVMultichainProd is BaseMultiChain {
         CVParams memory cvParams;
         {
             (uint256 maxRatio, uint256 weight, uint256 decay, uint256 minThresholdPoints) = cvStrategy.cvParams();
-            cvParams = CVParams(maxRatio, weight, decay, minThresholdPoints);
+            // Take current decay that its based on block time 3.8 sec and rescale it for block time 2 secs
+            uint256 newDecay = DecayRescale.rescale(decay(), 38e17 / 1e18, /*3.8*/ 2); // or pass (38,2) if you use integers
+            cvParams = CVParams(maxRatio, weight, newDecay, minThresholdPoints);
         }
         bytes memory setPoolParams =
             abi.encodeWithSelector(ICVStrategy.setPoolParams.selector, arbitrableConfig, cvParams);
 
-        return (upgradeCVStrategy, setPoolParams);
+        return (upgradeCVStrategy, initStrategy, setPoolParams);
     }
 
     function _createTransactionJson(address to, bytes memory data) internal pure returns (string memory) {
