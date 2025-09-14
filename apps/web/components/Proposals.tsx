@@ -262,9 +262,19 @@ export function Proposals({
     memberData?.member?.memberCommunity?.[0]?.stakedTokens ?? 0,
   );
 
-  const proposals = strategy.proposals.sort(
-    (a, b) => b.stakedAmount - a.stakedAmount,
-  );
+  const proposals = strategy.proposals.sort((a, b) => {
+    const aConviction =
+      proposalCardRefs.current.get(b.id)?.getProposalConviction()?.conviction ??
+      0n;
+    const bConviction =
+      proposalCardRefs.current.get(a.id)?.getProposalConviction()?.conviction ??
+      0n;
+    return (
+      aConviction < bConviction ? -1
+      : aConviction > bConviction ? 1
+      : 0
+    );
+  });
 
   // Effects
   useEffect(() => {
