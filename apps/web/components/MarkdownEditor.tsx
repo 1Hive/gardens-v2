@@ -31,7 +31,6 @@ import {
   CreateLink,
   DiffSourceToggleWrapper,
 } from "@mdxeditor/editor";
-import { ipfsFileUpload } from "@/utils/ipfsUtils";
 import "@mdxeditor/editor/style.css";
 import { useRef, useState, useEffect } from "react";
 import {
@@ -39,6 +38,7 @@ import {
   ArrowsPointingOutIcon,
 } from "@heroicons/react/24/solid";
 import { useTheme } from "@/providers/ThemeProvider";
+import { ipfsFileUpload } from "@/utils/ipfsUtils";
 
 export default function MarkdownEditor({
   id,
@@ -59,34 +59,33 @@ export default function MarkdownEditor({
   const [usingFallback, setUsingFallback] = useState(false);
   const { resolvedTheme } = useTheme();
 
-  const canNativeFs = () =>
-    typeof document !== "undefined" &&
-    // @ts-ignore safari old
-    (document.fullscreenEnabled || document.webkitFullscreenEnabled) &&
-    !!wrapRef.current &&
-    // @ts-ignore safari old
-    (wrapRef.current.requestFullscreen ||
-      (wrapRef.current as any).webkitRequestFullscreen);
+  // helpers
+  const getFsEl = () =>
+    // @ts-ignore
+    document.fullscreenElement || document.webkitFullscreenElement;
 
+  const requestFs = async (el: HTMLElement) => {
+    // @ts-ignore
+    const req = el.requestFullscreen || el.webkitRequestFullscreen;
+    return req.call(el);
+  };
+
+  const exitFs = async () => {
+    // @ts-ignore
+    const exit = document.exitFullscreen || document.webkitExitFullscreen;
+    return exit.call(document);
+  };
+
+  // effect: listen to both standard + webkit events and elements
   useEffect(() => {
-    const onFsChange = () => setIsFs(Boolean(document.fullscreenElement));
-    const onFsError = () => setIsFs(false);
-
+    const onFsChange = () => setIsFs(Boolean(getFsEl()));
     document.addEventListener("fullscreenchange", onFsChange);
-    document.addEventListener("fullscreenerror", onFsError);
-    // Safari legacy events
     // @ts-ignore
     document.addEventListener("webkitfullscreenchange", onFsChange);
-    // @ts-ignore
-    document.addEventListener("webkitfullscreenerror", onFsError);
-
     return () => {
       document.removeEventListener("fullscreenchange", onFsChange);
-      document.removeEventListener("fullscreenerror", onFsError);
       // @ts-ignore
       document.removeEventListener("webkitfullscreenchange", onFsChange);
-      // @ts-ignore
-      document.removeEventListener("webkitfullscreenerror", onFsError);
     };
   }, []);
 
@@ -122,32 +121,36 @@ export default function MarkdownEditor({
   const toggleFs = async () => {
     const el = wrapRef.current!;
     try {
-      if (document.fullscreenElement) {
-        await document.exitFullscreen();
+      if (usingFallback) {
+        // CSS fallback -> just exit
         setUsingFallback(false);
+        setIsFs(false);
         return;
       }
-      if (canNativeFs()) {
+      if (getFsEl()) {
+        await exitFs();
+        setIsFs(false);
+        return;
+      }
+      if (
         // @ts-ignore
-        const req = el.requestFullscreen || el.webkitRequestFullscreen;
-        await req.call(el);
+        (document.fullscreenEnabled || document.webkitFullscreenEnabled) &&
+        // @ts-ignore
+        (el.requestFullscreen || el.webkitRequestFullscreen)
+      ) {
+        await requestFs(el);
         setUsingFallback(false);
+        setIsFs(true);
       } else {
-        // CSS fallback for iOS / restricted contexts
+        // CSS fallback for iOS without native FS
         setUsingFallback(true);
         setIsFs(true);
       }
     } catch {
-      // If native request fails (Safari quirks), use fallback
+      // if native fails, fallback off
       setUsingFallback(true);
       setIsFs(true);
     }
-  };
-
-  // Exit for CSS fallback
-  const exitFallback = () => {
-    setUsingFallback(false);
-    setIsFs(false);
   };
 
   return (
@@ -186,7 +189,7 @@ export default function MarkdownEditor({
               },
             }),
             toolbarPlugin({
-              toolbarClassName: ``,
+              toolbarClassName: "",
               toolbarContents: () => (
                 <>
                   <DiffSourceToggleWrapper>

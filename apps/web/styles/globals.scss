@@ -379,6 +379,7 @@ dialog * {
 .mdxeditor-popup-container {
   position: fixed !important;
   z-index: 999999999 !important;
+  background-color: var(--baseBase);
 
   button {
     cursor: pointer;
