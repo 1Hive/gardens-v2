@@ -220,6 +220,7 @@ export default function PoolHeader({
 
   let sybilResistanceType: SybilResistanceType = "noSybilResist";
   let sybilResistanceValue: Address[] | number | undefined;
+
   if (strategy.sybil != null) {
     if (strategy.sybil.type === "Passport" && passportScore != null) {
       sybilResistanceType = "gitcoinPassport";
@@ -240,16 +241,48 @@ export default function PoolHeader({
     noSybilResist: "None",
   };
 
-  const sybilResistanceInfo: Record<SybilResistanceType, string> = {
-    allowList: `Only users in the allowlist can interact with this pool: \n -${(isArray(sybilResistanceValue) ? (sybilResistanceValue as Array<string>) : []).map((x) => shortenAddress(x)).join("\n- ")}`,
-    gitcoinPassport:
-      typeof sybilResistanceValue === "number" ?
-        `Only users with a Gitcoin Passport above the threshold can interact with this pool: \n Threshold: ${sybilResistanceValue.toFixed(2)}`
-      : "",
-    goodDollar:
-      "Only users verified with GoodDollar Sybil-Resistance can interact with this pool.",
-    noSybilResist: "Any wallet can interact with this pool.",
+  type SybilInfo =
+    | { type: "list"; message: string; items: Address[] }
+    | { type: "threshold"; message: string; value: number }
+    | { type: "text"; message: string };
+
+  const sybilResistanceInfo: Record<SybilResistanceType, SybilInfo> = {
+    allowList: {
+      type: "list",
+      message: "Only users in the allowlist can interact with this pool:",
+      items:
+        isArray(sybilResistanceValue) ?
+          (sybilResistanceValue as Address[])
+        : [],
+    },
+    gitcoinPassport: {
+      type: "threshold",
+      message:
+        "Only users with a Gitcoin Passport above the threshold can interact with this pool:",
+      value:
+        typeof sybilResistanceValue === "number" ? sybilResistanceValue : 0,
+    },
+    goodDollar: {
+      type: "text",
+      message:
+        "Only users verified with GoodDollar Sybil-Resistance can interact with this pool.",
+    },
+    noSybilResist: {
+      type: "text",
+      message: "Any wallet can interact with this pool.",
+    },
   };
+
+  // const sybilResistanceInfo: Record<SybilResistanceType, string> = {
+  //   allowList: `Only users in the allowlist can interact with this pool: \n -${(isArray(sybilResistanceValue) ? (sybilResistanceValue as Array<string>) : []).map((x) => shortenAddress(x)).join("\n- ")}`,
+  //   gitcoinPassport:
+  //     typeof sybilResistanceValue === "number" ?
+  //       `Only users with a Gitcoin Passport above the threshold can interact with this pool: \n Threshold: ${sybilResistanceValue.toFixed(2)}`
+  //     : "",
+  //   goodDollar:
+  //     "Only users verified with GoodDollar Sybil-Resistance can interact with this pool.",
+  //   noSybilResist: "Any wallet can interact with this pool.",
+  // };
 
   const poolConfig = [
     {
@@ -281,11 +314,11 @@ export default function PoolHeader({
       value: `${maxVotingWeight} ${poolToken?.symbol}`,
       info: "Staking above this specified limit won’t increase your voting weight.",
     },
-    {
-      label: "Protection",
-      value: sybilResistanceLabel[sybilResistanceType],
-      info: sybilResistanceInfo[sybilResistanceType],
-    },
+    // {
+    //   label: "Protection",
+    //   value: sybilResistanceLabel[sybilResistanceType],
+    //   info: sybilResistanceInfo[sybilResistanceType],
+    // },
     {
       label: "Token",
       info: "The token used in this pool to fund proposals.",
@@ -832,6 +865,63 @@ export default function PoolHeader({
                 </Statistic>
               </div>
             ))}
+            <div className="relative inline-block group">
+              {/* Trigger */}
+              <div className="cursor-pointer px-4 py-2 bg-base-200 rounded-lg shadow">
+                {poolConfig[5].value}
+              </div>
+
+              {/* Popover */}
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 hidden group-hover:block z-10">
+                <div className="relative bg-base-200 text-base-content shadow-lg p-3 rounded-lg">
+                  {/* Sybil Resistance Info */}
+                  <h3 className="font-semibold mb-2">
+                    {sybilResistanceLabel[sybilResistanceType]}
+                  </h3>
+
+                  {sybilResistanceType === "allowList" && (
+                    <>
+                      <p>
+                        Only users in the allowlist can interact with this pool:
+                      </p>
+                      <ul className="list-disc ml-4">
+                        {(sybilResistanceValue as Address[] | undefined)?.map(
+                          (addr) => (
+                            <li key={addr}>
+                              <EthAddress address={addr} />
+                            </li>
+                          ),
+                        )}
+                      </ul>
+                    </>
+                  )}
+
+                  {sybilResistanceType === "gitcoinPassport" && (
+                    <p>
+                      Only users with a Gitcoin Passport above the threshold can
+                      interact with this pool:{" "}
+                      <strong>
+                        {(sybilResistanceValue as number).toFixed(2)}
+                      </strong>
+                    </p>
+                  )}
+
+                  {sybilResistanceType === "goodDollar" && (
+                    <p>
+                      Only users verified with GoodDollar Sybil-Resistance can
+                      interact with this pool.
+                    </p>
+                  )}
+
+                  {sybilResistanceType === "noSybilResist" && (
+                    <p>Any wallet can interact with this pool.</p>
+                  )}
+
+                  {/* Arrow */}
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 w-3 h-3 bg-base-200 rotate-45 -mt-1 shadow-lg" />
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Voting weight + Dispute Address */}
