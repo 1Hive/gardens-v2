@@ -16,7 +16,7 @@ import {
   ActivatePoints,
   Badge,
   DisplayNumber,
-  CheckPassport,
+  CheckSybil,
   InfoBox,
   Button,
   EthAddress,
@@ -29,7 +29,7 @@ import { calculatePercentageBigInt } from "@/utils/numbers";
 export type PoolGovernanceProps = {
   memberPoolWeight: number | undefined;
   tokenDecimals: number;
-  strategy: Pick<CVStrategy, "id" | "sybilScorer" | "poolId"> & {
+  strategy: Pick<CVStrategy, "id" | "sybil" | "poolId"> & {
     registryCommunity: { garden: Pick<TokenGarden, "symbol"> };
     config: Pick<CVStrategyConfig, "pointSystem" | "allowlist">;
   };
@@ -54,6 +54,8 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
   const poolSystem = strategy.config.pointSystem;
   const [openGovDetails, setOpenGovDetails] = useState(false);
   const { address } = useAccount();
+  const [triggerSybilCheckModalClose, setTriggerSybilCheckModalClose] =
+    useState(false);
 
   const poolSystemDefinition: { [key: number]: string } = {
     0: "Fixed voting system. Every member has the same governance weight, limited to their registration stake.",
@@ -115,17 +117,19 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
 
         {/* Activate-Deactivate Button */}
         <div className="flex items-center flex-col gap-2">
-          <CheckPassport
+          <CheckSybil
             strategy={strategy}
             enableCheck={!memberActivatedStrategy}
+            triggerClose={triggerSybilCheckModalClose}
           >
             <ActivatePoints
               strategy={strategy}
               communityAddress={communityAddress}
               isMemberActivated={memberActivatedStrategy}
               isMember={isMemberCommunity}
+              handleTxSuccess={() => setTriggerSybilCheckModalClose(true)}
             />
-          </CheckPassport>
+          </CheckSybil>
         </div>
         <Button
           onClick={() => setOpenGovDetails(!openGovDetails)}
@@ -134,7 +138,7 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
           className="absolute top-0 right-0 md:flex items-start sm:w-auto border-none hover:opacity-75"
           icon={
             <ChevronUpIcon
-              className={`h-4 w-4 font-bold text-black transition-transform duration-200 ease-in-out ${cn(
+              className={`h-4 w-4 font-bold text-neutral-button transition-transform duration-200 ease-in-out ${cn(
                 {
                   "rotate-180": !openGovDetails,
                 },

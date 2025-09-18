@@ -28,7 +28,7 @@ export const Statistic = ({
         {icon != null && <div className="w-6 h-6 cursor-pointer">{icon}</div>}
       </div>
       {label != null && (
-        <p className="first-letter:uppercase text-md">
+        <p className="first-letter:uppercase text-md dark:text-neutral-soft-content">
           {label}: {count}
         </p>
       )}

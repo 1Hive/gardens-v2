@@ -1,4 +1,4 @@
-import React, { ReactNode, useState } from "react";
+import React, { ReactNode, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Address, formatUnits, parseUnits, zeroAddress } from "viem";
 import { getPoolDataQuery, TokenGarden } from "#/subgraph/.graphclient";
@@ -83,6 +83,7 @@ const sybilResistancePreview = (
       );
     })(),
     gitcoinPassport: `Passport score required: ${value}`,
+    goodDollar: "GoodDollar verification required",
   };
 
   return previewMap[sybilType];
@@ -143,6 +144,7 @@ export default function PoolEditForm({
     handleSubmit,
     setValue,
     watch,
+    getValues,
     formState: { errors },
   } = useForm<FormInputs>({
     mode: "onBlur",
@@ -180,9 +182,26 @@ export default function PoolEditForm({
         }
       : undefined,
   });
-  const sybilResistanceType =
-    strategy.sybilScorer == null ? "allowList" : "gitcoinPassport";
+
   const sybilResistanceValue = watch("sybilResistanceValue");
+
+  const derivedType =
+    strategy.sybil == null ? "allowList"
+    : strategy.sybil.type === "Passport" ? "gitcoinPassport"
+    : "goodDollar";
+
+  const formSybilType =
+    watch("sybilResistanceType") ??
+    initValues?.sybilResistanceType ??
+    derivedType;
+
+  useEffect(() => {
+    if (initValues?.sybilResistanceValue != null) {
+      setValue("sybilResistanceValue", initValues.sybilResistanceValue as any, {
+        shouldDirty: false,
+      });
+    }
+  }, [initValues?.sybilResistanceValue, setValue]);
 
   const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** (token?.decimals ?? 18);
   const INPUT_MIN_THRESHOLD_VALUE = 0;
@@ -244,7 +263,7 @@ export default function PoolEditForm({
       label: "Pool voting authorization:",
       parse: () =>
         sybilResistancePreview(
-          sybilResistanceType,
+          derivedType,
           Array.isArray(sybilResistanceValue) ? sybilResistanceValue : [],
           sybilResistanceValue?.toString(),
         ),
@@ -432,16 +451,23 @@ export default function PoolEditForm({
   return (
     <>
       <form onSubmit={handleSubmit(handlePreview)}>
+        <input
+          type="hidden"
+          {...register("sybilResistanceType")}
+          value={formSybilType}
+        />
+
         {showPreview ?
           <FormPreview formRows={formatFormRows()} />
         : <div className="flex flex-col gap-6">
             <div className="flex flex-col gap-4">
-              {sybilResistanceType === "gitcoinPassport" ?
+              {derivedType === "gitcoinPassport" ?
                 <FormInput
                   label="Gitcoin Passport score"
                   register={register}
-                  required={sybilResistanceType === "gitcoinPassport"}
+                  required={derivedType === "gitcoinPassport"}
                   registerOptions={{
+                    valueAsNumber: true,
                     min: {
                       value: 1 / CV_PASSPORT_THRESHOLD_SCALE,
                       message: `Amount must be greater than ${1 / CV_PASSPORT_THRESHOLD_SCALE}`,
@@ -456,7 +482,7 @@ export default function PoolEditForm({
                   type="number"
                   placeholder="0"
                 />
-              : sybilResistanceType === "allowList" && (
+              : derivedType === "allowList" && (
                   <AddressListInput
                     label="Allow list"
                     register={register}

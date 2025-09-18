@@ -1,5 +1,5 @@
 import * as dn from "dnum";
-import { formatUnits, parseUnits } from "viem";
+import { parseUnits } from "viem";
 
 export const INPUT_MIN_VALUE = 0.000000000001;
 export const MAX_RATIO_CONSTANT = 0.77645;
@@ -114,26 +114,29 @@ export function gte(
 }
 
 export function calculatePercentageBigInt(
-  value1: bigint,
-  value2: bigint,
-  tokenDecimals: number = 0,
+  value: bigint | string,
+  total: bigint | string,
 ): number {
-  if (!value1 || !value2) {
+  if (value == null || total == null) {
     return 0;
   }
 
-  if (value1 == 0n || value2 == 0n) {
+  if (typeof value !== "bigint") {
+    value = BigInt(value);
+  }
+
+  if (typeof total !== "bigint") {
+    total = BigInt(total);
+  }
+
+  if (!Boolean(total) || !Boolean(value)) {
     return 0;
   }
 
-  return parseFloat(
-    (
-      (parseFloat(formatUnits(value1, tokenDecimals)) /
-        parseFloat(formatUnits(value2, tokenDecimals))) *
-      100
-    ).toFixed(2),
-  );
+  const bps = (value * 10000n + total / 2n) / total;
+  return Number(bps) / 100;
 }
+
 export function calculatePercentage(value1: number, value2: number): number {
   if (!value1 || !value2) {
     return 0;

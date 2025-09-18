@@ -48,7 +48,7 @@ export function FormCheckBox({
         {...registered}
         onChange={registered?.onChange ?? onChange}
         readOnly={readOnly}
-        className="checkbox-info checkbox"
+        className="checkbox-info checkbox dark:bg-primary-soft-dark"
       />
       <label
         htmlFor={registerKey}

@@ -533,7 +533,7 @@ export type CVStrategy = {
     totalEffectiveActivePoints: Scalars['BigInt']['output'];
     isEnabled: Scalars['Boolean']['output'];
     token: Scalars['String']['output'];
-    sybilScorer?: Maybe<PassportScorer>;
+    sybil?: Maybe<SybilProtection>;
     archived: Scalars['Boolean']['output'];
 };
 export type CVStrategyproposalsArgs = {
@@ -563,6 +563,7 @@ export type CVStrategyConfig = {
     maxAmount?: Maybe<Scalars['BigInt']['output']>;
     allowlist?: Maybe<Array<Scalars['String']['output']>>;
     superfluidToken?: Maybe<Scalars['String']['output']>;
+    superfluidGDA: Array<Scalars['String']['output']>;
 };
 export type CVStrategyConfig_filter = {
     id?: InputMaybe<Scalars['ID']['input']>;
@@ -664,12 +665,18 @@ export type CVStrategyConfig_filter = {
     superfluidToken_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
     superfluidToken_not_ends_with?: InputMaybe<Scalars['String']['input']>;
     superfluidToken_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    superfluidGDA?: InputMaybe<Array<Scalars['String']['input']>>;
+    superfluidGDA_not?: InputMaybe<Array<Scalars['String']['input']>>;
+    superfluidGDA_contains?: InputMaybe<Array<Scalars['String']['input']>>;
+    superfluidGDA_contains_nocase?: InputMaybe<Array<Scalars['String']['input']>>;
+    superfluidGDA_not_contains?: InputMaybe<Array<Scalars['String']['input']>>;
+    superfluidGDA_not_contains_nocase?: InputMaybe<Array<Scalars['String']['input']>>;
     /** Filter for the block changed event. */
     _change_block?: InputMaybe<BlockChangedFilter>;
     and?: InputMaybe<Array<InputMaybe<CVStrategyConfig_filter>>>;
     or?: InputMaybe<Array<InputMaybe<CVStrategyConfig_filter>>>;
 };
-export type CVStrategyConfig_orderBy = 'id' | 'strategy' | 'strategy__id' | 'strategy__poolId' | 'strategy__metadata' | 'strategy__maxCVSupply' | 'strategy__totalEffectiveActivePoints' | 'strategy__isEnabled' | 'strategy__token' | 'strategy__archived' | 'D' | 'decay' | 'maxRatio' | 'minThresholdPoints' | 'weight' | 'proposalType' | 'pointSystem' | 'maxAmount' | 'allowlist' | 'superfluidToken';
+export type CVStrategyConfig_orderBy = 'id' | 'strategy' | 'strategy__id' | 'strategy__poolId' | 'strategy__metadata' | 'strategy__maxCVSupply' | 'strategy__totalEffectiveActivePoints' | 'strategy__isEnabled' | 'strategy__token' | 'strategy__archived' | 'D' | 'decay' | 'maxRatio' | 'minThresholdPoints' | 'weight' | 'proposalType' | 'pointSystem' | 'maxAmount' | 'allowlist' | 'superfluidToken' | 'superfluidGDA';
 export type CVStrategy_filter = {
     id?: InputMaybe<Scalars['ID']['input']>;
     id_not?: InputMaybe<Scalars['ID']['input']>;
@@ -797,27 +804,27 @@ export type CVStrategy_filter = {
     token_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
     token_not_ends_with?: InputMaybe<Scalars['String']['input']>;
     token_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
-    sybilScorer?: InputMaybe<Scalars['String']['input']>;
-    sybilScorer_not?: InputMaybe<Scalars['String']['input']>;
-    sybilScorer_gt?: InputMaybe<Scalars['String']['input']>;
-    sybilScorer_lt?: InputMaybe<Scalars['String']['input']>;
-    sybilScorer_gte?: InputMaybe<Scalars['String']['input']>;
-    sybilScorer_lte?: InputMaybe<Scalars['String']['input']>;
-    sybilScorer_in?: InputMaybe<Array<Scalars['String']['input']>>;
-    sybilScorer_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
-    sybilScorer_contains?: InputMaybe<Scalars['String']['input']>;
-    sybilScorer_contains_nocase?: InputMaybe<Scalars['String']['input']>;
-    sybilScorer_not_contains?: InputMaybe<Scalars['String']['input']>;
-    sybilScorer_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
-    sybilScorer_starts_with?: InputMaybe<Scalars['String']['input']>;
-    sybilScorer_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
-    sybilScorer_not_starts_with?: InputMaybe<Scalars['String']['input']>;
-    sybilScorer_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
-    sybilScorer_ends_with?: InputMaybe<Scalars['String']['input']>;
-    sybilScorer_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
-    sybilScorer_not_ends_with?: InputMaybe<Scalars['String']['input']>;
-    sybilScorer_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
-    sybilScorer_?: InputMaybe<PassportScorer_filter>;
+    sybil?: InputMaybe<Scalars['String']['input']>;
+    sybil_not?: InputMaybe<Scalars['String']['input']>;
+    sybil_gt?: InputMaybe<Scalars['String']['input']>;
+    sybil_lt?: InputMaybe<Scalars['String']['input']>;
+    sybil_gte?: InputMaybe<Scalars['String']['input']>;
+    sybil_lte?: InputMaybe<Scalars['String']['input']>;
+    sybil_in?: InputMaybe<Array<Scalars['String']['input']>>;
+    sybil_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
+    sybil_contains?: InputMaybe<Scalars['String']['input']>;
+    sybil_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+    sybil_not_contains?: InputMaybe<Scalars['String']['input']>;
+    sybil_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+    sybil_starts_with?: InputMaybe<Scalars['String']['input']>;
+    sybil_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    sybil_not_starts_with?: InputMaybe<Scalars['String']['input']>;
+    sybil_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    sybil_ends_with?: InputMaybe<Scalars['String']['input']>;
+    sybil_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    sybil_not_ends_with?: InputMaybe<Scalars['String']['input']>;
+    sybil_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    sybil_?: InputMaybe<SybilProtection_filter>;
     archived?: InputMaybe<Scalars['Boolean']['input']>;
     archived_not?: InputMaybe<Scalars['Boolean']['input']>;
     archived_in?: InputMaybe<Array<Scalars['Boolean']['input']>>;
@@ -827,7 +834,7 @@ export type CVStrategy_filter = {
     and?: InputMaybe<Array<InputMaybe<CVStrategy_filter>>>;
     or?: InputMaybe<Array<InputMaybe<CVStrategy_filter>>>;
 };
-export type CVStrategy_orderBy = 'id' | 'poolId' | 'metadata' | 'registryCommunity' | 'registryCommunity__id' | 'registryCommunity__chainId' | 'registryCommunity__strategyTemplate' | 'registryCommunity__profileId' | 'registryCommunity__communityFee' | 'registryCommunity__protocolFee' | 'registryCommunity__protocolFeeReceiver' | 'registryCommunity__communityName' | 'registryCommunity__covenantIpfsHash' | 'registryCommunity__councilSafe' | 'registryCommunity__pendingNewCouncilSafe' | 'registryCommunity__isKickEnabled' | 'registryCommunity__registerStakeAmount' | 'registryCommunity__registerToken' | 'registryCommunity__alloAddress' | 'registryCommunity__isValid' | 'registryCommunity__archived' | 'config' | 'config__id' | 'config__D' | 'config__decay' | 'config__maxRatio' | 'config__minThresholdPoints' | 'config__weight' | 'config__proposalType' | 'config__pointSystem' | 'config__maxAmount' | 'config__superfluidToken' | 'proposals' | 'memberActive' | 'maxCVSupply' | 'totalEffectiveActivePoints' | 'isEnabled' | 'token' | 'sybilScorer' | 'sybilScorer__id' | 'archived';
+export type CVStrategy_orderBy = 'id' | 'poolId' | 'metadata' | 'registryCommunity' | 'registryCommunity__id' | 'registryCommunity__chainId' | 'registryCommunity__strategyTemplate' | 'registryCommunity__profileId' | 'registryCommunity__communityFee' | 'registryCommunity__protocolFee' | 'registryCommunity__protocolFeeReceiver' | 'registryCommunity__communityName' | 'registryCommunity__covenantIpfsHash' | 'registryCommunity__councilSafe' | 'registryCommunity__pendingNewCouncilSafe' | 'registryCommunity__isKickEnabled' | 'registryCommunity__registerStakeAmount' | 'registryCommunity__registerToken' | 'registryCommunity__alloAddress' | 'registryCommunity__isValid' | 'registryCommunity__archived' | 'config' | 'config__id' | 'config__D' | 'config__decay' | 'config__maxRatio' | 'config__minThresholdPoints' | 'config__weight' | 'config__proposalType' | 'config__pointSystem' | 'config__maxAmount' | 'config__superfluidToken' | 'proposals' | 'memberActive' | 'maxCVSupply' | 'totalEffectiveActivePoints' | 'isEnabled' | 'token' | 'sybil' | 'sybil__id' | 'sybil__type' | 'archived';
 export type CollateralVault = {
     id: Scalars['ID']['output'];
     strategy: CVStrategy;
@@ -975,6 +982,169 @@ export type CollateralVault_filter = {
     or?: InputMaybe<Array<InputMaybe<CollateralVault_filter>>>;
 };
 export type CollateralVault_orderBy = 'id' | 'strategy' | 'strategy__id' | 'strategy__poolId' | 'strategy__metadata' | 'strategy__maxCVSupply' | 'strategy__totalEffectiveActivePoints' | 'strategy__isEnabled' | 'strategy__token' | 'strategy__archived' | 'collaterals';
+export type GoodDollarStrategy = {
+    id: Scalars['ID']['output'];
+    sybilProtection: SybilProtection;
+    strategy: CVStrategy;
+    councilSafe: Scalars['String']['output'];
+    active: Scalars['Boolean']['output'];
+};
+export type GoodDollarStrategy_filter = {
+    id?: InputMaybe<Scalars['ID']['input']>;
+    id_not?: InputMaybe<Scalars['ID']['input']>;
+    id_gt?: InputMaybe<Scalars['ID']['input']>;
+    id_lt?: InputMaybe<Scalars['ID']['input']>;
+    id_gte?: InputMaybe<Scalars['ID']['input']>;
+    id_lte?: InputMaybe<Scalars['ID']['input']>;
+    id_in?: InputMaybe<Array<Scalars['ID']['input']>>;
+    id_not_in?: InputMaybe<Array<Scalars['ID']['input']>>;
+    sybilProtection?: InputMaybe<Scalars['String']['input']>;
+    sybilProtection_not?: InputMaybe<Scalars['String']['input']>;
+    sybilProtection_gt?: InputMaybe<Scalars['String']['input']>;
+    sybilProtection_lt?: InputMaybe<Scalars['String']['input']>;
+    sybilProtection_gte?: InputMaybe<Scalars['String']['input']>;
+    sybilProtection_lte?: InputMaybe<Scalars['String']['input']>;
+    sybilProtection_in?: InputMaybe<Array<Scalars['String']['input']>>;
+    sybilProtection_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
+    sybilProtection_contains?: InputMaybe<Scalars['String']['input']>;
+    sybilProtection_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+    sybilProtection_not_contains?: InputMaybe<Scalars['String']['input']>;
+    sybilProtection_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+    sybilProtection_starts_with?: InputMaybe<Scalars['String']['input']>;
+    sybilProtection_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    sybilProtection_not_starts_with?: InputMaybe<Scalars['String']['input']>;
+    sybilProtection_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    sybilProtection_ends_with?: InputMaybe<Scalars['String']['input']>;
+    sybilProtection_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    sybilProtection_not_ends_with?: InputMaybe<Scalars['String']['input']>;
+    sybilProtection_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    sybilProtection_?: InputMaybe<SybilProtection_filter>;
+    strategy?: InputMaybe<Scalars['String']['input']>;
+    strategy_not?: InputMaybe<Scalars['String']['input']>;
+    strategy_gt?: InputMaybe<Scalars['String']['input']>;
+    strategy_lt?: InputMaybe<Scalars['String']['input']>;
+    strategy_gte?: InputMaybe<Scalars['String']['input']>;
+    strategy_lte?: InputMaybe<Scalars['String']['input']>;
+    strategy_in?: InputMaybe<Array<Scalars['String']['input']>>;
+    strategy_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
+    strategy_contains?: InputMaybe<Scalars['String']['input']>;
+    strategy_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+    strategy_not_contains?: InputMaybe<Scalars['String']['input']>;
+    strategy_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+    strategy_starts_with?: InputMaybe<Scalars['String']['input']>;
+    strategy_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    strategy_not_starts_with?: InputMaybe<Scalars['String']['input']>;
+    strategy_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    strategy_ends_with?: InputMaybe<Scalars['String']['input']>;
+    strategy_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    strategy_not_ends_with?: InputMaybe<Scalars['String']['input']>;
+    strategy_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    strategy_?: InputMaybe<CVStrategy_filter>;
+    councilSafe?: InputMaybe<Scalars['String']['input']>;
+    councilSafe_not?: InputMaybe<Scalars['String']['input']>;
+    councilSafe_gt?: InputMaybe<Scalars['String']['input']>;
+    councilSafe_lt?: InputMaybe<Scalars['String']['input']>;
+    councilSafe_gte?: InputMaybe<Scalars['String']['input']>;
+    councilSafe_lte?: InputMaybe<Scalars['String']['input']>;
+    councilSafe_in?: InputMaybe<Array<Scalars['String']['input']>>;
+    councilSafe_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
+    councilSafe_contains?: InputMaybe<Scalars['String']['input']>;
+    councilSafe_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+    councilSafe_not_contains?: InputMaybe<Scalars['String']['input']>;
+    councilSafe_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+    councilSafe_starts_with?: InputMaybe<Scalars['String']['input']>;
+    councilSafe_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    councilSafe_not_starts_with?: InputMaybe<Scalars['String']['input']>;
+    councilSafe_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    councilSafe_ends_with?: InputMaybe<Scalars['String']['input']>;
+    councilSafe_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    councilSafe_not_ends_with?: InputMaybe<Scalars['String']['input']>;
+    councilSafe_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    active?: InputMaybe<Scalars['Boolean']['input']>;
+    active_not?: InputMaybe<Scalars['Boolean']['input']>;
+    active_in?: InputMaybe<Array<Scalars['Boolean']['input']>>;
+    active_not_in?: InputMaybe<Array<Scalars['Boolean']['input']>>;
+    /** Filter for the block changed event. */
+    _change_block?: InputMaybe<BlockChangedFilter>;
+    and?: InputMaybe<Array<InputMaybe<GoodDollarStrategy_filter>>>;
+    or?: InputMaybe<Array<InputMaybe<GoodDollarStrategy_filter>>>;
+};
+export type GoodDollarStrategy_orderBy = 'id' | 'sybilProtection' | 'sybilProtection__id' | 'sybilProtection__type' | 'strategy' | 'strategy__id' | 'strategy__poolId' | 'strategy__metadata' | 'strategy__maxCVSupply' | 'strategy__totalEffectiveActivePoints' | 'strategy__isEnabled' | 'strategy__token' | 'strategy__archived' | 'councilSafe' | 'active';
+export type GoodDollarUser = {
+    id: Scalars['ID']['output'];
+    sybilProtection: SybilProtection;
+    verified: Scalars['Boolean']['output'];
+    userAddress: Scalars['String']['output'];
+    lastUpdated: Scalars['BigInt']['output'];
+};
+export type GoodDollarUser_filter = {
+    id?: InputMaybe<Scalars['ID']['input']>;
+    id_not?: InputMaybe<Scalars['ID']['input']>;
+    id_gt?: InputMaybe<Scalars['ID']['input']>;
+    id_lt?: InputMaybe<Scalars['ID']['input']>;
+    id_gte?: InputMaybe<Scalars['ID']['input']>;
+    id_lte?: InputMaybe<Scalars['ID']['input']>;
+    id_in?: InputMaybe<Array<Scalars['ID']['input']>>;
+    id_not_in?: InputMaybe<Array<Scalars['ID']['input']>>;
+    sybilProtection?: InputMaybe<Scalars['String']['input']>;
+    sybilProtection_not?: InputMaybe<Scalars['String']['input']>;
+    sybilProtection_gt?: InputMaybe<Scalars['String']['input']>;
+    sybilProtection_lt?: InputMaybe<Scalars['String']['input']>;
+    sybilProtection_gte?: InputMaybe<Scalars['String']['input']>;
+    sybilProtection_lte?: InputMaybe<Scalars['String']['input']>;
+    sybilProtection_in?: InputMaybe<Array<Scalars['String']['input']>>;
+    sybilProtection_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
+    sybilProtection_contains?: InputMaybe<Scalars['String']['input']>;
+    sybilProtection_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+    sybilProtection_not_contains?: InputMaybe<Scalars['String']['input']>;
+    sybilProtection_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+    sybilProtection_starts_with?: InputMaybe<Scalars['String']['input']>;
+    sybilProtection_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    sybilProtection_not_starts_with?: InputMaybe<Scalars['String']['input']>;
+    sybilProtection_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    sybilProtection_ends_with?: InputMaybe<Scalars['String']['input']>;
+    sybilProtection_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    sybilProtection_not_ends_with?: InputMaybe<Scalars['String']['input']>;
+    sybilProtection_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    sybilProtection_?: InputMaybe<SybilProtection_filter>;
+    verified?: InputMaybe<Scalars['Boolean']['input']>;
+    verified_not?: InputMaybe<Scalars['Boolean']['input']>;
+    verified_in?: InputMaybe<Array<Scalars['Boolean']['input']>>;
+    verified_not_in?: InputMaybe<Array<Scalars['Boolean']['input']>>;
+    userAddress?: InputMaybe<Scalars['String']['input']>;
+    userAddress_not?: InputMaybe<Scalars['String']['input']>;
+    userAddress_gt?: InputMaybe<Scalars['String']['input']>;
+    userAddress_lt?: InputMaybe<Scalars['String']['input']>;
+    userAddress_gte?: InputMaybe<Scalars['String']['input']>;
+    userAddress_lte?: InputMaybe<Scalars['String']['input']>;
+    userAddress_in?: InputMaybe<Array<Scalars['String']['input']>>;
+    userAddress_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
+    userAddress_contains?: InputMaybe<Scalars['String']['input']>;
+    userAddress_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+    userAddress_not_contains?: InputMaybe<Scalars['String']['input']>;
+    userAddress_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+    userAddress_starts_with?: InputMaybe<Scalars['String']['input']>;
+    userAddress_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    userAddress_not_starts_with?: InputMaybe<Scalars['String']['input']>;
+    userAddress_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    userAddress_ends_with?: InputMaybe<Scalars['String']['input']>;
+    userAddress_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    userAddress_not_ends_with?: InputMaybe<Scalars['String']['input']>;
+    userAddress_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    lastUpdated?: InputMaybe<Scalars['BigInt']['input']>;
+    lastUpdated_not?: InputMaybe<Scalars['BigInt']['input']>;
+    lastUpdated_gt?: InputMaybe<Scalars['BigInt']['input']>;
+    lastUpdated_lt?: InputMaybe<Scalars['BigInt']['input']>;
+    lastUpdated_gte?: InputMaybe<Scalars['BigInt']['input']>;
+    lastUpdated_lte?: InputMaybe<Scalars['BigInt']['input']>;
+    lastUpdated_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+    lastUpdated_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+    /** Filter for the block changed event. */
+    _change_block?: InputMaybe<BlockChangedFilter>;
+    and?: InputMaybe<Array<InputMaybe<GoodDollarUser_filter>>>;
+    or?: InputMaybe<Array<InputMaybe<GoodDollarUser_filter>>>;
+};
+export type GoodDollarUser_orderBy = 'id' | 'sybilProtection' | 'sybilProtection__id' | 'sybilProtection__type' | 'verified' | 'userAddress' | 'lastUpdated';
 export type Member = {
     id: Scalars['ID']['output'];
     memberCommunity?: Maybe<Array<MemberCommunity>>;
@@ -1221,45 +1391,9 @@ export type Member_filter = {
 export type Member_orderBy = 'id' | 'memberCommunity' | 'stakes' | 'isProtopian' | 'isKeeper';
 /** Defines the order direction, either ascending or descending */
 export type OrderDirection = 'asc' | 'desc';
-export type PassportScorer = {
-    id: Scalars['ID']['output'];
-    strategies?: Maybe<Array<PassportStrategy>>;
-    users?: Maybe<Array<PassportUser>>;
-};
-export type PassportScorerstrategiesArgs = {
-    skip?: InputMaybe<Scalars['Int']['input']>;
-    first?: InputMaybe<Scalars['Int']['input']>;
-    orderBy?: InputMaybe<PassportStrategy_orderBy>;
-    orderDirection?: InputMaybe<OrderDirection>;
-    where?: InputMaybe<PassportStrategy_filter>;
-};
-export type PassportScorerusersArgs = {
-    skip?: InputMaybe<Scalars['Int']['input']>;
-    first?: InputMaybe<Scalars['Int']['input']>;
-    orderBy?: InputMaybe<PassportUser_orderBy>;
-    orderDirection?: InputMaybe<OrderDirection>;
-    where?: InputMaybe<PassportUser_filter>;
-};
-export type PassportScorer_filter = {
-    id?: InputMaybe<Scalars['ID']['input']>;
-    id_not?: InputMaybe<Scalars['ID']['input']>;
-    id_gt?: InputMaybe<Scalars['ID']['input']>;
-    id_lt?: InputMaybe<Scalars['ID']['input']>;
-    id_gte?: InputMaybe<Scalars['ID']['input']>;
-    id_lte?: InputMaybe<Scalars['ID']['input']>;
-    id_in?: InputMaybe<Array<Scalars['ID']['input']>>;
-    id_not_in?: InputMaybe<Array<Scalars['ID']['input']>>;
-    strategies_?: InputMaybe<PassportStrategy_filter>;
-    users_?: InputMaybe<PassportUser_filter>;
-    /** Filter for the block changed event. */
-    _change_block?: InputMaybe<BlockChangedFilter>;
-    and?: InputMaybe<Array<InputMaybe<PassportScorer_filter>>>;
-    or?: InputMaybe<Array<InputMaybe<PassportScorer_filter>>>;
-};
-export type PassportScorer_orderBy = 'id' | 'strategies' | 'users';
 export type PassportStrategy = {
     id: Scalars['ID']['output'];
-    passportScorer: PassportScorer;
+    passportScorer: SybilProtection;
     strategy: CVStrategy;
     threshold: Scalars['BigInt']['output'];
     councilSafe: Scalars['String']['output'];
@@ -1294,7 +1428,7 @@ export type PassportStrategy_filter = {
     passportScorer_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
     passportScorer_not_ends_with?: InputMaybe<Scalars['String']['input']>;
     passportScorer_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
-    passportScorer_?: InputMaybe<PassportScorer_filter>;
+    passportScorer_?: InputMaybe<SybilProtection_filter>;
     strategy?: InputMaybe<Scalars['String']['input']>;
     strategy_not?: InputMaybe<Scalars['String']['input']>;
     strategy_gt?: InputMaybe<Scalars['String']['input']>;
@@ -1353,10 +1487,10 @@ export type PassportStrategy_filter = {
     and?: InputMaybe<Array<InputMaybe<PassportStrategy_filter>>>;
     or?: InputMaybe<Array<InputMaybe<PassportStrategy_filter>>>;
 };
-export type PassportStrategy_orderBy = 'id' | 'passportScorer' | 'passportScorer__id' | 'strategy' | 'strategy__id' | 'strategy__poolId' | 'strategy__metadata' | 'strategy__maxCVSupply' | 'strategy__totalEffectiveActivePoints' | 'strategy__isEnabled' | 'strategy__token' | 'strategy__archived' | 'threshold' | 'councilSafe' | 'active';
+export type PassportStrategy_orderBy = 'id' | 'passportScorer' | 'passportScorer__id' | 'passportScorer__type' | 'strategy' | 'strategy__id' | 'strategy__poolId' | 'strategy__metadata' | 'strategy__maxCVSupply' | 'strategy__totalEffectiveActivePoints' | 'strategy__isEnabled' | 'strategy__token' | 'strategy__archived' | 'threshold' | 'councilSafe' | 'active';
 export type PassportUser = {
     id: Scalars['ID']['output'];
-    passportScorer: PassportScorer;
+    passportScorer: SybilProtection;
     userAddress: Scalars['String']['output'];
     score: Scalars['BigInt']['output'];
     lastUpdated: Scalars['BigInt']['output'];
@@ -1390,7 +1524,7 @@ export type PassportUser_filter = {
     passportScorer_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
     passportScorer_not_ends_with?: InputMaybe<Scalars['String']['input']>;
     passportScorer_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
-    passportScorer_?: InputMaybe<PassportScorer_filter>;
+    passportScorer_?: InputMaybe<SybilProtection_filter>;
     userAddress?: InputMaybe<Scalars['String']['input']>;
     userAddress_not?: InputMaybe<Scalars['String']['input']>;
     userAddress_gt?: InputMaybe<Scalars['String']['input']>;
@@ -1432,7 +1566,7 @@ export type PassportUser_filter = {
     and?: InputMaybe<Array<InputMaybe<PassportUser_filter>>>;
     or?: InputMaybe<Array<InputMaybe<PassportUser_filter>>>;
 };
-export type PassportUser_orderBy = 'id' | 'passportScorer' | 'passportScorer__id' | 'userAddress' | 'score' | 'lastUpdated';
+export type PassportUser_orderBy = 'id' | 'passportScorer' | 'passportScorer__id' | 'passportScorer__type' | 'userAddress' | 'score' | 'lastUpdated';
 export type ProposalDispute = {
     id: Scalars['ID']['output'];
     createdAt: Scalars['BigInt']['output'];
@@ -1706,12 +1840,16 @@ export type Query = {
     tokenGardens: Array<TokenGarden>;
     allo?: Maybe<Allo>;
     allos: Array<Allo>;
-    passportScorer?: Maybe<PassportScorer>;
-    passportScorers: Array<PassportScorer>;
+    sybilProtection?: Maybe<SybilProtection>;
+    sybilProtections: Array<SybilProtection>;
     passportStrategy?: Maybe<PassportStrategy>;
     passportStrategies: Array<PassportStrategy>;
+    goodDollarStrategy?: Maybe<GoodDollarStrategy>;
+    goodDollarStrategies: Array<GoodDollarStrategy>;
     passportUser?: Maybe<PassportUser>;
     passportUsers: Array<PassportUser>;
+    goodDollarUser?: Maybe<GoodDollarUser>;
+    goodDollarUsers: Array<GoodDollarUser>;
     proposalDispute?: Maybe<ProposalDispute>;
     proposalDisputes: Array<ProposalDispute>;
     proposalDisputeMetadata?: Maybe<ProposalDisputeMetadata>;
@@ -1893,17 +2031,17 @@ export type QueryallosArgs = {
     block?: InputMaybe<Block_height>;
     subgraphError?: _SubgraphErrorPolicy_;
 };
-export type QuerypassportScorerArgs = {
+export type QuerysybilProtectionArgs = {
     id: Scalars['ID']['input'];
     block?: InputMaybe<Block_height>;
     subgraphError?: _SubgraphErrorPolicy_;
 };
-export type QuerypassportScorersArgs = {
+export type QuerysybilProtectionsArgs = {
     skip?: InputMaybe<Scalars['Int']['input']>;
     first?: InputMaybe<Scalars['Int']['input']>;
-    orderBy?: InputMaybe<PassportScorer_orderBy>;
+    orderBy?: InputMaybe<SybilProtection_orderBy>;
     orderDirection?: InputMaybe<OrderDirection>;
-    where?: InputMaybe<PassportScorer_filter>;
+    where?: InputMaybe<SybilProtection_filter>;
     block?: InputMaybe<Block_height>;
     subgraphError?: _SubgraphErrorPolicy_;
 };
@@ -1921,6 +2059,20 @@ export type QuerypassportStrategiesArgs = {
     block?: InputMaybe<Block_height>;
     subgraphError?: _SubgraphErrorPolicy_;
 };
+export type QuerygoodDollarStrategyArgs = {
+    id: Scalars['ID']['input'];
+    block?: InputMaybe<Block_height>;
+    subgraphError?: _SubgraphErrorPolicy_;
+};
+export type QuerygoodDollarStrategiesArgs = {
+    skip?: InputMaybe<Scalars['Int']['input']>;
+    first?: InputMaybe<Scalars['Int']['input']>;
+    orderBy?: InputMaybe<GoodDollarStrategy_orderBy>;
+    orderDirection?: InputMaybe<OrderDirection>;
+    where?: InputMaybe<GoodDollarStrategy_filter>;
+    block?: InputMaybe<Block_height>;
+    subgraphError?: _SubgraphErrorPolicy_;
+};
 export type QuerypassportUserArgs = {
     id: Scalars['ID']['input'];
     block?: InputMaybe<Block_height>;
@@ -1932,6 +2084,20 @@ export type QuerypassportUsersArgs = {
     orderBy?: InputMaybe<PassportUser_orderBy>;
     orderDirection?: InputMaybe<OrderDirection>;
     where?: InputMaybe<PassportUser_filter>;
+    block?: InputMaybe<Block_height>;
+    subgraphError?: _SubgraphErrorPolicy_;
+};
+export type QuerygoodDollarUserArgs = {
+    id: Scalars['ID']['input'];
+    block?: InputMaybe<Block_height>;
+    subgraphError?: _SubgraphErrorPolicy_;
+};
+export type QuerygoodDollarUsersArgs = {
+    skip?: InputMaybe<Scalars['Int']['input']>;
+    first?: InputMaybe<Scalars['Int']['input']>;
+    orderBy?: InputMaybe<GoodDollarUser_orderBy>;
+    orderDirection?: InputMaybe<OrderDirection>;
+    where?: InputMaybe<GoodDollarUser_filter>;
     block?: InputMaybe<Block_height>;
     subgraphError?: _SubgraphErrorPolicy_;
 };
@@ -2453,6 +2619,48 @@ export type Stake_filter = {
     or?: InputMaybe<Array<InputMaybe<Stake_filter>>>;
 };
 export type Stake_orderBy = 'id' | 'member' | 'member__id' | 'member__isProtopian' | 'member__isKeeper' | 'poolId' | 'proposal' | 'proposal__id' | 'proposal__proposalNumber' | 'proposal__metadataHash' | 'proposal__version' | 'proposal__beneficiary' | 'proposal__requestedAmount' | 'proposal__requestedToken' | 'proposal__proposalStatus' | 'proposal__blockLast' | 'proposal__convictionLast' | 'proposal__maxCVStaked' | 'proposal__stakedAmount' | 'proposal__submitter' | 'proposal__createdAt' | 'proposal__updatedAt' | 'amount' | 'createdAt';
+export type SybilProtection = {
+    id: Scalars['ID']['output'];
+    type: SybilProtectionType;
+    strategies?: Maybe<Array<PassportStrategy>>;
+    users?: Maybe<Array<PassportUser>>;
+};
+export type SybilProtectionstrategiesArgs = {
+    skip?: InputMaybe<Scalars['Int']['input']>;
+    first?: InputMaybe<Scalars['Int']['input']>;
+    orderBy?: InputMaybe<PassportStrategy_orderBy>;
+    orderDirection?: InputMaybe<OrderDirection>;
+    where?: InputMaybe<PassportStrategy_filter>;
+};
+export type SybilProtectionusersArgs = {
+    skip?: InputMaybe<Scalars['Int']['input']>;
+    first?: InputMaybe<Scalars['Int']['input']>;
+    orderBy?: InputMaybe<PassportUser_orderBy>;
+    orderDirection?: InputMaybe<OrderDirection>;
+    where?: InputMaybe<PassportUser_filter>;
+};
+export type SybilProtectionType = 'GoodDollar' | 'Passport';
+export type SybilProtection_filter = {
+    id?: InputMaybe<Scalars['ID']['input']>;
+    id_not?: InputMaybe<Scalars['ID']['input']>;
+    id_gt?: InputMaybe<Scalars['ID']['input']>;
+    id_lt?: InputMaybe<Scalars['ID']['input']>;
+    id_gte?: InputMaybe<Scalars['ID']['input']>;
+    id_lte?: InputMaybe<Scalars['ID']['input']>;
+    id_in?: InputMaybe<Array<Scalars['ID']['input']>>;
+    id_not_in?: InputMaybe<Array<Scalars['ID']['input']>>;
+    type?: InputMaybe<SybilProtectionType>;
+    type_not?: InputMaybe<SybilProtectionType>;
+    type_in?: InputMaybe<Array<SybilProtectionType>>;
+    type_not_in?: InputMaybe<Array<SybilProtectionType>>;
+    strategies_?: InputMaybe<PassportStrategy_filter>;
+    users_?: InputMaybe<PassportUser_filter>;
+    /** Filter for the block changed event. */
+    _change_block?: InputMaybe<BlockChangedFilter>;
+    and?: InputMaybe<Array<InputMaybe<SybilProtection_filter>>>;
+    or?: InputMaybe<Array<InputMaybe<SybilProtection_filter>>>;
+};
+export type SybilProtection_orderBy = 'id' | 'type' | 'strategies' | 'users';
 export type TokenGarden = {
     id: Scalars['ID']['output'];
     name: Scalars['String']['output'];
@@ -2710,6 +2918,12 @@ export type ResolversTypes = ResolversObject<{
     CollateralVault_filter: CollateralVault_filter;
     CollateralVault_orderBy: CollateralVault_orderBy;
     Float: ResolverTypeWrapper<Scalars['Float']['output']>;
+    GoodDollarStrategy: ResolverTypeWrapper<GoodDollarStrategy>;
+    GoodDollarStrategy_filter: GoodDollarStrategy_filter;
+    GoodDollarStrategy_orderBy: GoodDollarStrategy_orderBy;
+    GoodDollarUser: ResolverTypeWrapper<GoodDollarUser>;
+    GoodDollarUser_filter: GoodDollarUser_filter;
+    GoodDollarUser_orderBy: GoodDollarUser_orderBy;
     ID: ResolverTypeWrapper<Scalars['ID']['output']>;
     Int: ResolverTypeWrapper<Scalars['Int']['output']>;
     Int8: ResolverTypeWrapper<Scalars['Int8']['output']>;
@@ -2723,9 +2937,6 @@ export type ResolversTypes = ResolversObject<{
     Member_filter: Member_filter;
     Member_orderBy: Member_orderBy;
     OrderDirection: OrderDirection;
-    PassportScorer: ResolverTypeWrapper<PassportScorer>;
-    PassportScorer_filter: PassportScorer_filter;
-    PassportScorer_orderBy: PassportScorer_orderBy;
     PassportStrategy: ResolverTypeWrapper<PassportStrategy>;
     PassportStrategy_filter: PassportStrategy_filter;
     PassportStrategy_orderBy: PassportStrategy_orderBy;
@@ -2752,6 +2963,10 @@ export type ResolversTypes = ResolversObject<{
     Stake_filter: Stake_filter;
     Stake_orderBy: Stake_orderBy;
     String: ResolverTypeWrapper<Scalars['String']['output']>;
+    SybilProtection: ResolverTypeWrapper<SybilProtection>;
+    SybilProtectionType: SybilProtectionType;
+    SybilProtection_filter: SybilProtection_filter;
+    SybilProtection_orderBy: SybilProtection_orderBy;
     Timestamp: ResolverTypeWrapper<Scalars['Timestamp']['output']>;
     TokenGarden: ResolverTypeWrapper<TokenGarden>;
     TokenGarden_filter: TokenGarden_filter;
@@ -2783,6 +2998,10 @@ export type ResolversParentTypes = ResolversObject<{
     CollateralVaultDeposit_filter: CollateralVaultDeposit_filter;
     CollateralVault_filter: CollateralVault_filter;
     Float: Scalars['Float']['output'];
+    GoodDollarStrategy: GoodDollarStrategy;
+    GoodDollarStrategy_filter: GoodDollarStrategy_filter;
+    GoodDollarUser: GoodDollarUser;
+    GoodDollarUser_filter: GoodDollarUser_filter;
     ID: Scalars['ID']['output'];
     Int: Scalars['Int']['output'];
     Int8: Scalars['Int8']['output'];
@@ -2792,8 +3011,6 @@ export type ResolversParentTypes = ResolversObject<{
     MemberStrategy: MemberStrategy;
     MemberStrategy_filter: MemberStrategy_filter;
     Member_filter: Member_filter;
-    PassportScorer: PassportScorer;
-    PassportScorer_filter: PassportScorer_filter;
     PassportStrategy: PassportStrategy;
     PassportStrategy_filter: PassportStrategy_filter;
     PassportUser: PassportUser;
@@ -2812,6 +3029,8 @@ export type ResolversParentTypes = ResolversObject<{
     Stake: Stake;
     Stake_filter: Stake_filter;
     String: Scalars['String']['output'];
+    SybilProtection: SybilProtection;
+    SybilProtection_filter: SybilProtection_filter;
     Timestamp: Scalars['Timestamp']['output'];
     TokenGarden: TokenGarden;
     TokenGarden_filter: TokenGarden_filter;
@@ -2889,7 +3108,7 @@ export type CVStrategyResolvers<ContextType = MeshContext, ParentType extends Re
     totalEffectiveActivePoints?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
     isEnabled?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
     token?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-    sybilScorer?: Resolver<Maybe<ResolversTypes['PassportScorer']>, ParentType, ContextType>;
+    sybil?: Resolver<Maybe<ResolversTypes['SybilProtection']>, ParentType, ContextType>;
     archived?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
@@ -2906,6 +3125,7 @@ export type CVStrategyConfigResolvers<ContextType = MeshContext, ParentType exte
     maxAmount?: Resolver<Maybe<ResolversTypes['BigInt']>, ParentType, ContextType>;
     allowlist?: Resolver<Maybe<Array<ResolversTypes['String']>>, ParentType, ContextType>;
     superfluidToken?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+    superfluidGDA?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
 export type CollateralVaultResolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['CollateralVault'] = ResolversParentTypes['CollateralVault']> = ResolversObject<{
@@ -2923,6 +3143,22 @@ export type CollateralVaultDepositResolvers<ContextType = MeshContext, ParentTyp
     proposalId?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
     withdrawnAt?: Resolver<Maybe<ResolversTypes['BigInt']>, ParentType, ContextType>;
     withdrawnTo?: Resolver<Maybe<ResolversTypes['Bytes']>, ParentType, ContextType>;
+    __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+}>;
+export type GoodDollarStrategyResolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['GoodDollarStrategy'] = ResolversParentTypes['GoodDollarStrategy']> = ResolversObject<{
+    id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+    sybilProtection?: Resolver<ResolversTypes['SybilProtection'], ParentType, ContextType>;
+    strategy?: Resolver<ResolversTypes['CVStrategy'], ParentType, ContextType>;
+    councilSafe?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+    active?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+    __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+}>;
+export type GoodDollarUserResolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['GoodDollarUser'] = ResolversParentTypes['GoodDollarUser']> = ResolversObject<{
+    id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+    sybilProtection?: Resolver<ResolversTypes['SybilProtection'], ParentType, ContextType>;
+    verified?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+    userAddress?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+    lastUpdated?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
 export interface Int8ScalarConfig extends GraphQLScalarTypeConfig<ResolversTypes['Int8'], any> {
@@ -2954,15 +3190,9 @@ export type MemberStrategyResolvers<ContextType = MeshContext, ParentType extend
     activatedPoints?: Resolver<Maybe<ResolversTypes['BigInt']>, ParentType, ContextType>;
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
-export type PassportScorerResolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['PassportScorer'] = ResolversParentTypes['PassportScorer']> = ResolversObject<{
-    id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-    strategies?: Resolver<Maybe<Array<ResolversTypes['PassportStrategy']>>, ParentType, ContextType, RequireFields<PassportScorerstrategiesArgs, 'skip' | 'first'>>;
-    users?: Resolver<Maybe<Array<ResolversTypes['PassportUser']>>, ParentType, ContextType, RequireFields<PassportScorerusersArgs, 'skip' | 'first'>>;
-    __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
-}>;
 export type PassportStrategyResolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['PassportStrategy'] = ResolversParentTypes['PassportStrategy']> = ResolversObject<{
     id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-    passportScorer?: Resolver<ResolversTypes['PassportScorer'], ParentType, ContextType>;
+    passportScorer?: Resolver<ResolversTypes['SybilProtection'], ParentType, ContextType>;
     strategy?: Resolver<ResolversTypes['CVStrategy'], ParentType, ContextType>;
     threshold?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
     councilSafe?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -2971,7 +3201,7 @@ export type PassportStrategyResolvers<ContextType = MeshContext, ParentType exte
 }>;
 export type PassportUserResolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['PassportUser'] = ResolversParentTypes['PassportUser']> = ResolversObject<{
     id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-    passportScorer?: Resolver<ResolversTypes['PassportScorer'], ParentType, ContextType>;
+    passportScorer?: Resolver<ResolversTypes['SybilProtection'], ParentType, ContextType>;
     userAddress?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
     score?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
     lastUpdated?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
@@ -3026,12 +3256,16 @@ export type QueryResolvers<ContextType = MeshContext, ParentType extends Resolve
     tokenGardens?: Resolver<Array<ResolversTypes['TokenGarden']>, ParentType, ContextType, RequireFields<QuerytokenGardensArgs, 'skip' | 'first' | 'subgraphError'>>;
     allo?: Resolver<Maybe<ResolversTypes['Allo']>, ParentType, ContextType, RequireFields<QueryalloArgs, 'id' | 'subgraphError'>>;
     allos?: Resolver<Array<ResolversTypes['Allo']>, ParentType, ContextType, RequireFields<QueryallosArgs, 'skip' | 'first' | 'subgraphError'>>;
-    passportScorer?: Resolver<Maybe<ResolversTypes['PassportScorer']>, ParentType, ContextType, RequireFields<QuerypassportScorerArgs, 'id' | 'subgraphError'>>;
-    passportScorers?: Resolver<Array<ResolversTypes['PassportScorer']>, ParentType, ContextType, RequireFields<QuerypassportScorersArgs, 'skip' | 'first' | 'subgraphError'>>;
+    sybilProtection?: Resolver<Maybe<ResolversTypes['SybilProtection']>, ParentType, ContextType, RequireFields<QuerysybilProtectionArgs, 'id' | 'subgraphError'>>;
+    sybilProtections?: Resolver<Array<ResolversTypes['SybilProtection']>, ParentType, ContextType, RequireFields<QuerysybilProtectionsArgs, 'skip' | 'first' | 'subgraphError'>>;
     passportStrategy?: Resolver<Maybe<ResolversTypes['PassportStrategy']>, ParentType, ContextType, RequireFields<QuerypassportStrategyArgs, 'id' | 'subgraphError'>>;
     passportStrategies?: Resolver<Array<ResolversTypes['PassportStrategy']>, ParentType, ContextType, RequireFields<QuerypassportStrategiesArgs, 'skip' | 'first' | 'subgraphError'>>;
+    goodDollarStrategy?: Resolver<Maybe<ResolversTypes['GoodDollarStrategy']>, ParentType, ContextType, RequireFields<QuerygoodDollarStrategyArgs, 'id' | 'subgraphError'>>;
+    goodDollarStrategies?: Resolver<Array<ResolversTypes['GoodDollarStrategy']>, ParentType, ContextType, RequireFields<QuerygoodDollarStrategiesArgs, 'skip' | 'first' | 'subgraphError'>>;
     passportUser?: Resolver<Maybe<ResolversTypes['PassportUser']>, ParentType, ContextType, RequireFields<QuerypassportUserArgs, 'id' | 'subgraphError'>>;
     passportUsers?: Resolver<Array<ResolversTypes['PassportUser']>, ParentType, ContextType, RequireFields<QuerypassportUsersArgs, 'skip' | 'first' | 'subgraphError'>>;
+    goodDollarUser?: Resolver<Maybe<ResolversTypes['GoodDollarUser']>, ParentType, ContextType, RequireFields<QuerygoodDollarUserArgs, 'id' | 'subgraphError'>>;
+    goodDollarUsers?: Resolver<Array<ResolversTypes['GoodDollarUser']>, ParentType, ContextType, RequireFields<QuerygoodDollarUsersArgs, 'skip' | 'first' | 'subgraphError'>>;
     proposalDispute?: Resolver<Maybe<ResolversTypes['ProposalDispute']>, ParentType, ContextType, RequireFields<QueryproposalDisputeArgs, 'id' | 'subgraphError'>>;
     proposalDisputes?: Resolver<Array<ResolversTypes['ProposalDispute']>, ParentType, ContextType, RequireFields<QueryproposalDisputesArgs, 'skip' | 'first' | 'subgraphError'>>;
     proposalDisputeMetadata?: Resolver<Maybe<ResolversTypes['ProposalDisputeMetadata']>, ParentType, ContextType, RequireFields<QueryproposalDisputeMetadataArgs, 'id' | 'subgraphError'>>;
@@ -3083,6 +3317,13 @@ export type StakeResolvers<ContextType = MeshContext, ParentType extends Resolve
     createdAt?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
+export type SybilProtectionResolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['SybilProtection'] = ResolversParentTypes['SybilProtection']> = ResolversObject<{
+    id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+    type?: Resolver<ResolversTypes['SybilProtectionType'], ParentType, ContextType>;
+    strategies?: Resolver<Maybe<Array<ResolversTypes['PassportStrategy']>>, ParentType, ContextType, RequireFields<SybilProtectionstrategiesArgs, 'skip' | 'first'>>;
+    users?: Resolver<Maybe<Array<ResolversTypes['PassportUser']>>, ParentType, ContextType, RequireFields<SybilProtectionusersArgs, 'skip' | 'first'>>;
+    __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+}>;
 export interface TimestampScalarConfig extends GraphQLScalarTypeConfig<ResolversTypes['Timestamp'], any> {
     name: 'Timestamp';
 }
@@ -3123,11 +3364,12 @@ export type Resolvers<ContextType = MeshContext> = ResolversObject<{
     CVStrategyConfig?: CVStrategyConfigResolvers<ContextType>;
     CollateralVault?: CollateralVaultResolvers<ContextType>;
     CollateralVaultDeposit?: CollateralVaultDepositResolvers<ContextType>;
+    GoodDollarStrategy?: GoodDollarStrategyResolvers<ContextType>;
+    GoodDollarUser?: GoodDollarUserResolvers<ContextType>;
     Int8?: GraphQLScalarType;
     Member?: MemberResolvers<ContextType>;
     MemberCommunity?: MemberCommunityResolvers<ContextType>;
     MemberStrategy?: MemberStrategyResolvers<ContextType>;
-    PassportScorer?: PassportScorerResolvers<ContextType>;
     PassportStrategy?: PassportStrategyResolvers<ContextType>;
     PassportUser?: PassportUserResolvers<ContextType>;
     ProposalDispute?: ProposalDisputeResolvers<ContextType>;
@@ -3137,6 +3379,7 @@ export type Resolvers<ContextType = MeshContext> = ResolversObject<{
     RegistryCommunity?: RegistryCommunityResolvers<ContextType>;
     RegistryFactory?: RegistryFactoryResolvers<ContextType>;
     Stake?: StakeResolvers<ContextType>;
+    SybilProtection?: SybilProtectionResolvers<ContextType>;
     Timestamp?: GraphQLScalarType;
     TokenGarden?: TokenGardenResolvers<ContextType>;
     _Block_?: _Block_Resolvers<ContextType>;
@@ -3226,15 +3469,18 @@ export declare function getBuiltGraphSDK<TGlobalContext = any, TOperationContext
     getProposalTitles(variables: Exact<{
         proposalId: string;
     }>, options?: TOperationContext): Promise<getProposalTitlesQuery>;
-    getPassportScorer(variables: Exact<{
-        scorerId: string;
-    }>, options?: TOperationContext): Promise<getPassportScorerQuery>;
     getPassportStrategy(variables: Exact<{
         strategyId: string;
     }>, options?: TOperationContext): Promise<getPassportStrategyQuery>;
     getPassportUser(variables: Exact<{
         userId: string;
     }>, options?: TOperationContext): Promise<getPassportUserQuery>;
+    getGoodDollarStrategy(variables: Exact<{
+        strategyId: string;
+    }>, options?: TOperationContext): Promise<getGoodDollarStrategyQuery>;
+    getGoodDollarUser(variables: Exact<{
+        userId: string;
+    }>, options?: TOperationContext): Promise<getGoodDollarUserQuery>;
     getProposalDisputes(variables: Exact<{
         proposalId: string;
     }>, options?: TOperationContext): Promise<getProposalDisputesQuery>;
@@ -3395,7 +3641,7 @@ export type getPoolDataQuery = {
     allos: Array<Pick<Allo, 'id' | 'chainId' | 'tokenNative'>>;
     tokenGarden?: Maybe<Pick<TokenGarden, 'address' | 'name' | 'symbol' | 'description' | 'totalBalance' | 'ipfsCovenant' | 'decimals'>>;
     cvstrategies: Array<(Pick<CVStrategy, 'token' | 'metadata' | 'id' | 'poolId' | 'totalEffectiveActivePoints' | 'isEnabled' | 'maxCVSupply' | 'archived'> & {
-        sybilScorer?: Maybe<Pick<PassportScorer, 'id'>>;
+        sybil?: Maybe<Pick<SybilProtection, 'id' | 'type'>>;
         memberActive?: Maybe<Array<Pick<Member, 'id'>>>;
         config: Pick<CVStrategyConfig, 'id' | 'weight' | 'decay' | 'maxAmount' | 'maxRatio' | 'minThresholdPoints' | 'pointSystem' | 'proposalType' | 'allowlist' | 'superfluidToken'>;
         registryCommunity: (Pick<RegistryCommunity, 'id' | 'councilSafe' | 'isValid'> & {
@@ -3484,23 +3730,12 @@ export type getProposalTitlesQuery = {
         });
     })>;
 };
-export type getPassportScorerQueryVariables = Exact<{
-    scorerId: Scalars['ID']['input'];
-}>;
-export type getPassportScorerQuery = {
-    passportScorer?: Maybe<(Pick<PassportScorer, 'id'> & {
-        strategies?: Maybe<Array<(Pick<PassportStrategy, 'id' | 'threshold' | 'councilSafe' | 'active'> & {
-            strategy: Pick<CVStrategy, 'id'>;
-        })>>;
-        users?: Maybe<Array<Pick<PassportUser, 'id' | 'userAddress' | 'score' | 'lastUpdated'>>>;
-    })>;
-};
 export type getPassportStrategyQueryVariables = Exact<{
     strategyId: Scalars['ID']['input'];
 }>;
 export type getPassportStrategyQuery = {
     passportStrategy?: Maybe<(Pick<PassportStrategy, 'id' | 'threshold' | 'councilSafe' | 'active'> & {
-        strategy: Pick<CVStrategy, 'id'>;
+        passportScorer: Pick<SybilProtection, 'id' | 'type'>;
     })>;
 };
 export type getPassportUserQueryVariables = Exact<{
@@ -3508,6 +3743,20 @@ export type getPassportUserQueryVariables = Exact<{
 }>;
 export type getPassportUserQuery = {
     passportUser?: Maybe<Pick<PassportUser, 'id' | 'userAddress' | 'score' | 'lastUpdated'>>;
+};
+export type getGoodDollarStrategyQueryVariables = Exact<{
+    strategyId: Scalars['ID']['input'];
+}>;
+export type getGoodDollarStrategyQuery = {
+    goodDollarStrategy?: Maybe<(Pick<GoodDollarStrategy, 'id' | 'councilSafe' | 'active'> & {
+        sybilProtection: Pick<SybilProtection, 'id' | 'type'>;
+    })>;
+};
+export type getGoodDollarUserQueryVariables = Exact<{
+    userId: Scalars['ID']['input'];
+}>;
+export type getGoodDollarUserQuery = {
+    goodDollarUser?: Maybe<Pick<GoodDollarUser, 'id' | 'userAddress' | 'verified' | 'lastUpdated'>>;
 };
 export type getProposalDisputesQueryVariables = Exact<{
     proposalId: Scalars['ID']['input'];
@@ -3602,13 +3851,16 @@ export declare const getPoolTitlesDocument: DocumentNode<getPoolTitlesQuery, Exa
 export declare const getProposalTitlesDocument: DocumentNode<getProposalTitlesQuery, Exact<{
     proposalId: Scalars['ID']['input'];
 }>>;
-export declare const getPassportScorerDocument: DocumentNode<getPassportScorerQuery, Exact<{
-    scorerId: Scalars['ID']['input'];
-}>>;
 export declare const getPassportStrategyDocument: DocumentNode<getPassportStrategyQuery, Exact<{
     strategyId: Scalars['ID']['input'];
 }>>;
 export declare const getPassportUserDocument: DocumentNode<getPassportUserQuery, Exact<{
+    userId: Scalars['ID']['input'];
+}>>;
+export declare const getGoodDollarStrategyDocument: DocumentNode<getGoodDollarStrategyQuery, Exact<{
+    strategyId: Scalars['ID']['input'];
+}>>;
+export declare const getGoodDollarUserDocument: DocumentNode<getGoodDollarUserQuery, Exact<{
     userId: Scalars['ID']['input'];
 }>>;
 export declare const getProposalDisputesDocument: DocumentNode<getProposalDisputesQuery, Exact<{
@@ -3643,9 +3895,10 @@ export declare function getSdk<C, E>(requester: Requester<C, E>): {
     getCommunityTitles(variables: getCommunityTitlesQueryVariables, options?: C): Promise<getCommunityTitlesQuery>;
     getPoolTitles(variables: getPoolTitlesQueryVariables, options?: C): Promise<getPoolTitlesQuery>;
     getProposalTitles(variables: getProposalTitlesQueryVariables, options?: C): Promise<getProposalTitlesQuery>;
-    getPassportScorer(variables: getPassportScorerQueryVariables, options?: C): Promise<getPassportScorerQuery>;
     getPassportStrategy(variables: getPassportStrategyQueryVariables, options?: C): Promise<getPassportStrategyQuery>;
     getPassportUser(variables: getPassportUserQueryVariables, options?: C): Promise<getPassportUserQuery>;
+    getGoodDollarStrategy(variables: getGoodDollarStrategyQueryVariables, options?: C): Promise<getGoodDollarStrategyQuery>;
+    getGoodDollarUser(variables: getGoodDollarUserQueryVariables, options?: C): Promise<getGoodDollarUserQuery>;
     getProposalDisputes(variables: getProposalDisputesQueryVariables, options?: C): Promise<getProposalDisputesQuery>;
     getArbitrableConfigs(variables: getArbitrableConfigsQueryVariables, options?: C): Promise<getArbitrableConfigsQuery>;
     getMemberPassportAndCommunities(variables: getMemberPassportAndCommunitiesQueryVariables, options?: C): Promise<getMemberPassportAndCommunitiesQuery>;

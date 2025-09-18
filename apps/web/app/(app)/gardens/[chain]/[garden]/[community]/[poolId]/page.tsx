@@ -206,7 +206,7 @@ export default function Page({
       {isEnabled && (
         <Proposals
           poolToken={poolToken}
-          strategy={strategy}
+          strategy={{ ...strategy, title: ipfsResult?.title }}
           alloInfo={alloInfo}
           communityAddress={communityAddress}
           createProposalUrl={`/gardens/${chain}/${garden}/${communityAddress}/${poolId}/create-proposal`}

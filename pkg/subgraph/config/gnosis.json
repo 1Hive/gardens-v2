@@ -13,6 +13,12 @@
       "startBlock": 36032423,
       "address": "0x20965C5C8a021ac6fFeD5dE7A402f7CEaC3b0A82",
       "customTemplate": "passportScorer"
+    },
+    {
+      "name": "GoodDollarSybil",
+      "startBlock": 36032423,
+      "address": "0x752dD2BE242c0A2944469331a463297ccAfC3A0E",
+      "customTemplate": "goodDollarSybil"
     }
   ]
 }

@@ -14,3 +14,4 @@ out/utils/*
 !out/*IArbitrator*
 !out/*CollateralVault.sol*
 !out/utils/Mock*
+!out/*GoodDollarSybil.sol*

@@ -288,7 +288,6 @@ export const ProposalForm = ({
   const thresholdPct = calculatePercentageBigInt(
     thresholdFromContract as bigint,
     BigInt(strategy.maxCVSupply),
-    poolToken?.decimals ?? 18,
   );
 
   if (!poolToken && PoolTypes[proposalType] === "funding") {

@@ -80,9 +80,12 @@ export function CommunityCard({
           <TooltipIfOverflow>{communityName ?? ""}</TooltipIfOverflow>
         </h3>
         <div className="flex gap-2 items-center">
-          <p className="text-base font-normal">
+          <p className=" font-normal dark:text-opacity-80">
             Governance Token:
-            <span className="text-base font-normal"> {tokenSymbol}</span>
+            <span className="font-normal dark:text-opacity-80">
+              {" "}
+              {tokenSymbol}
+            </span>
           </p>
         </div>
         <Statistic
@@ -104,26 +107,26 @@ export function CommunityCardSkeleton() {
   return (
     <Card href="#" className="min-w-[313px]">
       <div className="flex justify-between text-neutral-content text-sm">
-        <div className="skeleton [--fallback-b3:#f0f0f0] mb-2 h-[100px] w-[100px]" />
+        <div className="skeleton [--fallback-b3:#f0f0f0] dark:[--fallback-b1:#717171]  mb-2 h-[100px] w-[100px]" />
         <div className="flex flex-col gap-1">
           <div className="flex gap-2 items-center">
-            <div className="skeleton [--fallback-b3:#f0f0f0] h-6 w-6 rounded-full" />
+            <div className="skeleton [--fallback-b3:#f0f0f0] dark:[--fallback-b1:#717171]  h-6 w-6 rounded-full" />
           </div>
         </div>
       </div>
 
       <div className="flex flex-col gap-2">
-        <div className="skeleton [--fallback-b3:#f0f0f0] h-7 w-48" />
+        <div className="skeleton [--fallback-b3:#f0f0f0] dark:[--fallback-b1:#717171]  h-7 w-48" />
         <div className="flex gap-2 items-center">
-          <div className="skeleton [--fallback-b3:#f0f0f0] h-6 w-40" />
+          <div className="skeleton [--fallback-b3:#f0f0f0] dark:[--fallback-b1:#717171]  h-6 w-40" />
         </div>
         <div className="flex gap-2 items-center">
-          <div className="skeleton [--fallback-b3:#f0f0f0] h-6 w-6" />
-          <div className="skeleton [--fallback-b3:#f0f0f0] h-6 w-24" />
+          <div className="skeleton [--fallback-b3:#f0f0f0] dark:[--fallback-b1:#717171]  h-6 w-6" />
+          <div className="skeleton [--fallback-b3:#f0f0f0] dark:[--fallback-b1:#717171]  h-6 w-24" />
         </div>
         <div className="flex gap-2 items-center">
-          <div className="skeleton [--fallback-b3:#f0f0f0] h-6 w-6" />
-          <div className="skeleton [--fallback-b3:#f0f0f0] h-6 w-24" />
+          <div className="skeleton [--fallback-b3:#f0f0f0] dark:[--fallback-b1:#717171]  h-6 w-6" />
+          <div className="skeleton [--fallback-b3:#f0f0f0] dark:[--fallback-b1:#717171]  h-6 w-24" />
         </div>
       </div>
     </Card>
