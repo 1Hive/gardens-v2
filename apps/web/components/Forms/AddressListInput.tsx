@@ -258,32 +258,31 @@ export function AddressListInput({
       {subLabel && <p className="mb-1 text-xs">{subLabel}</p>}
 
       <div
-        className={`rounded-lg flex mb-4 border p-0 text-neutral-soft-content ${
+        className={`rounded-lg flex mb-4 gap-1 p-0 text-neutral-soft-content ${
           !label && "mt-4"
         }`}
       >
-        <button
-          type="button"
+        <Button
           className={`w-full py-2 rounded-lg text-center px-4 text-semibold ${
             inputMode === "single" ?
-              "border border-border-neutral bg-neutral-soft text-neutral-content dark:text-neutral -m-[1px]"
+              "border border-border-neutral bg-neutral-soft text-neutral-content -m-[1px]"
             : ""
           }`}
           onClick={() => setInputMode("single")}
         >
           Single Input
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
           className={`w-full py-2 rounded-lg text-center px-4 text-semibold ${
             inputMode === "bulk" ?
-              "border border-border-neutral bg-neutral-soft text-neutral-content dark:text-neutral -m-[1px]"
+              "border border-border-neutral bg-neutral-soft text-neutral-content -m-[1px]"
             : ""
           }`}
           onClick={() => setInputMode("bulk")}
         >
           Bulk Input
-        </button>
+        </Button>
       </div>
       {inputMode === "single" ?
         <div className="flex mb-4 gap-2">

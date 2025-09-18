@@ -1,11 +1,31 @@
 "use client";
 
 import React from "react";
-import { MegaphoneIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import Link from "next/link";
 import { newLogo } from "@/assets";
-import { Badge, Button, ConnectWallet, ThemeButton } from "@/components";
+import { Button, ConnectWallet, ThemeButton } from "@/components";
+
+export function HeadphoneIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="30"
+      height="30"
+      viewBox="0 0 256 256"
+      fill="none"
+      stroke="white"
+      strokeWidth="4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <g transform="translate(1.4066 1.4066) scale(2.81 2.81)">
+        <path d="M 41.046 86.144 c -3.486 0 -6.322 -2.837 -6.322 -6.322 S 37.56 73.5 41.046 73.5 c 3.487 0 6.323 2.837 6.323 6.322 S 44.532 86.144 41.046 86.144 z M 41.046 76.467 c -1.85 0 -3.355 1.505 -3.355 3.355 s 1.505 3.355 3.355 3.355 c 1.851 0 3.356 -1.505 3.356 -3.355 S 42.896 76.467 41.046 76.467 z" />
+        <path d="M 80.581 33.518 C 77.501 16.67 62.724 3.856 45 3.856 c -17.724 0 -32.501 12.814 -35.581 29.662 C 4.103 34.283 0 38.855 0 44.379 v 11.321 c 0 5.038 3.413 9.285 8.045 10.575 c 0.048 0.092 0.105 0.182 0.174 0.265 c 7.408 8.931 16.898 13.801 28.252 14.542 v -2.971 c -9.529 -0.678 -17.627 -4.505 -24.15 -11.424 h 1.018 c 2.926 0 5.307 -2.381 5.307 -5.307 V 38.699 c 0 -2.926 -2.381 -5.306 -5.307 -5.306 h -0.877 C 15.548 18.252 28.961 6.823 45 6.823 c 16.039 0 29.452 11.43 32.539 26.57 h -0.878 c -2.925 0 -5.306 2.38 -5.306 5.306 v 22.681 c 0 2.926 2.381 5.307 5.306 5.307 h 2.352 C 85.071 66.688 90 61.759 90 55.701 V 44.379 C 90 38.855 85.897 34.283 80.581 33.518 z M 13.339 36.36 c 1.29 0 2.34 1.049 2.34 2.339 v 22.681 c 0 1.29 -1.049 2.34 -2.34 2.34 h -2.352 c -4.422 0 -8.02 -3.598 -8.02 -8.02 V 44.379 c 0 -4.422 3.598 -8.019 8.02 -8.019 H 13.339 z M 87.033 55.701 c 0 4.422 -3.598 8.02 -8.02 8.02 h -2.352 c -1.289 0 -2.339 -1.05 -2.339 -2.34 V 38.699 c 0 -1.29 1.05 -2.339 2.339 -2.339 h 2.352 c 4.423 0 8.02 3.597 8.02 8.019 V 55.701 z" />
+      </g>
+    </svg>
+  );
+}
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -106,7 +126,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <Button
           forceShowTooltip
           tooltip={"Discord\nSupport"}
-          icon={<MegaphoneIcon height={24} width={24} className="text-white" />}
+          icon={<HeadphoneIcon />}
         />
       </a>
     </div>
