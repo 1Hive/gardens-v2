@@ -351,6 +351,11 @@ export function getChain(chainId: ChainId): Chain | undefined {
 
 export const ChainIcon: FC<ChainIconProps> = ({ chain, ...props }) => {
   const numericChainId = Number(chain);
+  const chainData = chainConfigMap[numericChainId];
   const IconComponent = chainConfigMap[numericChainId]?.icon;
-  return IconComponent != null ? <IconComponent {...props} /> : null;
+  return IconComponent != null ?
+      <div className="tooltip" data-tip={chainData.name}>
+        <IconComponent {...props} />
+      </div>
+    : null;
 };
