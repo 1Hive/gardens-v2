@@ -1,10 +1,5 @@
 import React, { FC } from "react";
-import {
-  Arbitrum,
-  GnosisGno,
-  Optimism,
-  Polygon,
-} from "@thirdweb-dev/chain-icons";
+import { Arbitrum, Optimism, Polygon } from "@thirdweb-dev/chain-icons";
 import { Address } from "viem";
 import {
   arbitrum,
@@ -21,6 +16,7 @@ import {
 import Subgraph from "../configs/subgraph.json";
 import { BaseLogo } from "@/assets/BaseLogo";
 import { CeloLogo } from "@/assets/CeloLogo";
+import { GnosisLogo } from "@/assets/GnosisLogo";
 import { ChainId } from "@/types";
 
 type ChainIconProps = React.SVGProps<SVGSVGElement> & {
@@ -249,7 +245,7 @@ export const chainConfigMap: {
   100: {
     id: 100,
     name: gnosis.name,
-    icon: GnosisGno,
+    icon: GnosisLogo,
     explorer: "https://gnosisscan.io",
     blockTime: 5.2,
     confirmations: 2, // 4
@@ -351,11 +347,6 @@ export function getChain(chainId: ChainId): Chain | undefined {
 
 export const ChainIcon: FC<ChainIconProps> = ({ chain, ...props }) => {
   const numericChainId = Number(chain);
-  const chainData = chainConfigMap[numericChainId];
   const IconComponent = chainConfigMap[numericChainId]?.icon;
-  return IconComponent != null ?
-      <div className="tooltip" data-tip={chainData.name}>
-        <IconComponent {...props} />
-      </div>
-    : null;
+  return IconComponent != null ? <IconComponent {...props} /> : null;
 };

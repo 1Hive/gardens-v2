@@ -17,7 +17,7 @@ import { Card } from "./Card";
 import { Statistic } from "./Statistic";
 import TooltipIfOverflow from "./TooltipIfOverflow";
 import { CommunityLogo, ProtopianLogo } from "@/assets";
-import { ChainIcon } from "@/configs/chains";
+import { ChainIcon, getChain } from "@/configs/chains";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 
@@ -42,6 +42,7 @@ export function CommunityCard({
 
   const membersCount = members?.length ?? 0;
   const poolsCount = strategies?.length ?? 0;
+  const chain = getChain(chainId);
 
   const searchParams = useCollectQueryParams();
   const isNewCommunity =
@@ -69,7 +70,10 @@ export function CommunityCard({
           width={100}
         />
         <div className="flex flex-col gap-1">
-          <div className="flex gap-2 items-center">
+          <div
+            className="flex gap-2 items-center tooltip"
+            data-tip={chain?.name}
+          >
             <ChainIcon chain={chainId} height={24} />
           </div>
         </div>
