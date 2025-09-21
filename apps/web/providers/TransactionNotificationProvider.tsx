@@ -54,15 +54,15 @@ function reducer(
       if (!payload.toastId) return state;
       const shouldRemove = payload.enabled === false || payload.status == null;
       if (shouldRemove) {
-        const { [payload.toastId]: _discard, ...rest } = state;
+        const { [payload.toastId]: discarded, ...rest } = state;
         return rest;
       }
 
       const prev = state[payload.toastId];
       const next = {
-        createdAt: prev?.createdAt ?? Date.now(),
         ...prev,
         ...payload,
+        createdAt: prev?.createdAt ?? Date.now(),
       };
 
       if (prev && areEntriesEqual(prev, next)) {
@@ -75,7 +75,7 @@ function reducer(
     }
     case "REMOVE": {
       if (!action.toastId) return state;
-      const { [action.toastId]: _discard, ...rest } = state;
+      const { [action.toastId]: discarded, ...rest } = state;
       return rest;
     }
     default:
@@ -225,7 +225,9 @@ type NotificationRenderConfig = {
   autoClose?: ToastOptions["autoClose"];
 };
 
-const mapStatusToNotification = (entry: TransactionToastPayload): NotificationRenderConfig => {
+const mapStatusToNotification = (
+  entry: TransactionToastPayload,
+): NotificationRenderConfig => {
   const chainUrl = getExplorerUrl(entry.chainId);
   const openExplorer = () => {
     if (entry.transactionHash) {
@@ -302,14 +304,17 @@ const TransactionStatusWatcher = ({
     chainId: entry.chainId,
     confirmations: entry.confirmations,
     enabled: shouldWatch,
-    watch: true,
   });
 
   useEffect(() => {
     if (!shouldWatch) return;
 
     if (status === "success" && entry.status !== "success") {
-      notify({ toastId: entry.toastId, status: "success", transactionError: null });
+      notify({
+        toastId: entry.toastId,
+        status: "success",
+        transactionError: null,
+      });
     }
     if (status === "error" && entry.status !== "error") {
       notify({

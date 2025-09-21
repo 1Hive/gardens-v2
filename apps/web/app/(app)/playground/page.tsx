@@ -16,9 +16,6 @@ import MarkdownEditor from "@/components/MarkdownEditor";
 import { Skeleton } from "@/components/Skeleton";
 import { TransactionStatusNotification } from "@/components/TransactionStatusNotification";
 
-const sliderClass =
-  "range range-md w-full bg-neutral-soft dark:bg-neutral [--range-shdw:var(--color-green-500)] dark:[--range-shdw:#4E9F80]";
-
 const transactionStatuses: Array<{
   status: "idle" | "waiting" | "loading" | "success" | "error";
   message: string;
@@ -90,8 +87,6 @@ const buttonColors: Array<{ color: Color; label: string; disabled?: boolean }> =
 export default function DesignSystemPage() {
   const [radioValue, setRadioValue] = useState("option-a");
   const [textValue, setTextValue] = useState("100");
-  const [sliderValue, setSliderValue] = useState(50);
-  const [stakingSlider, setStakingSlider] = useState(75);
   const [markdownValue, setMarkdownValue] = useState<string>(
     "# Welcome to the design system\n\nYou can **edit** this content to preview our Markdown editor.",
   );
@@ -168,61 +163,6 @@ export default function DesignSystemPage() {
                 value={textValue}
                 onChange={(event) => setTextValue(event.target.value)}
               />
-            </div>
-          </DemoCard>
-
-          <DemoCard title="Sliders">
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium">
-                  Budget allocation
-                </label>
-                <input
-                  type="range"
-                  className={sliderClass}
-                  value={sliderValue}
-                  onChange={(event) =>
-                    setSliderValue(Number(event.target.value))
-                  }
-                />
-                <p className="text-xs text-neutral-soft-content">
-                  {sliderValue}% allocated to proposal
-                </p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium">
-                  Staking slider
-                </label>
-                <input
-                  type="range"
-                  className={`${sliderClass} [--range-thumb-size:14px]`}
-                  value={stakingSlider}
-                  min={0}
-                  max={100}
-                  onChange={(event) =>
-                    setStakingSlider(Number(event.target.value))
-                  }
-                />
-                <p className="text-xs text-neutral-soft-content">
-                  {stakingSlider}% of balance
-                </p>
-              </div>
-            </div>
-          </DemoCard>
-
-          <DemoCard title="Toggle & Checkbox">
-            <div className="flex flex-col gap-4">
-              <label className="flex items-center gap-2">
-                <input type="checkbox" className="toggle toggle-primary" />
-                <span>Email notifications</span>
-              </label>
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  className="checkbox checkbox-secondary"
-                />
-                <span>Accept terms</span>
-              </label>
             </div>
           </DemoCard>
 
