@@ -218,14 +218,6 @@ dialog.modal::backdrop {
   color: #58a885 !important;
 }
 
-[data-theme="darkTheme"] .bg-primary-button {
-  background-color: #3f8f65 !important;
-}
-
-[data-theme="darkTheme"] .border-primary-button {
-  border-color: #3f8f65 !important;
-}
-
 [data-theme="darkTheme"] .hover\:bg-primary-hover-content:hover {
   background-color: #58a885 !important;
 }
@@ -236,14 +228,6 @@ dialog.modal::backdrop {
 
 [data-theme="darkTheme"] .text-danger-content {
   color: #ffb4b4 !important;
-}
-
-[data-theme="darkTheme"] .bg-danger-button {
-  background-color: #d65a5a !important;
-}
-
-[data-theme="darkTheme"] .border-danger-button {
-  border-color: #d65a5a !important;
 }
 
 [data-theme="darkTheme"] .bg-danger-soft-dark {
