@@ -214,12 +214,16 @@ dialog.modal::backdrop {
   border-color: #63b693 !important;
 }
 
-[data-theme="darkTheme"] .hover\:text-primary-hover-content:hover {
-  color: #58a885 !important;
-}
-
 [data-theme="darkTheme"] .bg-primary-button {
   background-color: #3f8f65 !important;
+}
+
+[data-theme="darkTheme"] .hover\:bg-primary-hover-content:hover {
+  background-color: #58a885 !important;
+}
+
+[data-theme="darkTheme"] .hover\:border-primary-hover-content:hover {
+  border-color: #58a885 !important;
 }
 
 [data-theme="darkTheme"] .border-primary-button {
@@ -244,14 +248,6 @@ dialog.modal::backdrop {
 
 [data-theme="darkTheme"] .border-danger-button {
   border-color: #d65a5a !important;
-}
-
-[data-theme="darkTheme"] .hover\:bg-danger-hover-content:hover {
-  background-color: #e57373 !important;
-}
-
-[data-theme="darkTheme"] .hover\:border-danger-hover-content:hover {
-  border-color: #e57373 !important;
 }
 
 [data-theme="darkTheme"] .bg-danger-soft-dark {
