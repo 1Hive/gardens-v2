@@ -46,46 +46,46 @@ type BtnStyles = Record<BtnStyle, Record<Color, string>>;
 const btnStyles: BtnStyles = {
   filled: {
     primary:
-      "bg-primary-button text-neutral-inverted-content hover:bg-primary-hover-content dark:bg-[#3f8f65] dark:text-neutral-inverted-content dark:hover:bg-[#7fe7b8]",
+      "bg-primary-button text-neutral-inverted-content hover:bg-primary-hover-content dark:bg-primary-dark-base dark:text-neutral-inverted-content dark:hover:bg-primary-dark-hover",
     secondary:
-      "bg-secondary-button text-neutral-inverted-content hover:bg-secondary-hover-content dark:bg-[#8a5a2a] dark:text-neutral-inverted-content dark:hover:bg-[#f2b06f]",
+      "bg-secondary-button text-neutral-inverted-content hover:bg-secondary-hover-content dark:bg-secondary-dark-base dark:text-neutral-inverted-content dark:hover:bg-secondary-dark-hover",
     tertiary:
       "bg-tertiary-button text-neutral-inverted-content hover:bg-tertiary-hover-content",
     danger:
-      "bg-danger-button text-neutral-inverted-content hover:bg-danger-hover-content dark:bg-[#eb4848] dark:text-neutral-inverted-content dark:hover:bg-[#ff8f8f]",
+      "bg-danger-button text-neutral-inverted-content hover:bg-danger-hover-content dark:bg-danger-dark-base dark:text-neutral-inverted-content dark:hover:bg-danger-dark-hover",
     disabled:
       "bg-neutral-button text-neutral-inverted-content dark:text-neutral-inverted-content-dark",
   },
   outline: {
     primary:
-      "text-primary-content border border-primary-content hover:text-primary-hover-content hover:border-primary-hover-content dark:text-[#63b693] dark:border-[#3f8f65] dark:hover:text-[#d9fbe8] dark:hover:border-[#9beccc]",
+      "text-primary-content border border-primary-content hover:text-primary-hover-content hover:border-primary-hover-content dark:text-primary-dark-text dark:border-primary-dark-border dark:hover:text-primary-dark-text-hover dark:hover:border-primary-dark-border-hover",
     secondary:
-      "text-secondary-content border border-secondary-content hover:text-secondary-hover-content hover:border-secondary-hover-content dark:text-[#e89a4c] dark:border-[#8a5a2a] dark:hover:text-[#ffdfb2] dark:hover:border-[#d8974f]",
+      "text-secondary-content border border-secondary-content hover:text-secondary-hover-content hover:border-secondary-hover-content dark:text-secondary-dark-text dark:border-secondary-dark-border dark:hover:text-secondary-dark-text-hover dark:hover:border-secondary-dark-border-hover",
     tertiary:
       "text-tertiary-content border border-tertiary-content hover:text-tertiary-hover-content hover:border-tertiary-hover-content",
     danger:
-      "text-danger-button border border-danger-button hover:text-danger-hover-content hover:border-danger-hover-content dark:text-[#ffd0d0] dark:border-[#eb4848] dark:hover:text-[#fff6f6] dark:hover:border-[#ffbdbd]",
+      "text-danger-button border border-danger-button hover:text-danger-hover-content hover:border-danger-hover-content dark:text-danger-dark-text dark:border-danger-dark-border dark:hover:text-danger-dark-text-hover dark:hover:border-danger-dark-border-hover",
     disabled: "text-neutral-soft-content border border-neutral-soft-content",
   },
   link: {
     primary:
-      "text-primary-content hover:text-primary-hover-content dark:text-[#63b693] dark:hover:text-[#d9fbe8]",
+      "text-primary-content hover:text-primary-hover-content dark:text-primary-dark-text dark:hover:text-primary-dark-text-hover",
     secondary:
-      "text-secondary-content hover:text-secondary-hover-content dark:text-[#e89a4c] dark:hover:text-[#ffe3c0]",
+      "text-secondary-content hover:text-secondary-hover-content dark:text-secondary-dark-text dark:hover:text-secondary-dark-text-hover",
     tertiary: "text-tertiary-content hover:text-tertiary-hover-content",
     danger:
-      "text-danger-button hover:text-danger-hover-content dark:text-[#ffd0d0] dark:hover:text-[#fff1f1]",
+      "text-danger-button hover:text-danger-hover-content dark:text-danger-dark-text dark:hover:text-danger-dark-text-hover",
     disabled: "text-neutral-soft dark:text-neutral-inverted-content-dark",
   },
   ghost: {
     primary:
-      "text-primary-content hover:text-primary-hover-content hover:border border-primary-content dark:text-[#63b693] dark:hover:text-[#82deb4] dark:hover:border-[#6fcf9f] dark:border-[#3f8f65]",
+      "text-primary-content hover:text-primary-hover-content hover:border border-primary-content dark:text-primary-dark-text dark:border-primary-dark-border dark:hover:text-primary-dark-text-hover dark:hover:border-primary-dark-border-hover",
     secondary:
-      "text-secondary-content hover:text-secondary-hover-content hover:border border-secondary-content dark:text-[#e89a4c] dark:hover:text-[#ffc37d] dark:border-[#8a5a2a] dark:hover:border-[#b8763a]",
+      "text-secondary-content hover:text-secondary-hover-content hover:border border-secondary-content dark:text-secondary-dark-text dark:border-secondary-dark-border dark:hover:text-secondary-dark-text-hover dark:hover:border-secondary-dark-border-hover",
     tertiary:
       "text-tertiary-content hover:text-tertiary-hover-content hover:border border-tertiary-content",
     danger:
-      "text-danger-button hover:text-danger-hover-content hover:border border-danger-button dark:text-[#ffd0d0] dark:hover:text-[#fff6f6] dark:border-[#eb4848] dark:hover:border-[#ffbdbd]",
+      "text-danger-button hover:text-danger-hover-content hover:border border-danger-button dark:text-danger-dark-text dark:border-danger-dark-border dark:hover:text-danger-dark-text-hover dark:hover:border-danger-dark-border-hover",
     disabled: "text-neutral-soft dark:text-neutral-inverted-content-dark",
   },
 };
