@@ -52,7 +52,7 @@ const btnStyles: BtnStyles = {
     tertiary:
       "bg-tertiary-button text-neutral-inverted-content hover:bg-tertiary-hover-content dark:bg-tertiary-dark-base dark:text-neutral-inverted-content dark:hover:bg-tertiary-dark-hover",
     danger:
-      "bg-danger-button text-neutral-inverted-content hover:bg-danger-hover-content dark:bg-danger-dark-base dark:text-neutral-inverted-content dark:hover:bg-danger-dark-hover",
+      "bg-danger-button text-neutral-inverted-content hover:bg-danger-hover-content dark:bg-danger-dark-base dark:text-danger-dark-border dark:hover:bg-danger-dark-hover",
     disabled:
       "bg-neutral-button text-neutral-inverted-content dark:text-neutral-inverted-content-dark",
   },
@@ -64,7 +64,7 @@ const btnStyles: BtnStyles = {
     tertiary:
       "text-tertiary-content border border-tertiary-content hover:text-tertiary-hover-content hover:border-tertiary-hover-content dark:text-tertiary-dark-text dark:border-tertiary-dark-border dark:hover:text-tertiary-dark-text-hover dark:hover:border-tertiary-dark-border-hover",
     danger:
-      "text-danger-button border border-danger-button hover:text-danger-hover-content hover:border-danger-hover-content dark:text-danger-dark-text dark:border-danger-dark-border dark:hover:text-danger-dark-text-hover dark:hover:border-danger-dark-border-hover",
+      "text-danger-button border border-danger-button hover:text-danger-hover-content hover:border-danger-hover-content dark:text-danger-dark-border dark:border-danger-dark-border dark:hover:text-danger-dark-border-hover dark:hover;border-danger-dark-border-hover",
     disabled: "text-neutral-soft-content border border-neutral-soft-content",
   },
   link: {
