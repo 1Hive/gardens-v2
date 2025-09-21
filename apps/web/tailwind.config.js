@@ -52,7 +52,7 @@ module.exports = {
           "tertiary-soft": "#E5F7FA",
           "tertiary-content": "#2AAAE5",
           accent: "#37CDFA",
-          "danger-button": "#D65A5A",
+          "danger-button": "#EB4848",
           "danger-content": "#FFB4B4",
           "error-content": "#EB4848",
           //additions:

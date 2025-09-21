@@ -206,34 +206,6 @@ dialog.modal::backdrop {
   background-color: rgba(0, 0, 0, 0.75);
 }
 
-[data-theme="darkTheme"] .text-primary-content {
-  color: #63b693 !important;
-}
-
-[data-theme="darkTheme"] .border-primary-content {
-  border-color: #63b693 !important;
-}
-
-[data-theme="darkTheme"] .hover\:text-primary-hover-content:hover {
-  color: #58a885 !important;
-}
-
-[data-theme="darkTheme"] .hover\:bg-primary-hover-content:hover {
-  background-color: #58a885 !important;
-}
-
-[data-theme="darkTheme"] .hover\:border-primary-hover-content:hover {
-  border-color: #58a885 !important;
-}
-
-[data-theme="darkTheme"] .text-danger-content {
-  color: #ffb4b4 !important;
-}
-
-[data-theme="darkTheme"] .bg-danger-soft-dark {
-  background-color: #442121 !important;
-}
-
 /* dark mode */
 [data-theme="darkTheme"] .skeleton {
   background-color: #1f1f1f;
