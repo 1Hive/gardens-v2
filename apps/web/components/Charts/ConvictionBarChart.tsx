@@ -6,6 +6,7 @@ import EChartsReact from "echarts-for-react";
 import { ChartWrapper } from "./ChartWrapper";
 import { Countdown } from "../Countdown";
 import { Skeleton } from "../Skeleton";
+import { useTheme } from "@/providers/ThemeProvider";
 
 type ScenarioMapping = {
   condition: () => boolean;
@@ -39,6 +40,22 @@ export const ConvictionBarChart = ({
   proposalStatus,
 }: ConvictionBarChartProps) => {
   const [convictionRefreshing, setConvictionRefreshing] = useState(true);
+  const { resolvedTheme } = useTheme();
+  const isDarkTheme = resolvedTheme === "darkTheme";
+  const chartColors = useMemo(
+    () => ({
+      background: isDarkTheme ? "rgba(48, 48, 48, 0.55)" : "rgba(180, 180, 180, 0.2)",
+      support: isDarkTheme ? "#4FA176" : "#A8E066",
+      conviction: isDarkTheme ? "#2F7A58" : "#4F8E13",
+      threshold: isDarkTheme ? "rgba(79, 161, 118, 0.35)" : "rgba(150, 211, 105, 0.45)",
+      markLine: isDarkTheme ? "#E8E8E8" : "#191919",
+      label: isDarkTheme ? "#F5F5F5" : "#191919",
+      tooltipBorder: isDarkTheme ? "#4FA176" : "#65AD18",
+      tooltipBackground: isDarkTheme ? "#1E1E1E" : "#FCFFF7",
+      tooltipText: isDarkTheme ? "#F3F4F6" : "#191919",
+    }),
+    [isDarkTheme],
+  );
   const supportNeeded = (thresholdPct - proposalSupportPct).toFixed(2);
   const scenarioMappings: Record<string, ScenarioMapping> = {
     //1-SignalingType) Support > 0 && > Conviction
@@ -215,6 +232,7 @@ export const ConvictionBarChart = ({
       position: "start",
       formatter: "{@score} %",
       fontSize: compact ? 10 : 14,
+      color: chartColors.label,
     },
   };
 
@@ -234,7 +252,7 @@ export const ConvictionBarChart = ({
         ],
         lineStyle: {
           width: compact ? 0.5 : 1,
-          color: "#191919",
+          color: chartColors.markLine,
           dashOffset: 30,
         },
         z: 50,
@@ -271,8 +289,11 @@ export const ConvictionBarChart = ({
       trigger: "axis",
       valueFormatter: (value) => value + "%",
       borderWidth: 1,
-      borderColor: "#65AD18",
-      backgroundColor: "#FCFFF7",
+      borderColor: chartColors.tooltipBorder,
+      backgroundColor: chartColors.tooltipBackground,
+      textStyle: {
+        color: chartColors.tooltipText,
+      },
       axisPointer: {
         type: "none",
       },
@@ -291,20 +312,20 @@ export const ConvictionBarChart = ({
       {
         showBackground: true,
         backgroundStyle: {
-          color: "rgba(180, 180, 180, 0.2)",
+          color: chartColors.background,
           borderRadius: [50, 50],
         },
         type: "bar",
         name: "Support",
         itemStyle: {
-          color: "#A8E066",
+          color: chartColors.support,
           borderRadius: borderRadius,
         },
 
         label: {
           show: !compact,
           position: "insideRight",
-          color: "#191919",
+          color: chartColors.label,
           fontSize: 8,
           formatter: "{@score} %",
         },
@@ -319,7 +340,7 @@ export const ConvictionBarChart = ({
         type: "bar",
         name: "Conviction",
         itemStyle: {
-          color: "#65AD18",
+          color: chartColors.conviction,
           borderRadius: borderRadius,
         },
         label: {
@@ -343,9 +364,9 @@ export const ConvictionBarChart = ({
           data: [thresholdPct],
           itemStyle: {
             borderRadius: borderRadius,
-            color: "#EEEEEE",
+            color: chartColors.threshold,
           },
-          color: "#EEEEEE",
+          color: chartColors.threshold,
           z: 0,
           markLine: {
             ...markLineTh,
