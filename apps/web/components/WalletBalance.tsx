@@ -51,6 +51,8 @@ export const WalletBalance: FC<Props> = ({
     }
   }, [balance, askedAmount, setIsEnoughBalance]);
 
+  const isEnoughBalance = isEnoughBalanceRef.current;
+
   return (
     <div>
       {!data ?
@@ -80,20 +82,32 @@ export const WalletBalance: FC<Props> = ({
             </div>
           </div>
           <div className="flex">
-            <p className="font-medium">Your balance:</p>
+            <p className="font-medium dark:text-neutral-soft-content">Your balance:</p>
             <div
-              className={`tooltip ml-2 flex cursor-pointer items-center ${isEnoughBalanceRef.current ? "text-primary-content" : "text-neutral"} `}
-              data-tip={`${isEnoughBalanceRef.current ? `${roundToSignificant(+formatEther(data?.value ?? 0n), 2)} ${data.symbol}` : "Insufficient balance"}`}
+              className={`tooltip ml-2 flex cursor-pointer items-center ${
+                isEnoughBalance ?
+                  "text-primary-content dark:text-primary-content"
+                : "text-neutral dark:text-neutral-soft-content"
+              } `}
+              data-tip={`${isEnoughBalance ? `${roundToSignificant(+formatEther(data?.value ?? 0n), 2)} ${data.symbol}` : "Insufficient balance"}`}
             >
               <DisplayNumber
                 number={roundToSignificant(+(data?.formatted || 0), 4)}
-                valueClassName={`font-semibold ${isEnoughBalanceRef.current ? "text-primary-content" : "text-neutral"}`}
+                valueClassName={`font-semibold ${
+                  isEnoughBalance ?
+                    "text-primary-content dark:text-primary-content"
+                  : "text-neutral dark:text-neutral-soft-content"
+                }`}
                 disableTooltip={true}
                 tokenSymbol={data?.symbol}
                 symbolClassName="text-primary-content"
               />
               <InformationCircleIcon
-                className={`ml-2 stroke-2 ${isEnoughBalanceRef.current ? "text-primary-content" : "text-neutral-soft-content"}`}
+                className={`ml-2 stroke-2 ${
+                  isEnoughBalance ?
+                    "text-primary-content dark:text-primary-content"
+                  : "text-neutral-soft-content"
+                }`}
                 width={18}
                 height={18}
               />
