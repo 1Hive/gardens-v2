@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import "@rainbow-me/rainbowkit/styles.css";
 import {
   connectorsForWallets,
+  darkTheme as rainbowDarkTheme,
   lightTheme,
   RainbowKitProvider,
 } from "@rainbow-me/rainbowkit";
@@ -15,6 +16,7 @@ import {
   walletConnectWallet,
 } from "@rainbow-me/rainbowkit/wallets";
 import { AddrethConfig } from "addreth";
+import { Bounce, ToastContainer } from "react-toastify";
 import {
   Chain,
   configureChains,
@@ -31,6 +33,7 @@ import { isProd } from "@/configs/isProd";
 import { QueryParamsProvider } from "@/contexts/collectQueryParams.context";
 import { PubSubProvider } from "@/contexts/pubsub.context";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
+import { useTheme } from "@/providers/ThemeProvider";
 
 const createCustomConfig = (chain: Chain | undefined) => {
   let usedChains: Chain[] = [];
@@ -94,7 +97,6 @@ const Providers = ({ children }: Props) => {
   const chain = useChainFromPath() as Chain | undefined;
 
   const [wagmiConfig, setWagmiConfig] = useState<any>(null);
-
   useEffect(() => {
     setWagmiConfig(createCustomConfig(chain));
     setMounted(true);
@@ -103,29 +105,62 @@ const Providers = ({ children }: Props) => {
   if (!mounted || !wagmiConfig) {
     return null;
   }
-
   return (
     <UrqlProvider>
       <WagmiConfig config={wagmiConfig}>
         <AddrethConfig>
-          <RainbowKitProvider
-            modalSize="compact"
-            chains={wagmiConfig.chains ?? []}
-            theme={lightTheme({
-              accentColor: "var(--color-primary)",
-              accentColorForeground: "var(--color-black)",
-              borderRadius: "large",
-            })}
-          >
-            <ThemeProvider>
+          <ThemeProvider>
+            <ThemeAware chains={wagmiConfig.chains ?? []}>
               <QueryParamsProvider>
                 <PubSubProvider>{children}</PubSubProvider>
               </QueryParamsProvider>
-            </ThemeProvider>
-          </RainbowKitProvider>
+            </ThemeAware>
+          </ThemeProvider>
         </AddrethConfig>
       </WagmiConfig>
     </UrqlProvider>
+  );
+};
+
+const ThemeAware = ({
+  chains,
+  children,
+}: {
+  chains: Chain[];
+  children: React.ReactNode;
+}) => {
+  const { resolvedTheme } = useTheme();
+  const theme = useMemo(
+    () =>
+      (resolvedTheme === "darkTheme" ? rainbowDarkTheme : lightTheme)({
+        accentColor: "var(--color-primary)",
+        accentColorForeground: "var(--color-black)",
+        borderRadius: "large",
+        overlayBlur: "small",
+      }),
+    [resolvedTheme],
+  );
+
+  return (
+    <>
+      <RainbowKitProvider modalSize="compact" chains={chains} theme={theme}>
+        {children}
+      </RainbowKitProvider>
+      <ToastContainer
+        style={{ zIndex: 1000 }}
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme={resolvedTheme === "darkTheme" ? "dark" : "light"}
+        transition={Bounce}
+      />
+    </>
   );
 };
 
