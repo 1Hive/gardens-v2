@@ -10,6 +10,7 @@ import { toast } from "react-toastify";
 import { getCheat, useCheat } from "./useCheat";
 import { useIsMounted } from "./useIsMounted";
 import { HTTP_CODES } from "@/app/api/utils";
+import { LoadingToast } from "@/components";
 import { chainConfigMap, ChainData, getConfigByChain } from "@/configs/chains";
 import { isProd } from "@/configs/isProd";
 import {
@@ -24,8 +25,6 @@ import {
 import { initUrqlClient } from "@/providers/urql";
 import { ChainId } from "@/types";
 import { delayAsync } from "@/utils/delayAsync";
-import { LoadingToast } from "@/components";
-
 
 let isQueryAllChains = false;
 try {

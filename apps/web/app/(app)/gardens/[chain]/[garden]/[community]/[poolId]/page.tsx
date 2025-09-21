@@ -32,26 +32,6 @@ export default function Page({
 }) {
   const searchParams = useCollectQueryParams();
 
-  useEffect(() => {
-    const content = <LoadingToast message="Pulling new data" />;
-    const toastId = toast.loading(content, {
-      autoClose: false,
-      closeOnClick: true,
-      closeButton: false,
-      icon: false,
-      style: {
-        width: "fit-content",
-        marginLeft: "auto",
-      },
-    });
-
-    return () => {
-      if (toastId != null) {
-        toast.dismiss(toastId);
-      }
-    };
-  }, []);
-
   const { data, refetch, error } = useSubgraphQuery<getPoolDataQuery>({
     query: getPoolDataDocument,
     variables: { poolId: poolId, garden: garden.toLowerCase() },
