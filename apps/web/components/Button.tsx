@@ -81,13 +81,13 @@ const btnStyles: BtnStyles = {
   },
   ghost: {
     primary:
-      "text-primary-content hover:text-primary-hover-content hover:border border-primary-content dark:text-primary-dark-text dark:border-primary-dark-border dark:hover:text-primary-dark-text-hover dark:hover:border-primary-dark-border-hover",
+      "text-primary-content border border-transparent hover:text-primary-hover-content hover:border-primary-content dark:text-primary-dark-text dark:border-transparent dark:hover:text-primary-dark-text-hover dark:hover:border-primary-dark-border-hover",
     secondary:
-      "text-secondary-content hover:text-secondary-hover-content hover:border border-secondary-content dark:text-secondary-dark-text dark:border-secondary-dark-border dark:hover:text-secondary-dark-text-hover dark:hover:border-secondary-dark-border-hover",
+      "text-secondary-content border border-transparent hover:text-secondary-hover-content hover:border-secondary-content dark:text-secondary-dark-text dark:border-transparent dark:hover:text-secondary-dark-text-hover dark:hover:border-secondary-dark-border-hover",
     tertiary:
-      "text-tertiary-content hover:text-tertiary-hover-content hover:border border-tertiary-content dark:text-tertiary-dark-text dark:border-tertiary-dark-border dark:hover:text-tertiary-dark-text-hover dark:hover:border-tertiary-dark-border-hover",
+      "text-tertiary-content border border-transparent hover:text-tertiary-hover-content hover:border-tertiary-content dark:text-tertiary-dark-text dark:border-transparent dark:hover:text-tertiary-dark-text-hover dark:hover:border-tertiary-dark-border-hover",
     danger:
-      "text-danger-button hover:text-danger-hover-content hover:border border-danger-button dark:text-danger-dark-border dark:border-danger-dark-border dark:hover:text-danger-dark-border-hover dark:hover:border-danger-dark-border-hover",
+      "text-danger-button border border-transparent hover:text-danger-hover-content hover:border-danger-button dark:text-danger-dark-border dark:border-transparent dark:hover:text-danger-dark-border-hover dark:hover:border-danger-dark-border-hover",
     disabled: "text-neutral-soft dark:text-neutral-soft-content",
   },
 };
