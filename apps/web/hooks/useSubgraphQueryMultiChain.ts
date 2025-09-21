@@ -1,3 +1,14 @@
+import React, { useEffect, useRef, useState } from "react";
+import {
+  AnyVariables,
+  CombinedError,
+  DocumentInput,
+  OperationContext,
+} from "@urql/next";
+import { debounce, isEqual } from "lodash-es";
+import { toast } from "react-toastify";
+import { getCheat, useCheat } from "./useCheat";
+import { useIsMounted } from "./useIsMounted";
 import { HTTP_CODES } from "@/app/api/utils";
 import { chainConfigMap, ChainData, getConfigByChain } from "@/configs/chains";
 import { isProd } from "@/configs/isProd";
@@ -13,17 +24,8 @@ import {
 import { initUrqlClient } from "@/providers/urql";
 import { ChainId } from "@/types";
 import { delayAsync } from "@/utils/delayAsync";
-import {
-  AnyVariables,
-  CombinedError,
-  DocumentInput,
-  OperationContext,
-} from "@urql/next";
-import { debounce, isEqual } from "lodash-es";
-import { useEffect, useRef, useState } from "react";
-import { toast } from "react-toastify";
-import { getCheat, useCheat } from "./useCheat";
-import { useIsMounted } from "./useIsMounted";
+import { LoadingToast } from "@/components";
+
 
 let isQueryAllChains = false;
 try {
@@ -120,10 +122,23 @@ export function useSubgraphQueryMultiChain<
           const fetchSubgraphChain = async (retryCount?: number) => {
             if (retryCount == null && retryOnNoChange) {
               retryCount = 0;
-              toast.loading("Pulling new data", {
+            }
+
+            const toastContent = React.createElement(LoadingToast, {
+              message: "Pulling new data",
+            });
+
+            if (toast.isActive(pendingRefreshToastId)) {
+              toast.update(pendingRefreshToastId, {
+                render: toastContent,
+              });
+            } else {
+              toast.loading(toastContent, {
                 toastId: pendingRefreshToastId,
                 autoClose: false,
                 closeOnClick: true,
+                closeButton: false,
+                icon: false,
                 style: {
                   width: "fit-content",
                   marginLeft: "auto",

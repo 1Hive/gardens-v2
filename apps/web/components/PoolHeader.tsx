@@ -47,7 +47,7 @@ import { MetadataV1 } from "@/hooks/useIpfsFetch";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 
 import { SuperToken } from "@/hooks/useSuperfluidToken";
-import { TransactionStatusNotification } from "@/hooks/useTransactionNotification";
+import { TransactionStatusNotification } from "@/components/TransactionStatusNotification";
 import { superTokenFactoryAbi } from "@/src/customAbis";
 import { cvStrategyABI, registryCommunityABI } from "@/src/generated";
 import {

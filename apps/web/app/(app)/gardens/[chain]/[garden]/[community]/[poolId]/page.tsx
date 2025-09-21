@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { toast } from "react-toastify";
 import { Address } from "viem";
 import { useBalance, useAccount } from "wagmi";
 import {
@@ -8,7 +9,7 @@ import {
   getPoolDataDocument,
   getPoolDataQuery,
 } from "#/subgraph/.graphclient";
-import { PoolMetrics, Proposals } from "@/components";
+import { LoadingToast, PoolMetrics, Proposals } from "@/components";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import PoolHeader from "@/components/PoolHeader";
 import { QUERY_PARAMS } from "@/constants/query-params";
@@ -30,6 +31,26 @@ export default function Page({
   params: { chain: string; poolId: number; garden: string };
 }) {
   const searchParams = useCollectQueryParams();
+
+  useEffect(() => {
+    const content = <LoadingToast message="Pulling new data" />;
+    const toastId = toast.loading(content, {
+      autoClose: false,
+      closeOnClick: true,
+      closeButton: false,
+      icon: false,
+      style: {
+        width: "fit-content",
+        marginLeft: "auto",
+      },
+    });
+
+    return () => {
+      if (toastId != null) {
+        toast.dismiss(toastId);
+      }
+    };
+  }, []);
 
   const { data, refetch, error } = useSubgraphQuery<getPoolDataQuery>({
     query: getPoolDataDocument,

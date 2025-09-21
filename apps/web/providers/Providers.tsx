@@ -27,6 +27,7 @@ import {
 import { alchemyProvider } from "wagmi/providers/alchemy";
 import { publicProvider } from "wagmi/providers/public";
 import ThemeProvider from "./ThemeProvider";
+import { TransactionNotificationProvider } from "./TransactionNotificationProvider";
 import { UrqlProvider } from "./UrqlProvider";
 import { chainConfigMap, CHAINS } from "@/configs/chains";
 import { isProd } from "@/configs/isProd";
@@ -144,7 +145,9 @@ const ThemeAware = ({
   return (
     <>
       <RainbowKitProvider modalSize="compact" chains={chains} theme={theme}>
-        {children}
+        <TransactionNotificationProvider>
+          {children}
+        </TransactionNotificationProvider>
       </RainbowKitProvider>
       <ToastContainer
         style={{ zIndex: 1000 }}

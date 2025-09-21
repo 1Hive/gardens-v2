@@ -129,6 +129,9 @@ export function useContractWriteWithConfirmations<
     transactionError: txResult.error,
     enabled: props.showNotification ?? true, // default to true
     fallbackErrorMessage: props.fallbackErrorMessage,
+    contractName: props.contractName,
+    chainId: resolvedChaindId,
+    confirmations: propsWithChainId.confirmations,
   });
 
   useEffect(() => {
