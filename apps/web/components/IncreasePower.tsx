@@ -376,7 +376,7 @@ export const IncreasePower = ({
                   }
                   setAmountPerc(+percentage >= 100 ? "101" : percentage);
                 }}
-                className={`range range-md cursor-pointer bg-neutral-soft [--range-shdw:var(--color-green-500)] [--range-thumb-size:14px] ${
+                className={`range range-md cursor-pointer bg-neutral-soft [--range-bg:var(--color-grey-200)] dark:[--range-bg:#373737] dark:bg-[#373737] [--range-shdw:var(--color-green-500)] dark:[--range-shdw:#4E9F80] [--range-thumb-size:14px] ${
                   minAmountPercentage === 100 ?
                     "[--range-shdw:var(--color-grey-400)]"
                   : ""

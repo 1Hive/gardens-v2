@@ -335,7 +335,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
                             inputData ? Number(inputData.value) : undefined
                           }
                           className={
-                            "range range-md cursor-pointer bg-neutral-soft [--range-shdw:var(--color-green-500)] "
+                            "range range-md cursor-pointer bg-neutral-soft [--range-bg:var(--color-grey-200)] dark:[--range-bg:#373737] dark:bg-[#373737] [--range-shdw:var(--color-green-500)] dark:[--range-shdw:#4E9F80] "
                           }
                           step={Number(memberActivatedPoints) / 100}
                           onChange={(e) => {
