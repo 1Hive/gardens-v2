@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect } from "react";
-import { toast } from "react-toastify";
 import { Address } from "viem";
 import { useBalance, useAccount } from "wagmi";
 import {
@@ -9,7 +8,7 @@ import {
   getPoolDataDocument,
   getPoolDataQuery,
 } from "#/subgraph/.graphclient";
-import { LoadingToast, PoolMetrics, Proposals } from "@/components";
+import { PoolMetrics, Proposals } from "@/components";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import PoolHeader from "@/components/PoolHeader";
 import { QUERY_PARAMS } from "@/constants/query-params";

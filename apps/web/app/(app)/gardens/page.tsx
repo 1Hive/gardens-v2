@@ -22,9 +22,9 @@ import { LightCommunity } from "@/components/Communities";
 import { useCheat } from "@/hooks/useCheat";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQueryMultiChain } from "@/hooks/useSubgraphQueryMultiChain";
+import { useTheme } from "@/providers/ThemeProvider";
 import { getProtopiansOwners } from "@/services/alchemy";
 import { safeABI } from "@/src/customAbis";
-import { useTheme } from "@/providers/ThemeProvider";
 
 // Components
 const Header = () => {
