@@ -274,15 +274,31 @@ const mapStatusToNotification = (
   }
 };
 
-const parseErrorMessage = (entry: TransactionToastPayload) => {
+const renderMultilineMessage = (message: string) => {
+  const lines = message.split("\n");
+  return (
+    <span>
+      {lines.map((line, index) => (
+        <React.Fragment key={index}>
+          {line}
+          {index < lines.length - 1 && <br />}
+        </React.Fragment>
+      ))}
+    </span>
+  );
+};
+
+const parseErrorMessage = (
+  entry: TransactionToastPayload,
+): React.ReactNode => {
   const error = entry.transactionError;
   if (error?.cause instanceof UserRejectedRequestError) {
     return "User rejected the request";
   }
   if (entry.fallbackErrorMessage) {
-    return entry.fallbackErrorMessage;
+    return renderMultilineMessage(entry.fallbackErrorMessage);
   }
-  return "Transaction failed. Please report a bug";
+  return renderMultilineMessage("Transaction failed.\nPlease report a bug");
 };
 
 const TransactionStatusWatcher = ({

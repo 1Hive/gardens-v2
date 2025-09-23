@@ -258,7 +258,7 @@ export function AddressListInput({
       {subLabel && <p className="mb-1 text-xs">{subLabel}</p>}
 
       <div
-        className={`rounded-lg flex mb-4 border p-0 text-neutral-soft-content ${
+        className={`rounded-lg flex mb-4 p-0 text-neutral-content dark:text-neutral-soft-content ${
           !label && "mt-4"
         }`}
       >
@@ -391,9 +391,9 @@ export function AddressListInput({
             <li
               // eslint-disable-next-line react/no-array-index-key
               key={`addr_${index}`}
-              className="flex items-center justify-between bg-base-200 rounded"
+              className="flex items-center justify-between bg-base-200 rounded text-neutral-content dark:text-neutral-soft-content"
             >
-              <div className="truncate flex-grow mr-2 text-sm text-medium">
+              <div className="truncate flex-grow mr-2 text-sm font-medium">
                 {address === zeroAddress ?
                   "Everyone is allowed in the pool."
                 : <div className="font-mono flex items-center">

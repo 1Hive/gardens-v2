@@ -53,7 +53,8 @@ const btnStyles: BtnStyles = {
       "bg-tertiary-button text-neutral-inverted-content hover:bg-tertiary-hover-content dark:bg-tertiary-dark-base dark:hover:bg-tertiary-dark-hover",
     danger:
       "bg-danger-button text-neutral-inverted-content hover:bg-danger-hover-content dark:bg-danger-dark-base/70 dark:text-neutral-inverted-content dark:hover:bg-danger-dark-border-hover",
-    disabled: "bg-neutral-button text-neutral-inverted-content",
+    disabled:
+      "bg-neutral-soft text-neutral-soft-content border border-neutral-soft-content shadow-none dark:bg-white/10 dark:text-white/40 dark:border-white/10",
   },
   outline: {
     primary:
@@ -64,7 +65,8 @@ const btnStyles: BtnStyles = {
       "text-tertiary-content border border-tertiary-content hover:text-tertiary-hover-content hover:border-tertiary-hover-content dark:text-tertiary-dark-border dark:border-tertiary-dark-border dark:hover:text-tertiary-dark-border-hover dark:hover:border-tertiary-dark-border-hover",
     danger:
       "text-danger-button border border-danger-button hover:text-danger-hover-content hover:border-danger-hover-content dark:text-danger-dark-border dark:border-danger-dark-border dark:hover:text-danger-dark-border-hover dark:hover:border-danger-dark-border-hover",
-    disabled: "text-neutral-soft-content border border-neutral-soft-content",
+    disabled:
+      "text-neutral-soft-content border border-neutral-soft-content opacity-70 dark:text-white/30 dark:border-white/10",
   },
   link: {
     primary:
@@ -75,7 +77,7 @@ const btnStyles: BtnStyles = {
       "text-tertiary-content hover:text-tertiary-hover-content dark:text-tertiary-dark-border dark:hover:text-tertiary-dark-border-hover",
     danger:
       "text-danger-button hover:text-danger-hover-content dark:text-danger-dark-border dark:hover:text-danger-dark-border-hover",
-    disabled: "text-neutral-soft-content",
+    disabled: "text-neutral-soft-content opacity-70 dark:text-white/30",
   },
   ghost: {
     primary:
@@ -86,7 +88,8 @@ const btnStyles: BtnStyles = {
       "text-tertiary-content border border-transparent hover:text-tertiary-hover-content hover:border-tertiary-content dark:text-tertiary-dark-border dark:border-transparent dark:hover:text-tertiary-dark-border-hover dark:hover:border-tertiary-dark-border-hover",
     danger:
       "text-danger-button border border-transparent hover:text-danger-hover-content hover:border-danger-button dark:text-danger-dark-border dark:border-transparent dark:hover:text-danger-dark-border-hover dark:hover:border-danger-dark-border-hover",
-    disabled: "text-neutral-soft-content",
+    disabled:
+      "text-neutral-soft-content border border-transparent opacity-70 dark:text-white/30",
   },
 };
 
@@ -110,7 +113,7 @@ export function Button({
   const buttonElement = (
     <button
       type={type}
-      className={`${btnStyles[btnStyle][disabled ? "disabled" : color]} flex relative cursor-pointer justify-center rounded-lg px-4 py-2 transition-all ease-out disabled:cursor-not-allowed h-fit text-sm gap-2 ${className}`}
+      className={`${btnStyles[btnStyle][disabled ? "disabled" : color]} flex relative cursor-pointer justify-center rounded-lg px-4 py-2 transition-all ease-out disabled:cursor-not-allowed disabled:shadow-none h-fit text-sm gap-2 ${className}`}
       onClick={onClick}
       disabled={disabled || isLoading}
       style={style}

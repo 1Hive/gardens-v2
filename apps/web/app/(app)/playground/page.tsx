@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
+import { HandRaisedIcon } from "@heroicons/react/24/outline";
 import { noop } from "lodash-es";
 import { toast } from "react-toastify";
 import { Badge } from "@/components/Badge";
@@ -19,16 +20,6 @@ import { LoadingToast } from "@/components/LoadingToast";
 import { Skeleton } from "@/components/Skeleton";
 import { TransactionStatusNotification } from "@/components/TransactionStatusNotification";
 import { WalletBalance } from "@/components/WalletBalance";
-
-const transactionStatuses: Array<{
-  status: "idle" | "waiting" | "loading" | "success" | "error";
-  message: string;
-}> = [
-  { status: "waiting", message: "Waiting for signature" },
-  { status: "loading", message: "Transaction in progress" },
-  { status: "success", message: "Transaction successful" },
-  { status: "error", message: "Transaction failed" },
-];
 
 const toastButtons = [
   {
@@ -202,7 +193,8 @@ export default function DesignSystemPage() {
               <div className="flex flex-wrap gap-2">
                 <Badge type={0} />
                 <Badge type={1} />
-                <Badge status={0} />
+                <Badge status={0} icon={<HandRaisedIcon />} />
+                <Badge status={1} />
                 <Badge status={2} />
               </div>
               <InfoWrapper tooltip="This is an info wrapper tooltip" size="md">
@@ -219,7 +211,6 @@ export default function DesignSystemPage() {
                 askedAmount={BigInt(askedAmount)}
                 setIsEnoughBalance={noop}
                 token="native"
-                
               />
             </div>
           </DemoCard>
@@ -408,22 +399,6 @@ export default function DesignSystemPage() {
               />
             </div>
           </DemoCard>
-
-          <DemoCard title="Transaction Notification States">
-            <div className="space-y-4">
-              {transactionStatuses.map((item) => (
-                <div
-                  key={item.status}
-                  className="rounded-xl border border-neutral-soft p-4"
-                >
-                  <TransactionStatusNotification
-                    status={item.status}
-                    message={item.message}
-                  />
-                </div>
-              ))}
-            </div>
-          </DemoCard>
         </div>
       </Section>
 
@@ -493,7 +468,7 @@ function DemoCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border border-neutral-soft bg-neutral p-6 shadow-sm space-y-4">
+    <div className="rounded-2xl bg-neutral p-6 shadow-sm space-y-4">
       <h3 className="text-lg font-semibold">{title}</h3>
       {children}
     </div>

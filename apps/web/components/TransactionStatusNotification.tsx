@@ -1,9 +1,8 @@
 "use client";
 
-import Image from "next/image";
 import React from "react";
+import Image from "next/image";
 
-import { useChainFromPath } from "@/hooks/useChainFromPath";
 import {
   TxError,
   TxIdle,
@@ -11,6 +10,7 @@ import {
   TxSuccess,
   TxWaitingForSig,
 } from "@/assets";
+import { useChainFromPath } from "@/hooks/useChainFromPath";
 
 type TransactionStatus = "idle" | "waiting" | "loading" | "success" | "error";
 
@@ -48,7 +48,8 @@ export function TransactionStatusNotification({
   const icon = statusToIcon[status];
   const textColor = statusToTextColor[status];
 
-  const textClass = showClickToExplorer ? textColor : "dark:text-neutral-inverted-content";
+  const textClass =
+    showClickToExplorer ? textColor : "dark:text-neutral-inverted-content";
 
   return (
     <div className="flex flex-row items-center gap-2">
@@ -73,7 +74,9 @@ export function TransactionStatusNotification({
           {message}
         </div>
         {chain?.blockExplorers?.default.url && showClickToExplorer && (
-          <div className="w-full text-sm italic">Click to see in block explorer</div>
+          <div className="w-full text-sm italic">
+            Click to see in block explorer
+          </div>
         )}
       </div>
     </div>

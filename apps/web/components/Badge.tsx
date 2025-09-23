@@ -18,23 +18,22 @@ type BadgeProps = {
 
 // Styles for different pool badge types
 const POOL_TYPE_STYLES = [
-  "bg-primary-soft text-primary-content dark:bg-primary-dark-base/70 dark:text-neutral-inverted-content",
-  "bg-tertiary-soft text-tertiary-content dark:bg-tertiary-dark-base/70 dark:text-neutral-inverted-content",
+  "bg-primary-soft/70 text-[#bbd5ca] dark:bg-primary-dark-base/60 dark:text-primary-dark-text",
+  "bg-white text-tertiary-hover-content dark:bg-tertiary-dark-base/60 dark:text-tertiary-dark-text",
 ];
 
 // Styles for different proposal status badge
 const PROPOSAL_STATUS_STYLES = [
-  "bg-danger-soft text-danger-content dark:bg-danger-dark-base/70 dark:text-neutral-inverted-content",
-  "bg-primary-soft text-primary-content dark:bg-primary-dark-base/70 dark:text-neutral-inverted-content",
-  "bg-secondary-soft text-secondary-content dark:bg-secondary-dark-base/70 dark:text-neutral-inverted-content",
-  "bg-danger-soft text-danger-content dark:bg-danger-dark-base/70 dark:text-neutral-inverted-content",
-  "bg-tertiary-soft text-tertiary-content dark:bg-tertiary-dark-base/70 dark:text-neutral-inverted-content",
-  "bg-danger-soft text-danger-content dark:bg-danger-dark-base/70 dark:text-neutral-inverted-content",
-  "bg-danger-soft text-danger-content dark:bg-danger-dark-base/70 dark:text-neutral-inverted-content",
+  "bg-danger-soft/70 text-danger-hover-content dark:bg-danger-dark-base/60 dark:text-danger-dark-text",
+  "bg-primary-soft/70 text-primary-hover-content dark:bg-primary-dark-base/60 dark:text-primary-dark-text",
+  "bg-secondary-soft/70 text-secondary-hover-content dark:bg-secondary-dark-base/60 dark:text-secondary-dark-text",
+  "bg-danger-soft/70 text-danger-hover-content dark:bg-danger-dark-base/60 dark:text-danger-dark-text",
+  "bg-tertiary-soft/70 text-tertiary-hover-content dark:bg-tertiary-dark-base/60 dark:text-tertiary-dark-text",
+  "bg-danger-soft/70 text-danger-hover-content dark:bg-danger-dark-base/60 dark:text-danger-dark-text",
+  "bg-danger-soft/70 text-danger-hover-content dark:bg-danger-dark-base/60 dark:text-danger-dark-text",
 ];
 
-const BASE_STYLES =
-  "border-none rounded-full leading-5 py-1 px-2 cursor-default";
+const BASE_STYLES = "rounded-full leading-5 py-1 px-2 cursor-default";
 
 export function Badge({
   type,
@@ -52,11 +51,14 @@ export function Badge({
     status != null
       ? `${
           PROPOSAL_STATUS_STYLES[status] ??
-          "bg-secondary-soft text-secondary-content dark:bg-secondary-dark-base/70 dark:text-neutral-inverted-content"
+          "bg-secondary-soft text-secondary-hover-content dark:bg-secondary-dark-base/70 dark:text-secondary-dark-text"
         }`
     : ispoolTypeDefined ?
-      `${POOL_TYPE_STYLES[type] ?? "bg-tertiary-soft text-tertiary-content"}`
-    : "bg-tertiary-soft text-tertiary-content";
+      `${
+        POOL_TYPE_STYLES[type] ??
+        "bg-tertiary-soft text-tertiary-hover-content dark:text-tertiary-dark-text"
+      }`
+    : "bg-tertiary-soft text-tertiary-hover-content dark:text-tertiary-dark-text";
 
   // Determine the label content
   const content =
@@ -70,10 +72,8 @@ export function Badge({
     icon ??
     (() => {
       const iconMap: { [key: string]: React.ReactNode } = {
-        signaling: <HandThumbUpIcon className="h-5 w-5 text-primary-content" />,
-        funding: (
-          <CurrencyDollarIcon className="h-5 w-5 dark:text-tertiary-content" />
-        ),
+        signaling: <HandThumbUpIcon className="h-5 w-5 text-current" />,
+        funding: <CurrencyDollarIcon className="h-5 w-5 text-current" />,
       };
       return type != null ? iconMap[PoolTypes[type]] ?? null : null;
     })();
