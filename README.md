@@ -103,7 +103,7 @@ pnpm dev
 
 ## Contributing
 
-We welcome contributions! Please see our [New Contributor Onboarding](https://1hive-gardens.notion.site/Gardens-New-Contributor-Onboarding-8ab2e08a585c46e3bcb36482d006c9e9?pvs=4) for details on how to get started.
+We welcome contributions! Please see our [Contributing Guide](./CONTRIBUTING.md) for details on how to get started, and review our [Security Policy](./SECURITY.md) for security-related contributions.
 
 ## 📚 Documentation
 

@@ -125,7 +125,7 @@ We welcome contributions that improve Gardens v2's security:
 - **Documentation**: Improve security documentation and guides
 - **Community**: Help educate other users about security best practices
 
-See our [Contributing Guide](https://1hive-gardens.notion.site/Gardens-New-Contributor-Onboarding-8ab2e08a585c46e3bcb36482d006c9e9?pvs=4) for more information.
+See our [Contributing Guide](./CONTRIBUTING.md) for more information.
 
 ## License and Legal
 

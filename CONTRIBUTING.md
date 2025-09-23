@@ -19,17 +19,20 @@ Before you begin, ensure you have:
 
 1. **Fork the repository** on GitHub
 2. **Clone your fork** locally:
+
    ```bash
    git clone https://github.com/your-username/gardens-v2.git
    cd gardens-v2
    ```
 
 3. **Add the upstream remote**:
+
    ```bash
    git remote add upstream https://github.com/1Hive/gardens-v2.git
    ```
 
 4. **Install dependencies**:
+
    ```bash
    pnpm install
    ```
@@ -48,17 +51,21 @@ Gardens v2 is a monorepo with several packages:
 For frontend contributions:
 
 1. **Navigate to the web app**:
+
    ```bash
    cd apps/web
    ```
 
 2. **Set up environment variables**:
+
    ```bash
    cp .env.example .env
    ```
+
    Fill in the required environment variables (contact us in Discord for help with API keys)
 
 3. **Start the development server**:
+
    ```bash
    pnpm dev
    ```
@@ -70,17 +77,20 @@ For frontend contributions:
 For smart contract contributions:
 
 1. **Install Foundry** (required for contract development):
+
    ```bash
    curl -L https://foundry.paradigm.xyz | bash
    foundryup
    ```
 
 2. **Navigate to contracts package**:
+
    ```bash
    cd pkg/contracts
    ```
 
 3. **Build contracts**:
+
    ```bash
    forge build
    ```
@@ -97,6 +107,7 @@ For smart contract contributions:
 For subgraph contributions:
 
 1. **Navigate to subgraph package**:
+
    ```bash
    cd pkg/subgraph
    ```
@@ -129,6 +140,7 @@ We welcome various types of contributions:
 ### Making Your First Contribution
 
 1. **Create a new branch** for your work:
+
    ```bash
    git checkout -b feature/your-feature-name
    ```
@@ -136,29 +148,32 @@ We welcome various types of contributions:
 2. **Make your changes** following our coding standards (see below)
 
 3. **Test your changes**:
+
    ```bash
    # For frontend changes
    cd apps/web
    pnpm lint
    pnpm build
-   
+
    # For contract changes (requires Foundry)
    cd pkg/contracts
    forge test
    forge fmt
-   
+
    # Build all packages (note: requires Foundry for contracts)
    cd ../../
    pnpm build
    ```
 
 4. **Commit your changes** with a descriptive message:
+
    ```bash
    git add .
    git commit -m "feat: add new governance pool type"
    ```
 
 5. **Push to your fork**:
+
    ```bash
    git push origin feature/your-feature-name
    ```
@@ -290,6 +305,7 @@ We are committed to providing a welcoming and inclusive environment. Please be r
 ### Recognition
 
 Contributors are recognized in our:
+
 - GitHub contributor list
 - Discord community roles
 - Project documentation
