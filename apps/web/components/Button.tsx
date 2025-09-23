@@ -52,7 +52,7 @@ const btnStyles: BtnStyles = {
     tertiary:
       "bg-tertiary-button text-neutral-inverted-content hover:bg-tertiary-hover-content dark:bg-tertiary-dark-base dark:hover:bg-tertiary-dark-hover",
     danger:
-      "bg-danger-button text-neutral-inverted-content hover:bg-danger-hover-content dark:bg-danger-dark-base dark:hover:bg-danger-dark-hover",
+      "bg-danger-soft text-danger-content hover:bg-danger-button dark:bg-danger-dark-base/70 dark:text-neutral-inverted-content dark:hover:bg-danger-dark-border-hover",
     disabled:
       "bg-neutral-button text-neutral-inverted-content dark:text-neutral-inverted-content-dark",
   },
