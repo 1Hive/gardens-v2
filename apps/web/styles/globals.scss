@@ -424,6 +424,14 @@ dialog * {
     color: #9f9f9f;
   }
 
+  .cm-editor {
+    .cm-activeLineGutter {
+      background-color: var(--baseBg);
+    }
+    background-color: var(--baseBase);
+    color: var(--color-text);
+  }
+
   &.mdxeditor-popup-container {
     --basePageBg: var(--p);
     --baseTextColor: var(--color-text);

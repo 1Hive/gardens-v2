@@ -2,7 +2,7 @@ import "@/styles/globals.scss";
 import React from "react";
 import { Chakra_Petch, Inter } from "next/font/google";
 import Providers from "@/providers/Providers";
-import "react-toastify/dist/ReactToastify.css";
+import "react-toastify/dist/ReactToastify.minimal.css";
 import "@mdxeditor/editor/style.css";
 
 const inter = Inter({

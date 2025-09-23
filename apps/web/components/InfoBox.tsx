@@ -15,14 +15,16 @@ type InfoBoxProps = {
 };
 
 const BASE_STYLES =
-  "rounded-md p-2 flex flex-col items-start justify-center gap-2";
-// Styles for different info box types
+  "rounded-md p-4 flex flex-col gap-2 border border-transparent transition-colors";
 
-const infoBoxStyles = {
-  info: "bg-tertiary-soft text-tertiary-content dark:bg-tertiary-dark",
-  success: "bg-primary-soft text-primary-content",
-  warning: "bg-secondary-soft text-secondary-content",
-  error: "bg-danger-soft text-danger-content",
+const infoBoxStyles: Record<InfoBoxStyles, string> = {
+  info: "bg-tertiary-soft text-tertiary-content dark:bg-tertiary-dark-base/70 dark:text-neutral-inverted-content dark:border-tertiary-dark-border/80",
+  success:
+    "bg-primary-soft text-primary-content dark:bg-primary-dark-base/70 dark:text-neutral-inverted-content dark:border-primary-dark-border/80",
+  warning:
+    "bg-secondary-button text-neutral-inverted-content dark:bg-secondary-dark-base dark:text-neutral-inverted-content dark:border-secondary-dark-border",
+  error:
+    "bg-danger-soft text-danger-content dark:bg-danger-dark-base/70 dark:text-neutral-inverted-content dark:border-danger-dark-border/80",
 };
 
 export function InfoBox({
@@ -37,21 +39,18 @@ export function InfoBox({
 }: InfoBoxProps): JSX.Element {
   return (
     <div
-      className={`${BASE_STYLES} ${infoBoxStyles[infoBoxType]} ${className}`}
+      className={`${BASE_STYLES} ${infoBoxStyles[infoBoxType]} ${className ?? ""}`.trim()}
     >
       <div className="flex items-center gap-2">
         {!hideIcon && (
-          <div className="h-5 w-5 text-inherit flex-items-center justify-center">
-            {" "}
-            {icon ?? (
-              <InformationCircleIcon className="h-5 w-5 dark:text-tertiary-soft" />
-            )}
+          <div className="flex h-5 w-5 items-center justify-center text-inherit">
+            {icon ?? <InformationCircleIcon className="h-5 w-5" />}
           </div>
         )}
         <h6>{title}</h6>
       </div>
       <p
-        className={`text-sm leading-5 text-neutral-content first-letter:uppercase text-left ${contentStyle}`}
+        className={`text-sm leading-5 text-inherit first-letter:uppercase text-left ${contentStyle ?? ""}`.trim()}
       >
         {children ?? content}
       </p>

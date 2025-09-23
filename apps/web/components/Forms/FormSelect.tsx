@@ -54,6 +54,23 @@ export function FormSelect({
     value: value ?? registerOptions?.value,
   });
 
+  const baseSelectClasses = [
+    "select",
+    hasError ? "select-error" : "select-info",
+    "dark:bg-primary-soft-dark",
+    "w-full",
+    "max-w-[29rem]",
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const readOnlyClasses = readOnly ?
+    "!border-gray-300 focus:none !outline-gray-300 !pointer-events-none bg-transparent !cursor-not-allowed"
+  : "";
+  const errorFocusClasses = hasError ?
+    "focus-visible:!outline-danger-content focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-0"
+  : "";
+
   return (
     <div className="flex flex-col">
       {label && (
@@ -71,10 +88,7 @@ export function FormSelect({
         </label>
       )}
       <select
-        className={`select select-info dark:bg-primary-soft-dark w-full max-w-[29rem] ${className} ${
-          readOnly &&
-          "!border-gray-300 focus:none !outline-gray-300 !pointer-events-none bg-transparent !cursor-not-allowed"
-        } ${hasError && "!border-danger-content focus:!border-danger-content"}`}
+        className={`${baseSelectClasses} ${readOnlyClasses} ${errorFocusClasses}`.trim()}
         id={registerKey}
         {...registered}
         onChange={onChange ?? registered?.onChange}

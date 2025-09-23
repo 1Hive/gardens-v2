@@ -18,19 +18,19 @@ type BadgeProps = {
 
 // Styles for different pool badge types
 const POOL_TYPE_STYLES = [
-  "bg-primary-soft text-primary-content dark:bg-primary-soft-dark",
-  "bg-tertiary-soft dark:bg-tertiary-dark text-tertiary-content",
+  "bg-primary-soft text-primary-content dark:bg-primary-dark-base/70 dark:text-neutral-inverted-content",
+  "bg-tertiary-soft text-tertiary-content dark:bg-tertiary-dark-base/70 dark:text-neutral-inverted-content",
 ];
 
 // Styles for different proposal status badge
 const PROPOSAL_STATUS_STYLES = [
-  "bg-danger-soft dark:bg-danger-soft-dark text-danger-content",
-  "bg-primary-soft text-primary-content dark:bg-primary-soft-dark",
-  "bg-secondary-soft dark:bg-secondary-soft-dark text-secondary-content",
-  "bg-danger-soft dark:bg-danger-soft-dark text-danger-content",
-  "bg-tertiary-soft dark:bg-tertiary-dark text-tertiary-content",
-  "bg-danger-soft dark:bg-danger-soft-dark text-danger-content",
-  "bg-danger-soft dark:bg-danger-soft-dark text-danger-content",
+  "bg-danger-soft text-danger-content dark:bg-danger-dark-base/70 dark:text-neutral-inverted-content",
+  "bg-primary-soft text-primary-content dark:bg-primary-dark-base/70 dark:text-neutral-inverted-content",
+  "bg-secondary-button text-neutral-inverted-content dark:bg-secondary-dark-base dark:text-neutral-inverted-content",
+  "bg-danger-soft text-danger-content dark:bg-danger-dark-base/70 dark:text-neutral-inverted-content",
+  "bg-tertiary-soft text-tertiary-content dark:bg-tertiary-dark-base/70 dark:text-neutral-inverted-content",
+  "bg-danger-soft text-danger-content dark:bg-danger-dark-base/70 dark:text-neutral-inverted-content",
+  "bg-danger-soft text-danger-content dark:bg-danger-dark-base/70 dark:text-neutral-inverted-content",
 ];
 
 const BASE_STYLES =
@@ -49,7 +49,11 @@ export function Badge({
 
   // Determine the appropriate styles based on whether it's a proposal status badge or a pool type badge
   const styles =
-    status != null ? `${PROPOSAL_STATUS_STYLES[status] ?? "bg-secondary-soft"}`
+    status != null
+      ? `${
+          PROPOSAL_STATUS_STYLES[status] ??
+          "bg-secondary-button text-neutral-inverted-content dark:bg-secondary-dark-base dark:text-neutral-inverted-content"
+        }`
     : ispoolTypeDefined ?
       `${POOL_TYPE_STYLES[type] ?? "bg-tertiary-soft text-tertiary-content"}`
     : "bg-tertiary-soft text-tertiary-content";
