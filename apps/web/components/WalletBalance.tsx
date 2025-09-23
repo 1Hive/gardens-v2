@@ -51,7 +51,7 @@ export const WalletBalance: FC<Props> = ({
     }
   }, [balance, askedAmount, setIsEnoughBalance]);
 
-  const isEnoughBalance = isEnoughBalanceRef.current;
+  const isEnoughBalance = askedAmount != null && isEnoughBalanceRef.current;
 
   return (
     <div>

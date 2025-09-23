@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
+import { noop } from "lodash-es";
 import { toast } from "react-toastify";
 import { Badge } from "@/components/Badge";
 import { Button, BtnStyle, Color } from "@/components/Button";
@@ -17,6 +18,7 @@ import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { LoadingToast } from "@/components/LoadingToast";
 import { Skeleton } from "@/components/Skeleton";
 import { TransactionStatusNotification } from "@/components/TransactionStatusNotification";
+import { WalletBalance } from "@/components/WalletBalance";
 
 const transactionStatuses: Array<{
   status: "idle" | "waiting" | "loading" | "success" | "error";
@@ -133,6 +135,7 @@ export default function DesignSystemPage() {
     "# Welcome to the design system\n\nYou can **edit** this content to preview our Markdown editor.",
   );
   const [showContent, setShowContent] = useState(false);
+  const [askedAmount] = useState("50");
   const tableColumns = useMemo(
     () => [
       {
@@ -205,6 +208,19 @@ export default function DesignSystemPage() {
               <InfoWrapper tooltip="This is an info wrapper tooltip" size="md">
                 <span className="text-sm">Hover to see additional context</span>
               </InfoWrapper>
+            </div>
+          </DemoCard>
+
+          <DemoCard title="Wallet Balance">
+            <div className="flex flex-col gap-4">
+              <WalletBalance
+                label="Requested"
+                tooltip="Requested amount compared to your wallet balance"
+                askedAmount={BigInt(askedAmount)}
+                setIsEnoughBalance={noop}
+                token="native"
+                
+              />
             </div>
           </DemoCard>
 
