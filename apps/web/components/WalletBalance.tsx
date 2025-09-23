@@ -63,12 +63,12 @@ export const WalletBalance: FC<Props> = ({
           <div className="flex">
             <p className="font-medium">{label}:</p>
             <div
-              className="tooltip ml-2 flex cursor-pointer items-center"
+              className="tooltip ml-2 flex cursor-pointer items-center text-primary-content"
               data-tip={tooltip}
             >
               <DisplayNumber
                 number={askedFormated}
-                valueClassName="font-semibold"
+                valueClassName="font-semibold text-primary-content"
                 disableTooltip={true}
                 compact={true}
                 tokenSymbol={data?.symbol}

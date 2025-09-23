@@ -52,9 +52,8 @@ const btnStyles: BtnStyles = {
     tertiary:
       "bg-tertiary-button text-neutral-inverted-content hover:bg-tertiary-hover-content dark:bg-tertiary-dark-base dark:hover:bg-tertiary-dark-hover",
     danger:
-      "bg-danger-soft text-danger-content hover:bg-danger-button dark:bg-danger-dark-base/70 dark:text-neutral-inverted-content dark:hover:bg-danger-dark-border-hover",
-    disabled:
-      "bg-neutral-button text-neutral-inverted-content dark:text-neutral-inverted-content-dark",
+      "bg-danger-button text-neutral-inverted-content hover:bg-danger-hover-content dark:bg-danger-dark-base/70 dark:text-neutral-inverted-content dark:hover:bg-danger-dark-border-hover",
+    disabled: "bg-neutral-button text-neutral-inverted-content",
   },
   outline: {
     primary:
@@ -65,8 +64,7 @@ const btnStyles: BtnStyles = {
       "text-tertiary-content border border-tertiary-content hover:text-tertiary-hover-content hover:border-tertiary-hover-content dark:text-tertiary-dark-border dark:border-tertiary-dark-border dark:hover:text-tertiary-dark-border-hover dark:hover:border-tertiary-dark-border-hover",
     danger:
       "text-danger-button border border-danger-button hover:text-danger-hover-content hover:border-danger-hover-content dark:text-danger-dark-border dark:border-danger-dark-border dark:hover:text-danger-dark-border-hover dark:hover:border-danger-dark-border-hover",
-    disabled:
-      "text-neutral-soft-content border border-neutral-soft-content dark:text-neutral-soft-content",
+    disabled: "text-neutral-soft-content border border-neutral-soft-content",
   },
   link: {
     primary:
@@ -77,7 +75,7 @@ const btnStyles: BtnStyles = {
       "text-tertiary-content hover:text-tertiary-hover-content dark:text-tertiary-dark-border dark:hover:text-tertiary-dark-border-hover",
     danger:
       "text-danger-button hover:text-danger-hover-content dark:text-danger-dark-border dark:hover:text-danger-dark-border-hover",
-    disabled: "text-neutral-soft dark:text-neutral-soft-content",
+    disabled: "text-neutral-soft-content",
   },
   ghost: {
     primary:
@@ -88,7 +86,7 @@ const btnStyles: BtnStyles = {
       "text-tertiary-content border border-transparent hover:text-tertiary-hover-content hover:border-tertiary-content dark:text-tertiary-dark-border dark:border-transparent dark:hover:text-tertiary-dark-border-hover dark:hover:border-tertiary-dark-border-hover",
     danger:
       "text-danger-button border border-transparent hover:text-danger-hover-content hover:border-danger-button dark:text-danger-dark-border dark:border-transparent dark:hover:text-danger-dark-border-hover dark:hover:border-danger-dark-border-hover",
-    disabled: "text-neutral-soft dark:text-neutral-soft-content",
+    disabled: "text-neutral-soft-content",
   },
 };
 

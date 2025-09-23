@@ -22,7 +22,7 @@ const infoBoxStyles: Record<InfoBoxStyles, string> = {
   success:
     "bg-primary-soft text-primary-content dark:bg-primary-dark-base/70 dark:text-neutral-inverted-content dark:border-primary-dark-border/80",
   warning:
-    "bg-secondary-button text-neutral-inverted-content dark:bg-secondary-dark-base dark:text-neutral-inverted-content dark:border-secondary-dark-border",
+    "bg-secondary-soft text-secondary-content dark:bg-secondary-dark-base/70 dark:text-neutral-inverted-content dark:border-secondary-dark-border/80",
   error:
     "bg-danger-soft text-danger-content dark:bg-danger-dark-base/70 dark:text-neutral-inverted-content dark:border-danger-dark-border/80",
 };
