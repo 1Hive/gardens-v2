@@ -177,6 +177,37 @@ export default function DesignSystemPage() {
             </div>
           </DemoCard>
 
+          <DemoCard title="InfoBox">
+            <div className="grid gap-4">
+              <InfoBox infoBoxType="info" title="Informational">
+                Useful neutral information for the user.
+              </InfoBox>
+              <InfoBox infoBoxType="success" title="Success">
+                Everything worked as expected.
+              </InfoBox>
+              <InfoBox infoBoxType="warning" title="Warning">
+                Something might need your attention.
+              </InfoBox>
+              <InfoBox infoBoxType="error" title="Error">
+                Something went wrong that needs fixing.
+              </InfoBox>
+            </div>
+          </DemoCard>
+
+          <DemoCard title="Badges & Info Wrapper">
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-wrap gap-2">
+                <Badge type={0} />
+                <Badge type={1} />
+                <Badge status={0} />
+                <Badge status={2} />
+              </div>
+              <InfoWrapper tooltip="This is an info wrapper tooltip" size="md">
+                <span className="text-sm">Hover to see additional context</span>
+              </InfoWrapper>
+            </div>
+          </DemoCard>
+
           <DemoCard title="FormRadioButton">
             <div className="space-y-3">
               <FormRadioButton
@@ -325,23 +356,6 @@ export default function DesignSystemPage() {
             </div>
           </DemoCard>
 
-          <DemoCard title="InfoBox">
-            <div className="grid gap-4">
-              <InfoBox infoBoxType="info" title="Informational">
-                Useful neutral information for the user.
-              </InfoBox>
-              <InfoBox infoBoxType="success" title="Success">
-                Everything worked as expected.
-              </InfoBox>
-              <InfoBox infoBoxType="warning" title="Warning">
-                Something might need your attention.
-              </InfoBox>
-              <InfoBox infoBoxType="error" title="Error">
-                Something went wrong that needs fixing.
-              </InfoBox>
-            </div>
-          </DemoCard>
-
           <DemoCard title="Markdown Editor">
             <FormInput
               type="markdown"
@@ -392,20 +406,6 @@ export default function DesignSystemPage() {
                   />
                 </div>
               ))}
-            </div>
-          </DemoCard>
-
-          <DemoCard title="Badges & Info Wrapper">
-            <div className="flex flex-col gap-4">
-              <div className="flex flex-wrap gap-2">
-                <Badge type={0} />
-                <Badge type={1} />
-                <Badge status={0} />
-                <Badge status={2} />
-              </div>
-              <InfoWrapper tooltip="This is an info wrapper tooltip" size="md">
-                <span className="text-sm">Hover to see additional context</span>
-              </InfoWrapper>
             </div>
           </DemoCard>
         </div>
