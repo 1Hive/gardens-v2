@@ -986,7 +986,7 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
                         chain.globalTribunal?.toLowerCase()
                     ) ?
                       ""
-                    : chain.globalTribunal ?? "",
+                    : (chain.globalTribunal ?? ""),
                   );
                 }}
               />

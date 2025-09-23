@@ -2,7 +2,7 @@ import {
   CVStrategy,
   PassportScorer,
   PassportStrategy,
-  PassportUser
+  PassportUser,
 } from "../../generated/schema";
 import { log, BigInt } from "@graphprotocol/graph-ts";
 import {
@@ -12,7 +12,7 @@ import {
   StrategyActivated,
   Initialized,
   ThresholdModified,
-  StrategyRemoved
+  StrategyRemoved,
 } from "../../generated/PassportScorer/PassportScorer";
 
 export function handleInitialized(event: Initialized): void {
@@ -28,7 +28,7 @@ export function handleUserScoreAdded(event: UserScoreAdded): void {
     passportScorer.save();
     log.error(
       "PassportScorer: handleUserScoreAdded, PassportScorer not found: {}",
-      [event.address.toHexString()]
+      [event.address.toHexString()],
     );
   }
 
@@ -50,7 +50,7 @@ export function handleUserRemoved(event: UserRemoved): void {
     passportUser = new PassportUser(event.address.toHexString());
     passportUser.save();
     log.debug("PassportScorer: PassportUser not found: {}", [
-      event.params.user.toHexString()
+      event.params.user.toHexString(),
     ]);
   }
   passportUser.score = BigInt.fromI32(0);
@@ -64,7 +64,7 @@ export function handleStrategyAdded(event: StrategyAdded): void {
     passportScorer.save();
     log.error(
       "PassportScorer: handleStrategyAdded, PassportScorer not found: {}",
-      [event.address.toHexString()]
+      [event.address.toHexString()],
     );
   }
 
@@ -84,7 +84,7 @@ export function handleStrategyRemoved(event: StrategyRemoved): void {
     strategy.save();
     log.error(
       "PassportScorer: handleStrategyRemoved, PassportStrategy not found: {}",
-      [event.params.strategy.toHexString()]
+      [event.params.strategy.toHexString()],
     );
   }
   strategy.active = false;
@@ -98,7 +98,7 @@ export function handleStrategyActivated(event: StrategyActivated): void {
     strategy.save();
     log.error(
       "PassportScorer: handleStrategyActivated, PassportStrategy not found: {}",
-      [event.params.strategy.toHexString()]
+      [event.params.strategy.toHexString()],
     );
   }
   strategy.active = true;
@@ -112,7 +112,7 @@ export function handleThresholdModified(event: ThresholdModified): void {
     strategy.save();
     log.error(
       "PassportScorer: handleThresholdModified, PassportStrategy not found: {}",
-      [event.params.strategy.toHexString()]
+      [event.params.strategy.toHexString()],
     );
   }
   strategy.threshold = event.params.newThreshold;
