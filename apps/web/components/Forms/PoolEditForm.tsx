@@ -667,7 +667,7 @@ export default function PoolEditForm({
                           globalTribunal?.toLowerCase()
                       ) ?
                         ""
-                      : globalTribunal ?? "",
+                      : (globalTribunal ?? ""),
                     );
                   }}
                 />

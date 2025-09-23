@@ -127,7 +127,11 @@ export default function GardensPage() {
             )
             .filter((x) => !x.archived || showArchived)
             .map(async (x) => {
-              if ((protopianOwners && protopianOwners.length > 0) && x.chain.safePrefix) {
+              if (
+                protopianOwners &&
+                protopianOwners.length > 0 &&
+                x.chain.safePrefix
+              ) {
                 // Council Safe supported
                 const councilSafeAddress = x.councilSafe as Address;
                 try {

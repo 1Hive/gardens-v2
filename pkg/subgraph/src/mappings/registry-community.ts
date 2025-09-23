@@ -7,7 +7,7 @@ import {
   Allo,
   CVStrategy,
   CVStrategyConfig,
-  MemberStrategy
+  MemberStrategy,
 } from "../../generated/schema";
 
 import { BigInt, dataSource, log } from "@graphprotocol/graph-ts";
@@ -34,7 +34,7 @@ import {
   FeeReceiverChanged,
   KickEnabledUpdated,
   PoolRejected,
-  CommunityArchived
+  CommunityArchived,
 } from "../../generated/templates/RegistryCommunityV0_0/RegistryCommunityV0_0";
 
 import { RegistryFactoryV0_0 as RegistryFactoryContract } from "../../generated/RegistryFactoryV0_0/RegistryFactoryV0_0";
@@ -59,7 +59,7 @@ export function handleInitialized(event: RegistryInitialized): void {
   if (ctx != null && rc == null) {
     const factoryAddress = ctx.getString(CTX_FACTORY_ADDRESS) as string | null;
     log.debug("RegistryCommunity: factoryAddress: {}", [
-      factoryAddress ? factoryAddress : "0x"
+      factoryAddress ? factoryAddress : "0x",
     ]);
     let newRC = new RegistryCommunity(event.address.toHex());
 
@@ -84,7 +84,7 @@ export function handleInitialized(event: RegistryInitialized): void {
     if (protocolFeeResult.reverted) {
       log.error(
         "RegistryCommunity: handleInitialized: protocolFee reverted for community: {}",
-        [event.address.toHexString()]
+        [event.address.toHexString()],
       );
       newRC.protocolFee = BigInt.fromI32(0);
     } else {
@@ -126,14 +126,14 @@ export function handleInitialized(event: RegistryInitialized): void {
 }
 
 export function handleMemberRegisteredWithCovenant(
-  event: MemberRegisteredWithCovenant
+  event: MemberRegisteredWithCovenant,
 ): void {
   const community = event.address.toHex();
   const memberAddress = event.params._member.toHexString();
   const memberCommunityId = `${memberAddress}-${community}`;
   log.debug("RegistryCommunity: handleMemberRegistered: {}, {}", [
     community,
-    memberAddress
+    memberAddress,
   ]);
 
   let member = Member.load(memberAddress);
@@ -181,7 +181,7 @@ export function handleMemberRegistered(event: MemberRegistered): void {
   const memberCommunityId = `${memberAddress}-${community}`;
   log.debug("RegistryCommunity: handleMemberRegistered: {}, {}", [
     community,
-    memberAddress
+    memberAddress,
   ]);
 
   let member = Member.load(memberAddress);
@@ -225,7 +225,7 @@ export function handleMemberRegistered(event: MemberRegistered): void {
 //handleMemberUnregistered
 export function handleMemberUnregistered(event: MemberRegistered): void {
   log.debug("RegistryCommunity: handleMemberUnregistered: {}", [
-    event.params._member.toHexString()
+    event.params._member.toHexString(),
   ]);
 
   const memberAddress = event.params._member.toHexString();
@@ -245,7 +245,7 @@ export function handleMemberUnregistered(event: MemberRegistered): void {
 // handleMemberKicked
 export function handleMemberKicked(event: MemberKicked): void {
   log.debug("RegistryCommunity: handleMemberKicked: {}", [
-    event.params._member.toHexString()
+    event.params._member.toHexString(),
   ]);
   const memberAddress = event.params._member.toHexString();
   const idMemberCommunity = `${memberAddress}-${event.address.toHexString()}`;
@@ -258,7 +258,7 @@ export function handleMemberKicked(event: MemberKicked): void {
   const memberCommunity = MemberCommunity.load(idMemberCommunity);
   if (memberCommunity == null) {
     log.error("RegistryCommunity: MemberCommunity not found: {}", [
-      idMemberCommunity
+      idMemberCommunity,
     ]);
     return;
   }
@@ -270,7 +270,7 @@ export function handleMemberKicked(event: MemberKicked): void {
 // handleStrategyAdded
 export function handleStrategyAdded(event: StrategyAdded): void {
   log.debug("RegistryCommunity: handleStrategyAdded", [
-    event.params._strategy.toHexString()
+    event.params._strategy.toHexString(),
   ]);
   const strategyAddress = event.params._strategy.toHexString();
 
@@ -289,7 +289,7 @@ export function handleStrategyAdded(event: StrategyAdded): void {
 // handleStrategyRemoved
 export function handleStrategyRemoved(event: StrategyRemoved): void {
   log.debug("RegistryCommunity: handleStrategyRemoved", [
-    event.params._strategy.toHexString()
+    event.params._strategy.toHexString(),
   ]);
   const strategyAddress = event.params._strategy.toHexString();
 
@@ -312,10 +312,10 @@ export function handleCallStake(call: StakeAndRegisterMemberCall): void {
 
 // handleMemberActivatedStrategy
 export function handleMemberActivatedStrategy(
-  event: MemberActivatedStrategy
+  event: MemberActivatedStrategy,
 ): void {
   log.debug("RegistryCommunity: handleMemberActivatedStrategy: member:{}", [
-    event.params._member.toHexString()
+    event.params._member.toHexString(),
   ]);
 
   const memberAddress = event.params._member;
@@ -327,14 +327,14 @@ export function handleMemberActivatedStrategy(
 
   if (member == null) {
     log.error("RegistryCommunity: Member not found: {}", [
-      memberAddress.toHexString()
+      memberAddress.toHexString(),
     ]);
     return;
   }
 
   if (!strategy) {
     log.error("RegistryCommunity: Strategy not found: {}", [
-      strategyAddress.toHexString()
+      strategyAddress.toHexString(),
     ]);
     return;
   }
@@ -343,7 +343,7 @@ export function handleMemberActivatedStrategy(
   strategy.totalEffectiveActivePoints = totalEffectiveActivePoints;
   const maxCVSupply = getMaxConviction(
     totalEffectiveActivePoints,
-    cvc.cvParams().getDecay()
+    cvc.cvParams().getDecay(),
   );
   strategy.maxCVSupply = maxCVSupply;
 
@@ -375,10 +375,10 @@ export function handleMemberActivatedStrategy(
 // handleMemberDeactivatedStrategy
 
 export function handleMemberDeactivatedStrategy(
-  event: MemberDeactivatedStrategy
+  event: MemberDeactivatedStrategy,
 ): void {
   log.debug("RegistryCommunity: handleMemberDeactivatedStrategy: member:{}", [
-    event.params._member.toHexString()
+    event.params._member.toHexString(),
   ]);
 
   const memberAddress = event.params._member;
@@ -390,14 +390,14 @@ export function handleMemberDeactivatedStrategy(
 
   if (member == null) {
     log.error("RegistryCommunity: RegistryCommunity: Member not found: {}", [
-      memberAddress.toHexString()
+      memberAddress.toHexString(),
     ]);
     return;
   }
 
   if (!strategy) {
     log.error("RegistryCommunity: Strategy not found: {}", [
-      strategyAddress.toHexString()
+      strategyAddress.toHexString(),
     ]);
     return;
   }
@@ -415,7 +415,7 @@ export function handleMemberDeactivatedStrategy(
   strategy.totalEffectiveActivePoints = totalEffectiveActivePoints;
   const maxCVSupply = getMaxConviction(
     totalEffectiveActivePoints,
-    cvc.cvParams().getDecay()
+    cvc.cvParams().getDecay(),
   );
   strategy.maxCVSupply = maxCVSupply;
 
@@ -424,7 +424,7 @@ export function handleMemberDeactivatedStrategy(
 
   if (!memberStrategy) {
     log.error("RegistryCommunity: memberStrategy not found: {}", [
-      memberStrategyId
+      memberStrategyId,
     ]);
     return;
   }
@@ -439,7 +439,7 @@ export function handleMemberDeactivatedStrategy(
 export function handlePoolCreated(event: PoolCreated): void {
   log.debug("RegistryCommunity: handlePoolCreated: address:{} poolid: {}", [
     event.params._strategy.toHexString(),
-    event.params._poolId.toHexString()
+    event.params._poolId.toHexString(),
   ]);
 
   const strategyAddress = event.params._strategy;
@@ -456,7 +456,7 @@ export function handleMemberPowerIncreased(event: MemberPowerIncreased): void {
 
   if (newMemberCommunity == null) {
     log.error("RegistryCommunity: MemberCommunity not found: {}", [
-      memberCommunityId
+      memberCommunityId,
     ]);
     return;
   }
@@ -477,7 +477,7 @@ export function handleMemberPowerDecreased(event: MemberPowerDecreased): void {
 
   if (newMemberCommunity == null) {
     log.error("RegistryCommunity: MemberCommunity not found: {}", [
-      memberCommunityId
+      memberCommunityId,
     ]);
     return;
   }
@@ -508,13 +508,13 @@ export function handleMemberPowerDecreased(event: MemberPowerDecreased): void {
 
 export function handleCommunityNameUpdated(event: CommunityNameUpdated): void {
   log.debug("RegistryCommunity: handleCommunityNameUpdated: {}", [
-    event.params._communityName
+    event.params._communityName,
   ]);
 
   let community = RegistryCommunity.load(event.address.toHexString());
   if (community == null) {
     log.error("RegistryCommunity: Community not found: {}", [
-      event.address.toHexString()
+      event.address.toHexString(),
     ]);
     return;
   }
@@ -524,16 +524,16 @@ export function handleCommunityNameUpdated(event: CommunityNameUpdated): void {
 }
 
 export function handleCovenantIpfsHashUpdated(
-  event: CovenantIpfsHashUpdated
+  event: CovenantIpfsHashUpdated,
 ): void {
   log.debug("RegistryCommunity: handleCovenantIpfsHashUpdated: {}", [
-    event.params._covenantIpfsHash
+    event.params._covenantIpfsHash,
   ]);
 
   let community = RegistryCommunity.load(event.address.toHexString());
   if (community == null) {
     log.error("RegistryCommunity: Community not found: {}", [
-      event.address.toHexString()
+      event.address.toHexString(),
     ]);
     return;
   }
@@ -544,13 +544,13 @@ export function handleCovenantIpfsHashUpdated(
 
 export function handleKickEnabledUpdated(event: KickEnabledUpdated): void {
   log.debug("RegistryCommunity: handleKickEnabledUpdated: {}", [
-    event.params._isKickEnabled.toString()
+    event.params._isKickEnabled.toString(),
   ]);
 
   let community = RegistryCommunity.load(event.address.toHexString());
   if (community == null) {
     log.error("RegistryCommunity: Community not found: {}", [
-      event.address.toHexString()
+      event.address.toHexString(),
     ]);
     return;
   }
@@ -560,20 +560,20 @@ export function handleKickEnabledUpdated(event: KickEnabledUpdated): void {
 }
 
 export function handleCouncilSafeChangeStarted(
-  event: CouncilSafeChangeStarted
+  event: CouncilSafeChangeStarted,
 ): void {
   log.debug(
     "RegistryCommunity: handleCouncilSafeChangeStarted: from {} to {}",
     [
       event.params._safeOwner.toHexString(),
-      event.params._newSafeOwner.toHexString()
-    ]
+      event.params._newSafeOwner.toHexString(),
+    ],
   );
 
   let community = RegistryCommunity.load(event.address.toHexString());
   if (community == null) {
     log.error("RegistryCommunity: Community not found: {}", [
-      event.address.toHexString()
+      event.address.toHexString(),
     ]);
     return;
   }
@@ -584,13 +584,13 @@ export function handleCouncilSafeChangeStarted(
 
 export function handleCouncilSafeUpdated(event: CouncilSafeUpdated): void {
   log.debug("RegistryCommunity: handleCouncilSafeUpdated: {}", [
-    event.params._safe.toHexString()
+    event.params._safe.toHexString(),
   ]);
 
   let community = RegistryCommunity.load(event.address.toHexString());
   if (community == null) {
     log.error("RegistryCommunity: Community not found: {}", [
-      event.address.toHexString()
+      event.address.toHexString(),
     ]);
     return;
   }
@@ -601,16 +601,16 @@ export function handleCouncilSafeUpdated(event: CouncilSafeUpdated): void {
 }
 
 export function handleBasisStakedAmountUpdated(
-  event: BasisStakedAmountUpdated
+  event: BasisStakedAmountUpdated,
 ): void {
   log.debug("RegistryCommunity: handleBasisStakedAmountUpdated: {}", [
-    event.params._newAmount.toString()
+    event.params._newAmount.toString(),
   ]);
 
   let community = RegistryCommunity.load(event.address.toHexString());
   if (community == null) {
     log.error("RegistryCommunity: Community not found: {}", [
-      event.address.toHexString()
+      event.address.toHexString(),
     ]);
     return;
   }
@@ -621,13 +621,13 @@ export function handleBasisStakedAmountUpdated(
 
 export function handleCommunityFeeUpdated(event: CommunityFeeUpdated): void {
   log.debug("RegistryCommunity: handleCommunityFeeUpdated: {}", [
-    event.params._newFee.toString()
+    event.params._newFee.toString(),
   ]);
 
   let community = RegistryCommunity.load(event.address.toHexString());
   if (community == null) {
     log.error("RegistryCommunity: Community not found: {}", [
-      event.address.toHexString()
+      event.address.toHexString(),
     ]);
     return;
   }
@@ -638,13 +638,13 @@ export function handleCommunityFeeUpdated(event: CommunityFeeUpdated): void {
 
 export function handleFeeReceiverChanged(event: FeeReceiverChanged): void {
   log.debug("RegistryCommunity: handleFeeReceiverChanged: {}", [
-    event.params._feeReceiver.toHexString()
+    event.params._feeReceiver.toHexString(),
   ]);
 
   let community = RegistryCommunity.load(event.address.toHexString());
   if (community == null) {
     log.error("RegistryCommunity: Community not found: {}", [
-      event.address.toHexString()
+      event.address.toHexString(),
     ]);
     return;
   }
@@ -659,14 +659,14 @@ export function handleFeeReceiverChanged(event: FeeReceiverChanged): void {
 
 export function handlePoolRejected(event: PoolRejected): void {
   log.debug("RegistryCommunity: handlePoolRejected: strategy:{}", [
-    event.params._strategy.toHexString()
+    event.params._strategy.toHexString(),
   ]);
 
   const strategyAddress = event.params._strategy;
   const strategy = CVStrategy.load(strategyAddress.toHexString());
   if (strategy == null) {
     log.error("RegistryCommunity: Strategy not found: {}", [
-      strategyAddress.toHexString()
+      strategyAddress.toHexString(),
     ]);
     return;
   }
@@ -676,13 +676,13 @@ export function handlePoolRejected(event: PoolRejected): void {
 
 export function handleCommunityArchived(event: CommunityArchived): void {
   log.debug("RegistryCommunity: handleCommunityArchived: {}", [
-    event.address.toHexString()
+    event.address.toHexString(),
   ]);
 
   const community = RegistryCommunity.load(event.address.toHexString());
   if (community == null) {
     log.error("RegistryCommunity: Community not found: {}", [
-      event.address.toHexString()
+      event.address.toHexString(),
     ]);
     return;
   }

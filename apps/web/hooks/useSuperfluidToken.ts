@@ -8,11 +8,11 @@ import { ChainId } from "@/types";
 export const SUPER_TOKEN_QUERY = gql`
   query superToken($token: String!) {
     tokens(
-      where: { and: [
-		  { isSuperToken: true },
-      { or: [
-        { underlyingToken: $token },
-        { id: $token }] }] 
+      where: {
+        and: [
+          { isSuperToken: true }
+          { or: [{ underlyingToken: $token }, { id: $token }] }
+        ]
       }
       orderBy: isListed
       orderDirection: desc
