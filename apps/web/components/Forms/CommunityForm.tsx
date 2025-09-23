@@ -446,10 +446,11 @@ export const CommunityForm = () => {
               errors={errors}
               registerKey="stakeAmount"
               type="number"
+              placeholder="0.1"
               registerOptions={{
                 min: {
                   value: INPUT_TOKEN_MIN_VALUE,
-                  message: `Amount must be greater than ${INPUT_TOKEN_MIN_VALUE}`,
+                  message: "Amount must be greater than 0",
                 },
               }}
               otherProps={{

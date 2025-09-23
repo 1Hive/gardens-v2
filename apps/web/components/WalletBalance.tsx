@@ -63,12 +63,12 @@ export const WalletBalance: FC<Props> = ({
           <div className="flex">
             <p className="font-medium">{label}:</p>
             <div
-              className="tooltip ml-2 flex cursor-pointer items-center text-primary-content"
+              className="tooltip ml-2 flex cursor-pointer items-center"
               data-tip={tooltip}
             >
               <DisplayNumber
                 number={askedFormated}
-                valueClassName="font-semibold text-primary-content"
+                valueClassName="font-semibold"
                 disableTooltip={true}
                 compact={true}
                 tokenSymbol={data?.symbol}
@@ -82,7 +82,9 @@ export const WalletBalance: FC<Props> = ({
             </div>
           </div>
           <div className="flex">
-            <p className="font-medium dark:text-neutral-soft-content">Your balance:</p>
+            <p className="font-medium dark:text-neutral-soft-content">
+              Your balance:
+            </p>
             <div
               className={`tooltip ml-2 flex cursor-pointer items-center ${
                 isEnoughBalance ?
