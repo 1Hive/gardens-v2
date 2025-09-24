@@ -132,7 +132,7 @@ module.exports = {
         "danger-dark-text-hover": "#fff6f6",
         "tertiary-dark-text": "#8dd9f5",
         "tertiary-dark-text-hover": "#c4ecfb",
-        "tertiary-dark-border": "#1b6b84",
+        "tertiary-dark-border": "#3abde6",
         "tertiary-dark-border-hover": "#72d3f0",
         "tertiary-dark-base": "#125c88",
         "tertiary-dark-hover": "#1d7fb5",

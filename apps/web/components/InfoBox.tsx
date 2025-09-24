@@ -18,7 +18,7 @@ const BASE_STYLES =
   "rounded-md p-4 flex flex-col gap-2 border border-transparent transition-colors";
 
 const infoBoxStyles: Record<InfoBoxStyles, string> = {
-  info: "bg-tertiary-soft text-tertiary-hover-content dark:bg-tertiary-dark-base/70 dark:text-neutral-inverted-content dark:border-tertiary-dark-border/80",
+  info: "bg-tertiary-soft text-tertiary-hover-content dark:bg-tertiary-dark-base/70 dark:text-neutral-inverted-content dark:border-tertiary-dark-border/20",
   success:
     "bg-primary-soft text-primary-hover-content dark:bg-primary-dark-base/70 dark:text-neutral-inverted-content dark:border-primary-dark-border/80",
   warning:
