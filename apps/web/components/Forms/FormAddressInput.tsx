@@ -61,9 +61,13 @@ export const FormAddressInput = ({
   // const connectedChainId = chain?.id;
   const publicClient = usePublicClient();
 
-  const [inputValue, setInputValue] = useState<string>("");
+  const [inputValue, setInputValue] = useState<string>(value ?? "");
   const [isValidatingSafe, setIsValidatingSafe] = useState<boolean>(false);
   const bypassSafeCheck = useCheat("bypassSafeCheck");
+
+  useEffect(() => {
+    setInputValue(value ?? "");
+  }, [value]);
 
   // ENS Resolution
   const { data: ensAddress, isError: ensError } = useEnsAddress({

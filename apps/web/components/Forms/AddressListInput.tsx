@@ -286,13 +286,20 @@ export function AddressListInput({
         </button>
       </div>
       {inputMode === "single" ?
-        <div className="flex mb-4 gap-2">
+        <div
+          className="flex mb-4 gap-2 "
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              addAddresses(newAddress);
+            }
+          }}
+        >
           <FormAddressInput
             placeholder={placeholder}
             required={required && addresses.length === 0}
             onChange={(e) => setNewAddress(e.target.value)}
             value={newAddress}
-            className="w-full"
+            className="w-[29rem"
           />
           <Button
             type="button"
@@ -345,12 +352,11 @@ export function AddressListInput({
           : `${addresses.length} address${addresses.length !== 1 ? "es" : ""}`}
           )
         </label>
-        <div className="flex space-x-1 items-center">
+        <div className="flex gap-1 items-center">
           <Button
             type="button"
             btnStyle="outline"
-            className={`!p-2 font-normal text-[14px] leading-4 
-              ${!allowNoProtection ? "" : "!text-neutral !border-neutral"}`}
+            className={"font-normal text-[14px] leading-4 !p-2"}
             onClick={handleAllowEveryone}
             disabled={!allowNoProtection}
             icon={<UserGroupIcon className="w-4 h-4" />}
@@ -366,7 +372,7 @@ export function AddressListInput({
             type="button"
             btnStyle="outline"
             color="danger"
-            // className="!p-2 !text-neutral !border-neutral"
+            className="!p-2"
             onClick={clearAllAddresses}
             forceShowTooltip
             tooltip="Clear All"
@@ -393,7 +399,7 @@ export function AddressListInput({
               key={`addr_${index}`}
               className="flex items-center justify-between bg-base-200 rounded text-neutral-content dark:text-neutral-soft-content"
             >
-              <div className="truncate flex-grow mr-2 text-sm font-medium">
+              <div className="truncate flex-grow text-sm font-medium">
                 {address === zeroAddress ?
                   "Everyone is allowed in the pool."
                 : <div className="font-mono flex items-center">
@@ -413,7 +419,8 @@ export function AddressListInput({
                 <Button
                   type="button"
                   btnStyle="link"
-                  className="!p-[2px] !text-neutral !border-neutral"
+                  color="danger"
+                  className="!p-[2px]"
                   onClick={() => removeAddress(index)}
                 >
                   <XMarkIcon className="w-5 h-5" />

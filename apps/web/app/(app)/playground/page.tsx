@@ -1,16 +1,22 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import { HandRaisedIcon } from "@heroicons/react/24/outline";
+import {
+  HandRaisedIcon,
+  PencilSquareIcon,
+  PlusIcon,
+  TrashIcon,
+} from "@heroicons/react/24/outline";
 import { noop } from "lodash-es";
 import { toast } from "react-toastify";
+import { Address } from "viem";
 import { Badge } from "@/components/Badge";
 import { Button, BtnStyle, Color } from "@/components/Button";
 import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
 import { DataTable } from "@/components/DataTable";
 import { FormInput } from "@/components/Forms";
-import { FormAddressInput } from "@/components/Forms/FormAddressInput";
 import { AddressListInput } from "@/components/Forms/AddressListInput";
+import { FormAddressInput } from "@/components/Forms/FormAddressInput";
 import { FormCheckBox } from "@/components/Forms/FormCheckBox";
 import { FormRadioButton } from "@/components/Forms/FormRadioButton";
 import { FormSelect } from "@/components/Forms/FormSelect";
@@ -21,7 +27,6 @@ import { LoadingToast } from "@/components/LoadingToast";
 import { Skeleton } from "@/components/Skeleton";
 import { TransactionStatusNotification } from "@/components/TransactionStatusNotification";
 import { WalletBalance } from "@/components/WalletBalance";
-import { Address } from "viem";
 
 const toastButtons = [
   {
@@ -86,11 +91,6 @@ const demoAddressList: Address[] = [
   "0x0000000000000000000000000000000000000001",
   "0x0000000000000000000000000000000000000002",
   "0x0000000000000000000000000000000000000003",
-] as Address[];
-
-const demoAddressListWithError: Address[] = [
-  "0x0000000000000000000000000000000000000004",
-  "0x0000000000000000000000000000000000000005",
 ] as Address[];
 
 export default function DesignSystemPage() {
@@ -182,6 +182,43 @@ export default function DesignSystemPage() {
                   </div>
                 </div>
               ))}
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="w-20 text-sm font-semibold capitalize">
+                  Icons
+                </span>
+                <div className="flex flex-wrap gap-3">
+                  <Button
+                    btnStyle="filled"
+                    className="!px-2"
+                    icon={<PlusIcon className="h-5 w-5" />}
+                  >
+                    <span className="sr-only">Add</span>
+                  </Button>
+                  <Button
+                    btnStyle="outline"
+                    className="!px-2"
+                    icon={<PencilSquareIcon className="h-5 w-5" />}
+                  >
+                    <span className="sr-only">Edit</span>
+                  </Button>
+                  <Button
+                    btnStyle="ghost"
+                    color="danger"
+                    className="!px-2"
+                    icon={<TrashIcon className="h-5 w-5" />}
+                  >
+                    <span className="sr-only">Delete</span>
+                  </Button>
+                  <Button
+                    btnStyle="ghost"
+                    color="disabled"
+                    className="!px-2"
+                    icon={<TrashIcon className="h-5 w-5" />}
+                  >
+                    <span className="sr-only">Disabled</span>
+                  </Button>
+                </div>
+              </div>
             </div>
           </DemoCard>
 
@@ -399,21 +436,6 @@ export default function DesignSystemPage() {
                 pointSystemType={0}
                 tooltip="Add individual addresses or paste a list"
                 required
-              />
-              <AddressListInput
-                label="Allowlist (Error)"
-                registerKey="demo-address-list-error"
-                addresses={demoAddressListWithError}
-                register={addressListRegister}
-                setValue={addressListSetValue}
-                errors={{
-                  "demo-address-list-error": {
-                    type: "manual",
-                    message: "Invalid list provided",
-                  },
-                }}
-                pointSystemType={1}
-                tooltip="Example with validation messaging"
               />
             </div>
           </DemoCard>
