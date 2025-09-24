@@ -194,8 +194,12 @@ export default function DesignSystemPage() {
                 <Badge type={0} />
                 <Badge type={1} />
                 <Badge status={0} icon={<HandRaisedIcon />} />
-                <Badge status={1} />
-                <Badge status={2} />
+                <Badge status={1} icon={<HandRaisedIcon />} />
+                <Badge status={2} icon={<HandRaisedIcon />} />
+                <Badge status={3} icon={<HandRaisedIcon />} />
+                <Badge status={4} icon={<HandRaisedIcon />} />
+                <Badge status={5} icon={<HandRaisedIcon />} />
+                <Badge status={6} icon={<HandRaisedIcon />} />
               </div>
               <InfoWrapper tooltip="This is an info wrapper tooltip" size="md">
                 <span className="text-sm">Hover to see additional context</span>
