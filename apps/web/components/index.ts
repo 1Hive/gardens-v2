@@ -33,3 +33,5 @@ export { Modal } from "./Modal";
 export { InfoBox } from "./InfoBox";
 export { InfoWrapper } from "./InfoWrapper";
 export { DataTable } from "./DataTable";
+export { TransactionStatusNotification } from "./TransactionStatusNotification";
+export { LoadingToast } from "./LoadingToast";

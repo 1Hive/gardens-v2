@@ -72,22 +72,25 @@ export function RegisterMember({
     [accountTokenBalance?.value, registrationCost, token.decimals],
   );
 
-  const { write: writeUnregisterMember, error: unregisterMemberError } =
-    useContractWriteWithConfirmations({
-      ...registryContractCallConfig,
-      functionName: "unregisterMember",
-      fallbackErrorMessage: "Error unregistering member, please report a bug.",
-      onConfirmations: useCallback(() => {
-        publish({
-          topic: "member",
-          type: "delete",
-          containerId: communityAddress,
-          function: "unregisterMember",
-          id: communityAddress,
-          chainId: urlChainId,
-        });
-      }, [publish, communityAddress, urlChainId]),
-    });
+  const {
+    write: writeUnregisterMember,
+    error: unregisterMemberError,
+    isLoading: isUnregistering,
+  } = useContractWriteWithConfirmations({
+    ...registryContractCallConfig,
+    functionName: "unregisterMember",
+    fallbackErrorMessage: "Error unregistering member, please report a bug.",
+    onConfirmations: useCallback(() => {
+      publish({
+        topic: "member",
+        type: "delete",
+        containerId: communityAddress,
+        function: "unregisterMember",
+        id: communityAddress,
+        chainId: urlChainId,
+      });
+    }, [publish, communityAddress, urlChainId]),
+  });
 
   useErrorDetails(unregisterMemberError, "unregisterMember");
 
@@ -188,7 +191,7 @@ export function RegisterMember({
       />
       <div className="flex gap-4">
         <div className="flex items-center justify-center">
-          <Button {...buttonProps} className="">
+          <Button {...buttonProps} isLoading={isUnregistering}>
             {isMember ? "Leave" : "Join"}
           </Button>
         </div>

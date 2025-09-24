@@ -81,8 +81,6 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
               <div className="flex items-center gap-1">
                 <DisplayNumber
                   tokenSymbol={strategy.registryCommunity.garden.symbol}
-                  valueClassName="text-primary-content"
-                  symbolClassName="text-primary-content"
                   compact={true}
                   number={
                     [BigInt(memberTokensInCommunity), tokenDecimals] as Dnum
@@ -133,12 +131,11 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
         </div>
         <Button
           onClick={() => setOpenGovDetails(!openGovDetails)}
-          btnStyle="outline"
-          color="disabled"
-          className="absolute top-0 right-0 md:flex items-start sm:w-auto border-none hover:opacity-75"
+          btnStyle="link"
+          color="tertiary"
           icon={
             <ChevronUpIcon
-              className={`h-4 w-4 font-bold text-neutral-button transition-transform duration-200 ease-in-out ${cn(
+              className={`h-4 w-4 font-bold transition-transform duration-200 ease-in-out ${cn(
                 {
                   "rotate-180": !openGovDetails,
                 },

@@ -5,7 +5,7 @@
 import { Bytes, dataSource, json, log } from "@graphprotocol/graph-ts";
 import {
   ProposalDisputeMetadata,
-  ProposalMetadata
+  ProposalMetadata,
 } from "../../generated/schema";
 
 // https://kdghxz4drlsffkptavafm6ws2qkdwpdqauxstqioi3xdli7yjo4q.arweave.net/UMx754OK5FKp8wVAVnrS1BQ7PHAFLynBDkbuNaP4S7k
@@ -37,7 +37,7 @@ import {
 export function handleProposalDisputeMetadata(content: Bytes): void {
   const cid = dataSource.stringParam();
   log.debug("ProposalDisputeMetadata: Received dispute metadata with CID {}", [
-    cid.toString()
+    cid.toString(),
   ]);
 
   let metadata = new ProposalDisputeMetadata(cid);
@@ -52,7 +52,7 @@ export function handleProposalDisputeMetadata(content: Bytes): void {
 export function handleProposalMetadata(content: Bytes): void {
   const cid = dataSource.stringParam();
   log.debug("ProposalMetadata: Received proposal metadata with CID {}", [
-    cid.toString()
+    cid.toString(),
   ]);
 
   let metadata = new ProposalMetadata(cid);

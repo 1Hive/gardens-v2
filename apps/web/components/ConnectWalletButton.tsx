@@ -144,11 +144,11 @@ export function ConnectWallet() {
                       <Menu.Button>
                         <div
                           className={`flex w-fit cursor-pointer items-center gap-4 rounded-2xl pl-4 py-2 hover:opacity-85 pr-2 
-                             ${cn({ "bg-danger-soft": urlChainId != null && urlChainId !== chain.id }, { "bg-primary": urlChainId == null || urlChainId === chain.id })}      
+                             ${cn({ "bg-danger-soft dark:bg-danger-soft-dark": urlChainId != null && urlChainId !== chain.id }, { "bg-primary": urlChainId == null || urlChainId === chain.id })}      
                           `}
                         >
                           {isWrongNetwork ?
-                            <ExclamationTriangleIcon className="text-danger-content w-6" />
+                            <ExclamationTriangleIcon className="w-6 text-danger-content dark:text-danger-content" />
                           : <Image
                               alt="Wallet Avatar"
                               src={
@@ -163,9 +163,7 @@ export function ConnectWallet() {
                             />
                           }
                           <div className="hidden sm:flex flex-col">
-                            <h5
-                              className={`text-left ${isWrongNetwork ? "dark:text-neutral" : ""}`}
-                            >
+                            <h5 className={"text-left "}>
                               {ensName ?? formatAddress(acc.address)}
                             </h5>
                             <div className="flex items-center">
@@ -178,14 +176,14 @@ export function ConnectWallet() {
                                   <ChainIcon chain={chain.id} height={14} />
                                   <p className="text-xs ml-1">{chain.name}</p>
                                 </>
-                              : <p className="text-danger-content text-xs">
+                              : <p className="text-xs text-danger-content dark:text-danger-content">
                                   Switch to network {chainFromPath?.name ?? ""}
                                 </p>
                               }
                             </div>
                           </div>
                           <ChevronUpIcon
-                            className={`h-3 w-3 font-bold text-black transition-transform duration-200 ease-in-out ${cn(
+                            className={`h-3 w-3 font-bold text-neutral-content dark:text-neutral-inverted-content transition-transform duration-200 ease-in-out ${cn(
                               {
                                 "rotate-180": !open,
                               },
@@ -252,7 +250,6 @@ export function ConnectWallet() {
                                 <DisplayNumber
                                   number={(token?.formatted ?? 0).toString()}
                                   tokenSymbol={token?.symbol}
-                                  valueClassName="text-primary-content"
                                 />
                               </div>
                             </Menu.Item>

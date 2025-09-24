@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { GardensTheme, useTheme } from "@/providers/ThemeProvider";
 
 export function ThemeButton() {
-  const { systemTheme, theme, setTheme, isSystemTheme } = useTheme();
+  const { systemTheme, theme, setTheme } = useTheme();
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -46,7 +46,7 @@ export function ThemeButton() {
       ref={rootRef}
     >
       <button
-        className={`p-2 ${isSystemTheme ? "pr-3" : ""} rounded-md`}
+        className="p-2 rounded-md inline-flex h-10 w-11 items-center justify-center"
         aria-haspopup="menu"
         aria-expanded={open}
         onMouseDown={(e) => {

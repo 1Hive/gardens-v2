@@ -190,12 +190,20 @@ caption {
 }
 
 [data-theme="darkTheme"] .tooltip {
-  --tooltip-color: #111827;
+  --tooltip-color: #243654;
 }
 
 .tooltip:before {
   white-space: pre-line;
   text-align: left;
+}
+
+dialog.modal::backdrop {
+  background-color: rgba(0, 0, 0, 0.55);
+}
+
+[data-theme="darkTheme"] dialog.modal::backdrop {
+  background-color: rgba(0, 0, 0, 0.75);
 }
 
 /* dark mode */
@@ -412,8 +420,16 @@ dialog * {
     color: var(--color-text);
   }
 
-  ._placeholder_1e2ox_1106 {
+  ._placeholder_1e2ox_1106 p {
     color: #9f9f9f;
+  }
+
+  .cm-editor {
+    .cm-activeLineGutter {
+      background-color: var(--baseBg);
+    }
+    background-color: var(--baseBase);
+    color: var(--color-text);
   }
 
   &.mdxeditor-popup-container {

@@ -1,13 +1,13 @@
 import { log } from "@graphprotocol/graph-ts";
 import {
   CollateralVault,
-  CollateralVaultDeposit
+  CollateralVaultDeposit,
 } from "../../generated/schema";
 import {
   CollateralVault as CollateralVaultContract,
   CollateralDeposited,
   CollateralWithdrawn,
-  CollateralWithdrawn1
+  CollateralWithdrawn1,
 } from "../../generated/templates/CollateralVault/CollateralVault";
 
 export function handleCollateralDeposited(event: CollateralDeposited): void {
@@ -23,7 +23,7 @@ export function handleCollateralDeposited(event: CollateralDeposited): void {
       "-" +
       event.params.proposalId +
       "-" +
-      event.params.user
+      event.params.user,
   );
 
   deposit.collateralVault = event.address.toHexString();
@@ -42,7 +42,7 @@ export function handleCollateralWithdrawn(event: CollateralWithdrawn): void {
       "-" +
       event.params.proposalId +
       "-" +
-      event.params.user
+      event.params.user,
   );
 
   deposit.amount = deposit.amount.minus(event.params.amount);
@@ -52,7 +52,7 @@ export function handleCollateralWithdrawn(event: CollateralWithdrawn): void {
   if (event.params.isInsufficientAvailableAmount) {
     log.error(
       "Insufficient available amount to withdraw for proposalId {} and from user {}",
-      [event.params.proposalId.toString(), event.params.user.toHexString()]
+      [event.params.proposalId.toString(), event.params.user.toHexString()],
     );
   }
 
@@ -60,14 +60,14 @@ export function handleCollateralWithdrawn(event: CollateralWithdrawn): void {
 }
 
 export function handleCollateralWithdrawnFor(
-  event: CollateralWithdrawn1
+  event: CollateralWithdrawn1,
 ): void {
   let deposit = new CollateralVaultDeposit(
     event.address.toHexString() +
       "-" +
       event.params.proposalId +
       "-" +
-      event.params.fromUser
+      event.params.fromUser,
   );
 
   deposit.amount = deposit.amount.minus(event.params.amount);
@@ -77,7 +77,7 @@ export function handleCollateralWithdrawnFor(
   if (event.params.isInsufficientAvailableAmount) {
     log.error(
       "Insufficient available amount to withdraw for proposalId {} and from user {}",
-      [event.params.proposalId.toString(), event.params.fromUser.toHexString()]
+      [event.params.proposalId.toString(), event.params.fromUser.toHexString()],
     );
   }
 

@@ -109,7 +109,7 @@ export async function queryByChain<
     url:
       process.env.NEXT_PUBLIC_SKIP_PUBLISHED ?
         config.subgraphUrl
-      : config.publishedSubgraphUrl ?? config.subgraphUrl,
+      : (config.publishedSubgraphUrl ?? config.subgraphUrl),
     ...context,
   });
 }

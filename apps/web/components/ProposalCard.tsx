@@ -254,17 +254,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
                       </p>
                       <Badge
                         status={proposalStatus}
-                        icon={
-                          <HandRaisedIcon
-                            className={`w-5 h-5 ${
-                              ProposalStatus[proposalStatus] === "active" ?
-                                "text-primary-content"
-                              : ProposalStatus[proposalStatus] === "executed" ?
-                                "text-tertiary-content"
-                              : "text-danger-content"
-                            }`}
-                          />
-                        }
+                        icon={<HandRaisedIcon />}
                       />
                     </div>
                   )}
@@ -335,7 +325,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
                             inputData ? Number(inputData.value) : undefined
                           }
                           className={
-                            "range range-md cursor-pointer bg-neutral-soft [--range-shdw:var(--color-green-500)] "
+                            "range range-md cursor-pointer bg-neutral-soft [--range-bg:var(--color-grey-200)] dark:[--range-bg:#373737] dark:bg-[#373737] [--range-shdw:var(--color-green-500)] dark:[--range-shdw:#4E9F80] "
                           }
                           step={Number(memberActivatedPoints) / 100}
                           onChange={(e) => {
@@ -423,7 +413,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
           stakedFilter != null &&
           stakedFilter?.value > 0 &&
           Number(poolWeightAllocatedInProposal) > 0 && (
-            <Badge status={2} className="self-center justify-self-start">
+            <Badge color="warning" className="self-center justify-self-start">
               <p className="text-xs font-semibold">
                 Your support: {poolWeightAllocatedInProposal}%
               </p>

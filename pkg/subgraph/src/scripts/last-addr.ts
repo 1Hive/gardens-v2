@@ -25,7 +25,7 @@ const jsons: Record<number, any> = {
   // [viemChains.optimism.id]: optimismLatest,
   // [viemChains.gnosis.id]: gnosisLatest,
   // [viemChains.polygon.id]: polygonLatest,
-  [viemChains.arbitrum.id]: arbitrumLatest
+  [viemChains.arbitrum.id]: arbitrumLatest,
   // [viemChains.mainnet.id]: mainnetLatest
 };
 
@@ -65,7 +65,7 @@ export function extractAddr(runLatest: RunLatest): AddressChain {
     const txs = runLatest.transactions;
     blockNumber = fromHex(
       runLatest.receipts[0].blockNumber as Address,
-      "number"
+      "number",
     );
 
     for (const tx of txs) {
@@ -121,19 +121,19 @@ export function extractAddr(runLatest: RunLatest): AddressChain {
     proxySafeArbitrator,
     registryTemplate,
     strategyTemplate,
-    collateralVaultTemplate
+    collateralVaultTemplate,
   };
 }
 
 export async function getRunLatestAddrs(
-  chainId: number | string
+  chainId: number | string,
 ): Promise<AddressChain | undefined> {
   let runLatest: RunLatest | undefined;
 
   const chain = Object.values(viemChains).find(
     (x) =>
       ("id" in x && x.id == chainId) ||
-      ("network" in x && x.network === chainId)
+      ("network" in x && x.network === chainId),
   ) as viemChains.Chain;
   let result: AddressChain | undefined = undefined;
 
@@ -160,5 +160,5 @@ export async function getRunLatestAddrs(
 }
 
 getRunLatestAddrs(chainArg).then((latestAddress) =>
-  console.debug({ latestAddress })
+  console.debug({ latestAddress }),
 );

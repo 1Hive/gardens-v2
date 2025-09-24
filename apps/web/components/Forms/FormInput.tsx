@@ -10,7 +10,7 @@ import MarkdownEditor from "../MarkdownEditor";
 type Props = {
   label?: string;
   subLabel?: string | undefined;
-  type: HTMLInputTypeAttribute | "markdown";
+  type?: HTMLInputTypeAttribute | "markdown";
   registerKey?: string;
   placeholder?: string;
   register?: UseFormRegister<any>;
@@ -33,7 +33,7 @@ type Props = {
 export function FormInput({
   label,
   subLabel,
-  type,
+  type = "text",
   registerKey = "",
   placeholder = "",
   register,
@@ -128,17 +128,18 @@ export function FormInput({
             readOnly={readOnly || disabled}
             onChange={registered?.onChange ?? onChange}
             value={value}
+            className="input input-info dark:bg-primary-soft-dark"
             {...otherProps}
           />
         }
         {Boolean(suffix) && (
-          <span className="absolute right-[10px] top-1/2 -translate-y-1/2 text-neutral">
+          <span className="absolute right-[10px] top-1/2 -translate-y-1/2 text-neutral-content">
             {suffix}
           </span>
         )}
       </div>
       {errors && (
-        <p className="text-error mt-2 text-sm font-semibold ml-1">
+        <p className="text-danger-content text-sm mt-2">
           {errors[registerKey]?.message || ""}
         </p>
       )}

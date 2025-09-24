@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   CurrencyDollarIcon,
   HandThumbUpIcon,
@@ -8,6 +8,7 @@ import { PoolTypes, ProposalStatus } from "@/types";
 type BadgeProps = {
   type?: number;
   status?: number;
+  color?: "info" | "success" | "warning" | "danger";
   label?: string;
   className?: string;
   icon?: React.ReactNode;
@@ -39,6 +40,7 @@ const BASE_STYLES =
 export function Badge({
   type,
   status,
+  color = "info",
   label,
   className,
   tooltip,
@@ -46,30 +48,50 @@ export function Badge({
   children,
 }: BadgeProps): JSX.Element {
   const ispoolTypeDefined = type !== undefined;
+  const effectiveStatus = useMemo(() => {
+    if (status !== undefined) return status;
+    switch (color) {
+      case "danger":
+        return 0;
+      case "success":
+        return 1;
+      case "info":
+        return 4;
+      case "warning":
+        return 2;
+      default:
+        return 1;
+    }
+  }, [color, status]);
 
   // Determine the appropriate styles based on whether it's a proposal status badge or a pool type badge
   const styles =
-    status != null ? `${PROPOSAL_STATUS_STYLES[status] ?? "bg-secondary-soft"}`
+    effectiveStatus != null ?
+      `${
+        PROPOSAL_STATUS_STYLES[effectiveStatus] ??
+        "bg-secondary-soft text-secondary-hover-content dark:bg-secondary-dark-base/70 dark:text-secondary-dark-text"
+      }`
     : ispoolTypeDefined ?
-      `${POOL_TYPE_STYLES[type] ?? "bg-tertiary-soft text-tertiary-content"}`
-    : "bg-tertiary-soft text-tertiary-content";
+      `${
+        POOL_TYPE_STYLES[type] ??
+        "bg-tertiary-soft text-tertiary-hover-content dark:text-tertiary-dark-text"
+      }`
+    : "bg-tertiary-soft text-tertiary-hover-content dark:text-tertiary-dark-text";
 
   // Determine the label content
   const content =
     children ??
+    label ??
     (status != null ? ProposalStatus[status] : undefined) ??
-    (ispoolTypeDefined ? PoolTypes[type] : undefined) ??
-    label;
+    (ispoolTypeDefined ? PoolTypes[type] : undefined);
 
   //For type => conditionally set the icon based on type === poolTypes[type]
   const iconIncluded =
     icon ??
     (() => {
       const iconMap: { [key: string]: React.ReactNode } = {
-        signaling: <HandThumbUpIcon className="h-5 w-5 text-primary-content" />,
-        funding: (
-          <CurrencyDollarIcon className="h-5 w-5 dark:text-tertiary-content" />
-        ),
+        signaling: <HandThumbUpIcon />,
+        funding: <CurrencyDollarIcon />,
       };
       return type != null ? iconMap[PoolTypes[type]] ?? null : null;
     })();
@@ -79,7 +101,9 @@ export function Badge({
       className={`${BASE_STYLES} ${styles} ${tooltip ? "tooltip cursor-pointer" : ""} ${className} flex items-center gap-1`}
       data-tip={tooltip}
     >
-      {Boolean(iconIncluded) && <span className="h-5 w-5">{iconIncluded}</span>}
+      {Boolean(iconIncluded) && (
+        <span className={"h-5 w-5 text-inherit"}>{iconIncluded}</span>
+      )}
       <p className="first-letter:uppercase text-sm font-semibold text-inherit">
         {content}
       </p>
