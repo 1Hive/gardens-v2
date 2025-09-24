@@ -54,7 +54,7 @@ const btnStyles: BtnStyles = {
     danger:
       "bg-danger-button text-neutral-inverted-content hover:bg-danger-hover-content dark:bg-danger-dark-base/70 dark:text-neutral-inverted-content dark:hover:bg-danger-dark-border-hover",
     disabled:
-      "bg-neutral-soft text-neutral-soft-content border border-neutral-soft-content shadow-none dark:bg-white/10 dark:text-white/40 dark:border-white/10",
+      "bg-neutral-soft text-neutral-soft-content dark:bg-white/10 dark:text-white/40",
   },
   outline: {
     primary:
