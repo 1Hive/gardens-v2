@@ -4,6 +4,8 @@ Thank you for your interest in contributing to Gardens v2! We're excited to have
 
 Gardens v2 is a modular governance framework that enables communities to create and manage multiple governance pools with customizable parameters and voting mechanisms. As an open-source project, we welcome contributions from developers, designers, writers, and community members of all skill levels.
 
+👉 **Need help or want to chat before you start?** Join our [Discord community](https://discord.gg/tJWPg69ZWG) to meet maintainers, ask questions, and sync with other contributors.
+
 ## 🌱 Getting Started
 
 ### Prerequisites
@@ -137,53 +139,6 @@ We welcome various types of contributions:
 2. **Join our Discord** to discuss your contribution idea with the community
 3. **Review our [New Contributor Onboarding](https://1hive-gardens.notion.site/Gardens-New-Contributor-Onboarding-8ab2e08a585c46e3bcb36482d006c9e9?pvs=4)** guide
 
-### Making Your First Contribution
-
-1. **Create a new branch** for your work:
-
-   ```bash
-   git checkout -b feature/your-feature-name
-   ```
-
-2. **Make your changes** following our coding standards (see below)
-
-3. **Test your changes**:
-
-   ```bash
-   # For frontend changes
-   cd apps/web
-   pnpm lint
-   pnpm build
-
-   # For contract changes (requires Foundry)
-   cd pkg/contracts
-   forge test
-   forge fmt
-
-   # Build all packages (note: requires Foundry for contracts)
-   cd ../../
-   pnpm build
-   ```
-
-4. **Commit your changes** with a descriptive message:
-
-   ```bash
-   git add .
-   git commit -m "feat: add new governance pool type"
-   ```
-
-5. **Push to your fork**:
-
-   ```bash
-   git push origin feature/your-feature-name
-   ```
-
-6. **Open a Pull Request** on GitHub with:
-   - Clear title describing the change
-   - Detailed description of what was changed and why
-   - Screenshots for UI changes
-   - Link to related issues
-
 ## 📋 Coding Standards
 
 ### General Guidelines
@@ -211,41 +166,36 @@ We welcome various types of contributions:
 - Use proper access modifiers
 - Follow established patterns for upgradeable contracts
 
-### Commit Convention
-
-We use conventional commits:
-
-- `feat:` for new features
-- `fix:` for bug fixes
-- `docs:` for documentation changes
-- `style:` for formatting changes
-- `refactor:` for code refactoring
-- `test:` for adding or modifying tests
-- `chore:` for maintenance tasks
-
 ## 🧪 Testing
 
-### Running Tests
+### Running Lint/Tests
+
+#### Frontend linting and building
 
 ```bash
-# Frontend tests (when available)
-cd apps/web
-pnpm test
-
-# Frontend linting and building
 cd apps/web
 pnpm lint
 pnpm build
+```
 
-# Contract tests (requires Foundry)
+#### Contract tests (requires Foundry)
+
+```bash
 cd pkg/contracts
 forge test
+```
 
-# Lint all packages
+#### Lint all packages
+
+```bash
 cd ../../
 pnpm lint
+```
 
-# Build all packages (note: contracts require Foundry)
+#### Build all packages from root (note: contracts require Foundry)
+
+```bash
+cd ../../
 pnpm build
 ```
 
@@ -254,24 +204,8 @@ pnpm build
 ### Writing Tests
 
 - Write unit tests for new functionality
-- Include integration tests for complex features
 - Test edge cases and error conditions
 - Update tests when modifying existing functionality
-
-## 📚 Documentation
-
-### Updating Documentation
-
-- Update relevant documentation when making changes
-- Follow the established documentation style
-- Include code examples where helpful
-- Update API documentation for contract changes
-
-### Documentation Structure
-
-- **User Documentation**: Located in our [main docs](https://docs.gardens.fund)
-- **Developer Documentation**: Code comments and README files
-- **API Documentation**: Generated from code comments
 
 ## 🚀 Deployment and Release
 
@@ -279,15 +213,13 @@ pnpm build
 
 - `main`: Production-ready code
 - `develop`: Integration branch for new features
-- Feature branches: `feature/description`
-- Hotfix branches: `hotfix/description`
+- Name your branches based on the feature or fix (e.g., `feature/new-governance-pool`, `fix/vote-weight-bug`)
 
 ### Release Process
 
 1. Features are merged into `develop`
 2. Release candidates are created from `develop`
 3. After testing, releases are merged into `main`
-4. Tags are created for releases
 
 ## 🌍 Community
 
@@ -306,9 +238,7 @@ We are committed to providing a welcoming and inclusive environment. Please be r
 
 Contributors are recognized in our:
 
-- GitHub contributor list
 - Discord community roles
-- Project documentation
 - Community calls and updates
 
 ## 🔒 Security
