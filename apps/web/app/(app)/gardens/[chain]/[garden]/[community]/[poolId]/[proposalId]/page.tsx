@@ -318,15 +318,6 @@ export default function Page({
                     <h2>{metadata?.title}</h2>
                   </Skeleton>
                   <div className="flex items-center gap-2">
-                    {/* <div className="flex items-center gap-2">
-                      <p className="text-md flex items-center bg-neutral-soft-2 rounded-md px-2 py-1 text-neutral-soft-content">
-                        ID:{" "}
-                        <span className="text-md ml-1 font-medium text-black">
-                          {proposalIdNumber.toString()}
-                        </span>
-                      </p>
-                    </div> */}
-
                     <Badge type={proposalType} />
                   </div>
                 </div>
@@ -353,7 +344,7 @@ export default function Page({
 
                   <div className="flex flex-col items-start justify-between gap-2">
                     <Statistic label={"Created"}>
-                      <span className="text-black font-medium">
+                      <span className="font-medium dark:text-neutral-content">
                         {prettyTimestamp(proposalData?.createdAt ?? 0)}
                       </span>
                     </Statistic>
@@ -367,8 +358,8 @@ export default function Page({
                             )}
                             tokenSymbol={poolToken?.symbol}
                             compact={true}
-                            valueClassName="text-black font-medium"
-                            symbolClassName="text-black font-medium"
+                            valueClassName="font-medium dark:text-neutral-content"
+                            symbolClassName="font-medium dark:text-neutral-content"
                           />
                         </Statistic>
                       </>
@@ -489,8 +480,8 @@ export default function Page({
                 )}
                 {status !== "executed" && status !== "cancelled" && (
                   <InfoBox
+                    title="Information"
                     infoBoxType="info"
-                    contentStyle="text-tertiary-content"
                     content={`${isSignalingType ? "This proposal is open and can be supported or disputed by the community. Only the proposal creator can cancel" : "This proposal is currently open. It will pass if nobody successfully challenges it and it receives enough support."}`}
                   />
                 )}

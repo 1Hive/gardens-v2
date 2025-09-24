@@ -55,7 +55,8 @@ export type ChainId = number | string;
 export type SybilResistanceType =
   | "noSybilResist"
   | "gitcoinPassport"
-  | "allowList";
+  | "allowList"
+  | "goodDollar";
 
 export type Column<T> = {
   header: string | React.ReactNode;

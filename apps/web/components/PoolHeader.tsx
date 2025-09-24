@@ -15,6 +15,7 @@ import {
   Cog6ToothIcon,
 } from "@heroicons/react/24/solid";
 import sfMeta from "@superfluid-finance/metadata";
+import { isArray } from "lodash-es";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { toast } from "react-toastify";
@@ -35,6 +36,7 @@ import { Modal } from "./Modal";
 import { Skeleton } from "./Skeleton";
 import { Statistic } from "./Statistic";
 import { SuperfluidStream } from "@/assets";
+import { TransactionStatusNotification } from "@/components/TransactionStatusNotification";
 import { chainConfigMap } from "@/configs/chains";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { VOTING_POINT_SYSTEM_DESCRIPTION } from "@/globals";
@@ -46,7 +48,6 @@ import { MetadataV1 } from "@/hooks/useIpfsFetch";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 
 import { SuperToken } from "@/hooks/useSuperfluidToken";
-import { TransactionStatusNotification } from "@/hooks/useTransactionNotification";
 import { superTokenFactoryAbi } from "@/src/customAbis";
 import { cvStrategyABI, registryCommunityABI } from "@/src/generated";
 import {
@@ -217,15 +218,38 @@ export default function PoolHeader({
 
   const { value, unit } = convertSecondsToReadableTime(convictionGrowthSec);
 
-  let sybilResistanceType: SybilResistanceType;
+  let sybilResistanceType: SybilResistanceType = "noSybilResist";
   let sybilResistanceValue: Address[] | number | undefined;
-  if (passportScore != null && passportScore > 0) {
-    sybilResistanceType = "gitcoinPassport";
-    sybilResistanceValue = passportScore;
+  if (strategy.sybil != null) {
+    if (strategy.sybil.type === "Passport" && passportScore != null) {
+      sybilResistanceType = "gitcoinPassport";
+      sybilResistanceValue = passportScore;
+    } else if (strategy.sybil.type === "GoodDollar") {
+      sybilResistanceType = "goodDollar";
+      sybilResistanceValue = undefined;
+    }
   } else {
     sybilResistanceType = "allowList";
     sybilResistanceValue = allowList as Address[] | undefined;
   }
+
+  const sybilResistanceLabel: Record<SybilResistanceType, string> = {
+    allowList: "Allowlist",
+    gitcoinPassport: "Gitcoin Passport",
+    goodDollar: "GoodDollar",
+    noSybilResist: "None",
+  };
+
+  const sybilResistanceInfo: Record<SybilResistanceType, string> = {
+    allowList: `Only users in the allowlist can interact with this pool: \n -${(isArray(sybilResistanceValue) ? (sybilResistanceValue as Array<string>) : []).map((x) => shortenAddress(x)).join("\n- ")}`,
+    gitcoinPassport:
+      typeof sybilResistanceValue === "number" ?
+        `Only users with a Gitcoin Passport above the threshold can interact with this pool: \n Threshold: ${sybilResistanceValue.toFixed(2)}`
+      : "",
+    goodDollar:
+      "Only users verified with GoodDollar Sybil-Resistance can interact with this pool.",
+    noSybilResist: "Any wallet can interact with this pool.",
+  };
 
   const poolConfig = [
     {
@@ -240,7 +264,11 @@ export default function PoolHeader({
     },
     {
       label: "Conviction growth",
-      value: `${value} ${unit}`,
+      value:
+        `${value} ${unit}` +
+        (value > 1 && !unit.includes("sec") && !unit.includes("min") ?
+          "s"
+        : ""),
       info: "It's the time for conviction to reach proposal support. This parameter is logarithmic, represented as a half life and may vary slightly over time depending on network block times.",
     },
     {
@@ -255,24 +283,8 @@ export default function PoolHeader({
     },
     {
       label: "Protection",
-      value:
-        sybilResistanceType ?
-          sybilResistanceType === "gitcoinPassport" ? "Gitcoin Passport"
-          : (sybilResistanceValue as Array<Address>)?.[0] === zeroAddress ?
-            "None"
-          : "Allowlist"
-        : "",
-      info:
-        sybilResistanceType ?
-          sybilResistanceType === "gitcoinPassport" ?
-            `Only users with a Gitcoin Passport above the threshold can interact with this pool: \n Threshold: ${(sybilResistanceValue as number).toFixed(2)}`
-          : (sybilResistanceValue as Array<Address>)?.[0] === zeroAddress ?
-            "Any wallet can interact with this pool"
-          : (() => {
-              const allowlist = sybilResistanceValue as Array<string>;
-              return `Only users in the allowlist can interact with this pool: \n - ${allowlist.length ? allowlist.map((x) => shortenAddress(x)).join("\n- ") : "No addresses in allowlist"}`;
-            })()
-        : "",
+      value: sybilResistanceLabel[sybilResistanceType],
+      info: sybilResistanceInfo[sybilResistanceType],
     },
     {
       label: "Token",
@@ -580,17 +592,6 @@ export default function PoolHeader({
             </div>
             {(!!isCouncilMember || isCouncilSafe) && (
               <div className="flex gap-2 flex-wrap">
-                <Button
-                  btnStyle="outline"
-                  icon={<Cog6ToothIcon height={20} width={20} />}
-                  disabled={
-                    !isConnected || missmatchUrl || disableCouncilSafeButtons
-                  }
-                  tooltip={tooltipMessage}
-                  onClick={() => setIsOpenModal(true)}
-                >
-                  Edit
-                </Button>
                 {isArchived ?
                   <Button
                     icon={<CheckIcon height={20} width={20} />}
@@ -678,6 +679,17 @@ export default function PoolHeader({
                     </Button>
                   </>
                 }
+                <Button
+                  btnStyle="outline"
+                  icon={<Cog6ToothIcon height={20} width={20} />}
+                  disabled={
+                    !isConnected || missmatchUrl || disableCouncilSafeButtons
+                  }
+                  tooltip={tooltipMessage}
+                  onClick={() => setIsOpenModal(true)}
+                >
+                  Edit
+                </Button>
                 {!superToken &&
                   PoolTypes[proposalType] !== "signaling" &&
                   networkSfMetadata?.contractsV1.superTokenFactory && (
@@ -715,7 +727,7 @@ export default function PoolHeader({
                   )}
               </div>
             )}
-            <div className="flex px-1 flex-col sm:flex-row bg-neutral-soft-2 py-2 rounded-lg items-baseline justify-between">
+            <div className="flex px-1 flex-col sm:flex-row bg-primary py-2 rounded-lg items-baseline justify-between">
               <EthAddress
                 icon={false}
                 address={strategy.id as Address}
@@ -814,9 +826,7 @@ export default function PoolHeader({
                   }
                   tooltip={config.info}
                 >
-                  <p className="text-neutral-content subtitle">
-                    {config.value}
-                  </p>
+                  <p className="subtitle">{config.value}</p>
                 </Statistic>
               </div>
             ))}
@@ -828,11 +838,12 @@ export default function PoolHeader({
               <h4>Voting System:</h4>
               <div className="flex gap-2 items-center">
                 <Badge
+                  color="info"
                   label="conviction voting"
-                  className="text-secondary-content"
                   icon={<Battery50Icon />}
                 />
                 <Badge
+                  color="info"
                   label={PointSystems[pointSystem]}
                   tooltip={
                     VOTING_POINT_SYSTEM_DESCRIPTION[PointSystems[pointSystem]]
@@ -852,27 +863,18 @@ export default function PoolHeader({
               className="mb-4"
             />
           )}
-          {
-            !isEnabled && (
-              <div className="banner">
+          {!isEnabled && (
+            <div className="banner">
+              {isArchived ?
+                <ArchiveBoxIcon className="h-8 w-8 text-secondary-content" />
+              : <ClockIcon className="h-8 w-8 text-secondary-content" />}
+              <h6>
                 {isArchived ?
-                  <ArchiveBoxIcon className="h-8 w-8 text-secondary-content" />
-                : <ClockIcon className="h-8 w-8 text-secondary-content" />}
-                <h6>
-                  {isArchived ?
-                    "This pool has been archived"
-                  : "Waiting for council approval"}
-                </h6>
-              </div>
-            )
-            // : <Image
-            //     src={
-            //       PoolTypes[proposalType] === "funding" ? blueLand : grassLarge
-            //     }
-            //     alt="pool image"
-            //     className="h-12 w-full rounded-lg object-cover"
-            //   />
-          }
+                  "This pool has been archived"
+                : "Waiting for council approval"}
+              </h6>
+            </div>
+          )}
         </section>
       </div>
     </>

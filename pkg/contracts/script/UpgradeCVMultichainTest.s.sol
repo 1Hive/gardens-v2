@@ -75,7 +75,10 @@ contract UpgradeCVMultichainTest is BaseMultiChain {
             CVStrategyV0_0 cvStrategy = CVStrategyV0_0(payable(address(cvStrategyProxies[i])));
             cvStrategy.upgradeTo(strategyImplementation); // DOESNT VALIDATE SAFE UPGRADING
 
-            // 3.b -- Set the Pool Params --
+            // 3.b -- Init the Strategy --
+            cvStrategy.init2();
+
+            // 3.c -- Set the Pool Params --
             // (
             //     ,
             //     address tribunalSafe,

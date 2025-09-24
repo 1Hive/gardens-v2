@@ -95,27 +95,7 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
                     <div
                       key={key}
                       className="relative group block h-full w-full"
-                      // onMouseEnter={() => setHoveredIndex(index)}
-                      // onMouseLeave={() => setHoveredIndex(null)}
                     >
-                      {/* <AnimatePresence>
-                          {hoveredIndex === index && (
-                            <motion.span
-                              className="absolute inset-0 h-full w-full bg-secondary-soft block rounded-2xl z-10"
-                              layoutId="hoverBackground"
-                              initial={{ opacity: 0 }}
-                              animate={{
-                                opacity: 1,
-                                transition: { duration: 0.15 },
-                              }}
-                              exit={{
-                                opacity: 0,
-                                transition: { duration: 0.15, delay: 0.2 },
-                              }}
-                            />
-                          )}
-                        </AnimatePresence> */}
-
                       <div className="relative z-20">
                         {isFetching ?
                           <CommunityCardSkeleton />
@@ -253,7 +233,7 @@ export const Communities: React.FC<CommunitiesProps> = ({
             defaultExpanded={true}
             isFetching={isFetching}
           />
-          <div className="divider h-1 border-b border-border-neutral mx-2" />
+          <div className="divider h-1 border-b border-border-neutral dark:border-opacity-50 mx-2" />
         </>
       )}
 

@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Modal } from "@/components";
-import { TransactionStatusNotification } from "@/hooks/useTransactionNotification";
+import { TransactionStatusNotification } from "@/components/TransactionStatusNotification";
 
 export interface TransactionStep {
   transaction: string;

@@ -258,7 +258,7 @@ export function AddressListInput({
       {subLabel && <p className="mb-1 text-xs">{subLabel}</p>}
 
       <div
-        className={`rounded-lg flex mb-4 border p-0 text-neutral-soft-content ${
+        className={`rounded-lg flex mb-4 p-0 text-neutral-content dark:text-neutral-soft-content ${
           !label && "mt-4"
         }`}
       >
@@ -266,7 +266,7 @@ export function AddressListInput({
           type="button"
           className={`w-full py-2 rounded-lg text-center px-4 text-semibold ${
             inputMode === "single" ?
-              "border border-border-neutral bg-neutral-soft text-black -m-[1px]"
+              "border border-border-neutral bg-neutral-soft text-neutral-content dark:text-neutral -m-[1px]"
             : ""
           }`}
           onClick={() => setInputMode("single")}
@@ -277,7 +277,7 @@ export function AddressListInput({
           type="button"
           className={`w-full py-2 rounded-lg text-center px-4 text-semibold ${
             inputMode === "bulk" ?
-              "border border-border-neutral bg-neutral-soft text-black -m-[1px]"
+              "border border-border-neutral bg-neutral-soft text-neutral-content dark:text-neutral -m-[1px]"
             : ""
           }`}
           onClick={() => setInputMode("bulk")}
@@ -311,7 +311,7 @@ export function AddressListInput({
             onChange={(e) => setBulkAddresses(e.target.value)}
             placeholder={`Enter multiple Ethereum addresses 
 (one per line or comma-separated)`}
-            className={`textarea textarea-info w-full h-24 mb-2 ${
+            className={`textarea textarea-info dark:bg-primary-soft-dark w-full h-24 mb-2 ${
               className ?? ""
             }`}
             onKeyDown={handleSubmit}
@@ -350,7 +350,7 @@ export function AddressListInput({
             type="button"
             btnStyle="outline"
             className={`!p-2 font-normal text-[14px] leading-4 
-              ${!allowNoProtection ? "" : "!text-black !border-black"}`}
+              ${!allowNoProtection ? "" : "!text-neutral !border-neutral"}`}
             onClick={handleAllowEveryone}
             disabled={!allowNoProtection}
             icon={<UserGroupIcon className="w-4 h-4" />}
@@ -365,7 +365,8 @@ export function AddressListInput({
           <Button
             type="button"
             btnStyle="outline"
-            className="!p-2 !text-black !border-black"
+            color="danger"
+            // className="!p-2 !text-neutral !border-neutral"
             onClick={clearAllAddresses}
             forceShowTooltip
             tooltip="Clear All"
@@ -390,9 +391,9 @@ export function AddressListInput({
             <li
               // eslint-disable-next-line react/no-array-index-key
               key={`addr_${index}`}
-              className="flex items-center justify-between bg-base-200 rounded"
+              className="flex items-center justify-between bg-base-200 rounded text-neutral-content dark:text-neutral-soft-content"
             >
-              <div className="truncate flex-grow mr-2 text-sm text-medium">
+              <div className="truncate flex-grow mr-2 text-sm font-medium">
                 {address === zeroAddress ?
                   "Everyone is allowed in the pool."
                 : <div className="font-mono flex items-center">
@@ -412,7 +413,7 @@ export function AddressListInput({
                 <Button
                   type="button"
                   btnStyle="link"
-                  className="!p-[2px] !text-black !border-black"
+                  className="!p-[2px] !text-neutral !border-neutral"
                   onClick={() => removeAddress(index)}
                 >
                   <XMarkIcon className="w-5 h-5" />

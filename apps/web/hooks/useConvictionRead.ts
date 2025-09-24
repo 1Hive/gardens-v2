@@ -104,8 +104,7 @@ export const useConvictionRead = ({
       initialized ?
         calculatePercentageBigInt(
           thresholdFromContract as bigint,
-          proposalData.strategy.maxCVSupply,
-          token?.decimals ?? 18,
+          BigInt(proposalData.strategy.maxCVSupply),
         )
       : undefined,
     [
@@ -122,7 +121,6 @@ export const useConvictionRead = ({
         calculatePercentageBigInt(
           proposalData.stakedAmount,
           proposalData.strategy.totalEffectiveActivePoints,
-          token?.decimals ?? 18,
         )
       : undefined,
     [
@@ -139,7 +137,6 @@ export const useConvictionRead = ({
         calculatePercentageBigInt(
           BigInt(updatedConviction.toString()),
           proposalData.strategy.maxCVSupply,
-          token?.decimals ?? 18,
         )
       : undefined,
     [

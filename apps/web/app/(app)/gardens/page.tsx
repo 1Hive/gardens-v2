@@ -9,23 +9,37 @@ import {
   getCommunitiesDocument,
   getCommunitiesQuery,
 } from "#/subgraph/.graphclient";
-import { clouds1, clouds2, grassLarge, tree2, tree3 } from "@/assets";
+import {
+  clouds1,
+  clouds2,
+  grassLarge,
+  tree2,
+  tree3,
+  gardensNight,
+} from "@/assets";
 import { Button, Communities } from "@/components";
 import { LightCommunity } from "@/components/Communities";
 import { useCheat } from "@/hooks/useCheat";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQueryMultiChain } from "@/hooks/useSubgraphQueryMultiChain";
+import { useTheme } from "@/providers/ThemeProvider";
 import { getProtopiansOwners } from "@/services/alchemy";
 import { safeABI } from "@/src/customAbis";
 
 // Components
 const Header = () => {
   const { tooltipMessage, isConnected } = useDisableButtons();
+  const { resolvedTheme } = useTheme();
   return (
     <header className="flex flex-col items-center gap-8 ">
       <div className="flex items-center text-center">
         <div className="relative flex-1">
-          <Image src={clouds1} alt="clouds" width={175} height={175} />
+          <Image
+            src={resolvedTheme === "lightTheme" ? clouds1 : gardensNight}
+            alt="clouds"
+            width={175}
+            height={175}
+          />
         </div>
         <div className="mx-10 flex flex-col items-center gap-5">
           <div className="flex flex-col items-center">

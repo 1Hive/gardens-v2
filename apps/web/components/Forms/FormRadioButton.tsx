@@ -5,7 +5,7 @@ type Props = {
   registerKey: any;
   checked: boolean;
   label: string;
-  description?: string;
+  description?: React.ReactNode;
   inline?: boolean;
   onChange: React.ChangeEventHandler<HTMLInputElement>;
 };
@@ -28,7 +28,7 @@ export function FormRadioButton({
           onChange={onChange}
           value={value}
           type="radio"
-          className="radio radio-info"
+          className="radio radio-info dark:[--fallback-b1:#252525]"
           name={registerKey}
         />
         <label htmlFor={label} className="label font-semibold cursor-pointer">

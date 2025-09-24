@@ -275,7 +275,7 @@ export const IncreasePower = ({
                   number={(initialStakedAmount ?? 0).toString()}
                   tokenSymbol={tokenSymbol}
                   compact={true}
-                  valueClassName="text-primary-content font-bold text-3xl mr-1"
+                  valueClassName="font-bold text-3xl mr-1"
                   disableTooltip
                 />
               }
@@ -310,17 +310,17 @@ export const IncreasePower = ({
                 )}
                 tokenSymbol={tokenSymbol}
                 compact={true}
-                valueClassName="text-black text-lg"
-                symbolClassName="text-sm text-black"
+                valueClassName="text-lg"
+                symbolClassName="text-sm"
               />
             </div>
             <div className="relative w-full">
-              <label className="input input-bordered input-info flex items-center gap-2 w-full">
+              <label className="input input-bordered input-info flex items-center gap-2 w-full dark:bg-primary-soft-dark">
                 <input
                   type="number"
                   value={stakedAmount}
                   placeholder="Amount"
-                  className="flex-1 w-full"
+                  className="flex-1 w-full dark:bg-primary-soft-dark"
                   min={registerStakeAmount}
                   max={accountTokenBalancePlusStakeAmount}
                   onChange={(e) => {
@@ -375,7 +375,7 @@ export const IncreasePower = ({
                   }
                   setAmountPerc(+percentage >= 100 ? "101" : percentage);
                 }}
-                className={`range range-md cursor-pointer bg-neutral-soft [--range-shdw:var(--color-green-500)] [--range-thumb-size:14px] ${
+                className={`range range-md cursor-pointer bg-neutral-soft [--range-bg:var(--color-grey-200)] dark:[--range-bg:#373737] dark:bg-[#373737] [--range-shdw:var(--color-green-500)] dark:[--range-shdw:#4E9F80] [--range-thumb-size:20px] dark:[&::-webkit-slider-thumb]:bg-[#232323] dark:[&::-moz-range-thumb]:bg-[#232323] dark:[&::-webkit-slider-thumb]:border-0 dark:[&::-moz-range-thumb]:border-0 ${
                   minAmountPercentage === 100 ?
                     "[--range-shdw:var(--color-grey-400)]"
                   : ""
@@ -407,9 +407,7 @@ export const IncreasePower = ({
                   decreaseStatus === "loading"
                 }
               >
-                <span className="w-14">
-                  {stakeDifference >= 0 ? "Stake" : "Unstake"}
-                </span>
+                {stakeDifference >= 0 ? "Stake" : "Unstake"}
               </Button>
             </div>
           </>

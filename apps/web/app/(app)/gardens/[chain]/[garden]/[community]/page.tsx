@@ -376,7 +376,7 @@ export default function Page({
     <>
       <div className="col-span-12 xl:col-span-9">
         <div className="backdrop-blur-sm flex flex-col gap-10">
-          <header className="bg-white border border-gray-200 shadow-sm section-layout">
+          <header className="border border-gray-200 shadow-sm section-layout">
             <div className="flex flex-col sm:flex-row items-start space-y-4 sm:space-y-0 sm:space-x-4">
               {/* Image */}
               <div className="flex-shrink-0">
@@ -439,6 +439,8 @@ export default function Page({
                         ]}
                         compact={true}
                         tokenSymbol={tokenGarden.symbol}
+                        valueClassName="text-inherit"
+                        symbolClassName="text-inherit"
                       />
                     </Statistic>
                   </div>
@@ -470,7 +472,7 @@ export default function Page({
                       </Button>
                     )}
                     <RegisterMember
-                      memberData={isMemberResult}
+                      memberData={accountAddress ? isMemberResult : undefined}
                       registrationCost={getTotalRegistrationCost()}
                       token={tokenGarden}
                       registryCommunity={registryCommunity}
@@ -497,8 +499,7 @@ export default function Page({
                                 getTotalRegistrationCost(),
                                 tokenGarden?.decimals,
                               ]}
-                              valueClassName="text-xl font-bold text-primary-content"
-                              symbolClassName="text-primary-content"
+                              valueClassName="text-xl font-bold"
                               disableTooltip={true}
                               compact={true}
                               copiable={true}
@@ -511,12 +512,11 @@ export default function Page({
                   </div>
                   <Button
                     onClick={() => setOpenCommDetails(!openCommDetails)}
-                    btnStyle="outline"
-                    color="disabled"
-                    className="absolute top-0 right-0 md:flex items-start sm:w-auto border-none hover:opacity-75"
+                    btnStyle="link"
+                    color="tertiary"
                     icon={
                       <ChevronUpIcon
-                        className={`h-4 w-4 font-bold text-black transition-transform duration-200 ease-in-out ${cn(
+                        className={`h-4 w-4 font-bold transition-transform duration-200 ease-in-out ${cn(
                           {
                             "rotate-180": !openCommDetails,
                           },
@@ -629,7 +629,7 @@ export default function Page({
       <div className="col-span-12 xl:col-span-3">
         <div className="backdrop-blur-sm rounded-lg flex flex-col gap-2 sticky top-32">
           <IncreasePower
-            memberData={isMemberResult}
+            memberData={accountAddress ? isMemberResult : undefined}
             registryCommunity={registryCommunity}
             tokenGarden={tokenGarden}
             registrationAmount={registrationAmount}

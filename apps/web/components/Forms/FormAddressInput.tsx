@@ -157,7 +157,7 @@ export const FormAddressInput = ({
   };
 
   return (
-    <div className="w-[29rem]">
+    <div className="max-w-[29rem]">
       <FormInput
         {...rest}
         label={label}

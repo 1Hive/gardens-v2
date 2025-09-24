@@ -315,13 +315,14 @@ export const DisputeModal: FC<Props> = ({
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               placeholder="Enter your dispute reason here"
-              className="textarea textarea-accent w-full"
+              className="textarea textarea-accent w-full dark:bg-primary-soft-dark"
               rows={5}
               required
             />
             <div className="text-error ml-4 mt-1">{error}</div>
           </div>
           <InfoBox
+            title="Information"
             infoBoxType="info"
             content={`Disputing this proposal stops it from being executed but not from growing in support. The Tribunal has ${rulingTimeout.value} ${rulingTimeout.unit} to settle any disputes before it can be closed and collateral is returned.`}
           />
@@ -582,7 +583,7 @@ const DisputeMessage = ({
           </div>
         )}
       </div>
-      <div className="chat-bubble shadow-lg bg-neutral-200">
+      <div className="chat-bubble shadow-lg bg-neutral">
         <MarkdownWrapper
           source={
             dispute.metadata?.reason ??

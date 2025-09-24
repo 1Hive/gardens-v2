@@ -36,6 +36,7 @@ import {
   InitializedCV3DataStruct,
   SuperfluidTokenUpdated,
   SuperfluidGDAConnected,
+  SuperfluidGDADisconnected
 } from "../../generated/templates/CVStrategyV0_0/CVStrategyV0_0";
 
 import { Allo as AlloContract } from "../../generated/templates/CVStrategyV0_0/Allo";
@@ -646,7 +647,7 @@ export function handleSybilScorerUpdated(event: SybilScorerUpdated): void {
     return;
   }
 
-  cvs.sybilScorer = event.params.sybilScorer.toHexString();
+  cvs.sybil = event.params.sybilScorer.toHexString();
   cvs.save();
 }
 
@@ -792,7 +793,7 @@ function computeInitialize(
   cvs.maxCVSupply = BigInt.fromI32(0);
   cvs.totalEffectiveActivePoints = cvc.totalPointsActivated();
   cvs.isEnabled = false;
-  cvs.sybilScorer = data.sybilScorer.toHexString();
+  cvs.sybil = data.sybilScorer.toHexString();
   cvs.archived = false;
   config.proposalType = BigInt.fromI32(pType);
   config.pointSystem = BigInt.fromI32(pointSystem);

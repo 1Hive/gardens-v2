@@ -1,6 +1,6 @@
 import {
   CVStrategy,
-  PassportScorer,
+  SybilProtection,
   PassportStrategy,
   PassportUser,
 } from "../../generated/schema";
@@ -15,16 +15,20 @@ import {
   StrategyRemoved,
 } from "../../generated/PassportScorer/PassportScorer";
 
+const PassportType = "Passport";
+
 export function handleInitialized(event: Initialized): void {
-  let passportScorer = new PassportScorer(event.address.toHexString());
+  let passportScorer = new SybilProtection(event.address.toHexString());
+  passportScorer.type = PassportType;
   passportScorer.save();
 }
 
 export function handleUserScoreAdded(event: UserScoreAdded): void {
-  let passportScorer = PassportScorer.load(event.address.toHexString());
+  let passportScorer = SybilProtection.load(event.address.toHexString());
 
   if (passportScorer == null) {
-    passportScorer = new PassportScorer(event.address.toHexString());
+    passportScorer = new SybilProtection(event.address.toHexString());
+    passportScorer.type = PassportType;
     passportScorer.save();
     log.error(
       "PassportScorer: handleUserScoreAdded, PassportScorer not found: {}",
@@ -58,9 +62,10 @@ export function handleUserRemoved(event: UserRemoved): void {
 }
 
 export function handleStrategyAdded(event: StrategyAdded): void {
-  let passportScorer = PassportScorer.load(event.address.toHexString());
+  let passportScorer = SybilProtection.load(event.address.toHexString());
   if (passportScorer == null) {
-    passportScorer = new PassportScorer(event.address.toHexString());
+    passportScorer = new SybilProtection(event.address.toHexString());
+    passportScorer.type = PassportType;
     passportScorer.save();
     log.error(
       "PassportScorer: handleStrategyAdded, PassportScorer not found: {}",
