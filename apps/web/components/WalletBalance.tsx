@@ -72,7 +72,6 @@ export const WalletBalance: FC<Props> = ({
                 disableTooltip={true}
                 compact={true}
                 tokenSymbol={data?.symbol}
-                symbolClassName="text-primary-content"
               />
               <InformationCircleIcon
                 className="ml-2 stroke-2"
@@ -102,7 +101,6 @@ export const WalletBalance: FC<Props> = ({
                 }`}
                 disableTooltip={true}
                 tokenSymbol={data?.symbol}
-                symbolClassName="text-primary-content"
               />
               <InformationCircleIcon
                 className={`ml-2 stroke-2 ${

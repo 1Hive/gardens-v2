@@ -499,8 +499,7 @@ export default function Page({
                                 getTotalRegistrationCost(),
                                 tokenGarden?.decimals,
                               ]}
-                              valueClassName="text-xl font-bold text-primary-content"
-                              symbolClassName="text-primary-content"
+                              valueClassName="text-xl font-bold"
                               disableTooltip={true}
                               compact={true}
                               copiable={true}

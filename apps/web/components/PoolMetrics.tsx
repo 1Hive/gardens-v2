@@ -517,7 +517,6 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
             <DisplayNumber
               number={roundToSignificant(requestedStreamPerMonth, 2)}
               tokenSymbol={poolToken.symbol}
-              symbolClassName="dark:text-primary-content"
             />
           </Skeleton>
           <p>
@@ -769,8 +768,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                     number={[poolToken.balance, poolToken.decimals]}
                     tokenSymbol={poolToken.symbol}
                     compact={true}
-                    valueClassName="text-2xl mr-1 font-bold text-primary-content"
-                    symbolClassName="dark:text-primary-content"
+                    valueClassName="text-2xl mr-1 font-bold"
                   />
                 </div>
               </div>

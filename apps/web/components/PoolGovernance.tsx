@@ -81,8 +81,6 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
               <div className="flex items-center gap-1">
                 <DisplayNumber
                   tokenSymbol={strategy.registryCommunity.garden.symbol}
-                  valueClassName="text-primary-content"
-                  symbolClassName="text-primary-content"
                   compact={true}
                   number={
                     [BigInt(memberTokensInCommunity), tokenDecimals] as Dnum
