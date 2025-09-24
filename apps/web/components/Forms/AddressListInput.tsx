@@ -258,16 +258,16 @@ export function AddressListInput({
       {subLabel && <p className="mb-1 text-xs">{subLabel}</p>}
 
       <div
-        className={`rounded-lg flex mb-4 p-0 text-neutral-content dark:text-neutral-soft-content ${
+        className={`mb-4 flex gap-1 rounded-xl bg-neutral-soft p-1 text-neutral-content dark:bg-[#1f1f1f] dark:text-neutral-soft-content ${
           !label && "mt-4"
         }`}
       >
         <button
           type="button"
-          className={`w-full py-2 rounded-lg text-center px-4 text-semibold ${
+          className={`flex-1 rounded-lg px-3 py-2 text-center text-sm font-semibold transition-colors ${
             inputMode === "single" ?
-              "border border-border-neutral bg-neutral-soft text-neutral-content dark:text-neutral -m-[1px]"
-            : ""
+              "bg-neutral text-neutral-content shadow-sm dark:bg-[#2c2c2c] dark:text-white"
+            : "text-neutral-soft-content hover:bg-neutral/60 dark:text-neutral-soft-2"
           }`}
           onClick={() => setInputMode("single")}
         >
@@ -275,10 +275,10 @@ export function AddressListInput({
         </button>
         <button
           type="button"
-          className={`w-full py-2 rounded-lg text-center px-4 text-semibold ${
+          className={`flex-1 rounded-lg px-3 py-2 text-center text-sm font-semibold transition-colors ${
             inputMode === "bulk" ?
-              "border border-border-neutral bg-neutral-soft text-neutral-content dark:text-neutral -m-[1px]"
-            : ""
+              "bg-neutral text-neutral-content shadow-sm dark:bg-[#2c2c2c] dark:text-white"
+            : "text-neutral-soft-content hover:bg-neutral/60 dark:text-neutral-soft-2"
           }`}
           onClick={() => setInputMode("bulk")}
         >
@@ -299,7 +299,7 @@ export function AddressListInput({
             required={required && addresses.length === 0}
             onChange={(e) => setNewAddress(e.target.value)}
             value={newAddress}
-            className="w-[29rem"
+            className="!w-[29rem]"
           />
           <Button
             type="button"
@@ -311,7 +311,7 @@ export function AddressListInput({
             <PlusIcon className="w-5 h-5" />
           </Button>
         </div>
-      : <div className="mb-4">
+      : <div className="mb-4 flex flex-col justify-end">
           <textarea
             value={bulkAddresses}
             required={required && addresses.length === 0}
@@ -325,7 +325,7 @@ export function AddressListInput({
           />
           <Button
             type="button"
-            btnStyle="outline"
+            btnStyle="filled"
             className=""
             onClick={() => addAddresses(bulkAddresses)}
             disabled={!bulkAddresses.trim()}
@@ -352,7 +352,7 @@ export function AddressListInput({
           : `${addresses.length} address${addresses.length !== 1 ? "es" : ""}`}
           )
         </label>
-        <div className="flex gap-1 items-center">
+        <div className="flex gap-2 items-center">
           <Button
             type="button"
             btnStyle="outline"
@@ -372,7 +372,6 @@ export function AddressListInput({
             type="button"
             btnStyle="outline"
             color="danger"
-            className="!p-2"
             onClick={clearAllAddresses}
             forceShowTooltip
             tooltip="Clear All"
@@ -382,7 +381,6 @@ export function AddressListInput({
           <Button
             type="button"
             btnStyle="outline"
-            className="!p-2"
             onClick={exportAddresses}
             forceShowTooltip
             tooltip="Export"
