@@ -10,6 +10,7 @@ import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
 import { DataTable } from "@/components/DataTable";
 import { FormInput } from "@/components/Forms";
 import { FormAddressInput } from "@/components/Forms/FormAddressInput";
+import { AddressListInput } from "@/components/Forms/AddressListInput";
 import { FormCheckBox } from "@/components/Forms/FormCheckBox";
 import { FormRadioButton } from "@/components/Forms/FormRadioButton";
 import { FormSelect } from "@/components/Forms/FormSelect";
@@ -20,6 +21,7 @@ import { LoadingToast } from "@/components/LoadingToast";
 import { Skeleton } from "@/components/Skeleton";
 import { TransactionStatusNotification } from "@/components/TransactionStatusNotification";
 import { WalletBalance } from "@/components/WalletBalance";
+import { Address } from "viem";
 
 const toastButtons = [
   {
@@ -80,6 +82,17 @@ const buttonColors: Array<{ color: Color; label: string; disabled?: boolean }> =
     { color: "disabled", label: "Disabled", disabled: true },
   ];
 
+const demoAddressList: Address[] = [
+  "0x0000000000000000000000000000000000000001",
+  "0x0000000000000000000000000000000000000002",
+  "0x0000000000000000000000000000000000000003",
+] as Address[];
+
+const demoAddressListWithError: Address[] = [
+  "0x0000000000000000000000000000000000000004",
+  "0x0000000000000000000000000000000000000005",
+] as Address[];
+
 export default function DesignSystemPage() {
   const [radioValue, setRadioValue] = useState("option-a");
   const [textValue, setTextValue] = useState("100");
@@ -88,6 +101,8 @@ export default function DesignSystemPage() {
   const [selectErrorValue, setSelectErrorValue] = useState("");
   const [addressValue, setAddressValue] = useState("");
   const [addressErrorValue, setAddressErrorValue] = useState("");
+  const addressListRegister = useMemo(() => (() => undefined) as any, []);
+  const addressListSetValue = useMemo(() => (() => undefined) as any, []);
   const [isCheckboxChecked, setIsCheckboxChecked] = useState(false);
   const [isCheckboxErrorChecked, setIsCheckboxErrorChecked] = useState(false);
   const textInputErrors = useMemo(
@@ -360,6 +375,45 @@ export default function DesignSystemPage() {
                 value={addressErrorValue}
                 onChange={(event) => setAddressErrorValue(event.target.value)}
                 errors={addressErrors}
+              />
+              <FormAddressInput
+                label="Disabled"
+                registerKey="demo-address-disabled"
+                placeholder="0x..."
+                value="0x0000000000000000000000000000000000000000"
+                onChange={() => {}}
+                disabled
+              />
+            </div>
+          </DemoCard>
+
+          <DemoCard title="AddressListInput">
+            <div className="space-y-6">
+              <AddressListInput
+                label="Allowlist"
+                registerKey="demo-address-list"
+                addresses={demoAddressList}
+                register={addressListRegister}
+                setValue={addressListSetValue}
+                errors={{}}
+                pointSystemType={0}
+                tooltip="Add individual addresses or paste a list"
+                required
+              />
+              <AddressListInput
+                label="Allowlist (Error)"
+                registerKey="demo-address-list-error"
+                addresses={demoAddressListWithError}
+                register={addressListRegister}
+                setValue={addressListSetValue}
+                errors={{
+                  "demo-address-list-error": {
+                    type: "manual",
+                    message: "Invalid list provided",
+                  },
+                }}
+                pointSystemType={1}
+                tooltip="Example with validation messaging"
               />
             </div>
           </DemoCard>

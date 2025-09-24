@@ -118,6 +118,8 @@ module.exports = {
         "primary-dark-border-hover": "#74c898",
         "primary-dark-text": "#63b693",
         "primary-dark-text-hover": "#c9f1db",
+        "disabled-dark-button": "#474747",
+        "disabled-dark-text": "#8a8888",
         "secondary-dark-base": "#d97706",
         "secondary-dark-hover": "#f59e0b",
         "secondary-dark-border": "#d97706",
