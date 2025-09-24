@@ -1,14 +1,14 @@
 import {
   SybilProtection,
   GoodDollarUser,
-  GoodDollarStrategy
+  GoodDollarStrategy,
 } from "../../generated/schema";
 import { log } from "@graphprotocol/graph-ts";
 import {
   Initialized,
   UserValidated,
   UserInvalidated,
-  GoodDollarStrategyAdded
+  GoodDollarStrategyAdded,
 } from "../../generated/GoodDollarSybil/GoodDollarSybil";
 
 const GoodDollarType = "GoodDollar";
@@ -28,7 +28,7 @@ export function handleUserValidated(event: UserValidated): void {
     goodDollarSybil.save();
     log.error(
       "GoodDollar protection: handleValidated, SybilProtection not found: {}",
-      [event.address.toHexString()]
+      [event.address.toHexString()],
     );
   }
 
@@ -53,7 +53,7 @@ export function handleUserInvalidated(event: UserInvalidated): void {
     goodDollarSybil.save();
     log.error(
       "GoodDollar protection: handleUserInvalidated, SybilProtection not found: {}",
-      [event.address.toHexString()]
+      [event.address.toHexString()],
     );
   }
 
@@ -64,7 +64,7 @@ export function handleUserInvalidated(event: UserInvalidated): void {
     goodDollarUser.sybilProtection = goodDollarSybil.id;
     goodDollarUser.lastUpdated = event.block.timestamp;
     log.debug("GoodDollar: GoodDollarUser not found: {}", [
-      event.params.user.toHexString()
+      event.params.user.toHexString(),
     ]);
   }
   goodDollarUser.verified = false;
@@ -79,7 +79,7 @@ export function handleStrategyAdded(event: GoodDollarStrategyAdded): void {
     goodDollarUser.save();
     log.error(
       "GoodDollar: handleStrategyAdded, SybilProtection not found: {}",
-      [event.address.toHexString()]
+      [event.address.toHexString()],
     );
   }
 

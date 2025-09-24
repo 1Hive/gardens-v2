@@ -64,12 +64,14 @@ export function FormSelect({
   ]
     .filter(Boolean)
     .join(" ");
-  const readOnlyClasses = readOnly ?
-    "!border-gray-300 focus:none !outline-gray-300 !pointer-events-none bg-transparent !cursor-not-allowed"
-  : "";
-  const errorFocusClasses = hasError ?
-    "focus-visible:!outline-danger-content focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-0"
-  : "";
+  const readOnlyClasses =
+    readOnly ?
+      "!border-gray-300 focus:none !outline-gray-300 !pointer-events-none bg-transparent !cursor-not-allowed"
+    : "";
+  const errorFocusClasses =
+    hasError ?
+      "focus-visible:!outline-danger-content focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-0"
+    : "";
 
   return (
     <div className="flex flex-col">

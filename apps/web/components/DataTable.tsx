@@ -56,7 +56,7 @@ export const DataTable: React.FC<DataTableProps> = ({
               <tbody>
                 {data &&
                   data.map((item) => (
-                    <tr key={item.id} >
+                    <tr key={item.id}>
                       {columns.map((col, i) => (
                         <td
                           // eslint-disable-next-line react/no-array-index-key

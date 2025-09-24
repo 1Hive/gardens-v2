@@ -69,7 +69,9 @@ export function FormCheckBox({
   const labelClasses = [
     "text-sm",
     "font-medium",
-    disabled || readOnly ? "cursor-not-allowed text-neutral-soft-content" : "cursor-pointer",
+    disabled || readOnly ?
+      "cursor-not-allowed text-neutral-soft-content"
+    : "cursor-pointer",
   ].join(" ");
 
   return (

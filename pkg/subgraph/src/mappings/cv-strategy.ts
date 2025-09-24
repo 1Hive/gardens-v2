@@ -36,7 +36,7 @@ import {
   InitializedCV3DataStruct,
   SuperfluidTokenUpdated,
   SuperfluidGDAConnected,
-  SuperfluidGDADisconnected
+  SuperfluidGDADisconnected,
 } from "../../generated/templates/CVStrategyV0_0/CVStrategyV0_0";
 
 import { Allo as AlloContract } from "../../generated/templates/CVStrategyV0_0/Allo";

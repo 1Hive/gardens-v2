@@ -93,7 +93,7 @@ export function Badge({
         signaling: <HandThumbUpIcon />,
         funding: <CurrencyDollarIcon />,
       };
-      return type != null ? iconMap[PoolTypes[type]] ?? null : null;
+      return type != null ? (iconMap[PoolTypes[type]] ?? null) : null;
     })();
 
   return (

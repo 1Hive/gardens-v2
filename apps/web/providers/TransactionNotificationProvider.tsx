@@ -288,9 +288,7 @@ const renderMultilineMessage = (message: string) => {
   );
 };
 
-const parseErrorMessage = (
-  entry: TransactionToastPayload,
-): React.ReactNode => {
+const parseErrorMessage = (entry: TransactionToastPayload): React.ReactNode => {
   const error = entry.transactionError;
   if (error?.cause instanceof UserRejectedRequestError) {
     return "User rejected the request";

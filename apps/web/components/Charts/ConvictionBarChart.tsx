@@ -44,10 +44,12 @@ export const ConvictionBarChart = ({
   const isDarkTheme = resolvedTheme === "darkTheme";
   const chartColors = useMemo(
     () => ({
-      background: isDarkTheme ? "rgba(48, 48, 48, 0.55)" : "rgba(180, 180, 180, 0.2)",
+      background:
+        isDarkTheme ? "rgba(48, 48, 48, 0.55)" : "rgba(180, 180, 180, 0.2)",
       support: isDarkTheme ? "#4FA176" : "#A8E066",
       conviction: isDarkTheme ? "#2F7A58" : "#4F8E13",
-      threshold: isDarkTheme ? "rgba(79, 161, 118, 0.35)" : "rgba(150, 211, 105, 0.45)",
+      threshold:
+        isDarkTheme ? "rgba(79, 161, 118, 0.35)" : "rgba(150, 211, 105, 0.45)",
       markLine: isDarkTheme ? "#E8E8E8" : "#191919",
       label: isDarkTheme ? "#F5F5F5" : "#191919",
       tooltipBorder: isDarkTheme ? "#4FA176" : "#65AD18",
