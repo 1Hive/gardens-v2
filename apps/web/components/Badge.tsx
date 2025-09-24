@@ -73,12 +73,10 @@ export function Badge({
     icon ??
     (() => {
       const iconMap: { [key: string]: React.ReactNode } = {
-        signaling: <HandThumbUpIcon className="h-5 w-5 text-primary-content" />,
-        funding: (
-          <CurrencyDollarIcon className="h-5 w-5 dark:text-tertiary-content" />
-        ),
+        signaling: <HandThumbUpIcon />,
+        funding: <CurrencyDollarIcon />,
       };
-      return type != null ? (iconMap[PoolTypes[type]] ?? null) : null;
+      return type != null ? iconMap[PoolTypes[type]] ?? null : null;
     })();
 
   return (
@@ -87,7 +85,7 @@ export function Badge({
       data-tip={tooltip}
     >
       {Boolean(iconIncluded) && (
-        <span className={`h-5 w-5 ${styles}`}>{iconIncluded}</span>
+        <span className={"h-5 w-5 text-inherit"}>{iconIncluded}</span>
       )}
       <p className="first-letter:uppercase text-sm font-semibold text-inherit">
         {content}

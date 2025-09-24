@@ -14,7 +14,7 @@ module.exports = {
           "primary-content": "#65AD18",
           "secondary-soft": "#FFF4E6",
           "secondary-content": "#FF9500",
-          "neutral-button": "#ACACAC",
+          "neutral-button": "#acacac",
           "neutral-content": "#252525",
           "border-neutral": "#d5d5d5",
           neutral: "#FFFFFF",
@@ -86,7 +86,7 @@ module.exports = {
       colors: {
         //added color for the our daisy - lightTheme
         "neutral-soft-content": "#8c8c8c",
-        "neutral-button": "#8f8f8f",
+        "neutral-button": "#acacac",
         "neutral-inverted-content": "#ffffff",
         "neutral-inverted-content-dark": "#252525",
         "neutral-soft": "#eeeeee",

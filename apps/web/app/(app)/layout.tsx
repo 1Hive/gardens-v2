@@ -49,7 +49,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </aside> */}
 
       {/* Top Navigation Bar - Fixed with lower z-index */}
-      <nav className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 lg:px-6 py-2 bg-neutral min-h-[71px]">
+      <nav className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 lg:px-6 py-2 bg-neutral min-h-[71px] border-b border-gray-200">
         <div className="flex items-center gap-2">
           <Link href="/gardens" className="flex items-center gap-3 text-sm">
             <Image
