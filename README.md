@@ -1,8 +1,16 @@
 # Gardens v2
 
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![CodeQL](https://github.com/1Hive/gardens-v2/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/1Hive/gardens-v2/actions/workflows/github-code-scanning/codeql)
+[![CI](https://github.com/1Hive/gardens-v2/actions/workflows/ci.yaml/badge.svg)](https://github.com/1Hive/gardens-v2/actions/workflows/ci.yaml)
+[![Copilot](https://github.com/1Hive/gardens-v2/actions/workflows/copilot-swe-agent/copilot/badge.svg)](https://github.com/1Hive/gardens-v2/actions/workflows/copilot-swe-agent/copilot)
+
+[![Discord](https://img.shields.io/discord/749888500467054356?label=Discord&logo=discord&logoColor=white&color=7389D8&style=flat)](https://discord.gg/tJWPg69ZWG)
+[![Twitter Follow](https://img.shields.io/twitter/follow/gardens_fund?style=social)](https://twitter.com/gardens_fund)
+[![Farcaster](https://img.shields.io/badge/Farcaster-Protocol-purple?logo=farcaster&logoColor=white&labelColor=8A63D2)](https://farcaster.xyz/gardens)
+
 Gardens v2 is a modular governance framework that enables communities to create and manage multiple governance pools with customizable parameters and voting mechanisms. Our smart contracts are built to optimize for secure, flexible, intuitive, multi-network governance solutions.
 
-🌐 **[Launch Gardens v2 App](https://app.gardens.fund/)**
+🌱 **[Launch Gardens v2 App](https://app.gardens.fund/)**
 
 ## Features
 
@@ -21,8 +29,8 @@ Choose from multiple voting weight mechanisms to best suit your community's need
 
 - **Token-weighted**: Traditional 1 token = 1 vote
 - **Fixed**: Equal voting power for all members
-- **Quadratic**: Voting weight = square root of .tokens staked
 - **Capped**: 1 token = 1 vote up to a maximum threshold
+- **Quadratic**: Voting weight = square root of tokens staked
 
 ### Multi-Network Support
 
@@ -100,7 +108,4 @@ We welcome documentation improvements! For documentation issues or suggestions, 
 - 📚 [Documentation](https://docs.gardens.fund)
 - 💬 [Discord Community](https://discord.gg/tJWPg69ZWG)
 - 🐦 [Twitter](https://twitter.com/gardens_fund)
-
-```
-
-```
+- 🌌 [Farcaster](https://farcaster.xyz/gardens)
