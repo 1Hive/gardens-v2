@@ -82,26 +82,6 @@ export function CommunityFilters({
 
   return (
     <div className="flex flex-col sm:flex-row gap-2 mb-4">
-      <div className="flex items-center gap-2 mb-1">
-        <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="flex items-center text-tertiary-content gap-1"
-          aria-label={isExpanded ? "Collapse filters" : "Expand filters"}
-        >
-          <FunnelIcon
-            className="w-6 h-6 text-tertiary-content"
-            strokeWidth={2}
-          />
-          <motion.div
-            animate={{ rotate: isExpanded ? 0 : 180 }}
-            transition={{ duration: 0.3 }}
-            className="sm:hidden"
-          >
-            <ChevronUpIcon className="w-5 h-5" strokeWidth={3} />
-          </motion.div>
-        </button>
-      </div>
-
       <AnimatePresence>
         {isExpanded && (
           <motion.div
@@ -111,7 +91,7 @@ export function CommunityFilters({
             transition={{ duration: 0.3 }}
             className="flex-1"
           >
-            <div className="flex flex-col sm:flex-row gap-2 md:gap-3">
+            <div className="flex flex-col sm:flex-row gap-2 md:gap-7">
               <div className="flex-1 w-full">
                 <FormInput
                   // label="Search"
