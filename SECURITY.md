@@ -4,17 +4,7 @@
 
 Gardens v2 is a modular governance framework that enables communities to create and manage multiple governance pools with customizable parameters and voting mechanisms. We take security seriously and are committed to protecting our users and their communities.
 
-## Current Security Status
-
-⚠️ **Important Disclaimer**: Our smart contracts have not undergone a third-party security audit. Use at your own risk.
-
-Gardens v2 is currently in **Beta** status. While we've implemented comprehensive testing and follow security best practices, users should be aware of the following:
-
-- Smart contracts are not yet audited by external security firms
-- The platform is under active development with regular updates
-- New features and improvements are continuously being added
-
-## Supported Versions
+## Supported Networks
 
 Gardens v2 is currently deployed on the following networks:
 
@@ -25,6 +15,7 @@ Gardens v2 is currently deployed on the following networks:
 | Arbitrum     | ✅ Active | Full support |
 | Optimism     | ✅ Active | Full support |
 | Base         | ✅ Active | Full support |
+| Celo         | ✅ Active | Full support |
 
 We provide security support for all currently deployed networks.
 
@@ -71,7 +62,8 @@ When using Gardens v2, we recommend following these security practices:
 ### For Community Creators
 
 - Start with small amounts to test functionality
-- Carefully review all governance parameters before deployment
+- Carefully review all governance parameters before going live
+- Educate community members on governance mechanisms
 - Ensure council members are trusted community participants
 - Regularly monitor community activity and proposals
 
@@ -112,9 +104,8 @@ We are currently evaluating the implementation of a bug bounty program. Updates 
 
 Security updates and announcements will be communicated through:
 
-1. **GitHub Releases**: Tagged releases with security notes
+1. **Twitter**: Follow us at [@gardens_fund](https://twitter.com/gardens_fund) for real-time updates
 2. **Discord Community**: Real-time updates and discussions
-3. **Documentation**: Updated security guidelines and best practices
 
 ## Contributing to Security
 

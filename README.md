@@ -21,7 +21,7 @@ Choose from multiple voting weight mechanisms to best suit your community's need
 
 - **Token-weighted**: Traditional 1 token = 1 vote
 - **Fixed**: Equal voting power for all members
-- **Quadratic**: Voting weight = square root of tokens staked
+- **Quadratic**: Voting weight = square root of .tokens staked
 - **Capped**: 1 token = 1 vote up to a maximum threshold
 
 ### Multi-Network Support
@@ -33,6 +33,7 @@ Currently deployed on:
 - Arbitrum
 - Optimism
 - Base
+- Celo
 
 _More networks coming soon!_
 
@@ -54,56 +55,19 @@ Gardens v2 relies on the following apps and frameworks to be deployed:
 
 1. Visit [https://app.gardens.fund/](https://app.gardens.fund/)
 2. Connect your wallet
-3. Choose your network
-4. Create or join a community
-5. Activate your governance in governance pools to vote
-6. Increase your stake in the community to grow your voting power
-7. Create or dispute propoosals in pools
-8. Create governance pools in your community
-
-### Local Frontend Development
-
-Please message us in Discord for help with your own local deployment of Gardens.
-
-1. Requirements
-
-- [Node.js](https://nodejs.org/en/download/) (v18)
-- [pnpm](https://pnpm.io/installation) (v8.14)
-
-2. Clone the repository
-
-```bash
-git clone https://github.com/1Hive/gardens-v2.git
-```
-
-3. Install dependencies
-
-```bash
-pnpm install
-```
-
-4. Open the workspace (gardens-v2.code-workspace) in VSCode
-
-5. Open a terminal in the `apps/web` directory (Frontend package)
-
-6. Set up environment variables
-   -> Copy `.env.example` to `.env` and fill in the required environment variables (<KEY_NAME> placeholders)
-
-7. Start the development server
-
-```bash
-pnpm dev
-```
-
-8. Open http://localhost:3000 with your browser
-
-### Contracts Development
-
-🔜 Comming soon!
+3. Create or join a community on supported networks
+4. Activate your governance in governance pools to vote
+5. Increase your stake in the community to grow your voting power
+6. Create or dispute proposals in pools
+7. Create governance pools in your community
 
 ## Contributing
 
-We welcome contributions! Please see our [Contributing Guide](./CONTRIBUTING.md) for details on how to get started, and review our [Security Policy](./SECURITY.md) for security-related contributions.
+We welcome contributions! Start with the [Contributing Guide](./CONTRIBUTING.md) to learn about project structure, issue triage, development workflows, and documentation guidelines.
+
+## Security
+
+Please read our [Security Policy](./SECURITY.md) for responsible disclosure instructions, supported networks, and user best practices.
 
 ## 📚 Documentation
 
