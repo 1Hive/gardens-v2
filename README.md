@@ -10,7 +10,7 @@
 
 Gardens v2 is a modular governance framework that enables communities to create and manage multiple governance pools with customizable parameters and voting mechanisms. Our smart contracts are built to optimize for secure, flexible, intuitive, multi-network governance solutions.
 
-🌐 **[Launch Gardens v2 App](https://app.gardens.fund/)**
+🌱 **[Launch Gardens v2 App](https://app.gardens.fund/)**
 
 ## Features
 
