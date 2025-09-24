@@ -128,6 +128,7 @@ export function FormInput({
             readOnly={readOnly || disabled}
             onChange={registered?.onChange ?? onChange}
             value={value}
+            className="input input-info dark:bg-primary-soft-dark"
             {...otherProps}
           />
         }

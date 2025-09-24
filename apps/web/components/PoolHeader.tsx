@@ -36,6 +36,7 @@ import { Modal } from "./Modal";
 import { Skeleton } from "./Skeleton";
 import { Statistic } from "./Statistic";
 import { SuperfluidStream } from "@/assets";
+import { TransactionStatusNotification } from "@/components/TransactionStatusNotification";
 import { chainConfigMap } from "@/configs/chains";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { VOTING_POINT_SYSTEM_DESCRIPTION } from "@/globals";
@@ -47,7 +48,6 @@ import { MetadataV1 } from "@/hooks/useIpfsFetch";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 
 import { SuperToken } from "@/hooks/useSuperfluidToken";
-import { TransactionStatusNotification } from "@/components/TransactionStatusNotification";
 import { superTokenFactoryAbi } from "@/src/customAbis";
 import { cvStrategyABI, registryCommunityABI } from "@/src/generated";
 import {
@@ -592,17 +592,6 @@ export default function PoolHeader({
             </div>
             {(!!isCouncilMember || isCouncilSafe) && (
               <div className="flex gap-2 flex-wrap">
-                <Button
-                  btnStyle="outline"
-                  icon={<Cog6ToothIcon height={20} width={20} />}
-                  disabled={
-                    !isConnected || missmatchUrl || disableCouncilSafeButtons
-                  }
-                  tooltip={tooltipMessage}
-                  onClick={() => setIsOpenModal(true)}
-                >
-                  Edit
-                </Button>
                 {isArchived ?
                   <Button
                     icon={<CheckIcon height={20} width={20} />}
@@ -690,6 +679,17 @@ export default function PoolHeader({
                     </Button>
                   </>
                 }
+                <Button
+                  btnStyle="outline"
+                  icon={<Cog6ToothIcon height={20} width={20} />}
+                  disabled={
+                    !isConnected || missmatchUrl || disableCouncilSafeButtons
+                  }
+                  tooltip={tooltipMessage}
+                  onClick={() => setIsOpenModal(true)}
+                >
+                  Edit
+                </Button>
                 {!superToken &&
                   PoolTypes[proposalType] !== "signaling" &&
                   networkSfMetadata?.contractsV1.superTokenFactory && (
@@ -826,9 +826,7 @@ export default function PoolHeader({
                   }
                   tooltip={config.info}
                 >
-                  <p className="subtitle dark:text-neutral-soft-content">
-                    {config.value}
-                  </p>
+                  <p className="subtitle">{config.value}</p>
                 </Statistic>
               </div>
             ))}
@@ -840,17 +838,17 @@ export default function PoolHeader({
               <h4>Voting System:</h4>
               <div className="flex gap-2 items-center">
                 <Badge
+                  color="info"
                   label="conviction voting"
-                  className="text-secondary-content dark:bg-tertiary-dark"
-                  icon={<Battery50Icon className="text-tertiary-content" />}
+                  icon={<Battery50Icon />}
                 />
                 <Badge
+                  color="info"
                   label={PointSystems[pointSystem]}
                   tooltip={
                     VOTING_POINT_SYSTEM_DESCRIPTION[PointSystems[pointSystem]]
                   }
-                  className="text-secondary-content dark:bg-tertiary-dark"
-                  icon={<BoltIcon className="text-tertiary-content" />}
+                  icon={<BoltIcon />}
                 />
               </div>
             </div>

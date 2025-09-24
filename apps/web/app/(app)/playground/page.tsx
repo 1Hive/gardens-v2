@@ -126,7 +126,6 @@ export default function DesignSystemPage() {
     "# Welcome to the design system\n\nYou can **edit** this content to preview our Markdown editor.",
   );
   const [showContent, setShowContent] = useState(false);
-  const [askedAmount] = useState("50");
   const tableColumns = useMemo(
     () => [
       {
@@ -190,9 +189,17 @@ export default function DesignSystemPage() {
 
           <DemoCard title="Badges & Info Wrapper">
             <div className="flex flex-col gap-4">
-              <div className="flex flex-wrap gap-2">
+              <span className="w-20 text-sm font-semibold capitalize">
+                Pool type:
+              </span>
+              <div className="flex flex-wrap gap-3">
                 <Badge type={0} />
                 <Badge type={1} />
+              </div>
+              <span className="w-20 text-sm font-semibold capitalize">
+                Proposal status:
+              </span>
+              <div className="flex flex-wrap gap-3">
                 <Badge status={0} icon={<HandRaisedIcon />} />
                 <Badge status={1} icon={<HandRaisedIcon />} />
                 <Badge status={2} icon={<HandRaisedIcon />} />
@@ -200,6 +207,15 @@ export default function DesignSystemPage() {
                 <Badge status={4} icon={<HandRaisedIcon />} />
                 <Badge status={5} icon={<HandRaisedIcon />} />
                 <Badge status={6} icon={<HandRaisedIcon />} />
+              </div>
+              <span className="w-20 text-sm font-semibold capitalize">
+                Badge color:
+              </span>
+              <div className="flex flex-wrap gap-3">
+                <Badge color="info" label="Info" />
+                <Badge color="success" label="Success" />
+                <Badge color="warning" label="Warning" />
+                <Badge color="danger" label="Danger" />
               </div>
               <InfoWrapper tooltip="This is an info wrapper tooltip" size="md">
                 <span className="text-sm">Hover to see additional context</span>
@@ -212,7 +228,14 @@ export default function DesignSystemPage() {
               <WalletBalance
                 label="Requested"
                 tooltip="Requested amount compared to your wallet balance"
-                askedAmount={BigInt(askedAmount)}
+                askedAmount={BigInt("50000000000000000000000")} // 5 ETH in wei
+                setIsEnoughBalance={noop}
+                token="native"
+              />
+              <WalletBalance
+                label="Requested"
+                tooltip="Requested amount compared to your wallet balance"
+                askedAmount={0n}
                 setIsEnoughBalance={noop}
                 token="native"
               />

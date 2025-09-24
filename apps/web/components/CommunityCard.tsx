@@ -57,9 +57,11 @@ export function CommunityCard({
     >
       <div className="flex justify-between text-neutral-content text-sm">
         {isProtopian && (
-          <div className="absolute bottom-2 right-2 badge badge-soft badge-success bg-[#9ae7c3] text-[#0c7b0c]">
-            <CheckBadgeIcon className="h-4 w-4 mr-1" />
-            Protopian
+          <div
+            className="absolute bottom-3 right-3 tooltip tooltip-top-left"
+            data-tip="Protopian Community"
+          >
+            <CheckBadgeIcon className="h-6 w-6 text-primary-content" />
           </div>
         )}
         <Image

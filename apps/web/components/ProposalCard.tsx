@@ -413,7 +413,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
           stakedFilter != null &&
           stakedFilter?.value > 0 &&
           Number(poolWeightAllocatedInProposal) > 0 && (
-            <Badge status={2} className="self-center justify-self-start">
+            <Badge color="warning" className="self-center justify-self-start">
               <p className="text-xs font-semibold">
                 Your support: {poolWeightAllocatedInProposal}%
               </p>

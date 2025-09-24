@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   CurrencyDollarIcon,
   HandThumbUpIcon,
@@ -8,6 +8,7 @@ import { PoolTypes, ProposalStatus } from "@/types";
 type BadgeProps = {
   type?: number;
   status?: number;
+  color?: "info" | "success" | "warning" | "danger";
   label?: string;
   className?: string;
   icon?: React.ReactNode;
@@ -39,6 +40,7 @@ const BASE_STYLES =
 export function Badge({
   type,
   status,
+  color = "info",
   label,
   className,
   tooltip,
@@ -46,12 +48,27 @@ export function Badge({
   children,
 }: BadgeProps): JSX.Element {
   const ispoolTypeDefined = type !== undefined;
+  const effectiveStatus = useMemo(() => {
+    if (status !== undefined) return status;
+    switch (color) {
+      case "danger":
+        return 0;
+      case "success":
+        return 1;
+      case "info":
+        return 4;
+      case "warning":
+        return 2;
+      default:
+        return 1;
+    }
+  }, [color, status]);
 
   // Determine the appropriate styles based on whether it's a proposal status badge or a pool type badge
   const styles =
-    status != null ?
+    effectiveStatus != null ?
       `${
-        PROPOSAL_STATUS_STYLES[status] ??
+        PROPOSAL_STATUS_STYLES[effectiveStatus] ??
         "bg-secondary-soft text-secondary-hover-content dark:bg-secondary-dark-base/70 dark:text-secondary-dark-text"
       }`
     : ispoolTypeDefined ?
@@ -64,9 +81,9 @@ export function Badge({
   // Determine the label content
   const content =
     children ??
+    label ??
     (status != null ? ProposalStatus[status] : undefined) ??
-    (ispoolTypeDefined ? PoolTypes[type] : undefined) ??
-    label;
+    (ispoolTypeDefined ? PoolTypes[type] : undefined);
 
   //For type => conditionally set the icon based on type === poolTypes[type]
   const iconIncluded =

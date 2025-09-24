@@ -63,12 +63,12 @@ export const WalletBalance: FC<Props> = ({
           <div className="flex">
             <p className="font-medium">{label}:</p>
             <div
-              className="tooltip ml-2 flex cursor-pointer items-center text-primary-content"
+              className="tooltip ml-2 flex cursor-pointer items-center"
               data-tip={tooltip}
             >
               <DisplayNumber
                 number={askedFormated}
-                valueClassName="font-semibold text-primary-content"
+                valueClassName="font-semibold"
                 disableTooltip={true}
                 compact={true}
                 tokenSymbol={data?.symbol}
@@ -81,35 +81,24 @@ export const WalletBalance: FC<Props> = ({
             </div>
           </div>
           <div className="flex">
-            <p className="font-medium dark:text-neutral-soft-content">
-              Your balance:
-            </p>
+            <p className="font-medium">Your balance:</p>
             <div
               className={`tooltip ml-2 flex cursor-pointer items-center ${
                 isEnoughBalance ?
                   "text-primary-content dark:text-primary-content"
-                : "text-neutral dark:text-neutral-soft-content"
+                : "text-danger-content dark:text-danger-content"
               } `}
-              data-tip={`${isEnoughBalance ? `${roundToSignificant(+formatEther(data?.value ?? 0n), 2)} ${data.symbol}` : "Insufficient balance"}`}
+              data-tip={`${isEnoughBalance ? `${formatEther(data?.value ?? 0n)}` : "Insufficient balance"}`}
             >
               <DisplayNumber
                 number={roundToSignificant(+(data?.formatted || 0), 4)}
                 valueClassName={`font-semibold ${
                   isEnoughBalance ?
                     "text-primary-content dark:text-primary-content"
-                  : "text-neutral dark:text-neutral-soft-content"
+                  : "text-danger-content dark:text-danger-content"
                 }`}
                 disableTooltip={true}
                 tokenSymbol={data?.symbol}
-              />
-              <InformationCircleIcon
-                className={`ml-2 stroke-2 ${
-                  isEnoughBalance ?
-                    "text-primary-content dark:text-primary-content"
-                  : "text-neutral-soft-content"
-                }`}
-                width={18}
-                height={18}
               />
             </div>
           </div>

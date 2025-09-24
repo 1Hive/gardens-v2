@@ -126,7 +126,9 @@ export function Button({
         : ""
       }
     >
-      {isLoading && <span className={"loading loading-spinner loading-sm"} />}
+      {isLoading && (
+        <span className={"loading loading-spinner loading-sm text-inherit"} />
+      )}
       <div className={"flex gap-2 items-center"}>
         {icon != null && !isLoading && icon} {children}
       </div>
