@@ -496,7 +496,7 @@ export const DisputeModal: FC<Props> = ({
             onClick={() => setIsModalOpened(true)}
             className="w-full"
           >
-            {isDisputed ?? isProposalEnded ?
+            {(isDisputed ?? isProposalEnded) ?
               "Open dispute"
             : "Dispute Proposal"}
           </Button>

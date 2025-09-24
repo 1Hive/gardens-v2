@@ -78,7 +78,7 @@ export function Badge({
           <CurrencyDollarIcon className="h-5 w-5 dark:text-tertiary-content" />
         ),
       };
-      return type != null ? iconMap[PoolTypes[type]] ?? null : null;
+      return type != null ? (iconMap[PoolTypes[type]] ?? null) : null;
     })();
 
   return (
