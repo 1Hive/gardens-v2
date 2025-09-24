@@ -356,7 +356,7 @@ export function AddressListInput({
           <Button
             type="button"
             btnStyle="outline"
-            className={"font-normal text-[14px] leading-4 !p-2"}
+            className={"font-normal text-[14px] leading-4"}
             onClick={handleAllowEveryone}
             disabled={!allowNoProtection}
             icon={<UserGroupIcon className="w-4 h-4" />}
