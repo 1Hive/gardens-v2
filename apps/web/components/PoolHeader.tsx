@@ -241,7 +241,7 @@ export default function PoolHeader({
   };
 
   const sybilResistanceInfo: Record<SybilResistanceType, string> = {
-    allowList: `Only users in the allowlist can interact with this pool: \n -${(isArray(sybilResistanceValue) ? (sybilResistanceValue as Array<string>) : []).map((x) => shortenAddress(x)).join("\n- ")}`,
+    allowList: "Only users in the allowlist can interact with this pool",
     gitcoinPassport:
       typeof sybilResistanceValue === "number" ?
         `Only users with a Gitcoin Passport above the threshold can interact with this pool: \n Threshold: ${sybilResistanceValue.toFixed(2)}`
@@ -283,9 +283,35 @@ export default function PoolHeader({
     },
     {
       label: "Protection",
-      value: sybilResistanceLabel[sybilResistanceType],
       info: sybilResistanceInfo[sybilResistanceType],
+      value:
+        sybilResistanceType === "allowList" ?
+          <div className="dropdown dropdown-hover dropdown-center dropdowm-bottom sm:dropdown-right">
+            {/* Trigger for the dropdown */}
+            <p className="subtitle ml-1">Allowlist</p>
+            <div className="dropdown-content bg-primary rounded-box shadow z-10 p-2 max-h-[500px] overflow-y-auto w-64">
+              <ul className="menu w-full gap-1">
+                {(allowList ?? []).length > 0 ?
+                  (allowList ?? []).map((addr) => (
+                    <li key={addr} className="flex flex-col gap-2">
+                      <EthAddress
+                        address={addr as Address}
+                        shortenAddress={true}
+                        icon={"ens"}
+                        actions="copy"
+                      />
+                    </li>
+                  ))
+                : <li>
+                    <span>No addresses</span>
+                  </li>
+                }
+              </ul>
+            </div>
+          </div>
+        : sybilResistanceLabel[sybilResistanceType],
     },
+
     {
       label: "Token",
       info: "The token used in this pool to fund proposals.",
