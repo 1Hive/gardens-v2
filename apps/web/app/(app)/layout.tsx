@@ -127,6 +127,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           forceShowTooltip
           tooltip={"Discord\nSupport"}
           icon={<HeadphoneIcon />}
+          className="!p-2"
         />
       </a>
     </div>
