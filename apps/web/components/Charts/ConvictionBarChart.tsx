@@ -227,7 +227,7 @@ export const ConvictionBarChart = ({
     disabled: true,
   };
 
-  const borderRadius = defaultChartMaxValue ? [50, 50] : [50, 0, 0, 50];
+  const borderRadius = defaultChartMaxValue ? [50, 50] : [50, 4, 4, 50];
 
   const markLine: MarkLineComponentOption = {
     symbol: "none",
