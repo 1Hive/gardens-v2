@@ -83,8 +83,8 @@ Gardens is fully open source - always has been, always will be. We're committed 
 
 ### Documentation Resources
 
-- \*\*[Gardens documentation](https://docs.gardens.fund)
-- \*\*[How to grow using Gardens](https://1hive-gardens.notion.site/How-to-grow-using-Gardens-84be339e761d462085dcb27db12d1c4c)
+- [Gardens documentation](https://docs.gardens.fund)
+- [How to grow using Gardens](https://1hive-gardens.notion.site/How-to-grow-using-Gardens-84be339e761d462085dcb27db12d1c4c)
 
 ### Documentation Principles
 
