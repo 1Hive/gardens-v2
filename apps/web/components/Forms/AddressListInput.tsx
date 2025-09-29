@@ -288,7 +288,7 @@ export function AddressListInput({
       {inputMode === "single" ?
         <div
           className="flex mb-4 gap-2"
-          onKeyDown={(e) => {
+          onKeyUp={(e) => {
             if (e.key === "Enter") {
               addAddresses(newAddress);
             }
