@@ -459,7 +459,7 @@ export default function Page({
                           tooltipMessage ? tooltipMessage
                           : isCouncilMember ?
                             "Connect with Council Safe"
-                          : "Archive this pool will hide it from being listed in the home page but will remain accessible through a link."
+                          : "Archive this community will hide it from being listed in the home page but will remain accessible through a link."
 
                         }
                         forceShowTooltip={result.registryCommunity?.archived}
