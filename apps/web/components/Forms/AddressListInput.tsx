@@ -291,6 +291,8 @@ export function AddressListInput({
           onKeyUp={(e) => {
             if (e.key === "Enter") {
               addAddresses(newAddress);
+              e.preventDefault();
+              e.stopPropagation();
             }
           }}
         >
