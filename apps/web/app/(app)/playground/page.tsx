@@ -1,14 +1,21 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import { HandRaisedIcon } from "@heroicons/react/24/outline";
+import {
+  HandRaisedIcon,
+  PencilSquareIcon,
+  PlusIcon,
+  TrashIcon,
+} from "@heroicons/react/24/outline";
 import { noop } from "lodash-es";
 import { toast } from "react-toastify";
+import { Address } from "viem";
 import { Badge } from "@/components/Badge";
 import { Button, BtnStyle, Color } from "@/components/Button";
 import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
 import { DataTable } from "@/components/DataTable";
 import { FormInput } from "@/components/Forms";
+import { AddressListInput } from "@/components/Forms/AddressListInput";
 import { FormAddressInput } from "@/components/Forms/FormAddressInput";
 import { FormCheckBox } from "@/components/Forms/FormCheckBox";
 import { FormRadioButton } from "@/components/Forms/FormRadioButton";
@@ -80,6 +87,12 @@ const buttonColors: Array<{ color: Color; label: string; disabled?: boolean }> =
     { color: "disabled", label: "Disabled", disabled: true },
   ];
 
+const demoAddressList: Address[] = [
+  "0x0000000000000000000000000000000000000001",
+  "0x0000000000000000000000000000000000000002",
+  "0x0000000000000000000000000000000000000003",
+] as Address[];
+
 export default function DesignSystemPage() {
   const [radioValue, setRadioValue] = useState("option-a");
   const [textValue, setTextValue] = useState("100");
@@ -88,6 +101,8 @@ export default function DesignSystemPage() {
   const [selectErrorValue, setSelectErrorValue] = useState("");
   const [addressValue, setAddressValue] = useState("");
   const [addressErrorValue, setAddressErrorValue] = useState("");
+  const addressListRegister = useMemo(() => (() => undefined) as any, []);
+  const addressListSetValue = useMemo(() => (() => undefined) as any, []);
   const [isCheckboxChecked, setIsCheckboxChecked] = useState(false);
   const [isCheckboxErrorChecked, setIsCheckboxErrorChecked] = useState(false);
   const textInputErrors = useMemo(
@@ -167,6 +182,43 @@ export default function DesignSystemPage() {
                   </div>
                 </div>
               ))}
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="w-20 text-sm font-semibold capitalize">
+                  Icons
+                </span>
+                <div className="flex flex-wrap gap-3">
+                  <Button
+                    btnStyle="filled"
+                    className="!px-2"
+                    icon={<PlusIcon className="h-5 w-5" />}
+                  >
+                    <span className="sr-only">Add</span>
+                  </Button>
+                  <Button
+                    btnStyle="outline"
+                    className="!px-2"
+                    icon={<PencilSquareIcon className="h-5 w-5" />}
+                  >
+                    <span className="sr-only">Edit</span>
+                  </Button>
+                  <Button
+                    btnStyle="ghost"
+                    color="danger"
+                    className="!px-2"
+                    icon={<TrashIcon className="h-5 w-5" />}
+                  >
+                    <span className="sr-only">Delete</span>
+                  </Button>
+                  <Button
+                    btnStyle="ghost"
+                    color="disabled"
+                    className="!px-2"
+                    icon={<TrashIcon className="h-5 w-5" />}
+                  >
+                    <span className="sr-only">Disabled</span>
+                  </Button>
+                </div>
+              </div>
             </div>
           </DemoCard>
 
@@ -360,6 +412,30 @@ export default function DesignSystemPage() {
                 value={addressErrorValue}
                 onChange={(event) => setAddressErrorValue(event.target.value)}
                 errors={addressErrors}
+              />
+              <FormAddressInput
+                label="Disabled"
+                registerKey="demo-address-disabled"
+                placeholder="0x..."
+                value="0x0000000000000000000000000000000000000000"
+                onChange={() => {}}
+                disabled
+              />
+            </div>
+          </DemoCard>
+
+          <DemoCard title="AddressListInput">
+            <div className="space-y-6">
+              <AddressListInput
+                label="Allowlist"
+                registerKey="demo-address-list"
+                addresses={demoAddressList}
+                register={addressListRegister}
+                setValue={addressListSetValue}
+                errors={{}}
+                pointSystemType={0}
+                tooltip="Add individual addresses or paste a list"
+                required
               />
             </div>
           </DemoCard>

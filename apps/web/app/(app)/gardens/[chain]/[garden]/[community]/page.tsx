@@ -14,11 +14,15 @@ import { FetchTokenResult } from "@wagmi/core";
 import cn from "classnames";
 
 import { Dnum, multiply } from "dnum";
+import { AnimatePresence, motion } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
 import { Address } from "viem";
 import { useAccount, useToken } from "wagmi";
 import {
+  CVProposal,
+  CVStrategy,
+  CVStrategyConfig,
   getCommunityDocument,
   getCommunityQuery,
   isMemberDocument,
@@ -455,7 +459,7 @@ export default function Page({
                           tooltipMessage ? tooltipMessage
                           : isCouncilMember ?
                             "Connect with Council Safe"
-                          : "Archive this pool will hide it from being listed in the home page but will remain accessible through a link."
+                          : "Archive this community will hide it from being listed in the home page but will remain accessible through a link."
 
                         }
                         forceShowTooltip={result.registryCommunity?.archived}
@@ -541,68 +545,24 @@ export default function Page({
           </header>
 
           {/* Pools Section */}
-          <section className="flex flex-col gap-10 py-4">
-            <header className="flex  items-center justify-between ">
-              <h2>Pools</h2>
-              <Link
-                href={`/gardens/${chain?.id}/${tokenAddr}/${communityAddr}/create-pool`}
-              >
-                <Button
-                  btnStyle="filled"
-                  disabled={!isConnected || missmatchUrl}
-                  tooltip={tooltipMessage}
-                  icon={<PlusIcon height={24} width={24} />}
-                >
-                  Create New Pool
-                </Button>
-              </Link>
-            </header>
-            <div className="flex flex-col gap-4 ">
-              <h4 className="">Funding ({fundingPools.length})</h4>
-              {/* Funding Pools */}
-              <div className="pool-layout">
-                {fundingPools.map((pool) => (
-                  <Fragment key={pool.poolId}>
-                    <PoolCard token={pool.token} pool={pool} />
-                  </Fragment>
-                ))}
-              </div>
-            </div>
-            {/* Signaling Pools */}
-            <div className="flex flex-col gap-4">
-              <h4>Signaling ({signalingPools.length})</h4>
-              <div className="pool-layout">
-                {signalingPools.map((pool) => (
-                  <PoolCard key={pool.poolId} token={pool.token} pool={pool} />
-                ))}
-              </div>
-            </div>
-            {/* Pools in Review */}
-            <div className="flex flex-col gap-4">
-              <h4>In Review ({poolsInReview.length})</h4>
-              <div className="pool-layout">
-                {poolsInReview.map((pool) => (
-                  <PoolCard key={pool.poolId} token={pool.token} pool={pool} />
-                ))}
-              </div>
-            </div>
-
-            {(!!isCouncilMember || isCouncilSafe || showArchived) && (
-              <div className="flex flex-col gap-4">
-                <h4>Archived ({poolsArchived.length})</h4>
-                {/* Archived Pools */}
-                <div className="pool-layout">
-                  {poolsArchived.map((pool) => (
-                    <PoolCard
-                      key={pool.poolId}
-                      token={pool.token}
-                      pool={pool}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-          </section>
+          <PoolSection title="Funding" pools={fundingPools} defaultExpanded />
+          <PoolSection
+            title="Signaling"
+            pools={signalingPools}
+            defaultExpanded
+          />
+          <PoolSection
+            title="In Review"
+            pools={poolsInReview}
+            defaultExpanded={false}
+          />
+          {(!!isCouncilMember || isCouncilSafe || showArchived) && (
+            <PoolSection
+              title="Archived"
+              pools={poolsArchived}
+              defaultExpanded={false}
+            />
+          )}
 
           <section ref={covenantSectionRef} className="p-8">
             <h2 className="mb-4">Covenant</h2>
@@ -699,5 +659,65 @@ const CommunityDetailsTable = ({
         </div>
       }
     />
+  );
+};
+
+//pool section component and types
+type Pool = Pick<
+  CVStrategy,
+  "id" | "archived" | "isEnabled" | "poolId" | "metadata"
+> & {
+  proposals: Pick<CVProposal, "id">[];
+  config: Pick<CVStrategyConfig, "proposalType" | "pointSystem">;
+  token: any;
+};
+interface PoolSectionProps {
+  title: string;
+  pools: Pool[];
+  defaultExpanded?: boolean;
+}
+const PoolSection = ({
+  title,
+  pools,
+  defaultExpanded = true,
+}: PoolSectionProps) => {
+  const [expanded, setExpanded] = useState(defaultExpanded);
+
+  return (
+    <div className="flex flex-col gap-2">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="flex items-center gap-2"
+        aria-label={expanded ? "Collapse" : "Expand"}
+      >
+        <h4>
+          {title} ({pools.length})
+        </h4>
+        <motion.div
+          animate={{ rotate: expanded ? 0 : 180 }}
+          transition={{ duration: 0.3 }}
+        >
+          <ChevronUpIcon className="w-5 h-5" strokeWidth={3} />
+        </motion.div>
+      </button>
+
+      <AnimatePresence initial={false}>
+        {expanded && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
+            className="overflow-hidden"
+          >
+            <div className="pool-layout">
+              {pools.map((pool) => (
+                <PoolCard key={pool.poolId} pool={pool} token={pool.token} />
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 };

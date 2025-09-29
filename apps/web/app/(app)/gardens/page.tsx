@@ -89,17 +89,17 @@ const Footer = () => {
           <Image
             src={tree2}
             alt="tree"
-            className="absolute bottom-0 -left-10 h-52"
+            className="absolute bottom-0 -left-10 h-32 sm:h-52"
           />
           <Image
             src={tree3}
             alt="tree"
-            className="absolute bottom-0 -right-10 h-60"
+            className="absolute bottom-0 -right-10 h-40 sm:h-60"
           />
           <Image
             src={grassLarge}
             alt="grass"
-            className="absolute bottom-0 min-w-[1080px]"
+            className="absolute bottom-0 min-w-[600px] sm:min-w-[1080px]"
           />
         </div>
       </div>

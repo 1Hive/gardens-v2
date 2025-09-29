@@ -5,6 +5,8 @@ import {
   FlagIcon,
 } from "@heroicons/react/24/solid";
 import { InfoWrapper } from "../InfoWrapper";
+import { getChartColors } from "@/components/Charts/ConvictionBarChart";
+import { useTheme } from "@/providers/ThemeProvider";
 
 type ChartWrapperProps = {
   children?: ReactNode;
@@ -24,26 +26,30 @@ export const ChartWrapper = ({
   const growthClassname =
     growing ? "text-primary-content" : "text-danger-content";
   const iconClassname = `h-3 w-3 ${growthClassname}`;
-
+  const { isDarkTheme } = useTheme();
+  const chartColors = getChartColors(isDarkTheme);
   const legend = [
     {
       name: "Support",
-      // TODO: missing color in Design system: ask designer
-      className: "bg-[#A8E066] h-3 w-8 rounded-md",
+      className: "h-3 w-8 rounded-md",
+      style: { backgroundColor: chartColors.support },
       info: "Represents the total pool weight currently allocated to a proposal.",
     },
     {
       name: "Conviction",
-      className: "bg-primary-content  h-3 w-8 rounded-md",
+      className: "h-3 w-8 rounded-md",
+      style: { backgroundColor: chartColors.conviction },
       info: "Accumulated pool weight for a proposal, increasing over time, based on the conviction growth.",
     },
     {
       name: "Threshold",
-      className:
-        "w-5 bg-neutral-soft border-t-[1px] border-black border-dashed rotate-90 -mx-3",
+      style: {
+        borderColor: chartColors.markLine,
+      },
+      className: "w-5 border-t-[1px] border-dashed rotate-90 -mx-3",
       info: "The minimum level of conviction required for a proposal to pass.",
     },
-  ];
+  ] as const;
 
   return (
     <>
@@ -57,10 +63,17 @@ export const ChartWrapper = ({
                   <div className="flex items-center gap-1">
                     {item.name === "Threshold" ?
                       <div className="relative">
-                        <div className={`${item.className}`} />
-                        <FlagIcon className="absolute -left-[3.5px] -top-5 h-3 w-3 text-black" />
+                        <div
+                          className={`${item.className}`}
+                          style={item.style}
+                        />
+                        <FlagIcon
+                          className="absolute -left-[3.5px] -top-5 h-3 w-3"
+                          style={{ color: chartColors.markLine }}
+                        />
                       </div>
-                    : <div className={`${item.className}`} />}
+                    : <div className={`${item.className}`} style={item.style} />
+                    }
                     <p className="text-sm">{item.name}</p>
                   </div>
                 </InfoWrapper>

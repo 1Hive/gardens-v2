@@ -27,6 +27,22 @@ type ConvictionBarChartProps = {
   refreshConviction?: () => Promise<any>;
 };
 
+export function getChartColors(isDarkTheme?: boolean) {
+  return {
+    background:
+      isDarkTheme ? "rgba(48, 48, 48, 0.55)" : "rgba(180, 180, 180, 0.2)",
+    support: isDarkTheme ? "#88b358" : "#A8E066",
+    conviction: isDarkTheme ? "#457b08" : "#4F8E13",
+    threshold:
+      isDarkTheme ? "rgba(79, 161, 118, 0.35)" : "rgba(150, 211, 105, 0.45)",
+    markLine: isDarkTheme ? "#E8E8E8" : "#191919",
+    label: isDarkTheme ? "#F5F5F5" : "#191919",
+    tooltipBorder: isDarkTheme ? "#4FA176" : "#65AD18",
+    tooltipBackground: isDarkTheme ? "#1E1E1E" : "#FCFFF7",
+    tooltipText: isDarkTheme ? "#F3F4F6" : "#191919",
+  };
+}
+
 export const ConvictionBarChart = ({
   currentConvictionPct,
   thresholdPct,
@@ -42,20 +58,7 @@ export const ConvictionBarChart = ({
   const [convictionRefreshing, setConvictionRefreshing] = useState(true);
   const { resolvedTheme } = useTheme();
   const isDarkTheme = resolvedTheme === "darkTheme";
-  const chartColors = useMemo(
-    () => ({
-      background: isDarkTheme ? "rgba(48, 48, 48, 0.55)" : "rgba(180, 180, 180, 0.2)",
-      support: isDarkTheme ? "#4FA176" : "#A8E066",
-      conviction: isDarkTheme ? "#2F7A58" : "#4F8E13",
-      threshold: isDarkTheme ? "rgba(79, 161, 118, 0.35)" : "rgba(150, 211, 105, 0.45)",
-      markLine: isDarkTheme ? "#E8E8E8" : "#191919",
-      label: isDarkTheme ? "#F5F5F5" : "#191919",
-      tooltipBorder: isDarkTheme ? "#4FA176" : "#65AD18",
-      tooltipBackground: isDarkTheme ? "#1E1E1E" : "#FCFFF7",
-      tooltipText: isDarkTheme ? "#F3F4F6" : "#191919",
-    }),
-    [isDarkTheme],
-  );
+  const chartColors = getChartColors(isDarkTheme);
   const supportNeeded = (thresholdPct - proposalSupportPct).toFixed(2);
   const scenarioMappings: Record<string, ScenarioMapping> = {
     //1-SignalingType) Support > 0 && > Conviction
@@ -224,7 +227,7 @@ export const ConvictionBarChart = ({
     disabled: true,
   };
 
-  const borderRadius = defaultChartMaxValue ? [50, 50] : [50, 0, 0, 50];
+  const borderRadius = defaultChartMaxValue ? [50, 50] : [50, 4, 4, 50];
 
   const markLine: MarkLineComponentOption = {
     symbol: "none",
