@@ -544,6 +544,22 @@ export default function Page({
             )}
           </header>
 
+          <header className="flex items-center justify-between">
+            <h2>Pools</h2>
+            <Link
+              href={`/gardens/${chain?.id}/${tokenAddr}/${communityAddr}/create-pool`}
+            >
+              <Button
+                btnStyle="filled"
+                disabled={!isConnected || missmatchUrl}
+                tooltip={tooltipMessage}
+                icon={<PlusIcon height={24} width={24} />}
+              >
+                Create New Pool
+              </Button>
+            </Link>
+          </header>
+
           {/* Pools Section */}
           <PoolSection title="Funding" pools={fundingPools} defaultExpanded />
           <PoolSection
