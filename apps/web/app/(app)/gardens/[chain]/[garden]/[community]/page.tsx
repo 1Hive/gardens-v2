@@ -544,7 +544,7 @@ export default function Page({
             )}
           </header>
 
-          <header className="flex  items-center justify-between ">
+          <header className="flex items-center justify-between">
             <h2>Pools</h2>
             <Link
               href={`/gardens/${chain?.id}/${tokenAddr}/${communityAddr}/create-pool`}
