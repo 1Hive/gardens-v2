@@ -12,7 +12,7 @@ import {
 import { CommunityCard, CommunityCardSkeleton } from "./CommunityCard";
 import { CommunityFilters } from "./CommunityFilters";
 import { ONE_HIVE_COMMUNITY_ADDRESS } from "@/globals";
-import { useConfig } from "@/hooks/useCheat";
+import { useFlag } from "@/hooks/useFlag";
 
 export type LightCommunity = Pick<RegistryCommunity, "id" | "communityName"> & {
   garden: Pick<TokenGarden, "address" | "chainId" | "symbol" | "name">;
@@ -129,7 +129,7 @@ export const Communities: React.FC<CommunitiesProps> = ({
   const [searchFilter, setSearchFilter] = useState<string>("");
   const [tokenFilter, setTokenFilter] = useState<string>("");
   const [chainIdFilter, setchainIdFilter] = useState<string>("");
-  const showExcludedCommunities = useConfig("showExcludedCommunities");
+  const showExcludedCommunities = useFlag("showExcludedCommunities");
 
   const availableTokens = Array.from(
     new Set(communities.map((c) => c.garden.symbol)),

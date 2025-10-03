@@ -20,9 +20,9 @@ import { chainConfigMap, ChainIcon } from "@/configs/chains";
 import { isProd } from "@/configs/isProd";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
-import { useConfig } from "@/hooks/useCheat";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
+import { useFlag } from "@/hooks/useFlag";
 import { useSubgraphQueryMultiChain } from "@/hooks/useSubgraphQueryMultiChain";
 import { registryFactoryABI } from "@/src/generated";
 import { getEventFromReceipt } from "@/utils/contracts";
@@ -117,7 +117,7 @@ export const CommunityForm = () => {
     [registryFactories, getValues("chainId")],
   );
 
-  const isQueryAllChains = useConfig("queryAllChains");
+  const isQueryAllChains = useFlag("queryAllChains");
 
   const allChains = Object.entries(chainConfigMap)
     .filter(

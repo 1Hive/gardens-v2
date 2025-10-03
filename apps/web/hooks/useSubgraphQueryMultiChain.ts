@@ -7,7 +7,7 @@ import {
 } from "@urql/next";
 import { debounce, isEqual } from "lodash-es";
 import { toast } from "react-toastify";
-import { useConfig } from "./useCheat";
+import { useFlag } from "./useFlag";
 import { useIsMounted } from "./useIsMounted";
 import { HTTP_CODES } from "@/app/api/utils";
 import { LoadingToast } from "@/components";
@@ -57,8 +57,8 @@ export function useSubgraphQueryMultiChain<
   const errorsMap = useRef(new Map<ChainId, CombinedError>());
   const subscritionId = useRef<SubscriptionId>();
   const fetchingRef = useRef(false);
-  const skipPublished = useConfig("skipPublished");
-  const isQueryAllChains = useConfig("queryAllChains");
+  const skipPublished = useFlag("skipPublished");
+  const isQueryAllChains = useFlag("queryAllChains");
 
   const allChains = Object.entries(chainConfigMap)
     .filter(

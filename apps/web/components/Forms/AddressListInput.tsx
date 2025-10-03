@@ -21,7 +21,7 @@ import { mainnet } from "wagmi";
 import { FormAddressInput } from "./FormAddressInput";
 import { Button } from "../Button";
 import { InfoWrapper } from "../InfoWrapper";
-import { useConfig } from "@/hooks/useCheat";
+import { useFlag } from "@/hooks/useFlag";
 import { PointSystems } from "@/types";
 import { isENS } from "@/utils/web3";
 
@@ -63,7 +63,7 @@ export function AddressListInput({
   const [inputMode, setInputMode] = useState<"single" | "bulk">("single");
   const [errorMessage, setErrorMessage] = useState("");
   const [ensLoading, setEnsLoading] = useState(false);
-  const allowNoProtectionCheat = useConfig("allowNoProtection");
+  const allowNoProtectionCheat = useFlag("allowNoProtection");
 
   const allowNoProtection =
     PointSystems[pointSystemType] === "unlimited" || allowNoProtectionCheat;

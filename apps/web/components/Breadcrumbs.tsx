@@ -9,7 +9,7 @@ import { toast } from "react-toastify";
 import { AnyVariables, DocumentInput, OperationContext } from "urql";
 import { Address } from "viem";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
-import { useConfig } from "@/hooks/useCheat";
+import { useFlag } from "@/hooks/useFlag";
 import { initUrqlClient } from "@/providers/urql";
 import {
   parseStaticSegment,
@@ -27,7 +27,7 @@ export function Breadcrumbs() {
   const path = usePathname();
   const chain = useChainFromPath();
   const [breadcrumbs, setBreadcrumbs] = useState<Breadcrumb[]>([]);
-  const skipPublished = useConfig("skipPublished");
+  const skipPublished = useFlag("skipPublished");
 
   async function queryByChain<
     Data = any,
@@ -86,7 +86,6 @@ export function Breadcrumbs() {
 
     try {
       const result = await queryByChain(
-        segments[1],
         queryItem.document,
         queryItem.getVariables(segments[entityIndex]),
       );

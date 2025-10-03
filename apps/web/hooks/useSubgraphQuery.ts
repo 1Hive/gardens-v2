@@ -3,7 +3,7 @@ import { AnyVariables, DocumentInput, OperationContext } from "@urql/next";
 import { isEqual } from "lodash-es";
 import { toast } from "react-toastify";
 import { useChainIdFromPath } from "./useChainIdFromPath";
-import { useConfig } from "./useCheat";
+import { useFlag } from "./useFlag";
 import { useIsMounted } from "./useIsMounted";
 import { LoadingToast } from "@/components";
 import { getConfigByChain } from "@/configs/chains";
@@ -70,7 +70,7 @@ export function useSubgraphQuery<
   const latestResponse = useRef({ variables, response });
   const subscritionId = useRef<SubscriptionId>();
   const fetchingRef = useRef(false);
-  const skipPublished = useConfig("skipPublished");
+  const skipPublished = useFlag("skipPublished");
 
   useEffect(() => {
     latestResponse.current.response = response; // Update ref on every response change

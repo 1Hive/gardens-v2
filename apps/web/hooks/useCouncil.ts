@@ -1,7 +1,7 @@
 import { Address, useAccount, useContractRead } from "wagmi";
 import { Maybe, RegistryCommunity } from "#/subgraph/.graphclient";
 import { useChainFromPath } from "./useChainFromPath";
-import { useConfig } from "./useCheat";
+import { useFlag } from "./useFlag";
 import { safeABI } from "@/src/customAbis";
 
 type StrategyOrCommunity =
@@ -21,7 +21,7 @@ export const useCouncil = ({
   strategyOrCommunity,
   detectCouncilMember = true,
 }: Props) => {
-  const showAsCouncil = useConfig("showAsCouncilSafe");
+  const showAsCouncil = useFlag("showAsCouncilSafe");
   const { address } = useAccount();
   const chain = useChainFromPath();
   const councilSafeAddress =
