@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { useWatchLocalStorage } from "./useWatchLocalStorage";
+import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import { logOnce } from "@/utils/log";
 
 export const cheats = [
@@ -41,7 +42,7 @@ const getFlagFromEnv = (flag: CheatName) => {
 };
 
 export const useFlag = (flag: CheatName) => {
-  const queryParams = useSearchParams();
+  const queryParams = useCollectQueryParams();
 
   const [flagFromStorage] = useWatchLocalStorage({
     key: "flag." + flag,
@@ -49,29 +50,34 @@ export const useFlag = (flag: CheatName) => {
     serializer: (v) => (v ? "true" : "false"),
   });
 
+  const flagKey = "flag_" + flag;
+
   useEffect(() => {
-    (window as any).useFlags = () => {
-      console.info("Flags commands:");
-      cheats.forEach((c) => {
-        const enabled = localStorage.getItem("flag." + c) === "true";
-        console.info(
-          `localStorage.setItem("flag.${c}", ${!enabled})`,
-          enabled ? "enabled" : "disabled",
-        );
-      });
-    };
+    if (!(window as any).useFlags) {
+      (window as any).useFlags = () => {
+        console.info("🚩Flags commands:");
+        cheats.forEach((c) => {
+          const enabled = localStorage.getItem("flag_" + c) === "true";
+          console.info(
+            `localStorage.setItem("flag_${c}", ${!enabled})`,
+            enabled ? "enabled" : "disabled",
+          );
+        });
+      };
+    }
   }, []);
 
-  const flagFromEnv = getFlagFromEnv(flag);
-  const flagFromQuery = queryParams.get("flag_" + flag);
+  // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+  const flagFromEnv = getFlagFromEnv(flag) || undefined;
+  const flagFromQuery = queryParams?.[flagKey] || undefined;
   if (flagFromQuery != null) {
-    logOnce("debug", `🚩 [Flag:Query] ${flag} set to ${flagFromQuery}`);
+    logOnce("debug", `🚩 [Query] ${flag} set to ${flagFromQuery}`);
     return flagFromQuery === "true";
   } else if (flagFromStorage != null) {
-    logOnce("debug", `🚩 [Flag:storage] ${flag} set to ${flagFromStorage}`);
+    logOnce("debug", `🚩 [storage] ${flag} set to ${flagFromStorage}`);
     return flagFromStorage;
   } else if (flagFromEnv != null) {
-    logOnce("debug", `🚩 [Flag:Env] ${flag} set to ${flagFromEnv}`);
+    logOnce("debug", `🚩 [EnvVar] ${flag} set to ${flagFromEnv}`);
     return flagFromEnv === "true";
   }
 
