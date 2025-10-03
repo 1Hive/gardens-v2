@@ -1,7 +1,8 @@
 type CVStrategy @entity(immutable: false) {
   id: ID!
   poolId: BigInt!
-  metadata: String
+  metadata: PoolMetadata
+  metadataHash: String
   registryCommunity: RegistryCommunity!
   config: CVStrategyConfig!
   proposals: [CVProposal!]! @derivedFrom(field: "strategy")
@@ -228,6 +229,12 @@ type ProposalDisputeMetadata @entity(immutable: false) {
 }
 
 type ProposalMetadata @entity(immutable: false) {
+  id: ID!
+  title: String!
+  description: String!
+}
+
+type PoolMetadata @entity(immutable: false) {
   id: ID!
   title: String!
   description: String!

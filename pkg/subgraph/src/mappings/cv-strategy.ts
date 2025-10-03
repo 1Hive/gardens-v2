@@ -11,6 +11,7 @@ import {
 import {
   ProposalDisputeMetadata as ProposalDisputeMetadataTemplate,
   ProposalMetadata as ProposalMetadataTemplate,
+  PoolMetadata as PoolMetadataTemplate,
 } from "../../generated/templates";
 
 import {
@@ -775,15 +776,24 @@ function computeInitialize(
   //   [registryCommunity, pType.toString(), maxAmount.toString()]
   // );
   const cvc = CVStrategyContract.bind(contractAddress);
-  let cvs = new CVStrategy(contractAddress.toHex());
+  const strategyId = contractAddress.toHex();
+  let cvs = CVStrategy.load(strategyId);
+  if (cvs == null) {
+    cvs = new CVStrategy(strategyId);
+  }
   let alloAddr = cvc.getAllo();
   log.debug("CVStrategy: alloAddr:{}", [alloAddr.toHexString()]);
   const allo = AlloContract.bind(alloAddr);
   const alloPool = allo.getPool(poolId);
   let metadata = alloPool.metadata.pointer;
-  if (metadata) {
+  if (metadata.length > 0) {
     log.debug("CVStrategy: metadata:{}", [metadata.toString()]);
-    cvs.metadata = metadata ? metadata.toString() : null;
+    PoolMetadataTemplate.create(metadata);
+    cvs.metadata = metadata;
+    cvs.metadataHash = metadata;
+  } else {
+    cvs.metadata = null;
+    cvs.metadataHash = null;
   }
   cvs.token = alloPool.token.toHexString();
   cvs.poolId = poolId;

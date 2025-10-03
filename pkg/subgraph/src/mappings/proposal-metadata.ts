@@ -6,6 +6,7 @@ import { Bytes, dataSource, json, log } from "@graphprotocol/graph-ts";
 import {
   ProposalDisputeMetadata,
   ProposalMetadata,
+  PoolMetadata,
 } from "../../generated/schema";
 
 // https://kdghxz4drlsffkptavafm6ws2qkdwpdqauxstqioi3xdli7yjo4q.arweave.net/UMx754OK5FKp8wVAVnrS1BQ7PHAFLynBDkbuNaP4S7k

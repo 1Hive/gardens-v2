@@ -1,4 +1,7 @@
-import { CVStrategyV0_0 as CVStrategyTemplate } from "../../generated/templates";
+import {
+  CVStrategyV0_0 as CVStrategyTemplate,
+  PoolMetadata as PoolMetadataTemplate,
+} from "../../generated/templates";
 import {
   Member,
   RegistryCommunity,
@@ -443,6 +446,19 @@ export function handlePoolCreated(event: PoolCreated): void {
   ]);
 
   const strategyAddress = event.params._strategy;
+  const metadataPointer = event.params._metadata.pointer;
+
+  if (metadataPointer.length > 0) {
+    PoolMetadataTemplate.create(metadataPointer);
+
+    const strategyId = strategyAddress.toHexString();
+    let strategy = CVStrategy.load(strategyId);
+    if (strategy != null) {
+      strategy.metadataHash = metadataPointer;
+      strategy.metadata = metadataPointer;
+      strategy.save();
+    }
+  }
 
   CVStrategyTemplate.create(strategyAddress);
 }
