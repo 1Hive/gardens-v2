@@ -74,4 +74,6 @@ export const useFlag = (flag: CheatName) => {
     logOnce("debug", `🚩 [Flag:Env] ${flag} set to ${flagFromEnv}`);
     return flagFromEnv === "true";
   }
+
+  return false;
 };
