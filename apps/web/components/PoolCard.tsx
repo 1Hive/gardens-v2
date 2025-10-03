@@ -70,9 +70,6 @@ export function PoolCard({ pool, token }: Props) {
           </Skeleton>
           <Badge type={poolType} />
         </div>
-        {/* <div>
-          <h6>POOL ID: #{poolId}</h6>
-        </div> */}
       </header>
       <div className="mb-8 flex flex-col gap-2">
         <Statistic
