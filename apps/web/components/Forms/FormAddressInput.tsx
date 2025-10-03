@@ -13,7 +13,7 @@ import {
 import { FormInput } from "./FormInput";
 import { LoadingSpinner } from "../LoadingSpinner";
 import { getConfigByChain } from "@/configs/chains";
-import { useCheat } from "@/hooks/useCheat";
+import { useConfig } from "@/hooks/useCheat";
 import { useDebounce } from "@/hooks/useDebounce";
 import { safeABI } from "@/src/customAbis";
 import { isENS } from "@/utils/web3";
@@ -63,7 +63,7 @@ export const FormAddressInput = ({
 
   const [inputValue, setInputValue] = useState<string>(value ?? "");
   const [isValidatingSafe, setIsValidatingSafe] = useState<boolean>(false);
-  const bypassSafeCheck = useCheat("bypassSafeCheck");
+  const bypassSafeCheck = useConfig("bypassSafeCheck");
 
   useEffect(() => {
     setInputValue(value ?? "");

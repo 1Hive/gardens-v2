@@ -24,7 +24,7 @@ import { Modal } from "./Modal";
 import { Skeleton } from "./Skeleton";
 import { TransactionModal, TransactionProps } from "./TransactionModal";
 import { SuperfluidStream } from "@/assets";
-import { useCheat } from "@/hooks/useCheat";
+import { useConfig } from "@/hooks/useCheat";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useHandleAllowance } from "@/hooks/useHandleAllowance";
@@ -83,7 +83,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
   const [isTransferModalOpened, setIsTransferModalOpened] = useState(false);
   const [forceAllBalanceUsage, setForceAllBalanceUsage] = useState(false);
 
-  const showUseSuperTokenBalance = useCheat("showUseSuperTokenBalance");
+  const showUseSuperTokenBalance = useConfig("showUseSuperTokenBalance");
   const {
     currentUserOtherFlowRateBn,
     currentFlowRateBn,

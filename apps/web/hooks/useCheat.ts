@@ -1,6 +1,8 @@
 /* eslint-disable no-console */
 import { useEffect } from "react";
 import { useWatchLocalStorage } from "./useWatchLocalStorage";
+import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
+import { logOnce } from "@/utils/log";
 
 export const cheats = [
   "showArchived",
@@ -15,14 +17,22 @@ export const cheats = [
 
 export type CheatName = (typeof cheats)[number];
 
-export const useCheat = (cheat: CheatName) => {
+export const useConfig = (cheat: CheatName) => {
+  const queryParams = useCollectQueryParams();
+
   const [value] = useWatchLocalStorage({
     key: cheat,
-    initialValue:
-      process.env[`NEXT_PUBLIC_CHEAT_${cheat.toUpperCase()}`] === "true",
+    initialValue: process.env[`NEXT_PUBLIC_${cheat.toUpperCase()}`] === "true",
     deserializer: (v) => v === "true",
     serializer: (v) => (v ? "true" : "false"),
   });
+
+  if (!!process.env[`NEXT_PUBLIC_${cheat.toUpperCase()}`]) {
+    logOnce(
+      "debug",
+      `${cheat} cheat set to ${process.env[`NEXT_PUBLIC_${cheat.toUpperCase()}`]} by env`,
+    );
+  }
 
   useEffect(() => {
     (window as any).useCheats = () => {
@@ -37,17 +47,5 @@ export const useCheat = (cheat: CheatName) => {
     };
   }, []);
 
-  return value as boolean;
-};
-
-export const getCheat = (cheat: CheatName) => {
-  console.log({
-    storage: localStorage.getItem(cheat),
-    envKey: `NEXT_PUBLIC_CHEAT_${cheat.toUpperCase()}`,
-    env: process.env[`NEXT_PUBLIC_CHEAT_${cheat.toUpperCase()}`],
-  });
-  const value =
-    localStorage.getItem(cheat) ??
-    process.env[`NEXT_PUBLIC_CHEAT_${cheat.toUpperCase()}`];
-  return value === "true";
+  return (queryParams[cheat] ?? value) === "true";
 };

@@ -57,7 +57,7 @@ import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { ONE_HIVE_COMMUNITY_ADDRESS } from "@/globals";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
-import { useCheat } from "@/hooks/useCheat";
+import { useConfig } from "@/hooks/useCheat";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useCouncil } from "@/hooks/useCouncil";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
@@ -93,7 +93,7 @@ export default function Page({
 }) {
   const searchParams = useCollectQueryParams();
   const { address: accountAddress } = useAccount();
-  const showArchived = useCheat("showArchived");
+  const showArchived = useConfig("showArchived");
   const [openCommDetails, setOpenCommDetails] = useState(false);
   const isFetchingNFT = useRef<boolean>(false);
   const { publish } = usePubSubContext();

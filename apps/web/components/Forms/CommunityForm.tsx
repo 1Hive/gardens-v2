@@ -17,14 +17,13 @@ import { FormSelect } from "./FormSelect";
 import { LoadingSpinner } from "../LoadingSpinner";
 import { Button } from "@/components";
 import { chainConfigMap, ChainIcon } from "@/configs/chains";
+import { isProd } from "@/configs/isProd";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
+import { useConfig } from "@/hooks/useCheat";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
-import {
-  allChains,
-  useSubgraphQueryMultiChain,
-} from "@/hooks/useSubgraphQueryMultiChain";
+import { useSubgraphQueryMultiChain } from "@/hooks/useSubgraphQueryMultiChain";
 import { registryFactoryABI } from "@/src/generated";
 import { getEventFromReceipt } from "@/utils/contracts";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
@@ -117,6 +116,16 @@ export const CommunityForm = () => {
       )?.id as Address,
     [registryFactories, getValues("chainId")],
   );
+
+  const isQueryAllChains = useConfig("queryAllChains");
+
+  const allChains = Object.entries(chainConfigMap)
+    .filter(
+      ([_, chainConfig]) =>
+        isQueryAllChains ||
+        (isProd ? !chainConfig.isTestnet : !!chainConfig.isTestnet),
+    )
+    .map(([chainId]) => Number(chainId));
 
   const SUPPORTED_CHAINS = useMemo(
     () =>

@@ -2,18 +2,111 @@
 
 import React, { useEffect, useState } from "react";
 import { ChevronRightIcon } from "@heroicons/react/24/solid";
+import { fetchToken } from "@wagmi/core";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { getTitlesFromUrlSegments } from "@/services/getTitlesFromUrlSegments";
+import { toast } from "react-toastify";
+import { AnyVariables, DocumentInput, OperationContext } from "urql";
+import { Address } from "viem";
+import { useChainFromPath } from "@/hooks/useChainFromPath";
+import { useConfig } from "@/hooks/useCheat";
+import { initUrqlClient } from "@/providers/urql";
+import {
+  parseStaticSegment,
+  queryMap,
+} from "@/services/getTitlesFromUrlSegments";
 import { truncateString } from "@/utils/text";
 interface Breadcrumb {
   href: string;
   label: string;
 }
 
+const { urqlClient } = initUrqlClient();
+
 export function Breadcrumbs() {
   const path = usePathname();
+  const chain = useChainFromPath();
   const [breadcrumbs, setBreadcrumbs] = useState<Breadcrumb[]>([]);
+  const skipPublished = useConfig("skipPublished");
+
+  async function queryByChain<
+    Data = any,
+    Variables extends AnyVariables = AnyVariables,
+  >(
+    query: DocumentInput<any, Variables>,
+    variables: Variables = {} as Variables,
+    context?: Partial<OperationContext>,
+  ) {
+    if (!chain) {
+      throw new Error("Chain not supported");
+    }
+    return urqlClient.query<Data>(query, variables, {
+      url:
+        skipPublished ?
+          chain.subgraphUrl
+        : chain.publishedSubgraphUrl ?? chain.subgraphUrl,
+      ...context,
+    });
+  }
+
+  /**
+   * Fetches and parses titles from URL segments.
+   * @param segments - The URL segments to process.
+   * @returns A promise that resolves to an array of title strings or undefined.
+   * @throws {Error} If there's an issue fetching or parsing the data.
+   */
+  async function getTitlesFromUrlSegments(
+    segments: string[],
+  ): Promise<(string | undefined)[] | undefined> {
+    const segmentsLength = segments.length;
+    if (segmentsLength < 3) {
+      return undefined;
+    }
+
+    const isStaticSegment = segments[segmentsLength - 1].includes("create");
+    const entityIndex =
+      isStaticSegment ? segmentsLength - 2 : segmentsLength - 1;
+
+    if (entityIndex === 2) {
+      const tokenArgs = {
+        address: segments[2] as Address,
+        chainId: parseInt(segments[1]),
+      };
+      const tokenData = await fetchToken(tokenArgs)
+        .then((token) => token?.name)
+        .catch(() => {
+          console.error("Error fetching token from address: ", tokenArgs);
+          toast.error("Token not found");
+          return undefined;
+        });
+      return [tokenData, parseStaticSegment(segments[segmentsLength - 1])];
+    }
+
+    const queryItem = queryMap[entityIndex];
+
+    try {
+      const result = await queryByChain(
+        segments[1],
+        queryItem.document,
+        queryItem.getVariables(segments[entityIndex]),
+      );
+
+      if (!result?.data) {
+        throw new Error("No data returned from query");
+      }
+
+      const parsedResult = await queryItem.parseResult(result.data);
+
+      if (isStaticSegment) {
+        parsedResult.push(parseStaticSegment(segments[segmentsLength - 1]));
+      }
+
+      return parsedResult;
+    } catch (error) {
+      console.error("Error fetching title from address:", error);
+      return;
+    }
+  }
 
   const fetchBreadcrumbs = async (): Promise<Breadcrumb[]> => {
     const segments = path.split("/").filter((segment) => segment !== "");
