@@ -241,6 +241,7 @@ export default function Page({
 
   strategies = strategies ?? [];
 
+  console.log(strategies);
   const signalingPools = strategies.filter(
     (strategy) =>
       PoolTypes[strategy.config?.proposalType] === "signaling" &&
@@ -252,6 +253,7 @@ export default function Page({
       PoolTypes[strategy.config?.proposalType] === "funding" &&
       strategy.isEnabled,
   );
+
   const activePools = strategies?.filter((strategy) => strategy?.isEnabled);
 
   const poolsInReview = strategies.filter(
