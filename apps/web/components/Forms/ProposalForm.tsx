@@ -351,6 +351,16 @@ export const ProposalForm = ({
     return formattedRows;
   };
 
+  function getThresholdColor(
+    thresholdPctArgument: number,
+  ): "info" | "warning" | "error" {
+    if (thresholdPctArgument < 50) return "info";
+    if (thresholdPctArgument < 100) return "warning";
+    return "error";
+  }
+
+  const thColor = getThresholdColor(thresholdPct);
+
   return (
     <form onSubmit={handleSubmit(handlePreview)} className="w-full">
       {showPreview ?
@@ -397,21 +407,16 @@ export const ProposalForm = ({
           {requestedAmount && thresholdPct !== 0 && (
             <InfoBox
               title={`Conviction required:${" "} ${thresholdPct > 100 ? "Over 100" : thresholdPct}%`}
-              infoBoxType={
-                thresholdPct < 50 ? "info"
-                : thresholdPct < 100 ?
-                  "warning"
-                : "error"
-              }
+              infoBoxType={thColor}
             >
-              <div className="flex w-full justify-between">
+              <div className="flex flex-wrap w-full">
                 The{" "}
                 <InfoWrapper
                   tooltip={`Conviction accumulates over time based on both the level of support on a proposal and the duration defined by the Conviction Growth parameter (${convictionGrowth} ${convictionGrowthUnit}).`}
                   size="sm"
                   hoverOnChildren={true}
                   hideIcon={true}
-                  className="tooltip-top-right border-b border-dashed border-info text-sm"
+                  className={`tooltip-top-right border-b border-dashed border-${thColor} text-sm`}
                 >
                   conviction
                 </InfoWrapper>{" "}

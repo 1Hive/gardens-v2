@@ -240,7 +240,7 @@ export function AddressListInput({
   };
 
   return (
-    <div className="flex flex-col max-w-[29rem]">
+    <div className="flex flex-col">
       {label && (
         <label htmlFor={registerKey} className="label cursor-pointer w-fit">
           {tooltip ?
@@ -301,7 +301,7 @@ export function AddressListInput({
             required={required && addresses.length === 0}
             onChange={(e) => setNewAddress(e.target.value)}
             value={newAddress}
-            className="!w-[29rem]"
+            className="w-[22rem] sm:w-[27.5rem]"
           />
           <Button
             type="button"
@@ -309,9 +309,8 @@ export function AddressListInput({
             className="!py-3 !px-4 flex items-center"
             onClick={() => addAddresses(newAddress)}
             tooltip="Add"
-          >
-            <PlusIcon className="w-5 h-5" />
-          </Button>
+            icon={<PlusIcon className="w-5 h-5" />}
+          />
         </div>
       : <div className="mb-4 flex flex-col justify-end">
           <textarea
@@ -328,7 +327,7 @@ export function AddressListInput({
           <Button
             type="button"
             btnStyle="filled"
-            className=""
+            className="w-full"
             onClick={() => addAddresses(bulkAddresses)}
             disabled={!bulkAddresses.trim()}
             tooltip="Add Bulk Addresses"
