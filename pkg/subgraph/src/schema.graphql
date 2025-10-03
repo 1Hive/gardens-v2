@@ -231,19 +231,19 @@ type ProposalDispute @entity(immutable: false) {
 
 type ProposalDisputeMetadata @entity(immutable: false) {
   id: ID!
-  reason: String!
+  reason: String
 }
 
 type ProposalMetadata @entity(immutable: false) {
   id: ID!
-  title: String!
-  description: String!
+  title: String
+  description: String
 }
 
 type PoolMetadata @entity(immutable: false) {
   id: ID!
-  title: String!
-  description: String!
+  title: String
+  description: String
 }
 
 type CollateralVault @entity(immutable: false) {
