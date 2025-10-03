@@ -224,7 +224,7 @@ export type ArbitrableConfig_orderBy =
   | 'strategy'
   | 'strategy__id'
   | 'strategy__poolId'
-  | 'strategy__metadata'
+  | 'strategy__metadataHash'
   | 'strategy__maxCVSupply'
   | 'strategy__totalEffectiveActivePoints'
   | 'strategy__isEnabled'
@@ -519,7 +519,7 @@ export type CVProposal_orderBy =
   | 'strategy'
   | 'strategy__id'
   | 'strategy__poolId'
-  | 'strategy__metadata'
+  | 'strategy__metadataHash'
   | 'strategy__maxCVSupply'
   | 'strategy__totalEffectiveActivePoints'
   | 'strategy__isEnabled'
@@ -549,7 +549,8 @@ export type CVProposal_orderBy =
 export type CVStrategy = {
   id: Scalars['ID']['output'];
   poolId: Scalars['BigInt']['output'];
-  metadata?: Maybe<Scalars['String']['output']>;
+  metadata?: Maybe<PoolMetadata>;
+  metadataHash?: Maybe<Scalars['String']['output']>;
   registryCommunity: RegistryCommunity;
   config: CVStrategyConfig;
   proposals: Array<CVProposal>;
@@ -713,7 +714,7 @@ export type CVStrategyConfig_orderBy =
   | 'strategy'
   | 'strategy__id'
   | 'strategy__poolId'
-  | 'strategy__metadata'
+  | 'strategy__metadataHash'
   | 'strategy__maxCVSupply'
   | 'strategy__totalEffectiveActivePoints'
   | 'strategy__isEnabled'
@@ -768,6 +769,27 @@ export type CVStrategy_filter = {
   metadata_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
   metadata_not_ends_with?: InputMaybe<Scalars['String']['input']>;
   metadata_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  metadata_?: InputMaybe<PoolMetadata_filter>;
+  metadataHash?: InputMaybe<Scalars['String']['input']>;
+  metadataHash_not?: InputMaybe<Scalars['String']['input']>;
+  metadataHash_gt?: InputMaybe<Scalars['String']['input']>;
+  metadataHash_lt?: InputMaybe<Scalars['String']['input']>;
+  metadataHash_gte?: InputMaybe<Scalars['String']['input']>;
+  metadataHash_lte?: InputMaybe<Scalars['String']['input']>;
+  metadataHash_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  metadataHash_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  metadataHash_contains?: InputMaybe<Scalars['String']['input']>;
+  metadataHash_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  metadataHash_not_contains?: InputMaybe<Scalars['String']['input']>;
+  metadataHash_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  metadataHash_starts_with?: InputMaybe<Scalars['String']['input']>;
+  metadataHash_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  metadataHash_not_starts_with?: InputMaybe<Scalars['String']['input']>;
+  metadataHash_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  metadataHash_ends_with?: InputMaybe<Scalars['String']['input']>;
+  metadataHash_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  metadataHash_not_ends_with?: InputMaybe<Scalars['String']['input']>;
+  metadataHash_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
   registryCommunity?: InputMaybe<Scalars['String']['input']>;
   registryCommunity_not?: InputMaybe<Scalars['String']['input']>;
   registryCommunity_gt?: InputMaybe<Scalars['String']['input']>;
@@ -893,6 +915,10 @@ export type CVStrategy_orderBy =
   | 'id'
   | 'poolId'
   | 'metadata'
+  | 'metadata__id'
+  | 'metadata__title'
+  | 'metadata__description'
+  | 'metadataHash'
   | 'registryCommunity'
   | 'registryCommunity__id'
   | 'registryCommunity__chainId'
@@ -1100,13 +1126,57 @@ export type CollateralVault_orderBy =
   | 'strategy'
   | 'strategy__id'
   | 'strategy__poolId'
-  | 'strategy__metadata'
+  | 'strategy__metadataHash'
   | 'strategy__maxCVSupply'
   | 'strategy__totalEffectiveActivePoints'
   | 'strategy__isEnabled'
   | 'strategy__token'
   | 'strategy__archived'
   | 'collaterals';
+
+export type Covenant = {
+  id: Scalars['ID']['output'];
+  text?: Maybe<Scalars['String']['output']>;
+};
+
+export type Covenant_filter = {
+  id?: InputMaybe<Scalars['ID']['input']>;
+  id_not?: InputMaybe<Scalars['ID']['input']>;
+  id_gt?: InputMaybe<Scalars['ID']['input']>;
+  id_lt?: InputMaybe<Scalars['ID']['input']>;
+  id_gte?: InputMaybe<Scalars['ID']['input']>;
+  id_lte?: InputMaybe<Scalars['ID']['input']>;
+  id_in?: InputMaybe<Array<Scalars['ID']['input']>>;
+  id_not_in?: InputMaybe<Array<Scalars['ID']['input']>>;
+  text?: InputMaybe<Scalars['String']['input']>;
+  text_not?: InputMaybe<Scalars['String']['input']>;
+  text_gt?: InputMaybe<Scalars['String']['input']>;
+  text_lt?: InputMaybe<Scalars['String']['input']>;
+  text_gte?: InputMaybe<Scalars['String']['input']>;
+  text_lte?: InputMaybe<Scalars['String']['input']>;
+  text_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  text_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  text_contains?: InputMaybe<Scalars['String']['input']>;
+  text_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  text_not_contains?: InputMaybe<Scalars['String']['input']>;
+  text_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  text_starts_with?: InputMaybe<Scalars['String']['input']>;
+  text_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  text_not_starts_with?: InputMaybe<Scalars['String']['input']>;
+  text_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  text_ends_with?: InputMaybe<Scalars['String']['input']>;
+  text_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  text_not_ends_with?: InputMaybe<Scalars['String']['input']>;
+  text_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  /** Filter for the block changed event. */
+  _change_block?: InputMaybe<BlockChangedFilter>;
+  and?: InputMaybe<Array<InputMaybe<Covenant_filter>>>;
+  or?: InputMaybe<Array<InputMaybe<Covenant_filter>>>;
+};
+
+export type Covenant_orderBy =
+  | 'id'
+  | 'text';
 
 export type GoodDollarStrategy = {
   id: Scalars['ID']['output'];
@@ -1205,7 +1275,7 @@ export type GoodDollarStrategy_orderBy =
   | 'strategy'
   | 'strategy__id'
   | 'strategy__poolId'
-  | 'strategy__metadata'
+  | 'strategy__metadataHash'
   | 'strategy__maxCVSupply'
   | 'strategy__totalEffectiveActivePoints'
   | 'strategy__isEnabled'
@@ -1563,7 +1633,7 @@ export type MemberStrategy_orderBy =
   | 'strategy'
   | 'strategy__id'
   | 'strategy__poolId'
-  | 'strategy__metadata'
+  | 'strategy__metadataHash'
   | 'strategy__maxCVSupply'
   | 'strategy__totalEffectiveActivePoints'
   | 'strategy__isEnabled'
@@ -1715,7 +1785,7 @@ export type PassportStrategy_orderBy =
   | 'strategy'
   | 'strategy__id'
   | 'strategy__poolId'
-  | 'strategy__metadata'
+  | 'strategy__metadataHash'
   | 'strategy__maxCVSupply'
   | 'strategy__totalEffectiveActivePoints'
   | 'strategy__isEnabled'
@@ -1814,6 +1884,72 @@ export type PassportUser_orderBy =
   | 'score'
   | 'lastUpdated';
 
+export type PoolMetadata = {
+  id: Scalars['ID']['output'];
+  title?: Maybe<Scalars['String']['output']>;
+  description?: Maybe<Scalars['String']['output']>;
+};
+
+export type PoolMetadata_filter = {
+  id?: InputMaybe<Scalars['ID']['input']>;
+  id_not?: InputMaybe<Scalars['ID']['input']>;
+  id_gt?: InputMaybe<Scalars['ID']['input']>;
+  id_lt?: InputMaybe<Scalars['ID']['input']>;
+  id_gte?: InputMaybe<Scalars['ID']['input']>;
+  id_lte?: InputMaybe<Scalars['ID']['input']>;
+  id_in?: InputMaybe<Array<Scalars['ID']['input']>>;
+  id_not_in?: InputMaybe<Array<Scalars['ID']['input']>>;
+  title?: InputMaybe<Scalars['String']['input']>;
+  title_not?: InputMaybe<Scalars['String']['input']>;
+  title_gt?: InputMaybe<Scalars['String']['input']>;
+  title_lt?: InputMaybe<Scalars['String']['input']>;
+  title_gte?: InputMaybe<Scalars['String']['input']>;
+  title_lte?: InputMaybe<Scalars['String']['input']>;
+  title_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  title_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  title_contains?: InputMaybe<Scalars['String']['input']>;
+  title_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  title_not_contains?: InputMaybe<Scalars['String']['input']>;
+  title_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  title_starts_with?: InputMaybe<Scalars['String']['input']>;
+  title_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  title_not_starts_with?: InputMaybe<Scalars['String']['input']>;
+  title_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  title_ends_with?: InputMaybe<Scalars['String']['input']>;
+  title_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  title_not_ends_with?: InputMaybe<Scalars['String']['input']>;
+  title_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  description_not?: InputMaybe<Scalars['String']['input']>;
+  description_gt?: InputMaybe<Scalars['String']['input']>;
+  description_lt?: InputMaybe<Scalars['String']['input']>;
+  description_gte?: InputMaybe<Scalars['String']['input']>;
+  description_lte?: InputMaybe<Scalars['String']['input']>;
+  description_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  description_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  description_contains?: InputMaybe<Scalars['String']['input']>;
+  description_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  description_not_contains?: InputMaybe<Scalars['String']['input']>;
+  description_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  description_starts_with?: InputMaybe<Scalars['String']['input']>;
+  description_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  description_not_starts_with?: InputMaybe<Scalars['String']['input']>;
+  description_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  description_ends_with?: InputMaybe<Scalars['String']['input']>;
+  description_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  description_not_ends_with?: InputMaybe<Scalars['String']['input']>;
+  description_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  /** Filter for the block changed event. */
+  _change_block?: InputMaybe<BlockChangedFilter>;
+  and?: InputMaybe<Array<InputMaybe<PoolMetadata_filter>>>;
+  or?: InputMaybe<Array<InputMaybe<PoolMetadata_filter>>>;
+};
+
+export type PoolMetadata_orderBy =
+  | 'id'
+  | 'title'
+  | 'description';
+
 export type ProposalDispute = {
   id: Scalars['ID']['output'];
   createdAt: Scalars['BigInt']['output'];
@@ -1829,7 +1965,7 @@ export type ProposalDispute = {
 
 export type ProposalDisputeMetadata = {
   id: Scalars['ID']['output'];
-  reason: Scalars['String']['output'];
+  reason?: Maybe<Scalars['String']['output']>;
 };
 
 export type ProposalDisputeMetadata_filter = {
@@ -2039,8 +2175,8 @@ export type ProposalDispute_orderBy =
 
 export type ProposalMetadata = {
   id: Scalars['ID']['output'];
-  title: Scalars['String']['output'];
-  description: Scalars['String']['output'];
+  title?: Maybe<Scalars['String']['output']>;
+  description?: Maybe<Scalars['String']['output']>;
 };
 
 export type ProposalMetadata_filter = {
@@ -2126,6 +2262,8 @@ export type Query = {
   memberStrategies: Array<MemberStrategy>;
   tokenGarden?: Maybe<TokenGarden>;
   tokenGardens: Array<TokenGarden>;
+  covenant?: Maybe<Covenant>;
+  covenants: Array<Covenant>;
   allo?: Maybe<Allo>;
   allos: Array<Allo>;
   sybilProtection?: Maybe<SybilProtection>;
@@ -2144,6 +2282,8 @@ export type Query = {
   proposalDisputeMetadata_collection: Array<ProposalDisputeMetadata>;
   proposalMetadata?: Maybe<ProposalMetadata>;
   proposalMetadata_collection: Array<ProposalMetadata>;
+  poolMetadata?: Maybe<PoolMetadata>;
+  poolMetadata_collection: Array<PoolMetadata>;
   collateralVault?: Maybe<CollateralVault>;
   collateralVaults: Array<CollateralVault>;
   collateralVaultDeposit?: Maybe<CollateralVaultDeposit>;
@@ -2351,6 +2491,24 @@ export type QuerytokenGardensArgs = {
 };
 
 
+export type QuerycovenantArgs = {
+  id: Scalars['ID']['input'];
+  block?: InputMaybe<Block_height>;
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type QuerycovenantsArgs = {
+  skip?: InputMaybe<Scalars['Int']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  orderBy?: InputMaybe<Covenant_orderBy>;
+  orderDirection?: InputMaybe<OrderDirection>;
+  where?: InputMaybe<Covenant_filter>;
+  block?: InputMaybe<Block_height>;
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
 export type QueryalloArgs = {
   id: Scalars['ID']['input'];
   block?: InputMaybe<Block_height>;
@@ -2513,6 +2671,24 @@ export type QueryproposalMetadata_collectionArgs = {
 };
 
 
+export type QuerypoolMetadataArgs = {
+  id: Scalars['ID']['input'];
+  block?: InputMaybe<Block_height>;
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type QuerypoolMetadata_collectionArgs = {
+  skip?: InputMaybe<Scalars['Int']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  orderBy?: InputMaybe<PoolMetadata_orderBy>;
+  orderDirection?: InputMaybe<OrderDirection>;
+  where?: InputMaybe<PoolMetadata_filter>;
+  block?: InputMaybe<Block_height>;
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
 export type QuerycollateralVaultArgs = {
   id: Scalars['ID']['input'];
   block?: InputMaybe<Block_height>;
@@ -2563,6 +2739,7 @@ export type RegistryCommunity = {
   protocolFeeReceiver?: Maybe<Scalars['String']['output']>;
   communityName?: Maybe<Scalars['String']['output']>;
   covenantIpfsHash?: Maybe<Scalars['String']['output']>;
+  covenant?: Maybe<Covenant>;
   registryFactory?: Maybe<RegistryFactory>;
   strategies?: Maybe<Array<CVStrategy>>;
   councilSafe?: Maybe<Scalars['String']['output']>;
@@ -2728,6 +2905,27 @@ export type RegistryCommunity_filter = {
   covenantIpfsHash_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
   covenantIpfsHash_not_ends_with?: InputMaybe<Scalars['String']['input']>;
   covenantIpfsHash_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  covenant?: InputMaybe<Scalars['String']['input']>;
+  covenant_not?: InputMaybe<Scalars['String']['input']>;
+  covenant_gt?: InputMaybe<Scalars['String']['input']>;
+  covenant_lt?: InputMaybe<Scalars['String']['input']>;
+  covenant_gte?: InputMaybe<Scalars['String']['input']>;
+  covenant_lte?: InputMaybe<Scalars['String']['input']>;
+  covenant_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  covenant_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  covenant_contains?: InputMaybe<Scalars['String']['input']>;
+  covenant_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  covenant_not_contains?: InputMaybe<Scalars['String']['input']>;
+  covenant_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  covenant_starts_with?: InputMaybe<Scalars['String']['input']>;
+  covenant_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  covenant_not_starts_with?: InputMaybe<Scalars['String']['input']>;
+  covenant_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  covenant_ends_with?: InputMaybe<Scalars['String']['input']>;
+  covenant_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  covenant_not_ends_with?: InputMaybe<Scalars['String']['input']>;
+  covenant_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  covenant_?: InputMaybe<Covenant_filter>;
   registryFactory?: InputMaybe<Scalars['String']['input']>;
   registryFactory_not?: InputMaybe<Scalars['String']['input']>;
   registryFactory_gt?: InputMaybe<Scalars['String']['input']>;
@@ -2888,6 +3086,9 @@ export type RegistryCommunity_orderBy =
   | 'protocolFeeReceiver'
   | 'communityName'
   | 'covenantIpfsHash'
+  | 'covenant'
+  | 'covenant__id'
+  | 'covenant__text'
   | 'registryFactory'
   | 'registryFactory__id'
   | 'registryFactory__chainId'
@@ -3380,6 +3581,10 @@ export type _SubgraphErrorPolicy_ =
   /** null **/
   tokenGardens: InContextSdkMethod<Query['tokenGardens'], QuerytokenGardensArgs, MeshContext>,
   /** null **/
+  covenant: InContextSdkMethod<Query['covenant'], QuerycovenantArgs, MeshContext>,
+  /** null **/
+  covenants: InContextSdkMethod<Query['covenants'], QuerycovenantsArgs, MeshContext>,
+  /** null **/
   allo: InContextSdkMethod<Query['allo'], QueryalloArgs, MeshContext>,
   /** null **/
   allos: InContextSdkMethod<Query['allos'], QueryallosArgs, MeshContext>,
@@ -3415,6 +3620,10 @@ export type _SubgraphErrorPolicy_ =
   proposalMetadata: InContextSdkMethod<Query['proposalMetadata'], QueryproposalMetadataArgs, MeshContext>,
   /** null **/
   proposalMetadata_collection: InContextSdkMethod<Query['proposalMetadata_collection'], QueryproposalMetadata_collectionArgs, MeshContext>,
+  /** null **/
+  poolMetadata: InContextSdkMethod<Query['poolMetadata'], QuerypoolMetadataArgs, MeshContext>,
+  /** null **/
+  poolMetadata_collection: InContextSdkMethod<Query['poolMetadata_collection'], QuerypoolMetadata_collectionArgs, MeshContext>,
   /** null **/
   collateralVault: InContextSdkMethod<Query['collateralVault'], QuerycollateralVaultArgs, MeshContext>,
   /** null **/
