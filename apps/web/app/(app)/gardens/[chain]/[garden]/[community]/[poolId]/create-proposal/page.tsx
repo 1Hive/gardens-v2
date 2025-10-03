@@ -27,9 +27,12 @@ export default function Page({
   });
   const strategyObj = data?.cvstrategies?.[0];
 
-  const { metadata } = useMetadataIpfsFetch({
-    hash: strategyObj?.metadata,
+  const { data: metadataResult } = useMetadataIpfsFetch({
+    hash: strategyObj?.metadataHash,
+    enabled: strategyObj && !strategyObj?.metadata,
   });
+
+  const metadata = strategyObj?.metadata ?? metadataResult;
 
   const tokenGarden = data?.tokenGarden;
   const poolTokenAddr = strategyObj?.token;
@@ -48,7 +51,7 @@ export default function Page({
 
   if (
     !tokenGarden ||
-    !metadata ||
+    metadata == null ||
     !strategyObj ||
     (poolToken == undefined && PoolTypes[proposalType] === "funding")
   ) {

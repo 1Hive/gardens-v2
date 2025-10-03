@@ -1,7 +1,8 @@
 type CVStrategy @entity(immutable: false) {
   id: ID!
   poolId: BigInt!
-  metadata: String
+  metadata: PoolMetadata
+  metadataHash: String
   registryCommunity: RegistryCommunity!
   config: CVStrategyConfig!
   proposals: [CVProposal!]! @derivedFrom(field: "strategy")
@@ -92,6 +93,7 @@ type RegistryCommunity @entity(immutable: false) {
   protocolFeeReceiver: String
   communityName: String
   covenantIpfsHash: String
+  covenant: Covenant
   registryFactory: RegistryFactory
   strategies: [CVStrategy!] @derivedFrom(field: "registryCommunity")
   councilSafe: String
@@ -155,6 +157,11 @@ type TokenGarden @entity(immutable: false) {
   decimals: BigInt!
   address: String!
   communities: [RegistryCommunity!] @derivedFrom(field: "garden")
+}
+
+type Covenant @entity(immutable: false) {
+  id: ID!
+  text: String
 }
 
 type Allo @entity(immutable: false) {
@@ -224,13 +231,19 @@ type ProposalDispute @entity(immutable: false) {
 
 type ProposalDisputeMetadata @entity(immutable: false) {
   id: ID!
-  reason: String!
+  reason: String
 }
 
 type ProposalMetadata @entity(immutable: false) {
   id: ID!
-  title: String!
-  description: String!
+  title: String
+  description: String
+}
+
+type PoolMetadata @entity(immutable: false) {
+  id: ID!
+  title: String
+  description: String
 }
 
 type CollateralVault @entity(immutable: false) {

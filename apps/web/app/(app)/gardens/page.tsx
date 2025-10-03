@@ -19,7 +19,7 @@ import {
 } from "@/assets";
 import { Button, Communities } from "@/components";
 import { LightCommunity } from "@/components/Communities";
-import { useCheat } from "@/hooks/useCheat";
+import { useFlag } from "@/hooks/useFlag";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQueryMultiChain } from "@/hooks/useSubgraphQueryMultiChain";
 import { useTheme } from "@/providers/ThemeProvider";
@@ -113,7 +113,7 @@ export default function GardensPage() {
     undefined,
   );
 
-  const showArchived = useCheat("showArchived");
+  const showArchived = useFlag("showArchived");
 
   useEffect(() => {
     getProtopiansOwners()

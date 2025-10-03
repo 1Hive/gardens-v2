@@ -90,9 +90,12 @@ export default function Page({
     enabled: !!effectiveSuperToken && !!address,
   });
 
-  const { metadata: ipfsResult } = useMetadataIpfsFetch({
-    hash: strategy?.metadata,
+  const { data: metadataResult } = useMetadataIpfsFetch({
+    hash: strategy?.metadataHash,
+    enabled: strategy && !strategy?.metadata,
   });
+
+  const metadata = strategy?.metadata ?? metadataResult;
 
   useEffect(() => {
     const newProposalId = searchParams[QUERY_PARAMS.poolPage.newProposal];
@@ -167,7 +170,7 @@ export default function Page({
         strategy={strategy}
         arbitrableConfig={data.arbitrableConfigs[0]}
         poolId={poolId}
-        ipfsResult={ipfsResult}
+        ipfsResult={metadata}
         isEnabled={isEnabled}
         maxAmount={maxAmount}
         superTokenCandidate={superTokenCandidate}
@@ -206,7 +209,7 @@ export default function Page({
       {isEnabled && (
         <Proposals
           poolToken={poolToken}
-          strategy={{ ...strategy, title: ipfsResult?.title }}
+          strategy={{ ...strategy, title: metadata?.title }}
           alloInfo={alloInfo}
           communityAddress={communityAddress}
           createProposalUrl={`/gardens/${chain}/${garden}/${communityAddress}/${poolId}/create-proposal`}

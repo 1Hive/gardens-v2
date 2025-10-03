@@ -2,9 +2,9 @@ import { useState, useEffect } from "react";
 
 type Props<TValue> = {
   key: string;
-  initialValue: TValue;
+  initialValue?: TValue;
   deserializer?: (value: string) => TValue;
-  serializer?: (value: TValue) => string;
+  serializer?: (value: TValue | undefined) => string;
 };
 
 export function useWatchLocalStorage<TValue = string>({
@@ -13,9 +13,7 @@ export function useWatchLocalStorage<TValue = string>({
   deserializer = (v) => v as TValue,
   serializer = (v) => (v as unknown as string).toString(),
 }: Props<TValue>) {
-  // State to store our value
-  // Pass initial state function to useState so logic is only executed once
-  const [storedValue, setStoredValue] = useState<TValue>(() => {
+  const [value, setValue] = useState<TValue | undefined>(() => {
     try {
       const item = window.localStorage.getItem(key);
       return item ? deserializer(item) : initialValue;
@@ -25,19 +23,20 @@ export function useWatchLocalStorage<TValue = string>({
     }
   });
 
-  useEffect(() => {
+  const setAndStoreValue = (v: TValue | undefined) => {
     try {
-      window.localStorage.setItem(key, serializer(storedValue));
+      window.localStorage.setItem(key, serializer(v));
     } catch (error) {
       console.error(error);
     }
-  }, [key, storedValue]);
+    setValue(v);
+  };
 
   useEffect(() => {
     const interval = setInterval(() => {
       const item = window.localStorage.getItem(key);
       if (item !== null) {
-        setStoredValue(deserializer(item));
+        setValue(deserializer(item));
       }
     }, 1000);
 
@@ -46,5 +45,5 @@ export function useWatchLocalStorage<TValue = string>({
     };
   }, [key]);
 
-  return [storedValue, setStoredValue];
+  return [value, setAndStoreValue] as const;
 }

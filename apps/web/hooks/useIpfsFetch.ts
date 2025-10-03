@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 import { useEffect, useState } from "react";
 import { Maybe } from "graphql/jsutils/Maybe";
 import { fetchIpfs } from "@/utils/ipfsUtils";
@@ -51,8 +52,8 @@ export const useIpfsFetch = <TResult>({
 };
 
 export type MetadataV1 = {
-  title: string;
-  description: string;
+  title?: string | null;
+  description?: string | null;
 };
 
 export const useMetadataIpfsFetch = ({
