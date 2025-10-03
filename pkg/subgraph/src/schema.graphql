@@ -93,6 +93,7 @@ type RegistryCommunity @entity(immutable: false) {
   protocolFeeReceiver: String
   communityName: String
   covenantIpfsHash: String
+  covenant: Covenant
   registryFactory: RegistryFactory
   strategies: [CVStrategy!] @derivedFrom(field: "registryCommunity")
   councilSafe: String
@@ -156,6 +157,11 @@ type TokenGarden @entity(immutable: false) {
   decimals: BigInt!
   address: String!
   communities: [RegistryCommunity!] @derivedFrom(field: "garden")
+}
+
+type Covenant @entity(immutable: false) {
+  id: ID!
+  text: String
 }
 
 type Allo @entity(immutable: false) {
