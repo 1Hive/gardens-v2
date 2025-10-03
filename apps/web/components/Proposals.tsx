@@ -104,7 +104,7 @@ interface ProposalsProps {
         ProposalCardProps["proposalData"]
     >;
     config: ProposalCardProps["strategyConfig"];
-    title: string | undefined;
+    title: string | undefined | null;
   } & PoolGovernanceProps["strategy"];
   alloInfo: Allo;
   poolToken?: {
@@ -607,7 +607,7 @@ export function Proposals({
 
     let rows = activeOrDisputedProposals.map((proposal) => {
       const proposalNumber = proposal.proposalNumber;
-      const proposalTitle = `"${proposal.metadata?.title.replace(/"/g, '""')}"`; // Escape quotes in title
+      const proposalTitle = `"${proposal.metadata?.title?.replace(/"/g, '""')}"`; // Escape quotes in title
       const beneficiary = proposal.beneficiary;
       const support = formatUnits(proposal.stakedAmount, tokenDecimals);
       const supportPercent =
