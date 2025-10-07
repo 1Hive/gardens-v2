@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.19;
 
 import "./BaseMultiChain.s.sol";
 import {CVStrategyV0_0} from "../src/CVStrategy/CVStrategyV0_0.sol";
@@ -76,7 +76,8 @@ contract UpgradeCVMultichainTest is BaseMultiChain {
             cvStrategy.upgradeTo(strategyImplementation); // DOESNT VALIDATE SAFE UPGRADING
 
             // 3.b -- Init the Strategy --
-            cvStrategy.init2();
+            // init2 was removed from CVStrategyV0_0; upgrades now rely on the existing state
+            // and reconfiguration steps executed below.
 
             // 3.c -- Set the Pool Params --
             // (

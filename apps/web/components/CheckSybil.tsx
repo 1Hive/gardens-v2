@@ -79,6 +79,7 @@ export function CheckSybil({
     searchParams[QUERY_PARAMS.poolPage.goodDollar] === "true";
   const isGoodDollarSuccess =
     searchParams[QUERY_PARAMS.poolPage.goodDollarVerified] === "dHJ1ZQ=="; // base64 of 'true'
+  const walletVerified = isWalletVerified === true;
 
   useEffect(() => {
     if (triggerClose) {
@@ -149,6 +150,7 @@ export function CheckSybil({
   const sybilStrategy =
     passportStrategyData?.passportStrategy ??
     goodDollarStrategyData?.goodDollarStrategy;
+  const gardensVerified = isGoodDollarVerifiedInGardens === true;
   const threshold =
     (
       sybilStrategy != null &&
@@ -179,10 +181,10 @@ export function CheckSybil({
   ) => {
     if (strategy.sybil?.type === "GoodDollar") {
       if (walletAddr) {
-        if (isGoodDollarVerifiedInGardens) {
+        if (gardensVerified) {
           console.debug("GoodDollar user is verified, moving forward...");
           setIsModalOpen(false);
-        } else if (isWalletVerified) {
+        } else if (walletVerified) {
           console.debug(
             "Wallet is whitelisted in GoodDollar, submiting verification...",
           );
@@ -418,11 +420,11 @@ export function CheckSybil({
 
   const modalTitle = () => {
     if (strategy.sybil?.type === "GoodDollar") {
-      if (!isWalletVerified) {
+      if (!walletVerified) {
         return "Verify you're human";
       }
 
-      if (!isGoodDollarVerifiedInGardens && !forceIsVerified) {
+      if (!gardensVerified && !forceIsVerified) {
         return "Connect to Gardens";
       }
 
@@ -448,7 +450,7 @@ export function CheckSybil({
               <LoadingSpinner className="w-12 h-12" />
             : <>
                 {(
-                  (!isWalletVerified && !isGoodDollarCallback) ||
+                  (!walletVerified && !isGoodDollarCallback) ||
                   !isGoodDollarSuccess
                 ) ?
                   <>
@@ -467,8 +469,7 @@ export function CheckSybil({
                     </div>
                   </>
                 : (
-                  (isWalletVerified &&
-                    (isGoodDollarVerifiedInGardens ?? false)) ||
+                  (walletVerified && gardensVerified) ||
                   forceIsVerified
                 ) ?
                   <>
@@ -479,7 +480,7 @@ export function CheckSybil({
                   </>
                 : <>
                     <p className="text-left">
-                      {isWalletVerified && !isGoodDollarVerifiedInGardens ?
+                      {walletVerified && !gardensVerified ?
                         "Click to connect your verified GoodDollar account to Gardens."
                       : "GoodDollar verification pending..."}
                     </p>
@@ -487,7 +488,7 @@ export function CheckSybil({
                       <Button
                         className="w-fit"
                         btnStyle={
-                          isWalletVerified && !isGoodDollarVerifiedInGardens ?
+                          walletVerified && !gardensVerified ?
                             "filled"
                           : "outline"
                         }
@@ -510,7 +511,7 @@ export function CheckSybil({
                           setIsGoodDollarVerifying(false);
                         }}
                       >
-                        {isWalletVerified && !isGoodDollarVerifiedInGardens ?
+                        {walletVerified && !gardensVerified ?
                           "Connect"
                         : "Check again"}
                       </Button>

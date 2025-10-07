@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.19;
 
 import "forge-std/console2.sol";
 import "forge-std/Script.sol";
@@ -31,6 +31,7 @@ import {Upgrades} from "@openzeppelin/foundry/LegacyUpgrades.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {PassportScorer} from "../src/PassportScorer.sol";
 import {ISybilScorer} from "../src/ISybilScorer.sol";
+import {IArbitrator} from "../src/interfaces/IArbitrator.sol";
 
 abstract contract BaseMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
     using stdJson for string;

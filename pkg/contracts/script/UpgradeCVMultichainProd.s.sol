@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.19;
 
 import "./BaseMultiChain.s.sol";
 import {CVStrategyV0_0} from "../src/CVStrategy/CVStrategyV0_0.sol";

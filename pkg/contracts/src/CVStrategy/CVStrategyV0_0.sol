@@ -427,28 +427,47 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
 
         uint256 voterStake = totalVoterStakePct[_member];
         uint256 memberPower = registryCommunity.getMemberPowerInStrategy(_member, address(this));
-        uint256 unusedPower = memberPower > voterStake ? memberPower - voterStake : 0;
-        if (unusedPower < pointsToDecrease) {
-            uint256 balancingRatio = ((pointsToDecrease - unusedPower) << 128) / voterStake;
-            for (uint256 i = 0; i < voterStakedProposals[_member].length; i++) {
-                uint256 proposalId = voterStakedProposals[_member][i];
-                Proposal storage proposal = proposals[proposalId];
-                uint256 stakedPoints = proposal.voterStakedPoints[_member];
-                uint256 newStakedPoints;
-                newStakedPoints = stakedPoints - ((stakedPoints * balancingRatio + (1 << 127)) >> 128);
-                uint256 oldStake = proposal.stakedAmount;
-                proposal.stakedAmount -= stakedPoints - newStakedPoints;
-                proposal.voterStakedPoints[_member] = newStakedPoints;
-                totalStaked -= stakedPoints - newStakedPoints;
-                totalVoterStakePct[_member] -= stakedPoints - newStakedPoints;
-                _calculateAndSetConviction(proposal, oldStake);
-                emit SupportAdded(_member, proposalId, newStakedPoints, proposal.stakedAmount, proposal.convictionLast);
-            }
-        }
+
+        _rebalanceMemberSupport(_member, pointsToDecrease, voterStake, memberPower);
+
         totalPointsActivated -= pointsToDecrease;
         emit PowerDecreased(_member, _amountToUnstake, pointsToDecrease);
 
         return pointsToDecrease;
+    }
+
+    function _rebalanceMemberSupport(
+        address _member,
+        uint256 pointsToDecrease,
+        uint256 voterStake,
+        uint256 memberPower
+    ) internal {
+        uint256 unusedPower = memberPower > voterStake ? memberPower - voterStake : 0;
+        if (unusedPower >= pointsToDecrease) {
+            return;
+        }
+
+        uint256 shortage = pointsToDecrease - unusedPower;
+        uint256 balancingRatio = (shortage << 128) / voterStake;
+        uint256[] storage memberProposals = voterStakedProposals[_member];
+        uint256 proposalsLength = memberProposals.length;
+
+        for (uint256 i = 0; i < proposalsLength; i++) {
+            uint256 proposalId = memberProposals[i];
+            Proposal storage proposal = proposals[proposalId];
+            uint256 stakedPoints = proposal.voterStakedPoints[_member];
+            uint256 stakeDelta = (stakedPoints * balancingRatio + (1 << 127)) >> 128;
+            uint256 oldStake = proposal.stakedAmount;
+
+            stakedPoints -= stakeDelta;
+            proposal.stakedAmount -= stakeDelta;
+            proposal.voterStakedPoints[_member] = stakedPoints;
+            totalStaked -= stakeDelta;
+            totalVoterStakePct[_member] -= stakeDelta;
+
+            _calculateAndSetConviction(proposal, oldStake);
+            emit SupportAdded(_member, proposalId, stakedPoints, proposal.stakedAmount, proposal.convictionLast);
+        }
     }
 
     // Goss: Commented because both accessible by the public field
