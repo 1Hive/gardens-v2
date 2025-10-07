@@ -1,4 +1,9 @@
 "use client";
+import { useRef, useState, useEffect } from "react";
+import {
+  ArrowsPointingInIcon,
+  ArrowsPointingOutIcon,
+} from "@heroicons/react/24/solid";
 import {
   MDXEditor,
   headingsPlugin,
@@ -32,11 +37,6 @@ import {
   DiffSourceToggleWrapper,
 } from "@mdxeditor/editor";
 import "@mdxeditor/editor/style.css";
-import { useRef, useState, useEffect } from "react";
-import {
-  ArrowsPointingInIcon,
-  ArrowsPointingOutIcon,
-} from "@heroicons/react/24/solid";
 import { useTheme } from "@/providers/ThemeProvider";
 import { ipfsFileUpload } from "@/utils/ipfsUtils";
 
@@ -62,17 +62,17 @@ export default function MarkdownEditor({
   // helpers
   const getFsEl = () =>
     // @ts-ignore
-    document.fullscreenElement || document.webkitFullscreenElement;
+    document.fullscreenElement ?? document.webkitFullscreenElement;
 
   const requestFs = async (el: HTMLElement) => {
     // @ts-ignore
-    const req = el.requestFullscreen || el.webkitRequestFullscreen;
+    const req = el.requestFullscreen ?? el.webkitRequestFullscreen;
     return req.call(el);
   };
 
   const exitFs = async () => {
     // @ts-ignore
-    const exit = document.exitFullscreen || document.webkitExitFullscreen;
+    const exit = document.exitFullscreen ?? document.webkitExitFullscreen;
     return exit.call(document);
   };
 
@@ -134,9 +134,9 @@ export default function MarkdownEditor({
       }
       if (
         // @ts-ignore
-        (document.fullscreenEnabled || document.webkitFullscreenEnabled) &&
+        (document.fullscreenEnabled ?? document.webkitFullscreenEnabled) &&
         // @ts-ignore
-        (el.requestFullscreen || el.webkitRequestFullscreen)
+        (el.requestFullscreen ?? el.webkitRequestFullscreen) != null
       ) {
         await requestFs(el);
         setUsingFallback(false);

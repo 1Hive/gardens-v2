@@ -12,11 +12,10 @@ module.exports = {
     "airbnb-typescript",
     "plugin:@typescript-eslint/recommended",
     "plugin:react/recommended",
-    "plugin:jsx-a11y/recommended",
     "next/core-web-vitals",
     "prettier/prettier",
   ],
-  plugins: ["react"],
+  plugins: ["react", "jsx-a11y"],
   ignorePatterns: ["node_modules", "dist", "src/generated.ts", "public"],
   parser: "@typescript-eslint/parser",
   parserOptions: {

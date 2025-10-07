@@ -1,6 +1,4 @@
-import React, { ChangeEvent, useState } from "react";
-import { FunnelIcon } from "@heroicons/react/24/outline";
-import { ChevronUpIcon } from "@heroicons/react/24/outline";
+import React, { ChangeEvent } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { FormInput } from "./Forms/FormInput";
 import { FormSelect } from "./Forms/FormSelect";
@@ -32,7 +30,7 @@ export function CommunityFilters({
   setchainIdFilter,
   availableTokens,
 }: CommunityFiltersProps): JSX.Element {
-  const [isExpanded, setIsExpanded] = useState<boolean>(true);
+  const isExpanded = true;
 
   const availableNetworks = Object.entries(chainConfigMap)
     .filter(([_, chainConfig]) => !isProd || !chainConfig.isTestnet)
