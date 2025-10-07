@@ -8,7 +8,6 @@ import {
 } from "#/subgraph/.graphclient";
 import { PoolForm } from "@/components/Forms/PoolForm";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
-import MarkdownEditor from "@/components/MarkdownEditor";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 
 export default function Page({

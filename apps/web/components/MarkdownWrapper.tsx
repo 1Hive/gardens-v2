@@ -1,7 +1,7 @@
 "use client";
-import { useTheme } from "@/providers/ThemeProvider";
 import MarkdownEditor from "@uiw/react-markdown-editor";
 import remarkGfm from "remark-gfm";
+import { useTheme } from "@/providers/ThemeProvider";
 
 type Props = { source: string };
 
