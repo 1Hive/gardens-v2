@@ -130,37 +130,67 @@ contract UpgradeCVMultichainProd is BaseMultiChain {
             string.concat(vm.projectRoot(), "/pkg/contracts/transaction-builder/", CURRENT_NETWORK, "-payload.json");
         // [read the file and compare hash first]
 
-        string memory payload = string.concat(
-            "{",
-            '"version":"1.0",',
-            '"chainId":"',
-            vm.toString(block.chainid),
-            '",',
-            '"createdAt":',
-            vm.toString(block.timestamp * 1000),
-            ",",
-            '"meta":{',
-            '"name":"Contracts Upgrades Batch",',
-            '"description":"Safe Transaction Builder payload to upgrade contracts from Safe owner",',
-            '"txBuilderVersion":"1.18.0",',
-            '"createdFromSafeAddress":"',
-            _addressToString(safeOwner),
-            '",',
-            '"createdFromOwnerAddress":"',
-            _addressToString(msg.sender),
-            '",',
-            '"hash":"',
-            networkJson.readString(getKeyNetwork(".hash")),
-            '"},',
-            '"transactions":',
-            json,
-            "}"
-        );
+        string memory payload = _buildPayload(networkJson, json, safeOwner, msg.sender);
 
         vm.writeFile(path, payload);
 
         console2.log("Wrote %s", path);
         console2.log(payload);
+    }
+
+    function _buildPayload(
+        string memory networkJson,
+        string memory transactionsJson,
+        address safeOwner,
+        address initiator
+    ) internal view returns (string memory) {
+        string memory chainId = vm.toString(block.chainid);
+        string memory createdAt = vm.toString(block.timestamp * 1000);
+        string memory safeOwnerStr = _addressToString(safeOwner);
+        string memory ownerStr = _addressToString(initiator);
+        string memory metadataHash = networkJson.readString(getKeyNetwork(".hash"));
+
+        return _composePayload(transactionsJson, chainId, createdAt, safeOwnerStr, ownerStr, metadataHash);
+    }
+
+    function _composePayload(
+        string memory transactionsJson,
+        string memory chainId,
+        string memory createdAt,
+        string memory safeOwnerStr,
+        string memory ownerStr,
+        string memory metadataHash
+    ) internal pure returns (string memory) {
+        string memory meta = string.concat(
+            '"meta":{',
+            '"name":"Contracts Upgrades Batch",',
+            '"description":"Safe Transaction Builder payload to upgrade contracts from Safe owner",',
+            '"txBuilderVersion":"1.18.0",',
+            '"createdFromSafeAddress":"',
+            safeOwnerStr,
+            '",',
+            '"createdFromOwnerAddress":"',
+            ownerStr,
+            '",',
+            '"hash":"',
+            metadataHash,
+            '"},'
+        );
+
+        return string.concat(
+            "{",
+            '"version":"1.0",',
+            '"chainId":"',
+            chainId,
+            '",',
+            '"createdAt":',
+            createdAt,
+            ",",
+            meta,
+            '"transactions":',
+            transactionsJson,
+            "}"
+        );
     }
 
     function _removeLastChar(string memory input) internal pure returns (string memory) {
