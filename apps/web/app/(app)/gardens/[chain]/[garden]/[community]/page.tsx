@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
-import ClientPage from "./ClientPage";
 import { getCommunityNameDocument } from "#/subgraph/.graphclient";
+import ClientPage from "./ClientPage";
+import { FALLBACK_TITLE, description } from "./opengraph-image";
+import CommunityImage from "@/assets/CommunityImage.png";
 import { chainConfigMap } from "@/configs/chains";
 import { queryByChain } from "@/providers/urql";
-import { FALLBACK_TITLE, description } from "./opengraph-image";
 
 type PageParams = {
   params: {
@@ -14,7 +15,7 @@ type PageParams = {
 };
 
 function buildOgImagePath(params: PageParams["params"]) {
-  return `/gardens/${params.chain}/${params.garden}/${params.community}/opengraph-image`;
+  return CommunityImage.src;
 }
 
 export async function generateMetadata({
@@ -39,10 +40,9 @@ export async function generateMetadata({
   };
 
   if (chainConfig == null) {
-    console.error(
-      "Unsupported chainId for community metadata generation.",
-      { chainId: params.chain },
-    );
+    console.error("Unsupported chainId for community metadata generation.", {
+      chainId: params.chain,
+    });
     return fallbackMetadata;
   }
 
