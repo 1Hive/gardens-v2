@@ -80,7 +80,7 @@ export function Breadcrumbs() {
       const parsedResult = await queryItem.parseResult(result.data);
 
       if (isStaticSegment) {
-        parsedResult.push(parseStaticSegment(segments[segmentsLength - 1]));
+        parsedResult.push(parseStaticSegment(segments[segmentsLength - 1])); 
       }
 
       return parsedResult;
