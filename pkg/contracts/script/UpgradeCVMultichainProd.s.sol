@@ -12,7 +12,7 @@ contract UpgradeCVMultichainProd is BaseMultiChain {
     using stdJson for string;
 
     function runCurrentNetwork(string memory networkJson) public override {
-        address registryFactoryImplementation = address(new RegistryFactoryV0_0());
+        // address registryFactoryImplementation = address(new RegistryFactoryV0_0());
         address registryImplementation = address(new RegistryCommunityV0_0());
         address strategyImplementation = address(new CVStrategyV0_0());
         // address passportScorer = networkJson.readAddress(getKeyNetwork(".ENVS.PASSPORT_SCORER"));
