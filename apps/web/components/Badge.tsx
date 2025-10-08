@@ -65,17 +65,14 @@ export function Badge({
   }, [color, status]);
 
   // Determine the appropriate styles based on whether it's a proposal status badge or a pool type badge
+  // Determine the appropriate styles based on type (priority) or status
   const styles =
-    effectiveStatus != null ?
-      `${
-        PROPOSAL_STATUS_STYLES[effectiveStatus] ??
-        "bg-secondary-soft text-secondary-hover-content dark:bg-secondary-dark-base/70 dark:text-secondary-dark-text"
-      }`
-    : ispoolTypeDefined ?
-      `${
-        POOL_TYPE_STYLES[type] ??
-        "bg-tertiary-soft text-tertiary-hover-content dark:text-tertiary-dark-text"
-      }`
+    ispoolTypeDefined ?
+      POOL_TYPE_STYLES[type] ??
+      "bg-tertiary-soft text-tertiary-hover-content dark:text-tertiary-dark-text"
+    : effectiveStatus != null ?
+      PROPOSAL_STATUS_STYLES[effectiveStatus] ??
+      "bg-secondary-soft text-secondary-hover-content dark:bg-secondary-dark-base/70 dark:text-secondary-dark-text"
     : "bg-tertiary-soft text-tertiary-hover-content dark:text-tertiary-dark-text";
 
   // Determine the label content
