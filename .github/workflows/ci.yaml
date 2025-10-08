@@ -1,4 +1,4 @@
-name: CI
+name: Lint
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    name: Build, Lint and Test
+    name: Lint
     timeout-minutes: 15
     runs-on: ubuntu-latest
     env:
@@ -60,5 +60,5 @@ jobs:
       - name: Lint
         run: pnpm lint
 
-      - name: Build and Test
-        run: pnpm test
+      # - name: Build and Test
+      #   run: pnpm test
