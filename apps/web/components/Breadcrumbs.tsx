@@ -62,6 +62,9 @@ export function Breadcrumbs() {
     const queryItem = queryMap[entityIndex];
 
     try {
+      if (!chain) {
+        throw new Error("Chain not found in path");
+      }
       const result = await queryByChain(
         chain,
         queryItem.document,
