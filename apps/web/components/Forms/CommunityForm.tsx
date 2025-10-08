@@ -17,14 +17,13 @@ import { FormSelect } from "./FormSelect";
 import { LoadingSpinner } from "../LoadingSpinner";
 import { Button } from "@/components";
 import { chainConfigMap, ChainIcon } from "@/configs/chains";
+import { isProd } from "@/configs/isProd";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
-import {
-  allChains,
-  useSubgraphQueryMultiChain,
-} from "@/hooks/useSubgraphQueryMultiChain";
+import { useFlag } from "@/hooks/useFlag";
+import { useSubgraphQueryMultiChain } from "@/hooks/useSubgraphQueryMultiChain";
 import { registryFactoryABI } from "@/src/generated";
 import { getEventFromReceipt } from "@/utils/contracts";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
@@ -117,6 +116,16 @@ export const CommunityForm = () => {
       )?.id as Address,
     [registryFactories, getValues("chainId")],
   );
+
+  const isQueryAllChains = useFlag("queryAllChains");
+
+  const allChains = Object.entries(chainConfigMap)
+    .filter(
+      ([_, chainConfig]) =>
+        isQueryAllChains ||
+        (isProd ? !chainConfig.isTestnet : !!chainConfig.isTestnet),
+    )
+    .map(([chainId]) => Number(chainId));
 
   const SUPPORTED_CHAINS = useMemo(
     () =>
@@ -446,10 +455,11 @@ export const CommunityForm = () => {
               errors={errors}
               registerKey="stakeAmount"
               type="number"
+              placeholder="0.1"
               registerOptions={{
                 min: {
                   value: INPUT_TOKEN_MIN_VALUE,
-                  message: `Amount must be greater than ${INPUT_TOKEN_MIN_VALUE}`,
+                  message: "Amount must be greater than 0",
                 },
               }}
               otherProps={{
@@ -547,13 +557,13 @@ export const CommunityForm = () => {
                 href="https://www.notion.so/1hive-gardens/Covenant-the-community-constitution-103d6929d014801da379c5952d66d1a0"
                 target="_blank"
                 rel="noreferrer"
-                className="text-primary-content flex items-center gap-1 hover:opacity-90"
+                className="text-tertiary-content flex items-start gap-1 hover:text-tertiary-hover-content dark:text-tertiary-dark-border dark:hover:text-tertiary-dark-border-hover"
               >
                 Tools for creating your Community&apos;s Covenant
                 <ArrowTopRightOnSquareIcon
                   width={16}
                   height={16}
-                  className="text-primary-content"
+                  className="text-inherit"
                 />
               </a>
             </div>

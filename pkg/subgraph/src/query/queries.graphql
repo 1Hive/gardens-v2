@@ -7,6 +7,9 @@ query getFactories {
       isValid
       communityName
       covenantIpfsHash
+      covenant {
+        text
+      }
       registerToken
       alloAddress
       members(first: 1000) {
@@ -40,6 +43,9 @@ query getTokenGardens {
       id
       chainId
       covenantIpfsHash
+      covenant {
+        text
+      }
       communityFee
       isValid
       communityName
@@ -181,6 +187,9 @@ query getGardenCommunities($chainId: BigInt!, $tokenGarden: ID!) {
     chainId
     isValid
     covenantIpfsHash
+    covenant {
+      text
+    }
     communityName
     protocolFee
     communityFee
@@ -246,7 +255,11 @@ query getCommunity($communityAddr: ID!, $tokenAddr: ID!) {
       isEnabled
       poolId
       token
-      metadata
+      metadataHash
+      metadata {
+        title
+        description
+      }
       config {
         proposalType
         pointSystem
@@ -256,6 +269,9 @@ query getCommunity($communityAddr: ID!, $tokenAddr: ID!) {
       }
     }
     covenantIpfsHash
+    covenant {
+      text
+    }
     communityFee
     protocolFee
     registerStakeAmount
@@ -299,15 +315,20 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
   }
   cvstrategies(where: { poolId: $poolId }) {
     token
-    metadata
+    metadataHash
+    metadata {
+      title
+      description
+    }
     id
     poolId
     totalEffectiveActivePoints
     isEnabled
     maxCVSupply
     archived
-    sybilScorer {
+    sybil {
       id
+      type
     }
     memberActive {
       id
@@ -340,11 +361,11 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
     proposals(orderBy: createdAt, orderDirection: desc) {
       id
       proposalNumber
+      metadataHash
       metadata {
         title
         description
       }
-      metadataHash
       beneficiary
       requestedAmount
       requestedToken
@@ -397,11 +418,11 @@ query getProposalData($garden: ID!, $proposalId: ID!, $communityId: ID!) {
     blockLast
     convictionLast
     createdAt
+    metadataHash
     metadata {
       title
       description
     }
-    metadataHash
     proposalStatus
     requestedAmount
     requestedToken
@@ -470,11 +491,11 @@ query getStrategyByPool($poolId: BigInt!) {
     proposals {
       id
       proposalNumber
+      metadataHash
       metadata {
         title
         description
       }
-      metadataHash
       beneficiary
       requestedAmount
       requestedToken
@@ -502,28 +523,35 @@ query getCommunityTitles($communityAddr: ID!) {
 query getPoolTitles($poolId: BigInt!) {
   cvstrategies(where: { poolId: $poolId }) {
     poolId
-    metadata
+    metadataHash
+    metadata {
+      title
+      description
+    }
     registryCommunity {
       communityName
       garden {
         name
       }
     }
-    metadata
   }
 }
 
 query getProposalTitles($proposalId: ID!) {
   cvproposal(id: $proposalId) {
     proposalNumber
+    metadataHash
     metadata {
       title
       description
     }
-    metadataHash
     strategy {
       poolId
-      metadata
+      metadataHash
+      metadata {
+        title
+        description
+      }
       registryCommunity {
         communityName
         garden {
@@ -534,32 +562,12 @@ query getProposalTitles($proposalId: ID!) {
   }
 }
 
-query getPassportScorer($scorerId: ID!) {
-  passportScorer(id: $scorerId) {
-    id
-    strategies {
-      id
-      strategy {
-        id
-      }
-      threshold
-      councilSafe
-      active
-    }
-    users {
-      id
-      userAddress
-      score
-      lastUpdated
-    }
-  }
-}
-
 query getPassportStrategy($strategyId: ID!) {
   passportStrategy(id: $strategyId) {
     id
-    strategy {
+    passportScorer {
       id
+      type
     }
     threshold
     councilSafe
@@ -576,6 +584,27 @@ query getPassportUser($userId: ID!) {
   }
 }
 
+query getGoodDollarStrategy($strategyId: ID!) {
+  goodDollarStrategy(id: $strategyId) {
+    id
+    sybilProtection {
+      id
+      type
+    }
+    councilSafe
+    active
+  }
+}
+
+query getGoodDollarUser($userId: ID!) {
+  goodDollarUser(id: $userId) {
+    id
+    userAddress
+    verified
+    lastUpdated
+  }
+}
+
 query getProposalDisputes($proposalId: ID!) {
   proposalDisputes(where: { proposal_: { id: $proposalId } }) {
     id
@@ -584,6 +613,7 @@ query getProposalDisputes($proposalId: ID!) {
     challenger
     context
     metadata {
+      id
       reason
     }
     createdAt

@@ -426,8 +426,11 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         );
 
         uint256 voterStake = totalVoterStakePct[_member];
-        uint256 memberPower = registryCommunity.getMemberPowerInStrategy(_member, address(this));
-        uint256 unusedPower = memberPower > voterStake ? memberPower - voterStake : 0;
+        uint256 unusedPower;
+        {
+            uint256 memberPower = registryCommunity.getMemberPowerInStrategy(_member, address(this));
+            unusedPower = memberPower > voterStake ? memberPower - voterStake : 0;
+        }
         if (unusedPower < pointsToDecrease) {
             uint256 balancingRatio = ((pointsToDecrease - unusedPower) << 128) / voterStake;
             for (uint256 i = 0; i < voterStakedProposals[_member].length; i++) {
@@ -436,12 +439,14 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
                 uint256 stakedPoints = proposal.voterStakedPoints[_member];
                 uint256 newStakedPoints;
                 newStakedPoints = stakedPoints - ((stakedPoints * balancingRatio + (1 << 127)) >> 128);
-                uint256 oldStake = proposal.stakedAmount;
-                proposal.stakedAmount -= stakedPoints - newStakedPoints;
-                proposal.voterStakedPoints[_member] = newStakedPoints;
-                totalStaked -= stakedPoints - newStakedPoints;
-                totalVoterStakePct[_member] -= stakedPoints - newStakedPoints;
-                _calculateAndSetConviction(proposal, oldStake);
+                {
+                    uint256 oldStake = proposal.stakedAmount;
+                    proposal.stakedAmount -= stakedPoints - newStakedPoints;
+                    proposal.voterStakedPoints[_member] = newStakedPoints;
+                    totalStaked -= stakedPoints - newStakedPoints;
+                    totalVoterStakePct[_member] -= stakedPoints - newStakedPoints;
+                    _calculateAndSetConviction(proposal, oldStake);
+                }
                 emit SupportAdded(_member, proposalId, newStakedPoints, proposal.stakedAmount, proposal.convictionLast);
             }
         }

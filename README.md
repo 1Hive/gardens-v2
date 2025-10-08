@@ -1,8 +1,16 @@
 # Gardens v2
 
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![CodeQL](https://github.com/1Hive/gardens-v2/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/1Hive/gardens-v2/actions/workflows/github-code-scanning/codeql)
+[![CI](https://github.com/1Hive/gardens-v2/actions/workflows/ci.yaml/badge.svg)](https://github.com/1Hive/gardens-v2/actions/workflows/ci.yaml)
+[![Copilot](https://github.com/1Hive/gardens-v2/actions/workflows/copilot-swe-agent/copilot/badge.svg)](https://github.com/1Hive/gardens-v2/actions/workflows/copilot-swe-agent/copilot)
+
+[![Discord](https://img.shields.io/discord/749888500467054356?label=Discord&logo=discord&logoColor=white&color=7389D8&style=flat)](https://discord.gg/tJWPg69ZWG)
+[![Twitter Follow](https://img.shields.io/twitter/follow/gardens_fund?style=social)](https://twitter.com/gardens_fund)
+[![Farcaster](https://img.shields.io/badge/Farcaster-Protocol-purple?logo=farcaster&logoColor=white&labelColor=8A63D2)](https://farcaster.xyz/gardens)
+
 Gardens v2 is a modular governance framework that enables communities to create and manage multiple governance pools with customizable parameters and voting mechanisms. Our smart contracts are built to optimize for secure, flexible, intuitive, multi-network governance solutions.
 
-🌐 **[Launch Gardens v2 App](https://app.gardens.fund/)**
+🌱 **[Launch Gardens v2 App](https://app.gardens.fund/)**
 
 ## Features
 
@@ -21,8 +29,8 @@ Choose from multiple voting weight mechanisms to best suit your community's need
 
 - **Token-weighted**: Traditional 1 token = 1 vote
 - **Fixed**: Equal voting power for all members
-- **Quadratic**: Voting weight = square root of tokens staked
 - **Capped**: 1 token = 1 vote up to a maximum threshold
+- **Quadratic**: Voting weight = square root of tokens staked
 
 ### Multi-Network Support
 
@@ -33,6 +41,7 @@ Currently deployed on:
 - Arbitrum
 - Optimism
 - Base
+- Celo
 
 _More networks coming soon!_
 
@@ -54,56 +63,19 @@ Gardens v2 relies on the following apps and frameworks to be deployed:
 
 1. Visit [https://app.gardens.fund/](https://app.gardens.fund/)
 2. Connect your wallet
-3. Choose your network
-4. Create or join a community
-5. Activate your governance in governance pools to vote
-6. Increase your stake in the community to grow your voting power
-7. Create or dispute propoosals in pools
-8. Create governance pools in your community
-
-### Local Frontend Development
-
-Please message us in Discord for help with your own local deployment of Gardens.
-
-1. Requirements
-
-- [Node.js](https://nodejs.org/en/download/) (v18)
-- [pnpm](https://pnpm.io/installation) (v8.14)
-
-2. Clone the repository
-
-```bash
-git clone https://github.com/1Hive/gardens-v2.git
-```
-
-3. Install dependencies
-
-```bash
-pnpm install
-```
-
-4. Open the workspace (gardens-v2.code-workspace) in VSCode
-
-5. Open a terminal in the `apps/web` directory (Frontend package)
-
-6. Set up environment variables
-   -> Copy `.env.example` to `.env` and fill in the required environment variables (<KEY_NAME> placeholders)
-
-7. Start the development server
-
-```bash
-pnpm dev
-```
-
-8. Open http://localhost:3000 with your browser
-
-### Contracts Development
-
-🔜 Comming soon!
+3. Create or join a community on supported networks
+4. Activate your governance in governance pools to vote
+5. Increase your stake in the community to grow your voting power
+6. Create or dispute proposals in pools
+7. Create governance pools in your community
 
 ## Contributing
 
-We welcome contributions! Please see our [New Contributor Onboarding](https://1hive-gardens.notion.site/Gardens-New-Contributor-Onboarding-8ab2e08a585c46e3bcb36482d006c9e9?pvs=4) for details on how to get started.
+We welcome contributions! Start with the [Contributing Guide](./CONTRIBUTING.md) to learn about project structure, issue triage, development workflows, and documentation guidelines.
+
+## Security
+
+Please read our [Security Policy](./SECURITY.md) for responsible disclosure instructions, supported networks, and user best practices.
 
 ## 📚 Documentation
 
@@ -111,8 +83,8 @@ Gardens is fully open source - always has been, always will be. We're committed 
 
 ### Documentation Resources
 
-- \*\*[Gardens documentation](https://docs.gardens.fund)
-- \*\*[How to grow using Gardens](https://1hive-gardens.notion.site/How-to-grow-using-Gardens-84be339e761d462085dcb27db12d1c4c)
+- [Gardens documentation](https://docs.gardens.fund)
+- [How to grow using Gardens](https://1hive-gardens.notion.site/How-to-grow-using-Gardens-84be339e761d462085dcb27db12d1c4c)
 
 ### Documentation Principles
 
@@ -136,7 +108,4 @@ We welcome documentation improvements! For documentation issues or suggestions, 
 - 📚 [Documentation](https://docs.gardens.fund)
 - 💬 [Discord Community](https://discord.gg/tJWPg69ZWG)
 - 🐦 [Twitter](https://twitter.com/gardens_fund)
-
-```
-
-```
+- 🌌 [Farcaster](https://farcaster.xyz/gardens)

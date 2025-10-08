@@ -71,6 +71,7 @@ export const DisplayNumber = ({
     }
 
     if (typeof number === "string") {
+      if (number.endsWith(".")) number = number.slice(0, -1);
       return dn.format(dn.from(number), {
         compact: compact,
         digits: 2,

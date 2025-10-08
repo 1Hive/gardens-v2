@@ -6,11 +6,13 @@ import {
   MemberStrategy,
   Stake,
   Member,
-  ProposalDispute
+  ProposalDispute,
+  PoolMetadata
 } from "../../generated/schema";
 import {
   ProposalDisputeMetadata as ProposalDisputeMetadataTemplate,
-  ProposalMetadata as ProposalMetadataTemplate
+  ProposalMetadata as ProposalMetadataTemplate,
+  PoolMetadata as PoolMetadataTemplate
 } from "../../generated/templates";
 
 import {
@@ -35,12 +37,21 @@ import {
   InitializedCV3,
   InitializedCV3DataStruct,
   SuperfluidTokenUpdated,
-  SuperfluidGDAConnected
+  SuperfluidGDAConnected,
+  SuperfluidGDADisconnected
 } from "../../generated/templates/CVStrategyV0_0/CVStrategyV0_0";
 
 import { Allo as AlloContract } from "../../generated/templates/CVStrategyV0_0/Allo";
 
-import { Address, BigInt, ethereum, log } from "@graphprotocol/graph-ts";
+import {
+  Address,
+  BigInt,
+  ethereum,
+  log,
+  dataSource,
+  Bytes,
+  json
+} from "@graphprotocol/graph-ts";
 
 // export const CTX_PROPOSAL_ID = "proposalId";
 // export const CTX_METADATA_ID = "metadataId";
@@ -646,7 +657,7 @@ export function handleSybilScorerUpdated(event: SybilScorerUpdated): void {
     return;
   }
 
-  cvs.sybilScorer = event.params.sybilScorer.toHexString();
+  cvs.sybil = event.params.sybilScorer.toHexString();
   cvs.save();
 }
 
@@ -713,6 +724,22 @@ export function handleSuperfluidGDADisconnected(
   }
 }
 
+export function handlePoolMetadata(content: Bytes): void {
+  const cid = dataSource.stringParam();
+  log.debug("PoolMetadata: Received pool metadata with CID {}", [
+    cid.toString()
+  ]);
+
+  let metadata = new PoolMetadata(cid);
+  const value = json.fromBytes(content).toObject();
+
+  metadata.id = cid;
+  metadata.description = value.mustGet("description").toString();
+  metadata.title = value.mustGet("title").toString();
+
+  metadata.save();
+}
+
 /// -- Privates -- ///
 
 function computeConfig(
@@ -774,15 +801,24 @@ function computeInitialize(
   //   [registryCommunity, pType.toString(), maxAmount.toString()]
   // );
   const cvc = CVStrategyContract.bind(contractAddress);
-  let cvs = new CVStrategy(contractAddress.toHex());
+  const strategyId = contractAddress.toHex();
+  let cvs = CVStrategy.load(strategyId);
+  if (cvs == null) {
+    cvs = new CVStrategy(strategyId);
+  }
   let alloAddr = cvc.getAllo();
   log.debug("CVStrategy: alloAddr:{}", [alloAddr.toHexString()]);
   const allo = AlloContract.bind(alloAddr);
   const alloPool = allo.getPool(poolId);
   let metadata = alloPool.metadata.pointer;
-  if (metadata) {
+  if (metadata.length > 0) {
     log.debug("CVStrategy: metadata:{}", [metadata.toString()]);
-    cvs.metadata = metadata ? metadata.toString() : null;
+    PoolMetadataTemplate.create(metadata);
+    cvs.metadata = metadata;
+    cvs.metadataHash = metadata;
+  } else {
+    cvs.metadata = null;
+    cvs.metadataHash = null;
   }
   cvs.token = alloPool.token.toHexString();
   cvs.poolId = poolId;
@@ -792,7 +828,7 @@ function computeInitialize(
   cvs.maxCVSupply = BigInt.fromI32(0);
   cvs.totalEffectiveActivePoints = cvc.totalPointsActivated();
   cvs.isEnabled = false;
-  cvs.sybilScorer = data.sybilScorer.toHexString();
+  cvs.sybil = data.sybilScorer.toHexString();
   cvs.archived = false;
   config.proposalType = BigInt.fromI32(pType);
   config.pointSystem = BigInt.fromI32(pointSystem);

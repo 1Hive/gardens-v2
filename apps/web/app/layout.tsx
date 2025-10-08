@@ -1,7 +1,6 @@
 import "@/styles/globals.scss";
 import React from "react";
 import { Chakra_Petch, Inter } from "next/font/google";
-import { Bounce, ToastContainer } from "react-toastify";
 import Providers from "@/providers/Providers";
 import "react-toastify/dist/ReactToastify.css";
 import "@mdxeditor/editor/style.css";
@@ -33,27 +32,15 @@ export default function RootLayout({
     <html
       suppressHydrationWarning
       lang="en"
-      className={`${inter.variable} ${chakra.variable} bg-white`}
+      className={`${inter.variable} ${chakra.variable} bg-primary`}
+      data-theme="darkTheme"
     >
-      <body className="min-h-screen bg-white font-chakra">
+      <body className="min-h-screen bg-primary font-chakra">
         <div id="modal-root" />
+
         <Providers>
           <>{children}</>
         </Providers>
-        <ToastContainer
-          style={{ zIndex: 1000 }}
-          position="top-right"
-          autoClose={5000}
-          hideProgressBar={false}
-          newestOnTop={false}
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-          theme="light"
-          transition={Bounce}
-        />
       </body>
     </html>
   );

@@ -64,7 +64,7 @@ export function useHandleAllowance(
     if (args?.formAmount != null) {
       amount = args.formAmount;
     }
-    if (currentAllowance?.data != null && currentAllowance.data >= amount) {
+    if (currentAllowance?.data && currentAllowance.data >= amount) {
       await delayAsync(1000);
       setAllowanceTxProps((x) => ({
         ...x,
@@ -73,7 +73,7 @@ export function useHandleAllowance(
       }));
       triggerNextTx(args?.covenantSignature);
     } else {
-      if (currentAllowance?.data != null) {
+      if (currentAllowance?.data) {
         // Already found allowance but not enough, need to reset allowance
         setAllowanceTxProps({
           contractName: `${token?.symbol} allowance reset`,

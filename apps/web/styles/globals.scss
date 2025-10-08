@@ -11,8 +11,8 @@
   --border-neutral: #d5d5d5;
   --border-hover: #ff9500;
   --base-orange: #fff4e6;
-  /* add figma UI system color pallette light */
-  --color-grey-900: #000000;
+  --color-text: #000000 /* add figma UI system color pallette light */
+    --color-grey-900: #000000;
   --color-grey-500: #8c8c8c;
   --color-grey-400: #acacac;
   --color-grey-200: #eeeeee;
@@ -34,6 +34,11 @@
   --tooltip-text-color: #ffffff;
 }
 
+[data-theme="darkTheme"] {
+  --color-text: #eeeeee;
+  --border-neutral: #d5d5d550;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -42,7 +47,7 @@
 body {
   margin: 0;
   background-color: var(--color-background);
-  color: var(--color-grey-900);
+  color: var(--color-text);
   line-height: 1.15;
 }
 
@@ -54,6 +59,7 @@ h1 {
   font-weight: 700;
   line-height: 56px;
   text-align: left;
+  color: var(--color-text);
 
   /* @media only screen and (max-width: 680px) {
     font-size: 2.5rem;
@@ -66,6 +72,7 @@ h2 {
   font-weight: 600;
   line-height: 46px;
   text-align: left;
+  color: var(--color-text);
 
   /* @media only screen and (max-width: 680px) {
     font-size: 2rem;
@@ -78,6 +85,7 @@ h3 {
   font-weight: 500;
   line-height: auto;
   text-align: left;
+  color: var(--color-text);
 
   /* @media only screen and (max-width: 680px) {
     font-size: 1.75rem;
@@ -90,6 +98,7 @@ h4 {
   font-weight: 500;
   line-height: auto;
   text-align: left;
+  color: var(--color-text);
 
   /* @media only screen and (max-width: 680px) {
     font-size: 1.75rem;
@@ -104,6 +113,7 @@ h5,
   font-weight: 500;
   line-height: 22px;
   text-align: left;
+  color: var(--color-text);
 }
 
 /* subtitle 2 */
@@ -114,6 +124,7 @@ h6,
   font-weight: 500;
   line-height: 20px;
   text-align: left;
+  color: var(--color-text);
 }
 
 p {
@@ -122,6 +133,7 @@ p {
   font-weight: 400;
   line-height: 24px;
   text-align: left;
+  color: var(--color-text);
 
   /* @media only screen and (max-width: 680px) {
     font-size: 1rem;
@@ -132,6 +144,7 @@ span {
   font-family: var(--font-inter);
   font-size: 1rem;
   font-weight: 400;
+  color: var(--color-text);
 }
 
 button {
@@ -176,13 +189,30 @@ caption {
   --tooltip-text-color: #ffffff;
 }
 
+[data-theme="darkTheme"] .tooltip {
+  --tooltip-color: #243654;
+}
+
 .tooltip:before {
   white-space: pre-line;
   text-align: left;
 }
 
+dialog.modal::backdrop {
+  background-color: rgba(0, 0, 0, 0.55);
+}
+
+[data-theme="darkTheme"] dialog.modal::backdrop {
+  background-color: rgba(0, 0, 0, 0.75);
+}
+
+/* dark mode */
+[data-theme="darkTheme"] .skeleton {
+  background-color: #1f1f1f;
+}
+
 .banner {
-  @apply flex items-center gap-4 rounded-[20px] bg-secondary-soft p-4;
+  @apply flex items-center gap-4 rounded-[20px] bg-secondary-soft dark:bg-secondary-soft-dark p-4;
 }
 
 /* Hide number input arrows */
@@ -326,7 +356,8 @@ dialog * {
 
 /* MDXMarkdown */
 
-.mdxeditor-root-contenteditable {
+.mdxeditor-root-contenteditable,
+.wmde-markdown {
   ul {
     @apply list-disc ml-2;
   }
@@ -348,8 +379,72 @@ dialog * {
   h5 span {
     @apply text-base font-bold;
   }
+  a {
+    @apply text-accent underline;
+  }
 }
 
 .mdxeditor-popup-container {
+  position: fixed !important;
   z-index: 999999999 !important;
+  background-color: var(--baseBase);
+
+  button {
+    cursor: pointer;
+  }
+}
+
+// Hide diff source button
+._ggDiffSourceToggle_1e2ox_994 ._toolbarToggleItem_1e2ox_208:nth-of-type(2) {
+  display: none !important;
+}
+
+.mdxeditor-toolbar {
+  button {
+    cursor: pointer;
+  }
+}
+
+.mdxeditor-select-content {
+  div[role="option"] {
+    cursor: pointer;
+  }
+}
+
+.dark-editor {
+  --basePageBg: var(--p);
+  --baseTextColor: var(--color-text);
+
+  ._selectTrigger_1e2ox_308 {
+    background-color: var(--baseBase);
+    color: var(--color-text);
+  }
+
+  ._placeholder_1e2ox_1106 p {
+    color: #9f9f9f;
+  }
+
+  .cm-editor {
+    .cm-activeLineGutter {
+      background-color: var(--baseBg);
+    }
+    background-color: var(--baseBase);
+    color: var(--color-text);
+  }
+
+  &.mdxeditor-popup-container {
+    --basePageBg: var(--p);
+    --baseTextColor: var(--color-text);
+
+    div {
+      background-color: var(--baseBase);
+      color: var(--color-text);
+
+      .mdxeditor-select-content {
+        div[role="option"]:hover {
+          background-color: var(--baseBg);
+        }
+      }
+    }
+  }
 }

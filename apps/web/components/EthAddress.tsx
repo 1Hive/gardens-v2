@@ -7,6 +7,7 @@ import { useEnsName, useEnsAvatar } from "wagmi";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { isSafeAvatarUrl } from "@/app/api/utils";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
+import { useTheme } from "@/providers/ThemeProvider";
 import { shortenAddress as shortenAddressFn } from "@/utils/text";
 
 type EthAddressProps = {
@@ -34,22 +35,7 @@ export const EthAddress = ({
 }: EthAddressProps) => {
   const divParentRef = React.useRef<HTMLDivElement>(null);
   const chain = useChainFromPath();
-  // const topLayerNode = document.getElementById("dialog");
-  // const theme: ThemeDeclaration = {
-  //   textColor: "black",
-  //   // secondaryColor: "black",
-  //   focusColor: "black",
-  //   fontSize: 12,
-  //   badgeHeight: 12,
-  //   badgeGap: 12,
-  //   badgeRadius: 12,
-  //   badgeBackground: "black",
-  //   badgePadding: 12,
-  //   badgeLabelPadding: 12,
-  //   popupBackground: "black",
-  //   popupRadius: 12,
-  //   popupShadow: "black",
-  // };
+  const { resolvedTheme } = useTheme();
 
   const { data: ensName } = useEnsName({
     address: address as Address,
@@ -81,7 +67,7 @@ export const EthAddress = ({
         <Addreth
           // theme={theme}
           theme={{
-            base: "simple-light",
+            base: `simple-${resolvedTheme === "lightTheme" ? "light" : "dark"}`,
             textColor: textColor,
             badgeIconRadius: 12,
             badgeHeight: 32,

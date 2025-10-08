@@ -43,8 +43,10 @@ export function FormPreview({ title, description, formRows }: Props) {
 const PreviewDataRow = ({ label, data }: FormRow) => {
   return (
     <div className="px-4 py-2 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
-      <dt className="text-lg font-medium leading-6 text-gray-900">{label}</dt>
-      <dd className="mt-1 leading-6 text-gray-700 sm:col-span-2 sm:mt-0 first-letter:capitalize">
+      <dt className="text-lg font-medium leading-6 text-neutral-content">
+        {label}
+      </dt>
+      <dd className="mt-1 leading-6 text-neutral-content sm:col-span-2 sm:mt-0 first-letter:capitalize">
         {data}
       </dd>
     </div>

@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { AnyVariables, DocumentInput, OperationContext } from "@urql/next";
 import { isEqual } from "lodash-es";
 import { toast } from "react-toastify";
 import { useChainIdFromPath } from "./useChainIdFromPath";
-import { useCheat } from "./useCheat";
+import { useFlag } from "./useFlag";
 import { useIsMounted } from "./useIsMounted";
+import { LoadingToast } from "@/components";
 import { getConfigByChain } from "@/configs/chains";
 import {
   ChangeEventScope,
@@ -69,7 +70,7 @@ export function useSubgraphQuery<
   const latestResponse = useRef({ variables, response });
   const subscritionId = useRef<SubscriptionId>();
   const fetchingRef = useRef(false);
-  const skipPublished = useCheat("skipPublished");
+  const skipPublished = useFlag("skipPublished");
 
   useEffect(() => {
     latestResponse.current.response = response; // Update ref on every response change
@@ -136,9 +137,7 @@ export function useSubgraphQuery<
 
     let res;
     try {
-      const shouldSkipPublished =
-        skipPublished || process.env.NEXT_PUBLIC_SKIP_PUBLISHED === "true";
-      res = await urqlQuery(shouldSkipPublished);
+      res = await urqlQuery(skipPublished);
       if (!res.data && res.error) {
         throw res.error;
       }
@@ -176,20 +175,33 @@ export function useSubgraphQuery<
   const refetch = async (
     retryCount?: number,
   ): Promise<Awaited<ReturnType<typeof fetch>>> => {
-    const result = await fetch();
-
     if (!retryCount) {
       retryCount = 0;
-      toast.loading("Pulling new data", {
+    }
+
+    const toastContent = React.createElement(LoadingToast, {
+      message: "Pulling new data",
+    });
+
+    if (toast.isActive(pendingRefreshToastId)) {
+      toast.update(pendingRefreshToastId, {
+        render: toastContent,
+      });
+    } else {
+      toast.loading(toastContent, {
         toastId: pendingRefreshToastId,
         autoClose: false,
         closeOnClick: true,
+        closeButton: false,
+        icon: false,
         style: {
           width: "fit-content",
           marginLeft: "auto",
         },
       });
     }
+
+    const result = await fetch();
 
     if (result.error) {
       console.error("⚡ Error fetching subgraph data:", result.error);

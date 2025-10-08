@@ -1,9 +1,15 @@
 import React from "react";
 
-export const CeloLogo = ({ className }: { className?: string }) => {
+export const CeloLogo = ({
+  className,
+  height,
+}: {
+  className?: string;
+  height?: number;
+}) => {
   return (
     <svg
-      height="14"
+      height={height}
       viewBox="0 0 250 250"
       xmlns="http://www.w3.org/2000/svg"
       xmlnsXlink="http://www.w3.org/1999/xlink"

@@ -14,16 +14,21 @@ import { FetchTokenResult } from "@wagmi/core";
 import cn from "classnames";
 
 import { Dnum, multiply } from "dnum";
-import Head from "next/head";
+import { Maybe } from "graphql/jsutils/Maybe";
+import { AnimatePresence, motion } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
 import { Address } from "viem";
 import { useAccount, useToken } from "wagmi";
 import {
+  CVProposal,
+  CVStrategy,
+  CVStrategyConfig,
   getCommunityDocument,
   getCommunityQuery,
   isMemberDocument,
   isMemberQuery,
+  PoolMetadata,
 } from "#/subgraph/.graphclient";
 import {
   CommunityLogo,
@@ -52,15 +57,15 @@ import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { ONE_HIVE_COMMUNITY_ADDRESS } from "@/globals";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
-import { useCheat } from "@/hooks/useCheat";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useCouncil } from "@/hooks/useCouncil";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
+import { useFlag } from "@/hooks/useFlag";
+import { useIpfsFetch } from "@/hooks/useIpfsFetch";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { getProtopiansOwners } from "@/services/alchemy";
 import { registryCommunityABI } from "@/src/generated";
 import { Column, PoolTypes } from "@/types";
-import { fetchIpfs } from "@/utils/ipfsUtils";
 import {
   calculatePercentageBigInt,
   parseToken,
@@ -88,8 +93,7 @@ export default function Page({
 }) {
   const searchParams = useCollectQueryParams();
   const { address: accountAddress } = useAccount();
-  const [covenant, setCovenant] = useState<string | undefined>();
-  const showArchived = useCheat("showArchived");
+  const showArchived = useFlag("showArchived");
   const [openCommDetails, setOpenCommDetails] = useState(false);
   const isFetchingNFT = useRef<boolean>(false);
   const { publish } = usePubSubContext();
@@ -118,6 +122,14 @@ export default function Page({
   });
 
   const registryCommunity = result?.registryCommunity;
+
+  const { data: covenantResult } = useIpfsFetch<{ covenant: string }>({
+    hash: registryCommunity?.covenantIpfsHash,
+    enabled: registryCommunity != null && !registryCommunity.covenant,
+  });
+
+  const covenant =
+    registryCommunity?.covenant?.text ?? covenantResult?.covenant;
 
   const { isCouncilSafe, isCouncilMember, councilMembers } = useCouncil({
     strategyOrCommunity: registryCommunity,
@@ -211,24 +223,6 @@ export default function Page({
       console.error("Error while fetching community data: ", error);
     }
   }, [error]);
-
-  useEffect(() => {
-    const fetchCovenant = async () => {
-      if (registryCommunity?.covenantIpfsHash) {
-        try {
-          const json = await fetchIpfs<{ covenant: string }>(
-            registryCommunity.covenantIpfsHash,
-          );
-          if (json && typeof json.covenant === "string") {
-            setCovenant(json.covenant);
-          }
-        } catch (err) {
-          console.error(err);
-        }
-      }
-    };
-    fetchCovenant();
-  }, [registryCommunity?.covenantIpfsHash]);
 
   const communityStakedTokens =
     members?.reduce(
@@ -377,7 +371,7 @@ export default function Page({
     <>
       <div className="col-span-12 xl:col-span-9">
         <div className="backdrop-blur-sm flex flex-col gap-10">
-          <header className="bg-white border border-gray-200 shadow-sm section-layout">
+          <header className="border border-gray-200 shadow-sm section-layout">
             <div className="flex flex-col sm:flex-row items-start space-y-4 sm:space-y-0 sm:space-x-4">
               {/* Image */}
               <div className="flex-shrink-0">
@@ -440,6 +434,8 @@ export default function Page({
                         ]}
                         compact={true}
                         tokenSymbol={tokenGarden.symbol}
+                        valueClassName="text-inherit"
+                        symbolClassName="text-inherit"
                       />
                     </Statistic>
                   </div>
@@ -454,7 +450,7 @@ export default function Page({
                           tooltipMessage ? tooltipMessage
                           : isCouncilMember ?
                             "Connect with Council Safe"
-                          : "Archive this pool will hide it from being listed in the home page but will remain accessible through a link."
+                          : "Archive this community will hide it from being listed in the home page but will remain accessible through a link."
 
                         }
                         forceShowTooltip={result.registryCommunity?.archived}
@@ -471,7 +467,7 @@ export default function Page({
                       </Button>
                     )}
                     <RegisterMember
-                      memberData={isMemberResult}
+                      memberData={accountAddress ? isMemberResult : undefined}
                       registrationCost={getTotalRegistrationCost()}
                       token={tokenGarden}
                       registryCommunity={registryCommunity}
@@ -498,8 +494,7 @@ export default function Page({
                                 getTotalRegistrationCost(),
                                 tokenGarden?.decimals,
                               ]}
-                              valueClassName="text-xl font-bold text-primary-content"
-                              symbolClassName="text-primary-content"
+                              valueClassName="text-xl font-bold"
                               disableTooltip={true}
                               compact={true}
                               copiable={true}
@@ -512,12 +507,11 @@ export default function Page({
                   </div>
                   <Button
                     onClick={() => setOpenCommDetails(!openCommDetails)}
-                    btnStyle="outline"
-                    color="disabled"
-                    className="absolute top-0 right-0 md:flex items-start sm:w-auto border-none hover:opacity-75"
+                    btnStyle="link"
+                    color="tertiary"
                     icon={
                       <ChevronUpIcon
-                        className={`h-4 w-4 font-bold text-black transition-transform duration-200 ease-in-out ${cn(
+                        className={`h-4 w-4 font-bold transition-transform duration-200 ease-in-out ${cn(
                           {
                             "rotate-180": !openCommDetails,
                           },
@@ -541,75 +535,47 @@ export default function Page({
             )}
           </header>
 
-          {/* Pools Section */}
-          <section className="flex flex-col gap-10 py-4">
-            <header className="flex  items-center justify-between ">
-              <h2>Pools</h2>
-              <Link
-                href={`/gardens/${chain?.id}/${tokenAddr}/${communityAddr}/create-pool`}
+          <header className="flex items-center justify-between">
+            <h2>Pools</h2>
+            <Link
+              href={`/gardens/${chain?.id}/${tokenAddr}/${communityAddr}/create-pool`}
+            >
+              <Button
+                btnStyle="filled"
+                disabled={!isConnected || missmatchUrl}
+                tooltip={tooltipMessage}
+                icon={<PlusIcon height={24} width={24} />}
               >
-                <Button
-                  btnStyle="filled"
-                  disabled={!isConnected || missmatchUrl}
-                  tooltip={tooltipMessage}
-                  icon={<PlusIcon height={24} width={24} />}
-                >
-                  Create New Pool
-                </Button>
-              </Link>
-            </header>
-            <div className="flex flex-col gap-4 ">
-              <h4 className="">Funding ({fundingPools.length})</h4>
-              {/* Funding Pools */}
-              <div className="pool-layout">
-                {fundingPools.map((pool) => (
-                  <Fragment key={pool.poolId}>
-                    <PoolCard token={pool.token} pool={pool} />
-                  </Fragment>
-                ))}
-              </div>
-            </div>
-            {/* Signaling Pools */}
-            <div className="flex flex-col gap-4">
-              <h4>Signaling ({signalingPools.length})</h4>
-              <div className="pool-layout">
-                {signalingPools.map((pool) => (
-                  <PoolCard key={pool.poolId} token={pool.token} pool={pool} />
-                ))}
-              </div>
-            </div>
-            {/* Pools in Review */}
-            <div className="flex flex-col gap-4">
-              <h4>In Review ({poolsInReview.length})</h4>
-              <div className="pool-layout">
-                {poolsInReview.map((pool) => (
-                  <PoolCard key={pool.poolId} token={pool.token} pool={pool} />
-                ))}
-              </div>
-            </div>
+                Create New Pool
+              </Button>
+            </Link>
+          </header>
 
-            {(!!isCouncilMember || isCouncilSafe || showArchived) && (
-              <div className="flex flex-col gap-4">
-                <h4>Archived ({poolsArchived.length})</h4>
-                {/* Archived Pools */}
-                <div className="pool-layout">
-                  {poolsArchived.map((pool) => (
-                    <PoolCard
-                      key={pool.poolId}
-                      token={pool.token}
-                      pool={pool}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-          </section>
+          {/* Pools Section */}
+          <PoolSection title="Funding" pools={fundingPools} defaultExpanded />
+          <PoolSection
+            title="Signaling"
+            pools={signalingPools}
+            defaultExpanded
+          />
+          <PoolSection
+            title="In Review"
+            pools={poolsInReview}
+            defaultExpanded={false}
+          />
+          {(!!isCouncilMember || isCouncilSafe || showArchived) && (
+            <PoolSection
+              title="Archived"
+              pools={poolsArchived}
+              defaultExpanded={false}
+            />
+          )}
 
           <section ref={covenantSectionRef} className="p-8">
             <h2 className="mb-4">Covenant</h2>
             {registryCommunity?.covenantIpfsHash ?
               <Skeleton isLoading={!covenant} rows={5}>
-                <MarkdownWrapper source={covenant!} />
+                <MarkdownWrapper source={covenant} />
               </Skeleton>
             : <p className="italic">No covenant was submitted.</p>}
             <div className="mt-10 flex justify-center">
@@ -630,7 +596,7 @@ export default function Page({
       <div className="col-span-12 xl:col-span-3">
         <div className="backdrop-blur-sm rounded-lg flex flex-col gap-2 sticky top-32">
           <IncreasePower
-            memberData={isMemberResult}
+            memberData={accountAddress ? isMemberResult : undefined}
             registryCommunity={registryCommunity}
             tokenGarden={tokenGarden}
             registrationAmount={registrationAmount}
@@ -700,5 +666,66 @@ const CommunityDetailsTable = ({
         </div>
       }
     />
+  );
+};
+
+//pool section component and types
+type Pool = Pick<
+  CVStrategy,
+  "id" | "archived" | "isEnabled" | "poolId" | "metadataHash"
+> & {
+  proposals: Pick<CVProposal, "id">[];
+  config: Pick<CVStrategyConfig, "proposalType" | "pointSystem">;
+  token: any;
+  metadata?: Maybe<Omit<PoolMetadata, "id">>;
+};
+interface PoolSectionProps {
+  title: string;
+  pools: Pool[];
+  defaultExpanded?: boolean;
+}
+const PoolSection = ({
+  title,
+  pools,
+  defaultExpanded = true,
+}: PoolSectionProps) => {
+  const [expanded, setExpanded] = useState(defaultExpanded);
+
+  return (
+    <div className="flex flex-col gap-2">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="flex items-center gap-2"
+        aria-label={expanded ? "Collapse" : "Expand"}
+      >
+        <h4>
+          {title} ({pools.length})
+        </h4>
+        <motion.div
+          animate={{ rotate: expanded ? 0 : 180 }}
+          transition={{ duration: 0.3 }}
+        >
+          <ChevronUpIcon className="w-5 h-5" strokeWidth={3} />
+        </motion.div>
+      </button>
+
+      <AnimatePresence initial={false}>
+        {expanded && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
+            className="overflow-hidden"
+          >
+            <div className="pool-layout">
+              {pools.map((pool) => (
+                <PoolCard key={pool.poolId} pool={pool} token={pool.token} />
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 };

@@ -24,9 +24,9 @@ import { Modal } from "./Modal";
 import { Skeleton } from "./Skeleton";
 import { TransactionModal, TransactionProps } from "./TransactionModal";
 import { SuperfluidStream } from "@/assets";
-import { useCheat } from "@/hooks/useCheat";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
+import { useFlag } from "@/hooks/useFlag";
 import { useHandleAllowance } from "@/hooks/useHandleAllowance";
 import { useSuperfluidStream } from "@/hooks/useSuperfluidStream";
 import { superfluidCFAv1ForwarderAbi, superTokenABI } from "@/src/customAbis";
@@ -83,7 +83,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
   const [isTransferModalOpened, setIsTransferModalOpened] = useState(false);
   const [forceAllBalanceUsage, setForceAllBalanceUsage] = useState(false);
 
-  const showUseSuperTokenBalance = useCheat("showUseSuperTokenBalance");
+  const showUseSuperTokenBalance = useFlag("showUseSuperTokenBalance");
   const {
     currentUserOtherFlowRateBn,
     currentFlowRateBn,
@@ -466,7 +466,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
   };
 
   const fundAmountInput = (
-    <label className="input input-bordered input-info flex items-center gap-2">
+    <label className="input input-bordered input-info flex items-center gap-2 dark:bg-primary-soft-dark">
       <input
         max={walletBalance?.formatted}
         min={0}
@@ -480,7 +480,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
         required
         type="number"
         placeholder="0"
-        className="grow"
+        className="grow dark:bg-primary-soft-dark"
       />
       {poolToken.symbol}
     </label>
@@ -587,7 +587,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                   -
                 </button>
                 <input
-                  className="input input-bordered input-info w-24"
+                  className="input input-bordered dark:bg-primary-soft-dark input-info w-24"
                   id="duration"
                   placeholder="1"
                   min={1}
@@ -768,7 +768,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                     number={[poolToken.balance, poolToken.decimals]}
                     tokenSymbol={poolToken.symbol}
                     compact={true}
-                    valueClassName="text-2xl mr-1 font-bold text-primary-content"
+                    valueClassName="text-2xl mr-1 font-bold"
                   />
                 </div>
               </div>
@@ -813,8 +813,8 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                     ]}
                     tokenSymbol={poolToken.symbol}
                     compact={true}
-                    valueClassName="text-black text-lg"
-                    symbolClassName="text-sm text-black"
+                    valueClassName="text-lg"
+                    symbolClassName="text-sm"
                   />
                 </div>
               )}
@@ -836,7 +836,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                 Add Funds
               </Button>
               {!missmatchUrl && isConnected && (
-                <ul className="dropdown-content menu bg-base-100 rounded-box z-[1] w-full p-2 shadow">
+                <ul className="dropdown-content menu bg-primary rounded-box z-[1] w-full p-2 shadow">
                   <li>
                     <Button
                       type="submit"

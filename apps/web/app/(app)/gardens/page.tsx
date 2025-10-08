@@ -9,23 +9,37 @@ import {
   getCommunitiesDocument,
   getCommunitiesQuery,
 } from "#/subgraph/.graphclient";
-import { clouds1, clouds2, grassLarge, tree2, tree3 } from "@/assets";
+import {
+  clouds1,
+  clouds2,
+  grassLarge,
+  tree2,
+  tree3,
+  gardensNight,
+} from "@/assets";
 import { Button, Communities } from "@/components";
 import { LightCommunity } from "@/components/Communities";
-import { useCheat } from "@/hooks/useCheat";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
+import { useFlag } from "@/hooks/useFlag";
 import { useSubgraphQueryMultiChain } from "@/hooks/useSubgraphQueryMultiChain";
+import { useTheme } from "@/providers/ThemeProvider";
 import { getProtopiansOwners } from "@/services/alchemy";
 import { safeABI } from "@/src/customAbis";
 
 // Components
 const Header = () => {
   const { tooltipMessage, isConnected } = useDisableButtons();
+  const { resolvedTheme } = useTheme();
   return (
     <header className="flex flex-col items-center gap-8 ">
       <div className="flex items-center text-center">
         <div className="relative flex-1">
-          <Image src={clouds1} alt="clouds" width={175} height={175} />
+          <Image
+            src={resolvedTheme === "lightTheme" ? clouds1 : gardensNight}
+            alt="clouds"
+            width={175}
+            height={175}
+          />
         </div>
         <div className="mx-10 flex flex-col items-center gap-5">
           <div className="flex flex-col items-center">
@@ -75,17 +89,17 @@ const Footer = () => {
           <Image
             src={tree2}
             alt="tree"
-            className="absolute bottom-0 -left-10 h-52"
+            className="absolute bottom-0 -left-10 h-32 sm:h-52"
           />
           <Image
             src={tree3}
             alt="tree"
-            className="absolute bottom-0 -right-10 h-60"
+            className="absolute bottom-0 -right-10 h-40 sm:h-60"
           />
           <Image
             src={grassLarge}
             alt="grass"
-            className="absolute bottom-0 min-w-[1080px]"
+            className="absolute bottom-0 min-w-[600px] sm:min-w-[1080px]"
           />
         </div>
       </div>
@@ -99,7 +113,7 @@ export default function GardensPage() {
     undefined,
   );
 
-  const showArchived = useCheat("showArchived");
+  const showArchived = useFlag("showArchived");
 
   useEffect(() => {
     getProtopiansOwners()
@@ -127,7 +141,11 @@ export default function GardensPage() {
             )
             .filter((x) => !x.archived || showArchived)
             .map(async (x) => {
-              if ((protopianOwners && protopianOwners.length > 0) && x.chain.safePrefix) {
+              if (
+                protopianOwners &&
+                protopianOwners.length > 0 &&
+                x.chain.safePrefix
+              ) {
                 // Council Safe supported
                 const councilSafeAddress = x.councilSafe as Address;
                 try {

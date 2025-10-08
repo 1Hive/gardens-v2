@@ -94,7 +94,7 @@ async function extractProxies(chainId) {
   cvstrategies {
     id
   }
-  passportScorers {
+  sybilProtections {
     id
   }
 }`;
