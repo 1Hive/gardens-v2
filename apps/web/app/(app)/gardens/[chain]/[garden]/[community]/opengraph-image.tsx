@@ -19,7 +19,7 @@ export const size = {
 export const contentType = "image/png";
 export const description =
   "Gardens community for collective decision-making and funding.";
-const FALLBACK_TITLE = "Gardens community";
+export const FALLBACK_TITLE = "Gardens community";
 
 // Image generation
 type ImageParams = {
@@ -112,151 +112,164 @@ async function renderImage(title: string, chainId: number) {
           width: "100%",
           height: "100%",
           display: "flex",
-          flexDirection: "column",
-          justifyContent: "space-between",
           backgroundColor: "#F8FAFC",
-          padding: "64px",
+          padding: "48px",
           color: "#0F172A",
           fontFamily:
             '"Inter", "Manrope", "Helvetica Neue", "Arial", sans-serif',
-          gap: "48px",
         }}
       >
         <div
           style={{
             display: "flex",
-            alignItems: "flex-start",
+            flexDirection: "column",
             justifyContent: "space-between",
+            alignItems: "stretch",
+            height: "100%",
+            width: "100%",
+            borderRadius: "40px",
+            backgroundColor: "#FFFFFF",
+            padding: "48px",
+            boxShadow: "0 30px 60px rgba(79, 70, 229, 0.18)",
+            gap: "48px",
           }}
         >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "flex-start",
+              justifyContent: "space-between",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "20px",
+              }}
+            >
+              {gardenImageSrc ?
+                // eslint-disable-next-line @next/next/no-img-element -- Rendering inside ImageResponse.
+                <img
+                  alt="Gardens logo"
+                  src={gardenImageSrc}
+                  style={{
+                    height: "50px",
+                    width: "50px",
+                  }}
+                />
+              : <span
+                  style={{
+                    fontSize: "48px",
+                    fontWeight: 700,
+                    color: "#15803D",
+                  }}
+                >
+                  🌱
+                </span>
+              }
+              <span
+                style={{
+                  fontSize: "32px",
+                  fontWeight: 600,
+                  color: "#1c1d1c",
+                  lineHeight: 1,
+                  fontFamily:
+                    '"Inter", "Inter Fallback", system-ui, Arial, sans-serif',
+                }}
+              >
+                Gardens
+              </span>
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "flex-end",
+                gap: "12px",
+              }}
+            >
+              <ChainIcon chain={chainId} height={50} width={50} />
+            </div>
+          </div>
+
           <div
             style={{
               display: "flex",
               alignItems: "center",
-              gap: "20px",
+              gap: "48px",
+              flexGrow: 1,
             }}
           >
-            {gardenImageSrc ?
+            {communityImageSrc ?
               // eslint-disable-next-line @next/next/no-img-element -- Rendering inside ImageResponse.
               <img
-                alt="Gardens logo"
-                src={gardenImageSrc}
+                alt="Community illustration"
+                src={communityImageSrc}
                 style={{
-                  height: "50px",
-                  width: "50px",
+                  width: "200px",
+                  height: "200px",
                 }}
               />
-            : <span
+            : <div
                 style={{
-                  fontSize: "48px",
+                  width: "200px",
+                  height: "200px",
+                  borderRadius: "40px",
+                  backgroundColor: "#DDD6FE",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "88px",
                   fontWeight: 700,
-                  color: "#15803D",
+                  color: "#6D28D9",
                 }}
               >
                 🌱
-              </span>
+              </div>
             }
-            <span
-              style={{
-                fontSize: "32px",
-                fontWeight: 600,
-                color: "#1c1d1c",
-                lineHeight: 1,
-                fontFamily:
-                  '"Inter", "Inter Fallback", system-ui, Arial, sans-serif',
-              }}
-            >
-              Gardens
-            </span>
-          </div>
 
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "flex-end",
-              gap: "12px",
-            }}
-          >
-            <ChainIcon chain={chainId} height={50} width={50} />
-          </div>
-        </div>
-
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "48px",
-            flexGrow: 1,
-          }}
-        >
-          {communityImageSrc ?
-            // eslint-disable-next-line @next/next/no-img-element -- Rendering inside ImageResponse.
-            <img
-              alt="Community illustration"
-              src={communityImageSrc}
+            <div
               style={{
-                width: "200px",
-                height: "200px",
-              }}
-            />
-          : <div
-              style={{
-                width: "200px",
-                height: "200px",
-                borderRadius: "40px",
-                backgroundColor: "#DDD6FE",
                 display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "88px",
-                fontWeight: 700,
-                color: "#6D28D9",
+                flexDirection: "column",
+                gap: "15px",
+                maxWidth: "640px",
               }}
             >
-              🌱
+              <span
+                style={{
+                  fontSize: "72px",
+                  fontWeight: 700,
+                  lineHeight: 1.05,
+                }}
+              >
+                {safeTitle}
+              </span>
+
+              <span
+                style={{
+                  fontSize: "32px",
+                  color: "#475569",
+                  lineHeight: 1.4,
+                }}
+              >
+                A Gardens community for collective decision-making and funding.
+              </span>
             </div>
-          }
+          </div>
 
           <div
             style={{
               display: "flex",
-              flexDirection: "column",
-              gap: "15px",
-              maxWidth: "640px",
+              justifyContent: "flex-end",
+              fontSize: "32px",
+              color: "#1E293B",
             }}
           >
-            <span
-              style={{
-                fontSize: "72px",
-                fontWeight: 700,
-                lineHeight: 1.05,
-              }}
-            >
-              {safeTitle}
-            </span>
-
-            <span
-              style={{
-                fontSize: "32px",
-                color: "#475569",
-                lineHeight: 1.4,
-              }}
-            >
-              A Gardens community for collective decision-making and funding.
-            </span>
+            <span style={{ color: "#475569" }}>{footerMessage}</span>
           </div>
-        </div>
-
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "flex-end",
-            fontSize: "32px",
-            color: "#1E293B",
-          }}
-        >
-          <span style={{ color: "#475569" }}>{footerMessage}</span>
         </div>
       </div>
     ),
