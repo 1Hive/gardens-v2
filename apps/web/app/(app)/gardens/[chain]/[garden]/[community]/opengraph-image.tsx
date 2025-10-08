@@ -1,9 +1,14 @@
 import { readFile } from "fs/promises";
 import path from "path";
+import type { Metadata } from "next";
 import { ImageResponse } from "next/og";
 import { getCommunityNameDocument } from "#/subgraph/.graphclient";
 import { chainConfigMap, ChainIcon } from "@/configs/chains";
 import { queryByChain } from "@/providers/urql";
+import {
+  COMMUNITY_IMAGE_BASE64,
+  GARDEN_LOGO_BASE64,
+} from "./ogAssets";
 
 export const runtime = "nodejs";
 
@@ -15,6 +20,9 @@ export const size = {
 };
 
 export const contentType = "image/png";
+export const description =
+  "Gardens community for collective decision-making and funding.";
+const FALLBACK_TITLE = "Gardens community";
 
 // Image generation
 type ImageParams = {
@@ -23,14 +31,21 @@ type ImageParams = {
   community: string;
 };
 
+const isLocalEnvironment =
+  (process.env.NODE_ENV === "development" && !process.env.VERCEL) ||
+  process.env.GARDENS_LOCAL_OG === "true";
+
 let cachedCommunityImageDataUrl: string | null = null;
-const COMMUNITY_IMAGE_PATH = path.resolve(
+const COMMUNITY_IMAGE_SOURCE = path.resolve(
   process.cwd(),
   "assets/CommunityImage.png",
 );
 
 let cachedGardenLogoDataUrl: string | null = null;
-const GARDEN_LOGO_PATH = path.resolve(process.cwd(), "assets/NewLogo.png");
+const GARDEN_LOGO_SOURCE = path.resolve(
+  process.cwd(),
+  "assets/NewLogo.png",
+);
 
 const FOOTER_MESSAGES = [
   "Collaborate • Propose ideas • Grow your community",
@@ -45,8 +60,13 @@ async function getCommunityImageDataUrl() {
     return cachedCommunityImageDataUrl;
   }
 
-  const imageBuffer = await readFile(COMMUNITY_IMAGE_PATH);
-  cachedCommunityImageDataUrl = `data:image/png;base64,${imageBuffer.toString("base64")}`;
+  if (isLocalEnvironment) {
+    const imageBuffer = await readFile(COMMUNITY_IMAGE_SOURCE);
+    cachedCommunityImageDataUrl = `data:image/png;base64,${imageBuffer.toString("base64")}`;
+  } else {
+    cachedCommunityImageDataUrl = `data:image/png;base64,${COMMUNITY_IMAGE_BASE64}`;
+  }
+
   return cachedCommunityImageDataUrl;
 }
 
@@ -55,8 +75,13 @@ async function getGardenLogoDataUrl() {
     return cachedGardenLogoDataUrl;
   }
 
-  const imageBuffer = await readFile(GARDEN_LOGO_PATH);
-  cachedGardenLogoDataUrl = `data:image/png;base64,${imageBuffer.toString("base64")}`;
+  if (isLocalEnvironment) {
+    const imageBuffer = await readFile(GARDEN_LOGO_SOURCE);
+    cachedGardenLogoDataUrl = `data:image/png;base64,${imageBuffer.toString("base64")}`;
+  } else {
+    cachedGardenLogoDataUrl = `data:image/png;base64,${GARDEN_LOGO_BASE64}`;
+  }
+
   return cachedGardenLogoDataUrl;
 }
 
@@ -257,6 +282,68 @@ async function renderImage(title: string, chainId: number) {
       ...size,
     },
   );
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: ImageParams;
+}): Promise<Metadata> {
+  const chainId = Number(params.chain);
+  const chainConfig = chainConfigMap[params.chain] ?? chainConfigMap[chainId];
+
+  const fallbackMetadata: Metadata = {
+    title: FALLBACK_TITLE,
+    description,
+  };
+
+  if (chainConfig == null) {
+    console.error(
+      "Unsupported chainId for community opengraph-image metadata.",
+      { chainId: params.chain },
+    );
+    return fallbackMetadata;
+  }
+
+  try {
+    const communityResult = await queryByChain(
+      chainConfig,
+      getCommunityNameDocument,
+      {
+        communityAddr: params.community,
+      },
+      undefined,
+      true,
+    );
+
+    if (communityResult.error) {
+      console.error("Error fetching community metadata for OG image.", {
+        chainId: params.chain,
+        community: params.community,
+        error: communityResult.error,
+      });
+      return fallbackMetadata;
+    }
+
+    const communityName =
+      communityResult?.data?.registryCommunity?.communityName?.trim();
+
+    if (!communityName) {
+      return fallbackMetadata;
+    }
+
+    return {
+      title: communityName,
+      description,
+    };
+  } catch (error) {
+    console.error("Failed to generate metadata for community OG image.", {
+      chainId: params.chain,
+      community: params.community,
+      error,
+    });
+    return fallbackMetadata;
+  }
 }
 
 export default async function Image({ params }: { params: ImageParams }) {
