@@ -7,8 +7,8 @@ import { useEnsName, useEnsAvatar } from "wagmi";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { isSafeAvatarUrl } from "@/app/api/utils";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
-import { shortenAddress as shortenAddressFn } from "@/utils/text";
 import { useTheme } from "@/providers/ThemeProvider";
+import { shortenAddress as shortenAddressFn } from "@/utils/text";
 
 type EthAddressProps = {
   address?: Address;

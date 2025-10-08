@@ -1,4 +1,9 @@
 "use client";
+import { useRef, useState, useEffect } from "react";
+import {
+  ArrowsPointingInIcon,
+  ArrowsPointingOutIcon,
+} from "@heroicons/react/24/solid";
 import {
   MDXEditor,
   headingsPlugin,
@@ -32,11 +37,7 @@ import {
   DiffSourceToggleWrapper,
 } from "@mdxeditor/editor";
 import "@mdxeditor/editor/style.css";
-import { useRef, useState, useEffect } from "react";
-import {
-  ArrowsPointingInIcon,
-  ArrowsPointingOutIcon,
-} from "@heroicons/react/24/solid";
+
 import { useTheme } from "@/providers/ThemeProvider";
 import { ipfsFileUpload } from "@/utils/ipfsUtils";
 
@@ -62,7 +63,7 @@ export default function MarkdownEditor({
   // helpers
   const getFsEl = () =>
     // @ts-ignore
-    document.fullscreenElement || document.webkitFullscreenElement;
+    !!document.fullscreenElement || document.webkitFullscreenElement;
 
   const requestFs = async (el: HTMLElement) => {
     // @ts-ignore
