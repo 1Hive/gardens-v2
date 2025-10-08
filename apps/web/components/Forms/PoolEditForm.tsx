@@ -144,7 +144,6 @@ export default function PoolEditForm({
     handleSubmit,
     setValue,
     watch,
-    getValues,
     formState: { errors },
   } = useForm<FormInputs>({
     mode: "onBlur",

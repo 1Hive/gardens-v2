@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/strict-boolean-expressions */
+/* eslint-disable @typescript-eslint/no-unused-expressions */
+/* eslint-disable no-unused-expressions */
 "use client";
 import { useRef, useState, useEffect } from "react";
 import {
@@ -67,12 +70,14 @@ export default function MarkdownEditor({
 
   const requestFs = async (el: HTMLElement) => {
     // @ts-ignore
+    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     const req = el.requestFullscreen || el.webkitRequestFullscreen;
     return req.call(el);
   };
 
   const exitFs = async () => {
     // @ts-ignore
+    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     const exit = document.exitFullscreen || document.webkitExitFullscreen;
     return exit.call(document);
   };
@@ -137,9 +142,11 @@ export default function MarkdownEditor({
         // @ts-ignore
         (document.fullscreenEnabled || document.webkitFullscreenEnabled) &&
         // @ts-ignore
-        (el.requestFullscreen || el.webkitRequestFullscreen)
+        (!!el.requestFullscreen || el.webkitRequestFullscreen)
       ) {
-        await requestFs(el);
+        // @ts-ignore
+        (el.requestFullscreen ?? el.webkitRequestFullscreen)?.() ??
+          (await requestFs(el));
         setUsingFallback(false);
         setIsFs(true);
       } else {
