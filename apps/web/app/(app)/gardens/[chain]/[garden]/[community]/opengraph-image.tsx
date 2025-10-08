@@ -1,4 +1,11 @@
+import { readFile } from "fs/promises";
+import path from "path";
 import { ImageResponse } from "next/og";
+import { getCommunityNameDocument } from "#/subgraph/.graphclient";
+import { chainConfigMap, ChainIcon } from "@/configs/chains";
+import { queryByChain } from "@/providers/urql";
+
+export const runtime = "nodejs";
 
 // Image metadata
 export const alt = "Community Discussion";
@@ -10,7 +17,75 @@ export const size = {
 export const contentType = "image/png";
 
 // Image generation
-export default async function Image() {
+type ImageParams = {
+  chain: string;
+  garden: string;
+  community: string;
+};
+
+let cachedCommunityImageDataUrl: string | null = null;
+const COMMUNITY_IMAGE_PATH = path.resolve(
+  process.cwd(),
+  "assets/CommunityImage.png",
+);
+
+let cachedGardenLogoDataUrl: string | null = null;
+const GARDEN_LOGO_PATH = path.resolve(process.cwd(), "assets/NewLogo.png");
+
+const FOOTER_MESSAGES = [
+  "Collaborate • Propose ideas • Grow your community",
+  "Decide together • Fund change • Build your future",
+  "Create proposals • Vote collectively • Shape impact",
+  "Connect • Govern • Thrive",
+  "Empower your community • Make decisions • Bloom with purpose",
+];
+
+async function getCommunityImageDataUrl() {
+  if (cachedCommunityImageDataUrl) {
+    return cachedCommunityImageDataUrl;
+  }
+
+  const imageBuffer = await readFile(COMMUNITY_IMAGE_PATH);
+  cachedCommunityImageDataUrl = `data:image/png;base64,${imageBuffer.toString("base64")}`;
+  return cachedCommunityImageDataUrl;
+}
+
+async function getGardenLogoDataUrl() {
+  if (cachedGardenLogoDataUrl) {
+    return cachedGardenLogoDataUrl;
+  }
+
+  const imageBuffer = await readFile(GARDEN_LOGO_PATH);
+  cachedGardenLogoDataUrl = `data:image/png;base64,${imageBuffer.toString("base64")}`;
+  return cachedGardenLogoDataUrl;
+}
+
+function formatTitle(title: string) {
+  const trimmed = title?.trim() ?? "Community";
+  return trimmed.length > 80 ? `${trimmed.slice(0, 77)}...` : trimmed;
+}
+
+async function renderImage(title: string, chainId: number) {
+  let communityImageSrc: string | null = null;
+  let gardenImageSrc: string | null = null;
+
+  try {
+    communityImageSrc = await getCommunityImageDataUrl();
+  } catch (error) {
+    console.error("Failed to load community OG image asset.", { error });
+  }
+
+  try {
+    gardenImageSrc = await getGardenLogoDataUrl();
+  } catch (error) {
+    console.error("Failed to load garden logo image asset.", { error });
+  }
+
+  const safeTitle = formatTitle(title);
+  const footerMessage =
+    FOOTER_MESSAGES[Math.floor(Math.random() * FOOTER_MESSAGES.length)] ??
+    FOOTER_MESSAGES[0];
+
   return new ImageResponse(
     (
       <div
@@ -18,101 +93,213 @@ export default async function Image() {
           width: "100%",
           height: "100%",
           display: "flex",
-          flexDirection: "column",
-          backgroundColor: "#f8f9fa",
-          fontFamily: "system-ui, sans-serif",
+          backgroundColor: "#F8FAFC",
+          padding: "72px",
+          color: "#0F172A",
+          fontFamily:
+            '"Inter", "Manrope", "Helvetica Neue", "Arial", sans-serif',
         }}
       >
-        {/* Header section with logo area */}
         <div
           style={{
-            display: "flex",
-            alignItems: "center",
-            padding: "40px 60px",
-            backgroundColor: "#1f2937",
-            color: "white",
-            height: "180px",
-          }}
-        >
-          {/* Logo circle */}
-          <div
-            style={{
-              width: "60px",
-              height: "60px",
-              backgroundColor: "white",
-              borderRadius: "50%",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              marginRight: "30px",
-              color: "black",
-              fontSize: "28px",
-              fontWeight: "bold",
-            }}
-          >
-            N
-          </div>
-
-          {/* Title */}
-          <div
-            style={{
-              fontSize: "48px",
-              fontWeight: "bold",
-              lineHeight: "1.2",
-            }}
-          >
-            Community Discussion: Garden Name
-          </div>
-        </div>
-
-        {/* Content area */}
-        <div
-          style={{
-            flex: 1,
-            padding: "60px",
             display: "flex",
             flexDirection: "column",
-            justifyContent: "center",
-            backgroundColor: "white",
+            justifyContent: "space-between",
+            alignItems: "stretch",
+            height: "100%",
+            width: "100%",
+            borderRadius: "40px",
+            backgroundColor: "#FFFFFF",
+            padding: "48px",
+            boxShadow: "0 30px 60px rgba(79, 70, 229, 0.18)",
+            gap: "48px",
           }}
         >
           <div
             style={{
-              fontSize: "72px",
-              fontWeight: "bold",
-              color: "#1f2937",
-              lineHeight: "1.1",
-              marginBottom: "20px",
+              display: "flex",
+              alignItems: "flex-start",
+              justifyContent: "space-between",
             }}
           >
-            Join the conversation
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "20px",
+              }}
+            >
+              {gardenImageSrc ?
+                // eslint-disable-next-line @next/next/no-img-element -- Rendering inside ImageResponse.
+                <img
+                  alt="Gardens logo"
+                  src={gardenImageSrc}
+                  style={{
+                    height: "50px",
+                    width: "50px",
+                  }}
+                />
+              : <span
+                  style={{
+                    fontSize: "48px",
+                    fontWeight: 700,
+                    color: "#15803D",
+                  }}
+                >
+                  🌱
+                </span>
+              }
+              {/* <span
+                style={{
+                  fontSize: "64px",
+                  fontWeight: 800,
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                  color: "#14532D",
+                  lineHeight: 1,
+                }}
+              >
+                Gardens
+              </span> */}
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "flex-end",
+                gap: "12px",
+              }}
+            >
+              <ChainIcon chain={chainId} height={50} width={50} />
+            </div>
           </div>
+
           <div
             style={{
-              fontSize: "32px",
-              color: "#6b7280",
-              lineHeight: "1.4",
+              display: "flex",
+              alignItems: "center",
+              gap: "48px",
             }}
           >
-            Explore discussions and connect with the community
+            {communityImageSrc ?
+              // eslint-disable-next-line @next/next/no-img-element -- Rendering inside ImageResponse.
+              <img
+                alt="Community illustration"
+                src={communityImageSrc}
+                style={{
+                  width: "200px",
+                  height: "200px",
+                }}
+              />
+            : <div
+                style={{
+                  width: "200px",
+                  height: "200px",
+                  borderRadius: "40px",
+                  backgroundColor: "#DDD6FE",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "88px",
+                  fontWeight: 700,
+                  color: "#6D28D9",
+                }}
+              >
+                🌱
+              </div>
+            }
+
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "15px",
+                maxWidth: "640px",
+              }}
+            >
+              <span
+                style={{
+                  fontSize: "72px",
+                  fontWeight: 700,
+                  lineHeight: 1.05,
+                }}
+              >
+                {safeTitle}
+              </span>
+
+              <span
+                style={{
+                  fontSize: "28px",
+                  color: "#475569",
+                  lineHeight: 1.4,
+                }}
+              >
+                A Gardens community for collective decision-making and funding.
+              </span>
+            </div>
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "flex-end",
+              fontSize: "24px",
+              color: "#1E293B",
+            }}
+          >
+            <span style={{ color: "#475569" }}>{footerMessage}</span>
           </div>
         </div>
-
-        {/* Subtle border line */}
-        <div
-          style={{
-            position: "absolute",
-            top: "180px",
-            left: "0",
-            right: "0",
-            height: "1px",
-            backgroundColor: "#e5e7eb",
-          }}
-        />
       </div>
     ),
     {
       ...size,
     },
   );
+}
+
+export default async function Image({ params }: { params: ImageParams }) {
+  const chainId = Number(params.chain);
+  const chainConfig = chainConfigMap[params.chain] ?? chainConfigMap[chainId];
+
+  if (chainConfig == null) {
+    console.error(
+      "Unsupported chainId for community opengraph-image generation.",
+      { chainId: params.chain },
+    );
+    return renderImage("Community", chainId);
+  }
+
+  try {
+    const communityResult = await queryByChain(
+      chainConfig,
+      getCommunityNameDocument,
+      {
+        communityAddr: params.community,
+      },
+    );
+
+    if (communityResult.error) {
+      console.error("Error fetching community data for OG image.", {
+        chainId: params.chain,
+        community: params.community,
+        error: communityResult.error,
+      });
+      return await renderImage("Community", chainId);
+    }
+
+    const communityName =
+      communityResult?.data?.registryCommunity?.communityName?.trim() ??
+      "Community";
+
+    return await renderImage(communityName, chainId);
+  } catch (error) {
+    console.error("Failed to fetch community data for OG image.", {
+      chainId: params.chain,
+      community: params.community,
+      error,
+    });
+    return await renderImage("Community", chainId);
+  }
 }
