@@ -15,7 +15,7 @@ type PageParams = {
 };
 
 function buildOgImagePath(params: PageParams["params"]) {
-  return CommunityImage.src;
+  return `/gardens/${params.chain}/${params.garden}/${params.community}/opengraph-image-w94mav`;
 }
 
 export async function generateMetadata({
