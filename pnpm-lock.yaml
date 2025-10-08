@@ -2996,7 +2996,7 @@ packages:
       yargs: 17.7.2
     optionalDependencies:
       node-libcurl: 4.1.0
-      uWebSockets.js: git@github.com+uNetworking/uWebSockets.js/cfc9a40d8132a34881813cec3d5f8e3a185b3ce3
+      uWebSockets.js: github.com/uNetworking/uWebSockets.js/cfc9a40d8132a34881813cec3d5f8e3a185b3ce3
     transitivePeerDependencies:
       - bufferutil
       - encoding
@@ -17461,7 +17461,7 @@ packages:
     dependencies:
       '@mapbox/node-pre-gyp': 1.0.11
       env-paths: 2.2.0
-      nan: git@github.com+JCMais/nan/0ec2eca8b2fd7518affb3945d087e393ad839b7e
+      nan: github.com/JCMais/nan/0ec2eca8b2fd7518affb3945d087e393ad839b7e
       node-gyp: 10.2.0
       npmlog: 7.0.1
       rimraf: 5.0.5
@@ -21975,16 +21975,16 @@ packages:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
     dev: false
 
-  git@github.com+JCMais/nan/0ec2eca8b2fd7518affb3945d087e393ad839b7e:
-    resolution: {commit: 0ec2eca8b2fd7518affb3945d087e393ad839b7e, repo: git@github.com:JCMais/nan.git, type: git}
+  github.com/JCMais/nan/0ec2eca8b2fd7518affb3945d087e393ad839b7e:
+    resolution: {tarball: https://codeload.github.com/JCMais/nan/tar.gz/0ec2eca8b2fd7518affb3945d087e393ad839b7e}
     name: nan
     version: 2.22.0
     requiresBuild: true
     dev: true
     optional: true
 
-  git@github.com+uNetworking/uWebSockets.js/cfc9a40d8132a34881813cec3d5f8e3a185b3ce3:
-    resolution: {commit: cfc9a40d8132a34881813cec3d5f8e3a185b3ce3, repo: git@github.com:uNetworking/uWebSockets.js.git, type: git}
+  github.com/uNetworking/uWebSockets.js/cfc9a40d8132a34881813cec3d5f8e3a185b3ce3:
+    resolution: {tarball: https://codeload.github.com/uNetworking/uWebSockets.js/tar.gz/cfc9a40d8132a34881813cec3d5f8e3a185b3ce3}
     name: uWebSockets.js
     version: 20.52.0
     requiresBuild: true
