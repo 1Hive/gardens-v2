@@ -1,7 +1,4 @@
-import { fetchToken } from "@wagmi/core";
 import { DocumentNode } from "graphql";
-import { toast } from "react-toastify";
-import { Address } from "viem";
 import {
   CVProposal,
   CVStrategy,
@@ -11,10 +8,7 @@ import {
   RegistryCommunity,
   TokenGarden,
 } from "#/subgraph/.graphclient";
-import { initUrqlClient, queryByChain } from "@/providers/urql";
 import { capitalize } from "@/utils/text";
-
-const { urqlClient } = initUrqlClient();
 
 interface CommunityTitlesResult {
   registryCommunity?: Pick<RegistryCommunity, "communityName"> & {
@@ -48,7 +42,7 @@ interface QueryMapItem {
   parseResult: (arg: any) => Promise<(string | undefined)[]>;
 }
 
-const queryMap: Record<number, QueryMapItem> = {
+export const queryMap: Record<number, QueryMapItem> = {
   3: {
     document: getCommunityTitlesDocument,
     getVariables: (communityAddr: string) => ({
@@ -100,7 +94,7 @@ const queryMap: Record<number, QueryMapItem> = {
  * @param str - The segment to parse.
  * @returns The capitalized and formatted segment.
  */
-const parseStaticSegment = (str: string): string => {
+export const parseStaticSegment = (str: string): string => {
   return capitalize(str.replace(/-/g, " "));
 };
 
@@ -135,62 +129,3 @@ const parseStaticSegment = (str: string): string => {
 //     ? `#${proposal.proposalNumber} ${proposalTitle}`
 //     : undefined;
 // }
-
-/**
- * Fetches and parses titles from URL segments.
- * @param segments - The URL segments to process.
- * @returns A promise that resolves to an array of title strings or undefined.
- * @throws {Error} If there's an issue fetching or parsing the data.
- */
-export async function getTitlesFromUrlSegments(
-  segments: string[],
-): Promise<(string | undefined)[] | undefined> {
-  const segmentsLength = segments.length;
-  if (segmentsLength < 3) {
-    return undefined;
-  }
-
-  const isStaticSegment = segments[segmentsLength - 1].includes("create");
-  const entityIndex = isStaticSegment ? segmentsLength - 2 : segmentsLength - 1;
-
-  if (entityIndex === 2) {
-    const tokenArgs = {
-      address: segments[2] as Address,
-      chainId: parseInt(segments[1]),
-    };
-    const tokenData = await fetchToken(tokenArgs)
-      .then((token) => token?.name)
-      .catch(() => {
-        console.error("Error fetching token from address: ", tokenArgs);
-        toast.error("Token not found");
-        return undefined;
-      });
-    return [tokenData, parseStaticSegment(segments[segmentsLength - 1])];
-  }
-
-  const queryItem = queryMap[entityIndex];
-
-  try {
-    const result = await queryByChain(
-      urqlClient,
-      segments[1],
-      queryItem.document,
-      queryItem.getVariables(segments[entityIndex]),
-    );
-
-    if (!result?.data) {
-      throw new Error("No data returned from query");
-    }
-
-    const parsedResult = await queryItem.parseResult(result.data);
-
-    if (isStaticSegment) {
-      parsedResult.push(parseStaticSegment(segments[segmentsLength - 1]));
-    }
-
-    return parsedResult;
-  } catch (error) {
-    console.error("Error fetching title from address:", error);
-    return;
-  }
-}

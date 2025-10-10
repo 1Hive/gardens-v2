@@ -14,7 +14,7 @@ export function ThemeButton() {
     system: {
       id: "system",
       label: "System",
-      icon: () => <IconWithAuto systemTheme={systemTheme}></IconWithAuto>,
+      icon: () => <IconWithAuto systemTheme={systemTheme} />,
     },
   } as const;
 

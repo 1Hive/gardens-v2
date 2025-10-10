@@ -278,6 +278,23 @@ dialog * {
   scrollbar-color: var(--color-grey-500) var(--color-grey-200);
 }
 
+/* 🌙 Dark mode scrollbars */
+[data-theme="darkTheme"] ::-webkit-scrollbar-thumb {
+  background-color: #444; /* darker thumb */
+}
+
+[data-theme="darkTheme"] ::-webkit-scrollbar-thumb:hover {
+  background-color: #555;
+}
+
+[data-theme="darkTheme"] ::-webkit-scrollbar-track {
+  background-color: #1f1f1f; /* dark track */
+}
+
+[data-theme="darkTheme"] * {
+  scrollbar-color: #555 #1f1f1f; /* thumb / track for Firefox */
+}
+
 .wmde-markdown.wmde-markdown-color {
   background: transparent;
 }

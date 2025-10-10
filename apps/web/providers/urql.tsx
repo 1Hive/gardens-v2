@@ -90,26 +90,3 @@ export function initUrqlClient(
     ssrCache: urqlRecord[chainId][1],
   };
 }
-
-export async function queryByChain<
-  Data = any,
-  Variables extends AnyVariables = AnyVariables,
->(
-  urqlClient: Client,
-  chainId: string | number,
-  query: DocumentInput<any, Variables>,
-  variables: Variables = {} as Variables,
-  context?: Partial<OperationContext>,
-) {
-  const config = getConfigByChain(chainId);
-  if (!config) {
-    throw new Error("Chain not supported");
-  }
-  return urqlClient.query<Data>(query, variables, {
-    url:
-      process.env.NEXT_PUBLIC_SKIP_PUBLISHED ?
-        config.subgraphUrl
-      : (config.publishedSubgraphUrl ?? config.subgraphUrl),
-    ...context,
-  });
-}

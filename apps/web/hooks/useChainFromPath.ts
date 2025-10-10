@@ -5,7 +5,7 @@ import { chainConfigMap, getChain } from "@/configs/chains";
 export function useChainFromPath() {
   const chainId = useChainIdFromPath();
   const chain = useMemo(() => {
-    if (!chainId) {
+    if (chainId == null) {
       return undefined;
     }
     return { ...getChain(chainId), ...chainConfigMap[chainId] };

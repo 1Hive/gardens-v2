@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from "react";
 
 type Props = {
-  children: string | undefined;
+  children: string | undefined | null;
   className?: string;
   lineClamp?:
     | "line-clamp-2"
