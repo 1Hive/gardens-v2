@@ -14,6 +14,7 @@ import { FetchTokenResult } from "@wagmi/core";
 import cn from "classnames";
 
 import { Dnum, multiply } from "dnum";
+import { Maybe } from "graphql/jsutils/Maybe";
 import { AnimatePresence, motion } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
@@ -27,6 +28,7 @@ import {
   getCommunityQuery,
   isMemberDocument,
   isMemberQuery,
+  PoolMetadata,
 } from "#/subgraph/.graphclient";
 import {
   CommunityLogo,
@@ -55,15 +57,15 @@ import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { ONE_HIVE_COMMUNITY_ADDRESS } from "@/globals";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
-import { useCheat } from "@/hooks/useCheat";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useCouncil } from "@/hooks/useCouncil";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
+import { useFlag } from "@/hooks/useFlag";
+import { useIpfsFetch } from "@/hooks/useIpfsFetch";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { getProtopiansOwners } from "@/services/alchemy";
 import { registryCommunityABI } from "@/src/generated";
 import { Column, PoolTypes } from "@/types";
-import { fetchIpfs } from "@/utils/ipfsUtils";
 import {
   calculatePercentageBigInt,
   parseToken,
@@ -91,8 +93,7 @@ export default function Page({
 }) {
   const searchParams = useCollectQueryParams();
   const { address: accountAddress } = useAccount();
-  const [covenant, setCovenant] = useState<string | undefined>();
-  const showArchived = useCheat("showArchived");
+  const showArchived = useFlag("showArchived");
   const [openCommDetails, setOpenCommDetails] = useState(false);
   const isFetchingNFT = useRef<boolean>(false);
   const { publish } = usePubSubContext();
@@ -121,6 +122,14 @@ export default function Page({
   });
 
   const registryCommunity = result?.registryCommunity;
+
+  const { data: covenantResult } = useIpfsFetch<{ covenant: string }>({
+    hash: registryCommunity?.covenantIpfsHash,
+    enabled: registryCommunity != null && !registryCommunity.covenant,
+  });
+
+  const covenant =
+    registryCommunity?.covenant?.text ?? covenantResult?.covenant;
 
   const { isCouncilSafe, isCouncilMember, councilMembers } = useCouncil({
     strategyOrCommunity: registryCommunity,
@@ -214,24 +223,6 @@ export default function Page({
       console.error("Error while fetching community data: ", error);
     }
   }, [error]);
-
-  useEffect(() => {
-    const fetchCovenant = async () => {
-      if (registryCommunity?.covenantIpfsHash) {
-        try {
-          const json = await fetchIpfs<{ covenant: string }>(
-            registryCommunity.covenantIpfsHash,
-          );
-          if (json && typeof json.covenant === "string") {
-            setCovenant(json.covenant);
-          }
-        } catch (err) {
-          console.error(err);
-        }
-      }
-    };
-    fetchCovenant();
-  }, [registryCommunity?.covenantIpfsHash]);
 
   const communityStakedTokens =
     members?.reduce(
@@ -546,6 +537,22 @@ export default function Page({
             )}
           </header>
 
+          <header className="flex items-center justify-between">
+            <h2>Pools</h2>
+            <Link
+              href={`/gardens/${chain?.id}/${tokenAddr}/${communityAddr}/create-pool`}
+            >
+              <Button
+                btnStyle="filled"
+                disabled={!isConnected || missmatchUrl}
+                tooltip={tooltipMessage}
+                icon={<PlusIcon height={24} width={24} />}
+              >
+                Create New Pool
+              </Button>
+            </Link>
+          </header>
+
           {/* Pools Section */}
           <PoolSection title="Funding" pools={fundingPools} defaultExpanded />
           <PoolSection
@@ -570,7 +577,7 @@ export default function Page({
             <h2 className="mb-4">Covenant</h2>
             {registryCommunity?.covenantIpfsHash ?
               <Skeleton isLoading={!covenant} rows={5}>
-                <MarkdownWrapper source={covenant!} />
+                <MarkdownWrapper source={covenant} />
               </Skeleton>
             : <p className="italic">No covenant was submitted.</p>}
             <div className="mt-10 flex justify-center">
@@ -667,11 +674,12 @@ const CommunityDetailsTable = ({
 //pool section component and types
 type Pool = Pick<
   CVStrategy,
-  "id" | "archived" | "isEnabled" | "poolId" | "metadata"
+  "id" | "archived" | "isEnabled" | "poolId" | "metadataHash"
 > & {
   proposals: Pick<CVProposal, "id">[];
   config: Pick<CVStrategyConfig, "proposalType" | "pointSystem">;
   token: any;
+  metadata?: Maybe<Omit<PoolMetadata, "id">>;
 };
 interface PoolSectionProps {
   title: string;

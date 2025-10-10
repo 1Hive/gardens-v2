@@ -7,13 +7,12 @@ import {RegistryCommunityV0_0} from "../src/RegistryCommunity/RegistryCommunityV
 import {RegistryFactoryV0_0} from "../src/RegistryFactory/RegistryFactoryV0_0.sol";
 import {ICVStrategy} from "../src/CVStrategy/ICVStrategy.sol";
 import {ProxyOwner} from "../src/ProxyOwner.sol";
-import {DecayRescale} from "./DecayRescaler.sol";
 
 contract UpgradeCVMultichainProd is BaseMultiChain {
     using stdJson for string;
 
     function runCurrentNetwork(string memory networkJson) public override {
-        address registryFactoryImplementation = address(new RegistryFactoryV0_0());
+        // address registryFactoryImplementation = address(new RegistryFactoryV0_0());
         address registryImplementation = address(new RegistryCommunityV0_0());
         address strategyImplementation = address(new CVStrategyV0_0());
         // address passportScorer = networkJson.readAddress(getKeyNetwork(".ENVS.PASSPORT_SCORER"));
@@ -50,13 +49,13 @@ contract UpgradeCVMultichainProd is BaseMultiChain {
             // }
 
             // 1.c -- Set the Strategy Template --
-            // {
-            //     bytes memory setStrategyTemplate =
-            //         abi.encodeWithSelector(registryFactory.setStrategyTemplate.selector, strategyImplementation);
-            //     json = string(
-            //         abi.encodePacked(json, _createTransactionJson(registryFactoryProxy, setStrategyTemplate), ",")
-            //     );
-            // }
+            {
+                bytes memory setStrategyTemplate =
+                    abi.encodeWithSelector(registryFactory.setStrategyTemplate.selector, strategyImplementation);
+                json = string(
+                    abi.encodePacked(json, _createTransactionJson(registryFactoryProxy, setStrategyTemplate), ",")
+                );
+            }
         }
 
         // 2. REGISTRY COMMUNITIES UPGRADES
@@ -77,11 +76,11 @@ contract UpgradeCVMultichainProd is BaseMultiChain {
                 //     )
                 // );
                 // 2.b -- Set the Strategy Template --
-                // json = string(
-                //     abi.encodePacked(
-                //         json, _createTransactionJson(registryCommunityProxies[i], registryTransactions[i * 2 + 1]), ","
-                //     )
-                // );
+                json = string(
+                    abi.encodePacked(
+                        json, _createTransactionJson(registryCommunityProxies[i], registryTransactions[i * 2 + 1]), ","
+                    )
+                );
             }
         }
 
@@ -97,17 +96,17 @@ contract UpgradeCVMultichainProd is BaseMultiChain {
             }
             for (uint256 i = 0; i < cvStrategyProxies.length; i++) {
                 // 3.a -- Upgrade the CV Strategy --
-                // json = string(
-                //     abi.encodePacked(json, _createTransactionJson(cvStrategyProxies[i], upgradeCVStrategies[i]), ",")
-                // );
+                json = string(
+                    abi.encodePacked(json, _createTransactionJson(cvStrategyProxies[i], upgradeCVStrategies[i]), ",")
+                );
 
                 // 3.b -- Init the Strategy --
                 // json =
                 //     string(abi.encodePacked(json, _createTransactionJson(cvStrategyProxies[i], initStategies[i]), ","));
 
                 // 3.c -- Set the Pool Params --
-                json =
-                    string(abi.encodePacked(json, _createTransactionJson(cvStrategyProxies[i], setPoolParams[i]), ","));
+                // json =
+                //     string(abi.encodePacked(json, _createTransactionJson(cvStrategyProxies[i], setPoolParams[i]), ","));
             }
         }
 
@@ -131,37 +130,37 @@ contract UpgradeCVMultichainProd is BaseMultiChain {
             string.concat(vm.projectRoot(), "/pkg/contracts/transaction-builder/", CURRENT_NETWORK, "-payload.json");
         // [read the file and compare hash first]
 
-        vm.writeJson(
-            string.concat(
-                "{",
-                '"version":"1.0",',
-                '"chainId":"',
-                vm.toString(block.chainid),
-                '",',
-                '"createdAt":',
-                vm.toString(block.timestamp * 1000),
-                ",",
-                '"meta":{',
-                '"name":"Contracts Upgrades Batch",',
-                '"description":"Safe Transaction Builder payload to upgrade contracts from Safe owner",',
-                '"txBuilderVersion":"1.18.0",',
-                '"createdFromSafeAddress":"',
-                _addressToString(safeOwner),
-                '",',
-                '"createdFromOwnerAddress":"',
-                _addressToString(msg.sender),
-                '"',
-                '"hash":"',
-                networkJson.readString(getKeyNetwork(".hash")),
-                "},",
-                '"transactions":',
-                json,
-                "}"
-            ),
-            path
+        string memory payload = string.concat(
+            "{",
+            '"version":"1.0",',
+            '"chainId":"',
+            vm.toString(block.chainid),
+            '",',
+            '"createdAt":',
+            vm.toString(block.timestamp * 1000),
+            ",",
+            '"meta":{',
+            '"name":"Contracts Upgrades Batch",',
+            '"description":"Safe Transaction Builder payload to upgrade contracts from Safe owner",',
+            '"txBuilderVersion":"1.18.0",',
+            '"createdFromSafeAddress":"',
+            _addressToString(safeOwner),
+            '",',
+            '"createdFromOwnerAddress":"',
+            _addressToString(msg.sender),
+            '",',
+            '"hash":"',
+            networkJson.readString(getKeyNetwork(".hash")),
+            '"},',
+            '"transactions":',
+            json,
+            "}"
         );
 
+        vm.writeFile(path, payload);
+
         console2.log("Wrote %s", path);
+        console2.log(payload);
     }
 
     function _removeLastChar(string memory input) internal pure returns (string memory) {
@@ -227,8 +226,8 @@ contract UpgradeCVMultichainProd is BaseMultiChain {
         {
             (uint256 maxRatio, uint256 weight, uint256 decay, uint256 minThresholdPoints) = cvStrategy.cvParams();
             // Take current decay that its based on block time 3.8 sec and rescale it for block time 2 secs
-            uint256 newDecay = DecayRescale.rescale(decay(), 38e17 / 1e18, /*3.8*/ 2); // or pass (38,2) if you use integers
-            cvParams = CVParams(maxRatio, weight, newDecay, minThresholdPoints);
+            // uint256 newDecay = DecayRescale.rescale(decay(), 38e17 / 1e18, /*3.8*/ 2); // or pass (38,2) if you use integers
+            // cvParams = CVParams(maxRatio, weight, newDecay, minThresholdPoints);
         }
         bytes memory setPoolParams =
             abi.encodeWithSelector(ICVStrategy.setPoolParams.selector, arbitrableConfig, cvParams);

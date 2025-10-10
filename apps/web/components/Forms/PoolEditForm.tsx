@@ -144,7 +144,6 @@ export default function PoolEditForm({
     handleSubmit,
     setValue,
     watch,
-    getValues,
     formState: { errors },
   } = useForm<FormInputs>({
     mode: "onBlur",
@@ -693,7 +692,7 @@ export default function PoolEditForm({
                           globalTribunal?.toLowerCase()
                       ) ?
                         ""
-                      : (globalTribunal ?? ""),
+                      : globalTribunal ?? "",
                     );
                   }}
                 />
