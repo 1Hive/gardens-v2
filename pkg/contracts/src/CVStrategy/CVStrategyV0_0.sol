@@ -38,6 +38,10 @@ import {PowerManagementUtils} from "./PowerManagementUtils.sol";
 
 import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Library.sol";
 
+// Diamond Pattern imports
+import {LibDiamond} from "../libraries/LibDiamond.sol";
+import {IDiamondCut} from "../diamonds/interfaces/IDiamondCut.sol";
+
 /// @custom:oz-upgrades-from CVStrategyV0_0
 contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     using SuperTokenV1Library for ISuperToken;
@@ -133,10 +137,33 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     /*|--------------------------------------------|*/
 
     /*|--------------------------------------------|*/
-    /*|                VARIABLES                   |*/
+    /*|           VARIABLES & CONSTANTS            |*/
     /*|--------------------------------------------|*/
 
     using ConvictionsUtils for uint256;
+
+    // CVStrategy custom storage variables (Slots 106+)
+    address internal collateralVaultTemplate;
+    uint256 internal surpressStateMutabilityWarning;
+    uint256 public cloneNonce;
+    uint64 public disputeCount;
+    uint256 public proposalCounter;
+    uint256 public currentArbitrableConfigVersion;
+    uint256 public totalStaked;
+    uint256 public totalPointsActivated;
+    CVParams public cvParams;
+    ProposalType public proposalType;
+    PointSystem public pointSystem;
+    PointSystemConfig public pointConfig;
+    RegistryCommunityV0_0 public registryCommunity;
+    ICollateralVault public collateralVault;
+    ISybilScorer public sybilScorer;
+    mapping(uint256 => Proposal) public proposals;
+    mapping(address => uint256) public totalVoterStakePct;
+    mapping(address => uint256[]) public voterStakedProposals;
+    mapping(uint256 => uint256) public disputeIdToProposalId;
+    mapping(uint256 => ArbitrableConfig) public arbitrableConfigs;
+    ISuperToken public superfluidToken;
 
     // Constants for fixed numbers
     // string public constant VERSION = "0.0";
@@ -144,42 +171,6 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     // uint256 public constant MAX_STAKED_PROPOSALS = 10; // GOSS: Unsuded
     uint256 public constant RULING_OPTIONS = 3;
     uint256 public constant DISPUTE_COOLDOWN_SEC = 2 hours;
-
-    address internal collateralVaultTemplate;
-
-    // uint256 variables packed together
-    uint256 internal surpressStateMutabilityWarning; // used to suppress Solidity warnings
-    uint256 public cloneNonce;
-    uint64 public disputeCount;
-    uint256 public proposalCounter;
-    uint256 public currentArbitrableConfigVersion;
-
-    uint256 public totalStaked;
-    uint256 public totalPointsActivated;
-
-    CVParams public cvParams;
-
-    // Enum for handling proposal types
-    ProposalType public proposalType;
-
-    // Struct variables for complex data structures
-    PointSystem public pointSystem;
-    PointSystemConfig public pointConfig;
-
-    // Contract reference
-    RegistryCommunityV0_0 public registryCommunity;
-
-    ICollateralVault public collateralVault;
-    ISybilScorer public sybilScorer;
-
-    // Mappings to handle relationships and staking details
-    mapping(uint256 => Proposal) public proposals; // Mapping of proposal IDs to Proposal structures
-    mapping(address => uint256) public totalVoterStakePct; // voter -> total staked points
-    mapping(address => uint256[]) public voterStakedProposals; // voter -> proposal ids arrays
-    mapping(uint256 => uint256) public disputeIdToProposalId;
-    mapping(uint256 => ArbitrableConfig) public arbitrableConfigs;
-
-    ISuperToken public superfluidToken;
 
     /*|--------------------------------------------|*/
     /*|              CONSTRUCTORS                  |*/
@@ -213,16 +204,40 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
 
         emit InitializedCV3(_poolId, ip);
 
-        _setPoolParams(ip.arbitrableConfig, ip.cvParams, new address[](0), new address[](0)); // TODO: Consider passing superfluidToken at initialization
+        // Initialize pool params (simplified version of _setPoolParams for initialization only)
+        if (
+            ip.arbitrableConfig.tribunalSafe != address(0) && address(ip.arbitrableConfig.arbitrator) != address(0)
+        ) {
+            ip.arbitrableConfig.arbitrator.registerSafe(ip.arbitrableConfig.tribunalSafe);
+            currentArbitrableConfigVersion++;
+            arbitrableConfigs[currentArbitrableConfigVersion] = ip.arbitrableConfig;
+            emit ArbitrableConfigUpdated(
+                currentArbitrableConfigVersion,
+                ip.arbitrableConfig.arbitrator,
+                ip.arbitrableConfig.tribunalSafe,
+                ip.arbitrableConfig.submitterCollateralAmount,
+                ip.arbitrableConfig.challengerCollateralAmount,
+                ip.arbitrableConfig.defaultRuling,
+                ip.arbitrableConfig.defaultRulingTimeout
+            );
+        }
+        if (
+            !(
+                ip.cvParams.decay == 0 && ip.cvParams.weight == 0 && ip.cvParams.maxRatio == 0
+                    && ip.cvParams.minThresholdPoints == 0
+            )
+        ) {
+            cvParams = ip.cvParams;
+            emit CVParamsUpdated(ip.cvParams);
+        }
         if (address(sybilScorer) != address(0x0)) {
             _registerToSybilScorer(ip.sybilScorerThreshold);
         }
     }
 
-    // TODO: uncomment when contract size fixed with diamond
-    // function supportsInterface(bytes4 interfaceId) public view  override(ERC165) returns (bool) {
-    //     return interfaceId == type(IPointStrategy).interfaceId || super.supportsInterface(interfaceId);
-    // }
+    function supportsInterface(bytes4 interfaceId) public view override(ERC165) returns (bool) {
+        return interfaceId == type(IArbitrable).interfaceId || super.supportsInterface(interfaceId);
+    }
 
     /*|--------------------------------------------|*/
     /*|                 MODIFIERS                  |*/
@@ -303,71 +318,10 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     // if there are more steps, additional functions should be added to allow the owner to check
     // this could also check attestations directly and then Accept
 
+    // registerRecipient removed - now in ProposalManagementFacet
+    // Stub needed for IStrategy interface - delegates to facet
     function registerRecipient(bytes memory _data, address _sender) external payable returns (address) {
-        _checkOnlyAllo();
-        _checkOnlyInitialized();
-        checkSenderIsMember(_sender);
-        registryCommunity.onlyStrategyEnabled(address(this));
-        // surpressStateMutabilityWarning++;
-        _data;
-        CreateProposal memory proposal = abi.decode(_data, (CreateProposal));
-        // console.log("proposalType", uint256(proposalType));
-        if (proposalType == ProposalType.Funding) {
-            // _revertZeroAddress(proposal.beneficiary);
-            //We want != instead of == no ?
-            // require(proposal.beneficiary != address(0)); // TODO: Take commented when contract size fixed with diamond
-            // getAllo().getPool(poolId).token;
-            // if (proposal.requestedToken == address(0)) {
-            //     revert TokenCannotBeZero();
-            // }
-            IAllo _allo = this.getAllo();
-            if (proposal.requestedToken != _allo.getPool(proposal.poolId).token) {
-                // console.log("::requestedToken", proposal.requestedToken);
-                // console.log("::PookToken", poolToken);
-                // revert TokenNotAllowed();
-                // revert(("TokenNotAllowed")); // @todo take commented when contract size fixed with diamond
-                revert(); // @todo take commented when contract size fixed with diamond
-            }
-
-            // Commented out to allow creating a proposal requesting more than the pool available balance
-            // if (_isOverMaxRatio(proposal.amountRequested)) {
-            //     // revert AmountOverMaxRatio();
-            //     // revert(("AmountOverMaxRatio")); // @todo take commented when contract size fixed with diamond
-            //     revert();
-            // }
-        }
-
-        if (
-            address(arbitrableConfigs[currentArbitrableConfigVersion].arbitrator) != address(0)
-                && msg.value < arbitrableConfigs[currentArbitrableConfigVersion].submitterCollateralAmount
-        ) {
-            // revert InsufficientCollateral(
-            //     msg.value, arbitrableConfigs[currentArbitrableConfigVersion].submitterCollateralAmount
-            // );
-            // revert(("InsufficientCollateral")); // @todo take commented when contract size fixed with diamond
-            revert();
-        }
-
-        uint256 proposalId = ++proposalCounter;
-        Proposal storage p = proposals[proposalId];
-
-        p.proposalId = proposalId;
-        p.submitter = _sender;
-        p.beneficiary = proposal.beneficiary;
-        p.requestedToken = proposal.requestedToken;
-        p.requestedAmount = proposal.amountRequested;
-        // p.proposalType = proposal.proposalType;
-        p.proposalStatus = ProposalStatus.Active;
-        p.blockLast = block.number;
-        p.convictionLast = 0;
-        // p.agreementActionId = 0;
-        p.metadata = proposal.metadata;
-        p.arbitrableConfigVersion = currentArbitrableConfigVersion;
-        collateralVault.depositCollateral{value: msg.value}(proposalId, p.submitter);
-
-        emit ProposalCreated(poolId, proposalId);
-        // console.log("Gaz left: ", gasleft());
-        return address(uint160(proposalId));
+        _delegateToFacet();
     }
 
     function activatePoints() external {
@@ -380,21 +334,10 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         totalPointsActivated += registryCommunity.getMemberPowerInStrategy(msg.sender, address(this));
     }
 
+    // deactivatePoints (both versions) and _deactivatePoints removed - now in PowerManagementFacet
+    // Stub needed for tests to call - delegates to facet
     function deactivatePoints() external {
-        _deactivatePoints(msg.sender);
-    }
-
-    function deactivatePoints(address _member) external {
-        onlyRegistryCommunity();
-        _deactivatePoints(_member);
-    }
-
-    function _deactivatePoints(address _member) internal {
-        totalPointsActivated -= registryCommunity.getMemberPowerInStrategy(_member, address(this));
-        registryCommunity.deactivateMemberInStrategy(_member, address(this));
-        // remove support from all proposals
-        withdraw(_member);
-        emit PointsDeactivated(_member);
+        _delegateToFacet();
     }
 
     function increasePower(address _member, uint256 _amountToStake) external returns (uint256) {
@@ -417,43 +360,16 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         return pointsToIncrease;
     }
 
+    // decreasePower removed - now in PowerManagementFacet
+    // Stub needed for RegistryCommunity to call - delegates to facet
     function decreasePower(address _member, uint256 _amountToUnstake) external returns (uint256) {
-        onlyRegistryCommunity();
-        //requireMemberActivatedInStrategies
+        _delegateToFacet();
+    }
 
-        uint256 pointsToDecrease = PowerManagementUtils.decreasePower(
-            registryCommunity, _member, _amountToUnstake, pointSystem, pointConfig.maxAmount
-        );
-
-        uint256 voterStake = totalVoterStakePct[_member];
-        uint256 unusedPower;
-        {
-            uint256 memberPower = registryCommunity.getMemberPowerInStrategy(_member, address(this));
-            unusedPower = memberPower > voterStake ? memberPower - voterStake : 0;
-        }
-        if (unusedPower < pointsToDecrease) {
-            uint256 balancingRatio = ((pointsToDecrease - unusedPower) << 128) / voterStake;
-            for (uint256 i = 0; i < voterStakedProposals[_member].length; i++) {
-                uint256 proposalId = voterStakedProposals[_member][i];
-                Proposal storage proposal = proposals[proposalId];
-                uint256 stakedPoints = proposal.voterStakedPoints[_member];
-                uint256 newStakedPoints;
-                newStakedPoints = stakedPoints - ((stakedPoints * balancingRatio + (1 << 127)) >> 128);
-                {
-                    uint256 oldStake = proposal.stakedAmount;
-                    proposal.stakedAmount -= stakedPoints - newStakedPoints;
-                    proposal.voterStakedPoints[_member] = newStakedPoints;
-                    totalStaked -= stakedPoints - newStakedPoints;
-                    totalVoterStakePct[_member] -= stakedPoints - newStakedPoints;
-                    _calculateAndSetConviction(proposal, oldStake);
-                }
-                emit SupportAdded(_member, proposalId, newStakedPoints, proposal.stakedAmount, proposal.convictionLast);
-            }
-        }
-        totalPointsActivated -= pointsToDecrease;
-        emit PowerDecreased(_member, _amountToUnstake, pointsToDecrease);
-
-        return pointsToDecrease;
+    // deactivatePoints(address) removed - now in PowerManagementFacet
+    // Stub needed for RegistryCommunity to call - delegates to facet
+    function deactivatePoints(address _member) external {
+        _delegateToFacet();
     }
 
     // Goss: Commented because both accessible by the public field
@@ -474,235 +390,16 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     //     // allo().allocate(poolId, abi.encode(proposalId));
     // }
 
+    // allocate removed - now in AllocationFacet
+    // Stub needed for IStrategy interface - delegates to facet
     function allocate(bytes memory _data, address _sender) external payable {
-        _checkOnlyAllo();
-        _checkOnlyInitialized();
-
-        ProposalSupport[] memory pv = abi.decode(_data, (ProposalSupport[]));
-        for (uint256 i = 0; i < pv.length; i++) {
-            _checkProposalAllocationValidity(pv[i].proposalId, pv[i].deltaSupport);
-        }
-        checkSenderIsMember(_sender);
-
-        if (!registryCommunity.memberActivatedInStrategies(_sender, address(this))) {
-            // revert UserIsInactive();
-            // revert(("UserIsInactive")); // @todo take commented when contract size fixed with diamond
-            revert();
-        }
-        {
-            int256 deltaSupportSum = 0;
-            bool canAddSupport = _canExecuteAction(_sender);
-            for (uint256 i = 0; i < pv.length; i++) {
-                // check if pv index i exist
-                if (!canAddSupport && pv[i].deltaSupport > 0) {
-                    // revert UserCannotExecuteAction();
-                    // revert(("UserCannotExecuteAction")); // @todo take commented when contract size fixed with diamond
-                    revert();
-                }
-                if (pv[i].proposalId == 0) {
-                    //@todo: check better way to do that.
-                    // console.log("proposalId == 0");
-                    continue;
-                }
-                uint256 proposalId = pv[i].proposalId;
-                if (!proposalExists(proposalId)) {
-                    // revert ProposalNotInList(proposalId);
-                    // revert(("ProposalNotInList")); // @todo take commented when contract size fixed with diamond
-                    revert();
-                }
-                deltaSupportSum += pv[i].deltaSupport;
-            }
-            // console.log("deltaSupportSum");
-            // console.logInt(deltaSupportSum);
-            uint256 newTotalVotingSupport = _applyDelta(totalVoterStakePct[_sender], deltaSupportSum);
-            // console.log("newTotalVotingSupport", newTotalVotingSupport);
-            uint256 participantBalance = registryCommunity.getMemberPowerInStrategy(_sender, address(this));
-            // console.log("participantBalance", participantBalance);
-            // Check that the sum of support is not greater than the participant balance
-            // console.log("newTotalVotingSupport", newTotalVotingSupport);
-            // console.log("participantBalance", participantBalance);
-            if (newTotalVotingSupport > participantBalance) {
-                // revert NotEnoughPointsToSupport(newTotalVotingSupport, participantBalance);
-                // revert(("NotEnoughPointsToSupport")); // @todo take commented when contract size fixed with diamond
-                revert();
-            }
-
-            totalVoterStakePct[_sender] = newTotalVotingSupport;
-        }
-
-        uint256[] memory proposalsIds;
-        for (uint256 i = 0; i < pv.length; i++) {
-            uint256 proposalId = pv[i].proposalId;
-            // add proposalid to the list if not exist
-            if (proposalsIds.length == 0) {
-                proposalsIds = new uint256[](1);
-                proposalsIds[0] = proposalId; // 0 => 1
-            } else {
-                bool exist = false;
-                for (uint256 j = 0; j < proposalsIds.length; j++) {
-                    // 1
-                    if (proposalsIds[j] == proposalId) {
-                        exist = true;
-                        // revert ProposalSupportDuplicated(proposalId, j);
-                        break; // TODO: Uncommented when contract size fixed with diamond
-                    }
-                }
-                if (!exist) {
-                    uint256[] memory temp = new uint256[](proposalsIds.length + 1);
-                    for (uint256 j = 0; j < proposalsIds.length; j++) {
-                        temp[j] = proposalsIds[j];
-                    }
-                    temp[proposalsIds.length] = proposalId;
-                    proposalsIds = temp;
-                }
-            }
-            int256 delta = pv[i].deltaSupport;
-
-            Proposal storage proposal = proposals[proposalId];
-
-            // uint256 beforeStakedPointsPct = proposal.voterStakedPointsPct[_sender];
-            uint256 previousStakedAmount = proposal.stakedAmount;
-
-            uint256 previousStakedPoints = proposal.voterStakedPoints[_sender];
-            // console.log("beforeStakedPointsPct", beforeStakedPointsPct);
-            // console.log("previousStakedAmount:      %s", previousStakedAmount);
-
-            uint256 stakedPoints = _applyDelta(previousStakedPoints, delta);
-
-            // console.log("proposalID", proposalId);
-            // console.log("stakedPointsPct%", stakedPointsPct);
-
-            proposal.voterStakedPoints[_sender] = stakedPoints;
-            // console.log("proposal.voterStakedPoints[_sender]", proposal.voterStakedPoints[_sender]);
-
-            // console.log("_sender", _sender);
-            // uint2stakedPointsunt = stakedPoints;
-            // console.log("stakedAmount", stakedAmount);
-            // proposal.voterStake[_sender]stakedPointsunt;
-
-            bool hasProposal = false;
-            for (uint256 k = 0; k < voterStakedProposals[_sender].length; k++) {
-                if (voterStakedProposals[_sender][k] == proposal.proposalId) {
-                    hasProposal = true;
-                    break;
-                }
-            }
-            if (!hasProposal) {
-                voterStakedProposals[_sender].push(proposal.proposalId);
-            }
-            // proposal.stakedAmount += stakedAmount;
-            // uint256 diff =_diffStakedTokens(previousStakedAmount, stakedAmount);
-            if (previousStakedPoints <= stakedPoints) {
-                totalStaked += stakedPoints - previousStakedPoints;
-                proposal.stakedAmount += stakedPoints - previousStakedPoints;
-            } else {
-                totalStaked -= previousStakedPoints - stakedPoints;
-                proposal.stakedAmount -= previousStakedPoints - stakedPoints;
-            }
-            if (proposal.blockLast == 0) {
-                proposal.blockLast = block.number;
-            } else {
-                // _calculateAndSetConviction(proposal, previousStakedPoints);
-                _calculateAndSetConviction(proposal, previousStakedAmount);
-                emit SupportAdded(_sender, proposalId, stakedPoints, proposal.stakedAmount, proposal.convictionLast);
-            }
-            // console.log("proposal.stakedAmount", proposal.stakedAmount);
-        }
+        _delegateToFacet();
     }
 
-    function distribute(address[] memory, /*_recipientIds */ bytes memory _data, address /*_sender */ )
-        external
-        override
-    {
-        _checkOnlyAllo();
-        _checkOnlyInitialized();
-
-        // surpressStateMutabilityWarning++;
-        if (_data.length <= 0) {
-            // revert ProposalDataIsEmpty();
-            // revert(("ProposalDataIsEmpty")); // @todo take commented when contract size fixed with diamond
-            revert();
-        }
-
-        if (getPoolAmount() <= 0) {
-            // revert PoolIsEmpty();
-            // revert(("PoolIsEmpty")); // @todo take commented when contract size fixed with diamond
-            revert();
-        }
-
-        uint256 proposalId = abi.decode(_data, (uint256));
-
-        // Unwrap supertoken if needed
-        if (address(superfluidToken) != address(0)) {
-            if (
-                ERC20(proposals[proposalId].requestedToken).balanceOf(address(this))
-                    < proposals[proposalId].requestedAmount
-            ) {
-                superfluidToken.downgrade(superfluidToken.balanceOf(address(this))); // Unwrap all available
-            }
-        }
-
-        if (proposalType == ProposalType.Funding) {
-            if (proposals[proposalId].proposalId != proposalId && proposalId != 0) {
-                // @todo take commented when contract size fixed with diamond
-                //  revert ProposalNotInList(proposalId);
-                // revert(("ProposalNotInList"));
-                revert();
-            }
-
-            if (proposals[proposalId].proposalStatus != ProposalStatus.Active) {
-                // revert ProposalNotActive(proposalId);
-                // revert(("ProposalNotActive")); // @todo take commented when contract size fixed with diamond
-                revert();
-            }
-
-            if (proposals[proposalId].requestedAmount > getPoolAmount()) {
-                // revert PoolAmountNotEnough(proposalId, proposals[proposalId].requestedAmount, poolAmount);
-                // revert(("PoolAmountNotEnough")); // @todo take commented when contract size fixed with diamond
-                revert();
-            }
-
-            if (_isOverMaxRatio(proposals[proposalId].requestedAmount)) {
-                // revert AmountOverMaxRatio();
-                // revert(("AmountOverMaxRatio")); // @todo take commented when contract size fixed with diamond
-                revert();
-            }
-
-            uint256 convictionLast = updateProposalConviction(proposalId);
-
-            uint256 threshold = ConvictionsUtils.calculateThreshold(
-                proposals[proposalId].requestedAmount,
-                getPoolAmount(),
-                totalPointsActivated,
-                cvParams.decay,
-                cvParams.weight,
-                cvParams.maxRatio,
-                cvParams.minThresholdPoints
-            );
-
-            // <= for when threshold being zero
-            if (convictionLast <= threshold && proposals[proposalId].requestedAmount > 0) {
-                // revert ConvictionUnderMinimumThreshold();
-                // revert(("ConvictionUnderMinimumThreshold"));
-                revert();
-            }
-
-            // Not needed since poolAmount = balanceOf
-            // poolAmount -= proposals[proposalId].requestedAmount; // CEI
-
-            _transferAmount(
-                allo.getPool(poolId).token, proposals[proposalId].beneficiary, proposals[proposalId].requestedAmount
-            );
-
-            proposals[proposalId].proposalStatus = ProposalStatus.Executed;
-            collateralVault.withdrawCollateral(
-                proposalId,
-                proposals[proposalId].submitter,
-                arbitrableConfigs[currentArbitrableConfigVersion].submitterCollateralAmount
-            );
-
-            emit Distributed(proposalId, proposals[proposalId].beneficiary, proposals[proposalId].requestedAmount);
-        } //signaling do nothing @todo write tests @todo add end date
+    // distribute removed - now in AllocationFacet
+    // Stub needed for IStrategy interface - delegates to facet
+    function distribute(address[] memory, bytes memory, address) external override {
+        _delegateToFacet();
     }
 
     // GOSS: NEVER CALLED
@@ -755,22 +452,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         _setPoolActive(_active);
     }
 
-    function withdraw(address _member) internal {
-        // remove all proposals from the member
-        for (uint256 i = 0; i < voterStakedProposals[_member].length; i++) {
-            uint256 proposalId = voterStakedProposals[_member][i];
-            Proposal storage proposal = proposals[proposalId];
-            if (proposalExists(proposalId)) {
-                uint256 stakedPoints = proposal.voterStakedPoints[_member];
-                proposal.voterStakedPoints[_member] = 0;
-                proposal.stakedAmount -= stakedPoints;
-                totalStaked -= stakedPoints;
-                _calculateAndSetConviction(proposal, stakedPoints);
-                emit SupportAdded(_member, proposalId, 0, proposal.stakedAmount, proposal.convictionLast);
-            }
-        }
-        totalVoterStakePct[_member] = 0;
-    }
+    // withdraw removed - now in PowerManagementFacet
 
     /**
      * @dev Get proposal details
@@ -975,68 +657,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         );
     }
 
-    function _setPoolParams(
-        ArbitrableConfig memory _arbitrableConfig,
-        CVParams memory _cvParams,
-        address[] memory membersToAdd,
-        address[] memory membersToRemove
-    ) internal {
-        if (membersToAdd.length > 0) {
-            _addToAllowList(membersToAdd);
-        }
-        if (membersToRemove.length > 0) {
-            _removeFromAllowList(membersToRemove);
-        }
-
-        if (
-            _arbitrableConfig.tribunalSafe != address(0) && address(_arbitrableConfig.arbitrator) != address(0)
-                && (
-                    _arbitrableConfig.tribunalSafe != arbitrableConfigs[currentArbitrableConfigVersion].tribunalSafe
-                        || _arbitrableConfig.arbitrator != arbitrableConfigs[currentArbitrableConfigVersion].arbitrator
-                        || _arbitrableConfig.submitterCollateralAmount
-                            != arbitrableConfigs[currentArbitrableConfigVersion].submitterCollateralAmount
-                        || _arbitrableConfig.challengerCollateralAmount
-                            != arbitrableConfigs[currentArbitrableConfigVersion].challengerCollateralAmount
-                        || _arbitrableConfig.defaultRuling != arbitrableConfigs[currentArbitrableConfigVersion].defaultRuling
-                        || _arbitrableConfig.defaultRulingTimeout
-                            != arbitrableConfigs[currentArbitrableConfigVersion].defaultRulingTimeout
-                )
-        ) {
-            if (
-                arbitrableConfigs[currentArbitrableConfigVersion].tribunalSafe != _arbitrableConfig.tribunalSafe
-                    || arbitrableConfigs[currentArbitrableConfigVersion].arbitrator != _arbitrableConfig.arbitrator
-            ) {
-                _arbitrableConfig.arbitrator.registerSafe(_arbitrableConfig.tribunalSafe);
-                // TODO: Restore when needed in subgraph
-                // emit TribunaSafeRegistered(
-                //     address(this), address(_arbitrableConfig.arbitrator), _arbitrableConfig.tribunalSafe
-                // );
-            }
-
-            currentArbitrableConfigVersion++;
-            arbitrableConfigs[currentArbitrableConfigVersion] = _arbitrableConfig;
-
-            emit ArbitrableConfigUpdated(
-                currentArbitrableConfigVersion,
-                _arbitrableConfig.arbitrator,
-                _arbitrableConfig.tribunalSafe,
-                _arbitrableConfig.submitterCollateralAmount,
-                _arbitrableConfig.challengerCollateralAmount,
-                _arbitrableConfig.defaultRuling,
-                _arbitrableConfig.defaultRulingTimeout
-            );
-        }
-
-        if (
-            !(
-                _cvParams.decay == 0 && _cvParams.weight == 0 && _cvParams.maxRatio == 0
-                    && _cvParams.minThresholdPoints == 0
-            )
-        ) {
-            cvParams = _cvParams;
-            emit CVParamsUpdated(_cvParams);
-        }
-    }
+    // _setPoolParams removed - now in AdminFacet
 
     function updateProposalConviction(uint256 proposalId) public returns (uint256) {
         Proposal storage proposal = proposals[proposalId];
@@ -1078,6 +699,8 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     //     emit SybilScorerUpdated(_sybilScorer);
     // }
 
+    // setPoolParams removed - now in AdminFacet
+    // Stub needed for tests to call - delegates to facet
     function setPoolParams(
         ArbitrableConfig memory _arbitrableConfig,
         CVParams memory _cvParams,
@@ -1086,238 +709,37 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         address[] memory _membersToRemove,
         address _superfluidToken
     ) external {
-        onlyCouncilSafe();
-
-        // if (_superfluidToken != address(0)) {
-        //     if (superfluidToken.getUnderlyingToken() != address(allo.getPool(poolId).token)) {
-        //         // revert SuperTokenNotValid();
-        //         // revert(("SuperTokenNotValid")); // @todo take commented when contract size fixed with diamond
-        //         revert();
-        //     } else {
-        superfluidToken = ISuperToken(_superfluidToken);
-        emit SuperfluidTokenUpdated(_superfluidToken);
-        //     }
-        // }
-
-        _setPoolParams(_arbitrableConfig, _cvParams, _membersToAdd, _membersToRemove);
-
-        if (address(sybilScorer) != address(0) && _sybilScoreThreshold > 0) {
-            sybilScorer.modifyThreshold(address(this), _sybilScoreThreshold);
-        }
+        _delegateToFacet();
     }
 
+    // connectSuperfluidGDA and disconnectSuperfluidGDA removed - now in AdminFacet
+    // Stubs needed for tests to call - delegates to facet
     function connectSuperfluidGDA(address gda) external {
-        onlyCouncilSafeOrMember();
-        ISuperToken supertoken =
-            address(superfluidToken) != address(0) ? superfluidToken : ISuperToken(allo.getPool(poolId).token);
-        bool success = supertoken.connectPool(ISuperfluidPool(gda));
-        require(success, "Superfluid GDA connect failed");
-        emit SuperfluidGDAConnected(gda, msg.sender);
+        _delegateToFacet();
     }
 
     function disconnectSuperfluidGDA(address gda) external {
-        onlyCouncilSafeOrMember();
-        ISuperToken supertoken =
-            address(superfluidToken) != address(0) ? superfluidToken : ISuperToken(allo.getPool(poolId).token);
-        bool success = supertoken.disconnectPool(ISuperfluidPool(gda));
-        require(success, "Superfluid GDA disconnect failed");
-        emit SuperfluidGDADisconnected(gda, msg.sender);
+        _delegateToFacet();
     }
 
+    // disputeProposal and rule removed - now in DisputeFacet
+    // Stub needed for tests to call - delegates to facet
     function disputeProposal(uint256 proposalId, string calldata context, bytes calldata _extraData)
         external
         payable
         returns (uint256 disputeId)
     {
-        checkSenderIsMember(msg.sender);
-        Proposal storage proposal = proposals[proposalId];
-        ArbitrableConfig memory arbitrableConfig = arbitrableConfigs[proposal.arbitrableConfigVersion];
-
-        // if (address(arbitrableConfig.arbitrator) == address(0)) {
-        //     revert ArbitratorCannotBeZero();
-        // }
-        // Goss: Support Collateral Zero
-        // if (address(collateralVault) == address(0)) {
-        //     revert CollateralVaultCannotBeZero();
-        // }
-        // TODO: Uncoment when contract size fixed with diamond
-        // if (proposal.proposalId != proposalId) {
-        //     revert ProposalNotInList(proposalId);
-        // }
-        if (proposal.proposalStatus != ProposalStatus.Active) {
-            // revert ProposalNotActive(proposalId);
-            revert(); // @todo take commented when contract size fixed with diamond
-        }
-        if (msg.value < arbitrableConfig.challengerCollateralAmount) {
-            // revert InsufficientCollateral(msg.value, arbitrableConfig.challengerCollateralAmount);
-            revert(); // @todo take commented when contract size fixed with diamond
-        }
-
-        // if the lastDisputeCompletion is less than DISPUTE_COOLDOWN_SEC, we should revert
-        if (
-            proposal.lastDisputeCompletion != 0
-                && proposal.lastDisputeCompletion + DISPUTE_COOLDOWN_SEC > block.timestamp
-        ) {
-            // revert DisputeCooldownNotPassed(
-            //     proposalId, proposal.lastDisputeCompletion + DISPUTE_COOLDOWN_SEC - block.timestamp
-            // );
-            revert(); // @todo take commented when contract size fixed with diamond
-        }
-
-        uint256 arbitrationFee = msg.value - arbitrableConfig.challengerCollateralAmount;
-
-        collateralVault.depositCollateral{value: arbitrableConfig.challengerCollateralAmount}(proposalId, msg.sender);
-
-        disputeId = arbitrableConfig.arbitrator.createDispute{value: arbitrationFee}(RULING_OPTIONS, _extraData);
-
-        proposal.proposalStatus = ProposalStatus.Disputed;
-        proposal.disputeInfo.disputeId = disputeId;
-        proposal.disputeInfo.disputeTimestamp = block.timestamp;
-        proposal.disputeInfo.challenger = msg.sender;
-        disputeIdToProposalId[disputeId] = proposalId;
-
-        disputeCount++;
-
-        emit ProposalDisputed(
-            arbitrableConfig.arbitrator,
-            proposalId,
-            disputeId,
-            msg.sender,
-            context,
-            proposal.disputeInfo.disputeTimestamp
-        );
+        _delegateToFacet();
     }
 
-    function rule(uint256 _disputeID, uint256 _ruling) external override {
-        uint256 proposalId = disputeIdToProposalId[_disputeID];
-        Proposal storage proposal = proposals[proposalId];
-        ArbitrableConfig memory arbitrableConfig = arbitrableConfigs[proposal.arbitrableConfigVersion];
-
-        // if (proposalId == 0) {
-        //     revert ProposalNotInList(proposalId);
-        // }
-        if (proposal.proposalStatus != ProposalStatus.Disputed) {
-            // revert ProposalNotDisputed(proposalId);
-            revert(); // @todo take commented when contract size fixed with diamond
-        }
-
-        bool isTimeOut = block.timestamp > proposal.disputeInfo.disputeTimestamp + arbitrableConfig.defaultRulingTimeout;
-
-        if (!isTimeOut && msg.sender != address(arbitrableConfig.arbitrator)) {
-            // revert OnlyArbitrator();
-            revert(); // @todo take commented when contract size fixed with diamond
-        }
-
-        if (isTimeOut || _ruling == 0) {
-            if (arbitrableConfig.defaultRuling == 0) {
-                // TODO: Take commented when contract size fixed with diamond
-                // revert DefaultRulingNotSet();
-                revert(); // @todo take commented when contract size fixed with diamond
-            }
-            if (arbitrableConfig.defaultRuling == 1) {
-                proposal.proposalStatus = ProposalStatus.Active;
-            }
-            if (arbitrableConfig.defaultRuling == 2) {
-                proposal.proposalStatus = ProposalStatus.Rejected;
-                collateralVault.withdrawCollateral(
-                    proposalId, proposal.submitter, arbitrableConfig.submitterCollateralAmount
-                );
-            }
-            collateralVault.withdrawCollateral(
-                proposalId, proposal.disputeInfo.challenger, arbitrableConfig.challengerCollateralAmount
-            );
-        } else if (_ruling == 1) {
-            proposal.proposalStatus = ProposalStatus.Active;
-            collateralVault.withdrawCollateralFor(
-                proposalId,
-                proposal.disputeInfo.challenger,
-                address(registryCommunity.councilSafe()),
-                arbitrableConfig.challengerCollateralAmount
-            );
-        } else if (_ruling == 2) {
-            proposal.proposalStatus = ProposalStatus.Rejected;
-            collateralVault.withdrawCollateral(
-                proposalId, proposal.disputeInfo.challenger, arbitrableConfig.challengerCollateralAmount
-            );
-            collateralVault.withdrawCollateralFor(
-                proposalId,
-                proposal.submitter,
-                address(registryCommunity.councilSafe()),
-                arbitrableConfigs[currentArbitrableConfigVersion].submitterCollateralAmount / 2
-            );
-            collateralVault.withdrawCollateralFor(
-                proposalId,
-                proposal.submitter,
-                proposal.disputeInfo.challenger,
-                arbitrableConfigs[currentArbitrableConfigVersion].submitterCollateralAmount / 2
-            );
-        }
-
-        disputeCount--;
-        proposal.lastDisputeCompletion = block.timestamp;
-        emit Ruling(arbitrableConfig.arbitrator, _disputeID, _ruling);
+    // Stub to satisfy IArbitrable interface - delegates to facet
+    function rule(uint256, uint256) external virtual override {
+        _delegateToFacet();
     }
 
-    function cancelProposal(uint256 proposalId) external {
-        if (proposals[proposalId].proposalStatus != ProposalStatus.Active) {
-            // revert ProposalNotActive(proposalId);
-            revert(); // @todo take commented when contract size fixed with diamond
-        }
+    // cancelProposal removed - now in ProposalManagementFacet
 
-        if (proposals[proposalId].submitter != msg.sender) {
-            // revert OnlySubmitter(proposals[proposalId].submitter, msg.sender);
-            revert(); // @todo take commented when contract size fixed with diamond
-        }
-
-        collateralVault.withdrawCollateral(
-            proposalId,
-            proposals[proposalId].submitter,
-            arbitrableConfigs[proposals[proposalId].arbitrableConfigVersion].submitterCollateralAmount
-        );
-
-        proposals[proposalId].proposalStatus = ProposalStatus.Cancelled;
-        emit ProposalCancelled(proposalId);
-    }
-
-    // function addToAllowList(address[] memory members) public {
-    //     onlyCouncilSafe();
-    //     _addToAllowList(members);
-    // }
-
-    function _addToAllowList(address[] memory members) internal {
-        bytes32 allowlistRole = keccak256(abi.encodePacked("ALLOWLIST", poolId));
-
-        // we expect the UI to add address(0) back to the allowlist in case of removing all members
-        if (registryCommunity.hasRole(allowlistRole, address(0))) {
-            registryCommunity.revokeRole(allowlistRole, address(0));
-        }
-        for (uint256 i = 0; i < members.length; i++) {
-            if (!registryCommunity.hasRole(allowlistRole, members[i])) {
-                registryCommunity.grantRole(allowlistRole, members[i]);
-            }
-        }
-
-        emit AllowlistMembersAdded(poolId, members);
-    }
-
-    // function removeFromAllowList(address[] memory members) external {
-    //     onlyCouncilSafe();
-    //     _removeFromAllowList(members);
-    // }
-
-    function _removeFromAllowList(address[] memory members) internal {
-        for (uint256 i = 0; i < members.length; i++) {
-            if (registryCommunity.hasRole(keccak256(abi.encodePacked("ALLOWLIST", poolId)), members[i])) {
-                registryCommunity.revokeRole(keccak256(abi.encodePacked("ALLOWLIST", poolId)), members[i]);
-            }
-
-            if (members[i] != address(0)) {
-                _deactivatePoints(members[i]);
-            }
-        }
-
-        emit AllowlistMembersRemoved(poolId, members);
-    }
+    // _addToAllowList and _removeFromAllowList removed - now in AdminFacet
 
     function _registerToSybilScorer(uint256 threshold) internal {
         sybilScorer.addStrategy(address(this), threshold, address(registryCommunity.councilSafe()));
@@ -1344,7 +766,68 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         return base + sf;
     }
 
+    /// @notice Helper function to delegate to facet using LibDiamond
+    /// @dev Used by stub functions to delegate to their respective facets
+    /// @dev This function never returns - it either reverts or returns via assembly
+    function _delegateToFacet() private {
+        LibDiamond.DiamondStorage storage ds;
+        bytes32 position = LibDiamond.DIAMOND_STORAGE_POSITION;
+
+        assembly {
+            ds.slot := position
+        }
+
+        address facet = ds.facetAddressAndSelectorPosition[msg.sig].facetAddress;
+        require(facet != address(0), "CVStrategy: Function does not exist");
+
+        assembly {
+            calldatacopy(0, 0, calldatasize())
+            let result := delegatecall(gas(), facet, 0, calldatasize(), 0, 0)
+            returndatacopy(0, 0, returndatasize())
+            switch result
+            case 0 { revert(0, returndatasize()) }
+            default { return(0, returndatasize()) }
+        }
+    }
+
+    /// @notice Manage facets using diamond cut (owner only)
+    /// @param _diamondCut Array of FacetCut structs defining facet changes
+    /// @param _init Address of contract to execute with delegatecall (can be address(0))
+    /// @param _calldata Function call data to execute on _init address
+    function diamondCut(
+        IDiamondCut.FacetCut[] calldata _diamondCut,
+        address _init,
+        bytes calldata _calldata
+    ) external {
+        _checkOwner();
+        LibDiamond.diamondCut(_diamondCut, _init, _calldata);
+    }
+
+    /// @notice Fallback function delegates calls to facets based on function selector
+    /// @dev Uses Diamond storage to find facet address for the called function
+    fallback() external payable {
+        LibDiamond.DiamondStorage storage ds;
+        bytes32 position = LibDiamond.DIAMOND_STORAGE_POSITION;
+
+        assembly {
+            ds.slot := position
+        }
+
+        address facet = ds.facetAddressAndSelectorPosition[msg.sig].facetAddress;
+
+        require(facet != address(0), "CVStrategy: Function does not exist");
+
+        assembly {
+            calldatacopy(0, 0, calldatasize())
+            let result := delegatecall(gas(), facet, 0, calldatasize(), 0, 0)
+            returndatacopy(0, 0, returndatasize())
+            switch result
+            case 0 { revert(0, returndatasize()) }
+            default { return(0, returndatasize()) }
+        }
+    }
+
     receive() external payable {}
 
-    uint256[49] private __gap;
+    // Note: Storage gap is inherited from CVStrategyStorage base contract
 }

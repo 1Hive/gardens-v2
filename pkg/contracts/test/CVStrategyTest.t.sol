@@ -51,6 +51,8 @@ import {PassportScorer} from "../src/PassportScorer.sol";
 import {GasHelpers2} from "./shared/GasHelpers2.sol";
 import {SafeSetup} from "./shared/SafeSetup.sol";
 import {CVStrategyHelpers} from "./CVStrategyHelpers.sol";
+import {DiamondConfigurator} from "./helpers/DiamondConfigurator.sol";
+import {IDiamond} from "../src/diamonds/interfaces/IDiamond.sol";
 
 import {ABDKMath64x64} from "./ABDKMath64x64.sol";
 import {Upgrades} from "@openzeppelin/foundry/LegacyUpgrades.sol";
@@ -87,6 +89,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
 
     ISybilScorer public passportScorer;
     SafeArbitrator safeArbitrator;
+    DiamondConfigurator public diamondConfigurator;
 
     address factoryOwner = makeAddr("registryFactoryDeployer");
     address protocolFeeReceiver = makeAddr("multisigReceiver");
@@ -100,6 +103,9 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
     function setUp() public {
         __RegistrySetupFull();
         __AlloSetup(address(registry()));
+
+        // Deploy diamond configurator
+        diamondConfigurator = new DiamondConfigurator();
 
         vm.startPrank(allo_owner());
         allo().updateBaseFee(0);
@@ -228,6 +234,11 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         // console.log("strat: %s", strat);
         poolId = _poolId;
         CVStrategyV0_0 strategy = CVStrategyV0_0(payable(_strategy));
+
+        // Configure diamond facets for the strategy as the owner
+        vm.startPrank(strategy.owner());
+        strategy.diamondCut(diamondConfigurator.getFacetCuts(), address(0), "");
+        vm.stopPrank();
 
         vm.startPrank(pool_admin());
         safeHelper(
