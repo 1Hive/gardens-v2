@@ -1,18 +1,22 @@
 name: Task
 description: Track a general engineering or operational task.
-title: "[Task]: "
-issue-type: task
+title: ""
+type: "Task"
+projects: ["1Hive/17"]
 body:
   - type: markdown
     attributes:
       value: |
         Provide enough detail so anyone can pick up this task, understand the desired outcome, and know when it is complete.
-  - type: input
-    id: summary
+  - type: dropdown
+    id: priority
     attributes:
-      label: Summary
-      description: Brief description of the task.
-      placeholder: Publish documentation update for ...
+      label: Priority
+      description: Select the relative urgency.
+      options:
+        - P0 – time sensitive or blocking launch
+        - P1 – important but not blocking
+        - P2 – nice to have or follow up
     validations:
       required: true
   - type: textarea
@@ -34,11 +38,10 @@ body:
     validations:
       required: false
   - type: textarea
-    id: dependencies
+    id: additional-context
     attributes:
-      label: Dependencies
-      description: Link related issues, PRs, or external blockers.
-      placeholder: Depends on issue #123...
+      label: Additional context
+      description: Include notes, links, or considerations that help with execution.
     validations:
       required: false
   - type: checkboxes
