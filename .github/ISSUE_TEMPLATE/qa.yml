@@ -1,13 +1,36 @@
 name: QA request
 description: Request quality assurance coverage for a change or release.
-title: ""
+title: "[QA]: "
 labels: ["sanity"]
-type: "Task"
 body:
   - type: markdown
     attributes:
       value: |
         Share the scope, target environment, and risk areas so QA can validate the change efficiently.
+  - type: input
+    id: target-date
+    attributes:
+      label: Target sign-off date
+      description: When should QA complete validation?
+      placeholder: YYYY-MM-DD
+    validations:
+      required: false
+  - type: input
+    id: release-window
+    attributes:
+      label: Release window
+      description: Note the release, sprint, or deployment this QA supports.
+      placeholder: Sprint 14 / Mainnet release
+    validations:
+      required: false
+  - type: input
+    id: contact
+    attributes:
+      label: Requester
+      description: Who should QA contact for questions?
+      placeholder: Name or Slack handle
+    validations:
+      required: true
   - type: checkboxes
     id: test-types
     attributes:

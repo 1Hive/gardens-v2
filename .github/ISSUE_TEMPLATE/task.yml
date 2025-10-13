@@ -1,13 +1,20 @@
 name: Task
 description: Track a general engineering or operational task.
-title: ""
-type: "Task"
-projects: ["1Hive/17"]
+title: "[Task]: "
+labels: ["task"]
 body:
   - type: markdown
     attributes:
       value: |
         Provide enough detail so anyone can pick up this task, understand the desired outcome, and know when it is complete.
+  - type: input
+    id: owner
+    attributes:
+      label: Directly responsible
+      description: Who owns delivery of this task?
+      placeholder: Assignee name or team
+    validations:
+      required: false
   - type: dropdown
     id: priority
     attributes:
@@ -19,14 +26,22 @@ body:
         - P2 – nice to have or follow up
     validations:
       required: true
-  - type: textarea
-    id: details
+  - type: input
+    id: summary
     attributes:
-      label: Details
-      description: Outline the work to be done, relevant context, or implementation plan.
-      placeholder: Steps, notes, edge cases, or resources...
+      label: Summary
+      description: Brief description of the task.
+      placeholder: Publish documentation update for ...
     validations:
       required: true
+  - type: input
+    id: target-date
+    attributes:
+      label: Target completion date
+      description: Optional deadline or sprint.
+      placeholder: YYYY-MM-DD
+    validations:
+      required: false
   - type: textarea
     id: acceptance-criteria
     attributes:
@@ -38,10 +53,34 @@ body:
     validations:
       required: false
   - type: textarea
+    id: details
+    attributes:
+      label: Details
+      description: Outline the work to be done, relevant context, or implementation plan.
+      placeholder: Steps, notes, edge cases, or resources...
+    validations:
+      required: true
+  - type: textarea
     id: additional-context
     attributes:
       label: Additional context
       description: Include notes, links, or considerations that help with execution.
+    validations:
+      required: false
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies
+      description: Link related issues, PRs, or external blockers.
+      placeholder: Depends on issue #123...
+    validations:
+      required: false
+  - type: textarea
+    id: deliverables
+    attributes:
+      label: Deliverables
+      description: List specific outputs or artifacts expected.
+      placeholder: Hand-off doc, dashboard update, deployment checklist...
     validations:
       required: false
   - type: checkboxes
