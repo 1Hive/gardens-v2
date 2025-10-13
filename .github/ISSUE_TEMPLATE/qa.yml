@@ -1,0 +1,66 @@
+name: QA request
+description: Request quality assurance coverage for a change or release.
+title: "[QA]: "
+labels:
+  - qa
+issue-type: qa
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Share the scope, target environment, and risk areas so QA can validate the change efficiently.
+  - type: input
+    id: contact
+    attributes:
+      label: Requester
+      description: Who should QA contact for questions?
+      placeholder: Name or Slack handle
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: Summarize what needs to be tested and the expected outcome.
+      placeholder: Feature X flow covering...
+    validations:
+      required: true
+  - type: textarea
+    id: test-environment
+    attributes:
+      label: Test environment
+      description: Provide environment details, builds, or branches to use.
+      placeholder: QA should test on staging with branch ...
+    validations:
+      required: true
+  - type: textarea
+    id: test-data
+    attributes:
+      label: Test data
+      description: Include accounts, seeds, or fixtures needed during testing.
+      placeholder: Use wallet ... with balance ...
+    validations:
+      required: false
+  - type: textarea
+    id: risks
+    attributes:
+      label: Known risks or focus areas
+      description: Call out components or behaviors that need extra attention.
+      placeholder: Pay attention to proposal creation edge cases...
+    validations:
+      required: false
+  - type: textarea
+    id: artifacts
+    attributes:
+      label: Supporting artifacts
+      description: Link related PRs, designs, logs, or monitoring dashboards.
+      placeholder: Related PR: ...
+    validations:
+      required: false
+  - type: markdown
+    attributes:
+      value: |
+        **Reference links**
+
+        - Figma: https://www.figma.com/design/v9ECAmLYs2pam1wguh3HUS/Gardens-V2-UI?node-id=1-25&t=HMdvUpdbEzxPdDPZ-1
+        - GitHub repository: https://github.com/1Hive/gardens-v2
