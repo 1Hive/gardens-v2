@@ -1,8 +1,11 @@
 blank_issues_enabled: false
 contact_links:
-  - name: Gardens V2 design in Figma
-    url: https://www.figma.com/design/v9ECAmLYs2pam1wguh3HUS/Gardens-V2-UI?node-id=1-25&t=HMdvUpdbEzxPdDPZ-1
-    about: Review the latest user interface flows and components.
-  - name: Gardens V2 GitHub repository
-    url: https://github.com/1Hive/gardens-v2
-    about: Browse the source code, documentation, and existing issues.
+  - name: Bug
+    url: https://github.com/1Hive/gardens-v2/issues/new?template=bug.yml
+    about: Report a bug or unexpected behavior.
+  - name: Story
+    url: https://github.com/1Hive/gardens-v2/issues/new?template=story.yml
+    about: Capture a product or user story.
+  - name: Task
+    url: https://github.com/1Hive/gardens-v2/issues/new?template=task.yml
+    about: Track a general engineering or operational task.

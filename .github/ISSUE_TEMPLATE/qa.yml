@@ -2,7 +2,7 @@ name: QA request
 description: Request quality assurance coverage for a change or release.
 title: "[QA]: "
 labels:
-  - qa
+  - sanity
 issue-type: qa
 body:
   - type: markdown

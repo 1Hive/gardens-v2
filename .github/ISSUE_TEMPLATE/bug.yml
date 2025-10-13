@@ -1,8 +1,6 @@
 name: Bug
 description: Report a problem or unexpected behavior in the Gardens app.
-title: "[Bug]: "
-labels:
-  - bug
+title: ""
 issue-type: bug
 body:
   - type: markdown
@@ -61,6 +59,17 @@ body:
       description: Logs, screenshots, or any extra information that will help us investigate.
     validations:
       required: false
+  - type: checkboxes
+    id: focus-areas
+    attributes:
+      label: Focus areas
+      description: Select the relevant work areas.
+      options:
+        - label: "🎨 frontend"
+        - label: "🔗 subgraph"
+        - label: "🔧 contracts"
+        - label: "👩‍🎨 design"
+        - label: "🧪 tests"
   - type: markdown
     attributes:
       value: |

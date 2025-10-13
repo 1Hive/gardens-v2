@@ -1,9 +1,7 @@
 name: Story
 description: Capture a product or user story for the Gardens app.
 title: "[Story]: "
-labels:
-  - story
-issue-type: story
+issue-type: feature
 body:
   - type: markdown
     attributes:
@@ -48,6 +46,17 @@ body:
       description: Any supporting notes, mockups, or open questions.
     validations:
       required: false
+  - type: checkboxes
+    id: focus-areas
+    attributes:
+      label: Focus areas
+      description: Select the relevant work areas.
+      options:
+        - label: "🎨 frontend"
+        - label: "🔗 subgraph"
+        - label: "🔧 contracts"
+        - label: "👩‍🎨 design"
+        - label: "🧪 tests"
   - type: markdown
     attributes:
       value: |

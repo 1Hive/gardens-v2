@@ -1,0 +1,61 @@
+name: Task
+description: Track a general engineering or operational task.
+title: "[Task]: "
+issue-type: task
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Provide enough detail so anyone can pick up this task, understand the desired outcome, and know when it is complete.
+  - type: input
+    id: summary
+    attributes:
+      label: Summary
+      description: Brief description of the task.
+      placeholder: Publish documentation update for ...
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Details
+      description: Outline the work to be done, relevant context, or implementation plan.
+      placeholder: Steps, notes, edge cases, or resources...
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance criteria
+      description: Define how we will know this task is finished.
+      placeholder: |
+        - [ ] Criteria 1
+        - [ ] Criteria 2
+    validations:
+      required: false
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies
+      description: Link related issues, PRs, or external blockers.
+      placeholder: Depends on issue #123...
+    validations:
+      required: false
+  - type: checkboxes
+    id: focus-areas
+    attributes:
+      label: Focus areas
+      description: Select the relevant work areas.
+      options:
+        - label: "🎨 frontend"
+        - label: "🔗 subgraph"
+        - label: "🔧 contracts"
+        - label: "👩‍🎨 design"
+        - label: "🧪 tests"
+  - type: markdown
+    attributes:
+      value: |
+        **Reference links**
+
+        - Figma: https://www.figma.com/design/v9ECAmLYs2pam1wguh3HUS/Gardens-V2-UI?node-id=1-25&t=HMdvUpdbEzxPdDPZ-1
+        - GitHub repository: https://github.com/1Hive/gardens-v2
