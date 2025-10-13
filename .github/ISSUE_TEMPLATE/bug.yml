@@ -1,8 +1,9 @@
-name: Bug Report
-description: File a bug report.
+name: Bug report
+description: Report a problem or unexpected behavior in the Gardens app.
 title: "[Bug]: "
-labels: ["bug", "triage"]
-projects: ["1Hive/20"]
+labels: ["triage"]
+type: "Bug"
+projects: ["1Hive/20", "1Hive/17"]
 assignees:
   - Corantin
   - Mati0x
@@ -11,56 +12,121 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for taking the time to fill out this bug report!
+        Thanks for reporting an issue. Fill in the details so the team can size the impact, prioritize, and assign follow up quickly.
   - type: input
-    id: contact
+    id: summary
     attributes:
-      label: Contact Details
-      description: How can we get in touch with you if we need more info?
-      placeholder: ex. email@example.com
+      label: Summary
+      description: What is the core problem in a single sentence?
+      placeholder: Transaction fails when signing proposal
+    validations:
+      required: true
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      description: How disruptive is this bug?
+      options:
+        - Critical – production down or severe financial risk
+        - High – core flow blocked for many users
+        - Medium – degraded experience or workaround possible
+        - Low – cosmetic or low-risk issue
+    validations:
+      required: true
+  - type: dropdown
+    id: frequency
+    attributes:
+      label: Repro frequency
+      description: How often does the bug occur?
+      options:
+        - Always
+        - Often
+        - Intermittent
+        - Unable to reproduce
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impact
+      description: Who is affected and what is the business/user impact?
+      placeholder: Impacted user segment, financial exposure, deadlines at risk...
+    validations:
+      required: true
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: Steps to reproduce
+      description: List the steps needed to trigger the bug.
+      placeholder: |
+        1. Go to ...
+        2. Click ...
+        3. See error ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected behavior
+      description: What should happen instead?
+    validations:
+      required: true
+  - type: textarea
+    id: actual-behavior
+    attributes:
+      label: Actual behavior
+      description: What happened instead? Include messages or screenshots if helpful.
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Provide relevant runtime details.
+      placeholder: |
+        - App version or commit: ...
+        - Browser or device: ...
+        - Network or chain: ...
+        - Wallet: ...
     validations:
       required: false
   - type: textarea
-    id: what-happened
+    id: diagnostics
     attributes:
-      label: What happened?
-      description: Also tell us, what did you expect to happen?
-      placeholder: Tell us what you see!
-      value: "A bug happened!"
+      label: Supporting evidence
+      description: Include logs, screenshots, video links, or reproduction artifacts.
     validations:
-      required: true
-  - type: dropdown
-    id: version
-    attributes:
-      label: Version
-      description: What version of our software are you running?
-      options:
-        - 1.0.2 (Default)
-        - 1.0.3 (Edge)
-      default: 0
-    validations:
-      required: true
-  - type: dropdown
-    id: browsers
-    attributes:
-      label: What browsers are you seeing the problem on?
-      multiple: true
-      options:
-        - Firefox
-        - Chrome
-        - Safari
-        - Microsoft Edge
-  - type: textarea
-    id: logs
-    attributes:
-      label: Relevant log output
-      description: Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.
-      render: shell
+      required: false
   - type: checkboxes
-    id: terms
+    id: focus-areas
     attributes:
-      label: Code of Conduct
-      description: By submitting this issue, you agree to follow our [Code of Conduct](https://example.com).
+      label: Focus areas
+      description: Select all areas impacted by this bug.
       options:
-        - label: I agree to follow this project's Code of Conduct
-          required: true
+        - label: "🎨 frontend"
+        - label: "🔗 subgraph"
+        - label: "🔧 contracts"
+        - label: "👩‍🎨 design"
+        - label: "🧪 tests"
+  - type: input
+    id: target-fix-date
+    attributes:
+      label: Target fix date
+      description: Optional internal deadline or release window.
+      placeholder: YYYY-MM-DD
+    validations:
+      required: false
+  - type: textarea
+    id: coordination
+    attributes:
+      label: Coordination notes
+      description: Mention owners, related issues, or next steps agreed with the team.
+    validations:
+      required: false
+  - type: markdown
+    attributes:
+      value: |
+        **Reference links**
+
+        - Figma: https://www.figma.com/design/v9ECAmLYs2pam1wguh3HUS/Gardens-V2-UI?node-id=1-25&t=HMdvUpdbEzxPdDPZ-1
+        - GitHub repository: https://github.com/1Hive/gardens-v2

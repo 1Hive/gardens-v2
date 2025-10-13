@@ -1,22 +1,25 @@
 name: QA request
 description: Request quality assurance coverage for a change or release.
-title: "[QA]: "
-labels:
-  - sanity
-issue-type: qa
+title: ""
+labels: ["sanity"]
+type: "Task"
 body:
   - type: markdown
     attributes:
       value: |
         Share the scope, target environment, and risk areas so QA can validate the change efficiently.
-  - type: input
-    id: contact
+  - type: checkboxes
+    id: test-types
     attributes:
-      label: Requester
-      description: Who should QA contact for questions?
-      placeholder: Name or Slack handle
-    validations:
-      required: true
+      label: Test types requested
+      description: Select all QA activities needed.
+      options:
+        - label: Regression
+        - label: Smoke / sanity
+        - label: Exploratory
+        - label: Performance
+        - label: Security
+        - label: UAT coordination
   - type: textarea
     id: scope
     attributes:
@@ -47,6 +50,20 @@ body:
       label: Known risks or focus areas
       description: Call out components or behaviors that need extra attention.
       placeholder: Pay attention to proposal creation edge cases...
+    validations:
+      required: false
+  - type: textarea
+    id: entry-criteria
+    attributes:
+      label: Entry criteria
+      description: Preconditions QA should confirm before starting (build status, configs, flags).
+    validations:
+      required: false
+  - type: textarea
+    id: exit-criteria
+    attributes:
+      label: Exit criteria
+      description: Define what sign-off looks like (checklists, approvals, monitoring).
     validations:
       required: false
   - type: textarea

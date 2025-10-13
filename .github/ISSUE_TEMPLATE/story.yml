@@ -1,12 +1,29 @@
 name: Story
 description: Capture a product or user story for the Gardens app.
-title: "[Story]: "
-issue-type: feature
+title: "As a [user], I want [feature] so that [benefit]"
+type: "Feature"
+projects: ["1Hive/20"]
 body:
   - type: markdown
     attributes:
       value: |
         Outline the user problem, desired outcome, and acceptance criteria so the team can scope and implement the story effectively.
+  - type: input
+    id: summary
+    attributes:
+      label: Summary
+      description: Provide a short title or theme for the story.
+      placeholder: Snapshot of user needs or outcome
+    validations:
+      required: true
+  - type: textarea
+    id: business-context
+    attributes:
+      label: Business context
+      description: Why does this story matter now? Include goals, constraints, or related OKRs.
+      placeholder: This unlocks...
+    validations:
+      required: true
   - type: textarea
     id: user-value
     attributes:
@@ -32,6 +49,14 @@ body:
     validations:
       required: true
   - type: textarea
+    id: success-metrics
+    attributes:
+      label: Success metrics
+      description: How will we measure that this story achieved the desired outcome?
+      placeholder: Adoption, activation, retention targets...
+    validations:
+      required: false
+  - type: textarea
     id: dependencies
     attributes:
       label: Dependencies
@@ -44,6 +69,21 @@ body:
     attributes:
       label: Additional context
       description: Any supporting notes, mockups, or open questions.
+    validations:
+      required: false
+  - type: textarea
+    id: stakeholders
+    attributes:
+      label: Stakeholders
+      description: List the decision makers, reviewers, or teams to keep in sync.
+      placeholder: PM, design, dev lead...
+    validations:
+      required: false
+  - type: textarea
+    id: risks
+    attributes:
+      label: Risks and open questions
+      description: Capture known risks, assumptions, or questions to resolve.
     validations:
       required: false
   - type: checkboxes
@@ -64,4 +104,3 @@ body:
 
         - Figma: https://www.figma.com/design/v9ECAmLYs2pam1wguh3HUS/Gardens-V2-UI?node-id=1-25&t=HMdvUpdbEzxPdDPZ-1
         - GitHub repository: https://github.com/1Hive/gardens-v2
-        - Miro: [Add link to miro board if applicable]
