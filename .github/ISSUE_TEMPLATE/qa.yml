@@ -6,23 +6,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Share the scope, target environment, and risk areas so QA can validate the change efficiently.
-  - type: input
-    id: target-date
-    attributes:
-      label: Target sign-off date
-      description: When should QA complete validation?
-      placeholder: YYYY-MM-DD
-    validations:
-      required: false
-  - type: input
-    id: release-window
-    attributes:
-      label: Release window
-      description: Note the release, sprint, or deployment this QA supports.
-      placeholder: Sprint 14 / Mainnet release
-    validations:
-      required: false
+        Outline what needs testing, where to test it, and who to talk to.
   - type: input
     id: contact
     attributes:
@@ -31,76 +15,36 @@ body:
       placeholder: Name or Slack handle
     validations:
       required: true
-  - type: checkboxes
-    id: test-types
-    attributes:
-      label: Test types requested
-      description: Select all QA activities needed.
-      options:
-        - label: Regression
-        - label: Smoke / sanity
-        - label: Exploratory
-        - label: Performance
-        - label: Security
-        - label: UAT coordination
   - type: textarea
     id: scope
     attributes:
       label: Scope
       description: Summarize what needs to be tested and the expected outcome.
-      placeholder: Feature X flow covering...
+      placeholder: Validate the proposal creation flow covering...
     validations:
       required: true
   - type: textarea
-    id: test-environment
+    id: environment
     attributes:
       label: Test environment
-      description: Provide environment details, builds, or branches to use.
-      placeholder: QA should test on staging with branch ...
+      description: Provide builds, branches, credentials, or flags to use.
+      placeholder: Staging app URL, branch name, feature flags...
     validations:
       required: true
   - type: textarea
-    id: test-data
+    id: checklist
     attributes:
-      label: Test data
-      description: Include accounts, seeds, or fixtures needed during testing.
-      placeholder: Use wallet ... with balance ...
+      label: Checks to run
+      description: Optional checklist or areas to pay attention to.
+      placeholder: |
+        - [ ] Smoke login
+        - [ ] Verify metrics in...
     validations:
       required: false
   - type: textarea
-    id: risks
+    id: notes
     attributes:
-      label: Known risks or focus areas
-      description: Call out components or behaviors that need extra attention.
-      placeholder: Pay attention to proposal creation edge cases...
+      label: Extra context
+      description: Related issues, risks, or links.
     validations:
       required: false
-  - type: textarea
-    id: entry-criteria
-    attributes:
-      label: Entry criteria
-      description: Preconditions QA should confirm before starting (build status, configs, flags).
-    validations:
-      required: false
-  - type: textarea
-    id: exit-criteria
-    attributes:
-      label: Exit criteria
-      description: Define what sign-off looks like (checklists, approvals, monitoring).
-    validations:
-      required: false
-  - type: textarea
-    id: artifacts
-    attributes:
-      label: Supporting artifacts
-      description: Link related PRs, designs, logs, or monitoring dashboards.
-      placeholder: "Related PR(s): ..."
-    validations:
-      required: false
-  - type: markdown
-    attributes:
-      value: |
-        **Reference links**
-
-        - Figma: https://www.figma.com/design/v9ECAmLYs2pam1wguh3HUS/Gardens-V2-UI?node-id=1-25&t=HMdvUpdbEzxPdDPZ-1
-        - GitHub repository: https://github.com/1Hive/gardens-v2

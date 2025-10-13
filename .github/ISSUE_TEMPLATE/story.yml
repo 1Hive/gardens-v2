@@ -7,100 +7,46 @@ body:
   - type: markdown
     attributes:
       value: |
-        Outline the user problem, desired outcome, and acceptance criteria so the team can scope and implement the story effectively.
+        Keep it lightweight: describe the problem, the outcome, and how we'll confirm it delivers value.
   - type: input
     id: summary
     attributes:
       label: Summary
-      description: Provide a short title or theme for the story.
-      placeholder: Snapshot of user needs or outcome
+      description: Short title or theme for the story.
+      placeholder: Snapshot of the user need
     validations:
       required: true
   - type: textarea
-    id: business-context
+    id: problem
     attributes:
-      label: Business context
-      description: Why does this story matter now? Include goals, constraints, or related OKRs.
-      placeholder: This unlocks...
+      label: User problem
+      description: Who is impacted and what pain are they feeling?
+      placeholder: As a ... I struggle with ...
     validations:
       required: true
   - type: textarea
-    id: user-value
+    id: outcome
     attributes:
-      label: User value
-      description: Who benefits from this story and why?
-      placeholder: As a ... I want ... so that ...
+      label: Desired outcome
+      description: What changes for the user after we deliver this?
+      placeholder: Users can...
     validations:
       required: true
   - type: textarea
-    id: requirements
-    attributes:
-      label: Requirements
-      description: Detail the main scenarios, flows, or UI changes.
-      placeholder: List the key requirements here...
-    validations:
-      required: true
-  - type: textarea
-    id: acceptance-criteria
+    id: acceptance
     attributes:
       label: Acceptance criteria
-      description: Provide clear criteria that must be met for this story to be complete.
-      placeholder: Given ... when ... then ...
+      description: Bullet the scenarios that must pass.
+      placeholder: |
+        - Given ...
+        - When ...
+        - Then ...
     validations:
       required: true
   - type: textarea
-    id: success-metrics
+    id: notes
     attributes:
-      label: Success metrics
-      description: How will we measure that this story achieved the desired outcome?
-      placeholder: Adoption, activation, retention targets...
+      label: Notes
+      description: Links, designs, or open questions.
     validations:
       required: false
-  - type: textarea
-    id: dependencies
-    attributes:
-      label: Dependencies
-      description: Link related issues, designs, or technical blockers.
-      placeholder: Depends on issue #123...
-    validations:
-      required: false
-  - type: textarea
-    id: additional-context
-    attributes:
-      label: Additional context
-      description: Any supporting notes, mockups, or open questions.
-    validations:
-      required: false
-  - type: textarea
-    id: stakeholders
-    attributes:
-      label: Stakeholders
-      description: List the decision makers, reviewers, or teams to keep in sync.
-      placeholder: PM, design, dev lead...
-    validations:
-      required: false
-  - type: textarea
-    id: risks
-    attributes:
-      label: Risks and open questions
-      description: Capture known risks, assumptions, or questions to resolve.
-    validations:
-      required: false
-  - type: checkboxes
-    id: focus-areas
-    attributes:
-      label: Focus areas
-      description: Select the relevant work areas.
-      options:
-        - label: "🎨 frontend"
-        - label: "🔗 subgraph"
-        - label: "🔧 contracts"
-        - label: "👩‍🎨 design"
-        - label: "🧪 tests"
-  - type: markdown
-    attributes:
-      value: |
-        **Reference links**
-
-        - Figma: https://www.figma.com/design/v9ECAmLYs2pam1wguh3HUS/Gardens-V2-UI?node-id=1-25&t=HMdvUpdbEzxPdDPZ-1
-        - GitHub repository: https://github.com/1Hive/gardens-v2

@@ -6,98 +6,37 @@ body:
   - type: markdown
     attributes:
       value: |
-        Provide enough detail so anyone can pick up this task, understand the desired outcome, and know when it is complete.
-  - type: input
-    id: owner
-    attributes:
-      label: Directly responsible
-      description: Who owns delivery of this task?
-      placeholder: Assignee name or team
-    validations:
-      required: false
-  - type: dropdown
-    id: priority
-    attributes:
-      label: Priority
-      description: Select the relative urgency.
-      options:
-        - P0 – time sensitive or blocking launch
-        - P1 – important but not blocking
-        - P2 – nice to have or follow up
-    validations:
-      required: true
+        Capture the goal, the work needed, and how you'll know it's done.
   - type: input
     id: summary
     attributes:
       label: Summary
-      description: Brief description of the task.
-      placeholder: Publish documentation update for ...
+      description: Brief headline for the task.
+      placeholder: Publish docs update for...
     validations:
       required: true
-  - type: input
-    id: target-date
-    attributes:
-      label: Target completion date
-      description: Optional deadline or sprint.
-      placeholder: YYYY-MM-DD
-    validations:
-      required: false
   - type: textarea
-    id: acceptance-criteria
+    id: outcome
     attributes:
-      label: Acceptance criteria
-      description: Define how we will know this task is finished.
+      label: Desired outcome
+      description: What does success look like?
+      placeholder: When complete...
+    validations:
+      required: true
+  - type: textarea
+    id: plan
+    attributes:
+      label: Key steps
+      description: Outline the main actions or checklist items.
       placeholder: |
-        - [ ] Criteria 1
-        - [ ] Criteria 2
+        - [ ] Step 1
+        - [ ] Step 2
     validations:
       required: false
   - type: textarea
-    id: details
+    id: resources
     attributes:
-      label: Details
-      description: Outline the work to be done, relevant context, or implementation plan.
-      placeholder: Steps, notes, edge cases, or resources...
-    validations:
-      required: true
-  - type: textarea
-    id: additional-context
-    attributes:
-      label: Additional context
-      description: Include notes, links, or considerations that help with execution.
+      label: Links or context
+      description: Add references, related issues, or notes.
     validations:
       required: false
-  - type: textarea
-    id: dependencies
-    attributes:
-      label: Dependencies
-      description: Link related issues, PRs, or external blockers.
-      placeholder: Depends on issue #123...
-    validations:
-      required: false
-  - type: textarea
-    id: deliverables
-    attributes:
-      label: Deliverables
-      description: List specific outputs or artifacts expected.
-      placeholder: Hand-off doc, dashboard update, deployment checklist...
-    validations:
-      required: false
-  - type: checkboxes
-    id: focus-areas
-    attributes:
-      label: Focus areas
-      description: Select the relevant work areas.
-      options:
-        - label: "🎨 frontend"
-        - label: "🔗 subgraph"
-        - label: "🔧 contracts"
-        - label: "👩‍🎨 design"
-        - label: "🧪 tests"
-  - type: markdown
-    attributes:
-      value: |
-        **Reference links**
-
-        - Figma: https://www.figma.com/design/v9ECAmLYs2pam1wguh3HUS/Gardens-V2-UI?node-id=1-25&t=HMdvUpdbEzxPdDPZ-1
-        - GitHub repository: https://github.com/1Hive/gardens-v2

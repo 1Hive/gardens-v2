@@ -4,129 +4,52 @@ title: "[Bug]: "
 labels: ["triage"]
 type: "Bug"
 projects: ["1Hive/20", "1Hive/17"]
-assignees:
-  - Corantin
-  - Mati0x
-  - Oba-One
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for reporting an issue. Fill in the details so the team can size the impact, prioritize, and assign follow up quickly.
+        Thanks for raising an issue. Share the essentials so we can reproduce and fix it quickly.
   - type: input
     id: summary
     attributes:
-      label: Summary
-      description: What is the core problem in a single sentence?
-      placeholder: Transaction fails when signing proposal
-    validations:
-      required: true
-  - type: dropdown
-    id: severity
-    attributes:
-      label: Severity
-      description: How disruptive is this bug?
-      options:
-        - Critical – production down or severe financial risk
-        - High – core flow blocked for many users
-        - Medium – degraded experience or workaround possible
-        - Low – cosmetic or low-risk issue
-    validations:
-      required: true
-  - type: dropdown
-    id: frequency
-    attributes:
-      label: Repro frequency
-      description: How often does the bug occur?
-      options:
-        - Always
-        - Often
-        - Intermittent
-        - Unable to reproduce
+      label: What happened?
+      description: One line summary of the problem.
+      placeholder: Unable to sign proposal when...
     validations:
       required: true
   - type: textarea
-    id: impact
-    attributes:
-      label: Impact
-      description: Who is affected and what is the business/user impact?
-      placeholder: Impacted user segment, financial exposure, deadlines at risk...
-    validations:
-      required: true
-  - type: textarea
-    id: steps-to-reproduce
+    id: steps
     attributes:
       label: Steps to reproduce
-      description: List the steps needed to trigger the bug.
+      description: List the actions that trigger the bug.
       placeholder: |
         1. Go to ...
         2. Click ...
-        3. See error ...
+        3. Observe ...
     validations:
       required: true
   - type: textarea
-    id: expected-behavior
+    id: expected
     attributes:
-      label: Expected behavior
-      description: What should happen instead?
+      label: Expected result
+      description: What did you expect to happen?
     validations:
       required: true
   - type: textarea
-    id: actual-behavior
+    id: actual
     attributes:
-      label: Actual behavior
-      description: What happened instead? Include messages or screenshots if helpful.
+      label: Actual result
+      description: What happened instead? Include errors or screenshots if helpful.
     validations:
       required: true
   - type: textarea
-    id: environment
+    id: context
     attributes:
-      label: Environment
-      description: Provide relevant runtime details.
+      label: Extra context
+      description: Environment details, wallets, links, or anything else that helps.
       placeholder: |
-        - App version or commit: ...
-        - Browser or device: ...
-        - Network or chain: ...
-        - Wallet: ...
+        - Network:
+        - Browser or device:
+        - Wallet:
     validations:
       required: false
-  - type: textarea
-    id: diagnostics
-    attributes:
-      label: Supporting evidence
-      description: Include logs, screenshots, video links, or reproduction artifacts.
-    validations:
-      required: false
-  - type: checkboxes
-    id: focus-areas
-    attributes:
-      label: Focus areas
-      description: Select all areas impacted by this bug.
-      options:
-        - label: "🎨 frontend"
-        - label: "🔗 subgraph"
-        - label: "🔧 contracts"
-        - label: "👩‍🎨 design"
-        - label: "🧪 tests"
-  - type: input
-    id: target-fix-date
-    attributes:
-      label: Target fix date
-      description: Optional internal deadline or release window.
-      placeholder: YYYY-MM-DD
-    validations:
-      required: false
-  - type: textarea
-    id: coordination
-    attributes:
-      label: Coordination notes
-      description: Mention owners, related issues, or next steps agreed with the team.
-    validations:
-      required: false
-  - type: markdown
-    attributes:
-      value: |
-        **Reference links**
-
-        - Figma: https://www.figma.com/design/v9ECAmLYs2pam1wguh3HUS/Gardens-V2-UI?node-id=1-25&t=HMdvUpdbEzxPdDPZ-1
-        - GitHub repository: https://github.com/1Hive/gardens-v2
