@@ -1,14 +1,23 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.19;
 
-import {CommunityStorage} from "../CommunityStorage.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
+
+import {ReentrancyGuardUpgradeable} from
+    "openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
+import {AccessControlUpgradeable} from
+    "openzeppelin-contracts-upgradeable/contracts/access/AccessControlUpgradeable.sol";
+
 import {IRegistry, Metadata} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 import {CVStrategyInitializeParamsV0_2} from "../../CVStrategy/ICVStrategy.sol";
 import {CVStrategyV0_0} from "../../CVStrategy/CVStrategyV0_0.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {ProxyOwnableUpgrader} from "../../ProxyOwnableUpgrader.sol";
 import {ISafe} from "../../interfaces/ISafe.sol";
 import {FAllo} from "../../interfaces/FAllo.sol";
+import {Clone} from "allo-v2-contracts/core/libraries/Clone.sol";
 
 /// @notice Initialize parameters for the contract
 struct RegistryCommunityInitializeParamsV0_0 {
@@ -26,19 +35,58 @@ struct RegistryCommunityInitializeParamsV0_0 {
     string covenantIpfsHash;
 }
 
+struct Member {
+    address member;
+    uint256 stakedAmount;
+    bool isRegistered;
+}
+
 /**
  * @title CommunityPoolFacet
  * @notice Facet containing pool creation and initialization functions for RegistryCommunity
  * @dev This facet is called via delegatecall from RegistryCommunityV0_0
- *      CRITICAL: Storage layout is inherited from CommunityStorage base contract
+ *      CRITICAL: Must inherit from same base contracts as main contract for storage alignment
  */
-contract CommunityPoolFacet is CommunityStorage {
+contract CommunityPoolFacet is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, AccessControlUpgradeable {
+    using ERC165Checker for address;
+    using SafeERC20 for IERC20;
+    using Clone for address;
     /*|--------------------------------------------|*/
     /*|              CONSTANTS                     |*/
     /*|--------------------------------------------|*/
+    string public constant VERSION = "0.0";
     address public constant NATIVE = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
+    uint256 public constant PRECISION_SCALE = 10 ** 4;
+    uint256 public constant MAX_FEE = 10 * PRECISION_SCALE;
     bytes32 public constant COUNCIL_MEMBER = keccak256("COUNCIL_MEMBER");
-    bytes32 public constant DEFAULT_ADMIN_ROLE = 0x00;
+
+    /*|--------------------------------------------|*/
+    /*|              STORAGE VARIABLES             |*/
+    /*|  Must match RegistryCommunityV0_0 layout  |*/
+    /*|--------------------------------------------|*/
+    uint256 public registerStakeAmount;
+    uint256 public communityFee;
+    uint256 public cloneNonce;
+    bytes32 public profileId;
+    bool public isKickEnabled;
+    address public feeReceiver;
+    address public registryFactory;
+    address public collateralVaultTemplate;
+    address public strategyTemplate;
+    address payable public pendingCouncilSafe;
+    IRegistry public registry;
+    IERC20 public gardenToken;
+    ISafe public councilSafe;
+    FAllo public allo;
+    string public communityName;
+    string public covenantIpfsHash;
+    mapping(address strategy => bool isEnabled) public enabledStrategies;
+    mapping(address strategy => mapping(address member => uint256 power)) public memberPowerInStrategy;
+    mapping(address member => Member) public addressToMemberInfo;
+    mapping(address member => address[] strategiesAddresses) public strategiesByMember;
+    mapping(address member => mapping(address strategy => bool isActivated)) public memberActivatedInStrategies;
+    address[] internal initialMembers;
+    uint256 public totalMembers;
 
     /*|--------------------------------------------|*/
     /*|              EVENTS                        |*/
@@ -51,15 +99,6 @@ contract CommunityPoolFacet is CommunityStorage {
     /*|--------------------------------------------|*/
     error ValueCannotBeZero();
     error AllowlistTooBig(uint256 size);
-
-    /*|--------------------------------------------|*/
-    /*|              MODIFIERS/HELPERS             |*/
-    /*|--------------------------------------------|*/
-
-    /// @dev Access to _owner from ProxyOwnableUpgrader storage
-    function proxyOwner() internal view returns (address) {
-        return _owner;
-    }
 
     /*|--------------------------------------------|*/
     /*|              FUNCTIONS                     |*/
@@ -85,14 +124,16 @@ contract CommunityPoolFacet is CommunityStorage {
             }
             bytes32 allowlistRole = keccak256(abi.encodePacked("ALLOWLIST", poolId));
             for (uint256 i = 0; i < _params.initialAllowlist.length; i++) {
-                _roles[allowlistRole][_params.initialAllowlist[i]] = true;
+                _grantRole(allowlistRole, _params.initialAllowlist[i]);
             }
         }
 
-        // Grant the strategy role for strategy specific allowlist
-        // Note: Role admin configuration handled by AccessControl inheritance in main contract
-        bytes32 allowlistAdminRole = keccak256(abi.encodePacked("ALLOWLIST_ADMIN", poolId));
-        _roles[allowlistAdminRole][strategy] = true;
+        // Set up role admin hierarchy and grant strategy the admin role
+        _setRoleAdmin(
+            keccak256(abi.encodePacked("ALLOWLIST", poolId)),
+            keccak256(abi.encodePacked("ALLOWLIST_ADMIN", poolId))
+        );
+        _grantRole(keccak256(abi.encodePacked("ALLOWLIST_ADMIN", poolId)), strategy);
     }
 
     function createPool(

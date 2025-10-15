@@ -1,8 +1,26 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.19;
 
-import {CommunityStorage} from "../CommunityStorage.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
+
+import {ReentrancyGuardUpgradeable} from
+    "openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
+import {AccessControlUpgradeable} from
+    "openzeppelin-contracts-upgradeable/contracts/access/AccessControlUpgradeable.sol";
+
+import {ProxyOwnableUpgrader} from "../../ProxyOwnableUpgrader.sol";
+import {IRegistry} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 import {ISafe} from "../../interfaces/ISafe.sol";
+import {FAllo} from "../../interfaces/FAllo.sol";
+import {Clone} from "allo-v2-contracts/core/libraries/Clone.sol";
+
+struct Member {
+    address member;
+    uint256 stakedAmount;
+    bool isRegistered;
+}
 
 /// @notice Parameters for community configuration
 struct CommunityParams {
@@ -19,15 +37,49 @@ struct CommunityParams {
  * @title CommunityAdminFacet
  * @notice Facet containing admin configuration functions for RegistryCommunity
  * @dev This facet is called via delegatecall from RegistryCommunityV0_0
- *      CRITICAL: Storage layout is inherited from CommunityStorage base contract
+ *      CRITICAL: Must inherit from same base contracts as main contract for storage alignment
  */
-contract CommunityAdminFacet is CommunityStorage {
+contract CommunityAdminFacet is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, AccessControlUpgradeable {
+    using ERC165Checker for address;
+    using SafeERC20 for IERC20;
+    using Clone for address;
+
     /*|--------------------------------------------|*/
     /*|              CONSTANTS                     |*/
     /*|--------------------------------------------|*/
+    string public constant VERSION = "0.0";
+    address public constant NATIVE = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
     uint256 public constant PRECISION_SCALE = 10 ** 4;
     uint256 public constant MAX_FEE = 10 * PRECISION_SCALE;
     bytes32 public constant COUNCIL_MEMBER = keccak256("COUNCIL_MEMBER");
+
+    /*|--------------------------------------------|*/
+    /*|              STORAGE VARIABLES             |*/
+    /*|  Must match RegistryCommunityV0_0 layout  |*/
+    /*|--------------------------------------------|*/
+    uint256 public registerStakeAmount;
+    uint256 public communityFee;
+    uint256 public cloneNonce;
+    bytes32 public profileId;
+    bool public isKickEnabled;
+    address public feeReceiver;
+    address public registryFactory;
+    address public collateralVaultTemplate;
+    address public strategyTemplate;
+    address payable public pendingCouncilSafe;
+    IRegistry public registry;
+    IERC20 public gardenToken;
+    ISafe public councilSafe;
+    FAllo public allo;
+    string public communityName;
+    string public covenantIpfsHash;
+    mapping(address strategy => bool isEnabled) public enabledStrategies;
+    mapping(address strategy => mapping(address member => uint256 power)) public memberPowerInStrategy;
+    mapping(address member => Member) public addressToMemberInfo;
+    mapping(address member => address[] strategiesAddresses) public strategiesByMember;
+    mapping(address member => mapping(address strategy => bool isActivated)) public memberActivatedInStrategies;
+    address[] internal initialMembers;
+    uint256 public totalMembers;
 
     /*|--------------------------------------------|*/
     /*|              EVENTS                        |*/
@@ -54,26 +106,6 @@ contract CommunityAdminFacet is CommunityStorage {
     /*|--------------------------------------------|*/
     /*|              MODIFIERS                     |*/
     /*|--------------------------------------------|*/
-    function hasRole(bytes32 role, address account) internal view returns (bool) {
-        return _roles[role][account];
-    }
-
-    function grantRole(bytes32 role, address account) internal {
-        _roles[role][account] = true;
-    }
-
-    function revokeRole(bytes32 role, address account) internal {
-        _roles[role][account] = false;
-    }
-
-    function owner() internal view returns (address) {
-        return _owner;
-    }
-
-    function onlyOwner() internal view {
-        require(msg.sender == owner(), "Ownable: caller is not the owner");
-    }
-
     function onlyCouncilSafe() internal view {
         if (!hasRole(COUNCIL_MEMBER, msg.sender)) {
             revert UserNotInCouncil(msg.sender);
@@ -95,12 +127,12 @@ contract CommunityAdminFacet is CommunityStorage {
     }
 
     function setStrategyTemplate(address template) external {
-        onlyOwner();
+        require(msg.sender == owner(), "Ownable: caller is not the owner");
         strategyTemplate = template;
     }
 
     function setCollateralVaultTemplate(address template) external {
-        onlyOwner();
+        require(msg.sender == owner(), "Ownable: caller is not the owner");
         collateralVaultTemplate = template;
     }
 
@@ -135,8 +167,8 @@ contract CommunityAdminFacet is CommunityStorage {
         if (msg.sender != pendingCouncilSafe) {
             revert SenderNotNewOwner();
         }
-        grantRole(COUNCIL_MEMBER, pendingCouncilSafe);
-        revokeRole(COUNCIL_MEMBER, address(councilSafe));
+        _grantRole(COUNCIL_MEMBER, pendingCouncilSafe);
+        _revokeRole(COUNCIL_MEMBER, address(councilSafe));
         councilSafe = ISafe(pendingCouncilSafe);
         delete pendingCouncilSafe;
         emit CouncilSafeUpdated(address(councilSafe));
