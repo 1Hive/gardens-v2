@@ -5,8 +5,8 @@
       "path": "./apps/web",
     },
     {
-      "name": "Doc",
-      "path": "./apps/doc",
+      "name": "Docs",
+      "path": "./apps/docs",
     },
     {
       "name": "Foundry",

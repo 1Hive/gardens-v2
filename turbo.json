@@ -97,7 +97,7 @@
         "foundry#build"
       ]
     },
-    "gardens-docs#build": {
+    "docs#build": {
       "dependsOn": [
         "^build"
       ],
