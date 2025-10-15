@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { getCommunityNameDocument } from "#/subgraph/.graphclient";
 import ClientPage from "./ClientPage";
 import { FALLBACK_TITLE, description } from "./opengraph-image";
-import CommunityImage from "@/assets/CommunityImage.png";
 import { chainConfigMap } from "@/configs/chains";
 import { queryByChain } from "@/providers/urql";
 

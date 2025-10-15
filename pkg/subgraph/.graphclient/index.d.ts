@@ -4011,17 +4011,22 @@ export type getPoolTitleQueryVariables = Exact<{
     poolId: Scalars['BigInt']['input'];
 }>;
 export type getPoolTitleQuery = {
-    cvstrategies: Array<{
+    cvstrategies: Array<(Pick<CVStrategy, 'archived' | 'isEnabled'> & {
         metadata?: Maybe<Pick<PoolMetadata, 'title'>>;
-    }>;
+        config: Pick<CVStrategyConfig, 'proposalType'>;
+        registryCommunity: Pick<RegistryCommunity, 'communityName'>;
+    })>;
 };
 export type getProposalTitleQueryVariables = Exact<{
     proposalId: Scalars['ID']['input'];
 }>;
 export type getProposalTitleQuery = {
-    cvproposal?: Maybe<{
+    cvproposal?: Maybe<(Pick<CVProposal, 'proposalStatus'> & {
         metadata?: Maybe<Pick<ProposalMetadata, 'title'>>;
-    }>;
+        strategy: {
+            config: Pick<CVStrategyConfig, 'proposalType'>;
+        };
+    })>;
 };
 export declare const getFactoriesDocument: DocumentNode<getFactoriesQuery, Exact<{
     [key: string]: never;

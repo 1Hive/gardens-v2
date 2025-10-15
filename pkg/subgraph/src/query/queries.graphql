@@ -667,6 +667,14 @@ query getPoolTitle($poolId: BigInt!) {
     metadata {
       title
     }
+    archived
+    isEnabled
+    config {
+      proposalType
+    }
+    registryCommunity {
+      communityName
+    }
   }
 }
 
@@ -674,6 +682,12 @@ query getProposalTitle($proposalId: ID!) {
   cvproposal(id: $proposalId) {
     metadata {
       title
+    }
+    proposalStatus
+    strategy {
+      config {
+        proposalType
+      }
     }
   }
 }
