@@ -245,8 +245,13 @@ class MarkdownRenderer:
                 "success": "success",
             }.get(style, "info")
             lines = [line for line in content.splitlines()]
-            result = [f"> [!{tag}]"]
-            result.extend(f"> {line}" if line else ">" for line in lines)
+            while lines and not lines[0].strip():
+                lines.pop(0)
+            while lines and not lines[-1].strip():
+                lines.pop()
+            result = [f":::{tag}"]
+            result.extend(lines)
+            result.append(":::")
             return "\n".join(result)
         if block_type == "divider":
             return "---"

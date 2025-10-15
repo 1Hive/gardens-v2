@@ -8,10 +8,9 @@ const config: DocsThemeConfig = {
   chat: {
     link: "https://discord.com/invite/C4jhEYkqTv"
   },
-  docsRepositoryBase:
-    "https://github.com/1Hive/gardens-v2/tree/main/apps/docs/pages",
+  docsRepositoryBase: "https://github.com/1Hive/gardens-v2/tree/main/apps/docs",
   footer: {
-    content: "Gardens V2 Documentation"
+    content: "Gardens Documentation"
   }
 };
 
