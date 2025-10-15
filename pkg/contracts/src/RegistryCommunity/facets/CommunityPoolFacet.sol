@@ -55,83 +55,15 @@ contract CommunityPoolFacet is CommunityStorage {
     /*|--------------------------------------------|*/
     /*|              MODIFIERS/HELPERS             |*/
     /*|--------------------------------------------|*/
-    function setRoleAdmin(bytes32 role, bytes32 adminRole) internal {
-        _roleAdmin[role] = adminRole;
-    }
 
-    function grantRole(bytes32 role, address account) internal {
-        _roles[role][account] = true;
-    }
-
-    function owner() internal view returns (address) {
-        return _owner;
-    }
-
+    /// @dev Access to _owner from ProxyOwnableUpgrader storage
     function proxyOwner() internal view returns (address) {
-        return owner();
+        return _owner;
     }
 
     /*|--------------------------------------------|*/
     /*|              FUNCTIONS                     |*/
     /*|--------------------------------------------|*/
-
-    function initialize(
-        RegistryCommunityInitializeParamsV0_0 memory params,
-        address _strategyTemplate,
-        address _collateralVaultTemplate,
-        address _owner
-    ) public {
-        // Note: Initializer checks would be in main contract
-        _owner = _owner; // Set owner through ProxyOwnableUpgrader parent
-
-        setRoleAdmin(COUNCIL_MEMBER, DEFAULT_ADMIN_ROLE);
-
-        allo = FAllo(params._allo);
-        gardenToken = params._gardenToken;
-        if (params._registerStakeAmount == 0) {
-            revert ValueCannotBeZero();
-        }
-        registerStakeAmount = params._registerStakeAmount;
-        communityFee = params._communityFee;
-        isKickEnabled = params._isKickEnabled;
-        communityName = params._communityName;
-        covenantIpfsHash = params.covenantIpfsHash;
-
-        registryFactory = params._registryFactory;
-        feeReceiver = params._feeReceiver;
-        councilSafe = ISafe(params._councilSafe);
-        totalMembers = 0;
-
-        grantRole(COUNCIL_MEMBER, params._councilSafe);
-
-        registry = IRegistry(allo.getRegistry());
-
-        address[] memory pool_initialMembers;
-        // Support EOA as council safe
-        if (address(councilSafe).code.length == 0) {
-            pool_initialMembers = new address[](3);
-            pool_initialMembers[0] = msg.sender;
-        } else {
-            address[] memory owners = councilSafe.getOwners();
-            pool_initialMembers = new address[](owners.length + 2);
-            for (uint256 i = 0; i < owners.length; i++) {
-                pool_initialMembers[i] = owners[i];
-            }
-        }
-
-        pool_initialMembers[pool_initialMembers.length - 1] = address(councilSafe);
-        pool_initialMembers[pool_initialMembers.length - 2] = address(this);
-
-        profileId =
-            registry.createProfile(params._nonce, communityName, params._metadata, address(this), pool_initialMembers);
-
-        initialMembers = pool_initialMembers;
-
-        strategyTemplate = _strategyTemplate;
-        collateralVaultTemplate = _collateralVaultTemplate;
-
-        emit RegistryInitialized(profileId, communityName, params._metadata);
-    }
 
     function createPool(address _token, CVStrategyInitializeParamsV0_2 memory _params, Metadata memory _metadata)
         public
@@ -153,15 +85,14 @@ contract CommunityPoolFacet is CommunityStorage {
             }
             bytes32 allowlistRole = keccak256(abi.encodePacked("ALLOWLIST", poolId));
             for (uint256 i = 0; i < _params.initialAllowlist.length; i++) {
-                grantRole(allowlistRole, _params.initialAllowlist[i]);
+                _roles[allowlistRole][_params.initialAllowlist[i]] = true;
             }
         }
 
-        // Grant the strategy to grant for strategy specific allowlist
-        setRoleAdmin(
-            keccak256(abi.encodePacked("ALLOWLIST", poolId)), keccak256(abi.encodePacked("ALLOWLIST_ADMIN", poolId))
-        );
-        grantRole(keccak256(abi.encodePacked("ALLOWLIST_ADMIN", poolId)), strategy);
+        // Grant the strategy role for strategy specific allowlist
+        // Note: Role admin configuration handled by AccessControl inheritance in main contract
+        bytes32 allowlistAdminRole = keccak256(abi.encodePacked("ALLOWLIST_ADMIN", poolId));
+        _roles[allowlistAdminRole][strategy] = true;
     }
 
     function createPool(

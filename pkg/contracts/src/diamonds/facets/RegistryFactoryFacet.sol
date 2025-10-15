@@ -8,6 +8,7 @@ import {
 import {ProxyOwnableUpgrader} from "@src/ProxyOwnableUpgrader.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {Clone} from "allo-v2-contracts/core/libraries/Clone.sol";
+import {IDiamondCut} from "../interfaces/IDiamondCut.sol";
 
 struct CommunityInfo {
     uint256 fee;
@@ -23,6 +24,13 @@ contract RegistryFactoryFacet is ProxyOwnableUpgrader {
     address public registryCommunityTemplate;
     address public strategyTemplate;
     address public collateralVaultTemplate;
+
+    // Community facets for diamond pattern
+    address public communityMemberFacet;
+    address public communityPowerFacet;
+    address public communityStrategyFacet;
+    address public communityAdminFacet;
+    address public communityPoolFacet;
 
     /*|--------------------------------------------|*/
     /*|                 EVENTS                     |*/
@@ -64,6 +72,26 @@ contract RegistryFactoryFacet is ProxyOwnableUpgrader {
     /// @dev Set the address of the template contract for creating new collateral vaults
     function setCollateralVaultTemplate(address template) external onlyOwner {
         collateralVaultTemplate = template;
+    }
+
+    /// @notice Set the addresses of all community facets at once
+    /// @param _memberFacet Address of CommunityMemberFacet
+    /// @param _powerFacet Address of CommunityPowerFacet
+    /// @param _strategyFacet Address of CommunityStrategyFacet
+    /// @param _adminFacet Address of CommunityAdminFacet
+    /// @param _poolFacet Address of CommunityPoolFacet
+    function setCommunityFacets(
+        address _memberFacet,
+        address _powerFacet,
+        address _strategyFacet,
+        address _adminFacet,
+        address _poolFacet
+    ) external onlyOwner {
+        communityMemberFacet = _memberFacet;
+        communityPowerFacet = _powerFacet;
+        communityStrategyFacet = _strategyFacet;
+        communityAdminFacet = _adminFacet;
+        communityPoolFacet = _poolFacet;
     }
 
     /// @param _owner: address of the owner of the registry

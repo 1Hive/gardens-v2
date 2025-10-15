@@ -52,6 +52,7 @@ import {GasHelpers2} from "./shared/GasHelpers2.sol";
 import {SafeSetup} from "./shared/SafeSetup.sol";
 import {CVStrategyHelpers} from "./CVStrategyHelpers.sol";
 import {DiamondConfigurator} from "./helpers/DiamondConfigurator.sol";
+import {CommunityDiamondConfigurator} from "./helpers/CommunityDiamondConfigurator.sol";
 import {IDiamond} from "../src/diamonds/interfaces/IDiamond.sol";
 
 import {ABDKMath64x64} from "./ABDKMath64x64.sol";
@@ -90,6 +91,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
     ISybilScorer public passportScorer;
     SafeArbitrator safeArbitrator;
     DiamondConfigurator public diamondConfigurator;
+    CommunityDiamondConfigurator public communityDiamondConfigurator;
 
     address factoryOwner = makeAddr("registryFactoryDeployer");
     address protocolFeeReceiver = makeAddr("multisigReceiver");
@@ -104,8 +106,9 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         __RegistrySetupFull();
         __AlloSetup(address(registry()));
 
-        // Deploy diamond configurator
+        // Deploy diamond configurators
         diamondConfigurator = new DiamondConfigurator();
+        communityDiamondConfigurator = new CommunityDiamondConfigurator();
 
         vm.startPrank(allo_owner());
         allo().updateBaseFee(0);
@@ -161,7 +164,13 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         params._metadata = metadata;
         params._councilSafe = payable(address(_councilSafe()));
 
-        registryCommunity = RegistryCommunityV0_0(registryFactory.createRegistry(params));
+        registryCommunity = RegistryCommunityV0_0(payable(registryFactory.createRegistry(params)));
+
+        // Configure RegistryCommunity diamond facets (must be called as owner)
+        vm.startPrank(factoryOwner);
+        IDiamond.FacetCut[] memory communityFacetCuts = communityDiamondConfigurator.getFacetCuts();
+        registryCommunity.diamondCut(communityFacetCuts, address(0), "");
+        vm.stopPrank();
 
         proxy = new ERC1967Proxy(
             address(new PassportScorer()),
