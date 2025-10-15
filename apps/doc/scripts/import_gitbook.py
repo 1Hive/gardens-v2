@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Fetch the published Gardens GitBook content and convert it into
-Nextra-compatible MDX files under Doc/pages.
+Nextra-compatible MDX files under apps/doc/pages.
 """
 
 from __future__ import annotations
