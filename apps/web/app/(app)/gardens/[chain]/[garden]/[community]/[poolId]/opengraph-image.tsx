@@ -27,13 +27,14 @@ export const contentType = "image/png";
 export const getDescriptionText = (
   poolType: "signaling" | "funding" | "streaming" | undefined | null,
 ) => {
-  return (
-    poolType === "signaling" ?
-      "Where collective coordination meets community sentiment."
-    : poolType === "funding" ?
-      "For collective resource allocation and project support."
-    : "A Gardens pool for collective decision-making and funding."
-  );
+  switch (poolType) {
+    case "signaling":
+      return "Where collective coordination meets community sentiment.";
+    case "funding":
+      return "For collective resource allocation and project support.";
+    default:
+      return "A Gardens pool for collective decision-making and funding.";
+  }
 };
 export const FALLBACK_TITLE = "Gardens pool";
 
@@ -133,6 +134,7 @@ async function renderImage({
     | "funding"
     | "streaming"
     | undefined;
+
   const descriptionText = getDescriptionText(normalizedPoolType);
   const footerMessage =
     FOOTER_MESSAGES[Math.floor(Math.random() * FOOTER_MESSAGES.length)] ??
@@ -483,18 +485,16 @@ export async function generateMetadata({
     const strategy = poolResult?.data?.cvstrategies?.[0];
     const poolTitle = strategy?.metadata?.title?.trim();
 
-    if (!poolTitle) {
+    if (!strategy || !poolTitle) {
       return fallbackMetadata;
     }
-    const poolType =
-      PoolTypes[
-        poolResult?.data?.cvstrategies?.[0]?.metadata?.poolType as number
-      ];
-    description = getDescriptionText(poolType);
+    const poolType = PoolTypes[strategy.config?.proposalType as number];
+
+    const actualDescription = getDescriptionText(poolType);
 
     return {
       title: poolTitle,
-      description,
+      description: actualDescription,
     };
   } catch (error) {
     console.error("Failed to generate metadata for pool OG image.", {

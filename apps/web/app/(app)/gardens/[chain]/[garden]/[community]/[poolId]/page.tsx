@@ -74,29 +74,27 @@ export async function generateMetadata({
       return fallbackMetadata;
     }
 
-    const poolTitle =
-      poolResult?.data?.cvstrategies?.[0]?.metadata?.title?.trim();
-
+    const pool = poolResult?.data?.cvstrategies?.[0];
+    const poolTitle = pool?.metadata?.title?.trim();
+    console.log({ pool, poolTitle });
     if (!poolTitle) {
       return fallbackMetadata;
     }
-    const poolType =
-      PoolTypes[
-        poolResult?.data?.cvstrategies?.[0]?.metadata?.poolType as number
-      ];
-    description = getDescriptionText(poolType);
+
+    const poolType = PoolTypes[pool?.config?.proposalType as number];
+    const actualDescription = getDescriptionText(poolType);
     return {
       title: poolTitle,
-      description,
+      description: actualDescription,
       openGraph: {
         title: poolTitle,
-        description,
+        description: actualDescription,
         images: [{ url: buildOgImagePath(params) }],
       },
       twitter: {
         card: "summary_large_image",
         title: poolTitle,
-        description,
+        description: actualDescription,
         images: [buildOgImagePath(params)],
       },
     };
