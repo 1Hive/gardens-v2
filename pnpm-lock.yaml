@@ -21,7 +21,7 @@ importers:
         specifier: ^1.7.4
         version: 1.13.4
 
-  apps/doc:
+  apps/docs:
     dependencies:
       next:
         specifier: ^14.2.5
