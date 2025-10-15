@@ -439,6 +439,8 @@ export async function generateMetadata({
   const chainConfig = chainConfigMap[params.chain] ?? chainConfigMap[chainId];
   const poolId = params.poolId?.toString();
 
+  let description = getDescriptionText(undefined);
+
   const fallbackMetadata: Metadata = {
     title: FALLBACK_TITLE,
     description,
@@ -484,6 +486,11 @@ export async function generateMetadata({
     if (!poolTitle) {
       return fallbackMetadata;
     }
+    const poolType =
+      PoolTypes[
+        poolResult?.data?.cvstrategies?.[0]?.metadata?.poolType as number
+      ];
+    description = getDescriptionText(poolType);
 
     return {
       title: poolTitle,
