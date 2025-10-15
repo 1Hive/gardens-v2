@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { BookOpenIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
 import Link from "next/link";
 import { newLogo } from "@/assets";
@@ -98,6 +99,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <div className="flex items-center gap-4">
           <ConnectWallet />
           <ThemeButton />
+          <a
+            href="https://docs.gardens.fund"
+            target="_blank"
+            rel="noreferrer"
+            className="rounded-md hover:bg-neutral-soft dark:hover:bg-primary p-2"
+          >
+            <BookOpenIcon className="h-6 w-6" />
+          </a>
         </div>
       </nav>
 
