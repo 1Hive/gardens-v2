@@ -5,16 +5,16 @@
       "path": "./apps/web",
     },
     {
+      "name": "Doc",
+      "path": "./apps/doc",
+    },
+    {
       "name": "Foundry",
       "path": "./pkg/contracts",
     },
     {
       "name": "Subgraph",
       "path": "./pkg/subgraph",
-    },
-    {
-      "name": "Services",
-      "path": "./pkg/services",
     },
     {
       "name": "Root",
