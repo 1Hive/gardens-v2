@@ -12,7 +12,7 @@
     "lint": "turbo run lint",
     "test": "turbo run test",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "build:doc": "turbo run build --filter=docs..."
+    "build:docs": "turbo run build --filter=docs..."
   },
   "devDependencies": {
     "eslint-config-custom": "workspace:*",
