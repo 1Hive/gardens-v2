@@ -120,7 +120,7 @@ deploy-token-opsep:
 	--chain-id 11155420 \
 	--verify
 
-fork-testnet:
+fork-testnet-opsep:
 	anvil --host=0.0.0.0 -f $(RPC_URL_OP_TESTNET)
 
 deploy-verify-opsep: 
@@ -234,7 +234,7 @@ deploy-or-upgrade-good-dollar-sybil-opsep:
 
 ### ARBITRUM SEPOLIA ###
 
-fork-testnet:
+fork-testnet-arbsep:
 	anvil --host=0.0.0.0 -f $(RPC_URL_ARB_TESTNET)
 
 deploy-verify-arbsep: 
