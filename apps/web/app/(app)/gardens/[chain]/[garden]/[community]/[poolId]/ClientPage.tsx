@@ -196,7 +196,6 @@ export default function ClientPage({
                 superTokenInfo && {
                   ...superTokenInfo,
                   sameAsUnderlying: superTokenCandidate?.sameAsUnderlying,
-                  sameAsUnderlying: superTokenCandidate?.sameAsUnderlying,
                   address: effectiveSuperToken as Address,
                 }
               }

@@ -24,8 +24,17 @@ export const size = {
 };
 
 export const contentType = "image/png";
-export const description =
-  "Gardens pool for collaborative funding and decision-making.";
+export const getDescriptionText = (
+  poolType: "signaling" | "funding" | "streaming" | undefined | null,
+) => {
+  return (
+    poolType === "signaling" ?
+      "Where collective coordination meets community sentiment."
+    : poolType === "funding" ?
+      "For collective resource allocation and project support."
+    : "A Gardens pool for collective decision-making and funding."
+  );
+};
 export const FALLBACK_TITLE = "Gardens pool";
 
 // Image generation
@@ -124,12 +133,7 @@ async function renderImage({
     | "funding"
     | "streaming"
     | undefined;
-  const descriptionText =
-    normalizedPoolType === "signaling" ?
-      "Where collective coordination meets community sentiment."
-    : normalizedPoolType === "funding" ?
-      "For collective resource allocation and project support."
-    : "A Gardens pool for collective decision-making and funding.";
+  const descriptionText = getDescriptionText(normalizedPoolType);
   const footerMessage =
     FOOTER_MESSAGES[Math.floor(Math.random() * FOOTER_MESSAGES.length)] ??
     FOOTER_MESSAGES[0];

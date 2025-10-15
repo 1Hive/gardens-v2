@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
-import ClientPage from "./ClientPage";
-import { FALLBACK_TITLE, description } from "./opengraph-image";
 import { getPoolTitleDocument } from "#/subgraph/.graphclient";
+import ClientPage from "./ClientPage";
+import { FALLBACK_TITLE, getDescriptionText } from "./opengraph-image";
 import { chainConfigMap } from "@/configs/chains";
 import { queryByChain } from "@/providers/urql";
+import { PoolTypes } from "@/types";
 
 type PageParams = {
   params: {
@@ -15,7 +16,7 @@ type PageParams = {
 };
 
 function buildOgImagePath(params: PageParams["params"]) {
-  return `/gardens/${params.chain}/${params.garden}/${params.community}/${params.poolId}/opengraph-image-w94mav`;
+  return `/gardens/${params.chain}/${params.garden}/${params.community}/${params.poolId}/opengraph-image-12jbcu`;
 }
 
 export async function generateMetadata({
@@ -24,7 +25,7 @@ export async function generateMetadata({
   const chainId = Number(params.chain);
   const chainConfig = chainConfigMap[params.chain] ?? chainConfigMap[chainId];
   const poolId = params.poolId?.toString();
-
+  let description = getDescriptionText(undefined);
   const fallbackMetadata: Metadata = {
     title: FALLBACK_TITLE,
     description,
@@ -73,12 +74,17 @@ export async function generateMetadata({
       return fallbackMetadata;
     }
 
-    const poolTitle = poolResult?.data?.cvstrategies?.[0]?.metadata?.title?.trim();
+    const poolTitle =
+      poolResult?.data?.cvstrategies?.[0]?.metadata?.title?.trim();
 
     if (!poolTitle) {
       return fallbackMetadata;
     }
-
+    const poolType =
+      PoolTypes[
+        poolResult?.data?.cvstrategies?.[0]?.metadata?.poolType as number
+      ];
+    description = getDescriptionText(poolType);
     return {
       title: poolTitle,
       description,
