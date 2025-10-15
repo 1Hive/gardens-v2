@@ -39,7 +39,7 @@ contract CVProposalFacet is CVStrategyStorage {
         }
     }
 
-    function checkSenderIsMember(address _sender) internal view {
+    function checkSenderIsMember(address _sender) internal {
         if (!registryCommunity.isMember(_sender)) {
             revert();
         }

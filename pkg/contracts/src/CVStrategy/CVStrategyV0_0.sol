@@ -242,7 +242,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     /*|--------------------------------------------|*/
     /*|                 MODIFIERS                  |*/
     /*|--------------------------------------------|*/
-    function checkSenderIsMember(address _sender) internal view {
+    function checkSenderIsMember(address _sender) internal {
         // if (_sender == address(0)) {
         //     revert UserCannotBeZero();
         // }
@@ -570,7 +570,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         return proposals[_proposalId].voterStakedPoints[_voter];
     }
 
-    function getBasisStakedAmount() internal view returns (uint256) {
+    function getBasisStakedAmount() internal returns (uint256) {
         return registryCommunity.getBasisStakedAmount(); // 50 HNY = 100%
     }
 
