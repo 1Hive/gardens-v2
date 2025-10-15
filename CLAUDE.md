@@ -239,6 +239,75 @@ To inspect contract storage (important for upgrades):
 forge inspect pkg/contracts/src/CVStrategy/CVStrategyV0_0.sol storageLayout --md
 ```
 
+#### Diamond Pattern Storage Verification
+
+Both `CVStrategy` and `RegistryCommunity` use the diamond pattern (EIP-2535), where facets execute via delegatecall in the main contract's storage context. **Critical requirement**: All facets MUST have identical storage layout to the main contract.
+
+The verification script automatically discovers diamond contracts and their facets:
+
+```bash
+# From pkg/contracts directory
+
+# Verify all contracts (automatically discovers CVStrategy & RegistryCommunity)
+./scripts/verify-storage-layout.sh
+
+# Skip build if contracts already compiled (faster)
+./scripts/verify-storage-layout.sh --skip-build
+
+# Verify specific directory only
+./scripts/verify-storage-layout.sh --path src/CVStrategy
+
+# Show detailed differences if mismatches found
+./scripts/verify-storage-layout.sh --verbose
+
+# Use Makefile targets
+make verify-storage        # With build (recommended for deployments)
+make verify-storage-quick  # Skip build (faster if already compiled)
+```
+
+**Auto-Discovery Features:**
+- Finds main contracts by detecting `fallback()` functions
+- Discovers all `*Facet.sol` files in `facets/` subdirectories
+- Skips `src/diamonds` directory (generic diamond utilities)
+- Skips standard diamond facets (DiamondCutFacet, DiamondLoupeFacet, OwnershipFacet)
+
+**Architecture**:
+- **CVStrategy**: Main contract with 5 facets (CVAdminFacet, CVAllocationFacet, CVDisputeFacet, CVPowerFacet, CVProposalFacet)
+  - All facets inherit from `CVStrategyBaseFacet` which defines the shared storage layout
+  - Eliminates ~220 lines of duplicated storage declarations
+
+- **RegistryCommunity**: Main contract with 5 facets (CommunityAdminFacet, CommunityMemberFacet, CommunityPoolFacet, CommunityPowerFacet, CommunityStrategyFacet)
+  - All facets inherit from `CommunityBaseFacet` which defines the shared storage layout
+  - Eliminates ~185 lines of duplicated storage declarations
+
+**When to verify**:
+- **Before deployments**: Use `make verify-storage` as prerequisite in deployment targets
+- After adding new storage variables to base contracts
+- Before deploying upgrades
+- When creating new facets
+- In CI/CD pipeline before merging facet changes
+
+**Integrating with deployments**:
+Add `verify-storage` as a prerequisite to deployment targets in Makefile:
+```makefile
+# For production deployments (always build + verify)
+deploy-my-contract: verify-storage
+	-forge script script/DeployMyContract.s.sol ...
+
+# For local testing (quick verification)
+deploy-local: verify-storage-quick
+	-forge script script/DeployLocal.s.sol ...
+```
+
+This ensures storage alignment is verified (and contracts are built) before any deployment proceeds.
+
+**Storage safety rules**:
+1. Never reorder existing storage variables
+2. Never change variable types
+3. Always append new variables at the end (before `__gap`)
+4. Decrease `__gap` size when adding variables to maintain total slot count
+5. All facets must inherit from the BaseFacet contract
+
 ## Git Commit Guidelines
 
 - Never include co-authored Claude commits (as per global config)

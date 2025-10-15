@@ -7,8 +7,20 @@ include .env
 # create RPC_URL_LOCALHOST variable
 RPC_URL_LOCALHOST = http://127.0.0.1:8545
 # print RPC_URL
-print : 
+print :
 	@echo $(RPC_URL)
+
+# Verify diamond storage layouts (with build)
+verify-storage:
+	@echo "🔍 Verifying diamond storage layouts..."
+	@./scripts/verify-storage-layout.sh || (echo "❌ Storage verification FAILED! Fix storage alignment before deploying." && exit 1)
+	@echo "✅ Storage verification passed"
+
+# Verify diamond storage layouts (skip build - faster, assumes already compiled)
+verify-storage-quick:
+	@echo "🔍 Verifying diamond storage layouts (quick mode)..."
+	@./scripts/verify-storage-layout.sh --skip-build || (echo "❌ Storage verification FAILED! Fix storage alignment before deploying." && exit 1)
+	@echo "✅ Storage verification passed"
 
 ### LOCLAHOST ###
 

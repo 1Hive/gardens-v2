@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.19;
 
-import {CVStrategyStorage} from "../CVStrategyStorage.sol";
+import {CVStrategyBaseFacet} from "../CVStrategyBaseFacet.sol";
 import {IArbitrator} from "../../interfaces/IArbitrator.sol";
-import {IArbitrable} from "../../interfaces/IArbitrable.sol";
 import {Proposal, ProposalStatus, ArbitrableConfig} from "../ICVStrategy.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Library.sol";
 
@@ -11,16 +10,10 @@ import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Librar
  * @title CVDisputeFacet
  * @notice Facet containing dispute-related functions for CVStrategy
  * @dev This facet is called via delegatecall from CVStrategyV0_0
- *      CRITICAL: Storage layout is inherited from CVStrategyStorage base contract
+ *      CRITICAL: Inherits storage layout from CVStrategyBaseFacet
  */
-contract CVDisputeFacet is CVStrategyStorage, IArbitrable {
+contract CVDisputeFacet is CVStrategyBaseFacet {
     using SuperTokenV1Library for ISuperToken;
-
-    /*|--------------------------------------------|*/
-    /*|              CONSTANTS                     |*/
-    /*|--------------------------------------------|*/
-    uint256 public constant RULING_OPTIONS = 3;
-    uint256 public constant DISPUTE_COOLDOWN_SEC = 2 hours;
 
     /*|--------------------------------------------|*/
     /*|              EVENTS                        |*/
@@ -33,15 +26,7 @@ contract CVDisputeFacet is CVStrategyStorage, IArbitrable {
         string context,
         uint256 timestamp
     );
-
-    /*|--------------------------------------------|*/
-    /*|              MODIFIERS                     |*/
-    /*|--------------------------------------------|*/
-    function checkSenderIsMember(address _sender) internal {
-        if (!registryCommunity.isMember(_sender)) {
-            revert();
-        }
-    }
+    event Ruling(IArbitrator indexed _arbitrator, uint256 indexed _disputeID, uint256 _ruling);
 
     /*|--------------------------------------------|*/
     /*|              FUNCTIONS                     |*/
@@ -95,7 +80,7 @@ contract CVDisputeFacet is CVStrategyStorage, IArbitrable {
         );
     }
 
-    function rule(uint256 _disputeID, uint256 _ruling) external override {
+    function rule(uint256 _disputeID, uint256 _ruling) external {
         uint256 proposalId = disputeIdToProposalId[_disputeID];
         Proposal storage proposal = proposals[proposalId];
         ArbitrableConfig memory arbitrableConfig = arbitrableConfigs[proposal.arbitrableConfigVersion];

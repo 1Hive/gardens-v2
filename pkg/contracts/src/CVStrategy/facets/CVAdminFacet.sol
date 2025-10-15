@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.19;
 
-import {CVStrategyStorage} from "../CVStrategyStorage.sol";
+import {CVStrategyBaseFacet} from "../CVStrategyBaseFacet.sol";
 import {IArbitrator} from "../../interfaces/IArbitrator.sol";
 import {Proposal, ArbitrableConfig, CVParams} from "../ICVStrategy.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Library.sol";
@@ -10,9 +10,9 @@ import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Librar
  * @title CVAdminFacet
  * @notice Facet containing admin functions for CVStrategy
  * @dev This facet is called via delegatecall from CVStrategyV0_0
- *      CRITICAL: Storage layout is inherited from CVStrategyStorage base contract
+ *      CRITICAL: Inherits storage layout from CVStrategyBaseFacet
  */
-contract CVAdminFacet is CVStrategyStorage {
+contract CVAdminFacet is CVStrategyBaseFacet {
     using SuperTokenV1Library for ISuperToken;
 
     /*|--------------------------------------------|*/
@@ -34,37 +34,6 @@ contract CVAdminFacet is CVStrategyStorage {
     event SuperfluidGDAConnected(address indexed gda, address indexed by);
     event SuperfluidGDADisconnected(address indexed gda, address indexed by);
     event PointsDeactivated(address member);
-
-    /*|--------------------------------------------|*/
-    /*|              MODIFIERS                     |*/
-    /*|--------------------------------------------|*/
-    function owner() internal view returns (address) {
-        return _owner;
-    }
-
-    function onlyCouncilSafe() internal view {
-        if (msg.sender != address(registryCommunity.councilSafe()) && msg.sender != owner()) {
-            revert();
-        }
-    }
-
-    function _canExecuteAction(address _user) internal view returns (bool) {
-        if (address(sybilScorer) == address(0)) {
-            bytes32 allowlistRole = keccak256(abi.encodePacked("ALLOWLIST", poolId));
-            if (registryCommunity.hasRole(allowlistRole, address(0))) {
-                return true;
-            } else {
-                return registryCommunity.hasRole(allowlistRole, _user);
-            }
-        }
-        return sybilScorer.canExecuteAction(_user, address(this));
-    }
-
-    function onlyCouncilSafeOrMember() internal view {
-        if (msg.sender != address(registryCommunity.councilSafe()) && false == _canExecuteAction(msg.sender)) {
-            revert();
-        }
-    }
 
     /*|--------------------------------------------|*/
     /*|              FUNCTIONS                     |*/

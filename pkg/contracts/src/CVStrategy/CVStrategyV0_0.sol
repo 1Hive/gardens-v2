@@ -143,6 +143,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     using ConvictionsUtils for uint256;
 
     // CVStrategy custom storage variables (Slots 106+)
+    // Note: These must match CVStrategyBaseFacet storage layout exactly for diamond pattern
     address internal collateralVaultTemplate;
     uint256 internal surpressStateMutabilityWarning;
     uint256 public cloneNonce;
@@ -165,12 +166,12 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     mapping(uint256 => ArbitrableConfig) public arbitrableConfigs;
     ISuperToken public superfluidToken;
 
-    // Constants for fixed numbers
-    // string public constant VERSION = "0.0";
-    // uint256 internal constant TWO_64 = 0x10000000000000000; // 2**64 // GOSS: Unsused
-    // uint256 public constant MAX_STAKED_PROPOSALS = 10; // GOSS: Unsuded
+    // Constants (also defined in CVStrategyBaseFacet for facet access)
     uint256 public constant RULING_OPTIONS = 3;
     uint256 public constant DISPUTE_COOLDOWN_SEC = 2 hours;
+
+    /// @notice Native token address - use NATIVE from BaseStrategyUpgradeable
+    address internal constant NATIVE_TOKEN = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
     /*|--------------------------------------------|*/
     /*|              CONSTRUCTORS                  |*/
@@ -750,7 +751,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     function getPoolAmount() public view override returns (uint256) {
         address token = allo.getPool(poolId).token;
 
-        if (token == NATIVE) {
+        if (token == NATIVE_TOKEN) {
             return address(this).balance;
         }
 

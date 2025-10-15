@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.19;
 
-import {CVStrategyStorage} from "../CVStrategyStorage.sol";
+import {CVStrategyBaseFacet} from "../CVStrategyBaseFacet.sol";
 import {ProposalType, CreateProposal, Proposal, ProposalStatus} from "../ICVStrategy.sol";
 import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Library.sol";
@@ -10,9 +10,9 @@ import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Librar
  * @title CVProposalFacet
  * @notice Facet containing proposal management functions for CVStrategy
  * @dev This facet is called via delegatecall from CVStrategyV0_0
- *      CRITICAL: Storage layout is inherited from CVStrategyStorage base contract
+ *      CRITICAL: Inherits storage layout from CVStrategyBaseFacet
  */
-contract CVProposalFacet is CVStrategyStorage {
+contract CVProposalFacet is CVStrategyBaseFacet {
     using SuperTokenV1Library for ISuperToken;
 
     /*|--------------------------------------------|*/
@@ -23,27 +23,6 @@ contract CVProposalFacet is CVStrategyStorage {
     event SupportAdded(
         address from, uint256 proposalId, uint256 amount, uint256 totalStakedAmount, uint256 convictionLast
     );
-
-    /*|--------------------------------------------|*/
-    /*|              MODIFIERS                     |*/
-    /*|--------------------------------------------|*/
-    function _checkOnlyAllo() internal view {
-        if (msg.sender != address(allo)) {
-            revert();
-        }
-    }
-
-    function _checkOnlyInitialized() internal view {
-        if (poolId == 0) {
-            revert();
-        }
-    }
-
-    function checkSenderIsMember(address _sender) internal {
-        if (!registryCommunity.isMember(_sender)) {
-            revert();
-        }
-    }
 
     /*|--------------------------------------------|*/
     /*|              FUNCTIONS                     |*/

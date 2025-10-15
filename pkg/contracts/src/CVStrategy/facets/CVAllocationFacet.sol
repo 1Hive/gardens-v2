@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.19;
 
-import {CVStrategyStorage} from "../CVStrategyStorage.sol";
+import {CVStrategyBaseFacet} from "../CVStrategyBaseFacet.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {ProposalType, ProposalStatus, ProposalSupport, Proposal} from "../ICVStrategy.sol";
 import {ConvictionsUtils} from "../ConvictionsUtils.sol";
@@ -12,15 +12,10 @@ import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Librar
  * @title CVAllocationFacet
  * @notice Facet containing allocation and distribution functions for CVStrategy
  * @dev This facet is called via delegatecall from CVStrategyV0_0
- *      CRITICAL: Storage layout is inherited from CVStrategyStorage base contract
+ *      CRITICAL: Inherits storage layout from CVStrategyBaseFacet
  */
-contract CVAllocationFacet is CVStrategyStorage {
+contract CVAllocationFacet is CVStrategyBaseFacet {
     using SuperTokenV1Library for ISuperToken;
-
-    /*|--------------------------------------------|*/
-    /*|              CONSTANTS                     |*/
-    /*|--------------------------------------------|*/
-    address public constant NATIVE = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
     /*|--------------------------------------------|*/
     /*|              EVENTS                        |*/
@@ -51,36 +46,6 @@ contract CVAllocationFacet is CVStrategyStorage {
     /*|--------------------------------------------|*/
     /*|              MODIFIERS                     |*/
     /*|--------------------------------------------|*/
-    function _checkOnlyAllo() internal view {
-        if (msg.sender != address(allo)) {
-            revert();
-        }
-    }
-
-    function _checkOnlyInitialized() internal view {
-        if (poolId == 0) {
-            revert();
-        }
-    }
-
-    function checkSenderIsMember(address _sender) internal {
-        if (!registryCommunity.isMember(_sender)) {
-            revert();
-        }
-    }
-
-    function _canExecuteAction(address _user) internal view returns (bool) {
-        if (address(sybilScorer) == address(0)) {
-            bytes32 allowlistRole = keccak256(abi.encodePacked("ALLOWLIST", poolId));
-            if (registryCommunity.hasRole(allowlistRole, address(0))) {
-                return true;
-            } else {
-                return registryCommunity.hasRole(allowlistRole, _user);
-            }
-        }
-        return sybilScorer.canExecuteAction(_user, address(this));
-    }
-
     function _checkProposalAllocationValidity(uint256 _proposalId, int256 deltaSupport) internal view {
         Proposal storage p = proposals[_proposalId];
         if (
@@ -280,10 +245,6 @@ contract CVAllocationFacet is CVStrategyStorage {
     /*|              INTERNAL HELPERS              |*/
     /*|--------------------------------------------|*/
 
-    function proposalExists(uint256 _proposalID) internal view returns (bool) {
-        return proposals[_proposalID].proposalId > 0 && proposals[_proposalID].submitter != address(0);
-    }
-
     function _isOverMaxRatio(uint256 _requestedAmount) internal view returns (bool isOverMaxRatio) {
         isOverMaxRatio = cvParams.maxRatio * getPoolAmount() <= _requestedAmount * ConvictionsUtils.D;
     }
@@ -295,34 +256,6 @@ contract CVAllocationFacet is CVStrategyStorage {
             revert();
         }
         return uint256(result);
-    }
-
-    function _calculateAndSetConviction(Proposal storage _proposal, uint256 _oldStaked) internal {
-        (uint256 conviction, uint256 blockNumber) = _checkBlockAndCalculateConviction(_proposal, _oldStaked);
-        if (conviction == 0 && blockNumber == 0) {
-            return;
-        }
-        _proposal.blockLast = blockNumber;
-        _proposal.convictionLast = conviction;
-    }
-
-    function _checkBlockAndCalculateConviction(Proposal storage _proposal, uint256 _oldStaked)
-        internal
-        view
-        returns (uint256 conviction, uint256 blockNumber)
-    {
-        blockNumber = block.number;
-        assert(_proposal.blockLast <= blockNumber);
-        if (_proposal.blockLast == blockNumber) {
-            return (0, 0); // Conviction already stored
-        }
-        // calculateConviction and store it
-        conviction = ConvictionsUtils.calculateConviction(
-            blockNumber - _proposal.blockLast, // we assert it doesn't overflow above
-            _proposal.convictionLast,
-            _oldStaked,
-            cvParams.decay
-        );
     }
 
     function updateProposalConviction(uint256 proposalId) internal returns (uint256) {
@@ -339,7 +272,7 @@ contract CVAllocationFacet is CVStrategyStorage {
     function getPoolAmount() internal view returns (uint256) {
         address token = allo.getPool(poolId).token;
 
-        if (token == NATIVE) {
+        if (token == NATIVE_TOKEN) {
             return address(this).balance;
         }
 
@@ -356,7 +289,7 @@ contract CVAllocationFacet is CVStrategyStorage {
     }
 
     function _transferAmount(address _token, address _to, uint256 _amount) internal {
-        if (_token == NATIVE) {
+        if (_token == NATIVE_TOKEN) {
             (bool success,) = payable(_to).call{value: _amount}("");
             require(success, "Native transfer failed");
         } else {

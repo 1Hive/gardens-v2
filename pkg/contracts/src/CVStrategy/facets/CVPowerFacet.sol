@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.19;
 
-import {CVStrategyStorage} from "../CVStrategyStorage.sol";
+import {CVStrategyBaseFacet} from "../CVStrategyBaseFacet.sol";
 import {Proposal} from "../ICVStrategy.sol";
 import {PowerManagementUtils} from "../PowerManagementUtils.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Library.sol";
@@ -10,9 +10,9 @@ import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Librar
  * @title CVPowerFacet
  * @notice Facet containing power management functions for CVStrategy
  * @dev This facet is called via delegatecall from CVStrategyV0_0
- *      CRITICAL: Storage layout is inherited from CVStrategyStorage base contract
+ *      CRITICAL: Inherits storage layout from CVStrategyBaseFacet
  */
-contract CVPowerFacet is CVStrategyStorage {
+contract CVPowerFacet is CVStrategyBaseFacet {
     using SuperTokenV1Library for ISuperToken;
 
     /*|--------------------------------------------|*/
@@ -23,15 +23,6 @@ contract CVPowerFacet is CVStrategyStorage {
     event SupportAdded(
         address from, uint256 proposalId, uint256 amount, uint256 totalStakedAmount, uint256 convictionLast
     );
-
-    /*|--------------------------------------------|*/
-    /*|              MODIFIERS                     |*/
-    /*|--------------------------------------------|*/
-    function onlyRegistryCommunity() internal view {
-        if (msg.sender != address(registryCommunity)) {
-            revert();
-        }
-    }
 
     /*|--------------------------------------------|*/
     /*|              FUNCTIONS                     |*/
@@ -112,35 +103,6 @@ contract CVPowerFacet is CVStrategyStorage {
     /*|--------------------------------------------|*/
     /*|              INTERNAL HELPERS              |*/
     /*|--------------------------------------------|*/
-
-    function proposalExists(uint256 _proposalID) internal view returns (bool) {
-        return proposals[_proposalID].proposalId > 0 && proposals[_proposalID].submitter != address(0);
-    }
-
-    function _calculateAndSetConviction(Proposal storage _proposal, uint256 _oldStaked) internal {
-        (uint256 conviction, uint256 blockNumber) = _checkBlockAndCalculateConviction(_proposal, _oldStaked);
-        if (conviction == 0 && blockNumber == 0) {
-            return;
-        }
-        _proposal.blockLast = blockNumber;
-        _proposal.convictionLast = conviction;
-    }
-
-    function _checkBlockAndCalculateConviction(Proposal storage _proposal, uint256 _oldStaked)
-        internal
-        view
-        returns (uint256 conviction, uint256 blockNumber)
-    {
-        blockNumber = block.number;
-        assert(_proposal.blockLast <= blockNumber);
-        if (_proposal.blockLast == blockNumber) {
-            return (0, 0); // Conviction already stored
-        }
-        // calculateConviction and store it
-        conviction = _calculateConviction(
-            blockNumber - _proposal.blockLast, _proposal.convictionLast, _oldStaked, cvParams.decay
-        );
-    }
 
     function _calculateConviction(uint256 _timePassed, uint256 _lastConviction, uint256 _oldAmount, uint256 decay)
         internal
