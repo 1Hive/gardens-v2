@@ -83,7 +83,6 @@ async function renderImage(title: string, chainId: number) {
   const footerMessage =
     FOOTER_MESSAGES[Math.floor(Math.random() * FOOTER_MESSAGES.length)] ??
     FOOTER_MESSAGES[0];
-  const chainLabel = chainConfigMap[chainId]?.name ?? "";
 
   return new ImageResponse(
     (
@@ -159,17 +158,6 @@ async function renderImage(title: string, chainId: number) {
             }}
           >
             <ChainIcon chain={chainId} height={50} width={50} />
-            {chainLabel ?
-              <span
-                style={{
-                  fontSize: "22px",
-                  fontWeight: 600,
-                  color: "#475569",
-                }}
-              >
-                {chainLabel}
-              </span>
-            : null}
           </div>
         </div>
 
