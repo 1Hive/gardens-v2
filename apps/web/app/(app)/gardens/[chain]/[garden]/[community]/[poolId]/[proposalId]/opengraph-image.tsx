@@ -200,18 +200,20 @@ async function renderImage({
     : poolType === "signaling" ?
       `data:image/svg+xml;base64,${POOL_SIGNALING_ICON_BASE64}`
     : null;
-  const description = getDescriptionFromStatus(status);
+  const normalizedStatus = status?.toLowerCase();
+  const description = getDescriptionFromStatus(normalizedStatus);
   const safeTitle = formatTitle(title);
   const subHeaderText =
     communityName && poolTitle ?
       `${communityName} - ${poolTitle}`
     : communityName ?? poolTitle ?? null;
-  const showStatusBadge = status != null && status !== "active";
+  const showStatusBadge =
+    normalizedStatus != null && normalizedStatus !== "active";
   const statusStyle = showStatusBadge ?
-    STATUS_STYLES[status ?? ""] ?? DEFAULT_STATUS_STYLE
+    STATUS_STYLES[normalizedStatus ?? ""] ?? DEFAULT_STATUS_STYLE
   : null;
   const statusLabel = showStatusBadge ?
-    titleCaseStatus(status) ?? "Proposal"
+    titleCaseStatus(normalizedStatus) ?? "Proposal"
   : null;
   const hasStatusBadge = statusStyle != null && statusLabel != null;
   const hasPoolBadge = !!poolLabel;

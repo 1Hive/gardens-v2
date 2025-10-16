@@ -24,14 +24,16 @@ export function buildOgImagePath(params: ProposalPageParams): string {
 }
 
 export function getDescriptionFromStatus(status?: string): string {
-  return status === "active" ?
+  const normalized = status?.toLowerCase();
+  return normalized === "active" ?
       ACTIVE_PROPOSAL_DESCRIPTION
     : ENDED_PROPOSAL_DESCRIPTION;
 }
 
 export function titleCaseStatus(status?: string): string | undefined {
   if (!status) return undefined;
-  return status.charAt(0).toUpperCase() + status.slice(1);
+  const normalized = status.toLowerCase();
+  return normalized.charAt(0).toUpperCase() + normalized.slice(1);
 }
 
 export async function generateMetadata({
