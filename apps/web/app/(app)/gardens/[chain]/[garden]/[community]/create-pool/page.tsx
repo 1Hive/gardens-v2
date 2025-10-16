@@ -1,53 +1,41 @@
-"use client";
+import type { Metadata } from "next";
+import ClientPage from "./ClientPage";
 
-import React from "react";
-import { Address } from "viem";
-import {
-  getPoolCreationDataDocument,
-  getPoolCreationDataQuery,
-} from "#/subgraph/.graphclient";
-import { PoolForm } from "@/components/Forms/PoolForm";
-import { LoadingSpinner } from "@/components/LoadingSpinner";
-import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
+const TITLE = "Create a pool";
+const DESCRIPTION =
+  "Spin up a dedicated pool so your community can coordinate funding and signaling decisions together.";
 
-export default function Page({
-  params: { garden, community },
-}: {
-  params: { garden: string; community: string };
-}) {
-  const { data: result } = useSubgraphQuery<getPoolCreationDataQuery>({
-    query: getPoolCreationDataDocument,
-    variables: {
-      communityAddr: community.toLowerCase(),
-      tokenAddr: garden.toLowerCase(),
+type PageParams = {
+  params: {
+    chain: string;
+    garden: string;
+    community: string;
+  };
+};
+
+function buildCommunityOgImagePath(params: PageParams["params"]) {
+  return `/gardens/${params.chain}/${params.garden}/${params.community}/opengraph-image-w94mav`;
+}
+
+export function generateMetadata({ params }: PageParams): Metadata {
+  const ogImage = buildCommunityOgImagePath(params);
+  return {
+    title: TITLE,
+    description: DESCRIPTION,
+    openGraph: {
+      title: TITLE,
+      description: DESCRIPTION,
+      images: [{ url: ogImage }],
     },
-  });
-  let token = result?.tokenGarden;
-  let alloAddr = result?.allos[0]?.id as Address;
-  let communityName = result?.registryCommunity?.communityName as string;
+    twitter: {
+      card: "summary_large_image",
+      title: TITLE,
+      description: DESCRIPTION,
+      images: [ogImage],
+    },
+  };
+}
 
-  if (!token || !result) {
-    return (
-      <div className="my-40 col-span-12">
-        <LoadingSpinner />
-      </div>
-    );
-  }
-
-  return (
-    <>
-      <div className="page-layout mx-auto col-span-12">
-        <section className="section-layout">
-          <div className="text-center sm:mt-5 mb-12">
-            <h2 className="">Create a Pool in {communityName} community</h2>
-          </div>
-          <PoolForm
-            alloAddr={alloAddr}
-            governanceToken={token}
-            communityAddr={community as Address}
-          />
-        </section>
-      </div>
-    </>
-  );
+export default function Page(props: PageParams) {
+  return <ClientPage {...props} />;
 }
