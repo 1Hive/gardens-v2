@@ -291,7 +291,7 @@ export const IncreasePower = ({
         {/* Staking description */}
         <InfoBox
           title="Staking benefits"
-          content="Stake more tokens to increase your voting weight in the community’s governance pools"
+          content="Stake more tokens to increase your voting power in the community’s governance pools"
           infoBoxType="info"
           className="w-full"
         />
