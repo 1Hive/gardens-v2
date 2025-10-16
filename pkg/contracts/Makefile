@@ -7,8 +7,38 @@ include .env
 # create RPC_URL_LOCALHOST variable
 RPC_URL_LOCALHOST = http://127.0.0.1:8545
 # print RPC_URL
-print : 
+print :
 	@echo $(RPC_URL)
+
+# Aggregate diamond ABIs (combines main contract + all facets into single ABI)
+aggregate-abi:
+	@echo "📦 Aggregating diamond ABIs..."
+	@node scripts/aggregate-diamond-abi.js
+	@echo "✅ ABI aggregation complete"
+
+# Aggregate ABIs with verbose output
+aggregate-abi-verbose:
+	@echo "📦 Aggregating diamond ABIs (verbose mode)..."
+	@node scripts/aggregate-diamond-abi.js --verbose
+	@echo "✅ ABI aggregation complete"
+
+# Verify diamond storage layouts (with build)
+verify-storage:
+	@echo "🔍 Verifying diamond storage layouts..."
+	@./scripts/verify-storage-layout.sh || (echo "❌ Storage verification FAILED! Fix storage alignment before deploying." && exit 1)
+	@echo "✅ Storage verification passed"
+
+# Verify diamond storage layouts (skip build - faster, assumes already compiled)
+verify-storage-quick:
+	@echo "🔍 Verifying diamond storage layouts (quick mode)..."
+	@./scripts/verify-storage-layout.sh --skip-build || (echo "❌ Storage verification FAILED! Fix storage alignment before deploying." && exit 1)
+	@echo "✅ Storage verification passed"
+
+# Verify diamond storage layouts with verbose output (shows detailed differences)
+verify-storage-verbose:
+	@echo "🔍 Verifying diamond storage layouts (verbose mode)..."
+	@./scripts/verify-storage-layout.sh --verbose || (echo "❌ Storage verification FAILED! Fix storage alignment before deploying." && exit 1)
+	@echo "✅ Storage verification passed"
 
 ### LOCLAHOST ###
 
@@ -108,7 +138,7 @@ deploy-token-opsep:
 	--chain-id 11155420 \
 	--verify
 
-fork-testnet:
+fork-testnet-opsep:
 	anvil --host=0.0.0.0 -f $(RPC_URL_OP_TESTNET)
 
 deploy-verify-opsep: 
@@ -222,7 +252,7 @@ deploy-or-upgrade-good-dollar-sybil-opsep:
 
 ### ARBITRUM SEPOLIA ###
 
-fork-testnet:
+fork-testnet-arbsep:
 	anvil --host=0.0.0.0 -f $(RPC_URL_ARB_TESTNET)
 
 deploy-verify-arbsep: 

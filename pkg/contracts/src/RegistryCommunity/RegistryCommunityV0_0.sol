@@ -22,6 +22,10 @@ import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.s
 import {ProxyOwnableUpgrader} from "../ProxyOwnableUpgrader.sol";
 import {ISybilScorer} from "../ISybilScorer.sol";
 
+// Diamond Pattern imports
+import {LibDiamond} from "../libraries/LibDiamond.sol";
+import {IDiamondCut} from "../diamonds/interfaces/IDiamondCut.sol";
+
 /*|--------------------------------------------|*/
 /*|              STRUCTS/ENUMS                 |*/
 /*|--------------------------------------------|*/
@@ -206,13 +210,13 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         }
     }
 
-    function onlyRegistryMemberSender() internal view virtual {
+    function onlyRegistryMemberSender() internal virtual {
         if (!isMember(msg.sender)) {
             revert UserNotInRegistry();
         }
     }
 
-    function onlyRegistryMemberAddress(address _sender) internal view {
+    function onlyRegistryMemberAddress(address _sender) internal {
         if (!isMember(_sender)) {
             revert UserNotInRegistry();
         }
@@ -324,404 +328,210 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         emit RegistryInitialized(profileId, communityName, params._metadata);
     }
 
+    // Stub - delegates to CommunityPoolFacet
     function createPool(address _token, CVStrategyInitializeParamsV0_2 memory _params, Metadata memory _metadata)
         public
         virtual
         returns (uint256 poolId, address strategy)
     {
-        address strategyProxy = address(
-            new ERC1967Proxy(
-                address(strategyTemplate),
-                abi.encodeWithSelector(
-                    CVStrategyV0_0.init.selector, address(allo), collateralVaultTemplate, proxyOwner()
-                )
-            )
-        );
-        (poolId, strategy) = createPool(strategyProxy, _token, _params, _metadata);
-
-        if (address(_params.sybilScorer) == address(0)) {
-            if (_params.initialAllowlist.length > 10000) {
-                revert AllowlistTooBig(_params.initialAllowlist.length);
-            }
-            bytes32 allowlistRole = keccak256(abi.encodePacked("ALLOWLIST", poolId));
-            for (uint256 i = 0; i < _params.initialAllowlist.length; i++) {
-                _grantRole(allowlistRole, _params.initialAllowlist[i]);
-            }
-        }
-
-        // Grant the strategy to grant for startegy specific allowlist
-        _setRoleAdmin(
-            keccak256(abi.encodePacked("ALLOWLIST", poolId)), keccak256(abi.encodePacked("ALLOWLIST_ADMIN", poolId))
-        );
-        _grantRole(keccak256(abi.encodePacked("ALLOWLIST_ADMIN", poolId)), strategy);
+        _delegateToFacet();
     }
 
+    // Stub - delegates to CommunityPoolFacet
     function createPool(
         address _strategy,
         address _token,
         CVStrategyInitializeParamsV0_2 memory _params,
         Metadata memory _metadata
     ) public virtual returns (uint256 poolId, address strategy) {
-        address token = NATIVE;
-        if (_token != address(0)) {
-            token = _token;
-        }
-        strategy = _strategy;
-
-        poolId = allo.createPoolWithCustomStrategy(
-            profileId, strategy, abi.encode(_params), token, 0, _metadata, initialMembers
-        );
-
-        emit PoolCreated(poolId, strategy, address(this), _token, _metadata);
+        _delegateToFacet();
     }
 
-    function setArchived(bool _isArchived) external {
-        onlyCouncilSafe();
-        emit CommunityArchived(_isArchived);
+    // Stub - delegates to CommunityAdminFacet
+    function setArchived(bool) external {
+        _delegateToFacet();
     }
 
-    function activateMemberInStrategy(address _member, address _strategy) public virtual nonReentrant {
-        onlyRegistryMemberAddress(_member);
-        onlyStrategyEnabled(_strategy);
-        onlyStrategyAddress(msg.sender, _strategy);
-        // _revertZeroAddress(_strategy);
-
-        if (memberActivatedInStrategies[_member][_strategy]) {
-            revert UserAlreadyActivated();
-        }
-
-        Member memory member = addressToMemberInfo[_member];
-
-        uint256 totalStakedAmount = member.stakedAmount;
-        uint256 pointsToIncrease = registerStakeAmount;
-
-        if (CVStrategyV0_0(payable(_strategy)).getPointSystem() == PointSystem.Quadratic) {
-            pointsToIncrease = CVStrategyV0_0(payable(_strategy)).increasePower(_member, 0);
-        } else if (CVStrategyV0_0(payable(_strategy)).getPointSystem() != PointSystem.Fixed) {
-            pointsToIncrease = CVStrategyV0_0(payable(_strategy)).increasePower(_member, totalStakedAmount);
-        }
-
-        memberPowerInStrategy[_member][_strategy] = pointsToIncrease; // can be all zero
-        memberActivatedInStrategies[_member][_strategy] = true;
-
-        strategiesByMember[_member].push(_strategy);
-
-        emit MemberActivatedStrategy(_member, _strategy, pointsToIncrease);
+    // Stub - delegates to CommunityPowerFacet
+    function activateMemberInStrategy(address, address) public virtual {
+        _delegateToFacet();
     }
 
-    function deactivateMemberInStrategy(address _member, address _strategy) public virtual {
-        if (!memberActivatedInStrategies[_member][_strategy]) {
-            return;
-        }
-
-        onlyRegistryMemberAddress(_member);
-        // _revertZeroAddress(_strategy);
-        onlyStrategyAddress(msg.sender, _strategy);
-
-        memberActivatedInStrategies[_member][_strategy] = false;
-        memberPowerInStrategy[_member][_strategy] = 0;
-        removeStrategyFromMember(_member, _strategy);
-        //totalPointsActivatedInStrategy[_strategy] -= DEFAULT_POINTS;
-        // emit StrategyRemoved(_strategy);
-        emit MemberDeactivatedStrategy(_member, _strategy);
+    // Stub - delegates to CommunityPowerFacet
+    function deactivateMemberInStrategy(address, address) public virtual {
+        _delegateToFacet();
     }
 
-    function removeStrategyFromMember(address _member, address _strategy) internal virtual {
-        address[] storage memberStrategies = strategiesByMember[_member];
-        for (uint256 i = 0; i < memberStrategies.length; i++) {
-            if (memberStrategies[i] == _strategy) {
-                memberStrategies[i] = memberStrategies[memberStrategies.length - 1];
-                memberStrategies.pop();
-            }
-        }
+
+    // Stub - delegates to CommunityPowerFacet
+    function increasePower(uint256) public virtual {
+        _delegateToFacet();
     }
 
-    function increasePower(uint256 _amountStaked) public virtual nonReentrant {
-        onlyRegistryMemberSender();
-        address member = msg.sender;
-        uint256 pointsToIncrease;
-
-        for (uint256 i = 0; i < strategiesByMember[member].length; i++) {
-            //FIX support interface check
-            //if (address(strategiesByMember[member][i]) == _strategy) {
-            pointsToIncrease =
-                CVStrategyV0_0(payable(strategiesByMember[member][i])).increasePower(member, _amountStaked);
-            if (pointsToIncrease != 0) {
-                memberPowerInStrategy[member][strategiesByMember[member][i]] += pointsToIncrease;
-                // console.log("Strategy power", memberPowerInStrategy[member][strategiesByMember[member][i]]);
-            }
-            //}
-        }
-
-        gardenToken.safeTransferFrom(member, address(this), _amountStaked);
-        addressToMemberInfo[member].stakedAmount += _amountStaked;
-        emit MemberPowerIncreased(member, _amountStaked);
+    // Stub - delegates to CommunityPowerFacet
+    function decreasePower(uint256) public virtual {
+        _delegateToFacet();
     }
 
-    /*
-     * @notice Decrease the power of a member in a strategy
-     * @param _amountUnstaked The amount of tokens to unstake
-     */
-    function decreasePower(uint256 _amountUnstaked) public virtual nonReentrant {
-        onlyRegistryMemberSender();
-        address member = msg.sender;
-        address[] storage memberStrategies = strategiesByMember[member];
-
-        uint256 pointsToDecrease;
-
-        if (addressToMemberInfo[member].stakedAmount - _amountUnstaked < registerStakeAmount) {
-            revert DecreaseUnderMinimum();
-        }
-        gardenToken.safeTransfer(member, _amountUnstaked);
-        for (uint256 i = 0; i < memberStrategies.length; i++) {
-            address strategy = memberStrategies[i];
-            // if (strategy.supportsInterface(type(CVStrategyV0_0).interfaceId)) {
-            pointsToDecrease = CVStrategyV0_0(payable(strategy)).decreasePower(member, _amountUnstaked);
-            uint256 currentPower = memberPowerInStrategy[member][memberStrategies[i]];
-            if (pointsToDecrease > currentPower) {
-                revert CantDecreaseMoreThanPower(pointsToDecrease, currentPower);
-            } else {
-                memberPowerInStrategy[member][memberStrategies[i]] -= pointsToDecrease;
-            }
-            // } else {
-            //     // emit StrategyShouldBeRemoved(strategy, member);
-            //     memberStrategies[i] = memberStrategies[memberStrategies.length - 1];
-            //     memberStrategies.pop();
-            //     _removeStrategy(strategy);
-            // }
-            // }
-        }
-        addressToMemberInfo[member].stakedAmount -= _amountUnstaked;
-        emit MemberPowerDecreased(member, _amountUnstaked);
+    // Stub - delegates to CommunityPowerFacet
+    function getMemberPowerInStrategy(address, address) public virtual returns (uint256) {
+        _delegateToFacet();
     }
 
-    function getMemberPowerInStrategy(address _member, address _strategy) public view virtual returns (uint256) {
-        return memberPowerInStrategy[_member][_strategy];
+    // Stub - delegates to CommunityPowerFacet
+    function getMemberStakedAmount(address) public virtual returns (uint256) {
+        _delegateToFacet();
     }
 
-    function getMemberStakedAmount(address _member) public view virtual returns (uint256) {
-        return addressToMemberInfo[_member].stakedAmount;
+    // Stub - delegates to CommunityStrategyFacet
+    function addStrategyByPoolId(uint256) public virtual {
+        _delegateToFacet();
     }
 
-    function addStrategyByPoolId(uint256 poolId) public virtual {
-        onlyCouncilSafe();
-        address strategy = address(allo.getPool(poolId).strategy);
-        // _revertZeroAddress(strategy);
-        // if (strategy.supportsInterface(type(IPointStrategy).interfaceId)) {
-        _addStrategy(strategy);
-        // }
+    // Stub - delegates to CommunityStrategyFacet
+    function addStrategy(address) public virtual {
+        _delegateToFacet();
     }
 
-    function addStrategy(address _newStrategy) public virtual {
-        onlyCouncilSafe();
-        _addStrategy(_newStrategy);
+
+    // Stub - delegates to CommunityStrategyFacet
+    function rejectPool(address) public virtual {
+        _delegateToFacet();
     }
 
-    function _addStrategy(address _newStrategy) internal virtual {
-        if (enabledStrategies[_newStrategy]) {
-            revert StrategyExists();
-        }
-        enabledStrategies[_newStrategy] = true;
-        ISybilScorer sybilScorer = CVStrategyV0_0(payable(_newStrategy)).sybilScorer();
-        if (address(sybilScorer) != address(0)) {
-            sybilScorer.activateStrategy(_newStrategy);
-        }
-        emit StrategyAdded(_newStrategy);
+    // Stub - delegates to CommunityStrategyFacet
+    function removeStrategyByPoolId(uint256) public virtual {
+        _delegateToFacet();
     }
 
-    function rejectPool(address _strategy) public virtual {
-        onlyCouncilSafe();
-        if (enabledStrategies[_strategy]) {
-            _removeStrategy(_strategy);
-        }
-        emit PoolRejected(_strategy);
+
+    // Stub - delegates to CommunityStrategyFacet
+    function removeStrategy(address) public virtual {
+        _delegateToFacet();
     }
 
-    function removeStrategyByPoolId(uint256 poolId) public virtual {
-        onlyCouncilSafe();
-        address strategy = address(allo.getPool(poolId).strategy);
-        // _revertZeroAddress(strategy);
-        _removeStrategy(strategy);
+    // Stub - delegates to CommunityAdminFacet
+    function setCouncilSafe(address payable) public virtual {
+        _delegateToFacet();
     }
 
-    function _removeStrategy(address _strategy) internal virtual {
-        // _revertZeroAddress(_strategy);
-        enabledStrategies[_strategy] = false;
-        emit StrategyRemoved(_strategy);
-    }
-
-    function removeStrategy(address _strategy) public virtual {
-        onlyCouncilSafe();
-        _removeStrategy(_strategy);
-    }
-
-    function setCouncilSafe(address payable _safe) public virtual {
-        onlyCouncilSafe();
-        // _revertZeroAddress(_safe);
-        pendingCouncilSafe = _safe;
-        emit CouncilSafeChangeStarted(address(councilSafe), pendingCouncilSafe);
-    }
-
+    // Stub - delegates to CommunityAdminFacet
     function acceptCouncilSafe() public virtual {
-        if (msg.sender != pendingCouncilSafe) {
-            revert SenderNotNewOwner();
-        }
-        _grantRole(COUNCIL_MEMBER, pendingCouncilSafe);
-        _revokeRole(COUNCIL_MEMBER, address(councilSafe));
-        councilSafe = ISafe(pendingCouncilSafe);
-        delete pendingCouncilSafe;
-        emit CouncilSafeUpdated(address(councilSafe));
+        _delegateToFacet();
     }
 
-    function isMember(address _member) public view virtual returns (bool) {
-        return addressToMemberInfo[_member].isRegistered;
+    // Stub - delegates to CommunityMemberFacet
+    function isMember(address) public virtual returns (bool) {
+        _delegateToFacet();
     }
 
-    function stakeAndRegisterMember(string memory covenantSig) public virtual nonReentrant {
-        IRegistryFactory gardensFactory = IRegistryFactory(registryFactory);
-        uint256 communityFeeAmount = (registerStakeAmount * communityFee) / (100 * PRECISION_SCALE);
-        uint256 gardensFeeAmount =
-            (registerStakeAmount * gardensFactory.getProtocolFee(address(this))) / (100 * PRECISION_SCALE);
-        if (!isMember(msg.sender)) {
-            addressToMemberInfo[msg.sender].isRegistered = true;
-
-            addressToMemberInfo[msg.sender].stakedAmount = registerStakeAmount;
-            // console.log("registerStakeAmount", registerStakeAmount);
-            // console.log("gardenToken", address(gardenToken));
-
-            gardenToken.safeTransferFrom(
-                msg.sender, address(this), registerStakeAmount + communityFeeAmount + gardensFeeAmount
-            );
-            //TODO: Test if revert because of approve on contract, if doesnt work, transfer all to this contract, and then transfer to each receiver
-            //individually. Check vulnerabilites for that with Felipe
-            // gardenToken.approve(feeReceiver,communityFeeAmount);
-            //Error: ProtocolFee is equal to zero
-            // console.log("communityFeeAmount", communityFeeAmount);
-            if (communityFeeAmount > 0) {
-                // console.log("feeReceiver", feeReceiver);
-                gardenToken.safeTransfer(feeReceiver, communityFeeAmount);
-            }
-            // console.log("gardensFeeAmount", gardensFeeAmount);
-            if (gardensFeeAmount > 0) {
-                // console.log("gardensFactory.getGardensFeeReceiver()", gardensFactory.getGardensFeeReceiver());
-                gardenToken.safeTransfer(gardensFactory.getGardensFeeReceiver(), gardensFeeAmount);
-            }
-            totalMembers += 1;
-
-            emit MemberRegisteredWithCovenant(msg.sender, registerStakeAmount, covenantSig);
-        }
+    // Stub - delegates to CommunityMemberFacet
+    function stakeAndRegisterMember(string memory) public virtual {
+        _delegateToFacet();
     }
 
-    function getStakeAmountWithFees() public view virtual returns (uint256) {
-        uint256 communityFeeAmount = (registerStakeAmount * communityFee) / (100 * PRECISION_SCALE);
-        uint256 gardensFeeAmount = (
-            registerStakeAmount * IRegistryFactory(registryFactory).getProtocolFee(address(this))
-        ) / (100 * PRECISION_SCALE);
-
-        return registerStakeAmount + communityFeeAmount + gardensFeeAmount;
+    // Stub - delegates to CommunityMemberFacet
+    function getStakeAmountWithFees() public virtual returns (uint256) {
+        _delegateToFacet();
     }
 
-    function getBasisStakedAmount() external view virtual returns (uint256) {
-        return registerStakeAmount;
+    // Stub - delegates to CommunityMemberFacet
+    function getBasisStakedAmount() external virtual returns (uint256) {
+        _delegateToFacet();
     }
 
-    function setBasisStakedAmount(uint256 _newAmount) public virtual {
-        onlyCouncilSafe();
-        onlyEmptyCommunity();
-        registerStakeAmount = _newAmount;
-        emit BasisStakedAmountUpdated(_newAmount);
+    // Stub - delegates to CommunityAdminFacet
+    function setBasisStakedAmount(uint256) public virtual {
+        _delegateToFacet();
     }
 
-    function setCommunityParams(CommunityParams memory _params) external {
-        onlyCouncilSafe();
-        if (
-            _params.registerStakeAmount != registerStakeAmount || _params.isKickEnabled != isKickEnabled
-                || keccak256(bytes(_params.covenantIpfsHash)) != keccak256(bytes(covenantIpfsHash))
-        ) {
-            onlyEmptyCommunity();
-            if (_params.registerStakeAmount != registerStakeAmount) {
-                setBasisStakedAmount(_params.registerStakeAmount);
-            }
-            if (_params.isKickEnabled != isKickEnabled) {
-                isKickEnabled = _params.isKickEnabled;
-                emit KickEnabledUpdated(_params.isKickEnabled);
-            }
-            if (keccak256(bytes(_params.covenantIpfsHash)) != keccak256(bytes(covenantIpfsHash))) {
-                covenantIpfsHash = _params.covenantIpfsHash;
-                emit CovenantIpfsHashUpdated(_params.covenantIpfsHash);
-            }
+    // Stub - delegates to CommunityAdminFacet
+    function setCommunityParams(CommunityParams memory) external {
+        _delegateToFacet();
+    }
+
+    // Stub - delegates to CommunityAdminFacet
+    function setCommunityFee(uint256) public virtual {
+        _delegateToFacet();
+    }
+
+    // Stub - delegates to CommunityAdminFacet
+    function isCouncilMember(address) public virtual returns (bool) {
+        _delegateToFacet();
+    }
+
+    // Stub - delegates to CommunityMemberFacet
+    function unregisterMember() public virtual {
+        _delegateToFacet();
+    }
+
+
+    // Stub - delegates to CommunityMemberFacet
+    function kickMember(address, address) public virtual {
+        _delegateToFacet();
+    }
+
+    /// @notice Helper function to delegate to facet using LibDiamond
+    /// @dev Used by stub functions to delegate to their respective facets
+    /// @dev This function never returns - it either reverts or returns via assembly
+    function _delegateToFacet() private {
+        LibDiamond.DiamondStorage storage ds;
+        bytes32 position = LibDiamond.DIAMOND_STORAGE_POSITION;
+
+        assembly {
+            ds.slot := position
         }
-        if (keccak256(bytes(_params.communityName)) != keccak256(bytes(communityName))) {
-            communityName = _params.communityName;
-            emit CommunityNameUpdated(_params.communityName);
-        }
-        if (_params.communityFee != communityFee) {
-            setCommunityFee(_params.communityFee);
-        }
-        if (_params.feeReceiver != feeReceiver) {
-            feeReceiver = _params.feeReceiver;
-            emit FeeReceiverChanged(_params.feeReceiver);
-        }
-        if (_params.councilSafe != address(0)) {
-            setCouncilSafe(payable(_params.councilSafe));
+
+        address facet = ds.facetAddressAndSelectorPosition[msg.sig].facetAddress;
+        require(facet != address(0), "RegistryCommunity: Function does not exist");
+
+        assembly {
+            calldatacopy(0, 0, calldatasize())
+            let result := delegatecall(gas(), facet, 0, calldatasize(), 0, 0)
+            returndatacopy(0, 0, returndatasize())
+            switch result
+            case 0 { revert(0, returndatasize()) }
+            default { return(0, returndatasize()) }
         }
     }
 
-    function setCommunityFee(uint256 _newCommunityFee) public virtual {
-        onlyCouncilSafe();
-        // TODO: I dont think we want this to be restricted
-        if (_newCommunityFee > MAX_FEE) {
-            revert NewFeeGreaterThanMax();
+    /// @notice Manage facets using diamond cut (owner only)
+    /// @param _diamondCut Array of FacetCut structs defining facet changes
+    /// @param _init Address of contract to execute with delegatecall (can be address(0))
+    /// @param _calldata Function call data to execute on _init address
+    function diamondCut(
+        IDiamondCut.FacetCut[] calldata _diamondCut,
+        address _init,
+        bytes calldata _calldata
+    ) external onlyOwner {
+        LibDiamond.diamondCut(_diamondCut, _init, _calldata);
+    }
+
+    /// @notice Fallback function delegates calls to facets based on function selector
+    /// @dev Uses Diamond storage to find facet address for the called function
+    fallback() external {
+        LibDiamond.DiamondStorage storage ds;
+        bytes32 position = LibDiamond.DIAMOND_STORAGE_POSITION;
+
+        assembly {
+            ds.slot := position
         }
-        communityFee = _newCommunityFee;
-        emit CommunityFeeUpdated(_newCommunityFee);
-    }
 
-    function isCouncilMember(address _member) public view virtual returns (bool) {
-        return hasRole(COUNCIL_MEMBER, _member);
-    }
+        address facet = ds.facetAddressAndSelectorPosition[msg.sig].facetAddress;
 
-    function unregisterMember() public virtual nonReentrant {
-        onlyRegistryMemberSender();
-        address _member = msg.sender;
-        deactivateAllStrategies(_member);
-        Member memory member = addressToMemberInfo[_member];
-        delete addressToMemberInfo[_member];
-        delete strategiesByMember[_member];
-        // In order to resync older contracts that skipped this counter until upgrade (community-params-editable)
-        if (totalMembers > 0) {
-            totalMembers -= 1;
-        }
-        gardenToken.safeTransfer(_member, member.stakedAmount);
-        emit MemberUnregistered(_member, member.stakedAmount);
-    }
+        require(facet != address(0), "RegistryCommunity: Function does not exist");
 
-    function deactivateAllStrategies(address _member) internal virtual {
-        address[] memory memberStrategies = strategiesByMember[_member];
-        // bytes4 interfaceId = IPointStrategy.withdraw.selector;
-        for (uint256 i = 0; i < memberStrategies.length; i++) {
-            //FIX support interface check
-            //if(memberStrategies[i].supportsInterface(interfaceId)){
-            CVStrategyV0_0(payable(memberStrategies[i])).deactivatePoints(_member);
+        assembly {
+            calldatacopy(0, 0, calldatasize())
+            let result := delegatecall(gas(), facet, 0, calldatasize(), 0, 0)
+            returndatacopy(0, 0, returndatasize())
+            switch result
+            case 0 { revert(0, returndatasize()) }
+            default { return(0, returndatasize()) }
         }
     }
 
-    function kickMember(address _member, address _transferAddress) public virtual nonReentrant {
-        onlyCouncilSafe();
-        if (!isKickEnabled) {
-            revert KickNotEnabled();
-        }
-        if (!isMember(_member)) {
-            revert UserNotInRegistry();
-        }
-        Member memory member = addressToMemberInfo[_member];
-        deactivateAllStrategies(_member);
-        delete addressToMemberInfo[_member];
-        totalMembers -= 1;
-
-        gardenToken.safeTransfer(_transferAddress, member.stakedAmount);
-        emit MemberKicked(_member, _transferAddress, member.stakedAmount);
-    }
+    // receive() external payable {}
 
     uint256[49] private __gap;
 }
