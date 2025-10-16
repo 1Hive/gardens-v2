@@ -227,7 +227,7 @@ export function Proposals({
   const { data: memberPower, refetch: refetchMemberPower } = useContractRead({
     address: communityAddress,
     abi: registryCommunityABI,
-    functionName: "getMemberPowerInStrategy",
+    functionName: "memberPowerInStrategy",
     args: [wallet as Address, strategy.id as Address],
     chainId: chainId,
     enabled: !!wallet,

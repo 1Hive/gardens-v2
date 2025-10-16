@@ -22,6 +22,12 @@ verify-storage-quick:
 	@./scripts/verify-storage-layout.sh --skip-build || (echo "❌ Storage verification FAILED! Fix storage alignment before deploying." && exit 1)
 	@echo "✅ Storage verification passed"
 
+# Verify diamond storage layouts with verbose output (shows detailed differences)
+verify-storage-verbose:
+	@echo "🔍 Verifying diamond storage layouts (verbose mode)..."
+	@./scripts/verify-storage-layout.sh --verbose || (echo "❌ Storage verification FAILED! Fix storage alignment before deploying." && exit 1)
+	@echo "✅ Storage verification passed"
+
 ### LOCLAHOST ###
 
 fork:

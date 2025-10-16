@@ -83,10 +83,10 @@ verify_facet_storage() {
     local facet_tmp="/tmp/facet_${facet_name}_$$.txt"
 
     FOUNDRY_DISABLE_NIGHTLY_WARNING=1 forge inspect "$main_contract" storageLayout 2>&1 | \
-        grep -E "^\| [a-z_]+ " | grep -v "__gap" | awk '{print $2, $4, $6, $8}' > "$main_tmp" || true
+        grep -E "^\| [a-zA-Z_][a-zA-Z0-9_]* " | grep -v "__gap" | awk '{print $2, $4, $6, $8}' > "$main_tmp" || true
 
     FOUNDRY_DISABLE_NIGHTLY_WARNING=1 forge inspect "$facet_contract" storageLayout 2>&1 | \
-        grep -E "^\| [a-z_]+ " | grep -v "__gap" | awk '{print $2, $4, $6, $8}' > "$facet_tmp" || true
+        grep -E "^\| [a-zA-Z_][a-zA-Z0-9_]* " | grep -v "__gap" | awk '{print $2, $4, $6, $8}' > "$facet_tmp" || true
 
     # Compare
     if diff "$main_tmp" "$facet_tmp" > /dev/null 2>&1; then
@@ -97,8 +97,34 @@ verify_facet_storage() {
         echo -e "${RED}✗ MISMATCH${NC}"
 
         if [ "$VERBOSE" = true ]; then
-            echo -e "${YELLOW}Storage layout differences:${NC}"
-            diff "$main_tmp" "$facet_tmp" || true
+            echo -e "${YELLOW}Storage layout differences between ${main_contract} and ${facet_contract}:${NC}"
+            echo -e "${BLUE}Format: Variable Type Slot Offset${NC}"
+            echo ""
+
+            # Create detailed diff with context
+            local diff_output=$(diff -u "$main_tmp" "$facet_tmp" 2>&1 || true)
+
+            # Parse and display in a more readable format
+            echo "$diff_output" | while IFS= read -r line; do
+                if [[ "$line" == "---"* ]] || [[ "$line" == "+++"* ]] || [[ "$line" == "@@"* ]]; then
+                    # Skip diff headers
+                    continue
+                elif [[ "$line" == "-"* ]]; then
+                    # Lines in main but not in facet (should not happen - facet should have all main's storage)
+                    echo -e "${RED}  MAIN HAS (facet missing):  ${line:1}${NC}"
+                elif [[ "$line" == "+"* ]]; then
+                    # Lines in facet but not in main (this is the error - facet has extra storage)
+                    echo -e "${YELLOW}  FACET HAS (main missing): ${line:1}${NC}"
+                else
+                    # Common lines
+                    if [ -n "$line" ]; then
+                        echo -e "${GREEN}  ✓ ${line}${NC}"
+                    fi
+                fi
+            done
+            echo ""
+        else
+            echo -e "${YELLOW}  Run with --verbose to see detailed differences${NC}"
         fi
 
         rm -f "$main_tmp" "$facet_tmp"

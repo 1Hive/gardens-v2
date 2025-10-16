@@ -739,6 +739,10 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     }
 
     // cancelProposal removed - now in ProposalManagementFacet
+    // Stub needed for frontend to call - delegates to facet
+    function cancelProposal(uint256 proposalId) external {
+        _delegateToFacet();
+    }
 
     // _addToAllowList and _removeFromAllowList removed - now in AdminFacet
 

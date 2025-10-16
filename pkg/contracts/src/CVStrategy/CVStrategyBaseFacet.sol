@@ -141,6 +141,7 @@ abstract contract CVStrategyBaseFacet {
     /// @dev Slot 129+
     ISuperToken public superfluidToken;
 
+
     /// @dev Reserved storage space to allow for layout changes in the future
     /// @dev This gap is at the end of storage to allow adding new variables without shifting slots
     uint256[49] private __gap;
