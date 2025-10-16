@@ -100,17 +100,19 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
             {showPoolGovernanceData && (
               <div className="w-full flex items-center justify-between">
                 <h4 className="subtitle2">Voting power:</h4>
-                <p className="text-xl font-bold text-primary-content">
-                  {memberPoolWeight?.toFixed(2)} %
-                </p>
-                <a
-                  href="https://app.gitbook.com/o/GUQCgy8FGZIdiu7gfDdO/s/o7kAwsDASDRdKiTiqxwK/start-here/voting-power"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="rounded-md hover:bg-neutral-soft dark:hover:bg-primary p-2"
-                >
-                  <QuestionMarkCircleIcon className="h-6 w-6" />
-                </a>
+                <div className="flex items-center gap-1">
+                  <p className="text-xl font-bold text-primary-content">
+                    {memberPoolWeight?.toFixed(2)} %
+                  </p>
+                  <a
+                    href="https://docs.gardens.fund/start-here/voting-power"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="rounded-md hover:bg-neutral-soft dark:hover:bg-primary p-2"
+                  >
+                    <QuestionMarkCircleIcon className="h-6 w-6 text-primary-content" />
+                  </a>
+                </div>
               </div>
             )}
           </div>
