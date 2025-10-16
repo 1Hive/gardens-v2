@@ -31,8 +31,8 @@ Please **do not** create public GitHub issues for security vulnerabilities. This
 
 Report security vulnerabilities through one of these secure channels:
 
-- **Discord**: Join our [Discord Community](https://discord.gg/tJWPg69ZWG) and reach out to moderators or team members privately
 - **GitHub Security**: Use GitHub's [private vulnerability reporting feature](https://github.com/1Hive/gardens-v2/security/advisories/new) (recommended)
+- **Discord**: Join our [Discord Community](https://discord.gg/tJWPg69ZWG) and reach out to moderators or team members privately
 - **Email**: Contact our team through our community channels for direct email contact
 
 ### 3. Include Detailed Information

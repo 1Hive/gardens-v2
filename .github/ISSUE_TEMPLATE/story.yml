@@ -1,0 +1,52 @@
+name: Story
+description: Capture a product or user story for the Gardens app.
+title: "As a [user], I want [feature] so that [benefit]"
+type: "Feature"
+projects: ["1Hive/20"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Keep it lightweight: describe the problem, the outcome, and how we'll confirm it delivers value.
+  - type: input
+    id: summary
+    attributes:
+      label: Summary
+      description: Short title or theme for the story.
+      placeholder: Snapshot of the user need
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: User problem
+      description: Who is impacted and what pain are they feeling?
+      placeholder: As a ... I struggle with ...
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Desired outcome
+      description: What changes for the user after we deliver this?
+      placeholder: Users can...
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Bullet the scenarios that must pass.
+      placeholder: |
+        - Given ...
+        - When ...
+        - Then ...
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Links, designs, or open questions.
+    validations:
+      required: false
