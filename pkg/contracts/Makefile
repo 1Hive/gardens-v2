@@ -10,6 +10,18 @@ RPC_URL_LOCALHOST = http://127.0.0.1:8545
 print :
 	@echo $(RPC_URL)
 
+# Aggregate diamond ABIs (combines main contract + all facets into single ABI)
+aggregate-abi:
+	@echo "📦 Aggregating diamond ABIs..."
+	@node scripts/aggregate-diamond-abi.js
+	@echo "✅ ABI aggregation complete"
+
+# Aggregate ABIs with verbose output
+aggregate-abi-verbose:
+	@echo "📦 Aggregating diamond ABIs (verbose mode)..."
+	@node scripts/aggregate-diamond-abi.js --verbose
+	@echo "✅ ABI aggregation complete"
+
 # Verify diamond storage layouts (with build)
 verify-storage:
 	@echo "🔍 Verifying diamond storage layouts..."
