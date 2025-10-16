@@ -3,5 +3,10 @@ import { usePathname } from "next/navigation";
 export function useChainIdFromPath() {
   const path = usePathname();
   const segment = path?.split("/")[2];
-  return segment ? Number(segment) : undefined;
+  if (!segment) {
+    return undefined;
+  }
+
+  const chainId = Number(segment);
+  return Number.isNaN(chainId) ? undefined : chainId;
 }

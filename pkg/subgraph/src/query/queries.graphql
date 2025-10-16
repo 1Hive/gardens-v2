@@ -655,3 +655,45 @@ query getMemberPassportAndCommunities($memberId: ID!) {
 #     defaultRulingTimeout
 #   }
 # }
+
+query getCommunityName($communityAddr: ID!) {
+  registryCommunity(id: $communityAddr) {
+    communityName
+  }
+}
+
+query getPoolTitle($poolId: BigInt!) {
+  cvstrategies(first: 1, where: { poolId: $poolId }) {
+    metadata {
+      title
+    }
+    archived
+    isEnabled
+    config {
+      proposalType
+    }
+    registryCommunity {
+      communityName
+    }
+  }
+}
+
+query getProposalTitle($proposalId: ID!) {
+  cvproposal(id: $proposalId) {
+    metadata {
+      title
+    }
+    proposalStatus
+    strategy {
+      metadata {
+        title
+      }
+      registryCommunity {
+        communityName
+      }
+      config {
+        proposalType
+      }
+    }
+  }
+}
