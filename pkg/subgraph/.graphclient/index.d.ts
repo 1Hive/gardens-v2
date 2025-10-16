@@ -4024,6 +4024,8 @@ export type getProposalTitleQuery = {
     cvproposal?: Maybe<(Pick<CVProposal, 'proposalStatus'> & {
         metadata?: Maybe<Pick<ProposalMetadata, 'title'>>;
         strategy: {
+            metadata?: Maybe<Pick<PoolMetadata, 'title'>>;
+            registryCommunity: Pick<RegistryCommunity, 'communityName'>;
             config: Pick<CVStrategyConfig, 'proposalType'>;
         };
     })>;

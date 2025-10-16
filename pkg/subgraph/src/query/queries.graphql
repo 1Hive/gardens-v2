@@ -685,6 +685,12 @@ query getProposalTitle($proposalId: ID!) {
     }
     proposalStatus
     strategy {
+      metadata {
+        title
+      }
+      registryCommunity {
+        communityName
+      }
       config {
         proposalType
       }
