@@ -243,6 +243,7 @@ export default function ClientPage({
       PoolTypes[strategy.config?.proposalType] === "funding" &&
       strategy.isEnabled,
   );
+
   const activePools = strategies?.filter((strategy) => strategy?.isEnabled);
 
   const poolsInReview = strategies.filter(

@@ -32,11 +32,19 @@
 
   --tooltip-color: #8c8c8c;
   --tooltip-text-color: #ffffff;
+
+  --scrollbar-thumb: #8c8c8c;
+  --scrollbar-thumb-hover: #a0a0a0; /* hover color */
+  --scrollbar-track: #eeeeee;
 }
 
 [data-theme="darkTheme"] {
   --color-text: #eeeeee;
   --border-neutral: #d5d5d550;
+
+  --scrollbar-thumb: #555;
+  --scrollbar-thumb-hover: #666;
+  --scrollbar-track: #1f1f1f;
 }
 
 * {
@@ -257,25 +265,28 @@ dialog * {
   scrollbar-width: thin;
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar {
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+*::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
-::-webkit-scrollbar-thumb {
-  background-color: var(--color-grey-500);
+*::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
   border-radius: 10px;
 }
 
-::-webkit-scrollbar-track {
-  background-color: var(--color-grey-200);
-  border-radius: 10px;
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--scrollbar-thumb-hover);
 }
 
-* {
-  scrollbar-width: thin;
-  scrollbar-color: var(--color-grey-500) var(--color-grey-200);
+*::-webkit-scrollbar-track {
+  background-color: var(--scrollbar-track);
+  border-radius: 10px;
 }
 
 .wmde-markdown.wmde-markdown-color {
