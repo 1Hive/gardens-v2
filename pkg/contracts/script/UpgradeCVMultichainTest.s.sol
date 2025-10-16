@@ -76,7 +76,7 @@ contract UpgradeCVMultichainTest is BaseMultiChain {
             cvStrategy.upgradeTo(strategyImplementation); // DOESNT VALIDATE SAFE UPGRADING
 
             // 3.b -- Init the Strategy --
-            cvStrategy.init2();
+            // cvStrategy.init2();
 
             // 3.c -- Set the Pool Params --
             // (

@@ -13,6 +13,8 @@ import {
   CVProposal,
   CVStrategy,
   CVStrategyConfig,
+  Maybe,
+  PoolMetadata,
 } from "#/subgraph/.graphclient";
 import { Skeleton } from "./Skeleton";
 import TooltipIfOverflow from "./TooltipIfOverflow";
@@ -29,10 +31,11 @@ type Props = {
   token: string;
   pool: Pick<
     CVStrategy,
-    "id" | "isEnabled" | "poolId" | "metadata" | "archived"
+    "id" | "isEnabled" | "poolId" | "metadataHash" | "archived"
   > & {
     proposals: Pick<CVProposal, "id">[];
     config: Pick<CVStrategyConfig, "proposalType" | "pointSystem">;
+    metadata?: Maybe<Omit<PoolMetadata, "id">>;
   };
 };
 
@@ -40,11 +43,21 @@ export function PoolCard({ pool, token }: Props) {
   const pathname = usePathname();
   const searchParams = useCollectQueryParams();
 
-  let { poolId, proposals, isEnabled, config, metadata } = pool;
+  let {
+    poolId,
+    proposals,
+    isEnabled,
+    config,
+    metadata: metadataFromSubgraph,
+    metadataHash,
+  } = pool;
 
-  const { metadata: ipfsResult } = useMetadataIpfsFetch({
-    hash: metadata,
+  const { data: metadataResult } = useMetadataIpfsFetch({
+    hash: metadataHash,
+    enabled: metadataHash != null && !metadataFromSubgraph,
   });
+
+  const metadata = metadataFromSubgraph ?? metadataResult;
 
   const poolType = config?.proposalType as number | undefined;
 
@@ -63,9 +76,9 @@ export function PoolCard({ pool, token }: Props) {
     >
       <header className="mb-4 flex flex-col w-full justify-between items-start gap-2">
         <div className="flex flex-wrap w-full justify-between items-center gap-1">
-          <Skeleton isLoading={!ipfsResult}>
+          <Skeleton isLoading={!metadata}>
             <h3 className="flex items-center justify-between max-w-[190px]">
-              <TooltipIfOverflow>{ipfsResult?.title}</TooltipIfOverflow>
+              <TooltipIfOverflow>{metadata?.title}</TooltipIfOverflow>
             </h3>
           </Skeleton>
           <Badge type={poolType} />

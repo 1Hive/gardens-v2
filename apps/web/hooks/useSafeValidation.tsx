@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from "react";
 import { Address, isAddress } from "viem";
 import { useContractRead } from "wagmi";
-import { useCheat } from "./useCheat";
+import { useFlag } from "./useFlag";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { safeABI } from "@/src/customAbis";
 
@@ -34,7 +34,7 @@ export function useSafeValidation({
     return address as Address;
   }, [address]);
 
-  const bypassSafeCheck = useCheat("bypassSafeCheck");
+  const bypassSafeCheck = useFlag("bypassSafeCheck");
 
   // Contract read hook for Safe validation
   const {
