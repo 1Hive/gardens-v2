@@ -1,0 +1,50 @@
+name: QA request
+description: Request quality assurance coverage for a change or release.
+title: "[QA]: "
+labels: ["sanity"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Outline what needs testing, where to test it, and who to talk to.
+  - type: input
+    id: contact
+    attributes:
+      label: Requester
+      description: Who should QA contact for questions?
+      placeholder: Name or Slack handle
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: Summarize what needs to be tested and the expected outcome.
+      placeholder: Validate the proposal creation flow covering...
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Test environment
+      description: Provide builds, branches, credentials, or flags to use.
+      placeholder: Staging app URL, branch name, feature flags...
+    validations:
+      required: true
+  - type: textarea
+    id: checklist
+    attributes:
+      label: Checks to run
+      description: Optional checklist or areas to pay attention to.
+      placeholder: |
+        - [ ] Smoke login
+        - [ ] Verify metrics in...
+    validations:
+      required: false
+  - type: textarea
+    id: notes
+    attributes:
+      label: Extra context
+      description: Related issues, risks, or links.
+    validations:
+      required: false

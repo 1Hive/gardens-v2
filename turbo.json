@@ -102,6 +102,28 @@
       "dependsOn": [
         "foundry#build"
       ]
+    },
+    "docs#build": {
+      "dependsOn": [
+        "^build"
+      ],
+      "outputs": [
+        ".next/**",
+        "out/**",
+        "build/**"
+      ],
+      "env": [
+        "NEXT_PUBLIC_ENV_GARDENS",
+        "NEXT_PUBLIC_SENTRY_DSN",
+        "NEXT_PUBLIC_SENTRY_REPLAYS_ON_ERROR_SAMPLE_RATE",
+        "NEXT_PUBLIC_SENTRY_REPLAYS_SESSION_SAMPLE_RATE",
+        "NEXT_PUBLIC_WALLET_CONNECT_ID",
+        "NEXT_PUBLIC_DEFAULT_RULING_TIMEOUT",
+        "NEXT_PUBLIC_GLOBAL_TRIBUNAL_ADDRESS",
+        "NEXT_PUBLIC_SKIP_PUBLISHED",
+        "NEXT_PUBLIC_SUBGRAPH_KEY",
+        "NEXT_PUBLIC_ALCHEMY_KEY"
+      ]
     }
   }
 }

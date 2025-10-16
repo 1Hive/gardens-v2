@@ -1,0 +1,40 @@
+---
+title: "Conviction Parameters"
+---
+
+Conviction Voting allows proposals to be evaluated continuously and concurrently. Participants can express their preferences for the proposals they support, and their support accumulates over time. Any actions connected to a Conviction Voting Pool - like a funding distribution - are only executable when Conviction reaches a calculated threshold.
+
+## Conviction growth
+
+**Pool Types = Funding, Signaling, Streaming**
+
+Determines the rate at which a proposal accumulates conviction.
+
+A higher value for Conviction Growth means proposals will take longer to accumulate strength based on their support. This parameter is logarithmic and represents its "half-life," or the amount of time for conviction to reach 50% of its support.
+
+Example:
+
+- Conviction Growth = 7 days.
+- Alice has 10% of a Pool's voting weight, and supports Proposal B with all of her voting weight. After leaving her support allocated for 14 days, conviction on Proposal B is 7.5%, or 2 half-lifes.
+
+## Minimum Conviction
+
+**Pool Types = Funding, Streaming**
+
+In a Funding Pool, minimum conviction is the minimum voting weight needed for a proposal to pass. This parameter is defined as a percentage of total voting weight in a pool, and sets the amount of conviction needed for the smallest possible funding proposal (i.e. 0 tokens) to pass.
+
+In a Streaming Pool, minimum conviction is the percentage of voting weight needed for the tokens to begin streaming.
+
+## Spending Limit
+
+**Pool Types = Funding**
+
+The spending limit caps the number of tokens that can be requested in a single proposal. This parameter is defined as a percentage of tokens in the funding pool, and sets the amount of tokens requested where the proposal cannot be passed because 100% of the Pool's voting weight would need to accumulate conviction.
+
+## Fixed Minimum Threshold
+
+**Pool Types = Funding**
+
+This threshold is a fixed value representing the minimum voting weight that conviction must reach for a proposal to pass.
+
+This parameter overrides the Minimum Conviction parameter when its value is greater, and is a safeguard for newly created Pools or Pools that for any other reason do not have enough voting weight activated for funds to be considered secure.
