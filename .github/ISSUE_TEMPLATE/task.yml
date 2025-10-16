@@ -1,0 +1,42 @@
+name: Task
+description: Track a general engineering or operational task.
+title: "[Task]: "
+labels: ["task"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Capture the goal, the work needed, and how you'll know it's done.
+  - type: input
+    id: summary
+    attributes:
+      label: Summary
+      description: Brief headline for the task.
+      placeholder: Publish docs update for...
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Desired outcome
+      description: What does success look like?
+      placeholder: When complete...
+    validations:
+      required: true
+  - type: textarea
+    id: plan
+    attributes:
+      label: Key steps
+      description: Outline the main actions or checklist items.
+      placeholder: |
+        - [ ] Step 1
+        - [ ] Step 2
+    validations:
+      required: false
+  - type: textarea
+    id: resources
+    attributes:
+      label: Links or context
+      description: Add references, related issues, or notes.
+    validations:
+      required: false

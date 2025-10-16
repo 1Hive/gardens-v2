@@ -1,0 +1,55 @@
+name: Bug report
+description: Report a problem or unexpected behavior in the Gardens app.
+title: "[Bug]: "
+labels: ["triage"]
+type: "Bug"
+projects: ["1Hive/20", "1Hive/17"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for raising an issue. Share the essentials so we can reproduce and fix it quickly.
+  - type: input
+    id: summary
+    attributes:
+      label: What happened?
+      description: One line summary of the problem.
+      placeholder: Unable to sign proposal when...
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: List the actions that trigger the bug.
+      placeholder: |
+        1. Go to ...
+        2. Click ...
+        3. Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result
+      description: What did you expect to happen?
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual result
+      description: What happened instead? Include errors or screenshots if helpful.
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Extra context
+      description: Environment details, wallets, links, or anything else that helps.
+      placeholder: |
+        - Network:
+        - Browser or device:
+        - Wallet:
+    validations:
+      required: false
