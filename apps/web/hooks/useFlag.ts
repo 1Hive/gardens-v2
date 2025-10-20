@@ -1,5 +1,4 @@
 import { useEffect } from "react";
-import { useSearchParams } from "next/navigation";
 import { useWatchLocalStorage } from "./useWatchLocalStorage";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import { logOnce } from "@/utils/log";
@@ -45,7 +44,7 @@ export const useFlag = (flag: CheatName) => {
   const queryParams = useCollectQueryParams();
 
   const [flagFromStorage] = useWatchLocalStorage({
-    key: "flag." + flag,
+    key: "flag_" + flag,
     deserializer: (v) => v === "true",
     serializer: (v) => (v ? "true" : "false"),
   });
