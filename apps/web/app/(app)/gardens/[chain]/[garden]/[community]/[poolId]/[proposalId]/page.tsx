@@ -11,6 +11,8 @@ import { ProposalStatus } from "@/types";
 export const FALLBACK_TITLE = "Gardens proposal";
 export const ACTIVE_PROPOSAL_DESCRIPTION =
   "This proposal is active and can receive support from members";
+export const DISPUTED_PROPOSAL_DESCRIPTION =
+  "This proposal is disputed and now going through arbitration.";
 export const ENDED_PROPOSAL_DESCRIPTION =
   "This proposal has ended and can no longer receive support.";
 export const OG_IMAGE_TOKEN = "opengraph-image-1eoc0x";
@@ -23,11 +25,15 @@ export function buildOgImagePath(params: ProposalPageParams): string {
   return `/gardens/${params.chain}/${params.garden}/${params.community}/${params.poolId}/${params.proposalId}/${OG_IMAGE_TOKEN}`;
 }
 
-export function getDescriptionFromStatus(status?: string): string {
-  const normalized = status?.toLowerCase();
-  return normalized === "active" ?
-      ACTIVE_PROPOSAL_DESCRIPTION
-    : ENDED_PROPOSAL_DESCRIPTION;
+export function getDescriptionFromStatus(
+  status?: (typeof ProposalStatus)[number] | undefined,
+): string {
+  const normalized = status?.toLowerCase() as (typeof ProposalStatus)[number];
+  return (
+    normalized === "active" ? ACTIVE_PROPOSAL_DESCRIPTION
+    : normalized === "disputed" ? DISPUTED_PROPOSAL_DESCRIPTION
+    : ENDED_PROPOSAL_DESCRIPTION
+  );
 }
 
 export function titleCaseStatus(status?: string): string | undefined {

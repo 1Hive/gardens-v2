@@ -32,7 +32,7 @@ export const contentType = "image/png";
 
 type ProposalImageData = {
   title: string;
-  status?: string;
+  status?: (typeof ProposalStatus)[number];
   poolType?: "signaling" | "funding" | "streaming";
   poolTitle?: string | null;
   communityName?: string | null;
@@ -200,7 +200,8 @@ async function renderImage({
     : poolType === "signaling" ?
       `data:image/svg+xml;base64,${POOL_SIGNALING_ICON_BASE64}`
     : null;
-  const normalizedStatus = status?.toLowerCase();
+  const normalizedStatus =
+    status?.toLowerCase() as (typeof ProposalStatus)[number];
   const description = getDescriptionFromStatus(normalizedStatus);
   const safeTitle = formatTitle(title);
   const subHeaderText =
@@ -209,12 +210,12 @@ async function renderImage({
     : communityName ?? poolTitle ?? null;
   const showStatusBadge =
     normalizedStatus != null && normalizedStatus !== "active";
-  const statusStyle = showStatusBadge ?
-    STATUS_STYLES[normalizedStatus ?? ""] ?? DEFAULT_STATUS_STYLE
-  : null;
-  const statusLabel = showStatusBadge ?
-    titleCaseStatus(normalizedStatus) ?? "Proposal"
-  : null;
+  const statusStyle =
+    showStatusBadge ?
+      STATUS_STYLES[normalizedStatus ?? ""] ?? DEFAULT_STATUS_STYLE
+    : null;
+  const statusLabel =
+    showStatusBadge ? titleCaseStatus(normalizedStatus) ?? "Proposal" : null;
   const hasStatusBadge = statusStyle != null && statusLabel != null;
   const hasPoolBadge = !!poolLabel;
   const showBadges = hasPoolBadge || hasStatusBadge;
@@ -327,14 +328,12 @@ async function renderImage({
                   }}
                 >
                   {poolIconSrc ?
-                    (
-                      // eslint-disable-next-line @next/next/no-img-element -- Rendering inside ImageResponse.
-                      <img
-                        alt=""
-                        src={poolIconSrc}
-                        style={{ height: "20px", width: "20px" }}
-                      />
-                    )
+                    // eslint-disable-next-line @next/next/no-img-element -- Rendering inside ImageResponse.
+                    <img
+                      alt=""
+                      src={poolIconSrc}
+                      style={{ height: "20px", width: "20px" }}
+                    />
                   : null}
                   {poolLabel}
                 </span>
