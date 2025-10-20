@@ -22,6 +22,8 @@ import { queryByChain } from "@/providers/urql";
 import { PoolTypes, ProposalStatus } from "@/types";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export const alt = "Gardens Proposal";
 export const size = {
@@ -407,6 +409,9 @@ async function renderImage({
     ),
     {
       ...size,
+      headers: {
+        "Cache-Control": "no-store, no-cache, must-revalidate",
+      },
     },
   );
 }
