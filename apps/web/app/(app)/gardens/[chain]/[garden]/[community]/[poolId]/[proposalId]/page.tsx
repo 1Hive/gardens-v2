@@ -21,8 +21,12 @@ type PageProps = {
   params: ProposalPageParams;
 };
 
-export function buildOgImagePath(params: ProposalPageParams): string {
-  return `/gardens/${params.chain}/${params.garden}/${params.community}/${params.poolId}/${params.proposalId}/${OG_IMAGE_TOKEN}`;
+export function buildOgImagePath(
+  params: ProposalPageParams,
+  status?: string,
+): string {
+  const statusQuery = status ? `?status=${status.toLowerCase()}` : "";
+  return `/gardens/${params.chain}/${params.garden}/${params.community}/${params.poolId}/${params.proposalId}/${OG_IMAGE_TOKEN}${statusQuery}`;
 }
 
 export function getDescriptionFromStatus(
@@ -120,7 +124,7 @@ export async function generateMetadata({
         description,
         images: [
           {
-            url: buildOgImagePath(params),
+            url: buildOgImagePath(params, status),
             alt: titleCaseStatus(status) ?? "Proposal",
           },
         ],
@@ -129,7 +133,7 @@ export async function generateMetadata({
         card: "summary_large_image",
         title,
         description,
-        images: [buildOgImagePath(params)],
+        images: [buildOgImagePath(params, status)],
       },
     };
   } catch (error) {
