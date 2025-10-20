@@ -6,11 +6,10 @@ import { fetchToken } from "@wagmi/core";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { toast } from "react-toastify";
-import { AnyVariables, DocumentInput, OperationContext } from "urql";
 import { Address } from "viem";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useFlag } from "@/hooks/useFlag";
-import { initUrqlClient } from "@/providers/urql";
+import { queryByChain } from "@/providers/urql";
 import {
   parseStaticSegment,
   queryMap,
@@ -21,33 +20,11 @@ interface Breadcrumb {
   label: string;
 }
 
-const { urqlClient } = initUrqlClient();
-
 export function Breadcrumbs() {
   const path = usePathname();
   const chain = useChainFromPath();
   const [breadcrumbs, setBreadcrumbs] = useState<Breadcrumb[]>([]);
   const skipPublished = useFlag("skipPublished");
-
-  async function queryByChain<
-    Data = any,
-    Variables extends AnyVariables = AnyVariables,
-  >(
-    query: DocumentInput<any, Variables>,
-    variables: Variables = {} as Variables,
-    context?: Partial<OperationContext>,
-  ) {
-    if (!chain) {
-      throw new Error("Chain not supported");
-    }
-    return urqlClient.query<Data>(query, variables, {
-      url:
-        skipPublished ?
-          chain.subgraphUrl
-        : chain.publishedSubgraphUrl ?? chain.subgraphUrl,
-      ...context,
-    });
-  }
 
   /**
    * Fetches and parses titles from URL segments.
@@ -85,9 +62,15 @@ export function Breadcrumbs() {
     const queryItem = queryMap[entityIndex];
 
     try {
+      if (!chain) {
+        throw new Error("Chain not found in path");
+      }
       const result = await queryByChain(
+        chain,
         queryItem.document,
         queryItem.getVariables(segments[entityIndex]),
+        undefined,
+        skipPublished,
       );
 
       if (!result?.data) {
@@ -97,7 +80,7 @@ export function Breadcrumbs() {
       const parsedResult = await queryItem.parseResult(result.data);
 
       if (isStaticSegment) {
-        parsedResult.push(parseStaticSegment(segments[segmentsLength - 1]));
+        parsedResult.push(parseStaticSegment(segments[segmentsLength - 1])); 
       }
 
       return parsedResult;
