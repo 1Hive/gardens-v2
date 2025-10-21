@@ -6,15 +6,15 @@ schema:
 dataSources:
   - kind: ethereum/contract
     name: RegistryFactoryV0_0
-    network: matic
+    network: optimism-sepolia
     context:
       chainId: 
         type: Int
-        data: 137
+        data: 11155420
     source:
-      address: "0x57a9835b204dbcc101dbf981625a3625e8043b9c"
+      address: "0xEC8824e9a9498520891ec678e98c5bd3e65229c2"
       abi: RegistryFactoryV0_0
-      startBlock: 61584764
+      startBlock: 29036730
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -44,15 +44,15 @@ dataSources:
 
   - kind: ethereum/contract
     name: PassportScorer
-    network: matic
+    network: optimism-sepolia
     context:
       chainId: 
         type: Int
-        data: 137
+        data: 11155420
     source:
-      address: "0x190Fa730E6FfC64Ebd0031bE59b3007cC9eE2bB3"
+      address: "0xe3DC6e82B599cD80904aCf0a3cd9f7401d92CC37"
       abi: PassportScorer
-      startBlock: 61584764
+      startBlock: 29036730
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -81,15 +81,15 @@ dataSources:
 
   - kind: ethereum/contract
     name: GoodDollarSybil
-    network: matic
+    network: optimism-sepolia
     context:
       chainId: 
         type: Int
-        data: 137
+        data: 11155420
     source:
-      address: "0x7D08db0138fc0f0Dcc9C7120b301Ff07D3A7b300"
+      address: "0xb01AC9015E04ecC424E646eBAb32dfa7670Ae8a6"
       abi: GoodDollarSybil
-      startBlock: 61584764
+      startBlock: 29036730
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -113,7 +113,7 @@ dataSources:
 templates:
   - kind: ethereum/contract
     name: RegistryCommunityV0_0
-    network: matic
+    network: optimism-sepolia
     source:
       abi: RegistryCommunityV0_0
     mapping:
@@ -187,7 +187,7 @@ templates:
 
   - kind: ethereum/contract
     name: CVStrategyV0_0
-    network: matic
+    network: optimism-sepolia
     source:
       abi: CVStrategyV0_0
     mapping:
@@ -252,7 +252,7 @@ templates:
 
   - kind: ethereum/contract
     name: CollateralVault
-    network: matic
+    network: optimism-sepolia
     source:
       abi: CollateralVault
     mapping:
