@@ -96,6 +96,9 @@
       "cache": false
     },
     "web#generate": {
+      "dependsOn": [
+        "foundry#build"
+      ],
       "cache": false
     },
     "subgraph#build": {
