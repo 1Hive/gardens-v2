@@ -19,6 +19,8 @@ function buildOgImagePath(params: PageParams["params"]) {
   return `/gardens/${params.chain}/${params.garden}/${params.community}/${params.poolId}/opengraph-image-12jbcu`;
 }
 
+const titlePrefix = "Gardens - ";
+
 export async function generateMetadata({
   params,
 }: PageParams): Promise<Metadata> {
@@ -27,16 +29,16 @@ export async function generateMetadata({
   const poolId = params.poolId?.toString();
   let description = getDescriptionText(undefined);
   const fallbackMetadata: Metadata = {
-    title: FALLBACK_TITLE,
+    title: titlePrefix + FALLBACK_TITLE,
     description,
     openGraph: {
-      title: FALLBACK_TITLE,
+      title: titlePrefix + FALLBACK_TITLE,
       description,
       images: [{ url: buildOgImagePath(params) }],
     },
     twitter: {
       card: "summary_large_image",
-      title: FALLBACK_TITLE,
+      title: titlePrefix + FALLBACK_TITLE,
       description,
       images: [buildOgImagePath(params)],
     },
@@ -75,8 +77,7 @@ export async function generateMetadata({
     }
 
     const pool = poolResult?.data?.cvstrategies?.[0];
-    const poolTitle = pool?.metadata?.title?.trim();
-    console.log({ pool, poolTitle });
+    const poolTitle = titlePrefix + pool?.metadata?.title?.trim();
     if (!poolTitle) {
       return fallbackMetadata;
     }

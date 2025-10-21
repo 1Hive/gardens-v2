@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import ClientPage from "./ClientPage";
 
-const TITLE = "Create a pool";
+const TITLE = "Gardens - Create a pool";
 const DESCRIPTION =
   "Spin up a dedicated pool so your community can coordinate funding and signaling decisions together.";
 

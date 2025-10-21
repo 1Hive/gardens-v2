@@ -17,7 +17,7 @@ export const size = {
 export const contentType = "image/png";
 export const description =
   "Gardens community for collective decision-making and funding.";
-export const FALLBACK_TITLE = "Gardens community";
+export const FALLBACK_TITLE = "Community";
 
 // Image generation
 type ImageParams = {

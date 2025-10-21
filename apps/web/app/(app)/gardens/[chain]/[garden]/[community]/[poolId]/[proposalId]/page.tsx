@@ -46,6 +46,8 @@ export function titleCaseStatus(status?: string): string | undefined {
   return normalized.charAt(0).toUpperCase() + normalized.slice(1);
 }
 
+const titlePrefix = "Gardens - ";
+
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
@@ -114,7 +116,9 @@ export async function generateMetadata({
 
     const description = getDescriptionFromStatus(status);
     const rawTitle = proposal.metadata?.title?.trim();
-    const title = rawTitle && rawTitle.length > 0 ? rawTitle : FALLBACK_TITLE;
+    const title =
+      titlePrefix +
+      (rawTitle && rawTitle.length > 0 ? rawTitle : FALLBACK_TITLE);
 
     return {
       title,

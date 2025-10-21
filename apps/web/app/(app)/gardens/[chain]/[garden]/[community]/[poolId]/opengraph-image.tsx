@@ -36,7 +36,7 @@ export const getDescriptionText = (
       return "A Gardens pool for collective decision-making and funding.";
   }
 };
-export const FALLBACK_TITLE = "Gardens pool";
+export const FALLBACK_TITLE = "Pool";
 
 // Image generation
 type ImageParams = {
