@@ -161,7 +161,7 @@ deploy-opsep:
 	--verify \
 	-vv
 
-upgrade-opsep: 
+upgrade-opsep:
 	-forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
 	--rpc-url $(RPC_URL_OP_TESTNET) \
 	--sig "run(string)" 'opsepolia' \
@@ -172,7 +172,63 @@ upgrade-opsep:
 	--broadcast \
 	--via-ir \
 	--verify \
-	-vvv 
+	-vvv
+
+upgrade-diamond-opsep: verify-storage
+	-forge script script/UpgradeCVDiamond.s.sol:UpgradeCVDiamond \
+	--rpc-url $(RPC_URL_OP_TESTNET) \
+	--sig "run(string)" 'opsepolia' \
+	--account pkGarden \
+	--etherscan-api-key $(OPTIMISM_API_KEY) \
+	--chain-id 11155420 \
+	--ffi \
+	--broadcast \
+	--via-ir \
+	--verify \
+	-vvv
+
+upgrade-community-diamond-opsep: verify-storage
+	-forge script script/UpgradeRegistryCommunityDiamond.s.sol:UpgradeRegistryCommunityDiamond \
+	--rpc-url $(RPC_URL_OP_TESTNET) \
+	--sig "run(string)" 'opsepolia' \
+	--account pkGarden \
+	--etherscan-api-key $(OPTIMISM_API_KEY) \
+	--chain-id 11155420 \
+	--ffi \
+	--broadcast \
+	--via-ir \
+	--verify \
+	-vvv
+
+verify-diamond-blockscout-opsep:
+	-forge script script/UpgradeCVDiamond.s.sol:UpgradeCVDiamond \
+	--rpc-url $(RPC_URL_OP_TESTNET) \
+	--sig "run(string)" 'opsepolia' \
+	--account pkGarden \
+	--verifier blockscout \
+	--verifier-url https://optimism.blockscout.com/api/ \
+	--chain-id 11155420 \
+	--ffi \
+	--verify \
+	--via-ir \
+	--slow
+
+verify-community-diamond-blockscout-opsep:
+	-forge script script/UpgradeRegistryCommunityDiamond.s.sol:UpgradeRegistryCommunityDiamond \
+	--rpc-url $(RPC_URL_OP_TESTNET) \
+	--sig "run(string)" 'opsepolia' \
+	--account pkGarden \
+	--verifier blockscout \
+	--verifier-url https://optimism.blockscout.com/api/ \
+	--chain-id 11155420 \
+	--ffi \
+	--verify \
+	--via-ir \
+	--slow
+
+upgrade-and-verify-diamond-opsep: upgrade-diamond-opsep verify-diamond-blockscout-opsep
+
+upgrade-and-verify-community-diamond-opsep: upgrade-community-diamond-opsep verify-community-diamond-blockscout-opsep
 
 verify-blockscout-opsep: 
 	-forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \

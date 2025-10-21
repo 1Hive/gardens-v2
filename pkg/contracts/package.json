@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "make deploy",
     "fork": "make fork",
-    "build": "forge build --sizes",
+    "build": "forge build",
+    "postbuild": "node scripts/aggregate-diamond-abi.js",
     "build:ir": "forge build --sizes --via-ir",
     "lint": "forge fmt",
     "test": "forge test -vvv",
