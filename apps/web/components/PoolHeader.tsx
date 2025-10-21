@@ -259,7 +259,7 @@ export default function PoolHeader({
     },
     {
       label: "Min conviction",
-      value: `${roundToSignificant(minimumConviction, 2)} %`,
+      value: `${roundToSignificant(minimumConviction, 2, { showPrecisionMissIndicator: false })} %`,
       info: "% of Pool's voting weight needed to pass the smallest funding proposal possible. Higher funding requests demand greater conviction to pass.",
     },
     {
