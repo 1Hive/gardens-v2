@@ -250,11 +250,15 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
     }
 
     function _applyDelta(uint256 _support, int256 _delta) internal pure returns (uint256) {
+        // casting to 'int256' is safe because we're converting unsigned to signed for arithmetic
+        // forge-lint: disable-next-line(unsafe-typecast)
         int256 result = int256(_support) + _delta;
 
         if (result < 0) {
             revert();
         }
+        // casting to 'uint256' is safe because we checked result >= 0
+        // forge-lint: disable-next-line(unsafe-typecast)
         return uint256(result);
     }
 

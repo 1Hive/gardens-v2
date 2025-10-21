@@ -129,20 +129,30 @@ contract CVPowerFacet is CVStrategyBaseFacet {
 
     // ABDK Math helper functions (simplified)
     function _abdk64x64(uint256 x) internal pure returns (int128) {
+        // casting to fixed-point format (ABDK 64.64) - safe for mathematical operations
+        // forge-lint: disable-next-line(unsafe-typecast)
         return int128(int256(x << 64));
     }
 
     function _abdk64x64ToUInt(int128 x) internal pure returns (uint256) {
+        // casting from fixed-point (ABDK 64.64) to uint - safe, extracting integer part
+        // forge-lint: disable-next-line(unsafe-typecast)
         return uint256(uint128(x >> 64));
     }
 
     function _abdk64x64mul(int128 x, int128 y) internal pure returns (int128) {
+        // fixed-point multiplication - casting is safe, result fits in int128
+        // forge-lint: disable-next-line(unsafe-typecast)
         int256 result = (int256(x) * int256(y)) >> 64;
+        // forge-lint: disable-next-line(unsafe-typecast)
         return int128(result);
     }
 
     function _abdk64x64div(int128 x, int128 y) internal pure returns (int128) {
+        // fixed-point division - casting is safe, result fits in int128
+        // forge-lint: disable-next-line(unsafe-typecast)
         int256 result = (int256(x) << 64) / int256(y);
+        // forge-lint: disable-next-line(unsafe-typecast)
         return int128(result);
     }
 

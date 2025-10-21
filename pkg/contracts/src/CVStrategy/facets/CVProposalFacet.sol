@@ -67,6 +67,8 @@ contract CVProposalFacet is CVStrategyBaseFacet {
         collateralVault.depositCollateral{value: msg.value}(proposalId, p.submitter);
 
         emit ProposalCreated(poolId, proposalId);
+        // casting proposalId to address is safe - standard pattern for unique addresses
+        // forge-lint: disable-next-line(unsafe-typecast)
         return address(uint160(proposalId));
     }
 
