@@ -1,14 +1,14 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Address } from "viem";
-import { useBalance, useAccount } from "wagmi";
+import { useBalance, useAccount, useChainId } from "wagmi";
 import {
   getAlloQuery,
   getPoolDataDocument,
   getPoolDataQuery,
 } from "#/subgraph/.graphclient";
-import { PoolMetrics, Proposals } from "@/components";
+import { InfoBox, PoolMetrics, Proposals } from "@/components";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import PoolHeader from "@/components/PoolHeader";
 import { QUERY_PARAMS } from "@/constants/query-params";
@@ -17,6 +17,7 @@ import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { usePoolToken } from "@/hooks/usePoolToken";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { useSuperfluidToken } from "@/hooks/useSuperfluidToken";
+import { chainConfigMap } from "@/configs/chains";
 import { PoolTypes } from "@/types";
 import { formatTokenAmount } from "@/utils/numbers";
 
@@ -29,7 +30,7 @@ export default function ClientPage({
 }) {
   const searchParams = useCollectQueryParams();
 
-  const { data, refetch, error } = useSubgraphQuery<getPoolDataQuery>({
+  const { data, refetch, error, fetching } = useSubgraphQuery<getPoolDataQuery>({
     query: getPoolDataDocument,
     variables: { poolId: poolId, garden: garden.toLowerCase() },
     changeScope: [
@@ -60,6 +61,15 @@ export default function ClientPage({
   const poolTokenAddr = strategy?.token as Address;
   const proposalType = strategy?.config.proposalType;
 
+  const numericChainId = Number(chain);
+  const chainConfig =
+    chainConfigMap[chain] ??
+    (!Number.isNaN(numericChainId) ? chainConfigMap[numericChainId] : undefined);
+  const expectedChainId = chainConfig?.id ?? (!Number.isNaN(numericChainId) ? numericChainId : undefined);
+  const expectedChainName =
+    chainConfig?.name ??
+    (expectedChainId != null ? `chain ${expectedChainId}` : "the selected network");
+
   useEffect(() => {
     if (error) {
       console.error("Error while fetching community data: ", error);
@@ -81,6 +91,7 @@ export default function ClientPage({
     : null);
 
   const { address } = useAccount();
+  const connectedChainId = useChainId();
   const { data: superTokenInfo } = useBalance({
     address: address as Address,
     token: effectiveSuperToken as Address,
@@ -143,15 +154,60 @@ export default function ClientPage({
   const minThGtTotalEffPoints =
     +minThresholdPoints > +totalPointsActivatedInPool;
 
-  if (!strategy || (!poolToken && PoolTypes[proposalType] === "funding")) {
+  const poolType = proposalType != null ? PoolTypes[proposalType] : undefined;
+  const needsFundingToken = poolType === "funding";
+  const [hasWaitedForPoolToken, setHasWaitedForPoolToken] = useState(false);
+
+  useEffect(() => {
+    if (needsFundingToken && strategy && !poolToken && !error) {
+      const timer = window.setTimeout(() => {
+        setHasWaitedForPoolToken(true);
+      }, 1500);
+      return () => {
+        clearTimeout(timer);
+      };
+    }
+
+    setHasWaitedForPoolToken(false);
+    return undefined;
+  }, [needsFundingToken, strategy, poolToken, error]);
+
+  const stillLoading =
+    fetching ||
+    (!data && !error) ||
+    (needsFundingToken && !poolToken && !error && !hasWaitedForPoolToken);
+
+  if ((!strategy || (needsFundingToken && !poolToken)) && stillLoading) {
     console.debug("Loading pool data, waiting for", {
       strategy,
       poolTokenIfFundingPool: poolToken,
-      isFundingPool: PoolTypes[proposalType] === "funding",
+      isFundingPool: poolType === "funding",
     });
     return (
       <div className="mt-96 col-span-12">
         <LoadingSpinner />
+      </div>
+    );
+  }
+
+  const isWrongNetwork =
+    connectedChainId != null &&
+    expectedChainId != null &&
+    connectedChainId !== expectedChainId;
+
+  if (!strategy || (poolType === "funding" && !poolToken)) {
+    const title = isWrongNetwork ? "Switch network to continue" : "Pool unavailable";
+    const description = isWrongNetwork ?
+      `Connect your wallet to ${expectedChainName} to view this pool.` :
+      error ?
+        "We hit an unexpected error while loading this pool. Please try again or report the issue if it persists." :
+        "We couldn't find a pool that matches this URL. It may have been removed or you might be on the wrong network.";
+
+    return (
+      <div className="col-span-12 mt-48 flex justify-center">
+        <InfoBox infoBoxType={isWrongNetwork ? "warning" : "error"} title={title}>
+          {description}
+        </InfoBox>
       </div>
     );
   }
