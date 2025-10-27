@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import ClientPage from "./ClientPage";
+import ClientPage from "./client-page";
 
 const TITLE = "Gardens - Create a proposal";
 const DESCRIPTION =

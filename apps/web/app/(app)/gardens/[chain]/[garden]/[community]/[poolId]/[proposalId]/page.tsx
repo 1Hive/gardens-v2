@@ -3,7 +3,7 @@ import {
   getProposalTitleDocument,
   type getProposalTitleQuery,
 } from "#/subgraph/.graphclient";
-import ClientPage, { type ProposalPageParams } from "./ClientPage";
+import ClientPage, { type ProposalPageParams } from "./client-page";
 import { getConfigByChain } from "@/configs/chains";
 import { queryByChain } from "@/providers/urql";
 import { ProposalStatus } from "@/types";

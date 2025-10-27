@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import ClientPage from "./ClientPage";
+import ClientPage from "./client-page";
 
 const TITLE = "Gardens";
 const DESCRIPTION = "Create, govern, and fund communities together.";

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getPoolTitleDocument } from "#/subgraph/.graphclient";
-import ClientPage from "./ClientPage";
+import ClientPage from "./client-page";
 import { FALLBACK_TITLE, getDescriptionText } from "./opengraph-image";
 import { chainConfigMap } from "@/configs/chains";
 import { queryByChain } from "@/providers/urql";

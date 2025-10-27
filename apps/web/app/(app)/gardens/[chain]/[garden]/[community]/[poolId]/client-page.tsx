@@ -11,13 +11,13 @@ import {
 import { InfoBox, PoolMetrics, Proposals } from "@/components";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import PoolHeader from "@/components/PoolHeader";
+import { chainConfigMap } from "@/configs/chains";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { usePoolToken } from "@/hooks/usePoolToken";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { useSuperfluidToken } from "@/hooks/useSuperfluidToken";
-import { chainConfigMap } from "@/configs/chains";
 import { PoolTypes } from "@/types";
 import { formatTokenAmount } from "@/utils/numbers";
 
@@ -30,33 +30,35 @@ export default function ClientPage({
 }) {
   const searchParams = useCollectQueryParams();
 
-  const { data, refetch, error, fetching } = useSubgraphQuery<getPoolDataQuery>({
-    query: getPoolDataDocument,
-    variables: { poolId: poolId, garden: garden.toLowerCase() },
-    changeScope: [
-      {
-        topic: "pool",
-        id: poolId,
-      },
-      {
-        topic: "proposal",
-        containerId: poolId,
-        type: "update",
-      },
-      {
-        topic: "member",
-        function: "activatePoints",
-        type: "update",
-        containerId: poolId,
-      },
-      {
-        topic: "member",
-        function: "deactivatePoints",
-        type: "update",
-        containerId: poolId,
-      },
-    ],
-  });
+  const { data, refetch, error, fetching } = useSubgraphQuery<getPoolDataQuery>(
+    {
+      query: getPoolDataDocument,
+      variables: { poolId: poolId, garden: garden.toLowerCase() },
+      changeScope: [
+        {
+          topic: "pool",
+          id: poolId,
+        },
+        {
+          topic: "proposal",
+          containerId: poolId,
+          type: "update",
+        },
+        {
+          topic: "member",
+          function: "activatePoints",
+          type: "update",
+          containerId: poolId,
+        },
+        {
+          topic: "member",
+          function: "deactivatePoints",
+          type: "update",
+          containerId: poolId,
+        },
+      ],
+    },
+  );
   const strategy = data?.cvstrategies?.[0];
   const poolTokenAddr = strategy?.token as Address;
   const proposalType = strategy?.config.proposalType;
@@ -64,11 +66,17 @@ export default function ClientPage({
   const numericChainId = Number(chain);
   const chainConfig =
     chainConfigMap[chain] ??
-    (!Number.isNaN(numericChainId) ? chainConfigMap[numericChainId] : undefined);
-  const expectedChainId = chainConfig?.id ?? (!Number.isNaN(numericChainId) ? numericChainId : undefined);
+    (!Number.isNaN(numericChainId) ?
+      chainConfigMap[numericChainId]
+    : undefined);
+  const expectedChainId =
+    chainConfig?.id ??
+    (!Number.isNaN(numericChainId) ? numericChainId : undefined);
   const expectedChainName =
     chainConfig?.name ??
-    (expectedChainId != null ? `chain ${expectedChainId}` : "the selected network");
+    (expectedChainId != null ?
+      `chain ${expectedChainId}`
+    : "the selected network");
 
   useEffect(() => {
     if (error) {
@@ -196,16 +204,21 @@ export default function ClientPage({
     connectedChainId !== expectedChainId;
 
   if (!strategy || (poolType === "funding" && !poolToken)) {
-    const title = isWrongNetwork ? "Switch network to continue" : "Pool unavailable";
-    const description = isWrongNetwork ?
-      `Connect your wallet to ${expectedChainName} to view this pool.` :
-      error ?
-        "We hit an unexpected error while loading this pool. Please try again or report the issue if it persists." :
-        "We couldn't find a pool that matches this URL. It may have been removed or you might be on the wrong network.";
+    const title =
+      isWrongNetwork ? "Switch network to continue" : "Pool unavailable";
+    const description =
+      isWrongNetwork ?
+        `Connect your wallet to ${expectedChainName} to view this pool.`
+      : error ?
+        "We hit an unexpected error while loading this pool. Please try again or report the issue if it persists."
+      : "We couldn't find a pool that matches this URL. It may have been removed or you might be on the wrong network.";
 
     return (
       <div className="col-span-12 mt-48 flex justify-center">
-        <InfoBox infoBoxType={isWrongNetwork ? "warning" : "error"} title={title}>
+        <InfoBox
+          infoBoxType={isWrongNetwork ? "warning" : "error"}
+          title={title}
+        >
           {description}
         </InfoBox>
       </div>

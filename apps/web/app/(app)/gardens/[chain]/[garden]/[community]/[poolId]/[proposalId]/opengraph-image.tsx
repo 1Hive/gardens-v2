@@ -4,7 +4,7 @@ import {
   getProposalTitleDocument,
   type getProposalTitleQuery,
 } from "#/subgraph/.graphclient";
-import type { ProposalPageParams } from "./ClientPage";
+import type { ProposalPageParams } from "./client-page";
 import {
   ACTIVE_PROPOSAL_DESCRIPTION,
   ENDED_PROPOSAL_DESCRIPTION,

@@ -28,7 +28,7 @@ export default function ClientPage({
   const alloAddr = result?.allos[0]?.id as Address;
   const communityName = result?.registryCommunity?.communityName as string;
 
-  if (!token || !result) {
+  if (!token || result == null) {
     return (
       <div className="my-40 col-span-12">
         <LoadingSpinner />
