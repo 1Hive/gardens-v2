@@ -1,219 +1,121 @@
-"use client";
-
-import { useEffect } from "react";
-import { Address } from "viem";
-import { useBalance, useAccount } from "wagmi";
-import {
-  getAlloQuery,
-  getPoolDataDocument,
-  getPoolDataQuery,
-} from "#/subgraph/.graphclient";
-import { PoolMetrics, Proposals } from "@/components";
-import { LoadingSpinner } from "@/components/LoadingSpinner";
-import PoolHeader from "@/components/PoolHeader";
-import { QUERY_PARAMS } from "@/constants/query-params";
-import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
-import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
-import { usePoolToken } from "@/hooks/usePoolToken";
-import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
-import { useSuperfluidToken } from "@/hooks/useSuperfluidToken";
+import type { Metadata } from "next";
+import { getPoolTitleDocument } from "#/subgraph/.graphclient";
+import ClientPage from "./client-page";
+import { FALLBACK_TITLE, getDescriptionText } from "./opengraph-image";
+import { chainConfigMap } from "@/configs/chains";
+import { queryByChain } from "@/providers/urql";
 import { PoolTypes } from "@/types";
-import { formatTokenAmount } from "@/utils/numbers";
 
-export const dynamic = "force-dynamic";
+type PageParams = {
+  params: {
+    chain: string;
+    garden: string;
+    community: string;
+    poolId: string;
+  };
+};
 
-export type AlloQuery = getAlloQuery["allos"][number];
+function buildOgImagePath(params: PageParams["params"]) {
+  return `/gardens/${params.chain}/${params.garden}/${params.community}/${params.poolId}/opengraph-image-12jbcu`;
+}
 
-export default function Page({
-  params: { chain, poolId, garden },
-}: {
-  params: { chain: string; poolId: number; garden: string };
-}) {
-  const searchParams = useCollectQueryParams();
+const titlePrefix = "Gardens - ";
 
-  const { data, refetch, error } = useSubgraphQuery<getPoolDataQuery>({
-    query: getPoolDataDocument,
-    variables: { poolId: poolId, garden: garden.toLowerCase() },
-    changeScope: [
-      {
-        topic: "pool",
-        id: poolId,
-      },
-      {
-        topic: "proposal",
-        containerId: poolId,
-        type: "update",
-      },
-      {
-        topic: "member",
-        function: "activatePoints",
-        type: "update",
-        containerId: poolId,
-      },
-      {
-        topic: "member",
-        function: "deactivatePoints",
-        type: "update",
-        containerId: poolId,
-      },
-    ],
-  });
-  const strategy = data?.cvstrategies?.[0];
-  const poolTokenAddr = strategy?.token as Address;
-  const proposalType = strategy?.config.proposalType;
+export async function generateMetadata({
+  params,
+}: PageParams): Promise<Metadata> {
+  const chainId = Number(params.chain);
+  const chainConfig = chainConfigMap[params.chain] ?? chainConfigMap[chainId];
+  const poolId = params.poolId?.toString();
+  let description = getDescriptionText(undefined);
+  const fallbackMetadata: Metadata = {
+    title: titlePrefix + FALLBACK_TITLE,
+    description,
+    openGraph: {
+      title: titlePrefix + FALLBACK_TITLE,
+      description,
+      images: [{ url: buildOgImagePath(params) }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: titlePrefix + FALLBACK_TITLE,
+      description,
+      images: [buildOgImagePath(params)],
+    },
+  };
 
-  useEffect(() => {
-    if (error) {
-      console.error("Error while fetching community data: ", error);
-    }
-  }, [error]);
-
-  const {
-    superToken: superTokenCandidate,
-    setSuperToken: setSuperTokenCandidate,
-  } = useSuperfluidToken({
-    token: strategy?.token,
-    enabled: !strategy?.config.superfluidToken,
-  });
-
-  const effectiveSuperToken =
-    strategy?.config.superfluidToken ??
-    (superTokenCandidate && superTokenCandidate.sameAsUnderlying ?
-      superTokenCandidate.id
-    : null);
-
-  const { address } = useAccount();
-  const { data: superTokenInfo } = useBalance({
-    address: address as Address,
-    token: effectiveSuperToken as Address,
-    watch: true,
-    enabled: !!effectiveSuperToken && !!address,
-  });
-
-  const { metadata: ipfsResult } = useMetadataIpfsFetch({
-    hash: strategy?.metadata,
-  });
-
-  useEffect(() => {
-    const newProposalId = searchParams[QUERY_PARAMS.poolPage.newProposal];
-    if (!strategy) {
-      return;
-    }
-    const fetchedProposals = strategy?.proposals.map((p) =>
-      p.proposalNumber.toString(),
-    );
-    if (newProposalId && !fetchedProposals.includes(newProposalId)) {
-      console.debug("Pool: New proposal not yet fetched, refetching...", {
-        newProposalId,
-        fetchedProposals,
-      });
-      refetch();
-    }
-  }, [searchParams, strategy?.proposals]);
-
-  const maxAmount = strategy?.config?.maxAmount ?? 0;
-
-  const poolToken = usePoolToken({
-    poolAddress: strategy?.id,
-    poolTokenAddr: poolTokenAddr,
-    enabled:
-      !!strategy &&
-      PoolTypes[strategy.config.proposalType] !== "signaling" &&
-      !!poolTokenAddr,
-    watch: true,
-  });
-
-  const totalPointsActivatedInPool =
-    poolToken ?
-      formatTokenAmount(
-        strategy?.totalEffectiveActivePoints,
-        +poolToken.decimals,
-      )
-    : 0;
-
-  const minThresholdPoints =
-    poolToken ?
-      formatTokenAmount(
-        strategy?.config.minThresholdPoints,
-        +poolToken.decimals,
-      )
-    : "0";
-
-  const minThGtTotalEffPoints =
-    +minThresholdPoints > +totalPointsActivatedInPool;
-
-  if (!strategy || (!poolToken && PoolTypes[proposalType] === "funding")) {
-    console.debug("Loading pool data, waiting for", {
-      strategy,
-      poolTokenIfFundingPool: poolToken,
-      isFundingPool: PoolTypes[proposalType] === "funding",
+  if (chainConfig == null) {
+    console.error("Unsupported chainId for pool metadata generation.", {
+      chainId: params.chain,
     });
-    return (
-      <div className="mt-96 col-span-12">
-        <LoadingSpinner />
-      </div>
-    );
+    return fallbackMetadata;
   }
 
-  const communityAddress = strategy.registryCommunity.id as Address;
-  const alloInfo = data.allos[0];
+  if (!poolId) {
+    console.error("Missing poolId for pool metadata generation.", {
+      poolId: params.poolId,
+    });
+    return fallbackMetadata;
+  }
 
-  const isEnabled = data.cvstrategies?.[0]?.isEnabled as boolean;
+  try {
+    const poolResult = await queryByChain(
+      chainConfig,
+      getPoolTitleDocument,
+      { poolId },
+      undefined,
+      true,
+    );
 
+    if (poolResult.error) {
+      console.error("Error fetching pool metadata.", {
+        chainId: params.chain,
+        poolId,
+        error: poolResult.error,
+      });
+      return fallbackMetadata;
+    }
+
+    const pool = poolResult?.data?.cvstrategies?.[0];
+    const poolTitle = titlePrefix + pool?.metadata?.title?.trim();
+    if (!poolTitle) {
+      return fallbackMetadata;
+    }
+
+    const poolType = PoolTypes[pool?.config?.proposalType as number];
+    const actualDescription = getDescriptionText(poolType);
+    return {
+      title: poolTitle,
+      description: actualDescription,
+      openGraph: {
+        title: poolTitle,
+        description: actualDescription,
+        images: [{ url: buildOgImagePath(params) }],
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: poolTitle,
+        description: actualDescription,
+        images: [buildOgImagePath(params)],
+      },
+    };
+  } catch (error) {
+    console.error("Failed to generate pool metadata.", {
+      chainId: params.chain,
+      poolId,
+      error,
+    });
+    return fallbackMetadata;
+  }
+}
+
+export default function Page(props: PageParams) {
   return (
-    <>
-      <PoolHeader
-        poolToken={poolToken}
-        strategy={strategy}
-        arbitrableConfig={data.arbitrableConfigs[0]}
-        poolId={poolId}
-        ipfsResult={ipfsResult}
-        isEnabled={isEnabled}
-        maxAmount={maxAmount}
-        superTokenCandidate={superTokenCandidate}
-        superToken={
-          superTokenInfo && {
-            ...superTokenInfo,
-            sameAsUnderlying: superTokenCandidate?.sameAsUnderlying,
-            address: effectiveSuperToken as Address,
-          }
-        }
-        setSuperTokenCandidate={setSuperTokenCandidate}
-        minThGtTotalEffPoints={minThGtTotalEffPoints}
-      />
-
-      {isEnabled && (
-        <>
-          {poolToken && PoolTypes[proposalType] !== "signaling" && (
-            <PoolMetrics
-              communityAddress={communityAddress}
-              strategy={strategy}
-              poolId={poolId}
-              poolToken={poolToken}
-              chainId={Number(chain)}
-              superToken={
-                superTokenInfo && {
-                  ...superTokenInfo,
-                  sameAsUnderlying: superTokenCandidate?.sameAsUnderlying,
-                  address: effectiveSuperToken as Address,
-                }
-              }
-            />
-          )}
-        </>
-      )}
-
-      {isEnabled && (
-        <Proposals
-          poolToken={poolToken}
-          strategy={{ ...strategy, title: ipfsResult?.title }}
-          alloInfo={alloInfo}
-          communityAddress={communityAddress}
-          createProposalUrl={`/gardens/${chain}/${garden}/${communityAddress}/${poolId}/create-proposal`}
-          proposalType={proposalType}
-          minThGtTotalEffPoints={minThGtTotalEffPoints}
-        />
-      )}
-    </>
+    <ClientPage
+      params={{
+        ...props.params,
+        poolId: Number(props.params.poolId),
+      }}
+    />
   );
 }

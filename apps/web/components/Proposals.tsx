@@ -104,7 +104,7 @@ interface ProposalsProps {
         ProposalCardProps["proposalData"]
     >;
     config: ProposalCardProps["strategyConfig"];
-    title: string | undefined;
+    title: string | undefined | null;
   } & PoolGovernanceProps["strategy"];
   alloInfo: Allo;
   poolToken?: {
@@ -545,21 +545,21 @@ export function Proposals({
   const stats: Stats[] = [
     {
       id: 1,
-      name: "Your voting weight",
+      name: "Your voting power",
       stat: memberPoolWeight,
       className: poolWeightClassName,
-      info: "Represents your voting power within the pool",
+      info: "Indicates the amount of voting power you hold within this pool.",
     },
     {
       id: 2,
-      name: "Voting weight used",
+      name: "Voting power used",
       stat: memberSupportedProposalsPct,
       className: `${
         memberSupportedProposalsPct >= 100 ?
           "bg-secondary-content text-secondary-soft border-secondary-content"
         : "bg-primary-content text-primary-soft border-primary-content"
       }`,
-      info: "Reflects the percentage of your pool weight supporting proposals.",
+      info: "Shows the percentage of your voting power currently allocated to support proposals.",
     },
   ];
 
@@ -607,7 +607,7 @@ export function Proposals({
 
     let rows = activeOrDisputedProposals.map((proposal) => {
       const proposalNumber = proposal.proposalNumber;
-      const proposalTitle = `"${proposal.metadata?.title.replace(/"/g, '""')}"`; // Escape quotes in title
+      const proposalTitle = `"${proposal.metadata?.title?.replace(/"/g, '""') ?? "Untitled"}"`; // Escape quotes in title
       const beneficiary = proposal.beneficiary;
       const support = formatUnits(proposal.stakedAmount, tokenDecimals);
       const supportPercent =

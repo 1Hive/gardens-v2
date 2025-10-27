@@ -357,7 +357,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
                                   </span>
                                   /{memberPoolWeight}%{" "}
                                   <span className="text-neutral-soft-content text-sm">
-                                    ({inputValue}% of your voting weight)
+                                    ({inputValue}% of your voting power)
                                   </span>
                                 </p>
                                 {/* <p className="text-primary-content">Support</p> */}
