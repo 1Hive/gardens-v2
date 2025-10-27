@@ -44,6 +44,7 @@ type LoadedProposal = {
 };
 
 const STATUS_STYLES: Record<string, { text: string; background: string }> = {
+  active: { text: "#065F46", background: "#D1FAE5" },
   inactive: { text: "#1F2937", background: "#E5E7EB" },
   paused: { text: "#92400E", background: "#FEF3C7" },
   cancelled: { text: "#7F1D1D", background: "#FEE2E2" },
@@ -208,8 +209,7 @@ async function renderImage({
     communityName && poolTitle ?
       `${communityName} - ${poolTitle}`
     : communityName ?? poolTitle ?? null;
-  const showStatusBadge =
-    normalizedStatus != null && normalizedStatus !== "active";
+  const showStatusBadge = normalizedStatus != null;
   const statusStyle =
     showStatusBadge ?
       STATUS_STYLES[normalizedStatus ?? ""] ?? DEFAULT_STATUS_STYLE
