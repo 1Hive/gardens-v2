@@ -189,9 +189,16 @@ export default function PoolHeader({
     blockTime,
   );
 
+  //problem here, we are passing decimals from pool token decimals but it it decimals from the GOV token
+  const communityGovTokenDecimals =
+    strategy?.registryCommunity?.garden?.decimals;
+
   const minThresholdPoints =
     poolToken ?
-      formatTokenAmount(strategy.config.minThresholdPoints, +poolToken.decimals)
+      formatTokenAmount(
+        strategy.config.minThresholdPoints,
+        +communityGovTokenDecimals,
+      )
     : "0";
 
   const maxVotingWeight =
