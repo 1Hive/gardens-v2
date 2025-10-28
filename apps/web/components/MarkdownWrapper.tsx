@@ -1,5 +1,4 @@
 "use client";
-import "@uiw/react-markdown-editor/markdown-editor.css";
 import MarkdownEditor from "@uiw/react-markdown-editor";
 import remarkGfm from "remark-gfm";
 import { useTheme } from "@/providers/ThemeProvider";

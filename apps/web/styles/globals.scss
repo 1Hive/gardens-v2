@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+@import "@mdxeditor/editor/style.css";
+@import "@uiw/react-markdown-editor/markdown-editor.css";
+
 :root {
   --color-primary: #82c837;
   --color-secondary: #4dafd6;
@@ -536,6 +539,6 @@ dialog * {
 
 .mdxeditor-theme {
   ._placeholder_1e2ox_1106 {
-    margin-top: 0;
+    padding-top: var(--spacing-1_5, 0.375rem);
   }
 }

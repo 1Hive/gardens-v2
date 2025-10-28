@@ -2,7 +2,6 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 /* eslint-disable no-unused-expressions */
 "use client";
-import "@mdxeditor/editor/style.css";
 import { useEffect, useRef, useState } from "react";
 import {
   ArrowsPointingInIcon,
