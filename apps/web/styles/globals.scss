@@ -369,29 +369,103 @@ dialog * {
 
 .mdxeditor-root-contenteditable,
 .wmde-markdown {
+  @apply leading-7 text-base;
+
+  > * {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+
+  > * + * {
+    margin-top: 1rem;
+  }
+
+  p {
+    @apply leading-7;
+  }
+
   ul {
-    @apply list-disc ml-2;
+    @apply list-disc ml-5;
   }
+
   ol {
-    @apply list-decimal ml-2;
+    @apply list-decimal ml-5;
   }
+
+  li > ul,
+  li > ol {
+    margin-top: 0.5rem;
+  }
+
+  h1,
   h1 span {
     @apply text-3xl font-bold;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
   }
+
+  h2,
   h2 span {
     @apply text-2xl font-bold;
+    margin-top: 1.75rem;
+    margin-bottom: 0.75rem;
   }
+
+  h3,
   h3 span {
-    @apply text-xl font-bold;
+    @apply text-xl font-semibold;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
   }
+
+  h4,
   h4 span {
-    @apply text-lg font-bold;
+    @apply text-lg font-semibold;
+    margin-top: 1.25rem;
+    margin-bottom: 0.5rem;
   }
+
+  h5,
   h5 span {
-    @apply text-base font-bold;
+    @apply text-base font-semibold;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
   }
+
+  blockquote {
+    @apply border-l-4 pl-4 italic;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  pre {
+    @apply rounded-lg bg-base-200 p-4 text-sm overflow-x-auto;
+    line-height: 1.6;
+  }
+
+  code {
+    @apply rounded bg-base-200 px-1.5 py-0.5 text-sm;
+  }
+
+  pre code {
+    @apply bg-transparent p-0;
+  }
+
+  table {
+    @apply w-full border-collapse text-left;
+  }
+
+  th,
+  td {
+    @apply border border-base-200 px-3 py-2;
+  }
+
   a {
     @apply text-accent underline;
+  }
+
+  img {
+    @apply max-w-full rounded-lg;
   }
 }
 
@@ -457,5 +531,11 @@ dialog * {
         }
       }
     }
+  }
+}
+
+.mdxeditor-theme {
+  ._placeholder_1e2ox_1106 {
+    margin-top: 0;
   }
 }

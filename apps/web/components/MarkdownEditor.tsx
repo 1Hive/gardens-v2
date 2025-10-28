@@ -2,7 +2,8 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 /* eslint-disable no-unused-expressions */
 "use client";
-import { useRef, useState, useEffect } from "react";
+import "@mdxeditor/editor/style.css";
+import { useEffect, useRef, useState } from "react";
 import {
   ArrowsPointingInIcon,
   ArrowsPointingOutIcon,
@@ -39,7 +40,6 @@ import {
   CreateLink,
   DiffSourceToggleWrapper,
 } from "@mdxeditor/editor";
-import "@mdxeditor/editor/style.css";
 
 import { useTheme } from "@/providers/ThemeProvider";
 import { ipfsFileUpload } from "@/utils/ipfsUtils";
@@ -170,7 +170,7 @@ export default function MarkdownEditor({
       >
         <MDXEditor
           markdown={value ?? ""}
-          className={`rounded-2xl !h-full ${resolvedTheme === "darkTheme" ? "dark-theme dark-editor" : ""}`}
+          className={`rounded-2xl !h-full mdxeditor-theme ${resolvedTheme === "darkTheme" ? "dark-theme dark-editor" : ""}`}
           plugins={[
             headingsPlugin({
               allowedHeadingLevels: [1, 2, 3, 4, 5, 6],
