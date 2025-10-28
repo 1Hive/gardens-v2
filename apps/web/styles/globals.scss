@@ -2,8 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
-@import "@mdxeditor/editor/style.css";
-@import "@uiw/react-markdown-editor/markdown-editor.css";
+@import "../node_modules/@mdxeditor/editor/dist/style.css";
+@import "../node_modules/@uiw/react-markdown-editor/markdown-editor.css";
 
 :root {
   --color-primary: #82c837;
