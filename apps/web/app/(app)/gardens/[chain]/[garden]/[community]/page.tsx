@@ -52,8 +52,6 @@ export async function generateMetadata({
       chainConfig,
       getCommunityNameDocument,
       { communityAddr: params.community },
-      undefined,
-      true,
     );
 
     if (communityResult.error) {

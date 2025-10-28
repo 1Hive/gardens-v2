@@ -88,8 +88,6 @@ export async function generateMetadata({
       chainConfig,
       getProposalTitleDocument,
       { proposalId },
-      undefined,
-      true,
     );
 
     if (proposalResult.error) {

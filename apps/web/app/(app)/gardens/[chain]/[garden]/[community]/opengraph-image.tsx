@@ -273,8 +273,6 @@ export async function generateMetadata({
       {
         communityAddr: params.community,
       },
-      undefined,
-      true,
     );
 
     if (communityResult.error) {
@@ -326,8 +324,6 @@ export default async function Image({ params }: { params: ImageParams }) {
       {
         communityAddr: params.community,
       },
-      undefined,
-      true, // TODO: Use published when subgraph with metadata has been published (0.2.1)
     );
 
     if (communityResult.error) {

@@ -59,13 +59,9 @@ export async function generateMetadata({
   }
 
   try {
-    const poolResult = await queryByChain(
-      chainConfig,
-      getPoolTitleDocument,
-      { poolId },
-      undefined,
-      true,
-    );
+    const poolResult = await queryByChain(chainConfig, getPoolTitleDocument, {
+      poolId,
+    });
 
     if (poolResult.error) {
       console.error("Error fetching pool metadata.", {
