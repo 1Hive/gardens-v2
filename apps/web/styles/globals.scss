@@ -375,9 +375,11 @@ dialog * {
   }
   ul,
   ol {
-    @apply list-disc ml-2;
     margin-top: 0;
     margin-bottom: 16px;
+  }
+  ul {
+    @apply list-disc ml-2;
   }
   ol {
     @apply list-decimal ml-2;
