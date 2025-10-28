@@ -369,11 +369,30 @@ dialog * {
 
 .mdxeditor-root-contenteditable,
 .wmde-markdown {
-  ul {
+  p {
+    margin-top: 0;
+    margin-bottom: 16px;
+  }
+  ul,
+  ol {
     @apply list-disc ml-2;
+    margin-top: 0;
+    margin-bottom: 16px;
   }
   ol {
     @apply list-decimal ml-2;
+  }
+  li {
+    margin-top: 0.25em;
+  }
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    margin-top: 24px;
+    margin-bottom: 16px;
   }
   h1 span {
     @apply text-3xl font-bold;
