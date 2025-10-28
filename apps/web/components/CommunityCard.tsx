@@ -114,7 +114,7 @@ export function CommunityCard({
           icon={<CircleStackIcon />}
           count={poolsCount}
         />
-        <Statistic label="stake tokens" icon={<CurrencyDollarIcon />}>
+        <Statistic label="staked tokens" icon={<CurrencyDollarIcon />}>
           <DisplayNumber
             number={[BigInt(communityStakedTokens), decimals]}
             compact={true}
