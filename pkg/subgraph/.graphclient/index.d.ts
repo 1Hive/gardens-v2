@@ -3609,35 +3609,35 @@ export declare function getBuiltGraphSDK<TGlobalContext = any, TOperationContext
         [key: string]: never;
     }>, options?: TOperationContext): Promise<getTokenGardensQuery>;
     getMembersStrategy(variables: Exact<{
-        strategyId: string;
+        strategyId: Scalars["String"]["input"];
     }>, options?: TOperationContext): Promise<getMembersStrategyQuery>;
     getMemberStrategy(variables: Exact<{
-        member_strategy: string;
+        member_strategy: Scalars["ID"]["input"];
     }>, options?: TOperationContext): Promise<getMemberStrategyQuery>;
     isMember(variables: Exact<{
-        me: string;
-        comm: string;
+        me: Scalars["ID"]["input"];
+        comm: Scalars["String"]["input"];
     }>, options?: TOperationContext): Promise<isMemberQuery>;
     getMember(variables: Exact<{
-        me: string;
+        me: Scalars["ID"]["input"];
     }>, options?: TOperationContext): Promise<getMemberQuery>;
     getPoolCreationData(variables: Exact<{
-        communityAddr: string;
-        tokenAddr: string;
+        communityAddr: Scalars["ID"]["input"];
+        tokenAddr: Scalars["ID"]["input"];
     }>, options?: TOperationContext): Promise<getPoolCreationDataQuery>;
     getProposalSupporters(variables: Exact<{
-        proposalId: string;
+        proposalId: Scalars["String"]["input"];
     }>, options?: TOperationContext): Promise<getProposalSupportersQuery>;
     getGardenCommunities(variables: Exact<{
-        chainId: any;
-        tokenGarden: string;
+        chainId: Scalars["BigInt"]["input"];
+        tokenGarden: Scalars["ID"]["input"];
     }>, options?: TOperationContext): Promise<getGardenCommunitiesQuery>;
     getCommunities(variables?: Exact<{
         [key: string]: never;
     }>, options?: TOperationContext): Promise<getCommunitiesQuery>;
     getCommunity(variables: Exact<{
-        communityAddr: string;
-        tokenAddr: string;
+        communityAddr: Scalars["ID"]["input"];
+        tokenAddr: Scalars["ID"]["input"];
     }>, options?: TOperationContext): Promise<getCommunityQuery>;
     getCommunityCreationData(variables?: Exact<{
         [key: string]: never;
@@ -3646,61 +3646,61 @@ export declare function getBuiltGraphSDK<TGlobalContext = any, TOperationContext
         [key: string]: never;
     }>, options?: TOperationContext): Promise<getRegistryFactoryDataQuery>;
     getPoolData(variables: Exact<{
-        garden: string;
-        poolId: any;
+        garden: Scalars["ID"]["input"];
+        poolId: Scalars["BigInt"]["input"];
     }>, options?: TOperationContext): Promise<getPoolDataQuery>;
     getProposalData(variables: Exact<{
-        garden: string;
-        proposalId: string;
-        communityId: string;
+        garden: Scalars["ID"]["input"];
+        proposalId: Scalars["ID"]["input"];
+        communityId: Scalars["ID"]["input"];
     }>, options?: TOperationContext): Promise<getProposalDataQuery>;
     getAllo(variables?: Exact<{
         [key: string]: never;
     }>, options?: TOperationContext): Promise<getAlloQuery>;
     getStrategyByPool(variables: Exact<{
-        poolId: any;
+        poolId: Scalars["BigInt"]["input"];
     }>, options?: TOperationContext): Promise<getStrategyByPoolQuery>;
     getTokenTitle(variables: Exact<{
-        tokenAddr: string;
+        tokenAddr: Scalars["ID"]["input"];
     }>, options?: TOperationContext): Promise<getTokenTitleQuery>;
     getCommunityTitles(variables: Exact<{
-        communityAddr: string;
+        communityAddr: Scalars["ID"]["input"];
     }>, options?: TOperationContext): Promise<getCommunityTitlesQuery>;
     getPoolTitles(variables: Exact<{
-        poolId: any;
+        poolId: Scalars["BigInt"]["input"];
     }>, options?: TOperationContext): Promise<getPoolTitlesQuery>;
     getProposalTitles(variables: Exact<{
-        proposalId: string;
+        proposalId: Scalars["ID"]["input"];
     }>, options?: TOperationContext): Promise<getProposalTitlesQuery>;
     getPassportStrategy(variables: Exact<{
-        strategyId: string;
+        strategyId: Scalars["ID"]["input"];
     }>, options?: TOperationContext): Promise<getPassportStrategyQuery>;
     getPassportUser(variables: Exact<{
-        userId: string;
+        userId: Scalars["ID"]["input"];
     }>, options?: TOperationContext): Promise<getPassportUserQuery>;
     getGoodDollarStrategy(variables: Exact<{
-        strategyId: string;
+        strategyId: Scalars["ID"]["input"];
     }>, options?: TOperationContext): Promise<getGoodDollarStrategyQuery>;
     getGoodDollarUser(variables: Exact<{
-        userId: string;
+        userId: Scalars["ID"]["input"];
     }>, options?: TOperationContext): Promise<getGoodDollarUserQuery>;
     getProposalDisputes(variables: Exact<{
-        proposalId: string;
+        proposalId: Scalars["ID"]["input"];
     }>, options?: TOperationContext): Promise<getProposalDisputesQuery>;
     getArbitrableConfigs(variables: Exact<{
-        strategyId: string;
+        strategyId: Scalars["String"]["input"];
     }>, options?: TOperationContext): Promise<getArbitrableConfigsQuery>;
     getMemberPassportAndCommunities(variables: Exact<{
-        memberId: string;
+        memberId: Scalars["ID"]["input"];
     }>, options?: TOperationContext): Promise<getMemberPassportAndCommunitiesQuery>;
     getCommunityName(variables: Exact<{
-        communityAddr: string;
+        communityAddr: Scalars["ID"]["input"];
     }>, options?: TOperationContext): Promise<getCommunityNameQuery>;
     getPoolTitle(variables: Exact<{
-        poolId: any;
+        poolId: Scalars["BigInt"]["input"];
     }>, options?: TOperationContext): Promise<getPoolTitleQuery>;
     getProposalTitle(variables: Exact<{
-        proposalId: string;
+        proposalId: Scalars["ID"]["input"];
     }>, options?: TOperationContext): Promise<getProposalTitleQuery>;
 };
 export type getFactoriesQueryVariables = Exact<{
@@ -3817,9 +3817,11 @@ export type getCommunitiesQueryVariables = Exact<{
 }>;
 export type getCommunitiesQuery = {
     registryCommunities: Array<(Pick<RegistryCommunity, 'id' | 'councilSafe' | 'communityName' | 'archived'> & {
-        garden: Pick<TokenGarden, 'address' | 'chainId' | 'symbol' | 'name'>;
-        strategies?: Maybe<Array<Pick<CVStrategy, 'id' | 'totalEffectiveActivePoints' | 'poolId'>>>;
-        members?: Maybe<Array<Pick<MemberCommunity, 'id' | 'memberAddress'>>>;
+        garden: Pick<TokenGarden, 'address' | 'chainId' | 'symbol' | 'name' | 'decimals'>;
+        strategies?: Maybe<Array<(Pick<CVStrategy, 'id' | 'totalEffectiveActivePoints' | 'poolId'> & {
+            proposals: Array<Pick<CVProposal, 'id' | 'proposalStatus'>>;
+        })>>;
+        members?: Maybe<Array<Pick<MemberCommunity, 'id' | 'memberAddress' | 'stakedTokens'>>>;
     })>;
 };
 export type getCommunityQueryVariables = Exact<{
@@ -4030,106 +4032,37 @@ export type getProposalTitleQuery = {
         };
     })>;
 };
-export declare const getFactoriesDocument: DocumentNode<getFactoriesQuery, Exact<{
-    [key: string]: never;
-}>>;
-export declare const getTokenGardensDocument: DocumentNode<getTokenGardensQuery, Exact<{
-    [key: string]: never;
-}>>;
-export declare const getMembersStrategyDocument: DocumentNode<getMembersStrategyQuery, Exact<{
-    strategyId: Scalars['String']['input'];
-}>>;
-export declare const getMemberStrategyDocument: DocumentNode<getMemberStrategyQuery, Exact<{
-    member_strategy: Scalars['ID']['input'];
-}>>;
-export declare const isMemberDocument: DocumentNode<isMemberQuery, Exact<{
-    me: Scalars['ID']['input'];
-    comm: Scalars['String']['input'];
-}>>;
-export declare const getMemberDocument: DocumentNode<getMemberQuery, Exact<{
-    me: Scalars['ID']['input'];
-}>>;
-export declare const getPoolCreationDataDocument: DocumentNode<getPoolCreationDataQuery, Exact<{
-    communityAddr: Scalars['ID']['input'];
-    tokenAddr: Scalars['ID']['input'];
-}>>;
-export declare const getProposalSupportersDocument: DocumentNode<getProposalSupportersQuery, Exact<{
-    proposalId: Scalars['String']['input'];
-}>>;
-export declare const getGardenCommunitiesDocument: DocumentNode<getGardenCommunitiesQuery, Exact<{
-    chainId: Scalars['BigInt']['input'];
-    tokenGarden: Scalars['ID']['input'];
-}>>;
-export declare const getCommunitiesDocument: DocumentNode<getCommunitiesQuery, Exact<{
-    [key: string]: never;
-}>>;
-export declare const getCommunityDocument: DocumentNode<getCommunityQuery, Exact<{
-    communityAddr: Scalars['ID']['input'];
-    tokenAddr: Scalars['ID']['input'];
-}>>;
-export declare const getCommunityCreationDataDocument: DocumentNode<getCommunityCreationDataQuery, Exact<{
-    [key: string]: never;
-}>>;
-export declare const getRegistryFactoryDataDocument: DocumentNode<getRegistryFactoryDataQuery, Exact<{
-    [key: string]: never;
-}>>;
-export declare const getPoolDataDocument: DocumentNode<getPoolDataQuery, Exact<{
-    garden: Scalars['ID']['input'];
-    poolId: Scalars['BigInt']['input'];
-}>>;
-export declare const getProposalDataDocument: DocumentNode<getProposalDataQuery, Exact<{
-    garden: Scalars['ID']['input'];
-    proposalId: Scalars['ID']['input'];
-    communityId: Scalars['ID']['input'];
-}>>;
-export declare const getAlloDocument: DocumentNode<getAlloQuery, Exact<{
-    [key: string]: never;
-}>>;
-export declare const getStrategyByPoolDocument: DocumentNode<getStrategyByPoolQuery, Exact<{
-    poolId: Scalars['BigInt']['input'];
-}>>;
-export declare const getTokenTitleDocument: DocumentNode<getTokenTitleQuery, Exact<{
-    tokenAddr: Scalars['ID']['input'];
-}>>;
-export declare const getCommunityTitlesDocument: DocumentNode<getCommunityTitlesQuery, Exact<{
-    communityAddr: Scalars['ID']['input'];
-}>>;
-export declare const getPoolTitlesDocument: DocumentNode<getPoolTitlesQuery, Exact<{
-    poolId: Scalars['BigInt']['input'];
-}>>;
-export declare const getProposalTitlesDocument: DocumentNode<getProposalTitlesQuery, Exact<{
-    proposalId: Scalars['ID']['input'];
-}>>;
-export declare const getPassportStrategyDocument: DocumentNode<getPassportStrategyQuery, Exact<{
-    strategyId: Scalars['ID']['input'];
-}>>;
-export declare const getPassportUserDocument: DocumentNode<getPassportUserQuery, Exact<{
-    userId: Scalars['ID']['input'];
-}>>;
-export declare const getGoodDollarStrategyDocument: DocumentNode<getGoodDollarStrategyQuery, Exact<{
-    strategyId: Scalars['ID']['input'];
-}>>;
-export declare const getGoodDollarUserDocument: DocumentNode<getGoodDollarUserQuery, Exact<{
-    userId: Scalars['ID']['input'];
-}>>;
-export declare const getProposalDisputesDocument: DocumentNode<getProposalDisputesQuery, Exact<{
-    proposalId: Scalars['ID']['input'];
-}>>;
-export declare const getArbitrableConfigsDocument: DocumentNode<getArbitrableConfigsQuery, Exact<{
-    strategyId: Scalars['String']['input'];
-}>>;
-export declare const getMemberPassportAndCommunitiesDocument: DocumentNode<getMemberPassportAndCommunitiesQuery, Exact<{
-    memberId: Scalars['ID']['input'];
-}>>;
-export declare const getCommunityNameDocument: DocumentNode<getCommunityNameQuery, Exact<{
-    communityAddr: Scalars['ID']['input'];
-}>>;
-export declare const getPoolTitleDocument: DocumentNode<getPoolTitleQuery, Exact<{
-    poolId: Scalars['BigInt']['input'];
-}>>;
-export declare const getProposalTitleDocument: DocumentNode<getProposalTitleQuery, Exact<{
-    proposalId: Scalars['ID']['input'];
-}>>;
+export declare const getFactoriesDocument: DocumentNode<getFactoriesQuery, getFactoriesQueryVariables>;
+export declare const getTokenGardensDocument: DocumentNode<getTokenGardensQuery, getTokenGardensQueryVariables>;
+export declare const getMembersStrategyDocument: DocumentNode<getMembersStrategyQuery, getMembersStrategyQueryVariables>;
+export declare const getMemberStrategyDocument: DocumentNode<getMemberStrategyQuery, getMemberStrategyQueryVariables>;
+export declare const isMemberDocument: DocumentNode<isMemberQuery, isMemberQueryVariables>;
+export declare const getMemberDocument: DocumentNode<getMemberQuery, getMemberQueryVariables>;
+export declare const getPoolCreationDataDocument: DocumentNode<getPoolCreationDataQuery, getPoolCreationDataQueryVariables>;
+export declare const getProposalSupportersDocument: DocumentNode<getProposalSupportersQuery, getProposalSupportersQueryVariables>;
+export declare const getGardenCommunitiesDocument: DocumentNode<getGardenCommunitiesQuery, getGardenCommunitiesQueryVariables>;
+export declare const getCommunitiesDocument: DocumentNode<getCommunitiesQuery, getCommunitiesQueryVariables>;
+export declare const getCommunityDocument: DocumentNode<getCommunityQuery, getCommunityQueryVariables>;
+export declare const getCommunityCreationDataDocument: DocumentNode<getCommunityCreationDataQuery, getCommunityCreationDataQueryVariables>;
+export declare const getRegistryFactoryDataDocument: DocumentNode<getRegistryFactoryDataQuery, getRegistryFactoryDataQueryVariables>;
+export declare const getPoolDataDocument: DocumentNode<getPoolDataQuery, getPoolDataQueryVariables>;
+export declare const getProposalDataDocument: DocumentNode<getProposalDataQuery, getProposalDataQueryVariables>;
+export declare const getAlloDocument: DocumentNode<getAlloQuery, getAlloQueryVariables>;
+export declare const getStrategyByPoolDocument: DocumentNode<getStrategyByPoolQuery, getStrategyByPoolQueryVariables>;
+export declare const getTokenTitleDocument: DocumentNode<getTokenTitleQuery, getTokenTitleQueryVariables>;
+export declare const getCommunityTitlesDocument: DocumentNode<getCommunityTitlesQuery, getCommunityTitlesQueryVariables>;
+export declare const getPoolTitlesDocument: DocumentNode<getPoolTitlesQuery, getPoolTitlesQueryVariables>;
+export declare const getProposalTitlesDocument: DocumentNode<getProposalTitlesQuery, getProposalTitlesQueryVariables>;
+export declare const getPassportStrategyDocument: DocumentNode<getPassportStrategyQuery, getPassportStrategyQueryVariables>;
+export declare const getPassportUserDocument: DocumentNode<getPassportUserQuery, getPassportUserQueryVariables>;
+export declare const getGoodDollarStrategyDocument: DocumentNode<getGoodDollarStrategyQuery, getGoodDollarStrategyQueryVariables>;
+export declare const getGoodDollarUserDocument: DocumentNode<getGoodDollarUserQuery, getGoodDollarUserQueryVariables>;
+export declare const getProposalDisputesDocument: DocumentNode<getProposalDisputesQuery, getProposalDisputesQueryVariables>;
+export declare const getArbitrableConfigsDocument: DocumentNode<getArbitrableConfigsQuery, getArbitrableConfigsQueryVariables>;
+export declare const getMemberPassportAndCommunitiesDocument: DocumentNode<getMemberPassportAndCommunitiesQuery, getMemberPassportAndCommunitiesQueryVariables>;
+export declare const getCommunityNameDocument: DocumentNode<getCommunityNameQuery, getCommunityNameQueryVariables>;
+export declare const getPoolTitleDocument: DocumentNode<getPoolTitleQuery, getPoolTitleQueryVariables>;
+export declare const getProposalTitleDocument: DocumentNode<getProposalTitleQuery, getProposalTitleQueryVariables>;
 export type Requester<C = {}, E = unknown> = <R, V>(doc: DocumentNode, vars?: V, options?: C) => Promise<R> | AsyncIterable<R>;
 export declare function getSdk<C, E>(requester: Requester<C, E>): {
     getFactories(variables?: getFactoriesQueryVariables, options?: C): Promise<getFactoriesQuery>;
