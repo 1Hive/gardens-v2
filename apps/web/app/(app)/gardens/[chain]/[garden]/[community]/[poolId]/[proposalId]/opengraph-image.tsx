@@ -120,8 +120,6 @@ async function loadProposal(
       chainConfig,
       getProposalTitleDocument,
       { proposalId },
-      undefined,
-      true,
     );
 
     if (proposalResult.error) {
