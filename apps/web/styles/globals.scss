@@ -15,7 +15,7 @@
   --border-hover: #ff9500;
   --base-orange: #fff4e6;
   --color-text: #000000; /* add figma UI system color pallette light */
-    --color-grey-900: #000000;
+  --color-grey-900: #000000;
   --color-grey-500: #8c8c8c;
   --color-grey-400: #acacac;
   --color-grey-200: #eeeeee;
@@ -441,8 +441,9 @@ dialog * {
 
   :is(h1, h2, h3, h4, h5, h6) > a[href^="#"] {
     position: absolute;
-    left: 0;
-    transform: translateX(-150%);
+    left: 0rem;
+    top: 50%;
+    transform: translateY(-50%);
     display: inline-flex;
     align-items: center;
     justify-content: center;
