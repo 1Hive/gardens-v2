@@ -435,6 +435,33 @@ dialog * {
     margin-bottom: 0.5rem;
   }
 
+  :is(h1, h2, h3, h4, h5, h6) {
+    position: relative;
+  }
+
+  :is(h1, h2, h3, h4, h5, h6) > a[href^="#"] {
+    position: absolute;
+    left: 0;
+    transform: translateX(-150%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.25rem;
+    height: 1.25rem;
+    color: var(--color-grey-400);
+    text-decoration: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease;
+  }
+
+  :is(h1, h2, h3, h4, h5, h6):hover > a[href^="#"],
+  :is(h1, h2, h3, h4, h5, h6):focus-within > a[href^="#"],
+  :is(h1, h2, h3, h4, h5, h6) > a[href^="#"]:focus {
+    opacity: 1;
+    visibility: visible;
+  }
+
   blockquote {
     @apply border-l-4 pl-4 italic;
     margin-left: 0;
