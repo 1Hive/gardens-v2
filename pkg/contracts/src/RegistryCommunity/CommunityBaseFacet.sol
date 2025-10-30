@@ -106,4 +106,6 @@ abstract contract CommunityBaseFacet is ProxyOwnableUpgrader, ReentrancyGuardUpg
     address[] internal initialMembers;
     /// @notice The total number of members in the community
     uint256 public totalMembers;
+
+    uint256[49] private __gap;
 }

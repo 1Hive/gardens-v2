@@ -206,9 +206,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         emit InitializedCV3(_poolId, ip);
 
         // Initialize pool params (simplified version of _setPoolParams for initialization only)
-        if (
-            ip.arbitrableConfig.tribunalSafe != address(0) && address(ip.arbitrableConfig.arbitrator) != address(0)
-        ) {
+        if (ip.arbitrableConfig.tribunalSafe != address(0) && address(ip.arbitrableConfig.arbitrator) != address(0)) {
             ip.arbitrableConfig.arbitrator.registerSafe(ip.arbitrableConfig.tribunalSafe);
             currentArbitrableConfigVersion++;
             arbitrableConfigs[currentArbitrableConfigVersion] = ip.arbitrableConfig;
@@ -803,11 +801,9 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     /// @param _diamondCut Array of FacetCut structs defining facet changes
     /// @param _init Address of contract to execute with delegatecall (can be address(0))
     /// @param _calldata Function call data to execute on _init address
-    function diamondCut(
-        IDiamondCut.FacetCut[] calldata _diamondCut,
-        address _init,
-        bytes calldata _calldata
-    ) external {
+    function diamondCut(IDiamondCut.FacetCut[] calldata _diamondCut, address _init, bytes calldata _calldata)
+        external
+    {
         _checkOwner();
         LibDiamond.diamondCut(_diamondCut, _init, _calldata);
     }
@@ -839,4 +835,6 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     receive() external payable {}
 
     // Note: Storage gap is inherited from CVStrategyStorage base contract
+
+    uint256[49] private __gap;
 }
