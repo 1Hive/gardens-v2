@@ -184,13 +184,13 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
         <div className="text-neutral-soft-content text-xs sm:text-sm">
           {!isSignalingType && impossibleToPass ?
             <div
-              className="flex items-center justify-center gap-1 tooltip tooltip-right"
+              className="flex items-center justify-center gap-1 tooltip tooltip-top sm:tooltip-right"
               data-tip={`${
                 thresholdPct === 0 ?
-                  "No eligible members in this pool have activated their governance."
+                  "Not enough eligible voters in this pool have activated their governance."
                 : `This proposal will not pass unless more ${
                     minThGtTotalEffPoints ?
-                      "eligible members activate their governance"
+                      "eligible voters activate their governance"
                     : "funds are added"
                   }`
               }`}
@@ -382,9 +382,6 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
                                 </span>{" "}
                               </p>
                             </div>
-                            {!isSignalingType && poolToken && (
-                              <div className="w-1 h-1 rounded-full bg-neutral-soft-content" />
-                            )}
 
                             {ProposalCountDown}
                           </div>
