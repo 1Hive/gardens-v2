@@ -184,7 +184,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
         <div className="text-neutral-soft-content text-xs sm:text-sm">
           {!isSignalingType && impossibleToPass ?
             <div
-              className="flex items-center justify-center gap-1 tooltip"
+              className="flex items-center justify-center gap-1 tooltip tooltip-right"
               data-tip={`${
                 thresholdPct === 0 ?
                   "No eligible members in this pool have activated their governance."
@@ -198,7 +198,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
               <ExclamationTriangleIcon className="w-5 h-5 text-secondary-content" />
               <span className="text-xs sm:text-sm text-secondary-content">
                 {thresholdPct === 0 ?
-                  "Threshold is 0%."
+                  "Threshold out of reach"
                 : "Threshold over 100%."}
               </span>
             </div>
