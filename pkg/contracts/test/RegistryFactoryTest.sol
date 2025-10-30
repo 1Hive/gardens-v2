@@ -46,21 +46,18 @@ contract RegistryFactoryTest is Test {
 
         // Mock the councilSafe() and getOwners() for the community
         vm.mockCall(community, abi.encodeWithSignature("councilSafe()"), abi.encode(address(this)));
-        vm.mockCall(
-            address(this), abi.encodeWithSelector(ISafe.getOwners.selector), abi.encode([protopian, nonProtopianOwner])
-        );
 
         address[] memory owners = new address[](2);
         owners[0] = protopian;
         owners[1] = nonProtopianOwner;
 
-        vm.mockCall(address(this), abi.encodeWithSelector(ISafe.getOwners.selector), abi.encode(abi.encode(owners)));
+        vm.mockCall(address(this), abi.encodeWithSelector(ISafe.getOwners.selector), abi.encode(owners));
     }
 
     function testGetProtocolFee_ValidCommunity() public view {
         uint256 fee = registryFactory.getProtocolFee(community);
         console.log("Fee for community:", fee);
-        assertEq(fee, 100, "Fee should be 100 wei for a valid community");
+        assertEq(fee, 0, "Fee should be 0 for a community with a protopian owner");
     }
 
     function testGetProtocolFee_InvalidCommunity() public {
@@ -85,7 +82,9 @@ contract RegistryFactoryTest is Test {
 
     function testGetProtocolFee_CommunityWithoutProtopianOwner() public {
         // Mock the councilSafe() and getOwners() to exclude protopians
-        vm.mockCall(address(this), abi.encodeWithSelector(ISafe.getOwners.selector), abi.encode([nonProtopianOwner]));
+        address[] memory ownersWithoutProtopian = new address[](1);
+        ownersWithoutProtopian[0] = nonProtopianOwner;
+        vm.mockCall(address(this), abi.encodeWithSelector(ISafe.getOwners.selector), abi.encode(ownersWithoutProtopian));
 
         uint256 fee = registryFactory.getProtocolFee(community);
         assertEq(fee, 100, "Fee should be 100 wei for a community without a protopian owner");

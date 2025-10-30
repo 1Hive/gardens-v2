@@ -7,8 +7,38 @@ include .env
 # create RPC_URL_LOCALHOST variable
 RPC_URL_LOCALHOST = http://127.0.0.1:8545
 # print RPC_URL
-print : 
+print :
 	@echo $(RPC_URL)
+
+# Aggregate diamond ABIs (combines main contract + all facets into single ABI)
+aggregate-abi:
+	@echo "📦 Aggregating diamond ABIs..."
+	@node scripts/aggregate-diamond-abi.js
+	@echo "✅ ABI aggregation complete"
+
+# Aggregate ABIs with verbose output
+aggregate-abi-verbose:
+	@echo "📦 Aggregating diamond ABIs (verbose mode)..."
+	@node scripts/aggregate-diamond-abi.js --verbose
+	@echo "✅ ABI aggregation complete"
+
+# Verify diamond storage layouts (with build)
+verify-storage:
+	@echo "🔍 Verifying diamond storage layouts..."
+	@./scripts/verify-storage-layout.sh || (echo "❌ Storage verification FAILED! Fix storage alignment before deploying." && exit 1)
+	@echo "✅ Storage verification passed"
+
+# Verify diamond storage layouts (skip build - faster, assumes already compiled)
+verify-storage-quick:
+	@echo "🔍 Verifying diamond storage layouts (quick mode)..."
+	@./scripts/verify-storage-layout.sh --skip-build || (echo "❌ Storage verification FAILED! Fix storage alignment before deploying." && exit 1)
+	@echo "✅ Storage verification passed"
+
+# Verify diamond storage layouts with verbose output (shows detailed differences)
+verify-storage-verbose:
+	@echo "🔍 Verifying diamond storage layouts (verbose mode)..."
+	@./scripts/verify-storage-layout.sh --verbose || (echo "❌ Storage verification FAILED! Fix storage alignment before deploying." && exit 1)
+	@echo "✅ Storage verification passed"
 
 ### LOCLAHOST ###
 
@@ -108,7 +138,7 @@ deploy-token-opsep:
 	--chain-id 11155420 \
 	--verify
 
-fork-testnet:
+fork-testnet-opsep:
 	anvil --host=0.0.0.0 -f $(RPC_URL_OP_TESTNET)
 
 deploy-verify-opsep: 
@@ -131,7 +161,7 @@ deploy-opsep:
 	--verify \
 	-vv
 
-upgrade-opsep: 
+upgrade-opsep:
 	-forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
 	--rpc-url $(RPC_URL_OP_TESTNET) \
 	--sig "run(string)" 'opsepolia' \
@@ -142,7 +172,63 @@ upgrade-opsep:
 	--broadcast \
 	--via-ir \
 	--verify \
-	-vvv 
+	-vvv
+
+upgrade-diamond-opsep: verify-storage
+	-forge script script/UpgradeCVDiamond.s.sol:UpgradeCVDiamond \
+	--rpc-url $(RPC_URL_OP_TESTNET) \
+	--sig "run(string)" 'opsepolia' \
+	--account pkGarden \
+	--etherscan-api-key $(OPTIMISM_API_KEY) \
+	--chain-id 11155420 \
+	--ffi \
+	--broadcast \
+	--via-ir \
+	--verify \
+	-vvv
+
+upgrade-community-diamond-opsep: verify-storage
+	-forge script script/UpgradeRegistryCommunityDiamond.s.sol:UpgradeRegistryCommunityDiamond \
+	--rpc-url $(RPC_URL_OP_TESTNET) \
+	--sig "run(string)" 'opsepolia' \
+	--account pkGarden \
+	--etherscan-api-key $(OPTIMISM_API_KEY) \
+	--chain-id 11155420 \
+	--ffi \
+	--broadcast \
+	--via-ir \
+	--verify \
+	-vvv
+
+verify-diamond-blockscout-opsep:
+	-forge script script/UpgradeCVDiamond.s.sol:UpgradeCVDiamond \
+	--rpc-url $(RPC_URL_OP_TESTNET) \
+	--sig "run(string)" 'opsepolia' \
+	--account pkGarden \
+	--verifier blockscout \
+	--verifier-url https://optimism.blockscout.com/api/ \
+	--chain-id 11155420 \
+	--ffi \
+	--verify \
+	--via-ir \
+	--slow
+
+verify-community-diamond-blockscout-opsep:
+	-forge script script/UpgradeRegistryCommunityDiamond.s.sol:UpgradeRegistryCommunityDiamond \
+	--rpc-url $(RPC_URL_OP_TESTNET) \
+	--sig "run(string)" 'opsepolia' \
+	--account pkGarden \
+	--verifier blockscout \
+	--verifier-url https://optimism.blockscout.com/api/ \
+	--chain-id 11155420 \
+	--ffi \
+	--verify \
+	--via-ir \
+	--slow
+
+upgrade-and-verify-diamond-opsep: upgrade-diamond-opsep verify-diamond-blockscout-opsep
+
+upgrade-and-verify-community-diamond-opsep: upgrade-community-diamond-opsep verify-community-diamond-blockscout-opsep
 
 verify-blockscout-opsep: 
 	-forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
@@ -222,7 +308,7 @@ deploy-or-upgrade-good-dollar-sybil-opsep:
 
 ### ARBITRUM SEPOLIA ###
 
-fork-testnet:
+fork-testnet-arbsep:
 	anvil --host=0.0.0.0 -f $(RPC_URL_ARB_TESTNET)
 
 deploy-verify-arbsep: 
