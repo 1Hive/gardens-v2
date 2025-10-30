@@ -187,10 +187,10 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
               className="flex items-center justify-center gap-1 tooltip tooltip-right"
               data-tip={`${
                 thresholdPct === 0 ?
-                  "No eligible members in this pool have activated their governance."
+                  "Not enough eligible voters in this pool have activated their governance."
                 : `This proposal will not pass unless more ${
                     minThGtTotalEffPoints ?
-                      "eligible members activate their governance"
+                      "eligible voters activate their governance"
                     : "funds are added"
                   }`
               }`}
