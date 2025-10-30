@@ -6,15 +6,15 @@ schema:
 dataSources:
   - kind: ethereum/contract
     name: RegistryFactoryV0_0
-    network: optimism-sepolia
+    network: localhost
     context:
       chainId: 
         type: Int
-        data: 11155420
+        data: 1337
     source:
-      address: "0xEC8824e9a9498520891ec678e98c5bd3e65229c2"
+      address: "0xb7f8bc63bbcad18155201308c8f3540b07f84f5e"
       abi: RegistryFactoryV0_0
-      startBlock: 29036730
+      startBlock: 0
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -44,15 +44,15 @@ dataSources:
 
   - kind: ethereum/contract
     name: PassportScorer
-    network: optimism-sepolia
+    network: localhost
     context:
       chainId: 
         type: Int
-        data: 11155420
+        data: 1337
     source:
-      address: "0xe3DC6e82B599cD80904aCf0a3cd9f7401d92CC37"
+      address: "0x0165878a594ca255338adfa4d48449f69242eb8f"
       abi: PassportScorer
-      startBlock: 29036730
+      startBlock: 0
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -79,41 +79,10 @@ dataSources:
           handler: handleThresholdModified
       file: ./src/mappings/passport-scorer.ts
 
-  - kind: ethereum/contract
-    name: GoodDollarSybil
-    network: optimism-sepolia
-    context:
-      chainId: 
-        type: Int
-        data: 11155420
-    source:
-      address: "0xb01AC9015E04ecC424E646eBAb32dfa7670Ae8a6"
-      abi: GoodDollarSybil
-      startBlock: 29036730
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.7
-      language: wasm/assemblyscript
-      entities:
-        - GoodDollarSybil
-      abis:
-        - name: GoodDollarSybil
-          file: ../contracts/out/GoodDollarSybil.sol/GoodDollarSybil.json
-      eventHandlers:
-        - event: Initialized(uint8)
-          handler: handleInitialized
-        - event: UserValidated(address)
-          handler: handleUserValidated
-        - event: UserInvalidated(indexed address)
-          handler: handleUserInvalidated
-        - event: GoodDollarStrategyAdded(indexed address,address)
-          handler: handleStrategyAdded
-      file: ./src/mappings/good-dollar-sybil.ts
-
 templates:
   - kind: ethereum/contract
     name: RegistryCommunityV0_0
-    network: optimism-sepolia
+    network: localhost
     source:
       abi: RegistryCommunityV0_0
     mapping:
@@ -187,7 +156,7 @@ templates:
 
   - kind: ethereum/contract
     name: CVStrategyV0_0
-    network: optimism-sepolia
+    network: localhost
     source:
       abi: CVStrategyV0_0
     mapping:
@@ -252,7 +221,7 @@ templates:
 
   - kind: ethereum/contract
     name: CollateralVault
-    network: optimism-sepolia
+    network: localhost
     source:
       abi: CollateralVault
     mapping:

@@ -219,15 +219,21 @@ query getCommunities {
       chainId
       symbol
       name
+      decimals
     }
     strategies(where: { isEnabled: true }) {
       id
       totalEffectiveActivePoints
       poolId
+      proposals(where: { proposalStatus: 1 }) {
+        id
+        proposalStatus
+      }
     }
     members(first: 1000, where: { stakedTokens_gt: "0" }) {
       id
       memberAddress
+      stakedTokens
     }
   }
 }

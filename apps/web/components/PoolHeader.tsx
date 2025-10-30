@@ -892,7 +892,7 @@ export default function PoolHeader({
             <InfoBox
               title="Min threshold"
               infoBoxType="warning"
-              content="Activated governance in this pool is too low. No proposals will pass unless more members activate their governance. You can still create and support proposals."
+              content="Not enough eligible members in this pool have activated their governance. No proposals will pass until more members do. You can still create and support proposals."
               className="mb-4"
             />
           )}
