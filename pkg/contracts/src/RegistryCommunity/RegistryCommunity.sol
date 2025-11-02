@@ -164,7 +164,7 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
     /// @notice The Registry Allo contract
     IRegistry public registry;
     /// @notice The token used to stake in the community
-    IERC20 public gardenToken;
+    IERC20 public governanceToken;
     /// @notice The council safe contract address
     ISafe public councilSafe;
     /// @notice The Allo contract address
@@ -281,7 +281,7 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
         //     _revertZeroAddress(params._feeReceiver);
         // }
         allo = FAllo(params._allo);
-        gardenToken = params._gardenToken;
+        governanceToken = params._gardenToken;
         if (params._registerStakeAmount == 0) {
             revert ValueCannotBeZero();
         }

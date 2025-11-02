@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.19;
 
-import {RegistryCommunity} from "../RegistryCommunity/RegistryCommunity.sol";
+import {IVotingPowerRegistry} from "../interfaces/IVotingPowerRegistry.sol";
 import {PointSystem} from "./ICVStrategy.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
@@ -9,7 +9,7 @@ import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 // This contract is a utility for managing power-related functionalities.
 library PowerManagementUtils {
     function increasePower(
-        RegistryCommunity _registryCommunity,
+        IVotingPowerRegistry _registryCommunity,
         address _member,
         uint256 _amountToStake,
         PointSystem _pointSystem,
@@ -25,7 +25,7 @@ library PowerManagementUtils {
     }
 
     function increasePowerCapped(
-        RegistryCommunity _registryCommunity,
+        IVotingPowerRegistry _registryCommunity,
         address _member,
         uint256 _amountToStake,
         uint256 _pointConfigMaxAmount
@@ -41,14 +41,14 @@ library PowerManagementUtils {
         return _amountToStake;
     }
 
-    function increasePowerQuadratic(RegistryCommunity _registryCommunity, address _member, uint256 _amountToStake)
+    function increasePowerQuadratic(IVotingPowerRegistry _registryCommunity, address _member, uint256 _amountToStake)
         internal
         returns (uint256)
     {
         uint256 totalStake = _registryCommunity.getMemberStakedAmount(_member) + _amountToStake;
 
         uint256 decimal = 18;
-        try ERC20(address(_registryCommunity.gardenToken())).decimals() returns (uint8 _decimal) {
+        try ERC20(address(_registryCommunity.governanceToken())).decimals() returns (uint8 _decimal) {
             decimal = uint256(_decimal);
         } catch {
             // console.log("Error getting decimal");
@@ -62,7 +62,7 @@ library PowerManagementUtils {
     }
 
     function decreasePower(
-        RegistryCommunity _registryCommunity,
+        IVotingPowerRegistry _registryCommunity,
         address _member,
         uint256 _amountToUnstake,
         PointSystem _pointSystem,
@@ -82,12 +82,12 @@ library PowerManagementUtils {
         }
     }
 
-    function decreasePowerQuadratic(RegistryCommunity _registryCommunity, address _member, uint256 _amountToUnstake)
+    function decreasePowerQuadratic(IVotingPowerRegistry _registryCommunity, address _member, uint256 _amountToUnstake)
         internal
         returns (uint256)
     {
         uint256 decimal = 18;
-        try ERC20(address(_registryCommunity.gardenToken())).decimals() returns (uint8 _decimal) {
+        try ERC20(address(_registryCommunity.governanceToken())).decimals() returns (uint8 _decimal) {
             decimal = uint256(_decimal);
         } catch {
             // console.log("Error getting decimal");

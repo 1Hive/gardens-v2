@@ -76,15 +76,15 @@ contract CommunityMemberFacet is CommunityBaseFacet {
 
             addressToMemberInfo[msg.sender].stakedAmount = registerStakeAmount;
 
-            gardenToken.safeTransferFrom(
+            governanceToken.safeTransferFrom(
                 msg.sender, address(this), registerStakeAmount + communityFeeAmount + gardensFeeAmount
             );
 
             if (communityFeeAmount > 0) {
-                gardenToken.safeTransfer(feeReceiver, communityFeeAmount);
+                governanceToken.safeTransfer(feeReceiver, communityFeeAmount);
             }
             if (gardensFeeAmount > 0) {
-                gardenToken.safeTransfer(gardensFactory.getGardensFeeReceiver(), gardensFeeAmount);
+                governanceToken.safeTransfer(gardensFactory.getGardensFeeReceiver(), gardensFeeAmount);
             }
             totalMembers += 1;
 
@@ -103,7 +103,7 @@ contract CommunityMemberFacet is CommunityBaseFacet {
         if (totalMembers > 0) {
             totalMembers -= 1;
         }
-        gardenToken.safeTransfer(_member, member.stakedAmount);
+        governanceToken.safeTransfer(_member, member.stakedAmount);
         emit MemberUnregistered(_member, member.stakedAmount);
     }
 
@@ -120,7 +120,7 @@ contract CommunityMemberFacet is CommunityBaseFacet {
         delete addressToMemberInfo[_member];
         totalMembers -= 1;
 
-        gardenToken.safeTransfer(_transferAddress, member.stakedAmount);
+        governanceToken.safeTransfer(_transferAddress, member.stakedAmount);
         emit MemberKicked(_member, _transferAddress, member.stakedAmount);
     }
 

@@ -254,7 +254,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         );
         vm.stopPrank();
 
-        _registryCommunity().gardenToken().approve(address(registryCommunity), STAKE_WITH_FEES);
+        _registryCommunity().governanceToken().approve(address(registryCommunity), STAKE_WITH_FEES);
         _registryCommunity().stakeAndRegisterMember("");
         strategy.activatePoints();
 
@@ -287,7 +287,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         (,, uint256 submitterCollateralAmount,,,) = strategy.arbitrableConfigs(arbitrableConfigVersion);
         vm.deal(pool_admin(), submitterCollateralAmount);
         vm.startPrank(pool_admin());
-        _registryCommunity().gardenToken().approve(address(registryCommunity), STAKE_WITH_FEES);
+        _registryCommunity().governanceToken().approve(address(registryCommunity), STAKE_WITH_FEES);
         _registryCommunity().stakeAndRegisterMember("");
         proposalId = uint160(allo().registerRecipient{value: submitterCollateralAmount}(poolId, data));
         vm.stopPrank();

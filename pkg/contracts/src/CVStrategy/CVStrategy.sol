@@ -3,7 +3,6 @@ pragma solidity ^0.8.19;
 
 import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
 import {BaseStrategy, IAllo} from "allo-v2-contracts/strategies/BaseStrategy.sol";
-import {RegistryCommunity} from "../RegistryCommunity/RegistryCommunity.sol";
 import {ERC165, IERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IArbitrator} from "../interfaces/IArbitrator.sol";
@@ -33,6 +32,7 @@ import {
     CVStrategyInitializeParamsV0_2
 } from "./ICVStrategy.sol";
 
+import {IVotingPowerRegistry} from "../interfaces/IVotingPowerRegistry.sol";
 import {ConvictionsUtils} from "./ConvictionsUtils.sol";
 import {PowerManagementUtils} from "./PowerManagementUtils.sol";
 
@@ -156,7 +156,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     ProposalType public proposalType;
     PointSystem public pointSystem;
     PointSystemConfig public pointConfig;
-    RegistryCommunity public registryCommunity;
+    IVotingPowerRegistry public registryCommunity;
     ICollateralVault public collateralVault;
     ISybilScorer public sybilScorer;
     mapping(uint256 => Proposal) public proposals;
@@ -195,7 +195,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         //     revert RegistryCannotBeZero();
         // }
         // Set councilsafe to whitelist admin
-        registryCommunity = RegistryCommunity(ip.registryCommunity);
+        registryCommunity = IVotingPowerRegistry(ip.registryCommunity);
 
         proposalType = ip.proposalType;
         pointSystem = ip.pointSystem;
@@ -682,7 +682,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
 
     //If we want to keep, we need a func to transfer power mapping (and more) in Registry contract -Kev
     // function setRegistryCommunity(address _registryCommunity) external onlyPoolManager(msg.sender) {
-    //     registryCommunity = RegistryCommunity(_registryCommunity);
+    //     registryCommunity = IVotingPowerRegistry(_registryCommunity);
     //     emit RegistryUpdated(_registryCommunity);
     // }
 

@@ -131,7 +131,7 @@ contract CommunityPowerFacet is CommunityBaseFacet {
             }
         }
 
-        gardenToken.safeTransferFrom(member, address(this), _amountStaked);
+        governanceToken.safeTransferFrom(member, address(this), _amountStaked);
         addressToMemberInfo[member].stakedAmount += _amountStaked;
         emit MemberPowerIncreased(member, _amountStaked);
     }
@@ -146,7 +146,7 @@ contract CommunityPowerFacet is CommunityBaseFacet {
         if (addressToMemberInfo[member].stakedAmount - _amountUnstaked < registerStakeAmount) {
             revert DecreaseUnderMinimum();
         }
-        gardenToken.safeTransfer(member, _amountUnstaked);
+        governanceToken.safeTransfer(member, _amountUnstaked);
         for (uint256 i = 0; i < memberStrategies.length; i++) {
             address strategy = memberStrategies[i];
             pointsToDecrease = CVStrategy(payable(strategy)).decreasePower(member, _amountUnstaked);

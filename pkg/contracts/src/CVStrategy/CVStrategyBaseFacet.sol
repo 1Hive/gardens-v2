@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
-import {RegistryCommunity} from "../RegistryCommunity/RegistryCommunity.sol";
+import {IVotingPowerRegistry} from "../interfaces/IVotingPowerRegistry.sol";
 import {ICollateralVault} from "../interfaces/ICollateralVault.sol";
 import {ISybilScorer} from "../ISybilScorer.sol";
 import {ProposalType, PointSystem, Proposal, PointSystemConfig, ArbitrableConfig, CVParams} from "./ICVStrategy.sol";
@@ -107,7 +107,7 @@ abstract contract CVStrategyBaseFacet {
 
     /// @notice Reference to the Registry Community contract
     /// @dev Slot 121+
-    RegistryCommunity public registryCommunity;
+    IVotingPowerRegistry public registryCommunity;
 
     /// @notice Collateral vault for storing proposal collateral
     /// @dev Slot 122+
