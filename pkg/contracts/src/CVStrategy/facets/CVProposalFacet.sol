@@ -9,7 +9,7 @@ import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Librar
 /**
  * @title CVProposalFacet
  * @notice Facet containing proposal management functions for CVStrategy
- * @dev This facet is called via delegatecall from CVStrategyV0_0
+ * @dev This facet is called via delegatecall from CVStrategy
  *      CRITICAL: Inherits storage layout from CVStrategyBaseFacet
  */
 contract CVProposalFacet is CVStrategyBaseFacet {

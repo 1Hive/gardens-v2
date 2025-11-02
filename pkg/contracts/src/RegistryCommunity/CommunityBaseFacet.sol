@@ -28,9 +28,9 @@ struct Member {
  * @notice Base contract for all RegistryCommunity facets
  * @dev CRITICAL: This contract defines the storage layout for all Community facets.
  *      All facets must inherit from this contract to ensure correct storage alignment
- *      when called via delegatecall from RegistryCommunityV0_0.
+ *      when called via delegatecall from RegistryCommunity.
  *
- *      Storage Layout MUST match RegistryCommunityV0_0 exactly:
+ *      Storage Layout MUST match RegistryCommunity exactly:
  *      - Inherits from same base contracts in same order
  *      - Declares same storage variables in same order
  *
@@ -57,7 +57,7 @@ abstract contract CommunityBaseFacet is ProxyOwnableUpgrader, ReentrancyGuardUpg
 
     /*|--------------------------------------------|*/
     /*|              STORAGE VARIABLES             |*/
-    /*|  Must match RegistryCommunityV0_0 layout  |*/
+    /*|  Must match RegistryCommunity layout  |*/
     /*|--------------------------------------------|*/
 
     /// @notice The amount of tokens required to register a member

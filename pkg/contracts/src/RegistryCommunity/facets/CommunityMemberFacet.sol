@@ -5,12 +5,12 @@ import {CommunityBaseFacet, Member} from "../CommunityBaseFacet.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IRegistryFactory} from "../../IRegistryFactory.sol";
-import {CVStrategyV0_0} from "../../CVStrategy/CVStrategyV0_0.sol";
+import {CVStrategy} from "../../CVStrategy/CVStrategy.sol";
 
 /**
  * @title CommunityMemberFacet
  * @notice Facet containing member management functions for RegistryCommunity
- * @dev This facet is called via delegatecall from RegistryCommunityV0_0
+ * @dev This facet is called via delegatecall from RegistryCommunity
  *      CRITICAL: Inherits storage layout from CommunityBaseFacet
  */
 contract CommunityMemberFacet is CommunityBaseFacet {
@@ -18,6 +18,7 @@ contract CommunityMemberFacet is CommunityBaseFacet {
     /*|--------------------------------------------|*/
     /*|              EVENTS                        |*/
     /*|--------------------------------------------|*/
+
     event MemberRegisteredWithCovenant(address _member, uint256 _amountStaked, string _covenantSig);
     event MemberUnregistered(address _member, uint256 _amountReturned);
     event MemberKicked(address _member, address _transferAddress, uint256 _amountReturned);
@@ -130,7 +131,7 @@ contract CommunityMemberFacet is CommunityBaseFacet {
     function deactivateAllStrategies(address _member) internal {
         address[] memory memberStrategies = strategiesByMember[_member];
         for (uint256 i = 0; i < memberStrategies.length; i++) {
-            CVStrategyV0_0(payable(memberStrategies[i])).deactivatePoints(_member);
+            CVStrategy(payable(memberStrategies[i])).deactivatePoints(_member);
         }
     }
 }

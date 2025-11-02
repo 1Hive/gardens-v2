@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
-import {RegistryCommunityV0_0} from "../RegistryCommunity/RegistryCommunityV0_0.sol";
+import {RegistryCommunity} from "../RegistryCommunity/RegistryCommunity.sol";
 import {ICollateralVault} from "../interfaces/ICollateralVault.sol";
 import {ISybilScorer} from "../ISybilScorer.sol";
 import {ProposalType, PointSystem, Proposal, PointSystemConfig, ArbitrableConfig, CVParams} from "./ICVStrategy.sol";
@@ -15,13 +15,13 @@ import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Librar
  * @dev CRITICAL: This contract defines the storage layout for CVStrategy and its facets.
  *      All facets MUST inherit from this contract to maintain consistent storage layout.
  *
- *      Storage Layout (must match CVStrategyV0_0):
+ *      Storage Layout (must match CVStrategy):
  *      - Slots 0-50:   Initializable (from BaseStrategyUpgradeable in main contract)
  *      - Slots 51-100: OwnableUpgradeable (from BaseStrategyUpgradeable in main contract)
  *      - Slots 101-105: BaseStrategyUpgradeable (allo, strategyId, poolActive, poolId, poolAmount)
  *      - Slots 106+:   CVStrategy custom storage (defined below)
  *
- *      When facets are called via delegatecall from CVStrategyV0_0, they execute in the
+ *      When facets are called via delegatecall from CVStrategy, they execute in the
  *      main contract's storage context and access these exact storage slots.
  *
  *      IMPORTANT: This is an abstract contract that only provides storage layout - it does NOT
@@ -107,7 +107,7 @@ abstract contract CVStrategyBaseFacet {
 
     /// @notice Reference to the Registry Community contract
     /// @dev Slot 121+
-    RegistryCommunityV0_0 public registryCommunity;
+    RegistryCommunity public registryCommunity;
 
     /// @notice Collateral vault for storing proposal collateral
     /// @dev Slot 122+

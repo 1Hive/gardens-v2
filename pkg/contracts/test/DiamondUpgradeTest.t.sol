@@ -5,7 +5,7 @@ import "forge-std/Test.sol";
 import "forge-std/console.sol";
 
 import {CVStrategyTest} from "./CVStrategyTest.t.sol";
-import {CVStrategyV0_0} from "../src/CVStrategy/CVStrategyV0_0.sol";
+import {CVStrategy} from "../src/CVStrategy/CVStrategy.sol";
 import {CVAdminFacet} from "../src/CVStrategy/facets/CVAdminFacet.sol";
 import {CVAdminFacetV2} from "./mocks/CVAdminFacetV2.sol";
 import {CVTestFacet} from "./mocks/CVTestFacet.sol";
@@ -35,7 +35,7 @@ contract DiamondUpgradeTest is CVStrategyTest {
         (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) =
             _createProposal(NATIVE, 0, 0, ProposalType.Funding, PointSystem.Unlimited);
 
-        CVStrategyV0_0 strategy = CVStrategyV0_0(payable(address(pool.strategy)));
+        CVStrategy strategy = CVStrategy(payable(address(pool.strategy)));
 
         // Record state before upgrade
         uint256 totalStakedBefore = strategy.totalStaked();
@@ -108,7 +108,7 @@ contract DiamondUpgradeTest is CVStrategyTest {
         (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) =
             _createProposal(NATIVE, 0, 0, ProposalType.Funding, PointSystem.Unlimited);
 
-        CVStrategyV0_0 strategy = CVStrategyV0_0(payable(address(pool.strategy)));
+        CVStrategy strategy = CVStrategy(payable(address(pool.strategy)));
 
         // Record state before adding facet (no need to allocate, just having a proposal is enough)
         uint256 proposalCounterBefore = strategy.proposalCounter();
@@ -165,7 +165,7 @@ contract DiamondUpgradeTest is CVStrategyTest {
         (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) =
             _createProposal(NATIVE, 0, 0, ProposalType.Funding, PointSystem.Unlimited);
 
-        CVStrategyV0_0 strategy = CVStrategyV0_0(payable(address(pool.strategy)));
+        CVStrategy strategy = CVStrategy(payable(address(pool.strategy)));
 
         uint256 proposalCounterBefore = strategy.proposalCounter();
         console.log("Proposal counter before removal:", proposalCounterBefore);

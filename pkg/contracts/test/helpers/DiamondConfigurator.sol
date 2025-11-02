@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.19;
 
-import {CVStrategyV0_0} from "../../src/CVStrategy/CVStrategyV0_0.sol";
+import {CVStrategy} from "../../src/CVStrategy/CVStrategy.sol";
 import {CVAdminFacet} from "../../src/CVStrategy/facets/CVAdminFacet.sol";
 import {CVAllocationFacet} from "../../src/CVStrategy/facets/CVAllocationFacet.sol";
 import {CVDisputeFacet} from "../../src/CVStrategy/facets/CVDisputeFacet.sol";
@@ -96,10 +96,10 @@ contract DiamondConfigurator {
     /**
      * @notice Configure all facets for a CVStrategy instance
      * @dev Caller must be the owner of the strategy
-     * @param strategy The CVStrategyV0_0 instance to configure
+     * @param strategy The CVStrategy instance to configure
      */
     function configureFacets(address payable strategy) external {
         IDiamond.FacetCut[] memory cuts = getFacetCuts();
-        CVStrategyV0_0(strategy).diamondCut(cuts, address(0), "");
+        CVStrategy(strategy).diamondCut(cuts, address(0), "");
     }
 }

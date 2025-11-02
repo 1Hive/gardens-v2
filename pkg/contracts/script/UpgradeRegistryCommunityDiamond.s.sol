@@ -2,8 +2,8 @@
 pragma solidity ^0.8.13;
 
 import "./BaseMultiChain.s.sol";
-import {RegistryCommunityV0_0} from "../src/RegistryCommunity/RegistryCommunityV0_0.sol";
-import {RegistryFactoryV0_0} from "../src/RegistryFactory/RegistryFactoryV0_0.sol";
+import {RegistryCommunity} from "../src/RegistryCommunity/RegistryCommunity.sol";
+import {RegistryFactory} from "../src/RegistryFactory/RegistryFactory.sol";
 import {CommunityAdminFacet} from "../src/RegistryCommunity/facets/CommunityAdminFacet.sol";
 import {CommunityMemberFacet} from "../src/RegistryCommunity/facets/CommunityMemberFacet.sol";
 import {CommunityPoolFacet} from "../src/RegistryCommunity/facets/CommunityPoolFacet.sol";
@@ -33,8 +33,8 @@ contract UpgradeRegistryCommunityDiamond is BaseMultiChain {
 
         // 1. Deploy new implementation and facets
         console2.log("\n[1/4] Deploying new RegistryCommunity implementation and facets...");
-        address communityImplementation = address(new RegistryCommunityV0_0());
-        console2.log("  RegistryCommunityV0_0 impl:", communityImplementation);
+        address communityImplementation = address(new RegistryCommunity());
+        console2.log("  RegistryCommunity impl:", communityImplementation);
 
         adminFacet = new CommunityAdminFacet();
         console2.log("  CommunityAdminFacet:", address(adminFacet));
@@ -60,11 +60,10 @@ contract UpgradeRegistryCommunityDiamond is BaseMultiChain {
         // 2. Update RegistryFactory community template
         console2.log("\n[2/4] Building RegistryFactory community template update transaction...");
         address registryFactoryProxy = networkJson.readAddress(getKeyNetwork(".PROXIES.REGISTRY_FACTORY"));
-        RegistryFactoryV0_0 registryFactory = RegistryFactoryV0_0(payable(address(registryFactoryProxy)));
+        RegistryFactory registryFactory = RegistryFactory(payable(address(registryFactoryProxy)));
         {
-            bytes memory setTemplate = abi.encodeWithSelector(
-                registryFactory.setRegistryCommunityTemplate.selector, communityImplementation
-            );
+            bytes memory setTemplate =
+                abi.encodeWithSelector(registryFactory.setRegistryCommunityTemplate.selector, communityImplementation);
             json = string(abi.encodePacked(json, _createTransactionJson(registryFactoryProxy, setTemplate), ","));
         }
 
@@ -74,15 +73,13 @@ contract UpgradeRegistryCommunityDiamond is BaseMultiChain {
             networkJson.readAddressArray(getKeyNetwork(".PROXIES.REGISTRY_COMMUNITIES"));
         IDiamond.FacetCut[] memory cuts = _getFacetCuts();
         bytes memory diamondCutCalldata =
-            abi.encodeWithSelector(RegistryCommunityV0_0.diamondCut.selector, cuts, address(0), "");
+            abi.encodeWithSelector(RegistryCommunity.diamondCut.selector, cuts, address(0), "");
 
         for (uint256 i = 0; i < registryCommunityProxies.length; i++) {
-            RegistryCommunityV0_0 community =
-                RegistryCommunityV0_0(payable(address(registryCommunityProxies[i])));
+            RegistryCommunity community = RegistryCommunity(payable(address(registryCommunityProxies[i])));
 
             // 3.a - Upgrade implementation
-            bytes memory upgradeCalldata =
-                abi.encodeWithSelector(community.upgradeTo.selector, communityImplementation);
+            bytes memory upgradeCalldata = abi.encodeWithSelector(community.upgradeTo.selector, communityImplementation);
             json = string(
                 abi.encodePacked(json, _createTransactionJson(registryCommunityProxies[i], upgradeCalldata), ",")
             );
@@ -148,10 +145,14 @@ contract UpgradeRegistryCommunityDiamond is BaseMultiChain {
         bytes4[] memory poolSelectors = new bytes4[](2);
         // createPool has two overloads with different signatures
         poolSelectors[0] = bytes4(
-            keccak256("createPool(address,(uint256,bool,bool,bool,(uint256,uint256,uint256,uint256,uint256),(uint256,uint256,uint256,uint256),address,address,uint256,address[],address,uint256),(uint256,string))")
+            keccak256(
+                "createPool(address,(uint256,bool,bool,bool,(uint256,uint256,uint256,uint256,uint256),(uint256,uint256,uint256,uint256),address,address,uint256,address[],address,uint256),(uint256,string))"
+            )
         );
         poolSelectors[1] = bytes4(
-            keccak256("createPool(address,address,(uint256,bool,bool,bool,(uint256,uint256,uint256,uint256,uint256),(uint256,uint256,uint256,uint256),address,address,uint256,address[],address,uint256),(uint256,string))")
+            keccak256(
+                "createPool(address,address,(uint256,bool,bool,bool,(uint256,uint256,uint256,uint256,uint256),(uint256,uint256,uint256,uint256),address,address,uint256,address[],address,uint256),(uint256,string))"
+            )
         );
         cuts[2] = IDiamond.FacetCut({
             facetAddress: address(poolFacet),
@@ -193,9 +194,7 @@ contract UpgradeRegistryCommunityDiamond is BaseMultiChain {
      * @param safeOwner Safe owner address
      * @param networkJson Network configuration JSON
      */
-    function _writePayloadFile(string memory transactionsJson, address safeOwner, string memory networkJson)
-        internal
-    {
+    function _writePayloadFile(string memory transactionsJson, address safeOwner, string memory networkJson) internal {
         string memory payload = string.concat(
             "{",
             '"version":"1.0",',

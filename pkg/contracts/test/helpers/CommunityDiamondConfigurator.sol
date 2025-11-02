@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.19;
 
-import {RegistryCommunityV0_0} from "../../src/RegistryCommunity/RegistryCommunityV0_0.sol";
+import {RegistryCommunity} from "../../src/RegistryCommunity/RegistryCommunity.sol";
 import {CommunityMemberFacet} from "../../src/RegistryCommunity/facets/CommunityMemberFacet.sol";
 import {CommunityPowerFacet} from "../../src/RegistryCommunity/facets/CommunityPowerFacet.sol";
 import {CommunityStrategyFacet} from "../../src/RegistryCommunity/facets/CommunityStrategyFacet.sol";
@@ -112,10 +112,10 @@ contract CommunityDiamondConfigurator {
     /**
      * @notice Configure all facets for a RegistryCommunity instance
      * @dev Caller must be the owner of the community
-     * @param community The RegistryCommunityV0_0 instance to configure
+     * @param community The RegistryCommunity instance to configure
      */
     function configureFacets(address community) external {
         IDiamond.FacetCut[] memory cuts = getFacetCuts();
-        RegistryCommunityV0_0(payable(community)).diamondCut(cuts, address(0), "");
+        RegistryCommunity(payable(community)).diamondCut(cuts, address(0), "");
     }
 }

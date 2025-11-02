@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.19;
 
-import {
-    RegistryCommunityV0_0,
-    RegistryCommunityInitializeParamsV0_0
-} from "../RegistryCommunity/RegistryCommunityV0_0.sol";
+import {RegistryCommunity, RegistryCommunityInitializeParams} from "../RegistryCommunity/RegistryCommunity.sol";
 import {ProxyOwnableUpgrader} from "../ProxyOwnableUpgrader.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {ISafe} from "../interfaces/ISafe.sol";
@@ -15,8 +12,8 @@ struct CommunityInfo {
     bool valid;
 }
 
-/// @custom:oz-upgrades-from RegistryFactoryV0_0
-contract RegistryFactoryV0_0 is ProxyOwnableUpgrader {
+/// @custom:oz-upgrades-from RegistryFactory
+contract RegistryFactory is ProxyOwnableUpgrader {
     string public constant VERSION = "0.0";
     uint256 public nonce;
 
@@ -86,7 +83,7 @@ contract RegistryFactoryV0_0 is ProxyOwnableUpgrader {
         // setReceiverAddress(_gardensFeeReceiver); //onlyOwner
     }
 
-    function createRegistry(RegistryCommunityInitializeParamsV0_0 memory params)
+    function createRegistry(RegistryCommunityInitializeParams memory params)
         public
         virtual
         returns (address _createdRegistryAddress)
@@ -97,15 +94,11 @@ contract RegistryFactoryV0_0 is ProxyOwnableUpgrader {
         ERC1967Proxy proxy = new ERC1967Proxy(
             address(registryCommunityTemplate),
             abi.encodeWithSelector(
-                RegistryCommunityV0_0.initialize.selector,
-                params,
-                strategyTemplate,
-                collateralVaultTemplate,
-                proxyOwner()
+                RegistryCommunity.initialize.selector, params, strategyTemplate, collateralVaultTemplate, proxyOwner()
             )
         );
 
-        RegistryCommunityV0_0 registryCommunity = RegistryCommunityV0_0(payable(address(proxy)));
+        RegistryCommunity registryCommunity = RegistryCommunity(payable(address(proxy)));
 
         // registryCommunity.initialize(params);
         communityToInfo[address(registryCommunity)].valid = true;
@@ -173,7 +166,7 @@ contract RegistryFactoryV0_0 is ProxyOwnableUpgrader {
 
         // Check for protopians (free if they are owners of the community)
 
-        ISafe councilSafe = ISafe(RegistryCommunityV0_0(_community).councilSafe());
+        ISafe councilSafe = ISafe(RegistryCommunity(_community).councilSafe());
         if (protopiansAddresses[address(councilSafe)]) {
             return 0;
         }

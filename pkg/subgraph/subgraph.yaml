@@ -5,48 +5,48 @@ schema:
   file: ./src/schema.graphql
 dataSources:
   - kind: ethereum/contract
-    name: RegistryFactoryV0_0
+    name: RegistryFactory
     network: matic
     context:
-      chainId: 
+      chainId:
         type: Int
         data: 137
     source:
       address: "0x57a9835b204dbcc101dbf981625a3625e8043b9c"
-      abi: RegistryFactoryV0_0
+      abi: RegistryFactory
       startBlock: 61584764
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
       language: wasm/assemblyscript
       entities:
-        - RegistryFactoryV0_0
+        - RegistryFactory
         - RegistryCommunity
       abis:
-        - name: RegistryFactoryV0_0
-          file: ../contracts/out/RegistryFactoryV0_0.sol/RegistryFactoryV0_0.json
-        - name: RegistryCommunityV0_0
-          file: ../contracts/out/RegistryCommunityV0_0.sol/RegistryCommunityV0_0.json
+        - name: RegistryFactory
+          file: ../contracts/out/RegistryFactory.sol/RegistryFactory.json
+        - name: RegistryCommunity
+          file: ../contracts/out/RegistryCommunity.sol/RegistryCommunity.json
       eventHandlers:
         - event: CommunityCreated(address)
           handler: handleCommunityCreated
         - event: CommunityValiditySet(address,bool)
           handler: handleCommunityValiditySet
         - event: ProtocolFeeSet(address,uint256)
-          handler: handleProtocolFeeSet  
+          handler: handleProtocolFeeSet
         - event: ProtopiansChanged(address[],address[])
-          handler: handleProtopiansChanged  
+          handler: handleProtopiansChanged
         - event: KeepersChanged(address[],address[])
           handler: handleKeepersChanged
         - event: Initialized(uint8)
-          handler: handleRegistryInitialized  
+          handler: handleRegistryInitialized
       file: ./src/mappings/registry-factory.ts
 
   - kind: ethereum/contract
     name: PassportScorer
     network: matic
     context:
-      chainId: 
+      chainId:
         type: Int
         data: 137
     source:
@@ -83,7 +83,7 @@ dataSources:
     name: GoodDollarSybil
     network: matic
     context:
-      chainId: 
+      chainId:
         type: Int
         data: 137
     source:
@@ -112,10 +112,10 @@ dataSources:
 
 templates:
   - kind: ethereum/contract
-    name: RegistryCommunityV0_0
+    name: RegistryCommunity
     network: matic
     source:
-      abi: RegistryCommunityV0_0
+      abi: RegistryCommunity
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -127,15 +127,15 @@ templates:
         - TokenGarden
         - Member
       abis:
-        - name: RegistryCommunityV0_0
-          file: ../contracts/out/RegistryCommunityV0_0.sol/RegistryCommunityV0_0.json
+        - name: RegistryCommunity
+          file: ../contracts/out/RegistryCommunity.sol/RegistryCommunity.json
         - name: ERC20
           file: ../contracts/out/ERC20.sol/ERC20.json
-        - name: CVStrategyV0_0
-          file: ../contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json
-        - name: RegistryFactoryV0_0
-          file: ../contracts/out/RegistryFactoryV0_0.sol/RegistryFactoryV0_0.json
-     
+        - name: CVStrategy
+          file: ../contracts/out/CVStrategy.sol/CVStrategy.json
+        - name: RegistryFactory
+          file: ../contracts/out/RegistryFactory.sol/RegistryFactory.json
+
       eventHandlers:
         - event: RegistryInitialized(bytes32,string,(uint256,string))
           handler: handleInitialized
@@ -186,10 +186,10 @@ templates:
       file: ./src/mappings/registry-community.ts
 
   - kind: ethereum/contract
-    name: CVStrategyV0_0
+    name: CVStrategy
     network: matic
     source:
-      abi: CVStrategyV0_0
+      abi: CVStrategy
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -200,10 +200,10 @@ templates:
         - CVProposal
         - Allo
       abis:
-        - name: CVStrategyV0_0
-          file: ../contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json
-        - name: RegistryCommunityV0_0
-          file: ../contracts/out/RegistryCommunityV0_0.sol/RegistryCommunityV0_0.json
+        - name: CVStrategy
+          file: ../contracts/out/CVStrategy.sol/CVStrategy.json
+        - name: RegistryCommunity
+          file: ../contracts/out/RegistryCommunity.sol/RegistryCommunity.json
         - name: Allo
           file: ../contracts/out/Allo.sol/Allo.json
       eventHandlers:
@@ -272,8 +272,8 @@ templates:
           handler: handleCollateralWithdrawnFor
         - event: CollateralWithdrawn(uint256,indexed address,uint256,bool)
           handler: handleCollateralWithdrawn
-      file: ./src/mappings/cv-strategy.ts  
-  
+      file: ./src/mappings/cv-strategy.ts
+
   - name: ProposalDisputeMetadata
     kind: file/ipfs
     mapping:
@@ -284,9 +284,9 @@ templates:
       entities:
         - ProposalDisputeMetadata
       abis:
-        - name: CVStrategyV0_0
-          file: ../contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json
-  
+        - name: CVStrategy
+          file: ../contracts/out/CVStrategy.sol/CVStrategy.json
+
   - name: ProposalMetadata
     kind: file/ipfs
     mapping:
@@ -297,9 +297,9 @@ templates:
       entities:
         - ProposalMetadata
       abis:
-        - name: CVStrategyV0_0
-          file: ../contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json
-  
+        - name: CVStrategy
+          file: ../contracts/out/CVStrategy.sol/CVStrategy.json
+
   - name: PoolMetadata
     kind: file/ipfs
     mapping:
@@ -310,8 +310,8 @@ templates:
       entities:
         - PoolMetadata
       abis:
-        - name: CVStrategyV0_0
-          file: ../contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json
+        - name: CVStrategy
+          file: ../contracts/out/CVStrategy.sol/CVStrategy.json
 
   - name: Covenant
     kind: file/ipfs
@@ -323,5 +323,5 @@ templates:
       entities:
         - Covenant
       abis:
-        - name: CVStrategyV0_0
-          file: ../contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json
+        - name: CVStrategy
+          file: ../contracts/out/CVStrategy.sol/CVStrategy.json

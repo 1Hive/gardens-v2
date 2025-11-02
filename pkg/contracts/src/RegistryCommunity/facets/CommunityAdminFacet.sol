@@ -18,7 +18,7 @@ struct CommunityParams {
 /**
  * @title CommunityAdminFacet
  * @notice Facet containing admin configuration functions for RegistryCommunity
- * @dev This facet is called via delegatecall from RegistryCommunityV0_0
+ * @dev This facet is called via delegatecall from RegistryCommunity
  *      CRITICAL: Inherits storage layout from CommunityBaseFacet
  */
 contract CommunityAdminFacet is CommunityBaseFacet {

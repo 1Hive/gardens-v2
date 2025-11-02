@@ -2,9 +2,9 @@
 pragma solidity ^0.8.0;
 
 import "./BaseMultiChain.s.sol";
-import {CVStrategyV0_0} from "../src/CVStrategy/CVStrategyV0_0.sol";
-import {RegistryCommunityV0_0} from "../src/RegistryCommunity/RegistryCommunityV0_0.sol";
-import {RegistryFactoryV0_0} from "../src/RegistryFactory/RegistryFactoryV0_0.sol";
+import {CVStrategy} from "../src/CVStrategy/CVStrategy.sol";
+import {RegistryCommunity} from "../src/RegistryCommunity/RegistryCommunity.sol";
+import {RegistryFactory} from "../src/RegistryFactory/RegistryFactory.sol";
 import {ICVStrategy} from "../src/CVStrategy/ICVStrategy.sol";
 import {ProxyOwner} from "../src/ProxyOwner.sol";
 
@@ -12,9 +12,9 @@ contract UpgradeCVMultichainProd is BaseMultiChain {
     using stdJson for string;
 
     function runCurrentNetwork(string memory networkJson) public override {
-        // address registryFactoryImplementation = address(new RegistryFactoryV0_0());
-        address registryImplementation = address(new RegistryCommunityV0_0());
-        address strategyImplementation = address(new CVStrategyV0_0());
+        // address registryFactoryImplementation = address(new RegistryFactory());
+        address registryImplementation = address(new RegistryCommunity());
+        address strategyImplementation = address(new CVStrategy());
         // address passportScorer = networkJson.readAddress(getKeyNetwork(".ENVS.PASSPORT_SCORER"));
         address safeArbitrator = networkJson.readAddress(getKeyNetwork(".ENVS.ARBITRATOR"));
         address proxyOwner = networkJson.readAddress(getKeyNetwork(".ENVS.PROXY_OWNER"));
@@ -25,7 +25,7 @@ contract UpgradeCVMultichainProd is BaseMultiChain {
         // 1. REGISTRY FACTORY UPGRADE
         address registryFactoryProxy = networkJson.readAddress(getKeyNetwork(".PROXIES.REGISTRY_FACTORY"));
         {
-            RegistryFactoryV0_0 registryFactory = RegistryFactoryV0_0(payable(address(registryFactoryProxy)));
+            RegistryFactory registryFactory = RegistryFactory(payable(address(registryFactoryProxy)));
 
             // 1.a -- Upgrade the Registry Factory --
             // {
@@ -179,7 +179,7 @@ contract UpgradeCVMultichainProd is BaseMultiChain {
         address registryImplementation,
         address strategyImplementation
     ) internal pure returns (bytes memory, bytes memory) {
-        RegistryCommunityV0_0 registryCommunity = RegistryCommunityV0_0(payable(registryProxy));
+        RegistryCommunity registryCommunity = RegistryCommunity(payable(registryProxy));
         bytes memory upgradeRegistryCommunity =
             abi.encodeWithSelector(registryCommunity.upgradeTo.selector, registryImplementation);
         bytes memory setStrategyTemplateCommunity =
@@ -194,9 +194,9 @@ contract UpgradeCVMultichainProd is BaseMultiChain {
         view
         returns (bytes memory, bytes memory, bytes memory)
     {
-        CVStrategyV0_0 cvStrategy = CVStrategyV0_0(payable(_cvStrategyProxy));
+        CVStrategy cvStrategy = CVStrategy(payable(_cvStrategyProxy));
         bytes memory upgradeCVStrategy = abi.encodeWithSelector(cvStrategy.upgradeTo.selector, _strategyImplementation);
-        bytes memory initStrategy = abi.encodeWithSelector(CVStrategyV0_0.init.selector);
+        bytes memory initStrategy = abi.encodeWithSelector(CVStrategy.init.selector);
         // address oldPassport = address(cvStrategy.sybilScorer());
         // bytes memory setSybilScorer = "";
         // if (oldPassport != address(0)) {

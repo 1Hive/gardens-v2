@@ -4,15 +4,15 @@ pragma solidity ^0.8.19;
 import "forge-std/Test.sol";
 import "forge-std/console2.sol";
 
-import {CVStrategyV0_0} from "../src/CVStrategy/CVStrategyV0_0.sol";
+import {CVStrategy} from "../src/CVStrategy/CVStrategy.sol";
 import {CVAdminFacet} from "../src/CVStrategy/facets/CVAdminFacet.sol";
 import {CVAllocationFacet} from "../src/CVStrategy/facets/CVAllocationFacet.sol";
 import {CVDisputeFacet} from "../src/CVStrategy/facets/CVDisputeFacet.sol";
 import {CVPowerFacet} from "../src/CVStrategy/facets/CVPowerFacet.sol";
 import {CVProposalFacet} from "../src/CVStrategy/facets/CVProposalFacet.sol";
 import {IDiamondLoupe} from "../src/diamonds/interfaces/IDiamondLoupe.sol";
-import {RegistryFactoryV0_0} from "../src/RegistryFactory/RegistryFactoryV0_0.sol";
-import {RegistryCommunityV0_0} from "../src/RegistryCommunity/RegistryCommunityV0_0.sol";
+import {RegistryFactory} from "../src/RegistryFactory/RegistryFactory.sol";
+import {RegistryCommunity} from "../src/RegistryCommunity/RegistryCommunity.sol";
 
 /**
  * @title DiamondUpgradeFork
@@ -64,7 +64,7 @@ contract DiamondUpgradeFork is Test {
      * @notice Test that RegistryFactory strategy template was updated
      */
     function test_registryFactory_strategyTemplate_updated() public view {
-        RegistryFactoryV0_0 factory = RegistryFactoryV0_0(payable(REGISTRY_FACTORY));
+        RegistryFactory factory = RegistryFactory(payable(REGISTRY_FACTORY));
 
         address strategyTemplate = factory.strategyTemplate();
         console2.log("RegistryFactory strategy template:", strategyTemplate);
@@ -85,7 +85,7 @@ contract DiamondUpgradeFork is Test {
      */
     function test_registryCommunities_strategyTemplates_updated() public view {
         for (uint256 i = 0; i < registryCommunities.length; i++) {
-            RegistryCommunityV0_0 community = RegistryCommunityV0_0(payable(registryCommunities[i]));
+            RegistryCommunity community = RegistryCommunity(payable(registryCommunities[i]));
 
             address strategyTemplate = community.strategyTemplate();
             console2.log("Community strategy template:", strategyTemplate);
@@ -107,7 +107,7 @@ contract DiamondUpgradeFork is Test {
      */
     function test_cvStrategies_have_fallback() public view {
         for (uint256 i = 0; i < cvStrategies.length; i++) {
-            CVStrategyV0_0 strategy = CVStrategyV0_0(payable(cvStrategies[i]));
+            CVStrategy strategy = CVStrategy(payable(cvStrategies[i]));
 
             console2.log("=== Testing Strategy ===");
 
@@ -166,7 +166,7 @@ contract DiamondUpgradeFork is Test {
      */
     function test_storage_integrity_after_upgrade() public view {
         for (uint256 i = 0; i < cvStrategies.length; i++) {
-            CVStrategyV0_0 strategy = CVStrategyV0_0(payable(cvStrategies[i]));
+            CVStrategy strategy = CVStrategy(payable(cvStrategies[i]));
 
             console2.log("=== Storage Integrity Check for Strategy ===");
 
@@ -201,21 +201,10 @@ contract DiamondUpgradeFork is Test {
     function test_facets_deployed_correctly() public view {
         console2.log("=== Facet Deployment Verification ===");
 
-        address[5] memory facets = [
-            ADMIN_FACET,
-            ALLOCATION_FACET,
-            DISPUTE_FACET,
-            POWER_FACET,
-            PROPOSAL_FACET
-        ];
+        address[5] memory facets = [ADMIN_FACET, ALLOCATION_FACET, DISPUTE_FACET, POWER_FACET, PROPOSAL_FACET];
 
-        string[5] memory facetNames = [
-            "CVAdminFacet",
-            "CVAllocationFacet",
-            "CVDisputeFacet",
-            "CVPowerFacet",
-            "CVProposalFacet"
-        ];
+        string[5] memory facetNames =
+            ["CVAdminFacet", "CVAllocationFacet", "CVDisputeFacet", "CVPowerFacet", "CVProposalFacet"];
 
         for (uint256 i = 0; i < facets.length; i++) {
             console2.log(facetNames[i], ":", facets[i]);

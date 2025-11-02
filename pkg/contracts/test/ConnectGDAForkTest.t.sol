@@ -3,14 +3,14 @@ pragma solidity ^0.8.19;
 
 import "forge-std/Test.sol";
 import {console} from "forge-std/console.sol";
-import {CVStrategyV0_0, ArbitrableConfig, CVParams} from "../src/CVStrategy/CVStrategyV0_0.sol";
+import {CVStrategy, ArbitrableConfig, CVParams} from "../src/CVStrategy/CVStrategy.sol";
 import {IArbitrator} from "../src/interfaces/IArbitrator.sol";
 import {DiamondConfigurator} from "./helpers/DiamondConfigurator.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Library.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract ConnectGDAForkTest is Test {
-    CVStrategyV0_0 cvStrategy = CVStrategyV0_0(payable(address(0x3764607A0a721981780B798a02C2B1691D6bAa39)));
+    CVStrategy cvStrategy = CVStrategy(payable(address(0x3764607A0a721981780B798a02C2B1691D6bAa39)));
     address tribunal = address(0x9a17De1f0caD0c592F656410997E4B685d339029);
     address council = address(0x26746DdB7A853DDb5B12677Da60f40FA7e8F794a); // prod data team council address
     address allowlistMember = address(0x703550294eDD3E1A700f3F0D2347b037BC6A0030); // prod data team allowlist member address
@@ -20,7 +20,7 @@ contract ConnectGDAForkTest is Test {
 
     function setUp() public {
         vm.createSelectFork("https://forno.celo.org", 41312794);
-        CVStrategyV0_0 upgrade = new CVStrategyV0_0();
+        CVStrategy upgrade = new CVStrategy();
         vm.prank(tribunal);
         cvStrategy.upgradeTo(address(upgrade));
 

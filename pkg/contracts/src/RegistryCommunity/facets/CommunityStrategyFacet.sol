@@ -2,13 +2,13 @@
 pragma solidity ^0.8.19;
 
 import {CommunityBaseFacet} from "../CommunityBaseFacet.sol";
-import {CVStrategyV0_0} from "../../CVStrategy/CVStrategyV0_0.sol";
+import {CVStrategy} from "../../CVStrategy/CVStrategy.sol";
 import {ISybilScorer} from "../../ISybilScorer.sol";
 
 /**
  * @title CommunityStrategyFacet
  * @notice Facet containing strategy management functions for RegistryCommunity
- * @dev This facet is called via delegatecall from RegistryCommunityV0_0
+ * @dev This facet is called via delegatecall from RegistryCommunity
  *      CRITICAL: Inherits storage layout from CommunityBaseFacet
  */
 contract CommunityStrategyFacet is CommunityBaseFacet {
@@ -77,7 +77,7 @@ contract CommunityStrategyFacet is CommunityBaseFacet {
             revert StrategyExists();
         }
         enabledStrategies[_newStrategy] = true;
-        ISybilScorer sybilScorer = CVStrategyV0_0(payable(_newStrategy)).sybilScorer();
+        ISybilScorer sybilScorer = CVStrategy(payable(_newStrategy)).sybilScorer();
         if (address(sybilScorer) != address(0)) {
             sybilScorer.activateStrategy(_newStrategy);
         }

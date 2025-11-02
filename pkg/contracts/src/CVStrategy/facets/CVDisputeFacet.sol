@@ -9,7 +9,7 @@ import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Librar
 /**
  * @title CVDisputeFacet
  * @notice Facet containing dispute-related functions for CVStrategy
- * @dev This facet is called via delegatecall from CVStrategyV0_0
+ * @dev This facet is called via delegatecall from CVStrategy
  *      CRITICAL: Inherits storage layout from CVStrategyBaseFacet
  */
 contract CVDisputeFacet is CVStrategyBaseFacet {
@@ -31,7 +31,7 @@ contract CVDisputeFacet is CVStrategyBaseFacet {
     /*|--------------------------------------------|*/
     /*|              FUNCTIONS                     |*/
     /*|--------------------------------------------|*/
-    
+
     function disputeProposal(uint256 proposalId, string calldata context, bytes calldata _extraData)
         external
         payable

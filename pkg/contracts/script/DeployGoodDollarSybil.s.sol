@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 import "./BaseMultiChain.s.sol";
 import "forge-std/Script.sol";
 import {GoodDollarSybil} from "../src/GoodDollarSybil.sol";
-import {CVStrategyV0_0} from "../src/CVStrategy/CVStrategyV0_0.sol";
+import {CVStrategy} from "../src/CVStrategy/CVStrategy.sol";
 
 contract DeployGoodDollarSybil is BaseMultiChain {
     using stdJson for string;

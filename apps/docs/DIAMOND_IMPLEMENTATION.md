@@ -7,11 +7,13 @@ This branch (`diamond-implementation`) implements the **EIP-2535 Diamond Pattern
 ## Key Achievements
 
 ### Contract Size Reduction
+
 - **CVStrategy**: Reduced from **25,404 bytes** to **18,884 bytes** (~25% reduction)
 - **RegistryCommunity**: Significant size reduction through facet separation
 - All **95 tests passing** with **100% coverage**
 
 ### Code Deduplication
+
 - **CVStrategy**: Removed **~265 lines** of duplicated storage declarations
 - **RegistryCommunity**: Removed **~185 lines** of duplicated storage declarations
 - Centralized storage definitions in base facet contracts
@@ -23,13 +25,15 @@ This branch (`diamond-implementation`) implements the **EIP-2535 Diamond Pattern
 ### 1. CVStrategy Diamond Implementation
 
 **Before:**
+
 ```
 CVStrategy.sol (25,404 bytes - too large!)
 ```
 
 **After:**
+
 ```
-CVStrategyV0_0.sol (main contract with fallback)
+CVStrategy.sol (main contract with fallback)
 ├── CVStrategyBaseFacet.sol (shared storage layout)
 ├── CVAdminFacet.sol (admin functions)
 ├── CVAllocationFacet.sol (allocate/distribute)
@@ -41,31 +45,37 @@ CVStrategyV0_0.sol (main contract with fallback)
 #### CVStrategy Facets Breakdown
 
 **1. CVAdminFacet** (3 functions):
+
 - `setPoolParams()` - Configure pool parameters
 - `connectSuperfluidGDA()` - Enable Superfluid streaming
 - `disconnectSuperfluidGDA()` - Disable Superfluid streaming
 
 **2. CVAllocationFacet** (2 functions):
+
 - `allocate()` - Allocate voting power to proposals
 - `distribute()` - Distribute funds to approved proposals
 
 **3. CVDisputeFacet** (2 functions):
+
 - `disputeProposal()` - Challenge a proposal
 - `rule()` - Arbitrator ruling on disputes
 
 **4. CVPowerFacet** (3 functions):
+
 - `decreasePower()` - Reduce voting power
 - `deactivatePoints()` - Deactivate with no params
 - `deactivatePoints(address)` - Deactivate for specific address
 
 **5. CVProposalFacet** (2 functions):
+
 - `registerRecipient()` - Create new proposal
 - `cancelProposal()` - Cancel existing proposal
 
 #### Key Files Created
+
 ```
 pkg/contracts/src/CVStrategy/
-├── CVStrategyV0_0.sol (main diamond contract)
+├── CVStrategy.sol (main diamond contract)
 ├── CVStrategyBaseFacet.sol (base storage for all facets)
 ├── ICVStrategy.sol (interface)
 ├── facets/
@@ -82,8 +92,9 @@ pkg/contracts/src/CVStrategy/
 ### 2. RegistryCommunity Diamond Implementation
 
 **After:**
+
 ```
-RegistryCommunityV0_0.sol (main contract)
+RegistryCommunity.sol (main contract)
 ├── CommunityBaseFacet.sol (shared storage)
 ├── CommunityAdminFacet.sol (8 functions)
 ├── CommunityMemberFacet.sol (3 functions)
@@ -95,28 +106,34 @@ RegistryCommunityV0_0.sol (main contract)
 #### RegistryCommunity Facets Breakdown
 
 **1. CommunityAdminFacet** (8 functions):
+
 - `setStrategyTemplate`, `setCollateralVaultTemplate`, `setArchived`
 - `setBasisStakedAmount`, `setCommunityFee`, `setCouncilSafe`
 - `acceptCouncilSafe`, `setCommunityParams`
 
 **2. CommunityMemberFacet** (3 functions):
+
 - `stakeAndRegisterMember`, `unregisterMember`, `kickMember`
 
 **3. CommunityPoolFacet** (2 functions):
+
 - `createPool` (two overloads with different signatures)
 
 **4. CommunityPowerFacet** (4 functions):
+
 - `activateMemberInStrategy`, `deactivateMemberInStrategy`
 - `increasePower`, `decreasePower`
 
 **5. CommunityStrategyFacet** (5 functions):
+
 - `addStrategyByPoolId`, `addStrategy`
 - `removeStrategyByPoolId`, `removeStrategy`, `rejectPool`
 
 #### Key Files Created
+
 ```
 pkg/contracts/src/RegistryCommunity/
-├── RegistryCommunityV0_0.sol
+├── RegistryCommunity.sol
 ├── CommunityBaseFacet.sol
 └── facets/
     ├── CommunityAdminFacet.sol
@@ -152,11 +169,13 @@ pkg/contracts/src/diamonds/
 ## Critical Pattern: Storage Layout Alignment
 
 ### The Problem
+
 Diamond pattern uses `delegatecall` - all facets execute in the main contract's storage context. **Misaligned storage = catastrophic bugs!**
 
 ### The Solution: Base Facet Pattern
 
 **CVStrategyBaseFacet.sol:**
+
 ```solidity
 abstract contract CVStrategyBaseFacet is BaseStrategyUpgradeable {
     // Slots 0-105: Inherited from BaseStrategyUpgradeable
@@ -172,6 +191,7 @@ abstract contract CVStrategyBaseFacet is BaseStrategyUpgradeable {
 ```
 
 **All facets inherit from CVStrategyBaseFacet:**
+
 ```solidity
 contract CVAdminFacet is CVStrategyBaseFacet {
     // NO storage variables!
@@ -201,6 +221,7 @@ Created `pkg/contracts/scripts/verify-storage-layout.sh`:
 ```
 
 **Makefile Integration:**
+
 ```makefile
 verify-storage:
     ./scripts/verify-storage-layout.sh
@@ -223,12 +244,14 @@ deploy-prod: verify-storage  # Always verify before deployment!
 **Solution:** Post-build ABI aggregation
 
 Created `pkg/contracts/scripts/aggregate-diamond-abi.js`:
+
 ```javascript
 // Merges all facet ABIs into single JSON
-// Output: pkg/contracts/out/DiamondAggregated/CVStrategyV0_0.json
+// Output: pkg/contracts/out/DiamondAggregated/CVStrategy.json
 ```
 
 **Makefile Integration:**
+
 ```makefile
 build: contracts
     forge build --sizes
@@ -240,17 +263,19 @@ build: contracts
 **Problem:** Vercel builds failing due to missing Foundry artifacts
 
 **Solution:** Committed aggregated ABIs to git
+
 ```
 pkg/contracts/out/DiamondAggregated/
-├── CVStrategyV0_0.json (committed)
-└── RegistryCommunityV0_0.json (committed)
+├── CVStrategy.json (committed)
+└── RegistryCommunity.json (committed)
 ```
 
 **package.json changes:**
+
 ```json
 {
   "scripts": {
-    "generate": "wagmi generate",  // No longer depends on forge build
+    "generate": "wagmi generate", // No longer depends on forge build
     "postbuild": "node scripts/aggregate-diamond-abi.js"
   }
 }
@@ -265,7 +290,7 @@ pkg/contracts/out/DiamondAggregated/
 Upgrades existing CVStrategy contracts to diamond pattern:
 
 ```solidity
-1. Deploy new CVStrategyV0_0 implementation
+1. Deploy new CVStrategy implementation
 2. Deploy all 5 facets (Admin, Allocation, Dispute, Power, Proposal)
 3. Update RegistryFactory strategy template
 4. Update all RegistryCommunity strategy templates
@@ -275,6 +300,7 @@ Upgrades existing CVStrategy contracts to diamond pattern:
 ```
 
 **Now generates Safe Transaction Builder JSON:**
+
 - Creates multisig-compatible transaction batches
 - Outputs to `transaction-builder/{network}-diamond-upgrade-payload.json`
 - Compatible with Gnosis Safe Transaction Builder UI
@@ -282,8 +308,9 @@ Upgrades existing CVStrategy contracts to diamond pattern:
 ### UpgradeRegistryCommunityDiamond.s.sol
 
 Similar process for RegistryCommunity contracts:
+
 ```solidity
-1. Deploy new RegistryCommunityV0_0 implementation
+1. Deploy new RegistryCommunity implementation
 2. Deploy all 5 facets (Admin, Member, Pool, Power, Strategy)
 3. Upgrade each RegistryCommunity proxy
 4. Configure diamond cuts
@@ -296,6 +323,7 @@ Similar process for RegistryCommunity contracts:
 ### DiamondUpgradeTest.sol
 
 Comprehensive upgrade scenario testing:
+
 ```solidity
 - testUpgradeToStrictDiamondPattern()
   ├── Verify facet function calls work
@@ -311,6 +339,7 @@ Comprehensive upgrade scenario testing:
 ```
 
 **Results:**
+
 - ✅ 95 tests passing
 - ✅ 100% critical path coverage
 - ✅ CVAllocationFacet: 82.91% coverage
@@ -323,13 +352,16 @@ Comprehensive upgrade scenario testing:
 ### CLAUDE.md Additions
 
 Added comprehensive diamond pattern documentation:
+
 ```markdown
 ### Storage Layout Verification
+
 - When to verify
 - How to integrate with deployments
 - Storage safety rules
 
 ### Diamond Pattern Architecture
+
 - CVStrategy facets breakdown
 - RegistryCommunity facets breakdown
 - Storage alignment requirements
@@ -342,10 +374,12 @@ Added comprehensive diamond pattern documentation:
 ### Facet Prefix Strategy
 
 **CVStrategy facets:** `CV` prefix
+
 - CVAdminFacet, CVAllocationFacet, etc.
 - Prevents conflicts with future RegistryCommunity facets
 
 **RegistryCommunity facets:** `Community` prefix
+
 - CommunityAdminFacet, CommunityMemberFacet, etc.
 - Clear distinction from CVStrategy facets
 
@@ -395,6 +429,7 @@ d2b20398 - build: add postbuild hook for diamond ABI aggregation and fix contrac
 ## Benefits Summary
 
 ### Technical Benefits
+
 - ✅ **Contract size under 24KB limit**
 - ✅ **Modular, maintainable codebase**
 - ✅ **No storage duplication** (265+ lines saved)
@@ -402,12 +437,14 @@ d2b20398 - build: add postbuild hook for diamond ABI aggregation and fix contrac
 - ✅ **Future-proof for upgrades**
 
 ### Developer Experience
+
 - ✅ **Clear separation of concerns**
 - ✅ **Easy to add new features** (just add new facet)
 - ✅ **Better test coverage** (test facets individually)
 - ✅ **Documented patterns** in CLAUDE.md
 
 ### Production Readiness
+
 - ✅ **All tests passing**
 - ✅ **Storage layout verified**
 - ✅ **Upgrade scripts battle-tested**
@@ -421,7 +458,8 @@ d2b20398 - build: add postbuild hook for diamond ABI aggregation and fix contrac
 ### New Contract Files
 
 **CVStrategy Diamond:**
-- `src/CVStrategy/CVStrategyV0_0.sol` - Main diamond contract with `fallback()` and `diamondCut()`
+
+- `src/CVStrategy/CVStrategy.sol` - Main diamond contract with `fallback()` and `diamondCut()`
 - `src/CVStrategy/CVStrategyBaseFacet.sol` - Base contract with shared storage layout
 - `src/CVStrategy/ICVStrategy.sol` - Complete strategy interface
 - `src/CVStrategy/facets/CVAdminFacet.sol` - Admin functions (setPoolParams, Superfluid)
@@ -431,7 +469,8 @@ d2b20398 - build: add postbuild hook for diamond ABI aggregation and fix contrac
 - `src/CVStrategy/facets/CVProposalFacet.sol` - Proposal lifecycle
 
 **RegistryCommunity Diamond:**
-- `src/RegistryCommunity/RegistryCommunityV0_0.sol` - Main diamond contract
+
+- `src/RegistryCommunity/RegistryCommunity.sol` - Main diamond contract
 - `src/RegistryCommunity/CommunityBaseFacet.sol` - Base contract with shared storage
 - `src/RegistryCommunity/facets/CommunityAdminFacet.sol` - 8 admin functions
 - `src/RegistryCommunity/facets/CommunityMemberFacet.sol` - Member management
@@ -440,6 +479,7 @@ d2b20398 - build: add postbuild hook for diamond ABI aggregation and fix contrac
 - `src/RegistryCommunity/facets/CommunityStrategyFacet.sol` - Strategy management
 
 **Diamond Infrastructure:**
+
 - `src/diamonds/BaseDiamond.sol` - Base diamond implementation
 - `src/diamonds/libraries/LibDiamond.sol` - EIP-2535 diamond storage library
 - `src/diamonds/interfaces/IDiamond.sol` - Diamond interface
@@ -528,18 +568,23 @@ Slot | Variable                    | Type
 ### Common Issues
 
 **Issue: "Stack too deep" compiler error**
+
 - **Solution**: Extract logic into internal helper functions, use structs to group parameters
 
 **Issue: Storage layout mismatch**
+
 - **Solution**: Run `./scripts/verify-storage-layout.sh` and ensure all facets inherit from BaseFacet
 
 **Issue: Function selector collision**
+
 - **Solution**: Use different function names or namespaced facets (CV prefix vs Community prefix)
 
 **Issue: Frontend can't find function in ABI**
+
 - **Solution**: Run `node scripts/aggregate-diamond-abi.js` and use aggregated ABI
 
 **Issue: Upgrade fails with "function not found"**
+
 - **Solution**: Ensure `diamondCut()` was called after `upgradeTo()` to register facet selectors
 
 ---
@@ -549,6 +594,7 @@ Slot | Variable                    | Type
 ### Gas Costs
 
 Diamond pattern adds minimal overhead:
+
 - `fallback()` delegatecall: ~100 gas
 - Storage slot lookup: ~200 gas
 - **Total overhead: ~300 gas per external call**
@@ -558,14 +604,17 @@ This is negligible compared to typical function execution costs (5,000-50,000+ g
 ### Deployment Costs
 
 **Before (monolithic):**
+
 - CVStrategy deployment: ~6M gas
 
 **After (diamond):**
-- CVStrategyV0_0 deployment: ~4M gas
+
+- CVStrategy deployment: ~4M gas
 - 5 facets deployment: ~1.5M gas each = 7.5M gas
 - **Total: ~11.5M gas**
 
 **Trade-off:** Higher initial deployment cost, but:
+
 - Individual facets can be upgraded independently
 - Only changed facets need redeployment
 - Long-term maintenance cost is lower
@@ -635,16 +684,19 @@ cvStrategy.diamondCut(cuts, address(0), "");
 ## Resources
 
 ### EIP-2535 Diamond Standard
+
 - **Specification**: https://eips.ethereum.org/EIPS/eip-2535
 - **Reference Implementation**: https://github.com/mudgen/diamond
 - **Tutorial**: https://eip2535diamonds.substack.com/
 
 ### Internal Documentation
+
 - `CLAUDE.md` - Project-specific diamond patterns
 - `pkg/contracts/test/DiamondUpgradeTest.sol` - Usage examples
 - `pkg/contracts/scripts/verify-storage-layout.sh` - Storage verification
 
 ### Community Resources
+
 - **Discord**: [Gardens v2 Discord](https://discord.gg/1hive)
 - **Forum**: [1Hive Forum](https://forum.1hive.org/)
 - **GitHub**: [gardens-v2 Repository](https://github.com/1Hive/gardens-v2)
@@ -664,6 +716,7 @@ This diamond pattern implementation represents months of careful refactoring and
 - ✅ Production-ready (95 tests passing, full coverage)
 
 Special thanks to:
+
 - **Nick Mudge** for the EIP-2535 Diamond Standard
 - **1Hive Core Team** for architecture reviews
 - **OpenZeppelin** for security best practices

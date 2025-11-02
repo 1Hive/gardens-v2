@@ -2,14 +2,14 @@
 pragma solidity ^0.8.13;
 
 import "./BaseMultiChain.s.sol";
-import {CVStrategyV0_0} from "../src/CVStrategy/CVStrategyV0_0.sol";
+import {CVStrategy} from "../src/CVStrategy/CVStrategy.sol";
 import {CVAdminFacet} from "../src/CVStrategy/facets/CVAdminFacet.sol";
 import {CVAllocationFacet} from "../src/CVStrategy/facets/CVAllocationFacet.sol";
 import {CVDisputeFacet} from "../src/CVStrategy/facets/CVDisputeFacet.sol";
 import {CVPowerFacet} from "../src/CVStrategy/facets/CVPowerFacet.sol";
 import {CVProposalFacet} from "../src/CVStrategy/facets/CVProposalFacet.sol";
-import {RegistryCommunityV0_0} from "../src/RegistryCommunity/RegistryCommunityV0_0.sol";
-import {RegistryFactoryV0_0} from "../src/RegistryFactory/RegistryFactoryV0_0.sol";
+import {RegistryCommunity} from "../src/RegistryCommunity/RegistryCommunity.sol";
+import {RegistryFactory} from "../src/RegistryFactory/RegistryFactory.sol";
 import {IDiamond} from "../src/diamonds/interfaces/IDiamond.sol";
 import {ProxyOwner} from "../src/ProxyOwner.sol";
 import "forge-std/console2.sol";
@@ -34,8 +34,8 @@ contract UpgradeCVDiamond is BaseMultiChain {
 
         // 1. Deploy new implementation and facets
         console2.log("\n[1/5] Deploying new CVStrategy implementation and facets...");
-        address strategyImplementation = address(new CVStrategyV0_0());
-        console2.log("  CVStrategyV0_0 impl:", strategyImplementation);
+        address strategyImplementation = address(new CVStrategy());
+        console2.log("  CVStrategy impl:", strategyImplementation);
 
         adminFacet = new CVAdminFacet();
         console2.log("  CVAdminFacet:", address(adminFacet));
@@ -61,13 +61,12 @@ contract UpgradeCVDiamond is BaseMultiChain {
         // 2. Update RegistryFactory strategy template
         console2.log("\n[2/5] Building RegistryFactory strategy template update transaction...");
         address registryFactoryProxy = networkJson.readAddress(getKeyNetwork(".PROXIES.REGISTRY_FACTORY"));
-        RegistryFactoryV0_0 registryFactory = RegistryFactoryV0_0(payable(address(registryFactoryProxy)));
+        RegistryFactory registryFactory = RegistryFactory(payable(address(registryFactoryProxy)));
         {
             bytes memory setStrategyTemplate =
                 abi.encodeWithSelector(registryFactory.setStrategyTemplate.selector, strategyImplementation);
-            json = string(
-                abi.encodePacked(json, _createTransactionJson(registryFactoryProxy, setStrategyTemplate), ",")
-            );
+            json =
+                string(abi.encodePacked(json, _createTransactionJson(registryFactoryProxy, setStrategyTemplate), ","));
         }
 
         // 3. Update RegistryCommunity strategy templates
@@ -76,14 +75,11 @@ contract UpgradeCVDiamond is BaseMultiChain {
             networkJson.readAddressArray(getKeyNetwork(".PROXIES.REGISTRY_COMMUNITIES"));
 
         for (uint256 i = 0; i < registryCommunityProxies.length; i++) {
-            RegistryCommunityV0_0 registryCommunity =
-                RegistryCommunityV0_0(payable(address(registryCommunityProxies[i])));
+            RegistryCommunity registryCommunity = RegistryCommunity(payable(address(registryCommunityProxies[i])));
             bytes memory setStrategyTemplate =
                 abi.encodeWithSelector(registryCommunity.setStrategyTemplate.selector, strategyImplementation);
             json = string(
-                abi.encodePacked(
-                    json, _createTransactionJson(registryCommunityProxies[i], setStrategyTemplate), ","
-                )
+                abi.encodePacked(json, _createTransactionJson(registryCommunityProxies[i], setStrategyTemplate), ",")
             );
             console2.log("  Community", i + 1, "added to batch:", registryCommunityProxies[i]);
         }
@@ -92,20 +88,17 @@ contract UpgradeCVDiamond is BaseMultiChain {
         console2.log("\n[4/5] Building CVStrategy upgrade + diamond cut transactions...");
         address[] memory cvStrategyProxies = networkJson.readAddressArray(getKeyNetwork(".PROXIES.CV_STRATEGIES"));
         IDiamond.FacetCut[] memory cuts = _getFacetCuts();
-        bytes memory diamondCutCalldata = abi.encodeWithSelector(CVStrategyV0_0.diamondCut.selector, cuts, address(0), "");
+        bytes memory diamondCutCalldata = abi.encodeWithSelector(CVStrategy.diamondCut.selector, cuts, address(0), "");
 
         for (uint256 i = 0; i < cvStrategyProxies.length; i++) {
-            CVStrategyV0_0 cvStrategy = CVStrategyV0_0(payable(address(cvStrategyProxies[i])));
+            CVStrategy cvStrategy = CVStrategy(payable(address(cvStrategyProxies[i])));
 
             // 4.a - Upgrade implementation
-            bytes memory upgradeCalldata =
-                abi.encodeWithSelector(cvStrategy.upgradeTo.selector, strategyImplementation);
+            bytes memory upgradeCalldata = abi.encodeWithSelector(cvStrategy.upgradeTo.selector, strategyImplementation);
             json = string(abi.encodePacked(json, _createTransactionJson(cvStrategyProxies[i], upgradeCalldata), ","));
 
             // 4.b - Configure diamond facets
-            json = string(
-                abi.encodePacked(json, _createTransactionJson(cvStrategyProxies[i], diamondCutCalldata), ",")
-            );
+            json = string(abi.encodePacked(json, _createTransactionJson(cvStrategyProxies[i], diamondCutCalldata), ","));
 
             console2.log("  Strategy", i + 1, "added to batch:", cvStrategyProxies[i]);
         }
@@ -115,10 +108,7 @@ contract UpgradeCVDiamond is BaseMultiChain {
         console2.log("Registry Factory: %s", registryFactoryProxy);
         console2.log("Registry Communities: %s", registryCommunityProxies.length);
         console2.log("CV Strategies: %s", cvStrategyProxies.length);
-        console2.log(
-            "Total transactions: %s",
-            1 + registryCommunityProxies.length + (cvStrategyProxies.length * 2)
-        );
+        console2.log("Total transactions: %s", 1 + registryCommunityProxies.length + (cvStrategyProxies.length * 2));
 
         // Remove the last comma and close the JSON array
         json = string(abi.encodePacked(_removeLastChar(json), "]"));
@@ -197,9 +187,7 @@ contract UpgradeCVDiamond is BaseMultiChain {
      * @param safeOwner Safe owner address
      * @param networkJson Network configuration JSON
      */
-    function _writePayloadFile(string memory transactionsJson, address safeOwner, string memory networkJson)
-        internal
-    {
+    function _writePayloadFile(string memory transactionsJson, address safeOwner, string memory networkJson) internal {
         string memory payload = string.concat(
             "{",
             '"version":"1.0",',
@@ -230,10 +218,7 @@ contract UpgradeCVDiamond is BaseMultiChain {
         // Ensure folder exists and write file
         vm.createDir("transaction-builder", true);
         string memory path = string.concat(
-            vm.projectRoot(),
-            "/pkg/contracts/transaction-builder/",
-            CURRENT_NETWORK,
-            "-diamond-upgrade-payload.json"
+            vm.projectRoot(), "/pkg/contracts/transaction-builder/", CURRENT_NETWORK, "-diamond-upgrade-payload.json"
         );
 
         vm.writeFile(path, payload);

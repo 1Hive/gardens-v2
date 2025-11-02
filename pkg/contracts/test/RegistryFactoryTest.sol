@@ -2,13 +2,13 @@
 pragma solidity ^0.8.19;
 
 import "forge-std/Test.sol";
-import "../src/RegistryFactory/RegistryFactoryV0_0.sol";
-import "../src/RegistryCommunity/RegistryCommunityV0_0.sol";
+import "../src/RegistryFactory/RegistryFactory.sol";
+import "../src/RegistryCommunity/RegistryCommunity.sol";
 import "../src/interfaces/ISafe.sol";
 import {console} from "forge-std/console.sol";
 
 contract RegistryFactoryTest is Test {
-    RegistryFactoryV0_0 registryFactory;
+    RegistryFactory registryFactory;
     address gardensFeeReceiver = address(0x123);
     address registryCommunityTemplate = address(0x456);
     address strategyTemplate = address(0x789);
@@ -21,7 +21,7 @@ contract RegistryFactoryTest is Test {
     address nonProtopianOwner = address(0x444);
 
     function setUp() public {
-        registryFactory = new RegistryFactoryV0_0();
+        registryFactory = new RegistryFactory();
         registryFactory.initialize(
             owner, gardensFeeReceiver, registryCommunityTemplate, strategyTemplate, collateralVaultTemplate
         );
@@ -62,7 +62,7 @@ contract RegistryFactoryTest is Test {
 
     function testGetProtocolFee_InvalidCommunity() public {
         address invalidCommunity = address(0x555);
-        vm.expectRevert(abi.encodeWithSelector(RegistryFactoryV0_0.CommunityInvalid.selector, invalidCommunity));
+        vm.expectRevert(abi.encodeWithSelector(RegistryFactory.CommunityInvalid.selector, invalidCommunity));
         registryFactory.getProtocolFee(invalidCommunity);
     }
 

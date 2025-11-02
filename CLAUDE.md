@@ -24,18 +24,20 @@ The contract system follows a factory pattern with upgradeable proxies:
 ### Contract Hierarchy
 
 1. **RegistryFactory** (`pkg/contracts/src/RegistryFactory/`)
+
    - Diamond-based factory that creates RegistryCommunity instances
    - Manages protocol-level settings and fees
    - Entry point for creating new governance communities
 
-2. **RegistryCommunity** (`pkg/contracts/src/RegistryCommunity/RegistryCommunityV0_0.sol`)
+2. **RegistryCommunity** (`pkg/contracts/src/RegistryCommunity/RegistryCommunity.sol`)
+
    - Represents a governance community
    - Manages member registration, staking, and voting power
    - Creates and manages multiple CVStrategy pools
    - Integrates with Allo Registry for profile management
    - Uses Safe (Gnosis Safe) for council governance
 
-3. **CVStrategy** (`pkg/contracts/src/CVStrategy/CVStrategyV0_0.sol`)
+3. **CVStrategy** (`pkg/contracts/src/CVStrategy/CVStrategy.sol`)
    - Implements Conviction Voting algorithm
    - Extends Allo Protocol v2's BaseStrategy
    - Manages proposals, voting, and fund distribution
@@ -101,7 +103,7 @@ forge test --match-path pkg/contracts/test/CVStrategyTest.t.sol -vvv
 forge test --match-test testProposalCreation -vvv
 
 # Inspect contract storage layout
-forge inspect pkg/contracts/src/CVStrategy/CVStrategyV0_0.sol storageLayout --md
+forge inspect pkg/contracts/src/CVStrategy/CVStrategy.sol storageLayout --md
 
 # Format Solidity files
 forge fmt
@@ -177,18 +179,21 @@ pnpm deploy:prod
 ### Smart Contract Development
 
 **Prerequisites**: Install Foundry:
+
 ```bash
 curl -L https://foundry.paradigm.xyz | bash
 foundryup
 ```
 
 **Testing Pattern**:
+
 - Main test files in `pkg/contracts/test/`
 - Helper utilities in `pkg/contracts/test/shared/`
 - Use `CVStrategyHelpers.sol` for common test setup
 - Tests use Foundry's standard library and console logging
 
 **Contract Size Optimization**:
+
 - CVStrategy contracts are near the 24KB limit
 - Many error messages are commented out with `@todo take commented when contract size fixed with diamond`
 - Consider Diamond pattern for future size reduction
@@ -205,6 +210,7 @@ foundryup
 ### Conviction Voting Implementation
 
 The CV algorithm (`pkg/contracts/src/CVStrategy/ConvictionsUtils.sol`) calculates voting power that grows over time as tokens remain staked on a proposal. Key parameters:
+
 - **decay**: Rate at which conviction decreases when support is removed
 - **weight**: Multiplier for conviction growth
 - **maxRatio**: Maximum % of pool funds a single proposal can request
@@ -213,6 +219,7 @@ The CV algorithm (`pkg/contracts/src/CVStrategy/ConvictionsUtils.sol`) calculate
 ### Point Systems
 
 Four voting weight mechanisms in `PointSystem` enum:
+
 - **Unlimited**: 1 token = 1 vote (no cap)
 - **Fixed**: Equal voting power for all members
 - **Capped**: 1 token = 1 vote up to `maxAmount`
@@ -235,8 +242,9 @@ Four voting weight mechanisms in `PointSystem` enum:
 ### Storage Layout
 
 To inspect contract storage (important for upgrades):
+
 ```bash
-forge inspect pkg/contracts/src/CVStrategy/CVStrategyV0_0.sol storageLayout --md
+forge inspect pkg/contracts/src/CVStrategy/CVStrategy.sol storageLayout --md
 ```
 
 #### Diamond Pattern Storage Verification
@@ -266,13 +274,16 @@ make verify-storage-quick  # Skip build (faster if already compiled)
 ```
 
 **Auto-Discovery Features:**
+
 - Finds main contracts by detecting `fallback()` functions
 - Discovers all `*Facet.sol` files in `facets/` subdirectories
 - Skips `src/diamonds` directory (generic diamond utilities)
 - Skips standard diamond facets (DiamondCutFacet, DiamondLoupeFacet, OwnershipFacet)
 
 **Architecture**:
+
 - **CVStrategy**: Main contract with 5 facets (CVAdminFacet, CVAllocationFacet, CVDisputeFacet, CVPowerFacet, CVProposalFacet)
+
   - All facets inherit from `CVStrategyBaseFacet` which defines the shared storage layout
   - Eliminates ~220 lines of duplicated storage declarations
 
@@ -281,6 +292,7 @@ make verify-storage-quick  # Skip build (faster if already compiled)
   - Eliminates ~185 lines of duplicated storage declarations
 
 **When to verify**:
+
 - **Before deployments**: Use `make verify-storage` as prerequisite in deployment targets
 - After adding new storage variables to base contracts
 - Before deploying upgrades
@@ -289,6 +301,7 @@ make verify-storage-quick  # Skip build (faster if already compiled)
 
 **Integrating with deployments**:
 Add `verify-storage` as a prerequisite to deployment targets in Makefile:
+
 ```makefile
 # For production deployments (always build + verify)
 deploy-my-contract: verify-storage
@@ -302,6 +315,7 @@ deploy-local: verify-storage-quick
 This ensures storage alignment is verified (and contracts are built) before any deployment proceeds.
 
 **Storage safety rules**:
+
 1. Never reorder existing storage variables
 2. Never change variable types
 3. Always append new variables at the end (before `__gap`)
@@ -318,18 +332,21 @@ This ensures storage alignment is verified (and contracts are built) before any 
 ## Common Debugging Tips
 
 ### Contracts
+
 - Use `forge test -vvvv` for detailed trace output
 - Check storage slots for upgrade compatibility
 - Verify proxy initialization in deployment scripts
 - Monitor gas usage with `forge snapshot`
 
 ### Frontend
+
 - Check `.env` for required API keys (Alchemy, Pinata, etc.)
 - Verify subgraph queries match deployed schema version
 - Use Next.js dev tools for API route debugging
 - Check RainbowKit config for wallet connection issues
 
 ### Subgraph
+
 - Verify contract ABIs match deployed versions
 - Check event signatures in mappings
 - Use Graph Explorer for query testing

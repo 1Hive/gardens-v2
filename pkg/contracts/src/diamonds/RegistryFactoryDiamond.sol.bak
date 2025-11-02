@@ -41,7 +41,7 @@ contract RegistryFactoryDiamond is BaseDiamond {
     /*|                 STORAGE                    |*/
     /*|--------------------------------------------|*/
 
-    function createRegistry(RegistryCommunityInitializeParamsV0_0 memory params)
+    function createRegistry(RegistryCommunityInitializeParams memory params)
         public
         virtual
         returns (address _createdRegistryAddress)
@@ -52,7 +52,7 @@ contract RegistryFactoryDiamond is BaseDiamond {
         ERC1967Proxy proxy = new ERC1967Proxy(
             address(registryCommunityTemplate),
             abi.encodeWithSelector(
-                RegistryCommunityV0_0.initialize.selector,
+                RegistryCommunity.initialize.selector,
                 params,
                 strategyTemplate,
                 collateralVaultTemplate,

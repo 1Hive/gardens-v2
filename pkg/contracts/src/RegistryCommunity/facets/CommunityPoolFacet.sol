@@ -5,11 +5,11 @@ import {CommunityBaseFacet} from "../CommunityBaseFacet.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IRegistry, Metadata} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 import {CVStrategyInitializeParamsV0_2} from "../../CVStrategy/ICVStrategy.sol";
-import {CVStrategyV0_0} from "../../CVStrategy/CVStrategyV0_0.sol";
+import {CVStrategy} from "../../CVStrategy/CVStrategy.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 /// @notice Initialize parameters for the contract
-struct RegistryCommunityInitializeParamsV0_0 {
+struct RegistryCommunityInitializeParams {
     address _allo;
     IERC20 _gardenToken;
     uint256 _registerStakeAmount;
@@ -27,7 +27,7 @@ struct RegistryCommunityInitializeParamsV0_0 {
 /**
  * @title CommunityPoolFacet
  * @notice Facet containing pool creation and initialization functions for RegistryCommunity
- * @dev This facet is called via delegatecall from RegistryCommunityV0_0
+ * @dev This facet is called via delegatecall from RegistryCommunity
  *      CRITICAL: Inherits storage layout from CommunityBaseFacet
  */
 contract CommunityPoolFacet is CommunityBaseFacet {
@@ -54,9 +54,7 @@ contract CommunityPoolFacet is CommunityBaseFacet {
         address strategyProxy = address(
             new ERC1967Proxy(
                 address(strategyTemplate),
-                abi.encodeWithSelector(
-                    CVStrategyV0_0.init.selector, address(allo), collateralVaultTemplate, proxyOwner()
-                )
+                abi.encodeWithSelector(CVStrategy.init.selector, address(allo), collateralVaultTemplate, proxyOwner())
             )
         );
         (poolId, strategy) = createPool(strategyProxy, _token, _params, _metadata);
@@ -73,8 +71,7 @@ contract CommunityPoolFacet is CommunityBaseFacet {
 
         // Set up role admin hierarchy and grant strategy the admin role
         _setRoleAdmin(
-            keccak256(abi.encodePacked("ALLOWLIST", poolId)),
-            keccak256(abi.encodePacked("ALLOWLIST_ADMIN", poolId))
+            keccak256(abi.encodePacked("ALLOWLIST", poolId)), keccak256(abi.encodePacked("ALLOWLIST_ADMIN", poolId))
         );
         _grantRole(keccak256(abi.encodePacked("ALLOWLIST_ADMIN", poolId)), strategy);
     }

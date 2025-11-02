@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 import "./BaseMultiChain.s.sol";
 import "forge-std/Script.sol";
 import {SafeArbitrator} from "../src/SafeArbitrator.sol";
-import {CVStrategyV0_0, ArbitrableConfig} from "../src/CVStrategy/CVStrategyV0_0.sol";
+import {CVStrategy, ArbitrableConfig} from "../src/CVStrategy/CVStrategy.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 contract DeploySafeArbitrator is BaseMultiChain {
@@ -32,7 +32,7 @@ contract DeploySafeArbitrator is BaseMultiChain {
         // CV STRATEGIES
         //  address[] memory cvStrategyProxies = networkJson.readAddressArray(getKeyNetwork(".PROXIES.CV_STRATEGIES"));
         //  for (uint256 i = 0; i < cvStrategyProxies.length; i++) {
-        //      CVStrategyV0_0 strategy = CVStrategyV0_0(payable(address(cvStrategyProxies[i])));
+        //      CVStrategy strategy = CVStrategy(payable(address(cvStrategyProxies[i])));
         //      if (address(strategy.registryCommunity().councilSafe()) != sender) {
         //          continue;
         //      }

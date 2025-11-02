@@ -4,13 +4,13 @@ pragma solidity ^0.8.19;
 import {CommunityBaseFacet, Member} from "../CommunityBaseFacet.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {CVStrategyV0_0} from "../../CVStrategy/CVStrategyV0_0.sol";
+import {CVStrategy} from "../../CVStrategy/CVStrategy.sol";
 import {PointSystem} from "../../CVStrategy/ICVStrategy.sol";
 
 /**
  * @title CommunityPowerFacet
  * @notice Facet containing power management functions for RegistryCommunity
- * @dev This facet is called via delegatecall from RegistryCommunityV0_0
+ * @dev This facet is called via delegatecall from RegistryCommunity
  *      CRITICAL: Inherits storage layout from CommunityBaseFacet
  */
 contract CommunityPowerFacet is CommunityBaseFacet {
@@ -18,6 +18,7 @@ contract CommunityPowerFacet is CommunityBaseFacet {
     /*|--------------------------------------------|*/
     /*|              EVENTS                        |*/
     /*|--------------------------------------------|*/
+
     event MemberActivatedStrategy(address _member, address _strategy, uint256 _pointsToIncrease);
     event MemberDeactivatedStrategy(address _member, address _strategy);
     event MemberPowerIncreased(address _member, uint256 _stakedAmount);
@@ -90,10 +91,10 @@ contract CommunityPowerFacet is CommunityBaseFacet {
         uint256 totalStakedAmount = member.stakedAmount;
         uint256 pointsToIncrease = registerStakeAmount;
 
-        if (CVStrategyV0_0(payable(_strategy)).getPointSystem() == PointSystem.Quadratic) {
-            pointsToIncrease = CVStrategyV0_0(payable(_strategy)).increasePower(_member, 0);
-        } else if (CVStrategyV0_0(payable(_strategy)).getPointSystem() != PointSystem.Fixed) {
-            pointsToIncrease = CVStrategyV0_0(payable(_strategy)).increasePower(_member, totalStakedAmount);
+        if (CVStrategy(payable(_strategy)).getPointSystem() == PointSystem.Quadratic) {
+            pointsToIncrease = CVStrategy(payable(_strategy)).increasePower(_member, 0);
+        } else if (CVStrategy(payable(_strategy)).getPointSystem() != PointSystem.Fixed) {
+            pointsToIncrease = CVStrategy(payable(_strategy)).increasePower(_member, totalStakedAmount);
         }
 
         memberPowerInStrategy[_member][_strategy] = pointsToIncrease; // can be all zero
@@ -124,8 +125,7 @@ contract CommunityPowerFacet is CommunityBaseFacet {
         uint256 pointsToIncrease;
 
         for (uint256 i = 0; i < strategiesByMember[member].length; i++) {
-            pointsToIncrease =
-                CVStrategyV0_0(payable(strategiesByMember[member][i])).increasePower(member, _amountStaked);
+            pointsToIncrease = CVStrategy(payable(strategiesByMember[member][i])).increasePower(member, _amountStaked);
             if (pointsToIncrease != 0) {
                 memberPowerInStrategy[member][strategiesByMember[member][i]] += pointsToIncrease;
             }
@@ -149,7 +149,7 @@ contract CommunityPowerFacet is CommunityBaseFacet {
         gardenToken.safeTransfer(member, _amountUnstaked);
         for (uint256 i = 0; i < memberStrategies.length; i++) {
             address strategy = memberStrategies[i];
-            pointsToDecrease = CVStrategyV0_0(payable(strategy)).decreasePower(member, _amountUnstaked);
+            pointsToDecrease = CVStrategy(payable(strategy)).decreasePower(member, _amountUnstaked);
             uint256 currentPower = memberPowerInStrategy[member][memberStrategies[i]];
             if (pointsToDecrease > currentPower) {
                 revert CantDecreaseMoreThanPower(pointsToDecrease, currentPower);

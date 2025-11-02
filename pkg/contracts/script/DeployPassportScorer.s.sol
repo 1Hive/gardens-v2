@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 import "./BaseMultiChain.s.sol";
 import "forge-std/Script.sol";
 import {PassportScorer} from "../src/PassportScorer.sol";
-import {CVStrategyV0_0} from "../src/CVStrategy/CVStrategyV0_0.sol";
+import {CVStrategy} from "../src/CVStrategy/CVStrategy.sol";
 
 contract DeployPassportScorer is BaseMultiChain {
     using stdJson for string;
@@ -26,7 +26,7 @@ contract DeployPassportScorer is BaseMultiChain {
         // CV STRATEGIES
         // address[] memory cvStrategyProxies = networkJson.readAddressArray(getKeyNetwork(".PROXIES.CV_STRATEGIES"));
         // for (uint256 i = 0; i < cvStrategyProxies.length; i++) {
-        //     CVStrategyV0_0 strategy = CVStrategyV0_0(payable(address(cvStrategyProxies[i])));
+        //     CVStrategy strategy = CVStrategy(payable(address(cvStrategyProxies[i])));
         //     if (address(strategy.registryCommunity().councilSafe()) != sender) {
         //         continue;
         //     }

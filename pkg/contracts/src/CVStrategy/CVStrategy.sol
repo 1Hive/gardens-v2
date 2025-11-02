@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
 import {BaseStrategy, IAllo} from "allo-v2-contracts/strategies/BaseStrategy.sol";
-import {RegistryCommunityV0_0} from "../RegistryCommunity/RegistryCommunityV0_0.sol";
+import {RegistryCommunity} from "../RegistryCommunity/RegistryCommunity.sol";
 import {ERC165, IERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IArbitrator} from "../interfaces/IArbitrator.sol";
@@ -42,8 +42,8 @@ import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Librar
 import {LibDiamond} from "../libraries/LibDiamond.sol";
 import {IDiamondCut} from "../diamonds/interfaces/IDiamondCut.sol";
 
-/// @custom:oz-upgrades-from CVStrategyV0_0
-contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
+/// @custom:oz-upgrades-from CVStrategy
+contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     using SuperTokenV1Library for ISuperToken;
 
     /*|--------------------------------------------|*/
@@ -156,7 +156,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     ProposalType public proposalType;
     PointSystem public pointSystem;
     PointSystemConfig public pointConfig;
-    RegistryCommunityV0_0 public registryCommunity;
+    RegistryCommunity public registryCommunity;
     ICollateralVault public collateralVault;
     ISybilScorer public sybilScorer;
     mapping(uint256 => Proposal) public proposals;
@@ -195,7 +195,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         //     revert RegistryCannotBeZero();
         // }
         // Set councilsafe to whitelist admin
-        registryCommunity = RegistryCommunityV0_0(ip.registryCommunity);
+        registryCommunity = RegistryCommunity(ip.registryCommunity);
 
         proposalType = ip.proposalType;
         pointSystem = ip.pointSystem;
@@ -682,7 +682,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, ERC165 {
 
     //If we want to keep, we need a func to transfer power mapping (and more) in Registry contract -Kev
     // function setRegistryCommunity(address _registryCommunity) external onlyPoolManager(msg.sender) {
-    //     registryCommunity = RegistryCommunityV0_0(_registryCommunity);
+    //     registryCommunity = RegistryCommunity(_registryCommunity);
     //     emit RegistryUpdated(_registryCommunity);
     // }
 

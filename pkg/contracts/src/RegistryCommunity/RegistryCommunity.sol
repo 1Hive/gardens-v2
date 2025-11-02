@@ -16,7 +16,7 @@ import {FAllo} from "../interfaces/FAllo.sol";
 import {ISafe} from "../interfaces/ISafe.sol";
 import {IRegistryFactory} from "../IRegistryFactory.sol";
 import {CVStrategyInitializeParamsV0_2, PointSystem} from "../CVStrategy/ICVStrategy.sol";
-import {CVStrategyV0_0} from "../CVStrategy/CVStrategyV0_0.sol";
+import {CVStrategy} from "../CVStrategy/CVStrategy.sol";
 import {Upgrades} from "@openzeppelin/foundry/LegacyUpgrades.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {ProxyOwnableUpgrader} from "../ProxyOwnableUpgrader.sol";
@@ -42,7 +42,7 @@ import {IDiamondCut} from "../diamonds/interfaces/IDiamondCut.sol";
 /// @param _councilSafe The council safe contract address
 /// @param _communityName The community name
 /// @param _isKickEnabled Enable or able the kick feature
-struct RegistryCommunityInitializeParamsV0_0 {
+struct RegistryCommunityInitializeParams {
     address _allo;
     IERC20 _gardenToken;
     uint256 _registerStakeAmount;
@@ -78,8 +78,8 @@ struct Strategies {
     address[] strategies;
 }
 
-/// @custom:oz-upgrades-from RegistryCommunityV0_0
-contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, AccessControlUpgradeable {
+/// @custom:oz-upgrades-from RegistryCommunity
+contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, AccessControlUpgradeable {
     /*|--------------------------------------------|*/
     /*|                 EVENTS                     |*/
     /*|--------------------------------------------|*/
@@ -261,7 +261,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
     // AUDIT: acknowledged upgradeable contract hat does not protect initialize functions,
     // slither-disable-next-line unprotected-upgrade
     function initialize(
-        RegistryCommunityInitializeParamsV0_0 memory params,
+        RegistryCommunityInitializeParams memory params,
         address _strategyTemplate,
         address _collateralVaultTemplate,
         address _owner
@@ -362,7 +362,6 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         _delegateToFacet();
     }
 
-
     // Stub - delegates to CommunityPowerFacet
     function increasePower(uint256) public virtual {
         _delegateToFacet();
@@ -393,7 +392,6 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         _delegateToFacet();
     }
 
-
     // Stub - delegates to CommunityStrategyFacet
     function rejectPool(address) public virtual {
         _delegateToFacet();
@@ -403,7 +401,6 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
     function removeStrategyByPoolId(uint256) public virtual {
         _delegateToFacet();
     }
-
 
     // Stub - delegates to CommunityStrategyFacet
     function removeStrategy(address) public virtual {
@@ -465,7 +462,6 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         _delegateToFacet();
     }
 
-
     // Stub - delegates to CommunityMemberFacet
     function kickMember(address, address) public virtual {
         _delegateToFacet();
@@ -499,11 +495,10 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
     /// @param _diamondCut Array of FacetCut structs defining facet changes
     /// @param _init Address of contract to execute with delegatecall (can be address(0))
     /// @param _calldata Function call data to execute on _init address
-    function diamondCut(
-        IDiamondCut.FacetCut[] calldata _diamondCut,
-        address _init,
-        bytes calldata _calldata
-    ) external onlyOwner {
+    function diamondCut(IDiamondCut.FacetCut[] calldata _diamondCut, address _init, bytes calldata _calldata)
+        external
+        onlyOwner
+    {
         LibDiamond.diamondCut(_diamondCut, _init, _calldata);
     }
 
