@@ -21,7 +21,7 @@ import {
   InitializedCV,
   InitializedCV2,
   ProposalCreated,
-  CVStrategyV0_0 as CVStrategyContract,
+  CVStrategy as CVStrategyContract,
   SupportAdded,
   PowerIncreased,
   PowerDecreased,
@@ -39,9 +39,9 @@ import {
   SuperfluidTokenUpdated,
   SuperfluidGDAConnected,
   SuperfluidGDADisconnected
-} from "../../generated/templates/CVStrategyV0_0/CVStrategyV0_0";
+} from "../../generated/templates/CVStrategy/CVStrategy";
 
-import { Allo as AlloContract } from "../../generated/templates/CVStrategyV0_0/Allo";
+import { Allo as AlloContract } from "../../generated/templates/CVStrategy/Allo";
 
 import {
   Address,

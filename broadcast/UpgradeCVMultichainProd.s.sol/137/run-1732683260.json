@@ -3,7 +3,7 @@
     {
       "hash": "0x63ccf1b9ec32808474c706fb79bc3db70291d3451b60c8fce4f8fd5f0d7836d8",
       "transactionType": "CREATE",
-      "contractName": "RegistryCommunityV0_0",
+      "contractName": "RegistryCommunity",
       "contractAddress": "0xdcede1ccb12b9910ba03c3629b4a7d2d3d60a952",
       "function": null,
       "arguments": null,

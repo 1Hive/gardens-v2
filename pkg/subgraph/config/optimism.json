@@ -3,7 +3,7 @@
     "chainId": 10,
     "dataSources": [
       {
-        "name": "RegistryFactoryV0_0",
+        "name": "RegistryFactory",
         "startBlock": 125112015,
         "address": "0x1fac47cf25f1ca9f20ba366099d26b28401f5715",
         "customTemplate": "registryFactory"

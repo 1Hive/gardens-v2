@@ -3,7 +3,7 @@ import "viem/window";
 import { createWalletClient, custom } from "viem";
 import { localhost } from "viem/chains";
 
-import cvStrategyJson from "../../../pkg/contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json" assert { type: "json" };
+import cvStrategyJson from "../../../pkg/contracts/out/CVStrategy.sol/CVStrategy.json" assert { type: "json" };
 
 type CVStrategyJson = typeof cvStrategyJson;
 

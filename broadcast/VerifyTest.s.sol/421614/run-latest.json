@@ -3,7 +3,7 @@
     {
       "hash": "0xc2f87ad877773fc66a2a9192c6c351c87f18e57f675f35365db818d2585a53fb",
       "transactionType": "CREATE",
-      "contractName": "RegistryFactoryV0_0",
+      "contractName": "RegistryFactory",
       "contractAddress": "0x42fc79c53a3cb7c41e90a5b5ed37b9157710bfdf",
       "function": null,
       "arguments": null,
