@@ -3,7 +3,7 @@
     {
       "hash": "0x1bb2ff5b3a62597521ecaddc48217968d6d036ffd21786ead4764942b1522011",
       "transactionType": "CREATE",
-      "contractName": "CVStrategyV0_0",
+      "contractName": "CVStrategy",
       "contractAddress": "0x9676baf40bf310e7511769ae8ec8f055c1864e70",
       "function": null,
       "arguments": null,

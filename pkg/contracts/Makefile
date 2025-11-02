@@ -7,8 +7,38 @@ include .env
 # create RPC_URL_LOCALHOST variable
 RPC_URL_LOCALHOST = http://127.0.0.1:8545
 # print RPC_URL
-print : 
+print :
 	@echo $(RPC_URL)
+
+# Aggregate diamond ABIs (combines main contract + all facets into single ABI)
+aggregate-abi:
+	@echo "📦 Aggregating diamond ABIs..."
+	@node scripts/aggregate-diamond-abi.js
+	@echo "✅ ABI aggregation complete"
+
+# Aggregate ABIs with verbose output
+aggregate-abi-verbose:
+	@echo "📦 Aggregating diamond ABIs (verbose mode)..."
+	@node scripts/aggregate-diamond-abi.js --verbose
+	@echo "✅ ABI aggregation complete"
+
+# Verify diamond storage layouts (with build)
+verify-storage:
+	@echo "🔍 Verifying diamond storage layouts..."
+	@./scripts/verify-storage-layout.sh || (echo "❌ Storage verification FAILED! Fix storage alignment before deploying." && exit 1)
+	@echo "✅ Storage verification passed"
+
+# Verify diamond storage layouts (skip build - faster, assumes already compiled)
+verify-storage-quick:
+	@echo "🔍 Verifying diamond storage layouts (quick mode)..."
+	@./scripts/verify-storage-layout.sh --skip-build || (echo "❌ Storage verification FAILED! Fix storage alignment before deploying." && exit 1)
+	@echo "✅ Storage verification passed"
+
+# Verify diamond storage layouts with verbose output (shows detailed differences)
+verify-storage-verbose:
+	@echo "🔍 Verifying diamond storage layouts (verbose mode)..."
+	@./scripts/verify-storage-layout.sh --verbose || (echo "❌ Storage verification FAILED! Fix storage alignment before deploying." && exit 1)
+	@echo "✅ Storage verification passed"
 
 ### LOCLAHOST ###
 
@@ -108,14 +138,14 @@ deploy-token-opsep:
 	--chain-id 11155420 \
 	--verify
 
-fork-testnet:
+fork-testnet-opsep:
 	anvil --host=0.0.0.0 -f $(RPC_URL_OP_TESTNET)
 
 deploy-verify-opsep: 
 	-forge verify-contract \
   --rpc-url $(RPC_URL_OP_TESTNET) \
   0xd7b72fcb6a4e2857685175f609d1498ff5392e46 \
-  /home/corantin/Documents/GitHub/gardens-v2/main/pkg/contracts/src/RegistryFactoryV0_0.sol:RegistryFactoryV0_0 \
+  /home/corantin/Documents/GitHub/gardens-v2/main/pkg/contracts/src/RegistryFactory.sol:RegistryFactory \
 	--etherscan-api-key $(OPTIMISM_API_KEY)
 
 deploy-opsep: 
@@ -131,7 +161,7 @@ deploy-opsep:
 	--verify \
 	-vv
 
-upgrade-opsep: 
+upgrade-opsep:
 	-forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
 	--rpc-url $(RPC_URL_OP_TESTNET) \
 	--sig "run(string)" 'opsepolia' \
@@ -142,7 +172,63 @@ upgrade-opsep:
 	--broadcast \
 	--via-ir \
 	--verify \
-	-vvv 
+	-vvv
+
+upgrade-diamond-opsep: verify-storage
+	-forge script script/UpgradeCVDiamond.s.sol:UpgradeCVDiamond \
+	--rpc-url $(RPC_URL_OP_TESTNET) \
+	--sig "run(string)" 'opsepolia' \
+	--account pkGarden \
+	--etherscan-api-key $(OPTIMISM_API_KEY) \
+	--chain-id 11155420 \
+	--ffi \
+	--broadcast \
+	--via-ir \
+	--verify \
+	-vvv
+
+upgrade-community-diamond-opsep: verify-storage
+	-forge script script/UpgradeRegistryCommunityDiamond.s.sol:UpgradeRegistryCommunityDiamond \
+	--rpc-url $(RPC_URL_OP_TESTNET) \
+	--sig "run(string)" 'opsepolia' \
+	--account pkGarden \
+	--etherscan-api-key $(OPTIMISM_API_KEY) \
+	--chain-id 11155420 \
+	--ffi \
+	--broadcast \
+	--via-ir \
+	--verify \
+	-vvv
+
+verify-diamond-blockscout-opsep:
+	-forge script script/UpgradeCVDiamond.s.sol:UpgradeCVDiamond \
+	--rpc-url $(RPC_URL_OP_TESTNET) \
+	--sig "run(string)" 'opsepolia' \
+	--account pkGarden \
+	--verifier blockscout \
+	--verifier-url https://optimism.blockscout.com/api/ \
+	--chain-id 11155420 \
+	--ffi \
+	--verify \
+	--via-ir \
+	--slow
+
+verify-community-diamond-blockscout-opsep:
+	-forge script script/UpgradeRegistryCommunityDiamond.s.sol:UpgradeRegistryCommunityDiamond \
+	--rpc-url $(RPC_URL_OP_TESTNET) \
+	--sig "run(string)" 'opsepolia' \
+	--account pkGarden \
+	--verifier blockscout \
+	--verifier-url https://optimism.blockscout.com/api/ \
+	--chain-id 11155420 \
+	--ffi \
+	--verify \
+	--via-ir \
+	--slow
+
+upgrade-and-verify-diamond-opsep: upgrade-diamond-opsep verify-diamond-blockscout-opsep
+
+upgrade-and-verify-community-diamond-opsep: upgrade-community-diamond-opsep verify-community-diamond-blockscout-opsep
 
 verify-blockscout-opsep: 
 	-forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
@@ -222,14 +308,14 @@ deploy-or-upgrade-good-dollar-sybil-opsep:
 
 ### ARBITRUM SEPOLIA ###
 
-fork-testnet:
+fork-testnet-arbsep:
 	anvil --host=0.0.0.0 -f $(RPC_URL_ARB_TESTNET)
 
 deploy-verify-arbsep: 
 	-forge verify-contract \
   --rpc-url $(RPC_URL_ARB_TESTNET) \
   0xd7b72fcb6a4e2857685175f609d1498ff5392e46 \
-  /home/corantin/Documents/GitHub/gardens-v2/main/pkg/contracts/src/RegistryFactoryV0_0.sol:RegistryFactoryV0_0 \
+  /home/corantin/Documents/GitHub/gardens-v2/main/pkg/contracts/src/RegistryFactory.sol:RegistryFactory \
 	--etherscan-api-key $(ETHERSCAN_API_KEY)
 
 deploy-arbsep: 
@@ -887,7 +973,7 @@ deploy-or-upgrade-if-exists-safe-arbitrator-gnosis:
 verify-tenderly-gnosis: 
 	-forge verify-contract \
   0x853c80cce43c2f37d60c3679abc9966a346787f4 \
-  CVStrategyV0_0 \
+  CVStrategy \
   --etherscan-api-key ZVbLp2Jg48fSiv9gNsqjjg2iEAmYwHO1 \
   --verifier-url https://api.tenderly.co/api/v1/account/Gossman/project/project/etherscan/verify/network/100/public \
   --watch \

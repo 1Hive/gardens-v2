@@ -1,32 +1,35 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.19;
 
-import {RegistryCommunityV0_0} from "../RegistryCommunity/RegistryCommunityV0_0.sol";
-import { PointSystem } from "./ICVStrategy.sol";
+import {RegistryCommunity} from "../RegistryCommunity/RegistryCommunity.sol";
+import {PointSystem} from "./ICVStrategy.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
-
-// This contract is a utility for managing power-related functionalities.   
+// This contract is a utility for managing power-related functionalities.
 library PowerManagementUtils {
-
     function increasePower(
-        RegistryCommunityV0_0 _registryCommunity,
+        RegistryCommunity _registryCommunity,
         address _member,
         uint256 _amountToStake,
         PointSystem _pointSystem,
         uint256 _pointConfigMaxAmount
-    ) external view returns (uint256 pointsToIncrease) {
+    ) external returns (uint256 pointsToIncrease) {
         if (_pointSystem == PointSystem.Unlimited) {
             pointsToIncrease = _amountToStake; // from increasePowerUnlimited(_amountToUnstake)
         } else if (_pointSystem == PointSystem.Capped) {
-            pointsToIncrease = increasePowerCapped(_registryCommunity,_member, _amountToStake,_pointConfigMaxAmount);
+            pointsToIncrease = increasePowerCapped(_registryCommunity, _member, _amountToStake, _pointConfigMaxAmount);
         } else if (_pointSystem == PointSystem.Quadratic) {
-            pointsToIncrease = increasePowerQuadratic(_registryCommunity,_member, _amountToStake);
+            pointsToIncrease = increasePowerQuadratic(_registryCommunity, _member, _amountToStake);
         }
     }
 
-    function increasePowerCapped(RegistryCommunityV0_0 _registryCommunity, address _member, uint256 _amountToStake,uint256 _pointConfigMaxAmount) internal view returns (uint256) {
+    function increasePowerCapped(
+        RegistryCommunity _registryCommunity,
+        address _member,
+        uint256 _amountToStake,
+        uint256 _pointConfigMaxAmount
+    ) internal returns (uint256) {
         // console.log("POINTS TO INCREASE", _amountToStake);
         uint256 memberPower = _registryCommunity.getMemberPowerInStrategy(_member, address(this));
         // console.log("MEMBERPOWER", memberPower);
@@ -38,7 +41,10 @@ library PowerManagementUtils {
         return _amountToStake;
     }
 
-    function increasePowerQuadratic(RegistryCommunityV0_0 _registryCommunity, address _member, uint256 _amountToStake) internal view returns (uint256) {
+    function increasePowerQuadratic(RegistryCommunity _registryCommunity, address _member, uint256 _amountToStake)
+        internal
+        returns (uint256)
+    {
         uint256 totalStake = _registryCommunity.getMemberStakedAmount(_member) + _amountToStake;
 
         uint256 decimal = 18;
@@ -55,17 +61,17 @@ library PowerManagementUtils {
         return pointsToIncrease;
     }
 
-  function decreasePower(
-        RegistryCommunityV0_0 _registryCommunity,
+    function decreasePower(
+        RegistryCommunity _registryCommunity,
         address _member,
         uint256 _amountToUnstake,
         PointSystem _pointSystem,
         uint256 _pointConfigMaxAmount
-    ) external view returns (uint256 pointsToDecrease) {
-    if (_pointSystem == PointSystem.Unlimited) {
+    ) external returns (uint256 pointsToDecrease) {
+        if (_pointSystem == PointSystem.Unlimited) {
             pointsToDecrease = _amountToUnstake;
         } else if (_pointSystem == PointSystem.Quadratic) {
-            pointsToDecrease = decreasePowerQuadratic(_registryCommunity,_member, _amountToUnstake);
+            pointsToDecrease = decreasePowerQuadratic(_registryCommunity, _member, _amountToUnstake);
         } else if (_pointSystem == PointSystem.Capped) {
             if (_registryCommunity.getMemberPowerInStrategy(_member, address(this)) < _pointConfigMaxAmount) {
                 pointsToDecrease = _amountToUnstake;
@@ -75,7 +81,11 @@ library PowerManagementUtils {
             }
         }
     }
-    function decreasePowerQuadratic(RegistryCommunityV0_0 _registryCommunity, address _member, uint256 _amountToUnstake) internal view returns (uint256) {
+
+    function decreasePowerQuadratic(RegistryCommunity _registryCommunity, address _member, uint256 _amountToUnstake)
+        internal
+        returns (uint256)
+    {
         uint256 decimal = 18;
         try ERC20(address(_registryCommunity.gardenToken())).decimals() returns (uint8 _decimal) {
             decimal = uint256(_decimal);

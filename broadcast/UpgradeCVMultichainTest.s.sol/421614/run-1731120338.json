@@ -3,7 +3,7 @@
     {
       "hash": "0xf367da304cd463dd5fc062b6ade9907c33aaedce87eed49ac4a5b7e903ae9091",
       "transactionType": "CREATE",
-      "contractName": "RegistryFactoryV0_0",
+      "contractName": "RegistryFactory",
       "contractAddress": "0xef127ec13275ed6870a429632445d79c24573b5d",
       "function": null,
       "arguments": null,
@@ -21,7 +21,7 @@
     {
       "hash": "0x8c24de6b035e42ffb19cc799ef3c32d04f09859136a30ec9d8ad759e1309004e",
       "transactionType": "CREATE",
-      "contractName": "RegistryCommunityV0_0",
+      "contractName": "RegistryCommunity",
       "contractAddress": "0xd25f193e4c2208a806cb8a5956a407fcf8f157de",
       "function": null,
       "arguments": null,
@@ -39,7 +39,7 @@
     {
       "hash": "0x943e0f3329f86e5a0aef5b23e02aa0c2bdb6aa76dfc10cb75502d44cd4dfc8cf",
       "transactionType": "CREATE",
-      "contractName": "CVStrategyV0_0",
+      "contractName": "CVStrategy",
       "contractAddress": "0xfa064c229128b3a2608bf3bd94719f81e8538790",
       "function": null,
       "arguments": null,

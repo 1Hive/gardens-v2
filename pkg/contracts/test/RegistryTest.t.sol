@@ -21,22 +21,22 @@
 // import {IArbitrator} from "../src/interfaces/IArbitrator.sol";
 // import {GV2ERC20} from "../script/GV2ERC20.sol";
 // import {GasHelpers2} from "./shared/GasHelpers2.sol";
-// import {RegistryFactoryV0_0} from "../src/RegistryFactory/RegistryFactoryV0_0.sol";
+// import {RegistryFactory} from "../src/RegistryFactory/RegistryFactory.sol";
 // import {RegistryFactoryV0_1} from "../src/RegistryFactory/RegistryFactoryV0_1.sol";
 // import {
-//     CVStrategyV0_0,
+//     CVStrategy,
 //     PointSystem,
 //     ProposalType,
 //     ArbitrableConfig,
 //     PointSystemConfig
-// } from "../src/CVStrategy/CVStrategyV0_0.sol";
+// } from "../src/CVStrategy/CVStrategy.sol";
 // import {CollateralVault} from "../src/CollateralVault.sol";
 // import {SafeArbitrator} from "../src/SafeArbitrator.sol";
 // import {
-//     RegistryCommunityV0_0,
+//     RegistryCommunity,
 //     CommunityParams,
-//     RegistryCommunityInitializeParamsV0_0
-// } from "../src/RegistryCommunity/RegistryCommunityV0_0.sol";
+//     RegistryCommunityInitializeParams
+// } from "../src/RegistryCommunity/RegistryCommunity.sol";
 // import {ISafe as Safe, SafeProxyFactory, Enum} from "../src/interfaces/ISafe.sol";
 // import {SafeSetup} from "./shared/SafeSetup.sol";
 
@@ -59,7 +59,7 @@
 // // @dev Run forge test --mc RegistryTest -vvvvv
 
 // contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, Errors, GasHelpers2, SafeSetup {
-//     CVStrategyV0_0 public strategy;
+//     CVStrategy public strategy;
 //     uint256 public poolId;
 //     IArbitrator safeArbitrator;
 //     GV2ERC20 public token;
@@ -75,9 +75,9 @@
 
 //     // Metadata public metadata = Metadata({protocol: 1, pointer: "strategy pointer"});
 
-//     RegistryFactoryV0_0 internal registryFactory;
-//     RegistryCommunityV0_0 internal registryCommunity;
-//     RegistryCommunityV0_0 internal nonKickableCommunity;
+//     RegistryFactory internal registryFactory;
+//     RegistryCommunity internal registryCommunity;
+//     RegistryCommunity internal nonKickableCommunity;
 
 //     address gardenOwner = makeAddr("communityGardenOwner");
 //     address gardenMember = makeAddr("communityGardenMember");
@@ -107,9 +107,9 @@
 //         //        strategy = address(new CVMockStrategy(address(allo())));
 
 //         // ERC1967Proxy strategyProxy = new ERC1967Proxy(
-//         //     address(new CVStrategyV0_0()),
+//         //     address(new CVStrategy()),
 //         //     abi.encodeWithSelector(
-//         //         CVStrategyV0_0.init.selector, address(allo()), address(new CollateralVault()), pool_admin()
+//         //         CVStrategy.init.selector, address(allo()), address(new CollateralVault()), pool_admin()
 //         //     )
 //         // );
 
@@ -131,25 +131,25 @@
 //         vm.stopPrank();
 //         vm.startPrank(gardenOwner);
 //         ERC1967Proxy proxy = new ERC1967Proxy(
-//             address(new RegistryFactoryV0_0()),
+//             address(new RegistryFactory()),
 //             abi.encodeWithSelector(
-//                 RegistryFactoryV0_0.initialize.selector,
+//                 RegistryFactory.initialize.selector,
 //                 gardenOwner,
 //                 address(protocolFeeReceiver),
-//                 address(new RegistryCommunityV0_0()),
-//                 address(new CVStrategyV0_0()),
+//                 address(new RegistryCommunity()),
+//                 address(new CVStrategy()),
 //                 address(new CollateralVault())
 //             )
 //         );
 
-//         registryFactory = RegistryFactoryV0_0(address(proxy));
+//         registryFactory = RegistryFactory(address(proxy));
 
-//         // registryFactory = new RegistryFactoryV0_0();
+//         // registryFactory = new RegistryFactory();
 //         // _registryFactory().setReceiverAddress(address(protocolFeeReceiver));
 
 //         vm.stopPrank();
 
-//         RegistryCommunityInitializeParamsV0_0 memory params;
+//         RegistryCommunityInitializeParams memory params;
 //         params._allo = address(allo());
 //         params._gardenToken = IERC20(address(token));
 //         params._registerStakeAmount = MINIMUM_STAKE;
@@ -160,7 +160,7 @@
 
 //         params._isKickEnabled = true;
 
-//         registryCommunity = RegistryCommunityV0_0(registryFactory.createRegistry(params));
+//         registryCommunity = RegistryCommunity(registryFactory.createRegistry(params));
 //         ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
 //         (uint256 returnedPoolId, address strategyProxy) = registryCommunity.createPool(
 //             NATIVE,
@@ -177,7 +177,7 @@
 //             ),
 //             metadata
 //         );
-//         strategy = CVStrategyV0_0(payable(strategyProxy));
+//         strategy = CVStrategy(payable(strategyProxy));
 //         poolId = returnedPoolId;
 //         assertEq(registryFactory.nonce(), 1, "nonce before upgrade");
 
@@ -216,7 +216,7 @@
 
 //         params._isKickEnabled = false;
 
-//         nonKickableCommunity = RegistryCommunityV0_0(registryFactory.createRegistry(params));
+//         nonKickableCommunity = RegistryCommunity(registryFactory.createRegistry(params));
 //     }
 
 //     function createCutsFactory() public returns (IDiamond.FacetCut[] memory cuts) {
@@ -295,15 +295,15 @@
 //         );
 //     }
 
-//     function _registryCommunity() internal view returns (RegistryCommunityV0_0) {
+//     function _registryCommunity() internal view returns (RegistryCommunity) {
 //         return registryCommunity;
 //     }
 
-//     function _registryFactory() internal view returns (RegistryFactoryV0_0) {
+//     function _registryFactory() internal view returns (RegistryFactory) {
 //         return registryFactory;
 //     }
 
-//     function _nonKickableCommunity() internal view returns (RegistryCommunityV0_0) {
+//     function _nonKickableCommunity() internal view returns (RegistryCommunity) {
 //         return nonKickableCommunity;
 //     }
 
@@ -388,7 +388,7 @@
 //         _registryFactory().setProtocolFee(address(registryCommunity), 2);
 //         _registryFactory().setCommunityValidity(address(registryCommunity), false);
 //         vm.expectRevert(
-//             abi.encodeWithSelector(RegistryFactoryV0_0.CommunityInvalid.selector, address(registryCommunity))
+//             abi.encodeWithSelector(RegistryFactory.CommunityInvalid.selector, address(registryCommunity))
 //         );
 //         _registryFactory().getProtocolFee(address(registryCommunity));
 //         vm.stopPrank();
@@ -426,7 +426,7 @@
 //             metadata
 //         );
 //         // poolId = _poolId;
-//         CVStrategyV0_0 fixedStrategy = CVStrategyV0_0(payable(strategyProxy));
+//         CVStrategy fixedStrategy = CVStrategy(payable(strategyProxy));
 
 //         vm.stopPrank();
 
@@ -473,7 +473,7 @@
 //             ),
 //             metadata
 //         );
-//         CVStrategyV0_0 fixedStrategy = CVStrategyV0_0(payable(strategyProxy));
+//         CVStrategy fixedStrategy = CVStrategy(payable(strategyProxy));
 
 //         vm.stopPrank();
 
@@ -557,7 +557,7 @@
 //             ),
 //             metadata
 //         );
-//         CVStrategyV0_0 cappedStrategy = CVStrategyV0_0(payable(strategyProxy));
+//         CVStrategy cappedStrategy = CVStrategy(payable(strategyProxy));
 
 //         vm.stopPrank();
 //         vm.startPrank(address(councilSafe));
@@ -611,7 +611,7 @@
 //             ),
 //             metadata
 //         );
-//         CVStrategyV0_0 quadraticStrategy = CVStrategyV0_0(payable(strategyProxy));
+//         CVStrategy quadraticStrategy = CVStrategy(payable(strategyProxy));
 //         vm.stopPrank();
 
 //         vm.startPrank(address(councilSafe));
@@ -670,7 +670,7 @@
 //             ),
 //             metadata
 //         );
-//         CVStrategyV0_0 quadraticStrategy = CVStrategyV0_0(payable(strategyProxy));
+//         CVStrategy quadraticStrategy = CVStrategy(payable(strategyProxy));
 
 //         vm.stopPrank();
 //         vm.startPrank(address(councilSafe));
@@ -773,7 +773,7 @@
 //             ),
 //             metadata
 //         );
-//         CVStrategyV0_0 quadraticStrategy = CVStrategyV0_0(payable(strategyProxy));
+//         CVStrategy quadraticStrategy = CVStrategy(payable(strategyProxy));
 //         console.log("PoolId: %s", poolId);
 //         vm.stopPrank();
 //         vm.startPrank(address(councilSafe));
@@ -886,7 +886,7 @@
 //             registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
 //             registryCommunity.registerStakeAmount()
 //         );
-//         // vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.DecreaseUnderMinimum.selector));
+//         // vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.DecreaseUnderMinimum.selector));
 //         vm.stopPrank();
 //     }
 
@@ -921,7 +921,7 @@
 //             registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
 //             registryCommunity.registerStakeAmount()
 //         );
-//         // vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.DecreaseUnderMinimum.selector));
+//         // vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.DecreaseUnderMinimum.selector));
 //         vm.stopPrank();
 //     }
 
@@ -949,7 +949,7 @@
 //             ),
 //             metadata
 //         );
-//         CVStrategyV0_0 allowlistStrategy = CVStrategyV0_0(payable(strategyProxy));
+//         CVStrategy allowlistStrategy = CVStrategy(payable(strategyProxy));
 //         vm.stopPrank();
 
 //         vm.startPrank(address(councilSafe));
@@ -993,7 +993,7 @@
 //             ),
 //             metadata
 //         );
-//         CVStrategyV0_0 allowlistStrategy = CVStrategyV0_0(payable(strategyProxy));
+//         CVStrategy allowlistStrategy = CVStrategy(payable(strategyProxy));
 //         vm.stopPrank();
 
 //         vm.startPrank(address(councilSafe));
@@ -1004,7 +1004,7 @@
 //         vm.startPrank(gardenOwner);
 //         token.approve(address(registryCommunity), STAKE_WITH_FEES);
 //         _registryCommunity().stakeAndRegisterMember("");
-//         vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.UserCannotExecuteAction.selector));
+//         vm.expectRevert(abi.encodeWithSelector(CVStrategy.UserCannotExecuteAction.selector));
 //         allowlistStrategy.activatePoints();
 //         vm.stopPrank();
 
@@ -1028,7 +1028,7 @@
 //         for (uint256 i = 0; i < limit; i++) {
 //             allowlist[i] = address(uint160(uint256(keccak256(abi.encodePacked(i)))));
 //         }
-//         vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.AllowlistTooBig.selector, limit));
+//         vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.AllowlistTooBig.selector, limit));
 //         registryCommunity.createPool(
 //             NATIVE,
 //             getParams(
@@ -1093,7 +1093,7 @@
 //         vm.startPrank(gardenOwner);
 //         token.approve(address(registryCommunity), STAKE_WITH_FEES);
 //         _registryCommunity().stakeAndRegisterMember("");
-//         vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.UserCannotExecuteAction.selector));
+//         vm.expectRevert(abi.encodeWithSelector(CVStrategy.UserCannotExecuteAction.selector));
 //         strategy.activatePoints();
 //         vm.stopPrank();
 //     }
@@ -1120,7 +1120,7 @@
 //         // gardenMember isn't in allowlist, so should revert
 //         vm.startPrank(gardenMember);
 //         token.approve(address(registryCommunity), 350 * DECIMALS);
-//         vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.UserCannotExecuteAction.selector));
+//         vm.expectRevert(abi.encodeWithSelector(CVStrategy.UserCannotExecuteAction.selector));
 //         _registryCommunity().increasePower(350 * DECIMALS);
 //         vm.stopPrank();
 //     }
@@ -1148,7 +1148,7 @@
 //             ),
 //             metadata
 //         );
-//         CVStrategyV0_0 allowlistStrategy = CVStrategyV0_0(payable(strategyProxy));
+//         CVStrategy allowlistStrategy = CVStrategy(payable(strategyProxy));
 //         vm.stopPrank();
 
 //         vm.startPrank(address(councilSafe));
@@ -1165,7 +1165,7 @@
 //         vm.startPrank(gardenOwner);
 //         token.approve(address(registryCommunity), STAKE_WITH_FEES);
 //         _registryCommunity().stakeAndRegisterMember("");
-//         vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.UserCannotExecuteAction.selector));
+//         vm.expectRevert(abi.encodeWithSelector(CVStrategy.UserCannotExecuteAction.selector));
 //         allowlistStrategy.activatePoints();
 //         vm.stopPrank();
 //     }
@@ -1187,7 +1187,7 @@
 //             ),
 //             metadata
 //         );
-//         CVStrategyV0_0 quadraticStrategy = CVStrategyV0_0(payable(strategyProxy));
+//         CVStrategy quadraticStrategy = CVStrategy(payable(strategyProxy));
 //         vm.stopPrank();
 
 //         vm.startPrank(address(councilSafe));
@@ -1219,7 +1219,7 @@
 //         sqrtValue = 8 * DECIMALS;
 //         assertEq(registryCommunity.getMemberPowerInStrategy(gardenMember, address(quadraticStrategy)), sqrtValue);
 
-//         vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.DecreaseUnderMinimum.selector));
+//         vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.DecreaseUnderMinimum.selector));
 //         _registryCommunity().decreasePower(50 * DECIMALS);
 //         vm.stopPrank();
 //     }
@@ -1267,7 +1267,7 @@
 //         _nonKickableCommunity().stakeAndRegisterMember("");
 //         vm.stopPrank();
 //         vm.startPrank(address(councilSafe));
-//         vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.KickNotEnabled.selector));
+//         vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.KickNotEnabled.selector));
 //         _nonKickableCommunity().kickMember(gardenMember, address(councilSafe));
 //         vm.stopPrank();
 //         stopMeasuringGas();
@@ -1279,7 +1279,7 @@
 //         vm.startPrank(gardenMember);
 //         token.approve(address(registryCommunity), STAKE_WITH_FEES);
 //         _registryCommunity().stakeAndRegisterMember("");
-//         vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.StrategyDisabled.selector));
+//         vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.StrategyDisabled.selector));
 //         strategy.activatePoints();
 //         vm.stopPrank();
 //     }
@@ -1289,13 +1289,13 @@
 
 //         vm.startPrank(address(councilSafe));
 //         _registryCommunity().addStrategy(address(strategy));
-//         vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.StrategyExists.selector));
+//         vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.StrategyExists.selector));
 //         _registryCommunity().addStrategy(address(strategy));
 //         vm.stopPrank();
 //     }
 
 //     function test_revert_initialize_zeroStake() public {
-//         RegistryCommunityInitializeParamsV0_0 memory params;
+//         RegistryCommunityInitializeParams memory params;
 //         params._allo = address(allo());
 //         params._gardenToken = IERC20(address(token));
 //         params._registerStakeAmount = 0;
@@ -1304,8 +1304,8 @@
 //         params._feeReceiver = address(daoFeeReceiver);
 //         params._councilSafe = payable(address(_councilSafe()));
 //         params._isKickEnabled = true;
-//         vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.ValueCannotBeZero.selector));
-//         registryCommunity = RegistryCommunityV0_0(registryFactory.createRegistry(params));
+//         vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.ValueCannotBeZero.selector));
+//         registryCommunity = RegistryCommunity(registryFactory.createRegistry(params));
 //     }
 
 //     function test_revert_deactivateMemberInStrategyCaller() public {
@@ -1317,7 +1317,7 @@
 
 //         _registryCommunity().stakeAndRegisterMember("");
 
-//         vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.SenderNotStrategy.selector));
+//         vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.SenderNotStrategy.selector));
 //         _registryCommunity().deactivateMemberInStrategy(gardenMember, address(strategy));
 
 //         vm.stopPrank();
@@ -1332,7 +1332,7 @@
 //         _registryCommunity().stakeAndRegisterMember("");
 //         vm.stopPrank();
 //         vm.startPrank(address(strategy));
-//         vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.UserAlreadyDeactivated.selector));
+//         vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.UserAlreadyDeactivated.selector));
 //         _registryCommunity().deactivateMemberInStrategy(gardenMember, address(strategy));
 //         vm.stopPrank();
 //         stopMeasuringGas();
@@ -1340,7 +1340,7 @@
 
 //     function test_revertIncreasePower() public {
 //         vm.startPrank(gardenMember);
-//         vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.UserNotInRegistry.selector));
+//         vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.UserNotInRegistry.selector));
 //         _registryCommunity().increasePower(20 * DECIMALS);
 //     }
 
@@ -1360,7 +1360,7 @@
 //             registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
 //             registryCommunity.getMemberStakedAmount(gardenMember)
 //         );
-//         vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.DecreaseUnderMinimum.selector));
+//         vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.DecreaseUnderMinimum.selector));
 //         _registryCommunity().decreasePower(101 * DECIMALS);
 
 //         //Test if decreasing by 100 doesn't revert as it shouldn't
@@ -1372,7 +1372,7 @@
 //     function test_revertKickUnregisteredMember() public {
 //         startMeasuringGas("Registering and kicking member");
 //         vm.startPrank(address(councilSafe));
-//         vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.UserNotInRegistry.selector));
+//         vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.UserNotInRegistry.selector));
 //         _registryCommunity().kickMember(gardenMember, address(councilSafe));
 //         vm.stopPrank();
 //         stopMeasuringGas();
@@ -1385,7 +1385,7 @@
 //         _registryCommunity().stakeAndRegisterMember("");
 //         vm.stopPrank();
 //         vm.startPrank(gardenOwner);
-//         vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.UserNotInCouncil.selector, gardenOwner));
+//         vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.UserNotInCouncil.selector, gardenOwner));
 //         _registryCommunity().kickMember(gardenMember, address(councilSafe));
 //         vm.stopPrank();
 //         stopMeasuringGas();
@@ -1423,17 +1423,17 @@
 
 //     function test_revertSetCouncilSafe() public {
 //         vm.startPrank(gardenMember);
-//         vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.UserNotInCouncil.selector, gardenMember));
+//         vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.UserNotInCouncil.selector, gardenMember));
 //         _registryCommunity().setCouncilSafe(payable(newCouncilSafe));
 //         vm.stopPrank();
 //         vm.startPrank(address(councilSafe));
-//         vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.AddressCannotBeZero.selector));
+//         vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.AddressCannotBeZero.selector));
 //         _registryCommunity().setCouncilSafe(payable(address(0)));
 //         _registryCommunity().setCouncilSafe(payable(newCouncilSafe));
 //         assertEq(address(_registryCommunity().pendingCouncilSafe()), address(newCouncilSafe));
 //         vm.stopPrank();
 //         vm.startPrank(gardenMember);
-//         vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.SenderNotNewOwner.selector));
+//         vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.SenderNotNewOwner.selector));
 //         _registryCommunity().acceptCouncilSafe();
 //         vm.stopPrank();
 //     }
@@ -1511,7 +1511,7 @@
 //     function test_revertUnregisterMember() public {
 //         startMeasuringGas("Testing kick member revert");
 //         vm.startPrank(gardenOwner);
-//         vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.UserNotInRegistry.selector));
+//         vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.UserNotInRegistry.selector));
 //         _registryCommunity().unregisterMember();
 //         vm.stopPrank();
 //         stopMeasuringGas();
@@ -1520,12 +1520,12 @@
 //     function test_revertSetCommunityFee() public {
 //         startMeasuringGas("Testing update protocol revert");
 //         vm.startPrank(gardenOwner);
-//         vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.UserNotInCouncil.selector, gardenOwner));
+//         vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.UserNotInCouncil.selector, gardenOwner));
 //         _registryCommunity().setCommunityFee(5);
 //         vm.stopPrank();
 
 //         vm.startPrank(address(councilSafe));
-//         vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.NewFeeGreaterThanMax.selector));
+//         vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.NewFeeGreaterThanMax.selector));
 //         _registryCommunity().setCommunityFee(11 * PERCENTAGE_SCALE);
 //         _registryCommunity().setCommunityFee(10 * PERCENTAGE_SCALE);
 //         assertEq(_registryCommunity().communityFee(), 10 * PERCENTAGE_SCALE);
@@ -1535,7 +1535,7 @@
 //     function test_revertSetBasisStakeAmount() public {
 //         startMeasuringGas("Testing setBasisStake revert");
 //         vm.startPrank(gardenOwner);
-//         vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.UserNotInCouncil.selector, gardenOwner));
+//         vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.UserNotInCouncil.selector, gardenOwner));
 //         _registryCommunity().setBasisStakedAmount(500);
 //         vm.stopPrank();
 //         stopMeasuringGas();
@@ -1578,12 +1578,12 @@
 //         _registryCommunity().addStrategyByPoolId(poolId);
 //         vm.stopPrank();
 
-//         vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.UserNotInCouncil.selector, address(this)));
+//         vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.UserNotInCouncil.selector, address(this)));
 //         _registryCommunity().removeStrategyByPoolId(poolId);
 
 //         vm.startPrank(address(councilSafe));
 
-//         vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.AddressCannotBeZero.selector));
+//         vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.AddressCannotBeZero.selector));
 //         _registryCommunity().removeStrategyByPoolId(poolId + 1);
 
 //         vm.stopPrank();
@@ -1595,12 +1595,12 @@
 //         assertEq(_registryCommunity().enabledStrategies(address(strategy)), false);
 
 //         vm.startPrank(gardenOwner);
-//         vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.UserNotInCouncil.selector, gardenOwner));
+//         vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.UserNotInCouncil.selector, gardenOwner));
 //         _registryCommunity().addStrategyByPoolId(poolId);
 //         vm.stopPrank();
 
 //         vm.startPrank(address(councilSafe));
-//         vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.AddressCannotBeZero.selector));
+//         vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.AddressCannotBeZero.selector));
 //         _registryCommunity().addStrategyByPoolId(poolId + 1);
 //         vm.stopPrank();
 
