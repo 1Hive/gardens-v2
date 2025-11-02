@@ -38,34 +38,35 @@ export default async function Image() {
   }
 
   return new ImageResponse(
-    <div
-      style={{
-        width: "100%",
-        height: "100%",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        backgroundColor: "#0F172A",
-        color: "#F8FAFC",
-        fontFamily:
-          '"Inter", "Inter Fallback", system-ui, Arial, sans-serif',
-        fontSize: "56px",
-        fontWeight: 600,
-        letterSpacing: "-0.01em",
-      }}
-    >
-      {gardensCoverSrc ?
-        // eslint-disable-next-line @next/next/no-img-element -- Rendering inside ImageResponse.
-        <img
-          alt="Gardens cover illustration"
-          src={gardensCoverSrc}
-          style={{
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-          }}
-        />
-      : <span>Gardens</span>}
-    </div>,
+    (
+      <div
+        style={{
+          width: "100%",
+          height: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: "#0F172A",
+          color: "#F8FAFC",
+          fontFamily: '"Inter", "Inter Fallback", system-ui, Arial, sans-serif',
+          fontSize: "56px",
+          fontWeight: 600,
+          letterSpacing: "-0.01em",
+        }}
+      >
+        {gardensCoverSrc ?
+          // eslint-disable-next-line @next/next/no-img-element -- Rendering inside ImageResponse.
+          <img
+            alt="Gardens cover illustration"
+            src={gardensCoverSrc}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+            }}
+          />
+        : <span>Gardens</span>}
+      </div>
+    ),
   );
 }

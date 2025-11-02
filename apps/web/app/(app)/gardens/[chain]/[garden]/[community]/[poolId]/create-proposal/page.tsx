@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import ClientPage from "./ClientPage";
+import ClientPage from "./client-page";
 
-const TITLE = "Create a proposal";
+const TITLE = "Gardens - Create a proposal";
 const DESCRIPTION =
   "Draft a proposal for your community's pool to align supporters, gather feedback, and move collective action forward.";
 

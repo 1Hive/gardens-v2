@@ -17,7 +17,7 @@ export const size = {
 export const contentType = "image/png";
 export const description =
   "Gardens community for collective decision-making and funding.";
-export const FALLBACK_TITLE = "Gardens community";
+export const FALLBACK_TITLE = "Community";
 
 // Image generation
 type ImageParams = {
@@ -273,8 +273,6 @@ export async function generateMetadata({
       {
         communityAddr: params.community,
       },
-      undefined,
-      true,
     );
 
     if (communityResult.error) {
@@ -326,8 +324,6 @@ export default async function Image({ params }: { params: ImageParams }) {
       {
         communityAddr: params.community,
       },
-      undefined,
-      true, // TODO: Use published when subgraph with metadata has been published (0.2.1)
     );
 
     if (communityResult.error) {

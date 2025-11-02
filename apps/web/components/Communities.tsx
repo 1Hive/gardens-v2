@@ -15,11 +15,16 @@ import { ONE_HIVE_COMMUNITY_ADDRESS } from "@/globals";
 import { useFlag } from "@/hooks/useFlag";
 
 export type LightCommunity = Pick<RegistryCommunity, "id" | "communityName"> & {
-  garden: Pick<TokenGarden, "address" | "chainId" | "symbol" | "name">;
+  garden: Pick<
+    TokenGarden,
+    "address" | "chainId" | "symbol" | "name" | "decimals"
+  >;
   strategies?: Maybe<
     Array<Pick<CVStrategy, "id" | "totalEffectiveActivePoints" | "poolId">>
   >;
-  members?: Maybe<Array<Pick<MemberCommunity, "id" | "memberAddress">>>;
+  members?: Maybe<
+    Array<Pick<MemberCommunity, "id" | "memberAddress" | "stakedTokens">>
+  >;
   isProtopian: boolean;
 };
 

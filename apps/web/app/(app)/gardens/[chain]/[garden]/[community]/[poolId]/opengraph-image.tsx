@@ -36,7 +36,7 @@ export const getDescriptionText = (
       return "A Gardens pool for collective decision-making and funding.";
   }
 };
-export const FALLBACK_TITLE = "Gardens pool";
+export const FALLBACK_TITLE = "Pool";
 
 // Image generation
 type ImageParams = {
@@ -463,15 +463,9 @@ export async function generateMetadata({
   }
 
   try {
-    const poolResult = await queryByChain(
-      chainConfig,
-      getPoolTitleDocument,
-      {
-        poolId,
-      },
-      undefined,
-      true,
-    );
+    const poolResult = await queryByChain(chainConfig, getPoolTitleDocument, {
+      poolId,
+    });
 
     if (poolResult.error) {
       console.error("Error fetching pool metadata for OG image.", {
@@ -526,15 +520,9 @@ export default async function Image({ params }: { params: ImageParams }) {
   }
 
   try {
-    const poolResult = await queryByChain(
-      chainConfig,
-      getPoolTitleDocument,
-      {
-        poolId,
-      },
-      undefined,
-      true, // TODO: Use published when subgraph with metadata has been published (0.2.1)
-    );
+    const poolResult = await queryByChain(chainConfig, getPoolTitleDocument, {
+      poolId,
+    });
 
     if (poolResult.error) {
       console.error("Error fetching pool data for OG image.", {

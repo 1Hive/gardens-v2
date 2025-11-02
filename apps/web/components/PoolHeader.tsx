@@ -8,6 +8,7 @@ import {
   ArchiveBoxIcon,
   InformationCircleIcon,
   ArrowPathRoundedSquareIcon,
+  ChevronDoubleUpIcon,
 } from "@heroicons/react/24/outline";
 import {
   NoSymbolIcon,
@@ -15,7 +16,6 @@ import {
   Cog6ToothIcon,
 } from "@heroicons/react/24/solid";
 import sfMeta from "@superfluid-finance/metadata";
-import { isArray } from "lodash-es";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { toast } from "react-toastify";
@@ -189,9 +189,16 @@ export default function PoolHeader({
     blockTime,
   );
 
+  //problem here, we are passing decimals from pool token decimals but it it decimals from the GOV token
+  const communityGovTokenDecimals =
+    strategy?.registryCommunity?.garden?.decimals;
+
   const minThresholdPoints =
     poolToken ?
-      formatTokenAmount(strategy.config.minThresholdPoints, +poolToken.decimals)
+      formatTokenAmount(
+        strategy.config.minThresholdPoints,
+        +communityGovTokenDecimals,
+      )
     : "0";
 
   const maxVotingWeight =
@@ -288,7 +295,10 @@ export default function PoolHeader({
         sybilResistanceType === "allowList" ?
           <div className="dropdown dropdown-hover dropdown-center dropdowm-bottom sm:dropdown-right">
             {/* Trigger for the dropdown */}
-            <p className="subtitle ml-1">Allowlist</p>
+            <div className="flex items-center gap-2 group">
+              <p className="subtitle ml-1">Allowlist</p>
+              <ChevronDoubleUpIcon className="w-4 h-4 group-hover:rotate-180 transition-all ease-in-out duration-250" />
+            </div>
             <div className="dropdown-content bg-primary rounded-box shadow z-10 p-2 max-h-[500px] overflow-y-auto w-64">
               <ul className="menu w-full gap-1">
                 {(allowList ?? []).length > 0 ?
@@ -885,7 +895,7 @@ export default function PoolHeader({
             <InfoBox
               title="Min threshold"
               infoBoxType="warning"
-              content="Activated governance in this pool is too low. No proposals will pass unless more members activate their governance. You can still create and support proposals."
+              content="Not enough eligible members in this pool have activated their governance. No proposals will pass until more members do. You can still create and support proposals."
               className="mb-4"
             />
           )}
