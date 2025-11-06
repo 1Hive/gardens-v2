@@ -76,6 +76,8 @@ abstract contract CommunityBaseFacet is ProxyOwnableUpgrader, ReentrancyGuardUpg
     address public registryFactory;
     /// @notice The address of the collateral vault template
     address public collateralVaultTemplate;
+    /// @notice The address of the YDS conviction vault template
+    address public cvVaultTemplate;
     /// @notice The address of the strategy template
     address public strategyTemplate;
     /// @notice The address of the pending council safe owner

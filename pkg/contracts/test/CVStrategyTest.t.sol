@@ -26,6 +26,7 @@ import {GV2ERC20} from "../script/GV2ERC20.sol";
 import {RegistryCommunity, RegistryCommunityInitializeParams} from "../src/RegistryCommunity/RegistryCommunity.sol";
 
 import {CollateralVault} from "../src/CollateralVault.sol";
+import {CVVault} from "../src/CVVault/CVVault.sol";
 import {RegistryFactory} from "../src/RegistryFactory/RegistryFactory.sol";
 import {
     CVStrategy,
@@ -142,7 +143,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
                 address(protocolFeeReceiver),
                 address(new RegistryCommunity()),
                 address(new CVStrategy()),
-                address(new CollateralVault())
+                address(new CollateralVault()),
+                address(new CVVault())
             )
         );
 
@@ -213,33 +215,34 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         if (poolAmount == 0) {
             poolAmount = POOL_AMOUNT;
         }
-        address useTokenPool = _tokenPool;
         if (_tokenPool == address(0)) {
-            useTokenPool = NATIVE;
+            _tokenPool = NATIVE;
         }
+        address useTokenPool = _tokenPool;
 
-        startMeasuringGas("createProposal");
-        // allo().addToCloneableStrategies(address(strategy));
-        ArbitrableConfig memory arbitrableConfig =
-            ArbitrableConfig(safeArbitrator, payable(tribunalSafe), 0.02 ether, 0.01 ether, 1, 300);
-        CVStrategyInitializeParamsV0_2 memory params = getParams(
-            address(registryCommunity),
-            proposalType,
-            pointSystem,
-            PointSystemConfig(200 * DECIMALS),
-            arbitrableConfig,
-            new address[](1),
-            address(0),
-            0,
-            address(0)
-        );
+        CVStrategy strategy;
+        {
+            ArbitrableConfig memory arbitrableConfig =
+                ArbitrableConfig(safeArbitrator, payable(tribunalSafe), 0.02 ether, 0.01 ether, 1, 300);
+            address[] memory initialAllowlist = proposalType == ProposalType.YieldDistribution
+                ? new address[](0)
+                : new address[](1);
+            CVStrategyInitializeParamsV0_2 memory params = getParams(
+                address(registryCommunity),
+                proposalType,
+                pointSystem,
+                PointSystemConfig(200 * DECIMALS),
+                arbitrableConfig,
+                initialAllowlist,
+                address(0),
+                0,
+                address(0)
+            );
 
-        // CVStrategy strategy = new CVStrategy(address(allo()));
-
-        (uint256 _poolId, address _strategy) = _registryCommunity().createPool(useTokenPool, params, metadata);
-        // console.log("strat: %s", strat);
-        poolId = _poolId;
-        CVStrategy strategy = CVStrategy(payable(_strategy));
+            (uint256 _poolId, address _strategy) = _registryCommunity().createPool(useTokenPool, params, metadata);
+            poolId = _poolId;
+            strategy = CVStrategy(payable(_strategy));
+        }
 
         // Configure diamond facets for the strategy as the owner
         vm.startPrank(strategy.owner());
@@ -254,11 +257,19 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         );
         vm.stopPrank();
 
-        _registryCommunity().governanceToken().approve(address(registryCommunity), STAKE_WITH_FEES);
-        _registryCommunity().stakeAndRegisterMember("");
-        strategy.activatePoints();
-
         pool = allo().getPool(poolId);
+
+        if (proposalType == ProposalType.YieldDistribution) {
+            address vault = address(strategy.cvVault());
+            require(vault != address(0), "vault");
+            GV2ERC20(pool.token).mint(address(this), MINIMUM_STAKE);
+            IERC20(pool.token).approve(vault, MINIMUM_STAKE);
+            CVVault(vault).deposit(MINIMUM_STAKE, address(this));
+        } else {
+            _registryCommunity().governanceToken().approve(address(registryCommunity), STAKE_WITH_FEES);
+            _registryCommunity().stakeAndRegisterMember("");
+        }
+        strategy.activatePoints();
 
         if (useTokenPool == NATIVE) {
             // allo().fundPool{value: poolAmount}(poolId, poolAmount);
@@ -278,21 +289,41 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         // assertNotEq(address(pool.strategy), address(strategy), "Strategy Clones");
 
         startMeasuringGas("createProposal");
-
-        CreateProposal memory proposal =
-            CreateProposal(poolId, pool_admin(), requestAmount, address(useTokenPool), metadata);
-        bytes memory data = abi.encode(proposal);
-        uint256 arbitrableConfigVersion = strategy.currentArbitrableConfigVersion();
-
-        (,, uint256 submitterCollateralAmount,,,) = strategy.arbitrableConfigs(arbitrableConfigVersion);
-        vm.deal(pool_admin(), submitterCollateralAmount);
-        vm.startPrank(pool_admin());
-        _registryCommunity().governanceToken().approve(address(registryCommunity), STAKE_WITH_FEES);
-        _registryCommunity().stakeAndRegisterMember("");
-        proposalId = uint160(allo().registerRecipient{value: submitterCollateralAmount}(poolId, data));
-        vm.stopPrank();
-
+        proposalId = _registerProposal(strategy, poolId, address(useTokenPool), requestAmount, proposalType);
         stopMeasuringGas();
+    }
+
+    function _registerProposal(
+        CVStrategy strategy,
+        uint256 poolId,
+        address requestedToken,
+        uint256 requestAmount,
+        ProposalType proposalType
+    ) internal returns (uint256 proposalId) {
+        uint256 submitterCollateralAmount;
+        (,, submitterCollateralAmount,,,) = strategy.arbitrableConfigs(strategy.currentArbitrableConfigVersion());
+        vm.deal(pool_admin(), submitterCollateralAmount);
+
+        vm.startPrank(pool_admin());
+        if (proposalType != ProposalType.YieldDistribution) {
+            _registryCommunity().governanceToken().approve(address(registryCommunity), STAKE_WITH_FEES);
+            _registryCommunity().stakeAndRegisterMember("");
+        }
+        proposalId = uint160(
+            allo().registerRecipient{value: submitterCollateralAmount}(
+                poolId,
+                abi.encode(
+                    CreateProposal({
+                        poolId: poolId,
+                        beneficiary: pool_admin(),
+                        amountRequested: requestAmount,
+                        requestedToken: requestedToken,
+                        metadata: metadata
+                    })
+                )
+            )
+        );
+        vm.stopPrank();
     }
 
     function _canExecuteProposal(CVStrategy strategy, uint256 proposalId)
@@ -471,6 +502,44 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         //     abi.encodeWithSelector(CVStrategy.ProposalInvalidForAllocation.selector, 10, ProposalStatus.Inactive)
         // );
         allo().allocate(poolId, data);
+    }
+
+    function test_harvestYDS_distributes_yield() public {
+        (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(
+            address(token), 0, POOL_AMOUNT, ProposalType.YieldDistribution, PointSystem.Unlimited
+        );
+
+        CVStrategy strategy = CVStrategy(payable(address(pool.strategy)));
+        CVVault vault = CVVault(address(strategy.cvVault()));
+
+        address beneficiarySecondary = makeAddr("beneficiarySecondary");
+        CreateProposal memory proposal2 = CreateProposal(poolId, beneficiarySecondary, 0, address(token), metadata);
+        bytes memory proposalData2 = abi.encode(proposal2);
+
+        uint256 arbitrableConfigVersion = strategy.currentArbitrableConfigVersion();
+        (,, uint256 submitterCollateralAmount,,,) = strategy.arbitrableConfigs(arbitrableConfigVersion);
+        vm.deal(pool_admin(), submitterCollateralAmount);
+        vm.prank(pool_admin());
+        uint256 proposalId2 =
+            uint160(allo().registerRecipient{value: submitterCollateralAmount}(poolId, proposalData2));
+
+        ProposalSupport[] memory votes = new ProposalSupport[](2);
+        votes[0] = ProposalSupport(proposalId, int256(2 ether));
+        votes[1] = ProposalSupport(proposalId2, int256(2 ether));
+        allo().allocate(poolId, abi.encode(votes));
+
+        vm.roll(block.number + 10);
+
+        token.mint(address(vault), 4 ether);
+
+        uint256 beforePrimary = token.balanceOf(pool_admin());
+        uint256 beforeSecondary = token.balanceOf(beneficiarySecondary);
+
+        strategy.harvestYDS();
+
+        assertEq(token.balanceOf(pool_admin()) - beforePrimary, 2 ether);
+        assertEq(token.balanceOf(beneficiarySecondary) - beforeSecondary, 2 ether);
+        assertEq(token.balanceOf(address(vault)), MINIMUM_STAKE);
     }
 
     /**

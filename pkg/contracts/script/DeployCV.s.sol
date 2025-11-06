@@ -10,6 +10,7 @@ import {Allo} from "allo-v2-contracts/core/Allo.sol";
 import {Registry} from "allo-v2-contracts/core/Registry.sol";
 import {SafeArbitrator, IArbitrator} from "../src/SafeArbitrator.sol";
 import {CollateralVault} from "../src/CollateralVault.sol";
+import {CVVault} from "../src/CVVault/CVVault.sol";
 import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
 import {CVStrategyHelpers, CVStrategy} from "../test/CVStrategyHelpers.sol";
 import {TERC20} from "../test/shared/TERC20.sol";
@@ -90,7 +91,8 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
                 address(protocolFeeReceiver),
                 address(new RegistryCommunity()),
                 address(new CVStrategy()),
-                address(new CollateralVault())
+                address(new CollateralVault()),
+                address(new CVVault())
             )
         );
         registryFactory = RegistryFactory(address(factoryProxy));

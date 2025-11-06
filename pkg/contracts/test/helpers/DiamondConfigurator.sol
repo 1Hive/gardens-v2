@@ -7,6 +7,7 @@ import {CVAllocationFacet} from "../../src/CVStrategy/facets/CVAllocationFacet.s
 import {CVDisputeFacet} from "../../src/CVStrategy/facets/CVDisputeFacet.sol";
 import {CVPowerFacet} from "../../src/CVStrategy/facets/CVPowerFacet.sol";
 import {CVProposalFacet} from "../../src/CVStrategy/facets/CVProposalFacet.sol";
+import {CVYDSFacet} from "../../src/CVStrategy/facets/CVYDSFacet.sol";
 import {IDiamondCut} from "../../src/diamonds/interfaces/IDiamondCut.sol";
 import {IDiamond} from "../../src/diamonds/interfaces/IDiamond.sol";
 
@@ -21,6 +22,7 @@ contract DiamondConfigurator {
     CVDisputeFacet public disputeFacet;
     CVPowerFacet public powerManagementFacet;
     CVProposalFacet public proposalManagementFacet;
+    CVYDSFacet public ydsFacet;
 
     constructor() {
         // Deploy all facets
@@ -29,6 +31,7 @@ contract DiamondConfigurator {
         disputeFacet = new CVDisputeFacet();
         powerManagementFacet = new CVPowerFacet();
         proposalManagementFacet = new CVProposalFacet();
+        ydsFacet = new CVYDSFacet();
     }
 
     /**
@@ -36,7 +39,7 @@ contract DiamondConfigurator {
      * @return cuts Array of FacetCut structs to pass to diamondCut()
      */
     function getFacetCuts() public view returns (IDiamond.FacetCut[] memory cuts) {
-        cuts = new IDiamond.FacetCut[](5);
+        cuts = new IDiamond.FacetCut[](6);
 
         // CVAdminFacet functions
         bytes4[] memory adminSelectors = new bytes4[](3);
@@ -88,6 +91,14 @@ contract DiamondConfigurator {
             facetAddress: address(proposalManagementFacet),
             action: IDiamond.FacetCutAction.Add,
             functionSelectors: proposalSelectors
+        });
+
+        bytes4[] memory ydsSelectors = new bytes4[](1);
+        ydsSelectors[0] = CVYDSFacet.harvestYDS.selector;
+        cuts[5] = IDiamond.FacetCut({
+            facetAddress: address(ydsFacet),
+            action: IDiamond.FacetCutAction.Add,
+            functionSelectors: ydsSelectors
         });
 
         return cuts;

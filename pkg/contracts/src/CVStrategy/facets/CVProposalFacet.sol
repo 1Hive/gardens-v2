@@ -42,6 +42,11 @@ contract CVProposalFacet is CVStrategyBaseFacet {
             if (proposal.requestedToken != _allo.getPool(proposal.poolId).token) {
                 revert();
             }
+        } else if (proposalType == ProposalType.YieldDistribution) {
+            if (proposal.amountRequested != 0) {
+                revert();
+            }
+            proposal.requestedToken = IAllo(address(allo)).getPool(proposal.poolId).token;
         }
 
         if (

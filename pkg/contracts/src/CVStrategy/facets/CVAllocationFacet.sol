@@ -172,6 +172,10 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
         _checkOnlyAllo();
         _checkOnlyInitialized();
 
+        if (proposalType == ProposalType.YieldDistribution) {
+            revert();
+        }
+
         if (_data.length <= 0) {
             revert();
         }
