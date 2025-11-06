@@ -208,7 +208,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         ProposalType proposalType,
         PointSystem pointSystem
     ) public returns (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) {
-        if (requestAmount == 0) {
+        if (requestAmount == 0 && proposalType != ProposalType.YieldDistribution) {
             requestAmount = REQUESTED_AMOUNT;
         }
 
@@ -262,14 +262,16 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         if (proposalType == ProposalType.YieldDistribution) {
             address vault = address(strategy.cvVault());
             require(vault != address(0), "vault");
-            GV2ERC20(pool.token).mint(address(this), MINIMUM_STAKE);
+            vm.startPrank(pool_admin());
             IERC20(pool.token).approve(vault, MINIMUM_STAKE);
-            CVVault(vault).deposit(MINIMUM_STAKE, address(this));
+            CVVault(vault).deposit(MINIMUM_STAKE, pool_admin());
+            strategy.activatePoints();
+            vm.stopPrank();
         } else {
             _registryCommunity().governanceToken().approve(address(registryCommunity), STAKE_WITH_FEES);
             _registryCommunity().stakeAndRegisterMember("");
+            strategy.activatePoints();
         }
-        strategy.activatePoints();
 
         if (useTokenPool == NATIVE) {
             // allo().fundPool{value: poolAmount}(poolId, poolAmount);
@@ -526,6 +528,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         ProposalSupport[] memory votes = new ProposalSupport[](2);
         votes[0] = ProposalSupport(proposalId, int256(2 ether));
         votes[1] = ProposalSupport(proposalId2, int256(2 ether));
+        vm.prank(pool_admin());
         allo().allocate(poolId, abi.encode(votes));
 
         vm.roll(block.number + 10);

@@ -254,8 +254,8 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
                 }
             }
 
-            cvVault.revokeRole(defaultAdmin, address(this));
             cvVault.revokeRole(managerRole, address(this));
+            cvVault.revokeRole(defaultAdmin, address(this));
             registryCommunity = IVotingPowerRegistry(address(cvVault));
         } else {
             registryCommunity = IVotingPowerRegistry(ip.registryCommunity);

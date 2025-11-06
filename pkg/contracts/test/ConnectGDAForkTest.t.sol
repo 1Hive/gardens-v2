@@ -4,6 +4,8 @@ pragma solidity ^0.8.19;
 import "forge-std/Test.sol";
 import {console} from "forge-std/console.sol";
 import {CVStrategy, ArbitrableConfig, CVParams} from "../src/CVStrategy/CVStrategy.sol";
+import {IVotingPowerRegistry} from "../src/interfaces/IVotingPowerRegistry.sol";
+import {ISafe} from "../src/interfaces/ISafe.sol";
 import {IArbitrator} from "../src/interfaces/IArbitrator.sol";
 import {DiamondConfigurator} from "./helpers/DiamondConfigurator.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Library.sol";
@@ -30,6 +32,35 @@ contract ConnectGDAForkTest is Test {
         vm.startPrank(owner);
         cvStrategy.diamondCut(configurator.getFacetCuts(), address(0), "");
         vm.stopPrank();
+
+        IVotingPowerRegistry registryCommunity = cvStrategy.registryCommunity();
+        address registryAddress = address(registryCommunity);
+        bytes32 allowlistRole = keccak256(abi.encodePacked("ALLOWLIST", cvStrategy.getPoolId()));
+
+        vm.mockCall(
+            registryAddress,
+            abi.encodeCall(IVotingPowerRegistry.councilSafe, ()),
+            abi.encode(ISafe(council))
+        );
+
+        vm.mockCall(
+            registryAddress,
+            abi.encodeCall(IVotingPowerRegistry.hasRole, (allowlistRole, address(0))),
+            abi.encode(false)
+        );
+
+        vm.mockCall(
+            registryAddress,
+            abi.encodeCall(IVotingPowerRegistry.hasRole, (allowlistRole, allowlistMember)),
+            abi.encode(true)
+        );
+
+        address randomMember = address(0x1234567890123456789012345678901234567890);
+        vm.mockCall(
+            registryAddress,
+            abi.encodeCall(IVotingPowerRegistry.hasRole, (allowlistRole, randomMember)),
+            abi.encode(false)
+        );
     }
 
     function test_connectSuperfluidGDA_council() public {
