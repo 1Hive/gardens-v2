@@ -2,8 +2,9 @@
 pragma solidity ^0.8.19;
 
 import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
-import {RegistryCommunity} from "../RegistryCommunity/RegistryCommunity.sol";
+import {IVotingPowerRegistry} from "../interfaces/IVotingPowerRegistry.sol";
 import {ICollateralVault} from "../interfaces/ICollateralVault.sol";
+import {ICVVault} from "../interfaces/ICVVault.sol";
 import {ISybilScorer} from "../ISybilScorer.sol";
 import {ProposalType, PointSystem, Proposal, PointSystemConfig, ArbitrableConfig, CVParams} from "./ICVStrategy.sol";
 import {ConvictionsUtils} from "./ConvictionsUtils.sol";
@@ -70,6 +71,9 @@ abstract contract CVStrategyBaseFacet {
     /// @dev Slot 106
     address internal collateralVaultTemplate;
 
+    /// @notice Template address for cloning CVVault instances
+    address internal cvVaultTemplate;
+
     /// @dev Used to suppress Solidity warnings - Slot 107
     uint256 internal surpressStateMutabilityWarning;
 
@@ -107,11 +111,14 @@ abstract contract CVStrategyBaseFacet {
 
     /// @notice Reference to the Registry Community contract
     /// @dev Slot 121+
-    RegistryCommunity public registryCommunity;
+    IVotingPowerRegistry public registryCommunity;
 
     /// @notice Collateral vault for storing proposal collateral
     /// @dev Slot 122+
     ICollateralVault public collateralVault;
+
+    /// @notice Yield distribution vault used as voting power registry
+    ICVVault public cvVault;
 
     /// @notice Sybil resistance scorer contract
     /// @dev Slot 123+

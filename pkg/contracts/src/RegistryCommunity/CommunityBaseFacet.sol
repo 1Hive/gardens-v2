@@ -76,6 +76,8 @@ abstract contract CommunityBaseFacet is ProxyOwnableUpgrader, ReentrancyGuardUpg
     address public registryFactory;
     /// @notice The address of the collateral vault template
     address public collateralVaultTemplate;
+    /// @notice The address of the YDS conviction vault template
+    address public cvVaultTemplate;
     /// @notice The address of the strategy template
     address public strategyTemplate;
     /// @notice The address of the pending council safe owner
@@ -83,7 +85,7 @@ abstract contract CommunityBaseFacet is ProxyOwnableUpgrader, ReentrancyGuardUpg
     /// @notice The Registry Allo contract
     IRegistry public registry;
     /// @notice The token used to stake in the community
-    IERC20 public gardenToken;
+    IERC20 public governanceToken;
     /// @notice The council safe contract address
     ISafe public councilSafe;
     /// @notice The Allo contract address

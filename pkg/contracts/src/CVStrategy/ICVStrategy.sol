@@ -21,7 +21,8 @@ import {Metadata} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 enum ProposalType {
     Signaling,
     Funding,
-    Streaming
+    Streaming,
+    YieldDistribution
 }
 
 enum PointSystem {

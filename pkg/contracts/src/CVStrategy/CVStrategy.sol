@@ -3,9 +3,10 @@ pragma solidity ^0.8.19;
 
 import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
 import {BaseStrategy, IAllo} from "allo-v2-contracts/strategies/BaseStrategy.sol";
-import {RegistryCommunity} from "../RegistryCommunity/RegistryCommunity.sol";
 import {ERC165, IERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {IArbitrator} from "../interfaces/IArbitrator.sol";
 import {IArbitrable} from "../interfaces/IArbitrable.sol";
 import {Clone} from "allo-v2-contracts/core/libraries/Clone.sol";
@@ -16,6 +17,7 @@ import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeab
 import {BaseStrategyUpgradeable} from "../BaseStrategyUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {ICollateralVault} from "../interfaces/ICollateralVault.sol";
+import {ICVVault} from "../interfaces/ICVVault.sol";
 import {PassportScorer} from "../PassportScorer.sol";
 import {
     ProposalType,
@@ -33,6 +35,7 @@ import {
     CVStrategyInitializeParamsV0_2
 } from "./ICVStrategy.sol";
 
+import {IVotingPowerRegistry} from "../interfaces/IVotingPowerRegistry.sol";
 import {ConvictionsUtils} from "./ConvictionsUtils.sol";
 import {PowerManagementUtils} from "./PowerManagementUtils.sol";
 
@@ -145,6 +148,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     // CVStrategy custom storage variables (Slots 106+)
     // Note: These must match CVStrategyBaseFacet storage layout exactly for diamond pattern
     address internal collateralVaultTemplate;
+    address internal cvVaultTemplate;
     uint256 internal surpressStateMutabilityWarning;
     uint256 public cloneNonce;
     uint64 public disputeCount;
@@ -156,8 +160,9 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     ProposalType public proposalType;
     PointSystem public pointSystem;
     PointSystemConfig public pointConfig;
-    RegistryCommunity public registryCommunity;
+    IVotingPowerRegistry public registryCommunity;
     ICollateralVault public collateralVault;
+    ICVVault public cvVault;
     ISybilScorer public sybilScorer;
     mapping(uint256 => Proposal) public proposals;
     mapping(address => uint256) public totalVoterStakePct;
@@ -177,9 +182,13 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     /*|              CONSTRUCTORS                  |*/
     /*|--------------------------------------------|*/
     // constructor(address _allo) BaseStrategy(address(_allo), "CVStrategy") {}
-    function init(address _allo, address _collateralVaultTemplate, address _owner) external initializer {
+    function init(address _allo, address _collateralVaultTemplate, address _cvVaultTemplate, address _owner)
+        external
+        initializer
+    {
         super.init(_allo, "CVStrategy", _owner);
         collateralVaultTemplate = _collateralVaultTemplate;
+        cvVaultTemplate = _cvVaultTemplate;
     }
 
     function initialize(uint256 _poolId, bytes memory _data) external override {
@@ -194,14 +203,63 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         // if (ip.registryCommunity == address(0)) {
         //     revert RegistryCannotBeZero();
         // }
-        // Set councilsafe to whitelist admin
-        registryCommunity = RegistryCommunity(ip.registryCommunity);
-
-        proposalType = ip.proposalType;
+        ProposalType proposalTypeConfig = ip.proposalType;
+        proposalType = proposalTypeConfig;
         pointSystem = ip.pointSystem;
         pointConfig = ip.pointConfig;
         sybilScorer = ISybilScorer(ip.sybilScorer);
         superfluidToken = ISuperToken(ip.superfluidToken);
+
+        if (proposalTypeConfig == ProposalType.YieldDistribution) {
+            IVotingPowerRegistry sourceRegistry = IVotingPowerRegistry(ip.registryCommunity);
+            if (cvVaultTemplate == address(0)) {
+                revert();
+            }
+            address poolToken = allo.getPool(poolId).token;
+            if (poolToken == NATIVE_TOKEN) {
+                revert TokenNotAllowed();
+            }
+            cvVault = ICVVault(Clone.createClone(cvVaultTemplate, cloneNonce++));
+            string memory vaultName = string.concat("Gardens YDS Vault #", Strings.toString(poolId));
+            string memory vaultSymbol = string.concat("gYDS-", Strings.toString(poolId));
+            cvVault.initialize(
+                IERC20(poolToken),
+                vaultName,
+                vaultSymbol,
+                address(this),
+                sourceRegistry.councilSafe(),
+                sourceRegistry.getBasisStakedAmount(),
+                address(this),
+                true
+            );
+
+            bytes32 defaultAdmin = bytes32(0);
+            bytes32 managerRole = keccak256("MANAGER_ROLE");
+            cvVault.grantRole(defaultAdmin, owner());
+            cvVault.grantRole(managerRole, owner());
+
+            bytes32 allowlistRole = keccak256(abi.encodePacked("ALLOWLIST", poolId));
+            bytes32 allowlistAdminRole = keccak256(abi.encodePacked("ALLOWLIST_ADMIN", poolId));
+            cvVault.configureAllowlist(allowlistRole, allowlistAdminRole);
+            cvVault.grantRole(allowlistAdminRole, address(this));
+            cvVault.grantRole(allowlistAdminRole, owner());
+
+            if (address(sybilScorer) == address(0)) {
+                if (ip.initialAllowlist.length == 0) {
+                    cvVault.grantRole(allowlistRole, address(0));
+                } else {
+                    for (uint256 i = 0; i < ip.initialAllowlist.length; i++) {
+                        cvVault.grantRole(allowlistRole, ip.initialAllowlist[i]);
+                    }
+                }
+            }
+
+            cvVault.revokeRole(managerRole, address(this));
+            cvVault.revokeRole(defaultAdmin, address(this));
+            registryCommunity = IVotingPowerRegistry(address(cvVault));
+        } else {
+            registryCommunity = IVotingPowerRegistry(ip.registryCommunity);
+        }
 
         emit InitializedCV3(_poolId, ip);
 
@@ -604,6 +662,9 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     }
 
     function calculateThreshold(uint256 _requestedAmount) external view returns (uint256) {
+        if (proposalType == ProposalType.YieldDistribution) {
+            return 0;
+        }
         if (_isOverMaxRatio(_requestedAmount)) {
             // revert AmountOverMaxRatio();
             // revert(("AmountOverMaxRatio")); // @todo take commented when contract size fixed with diamond
@@ -682,7 +743,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
 
     //If we want to keep, we need a func to transfer power mapping (and more) in Registry contract -Kev
     // function setRegistryCommunity(address _registryCommunity) external onlyPoolManager(msg.sender) {
-    //     registryCommunity = RegistryCommunity(_registryCommunity);
+    //     registryCommunity = IVotingPowerRegistry(_registryCommunity);
     //     emit RegistryUpdated(_registryCommunity);
     // }
 
@@ -722,6 +783,10 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     }
 
     function disconnectSuperfluidGDA(address gda) external {
+        _delegateToFacet();
+    }
+
+    function harvestYDS() external {
         _delegateToFacet();
     }
 

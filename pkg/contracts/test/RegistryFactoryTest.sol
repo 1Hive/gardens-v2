@@ -13,6 +13,7 @@ contract RegistryFactoryTest is Test {
     address registryCommunityTemplate = address(0x456);
     address strategyTemplate = address(0x789);
     address collateralVaultTemplate = address(0xABC);
+    address cvVaultTemplate = address(0xA0C);
     address owner = address(0xDEF);
 
     address community = address(0x111);
@@ -23,7 +24,12 @@ contract RegistryFactoryTest is Test {
     function setUp() public {
         registryFactory = new RegistryFactory();
         registryFactory.initialize(
-            owner, gardensFeeReceiver, registryCommunityTemplate, strategyTemplate, collateralVaultTemplate
+            owner,
+            gardensFeeReceiver,
+            registryCommunityTemplate,
+            strategyTemplate,
+            collateralVaultTemplate,
+            cvVaultTemplate
         );
 
         // Set up a valid community with a fee

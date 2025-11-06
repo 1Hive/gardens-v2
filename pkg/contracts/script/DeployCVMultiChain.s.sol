@@ -25,6 +25,7 @@ import {RegistryFactory} from "../src/RegistryFactory/RegistryFactory.sol";
 import {RegistryCommunity, RegistryCommunityInitializeParams} from "../src/RegistryCommunity/RegistryCommunity.sol";
 import {ISafe as Safe, SafeProxyFactory, Enum} from "../src/interfaces/ISafe.sol";
 import {CollateralVault} from "../src/CollateralVault.sol";
+import {CVVault} from "../src/CVVault/CVVault.sol";
 // import {SafeProxyFactory} from "safe-smart-account/contracts/proxies/SafeProxyFactory.sol";
 import {Upgrades} from "@openzeppelin/foundry/LegacyUpgrades.sol";
 
@@ -187,7 +188,8 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
                         address(SENDER),
                         address(new RegistryCommunity()),
                         address(new CVStrategy()),
-                        address(new CollateralVault())
+                        address(new CollateralVault()),
+                        address(new CVVault())
                     )
                 );
                 REGISTRY_FACTORY = RegistryFactory(address(proxy));
