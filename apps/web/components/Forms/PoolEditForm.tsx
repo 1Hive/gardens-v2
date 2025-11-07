@@ -1,8 +1,8 @@
-import React, { ReactNode, useState } from "react";
+import React, { ReactNode, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Address, formatUnits, parseUnits } from "viem";
-import { CVStrategy, TokenGarden } from "#/subgraph/.graphclient";
-import { AllowListInput } from "./AllowListInput";
+import { Address, formatUnits, parseUnits, zeroAddress } from "viem";
+import { getPoolDataQuery, TokenGarden } from "#/subgraph/.graphclient";
+import { AddressListInput } from "./AddressListInput";
 import { FormAddressInput } from "./FormAddressInput";
 import { FormCheckBox } from "./FormCheckBox";
 import { FormInput } from "./FormInput";
@@ -14,9 +14,9 @@ import { chainConfigMap } from "@/configs/chains";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
+import { useSuperfluidToken } from "@/hooks/useSuperfluidToken";
 import { cvStrategyABI } from "@/src/generated";
 import { DisputeOutcome, PoolTypes, SybilResistanceType } from "@/types";
-import { filterFunctionFromABI } from "@/utils/abi";
 import {
   calculateDecay,
   CV_PASSPORT_THRESHOLD_SCALE,
@@ -46,10 +46,9 @@ type FormInputs = {
 } & ArbitrationSettings;
 
 type Props = {
-  strategy: Pick<CVStrategy, "id" | "poolId" | "sybilScorer">;
-  token: TokenGarden["decimals"];
-  chainId: string;
-  initValues: FormInputs;
+  strategy: getPoolDataQuery["cvstrategies"][0];
+  token?: Pick<TokenGarden, "decimals">;
+  initValues: FormInputs | undefined;
   proposalType: string;
   pointSystemType: number;
   proposalOnDispute: boolean;
@@ -62,21 +61,21 @@ const sybilResistancePreview = (
   value?: string | Address[],
 ): ReactNode => {
   const previewMap: Record<SybilResistanceType, ReactNode> = {
-    noSybilResist: "No restrictions (anyone can vote)",
+    noSybilResist: "No protections (anyone can vote)",
     allowList: (() => {
       if (addresses.length === 0) {
         return "Allow list (no addresses submitted)";
       }
+      if (addresses.length === 1 && addresses[0] === zeroAddress) {
+        return "No protections (anyone can vote)";
+      }
       return (
         <div className="flex flex-col">
           <div className="w-fit text-nowrap flex-nowrap">Allow list:</div>
-          <ul className="space-y-2 overflow-y-auto border1 p-2 rounded-xl w-fit resize-y">
+          <ul className="space-y-2 border1 p-2 rounded-xl w-fit resize-y">
             {addresses.map((address) => (
               <li key={address}>
-                <EthAddress
-                  address={address as Address}
-                  shortenAddress={false}
-                />
+                <EthAddress address={address as Address} showPopup={false} />
               </li>
             ))}
           </ul>
@@ -84,12 +83,14 @@ const sybilResistancePreview = (
       );
     })(),
     gitcoinPassport: `Passport score required: ${value}`,
+    goodDollar: "GoodDollar verification required",
   };
 
   return previewMap[sybilType];
 };
 
 const parseAllowListMembers = (
+  activeMembers: Address[],
   initialList: Address[],
   currentList: Address[],
 ) => {
@@ -98,6 +99,22 @@ const parseAllowListMembers = (
 
   const membersToAdd: Address[] = [];
   const membersToRemove: Address[] = [];
+
+  // Check if transitioning from everyone allowed to allow list
+  if (
+    initialList.length === 1 &&
+    initialList[0] === zeroAddress &&
+    currentList.length > 1 // more than just zeroAddress
+  ) {
+    // We should remove currently staking users (to deactive them from the pool)
+    return {
+      membersToAdd,
+      membersToRemove: [
+        zeroAddress,
+        ...activeMembers.filter((x) => !membersToAdd.includes(x)), // Force deactive all currently active but excluded members
+      ],
+    };
+  }
 
   for (const address of initialSet) {
     if (!currentSet.has(address)) {
@@ -117,7 +134,6 @@ const parseAllowListMembers = (
 export default function PoolEditForm({
   token,
   strategy,
-  chainId,
   initValues,
   proposalType,
   pointSystemType,
@@ -130,6 +146,7 @@ export default function PoolEditForm({
     watch,
     formState: { errors },
   } = useForm<FormInputs>({
+    mode: "onBlur",
     defaultValues:
       initValues ?
         {
@@ -164,16 +181,35 @@ export default function PoolEditForm({
         }
       : undefined,
   });
-  const sybilResistanceType =
-    strategy.sybilScorer == null ? "allowList" : "gitcoinPassport";
+
   const sybilResistanceValue = watch("sybilResistanceValue");
 
-  const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** token.decimals;
+  const derivedType =
+    strategy.sybil == null ? "allowList"
+    : strategy.sybil.type === "Passport" ? "gitcoinPassport"
+    : "goodDollar";
+
+  const formSybilType =
+    watch("sybilResistanceType") ??
+    initValues?.sybilResistanceType ??
+    derivedType;
+
+  useEffect(() => {
+    if (initValues?.sybilResistanceValue != null) {
+      setValue("sybilResistanceValue", initValues.sybilResistanceValue as any, {
+        shouldDirty: false,
+      });
+    }
+  }, [initValues?.sybilResistanceValue, setValue]);
+
+  const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** (token?.decimals ?? 18);
   const INPUT_MIN_THRESHOLD_VALUE = 0;
   const shouldRenderInput = (key: string): boolean => {
     if (
       PoolTypes[proposalType] === "signaling" &&
-      (key === "spendingLimit" || key === "minThresholdPoints")
+      (key === "spendingLimit" ||
+        key === "minThresholdPoints" ||
+        key === "minimumConviction")
     ) {
       return false;
     }
@@ -182,13 +218,20 @@ export default function PoolEditForm({
 
   const [showPreview, setShowPreview] = useState<boolean>(false);
   const [previewData, setPreviewData] = useState<FormInputs>();
-  const [tribunalAddress, setTribunalAddress] = useState(
-    initValues?.tribunalAddress ?? "",
-  );
+  const tribunalAddress = watch("tribunalAddress");
+  const { superToken } = useSuperfluidToken({
+    token: strategy.token,
+    enabled: !strategy.config.superfluidToken,
+  });
 
   const [loading, setLoading] = useState(false);
   const { publish } = usePubSubContext();
-  const chain = useChainFromPath()!;
+  const {
+    id: chainId,
+    nativeCurrency,
+    arbitrator,
+    globalTribunal,
+  } = useChainFromPath()!;
 
   const formRowTypes: Record<string, any> = {
     spendingLimit: {
@@ -219,7 +262,7 @@ export default function PoolEditForm({
       label: "Pool voting authorization:",
       parse: () =>
         sybilResistancePreview(
-          sybilResistanceType,
+          derivedType,
           Array.isArray(sybilResistanceValue) ? sybilResistanceValue : [],
           sybilResistanceValue?.toString(),
         ),
@@ -240,21 +283,42 @@ export default function PoolEditForm({
     },
     proposalCollateral: {
       label: "Proposal collateral:",
-      parse: (value: string) =>
-        value + " " + chain.nativeCurrency?.symbol || "",
+      parse: (value: string) => value + " " + nativeCurrency?.symbol || "",
     },
     disputeCollateral: {
       label: "Dispute collateral:",
-      parse: (value: string) =>
-        value + " " + chain.nativeCurrency?.symbol || "",
+      parse: (value: string) => value + " " + nativeCurrency?.symbol || "",
     },
     tribunalAddress: {
       label: "Tribunal safe:",
       parse: (value: string) => (
-        <EthAddress address={value as Address} icon={"ens"} />
+        <EthAddress address={value as Address} icon={"ens"} showPopup={false} />
       ),
     },
   };
+
+  const { write: setPoolParamsWrite } = useContractWriteWithConfirmations({
+    address: strategy.id as Address,
+    contractName: "CV Strategy",
+    functionName: "setPoolParams",
+    fallbackErrorMessage: "Error editing a pool, please report a bug.",
+    onConfirmations: () => {
+      publish({
+        topic: "pool",
+        function: "setPoolParams",
+        type: "update",
+        id: strategy.poolId,
+        chainId: chainId,
+      });
+    },
+    onSettled: () => {
+      setLoading(false);
+    },
+    onSuccess: () => {
+      setModalOpen(false);
+    },
+    abi: cvStrategyABI,
+  });
 
   const contractWrite = () => {
     setLoading(true);
@@ -265,9 +329,9 @@ export default function PoolEditForm({
     let minimumConviction;
     let convictionGrowth;
 
-    spendingLimit = previewData?.spendingLimit as number;
-    minimumConviction = previewData?.minimumConviction as number;
-    convictionGrowth = previewData?.convictionGrowth as number;
+    spendingLimit = previewData.spendingLimit as number;
+    minimumConviction = previewData.minimumConviction as number;
+    convictionGrowth = previewData.convictionGrowth as number;
 
     // parse to percentage fraction
     spendingLimit = spendingLimit / 100;
@@ -276,7 +340,7 @@ export default function PoolEditForm({
     const maxRatioNum = calculateMaxRatioNum(spendingLimit, minimumConviction);
 
     const weightNum = minimumConviction * maxRatioNum ** 2;
-    const blockTime = chainConfigMap[chainId].blockTime;
+    const blockTime = chainConfigMap[chainId!].blockTime;
 
     // pool settings
     const maxRatio = BigInt(Math.round(maxRatioNum * CV_SCALE_PRECISION));
@@ -284,61 +348,62 @@ export default function PoolEditForm({
     const decay = BigInt(calculateDecay(blockTime, convictionGrowth));
 
     const minThresholdPoints = parseUnits(
-      (previewData?.minThresholdPoints ?? 0).toString(),
-      token.decimals,
+      (previewData.minThresholdPoints ?? 0).toString(),
+      token?.decimals ?? 18,
     );
 
     const initialAllowList =
-      Array.isArray(initValues?.sybilResistanceValue) ?
+      initValues && Array.isArray(initValues?.sybilResistanceValue) ?
         initValues.sybilResistanceValue
       : [];
 
     const currentAllowList =
-      Array.isArray(previewData?.sybilResistanceValue) ?
+      Array.isArray(previewData.sybilResistanceValue) ?
         previewData.sybilResistanceValue
       : [];
 
     const { membersToAdd, membersToRemove } = parseAllowListMembers(
+      strategy.memberActive?.map((x) => x.id as Address) ?? [],
       initialAllowList,
       currentAllowList,
     );
 
-    const coreArgs = [
-      {
-        arbitrator: chain.arbitrator as Address,
-        tribunalSafe: tribunalAddress as Address,
-        submitterCollateralAmount: parseUnits(
-          previewData.proposalCollateral.toString(),
-          token?.decimals,
-        ),
-        challengerCollateralAmount: parseUnits(
-          previewData.disputeCollateral.toString(),
-          token?.decimals,
-        ),
-        defaultRuling: BigInt(previewData.defaultResolution),
-        defaultRulingTimeout: BigInt(
-          Math.round(parseTimeUnit(previewData.rulingTime, "days", "seconds")),
-        ),
-      },
-      {
-        maxRatio: maxRatio,
-        weight: weight,
-        decay: decay,
-        minThresholdPoints: minThresholdPoints,
-      },
-    ] as const;
-
-    if (sybilResistanceType === "gitcoinPassport") {
-      const sybilValue =
-        +(previewData.sybilResistanceValue ?? 0) * CV_PASSPORT_THRESHOLD_SCALE;
-      writeEditPoolWithScoreThreshold({
-        args: [...coreArgs, BigInt(sybilValue)],
-      });
-    } else {
-      writeEditPoolWithAllowlist({
-        args: [...coreArgs, membersToAdd, membersToRemove],
-      });
-    }
+    const sybilValue =
+      +(previewData.sybilResistanceValue ?? 0) * CV_PASSPORT_THRESHOLD_SCALE;
+    setPoolParamsWrite({
+      args: [
+        {
+          arbitrator: arbitrator as Address,
+          tribunalSafe: tribunalAddress as Address,
+          submitterCollateralAmount: parseUnits(
+            previewData.proposalCollateral.toString(),
+            token?.decimals,
+          ),
+          challengerCollateralAmount: parseUnits(
+            previewData.disputeCollateral.toString(),
+            token?.decimals,
+          ),
+          defaultRuling: BigInt(previewData.defaultResolution),
+          defaultRulingTimeout: BigInt(
+            Math.round(
+              parseTimeUnit(previewData.rulingTime, "days", "seconds"),
+            ),
+          ),
+        },
+        {
+          maxRatio: maxRatio,
+          weight: weight,
+          decay: decay,
+          minThresholdPoints: minThresholdPoints,
+        },
+        BigInt(sybilValue || 0),
+        membersToAdd,
+        membersToRemove,
+        (strategy.config.superfluidToken as Address) ??
+          (superToken?.sameAsUnderlying ? undefined : superToken?.id) ??
+          zeroAddress,
+      ],
+    });
   };
 
   const formatFormRows = () => {
@@ -363,10 +428,7 @@ export default function PoolEditForm({
 
     Object.entries(reorderedData).forEach(([key, value]) => {
       const formRow = formRowTypes[key];
-      if (
-        formRow
-        // && shouldRenderInPreview(key)
-      ) {
+      if (formRow && shouldRenderInput(key)) {
         const parsedValue = formRow.parse ? formRow.parse(value) : value;
         formattedRows.push({
           label: formRow.label,
@@ -380,52 +442,6 @@ export default function PoolEditForm({
     return formattedRows;
   };
 
-  const setPoolParamsWritePayload = {
-    address: strategy.id as Address,
-    contractName: "CV Strategy",
-    functionName: "setPoolParams",
-    fallbackErrorMessage: "Error editing a pool, please report a bug.",
-    onConfirmations: () => {
-      publish({
-        topic: "pool",
-        function: "setPoolParams",
-        type: "update",
-        id: strategy.poolId,
-        chainId: chainId,
-      });
-    },
-    onSettled: () => {
-      setLoading(false);
-    },
-    onSuccess: () => {
-      setModalOpen(false);
-    },
-  } as const;
-
-  const { write: writeEditPoolWithAllowlist } =
-    useContractWriteWithConfirmations({
-      ...setPoolParamsWritePayload,
-      abi: filterFunctionFromABI(
-        cvStrategyABI,
-        (abiItem) =>
-          abiItem.name === "setPoolParams" &&
-          !!abiItem.inputs.find((param) => param.name === "membersToAdd"),
-      ),
-    });
-
-  const { write: writeEditPoolWithScoreThreshold } =
-    useContractWriteWithConfirmations({
-      ...setPoolParamsWritePayload,
-      abi: filterFunctionFromABI(
-        cvStrategyABI,
-        (abiItem) =>
-          abiItem.name === "setPoolParams" &&
-          !!abiItem.inputs.find(
-            (param) => param.name === "sybilScoreThreshold",
-          ),
-      ),
-    });
-
   const handlePreview = (data: FormInputs) => {
     setPreviewData(data);
     setShowPreview(true);
@@ -433,17 +449,24 @@ export default function PoolEditForm({
 
   return (
     <>
-      <form onSubmit={handleSubmit(handlePreview)} className="max-w-4xl px-14">
+      <form onSubmit={handleSubmit(handlePreview)}>
+        <input
+          type="hidden"
+          {...register("sybilResistanceType")}
+          value={formSybilType}
+        />
+
         {showPreview ?
           <FormPreview formRows={formatFormRows()} />
         : <div className="flex flex-col gap-6">
             <div className="flex flex-col gap-4">
-              {sybilResistanceType === "gitcoinPassport" ?
+              {derivedType === "gitcoinPassport" ?
                 <FormInput
                   label="Gitcoin Passport score"
                   register={register}
-                  required={sybilResistanceType === "gitcoinPassport"}
+                  required={derivedType === "gitcoinPassport"}
                   registerOptions={{
+                    valueAsNumber: true,
                     min: {
                       value: 1 / CV_PASSPORT_THRESHOLD_SCALE,
                       message: `Amount must be greater than ${1 / CV_PASSPORT_THRESHOLD_SCALE}`,
@@ -458,8 +481,8 @@ export default function PoolEditForm({
                   type="number"
                   placeholder="0"
                 />
-              : sybilResistanceType === "allowList" && (
-                  <AllowListInput
+              : derivedType === "allowList" && (
+                  <AddressListInput
                     label="Allow list"
                     register={register}
                     registerKey="sybilResistanceValue"
@@ -472,7 +495,6 @@ export default function PoolEditForm({
                 )
               }
             </div>
-
             {/* pool settings section */}
             <div className="flex flex-col">
               <h6 className="mb-4">Conviction params</h6>
@@ -492,10 +514,6 @@ export default function PoolEditForm({
                       min: 1 / CV_SCALE_PRECISION,
                     }}
                     registerOptions={{
-                      max: {
-                        value: 100,
-                        message: "Max amount cannot exceed 100%",
-                      },
                       min: {
                         value: 1 / CV_SCALE_PRECISION,
                         message: "Amount must be greater than 0",
@@ -603,7 +621,7 @@ export default function PoolEditForm({
                   step: 1 / 10 ** ETH_DECIMALS,
                   min: 1 / 10 ** ETH_DECIMALS,
                 }}
-                suffix={chain.nativeCurrency?.symbol ?? ""}
+                suffix={nativeCurrency?.symbol ?? ""}
               />
               <FormInput
                 tooltip={
@@ -618,7 +636,7 @@ export default function PoolEditForm({
                   step: 1 / 10 ** ETH_DECIMALS,
                   min: 1 / 10 ** ETH_DECIMALS,
                 }}
-                suffix={chain.nativeCurrency?.symbol ?? ""}
+                suffix={nativeCurrency?.symbol ?? ""}
               />
               <FormInput
                 label="Ruling Time"
@@ -652,26 +670,29 @@ export default function PoolEditForm({
                   tooltip="Enter a Safe address to rule on proposal disputes in the Pool and determine if they are in violation of the Covenant."
                   label="Tribunal address"
                   required
-                  onChange={(ev) =>
-                    setValue("tribunalAddress", ev.target.value)
-                  }
+                  validateSafe
                   value={tribunalAddress}
+                  registerKey="tribunalAddress"
+                  register={register}
+                  errors={errors}
                 />
                 <FormCheckBox
                   label="Use global tribunal"
-                  register={register}
                   registerKey="useGlobalTribunal"
-                  type="checkbox"
                   tooltip="Check this box to use the Gardens global tribunal Safe to rule on proposal disputes in the Pool, a service we offer if your community does not have an impartial 3rd party that can rule on violations of the Covenant."
                   value={
-                    tribunalAddress.toLowerCase() ===
-                    chain.globalTribunal?.toLowerCase()
+                    tribunalAddress?.toLowerCase() ===
+                    globalTribunal?.toLowerCase()
                   }
                   onChange={() => {
-                    setTribunalAddress((oldAddress) =>
-                      oldAddress === chain.globalTribunal ?
+                    setValue(
+                      "tribunalAddress",
+                      (
+                        tribunalAddress.toLowerCase() ===
+                          globalTribunal?.toLowerCase()
+                      ) ?
                         ""
-                      : (chain.globalTribunal ?? ""),
+                      : globalTribunal ?? "",
                     );
                   }}
                 />
@@ -679,38 +700,38 @@ export default function PoolEditForm({
             </div>
           </div>
         }
+        <div className="flex w-full items-center justify-end pt-6">
+          {showPreview ?
+            <div className="flex items-center gap-4">
+              <Button
+                onClick={() => {
+                  setShowPreview(false);
+                  setLoading(false);
+                }}
+                btnStyle="outline"
+              >
+                Edit
+              </Button>
+              <Button onClick={() => contractWrite()} isLoading={loading}>
+                Submit
+              </Button>
+            </div>
+          : <div className="flex items-center gap-4">
+              <Button
+                className="flex-1"
+                btnStyle="outline"
+                color="danger"
+                onClick={() => setModalOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button className="flex-1" type="submit">
+                Preview
+              </Button>
+            </div>
+          }
+        </div>
       </form>
-      <div className="flex w-full items-center justify-end pt-6">
-        {showPreview ?
-          <div className="flex items-center gap-4">
-            <Button
-              onClick={() => {
-                setShowPreview(false);
-                setLoading(false);
-              }}
-              btnStyle="outline"
-            >
-              Edit
-            </Button>
-            <Button onClick={() => contractWrite()} isLoading={loading}>
-              Submit
-            </Button>
-          </div>
-        : <div className="flex items-center gap-4">
-            <Button
-              className="flex-1"
-              btnStyle="outline"
-              color="danger"
-              onClick={() => setModalOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button className="flex-1" type="submit">
-              Preview
-            </Button>
-          </div>
-        }
-      </div>
     </>
   );
 }

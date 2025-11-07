@@ -1,18 +1,24 @@
-{
-  "network": "optimism",
-  "chainId": 10,
-  "dataSources": [
-    {
-      "name": "RegistryFactoryV0_0",
-      "startBlock": 125112016,
-      "address": "0x1fac47cf25f1ca9f20ba366099d26b28401f5715",
-      "customTemplate": "registryFactory"
-    },
-    {
-      "name": "PassportScorer",
-      "startBlock": 125112016,
-      "address": "0xc93830dd463516ed5f28f6cd4f837173b87ff389",
-      "customTemplate": "passportScorer"
-    }
-  ]
-}
+  {
+    "network": "optimism",
+    "chainId": 10,
+    "dataSources": [
+      {
+        "name": "RegistryFactory",
+        "startBlock": 125112015,
+        "address": "0x1fac47cf25f1ca9f20ba366099d26b28401f5715",
+        "customTemplate": "registryFactory"
+      },
+      {
+        "name": "PassportScorer",
+        "startBlock": 125112015,
+        "address": "0x084a5504dCFeac0ec3E10517247639e50c8DcFFd",
+        "customTemplate": "passportScorer"
+      },
+      {
+        "name": "GoodDollarSybil",
+        "startBlock": 125112015,
+        "address": "0x5820D4e62A0EF69B1CCDAFB7729ACc8B0E93d845",
+        "customTemplate": "goodDollarSybil"
+      }
+    ]
+  }

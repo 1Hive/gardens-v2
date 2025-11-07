@@ -1,50 +1,41 @@
-"use client";
+import type { Metadata } from "next";
+import ClientPage from "./client-page";
 
-import React from "react";
-import { Address } from "viem";
-import {
-  getPoolCreationDataDocument,
-  getPoolCreationDataQuery,
-} from "#/subgraph/.graphclient";
-import { PoolForm } from "@/components/Forms/PoolForm";
-import { LoadingSpinner } from "@/components/LoadingSpinner";
-import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
+const TITLE = "Gardens - Create a pool";
+const DESCRIPTION =
+  "Spin up a dedicated pool so your community can coordinate funding and signaling decisions together.";
 
-export default function Page({
-  params: { garden, community },
-}: {
-  params: { garden: string; community: string };
-}) {
-  const { data: result } = useSubgraphQuery<getPoolCreationDataQuery>({
-    query: getPoolCreationDataDocument,
-    variables: { communityAddr: community, tokenAddr: garden },
-  });
-  let token = result?.tokenGarden;
-  let alloAddr = result?.allos[0]?.id as Address;
-  let communityName = result?.registryCommunity?.communityName as string;
+type PageParams = {
+  params: {
+    chain: string;
+    garden: string;
+    community: string;
+  };
+};
 
-  if (!token) {
-    return (
-      <div className="my-40">
-        <LoadingSpinner />
-      </div>
-    );
-  }
+function buildCommunityOgImagePath(params: PageParams["params"]) {
+  return `/gardens/${params.chain}/${params.garden}/${params.community}/opengraph-image-w94mav`;
+}
 
-  return result ?
-      <div className="page-layout">
-        <section className="section-layout">
-          <div className="text-center sm:mt-5 mb-12">
-            <h2 className="">Create a Pool in {communityName} community</h2>
-          </div>
-          <PoolForm
-            alloAddr={alloAddr}
-            token={token}
-            communityAddr={community as Address}
-          />
-        </section>
-      </div>
-    : <div className="mt-96">
-        <LoadingSpinner />
-      </div>;
+export function generateMetadata({ params }: PageParams): Metadata {
+  const ogImage = buildCommunityOgImagePath(params);
+  return {
+    title: TITLE,
+    description: DESCRIPTION,
+    openGraph: {
+      title: TITLE,
+      description: DESCRIPTION,
+      images: [{ url: ogImage }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: TITLE,
+      description: DESCRIPTION,
+      images: [ogImage],
+    },
+  };
+}
+
+export default function Page(props: PageParams) {
+  return <ClientPage {...props} />;
 }

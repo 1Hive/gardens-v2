@@ -12,11 +12,10 @@ module.exports = {
     "airbnb-typescript",
     "plugin:@typescript-eslint/recommended",
     "plugin:react/recommended",
-    "plugin:jsx-a11y/recommended",
     "next/core-web-vitals",
     "prettier/prettier",
   ],
-  plugins: ["react"],
+  plugins: ["react", "jsx-a11y"],
   ignorePatterns: ["node_modules", "dist", "src/generated.ts", "public"],
   parser: "@typescript-eslint/parser",
   parserOptions: {
@@ -86,5 +85,18 @@ module.exports = {
     indent: "off",
     "@typescript-eslint/indent": "off",
     "jsx-a11y/label-has-associated-control": "off",
+    "@typescript-eslint/strict-boolean-expressions": [
+      "warn",
+      {
+        allowString: true,
+        allowNumber: true,
+        allowNullableEnum: false,
+        allowNullableObject: true,
+        allowNullableBoolean: true,
+        allowNullableString: true,
+        allowNullableNumber: false,
+        allowAny: true,
+      },
+    ],
   },
 };

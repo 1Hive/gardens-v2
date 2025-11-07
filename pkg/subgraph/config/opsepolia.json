@@ -4,9 +4,21 @@
   "dataSources": [
     {
       "name": "RegistryFactory",
-      "startBlock": 0,
-      "address": "",
+      "startBlock": 29036730,
+      "address": "0xEC8824e9a9498520891ec678e98c5bd3e65229c2",
       "customTemplate": "registryFactory"
+    },
+    {
+      "name": "PassportScorer",
+      "startBlock": 29036730,
+      "address": "0xe3DC6e82B599cD80904aCf0a3cd9f7401d92CC37",
+      "customTemplate": "passportScorer"
+    },
+    {
+      "name": "GoodDollarSybil",
+      "startBlock": 29036730,
+      "address": "0xb01AC9015E04ecC424E646eBAb32dfa7670Ae8a6",
+      "customTemplate": "goodDollarSybil"
     }
   ]
 }

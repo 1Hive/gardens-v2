@@ -16,6 +16,7 @@ build
 # misc
 .DS_Store
 *.pem
+WARP.md
 
 # debug
 npm-debug.log*
@@ -29,7 +30,7 @@ yarn-error.log*
 .env.development.local
 .env.test.local
 .env.production.local
-
+.env.*
 # turbo
 .turbo
 

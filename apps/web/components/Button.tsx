@@ -12,7 +12,8 @@ type ButtonProps = {
   btnStyle?: BtnStyle;
   color?: Color;
   onClick?: React.DOMAttributes<HTMLButtonElement>["onClick"];
-  showToolTip?: boolean;
+  forceShowTooltip?: boolean;
+  popTooltip?: boolean; // Allows to display the tooltip programmatically
   className?: string;
   disabled?: boolean;
   tooltip?: string;
@@ -21,12 +22,15 @@ type ButtonProps = {
     | "tooltip-top"
     | "tooltip-bottom"
     | "tooltip-left"
-    | "tooltip-right";
-  children: React.ReactNode;
+    | "tooltip-right"
+    | "tooltip-top-right"
+    | "tooltip-top-left";
+  children?: React.ReactNode;
   isLoading?: boolean;
   size?: Size;
   icon?: React.ReactNode;
   walletConnected?: boolean;
+  style?: React.CSSProperties;
 };
 
 export type Color =
@@ -35,46 +39,68 @@ export type Color =
   | "tertiary"
   | "danger"
   | "disabled";
-export type BtnStyle = "filled" | "outline" | "link";
+export type BtnStyle = "filled" | "outline" | "link" | "ghost";
 
 type BtnStyles = Record<BtnStyle, Record<Color, string>>;
 
 const btnStyles: BtnStyles = {
   filled: {
     primary:
-      "bg-primary-button text-neutral-inverted-content hover:bg-primary-hover-content",
-    secondary: "",
-    tertiary: "",
+      "bg-primary-button text-neutral-inverted-content hover:bg-primary-hover-content dark:bg-primary-dark-base dark:hover:bg-primary-dark-hover",
+    secondary:
+      "bg-secondary-button text-neutral-inverted-content hover:bg-secondary-hover-content dark:bg-secondary-dark-base dark:hover:bg-secondary-dark-hover",
+    tertiary:
+      "bg-tertiary-button text-neutral-inverted-content hover:bg-tertiary-hover-content dark:bg-tertiary-dark-base dark:hover:bg-tertiary-dark-hover",
     danger:
-      "bg-danger-button text-neutral-inverted-content hover:bg-danger-hover-content",
-    disabled: "bg-neutral-button text-neutral-inverted-content",
+      "bg-danger-button text-neutral-inverted-content hover:bg-danger-hover-content dark:bg-danger-dark-base/70 dark:text-neutral-inverted-content dark:hover:bg-danger-dark-border-hover",
+    disabled:
+      "bg-neutral-button text-neutral-inverted-content dark:bg-disabled-dark-button dark:text-disabled-dark-text",
   },
   outline: {
     primary:
-      "text-primary-content border border-primary-content hover:text-primary-hover-content hover:outline-primary-hover-content",
+      "text-primary-content border border-primary-content hover:text-primary-hover-content hover:border-primary-hover-content dark:text-primary-dark-border dark:border-primary-dark-border dark:hover:text-primary-dark-border-hover dark:hover:border-primary-dark-border-hover",
     secondary:
-      "text-secondary-content border border-secondary-content hover:text-secondary-hover-content hover:outline-secondary-hover-content",
-    tertiary: "",
+      "text-secondary-content border border-secondary-content hover:text-secondary-hover-content hover:border-secondary-hover-content dark:text-secondary-dark-border dark:border-secondary-dark-border dark:hover:text-secondary-dark-border-hover dark:hover:border-secondary-dark-border-hover",
+    tertiary:
+      "text-tertiary-content border border-tertiary-content hover:text-tertiary-hover-content hover:border-tertiary-hover-content dark:text-tertiary-dark-border dark:border-tertiary-dark-border dark:hover:text-tertiary-dark-border-hover dark:hover:border-tertiary-dark-border-hover",
     danger:
-      "text-danger-button border border-danger-button hover:text-danger-hover-content hover:outline-danger-hover-content",
-    disabled: "text-neutral-soft-content border border-neutral-soft-content",
+      "text-danger-button border border-danger-button hover:text-danger-hover-content hover:border-danger-hover-content dark:text-danger-dark-border dark:border-danger-dark-border dark:hover:text-danger-dark-border-hover dark:hover:border-danger-dark-border-hover",
+    disabled:
+      "text-neutral-soft-content border border-neutral-soft-content opacity-70 dark:text-white/30 dark:border-white/10",
   },
   link: {
-    primary: "text-primary-content",
-    secondary: "",
-    tertiary: "",
-    danger: "text-danger-button",
-    disabled: "text-neutral-soft",
+    primary:
+      "text-primary-content hover:text-primary-hover-content dark:text-primary-dark-border dark:hover:text-primary-dark-border-hover",
+    secondary:
+      "text-secondary-content hover:text-secondary-hover-content dark:text-secondary-dark-border dark:hover:text-secondary-dark-border-hover",
+    tertiary:
+      "text-tertiary-content hover:text-tertiary-hover-content dark:text-tertiary-dark-border dark:hover:text-tertiary-dark-border-hover",
+    danger:
+      "text-danger-button hover:text-danger-hover-content dark:text-danger-dark-border dark:hover:text-danger-dark-border-hover",
+    disabled: "text-neutral-soft-content opacity-70 dark:text-white/30",
+  },
+  ghost: {
+    primary:
+      "text-primary-content border border-transparent hover:text-primary-hover-content hover:border-primary-content dark:text-primary-dark-border dark:border-transparent dark:hover:text-primary-dark-border-hover dark:hover:border-primary-dark-border-hover",
+    secondary:
+      "text-secondary-content border border-transparent hover:text-secondary-hover-content hover:border-secondary-content dark:text-secondary-dark-border dark:border-transparent dark:hover:text-secondary-dark-border-hover dark:hover:border-secondary-dark-border-hover",
+    tertiary:
+      "text-tertiary-content border border-transparent hover:text-tertiary-hover-content hover:border-tertiary-content dark:text-tertiary-dark-border dark:border-transparent dark:hover:text-tertiary-dark-border-hover dark:hover:border-tertiary-dark-border-hover",
+    danger:
+      "text-danger-button border border-transparent hover:text-danger-hover-content hover:border-danger-button dark:text-danger-dark-border dark:border-transparent dark:hover:text-danger-dark-border-hover dark:hover:border-danger-dark-border-hover",
+    disabled:
+      "text-neutral-soft-content border border-transparent opacity-70 dark:text-white/30",
   },
 };
 
 export function Button({
   onClick,
-  className: styles,
+  className = "",
   disabled = false,
   tooltip,
-  showToolTip = true,
-  tooltipClassName: tooltipStyles,
+  forceShowTooltip = false,
+  popTooltip = false,
+  tooltipClassName: tooltipStyles = "",
   tooltipSide = "tooltip-top",
   children,
   btnStyle = "filled",
@@ -82,29 +108,36 @@ export function Button({
   isLoading = false,
   icon,
   type = "button",
+  style,
 }: ButtonProps) {
   const buttonElement = (
     <button
       type={type}
-      className={`${btnStyles[btnStyle][disabled ? "disabled" : color]}
-      flex relative cursor-pointer  justify-center rounded-lg px-6 py-4 transition-all ease-out disabled:cursor-not-allowed h-fit ${styles}`}
+      className={`${btnStyles[btnStyle][disabled ? "disabled" : color]} flex relative cursor-pointer justify-center rounded-lg px-4 py-2 transition-all ease-out disabled:cursor-not-allowed disabled:shadow-none h-fit text-sm gap-2 ${className}`}
       onClick={onClick}
       disabled={disabled || isLoading}
+      style={style}
+      aria-disabled={disabled || isLoading ? "true" : "false"}
+      aria-label={
+        children != null ?
+          typeof children === "string" ?
+            children
+          : ""
+        : ""
+      }
     >
-      <div
-        className={`${isLoading ? "invisible" : "visible"} flex gap-2 items-center`}
-      >
-        {icon && icon} {children}
+      {isLoading && (
+        <span className={"loading loading-spinner loading-sm text-inherit"} />
+      )}
+      <div className={"flex gap-2 items-center"}>
+        {icon != null && !isLoading && icon} {children}
       </div>
-      <span
-        className={`loading loading-spinner absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 ${isLoading ? "block" : "hidden"}`}
-      />
     </button>
   );
 
-  return disabled || showToolTip ?
+  return disabled || forceShowTooltip ?
       <div
-        className={`${tooltip ? "tooltip" : ""} ${tooltipSide} ${tooltipStyles}`}
+        className={`${className} ${tooltip ? "tooltip" : ""} ${tooltipSide} ${tooltipStyles} ${popTooltip ? "tooltip-open" : ""}`}
         data-tip={tooltip}
       >
         {buttonElement}

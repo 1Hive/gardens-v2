@@ -1,5 +1,6 @@
 !out/
 out/*
+!out/DiamondAggregated/
 !out/*CV*
 !out/*Allo.*
 !out/*Registry*
@@ -14,3 +15,4 @@ out/utils/*
 !out/*IArbitrator*
 !out/*CollateralVault.sol*
 !out/utils/Mock*
+!out/*GoodDollarSybil.sol*

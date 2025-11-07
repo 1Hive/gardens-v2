@@ -1,87 +1,115 @@
 import { useEffect, useState } from "react";
+import { noop } from "lodash-es";
+import { formatUnits } from "viem";
 import { Address, useContractRead } from "wagmi";
 import { useChainIdFromPath } from "./useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "./useContractWriteWithConfirmations";
 import { TransactionProps } from "@/components/TransactionModal";
 import { erc20ABI } from "@/src/generated";
-import { abiWithErrors } from "@/utils/abi";
+import { delayAsync } from "@/utils/delayAsync";
+import { roundToSignificant } from "@/utils/numbers";
 import { getTxMessage } from "@/utils/transactionMessages";
 
 export function useHandleAllowance(
   accountAddr: Address | undefined,
-  tokenAddr: Address | undefined,
-  tokenSymbol: string,
+  token: { address: string; decimals: number; symbol: string } | undefined,
   spenderAddr: Address,
   amount: bigint,
-  triggerNextTx: () => void,
+  triggerNextTx: (covenantSignature: `0x${string}` | undefined) => void,
+  transactionLabel?: string,
 ): {
   allowanceTxProps: TransactionProps;
-  handleAllowance: () => void;
+  handleAllowance: (args?: {
+    formAmount?: bigint;
+    covenantSignature?: `0x${string}`;
+  }) => Promise<void>;
   resetState: () => void;
 } {
   const chainId = useChainIdFromPath();
   const [allowanceTxProps, setAllowanceTxProps] = useState<TransactionProps>({
-    contractName: `${tokenSymbol} expenditure approval`,
+    contractName: transactionLabel ?? `${token?.symbol} expenditure approval`,
     message: "",
     status: "idle",
   });
+  const [onSuccess, setOnSuccess] = useState<() => void>(noop);
 
   const { refetch: refetchAllowance } = useContractRead({
     chainId,
-    address: tokenAddr,
-    abi: abiWithErrors(erc20ABI),
+    address: token?.address as Address,
+    abi: erc20ABI,
     args: [accountAddr as Address, spenderAddr],
     functionName: "allowance",
-    enabled: !!tokenAddr && accountAddr !== undefined,
+    enabled: !!token?.address && !!accountAddr && !!spenderAddr,
   });
 
   const {
-    write: writeAllowToken,
+    writeAsync: writeAllowTokenAsync,
     transactionStatus,
     error: allowanceError,
   } = useContractWriteWithConfirmations({
-    address: tokenAddr,
-    abi: abiWithErrors(erc20ABI),
-    args: [spenderAddr, amount],
+    address: token?.address as Address,
+    abi: erc20ABI,
+    // args: [spenderAddr, amount],
     functionName: "approve",
     contractName: "ERC20",
     showNotification: false,
   });
 
-  const handleAllowance = async () => {
-    const newAllowance = await refetchAllowance();
-    if (
-      newAllowance.data === undefined ||
-      (newAllowance.data as bigint) < amount
-    ) {
-      writeAllowToken();
-    } else {
-      setAllowanceTxProps({
-        contractName: `${tokenSymbol} expenditure approval`,
+  const handleAllowance = async (args?: {
+    formAmount?: bigint;
+    covenantSignature?: `0x${string}`;
+  }) => {
+    const currentAllowance = await refetchAllowance();
+
+    if (args?.formAmount != null) {
+      amount = args.formAmount;
+    }
+    if (currentAllowance?.data && currentAllowance.data >= amount) {
+      await delayAsync(1000);
+      setAllowanceTxProps((x) => ({
+        ...x,
         message: getTxMessage("success"),
         status: "success",
-      });
-      triggerNextTx();
+      }));
+      triggerNextTx(args?.covenantSignature);
+    } else {
+      if (currentAllowance?.data) {
+        // Already found allowance but not enough, need to reset allowance
+        setAllowanceTxProps({
+          contractName: `${token?.symbol} allowance reset`,
+          message: `Resetting allowance for ${token?.symbol} to 0`,
+          status: "loading",
+        });
+        await writeAllowTokenAsync({ args: [spenderAddr, 0n] });
+        setAllowanceTxProps({
+          contractName:
+            transactionLabel ?? `${token?.symbol} expenditure approval`,
+          message: `Setting allowance for ${token?.symbol} of ${token ? roundToSignificant(formatUnits(amount, token.decimals), 4) : ""}`,
+          status: "waiting",
+        });
+      }
+      setOnSuccess(() => () => triggerNextTx(args?.covenantSignature));
+      await writeAllowTokenAsync({ args: [spenderAddr, amount] });
     }
   };
 
   useEffect(() => {
-    setAllowanceTxProps({
-      contractName: `${tokenSymbol} expenditure approval`,
+    setAllowanceTxProps((x) => ({
+      ...x,
       message: getTxMessage(transactionStatus, allowanceError),
       status: transactionStatus ?? "idle",
-    });
+    }));
     if (transactionStatus === "success") {
-      triggerNextTx();
+      delayAsync(2000).then(() => onSuccess());
     }
   }, [transactionStatus]);
 
   const resetState = () =>
-    setAllowanceTxProps({
-      contractName: `${tokenSymbol} expenditure approval`,
+    setAllowanceTxProps((x) => ({
+      ...x,
       message: getTxMessage("idle"),
       status: "idle",
-    });
+    }));
 
   return {
     allowanceTxProps,

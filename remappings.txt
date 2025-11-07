@@ -4,4 +4,5 @@ allo-v2-test/=lib/allo-v2/test/
 @openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/
 @openzeppelin/foundry/=lib/openzeppelin-foundry-upgrades/src/
 @openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/
+@superfluid-finance/=lib/protocol-monorepo/packages/
 @src/=pkg/contracts/src

@@ -1,7 +1,9 @@
 import { useEffect, useMemo } from "react";
 
+import { getDataSuffix, submitReferral } from "@divvi/referral-sdk";
 import { WriteContractMode } from "@wagmi/core";
-import { Abi, TransactionReceipt } from "viem";
+import { Abi, Address, TransactionReceipt } from "viem";
+import { celo } from "viem/chains";
 import {
   useChainId,
   useContractWrite,
@@ -18,6 +20,15 @@ export type ComputedStatus =
   | "error"
   | "waiting"
   | undefined;
+
+// Divvi configuration constants
+const DIVVI_CONSUMER =
+  process.env.NEXT_PUBLIC_DIVVI_CONSUMER ??
+  "0x3c4d7f1a2b5e8c6f9e4b5a2c3d4e5f6a7b8c9d0e";
+const DIVVI_PROVIDERS = process.env.NEXT_PUBLIC_DIVVI_PROVIDERS?.split(",") ?? [
+  "0x0423189886d7966f0dd7e7d256898daeee625dca",
+  "0x5f0a55fad9424ac99429f635dfb9bf20c3360ab8",
+];
 
 /**
  * this hook is used to write to a contract and wait for confirmations.
@@ -44,9 +55,31 @@ export function useContractWriteWithConfirmations<
   const toastId = props.contractName + "_" + props.functionName;
   const chainIdFromWallet = useChainId();
   const chainIdFromPath = useChainIdFromPath();
+  const resolvedChaindId = +(
+    props.chainId ??
+    chainIdFromPath ??
+    chainIdFromWallet
+  );
+
+  const shouldDivviTrack = useMemo(() => {
+    return resolvedChaindId === celo.id;
+  }, [resolvedChaindId]);
+
   let propsWithChainId = {
     ...props,
-    chainId: props.chainId ?? chainIdFromPath ?? chainIdFromWallet,
+    chainId: resolvedChaindId,
+    dataSuffix:
+      shouldDivviTrack ?
+        getDataSuffix({
+          consumer: DIVVI_CONSUMER as Address,
+          providers: DIVVI_PROVIDERS as Address[],
+        })
+      : undefined,
+    confirmations:
+      props.confirmations ??
+      chainConfigMap[+resolvedChaindId]?.confirmations ??
+      1,
+    onConfirmations: props.onConfirmations,
   };
 
   function logError(error: any, variables: any, context: string) {
@@ -69,10 +102,8 @@ export function useContractWriteWithConfirmations<
   // Hook does not run unless hash is defined.
   const txWaitResult = useWaitForTransaction({
     hash: txResult.data?.hash,
-    chainId: +propsWithChainId.chainId,
-    confirmations:
-      propsWithChainId.confirmations ??
-      chainConfigMap[+propsWithChainId.chainId].confirmations,
+    chainId: +resolvedChaindId,
+    confirmations: propsWithChainId.confirmations,
   });
 
   const computedStatus = useMemo(() => {
@@ -98,10 +129,27 @@ export function useContractWriteWithConfirmations<
     transactionError: txResult.error,
     enabled: props.showNotification ?? true, // default to true
     fallbackErrorMessage: props.fallbackErrorMessage,
+    contractName: props.contractName,
+    chainId: resolvedChaindId,
+    confirmations: propsWithChainId.confirmations,
   });
 
   useEffect(() => {
     if (txWaitResult.isSuccess && txWaitResult.data) {
+      const hash = txResult.data?.hash;
+      // Referral tracking only for Celo
+      if (hash && shouldDivviTrack) {
+        try {
+          submitReferral({
+            txHash: hash,
+            chainId: resolvedChaindId,
+          }).then(() => {
+            console.info("Successfully tracked referral with Divvi:", hash);
+          });
+        } catch (error) {
+          logError(error, { hash }, "track divvi referral");
+        }
+      }
       propsWithChainId.onConfirmations?.(txWaitResult.data);
     }
   }, [txResult.isSuccess, txWaitResult.data]);

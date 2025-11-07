@@ -1,8 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import {
+  ArrowTrendingDownIcon,
+  ArrowTrendingUpIcon,
+} from "@heroicons/react/24/outline";
 import { Dnum } from "dnum";
-import { parseUnits } from "viem";
+import { formatUnits } from "viem";
 import { Address, useAccount, useBalance } from "wagmi";
 import {
   isMemberQuery,
@@ -11,17 +15,17 @@ import {
 } from "#/subgraph/.graphclient";
 import { Button } from "./Button";
 import { DisplayNumber } from "./DisplayNumber";
+import { EthAddress } from "./EthAddress";
 import { InfoBox } from "./InfoBox";
 import { InfoWrapper } from "./InfoWrapper";
 import { TransactionModal, TransactionProps } from "./TransactionModal";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
-import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
+import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useHandleAllowance } from "@/hooks/useHandleAllowance";
 import { registryCommunityABI } from "@/src/generated";
-import { abiWithErrors } from "@/utils/abi";
-import { parseToken } from "@/utils/numbers";
+import { parseToken, roundToSignificant } from "@/utils/numbers";
 import { getTxMessage } from "@/utils/transactionMessages";
 
 type IncreasePowerProps = {
@@ -53,44 +57,75 @@ export const IncreasePower = ({
   } = tokenGarden;
   const {
     communityName,
-    registerStakeAmount,
+    registerStakeAmount: registerStakeAmountStr,
     id: communityAddress,
   } = registryCommunity;
 
   const [isOpenModal, setIsOpenModal] = useState(false);
-  const [amount, setAmount] = useState<string>("0");
+  const [amountPerc, setAmountPerc] = useState("0");
+  const [stakedAmount, setStakedAmount] = useState("0");
   const { address: accountAddress } = useAccount();
 
-  const stakedTokens = memberData?.member?.memberCommunity?.[0]?.stakedTokens;
   const isMember = memberData?.member?.memberCommunity?.[0]?.isRegistered;
 
-  const memberStakedTokens = BigInt(
-    typeof stakedTokens === "string" ? stakedTokens : "0",
-  );
   const registerStakeAmountBigInt = BigInt(
-    typeof registerStakeAmount === "string" ? registerStakeAmount : "0",
+    typeof registerStakeAmountStr === "string" ? registerStakeAmountStr : "0",
   );
 
+  const registerStakeAmount = +registerStakeAmountStr / 10 ** tokenDecimals;
+
   const urlChainId = useChainIdFromPath();
-  const requestedAmount = parseUnits(amount, tokenDecimals);
+
+  const roundedStakedAmount = roundToSignificant(+stakedAmount, 4);
 
   const { data: accountTokenBalance } = useBalance({
     address: accountAddress,
     token: registerToken as Address,
     chainId: urlChainId,
+    watch: true,
+    enabled: !!accountAddress && !!registerToken,
+  });
+
+  const initialStakedAmountBn = BigInt(
+    memberData?.member?.memberCommunity?.[0]?.stakedTokens ?? 0,
+  );
+  const initialStakedAmount =
+    initialStakedAmountBn ?
+      +formatUnits(initialStakedAmountBn, tokenDecimals)
+    : 0;
+
+  const accountTokenBalancePlusStakeAmount =
+    accountTokenBalance &&
+    initialStakedAmount &&
+    +accountTokenBalance.formatted + initialStakedAmount;
+
+  const stakedAmountBn = BigInt(
+    Math.round(+stakedAmount * 10 ** tokenDecimals),
+  );
+
+  const minAmountPercentage =
+    (registerStakeAmount / (accountTokenBalancePlusStakeAmount ?? 1)) * 100;
+
+  const stakeDifferenceBn =
+    +amountPerc >= 100 && accountTokenBalance ?
+      accountTokenBalance.value
+    : stakedAmountBn - initialStakedAmountBn;
+  const stakeDifference = +stakedAmount - initialStakedAmount;
+  const stakeDifferenceRounded = roundToSignificant(stakeDifference, 4, {
+    showPrecisionMissIndicator: false,
   });
 
   const registryContractCallConfig = {
     address: communityAddress as Address,
-    abi: abiWithErrors(registryCommunityABI),
+    abi: registryCommunityABI,
     contractName: "Registry Community",
   };
 
   const { publish } = usePubSubContext();
 
   const [votingPowerTx, setVotingPowerTx] = useState<TransactionProps>({
-    contractName: "Increase voting power",
-    message: "",
+    contractName: `Stake ${tokenGarden.symbol} in ${communityName}`,
+    message: `Stake ${roundedStakedAmount} ${tokenSymbol} in ${communityName}`,
     status: "idle",
   });
 
@@ -101,8 +136,10 @@ export const IncreasePower = ({
   } = useContractWriteWithConfirmations({
     ...registryContractCallConfig,
     functionName: "increasePower",
-    args: [parseUnits(amount, tokenDecimals)],
+    args: [stakeDifferenceBn],
     showNotification: false,
+    fallbackErrorMessage:
+      "Error staking governance token, please report a bug.",
     onConfirmations: () => {
       publish({
         topic: "member",
@@ -115,22 +152,24 @@ export const IncreasePower = ({
     },
   });
 
-  const { write: writeDecreasePower } = useContractWriteWithConfirmations({
-    ...registryContractCallConfig,
-    functionName: "decreasePower",
-    args: [requestedAmount],
-    fallbackErrorMessage: "Error decreasing power, please report a bug.",
-    onConfirmations: () => {
-      publish({
-        topic: "member",
-        type: "update",
-        containerId: communityAddress,
-        function: "decreasePower",
-        id: accountAddress,
-        chainId: urlChainId,
-      });
-    },
-  });
+  const { write: writeDecreasePower, status: decreaseStatus } =
+    useContractWriteWithConfirmations({
+      ...registryContractCallConfig,
+      functionName: "decreasePower",
+      // Difference between staked amount and initial amount
+      args: [stakeDifferenceBn * -1n],
+      fallbackErrorMessage: "Error decreasing power, please report a bug.",
+      onConfirmations: () => {
+        publish({
+          topic: "member",
+          type: "update",
+          containerId: communityAddress,
+          function: "decreasePower",
+          id: accountAddress,
+          chainId: urlChainId,
+        });
+      },
+    });
 
   useEffect(() => {
     setVotingPowerTx((prev) => ({
@@ -141,69 +180,62 @@ export const IncreasePower = ({
   }, [increasePowerStatus]);
 
   function handleClick() {
-    setVotingPowerTx((prev) => ({
-      ...prev,
-      message: getTxMessage("idle"),
-      status: "idle",
-    }));
-    setIsOpenModal(true);
-    handleAllowance();
+    if (stakeDifferenceBn > 0n) {
+      setVotingPowerTx((prev) => ({
+        ...prev,
+        message: getTxMessage("idle"),
+        status: "idle",
+      }));
+      setIsOpenModal(true);
+      handleAllowance({});
+    } else {
+      writeDecreasePower();
+    }
   }
 
-  const isInputIncreaseGreaterThanBalance =
-    Number(amount) > Number(accountTokenBalance?.formatted);
-
-  const disablePowerBtnCondition: ConditionObject[] = [
-    {
-      condition: !isMember,
-      message: "Join community to increase voting power",
-    },
-    {
-      condition: Number(amount) <= 0 || amount === undefined,
-      message: "Input can not be zero or negative",
-    },
-  ];
-
-  const disableIncPowerBtnCondition: ConditionObject[] = [
-    ...disablePowerBtnCondition,
-    {
-      condition: isInputIncreaseGreaterThanBalance,
-      message: `Not enough ${tokenSymbol} balance to stake`,
-    },
-  ];
-
-  const disableDecPowerBtnCondition: ConditionObject[] = [
-    ...disablePowerBtnCondition,
-    {
-      condition:
-        parseUnits(amount.toString(), tokenDecimals) >
-        memberStakedTokens - registerStakeAmountBigInt,
-      message:
-        "You have the minimun tokens staked to be a member in this community.",
-    },
-  ];
-
-  const disabledDecPowerButton = disableDecPowerBtnCondition.some(
-    (cond) => cond.condition,
-  );
-
-  const disabledIncPowerButton = disableIncPowerBtnCondition.some(
-    (cond) => cond.condition,
-  );
-
-  const { tooltipMessage } = useDisableButtons(disableIncPowerBtnCondition);
-  const { tooltipMessage: decreaseTooltipMsg } = useDisableButtons(
-    disableDecPowerBtnCondition,
-  );
+  useEffect(() => {
+    if (accountTokenBalancePlusStakeAmount == null) return;
+    setStakedAmount(
+      roundToSignificant(initialStakedAmount ?? 0, 4, {
+        showPrecisionMissIndicator: false,
+      }),
+    );
+    setAmountPerc(
+      (accountTokenBalance?.value == 0n ?
+        100
+      : (initialStakedAmount / accountTokenBalancePlusStakeAmount) * 100
+      ).toString(),
+    );
+  }, [accountTokenBalancePlusStakeAmount]);
 
   const { allowanceTxProps: allowanceTx, handleAllowance } = useHandleAllowance(
     accountAddress,
-    registerToken as Address,
-    tokenSymbol,
+    tokenGarden,
     communityAddress as Address,
-    parseUnits(amount, tokenDecimals),
-    writeIncreasePower,
+    stakeDifferenceBn,
+    () => writeIncreasePower(),
+    `Approve ${tokenSymbol}`,
   );
+
+  const AddedStake = [
+    stakedAmountBn - registerStakeAmountBigInt,
+    tokenDecimals,
+  ] as Dnum;
+
+  const { isButtonDisabled, tooltipMessage } = useDisableButtons([
+    { condition: !isMember, message: "Join this community first" },
+    {
+      condition: +stakedAmount < registerStakeAmount,
+      message: `Minimum stake amount is ${registerStakeAmount} ${tokenSymbol} (${communityName} registration stake)`,
+    },
+    {
+      condition:
+        accountTokenBalancePlusStakeAmount != null &&
+        +stakedAmount > accountTokenBalancePlusStakeAmount,
+      message: `You cannot stake more than your available balance of ${roundToSignificant(accountTokenBalancePlusStakeAmount ?? 0, 4)} ${tokenSymbol}`,
+    },
+    { condition: stakeDifferenceBn == 0n, message: "Make a change to apply" },
+  ]);
 
   // useEffect(() => {
   //   if (votingPowerTx.status === "success") {
@@ -211,88 +243,175 @@ export const IncreasePower = ({
   //   }
   // }, [votingPowerTx.status]);
 
-  if (!isMember) return null;
-
-  const AddedStake = [
-    BigInt(memberStakedTokens - registerStakeAmountBigInt),
-    tokenDecimals,
-  ] as Dnum;
-
   return (
     <section className="section-layout space-y-5">
-      <h2>Your stake</h2>
+      <h3>Staking</h3>
       <TransactionModal
         label={`Stake ${tokenSymbol} in ${communityName}`}
         transactions={[allowanceTx, votingPowerTx]}
         isOpen={isOpenModal}
         onClose={() => setIsOpenModal(false)}
-      >
-        <div className="flex gap-2">
-          <p>Adding:</p>
-          <DisplayNumber number={amount} tokenSymbol={tokenSymbol} />
-        </div>
-      </TransactionModal>
+      />
 
       <div className="flex justify-between gap-4 flex-wrap">
-        <div className="flex flex-col justify-between gap-2">
-          <div className="flex justify-between">
-            <div className="flex-start flex gap-2">
-              <p className="subtitle2">Total Staked in the community:</p>
-              <InfoWrapper
-                tooltip={`Registration stake: ${parseToken(registrationAmount)} ${tokenGarden.symbol}\n Added stake: ${parseToken(AddedStake)} ${tokenGarden.symbol}`}
-              >
+        {/* Title + Member staked */}
+        {isMember ?
+          <div className="flex flex-col justify-between gap-2">
+            <div className="flex justify-between">
+              <div className="flex-start flex gap-2 items-center">
+                <p className="subtitle2">Your stake in the community:</p>
+                <InfoWrapper
+                  tooltip={`Registration stake: ${parseToken(registrationAmount)} ${tokenGarden.symbol} ${isMember ? `\n Added stake: ${parseToken(AddedStake)} ${tokenGarden.symbol}` : ""}`}
+                />
+              </div>
+            </div>
+            <EthAddress
+              address={registerToken as Address}
+              shortenAddress={true}
+              actions="none"
+              icon={false}
+              label={
                 <DisplayNumber
-                  number={[memberStakedTokens, tokenDecimals]}
+                  number={(initialStakedAmount ?? 0).toString()}
                   tokenSymbol={tokenSymbol}
                   compact={true}
-                  className="subtitle2 text-primary-content"
+                  valueClassName="font-bold text-3xl mr-1"
                   disableTooltip
                 />
-              </InfoWrapper>
-            </div>
-          </div>
-          <InfoBox
-            content="staking more tokens in the community can increase your voting power in pools to support proposals."
-            infoBoxType="info"
-            className="max-w-xl"
-          />
-        </div>
-        <div className="flex flex-col gap-4">
-          <div className="relative">
-            <input
-              type="number"
-              value={amount}
-              placeholder="Amount"
-              className="input input-bordered input-info w-full"
-              onChange={(e) => setAmount(e.target.value)}
+              }
             />
-            <span className="absolute right-8 top-3.5 text-black">
-              {tokenSymbol}
-            </span>
           </div>
+        : <>
+            <p className="subtitle2 text-neutral-soft-content">
+              Join community to stake.
+            </p>
+          </>
+        }
 
-          <div className="flex gap-4">
-            <Button
-              onClick={handleClick}
-              disabled={disabledIncPowerButton}
-              tooltip={tooltipMessage}
-            >
-              Increase stake
-              <span className="loading-spinner" />
-            </Button>
+        {/* Staking description */}
+        <InfoBox
+          title="Staking benefits"
+          content="Stake more tokens to increase your voting power in the community’s governance pools"
+          infoBoxType="info"
+          className="w-full"
+        />
 
-            <Button
-              onClick={() => writeDecreasePower?.()}
-              btnStyle="outline"
-              color="danger"
-              disabled={disabledDecPowerButton}
-              tooltip={decreaseTooltipMsg}
+        {/* Input */}
+
+        {isMember && (
+          <>
+            {/* Available to stake*/}
+            <div className="flex-1 flex items-baseline justify-between">
+              <p className="text-sm">Available</p>
+              <DisplayNumber
+                number={roundToSignificant(
+                  accountTokenBalancePlusStakeAmount ?? 0,
+                  4,
+                )}
+                tokenSymbol={tokenSymbol}
+                compact={true}
+                valueClassName="text-lg"
+                symbolClassName="text-sm"
+              />
+            </div>
+            <div className="relative w-full">
+              <label className="input input-bordered input-info flex items-center gap-2 w-full dark:bg-primary-soft-dark">
+                <input
+                  type="number"
+                  value={stakedAmount}
+                  placeholder="Amount"
+                  className="flex-1 w-full dark:bg-primary-soft-dark"
+                  min={registerStakeAmount}
+                  max={accountTokenBalancePlusStakeAmount}
+                  onChange={(e) => {
+                    const amount = e.target.value;
+                    setStakedAmount(amount);
+                    if (accountTokenBalancePlusStakeAmount != null)
+                      setAmountPerc(
+                        (
+                          (+amount / accountTokenBalancePlusStakeAmount) *
+                          100
+                        ).toString(),
+                      );
+                  }}
+                />
+                <span className="">{tokenSymbol}</span>
+              </label>
+            </div>
+
+            <div
+              className={`${minAmountPercentage == 100 ? "tooltip " : ""} w-full`}
+              data-tip={
+                minAmountPercentage == 100 ?
+                  `Insuficant ${tokenSymbol} balance to increase the staked amount`
+                : undefined
+              }
             >
-              Decrease stake
-              <span className="loading-spinner" />
-            </Button>
-          </div>
-        </div>
+              <input
+                type="range"
+                min={minAmountPercentage}
+                max={101}
+                value={amountPerc}
+                disabled={minAmountPercentage === 100}
+                title=""
+                onChange={(e) => {
+                  const percentage = e.target.value;
+                  if (
+                    accountTokenBalancePlusStakeAmount != null &&
+                    accountTokenBalancePlusStakeAmount > 0
+                  ) {
+                    const stake = Math.max(
+                      registerStakeAmount, // Minimum stake amount
+                      (+percentage * accountTokenBalancePlusStakeAmount) / 100,
+                    );
+
+                    setStakedAmount(
+                      +percentage >= 100 ?
+                        accountTokenBalancePlusStakeAmount.toString()
+                      : roundToSignificant(stake, 4, {
+                          showPrecisionMissIndicator: false,
+                        }),
+                    );
+                  }
+                  setAmountPerc(+percentage >= 100 ? "101" : percentage);
+                }}
+                className={`range range-md cursor-pointer bg-neutral-soft [--range-bg:var(--color-grey-200)] dark:[--range-bg:#373737] dark:bg-[#373737] [--range-shdw:var(--color-green-500)] dark:[--range-shdw:#4E9F80] [--range-thumb-size:20px] dark:[&::-webkit-slider-thumb]:bg-[#232323] dark:[&::-moz-range-thumb]:bg-[#232323] dark:[&::-webkit-slider-thumb]:border-0 dark:[&::-moz-range-thumb]:border-0 ${
+                  minAmountPercentage === 100 ?
+                    "[--range-shdw:var(--color-grey-400)]"
+                  : ""
+                }`}
+              />
+            </div>
+
+            {/* Apply Buttons */}
+            <div className="flex-1 flex items-center gap-1 justify-between flex-wrap">
+              <Button
+                onClick={handleClick}
+                disabled={isButtonDisabled}
+                tooltip={
+                  isButtonDisabled ? tooltipMessage
+                  : stakeDifference > 0 ?
+                    `Staking ${stakeDifferenceRounded} ${tokenSymbol} more in ${communityName}`
+                  : `Unstaking ${+stakeDifferenceRounded * -1} ${tokenSymbol} from ${communityName}`
+
+                }
+                forceShowTooltip={true}
+                icon={
+                  stakeDifference >= 0 ?
+                    <ArrowTrendingUpIcon className="h-5 w-5" />
+                  : <ArrowTrendingDownIcon className="h-5 w-5" />
+                }
+                className="w-full"
+                isLoading={
+                  increasePowerStatus === "loading" ||
+                  decreaseStatus === "loading"
+                }
+              >
+                {stakeDifference >= 0 ? "Stake" : "Unstake"}
+              </Button>
+            </div>
+          </>
+        )}
       </div>
     </section>
   );

@@ -17,7 +17,7 @@ export const getTxMessage = (
       message = "Transaction in progress...";
       break;
     case "success":
-      message = "Approved";
+      message = "Confirmed";
       break;
     case "error":
       message =
@@ -30,12 +30,11 @@ export const getTxMessage = (
 };
 
 function parseErrorMessage(error: Error, fallbackErrorMessage?: string) {
-  console.debug(error);
   if (error?.cause instanceof UserRejectedRequestError) {
     return "User rejected the request";
   } else if (fallbackErrorMessage) {
     return fallbackErrorMessage;
   } else {
-    return "Transaction failed. Please report a bug";
+    return "Transaction failed\nPlease report a bug";
   }
 }

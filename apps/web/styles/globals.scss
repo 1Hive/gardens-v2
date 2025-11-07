@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+@import "../node_modules/@mdxeditor/editor/dist/style.css";
+@import "../node_modules/@uiw/react-markdown-editor/markdown-editor.css";
+
 :root {
   --color-primary: #82c837;
   --color-secondary: #4dafd6;
@@ -11,7 +14,7 @@
   --border-neutral: #d5d5d5;
   --border-hover: #ff9500;
   --base-orange: #fff4e6;
-  /* add figma UI system color pallette light */
+  --color-text: #000000; /* add figma UI system color pallette light */
   --color-grey-900: #000000;
   --color-grey-500: #8c8c8c;
   --color-grey-400: #acacac;
@@ -32,6 +35,19 @@
 
   --tooltip-color: #8c8c8c;
   --tooltip-text-color: #ffffff;
+
+  --scrollbar-thumb: #8c8c8c;
+  --scrollbar-thumb-hover: #a0a0a0; /* hover color */
+  --scrollbar-track: #eeeeee;
+}
+
+[data-theme="darkTheme"] {
+  --color-text: #eeeeee;
+  --border-neutral: #d5d5d550;
+
+  --scrollbar-thumb: #555;
+  --scrollbar-thumb-hover: #666;
+  --scrollbar-track: #1f1f1f;
 }
 
 * {
@@ -39,26 +55,10 @@
   padding: 0;
 }
 
-html {
-  scroll-behavior: smooth;
-}
-
-html::-webkit-scrollbar {
-  width: 0.5rem;
-}
-
-html::-webkit-scrollbar-track {
-  background-color: #eee;
-}
-
-html::-webkit-scrollbar-thumb {
-  background-color: #171717;
-}
-
 body {
   margin: 0;
   background-color: var(--color-background);
-  color: var(--color-grey-900);
+  color: var(--color-text);
   line-height: 1.15;
 }
 
@@ -66,10 +66,11 @@ h1 {
   margin-bottom: 1rem;
   margin-top: 0.5rem;
   font-family: var(--font-chakra);
-  font-size: 52px;
+  font-size: 44px;
   font-weight: 700;
   line-height: 56px;
   text-align: left;
+  color: var(--color-text);
 
   /* @media only screen and (max-width: 680px) {
     font-size: 2.5rem;
@@ -78,23 +79,37 @@ h1 {
 
 h2 {
   font-family: var(--font-chakra);
-  font-size: 36px;
+  font-size: 32px;
   font-weight: 600;
   line-height: 46px;
   text-align: left;
+  color: var(--color-text);
 
   /* @media only screen and (max-width: 680px) {
     font-size: 2rem;
   } */
 }
 
-h3,
-h4 {
+h3 {
   font-family: var(--font-inter);
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 500;
   line-height: auto;
   text-align: left;
+  color: var(--color-text);
+
+  /* @media only screen and (max-width: 680px) {
+    font-size: 1.75rem;
+  } */
+}
+
+h4 {
+  font-family: var(--font-inter);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: auto;
+  text-align: left;
+  color: var(--color-text);
 
   /* @media only screen and (max-width: 680px) {
     font-size: 1.75rem;
@@ -109,6 +124,7 @@ h5,
   font-weight: 500;
   line-height: 22px;
   text-align: left;
+  color: var(--color-text);
 }
 
 /* subtitle 2 */
@@ -119,6 +135,7 @@ h6,
   font-weight: 500;
   line-height: 20px;
   text-align: left;
+  color: var(--color-text);
 }
 
 p {
@@ -127,6 +144,7 @@ p {
   font-weight: 400;
   line-height: 24px;
   text-align: left;
+  color: var(--color-text);
 
   /* @media only screen and (max-width: 680px) {
     font-size: 1rem;
@@ -137,6 +155,7 @@ span {
   font-family: var(--font-inter);
   font-size: 1rem;
   font-weight: 400;
+  color: var(--color-text);
 }
 
 button {
@@ -165,11 +184,15 @@ caption {
 }
 
 .section-layout {
-  @apply border1 relative rounded-3xl bg-neutral p-8;
+  @apply border1 relative rounded-lg bg-neutral p-6;
 }
 
 .page-layout {
-  @apply flex w-full max-w-6xl flex-col gap-10 p-4 md:p-8;
+  @apply flex w-full max-w-6xl flex-col gap-10 p-4 md:p-8 overflow-x-visible;
+}
+
+.pool-layout {
+  @apply grid grid-cols-1 md:grid-cols-2 gap-4;
 }
 
 .tooltip {
@@ -177,13 +200,30 @@ caption {
   --tooltip-text-color: #ffffff;
 }
 
+[data-theme="darkTheme"] .tooltip {
+  --tooltip-color: #243654;
+}
+
 .tooltip:before {
   white-space: pre-line;
   text-align: left;
 }
 
+dialog.modal::backdrop {
+  background-color: rgba(0, 0, 0, 0.55);
+}
+
+[data-theme="darkTheme"] dialog.modal::backdrop {
+  background-color: rgba(0, 0, 0, 0.75);
+}
+
+/* dark mode */
+[data-theme="darkTheme"] .skeleton {
+  background-color: #1f1f1f;
+}
+
 .banner {
-  @apply flex items-center gap-4 rounded-[20px] bg-secondary-soft p-4;
+  @apply flex items-center gap-4 rounded-[20px] bg-secondary-soft dark:bg-secondary-soft-dark p-4;
 }
 
 /* Hide number input arrows */
@@ -223,56 +263,286 @@ caption {
   }
 }
 
-// Markdown overrides
-
-.md-editor-preview,
-.wmde-markdown {
-  ol {
-    list-style-type: decimal !important;
-  }
-
-  ul {
-    list-style-type: unset !important;
-  }
-}
-
-.cm-gutters {
-  display: none !important;
-}
-
-/* Firefox (uncomment to work in Firefox, although other properties will not work!)  */
-/** {
+/* input */
+dialog * {
   scrollbar-width: thin;
-  scrollbar-color: #4C5356 #DFE9EB;
-}*/
+}
 
-/* Chrome, Edge and Safari */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
 *::-webkit-scrollbar {
-  height: 10px;
-  width: 10px;
-}
-*::-webkit-scrollbar-track {
-  border-radius: 5px;
-  background-color: #dfe9eb;
-}
-
-*::-webkit-scrollbar-track:hover {
-  background-color: #b8c0c2;
-}
-
-*::-webkit-scrollbar-track:active {
-  background-color: #b8c0c2;
+  width: 8px;
+  height: 8px;
 }
 
 *::-webkit-scrollbar-thumb {
-  border-radius: 5px;
-  background-color: #4c5356;
+  background-color: var(--scrollbar-thumb);
+  border-radius: 10px;
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background-color: #62a34b;
+  background-color: var(--scrollbar-thumb-hover);
 }
 
-*::-webkit-scrollbar-thumb:active {
-  background-color: #62a34b;
+*::-webkit-scrollbar-track {
+  background-color: var(--scrollbar-track);
+  border-radius: 10px;
+}
+
+.wmde-markdown.wmde-markdown-color {
+  background: transparent;
+}
+
+@layer utilities {
+  .tooltip-top-right::before {
+    transform: translateX(-10%);
+    top: auto;
+    left: 50%;
+    right: auto;
+    bottom: var(--tooltip-offset);
+  }
+
+  .tooltip-top-right::after {
+    transform: translateX(-50%);
+    border-color: var(--tooltip-color) transparent transparent transparent;
+    top: auto;
+    left: 50%;
+    right: auto;
+    bottom: var(--tooltip-tail-offset);
+  }
+
+  .tooltip-top-left::before {
+    transform: translateX(-80%);
+    top: auto;
+    left: 50%;
+    right: auto;
+    bottom: var(--tooltip-offset);
+  }
+
+  .tooltip-top-left::after {
+    transform: translateX(-50%);
+    border-color: var(--tooltip-color) transparent transparent transparent;
+    top: auto;
+    left: 50%;
+    right: auto;
+    bottom: var(--tooltip-tail-offset);
+  }
+
+  .tooltip-bottom-right::before {
+    transform: translateX(-10%);
+    top: var(--tooltip-offset);
+    top: auto;
+    left: 50%;
+    right: auto;
+    bottom: auto;
+  }
+
+  .tooltip-bottom-right::after {
+    transform: translateX(-50%);
+    border-color: var(--tooltip-color) transparent transparent transparent;
+    top: var(--tooltip-tail-offset);
+    left: 50%;
+    right: auto;
+    bottom: auto;
+  }
+
+  .tooltip-bottom-left::before {
+    transform: translateX(-80%);
+    top: var(--tooltip-offset);
+    top: auto;
+    left: 50%;
+    right: auto;
+    bottom: auto;
+  }
+
+  .tooltip-bottom-left::after {
+    transform: translateX(-50%);
+    border-color: var(--tooltip-color) transparent transparent transparent;
+    top: var(--tooltip-tail-offset);
+    left: 50%;
+    right: auto;
+    bottom: auto;
+  }
+}
+
+/* MDXMarkdown */
+
+.mdxeditor-root-contenteditable,
+.wmde-markdown {
+  @apply leading-7 text-base;
+
+  > * {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+
+  > * + * {
+    margin-top: 1rem;
+  }
+
+  p {
+    @apply leading-7;
+  }
+
+  ul {
+    @apply list-disc ml-5;
+  }
+
+  ol {
+    @apply list-decimal ml-5;
+  }
+
+  li > ul,
+  li > ol {
+    margin-top: 0.5rem;
+  }
+
+  h1,
+  h1 span {
+    @apply text-3xl font-bold;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+  }
+
+  h2,
+  h2 span {
+    @apply text-2xl font-bold;
+    margin-top: 1.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  h3,
+  h3 span {
+    @apply text-xl font-semibold;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  h4,
+  h4 span {
+    @apply text-lg font-semibold;
+    margin-top: 1.25rem;
+    margin-bottom: 0.5rem;
+  }
+
+  h5,
+  h5 span {
+    @apply text-base font-semibold;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  :is(h1, h2, h3, h4, h5, h6) > a[href^="#"] {
+    display: none;
+  }
+
+  blockquote {
+    @apply border-l-4 pl-4 italic;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  pre {
+    @apply rounded-lg bg-base-200 p-4 text-sm overflow-x-auto;
+    line-height: 1.6;
+  }
+
+  code {
+    @apply rounded bg-base-200 px-1.5 py-0.5 text-sm;
+  }
+
+  pre code {
+    @apply bg-transparent p-0;
+  }
+
+  table {
+    @apply w-full border-collapse text-left;
+  }
+
+  th,
+  td {
+    @apply border border-base-200 px-3 py-2;
+  }
+
+  a {
+    @apply text-accent underline;
+  }
+
+  img {
+    @apply max-w-full rounded-lg;
+  }
+}
+
+.mdxeditor-popup-container {
+  position: fixed !important;
+  z-index: 999999999 !important;
+  background-color: var(--baseBase);
+
+  button {
+    cursor: pointer;
+  }
+}
+
+// Hide diff source button
+._ggDiffSourceToggle_1e2ox_994 ._toolbarToggleItem_1e2ox_208:nth-of-type(2) {
+  display: none !important;
+}
+
+.mdxeditor-toolbar {
+  button {
+    cursor: pointer;
+  }
+}
+
+.mdxeditor-select-content {
+  div[role="option"] {
+    cursor: pointer;
+  }
+}
+
+.dark-editor {
+  --basePageBg: var(--p);
+  --baseTextColor: var(--color-text);
+
+  ._selectTrigger_1e2ox_308 {
+    background-color: var(--baseBase);
+    color: var(--color-text);
+  }
+
+  ._placeholder_1e2ox_1106 p {
+    color: #9f9f9f;
+  }
+
+  .cm-editor {
+    .cm-activeLineGutter {
+      background-color: var(--baseBg);
+    }
+    background-color: var(--baseBase);
+    color: var(--color-text);
+  }
+
+  &.mdxeditor-popup-container {
+    --basePageBg: var(--p);
+    --baseTextColor: var(--color-text);
+
+    div {
+      background-color: var(--baseBase);
+      color: var(--color-text);
+
+      .mdxeditor-select-content {
+        div[role="option"]:hover {
+          background-color: var(--baseBg);
+        }
+      }
+    }
+  }
+}
+
+.mdxeditor-theme {
+  ._placeholder_1e2ox_1106 {
+    padding-top: var(--spacing-1_5, 0.375rem);
+  }
 }

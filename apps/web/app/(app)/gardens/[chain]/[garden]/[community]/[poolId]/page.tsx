@@ -1,162 +1,117 @@
-"use client";
-
-import { useEffect } from "react";
-import { Address } from "viem";
-import { useToken } from "wagmi";
-import {
-  getAlloQuery,
-  getPoolDataDocument,
-  getPoolDataQuery,
-} from "#/subgraph/.graphclient";
-import { PoolMetrics, Proposals } from "@/components";
-import { LoadingSpinner } from "@/components/LoadingSpinner";
-import PoolHeader from "@/components/PoolHeader";
-import { QUERY_PARAMS } from "@/constants/query-params";
-import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
-import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
-import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
+import type { Metadata } from "next";
+import { getPoolTitleDocument } from "#/subgraph/.graphclient";
+import ClientPage from "./client-page";
+import { FALLBACK_TITLE, getDescriptionText } from "./opengraph-image";
+import { chainConfigMap } from "@/configs/chains";
+import { queryByChain } from "@/providers/urql";
 import { PoolTypes } from "@/types";
 
-export const dynamic = "force-dynamic";
+type PageParams = {
+  params: {
+    chain: string;
+    garden: string;
+    community: string;
+    poolId: string;
+  };
+};
 
-export type AlloQuery = getAlloQuery["allos"][number];
+function buildOgImagePath(params: PageParams["params"]) {
+  return `/gardens/${params.chain}/${params.garden}/${params.community}/${params.poolId}/opengraph-image-12jbcu`;
+}
 
-export default function Page({
-  params: { chain, poolId, garden },
-}: {
-  params: { chain: string; poolId: number; garden: string };
-}) {
-  const searchParams = useCollectQueryParams();
+const titlePrefix = "Gardens - ";
 
-  const { data, refetch, error } = useSubgraphQuery<getPoolDataQuery>({
-    query: getPoolDataDocument,
-    variables: { poolId: poolId, garden: garden },
-    changeScope: [
-      {
-        topic: "pool",
-        id: poolId,
-      },
-      {
-        topic: "proposal",
-        containerId: poolId,
-        type: "update",
-      },
-      {
-        topic: "member",
-        function: "activatePoints",
-        type: "update",
-        containerId: poolId,
-      },
-      {
-        topic: "member",
-        function: "deactivatePoints",
-        type: "update",
-        containerId: poolId,
-      },
-    ],
-  });
+export async function generateMetadata({
+  params,
+}: PageParams): Promise<Metadata> {
+  const chainId = Number(params.chain);
+  const chainConfig = chainConfigMap[params.chain] ?? chainConfigMap[chainId];
+  const poolId = params.poolId?.toString();
+  let description = getDescriptionText(undefined);
+  const fallbackMetadata: Metadata = {
+    title: titlePrefix + FALLBACK_TITLE,
+    description,
+    openGraph: {
+      title: titlePrefix + FALLBACK_TITLE,
+      description,
+      images: [{ url: buildOgImagePath(params) }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: titlePrefix + FALLBACK_TITLE,
+      description,
+      images: [buildOgImagePath(params)],
+    },
+  };
 
-  const strategyObj = data?.cvstrategies?.[0];
-  const poolTokenAddr = strategyObj?.token as Address;
-  const proposalType = strategyObj?.config.proposalType;
-  const { data: poolToken } = useToken({
-    address: poolTokenAddr,
-    enabled: !!poolTokenAddr && PoolTypes[proposalType] === "funding",
-    chainId: +chain,
-  });
+  if (chainConfig == null) {
+    console.error("Unsupported chainId for pool metadata generation.", {
+      chainId: params.chain,
+    });
+    return fallbackMetadata;
+  }
 
-  useEffect(() => {
-    if (error) {
-      console.error("Error while fetching community data: ", error);
-    }
-  }, [error]);
+  if (!poolId) {
+    console.error("Missing poolId for pool metadata generation.", {
+      poolId: params.poolId,
+    });
+    return fallbackMetadata;
+  }
 
-  const { metadata: ipfsResult } = useMetadataIpfsFetch({
-    hash: data?.cvstrategies?.[0]?.metadata,
-  });
+  try {
+    const poolResult = await queryByChain(chainConfig, getPoolTitleDocument, {
+      poolId,
+    });
 
-  useEffect(() => {
-    if (!strategyObj) {
-      return;
-    }
-    console.debug(
-      "maxRatio: " + strategyObj?.config?.maxRatio,
-      "minThresholdPoints: " + strategyObj?.config?.minThresholdPoints,
-      "poolAmount: " + strategyObj?.poolAmount,
-    );
-  }, [strategyObj?.config, strategyObj?.config, strategyObj?.poolAmount]);
-
-  useEffect(() => {
-    const newProposalId = searchParams[QUERY_PARAMS.poolPage.newProposal];
-    if (!strategyObj) {
-      return;
-    }
-    const fetchedProposals = strategyObj?.proposals.map((p) =>
-      p.proposalNumber.toString(),
-    );
-    if (newProposalId && !fetchedProposals.includes(newProposalId)) {
-      console.debug("Pool: New proposal not yet fetched, refetching...", {
-        newProposalId,
-        fetchedProposals,
+    if (poolResult.error) {
+      console.error("Error fetching pool metadata.", {
+        chainId: params.chain,
+        poolId,
+        error: poolResult.error,
       });
-      refetch();
+      return fallbackMetadata;
     }
-  }, [searchParams, strategyObj?.proposals]);
 
-  const tokenGarden = data?.tokenGarden;
+    const pool = poolResult?.data?.cvstrategies?.[0];
+    const poolTitle = titlePrefix + pool?.metadata?.title?.trim();
+    if (!poolTitle) {
+      return fallbackMetadata;
+    }
 
-  if (!tokenGarden || (!poolToken && PoolTypes[proposalType] === "funding")) {
-    return (
-      <div className="mt-96">
-        <LoadingSpinner />
-      </div>
-    );
+    const poolType = PoolTypes[pool?.config?.proposalType as number];
+    const actualDescription = getDescriptionText(poolType);
+    return {
+      title: poolTitle,
+      description: actualDescription,
+      openGraph: {
+        title: poolTitle,
+        description: actualDescription,
+        images: [{ url: buildOgImagePath(params) }],
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: poolTitle,
+        description: actualDescription,
+        images: [buildOgImagePath(params)],
+      },
+    };
+  } catch (error) {
+    console.error("Failed to generate pool metadata.", {
+      chainId: params.chain,
+      poolId,
+      error,
+    });
+    return fallbackMetadata;
   }
+}
 
-  if (!data || !strategyObj) {
-    return <div className="mt-52 text-center">Pool {poolId} not found</div>;
-  }
-
-  const communityAddress = strategyObj.registryCommunity.id as Address;
-  const alloInfo = data.allos[0];
-  const poolAmount = strategyObj.poolAmount as number;
-
-  const isEnabled = data.cvstrategies?.[0]?.isEnabled as boolean;
-
+export default function Page(props: PageParams) {
   return (
-    <div className="page-layout">
-      <PoolHeader
-        poolToken={poolToken}
-        token={tokenGarden}
-        strategy={strategyObj}
-        arbitrableConfig={data.arbitrableConfigs[0]}
-        poolId={poolId}
-        ipfsResult={ipfsResult}
-        isEnabled={isEnabled}
-        chainId={chain}
-      />
-      {isEnabled && (
-        <>
-          {poolToken && PoolTypes[proposalType] !== "signaling" && (
-            <PoolMetrics
-              poolToken={poolToken}
-              alloInfo={alloInfo}
-              poolId={poolId}
-              poolAmount={poolAmount}
-              communityAddress={communityAddress}
-              chainId={chain}
-            />
-          )}
-          <Proposals
-            poolToken={poolToken}
-            strategy={strategyObj}
-            alloInfo={alloInfo}
-            communityAddress={communityAddress}
-            createProposalUrl={`/gardens/${chain}/${garden}/${communityAddress}/${poolId}/create-proposal`}
-            proposalType={proposalType}
-          />
-        </>
-      )}
-    </div>
+    <ClientPage
+      params={{
+        ...props.params,
+        poolId: Number(props.params.poolId),
+      }}
+    />
   );
 }

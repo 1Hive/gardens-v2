@@ -1,8 +1,8 @@
 type CVStrategy @entity(immutable: false) {
   id: ID!
   poolId: BigInt!
-  poolAmount: BigInt!
-  metadata: String
+  metadata: PoolMetadata
+  metadataHash: String
   registryCommunity: RegistryCommunity!
   config: CVStrategyConfig!
   proposals: [CVProposal!]! @derivedFrom(field: "strategy")
@@ -11,7 +11,8 @@ type CVStrategy @entity(immutable: false) {
   totalEffectiveActivePoints: BigInt!
   isEnabled: Boolean!
   token: String!
-  sybilScorer: PassportScorer
+  sybil: SybilProtection
+  archived: Boolean!
 }
 
 type CVStrategyConfig @entity(immutable: false) {
@@ -26,6 +27,8 @@ type CVStrategyConfig @entity(immutable: false) {
   pointSystem: BigInt!
   maxAmount: BigInt
   allowlist: [String!]
+  superfluidToken: String
+  superfluidGDA: [String!]!
 }
 
 type ArbitrableConfig @entity(immutable: false) {
@@ -54,7 +57,6 @@ type CVProposal @entity(immutable: false) {
   proposalStatus: BigInt!
   blockLast: BigInt!
   convictionLast: BigInt!
-  threshold: BigInt!
   maxCVStaked: BigInt!
   # proposalType: BigInt!
   stakedAmount: BigInt!
@@ -88,11 +90,14 @@ type RegistryCommunity @entity(immutable: false) {
   profileId: String
   communityFee: BigInt!
   protocolFee: BigInt!
+  protocolFeeReceiver: String
   communityName: String
   covenantIpfsHash: String
+  covenant: Covenant
   registryFactory: RegistryFactory
   strategies: [CVStrategy!] @derivedFrom(field: "registryCommunity")
   councilSafe: String
+  pendingNewCouncilSafe: String
   isKickEnabled: Boolean
   registerStakeAmount: BigInt
   registerToken: String
@@ -101,6 +106,7 @@ type RegistryCommunity @entity(immutable: false) {
   # members: [Member!] @derivedFrom(field: "registryCommunity")
   garden: TokenGarden!
   isValid: Boolean!
+  archived: Boolean!
 }
 
 type Member @entity(immutable: false) {
@@ -108,10 +114,12 @@ type Member @entity(immutable: false) {
   # registryCommunity: [RegistryCommunity!]
   memberCommunity: [MemberCommunity!] @derivedFrom(field: "member")
   stakes: [Stake!] @derivedFrom(field: "member")
+  isProtopian: Boolean
+  isKeeper: Boolean
   # isRegistered: Boolean
 }
 
-type Stake @entity {
+type Stake @entity(immutable: false) {
   id: ID!
   member: Member!
   poolId: BigInt!
@@ -127,6 +135,7 @@ type MemberCommunity @entity(immutable: false) {
   isRegistered: Boolean
   member: Member!
   registryCommunity: RegistryCommunity!
+  covenantSignature: String
 }
 
 type MemberStrategy @entity(immutable: false) {
@@ -150,32 +159,58 @@ type TokenGarden @entity(immutable: false) {
   communities: [RegistryCommunity!] @derivedFrom(field: "garden")
 }
 
+type Covenant @entity(immutable: false) {
+  id: ID!
+  text: String
+}
+
 type Allo @entity(immutable: false) {
   id: ID!
   chainId: BigInt!
   tokenNative: String!
 }
+enum SybilProtectionType {
+  GoodDollar
+  Passport
+}
 
-type PassportScorer @entity(immutable: false) {
+type SybilProtection @entity(immutable: false) {
   id: ID!
+  type: SybilProtectionType!
   strategies: [PassportStrategy!] @derivedFrom(field: "passportScorer")
   users: [PassportUser!] @derivedFrom(field: "passportScorer")
 }
 
 type PassportStrategy @entity(immutable: false) {
   id: ID!
-  passportScorer: PassportScorer!
+  passportScorer: SybilProtection!
   strategy: CVStrategy!
   threshold: BigInt!
   councilSafe: String!
   active: Boolean!
 }
 
+type GoodDollarStrategy @entity(immutable: false) {
+  id: ID!
+  sybilProtection: SybilProtection!
+  strategy: CVStrategy!
+  councilSafe: String!
+  active: Boolean!
+}
+
 type PassportUser @entity(immutable: false) {
   id: ID!
-  passportScorer: PassportScorer!
+  passportScorer: SybilProtection!
   userAddress: String!
   score: BigInt!
+  lastUpdated: BigInt!
+}
+
+type GoodDollarUser @entity(immutable: false) {
+  id: ID!
+  sybilProtection: SybilProtection!
+  verified: Boolean!
+  userAddress: String!
   lastUpdated: BigInt!
 }
 
@@ -196,13 +231,19 @@ type ProposalDispute @entity(immutable: false) {
 
 type ProposalDisputeMetadata @entity(immutable: false) {
   id: ID!
-  reason: String!
+  reason: String
 }
 
 type ProposalMetadata @entity(immutable: false) {
   id: ID!
-  title: String!
-  description: String!
+  title: String
+  description: String
+}
+
+type PoolMetadata @entity(immutable: false) {
+  id: ID!
+  title: String
+  description: String
 }
 
 type CollateralVault @entity(immutable: false) {

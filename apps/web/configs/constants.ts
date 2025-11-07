@@ -1,3 +1,0 @@
-export const DEFAULT_RULING_TIMEOUT_SEC = +(
-  (process.env.NEXT_PUBLIC_DEFAULT_RULING_TIMEOUT ?? 604800) // 7 days
-);

@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  ArchiveBoxIcon,
   BoltIcon,
   ClockIcon,
   CurrencyDollarIcon,
@@ -12,7 +13,8 @@ import {
   CVProposal,
   CVStrategy,
   CVStrategyConfig,
-  TokenGarden,
+  Maybe,
+  PoolMetadata,
 } from "#/subgraph/.graphclient";
 import { Skeleton } from "./Skeleton";
 import TooltipIfOverflow from "./TooltipIfOverflow";
@@ -21,52 +23,68 @@ import { Badge, Card, DisplayNumber, Statistic } from "@/components";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
+import { usePoolToken } from "@/hooks/usePoolToken";
 import { PointSystems, PoolTypes } from "@/types";
 import { capitalize } from "@/utils/text";
 
 type Props = {
-  tokenGarden: Pick<TokenGarden, "decimals" | "symbol">;
+  token: string;
   pool: Pick<
     CVStrategy,
-    "id" | "isEnabled" | "poolAmount" | "poolId" | "metadata"
+    "id" | "isEnabled" | "poolId" | "metadataHash" | "archived"
   > & {
     proposals: Pick<CVProposal, "id">[];
     config: Pick<CVStrategyConfig, "proposalType" | "pointSystem">;
+    metadata?: Maybe<Omit<PoolMetadata, "id">>;
   };
 };
 
-export function PoolCard({ pool, tokenGarden }: Props) {
+export function PoolCard({ pool, token }: Props) {
   const pathname = usePathname();
   const searchParams = useCollectQueryParams();
 
-  let { poolAmount, poolId, proposals, isEnabled, config, metadata } = pool;
+  let {
+    poolId,
+    proposals,
+    isEnabled,
+    config,
+    metadata: metadataFromSubgraph,
+    metadataHash,
+  } = pool;
 
-  const { metadata: ipfsResult } = useMetadataIpfsFetch({
-    hash: metadata,
+  const { data: metadataResult } = useMetadataIpfsFetch({
+    hash: metadataHash,
+    enabled: metadataHash != null && !metadataFromSubgraph,
   });
 
-  poolAmount = poolAmount || 0;
+  const metadata = metadataFromSubgraph ?? metadataResult;
+
   const poolType = config?.proposalType as number | undefined;
+
+  const poolToken = usePoolToken({
+    poolAddress: pool.id,
+    poolTokenAddr: token,
+    enabled: isEnabled && poolType != null && PoolTypes[poolType] === "funding",
+  });
 
   const isNewPool =
     searchParams[QUERY_PARAMS.communityPage.newPool] === pool.poolId.toString();
   return (
     <Card
       href={`${pathname}/${poolId}`}
-      className={`w-[275px] sm:min-w-[313px] ${isNewPool ? "shadow-2xl" : ""}`}
+      className={`w-full ${isNewPool ? "shadow-2xl" : ""}`}
     >
       <header className="mb-4 flex flex-col w-full justify-between items-start gap-2">
-        <Skeleton isLoading={!ipfsResult}>
-          <h3 className="flex items-start w-fit max-w-full">
-            <TooltipIfOverflow>{ipfsResult?.title}</TooltipIfOverflow>
-          </h3>
-        </Skeleton>
-        <div className="flex justify-between items-center w-full">
-          <h6>ID #{poolId}</h6>
+        <div className="flex flex-wrap w-full justify-between items-center gap-1">
+          <Skeleton isLoading={!metadata}>
+            <h3 className="flex items-center justify-between max-w-[190px]">
+              <TooltipIfOverflow>{metadata?.title}</TooltipIfOverflow>
+            </h3>
+          </Skeleton>
           <Badge type={poolType} />
         </div>
       </header>
-      <div className="mb-8 flex min-h-[60px] flex-col gap-2">
+      <div className="mb-8 flex flex-col gap-2">
         <Statistic
           icon={<BoltIcon />}
           label="voting weight"
@@ -76,28 +94,38 @@ export function PoolCard({ pool, tokenGarden }: Props) {
           icon={<HandRaisedIcon />}
           count={proposals.length}
           label="proposals"
+          className={`${isEnabled ? "visible" : "invisible"}`}
         />
-        <Statistic
-          icon={<CurrencyDollarIcon />}
-          label="funds"
-          className={`${poolType && PoolTypes[poolType] === "funding" ? "visible" : "invisible"}`}
-        >
-          <DisplayNumber
-            number={[BigInt(poolAmount), tokenGarden.decimals]}
-            compact={true}
-            tokenSymbol={tokenGarden.symbol}
-          />
-        </Statistic>
+        {isEnabled &&
+          poolToken &&
+          poolType != null &&
+          PoolTypes[poolType] === "funding" && (
+            <Statistic icon={<CurrencyDollarIcon />} label="funds">
+              <DisplayNumber
+                number={poolToken.formatted || "0"}
+                compact={true}
+                tokenSymbol={poolToken.symbol}
+                valueClassName="text-inherit"
+                symbolClassName="text-inherit"
+              />
+            </Statistic>
+          )}
       </div>
       {!isEnabled ?
         <div className="banner md:min-w-[262px]">
-          <ClockIcon className="h-8 w-8 text-secondary-content" />
-          <h6>Waiting for approval</h6>
+          {pool.archived ?
+            <ArchiveBoxIcon className="h-8 w-8 text-secondary-content" />
+          : <ClockIcon className="h-8 w-8 text-secondary-content" />}
+          <h6>{pool.archived ? "Archived" : "Waiting for approval"}</h6>
         </div>
       : <Image
-          src={poolType && PoolTypes[poolType] === "funding" ? blueLand : grass}
+          src={
+            poolType != null && PoolTypes[poolType] === "funding" ?
+              blueLand
+            : grass
+          }
           alt="Garden land"
-          className="h-12 w-full rounded-lg object-cover"
+          className="h-14 w-full rounded-lg object-cover"
         />
       }
     </Card>

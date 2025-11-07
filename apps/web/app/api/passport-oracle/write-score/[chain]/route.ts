@@ -15,33 +15,17 @@ import {
   getMemberPassportAndCommunitiesQuery,
 } from "#/subgraph/.graphclient";
 import { getConfigByChain } from "@/configs/chains";
+import { isProd } from "@/configs/isProd";
 import { initUrqlClient } from "@/providers/urql";
 import { passportScorerABI } from "@/src/generated";
+import { fetchPassportScore } from "@/utils/gitcoin-passport";
 import { CV_PASSPORT_THRESHOLD_SCALE } from "@/utils/numbers";
 import { getViemChain } from "@/utils/web3";
 const LIST_MANAGER_PRIVATE_KEY = process.env.LIST_MANAGER_PRIVATE_KEY;
 const LOCAL_RPC = "http://127.0.0.1:8545";
 
-const fetchScoreFromGitcoin = async (user: string) => {
-  const url = `${process.env.VERCEL_URL ? "https://" + process.env.VERCEL_URL : "http://localhost:3000"}/api/passport`;
-  const response = await fetch(`${url}/${user}`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-
-  if (response.ok) {
-    const data = await response.json();
-    return data.score;
-  } else {
-    const errorData = await response.json();
-    throw new Error(errorData.message || "Failed to fetch score from Gitcoin");
-  }
-};
-
 export async function POST(req: Request, { params }: Params) {
-  const { chain } = params;
+  const { chain: chainId } = params as { chain: string };
   const { user } = await req.json();
 
   if (typeof user !== "string") {
@@ -53,23 +37,59 @@ export async function POST(req: Request, { params }: Params) {
     );
   }
 
-  const chainConfig = getConfigByChain(chain);
+  const chain = getViemChain(chainId);
+  const chainConfig = getConfigByChain(chainId);
 
   try {
+    const publishedSubgraphUrl = chainConfig?.publishedSubgraphUrl as string;
     const subgraphUrl = chainConfig?.subgraphUrl as string;
-    const { urqlClient } = initUrqlClient({ chainId: chain });
-    const subgraphResponse = await urqlClient
-      .query<getMemberPassportAndCommunitiesQuery>(
-        getMemberPassportAndCommunitiesDocument,
+    const { urqlClient } = initUrqlClient({ chainId });
+    const fetchUser = (_subgraphUrl: string) =>
+      urqlClient
+        .query<getMemberPassportAndCommunitiesQuery>(
+          getMemberPassportAndCommunitiesDocument,
+          {
+            memberId: user.toLowerCase(),
+          },
+          {
+            url: _subgraphUrl,
+            fetchOptions: {
+              headers: [
+                ["origin", isProd ? "app.gardens.fund" : ""],
+                ["referer", isProd ? "https://app.gardens.fund/" : ""],
+              ],
+            },
+            requestPolicy: "network-only",
+          },
+        )
+        .toPromise()
+        .catch((error) => {
+          console.error("Error fetching subgraph data:", {
+            error,
+            url: _subgraphUrl,
+          });
+          return { data: null, error: "Failed to fetch subgraph data" };
+        });
+    let subgraphResponse = await fetchUser(publishedSubgraphUrl);
+    if (subgraphResponse == null || subgraphResponse.error != null) {
+      console.warn(
+        "Subgraph query failed with published query, trying dev subgraph",
         {
-          memberId: user.toLowerCase(),
+          subgraphUrl,
+          publishedSubgraphUrl,
+          error: subgraphResponse?.error,
         },
-        {
-          url: subgraphUrl,
-          requestPolicy: "network-only",
-        },
-      )
-      .toPromise();
+      );
+      subgraphResponse = await fetchUser(subgraphUrl);
+    }
+
+    if (subgraphResponse == null || subgraphResponse.error != null) {
+      console.error("Subgraph query error:", subgraphResponse?.error);
+      return NextResponse.json(
+        { error: "Failed to fetch user data" },
+        { status: 500 },
+      );
+    }
 
     if (subgraphResponse.data == null) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
@@ -78,10 +98,7 @@ export async function POST(req: Request, { params }: Params) {
     const { member, passportUser } = subgraphResponse.data;
 
     if (!member?.memberCommunity || member.memberCommunity.length === 0) {
-      return NextResponse.json(
-        { error: "User has no communities" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "Not a member" }, { status: 400 });
     }
 
     // Throttle the score update to once per day
@@ -94,7 +111,7 @@ export async function POST(req: Request, { params }: Params) {
       return NextResponse.json(
         {
           error:
-            "User score cannot be updated before " +
+            "Score cannot be updated before " +
             new Date(
               passportUser.lastUpdated * 1000 + twoHoursMs,
             ).toUTCString(),
@@ -112,7 +129,7 @@ export async function POST(req: Request, { params }: Params) {
 
   try {
     const client = createPublicClient({
-      chain: getViemChain(chain),
+      chain: chain,
       transport: http(chainConfig?.rpcUrl ?? LOCAL_RPC),
     });
 
@@ -120,12 +137,19 @@ export async function POST(req: Request, { params }: Params) {
       account: privateKeyToAccount(
         (`${LIST_MANAGER_PRIVATE_KEY}` as Address) || "",
       ),
-      chain: getViemChain(chain),
+      chain: chain,
       transport: custom(client.transport),
     });
 
-    const score = await fetchScoreFromGitcoin(user);
-    const integerScore = Number(score) * CV_PASSPORT_THRESHOLD_SCALE;
+    const score = await fetchPassportScore(user);
+    const integerScore = Math.round(score * CV_PASSPORT_THRESHOLD_SCALE);
+
+    if (!integerScore || isNaN(integerScore)) {
+      return NextResponse.json(
+        { error: "Passport has no score" },
+        { status: 400 },
+      );
+    }
 
     if (!chainConfig?.passportScorer) {
       console.error("Passport scorer contract address is missing");
@@ -139,6 +163,7 @@ export async function POST(req: Request, { params }: Params) {
       abi: passportScorerABI,
       address: chainConfig.passportScorer,
       functionName: "addUserScore",
+      chain: chain,
       args: [user as Address, BigInt(integerScore)],
     });
 

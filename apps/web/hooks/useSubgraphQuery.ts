@@ -1,9 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { AnyVariables, DocumentInput, OperationContext } from "@urql/next";
 import { isEqual } from "lodash-es";
 import { toast } from "react-toastify";
 import { useChainIdFromPath } from "./useChainIdFromPath";
+import { useFlag } from "./useFlag";
 import { useIsMounted } from "./useIsMounted";
+import { LoadingToast } from "@/components";
 import { getConfigByChain } from "@/configs/chains";
 import {
   ChangeEventScope,
@@ -68,6 +70,7 @@ export function useSubgraphQuery<
   const latestResponse = useRef({ variables, response });
   const subscritionId = useRef<SubscriptionId>();
   const fetchingRef = useRef(false);
+  const skipPublished = useFlag("skipPublished");
 
   useEffect(() => {
     latestResponse.current.response = response; // Update ref on every response change
@@ -121,12 +124,32 @@ export function useSubgraphQuery<
           value?.toLowerCase()
         : value;
     });
-    const res = await urqlClient.query<Data>(query, variables, {
-      ...context,
-      url: config?.subgraphUrl,
-      requestPolicy: "network-only",
-    });
-    return modifier && res.data ? { ...res, data: modifier(res.data) } : res;
+
+    const urqlQuery = (useDev: boolean) =>
+      urqlClient.query<Data>(query, variables, {
+        ...context,
+        url:
+          useDev || !config?.publishedSubgraphUrl ?
+            config?.subgraphUrl
+          : config?.publishedSubgraphUrl,
+        requestPolicy: "network-only",
+      });
+
+    let res;
+    try {
+      res = await urqlQuery(skipPublished);
+      if (!res.data && res.error) {
+        throw res.error;
+      }
+    } catch (err1) {
+      console.error(
+        "⚡ Error fetching through published subgraph, retrying with hosted:",
+        err1,
+      );
+      res = await urqlQuery(true);
+    }
+
+    return modifier && res?.data ? { ...res, data: modifier(res.data) } : res;
   };
 
   const refetchFromOutside = async () => {
@@ -152,20 +175,33 @@ export function useSubgraphQuery<
   const refetch = async (
     retryCount?: number,
   ): Promise<Awaited<ReturnType<typeof fetch>>> => {
-    const result = await fetch();
-
     if (!retryCount) {
       retryCount = 0;
-      toast.loading("Pulling new data", {
+    }
+
+    const toastContent = React.createElement(LoadingToast, {
+      message: "Pulling new data",
+    });
+
+    if (toast.isActive(pendingRefreshToastId)) {
+      toast.update(pendingRefreshToastId, {
+        render: toastContent,
+      });
+    } else {
+      toast.loading(toastContent, {
         toastId: pendingRefreshToastId,
         autoClose: false,
         closeOnClick: true,
+        closeButton: false,
+        icon: false,
         style: {
           width: "fit-content",
           marginLeft: "auto",
         },
       });
     }
+
+    const result = await fetch();
 
     if (result.error) {
       console.error("⚡ Error fetching subgraph data:", result.error);

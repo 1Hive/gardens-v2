@@ -3,16 +3,22 @@
   "chainId": 137,
   "dataSources": [
     {
-      "name": "RegistryFactoryV0_0",
-      "startBlock": 61584765,
+      "name": "RegistryFactory",
+      "startBlock": 61584764,
       "address": "0x57a9835b204dbcc101dbf981625a3625e8043b9c",
       "customTemplate": "registryFactory"
     },
     {
       "name": "PassportScorer",
-      "startBlock": 61584765,
-      "address": "0x1fac47cf25f1ca9f20ba366099d26b28401f5715",
+      "startBlock": 61584764,
+      "address": "0x190Fa730E6FfC64Ebd0031bE59b3007cC9eE2bB3",
       "customTemplate": "passportScorer"
+    },
+    {
+      "name": "GoodDollarSybil",
+      "startBlock": 61584764,
+      "address": "0x7D08db0138fc0f0Dcc9C7120b301Ff07D3A7b300",
+      "customTemplate": "goodDollarSybil"
     }
   ]
 }

@@ -3,7 +3,7 @@
 	url = https://github.com/foundry-rs/forge-std
 [submodule "lib/allo-v2"]
 	path = lib/allo-v2
-	url = https://github.com/allo-protocol/allo-v2
+	url = https://github.com/1Hive/allo-v2
 [submodule "lib/openzeppelin-foundry-upgrades"]
 	path = lib/openzeppelin-foundry-upgrades
 	url = https://github.com/OpenZeppelin/openzeppelin-foundry-upgrades
@@ -16,3 +16,9 @@
 [submodule "lib/safe-smart-account"]
 	path = lib/safe-smart-account
 	url = https://github.com/safe-global/safe-smart-account
+[submodule "lib/protocol-monorepo"]
+	path = lib/protocol-monorepo
+	url = https://github.com/superfluid-org/protocol-monorepo
+[submodule "protocol-monorepo"]
+	path = protocol-monorepo
+	url = https://github.com/superfluid-org/protocol-monorepo

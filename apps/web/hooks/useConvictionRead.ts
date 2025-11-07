@@ -8,7 +8,6 @@ import {
   TokenGarden,
 } from "#/subgraph/.graphclient";
 import { useChainFromPath } from "./useChainFromPath";
-import { useChainIdFromPath } from "./useChainIdFromPath";
 import { cvStrategyABI } from "@/src/generated";
 import { PoolTypes } from "@/types";
 import { getRemainingBlocksToPass } from "@/utils/convictionFormulas";
@@ -18,12 +17,7 @@ import { calculatePercentageBigInt, CV_SCALE_PRECISION } from "@/utils/numbers";
 export type ProposalDataLight = Maybe<
   Pick<
     CVProposal,
-    | "proposalNumber"
-    | "convictionLast"
-    | "stakedAmount"
-    | "threshold"
-    | "requestedAmount"
-    | "blockLast"
+    "proposalNumber" | "stakedAmount" | "requestedAmount" | "beneficiary"
   > & {
     strategy: Pick<
       CVStrategy,
@@ -43,13 +37,11 @@ export const useConvictionRead = ({
   tokenData: Maybe<Pick<TokenGarden, "decimals">> | undefined;
   enabled?: boolean;
 }) => {
-  const chainIdFromPath = useChainIdFromPath();
   const chain = useChainFromPath();
 
   const cvStrategyContract = {
     address: proposalData?.strategy.id as Address,
     abi: cvStrategyABI,
-    chainId: chainIdFromPath,
     enabled: !!proposalData,
   };
 
@@ -59,7 +51,7 @@ export const useConvictionRead = ({
     refetch: triggerConvictionRefetch,
   } = useContractRead({
     ...cvStrategyContract,
-    functionName: "updateProposalConviction" as any,
+    functionName: "calculateProposalConviction",
     args: [BigInt(proposalData?.proposalNumber ?? 0)],
     enabled,
   });
@@ -67,7 +59,7 @@ export const useConvictionRead = ({
   const { data: thresholdFromContract, error: errorThreshold } =
     useContractRead({
       ...cvStrategyContract,
-      functionName: "calculateThreshold" as any,
+      functionName: "calculateThreshold",
       args: [proposalData?.requestedAmount ?? 0],
       enabled: enabled && PoolTypes[strategyConfig?.proposalType] === "funding",
     });
@@ -95,64 +87,87 @@ export const useConvictionRead = ({
   );
   const blockTime = chain?.blockTime;
 
+  const initialized =
+    proposalData &&
+    updatedConviction != null &&
+    chain != null &&
+    strategyConfig &&
+    enabled;
+
   const timeToPass =
-    Date.now() / 1000 + remainingBlocksToPass * (blockTime ?? 0);
+    initialized ?
+      Date.now() / 1000 + remainingBlocksToPass * (blockTime ?? 0)
+    : undefined;
 
-  if (!enabled) {
-    return {
-      thresholdPct: undefined,
-      totalSupportPct: undefined,
-      currentConvictionPct: undefined,
-      updatedConviction: undefined,
-      timeToPass: undefined,
-    };
-  }
-
-  if (
-    !proposalData ||
-    updatedConviction == null ||
-    chain == undefined ||
-    !strategyConfig
-  ) {
-    return {
-      thresholdPct: undefined,
-      totalSupportPct: undefined,
-      currentConvictionPct: undefined,
-      updatedConviction: undefined,
-      timeToPass: undefined,
-    };
-  }
-
-  let thresholdPct = calculatePercentageBigInt(
-    thresholdFromContract as bigint,
-    proposalData.strategy.maxCVSupply,
-    token?.decimals ?? 18,
+  let thresholdPct = useMemo(
+    () =>
+      initialized ?
+        calculatePercentageBigInt(
+          thresholdFromContract as bigint,
+          BigInt(proposalData.strategy.maxCVSupply),
+        )
+      : undefined,
+    [
+      thresholdFromContract,
+      proposalData?.strategy.maxCVSupply,
+      token?.decimals,
+      initialized,
+    ],
   );
 
-  let totalSupportPct = calculatePercentageBigInt(
-    proposalData.stakedAmount,
-    proposalData.strategy.totalEffectiveActivePoints,
-    token?.decimals ?? 18,
+  let totalSupportPct = useMemo(
+    () =>
+      initialized ?
+        calculatePercentageBigInt(
+          proposalData.stakedAmount,
+          proposalData.strategy.totalEffectiveActivePoints,
+        )
+      : undefined,
+    [
+      proposalData?.stakedAmount,
+      proposalData?.strategy.totalEffectiveActivePoints,
+      token?.decimals,
+      initialized,
+    ],
   );
 
-  let currentConvictionPct = calculatePercentageBigInt(
-    BigInt(updatedConviction.toString()),
-    proposalData.strategy.maxCVSupply,
-    token?.decimals ?? 18,
+  let currentConvictionPct = useMemo(
+    () =>
+      initialized ?
+        calculatePercentageBigInt(
+          BigInt(updatedConviction.toString()),
+          proposalData.strategy.maxCVSupply,
+        )
+      : undefined,
+    [
+      updatedConviction,
+      proposalData?.strategy.maxCVSupply,
+      token?.decimals,
+      initialized,
+    ],
   );
 
   logOnce("debug", "Conviction computed numbers", {
     thresholdPct,
+    thresholdFromContract,
     totalSupportPct,
     currentConvictionPct,
   });
 
-  return {
-    thresholdPct,
-    totalSupportPct,
-    currentConvictionPct,
-    updatedConviction,
-    timeToPass,
-    triggerConvictionRefetch: () => triggerConvictionRefetch(),
-  };
+  return initialized ?
+      {
+        thresholdPct,
+        totalSupportPct,
+        currentConvictionPct,
+        updatedConviction,
+        timeToPass,
+        triggerConvictionRefetch: () => triggerConvictionRefetch(),
+      }
+    : {
+        thresholdPct: undefined,
+        totalSupportPct: undefined,
+        currentConvictionPct: undefined,
+        updatedConviction: undefined,
+        timeToPass: undefined,
+      };
 };

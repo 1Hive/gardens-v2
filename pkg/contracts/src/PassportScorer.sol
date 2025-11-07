@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity ^0.8.19;
 
+import {ProxyOwnableUpgrader} from "./ProxyOwnableUpgrader.sol";
 import {ISybilScorer, Strategy} from "./ISybilScorer.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
-import {Initializable} from "openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol";
-import {CVStrategyV0_0} from "./CVStrategy/CVStrategyV0_0.sol";
+import {CVStrategy} from "./CVStrategy/CVStrategy.sol";
 
 /// @custom:oz-upgrades-from PassportScorer
-contract PassportScorer is Initializable, UUPSUpgradeable, OwnableUpgradeable, ISybilScorer {
+contract PassportScorer is ISybilScorer, ProxyOwnableUpgrader {
     address public listManager;
 
     mapping(address => uint256) public userScores;
@@ -38,7 +38,7 @@ contract PassportScorer is Initializable, UUPSUpgradeable, OwnableUpgradeable, I
     }
 
     modifier onlyCouncilOrAuthorized(address _strategy) {
-        address registryCommunity = address(CVStrategyV0_0(payable(_strategy)).registryCommunity());
+        address registryCommunity = address(CVStrategy(payable(_strategy)).registryCommunity());
         if (
             msg.sender == owner() || msg.sender == _strategy || msg.sender == registryCommunity
                 || msg.sender == listManager || msg.sender == strategies[_strategy].councilSafe
@@ -62,10 +62,10 @@ contract PassportScorer is Initializable, UUPSUpgradeable, OwnableUpgradeable, I
             revert ZeroAddress();
         }
     }
-    // slither-disable-next-line unprotected-upgrade
 
-    function initialize(address _listManager) public initializer {
-        __Ownable_init();
+    // slither-disable-next-line unprotected-upgrade
+    function initialize(address _listManager, address _owner) public initializer {
+        super.initialize(_owner);
         _revertZeroAddress(_listManager);
         listManager = _listManager;
     }
@@ -73,7 +73,7 @@ contract PassportScorer is Initializable, UUPSUpgradeable, OwnableUpgradeable, I
     /// @notice Add a userScore to the list
     /// @param _user address of the user to add
     /// @param _score score to assign to the user
-    function addUserScore(address _user, uint256 _score) external override onlyAuthorized {
+    function addUserScore(address _user, uint256 _score) external onlyAuthorized {
         _revertZeroAddress(_user);
         userScores[_user] = _score;
         emit UserScoreAdded(_user, _score);
@@ -81,7 +81,7 @@ contract PassportScorer is Initializable, UUPSUpgradeable, OwnableUpgradeable, I
 
     /// @notice Remove a user from the list
     /// @param _user address of the user to remove
-    function removeUser(address _user) external override onlyAuthorized {
+    function removeUser(address _user) external onlyAuthorized {
         _revertZeroAddress(_user);
         delete userScores[_user];
         emit UserRemoved(_user);
@@ -89,7 +89,7 @@ contract PassportScorer is Initializable, UUPSUpgradeable, OwnableUpgradeable, I
 
     /// @notice Change the list manager address
     /// @param _newManager address of the new list manager
-    function changeListManager(address _newManager) external override onlyOwner {
+    function changeListManager(address _newManager) external onlyOwner {
         _revertZeroAddress(_newManager);
         address oldManager = listManager;
         listManager = _newManager;
@@ -115,7 +115,7 @@ contract PassportScorer is Initializable, UUPSUpgradeable, OwnableUpgradeable, I
 
     /// @notice Remove a strategy from the contract
     /// @param _strategy address of the strategy to remove
-    function removeStrategy(address _strategy) external override onlyCouncilOrAuthorized(_strategy) {
+    function removeStrategy(address _strategy) external onlyCouncilOrAuthorized(_strategy) {
         _revertZeroAddress(_strategy);
         delete strategies[_strategy];
         emit StrategyRemoved(_strategy);
@@ -151,8 +151,6 @@ contract PassportScorer is Initializable, UUPSUpgradeable, OwnableUpgradeable, I
 
         return userScore >= strategy.threshold;
     }
-
-    function _authorizeUpgrade(address) internal override onlyOwner {}
 
     uint256[50] private __gap;
 }

@@ -19,8 +19,8 @@
       abis:
         - name: {{name}}
           file: ../contracts/out/{{name}}.sol/{{name}}.json
-        - name: RegistryCommunityV0_0
-          file: ../contracts/out/RegistryCommunityV0_0.sol/RegistryCommunityV0_0.json
+        - name: RegistryCommunity
+          file: ../contracts/out/RegistryCommunity.sol/RegistryCommunity.json
       eventHandlers:
         - event: CommunityCreated(address)
           handler: handleCommunityCreated
@@ -28,6 +28,10 @@
           handler: handleCommunityValiditySet
         - event: ProtocolFeeSet(address,uint256)
           handler: handleProtocolFeeSet  
+        - event: ProtopiansChanged(address[],address[])
+          handler: handleProtopiansChanged  
+        - event: KeepersChanged(address[],address[])
+          handler: handleKeepersChanged
         - event: Initialized(uint8)
           handler: handleRegistryInitialized  
       file: ./src/mappings/registry-factory.ts

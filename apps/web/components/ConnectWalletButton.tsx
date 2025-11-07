@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Fragment } from "react";
+import React, { Fragment, useMemo, useState } from "react";
 import { Menu, Transition } from "@headlessui/react";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import {
@@ -9,21 +9,30 @@ import {
   ArrowsRightLeftIcon,
 } from "@heroicons/react/24/solid";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { blo } from "blo";
 import cn from "classnames";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { isAddress } from "viem";
+import { arbitrum, base, mainnet, optimism } from "viem/chains";
 import {
+  Address,
   useAccount,
   useBalance,
   useConnect,
   useDisconnect,
+  useEnsAvatar,
+  useEnsName,
   useSwitchNetwork,
 } from "wagmi";
 import TooltipIfOverflow from "./TooltipIfOverflow";
+import { isSafeAvatarUrl } from "@/app/api/utils";
+import { BeeKeeperNFT, FirstHolderNFT, ProtopianNFT } from "@/assets";
 import { walletIcon } from "@/assets";
 import { Button, DisplayNumber } from "@/components";
 import { ChainIcon } from "@/configs/chains";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
+import { useOwnerOfNFT } from "@/hooks/useOwnerOfNFT";
 import { formatAddress } from "@/utils/formatAddress";
 
 export function ConnectWallet() {
@@ -36,6 +45,45 @@ export function ConnectWallet() {
   const { switchNetwork } = useSwitchNetwork();
   const { disconnect } = useDisconnect();
   const { connectors } = useConnect();
+  const { isOwner: isFirstHolder } = useOwnerOfNFT({
+    nft: "FirstHolder",
+    chains: [optimism, arbitrum, base, mainnet],
+    enabled: account.isConnected,
+  });
+  const { isOwner: isProtopianHolder } = useOwnerOfNFT({
+    nft: "Protopian",
+    chains: [optimism, arbitrum, base, mainnet],
+    enabled: account.isConnected,
+  });
+  const { isOwner: isBeekperHolder } = useOwnerOfNFT({
+    nft: "Keeper",
+    chains: [optimism, arbitrum, base, mainnet],
+    enabled: account.isConnected,
+  });
+
+  const nfts = useMemo(
+    () =>
+      [
+        {
+          image: ProtopianNFT,
+          title: "Protopian NFT",
+          hasNFT: isProtopianHolder,
+        },
+        {
+          image: BeeKeeperNFT,
+          title: "Bee Keeper NFT",
+          hasNFT: isBeekperHolder,
+        },
+        {
+          image: FirstHolderNFT,
+          title: "First Holder NFT",
+          hasNFT: !!isFirstHolder,
+        },
+      ].filter((nft) => nft.hasNFT),
+    [isFirstHolder],
+  );
+
+  const [selectedNFTIndex, setSelectedNFTIndex] = useState(0);
 
   const wallet = connectors[0].name;
 
@@ -43,16 +91,30 @@ export function ConnectWallet() {
     address: account?.address,
     token: tokenUrlAddress as `0x${string}` | undefined,
     chainId: urlChainId,
-    enabled: !!account && !!urlChainId,
+    enabled: !!account.address && urlChainId != null,
+  });
+
+  const { data: ensName } = useEnsName({
+    address: account?.address as Address,
+    enabled: isAddress(account?.address ?? ""),
+    chainId: 1,
+    cacheTime: 30_000,
+  });
+
+  const { data: avatarUrl } = useEnsAvatar({
+    name: ensName,
+    enabled: Boolean(ensName),
+    chainId: 1,
+    cacheTime: 30_000,
   });
 
   return (
     <ConnectButton.Custom>
-      {({ account: accountAddress, chain, openConnectModal, mounted }) => {
+      {({ account: acc, chain, openConnectModal, mounted }) => {
         const ready = mounted;
-        const connected = ready && accountAddress && chain;
+        const connected = ready && !!acc && !!chain;
         const isWrongNetwork =
-          chain?.id != urlChainId && urlChainId && !isNaN(urlChainId);
+          chain?.id != urlChainId && urlChainId != null && !isNaN(urlChainId);
 
         return (
           <>
@@ -72,18 +134,6 @@ export function ConnectWallet() {
                   </Button>
                 );
               }
-              //WRONG NETWORK! button if wallet is connected to unsupported chains
-              // if (chain.unsupported) {
-              //   return (
-              //     <Button
-              //       onClick={openChainModal}
-              //       btnStyle="outline"
-              //       color="danger"
-              //     >
-              //       Wrong network
-              //     </Button>
-              //   );
-              // }
 
               //Is CONNECTED to a supported chains with condition => urlChainId(urlChain) === chainId(wallet)
               //Dropdown menu with wallet, balance, switch network and disconnect buttons
@@ -94,14 +144,18 @@ export function ConnectWallet() {
                       <Menu.Button>
                         <div
                           className={`flex w-fit cursor-pointer items-center gap-4 rounded-2xl pl-4 py-2 hover:opacity-85 pr-2 
-                             ${cn({ "bg-danger-soft": urlChainId && urlChainId !== chain.id }, { "bg-primary": !urlChainId || urlChainId === chain.id })}      
+                             ${cn({ "bg-danger-soft dark:bg-danger-soft-dark": urlChainId != null && urlChainId !== chain.id }, { "bg-primary": urlChainId == null || urlChainId === chain.id })}      
                           `}
                         >
                           {isWrongNetwork ?
-                            <ExclamationTriangleIcon className="text-danger-content w-6" />
+                            <ExclamationTriangleIcon className="w-6 text-danger-content dark:text-danger-content" />
                           : <Image
-                              alt={"Chain icon"}
-                              src={`https://effigy.im/a/${accountAddress.address}.png`}
+                              alt="Wallet Avatar"
+                              src={
+                                avatarUrl && isSafeAvatarUrl(avatarUrl) ?
+                                  avatarUrl
+                                : `${blo(acc.address as Address)}`
+                              }
                               className="rounded-full"
                               width={34}
                               height={34}
@@ -109,12 +163,12 @@ export function ConnectWallet() {
                             />
                           }
                           <div className="hidden sm:flex flex-col">
-                            <h5 className="text-left">
-                              {formatAddress(accountAddress.address)}
+                            <h5 className={"text-left "}>
+                              {ensName ?? formatAddress(acc.address)}
                             </h5>
                             <div className="flex items-center">
                               {(
-                                !urlChainId ||
+                                urlChainId == null ||
                                 isNaN(urlChainId!) ||
                                 chain.id === urlChainId
                               ) ?
@@ -122,14 +176,14 @@ export function ConnectWallet() {
                                   <ChainIcon chain={chain.id} height={14} />
                                   <p className="text-xs ml-1">{chain.name}</p>
                                 </>
-                              : <p className="text-danger-content text-xs">
+                              : <p className="text-xs text-danger-content dark:text-danger-content">
                                   Switch to network {chainFromPath?.name ?? ""}
                                 </p>
                               }
                             </div>
                           </div>
                           <ChevronUpIcon
-                            className={`h-3 w-3 font-bold text-black transition-transform duration-200 ease-in-out ${cn(
+                            className={`h-3 w-3 font-bold text-neutral-content dark:text-neutral-inverted-content transition-transform duration-200 ease-in-out ${cn(
                               {
                                 "rotate-180": !open,
                               },
@@ -148,6 +202,42 @@ export function ConnectWallet() {
                         leaveTo="transform opacity-0 scale-95"
                       >
                         <Menu.Items className="border1 bg-neutral rounded-3xl absolute right-0 top-16 z-10 focus:outline-none">
+                          {nfts.map(({ title, image }, i) => (
+                            <div
+                              key={title}
+                              className={`relative w-full ${selectedNFTIndex !== i ? "hidden" : ""}`}
+                            >
+                              <Image
+                                src={image}
+                                width={300}
+                                height={300}
+                                alt={title}
+                                className="rounded-t-[18px] w-[300px] h-[300px]"
+                                title={title}
+                              />
+                            </div>
+                          ))}
+
+                          {nfts.length > 1 && (
+                            <div className="flex w-full justify-center gap-2 py-2">
+                              {nfts.map(({ title }, i) => (
+                                <span
+                                  key={title}
+                                  className={`cursor-pointer w-3 h-3 bg-gray-600 rounded-full inline-block mx-1 ${selectedNFTIndex !== i ? "opacity-25" : ""}`}
+                                  aria-label="View Protopian NFT"
+                                  onClick={() => setSelectedNFTIndex(i)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") {
+                                      setSelectedNFTIndex(i);
+                                    }
+                                  }}
+                                >
+                                  <span className="sr-only">View {title}</span>
+                                </span>
+                              ))}
+                            </div>
+                          )}
+
                           <div className="flex flex-col gap-4 rounded-lg p-4 min-w-[300px]">
                             {/* wallet and token balance info */}
                             <Menu.Item as="div" className="flex flex-col gap-2">
@@ -160,7 +250,6 @@ export function ConnectWallet() {
                                 <DisplayNumber
                                   number={(token?.formatted ?? 0).toString()}
                                   tokenSymbol={token?.symbol}
-                                  className="text-primary-content"
                                 />
                               </div>
                             </Menu.Item>

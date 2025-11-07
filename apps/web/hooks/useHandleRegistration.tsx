@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { Address } from "wagmi";
+import { useContractWriteWithConfirmations } from "./useContractWriteWithConfirmations";
 import { TransactionProps } from "@/components/TransactionModal";
 import { usePubSubContext } from "@/contexts/pubsub.context";
-import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { registryCommunityABI } from "@/src/generated";
 import { abiWithErrors } from "@/utils/abi";
 import { getTxMessage } from "@/utils/transactionMessages";
@@ -13,7 +13,7 @@ export function useHandleRegistration(
   urlChainId: number | undefined,
 ): {
   registrationTxProps: TransactionProps;
-  handleRegistration: () => void;
+  handleRegistration: (covenantSig?: `0x${string}`) => void;
   resetState: () => void;
 } {
   const [registrationTxProps, setRegistrationTxProps] =
@@ -29,11 +29,14 @@ export function useHandleRegistration(
     write: writeRegisterMember,
     transactionStatus: registerMemberTxStatus,
     error: registerMemberTxError,
+    transactionData,
   } = useContractWriteWithConfirmations({
     address: communityAddress,
     abi: abiWithErrors(registryCommunityABI),
     functionName: "stakeAndRegisterMember",
+    args: [""], // Empty covenant signature as a default value
     contractName: "Registry Community",
+    chainId: urlChainId,
     showNotification: false,
     onConfirmations: useCallback(() => {
       publish({
@@ -52,12 +55,18 @@ export function useHandleRegistration(
       ...prev,
       message: getTxMessage(registerMemberTxStatus, registerMemberTxError),
       status: registerMemberTxStatus ?? "idle",
+      txHash: transactionData?.hash,
     }));
-  }, [registerMemberTxStatus, registerMemberTxError]);
+  }, [registerMemberTxStatus, registerMemberTxError, transactionData?.hash]);
 
-  const handleRegistration = useCallback(() => {
-    writeRegisterMember();
-  }, [writeRegisterMember]);
+  const handleRegistration = useCallback(
+    (covenantSig?: `0x${string}`) => {
+      writeRegisterMember({
+        args: [covenantSig ?? "0x"], // Use empty string if covenantSig is undefined
+      });
+    },
+    [writeRegisterMember],
+  );
 
   const resetState = useCallback(() => {
     setRegistrationTxProps({

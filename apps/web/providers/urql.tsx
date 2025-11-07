@@ -7,7 +7,7 @@ import {
   OperationContext,
   ssrExchange,
 } from "urql";
-import { getConfigByChain } from "@/configs/chains";
+import { ChainData, getConfigByChain } from "@/configs/chains";
 import { ChainId } from "@/types";
 
 let urqlRecord: Record<
@@ -18,7 +18,9 @@ let urqlRecord: Record<
 const isServer = typeof window === "undefined";
 
 //Subgraph URL
-const subgraphArbSepURL = process.env.NEXT_PUBLIC_SUBGRAPH_URL_ARB_SEP ?? "";
+const arbsepConfig = getConfigByChain(421614);
+const subgraphArbSepURL =
+  arbsepConfig?.publishedSubgraphUrl ?? arbsepConfig?.subgraphUrl;
 
 /**
  * Function to initialize urql client. can be used both on client and server
@@ -34,18 +36,17 @@ export function initUrqlClient(
     chainId: "default",
   },
 ) {
+  // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
   if (!urqlRecord[chainId]) {
     //fill the client with initial state from the server.
     const ssr = ssrExchange({ initialState, isClient: !isServer });
     const urqlClient = createClient({
-      url: subgraphArbSepURL,
+      url: subgraphArbSepURL!,
       exchanges: [
         // cacheExchange,
         // authExchange(async (util) => {
-        //   // console.log("util", util);
         //   return {
         //     didAuthError() {
-        //       console.log("didAuthError");
         //       return false;
         //     },
         //     async refreshAuth() {},
@@ -91,22 +92,26 @@ export function initUrqlClient(
   };
 }
 
+const { urqlClient } = initUrqlClient();
+
 export async function queryByChain<
   Data = any,
   Variables extends AnyVariables = AnyVariables,
 >(
-  urqlClient: Client,
-  chainId: string | number,
+  chain: Pick<ChainData, "subgraphUrl" | "publishedSubgraphUrl">,
   query: DocumentInput<any, Variables>,
   variables: Variables = {} as Variables,
   context?: Partial<OperationContext>,
+  skipPublished?: boolean,
 ) {
-  const config = getConfigByChain(chainId);
-  if (!config) {
+  if (chain == null) {
     throw new Error("Chain not supported");
   }
   return urqlClient.query<Data>(query, variables, {
-    url: config.subgraphUrl,
+    url:
+      !!skipPublished || !chain.publishedSubgraphUrl ?
+        chain.subgraphUrl
+      : chain.publishedSubgraphUrl,
     ...context,
   });
 }

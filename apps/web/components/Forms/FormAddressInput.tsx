@@ -1,57 +1,85 @@
-import { ChangeEvent, useCallback, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { blo } from "blo";
-import { uniqueId } from "lodash-es";
+import Image from "next/image";
+import { RegisterOptions } from "react-hook-form";
 import { Address, isAddress } from "viem";
-import { useEnsAddress, useEnsAvatar, useEnsName } from "wagmi";
-import { InfoWrapper } from "../InfoWrapper";
+import {
+  useEnsAddress,
+  useEnsAvatar,
+  useEnsName,
+  useNetwork,
+  usePublicClient,
+} from "wagmi";
+import { FormInput } from "./FormInput";
+import { LoadingSpinner } from "../LoadingSpinner";
+import { getConfigByChain } from "@/configs/chains";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useFlag } from "@/hooks/useFlag";
+import { safeABI } from "@/src/customAbis";
 import { isENS } from "@/utils/web3";
 
-/**
- * Address input with ENS name resolution
- */
 type Props = {
   label?: string;
   errors?: any;
   required?: boolean;
   placeholder?: string;
   readOnly?: boolean;
+  registerKey?: string;
+  register?: any;
   disabled?: boolean;
   className?: string;
   value?: string;
   tooltip?: string;
+  validateSafe?: boolean;
+  registerOptions?: RegisterOptions;
   onChange?: React.ChangeEventHandler<HTMLInputElement>;
+  suffix?: React.ReactNode;
+  // trigger?: UseFormTrigger<any>;
 };
 
 export const FormAddressInput = ({
   label,
-  errors = false,
+  errors = {},
   required = false,
   placeholder = "0x",
   readOnly,
+  registerKey = "",
+  register,
   disabled,
   className,
-  value = undefined,
+  value,
   tooltip,
+  validateSafe = false,
   onChange,
+  registerOptions,
+  // trigger,
+  suffix,
+  ...rest
 }: Props) => {
-  const id = uniqueId("address-input-");
   const debouncedValue = useDebounce(value, 500);
-  const debouncedOrValue = isAddress(value ?? "") ? value : debouncedValue;
-  const isDebouncedValueLive = debouncedOrValue === value;
+  const { chain } = useNetwork();
+  // const connectedChainId = chain?.id;
+  const publicClient = usePublicClient();
 
-  const settledValue = isDebouncedValueLive ? debouncedOrValue : undefined;
+  const [inputValue, setInputValue] = useState<string>(value ?? "");
+  const [isValidatingSafe, setIsValidatingSafe] = useState<boolean>(false);
+  const bypassSafeCheck = useFlag("bypassSafeCheck");
 
-  const { data: ensAddress } = useEnsAddress({
-    name: settledValue,
-    enabled: isENS(debouncedOrValue),
+  useEffect(() => {
+    setInputValue(value ?? "");
+  }, [value]);
+
+  // ENS Resolution
+  const { data: ensAddress, isError: ensError } = useEnsAddress({
+    name: debouncedValue,
+    enabled: isENS(debouncedValue),
     chainId: 1,
     cacheTime: 30_000,
   });
 
   const { data: ensName } = useEnsName({
-    address: settledValue as Address,
-    enabled: isAddress(debouncedOrValue ?? ""),
+    address: debouncedValue as Address,
+    enabled: isAddress(debouncedValue ?? ""),
     chainId: 1,
     cacheTime: 30_000,
   });
@@ -64,77 +92,115 @@ export const FormAddressInput = ({
   });
 
   useEffect(() => {
-    if (!ensAddress) return;
-    const ev = {
-      target: { value: ensAddress },
-    } as ChangeEvent<HTMLInputElement>;
-    onChange?.(ev);
-  }, [ensAddress, onChange, debouncedOrValue]);
+    if (ensAddress) {
+      setInputValue(ensAddress);
+      (onChange ?? registerOptions?.onChange)?.({
+        target: { value: ensAddress },
+      } as React.ChangeEvent<HTMLInputElement>);
+    }
+  }, [ensAddress]);
 
-  const handleChange = useCallback(
-    (newValue: string) => {
-      const ev = {
-        target: { value: newValue },
-      } as ChangeEvent<HTMLInputElement>;
-      onChange?.(ev);
+  const validateSafeAddress = async (address: string) => {
+    if (
+      bypassSafeCheck ||
+      !getConfigByChain(publicClient.chain.id)?.safePrefix
+    ) {
+      return true;
+    }
+    try {
+      setIsValidatingSafe(true);
+      const isSafe = await Promise.all([
+        publicClient?.readContract({
+          address: address as Address,
+          abi: safeABI,
+          functionName: "getOwners",
+        }),
+      ])
+        .catch(() => {
+          return false;
+        })
+        .then(() => {
+          return true;
+        });
+      if (isSafe) {
+        return true;
+      } else {
+        return `Not a valid Safe address in ${chain?.name} network`;
+      }
+    } catch (err) {
+      console.error(err);
+      return `Not a valid Safe address in ${chain?.name} network`;
+    } finally {
+      setIsValidatingSafe(false);
+    }
+  };
+
+  const extendedRegisterOptions = {
+    ...registerOptions,
+    validate: async (validateValue: string) => {
+      // ENS validation
+      if (isENS(validateValue)) {
+        if (ensError) return "Invalid ENS name";
+        if (!ensAddress) return "Unable to resolve ENS name";
+        return true;
+      }
+
+      // Address format validation
+      if (!isAddress(validateValue)) {
+        return "Invalid Ethereum address format";
+      }
+
+      // SAFE validation if required
+      if (validateSafe) {
+        const isValid = await validateSafeAddress(validateValue);
+        return isValid;
+      }
+
+      return true;
     },
-    [onChange],
-  );
-
-  let modifier = "";
-  if (Object.keys(errors).length > 0) {
-    modifier = "border-error";
-  } else if (disabled) {
-    modifier = "border-disabled";
-  } else if (readOnly) {
-    modifier =
-      "!border-gray-300 !focus-within:border-gray-300 focus-within:outline !outline-gray-300 cursor-not-allowed bg-transparent";
-  }
+  };
 
   return (
-    <div className={`flex flex-col max-w-md text-sm ${className ?? ""}`}>
-      {label && (
-        <label htmlFor={id} className="label cursor-pointer">
-          <span className="label-text">
-            {tooltip ?
-              <InfoWrapper tooltip={tooltip}>
-                {label}
-                {required && <span className="ml-1">*</span>}
-              </InfoWrapper>
-            : <>
-                {label}
-                {required && <span className="ml-1">*</span>}
-              </>
-            }
-          </span>
-        </label>
-      )}
-      <div
-        className={`form-control input input-info flex flex-row font-normal items-center ${modifier}`}
-      >
-        <input
-          className={`input font-mono text-sm px-0 w-full border-none focus:border-none outline-none focus:outline-none ${(readOnly ?? disabled) ? "cursor-not-allowed" : ""}`}
-          placeholder={placeholder || "Enter address or ENS name"}
-          id={id}
-          name={id}
-          onChange={(e) => handleChange(e.target.value)}
-          disabled={disabled ?? readOnly}
-          readOnly={readOnly ?? disabled}
-          required={required}
-          value={value}
-        />
-        {value && (
-          // Don't want to use nextJS Image here (and adding remote patterns for the URL)
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            alt=""
-            className={"!rounded-full ml-2"}
-            src={avatarUrl ? avatarUrl : blo(value as Address)}
-            width="30"
-            height="30"
-          />
-        )}
-      </div>
+    <div className="max-w-[29rem]">
+      <FormInput
+        {...rest}
+        label={label}
+        tooltip={tooltip}
+        type="text"
+        registerKey={registerKey}
+        register={register}
+        required={required}
+        placeholder={placeholder}
+        errors={errors}
+        disabled={disabled}
+        readOnly={readOnly}
+        className={`${className} pr-12`}
+        value={inputValue}
+        registerOptions={{
+          ...extendedRegisterOptions,
+        }}
+        onChange={(e) => {
+          (onChange ?? registerOptions?.onChange)?.(e);
+          setInputValue(e.target.value);
+        }}
+        wide={true}
+        suffix={
+          suffix ??
+          (isValidatingSafe ?
+            <LoadingSpinner className="text-neutral-soft-content" />
+          : debouncedValue && (
+              <Image
+                alt=""
+                className="rounded-full"
+                src={avatarUrl ? avatarUrl : blo(debouncedValue as Address)}
+                width="30"
+                height="30"
+              />
+            ))
+        }
+      />
     </div>
   );
 };
+
+export default FormAddressInput;

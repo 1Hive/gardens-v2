@@ -17,7 +17,6 @@ import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { useHandleAllowance } from "@/hooks/useHandleAllowance";
 import { useHandleRegistration } from "@/hooks/useHandleRegistration";
 import { registryCommunityABI } from "@/src/generated";
-import { abiWithErrors } from "@/utils/abi";
 import { useErrorDetails } from "@/utils/getErrorName";
 import { gte } from "@/utils/numbers";
 
@@ -55,7 +54,7 @@ export function RegisterMember({
   const registryContractCallConfig = useMemo(
     () => ({
       address: communityAddress as Address,
-      abi: abiWithErrors(registryCommunityABI),
+      abi: registryCommunityABI,
       contractName: "Registry Community",
     }),
     [communityAddress],
@@ -65,6 +64,7 @@ export function RegisterMember({
     address: accountAddress,
     token: token.address as Address,
     chainId: urlChainId,
+    watch: true,
   });
 
   const accountHasBalance = useMemo(
@@ -72,22 +72,25 @@ export function RegisterMember({
     [accountTokenBalance?.value, registrationCost, token.decimals],
   );
 
-  const { write: writeUnregisterMember, error: unregisterMemberError } =
-    useContractWriteWithConfirmations({
-      ...registryContractCallConfig,
-      functionName: "unregisterMember",
-      fallbackErrorMessage: "Error unregistering member, please report a bug.",
-      onConfirmations: useCallback(() => {
-        publish({
-          topic: "member",
-          type: "delete",
-          containerId: communityAddress,
-          function: "unregisterMember",
-          id: communityAddress,
-          chainId: urlChainId,
-        });
-      }, [publish, communityAddress, urlChainId]),
-    });
+  const {
+    write: writeUnregisterMember,
+    error: unregisterMemberError,
+    isLoading: isUnregistering,
+  } = useContractWriteWithConfirmations({
+    ...registryContractCallConfig,
+    functionName: "unregisterMember",
+    fallbackErrorMessage: "Error unregistering member, please report a bug.",
+    onConfirmations: useCallback(() => {
+      publish({
+        topic: "member",
+        type: "delete",
+        containerId: communityAddress,
+        function: "unregisterMember",
+        id: communityAddress,
+        chainId: urlChainId,
+      });
+    }, [publish, communityAddress, urlChainId]),
+  });
 
   useErrorDetails(unregisterMemberError, "unregisterMember");
 
@@ -95,7 +98,7 @@ export function RegisterMember({
     () => [
       {
         condition: !isMember && !accountHasBalance,
-        message: "Connected account has insufficient balance",
+        message: "Insufficient balance",
       },
     ],
     [isMember, accountHasBalance],
@@ -121,8 +124,7 @@ export function RegisterMember({
     resetState: handleAllowanceResetState,
   } = useHandleAllowance(
     accountAddress,
-    token.address as Address,
-    token.symbol,
+    token,
     communityAddress as Address,
     registrationCost,
     handleRegistration,
@@ -175,6 +177,7 @@ export function RegisterMember({
       missmatchUrl,
       disableRegMemberBtnCondition,
       tooltipMessage,
+      accountHasBalance,
     ],
   );
 
@@ -188,8 +191,8 @@ export function RegisterMember({
       />
       <div className="flex gap-4">
         <div className="flex items-center justify-center">
-          <Button {...buttonProps}>
-            {isMember ? "Leave community" : "Register in community"}
+          <Button {...buttonProps} isLoading={isUnregistering}>
+            {isMember ? "Leave" : "Join"}
           </Button>
         </div>
       </div>

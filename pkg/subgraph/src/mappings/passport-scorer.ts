@@ -1,8 +1,8 @@
 import {
   CVStrategy,
-  PassportScorer,
+  SybilProtection,
   PassportStrategy,
-  PassportUser
+  PassportUser,
 } from "../../generated/schema";
 import { log, BigInt } from "@graphprotocol/graph-ts";
 import {
@@ -12,23 +12,28 @@ import {
   StrategyActivated,
   Initialized,
   ThresholdModified,
-  StrategyRemoved
+  StrategyRemoved,
 } from "../../generated/PassportScorer/PassportScorer";
 
+const PassportType = "Passport";
+
 export function handleInitialized(event: Initialized): void {
-  let passportScorer = new PassportScorer(event.address.toHexString());
+  let passportScorer = new SybilProtection(event.address.toHexString());
+  passportScorer.type = PassportType;
   passportScorer.save();
 }
 
 export function handleUserScoreAdded(event: UserScoreAdded): void {
-  let passportScorer = PassportScorer.load(event.address.toHexString());
+  let passportScorer = SybilProtection.load(event.address.toHexString());
 
   if (passportScorer == null) {
+    passportScorer = new SybilProtection(event.address.toHexString());
+    passportScorer.type = PassportType;
+    passportScorer.save();
     log.error(
       "PassportScorer: handleUserScoreAdded, PassportScorer not found: {}",
-      [event.address.toHexString()]
+      [event.address.toHexString()],
     );
-    return;
   }
 
   let passportUser = PassportUser.load(event.params.user.toHexString());
@@ -46,23 +51,26 @@ export function handleUserScoreAdded(event: UserScoreAdded): void {
 export function handleUserRemoved(event: UserRemoved): void {
   let passportUser = PassportUser.load(event.params.user.toHexString());
   if (passportUser == null) {
+    passportUser = new PassportUser(event.address.toHexString());
+    passportUser.save();
     log.debug("PassportScorer: PassportUser not found: {}", [
-      event.params.user.toHexString()
+      event.params.user.toHexString(),
     ]);
-    return;
   }
   passportUser.score = BigInt.fromI32(0);
   passportUser.save();
 }
 
 export function handleStrategyAdded(event: StrategyAdded): void {
-  let passportScorer = PassportScorer.load(event.address.toHexString());
+  let passportScorer = SybilProtection.load(event.address.toHexString());
   if (passportScorer == null) {
+    passportScorer = new SybilProtection(event.address.toHexString());
+    passportScorer.type = PassportType;
+    passportScorer.save();
     log.error(
       "PassportScorer: handleStrategyAdded, PassportScorer not found: {}",
-      [event.address.toHexString()]
+      [event.address.toHexString()],
     );
-    return;
   }
 
   let strategy = new PassportStrategy(event.params.strategy.toHexString());
@@ -77,11 +85,12 @@ export function handleStrategyAdded(event: StrategyAdded): void {
 export function handleStrategyRemoved(event: StrategyRemoved): void {
   let strategy = PassportStrategy.load(event.params.strategy.toHexString());
   if (strategy == null) {
+    strategy = new PassportStrategy(event.address.toHexString());
+    strategy.save();
     log.error(
       "PassportScorer: handleStrategyRemoved, PassportStrategy not found: {}",
-      [event.params.strategy.toHexString()]
+      [event.params.strategy.toHexString()],
     );
-    return;
   }
   strategy.active = false;
   strategy.save();
@@ -90,11 +99,12 @@ export function handleStrategyRemoved(event: StrategyRemoved): void {
 export function handleStrategyActivated(event: StrategyActivated): void {
   let strategy = PassportStrategy.load(event.params.strategy.toHexString());
   if (strategy == null) {
+    strategy = new PassportStrategy(event.address.toHexString());
+    strategy.save();
     log.error(
       "PassportScorer: handleStrategyActivated, PassportStrategy not found: {}",
-      [event.params.strategy.toHexString()]
+      [event.params.strategy.toHexString()],
     );
-    return;
   }
   strategy.active = true;
   strategy.save();
@@ -103,11 +113,12 @@ export function handleStrategyActivated(event: StrategyActivated): void {
 export function handleThresholdModified(event: ThresholdModified): void {
   let strategy = PassportStrategy.load(event.params.strategy.toHexString());
   if (strategy == null) {
+    strategy = new PassportStrategy(event.address.toHexString());
+    strategy.save();
     log.error(
       "PassportScorer: handleThresholdModified, PassportStrategy not found: {}",
-      [event.params.strategy.toHexString()]
+      [event.params.strategy.toHexString()],
     );
-    return;
   }
   strategy.threshold = event.params.newThreshold;
   strategy.save();

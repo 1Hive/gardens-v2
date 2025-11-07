@@ -1,4 +1,8 @@
-import { CVStrategyV0_0 as CVStrategyTemplate } from "../../generated/templates";
+import {
+  CVStrategy as CVStrategyTemplate,
+  PoolMetadata as PoolMetadataTemplate,
+  Covenant as CovenantTemplate
+} from "../../generated/templates";
 import {
   Member,
   RegistryCommunity,
@@ -13,7 +17,7 @@ import {
 import { BigInt, dataSource, log } from "@graphprotocol/graph-ts";
 import {
   RegistryInitialized,
-  RegistryCommunityV0_0 as RegistryCommunityContract,
+  RegistryCommunity as RegistryCommunityContract,
   MemberRegistered,
   MemberActivatedStrategy,
   StrategyAdded,
@@ -23,17 +27,33 @@ import {
   PoolCreated,
   MemberKicked,
   MemberPowerIncreased,
-  MemberPowerDecreased
-} from "../../generated/templates/RegistryCommunityV0_0/RegistryCommunityV0_0";
+  MemberRegisteredWithCovenant,
+  MemberPowerDecreased,
+  CommunityNameUpdated,
+  BasisStakedAmountUpdated,
+  CommunityFeeUpdated,
+  CouncilSafeChangeStarted,
+  CouncilSafeUpdated,
+  CovenantIpfsHashUpdated,
+  FeeReceiverChanged,
+  KickEnabledUpdated,
+  PoolRejected,
+  CommunityArchived
+} from "../../generated/templates/RegistryCommunity/RegistryCommunity";
 
-import { RegistryFactoryV0_0 as RegistryFactoryContract } from "../../generated/RegistryFactoryV0_0/RegistryFactoryV0_0";
+import { RegistryFactory as RegistryFactoryContract } from "../../generated/RegistryFactory/RegistryFactory";
 
-import { CVStrategyV0_0 as CVStrategyContract } from "../../generated/templates/CVStrategyV0_0/CVStrategyV0_0";
+import { CVStrategy as CVStrategyContract } from "../../generated/templates/CVStrategy/CVStrategy";
 
-import { ERC20 as ERC20Contract } from "../../generated/templates/RegistryCommunityV0_0/ERC20";
+import { ERC20 as ERC20Contract } from "../../generated/templates/RegistryCommunity/ERC20";
 import { CTX_CHAIN_ID, CTX_FACTORY_ADDRESS } from "./registry-factory";
 
 const TOKEN_NATIVE = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
+const D = BigInt.fromI32(10000000);
+
+function getMaxConviction(staked: BigInt, _decay: BigInt): BigInt {
+  return staked.times(D).div(D.minus(_decay));
+}
 
 export function handleInitialized(event: RegistryInitialized): void {
   const communityAddr = event.address.toHexString();
@@ -57,34 +77,51 @@ export function handleInitialized(event: RegistryInitialized): void {
 
     const rfc = RegistryFactoryContract.bind(rcc.registryFactory());
 
-    newRC.covenantIpfsHash = rcc.covenantIpfsHash();
+    const covenantIpfsHash = rcc.covenantIpfsHash();
+    newRC.covenantIpfsHash = covenantIpfsHash;
+    if (covenantIpfsHash.length > 0) {
+      CovenantTemplate.create(covenantIpfsHash);
+      newRC.covenant = covenantIpfsHash;
+    } else {
+      newRC.covenant = null;
+    }
     newRC.registerStakeAmount = rcc.registerStakeAmount();
     newRC.councilSafe = rcc.councilSafe().toHexString();
 
     newRC.alloAddress = rcc.allo().toHexString();
     newRC.isKickEnabled = rcc.isKickEnabled();
     newRC.communityFee = rcc.communityFee();
-    newRC.protocolFee = rfc.getProtocolFee(event.address);
+    const protocolFeeResult = rfc.try_getProtocolFee(event.address);
+    if (protocolFeeResult.reverted) {
+      log.error(
+        "RegistryCommunity: handleInitialized: protocolFee reverted for community: {}",
+        [event.address.toHexString()]
+      );
+      newRC.protocolFee = BigInt.fromI32(0);
+    } else {
+      newRC.protocolFee = protocolFeeResult.value;
+    }
     const token = rcc.gardenToken();
     newRC.registerToken = token.toHexString();
     newRC.registryFactory = factoryAddress;
     newRC.strategyTemplate = rcc.strategyTemplate().toHexString();
     newRC.isValid = true;
 
+    const erc20 = ERC20Contract.bind(token);
     let tg = TokenGarden.load(token.toHexString());
     if (tg == null) {
       tg = new TokenGarden(token.toHexString());
-      const erc20 = ERC20Contract.bind(token);
-
       tg.name = erc20.name();
-      tg.totalBalance = erc20.balanceOf(event.address);
       tg.chainId = newRC.chainId;
       tg.decimals = BigInt.fromI32(erc20.decimals());
       tg.address = token.toHexString();
       tg.symbol = erc20.symbol();
-      tg.save();
     }
+    tg.totalBalance = erc20.balanceOf(event.address);
+    tg.ipfsCovenant = covenantIpfsHash.length > 0 ? covenantIpfsHash : null;
+    tg.save();
     newRC.garden = tg.id;
+    newRC.archived = false;
 
     newRC.save();
 
@@ -99,7 +136,56 @@ export function handleInitialized(event: RegistryInitialized): void {
   }
 }
 
-// // handleMemberRegistered
+export function handleMemberRegisteredWithCovenant(
+  event: MemberRegisteredWithCovenant
+): void {
+  const community = event.address.toHex();
+  const memberAddress = event.params._member.toHexString();
+  const memberCommunityId = `${memberAddress}-${community}`;
+  log.debug("RegistryCommunity: handleMemberRegistered: {}, {}", [
+    community,
+    memberAddress
+  ]);
+
+  let member = Member.load(memberAddress);
+
+  if (member == null) {
+    member = new Member(memberAddress);
+  }
+
+  member.save();
+
+  const rcc = RegistryCommunityContract.bind(event.address);
+
+  const token = rcc.gardenToken();
+  let tg = TokenGarden.load(token.toHexString());
+  if (tg == null) {
+    log.error("RegistryCommunity: TokenGarden not found", []);
+    return;
+  }
+  const erc20 = ERC20Contract.bind(token);
+
+  tg.totalBalance = erc20.balanceOf(event.address);
+  tg.save();
+
+  let newMemberCommunity = MemberCommunity.load(memberCommunityId);
+
+  if (newMemberCommunity == null) {
+    newMemberCommunity = new MemberCommunity(memberCommunityId);
+    newMemberCommunity.member = memberAddress;
+    newMemberCommunity.registryCommunity = community;
+    newMemberCommunity.memberAddress = memberAddress;
+  }
+
+  newMemberCommunity.stakedTokens = newMemberCommunity.stakedTokens
+    ? newMemberCommunity.stakedTokens!.plus(event.params._amountStaked)
+    : event.params._amountStaked;
+
+  newMemberCommunity.isRegistered = true;
+  newMemberCommunity.covenantSignature = event.params._covenantSig;
+  newMemberCommunity.save();
+}
+
 export function handleMemberRegistered(event: MemberRegistered): void {
   const community = event.address.toHex();
   const memberAddress = event.params._member.toHexString();
@@ -192,7 +278,7 @@ export function handleMemberKicked(event: MemberKicked): void {
   memberCommunity.save();
 }
 
-// //  handleStrategyAdded
+// handleStrategyAdded
 export function handleStrategyAdded(event: StrategyAdded): void {
   log.debug("RegistryCommunity: handleStrategyAdded", [
     event.params._strategy.toHexString()
@@ -207,10 +293,11 @@ export function handleStrategyAdded(event: StrategyAdded): void {
   }
 
   cvs.isEnabled = true;
+  cvs.archived = false;
   cvs.save();
 }
 
-// //  handleStrategyAdded
+// handleStrategyRemoved
 export function handleStrategyRemoved(event: StrategyRemoved): void {
   log.debug("RegistryCommunity: handleStrategyRemoved", [
     event.params._strategy.toHexString()
@@ -263,9 +350,12 @@ export function handleMemberActivatedStrategy(
     return;
   }
   const cvc = CVStrategyContract.bind(strategyAddress);
-  const totalEffectiveActivePoints = cvc.totalEffectiveActivePoints();
+  const totalEffectiveActivePoints = cvc.totalPointsActivated();
   strategy.totalEffectiveActivePoints = totalEffectiveActivePoints;
-  const maxCVSupply = cvc.getMaxConviction(totalEffectiveActivePoints);
+  const maxCVSupply = getMaxConviction(
+    totalEffectiveActivePoints,
+    cvc.cvParams().getDecay()
+  );
   strategy.maxCVSupply = maxCVSupply;
 
   let membersActive: string[] = [];
@@ -332,9 +422,12 @@ export function handleMemberDeactivatedStrategy(
     membersActive.splice(index, 1);
   }
   const cvc = CVStrategyContract.bind(strategyAddress);
-  const totalEffectiveActivePoints = cvc.totalEffectiveActivePoints();
+  const totalEffectiveActivePoints = cvc.totalPointsActivated();
   strategy.totalEffectiveActivePoints = totalEffectiveActivePoints;
-  const maxCVSupply = cvc.getMaxConviction(totalEffectiveActivePoints);
+  const maxCVSupply = getMaxConviction(
+    totalEffectiveActivePoints,
+    cvc.cvParams().getDecay()
+  );
   strategy.maxCVSupply = maxCVSupply;
 
   const memberStrategyId = `${memberAddress.toHexString()}-${strategyAddress.toHexString()}`;
@@ -361,6 +454,19 @@ export function handlePoolCreated(event: PoolCreated): void {
   ]);
 
   const strategyAddress = event.params._strategy;
+  const metadataPointer = event.params._metadata.pointer;
+
+  if (metadataPointer.length > 0) {
+    PoolMetadataTemplate.create(metadataPointer);
+
+    const strategyId = strategyAddress.toHexString();
+    let strategy = CVStrategy.load(strategyId);
+    if (strategy != null) {
+      strategy.metadataHash = metadataPointer;
+      strategy.metadata = metadataPointer;
+      strategy.save();
+    }
+  }
 
   CVStrategyTemplate.create(strategyAddress);
 }
@@ -405,6 +511,225 @@ export function handleMemberPowerDecreased(event: MemberPowerDecreased): void {
     : event.params._unstakedAmount;
 
   newMemberCommunity.save();
+}
+
+/** Need to hanlde the following events:
+ * - handleFeeReceiverChanged
+ * - handleCommunityNameUpdated
+ * handleCovenantIpfsHashUpdated
+ * handleKickEnabledUpdated
+ * handleCouncilSafeChangeStarted
+ * handleCouncilSafeUpdated
+ * handleBasisStakedAmountUpdated
+ */
+
+// export function handleFeeReceiverChanged(event: MemberPowerDecreased): void {
+//   log.debug("RegistryCommunity: handleFeeReceiverChanged: {}", [
+//     event.params._member.toHexString()
+//   ]);
+
+// }
+
+export function handleCommunityNameUpdated(event: CommunityNameUpdated): void {
+  log.debug("RegistryCommunity: handleCommunityNameUpdated: {}", [
+    event.params._communityName
+  ]);
+
+  let community = RegistryCommunity.load(event.address.toHexString());
+  if (community == null) {
+    log.error("RegistryCommunity: Community not found: {}", [
+      event.address.toHexString()
+    ]);
+    return;
+  }
+
+  community.communityName = event.params._communityName;
+  community.save();
+}
+
+export function handleCovenantIpfsHashUpdated(
+  event: CovenantIpfsHashUpdated
+): void {
+  log.debug("RegistryCommunity: handleCovenantIpfsHashUpdated: {}", [
+    event.params._covenantIpfsHash
+  ]);
+
+  let community = RegistryCommunity.load(event.address.toHexString());
+  if (community == null) {
+    log.error("RegistryCommunity: Community not found: {}", [
+      event.address.toHexString()
+    ]);
+    return;
+  }
+
+  const covenantIpfsHash = event.params._covenantIpfsHash;
+  community.covenantIpfsHash = covenantIpfsHash;
+  if (covenantIpfsHash.length > 0) {
+    CovenantTemplate.create(covenantIpfsHash);
+    community.covenant = covenantIpfsHash;
+  } else {
+    community.covenant = null;
+  }
+
+  if (community.garden) {
+    let tokenGarden = TokenGarden.load(community.garden);
+    if (tokenGarden != null) {
+      tokenGarden.ipfsCovenant =
+        covenantIpfsHash.length > 0 ? covenantIpfsHash : null;
+      tokenGarden.save();
+    }
+  }
+
+  community.save();
+}
+
+export function handleKickEnabledUpdated(event: KickEnabledUpdated): void {
+  log.debug("RegistryCommunity: handleKickEnabledUpdated: {}", [
+    event.params._isKickEnabled.toString()
+  ]);
+
+  let community = RegistryCommunity.load(event.address.toHexString());
+  if (community == null) {
+    log.error("RegistryCommunity: Community not found: {}", [
+      event.address.toHexString()
+    ]);
+    return;
+  }
+
+  community.isKickEnabled = event.params._isKickEnabled;
+  community.save();
+}
+
+export function handleCouncilSafeChangeStarted(
+  event: CouncilSafeChangeStarted
+): void {
+  log.debug(
+    "RegistryCommunity: handleCouncilSafeChangeStarted: from {} to {}",
+    [
+      event.params._safeOwner.toHexString(),
+      event.params._newSafeOwner.toHexString()
+    ]
+  );
+
+  let community = RegistryCommunity.load(event.address.toHexString());
+  if (community == null) {
+    log.error("RegistryCommunity: Community not found: {}", [
+      event.address.toHexString()
+    ]);
+    return;
+  }
+
+  community.pendingNewCouncilSafe = event.params._newSafeOwner.toHexString();
+  community.save();
+}
+
+export function handleCouncilSafeUpdated(event: CouncilSafeUpdated): void {
+  log.debug("RegistryCommunity: handleCouncilSafeUpdated: {}", [
+    event.params._safe.toHexString()
+  ]);
+
+  let community = RegistryCommunity.load(event.address.toHexString());
+  if (community == null) {
+    log.error("RegistryCommunity: Community not found: {}", [
+      event.address.toHexString()
+    ]);
+    return;
+  }
+
+  community.councilSafe = event.params._safe.toHexString();
+  community.pendingNewCouncilSafe = null;
+  community.save();
+}
+
+export function handleBasisStakedAmountUpdated(
+  event: BasisStakedAmountUpdated
+): void {
+  log.debug("RegistryCommunity: handleBasisStakedAmountUpdated: {}", [
+    event.params._newAmount.toString()
+  ]);
+
+  let community = RegistryCommunity.load(event.address.toHexString());
+  if (community == null) {
+    log.error("RegistryCommunity: Community not found: {}", [
+      event.address.toHexString()
+    ]);
+    return;
+  }
+
+  community.registerStakeAmount = event.params._newAmount;
+  community.save();
+}
+
+export function handleCommunityFeeUpdated(event: CommunityFeeUpdated): void {
+  log.debug("RegistryCommunity: handleCommunityFeeUpdated: {}", [
+    event.params._newFee.toString()
+  ]);
+
+  let community = RegistryCommunity.load(event.address.toHexString());
+  if (community == null) {
+    log.error("RegistryCommunity: Community not found: {}", [
+      event.address.toHexString()
+    ]);
+    return;
+  }
+
+  community.communityFee = event.params._newFee;
+  community.save();
+}
+
+export function handleFeeReceiverChanged(event: FeeReceiverChanged): void {
+  log.debug("RegistryCommunity: handleFeeReceiverChanged: {}", [
+    event.params._feeReceiver.toHexString()
+  ]);
+
+  let community = RegistryCommunity.load(event.address.toHexString());
+  if (community == null) {
+    log.error("RegistryCommunity: Community not found: {}", [
+      event.address.toHexString()
+    ]);
+    return;
+  }
+
+  if (event.params._feeReceiver) {
+    community.protocolFeeReceiver = event.params._feeReceiver.toHexString();
+  } else {
+    community.protocolFeeReceiver = null;
+  }
+  community.save();
+}
+
+export function handlePoolRejected(event: PoolRejected): void {
+  log.debug("RegistryCommunity: handlePoolRejected: strategy:{}", [
+    event.params._strategy.toHexString()
+  ]);
+
+  const strategyAddress = event.params._strategy;
+  const strategy = CVStrategy.load(strategyAddress.toHexString());
+  if (strategy == null) {
+    log.error("RegistryCommunity: Strategy not found: {}", [
+      strategyAddress.toHexString()
+    ]);
+    return;
+  }
+  strategy.archived = true;
+  strategy.save();
+}
+
+export function handleCommunityArchived(event: CommunityArchived): void {
+  log.debug("RegistryCommunity: handleCommunityArchived: {}", [
+    event.address.toHexString()
+  ]);
+
+  const community = RegistryCommunity.load(event.address.toHexString());
+  if (community == null) {
+    log.error("RegistryCommunity: Community not found: {}", [
+      event.address.toHexString()
+    ]);
+    return;
+  }
+
+  community.archived = event.params._archived;
+  community.save();
 }
 
 // handler: handleMemberPowerDecreased

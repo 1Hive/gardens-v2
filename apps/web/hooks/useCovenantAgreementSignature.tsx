@@ -11,7 +11,7 @@ interface CustomError extends Error {
 
 export function useCovenantAgreementSignature(
   message: string,
-  triggerNextTx: () => void,
+  triggerNextTx: (args: { covenantSignature: `0x${string}` }) => void,
 ): {
   covenantAgreementTxProps: TransactionProps;
   handleSignature: () => void;
@@ -41,7 +41,11 @@ export function useCovenantAgreementSignature(
       status: "idle",
     }));
 
-  const { signMessage, isLoading } = useSignMessage({
+  const {
+    signMessage,
+    isLoading,
+    data: signedMessage,
+  } = useSignMessage({
     message: message,
     onSettled(data, error) {
       const customError = error as CustomError;
@@ -57,7 +61,7 @@ export function useCovenantAgreementSignature(
           message: getTxMessage("success"),
           status: "success",
         });
-        triggerNextTx();
+        triggerNextTx({ covenantSignature: data });
       }
     },
   });
@@ -74,6 +78,20 @@ export function useCovenantAgreementSignature(
 
   return {
     covenantAgreementTxProps,
-    handleSignature: signMessage,
+    handleSignature: () => {
+      setCovenantAgreementTxProps({
+        contractName: CovenantTitle,
+        message: getTxMessage("idle"),
+        status: "idle",
+      });
+      if (signedMessage) {
+        setCovenantAgreementTxProps({
+          contractName: CovenantTitle,
+          message: getTxMessage("success"),
+          status: "success",
+        });
+        triggerNextTx({ covenantSignature: signedMessage });
+      } else signMessage();
+    },
   };
 }

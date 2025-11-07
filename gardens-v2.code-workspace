@@ -5,16 +5,16 @@
       "path": "./apps/web",
     },
     {
+      "name": "Docs",
+      "path": "./apps/docs",
+    },
+    {
       "name": "Foundry",
       "path": "./pkg/contracts",
     },
     {
       "name": "Subgraph",
       "path": "./pkg/subgraph",
-    },
-    {
-      "name": "Services",
-      "path": "./pkg/services",
     },
     {
       "name": "Root",
@@ -46,7 +46,9 @@
       "editor.defaultFormatter": "rvest.vs-code-prettier-eslint",
     },
     "solidity.formatter": "forge",
-    "openctx.enable": false
+    "openctx.enable": false,
+    "postman.settings.dotenv-detection-notification-visibility": false,
+    "dotenv.enableAutocloaking": false
   },
   "extensions": {
     "recommendations": [

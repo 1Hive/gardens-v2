@@ -2,13 +2,17 @@
 
 import "viem/window";
 import React, { ReactNode, useEffect, useState } from "react";
+// eslint-disable-next-line import/no-extraneous-dependencies
+import { ArrowPathRoundedSquareIcon } from "@heroicons/react/24/solid";
+import sfMeta from "@superfluid-finance/metadata";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
-import { Address, parseUnits, zeroAddress } from "viem";
+import { Address, isAddress, parseUnits, zeroAddress } from "viem";
 import { polygon } from "viem/chains";
 import { useToken } from "wagmi";
 import { TokenGarden } from "#/subgraph/.graphclient";
-import { AllowListInput } from "./AllowListInput";
+import { AddressListInput } from "./AddressListInput";
 import { FormAddressInput } from "./FormAddressInput";
 import { FormCheckBox } from "./FormCheckBox";
 import { FormInput } from "./FormInput";
@@ -16,13 +20,21 @@ import { FormPreview, FormRow } from "./FormPreview";
 import { FormRadioButton } from "./FormRadioButton";
 import { FormSelect } from "./FormSelect";
 import { EthAddress } from "../EthAddress";
+import { InfoBox } from "../InfoBox";
+import { InfoWrapper } from "../InfoWrapper";
+import { SuperfluidStream } from "@/assets";
 import { Button } from "@/components/Button";
-import { DEFAULT_RULING_TIMEOUT_SEC } from "@/configs/constants";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
+import {
+  DEFAULT_RULING_TIMEOUT_SEC,
+  VOTING_POINT_SYSTEM_DESCRIPTION,
+} from "@/globals";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
+import { useSuperfluidToken } from "@/hooks/useSuperfluidToken";
+import { superTokenFactoryAbi } from "@/src/customAbis";
 import { registryCommunityABI } from "@/src/generated";
 import {
   DisputeOutcome,
@@ -75,7 +87,7 @@ type FormInputs = {
 type Props = {
   communityAddr: `0x${string}`;
   alloAddr: `0x${string}`;
-  token: Pick<TokenGarden, "decimals" | "id" | "symbol">;
+  governanceToken: Pick<TokenGarden, "decimals" | "id" | "symbol">;
 };
 
 const poolSettingValues: Record<
@@ -127,12 +139,7 @@ const proposalInputMap: Record<string, number[]> = {
   disputeCollateral: [0, 1],
   tribunalAddress: [0, 1],
   poolTokenAddress: [0, 1],
-};
-
-const fullSybilResistanceOptions: Record<SybilResistanceType, string> = {
-  noSybilResist: "Any member can vote",
-  allowList: "Members in Allow List only",
-  gitcoinPassport: "Members with Gitcoin Passport score",
+  superfluidEnabled: [1],
 };
 
 const sybilResistancePreview = (
@@ -141,7 +148,7 @@ const sybilResistancePreview = (
   value?: string | Address[],
 ): ReactNode => {
   const previewMap: Record<SybilResistanceType, ReactNode> = {
-    noSybilResist: "No restrictions (anyone can vote)",
+    noSybilResist: "No protections (anyone can vote)",
     allowList: (() => {
       if (addresses.length === 0) {
         return "Allow list (no addresses submitted)";
@@ -163,9 +170,12 @@ const sybilResistancePreview = (
       );
     })(),
     gitcoinPassport: `Passport score required: ${value}`,
+    goodDollar: "GoodDollar verification required",
   };
 
-  return previewMap[sybilType];
+  return previewMap[
+    addresses?.[0] === zeroAddress ? "noSybilResist" : sybilType
+  ];
 };
 
 const shouldRenderInputMap = (key: string, value: number): boolean => {
@@ -177,7 +187,7 @@ const defaultEthChallengeColateral = 0.001;
 const defaultMaticProposalColateral = 10;
 const defaultMaticChallengeColateral = 5;
 
-export function PoolForm({ token, communityAddr }: Props) {
+export function PoolForm({ governanceToken, communityAddr }: Props) {
   const chain = useChainFromPath()!;
   const {
     register,
@@ -186,15 +196,16 @@ export function PoolForm({ token, communityAddr }: Props) {
     getValues,
     setValue,
     watch,
-    trigger,
   } = useForm<FormInputs>({
+    mode: "onBlur",
     defaultValues: {
       strategyType: 1,
       pointSystemType: 0,
+      sybilResistanceType: "allowList",
       rulingTime: parseTimeUnit(DEFAULT_RULING_TIMEOUT_SEC, "seconds", "days"),
       defaultResolution: 1,
       minThresholdPoints: 0,
-      poolTokenAddress: token.id,
+      poolTokenAddress: "",
       proposalCollateral:
         chain.id === polygon.id ?
           defaultMaticProposalColateral
@@ -209,41 +220,40 @@ export function PoolForm({ token, communityAddr }: Props) {
   const sybilResistanceType = watch("sybilResistanceType");
   const sybilResistanceValue = watch("sybilResistanceValue");
   const tribunalAddress = watch("tribunalAddress");
-  const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** token.decimals;
+  const poolTokenAddress = watch("poolTokenAddress").toLowerCase() as Address;
+
+  const { superToken, setSuperToken, isFetching } = useSuperfluidToken({
+    token: poolTokenAddress,
+  });
+
+  const { data: customTokenData } = useToken({
+    address: poolTokenAddress,
+    enabled: !!poolTokenAddress && isAddress(poolTokenAddress),
+  });
+
+  const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** governanceToken.decimals;
   const INPUT_MIN_THRESHOLD_VALUE = 0;
 
   const [showPreview, setShowPreview] = useState<boolean>(false);
   const [previewData, setPreviewData] = useState<FormInputs>();
   const [optionType, setOptionType] = useState(1);
 
-  const [sybilResistanceOptions, setSybilResistanceOptions] = useState<
-    Partial<Record<SybilResistanceType, string>>
-  >(fullSybilResistanceOptions);
-
   const [loading, setLoading] = useState(false);
+  const [showWarningMessage, setShowWarningMessage] = useState(false);
+
   const router = useRouter();
   const pathname = usePathname();
   const { publish } = usePubSubContext();
   const { isConnected, missmatchUrl, tooltipMessage } = useDisableButtons();
 
-  const watchedAddress = watch("poolTokenAddress").toLowerCase() as Address;
-  const { data: customTokenData } = useToken({
-    address: watchedAddress ?? "0x",
-    chainId: +chain,
-  });
-
   const pointSystemType = watch("pointSystemType");
   const strategyType = watch("strategyType");
 
   useEffect(() => {
-    if (PointSystems[pointSystemType] !== "unlimited") {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { noSybilResist, ...rest } = fullSybilResistanceOptions;
-      setSybilResistanceOptions(rest);
-    } else {
-      setSybilResistanceOptions(fullSybilResistanceOptions);
-    }
-  }, [pointSystemType]);
+    const isUnlimited = PointSystems[pointSystemType] === "unlimited";
+    const isUnprotected = sybilResistanceType === "noSybilResist";
+    setShowWarningMessage(!isUnlimited && isUnprotected);
+  }, [pointSystemType, sybilResistanceType]);
 
   const formRowTypes: Record<
     string,
@@ -323,7 +333,11 @@ export function PoolForm({ token, communityAddr }: Props) {
     tribunalAddress: {
       label: "Tribunal safe:",
       parse: (value: string) => (
-        <EthAddress address={value as Address} icon={"ens"} />
+        <EthAddress
+          address={value as Address}
+          icon={"ens"}
+          shortenAddress={false}
+        />
       ),
     },
     poolTokenAddress: {
@@ -334,6 +348,10 @@ export function PoolForm({ token, communityAddr }: Props) {
           <span className="text-black">{customTokenData?.symbol}</span>
         </div>
       ),
+    },
+    superfluidEnabled: {
+      label: "Stream funding",
+      parse: (value: boolean) => (value ? "✅" : "❌"),
     },
   } as const;
 
@@ -384,7 +402,7 @@ export function PoolForm({ token, communityAddr }: Props) {
 
     const minThresholdPoints = parseUnits(
       (previewData?.minThresholdPoints ?? 0).toString(),
-      token.decimals,
+      governanceToken.decimals,
     );
 
     const maxAmountStr = (previewData?.maxAmount ?? 0).toString();
@@ -400,10 +418,7 @@ export function PoolForm({ token, communityAddr }: Props) {
       Array.isArray(sybilResistanceValue)
     ) {
       allowList = sybilResistanceValue;
-    } else if (
-      sybilResistanceType === "noSybilResist" ||
-      sybilResistanceType === "gitcoinPassport"
-    ) {
+    } else {
       allowList = [zeroAddress];
     }
     writeCreatePool({
@@ -434,24 +449,33 @@ export function PoolForm({ token, communityAddr }: Props) {
             tribunalSafe: previewData.tribunalAddress as Address,
             arbitrator: chain.arbitrator as Address,
           },
-          pointConfig: { maxAmount: parseUnits(maxAmountStr, token.decimals) },
+          pointConfig: {
+            maxAmount: parseUnits(maxAmountStr, governanceToken.decimals),
+          },
           pointSystem: previewData.pointSystemType,
           proposalType: previewData.strategyType,
           registryCommunity: communityAddr,
           sybilScorer:
             sybilResistanceType === "gitcoinPassport" ?
               (chain.passportScorer as Address)
+            : sybilResistanceType === "goodDollar" ?
+              (chain.goodDollar as Address)
             : zeroAddress,
           sybilScorerThreshold: BigInt(
-            (
-              Array.isArray(sybilResistanceValue) ||
-                !previewData.sybilResistanceValue
-            ) ?
-              0
-            : (previewData.sybilResistanceValue as unknown as number) *
-                CV_PASSPORT_THRESHOLD_SCALE,
+            Math.round(
+              (
+                Array.isArray(sybilResistanceValue) ||
+                  !Boolean(previewData.sybilResistanceValue)
+              ) ?
+                0
+              : (previewData.sybilResistanceValue as unknown as number) *
+                  CV_PASSPORT_THRESHOLD_SCALE,
+            ),
           ),
           initialAllowlist: allowList,
+          superfluidToken:
+            (superToken?.sameAsUnderlying ? undefined : superToken?.id) ??
+            zeroAddress,
         },
         {
           protocol: 1n,
@@ -496,6 +520,33 @@ export function PoolForm({ token, communityAddr }: Props) {
           `?${QUERY_PARAMS.communityPage.newPool}=${newPoolData._poolId}`,
         ),
       );
+    },
+  });
+
+  const networkSfMetadata =
+    chain.id ? sfMeta.getNetworkByChainId(chain.id) : undefined;
+
+  const {
+    writeAsync: writeCreateSuperTokenAsync,
+    isLoading: isCreateSuperTokenLoading,
+  } = useContractWriteWithConfirmations({
+    abi: superTokenFactoryAbi,
+    address: networkSfMetadata?.contractsV1.superTokenFactory as Address,
+    functionName: "createERC20Wrapper",
+    contractName: "SuperTokenFactory",
+    onConfirmations: async (receipt) => {
+      const newSuperToken = getEventFromReceipt(
+        receipt,
+        "SuperTokenFactory",
+        "SuperTokenCreated",
+      ).args;
+
+      setSuperToken({
+        name: "Super" + customTokenData?.name,
+        symbol: customTokenData?.symbol + "x",
+        id: newSuperToken.token,
+        underlyingToken: poolTokenAddress,
+      });
     },
   });
 
@@ -553,11 +604,12 @@ export function PoolForm({ token, communityAddr }: Props) {
       proposalCollateral: previewData.proposalCollateral,
       disputeCollateral: previewData.disputeCollateral,
       tribunalAddress: previewData.tribunalAddress,
+      superfluidEnabled: !!superToken,
     };
 
     Object.entries(reorderedData).forEach(([key, value]) => {
       const formRow = formRowTypes[key];
-      if (formRow && shouldRenderInPreview(key)) {
+      if (Boolean(formRow) && shouldRenderInPreview(key)) {
         const parsedValue = formRow.parse ? formRow.parse(value) : value;
         formattedRows.push({
           label: formRow.label,
@@ -573,7 +625,7 @@ export function PoolForm({ token, communityAddr }: Props) {
 
   const shouldRenderInPreview = (key: string) => {
     if (key === "maxAmount") {
-      if (previewData?.pointSystemType) {
+      if (previewData?.pointSystemType != null) {
         return PointSystems[previewData?.pointSystemType] === "capped";
       } else {
         return false;
@@ -585,18 +637,15 @@ export function PoolForm({ token, communityAddr }: Props) {
     }
   };
 
-  useEffect(() => {
-    if (watchedAddress) {
-      trigger("poolTokenAddress");
-    }
-  }, [customTokenData, watchedAddress, trigger]);
-
-  const votingWeightSystemDescriptions = {
-    fixed: "Everyone has the same voting weight, limited to registration stake",
-    capped: "Voting weight is equal to tokens staked, up to a limit",
-    unlimited: "Voting weight is equal to tokens staked, no limit.",
-    quadratic:
-      "Voting weight increases as more tokens are staked, following a quadratic curve.",
+  const handleEnableStreaming = async () => {
+    writeCreateSuperTokenAsync({
+      args: [
+        poolTokenAddress,
+        1,
+        "Super " + customTokenData!.name,
+        customTokenData!.symbol + "x",
+      ],
+    });
   };
 
   return (
@@ -645,26 +694,82 @@ export function PoolForm({ token, communityAddr }: Props) {
                 }))}
             />
             {PoolTypes[strategyType] === "funding" && (
-              <FormInput
-                label="Pool token ERC20 address"
-                register={register}
-                required
-                registerOptions={{
-                  pattern: {
-                    value: ethAddressRegEx,
-                    message: "Invalid Eth Address",
-                  },
-                  validate: () =>
-                    customTokenData?.symbol !== undefined ||
-                    "Not a supported ERC20 token",
-                }}
-                errors={errors}
-                registerKey="poolTokenAddress"
-                placeholder="0x.."
-                type="text"
-                className="pr-14 font-mono text-sm"
-                suffix={customTokenData?.symbol}
-              />
+              <div className="flex items-end gap-4 flex-wrap md:flex-nowrap">
+                <FormAddressInput
+                  label="Pool token ERC20 address"
+                  register={register}
+                  required
+                  registerOptions={{
+                    pattern: {
+                      value: ethAddressRegEx,
+                      message: "Invalid Eth Address",
+                    },
+                    validate: () =>
+                      customTokenData?.symbol !== undefined ||
+                      "Not a supported ERC20 token",
+                  }}
+                  errors={errors}
+                  registerKey="poolTokenAddress"
+                  placeholder="0x.."
+                  className="font-mono text-sm"
+                  suffix={customTokenData?.symbol}
+                />
+                {networkSfMetadata && poolTokenAddress && customTokenData && (
+                  <div className="mb-2">
+                    {isFetching ?
+                      <span className="loading loading-spinner loading-md mb-2" />
+                    : (
+                      superToken &&
+                      superToken.underlyingToken === poolTokenAddress
+                    ) ?
+                      <div className="flex gap-1">
+                        <InfoWrapper tooltip="This pool will support streaming through Superfluid — allowing continuous funding over time.">
+                          <div className="flex items-center">
+                            <Image
+                              src={SuperfluidStream}
+                              alt="Incoming Stream"
+                              width={36}
+                              height={36}
+                              className="mb-2"
+                            />
+                            {superToken.sameAsUnderlying ?
+                              "Natively supports streaming"
+                            : <>
+                                Fund streaming enabled with{" "}
+                                <EthAddress
+                                  address={superToken?.id as Address}
+                                  shortenAddress={true}
+                                  icon={false}
+                                  actions="copy"
+                                  label={superToken?.symbol}
+                                />
+                              </>
+                            }
+                          </div>
+                        </InfoWrapper>
+                      </div>
+                    : <Button
+                        btnStyle="outline"
+                        color="tertiary"
+                        icon={
+                          <ArrowPathRoundedSquareIcon height={20} width={20} />
+                        }
+                        disabled={!isConnected || missmatchUrl}
+                        tooltip={
+                          tooltipMessage ??
+                          "This allows people to add funds to the pool via streaming (Superfluid)."
+                        }
+                        forceShowTooltip={true}
+                        onClick={() => handleEnableStreaming()}
+                        isLoading={isCreateSuperTokenLoading}
+                        className="mb-0.5"
+                      >
+                        Create Stream Token
+                      </Button>
+                    }
+                  </div>
+                )}
+              </div>
             )}
             <div>
               <label className="label w-fit">
@@ -672,19 +777,20 @@ export function PoolForm({ token, communityAddr }: Props) {
                 <span className="ml-1">*</span>
               </label>
               <div className="ml-2 flex flex-col gap-2">
-                {Object.entries(PointSystems).map(([value, label], i) => (
+                {Object.entries(PointSystems).map(([value, id], i) => (
                   <div key={value}>
                     <FormRadioButton
                       value={value}
-                      label={capitalize(label)}
+                      label={capitalize(id)}
                       inline={true}
                       onChange={() =>
                         setValue("pointSystemType", parseInt(value))
                       }
                       checked={parseInt(value) === pointSystemType}
                       registerKey="pointSystemType"
-                      description={votingWeightSystemDescriptions[label]}
+                      description={VOTING_POINT_SYSTEM_DESCRIPTION[id]}
                     />
+
                     {PointSystems[pointSystemType] === "capped" &&
                       i === Object.values(PointSystems).indexOf("capped") && (
                         <div className="flex flex-col ml-8 ">
@@ -707,7 +813,7 @@ export function PoolForm({ token, communityAddr }: Props) {
                             registerKey="maxAmount"
                             type="number"
                             placeholder="0"
-                            suffix={token.symbol}
+                            suffix={customTokenData?.symbol}
                           />
                         </div>
                       )}
@@ -716,28 +822,99 @@ export function PoolForm({ token, communityAddr }: Props) {
               </div>
             </div>
           </div>
-
           {shouldRenderInputMap("sybilResistanceType", strategyType) && (
-            <div className="flex flex-col gap-4">
-              <FormSelect
-                label="Pool voting protection"
-                register={register}
-                errors={errors}
-                required
-                registerKey="sybilResistanceType"
-                placeholder="Who can vote in this pool ?"
-                tooltip="Select the restriction type to prevent voting abuse for this pool."
-                options={Object.entries(sybilResistanceOptions).map(
-                  ([value, text]) => ({
-                    label: text,
-                    value: value,
-                  }),
+            <div>
+              <label className="label w-fit">
+                Who can vote?
+                <span className="ml-1">*</span>
+              </label>
+
+              <div className="flex flex-col gap-2 ml-2">
+                <FormRadioButton
+                  label="All members"
+                  value={"noSybilResist"}
+                  inline={true}
+                  onChange={() =>
+                    setValue("sybilResistanceType", "noSybilResist")
+                  }
+                  checked={sybilResistanceType === "noSybilResist"}
+                  registerKey="sybilResistanceType"
+                  description="Anyone in the community can vote"
+                />
+                <FormRadioButton
+                  label="Allow list"
+                  value={"allowList"}
+                  inline={true}
+                  onChange={() => setValue("sybilResistanceType", "allowList")}
+                  checked={sybilResistanceType === "allowList"}
+                  registerKey="sybilResistanceType"
+                  description="Add a list of addresses that can vote"
+                />
+                <FormRadioButton
+                  label="Human Passport"
+                  value={"gitcoinPassport"}
+                  inline={true}
+                  onChange={() =>
+                    setValue("sybilResistanceType", "gitcoinPassport")
+                  }
+                  checked={sybilResistanceType === "gitcoinPassport"}
+                  registerKey="SybilResistanceType"
+                  description={
+                    <>
+                      Set a minimum score on{" "}
+                      <a
+                        href="https://passport.xyz/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="underline"
+                      >
+                        Passport
+                      </a>{" "}
+                      needed for members to vote
+                    </>
+                  }
+                />
+                {chain.goodDollar && (
+                  <FormRadioButton
+                    label="GoodDollar"
+                    value={"goodDollar"}
+                    inline={true}
+                    onChange={() =>
+                      setValue("sybilResistanceType", "goodDollar")
+                    }
+                    checked={sybilResistanceType === "goodDollar"}
+                    registerKey="sybilResistanceType"
+                    description={
+                      <>
+                        Members verify uniqueness with a secure face scan on{" "}
+                        <a
+                          href="https://www.gooddollar.org/"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="underline"
+                        >
+                          GoodDollar
+                        </a>
+                      </>
+                    }
+                  />
                 )}
-              />
+              </div>
+
+              {showWarningMessage && (
+                <div className="mt-6">
+                  <InfoBox
+                    title="Warning"
+                    content={`This setup may be vulnerable to Sybil attacks (duplicated accounts gaining unfair influence). 
+                    To ensure fair governance, consider enabling voting protection (e.g. Allowlist or Gitcoin Passport).`}
+                    infoBoxType="warning"
+                  />
+                </div>
+              )}
               <div className="flex flex-col gap-2 my-2">
                 <hr />
                 <span className="text-neutral-soft-content mx-auto pt-2">
-                  Council can edit this section once the pool is created.
+                  Council safe can edit this section once the pool is created.
                 </span>
               </div>
               {sybilResistanceType === "gitcoinPassport" && (
@@ -761,8 +938,9 @@ export function PoolForm({ token, communityAddr }: Props) {
                   placeholder="0"
                 />
               )}
+
               {sybilResistanceType === "allowList" && (
-                <AllowListInput
+                <AddressListInput
                   register={register}
                   registerKey="sybilResistanceValue"
                   addresses={sybilResistanceValue}
@@ -773,6 +951,7 @@ export function PoolForm({ token, communityAddr }: Props) {
               )}
             </div>
           )}
+
           {/* arbitration section */}
           <div className="flex flex-col gap-4">
             <div className="flex flex-col">
@@ -840,15 +1019,15 @@ export function PoolForm({ token, communityAddr }: Props) {
                 tooltip="Enter a Safe address to rule on proposal disputes in the Pool and determine if they are in violation of the Covenant."
                 label="Tribunal address"
                 required
+                validateSafe
                 value={tribunalAddress}
-                onChange={(e) => {
-                  setValue("tribunalAddress", e.target.value);
-                }}
+                registerKey="tribunalAddress"
+                register={register}
+                errors={errors}
               />
               <FormCheckBox
                 label="Use global tribunal"
                 registerKey="useGlobalTribunal"
-                type="checkbox"
                 tooltip="Check this box to use the Gardens global tribunal Safe to rule on proposal disputes in the Pool, a service we offer if your community does not have an impartial 3rd party that can rule on violations of the Covenant."
                 value={
                   tribunalAddress?.toLowerCase() ===
@@ -908,10 +1087,6 @@ export function PoolForm({ token, communityAddr }: Props) {
                       min: 1 / CV_SCALE_PRECISION,
                     }}
                     registerOptions={{
-                      max: {
-                        value: 100,
-                        message: "Max amount cannot exceed 100%",
-                      },
                       min: {
                         value: 1 / CV_SCALE_PRECISION,
                         message: "Amount must be greater than 0",
@@ -927,7 +1102,6 @@ export function PoolForm({ token, communityAddr }: Props) {
                     tooltip="% of Pool's voting weight needed to pass the smallest funding proposal possible. Higher funding requests demand greater conviction to pass."
                     label="Minimum conviction"
                     register={register}
-                    required
                     errors={errors}
                     registerKey="minimumConviction"
                     type="number"
@@ -936,16 +1110,11 @@ export function PoolForm({ token, communityAddr }: Props) {
                     className="pr-14"
                     otherProps={{
                       step: 1 / CV_SCALE_PRECISION,
-                      min: 1 / CV_SCALE_PRECISION,
                     }}
                     registerOptions={{
                       max: {
                         value: 99.9,
                         message: "Minimum conviction should be under 100%",
-                      },
-                      min: {
-                        value: 1 / CV_SCALE_PRECISION,
-                        message: "Minimum conviction must be greater than 0",
                       },
                     }}
                     suffix="%"
@@ -986,7 +1155,7 @@ export function PoolForm({ token, communityAddr }: Props) {
               {shouldRenderInputMap("minThresholdPoints", strategyType) && (
                 <div className="flex flex-col">
                   <FormInput
-                    tooltip={`A fixed amount of ${token.symbol} that overrides Minimum Conviction when the Pool's activated governance is low.`}
+                    tooltip={`A fixed amount of ${governanceToken.symbol} that overrides Minimum Conviction when the Pool's activated governance is low.`}
                     label="Minimum threshold points"
                     register={register}
                     registerOptions={{

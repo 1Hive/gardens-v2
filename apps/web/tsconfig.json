@@ -17,6 +17,7 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
+    "tsBuildInfoFile": "./.next/cache/tsbuildinfo",
     "plugins": [
       {
         "name": "next"
@@ -43,6 +44,13 @@
     "tailwind.config.js"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    ".next/**/*",
+    ".turbo/**/*",
+    "dist/**/*",
+    "build/**/*",
+    "out/**/*",
+    "cache/**/*",
+    "broadcast/**/*"
   ]
 }

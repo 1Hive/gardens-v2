@@ -6,21 +6,34 @@ import * as dn from "dnum";
 export const DisplayNumber = ({
   number,
   tokenSymbol,
-  className,
+  valueClassName,
+  symbolClassName,
   disableTooltip = false,
   compact,
   copiable,
+  tooltipClass = "tooltip-top",
+  forceTooltip,
 }: {
   number: dn.Dnum | string;
   tokenSymbol?: string;
-  className?: string;
+  valueClassName?: string;
+  symbolClassName?: string;
   disableTooltip?: boolean;
   compact?: boolean;
   copiable?: boolean;
+  forceTooltip?: boolean;
+  tooltipClass?:
+    | "tooltip-top"
+    | "tooltip-bottom"
+    | "tooltip-left"
+    | "tooltip-right";
 }) => {
   const fullNumberStr =
     typeof number === "string" ? number : (
-      dn.format([BigInt(number[0]), Number(number[1])])
+      dn.format(number, {
+        trailingZeros: false,
+        digits: 4,
+      })
     );
 
   const [isCopied, setIsCopied] = useState(false);
@@ -35,14 +48,18 @@ export const DisplayNumber = ({
     const charsLength = 3;
     const prefixLength = 2; // "0."
 
-    if (!str) {
+    if (!str) return "0";
+
+    if (str === "0" || str === "0.0" || str === "0.00") {
       setShowTooltip(false);
-      return "";
+      return "0";
     }
+
     if (str.length < charsLength * 2 + prefixLength) {
       setShowTooltip(false);
       return str;
     }
+
     setShowTooltip(true);
 
     if (str.slice(0, 2) === "0.") {
@@ -52,7 +69,9 @@ export const DisplayNumber = ({
         str.slice(-charsLength)
       );
     }
+
     if (typeof number === "string") {
+      if (number.endsWith(".")) number = number.slice(0, -1);
       return dn.format(dn.from(number), {
         compact: compact,
         digits: 2,
@@ -62,7 +81,13 @@ export const DisplayNumber = ({
     return dn.format(number, { compact: compact, digits: 2 });
   };
 
-  const handleCopy = async () => {
+  const handleCopy = async (
+    e:
+      | React.MouseEvent<HTMLDivElement, MouseEvent>
+      | React.KeyboardEvent<HTMLDivElement>,
+  ) => {
+    e.stopPropagation();
+    e.preventDefault();
     if (!copiable) {
       return;
     }
@@ -84,20 +109,20 @@ export const DisplayNumber = ({
   };
 
   return (
-    <div className="relative flex items-center gap-1">
+    <div className="relative flex items-baseline gap-1">
       <div
-        onClick={handleCopy}
+        onClick={(e) => handleCopy(e)}
         onKeyDown={(ev) => {
           if (ev.key === "Enter" || ev.key === " ") {
-            handleCopy();
+            handleCopy(ev);
           }
         }}
-        className={`${!disableTooltip && showTooltip && "tooltip"} cursor-pointer`}
-        data-tip={isCopied ? "Copied!" : fullNumberStr}
+        className={`${!disableTooltip && (showTooltip || forceTooltip) && "tooltip"} ${copiable && "cursor-pointer"} ${tooltipClass}`}
+        data-tip={isCopied ? "Copied" : fullNumberStr}
       >
-        <p className={className}>{shortNumber}</p>
+        <p className={valueClassName}>{shortNumber}</p>
       </div>
-      <p className={className}>{tokenSymbol}</p>
+      <p className={symbolClassName}>{tokenSymbol}</p>
     </div>
   );
 };

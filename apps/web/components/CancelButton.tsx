@@ -9,7 +9,6 @@ import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { MetadataV1 } from "@/hooks/useIpfsFetch";
 import { cvStrategyABI } from "@/src/generated";
-import { abiWithErrors } from "@/utils/abi";
 
 type Props = {
   proposalData: Maybe<
@@ -29,7 +28,7 @@ function CancelButton({ proposalData }: Props) {
 
   const { write: writeCancel, isLoading } = useContractWriteWithConfirmations({
     address: strategy.id as Address,
-    abi: abiWithErrors(cvStrategyABI),
+    abi: cvStrategyABI,
     functionName: "cancelProposal",
     contractName: "CV Strategy",
     fallbackErrorMessage: "Error cancelling proposal, please report a bug.",
@@ -62,12 +61,12 @@ function CancelButton({ proposalData }: Props) {
       >
         <div>
           <div>
-            This action cannot be undone and will permanently prevent this
-            proposal from being executed.
+            This action cannot be undone.
+            <span className="font-semibold ml-1">
+              Are you sure you want to cancel?
+            </span>
           </div>
-          <p className="font-bold mt-1">
-            Are you absolutely sure you want to cancel?
-          </p>
+
           <div className="modal-action">
             <Button
               btnStyle="outline"

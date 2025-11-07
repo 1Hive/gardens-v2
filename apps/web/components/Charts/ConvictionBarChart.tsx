@@ -1,10 +1,12 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import type { EChartsOption, MarkLineComponentOption } from "echarts";
 import EChartsReact from "echarts-for-react";
 import { ChartWrapper } from "./ChartWrapper";
 import { Countdown } from "../Countdown";
+import { Skeleton } from "../Skeleton";
+import { useTheme } from "@/providers/ThemeProvider";
 
 type ScenarioMapping = {
   condition: () => boolean;
@@ -19,8 +21,27 @@ type ConvictionBarChartProps = {
   proposalNumber: number;
   compact?: boolean;
   timeToPass?: number;
+  defaultChartMaxValue?: boolean;
+  proposalStatus: string;
   onReadyToExecute?: () => void;
+  refreshConviction?: () => Promise<any>;
 };
+
+export function getChartColors(isDarkTheme?: boolean) {
+  return {
+    background:
+      isDarkTheme ? "rgba(48, 48, 48, 0.55)" : "rgba(180, 180, 180, 0.2)",
+    support: isDarkTheme ? "#88b358" : "#A8E066",
+    conviction: isDarkTheme ? "#457b08" : "#4F8E13",
+    threshold:
+      isDarkTheme ? "rgba(79, 161, 118, 0.35)" : "rgba(150, 211, 105, 0.45)",
+    markLine: isDarkTheme ? "#E8E8E8" : "#191919",
+    label: isDarkTheme ? "#F5F5F5" : "#191919",
+    tooltipBorder: isDarkTheme ? "#4FA176" : "#65AD18",
+    tooltipBackground: isDarkTheme ? "#1E1E1E" : "#FCFFF7",
+    tooltipText: isDarkTheme ? "#F3F4F6" : "#191919",
+  };
+}
 
 export const ConvictionBarChart = ({
   currentConvictionPct,
@@ -31,7 +52,13 @@ export const ConvictionBarChart = ({
   compact,
   timeToPass,
   onReadyToExecute,
+  defaultChartMaxValue = false,
+  proposalStatus,
 }: ConvictionBarChartProps) => {
+  const [convictionRefreshing, setConvictionRefreshing] = useState(true);
+  const { resolvedTheme } = useTheme();
+  const isDarkTheme = resolvedTheme === "darkTheme";
+  const chartColors = getChartColors(isDarkTheme);
   const supportNeeded = (thresholdPct - proposalSupportPct).toFixed(2);
   const scenarioMappings: Record<string, ScenarioMapping> = {
     //1-SignalingType) Support > 0 && > Conviction
@@ -159,6 +186,19 @@ export const ConvictionBarChart = ({
         },
       ],
     },
+    //9) Conviction = Threshold  < Support
+    ConvictionEqThresholdLTSupport: {
+      condition: () =>
+        thresholdPct == currentConvictionPct &&
+        proposalSupportPct !== 0 &&
+        proposalSupportPct > thresholdPct,
+      details: [
+        {
+          message: "This proposal needs conviction to grow!",
+          growing: true,
+        },
+      ],
+    },
   };
 
   const { message, growing } = useMemo(() => {
@@ -166,13 +206,19 @@ export const ConvictionBarChart = ({
       Object.values(scenarioMappings).find(({ condition }) => condition())
         ?.details[0] ?? {
         message:
-          proposalSupportPct == 0 ?
+          proposalSupportPct === 0 ?
             "Proposal waiting for support"
           : "Scenario not found",
         growing: null,
       }
     );
   }, [timeToPass, currentConvictionPct, proposalSupportPct, thresholdPct]);
+
+  useEffect(() => {
+    if (convictionRefreshing && currentConvictionPct != null) {
+      setConvictionRefreshing(false);
+    }
+  }, [convictionRefreshing, currentConvictionPct]);
 
   const supportGtConv = proposalSupportPct > currentConvictionPct;
   const convEqSupport = proposalSupportPct === currentConvictionPct;
@@ -181,14 +227,15 @@ export const ConvictionBarChart = ({
     disabled: true,
   };
 
-  const borderRadius = [50, 0, 0, 50];
+  const borderRadius = defaultChartMaxValue ? [50, 50] : [50, 4, 4, 50];
 
   const markLine: MarkLineComponentOption = {
     symbol: "none",
     label: {
       position: "start",
       formatter: "{@score} %",
-      fontSize: compact ? 10 : 16,
+      fontSize: compact ? 10 : 14,
+      color: chartColors.label,
     },
   };
 
@@ -208,11 +255,17 @@ export const ConvictionBarChart = ({
         ],
         lineStyle: {
           width: compact ? 0.5 : 1,
-          color: "#191919",
+          color: chartColors.markLine,
           dashOffset: 30,
         },
         z: 50,
       };
+
+  const chartMaxValue =
+    defaultChartMaxValue ?
+      Math.max(currentConvictionPct, proposalSupportPct, thresholdPct)
+    : 100;
+
   const option: EChartsOption = {
     emphasis: emphasis,
     yAxis: {
@@ -228,19 +281,22 @@ export const ConvictionBarChart = ({
       axisLabel: {
         show: false,
         formatter: "{value}%",
-        fontSize: 10,
+        fontSize: 8,
       },
       axisLine: {
         show: false,
       },
-      max: 100,
+      max: chartMaxValue,
     },
     tooltip: {
       trigger: "axis",
       valueFormatter: (value) => value + "%",
       borderWidth: 1,
-      borderColor: "#65AD18",
-      backgroundColor: "#FCFFF7",
+      borderColor: chartColors.tooltipBorder,
+      backgroundColor: chartColors.tooltipBackground,
+      textStyle: {
+        color: chartColors.tooltipText,
+      },
       axisPointer: {
         type: "none",
       },
@@ -259,46 +315,46 @@ export const ConvictionBarChart = ({
       {
         showBackground: true,
         backgroundStyle: {
-          color: "rgba(180, 180, 180, 0.2)",
+          color: chartColors.background,
           borderRadius: [50, 50],
         },
         type: "bar",
         name: "Support",
         itemStyle: {
-          color: "#A8E066",
+          color: chartColors.support,
           borderRadius: borderRadius,
         },
 
         label: {
           show: !compact,
           position: "insideRight",
-          color: "#191919",
-          fontSize: 10,
+          color: chartColors.label,
+          fontSize: 8,
           formatter: "{@score} %",
         },
         z:
           supportGtConv ? 1
           : convEqSupport ? 1
           : 2,
-        barWidth: 23,
+        barWidth: 18,
         data: [proposalSupportPct],
       },
       {
         type: "bar",
         name: "Conviction",
         itemStyle: {
-          color: "#65AD18",
+          color: chartColors.conviction,
           borderRadius: borderRadius,
         },
         label: {
           show: !compact,
           position: "insideRight",
           color: "#FFFFFF",
-          fontSize: 10,
+          fontSize: 8,
           formatter: "{@score} %",
           width: 0,
         },
-        barWidth: 23,
+        barWidth: 18,
         z: 1,
         data: [currentConvictionPct],
       },
@@ -307,13 +363,13 @@ export const ConvictionBarChart = ({
       : {
           type: "bar",
           name: "Threshold",
-          barWidth: 23,
+          barWidth: 18,
           data: [thresholdPct],
           itemStyle: {
             borderRadius: borderRadius,
-            color: "#EEEEEE",
+            color: chartColors.threshold,
           },
-          color: "#EEEEEE",
+          color: chartColors.threshold,
           z: 0,
           markLine: {
             ...markLineTh,
@@ -327,25 +383,41 @@ export const ConvictionBarChart = ({
     Number(supportNeeded) < 0 &&
     (currentConvictionPct ?? 0) < (thresholdPct ?? 0);
 
-  return (
+  const chart = (
     <>
-      {compact ?
+      <Skeleton isLoading={convictionRefreshing}>
         <EChartsReact
           option={option}
           style={{ height: "100%", width: "100%" }}
+          className="cursor-default"
         />
+      </Skeleton>
+
+      {/* <Button
+        btnStyle="link"
+        onClick={handleRefreshConviction}
+        tooltip="Refresh conviction"
+        className={!compact ? "border2" : ""}
+      >
+        <ArrowPathIcon className="w-5" />
+      </Button> */}
+    </>
+  );
+
+  return (
+    <>
+      {compact ?
+        chart
       : <>
           <ChartWrapper
             message={isSignalingType ? undefined : message}
             growing={growing}
             isSignalingType={isSignalingType}
+            proposalStatus={proposalStatus}
           >
-            <EChartsReact
-              option={option}
-              style={{ height: "100%", width: "100%" }}
-            />
+            {chart}
           </ChartWrapper>
-          {scenarioMappings.supportLTConvictionLTThreshold &&
+          {scenarioMappings.supportLTConvictionLTThreshold != null &&
             proposalWillPass &&
             !readyToBeExecuted && (
               <div className="flex items-center gap-2">
