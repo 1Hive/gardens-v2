@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import {CVStrategyBaseFacet} from "../CVStrategyBaseFacet.sol";
 import {ProposalType, CreateProposal, Proposal, ProposalStatus} from "../ICVStrategy.sol";
-import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
+import {IAllo, Metadata} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Library.sol";
 
 /**
@@ -23,6 +23,8 @@ contract CVProposalFacet is CVStrategyBaseFacet {
     event SupportAdded(
         address from, uint256 proposalId, uint256 amount, uint256 totalStakedAmount, uint256 convictionLast
     );
+
+    uint256 public constant ONE_HOUR = 3600;
 
     /*|--------------------------------------------|*/
     /*|              FUNCTIONS                     |*/
@@ -61,6 +63,7 @@ contract CVProposalFacet is CVStrategyBaseFacet {
         p.requestedAmount = proposal.amountRequested;
         p.proposalStatus = ProposalStatus.Active;
         p.blockLast = block.number;
+        p.creationTimestamp = block.timestamp;
         p.convictionLast = 0;
         p.metadata = proposal.metadata;
         p.arbitrableConfigVersion = currentArbitrableConfigVersion;
@@ -89,5 +92,43 @@ contract CVProposalFacet is CVStrategyBaseFacet {
 
         proposals[proposalId].proposalStatus = ProposalStatus.Cancelled;
         emit ProposalCancelled(proposalId);
+    }
+
+    function editProposal(
+        uint256 _proposalId,
+        Metadata memory _metadata,
+        address _beneficiary,
+        uint256 _requestedAmount
+    ) external {
+        //
+        Proposal storage proposal = proposals[_proposalId];
+        if (proposal.proposalStatus != ProposalStatus.Active) {
+            revert();
+        }
+
+        if (proposal.submitter != msg.sender) {
+            revert();
+        }
+
+        if (
+            (proposal.beneficiary != _beneficiary || proposal.requestedAmount != _requestedAmount)
+                && block.timestamp - proposal.creationTimestamp > ONE_HOUR
+        ) {
+            proposal.beneficiary = _beneficiary;
+            proposal.requestedAmount = _requestedAmount;
+        }
+
+        if (compareStringsByHash(proposal.metadata.pointer, _metadata.pointer) && proposal.convictionLast == 0) {
+            proposal.metadata.pointer = _metadata.pointer;
+        }
+    }
+
+    function compareStringsByHash(string memory _first, string memory _second) public pure returns (bool) {
+        // Convert both strings to bytes and hash them using abi.encodePacked
+        bytes32 hash1 = keccak256(abi.encodePacked(_first));
+        bytes32 hash2 = keccak256(abi.encodePacked(_second));
+
+        // Compare the hashes
+        return hash1 == hash2;
     }
 }

@@ -746,6 +746,15 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         _delegateToFacet();
     }
 
+    function editProposal(
+        uint256 _proposalId,
+        Metadata memory _metadata,
+        address _beneficiary,
+        uint256 _requestedAmount
+    ) external {
+        _delegateToFacet();
+    }
+
     // _addToAllowList and _removeFromAllowList removed - now in AdminFacet
 
     function _registerToSybilScorer(uint256 threshold) internal {

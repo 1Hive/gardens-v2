@@ -73,6 +73,7 @@ struct Proposal {
     ProposalDisputeInfo disputeInfo;
     uint256 lastDisputeCompletion;
     uint256 arbitrableConfigVersion;
+    uint256 creationTimestamp;
 }
 
 struct ProposalSupport {
