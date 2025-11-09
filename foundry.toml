@@ -7,12 +7,16 @@ celo = { key = "${CELOSCAN_API_KEY}", url = "https://api.celoscan.io/api"}
 celo = "https://forno.celo.org"
 
 [profile.default]
+# Allow multiple Solidity versions (0.8.19 for Gardens, 0.8.20 for Octant)
 # solc-version = "0.8.19"
+auto_detect_solc = true
 src = 'pkg/contracts/src'
 script = 'pkg/contracts/script'
 test = 'pkg/contracts/test'
 out = 'pkg/contracts/out'
 libs = ['lib']
+via_ir = false
+evm_version = "paris"
 ffi = true
 ast = true
 build_info = true

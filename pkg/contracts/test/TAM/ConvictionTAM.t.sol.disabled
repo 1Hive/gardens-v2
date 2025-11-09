@@ -1,0 +1,306 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+pragma solidity ^0.8.19;
+
+import "forge-std/Test.sol";
+import {ConvictionVotingTAM} from "../../src/tam/ConvictionVotingTAM.sol";
+import {BaseConvictionVotingMechanism} from "../../src/tam/BaseConvictionVotingMechanism.sol";
+import {ConvictionVotingTAMFactory} from "../../src/tam/ConvictionVotingTAMFactory.sol";
+import {PointSystem, PointSystemConfig} from "../../src/CVStrategy/ICVStrategy.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Library.sol";
+
+contract MockToken is ERC20 {
+    constructor() ERC20("Mock", "MOCK") {
+        _mint(msg.sender, 1000000e18);
+    }
+    function mint(address to, uint256 amount) external {
+        _mint(to, amount);
+    }
+}
+
+/**
+ * @title ConvictionTAMTest
+ * @notice Tests for Octant TAM pattern implementation
+ * @dev Validates lifecycle, hooks, and onlySelf protection
+ */
+contract ConvictionTAMTest is Test {
+    
+    ConvictionVotingTAMFactory public factory;
+    BaseConvictionVotingMechanism public tam;
+    MockToken public token;
+    
+    address public alice = address(0x1);
+    address public bob = address(0x2);
+    address public projectA = address(0x3);
+    address public projectB = address(0x4);
+    
+    function setUp() public {
+        token = new MockToken();
+        
+        // Deploy factory (deploys shared implementation)
+        factory = new ConvictionVotingTAMFactory();
+        
+        // Create TAM instance
+        address registryCommunity = address(0x999); // Mock
+        
+        tam = BaseConvictionVotingMechanism(
+            factory.createTAM(
+                IERC20(address(token)),
+                registryCommunity,
+                9965853,  // 7-day decay
+                500000,   // weight
+                2000000,  // maxRatio
+                100000,   // minThreshold
+                PointSystem.Unlimited,
+                PointSystemConfig({maxAmount: 0}),
+                ISuperToken(address(0)), // No streaming for basic test
+                bytes32("test-tam")
+            )
+        );
+        
+        // Fund test users
+        token.transfer(alice, 10000e18);
+        token.transfer(bob, 10000e18);
+        
+        vm.prank(alice);
+        token.approve(address(tam), type(uint256).max);
+        
+        vm.prank(bob);
+        token.approve(address(tam), type(uint256).max);
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                        LIFECYCLE TESTS
+    //////////////////////////////////////////////////////////////*/
+
+    function testSignupGrantsVotingPower() public {
+        uint256 deposit = 1000e18;
+        
+        vm.prank(alice);
+        uint256 power = tam.signup(deposit);
+        
+        assertEq(power, deposit, "1:1 voting power");
+        assertEq(tam.votingPower(alice), deposit);
+        assertEq(tam.totalVotingPower(), deposit);
+    }
+
+    function testCreateProposal() public {
+        uint256 propId = tam.propose(projectA, 5000e18, "Project A");
+        
+        assertEq(propId, 1);
+        (address recipient, uint256 amount, string memory meta, bool queued) = tam.proposals(propId);
+        assertEq(recipient, projectA);
+        assertEq(amount, 5000e18);
+        assertFalse(queued);
+    }
+
+    function testCastVote() public {
+        // Setup
+        vm.prank(alice);
+        tam.signup(1000e18);
+        
+        uint256 propId = tam.propose(projectA, 5000e18, "Project A");
+        
+        // Set phase to voting
+        tam.setPhase(ConvictionVotingTAM.Phase.Voting);
+        
+        // Cast vote
+        vm.prank(alice);
+        tam.castVote(propId, 600);
+        
+        assertEq(tam.votes(alice, propId), 600);
+        assertEq(tam.proposalSupport(propId), 600);
+        assertEq(tam.votingPower(alice), 400, "Power reduced");
+    }
+
+    function testCannotVoteTwice() public {
+        vm.prank(alice);
+        tam.signup(1000e18);
+        
+        uint256 propId = tam.propose(projectA, 5000e18, "Project A");
+        tam.setPhase(ConvictionVotingTAM.Phase.Voting);
+        
+        vm.prank(alice);
+        tam.castVote(propId, 600);
+        
+        // Try to vote again
+        vm.prank(alice);
+        vm.expectRevert();
+        tam.castVote(propId, 200);
+    }
+
+    function testFinalizeVoteTally() public {
+        tam.setPhase(ConvictionVotingTAM.Phase.Voting);
+        
+        // Simulate voting period ended
+        vm.warp(block.timestamp + 7 days);
+        
+        tam.finalizeVoteTally();
+        
+        assertEq(uint256(tam.currentPhase()), uint256(ConvictionVotingTAM.Phase.Finalized));
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                        HOOK TESTS
+    //////////////////////////////////////////////////////////////*/
+
+    function testOnlySelfProtectsHooks() public {
+        // Hooks should only be callable via delegatecall
+        
+        // Try to call hook directly (should fail)
+        vm.expectRevert();
+        tam.beforeSignupHook(alice, 1000e18);
+        
+        vm.expectRevert();
+        tam.getVotingPowerHook(1000e18);
+        
+        vm.expectRevert();
+        tam.processVoteHook(alice, 1, 100, 1000);
+        
+        // These should all revert with OnlySelf error
+    }
+
+    function testHooksExecuteViaDelegatecall() public {
+        // When signup() is called, it delegatecalls hooks
+        // Hooks execute in proxy's storage context
+        
+        vm.prank(alice);
+        uint256 power = tam.signup(1000e18);
+        
+        // Hook was executed (we got voting power)
+        assertGt(power, 0);
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                        QUEUING TESTS
+    //////////////////////////////////////////////////////////////*/
+
+    function testQueueProposalWhenThresholdMet() public {
+        // Setup: Create proposal and vote
+        vm.prank(alice);
+        tam.signup(10000e18);
+        
+        vm.prank(bob);
+        tam.signup(10000e18);
+        
+        uint256 propId = tam.propose(projectA, 2000e18, "Project A");
+        
+        tam.setPhase(ConvictionVotingTAM.Phase.Voting);
+        
+        vm.prank(alice);
+        tam.castVote(propId, 5000);
+        
+        vm.prank(bob);
+        tam.castVote(propId, 5000);
+        
+        // Advance blocks for conviction
+        vm.roll(block.number + 1000);
+        
+        // Finalize
+        tam.setPhase(ConvictionVotingTAM.Phase.Voting);
+        vm.warp(block.timestamp + 7 days);
+        tam.finalizeVoteTally();
+        
+        // Queue (permissionless)
+        tam.queueProposal(propId);
+        
+        (,,,bool queued) = tam.proposals(propId);
+        assertTrue(queued);
+    }
+
+    function testCannotQueueWithoutQuorum() public {
+        // Create proposal with insufficient support
+        vm.prank(alice);
+        tam.signup(10000e18);
+        
+        uint256 propId = tam.propose(projectA, 8000e18, "Big ask");
+        
+        tam.setPhase(ConvictionVotingTAM.Phase.Voting);
+        
+        vm.prank(alice);
+        tam.castVote(propId, 1000); // Not enough
+        
+        vm.warp(block.timestamp + 7 days);
+        tam.finalizeVoteTally();
+        
+        // Try to queue (should fail - no quorum)
+        vm.expectRevert();
+        tam.queueProposal(propId);
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                        FACTORY TESTS
+    //////////////////////////////////////////////////////////////*/
+
+    function testFactoryCreatesMultipleTAMs() public {
+        address tam1 = factory.createTAM(
+            IERC20(address(token)),
+            address(0x999),
+            9965853, 500000, 2000000, 100000,
+            PointSystem.Unlimited,
+            PointSystemConfig({maxAmount: 0}),
+            ISuperToken(address(0)),
+            bytes32("tam1")
+        );
+        
+        address tam2 = factory.createTAM(
+            IERC20(address(token)),
+            address(0x999),
+            9965853, 500000, 2000000, 100000,
+            PointSystem.Capped,
+            PointSystemConfig({maxAmount: 10000e18}),
+            ISuperToken(address(0)),
+            bytes32("tam2")
+        );
+        
+        assertFalse(tam1 == tam2, "Different instances");
+        assertEq(factory.tamCount(), 3); // Including setUp TAM
+    }
+
+    function testFactoryTracksCreators() public {
+        vm.prank(alice);
+        address tam1 = factory.createTAM(
+            IERC20(address(token)),
+            address(0x999),
+            9965853, 500000, 2000000, 100000,
+            PointSystem.Unlimited,
+            PointSystemConfig({maxAmount: 0}),
+            ISuperToken(address(0)),
+            bytes32("alice-tam")
+        );
+        
+        address[] memory aliceTAMs = factory.getTAMsByCreator(alice);
+        assertEq(aliceTAMs.length, 1);
+        assertEq(aliceTAMs[0], tam1);
+    }
+
+    function testAllTAMsShareImplementation() public {
+        address impl = factory.implementation();
+        
+        address tam1 = factory.createTAM(
+            IERC20(address(token)),
+            address(0x999),
+            9965853, 500000, 2000000, 100000,
+            PointSystem.Unlimited,
+            PointSystemConfig({maxAmount: 0}),
+            ISuperToken(address(0)),
+            bytes32("tam1")
+        );
+        
+        address tam2 = factory.createTAM(
+            IERC20(address(token)),
+            address(0x999),
+            9965853, 500000, 2000000, 100000,
+            PointSystem.Unlimited,
+            PointSystemConfig({maxAmount: 0}),
+            ISuperToken(address(0)),
+            bytes32("tam2")
+        );
+        
+        assertEq(BaseConvictionVotingMechanism(payable(tam1)).implementation(), impl);
+        assertEq(BaseConvictionVotingMechanism(payable(tam2)).implementation(), impl);
+    }
+}
+
+

@@ -6,6 +6,8 @@ import {IVotingPowerRegistry} from "../interfaces/IVotingPowerRegistry.sol";
 import {ICollateralVault} from "../interfaces/ICollateralVault.sol";
 import {ICVVault} from "../interfaces/ICVVault.sol";
 import {ISybilScorer} from "../ISybilScorer.sol";
+import {IYDSStrategy} from "../interfaces/IYDSStrategy.sol";
+import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {ProposalType, PointSystem, Proposal, PointSystemConfig, ArbitrableConfig, CVParams} from "./ICVStrategy.sol";
 import {ConvictionsUtils} from "./ConvictionsUtils.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Library.sol";
@@ -40,6 +42,28 @@ abstract contract CVStrategyBaseFacet {
 
     /// @notice Native token address (defined here to avoid import conflicts with allo-v2)
     address internal constant NATIVE_TOKEN = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
+
+    /// @notice Total GDA units representing 100%
+    uint128 public constant TOTAL_GDA_UNITS = 10000;
+
+    /// @notice Default funding stream units
+    uint128 public constant DEFAULT_FUNDING_UNITS = 1000;
+
+    /*|--------------------------------------------|*/
+    /*|      STREAMING-SPECIFIC ERRORS             |*/
+    /*|--------------------------------------------|*/
+
+    error GDANotConfigured();
+    error SuperfluidOperationFailed(string operation);
+    error StreamingNotEnabled();
+    error WrongProposalType();
+    error NoVaultConfigured();
+    error NoYDSStrategy();
+    error StreamAlreadyActive(uint256 proposalId);
+    error StreamNotActive(uint256 proposalId);
+    error InvalidUnits();
+    error OnlyPendingRecipient();
+    error ProposalNotFoundStream();
 
     /*|--------------------------------------------|*/
     /*|      INHERITED STORAGE LAYOUT              |*/
@@ -148,9 +172,38 @@ abstract contract CVStrategyBaseFacet {
     /// @dev Slot 129+
     ISuperToken public superfluidToken;
 
+    /*|--------------------------------------------|*/
+    /*|      NEW: YDS & STREAMING STORAGE          |*/
+    /*|         (Octant Integration)               |*/
+    /*|--------------------------------------------|*/
+
+    /// @notice Yield Donating Strategy for Octant-style yield distribution
+    /// @dev Slot 130+
+    IYDSStrategy public ydsStrategy;
+
+    /// @notice Superfluid stream state per proposal
+    struct StreamState {
+        bool isActive;           // Is stream currently flowing
+        uint128 flowUnits;       // Superfluid GDA units allocated
+        uint256 lastUpdateBlock; // Last block stream was modified
+        address beneficiary;     // Current beneficiary receiving stream
+    }
+
+    /// @notice Mapping of proposal ID to its stream state
+    /// @dev Slot 131+
+    mapping(uint256 => StreamState) internal proposalStreams;
+
+    /// @notice Superfluid General Distribution Agreement address
+    /// @dev Slot 132+
+    address internal superfluidGDA;
+
+    /// @notice Whether Superfluid streaming is enabled for this pool
+    /// @dev Slot 133+
+    bool public streamingEnabled;
+
     /// @dev Reserved storage space to allow for layout changes in the future
-    /// @dev This gap is at the end of storage to allow adding new variables without shifting slots
-    uint256[49] private __gap;
+    /// @dev Reduced from 49 to 45 to accommodate new streaming variables
+    uint256[45] private __gap;
 
     /*|--------------------------------------------|*/
     /*|         SHARED HELPER FUNCTIONS            |*/
@@ -243,6 +296,30 @@ abstract contract CVStrategyBaseFacet {
      */
     function proposalExists(uint256 _proposalID) internal view returns (bool) {
         return proposals[_proposalID].proposalId > 0 && proposals[_proposalID].submitter != address(0);
+    }
+
+    /**
+     * @notice Get total pool amount (token balance)
+     * @dev Used by streaming facets to calculate thresholds and units
+     * @return uint256 Total pool balance including super tokens
+     */
+    function getPoolAmount() internal view virtual returns (uint256) {
+        address token = allo.getPool(poolId).token;
+
+        if (token == NATIVE_TOKEN) {
+            return address(this).balance;
+        }
+
+        uint256 base = ERC20(token).balanceOf(address(this));
+        uint256 sf = address(superfluidToken) == address(0) ? 0 : superfluidToken.balanceOf(address(this));
+
+        uint8 d = ERC20(token).decimals();
+        if (d < 18) {
+            sf /= 10 ** (18 - d); // downscale 18 -> d
+        } else if (d > 18) {
+            sf *= 10 ** (d - 18); // upscale 18 -> d  (unlikely)
+        }
+        return base + sf;
     }
 
     /**

@@ -1,0 +1,238 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+pragma solidity ^0.8.19;
+
+import {BaseConvictionVotingMechanism} from "./BaseConvictionVotingMechanism.sol";
+import {ConvictionVotingTAM} from "./ConvictionVotingTAM.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {PointSystem, PointSystemConfig} from "../CVStrategy/ICVStrategy.sol";
+import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Library.sol";
+
+/**
+ * @title ConvictionVotingTAMFactory
+ * @notice Factory for deploying Conviction Voting TAM instances
+ * @dev Follows Octant TAM pattern - deploys minimal proxies pointing to shared implementation
+ * 
+ * Architecture:
+ * 1. Deploy shared ConvictionVotingTAM implementation once (gas efficient)
+ * 2. Factory deploys lightweight BaseConvictionVotingMechanism proxies
+ * 3. Each proxy has own storage but shares implementation logic
+ * 4. Proxies can be customized via initialization parameters
+ * 
+ * vs Allo Pattern:
+ * - Allo: Each pool is independent CVStrategy instance (heavier)
+ * - TAM: Shared implementation + lightweight proxies (cheaper deployment)
+ */
+contract ConvictionVotingTAMFactory {
+    using SuperTokenV1Library for ISuperToken;
+
+    /*//////////////////////////////////////////////////////////////
+                                 EVENTS
+    //////////////////////////////////////////////////////////////*/
+
+    event TAMCreated(
+        address indexed tam,
+        address indexed creator,
+        address asset,
+        address registryCommunity,
+        bytes32 metadata
+    );
+
+    event ImplementationUpdated(address indexed newImplementation);
+
+    /*//////////////////////////////////////////////////////////////
+                                 STATE
+    //////////////////////////////////////////////////////////////*/
+
+    /// @notice Shared ConvictionVotingTAM implementation
+    address public implementation;
+
+    /// @notice Owner who can update implementation
+    address public owner;
+
+    /// @notice All deployed TAMs
+    address[] public allTAMs;
+
+    /// @notice Mapping of TAM => creator
+    mapping(address => address) public tamCreator;
+
+    /*//////////////////////////////////////////////////////////////
+                              CONSTRUCTOR
+    //////////////////////////////////////////////////////////////*/
+
+    constructor() {
+        owner = msg.sender;
+        
+        // Deploy shared implementation
+        implementation = address(new ConvictionVotingTAM());
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                            TAM DEPLOYMENT
+    //////////////////////////////////////////////////////////////*/
+
+    /**
+     * @notice Create new Conviction Voting TAM
+     * @param asset Funding token (e.g., DAI, USDC)
+     * @param registryCommunity Gardens registry for member management
+     * @param decay Conviction decay parameter (7-day half-life ≈ 9965853)
+     * @param _weight Conviction weight (rho)
+     * @param _maxRatio Max ratio parameter (beta)
+     * @param _minThresholdPoints Min threshold percentage
+     * @param _pointSystem Voting power system (Unlimited, Capped, Quadratic)
+     * @param pointConfig Point system configuration
+     * @param superToken Superfluid super token for streaming
+     * @param metadata IPFS hash or description
+     * @return tam Address of deployed TAM
+     */
+    function createTAM(
+        IERC20 asset,
+        address registryCommunity,
+        uint256 decay,
+        uint256 _weight,
+        uint256 _maxRatio,
+        uint256 _minThresholdPoints,
+        PointSystem _pointSystem,
+        PointSystemConfig memory pointConfig,
+        ISuperToken superToken,
+        bytes32 metadata
+    ) external returns (address tam) {
+        // Deploy proxy
+        tam = address(new BaseConvictionVotingMechanism(implementation));
+        
+        // Initialize via delegatecall
+        BaseConvictionVotingMechanism(tam).initialize(
+            asset,
+            registryCommunity,
+            decay,
+            _weight,
+            _maxRatio,
+            _minThresholdPoints,
+            _pointSystem,
+            pointConfig,
+            superToken
+        );
+        
+        // Record deployment
+        allTAMs.push(tam);
+        tamCreator[tam] = msg.sender;
+        
+        emit TAMCreated(tam, msg.sender, address(asset), registryCommunity, metadata);
+    }
+
+    /**
+     * @notice Create TAM with Superfluid GDA pre-configured
+     * @dev Convenience function that also sets up GDA
+     */
+    function createTAMWithGDA(
+        IERC20 asset,
+        address registryCommunity,
+        uint256 decay,
+        uint256 _weight,
+        uint256 _maxRatio,
+        uint256 _minThresholdPoints,
+        PointSystem _pointSystem,
+        PointSystemConfig memory pointConfig,
+        ISuperToken superToken,
+        address gda,
+        bytes32 metadata
+    ) external returns (address tam) {
+        // Create TAM
+        tam = this.createTAM(
+            asset,
+            registryCommunity,
+            decay,
+            _weight,
+            _maxRatio,
+            _minThresholdPoints,
+            _pointSystem,
+            pointConfig,
+            superToken,
+            metadata
+        );
+        
+        // Configure GDA if provided
+        if (gda != address(0)) {
+            BaseConvictionVotingMechanism proxy = BaseConvictionVotingMechanism(tam);
+            proxy.superfluidGDA = gda;
+            
+            // Connect to GDA
+            superToken.connectPool(ISuperfluidPool(gda));
+        }
+        
+        return tam;
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                            ADMIN FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
+
+    /**
+     * @notice Update shared implementation
+     * @dev All new TAMs will use new implementation, existing ones unchanged
+     * @param newImplementation Address of new ConvictionVotingTAM
+     */
+    function setImplementation(address newImplementation) external {
+        require(msg.sender == owner, "Only owner");
+        require(newImplementation != address(0), "Zero address");
+        
+        implementation = newImplementation;
+        emit ImplementationUpdated(newImplementation);
+    }
+
+    /**
+     * @notice Transfer factory ownership
+     * @param newOwner New owner address
+     */
+    function transferOwnership(address newOwner) external {
+        require(msg.sender == owner, "Only owner");
+        require(newOwner != address(0), "Zero address");
+        owner = newOwner;
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                            VIEW FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
+
+    /**
+     * @notice Get all deployed TAMs
+     * @return address[] Array of TAM addresses
+     */
+    function getAllTAMs() external view returns (address[] memory) {
+        return allTAMs;
+    }
+
+    /**
+     * @notice Get TAM count
+     * @return uint256 Number of TAMs deployed
+     */
+    function tamCount() external view returns (uint256) {
+        return allTAMs.length;
+    }
+
+    /**
+     * @notice Get TAMs created by specific address
+     * @param creator Creator address
+     * @return tams Array of TAM addresses
+     */
+    function getTAMsByCreator(address creator) external view returns (address[] memory tams) {
+        uint256 count = 0;
+        
+        // Count TAMs by creator
+        for (uint256 i = 0; i < allTAMs.length; i++) {
+            if (tamCreator[allTAMs[i]] == creator) {
+                count++;
+            }
+        }
+        
+        // Build array
+        tams = new address[](count);
+        uint256 index = 0;
+        for (uint256 i = 0; i < allTAMs.length; i++) {
+            if (tamCreator[allTAMs[i]] == creator) {
+                tams[index++] = allTAMs[i];
+            }
+        }
+    }
+}
+
+

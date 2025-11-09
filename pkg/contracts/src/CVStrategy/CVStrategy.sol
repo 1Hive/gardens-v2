@@ -790,6 +790,51 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         _delegateToFacet();
     }
 
+    // NEW: Streaming function stubs - delegate to facets
+    function setYDSStrategy(address _ydsStrategy) external {
+        _delegateToFacet();
+    }
+
+    function initializeGDA(address gda) external {
+        _delegateToFacet();
+    }
+
+    function setStreamingEnabled(bool enabled) external {
+        _delegateToFacet();
+    }
+
+    function rebalanceYieldStreams() external {
+        _delegateToFacet();
+    }
+
+    function evaluateProposalStream(uint256 proposalId) external {
+        _delegateToFacet();
+    }
+
+    function batchEvaluateStreams() external {
+        _delegateToFacet();
+    }
+
+    function startStream(uint256 proposalId, address beneficiary, uint128 units) external {
+        _delegateToFacet();
+    }
+
+    function updateStream(uint256 proposalId, uint128 newUnits) external {
+        _delegateToFacet();
+    }
+
+    function stopStream(uint256 proposalId) external {
+        _delegateToFacet();
+    }
+
+    function getStreamState(uint256 proposalId) external returns (bool, uint128, uint256, address) {
+        _delegateToFacet();
+    }
+
+    function getGDA() external returns (address) {
+        _delegateToFacet();
+    }
+
     // disputeProposal and rule removed - now in DisputeFacet
     // Stub needed for tests to call - delegates to facet
     function disputeProposal(uint256 proposalId, string calldata context, bytes calldata _extraData)

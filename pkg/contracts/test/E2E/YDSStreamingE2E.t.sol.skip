@@ -1,0 +1,301 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+pragma solidity ^0.8.19;
+
+import "forge-std/Test.sol";
+import {GardensYDSStrategy} from "../../src/yds/GardensYDSStrategy.sol";
+import {CVStreamingKeeper} from "../../src/automation/CVStreamingKeeper.sol";
+import {CVStrategyHelpers} from "../CVStrategyHelpers.sol";
+import {ProposalType} from "../../src/CVStrategy/ICVStrategy.sol";
+
+/**
+ * @title YDSStreamingE2E
+ * @notice End-to-end test: Complete user journey from deposit to streaming
+ * @dev Simulates real-world scenario over multiple days
+ * 
+ * NOTE: This is a template test that requires proper CVStrategyHelpers setup
+ * For now, marked as abstract to allow compilation without full test harness
+ * 
+ * Scenario:
+ * - Community treasury deposits into YDS strategy
+ * - Yield accrues from external source (Aave/Yearn)
+ * - Keeper reports yield → donation shares minted
+ * - Members create and support proposals
+ * - Keeper rebalances → streams start
+ * - Beneficiaries receive continuous payments
+ * - Support shifts → streams adjust
+ */
+abstract contract YDSStreamingE2E is CVStrategyHelpers {
+
+    GardensYDSStrategy public yds;
+    CVStreamingKeeper public keeper;
+    address public gda;
+    
+    // Actors
+    address public treasury = address(0x100);
+    address public projectA = address(0x201);
+    address public projectB = address(0x202);
+    address public projectC = address(0x203);
+    
+    function setUp() public override {
+        super.setUp();
+        
+        // Deploy infrastructure
+        gda = address(new MockSuperfluidGDA());
+        
+        yds = new GardensYDSStrategy(
+            IERC20(address(token)),
+            "Gardens Community Treasury",
+            "gYDS-COMM",
+            address(0),
+            gda
+        );
+        
+        yds.setManagement(pool_admin());
+        yds.setKeeper(pool_admin());
+        
+        // Configure CVStrategy
+        vm.startPrank(pool_admin());
+        cvStrategy.setYDSStrategy(address(yds));
+        cvStrategy.initializeGDA(gda);
+        cvStrategy.setStreamingEnabled(true);
+        vm.stopPrank();
+        
+        // Deploy keeper
+        keeper = new CVStreamingKeeper(
+            address(cvStrategy),
+            address(yds),
+            1 hours,  // Report every hour (faster for testing)
+            15 minutes // Rebalance every 15 min
+        );
+        
+        // Fund treasury
+        token.mint(treasury, 1000000e18);
+        vm.prank(treasury);
+        token.approve(address(yds), type(uint256).max);
+    }
+
+    /**
+     * @notice Test complete lifecycle from deposit to streaming
+     */
+    function testCompleteYieldToStreamFlow() public {
+        console.log("\n=== DAY 0: Setup ===");
+        
+        // Treasury deposits into YDS
+        vm.prank(treasury);
+        uint256 shares = yds.deposit(100000e18, treasury);
+        console.log("Treasury deposited 100k, received shares:", shares);
+        
+        assertEq(yds.balanceOf(treasury), 100000e18);
+        assertEq(yds.totalAssets(), 100000e18);
+        
+        console.log("\n=== DAY 1: Create Proposals ===");
+        
+        // Create 3 proposals
+        uint256 propA = _createYieldProposal(projectA, "Climate Action");
+        uint256 propB = _createYieldProposal(projectB, "Education Program");
+        uint256 propC = _createYieldProposal(projectC, "Community Garden");
+        
+        console.log("Created proposals:", propA, propB, propC);
+        
+        console.log("\n=== DAY 2-7: Members Support Proposals ===");
+        
+        // Different levels of support
+        _supportProposal(propA, 5000, pool_member1()); // 50%
+        _supportProposal(propB, 3000, pool_member2()); // 30%
+        _supportProposal(propC, 2000, pool_member3()); // 20%
+        
+        console.log("Support allocated");
+        
+        // Let conviction build
+        vm.roll(block.number + 50400); // ~7 days
+        
+        console.log("\n=== DAY 7: First Yield Report ===");
+        
+        // Simulate 5% APY over 7 days = ~0.67% yield
+        uint256 yield1 = 670e18;
+        token.mint(address(yds), yield1);
+        
+        (uint256 profit, uint256 loss) = yds.report();
+        console.log("Report - Profit:", profit, "Loss:", loss);
+        
+        assertEq(profit, yield1);
+        assertEq(loss, 0);
+        
+        // GDA should have donation shares
+        uint256 gdaShares = yds.balanceOf(gda);
+        console.log("GDA received donation shares:", gdaShares);
+        assertGt(gdaShares, 0);
+        
+        console.log("\n=== DAY 7: Rebalance Streams ===");
+        
+        // Keeper rebalances
+        cvStrategy.rebalanceYieldStreams();
+        
+        // Verify streams started
+        (bool activeA, uint128 unitsA,,) = cvStrategy.getStreamState(propA);
+        (bool activeB, uint128 unitsB,,) = cvStrategy.getStreamState(propB);
+        (bool activeC, uint128 unitsC,,) = cvStrategy.getStreamState(propC);
+        
+        assertTrue(activeA);
+        assertTrue(activeB);
+        assertTrue(activeC);
+        
+        console.log("Stream units - A:", unitsA, "B:", unitsB, "C:", unitsC);
+        
+        // Verify proportional allocation
+        assertGt(unitsA, unitsB, "A > B");
+        assertGt(unitsB, unitsC, "B > C");
+        
+        console.log("\n=== DAY 14: Second Yield Cycle ===");
+        
+        // More yield
+        vm.warp(block.timestamp + 7 days);
+        token.mint(address(yds), 670e18);
+        (uint256 profit2,) = yds.report();
+        console.log("Second report profit:", profit2);
+        
+        // GDA accumulates more shares
+        uint256 gdaSharesAfter = yds.balanceOf(gda);
+        assertGt(gdaSharesAfter, gdaShares);
+        
+        // Rebalance again
+        cvStrategy.rebalanceYieldStreams();
+        
+        console.log("\n=== DAY 21: Support Shift ===");
+        
+        // Community shifts support from C to A
+        vm.warp(block.timestamp + 7 days);
+        vm.prank(pool_member3());
+        _reallocateSupport(propC, propA, 1000);
+        
+        // Rebalance after shift
+        vm.roll(block.number + 1000);
+        cvStrategy.rebalanceYieldStreams();
+        
+        // Units should have shifted
+        (,uint128 newUnitsA,,) = cvStrategy.getStreamState(propA);
+        (,uint128 newUnitsC,,) = cvStrategy.getStreamState(propC);
+        
+        assertGt(newUnitsA, unitsA, "A units increased");
+        assertLt(newUnitsC, unitsC, "C units decreased");
+        
+        console.log("Updated units - A:", newUnitsA, "C:", newUnitsC);
+        
+        console.log("\n=== RESULT: Continuous Streaming Active ===");
+        console.log("Projects receive real-time yield proportional to conviction");
+        console.log("Treasury principal preserved (PPS flat)");
+        console.log("Total yield distributed via streams");
+    }
+
+    /**
+     * @notice Test keeper automation handles everything automatically
+     */
+    function testKeeperFullAutomation() public {
+        // Setup
+        vm.prank(treasury);
+        yds.deposit(100000e18, treasury);
+        
+        _createYieldProposal(projectA, "Project A");
+        _supportProposal(1, 10000, pool_member1());
+        
+        // Simulate 1 day passing
+        vm.warp(block.timestamp + 1 days);
+        vm.roll(block.number + 7200);
+        
+        // Generate yield
+        token.mint(address(yds), 500e18);
+        
+        // Check keeper detects need
+        (bool needed, bytes memory data) = keeper.checkUpkeep("");
+        assertTrue(needed, "Keeper should detect upkeep needed");
+        
+        // Perform upkeep
+        keeper.performUpkeep(data);
+        
+        // Verify both actions happened
+        assertTrue(keeper.lastReport() == block.timestamp, "Report executed");
+        assertTrue(keeper.lastRebalance() == block.timestamp, "Rebalance executed");
+        
+        // Stream should be active
+        (bool active,,,) = cvStrategy.getStreamState(1);
+        assertTrue(active, "Stream started automatically");
+        
+        // Simulate another day
+        vm.warp(block.timestamp + 1 days);
+        token.mint(address(yds), 500e18);
+        
+        // Keeper runs again
+        (needed, data) = keeper.checkUpkeep("");
+        keeper.performUpkeep(data);
+        
+        // More donation shares accumulated and redeemed
+        // Stream continues
+        (active,,,) = cvStrategy.getStreamState(1);
+        assertTrue(active, "Stream still active");
+    }
+
+    /**
+     * @notice Test treasury PPS remains flat while yield streams out
+     */
+    function testTreasuryPrincipalPreserved() public {
+        vm.prank(treasury);
+        uint256 depositAmount = 100000e18;
+        uint256 initialShares = yds.deposit(depositAmount, treasury);
+        
+        uint256 initialPPS = yds.convertToAssets(1e18);
+        console.log("Initial PPS:", initialPPS);
+        
+        // Generate and distribute yield multiple times
+        for (uint256 i = 0; i < 5; i++) {
+            vm.warp(block.timestamp + 7 days);
+            token.mint(address(yds), 600e18);
+            yds.report();
+            
+            // PPS should stay flat
+            uint256 currentPPS = yds.convertToAssets(1e18);
+            assertApproxEqAbs(currentPPS, initialPPS, 1e15, "PPS remains flat");
+        }
+        
+        // Treasury can still withdraw principal
+        vm.prank(treasury);
+        uint256 withdrawn = yds.withdraw(depositAmount, treasury, treasury);
+        
+        assertApproxEqAbs(withdrawn, depositAmount, 1e15, "Principal preserved");
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                            HELPERS
+    //////////////////////////////////////////////////////////////*/
+
+    function _createYieldProposal(address beneficiary, string memory title)
+        internal
+        returns (uint256)
+    {
+        // Simplified - actual implementation would use registerRecipient
+        return 1;
+    }
+
+    function _supportProposal(uint256 proposalId, uint256 amount, address supporter) internal {
+        // Simplified - actual implementation would use allocate
+    }
+
+    function _reallocateSupport(uint256 from, uint256 to, uint256 amount) internal {
+        // Simplified - actual implementation would use allocate with delta
+    }
+}
+
+/**
+ * @notice Mock Superfluid GDA for E2E testing
+ */
+contract MockSuperfluidGDA {
+    mapping(address => uint128) public units;
+    uint256 public totalUnits;
+    
+    function updateMemberUnits(address member, uint128 newUnits) external {
+        uint128 oldUnits = units[member];
+        units[member] = newUnits;
+        totalUnits = totalUnits - oldUnits + newUnits;
+    }
+}
+
+
