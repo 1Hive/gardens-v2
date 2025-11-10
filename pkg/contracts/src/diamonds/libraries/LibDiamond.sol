@@ -19,7 +19,7 @@ error NoSelectorsProvidedForFacetForCut(address _facetAddress);
 error CannotAddSelectorsToZeroAddress(bytes4[] _selectors);
 error NoBytecodeAtAddress(address _contractAddress, string _message);
 error IncorrectFacetCutAction(uint8 _action);
-error CannotAddFunctionToDiamondThatAlreadyExists(bytes4 _selector);
+error CannotAddFunctionToDiamondThatAlreadyExists(bytes4 _selector, string _selectorSignature);
 error CannotReplaceFunctionsFromFacetWithZeroAddress(bytes4[] _selectors);
 error CannotReplaceImmutableFunction(bytes4 _selector);
 error CannotReplaceFunctionWithTheSameFunctionFromTheSameFacet(bytes4 _selector);
@@ -118,7 +118,7 @@ library LibDiamond {
             bytes4 selector = _functionSelectors[selectorIndex];
             address oldFacetAddress = ds.facetAddressAndSelectorPosition[selector].facetAddress;
             if (oldFacetAddress != address(0)) {
-                revert CannotAddFunctionToDiamondThatAlreadyExists(selector);
+                revert CannotAddFunctionToDiamondThatAlreadyExists(selector, _selectorDisplayName(selector));
             }
             ds.facetAddressAndSelectorPosition[selector] = FacetAddressAndSelectorPosition(_facetAddress, selectorCount);
             ds.selectors.push(selector);
@@ -200,6 +200,69 @@ library LibDiamond {
                 revert InitializationFunctionReverted(_init, _calldata);
             }
         }
+    }
+
+    function _selectorToHexString(bytes4 selector) internal pure returns (string memory) {
+        bytes memory alphabet = "0123456789abcdef";
+        bytes memory str = new bytes(10);
+        str[0] = "0";
+        str[1] = "x";
+        for (uint256 i = 0; i < 4; i++) {
+            str[2 + i * 2] = alphabet[uint8(selector[i] >> 4)];
+            str[3 + i * 2] = alphabet[uint8(selector[i] & 0x0f)];
+        }
+        return string(str);
+    }
+
+    function _selectorDisplayName(bytes4 selector) internal pure returns (string memory) {
+        string memory known = _knownSelectorName(selector);
+        if (bytes(known).length > 0) {
+            return known;
+        }
+        return _selectorToHexString(selector);
+    }
+
+    function _knownSelectorName(bytes4 selector) internal pure returns (string memory) {
+        if (selector == bytes4(0xd5b7cc54)) {
+            return "CVAdminFacet.setPoolParams";
+        }
+        if (selector == bytes4(0x924e6704)) {
+            return "CVAdminFacet.connectSuperfluidGDA";
+        }
+        if (selector == bytes4(0xc69271ec)) {
+            return "CVAdminFacet.disconnectSuperfluidGDA";
+        }
+        if (selector == bytes4(0xef2920fc)) {
+            return "CVAllocationFacet.allocate";
+        }
+        if (selector == bytes4(0x0a6f0ee9)) {
+            return "CVAllocationFacet.distribute";
+        }
+        if (selector == bytes4(0xb41596ec)) {
+            return "CVDisputeFacet.disputeProposal";
+        }
+        if (selector == bytes4(0x311a6c56)) {
+            return "CVDisputeFacet.rule";
+        }
+        if (selector == bytes4(0x2ed04b2b)) {
+            return "CVPowerFacet.decreasePower";
+        }
+        if (selector == bytes4(0x1ddf1e23)) {
+            return "CVPowerFacet.deactivatePoints()";
+        }
+        if (selector == bytes4(0x6453d9c4)) {
+            return "CVPowerFacet.deactivatePoints(address)";
+        }
+        if (selector == bytes4(0x2bbe0cae)) {
+            return "CVProposalFacet.registerRecipient";
+        }
+        if (selector == bytes4(0xe0a8f6f5)) {
+            return "CVProposalFacet.cancelProposal";
+        }
+        if (selector == bytes4(0x141e3b38)) {
+            return "CVProposalFacet.editProposal";
+        }
+        return "";
     }
 
     function enforceHasContractCode(address _contract, string memory _errorMessage) internal view {
