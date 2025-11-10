@@ -25,11 +25,11 @@ templates:
         - Member
       abis:
         - name: RegistryCommunity
-          file: ../contracts/out/RegistryCommunity.sol/RegistryCommunity.json
+          file: ../contracts/out/DiamondAggregated/RegistryCommunity.json
         - name: ERC20
           file: ../contracts/out/ERC20.sol/ERC20.json
         - name: CVStrategy
-          file: ../contracts/out/CVStrategy.sol/CVStrategy.json
+          file: ../contracts/out/DiamondAggregated/CVStrategy.json
         - name: RegistryFactory
           file: ../contracts/out/RegistryFactory.sol/RegistryFactory.json
      
@@ -98,9 +98,9 @@ templates:
         - Allo
       abis:
         - name: CVStrategy
-          file: ../contracts/out/CVStrategy.sol/CVStrategy.json
+          file: ../contracts/out/DiamondAggregated/CVStrategy.json
         - name: RegistryCommunity
-          file: ../contracts/out/RegistryCommunity.sol/RegistryCommunity.json
+          file: ../contracts/out/DiamondAggregated/RegistryCommunity.json
         - name: Allo
           file: ../contracts/out/Allo.sol/Allo.json
       eventHandlers:
@@ -144,6 +144,8 @@ templates:
           handler: handleSuperfluidGDAConnected
         - event: SuperfluidGDADisconnected(indexed address,indexed address)
           handler: handleSuperfluidGDADisconnected
+        - event: ProposalEdited(uint256,(uint256,string),address,uint256)
+          handler: handleProposalEdited
 
       file: ./src/mappings/cv-strategy.ts
 
