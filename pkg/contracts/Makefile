@@ -145,7 +145,7 @@ deploy-verify-opsep:
 	-forge verify-contract \
   --rpc-url $(RPC_URL_OP_TESTNET) \
   0xd7b72fcb6a4e2857685175f609d1498ff5392e46 \
-  /home/corantin/Documents/GitHub/gardens-v2/main/pkg/contracts/src/RegistryFactory.sol:RegistryFactory \
+  /home/corantin/Documents/GitHub/gardens-v2/main/pkg/contracts/src/RegistryFactoryV0_0.sol:RegistryFactoryV0_0 \
 	--etherscan-api-key $(OPTIMISM_API_KEY)
 
 deploy-opsep: 
@@ -175,7 +175,7 @@ upgrade-opsep:
 	-vvv
 
 upgrade-diamond-opsep: verify-storage
-	-forge script script/UpgradeCVDiamond.s.sol:UpgradeCVDiamond \
+	-forge script script/UpgradeCVDiamondTest.s.sol:UpgradeCVDiamondTest \
 	--rpc-url $(RPC_URL_OP_TESTNET) \
 	--sig "run(string)" 'opsepolia' \
 	--account pkGarden \
@@ -315,7 +315,7 @@ deploy-verify-arbsep:
 	-forge verify-contract \
   --rpc-url $(RPC_URL_ARB_TESTNET) \
   0xd7b72fcb6a4e2857685175f609d1498ff5392e46 \
-  /home/corantin/Documents/GitHub/gardens-v2/main/pkg/contracts/src/RegistryFactory.sol:RegistryFactory \
+  /home/corantin/Documents/GitHub/gardens-v2/main/pkg/contracts/src/RegistryFactoryV0_0.sol:RegistryFactoryV0_0 \
 	--etherscan-api-key $(ETHERSCAN_API_KEY)
 
 deploy-arbsep: 
@@ -973,7 +973,7 @@ deploy-or-upgrade-if-exists-safe-arbitrator-gnosis:
 verify-tenderly-gnosis: 
 	-forge verify-contract \
   0x853c80cce43c2f37d60c3679abc9966a346787f4 \
-  CVStrategy \
+  CVStrategyV0_0 \
   --etherscan-api-key ZVbLp2Jg48fSiv9gNsqjjg2iEAmYwHO1 \
   --verifier-url https://api.tenderly.co/api/v1/account/Gossman/project/project/etherscan/verify/network/100/public \
   --watch \

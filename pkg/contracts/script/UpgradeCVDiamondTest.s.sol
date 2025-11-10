@@ -148,7 +148,7 @@ contract UpgradeCVDiamondTest is BaseMultiChain {
         proposalAdd[0] = CVProposalFacet.editProposal.selector;
         cuts[5] = IDiamond.FacetCut({
             facetAddress: address(proposalFacet),
-            action: IDiamond.FacetCutAction.Add,
+            action: IDiamond.FacetCutAction.Replace,
             functionSelectors: proposalAdd
         });
 

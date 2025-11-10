@@ -23,7 +23,7 @@ import {ProxyOwnableUpgrader} from "../ProxyOwnableUpgrader.sol";
 import {ISybilScorer} from "../ISybilScorer.sol";
 
 // Diamond Pattern imports
-import {LibDiamond} from "../libraries/LibDiamond.sol";
+import {LibDiamond} from "../diamonds/libraries/LibDiamond.sol";
 import {IDiamondCut} from "../diamonds/interfaces/IDiamondCut.sol";
 
 /*|--------------------------------------------|*/

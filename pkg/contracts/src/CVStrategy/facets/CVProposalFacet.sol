@@ -20,6 +20,7 @@ contract CVProposalFacet is CVStrategyBaseFacet {
     /*|--------------------------------------------|*/
     event ProposalCreated(uint256 poolId, uint256 proposalId);
     event ProposalCancelled(uint256 proposalId);
+    event ProposalEdited(uint256 proposalId, Metadata metadata, address beneficiary, uint256 requestedAmount);
     event SupportAdded(
         address from, uint256 proposalId, uint256 amount, uint256 totalStakedAmount, uint256 convictionLast
     );

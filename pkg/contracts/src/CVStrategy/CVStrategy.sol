@@ -39,7 +39,7 @@ import {PowerManagementUtils} from "./PowerManagementUtils.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Library.sol";
 
 // Diamond Pattern imports
-import {LibDiamond} from "../libraries/LibDiamond.sol";
+import {LibDiamond} from "../diamonds/libraries/LibDiamond.sol";
 import {IDiamondCut} from "../diamonds/interfaces/IDiamondCut.sol";
 
 /// @custom:oz-upgrades-from CVStrategy
