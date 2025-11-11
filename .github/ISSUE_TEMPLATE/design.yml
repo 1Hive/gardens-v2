@@ -1,50 +1,67 @@
 name: Design
-description: Request quality assurance coverage for a change or release.
-title: "[QA]: "
-labels: ["sanity"]
+description: Propose or refine a UI/UX design element for Gardens V2.
+title: "[Design]: "
+labels: ["👩‍🎨 design"]
+projects: ["1Hive/17"]
 body:
   - type: markdown
     attributes:
       value: |
-        Outline what needs testing, where to test it, and who to talk to.
-  - type: input
-    id: contact
+        Use this form to request new designs, updates to existing components, or UX refinements.  
+        Reference the design system and include enough context for handoff.
+
+        **Figma:** [Gardens V2 UI](https://www.figma.com/design/v9ECAmLYs2pam1wguh3HUS/Gardens-V2-UI?node-id=1-25&p=f&t=QTrkzN8ykb9AdIi6-0)  
+        **Miro:** [Design Collaboration Board](https://miro.com/app/board/uXjVJF2w8YI=/)
+
+  - type: textarea
+    id: summary
     attributes:
-      label: Requester
-      description: Who should QA contact for questions?
-      placeholder: Name or Slack handle
+      label: Summary
+      description: Briefly describe the design goal or problem to solve.
+      placeholder: Improve visual hierarchy in proposal cards...
     validations:
       required: true
+
   - type: textarea
-    id: scope
+    id: context
     attributes:
-      label: Scope
-      description: Summarize what needs to be tested and the expected outcome.
-      placeholder: Validate the proposal creation flow covering...
+      label: Context and rationale
+      description: Explain why this design work is needed. Mention any related issues or product goals.
+      placeholder: Current layout causes confusion between proposal states...
     validations:
       required: true
-  - type: textarea
-    id: environment
+
+  - type: dropdown
+    id: design_type
     attributes:
-      label: Test environment
-      description: Provide builds, branches, credentials, or flags to use.
-      placeholder: Staging app URL, branch name, feature flags...
+      label: Design category
+      description: Select the kind of work this involves.
+      options:
+        - New feature / component
+        - UX refinement
+        - Visual polish
+        - Design system update
+        - Other
     validations:
       required: true
+
   - type: textarea
-    id: checklist
+    id: deliverables
     attributes:
-      label: Checks to run
-      description: Optional checklist or areas to pay attention to.
+      label: Expected deliverables
+      description: List what should result from this design task (screens, components, flow diagrams, etc.).
       placeholder: |
-        - [ ] Smoke login
-        - [ ] Verify metrics in...
+        - Updated Figma components  
+        - Interaction flow prototype  
+        - Accessibility review notes
     validations:
       required: false
+
   - type: textarea
-    id: notes
+    id: links
     attributes:
-      label: Extra context
-      description: Related issues, risks, or links.
+      label: References or assets
+      description: Include links to mockups, specifications, or related materials.
+      placeholder: Figma link, Miro frames, screenshots, Notion doc, etc.
     validations:
       required: false

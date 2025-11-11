@@ -1,7 +1,8 @@
 name: QA request
 description: Request quality assurance coverage for a change or release.
 title: "[QA]: "
-labels: ["sanity"]
+labels: ["🧼 Sanity"]
+projects: ["1Hive/17"]
 body:
   - type: markdown
     attributes:
