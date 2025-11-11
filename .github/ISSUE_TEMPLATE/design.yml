@@ -1,43 +1,50 @@
----
-name: Task
-description: Track a general engineering or operational task.
-title: "[Task]: "
-labels: ["task"]
+name: Design
+description: Request quality assurance coverage for a change or release.
+title: "[QA]: "
+labels: ["sanity"]
 body:
   - type: markdown
     attributes:
       value: |
-        Capture the goal, the work needed, and how you'll know it's done.
+        Outline what needs testing, where to test it, and who to talk to.
   - type: input
-    id: summary
+    id: contact
     attributes:
-      label: Summary
-      description: Brief headline for the task.
-      placeholder: Publish docs update for...
+      label: Requester
+      description: Who should QA contact for questions?
+      placeholder: Name or Slack handle
     validations:
       required: true
   - type: textarea
-    id: outcome
+    id: scope
     attributes:
-      label: Desired outcome
-      description: What does success look like?
-      placeholder: When complete...
+      label: Scope
+      description: Summarize what needs to be tested and the expected outcome.
+      placeholder: Validate the proposal creation flow covering...
     validations:
       required: true
   - type: textarea
-    id: plan
+    id: environment
     attributes:
-      label: Key steps
-      description: Outline the main actions or checklist items.
+      label: Test environment
+      description: Provide builds, branches, credentials, or flags to use.
+      placeholder: Staging app URL, branch name, feature flags...
+    validations:
+      required: true
+  - type: textarea
+    id: checklist
+    attributes:
+      label: Checks to run
+      description: Optional checklist or areas to pay attention to.
       placeholder: |
-        - [ ] Step 1
-        - [ ] Step 2
+        - [ ] Smoke login
+        - [ ] Verify metrics in...
     validations:
       required: false
   - type: textarea
-    id: resources
+    id: notes
     attributes:
-      label: Links or context
-      description: Add references, related issues, or notes.
+      label: Extra context
+      description: Related issues, risks, or links.
     validations:
       required: false
