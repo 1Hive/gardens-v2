@@ -1,4 +1,5 @@
 export const QUERY_PARAMS = {
+  simulatedWallet: "wallet",
   gardenPage: {
     newCommunity: "newCommunity",
   },
