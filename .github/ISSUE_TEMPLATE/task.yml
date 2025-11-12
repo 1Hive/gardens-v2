@@ -1,7 +1,7 @@
 name: Task
 description: Track a general engineering or operational task.
-title: "[Task]: "
-labels: ["task"]
+type: "Task"
+projects: ["1Hive/17"]
 body:
   - type: markdown
     attributes:
