@@ -1,3 +1,5 @@
+"use client";
+
 import {
   createContext,
   useContext,
@@ -10,8 +12,27 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { logOnce } from "@/utils/log";
 
-const PERSISTED_QUERY_KEYS = [QUERY_PARAMS.simulatedWallet];
+const SIMULATED_WALLET_KEY = QUERY_PARAMS.simulatedWallet;
+const SIMULATED_WALLET_ALIASES = [SIMULATED_WALLET_KEY, "simulateWallet"];
+const PERSISTED_QUERY_KEYS = [SIMULATED_WALLET_KEY];
 const persistedParamsCache: Record<string, string> = {};
+
+const normalizeSimulatedWalletParam = (
+  params: Record<string, string>,
+): Record<string, string> => {
+  const normalized = { ...params };
+  for (const alias of SIMULATED_WALLET_ALIASES) {
+    if (alias === SIMULATED_WALLET_KEY) continue;
+    if (
+      normalized[alias] != null &&
+      normalized[SIMULATED_WALLET_KEY] == null
+    ) {
+      normalized[SIMULATED_WALLET_KEY] = normalized[alias];
+    }
+    delete normalized[alias];
+  }
+  return normalized;
+};
 
 const collectPersistedParams = () => {
   const entries = PERSISTED_QUERY_KEYS.map((key) => {
@@ -25,11 +46,14 @@ const collectPersistedParams = () => {
 const persistParams = (params: Record<string, string>) => {
   PERSISTED_QUERY_KEYS.forEach((key) => {
     const value = params[key];
+    if (!Object.prototype.hasOwnProperty.call(params, key)) return;
+
     if (value) {
       persistedParamsCache[key] = value;
-    } else if (Object.prototype.hasOwnProperty.call(params, key)) {
-      delete persistedParamsCache[key];
+      return;
     }
+
+    delete persistedParamsCache[key];
   });
 };
 
@@ -61,8 +85,17 @@ export const QueryParamsProvider = ({ children }: { children: ReactNode }) => {
       );
     }
 
-    if (searchParams.size) {
-      const newParams = Object.fromEntries(searchParams.entries());
+    const runtimeSearchParams =
+      searchParams.size ?
+        searchParams
+      : typeof window !== "undefined" ?
+        new URLSearchParams(window.location.search)
+      : undefined;
+
+    if (runtimeSearchParams?.size) {
+      const newParams = normalizeSimulatedWalletParam(
+        Object.fromEntries(runtimeSearchParams.entries()),
+      );
       setQueryParams((prev) => ({ ...prev, ...newParams }));
       persistParams(newParams);
       logOnce(
@@ -70,7 +103,7 @@ export const QueryParamsProvider = ({ children }: { children: ReactNode }) => {
         "QueryParamsProvider: collected query params",
         newParams,
       );
-      router.push(path);
+      router.replace(path);
       return;
     }
 
