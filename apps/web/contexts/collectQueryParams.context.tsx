@@ -7,7 +7,31 @@ import {
   useRef,
 } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { QUERY_PARAMS } from "@/constants/query-params";
 import { logOnce } from "@/utils/log";
+
+const PERSISTED_QUERY_KEYS = [QUERY_PARAMS.simulatedWallet];
+const persistedParamsCache: Record<string, string> = {};
+
+const collectPersistedParams = () => {
+  const entries = PERSISTED_QUERY_KEYS.map((key) => {
+    const value = persistedParamsCache[key];
+    return value ? [key, value] : null;
+  }).filter((entry): entry is [string, string] => entry != null);
+
+  return Object.fromEntries(entries);
+};
+
+const persistParams = (params: Record<string, string>) => {
+  PERSISTED_QUERY_KEYS.forEach((key) => {
+    const value = params[key];
+    if (value) {
+      persistedParamsCache[key] = value;
+    } else if (Object.prototype.hasOwnProperty.call(params, key)) {
+      delete persistedParamsCache[key];
+    }
+  });
+};
 
 // Define the context
 interface QueryParamsContextType {
@@ -26,8 +50,10 @@ export const QueryParamsProvider = ({ children }: { children: ReactNode }) => {
   const pathRef = useRef(path);
 
   useEffect(() => {
+    const persistedParams = collectPersistedParams();
+
     if (pathRef.current !== path) {
-      setQueryParams({}); // Reset query params when changing page
+      setQueryParams(persistedParams);
       pathRef.current = path;
       logOnce(
         "debug",
@@ -35,17 +61,26 @@ export const QueryParamsProvider = ({ children }: { children: ReactNode }) => {
       );
     }
 
-    if (!Object.keys(queryParams).length && searchParams.size) {
+    if (searchParams.size) {
       const newParams = Object.fromEntries(searchParams.entries());
-      setQueryParams(newParams);
+      setQueryParams((prev) => ({ ...prev, ...newParams }));
+      persistParams(newParams);
       logOnce(
         "debug",
         "QueryParamsProvider: collected query params",
         newParams,
       );
       router.push(path);
+      return;
     }
-  }, [searchParams, path]);
+
+    setQueryParams((prev) => {
+      if (Object.keys(prev).length || !Object.keys(persistedParams).length) {
+        return prev;
+      }
+      return persistedParams;
+    });
+  }, [searchParams, path, router]);
 
   return (
     <QueryParamsContext.Provider value={queryParams}>
