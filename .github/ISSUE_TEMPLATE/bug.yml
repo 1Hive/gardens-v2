@@ -1,6 +1,5 @@
 name: Bug report
 description: Report a problem or unexpected behavior in the Gardens app.
-title: "[Bug]: "
 labels: ["triage"]
 type: "Bug"
 projects: ["1Hive/20", "1Hive/17"]

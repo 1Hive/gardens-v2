@@ -1,6 +1,5 @@
 name: Backend
 description: Track a backend development task for Gardens V2 (Contracts or Subgraph).
-title: "[Backend]: "
 projects: ["1Hive/17"]
 body:
   - type: markdown
