@@ -431,12 +431,15 @@ export function Proposals({
     }, []);
   };
 
-  const calculateTotalTokens = (exceptProposalId?: string) => {
-    if (!Object.keys(inputs).length) {
+  const calculateTotalTokens = (
+    inputState: { [key: string]: ProposalInputItem },
+    exceptProposalId?: string,
+  ) => {
+    if (!Object.keys(inputState).length) {
       console.error("Inputs not yet computed");
       return 0n;
     }
-    return Object.values(inputs).reduce((acc, curr) => {
+    return Object.values(inputState).reduce((acc, curr) => {
       if (
         exceptProposalId !== undefined &&
         exceptProposalId === curr.proposalId
@@ -449,15 +452,30 @@ export function Proposals({
   };
 
   const inputHandler = (proposalId: string, value: bigint) => {
-    const currentPoints = calculateTotalTokens(proposalId);
+    setInputs((prev) => {
+      const currentPoints = calculateTotalTokens(prev, proposalId);
+      const previousValue = prev[proposalId]?.value ?? 0n;
+      const availableCapacity = memberActivatedPoints - currentPoints;
+      const safePreviousValue = previousValue < 0n ? 0n : previousValue;
+      const maxAllowableValue =
+        availableCapacity < 0n ? safePreviousValue : availableCapacity;
+      const safeMaxAllowableValue =
+        maxAllowableValue < 0n ? 0n : maxAllowableValue;
+      const clampedValue =
+        value < 0n ? 0n : bigIntMin(value, safeMaxAllowableValue);
 
-    const maxAllowableValue = memberActivatedPoints - currentPoints;
-    const minValue = (value = bigIntMin(value, maxAllowableValue));
+      const nextInputs = {
+        ...prev,
+        [proposalId]: {
+          ...prev[proposalId],
+          value: clampedValue,
+        },
+      };
 
-    const input = inputs[proposalId];
-    input.value = minValue;
-    setInputs((prev) => ({ ...prev, [proposalId]: input }));
-    setInputAllocatedTokens(currentPoints + minValue);
+      setInputAllocatedTokens(currentPoints + clampedValue);
+
+      return nextInputs;
+    });
   };
 
   const toastId = useRef<Id | null>(null);
