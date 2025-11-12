@@ -1,0 +1,75 @@
+name: Backend
+description: Track a backend development task for Gardens V2 (Contracts or Subgraph).
+projects: ["1Hive/17"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template for backend work such as contract updates, indexing logic, or subgraph schema improvements.
+
+  - type: dropdown
+    id: domain
+    attributes:
+      label: Domain
+      description: Select the backend area this issue targets.
+      options:
+        - Contracts
+        - Subgraph
+    validations:
+      required: true
+
+  - type: input
+    id: summary
+    attributes:
+      label: Summary
+      description: Short headline describing the backend task.
+      placeholder: Implement CVStrategy upgradeable version
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What needs to be built, fixed, or improved?
+      placeholder: |
+        Add a new function in the CVStrategy contract to handle streaming yield from Superfluid.
+        Update tests and ensure storage layout compatibility.
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Define when this task can be considered complete.
+      placeholder: |
+        - Contract compiles successfully
+        - Tests cover new logic
+        - Subgraph indexing works without errors
+    validations:
+      required: true
+
+  - type: textarea
+    id: implementation
+    attributes:
+      label: Implementation details
+      description: Optional notes about contracts, subgraph entities, or related systems.
+      placeholder: |
+        - Update `BaseStrategy.sol`
+        - Deploy to Arbitrum and Celo testnets
+        - Adjust Subgraph mappings for new event
+    validations:
+      required: false
+
+  - type: textarea
+    id: resources
+    attributes:
+      label: References or assets
+      description: Include links to related issues, branches, deployments, or PRs.
+      placeholder: |
+        - Related issue: #456
+        - PR: (to be added)
+        - Subgraph URL: https://api.thegraph.com/subgraphs/name/...
+    validations:
+      required: false
