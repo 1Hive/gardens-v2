@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { Suspense, useEffect, useMemo, useState } from "react";
 import "@rainbow-me/rainbowkit/styles.css";
 import {
   connectorsForWallets,
@@ -144,9 +144,11 @@ type Props = {
 
 const Providers = ({ children }: Props) => {
   return (
-    <QueryParamsProvider>
-      <ProvidersWithQueryParams>{children}</ProvidersWithQueryParams>
-    </QueryParamsProvider>
+    <Suspense fallback={null}>
+      <QueryParamsProvider>
+        <ProvidersWithQueryParams>{children}</ProvidersWithQueryParams>
+      </QueryParamsProvider>
+    </Suspense>
   );
 };
 
