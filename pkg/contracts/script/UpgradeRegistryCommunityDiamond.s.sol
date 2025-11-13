@@ -16,10 +16,12 @@ import "forge-std/console2.sol";
 /**
  * @title UpgradeRegistryCommunityDiamond
  * @notice Upgrades RegistryCommunity contracts to diamond pattern with facets
- * @dev Deploys facets, upgrades main contract, and configures diamond cuts for all existing communities
+ * @dev Can broadcast upgrades directly or generate Safe transaction payloads via a flag
  */
 contract UpgradeRegistryCommunityDiamond is BaseMultiChain {
     using stdJson for string;
+
+    bool internal directBroadcastOverride;
 
     // Deployed facet addresses
     CommunityAdminFacet public adminFacet;
@@ -29,10 +31,19 @@ contract UpgradeRegistryCommunityDiamond is BaseMultiChain {
     CommunityStrategyFacet public strategyFacet;
 
     function runCurrentNetwork(string memory networkJson) public override {
-        console2.log("=== Starting RegistryCommunity Diamond Pattern Upgrade (Safe Transaction Builder) ===");
+        bool directBroadcast = directBroadcastOverride || vm.envOr("DIRECT_COMMUNITY_DIAMOND", false);
+        console2.log(
+            directBroadcast
+                ? "=== Starting RegistryCommunity Diamond Pattern Upgrade (Direct Broadcast) ==="
+                : "=== Starting RegistryCommunity Diamond Pattern Upgrade (Safe Transaction Builder) ==="
+        );
 
         // 1. Deploy new implementation and facets
-        console2.log("\n[1/4] Deploying new RegistryCommunity implementation and facets...");
+        console2.log(
+            directBroadcast
+                ? "\n[1/3] Deploying new RegistryCommunity implementation and facets..."
+                : "\n[1/4] Deploying new RegistryCommunity implementation and facets..."
+        );
         address communityImplementation = address(new RegistryCommunity());
         console2.log("  RegistryCommunity impl:", communityImplementation);
 
@@ -51,40 +62,88 @@ contract UpgradeRegistryCommunityDiamond is BaseMultiChain {
         strategyFacet = new CommunityStrategyFacet();
         console2.log("  CommunityStrategyFacet:", address(strategyFacet));
 
-        // Get ProxyOwner and Safe owner for JSON metadata
-        address proxyOwner = networkJson.readAddress(getKeyNetwork(".ENVS.PROXY_OWNER"));
-        address safeOwner = ProxyOwner(proxyOwner).owner();
-
-        string memory json = string(abi.encodePacked("["));
-
-        // 2. Update RegistryFactory community template
-        console2.log("\n[2/4] Building RegistryFactory community template update transaction...");
         address registryFactoryProxy = networkJson.readAddress(getKeyNetwork(".PROXIES.REGISTRY_FACTORY"));
         RegistryFactory registryFactory = RegistryFactory(payable(address(registryFactoryProxy)));
+
+        address[] memory registryCommunityProxies =
+            networkJson.readAddressArray(getKeyNetwork(".PROXIES.REGISTRY_COMMUNITIES"));
+        IDiamond.FacetCut[] memory cuts = _getFacetCuts();
+
+        if (directBroadcast) {
+            _executeDirectUpgrades(
+                registryFactory, registryFactoryProxy, registryCommunityProxies, communityImplementation, cuts
+            );
+        } else {
+            address proxyOwner = networkJson.readAddress(getKeyNetwork(".ENVS.PROXY_OWNER"));
+            address safeOwner = ProxyOwner(proxyOwner).owner();
+            _generateSafeTransactions(
+                registryFactory,
+                registryFactoryProxy,
+                registryCommunityProxies,
+                communityImplementation,
+                cuts,
+                safeOwner,
+                networkJson
+            );
+        }
+
+        console2.log("\n=== Summary ===");
+        console2.log("Registry Factory: %s", registryFactoryProxy);
+        console2.log("Registry Communities: %s", registryCommunityProxies.length);
+        if (!directBroadcast) {
+            console2.log("Total transactions: %s", 1 + (registryCommunityProxies.length * 2));
+        }
+    }
+
+    function _executeDirectUpgrades(
+        RegistryFactory registryFactory,
+        address registryFactoryProxy,
+        address[] memory registryCommunityProxies,
+        address communityImplementation,
+        IDiamond.FacetCut[] memory cuts
+    ) internal {
+        console2.log("\n[2/3] Updating RegistryFactory community template...");
+        registryFactory.setRegistryCommunityTemplate(communityImplementation);
+        console2.log("  RegistryFactory template updated:", registryFactoryProxy);
+
+        console2.log("\n[3/3] Upgrading RegistryCommunity proxies and applying diamond cuts...");
+        for (uint256 i = 0; i < registryCommunityProxies.length; i++) {
+            RegistryCommunity community = RegistryCommunity(payable(address(registryCommunityProxies[i])));
+            community.upgradeTo(communityImplementation);
+            community.diamondCut(cuts, address(0), "");
+            console2.log("  Community", i + 1, "upgraded with diamond facets:", registryCommunityProxies[i]);
+        }
+    }
+
+    function _generateSafeTransactions(
+        RegistryFactory registryFactory,
+        address registryFactoryProxy,
+        address[] memory registryCommunityProxies,
+        address communityImplementation,
+        IDiamond.FacetCut[] memory cuts,
+        address safeOwner,
+        string memory networkJson
+    ) internal {
+        console2.log("\n[2/4] Building RegistryFactory community template update transaction...");
+        string memory json = string(abi.encodePacked("["));
         {
             bytes memory setTemplate =
                 abi.encodeWithSelector(registryFactory.setRegistryCommunityTemplate.selector, communityImplementation);
             json = string(abi.encodePacked(json, _createTransactionJson(registryFactoryProxy, setTemplate), ","));
         }
 
-        // 3. Upgrade existing RegistryCommunity proxies and configure facets
         console2.log("\n[3/4] Building RegistryCommunity upgrade + diamond cut transactions...");
-        address[] memory registryCommunityProxies =
-            networkJson.readAddressArray(getKeyNetwork(".PROXIES.REGISTRY_COMMUNITIES"));
-        IDiamond.FacetCut[] memory cuts = _getFacetCuts();
         bytes memory diamondCutCalldata =
             abi.encodeWithSelector(RegistryCommunity.diamondCut.selector, cuts, address(0), "");
 
         for (uint256 i = 0; i < registryCommunityProxies.length; i++) {
             RegistryCommunity community = RegistryCommunity(payable(address(registryCommunityProxies[i])));
 
-            // 3.a - Upgrade implementation
             bytes memory upgradeCalldata = abi.encodeWithSelector(community.upgradeTo.selector, communityImplementation);
             json = string(
                 abi.encodePacked(json, _createTransactionJson(registryCommunityProxies[i], upgradeCalldata), ",")
             );
 
-            // 3.b - Configure diamond facets
             json = string(
                 abi.encodePacked(json, _createTransactionJson(registryCommunityProxies[i], diamondCutCalldata), ",")
             );
@@ -92,16 +151,8 @@ contract UpgradeRegistryCommunityDiamond is BaseMultiChain {
             console2.log("  Community", i + 1, "added to batch:", registryCommunityProxies[i]);
         }
 
-        // Console log summary
-        console2.log("\n=== Summary ===");
-        console2.log("Registry Factory: %s", registryFactoryProxy);
-        console2.log("Registry Communities: %s", registryCommunityProxies.length);
-        console2.log("Total transactions: %s", 1 + (registryCommunityProxies.length * 2));
-
-        // Remove the last comma and close the JSON array
         json = string(abi.encodePacked(_removeLastChar(json), "]"));
 
-        // Write payload file
         _writePayloadFile(json, safeOwner, networkJson);
 
         console2.log("\n[4/4] Safe Transaction Builder JSON generated!");
@@ -115,7 +166,7 @@ contract UpgradeRegistryCommunityDiamond is BaseMultiChain {
         cuts = new IDiamond.FacetCut[](5);
 
         // CommunityAdminFacet functions
-        bytes4[] memory adminSelectors = new bytes4[](8);
+        bytes4[] memory adminSelectors = new bytes4[](9);
         adminSelectors[0] = CommunityAdminFacet.setStrategyTemplate.selector;
         adminSelectors[1] = CommunityAdminFacet.setCollateralVaultTemplate.selector;
         adminSelectors[2] = CommunityAdminFacet.setArchived.selector;
@@ -124,20 +175,24 @@ contract UpgradeRegistryCommunityDiamond is BaseMultiChain {
         adminSelectors[5] = CommunityAdminFacet.setCouncilSafe.selector;
         adminSelectors[6] = CommunityAdminFacet.acceptCouncilSafe.selector;
         adminSelectors[7] = CommunityAdminFacet.setCommunityParams.selector;
+        adminSelectors[8] = CommunityAdminFacet.isCouncilMember.selector;
         cuts[0] = IDiamond.FacetCut({
             facetAddress: address(adminFacet),
-            action: IDiamond.FacetCutAction.Add,
+            action: IDiamond.FacetCutAction.Auto,
             functionSelectors: adminSelectors
         });
 
         // CommunityMemberFacet functions
-        bytes4[] memory memberSelectors = new bytes4[](3);
+        bytes4[] memory memberSelectors = new bytes4[](6);
         memberSelectors[0] = CommunityMemberFacet.stakeAndRegisterMember.selector;
         memberSelectors[1] = CommunityMemberFacet.unregisterMember.selector;
         memberSelectors[2] = CommunityMemberFacet.kickMember.selector;
+        memberSelectors[3] = CommunityMemberFacet.isMember.selector;
+        memberSelectors[4] = CommunityMemberFacet.getBasisStakedAmount.selector;
+        memberSelectors[5] = CommunityMemberFacet.getStakeAmountWithFees.selector;
         cuts[1] = IDiamond.FacetCut({
             facetAddress: address(memberFacet),
-            action: IDiamond.FacetCutAction.Add,
+            action: IDiamond.FacetCutAction.Auto,
             functionSelectors: memberSelectors
         });
 
@@ -156,19 +211,21 @@ contract UpgradeRegistryCommunityDiamond is BaseMultiChain {
         );
         cuts[2] = IDiamond.FacetCut({
             facetAddress: address(poolFacet),
-            action: IDiamond.FacetCutAction.Add,
+            action: IDiamond.FacetCutAction.Auto,
             functionSelectors: poolSelectors
         });
 
         // CommunityPowerFacet functions
-        bytes4[] memory powerSelectors = new bytes4[](4);
+        bytes4[] memory powerSelectors = new bytes4[](6);
         powerSelectors[0] = CommunityPowerFacet.activateMemberInStrategy.selector;
         powerSelectors[1] = CommunityPowerFacet.deactivateMemberInStrategy.selector;
         powerSelectors[2] = CommunityPowerFacet.increasePower.selector;
         powerSelectors[3] = CommunityPowerFacet.decreasePower.selector;
+        powerSelectors[4] = CommunityPowerFacet.getMemberPowerInStrategy.selector;
+        powerSelectors[5] = CommunityPowerFacet.getMemberStakedAmount.selector;
         cuts[3] = IDiamond.FacetCut({
             facetAddress: address(powerFacet),
-            action: IDiamond.FacetCutAction.Add,
+            action: IDiamond.FacetCutAction.Auto,
             functionSelectors: powerSelectors
         });
 
@@ -181,7 +238,7 @@ contract UpgradeRegistryCommunityDiamond is BaseMultiChain {
         strategySelectors[4] = CommunityStrategyFacet.rejectPool.selector;
         cuts[4] = IDiamond.FacetCut({
             facetAddress: address(strategyFacet),
-            action: IDiamond.FacetCutAction.Add,
+            action: IDiamond.FacetCutAction.Auto,
             functionSelectors: strategySelectors
         });
 
