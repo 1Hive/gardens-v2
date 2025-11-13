@@ -159,7 +159,7 @@
       "name": "cancelProposal",
       "inputs": [
         {
-          "name": "proposalId",
+          "name": "",
           "type": "uint256",
           "internalType": "uint256"
         }
@@ -198,7 +198,7 @@
       "name": "connectSuperfluidGDA",
       "inputs": [
         {
-          "name": "gda",
+          "name": "",
           "type": "address",
           "internalType": "address"
         }
@@ -336,7 +336,7 @@
       "name": "disconnectSuperfluidGDA",
       "inputs": [
         {
-          "name": "gda",
+          "name": "",
           "type": "address",
           "internalType": "address"
         }
@@ -381,24 +381,24 @@
       "name": "disputeProposal",
       "inputs": [
         {
-          "name": "proposalId",
+          "name": "",
           "type": "uint256",
           "internalType": "uint256"
         },
         {
-          "name": "context",
+          "name": "",
           "type": "string",
           "internalType": "string"
         },
         {
-          "name": "_extraData",
+          "name": "",
           "type": "bytes",
           "internalType": "bytes"
         }
       ],
       "outputs": [
         {
-          "name": "disputeId",
+          "name": "",
           "type": "uint256",
           "internalType": "uint256"
         }
@@ -433,12 +433,12 @@
       "name": "editProposal",
       "inputs": [
         {
-          "name": "_proposalId",
+          "name": "",
           "type": "uint256",
           "internalType": "uint256"
         },
         {
-          "name": "_metadata",
+          "name": "",
           "type": "tuple",
           "internalType": "struct Metadata",
           "components": [
@@ -455,12 +455,12 @@
           ]
         },
         {
-          "name": "_beneficiary",
+          "name": "",
           "type": "address",
           "internalType": "address"
         },
         {
-          "name": "_requestedAmount",
+          "name": "",
           "type": "uint256",
           "internalType": "uint256"
         }
@@ -2369,6 +2369,628 @@
         }
       ],
       "anonymous": false
+    },
+    {
+      "type": "error",
+      "name": "ALLOCATION_ACTIVE",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "ALLOCATION_NOT_ACTIVE",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "ALLOCATION_NOT_ENDED",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "ALREADY_INITIALIZED",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "AMOUNT_MISMATCH",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "ANCHOR_ERROR",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "ARRAY_MISMATCH",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "AShouldBeUnderOrEqTwo_128",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "AShouldBeUnderTwo_128",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "AddressCannotBeZero",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "AmountOverMaxRatio",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "ArbitratorCannotBeZero",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "BShouldBeLessTwo_128",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "CallerNotOwner",
+      "inputs": [
+        {
+          "name": "_caller",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "CannotAddFunctionToDiamondThatAlreadyExists",
+      "inputs": [
+        {
+          "name": "_selector",
+          "type": "bytes4",
+          "internalType": "bytes4"
+        },
+        {
+          "name": "_selectorSignature",
+          "type": "string",
+          "internalType": "string"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "CannotAddSelectorsToZeroAddress",
+      "inputs": [
+        {
+          "name": "_selectors",
+          "type": "bytes4[]",
+          "internalType": "bytes4[]"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "CannotRemoveFunctionThatDoesNotExist",
+      "inputs": [
+        {
+          "name": "_selector",
+          "type": "bytes4",
+          "internalType": "bytes4"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "CannotRemoveImmutableFunction",
+      "inputs": [
+        {
+          "name": "_selector",
+          "type": "bytes4",
+          "internalType": "bytes4"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "CannotReplaceFunctionThatDoesNotExists",
+      "inputs": [
+        {
+          "name": "_selector",
+          "type": "bytes4",
+          "internalType": "bytes4"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "CannotReplaceFunctionWithTheSameFunctionFromTheSameFacet",
+      "inputs": [
+        {
+          "name": "_selector",
+          "type": "bytes4",
+          "internalType": "bytes4"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "CannotReplaceFunctionsFromFacetWithZeroAddress",
+      "inputs": [
+        {
+          "name": "_selectors",
+          "type": "bytes4[]",
+          "internalType": "bytes4[]"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "CannotReplaceImmutableFunction",
+      "inputs": [
+        {
+          "name": "_selector",
+          "type": "bytes4",
+          "internalType": "bytes4"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "ConvictionUnderMinimumThreshold",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "DefaultRulingNotSet",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "DisputeCooldownNotPassed",
+      "inputs": [
+        {
+          "name": "_proposalId",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_remainingSec",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "INVALID",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "INVALID_ADDRESS",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "INVALID_FEE",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "INVALID_METADATA",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "INVALID_REGISTRATION",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "IS_APPROVED_STRATEGY",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "IncorrectFacetCutAction",
+      "inputs": [
+        {
+          "name": "_action",
+          "type": "uint8",
+          "internalType": "uint8"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "InitializationFunctionReverted",
+      "inputs": [
+        {
+          "name": "_initializationContractAddress",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_calldata",
+          "type": "bytes",
+          "internalType": "bytes"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "InsufficientCollateral",
+      "inputs": [
+        {
+          "name": "sentAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "requiredAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "MISMATCH",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "NONCE_NOT_AVAILABLE",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "NON_ZERO_VALUE",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "NOT_APPROVED_STRATEGY",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "NOT_ENOUGH_FUNDS",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "NOT_IMPLEMENTED",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "NOT_INITIALIZED",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "NOT_PENDING_OWNER",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "NoBytecodeAtAddress",
+      "inputs": [
+        {
+          "name": "_contractAddress",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_message",
+          "type": "string",
+          "internalType": "string"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "NoSelectorsProvidedForFacetForCut",
+      "inputs": [
+        {
+          "name": "_facetAddress",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "NotEnoughPointsToSupport",
+      "inputs": [
+        {
+          "name": "pointsSupport",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "pointsBalance",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "NotImplemented",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "OnlyArbitrator",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "OnlyCommunityAllowed",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "OnlyCouncilSafe",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "OnlySubmitter",
+      "inputs": [
+        {
+          "name": "submitter",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "sender",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "POOL_ACTIVE",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "POOL_INACTIVE",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "PoolAmountNotEnough",
+      "inputs": [
+        {
+          "name": "_proposalId",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_requestedAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_poolAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "PoolIsEmpty",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "ProposalDataIsEmpty",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "ProposalIdCannotBeZero",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "ProposalInvalidForAllocation",
+      "inputs": [
+        {
+          "name": "_proposalId",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_proposalStatus",
+          "type": "uint8",
+          "internalType": "enum ProposalStatus"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "ProposalNotActive",
+      "inputs": [
+        {
+          "name": "_proposalId",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "ProposalNotDisputed",
+      "inputs": [
+        {
+          "name": "_proposalId",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "ProposalNotInList",
+      "inputs": [
+        {
+          "name": "_proposalId",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "ProposalSupportDuplicated",
+      "inputs": [
+        {
+          "name": "_proposalId",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "index",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "RECIPIENT_ALREADY_ACCEPTED",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "RECIPIENT_ERROR",
+      "inputs": [
+        {
+          "name": "recipientId",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "RECIPIENT_NOT_ACCEPTED",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "REGISTRATION_ACTIVE",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "REGISTRATION_NOT_ACTIVE",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "RegistryCannotBeZero",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "RemoveFacetAddressMustBeZeroAddress",
+      "inputs": [
+        {
+          "name": "_facetAddress",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "StrategyFunctionDoesNotExist",
+      "inputs": [
+        {
+          "name": "selector",
+          "type": "bytes4",
+          "internalType": "bytes4"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "SupportUnderflow",
+      "inputs": [
+        {
+          "name": "_support",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_delta",
+          "type": "int256",
+          "internalType": "int256"
+        },
+        {
+          "name": "_result",
+          "type": "int256",
+          "internalType": "int256"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "TokenCannotBeZero",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "TokenNotAllowed",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "UNAUTHORIZED",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "UserCannotBeZero",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "UserCannotExecuteAction",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "UserIsInactive",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "UserNotInRegistry",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "ZERO_ADDRESS",
+      "inputs": []
     },
     {
       "type": "function",

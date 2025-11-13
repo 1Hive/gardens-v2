@@ -2096,6 +2096,295 @@
         }
       ],
       "anonymous": false
+    },
+    {
+      "type": "error",
+      "name": "AllowlistTooBig",
+      "inputs": [
+        {
+          "name": "size",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "CallerNotOwner",
+      "inputs": [
+        {
+          "name": "_caller",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "CannotAddFunctionToDiamondThatAlreadyExists",
+      "inputs": [
+        {
+          "name": "_selector",
+          "type": "bytes4",
+          "internalType": "bytes4"
+        },
+        {
+          "name": "_selectorSignature",
+          "type": "string",
+          "internalType": "string"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "CannotAddSelectorsToZeroAddress",
+      "inputs": [
+        {
+          "name": "_selectors",
+          "type": "bytes4[]",
+          "internalType": "bytes4[]"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "CannotRemoveFunctionThatDoesNotExist",
+      "inputs": [
+        {
+          "name": "_selector",
+          "type": "bytes4",
+          "internalType": "bytes4"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "CannotRemoveImmutableFunction",
+      "inputs": [
+        {
+          "name": "_selector",
+          "type": "bytes4",
+          "internalType": "bytes4"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "CannotReplaceFunctionThatDoesNotExists",
+      "inputs": [
+        {
+          "name": "_selector",
+          "type": "bytes4",
+          "internalType": "bytes4"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "CannotReplaceFunctionWithTheSameFunctionFromTheSameFacet",
+      "inputs": [
+        {
+          "name": "_selector",
+          "type": "bytes4",
+          "internalType": "bytes4"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "CannotReplaceFunctionsFromFacetWithZeroAddress",
+      "inputs": [
+        {
+          "name": "_selectors",
+          "type": "bytes4[]",
+          "internalType": "bytes4[]"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "CannotReplaceImmutableFunction",
+      "inputs": [
+        {
+          "name": "_selector",
+          "type": "bytes4",
+          "internalType": "bytes4"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "CantDecreaseMoreThanPower",
+      "inputs": [
+        {
+          "name": "_decreaseAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_currentPower",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "CommunityFunctionDoesNotExist",
+      "inputs": [
+        {
+          "name": "selector",
+          "type": "bytes4",
+          "internalType": "bytes4"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "DecreaseUnderMinimum",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "IncorrectFacetCutAction",
+      "inputs": [
+        {
+          "name": "_action",
+          "type": "uint8",
+          "internalType": "uint8"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "InitializationFunctionReverted",
+      "inputs": [
+        {
+          "name": "_initializationContractAddress",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_calldata",
+          "type": "bytes",
+          "internalType": "bytes"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "KickNotEnabled",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "NewFeeGreaterThanMax",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "NoBytecodeAtAddress",
+      "inputs": [
+        {
+          "name": "_contractAddress",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_message",
+          "type": "string",
+          "internalType": "string"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "NoSelectorsProvidedForFacetForCut",
+      "inputs": [
+        {
+          "name": "_facetAddress",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "OnlyEmptyCommunity",
+      "inputs": [
+        {
+          "name": "totalMembers",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "PointsDeactivated",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "RemoveFacetAddressMustBeZeroAddress",
+      "inputs": [
+        {
+          "name": "_facetAddress",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "SenderNotNewOwner",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "SenderNotStrategy",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "StrategyDisabled",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "StrategyExists",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "UserAlreadyActivated",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "UserNotInCouncil",
+      "inputs": [
+        {
+          "name": "_user",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "UserNotInRegistry",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "ValueCannotBeZero",
+      "inputs": []
     }
   ]
 }
