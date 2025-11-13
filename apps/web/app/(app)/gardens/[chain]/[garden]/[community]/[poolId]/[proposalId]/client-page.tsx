@@ -30,6 +30,7 @@ import {
 import CancelButton from "@/components/CancelButton";
 import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
 import { DisputeModal } from "@/components/DisputeModal";
+import EditProposalButton from "@/components/EditProposalButton";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import MarkdownWrapper from "@/components/MarkdownWrapper";
 import { Skeleton } from "@/components/Skeleton";
@@ -113,7 +114,10 @@ export default function ClientPage({ params }: ClientPageProps) {
     !!memberData?.member?.memberCommunity?.[0]?.isRegistered;
   //
 
-  const proposalData = data?.cvproposal;
+  const proposalData = {
+    ...data?.cvproposal,
+    registryCommunity: data?.registryCommunity,
+  };
   const proposalSupporters = supportersData?.members;
 
   const filteredAndSortedProposalSupporters: ProposalSupporter[] =
@@ -506,7 +510,14 @@ export default function ClientPage({ params }: ClientPageProps) {
               <InfoBox
                 infoBoxType="info"
                 contentStyle="text-tertiary-content"
-                content="As the original author, you can remove this proposal from consideration."
+                content="As the original author, you can edit/cancel this proposal."
+              />
+              <EditProposalButton
+                proposalData={{
+                  ...proposalData,
+                  ...metadata,
+                }}
+                poolToken={poolToken}
               />
               <CancelButton proposalData={{ ...proposalData, ...metadata }} />
             </section>
