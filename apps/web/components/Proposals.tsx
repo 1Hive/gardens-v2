@@ -27,23 +27,15 @@ import {
   isMemberQuery,
   CVStrategy,
   RegistryCommunity,
-  getMembersStrategyQuery,
-  getMembersStrategyDocument,
 } from "#/subgraph/.graphclient";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { PoolGovernanceProps } from "./PoolGovernance";
 import { ProposalCardProps, ProposalHandle } from "./ProposalCard";
 import TooltipIfOverflow from "./TooltipIfOverflow";
-import {
-  Button,
-  CheckSybil,
-  InfoWrapper,
-  PoolGovernance,
-  ProposalCard,
-} from "@/components";
+import { Button, CheckSybil, InfoWrapper, ProposalCard } from "@/components";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
-import { SubscriptionId, usePubSubContext } from "@/contexts/pubsub.context";
+import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import useCheckAllowList from "@/hooks/useCheckAllowList";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
@@ -147,7 +139,6 @@ export function Proposals({
   const chainId = useChainIdFromPath();
   const allowList = (strategy?.config?.allowlist as Address[]) ?? [];
   const isAllowed = useCheckAllowList(allowList, wallet);
-  const { subscribe, unsubscribe, connected } = usePubSubContext();
 
   const tokenDecimals = strategy.registryCommunity.garden.decimals;
   const searchParams = useCollectQueryParams();
@@ -202,29 +193,12 @@ export function Proposals({
     },
   );
 
-  const { data: membersStrategyData } =
-    useSubgraphQuery<getMembersStrategyQuery>({
-      query: getMembersStrategyDocument,
-      variables: {
-        strategyId: `${strategy.id.toLowerCase()}`,
-      },
-      changeScope: [
-        {
-          topic: "proposal",
-          containerId: strategy.poolId,
-          type: "update",
-        },
-        { topic: "member", id: wallet, containerId: strategy.poolId },
-      ],
-      enabled: !!wallet,
-    });
-
   const memberActivatedPoints: bigint = BigInt(
     memberStrategyData?.memberStrategy?.activatedPoints ?? 0,
   );
 
   // Contract reads
-  const { data: memberPower, refetch: refetchMemberPower } = useContractRead({
+  const { data: memberPower } = useContractRead({
     address: communityAddress,
     abi: registryCommunityABI,
     functionName: "getMemberPowerInStrategy",
@@ -233,34 +207,11 @@ export function Proposals({
     enabled: !!wallet,
   });
 
-  const subscritionId = useRef<SubscriptionId>();
-  useEffect(() => {
-    subscritionId.current = subscribe(
-      {
-        topic: "member",
-        id: wallet,
-        containerId: strategy.poolId,
-        type: "update",
-      },
-      () => {
-        return refetchMemberPower();
-      },
-    );
-    return () => {
-      if (subscritionId.current) {
-        unsubscribe(subscritionId.current);
-      }
-    };
-  }, [connected]);
-
   // Derived state
   const isMemberCommunity =
     !!memberData?.member?.memberCommunity?.[0]?.isRegistered;
   const memberActivatedStrategy =
     memberStrategyData?.memberStrategy?.activatedPoints > 0n;
-  const memberTokensInCommunity = BigInt(
-    memberData?.member?.memberCommunity?.[0]?.stakedTokens ?? 0,
-  );
 
   const proposals = strategy.proposals.sort((a, b) => {
     const aConviction =
@@ -316,7 +267,9 @@ export function Proposals({
       }));
       console.info(
         "[Proposals][SupportSnapshot]",
-        supportSnapshot.length ? supportSnapshot : "No active support positions",
+        supportSnapshot.length ? supportSnapshot : (
+          "No active support positions"
+        ),
       );
     }
 
@@ -428,9 +381,11 @@ export function Proposals({
         proposalNumber: input.proposalNumber,
         initialValue: input.value.toString(),
         fromStake: stakedFilters[input.proposalId]?.value.toString() ?? "0",
-        status: ProposalStatus[
-          proposals.find((p) => p.id === input.proposalId)?.proposalStatus ?? 0
-        ],
+        status:
+          ProposalStatus[
+            proposals.find((p) => p.id === input.proposalId)?.proposalStatus ??
+              0
+          ],
       }));
       console.info("[Proposals][InitialInputs]", snapshot);
     }
@@ -612,8 +567,6 @@ export function Proposals({
       ProposalStatus[x.proposalStatus] === "rejected" ||
       ProposalStatus[x.proposalStatus] === "executed",
   );
-
-  const membersStrategies = membersStrategyData?.memberStrategies;
 
   const handleDownloadCVResults = () => {
     let headers = [
@@ -920,24 +873,6 @@ export function Proposals({
           </div>
         )}
       </section>
-
-      {/* Pool Governace */}
-      {strategy.isEnabled && (
-        <div className="col-span-12 xl:col-span-3">
-          <div className="backdrop-blur-sm rounded-lg flex flex-col gap-2 sticky top-32">
-            <PoolGovernance
-              memberPoolWeight={memberPoolWeight}
-              tokenDecimals={tokenDecimals}
-              strategy={strategy}
-              communityAddress={communityAddress}
-              memberTokensInCommunity={memberTokensInCommunity}
-              isMemberCommunity={isMemberCommunity}
-              memberActivatedStrategy={memberActivatedStrategy}
-              membersStrategyData={membersStrategies}
-            />
-          </div>
-        </div>
-      )}
     </>
   );
 }

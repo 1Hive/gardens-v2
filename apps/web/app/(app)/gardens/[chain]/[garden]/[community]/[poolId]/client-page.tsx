@@ -1,25 +1,34 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Address } from "viem";
-import { useBalance, useAccount, useChainId } from "wagmi";
+import { useBalance, useAccount, useChainId, useContractRead } from "wagmi";
 import {
   getAlloQuery,
+  getMembersStrategyDocument,
+  getMembersStrategyQuery,
+  getMemberStrategyDocument,
+  getMemberStrategyQuery,
   getPoolDataDocument,
   getPoolDataQuery,
+  isMemberDocument,
+  isMemberQuery,
 } from "#/subgraph/.graphclient";
-import { InfoBox, PoolMetrics, Proposals } from "@/components";
+import { InfoBox, PoolGovernance, PoolMetrics, Proposals } from "@/components";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import PoolHeader from "@/components/PoolHeader";
 import { chainConfigMap } from "@/configs/chains";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
+import { SubscriptionId, usePubSubContext } from "@/contexts/pubsub.context";
+import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { usePoolToken } from "@/hooks/usePoolToken";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { useSuperfluidToken } from "@/hooks/useSuperfluidToken";
+import { registryCommunityABI } from "@/src/generated";
 import { PoolTypes } from "@/types";
-import { formatTokenAmount } from "@/utils/numbers";
+import { calculatePercentageBigInt, formatTokenAmount } from "@/utils/numbers";
 
 export type AlloQuery = getAlloQuery["allos"][number];
 
@@ -59,7 +68,118 @@ export default function ClientPage({
       ],
     },
   );
+
   const strategy = data?.cvstrategies?.[0];
+
+  const communityAddress = strategy?.registryCommunity.id as Address;
+
+  const { address: wallet } = useAccount();
+
+  const tokenDecimals = strategy?.registryCommunity.garden.decimals;
+
+  const chainId = useChainIdFromPath();
+
+  //New querys and logic for PoolGovernance component
+  const { data: memberPower, refetch: refetchMemberPower } = useContractRead({
+    address: communityAddress,
+    abi: registryCommunityABI,
+    functionName: "getMemberPowerInStrategy",
+    args: [wallet as Address, strategy?.id as Address],
+    chainId: chainId,
+    enabled: !!wallet,
+  });
+
+  const { data: memberData, error: errorMemberData } =
+    useSubgraphQuery<isMemberQuery>({
+      query: isMemberDocument,
+      variables: {
+        me: wallet?.toLowerCase(),
+        comm: strategy?.registryCommunity.id.toLowerCase(),
+      },
+      changeScope: [
+        {
+          topic: "member",
+          id: wallet,
+          containerId: strategy?.poolId,
+        },
+        {
+          topic: "proposal",
+          containerId: strategy?.poolId,
+          function: "allocate",
+        },
+      ],
+      enabled: !!wallet && !!strategy?.registryCommunity?.id,
+    });
+  const { data: memberStrategyData } = useSubgraphQuery<getMemberStrategyQuery>(
+    {
+      query: getMemberStrategyDocument,
+      variables: {
+        member_strategy: `${wallet?.toLowerCase()}-${strategy?.id.toLowerCase()}`,
+      },
+      changeScope: [
+        {
+          topic: "proposal",
+          containerId: strategy?.poolId,
+          type: "update",
+        },
+        { topic: "member", id: wallet, containerId: strategy?.poolId },
+      ],
+      enabled: !!wallet && !!strategy?.id,
+    },
+  );
+
+  const memberTokensInCommunity = BigInt(
+    memberData?.member?.memberCommunity?.[0]?.stakedTokens ?? 0,
+  );
+
+  const { data: membersStrategyData } =
+    useSubgraphQuery<getMembersStrategyQuery>({
+      query: getMembersStrategyDocument,
+      variables: {
+        strategyId: `${strategy?.id.toLowerCase()}`,
+      },
+      changeScope: [
+        {
+          topic: "proposal",
+          containerId: strategy?.poolId,
+          type: "update",
+        },
+        { topic: "member", id: wallet, containerId: strategy?.poolId },
+      ],
+      enabled: !!wallet,
+    });
+
+  const membersStrategies = membersStrategyData?.memberStrategies;
+
+  const isMemberCommunity =
+    !!memberData?.member?.memberCommunity?.[0]?.isRegistered;
+
+  const memberActivatedStrategy =
+    memberStrategyData?.memberStrategy?.activatedPoints > 0n;
+
+  const { subscribe, unsubscribe, connected } = usePubSubContext();
+
+  const subscritionId = useRef<SubscriptionId>();
+  useEffect(() => {
+    subscritionId.current = subscribe(
+      {
+        topic: "member",
+        id: wallet,
+        containerId: strategy?.poolId,
+        type: "update",
+      },
+      () => {
+        return refetchMemberPower();
+      },
+    );
+    return () => {
+      if (subscritionId.current) {
+        unsubscribe(subscritionId.current);
+      }
+    };
+  }, [connected]);
+  //
+
   const poolTokenAddr = strategy?.token as Address;
   const proposalType = strategy?.config.proposalType;
 
@@ -77,6 +197,13 @@ export default function ClientPage({
     (expectedChainId != null ?
       `chain ${expectedChainId}`
     : "the selected network");
+
+  // Effects
+  useEffect(() => {
+    if (errorMemberData) {
+      console.error("Error while fetching member data: ", errorMemberData);
+    }
+  }, [errorMemberData]);
 
   useEffect(() => {
     if (error) {
@@ -98,13 +225,13 @@ export default function ClientPage({
       superTokenCandidate.id
     : null);
 
-  const { address } = useAccount();
   const connectedChainId = useChainId();
+
   const { data: superTokenInfo } = useBalance({
-    address: address as Address,
+    address: wallet as Address,
     token: effectiveSuperToken as Address,
     watch: true,
-    enabled: !!effectiveSuperToken && !!address,
+    enabled: !!effectiveSuperToken && !!wallet,
   });
 
   const { data: metadataResult } = useMetadataIpfsFetch({
@@ -225,10 +352,17 @@ export default function ClientPage({
     );
   }
 
-  const communityAddress = strategy.registryCommunity.id as Address;
   const alloInfo = data.allos[0];
 
   const isEnabled = data.cvstrategies?.[0]?.isEnabled as boolean;
+
+  const memberPoolWeight =
+    memberPower != null && +strategy.totalEffectiveActivePoints > 0 ?
+      calculatePercentageBigInt(
+        memberPower,
+        BigInt(strategy.totalEffectiveActivePoints),
+      )
+    : undefined;
 
   return (
     <>
@@ -283,6 +417,23 @@ export default function ClientPage({
           proposalType={proposalType}
           minThGtTotalEffPoints={minThGtTotalEffPoints}
         />
+      )}
+
+      {isEnabled && (
+        <div className="col-span-12 xl:col-span-3">
+          <div className="backdrop-blur-sm rounded-lg flex flex-col gap-2 sticky top-32">
+            <PoolGovernance
+              memberPoolWeight={memberPoolWeight}
+              tokenDecimals={tokenDecimals}
+              strategy={strategy}
+              communityAddress={communityAddress}
+              memberTokensInCommunity={memberTokensInCommunity}
+              isMemberCommunity={isMemberCommunity}
+              memberActivatedStrategy={memberActivatedStrategy}
+              membersStrategyData={membersStrategies}
+            />
+          </div>
+        </div>
       )}
     </>
   );
