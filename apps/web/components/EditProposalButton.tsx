@@ -3,14 +3,8 @@ import {
   ExclamationTriangleIcon,
   PencilIcon,
 } from "@heroicons/react/24/outline";
-import { FetchTokenResult } from "@wagmi/core";
 import { Address } from "wagmi";
-import {
-  CVProposal,
-  CVStrategy,
-  CVStrategyConfig,
-  Maybe,
-} from "#/subgraph/.graphclient";
+import { getProposalDataQuery } from "#/subgraph/.graphclient";
 import { Button } from "./Button";
 import { EditProposalForm } from "./Forms/EditProposalForm";
 import { Modal } from "./Modal";
@@ -27,26 +21,10 @@ import {
   MAX_RATIO_CONSTANT,
 } from "@/utils/numbers";
 
+type ProposalData = NonNullable<getProposalDataQuery["cvproposal"]>;
+
 type Props = {
-  proposalData: Pick<
-    CVProposal,
-    "metadataHash" | "requestedAmount" | "beneficiary" | "id" | "proposalNumber"
-  > & {
-    strategy: Pick<
-      CVStrategy,
-      | "id"
-      | "poolId"
-      | "token"
-      | "maxCVSupply"
-      | "totalEffectiveActivePoints"
-      | "registryCommunity"
-    > & {
-      config: Pick<
-        CVStrategyConfig,
-        "maxRatio" | "weight" | "decay" | "proposalType"
-      >;
-    };
-  } & MetadataV1;
+  proposalData: ProposalData & MetadataV1;
   poolToken: ReturnType<typeof usePoolToken>;
 };
 

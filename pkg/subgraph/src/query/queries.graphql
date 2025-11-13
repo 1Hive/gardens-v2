@@ -444,11 +444,29 @@ query getProposalData($garden: ID!, $proposalId: ID!, $communityId: ID!) {
       totalEffectiveActivePoints
       poolId
       isEnabled
+      registryCommunity {
+        id
+        councilSafe
+        isValid
+        garden {
+          id
+          symbol
+          decimals
+        }
+        members(first: 1000) {
+          memberAddress
+        }
+      }
       config {
         proposalType
         pointSystem
         minThresholdPoints
         decay
+        weight
+        maxRatio
+        maxAmount
+        allowlist
+        superfluidToken
       }
     }
     arbitrableConfig {

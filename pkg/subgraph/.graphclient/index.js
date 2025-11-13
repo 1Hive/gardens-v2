@@ -71,37 +71,37 @@ export async function getMeshOptions() {
         store: rootStore.child('bareMerger')
     });
     const documentHashMap = {
-        "3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d": GetFactoriesDocument,
-        "3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d": GetTokenGardensDocument,
-        "3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d": GetMembersStrategyDocument,
-        "3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d": GetMemberStrategyDocument,
-        "3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d": IsMemberDocument,
-        "3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d": GetMemberDocument,
-        "3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d": GetPoolCreationDataDocument,
-        "3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d": GetProposalSupportersDocument,
-        "3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d": GetGardenCommunitiesDocument,
-        "3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d": GetCommunitiesDocument,
-        "3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d": GetCommunityDocument,
-        "3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d": GetCommunityCreationDataDocument,
-        "3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d": GetRegistryFactoryDataDocument,
-        "3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d": GetPoolDataDocument,
-        "3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d": GetProposalDataDocument,
-        "3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d": GetAlloDocument,
-        "3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d": GetStrategyByPoolDocument,
-        "3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d": GetTokenTitleDocument,
-        "3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d": GetCommunityTitlesDocument,
-        "3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d": GetPoolTitlesDocument,
-        "3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d": GetProposalTitlesDocument,
-        "3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d": GetPassportStrategyDocument,
-        "3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d": GetPassportUserDocument,
-        "3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d": GetGoodDollarStrategyDocument,
-        "3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d": GetGoodDollarUserDocument,
-        "3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d": GetProposalDisputesDocument,
-        "3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d": GetArbitrableConfigsDocument,
-        "3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d": GetMemberPassportAndCommunitiesDocument,
-        "3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d": GetCommunityNameDocument,
-        "3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d": GetPoolTitleDocument,
-        "3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d": GetProposalTitleDocument
+        "99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f": GetFactoriesDocument,
+        "99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f": GetTokenGardensDocument,
+        "99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f": GetMembersStrategyDocument,
+        "99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f": GetMemberStrategyDocument,
+        "99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f": IsMemberDocument,
+        "99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f": GetMemberDocument,
+        "99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f": GetPoolCreationDataDocument,
+        "99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f": GetProposalSupportersDocument,
+        "99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f": GetGardenCommunitiesDocument,
+        "99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f": GetCommunitiesDocument,
+        "99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f": GetCommunityDocument,
+        "99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f": GetCommunityCreationDataDocument,
+        "99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f": GetRegistryFactoryDataDocument,
+        "99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f": GetPoolDataDocument,
+        "99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f": GetProposalDataDocument,
+        "99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f": GetAlloDocument,
+        "99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f": GetStrategyByPoolDocument,
+        "99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f": GetTokenTitleDocument,
+        "99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f": GetCommunityTitlesDocument,
+        "99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f": GetPoolTitlesDocument,
+        "99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f": GetProposalTitlesDocument,
+        "99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f": GetPassportStrategyDocument,
+        "99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f": GetPassportUserDocument,
+        "99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f": GetGoodDollarStrategyDocument,
+        "99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f": GetGoodDollarUserDocument,
+        "99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f": GetProposalDisputesDocument,
+        "99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f": GetArbitrableConfigsDocument,
+        "99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f": GetMemberPassportAndCommunitiesDocument,
+        "99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f": GetCommunityNameDocument,
+        "99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f": GetPoolTitleDocument,
+        "99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f": GetProposalTitleDocument
     };
     additionalEnvelopPlugins.push(usePersistedOperations({
         getPersistedOperation(key) {
@@ -127,217 +127,217 @@ export async function getMeshOptions() {
                         return printWithCache(GetFactoriesDocument);
                     },
                     location: 'GetFactoriesDocument.graphql',
-                    sha256Hash: '3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d'
+                    sha256Hash: '99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f'
                 }, {
                     document: GetTokenGardensDocument,
                     get rawSDL() {
                         return printWithCache(GetTokenGardensDocument);
                     },
                     location: 'GetTokenGardensDocument.graphql',
-                    sha256Hash: '3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d'
+                    sha256Hash: '99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f'
                 }, {
                     document: GetMembersStrategyDocument,
                     get rawSDL() {
                         return printWithCache(GetMembersStrategyDocument);
                     },
                     location: 'GetMembersStrategyDocument.graphql',
-                    sha256Hash: '3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d'
+                    sha256Hash: '99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f'
                 }, {
                     document: GetMemberStrategyDocument,
                     get rawSDL() {
                         return printWithCache(GetMemberStrategyDocument);
                     },
                     location: 'GetMemberStrategyDocument.graphql',
-                    sha256Hash: '3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d'
+                    sha256Hash: '99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f'
                 }, {
                     document: IsMemberDocument,
                     get rawSDL() {
                         return printWithCache(IsMemberDocument);
                     },
                     location: 'IsMemberDocument.graphql',
-                    sha256Hash: '3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d'
+                    sha256Hash: '99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f'
                 }, {
                     document: GetMemberDocument,
                     get rawSDL() {
                         return printWithCache(GetMemberDocument);
                     },
                     location: 'GetMemberDocument.graphql',
-                    sha256Hash: '3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d'
+                    sha256Hash: '99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f'
                 }, {
                     document: GetPoolCreationDataDocument,
                     get rawSDL() {
                         return printWithCache(GetPoolCreationDataDocument);
                     },
                     location: 'GetPoolCreationDataDocument.graphql',
-                    sha256Hash: '3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d'
+                    sha256Hash: '99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f'
                 }, {
                     document: GetProposalSupportersDocument,
                     get rawSDL() {
                         return printWithCache(GetProposalSupportersDocument);
                     },
                     location: 'GetProposalSupportersDocument.graphql',
-                    sha256Hash: '3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d'
+                    sha256Hash: '99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f'
                 }, {
                     document: GetGardenCommunitiesDocument,
                     get rawSDL() {
                         return printWithCache(GetGardenCommunitiesDocument);
                     },
                     location: 'GetGardenCommunitiesDocument.graphql',
-                    sha256Hash: '3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d'
+                    sha256Hash: '99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f'
                 }, {
                     document: GetCommunitiesDocument,
                     get rawSDL() {
                         return printWithCache(GetCommunitiesDocument);
                     },
                     location: 'GetCommunitiesDocument.graphql',
-                    sha256Hash: '3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d'
+                    sha256Hash: '99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f'
                 }, {
                     document: GetCommunityDocument,
                     get rawSDL() {
                         return printWithCache(GetCommunityDocument);
                     },
                     location: 'GetCommunityDocument.graphql',
-                    sha256Hash: '3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d'
+                    sha256Hash: '99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f'
                 }, {
                     document: GetCommunityCreationDataDocument,
                     get rawSDL() {
                         return printWithCache(GetCommunityCreationDataDocument);
                     },
                     location: 'GetCommunityCreationDataDocument.graphql',
-                    sha256Hash: '3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d'
+                    sha256Hash: '99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f'
                 }, {
                     document: GetRegistryFactoryDataDocument,
                     get rawSDL() {
                         return printWithCache(GetRegistryFactoryDataDocument);
                     },
                     location: 'GetRegistryFactoryDataDocument.graphql',
-                    sha256Hash: '3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d'
+                    sha256Hash: '99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f'
                 }, {
                     document: GetPoolDataDocument,
                     get rawSDL() {
                         return printWithCache(GetPoolDataDocument);
                     },
                     location: 'GetPoolDataDocument.graphql',
-                    sha256Hash: '3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d'
+                    sha256Hash: '99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f'
                 }, {
                     document: GetProposalDataDocument,
                     get rawSDL() {
                         return printWithCache(GetProposalDataDocument);
                     },
                     location: 'GetProposalDataDocument.graphql',
-                    sha256Hash: '3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d'
+                    sha256Hash: '99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f'
                 }, {
                     document: GetAlloDocument,
                     get rawSDL() {
                         return printWithCache(GetAlloDocument);
                     },
                     location: 'GetAlloDocument.graphql',
-                    sha256Hash: '3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d'
+                    sha256Hash: '99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f'
                 }, {
                     document: GetStrategyByPoolDocument,
                     get rawSDL() {
                         return printWithCache(GetStrategyByPoolDocument);
                     },
                     location: 'GetStrategyByPoolDocument.graphql',
-                    sha256Hash: '3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d'
+                    sha256Hash: '99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f'
                 }, {
                     document: GetTokenTitleDocument,
                     get rawSDL() {
                         return printWithCache(GetTokenTitleDocument);
                     },
                     location: 'GetTokenTitleDocument.graphql',
-                    sha256Hash: '3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d'
+                    sha256Hash: '99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f'
                 }, {
                     document: GetCommunityTitlesDocument,
                     get rawSDL() {
                         return printWithCache(GetCommunityTitlesDocument);
                     },
                     location: 'GetCommunityTitlesDocument.graphql',
-                    sha256Hash: '3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d'
+                    sha256Hash: '99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f'
                 }, {
                     document: GetPoolTitlesDocument,
                     get rawSDL() {
                         return printWithCache(GetPoolTitlesDocument);
                     },
                     location: 'GetPoolTitlesDocument.graphql',
-                    sha256Hash: '3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d'
+                    sha256Hash: '99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f'
                 }, {
                     document: GetProposalTitlesDocument,
                     get rawSDL() {
                         return printWithCache(GetProposalTitlesDocument);
                     },
                     location: 'GetProposalTitlesDocument.graphql',
-                    sha256Hash: '3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d'
+                    sha256Hash: '99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f'
                 }, {
                     document: GetPassportStrategyDocument,
                     get rawSDL() {
                         return printWithCache(GetPassportStrategyDocument);
                     },
                     location: 'GetPassportStrategyDocument.graphql',
-                    sha256Hash: '3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d'
+                    sha256Hash: '99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f'
                 }, {
                     document: GetPassportUserDocument,
                     get rawSDL() {
                         return printWithCache(GetPassportUserDocument);
                     },
                     location: 'GetPassportUserDocument.graphql',
-                    sha256Hash: '3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d'
+                    sha256Hash: '99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f'
                 }, {
                     document: GetGoodDollarStrategyDocument,
                     get rawSDL() {
                         return printWithCache(GetGoodDollarStrategyDocument);
                     },
                     location: 'GetGoodDollarStrategyDocument.graphql',
-                    sha256Hash: '3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d'
+                    sha256Hash: '99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f'
                 }, {
                     document: GetGoodDollarUserDocument,
                     get rawSDL() {
                         return printWithCache(GetGoodDollarUserDocument);
                     },
                     location: 'GetGoodDollarUserDocument.graphql',
-                    sha256Hash: '3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d'
+                    sha256Hash: '99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f'
                 }, {
                     document: GetProposalDisputesDocument,
                     get rawSDL() {
                         return printWithCache(GetProposalDisputesDocument);
                     },
                     location: 'GetProposalDisputesDocument.graphql',
-                    sha256Hash: '3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d'
+                    sha256Hash: '99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f'
                 }, {
                     document: GetArbitrableConfigsDocument,
                     get rawSDL() {
                         return printWithCache(GetArbitrableConfigsDocument);
                     },
                     location: 'GetArbitrableConfigsDocument.graphql',
-                    sha256Hash: '3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d'
+                    sha256Hash: '99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f'
                 }, {
                     document: GetMemberPassportAndCommunitiesDocument,
                     get rawSDL() {
                         return printWithCache(GetMemberPassportAndCommunitiesDocument);
                     },
                     location: 'GetMemberPassportAndCommunitiesDocument.graphql',
-                    sha256Hash: '3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d'
+                    sha256Hash: '99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f'
                 }, {
                     document: GetCommunityNameDocument,
                     get rawSDL() {
                         return printWithCache(GetCommunityNameDocument);
                     },
                     location: 'GetCommunityNameDocument.graphql',
-                    sha256Hash: '3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d'
+                    sha256Hash: '99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f'
                 }, {
                     document: GetPoolTitleDocument,
                     get rawSDL() {
                         return printWithCache(GetPoolTitleDocument);
                     },
                     location: 'GetPoolTitleDocument.graphql',
-                    sha256Hash: '3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d'
+                    sha256Hash: '99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f'
                 }, {
                     document: GetProposalTitleDocument,
                     get rawSDL() {
                         return printWithCache(GetProposalTitleDocument);
                     },
                     location: 'GetProposalTitleDocument.graphql',
-                    sha256Hash: '3d01dd3a57466c9d10f7b64699965b5aaf4df5f51a788b38d47ef1613be7d50d'
+                    sha256Hash: '99205651fdbd7aaad29ea8638767c68cefd7abda78b51c4e1ef080be6516fd0f'
                 }
             ];
         },
@@ -844,11 +844,29 @@ export const getProposalDataDocument = gql `
       totalEffectiveActivePoints
       poolId
       isEnabled
+      registryCommunity {
+        id
+        councilSafe
+        isValid
+        garden {
+          id
+          symbol
+          decimals
+        }
+        members(first: 1000) {
+          memberAddress
+        }
+      }
       config {
         proposalType
         pointSystem
         minThresholdPoints
         decay
+        weight
+        maxRatio
+        maxAmount
+        allowlist
+        superfluidToken
       }
     }
     arbitrableConfig {

@@ -9,7 +9,7 @@ import {
 import { usePathname, useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { Address, encodeAbiParameters, formatUnits } from "viem";
-import { useAccount, useToken } from "wagmi";
+import { useAccount } from "wagmi";
 import {
   getProposalDataDocument,
   getProposalDataQuery,
@@ -41,6 +41,7 @@ import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithC
 import { useConvictionRead } from "@/hooks/useConvictionRead";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
+import { usePoolToken } from "@/hooks/usePoolToken";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { alloABI } from "@/src/generated";
 import { PoolTypes, ProposalStatus, Column } from "@/types";
@@ -114,10 +115,16 @@ export default function ClientPage({ params }: ClientPageProps) {
     !!memberData?.member?.memberCommunity?.[0]?.isRegistered;
   //
 
-  const proposalData = {
-    ...data?.cvproposal,
-    registryCommunity: data?.registryCommunity,
-  };
+  type ProposalData = NonNullable<getProposalDataQuery["cvproposal"]>;
+  const proposalData: (ProposalData & {
+    registryCommunity?: getProposalDataQuery["registryCommunity"];
+  }) | undefined =
+    data?.cvproposal ?
+      {
+        ...data.cvproposal,
+        registryCommunity: data?.registryCommunity,
+      }
+    : undefined;
   const proposalSupporters = supportersData?.members;
 
   const filteredAndSortedProposalSupporters: ProposalSupporter[] =
@@ -148,7 +155,7 @@ export default function ClientPage({ params }: ClientPageProps) {
       BigInt(proposalData.proposalNumber)
     : undefined;
 
-  const poolTokenAddr = proposalData?.strategy.token as Address;
+  const poolTokenAddr = proposalData?.strategy?.token as Address;
 
   const { publish } = usePubSubContext();
   const chainId = useChainIdFromPath();
@@ -161,17 +168,18 @@ export default function ClientPage({ params }: ClientPageProps) {
   const isProposerConnected =
     proposalData?.submitter === address?.toLowerCase();
 
-  const proposalType = proposalData?.strategy.config?.proposalType;
+  const proposalType = proposalData?.strategy?.config?.proposalType;
   const isSignalingType = PoolTypes[proposalType] === "signaling";
   const requestedAmount = proposalData?.requestedAmount;
   const beneficiary = proposalData?.beneficiary as Address | undefined;
   const submitter = proposalData?.submitter as Address | undefined;
   const proposalStatus = ProposalStatus[proposalData?.proposalStatus];
 
-  const { data: poolToken } = useToken({
-    address: poolTokenAddr,
-    enabled: !!poolTokenAddr && !isSignalingType,
-    chainId,
+  const poolToken = usePoolToken({
+    poolAddress: proposalData?.strategy?.id,
+    poolTokenAddr,
+    enabled:
+      !!poolTokenAddr && !!proposalData?.strategy?.id && !isSignalingType,
   });
 
   const {
@@ -182,10 +190,10 @@ export default function ClientPage({ params }: ClientPageProps) {
     timeToPass,
     triggerConvictionRefetch,
   } = useConvictionRead({
-    proposalData,
+    proposalData: proposalData as getProposalDataQuery["cvproposal"],
     strategyConfig: proposalData?.strategy?.config,
     tokenData: data?.tokenGarden?.decimals,
-    enabled: proposalData?.proposalNumber != null,
+    enabled: proposalData?.proposalNumber != null && proposalData != null,
   });
 
   useEffect(() => {
@@ -377,7 +385,7 @@ export default function ClientPage({ params }: ClientPageProps) {
               {/* Divider */}
 
               {/* Conviction Progress */}
-              {proposalData.strategy.isEnabled &&
+              {proposalData.strategy?.isEnabled &&
                 currentConvictionPct != null &&
                 thresholdPct != null &&
                 totalSupportPct != null && (
@@ -406,7 +414,7 @@ export default function ClientPage({ params }: ClientPageProps) {
             </div>
           </div>
 
-          {!proposalData.strategy.isEnabled && (
+          {!proposalData.strategy?.isEnabled && (
             <InfoBox infoBoxType="warning">The pool is not enabled.</InfoBox>
           )}
 
@@ -434,7 +442,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                       writeDistribute?.({
                         args: [
                           BigInt(poolId),
-                          [proposalData?.strategy.id as Address],
+                          [proposalData?.strategy?.id as Address],
                           encodedDataProposalId(proposalIdNumber),
                         ],
                       })
@@ -496,7 +504,7 @@ export default function ClientPage({ params }: ClientPageProps) {
             </div>
             <div className="flex items-end">
               {(status === "active" || status === "disputed") &&
-                proposalData.strategy.isEnabled && (
+                proposalData.strategy?.isEnabled && (
                   <DisputeModal
                     isMemberCommunity={isMemberCommunity}
                     proposalData={{ ...proposalData, ...metadata }}

@@ -5,15 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { Address, encodeAbiParameters, parseUnits } from "viem";
 import { useAccount, useContractRead, useToken } from "wagmi";
-import {
-  Allo,
-  ArbitrableConfig,
-  CVStrategy,
-  CVStrategyConfig,
-  Maybe,
-  MemberCommunity,
-  TokenGarden,
-} from "#/subgraph/.graphclient";
+import { getProposalDataQuery } from "#/subgraph/.graphclient";
 import { FormAddressInput } from "./FormAddressInput";
 import { FormInput } from "./FormInput";
 import { FormPreview, FormRow } from "./FormPreview";
@@ -45,15 +37,7 @@ type FormInputs = {
 };
 
 type EditProposalFormProps = {
-  strategy: Pick<
-    CVStrategy,
-    "id" | "token" | "maxCVSupply" | "totalEffectiveActivePoints"
-  > & {
-    config: Pick<CVStrategyConfig, "decay" | "proposalType">;
-    registryCommunity: {
-      members?: Maybe<Pick<MemberCommunity, "memberAddress">[]>;
-    };
-  };
+  strategy: NonNullable<getProposalDataQuery["cvproposal"]>["strategy"];
   // arbitrableConfig:
   //   | Pick<ArbitrableConfig, "submitterCollateralAmount">
   //   | undefined;
