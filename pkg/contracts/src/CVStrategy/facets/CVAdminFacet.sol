@@ -59,6 +59,28 @@ contract CVAdminFacet is CVStrategyBaseFacet {
         }
     }
 
+    function connectSuperfluidGDA(address gda) external {
+        onlyCouncilSafeOrMember();
+        ISuperToken supertoken =
+            address(superfluidToken) != address(0) ? superfluidToken : ISuperToken(allo.getPool(poolId).token);
+        bool success = supertoken.connectPool(ISuperfluidPool(gda));
+        require(success, "Superfluid GDA connect failed");
+        emit SuperfluidGDAConnected(gda, msg.sender);
+    }
+
+    function disconnectSuperfluidGDA(address gda) external {
+        onlyCouncilSafeOrMember();
+        ISuperToken supertoken =
+            address(superfluidToken) != address(0) ? superfluidToken : ISuperToken(allo.getPool(poolId).token);
+        bool success = supertoken.disconnectPool(ISuperfluidPool(gda));
+        require(success, "Superfluid GDA disconnect failed");
+        emit SuperfluidGDADisconnected(gda, msg.sender);
+    }
+
+    /*|--------------------------------------------|*/
+    /*|              INTERNAL HELPERS              |*/
+    /*|--------------------------------------------|*/
+
     function _setPoolParams(
         ArbitrableConfig memory _arbitrableConfig,
         CVParams memory _cvParams,
@@ -116,24 +138,6 @@ contract CVAdminFacet is CVStrategyBaseFacet {
             cvParams = _cvParams;
             emit CVParamsUpdated(_cvParams);
         }
-    }
-
-    function connectSuperfluidGDA(address gda) external {
-        onlyCouncilSafeOrMember();
-        ISuperToken supertoken =
-            address(superfluidToken) != address(0) ? superfluidToken : ISuperToken(allo.getPool(poolId).token);
-        bool success = supertoken.connectPool(ISuperfluidPool(gda));
-        require(success, "Superfluid GDA connect failed");
-        emit SuperfluidGDAConnected(gda, msg.sender);
-    }
-
-    function disconnectSuperfluidGDA(address gda) external {
-        onlyCouncilSafeOrMember();
-        ISuperToken supertoken =
-            address(superfluidToken) != address(0) ? superfluidToken : ISuperToken(allo.getPool(poolId).token);
-        bool success = supertoken.disconnectPool(ISuperfluidPool(gda));
-        require(success, "Superfluid GDA disconnect failed");
-        emit SuperfluidGDADisconnected(gda, msg.sender);
     }
 
     function _addToAllowList(address[] memory members) internal {

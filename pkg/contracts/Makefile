@@ -174,7 +174,7 @@ upgrade-opsep:
 	--verify \
 	-vvv
 
-upgrade-diamond-opsep: verify-storage
+upgrade-diamond-opsep:  verify-storage
 	-forge script script/UpgradeCVDiamondTest.s.sol:UpgradeCVDiamondTest \
 	--rpc-url $(RPC_URL_OP_TESTNET) \
 	--sig "run(string)" 'opsepolia' \
@@ -183,12 +183,11 @@ upgrade-diamond-opsep: verify-storage
 	--chain-id 11155420 \
 	--ffi \
 	--broadcast \
-	--via-ir \
 	--verify \
 	-vvv
 
-upgrade-community-diamond-opsep: verify-storage
-	-forge script script/UpgradeRegistryCommunityDiamond.s.sol:UpgradeRegistryCommunityDiamond \
+upgrade-community-diamond-opsep:
+	-forge script script/UpgradeRegistryCommunityDiamondTest.s.sol:UpgradeRegistryCommunityDiamondTest \
 	--rpc-url $(RPC_URL_OP_TESTNET) \
 	--sig "run(string)" 'opsepolia' \
 	--account pkGarden \
@@ -196,12 +195,11 @@ upgrade-community-diamond-opsep: verify-storage
 	--chain-id 11155420 \
 	--ffi \
 	--broadcast \
-	--via-ir \
 	--verify \
 	-vvv
 
 verify-diamond-blockscout-opsep:
-	-forge script script/UpgradeCVDiamond.s.sol:UpgradeCVDiamond \
+	-forge script script/UpgradeCVDiamond.s.sol:UpgradeCVDiamondTest \
 	--rpc-url $(RPC_URL_OP_TESTNET) \
 	--sig "run(string)" 'opsepolia' \
 	--account pkGarden \

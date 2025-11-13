@@ -124,7 +124,11 @@ contract CVProposalFacet is CVStrategyBaseFacet {
         }
     }
 
-    function compareStringsByHash(string memory _first, string memory _second) public pure returns (bool) {
+    /*|--------------------------------------------|*/
+    /*|              INTERNAL HELPERS              |*/
+    /*|--------------------------------------------|*/
+
+    function compareStringsByHash(string memory _first, string memory _second) internal pure returns (bool) {
         // Convert both strings to bytes and hash them using abi.encodePacked
         bytes32 hash1 = keccak256(abi.encodePacked(_first));
         bytes32 hash2 = keccak256(abi.encodePacked(_second));

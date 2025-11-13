@@ -111,22 +111,23 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
     /*|              CUSTOM ERRORS                 |*/
     /*|--------------------------------------------|*/
 
-    error AllowlistTooBig(uint256 size);
-    // error AddressCannotBeZero();
-    error OnlyEmptyCommunity(uint256 totalMembers);
-    error UserNotInCouncil(address _user);
-    error UserNotInRegistry();
-    error UserAlreadyActivated();
-    error StrategyExists();
-    error StrategyDisabled();
-    error SenderNotNewOwner();
-    error SenderNotStrategy();
-    error ValueCannotBeZero();
-    error NewFeeGreaterThanMax();
-    error KickNotEnabled();
-    error PointsDeactivated();
-    error DecreaseUnderMinimum();
-    error CantDecreaseMoreThanPower(uint256 _decreaseAmount, uint256 _currentPower);
+    error AllowlistTooBig(uint256 size); // 0x83d888a8
+    // error AddressCannotBeZero(); // 0xe622e040
+    error OnlyEmptyCommunity(uint256 totalMembers); // 0xfb2aa73e
+    error UserNotInCouncil(address _user); // 0xfc4be72f
+    error UserNotInRegistry(); // 0x6a5cfb6d
+    error UserAlreadyActivated(); // 0xd5b9bc96
+    error StrategyExists(); // 0x968a4d2c
+    error StrategyDisabled(); // 0x46c26e4b
+    error SenderNotNewOwner(); // 0xebcd0d6e
+    error SenderNotStrategy(); // 0xbbe79611
+    error ValueCannotBeZero(); // 0xc70d18aa
+    error NewFeeGreaterThanMax(); // 0xfe925f7d
+    error KickNotEnabled(); // 0xcb63dc72
+    error PointsDeactivated(); // 0xd4d3290e
+    error DecreaseUnderMinimum(); // 0x9c47d02e
+    error CantDecreaseMoreThanPower(uint256 _decreaseAmount, uint256 _currentPower); // 0x8a11f318
+    error CommunityFunctionDoesNotExist(bytes4 selector); // 0x8e2ba36a
 
     using ERC165Checker for address;
     using SafeERC20 for IERC20;
@@ -378,91 +379,109 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
     }
 
     // Stub - delegates to CommunityPowerFacet
+    // Signature: getMemberStakedAmount(address) => 0x2c611c4a
     function getMemberStakedAmount(address) public virtual returns (uint256) {
         _delegateToFacet();
     }
 
     // Stub - delegates to CommunityStrategyFacet
+    // Signature: addStrategyByPoolId(uint256) => 0x82d6a1e7
     function addStrategyByPoolId(uint256) public virtual {
         _delegateToFacet();
     }
 
     // Stub - delegates to CommunityStrategyFacet
+    // Signature: addStrategy(address) => 0x223e5479
     function addStrategy(address) public virtual {
         _delegateToFacet();
     }
 
     // Stub - delegates to CommunityStrategyFacet
+    // Signature: rejectPool(address) => 0xfb1f6917
     function rejectPool(address) public virtual {
         _delegateToFacet();
     }
 
     // Stub - delegates to CommunityStrategyFacet
+    // Signature: removeStrategyByPoolId(uint256) => 0x73265c37
     function removeStrategyByPoolId(uint256) public virtual {
         _delegateToFacet();
     }
 
     // Stub - delegates to CommunityStrategyFacet
+    // Signature: removeStrategy(address) => 0x175188e8
     function removeStrategy(address) public virtual {
         _delegateToFacet();
     }
 
     // Stub - delegates to CommunityAdminFacet
+    // Signature: setCouncilSafe(address) => 0x397e2543
     function setCouncilSafe(address payable) public virtual {
         _delegateToFacet();
     }
 
     // Stub - delegates to CommunityAdminFacet
+    // Signature: acceptCouncilSafe() => 0xb5058c50
     function acceptCouncilSafe() public virtual {
         _delegateToFacet();
     }
 
     // Stub - delegates to CommunityMemberFacet
+    // Signature: isMember(address) => 0xa230c524
     function isMember(address) public virtual returns (bool) {
         _delegateToFacet();
     }
 
     // Stub - delegates to CommunityMemberFacet
+    // Signature: stakeAndRegisterMember(string) => 0x9a1f46e2
     function stakeAndRegisterMember(string memory) public virtual {
         _delegateToFacet();
     }
 
     // Stub - delegates to CommunityMemberFacet
+    // Signature: getStakeAmountWithFees() => 0x28c309e9
     function getStakeAmountWithFees() public virtual returns (uint256) {
         _delegateToFacet();
     }
 
     // Stub - delegates to CommunityMemberFacet
+    // Signature: getBasisStakedAmount() => 0x0331383c
     function getBasisStakedAmount() external virtual returns (uint256) {
         _delegateToFacet();
     }
 
     // Stub - delegates to CommunityAdminFacet
+    // Signature: setBasisStakedAmount(uint256) => 0x31f61bca
     function setBasisStakedAmount(uint256) public virtual {
         _delegateToFacet();
     }
 
     // Stub - delegates to CommunityAdminFacet
+    // Signature: setCommunityParams((address,address,uint256,string,uint256,bool,string)) => 0xf2d774e7
     function setCommunityParams(CommunityParams memory) external {
         _delegateToFacet();
     }
 
     // Stub - delegates to CommunityAdminFacet
+    // Signature: setCommunityFee(uint256) => 0x0d12bbdb
     function setCommunityFee(uint256) public virtual {
         _delegateToFacet();
     }
 
     // Stub - delegates to CommunityAdminFacet
+    // Signature: isCouncilMember(address) => 0xebd7dc52
     function isCouncilMember(address) public virtual returns (bool) {
         _delegateToFacet();
     }
 
     // Stub - delegates to CommunityMemberFacet
+    // Signature: unregisterMember() => 0xb99b4370
     function unregisterMember() public virtual {
         _delegateToFacet();
     }
 
     // Stub - delegates to CommunityMemberFacet
+    // Signature: kickMember(address,address) => 0x6871eb4d
     function kickMember(address, address) public virtual {
         _delegateToFacet();
     }
@@ -479,7 +498,9 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
         }
 
         address facet = ds.facetAddressAndSelectorPosition[msg.sig].facetAddress;
-        require(facet != address(0), "RegistryCommunity: Function does not exist");
+        if (facet == address(0)) {
+            revert CommunityFunctionDoesNotExist(msg.sig);
+        }
 
         assembly {
             calldatacopy(0, 0, calldatasize())
@@ -514,7 +535,9 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
 
         address facet = ds.facetAddressAndSelectorPosition[msg.sig].facetAddress;
 
-        require(facet != address(0), "RegistryCommunity: Function does not exist");
+        if (facet == address(0)) {
+            revert CommunityFunctionDoesNotExist(msg.sig);
+        }
 
         assembly {
             calldatacopy(0, 0, calldatasize())

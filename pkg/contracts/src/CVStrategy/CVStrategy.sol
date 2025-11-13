@@ -86,6 +86,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     error AShouldBeUnderTwo_128();
     error BShouldBeLessTwo_128();
     error AShouldBeUnderOrEqTwo_128();
+    error StrategyFunctionDoesNotExist(bytes4 selector);
 
     /*|--------------------------------------------|*/
     /*|              CUSTOM EVENTS                 |*/
@@ -717,41 +718,35 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
 
     // connectSuperfluidGDA and disconnectSuperfluidGDA removed - now in AdminFacet
     // Stubs needed for tests to call - delegates to facet
-    function connectSuperfluidGDA(address gda) external {
+    function connectSuperfluidGDA(address) external {
         _delegateToFacet();
     }
 
-    function disconnectSuperfluidGDA(address gda) external {
+    function disconnectSuperfluidGDA(address) external {
         _delegateToFacet();
     }
 
     // disputeProposal and rule removed - now in DisputeFacet
     // Stub needed for tests to call - delegates to facet
-    function disputeProposal(uint256 proposalId, string calldata context, bytes calldata _extraData)
-        external
-        payable
-        returns (uint256 disputeId)
-    {
+    // Sig: 0xb41596ec
+    function disputeProposal(uint256, string calldata, bytes calldata) external payable returns (uint256) {
         _delegateToFacet();
     }
 
     // Stub to satisfy IArbitrable interface - delegates to facet
+    // Sig: 0x311a6c56
     function rule(uint256, uint256) external virtual override {
         _delegateToFacet();
     }
 
     // cancelProposal removed - now in ProposalManagementFacet
     // Stub needed for frontend to call - delegates to facet
-    function cancelProposal(uint256 proposalId) external {
+    // Sig: 0xe0a8f6f5
+    function cancelProposal(uint256) external {
         _delegateToFacet();
     }
 
-    function editProposal(
-        uint256 _proposalId,
-        Metadata memory _metadata,
-        address _beneficiary,
-        uint256 _requestedAmount
-    ) external {
+    function editProposal(uint256, Metadata memory, address, uint256) external {
         _delegateToFacet();
     }
 
@@ -794,7 +789,9 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         }
 
         address facet = ds.facetAddressAndSelectorPosition[msg.sig].facetAddress;
-        require(facet != address(0), "CVStrategy: Function does not exist");
+        if (facet == address(0)) {
+            revert StrategyFunctionDoesNotExist(msg.sig);
+        }
 
         assembly {
             calldatacopy(0, 0, calldatasize())
@@ -829,7 +826,9 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
 
         address facet = ds.facetAddressAndSelectorPosition[msg.sig].facetAddress;
 
-        require(facet != address(0), "CVStrategy: Function does not exist");
+        if (facet == address(0)) {
+            revert StrategyFunctionDoesNotExist(msg.sig);
+        }
 
         assembly {
             calldatacopy(0, 0, calldatasize())

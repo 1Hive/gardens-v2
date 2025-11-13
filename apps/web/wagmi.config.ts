@@ -4,12 +4,12 @@ import { Abi } from "viem";
 import { abi as alloABI } from "#/contracts/out/Allo.sol/Allo.json";
 // Use aggregated diamond ABIs that include all facet functions
 import { abi as CVStrategyABI } from "#/contracts/out/DiamondAggregated/CVStrategy.json";
+import { abi as registryComityABI } from "#/contracts/out/DiamondAggregated/RegistryCommunity.json";
 import { abi as GoodDollarABI } from "#/contracts/out/GoodDollarSybil.sol/GoodDollarSybil.json";
 import { abi as ArbitratorAbi } from "#/contracts/out/IArbitrator.sol/IArbitrator.json";
 import { abi as mockERC20ABI } from "#/contracts/out/MockERC20.sol/MockERC20.json";
 import { abi as PassportScorerABI } from "#/contracts/out/PassportScorer.sol/PassportScorer.json";
 // Use aggregated diamond ABIs that include all facet functions
-import { abi as registryComityABI } from "#/contracts/out/DiamondAggregated/RegistryCommunity.json";
 import { abi as registryFactoryABI } from "#/contracts/out/RegistryFactory.sol/RegistryFactory.json";
 import { abi as SafeArbitrator } from "#/contracts/out/SafeArbitrator.sol/SafeArbitrator.json";
 
