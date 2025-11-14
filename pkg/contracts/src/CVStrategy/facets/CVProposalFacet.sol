@@ -23,7 +23,7 @@ contract CVProposalFacet is CVStrategyBaseFacet {
     /*|--------------------------------------------|*/
     error ProposalNotActive(uint256 proposalId, uint8 currentStatus); // 0x14b469ec
     error UnexpectedRequestToken(address requestedToken, address poolToken); // 0x24bb70b8
-    error ArbitratorNotSet(address arbitrator); // 0x25a25805
+    error ArbitratorNotSet(); // 0x25a25805
     error InsufficientCollateral(uint256 sent, uint256 required); // 0xb07e3bc4
     error BeneficiaryEditTimeout(
         uint256 proposalId, address currentBeneficiary, address newBeneficiary, uint256 creationTimestamp
@@ -66,8 +66,8 @@ contract CVProposalFacet is CVStrategyBaseFacet {
             }
         }
 
-        if (address(arbitrableConfigs[currentArbitrableConfigVersion].arbitrator) != address(0)) {
-            revert ArbitratorNotSet(address(arbitrableConfigs[currentArbitrableConfigVersion].arbitrator));
+        if (address(arbitrableConfigs[currentArbitrableConfigVersion].arbitrator) == address(0)) {
+            revert ArbitratorNotSet();
         }
 
         if (msg.value < arbitrableConfigs[currentArbitrableConfigVersion].submitterCollateralAmount) {
@@ -164,5 +164,7 @@ contract CVProposalFacet is CVStrategyBaseFacet {
 
             proposal.metadata.pointer = _metadata.pointer;
         }
+
+        emit ProposalEdited(_proposalId, _metadata, _beneficiary, _requestedAmount);
     }
 }

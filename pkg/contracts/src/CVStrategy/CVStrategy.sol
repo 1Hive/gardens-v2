@@ -408,17 +408,26 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     {
         Proposal storage proposal = proposals[_proposalId];
 
-        threshold = proposal.requestedAmount == 0
-            ? 0
-            : ConvictionsUtils.calculateThreshold(
-                proposal.requestedAmount,
-                getPoolAmount(),
-                totalPointsActivated,
-                cvParams.decay,
-                cvParams.weight,
-                cvParams.maxRatio,
-                cvParams.minThresholdPoints
-            );
+        if (proposal.requestedAmount == 0) {
+            threshold = 0;
+        } else {
+            uint256 poolAmount = getPoolAmount();
+            uint256 maxAllowed = Math.mulDiv(poolAmount, cvParams.maxRatio, ConvictionsUtils.D);
+
+            if (maxAllowed == 0 || proposal.requestedAmount > maxAllowed) {
+                threshold = 0;
+            } else {
+                threshold = ConvictionsUtils.calculateThreshold(
+                    proposal.requestedAmount,
+                    poolAmount,
+                    totalPointsActivated,
+                    cvParams.decay,
+                    cvParams.weight,
+                    cvParams.maxRatio,
+                    cvParams.minThresholdPoints
+                );
+            }
+        }
         return (
             proposal.submitter,
             proposal.beneficiary,

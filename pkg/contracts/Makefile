@@ -179,6 +179,7 @@ upgrade-diamond-opsep: # verify-storage
 	--broadcast \
 	--ffi \
 	--verify \
+	--slow \
 	-vvv
 
 upgrade-community-diamond-opsep:  
