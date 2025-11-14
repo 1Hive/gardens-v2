@@ -759,8 +759,10 @@ export function Proposals({
               isOpen={allocationView}
               onClose={setAllocationView}
               size="large"
+              title="Manage Your Support"
             >
               <div className="border2 flex flex-col gap-4">
+                <UserAllocationStats stats={stats} />
                 {activeOrDisputedProposals.map((proposalData) => (
                   <Fragment key={proposalData.id}>
                     <ProposalsModalSupport
@@ -893,34 +895,31 @@ export function Proposals({
 
 function UserAllocationStats({ stats }: { stats: Stats[] }) {
   return (
-    <div className="mt-10">
-      <h5>Support Overview</h5>
-      <div className="mt-5 grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-2">
-        {stats.map((stat) => (
-          <div key={`stat_${stat.id}`} className="section-layout flex gap-4">
-            <div
-              className={`radial-progress rounded-full border-4 border-neutral transition-all duration-300 ease-in-out ${stat.className}`}
-              style={{
-                // @ts-ignore
-                "--value": stat.stat,
-                "--size": "4.2rem",
-                "--thickness": "0.35rem",
-              }}
-              role="progressbar"
-            >
-              <span className="text-xs dark:text-black">{stat.stat} %</span>
-            </div>
-            <div className="flex flex-col items-start justify-center">
-              <InfoWrapper tooltip={stat.info}>
-                <h5>
-                  <TooltipIfOverflow>{stat.name}</TooltipIfOverflow>
-                </h5>
-              </InfoWrapper>
-              <p className="text-2xl font-semibold text-right">{stat.stat} %</p>
-            </div>
+    <div className="mt-5 grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-2">
+      {stats.map((stat) => (
+        <div key={`stat_${stat.id}`} className="section-layout flex gap-4">
+          <div
+            className={`radial-progress rounded-full border-4 border-neutral transition-all duration-300 ease-in-out ${stat.className}`}
+            style={{
+              // @ts-ignore
+              "--value": stat.stat,
+              "--size": "4.2rem",
+              "--thickness": "0.35rem",
+            }}
+            role="progressbar"
+          >
+            <span className="text-xs dark:text-black">{stat.stat} %</span>
           </div>
-        ))}
-      </div>
+          <div className="flex flex-col items-start justify-center">
+            <InfoWrapper tooltip={stat.info}>
+              <h4>
+                <TooltipIfOverflow>{stat.name}</TooltipIfOverflow>
+              </h4>
+            </InfoWrapper>
+            <p className="text-xl font-semibold text-right">{stat.stat} %</p>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

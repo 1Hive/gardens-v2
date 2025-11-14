@@ -1,11 +1,12 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 "use client";
 
-import { forwardRef, useEffect, useImperativeHandle } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
 import {
   HandRaisedIcon,
   ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
+import { ArrowDownIcon } from "@heroicons/react/24/solid";
 import { usePathname } from "next/navigation";
 import { Address, formatUnits } from "viem";
 import {
@@ -19,7 +20,7 @@ import { Countdown } from "./Countdown";
 import { DisplayNumber } from "./DisplayNumber";
 import { ProposalInputItem } from "./Proposals";
 import TooltipIfOverflow from "./TooltipIfOverflow";
-import { Badge, Card, EthAddress, Modal } from "@/components";
+import { Badge, Button, Card, EthAddress, Modal } from "@/components";
 import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
 import { Skeleton } from "@/components/Skeleton";
 import { QUERY_PARAMS } from "@/constants/query-params";
@@ -104,9 +105,11 @@ export const ProposalsModalSupport = forwardRef<
       enabled: !proposalData.metadata,
     });
 
+    const [openInfo, setOpenInfo] = useState(false);
+
     const metadata = proposalData.metadata ?? metadataResult;
 
-    const { id, proposalNumber, proposalStatus, requestedAmount, submitter } =
+    const { proposalNumber, proposalStatus, requestedAmount, submitter } =
       proposalData;
     const pathname = usePathname();
 
@@ -235,8 +238,8 @@ export const ProposalsModalSupport = forwardRef<
           <div className="flex flex-col sm:flex-row w-full">
             {/* icon title and id */}
             <header className="flex-1 justify-between items-start gap-3">
-              <div className="flex-1 items-start flex-col gap-1 ">
-                <div className="flex items-center gap-4">
+              <div className="flex-1 items-start flex-col gap-1 border2">
+                <div className="flex items-center gap-4  ">
                   <Skeleton isLoading={!metadata}>
                     <h3 className="flex items-start max-w-[165px] sm:max-w-md">
                       <TooltipIfOverflow>{metadata?.title}</TooltipIfOverflow>
@@ -266,6 +269,14 @@ export const ProposalsModalSupport = forwardRef<
                     </div>
                   )}
                 </div>
+                <Button
+                  type="button"
+                  btnStyle="ghost"
+                  onClick={() => setOpenInfo(!openInfo)}
+                  icon={<ArrowDownIcon className="w-3 h-3" />}
+                />
+              </div>
+              {openInfo && (
                 <div className="flex  justify-between items-center border2">
                   <div className="flex sm:items-center flex-col items-start sm:flex-row gap-2">
                     <div
@@ -288,7 +299,7 @@ export const ProposalsModalSupport = forwardRef<
                         <div className="flex items-center gap-1 justify-self-end">
                           <div className="hidden sm:block w-1 h-1 rounded-full bg-neutral-soft-content" />
                           <p className="text-sm ml-1 dark:text-neutral-soft-content">
-                            Requesting:{".... "}
+                            Requesting:{""}
                           </p>
                           <DisplayNumber
                             number={formatUnits(
@@ -311,7 +322,7 @@ export const ProposalsModalSupport = forwardRef<
                     </div>
                   </div>
                 </div>
-              </div>
+              )}
             </header>
           </div>
 
@@ -322,8 +333,8 @@ export const ProposalsModalSupport = forwardRef<
                 {/* manage support view */}
                 {isAllocationView ?
                   <div className="flex w-full flex-wrap items-center justify-between gap-6">
-                    <div className="flex items-center gap-8 flex-grow flex-wrap">
-                      <div className={"flex-grow sm:max-w-[460px]"}>
+                    <div className="flex items-center gap-8 flex-grow flex-wrap border2">
+                      <div className={"flex-grow sm:max-w-[460px] border2"}>
                         <input
                           type="range"
                           min={0}
@@ -354,7 +365,7 @@ export const ProposalsModalSupport = forwardRef<
                       </div>
 
                       {inputValue > 0 && (
-                        <div className="mb-2">
+                        <div className="mb-2 border2">
                           <>
                             <div className="flex gap-10">
                               <div className="flex flex-col items-center justify-center">
