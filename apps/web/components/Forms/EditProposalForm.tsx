@@ -93,7 +93,10 @@ export const EditProposalForm = ({
   const ONE_HOUR_MS = 60 * 60 * 1000;
   const proposalCreatedAtMs = Number(proposal.createdAt ?? 0) * 1000;
   const metadataEditDeadline = proposalCreatedAtMs + ONE_HOUR_MS;
-  const canEditMetadata = Date.now() < metadataEditDeadline;
+  const [metadataTimeLeft, setMetadataTimeLeft] = useState(() =>
+    Math.max(metadataEditDeadline - Date.now(), 0),
+  );
+  const canEditMetadata = metadataTimeLeft > 0;
   const proposalConviction = useConvictionRead({
     strategyConfig: strategy.config,
     proposalData: { ...proposal, strategy: strategy },
@@ -155,6 +158,32 @@ export const EditProposalForm = ({
   const proposalMetadataChanged =
     proposalTitle !== proposal.metadata?.title ||
     proposalDescription !== proposal.metadata?.description;
+
+  useEffect(() => {
+    let timer: ReturnType<typeof setInterval>;
+    const updateTime = () => {
+      setMetadataTimeLeft(() => {
+        const remaining = Math.max(metadataEditDeadline - Date.now(), 0);
+        if (remaining === 0 && timer) {
+          clearInterval(timer);
+        }
+        return remaining;
+      });
+    };
+
+    updateTime();
+    timer = setInterval(updateTime, 1000);
+
+    return () => clearInterval(timer);
+  }, [metadataEditDeadline]);
+
+  const formatTimeLeft = (ms: number) => {
+    if (ms <= 0) return "0s";
+    const totalSeconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes}m ${seconds}s`;
+  };
 
   useEffect(() => {
     setRequestedAmount(
@@ -420,6 +449,16 @@ export const EditProposalForm = ({
               placeholder="Proposal description"
               disabled={!canEditMetadata}
             />
+            {canEditMetadata && metadataTimeLeft > 0 && (
+              <InfoBox
+                infoBoxType="info"
+                title="Metadata editing window"
+                className="mt-3"
+              >
+                You can edit the beneficiary, title, and description for{" "}
+                {formatTimeLeft(metadataTimeLeft)}.
+              </InfoBox>
+            )}
             {!canEditMetadata && (
               <InfoBox
                 infoBoxType="warning"
@@ -433,7 +472,7 @@ export const EditProposalForm = ({
           </div>
         </div>
       }
-      <div className="flex w-full items-center justify-between py-6 flex-wrap">
+      <div className="flex w-full items-center justify-end py-6 flex-wrap">
         {showPreview ?
           <div className="flex items-center gap-10">
             <Button

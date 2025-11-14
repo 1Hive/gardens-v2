@@ -167,7 +167,7 @@ export default function MarkdownEditor({
   };
 
   return (
-    <div ref={wrapRef} className="relative bg-neutral">
+    <div ref={wrapRef} className="relative bg-neutral rounded-2xl">
       <div
         className={`p-2 resize-y overflow-auto min-h-60 rounded-2xl border ${
           id && errors?.[id] ? "input-error" : "input-info"

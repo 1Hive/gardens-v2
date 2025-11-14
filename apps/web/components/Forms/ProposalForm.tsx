@@ -21,6 +21,7 @@ import { LoadingSpinner } from "../LoadingSpinner";
 import { calculateConvictionGrowthInSeconds } from "../PoolHeader";
 import { WalletBalance } from "../WalletBalance";
 import { Button, EthAddress, InfoBox, InfoWrapper } from "@/components";
+import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
@@ -217,9 +218,21 @@ export const ProposalForm = ({
       if (pathname) {
         const newPath = pathname.replace(
           "/create-proposal",
-          `${strategy.id}-${proposalId}`,
+          `/${strategy.id}-${proposalId}`,
         );
-        router.push(newPath);
+        const searchParams = new URLSearchParams();
+        searchParams.set(
+          QUERY_PARAMS.proposalPage.pendingProposal,
+          proposalId.toString(),
+        );
+        const titleValue = getValues("title");
+        if (titleValue) {
+          searchParams.set(
+            QUERY_PARAMS.proposalPage.pendingProposalTitle,
+            encodeURIComponent(titleValue),
+          );
+        }
+        router.push(`${newPath}?${searchParams.toString()}`);
       }
     },
   });
@@ -453,6 +466,7 @@ export const ProposalForm = ({
         {showPreview ?
           <div className="flex items-center gap-10">
             <Button
+              type="button"
               onClick={() => {
                 setShowPreview(false);
                 setLoading(false);
@@ -462,6 +476,7 @@ export const ProposalForm = ({
               Edit
             </Button>
             <Button
+              type="button"
               onClick={() => createProposal()}
               isLoading={loading}
               disabled={isButtonDisabled}

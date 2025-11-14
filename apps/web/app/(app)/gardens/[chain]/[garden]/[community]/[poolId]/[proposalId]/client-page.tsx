@@ -6,7 +6,7 @@ import {
   CheckIcon,
   BoltIcon,
 } from "@heroicons/react/24/outline";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "react-toastify";
 import { Address, encodeAbiParameters, formatUnits } from "viem";
 import { useAccount } from "wagmi";
@@ -35,6 +35,7 @@ import { LoadingSpinner } from "@/components/LoadingSpinner";
 import MarkdownWrapper from "@/components/MarkdownWrapper";
 import { Skeleton } from "@/components/Skeleton";
 import { QUERY_PARAMS } from "@/constants/query-params";
+import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
@@ -74,9 +75,19 @@ export default function ClientPage({ params }: ClientPageProps) {
   const router = useRouter();
 
   const { address } = useAccount();
+  const routerSearchParams = useSearchParams();
+  const collectedParams = useCollectQueryParams();
+  const [initialSearchParams] = useState<Record<string, string> | null>(() => {
+    if (typeof window === "undefined") return null;
+    return Object.fromEntries(new URLSearchParams(window.location.search));
+  });
 
   const [, proposalNumber] = proposalId.split("-");
-  const { data } = useSubgraphQuery<getProposalDataQuery>({
+  const {
+    data,
+    fetching,
+    refetch: refetchProposal,
+  } = useSubgraphQuery<getProposalDataQuery>({
     query: getProposalDataDocument,
     variables: {
       garden: garden.toLowerCase(),
@@ -116,9 +127,11 @@ export default function ClientPage({ params }: ClientPageProps) {
   //
 
   type ProposalData = NonNullable<getProposalDataQuery["cvproposal"]>;
-  const proposalData: (ProposalData & {
-    registryCommunity?: getProposalDataQuery["registryCommunity"];
-  }) | undefined =
+  const proposalData:
+    | (ProposalData & {
+        registryCommunity?: getProposalDataQuery["registryCommunity"];
+      })
+    | undefined =
     data?.cvproposal ?
       {
         ...data.cvproposal,
@@ -165,8 +178,10 @@ export default function ClientPage({ params }: ClientPageProps) {
   });
   const path = usePathname();
   const metadata = proposalData?.metadata ?? ipfsResult ?? null;
-  const metadataForActions: MetadataV1 =
-    (metadata ?? { title: undefined, description: undefined }) as MetadataV1;
+  const metadataForActions: MetadataV1 = (metadata ?? {
+    title: undefined,
+    description: undefined,
+  }) as MetadataV1;
   const proposalDataForActions =
     proposalData ?
       {
@@ -177,6 +192,37 @@ export default function ClientPage({ params }: ClientPageProps) {
     : undefined;
   const isProposerConnected =
     proposalData?.submitter === address?.toLowerCase();
+  const pendingProposalParam =
+    collectedParams[QUERY_PARAMS.proposalPage.pendingProposal] ??
+    routerSearchParams.get(QUERY_PARAMS.proposalPage.pendingProposal) ??
+    initialSearchParams?.[QUERY_PARAMS.proposalPage.pendingProposal] ??
+    undefined;
+  const pendingProposalTitleParam =
+    collectedParams[QUERY_PARAMS.proposalPage.pendingProposalTitle] ??
+    routerSearchParams.get(QUERY_PARAMS.proposalPage.pendingProposalTitle) ??
+    initialSearchParams?.[QUERY_PARAMS.proposalPage.pendingProposalTitle] ??
+    undefined;
+  const pendingProposalTitle =
+    pendingProposalTitleParam ?
+      (() => {
+        try {
+          return decodeURIComponent(pendingProposalTitleParam);
+        } catch (error) {
+          console.warn("Unable to decode pending proposal title", {
+            pendingProposalTitleParam,
+            error,
+          });
+          return pendingProposalTitleParam;
+        }
+      })()
+    : undefined;
+
+  const isAwaitingProposal = !!pendingProposalParam && proposalData == null;
+
+  useEffect(() => {
+    if (fetching || !isAwaitingProposal) return;
+    refetchProposal();
+  }, [fetching, isAwaitingProposal]);
 
   const proposalType = proposalData?.strategy?.config?.proposalType;
   const isSignalingType = PoolTypes[proposalType] === "signaling";
@@ -303,6 +349,20 @@ export default function ClientPage({ params }: ClientPageProps) {
   const { tooltipMessage: executeBtnTooltipMessage } =
     useDisableButtons(disableExecuteButton);
 
+  if (isAwaitingProposal) {
+    return (
+      <div className="col-span-12 flex min-h-[60vh] flex-col items-center justify-center gap-6">
+        <InfoBox
+          infoBoxType="info"
+          title="Finalizing proposal creation"
+          className="max-w-2xl"
+        >
+          {`Waiting for "${pendingProposalTitle ?? "newly created proposal"}" to be indexed...`}
+        </InfoBox>
+      </div>
+    );
+  }
+
   if (
     !proposalData ||
     !supportersData ||
@@ -311,7 +371,7 @@ export default function ClientPage({ params }: ClientPageProps) {
     updatedConviction == null
   ) {
     return (
-      <div className="mt-96 col-span-12">
+      <div className="col-span-12 flex min-h-[40vh] items-center justify-center">
         <LoadingSpinner />
       </div>
     );
@@ -529,7 +589,7 @@ export default function ClientPage({ params }: ClientPageProps) {
               <InfoBox
                 infoBoxType="info"
                 contentStyle="text-tertiary-content"
-                content="As the original author, you can edit/cancel this proposal."
+                content="As the original author, you can edit or cancel this proposal."
               />
               {proposalDataForActions && (
                 <>
