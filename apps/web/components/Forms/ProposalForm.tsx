@@ -21,7 +21,6 @@ import { LoadingSpinner } from "../LoadingSpinner";
 import { calculateConvictionGrowthInSeconds } from "../PoolHeader";
 import { WalletBalance } from "../WalletBalance";
 import { Button, EthAddress, InfoBox, InfoWrapper } from "@/components";
-import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
@@ -220,7 +219,6 @@ export const ProposalForm = ({
 
       write({ args: [BigInt(poolId), encodedData] });
     }
-    setLoading(false);
   };
 
   const handlePreview = (data: FormInputs) => {
@@ -253,7 +251,7 @@ export const ProposalForm = ({
       if (pathname) {
         const newPath = pathname.replace(
           "/create-proposal",
-          `?${QUERY_PARAMS.poolPage.newProposal}=${proposalId}`,
+          `${strategy.id}-${proposalId}`,
         );
         router.push(newPath);
       }
