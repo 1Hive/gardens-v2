@@ -31,8 +31,15 @@ import {
 import { LoadingSpinner } from "./LoadingSpinner";
 import { PoolGovernanceProps } from "./PoolGovernance";
 import { ProposalCardProps, ProposalHandle } from "./ProposalCard";
+import { ProposalsModalSupport } from "./ProposalsModalSupport";
 import TooltipIfOverflow from "./TooltipIfOverflow";
-import { Button, CheckSybil, InfoWrapper, ProposalCard } from "@/components";
+import {
+  Button,
+  CheckSybil,
+  InfoWrapper,
+  Modal,
+  ProposalCard,
+} from "@/components";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import { usePubSubContext } from "@/contexts/pubsub.context";
@@ -745,38 +752,73 @@ export function Proposals({
                 </div>
               ))}
         </header>
-        {allocationView && <UserAllocationStats stats={stats} />}
 
-        <div className="flex flex-col gap-6">
-          {inputs != null ?
-            <>
-              {activeOrDisputedProposals.map((proposalData) => (
-                <Fragment key={proposalData.id}>
-                  <ProposalCard
-                    ref={makeRef(proposalData.id)}
-                    proposalData={proposalData}
-                    strategyConfig={strategy.config}
-                    inputData={inputs[proposalData.id]}
-                    stakedFilter={stakedFilters[proposalData.id]}
-                    isAllocationView={allocationView}
-                    memberActivatedPoints={memberActivatedPoints}
-                    memberPoolWeight={memberPoolWeight}
-                    executeDisabled={
-                      proposalData.proposalStatus == 4 ||
-                      !isConnected ||
-                      missmatchUrl
-                    }
-                    poolToken={poolToken}
-                    tokenDecimals={tokenDecimals}
-                    alloInfo={alloInfo}
-                    inputHandler={inputHandler}
-                    communityToken={strategy.registryCommunity.garden}
-                    isPoolEnabled={strategy.isEnabled}
-                    minThGtTotalEffPoints={minThGtTotalEffPoints}
-                  />
-                </Fragment>
-              ))}
-              {!!endedProposals.length && (
+        {inputs != null ?
+          <>
+            <Modal
+              isOpen={allocationView}
+              onClose={setAllocationView}
+              size="large"
+            >
+              <div className="border2 flex flex-col gap-4">
+                {activeOrDisputedProposals.map((proposalData) => (
+                  <Fragment key={proposalData.id}>
+                    <ProposalsModalSupport
+                      ref={makeRef(proposalData.id)}
+                      proposalData={proposalData}
+                      strategyConfig={strategy.config}
+                      inputData={inputs[proposalData.id]}
+                      stakedFilter={stakedFilters[proposalData.id]}
+                      isAllocationView={allocationView}
+                      memberActivatedPoints={memberActivatedPoints}
+                      memberPoolWeight={memberPoolWeight}
+                      executeDisabled={
+                        proposalData.proposalStatus == 4 ||
+                        !isConnected ||
+                        missmatchUrl
+                      }
+                      poolToken={poolToken}
+                      tokenDecimals={tokenDecimals}
+                      alloInfo={alloInfo}
+                      inputHandler={inputHandler}
+                      communityToken={strategy.registryCommunity.garden}
+                      isPoolEnabled={strategy.isEnabled}
+                      minThGtTotalEffPoints={minThGtTotalEffPoints}
+                    />
+                  </Fragment>
+                ))}
+                {strategy.isEnabled &&
+                  allocationView &&
+                  proposals.length > 0 && (
+                    <>
+                      <div className="flex justify-end gap-4">
+                        <Button
+                          btnStyle="outline"
+                          color="danger"
+                          onClick={() => setAllocationView((prev) => !prev)}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          onClick={submit}
+                          isLoading={allocateStatus === "loading"}
+                          disabled={
+                            inputs == null ||
+                            !getProposalsInputsDifferences(
+                              inputs,
+                              stakedFilters,
+                            ).length
+                          }
+                          tooltip="Make changes in proposals support first"
+                        >
+                          Submit your support
+                        </Button>
+                      </div>
+                      <div />
+                    </>
+                  )}
+              </div>
+              {/* {!!endedProposals.length && (
                 <div className="collapse collapse-arrow">
                   <input type="checkbox" />
                   <div className="collapse-title text-lg font-medium">
@@ -810,56 +852,12 @@ export function Proposals({
                     ))}
                   </div>
                 </div>
-              )}
-            </>
-          : <LoadingSpinner />}
-        </div>
-
-        {strategy.isEnabled && allocationView && proposals.length > 0 && (
-          <>
-            <div className="flex justify-end gap-4">
-              <Button
-                btnStyle="outline"
-                color="danger"
-                onClick={() => setAllocationView((prev) => !prev)}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={submit}
-                isLoading={allocateStatus === "loading"}
-                disabled={
-                  inputs == null ||
-                  !getProposalsInputsDifferences(inputs, stakedFilters).length
-                }
-                tooltip="Make changes in proposals support first"
-              >
-                Submit your support
-              </Button>
-            </div>
-            <div>
-              <div className="flex items-center justify-center gap-6">
-                <Link href={createProposalUrl}>
-                  <Button
-                    icon={<PlusIcon height={24} width={24} />}
-                    disabled={
-                      !isConnected || missmatchUrl || !isMemberCommunity
-                    }
-                    tooltip={
-                      !isConnected ? "Connect your wallet"
-                      : !isMemberCommunity ?
-                        "Join the community first"
-                      : "Create a proposal"
-                    }
-                  >
-                    Create a proposal
-                  </Button>
-                </Link>
-              </div>
-            </div>
+              )} */}
+            </Modal>
           </>
-        )}
-        {proposals.length > 0 && !allocationView && (
+        : <LoadingSpinner />}
+
+        {/* {proposals.length > 0 && !allocationView && (
           <div className="flex items-center justify-center gap-6">
             <Link href={createProposalUrl}>
               <Button
@@ -871,7 +869,23 @@ export function Proposals({
               </Button>
             </Link>
           </div>
-        )}
+        )} */}
+        <div className="flex items-center justify-center gap-6">
+          <Link href={createProposalUrl}>
+            <Button
+              icon={<PlusIcon height={24} width={24} />}
+              disabled={!isConnected || missmatchUrl || !isMemberCommunity}
+              tooltip={
+                !isConnected ? "Connect your wallet"
+                : !isMemberCommunity ?
+                  "Join the community first"
+                : "Create a proposal"
+              }
+            >
+              Create a proposal
+            </Button>
+          </Link>
+        </div>
       </section>
     </>
   );

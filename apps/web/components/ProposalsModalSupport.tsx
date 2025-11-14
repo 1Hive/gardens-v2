@@ -19,7 +19,7 @@ import { Countdown } from "./Countdown";
 import { DisplayNumber } from "./DisplayNumber";
 import { ProposalInputItem } from "./Proposals";
 import TooltipIfOverflow from "./TooltipIfOverflow";
-import { Badge, Card, EthAddress } from "@/components";
+import { Badge, Card, EthAddress, Modal } from "@/components";
 import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
 import { Skeleton } from "@/components/Skeleton";
 import { QUERY_PARAMS } from "@/constants/query-params";
@@ -55,6 +55,7 @@ export type ProposalCardProps = {
     formatted: string;
   };
   isAllocationView: boolean;
+
   memberActivatedPoints: bigint;
   memberPoolWeight?: number;
   executeDisabled: boolean;
@@ -76,7 +77,10 @@ export type ProposalHandle = {
   };
 };
 
-export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
+export const ProposalsModalSupport = forwardRef<
+  ProposalHandle,
+  ProposalCardProps
+>(
   (
     {
       proposalData,
@@ -86,6 +90,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
       stakedFilter,
       poolToken,
       isAllocationView,
+
       memberActivatedPoints,
       memberPoolWeight,
       communityToken: tokenData,
@@ -148,7 +153,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
       ],
     );
 
-    ProposalCard.displayName = "ProposalCard";
+    ProposalsModalSupport.displayName = "ProposalsModalSupport";
 
     const inputValue =
       inputData ?
@@ -214,15 +219,6 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
             "Ready to be executed"
           : ""}
         </div>
-        {proposalWillPass && !readyToBeExecuted && timeToPass != null && (
-          <Countdown
-            endTimestamp={Number(timeToPass)}
-            display="inline"
-            className="text-neutral-soft-content text-xs sm:text-sm"
-            onTimeout={triggerConvictionRefetch}
-            showTimeout={false}
-          />
-        )}
       </>
     );
 
@@ -231,35 +227,46 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
       ProposalStatus[proposalStatus] === "rejected" ||
       ProposalStatus[proposalStatus] === "executed";
 
-    const proposalCardContent = (
+    return (
       <>
         <div
-          className={`flex flex-wrap ${isAllocationView ? `section-layout ${isNewProposal ? "shadow-2xl" : ""}` : ""}`}
+          className={`flex flex-wrap section-layout ${isNewProposal ? "shadow-2xl" : ""}`}
         >
           <div className="flex flex-col sm:flex-row w-full">
             {/* icon title and id */}
             <header className="flex-1 justify-between items-start gap-3">
               <div className="flex-1 items-start flex-col gap-1 ">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
                   <Skeleton isLoading={!metadata}>
                     <h3 className="flex items-start max-w-[165px] sm:max-w-md">
                       <TooltipIfOverflow>{metadata?.title}</TooltipIfOverflow>
                     </h3>
                   </Skeleton>
                   {isPoolEnabled && (
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-4 ">
                       {/* <p className="hidden sm:flex text-sm  items-center bg-neutral-soft-2 rounded-md px-2 dark:bg-primary-soft-dark py-1">
                         ID:{" "}
                         <span className="text-md ml-1">{proposalNumber}</span>
                       </p> */}
                       <Badge
                         status={proposalStatus}
-                        icon={<HandRaisedIcon />}
+                        // icon={<HandRaisedIcon />}
                       />
+                      {isPoolEnabled &&
+                        !isAllocationView &&
+                        stakedFilter != null &&
+                        stakedFilter?.value > 0 &&
+                        Number(poolWeightAllocatedInProposal) > 0 && (
+                          <Badge className="self-center justify-self-start">
+                            <p className="text-xs font-semibold">
+                              Your support: {poolWeightAllocatedInProposal}%
+                            </p>
+                          </Badge>
+                        )}
                     </div>
                   )}
                 </div>
-                <div className="flex  justify-between items-center">
+                <div className="flex  justify-between items-center border2">
                   <div className="flex sm:items-center flex-col items-start sm:flex-row gap-2">
                     <div
                       className="flex items-center gap-1"
@@ -273,7 +280,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
                         address={submitter as Address}
                         shortenAddress={true}
                         actions="copy"
-                        textColor="var(--color-grey-900)"
+                        textColor="var(--color-grey-100)"
                       />
                     </div>
                     <div className="flex gap-6 text-neutral-soft-content justify-end">
@@ -281,7 +288,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
                         <div className="flex items-center gap-1 justify-self-end">
                           <div className="hidden sm:block w-1 h-1 rounded-full bg-neutral-soft-content" />
                           <p className="text-sm ml-1 dark:text-neutral-soft-content">
-                            Requesting:{" "}
+                            Requesting:{".... "}
                           </p>
                           <DisplayNumber
                             number={formatUnits(
@@ -385,18 +392,6 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
 
                             {ProposalCountDown}
                           </div>
-                          <div className="h-3 flex items-center mb-2">
-                            <ConvictionBarChart
-                              compact
-                              currentConvictionPct={currentConvictionPct}
-                              thresholdPct={isSignalingType ? 0 : thresholdPct}
-                              proposalSupportPct={totalSupportPct}
-                              isSignalingType={isSignalingType}
-                              proposalNumber={proposalNumber}
-                              refreshConviction={triggerConvictionRefetch}
-                              proposalStatus={proposalStatus}
-                            />
-                          </div>
                         </div>
                       )}
                   </div>
@@ -405,33 +400,9 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
             </div>
           )}
         </div>
-        {isPoolEnabled &&
-          !isAllocationView &&
-          stakedFilter != null &&
-          stakedFilter?.value > 0 &&
-          Number(poolWeightAllocatedInProposal) > 0 && (
-            <Badge color="warning" className="self-center justify-self-start">
-              <p className="text-xs font-semibold">
-                Your support: {poolWeightAllocatedInProposal}%
-              </p>
-            </Badge>
-          )}
+
         {/* TODO: fetch every member stake */}
         {/* {!isAllocationView && <p className="text-sm mt-1">3 Supporters</p>} */}
-      </>
-    );
-
-    return (
-      <>
-        {isAllocationView ?
-          proposalCardContent
-        : <Card
-            href={`${pathname}/${id}`}
-            className={`py-4 ${isNewProposal ? "shadow-2xl" : ""}`}
-          >
-            {proposalCardContent}
-          </Card>
-        }
       </>
     );
   },
