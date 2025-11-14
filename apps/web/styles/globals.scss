@@ -383,7 +383,7 @@ dialog * {
   height: calc(100vh - 2rem);
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: auto;
   resize: none;
   background-color: var(--baseBase);
   box-shadow: 0 25px 60px rgba(0, 0, 0, 0.45);
