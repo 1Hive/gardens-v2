@@ -1,7 +1,8 @@
 import { keccak256, stringToBytes } from "viem";
 
 const errorLines = [
-  "error CannotEditRequestedAmountWithActiveSupport(uint256 proposalId, uint256 currentAmount, uint256 newAmount);",
+  "error BeneficiaryEditTimeout(uint256 proposalId, address currentBeneficiary, address newBeneficiary, uint256 creationTimestamp);",
+  "error MetadataEditTimeout(uint256 proposalId, string currentMetadata, string newMetadata, uint256 creationTimestamp);",
 ];
 
 function selector(sig) {

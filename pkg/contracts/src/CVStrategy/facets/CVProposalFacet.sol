@@ -6,6 +6,7 @@ import {ProposalType, CreateProposal, Proposal, ProposalStatus} from "../ICVStra
 import {IAllo, Metadata} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import {ConvictionsUtils} from "../ConvictionsUtils.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Library.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 
 /**
  * @title CVProposalFacet
@@ -15,6 +16,7 @@ import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Librar
  */
 contract CVProposalFacet is CVStrategyBaseFacet {
     using SuperTokenV1Library for ISuperToken;
+    using Strings for string;
 
     /*|--------------------------------------------|*/
     /*|              ERRORS                        |*/
@@ -23,8 +25,12 @@ contract CVProposalFacet is CVStrategyBaseFacet {
     error UnexpectedRequestToken(address requestedToken, address poolToken); // 0x24bb70b8
     error ArbitratorNotSet(address arbitrator); // 0x25a25805
     error InsufficientCollateral(uint256 sent, uint256 required); // 0xb07e3bc4
-    error BeneficiaryEditTimeout(uint256 proposalId, address currentBeneficiary, address newBeneficiary); // 0xc9e8c9af
-    error MetadataEditTimeout(uint256 proposalId, string currentMetadata, string newMetadata); // 0x42306b78
+    error BeneficiaryEditTimeout(
+        uint256 proposalId, address currentBeneficiary, address newBeneficiary, uint256 creationTimestamp
+    ); // 0xd209029d
+    error MetadataEditTimeout(
+        uint256 proposalId, string currentMetadata, string newMetadata, uint256 creationTimestamp
+    ); // 0x7195b4df
     error CannotEditRequestedAmountWithActiveSupport(uint256 proposalId, uint256 currentAmount, uint256 newAmount); // 0xb5018617
 
     /*|--------------------------------------------|*/
@@ -37,7 +43,7 @@ contract CVProposalFacet is CVStrategyBaseFacet {
         address from, uint256 proposalId, uint256 amount, uint256 totalStakedAmount, uint256 convictionLast
     );
 
-    uint256 public constant ONE_HOUR = 3600;
+    uint256 public constant ONE_HOUR = 3600; // seconds
 
     /*|--------------------------------------------|*/
     /*|              FUNCTIONS                     |*/
@@ -136,35 +142,27 @@ contract CVProposalFacet is CVStrategyBaseFacet {
             proposal.requestedAmount = _requestedAmount;
         }
 
+        // 1763099258 - 1763007730  = 91528 > 3600
         bool timeout = block.timestamp - proposal.creationTimestamp > ONE_HOUR;
 
         if (proposal.beneficiary != _beneficiary) {
             if (timeout) {
-                revert BeneficiaryEditTimeout(_proposalId, proposal.beneficiary, _beneficiary);
+                revert BeneficiaryEditTimeout(
+                    _proposalId, proposal.beneficiary, _beneficiary, proposal.creationTimestamp
+                );
             }
 
             proposal.beneficiary = _beneficiary;
         }
 
-        if (compareStringsByHash(proposal.metadata.pointer, _metadata.pointer)) {
+        if (!proposal.metadata.pointer.equal(_metadata.pointer)) {
             if (timeout) {
-                revert MetadataEditTimeout(_proposalId, proposal.metadata.pointer, _metadata.pointer);
+                revert MetadataEditTimeout(
+                    _proposalId, proposal.metadata.pointer, _metadata.pointer, proposal.creationTimestamp
+                );
             }
 
             proposal.metadata.pointer = _metadata.pointer;
         }
-    }
-
-    /*|--------------------------------------------|*/
-    /*|              INTERNAL HELPERS              |*/
-    /*|--------------------------------------------|*/
-
-    function compareStringsByHash(string memory _first, string memory _second) internal pure returns (bool) {
-        // Convert both strings to bytes and hash them using abi.encodePacked
-        bytes32 hash1 = keccak256(abi.encodePacked(_first));
-        bytes32 hash2 = keccak256(abi.encodePacked(_second));
-
-        // Compare the hashes
-        return hash1 == hash2;
     }
 }

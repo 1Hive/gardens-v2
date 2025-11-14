@@ -3457,6 +3457,11 @@
           "name": "newBeneficiary",
           "type": "address",
           "internalType": "address"
+        },
+        {
+          "name": "creationTimestamp",
+          "type": "uint256",
+          "internalType": "uint256"
         }
       ]
     },
@@ -3499,6 +3504,11 @@
           "name": "newMetadata",
           "type": "string",
           "internalType": "string"
+        },
+        {
+          "name": "creationTimestamp",
+          "type": "uint256",
+          "internalType": "uint256"
         }
       ]
     },
