@@ -327,7 +327,7 @@ export const EditProposalForm = ({
             <div className="relative flex flex-col">
               <FormInput
                 label="Requested amount"
-                subLabel={`Pool Funds: ${poolToken?.formatted} ${poolToken?.symbol} - Spending limit: ${spendingLimitPct.toFixed(1)}% = ${spendingLimit} ${poolToken?.symbol}. Editable until first support.`}
+                subLabel={`Pool Funds: ${poolToken?.formatted} ${poolToken?.symbol} - Spending limit: ${spendingLimitPct.toFixed(1)}% = ${spendingLimit} ${poolToken?.symbol}.`}
                 register={register}
                 required
                 onChange={(e) => {
@@ -355,6 +355,16 @@ export const EditProposalForm = ({
                 placeholder="0"
                 suffix={poolToken?.symbol}
               />
+              {canEditAmount && (
+                <InfoBox
+                  infoBoxType="info"
+                  title="Editable until first support"
+                  className="mt-3"
+                >
+                  You can adjust the requested amount until someone supports
+                  this proposal.
+                </InfoBox>
+              )}
               {!canEditAmount && (
                 <InfoBox
                   infoBoxType="warning"
