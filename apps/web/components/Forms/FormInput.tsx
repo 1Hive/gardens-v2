@@ -1,11 +1,10 @@
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 "use client";
 
-import { HTMLInputTypeAttribute } from "react";
-import React from "react";
+import React, { HTMLInputTypeAttribute, useRef } from "react";
 import { RegisterOptions, UseFormRegister } from "react-hook-form";
 import { InfoWrapper } from "../InfoWrapper";
-import MarkdownEditor from "../MarkdownEditor";
+import MarkdownEditor, { type MarkdownEditorHandle } from "../MarkdownEditor";
 
 type Props = {
   label?: string;
@@ -59,6 +58,13 @@ export function FormInput({
     value: value ?? registerOptions?.value,
     onChange: onChange ?? registerOptions?.onChange,
   });
+  const { ref: registerRef, ...registeredProps } = registered ?? {};
+  const markdownEditorRef = useRef<MarkdownEditorHandle>(null);
+  const handleLabelClick = (event: React.MouseEvent<HTMLLabelElement>) => {
+    if (type !== "markdown") return;
+    event.preventDefault();
+    markdownEditorRef.current?.focus();
+  };
 
   const disabledInputClassname =
     "!border-gray-400 focus:border-gray-400 focus:outline-none cursor-not-allowed bg-transparent opacity-60";
@@ -66,7 +72,11 @@ export function FormInput({
   return (
     <div className={`flex flex-col ${wide ? "w-full" : ""}`}>
       {label && (
-        <label htmlFor={registerKey} className="label cursor-pointer w-fit">
+        <label
+          htmlFor={registerKey}
+          className="label cursor-pointer w-fit"
+          onClick={handleLabelClick}
+        >
           {tooltip ?
             <InfoWrapper tooltip={tooltip}>
               {label}
@@ -85,7 +95,8 @@ export function FormInput({
       >
         {type !== "textarea" && type !== "markdown" ?
           <input
-            {...registered}
+            {...registeredProps}
+            ref={registerRef}
             id={registerKey}
             type={type}
             placeholder={placeholder}
@@ -105,7 +116,8 @@ export function FormInput({
           />
         : type === "textarea" ?
           <textarea
-            {...registered}
+            {...registeredProps}
+            ref={registerRef}
             id={registerKey}
             placeholder={placeholder}
             className={`${className} textarea textarea-info line-clamp-5 w-full overflow-auto h-24 dark:bg-primary-soft-dark ${
@@ -120,7 +132,8 @@ export function FormInput({
             {...otherProps}
           />
         : <MarkdownEditor
-            {...registered}
+            {...registeredProps}
+            ref={markdownEditorRef}
             id={registerKey}
             placeholder={placeholder}
             required={required}
