@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { usePathname, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { Address, formatUnits, parseUnits } from "viem";
 import { useAccount, useContractRead } from "wagmi";
@@ -12,7 +11,6 @@ import { FormPreview, FormRow } from "./FormPreview";
 import { LoadingSpinner } from "../LoadingSpinner";
 import { calculateConvictionGrowthInSeconds } from "../PoolHeader";
 import { Button, EthAddress, InfoBox, InfoWrapper } from "@/components";
-import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
@@ -22,7 +20,6 @@ import { MetadataV1 } from "@/hooks/useIpfsFetch";
 import { usePoolToken } from "@/hooks/usePoolToken";
 import { cvStrategyABI } from "@/src/generated";
 import { PoolTypes } from "@/types";
-import { getEventFromReceipt } from "@/utils/contracts";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 import {
   calculatePercentageBigInt,
@@ -42,11 +39,15 @@ type EditProposalFormProps = {
   spendingLimit: number | string | undefined;
   spendingLimitPct: number;
   proposal: NonNullable<
-    Pick<CVProposal, "beneficiary" | "requestedAmount" | "metadataHash"> & {
+    Pick<
+      CVProposal,
+      "proposalNumber" | "beneficiary" | "requestedAmount" | "metadataHash"
+    > & {
       metadata: MetadataV1;
     }
   >;
   poolToken: ReturnType<typeof usePoolToken>;
+  onClose: () => void;
 };
 
 type FormRowTypes = {
@@ -60,6 +61,7 @@ export const EditProposalForm = ({
   spendingLimit,
   proposal,
   poolToken,
+  onClose,
 }: EditProposalFormProps) => {
   const {
     register,
@@ -104,8 +106,6 @@ export const EditProposalForm = ({
   const [previewData, setPreviewData] = useState<FormInputs>();
   const [requestedAmount, setRequestedAmount] = useState<string>();
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
-  const pathname = usePathname();
   const { blockTime, id: chainIdFromPath } = useChainFromPath()!;
 
   const convictionGrowthSec = calculateConvictionGrowthInSeconds(
@@ -160,7 +160,7 @@ export const EditProposalForm = ({
 
       write({
         args: [
-          strategy.poolId,
+          proposal.proposalNumber,
           { protocol: 1n, pointer: ipfsHash },
           (previewData?.beneficiary ||
             "0x0000000000000000000000000000000000000000") as Address,
@@ -182,21 +182,17 @@ export const EditProposalForm = ({
     contractName: "CV Strategy",
     functionName: "editProposal",
     fallbackErrorMessage: "Error creating Proposal, please report a bug.",
-    onConfirmations: (receipt) => {
-      const proposalId = getEventFromReceipt(
-        receipt,
-        "CVStrategy",
-        "ProposalCreated",
-      ).args.proposalId;
+    onConfirmations: () => {
       publish({
         topic: "proposal",
         type: "update",
         function: "editProposal",
         containerId: strategy.poolId,
-        id: proposalId.toString(), // proposalId is a bigint
+        id: proposal.proposalNumber.toString(), // proposalNumber is a bigint
         chainId,
       });
       setLoading(false);
+      onClose();
     },
   });
 

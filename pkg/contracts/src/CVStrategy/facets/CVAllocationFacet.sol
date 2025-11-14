@@ -28,19 +28,19 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
     /*|--------------------------------------------|*/
     /*|              ERRORS                        |*/
     /*|--------------------------------------------|*/
-    error UserIsInactive(address user);
-    error UserCannotExecuteAction(address user);
-    error ProposalNotInList(uint256 proposalId);
-    error ProposalNotActive(uint256 proposalId, ProposalStatus currentStatus);
-    error ProposalDataIsEmpty(uint256 inputLength);
-    error PoolIsEmpty(uint256 poolAmount);
-    error PoolAmountNotEnough(uint256 proposalId, uint256 requestedAmount, uint256 poolAmount);
-    error ConvictionUnderMinimumThreshold(uint256 conviction, uint256 threshold, uint256 requestedAmount);
-    error AmountOverMaxRatio(uint256 requestedAmount, uint256 maxAllowed, uint256 poolAmount);
-    error NotEnoughPointsToSupport(uint256 pointsSupport, uint256 pointsBalance);
-    error SupportUnderflow(uint256 _support, int256 _delta, int256 _result);
-    error ProposalInvalidForAllocation(uint256 _proposalId, ProposalStatus _proposalStatus);
-    error NativeTransferFailed(address recipient, uint256 amount);
+    error UserIsInactive(address user); // 0x9edf9ee6
+    error UserCannotExecuteAction(address user); // 0xeee56a60
+    error ProposalNotInList(uint256 proposalId); // 0xc1d17bef
+    error ProposalNotActive(uint256 proposalId, uint8 currentStatus); // 0x14b469ec
+    error ProposalDataIsEmpty(uint256 inputLength); // 0x07ab773f
+    error PoolIsEmpty(uint256 poolAmount); // 0xf458e27c
+    error PoolAmountNotEnough(uint256 proposalId, uint256 requestedAmount, uint256 poolAmount); // 0x5863b0b6
+    error ConvictionUnderMinimumThreshold(uint256 conviction, uint256 threshold, uint256 requestedAmount); // 0x7ac83e3d
+    error AmountOverMaxRatio(uint256 requestedAmount, uint256 maxAllowed, uint256 poolAmount); // 0x3e4bb863
+    error NotEnoughPointsToSupport(uint256 pointsSupport, uint256 pointsBalance); // 0xd64182fe
+    error SupportUnderflow(uint256 _support, int256 _delta, int256 _result); // 0x3bbc7142
+    error ProposalInvalidForAllocation(uint256 _proposalId, ProposalStatus _proposalStatus); // 0x9c3f44fe
+    error NativeTransferFailed(address recipient, uint256 amount); // 0xa5b05eec
 
     /*|--------------------------------------------|*/
     /*|              MODIFIERS                     |*/
@@ -49,10 +49,10 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
         Proposal storage p = proposals[_proposalId];
         if (
             deltaSupport > 0
-                && (
-                    p.proposalStatus == ProposalStatus.Inactive || p.proposalStatus == ProposalStatus.Cancelled
-                        || p.proposalStatus == ProposalStatus.Executed || p.proposalStatus == ProposalStatus.Rejected
-                )
+                && (p.proposalStatus == ProposalStatus.Inactive
+                    || p.proposalStatus == ProposalStatus.Cancelled
+                    || p.proposalStatus == ProposalStatus.Executed
+                    || p.proposalStatus == ProposalStatus.Rejected)
         ) {
             revert ProposalInvalidForAllocation(_proposalId, p.proposalStatus);
         }
@@ -167,7 +167,14 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
         }
     }
 
-    function distribute(address[] memory, /*_recipientIds */ bytes memory _data, address /*_sender */ ) external {
+    function distribute(
+        address[] memory,
+        /*_recipientIds */
+        bytes memory _data,
+        address /*_sender */
+    )
+        external
+    {
         _checkOnlyAllo();
         _checkOnlyInitialized();
 
@@ -198,7 +205,7 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
             }
 
             if (proposals[proposalId].proposalStatus != ProposalStatus.Active) {
-                revert ProposalNotActive(proposalId, proposals[proposalId].proposalStatus);
+                revert ProposalNotActive(proposalId, uint8(proposals[proposalId].proposalStatus));
             }
 
             if (proposals[proposalId].requestedAmount > poolAmount) {
@@ -224,9 +231,7 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
 
             // <= for when threshold being zero
             if (convictionLast <= threshold && proposals[proposalId].requestedAmount > 0) {
-                revert ConvictionUnderMinimumThreshold(
-                    convictionLast, threshold, proposals[proposalId].requestedAmount
-                );
+                revert ConvictionUnderMinimumThreshold(convictionLast, threshold, proposals[proposalId].requestedAmount);
             }
 
             _transferAmount(

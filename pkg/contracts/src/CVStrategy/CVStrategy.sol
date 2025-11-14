@@ -50,16 +50,16 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     /*|              CUSTOM ERRORS                 |*/
     /*|--------------------------------------------|*/
 
-    error UserCannotBeZero(address user); // 0xd1f28288
-    error UserNotInRegistry(address user, address registry); //0x6a5cfb6d
-    error UserIsInactive(address user); // 0x5fccb67f
-    error PoolIsEmpty(uint256 poolAmount); // 0xed4421ad
-    error NotImplemented(bytes4 selector); //0xd6234725
-    error TokenCannotBeZero(address token); //0x596a094c
-    error TokenNotAllowed(address token); // 0xa29c4986
-    error AmountOverMaxRatio(uint256 requestedAmount, uint256 maxAllowed, uint256 poolAmount); // 0x3bf5ca14
-    error AddressCannotBeZero(address input); //0xe622e040
-    error RegistryCannotBeZero(address registry); // 0x5df4b1ef
+    error UserCannotBeZero(address user); // 0x538cffa3
+    error UserNotInRegistry(address user, address registry); //0x95788c82
+    error UserIsInactive(address user); // 0x9edf9ee6
+    error PoolIsEmpty(uint256 poolAmount); // 0xf458e27c
+    error NotImplemented(bytes4 selector); //0xc79348a6
+    error TokenCannotBeZero(address token); //0x61a8cdce
+    error TokenNotAllowed(address token); // 0x94403b70
+    error AmountOverMaxRatio(uint256 requestedAmount, uint256 maxAllowed, uint256 poolAmount); // 0x3e4bb863
+    error AddressCannotBeZero(address input); //0x084c41ef
+    error RegistryCannotBeZero(address registry); // 0x22947713
     error SupportUnderflow(uint256 _support, int256 _delta, int256 _result); // 0x3bbc7142
     error NotEnoughPointsToSupport(uint256 pointsSupport, uint256 pointsBalance); // 0xd64182fe
 
@@ -69,25 +69,25 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     error ProposalNotInList(uint256 _proposalId); // 0xc1d17bef
     error ProposalSupportDuplicated(uint256 _proposalId, uint256 index); //0xadebb154
     error ConvictionUnderMinimumThreshold(); // 0xcce79308
-    error OnlyCommunityAllowed(address sender, address registryCommunity); // 0xaf0916a2
+    error OnlyCommunityAllowed(address sender, address registryCommunity); // 0x5f4e6f2c
     error PoolAmountNotEnough(uint256 _proposalId, uint256 _requestedAmount, uint256 _poolAmount); //0x5863b0b6
-    error OnlyCouncilSafe(address sender, address councilSafe, address owner);
-    error UserCannotExecuteAction(address sender);
-    error InsufficientCollateral(uint256 sentAmount, uint256 requiredAmount);
-    error OnlyArbitrator(address sender, address arbitrator);
-    error ProposalNotDisputed(uint256 _proposalId);
-    error ArbitratorCannotBeZero();
+    error OnlyCouncilSafe(address sender, address councilSafe, address owner); // 0xe1b9c469
+    error UserCannotExecuteAction(address sender); // 0xeee56a60
+    error InsufficientCollateral(uint256 sentAmount, uint256 requiredAmount); // 0xb07e3bc4
+    error OnlyArbitrator(address sender, address arbitrator); // 0xef429d5e
+    error ProposalNotDisputed(uint256 _proposalId); // 0x96023952
+    error ArbitratorCannotBeZero(); // 0x6c291fd3
     // Goss: Support Collateral Zero
     // error CollateralVaultCannotBeZero();
-    error DefaultRulingNotSet();
-    error DisputeCooldownNotPassed(uint256 _proposalId, uint256 _remainingSec);
-    error ProposalInvalidForAllocation(uint256 _proposalId, ProposalStatus _proposalStatus);
-    error AShouldBeUnderTwo_128();
-    error BShouldBeLessTwo_128();
-    error AShouldBeUnderOrEqTwo_128();
-    error StrategyFunctionDoesNotExist(bytes4 selector);
-    error RegistryCommunityCannotBeZero(address registry);
-    error OnlyCouncilSafeOrMember(address sender, address councilSafe);
+    error DefaultRulingNotSet(); // 0xdd466dd0
+    error DisputeCooldownNotPassed(uint256 _proposalId, uint256 _remainingSec); // 0x8d2f6c31
+    error ProposalInvalidForAllocation(uint256 _proposalId, ProposalStatus _proposalStatus); // 0x94d57ead
+    error AShouldBeUnderTwo_128(); // 0x3e668d03
+    error BShouldBeLessTwo_128(); // 0x70b7a2d9
+    error AShouldBeUnderOrEqTwo_128(); // 0xff5b3cef
+    error StrategyFunctionDoesNotExist(bytes4 selector); // 0x66bda40a
+    error RegistryCommunityCannotBeZero(address registry); // 0x2199ab77
+    error OnlyCouncilSafeOrMember(address sender, address councilSafe); // 0xfa33758e
 
     /*|--------------------------------------------|*/
     /*|              CUSTOM EVENTS                 |*/

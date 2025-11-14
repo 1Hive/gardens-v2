@@ -18,8 +18,8 @@ contract CVAdminFacet is CVStrategyBaseFacet {
     /*|--------------------------------------------|*/
     /*|              ERRORS                        |*/
     /*|--------------------------------------------|*/
-    error SuperfluidGDAConnectFailed(address gda, address superToken, address caller);
-    error SuperfluidGDADisconnectFailed(address gda, address superToken, address caller);
+    error SuperfluidGDAConnectFailed(address gda, address superToken, address caller); // 0x9bd2355f
+    error SuperfluidGDADisconnectFailed(address gda, address superToken, address caller); // 0x3746bbff
 
     /*|--------------------------------------------|*/
     /*|              EVENTS                        |*/
@@ -106,17 +106,16 @@ contract CVAdminFacet is CVStrategyBaseFacet {
 
         if (
             _arbitrableConfig.tribunalSafe != address(0) && address(_arbitrableConfig.arbitrator) != address(0)
-                && (
-                    _arbitrableConfig.tribunalSafe != arbitrableConfigs[currentArbitrableConfigVersion].tribunalSafe
-                        || _arbitrableConfig.arbitrator != arbitrableConfigs[currentArbitrableConfigVersion].arbitrator
-                        || _arbitrableConfig.submitterCollateralAmount
-                            != arbitrableConfigs[currentArbitrableConfigVersion].submitterCollateralAmount
-                        || _arbitrableConfig.challengerCollateralAmount
-                            != arbitrableConfigs[currentArbitrableConfigVersion].challengerCollateralAmount
-                        || _arbitrableConfig.defaultRuling != arbitrableConfigs[currentArbitrableConfigVersion].defaultRuling
-                        || _arbitrableConfig.defaultRulingTimeout
-                            != arbitrableConfigs[currentArbitrableConfigVersion].defaultRulingTimeout
-                )
+                && (_arbitrableConfig.tribunalSafe != arbitrableConfigs[currentArbitrableConfigVersion].tribunalSafe
+                    || _arbitrableConfig.arbitrator != arbitrableConfigs[currentArbitrableConfigVersion].arbitrator
+                    || _arbitrableConfig.submitterCollateralAmount
+                        != arbitrableConfigs[currentArbitrableConfigVersion].submitterCollateralAmount
+                    || _arbitrableConfig.challengerCollateralAmount
+                        != arbitrableConfigs[currentArbitrableConfigVersion].challengerCollateralAmount
+                    || _arbitrableConfig.defaultRuling
+                        != arbitrableConfigs[currentArbitrableConfigVersion].defaultRuling
+                    || _arbitrableConfig.defaultRulingTimeout
+                        != arbitrableConfigs[currentArbitrableConfigVersion].defaultRulingTimeout)
         ) {
             if (
                 arbitrableConfigs[currentArbitrableConfigVersion].tribunalSafe != _arbitrableConfig.tribunalSafe
@@ -139,12 +138,8 @@ contract CVAdminFacet is CVStrategyBaseFacet {
             );
         }
 
-        if (
-            !(
-                _cvParams.decay == 0 && _cvParams.weight == 0 && _cvParams.maxRatio == 0
-                    && _cvParams.minThresholdPoints == 0
-            )
-        ) {
+        if (!(_cvParams.decay == 0 && _cvParams.weight == 0 && _cvParams.maxRatio == 0
+                    && _cvParams.minThresholdPoints == 0)) {
             cvParams = _cvParams;
             emit CVParamsUpdated(_cvParams);
         }

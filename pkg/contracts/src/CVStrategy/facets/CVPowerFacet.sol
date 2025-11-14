@@ -15,7 +15,7 @@ import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Librar
 contract CVPowerFacet is CVStrategyBaseFacet {
     using SuperTokenV1Library for ISuperToken;
 
-    error UserCannotExecuteAction(address sender);
+    error UserCannotExecuteAction(address sender); // 0xf634e7ce
 
     /*|--------------------------------------------|*/
     /*|              EVENTS                        |*/

@@ -3441,6 +3441,69 @@
     },
     {
       "type": "error",
+      "name": "BeneficiaryEditTimeout",
+      "inputs": [
+        {
+          "name": "proposalId",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "currentBeneficiary",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "newBeneficiary",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "CannotEditRequestedAmountWithActiveSupport",
+      "inputs": [
+        {
+          "name": "proposalId",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "currentAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "newAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "MetadataEditTimeout",
+      "inputs": [
+        {
+          "name": "proposalId",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "currentMetadata",
+          "type": "string",
+          "internalType": "string"
+        },
+        {
+          "name": "newMetadata",
+          "type": "string",
+          "internalType": "string"
+        }
+      ]
+    },
+    {
+      "type": "error",
       "name": "UnexpectedRequestToken",
       "inputs": [
         {

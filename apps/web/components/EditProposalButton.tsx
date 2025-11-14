@@ -57,6 +57,7 @@ function EditProposalButton({ proposalData, poolToken }: Props) {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title={`Edit proposal: ${proposalMetadata?.title ?? ""} #${proposalData.proposalNumber}`}
+        size="ultra-large"
       >
         <div className="modal-action">
           {proposalData != null &&
@@ -70,6 +71,7 @@ function EditProposalButton({ proposalData, poolToken }: Props) {
                 strategy={proposalData.strategy}
                 spendingLimit={spendingLimitValueNum}
                 spendingLimitPct={spendingLimitValuePct}
+                onClose={() => setIsModalOpen(false)}
               />
             )}
         </div>

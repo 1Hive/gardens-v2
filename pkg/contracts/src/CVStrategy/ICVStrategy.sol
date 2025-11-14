@@ -49,7 +49,6 @@ enum ProposalStatus {
     Executed, // A vote that has been executed
     Disputed, // A vote that has been disputed
     Rejected // A vote that has been rejected
-
 }
 
 struct ProposalDisputeInfo {

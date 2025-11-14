@@ -19,10 +19,13 @@ contract CVProposalFacet is CVStrategyBaseFacet {
     /*|--------------------------------------------|*/
     /*|              ERRORS                        |*/
     /*|--------------------------------------------|*/
-    error ProposalNotActive(uint256 proposalId, ProposalStatus currentStatus);
-    error UnexpectedRequestToken(address requestedToken, address poolToken);
-    error ArbitratorNotSet(address arbitrator);
-    error InsufficientCollateral(uint256 sent, uint256 required);
+    error ProposalNotActive(uint256 proposalId, uint8 currentStatus); // 0x14b469ec
+    error UnexpectedRequestToken(address requestedToken, address poolToken); // 0x24bb70b8
+    error ArbitratorNotSet(address arbitrator); // 0x25a25805
+    error InsufficientCollateral(uint256 sent, uint256 required); // 0xb07e3bc4
+    error BeneficiaryEditTimeout(uint256 proposalId, address currentBeneficiary, address newBeneficiary); // 0xc9e8c9af
+    error MetadataEditTimeout(uint256 proposalId, string currentMetadata, string newMetadata); // 0x42306b78
+    error CannotEditRequestedAmountWithActiveSupport(uint256 proposalId, uint256 currentAmount, uint256 newAmount); // 0xb5018617
 
     /*|--------------------------------------------|*/
     /*|              EVENTS                        |*/
@@ -91,7 +94,7 @@ contract CVProposalFacet is CVStrategyBaseFacet {
 
     function cancelProposal(uint256 proposalId) external {
         if (proposals[proposalId].proposalStatus != ProposalStatus.Active) {
-            revert ProposalNotActive(proposalId, proposals[proposalId].proposalStatus);
+            revert ProposalNotActive(proposalId, uint8(proposals[proposalId].proposalStatus));
         }
 
         if (proposals[proposalId].submitter != msg.sender) {
@@ -117,22 +120,37 @@ contract CVProposalFacet is CVStrategyBaseFacet {
         //
         Proposal storage proposal = proposals[_proposalId];
         if (proposal.proposalStatus != ProposalStatus.Active) {
-            revert ProposalNotActive(_proposalId, proposal.proposalStatus);
+            revert ProposalNotActive(_proposalId, uint8(proposal.proposalStatus));
         }
 
         if (proposal.submitter != msg.sender) {
             revert OnlySubmitter(_proposalId, proposal.submitter, msg.sender);
         }
 
-        if (
-            (proposal.beneficiary != _beneficiary || proposal.requestedAmount != _requestedAmount)
-                && block.timestamp - proposal.creationTimestamp > ONE_HOUR
-        ) {
-            proposal.beneficiary = _beneficiary;
+        if ((proposal.requestedAmount != _requestedAmount)) {
+            if (proposal.convictionLast != 0) {
+                revert CannotEditRequestedAmountWithActiveSupport(
+                    _proposalId, proposal.requestedAmount, _requestedAmount
+                );
+            }
             proposal.requestedAmount = _requestedAmount;
         }
 
-        if (compareStringsByHash(proposal.metadata.pointer, _metadata.pointer) && proposal.convictionLast == 0) {
+        bool timeout = block.timestamp - proposal.creationTimestamp > ONE_HOUR;
+
+        if (proposal.beneficiary != _beneficiary) {
+            if (timeout) {
+                revert BeneficiaryEditTimeout(_proposalId, proposal.beneficiary, _beneficiary);
+            }
+
+            proposal.beneficiary = _beneficiary;
+        }
+
+        if (compareStringsByHash(proposal.metadata.pointer, _metadata.pointer)) {
+            if (timeout) {
+                revert MetadataEditTimeout(_proposalId, proposal.metadata.pointer, _metadata.pointer);
+            }
+
             proposal.metadata.pointer = _metadata.pointer;
         }
     }

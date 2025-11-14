@@ -18,11 +18,11 @@ contract CVDisputeFacet is CVStrategyBaseFacet {
     /*|--------------------------------------------|*/
     /*|              ERRORS                        |*/
     /*|--------------------------------------------|*/
-    error ProposalStatusInvalid(uint256 proposalId, ProposalStatus currentStatus);
-    error ChallengerCollateralTooLow(uint256 sent, uint256 required);
-    error DisputeCooldownActive(uint256 proposalId, uint256 secondsRemaining);
-    error OnlyArbitrator(address sender, address arbitrator);
-    error DefaultRulingNotConfigured(uint256 proposalId);
+    error ProposalStatusInvalid(uint256 proposalId, ProposalStatus currentStatus); // 0xbcc5dcb1
+    error ChallengerCollateralTooLow(uint256 sent, uint256 required); // 0x453ac5fd
+    error DisputeCooldownActive(uint256 proposalId, uint256 secondsRemaining); // 0xc84ca6af
+    error OnlyArbitrator(address sender, address arbitrator); // 0x84844502
+    error DefaultRulingNotConfigured(uint256 proposalId); // 0x1b330288
 
     /*|--------------------------------------------|*/
     /*|              EVENTS                        |*/
