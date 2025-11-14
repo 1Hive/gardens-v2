@@ -4,6 +4,7 @@ pragma solidity ^0.8.19;
 import {CVStrategyBaseFacet} from "../CVStrategyBaseFacet.sol";
 import {ProposalType, CreateProposal, Proposal, ProposalStatus} from "../ICVStrategy.sol";
 import {IAllo, Metadata} from "allo-v2-contracts/core/interfaces/IAllo.sol";
+import {ConvictionsUtils} from "../ConvictionsUtils.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Library.sol";
 
 /**
@@ -14,6 +15,14 @@ import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Librar
  */
 contract CVProposalFacet is CVStrategyBaseFacet {
     using SuperTokenV1Library for ISuperToken;
+
+    /*|--------------------------------------------|*/
+    /*|              ERRORS                        |*/
+    /*|--------------------------------------------|*/
+    error ProposalNotActive(uint256 proposalId, ProposalStatus currentStatus);
+    error UnexpectedRequestToken(address requestedToken, address poolToken);
+    error ArbitratorNotSet(address arbitrator);
+    error InsufficientCollateral(uint256 sent, uint256 required);
 
     /*|--------------------------------------------|*/
     /*|              EVENTS                        |*/
@@ -42,16 +51,20 @@ contract CVProposalFacet is CVStrategyBaseFacet {
 
         if (proposalType == ProposalType.Funding) {
             IAllo _allo = IAllo(address(allo));
-            if (proposal.requestedToken != _allo.getPool(proposal.poolId).token) {
-                revert();
+            address poolToken = address(_allo.getPool(proposal.poolId).token);
+            if (proposal.requestedToken != poolToken) {
+                revert UnexpectedRequestToken(proposal.requestedToken, poolToken);
             }
         }
 
-        if (
-            address(arbitrableConfigs[currentArbitrableConfigVersion].arbitrator) != address(0)
-                && msg.value < arbitrableConfigs[currentArbitrableConfigVersion].submitterCollateralAmount
-        ) {
-            revert();
+        if (address(arbitrableConfigs[currentArbitrableConfigVersion].arbitrator) != address(0)) {
+            revert ArbitratorNotSet(address(arbitrableConfigs[currentArbitrableConfigVersion].arbitrator));
+        }
+
+        if (msg.value < arbitrableConfigs[currentArbitrableConfigVersion].submitterCollateralAmount) {
+            revert InsufficientCollateral(
+                msg.value, arbitrableConfigs[currentArbitrableConfigVersion].submitterCollateralAmount
+            );
         }
 
         uint256 proposalId = ++proposalCounter;
@@ -78,11 +91,11 @@ contract CVProposalFacet is CVStrategyBaseFacet {
 
     function cancelProposal(uint256 proposalId) external {
         if (proposals[proposalId].proposalStatus != ProposalStatus.Active) {
-            revert();
+            revert ProposalNotActive(proposalId, proposals[proposalId].proposalStatus);
         }
 
         if (proposals[proposalId].submitter != msg.sender) {
-            revert();
+            revert OnlySubmitter(proposalId, proposals[proposalId].submitter, msg.sender);
         }
 
         collateralVault.withdrawCollateral(
@@ -104,11 +117,11 @@ contract CVProposalFacet is CVStrategyBaseFacet {
         //
         Proposal storage proposal = proposals[_proposalId];
         if (proposal.proposalStatus != ProposalStatus.Active) {
-            revert();
+            revert ProposalNotActive(_proposalId, proposal.proposalStatus);
         }
 
         if (proposal.submitter != msg.sender) {
-            revert();
+            revert OnlySubmitter(_proposalId, proposal.submitter, msg.sender);
         }
 
         if (

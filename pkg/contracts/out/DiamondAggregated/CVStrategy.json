@@ -59,12 +59,12 @@
       "name": "allocate",
       "inputs": [
         {
-          "name": "_data",
+          "name": "",
           "type": "bytes",
           "internalType": "bytes"
         },
         {
-          "name": "_sender",
+          "name": "",
           "type": "address",
           "internalType": "address"
         }
@@ -259,7 +259,7 @@
       "name": "deactivatePoints",
       "inputs": [
         {
-          "name": "_member",
+          "name": "",
           "type": "address",
           "internalType": "address"
         }
@@ -272,12 +272,12 @@
       "name": "decreasePower",
       "inputs": [
         {
-          "name": "_member",
+          "name": "",
           "type": "address",
           "internalType": "address"
         },
         {
-          "name": "_amountToUnstake",
+          "name": "",
           "type": "uint256",
           "internalType": "uint256"
         }
@@ -521,6 +521,19 @@
     },
     {
       "type": "function",
+      "name": "getMaxAmount",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
       "name": "getPointSystem",
       "inputs": [],
       "outputs": [
@@ -680,12 +693,12 @@
       "name": "increasePower",
       "inputs": [
         {
-          "name": "_member",
+          "name": "",
           "type": "address",
           "internalType": "address"
         },
         {
-          "name": "_amountToStake",
+          "name": "",
           "type": "uint256",
           "internalType": "uint256"
         }
@@ -998,12 +1011,12 @@
       "name": "registerRecipient",
       "inputs": [
         {
-          "name": "_data",
+          "name": "",
           "type": "bytes",
           "internalType": "bytes"
         },
         {
-          "name": "_sender",
+          "name": "",
           "type": "address",
           "internalType": "address"
         }
@@ -1086,7 +1099,7 @@
       "name": "setPoolParams",
       "inputs": [
         {
-          "name": "_arbitrableConfig",
+          "name": "",
           "type": "tuple",
           "internalType": "struct ArbitrableConfig",
           "components": [
@@ -1123,7 +1136,7 @@
           ]
         },
         {
-          "name": "_cvParams",
+          "name": "",
           "type": "tuple",
           "internalType": "struct CVParams",
           "components": [
@@ -1150,24 +1163,42 @@
           ]
         },
         {
-          "name": "_sybilScoreThreshold",
+          "name": "",
           "type": "uint256",
           "internalType": "uint256"
         },
         {
-          "name": "_membersToAdd",
+          "name": "",
           "type": "address[]",
           "internalType": "address[]"
         },
         {
-          "name": "_membersToRemove",
+          "name": "",
           "type": "address[]",
           "internalType": "address[]"
         },
         {
-          "name": "_superfluidToken",
+          "name": "",
           "type": "address",
           "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "setSybilScorer",
+      "inputs": [
+        {
+          "name": "_sybilScorer",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "threshold",
+          "type": "uint256",
+          "internalType": "uint256"
         }
       ],
       "outputs": [],
@@ -2418,12 +2449,34 @@
     {
       "type": "error",
       "name": "AddressCannotBeZero",
-      "inputs": []
+      "inputs": [
+        {
+          "name": "input",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
     },
     {
       "type": "error",
       "name": "AmountOverMaxRatio",
-      "inputs": []
+      "inputs": [
+        {
+          "name": "requestedAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "maxAllowed",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "poolAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
     },
     {
       "type": "error",
@@ -2729,34 +2782,78 @@
     {
       "type": "error",
       "name": "NotImplemented",
-      "inputs": []
+      "inputs": [
+        {
+          "name": "selector",
+          "type": "bytes4",
+          "internalType": "bytes4"
+        }
+      ]
     },
     {
       "type": "error",
       "name": "OnlyArbitrator",
-      "inputs": []
-    },
-    {
-      "type": "error",
-      "name": "OnlyCommunityAllowed",
-      "inputs": []
-    },
-    {
-      "type": "error",
-      "name": "OnlyCouncilSafe",
-      "inputs": []
-    },
-    {
-      "type": "error",
-      "name": "OnlySubmitter",
       "inputs": [
         {
-          "name": "submitter",
+          "name": "sender",
           "type": "address",
           "internalType": "address"
         },
         {
+          "name": "arbitrator",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "OnlyCommunityAllowed",
+      "inputs": [
+        {
           "name": "sender",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "registryCommunity",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "OnlyCouncilSafe",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "councilSafe",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "OnlyCouncilSafeOrMember",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "councilSafe",
           "type": "address",
           "internalType": "address"
         }
@@ -2796,7 +2893,13 @@
     {
       "type": "error",
       "name": "PoolIsEmpty",
-      "inputs": []
+      "inputs": [
+        {
+          "name": "poolAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
     },
     {
       "type": "error",
@@ -2907,7 +3010,24 @@
     {
       "type": "error",
       "name": "RegistryCannotBeZero",
-      "inputs": []
+      "inputs": [
+        {
+          "name": "registry",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "RegistryCommunityCannotBeZero",
+      "inputs": [
+        {
+          "name": "registry",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
     },
     {
       "type": "error",
@@ -2955,12 +3075,24 @@
     {
       "type": "error",
       "name": "TokenCannotBeZero",
-      "inputs": []
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
     },
     {
       "type": "error",
       "name": "TokenNotAllowed",
-      "inputs": []
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
     },
     {
       "type": "error",
@@ -2970,27 +3102,275 @@
     {
       "type": "error",
       "name": "UserCannotBeZero",
-      "inputs": []
+      "inputs": [
+        {
+          "name": "user",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
     },
     {
       "type": "error",
       "name": "UserCannotExecuteAction",
-      "inputs": []
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
     },
     {
       "type": "error",
       "name": "UserIsInactive",
-      "inputs": []
+      "inputs": [
+        {
+          "name": "user",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
     },
     {
       "type": "error",
       "name": "UserNotInRegistry",
-      "inputs": []
+      "inputs": [
+        {
+          "name": "user",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "registry",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
     },
     {
       "type": "error",
       "name": "ZERO_ADDRESS",
       "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "OnlyActiveProposal",
+      "inputs": [
+        {
+          "name": "proposalId",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "OnlyAllo",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "allo",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "OnlyInitialized",
+      "inputs": [
+        {
+          "name": "poolId",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "OnlyMember",
+      "inputs": [
+        {
+          "name": "wallet",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "community",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "OnlyRegistryCommunity",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "registry",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "OnlySubmitter",
+      "inputs": [
+        {
+          "name": "proposalId",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "submitter",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "sender",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "ProposalDoesNotExist",
+      "inputs": [
+        {
+          "name": "proposalID",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "SuperfluidGDAConnectFailed",
+      "inputs": [
+        {
+          "name": "gda",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "superToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "caller",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "SuperfluidGDADisconnectFailed",
+      "inputs": [
+        {
+          "name": "gda",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "superToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "caller",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "NativeTransferFailed",
+      "inputs": [
+        {
+          "name": "recipient",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "ChallengerCollateralTooLow",
+      "inputs": [
+        {
+          "name": "sent",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "required",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "DefaultRulingNotConfigured",
+      "inputs": [
+        {
+          "name": "proposalId",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "DisputeCooldownActive",
+      "inputs": [
+        {
+          "name": "proposalId",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "secondsRemaining",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "ProposalStatusInvalid",
+      "inputs": [
+        {
+          "name": "proposalId",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "currentStatus",
+          "type": "uint8",
+          "internalType": "enum ProposalStatus"
+        }
+      ]
     },
     {
       "type": "function",
@@ -3004,30 +3384,6 @@
         }
       ],
       "stateMutability": "view"
-    },
-    {
-      "type": "function",
-      "name": "compareStringsByHash",
-      "inputs": [
-        {
-          "name": "_first",
-          "type": "string",
-          "internalType": "string"
-        },
-        {
-          "name": "_second",
-          "type": "string",
-          "internalType": "string"
-        }
-      ],
-      "outputs": [
-        {
-          "name": "",
-          "type": "bool",
-          "internalType": "bool"
-        }
-      ],
-      "stateMutability": "pure"
     },
     {
       "type": "event",
@@ -3071,6 +3427,33 @@
         }
       ],
       "anonymous": false
+    },
+    {
+      "type": "error",
+      "name": "ArbitratorNotSet",
+      "inputs": [
+        {
+          "name": "arbitrator",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "UnexpectedRequestToken",
+      "inputs": [
+        {
+          "name": "requestedToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "poolToken",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
     }
   ]
 }

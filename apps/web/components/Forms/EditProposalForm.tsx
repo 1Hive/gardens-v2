@@ -3,23 +3,24 @@
 import React, { useState, useMemo } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
-import { Address, encodeAbiParameters, parseUnits } from "viem";
-import { useAccount, useContractRead, useToken } from "wagmi";
-import { getProposalDataQuery } from "#/subgraph/.graphclient";
+import { Address, formatUnits, parseUnits } from "viem";
+import { useAccount, useContractRead } from "wagmi";
+import { CVProposal, getProposalDataQuery } from "#/subgraph/.graphclient";
 import { FormAddressInput } from "./FormAddressInput";
 import { FormInput } from "./FormInput";
 import { FormPreview, FormRow } from "./FormPreview";
 import { LoadingSpinner } from "../LoadingSpinner";
 import { calculateConvictionGrowthInSeconds } from "../PoolHeader";
-import { WalletBalance } from "../WalletBalance";
 import { Button, EthAddress, InfoBox, InfoWrapper } from "@/components";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
+import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
+import { MetadataV1 } from "@/hooks/useIpfsFetch";
 import { usePoolToken } from "@/hooks/usePoolToken";
-import { alloABI, cvStrategyABI } from "@/src/generated";
+import { cvStrategyABI } from "@/src/generated";
 import { PoolTypes } from "@/types";
 import { getEventFromReceipt } from "@/utils/contracts";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
@@ -38,17 +39,14 @@ type FormInputs = {
 
 type EditProposalFormProps = {
   strategy: NonNullable<getProposalDataQuery["cvproposal"]>["strategy"];
-  // arbitrableConfig:
-  //   | Pick<ArbitrableConfig, "submitterCollateralAmount">
-  //   | undefined;
-  // poolId: number;
-  // proposalType: number;
-  // poolParams: Pick<CVStrategyConfig, "decay">;
-  // alloInfo: Pick<Allo, "id" | "chainId" | "tokenNative">;
-  // tokenGarden: Pick<TokenGarden, "symbol" | "decimals">;
   spendingLimit: number | string | undefined;
   spendingLimitPct: number;
-  poolBalance: string | undefined;
+  proposal: NonNullable<
+    Pick<CVProposal, "beneficiary" | "requestedAmount" | "metadataHash"> & {
+      metadata: MetadataV1;
+    }
+  >;
+  poolToken: ReturnType<typeof usePoolToken>;
 };
 
 type FormRowTypes = {
@@ -56,65 +54,12 @@ type FormRowTypes = {
   parse?: (value: any) => React.ReactNode;
 };
 
-const abiParameters = [
-  {
-    type: "tuple",
-    components: [
-      { name: "poolId", type: "uint" },
-      { name: "beneficiaryAddress", type: "address" },
-      { name: "requestedAmount", type: "uint" },
-      { name: "requestedTokenAddress", type: "address" },
-      {
-        name: "metadata",
-        type: "tuple",
-        components: [
-          { name: "pointer", type: "uint" },
-          { name: "ipfsHash", type: "string" },
-        ],
-      },
-    ],
-  },
-];
-
-// function formatNumber(num: string | number): string {
-//   if (num == 0) {
-//     return "0";
-//   }
-//   // Convert to number if it's a string
-//   const number = typeof num === "string" ? parseFloat(num) : num;
-
-//   // Check if the number is NaN
-//   if (isNaN(number)) {
-//     return "Invalid Number";
-//   }
-
-//   // If the absolute value is greater than or equal to 1, use toFixed(2)
-//   if (Math.abs(number) >= 1) {
-//     return number.toFixed(2);
-//   }
-
-//   // For numbers between 0 and 1 (exclusive)
-//   const parts = number.toString().split("e");
-//   const exponent = parts[1] ? parseInt(parts[1]) : 0;
-
-//   if (exponent < -3) {
-//     // For very small numbers, use exponential notation with 4 significant digits
-//     return number.toPrecision(4);
-//   } else {
-//     // For numbers between 0.001 and 1, show at least 4 decimal places
-//     const decimalPlaces = Math.max(
-//       4,
-//       -Math.floor(Math.log10(Math.abs(number))) + 3,
-//     );
-//     return number.toFixed(decimalPlaces);
-//   }
-// }
-
 export const EditProposalForm = ({
-  poolBalance,
   strategy,
   spendingLimitPct,
   spendingLimit,
+  proposal,
+  poolToken,
 }: EditProposalFormProps) => {
   const {
     register,
@@ -123,12 +68,21 @@ export const EditProposalForm = ({
     getValues,
     setValue,
     watch,
-  } = useForm<FormInputs>({ mode: "onBlur" });
+  } = useForm<FormInputs>({
+    mode: "onBlur",
+    defaultValues: {
+      title: proposal.metadata?.title ?? "",
+      description: proposal.metadata?.description ?? "",
+      amount: Number(
+        formatUnits(proposal.requestedAmount, poolToken?.decimals ?? 18),
+      ),
+      beneficiary: proposal.beneficiary,
+    },
+  });
 
   const { publish } = usePubSubContext();
-
+  const chainId = useChainIdFromPath();
   const { address: connectedWallet } = useAccount();
-
   const beneficiary = watch("beneficiary");
 
   const formRowTypes: Record<string, FormRowTypes> = {
@@ -150,10 +104,8 @@ export const EditProposalForm = ({
   const [previewData, setPreviewData] = useState<FormInputs>();
   const [requestedAmount, setRequestedAmount] = useState<string>();
   const [loading, setLoading] = useState(false);
-  const [isEnoughBalance, setIsEnoughBalance] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
-
   const { blockTime, id: chainIdFromPath } = useChainFromPath()!;
 
   const convictionGrowthSec = calculateConvictionGrowthInSeconds(
@@ -166,38 +118,55 @@ export const EditProposalForm = ({
   const disableSubmitBtn = useMemo<ConditionObject[]>(
     () => [
       {
-        condition: !isEnoughBalance,
-        message: "Insufficient balance",
-      },
-      {
         condition: !strategy.registryCommunity?.members?.find(
           (x) => x.memberAddress === connectedWallet?.toLowerCase(),
         ),
         message: "Join the community to create a proposal",
       },
     ],
-    [isEnoughBalance, connectedWallet, strategy.registryCommunity?.members],
+    [connectedWallet, strategy.registryCommunity?.members],
   );
   const { tooltipMessage, isButtonDisabled } =
     useDisableButtons(disableSubmitBtn);
 
   const proposalTypeName = PoolTypes[strategy.config.proposalType];
 
-  const createProposal = async () => {
-    setLoading(true);
-    const json = {
-      title: getValues("title"),
-      description: getValues("description"),
-    };
+  const proposalTitle = watch("title");
+  const proposalDescription = watch("description");
+  const proposalMetadataChanged =
+    proposalTitle !== proposal.metadata?.title ||
+    proposalDescription !== proposal.metadata?.description;
 
-    const ipfsHash = await ipfsJsonUpload(json);
+  const editProposal = async () => {
+    setLoading(true);
+
+    const ipfsHash =
+      proposalMetadataChanged ?
+        await ipfsJsonUpload({
+          title: proposalTitle,
+          description: proposalDescription,
+        })
+      : proposal.metadataHash;
+
     if (ipfsHash) {
       if (previewData === undefined) {
         throw new Error("No preview data");
       }
-      const encodedData = getEncodeData(ipfsHash);
 
-      // write({ args: [BigInt(strategy.id), encodedData] });
+      const amount = parseUnits(
+        requestedAmount ?? "0",
+        poolToken?.decimals ?? 0,
+      );
+
+      write({
+        args: [
+          strategy.poolId,
+          { protocol: 1n, pointer: ipfsHash },
+          (previewData?.beneficiary ||
+            "0x0000000000000000000000000000000000000000") as Address,
+          amount,
+        ],
+      });
     }
     setLoading(false);
   };
@@ -207,42 +176,28 @@ export const EditProposalForm = ({
     setShowPreview(true);
   };
 
-  // const { write } = useContractWriteWithConfirmations({
-  //   address: alloInfo.id as Address,
-  //   abi: alloABI,
-  //   contractName: "Allo",
-  //   functionName: "registerRecipient",
-  //   fallbackErrorMessage: "Error creating Proposal, please report a bug.",
-  //   value: arbitrableConfig?.submitterCollateralAmount,
-  //   onConfirmations: (receipt) => {
-  //     const proposalId = getEventFromReceipt(
-  //       receipt,
-  //       "CVStrategy",
-  //       "ProposalCreated",
-  //     ).args.proposalId;
-  //     publish({
-  //       topic: "proposal",
-  //       type: "update",
-  //       function: "registerRecipient",
-  //       containerId: poolId,
-  //       id: proposalId.toString(), // proposalId is a bigint
-  //       chainId,
-  //     });
-  //     setLoading(false);
-  //     if (pathname) {
-  //       const newPath = pathname.replace(
-  //         "/create-proposal",
-  //         `?${QUERY_PARAMS.poolPage.newProposal}=${proposalId}`,
-  //       );
-  //       router.push(newPath);
-  //     }()
-  //   },
-  // });
-
-  const poolTokenAddr = strategy?.token as Address;
-  const poolToken = usePoolToken({
-    poolAddress: strategy.id,
-    poolTokenAddr: poolTokenAddr,
+  const { write } = useContractWriteWithConfirmations({
+    address: strategy.id as Address,
+    abi: cvStrategyABI,
+    contractName: "CV Strategy",
+    functionName: "editProposal",
+    fallbackErrorMessage: "Error creating Proposal, please report a bug.",
+    onConfirmations: (receipt) => {
+      const proposalId = getEventFromReceipt(
+        receipt,
+        "CVStrategy",
+        "ProposalCreated",
+      ).args.proposalId;
+      publish({
+        topic: "proposal",
+        type: "update",
+        function: "editProposal",
+        containerId: strategy.poolId,
+        id: proposalId.toString(), // proposalId is a bigint
+        chainId,
+      });
+      setLoading(false);
+    },
   });
 
   const INPUT_TOKEN_MIN_VALUE =
@@ -275,30 +230,6 @@ export const EditProposalForm = ({
       </div>
     );
   }
-
-  const getEncodeData = (metadataIpfs: string) => {
-    if (previewData === undefined) {
-      throw new Error("no preview data");
-    }
-
-    const metadata = [1, metadataIpfs as string];
-
-    const strAmount = previewData.amount?.toString() || "";
-    const amount = parseUnits(strAmount, poolToken?.decimals ?? 0);
-
-    const encodedData = encodeAbiParameters(abiParameters, [
-      [
-        strategy.id,
-        previewData?.beneficiary ||
-          "0x0000000000000000000000000000000000000000",
-        amount,
-        poolTokenAddr,
-        metadata,
-      ],
-    ]);
-
-    return encodedData;
-  };
 
   const formatFormRows = () => {
     if (!previewData) {
@@ -352,7 +283,7 @@ export const EditProposalForm = ({
             <div className="relative flex flex-col">
               <FormInput
                 label="Requested amount"
-                subLabel={`Pool Funds: ${poolBalance} ${poolToken?.symbol} - Spending limit: ${spendingLimitPct.toFixed(1)}% = ${spendingLimit} ${poolToken?.symbol}`}
+                subLabel={`Pool Funds: ${poolToken?.formatted} ${poolToken?.symbol} - Spending limit: ${spendingLimitPct.toFixed(1)}% = ${spendingLimit} ${poolToken?.symbol}`}
                 register={register}
                 required
                 onChange={(e) => {
@@ -465,7 +396,7 @@ export const EditProposalForm = ({
               Edit
             </Button>
             <Button
-              onClick={() => createProposal()}
+              onClick={() => editProposal()}
               isLoading={loading}
               disabled={isButtonDisabled}
               tooltip={tooltipMessage}

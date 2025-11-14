@@ -40,7 +40,7 @@ import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useConvictionRead } from "@/hooks/useConvictionRead";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
-import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
+import { MetadataV1, useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { usePoolToken } from "@/hooks/usePoolToken";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { alloABI } from "@/src/generated";
@@ -165,6 +165,16 @@ export default function ClientPage({ params }: ClientPageProps) {
   });
   const path = usePathname();
   const metadata = proposalData?.metadata ?? ipfsResult ?? null;
+  const metadataForActions: MetadataV1 =
+    (metadata ?? { title: undefined, description: undefined }) as MetadataV1;
+  const proposalDataForActions =
+    proposalData ?
+      {
+        ...proposalData,
+        ...metadataForActions,
+        metadata: metadataForActions,
+      }
+    : undefined;
   const isProposerConnected =
     proposalData?.submitter === address?.toLowerCase();
 
@@ -504,10 +514,11 @@ export default function ClientPage({ params }: ClientPageProps) {
             </div>
             <div className="flex items-end">
               {(status === "active" || status === "disputed") &&
-                proposalData.strategy?.isEnabled && (
+                proposalData.strategy?.isEnabled &&
+                proposalDataForActions && (
                   <DisputeModal
                     isMemberCommunity={isMemberCommunity}
-                    proposalData={{ ...proposalData, ...metadata }}
+                    proposalData={proposalDataForActions}
                   />
                 )}
             </div>
@@ -520,14 +531,15 @@ export default function ClientPage({ params }: ClientPageProps) {
                 contentStyle="text-tertiary-content"
                 content="As the original author, you can edit/cancel this proposal."
               />
-              <EditProposalButton
-                proposalData={{
-                  ...proposalData,
-                  ...metadata,
-                }}
-                poolToken={poolToken}
-              />
-              <CancelButton proposalData={{ ...proposalData, ...metadata }} />
+              {proposalDataForActions && (
+                <>
+                  <EditProposalButton
+                    proposalData={proposalDataForActions}
+                    poolToken={poolToken}
+                  />
+                  <CancelButton proposalData={proposalDataForActions} />
+                </>
+              )}
             </section>
           )}
 

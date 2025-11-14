@@ -92,7 +92,12 @@ export function useContractWriteWithConfirmations<
   function logError(error: any, variables: any, context: string) {
     console.error(
       `Error with transaction [${props.contractName} -> ${props.functionName}]`,
-      { error, variables, context, cause: error?.cause.message },
+      {
+        error,
+        variables,
+        context,
+        cause: error?.cause?.message || error?.message,
+      },
     );
   }
 

@@ -1,57 +1,22 @@
 import React, { useState } from "react";
-import {
-  ExclamationTriangleIcon,
-  PencilIcon,
-} from "@heroicons/react/24/outline";
-import { Address } from "wagmi";
 import { getProposalDataQuery } from "#/subgraph/.graphclient";
 import { Button } from "./Button";
 import { EditProposalForm } from "./Forms/EditProposalForm";
 import { Modal } from "./Modal";
 import { calculateMinimumConviction } from "./PoolHeader";
-import { usePubSubContext } from "@/contexts/pubsub.context";
-import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
-import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
-import { MetadataV1 } from "@/hooks/useIpfsFetch";
+import { MetadataV1, useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { usePoolToken } from "@/hooks/usePoolToken";
-import { cvStrategyABI } from "@/src/generated";
-import {
-  CV_SCALE_PRECISION,
-  formatTokenAmount,
-  MAX_RATIO_CONSTANT,
-} from "@/utils/numbers";
+import { CV_SCALE_PRECISION, MAX_RATIO_CONSTANT } from "@/utils/numbers";
 
 type ProposalData = NonNullable<getProposalDataQuery["cvproposal"]>;
 
 type Props = {
-  proposalData: ProposalData & MetadataV1;
+  proposalData: ProposalData & { metadata: MetadataV1 };
   poolToken: ReturnType<typeof usePoolToken>;
 };
 
 function EditProposalButton({ proposalData, poolToken }: Props) {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const chainId = useChainIdFromPath();
-  const { publish } = usePubSubContext();
-  const { strategy } = proposalData;
-  const [, proposalNumber] = proposalData.id.split("-");
-
-  const { write: writeCancel, isLoading } = useContractWriteWithConfirmations({
-    address: strategy.id as Address,
-    abi: cvStrategyABI,
-    functionName: "cancelProposal",
-    contractName: "CV Strategy",
-    fallbackErrorMessage: "Error cancelling proposal, please report a bug.",
-    onConfirmations: () => {
-      publish({
-        topic: "proposal",
-        type: "update",
-        function: "cancelProposal",
-        id: +proposalNumber,
-        containerId: proposalData.strategy.poolId,
-        chainId: chainId,
-      });
-    },
-  });
 
   const spendingLimitPctValue =
     (Number(proposalData.strategy.config.maxRatio || 0) / CV_SCALE_PRECISION) *
@@ -73,11 +38,11 @@ function EditProposalButton({ proposalData, poolToken }: Props) {
       2,
     );
 
-  const poolBalanceFormatted = formatTokenAmount(
-    poolToken?.balance,
-    poolToken?.decimals ?? 18,
-    2,
-  );
+  const { data: proposalMetadata } = useMetadataIpfsFetch({
+    hash: proposalData?.metadataHash,
+    enabled:
+      proposalData?.metadataHash != null && proposalData?.metadata == null,
+  });
 
   return (
     <>
@@ -91,38 +56,22 @@ function EditProposalButton({ proposalData, poolToken }: Props) {
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title={`Edit proposal: ${proposalData.title} #${proposalData.proposalNumber}`}
+        title={`Edit proposal: ${proposalMetadata?.title ?? ""} #${proposalData.proposalNumber}`}
       >
-        <div>
-          <div>
-            This action cannot be undone.
-            <span className="font-semibold ml-1">
-              Are you sure you want to confirm edit?
-            </span>
-          </div>
-
-          <div className="modal-action">
-            <EditProposalForm
-              poolBalance={poolBalanceFormatted}
-              strategy={proposalData.strategy}
-              // poolId={+proposalData.strategy.poolId}
-              // poolParams={data.cvstrategies[0].config}
-              // proposalType={proposalType}
-              // tokenGarden={tokenGarden}
-              spendingLimit={spendingLimitValueNum}
-              spendingLimitPct={spendingLimitValuePct}
-            />
-            {/* <Button
-              btnStyle="filled"
-              color="primary"
-              isLoading={isLoading}
-              onClick={() =>
-                writeCancel({ args: [BigInt(proposalData.proposalNumber)] })
-              }
-            >
-              Confirm
-            </Button> */}
-          </div>
+        <div className="modal-action">
+          {proposalData != null &&
+            (proposalData.metadata ?? proposalMetadata) != null && (
+              <EditProposalForm
+                proposal={{
+                  ...proposalData,
+                  metadata: proposalData.metadata ?? proposalMetadata,
+                }}
+                poolToken={poolToken}
+                strategy={proposalData.strategy}
+                spendingLimit={spendingLimitValueNum}
+                spendingLimitPct={spendingLimitValuePct}
+              />
+            )}
         </div>
       </Modal>
     </>

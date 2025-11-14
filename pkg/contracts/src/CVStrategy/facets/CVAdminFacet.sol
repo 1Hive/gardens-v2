@@ -16,6 +16,12 @@ contract CVAdminFacet is CVStrategyBaseFacet {
     using SuperTokenV1Library for ISuperToken;
 
     /*|--------------------------------------------|*/
+    /*|              ERRORS                        |*/
+    /*|--------------------------------------------|*/
+    error SuperfluidGDAConnectFailed(address gda, address superToken, address caller);
+    error SuperfluidGDADisconnectFailed(address gda, address superToken, address caller);
+
+    /*|--------------------------------------------|*/
     /*|              EVENTS                        |*/
     /*|--------------------------------------------|*/
     event CVParamsUpdated(CVParams cvParams);
@@ -64,7 +70,9 @@ contract CVAdminFacet is CVStrategyBaseFacet {
         ISuperToken supertoken =
             address(superfluidToken) != address(0) ? superfluidToken : ISuperToken(allo.getPool(poolId).token);
         bool success = supertoken.connectPool(ISuperfluidPool(gda));
-        require(success, "Superfluid GDA connect failed");
+        if (!success) {
+            revert SuperfluidGDAConnectFailed(gda, address(supertoken), msg.sender);
+        }
         emit SuperfluidGDAConnected(gda, msg.sender);
     }
 
@@ -73,7 +81,9 @@ contract CVAdminFacet is CVStrategyBaseFacet {
         ISuperToken supertoken =
             address(superfluidToken) != address(0) ? superfluidToken : ISuperToken(allo.getPool(poolId).token);
         bool success = supertoken.disconnectPool(ISuperfluidPool(gda));
-        require(success, "Superfluid GDA disconnect failed");
+        if (!success) {
+            revert SuperfluidGDADisconnectFailed(gda, address(supertoken), msg.sender);
+        }
         emit SuperfluidGDADisconnected(gda, msg.sender);
     }
 

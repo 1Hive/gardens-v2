@@ -28,20 +28,19 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
     /*|--------------------------------------------|*/
     /*|              ERRORS                        |*/
     /*|--------------------------------------------|*/
-    error UserNotInRegistry();
-    error UserIsInactive();
-    error UserCannotExecuteAction();
-    error ProposalNotInList(uint256 _proposalId);
-    error ProposalNotActive(uint256 _proposalId);
-    error ProposalDataIsEmpty();
-    error PoolIsEmpty();
-    error PoolAmountNotEnough(uint256 _proposalId, uint256 _requestedAmount, uint256 _poolAmount);
-    error ConvictionUnderMinimumThreshold();
-    error AmountOverMaxRatio();
+    error UserIsInactive(address user);
+    error UserCannotExecuteAction(address user);
+    error ProposalNotInList(uint256 proposalId);
+    error ProposalNotActive(uint256 proposalId, ProposalStatus currentStatus);
+    error ProposalDataIsEmpty(uint256 inputLength);
+    error PoolIsEmpty(uint256 poolAmount);
+    error PoolAmountNotEnough(uint256 proposalId, uint256 requestedAmount, uint256 poolAmount);
+    error ConvictionUnderMinimumThreshold(uint256 conviction, uint256 threshold, uint256 requestedAmount);
+    error AmountOverMaxRatio(uint256 requestedAmount, uint256 maxAllowed, uint256 poolAmount);
     error NotEnoughPointsToSupport(uint256 pointsSupport, uint256 pointsBalance);
     error SupportUnderflow(uint256 _support, int256 _delta, int256 _result);
     error ProposalInvalidForAllocation(uint256 _proposalId, ProposalStatus _proposalStatus);
-    error OnlyCommunityAllowed();
+    error NativeTransferFailed(address recipient, uint256 amount);
 
     /*|--------------------------------------------|*/
     /*|              MODIFIERS                     |*/
@@ -55,7 +54,7 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
                         || p.proposalStatus == ProposalStatus.Executed || p.proposalStatus == ProposalStatus.Rejected
                 )
         ) {
-            revert();
+            revert ProposalInvalidForAllocation(_proposalId, p.proposalStatus);
         }
     }
 
@@ -74,7 +73,7 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
         checkSenderIsMember(_sender);
 
         if (!registryCommunity.memberActivatedInStrategies(_sender, address(this))) {
-            revert();
+            revert UserIsInactive(_sender);
         }
         {
             int256 deltaSupportSum = 0;
@@ -82,7 +81,7 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
             for (uint256 i = 0; i < pv.length; i++) {
                 // check if pv index i exist
                 if (!canAddSupport && pv[i].deltaSupport > 0) {
-                    revert();
+                    revert UserCannotExecuteAction(_sender);
                 }
                 if (pv[i].proposalId == 0) {
                     //@todo: check better way to do that.
@@ -90,7 +89,7 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
                 }
                 uint256 proposalId = pv[i].proposalId;
                 if (!proposalExists(proposalId)) {
-                    revert();
+                    revert ProposalNotInList(proposalId);
                 }
                 deltaSupportSum += pv[i].deltaSupport;
             }
@@ -98,7 +97,7 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
             uint256 participantBalance = registryCommunity.getMemberPowerInStrategy(_sender, address(this));
             // Check that the sum of support is not greater than the participant balance
             if (newTotalVotingSupport > participantBalance) {
-                revert();
+                revert NotEnoughPointsToSupport(newTotalVotingSupport, participantBalance);
             }
 
             totalVoterStakePct[_sender] = newTotalVotingSupport;
@@ -173,11 +172,12 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
         _checkOnlyInitialized();
 
         if (_data.length <= 0) {
-            revert();
+            revert ProposalDataIsEmpty(_data.length);
         }
 
-        if (getPoolAmount() <= 0) {
-            revert();
+        uint256 poolAmount = getPoolAmount();
+        if (poolAmount == 0) {
+            revert PoolIsEmpty(poolAmount);
         }
 
         uint256 proposalId = abi.decode(_data, (uint256));
@@ -194,26 +194,27 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
 
         if (proposalType == ProposalType.Funding) {
             if (proposals[proposalId].proposalId != proposalId && proposalId != 0) {
-                revert();
+                revert ProposalNotInList(proposalId);
             }
 
             if (proposals[proposalId].proposalStatus != ProposalStatus.Active) {
-                revert();
+                revert ProposalNotActive(proposalId, proposals[proposalId].proposalStatus);
             }
 
-            if (proposals[proposalId].requestedAmount > getPoolAmount()) {
-                revert();
+            if (proposals[proposalId].requestedAmount > poolAmount) {
+                revert PoolAmountNotEnough(proposalId, proposals[proposalId].requestedAmount, poolAmount);
             }
 
             if (_isOverMaxRatio(proposals[proposalId].requestedAmount)) {
-                revert();
+                uint256 maxAllowed = (cvParams.maxRatio * poolAmount) / ConvictionsUtils.D;
+                revert AmountOverMaxRatio(proposals[proposalId].requestedAmount, maxAllowed, poolAmount);
             }
 
             uint256 convictionLast = updateProposalConviction(proposalId);
 
             uint256 threshold = ConvictionsUtils.calculateThreshold(
                 proposals[proposalId].requestedAmount,
-                getPoolAmount(),
+                poolAmount,
                 totalPointsActivated,
                 cvParams.decay,
                 cvParams.weight,
@@ -223,7 +224,9 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
 
             // <= for when threshold being zero
             if (convictionLast <= threshold && proposals[proposalId].requestedAmount > 0) {
-                revert();
+                revert ConvictionUnderMinimumThreshold(
+                    convictionLast, threshold, proposals[proposalId].requestedAmount
+                );
             }
 
             _transferAmount(
@@ -255,7 +258,7 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
         int256 result = int256(_support) + _delta;
 
         if (result < 0) {
-            revert();
+            revert SupportUnderflow(_support, _delta, result);
         }
         // casting to 'uint256' is safe because we checked result >= 0
         // forge-lint: disable-next-line(unsafe-typecast)
@@ -266,36 +269,19 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
         Proposal storage proposal = proposals[proposalId];
 
         if (proposal.proposalId != proposalId) {
-            revert();
+            revert ProposalNotInList(proposalId);
         }
 
         _calculateAndSetConviction(proposal, proposal.stakedAmount);
         return proposal.convictionLast;
     }
 
-    function getPoolAmount() internal view returns (uint256) {
-        address token = allo.getPool(poolId).token;
-
-        if (token == NATIVE_TOKEN) {
-            return address(this).balance;
-        }
-
-        uint256 base = ERC20(token).balanceOf(address(this));
-        uint256 sf = address(superfluidToken) == address(0) ? 0 : superfluidToken.balanceOf(address(this));
-
-        uint8 d = ERC20(token).decimals();
-        if (d < 18) {
-            sf /= 10 ** (18 - d); // downscale 18 -> d
-        } else if (d > 18) {
-            sf *= 10 ** (d - 18); // upscale 18 -> d  (unlikely)
-        }
-        return base + sf;
-    }
-
     function _transferAmount(address _token, address _to, uint256 _amount) internal {
         if (_token == NATIVE_TOKEN) {
             (bool success,) = payable(_to).call{value: _amount}("");
-            require(success, "Native transfer failed");
+            if (!success) {
+                revert NativeTransferFailed(_to, _amount);
+            }
         } else {
             ERC20(_token).transfer(_to, _amount);
         }

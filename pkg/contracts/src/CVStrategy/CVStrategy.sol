@@ -50,16 +50,16 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     /*|              CUSTOM ERRORS                 |*/
     /*|--------------------------------------------|*/
 
-    error UserCannotBeZero(); // 0xd1f28288
-    error UserNotInRegistry(); //0x6a5cfb6d
-    error UserIsInactive(); // 0x5fccb67f
-    error PoolIsEmpty(); // 0xed4421ad
-    error NotImplemented(); //0xd6234725
-    error TokenCannotBeZero(); //0x596a094c
-    error TokenNotAllowed(); // 0xa29c4986
-    error AmountOverMaxRatio(); // 0x3bf5ca14
-    error AddressCannotBeZero(); //0xe622e040
-    error RegistryCannotBeZero(); // 0x5df4b1ef
+    error UserCannotBeZero(address user); // 0xd1f28288
+    error UserNotInRegistry(address user, address registry); //0x6a5cfb6d
+    error UserIsInactive(address user); // 0x5fccb67f
+    error PoolIsEmpty(uint256 poolAmount); // 0xed4421ad
+    error NotImplemented(bytes4 selector); //0xd6234725
+    error TokenCannotBeZero(address token); //0x596a094c
+    error TokenNotAllowed(address token); // 0xa29c4986
+    error AmountOverMaxRatio(uint256 requestedAmount, uint256 maxAllowed, uint256 poolAmount); // 0x3bf5ca14
+    error AddressCannotBeZero(address input); //0xe622e040
+    error RegistryCannotBeZero(address registry); // 0x5df4b1ef
     error SupportUnderflow(uint256 _support, int256 _delta, int256 _result); // 0x3bbc7142
     error NotEnoughPointsToSupport(uint256 pointsSupport, uint256 pointsBalance); // 0xd64182fe
 
@@ -69,15 +69,14 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     error ProposalNotInList(uint256 _proposalId); // 0xc1d17bef
     error ProposalSupportDuplicated(uint256 _proposalId, uint256 index); //0xadebb154
     error ConvictionUnderMinimumThreshold(); // 0xcce79308
-    error OnlyCommunityAllowed(); // 0xaf0916a2
+    error OnlyCommunityAllowed(address sender, address registryCommunity); // 0xaf0916a2
     error PoolAmountNotEnough(uint256 _proposalId, uint256 _requestedAmount, uint256 _poolAmount); //0x5863b0b6
-    error OnlyCouncilSafe();
-    error UserCannotExecuteAction();
+    error OnlyCouncilSafe(address sender, address councilSafe, address owner);
+    error UserCannotExecuteAction(address sender);
     error InsufficientCollateral(uint256 sentAmount, uint256 requiredAmount);
-    error OnlyArbitrator();
+    error OnlyArbitrator(address sender, address arbitrator);
     error ProposalNotDisputed(uint256 _proposalId);
     error ArbitratorCannotBeZero();
-    error OnlySubmitter(address submitter, address sender);
     // Goss: Support Collateral Zero
     // error CollateralVaultCannotBeZero();
     error DefaultRulingNotSet();
@@ -87,6 +86,8 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     error BShouldBeLessTwo_128();
     error AShouldBeUnderOrEqTwo_128();
     error StrategyFunctionDoesNotExist(bytes4 selector);
+    error RegistryCommunityCannotBeZero(address registry);
+    error OnlyCouncilSafeOrMember(address sender, address councilSafe);
 
     /*|--------------------------------------------|*/
     /*|              CUSTOM EVENTS                 |*/
@@ -243,35 +244,30 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     /*|                 MODIFIERS                  |*/
     /*|--------------------------------------------|*/
     function checkSenderIsMember(address _sender) internal {
-        // if (_sender == address(0)) {
-        //     revert UserCannotBeZero();
-        // }
-        // if (address(registryCommunity) == address(0)) {
-        //     revert RegistryCannotBeZero();
-        // }
-        if (!registryCommunity.isMember(_sender)) {
-            // revert UserNotInRegistry();
-            revert(); // @todo take commented when contract size fixed with diamond
+        if (_sender == address(0)) {
+            revert UserCannotBeZero(_sender);
         }
-        // _;
+        if (address(registryCommunity) == address(0)) {
+            revert RegistryCannotBeZero(address(registryCommunity));
+        }
+        if (!registryCommunity.isMember(_sender)) {
+            revert UserNotInRegistry(_sender, address(registryCommunity));
+        }
     }
 
     function onlyRegistryCommunity() internal view {
         if (msg.sender != address(registryCommunity)) {
-            // revert OnlyCommunityAllowed();
-            revert(); // @todo take commented when contract size fixed with diamond
+            revert OnlyCommunityAllowed(msg.sender, address(registryCommunity));
         }
     }
 
-    // TODO: Uncomment when contract size fixed with diamond
-    // function _revertZeroAddress(address _address) internal pure  {
-    //     if (_address == address(0)) revert AddressCannotBeZero();
-    // }
+    function _revertZeroAddress(address _address) internal pure {
+        if (_address == address(0)) revert AddressCannotBeZero(_address);
+    }
 
     function onlyCouncilSafe() internal view {
         if (msg.sender != address(registryCommunity.councilSafe()) && msg.sender != owner()) {
-            // revert OnlyCouncilSafe();
-            revert(); // @todo take commented when contract size fixed with diamond
+            revert OnlyCouncilSafe(msg.sender, address(registryCommunity.councilSafe()), owner());
         }
     }
 
@@ -296,15 +292,13 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
                         || p.proposalStatus == ProposalStatus.Executed || p.proposalStatus == ProposalStatus.Rejected
                 )
         ) {
-            // revert ProposalInvalidForAllocation(_proposalId, p.proposalStatus);
-            revert(); // @todo take commented when contract size fixed with diamond
+            revert ProposalInvalidForAllocation(_proposalId, p.proposalStatus);
         }
     }
 
     function onlyCouncilSafeOrMember() internal view {
         if (msg.sender != address(registryCommunity.councilSafe()) && false == _canExecuteAction(msg.sender)) {
-            // revert OnlyCouncilSafeOrMember();
-            revert(); // @todo take commented when contract size fixed with diamond
+            revert OnlyCouncilSafeOrMember(msg.sender, address(registryCommunity.councilSafe()));
         }
     }
 
@@ -320,62 +314,33 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
 
     // registerRecipient removed - now in ProposalManagementFacet
     // Stub needed for IStrategy interface - delegates to facet
-    function registerRecipient(bytes memory _data, address _sender) external payable returns (address) {
+    function registerRecipient(bytes memory, address) external payable returns (address) {
         _delegateToFacet();
     }
 
     function activatePoints() external {
-        if (!_canExecuteAction(msg.sender)) {
-            // revert UserCannotExecuteAction();
-            // revert(("UserCannotExecuteAction")); // @todo take commented when contract size fixed with diamond
-            revert();
-        }
-        registryCommunity.activateMemberInStrategy(msg.sender, address(this));
-        totalPointsActivated += registryCommunity.getMemberPowerInStrategy(msg.sender, address(this));
+        _delegateToFacet();
     }
 
-    // deactivatePoints (both versions) and _deactivatePoints removed - now in PowerManagementFacet
-    // Stub needed for tests to call - delegates to facet
     function deactivatePoints() external {
         _delegateToFacet();
     }
 
-    function increasePower(address _member, uint256 _amountToStake) external returns (uint256) {
-        //requireMemberActivatedInStrategies
-        onlyRegistryCommunity();
-        if (!_canExecuteAction(_member)) {
-            // revert UserCannotExecuteAction();
-            // revert(("UserCannotExecuteAction")); // @todo take commented when contract size fixed with diamond
-            revert();
-        }
-        uint256 pointsToIncrease = PowerManagementUtils.increasePower(
-            registryCommunity, _member, _amountToStake, pointSystem, pointConfig.maxAmount
-        );
-
-        bool isActivated = registryCommunity.memberActivatedInStrategies(_member, address(this));
-        if (isActivated) {
-            totalPointsActivated += pointsToIncrease;
-        }
-        emit PowerIncreased(_member, _amountToStake, pointsToIncrease);
-        return pointsToIncrease;
-    }
-
-    // decreasePower removed - now in PowerManagementFacet
-    // Stub needed for RegistryCommunity to call - delegates to facet
-    function decreasePower(address _member, uint256 _amountToUnstake) external returns (uint256) {
+    function increasePower(address, uint256) external returns (uint256) {
         _delegateToFacet();
     }
 
-    // deactivatePoints(address) removed - now in PowerManagementFacet
-    // Stub needed for RegistryCommunity to call - delegates to facet
-    function deactivatePoints(address _member) external {
+    function decreasePower(address, uint256) external returns (uint256) {
         _delegateToFacet();
     }
 
-    // Goss: Commented because both accessible by the public field
-    // function getMaxAmount() public view  returns (uint256) {
-    //     return pointConfig.maxAmount;
-    // }
+    function deactivatePoints(address) external {
+        _delegateToFacet();
+    }
+
+    function getMaxAmount() public view returns (uint256) {
+        return pointConfig.maxAmount;
+    }
 
     function getPointSystem() public view returns (PointSystem) {
         return pointSystem;
@@ -392,7 +357,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
 
     // allocate removed - now in AllocationFacet
     // Stub needed for IStrategy interface - delegates to facet
-    function allocate(bytes memory _data, address _sender) external payable {
+    function allocate(bytes memory, address) external payable {
         _delegateToFacet();
     }
 
@@ -401,52 +366,6 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     function distribute(address[] memory, bytes memory, address) external override {
         _delegateToFacet();
     }
-
-    // GOSS: NEVER CALLED
-    // function canExecuteProposal(uint256 proposalId) public view  returns (bool canBeExecuted) {
-    //     Proposal storage proposal = proposals[proposalId];
-
-    //     // uint256 convictionLast = updateProposalConviction(proposalId);
-    //     (uint256 convictionLast, uint256 blockNumber) =
-    //         _checkBlockAndCalculateConviction(proposal, proposal.stakedAmount);
-
-    //     if (convictionLast == 0 && blockNumber == 0) {
-    //         convictionLast = proposal.convictionLast;
-    //     }
-    //     uint256 threshold = calculateThreshold(proposal.requestedAmount);
-
-    //     // console.log("convictionLast", convictionLast);
-    //     // console.log("threshold", threshold);
-    //     canBeExecuted = convictionLast >= threshold;
-    // }
-
-    // function getPayouts(address[] memory, bytes[] memory) external pure override returns (PayoutSummary[] memory) {
-    //     // surpressStateMutabilityWarning
-    //     // PayoutSummary[] memory payouts = new PayoutSummary[](0);
-    //     // return payouts;
-    //     // revert NotImplemented();
-    //     revert();
-    // }
-
-    // function _getPayout(address _recipientId, bytes memory _data)
-    //     internal
-    //     pure
-    //     returns (PayoutSummary memory)
-    // {
-    //     // surpressStateMutabilityWarning;
-    //     // _data;
-    //     // return PayoutSummary(_recipientId, 0);
-    // }
-
-    // function _afterIncreasePoolAmount(uint256 _amount) internal {
-    //     emit PoolAmountIncreased(_amount);
-    // }
-
-    // simply returns whether a allocator is valid or not, will usually be true for all
-
-    // function _isValidAllocator(address _allocator) internal pure override returns (bool) {
-    //     // surpressStateMutabilityWarning;
-    // }
 
     function setPoolActive(bool _active) external {
         _setPoolActive(_active);
@@ -588,9 +507,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         int256 result = int256(_support) + _delta;
 
         if (result < 0) {
-            // revert SupportUnderflow(_support, _delta, result);
-            // revert(("SupportUnderflow")); // @todo take commented when contract size fixed with diamond
-            revert();
+            revert SupportUnderflow(_support, _delta, result);
         }
         // casting to 'uint256' is safe because we checked result >= 0
         // forge-lint: disable-next-line(unsafe-typecast)
@@ -605,14 +522,14 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     }
 
     function calculateThreshold(uint256 _requestedAmount) external view returns (uint256) {
-        if (_isOverMaxRatio(_requestedAmount)) {
-            // revert AmountOverMaxRatio();
-            // revert(("AmountOverMaxRatio")); // @todo take commented when contract size fixed with diamond
-            revert();
+        uint256 poolAmount = getPoolAmount();
+        uint256 maxAllowed = (cvParams.maxRatio * poolAmount) / ConvictionsUtils.D;
+        if (_requestedAmount * ConvictionsUtils.D > cvParams.maxRatio * poolAmount) {
+            revert AmountOverMaxRatio(_requestedAmount, maxAllowed, poolAmount);
         }
         return ConvictionsUtils.calculateThreshold(
             _requestedAmount,
-            getPoolAmount(),
+            poolAmount,
             totalPointsActivated,
             cvParams.decay,
             cvParams.weight,
@@ -620,11 +537,6 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
             cvParams.minThresholdPoints
         );
     }
-
-    // TODO: Goss commented because totalPointsActivated is public
-    // function totalEffectiveActivePoints public view  returns (uint256) {
-    //     return totalPointsActivated;
-    // }
 
     /**
      * @dev Calculate conviction and store it on the proposal
@@ -667,9 +579,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         Proposal storage proposal = proposals[proposalId];
 
         if (proposal.proposalId != proposalId) {
-            // revert ProposalNotInList(proposalId);
-            // revert(("ProposalNotInList")); // @todo take commented when contract size fixed with diamond
-            revert();
+            revert ProposalNotInList(proposalId);
         }
 
         // Goss: Remove it to have access to this when disputed or proposal closed (to see the chart)
@@ -687,31 +597,26 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     //     emit RegistryUpdated(_registryCommunity);
     // }
 
-    // Goss: Commented to save space because not used
-    // function setSybilScorer(address _sybilScorer, uint256 threshold) external {
-    //     if (msg.sender != address(registryCommunity.councilSafe()) && msg.sender != owner()) {
-    //         // revert OnlyCouncilSafe();
-    //         // revert(("OnlyCouncilSafe")); // @todo take commented when contract size fixed with diamond
-    //         revert();
-    //     }
-    //     // _revertZeroAddress(_sybilScorer);
-    //     if (_sybilScorer == address(0)) {
-    //         revert(); // TODO: Take commented when contract size fixed with diamond
-    //     }
-    //     sybilScorer = ISybilScorer(_sybilScorer);
-    //     _registerToSybilScorer(threshold);
-    //     emit SybilScorerUpdated(_sybilScorer);
-    // }
+    function setSybilScorer(address _sybilScorer, uint256 threshold) external {
+        if (msg.sender != address(registryCommunity.councilSafe()) && msg.sender != owner()) {
+            revert OnlyCouncilSafe(msg.sender, address(registryCommunity.councilSafe()), owner());
+        }
+        _revertZeroAddress(_sybilScorer);
+
+        sybilScorer = ISybilScorer(_sybilScorer);
+        _registerToSybilScorer(threshold);
+        emit SybilScorerUpdated(_sybilScorer);
+    }
 
     // setPoolParams removed - now in AdminFacet
     // Stub needed for tests to call - delegates to facet
     function setPoolParams(
-        ArbitrableConfig memory _arbitrableConfig,
-        CVParams memory _cvParams,
-        uint256 _sybilScoreThreshold,
-        address[] memory _membersToAdd,
-        address[] memory _membersToRemove,
-        address _superfluidToken
+        ArbitrableConfig memory,
+        CVParams memory,
+        uint256,
+        address[] memory,
+        address[] memory,
+        address
     ) external {
         _delegateToFacet();
     }
