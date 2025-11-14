@@ -11,6 +11,7 @@ import { FormPreview, FormRow } from "./FormPreview";
 import { LoadingSpinner } from "../LoadingSpinner";
 import { calculateConvictionGrowthInSeconds } from "../PoolHeader";
 import { Button, EthAddress, InfoBox, InfoWrapper } from "@/components";
+import { Countdown } from "@/components/Countdown";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
@@ -93,6 +94,7 @@ export const EditProposalForm = ({
   const ONE_HOUR_MS = 60 * 60 * 1000;
   const proposalCreatedAtMs = Number(proposal.createdAt ?? 0) * 1000;
   const metadataEditDeadline = proposalCreatedAtMs + ONE_HOUR_MS;
+  const metadataEditDeadlineSeconds = Math.floor(metadataEditDeadline / 1000);
   const [metadataTimeLeft, setMetadataTimeLeft] = useState(() =>
     Math.max(metadataEditDeadline - Date.now(), 0),
   );
@@ -164,7 +166,7 @@ export const EditProposalForm = ({
     const updateTime = () => {
       setMetadataTimeLeft(() => {
         const remaining = Math.max(metadataEditDeadline - Date.now(), 0);
-        if (remaining === 0 && timer) {
+        if (remaining === 0 && Boolean(timer)) {
           clearInterval(timer);
         }
         return remaining;
@@ -176,14 +178,6 @@ export const EditProposalForm = ({
 
     return () => clearInterval(timer);
   }, [metadataEditDeadline]);
-
-  const formatTimeLeft = (ms: number) => {
-    if (ms <= 0) return "0s";
-    const totalSeconds = Math.floor(ms / 1000);
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds % 60;
-    return `${minutes}m ${seconds}s`;
-  };
 
   useEffect(() => {
     setRequestedAmount(
@@ -455,8 +449,17 @@ export const EditProposalForm = ({
                 title="Metadata editing window"
                 className="mt-3"
               >
-                You can edit the beneficiary, title, and description for{" "}
-                {formatTimeLeft(metadataTimeLeft)}.
+                <div className="flex flex-row gap-1 align-middle">
+                  You can edit the beneficiary, title, and description for{" "}
+                  <Countdown
+                    endTimestamp={metadataEditDeadlineSeconds}
+                    format="minutes"
+                    display="inline"
+                    showTimeout={false}
+                    className="items-end text-xs font-semibold"
+                  />
+                  .
+                </div>
               </InfoBox>
             )}
             {!canEditMetadata && (
