@@ -43,20 +43,26 @@ import {
 import { useTheme } from "@/providers/ThemeProvider";
 import { ipfsFileUpload } from "@/utils/ipfsUtils";
 
+type MarkdownEditorProps = {
+  id: string;
+  value: string | undefined;
+  className?: string;
+  errors?: Record<string, string>;
+  onChange?: React.ChangeEventHandler<HTMLInputElement>;
+  disabled?: boolean;
+  readOnly?: boolean;
+} & Omit<React.ComponentProps<typeof MDXEditor>, "onChange" | "markdown">;
+
 export default function MarkdownEditor({
   id,
   value,
   onChange,
   className,
   errors,
+  disabled = false,
+  readOnly = false,
   ...rest
-}: {
-  id: string;
-  value: string | undefined;
-  className?: string;
-  errors?: Record<string, string>;
-  onChange?: React.ChangeEventHandler<HTMLInputElement>;
-} & Omit<React.ComponentProps<typeof MDXEditor>, "onChange" | "markdown">) {
+}: MarkdownEditorProps) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [isFs, setIsFs] = useState(false);
   const [usingFallback, setUsingFallback] = useState(false);
@@ -165,11 +171,17 @@ export default function MarkdownEditor({
       <div
         className={`p-2 resize-y overflow-auto min-h-60 rounded-2xl border ${
           id && errors?.[id] ? "input-error" : "input-info"
-        } ${className} ${isFs ? "fixed inset-0 z-50 m-4" : ""}`}
+        } ${disabled ? "!border-gray-400 opacity-60 cursor-not-allowed" : ""} ${className} ${
+          isFs ? "fixed inset-0 z-50 m-4" : ""
+        }`}
       >
         <MDXEditor
           markdown={value ?? ""}
-          className={`rounded-2xl !h-full mdxeditor-theme ${resolvedTheme === "darkTheme" ? "dark-theme dark-editor" : ""}`}
+          readOnly={readOnly || disabled}
+          className={`rounded-2xl !h-full mdxeditor-theme ${resolvedTheme === "darkTheme" ? "dark-theme dark-editor" : ""} ${
+            readOnly || disabled ? "pointer-events-none" : ""
+          }`}
+          {...rest}
           plugins={[
             headingsPlugin({
               allowedHeadingLevels: [1, 2, 3, 4, 5, 6],

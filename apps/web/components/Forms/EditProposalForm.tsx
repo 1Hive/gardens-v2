@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Address, formatUnits, parseUnits } from "viem";
 import { useAccount, useContractRead } from "wagmi";
@@ -15,6 +15,7 @@ import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
+import { useConvictionRead } from "@/hooks/useConvictionRead";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { MetadataV1 } from "@/hooks/useIpfsFetch";
 import { usePoolToken } from "@/hooks/usePoolToken";
@@ -41,7 +42,13 @@ type EditProposalFormProps = {
   proposal: NonNullable<
     Pick<
       CVProposal,
-      "proposalNumber" | "beneficiary" | "requestedAmount" | "metadataHash"
+      | "proposalNumber"
+      | "beneficiary"
+      | "requestedAmount"
+      | "convictionLast"
+      | "metadataHash"
+      | "createdAt"
+      | "stakedAmount"
     > & {
       metadata: MetadataV1;
     }
@@ -83,6 +90,18 @@ export const EditProposalForm = ({
   });
 
   const { publish } = usePubSubContext();
+  const ONE_HOUR_MS = 60 * 60 * 1000;
+  const proposalCreatedAtMs = Number(proposal.createdAt ?? 0) * 1000;
+  const metadataEditDeadline = proposalCreatedAtMs + ONE_HOUR_MS;
+  const canEditMetadata = Date.now() < metadataEditDeadline;
+  const proposalConviction = useConvictionRead({
+    strategyConfig: strategy.config,
+    proposalData: { ...proposal, strategy: strategy },
+    tokenData: poolToken,
+    enabled: Boolean(strategy.id && proposal.proposalNumber),
+  });
+  const canEditAmount =
+    BigInt(proposalConviction.currentConvictionPct ?? "0") === 0n;
   const chainId = useChainIdFromPath();
   const { address: connectedWallet } = useAccount();
   const beneficiary = watch("beneficiary");
@@ -136,6 +155,12 @@ export const EditProposalForm = ({
   const proposalMetadataChanged =
     proposalTitle !== proposal.metadata?.title ||
     proposalDescription !== proposal.metadata?.description;
+
+  useEffect(() => {
+    setRequestedAmount(
+      formatUnits(proposal.requestedAmount, poolToken?.decimals ?? 18),
+    );
+  }, [proposal.requestedAmount, poolToken?.decimals]);
 
   const editProposal = async () => {
     setLoading(true);
@@ -285,6 +310,7 @@ export const EditProposalForm = ({
                 onChange={(e) => {
                   setRequestedAmount(e.target.value);
                 }}
+                disabled={!canEditAmount}
                 registerOptions={{
                   // max: {
                   //   value: spendingLimit ? +spendingLimit : 0,
@@ -306,6 +332,16 @@ export const EditProposalForm = ({
                 placeholder="0"
                 suffix={poolToken?.symbol}
               />
+              {!canEditAmount && (
+                <InfoBox
+                  infoBoxType="warning"
+                  title="Requested amount locked"
+                  className="mt-3"
+                >
+                  The requested amount can no longer be changed after receiving
+                  the first support.
+                </InfoBox>
+              )}
             </div>
           )}
 
@@ -347,6 +383,12 @@ export const EditProposalForm = ({
                 }}
                 required
                 errors={errors}
+                disabled={!canEditMetadata}
+                tooltip={
+                  canEditMetadata ? undefined : (
+                    "Beneficiary can only be changed within the first hour."
+                  )
+                }
               />
             </div>
           )}
@@ -359,6 +401,7 @@ export const EditProposalForm = ({
               registerKey="title"
               type="text"
               placeholder="Example Title"
+              disabled={!canEditMetadata}
             />
           </div>
           <div className="flex flex-col">
@@ -375,7 +418,18 @@ export const EditProposalForm = ({
               type="markdown"
               rows={10}
               placeholder="Proposal description"
+              disabled={!canEditMetadata}
             />
+            {!canEditMetadata && (
+              <InfoBox
+                infoBoxType="warning"
+                title="Metadata locked"
+                className="mt-3"
+              >
+                Title, description, and beneficiary can only be edited within
+                one hour after creation.
+              </InfoBox>
+            )}
           </div>
         </div>
       }
