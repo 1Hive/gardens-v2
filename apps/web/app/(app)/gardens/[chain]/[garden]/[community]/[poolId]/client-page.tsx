@@ -147,8 +147,7 @@ export default function ClientPage({
     strategy?.registryCommunity?.garden?.decimals != null ?
       Number(strategy.registryCommunity.garden.decimals)
     : undefined;
-  const decimalsForPoints =
-    communityTokenDecimals ?? poolToken?.decimals ?? 18;
+  const decimalsForPoints = communityTokenDecimals ?? poolToken?.decimals ?? 18;
 
   const totalPointsActivatedInPool = formatTokenAmount(
     strategy?.totalEffectiveActivePoints,
@@ -238,9 +237,7 @@ export default function ClientPage({
       {showMissingFundingTokenWarning && (
         <div className="col-span-12 mt-4">
           <InfoBox infoBoxType="warning" title="Funding token unavailable">
-            We could not load the funding token for this pool. Pool balances
-            and funding actions are temporarily hidden until the pool token is
-            configured or available on-chain.
+            We could not load the funding token for this pool.
           </InfoBox>
         </div>
       )}
