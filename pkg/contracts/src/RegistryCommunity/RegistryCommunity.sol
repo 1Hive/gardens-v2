@@ -332,21 +332,20 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
     }
 
     // Stub - delegates to CommunityPoolFacet
-    function createPool(address _token, CVStrategyInitializeParamsV0_2 memory _params, Metadata memory _metadata)
+    function createPool(address, CVStrategyInitializeParamsV0_2 memory, Metadata memory)
         public
         virtual
-        returns (uint256 poolId, address strategy)
+        returns (uint256, address)
     {
         _delegateToFacet();
     }
 
     // Stub - delegates to CommunityPoolFacet
-    function createPool(
-        address _strategy,
-        address _token,
-        CVStrategyInitializeParamsV0_2 memory _params,
-        Metadata memory _metadata
-    ) public virtual returns (uint256 poolId, address strategy) {
+    function createPool(address, address, CVStrategyInitializeParamsV0_2 memory, Metadata memory)
+        public
+        virtual
+        returns (uint256, address)
+    {
         _delegateToFacet();
     }
 
