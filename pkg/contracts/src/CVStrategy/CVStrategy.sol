@@ -211,11 +211,12 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         pointConfig = ip.pointConfig;
         sybilScorer = ISybilScorer(ip.sybilScorer);
         superfluidToken = ISuperToken(ip.superfluidToken);
+        IVotingPowerRegistry sourceRegistry = IVotingPowerRegistry(ip.registryCommunity);
+        registryCommunity = sourceRegistry;
 
         if (proposalTypeConfig == ProposalType.YieldDistribution) {
-            IVotingPowerRegistry sourceRegistry = IVotingPowerRegistry(ip.registryCommunity);
             if (cvVaultTemplate == address(0)) {
-                revert();
+                revert TokenCannotBeZero(cvVaultTemplate);
             }
             address poolToken = allo.getPool(poolId).token;
             if (poolToken == NATIVE_TOKEN) {
@@ -258,9 +259,6 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
 
             cvVault.revokeRole(managerRole, address(this));
             cvVault.revokeRole(defaultAdmin, address(this));
-            registryCommunity = sourceRegistry;
-        } else {
-            registryCommunity = IVotingPowerRegistry(ip.registryCommunity);
         }
 
         emit InitializedCV3(_poolId, ip);
