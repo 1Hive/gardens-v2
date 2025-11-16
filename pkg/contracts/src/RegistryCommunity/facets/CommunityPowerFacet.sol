@@ -15,6 +15,17 @@ import {PointSystem} from "../../CVStrategy/ICVStrategy.sol";
  */
 contract CommunityPowerFacet is CommunityBaseFacet {
     using SafeERC20 for IERC20;
+
+    /*|--------------------------------------------|*/
+    /*|              ERRORS                        |*/
+    /*|--------------------------------------------|*/
+    error UserNotInRegistry(); // 0x6a5cfb6d
+    error UserAlreadyActivated(); // 0xd5b9bc96
+    error StrategyDisabled(); // 0x46c26e4b
+    error SenderNotStrategy(); // 0xbbe79611
+    error DecreaseUnderMinimum(); // 0x9c47d02e
+    error CantDecreaseMoreThanPower(uint256 _decreaseAmount, uint256 _currentPower); // 0x8a11f318
+
     /*|--------------------------------------------|*/
     /*|              EVENTS                        |*/
     /*|--------------------------------------------|*/
@@ -23,16 +34,6 @@ contract CommunityPowerFacet is CommunityBaseFacet {
     event MemberDeactivatedStrategy(address _member, address _strategy);
     event MemberPowerIncreased(address _member, uint256 _stakedAmount);
     event MemberPowerDecreased(address _member, uint256 _unstakedAmount);
-
-    /*|--------------------------------------------|*/
-    /*|              ERRORS                        |*/
-    /*|--------------------------------------------|*/
-    error UserNotInRegistry();
-    error UserAlreadyActivated();
-    error StrategyDisabled();
-    error SenderNotStrategy();
-    error DecreaseUnderMinimum();
-    error CantDecreaseMoreThanPower(uint256 _decreaseAmount, uint256 _currentPower);
 
     /*|--------------------------------------------|*/
     /*|              MODIFIERS                     |*/

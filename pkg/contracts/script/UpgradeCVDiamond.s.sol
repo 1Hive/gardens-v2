@@ -17,10 +17,12 @@ import "forge-std/console2.sol";
 /**
  * @title UpgradeCVDiamond
  * @notice Upgrades CVStrategy contracts to diamond pattern with facets
- * @dev Deploys facets, upgrades main contract, and configures diamond cuts for all existing strategies
+ * @dev Can broadcast upgrades directly or generate Safe transaction payloads via a flag
  */
 contract UpgradeCVDiamond is BaseMultiChain {
     using stdJson for string;
+
+    bool internal directBroadcastOverride;
 
     // Deployed facet addresses
     CVAdminFacet public adminFacet;
@@ -30,10 +32,19 @@ contract UpgradeCVDiamond is BaseMultiChain {
     CVProposalFacet public proposalFacet;
 
     function runCurrentNetwork(string memory networkJson) public override {
-        console2.log("=== Starting Diamond Pattern Upgrade (Safe Transaction Builder) ===");
+        bool directBroadcast = directBroadcastOverride || vm.envOr("DIRECT_CV_DIAMOND", false);
+        console2.log(
+            directBroadcast
+                ? "=== Starting Diamond Pattern Upgrade (Direct Broadcast) ==="
+                : "=== Starting Diamond Pattern Upgrade (Safe Transaction Builder) ==="
+        );
 
         // 1. Deploy new implementation and facets
-        console2.log("\n[1/5] Deploying new CVStrategy implementation and facets...");
+        console2.log(
+            directBroadcast
+                ? "\n[1/4] Deploying new CVStrategy implementation and facets..."
+                : "\n[1/5] Deploying new CVStrategy implementation and facets..."
+        );
         address strategyImplementation = address(new CVStrategy());
         console2.log("  CVStrategy impl:", strategyImplementation);
 
@@ -52,68 +63,119 @@ contract UpgradeCVDiamond is BaseMultiChain {
         proposalFacet = new CVProposalFacet();
         console2.log("  CVProposalFacet:", address(proposalFacet));
 
-        // Get ProxyOwner and Safe owner for JSON metadata
-        address proxyOwner = networkJson.readAddress(getKeyNetwork(".ENVS.PROXY_OWNER"));
-        address safeOwner = ProxyOwner(proxyOwner).owner();
-
-        string memory json = string(abi.encodePacked("["));
-
-        // 2. Update RegistryFactory strategy template
-        console2.log("\n[2/5] Building RegistryFactory strategy template update transaction...");
         address registryFactoryProxy = networkJson.readAddress(getKeyNetwork(".PROXIES.REGISTRY_FACTORY"));
-        RegistryFactory registryFactory = RegistryFactory(payable(address(registryFactoryProxy)));
-        {
-            bytes memory setStrategyTemplate =
-                abi.encodeWithSelector(registryFactory.setStrategyTemplate.selector, strategyImplementation);
-            json =
-                string(abi.encodePacked(json, _createTransactionJson(registryFactoryProxy, setStrategyTemplate), ","));
-        }
-
-        // 3. Update RegistryCommunity strategy templates
-        console2.log("\n[3/5] Building RegistryCommunity strategy template update transactions...");
         address[] memory registryCommunityProxies =
             networkJson.readAddressArray(getKeyNetwork(".PROXIES.REGISTRY_COMMUNITIES"));
+        address[] memory cvStrategyProxies = networkJson.readAddressArray(getKeyNetwork(".PROXIES.CV_STRATEGIES"));
+        IDiamond.FacetCut[] memory cuts = _getFacetCuts();
 
+        if (directBroadcast) {
+            RegistryFactory registryFactory = RegistryFactory(payable(registryFactoryProxy));
+            _executeDirectUpgrades(
+                registryFactory,
+                registryFactoryProxy,
+                registryCommunityProxies,
+                cvStrategyProxies,
+                strategyImplementation,
+                cuts
+            );
+        } else {
+            address proxyOwner = networkJson.readAddress(getKeyNetwork(".ENVS.PROXY_OWNER"));
+            address safeOwner = ProxyOwner(proxyOwner).owner();
+            _generateSafeTransactions(
+                registryFactoryProxy,
+                registryCommunityProxies,
+                cvStrategyProxies,
+                strategyImplementation,
+                cuts,
+                safeOwner,
+                networkJson
+            );
+        }
+
+        console2.log("\n=== Summary ===");
+        console2.log("Registry Factory: %s", registryFactoryProxy);
+        console2.log("Registry Communities: %s", registryCommunityProxies.length);
+        console2.log("CV Strategies: %s", cvStrategyProxies.length);
+        if (!directBroadcast) {
+            console2.log("Total transactions: %s", 1 + registryCommunityProxies.length + (cvStrategyProxies.length * 2));
+        }
+    }
+
+    function _executeDirectUpgrades(
+        RegistryFactory registryFactory,
+        address registryFactoryProxy,
+        address[] memory registryCommunityProxies,
+        address[] memory cvStrategyProxies,
+        address strategyImplementation,
+        IDiamond.FacetCut[] memory cuts
+    ) internal {
+        console2.log("\n[2/4] Updating RegistryFactory strategy template...");
+        registryFactory.setStrategyTemplate(strategyImplementation);
+        console2.log("  RegistryFactory template updated:", registryFactoryProxy);
+
+        console2.log("\n[3/4] Updating RegistryCommunity strategy templates...");
         for (uint256 i = 0; i < registryCommunityProxies.length; i++) {
             RegistryCommunity registryCommunity = RegistryCommunity(payable(address(registryCommunityProxies[i])));
-            bytes memory setStrategyTemplate =
-                abi.encodeWithSelector(registryCommunity.setStrategyTemplate.selector, strategyImplementation);
+            registryCommunity.setStrategyTemplate(strategyImplementation);
+            console2.log("  Community", i + 1, "template updated:", registryCommunityProxies[i]);
+        }
+
+        console2.log("\n[4/4] Upgrading CVStrategy proxies and applying diamond cuts...");
+        for (uint256 i = 0; i < cvStrategyProxies.length; i++) {
+            CVStrategy cvStrategy = CVStrategy(payable(address(cvStrategyProxies[i])));
+            cvStrategy.upgradeTo(strategyImplementation);
+            cvStrategy.diamondCut(cuts, address(0), "");
+            console2.log("  Strategy", i + 1, "upgraded with diamond facets:", cvStrategyProxies[i]);
+        }
+    }
+
+    function _generateSafeTransactions(
+        address registryFactoryProxy,
+        address[] memory registryCommunityProxies,
+        address[] memory cvStrategyProxies,
+        address strategyImplementation,
+        IDiamond.FacetCut[] memory cuts,
+        address safeOwner,
+        string memory networkJson
+    ) internal {
+        console2.log("\n[2/5] Building RegistryFactory strategy template update transaction...");
+        string memory json = string(abi.encodePacked("["));
+        {
+            bytes memory setStrategyTemplateData =
+                abi.encodeWithSelector(RegistryFactory.setStrategyTemplate.selector, strategyImplementation);
             json = string(
-                abi.encodePacked(json, _createTransactionJson(registryCommunityProxies[i], setStrategyTemplate), ",")
+                abi.encodePacked(json, _createTransactionJson(registryFactoryProxy, setStrategyTemplateData), ",")
+            );
+        }
+
+        console2.log("\n[3/5] Building RegistryCommunity strategy template update transactions...");
+        bytes memory communitySetStrategyTemplateData =
+            abi.encodeWithSelector(RegistryCommunity.setStrategyTemplate.selector, strategyImplementation);
+        for (uint256 i = 0; i < registryCommunityProxies.length; i++) {
+            json = string(
+                abi.encodePacked(
+                    json, _createTransactionJson(registryCommunityProxies[i], communitySetStrategyTemplateData), ","
+                )
             );
             console2.log("  Community", i + 1, "added to batch:", registryCommunityProxies[i]);
         }
 
-        // 4. Upgrade existing CVStrategy proxies and configure facets
         console2.log("\n[4/5] Building CVStrategy upgrade + diamond cut transactions...");
-        address[] memory cvStrategyProxies = networkJson.readAddressArray(getKeyNetwork(".PROXIES.CV_STRATEGIES"));
-        IDiamond.FacetCut[] memory cuts = _getFacetCuts();
+        bytes4 upgradeSelector = bytes4(keccak256("upgradeTo(address)"));
         bytes memory diamondCutCalldata = abi.encodeWithSelector(CVStrategy.diamondCut.selector, cuts, address(0), "");
+        bytes memory upgradeCalldata = abi.encodeWithSelector(upgradeSelector, strategyImplementation);
 
         for (uint256 i = 0; i < cvStrategyProxies.length; i++) {
-            CVStrategy cvStrategy = CVStrategy(payable(address(cvStrategyProxies[i])));
-
-            // 4.a - Upgrade implementation
-            bytes memory upgradeCalldata = abi.encodeWithSelector(cvStrategy.upgradeTo.selector, strategyImplementation);
             json = string(abi.encodePacked(json, _createTransactionJson(cvStrategyProxies[i], upgradeCalldata), ","));
 
-            // 4.b - Configure diamond facets
             json = string(abi.encodePacked(json, _createTransactionJson(cvStrategyProxies[i], diamondCutCalldata), ","));
 
             console2.log("  Strategy", i + 1, "added to batch:", cvStrategyProxies[i]);
         }
 
-        // Console log summary
-        console2.log("\n=== Summary ===");
-        console2.log("Registry Factory: %s", registryFactoryProxy);
-        console2.log("Registry Communities: %s", registryCommunityProxies.length);
-        console2.log("CV Strategies: %s", cvStrategyProxies.length);
-        console2.log("Total transactions: %s", 1 + registryCommunityProxies.length + (cvStrategyProxies.length * 2));
-
-        // Remove the last comma and close the JSON array
         json = string(abi.encodePacked(_removeLastChar(json), "]"));
 
-        // Write payload file
         _writePayloadFile(json, safeOwner, networkJson);
 
         console2.log("\n[5/5] Safe Transaction Builder JSON generated!");
@@ -132,9 +194,7 @@ contract UpgradeCVDiamond is BaseMultiChain {
         adminSelectors[1] = CVAdminFacet.connectSuperfluidGDA.selector;
         adminSelectors[2] = CVAdminFacet.disconnectSuperfluidGDA.selector;
         cuts[0] = IDiamond.FacetCut({
-            facetAddress: address(adminFacet),
-            action: IDiamond.FacetCutAction.Add,
-            functionSelectors: adminSelectors
+            facetAddress: address(adminFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: adminSelectors
         });
 
         // CVAllocationFacet functions
@@ -143,7 +203,7 @@ contract UpgradeCVDiamond is BaseMultiChain {
         allocationSelectors[1] = CVAllocationFacet.distribute.selector;
         cuts[1] = IDiamond.FacetCut({
             facetAddress: address(allocationFacet),
-            action: IDiamond.FacetCutAction.Add,
+            action: IDiamond.FacetCutAction.Auto,
             functionSelectors: allocationSelectors
         });
 
@@ -153,28 +213,29 @@ contract UpgradeCVDiamond is BaseMultiChain {
         disputeSelectors[1] = CVDisputeFacet.rule.selector;
         cuts[2] = IDiamond.FacetCut({
             facetAddress: address(disputeFacet),
-            action: IDiamond.FacetCutAction.Add,
+            action: IDiamond.FacetCutAction.Auto,
             functionSelectors: disputeSelectors
         });
 
         // CVPowerFacet functions
-        bytes4[] memory powerSelectors = new bytes4[](3);
-        powerSelectors[0] = CVPowerFacet.decreasePower.selector;
-        powerSelectors[1] = bytes4(keccak256("deactivatePoints()")); // No-parameter version
-        powerSelectors[2] = bytes4(keccak256("deactivatePoints(address)")); // With address parameter
+        bytes4[] memory powerSelectors = new bytes4[](5);
+        powerSelectors[0] = CVPowerFacet.activatePoints.selector;
+        powerSelectors[1] = CVPowerFacet.increasePower.selector;
+        powerSelectors[2] = CVPowerFacet.decreasePower.selector;
+        powerSelectors[3] = bytes4(keccak256("deactivatePoints()")); // No-parameter version
+        powerSelectors[4] = bytes4(keccak256("deactivatePoints(address)")); // With address parameter
         cuts[3] = IDiamond.FacetCut({
-            facetAddress: address(powerFacet),
-            action: IDiamond.FacetCutAction.Add,
-            functionSelectors: powerSelectors
+            facetAddress: address(powerFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: powerSelectors
         });
 
         // CVProposalFacet functions
-        bytes4[] memory proposalSelectors = new bytes4[](2);
+        bytes4[] memory proposalSelectors = new bytes4[](3);
         proposalSelectors[0] = CVProposalFacet.registerRecipient.selector;
         proposalSelectors[1] = CVProposalFacet.cancelProposal.selector;
+        proposalSelectors[2] = CVProposalFacet.editProposal.selector;
         cuts[4] = IDiamond.FacetCut({
             facetAddress: address(proposalFacet),
-            action: IDiamond.FacetCutAction.Add,
+            action: IDiamond.FacetCutAction.Auto,
             functionSelectors: proposalSelectors
         });
 

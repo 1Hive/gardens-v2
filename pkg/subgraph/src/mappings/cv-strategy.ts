@@ -36,6 +36,7 @@ import {
   SybilScorerUpdated,
   InitializedCV3,
   InitializedCV3DataStruct,
+  ProposalEdited,
   SuperfluidTokenUpdated,
   SuperfluidGDAConnected,
   SuperfluidGDADisconnected
@@ -738,6 +739,36 @@ export function handlePoolMetadata(content: Bytes): void {
   metadata.title = value.mustGet("title").toString();
 
   metadata.save();
+}
+
+export function handleProposalEdited(event: ProposalEdited): void {
+  const proposalId = `${event.address.toHexString()}-${event.params.proposalId.toString()}`;
+  let proposal = CVProposal.load(proposalId);
+
+  if (proposal == null) {
+    log.error("CVStrategy: handleProposalEdited proposal not found: {} (block: {})", [
+      proposalId,
+      event.block.number.toString()
+    ]);
+    return;
+  }
+
+  const pointer = event.params.metadata.pointer;
+  if (pointer.length == 0) {
+    log.warning("CVStrategy: handleProposalEdited empty metadata pointer for proposal {}", [
+      proposalId
+    ]);
+  } else if (proposal.metadataHash != pointer) {
+    proposal.metadata = pointer;
+    proposal.metadataHash = pointer;
+    ProposalMetadataTemplate.create(pointer);
+  }
+
+  proposal.beneficiary = event.params.beneficiary.toHex();
+  proposal.requestedAmount = event.params.requestedAmount;
+  proposal.updatedAt = event.block.timestamp;
+
+  proposal.save();
 }
 
 /// -- Privates -- ///

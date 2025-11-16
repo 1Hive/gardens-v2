@@ -93,18 +93,29 @@ function aggregateDiamondABI(mainContract, facets) {
   // Start with main contract functions and events
   const functionNames = new Set();
   const eventNames = new Set();
-  const aggregatedABI = mainJSON.abi.filter(item => {
+  const errorNames = new Set();
+  const aggregatedABI = [];
+
+  for (const item of mainJSON.abi) {
     if (item.type === 'function') {
       functionNames.add(item.name);
-      return true;
+      aggregatedABI.push(item);
+      continue;
     }
     if (item.type === 'event') {
       eventNames.add(item.name);
-      return true;
+      aggregatedABI.push(item);
+      continue;
     }
-    // Keep fallback and receive from main contract
-    return item.type === 'fallback' || item.type === 'receive';
-  });
+    if (item.type === 'error') {
+      errorNames.add(item.name);
+      aggregatedABI.push(item);
+      continue;
+    }
+    if (item.type === 'fallback' || item.type === 'receive') {
+      aggregatedABI.push(item);
+    }
+  }
 
   let facetsProcessed = 0;
 
@@ -122,6 +133,7 @@ function aggregateDiamondABI(mainContract, facets) {
     // Add functions and events that don't already exist
     let functionsAdded = 0;
     let eventsAdded = 0;
+    let errorsAdded = 0;
     for (const item of facetJSON.abi) {
       if (item.type === 'function' && !functionNames.has(item.name)) {
         aggregatedABI.push(item);
@@ -131,13 +143,20 @@ function aggregateDiamondABI(mainContract, facets) {
         aggregatedABI.push(item);
         eventNames.add(item.name);
         eventsAdded++;
+      } else if (item.type === 'error' && !errorNames.has(item.name)) {
+        aggregatedABI.push(item);
+        errorNames.add(item.name);
+        errorsAdded++;
       }
     }
 
     facetsProcessed++;
 
     if (options.verbose) {
-      log(colors.green, `  ✓ Merged ${facetName} (${functionsAdded} new functions, ${eventsAdded} new events)`);
+      log(
+        colors.green,
+        `  ✓ Merged ${facetName} (${functionsAdded} new functions, ${eventsAdded} new events, ${errorsAdded} new errors)`
+      );
     }
   }
 

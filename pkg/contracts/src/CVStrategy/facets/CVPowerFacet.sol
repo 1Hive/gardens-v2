@@ -15,9 +15,12 @@ import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Librar
 contract CVPowerFacet is CVStrategyBaseFacet {
     using SuperTokenV1Library for ISuperToken;
 
+    error UserCannotExecuteAction(address sender); // 0xf634e7ce
+
     /*|--------------------------------------------|*/
     /*|              EVENTS                        |*/
     /*|--------------------------------------------|*/
+    event PowerIncreased(address member, uint256 tokensStaked, uint256 pointsToIncrease);
     event PowerDecreased(address member, uint256 tokensUnStaked, uint256 pointsToDecrease);
     event PointsDeactivated(address member);
     event SupportAdded(
@@ -27,6 +30,31 @@ contract CVPowerFacet is CVStrategyBaseFacet {
     /*|--------------------------------------------|*/
     /*|              FUNCTIONS                     |*/
     /*|--------------------------------------------|*/
+
+    function activatePoints() external {
+        if (!_canExecuteAction(msg.sender)) {
+            revert UserCannotExecuteAction(msg.sender);
+        }
+        registryCommunity.activateMemberInStrategy(msg.sender, address(this));
+        totalPointsActivated += registryCommunity.getMemberPowerInStrategy(msg.sender, address(this));
+    }
+
+    function increasePower(address _member, uint256 _amountToStake) external returns (uint256) {
+        onlyRegistryCommunity();
+        if (!_canExecuteAction(_member)) {
+            revert UserCannotExecuteAction(_member);
+        }
+        uint256 pointsToIncrease = PowerManagementUtils.increasePower(
+            registryCommunity, _member, _amountToStake, pointSystem, pointConfig.maxAmount
+        );
+
+        bool isActivated = registryCommunity.memberActivatedInStrategies(_member, address(this));
+        if (isActivated) {
+            totalPointsActivated += pointsToIncrease;
+        }
+        emit PowerIncreased(_member, _amountToStake, pointsToIncrease);
+        return pointsToIncrease;
+    }
 
     function decreasePower(address _member, uint256 _amountToUnstake) external returns (uint256) {
         onlyRegistryCommunity();
@@ -75,15 +103,19 @@ contract CVPowerFacet is CVStrategyBaseFacet {
         _deactivatePoints(_member);
     }
 
+    /*|--------------------------------------------|*/
+    /*|              INTERNAL HELPERS              |*/
+    /*|--------------------------------------------|*/
+
     function _deactivatePoints(address _member) internal {
         totalPointsActivated -= registryCommunity.getMemberPowerInStrategy(_member, address(this));
         registryCommunity.deactivateMemberInStrategy(_member, address(this));
         // remove support from all proposals
-        withdraw(_member);
+        _withdraw(_member);
         emit PointsDeactivated(_member);
     }
 
-    function withdraw(address _member) internal {
+    function _withdraw(address _member) internal {
         // remove all proposals from the member
         for (uint256 i = 0; i < voterStakedProposals[_member].length; i++) {
             uint256 proposalId = voterStakedProposals[_member][i];
@@ -99,10 +131,6 @@ contract CVPowerFacet is CVStrategyBaseFacet {
         }
         totalVoterStakePct[_member] = 0;
     }
-
-    /*|--------------------------------------------|*/
-    /*|              INTERNAL HELPERS              |*/
-    /*|--------------------------------------------|*/
 
     function _calculateConviction(uint256 _timePassed, uint256 _lastConviction, uint256 _oldAmount, uint256 decay)
         internal

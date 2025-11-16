@@ -84,9 +84,10 @@ contract DiamondConfigurator {
         });
 
         // CVProposalFacet functions
-        bytes4[] memory proposalSelectors = new bytes4[](2);
+        bytes4[] memory proposalSelectors = new bytes4[](3);
         proposalSelectors[0] = CVProposalFacet.registerRecipient.selector;
         proposalSelectors[1] = CVProposalFacet.cancelProposal.selector;
+        proposalSelectors[2] = CVProposalFacet.editProposal.selector;
         cuts[4] = IDiamond.FacetCut({
             facetAddress: address(proposalManagementFacet),
             action: IDiamond.FacetCutAction.Add,

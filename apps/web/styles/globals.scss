@@ -370,6 +370,30 @@ dialog * {
 
 /* MDXMarkdown */
 
+.markdown-editor-shell {
+  @apply bg-base-100 dark:bg-neutral;
+}
+
+.markdown-editor-shell--fullscreen {
+  position: fixed;
+  inset: 0;
+  margin: 1rem;
+  z-index: 9999;
+  width: calc(100vw - 2rem);
+  height: calc(100vh - 2rem);
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+  resize: none;
+  background-color: var(--baseBase);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.45);
+  border-radius: 1rem;
+}
+
+.markdown-editor-shell--fullscreen .mdxeditor-theme {
+  height: 100% !important;
+}
+
 .mdxeditor-root-contenteditable,
 .wmde-markdown {
   @apply leading-7 text-base;
@@ -543,6 +567,13 @@ dialog * {
 
 .mdxeditor-theme {
   ._placeholder_1e2ox_1106 {
-    padding-top: var(--spacing-1_5, 0.375rem);
+    top: 0;
+    left: 0;
+    line-height: var(--line-height-md, 1.75rem);
+    margin-top: 0;
   }
+}
+
+.modal-action {
+  margin-top: 0.5rem;
 }

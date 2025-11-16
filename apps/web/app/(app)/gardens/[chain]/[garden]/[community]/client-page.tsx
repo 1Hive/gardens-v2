@@ -342,27 +342,24 @@ export default function ClientPage({
     tokenGarden.decimals,
   ] as Dnum;
 
-  const getTotalRegistrationCost = () => {
-    if (registerStakeAmount == undefined) {
-      registerStakeAmount = 0;
-    }
+  const registerStakeAmountValue = registerStakeAmount ?? 0;
+  const registerStakeAmountBn = BigInt(registerStakeAmountValue);
+  const protocolFeeScaled = protocolFee != null ? BigInt(protocolFee) : 0n;
+  const communityFeeScaled = communityFee != null ? BigInt(communityFee) : 0n;
 
-    const registerStakeAmountBn = BigInt(registerStakeAmount);
-    const protocolFeeBn =
-      protocolFee && BigInt(protocolFee * 100) / BigInt(SCALE_PRECISION);
-    const communityFeeBn =
-      communityFee && BigInt(communityFee * 100) / BigInt(SCALE_PRECISION);
+  const communityFeeAmount =
+    communityFeeScaled > 0n ?
+      (registerStakeAmountBn * communityFeeScaled) / BigInt(SCALE_PRECISION)
+    : 0n;
+  const protocolFeeAmount =
+    protocolFeeScaled > 0n ?
+      (registerStakeAmountBn * protocolFeeScaled) / BigInt(SCALE_PRECISION)
+    : 0n;
 
-    const res =
-      registerStakeAmountBn + // Min stake
-      (communityFee ?
-        (registerStakeAmountBn * communityFeeBn) / 100n
-      : BigInt(0)) + // Commuity fee as % of min stake
-      (protocolFeeBn ?
-        (registerStakeAmountBn * protocolFeeBn) / 100n
-      : BigInt(0)); // Protocol fee as extra
-    return res;
-  };
+  const totalRegistrationCost =
+    registerStakeAmountBn + // Min stake
+    communityFeeAmount + // Community fee as % of min stake
+    protocolFeeAmount; // Protocol fee as extra
 
   {
     /* Community Header */
@@ -469,7 +466,7 @@ export default function ClientPage({
                     )}
                     <RegisterMember
                       memberData={accountAddress ? isMemberResult : undefined}
-                      registrationCost={getTotalRegistrationCost()}
+                      registrationCost={totalRegistrationCost}
                       token={tokenGarden}
                       registryCommunity={registryCommunity}
                     />
@@ -492,7 +489,7 @@ export default function ClientPage({
                           label={
                             <DisplayNumber
                               number={[
-                                getTotalRegistrationCost(),
+                                totalRegistrationCost,
                                 tokenGarden?.decimals,
                               ]}
                               valueClassName="text-xl font-bold"

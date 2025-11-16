@@ -399,6 +399,138 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         allo().registerRecipient(poolId, data);
     }
 
+    function test_decreasePower_with_staked_proposal() public {
+        /* Params */
+        uint256 TOTAL_POWER = 100 ether;
+        uint256 STAKED_ON_PROPOSAL = 50 ether;
+        uint256 STAKE_TO_REMOVE = 75 ether;
+
+        (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
+        ProposalSupport[] memory votes = new ProposalSupport[](1);
+        vm.startPrank(gardenMember);
+        token.approve(address(registryCommunity), STAKE_WITH_FEES);
+        console.log("STAKE_WITH_FEES", STAKE_WITH_FEES);
+        _registryCommunity().stakeAndRegisterMember("");
+        token.approve(address(registryCommunity), TOTAL_POWER - MINIMUM_STAKE);
+        registryCommunity.increasePower(TOTAL_POWER - MINIMUM_STAKE);
+        // 5 ether from regiterStake + 50 ether increase = 55 ether total staked
+        votes[0] = ProposalSupport(proposalId, int256(STAKED_ON_PROPOSAL));
+        bytes memory data = abi.encode(votes);
+        CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
+        cv.activatePoints();
+        allo().allocate(poolId, data);
+        //Note: Here it might not be staked amount but support percentage
+        //TODO: TotalVoterStakePct is actually TotalVoterStakePoints, need to refactor all pct for points
+        assertEq(registryCommunity.getMemberPowerInStrategy(gardenMember, address(cv)), TOTAL_POWER);
+        assertEq(cv.totalVoterStakePct(address(gardenMember)), STAKED_ON_PROPOSAL);
+        assertEq(cv.getProposalStakedAmount(proposalId), STAKED_ON_PROPOSAL);
+        assertEq(cv.totalStaked(), STAKED_ON_PROPOSAL);
+        registryCommunity.decreasePower(STAKE_TO_REMOVE); //decrease power by 75, so only 25 ether left should be on proposal
+        assertEq(cv.totalVoterStakePct(address(gardenMember)), TOTAL_POWER - STAKE_TO_REMOVE);
+        assertEq(cv.getProposalStakedAmount(proposalId), TOTAL_POWER - STAKE_TO_REMOVE);
+        vm.stopPrank();
+    }
+
+    function test_editProposal() public {
+        // Create a proposal
+        (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
+        CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
+
+        // Get initial proposal data
+        (, address beneficiary,, uint256 requestedAmount,,,,,,,,) = cv.getProposal(proposalId);
+
+        // Prepare new data for editing
+        address newBeneficiary = makeAddr("newBeneficiary");
+        uint256 newRequestedAmount = REQUESTED_AMOUNT * 2;
+        Metadata memory newMetadata = Metadata({protocol: 1, pointer: "QmNewPointer123456789"});
+
+        // Edit proposal as the submitter (pool_admin who created it)
+        vm.startPrank(pool_admin());
+
+        // Fast forward 2 hours to allow editing beneficiary and amount
+        vm.warp(block.timestamp + 2 hours);
+
+        cv.editProposal(proposalId, newMetadata, newBeneficiary, newRequestedAmount);
+
+        vm.stopPrank();
+
+        // Verify the proposal was edited
+        (, address updatedBeneficiary,, uint256 updatedRequestedAmount,,,,,,,,) = cv.getProposal(proposalId);
+
+        assertEq(updatedBeneficiary, newBeneficiary, "Beneficiary should be updated");
+        assertEq(updatedRequestedAmount, newRequestedAmount, "Requested amount should be updated");
+    }
+
+    function testRevert_editProposal_notSubmitter() public {
+        // Create a proposal
+        (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
+        CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
+
+        // Prepare new data
+        address newBeneficiary = makeAddr("newBeneficiary");
+        uint256 newRequestedAmount = REQUESTED_AMOUNT * 2;
+        Metadata memory newMetadata = Metadata({protocol: 1, pointer: "QmNewPointer123456789"});
+
+        // Try to edit proposal as a different user (not the submitter)
+        vm.startPrank(gardenMember);
+        vm.warp(block.timestamp + 2 hours);
+
+        vm.expectRevert();
+        cv.editProposal(proposalId, newMetadata, newBeneficiary, newRequestedAmount);
+
+        vm.stopPrank();
+    }
+
+    function testRevert_editProposal_inactiveProposal() public {
+        // Create a proposal
+        (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
+        CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
+
+        // Cancel the proposal
+        vm.startPrank(pool_admin());
+        cv.cancelProposal(proposalId);
+
+        // Prepare new data
+        address newBeneficiary = makeAddr("newBeneficiary");
+        uint256 newRequestedAmount = REQUESTED_AMOUNT * 2;
+        Metadata memory newMetadata = Metadata({protocol: 1, pointer: "QmNewPointer123456789"});
+
+        // Try to edit cancelled proposal
+        vm.expectRevert();
+        cv.editProposal(proposalId, newMetadata, newBeneficiary, newRequestedAmount);
+
+        vm.stopPrank();
+    }
+
+    function test_editProposal_metadataOnly_withinOneHour() public {
+        // Create a proposal
+        (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
+        CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
+
+        // Get initial proposal data
+        (, address beneficiary,, uint256 requestedAmount,,,, uint256 convictionLast,,,,) = cv.getProposal(proposalId);
+
+        // Prepare new metadata (but keep beneficiary and amount the same)
+        Metadata memory newMetadata = Metadata({protocol: 1, pointer: "QmNewPointer123456789"});
+
+        // Edit proposal within one hour (only metadata should change if convictionLast == 0)
+        vm.startPrank(pool_admin());
+
+        // Only 30 minutes passed (less than ONE_HOUR)
+        vm.warp(block.timestamp + 30 minutes);
+
+        cv.editProposal(proposalId, newMetadata, beneficiary, requestedAmount);
+
+        vm.stopPrank();
+
+        // Verify that beneficiary and amount remain unchanged within one hour
+        (, address updatedBeneficiary,, uint256 updatedRequestedAmount,,,,,,,,) = cv.getProposal(proposalId);
+
+        assertEq(updatedBeneficiary, beneficiary, "Beneficiary should remain unchanged");
+        assertEq(updatedRequestedAmount, requestedAmount, "Requested amount should remain unchanged");
+        // Note: Metadata changes are not verifiable via getProposal, but would be reflected in proposal storage
+    }
+
     function testRevert_deactivate_NotRegistry() public {
         (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
         /**

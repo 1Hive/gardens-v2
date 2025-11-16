@@ -2,6 +2,8 @@
 pragma solidity ^0.8.19;
 
 import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
+import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {RegistryCommunity} from "../RegistryCommunity/RegistryCommunity.sol";
 import {IVotingPowerRegistry} from "../interfaces/IVotingPowerRegistry.sol";
 import {ICollateralVault} from "../interfaces/ICollateralVault.sol";
 import {ICVVault} from "../interfaces/ICVVault.sol";
@@ -31,6 +33,19 @@ import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Librar
 abstract contract CVStrategyBaseFacet {
     using SuperTokenV1Library for ISuperToken;
     using ConvictionsUtils for uint256;
+
+    /*|--------------------------------------------|*/
+    /*|              ERRORS                        |*/
+    /*|--------------------------------------------|*/
+    error OnlyInitialized(uint256 poolId);
+    error OnlyRegistryCommunity(address sender, address registry);
+    error OnlyAllo(address sender, address allo);
+    error OnlyMember(address wallet, address community);
+    error OnlyCouncilSafe(address sender, address councilSafe, address owner);
+    error OnlyCouncilSafeOrMember(address sender, address councilSafe);
+    error ProposalDoesNotExist(uint256 proposalID);
+    error OnlyActiveProposal(uint256 proposalId);
+    error OnlySubmitter(uint256 proposalId, address submitter, address sender);
 
     /*|--------------------------------------------|*/
     /*|              CONSTANTS                     |*/
@@ -170,7 +185,7 @@ abstract contract CVStrategyBaseFacet {
      */
     function checkSenderIsMember(address _sender) internal {
         if (!registryCommunity.isMember(_sender)) {
-            revert();
+            revert OnlyMember(_sender, address(registryCommunity));
         }
     }
 
@@ -179,7 +194,7 @@ abstract contract CVStrategyBaseFacet {
      */
     function onlyRegistryCommunity() internal view {
         if (msg.sender != address(registryCommunity)) {
-            revert();
+            revert OnlyRegistryCommunity(msg.sender, address(registryCommunity));
         }
     }
 
@@ -188,7 +203,7 @@ abstract contract CVStrategyBaseFacet {
      */
     function onlyCouncilSafe() internal view {
         if (msg.sender != address(registryCommunity.councilSafe()) && msg.sender != owner()) {
-            revert();
+            revert OnlyCouncilSafe(msg.sender, address(registryCommunity.councilSafe()), owner());
         }
     }
 
@@ -197,7 +212,7 @@ abstract contract CVStrategyBaseFacet {
      */
     function onlyCouncilSafeOrMember() internal view {
         if (msg.sender != address(registryCommunity.councilSafe()) && false == _canExecuteAction(msg.sender)) {
-            revert();
+            revert OnlyCouncilSafeOrMember(msg.sender, address(registryCommunity.councilSafe()));
         }
     }
 
@@ -223,7 +238,7 @@ abstract contract CVStrategyBaseFacet {
      */
     function _checkOnlyAllo() internal view {
         if (msg.sender != address(allo)) {
-            revert();
+            revert OnlyAllo(msg.sender, address(allo));
         }
     }
 
@@ -232,7 +247,7 @@ abstract contract CVStrategyBaseFacet {
      */
     function _checkOnlyInitialized() internal view {
         if (poolId == 0) {
-            revert();
+            revert OnlyInitialized(poolId);
         }
     }
 
@@ -283,5 +298,26 @@ abstract contract CVStrategyBaseFacet {
             _oldStaked,
             cvParams.decay
         );
+    }
+
+    /// @notice Getter for the 'poolAmount'.
+    /// @return The balance of the pool
+    function getPoolAmount() internal view returns (uint256) {
+        address token = allo.getPool(poolId).token;
+
+        if (token == NATIVE_TOKEN) {
+            return address(this).balance;
+        }
+
+        uint256 base = ERC20(token).balanceOf(address(this));
+        uint256 sf = address(superfluidToken) == address(0) ? 0 : superfluidToken.balanceOf(address(this));
+
+        uint8 d = ERC20(token).decimals();
+        if (d < 18) {
+            sf /= 10 ** (18 - d); // downscale 18 -> d
+        } else if (d > 18) {
+            sf *= 10 ** (d - 18); // upscale 18 -> d  (unlikely)
+        }
+        return base + sf;
     }
 }

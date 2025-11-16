@@ -1,4 +1,5 @@
 export const QUERY_PARAMS = {
+  simulatedWallet: "wallet",
   gardenPage: {
     newCommunity: "newCommunity",
   },
@@ -12,5 +13,9 @@ export const QUERY_PARAMS = {
     allocationView: "allocationView",
     goodDollar: "goodDollar",
     goodDollarVerified: "verified",
+  },
+  proposalPage: {
+    pendingProposal: "pendingProposal",
+    pendingProposalTitle: "pendingProposalTitle",
   },
 } as const;

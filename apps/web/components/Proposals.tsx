@@ -307,6 +307,19 @@ export function Proposals({
       };
     });
 
+    if (process.env.NODE_ENV !== "production") {
+      const supportSnapshot = stakesFiltered.map((stake) => ({
+        proposalId: stake.proposal.id,
+        proposalNumber: stake.proposal.proposalNumber,
+        supportRaw: stake.amount.toString(),
+        supportFormatted: formatUnits(stake.amount, tokenDecimals),
+      }));
+      console.info(
+        "[Proposals][SupportSnapshot]",
+        supportSnapshot.length ? supportSnapshot : "No active support positions",
+      );
+    }
+
     setInputAllocatedTokens(totalStaked);
     setStakedFilters(memberStakes);
   }, [memberData?.member?.stakes, strategy.id]);
@@ -409,6 +422,18 @@ export function Proposals({
       };
     });
     setInputs(newInputs);
+    if (process.env.NODE_ENV !== "production") {
+      const snapshot = Object.values(newInputs).map((input) => ({
+        proposalId: input.proposalId,
+        proposalNumber: input.proposalNumber,
+        initialValue: input.value.toString(),
+        fromStake: stakedFilters[input.proposalId]?.value.toString() ?? "0",
+        status: ProposalStatus[
+          proposals.find((p) => p.id === input.proposalId)?.proposalStatus ?? 0
+        ],
+      }));
+      console.info("[Proposals][InitialInputs]", snapshot);
+    }
   }, [proposals, stakedFilters]);
 
   const getProposalsInputsDifferences = (
@@ -500,6 +525,24 @@ export function Proposals({
       inputs,
       stakedFilters,
     );
+    if (process.env.NODE_ENV !== "production") {
+      console.info("[Proposals][Allocate] Current inputs snapshot", {
+        inputs: Object.values(inputs).map((input) => ({
+          proposalId: input.proposalId,
+          proposalNumber: input.proposalNumber,
+          value: input.value.toString(),
+        })),
+        stakedFilters: Object.values(stakedFilters).map((stake) => ({
+          proposalId: stake.proposalId,
+          proposalNumber: stake.proposalNumber,
+          value: stake.value.toString(),
+        })),
+        deltas: proposalsDifferencesArr.map((delta) => ({
+          proposalId: delta.proposalId.toString(),
+          deltaSupport: delta.deltaSupport.toString(),
+        })),
+      });
+    }
     const abiTypes = parseAbiParameters(
       "(uint256 proposalId, int256 deltaSupport)[]",
     );

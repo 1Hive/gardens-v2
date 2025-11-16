@@ -16,6 +16,12 @@ contract CVAdminFacet is CVStrategyBaseFacet {
     using SuperTokenV1Library for ISuperToken;
 
     /*|--------------------------------------------|*/
+    /*|              ERRORS                        |*/
+    /*|--------------------------------------------|*/
+    error SuperfluidGDAConnectFailed(address gda, address superToken, address caller); // 0x9bd2355f
+    error SuperfluidGDADisconnectFailed(address gda, address superToken, address caller); // 0x3746bbff
+
+    /*|--------------------------------------------|*/
     /*|              EVENTS                        |*/
     /*|--------------------------------------------|*/
     event CVParamsUpdated(CVParams cvParams);
@@ -59,6 +65,32 @@ contract CVAdminFacet is CVStrategyBaseFacet {
         }
     }
 
+    function connectSuperfluidGDA(address gda) external {
+        onlyCouncilSafeOrMember();
+        ISuperToken supertoken =
+            address(superfluidToken) != address(0) ? superfluidToken : ISuperToken(allo.getPool(poolId).token);
+        bool success = supertoken.connectPool(ISuperfluidPool(gda));
+        if (!success) {
+            revert SuperfluidGDAConnectFailed(gda, address(supertoken), msg.sender);
+        }
+        emit SuperfluidGDAConnected(gda, msg.sender);
+    }
+
+    function disconnectSuperfluidGDA(address gda) external {
+        onlyCouncilSafeOrMember();
+        ISuperToken supertoken =
+            address(superfluidToken) != address(0) ? superfluidToken : ISuperToken(allo.getPool(poolId).token);
+        bool success = supertoken.disconnectPool(ISuperfluidPool(gda));
+        if (!success) {
+            revert SuperfluidGDADisconnectFailed(gda, address(supertoken), msg.sender);
+        }
+        emit SuperfluidGDADisconnected(gda, msg.sender);
+    }
+
+    /*|--------------------------------------------|*/
+    /*|              INTERNAL HELPERS              |*/
+    /*|--------------------------------------------|*/
+
     function _setPoolParams(
         ArbitrableConfig memory _arbitrableConfig,
         CVParams memory _cvParams,
@@ -74,17 +106,16 @@ contract CVAdminFacet is CVStrategyBaseFacet {
 
         if (
             _arbitrableConfig.tribunalSafe != address(0) && address(_arbitrableConfig.arbitrator) != address(0)
-                && (
-                    _arbitrableConfig.tribunalSafe != arbitrableConfigs[currentArbitrableConfigVersion].tribunalSafe
-                        || _arbitrableConfig.arbitrator != arbitrableConfigs[currentArbitrableConfigVersion].arbitrator
-                        || _arbitrableConfig.submitterCollateralAmount
-                            != arbitrableConfigs[currentArbitrableConfigVersion].submitterCollateralAmount
-                        || _arbitrableConfig.challengerCollateralAmount
-                            != arbitrableConfigs[currentArbitrableConfigVersion].challengerCollateralAmount
-                        || _arbitrableConfig.defaultRuling != arbitrableConfigs[currentArbitrableConfigVersion].defaultRuling
-                        || _arbitrableConfig.defaultRulingTimeout
-                            != arbitrableConfigs[currentArbitrableConfigVersion].defaultRulingTimeout
-                )
+                && (_arbitrableConfig.tribunalSafe != arbitrableConfigs[currentArbitrableConfigVersion].tribunalSafe
+                    || _arbitrableConfig.arbitrator != arbitrableConfigs[currentArbitrableConfigVersion].arbitrator
+                    || _arbitrableConfig.submitterCollateralAmount
+                        != arbitrableConfigs[currentArbitrableConfigVersion].submitterCollateralAmount
+                    || _arbitrableConfig.challengerCollateralAmount
+                        != arbitrableConfigs[currentArbitrableConfigVersion].challengerCollateralAmount
+                    || _arbitrableConfig.defaultRuling
+                        != arbitrableConfigs[currentArbitrableConfigVersion].defaultRuling
+                    || _arbitrableConfig.defaultRulingTimeout
+                        != arbitrableConfigs[currentArbitrableConfigVersion].defaultRulingTimeout)
         ) {
             if (
                 arbitrableConfigs[currentArbitrableConfigVersion].tribunalSafe != _arbitrableConfig.tribunalSafe
@@ -107,33 +138,11 @@ contract CVAdminFacet is CVStrategyBaseFacet {
             );
         }
 
-        if (
-            !(
-                _cvParams.decay == 0 && _cvParams.weight == 0 && _cvParams.maxRatio == 0
-                    && _cvParams.minThresholdPoints == 0
-            )
-        ) {
+        if (!(_cvParams.decay == 0 && _cvParams.weight == 0 && _cvParams.maxRatio == 0
+                    && _cvParams.minThresholdPoints == 0)) {
             cvParams = _cvParams;
             emit CVParamsUpdated(_cvParams);
         }
-    }
-
-    function connectSuperfluidGDA(address gda) external {
-        onlyCouncilSafeOrMember();
-        ISuperToken supertoken =
-            address(superfluidToken) != address(0) ? superfluidToken : ISuperToken(allo.getPool(poolId).token);
-        bool success = supertoken.connectPool(ISuperfluidPool(gda));
-        require(success, "Superfluid GDA connect failed");
-        emit SuperfluidGDAConnected(gda, msg.sender);
-    }
-
-    function disconnectSuperfluidGDA(address gda) external {
-        onlyCouncilSafeOrMember();
-        ISuperToken supertoken =
-            address(superfluidToken) != address(0) ? superfluidToken : ISuperToken(allo.getPool(poolId).token);
-        bool success = supertoken.disconnectPool(ISuperfluidPool(gda));
-        require(success, "Superfluid GDA disconnect failed");
-        emit SuperfluidGDADisconnected(gda, msg.sender);
     }
 
     function _addToAllowList(address[] memory members) internal {

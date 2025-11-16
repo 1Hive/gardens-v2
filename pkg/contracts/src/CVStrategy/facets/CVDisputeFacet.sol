@@ -16,6 +16,15 @@ contract CVDisputeFacet is CVStrategyBaseFacet {
     using SuperTokenV1Library for ISuperToken;
 
     /*|--------------------------------------------|*/
+    /*|              ERRORS                        |*/
+    /*|--------------------------------------------|*/
+    error ProposalStatusInvalid(uint256 proposalId, ProposalStatus currentStatus); // 0xbcc5dcb1
+    error ChallengerCollateralTooLow(uint256 sent, uint256 required); // 0x453ac5fd
+    error DisputeCooldownActive(uint256 proposalId, uint256 secondsRemaining); // 0xc84ca6af
+    error OnlyArbitrator(address sender, address arbitrator); // 0x84844502
+    error DefaultRulingNotConfigured(uint256 proposalId); // 0x1b330288
+
+    /*|--------------------------------------------|*/
     /*|              EVENTS                        |*/
     /*|--------------------------------------------|*/
     event ProposalDisputed(
@@ -42,10 +51,10 @@ contract CVDisputeFacet is CVStrategyBaseFacet {
         ArbitrableConfig memory arbitrableConfig = arbitrableConfigs[proposal.arbitrableConfigVersion];
 
         if (proposal.proposalStatus != ProposalStatus.Active) {
-            revert();
+            revert ProposalStatusInvalid(proposalId, proposal.proposalStatus);
         }
         if (msg.value < arbitrableConfig.challengerCollateralAmount) {
-            revert();
+            revert ChallengerCollateralTooLow(msg.value, arbitrableConfig.challengerCollateralAmount);
         }
 
         // if the lastDisputeCompletion is less than DISPUTE_COOLDOWN_SEC, we should revert
@@ -53,7 +62,9 @@ contract CVDisputeFacet is CVStrategyBaseFacet {
             proposal.lastDisputeCompletion != 0
                 && proposal.lastDisputeCompletion + DISPUTE_COOLDOWN_SEC > block.timestamp
         ) {
-            revert();
+            revert DisputeCooldownActive(
+                proposalId, proposal.lastDisputeCompletion + DISPUTE_COOLDOWN_SEC - block.timestamp
+            );
         }
 
         uint256 arbitrationFee = msg.value - arbitrableConfig.challengerCollateralAmount;
@@ -86,18 +97,18 @@ contract CVDisputeFacet is CVStrategyBaseFacet {
         ArbitrableConfig memory arbitrableConfig = arbitrableConfigs[proposal.arbitrableConfigVersion];
 
         if (proposal.proposalStatus != ProposalStatus.Disputed) {
-            revert();
+            revert ProposalStatusInvalid(proposalId, proposal.proposalStatus);
         }
 
         bool isTimeOut = block.timestamp > proposal.disputeInfo.disputeTimestamp + arbitrableConfig.defaultRulingTimeout;
 
         if (!isTimeOut && msg.sender != address(arbitrableConfig.arbitrator)) {
-            revert();
+            revert OnlyArbitrator(msg.sender, address(arbitrableConfig.arbitrator));
         }
 
         if (isTimeOut || _ruling == 0) {
             if (arbitrableConfig.defaultRuling == 0) {
-                revert();
+                revert DefaultRulingNotConfigured(proposalId);
             }
             if (arbitrableConfig.defaultRuling == 1) {
                 proposal.proposalStatus = ProposalStatus.Active;
