@@ -180,14 +180,14 @@ export default function ClientPage({
 
     setHasWaitedForPoolToken(false);
     return undefined;
-  }, [needsFundingToken, strategy, poolToken, error]);
+  }, [isMissingFundingToken, strategy, error]);
 
   const stillLoading =
     fetching ||
     (!data && !error) ||
-    (needsFundingToken && !poolToken && !error && !hasWaitedForPoolToken);
+    (isMissingFundingToken && !error && !hasWaitedForPoolToken);
 
-  if ((!strategy || (needsFundingToken && !poolToken)) && stillLoading) {
+  if ((!strategy || isMissingFundingToken) && stillLoading) {
     console.debug("Loading pool data, waiting for", {
       strategy,
       poolTokenIfFundingPool: poolToken,
@@ -205,7 +205,7 @@ export default function ClientPage({
     expectedChainId != null &&
     connectedChainId !== expectedChainId;
 
-  if (!strategy || (poolType === "funding" && !poolToken)) {
+  if (!strategy) {
     const title =
       isWrongNetwork ? "Switch network to continue" : "Pool unavailable";
     const description =
@@ -227,6 +227,7 @@ export default function ClientPage({
     );
   }
 
+  const showMissingFundingTokenWarning = isMissingFundingToken && !error;
   const communityAddress = strategy.registryCommunity.id as Address;
   const alloInfo = data.allos[0];
 
@@ -234,6 +235,15 @@ export default function ClientPage({
 
   return (
     <>
+      {showMissingFundingTokenWarning && (
+        <div className="col-span-12 mt-4">
+          <InfoBox infoBoxType="warning" title="Funding token unavailable">
+            We could not load the funding token for this pool. Pool balances
+            and funding actions are temporarily hidden until the pool token is
+            configured or available on-chain.
+          </InfoBox>
+        </div>
+      )}
       <PoolHeader
         poolToken={poolToken}
         strategy={strategy}
