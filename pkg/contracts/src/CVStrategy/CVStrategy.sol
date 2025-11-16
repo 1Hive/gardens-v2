@@ -150,7 +150,6 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     // CVStrategy custom storage variables (Slots 106+)
     // Note: These must match CVStrategyBaseFacet storage layout exactly for diamond pattern
     address internal collateralVaultTemplate;
-    address internal cvVaultTemplate;
     uint256 internal surpressStateMutabilityWarning;
     uint256 public cloneNonce;
     uint64 public disputeCount;
@@ -184,13 +183,9 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     /*|              CONSTRUCTORS                  |*/
     /*|--------------------------------------------|*/
     // constructor(address _allo) BaseStrategy(address(_allo), "CVStrategy") {}
-    function init(address _allo, address _collateralVaultTemplate, address _cvVaultTemplate, address _owner)
-        external
-        initializer
-    {
+    function init(address _allo, address _collateralVaultTemplate, address _owner) external initializer {
         super.init(_allo, "CVStrategy", _owner);
         collateralVaultTemplate = _collateralVaultTemplate;
-        cvVaultTemplate = _cvVaultTemplate;
     }
 
     function initialize(uint256 _poolId, bytes memory _data) external override {
@@ -215,14 +210,10 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         registryCommunity = sourceRegistry;
 
         if (proposalTypeConfig == ProposalType.YieldDistribution) {
-            if (cvVaultTemplate == address(0)) {
-                revert TokenCannotBeZero(cvVaultTemplate);
-            }
             address poolToken = allo.getPool(poolId).token;
             if (poolToken == NATIVE_TOKEN) {
                 revert TokenNotAllowed(poolToken);
             }
-            cvVault = ICVVault(Clone.createClone(cvVaultTemplate, cloneNonce++));
             string memory vaultName = string.concat("Gardens YDS Vault #", Strings.toString(poolId));
             string memory vaultSymbol = string.concat("gYDS-", Strings.toString(poolId));
             cvVault.initialize(

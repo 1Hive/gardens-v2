@@ -77,11 +77,6 @@ contract CommunityAdminFacet is CommunityBaseFacet {
         collateralVaultTemplate = template;
     }
 
-    function setCVVaultTemplate(address template) external {
-        require(msg.sender == owner(), "Ownable: caller is not the owner");
-        cvVaultTemplate = template;
-    }
-
     function setArchived(bool _isArchived) external {
         onlyCouncilSafe();
         emit CommunityArchived(_isArchived);

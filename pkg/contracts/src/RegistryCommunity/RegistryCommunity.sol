@@ -5,10 +5,12 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 
-import {ReentrancyGuardUpgradeable} from
-    "openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
-import {AccessControlUpgradeable} from
-    "openzeppelin-contracts-upgradeable/contracts/access/AccessControlUpgradeable.sol";
+import {
+    ReentrancyGuardUpgradeable
+} from "openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
+import {
+    AccessControlUpgradeable
+} from "openzeppelin-contracts-upgradeable/contracts/access/AccessControlUpgradeable.sol";
 
 import {Clone} from "allo-v2-contracts/core/libraries/Clone.sol";
 import {IRegistry, Metadata} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
@@ -157,8 +159,6 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
     address public registryFactory;
     /// @notice The address of the collateral vault template
     address public collateralVaultTemplate;
-    /// @notice The address of the YDS conviction vault template
-    address public cvVaultTemplate;
     /// @notice The address of the strategy template
     address public strategyTemplate;
     /// @notice The address of the pending council safe owner
@@ -261,17 +261,12 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
         collateralVaultTemplate = template;
     }
 
-    function setCVVaultTemplate(address template) external onlyOwner {
-        cvVaultTemplate = template;
-    }
-
     // AUDIT: acknowledged upgradeable contract hat does not protect initialize functions,
     // slither-disable-next-line unprotected-upgrade
     function initialize(
         RegistryCommunityInitializeParams memory params,
         address _strategyTemplate,
         address _collateralVaultTemplate,
-        address _cvVaultTemplate,
         address _owner
     ) public initializer {
         super.initialize(_owner);
@@ -332,7 +327,6 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
 
         strategyTemplate = _strategyTemplate;
         collateralVaultTemplate = _collateralVaultTemplate;
-        cvVaultTemplate = _cvVaultTemplate;
 
         emit RegistryInitialized(profileId, communityName, params._metadata);
     }

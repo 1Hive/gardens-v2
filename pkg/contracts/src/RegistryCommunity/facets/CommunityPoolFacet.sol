@@ -54,9 +54,7 @@ contract CommunityPoolFacet is CommunityBaseFacet {
         address strategyProxy = address(
             new ERC1967Proxy(
                 address(strategyTemplate),
-                abi.encodeWithSelector(
-                    CVStrategy.init.selector, address(allo), collateralVaultTemplate, cvVaultTemplate, proxyOwner()
-                )
+                abi.encodeWithSelector(CVStrategy.init.selector, address(allo), collateralVaultTemplate, proxyOwner())
             )
         );
         (poolId, strategy) = createPool(strategyProxy, _token, _params, _metadata);

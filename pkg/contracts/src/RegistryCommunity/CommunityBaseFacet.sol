@@ -5,10 +5,12 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 
-import {ReentrancyGuardUpgradeable} from
-    "openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
-import {AccessControlUpgradeable} from
-    "openzeppelin-contracts-upgradeable/contracts/access/AccessControlUpgradeable.sol";
+import {
+    ReentrancyGuardUpgradeable
+} from "openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
+import {
+    AccessControlUpgradeable
+} from "openzeppelin-contracts-upgradeable/contracts/access/AccessControlUpgradeable.sol";
 
 import {ProxyOwnableUpgrader} from "../ProxyOwnableUpgrader.sol";
 import {IRegistry} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
@@ -76,8 +78,6 @@ abstract contract CommunityBaseFacet is ProxyOwnableUpgrader, ReentrancyGuardUpg
     address public registryFactory;
     /// @notice The address of the collateral vault template
     address public collateralVaultTemplate;
-    /// @notice The address of the YDS conviction vault template
-    address public cvVaultTemplate;
     /// @notice The address of the strategy template
     address public strategyTemplate;
     /// @notice The address of the pending council safe owner

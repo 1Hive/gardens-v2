@@ -47,9 +47,7 @@ contract CommunityDiamondConfigurator {
         memberSelectors[4] = CommunityMemberFacet.getBasisStakedAmount.selector;
         memberSelectors[5] = CommunityMemberFacet.getStakeAmountWithFees.selector;
         cuts[0] = IDiamond.FacetCut({
-            facetAddress: address(memberFacet),
-            action: IDiamond.FacetCutAction.Add,
-            functionSelectors: memberSelectors
+            facetAddress: address(memberFacet), action: IDiamond.FacetCutAction.Add, functionSelectors: memberSelectors
         });
 
         // CommunityPowerFacet functions
@@ -61,9 +59,7 @@ contract CommunityDiamondConfigurator {
         powerSelectors[4] = CommunityPowerFacet.getMemberPowerInStrategy.selector;
         powerSelectors[5] = CommunityPowerFacet.getMemberStakedAmount.selector;
         cuts[1] = IDiamond.FacetCut({
-            facetAddress: address(powerFacet),
-            action: IDiamond.FacetCutAction.Add,
-            functionSelectors: powerSelectors
+            facetAddress: address(powerFacet), action: IDiamond.FacetCutAction.Add, functionSelectors: powerSelectors
         });
 
         // CommunityStrategyFacet functions
@@ -80,21 +76,18 @@ contract CommunityDiamondConfigurator {
         });
 
         // CommunityAdminFacet functions
-        bytes4[] memory adminSelectors = new bytes4[](10);
+        bytes4[] memory adminSelectors = new bytes4[](9);
         adminSelectors[0] = CommunityAdminFacet.isCouncilMember.selector;
         adminSelectors[1] = CommunityAdminFacet.setStrategyTemplate.selector;
         adminSelectors[2] = CommunityAdminFacet.setCollateralVaultTemplate.selector;
-        adminSelectors[3] = CommunityAdminFacet.setCVVaultTemplate.selector;
-        adminSelectors[4] = CommunityAdminFacet.setArchived.selector;
-        adminSelectors[5] = CommunityAdminFacet.setBasisStakedAmount.selector;
-        adminSelectors[6] = CommunityAdminFacet.setCommunityFee.selector;
-        adminSelectors[7] = CommunityAdminFacet.setCouncilSafe.selector;
-        adminSelectors[8] = CommunityAdminFacet.acceptCouncilSafe.selector;
-        adminSelectors[9] = CommunityAdminFacet.setCommunityParams.selector;
+        adminSelectors[3] = CommunityAdminFacet.setArchived.selector;
+        adminSelectors[4] = CommunityAdminFacet.setBasisStakedAmount.selector;
+        adminSelectors[5] = CommunityAdminFacet.setCommunityFee.selector;
+        adminSelectors[6] = CommunityAdminFacet.setCouncilSafe.selector;
+        adminSelectors[7] = CommunityAdminFacet.acceptCouncilSafe.selector;
+        adminSelectors[8] = CommunityAdminFacet.setCommunityParams.selector;
         cuts[3] = IDiamond.FacetCut({
-            facetAddress: address(adminFacet),
-            action: IDiamond.FacetCutAction.Add,
-            functionSelectors: adminSelectors
+            facetAddress: address(adminFacet), action: IDiamond.FacetCutAction.Add, functionSelectors: adminSelectors
         });
 
         // CommunityPoolFacet functions (both createPool overloads)
@@ -102,9 +95,7 @@ contract CommunityDiamondConfigurator {
         poolSelectors[0] = 0x499ac57f; // createPool(address,CVStrategyInitializeParamsV0_2,Metadata)
         poolSelectors[1] = 0xcd564dae; // createPool(address,address,CVStrategyInitializeParamsV0_2,Metadata)
         cuts[4] = IDiamond.FacetCut({
-            facetAddress: address(poolFacet),
-            action: IDiamond.FacetCutAction.Add,
-            functionSelectors: poolSelectors
+            facetAddress: address(poolFacet), action: IDiamond.FacetCutAction.Add, functionSelectors: poolSelectors
         });
 
         return cuts;

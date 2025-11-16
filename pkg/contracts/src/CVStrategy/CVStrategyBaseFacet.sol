@@ -86,9 +86,6 @@ abstract contract CVStrategyBaseFacet {
     /// @dev Slot 106
     address internal collateralVaultTemplate;
 
-    /// @notice Template address for cloning CVVault instances
-    address internal cvVaultTemplate;
-
     /// @dev Used to suppress Solidity warnings - Slot 107
     uint256 internal surpressStateMutabilityWarning;
 

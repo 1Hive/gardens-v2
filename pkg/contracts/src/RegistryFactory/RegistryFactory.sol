@@ -22,7 +22,6 @@ contract RegistryFactory is ProxyOwnableUpgrader {
     address public registryCommunityTemplate;
     address public strategyTemplate;
     address public collateralVaultTemplate;
-    address public cvVaultTemplate;
     mapping(address => bool) public protopiansAddresses;
     mapping(address => bool) public keepersAddresses;
 
@@ -64,29 +63,22 @@ contract RegistryFactory is ProxyOwnableUpgrader {
         collateralVaultTemplate = template;
     }
 
-    function setCVVaultTemplate(address template) external virtual onlyOwner {
-        cvVaultTemplate = template;
-    }
-
     function initialize(
         address _owner,
         address _gardensFeeReceiver,
         address _registryCommunityTemplate,
         address _strategyTemplate,
-        address _collateralVaultTemplate,
-        address _cvVaultTemplate
+        address _collateralVaultTemplate
     ) public initializer {
         super.initialize(_owner);
         nonce = 0;
         _revertZeroAddress(_gardensFeeReceiver);
         _revertZeroAddress(_registryCommunityTemplate);
         _revertZeroAddress(_collateralVaultTemplate);
-        _revertZeroAddress(_cvVaultTemplate);
         gardensFeeReceiver = _gardensFeeReceiver;
         registryCommunityTemplate = _registryCommunityTemplate;
         strategyTemplate = _strategyTemplate;
         collateralVaultTemplate = _collateralVaultTemplate;
-        cvVaultTemplate = _cvVaultTemplate;
         emit FeeReceiverSet(_gardensFeeReceiver);
         // setReceiverAddress(_gardensFeeReceiver); //onlyOwner
     }
@@ -102,12 +94,7 @@ contract RegistryFactory is ProxyOwnableUpgrader {
         ERC1967Proxy proxy = new ERC1967Proxy(
             address(registryCommunityTemplate),
             abi.encodeWithSelector(
-                RegistryCommunity.initialize.selector,
-                params,
-                strategyTemplate,
-                collateralVaultTemplate,
-                cvVaultTemplate,
-                proxyOwner()
+                RegistryCommunity.initialize.selector, params, strategyTemplate, collateralVaultTemplate, proxyOwner()
             )
         );
 
