@@ -143,31 +143,33 @@ export default function ClientPage({
     watch: true,
   });
 
-  const totalPointsActivatedInPool =
-    poolToken ?
-      formatTokenAmount(
-        strategy?.totalEffectiveActivePoints,
-        +poolToken.decimals,
-      )
-    : 0;
+  const communityTokenDecimals =
+    strategy?.registryCommunity?.garden?.decimals != null ?
+      Number(strategy.registryCommunity.garden.decimals)
+    : undefined;
+  const decimalsForPoints =
+    communityTokenDecimals ?? poolToken?.decimals ?? 18;
 
-  const minThresholdPoints =
-    poolToken ?
-      formatTokenAmount(
-        strategy?.config.minThresholdPoints,
-        +poolToken.decimals,
-      )
-    : "0";
+  const totalPointsActivatedInPool = formatTokenAmount(
+    strategy?.totalEffectiveActivePoints,
+    decimalsForPoints,
+  );
+
+  const minThresholdPoints = formatTokenAmount(
+    strategy?.config.minThresholdPoints,
+    decimalsForPoints,
+  );
 
   const minThGtTotalEffPoints =
     +minThresholdPoints > +totalPointsActivatedInPool;
 
   const poolType = proposalType != null ? PoolTypes[proposalType] : undefined;
   const needsFundingToken = poolType === "funding";
+  const isMissingFundingToken = needsFundingToken && !poolToken;
   const [hasWaitedForPoolToken, setHasWaitedForPoolToken] = useState(false);
 
   useEffect(() => {
-    if (needsFundingToken && strategy && !poolToken && !error) {
+    if (isMissingFundingToken && strategy && !error) {
       const timer = window.setTimeout(() => {
         setHasWaitedForPoolToken(true);
       }, 1500);
