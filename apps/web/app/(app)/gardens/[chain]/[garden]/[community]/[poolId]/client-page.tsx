@@ -18,7 +18,7 @@ import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { usePoolToken } from "@/hooks/usePoolToken";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { useSuperfluidToken } from "@/hooks/useSuperfluidToken";
-import { PoolTypes } from "@/types";
+import { PoolTypes, isFundingPoolType, isSignalingPoolType } from "@/types";
 import { formatTokenAmount } from "@/utils/numbers";
 
 export type AlloQuery = getAlloQuery["allos"][number];
@@ -163,7 +163,7 @@ export default function ClientPage({
     +minThresholdPoints > +totalPointsActivatedInPool;
 
   const poolType = proposalType != null ? PoolTypes[proposalType] : undefined;
-  const needsFundingToken = poolType === "funding";
+  const needsFundingToken = isFundingPoolType(poolType);
   const [hasWaitedForPoolToken, setHasWaitedForPoolToken] = useState(false);
 
   useEffect(() => {
@@ -189,7 +189,7 @@ export default function ClientPage({
     console.debug("Loading pool data, waiting for", {
       strategy,
       poolTokenIfFundingPool: poolToken,
-      isFundingPool: poolType === "funding",
+      isFundingPool: isFundingPoolType(poolType),
     });
     return (
       <div className="mt-96 col-span-12">
@@ -203,7 +203,7 @@ export default function ClientPage({
     expectedChainId != null &&
     connectedChainId !== expectedChainId;
 
-  if (!strategy || (poolType === "funding" && !poolToken)) {
+  if (!strategy || (isFundingPoolType(poolType) && !poolToken)) {
     const title =
       isWrongNetwork ? "Switch network to continue" : "Pool unavailable";
     const description =
@@ -254,7 +254,7 @@ export default function ClientPage({
 
       {isEnabled && (
         <>
-          {poolToken && PoolTypes[proposalType] !== "signaling" && (
+          {poolToken && !isSignalingPoolType(PoolTypes[proposalType]) && (
             <PoolMetrics
               communityAddress={communityAddress}
               strategy={strategy}
@@ -268,6 +268,7 @@ export default function ClientPage({
                   address: effectiveSuperToken as Address,
                 }
               }
+              poolType={poolType}
             />
           )}
         </>

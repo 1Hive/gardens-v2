@@ -19,8 +19,10 @@ type BadgeProps = {
 
 // Styles for different pool badge types
 const POOL_TYPE_STYLES = [
-  "bg-primary-soft text-primary-content dark:bg-primary-soft-dark",
-  "bg-tertiary-soft dark:bg-tertiary-dark text-tertiary-content",
+  "bg-primary-soft text-primary-content dark:bg-primary-soft-dark", // signaling
+  "bg-tertiary-soft dark:bg-tertiary-dark text-tertiary-content", // funding
+  "bg-secondary-soft dark:bg-secondary-soft-dark text-secondary-content", // streaming
+  "bg-warning-soft dark:bg-warning-soft-dark text-warning-content", // yield distribution
 ];
 
 // Styles for different proposal status badge
@@ -76,11 +78,14 @@ export function Badge({
     : "bg-tertiary-soft text-tertiary-hover-content dark:text-tertiary-dark-text";
 
   // Determine the label content
+  const formatPoolTypeLabel = (poolType?: string) =>
+    poolType ? poolType.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase()).trim() : undefined;
+
   const content =
     children ??
     label ??
     (status != null ? ProposalStatus[status] : undefined) ??
-    (ispoolTypeDefined ? PoolTypes[type] : undefined);
+    (ispoolTypeDefined ? formatPoolTypeLabel(PoolTypes[type]) : undefined);
 
   //For type => conditionally set the icon based on type === poolTypes[type]
   const iconIncluded =
@@ -89,6 +94,7 @@ export function Badge({
       const iconMap: { [key: string]: React.ReactNode } = {
         signaling: <HandThumbUpIcon />,
         funding: <CurrencyDollarIcon />,
+        yieldDistribution: <CurrencyDollarIcon />,
       };
       return type != null ? iconMap[PoolTypes[type]] ?? null : null;
     })();

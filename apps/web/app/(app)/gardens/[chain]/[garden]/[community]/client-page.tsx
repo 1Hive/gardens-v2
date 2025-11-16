@@ -65,7 +65,7 @@ import { useIpfsFetch } from "@/hooks/useIpfsFetch";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { getProtopiansOwners } from "@/services/alchemy";
 import { registryCommunityABI } from "@/src/generated";
-import { Column, PoolTypes } from "@/types";
+import { Column, PoolTypes, isFundingPoolType } from "@/types";
 import {
   calculatePercentageBigInt,
   parseToken,
@@ -240,7 +240,7 @@ export default function ClientPage({
 
   const fundingPools = strategies.filter(
     (strategy) =>
-      PoolTypes[strategy.config?.proposalType] === "funding" &&
+      isFundingPoolType(PoolTypes[strategy.config?.proposalType]) &&
       strategy.isEnabled,
   );
 

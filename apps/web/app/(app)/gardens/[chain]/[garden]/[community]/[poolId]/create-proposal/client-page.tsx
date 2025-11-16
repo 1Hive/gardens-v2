@@ -9,7 +9,7 @@ import { calculateMinimumConviction } from "@/components/PoolHeader";
 import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { usePoolToken } from "@/hooks/usePoolToken";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
-import { PoolTypes } from "@/types";
+import { PoolTypes, isFundingPoolType } from "@/types";
 import {
   CV_SCALE_PRECISION,
   formatTokenAmount,
@@ -52,7 +52,9 @@ export default function ClientPage({
       !!poolTokenAddr &&
       !!strategyObj?.id &&
       data &&
-      PoolTypes[data.cvstrategies[0].config.proposalType] === "funding",
+      isFundingPoolType(
+        PoolTypes[data.cvstrategies[0].config.proposalType],
+      ),
     watch: true,
   });
 
@@ -60,7 +62,7 @@ export default function ClientPage({
     !tokenGarden ||
     metadata == null ||
     !strategyObj ||
-    (poolToken == undefined && PoolTypes[proposalType] === "funding")
+    (poolToken == undefined && isFundingPoolType(PoolTypes[proposalType]))
   ) {
     return (
       <div className="mt-96 col-span-12">

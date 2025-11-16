@@ -55,6 +55,8 @@ import {
   PoolTypes,
   ProposalStatus,
   SybilResistanceType,
+  isFundingPoolType,
+  isSignalingPoolType,
 } from "@/types";
 import { getEventFromReceipt } from "@/utils/contracts";
 import { delayAsync } from "@/utils/delayAsync";
@@ -215,6 +217,8 @@ export default function PoolHeader({
   const disputeCollateral = arbitrableConfig.challengerCollateralAmount;
   const tribunalAddress = arbitrableConfig.tribunalSafe;
   const proposalType = strategy.config.proposalType;
+  const poolTypeName =
+    proposalType != null ? PoolTypes[proposalType] : undefined;
   const pointSystem = strategy.config.pointSystem;
   const allowList = strategy.config.allowlist;
   const rulingTime = arbitrableConfig.defaultRulingTimeout;
@@ -369,7 +373,7 @@ export default function PoolHeader({
 
   const filteredPoolConfig =
     (
-      PoolTypes[proposalType] === "signaling" &&
+      isSignalingPoolType(poolTypeName) &&
       PointSystems[pointSystem] !== "capped"
     ) ?
       poolConfig.filter((config) => {
@@ -382,7 +386,7 @@ export default function PoolHeader({
         ];
         return config.value != null && !filter.includes(config.label);
       })
-    : PoolTypes[proposalType] === "signaling" ?
+    : isSignalingPoolType(poolTypeName) ?
       poolConfig.filter((config) => {
         const filteredLabels: (typeof poolConfig)[number]["label"][] = [
           "Spending limit",
@@ -611,7 +615,7 @@ export default function PoolHeader({
   return (
     <>
       <div
-        className={`col-span-12 ${PoolTypes[proposalType] === "funding" ? "xl:col-span-9" : "xl:col-span-12"}`}
+        className={`col-span-12 ${isFundingPoolType(poolTypeName) ? "xl:col-span-9" : "xl:col-span-12"}`}
       >
         <section className="section-layout flex flex-col gap-6">
           {/* Title - Badge poolType - Addresses and Button(when council memeber is connected) */}
@@ -727,7 +731,7 @@ export default function PoolHeader({
                   Edit
                 </Button>
                 {!superToken &&
-                  PoolTypes[proposalType] !== "signaling" &&
+                  !isSignalingPoolType(poolTypeName) &&
                   networkSfMetadata?.contractsV1.superTokenFactory && (
                     <>
                       <Button
@@ -812,7 +816,7 @@ export default function PoolHeader({
               isOpen={isOpenModal}
               onClose={() => setIsOpenModal(false)}
             >
-              {(!!poolToken || PoolTypes[proposalType] !== "funding") && (
+              {(!!poolToken || !isFundingPoolType(poolTypeName)) && (
                 <PoolEditForm
                   strategy={strategy}
                   pointSystemType={pointSystemType}

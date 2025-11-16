@@ -1,11 +1,23 @@
 export * from "./styles";
 
-export const PoolTypes: Record<string, "signaling" | "funding" | "streaming"> =
-  {
-    0: "signaling",
-    1: "funding",
-    2: "streaming",
-  };
+export type PoolType =
+  | "signaling"
+  | "funding"
+  | "streaming"
+  | "yieldDistribution";
+
+export const PoolTypes: Record<string, PoolType> = {
+  0: "signaling",
+  1: "funding",
+  2: "streaming",
+  3: "yieldDistribution",
+};
+
+export const isFundingPoolType = (poolType?: PoolType) =>
+  poolType === "funding" || poolType === "yieldDistribution";
+
+export const isSignalingPoolType = (poolType?: PoolType) =>
+  poolType === "signaling";
 
 export const PointSystems: Record<
   string,

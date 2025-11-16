@@ -24,7 +24,7 @@ import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { usePoolToken } from "@/hooks/usePoolToken";
-import { PointSystems, PoolTypes } from "@/types";
+import { PointSystems, PoolTypes, isFundingPoolType } from "@/types";
 import { capitalize } from "@/utils/text";
 
 type Props = {
@@ -64,7 +64,8 @@ export function PoolCard({ pool, token }: Props) {
   const poolToken = usePoolToken({
     poolAddress: pool.id,
     poolTokenAddr: token,
-    enabled: isEnabled && poolType != null && PoolTypes[poolType] === "funding",
+    enabled:
+      isEnabled && poolType != null && isFundingPoolType(PoolTypes[poolType]),
   });
 
   const isNewPool =
@@ -99,7 +100,7 @@ export function PoolCard({ pool, token }: Props) {
         {isEnabled &&
           poolToken &&
           poolType != null &&
-          PoolTypes[poolType] === "funding" && (
+          isFundingPoolType(PoolTypes[poolType]) && (
             <Statistic icon={<CurrencyDollarIcon />} label="funds">
               <DisplayNumber
                 number={poolToken.formatted || "0"}
@@ -120,7 +121,7 @@ export function PoolCard({ pool, token }: Props) {
         </div>
       : <Image
           src={
-            poolType != null && PoolTypes[poolType] === "funding" ?
+            poolType != null && isFundingPoolType(PoolTypes[poolType]) ?
               blueLand
             : grass
           }

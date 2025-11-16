@@ -9,7 +9,7 @@ import {
 } from "#/subgraph/.graphclient";
 import { useChainFromPath } from "./useChainFromPath";
 import { cvStrategyABI } from "@/src/generated";
-import { PoolTypes } from "@/types";
+import { PoolTypes, isFundingPoolType } from "@/types";
 import { getRemainingBlocksToPass } from "@/utils/convictionFormulas";
 import { logOnce } from "@/utils/log";
 import { calculatePercentageBigInt, CV_SCALE_PRECISION } from "@/utils/numbers";
@@ -38,6 +38,10 @@ export const useConvictionRead = ({
   enabled?: boolean;
 }) => {
   const chain = useChainFromPath();
+  const strategyPoolType =
+    strategyConfig?.proposalType != null
+      ? PoolTypes[strategyConfig.proposalType]
+      : undefined;
 
   const cvStrategyContract = {
     address: proposalData?.strategy.id as Address,
@@ -61,7 +65,7 @@ export const useConvictionRead = ({
       ...cvStrategyContract,
       functionName: "calculateThreshold",
       args: [proposalData?.requestedAmount ?? 0],
-      enabled: enabled && PoolTypes[strategyConfig?.proposalType] === "funding",
+    enabled: enabled && isFundingPoolType(strategyPoolType),
     });
 
   if (errorThreshold) {

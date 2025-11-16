@@ -14,8 +14,8 @@ import sfMeta from "@superfluid-finance/metadata";
 import { erc20ABI } from "@wagmi/core";
 import { trimEnd } from "lodash-es";
 import Image from "next/image";
-import { formatUnits } from "viem";
-import { Address, useAccount, useBalance } from "wagmi";
+import { formatUnits, zeroAddress } from "viem";
+import { Address, useAccount, useBalance, useContractRead } from "wagmi";
 import { CVStrategy } from "#/subgraph/.graphclient";
 import { Button } from "./Button";
 import { DisplayNumber } from "./DisplayNumber";
@@ -42,6 +42,30 @@ import {
   scaleTo,
 } from "@/utils/numbers";
 import { getTxMessage } from "@/utils/transactionMessages";
+import { PoolType } from "@/types";
+
+const cvStrategyVaultAbi = [
+  {
+    stateMutability: "view",
+    type: "function",
+    inputs: [],
+    name: "cvVault",
+    outputs: [{ name: "", internalType: "address", type: "address" }],
+  },
+] as const;
+
+const erc4626Abi = [
+  {
+    stateMutability: "nonpayable",
+    type: "function",
+    name: "deposit",
+    inputs: [
+      { name: "assets", internalType: "uint256", type: "uint256" },
+      { name: "receiver", internalType: "address", type: "address" },
+    ],
+    outputs: [{ name: "", internalType: "uint256", type: "uint256" }],
+  },
+] as const;
 
 interface PoolMetricsProps {
   strategy: Pick<CVStrategy, "id" | "poolId" | "token"> & {
@@ -66,6 +90,7 @@ interface PoolMetricsProps {
         sameAsUnderlying?: boolean;
       }
     | undefined;
+  poolType?: PoolType;
 }
 
 export const PoolMetrics: FC<PoolMetricsProps> = ({
@@ -73,6 +98,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
   poolToken,
   chainId,
   superToken,
+  poolType,
 }) => {
   const { id: poolAddress, poolId } = strategy;
   const [amountInput, setAmount] = useState<string>("");
@@ -81,6 +107,9 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
   const { address: accountAddress } = useAccount();
   const [isStreamModalOpened, setIsStreamModalOpened] = useState(false);
   const [isTransferModalOpened, setIsTransferModalOpened] = useState(false);
+  const [isStakeModalOpened, setIsStakeModalOpened] = useState(false);
+  const [isStakeTxModalOpen, setIsStakeTxModalOpen] = useState(false);
+  const isYieldPool = poolType === "yieldDistribution";
   const [forceAllBalanceUsage, setForceAllBalanceUsage] = useState(false);
 
   const showUseSuperTokenBalance = useFlag("showUseSuperTokenBalance");
@@ -95,6 +124,15 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     receiver: poolAddress,
     superToken: superToken?.address as Address,
   });
+
+  const { data: cvVaultData } = useContractRead({
+    address: poolAddress as Address,
+    abi: cvStrategyVaultAbi,
+    functionName: "cvVault",
+    chainId,
+    enabled: isYieldPool,
+  });
+  const cvVaultAddress = isYieldPool ? (cvVaultData as Address | undefined) : undefined;
 
   const amount = +(amountInput || 0);
 

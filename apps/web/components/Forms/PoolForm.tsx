@@ -41,6 +41,7 @@ import {
   PointSystems,
   PoolTypes,
   SybilResistanceType,
+  isFundingPoolType,
 } from "@/types";
 import { filterFunctionFromABI } from "@/utils/abi";
 import { getEventFromReceipt } from "@/utils/contracts";
@@ -631,7 +632,10 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
         return false;
       }
     } else if (key === "poolTokenAddress") {
-      return !!previewData && PoolTypes[previewData.strategyType] === "funding";
+      return (
+        !!previewData &&
+        isFundingPoolType(PoolTypes[previewData.strategyType])
+      );
     } else {
       return shouldRenderInputMap(key, strategyType);
     }
@@ -687,13 +691,13 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
               registerKey="strategyType"
               required
               options={Object.entries(PoolTypes)
-                .slice(0, -1)
+                .filter(([, typeName]) => typeName !== "streaming")
                 .map(([value, text]) => ({
-                  label: capitalize(text),
+                  label: capitalize(text.replace(/([A-Z])/g, " $1")),
                   value: value,
                 }))}
             />
-            {PoolTypes[strategyType] === "funding" && (
+            {isFundingPoolType(PoolTypes[strategyType]) && (
               <div className="flex items-end gap-4 flex-wrap md:flex-nowrap">
                 <FormAddressInput
                   label="Pool token ERC20 address"

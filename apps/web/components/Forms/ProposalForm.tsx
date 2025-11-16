@@ -27,7 +27,7 @@ import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { alloABI, cvStrategyABI } from "@/src/generated";
-import { PoolTypes } from "@/types";
+import { PoolTypes, isFundingPoolType } from "@/types";
 import { getEventFromReceipt } from "@/utils/contracts";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 import {
@@ -240,7 +240,7 @@ export const ProposalForm = ({
   const poolTokenAddr = strategy?.token as Address;
   const { data: poolToken } = useToken({
     address: poolTokenAddr,
-    enabled: !!poolTokenAddr && PoolTypes[proposalType] === "funding",
+    enabled: !!poolTokenAddr && isFundingPoolType(PoolTypes[proposalType]),
     chainId,
   });
 
@@ -259,7 +259,11 @@ export const ProposalForm = ({
     ],
     enabled:
       requestedAmount !== undefined &&
-      PoolTypes[strategy?.config?.proposalType] === "funding",
+      isFundingPoolType(
+        strategy?.config?.proposalType != null
+          ? PoolTypes[strategy.config.proposalType]
+          : undefined,
+      ),
   });
 
   const thresholdPct = calculatePercentageBigInt(
@@ -267,7 +271,7 @@ export const ProposalForm = ({
     BigInt(strategy.maxCVSupply),
   );
 
-  if (!poolToken && PoolTypes[proposalType] === "funding") {
+  if (!poolToken && isFundingPoolType(PoolTypes[proposalType])) {
     return (
       <div className="m-40 col-span-12">
         <LoadingSpinner />

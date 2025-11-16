@@ -12,7 +12,7 @@ import {
 } from "../ogAssets";
 import { chainConfigMap, ChainIcon } from "@/configs/chains";
 import { queryByChain } from "@/providers/urql";
-import { PoolTypes } from "@/types";
+import { PoolTypes, isFundingPoolType } from "@/types";
 
 export const runtime = "nodejs";
 
@@ -25,13 +25,21 @@ export const size = {
 
 export const contentType = "image/png";
 export const getDescriptionText = (
-  poolType: "signaling" | "funding" | "streaming" | undefined | null,
+  poolType:
+    | "signaling"
+    | "funding"
+    | "streaming"
+    | "yieldDistribution"
+    | undefined
+    | null,
 ) => {
   switch (poolType) {
     case "signaling":
       return "Where collective coordination meets community sentiment.";
     case "funding":
       return "For collective resource allocation and project support.";
+    case "yieldDistribution":
+      return "Stake to earn yield first, then empower proposals with the proceeds.";
     default:
       return "A Gardens pool for collective decision-making and funding.";
   }
@@ -74,9 +82,15 @@ function getSvgDataUrl(base64: string) {
 }
 
 async function getPoolBackgroundDataUrl(
-  poolType: "signaling" | "funding" | "streaming" | undefined | null,
+  poolType:
+    | "signaling"
+    | "funding"
+    | "streaming"
+    | "yieldDistribution"
+    | undefined
+    | null,
 ): Promise<string> {
-  if (poolType === "funding") {
+  if (isFundingPoolType(poolType)) {
     if (!fundingBackgroundDataUrl) {
       fundingBackgroundDataUrl = getSvgDataUrl(POOL_BLUE_GRASS_BASE64);
     }
@@ -104,7 +118,7 @@ async function renderImage({
 }: {
   title: string;
   chainId: number;
-  poolType?: "signaling" | "funding" | "streaming";
+  poolType?: "signaling" | "funding" | "streaming" | "yieldDistribution";
   communityName?: string | null;
   isEnabled?: boolean | null;
   archived?: boolean | null;
@@ -129,10 +143,11 @@ async function renderImage({
 
   const safeTitle = formatTitle(title);
   const safeCommunityName = communityName?.trim() ?? "";
-  const normalizedPoolType = poolType?.toLowerCase() as
+  const normalizedPoolType = poolType as
     | "signaling"
     | "funding"
     | "streaming"
+    | "yieldDistribution"
     | undefined;
 
   const descriptionText = getDescriptionText(normalizedPoolType);
@@ -161,16 +176,20 @@ async function renderImage({
       iconSrc: `data:image/svg+xml;base64,${STATUS_REVIEW_ICON_BASE64}`,
     });
   }
-  const poolLabelText =
-    normalizedPoolType ? `${normalizedPoolType} pool` : "pool";
+  const isFundingPool =
+    normalizedPoolType != null &&
+    isFundingPoolType(normalizedPoolType as any);
+  const poolLabelText = normalizedPoolType
+    ? `${normalizedPoolType.replace(/([A-Z])/g, " $1").trim()} pool`
+    : "pool";
   const poolLabelStyles =
-    normalizedPoolType === "funding" ?
+    isFundingPool ?
       { text: "#1B5370", background: "#D1ECF3" }
     : normalizedPoolType === "signaling" ?
       { text: "#065F46", background: "#D1FAE5" }
     : { text: "#312E81", background: "#EDE9FE" };
   const poolLabelIconSrc =
-    normalizedPoolType === "funding" ?
+    isFundingPool ?
       `data:image/svg+xml;base64,${POOL_FUNDING_ICON_BASE64}`
     : normalizedPoolType === "signaling" ?
       `data:image/svg+xml;base64,${POOL_SIGNALING_ICON_BASE64}`

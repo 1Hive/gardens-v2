@@ -19,7 +19,7 @@ import {
 } from "../../ogAssets";
 import { ChainIcon, getConfigByChain } from "@/configs/chains";
 import { queryByChain } from "@/providers/urql";
-import { PoolTypes, ProposalStatus } from "@/types";
+import { PoolTypes, ProposalStatus, isFundingPoolType } from "@/types";
 
 export const runtime = "nodejs";
 
@@ -33,7 +33,7 @@ export const contentType = "image/png";
 type ProposalImageData = {
   title: string;
   status?: (typeof ProposalStatus)[number];
-  poolType?: "signaling" | "funding" | "streaming";
+  poolType?: "signaling" | "funding" | "streaming" | "yieldDistribution";
   poolTitle?: string | null;
   communityName?: string | null;
 };
@@ -56,12 +56,13 @@ const STATUS_STYLES: Record<string, { text: string; background: string }> = {
 const DEFAULT_STATUS_STYLE = { text: "#1E293B", background: "#E2E8F0" };
 
 const POOL_TYPE_STYLES: Record<
-  "signaling" | "funding" | "streaming",
+  "signaling" | "funding" | "streaming" | "yieldDistribution",
   { text: string; background: string }
 > = {
   signaling: { text: "#065F46", background: "#D1FAE5" },
   funding: { text: "#1B5370", background: "#D1ECF3" },
   streaming: { text: "#312E81", background: "#EDE9FE" },
+  yieldDistribution: { text: "#1B5370", background: "#D1ECF3" },
 };
 
 const DEFAULT_POOL_STYLE = { text: "#1F2937", background: "#E5E7EB" };
@@ -73,15 +74,19 @@ function formatTitle(title: string) {
   const normalized = trimmed && trimmed.length > 0 ? trimmed : FALLBACK_TITLE;
   return normalized.length > 90 ? `${normalized.slice(0, 87)}...` : normalized;
 }
-function getPoolStyle(poolType?: "signaling" | "funding" | "streaming") {
+function getPoolStyle(
+  poolType?: "signaling" | "funding" | "streaming" | "yieldDistribution",
+) {
   if (!poolType) {
     return DEFAULT_POOL_STYLE;
   }
   return POOL_TYPE_STYLES[poolType] ?? DEFAULT_POOL_STYLE;
 }
 
-function getPoolLabel(poolType?: "signaling" | "funding" | "streaming") {
-  return poolType ? `${poolType} proposal` : null;
+function getPoolLabel(
+  poolType?: "signaling" | "funding" | "streaming" | "yieldDistribution",
+) {
+  return poolType ? `${poolType.replace(/([A-Z])/g, " $1").trim()} proposal` : null;
 }
 
 async function getGardenLogoDataUrl() {
@@ -194,7 +199,7 @@ async function renderImage({
   const poolStyle = getPoolStyle(poolType);
   const poolLabel = getPoolLabel(poolType);
   const poolIconSrc =
-    poolType === "funding" ?
+    isFundingPoolType(poolType) ?
       `data:image/svg+xml;base64,${POOL_FUNDING_ICON_BASE64}`
     : poolType === "signaling" ?
       `data:image/svg+xml;base64,${POOL_SIGNALING_ICON_BASE64}`
