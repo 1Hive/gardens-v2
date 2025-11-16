@@ -258,7 +258,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
 
             cvVault.revokeRole(managerRole, address(this));
             cvVault.revokeRole(defaultAdmin, address(this));
-            registryCommunity = IVotingPowerRegistry(address(cvVault));
+            registryCommunity = sourceRegistry;
         } else {
             registryCommunity = IVotingPowerRegistry(ip.registryCommunity);
         }
@@ -297,7 +297,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     /*|--------------------------------------------|*/
     /*|                 MODIFIERS                  |*/
     /*|--------------------------------------------|*/
-    function checkSenderIsMember(address _sender) internal {
+    function checkSenderIsMember(address _sender) internal view {
         if (_sender == address(0)) {
             revert UserCannotBeZero(_sender);
         }
@@ -553,7 +553,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         return proposals[_proposalId].voterStakedPoints[_voter];
     }
 
-    function getBasisStakedAmount() internal returns (uint256) {
+    function getBasisStakedAmount() internal view returns (uint256) {
         return registryCommunity.getBasisStakedAmount(); // 50 HNY = 100%
     }
 

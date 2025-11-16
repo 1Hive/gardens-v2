@@ -183,7 +183,7 @@ abstract contract CVStrategyBaseFacet {
      * @notice Check if sender is a registered member in the registry community
      * @param _sender Address to check
      */
-    function checkSenderIsMember(address _sender) internal {
+    function checkSenderIsMember(address _sender) internal view {
         if (!registryCommunity.isMember(_sender)) {
             revert OnlyMember(_sender, address(registryCommunity));
         }
