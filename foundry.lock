@@ -17,9 +17,6 @@
   "lib/protocol-monorepo": {
     "rev": "264d158d4d5ce919c0467512c6153175d353e571"
   },
-  "lib/safe-smart-account": {
-    "rev": "bf943f80fec5ac647159d26161446ac5d716a294"
-  },
   "protocol-monorepo": {
     "rev": "264d158d4d5ce919c0467512c6153175d353e571"
   }

@@ -35,7 +35,7 @@ remappings = [
 # "forge-std/=lib/forge-std/src/",
 # "allo-v2/=lib/allo-v2/"
 # ,"allo-v2-contracts/=lib/allo-v2/contracts/"
-# ,"allo-v2-test/=lib/allo-v2/test/","safe-smart-account/=lib/safe-contracts/"]
+# ,"allo-v2-test/=lib/allo-v2/test/"]
 # # list of libraries to link in the form of `<path to lib>:<lib name>:<address>`: `"src/MyLib.sol:MyLib:0x8De6DDbCd5053d32292AAA0D2105A32d108484a6"`
 # # the <path to lib> supports remappings
 # libraries = []
