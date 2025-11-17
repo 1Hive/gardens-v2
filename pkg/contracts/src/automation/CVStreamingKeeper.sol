@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-pragma solidity ^0.8.19;
+pragma solidity >=0.8.18;
 
 import {AutomationCompatibleInterface} from "../interfaces/IAutomation.sol";
 import {IYDSStrategy} from "../interfaces/IYDSStrategy.sol";
@@ -22,6 +22,13 @@ import {ProposalType} from "../CVStrategy/ICVStrategy.sol";
  * - rebalanceInterval: How often to rebalance streams (e.g., 1 hour)
  */
 contract CVStreamingKeeper is AutomationCompatibleInterface {
+    uint256 internal constant DECAY_DENOMINATOR = 10_000_000; // Conviction utils D constant
+    uint256 internal constant HALF_LIFE_NUMERATOR = 1_718_548_800; // Calibrated for 7d half-life at decay=0.9965853
+    uint256 internal constant CHANGE_NUMERATOR = 74; // 7.4% of half-life ≈ 5% conviction delta
+    uint256 internal constant CHANGE_DENOMINATOR = 1000;
+    uint256 internal constant BLOCK_TIME_SECONDS = 12; // Target network block time (Arb/optimism)
+    uint256 internal constant MIN_INTERVAL_SECONDS = 3600; // 1 hour
+    uint256 internal constant MAX_INTERVAL_SECONDS = 86400; // 24 hours
 
     /*//////////////////////////////////////////////////////////////
                                  ERRORS
@@ -220,6 +227,31 @@ contract CVStreamingKeeper is AutomationCompatibleInterface {
     }
     
     /**
+     * @notice Sync keeper intervals with strategy conviction parameters
+     * @dev Derives optimal intervals from decay parameter and updates keeper config
+     */
+    function syncIntervalsWithConviction() external {
+        if (msg.sender != owner) revert OnlyOwner();
+        
+        // Get conviction decay from strategy
+        uint256 decay = strategy.getConvictionDecay();
+        
+        // Calculate optimal base interval (5% conviction change)
+        uint256 optimalBase = calculateOptimalInterval(decay);
+        
+        // Set min interval to 1/4 of base (allows faster response to immediate requests)
+        uint256 optimalMin = optimalBase / 4;
+        if (optimalMin < 900) optimalMin = 900;  // Min 15 minutes
+        
+        // Keep report interval unchanged (YDS reporting is independent)
+        reportInterval = reportInterval;
+        baseRebalanceInterval = optimalBase;
+        minRebalanceInterval = optimalMin;
+        
+        emit ConfigurationUpdated(reportInterval, optimalBase, optimalMin);
+    }
+    
+    /**
      * @notice Calculate optimal rebalance interval based on conviction half-life
      * @param decay Conviction decay parameter (e.g., 9965853 for 7 days)
      * @return interval Optimal interval in seconds for 5% conviction change
@@ -228,30 +260,35 @@ contract CVStreamingKeeper is AutomationCompatibleInterface {
      *      For 5% change with 7-day half-life: ~12 hours
      *      For 10% change: ~6 hours
      */
-    function calculateOptimalInterval(uint256 decay) 
-        public pure returns (uint256 interval) 
-    {
-        // Approximate calculation for 5% conviction change
-        // For decay = 9965853 (7-day half-life):
-        // Half-life ≈ 50400 blocks ≈ 7 days @ 12s/block
-        // 5% change ≈ 0.074 * half-life ≈ 3732 blocks ≈ 12.4 hours
-        
-        uint256 D = 10000000;
-        uint256 rate = D - decay;
-        
-        // Approximate half-life in blocks: ln(2) / ln(D / (D-rate))
-        // For standard params: ~50400 blocks
-        uint256 halfLifeBlocks = 50400;  // Can be made more precise
-        
-        // 5% conviction change ≈ 7.4% of half-life
-        uint256 blocksFor5Percent = (halfLifeBlocks * 74) / 1000;
-        
-        // Convert to seconds (12s per block on Arbitrum)
-        interval = blocksFor5Percent * 12;
-        
-        // Return in reasonable range (1-24 hours)
-        if (interval < 3600) interval = 3600;  // Min 1 hour
-        if (interval > 86400) interval = 86400;  // Max 24 hours
+    function calculateOptimalInterval(uint256 decay) public pure returns (uint256 interval) {
+        if (decay >= DECAY_DENOMINATOR) {
+            return MAX_INTERVAL_SECONDS;
+        }
+
+        uint256 decayGap = DECAY_DENOMINATOR - decay;
+        if (decayGap == 0) {
+            return MAX_INTERVAL_SECONDS;
+        }
+
+        // Half-life approximation scaled to match default params (7 days @ 12s blocks)
+        uint256 halfLifeBlocks = HALF_LIFE_NUMERATOR / decayGap;
+        if (halfLifeBlocks == 0) {
+            return MIN_INTERVAL_SECONDS;
+        }
+
+        // Target ~5% conviction delta (empirically ≈7.4% of half-life)
+        uint256 blocksForChange = (halfLifeBlocks * CHANGE_NUMERATOR) / CHANGE_DENOMINATOR;
+        if (blocksForChange == 0) {
+            blocksForChange = 1;
+        }
+
+        interval = blocksForChange * BLOCK_TIME_SECONDS;
+
+        if (interval < MIN_INTERVAL_SECONDS) {
+            interval = MIN_INTERVAL_SECONDS;
+        } else if (interval > MAX_INTERVAL_SECONDS) {
+            interval = MAX_INTERVAL_SECONDS;
+        }
     }
 
     /**
@@ -338,6 +375,22 @@ contract CVStreamingKeeper is AutomationCompatibleInterface {
     {
         return (reportInterval, baseRebalanceInterval, minRebalanceInterval);
     }
+    
+    /**
+     * @notice Get recommended intervals based on current conviction parameters
+     * @dev Councils can use this to understand optimal sync frequency
+     * @return recommendedBase Optimal base rebalance interval
+     * @return recommendedMin Optimal minimum rebalance interval
+     * @return currentDecay Current conviction decay parameter
+     */
+    function getRecommendedIntervals() 
+        external view returns (uint256 recommendedBase, uint256 recommendedMin, uint256 currentDecay) 
+    {
+        currentDecay = strategy.getConvictionDecay();
+        recommendedBase = calculateOptimalInterval(currentDecay);
+        recommendedMin = recommendedBase / 4;
+        if (recommendedMin < 900) recommendedMin = 900;  // Min 15 minutes
+    }
 }
 
 /**
@@ -347,5 +400,6 @@ interface ICVStrategy {
     function proposalType() external view returns (ProposalType);
     function rebalanceYieldStreams() external;
     function batchEvaluateStreams() external;
+    function getConvictionDecay() external view returns (uint256);
 }
 

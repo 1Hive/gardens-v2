@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.19;
 
-import "forge-std/Test.sol";
+import {Test} from "forge-std/Test.sol";
 import {GardensYDSStrategy} from "../../src/yds/GardensYDSStrategy.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -28,7 +28,7 @@ contract MockYieldVault is ERC20 {
     }
     
     function deposit(uint256 assets, address receiver) external returns (uint256 shares) {
-        asset.transferFrom(msg.sender, address(this), assets);
+        require(asset.transferFrom(msg.sender, address(this), assets), "Transfer failed");
         
         // Calculate shares based on current supply and tracked assets
         uint256 supply = totalSupply();
@@ -44,7 +44,7 @@ contract MockYieldVault is ERC20 {
         
         _burn(owner, shares);
         _totalAssets -= assets;  // Update tracked assets
-        asset.transfer(receiver, assets);
+        require(asset.transfer(receiver, assets), "Transfer failed");
     }
     
     function redeem(uint256 shares, address receiver, address owner) external returns (uint256 assets) {
@@ -53,7 +53,7 @@ contract MockYieldVault is ERC20 {
         
         _burn(owner, shares);
         _totalAssets -= assets;  // Update tracked assets
-        asset.transfer(receiver, assets);
+        require(asset.transfer(receiver, assets), "Transfer failed");
     }
     
     function totalAssets() public view returns (uint256) {
@@ -124,8 +124,8 @@ contract GardensYDSStrategyTest is Test {
         yds.setKeeper(keeper);
         
         // Setup test users with tokens
-        dai.transfer(alice, 10000e18);
-        dai.transfer(bob, 10000e18);
+        require(dai.transfer(alice, 10000e18), "Transfer failed");
+        require(dai.transfer(bob, 10000e18), "Transfer failed");
         
         // Approve strategy
         vm.prank(alice);

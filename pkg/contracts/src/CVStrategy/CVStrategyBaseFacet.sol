@@ -186,6 +186,7 @@ abstract contract CVStrategyBaseFacet {
         bool isActive;           // Is stream currently flowing
         uint128 flowUnits;       // Superfluid GDA units allocated
         uint256 lastUpdateBlock; // Last block stream was modified
+        uint256 lastEvalBlock;   // Last block stream was evaluated (throttle)
         address beneficiary;     // Current beneficiary receiving stream
     }
 
@@ -221,7 +222,7 @@ abstract contract CVStrategyBaseFacet {
      * @notice Check if sender is a registered member in the registry community
      * @param _sender Address to check
      */
-    function checkSenderIsMember(address _sender) internal {
+    function checkSenderIsMember(address _sender) internal view {
         if (!registryCommunity.isMember(_sender)) {
             revert();
         }
@@ -334,6 +335,36 @@ abstract contract CVStrategyBaseFacet {
         }
         _proposal.blockLast = blockNumber;
         _proposal.convictionLast = conviction;
+        
+        // Inline stream evaluation for funding pools (if streaming enabled)
+        if (streamingEnabled && (proposalType == ProposalType.Funding || proposalType == ProposalType.Streaming)) {
+            _maybeEvaluateProposalStream(_proposal.proposalId);
+        }
+    }
+    
+    /**
+     * @notice Evaluate proposal stream if throttle allows
+     * @dev Internal helper to avoid spam - only evaluates if enough blocks have passed
+     * @param proposalId Proposal to evaluate
+     */
+    function _maybeEvaluateProposalStream(uint256 proposalId) internal {
+        StreamState storage stream = proposalStreams[proposalId];
+        
+        // Throttle: Only evaluate if at least 10 blocks have passed since last eval
+        // This prevents spam while still catching most threshold crossings quickly
+        if (block.number < stream.lastEvalBlock + 10) {
+            return;
+        }
+        
+        stream.lastEvalBlock = block.number;
+        
+        // Delegate to streaming facet internal method (updateConviction=false to avoid double calc)
+        // This will be caught by the fallback and routed to CVStreamingFundingFacet
+        (bool success,) = address(this).delegatecall(
+            abi.encodeWithSignature("_evaluateProposalStreamInternal(uint256,bool)", proposalId, false)
+        );
+        // Best effort - don't revert if evaluation fails
+        success;
     }
 
     /**
@@ -360,5 +391,48 @@ abstract contract CVStrategyBaseFacet {
             _oldStaked,
             cvParams.decay
         );
+    }
+    
+    /*|--------------------------------------------|*/
+    /*|      SHARED STREAMING HELPERS              |*/
+    /*|--------------------------------------------|*/
+    
+    /**
+     * @notice Start stream via core facet (internal delegatecall)
+     * @dev Used by both funding and yield facets to avoid duplication
+     */
+    function _startStreamViaCore(uint256 proposalId, address beneficiary, uint128 units) internal {
+        (bool success,) = address(this).delegatecall(
+            abi.encodeWithSignature("startStream(uint256,address,uint128)", proposalId, beneficiary, units)
+        );
+        if (!success) {
+            revert SuperfluidOperationFailed("startStream");
+        }
+    }
+
+    /**
+     * @notice Update stream via core facet (internal delegatecall)
+     * @dev Used by yield facet for proportional rebalancing
+     */
+    function _updateStreamViaCore(uint256 proposalId, uint128 newUnits) internal {
+        (bool success,) = address(this).delegatecall(
+            abi.encodeWithSignature("updateStream(uint256,uint128)", proposalId, newUnits)
+        );
+        if (!success) {
+            revert SuperfluidOperationFailed("updateStream");
+        }
+    }
+
+    /**
+     * @notice Stop stream via core facet (internal delegatecall)
+     * @dev Best effort - doesn't revert on failure to prevent blocking cleanup
+     */
+    function _stopStreamViaCore(uint256 proposalId) internal {
+        // solhint-disable-next-line avoid-low-level-calls
+        (bool success, ) = address(this).delegatecall(
+            abi.encodeWithSignature("stopStream(uint256)", proposalId)
+        );
+        // Best effort - don't revert on failure
+        success; // silence unused variable warning
     }
 }

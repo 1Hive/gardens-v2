@@ -29,22 +29,22 @@ contract CVSuperfluidCoreFacet is CVStrategyBaseFacet {
     event StreamStarted(
         uint256 indexed proposalId,
         address indexed beneficiary,
-        uint128 units,
+        uint128 indexed units,
         uint256 timestamp
     );
 
     event StreamUpdated(
         uint256 indexed proposalId,
         address indexed beneficiary,
+        uint128 indexed newUnits,
         uint128 oldUnits,
-        uint128 newUnits,
         uint256 timestamp
     );
 
     event StreamStopped(
         uint256 indexed proposalId,
         address indexed beneficiary,
-        uint256 timestamp
+        uint256 indexed timestamp
     );
 
     event GDAInitialized(

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-pragma solidity ^0.8.19;
+pragma solidity >=0.8.18;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
@@ -84,7 +84,6 @@ contract BaseConvictionVotingMechanism {
 
     /**
      * @notice Initialize TAM with conviction voting parameters
-     * @param _asset Funding token
      * @param _registryCommunity Gardens registry
      * @param _decay Conviction decay parameter
      * @param _weight Conviction weight parameter
@@ -95,7 +94,7 @@ contract BaseConvictionVotingMechanism {
      * @param _superToken Superfluid super token
      */
     function initialize(
-        IERC20 _asset,
+        IERC20 /* _asset */,
         address _registryCommunity,
         uint256 _decay,
         uint256 _weight,
@@ -127,7 +126,7 @@ contract BaseConvictionVotingMechanism {
      * @notice Hook wrapper: Check user eligibility
      * @dev onlySelf ensures only callable via delegatecall from implementation
      */
-    function beforeSignupHook(address user, uint256 deposit) external {
+    function beforeSignupHook(address user, uint256 /* deposit */) external view {
         if (msg.sender != address(this)) revert OnlySelf();
         
         // Policy: User must be Gardens community member
@@ -138,7 +137,7 @@ contract BaseConvictionVotingMechanism {
      * @notice Hook wrapper: Calculate voting power
      * @dev onlySelf ensures only callable via delegatecall
      */
-    function getVotingPowerHook(uint256 deposit) external returns (uint256) {
+    function getVotingPowerHook(uint256 deposit) external view returns (uint256) {
         if (msg.sender != address(this)) revert OnlySelf();
         
         // Policy: Apply Gardens point system
@@ -159,11 +158,11 @@ contract BaseConvictionVotingMechanism {
      * @dev onlySelf ensures only callable via delegatecall
      */
     function processVoteHook(
-        address voter,
-        uint256 proposalId,
+        address /* voter */,
+        uint256 /* proposalId */,
         uint256 voteWeight,
         uint256 currentPower
-    ) external returns (uint256 newPower) {
+    ) external view returns (uint256 newPower) {
         if (msg.sender != address(this)) revert OnlySelf();
         
         // Policy: Linear cost (not quadratic like QF)

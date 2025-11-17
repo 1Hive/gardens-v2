@@ -32,16 +32,16 @@ contract CVStreamingFundingFacet is CVStrategyBaseFacet {
 
     event ProposalStreamEvaluated(
         uint256 indexed proposalId,
-        uint256 conviction,
-        uint256 threshold,
+        uint256 indexed conviction,
+        uint256 indexed threshold,
         bool meetsThreshold,
         bool streamActive
     );
 
     event ThresholdCrossed(
         uint256 indexed proposalId,
-        uint256 conviction,
-        uint256 threshold,
+        uint256 indexed conviction,
+        uint256 indexed threshold,
         bool crossed
     );
 
@@ -57,10 +57,19 @@ contract CVStreamingFundingFacet is CVStrategyBaseFacet {
 
     /**
      * @notice Evaluate single proposal and adjust stream based on threshold
-     * @dev Called by keeper or automatically after support changes
+     * @dev Called by keeper, inline after conviction updates, or manually
      * @param proposalId Proposal to evaluate
      */
     function evaluateProposalStream(uint256 proposalId) external {
+        _evaluateProposalStreamInternal(proposalId, true);
+    }
+    
+    /**
+     * @notice Internal evaluation logic with reentrancy protection
+     * @param proposalId Proposal to evaluate
+     * @param updateConviction Whether to recalculate conviction (false when called inline)
+     */
+    function _evaluateProposalStreamInternal(uint256 proposalId, bool updateConviction) internal {
         _checkOnlyInitialized();
         
         if (proposalType != ProposalType.Funding && proposalType != ProposalType.Streaming) {
@@ -85,8 +94,10 @@ contract CVStreamingFundingFacet is CVStrategyBaseFacet {
             return;
         }
         
-        // Update conviction
-        _calculateAndSetConviction(p, p.stakedAmount);
+        // Update conviction only if requested (avoid double-calculation when called inline)
+        if (updateConviction) {
+            _calculateAndSetConviction(p, p.stakedAmount);
+        }
         
         // Calculate threshold
         uint256 threshold = _calculateProposalThreshold(proposalId);
@@ -203,25 +214,7 @@ contract CVStreamingFundingFacet is CVStrategyBaseFacet {
         return uint128(requestRatio);
     }
 
-    /*//////////////////////////////////////////////////////////////
-                        CORE FACET INTEGRATION
-    //////////////////////////////////////////////////////////////*/
-
-    function _startStreamViaCore(uint256 proposalId, address beneficiary, uint128 units) internal {
-        (bool success,) = address(this).delegatecall(
-            abi.encodeWithSignature("startStream(uint256,address,uint128)", proposalId, beneficiary, units)
-        );
-        if (!success) {
-            revert SuperfluidOperationFailed("startStream");
-        }
-    }
-
-    function _stopStreamViaCore(uint256 proposalId) internal {
-        (bool success,) = address(this).delegatecall(
-            abi.encodeWithSignature("stopStream(uint256)", proposalId)
-        );
-        // Best effort - don't revert on failure
-    }
+    // Note: Stream helper functions moved to CVStrategyBaseFacet to avoid duplication
 
     /*//////////////////////////////////////////////////////////////
                             VIEW FUNCTIONS

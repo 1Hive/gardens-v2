@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-pragma solidity ^0.8.20;
+pragma solidity >=0.8.20;
 
 import {BaseAllocationMechanism, AllocationConfig} from "octant-v2/mechanisms/BaseAllocationMechanism.sol";
 import {TokenizedAllocationMechanism} from "octant-v2/mechanisms/TokenizedAllocationMechanism.sol";

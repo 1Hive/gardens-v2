@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-pragma solidity ^0.8.19;
+pragma solidity >=0.8.18;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -230,7 +230,7 @@ contract ConvictionVotingTAM is ERC20 {
         proposal.queued = true;
         
         // Hook: Custom distribution (start stream or mint shares)
-        (bool custom, uint256 transferred) = _requestCustomDistributionHook(
+        (bool custom, ) = _requestCustomDistributionHook(
             proposal.recipient,
             proposalSupport[proposalId]
         );
@@ -302,8 +302,8 @@ contract ConvictionVotingTAM is ERC20 {
      * @return newPower Remaining voting power after allocation
      */
     function _processVoteHook(
-        address voter,
-        uint256 proposalId,
+        address /* voter */,
+        uint256 /* proposalId */,
         uint256 voteWeight,
         uint256 currentPower
     ) internal virtual returns (uint256 newPower) {
@@ -335,7 +335,7 @@ contract ConvictionVotingTAM is ERC20 {
      * @return useCustom Whether custom distribution was used
      * @return transferred Amount of assets transferred (for accounting)
      */
-    function _requestCustomDistributionHook(address recipient, uint256 support)
+    function _requestCustomDistributionHook(address /* recipient */, uint256 /* support */)
         internal
         virtual
         returns (bool useCustom, uint256 transferred)

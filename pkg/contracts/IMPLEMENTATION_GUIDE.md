@@ -128,10 +128,18 @@ src/interfaces/
 **How It Works**:
 1. YDS generates yield → mints donation shares to Superfluid GDA
 2. Proposals accumulate conviction via member support
-3. Keeper calls `rebalanceYieldStreams()` (every hour)
-4. Calculates total conviction across proposals
-5. Allocates GDA units proportionally
-6. **Beneficiaries receive continuous stream** 💰
+3. **Inline evaluation**: Stream state updates immediately on votes (10-block throttle)
+4. **Keeper fallback**: Periodic rebalancing catches time-based conviction growth
+5. Calculates total conviction across proposals (cached per block)
+6. Allocates GDA units proportionally
+7. **Beneficiaries receive continuous stream** 💰
+
+**Performance Optimizations**:
+- ✅ Inline stream evaluation reduces keeper lag (threshold crossings happen immediately)
+- ✅ 10-block throttle prevents spam (max 1 evaluation per 10 blocks per proposal)
+- ✅ Block-level conviction caching (only recalculates if block changed)
+- ✅ O(1) stream cleanup using bitmap lookup (no nested loops)
+- ✅ Keeper intervals auto-sync with conviction decay parameters
 
 **Streaming Modes**:
 
@@ -161,8 +169,42 @@ Member shifts support → conviction changes → rebalance → streams adjust
 
 **Automation**:
 - Chainlink keeper reports YDS (every 24h)
-- Chainlink keeper rebalances streams (every 1h)
+- Chainlink keeper rebalances streams (dynamically calculated from conviction decay)
+- Inline evaluation handles immediate threshold crossings (no keeper lag)
 - Cost: ~$0.10/month on Arbitrum
+
+**Keeper Configuration**:
+```solidity
+// Council syncs keeper with conviction parameters
+keeper.syncIntervalsWithConviction();
+// Automatically derives optimal intervals from cvParams.decay
+
+// Check current vs recommended
+(uint256 report, uint256 base, uint256 min) = keeper.getIntervals();
+(uint256 recBase, uint256 recMin, uint256 decay) = keeper.getRecommendedIntervals();
+
+// Manual override if needed
+keeper.setIntervals(reportInterval, baseInterval, minInterval);
+```
+
+**How Inline Evaluation Works**:
+```solidity
+// User votes on proposal
+cvStrategy.supportProposal(proposalId, amount);
+    ↓
+_calculateAndSetConviction(proposal, oldStaked)
+    ↓
+_maybeEvaluateProposalStream(proposalId)  // 10-block throttle
+    ↓
+_evaluateProposalStreamInternal(proposalId, updateConviction=false)
+    ↓
+Start/stop stream if threshold crossed (immediate response)
+```
+
+**When Keeper Still Needed**:
+- Time-based conviction growth (no user action)
+- Proportional rebalancing (requires iterating all proposals)
+- YDS reporting (generates donation shares)
 
 ### Phase 3: Octant TAM - Hook-Based Allocation
 

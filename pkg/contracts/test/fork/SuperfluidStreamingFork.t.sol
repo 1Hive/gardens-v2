@@ -1,18 +1,19 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.19;
 
-import "forge-std/Test.sol";
+import {Test} from "forge-std/Test.sol";
+import {console} from "forge-std/console.sol";
 import {GardensYDSStrategy} from "../../src/yds/GardensYDSStrategy.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ISuperfluidPool} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/gdav1/ISuperfluidPool.sol";
-import {ISuperToken} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperToken.sol";
 
 /**
  * @title SuperfluidStreamingForkTest
- * @notice Fork tests for YDS → Superfluid GDA → Streaming integration
- * @dev Run with: forge test --match-contract SuperfluidStreamingFork --fork-url $ARBITRUM_RPC
+ * @notice Fork tests for YDS -> Superfluid GDA -> Streaming integration
+ * @dev Run with: RUN_SUPERFLUID_FORK=true forge test --match-contract SuperfluidStreamingFork --fork-url $ARBITRUM_RPC
  * 
  * Tests complete flow with real Superfluid contracts on Arbitrum
+ * Skips if RUN_SUPERFLUID_FORK env var is not set (CI-friendly)
  */
 contract SuperfluidStreamingForkTest is Test {
     
@@ -33,8 +34,15 @@ contract SuperfluidStreamingForkTest is Test {
     address public keeper = address(0x300);
     
     function setUp() public {
+        // Skip if fork testing not enabled
+        if (!vm.envOr("RUN_SUPERFLUID_FORK", false)) {
+            vm.skip(true);
+            return;
+        }
+        
         // Fork Arbitrum
-        vm.createSelectFork(vm.envString("ARBITRUM_RPC"));
+        string memory rpcUrl = vm.envOr("ARBITRUM_RPC", string("https://arb1.arbitrum.io/rpc"));
+        vm.createSelectFork(rpcUrl);
         
         console.log("Forked Arbitrum at block:", block.number);
         
@@ -66,7 +74,7 @@ contract SuperfluidStreamingForkTest is Test {
     //////////////////////////////////////////////////////////////*/
     
     function testYieldToDonationShares() public {
-        console.log("Testing YDS → Donation Shares flow...");
+        console.log("Testing YDS -> Donation Shares flow...");
         
         // 1. Deposit
         vm.prank(depositor);
@@ -86,7 +94,7 @@ contract SuperfluidStreamingForkTest is Test {
         assertGt(gdaShares, 0, "GDA has donation shares");
         
         console.log("GDA donation shares:", gdaShares);
-        console.log("Yield → Donation shares flow validated");
+        console.log("Yield -> Donation shares flow validated");
     }
     
     function testDonationShareRedemption() public {
@@ -133,7 +141,8 @@ contract SuperfluidStreamingForkTest is Test {
             vm.warp(block.timestamp + 30 days);
             
             // Simulate ~4% APY monthly yield
-            uint256 monthlyYield = (10000e18 * 4) / (100 * 12);  // ~33 DAI/month
+            uint256 numerator = 10000 ether * 4;
+            uint256 monthlyYield = numerator / 1200;  // ~33 DAI/month
             deal(DAI, address(yds), IERC20(DAI).balanceOf(address(yds)) + monthlyYield);
             
             vm.prank(keeper);
@@ -155,7 +164,7 @@ contract SuperfluidStreamingForkTest is Test {
         uint256 totalDonationShares = yds.balanceOf(address(gda));
         assertGt(totalDonationShares, 0, "GDA accumulated shares");
         
-        console.log("6 months simulation: Principal preserved ✅");
+        console.log("6 months simulation: Principal preserved [OK]");
         console.log("Total donation shares to GDA:", totalDonationShares);
     }
     
@@ -182,7 +191,7 @@ contract SuperfluidStreamingForkTest is Test {
         yds.deposit(10000e18, depositor);
         
         // Emergency shutdown
-        vm.prank(management);
+        vm.prank(address(this));
         yds.setEmergencyShutdown(true);
         
         // Can't deposit during shutdown

@@ -19,7 +19,25 @@ Gardens Conviction Voting integrated with Octant v2 for **sustainable funding**:
 ## 📖 Documentation
 
 **[IMPLEMENTATION_GUIDE.md](./IMPLEMENTATION_GUIDE.md)** - Complete technical reference  
-**[DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)** - Deployment instructions
+**[DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)** - Deployment instructions  
+**[TEST_GUIDE.md](./TEST_GUIDE.md)** - Testing guide (unit + fork tests)
+
+---
+
+## 🔧 Build
+
+```bash
+# Build all contracts (V1 + V2)
+forge build
+
+# Build V2 separately (Octant imports, requires 0.8.25)
+forge build --use 0.8.25 --contracts src/yds/GardensYDSStrategyV2.sol
+forge build --use 0.8.25 --contracts src/tam/GardensConvictionMechanismV2.sol
+```
+
+**V1 (Default)**: Gardens native implementation (0.8.19) - Allo compatible  
+**V2 (Optional)**: Imports Octant's audited base (0.8.25) - Saves ~$30k audit cost  
+**Both**: Work with CVStrategy via IYDSStrategy interface!
 
 ---
 
@@ -53,16 +71,20 @@ See [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md) for complete instructions.
 ## 🏗️ Architecture (30 Second Overview)
 
 ```
-Treasury ($100k) → GardensYDSStrategy → Aave (5% APY)
+CVStrategy (Allo-based, Diamond) ← Existing Gardens
+    ↓ IYDSStrategy interface (can swap V1/V2!)
+Treasury ($100k) → YDS Strategy → Aave (5% APY)
                         ↓
               Yield ($5k/year) → Donation Shares
                         ↓
                   Superfluid GDA
                         ↓
-       Conviction Voting (Gardens) → Unit Allocation
+       Conviction Voting → Unit Allocation
                         ↓
             Proposal Beneficiaries ← Continuous Streams 💰
 ```
+
+**Key**: YDS is **pluggable**! Use V1 (Gardens) or V2 (Octant imports) - both work with Allo!
 
 **Result**: Fund public goods forever from yield, principal intact.
 
@@ -70,13 +92,17 @@ Treasury ($100k) → GardensYDSStrategy → Aave (5% APY)
 
 ## 📦 What Was Built
 
-### Contracts (16 new files)
+### Contracts (18 new files)
 
-**YDS** (3): BaseYDSStrategy, GardensYDSStrategy, IYDSStrategy  
+**YDS** (5): BaseYDSStrategy (V1), GardensYDSStrategy (V1), GardensYDSStrategyV2 (Octant), IYDSStrategy  
 **Streaming** (4): SuperfluidCore, StreamingYield, StreamingFunding, Keeper  
-**TAM** (4): GardensConvictionMechanism (V1 + V2), alternatives  
+**TAM** (4): GardensConvictionMechanism (V1), GardensConvictionMechanismV2 (Octant), alternatives  
 **Modified** (3): CVStrategyBaseFacet, CVYDSFacet, CVStrategy  
-**Interfaces** (2): IYDSStrategy, IAutomation  
+**Interfaces** (2): IYDSStrategy, IAutomation
+
+**V1**: Gardens native (0.8.19) - Deploy now  
+**V2**: Octant imports (0.8.25) - Available for upgrade  
+**Both**: Work with Allo via interfaces!  
 
 ### Features
 
@@ -111,12 +137,20 @@ forge test --match-contract Fork --fork-url $ARBITRUM_RPC
 
 ## 💰 Audit Strategy
 
-**Current Implementation**: $85-100k  
-**With Octant Import** (future): $100k total over time  
-**vs Full Custom**: $150k  
-**Savings**: $50k (33%)
+### V1 (Gardens Native)
+- YDS V1: ~$35k
+- Streaming facets: ~$40k  
+- TAM V1: ~$55k
+- **Total**: ~$130k
 
-See [OCTANT_INTEGRATION_STRATEGY.md](./OCTANT_INTEGRATION_STRATEGY.md) for details.
+### V2 (Octant Imports) - Optional
+- Octant base: $0 (already audited - 2376 lines FREE!)
+- Gardens hooks: ~$25k (just customization)
+- Streaming: ~$40k (same)
+- **Total**: ~$65k
+- **Savings**: $65k (50% reduction!)
+
+**Recommendation**: Deploy V1 now, optionally upgrade to V2 later via `setYDSStrategy(v2Address)` for audit savings.
 
 ---
 
@@ -131,7 +165,8 @@ See [OCTANT_INTEGRATION_STRATEGY.md](./OCTANT_INTEGRATION_STRATEGY.md) for detai
 
 ### Scripts
 
-**Deploy YDS**: `script/DeployGardensYDS.s.sol`  
+**Deploy YDS V1**: `script/DeployGardensYDS.s.sol`  
+**Deploy YDS V2** (optional): `script/DeployGardensYDSV2.s.sol`  
 **Configure**: `script/ConfigureYDSForStreaming.s.sol`  
 
 ### Tests

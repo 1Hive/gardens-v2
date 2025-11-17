@@ -1,21 +1,23 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.19;
 
-import "forge-std/Test.sol";
+import {Test} from "forge-std/Test.sol";
+import {console} from "forge-std/console.sol";
 import {GardensYDSStrategy} from "../../src/yds/GardensYDSStrategy.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 
 /**
  * @title GardensYDSStrategyForkTest
  * @notice Fork tests using real Arbitrum contracts (Aave, DAI, etc.)
- * @dev Run with: forge test --match-contract ForkTest --fork-url $ARBITRUM_RPC
+ * @dev Run with: RUN_YDS_FORK=true forge test --match-contract GardensYDSFork --fork-url $ARBITRUM_RPC
  * 
  * Benefits:
  * - No mock issues (uses real ERC4626 vaults)
  * - Real yield accrual
  * - Real protocol integrations
  * - Production-like testing
+ * 
+ * Skips if RUN_YDS_FORK env var is not set (CI-friendly)
  */
 contract GardensYDSStrategyForkTest is Test {
     
@@ -40,8 +42,15 @@ contract GardensYDSStrategyForkTest is Test {
     address public keeper = address(0x400);
     
     function setUp() public {
+        // Skip if fork testing not enabled
+        if (!vm.envOr("RUN_YDS_FORK", false)) {
+            vm.skip(true);
+            return;
+        }
+        
         // Fork Arbitrum at recent block
-        vm.createSelectFork(vm.envString("ARBITRUM_RPC"));
+        string memory rpcUrl = vm.envOr("ARBITRUM_RPC", string("https://arb1.arbitrum.io/rpc"));
+        vm.createSelectFork(rpcUrl);
         
         console.log("Forked Arbitrum at block:", block.number);
         console.log("DAI address:", DAI);

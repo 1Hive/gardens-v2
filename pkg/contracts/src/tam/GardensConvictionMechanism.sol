@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-pragma solidity ^0.8.19;
+pragma solidity >=0.8.18;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -197,7 +197,7 @@ contract GardensConvictionMechanism is ERC20 {
     /**
      * @dev HOOK 1: Check if user can register (Gardens: community member)
      */
-    function _beforeSignupHook(address user) internal returns (bool) {
+    function _beforeSignupHook(address user) internal view returns (bool) {
         ConvictionStorage storage cv = _convictionStorage();
         return cv.registryCommunity.isMember(user);
     }
@@ -205,8 +205,8 @@ contract GardensConvictionMechanism is ERC20 {
     /**
      * @dev HOOK 2: Calculate voting power from deposit (Gardens: point systems)
      */
-    function _getVotingPowerHook(address user, uint256 deposit) 
-        internal returns (uint256) 
+    function _getVotingPowerHook(address /* user */, uint256 deposit) 
+        internal view returns (uint256) 
     {
         ConvictionStorage storage cv = _convictionStorage();
         
@@ -232,13 +232,12 @@ contract GardensConvictionMechanism is ERC20 {
      * @dev Implements Octant hook: _beforeProposeHook
      * @param beneficiary Address to receive funds
      * @param requestedAmount Amount requested (0 for yield distribution)
-     * @param metadata IPFS hash or description
      * @return proposalId New proposal ID
      */
     function propose(
         address beneficiary,
         uint256 requestedAmount,
-        string calldata metadata
+        string calldata /* metadata */
     ) external returns (uint256 proposalId) {
         ConvictionStorage storage cv = _convictionStorage();
         
@@ -258,7 +257,7 @@ contract GardensConvictionMechanism is ERC20 {
     /**
      * @dev HOOK 3: Check if address can create proposals (Gardens: members)
      */
-    function _beforeProposeHook(address proposer) internal returns (bool) {
+    function _beforeProposeHook(address proposer) internal view returns (bool) {
         ConvictionStorage storage cv = _convictionStorage();
         return cv.registryCommunity.isMember(proposer);
     }
@@ -281,7 +280,6 @@ contract GardensConvictionMechanism is ERC20 {
         require(proposalId > 0 && proposalId <= cv.proposalCount, "Invalid proposal");
         
         uint256 oldPower = cv.votingPower[msg.sender];
-        uint256 previousAllocation = cv.voterAllocations[msg.sender][proposalId];
         
         // HOOK 4: _processVoteHook - Process allocation change
         uint256 newPower = _processVoteHook(
@@ -304,7 +302,6 @@ contract GardensConvictionMechanism is ERC20 {
      * @dev HOOK 4: Process vote allocation (Gardens: multi-proposal, continuous)
      * @param pid Proposal ID
      * @param voter User address
-     * @param choice Vote type (always 1/For for Gardens)
      * @param weight New allocation amount
      * @param oldPower User's current available power
      * @return newPower User's remaining power
@@ -312,7 +309,7 @@ contract GardensConvictionMechanism is ERC20 {
     function _processVoteHook(
         uint256 pid,
         address voter,
-        uint256 choice,
+        uint256 /* choice */,
         uint256 weight,
         uint256 oldPower
     ) internal returns (uint256 newPower) {
@@ -466,7 +463,7 @@ contract GardensConvictionMechanism is ERC20 {
     function _requestCustomDistributionHook(
         uint256 pid,
         address recipient,
-        uint256 support
+        uint256 /* support */
     ) internal returns (bool handled, uint256 assetsTransferred) {
         ConvictionStorage storage cv = _convictionStorage();
         
@@ -506,7 +503,7 @@ contract GardensConvictionMechanism is ERC20 {
     /**
      * @dev HOOK 8: Convert votes to shares (Gardens: unused, streaming instead)
      */
-    function _convertVotesToShares(uint256 pid) internal pure returns (uint256) {
+    function _convertVotesToShares(uint256 /* pid */) internal pure returns (uint256) {
         // Gardens uses streaming distribution, not share minting
         return 0;
     }
@@ -518,7 +515,7 @@ contract GardensConvictionMechanism is ERC20 {
     /**
      * @dev HOOK 9: Available withdraw limit (Gardens: unused, no share redemption)
      */
-    function _availableWithdrawLimit(address owner) internal pure returns (uint256) {
+    function _availableWithdrawLimit(address /* owner */) internal pure returns (uint256) {
         // Gardens streams directly, no share redemption needed
         return 0;
     }

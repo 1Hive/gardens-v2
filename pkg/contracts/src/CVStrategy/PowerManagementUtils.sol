@@ -14,7 +14,7 @@ library PowerManagementUtils {
         uint256 _amountToStake,
         PointSystem _pointSystem,
         uint256 _pointConfigMaxAmount
-    ) external returns (uint256 pointsToIncrease) {
+    ) external view returns (uint256 pointsToIncrease) {
         if (_pointSystem == PointSystem.Unlimited) {
             pointsToIncrease = _amountToStake; // from increasePowerUnlimited(_amountToUnstake)
         } else if (_pointSystem == PointSystem.Capped) {
@@ -29,7 +29,7 @@ library PowerManagementUtils {
         address _member,
         uint256 _amountToStake,
         uint256 _pointConfigMaxAmount
-    ) internal returns (uint256) {
+    ) internal view returns (uint256) {
         // console.log("POINTS TO INCREASE", _amountToStake);
         uint256 memberPower = _registryCommunity.getMemberPowerInStrategy(_member, address(this));
         // console.log("MEMBERPOWER", memberPower);
@@ -43,6 +43,7 @@ library PowerManagementUtils {
 
     function increasePowerQuadratic(IVotingPowerRegistry _registryCommunity, address _member, uint256 _amountToStake)
         internal
+        view
         returns (uint256)
     {
         uint256 totalStake = _registryCommunity.getMemberStakedAmount(_member) + _amountToStake;
@@ -67,7 +68,7 @@ library PowerManagementUtils {
         uint256 _amountToUnstake,
         PointSystem _pointSystem,
         uint256 _pointConfigMaxAmount
-    ) external returns (uint256 pointsToDecrease) {
+    ) external view returns (uint256 pointsToDecrease) {
         if (_pointSystem == PointSystem.Unlimited) {
             pointsToDecrease = _amountToUnstake;
         } else if (_pointSystem == PointSystem.Quadratic) {
@@ -84,6 +85,7 @@ library PowerManagementUtils {
 
     function decreasePowerQuadratic(IVotingPowerRegistry _registryCommunity, address _member, uint256 _amountToUnstake)
         internal
+        view
         returns (uint256)
     {
         uint256 decimal = 18;

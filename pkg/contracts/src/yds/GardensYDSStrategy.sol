@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-pragma solidity ^0.8.19;
+pragma solidity >=0.8.18;
 
 import {BaseYDSStrategy} from "./BaseYDSStrategy.sol";
-import {ERC4626} from "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
@@ -120,7 +119,7 @@ contract GardensYDSStrategy is BaseYDSStrategy {
      * @dev Called during report() by keeper
      * @return totalAssets_ Current total assets under management
      */
-    function _harvestAndReport() internal override returns (uint256 totalAssets_) {
+    function _harvestAndReport() internal view override returns (uint256 totalAssets_) {
         if (useExternalVault && address(yieldVault) != address(0)) {
             // Get current value of vault shares (includes accrued yield)
             uint256 vaultShares = yieldVault.balanceOf(address(this));
@@ -156,7 +155,7 @@ contract GardensYDSStrategy is BaseYDSStrategy {
      * @notice Emergency withdrawal - pull all funds to idle
      * @dev Called during emergency shutdown
      */
-    function _emergencyWithdraw(uint256 amount) internal override {
+    function _emergencyWithdraw(uint256 /* amount */) internal override {
         if (useExternalVault && address(yieldVault) != address(0)) {
             uint256 vaultShares = yieldVault.balanceOf(address(this));
             if (vaultShares > 0) {

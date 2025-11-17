@@ -32,22 +32,22 @@ contract CVStreamingYieldFacet is CVStrategyBaseFacet {
 
     event YieldStreamsRebalanced(
         uint256 indexed poolId,
-        uint256 activeProposals,
-        uint256 totalConviction,
+        uint256 indexed activeProposals,
+        uint256 indexed totalConviction,
         uint256 timestamp
     );
 
     event ProposalYieldShare(
         uint256 indexed proposalId,
-        uint256 conviction,
-        uint128 units,
+        uint256 indexed conviction,
+        uint128 indexed units,
         uint256 shareBps
     );
 
     event DonationSharesRedeemed(
         address indexed ydsStrategy,
-        uint256 shares,
-        uint256 assets,
+        uint256 indexed shares,
+        uint256 indexed assets,
         address recipient
     );
 
@@ -135,6 +135,7 @@ contract CVStreamingYieldFacet is CVStrategyBaseFacet {
 
     /**
      * @notice Calculate total conviction across all active proposals
+     * @dev Optimized: Only updates conviction if block changed (cached via blockLast)
      * @return totalConviction Sum of all proposal convictions
      * @return activeCount Number of proposals with conviction > 0
      * @return proposalIds Array of active proposal IDs
@@ -152,6 +153,7 @@ contract CVStreamingYieldFacet is CVStrategyBaseFacet {
         uint256 length = proposalCounter;
         proposalIds = new uint256[](length);
         convictions = new uint256[](length);
+        uint256 currentBlock = block.number;
         
         for (uint256 i = 1; i <= length; i++) {
             Proposal storage p = proposals[i];
@@ -165,8 +167,11 @@ contract CVStreamingYieldFacet is CVStrategyBaseFacet {
                 continue;
             }
             
-            // Update conviction
-            _calculateAndSetConviction(p, p.stakedAmount);
+            // Update conviction only if block changed (natural caching)
+            // _calculateAndSetConviction checks blockLast internally
+            if (p.blockLast < currentBlock) {
+                _calculateAndSetConviction(p, p.stakedAmount);
+            }
             
             if (p.convictionLast > 0) {
                 proposalIds[activeCount] = i;
@@ -237,19 +242,20 @@ contract CVStreamingYieldFacet is CVStrategyBaseFacet {
      * @notice Stop streams for proposals not in the active list
      */
     function _stopInactiveStreams(uint256 activeCount, uint256[] memory activeProposalIds) internal {
-        for (uint256 i = 1; i <= proposalCounter; i++) {
-            if (!proposalStreams[i].isActive) continue;
-            
-            // Check if this proposal is in active list
-            bool found = false;
-            for (uint256 j = 0; j < activeCount; j++) {
-                if (activeProposalIds[j] == i) {
-                    found = true;
-                    break;
-                }
+        if (proposalCounter == 0) {
+            return;
+        }
+
+        bool[] memory isActiveProposal = new bool[](proposalCounter + 1);
+        for (uint256 j = 0; j < activeCount; j++) {
+            uint256 proposalId = activeProposalIds[j];
+            if (proposalId != 0 && proposalId <= proposalCounter) {
+                isActiveProposal[proposalId] = true;
             }
-            
-            if (!found) {
+        }
+
+        for (uint256 i = 1; i <= proposalCounter; i++) {
+            if (proposalStreams[i].isActive && !isActiveProposal[i]) {
                 _stopStreamViaCore(i);
             }
         }
@@ -266,43 +272,7 @@ contract CVStreamingYieldFacet is CVStrategyBaseFacet {
         }
     }
 
-    /*//////////////////////////////////////////////////////////////
-                        CORE FACET INTEGRATION
-    //////////////////////////////////////////////////////////////*/
-
-    /**
-     * @notice Start stream via core facet (internal delegatecall)
-     */
-    function _startStreamViaCore(uint256 proposalId, address beneficiary, uint128 units) internal {
-        (bool success,) = address(this).delegatecall(
-            abi.encodeWithSignature("startStream(uint256,address,uint128)", proposalId, beneficiary, units)
-        );
-        if (!success) {
-            revert SuperfluidOperationFailed("startStream");
-        }
-    }
-
-    /**
-     * @notice Update stream via core facet (internal delegatecall)
-     */
-    function _updateStreamViaCore(uint256 proposalId, uint128 newUnits) internal {
-        (bool success,) = address(this).delegatecall(
-            abi.encodeWithSignature("updateStream(uint256,uint128)", proposalId, newUnits)
-        );
-        if (!success) {
-            revert SuperfluidOperationFailed("updateStream");
-        }
-    }
-
-    /**
-     * @notice Stop stream via core facet (internal delegatecall)
-     */
-    function _stopStreamViaCore(uint256 proposalId) internal {
-        (bool success,) = address(this).delegatecall(
-            abi.encodeWithSignature("stopStream(uint256)", proposalId)
-        );
-        // Don't revert on failure - best effort during cleanup
-    }
+    // Note: Stream helper functions moved to CVStrategyBaseFacet to avoid duplication
 
     /*//////////////////////////////////////////////////////////////
                         SINGLE PROPOSAL REBALANCE

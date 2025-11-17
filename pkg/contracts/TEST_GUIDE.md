@@ -16,7 +16,9 @@ forge test --match-contract GardensYDSStrategyTest
 
 **Expected**: ✅ 24/24 tests passing after mock fixes
 
-### Fork Tests (Real Protocols - Requires RPC)
+### Fork Tests (Real Protocols - Opt-In)
+
+Fork tests are **CI-friendly** and skip by default. Enable with env vars:
 
 **YDS Fork Tests**: `test/fork/GardensYDSFork.t.sol`
 - Real Arbitrum DAI
@@ -29,19 +31,19 @@ forge test --match-contract GardensYDSStrategyTest
 - Donation shares → streaming
 - Real Superfluid contracts
 
-**Setup**:
-```bash
-# Copy example env
-cp .env.example .env
-
-# Add your RPC
-echo "ARBITRUM_RPC=https://arb1.arbitrum.io/rpc" >> .env
-```
-
 **Run**:
 ```bash
-forge test --match-contract Fork --fork-url $ARBITRUM_RPC -vvv
+# YDS fork tests
+export RUN_YDS_FORK=true
+export ARBITRUM_RPC=https://arb1.arbitrum.io/rpc
+forge test --match-contract GardensYDSFork --fork-url $ARBITRUM_RPC -vv
+
+# Superfluid fork tests
+export RUN_SUPERFLUID_FORK=true
+forge test --match-contract SuperfluidStreamingFork --fork-url $ARBITRUM_RPC -vv
 ```
+
+**CI Behavior**: Without env vars, tests skip automatically (no RPC needed)
 
 ### Integration Tests (Currently Disabled)
 
