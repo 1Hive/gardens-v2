@@ -188,4 +188,17 @@ contract CVAdminFacet is CVStrategyBaseFacet {
         }
         totalVoterStakePct[_member] = 0;
     }
+    
+    /*|--------------------------------------------|*/
+    /*|              VIEW FUNCTIONS                |*/
+    /*|--------------------------------------------|*/
+    
+    /**
+     * @notice Get conviction decay parameter
+     * @dev Used by keeper to calculate optimal rebalance intervals
+     * @return uint256 Current conviction decay parameter
+     */
+    function getConvictionDecay() external view returns (uint256) {
+        return cvParams.decay;
+    }
 }

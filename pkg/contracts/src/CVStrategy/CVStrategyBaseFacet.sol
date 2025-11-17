@@ -6,6 +6,8 @@ import {IVotingPowerRegistry} from "../interfaces/IVotingPowerRegistry.sol";
 import {ICollateralVault} from "../interfaces/ICollateralVault.sol";
 import {ICVVault} from "../interfaces/ICVVault.sol";
 import {ISybilScorer} from "../ISybilScorer.sol";
+import {IYDSStrategy} from "../interfaces/IYDSStrategy.sol";
+import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {ProposalType, PointSystem, Proposal, PointSystemConfig, ArbitrableConfig, CVParams} from "./ICVStrategy.sol";
 import {ConvictionsUtils} from "./ConvictionsUtils.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Library.sol";
@@ -40,6 +42,28 @@ abstract contract CVStrategyBaseFacet {
 
     /// @notice Native token address (defined here to avoid import conflicts with allo-v2)
     address internal constant NATIVE_TOKEN = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
+
+    /// @notice Total GDA units representing 100%
+    uint128 public constant TOTAL_GDA_UNITS = 10000;
+
+    /// @notice Default funding stream units
+    uint128 public constant DEFAULT_FUNDING_UNITS = 1000;
+
+    /*|--------------------------------------------|*/
+    /*|      STREAMING-SPECIFIC ERRORS             |*/
+    /*|--------------------------------------------|*/
+
+    error GDANotConfigured();
+    error SuperfluidOperationFailed(string operation);
+    error StreamingNotEnabled();
+    error WrongProposalType();
+    error NoVaultConfigured();
+    error NoYDSStrategy();
+    error StreamAlreadyActive(uint256 proposalId);
+    error StreamNotActive(uint256 proposalId);
+    error InvalidUnits();
+    error OnlyPendingRecipient();
+    error ProposalNotFoundStream();
 
     /*|--------------------------------------------|*/
     /*|      INHERITED STORAGE LAYOUT              |*/
@@ -148,9 +172,39 @@ abstract contract CVStrategyBaseFacet {
     /// @dev Slot 129+
     ISuperToken public superfluidToken;
 
+    /*|--------------------------------------------|*/
+    /*|      NEW: YDS & STREAMING STORAGE          |*/
+    /*|         (Octant Integration)               |*/
+    /*|--------------------------------------------|*/
+
+    /// @notice Yield Donating Strategy for Octant-style yield distribution
+    /// @dev Slot 130+
+    IYDSStrategy public ydsStrategy;
+
+    /// @notice Superfluid stream state per proposal
+    struct StreamState {
+        bool isActive;           // Is stream currently flowing
+        uint128 flowUnits;       // Superfluid GDA units allocated
+        uint256 lastUpdateBlock; // Last block stream was modified
+        uint256 lastEvalBlock;   // Last block stream was evaluated (throttle)
+        address beneficiary;     // Current beneficiary receiving stream
+    }
+
+    /// @notice Mapping of proposal ID to its stream state
+    /// @dev Slot 131+
+    mapping(uint256 => StreamState) internal proposalStreams;
+
+    /// @notice Superfluid General Distribution Agreement address
+    /// @dev Slot 132+
+    address internal superfluidGDA;
+
+    /// @notice Whether Superfluid streaming is enabled for this pool
+    /// @dev Slot 133+
+    bool public streamingEnabled;
+
     /// @dev Reserved storage space to allow for layout changes in the future
-    /// @dev This gap is at the end of storage to allow adding new variables without shifting slots
-    uint256[49] private __gap;
+    /// @dev Reduced from 49 to 45 to accommodate new streaming variables
+    uint256[45] private __gap;
 
     /*|--------------------------------------------|*/
     /*|         SHARED HELPER FUNCTIONS            |*/
@@ -168,7 +222,7 @@ abstract contract CVStrategyBaseFacet {
      * @notice Check if sender is a registered member in the registry community
      * @param _sender Address to check
      */
-    function checkSenderIsMember(address _sender) internal {
+    function checkSenderIsMember(address _sender) internal view {
         if (!registryCommunity.isMember(_sender)) {
             revert();
         }
@@ -246,6 +300,30 @@ abstract contract CVStrategyBaseFacet {
     }
 
     /**
+     * @notice Get total pool amount (token balance)
+     * @dev Used by streaming facets to calculate thresholds and units
+     * @return uint256 Total pool balance including super tokens
+     */
+    function getPoolAmount() internal view virtual returns (uint256) {
+        address token = allo.getPool(poolId).token;
+
+        if (token == NATIVE_TOKEN) {
+            return address(this).balance;
+        }
+
+        uint256 base = ERC20(token).balanceOf(address(this));
+        uint256 sf = address(superfluidToken) == address(0) ? 0 : superfluidToken.balanceOf(address(this));
+
+        uint8 d = ERC20(token).decimals();
+        if (d < 18) {
+            sf /= 10 ** (18 - d); // downscale 18 -> d
+        } else if (d > 18) {
+            sf *= 10 ** (d - 18); // upscale 18 -> d  (unlikely)
+        }
+        return base + sf;
+    }
+
+    /**
      * @notice Calculate and store conviction for a proposal
      * @param _proposal Proposal storage reference
      * @param _oldStaked Previous staked amount
@@ -257,6 +335,36 @@ abstract contract CVStrategyBaseFacet {
         }
         _proposal.blockLast = blockNumber;
         _proposal.convictionLast = conviction;
+        
+        // Inline stream evaluation for funding pools (if streaming enabled)
+        if (streamingEnabled && (proposalType == ProposalType.Funding || proposalType == ProposalType.Streaming)) {
+            _maybeEvaluateProposalStream(_proposal.proposalId);
+        }
+    }
+    
+    /**
+     * @notice Evaluate proposal stream if throttle allows
+     * @dev Internal helper to avoid spam - only evaluates if enough blocks have passed
+     * @param proposalId Proposal to evaluate
+     */
+    function _maybeEvaluateProposalStream(uint256 proposalId) internal {
+        StreamState storage stream = proposalStreams[proposalId];
+        
+        // Throttle: Only evaluate if at least 10 blocks have passed since last eval
+        // This prevents spam while still catching most threshold crossings quickly
+        if (block.number < stream.lastEvalBlock + 10) {
+            return;
+        }
+        
+        stream.lastEvalBlock = block.number;
+        
+        // Delegate to streaming facet internal method (updateConviction=false to avoid double calc)
+        // This will be caught by the fallback and routed to CVStreamingFundingFacet
+        (bool success,) = address(this).delegatecall(
+            abi.encodeWithSignature("_evaluateProposalStreamInternal(uint256,bool)", proposalId, false)
+        );
+        // Best effort - don't revert if evaluation fails
+        success;
     }
 
     /**
@@ -283,5 +391,48 @@ abstract contract CVStrategyBaseFacet {
             _oldStaked,
             cvParams.decay
         );
+    }
+    
+    /*|--------------------------------------------|*/
+    /*|      SHARED STREAMING HELPERS              |*/
+    /*|--------------------------------------------|*/
+    
+    /**
+     * @notice Start stream via core facet (internal delegatecall)
+     * @dev Used by both funding and yield facets to avoid duplication
+     */
+    function _startStreamViaCore(uint256 proposalId, address beneficiary, uint128 units) internal {
+        (bool success,) = address(this).delegatecall(
+            abi.encodeWithSignature("startStream(uint256,address,uint128)", proposalId, beneficiary, units)
+        );
+        if (!success) {
+            revert SuperfluidOperationFailed("startStream");
+        }
+    }
+
+    /**
+     * @notice Update stream via core facet (internal delegatecall)
+     * @dev Used by yield facet for proportional rebalancing
+     */
+    function _updateStreamViaCore(uint256 proposalId, uint128 newUnits) internal {
+        (bool success,) = address(this).delegatecall(
+            abi.encodeWithSignature("updateStream(uint256,uint128)", proposalId, newUnits)
+        );
+        if (!success) {
+            revert SuperfluidOperationFailed("updateStream");
+        }
+    }
+
+    /**
+     * @notice Stop stream via core facet (internal delegatecall)
+     * @dev Best effort - doesn't revert on failure to prevent blocking cleanup
+     */
+    function _stopStreamViaCore(uint256 proposalId) internal {
+        // solhint-disable-next-line avoid-low-level-calls
+        (bool success, ) = address(this).delegatecall(
+            abi.encodeWithSignature("stopStream(uint256)", proposalId)
+        );
+        // Best effort - don't revert on failure
+        success; // silence unused variable warning
     }
 }

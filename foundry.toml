@@ -7,12 +7,16 @@ celo = { key = "${CELOSCAN_API_KEY}", url = "https://api.celoscan.io/api"}
 celo = "https://forno.celo.org"
 
 [profile.default]
-# solc-version = "0.8.19"
+# Multi-version: 0.8.19 for Allo, 0.8.25 for Octant imports
+# Foundry auto-detects per-file pragma
+auto_detect_solc = true
 src = 'pkg/contracts/src'
 script = 'pkg/contracts/script'
 test = 'pkg/contracts/test'
 out = 'pkg/contracts/out'
 libs = ['lib']
+via_ir = false
+evm_version = "paris"
 ffi = true
 ast = true
 build_info = true
@@ -28,7 +32,20 @@ bytecode_hash = "none"
 # fs_permissions = []
 remappings = [
   "solady/=lib/allo-v2/lib/solady/src",
-  "allo-v2/=lib/allo-v2/contracts/"
+  "allo-v2/=lib/allo-v2/contracts/",
+  "allo-v2-contracts/=lib/allo-v2/contracts/",
+  "octant-v2/=lib/octant-v2-core/src/"
+]
+
+# Note: Octant-based contracts (0.8.25) are skipped in default profile
+# Build them separately with: FORGE_PROFILE=v2 forge build
+skip = [
+  "pkg/contracts/src/tam/GardensConvictionMechanism.sol",
+  "pkg/contracts/src/yds/GardensYDSStrategy.sol",
+  "pkg/contracts/script/DeployGardensYDS.s.sol",
+  "pkg/contracts/test/YDS/GardensYDSStrategy.t.sol",
+  "pkg/contracts/test/fork/GardensYDSFork.t.sol",
+  "pkg/contracts/test/fork/SuperfluidStreamingFork.t.sol"
 ]
 # auto_detect_remappings = true # recursive auto-detection of remappings
 # remappings = ["ds-test/=lib/forge-std/lib/ds-test/src/",
@@ -143,6 +160,49 @@ remappings = [
 # # following example enables read-write access for the project dir :
 # #       `fs_permissions = [{ access = "read-write", path = "./"}]`
 # fs_permissions = [{ access = "read", path = "./out"}]
+# Profile for Octant-based contracts - Separate build with 0.8.25
+[profile.v2]
+solc = "0.8.25"
+auto_detect_solc = false
+src = 'pkg/contracts/src'
+script = 'pkg/contracts/script'
+test = 'pkg/contracts/test'
+out = 'pkg/contracts/out-v2'
+libs = ['lib']
+via_ir = false
+evm_version = "paris"
+ffi = true
+ast = true
+build_info = true
+extra_output = ["storageLayout"]
+fs_permissions = [{ access = "read-write", path = "./"}]
+remappings = [
+  "solady/=lib/allo-v2/lib/solady/src",
+  "allo-v2/=lib/allo-v2/contracts/",
+  "allo-v2-contracts/=lib/allo-v2/contracts/",
+  "octant-v2/=lib/octant-v2-core/src/"
+]
+# Skip ALL allo-v2 to avoid version conflicts (Allo uses 0.8.19)
+skip = ["lib/allo-v2"]
+# Ignore 0.8.19 contracts when building Octant-based contracts
+ignored_paths = [
+    "pkg/contracts/src/CVStrategy/**",
+    "pkg/contracts/src/RegistryCommunity/**",
+    "pkg/contracts/src/RegistryFactory/**",
+    "pkg/contracts/src/BaseStrategyUpgradeable.sol",
+    "pkg/contracts/src/tam/ConvictionVotingTAM.sol",
+    "pkg/contracts/src/tam/BaseConvictionVotingMechanism.sol",
+    "pkg/contracts/test/CVStrategyTest.t.sol",
+    "pkg/contracts/test/RegistryTest.t.sol",
+    "pkg/contracts/test/RegistryFactoryTest.t.sol",
+    "pkg/contracts/test/DiamondUpgrade*.t.sol",
+    "pkg/contracts/test/GooddollarTest.t.sol",
+    "pkg/contracts/test/PassportScorerTest.t.sol",
+    "pkg/contracts/test/ProxyOwnerTest.t.sol",
+    "pkg/contracts/test/SafeArbitratorTest.t.sol",
+    "pkg/contracts/test/ConnectGDAForkTest.t.sol"
+]
+
 [fuzz]
 runs = 256
 # max_test_rejects = 65536

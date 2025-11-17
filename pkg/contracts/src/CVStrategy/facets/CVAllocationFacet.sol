@@ -24,6 +24,7 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
     event SupportAdded(
         address from, uint256 proposalId, uint256 amount, uint256 totalStakedAmount, uint256 convictionLast
     );
+    event SignificantConvictionChange(uint256 indexed proposalId, uint256 percentChange);
 
     /*|--------------------------------------------|*/
     /*|              ERRORS                        |*/
@@ -162,9 +163,38 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
             if (proposal.blockLast == 0) {
                 proposal.blockLast = block.number;
             } else {
+                uint256 previousConviction = proposal.convictionLast;
                 _calculateAndSetConviction(proposal, previousStakedAmount);
                 emit SupportAdded(_sender, proposalId, stakedPoints, proposal.stakedAmount, proposal.convictionLast);
+                
+                // NEW: Check if significant change (trigger immediate rebalance)
+                _checkSignificantChange(proposalId, previousConviction, proposal.convictionLast);
             }
+        }
+    }
+    
+    /**
+     * @notice Check if conviction changed significantly (>5%)
+     * @dev Emits event to trigger immediate keeper rebalance
+     */
+    function _checkSignificantChange(
+        uint256 proposalId,
+        uint256 previousConviction,
+        uint256 newConviction
+    ) internal {
+        if (previousConviction == 0) return;  // Skip if first time
+        
+        // Calculate percent change
+        uint256 percentChange;
+        if (newConviction > previousConviction) {
+            percentChange = ((newConviction - previousConviction) * 100) / previousConviction;
+        } else {
+            percentChange = ((previousConviction - newConviction) * 100) / previousConviction;
+        }
+        
+        // If >5% change, emit event for immediate rebalance
+        if (percentChange >= 5) {
+            emit SignificantConvictionChange(proposalId, percentChange);
         }
     }
 
@@ -277,7 +307,7 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
         return proposal.convictionLast;
     }
 
-    function getPoolAmount() internal view returns (uint256) {
+    function getPoolAmount() internal view override returns (uint256) {
         address token = allo.getPool(poolId).token;
 
         if (token == NATIVE_TOKEN) {

@@ -47,5 +47,8 @@
   "typescript.tsc.autoDetect": "off",
   "typescript.disableAutomaticTypeAcquisition": true,
   "typescript.surveys.enabled": false,
-  "typescript.suggest.completeFunctionCalls": false
+  "typescript.suggest.completeFunctionCalls": false,
+  "githubPullRequests.ignoredPullRequestBranches": [
+    "main"
+  ]
 }

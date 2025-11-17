@@ -299,7 +299,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     /*|--------------------------------------------|*/
     /*|                 MODIFIERS                  |*/
     /*|--------------------------------------------|*/
-    function checkSenderIsMember(address _sender) internal {
+    function checkSenderIsMember(address _sender) internal view {
         // if (_sender == address(0)) {
         //     revert UserCannotBeZero();
         // }
@@ -627,7 +627,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         return proposals[_proposalId].voterStakedPoints[_voter];
     }
 
-    function getBasisStakedAmount() internal returns (uint256) {
+    function getBasisStakedAmount() internal view returns (uint256) {
         return registryCommunity.getBasisStakedAmount(); // 50 HNY = 100%
     }
 
@@ -766,23 +766,23 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     // setPoolParams removed - now in AdminFacet
     // Stub needed for tests to call - delegates to facet
     function setPoolParams(
-        ArbitrableConfig memory _arbitrableConfig,
-        CVParams memory _cvParams,
-        uint256 _sybilScoreThreshold,
-        address[] memory _membersToAdd,
-        address[] memory _membersToRemove,
-        address _superfluidToken
+        ArbitrableConfig memory /* _arbitrableConfig */,
+        CVParams memory /* _cvParams */,
+        uint256 /* _sybilScoreThreshold */,
+        address[] memory /* _membersToAdd */,
+        address[] memory /* _membersToRemove */,
+        address /* _superfluidToken */
     ) external {
         _delegateToFacet();
     }
 
     // connectSuperfluidGDA and disconnectSuperfluidGDA removed - now in AdminFacet
     // Stubs needed for tests to call - delegates to facet
-    function connectSuperfluidGDA(address gda) external {
+    function connectSuperfluidGDA(address /* gda */) external {
         _delegateToFacet();
     }
 
-    function disconnectSuperfluidGDA(address gda) external {
+    function disconnectSuperfluidGDA(address /* gda */) external {
         _delegateToFacet();
     }
 
@@ -790,12 +790,57 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         _delegateToFacet();
     }
 
+    // NEW: Streaming function stubs - delegate to facets
+    function setYDSStrategy(address /* _ydsStrategy */) external {
+        _delegateToFacet();
+    }
+
+    function initializeGDA(address /* gda */) external {
+        _delegateToFacet();
+    }
+
+    function setStreamingEnabled(bool /* enabled */) external {
+        _delegateToFacet();
+    }
+
+    function rebalanceYieldStreams() external {
+        _delegateToFacet();
+    }
+
+    function evaluateProposalStream(uint256 /* proposalId */) external {
+        _delegateToFacet();
+    }
+
+    function batchEvaluateStreams() external {
+        _delegateToFacet();
+    }
+
+    function startStream(uint256 /* proposalId */, address /* beneficiary */, uint128 /* units */) external {
+        _delegateToFacet();
+    }
+
+    function updateStream(uint256 /* proposalId */, uint128 /* newUnits */) external {
+        _delegateToFacet();
+    }
+
+    function stopStream(uint256 /* proposalId */) external {
+        _delegateToFacet();
+    }
+
+    function getStreamState(uint256 /* proposalId */) external returns (bool, uint128, uint256, address) {
+        _delegateToFacet();
+    }
+
+    function getGDA() external returns (address) {
+        _delegateToFacet();
+    }
+
     // disputeProposal and rule removed - now in DisputeFacet
     // Stub needed for tests to call - delegates to facet
-    function disputeProposal(uint256 proposalId, string calldata context, bytes calldata _extraData)
+    function disputeProposal(uint256 /* proposalId */, string calldata /* context */, bytes calldata /* _extraData */)
         external
         payable
-        returns (uint256 disputeId)
+        returns (uint256 /* disputeId */)
     {
         _delegateToFacet();
     }
@@ -807,7 +852,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
 
     // cancelProposal removed - now in ProposalManagementFacet
     // Stub needed for frontend to call - delegates to facet
-    function cancelProposal(uint256 proposalId) external {
+    function cancelProposal(uint256 /* proposalId */) external {
         _delegateToFacet();
     }
 

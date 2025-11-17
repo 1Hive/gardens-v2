@@ -2,9 +2,7 @@
 
 pragma solidity ^0.8.19;
 
-import "forge-std/Test.sol";
-import "forge-std/console.sol";
-
+import {Test} from "forge-std/Test.sol";
 import {ISafe as Safe, SafeProxyFactory, Enum} from "../../src/interfaces/ISafe.sol";
 
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
@@ -21,7 +19,7 @@ contract SafeSetup is Test {
     Safe public councilSafeOwner;
 
     address public councilMember1;
-    uint256 public councilMemberPK = 1;
+    uint256 public councilMemberPk = 1;
     uint256 public _nonce = 0;
 
     address _safeSingleton;
@@ -100,7 +98,7 @@ contract SafeSetup is Test {
 
     function _councilSafe() public returns (Safe) {
         // console.log("isContract 2", isContract(address(0x41675C099F32341bf84BFc5382aF534df5C7461a)));
-        councilMember1 = vm.addr(councilMemberPK);
+        councilMember1 = vm.addr(councilMemberPk);
         vm.label(councilMember1, "councilMember1");
 
         if (address(councilSafe) == address(0)) {
@@ -136,34 +134,34 @@ contract SafeSetup is Test {
         );
     }
 
-    function getSignature(address to_, bytes memory data_, Safe councilSafe_, uint256 councilMemberPK_)
+    function getSignature(address to_, bytes memory data_, Safe councilSafe_, uint256 councilMemberPk_)
         private
         view
         returns (bytes memory signature)
     {
         // console.log("to_", to_);
         // console.log("councilSafe_", address(councilSafe_));
-        // console.log("councilMemberPK_", councilMemberPK_);
+        // console.log("councilMemberPk_", councilMemberPk_);
 
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(councilMemberPK_, getHash(to_, data_, councilSafe_));
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(councilMemberPk_, getHash(to_, data_, councilSafe_));
 
         signature = abi.encodePacked(r, s, v);
     }
 
     function safeHelper(address to_, uint256 value_, bytes memory data_) public {
-        safeHelper(councilSafe, councilMemberPK, to_, data_, value_);
+        safeHelper(councilSafe, councilMemberPk, to_, data_, value_);
     }
 
-    function safeHelper(Safe councilSafe_, uint256 councilMemberPK_, address to_, bytes memory data_) public {
-        safeHelper(councilSafe_, councilMemberPK_, to_, data_, 0);
+    function safeHelper(Safe councilSafe_, uint256 councilMemberPk_, address to_, bytes memory data_) public {
+        safeHelper(councilSafe_, councilMemberPk_, to_, data_, 0);
     }
 
-    function safeHelper(Safe councilSafe_, uint256 councilMemberPK_, address to_, bytes memory data_, uint256 value_)
+    function safeHelper(Safe councilSafe_, uint256 councilMemberPk_, address to_, bytes memory data_, uint256 value_)
         public
     {
         bytes memory sign;
         {
-            sign = getSignature(to_, data_, councilSafe_, councilMemberPK_);
+            sign = getSignature(to_, data_, councilSafe_, councilMemberPk_);
         }
         assertTrue(
             councilSafe_.execTransaction(
