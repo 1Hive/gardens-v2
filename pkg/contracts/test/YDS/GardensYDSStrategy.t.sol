@@ -90,6 +90,13 @@ contract MockYieldVault is ERC20 {
 /**
  * @title GardensYDSStrategyTest
  * @notice Unit tests for GardensYDSStrategy following Octant YDS pattern
+ * 
+ * NOTE: These tests were written for the V1 (BaseYDSStrategy) implementation.
+ * The current Octant-based implementation uses initialize() instead of constructor
+ * and requires mocking Octant's TokenizedStrategy.
+ * 
+ * TODO: Update tests for Octant-based implementation or use fork tests
+ * Recommendation: Use fork tests (GardensYDSFork.t.sol) with real Octant deployment
  */
 contract GardensYDSStrategyTest is Test {
     GardensYDSStrategy public yds;

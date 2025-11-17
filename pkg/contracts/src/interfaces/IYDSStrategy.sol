@@ -43,6 +43,9 @@ interface IYDSStrategy is IERC4626 {
     /// @notice Get the current donation recipient address
     function donationRecipient() external view returns (address);
 
+    /// @notice Get the pending donation recipient address (two-step process)
+    function pendingDonationRecipient() external view returns (address);
+
     /// @notice Set new donation recipient (two-step process)
     function proposeDonationRecipient(address newRecipient) external;
 
@@ -69,6 +72,9 @@ interface IYDSStrategy is IERC4626 {
 
     /// @notice Get last total assets value
     function lastTotalAssets() external view returns (uint256);
+
+    /// @notice Emergency withdraw all funds from external yield sources
+    function emergencyWithdraw() external;
 }
 
 

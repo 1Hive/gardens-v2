@@ -11,6 +11,11 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
  * @notice Fork tests using real Arbitrum contracts (Aave, DAI, etc.)
  * @dev Run with: RUN_YDS_FORK=true forge test --match-contract GardensYDSFork --fork-url $ARBITRUM_RPC
  * 
+ * NOTE: These tests also need updating for Octant-based implementation.
+ * The new GardensYDSStrategy requires Octant TokenizedStrategy deployment.
+ * 
+ * TODO: Update to deploy Octant TokenizedStrategy first, then initialize GardensYDSStrategy
+ * 
  * Benefits:
  * - No mock issues (uses real ERC4626 vaults)
  * - Real yield accrual

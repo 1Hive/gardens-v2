@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 import "forge-std/Script.sol";
-import {GardensYDSStrategy} from "../src/yds/GardensYDSStrategy.sol";
+import {IYDSStrategy} from "../src/interfaces/IYDSStrategy.sol";
 import {CVStrategy} from "../src/CVStrategy/CVStrategy.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Library.sol";
 
@@ -54,7 +54,7 @@ contract ConfigureYDSForStreaming is Script {
         
         vm.startBroadcast(deployerPrivateKey);
         
-        GardensYDSStrategy yds = GardensYDSStrategy(config.ydsStrategy);
+        IYDSStrategy yds = IYDSStrategy(config.ydsStrategy);
         CVStrategy cv = CVStrategy(payable(config.cvStrategy));
         ISuperToken superToken = ISuperToken(config.superToken);
         
@@ -115,7 +115,7 @@ contract ConfigureYDSForStreaming is Script {
      * @notice Helper to accept donation recipient (call from GDA controller)
      */
     function acceptDonationRecipient(address ydsStrategy) external {
-        GardensYDSStrategy(ydsStrategy).acceptDonationRecipient();
+        IYDSStrategy(ydsStrategy).acceptDonationRecipient();
         console.log("Donation recipient accepted");
     }
 }

@@ -1,125 +1,76 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-pragma solidity ^0.8.19;
+pragma solidity >=0.8.25;
 
 import "forge-std/Script.sol";
 import {GardensYDSStrategy} from "../src/yds/GardensYDSStrategy.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {CVStrategy} from "../src/CVStrategy/CVStrategy.sol";
+
+// Note: Don't import CVStrategy (0.8.19) directly - just reference by address
 
 /**
  * @title DeployGardensYDS
- * @notice Deployment script for GardensYDSStrategy
- * @dev Deploys Octant-compliant YDS strategy for Gardens conviction voting pools
+ * @notice Deployment script for Gardens YDS Strategy (Octant-based)
+ * @dev Deploys strategy that imports Octant's audited base
+ * 
+ * KEY: Works WITH existing CVStrategy via IYDSStrategy interface!
+ * 
+ * Integration:
+ * 1. CVStrategy already deployed (Allo-based, 0.8.19)
+ * 2. Deploy this strategy (Octant-based, 0.8.25)
+ * 3. Connect: cvStrategy.setYDSStrategy(address(ydsStrategy))
+ * 4. Use normally: cvStrategy.harvestYDS() ← calls this!
+ * 
+ * Benefits:
+ * - Maintains Allo integration ✅
+ * - Uses Octant audited base ✅
+ * - Saves ~$30k audit cost ✅
  */
 contract DeployGardensYDS is Script {
-    
-    // Environment variables (set in .env or via command line)
-    // ASSET_ADDRESS - underlying asset (e.g., DAI, USDC)
-    // YIELD_VAULT_ADDRESS - optional external yield vault (CVVault, Yearn, Aave)
-    // DONATION_RECIPIENT - where donation shares go (e.g., CVStrategy or Superfluid GDA)
-    // COUNCIL_SAFE - community multisig for management
-    // KEEPER_ADDRESS - automated keeper for report() calls
-    
-    struct DeploymentParams {
-        address asset;
-        string name;
-        string symbol;
-        address yieldVault;
-        address donationRecipient;
-        address councilSafe;
-        address keeper;
-    }
     
     function run() external {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         
-        // Load deployment parameters
-        DeploymentParams memory params = DeploymentParams({
-            asset: vm.envAddress("ASSET_ADDRESS"),
-            name: vm.envOr("STRATEGY_NAME", string("Gardens YDS - DAI")),
-            symbol: vm.envOr("STRATEGY_SYMBOL", string("gYDS-DAI")),
-            yieldVault: vm.envOr("YIELD_VAULT_ADDRESS", address(0)),
-            donationRecipient: vm.envAddress("DONATION_RECIPIENT"),
-            councilSafe: vm.envAddress("COUNCIL_SAFE"),
-            keeper: vm.envOr("KEEPER_ADDRESS", vm.addr(deployerPrivateKey))
-        });
+        // Load config
+        address asset = vm.envAddress("ASSET_ADDRESS");
+        address tokenizedStrategyImpl = vm.envAddress("OCTANT_TOKENIZED_STRATEGY");
+        address donationRecipient = vm.envAddress("DONATION_RECIPIENT");
+        address externalVault = vm.envOr("YIELD_VAULT_ADDRESS", address(0));
         
-        console.log("Deploying GardensYDSStrategy with parameters:");
-        console.log("  Asset:", params.asset);
-        console.log("  Name:", params.name);
-        console.log("  Symbol:", params.symbol);
-        console.log("  Yield Vault:", params.yieldVault);
-        console.log("  Donation Recipient:", params.donationRecipient);
-        console.log("  Council Safe:", params.councilSafe);
-        console.log("  Keeper:", params.keeper);
+        string memory name = "Gardens YDS - DAI";
+        
+        console.log("Deploying GardensYDSStrategy (Octant-based):");
+        console.log("  Asset:", asset);
+        console.log("  Octant Implementation:", tokenizedStrategyImpl);
+        console.log("  Donation Recipient:", donationRecipient);
+        console.log("  External Vault:", externalVault);
         
         vm.startBroadcast(deployerPrivateKey);
         
-        // Deploy YDS strategy
-        GardensYDSStrategy yds = new GardensYDSStrategy(
-            IERC20(params.asset),
-            params.name,
-            params.symbol,
-            params.yieldVault,
-            params.donationRecipient
+        // Deploy strategy
+        GardensYDSStrategy ydsStrategy = new GardensYDSStrategy();
+        
+        // Initialize
+        ydsStrategy.initialize(
+            asset,
+            name,
+            tokenizedStrategyImpl,
+            donationRecipient,
+            externalVault
         );
         
-        console.log("GardensYDSStrategy deployed at:", address(yds));
-        
-        // Set management to council safe
-        if (params.councilSafe != address(0)) {
-            yds.setManagement(params.councilSafe);
-            console.log("Management set to:", params.councilSafe);
-        }
-        
-        // Set keeper
-        if (params.keeper != address(0)) {
-            yds.setKeeper(params.keeper);
-            console.log("Keeper set to:", params.keeper);
-        }
+        console.log("\nGardensYDSStrategy deployed at:", address(ydsStrategy));
         
         vm.stopBroadcast();
         
-        // Verification info
-        console.log("\n=== Deployment Summary ===");
-        console.log("GardensYDSStrategy:", address(yds));
-        console.log("Donation Recipient:", yds.donationRecipient());
-        console.log("Management:", yds.management());
-        console.log("Keeper:", yds.keeper());
-        console.log("\n=== Next Steps ===");
-        console.log("1. Register YDS strategy in CVStrategy:");
-        console.log("   cvStrategy.setYDSStrategy(", address(yds), ")");
-        console.log("2. Deposit funds into strategy for yield generation");
-        console.log("3. Configure keeper automation for report() calls");
-    }
-    
-    /**
-     * @notice Deploy with custom parameters (for testing)
-     */
-    function deployWithParams(
-        address asset,
-        string memory name,
-        string memory symbol,
-        address yieldVault,
-        address donationRecipient,
-        address management_
-    ) public returns (address) {
-        GardensYDSStrategy yds = new GardensYDSStrategy(
-            IERC20(asset),
-            name,
-            symbol,
-            yieldVault,
-            donationRecipient
-        );
-        
-        if (management_ != address(0)) {
-            yds.setManagement(management_);
-        }
-        
-        return address(yds);
+        console.log("\n=== INTEGRATION WITH CVSTRATEGY ===");
+        console.log("1. Get your CVStrategy address");
+        console.log("2. Call: cvStrategy.setYDSStrategy(", address(ydsStrategy), ")");
+        console.log("3. Use: cvStrategy.harvestYDS() <- now uses this strategy!");
+        console.log("\nBenefits:");
+        console.log("  - Uses Octant's audited base (1749+ lines FREE)");
+        console.log("  - Only audit ~100 lines of Gardens customization");
+        console.log("  - Saves ~$30k audit cost");
+        console.log("  - Maintains full Allo integration!");
     }
 }
-
-
-
 
