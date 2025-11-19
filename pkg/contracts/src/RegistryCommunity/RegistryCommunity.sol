@@ -5,10 +5,12 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 
-import {ReentrancyGuardUpgradeable} from
-    "openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
-import {AccessControlUpgradeable} from
-    "openzeppelin-contracts-upgradeable/contracts/access/AccessControlUpgradeable.sol";
+import {
+    ReentrancyGuardUpgradeable
+} from "openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
+import {
+    AccessControlUpgradeable
+} from "openzeppelin-contracts-upgradeable/contracts/access/AccessControlUpgradeable.sol";
 
 import {Clone} from "allo-v2-contracts/core/libraries/Clone.sol";
 import {IRegistry, Metadata} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
@@ -113,8 +115,7 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
     /*|--------------------------------------------|*/
 
     error AllowlistTooBig(uint256 size); // 0x83d888a8
-    // error AddressCannotBeZero(); // 0xe622e040
-    error OnlyEmptyCommunity(uint256 totalMembers); // 0xfb2aa73e
+        error OnlyEmptyCommunity(uint256 totalMembers); // 0xfb2aa73e
     error UserNotInCouncil(address _user); // 0xfc4be72f
     error UserNotInRegistry(); // 0x6a5cfb6d
     error UserAlreadyActivated(); // 0xd5b9bc96
@@ -248,9 +249,8 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
         }
     }
 
-    // function _revertZeroAddress(address _address) internal pure {
-    //     if (_address == address(0)) revert AddressCannotBeZero();
-    // }
+    function _revertZeroAddress(address _address) internal pure {
+    }
 
     function setStrategyTemplate(address template) external onlyOwner {
         strategyTemplate = template;
@@ -274,14 +274,14 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
 
         _setRoleAdmin(COUNCIL_MEMBER, DEFAULT_ADMIN_ROLE);
 
-        // _revertZeroAddress(address(params._gardenToken));
-        // _revertZeroAddress(params._councilSafe);
-        // _revertZeroAddress(params._allo);
-        // _revertZeroAddress(params._registryFactory);
+        _revertZeroAddress(address(params._gardenToken));
+        _revertZeroAddress(params._councilSafe);
+        _revertZeroAddress(params._allo);
+        _revertZeroAddress(params._registryFactory);
 
-        // if (params._communityFee != 0) {
-        //     _revertZeroAddress(params._feeReceiver);
-        // }
+        if (params._communityFee != 0) {
+            _revertZeroAddress(params._feeReceiver);
+        }
         allo = FAllo(params._allo);
         gardenToken = params._gardenToken;
         if (params._registerStakeAmount == 0) {

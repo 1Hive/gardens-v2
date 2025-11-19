@@ -27,7 +27,8 @@ import {
     PointSystem,
     ProposalType,
     ArbitrableConfig,
-    PointSystemConfig
+    PointSystemConfig,
+    CVParams
 } from "../src/CVStrategy/CVStrategy.sol";
 import {CollateralVault} from "../src/CollateralVault.sol";
 import {SafeArbitrator} from "../src/SafeArbitrator.sol";
@@ -190,7 +191,12 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         vm.stopPrank();
     }
 
-    
+    function _updateAllowlist(CVStrategy target, address[] memory membersToAdd, address[] memory membersToRemove) internal {
+        ArbitrableConfig memory emptyArbConfig =
+            ArbitrableConfig(IArbitrator(address(0)), address(0), 0, 0, 0, 0);
+        CVParams memory emptyCvParams = CVParams(0, 0, 0, 0);
+        target.setPoolParams(emptyArbConfig, emptyCvParams, 0, membersToAdd, membersToRemove, address(0));
+    }
 
     function _registryCommunity() internal view returns (RegistryCommunity) {
         return registryCommunity;
@@ -906,7 +912,8 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         vm.startPrank(address(councilSafe));
         address[] memory membersToAdd = new address[](1);
         membersToAdd[0] = gardenOwner;
-        allowlistStrategy.addToAllowList(membersToAdd);
+        address[] memory emptyRemove = new address[](0);
+        _updateAllowlist(allowlistStrategy, membersToAdd, emptyRemove);
         vm.stopPrank();
         // Now should be able to activate points
         vm.startPrank(gardenOwner);
@@ -934,7 +941,8 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
                 arbitrableConfig,
                 allowlist,
                 address(0),
-                0
+                0,
+                address(0)
             ),
             metadata
         );
@@ -961,7 +969,8 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
                 arbitrableConfig,
                 allowlist,
                 address(0),
-                0
+                0,
+                address(0)
             ),
             metadata
         );
@@ -975,7 +984,8 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         _registryCommunity().addStrategy(address(strategy));
         address[] memory membersToAdd = new address[](1);
         membersToAdd[0] = gardenMember;
-        strategy.addToAllowList(membersToAdd);
+        address[] memory emptyRemove = new address[](0);
+        _updateAllowlist(strategy, membersToAdd, emptyRemove);
         vm.stopPrank();
 
         vm.startPrank(gardenMember);
@@ -998,7 +1008,8 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         _registryCommunity().addStrategy(address(strategy));
         address[] memory membersToAdd = new address[](1);
         membersToAdd[0] = gardenMember;
-        strategy.addToAllowList(membersToAdd);
+        address[] memory emptyRemove = new address[](0);
+        _updateAllowlist(strategy, membersToAdd, emptyRemove);
         vm.stopPrank();
 
         vm.startPrank(gardenMember);
@@ -1010,7 +1021,8 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         vm.startPrank(address(councilSafe));
         address[] memory membersToRemove = new address[](1);
         membersToRemove[0] = gardenMember;
-        strategy.removeFromAllowList(membersToRemove);
+        address[] memory emptyAdd = new address[](0);
+        _updateAllowlist(strategy, emptyAdd, membersToRemove);
         vm.stopPrank();
         // gardenMember isn't in allowlist, so should revert
         vm.startPrank(gardenMember);
@@ -1039,7 +1051,8 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
                 arbitrableConfig,
                 allowlist,
                 address(0),
-                0
+                0,
+                address(0)
             ),
             metadata
         );
@@ -1078,7 +1091,8 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
                 arbitrableConfig,
                 new address[](1),
                 address(0),
-                0
+                0,
+                address(0)
             ),
             metadata
         );
@@ -1227,7 +1241,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         _registryCommunity().stakeAndRegisterMember("");
         vm.stopPrank();
         vm.startPrank(address(strategy));
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.UserAlreadyDeactivated.selector));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.PointsDeactivated.selector));
         _registryCommunity().deactivateMemberInStrategy(gardenMember, address(strategy));
         vm.stopPrank();
         stopMeasuringGas();
@@ -1322,7 +1336,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         _registryCommunity().setCouncilSafe(payable(newCouncilSafe));
         vm.stopPrank();
         vm.startPrank(address(councilSafe));
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.AddressCannotBeZero.selector));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.ValueCannotBeZero.selector));
         _registryCommunity().setCouncilSafe(payable(address(0)));
         _registryCommunity().setCouncilSafe(payable(newCouncilSafe));
         assertEq(address(_registryCommunity().pendingCouncilSafe()), address(newCouncilSafe));
@@ -1480,7 +1494,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
 
         vm.startPrank(address(councilSafe));
 
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.AddressCannotBeZero.selector));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.ValueCannotBeZero.selector));
         _registryCommunity().removeStrategyByPoolId(poolId + 1);
 
         vm.stopPrank();
@@ -1497,7 +1511,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         vm.stopPrank();
 
         vm.startPrank(address(councilSafe));
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.AddressCannotBeZero.selector));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.ValueCannotBeZero.selector));
         _registryCommunity().addStrategyByPoolId(poolId + 1);
         vm.stopPrank();
 
