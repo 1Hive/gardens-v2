@@ -236,10 +236,6 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         }
     }
 
-    function supportsInterface(bytes4 interfaceId) public view override(ERC165) returns (bool) {
-        return interfaceId == type(IArbitrable).interfaceId || super.supportsInterface(interfaceId);
-    }
-
     /*|--------------------------------------------|*/
     /*|                 MODIFIERS                  |*/
     /*|--------------------------------------------|*/

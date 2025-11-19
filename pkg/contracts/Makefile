@@ -170,7 +170,7 @@ upgrade-opsep:
 	-vvv
 
 upgrade-diamond-opsep: # verify-storage
-	-forge script script/UpgradeCVDiamondTest.s.sol:UpgradeCVDiamondTest \
+	-forge script script/UpgradeCVDiamond.s.sol:UpgradeCVDiamond \
 	--rpc-url $(RPC_URL_OP_TESTNET) \
 	--sig "run(string)" 'opsepolia' \
 	--account pkGarden \
@@ -183,7 +183,7 @@ upgrade-diamond-opsep: # verify-storage
 	-vvv
 
 upgrade-community-diamond-opsep:  
-	-forge script script/UpgradeRegistryCommunityDiamondTest.s.sol:UpgradeRegistryCommunityDiamondTest \
+	-forge script script/UpgradeRegistryCommunityDiamond.s.sol:UpgradeRegistryCommunityDiamond \
 	--rpc-url $(RPC_URL_OP_TESTNET) \
 	--sig "run(string)" 'opsepolia' \
 	--account pkGarden \

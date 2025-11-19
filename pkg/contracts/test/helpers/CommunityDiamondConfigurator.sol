@@ -7,8 +7,12 @@ import {CommunityPowerFacet} from "../../src/RegistryCommunity/facets/CommunityP
 import {CommunityStrategyFacet} from "../../src/RegistryCommunity/facets/CommunityStrategyFacet.sol";
 import {CommunityAdminFacet} from "../../src/RegistryCommunity/facets/CommunityAdminFacet.sol";
 import {CommunityPoolFacet} from "../../src/RegistryCommunity/facets/CommunityPoolFacet.sol";
+import {DiamondLoupeFacet} from "../../src/diamonds/facets/DiamondLoupeFacet.sol";
+import {RegistryCommunityDiamondInit} from "../../src/RegistryCommunity/RegistryCommunityDiamondInit.sol";
 import {IDiamondCut} from "../../src/diamonds/interfaces/IDiamondCut.sol";
 import {IDiamond} from "../../src/diamonds/interfaces/IDiamond.sol";
+import {IDiamondLoupe} from "../../src/diamonds/interfaces/IDiamondLoupe.sol";
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 /**
  * @title CommunityDiamondConfigurator
@@ -21,6 +25,8 @@ contract CommunityDiamondConfigurator {
     CommunityStrategyFacet public strategyFacet;
     CommunityAdminFacet public adminFacet;
     CommunityPoolFacet public poolFacet;
+    DiamondLoupeFacet public loupeFacet;
+    RegistryCommunityDiamondInit public diamondInit;
 
     constructor() {
         // Deploy all facets
@@ -29,6 +35,8 @@ contract CommunityDiamondConfigurator {
         strategyFacet = new CommunityStrategyFacet();
         adminFacet = new CommunityAdminFacet();
         poolFacet = new CommunityPoolFacet();
+        loupeFacet = new DiamondLoupeFacet();
+        diamondInit = new RegistryCommunityDiamondInit();
     }
 
     /**
@@ -36,7 +44,7 @@ contract CommunityDiamondConfigurator {
      * @return cuts Array of FacetCut structs to pass to diamondCut()
      */
     function getFacetCuts() public view returns (IDiamond.FacetCut[] memory cuts) {
-        cuts = new IDiamond.FacetCut[](5);
+        cuts = new IDiamond.FacetCut[](6);
 
         // CommunityMemberFacet functions
         bytes4[] memory memberSelectors = new bytes4[](6);
@@ -106,6 +114,19 @@ contract CommunityDiamondConfigurator {
             functionSelectors: poolSelectors
         });
 
+        // DiamondLoupeFacet functions - all 5 selectors including supportsInterface
+        bytes4[] memory loupeSelectors = new bytes4[](5);
+        loupeSelectors[0] = IDiamondLoupe.facets.selector;
+        loupeSelectors[1] = IDiamondLoupe.facetFunctionSelectors.selector;
+        loupeSelectors[2] = IDiamondLoupe.facetAddresses.selector;
+        loupeSelectors[3] = IDiamondLoupe.facetAddress.selector;
+        loupeSelectors[4] = IERC165.supportsInterface.selector;
+        cuts[5] = IDiamond.FacetCut({
+            facetAddress: address(loupeFacet),
+            action: IDiamond.FacetCutAction.Add,
+            functionSelectors: loupeSelectors
+        });
+
         return cuts;
     }
 
@@ -116,6 +137,6 @@ contract CommunityDiamondConfigurator {
      */
     function configureFacets(address community) external {
         IDiamond.FacetCut[] memory cuts = getFacetCuts();
-        RegistryCommunity(payable(community)).diamondCut(cuts, address(0), "");
+        RegistryCommunity(payable(community)).diamondCut(cuts, address(diamondInit), abi.encodeCall(RegistryCommunityDiamondInit.init, ()));
     }
 }

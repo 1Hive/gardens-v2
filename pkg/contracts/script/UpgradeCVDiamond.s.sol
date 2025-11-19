@@ -8,9 +8,13 @@ import {CVAllocationFacet} from "../src/CVStrategy/facets/CVAllocationFacet.sol"
 import {CVDisputeFacet} from "../src/CVStrategy/facets/CVDisputeFacet.sol";
 import {CVPowerFacet} from "../src/CVStrategy/facets/CVPowerFacet.sol";
 import {CVProposalFacet} from "../src/CVStrategy/facets/CVProposalFacet.sol";
+import {DiamondLoupeFacet} from "../src/diamonds/facets/DiamondLoupeFacet.sol";
+import {CVStrategyDiamondInit} from "../src/CVStrategy/CVStrategyDiamondInit.sol";
 import {RegistryCommunity} from "../src/RegistryCommunity/RegistryCommunity.sol";
 import {RegistryFactory} from "../src/RegistryFactory/RegistryFactory.sol";
 import {IDiamond} from "../src/diamonds/interfaces/IDiamond.sol";
+import {IDiamondLoupe} from "../src/diamonds/interfaces/IDiamondLoupe.sol";
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {ProxyOwner} from "../src/ProxyOwner.sol";
 import "forge-std/console2.sol";
 
@@ -30,9 +34,13 @@ contract UpgradeCVDiamond is BaseMultiChain {
     CVDisputeFacet public disputeFacet;
     CVPowerFacet public powerFacet;
     CVProposalFacet public proposalFacet;
+    DiamondLoupeFacet public loupeFacet;
 
     function runCurrentNetwork(string memory networkJson) public override {
-        bool directBroadcast = directBroadcastOverride || vm.envOr("DIRECT_CV_DIAMOND", false);
+        // Auto-detect direct broadcast mode based on network config
+        // Testnets with "no-safe": true will use direct broadcast
+        // Production networks will generate Safe Transaction Builder JSON
+        bool directBroadcast = directBroadcastOverride || networkJson.readBool(getKeyNetwork(".no-safe"));
         console2.log(
             directBroadcast
                 ? "=== Starting Diamond Pattern Upgrade (Direct Broadcast) ==="
@@ -62,6 +70,9 @@ contract UpgradeCVDiamond is BaseMultiChain {
 
         proposalFacet = new CVProposalFacet();
         console2.log("  CVProposalFacet:", address(proposalFacet));
+
+        loupeFacet = new DiamondLoupeFacet();
+        console2.log("  DiamondLoupeFacet:", address(loupeFacet));
 
         address registryFactoryProxy = networkJson.readAddress(getKeyNetwork(".PROXIES.REGISTRY_FACTORY"));
         address[] memory registryCommunityProxies =
@@ -122,10 +133,13 @@ contract UpgradeCVDiamond is BaseMultiChain {
         }
 
         console2.log("\n[4/4] Upgrading CVStrategy proxies and applying diamond cuts...");
+        CVStrategyDiamondInit initContract = new CVStrategyDiamondInit();
+        console2.log("  CVStrategyDiamondInit deployed:", address(initContract));
+
         for (uint256 i = 0; i < cvStrategyProxies.length; i++) {
             CVStrategy cvStrategy = CVStrategy(payable(address(cvStrategyProxies[i])));
             cvStrategy.upgradeTo(strategyImplementation);
-            cvStrategy.diamondCut(cuts, address(0), "");
+            cvStrategy.diamondCut(cuts, address(initContract), abi.encodeCall(CVStrategyDiamondInit.init, ()));
             console2.log("  Strategy", i + 1, "upgraded with diamond facets:", cvStrategyProxies[i]);
         }
     }
@@ -162,8 +176,12 @@ contract UpgradeCVDiamond is BaseMultiChain {
         }
 
         console2.log("\n[4/5] Building CVStrategy upgrade + diamond cut transactions...");
+        CVStrategyDiamondInit initContract = new CVStrategyDiamondInit();
+        console2.log("  CVStrategyDiamondInit deployed:", address(initContract));
+
         bytes4 upgradeSelector = bytes4(keccak256("upgradeTo(address)"));
-        bytes memory diamondCutCalldata = abi.encodeWithSelector(CVStrategy.diamondCut.selector, cuts, address(0), "");
+        bytes memory diamondCutCalldata =
+            abi.encodeWithSelector(CVStrategy.diamondCut.selector, cuts, address(initContract), abi.encodeCall(CVStrategyDiamondInit.init, ()));
         bytes memory upgradeCalldata = abi.encodeWithSelector(upgradeSelector, strategyImplementation);
 
         for (uint256 i = 0; i < cvStrategyProxies.length; i++) {
@@ -186,7 +204,7 @@ contract UpgradeCVDiamond is BaseMultiChain {
      * @return cuts Array of FacetCut structs matching DiamondConfigurator pattern
      */
     function _getFacetCuts() internal view returns (IDiamond.FacetCut[] memory cuts) {
-        cuts = new IDiamond.FacetCut[](5);
+        cuts = new IDiamond.FacetCut[](6);
 
         // CVAdminFacet functions
         bytes4[] memory adminSelectors = new bytes4[](3);
@@ -237,6 +255,19 @@ contract UpgradeCVDiamond is BaseMultiChain {
             facetAddress: address(proposalFacet),
             action: IDiamond.FacetCutAction.Auto,
             functionSelectors: proposalSelectors
+        });
+
+        // DiamondLoupeFacet functions - all 5 selectors including supportsInterface
+        bytes4[] memory loupeSelectors = new bytes4[](5);
+        loupeSelectors[0] = IDiamondLoupe.facets.selector;
+        loupeSelectors[1] = IDiamondLoupe.facetFunctionSelectors.selector;
+        loupeSelectors[2] = IDiamondLoupe.facetAddresses.selector;
+        loupeSelectors[3] = IDiamondLoupe.facetAddress.selector;
+        loupeSelectors[4] = IERC165.supportsInterface.selector;
+        cuts[5] = IDiamond.FacetCut({
+            facetAddress: address(loupeFacet),
+            action: IDiamond.FacetCutAction.Auto,
+            functionSelectors: loupeSelectors
         });
 
         return cuts;

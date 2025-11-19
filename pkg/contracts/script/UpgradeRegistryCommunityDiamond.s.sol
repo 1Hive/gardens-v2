@@ -9,7 +9,11 @@ import {CommunityMemberFacet} from "../src/RegistryCommunity/facets/CommunityMem
 import {CommunityPoolFacet} from "../src/RegistryCommunity/facets/CommunityPoolFacet.sol";
 import {CommunityPowerFacet} from "../src/RegistryCommunity/facets/CommunityPowerFacet.sol";
 import {CommunityStrategyFacet} from "../src/RegistryCommunity/facets/CommunityStrategyFacet.sol";
+import {DiamondLoupeFacet} from "../src/diamonds/facets/DiamondLoupeFacet.sol";
+import {RegistryCommunityDiamondInit} from "../src/RegistryCommunity/RegistryCommunityDiamondInit.sol";
 import {IDiamond} from "../src/diamonds/interfaces/IDiamond.sol";
+import {IDiamondLoupe} from "../src/diamonds/interfaces/IDiamondLoupe.sol";
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {ProxyOwner} from "../src/ProxyOwner.sol";
 import "forge-std/console2.sol";
 
@@ -29,9 +33,13 @@ contract UpgradeRegistryCommunityDiamond is BaseMultiChain {
     CommunityPoolFacet public poolFacet;
     CommunityPowerFacet public powerFacet;
     CommunityStrategyFacet public strategyFacet;
+    DiamondLoupeFacet public loupeFacet;
 
     function runCurrentNetwork(string memory networkJson) public override {
-        bool directBroadcast = directBroadcastOverride || vm.envOr("DIRECT_COMMUNITY_DIAMOND", false);
+        // Auto-detect direct broadcast mode based on network config
+        // Testnets with "no-safe": true will use direct broadcast
+        // Production networks will generate Safe Transaction Builder JSON
+        bool directBroadcast = directBroadcastOverride || networkJson.readBool(getKeyNetwork(".no-safe"));
         console2.log(
             directBroadcast
                 ? "=== Starting RegistryCommunity Diamond Pattern Upgrade (Direct Broadcast) ==="
@@ -61,6 +69,9 @@ contract UpgradeRegistryCommunityDiamond is BaseMultiChain {
 
         strategyFacet = new CommunityStrategyFacet();
         console2.log("  CommunityStrategyFacet:", address(strategyFacet));
+
+        loupeFacet = new DiamondLoupeFacet();
+        console2.log("  DiamondLoupeFacet:", address(loupeFacet));
 
         address registryFactoryProxy = networkJson.readAddress(getKeyNetwork(".PROXIES.REGISTRY_FACTORY"));
         RegistryFactory registryFactory = RegistryFactory(payable(address(registryFactoryProxy)));
@@ -107,10 +118,13 @@ contract UpgradeRegistryCommunityDiamond is BaseMultiChain {
         console2.log("  RegistryFactory template updated:", registryFactoryProxy);
 
         console2.log("\n[3/3] Upgrading RegistryCommunity proxies and applying diamond cuts...");
+        RegistryCommunityDiamondInit initContract = new RegistryCommunityDiamondInit();
+        console2.log("  RegistryCommunityDiamondInit deployed:", address(initContract));
+
         for (uint256 i = 0; i < registryCommunityProxies.length; i++) {
             RegistryCommunity community = RegistryCommunity(payable(address(registryCommunityProxies[i])));
             community.upgradeTo(communityImplementation);
-            community.diamondCut(cuts, address(0), "");
+            community.diamondCut(cuts, address(initContract), abi.encodeCall(RegistryCommunityDiamondInit.init, ()));
             console2.log("  Community", i + 1, "upgraded with diamond facets:", registryCommunityProxies[i]);
         }
     }
@@ -133,8 +147,12 @@ contract UpgradeRegistryCommunityDiamond is BaseMultiChain {
         }
 
         console2.log("\n[3/4] Building RegistryCommunity upgrade + diamond cut transactions...");
-        bytes memory diamondCutCalldata =
-            abi.encodeWithSelector(RegistryCommunity.diamondCut.selector, cuts, address(0), "");
+        RegistryCommunityDiamondInit initContract = new RegistryCommunityDiamondInit();
+        console2.log("  RegistryCommunityDiamondInit deployed:", address(initContract));
+
+        bytes memory diamondCutCalldata = abi.encodeWithSelector(
+            RegistryCommunity.diamondCut.selector, cuts, address(initContract), abi.encodeCall(RegistryCommunityDiamondInit.init, ())
+        );
 
         for (uint256 i = 0; i < registryCommunityProxies.length; i++) {
             RegistryCommunity community = RegistryCommunity(payable(address(registryCommunityProxies[i])));
@@ -163,7 +181,7 @@ contract UpgradeRegistryCommunityDiamond is BaseMultiChain {
      * @return cuts Array of FacetCut structs for RegistryCommunity facets
      */
     function _getFacetCuts() internal view returns (IDiamond.FacetCut[] memory cuts) {
-        cuts = new IDiamond.FacetCut[](5);
+        cuts = new IDiamond.FacetCut[](6);
 
         // CommunityAdminFacet functions
         bytes4[] memory adminSelectors = new bytes4[](9);
@@ -240,6 +258,19 @@ contract UpgradeRegistryCommunityDiamond is BaseMultiChain {
             facetAddress: address(strategyFacet),
             action: IDiamond.FacetCutAction.Auto,
             functionSelectors: strategySelectors
+        });
+
+        // DiamondLoupeFacet functions - all 5 selectors including supportsInterface
+        bytes4[] memory loupeSelectors = new bytes4[](5);
+        loupeSelectors[0] = IDiamondLoupe.facets.selector;
+        loupeSelectors[1] = IDiamondLoupe.facetFunctionSelectors.selector;
+        loupeSelectors[2] = IDiamondLoupe.facetAddresses.selector;
+        loupeSelectors[3] = IDiamondLoupe.facetAddress.selector;
+        loupeSelectors[4] = IERC165.supportsInterface.selector;
+        cuts[5] = IDiamond.FacetCut({
+            facetAddress: address(loupeFacet),
+            action: IDiamond.FacetCutAction.Auto,
+            functionSelectors: loupeSelectors
         });
 
         return cuts;

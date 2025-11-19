@@ -7,8 +7,12 @@ import {CVAllocationFacet} from "../../src/CVStrategy/facets/CVAllocationFacet.s
 import {CVDisputeFacet} from "../../src/CVStrategy/facets/CVDisputeFacet.sol";
 import {CVPowerFacet} from "../../src/CVStrategy/facets/CVPowerFacet.sol";
 import {CVProposalFacet} from "../../src/CVStrategy/facets/CVProposalFacet.sol";
+import {DiamondLoupeFacet} from "../../src/diamonds/facets/DiamondLoupeFacet.sol";
+import {CVStrategyDiamondInit} from "../../src/CVStrategy/CVStrategyDiamondInit.sol";
 import {IDiamondCut} from "../../src/diamonds/interfaces/IDiamondCut.sol";
 import {IDiamond} from "../../src/diamonds/interfaces/IDiamond.sol";
+import {IDiamondLoupe} from "../../src/diamonds/interfaces/IDiamondLoupe.sol";
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 /**
  * @title DiamondConfigurator
@@ -21,6 +25,8 @@ contract DiamondConfigurator {
     CVDisputeFacet public disputeFacet;
     CVPowerFacet public powerManagementFacet;
     CVProposalFacet public proposalManagementFacet;
+    DiamondLoupeFacet public loupeFacet;
+    CVStrategyDiamondInit public diamondInit;
 
     constructor() {
         // Deploy all facets
@@ -29,6 +35,8 @@ contract DiamondConfigurator {
         disputeFacet = new CVDisputeFacet();
         powerManagementFacet = new CVPowerFacet();
         proposalManagementFacet = new CVProposalFacet();
+        loupeFacet = new DiamondLoupeFacet();
+        diamondInit = new CVStrategyDiamondInit();
     }
 
     /**
@@ -36,7 +44,7 @@ contract DiamondConfigurator {
      * @return cuts Array of FacetCut structs to pass to diamondCut()
      */
     function getFacetCuts() public view returns (IDiamond.FacetCut[] memory cuts) {
-        cuts = new IDiamond.FacetCut[](5);
+        cuts = new IDiamond.FacetCut[](6);
 
         // CVAdminFacet functions
         bytes4[] memory adminSelectors = new bytes4[](3);
@@ -70,10 +78,12 @@ contract DiamondConfigurator {
         });
 
         // CVPowerFacet functions
-        bytes4[] memory powerSelectors = new bytes4[](3);
-        powerSelectors[0] = CVPowerFacet.decreasePower.selector;
-        powerSelectors[1] = bytes4(keccak256("deactivatePoints()")); // No-parameter version
-        powerSelectors[2] = bytes4(keccak256("deactivatePoints(address)")); // With address parameter
+        bytes4[] memory powerSelectors = new bytes4[](5);
+        powerSelectors[0] = CVPowerFacet.activatePoints.selector;
+        powerSelectors[1] = CVPowerFacet.increasePower.selector;
+        powerSelectors[2] = CVPowerFacet.decreasePower.selector;
+        powerSelectors[3] = bytes4(keccak256("deactivatePoints()")); // No-parameter version
+        powerSelectors[4] = bytes4(keccak256("deactivatePoints(address)")); // With address parameter
         cuts[3] = IDiamond.FacetCut({
             facetAddress: address(powerManagementFacet),
             action: IDiamond.FacetCutAction.Add,
@@ -91,6 +101,19 @@ contract DiamondConfigurator {
             functionSelectors: proposalSelectors
         });
 
+        // DiamondLoupeFacet functions - all 5 selectors including supportsInterface
+        bytes4[] memory loupeSelectors = new bytes4[](5);
+        loupeSelectors[0] = IDiamondLoupe.facets.selector;
+        loupeSelectors[1] = IDiamondLoupe.facetFunctionSelectors.selector;
+        loupeSelectors[2] = IDiamondLoupe.facetAddresses.selector;
+        loupeSelectors[3] = IDiamondLoupe.facetAddress.selector;
+        loupeSelectors[4] = IERC165.supportsInterface.selector;
+        cuts[5] = IDiamond.FacetCut({
+            facetAddress: address(loupeFacet),
+            action: IDiamond.FacetCutAction.Add,
+            functionSelectors: loupeSelectors
+        });
+
         return cuts;
     }
 
@@ -101,6 +124,6 @@ contract DiamondConfigurator {
      */
     function configureFacets(address payable strategy) external {
         IDiamond.FacetCut[] memory cuts = getFacetCuts();
-        CVStrategy(strategy).diamondCut(cuts, address(0), "");
+        CVStrategy(strategy).diamondCut(cuts, address(diamondInit), abi.encodeCall(CVStrategyDiamondInit.init, ()));
     }
 }
