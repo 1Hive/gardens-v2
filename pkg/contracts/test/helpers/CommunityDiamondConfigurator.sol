@@ -9,6 +9,7 @@ import {CommunityAdminFacet} from "../../src/RegistryCommunity/facets/CommunityA
 import {CommunityPoolFacet} from "../../src/RegistryCommunity/facets/CommunityPoolFacet.sol";
 import {IDiamondCut} from "../../src/diamonds/interfaces/IDiamondCut.sol";
 import {IDiamond} from "../../src/diamonds/interfaces/IDiamond.sol";
+import {LibDiamond} from "../../src/diamonds/libraries/LibDiamond.sol";
 
 /**
  * @title CommunityDiamondConfigurator
@@ -110,5 +111,9 @@ contract CommunityDiamondConfigurator {
     function configureFacets(address community) external {
         IDiamond.FacetCut[] memory cuts = getFacetCuts();
         RegistryCommunity(payable(community)).diamondCut(cuts, address(0), "");
+    }
+
+    function knownSelectorName(bytes4 selector) external pure returns (string memory) {
+        return LibDiamond._knownSelectorName(selector);
     }
 }

@@ -128,7 +128,7 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
     error PointsDeactivated(); // 0xd4d3290e
     error DecreaseUnderMinimum(); // 0x9c47d02e
     error CantDecreaseMoreThanPower(uint256 _decreaseAmount, uint256 _currentPower); // 0x8a11f318
-    error CommunityFunctionDoesNotExist(bytes4 selector); // 0x8e2ba36a
+    error CommunityFunctionDoesNotExist(bytes4 selector, string knownSelectorName); // 0x8e2ba36a
 
     using ERC165Checker for address;
     using SafeERC20 for IERC20;
@@ -503,7 +503,7 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
 
         address facet = ds.facetAddressAndSelectorPosition[msg.sig].facetAddress;
         if (facet == address(0)) {
-            revert CommunityFunctionDoesNotExist(msg.sig);
+            revert CommunityFunctionDoesNotExist(msg.sig, LibDiamond._knownSelectorName(msg.sig));
         }
 
         assembly {
@@ -540,7 +540,7 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
         address facet = ds.facetAddressAndSelectorPosition[msg.sig].facetAddress;
 
         if (facet == address(0)) {
-            revert CommunityFunctionDoesNotExist(msg.sig);
+            revert CommunityFunctionDoesNotExist(msg.sig, LibDiamond._knownSelectorName(msg.sig));
         }
 
         assembly {

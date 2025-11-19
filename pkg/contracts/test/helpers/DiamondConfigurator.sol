@@ -9,6 +9,7 @@ import {CVPowerFacet} from "../../src/CVStrategy/facets/CVPowerFacet.sol";
 import {CVProposalFacet} from "../../src/CVStrategy/facets/CVProposalFacet.sol";
 import {IDiamondCut} from "../../src/diamonds/interfaces/IDiamondCut.sol";
 import {IDiamond} from "../../src/diamonds/interfaces/IDiamond.sol";
+import {LibDiamond} from "../../src/diamonds/libraries/LibDiamond.sol";
 
 /**
  * @title DiamondConfigurator
@@ -93,5 +94,9 @@ contract DiamondConfigurator {
     function configureFacets(address payable strategy) external {
         IDiamond.FacetCut[] memory cuts = getFacetCuts();
         CVStrategy(strategy).diamondCut(cuts, address(0), "");
+    }
+
+    function knownSelectorName(bytes4 selector) external pure returns (string memory) {
+        return LibDiamond._knownSelectorName(selector);
     }
 }

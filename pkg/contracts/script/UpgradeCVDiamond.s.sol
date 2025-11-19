@@ -12,7 +12,7 @@ import {RegistryCommunity} from "../src/RegistryCommunity/RegistryCommunity.sol"
 import {RegistryFactory} from "../src/RegistryFactory/RegistryFactory.sol";
 import {IDiamond} from "../src/diamonds/interfaces/IDiamond.sol";
 import {ProxyOwner} from "../src/ProxyOwner.sol";
-import {DiamondConfiguratorBase} from "../test/helpers/DiamondConfigurator.sol";
+import {DiamondConfigurator} from "../test/helpers/DiamondConfigurator.sol";
 import "forge-std/console2.sol";
 
 /**
@@ -20,7 +20,7 @@ import "forge-std/console2.sol";
  * @notice Upgrades CVStrategy contracts to diamond pattern with facets
  * @dev Can broadcast upgrades directly or generate Safe transaction payloads via a flag
  */
-contract UpgradeCVDiamond is BaseMultiChain, DiamondConfiguratorBase {
+contract UpgradeCVDiamond is BaseMultiChain, DiamondConfigurator {
     using stdJson for string;
 
     bool internal directBroadcastOverride;

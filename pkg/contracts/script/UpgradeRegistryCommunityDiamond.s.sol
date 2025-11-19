@@ -11,7 +11,7 @@ import {CommunityPowerFacet} from "../src/RegistryCommunity/facets/CommunityPowe
 import {CommunityStrategyFacet} from "../src/RegistryCommunity/facets/CommunityStrategyFacet.sol";
 import {IDiamond} from "../src/diamonds/interfaces/IDiamond.sol";
 import {ProxyOwner} from "../src/ProxyOwner.sol";
-import {CommunityDiamondConfiguratorBase} from "../test/helpers/CommunityDiamondConfigurator.sol";
+import {CommunityDiamondConfigurator} from "../test/helpers/CommunityDiamondConfigurator.sol";
 import "forge-std/console2.sol";
 
 /**
@@ -19,7 +19,7 @@ import "forge-std/console2.sol";
  * @notice Upgrades RegistryCommunity contracts to diamond pattern with facets
  * @dev Can broadcast upgrades directly or generate Safe transaction payloads via a flag
  */
-contract UpgradeRegistryCommunityDiamond is BaseMultiChain, CommunityDiamondConfiguratorBase {
+contract UpgradeRegistryCommunityDiamond is BaseMultiChain, CommunityDiamondConfigurator {
     using stdJson for string;
 
     bool internal directBroadcastOverride;
