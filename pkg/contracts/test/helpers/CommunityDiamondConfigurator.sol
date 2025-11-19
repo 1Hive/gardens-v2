@@ -74,16 +74,9 @@ contract CommunityDiamondConfigurator {
         });
 
         bytes4[] memory poolSelectors = new bytes4[](2);
-        poolSelectors[0] = bytes4(
-            keccak256(
-                "createPool(address,(uint256,bool,bool,bool,(uint256,uint256,uint256,uint256,uint256),(uint256,uint256,uint256,uint256),address,address,uint256,address[],address,uint256),(uint256,string))"
-            )
-        );
-        poolSelectors[1] = bytes4(
-            keccak256(
-                "createPool(address,address,(uint256,bool,bool,bool,(uint256,uint256,uint256,uint256,uint256),(uint256,uint256,uint256,uint256),address,address,uint256,address[],address,uint256),(uint256,string))"
-            )
-        );
+        // Hard-coded selectors for both overloads to avoid signature mismatches
+        poolSelectors[0] = 0x499ac57f;
+        poolSelectors[1] = 0xcd564dae;
         cuts[2] = IDiamond.FacetCut({
             facetAddress: address(_poolFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: poolSelectors
         });
