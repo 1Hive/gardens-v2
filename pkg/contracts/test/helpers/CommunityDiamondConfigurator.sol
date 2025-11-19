@@ -37,6 +37,16 @@ contract CommunityDiamondConfigurator {
      * @return cuts Array of FacetCut structs to pass to diamondCut()
      */
     function getFacetCuts() public view returns (IDiamond.FacetCut[] memory cuts) {
+        return getFacetCuts(adminFacet, memberFacet, poolFacet, powerFacet, strategyFacet);
+    }
+
+    function getFacetCuts(
+        CommunityAdminFacet _adminFacet,
+        CommunityMemberFacet _memberFacet,
+        CommunityPoolFacet _poolFacet,
+        CommunityPowerFacet _powerFacet,
+        CommunityStrategyFacet _strategyFacet
+    ) public pure returns (IDiamond.FacetCut[] memory cuts) {
         cuts = new IDiamond.FacetCut[](5);
 
         bytes4[] memory adminSelectors = new bytes4[](9);
@@ -49,9 +59,8 @@ contract CommunityDiamondConfigurator {
         adminSelectors[6] = CommunityAdminFacet.acceptCouncilSafe.selector;
         adminSelectors[7] = CommunityAdminFacet.setCommunityParams.selector;
         adminSelectors[8] = CommunityAdminFacet.isCouncilMember.selector;
-        cuts[0] = IDiamond.FacetCut({
-            facetAddress: address(adminFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: adminSelectors
-        });
+        cuts[0] =
+            IDiamond.FacetCut({facetAddress: address(_adminFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: adminSelectors});
 
         bytes4[] memory memberSelectors = new bytes4[](6);
         memberSelectors[0] = CommunityMemberFacet.stakeAndRegisterMember.selector;
@@ -61,7 +70,7 @@ contract CommunityDiamondConfigurator {
         memberSelectors[4] = CommunityMemberFacet.getBasisStakedAmount.selector;
         memberSelectors[5] = CommunityMemberFacet.getStakeAmountWithFees.selector;
         cuts[1] = IDiamond.FacetCut({
-            facetAddress: address(memberFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: memberSelectors
+            facetAddress: address(_memberFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: memberSelectors
         });
 
         bytes4[] memory poolSelectors = new bytes4[](2);
@@ -76,7 +85,7 @@ contract CommunityDiamondConfigurator {
             )
         );
         cuts[2] = IDiamond.FacetCut({
-            facetAddress: address(poolFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: poolSelectors
+            facetAddress: address(_poolFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: poolSelectors
         });
 
         bytes4[] memory powerSelectors = new bytes4[](6);
@@ -87,7 +96,7 @@ contract CommunityDiamondConfigurator {
         powerSelectors[4] = CommunityPowerFacet.getMemberPowerInStrategy.selector;
         powerSelectors[5] = CommunityPowerFacet.getMemberStakedAmount.selector;
         cuts[3] = IDiamond.FacetCut({
-            facetAddress: address(powerFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: powerSelectors
+            facetAddress: address(_powerFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: powerSelectors
         });
 
         bytes4[] memory strategySelectors = new bytes4[](5);
@@ -97,23 +106,9 @@ contract CommunityDiamondConfigurator {
         strategySelectors[3] = CommunityStrategyFacet.removeStrategy.selector;
         strategySelectors[4] = CommunityStrategyFacet.rejectPool.selector;
         cuts[4] = IDiamond.FacetCut({
-            facetAddress: address(strategyFacet),
+            facetAddress: address(_strategyFacet),
             action: IDiamond.FacetCutAction.Auto,
             functionSelectors: strategySelectors
         });
-    }
-
-    /**
-     * @notice Configure all facets for a RegistryCommunity instance
-     * @dev Caller must be the owner of the community
-     * @param community The RegistryCommunity instance to configure
-     */
-    function configureFacets(address community) external {
-        IDiamond.FacetCut[] memory cuts = getFacetCuts();
-        RegistryCommunity(payable(community)).diamondCut(cuts, address(0), "");
-    }
-
-    function knownSelectorName(bytes4 selector) external pure returns (string memory) {
-        return LibDiamond._knownSelectorName(selector);
     }
 }
