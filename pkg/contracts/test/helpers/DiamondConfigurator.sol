@@ -19,16 +19,16 @@ contract DiamondConfigurator {
     CVAdminFacet public adminFacet;
     CVAllocationFacet public allocationFacet;
     CVDisputeFacet public disputeFacet;
-    CVPowerFacet public powerManagementFacet;
-    CVProposalFacet public proposalManagementFacet;
+    CVPowerFacet public powerFacet;
+    CVProposalFacet public proposalFacet;
 
     constructor() {
         // Deploy all facets
         adminFacet = new CVAdminFacet();
         allocationFacet = new CVAllocationFacet();
         disputeFacet = new CVDisputeFacet();
-        powerManagementFacet = new CVPowerFacet();
-        proposalManagementFacet = new CVProposalFacet();
+        powerFacet = new CVPowerFacet();
+        proposalFacet = new CVProposalFacet();
     }
 
     /**
@@ -38,60 +38,51 @@ contract DiamondConfigurator {
     function getFacetCuts() public view returns (IDiamond.FacetCut[] memory cuts) {
         cuts = new IDiamond.FacetCut[](5);
 
-        // CVAdminFacet functions
         bytes4[] memory adminSelectors = new bytes4[](3);
         adminSelectors[0] = CVAdminFacet.setPoolParams.selector;
         adminSelectors[1] = CVAdminFacet.connectSuperfluidGDA.selector;
         adminSelectors[2] = CVAdminFacet.disconnectSuperfluidGDA.selector;
         cuts[0] = IDiamond.FacetCut({
-            facetAddress: address(adminFacet),
-            action: IDiamond.FacetCutAction.Add,
-            functionSelectors: adminSelectors
+            facetAddress: address(adminFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: adminSelectors
         });
 
-        // CVAllocationFacet functions
         bytes4[] memory allocationSelectors = new bytes4[](2);
         allocationSelectors[0] = CVAllocationFacet.allocate.selector;
         allocationSelectors[1] = CVAllocationFacet.distribute.selector;
         cuts[1] = IDiamond.FacetCut({
             facetAddress: address(allocationFacet),
-            action: IDiamond.FacetCutAction.Add,
+            action: IDiamond.FacetCutAction.Auto,
             functionSelectors: allocationSelectors
         });
 
-        // CVDisputeFacet functions
         bytes4[] memory disputeSelectors = new bytes4[](2);
         disputeSelectors[0] = CVDisputeFacet.disputeProposal.selector;
         disputeSelectors[1] = CVDisputeFacet.rule.selector;
         cuts[2] = IDiamond.FacetCut({
             facetAddress: address(disputeFacet),
-            action: IDiamond.FacetCutAction.Add,
+            action: IDiamond.FacetCutAction.Auto,
             functionSelectors: disputeSelectors
         });
 
-        // CVPowerFacet functions
-        bytes4[] memory powerSelectors = new bytes4[](3);
-        powerSelectors[0] = CVPowerFacet.decreasePower.selector;
-        powerSelectors[1] = bytes4(keccak256("deactivatePoints()")); // No-parameter version
-        powerSelectors[2] = bytes4(keccak256("deactivatePoints(address)")); // With address parameter
+        bytes4[] memory powerSelectors = new bytes4[](5);
+        powerSelectors[0] = CVPowerFacet.activatePoints.selector;
+        powerSelectors[1] = CVPowerFacet.increasePower.selector;
+        powerSelectors[2] = CVPowerFacet.decreasePower.selector;
+        powerSelectors[3] = bytes4(keccak256("deactivatePoints()"));
+        powerSelectors[4] = bytes4(keccak256("deactivatePoints(address)"));
         cuts[3] = IDiamond.FacetCut({
-            facetAddress: address(powerManagementFacet),
-            action: IDiamond.FacetCutAction.Add,
-            functionSelectors: powerSelectors
+            facetAddress: address(powerFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: powerSelectors
         });
 
-        // CVProposalFacet functions
         bytes4[] memory proposalSelectors = new bytes4[](3);
         proposalSelectors[0] = CVProposalFacet.registerRecipient.selector;
         proposalSelectors[1] = CVProposalFacet.cancelProposal.selector;
         proposalSelectors[2] = CVProposalFacet.editProposal.selector;
         cuts[4] = IDiamond.FacetCut({
-            facetAddress: address(proposalManagementFacet),
-            action: IDiamond.FacetCutAction.Add,
+            facetAddress: address(proposalFacet),
+            action: IDiamond.FacetCutAction.Auto,
             functionSelectors: proposalSelectors
         });
-
-        return cuts;
     }
 
     /**
