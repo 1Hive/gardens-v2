@@ -40,6 +40,8 @@ import {
     ProposalSupport,
     CVParams
 } from "../src/CVStrategy/CVStrategy.sol";
+
+import {CVProposalFacet} from "../src/CVStrategy/facets/CVProposalFacet.sol";
 import {ConvictionsUtils} from "../src/CVStrategy/ConvictionsUtils.sol";
 
 import {ISybilScorer} from "../src/ISybilScorer.sol";
@@ -406,8 +408,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         // Edit proposal as the submitter (pool_admin who created it)
         vm.startPrank(pool_admin());
 
-        // Fast forward 2 hours to allow editing beneficiary and amount
-        vm.warp(block.timestamp + 2 hours);
+        // Fast forward less than 1 hour to see if it fails
+        // vm.warp(block.timestamp + 2 hours);
 
         cv.editProposal(proposalId, newMetadata, newBeneficiary, newRequestedAmount);
 
@@ -418,6 +420,37 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
 
         assertEq(updatedBeneficiary, newBeneficiary, "Beneficiary should be updated");
         assertEq(updatedRequestedAmount, newRequestedAmount, "Requested amount should be updated");
+    }
+
+    function testRevert_editProposal_editTimeout() public {
+        // Create a proposal
+        (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
+        CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
+
+        // Get initial proposal data
+        (, address beneficiary,, uint256 requestedAmount,,,,,,,,) = cv.getProposal(proposalId);
+
+        // Prepare new data for editing
+        address newBeneficiary = makeAddr("newBeneficiary");
+        uint256 newRequestedAmount = REQUESTED_AMOUNT * 2;
+        Metadata memory newMetadata = Metadata({protocol: 1, pointer: "QmNewPointer123456789"});
+
+        // Edit proposal as the submitter (pool_admin who created it)
+        vm.startPrank(pool_admin());
+
+        // Fast forward 2 hours to see if it fails
+        vm.warp(block.timestamp + 2 hours);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                CVProposalFacet.BeneficiaryEditTimeout.selector, proposalId, beneficiary, newBeneficiary, 1
+            )
+        );
+        // revert BeneficiaryEditTimeout(
+        //             _proposalId, proposal.beneficiary, _beneficiary, proposal.creationTimestamp
+        //         );
+        cv.editProposal(proposalId, newMetadata, newBeneficiary, newRequestedAmount);
+
+        vm.stopPrank();
     }
 
     function testRevert_editProposal_notSubmitter() public {
