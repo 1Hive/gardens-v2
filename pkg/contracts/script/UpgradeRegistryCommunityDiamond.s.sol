@@ -11,7 +11,7 @@ import {CommunityPowerFacet} from "../src/RegistryCommunity/facets/CommunityPowe
 import {CommunityStrategyFacet} from "../src/RegistryCommunity/facets/CommunityStrategyFacet.sol";
 import {IDiamond} from "../src/diamonds/interfaces/IDiamond.sol";
 import {ProxyOwner} from "../src/ProxyOwner.sol";
-import {CommunityDiamondConfigurator} from "../test/helpers/CommunityDiamondConfigurator.sol";
+import {CommunityDiamondConfiguratorBase} from "../test/helpers/CommunityDiamondConfigurator.sol";
 import "forge-std/console2.sol";
 
 /**
@@ -19,7 +19,7 @@ import "forge-std/console2.sol";
  * @notice Upgrades RegistryCommunity contracts to diamond pattern with facets
  * @dev Can broadcast upgrades directly or generate Safe transaction payloads via a flag
  */
-contract UpgradeRegistryCommunityDiamond is BaseMultiChain, CommunityDiamondConfigurator {
+contract UpgradeRegistryCommunityDiamond is BaseMultiChain, CommunityDiamondConfiguratorBase {
     using stdJson for string;
 
     bool internal directBroadcastOverride;
@@ -68,7 +68,8 @@ contract UpgradeRegistryCommunityDiamond is BaseMultiChain, CommunityDiamondConf
 
         address[] memory registryCommunityProxies =
             networkJson.readAddressArray(getKeyNetwork(".PROXIES.REGISTRY_COMMUNITIES"));
-        IDiamond.FacetCut[] memory cuts = getFacetCuts(adminFacet, memberFacet, poolFacet, powerFacet, strategyFacet);
+        IDiamond.FacetCut[] memory cuts =
+            _buildFacetCuts(adminFacet, memberFacet, poolFacet, powerFacet, strategyFacet);
 
         if (directBroadcast) {
             _executeDirectUpgrades(

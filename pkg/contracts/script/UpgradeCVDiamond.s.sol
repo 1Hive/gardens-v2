@@ -12,7 +12,7 @@ import {RegistryCommunity} from "../src/RegistryCommunity/RegistryCommunity.sol"
 import {RegistryFactory} from "../src/RegistryFactory/RegistryFactory.sol";
 import {IDiamond} from "../src/diamonds/interfaces/IDiamond.sol";
 import {ProxyOwner} from "../src/ProxyOwner.sol";
-import {DiamondConfigurator} from "../test/helpers/DiamondConfigurator.sol";
+import {DiamondConfiguratorBase} from "../test/helpers/DiamondConfigurator.sol";
 import "forge-std/console2.sol";
 
 /**
@@ -20,7 +20,7 @@ import "forge-std/console2.sol";
  * @notice Upgrades CVStrategy contracts to diamond pattern with facets
  * @dev Can broadcast upgrades directly or generate Safe transaction payloads via a flag
  */
-contract UpgradeCVDiamond is BaseMultiChain, DiamondConfigurator {
+contract UpgradeCVDiamond is BaseMultiChain, DiamondConfiguratorBase {
     using stdJson for string;
 
     bool internal directBroadcastOverride;
@@ -69,7 +69,7 @@ contract UpgradeCVDiamond is BaseMultiChain, DiamondConfigurator {
             networkJson.readAddressArray(getKeyNetwork(".PROXIES.REGISTRY_COMMUNITIES"));
         address[] memory cvStrategyProxies = networkJson.readAddressArray(getKeyNetwork(".PROXIES.CV_STRATEGIES"));
         IDiamond.FacetCut[] memory cuts =
-            getFacetCuts(adminFacet, allocationFacet, disputeFacet, powerFacet, proposalFacet);
+            _buildFacetCuts(adminFacet, allocationFacet, disputeFacet, powerFacet, proposalFacet);
 
         if (directBroadcast) {
             RegistryFactory registryFactory = RegistryFactory(payable(registryFactoryProxy));
