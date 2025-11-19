@@ -69,7 +69,7 @@ contract UpgradeCVDiamond is BaseMultiChain, DiamondConfigurator {
             networkJson.readAddressArray(getKeyNetwork(".PROXIES.REGISTRY_COMMUNITIES"));
         address[] memory cvStrategyProxies = networkJson.readAddressArray(getKeyNetwork(".PROXIES.CV_STRATEGIES"));
         IDiamond.FacetCut[] memory cuts =
-            _buildFacetCuts(adminFacet, allocationFacet, disputeFacet, powerFacet, proposalFacet);
+            getFacetCuts(adminFacet, allocationFacet, disputeFacet, powerFacet, proposalFacet);
 
         if (directBroadcast) {
             RegistryFactory registryFactory = RegistryFactory(payable(registryFactoryProxy));

@@ -68,7 +68,7 @@ contract UpgradeRegistryCommunityDiamond is BaseMultiChain, CommunityDiamondConf
 
         address[] memory registryCommunityProxies =
             networkJson.readAddressArray(getKeyNetwork(".PROXIES.REGISTRY_COMMUNITIES"));
-        IDiamond.FacetCut[] memory cuts = _buildFacetCuts(adminFacet, memberFacet, poolFacet, powerFacet, strategyFacet);
+        IDiamond.FacetCut[] memory cuts = getFacetCuts(adminFacet, memberFacet, poolFacet, powerFacet, strategyFacet);
 
         if (directBroadcast) {
             _executeDirectUpgrades(
