@@ -61,38 +61,49 @@ abstract contract CommunityBaseFacet is ProxyOwnableUpgrader, ReentrancyGuardUpg
     /*|--------------------------------------------|*/
 
     /// @notice The amount of tokens required to register a member
+    // slither-disable-next-line uninitialized-state
     uint256 public registerStakeAmount;
     /// @notice The fee charged to the community for each registration
+    // slither-disable-next-line uninitialized-state
     uint256 public communityFee;
     /// @notice The nonce used to create new strategy clones
     uint256 public cloneNonce;
     /// @notice The profileId of the community in the Allo Registry
+    // slither-disable-next-line uninitialized-state
     bytes32 public profileId;
     /// @notice Enable or disable the kick feature
+    // slither-disable-next-line uninitialized-state
     bool public isKickEnabled;
     /// @notice The address that receives the community fee
+    // slither-disable-next-line uninitialized-state
     address public feeReceiver;
     /// @notice The address of the registry factory
+    // slither-disable-next-line uninitialized-state
     address public registryFactory;
     /// @notice The address of the collateral vault template
+    // slither-disable-next-line uninitialized-state
     address public collateralVaultTemplate;
     /// @notice The address of the strategy template
+    // slither-disable-next-line uninitialized-state
     address public strategyTemplate;
     /// @notice The address of the pending council safe owner
     address payable public pendingCouncilSafe;
     /// @notice The Registry Allo contract
     IRegistry public registry;
     /// @notice The token used to stake in the community
+    // slither-disable-next-line uninitialized-state
     IERC20 public gardenToken;
     /// @notice The council safe contract address
     ISafe public councilSafe;
     /// @notice The Allo contract address
+    // slither-disable-next-line uninitialized-state
     FAllo public allo;
     /// @notice The community name
     string public communityName;
     /// @notice The covenant IPFS hash of community
     string public covenantIpfsHash;
     /// @notice List of enabled/disabled strategies
+    // slither-disable-next-line uninitialized-state
     mapping(address strategy => bool isEnabled) public enabledStrategies;
     /// @notice Power points for each member in each strategy
     mapping(address strategy => mapping(address member => uint256 power)) public memberPowerInStrategy;
@@ -103,8 +114,10 @@ abstract contract CommunityBaseFacet is ProxyOwnableUpgrader, ReentrancyGuardUpg
     /// @notice Mapping to check if a member is activated in a strategy
     mapping(address member => mapping(address strategy => bool isActivated)) public memberActivatedInStrategies;
     /// @notice List of initial members to be added as pool managers in the Allo Pool
+    // slither-disable-next-line uninitialized-state
     address[] internal initialMembers;
     /// @notice The total number of members in the community
+    // slither-disable-next-line uninitialized-state
     uint256 public totalMembers;
 
     uint256[49] private __gap;

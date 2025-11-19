@@ -79,6 +79,7 @@ struct Strategies {
 }
 
 /// @custom:oz-upgrades-from RegistryCommunity
+// slither-disable-start uninitialized-state
 contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, AccessControlUpgradeable {
     /*|--------------------------------------------|*/
     /*|                 EVENTS                     |*/
@@ -330,6 +331,7 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
     }
 
     // Stub - delegates to CommunityPoolFacet
+    // slither-disable-next-line incorrect-return
     function createPool(address _token, CVStrategyInitializeParamsV0_2 memory _params, Metadata memory _metadata)
         public
         virtual
@@ -339,6 +341,7 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
     }
 
     // Stub - delegates to CommunityPoolFacet
+    // slither-disable-next-line incorrect-return
     function createPool(
         address _strategy,
         address _token,
@@ -374,6 +377,7 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
     }
 
     // Stub - delegates to CommunityPowerFacet
+    // slither-disable-next-line incorrect-return
     function getMemberPowerInStrategy(address, address) public virtual returns (uint256) {
         _delegateToFacet();
     }
@@ -427,7 +431,7 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
     }
 
     // Stub - delegates to CommunityMemberFacet
-    // Signature: isMember(address) => 0xa230c524
+    // slither-disable-next-line incorrect-return
     function isMember(address) public virtual returns (bool) {
         _delegateToFacet();
     }
@@ -553,3 +557,4 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
 
     uint256[49] private __gap;
 }
+// slither-disable-end uninitialized-state

@@ -9,6 +9,7 @@ import {ISybilScorer} from "../ISybilScorer.sol";
 import {ProposalType, PointSystem, Proposal, PointSystemConfig, ArbitrableConfig, CVParams} from "./ICVStrategy.sol";
 import {ConvictionsUtils} from "./ConvictionsUtils.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Library.sol";
+import {LibDiamond} from "@src/diamonds/libraries/LibDiamond.sol";
 
 /**
  * @title CVStrategyBaseFacet
@@ -69,9 +70,11 @@ abstract contract CVStrategyBaseFacet {
     uint256[49] private __gap_ownable;
 
     /// @dev Slots 101-105: BaseStrategyUpgradeable
+    // slither-disable-next-line uninitialized-state
     IAllo internal allo;
     bytes32 internal strategyId;
     bool internal poolActive;
+    // slither-disable-next-line uninitialized-state
     uint256 internal poolId;
     uint256 internal poolAmount;
 
@@ -97,38 +100,47 @@ abstract contract CVStrategyBaseFacet {
     uint256 public proposalCounter;
 
     /// @notice Current version of arbitrable configuration - Slot 111
+    // slither-disable-next-line uninitialized-state
     uint256 public currentArbitrableConfigVersion;
 
     /// @notice Total points staked across all proposals - Slot 112
     uint256 public totalStaked;
 
     /// @notice Total voting power activated in this strategy - Slot 113
+    // slither-disable-next-line uninitialized-state
     uint256 public totalPointsActivated;
 
     /// @notice Conviction Voting parameters (decay, weight, maxRatio, minThresholdPoints)
     /// @dev Slots 114-117
+    // slither-disable-next-line uninitialized-state
     CVParams public cvParams;
 
     /// @notice Type of proposals (Funding or Signaling) - Slot 118
+    // slither-disable-next-line uninitialized-state
     ProposalType public proposalType;
 
     /// @notice Voting power calculation system (Unlimited, Fixed, Capped, Quadratic) - Slot 119
+    // slither-disable-next-line uninitialized-state
     PointSystem public pointSystem;
 
     /// @notice Configuration for point system (e.g., max amount for Capped)
     /// @dev Slot 120+
+    // slither-disable-next-line uninitialized-state
     PointSystemConfig public pointConfig;
 
     /// @notice Reference to the Registry Community contract
     /// @dev Slot 121+
+    // slither-disable-next-line uninitialized-state
     RegistryCommunity public registryCommunity;
 
     /// @notice Collateral vault for storing proposal collateral
     /// @dev Slot 122+
+    // slither-disable-next-line uninitialized-state
     ICollateralVault public collateralVault;
 
     /// @notice Sybil resistance scorer contract
     /// @dev Slot 123+
+    // slither-disable-next-line uninitialized-state
     ISybilScorer public sybilScorer;
 
     /// @notice Mapping of proposal ID to Proposal struct
@@ -141,6 +153,7 @@ abstract contract CVStrategyBaseFacet {
 
     /// @notice Mapping of voter address to array of proposal IDs they've staked on
     /// @dev Slot 126+
+    // slither-disable-next-line uninitialized-state
     mapping(address => uint256[]) public voterStakedProposals;
 
     /// @notice Mapping of dispute ID to proposal ID
@@ -149,10 +162,12 @@ abstract contract CVStrategyBaseFacet {
 
     /// @notice Mapping of arbitrable config version to ArbitrableConfig
     /// @dev Slot 128+
+    // slither-disable-next-line uninitialized-state
     mapping(uint256 => ArbitrableConfig) public arbitrableConfigs;
 
     /// @notice Superfluid super token address for streaming payments
     /// @dev Slot 129+
+    // slither-disable-next-line uninitialized-state
     ISuperToken public superfluidToken;
 
     /// @dev Reserved storage space to allow for layout changes in the future
@@ -168,7 +183,7 @@ abstract contract CVStrategyBaseFacet {
      * @dev Accesses the _owner storage variable from OwnableUpgradeable layout
      */
     function owner() internal view returns (address) {
-        return _owner;
+        return LibDiamond.contractOwner();
     }
 
     /**
@@ -294,7 +309,7 @@ abstract contract CVStrategyBaseFacet {
 
     /// @notice Getter for the 'poolAmount'.
     /// @return The balance of the pool
-    function getPoolAmount() internal view returns (uint256) {
+    function getPoolAmount() internal view virtual returns (uint256) {
         address token = allo.getPool(poolId).token;
 
         if (token == NATIVE_TOKEN) {
