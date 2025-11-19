@@ -22,7 +22,6 @@ import {IArbitrator} from "../src/interfaces/IArbitrator.sol";
 import {GV2ERC20} from "../script/GV2ERC20.sol";
 import {GasHelpers2} from "./shared/GasHelpers2.sol";
 import {RegistryFactory} from "../src/RegistryFactory/RegistryFactory.sol";
-import {RegistryFactoryV0_1} from "../src/RegistryFactory/RegistryFactoryV0_1.sol";
 import {
     CVStrategy,
     PointSystem,
@@ -37,23 +36,13 @@ import {
     CommunityParams,
     RegistryCommunityInitializeParams
 } from "../src/RegistryCommunity/RegistryCommunity.sol";
-import {ISafe as Safe, SafeProxyFactory, Enum} from "../src/interfaces/ISafe.sol";
 import {SafeSetup} from "./shared/SafeSetup.sol";
 
 import {CVStrategyHelpers} from "./CVStrategyHelpers.sol";
 
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
-// import {Upgrades} from "@openzeppelin/foundry/LegacyUpgrades.sol";
-import {Core} from "@openzeppelin/foundry/internal/Core.sol";
 
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import {RegistryFactoryDiamond, BaseDiamond} from "@src/diamonds/RegistryFactoryDiamond.sol";
-
-import {IDiamond} from "@src/diamonds/interfaces/IDiamond.sol";
-import {IDiamondCut} from "@src/diamonds/interfaces/IDiamondCut.sol";
-import {DiamondCutFacet} from "@src/diamonds/facets/DiamondCutFacet.sol";
-import {DiamondLoupeFacet} from "@src/diamonds/facets/DiamondLoupeFacet.sol";
-import {RegistryFactoryFacet} from "@src/diamonds/facets/RegistryFactoryFacet.sol";
 import {DiamondConfigurator} from "./helpers/DiamondConfigurator.sol";
 import {CommunityDiamondConfigurator} from "./helpers/CommunityDiamondConfigurator.sol";
 // @dev Run forge test --mc RegistryTest -vvvvv
@@ -195,119 +184,13 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         vm.startPrank(gardenOwner);
         _registryFactory().setProtocolFee(address(registryCommunity), PROTOCOL_FEE_PERCENTAGE);
 
-        // Upgrades.upgradeProxy(
-        //     address(_registryFactory()),
-        //     "RegistryFactoryV0_1.sol",
-        //     abi.encodeWithSelector(RegistryFactoryV0_1.initializeV2.selector)
-        // );
-
-        // assertEq(registryFactory.nonce(), 1, "nonce after upgrade");
-
-        Core.upgradeProxyTo(
-            address(_registryFactory()),
-            address(new RegistryFactoryDiamond()),
-            abi.encodeWithSelector(BaseDiamond.initialize.selector, gardenOwner)
-        );
-
-        // RegistryFactoryFacet(address(_registryFactory())).initialize(gardenOwner);
-
-        IDiamondCut(address(_registryFactory())).diamondCut(createCutsFactory(), address(0), "");
-
-        RegistryFactoryFacet(address(_registryFactory())).initializeV2(gardenOwner);
-
-        assertEq(
-            address(RegistryFactoryDiamond(payable(address(registryFactory)))._owner()),
-            address(gardenOwner),
-            "owner after upgrade"
-        );
-        assertEq(registryFactory.nonce(), 1, "nonce after upgrade");
-        assertEq(registryFactory.VERSION(), "0.0", "VERSION after upgrade");
-
-        vm.stopPrank();
-
-        params._isKickEnabled = false;
-
         nonKickableCommunity = RegistryCommunity(registryFactory.createRegistry(params));
         vm.startPrank(gardenOwner);
         nonKickableCommunity.diamondCut(communityDiamondConfigurator.getFacetCuts(), address(0), "");
         vm.stopPrank();
     }
 
-    function createCutsFactory() public returns (IDiamond.FacetCut[] memory cuts) {
-        DiamondCutFacet dCutFacet = new DiamondCutFacet(); //@todo can be removed
-        DiamondLoupeFacet dLoupe = new DiamondLoupeFacet();
-        // OwnershipFacet ownerF = new OwnershipFacet();
-        RegistryFactoryFacet registryFactoryF = new RegistryFactoryFacet();
-
-        cuts = new IDiamond.FacetCut[](3);
-
-        bytes4[] memory sighashes = new bytes4[](1);
-        sighashes[0] = bytes4(0x1f931c1c);
-
-        cuts[0] = IDiamond.FacetCut({
-            facetAddress: address(dCutFacet),
-            action: IDiamond.FacetCutAction.Add,
-            functionSelectors: sighashes
-        });
-
-        sighashes = new bytes4[](5);
-        sighashes[0] = bytes4(0x7a0ed627);
-        sighashes[1] = bytes4(0xadfca15e);
-        sighashes[2] = bytes4(0x52ef6b2c);
-        sighashes[3] = bytes4(0xcdffacc6);
-        sighashes[4] = bytes4(0x01ffc9a7);
-        //build cut struct
-        // IDiamond.FacetCut[] memory cut = new IDiamond.FacetCut[](2);
-
-        cuts[1] = (
-            IDiamond.FacetCut({
-                facetAddress: address(dLoupe),
-                action: IDiamond.FacetCutAction.Add,
-                functionSelectors: sighashes
-            })
-        );
-
-        // sighashes = new bytes4[](2);
-        // sighashes[0] = bytes4(0xf2fde38b);
-        // sighashes[1] = bytes4(0x8da5cb5b);
-
-        // cut[1] = (IDiamond.FacetCut({facetAddress: address(ownerF), action: IDiamond.FacetCutAction.Add, functionSelectors: sighashes}));
-
-        bytes4[] memory sighashesInit = new bytes4[](25);
-        sighashesInit[0] = bytes4(0x77122d56);
-        sighashesInit[1] = bytes4(0xbeb331a3);
-        sighashesInit[2] = bytes4(0xb8bed901);
-        sighashesInit[3] = bytes4(0xf5016b5e);
-        sighashesInit[4] = bytes4(0x987435be);
-        sighashesInit[5] = bytes4(0x0a992e0c);
-        sighashesInit[6] = bytes4(0xc4d66de8);
-        sighashesInit[7] = bytes4(0x1459457a);
-        sighashesInit[8] = bytes4(0x29b6eca9);
-        sighashesInit[9] = bytes4(0x3101cfcb);
-        sighashesInit[10] = bytes4(0xaffed0e0);
-        sighashesInit[11] = bytes4(0x8da5cb5b);
-        sighashesInit[12] = bytes4(0x52d1902d);
-        sighashesInit[13] = bytes4(0x02c1d0b1);
-        sighashesInit[14] = bytes4(0x715018a6);
-        sighashesInit[15] = bytes4(0xb0d3713a);
-        sighashesInit[16] = bytes4(0x5a2c8ace);
-        sighashesInit[17] = bytes4(0xb5b3ca2c);
-        sighashesInit[18] = bytes4(0x8279c7db);
-        sighashesInit[19] = bytes4(0x5decae02);
-        sighashesInit[20] = bytes4(0x1b71f0e4);
-        sighashesInit[21] = bytes4(0x5c94e4d2);
-        sighashesInit[22] = bytes4(0xf2fde38b);
-        sighashesInit[23] = bytes4(0x3659cfe6);
-        sighashesInit[24] = bytes4(0x4f1ef286);
-
-        cuts[2] = (
-            IDiamond.FacetCut({
-                facetAddress: address(registryFactoryF),
-                action: IDiamond.FacetCutAction.Add,
-                functionSelectors: sighashesInit
-            })
-        );
-    }
+    
 
     function _registryCommunity() internal view returns (RegistryCommunity) {
         return registryCommunity;
@@ -401,9 +284,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         vm.startPrank(gardenOwner);
         _registryFactory().setProtocolFee(address(registryCommunity), 2);
         _registryFactory().setCommunityValidity(address(registryCommunity), false);
-        vm.expectRevert(
-            abi.encodeWithSelector(RegistryFactory.CommunityInvalid.selector, address(registryCommunity))
-        );
+        vm.expectRevert(abi.encodeWithSelector(RegistryFactory.CommunityInvalid.selector, address(registryCommunity)));
         _registryFactory().getProtocolFee(address(registryCommunity));
         vm.stopPrank();
         stopMeasuringGas();
@@ -424,7 +305,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
     function test_activate_totalActivatedPoints_fixed_system() public {
         vm.startPrank(pool_admin());
         ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
-        ( /*uint256  _poolId */ , address strategyProxy) = registryCommunity.createPool(
+        (/*uint256  _poolId */, address strategyProxy) = registryCommunity.createPool(
             NATIVE,
             getParams(
                 address(registryCommunity),
@@ -472,7 +353,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         vm.startPrank(pool_admin());
 
         ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
-        ( /*uint256  _poolId */ , address strategyProxy) = registryCommunity.createPool(
+        (/*uint256  _poolId */, address strategyProxy) = registryCommunity.createPool(
             NATIVE,
             getParams(
                 address(registryCommunity),
@@ -556,7 +437,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
 
         vm.startPrank(pool_admin());
         ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
-        ( /*uint256  _poolId */ , address strategyProxy) = registryCommunity.createPool(
+        (/*uint256  _poolId */, address strategyProxy) = registryCommunity.createPool(
             NATIVE,
             getParams(
                 address(registryCommunity),
@@ -669,7 +550,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
     function test_increasePowerQuadraticFixedValues() public {
         vm.startPrank(pool_admin());
         ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
-        ( /*uint256  _poolId */ , address strategyProxy) = registryCommunity.createPool(
+        (/*uint256  _poolId */, address strategyProxy) = registryCommunity.createPool(
             NATIVE,
             getParams(
                 address(registryCommunity),
@@ -772,7 +653,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
     function test_activateAfterIncreasePowerQuadratic() public {
         vm.startPrank(pool_admin());
         ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
-        ( /*uint256  _poolId */ , address strategyProxy) = registryCommunity.createPool(
+        (/*uint256  _poolId */, address strategyProxy) = registryCommunity.createPool(
             NATIVE,
             getParams(
                 address(registryCommunity),
@@ -1485,34 +1366,36 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         //     string communityName;
         // }
 
-        _registryCommunity().setCommunityParams(
-            CommunityParams({
-                registerStakeAmount: 500,
-                isKickEnabled: true,
-                covenantIpfsHash: "0x0",
-                councilSafe: address(councilSafe),
-                feeReceiver: address(daoFeeReceiver),
-                communityFee: 5 * PERCENTAGE_SCALE,
-                communityName: "Test"
-            })
-        );
+        _registryCommunity()
+            .setCommunityParams(
+                CommunityParams({
+                    registerStakeAmount: 500,
+                    isKickEnabled: true,
+                    covenantIpfsHash: "0x0",
+                    councilSafe: address(councilSafe),
+                    feeReceiver: address(daoFeeReceiver),
+                    communityFee: 5 * PERCENTAGE_SCALE,
+                    communityName: "Test"
+                })
+            );
         assertEq(_registryCommunity().registerStakeAmount(), 500);
         assertEq(_registryCommunity().isKickEnabled(), true);
         assertEq(_registryCommunity().communityFee(), 5 * PERCENTAGE_SCALE);
         assertEq(_registryCommunity().communityName(), "Test");
         assertEq(_registryCommunity().covenantIpfsHash(), "0x0");
         assertEq(_registryCommunity().feeReceiver(), address(daoFeeReceiver));
-        _registryCommunity().setCommunityParams(
-            CommunityParams({
-                registerStakeAmount: 500,
-                isKickEnabled: true,
-                covenantIpfsHash: "0x0",
-                councilSafe: address(newCouncilSafe),
-                feeReceiver: address(daoFeeReceiver),
-                communityFee: 5 * PERCENTAGE_SCALE,
-                communityName: "Test"
-            })
-        );
+        _registryCommunity()
+            .setCommunityParams(
+                CommunityParams({
+                    registerStakeAmount: 500,
+                    isKickEnabled: true,
+                    covenantIpfsHash: "0x0",
+                    councilSafe: address(newCouncilSafe),
+                    feeReceiver: address(daoFeeReceiver),
+                    communityFee: 5 * PERCENTAGE_SCALE,
+                    communityName: "Test"
+                })
+            );
         assertEq(address(_registryCommunity().pendingCouncilSafe()), address(newCouncilSafe));
         vm.stopPrank();
         vm.startPrank(newCouncilSafe);
