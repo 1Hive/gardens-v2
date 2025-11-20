@@ -24,12 +24,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          submodules: recursive
+          submodules: false
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
           version: nightly
+
+      - name: Init required submodules
+        run: |
+          git submodule update --init --recursive --depth 1 --jobs 4 \
+            lib/allo-v2 \
+            lib/forge-std \
+            lib/openzeppelin-foundry-upgrades \
+            lib/openzeppelin-contracts \
+            lib/openzeppelin-contracts-upgradeable \
+            lib/safe-smart-account \
+            lib/protocol-monorepo \
+            protocol-monorepo
 
       - name: Run coverage
         run: forge coverage --ir-minimum --match-path 'pkg/contracts/test/**' --report lcov
