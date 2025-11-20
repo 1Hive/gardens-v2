@@ -175,6 +175,12 @@ const PoolGovernanceDetails: React.FC<{
       memberCommunity: {
         memberAddress: string;
       }[];
+      stakes: {
+        amount: string;
+        proposal: {
+          proposalStatus: string;
+        };
+      }[];
     };
   }[];
 }> = ({ membersStrategyData }) => {
@@ -197,15 +203,22 @@ const PoolGovernanceDetails: React.FC<{
     },
     {
       header: "Voting power used",
-      render: (member) => (
-        <span>
-          {calculatePercentageBigInt(
-            BigInt(member.totalStakedPoints),
-            BigInt(member.activatedPoints),
-          )}{" "}
-          %
-        </span>
-      ),
+      render: (member) => {
+        // Calculate total staked points from active (1) and disputed (5) proposals only
+        const activeStakedPoints = member.member.stakes?.reduce((sum, stake) => {
+          return sum + BigInt(stake.amount);
+        }, 0n) ?? 0n;
+        
+        return (
+          <span>
+            {calculatePercentageBigInt(
+              activeStakedPoints,
+              BigInt(member.activatedPoints),
+            )}{" "}
+            %
+          </span>
+        );
+      },
       className: "flex justify-end",
     },
   ];

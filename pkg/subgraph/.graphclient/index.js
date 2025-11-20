@@ -456,6 +456,12 @@ export const getMembersStrategyDocument = gql `
         memberAddress
         isRegistered
       }
+      stakes(first: 1000, where: {proposal_: {strategy: $strategyId, proposalStatus_in: [1, 5]}}) {
+        amount
+        proposal {
+          proposalStatus
+        }
+      }
     }
     totalStakedPoints
     id
