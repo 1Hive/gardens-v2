@@ -27,6 +27,18 @@ export async function GET(req: NextRequest, { params }: Params) {
       },
     );
   }
+  const contentType = res.headers.get("content-type") ?? "application/json";
+
+  if (contentType.startsWith("image/")) {
+    const buffer = await res.arrayBuffer();
+    return new Response(buffer, {
+      status: 200,
+      headers: {
+        "Content-Type": contentType,
+        "Cache-Control": "public, max-age=31536000, immutable",
+      },
+    });
+  }
 
   if (searchParams.get("isText") === "true") {
     const text = await res.text();

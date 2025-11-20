@@ -86,12 +86,13 @@ export function ConnectWallet() {
   const [selectedNFTIndex, setSelectedNFTIndex] = useState(0);
 
   const wallet = connectors[0].name;
+  const isMockConnection = account.connector?.id === "mock";
 
   const { data: token } = useBalance({
     address: account?.address,
     token: tokenUrlAddress as `0x${string}` | undefined,
     chainId: urlChainId,
-    enabled: !!account && !!urlChainId,
+    enabled: !!account.address && urlChainId != null,
   });
 
   const { data: ensName } = useEnsName({
@@ -112,9 +113,9 @@ export function ConnectWallet() {
     <ConnectButton.Custom>
       {({ account: acc, chain, openConnectModal, mounted }) => {
         const ready = mounted;
-        const connected = ready && acc && chain;
+        const connected = ready && !!acc && !!chain;
         const isWrongNetwork =
-          chain?.id != urlChainId && urlChainId && !isNaN(urlChainId);
+          chain?.id != urlChainId && urlChainId != null && !isNaN(urlChainId);
 
         return (
           <>
@@ -134,18 +135,6 @@ export function ConnectWallet() {
                   </Button>
                 );
               }
-              //WRONG NETWORK! button if wallet is connected to unsupported chains
-              // if (chain.unsupported) {
-              //   return (
-              //     <Button
-              //       onClick={openChainModal}
-              //       btnStyle="outline"
-              //       color="danger"
-              //     >
-              //       Wrong network
-              //     </Button>
-              //   );
-              // }
 
               //Is CONNECTED to a supported chains with condition => urlChainId(urlChain) === chainId(wallet)
               //Dropdown menu with wallet, balance, switch network and disconnect buttons
@@ -156,11 +145,11 @@ export function ConnectWallet() {
                       <Menu.Button>
                         <div
                           className={`flex w-fit cursor-pointer items-center gap-4 rounded-2xl pl-4 py-2 hover:opacity-85 pr-2 
-                             ${cn({ "bg-danger-soft": urlChainId && urlChainId !== chain.id }, { "bg-primary": !urlChainId || urlChainId === chain.id })}      
+                             ${cn({ "bg-danger-soft dark:bg-danger-soft-dark": urlChainId != null && urlChainId !== chain.id }, { "bg-primary": urlChainId == null || urlChainId === chain.id })}      
                           `}
                         >
                           {isWrongNetwork ?
-                            <ExclamationTriangleIcon className="text-danger-content w-6" />
+                            <ExclamationTriangleIcon className="w-6 text-danger-content dark:text-danger-content" />
                           : <Image
                               alt="Wallet Avatar"
                               src={
@@ -175,12 +164,27 @@ export function ConnectWallet() {
                             />
                           }
                           <div className="hidden sm:flex flex-col">
-                            <h5 className="text-left" data-testid="accounts">
+                            <h5
+                              className={cn(
+                                "text-left",
+                                "tooltip tooltip-bottom",
+                                {
+                                  "text-warning-content dark:text-warning-content":
+                                    isMockConnection,
+                                },
+                              )}
+                              data-tip={
+                                isMockConnection ? "Simulated wallet" : (
+                                  undefined
+                                )
+                              }
+                              data-testid="accounts"
+                            >
                               {ensName ?? formatAddress(acc.address)}
                             </h5>
                             <div className="flex items-center">
                               {(
-                                !urlChainId ||
+                                urlChainId == null ||
                                 isNaN(urlChainId!) ||
                                 chain.id === urlChainId
                               ) ?
@@ -189,7 +193,7 @@ export function ConnectWallet() {
                                   <p className="text-xs ml-1">{chain.name}</p>
                                 </>
                               : <p
-                                  className="text-danger-content text-xs"
+                                  className="text-xs text-danger-content dark:text-danger-content"
                                   data-testid="wrong-network"
                                 >
                                   Switch to network {chainFromPath?.name ?? ""}
@@ -198,7 +202,7 @@ export function ConnectWallet() {
                             </div>
                           </div>
                           <ChevronUpIcon
-                            className={`h-3 w-3 font-bold text-black transition-transform duration-200 ease-in-out ${cn(
+                            className={`h-3 w-3 font-bold text-neutral-content dark:text-neutral-inverted-content transition-transform duration-200 ease-in-out ${cn(
                               {
                                 "rotate-180": !open,
                               },
@@ -265,7 +269,6 @@ export function ConnectWallet() {
                                 <DisplayNumber
                                   number={(token?.formatted ?? 0).toString()}
                                   tokenSymbol={token?.symbol}
-                                  valueClassName="text-primary-content"
                                 />
                               </div>
                             </Menu.Item>

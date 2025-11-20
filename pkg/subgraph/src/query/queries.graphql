@@ -1,18 +1,21 @@
 query getFactories {
-  registryFactories {
+  registryFactories(first: 1000) {
     id
-    registryCommunities {
+    registryCommunities(first: 1000) {
       id
       chainId
       isValid
       communityName
       covenantIpfsHash
+      covenant {
+        text
+      }
       registerToken
       alloAddress
       members(first: 1000) {
         memberAddress
       }
-      strategies {
+      strategies(first: 1000) {
         id
         poolId
         isEnabled
@@ -29,21 +32,24 @@ query getFactories {
 }
 
 query getTokenGardens {
-  tokenGardens {
+  tokenGardens(first: 1000) {
     id
     chainId
     name
     symbol
     decimals
     totalBalance
-    communities {
+    communities(first: 1000) {
       id
       chainId
       covenantIpfsHash
+      covenant {
+        text
+      }
       communityFee
       isValid
       communityName
-      strategies {
+      strategies(first: 1000) {
         id
       }
       members(first: 1000) {
@@ -85,7 +91,7 @@ query getMemberStrategy($member_strategy: ID!) {
 query isMember($me: ID!, $comm: String!) {
   member(id: $me) {
     id
-    stakes {
+    stakes(first: 1000) {
       id
       amount
       proposal {
@@ -108,7 +114,7 @@ query isMember($me: ID!, $comm: String!) {
         }
       }
     }
-    memberCommunity(where: { registryCommunity_contains: $comm }) {
+    memberCommunity(first: 1000, where: { registryCommunity_contains: $comm }) {
       stakedTokens
       isRegistered
       registryCommunity {
@@ -121,7 +127,7 @@ query isMember($me: ID!, $comm: String!) {
 query getMember($me: ID!) {
   member(id: $me) {
     id
-    memberCommunity {
+    memberCommunity(first: 1000) {
       id
       stakedTokens
       isRegistered
@@ -130,7 +136,7 @@ query getMember($me: ID!) {
         isValid
       }
     }
-    stakes {
+    stakes(first: 1000) {
       id
       proposal {
         proposalNumber
@@ -148,7 +154,7 @@ query getPoolCreationData($communityAddr: ID!, $tokenAddr: ID!) {
     id
     symbol
   }
-  allos {
+  allos(first: 1000) {
     id
   }
   registryCommunity(id: $communityAddr) {
@@ -160,7 +166,7 @@ query getPoolCreationData($communityAddr: ID!, $tokenAddr: ID!) {
 query getProposalSupporters($proposalId: String!) {
   members(first: 1000) {
     id
-    stakes(where: { proposal: $proposalId }) {
+    stakes(where: { proposal: $proposalId }, first: 1000) {
       amount
       proposal {
         proposalNumber
@@ -172,6 +178,7 @@ query getProposalSupporters($proposalId: String!) {
 
 query getGardenCommunities($chainId: BigInt!, $tokenGarden: ID!) {
   registryCommunities(
+    first: 1000
     where: { chainId: $chainId, garden_: { id: $tokenGarden } }
   ) {
     id
@@ -181,6 +188,9 @@ query getGardenCommunities($chainId: BigInt!, $tokenGarden: ID!) {
     chainId
     isValid
     covenantIpfsHash
+    covenant {
+      text
+    }
     communityName
     protocolFee
     communityFee
@@ -191,7 +201,7 @@ query getGardenCommunities($chainId: BigInt!, $tokenGarden: ID!) {
       id
       memberAddress
     }
-    strategies(where: { isEnabled: true }) {
+    strategies(first: 1000, where: { isEnabled: true }) {
       id
       totalEffectiveActivePoints
       poolId
@@ -200,7 +210,7 @@ query getGardenCommunities($chainId: BigInt!, $tokenGarden: ID!) {
 }
 
 query getCommunities {
-  registryCommunities(where: { isValid: true }) {
+  registryCommunities(first: 1000, where: { isValid: true }) {
     id
     councilSafe
     communityName
@@ -210,15 +220,21 @@ query getCommunities {
       chainId
       symbol
       name
+      decimals
     }
-    strategies(where: { isEnabled: true }) {
+    strategies(first: 1000, where: { isEnabled: true }) {
       id
       totalEffectiveActivePoints
       poolId
+      proposals(first: 1000, where: { proposalStatus: 1 }) {
+        id
+        proposalStatus
+      }
     }
     members(first: 1000, where: { stakedTokens_gt: "0" }) {
       id
       memberAddress
+      stakedTokens
     }
   }
 }
@@ -237,25 +253,32 @@ query getCommunity($communityAddr: ID!, $tokenAddr: ID!) {
       memberAddress
       stakedTokens
     }
-    strategies(orderBy: poolId, orderDirection: desc) {
+    strategies(first: 1000, orderBy: poolId, orderDirection: desc) {
       id
-      proposals {
+      proposals(first: 1000) {
         id
       }
       archived
       isEnabled
       poolId
       token
-      metadata
+      metadataHash
+      metadata {
+        title
+        description
+      }
       config {
         proposalType
         pointSystem
       }
-      proposals {
+      proposals(first: 1000) {
         id
       }
     }
     covenantIpfsHash
+    covenant {
+      text
+    }
     communityFee
     protocolFee
     registerStakeAmount
@@ -270,20 +293,20 @@ query getCommunity($communityAddr: ID!, $tokenAddr: ID!) {
 }
 
 query getCommunityCreationData {
-  registryFactories {
+  registryFactories(first: 1000) {
     id
   }
 }
 
 query getRegistryFactoryData {
-  registryFactories {
+  registryFactories(first: 1000) {
     id
     chainId
   }
 }
 
 query getPoolData($garden: ID!, $poolId: BigInt!) {
-  allos {
+  allos(first: 1000) {
     id
     chainId
     tokenNative
@@ -297,19 +320,24 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
     ipfsCovenant
     decimals
   }
-  cvstrategies(where: { poolId: $poolId }) {
+  cvstrategies(first: 1000, where: { poolId: $poolId }) {
     token
-    metadata
+    metadataHash
+    metadata {
+      title
+      description
+    }
     id
     poolId
     totalEffectiveActivePoints
     isEnabled
     maxCVSupply
     archived
-    sybilScorer {
+    sybil {
       id
+      type
     }
-    memberActive {
+    memberActive(first: 1000) {
       id
     }
     config {
@@ -333,18 +361,18 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
         symbol
         decimals
       }
-      members {
+      members(first: 1000) {
         memberAddress
       }
     }
-    proposals(orderBy: createdAt, orderDirection: desc) {
+    proposals(first: 1000, orderBy: createdAt, orderDirection: desc) {
       id
       proposalNumber
+      metadataHash
       metadata {
         title
         description
       }
-      metadataHash
       beneficiary
       requestedAmount
       requestedToken
@@ -377,7 +405,7 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
 }
 
 query getProposalData($garden: ID!, $proposalId: ID!, $communityId: ID!) {
-  allos {
+  allos(first: 1000) {
     id
     chainId
     tokenNative
@@ -397,11 +425,11 @@ query getProposalData($garden: ID!, $proposalId: ID!, $communityId: ID!) {
     blockLast
     convictionLast
     createdAt
+    metadataHash
     metadata {
       title
       description
     }
-    metadataHash
     proposalStatus
     requestedAmount
     requestedToken
@@ -435,7 +463,7 @@ query getProposalData($garden: ID!, $proposalId: ID!, $communityId: ID!) {
 }
 
 query getAllo {
-  allos {
+  allos(first: 1000) {
     id
     chainId
     tokenNative
@@ -443,7 +471,7 @@ query getAllo {
 }
 
 query getStrategyByPool($poolId: BigInt!) {
-  cvstrategies(where: { poolId: $poolId }) {
+  cvstrategies(first: 1000, where: { poolId: $poolId }) {
     id
     poolId
     totalEffectiveActivePoints
@@ -455,7 +483,7 @@ query getStrategyByPool($poolId: BigInt!) {
       pointSystem
       minThresholdPoints
     }
-    memberActive {
+    memberActive(first: 1000) {
       id
     }
     registryCommunity {
@@ -467,14 +495,14 @@ query getStrategyByPool($poolId: BigInt!) {
         decimals
       }
     }
-    proposals {
+    proposals(first: 1000) {
       id
       proposalNumber
+      metadataHash
       metadata {
         title
         description
       }
-      metadataHash
       beneficiary
       requestedAmount
       requestedToken
@@ -500,30 +528,37 @@ query getCommunityTitles($communityAddr: ID!) {
 }
 
 query getPoolTitles($poolId: BigInt!) {
-  cvstrategies(where: { poolId: $poolId }) {
+  cvstrategies(first: 1000, where: { poolId: $poolId }) {
     poolId
-    metadata
+    metadataHash
+    metadata {
+      title
+      description
+    }
     registryCommunity {
       communityName
       garden {
         name
       }
     }
-    metadata
   }
 }
 
 query getProposalTitles($proposalId: ID!) {
   cvproposal(id: $proposalId) {
     proposalNumber
+    metadataHash
     metadata {
       title
       description
     }
-    metadataHash
     strategy {
       poolId
-      metadata
+      metadataHash
+      metadata {
+        title
+        description
+      }
       registryCommunity {
         communityName
         garden {
@@ -534,32 +569,12 @@ query getProposalTitles($proposalId: ID!) {
   }
 }
 
-query getPassportScorer($scorerId: ID!) {
-  passportScorer(id: $scorerId) {
-    id
-    strategies {
-      id
-      strategy {
-        id
-      }
-      threshold
-      councilSafe
-      active
-    }
-    users {
-      id
-      userAddress
-      score
-      lastUpdated
-    }
-  }
-}
-
 query getPassportStrategy($strategyId: ID!) {
   passportStrategy(id: $strategyId) {
     id
-    strategy {
+    passportScorer {
       id
+      type
     }
     threshold
     councilSafe
@@ -576,14 +591,36 @@ query getPassportUser($userId: ID!) {
   }
 }
 
+query getGoodDollarStrategy($strategyId: ID!) {
+  goodDollarStrategy(id: $strategyId) {
+    id
+    sybilProtection {
+      id
+      type
+    }
+    councilSafe
+    active
+  }
+}
+
+query getGoodDollarUser($userId: ID!) {
+  goodDollarUser(id: $userId) {
+    id
+    userAddress
+    verified
+    lastUpdated
+  }
+}
+
 query getProposalDisputes($proposalId: ID!) {
-  proposalDisputes(where: { proposal_: { id: $proposalId } }) {
+  proposalDisputes(first: 1000, where: { proposal_: { id: $proposalId } }) {
     id
     disputeId
     status
     challenger
     context
     metadata {
+      id
       reason
     }
     createdAt
@@ -593,7 +630,7 @@ query getProposalDisputes($proposalId: ID!) {
 }
 
 query getArbitrableConfigs($strategyId: String!) {
-  arbitrableConfigs(where: { strategy: $strategyId }) {
+  arbitrableConfigs(first: 1000, where: { strategy: $strategyId }) {
     arbitrator
     challengerCollateralAmount
     submitterCollateralAmount
@@ -605,7 +642,7 @@ query getArbitrableConfigs($strategyId: String!) {
 
 query getMemberPassportAndCommunities($memberId: ID!) {
   member(id: $memberId) {
-    memberCommunity {
+    memberCommunity(first: 1000) {
       id
     }
   }
@@ -625,3 +662,45 @@ query getMemberPassportAndCommunities($memberId: ID!) {
 #     defaultRulingTimeout
 #   }
 # }
+
+query getCommunityName($communityAddr: ID!) {
+  registryCommunity(id: $communityAddr) {
+    communityName
+  }
+}
+
+query getPoolTitle($poolId: BigInt!) {
+  cvstrategies(first: 1, where: { poolId: $poolId }) {
+    metadata {
+      title
+    }
+    archived
+    isEnabled
+    config {
+      proposalType
+    }
+    registryCommunity {
+      communityName
+    }
+  }
+}
+
+query getProposalTitle($proposalId: ID!) {
+  cvproposal(id: $proposalId) {
+    metadata {
+      title
+    }
+    proposalStatus
+    strategy {
+      metadata {
+        title
+      }
+      registryCommunity {
+        communityName
+      }
+      config {
+        proposalType
+      }
+    }
+  }
+}

@@ -1,7 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
-import { ChevronUpIcon } from "@heroicons/react/24/outline";
+import {
+  ChevronUpIcon,
+  QuestionMarkCircleIcon,
+} from "@heroicons/react/24/outline";
 import cn from "classnames";
 import { Dnum } from "dnum";
 import { Address, useAccount } from "wagmi";
@@ -16,7 +19,7 @@ import {
   ActivatePoints,
   Badge,
   DisplayNumber,
-  CheckPassport,
+  CheckSybil,
   InfoBox,
   Button,
   EthAddress,
@@ -29,7 +32,7 @@ import { calculatePercentageBigInt } from "@/utils/numbers";
 export type PoolGovernanceProps = {
   memberPoolWeight: number | undefined;
   tokenDecimals: number;
-  strategy: Pick<CVStrategy, "id" | "sybilScorer" | "poolId"> & {
+  strategy: Pick<CVStrategy, "id" | "sybil" | "poolId"> & {
     registryCommunity: { garden: Pick<TokenGarden, "symbol"> };
     config: Pick<CVStrategyConfig, "pointSystem" | "allowlist">;
   };
@@ -54,15 +57,17 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
   const poolSystem = strategy.config.pointSystem;
   const [openGovDetails, setOpenGovDetails] = useState(false);
   const { address } = useAccount();
+  const [triggerSybilCheckModalClose, setTriggerSybilCheckModalClose] =
+    useState(false);
 
   const poolSystemDefinition: { [key: number]: string } = {
-    0: "Fixed voting system. Every member has the same governance weight, limited to their registration stake.",
+    0: "Fixed voting system. Every member has the same voting power, limited to their registration stake.",
 
-    1: "Capped voting system. Your governance weight increase with more tokens staked, but only up to a limit.",
+    1: "Capped voting system. Your voting power increases with more tokens staked, but only up to a limit.",
 
-    2: "Unlimited voting system. Your governance weight is equal to your total staked tokens in the community.",
+    2: "Unlimited voting system. Your voting power is equal to your total staked tokens in the community.",
 
-    3: "Quadratic voting system. Your governance weight is equal to the square root of your stake in the community.",
+    3: "Quadratic voting system. Your voting power is equal to the square root of your total staked tokens in the community.",
   };
 
   return (
@@ -79,29 +84,35 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
               <div className="flex items-center gap-1">
                 <DisplayNumber
                   tokenSymbol={strategy.registryCommunity.garden.symbol}
-                  valueClassName="text-primary-content"
-                  symbolClassName="text-primary-content"
                   compact={true}
                   number={
                     [BigInt(memberTokensInCommunity), tokenDecimals] as Dnum
                   }
                 />
                 <InfoWrapper
-                  tooltip={`${poolSystem > 0 ? "Stake more tokens to increase your\ngovernance weight in this pool." : "Fixed voting weight"}`}
+                  tooltip={`${poolSystem > 0 ? "Stake more tokens to increase your\voting power in this pool." : "Fixed voting power"}`}
                   className="hidden md:block text-black"
                   size="sm"
                 />
               </div>
-
-              {/* <Badge status={memberActivatedStrategy ? 1 : 0} /> */}
             </div>
 
             {showPoolGovernanceData && (
               <div className="w-full flex items-center justify-between">
-                <h4 className="subtitle2">Voting weight:</h4>
-                <p className="text-xl font-bold text-primary-content">
-                  {memberPoolWeight?.toFixed(2)} %
-                </p>
+                <h4 className="subtitle2">Voting power:</h4>
+                <div className="flex items-center gap-1">
+                  <p className="text-xl font-bold text-primary-content">
+                    {memberPoolWeight?.toFixed(2)} %
+                  </p>
+                  <a
+                    href="https://docs.gardens.fund/start-here/voting-power"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="rounded-md hover:bg-neutral-soft dark:hover:bg-primary p-2"
+                  >
+                    <QuestionMarkCircleIcon className="h-6 w-6 text-primary-content" />
+                  </a>
+                </div>
               </div>
             )}
           </div>
@@ -115,26 +126,27 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
 
         {/* Activate-Deactivate Button */}
         <div className="flex items-center flex-col gap-2">
-          <CheckPassport
+          <CheckSybil
             strategy={strategy}
             enableCheck={!memberActivatedStrategy}
+            triggerClose={triggerSybilCheckModalClose}
           >
             <ActivatePoints
               strategy={strategy}
               communityAddress={communityAddress}
               isMemberActivated={memberActivatedStrategy}
               isMember={isMemberCommunity}
+              handleTxSuccess={() => setTriggerSybilCheckModalClose(true)}
             />
-          </CheckPassport>
+          </CheckSybil>
         </div>
         <Button
           onClick={() => setOpenGovDetails(!openGovDetails)}
-          btnStyle="outline"
-          color="disabled"
-          className="absolute top-0 right-0 md:flex items-start sm:w-auto border-none hover:opacity-75"
+          btnStyle="link"
+          color="tertiary"
           icon={
             <ChevronUpIcon
-              className={`h-4 w-4 font-bold text-black transition-transform duration-200 ease-in-out ${cn(
+              className={`h-4 w-4 font-bold transition-transform duration-200 ease-in-out ${cn(
                 {
                   "rotate-180": !openGovDetails,
                 },
@@ -142,7 +154,7 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
             />
           }
         >
-          {openGovDetails ? "Close" : "View"} governance details
+          {openGovDetails ? "Hide" : "View"} governance details
         </Button>
         {openGovDetails && (
           <PoolGovernanceDetails membersStrategyData={membersStrategyData} />
@@ -184,7 +196,7 @@ const PoolGovernanceDetails: React.FC<{
       ),
     },
     {
-      header: "Voting weight used",
+      header: "Voting power used",
       render: (member) => (
         <span>
           {calculatePercentageBigInt(

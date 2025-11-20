@@ -1,4 +1,8 @@
-import { CVStrategyV0_0 as CVStrategyTemplate } from "../../generated/templates";
+import {
+  CVStrategyV0_0 as CVStrategyTemplate,
+  PoolMetadata as PoolMetadataTemplate,
+  Covenant as CovenantTemplate,
+} from "../../generated/templates";
 import {
   Member,
   RegistryCommunity,
@@ -7,7 +11,7 @@ import {
   Allo,
   CVStrategy,
   CVStrategyConfig,
-  MemberStrategy
+  MemberStrategy,
 } from "../../generated/schema";
 
 import { BigInt, dataSource, log } from "@graphprotocol/graph-ts";
@@ -73,7 +77,14 @@ export function handleInitialized(event: RegistryInitialized): void {
 
     const rfc = RegistryFactoryContract.bind(rcc.registryFactory());
 
-    newRC.covenantIpfsHash = rcc.covenantIpfsHash();
+    const covenantIpfsHash = rcc.covenantIpfsHash();
+    newRC.covenantIpfsHash = covenantIpfsHash;
+    if (covenantIpfsHash.length > 0) {
+      CovenantTemplate.create(covenantIpfsHash);
+      newRC.covenant = covenantIpfsHash;
+    } else {
+      newRC.covenant = null;
+    }
     newRC.registerStakeAmount = rcc.registerStakeAmount();
     newRC.councilSafe = rcc.councilSafe().toHexString();
 
@@ -96,19 +107,19 @@ export function handleInitialized(event: RegistryInitialized): void {
     newRC.strategyTemplate = rcc.strategyTemplate().toHexString();
     newRC.isValid = true;
 
+    const erc20 = ERC20Contract.bind(token);
     let tg = TokenGarden.load(token.toHexString());
     if (tg == null) {
       tg = new TokenGarden(token.toHexString());
-      const erc20 = ERC20Contract.bind(token);
-
       tg.name = erc20.name();
-      tg.totalBalance = erc20.balanceOf(event.address);
       tg.chainId = newRC.chainId;
       tg.decimals = BigInt.fromI32(erc20.decimals());
       tg.address = token.toHexString();
       tg.symbol = erc20.symbol();
-      tg.save();
     }
+    tg.totalBalance = erc20.balanceOf(event.address);
+    tg.ipfsCovenant = covenantIpfsHash.length > 0 ? covenantIpfsHash : null;
+    tg.save();
     newRC.garden = tg.id;
     newRC.archived = false;
 
@@ -443,6 +454,19 @@ export function handlePoolCreated(event: PoolCreated): void {
   ]);
 
   const strategyAddress = event.params._strategy;
+  const metadataPointer = event.params._metadata.pointer;
+
+  if (metadataPointer.length > 0) {
+    PoolMetadataTemplate.create(metadataPointer);
+
+    const strategyId = strategyAddress.toHexString();
+    let strategy = CVStrategy.load(strategyId);
+    if (strategy != null) {
+      strategy.metadataHash = metadataPointer;
+      strategy.metadata = metadataPointer;
+      strategy.save();
+    }
+  }
 
   CVStrategyTemplate.create(strategyAddress);
 }
@@ -538,7 +562,24 @@ export function handleCovenantIpfsHashUpdated(
     return;
   }
 
-  community.covenantIpfsHash = event.params._covenantIpfsHash;
+  const covenantIpfsHash = event.params._covenantIpfsHash;
+  community.covenantIpfsHash = covenantIpfsHash;
+  if (covenantIpfsHash.length > 0) {
+    CovenantTemplate.create(covenantIpfsHash);
+    community.covenant = covenantIpfsHash;
+  } else {
+    community.covenant = null;
+  }
+
+  if (community.garden) {
+    let tokenGarden = TokenGarden.load(community.garden);
+    if (tokenGarden != null) {
+      tokenGarden.ipfsCovenant =
+        covenantIpfsHash.length > 0 ? covenantIpfsHash : null;
+      tokenGarden.save();
+    }
+  }
+
   community.save();
 }
 

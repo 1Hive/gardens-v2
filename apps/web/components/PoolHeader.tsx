@@ -8,6 +8,7 @@ import {
   ArchiveBoxIcon,
   InformationCircleIcon,
   ArrowPathRoundedSquareIcon,
+  ChevronDoubleUpIcon,
 } from "@heroicons/react/24/outline";
 import {
   NoSymbolIcon,
@@ -35,6 +36,7 @@ import { Modal } from "./Modal";
 import { Skeleton } from "./Skeleton";
 import { Statistic } from "./Statistic";
 import { SuperfluidStream } from "@/assets";
+import { TransactionStatusNotification } from "@/components/TransactionStatusNotification";
 import { chainConfigMap } from "@/configs/chains";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { VOTING_POINT_SYSTEM_DESCRIPTION } from "@/globals";
@@ -46,7 +48,6 @@ import { MetadataV1 } from "@/hooks/useIpfsFetch";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 
 import { SuperToken } from "@/hooks/useSuperfluidToken";
-import { TransactionStatusNotification } from "@/hooks/useTransactionNotification";
 import { superTokenFactoryAbi } from "@/src/customAbis";
 import { cvStrategyABI, registryCommunityABI } from "@/src/generated";
 import {
@@ -63,6 +64,7 @@ import {
   CV_SCALE_PRECISION,
   formatTokenAmount,
   MAX_RATIO_CONSTANT,
+  roundToSignificant,
 } from "@/utils/numbers";
 import { shortenAddress } from "@/utils/text";
 
@@ -98,6 +100,7 @@ type Props = {
     | undefined;
   superTokenCandidate: SuperToken | null;
   setSuperTokenCandidate: (token: SuperToken | null) => void;
+  minThGtTotalEffPoints: boolean;
 };
 
 export function calculateConvictionGrowthInSeconds(
@@ -137,6 +140,7 @@ export default function PoolHeader({
   superToken,
   superTokenCandidate,
   setSuperTokenCandidate,
+  minThGtTotalEffPoints,
 }: Props) {
   const [isOpenModal, setIsOpenModal] = useState(false);
   const { publish } = usePubSubContext();
@@ -185,23 +189,20 @@ export default function PoolHeader({
     blockTime,
   );
 
+  //problem here, we are passing decimals from pool token decimals but it it decimals from the GOV token
+  const communityGovTokenDecimals =
+    strategy?.registryCommunity?.garden?.decimals;
+
   const minThresholdPoints =
     poolToken ?
-      formatTokenAmount(strategy.config.minThresholdPoints, +poolToken.decimals)
-    : "0";
-
-  const totalPointsActivatedInPool =
-    poolToken ?
       formatTokenAmount(
-        strategy.totalEffectiveActivePoints,
-        +poolToken.decimals,
+        strategy.config.minThresholdPoints,
+        +communityGovTokenDecimals,
       )
-    : 0;
+    : "0";
 
   const maxVotingWeight =
     poolToken ? formatTokenAmount(maxAmount, poolToken.decimals) : 0;
-  const minThGtTotalEffPoints =
-    +minThresholdPoints > +totalPointsActivatedInPool;
 
   const spendingLimit =
     (strategy.config.maxRatio / CV_SCALE_PRECISION) *
@@ -224,36 +225,63 @@ export default function PoolHeader({
 
   const { value, unit } = convertSecondsToReadableTime(convictionGrowthSec);
 
-  let sybilResistanceType: SybilResistanceType;
+  let sybilResistanceType: SybilResistanceType = "noSybilResist";
   let sybilResistanceValue: Address[] | number | undefined;
-  if (passportScore && passportScore > 0) {
-    sybilResistanceType = "gitcoinPassport";
-    sybilResistanceValue = passportScore;
+  if (strategy.sybil != null) {
+    if (strategy.sybil.type === "Passport" && passportScore != null) {
+      sybilResistanceType = "gitcoinPassport";
+      sybilResistanceValue = passportScore;
+    } else if (strategy.sybil.type === "GoodDollar") {
+      sybilResistanceType = "goodDollar";
+      sybilResistanceValue = undefined;
+    }
   } else {
     sybilResistanceType = "allowList";
     sybilResistanceValue = allowList as Address[] | undefined;
   }
 
+  const sybilResistanceLabel: Record<SybilResistanceType, string> = {
+    allowList: "Allowlist",
+    gitcoinPassport: "Gitcoin Passport",
+    goodDollar: "GoodDollar",
+    noSybilResist: "None",
+  };
+
+  const sybilResistanceInfo: Record<SybilResistanceType, string> = {
+    allowList: "Only users in the allowlist can interact with this pool",
+    gitcoinPassport:
+      typeof sybilResistanceValue === "number" ?
+        `Only users with a Gitcoin Passport above the threshold can interact with this pool: \n Threshold: ${sybilResistanceValue.toFixed(2)}`
+      : "",
+    goodDollar:
+      "Only users verified with GoodDollar Sybil-Resistance can interact with this pool.",
+    noSybilResist: "Any wallet can interact with this pool.",
+  };
+
   const poolConfig = [
     {
       label: "Spending limit",
-      value: `${spendingLimit > 99 ? "100" : spendingLimit.toPrecision(2)} %`,
+      value: `${spendingLimit > 99 ? "100" : roundToSignificant(spendingLimit, 2)} %`,
       info: "Max percentage of the pool funds that can be spent in a single proposal.",
     },
     {
       label: "Min conviction",
-      value: `${minimumConviction.toPrecision(2)} %`,
+      value: `${roundToSignificant(minimumConviction, 2, { showPrecisionMissIndicator: false })} %`,
       info: "% of Pool's voting weight needed to pass the smallest funding proposal possible. Higher funding requests demand greater conviction to pass.",
     },
     {
       label: "Conviction growth",
-      value: `${value} ${unit}`,
+      value:
+        `${value} ${unit}` +
+        (value > 1 && !unit.includes("sec") && !unit.includes("min") ?
+          "s"
+        : ""),
       info: "It's the time for conviction to reach proposal support. This parameter is logarithmic, represented as a half life and may vary slightly over time depending on network block times.",
     },
     {
       label: "Min threshold",
       value: `${minThresholdPoints}`,
-      info: `A fixed amount of ${poolToken?.symbol} that overrides Minimum Conviction when the Pool's activated governance is low.`,
+      info: "A fixed amount of voting weight that overrides minimum conviction when not enough members have activated their governance.",
     },
     {
       label: "Max voting weight",
@@ -262,22 +290,38 @@ export default function PoolHeader({
     },
     {
       label: "Protection",
+      info: sybilResistanceInfo[sybilResistanceType],
       value:
-        sybilResistanceType ?
-          sybilResistanceType === "gitcoinPassport" ? "Gitcoin Passport"
-          : (sybilResistanceValue as Array<Address>)?.[0] === zeroAddress ?
-            "None"
-          : "Allowlist"
-        : "",
-      info:
-        sybilResistanceType ?
-          sybilResistanceType === "gitcoinPassport" ?
-            `Only users with a Gitcoin Passport above the threshold can interact with this pool: \n Threshold: ${(sybilResistanceValue as number).toFixed(2)}`
-          : (sybilResistanceValue as Array<Address>)?.[0] === zeroAddress ?
-            "Any wallet can interact with this pool"
-          : `Only users in the allowlist can interact with this pool: \n -${(sybilResistanceValue as Array<string>).map((x) => shortenAddress(x)).join("\n- ")}`
-        : "",
+        sybilResistanceType === "allowList" ?
+          <div className="dropdown dropdown-hover dropdown-center dropdowm-bottom sm:dropdown-right">
+            {/* Trigger for the dropdown */}
+            <div className="flex items-center gap-2 group">
+              <p className="subtitle ml-1">Allowlist</p>
+              <ChevronDoubleUpIcon className="w-4 h-4 group-hover:rotate-180 transition-all ease-in-out duration-250" />
+            </div>
+            <div className="dropdown-content bg-primary rounded-box shadow z-10 p-2 max-h-[500px] overflow-y-auto w-64">
+              <ul className="menu w-full gap-1">
+                {(allowList ?? []).length > 0 ?
+                  (allowList ?? []).map((addr) => (
+                    <li key={addr} className="flex flex-col gap-2">
+                      <EthAddress
+                        address={addr as Address}
+                        shortenAddress={true}
+                        icon={"ens"}
+                        actions="copy"
+                      />
+                    </li>
+                  ))
+                : <li>
+                    <span>No addresses</span>
+                  </li>
+                }
+              </ul>
+            </div>
+          </div>
+        : sybilResistanceLabel[sybilResistanceType],
     },
+
     {
       label: "Token",
       info: "The token used in this pool to fund proposals.",
@@ -336,7 +380,7 @@ export default function PoolHeader({
           "Max voting weight",
           "Token",
         ];
-        return !!config.value && !filter.includes(config.label);
+        return config.value != null && !filter.includes(config.label);
       })
     : PoolTypes[proposalType] === "signaling" ?
       poolConfig.filter((config) => {
@@ -345,7 +389,7 @@ export default function PoolHeader({
           "Min threshold",
           "Min conviction",
         ];
-        return !!config.value && !filteredLabels.includes(config.label);
+        return config.value != null && !filteredLabels.includes(config.label);
       })
     : PointSystems[pointSystem] === "capped" ? poolConfig
     : poolConfig.filter((config) => config.label !== "Max voting weight");
@@ -458,7 +502,7 @@ export default function PoolHeader({
     if (
       isEnableStreamTxModalOpened &&
       isCouncilSafe &&
-      toastId &&
+      toastId != null &&
       superTokenCandidate
     ) {
       toast.dismiss(toastId);
@@ -584,17 +628,6 @@ export default function PoolHeader({
             </div>
             {(!!isCouncilMember || isCouncilSafe) && (
               <div className="flex gap-2 flex-wrap">
-                <Button
-                  btnStyle="outline"
-                  icon={<Cog6ToothIcon height={20} width={20} />}
-                  disabled={
-                    !isConnected || missmatchUrl || disableCouncilSafeButtons
-                  }
-                  tooltip={tooltipMessage}
-                  onClick={() => setIsOpenModal(true)}
-                >
-                  Edit
-                </Button>
                 {isArchived ?
                   <Button
                     icon={<CheckIcon height={20} width={20} />}
@@ -682,7 +715,19 @@ export default function PoolHeader({
                     </Button>
                   </>
                 }
+                <Button
+                  btnStyle="outline"
+                  icon={<Cog6ToothIcon height={20} width={20} />}
+                  disabled={
+                    !isConnected || missmatchUrl || disableCouncilSafeButtons
+                  }
+                  tooltip={tooltipMessage}
+                  onClick={() => setIsOpenModal(true)}
+                >
+                  Edit
+                </Button>
                 {!superToken &&
+                  PoolTypes[proposalType] !== "signaling" &&
                   networkSfMetadata?.contractsV1.superTokenFactory && (
                     <>
                       <Button
@@ -718,7 +763,7 @@ export default function PoolHeader({
                   )}
               </div>
             )}
-            <div className="flex px-1 flex-col sm:flex-row bg-neutral-soft-2 py-2 rounded-lg items-baseline justify-between">
+            <div className="flex px-1 flex-col sm:flex-row bg-primary py-2 rounded-lg items-baseline justify-between">
               <EthAddress
                 icon={false}
                 address={strategy.id as Address}
@@ -795,9 +840,7 @@ export default function PoolHeader({
 
           {/* Description */}
           <Skeleton rows={5} isLoading={!ipfsResult}>
-            <MarkdownWrapper>
-              {ipfsResult?.description ?? "No description found"}
-            </MarkdownWrapper>
+            <MarkdownWrapper source={ipfsResult?.description ?? ""} />
           </Skeleton>
 
           {/* Pool Params */}
@@ -819,9 +862,7 @@ export default function PoolHeader({
                   }
                   tooltip={config.info}
                 >
-                  <p className="text-neutral-content subtitle">
-                    {config.value}
-                  </p>
+                  <p className="subtitle">{config.value}</p>
                 </Statistic>
               </div>
             ))}
@@ -833,11 +874,12 @@ export default function PoolHeader({
               <h4>Voting System:</h4>
               <div className="flex gap-2 items-center">
                 <Badge
+                  color="info"
                   label="conviction voting"
-                  className="text-secondary-content"
                   icon={<Battery50Icon />}
                 />
                 <Badge
+                  color="info"
                   label={PointSystems[pointSystem]}
                   tooltip={
                     VOTING_POINT_SYSTEM_DESCRIPTION[PointSystems[pointSystem]]
@@ -851,32 +893,24 @@ export default function PoolHeader({
           {/* InfoBox - Banner or Image */}
           {minThGtTotalEffPoints && isEnabled && (
             <InfoBox
+              title="Min threshold"
               infoBoxType="warning"
-              content="Activated governance in this pool is too low. No proposals will pass unless more members activate their governance. You can still create and support proposals."
+              content="Not enough eligible members in this pool have activated their governance. No proposals will pass until more members do. You can still create and support proposals."
               className="mb-4"
             />
           )}
-          {
-            !isEnabled && (
-              <div className="banner">
+          {!isEnabled && (
+            <div className="banner">
+              {isArchived ?
+                <ArchiveBoxIcon className="h-8 w-8 text-secondary-content" />
+              : <ClockIcon className="h-8 w-8 text-secondary-content" />}
+              <h6>
                 {isArchived ?
-                  <ArchiveBoxIcon className="h-8 w-8 text-secondary-content" />
-                : <ClockIcon className="h-8 w-8 text-secondary-content" />}
-                <h6>
-                  {isArchived ?
-                    "This pool has been archived"
-                  : "Waiting for council approval"}
-                </h6>
-              </div>
-            )
-            // : <Image
-            //     src={
-            //       PoolTypes[proposalType] === "funding" ? blueLand : grassLarge
-            //     }
-            //     alt="pool image"
-            //     className="h-12 w-full rounded-lg object-cover"
-            //   />
-          }
+                  "This pool has been archived"
+                : "Waiting for council approval"}
+              </h6>
+            </div>
+          )}
         </section>
       </div>
     </>

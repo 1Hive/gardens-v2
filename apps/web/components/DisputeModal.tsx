@@ -101,7 +101,7 @@ export const DisputeModal: FC<Props> = ({
       containerId: proposalData?.strategy.poolId,
       type: "update",
     },
-    enabled: !!proposalData,
+    enabled: proposalData != null,
   });
 
   const { data: arbitrationCost } = useContractRead({
@@ -121,7 +121,7 @@ export const DisputeModal: FC<Props> = ({
   });
 
   const totalStake =
-    arbitrationCost != null && arbitrationConfig ?
+    arbitrationCost != null ?
       arbitrationCost + BigInt(arbitrationConfig.challengerCollateralAmount)
     : undefined;
   const lastDispute =
@@ -130,14 +130,14 @@ export const DisputeModal: FC<Props> = ({
     ];
   const isCooldown =
     !!lastDispute &&
-    !!disputeCooldown &&
+    disputeCooldown != null &&
     +lastDispute.ruledAt + Number(disputeCooldown) > Date.now() / 1000;
   const proposalStatus = ProposalStatus[proposalData.proposalStatus];
   const isDisputed =
-    proposalData && lastDispute && proposalStatus === "disputed";
+    proposalData != null && lastDispute && proposalStatus === "disputed";
   const isTimeout =
     lastDispute &&
-    arbitrationConfig &&
+    arbitrationConfig != null &&
     +lastDispute.createdAt + +arbitrationConfig.defaultRulingTimeout <
       Date.now() / 1000;
   const disputes = disputesResult?.proposalDisputes ?? [];
@@ -147,7 +147,7 @@ export const DisputeModal: FC<Props> = ({
   if (
     chainId === gnosis.id &&
     lastDispute &&
-    lastDispute &&
+    lastDispute != null &&
     +lastDispute.disputeId >= 62 &&
     +lastDispute.disputeId <= 69
   )
@@ -315,13 +315,14 @@ export const DisputeModal: FC<Props> = ({
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               placeholder="Enter your dispute reason here"
-              className="textarea textarea-accent w-full"
+              className="textarea textarea-accent w-full dark:bg-primary-soft-dark"
               rows={5}
               required
             />
             <div className="text-error ml-4 mt-1">{error}</div>
           </div>
           <InfoBox
+            title="Information"
             infoBoxType="info"
             content={`Disputing this proposal stops it from being executed but not from growing in support. The Tribunal has ${rulingTimeout.value} ${rulingTimeout.unit} to settle any disputes before it can be closed and collateral is returned.`}
           />
@@ -347,7 +348,7 @@ export const DisputeModal: FC<Props> = ({
       {isDisputed ?
         <>
           {DisputeStatus[+lastDispute.status] === "waiting" &&
-            (!!isTribunalMember || isTribunalSafe) && (
+            (Boolean(isTribunalMember) || isTribunalSafe) && (
               <div className="flex flex-col gap-1 p-1 w-48">
                 <a
                   href={`https://app.safe.global/transactions/queue?safe=${safePrefix}:${arbitrationConfig.tribunalSafe}`}
@@ -369,7 +370,7 @@ export const DisputeModal: FC<Props> = ({
           <div className="w-full flex justify-end gap-4 flex-wrap">
             {(
               DisputeStatus[+lastDispute.status] === "waiting" &&
-              (!!isTribunalMember || isTribunalSafe || isTimeout)
+              (Boolean(isTribunalMember) || isTribunalSafe || isTimeout)
             ) ?
               <>
                 <Button
@@ -444,7 +445,7 @@ export const DisputeModal: FC<Props> = ({
         </>
       : <div className="flex w-full justify-between items-end flex-wrap gap-2">
           <div>
-            {totalStake && (
+            {totalStake != null && (
               <WalletBalance
                 label="Dispute Stake"
                 token="native"
@@ -495,7 +496,7 @@ export const DisputeModal: FC<Props> = ({
             onClick={() => setIsModalOpened(true)}
             className="w-full"
           >
-            {isDisputed ?? isProposalEnded ?
+            {(isDisputed ?? isProposalEnded) ?
               "Open dispute"
             : "Dispute Proposal"}
           </Button>
@@ -582,12 +583,14 @@ const DisputeMessage = ({
           </div>
         )}
       </div>
-      <div className="chat-bubble shadow-lg bg-neutral-200">
-        <MarkdownWrapper>
-          {dispute.metadata?.reason ??
+      <div className="chat-bubble shadow-lg bg-neutral">
+        <MarkdownWrapper
+          source={
+            dispute.metadata?.reason ??
             disputeMetadata?.reason ??
-            "No reason provided."}
-        </MarkdownWrapper>
+            "No reason provided."
+          }
+        />
       </div>
     </div>
   );

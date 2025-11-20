@@ -1,14 +1,22 @@
+/* eslint-disable jsx-a11y/click-events-have-key-events */
 "use client";
 
-import React, { Fragment, useEffect, useRef, useState } from "react";
+import React, {
+  Fragment,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import {
   AdjustmentsHorizontalIcon,
+  ArrowDownTrayIcon,
   PlusIcon,
   UsersIcon,
 } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { Id, toast } from "react-toastify";
-import { parseAbiParameters, encodeAbiParameters } from "viem";
+import { parseAbiParameters, encodeAbiParameters, formatUnits } from "viem";
 import { Address, useAccount, useContractRead } from "wagmi";
 import {
   Allo,
@@ -24,11 +32,11 @@ import {
 } from "#/subgraph/.graphclient";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { PoolGovernanceProps } from "./PoolGovernance";
-import { ProposalCardProps } from "./ProposalCard";
+import { ProposalCardProps, ProposalHandle } from "./ProposalCard";
 import TooltipIfOverflow from "./TooltipIfOverflow";
 import {
   Button,
-  CheckPassport,
+  CheckSybil,
   InfoWrapper,
   PoolGovernance,
   ProposalCard,
@@ -42,7 +50,7 @@ import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithC
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { alloABI, registryCommunityABI } from "@/src/generated";
-import { ProposalStatus } from "@/types";
+import { PoolTypes, ProposalStatus } from "@/types";
 import { useErrorDetails } from "@/utils/getErrorName";
 import { bigIntMin, calculatePercentageBigInt } from "@/utils/numbers";
 
@@ -86,7 +94,7 @@ type Stats = {
 interface ProposalsProps {
   strategy: Pick<
     CVStrategy,
-    "id" | "poolId" | "totalEffectiveActivePoints" | "sybilScorer" | "isEnabled"
+    "id" | "poolId" | "totalEffectiveActivePoints" | "sybil" | "isEnabled"
   > & {
     registryCommunity: Pick<RegistryCommunity, "id"> & {
       garden: Pick<RegistryCommunity["garden"], "decimals">;
@@ -96,6 +104,7 @@ interface ProposalsProps {
         ProposalCardProps["proposalData"]
     >;
     config: ProposalCardProps["strategyConfig"];
+    title: string | undefined | null;
   } & PoolGovernanceProps["strategy"];
   alloInfo: Allo;
   poolToken?: {
@@ -108,6 +117,7 @@ interface ProposalsProps {
   communityAddress: Address;
   createProposalUrl: string;
   proposalType: number;
+  minThGtTotalEffPoints: boolean;
 }
 
 export function Proposals({
@@ -116,6 +126,7 @@ export function Proposals({
   poolToken,
   communityAddress,
   createProposalUrl,
+  minThGtTotalEffPoints,
 }: ProposalsProps) {
   // State
   const [allocationView, setAllocationView] = useState(false);
@@ -126,6 +137,9 @@ export function Proposals({
   const [stakedFilters, setStakedFilters] = useState<{
     [key: string]: ProposalInputItem;
   }>({});
+  const [showManageSupportTooltip, setShowManageSupportTooltip] =
+    useState(false);
+  const proposalCardRefs = useRef<Map<string, ProposalHandle>>(new Map());
 
   // Hooks
   const { address: wallet } = useAccount();
@@ -137,6 +151,16 @@ export function Proposals({
 
   const tokenDecimals = strategy.registryCommunity.garden.decimals;
   const searchParams = useCollectQueryParams();
+
+  const proposalSectionRef = useRef<HTMLDivElement>(null);
+
+  const makeRef = useCallback(
+    (id: string) => (inst: ProposalHandle | null) => {
+      if (inst) proposalCardRefs.current.set(id, inst);
+      else proposalCardRefs.current.delete(id); // cleanup on unmount
+    },
+    [],
+  );
 
   // Queries
   const { data: memberData, error } = useSubgraphQuery<isMemberQuery>({
@@ -238,9 +262,19 @@ export function Proposals({
     memberData?.member?.memberCommunity?.[0]?.stakedTokens ?? 0,
   );
 
-  const proposals = strategy.proposals.sort(
-    (a, b) => b.stakedAmount - a.stakedAmount,
-  );
+  const proposals = strategy.proposals.sort((a, b) => {
+    const aConviction =
+      proposalCardRefs.current.get(b.id)?.getProposalConviction()?.conviction ??
+      0n;
+    const bConviction =
+      proposalCardRefs.current.get(a.id)?.getProposalConviction()?.conviction ??
+      0n;
+    return (
+      aConviction < bConviction ? -1
+      : aConviction > bConviction ? 1
+      : 0
+    );
+  });
 
   // Effects
   useEffect(() => {
@@ -273,6 +307,19 @@ export function Proposals({
       };
     });
 
+    if (process.env.NODE_ENV !== "production") {
+      const supportSnapshot = stakesFiltered.map((stake) => ({
+        proposalId: stake.proposal.id,
+        proposalNumber: stake.proposal.proposalNumber,
+        supportRaw: stake.amount.toString(),
+        supportFormatted: formatUnits(stake.amount, tokenDecimals),
+      }));
+      console.info(
+        "[Proposals][SupportSnapshot]",
+        supportSnapshot.length ? supportSnapshot : "No active support positions",
+      );
+    }
+
     setInputAllocatedTokens(totalStaked);
     setStakedFilters(memberStakes);
   }, [memberData?.member?.stakes, strategy.id]);
@@ -298,24 +345,66 @@ export function Proposals({
     },
   ];
 
-  const disableManSupportButton = disableManageSupportBtnCondition.some(
+  const disableCreateProposalBtnCondition: ConditionObject[] = [
+    {
+      condition: !isMemberCommunity,
+      message: "Join community first",
+    },
+  ];
+
+  const disableManageSupportButton = disableManageSupportBtnCondition.some(
     (cond) => cond.condition,
   );
+
   const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons(
     disableManageSupportBtnCondition,
   );
-  useEffect(() => {
-    if (
-      searchParams[QUERY_PARAMS.poolPage.allocationView] === "true" &&
-      !disableManSupportButton &&
-      isConnected
-    ) {
-      setAllocationView(true);
-    }
-  }, [disableManSupportButton, isConnected, searchParams]);
+
+  const { tooltipMessage: createProposalTooltipMessage } = useDisableButtons(
+    disableCreateProposalBtnCondition,
+  );
 
   useEffect(() => {
-    if (!proposals) return;
+    if (disableManageSupportButton) {
+      // Used to dismiss the Manage support tooltip in case it was shown
+      const handleClickOutside = () => {
+        setShowManageSupportTooltip(false);
+        document.removeEventListener("click", handleClickOutside);
+      };
+      document.addEventListener("click", handleClickOutside);
+
+      return () => {
+        document.removeEventListener("click", handleClickOutside);
+      };
+    }
+  }, [disableManageSupportButton]);
+
+  useEffect(() => {
+    if (searchParams[QUERY_PARAMS.poolPage.allocationView] === "true") {
+      if (!disableManageSupportButton && isConnected) {
+        setAllocationView(true);
+      } else {
+        setShowManageSupportTooltip(true);
+      }
+    }
+  }, [disableManageSupportButton, isConnected, searchParams]);
+
+  useEffect(() => {
+    if (
+      searchParams[QUERY_PARAMS.poolPage.allocationView] !== undefined &&
+      proposalSectionRef.current
+    ) {
+      const elementTop =
+        proposalSectionRef.current.getBoundingClientRect().top + window.scrollY;
+      window.scrollTo({
+        top: elementTop - 150,
+        behavior: "smooth",
+      });
+    }
+  }, [proposalSectionRef.current, searchParams]);
+
+  useEffect(() => {
+    if (proposals == null) return;
 
     const newInputs: { [key: string]: ProposalInputItem } = {};
 
@@ -326,11 +415,25 @@ export function Proposals({
       newInputs[id] = {
         proposalId: id,
         value:
-          !proposalEnded && stakedFilters[id] ? stakedFilters[id]?.value : 0n,
+          !proposalEnded && stakedFilters[id] != null ?
+            stakedFilters[id]?.value
+          : 0n,
         proposalNumber,
       };
     });
     setInputs(newInputs);
+    if (process.env.NODE_ENV !== "production") {
+      const snapshot = Object.values(newInputs).map((input) => ({
+        proposalId: input.proposalId,
+        proposalNumber: input.proposalNumber,
+        initialValue: input.value.toString(),
+        fromStake: stakedFilters[input.proposalId]?.value.toString() ?? "0",
+        status: ProposalStatus[
+          proposals.find((p) => p.id === input.proposalId)?.proposalStatus ?? 0
+        ],
+      }));
+      console.info("[Proposals][InitialInputs]", snapshot);
+    }
   }, [proposals, stakedFilters]);
 
   const getProposalsInputsDifferences = (
@@ -354,7 +457,7 @@ export function Proposals({
   };
 
   const calculateTotalTokens = (exceptProposalId?: string) => {
-    if (!inputs) {
+    if (!Object.keys(inputs).length) {
       console.error("Inputs not yet computed");
       return 0n;
     }
@@ -405,7 +508,7 @@ export function Proposals({
         containerId: strategy.poolId,
         function: "allocate",
       });
-      if (toastId.current) {
+      if (toastId.current != null) {
         toast.dismiss(toastId.current);
         toastId.current = null;
       }
@@ -413,7 +516,7 @@ export function Proposals({
   });
 
   const submit = async () => {
-    if (!inputs) {
+    if (!Object.keys(inputs).length) {
       console.error("Inputs not yet computed");
       return;
     }
@@ -422,6 +525,24 @@ export function Proposals({
       inputs,
       stakedFilters,
     );
+    if (process.env.NODE_ENV !== "production") {
+      console.info("[Proposals][Allocate] Current inputs snapshot", {
+        inputs: Object.values(inputs).map((input) => ({
+          proposalId: input.proposalId,
+          proposalNumber: input.proposalNumber,
+          value: input.value.toString(),
+        })),
+        stakedFilters: Object.values(stakedFilters).map((stake) => ({
+          proposalId: stake.proposalId,
+          proposalNumber: stake.proposalNumber,
+          value: stake.value.toString(),
+        })),
+        deltas: proposalsDifferencesArr.map((delta) => ({
+          proposalId: delta.proposalId.toString(),
+          deltaSupport: delta.deltaSupport.toString(),
+        })),
+      });
+    }
     const abiTypes = parseAbiParameters(
       "(uint256 proposalId, int256 deltaSupport)[]",
     );
@@ -451,7 +572,7 @@ export function Proposals({
     : undefined;
 
   const calcPoolWeightUsed =
-    memberPoolWeight ?
+    memberPoolWeight != null ?
       (number: number) => {
         if (memberPoolWeight == 0) return 0;
         return ((number / 100) * memberPoolWeight).toFixed(2);
@@ -467,21 +588,21 @@ export function Proposals({
   const stats: Stats[] = [
     {
       id: 1,
-      name: "Your voting weight",
+      name: "Your voting power",
       stat: memberPoolWeight,
       className: poolWeightClassName,
-      info: "Represents your voting power within the pool",
+      info: "Indicates the amount of voting power you hold within this pool.",
     },
     {
       id: 2,
-      name: "Voting weight used",
+      name: "Voting power used",
       stat: memberSupportedProposalsPct,
       className: `${
         memberSupportedProposalsPct >= 100 ?
           "bg-secondary-content text-secondary-soft border-secondary-content"
         : "bg-primary-content text-primary-soft border-primary-content"
       }`,
-      info: "Reflects the percentage of your pool weight supporting proposals.",
+      info: "Shows the percentage of your voting power currently allocated to support proposals.",
     },
   ];
 
@@ -494,17 +615,114 @@ export function Proposals({
 
   const membersStrategies = membersStrategyData?.memberStrategies;
 
+  const handleDownloadCVResults = () => {
+    let headers = [
+      "Proposal ID",
+      "Proposal Name",
+      "Support",
+      "Support %",
+      "Conviction",
+      "Conviction %",
+      "Threshold",
+      "Recipient Address",
+    ];
+
+    // Create a record of proposal convictions with proposal ID as keys
+    const proposalConvictionMap = Array.from(
+      proposalCardRefs.current.entries(),
+    ).reduce(
+      (acc, [id, proposal]) => {
+        acc[id] = proposal.getProposalConviction();
+        return acc;
+      },
+      {} as Record<string, ReturnType<ProposalHandle["getProposalConviction"]>>,
+    );
+
+    const totalSupport = Object.values(proposalConvictionMap).reduce(
+      (acc, proposal) => acc + proposal.support || 0,
+      0,
+    );
+
+    const totalConviction = Object.values(proposalConvictionMap).reduce(
+      (acc, proposal) => acc + proposal.conviction || 0n,
+      0n,
+    );
+
+    let rows = activeOrDisputedProposals.map((proposal) => {
+      const proposalNumber = proposal.proposalNumber;
+      const proposalTitle = `"${proposal.metadata?.title?.replace(/"/g, '""') ?? "Untitled"}"`; // Escape quotes in title
+      const beneficiary = proposal.beneficiary;
+      const support = formatUnits(proposal.stakedAmount, tokenDecimals);
+      const supportPercent =
+        totalSupport > 0 ?
+          ((proposalConvictionMap[proposal.id]?.support || 0) / totalSupport) *
+            100 +
+          "%"
+        : "0%";
+      const conviction = formatUnits(
+        proposalConvictionMap[proposal.id]?.conviction || 0n,
+        tokenDecimals,
+      );
+      const convictionPercent =
+        calculatePercentageBigInt(
+          proposalConvictionMap[proposal.id]?.conviction || 0n,
+          totalConviction,
+        ) + "%";
+      const threshold = proposalConvictionMap[proposal.id]?.threshold || 0;
+      return [
+        proposalNumber,
+        proposalTitle,
+        support,
+        supportPercent,
+        conviction,
+        convictionPercent,
+        threshold,
+        beneficiary,
+      ];
+    });
+
+    // Remove last 2 column if pool is signaling
+    if (PoolTypes[strategy.config.proposalType] === "signaling") {
+      headers = headers.slice(0, -2);
+      rows = rows.map((row) => row.slice(0, -2));
+    }
+
+    const csvContent = [headers, ...rows].map((e) => e.join(",")).join("\n");
+
+    const blob = new Blob([csvContent], {
+      type: "text/csv;charset=utf-8;",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    const fileName =
+      strategy.title ?
+        `conviction_results_pool_${strategy.title}.csv`
+      : "conviction_results_pool.csv";
+    link.setAttribute("download", fileName);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const activeOrDisputedProposals = proposals.filter(
+    (x) =>
+      ProposalStatus[x.proposalStatus] === "active" ||
+      ProposalStatus[x.proposalStatus] === "disputed",
+  );
+
   // Render
   return (
     <>
       {/* Proposals section */}
       <section className="col-span-12 xl:col-span-9 flex flex-col gap-10">
         <header
+          ref={proposalSectionRef}
           className={`flex ${proposals.length === 0 ? "flex-col items-start justify-start" : "items-center justify-between"} gap-10 flex-wrap`}
         >
           <h3 className="text-left w-52">Proposals</h3>
-          {!!proposals &&
-            strategy.isEnabled &&
+          {strategy.isEnabled &&
             (proposals.length === 0 ?
               <div className="text-center py-12  w-full flex flex-col items-center justify-center">
                 <div className="w-16 h-16 bg-neutral-soft-2 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -535,58 +753,76 @@ export function Proposals({
                 </Link>
               </div>
             : !allocationView && (
-                <CheckPassport strategy={strategy}>
-                  <Button
-                    icon={<AdjustmentsHorizontalIcon height={24} width={24} />}
-                    onClick={() => setAllocationView((prev) => !prev)}
-                    disabled={
-                      !isConnected ||
-                      missmatchUrl ||
-                      !memberActivatedStrategy ||
-                      !isAllowed
-                    }
-                    tooltip={tooltipMessage}
-                  >
-                    Manage support
-                  </Button>
-                </CheckPassport>
+                <div className="flex items-center gap-4">
+                  {activeOrDisputedProposals.length > 0 &&
+                    proposalCardRefs.current.size ===
+                      activeOrDisputedProposals.length && (
+                      <Button
+                        btnStyle="link"
+                        color="primary"
+                        tooltip="Download conviction results (CSV)"
+                        forceShowTooltip={true}
+                        icon={<ArrowDownTrayIcon className="w-6 h-6" />}
+                        onClick={handleDownloadCVResults}
+                      />
+                    )}
+                  <div onMouseLeave={() => setShowManageSupportTooltip(false)}>
+                    <CheckSybil
+                      strategy={strategy}
+                      enableCheck={strategy.sybil?.type === "Passport"}
+                    >
+                      <Button
+                        icon={
+                          <AdjustmentsHorizontalIcon height={24} width={24} />
+                        }
+                        onClick={() => setAllocationView((prev) => !prev)}
+                        popTooltip={showManageSupportTooltip}
+                        disabled={
+                          !isConnected ||
+                          missmatchUrl ||
+                          !memberActivatedStrategy ||
+                          !isAllowed
+                        }
+                        tooltip={tooltipMessage}
+                      >
+                        Manage support
+                      </Button>
+                    </CheckSybil>
+                  </div>
+                </div>
               ))}
         </header>
         {allocationView && <UserAllocationStats stats={stats} />}
 
         <div className="flex flex-col gap-6">
-          {proposals && inputs ?
+          {inputs != null ?
             <>
-              {proposals
-                .filter(
-                  (x) =>
-                    ProposalStatus[x.proposalStatus] === "active" ||
-                    ProposalStatus[x.proposalStatus] === "disputed",
-                )
-                .map((proposalData) => (
-                  <Fragment key={proposalData.id}>
-                    <ProposalCard
-                      proposalData={proposalData}
-                      strategyConfig={strategy.config}
-                      inputData={inputs[proposalData.id]}
-                      stakedFilter={stakedFilters[proposalData.id]}
-                      isAllocationView={allocationView}
-                      memberActivatedPoints={memberActivatedPoints}
-                      memberPoolWeight={memberPoolWeight}
-                      executeDisabled={
-                        proposalData.proposalStatus == 4 ||
-                        !isConnected ||
-                        missmatchUrl
-                      }
-                      poolToken={poolToken}
-                      tokenDecimals={tokenDecimals}
-                      alloInfo={alloInfo}
-                      inputHandler={inputHandler}
-                      communityToken={strategy.registryCommunity.garden}
-                      isPoolEnabled={strategy.isEnabled}
-                    />
-                  </Fragment>
-                ))}
+              {activeOrDisputedProposals.map((proposalData) => (
+                <Fragment key={proposalData.id}>
+                  <ProposalCard
+                    ref={makeRef(proposalData.id)}
+                    proposalData={proposalData}
+                    strategyConfig={strategy.config}
+                    inputData={inputs[proposalData.id]}
+                    stakedFilter={stakedFilters[proposalData.id]}
+                    isAllocationView={allocationView}
+                    memberActivatedPoints={memberActivatedPoints}
+                    memberPoolWeight={memberPoolWeight}
+                    executeDisabled={
+                      proposalData.proposalStatus == 4 ||
+                      !isConnected ||
+                      missmatchUrl
+                    }
+                    poolToken={poolToken}
+                    tokenDecimals={tokenDecimals}
+                    alloInfo={alloInfo}
+                    inputHandler={inputHandler}
+                    communityToken={strategy.registryCommunity.garden}
+                    isPoolEnabled={strategy.isEnabled}
+                    minThGtTotalEffPoints={minThGtTotalEffPoints}
+                  />
+                </Fragment>
+              ))}
               {!!endedProposals.length && (
                 <div className="collapse collapse-arrow">
                   <input type="checkbox" />
@@ -615,6 +851,7 @@ export function Proposals({
                           inputHandler={inputHandler}
                           communityToken={strategy.registryCommunity.garden}
                           isPoolEnabled={strategy.isEnabled}
+                          minThGtTotalEffPoints={minThGtTotalEffPoints}
                         />
                       </Fragment>
                     ))}
@@ -639,7 +876,7 @@ export function Proposals({
                 onClick={submit}
                 isLoading={allocateStatus === "loading"}
                 disabled={
-                  !inputs ||
+                  inputs == null ||
                   !getProposalsInputsDifferences(inputs, stakedFilters).length
                 }
                 tooltip="Make changes in proposals support first"
@@ -675,12 +912,7 @@ export function Proposals({
               <Button
                 icon={<PlusIcon height={24} width={24} />}
                 disabled={!isConnected || missmatchUrl || !isMemberCommunity}
-                tooltip={
-                  !isConnected ? "Connect your wallet"
-                  : !isMemberCommunity ?
-                    "Join the community first"
-                  : "Create a proposal"
-                }
+                tooltip={createProposalTooltipMessage}
               >
                 Create a proposal
               </Button>
@@ -727,7 +959,7 @@ function UserAllocationStats({ stats }: { stats: Stats[] }) {
               }}
               role="progressbar"
             >
-              <span className="text-xs">{stat.stat} %</span>
+              <span className="text-xs dark:text-black">{stat.stat} %</span>
             </div>
             <div className="flex flex-col items-start justify-center">
               <InfoWrapper tooltip={stat.info}>

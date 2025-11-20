@@ -25,10 +25,10 @@ export const Statistic = ({
         className={"tooltip flex items-center gap-2 max-w-sm"}
         data-tip={tooltip}
       >
-        {icon && <div className="w-6 h-6 cursor-pointer">{icon}</div>}
+        {icon != null && <div className="w-6 h-6 cursor-pointer">{icon}</div>}
       </div>
-      {label && (
-        <p className="first-letter:uppercase text-md">
+      {label != null && (
+        <p className="first-letter:uppercase text-md dark:text-neutral-soft-content">
           {label}: {count}
         </p>
       )}

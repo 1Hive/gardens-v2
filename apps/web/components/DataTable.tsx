@@ -3,7 +3,7 @@ import React from "react";
 interface DataTableProps {
   title?: string;
   description?: string;
-  data: any[];
+  data: any[] | undefined;
   columns: TableColumn[];
   footer?: React.ReactNode;
   className?: string;
@@ -48,7 +48,7 @@ export const DataTable: React.FC<DataTableProps> = ({
                       scope="col"
                       className={`py-3.5  ${col.className ?? ""}`}
                     >
-                      <h6 className="text-md">{col.header}</h6>
+                      <h6 className="text-sm">{col.header}</h6>
                     </th>
                   ))}
                 </tr>
@@ -56,12 +56,12 @@ export const DataTable: React.FC<DataTableProps> = ({
               <tbody>
                 {data &&
                   data.map((item) => (
-                    <tr key={item.id} className="even:bg-gray-50">
+                    <tr key={item.id} >
                       {columns.map((col, i) => (
                         <td
                           // eslint-disable-next-line react/no-array-index-key
                           key={`col-${i}-${item.id}`}
-                          className={`whitespace-nowrap py-2 pr-1 text-sm text-neutral-soft-content ${col.className ?? ""}`}
+                          className={`whitespace-nowrap py-1 pr-1 text-sm text-neutral-soft-content ${col.className ?? ""}`}
                         >
                           <div className="text-base font-normal leading-6 text-left">
                             {col.render(item)}
@@ -71,7 +71,7 @@ export const DataTable: React.FC<DataTableProps> = ({
                     </tr>
                   ))}
               </tbody>
-              {footer && (
+              {footer != null && (
                 <tfoot>
                   <tr>
                     <td className="pt-2 sm:table-cel" colSpan={columns.length}>

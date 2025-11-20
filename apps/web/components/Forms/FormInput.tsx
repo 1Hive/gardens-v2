@@ -1,16 +1,15 @@
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 "use client";
 
-import { ChangeEvent, HTMLInputTypeAttribute } from "react";
-import MarkdownEditor from "@uiw/react-markdown-editor";
+import React, { HTMLInputTypeAttribute, useRef } from "react";
 import { RegisterOptions, UseFormRegister } from "react-hook-form";
-import {} from "react-hook-form";
 import { InfoWrapper } from "../InfoWrapper";
+import MarkdownEditor, { type MarkdownEditorHandle } from "../MarkdownEditor";
 
 type Props = {
   label?: string;
   subLabel?: string | undefined;
-  type: HTMLInputTypeAttribute | "markdown";
+  type?: HTMLInputTypeAttribute | "markdown";
   registerKey?: string;
   placeholder?: string;
   register?: UseFormRegister<any>;
@@ -33,7 +32,7 @@ type Props = {
 export function FormInput({
   label,
   subLabel,
-  type,
+  type = "text",
   registerKey = "",
   placeholder = "",
   register,
@@ -59,6 +58,13 @@ export function FormInput({
     value: value ?? registerOptions?.value,
     onChange: onChange ?? registerOptions?.onChange,
   });
+  const { ref: registerRef, ...registeredProps } = registered ?? {};
+  const markdownEditorRef = useRef<MarkdownEditorHandle>(null);
+  const handleLabelClick = (event: React.MouseEvent<HTMLLabelElement>) => {
+    if (type !== "markdown") return;
+    event.preventDefault();
+    markdownEditorRef.current?.focus();
+  };
 
   const fixedInputClassname =
     "!border-gray-300 focus:border-gray-300 focus:outline-gray-300 cursor-not-allowed bg-transparent";
@@ -66,7 +72,11 @@ export function FormInput({
   return (
     <div className={`flex flex-col ${wide ? "w-full" : ""}`}>
       {label && (
-        <label htmlFor={registerKey} className="label cursor-pointer w-fit">
+        <label
+          htmlFor={registerKey}
+          className="label cursor-pointer w-fit"
+          onClick={handleLabelClick}
+        >
           {tooltip ?
             <InfoWrapper tooltip={tooltip}>
               {label}
@@ -85,12 +95,15 @@ export function FormInput({
       >
         {type !== "textarea" && type !== "markdown" ?
           <input
-            {...registered}
+            {...registeredProps}
+            ref={registerRef}
             id={registerKey}
             type={type}
             placeholder={placeholder}
-            className={`hide-input-arrows input input-bordered ${
-              errors[registerKey] ? "input-error" : "input-info"
+            className={`hide-input-arrows input dark:bg-primary-soft-dark input-bordered ${
+              errors[registerKey] ?
+                "input-error dark:dark:bg-primary-soft-dark"
+              : "input-info dark:bg-primary-soft-dark"
             } w-full ${readOnly && fixedInputClassname} ${className}`}
             required={required}
             step={step}
@@ -101,10 +114,11 @@ export function FormInput({
           />
         : type === "textarea" ?
           <textarea
-            {...registered}
+            {...registeredProps}
+            ref={registerRef}
             id={registerKey}
             placeholder={placeholder}
-            className={`${className} textarea textarea-info line-clamp-5 w-full overflow-auto h-24 ${
+            className={`${className} textarea textarea-info line-clamp-5 w-full overflow-auto h-24 dark:bg-primary-soft-dark ${
               errors[registerKey] ? "input-error" : "input-info"
             }`}
             required={required}
@@ -115,40 +129,30 @@ export function FormInput({
             value={value}
             {...otherProps}
           />
-        : <div data-color-mode="light">
-            <MarkdownEditor
-              {...registered}
-              className={`textarea p-0 ![--color-canvas-subtle:white] ![--color-neutral-muted:#cceeff44] rounded-2xl ${
-                errors[registerKey] ? "textarea-error" : "textarea-info"
-              }`}
-              id={registerKey}
-              style={{
-                resize: "vertical",
-                overflow: "auto",
-                minHeight: "200px",
-              }}
-              disabled={disabled || readOnly}
-              readOnly={readOnly || disabled}
-              required={required}
-              value={value}
-              onChange={(v) => {
-                const e = {
-                  target: { value: v, name: registerKey },
-                } as ChangeEvent<HTMLInputElement>;
-                (registered?.onChange ?? onChange)?.(e);
-              }}
-              {...otherProps}
-            />
-          </div>
+        : <MarkdownEditor
+            {...registeredProps}
+            ref={markdownEditorRef}
+            id={registerKey}
+            placeholder={placeholder}
+            required={required}
+            rows={rows}
+            errors={errors}
+            disabled={disabled || readOnly}
+            readOnly={readOnly || disabled}
+            onChange={registered?.onChange ?? onChange}
+            value={value}
+            className="input input-info dark:bg-primary-soft-dark"
+            {...otherProps}
+          />
         }
-        {suffix && (
-          <span className="absolute right-[10px] top-1/2 -translate-y-1/2 text-black">
+        {Boolean(suffix) && (
+          <span className="absolute right-[10px] top-1/2 -translate-y-1/2 text-neutral-content">
             {suffix}
           </span>
         )}
       </div>
       {errors && (
-        <p className="text-error mt-2 text-sm font-semibold ml-1">
+        <p className="text-danger-content text-sm mt-2">
           {errors[registerKey]?.message || ""}
         </p>
       )}

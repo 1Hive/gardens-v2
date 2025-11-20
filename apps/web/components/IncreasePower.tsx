@@ -25,7 +25,7 @@ import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithC
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useHandleAllowance } from "@/hooks/useHandleAllowance";
 import { registryCommunityABI } from "@/src/generated";
-import { parseToken } from "@/utils/numbers";
+import { parseToken, roundToSignificant } from "@/utils/numbers";
 import { getTxMessage } from "@/utils/transactionMessages";
 
 type IncreasePowerProps = {
@@ -76,7 +76,7 @@ export const IncreasePower = ({
 
   const urlChainId = useChainIdFromPath();
 
-  const roundedStakedAmount = (+stakedAmount).toPrecision(4);
+  const roundedStakedAmount = roundToSignificant(+stakedAmount, 4);
 
   const { data: accountTokenBalance } = useBalance({
     address: accountAddress,
@@ -111,7 +111,9 @@ export const IncreasePower = ({
       accountTokenBalance.value
     : stakedAmountBn - initialStakedAmountBn;
   const stakeDifference = +stakedAmount - initialStakedAmount;
-  const stakeDifferenceRounded = stakeDifference.toPrecision(4);
+  const stakeDifferenceRounded = roundToSignificant(stakeDifference, 4, {
+    showPrecisionMissIndicator: false,
+  });
 
   const registryContractCallConfig = {
     address: communityAddress as Address,
@@ -193,7 +195,11 @@ export const IncreasePower = ({
 
   useEffect(() => {
     if (accountTokenBalancePlusStakeAmount == null) return;
-    setStakedAmount((initialStakedAmount ?? 0).toPrecision(4));
+    setStakedAmount(
+      roundToSignificant(initialStakedAmount ?? 0, 4, {
+        showPrecisionMissIndicator: false,
+      }),
+    );
     setAmountPerc(
       (accountTokenBalance?.value == 0n ?
         100
@@ -224,9 +230,9 @@ export const IncreasePower = ({
     },
     {
       condition:
-        !!accountTokenBalancePlusStakeAmount &&
+        accountTokenBalancePlusStakeAmount != null &&
         +stakedAmount > accountTokenBalancePlusStakeAmount,
-      message: `You cannot stake more than your available balance of ${accountTokenBalancePlusStakeAmount?.toPrecision() ?? 0} ${tokenSymbol}`,
+      message: `You cannot stake more than your available balance of ${roundToSignificant(accountTokenBalancePlusStakeAmount ?? 0, 4)} ${tokenSymbol}`,
     },
     { condition: stakeDifferenceBn == 0n, message: "Make a change to apply" },
   ]);
@@ -269,7 +275,7 @@ export const IncreasePower = ({
                   number={(initialStakedAmount ?? 0).toString()}
                   tokenSymbol={tokenSymbol}
                   compact={true}
-                  valueClassName="text-primary-content font-bold text-3xl mr-1"
+                  valueClassName="font-bold text-3xl mr-1"
                   disableTooltip
                 />
               }
@@ -285,7 +291,7 @@ export const IncreasePower = ({
         {/* Staking description */}
         <InfoBox
           title="Staking benefits"
-          content="Stake more tokens to increase your voting weight in the community’s governance pools"
+          content="Stake more tokens to increase your voting power in the community’s governance pools"
           infoBoxType="info"
           className="w-full"
         />
@@ -298,28 +304,29 @@ export const IncreasePower = ({
             <div className="flex-1 flex items-baseline justify-between">
               <p className="text-sm">Available</p>
               <DisplayNumber
-                number={
-                  accountTokenBalancePlusStakeAmount?.toPrecision(4) ?? "0"
-                }
+                number={roundToSignificant(
+                  accountTokenBalancePlusStakeAmount ?? 0,
+                  4,
+                )}
                 tokenSymbol={tokenSymbol}
                 compact={true}
-                valueClassName="text-black text-lg"
-                symbolClassName="text-sm text-black"
+                valueClassName="text-lg"
+                symbolClassName="text-sm"
               />
             </div>
             <div className="relative w-full">
-              <label className="input input-bordered input-info flex items-center gap-2 w-full">
+              <label className="input input-bordered input-info flex items-center gap-2 w-full dark:bg-primary-soft-dark">
                 <input
                   type="number"
                   value={stakedAmount}
                   placeholder="Amount"
-                  className="flex-1 w-full"
+                  className="flex-1 w-full dark:bg-primary-soft-dark"
                   min={registerStakeAmount}
                   max={accountTokenBalancePlusStakeAmount}
                   onChange={(e) => {
                     const amount = e.target.value;
                     setStakedAmount(amount);
-                    if (accountTokenBalancePlusStakeAmount)
+                    if (accountTokenBalancePlusStakeAmount != null)
                       setAmountPerc(
                         (
                           (+amount / accountTokenBalancePlusStakeAmount) *
@@ -349,20 +356,26 @@ export const IncreasePower = ({
                 title=""
                 onChange={(e) => {
                   const percentage = e.target.value;
-                  if (accountTokenBalancePlusStakeAmount) {
+                  if (
+                    accountTokenBalancePlusStakeAmount != null &&
+                    accountTokenBalancePlusStakeAmount > 0
+                  ) {
+                    const stake = Math.max(
+                      registerStakeAmount, // Minimum stake amount
+                      (+percentage * accountTokenBalancePlusStakeAmount) / 100,
+                    );
+
                     setStakedAmount(
                       +percentage >= 100 ?
-                        accountTokenBalancePlusStakeAmount.toPrecision(4)
-                      : Math.max(
-                          registerStakeAmount, // Minimum stake amount
-                          (+percentage * accountTokenBalancePlusStakeAmount) /
-                            100,
-                        ).toPrecision(4),
+                        accountTokenBalancePlusStakeAmount.toString()
+                      : roundToSignificant(stake, 4, {
+                          showPrecisionMissIndicator: false,
+                        }),
                     );
                   }
-                  setAmountPerc(percentage);
+                  setAmountPerc(+percentage >= 100 ? "101" : percentage);
                 }}
-                className={`range range-md cursor-pointer bg-neutral-soft [--range-shdw:var(--color-green-500)] ${
+                className={`range range-md cursor-pointer bg-neutral-soft [--range-bg:var(--color-grey-200)] dark:[--range-bg:#373737] dark:bg-[#373737] [--range-shdw:var(--color-green-500)] dark:[--range-shdw:#4E9F80] [--range-thumb-size:20px] dark:[&::-webkit-slider-thumb]:bg-[#232323] dark:[&::-moz-range-thumb]:bg-[#232323] dark:[&::-webkit-slider-thumb]:border-0 dark:[&::-moz-range-thumb]:border-0 ${
                   minAmountPercentage === 100 ?
                     "[--range-shdw:var(--color-grey-400)]"
                   : ""
@@ -394,9 +407,7 @@ export const IncreasePower = ({
                   decreaseStatus === "loading"
                 }
               >
-                <span className="w-14">
-                  {stakeDifference >= 0 ? "Stake" : "Unstake"}
-                </span>
+                {stakeDifference >= 0 ? "Stake" : "Unstake"}
               </Button>
             </div>
           </>

@@ -149,7 +149,7 @@ verify-blockscout-opsep:
 	--rpc-url $(RPC_URL_OP_TESTNET) \
 	--account pkGarden \
 	--verifier blockscout \
-	--verifier-url https://arbitrum.blockscout.com/api/ \
+	--verifier-url https://optimism.blockscout.com/api/ \
 	--verify \
 	--via-ir \
 	--slow
@@ -198,6 +198,18 @@ deploy-passport-scorer-opsep:
 
 deploy-safe-arbitrator-opsep:
 	-forge script script/DeploySafeArbitrator.s.sol:DeploySafeArbitrator \
+	--rpc-url $(RPC_URL_OP_TESTNET) \
+	--sig "run(string)" 'opsepolia' \
+	--chain-id 11155420 \
+	--etherscan-api-key $(OPTIMISM_API_KEY) \
+	--account pkGarden \
+	--via-ir \
+	--verify \
+	--broadcast \
+	-vv
+	
+deploy-or-upgrade-good-dollar-sybil-opsep:
+	-forge script script/DeployGoodDollarSybil.s.sol:DeployGoodDollarSybil \
 	--rpc-url $(RPC_URL_OP_TESTNET) \
 	--sig "run(string)" 'opsepolia' \
 	--chain-id 11155420 \
@@ -391,6 +403,18 @@ deploy-or-upgrade-if-exists-safe-arbitrator-arbsep:
 	--broadcast \
 	-vv
 
+deploy-or-upgrade-good-dollar-sybil-arbsep:
+	-forge script script/DeployGoodDollarSybil.s.sol:DeployGoodDollarSybil \
+	--rpc-url $(RPC_URL_ARB_TESTNET) \
+	--sig "run(string)" 'arbsepolia' \
+	--chain-id 421614 \
+	--etherscan-api-key $(ARBISCAN_API_KEY) \
+	--account pkGarden \
+	--via-ir \
+	--verify \
+	--broadcast \
+	-vv
+
 ########################  PROD ##################################
 
 
@@ -444,10 +468,8 @@ upgrade-arbitrum:
 	--ffi \
 	--chain-id 42161 \
 	--broadcast \
-	--legacy \
 	--via-ir \
 	--verify \
-	--base-fee 10158000 \
 	-vvv
 
 verify-blockscout-arbitrum: 
@@ -492,6 +514,18 @@ deploy-passport-scorer-arbitrum:
 
 deploy-or-upgrade-if-exists-safe-arbitrator-arbitrum:
 	-forge script script/DeploySafeArbitrator.s.sol:DeploySafeArbitrator \
+	--rpc-url $(RPC_URL_ARB) \
+	--sig "run(string)" 'arbitrum' \
+	--chain-id 42161 \
+	--etherscan-api-key $(ARBISCAN_API_KEY) \
+	--account pkGarden \
+	--via-ir \
+	--verify \
+	--broadcast \
+	-vv
+
+deploy-or-upgrade-good-dollar-sybil-arbitrum:
+	-forge script script/DeployGoodDollarSybil.s.sol:DeployGoodDollarSybil \
 	--rpc-url $(RPC_URL_ARB) \
 	--sig "run(string)" 'arbitrum' \
 	--chain-id 42161 \
@@ -610,6 +644,18 @@ deploy-or-upgrade-if-exists-safe-arbitrator-optimism:
 	--broadcast \
 	-vv
 
+deploy-or-upgrade-good-dollar-sybil-optimism:
+	-forge script script/DeployGoodDollarSybil.s.sol:DeployGoodDollarSybil \
+	--rpc-url $(RPC_URL_OPT) \
+	--sig "run(string)" 'optimism' \
+	--chain-id 10 \
+	--etherscan-api-key $(OPTIMISM_API_KEY) \
+	--account pkGarden \
+	--via-ir \
+	--verify \
+	--broadcast \
+	-vv
+
 ### POLYGON ###
 
 transfer-ownership-polygon:
@@ -706,6 +752,18 @@ deploy-passport-scorer-polygon:
 
 deploy-or-upgrade-if-exists-safe-arbitrator-polygon:
 	-forge script script/DeploySafeArbitrator.s.sol:DeploySafeArbitrator \
+	--rpc-url $(RPC_URL_POLYGON) \
+	--sig "run(string)" 'polygon' \
+	--chain-id 137 \
+	--etherscan-api-key $(POLYGONSCAN_API_KEY) \
+	--account pkGarden \
+	--via-ir \
+	--verify \
+	--broadcast \
+	-vv
+
+deploy-or-upgrade-good-dollar-sybil-polygon:
+	-forge script script/DeployGoodDollarSybil.s.sol:DeployGoodDollarSybil \
 	--rpc-url $(RPC_URL_POLYGON) \
 	--sig "run(string)" 'polygon' \
 	--chain-id 137 \
@@ -848,6 +906,18 @@ change-passport-manager-gnosis:
 	--legacy \
 	-vvv
 
+deploy-or-upgrade-good-dollar-sybil-gnosis:
+	-forge script script/DeployGoodDollarSybil.s.sol:DeployGoodDollarSybil \
+	--rpc-url $(RPC_URL_GNOSIS) \
+	--sig "run(string)" 'gnosis' \
+	--chain-id 100 \
+	--etherscan-api-key $(GNOSISSCAN_API_KEY) \
+	--account pkGarden \
+	--via-ir \
+	--verify \
+	--broadcast \
+	-vv
+
 ### BASE ###
 
 transfer-ownership-base:
@@ -975,6 +1045,18 @@ deploy-or-upgrade-if-exists-safe-arbitrator-base:
 
 deploy-proxy-owner-base:
 	-forge script script/DeployProxyOwner.s.sol:DeployProxyOwner \
+	--rpc-url $(RPC_URL_BASE) \
+	--sig "run(string)" 'base' \
+	--chain-id 8453 \
+	--etherscan-api-key $(BASESCAN_API_KEY) \
+	--account pkGarden \
+	--via-ir \
+	--verify \
+	--broadcast \
+	-vv
+
+deploy-or-upgrade-good-dollar-sybil-base:
+	-forge script script/DeployGoodDollarSybil.s.sol:DeployGoodDollarSybil \
 	--rpc-url $(RPC_URL_BASE) \
 	--sig "run(string)" 'base' \
 	--chain-id 8453 \
@@ -1133,6 +1215,18 @@ verify-blockscout-proxy-owner-celo:
 	--account pkGarden \
 	--via-ir \
 	--verify \
+	-vv
+
+deploy-or-upgrade-good-dollar-sybil-celo:
+	-forge script script/DeployGoodDollarSybil.s.sol:DeployGoodDollarSybil \
+	--rpc-url $(RPC_URL_CELO) \
+	--sig "run(string)" 'celo' \
+	--chain-id 42220 \
+	--etherscan-api-key $(CELOSCAN_API_KEY) \
+	--account pkGarden \
+	--via-ir \
+	--verify \
+	--broadcast \
 	-vv
 
 # Mainnet

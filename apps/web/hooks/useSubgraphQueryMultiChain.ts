@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   AnyVariables,
   CombinedError,
@@ -7,9 +7,10 @@ import {
 } from "@urql/next";
 import { debounce, isEqual } from "lodash-es";
 import { toast } from "react-toastify";
-import { getCheat, useCheat } from "./useCheat";
+import { useFlag } from "./useFlag";
 import { useIsMounted } from "./useIsMounted";
 import { HTTP_CODES } from "@/app/api/utils";
+import { LoadingToast } from "@/components";
 import { chainConfigMap, ChainData, getConfigByChain } from "@/configs/chains";
 import { isProd } from "@/configs/isProd";
 import {
@@ -24,21 +25,6 @@ import {
 import { initUrqlClient } from "@/providers/urql";
 import { ChainId } from "@/types";
 import { delayAsync } from "@/utils/delayAsync";
-
-let isQueryAllChains = false;
-try {
-  isQueryAllChains = getCheat("queryAllChains");
-} catch (error) {
-  // ignore when not browser side
-}
-
-export const allChains: ChainId[] = Object.entries(chainConfigMap)
-  .filter(
-    ([_, chainConfig]) =>
-      isQueryAllChains ||
-      (isProd ? !chainConfig.isTestnet : !!chainConfig.isTestnet),
-  )
-  .map(([chainId]) => Number(chainId));
 
 const pendingRefreshToastId = "pending-refresh";
 
@@ -71,7 +57,16 @@ export function useSubgraphQueryMultiChain<
   const errorsMap = useRef(new Map<ChainId, CombinedError>());
   const subscritionId = useRef<SubscriptionId>();
   const fetchingRef = useRef(false);
-  const skipPublished = useCheat("skipPublished");
+  const skipPublished = useFlag("skipPublished");
+  const isQueryAllChains = useFlag("queryAllChains");
+
+  const allChains = Object.entries(chainConfigMap)
+    .filter(
+      ([_, chainConfig]) =>
+        isQueryAllChains ||
+        (isProd ? !chainConfig.isTestnet : !!chainConfig.isTestnet),
+    )
+    .map(([chainId]) => Number(chainId));
 
   useEffect(() => {
     if (!enabled) return;
@@ -89,7 +84,10 @@ export function useSubgraphQueryMultiChain<
     }
 
     subscritionId.current = subscribe(changeScope, (payload) => {
-      fetchDebounce(payload.chainId ? [payload.chainId] : undefined, true);
+      fetchDebounce(
+        payload.chainId != null ? [payload.chainId] : undefined,
+        true,
+      );
     });
 
     return () => {
@@ -115,12 +113,25 @@ export function useSubgraphQueryMultiChain<
       await Promise.all(
         chainSubgraphs.map(async ({ chainId, chainConfig }, i) => {
           const fetchSubgraphChain = async (retryCount?: number) => {
-            if (!retryCount && retryOnNoChange) {
+            if (retryCount == null && retryOnNoChange) {
               retryCount = 0;
-              toast.loading("Pulling new data", {
+            }
+
+            const toastContent = React.createElement(LoadingToast, {
+              message: "Pulling new data",
+            });
+
+            if (toast.isActive(pendingRefreshToastId)) {
+              toast.update(pendingRefreshToastId, {
+                render: toastContent,
+              });
+            } else {
+              toast.loading(toastContent, {
                 toastId: pendingRefreshToastId,
                 autoClose: false,
                 closeOnClick: true,
+                closeButton: false,
+                icon: false,
                 style: {
                   width: "fit-content",
                   marginLeft: "auto",
@@ -132,7 +143,7 @@ export function useSubgraphQueryMultiChain<
                 const { urqlClient } = initUrqlClient({
                   chainId: (chainsOverride ?? allChains)[i],
                 });
-                if (!urqlClient) {
+                if (urqlClient == null) {
                   throw new Error(
                     `Urql client not initialized for chain ${chainId}`,
                   );
@@ -150,11 +161,8 @@ export function useSubgraphQueryMultiChain<
 
               let res;
               try {
-                const shouldSkipPublished =
-                  skipPublished ||
-                  process.env.NEXT_PUBLIC_SKIP_PUBLISHED === "true";
-                res = await fetchQuery(shouldSkipPublished);
-                if (!res.data && res.error) {
+                res = await fetchQuery(skipPublished);
+                if (res.data == null && res.error) {
                   throw res.error;
                 }
               } catch (err1) {

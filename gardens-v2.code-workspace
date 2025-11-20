@@ -5,6 +5,10 @@
       "path": "./apps/web",
     },
     {
+      "name": "Docs",
+      "path": "./apps/docs",
+    },
+    {
       "name": "Foundry",
       "path": "./pkg/contracts",
     },
@@ -51,7 +55,7 @@
     },
     "solidity.formatter": "forge",
     "openctx.enable": false,
-    "postman.settings.dotenv-detection-notification-visibility": false
+    "postman.settings.dotenv-detection-notification-visibility": false,
   },
   "extensions": {
     "recommendations": [

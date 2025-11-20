@@ -30,7 +30,6 @@ const DIVVI_PROVIDERS = process.env.NEXT_PUBLIC_DIVVI_PROVIDERS?.split(",") ?? [
   "0x5f0a55fad9424ac99429f635dfb9bf20c3360ab8",
 ];
 
-
 /**
  * this hook is used to write to a contract and wait for confirmations.
  * @param props
@@ -130,6 +129,9 @@ export function useContractWriteWithConfirmations<
     transactionError: txResult.error,
     enabled: props.showNotification ?? true, // default to true
     fallbackErrorMessage: props.fallbackErrorMessage,
+    contractName: props.contractName,
+    chainId: resolvedChaindId,
+    confirmations: propsWithChainId.confirmations,
   });
 
   useEffect(() => {

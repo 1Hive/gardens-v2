@@ -53,7 +53,9 @@ type ProposalFormProps = {
       members?: Maybe<Pick<MemberCommunity, "memberAddress">[]>;
     };
   };
-  arbitrableConfig: Pick<ArbitrableConfig, "submitterCollateralAmount">;
+  arbitrableConfig:
+    | Pick<ArbitrableConfig, "submitterCollateralAmount">
+    | undefined;
   poolId: number;
   proposalType: number;
   poolParams: Pick<CVStrategyConfig, "decay">;
@@ -61,6 +63,7 @@ type ProposalFormProps = {
   tokenGarden: Pick<TokenGarden, "symbol" | "decimals">;
   spendingLimit: number | string | undefined;
   spendingLimitPct: number;
+  poolBalance: string | undefined;
 };
 
 type FormRowTypes = {
@@ -129,8 +132,9 @@ export const ProposalForm = ({
   proposalType,
   poolParams,
   alloInfo,
-  spendingLimit,
+  poolBalance,
   spendingLimitPct,
+  spendingLimit,
 }: ProposalFormProps) => {
   const {
     register,
@@ -230,7 +234,7 @@ export const ProposalForm = ({
     contractName: "Allo",
     functionName: "registerRecipient",
     fallbackErrorMessage: "Error creating Proposal, please report a bug.",
-    value: arbitrableConfig.submitterCollateralAmount,
+    value: arbitrableConfig?.submitterCollateralAmount,
     onConfirmations: (receipt) => {
       const proposalId = getEventFromReceipt(
         receipt,
@@ -284,7 +288,6 @@ export const ProposalForm = ({
   const thresholdPct = calculatePercentageBigInt(
     thresholdFromContract as bigint,
     BigInt(strategy.maxCVSupply),
-    poolToken?.decimals ?? 18,
   );
 
   if (!poolToken && PoolTypes[proposalType] === "funding") {
@@ -303,11 +306,7 @@ export const ProposalForm = ({
     const metadata = [1, metadataIpfs as string];
 
     const strAmount = previewData.amount?.toString() || "";
-    const amount = parseUnits(
-      strAmount,
-      // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-      poolToken?.decimals || 0,
-    );
+    const amount = parseUnits(strAmount, poolToken?.decimals ?? 0);
 
     const encodedData = encodeAbiParameters(abiParameters, [
       [
@@ -331,7 +330,7 @@ export const ProposalForm = ({
 
     Object.entries(previewData).forEach(([key, value]) => {
       const formRow = formRowTypes[key];
-      if (formRow) {
+      if (Boolean(formRow)) {
         const parsedValue = formRow.parse ? formRow.parse(value) : value;
         formattedRows.push({
           label: formRow.label,
@@ -352,6 +351,16 @@ export const ProposalForm = ({
     return formattedRows;
   };
 
+  function getThresholdColor(
+    thresholdPctArgument: number,
+  ): "info" | "warning" | "error" {
+    if (thresholdPctArgument < 50) return "info";
+    if (thresholdPctArgument < 100) return "warning";
+    return "error";
+  }
+
+  const thColor = getThresholdColor(thresholdPct);
+
   return (
     <form onSubmit={handleSubmit(handlePreview)} className="w-full">
       {showPreview ?
@@ -365,17 +374,17 @@ export const ProposalForm = ({
             <div className="relative flex flex-col">
               <FormInput
                 label="Requested amount"
-                subLabel={`Max ${spendingLimit} ${poolToken?.symbol} (${spendingLimitPct.toFixed(2)}% of Pool Funds)`}
+                subLabel={`Pool Funds: ${poolBalance} ${poolToken?.symbol} - Spending limit: ${spendingLimitPct.toFixed(1)}% = ${spendingLimit} ${poolToken?.symbol}`}
                 register={register}
                 required
                 onChange={(e) => {
                   setRequestedAmount(e.target.value);
                 }}
                 registerOptions={{
-                  max: {
-                    value: spendingLimit ? +spendingLimit : 0,
-                    message: `Max amount must remain under the spending limit of ${spendingLimit} ${poolToken?.symbol}`,
-                  },
+                  // max: {
+                  //   value: spendingLimit ? +spendingLimit : 0,
+                  //   message: `Max amount must remain under the spending limit of ${spendingLimit} ${poolToken?.symbol}`,
+                  // },
                   min: {
                     value: INPUT_TOKEN_MIN_VALUE,
                     message: `Amount must be greater than ${INPUT_TOKEN_MIN_VALUE}`,
@@ -395,33 +404,29 @@ export const ProposalForm = ({
             </div>
           )}
 
-          {requestedAmount && thresholdPct !== 0 && thresholdPct <= 100 && (
+          {requestedAmount && thresholdPct !== 0 && (
             <InfoBox
-              infoBoxType={
-                thresholdPct < 50 ? "info"
-                : thresholdPct < 100 ?
-                  "warning"
-                : "error"
-              }
+              title={`Conviction required:${" "} ${thresholdPct > 100 ? "Over 100" : thresholdPct}%`}
+              infoBoxType={thColor}
             >
-              <div className="flex w-full justify-between">
+              <div className="flex flex-wrap w-full">
                 The{" "}
                 <InfoWrapper
                   tooltip={`Conviction accumulates over time based on both the level of support on a proposal and the duration defined by the Conviction Growth parameter (${convictionGrowth} ${convictionGrowthUnit}).`}
                   size="sm"
                   hoverOnChildren={true}
                   hideIcon={true}
-                  className="tooltip-top-right border-b border-dashed border-info text-sm"
+                  className={`tooltip-top-right border-b border-dashed border-${thColor} text-sm`}
                 >
                   conviction
                 </InfoWrapper>{" "}
-                required in order for the proposal to pass with the requested
-                amount is {thresholdPct}%.{" "}
+                required for the proposal to pass within the request amount is{" "}
+                {thresholdPct}%.{" "}
                 {requestedAmount &&
                   thresholdPct > 50 &&
                   (thresholdPct < 100 ?
                     "It may be difficult to pass."
-                  : "Its unlikely to pass.")}
+                  : "It will not pass unless more funds are added to the pool")}
               </div>
             </InfoBox>
           )}

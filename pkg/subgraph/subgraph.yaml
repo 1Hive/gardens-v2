@@ -6,15 +6,15 @@ schema:
 dataSources:
   - kind: ethereum/contract
     name: RegistryFactoryV0_0
-    network: optimism-sepolia
+    network: localhost
     context:
       chainId: 
         type: Int
-        data: 11155420
+        data: 1337
     source:
-      address: "0xEC8824e9a9498520891ec678e98c5bd3e65229c2"
+      address: "0xb7f8bc63bbcad18155201308c8f3540b07f84f5e"
       abi: RegistryFactoryV0_0
-      startBlock: 29036730
+      startBlock: 0
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -44,15 +44,15 @@ dataSources:
 
   - kind: ethereum/contract
     name: PassportScorer
-    network: optimism-sepolia
+    network: localhost
     context:
       chainId: 
         type: Int
-        data: 11155420
+        data: 1337
     source:
-      address: "0xe3DC6e82B599cD80904aCf0a3cd9f7401d92CC37"
+      address: "0x0165878a594ca255338adfa4d48449f69242eb8f"
       abi: PassportScorer
-      startBlock: 29036730
+      startBlock: 0
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -82,7 +82,7 @@ dataSources:
 templates:
   - kind: ethereum/contract
     name: RegistryCommunityV0_0
-    network: optimism-sepolia
+    network: localhost
     source:
       abi: RegistryCommunityV0_0
     mapping:
@@ -156,7 +156,7 @@ templates:
 
   - kind: ethereum/contract
     name: CVStrategyV0_0
-    network: optimism-sepolia
+    network: localhost
     source:
       abi: CVStrategyV0_0
     mapping:
@@ -212,12 +212,16 @@ templates:
           handler: handleSybilScorerUpdated
         - event: SuperfluidTokenUpdated(address)
           handler: handleSuperfluidTokenUpdated
- 
+        - event: SuperfluidGDAConnected(indexed address,indexed address)
+          handler: handleSuperfluidGDAConnected
+        - event: SuperfluidGDADisconnected(indexed address,indexed address)
+          handler: handleSuperfluidGDADisconnected
+
       file: ./src/mappings/cv-strategy.ts
 
   - kind: ethereum/contract
     name: CollateralVault
-    network: optimism-sepolia
+    network: localhost
     source:
       abi: CollateralVault
     mapping:
@@ -261,6 +265,32 @@ templates:
       handler: handleProposalMetadata
       entities:
         - ProposalMetadata
+      abis:
+        - name: CVStrategyV0_0
+          file: ../contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json
+  
+  - name: PoolMetadata
+    kind: file/ipfs
+    mapping:
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      file: ./src/mappings/pool-metadata.ts
+      handler: handlePoolMetadata
+      entities:
+        - PoolMetadata
+      abis:
+        - name: CVStrategyV0_0
+          file: ../contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json
+
+  - name: Covenant
+    kind: file/ipfs
+    mapping:
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      file: ./src/mappings/covenant.ts
+      handler: handleCovenant
+      entities:
+        - Covenant
       abis:
         - name: CVStrategyV0_0
           file: ../contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json

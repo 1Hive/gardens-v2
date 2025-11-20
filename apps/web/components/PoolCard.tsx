@@ -13,6 +13,8 @@ import {
   CVProposal,
   CVStrategy,
   CVStrategyConfig,
+  Maybe,
+  PoolMetadata,
 } from "#/subgraph/.graphclient";
 import { Skeleton } from "./Skeleton";
 import TooltipIfOverflow from "./TooltipIfOverflow";
@@ -29,10 +31,11 @@ type Props = {
   token: string;
   pool: Pick<
     CVStrategy,
-    "id" | "isEnabled" | "poolId" | "metadata" | "archived"
+    "id" | "isEnabled" | "poolId" | "metadataHash" | "archived"
   > & {
     proposals: Pick<CVProposal, "id">[];
     config: Pick<CVStrategyConfig, "proposalType" | "pointSystem">;
+    metadata?: Maybe<Omit<PoolMetadata, "id">>;
   };
 };
 
@@ -40,18 +43,28 @@ export function PoolCard({ pool, token }: Props) {
   const pathname = usePathname();
   const searchParams = useCollectQueryParams();
 
-  let { poolId, proposals, isEnabled, config, metadata } = pool;
+  let {
+    poolId,
+    proposals,
+    isEnabled,
+    config,
+    metadata: metadataFromSubgraph,
+    metadataHash,
+  } = pool;
 
-  const { metadata: ipfsResult } = useMetadataIpfsFetch({
-    hash: metadata,
+  const { data: metadataResult } = useMetadataIpfsFetch({
+    hash: metadataHash,
+    enabled: metadataHash != null && !metadataFromSubgraph,
   });
+
+  const metadata = metadataFromSubgraph ?? metadataResult;
 
   const poolType = config?.proposalType as number | undefined;
 
   const poolToken = usePoolToken({
     poolAddress: pool.id,
     poolTokenAddr: token,
-    enabled: isEnabled && !!poolType && PoolTypes[poolType] === "funding",
+    enabled: isEnabled && poolType != null && PoolTypes[poolType] === "funding",
   });
 
   const isNewPool =
@@ -63,16 +76,13 @@ export function PoolCard({ pool, token }: Props) {
     >
       <header className="mb-4 flex flex-col w-full justify-between items-start gap-2">
         <div className="flex flex-wrap w-full justify-between items-center gap-1">
-          <Skeleton isLoading={!ipfsResult}>
+          <Skeleton isLoading={!metadata}>
             <h3 className="flex items-center justify-between max-w-[190px]">
-              <TooltipIfOverflow>{ipfsResult?.title}</TooltipIfOverflow>
+              <TooltipIfOverflow>{metadata?.title}</TooltipIfOverflow>
             </h3>
           </Skeleton>
           <Badge type={poolType} />
         </div>
-        {/* <div>
-          <h6>POOL ID: #{poolId}</h6>
-        </div> */}
       </header>
       <div className="mb-8 flex flex-col gap-2">
         <Statistic
@@ -88,14 +98,15 @@ export function PoolCard({ pool, token }: Props) {
         />
         {isEnabled &&
           poolToken &&
-          poolToken.balance &&
-          poolType &&
+          poolType != null &&
           PoolTypes[poolType] === "funding" && (
             <Statistic icon={<CurrencyDollarIcon />} label="funds">
               <DisplayNumber
-                number={poolToken.formatted}
+                number={poolToken.formatted || "0"}
                 compact={true}
                 tokenSymbol={poolToken.symbol}
+                valueClassName="text-inherit"
+                symbolClassName="text-inherit"
               />
             </Statistic>
           )}
@@ -108,7 +119,11 @@ export function PoolCard({ pool, token }: Props) {
           <h6>{pool.archived ? "Archived" : "Waiting for approval"}</h6>
         </div>
       : <Image
-          src={poolType && PoolTypes[poolType] === "funding" ? blueLand : grass}
+          src={
+            poolType != null && PoolTypes[poolType] === "funding" ?
+              blueLand
+            : grass
+          }
           alt="Garden land"
           className="h-14 w-full rounded-lg object-cover"
         />

@@ -1,22 +1,19 @@
-import React from "react";
-import MarkdownEditor, {
-  MarkdownPreviewProps,
-} from "@uiw/react-markdown-editor";
+"use client";
+import MarkdownEditor from "@uiw/react-markdown-editor";
+import remarkGfm from "remark-gfm";
+import { useTheme } from "@/providers/ThemeProvider";
 
-type Props = {
-  children: string;
-  optionsOverride?: MarkdownPreviewProps;
-};
+type Props = { source: string | null | undefined };
 
-const MarkdownWrapper = ({ children, optionsOverride }: Props) => {
+export default function MarkdownWrapper({ source }: Props) {
+  const normalized = source?.replace(/\r\n?/g, "\n") ?? ""; // CRLF/CR -> LF
+  const { resolvedTheme } = useTheme();
   return (
-    <div data-color-mode="light">
+    <div data-color-mode={resolvedTheme === "darkTheme" ? "dark" : "light"}>
       <MarkdownEditor.Markdown
-        source={children.replace(/\n/g, "\n\r")}
-        {...optionsOverride}
+        source={normalized}
+        remarkPlugins={[remarkGfm]}
       />
     </div>
   );
-};
-
-export default MarkdownWrapper;
+}

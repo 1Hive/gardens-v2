@@ -1,6 +1,4 @@
-import React, { ChangeEvent, useState } from "react";
-import { FunnelIcon } from "@heroicons/react/24/outline";
-import { ChevronUpIcon } from "@heroicons/react/24/outline";
+import React, { ChangeEvent } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { FormInput } from "./Forms/FormInput";
 import { FormSelect } from "./Forms/FormSelect";
@@ -32,8 +30,6 @@ export function CommunityFilters({
   setchainIdFilter,
   availableTokens,
 }: CommunityFiltersProps): JSX.Element {
-  const [isExpanded, setIsExpanded] = useState<boolean>(true);
-
   const availableNetworks = Object.entries(chainConfigMap)
     .filter(([_, chainConfig]) => !isProd || !chainConfig.isTestnet)
     .map(([chainId, chainConfig]) => ({
@@ -82,69 +78,47 @@ export function CommunityFilters({
 
   return (
     <div className="flex flex-col sm:flex-row gap-2 mb-4">
-      <div className="flex items-center gap-2 mb-1">
-        <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="flex items-center text-tertiary-content gap-1"
-          aria-label={isExpanded ? "Collapse filters" : "Expand filters"}
-        >
-          <FunnelIcon
-            className="w-6 h-6 text-tertiary-content"
-            strokeWidth={2}
-          />
-          <motion.div
-            animate={{ rotate: isExpanded ? 0 : 180 }}
-            transition={{ duration: 0.3 }}
-            className="sm:hidden"
-          >
-            <ChevronUpIcon className="w-5 h-5" strokeWidth={3} />
-          </motion.div>
-        </button>
-      </div>
-
       <AnimatePresence>
-        {isExpanded && (
-          <motion.div
-            initial={{ opacity: 0, width: 0 }}
-            animate={{ opacity: 1, width: "auto" }}
-            exit={{ opacity: 0, height: 0, width: 0 }}
-            transition={{ duration: 0.3 }}
-            className="flex-1"
-          >
-            <div className="flex flex-col sm:flex-row gap-2 md:gap-3">
-              <div className="flex-1 w-full">
-                <FormInput
-                  // label="Search"
-                  type="text"
-                  value={searchFilter}
-                  onChange={handleNameChange}
-                  placeholder="Search"
-                  className="w-full h-10"
-                />
-              </div>
-              <div className="flex-1 w-full">
-                <FormSelect
-                  // label="Governance Token"
-                  registerKey="tokenFilter"
-                  options={tokenOptions}
-                  value={tokenFilter}
-                  onChange={handleTokenChange}
-                  className="h-10 min-h-10"
-                />
-              </div>
-              <div className="flex-1 w-full">
-                <FormSelect
-                  // label="Network"
-                  registerKey="chainIdFilter"
-                  options={networkOptions}
-                  value={chainIdFilter}
-                  onChange={handleNetworkChange}
-                  className="h-10 min-h-10"
-                />
-              </div>
+        <motion.div
+          initial={{ opacity: 0, width: 0 }}
+          animate={{ opacity: 1, width: "auto" }}
+          exit={{ opacity: 0, height: 0, width: 0 }}
+          transition={{ duration: 0.3 }}
+          className="flex-1"
+        >
+          <div className="flex flex-col sm:flex-row gap-2 md:gap-7">
+            <div className="flex-1 w-full">
+              <FormInput
+                // label="Search"
+                type="text"
+                value={searchFilter}
+                onChange={handleNameChange}
+                placeholder="Search"
+                className="w-full h-10"
+              />
             </div>
-          </motion.div>
-        )}
+            <div className="flex-1 w-full">
+              <FormSelect
+                // label="Governance Token"
+                registerKey="tokenFilter"
+                options={tokenOptions}
+                value={tokenFilter}
+                onChange={handleTokenChange}
+                className="h-10 min-h-10"
+              />
+            </div>
+            <div className="flex-1 w-full">
+              <FormSelect
+                // label="Network"
+                registerKey="chainIdFilter"
+                options={networkOptions}
+                value={chainIdFilter}
+                onChange={handleNetworkChange}
+                className="h-10 min-h-10"
+              />
+            </div>
+          </div>
+        </motion.div>
       </AnimatePresence>
     </div>
   );

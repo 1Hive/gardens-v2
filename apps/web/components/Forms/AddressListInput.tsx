@@ -21,7 +21,7 @@ import { mainnet } from "wagmi";
 import { FormAddressInput } from "./FormAddressInput";
 import { Button } from "../Button";
 import { InfoWrapper } from "../InfoWrapper";
-import { useCheat } from "@/hooks/useCheat";
+import { useFlag } from "@/hooks/useFlag";
 import { PointSystems } from "@/types";
 import { isENS } from "@/utils/web3";
 
@@ -63,7 +63,7 @@ export function AddressListInput({
   const [inputMode, setInputMode] = useState<"single" | "bulk">("single");
   const [errorMessage, setErrorMessage] = useState("");
   const [ensLoading, setEnsLoading] = useState(false);
-  const allowNoProtectionCheat = useCheat("allowNoProtection");
+  const allowNoProtectionCheat = useFlag("allowNoProtection");
 
   const allowNoProtection =
     PointSystems[pointSystemType] === "unlimited" || allowNoProtectionCheat;
@@ -101,9 +101,6 @@ export function AddressListInput({
       const client = getPublicClient({ chainId: mainnet.id });
       const ENS_REGISTRY = mainnet.contracts.ensRegistry.address as Address;
 
-      /* -------------------------------------------------- *
-       * 1️⃣  Registry  ➜  Resolver
-       * -------------------------------------------------- */
       const resolverCalls: ContractFunctionConfig[] = ensAddresses.map(
         ({ name }) => ({
           address: ENS_REGISTRY,
@@ -125,15 +122,11 @@ export function AddressListInput({
         contracts: resolverCalls,
       });
 
-      /* -------------------------------------------------- *
-       * Build addr() calls _and_ remember where to put them
-       * -------------------------------------------------- */
       type AddrMeta = { slot: number; contract: ContractFunctionConfig };
 
       const addrMeta: AddrMeta[] = resolverResults.flatMap((r, i) => {
         if (r.status !== "success") return [];
         const resolverAddr = r.result as Address;
-        if (resolverAddr === zeroAddress) return []; // name has no resolver
 
         const { name, index: slot } = ensAddresses[i];
 
@@ -158,28 +151,32 @@ export function AddressListInput({
         ];
       });
 
-      /* -------------------------------------------------- *
-       * 2️⃣  Resolver  ➜  Address
-       * -------------------------------------------------- */
       const addrResults = await client.multicall({
         contracts: addrMeta.map((m) => m.contract),
       });
 
-      /* -------------------------------------------------- *
-       * Patch newAddresses using the saved slot
-       * -------------------------------------------------- */
-      addrResults.forEach((res, i) => {
-        const { slot } = addrMeta[i];
+      await Promise.all(
+        addrResults.map(async (res, i) => {
+          const { slot } = addrMeta[i];
 
-        if (res.status === "success" && res.result !== zeroAddress) {
-          newAddresses[slot] = res.result as Address;
-        } else {
-          newAddresses[slot] = ""; // keep empty on failure / unset addr()
-          if (res.status === "failure") {
-            console.error("ENS resolution failed", res.error);
+          if (res.status === "success" && res.result !== zeroAddress) {
+            newAddresses[slot] = res.result as Address;
+          } else {
+            // Try resolve with universal resolver
+            const name = ensAddresses[addrMeta[i].slot].name;
+            const resolved = await client.getEnsAddress({
+              name,
+            });
+            if (resolved) {
+              newAddresses[slot] = resolved;
+            } else {
+              if (res.status === "failure") {
+                console.error(`ENS resolution failed for: ${name}`, res.error);
+              }
+            }
           }
-        }
-      });
+        }),
+      );
     }
 
     const validNewAddresses = newAddresses.filter(
@@ -243,7 +240,7 @@ export function AddressListInput({
   };
 
   return (
-    <div className="flex flex-col max-w-[29rem]">
+    <div className="flex flex-col">
       {label && (
         <label htmlFor={registerKey} className="label cursor-pointer w-fit">
           {tooltip ?
@@ -261,16 +258,16 @@ export function AddressListInput({
       {subLabel && <p className="mb-1 text-xs">{subLabel}</p>}
 
       <div
-        className={`rounded-lg flex mb-4 border p-0 text-neutral-soft-content ${
+        className={`mb-4 flex gap-1 rounded-xl bg-neutral-soft p-1 text-neutral-content dark:bg-[#1f1f1f] dark:text-neutral-soft-content ${
           !label && "mt-4"
         }`}
       >
         <button
           type="button"
-          className={`w-full py-2 rounded-lg text-center px-4 text-semibold ${
+          className={`flex-1 rounded-lg px-3 py-2 text-center text-sm font-semibold transition-colors ${
             inputMode === "single" ?
-              "border border-border-neutral bg-neutral-soft text-black -m-[1px]"
-            : ""
+              "bg-neutral text-neutral-content shadow-sm dark:bg-[#2c2c2c] dark:text-white"
+            : "text-neutral-soft-content hover:bg-neutral/60 dark:text-neutral-soft-2"
           }`}
           onClick={() => setInputMode("single")}
         >
@@ -278,10 +275,10 @@ export function AddressListInput({
         </button>
         <button
           type="button"
-          className={`w-full py-2 rounded-lg text-center px-4 text-semibold ${
+          className={`flex-1 rounded-lg px-3 py-2 text-center text-sm font-semibold transition-colors ${
             inputMode === "bulk" ?
-              "border border-border-neutral bg-neutral-soft text-black -m-[1px]"
-            : ""
+              "bg-neutral text-neutral-content shadow-sm dark:bg-[#2c2c2c] dark:text-white"
+            : "text-neutral-soft-content hover:bg-neutral/60 dark:text-neutral-soft-2"
           }`}
           onClick={() => setInputMode("bulk")}
         >
@@ -289,13 +286,22 @@ export function AddressListInput({
         </button>
       </div>
       {inputMode === "single" ?
-        <div className="flex mb-4 gap-2">
+        <div
+          className="flex mb-4 gap-2"
+          onKeyUp={(e) => {
+            if (e.key === "Enter") {
+              addAddresses(newAddress);
+              e.preventDefault();
+              e.stopPropagation();
+            }
+          }}
+        >
           <FormAddressInput
             placeholder={placeholder}
             required={required && addresses.length === 0}
             onChange={(e) => setNewAddress(e.target.value)}
             value={newAddress}
-            className="w-full"
+            className="w-[22rem] sm:w-[27.5rem]"
           />
           <Button
             type="button"
@@ -303,26 +309,25 @@ export function AddressListInput({
             className="!py-3 !px-4 flex items-center"
             onClick={() => addAddresses(newAddress)}
             tooltip="Add"
-          >
-            <PlusIcon className="w-5 h-5" />
-          </Button>
+            icon={<PlusIcon className="w-5 h-5" />}
+          />
         </div>
-      : <div className="mb-4">
+      : <div className="mb-4 flex flex-col justify-end">
           <textarea
             value={bulkAddresses}
             required={required && addresses.length === 0}
             onChange={(e) => setBulkAddresses(e.target.value)}
             placeholder={`Enter multiple Ethereum addresses 
 (one per line or comma-separated)`}
-            className={`textarea textarea-info w-full h-24 mb-2 ${
+            className={`textarea textarea-info dark:bg-primary-soft-dark w-full h-24 mb-2 ${
               className ?? ""
             }`}
             onKeyDown={handleSubmit}
           />
           <Button
             type="button"
-            btnStyle="outline"
-            className=""
+            btnStyle="filled"
+            className="w-full"
             onClick={() => addAddresses(bulkAddresses)}
             disabled={!bulkAddresses.trim()}
             tooltip="Add Bulk Addresses"
@@ -348,12 +353,11 @@ export function AddressListInput({
           : `${addresses.length} address${addresses.length !== 1 ? "es" : ""}`}
           )
         </label>
-        <div className="flex space-x-1 items-center">
+        <div className="flex gap-2 items-center flex-wrap">
           <Button
             type="button"
             btnStyle="outline"
-            className={`!p-2 font-normal text-[14px] leading-4 
-              ${!allowNoProtection ? "" : "!text-black !border-black"}`}
+            className={"font-normal text-[14px] leading-4"}
             onClick={handleAllowEveryone}
             disabled={!allowNoProtection}
             icon={<UserGroupIcon className="w-4 h-4" />}
@@ -368,7 +372,7 @@ export function AddressListInput({
           <Button
             type="button"
             btnStyle="outline"
-            className="!p-2 !text-black !border-black"
+            color="danger"
             onClick={clearAllAddresses}
             forceShowTooltip
             tooltip="Clear All"
@@ -378,7 +382,6 @@ export function AddressListInput({
           <Button
             type="button"
             btnStyle="outline"
-            className="!p-2"
             onClick={exportAddresses}
             forceShowTooltip
             tooltip="Export"
@@ -393,9 +396,9 @@ export function AddressListInput({
             <li
               // eslint-disable-next-line react/no-array-index-key
               key={`addr_${index}`}
-              className="flex items-center justify-between bg-base-200 rounded"
+              className="flex items-center justify-between bg-base-200 rounded text-neutral-content dark:text-neutral-soft-content"
             >
-              <div className="truncate flex-grow mr-2 text-sm text-medium">
+              <div className="truncate flex-grow text-sm font-medium">
                 {address === zeroAddress ?
                   "Everyone is allowed in the pool."
                 : <div className="font-mono flex items-center">
@@ -415,7 +418,8 @@ export function AddressListInput({
                 <Button
                   type="button"
                   btnStyle="link"
-                  className="!p-[2px] !text-black !border-black"
+                  color="danger"
+                  className="!p-[2px]"
                   onClick={() => removeAddress(index)}
                 >
                   <XMarkIcon className="w-5 h-5" />

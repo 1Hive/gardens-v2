@@ -140,7 +140,11 @@ templates:
           handler: handleSybilScorerUpdated
         - event: SuperfluidTokenUpdated(address)
           handler: handleSuperfluidTokenUpdated
- 
+        - event: SuperfluidGDAConnected(indexed address,indexed address)
+          handler: handleSuperfluidGDAConnected
+        - event: SuperfluidGDADisconnected(indexed address,indexed address)
+          handler: handleSuperfluidGDADisconnected
+
       file: ./src/mappings/cv-strategy.ts
 
   - kind: ethereum/contract
@@ -189,6 +193,32 @@ templates:
       handler: handleProposalMetadata
       entities:
         - ProposalMetadata
+      abis:
+        - name: CVStrategyV0_0
+          file: ../contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json
+  
+  - name: PoolMetadata
+    kind: file/ipfs
+    mapping:
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      file: ./src/mappings/pool-metadata.ts
+      handler: handlePoolMetadata
+      entities:
+        - PoolMetadata
+      abis:
+        - name: CVStrategyV0_0
+          file: ../contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json
+
+  - name: Covenant
+    kind: file/ipfs
+    mapping:
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      file: ./src/mappings/covenant.ts
+      handler: handleCovenant
+      entities:
+        - Covenant
       abis:
         - name: CVStrategyV0_0
           file: ../contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json

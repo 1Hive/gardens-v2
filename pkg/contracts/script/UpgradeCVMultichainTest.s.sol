@@ -36,10 +36,10 @@ contract UpgradeCVMultichainTest is BaseMultiChain {
         // registryFactory.upgradeTo(registryFactoryImplementation); // DOESNT VALIDATE SAFE UPGRADING
 
         // 1.b -- Set the Registry Community Template --
-        registryFactory.setRegistryCommunityTemplate(registryImplementation);
+        // registryFactory.setRegistryCommunityTemplate(registryImplementation);
 
         // 1.c -- Set the Strategy Template --
-        // registryFactory.setStrategyTemplate(strategyImplementation);
+        registryFactory.setStrategyTemplate(strategyImplementation);
 
         // 2. REGISTRY COMMUNITIES UPGRADES
         address[] memory registryCommunityProxies =
@@ -55,10 +55,10 @@ contract UpgradeCVMultichainTest is BaseMultiChain {
             // abi.encodeWithSelector(RegistryCommunityV0_0.initializeV2.selector)
 
             // 2.a -- Upgrade the Registry Community --
-            registryCommunity.upgradeTo(registryImplementation); // DOESNT VALIDATE SAFE UPGRADING
+            // registryCommunity.upgradeTo(registryImplementation); // DOESNT VALIDATE SAFE UPGRADING
 
             // 2.b -- Set the Strategy Template --
-            // registryCommunity.setStrategyTemplate(strategyImplementation);
+            registryCommunity.setStrategyTemplate(strategyImplementation);
         }
 
         // 3. CV STRATEGIES UPGRADES
@@ -72,10 +72,13 @@ contract UpgradeCVMultichainTest is BaseMultiChain {
             // abi.encodeWithSelector(CVStrategyV0_0initializeV2.selector)
 
             // 3.a -- Upgrade the CV Strategy --
-            // CVStrategyV0_0 cvStrategy = CVStrategyV0_0(payable(address(cvStrategyProxies[i])));
-            // cvStrategy.upgradeTo(strategyImplementation); // DOESNT VALIDATE SAFE UPGRADING
+            CVStrategyV0_0 cvStrategy = CVStrategyV0_0(payable(address(cvStrategyProxies[i])));
+            cvStrategy.upgradeTo(strategyImplementation); // DOESNT VALIDATE SAFE UPGRADING
 
-            // 3.b -- Set the Pool Params --
+            // 3.b -- Init the Strategy --
+            // cvStrategy.init2();
+
+            // 3.c -- Set the Pool Params --
             // (
             //     ,
             //     address tribunalSafe,
