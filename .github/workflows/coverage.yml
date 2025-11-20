@@ -33,9 +33,7 @@ jobs:
 
       - name: Init required submodules
         run: |
-          while read -r _ path; do
-            git submodule update --init --depth 1 --jobs 4 "$path"
-          done < <(git config --file .gitmodules --get-regexp path)
+          git submodule update --init --recursive --depth 1 --jobs 4
 
       - name: Run coverage
         run: forge coverage --ir-minimum --match-path 'pkg/contracts/test/**' --report lcov
