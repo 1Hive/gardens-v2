@@ -33,15 +33,9 @@ jobs:
 
       - name: Init required submodules
         run: |
-          git submodule update --init --recursive --depth 1 --jobs 4 \
-            lib/allo-v2 \
-            lib/forge-std \
-            lib/openzeppelin-foundry-upgrades \
-            lib/openzeppelin-contracts \
-            lib/openzeppelin-contracts-upgradeable \
-            lib/safe-smart-account \
-            lib/protocol-monorepo \
-            protocol-monorepo
+          while read -r _ path; do
+            git submodule update --init --depth 1 --jobs 4 "$path"
+          done < <(git config --file .gitmodules --get-regexp path)
 
       - name: Run coverage
         run: forge coverage --ir-minimum --match-path 'pkg/contracts/test/**' --report lcov
