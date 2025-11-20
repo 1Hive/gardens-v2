@@ -205,7 +205,7 @@ const PoolGovernanceDetails: React.FC<{
       header: "Voting power used",
       render: (member) => {
         // Calculate total staked points from active (1) and disputed (5) proposals only
-        const activeStakedPoints = member.member.stakes?.reduce((sum, stake) => {
+        const activeStakedPoints = member?.member?.stakes?.reduce((sum, stake) => {
           return sum + BigInt(stake.amount);
         }, 0n) ?? 0n;
         
