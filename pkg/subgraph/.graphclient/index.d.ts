@@ -3736,9 +3736,9 @@ export type getMembersStrategyQuery = {
     memberStrategies: Array<(Pick<MemberStrategy, 'activatedPoints' | 'totalStakedPoints' | 'id'> & {
         member: {
             memberCommunity?: Maybe<Array<Pick<MemberCommunity, 'memberAddress' | 'isRegistered'>>>;
-            stakes: Array<(Pick<Stake, 'amount'> & {
+            stakes?: Maybe<Array<(Pick<Stake, 'amount'> & {
                 proposal: Pick<CVProposal, 'proposalStatus'>;
-            })>;
+            })>>;
         };
     })>;
 };
