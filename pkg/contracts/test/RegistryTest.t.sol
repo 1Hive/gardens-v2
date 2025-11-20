@@ -1133,7 +1133,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         vm.stopPrank();
     }
 
-    function test_isCouncilMember() public view {
+    function test_isCouncilMember() public {
         assertEq(_registryCommunity().isCouncilMember(address(councilSafe)), true);
         assertEq(_registryCommunity().isCouncilMember(gardenMember), false);
     }
@@ -1452,7 +1452,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         stopMeasuringGas();
     }
 
-    function test_getStakeAmountWithFees() public view {
+    function test_getStakeAmountWithFees() public {
         uint256 stakeFees = _registryCommunity().getStakeAmountWithFees();
         assertEq(stakeFees, STAKE_WITH_FEES);
     }
