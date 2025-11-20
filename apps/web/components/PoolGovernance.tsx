@@ -40,7 +40,7 @@ export type PoolGovernanceProps = {
   memberTokensInCommunity: bigint;
   isMemberCommunity: boolean;
   memberActivatedStrategy: boolean;
-  membersStrategyData: any;
+  membersStrategyData: MemberStrategyData[];
 };
 
 export const PoolGovernance: React.FC<PoolGovernanceProps> = ({

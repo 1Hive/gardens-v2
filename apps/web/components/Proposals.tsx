@@ -69,6 +69,12 @@ export type MemberStrategyData = {
       isRegistered: boolean;
       memberAddress: string;
     };
+    stakes: {
+      amount
+      proposal {
+        proposalStatus
+      }
+    }
   };
   totalStakedPoints: string;
 };
