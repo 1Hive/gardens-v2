@@ -2,9 +2,9 @@
 pragma solidity ^0.8.13;
 
 import "./BaseMultiChain.s.sol";
-import {CVStrategyV0_0} from "../src/CVStrategy/CVStrategyV0_0.sol";
-import {RegistryCommunityV0_0} from "../src/RegistryCommunity/RegistryCommunityV0_0.sol";
-import {RegistryFactoryV0_0} from "../src/RegistryFactory/RegistryFactoryV0_0.sol";
+import {CVStrategy} from "../src/CVStrategy/CVStrategy.sol";
+import {RegistryCommunity} from "../src/RegistryCommunity/RegistryCommunity.sol";
+import {RegistryFactory} from "../src/RegistryFactory/RegistryFactory.sol";
 
 // EIP-1967 slot for proxy implementation:
 
@@ -14,8 +14,8 @@ contract UpgradeCVMultichainTest is BaseMultiChain {
     bytes32 constant IMPLEMENTATION_SLOT = bytes32(uint256(keccak256("eip1967.proxy.implementation")) - 1);
 
     function runCurrentNetwork(string memory networkJson) public override {
-        address registryImplementation = address(new RegistryCommunityV0_0());
-        address strategyImplementation = address(new CVStrategyV0_0());
+        address registryImplementation = address(new RegistryCommunity());
+        address strategyImplementation = address(new CVStrategy());
         // address passportScorer = networkJson.readAddress(getKeyNetwork(".ENVS.PASSPORT_SCORER"));
         // address safeArbitrator = networkJson.readAddress(getKeyNetwork(".ENVS.ARBITRATOR"));
 
@@ -27,11 +27,11 @@ contract UpgradeCVMultichainTest is BaseMultiChain {
 
         // 1. REGISTRY FACTORY UPGRADE
         address registryFactoryProxy = networkJson.readAddress(getKeyNetwork(".PROXIES.REGISTRY_FACTORY"));
-        RegistryFactoryV0_0 registryFactory = RegistryFactoryV0_0(payable(address(registryFactoryProxy)));
+        RegistryFactory registryFactory = RegistryFactory(payable(address(registryFactoryProxy)));
 
         // 1.a -- Upgrade the Registry Factory --
-        // address registryFactoryImplementation = address(new RegistryFactoryV0_0());
-        // Upgrades.upgradeProxy(address(registryFactoryProxy), "RegistryFactoryV0_0.sol:RegistryFactoryV0_0", "");
+        // address registryFactoryImplementation = address(new RegistryFactory());
+        // Upgrades.upgradeProxy(address(registryFactoryProxy), "RegistryFactory.sol:RegistryFactory", "");
         // abi.encodeWithSelector(RegistryFactoryV0_1.initializeV2.selector)
         // registryFactory.upgradeTo(registryFactoryImplementation); // DOESNT VALIDATE SAFE UPGRADING
 
@@ -45,14 +45,13 @@ contract UpgradeCVMultichainTest is BaseMultiChain {
         address[] memory registryCommunityProxies =
             networkJson.readAddressArray(getKeyNetwork(".PROXIES.REGISTRY_COMMUNITIES"));
         for (uint256 i = 0; i < registryCommunityProxies.length; i++) {
-            RegistryCommunityV0_0 registryCommunity =
-                RegistryCommunityV0_0(payable(address(registryCommunityProxies[i])));
+            RegistryCommunity registryCommunity = RegistryCommunity(payable(address(registryCommunityProxies[i])));
 
             // WIP: Upgrade with safety
             // Upgrades.upgradeProxy(
-            //     address(registryCommunityProxies[i]), "RegistryCommunityV0_0.sol:RegistryCommunityV0_0", ""
+            //     address(registryCommunityProxies[i]), "RegistryCommunity.sol:RegistryCommunity", ""
             // );
-            // abi.encodeWithSelector(RegistryCommunityV0_0.initializeV2.selector)
+            // abi.encodeWithSelector(RegistryCommunity.initializeV2.selector)
 
             // 2.a -- Upgrade the Registry Community --
             // registryCommunity.upgradeTo(registryImplementation); // DOESNT VALIDATE SAFE UPGRADING
@@ -67,12 +66,12 @@ contract UpgradeCVMultichainTest is BaseMultiChain {
             // WIP: Upgrade with safety
             // Upgrades.upgradeProxy(
             //     address(cvStrategyProxies[i]),
-            //     "CVStrategyV0_0.sol:CVStrategyV0_0",
-            //     abi.encodeWithSelector(CVStrategyV0_0.init2.selector, safeArbitrator));
-            // abi.encodeWithSelector(CVStrategyV0_0initializeV2.selector)
+            //     "CVStrategy.sol:CVStrategy",
+            //     abi.encodeWithSelector(CVStrategy.init2.selector, safeArbitrator));
+            // abi.encodeWithSelector(CVStrategyinitializeV2.selector)
 
             // 3.a -- Upgrade the CV Strategy --
-            CVStrategyV0_0 cvStrategy = CVStrategyV0_0(payable(address(cvStrategyProxies[i])));
+            CVStrategy cvStrategy = CVStrategy(payable(address(cvStrategyProxies[i])));
             cvStrategy.upgradeTo(strategyImplementation); // DOESNT VALIDATE SAFE UPGRADING
 
             // 3.b -- Init the Strategy --

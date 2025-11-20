@@ -66,8 +66,8 @@ export function FormInput({
     markdownEditorRef.current?.focus();
   };
 
-  const fixedInputClassname =
-    "!border-gray-300 focus:border-gray-300 focus:outline-gray-300 cursor-not-allowed bg-transparent";
+  const disabledInputClassname =
+    "!border-gray-400 focus:border-gray-400 focus:outline-none cursor-not-allowed bg-transparent opacity-60";
 
   return (
     <div className={`flex flex-col ${wide ? "w-full" : ""}`}>
@@ -104,7 +104,9 @@ export function FormInput({
               errors[registerKey] ?
                 "input-error dark:dark:bg-primary-soft-dark"
               : "input-info dark:bg-primary-soft-dark"
-            } w-full ${readOnly && fixedInputClassname} ${className}`}
+            } w-full ${
+              disabled || readOnly ? disabledInputClassname : ""
+            } ${className}`}
             required={required}
             step={step}
             disabled={disabled || readOnly}
@@ -120,7 +122,7 @@ export function FormInput({
             placeholder={placeholder}
             className={`${className} textarea textarea-info line-clamp-5 w-full overflow-auto h-24 dark:bg-primary-soft-dark ${
               errors[registerKey] ? "input-error" : "input-info"
-            }`}
+            } ${disabled || readOnly ? disabledInputClassname : ""}`}
             required={required}
             rows={rows}
             disabled={disabled || readOnly}
