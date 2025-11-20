@@ -64,12 +64,12 @@ export type ProposalInputItem = {
 export type MemberStrategyData = {
   activatedPoints: string;
   id: string;
-  member?: {
+  member: {
     memberCommunity?: {
       isRegistered: boolean;
       memberAddress: string;
     }[];
-    stakes?: {
+    stakes: {
       amount: string;
       proposal: {
         proposalStatus: number;
