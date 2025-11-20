@@ -12,6 +12,7 @@ import { Address, useAccount } from "wagmi";
 import {
   CVStrategy,
   CVStrategyConfig,
+  getMembersStrategyQuery,
   TokenGarden,
 } from "#/subgraph/.graphclient";
 import { MemberStrategyData } from "./Proposals";
@@ -40,7 +41,7 @@ export type PoolGovernanceProps = {
   memberTokensInCommunity: bigint;
   isMemberCommunity: boolean;
   memberActivatedStrategy: boolean;
-  membersStrategyData: MemberStrategyData[];
+  membersStrategyData: getMembersStrategyQuery | undefined;
 };
 
 export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
@@ -156,7 +157,7 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
         >
           {openGovDetails ? "Hide" : "View"} governance details
         </Button>
-        {openGovDetails && (
+        {openGovDetails && membersStrategyData && (
           <PoolGovernanceDetails membersStrategyData={membersStrategyData} />
         )}
       </section>
@@ -164,10 +165,10 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
   );
 };
 
-type MemberColumn = Column<MemberStrategyData>;
+type MemberColumn = Column<getMembersStrategyQuery["memberStrategies"][0]>;
 
 const PoolGovernanceDetails: React.FC<{
-  membersStrategyData: MemberStrategyData[];
+  membersStrategyData: getMembersStrategyQuery;
 }> = ({ membersStrategyData }) => {
   const columns: MemberColumn[] = [
     {
@@ -190,10 +191,11 @@ const PoolGovernanceDetails: React.FC<{
       header: "Voting power used",
       render: (member) => {
         // Calculate total staked points from active (1) and disputed (5) proposals only
-        const activeStakedPoints = member?.member.stakes.reduce((sum, stake) => {
-          return sum + BigInt(stake.amount);
-        }, 0n) ?? 0n;
-        
+        const activeStakedPoints =
+          member?.member.stakes.reduce((sum, stake) => {
+            return sum + BigInt(stake.amount);
+          }, 0n) ?? 0n;
+
         return (
           <span>
             {calculatePercentageBigInt(
@@ -211,7 +213,7 @@ const PoolGovernanceDetails: React.FC<{
   return (
     <DataTable
       description="A list of all the community members and their activity in this pool."
-      data={membersStrategyData}
+      data={membersStrategyData.memberStrategies}
       columns={columns}
     />
   );
