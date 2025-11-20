@@ -250,6 +250,9 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
     }
 
     function _revertZeroAddress(address _address) internal pure {
+        if (_address == address(0)) {
+            revert ValueCannotBeZero();
+        }
     }
 
     function setStrategyTemplate(address template) external onlyOwner {
