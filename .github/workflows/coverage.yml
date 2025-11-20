@@ -32,8 +32,7 @@ jobs:
           version: nightly
 
       - name: Init required submodules
-        run: |
-          git submodule update --init --recursive --depth 1 --jobs 4
+        run: git submodule update --init --recursive --depth 1 --jobs 4
 
       - name: Run coverage
         run: forge coverage --ir-minimum --match-path 'pkg/contracts/test/**' --report lcov
