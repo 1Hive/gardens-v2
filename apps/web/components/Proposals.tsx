@@ -69,12 +69,12 @@ export type MemberStrategyData = {
       isRegistered: boolean;
       memberAddress: string;
     };
-    stakes: {
+    stakes?: {
       amount
       proposal {
         proposalStatus
       }
-    }
+    };
   };
   totalStakedPoints: string;
 };
