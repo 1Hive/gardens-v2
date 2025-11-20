@@ -272,6 +272,7 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
         address _owner
     ) public initializer {
         super.initialize(_owner);
+        LibDiamond.setContractOwner(_owner);
         __ReentrancyGuard_init();
         __AccessControl_init();
 
