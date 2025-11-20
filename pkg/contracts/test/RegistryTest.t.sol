@@ -199,6 +199,12 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         target.setPoolParams(emptyArbConfig, emptyCvParams, 0, membersToAdd, membersToRemove, address(0));
     }
 
+    function _configureStrategy(CVStrategy target) internal {
+        vm.startPrank(target.owner());
+        target.diamondCut(diamondConfigurator.getFacetCuts(), address(0), "");
+        vm.stopPrank();
+    }
+
     function _registryCommunity() internal view returns (RegistryCommunity) {
         return registryCommunity;
     }
@@ -329,6 +335,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         );
         // poolId = _poolId;
         CVStrategy fixedStrategy = CVStrategy(payable(strategyProxy));
+        _configureStrategy(fixedStrategy);
 
         vm.stopPrank();
 
@@ -376,6 +383,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
             metadata
         );
         CVStrategy fixedStrategy = CVStrategy(payable(strategyProxy));
+        _configureStrategy(fixedStrategy);
 
         vm.stopPrank();
 
@@ -435,8 +443,8 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
     function testFuzz_increasePowerCapped(uint256 tokenAmount) public {
         uint256 CAPPED_MAX_AMOUNT = 200 * DECIMALS;
         uint256 MIN_AMOUNT_TO_MAX = (CAPPED_MAX_AMOUNT - MINIMUM_STAKE) / DECIMALS;
-        console.log("MINIMUM_STAKE: %s", MINIMUM_STAKE / DECIMALS);
-        console.log("CAPPED_MAX_AMOUNT- MINIMUM_STAKE: %s", MIN_AMOUNT_TO_MAX);
+        console.log("MINIMUM_STAKE:", MINIMUM_STAKE / DECIMALS);
+        console.log("CAPPED_MAX_AMOUNT- MINIMUM_STAKE:", MIN_AMOUNT_TO_MAX);
 
         vm.assume(tokenAmount <= MIN_AMOUNT_TO_MAX * 2);
         vm.assume(tokenAmount >= MIN_AMOUNT_TO_MAX);
@@ -460,6 +468,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
             metadata
         );
         CVStrategy cappedStrategy = CVStrategy(payable(strategyProxy));
+        _configureStrategy(cappedStrategy);
 
         vm.stopPrank();
         vm.startPrank(address(councilSafe));
@@ -480,7 +489,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
 
         uint256 current = tokenAmount * DECIMALS + MINIMUM_STAKE;
 
-        console.log("Current: %s", current);
+        console.log("Current:", current);
         // if (tokenAmount >= CAPPED_MAX_AMOUNT) {
         assertEq(memberPower, CAPPED_MAX_AMOUNT, "Power to 200");
         // } else {
@@ -514,6 +523,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
             metadata
         );
         CVStrategy quadraticStrategy = CVStrategy(payable(strategyProxy));
+        _configureStrategy(quadraticStrategy);
         vm.stopPrank();
 
         vm.startPrank(address(councilSafe));
@@ -573,6 +583,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
             metadata
         );
         CVStrategy quadraticStrategy = CVStrategy(payable(strategyProxy));
+        _configureStrategy(quadraticStrategy);
 
         vm.stopPrank();
         vm.startPrank(address(councilSafe));
@@ -676,6 +687,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
             metadata
         );
         CVStrategy quadraticStrategy = CVStrategy(payable(strategyProxy));
+        _configureStrategy(quadraticStrategy);
         console.log("PoolId: %s", poolId);
         vm.stopPrank();
         vm.startPrank(address(councilSafe));
@@ -852,6 +864,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
             metadata
         );
         CVStrategy allowlistStrategy = CVStrategy(payable(strategyProxy));
+        _configureStrategy(allowlistStrategy);
         vm.stopPrank();
 
         vm.startPrank(address(councilSafe));
@@ -896,6 +909,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
             metadata
         );
         CVStrategy allowlistStrategy = CVStrategy(payable(strategyProxy));
+        _configureStrategy(allowlistStrategy);
         vm.stopPrank();
 
         vm.startPrank(address(councilSafe));
@@ -1058,6 +1072,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
             metadata
         );
         CVStrategy allowlistStrategy = CVStrategy(payable(strategyProxy));
+        _configureStrategy(allowlistStrategy);
         vm.stopPrank();
 
         vm.startPrank(address(councilSafe));
@@ -1098,6 +1113,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
             metadata
         );
         CVStrategy quadraticStrategy = CVStrategy(payable(strategyProxy));
+        _configureStrategy(quadraticStrategy);
         vm.stopPrank();
 
         vm.startPrank(address(councilSafe));
