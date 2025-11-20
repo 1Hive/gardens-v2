@@ -167,22 +167,7 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
 type MemberColumn = Column<MemberStrategyData>;
 
 const PoolGovernanceDetails: React.FC<{
-  membersStrategyData: {
-    id: string;
-    activatedPoints: string;
-    totalStakedPoints: string;
-    member: {
-      memberCommunity: {
-        memberAddress: string;
-      }[];
-      stakes: {
-        amount: string;
-        proposal: {
-          proposalStatus: string;
-        };
-      }[];
-    };
-  }[];
+  membersStrategyData: MemberStrategyData[];
 }> = ({ membersStrategyData }) => {
   const columns: MemberColumn[] = [
     {
