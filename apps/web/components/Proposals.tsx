@@ -138,7 +138,7 @@ export function Proposals({
   const [allocationView, setAllocationView] = useState(false);
   const [inputAllocatedTokens, setInputAllocatedTokens] = useState<bigint>(0n);
   const [inputs, setInputs] = useState<{ [key: string]: ProposalInputItem }>(
-    {},
+    {}
   );
   const [stakedFilters, setStakedFilters] = useState<{
     [key: string]: ProposalInputItem;
@@ -165,7 +165,7 @@ export function Proposals({
       if (inst) proposalCardRefs.current.set(id, inst);
       else proposalCardRefs.current.delete(id); // cleanup on unmount
     },
-    [],
+    []
   );
 
   // Queries
@@ -205,7 +205,7 @@ export function Proposals({
         { topic: "member", id: wallet, containerId: strategy.poolId },
       ],
       enabled: !!wallet,
-    },
+    }
   );
 
   const { data: membersStrategyData } =
@@ -226,7 +226,7 @@ export function Proposals({
     });
 
   const memberActivatedPoints: bigint = BigInt(
-    memberStrategyData?.memberStrategy?.activatedPoints ?? 0,
+    memberStrategyData?.memberStrategy?.activatedPoints ?? 0
   );
 
   // Contract reads
@@ -250,7 +250,7 @@ export function Proposals({
       },
       () => {
         return refetchMemberPower();
-      },
+      }
     );
     return () => {
       if (subscritionId.current) {
@@ -265,7 +265,7 @@ export function Proposals({
   const memberActivatedStrategy =
     memberStrategyData?.memberStrategy?.activatedPoints > 0n;
   const memberTokensInCommunity = BigInt(
-    memberData?.member?.memberCommunity?.[0]?.stakedTokens ?? 0,
+    memberData?.member?.memberCommunity?.[0]?.stakedTokens ?? 0
   );
 
   const proposals = strategy.proposals.sort((a, b) => {
@@ -291,13 +291,13 @@ export function Proposals({
         ?.filter(
           (stake) =>
             stake.proposal.strategy.id.toLowerCase() ===
-            strategy.id.toLowerCase(),
+            strategy.id.toLowerCase()
         )
         .map((x) => ({ ...x, amount: BigInt(x.amount) })) ?? [];
 
     const totalStaked = stakesFiltered.reduce(
       (acc, curr) => acc + curr.amount,
-      0n,
+      0n
     );
 
     const memberStakes: { [key: string]: ProposalInputItem } = {};
@@ -318,7 +318,7 @@ export function Proposals({
       }));
       console.info(
         "[Proposals][SupportSnapshot]",
-        supportSnapshot.length ? supportSnapshot : "No active support positions",
+        supportSnapshot.length ? supportSnapshot : "No active support positions"
       );
     }
 
@@ -355,15 +355,15 @@ export function Proposals({
   ];
 
   const disableManageSupportButton = disableManageSupportBtnCondition.some(
-    (cond) => cond.condition,
+    (cond) => cond.condition
   );
 
   const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons(
-    disableManageSupportBtnCondition,
+    disableManageSupportBtnCondition
   );
 
   const { tooltipMessage: createProposalTooltipMessage } = useDisableButtons(
-    disableCreateProposalBtnCondition,
+    disableCreateProposalBtnCondition
   );
 
   useEffect(() => {
@@ -442,7 +442,7 @@ export function Proposals({
 
   const getProposalsInputsDifferences = (
     inputData: { [key: string]: ProposalInputItem },
-    currentData: { [key: string]: ProposalInputItem },
+    currentData: { [key: string]: ProposalInputItem }
   ) => {
     // log maximum stakable tokens
     return Object.values(inputData).reduce<
@@ -527,7 +527,7 @@ export function Proposals({
 
     const proposalsDifferencesArr = getProposalsInputsDifferences(
       inputs,
-      stakedFilters,
+      stakedFilters
     );
     if (process.env.NODE_ENV !== "production") {
       console.info("[Proposals][Allocate] Current inputs snapshot", {
@@ -548,7 +548,7 @@ export function Proposals({
       });
     }
     const abiTypes = parseAbiParameters(
-      "(uint256 proposalId, int256 deltaSupport)[]",
+      "(uint256 proposalId, int256 deltaSupport)[]"
     );
     const encodedData = encodeAbiParameters(abiTypes, [
       proposalsDifferencesArr,
@@ -564,14 +564,14 @@ export function Proposals({
   // Computed values
   const memberSupportedProposalsPct = calculatePercentageBigInt(
     inputAllocatedTokens,
-    memberActivatedPoints,
+    memberActivatedPoints
   );
 
   const memberPoolWeight =
     memberPower != null && +strategy.totalEffectiveActivePoints > 0
       ? calculatePercentageBigInt(
           memberPower,
-          BigInt(strategy.totalEffectiveActivePoints),
+          BigInt(strategy.totalEffectiveActivePoints)
         )
       : undefined;
 
@@ -614,7 +614,7 @@ export function Proposals({
     (x) =>
       ProposalStatus[x.proposalStatus] === "cancelled" ||
       ProposalStatus[x.proposalStatus] === "rejected" ||
-      ProposalStatus[x.proposalStatus] === "executed",
+      ProposalStatus[x.proposalStatus] === "executed"
   );
 
   const membersStrategies = membersStrategyData?.memberStrategies;
@@ -633,7 +633,7 @@ export function Proposals({
 
     // Create a record of proposal convictions with proposal ID as keys
     const proposalConvictionMap = Array.from(
-      proposalCardRefs.current.entries(),
+      proposalCardRefs.current.entries()
     ).reduce((acc, [id, proposal]) => {
       acc[id] = proposal.getProposalConviction();
       return acc;
@@ -641,12 +641,12 @@ export function Proposals({
 
     const totalSupport = Object.values(proposalConvictionMap).reduce(
       (acc, proposal) => acc + proposal.support || 0,
-      0,
+      0
     );
 
     const totalConviction = Object.values(proposalConvictionMap).reduce(
       (acc, proposal) => acc + proposal.conviction || 0n,
-      0n,
+      0n
     );
 
     let rows = activeOrDisputedProposals.map((proposal) => {
@@ -665,12 +665,12 @@ export function Proposals({
           : "0%";
       const conviction = formatUnits(
         proposalConvictionMap[proposal.id]?.conviction || 0n,
-        tokenDecimals,
+        tokenDecimals
       );
       const convictionPercent =
         calculatePercentageBigInt(
           proposalConvictionMap[proposal.id]?.conviction || 0n,
-          totalConviction,
+          totalConviction
         ) + "%";
       const threshold = proposalConvictionMap[proposal.id]?.threshold || 0;
       return [
@@ -712,7 +712,7 @@ export function Proposals({
   const activeOrDisputedProposals = proposals.filter(
     (x) =>
       ProposalStatus[x.proposalStatus] === "active" ||
-      ProposalStatus[x.proposalStatus] === "disputed",
+      ProposalStatus[x.proposalStatus] === "disputed"
   );
 
   // Render
@@ -946,7 +946,7 @@ export function Proposals({
               memberTokensInCommunity={memberTokensInCommunity}
               isMemberCommunity={isMemberCommunity}
               memberActivatedStrategy={memberActivatedStrategy}
-              membersStrategyData={membersStrategies}
+              membersStrategyData={membersStrategyData}
             />
           </div>
         </div>
