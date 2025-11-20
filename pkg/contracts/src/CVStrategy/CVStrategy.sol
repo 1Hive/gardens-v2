@@ -182,6 +182,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     // constructor(address _allo) BaseStrategy(address(_allo), "CVStrategy") {}
     function init(address _allo, address _collateralVaultTemplate, address _owner) external initializer {
         super.init(_allo, "CVStrategy", _owner);
+        LibDiamond.setContractOwner(_owner);
         collateralVaultTemplate = _collateralVaultTemplate;
     }
 
