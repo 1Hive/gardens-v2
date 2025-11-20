@@ -24,6 +24,8 @@ contract CommunityStrategyFacet is CommunityBaseFacet {
     /*|--------------------------------------------|*/
     error UserNotInCouncil(address _user);
     error StrategyExists();
+    error StrategyNotEnabled();
+    error ValueCannotBeZero();
 
     /*|--------------------------------------------|*/
     /*|              MODIFIERS                     |*/
@@ -73,6 +75,9 @@ contract CommunityStrategyFacet is CommunityBaseFacet {
     /*|--------------------------------------------|*/
 
     function _addStrategy(address _newStrategy) internal {
+        if (_newStrategy == address(0)) {
+            revert ValueCannotBeZero();
+        }
         if (enabledStrategies[_newStrategy]) {
             revert StrategyExists();
         }
@@ -85,6 +90,12 @@ contract CommunityStrategyFacet is CommunityBaseFacet {
     }
 
     function _removeStrategy(address _strategy) internal {
+        if (_strategy == address(0)) {
+            revert ValueCannotBeZero();
+        }
+        if (!enabledStrategies[_strategy]) {
+            revert StrategyNotEnabled();
+        }
         enabledStrategies[_strategy] = false;
         emit StrategyRemoved(_strategy);
     }

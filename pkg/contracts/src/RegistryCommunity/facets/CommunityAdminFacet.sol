@@ -100,6 +100,9 @@ contract CommunityAdminFacet is CommunityBaseFacet {
 
     function setCouncilSafe(address payable _safe) public {
         onlyCouncilSafe();
+        if (_safe == address(0)) {
+            revert ValueCannotBeZero();
+        }
         pendingCouncilSafe = _safe;
         emit CouncilSafeChangeStarted(address(councilSafe), pendingCouncilSafe);
     }

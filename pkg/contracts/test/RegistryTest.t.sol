@@ -920,7 +920,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         vm.startPrank(gardenOwner);
         token.approve(address(registryCommunity), STAKE_WITH_FEES);
         _registryCommunity().stakeAndRegisterMember("");
-        vm.expectRevert(abi.encodeWithSelector(CVStrategy.UserCannotExecuteAction.selector));
+        vm.expectRevert(abi.encodeWithSelector(CVStrategy.UserCannotExecuteAction.selector, gardenOwner));
         allowlistStrategy.activatePoints();
         vm.stopPrank();
 
@@ -1013,7 +1013,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         vm.startPrank(gardenOwner);
         token.approve(address(registryCommunity), STAKE_WITH_FEES);
         _registryCommunity().stakeAndRegisterMember("");
-        vm.expectRevert(abi.encodeWithSelector(CVStrategy.UserCannotExecuteAction.selector));
+        vm.expectRevert(abi.encodeWithSelector(CVStrategy.UserCannotExecuteAction.selector, gardenOwner));
         strategy.activatePoints();
         vm.stopPrank();
     }
@@ -1042,7 +1042,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         // gardenMember isn't in allowlist, so should revert
         vm.startPrank(gardenMember);
         token.approve(address(registryCommunity), 350 * DECIMALS);
-        vm.expectRevert(abi.encodeWithSelector(CVStrategy.UserCannotExecuteAction.selector));
+        vm.expectRevert(abi.encodeWithSelector(CVStrategy.UserCannotExecuteAction.selector, gardenMember));
         _registryCommunity().increasePower(350 * DECIMALS);
         vm.stopPrank();
     }
@@ -1089,7 +1089,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         vm.startPrank(gardenOwner);
         token.approve(address(registryCommunity), STAKE_WITH_FEES);
         _registryCommunity().stakeAndRegisterMember("");
-        vm.expectRevert(abi.encodeWithSelector(CVStrategy.UserCannotExecuteAction.selector));
+        vm.expectRevert(abi.encodeWithSelector(CVStrategy.UserCannotExecuteAction.selector, gardenOwner));
         allowlistStrategy.activatePoints();
         vm.stopPrank();
     }
