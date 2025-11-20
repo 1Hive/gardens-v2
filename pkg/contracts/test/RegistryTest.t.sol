@@ -186,6 +186,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         vm.startPrank(gardenOwner);
         _registryFactory().setProtocolFee(address(registryCommunity), PROTOCOL_FEE_PERCENTAGE);
 
+        params._isKickEnabled = false;
         nonKickableCommunity = RegistryCommunity(registryFactory.createRegistry(params));
         vm.startPrank(gardenOwner);
         nonKickableCommunity.diamondCut(communityDiamondConfigurator.getFacetCuts(), address(0), "");

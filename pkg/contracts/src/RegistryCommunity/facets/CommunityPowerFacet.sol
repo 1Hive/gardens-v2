@@ -25,6 +25,7 @@ contract CommunityPowerFacet is CommunityBaseFacet {
     error SenderNotStrategy(); // 0xbbe79611
     error DecreaseUnderMinimum(); // 0x9c47d02e
     error CantDecreaseMoreThanPower(uint256 _decreaseAmount, uint256 _currentPower); // 0x8a11f318
+    error PointsDeactivated(); // 0xd4d3290e
 
     /*|--------------------------------------------|*/
     /*|              EVENTS                        |*/
@@ -101,22 +102,29 @@ contract CommunityPowerFacet is CommunityBaseFacet {
         memberPowerInStrategy[_member][_strategy] = pointsToIncrease; // can be all zero
         memberActivatedInStrategies[_member][_strategy] = true;
 
-        strategiesByMember[_member].push(_strategy);
+        bool alreadyListed;
+        for (uint256 i = 0; i < strategiesByMember[_member].length; i++) {
+            if (strategiesByMember[_member][i] == _strategy) {
+                alreadyListed = true;
+                break;
+            }
+        }
+        if (!alreadyListed) {
+            strategiesByMember[_member].push(_strategy);
+        }
 
         emit MemberActivatedStrategy(_member, _strategy, pointsToIncrease);
     }
 
     function deactivateMemberInStrategy(address _member, address _strategy) public {
-        if (!memberActivatedInStrategies[_member][_strategy]) {
-            return;
-        }
-
-        onlyRegistryMemberAddress(_member);
         onlyStrategyAddress(msg.sender, _strategy);
+        onlyRegistryMemberAddress(_member);
+        if (!memberActivatedInStrategies[_member][_strategy]) {
+            revert PointsDeactivated();
+        }
 
         memberActivatedInStrategies[_member][_strategy] = false;
         memberPowerInStrategy[_member][_strategy] = 0;
-        removeStrategyFromMember(_member, _strategy);
         emit MemberDeactivatedStrategy(_member, _strategy);
     }
 
@@ -126,9 +134,10 @@ contract CommunityPowerFacet is CommunityBaseFacet {
         uint256 pointsToIncrease;
 
         for (uint256 i = 0; i < strategiesByMember[member].length; i++) {
-            pointsToIncrease = CVStrategy(payable(strategiesByMember[member][i])).increasePower(member, _amountStaked);
+            address strategy = strategiesByMember[member][i];
+            pointsToIncrease = CVStrategy(payable(strategy)).increasePower(member, _amountStaked);
             if (pointsToIncrease != 0) {
-                memberPowerInStrategy[member][strategiesByMember[member][i]] += pointsToIncrease;
+                memberPowerInStrategy[member][strategy] += pointsToIncrease;
             }
         }
 
