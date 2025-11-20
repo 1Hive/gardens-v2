@@ -2,10 +2,9 @@
 pragma solidity ^0.8.0;
 
 /**
- * \
- * Author: Nick Mudge <nick@perfectabstractions.com> (https://twitter.com/mudgen)
- * EIP-2535 Diamonds: https://eips.ethereum.org/EIPS/eip-2535
- * /*****************************************************************************
+ * @title LibDiamond
+ * @author Nick Mudge (nick@perfectabstractions.com)
+ * @notice EIP-2535 Diamonds: https://eips.ethereum.org/EIPS/eip-2535
  */
 import {IDiamond} from "../interfaces/IDiamond.sol";
 import {IDiamondCut} from "../interfaces/IDiamondCut.sol";
