@@ -216,7 +216,6 @@ export function Proposals({
         },
         { topic: "member", id: wallet, containerId: strategy.poolId },
       ],
-      enabled: !!wallet,
     });
 
   const memberActivatedPoints: bigint = BigInt(
