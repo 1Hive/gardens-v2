@@ -74,8 +74,10 @@ function normalizeStatus(
 ): (typeof ProposalStatus)[number] | undefined {
   if (!status) return undefined;
   const normalized = status.toLowerCase();
-  return PROPOSAL_STATUS_VALUES.includes(
-      normalized as (typeof ProposalStatus)[number],
+  return (
+      PROPOSAL_STATUS_VALUES.includes(
+        normalized as (typeof ProposalStatus)[number],
+      )
     ) ?
       (normalized as (typeof ProposalStatus)[number])
     : undefined;
@@ -133,8 +135,8 @@ async function loadProposal(
       chainConfig,
       getProposalTitleDocument,
       { proposalId },
-      undefined,
-      true, // bypass published/gateway cache for freshest status
+      { requestPolicy: "network-only" },
+      true,
     );
 
     if (proposalResult.error) {
