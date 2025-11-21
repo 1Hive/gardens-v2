@@ -88,6 +88,7 @@ export async function generateMetadata({
       chainConfig,
       getProposalTitleDocument,
       { proposalId },
+      { requestPolicy: "network-only" },
     );
 
     if (proposalResult.error) {
