@@ -67,6 +67,19 @@ const POOL_TYPE_STYLES: Record<
 const DEFAULT_POOL_STYLE = { text: "#1F2937", background: "#E5E7EB" };
 
 let cachedGardenLogoDataUrl: string | null = null;
+const PROPOSAL_STATUS_VALUES = Object.values(ProposalStatus);
+
+function normalizeStatus(
+  status?: string | null,
+): (typeof ProposalStatus)[number] | undefined {
+  if (!status) return undefined;
+  const normalized = status.toLowerCase();
+  return PROPOSAL_STATUS_VALUES.includes(
+      normalized as (typeof ProposalStatus)[number],
+    ) ?
+      (normalized as (typeof ProposalStatus)[number])
+    : undefined;
+}
 
 function formatTitle(title: string) {
   const trimmed = title?.trim();
@@ -142,7 +155,9 @@ async function loadProposal(
     }
 
     const statusCode = proposal.proposalStatus?.toString?.();
-    const status = statusCode != null ? ProposalStatus[statusCode] : undefined;
+    const status = normalizeStatus(
+      statusCode != null ? ProposalStatus[statusCode] : undefined,
+    );
 
     const poolTypeCode = proposal.strategy?.config?.proposalType?.toString?.();
     const poolType = poolTypeCode != null ? PoolTypes[poolTypeCode] : undefined;
@@ -199,8 +214,7 @@ async function renderImage({
     : poolType === "signaling" ?
       `data:image/svg+xml;base64,${POOL_SIGNALING_ICON_BASE64}`
     : null;
-  const normalizedStatus =
-    status?.toLowerCase() as (typeof ProposalStatus)[number];
+  const normalizedStatus = normalizeStatus(status);
   const description = getDescriptionFromStatus(normalizedStatus);
   const safeTitle = formatTitle(title);
   const subHeaderText =
@@ -436,15 +450,18 @@ export async function generateMetadata({
 
 export default async function Image({
   params,
+  searchParams,
 }: {
   params: ProposalPageParams;
+  searchParams?: { status?: string };
 }) {
   const { chainId, data } = await loadProposal(params);
+  const status = normalizeStatus(searchParams?.status) ?? data?.status;
 
   try {
     return await renderImage({
       title: data?.title ?? FALLBACK_TITLE,
-      status: data?.status,
+      status,
       poolType: data?.poolType,
       poolTitle: data?.poolTitle ?? null,
       communityName: data?.communityName ?? null,
