@@ -214,9 +214,9 @@ export function Proposals({
           containerId: strategy.poolId,
           type: "update",
         },
-        { topic: "member", id: wallet, containerId: strategy.poolId },
+        { topic: "member", containerId: strategy.poolId },
       ],
-      enabled: !!wallet,
+      enabled: !!strategy.id,
     });
 
   const memberActivatedPoints: bigint = BigInt(
