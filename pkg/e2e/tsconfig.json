@@ -20,7 +20,8 @@
   "include": [
     "test/**/*",
     "playwright.config.ts",
-    "tests/community.e2e.ts"
+    "tests/community.e2e.ts",
+    "wallet-setup"
   ],
   "exclude": [
     "node_modules"

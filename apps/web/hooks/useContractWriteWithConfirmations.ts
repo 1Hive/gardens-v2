@@ -30,6 +30,9 @@ const DIVVI_PROVIDERS = process.env.NEXT_PUBLIC_DIVVI_PROVIDERS?.split(",") ?? [
   "0x5f0a55fad9424ac99429f635dfb9bf20c3360ab8",
 ];
 
+const IS_E2E =
+  process.env.NEXT_PUBLIC_E2E === "true" || process.env.E2E === "true";
+
 /**
  * this hook is used to write to a contract and wait for confirmations.
  * @param props
@@ -62,19 +65,19 @@ export function useContractWriteWithConfirmations<
   );
 
   const shouldDivviTrack = useMemo(() => {
-    return resolvedChaindId === celo.id;
+    return !IS_E2E && resolvedChaindId === celo.id;
   }, [resolvedChaindId]);
 
   let propsWithChainId = {
     ...props,
     chainId: resolvedChaindId,
     dataSuffix:
-      shouldDivviTrack ?
-        getDataSuffix({
-          consumer: DIVVI_CONSUMER as Address,
-          providers: DIVVI_PROVIDERS as Address[],
-        })
-      : undefined,
+      shouldDivviTrack
+        ? (`0x${getDataSuffix({
+            consumer: DIVVI_CONSUMER as Address,
+            providers: DIVVI_PROVIDERS as Address[],
+          })}` as `0x${string}`)
+        : undefined,
     confirmations:
       props.confirmations ??
       chainConfigMap[+resolvedChaindId]?.confirmations ??
