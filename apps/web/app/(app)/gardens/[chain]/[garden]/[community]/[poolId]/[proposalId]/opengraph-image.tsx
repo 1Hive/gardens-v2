@@ -133,6 +133,8 @@ async function loadProposal(
       chainConfig,
       getProposalTitleDocument,
       { proposalId },
+      undefined,
+      true, // bypass published/gateway cache for freshest status
     );
 
     if (proposalResult.error) {

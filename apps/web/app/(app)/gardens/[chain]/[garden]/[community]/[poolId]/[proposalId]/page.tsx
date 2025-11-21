@@ -89,6 +89,7 @@ export async function generateMetadata({
       getProposalTitleDocument,
       { proposalId },
       { requestPolicy: "network-only" },
+      true, // avoid gateway cache for latest proposal status
     );
 
     if (proposalResult.error) {
