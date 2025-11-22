@@ -36,6 +36,6 @@ export function generateMetadata({ params }: PageParams): Metadata {
   };
 }
 
-export default function Page(props: PageParams) {
-  return <ClientPage {...props} />;
+export default function Page({ params }: PageParams) {
+  return <ClientPage params={params} />;
 }

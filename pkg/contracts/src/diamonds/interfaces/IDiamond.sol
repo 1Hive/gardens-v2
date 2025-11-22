@@ -5,9 +5,10 @@ interface IDiamond {
     enum FacetCutAction {
         Add,
         Replace,
-        Remove
+        Remove,
+        Auto
     }
-    // Add=0, Replace=1, Remove=2
+    // Add=0, Replace=1, Remove=2, Auto=3
 
     struct FacetCut {
         address facetAddress;
