@@ -699,19 +699,17 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
                   label="Pool token ERC20 address"
                   register={register}
                   required
+                  validateERC20
                   registerOptions={{
                     pattern: {
                       value: ethAddressRegEx,
                       message: "Invalid Eth Address",
                     },
-                    validate: () =>
-                      customTokenData?.symbol !== undefined ||
-                      "Not a supported ERC20 token",
                   }}
                   errors={errors}
                   registerKey="poolTokenAddress"
                   placeholder="0x.."
-                  className="font-mono text-sm"
+                  className="font-mono text-sm w-full max-w-[29rem]"
                   suffix={customTokenData?.symbol}
                 />
                 {networkSfMetadata && poolTokenAddress && customTokenData && (
@@ -1041,7 +1039,7 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
                         chain.globalTribunal?.toLowerCase()
                     ) ?
                       ""
-                    : (chain.globalTribunal ?? ""),
+                    : chain.globalTribunal ?? "",
                   );
                 }}
               />

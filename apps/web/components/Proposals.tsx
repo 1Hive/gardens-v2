@@ -27,6 +27,8 @@ import {
   isMemberQuery,
   CVStrategy,
   RegistryCommunity,
+  getMembersStrategyQuery,
+  getMembersStrategyDocument,
 } from "#/subgraph/.graphclient";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { PoolGovernanceProps } from "./PoolGovernance";
@@ -199,6 +201,23 @@ export function Proposals({
       enabled: !!wallet,
     },
   );
+
+  const { data: membersStrategyData } =
+    useSubgraphQuery<getMembersStrategyQuery>({
+      query: getMembersStrategyDocument,
+      variables: {
+        strategyId: `${strategy.id.toLowerCase()}`,
+      },
+      changeScope: [
+        {
+          topic: "proposal",
+          containerId: strategy.poolId,
+          type: "update",
+        },
+        { topic: "member", containerId: strategy.poolId },
+      ],
+      enabled: !!strategy.id,
+    });
 
   const memberActivatedPoints: bigint = BigInt(
     memberStrategyData?.memberStrategy?.activatedPoints ?? 0,

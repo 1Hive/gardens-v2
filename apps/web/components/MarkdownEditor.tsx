@@ -1,8 +1,12 @@
-/* eslint-disable @typescript-eslint/strict-boolean-expressions */
-/* eslint-disable @typescript-eslint/no-unused-expressions */
-/* eslint-disable no-unused-expressions */
 "use client";
-import { useEffect, useRef, useState } from "react";
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from "react";
 import {
   ArrowsPointingInIcon,
   ArrowsPointingOutIcon,
@@ -38,29 +42,35 @@ import {
   linkDialogPlugin,
   CreateLink,
   DiffSourceToggleWrapper,
+  type MDXEditorMethods,
 } from "@mdxeditor/editor";
 
 import { useTheme } from "@/providers/ThemeProvider";
 import { ipfsFileUpload } from "@/utils/ipfsUtils";
 
-export default function MarkdownEditor({
-  id,
-  value,
-  onChange,
-  className,
-  errors,
-  ...rest
-}: {
+export type MarkdownEditorHandle = {
+  focus: () => void;
+};
+
+type MarkdownEditorProps = {
   id: string;
   value: string | undefined;
   className?: string;
   errors?: Record<string, string>;
   onChange?: React.ChangeEventHandler<HTMLInputElement>;
-} & Omit<React.ComponentProps<typeof MDXEditor>, "onChange" | "markdown">) {
+} & Omit<React.ComponentProps<typeof MDXEditor>, "onChange" | "markdown">;
+
+const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorProps>(
+  function MarkdownEditor(
+    { id, value, onChange, className, errors, ...rest },
+    ref,
+  ) {
   const wrapRef = useRef<HTMLDivElement>(null);
+  const editorRef = useRef<MDXEditorMethods | null>(null);
   const [isFs, setIsFs] = useState(false);
   const [usingFallback, setUsingFallback] = useState(false);
   const { resolvedTheme } = useTheme();
+  const isFullscreenActive = isFs || usingFallback;
 
   // helpers
   const getFsEl = () =>
@@ -69,17 +79,34 @@ export default function MarkdownEditor({
 
   const requestFs = async (el: HTMLElement) => {
     // @ts-ignore
-    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-    const req = el.requestFullscreen || el.webkitRequestFullscreen;
+    const req = el.requestFullscreen ?? el.webkitRequestFullscreen;
+    if (typeof req !== "function") {
+      throw new Error("Fullscreen API not available");
+    }
     return req.call(el);
   };
 
   const exitFs = async () => {
     // @ts-ignore
-    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-    const exit = document.exitFullscreen || document.webkitExitFullscreen;
-    return exit.call(document);
+    const exit = document.exitFullscreen ?? document.webkitExitFullscreen;
+    return exit?.call(document);
   };
+
+  const closeFs = useCallback(async () => {
+    if (usingFallback) {
+      setUsingFallback(false);
+      setIsFs(false);
+      return;
+    }
+    if (getFsEl()) {
+      try {
+        await exitFs();
+      } catch {
+        // ignore -> fallback to local state reset
+      }
+    }
+    setIsFs(false);
+  }, [usingFallback]);
 
   // effect: listen to both standard + webkit events and elements
   useEffect(() => {
@@ -103,14 +130,14 @@ export default function MarkdownEditor({
     const host = wrapRef.current ?? document.body;
     const originalParent = popup.parentElement ?? document.body;
 
-    if (isFs || usingFallback) {
+    if (isFullscreenActive) {
       // move popups inside the fullscreen subtree
       host.appendChild(popup);
     } else {
       // restore to body when exiting
       if (originalParent !== document.body) document.body.appendChild(popup);
     }
-  }, [isFs, usingFallback]);
+  }, [isFullscreenActive]);
 
   // Lock body scroll when using CSS fallback
   useEffect(() => {
@@ -123,29 +150,33 @@ export default function MarkdownEditor({
     }
   }, [usingFallback]);
 
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && isFullscreenActive) {
+        event.stopPropagation();
+        void closeFs();
+      }
+    };
+    document.addEventListener("keydown", handleKeyPress);
+    return () => document.removeEventListener("keydown", handleKeyPress);
+  }, [closeFs, isFullscreenActive]);
+
   const toggleFs = async () => {
     const el = wrapRef.current!;
     try {
-      if (usingFallback) {
-        // CSS fallback -> just exit
-        setUsingFallback(false);
-        setIsFs(false);
+      if (isFullscreenActive) {
+        await closeFs();
         return;
       }
-      if (getFsEl()) {
-        await exitFs();
-        setIsFs(false);
-        return;
-      }
-      if (
+      const hasNativeApi =
         // @ts-ignore
-        (document.fullscreenEnabled || document.webkitFullscreenEnabled) &&
-        // @ts-ignore
-        (!!el.requestFullscreen || el.webkitRequestFullscreen)
-      ) {
-        // @ts-ignore
-        (el.requestFullscreen ?? el.webkitRequestFullscreen)?.() ??
-          (await requestFs(el));
+        (document.fullscreenEnabled ?? document.webkitFullscreenEnabled) &&
+        Boolean(
+          // @ts-ignore
+          el.requestFullscreen ?? el.webkitRequestFullscreen,
+        );
+      if (hasNativeApi) {
+        await requestFs(el);
         setUsingFallback(false);
         setIsFs(true);
       } else {
@@ -160,14 +191,55 @@ export default function MarkdownEditor({
     }
   };
 
+  const focusEditor = useCallback(() => {
+    editorRef.current?.focus(undefined, { defaultSelection: "rootEnd" });
+  }, []);
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      focus: focusEditor,
+    }),
+    [focusEditor],
+  );
+
+  const handleShellMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (!editorRef.current) return;
+    const target = event.target as HTMLElement | null;
+    if (!target) return;
+    const isToolbarClick = target.closest(".mdxeditor-toolbar");
+    const isPopupClick = target.closest(".mdxeditor-popup-container");
+    if (isToolbarClick != null || isPopupClick != null) return;
+    const isWithinContent = target.closest(".mdxeditor-root-contenteditable");
+    if (!isWithinContent) {
+      event.preventDefault();
+      focusEditor();
+    }
+  };
+
+  const handleShellFocus = (event: React.FocusEvent<HTMLDivElement>) => {
+    if (event.target === event.currentTarget) {
+      focusEditor();
+    }
+  };
+
   return (
-    <div ref={wrapRef} className="relative bg-neutral">
+    <div ref={wrapRef} className="relative">
       <div
-        className={`p-2 resize-y overflow-auto min-h-60 rounded-2xl border ${
+        className={`markdown-editor-shell p-2 min-h-60 rounded-2xl border ${
           id && errors?.[id] ? "input-error" : "input-info"
-        } ${className} ${isFs ? "fixed inset-0 z-50 m-4" : ""}`}
+        } ${className ?? ""} ${
+          isFullscreenActive ?
+            "markdown-editor-shell--fullscreen"
+          : "resize-y overflow-auto"
+        }`}
+        id={id}
+        tabIndex={-1}
+        onMouseDown={handleShellMouseDown}
+        onFocus={handleShellFocus}
       >
         <MDXEditor
+          ref={editorRef}
           markdown={value ?? ""}
           className={`rounded-2xl !h-full mdxeditor-theme ${resolvedTheme === "darkTheme" ? "dark-theme dark-editor" : ""}`}
           plugins={[
@@ -266,4 +338,6 @@ export default function MarkdownEditor({
       </div>
     </div>
   );
-}
+});
+
+export default MarkdownEditor;
