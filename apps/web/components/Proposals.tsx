@@ -701,6 +701,7 @@ export function Proposals({
           className={`flex ${proposals.length === 0 ? "flex-col items-start justify-start" : "items-center justify-between"} gap-10 flex-wrap`}
         >
           <h3 className="text-left w-52">Proposals</h3>
+
           {strategy.isEnabled &&
             (proposals.length === 0 ?
               <div className="text-center py-12  w-full flex flex-col items-center justify-center">
@@ -772,15 +773,40 @@ export function Proposals({
               ))}
         </header>
 
+        {activeOrDisputedProposals.map((proposalData) => (
+          <Fragment key={proposalData.id}>
+            <ProposalCard
+              ref={makeRef(proposalData.id)}
+              proposalData={proposalData}
+              strategyConfig={strategy.config}
+              inputData={inputs[proposalData.id]}
+              stakedFilter={stakedFilters[proposalData.id]}
+              isAllocationView={allocationView}
+              memberActivatedPoints={memberActivatedPoints}
+              memberPoolWeight={memberPoolWeight}
+              executeDisabled={
+                proposalData.proposalStatus == 4 || !isConnected || missmatchUrl
+              }
+              poolToken={poolToken}
+              tokenDecimals={tokenDecimals}
+              alloInfo={alloInfo}
+              inputHandler={inputHandler}
+              communityToken={strategy.registryCommunity.garden}
+              isPoolEnabled={strategy.isEnabled}
+              minThGtTotalEffPoints={minThGtTotalEffPoints}
+            />
+          </Fragment>
+        ))}
+
         {inputs != null ?
           <>
             <Modal
               isOpen={allocationView}
-              onClose={setAllocationView}
-              size="large"
+              onClose={() => setAllocationView(false)}
+              size="extra-large"
               title="Manage Your Support"
             >
-              <div className="border2 flex flex-col gap-4">
+              <div className="flex flex-col gap-4">
                 <UserAllocationStats stats={stats} />
                 {activeOrDisputedProposals.map((proposalData) => (
                   <Fragment key={proposalData.id}>
@@ -877,20 +903,6 @@ export function Proposals({
             </Modal>
           </>
         : <LoadingSpinner />}
-
-        {/* {proposals.length > 0 && !allocationView && (
-          <div className="flex items-center justify-center gap-6">
-            <Link href={createProposalUrl}>
-              <Button
-                icon={<PlusIcon height={24} width={24} />}
-                disabled={!isConnected || missmatchUrl || !isMemberCommunity}
-                tooltip={createProposalTooltipMessage}
-              >
-                Create a proposal
-              </Button>
-            </Link>
-          </div>
-        )} */}
         <div className="flex items-center justify-center gap-6">
           <Link href={createProposalUrl}>
             <Button
