@@ -138,7 +138,7 @@ export function Proposals({
   const [allocationView, setAllocationView] = useState(false);
   const [inputAllocatedTokens, setInputAllocatedTokens] = useState<bigint>(0n);
   const [inputs, setInputs] = useState<{ [key: string]: ProposalInputItem }>(
-    {}
+    {},
   );
   const [stakedFilters, setStakedFilters] = useState<{
     [key: string]: ProposalInputItem;
@@ -165,7 +165,7 @@ export function Proposals({
       if (inst) proposalCardRefs.current.set(id, inst);
       else proposalCardRefs.current.delete(id); // cleanup on unmount
     },
-    []
+    [],
   );
 
   // Queries
@@ -205,7 +205,7 @@ export function Proposals({
         { topic: "member", id: wallet, containerId: strategy.poolId },
       ],
       enabled: !!wallet,
-    }
+    },
   );
 
   const { data: membersStrategyData } =
@@ -226,7 +226,7 @@ export function Proposals({
     });
 
   const memberActivatedPoints: bigint = BigInt(
-    memberStrategyData?.memberStrategy?.activatedPoints ?? 0
+    memberStrategyData?.memberStrategy?.activatedPoints ?? 0,
   );
 
   // Contract reads
@@ -250,7 +250,7 @@ export function Proposals({
       },
       () => {
         return refetchMemberPower();
-      }
+      },
     );
     return () => {
       if (subscritionId.current) {
@@ -265,7 +265,7 @@ export function Proposals({
   const memberActivatedStrategy =
     memberStrategyData?.memberStrategy?.activatedPoints > 0n;
   const memberTokensInCommunity = BigInt(
-    memberData?.member?.memberCommunity?.[0]?.stakedTokens ?? 0
+    memberData?.member?.memberCommunity?.[0]?.stakedTokens ?? 0,
   );
 
   const proposals = strategy.proposals.sort((a, b) => {
@@ -275,7 +275,11 @@ export function Proposals({
     const bConviction =
       proposalCardRefs.current.get(a.id)?.getProposalConviction()?.conviction ??
       0n;
-    return aConviction < bConviction ? -1 : aConviction > bConviction ? 1 : 0;
+    return (
+      aConviction < bConviction ? -1
+      : aConviction > bConviction ? 1
+      : 0
+    );
   });
 
   // Effects
@@ -291,14 +295,17 @@ export function Proposals({
         ?.filter(
           (stake) =>
             stake.proposal.strategy.id.toLowerCase() ===
-            strategy.id.toLowerCase()
+            strategy.id.toLowerCase(),
         )
         .map((x) => ({ ...x, amount: BigInt(x.amount) })) ?? [];
 
-    const totalStaked = stakesFiltered.reduce(
-      (acc, curr) => acc + curr.amount,
-      0n
-    );
+    const totalActiveStaked = stakesFiltered.reduce((acc, curr) => {
+      const proposalStatus = ProposalStatus[curr.proposal.proposalStatus];
+      const proposalEnded =
+        proposalStatus !== "active" && proposalStatus !== "disputed";
+
+      return proposalEnded ? acc : acc + curr.amount;
+    }, 0n);
 
     const memberStakes: { [key: string]: ProposalInputItem } = {};
     stakesFiltered.forEach((item) => {
@@ -318,11 +325,13 @@ export function Proposals({
       }));
       console.info(
         "[Proposals][SupportSnapshot]",
-        supportSnapshot.length ? supportSnapshot : "No active support positions"
+        supportSnapshot.length ? supportSnapshot : (
+          "No active support positions"
+        ),
       );
     }
 
-    setInputAllocatedTokens(totalStaked);
+    setInputAllocatedTokens(totalActiveStaked);
     setStakedFilters(memberStakes);
   }, [memberData?.member?.stakes, strategy.id]);
 
@@ -355,15 +364,15 @@ export function Proposals({
   ];
 
   const disableManageSupportButton = disableManageSupportBtnCondition.some(
-    (cond) => cond.condition
+    (cond) => cond.condition,
   );
 
   const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons(
-    disableManageSupportBtnCondition
+    disableManageSupportBtnCondition,
   );
 
   const { tooltipMessage: createProposalTooltipMessage } = useDisableButtons(
-    disableCreateProposalBtnCondition
+    disableCreateProposalBtnCondition,
   );
 
   useEffect(() => {
@@ -417,13 +426,19 @@ export function Proposals({
       newInputs[id] = {
         proposalId: id,
         value:
-          !proposalEnded && stakedFilters[id] != null
-            ? stakedFilters[id]?.value
-            : 0n,
+          !proposalEnded && stakedFilters[id] != null ?
+            stakedFilters[id]?.value
+          : 0n,
         proposalNumber,
       };
     });
+    const initialActiveAllocation = Object.values(newInputs).reduce(
+      (acc, input) => acc + input.value,
+      0n,
+    );
+
     setInputs(newInputs);
+    setInputAllocatedTokens(initialActiveAllocation);
     if (process.env.NODE_ENV !== "production") {
       const snapshot = Object.values(newInputs).map((input) => ({
         proposalId: input.proposalId,
@@ -442,7 +457,7 @@ export function Proposals({
 
   const getProposalsInputsDifferences = (
     inputData: { [key: string]: ProposalInputItem },
-    currentData: { [key: string]: ProposalInputItem }
+    currentData: { [key: string]: ProposalInputItem },
   ) => {
     // log maximum stakable tokens
     return Object.values(inputData).reduce<
@@ -527,7 +542,7 @@ export function Proposals({
 
     const proposalsDifferencesArr = getProposalsInputsDifferences(
       inputs,
-      stakedFilters
+      stakedFilters,
     );
     if (process.env.NODE_ENV !== "production") {
       console.info("[Proposals][Allocate] Current inputs snapshot", {
@@ -548,7 +563,7 @@ export function Proposals({
       });
     }
     const abiTypes = parseAbiParameters(
-      "(uint256 proposalId, int256 deltaSupport)[]"
+      "(uint256 proposalId, int256 deltaSupport)[]",
     );
     const encodedData = encodeAbiParameters(abiTypes, [
       proposalsDifferencesArr,
@@ -564,29 +579,29 @@ export function Proposals({
   // Computed values
   const memberSupportedProposalsPct = calculatePercentageBigInt(
     inputAllocatedTokens,
-    memberActivatedPoints
+    memberActivatedPoints,
   );
 
   const memberPoolWeight =
-    memberPower != null && +strategy.totalEffectiveActivePoints > 0
-      ? calculatePercentageBigInt(
-          memberPower,
-          BigInt(strategy.totalEffectiveActivePoints)
-        )
-      : undefined;
+    memberPower != null && +strategy.totalEffectiveActivePoints > 0 ?
+      calculatePercentageBigInt(
+        memberPower,
+        BigInt(strategy.totalEffectiveActivePoints),
+      )
+    : undefined;
 
   const calcPoolWeightUsed =
-    memberPoolWeight != null
-      ? (number: number) => {
-          if (memberPoolWeight == 0) return 0;
-          return ((number / 100) * memberPoolWeight).toFixed(2);
-        }
-      : undefined;
+    memberPoolWeight != null ?
+      (number: number) => {
+        if (memberPoolWeight == 0) return 0;
+        return ((number / 100) * memberPoolWeight).toFixed(2);
+      }
+    : undefined;
 
   const poolWeightClassName = `${
-    calcPoolWeightUsed?.(memberSupportedProposalsPct) === memberPoolWeight
-      ? "bg-secondary-soft text-secondary-content"
-      : "bg-primary-soft text-primary-content"
+    calcPoolWeightUsed?.(memberSupportedProposalsPct) === memberPoolWeight ?
+      "bg-secondary-soft text-secondary-content"
+    : "bg-primary-soft text-primary-content"
   }`;
 
   const stats: Stats[] = [
@@ -602,9 +617,9 @@ export function Proposals({
       name: "Voting power used",
       stat: memberSupportedProposalsPct,
       className: `${
-        memberSupportedProposalsPct >= 100
-          ? "bg-secondary-content text-secondary-soft border-secondary-content"
-          : "bg-primary-content text-primary-soft border-primary-content"
+        memberSupportedProposalsPct >= 100 ?
+          "bg-secondary-content text-secondary-soft border-secondary-content"
+        : "bg-primary-content text-primary-soft border-primary-content"
       }`,
       info: "Shows the percentage of your voting power currently allocated to support proposals.",
     },
@@ -614,7 +629,7 @@ export function Proposals({
     (x) =>
       ProposalStatus[x.proposalStatus] === "cancelled" ||
       ProposalStatus[x.proposalStatus] === "rejected" ||
-      ProposalStatus[x.proposalStatus] === "executed"
+      ProposalStatus[x.proposalStatus] === "executed",
   );
 
   const membersStrategies = membersStrategyData?.memberStrategies;
@@ -633,20 +648,23 @@ export function Proposals({
 
     // Create a record of proposal convictions with proposal ID as keys
     const proposalConvictionMap = Array.from(
-      proposalCardRefs.current.entries()
-    ).reduce((acc, [id, proposal]) => {
-      acc[id] = proposal.getProposalConviction();
-      return acc;
-    }, {} as Record<string, ReturnType<ProposalHandle["getProposalConviction"]>>);
+      proposalCardRefs.current.entries(),
+    ).reduce(
+      (acc, [id, proposal]) => {
+        acc[id] = proposal.getProposalConviction();
+        return acc;
+      },
+      {} as Record<string, ReturnType<ProposalHandle["getProposalConviction"]>>,
+    );
 
     const totalSupport = Object.values(proposalConvictionMap).reduce(
       (acc, proposal) => acc + proposal.support || 0,
-      0
+      0,
     );
 
     const totalConviction = Object.values(proposalConvictionMap).reduce(
       (acc, proposal) => acc + proposal.conviction || 0n,
-      0n
+      0n,
     );
 
     let rows = activeOrDisputedProposals.map((proposal) => {
@@ -657,20 +675,19 @@ export function Proposals({
       const beneficiary = proposal.beneficiary;
       const support = formatUnits(proposal.stakedAmount, tokenDecimals);
       const supportPercent =
-        totalSupport > 0
-          ? ((proposalConvictionMap[proposal.id]?.support || 0) /
-              totalSupport) *
-              100 +
-            "%"
-          : "0%";
+        totalSupport > 0 ?
+          ((proposalConvictionMap[proposal.id]?.support || 0) / totalSupport) *
+            100 +
+          "%"
+        : "0%";
       const conviction = formatUnits(
         proposalConvictionMap[proposal.id]?.conviction || 0n,
-        tokenDecimals
+        tokenDecimals,
       );
       const convictionPercent =
         calculatePercentageBigInt(
           proposalConvictionMap[proposal.id]?.conviction || 0n,
-          totalConviction
+          totalConviction,
         ) + "%";
       const threshold = proposalConvictionMap[proposal.id]?.threshold || 0;
       return [
@@ -699,8 +716,9 @@ export function Proposals({
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    const fileName = strategy.title
-      ? `conviction_results_pool_${strategy.title}.csv`
+    const fileName =
+      strategy.title ?
+        `conviction_results_pool_${strategy.title}.csv`
       : "conviction_results_pool.csv";
     link.setAttribute("download", fileName);
     document.body.appendChild(link);
@@ -712,7 +730,7 @@ export function Proposals({
   const activeOrDisputedProposals = proposals.filter(
     (x) =>
       ProposalStatus[x.proposalStatus] === "active" ||
-      ProposalStatus[x.proposalStatus] === "disputed"
+      ProposalStatus[x.proposalStatus] === "disputed",
   );
 
   // Render
@@ -723,14 +741,14 @@ export function Proposals({
         <header
           ref={proposalSectionRef}
           className={`flex ${
-            proposals.length === 0
-              ? "flex-col items-start justify-start"
-              : "items-center justify-between"
+            proposals.length === 0 ?
+              "flex-col items-start justify-start"
+            : "items-center justify-between"
           } gap-10 flex-wrap`}
         >
           <h3 className="text-left w-52">Proposals</h3>
           {strategy.isEnabled &&
-            (proposals.length === 0 ? (
+            (proposals.length === 0 ?
               <div className="text-center py-12  w-full flex flex-col items-center justify-center">
                 <div className="w-16 h-16 bg-neutral-soft-2 rounded-full flex items-center justify-center mx-auto mb-4">
                   <UsersIcon className="w-8 h-8 text-gray-400" />
@@ -749,19 +767,17 @@ export function Proposals({
                       !isConnected || missmatchUrl || !isMemberCommunity
                     }
                     tooltip={
-                      !isConnected
-                        ? "Connect your wallet"
-                        : !isMemberCommunity
-                        ? "Join the community first"
-                        : "Create a proposal"
+                      !isConnected ? "Connect your wallet"
+                      : !isMemberCommunity ?
+                        "Join the community first"
+                      : "Create a proposal"
                     }
                   >
                     Create a proposal
                   </Button>
                 </Link>
               </div>
-            ) : (
-              !allocationView && (
+            : !allocationView && (
                 <div className="flex items-center gap-4">
                   {activeOrDisputedProposals.length > 0 &&
                     proposalCardRefs.current.size ===
@@ -799,13 +815,12 @@ export function Proposals({
                     </CheckSybil>
                   </div>
                 </div>
-              )
-            ))}
+              ))}
         </header>
         {allocationView && <UserAllocationStats stats={stats} />}
 
         <div className="flex flex-col gap-6">
-          {inputs != null ? (
+          {inputs != null ?
             <>
               {activeOrDisputedProposals.map((proposalData) => (
                 <Fragment key={proposalData.id}>
@@ -869,9 +884,7 @@ export function Proposals({
                 </div>
               )}
             </>
-          ) : (
-            <LoadingSpinner />
-          )}
+          : <LoadingSpinner />}
         </div>
 
         {strategy.isEnabled && allocationView && proposals.length > 0 && (
@@ -905,11 +918,10 @@ export function Proposals({
                       !isConnected || missmatchUrl || !isMemberCommunity
                     }
                     tooltip={
-                      !isConnected
-                        ? "Connect your wallet"
-                        : !isMemberCommunity
-                        ? "Join the community first"
-                        : "Create a proposal"
+                      !isConnected ? "Connect your wallet"
+                      : !isMemberCommunity ?
+                        "Join the community first"
+                      : "Create a proposal"
                     }
                   >
                     Create a proposal
