@@ -61,23 +61,8 @@ export type ProposalInputItem = {
   value: bigint;
 };
 
-export type MemberStrategyData = {
-  activatedPoints: string;
-  id: string;
-  member: {
-    memberCommunity?: {
-      isRegistered: boolean;
-      memberAddress: string;
-    }[];
-    stakes: {
-      amount: string;
-      proposal: {
-        proposalStatus: number;
-      };
-    }[];
-  };
-  totalStakedPoints: string;
-};
+export type MemberStrategyData =
+  getMembersStrategyQuery["memberStrategies"][0];
 
 // export type Strategy = getStrategyByPoolQuery["cvstrategies"][number];
 // export type Proposal = CVStrategy["proposals"][number];
