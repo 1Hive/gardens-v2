@@ -320,23 +320,12 @@ export function Proposals({
     },
   ];
 
-  const disableCreateProposalBtnCondition: ConditionObject[] = [
-    {
-      condition: !isMemberCommunity,
-      message: "Join community first",
-    },
-  ];
-
   const disableManageSupportButton = disableManageSupportBtnCondition.some(
     (cond) => cond.condition,
   );
 
   const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons(
     disableManageSupportBtnCondition,
-  );
-
-  const { tooltipMessage: createProposalTooltipMessage } = useDisableButtons(
-    disableCreateProposalBtnCondition,
   );
 
   useEffect(() => {
@@ -806,6 +795,7 @@ export function Proposals({
           </Fragment>
         ))}
 
+        {/* Modal Manage Support section */}
         {inputs != null ?
           <>
             <Modal
@@ -911,22 +901,6 @@ export function Proposals({
             </Modal>
           </>
         : <LoadingSpinner />}
-        <div className="flex items-center justify-center gap-6">
-          <Link href={createProposalUrl}>
-            <Button
-              icon={<PlusIcon height={24} width={24} />}
-              disabled={!isConnected || missmatchUrl || !isMemberCommunity}
-              tooltip={
-                !isConnected ? "Connect your wallet"
-                : !isMemberCommunity ?
-                  "Join the community first"
-                : "Create a proposal"
-              }
-            >
-              Create a proposal
-            </Button>
-          </Link>
-        </div>
       </section>
     </>
   );

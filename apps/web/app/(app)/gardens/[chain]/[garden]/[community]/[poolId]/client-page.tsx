@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { PlusIcon } from "@heroicons/react/24/outline";
+import Link from "next/link";
 import { Address } from "viem";
 import { useBalance, useAccount, useChainId, useContractRead } from "wagmi";
 import {
@@ -14,7 +16,13 @@ import {
   isMemberDocument,
   isMemberQuery,
 } from "#/subgraph/.graphclient";
-import { InfoBox, PoolGovernance, PoolMetrics, Proposals } from "@/components";
+import {
+  Button,
+  InfoBox,
+  PoolGovernance,
+  PoolMetrics,
+  Proposals,
+} from "@/components";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import PoolHeader from "@/components/PoolHeader";
 import { chainConfigMap } from "@/configs/chains";
@@ -22,6 +30,7 @@ import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import { SubscriptionId, usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
+import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { usePoolToken } from "@/hooks/usePoolToken";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
@@ -294,6 +303,17 @@ export default function ClientPage({
   const isMissingFundingToken = needsFundingToken && !poolToken;
   const [hasWaitedForPoolToken, setHasWaitedForPoolToken] = useState(false);
 
+  const disableCreateProposalBtnCondition: ConditionObject[] = [
+    {
+      condition: !isMemberCommunity,
+      message: "Join community first",
+    },
+  ];
+
+  const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons(
+    disableCreateProposalBtnCondition,
+  );
+
   useEffect(() => {
     if (isMissingFundingToken && strategy && !error) {
       const timer = window.setTimeout(() => {
@@ -358,6 +378,8 @@ export default function ClientPage({
 
   const isEnabled = data.cvstrategies?.[0]?.isEnabled as boolean;
 
+  const createProposalUrl = `/gardens/${chain}/${garden}/${communityAddress}/${poolId}/create-proposal`;
+
   const memberPoolWeight =
     memberPower != null && +strategy.totalEffectiveActivePoints > 0 ?
       calculatePercentageBigInt(
@@ -416,6 +438,35 @@ export default function ClientPage({
             )}
           </>
         )}
+
+        <div className="section-layout flex flex-col items-start xl:items-center gap-4">
+          <div className="flex flex-col gap-4">
+            <h3>Have and idea ?</h3>
+            <span className="text-sm">
+              Submit a proposal{" "}
+              {PoolTypes[proposalType] !== "signaling" ?
+                "to request funding from the pool."
+              : "to share your vision and build community support."}
+            </span>
+          </div>
+          <div className="w-full flex items-center justify-center">
+            <Link href={createProposalUrl}>
+              <Button
+                icon={<PlusIcon height={24} width={24} />}
+                disabled={!isConnected || missmatchUrl || !isMemberCommunity}
+                tooltip={
+                  !isConnected ? "Connect your wallet"
+                  : !isMemberCommunity ?
+                    "Join the community first"
+                  : "Create a proposal"
+                }
+              >
+                Create a proposal
+              </Button>
+            </Link>
+          </div>
+        </div>
+
         {isEnabled && (
           <PoolGovernance
             memberPoolWeight={memberPoolWeight}
@@ -440,7 +491,7 @@ export default function ClientPage({
           strategy={{ ...strategy, title: metadata?.title }}
           alloInfo={alloInfo}
           communityAddress={communityAddress}
-          createProposalUrl={`/gardens/${chain}/${garden}/${communityAddress}/${poolId}/create-proposal`}
+          createProposalUrl={createProposalUrl}
           proposalType={proposalType}
           minThGtTotalEffPoints={minThGtTotalEffPoints}
         />
