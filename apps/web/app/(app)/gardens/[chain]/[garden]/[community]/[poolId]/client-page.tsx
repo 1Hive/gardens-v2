@@ -395,26 +395,44 @@ export default function ClientPage({
         minThGtTotalEffPoints={minThGtTotalEffPoints}
       />
 
-      {isEnabled && (
-        <>
-          {poolToken && PoolTypes[proposalType] !== "signaling" && (
-            <PoolMetrics
-              communityAddress={communityAddress}
-              strategy={strategy}
-              poolId={poolId}
-              poolToken={poolToken}
-              chainId={Number(chain)}
-              superToken={
-                superTokenInfo && {
-                  ...superTokenInfo,
-                  sameAsUnderlying: superTokenCandidate?.sameAsUnderlying,
-                  address: effectiveSuperToken as Address,
+      <div className="col-span-12 xl:col-span-3 flex flex-col gap-10">
+        {isEnabled && (
+          <>
+            {poolToken && PoolTypes[proposalType] !== "signaling" && (
+              <PoolMetrics
+                communityAddress={communityAddress}
+                strategy={strategy}
+                poolId={poolId}
+                poolToken={poolToken}
+                chainId={Number(chain)}
+                superToken={
+                  superTokenInfo && {
+                    ...superTokenInfo,
+                    sameAsUnderlying: superTokenCandidate?.sameAsUnderlying,
+                    address: effectiveSuperToken as Address,
+                  }
                 }
-              }
-            />
-          )}
-        </>
-      )}
+              />
+            )}
+          </>
+        )}
+        {isEnabled && (
+          <PoolGovernance
+            memberPoolWeight={memberPoolWeight}
+            tokenDecimals={tokenDecimals}
+            strategy={strategy}
+            communityAddress={communityAddress}
+            memberTokensInCommunity={memberTokensInCommunity}
+            isMemberCommunity={isMemberCommunity}
+            memberActivatedStrategy={memberActivatedStrategy}
+            membersStrategyData={
+              membersStrategies ?
+                { memberStrategies: membersStrategies }
+              : undefined
+            }
+          />
+        )}
+      </div>
 
       {isEnabled && (
         <Proposals
@@ -426,27 +444,6 @@ export default function ClientPage({
           proposalType={proposalType}
           minThGtTotalEffPoints={minThGtTotalEffPoints}
         />
-      )}
-
-      {isEnabled && (
-        <div className="col-span-12 xl:col-span-3">
-          <div className="backdrop-blur-sm rounded-lg flex flex-col gap-2 sticky top-32">
-            <PoolGovernance
-              memberPoolWeight={memberPoolWeight}
-              tokenDecimals={tokenDecimals}
-              strategy={strategy}
-              communityAddress={communityAddress}
-              memberTokensInCommunity={memberTokensInCommunity}
-              isMemberCommunity={isMemberCommunity}
-              memberActivatedStrategy={memberActivatedStrategy}
-              membersStrategyData={
-                membersStrategies ?
-                  { memberStrategies: membersStrategies }
-                : undefined
-              }
-            />
-          </div>
-        </div>
       )}
     </>
   );
