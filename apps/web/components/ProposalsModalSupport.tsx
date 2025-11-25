@@ -231,7 +231,7 @@ export const ProposalsModalSupport = forwardRef<
           <div className="flex flex-col sm:flex-row w-full">
             {/* icon title and id */}
             <header className="flex-1 justify-between items-start gap-3">
-              <div className="flex items-center gap-4">
+              <div className="flex items-center justify-between gap-2">
                 <Skeleton isLoading={!metadata}>
                   <h3 className="flex items-start max-w-[165px] sm:max-w-md">
                     <TooltipIfOverflow>{metadata?.title}</TooltipIfOverflow>
@@ -240,17 +240,6 @@ export const ProposalsModalSupport = forwardRef<
                 {isPoolEnabled && (
                   <div className="flex items-center gap-4 ">
                     <Badge status={proposalStatus} icon={<HandRaisedIcon />} />
-                    {isPoolEnabled &&
-                      !isAllocationView &&
-                      stakedFilter != null &&
-                      stakedFilter?.value > 0 &&
-                      Number(poolWeightAllocatedInProposal) > 0 && (
-                        <Badge className="self-center justify-self-start">
-                          <p className="text-xs font-semibold">
-                            Your support: {poolWeightAllocatedInProposal}%
-                          </p>
-                        </Badge>
-                      )}
                   </div>
                 )}
               </div>

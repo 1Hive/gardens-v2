@@ -439,7 +439,11 @@ export default function ClientPage({
               memberTokensInCommunity={memberTokensInCommunity}
               isMemberCommunity={isMemberCommunity}
               memberActivatedStrategy={memberActivatedStrategy}
-              membersStrategyData={membersStrategies}
+              membersStrategyData={
+                membersStrategies ?
+                  { memberStrategies: membersStrategies }
+                : undefined
+              }
             />
           </div>
         </div>
