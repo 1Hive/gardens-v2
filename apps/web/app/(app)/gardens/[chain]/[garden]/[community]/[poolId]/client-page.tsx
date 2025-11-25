@@ -417,7 +417,7 @@ export default function ClientPage({
         minThGtTotalEffPoints={minThGtTotalEffPoints}
       />
 
-      <div className="col-span-12 xl:col-span-3 flex flex-col gap-10">
+      <div className="col-span-12 xl:col-span-3 flex flex-col gap-10 xl:h-10">
         {isEnabled && (
           <>
             {poolToken && PoolTypes[proposalType] !== "signaling" && (
@@ -439,7 +439,7 @@ export default function ClientPage({
           </>
         )}
 
-        <div className="section-layout flex flex-col items-start xl:items-center gap-4">
+        <div className="section-layout flex flex-col items-start xl:items-center gap-4 -z-50">
           <div className="flex flex-col gap-4">
             <h3>Have and idea ?</h3>
             <span className="text-sm">
