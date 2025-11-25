@@ -62,17 +62,7 @@ export type ProposalInputItem = {
   value: bigint;
 };
 
-export type MemberStrategyData = {
-  activatedPoints: string;
-  id: string;
-  member?: {
-    memberCommunity?: {
-      isRegistered: boolean;
-      memberAddress: string;
-    };
-  };
-  totalStakedPoints: string;
-};
+export type MemberStrategyData = getMembersStrategyQuery["memberStrategies"][0];
 
 // export type Strategy = getStrategyByPoolQuery["cvstrategies"][number];
 // export type Proposal = CVStrategy["proposals"][number];
@@ -270,10 +260,13 @@ export function Proposals({
         )
         .map((x) => ({ ...x, amount: BigInt(x.amount) })) ?? [];
 
-    const totalStaked = stakesFiltered.reduce(
-      (acc, curr) => acc + curr.amount,
-      0n,
-    );
+    const totalActiveStaked = stakesFiltered.reduce((acc, curr) => {
+      const proposalStatus = ProposalStatus[curr.proposal.proposalStatus];
+      const proposalEnded =
+        proposalStatus !== "active" && proposalStatus !== "disputed";
+
+      return proposalEnded ? acc : acc + curr.amount;
+    }, 0n);
 
     const memberStakes: { [key: string]: ProposalInputItem } = {};
     stakesFiltered.forEach((item) => {
@@ -296,10 +289,13 @@ export function Proposals({
         supportSnapshot.length ? supportSnapshot : (
           "No active support positions"
         ),
+        supportSnapshot.length ? supportSnapshot : (
+          "No active support positions"
+        ),
       );
     }
 
-    setInputAllocatedTokens(totalStaked);
+    setInputAllocatedTokens(totalActiveStaked);
     setStakedFilters(memberStakes);
   }, [memberData?.member?.stakes, strategy.id]);
 
@@ -400,7 +396,13 @@ export function Proposals({
         proposalNumber,
       };
     });
+    const initialActiveAllocation = Object.values(newInputs).reduce(
+      (acc, input) => acc + input.value,
+      0n,
+    );
+
     setInputs(newInputs);
+    setInputAllocatedTokens(initialActiveAllocation);
     if (process.env.NODE_ENV !== "production") {
       const snapshot = Object.values(newInputs).map((input) => ({
         proposalId: input.proposalId,
@@ -629,7 +631,9 @@ export function Proposals({
 
     let rows = activeOrDisputedProposals.map((proposal) => {
       const proposalNumber = proposal.proposalNumber;
-      const proposalTitle = `"${proposal.metadata?.title?.replace(/"/g, '""') ?? "Untitled"}"`; // Escape quotes in title
+      const proposalTitle = `"${
+        proposal.metadata?.title?.replace(/"/g, '""') ?? "Untitled"
+      }"`; // Escape quotes in title
       const beneficiary = proposal.beneficiary;
       const support = formatUnits(proposal.stakedAmount, tokenDecimals);
       const supportPercent =
@@ -698,7 +702,11 @@ export function Proposals({
       <section className="col-span-12 xl:col-span-9 flex flex-col gap-10">
         <header
           ref={proposalSectionRef}
-          className={`flex ${proposals.length === 0 ? "flex-col items-start justify-start" : "items-center justify-between"} gap-10 flex-wrap`}
+          className={`flex ${
+            proposals.length === 0 ?
+              "flex-col items-start justify-start"
+            : "items-center justify-between"
+          } gap-10 flex-wrap`}
         >
           <h3 className="text-left w-52">Proposals</h3>
 
