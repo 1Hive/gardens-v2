@@ -9,6 +9,8 @@ import { queryByChain } from "@/providers/urql";
 import { ProposalStatus } from "@/types";
 
 export const dynamic = "force-dynamic"; // ensure latest proposal status for OG
+export const revalidate = 0; // do not cache this route
+export const fetchCache = "force-no-store"; // always fetch fresh metadata data
 export const FALLBACK_TITLE = "Gardens proposal";
 export const ACTIVE_PROPOSAL_DESCRIPTION =
   "This proposal is active and can receive support from members";

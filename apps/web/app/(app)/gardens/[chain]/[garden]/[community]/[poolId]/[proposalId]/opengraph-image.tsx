@@ -23,6 +23,8 @@ import { PoolTypes, ProposalStatus } from "@/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic"; // keep OG image fresh with live status
+export const revalidate = 0; // no ISR caching
+export const fetchCache = "force-no-store"; // always fetch live subgraph data
 
 export const alt = "Gardens Proposal";
 export const size = {
