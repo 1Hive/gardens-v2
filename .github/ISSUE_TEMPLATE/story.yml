@@ -11,14 +11,6 @@ body:
 
         **Figma:** [Gardens V2 UI](https://www.figma.com/design/v9ECAmLYs2pam1wguh3HUS/Gardens-V2-UI?node-id=1-25&p=f&t=QTrkzN8ykb9AdIi6-0)  
         **Miro:** [Design Collaboration Board](https://miro.com/app/board/uXjVJF2w8YI=/)
-  - type: input
-    id: summary
-    attributes:
-      label: Summary
-      description: Short title or theme for the story.
-      placeholder: Snapshot of the user need
-    validations:
-      required: true
   - type: textarea
     id: problem
     attributes:
