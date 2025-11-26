@@ -15,8 +15,10 @@ type PageParams = {
   };
 };
 
+const OG_IMAGE_VERSION = "v=3";
+
 function buildOgImagePath(params: PageParams["params"]) {
-  return `/gardens/${params.chain}/${params.garden}/${params.community}/${params.poolId}/opengraph-image-12jbcu`;
+  return `/gardens/${params.chain}/${params.garden}/${params.community}/${params.poolId}/opengraph-image-12jbcu?${OG_IMAGE_VERSION}`;
 }
 
 const titlePrefix = "Gardens - ";

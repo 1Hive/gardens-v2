@@ -19,7 +19,7 @@ export const DISPUTED_PROPOSAL_DESCRIPTION =
 export const ENDED_PROPOSAL_DESCRIPTION =
   "This proposal has ended and can no longer receive support.";
 export const OG_IMAGE_TOKEN = "opengraph-image-1eoc0x";
-export const OG_IMAGE_VERSION = "v=2";
+export const OG_IMAGE_VERSION = "v=3";
 
 type PageProps = {
   params: ProposalPageParams;
