@@ -195,6 +195,19 @@ async function loadProposal(
   }
 }
 
+function normalizePoolType(
+  poolType?: string | null,
+): ProposalImageData["poolType"] {
+  const normalized = poolType?.toLowerCase();
+  return (
+    normalized === "funding" ||
+    normalized === "signaling" ||
+    normalized === "streaming"
+  ) ?
+      normalized
+    : undefined;
+}
+
 async function renderImage({
   title,
   status,
@@ -460,18 +473,51 @@ export default async function Image({
   searchParams,
 }: {
   params: ProposalPageParams;
-  searchParams?: { status?: string };
+  searchParams?: {
+    status?: string;
+    title?: string;
+    poolType?: string;
+    poolTitle?: string;
+    communityName?: string;
+  };
 }) {
-  const { chainId, data } = await loadProposal(params);
-  const status = normalizeStatus(searchParams?.status) ?? data?.status;
+  const searchStatus = normalizeStatus(searchParams?.status);
+  const searchTitle = searchParams?.title?.trim();
+  const searchPoolType = normalizePoolType(searchParams?.poolType);
+  const chainId = (() => {
+    const numericChainId = Number(params.chain);
+    const chainConfig =
+      getConfigByChain(params.chain) ??
+      (Number.isFinite(numericChainId) ?
+        getConfigByChain(numericChainId)
+      : undefined);
+    return chainConfig?.id ?? (Number.isFinite(numericChainId) ? numericChainId : 0);
+  })();
+
+  if (searchTitle || searchStatus || searchPoolType) {
+    return renderImage({
+      title: searchTitle && searchTitle.length > 0 ? searchTitle : FALLBACK_TITLE,
+      status: searchStatus,
+      poolType: searchPoolType,
+      poolTitle: searchParams?.poolTitle?.trim() ?? null,
+      communityName: searchParams?.communityName?.trim() ?? null,
+      chainId,
+    });
+  }
+
+  const { data } = await loadProposal(params);
+  const status = searchStatus ?? data?.status;
 
   try {
     return await renderImage({
-      title: data?.title ?? FALLBACK_TITLE,
+      title: searchTitle && searchTitle.length > 0 ?
+        searchTitle
+      : data?.title ?? FALLBACK_TITLE,
       status,
-      poolType: data?.poolType,
-      poolTitle: data?.poolTitle ?? null,
-      communityName: data?.communityName ?? null,
+      poolType: searchPoolType ?? data?.poolType,
+      poolTitle: searchParams?.poolTitle?.trim() ?? data?.poolTitle ?? null,
+      communityName:
+        searchParams?.communityName?.trim() ?? data?.communityName ?? null,
       chainId,
     });
   } catch (error) {

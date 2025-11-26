@@ -28,10 +28,14 @@ type PageProps = {
 export function buildOgImagePath(
   params: ProposalPageParams,
   status?: string,
+  title?: string,
 ): string {
   const paramsList = [];
   if (status) {
-    paramsList.push(`status=${status.toLowerCase()}`);
+    paramsList.push(`status=${encodeURIComponent(status.toLowerCase())}`);
+  }
+  if (title) {
+    paramsList.push(`title=${encodeURIComponent(title)}`);
   }
   paramsList.push(OG_IMAGE_VERSION);
   const query = paramsList.length ? `?${paramsList.join("&")}` : "";
@@ -128,6 +132,8 @@ export async function generateMetadata({
     const title =
       titlePrefix +
       (rawTitle && rawTitle.length > 0 ? rawTitle : FALLBACK_TITLE);
+    const imageTitle =
+      rawTitle && rawTitle.length > 0 ? rawTitle : FALLBACK_TITLE;
 
     return {
       title,
@@ -137,7 +143,7 @@ export async function generateMetadata({
         description,
         images: [
           {
-            url: buildOgImagePath(params, status),
+            url: buildOgImagePath(params, status, imageTitle),
             alt: titleCaseStatus(status) ?? "Proposal",
           },
         ],
@@ -146,7 +152,7 @@ export async function generateMetadata({
         card: "summary_large_image",
         title,
         description,
-        images: [buildOgImagePath(params, status)],
+        images: [buildOgImagePath(params, status, imageTitle)],
       },
     };
   } catch (error) {
