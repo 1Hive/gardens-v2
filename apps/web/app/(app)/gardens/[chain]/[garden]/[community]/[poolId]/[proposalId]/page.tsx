@@ -17,6 +17,7 @@ export const DISPUTED_PROPOSAL_DESCRIPTION =
 export const ENDED_PROPOSAL_DESCRIPTION =
   "This proposal has ended and can no longer receive support.";
 export const OG_IMAGE_TOKEN = "opengraph-image-1eoc0x";
+export const OG_IMAGE_VERSION = "v=2";
 
 type PageProps = {
   params: ProposalPageParams;
@@ -26,8 +27,13 @@ export function buildOgImagePath(
   params: ProposalPageParams,
   status?: string,
 ): string {
-  const statusQuery = status ? `?status=${status.toLowerCase()}` : "";
-  return `/gardens/${params.chain}/${params.garden}/${params.community}/${params.poolId}/${params.proposalId}/${OG_IMAGE_TOKEN}${statusQuery}`;
+  const paramsList = [];
+  if (status) {
+    paramsList.push(`status=${status.toLowerCase()}`);
+  }
+  paramsList.push(OG_IMAGE_VERSION);
+  const query = paramsList.length ? `?${paramsList.join("&")}` : "";
+  return `/gardens/${params.chain}/${params.garden}/${params.community}/${params.poolId}/${params.proposalId}/${OG_IMAGE_TOKEN}${query}`;
 }
 
 export function getDescriptionFromStatus(
