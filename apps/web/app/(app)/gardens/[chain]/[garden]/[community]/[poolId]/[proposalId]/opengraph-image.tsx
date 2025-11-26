@@ -22,6 +22,7 @@ import { queryByChain } from "@/providers/urql";
 import { PoolTypes, ProposalStatus } from "@/types";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic"; // keep OG image fresh with live status
 
 export const alt = "Gardens Proposal";
 export const size = {

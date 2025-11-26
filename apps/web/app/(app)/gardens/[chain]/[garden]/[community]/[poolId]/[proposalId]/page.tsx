@@ -8,6 +8,7 @@ import { getConfigByChain } from "@/configs/chains";
 import { queryByChain } from "@/providers/urql";
 import { ProposalStatus } from "@/types";
 
+export const dynamic = "force-dynamic"; // ensure latest proposal status for OG
 export const FALLBACK_TITLE = "Gardens proposal";
 export const ACTIVE_PROPOSAL_DESCRIPTION =
   "This proposal is active and can receive support from members";
