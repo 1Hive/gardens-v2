@@ -5,12 +5,14 @@ import React, {
   Fragment,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
 import {
   AdjustmentsHorizontalIcon,
   ArrowDownTrayIcon,
+  Cog6ToothIcon,
   PlusIcon,
   UsersIcon,
 } from "@heroicons/react/24/outline";
@@ -578,12 +580,17 @@ export function Proposals({
     },
   ];
 
-  const endedProposals = proposals.filter(
-    (x) =>
-      ProposalStatus[x.proposalStatus] === "cancelled" ||
-      ProposalStatus[x.proposalStatus] === "rejected" ||
-      ProposalStatus[x.proposalStatus] === "executed",
-  );
+  const STATUS_FILTERS = {
+    inactive: 0,
+    active: 1,
+    paused: 2,
+    cancelled: 3,
+    executed: 4,
+    disputed: 5,
+    rejected: 6,
+  };
+
+  // STATUS MAP — número → string para UI
 
   const handleDownloadCVResults = () => {
     let headers = [
@@ -684,6 +691,10 @@ export function Proposals({
       ProposalStatus[x.proposalStatus] === "disputed",
   );
 
+  const { filter, setFilter, filteredAndSortedProposals } = useProposalFilter(
+    strategy.proposals,
+  );
+
   // Render
   return (
     <>
@@ -770,10 +781,12 @@ export function Proposals({
               ))}
         </header>
 
-        {activeOrDisputedProposals.map((proposalData) => (
-          <Fragment key={proposalData.id}>
+        <button onClick={() => setFilter("active")}>Active</button>
+        <button onClick={() => setFilter("disputed")}>Disputed</button>
+        <button onClick={() => setFilter(null)}>All</button>
+        {filteredAndSortedProposals.map((proposalData) => (
+          <Fragment key={proposalData.proposalNumber}>
             <ProposalCard
-              ref={makeRef(proposalData.id)}
               proposalData={proposalData}
               strategyConfig={strategy.config}
               inputData={inputs[proposalData.id]}
@@ -863,47 +876,38 @@ export function Proposals({
                     </>
                   )}
               </div>
-              {/* {!!endedProposals.length && (
-                <div className="collapse collapse-arrow">
-                  <input type="checkbox" />
-                  <div className="collapse-title text-lg font-medium">
-                    Click to show/hide ended proposals
-                  </div>
-                  <div className="collapse-content flex flex-col gap-6 px-0">
-                    {endedProposals.map((proposalData) => (
-                      <Fragment key={proposalData.proposalNumber}>
-                        <ProposalCard
-                          proposalData={proposalData}
-                          strategyConfig={strategy.config}
-                          inputData={inputs[proposalData.id]}
-                          stakedFilter={stakedFilters[proposalData.id]}
-                          isAllocationView={allocationView}
-                          memberActivatedPoints={memberActivatedPoints}
-                          memberPoolWeight={memberPoolWeight}
-                          executeDisabled={
-                            proposalData.proposalStatus == 4 ||
-                            !isConnected ||
-                            missmatchUrl
-                          }
-                          poolToken={poolToken}
-                          tokenDecimals={tokenDecimals}
-                          alloInfo={alloInfo}
-                          inputHandler={inputHandler}
-                          communityToken={strategy.registryCommunity.garden}
-                          isPoolEnabled={strategy.isEnabled}
-                          minThGtTotalEffPoints={minThGtTotalEffPoints}
-                        />
-                      </Fragment>
-                    ))}
-                  </div>
-                </div>
-              )} */}
             </Modal>
           </>
         : <LoadingSpinner />}
       </section>
     </>
   );
+}
+
+export function useProposalFilter<T extends { proposalStatus: number }>(
+  proposals: T[],
+) {
+  const [filter, setFilter] = useState<"active" | "disputed" | null>(null);
+
+  const filteredAndSortedProposals = useMemo(() => {
+    if (!filter) return proposals;
+
+    if (filter === "active") {
+      return proposals.filter((p) => Number(p.proposalStatus) === 1);
+    }
+
+    if (filter === "disputed") {
+      return proposals.filter((p) => Number(p.proposalStatus) === 5);
+    }
+
+    return proposals;
+  }, [filter, proposals]);
+
+  return {
+    filter,
+    setFilter,
+    filteredAndSortedProposals,
+  };
 }
 
 function UserAllocationStats({ stats }: { stats: Stats[] }) {
