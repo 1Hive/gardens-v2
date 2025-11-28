@@ -182,7 +182,7 @@ const PoolGovernanceDetails: React.FC<{
       render: (member) => (
         <EthAddress
           address={
-            Array.isArray(member?.member.memberCommunity) ?
+            Array.isArray(member.member.memberCommunity) ?
               (member.member.memberCommunity[0]?.memberAddress as Address)
             : undefined
           }
