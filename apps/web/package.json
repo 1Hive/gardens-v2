@@ -36,7 +36,7 @@
     "@uiw/react-markdown-editor": "^6.1.2",
     "@urql/next": "^1.1.0",
     "@wagmi/cli": "1.5.2",
-    "@wagmi/core": "~1",
+    "@wagmi/core": "~2.0.1",
     "abitype": "^1.0.5",
     "ably": "^2.1.0",
     "addreth": "1.2.0",
@@ -45,7 +45,7 @@
     "daisyui": "^4.4.20",
     "date-fns": "^3.6.0",
     "dnum": "^2.11.0",
-    "echarts": "^5.4.2",
+    "echarts": "^5.5.1",
     "echarts-for-react": "^3.0.2",
     "graphql": "^16.8.1",
     "lodash-es": "^4.17.21",
@@ -63,7 +63,7 @@
     "sharp": "^0.33.5",
     "urql": "^4.0.6",
     "usehooks-ts": "^3.1.0",
-    "viem": "~1",
+    "viem": "~2.15.1",
     "wagmi": "~1"
   },
   "devDependencies": {
