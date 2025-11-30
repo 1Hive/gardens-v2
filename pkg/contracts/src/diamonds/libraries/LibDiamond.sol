@@ -18,7 +18,7 @@ error NoSelectorsProvidedForFacetForCut(address _facetAddress);
 error CannotAddSelectorsToZeroAddress(bytes4[] _selectors);
 error NoBytecodeAtAddress(address _contractAddress, string _message);
 error IncorrectFacetCutAction(uint8 _action);
-error CannotAddFunctionToDiamondThatAlreadyExists(bytes4 _selector, string _selectorSignature);
+error CannotAddFunctionToDiamondThatAlreadyExists(bytes4 _selector);
 error CannotReplaceFunctionsFromFacetWithZeroAddress(bytes4[] _selectors);
 error CannotReplaceImmutableFunction(bytes4 _selector);
 error CannotReplaceFunctionWithTheSameFunctionFromTheSameFacet(bytes4 _selector);
@@ -52,14 +52,6 @@ library LibDiamond {
         assembly {
             ds.slot := position
         }
-    }
-
-    function isInitialized() internal view returns (bool) {
-        return diamondStorage().isInitialized;
-    }
-
-    function setInitialized() internal {
-        diamondStorage().isInitialized = true;
     }
 
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
@@ -151,7 +143,7 @@ library LibDiamond {
             bytes4 selector = _functionSelectors[selectorIndex];
             address oldFacetAddress = ds.facetAddressAndSelectorPosition[selector].facetAddress;
             if (oldFacetAddress != address(0)) {
-                revert CannotAddFunctionToDiamondThatAlreadyExists(selector, _selectorDisplayName(selector));
+                revert CannotAddFunctionToDiamondThatAlreadyExists(selector);
             }
             ds.facetAddressAndSelectorPosition[selector] = FacetAddressAndSelectorPosition(_facetAddress, selectorCount);
             ds.selectors.push(selector);
@@ -207,7 +199,7 @@ library LibDiamond {
                 bytes4 lastSelector = ds.selectors[selectorCount];
                 ds.selectors[oldFacetAddressAndSelectorPosition.selectorPosition] = lastSelector;
                 ds.facetAddressAndSelectorPosition[lastSelector].selectorPosition =
-                    oldFacetAddressAndSelectorPosition.selectorPosition;
+                oldFacetAddressAndSelectorPosition.selectorPosition;
             }
             // delete last selector
             ds.selectors.pop();
@@ -235,164 +227,7 @@ library LibDiamond {
         }
     }
 
-    function _selectorToHexString(bytes4 selector) internal pure returns (string memory) {
-        bytes memory alphabet = "0123456789abcdef";
-        bytes memory str = new bytes(10);
-        str[0] = "0";
-        str[1] = "x";
-        for (uint256 i = 0; i < 4; i++) {
-            str[2 + i * 2] = alphabet[uint8(selector[i] >> 4)];
-            str[3 + i * 2] = alphabet[uint8(selector[i] & 0x0f)];
-        }
-        return string(str);
-    }
-
-    function _selectorDisplayName(bytes4 selector) internal pure returns (string memory) {
-        string memory known = _knownSelectorName(selector);
-        if (bytes(known).length > 0) {
-            return known;
-        }
-        return _selectorToHexString(selector);
-    }
-
-    function _knownSelectorName(bytes4 selector) internal pure returns (string memory) {
-        if (selector == bytes4(0xd5b7cc54)) {
-            return "CVAdminFacet.setPoolParams";
-        }
-        if (selector == bytes4(0x924e6704)) {
-            return "CVAdminFacet.connectSuperfluidGDA";
-        }
-        if (selector == bytes4(0xc69271ec)) {
-            return "CVAdminFacet.disconnectSuperfluidGDA";
-        }
-        if (selector == bytes4(0xef2920fc)) {
-            return "CVAllocationFacet.allocate";
-        }
-        if (selector == bytes4(0x0a6f0ee9)) {
-            return "CVAllocationFacet.distribute";
-        }
-        if (selector == bytes4(0xb41596ec)) {
-            return "CVDisputeFacet.disputeProposal";
-        }
-        if (selector == bytes4(0x311a6c56)) {
-            return "CVDisputeFacet.rule";
-        }
-        if (selector == bytes4(0x2ed04b2b)) {
-            return "CVPowerFacet.decreasePower";
-        }
-        if (selector == bytes4(0x1ddf1e23)) {
-            return "CVPowerFacet.deactivatePoints()";
-        }
-        if (selector == bytes4(0x6453d9c4)) {
-            return "CVPowerFacet.deactivatePoints(address)";
-        }
-        if (selector == bytes4(0x2bbe0cae)) {
-            return "CVProposalFacet.registerRecipient";
-        }
-        if (selector == bytes4(0xe0a8f6f5)) {
-            return "CVProposalFacet.cancelProposal";
-        }
-        if (selector == bytes4(0x141e3b38)) {
-            return "CVProposalFacet.editProposal";
-        }
-        if (selector == bytes4(0x1b71f0e4)) {
-            return "RegistryCommunity.setStrategyTemplate";
-        }
-        if (selector == bytes4(0xb0d3713a)) {
-            return "RegistryCommunity.setCollateralVaultTemplate";
-        }
-        if (selector == bytes4(0x34196355)) {
-            return "RegistryCommunity.initialize";
-        }
-        if (selector == bytes4(0x499ac57f)) {
-            return "RegistryCommunity.createPool(address,(CVStrategyInitializeParamsV0_2),(Metadata))";
-        }
-        if (selector == bytes4(0xcd564dae)) {
-            return "RegistryCommunity.createPool(address,address,(CVStrategyInitializeParamsV0_2),(Metadata))";
-        }
-        if (selector == bytes4(0x0b03bb9a)) {
-            return "RegistryCommunity.setArchived";
-        }
-        if (selector == bytes4(0x0d4a8b49)) {
-            return "RegistryCommunity.activateMemberInStrategy";
-        }
-        if (selector == bytes4(0x22bcf999)) {
-            return "RegistryCommunity.deactivateMemberInStrategy";
-        }
-        if (selector == bytes4(0x559de05d)) {
-            return "RegistryCommunity.increasePower";
-        }
-        if (selector == bytes4(0x5ecf71c5)) {
-            return "RegistryCommunity.decreasePower";
-        }
-        if (selector == bytes4(0x7817ee4f)) {
-            return "RegistryCommunity.getMemberPowerInStrategy";
-        }
-        if (selector == bytes4(0x2c611c4a)) {
-            return "RegistryCommunity.getMemberStakedAmount";
-        }
-        if (selector == bytes4(0x82d6a1e7)) {
-            return "RegistryCommunity.addStrategyByPoolId";
-        }
-        if (selector == bytes4(0x223e5479)) {
-            return "RegistryCommunity.addStrategy";
-        }
-        if (selector == bytes4(0xfb1f6917)) {
-            return "RegistryCommunity.rejectPool";
-        }
-        if (selector == bytes4(0x73265c37)) {
-            return "RegistryCommunity.removeStrategyByPoolId";
-        }
-        if (selector == bytes4(0x175188e8)) {
-            return "RegistryCommunity.removeStrategy";
-        }
-        if (selector == bytes4(0x397e2543)) {
-            return "RegistryCommunity.setCouncilSafe";
-        }
-        if (selector == bytes4(0xb5058c50)) {
-            return "RegistryCommunity.acceptCouncilSafe";
-        }
-        if (selector == bytes4(0xa230c524)) {
-            return "RegistryCommunity.isMember";
-        }
-        if (selector == bytes4(0x9a1f46e2)) {
-            return "RegistryCommunity.stakeAndRegisterMember";
-        }
-        if (selector == bytes4(0x28c309e9)) {
-            return "RegistryCommunity.getStakeAmountWithFees";
-        }
-        if (selector == bytes4(0x0331383c)) {
-            return "RegistryCommunity.getBasisStakedAmount";
-        }
-        if (selector == bytes4(0x31f61bca)) {
-            return "RegistryCommunity.setBasisStakedAmount";
-        }
-        if (selector == bytes4(0xf2d774e7)) {
-            return "RegistryCommunity.setCommunityParams";
-        }
-        if (selector == bytes4(0x0d12bbdb)) {
-            return "RegistryCommunity.setCommunityFee";
-        }
-        if (selector == bytes4(0xebd7dc52)) {
-            return "RegistryCommunity.isCouncilMember";
-        }
-        if (selector == bytes4(0xb99b4370)) {
-            return "RegistryCommunity.unregisterMember";
-        }
-        if (selector == bytes4(0x6871eb4d)) {
-            return "RegistryCommunity.kickMember";
-        }
-        if (selector == bytes4(0x1f931c1c)) {
-            return "RegistryCommunity.diamondCut";
-        }
-        return "";
-    }
-
-    function _shrinkSelectorArray(bytes4[] memory selectors, uint256 newLength)
-        private
-        pure
-        returns (bytes4[] memory)
-    {
+    function _shrinkSelectorArray(bytes4[] memory selectors, uint256 newLength) private pure returns (bytes4[] memory) {
         bytes4[] memory trimmed = new bytes4[](newLength);
         for (uint256 i = 0; i < newLength; i++) {
             trimmed[i] = selectors[i];
