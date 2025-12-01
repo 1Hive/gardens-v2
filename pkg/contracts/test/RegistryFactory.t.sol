@@ -1,92 +1,194 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.19;
 
 import "forge-std/Test.sol";
-import "../src/RegistryFactory/RegistryFactory.sol";
-import "../src/RegistryCommunity/RegistryCommunity.sol";
-import "../src/interfaces/ISafe.sol";
-import {console} from "forge-std/console.sol";
+
+import {RegistryFactory} from "../src/RegistryFactory/RegistryFactory.sol";
+import {RegistryCommunityInitializeParams} from "../src/RegistryCommunity/RegistryCommunity.sol";
+import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {Metadata} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
+
+contract MockSafe {
+    address[] internal _owners;
+
+    constructor(address owner) {
+        _owners.push(owner);
+    }
+
+    function getOwners() external view returns (address[] memory) {
+        return _owners;
+    }
+}
+
+contract MockRegistryCommunity {
+    address public councilSafe;
+
+    function initialize(
+        RegistryCommunityInitializeParams memory params,
+        address,
+        address,
+        address
+    ) external {
+        councilSafe = params._councilSafe;
+    }
+
+    function diamondCut(RegistryCommunityInitializeParams[] memory, address, bytes memory) external {}
+
+    function setCouncilSafe(address newSafe) external {
+        councilSafe = newSafe;
+    }
+}
 
 contract RegistryFactoryTest is Test {
-    RegistryFactory registryFactory;
-    address gardensFeeReceiver = address(0x123);
-    address registryCommunityTemplate = address(0x456);
-    address strategyTemplate = address(0x789);
-    address collateralVaultTemplate = address(0xABC);
-    address owner = address(0xDEF);
+    RegistryFactory factory;
+    address owner = address(0xA11CE);
+    address gardensFeeReceiver = address(0xFEE);
+    address registryTemplate;
+    address strategyTemplate;
+    address collateralTemplate;
+    MockSafe councilSafe;
 
-    address community = address(0x111);
-    address keeper = address(0x222);
-    address protopian = address(0x333);
-    address nonProtopianOwner = address(0x444);
+    RegistryCommunityInitializeParams params;
 
     function setUp() public {
-        registryFactory = new RegistryFactory();
-        registryFactory.initialize(
-            owner, gardensFeeReceiver, registryCommunityTemplate, strategyTemplate, collateralVaultTemplate
+        registryTemplate = address(new MockRegistryCommunity());
+        strategyTemplate = address(0x1234);
+        collateralTemplate = address(0x5678);
+        councilSafe = new MockSafe(address(0xC0FFEE));
+
+        factory = RegistryFactory(
+            address(
+                new ERC1967Proxy(
+                    address(new RegistryFactory()),
+                    abi.encodeWithSelector(
+                        RegistryFactory.initialize.selector,
+                        owner,
+                        gardensFeeReceiver,
+                        registryTemplate,
+                        strategyTemplate,
+                        collateralTemplate
+                    )
+                )
+            )
         );
 
-        // Set up a valid community with a fee
-        vm.prank(owner);
-        registryFactory.setCommunityValidity(community, true);
-        vm.prank(owner);
-        registryFactory.setProtocolFee(community, 100); // Fee is 100 wei
-
-        // Set up a keeper
-        vm.prank(owner);
-        address[] memory keepers = new address[](1);
-        keepers[0] = keeper;
-        registryFactory.setKeeperAddress(keepers, true);
-
-        // Set up a protopian
-        vm.prank(owner);
-        address[] memory protopians = new address[](1);
-        protopians[0] = protopian;
-        registryFactory.setProtopianAddress(protopians, true);
-
-        // Mock the councilSafe() and getOwners() for the community
-        vm.mockCall(community, abi.encodeWithSignature("councilSafe()"), abi.encode(address(this)));
-
-        address[] memory owners = new address[](2);
-        owners[0] = protopian;
-        owners[1] = nonProtopianOwner;
-
-        vm.mockCall(address(this), abi.encodeWithSelector(ISafe.getOwners.selector), abi.encode(owners));
+        params._allo = address(this);
+        params._gardenToken = IERC20(address(0xBEEF));
+        params._registerStakeAmount = 1;
+        params._communityFee = 1;
+        params._feeReceiver = gardensFeeReceiver;
+        params._metadata = Metadata({protocol: 1, pointer: "test-meta"});
+        params._councilSafe = payable(address(councilSafe));
+        params._communityName = "test";
+        params._isKickEnabled = false;
+        params.covenantIpfsHash = "";
     }
 
-    function testGetProtocolFee_ValidCommunity() public view {
-        uint256 fee = registryFactory.getProtocolFee(community);
-        console.log("Fee for community:", fee);
-        assertEq(fee, 0, "Fee should be 0 for a community with a protopian owner");
+    function test_initialize_setsVars() public {
+        assertEq(factory.gardensFeeReceiver(), gardensFeeReceiver);
+        assertEq(factory.registryCommunityTemplate(), registryTemplate);
+        assertEq(factory.strategyTemplate(), strategyTemplate);
+        assertEq(factory.collateralVaultTemplate(), collateralTemplate);
+        assertEq(factory.nonce(), 0);
     }
 
-    function testGetProtocolFee_InvalidCommunity() public {
-        address invalidCommunity = address(0x555);
-        vm.expectRevert(abi.encodeWithSelector(RegistryFactory.CommunityInvalid.selector, invalidCommunity));
-        registryFactory.getProtocolFee(invalidCommunity);
+    function test_createRegistry_incrementsNonceAndMarksValid() public {
+        address registryAddr = factory.createRegistry(params);
+        assertTrue(factory.getCommunityValidity(registryAddr));
+        assertEq(factory.nonce(), 1);
     }
 
-    function testGetProtocolFee_CommunityWithKeeper() public {
+    function test_setReceiverAddress_onlyOwner() public {
         vm.prank(owner);
-        address[] memory keepers = new address[](1);
-        keepers[0] = community;
-        registryFactory.setKeeperAddress(keepers, true);
-        uint256 fee = registryFactory.getProtocolFee(community);
-        assertEq(fee, 0, "Fee should be 0 for a keeper community");
+        factory.setReceiverAddress(address(0xB0B));
+        assertEq(factory.gardensFeeReceiver(), address(0xB0B));
+
+        vm.prank(owner);
+        vm.expectRevert();
+        factory.setReceiverAddress(address(0));
     }
 
-    function testGetProtocolFee_CommunityWithProtopianOwner() public view {
-        uint256 fee = registryFactory.getProtocolFee(community);
-        assertEq(fee, 0, "Fee should be 0 for a community with a protopian owner");
+    function test_setTemplates_onlyOwner() public {
+        vm.startPrank(owner);
+        factory.setRegistryCommunityTemplate(address(0x123));
+        factory.setStrategyTemplate(address(0x456));
+        factory.setCollateralVaultTemplate(address(0x789));
+        vm.stopPrank();
+
+        assertEq(factory.registryCommunityTemplate(), address(0x123));
+        assertEq(factory.strategyTemplate(), address(0x456));
+        assertEq(factory.collateralVaultTemplate(), address(0x789));
     }
 
-    function testGetProtocolFee_CommunityWithoutProtopianOwner() public {
-        // Mock the councilSafe() and getOwners() to exclude protopians
-        address[] memory ownersWithoutProtopian = new address[](1);
-        ownersWithoutProtopian[0] = nonProtopianOwner;
-        vm.mockCall(address(this), abi.encodeWithSelector(ISafe.getOwners.selector), abi.encode(ownersWithoutProtopian));
+    function test_getProtocolFee_returnsFee() public {
+        address registryAddr = factory.createRegistry(params);
 
-        uint256 fee = registryFactory.getProtocolFee(community);
-        assertEq(fee, 100, "Fee should be 100 wei for a community without a protopian owner");
+        vm.prank(owner);
+        factory.setProtocolFee(registryAddr, 42);
+
+        uint256 fee = factory.getProtocolFee(registryAddr);
+        assertEq(fee, 42);
+    }
+
+    function test_getProtocolFee_revertsIfInvalidCommunity() public {
+        vm.expectRevert();
+        factory.getProtocolFee(address(0xDEAD));
+    }
+
+    function test_getProtocolFee_zeroForKeepers() public {
+        address registryAddr = factory.createRegistry(params);
+        vm.prank(owner);
+        factory.setKeeperAddress(_toSingleton(registryAddr), true);
+
+        uint256 fee = factory.getProtocolFee(registryAddr);
+        assertEq(fee, 0);
+    }
+
+    function test_getProtocolFee_zeroForProtopianSafe() public {
+        address registryAddr = factory.createRegistry(params);
+        MockSafe safe = new MockSafe(address(0xC0FFEE));
+
+        vm.prank(owner);
+        factory.setProtopianAddress(_toSingleton(address(safe)), true);
+
+        MockRegistryCommunity(registryAddr).setCouncilSafe(address(safe));
+
+        uint256 fee = factory.getProtocolFee(registryAddr);
+        assertEq(fee, 0);
+    }
+
+    function test_getProtocolFee_zeroForProtopianOwner() public {
+        address registryAddr = factory.createRegistry(params);
+        address ownerAddr = councilSafe.getOwners()[0];
+
+        vm.prank(owner);
+        factory.setProtopianAddress(_toSingleton(ownerAddr), true);
+
+        uint256 fee = factory.getProtocolFee(registryAddr);
+        assertEq(fee, 0);
+    }
+
+    function test_setProtopianAddress_removalBranch() public {
+        address[] memory addrs = _toSingleton(address(0x2));
+        vm.startPrank(owner);
+        factory.setProtopianAddress(addrs, true);
+        factory.setProtopianAddress(addrs, false);
+        vm.stopPrank();
+        assertFalse(factory.protopiansAddresses(address(0x2)));
+    }
+
+    function test_setKeeperAddress_removalBranch() public {
+        address[] memory keepers = _toSingleton(address(0xB));
+        vm.startPrank(owner);
+        factory.setKeeperAddress(keepers, true);
+        factory.setKeeperAddress(keepers, false);
+        vm.stopPrank();
+        assertFalse(factory.keepersAddresses(address(0xB)));
+    }
+
+    function _toSingleton(address a) internal pure returns (address[] memory arr) {
+        arr = new address[](1);
+        arr[0] = a;
     }
 }

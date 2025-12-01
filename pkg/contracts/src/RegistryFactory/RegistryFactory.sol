@@ -99,11 +99,12 @@ contract RegistryFactory is ProxyOwnableUpgrader {
         );
 
         RegistryCommunity registryCommunity = RegistryCommunity(payable(address(proxy)));
+        address createdRegistry = address(registryCommunity);
 
         // registryCommunity.initialize(params);
-        communityToInfo[address(registryCommunity)].valid = true;
-        emit CommunityCreated(address(registryCommunity));
-        return address(registryCommunity);
+        communityToInfo[createdRegistry].valid = true;
+        emit CommunityCreated(createdRegistry);
+        return createdRegistry;
     }
 
     function setReceiverAddress(address _newFeeReceiver) public virtual onlyOwner {
@@ -167,7 +168,8 @@ contract RegistryFactory is ProxyOwnableUpgrader {
         // Check for protopians (free if they are owners of the community)
 
         ISafe councilSafe = ISafe(RegistryCommunity(_community).councilSafe());
-        if (protopiansAddresses[address(councilSafe)]) {
+        bool isProtopianSafe = protopiansAddresses[address(councilSafe)];
+        if (isProtopianSafe) {
             return 0;
         }
 
