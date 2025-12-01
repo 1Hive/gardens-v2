@@ -21,6 +21,8 @@ import {IArbitrable} from "../src/interfaces/IArbitrable.sol";
 import {GV2ERC20} from "../script/GV2ERC20.sol";
 import {CVStrategyHelpers} from "./CVStrategyHelpers.sol";
 import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
+import {DiamondConfigurator} from "./helpers/DiamondConfigurator.sol";
+import {CommunityDiamondConfigurator} from "./helpers/CommunityDiamondConfigurator.sol";
 
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -36,6 +38,8 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
     // address local = address(0x5);
     // address pool_admin = address(3);
     address challenger = address(3);
+    DiamondConfigurator public diamondConfigurator;
+    CommunityDiamondConfigurator public communityDiamondConfigurator;
 
     uint256 public constant POOL_AMOUNT = 15000 ether;
     uint256 constant TOTAL_SUPPLY = 100000 ether;
@@ -112,6 +116,14 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
                 ).createRegistry(params)
         );
 
+        // Configure community diamond facets
+        communityDiamondConfigurator = new CommunityDiamondConfigurator();
+        vm.startPrank(factoryOwner);
+        registryCommunity.diamondCut(communityDiamondConfigurator.getFacetCuts(), address(0), "");
+        vm.stopPrank();
+
+        diamondConfigurator = new DiamondConfigurator();
+
         uint256 _poolId;
         address _strategy;
 
@@ -137,6 +149,18 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
 
         poolId = _poolId;
         cvStrategy = CVStrategy(payable(_strategy));
+
+        // configure strategy diamond facets
+        vm.startPrank(cvStrategy.owner());
+        cvStrategy.diamondCut(diamondConfigurator.getFacetCuts(), address(0), "");
+        vm.stopPrank();
+
+        // register tribunal safe for this arbitrable strategy
+        vm.prank(address(cvStrategy));
+        safeArbitrator.registerSafe(address(_councilSafe()));
+        address registeredSafe = safeArbitrator.arbitrableTribunalSafe(address(cvStrategy));
+        require(registeredSafe != address(0), "tribunal safe not registered");
+
         vm.startPrank(pool_admin());
         safeHelper(
             address(registryCommunity),
@@ -150,7 +174,7 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
         cvStrategy.activatePoints();
 
         vm.deal(address(this), POOL_AMOUNT);
-        (bool success,) = address(allo()).call{value: POOL_AMOUNT}("");
+        (bool success,) = address(cvStrategy).call{value: POOL_AMOUNT}("");
         require(success, "Transfer failed");
     }
 
@@ -180,10 +204,14 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
     function testCreateDispute() public {
         uint256 proposalId = createProposal();
         vm.deal(challenger, 10 ether);
+        vm.prank(address(cvStrategy));
+        safeArbitrator.registerSafe(address(_councilSafe()));
         vm.prank(challenger);
-
         uint256 disputeID = cvStrategy.disputeProposal{value: 0.01 ether + ARBITRATION_FEE}(proposalId, "", "");
         (, address configTribunalSafe,,,,) = cvStrategy.arbitrableConfigs(cvStrategy.currentArbitrableConfigVersion());
+
+        // fund this contract to cover the direct call below
+        vm.deal(address(this), ARBITRATION_FEE);
         safeArbitrator.createDispute{value: ARBITRATION_FEE}(3, "");
 
         (
@@ -193,7 +221,7 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
             uint256 ruling,
             SafeArbitrator.DisputeStatus status,
             address tribunalSafe
-        ) = safeArbitrator.disputes(disputeID);
+        ) = safeArbitrator.disputes(disputeID - 1);
 
         assertEq(choices, 3);
         assertEq(arbitrationFee, ARBITRATION_FEE);
@@ -206,13 +234,15 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
         uint256 proposalId = createProposal();
 
         vm.deal(challenger, 10 ether);
+        vm.prank(address(cvStrategy));
+        safeArbitrator.registerSafe(address(_councilSafe()));
         vm.prank(challenger);
         uint256 disputeID = cvStrategy.disputeProposal{value: 0.01 ether + ARBITRATION_FEE}(proposalId, "", "");
 
         vm.prank(address(_councilSafe()));
         safeArbitrator.executeRuling(disputeID, 2, address(cvStrategy));
 
-        (,,,, uint256 ruling, SafeArbitrator.DisputeStatus status,) = safeArbitrator.disputes(disputeID);
+        (,,,, uint256 ruling, SafeArbitrator.DisputeStatus status,) = safeArbitrator.disputes(disputeID - 1);
         assertEq(ruling, 2);
         assertEq(uint256(status), uint256(SafeArbitrator.DisputeStatus.Solved));
     }
@@ -280,7 +310,7 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
         vm.prank(address(_councilSafe()));
         safeArbitrator.executeRuling(disputeID, 2, address(cvStrategy));
 
-        (uint256 ruling, bool tied, bool overridden) = safeArbitrator.currentRuling(disputeID);
+        (uint256 ruling, bool tied, bool overridden) = safeArbitrator.currentRuling(disputeID - 1);
 
         assertEq(ruling, 2);
         assertFalse(tied);
