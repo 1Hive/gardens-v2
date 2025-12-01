@@ -291,9 +291,6 @@ export function Proposals({
         supportSnapshot.length ? supportSnapshot : (
           "No active support positions"
         ),
-        supportSnapshot.length ? supportSnapshot : (
-          "No active support positions"
-        ),
       );
     }
 

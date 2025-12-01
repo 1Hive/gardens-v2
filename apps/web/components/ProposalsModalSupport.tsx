@@ -124,10 +124,10 @@ export const ProposalsModalSupport = forwardRef<
       tokenData,
     });
 
-    useEffect(() => {
-      if (updatedConviction != null && currentConvictionPct != null) {
-      }
-    }, [updatedConviction, currentConvictionPct]);
+    // useEffect(() => {
+    //   if (updatedConviction != null && currentConvictionPct != null) {
+    //   }
+    // }, [updatedConviction, currentConvictionPct]);
 
     useImperativeHandle(
       ref,
@@ -149,8 +149,6 @@ export const ProposalsModalSupport = forwardRef<
       ],
     );
 
-    ProposalsModalSupport.displayName = "ProposalsModalSupport";
-
     const inputValue =
       inputData ?
         calculatePercentageBigInt(inputData.value, memberActivatedPoints)
@@ -164,7 +162,7 @@ export const ProposalsModalSupport = forwardRef<
     const isSignalingType =
       PoolTypes[strategyConfig.proposalType] === "signaling";
 
-    const alreadyExecuted = proposalStatus[proposalStatus] === "executed";
+    const alreadyExecuted = ProposalStatus[proposalStatus] === "executed";
 
     const supportNeededToPass = (
       (thresholdPct ?? 0) - (totalSupportPct ?? 0)
@@ -383,3 +381,5 @@ export const ProposalsModalSupport = forwardRef<
     );
   },
 );
+
+ProposalsModalSupport.displayName = "ProposalsModalSupport";

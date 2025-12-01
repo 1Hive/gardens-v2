@@ -842,10 +842,6 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                     type="submit"
                     btnStyle="ghost"
                     color="primary"
-                    disabled={missmatchUrl || !isConnected}
-                    tooltip={
-                      missmatchUrl || !isConnected ? tooltipMessage : undefined
-                    }
                     icon={<BanknotesIcon className="w-5 h-5" />}
                     className="w-full mt-1 xl:!justify-start"
                     onClick={() => setIsTransferModalOpened(true)}
@@ -858,11 +854,9 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                     type="submit"
                     btnStyle="ghost"
                     color="secondary"
-                    disabled={missmatchUrl || !isConnected || !superToken}
+                    disabled={!superToken}
                     tooltip={
-                      missmatchUrl || !isConnected ? tooltipMessage : (
-                        "Not enabled yet, the community's Council Safe can connect to enable streaming for this Pool"
-                      )
+                      "Not enabled yet, the community's Council Safe can connect to enable streaming for this Pool"
                     }
                     icon={<ArrowPathRoundedSquareIcon className="w-5 h-5" />}
                     className="w-full mt-1 xl:!justify-start"

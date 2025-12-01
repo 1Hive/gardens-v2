@@ -83,6 +83,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
       strategyConfig,
       isPoolEnabled,
       inputData,
+      stakedFilter,
       poolToken,
       isAllocationView,
       memberActivatedPoints,
@@ -346,7 +347,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
               </div>
             </div>
           )}
-          {isPoolEnabled && (
+          {isPoolEnabled && stakedFilter?.value > 0 && (
             <Badge color="info" className="self-center justify-self-start">
               <p className="text-xs font-semibold">
                 Your support: {poolWeightAllocatedInProposal}%
