@@ -10,6 +10,12 @@ import {CollateralVault} from "../src/CollateralVault.sol";
 import {ProxyOwner} from "../src/ProxyOwner.sol";
 import {ProxyOwnableUpgrader} from "../src/ProxyOwnableUpgrader.sol";
 
+contract ProxyOwnerV2 is ProxyOwner {
+    function version() external pure returns (string memory) {
+        return "v2";
+    }
+}
+
 contract ProxyOwnerTest is Test {
     address deployerWallet = makeAddr("deployerWallet");
     address anotherWallet = makeAddr("anotherWallet");
@@ -129,5 +135,24 @@ contract ProxyOwnerTest is Test {
             abi.encodeWithSelector(ProxyOwnableUpgrader.CallerNotOwner.selector, deployerWallet, anotherWallet)
         );
         factory.upgradeTo(address(newImpl));
+    }
+
+    function test_proxyOwner_upgrade_authorizedOnlyOwner() public {
+        ProxyOwner proxyOwner = _deployProxyOwner();
+        ProxyOwnerV2 newImpl = new ProxyOwnerV2();
+
+        vm.prank(deployerWallet);
+        proxyOwner.upgradeTo(address(newImpl));
+
+        assertEq(ProxyOwnerV2(address(proxyOwner)).version(), "v2");
+    }
+
+    function test_proxyOwner_upgrade_revertsForNonOwner() public {
+        ProxyOwner proxyOwner = _deployProxyOwner();
+        ProxyOwnerV2 newImpl = new ProxyOwnerV2();
+
+        vm.prank(anotherWallet);
+        vm.expectRevert("Ownable: caller is not the owner");
+        proxyOwner.upgradeTo(address(newImpl));
     }
 }
