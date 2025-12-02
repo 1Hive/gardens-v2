@@ -8,13 +8,17 @@ import React, {
   useMemo,
   useRef,
   useState,
+  useTransition,
 } from "react";
 import {
   AdjustmentsHorizontalIcon,
   ArrowDownTrayIcon,
-  Cog6ToothIcon,
   PlusIcon,
   UsersIcon,
+  ArrowDownIcon,
+  ArrowUpIcon,
+  Battery50Icon,
+  CurrencyDollarIcon,
 } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { Id, toast } from "react-toastify";
@@ -38,7 +42,6 @@ import { ProposalCardProps, ProposalHandle } from "./ProposalCard";
 import { ProposalsModalSupport } from "./ProposalsModalSupport";
 import TooltipIfOverflow from "./TooltipIfOverflow";
 import {
-  Badge,
   Button,
   CheckSybil,
   InfoWrapper,
@@ -578,18 +581,7 @@ export function Proposals({
     },
   ];
 
-  const STATUS_FILTERS = {
-    inactive: 0,
-    active: 1,
-    paused: 2,
-    cancelled: 3,
-    executed: 4,
-    disputed: 5,
-    rejected: 6,
-  };
-
   // STATUS MAP — número → string para UI
-
   const handleDownloadCVResults = () => {
     let headers = [
       "Proposal ID",
@@ -695,9 +687,9 @@ export function Proposals({
     sortBy: sortBy,
     setSortBy: setSortBy,
     filtered: filteredAndSorted,
+    loading,
   } = useProposalFilter(strategy.proposals);
 
-  // Render
   return (
     <>
       {/* Proposals section */}
@@ -788,30 +780,37 @@ export function Proposals({
           setFilter={setFilter}
           sortBy={sortBy}
           setSortBy={setSortBy}
+          poolType={strategy?.config?.proposalType}
         />
-        {filteredAndSorted.map((proposalData) => (
-          <Fragment key={proposalData.proposalNumber}>
-            <ProposalCard
-              proposalData={proposalData}
-              strategyConfig={strategy.config}
-              inputData={inputs[proposalData.id]}
-              stakedFilter={stakedFilters[proposalData.id]}
-              isAllocationView={allocationView}
-              memberActivatedPoints={memberActivatedPoints}
-              memberPoolWeight={memberPoolWeight}
-              executeDisabled={
-                proposalData.proposalStatus == 4 || !isConnected || missmatchUrl
-              }
-              poolToken={poolToken}
-              tokenDecimals={tokenDecimals}
-              alloInfo={alloInfo}
-              inputHandler={inputHandler}
-              communityToken={strategy.registryCommunity.garden}
-              isPoolEnabled={strategy.isEnabled}
-              minThGtTotalEffPoints={minThGtTotalEffPoints}
-            />
-          </Fragment>
-        ))}
+
+        {loading ?
+          <ProposalListLoading />
+        : filteredAndSorted.map((proposalData) => (
+            <Fragment key={proposalData.proposalNumber}>
+              <ProposalCard
+                proposalData={proposalData}
+                strategyConfig={strategy.config}
+                inputData={inputs[proposalData.id]}
+                stakedFilter={stakedFilters[proposalData.id]}
+                isAllocationView={allocationView}
+                memberActivatedPoints={memberActivatedPoints}
+                memberPoolWeight={memberPoolWeight}
+                executeDisabled={
+                  proposalData.proposalStatus == 4 ||
+                  !isConnected ||
+                  missmatchUrl
+                }
+                poolToken={poolToken}
+                tokenDecimals={tokenDecimals}
+                alloInfo={alloInfo}
+                inputHandler={inputHandler}
+                communityToken={strategy.registryCommunity.garden}
+                isPoolEnabled={strategy.isEnabled}
+                minThGtTotalEffPoints={minThGtTotalEffPoints}
+              />
+            </Fragment>
+          ))
+        }
 
         {/* Modal Manage Support section */}
         {inputs != null ?
@@ -911,6 +910,8 @@ export function useProposalFilter<
 
   const [filter, setFilter] = useState<FilterType>("all");
 
+  const [isPending, startTransition] = useTransition();
+
   const FILTER_STATUS: Record<Exclude<FilterType, null>, number> = {
     all: 0,
     active: 1,
@@ -971,12 +972,26 @@ export function useProposalFilter<
     }
   }, [filteredProposals, sortBy]);
 
+  // Wrapped setters with loading state
+  const setFilterWithLoading = (newFilter: FilterType) => {
+    startTransition(() => {
+      setFilter(newFilter);
+    });
+  };
+
+  const setSortByWithLoading = (newSort: SortType) => {
+    startTransition(() => {
+      setSortBy(newSort);
+    });
+  };
+
   return {
     filter,
-    setFilter,
+    setFilter: setFilterWithLoading,
     sortBy: sortBy,
-    setSortBy: setSortBy,
+    setSortBy: setSortByWithLoading,
     filtered: filteredAndSorted,
+    loading: isPending,
   };
 }
 
@@ -985,30 +1000,45 @@ function ProposalFiltersUI({
   setFilter,
   sortBy,
   setSortBy,
+  poolType,
 }: {
   filter: string | null;
   setFilter: (v: any) => void;
   sortBy: string | null;
   setSortBy: (v: any) => void;
+  poolType: number;
 }) {
-  const FILTERS = ["all", "active", "disputed", "executed", "cancelled", ,];
+  const FILTERS = ["all", "active", "disputed", "executed", "cancelled"];
 
-  const SORT_OPTIONS = [
-    { key: "newest", label: "Newest first" },
-    { key: "oldest", label: "Oldest first" },
-    { key: "mostSupported", label: "Most Supported" },
-    { key: "mostConviction", label: "Most Conviction" },
-    { key: "mostRequested", label: "Requested Amount" },
-  ];
+  const SORT_OPTIONS = useMemo(() => {
+    const options = [
+      { key: "newest", label: "Newest first", icon: ArrowUpIcon },
+      { key: "oldest", label: "Oldest first", icon: ArrowDownIcon },
+      { key: "mostSupported", label: "Most Supported", icon: UsersIcon },
+      { key: "mostConviction", label: "Most Conviction", icon: Battery50Icon },
+      {
+        key: "mostRequested",
+        label: "Requested Amount",
+        icon: CurrencyDollarIcon,
+      },
+    ];
+
+    // Remove "Requested Amount" option when poolType is a signlaing pool
+    return +poolType === 0 ?
+        options.filter((opt) => opt.key !== "mostRequested")
+      : options;
+  }, [poolType]);
+
+  const currentSortOption = SORT_OPTIONS.find((o) => o.key === sortBy);
+  const CurrentIcon = currentSortOption?.icon;
 
   return (
-    <div className="flex flex-col sm:flex-row gap-3 justify-between border2">
+    <div className="flex flex-col sm:flex-row gap-3 justify-between bg-neutral py-2 px-4 rounded-2xl">
       {/* FILTERS */}
       <div className="flex gap-2 flex-wrap">
         {FILTERS.map((f) => (
           <Button
             onClick={() => setFilter(f === filter ? null : f)}
-            btnStyle={filter === f ? "filled" : "outline"}
             color={filter === f ? "primary" : "disabled"}
             className="rounded-full"
             key={f}
@@ -1019,24 +1049,46 @@ function ProposalFiltersUI({
       </div>
 
       {/* SORT DROPDOWN */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1">
         <p className="text-sm text-neutral-soft-content">Sort by</p>
         <div className="dropdown dropdown-hover dropdown-start">
-          <Button btnStyle="ghost">{sortBy}</Button>
-          <ul className="dropdown-content menu bg-primary rounded-box z-50 p-2 shadow w-[200px]">
-            {SORT_OPTIONS.map((option) => (
-              <li
-                key={option.key}
-                onClick={() => {
-                  setSortBy(option.key);
-                }}
-                className="cursor-pointer w-full flex justify-between items-start px-3 py-2 text-sm hover:bg-gray-100 rounded-md"
-              >
-                {option.label}
-              </li>
-            ))}
+          <Button
+            btnStyle="ghost"
+            icon={CurrentIcon && <CurrentIcon className="w-4 h-4" />}
+          >
+            {currentSortOption?.label}
+          </Button>
+          <ul className="dropdown-content menu bg-primary rounded-box z-50 shadow w-[210px]">
+            {SORT_OPTIONS.map((option) => {
+              const Icon = option.icon;
+
+              return (
+                <li
+                  key={option.key}
+                  onClick={() => setSortBy(option.key)}
+                  className="cursor-pointer w-full flex justify-between items-start text-xs hover:bg-primary-soft dark:hover:bg-primary-hover-content rounded-md"
+                >
+                  <span className="flex items-center gap-2 text-sm">
+                    <Icon className="w-4 h-4" />
+                    {option.label}
+                  </span>
+                </li>
+              );
+            })}
           </ul>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function ProposalListLoading() {
+  return (
+    <div className="flex flex-col items-center justify-center py-12 space-y-4">
+      {/* Spinner */}
+      <div className="relative w-12 h-12">
+        <div className="absolute inset-0 border-4 border-neutral rounded-full" />
+        <div className="absolute inset-0 border-4 border-primary-content border-t-transparent rounded-full animate-spin" />
       </div>
     </div>
   );
