@@ -10,6 +10,7 @@ import {
     IncorrectFacetCutAction,
     CannotAddSelectorsToZeroAddress,
     CannotAddFunctionToDiamondThatAlreadyExists,
+    CannotReplaceFunctionsFromFacetWithZeroAddress,
     CannotReplaceFunctionWithTheSameFunctionFromTheSameFacet,
     CannotReplaceFunctionThatDoesNotExists,
     CannotReplaceImmutableFunction,
@@ -514,6 +515,24 @@ contract LibDiamondTest is Test {
 
         vm.prank(owner);
         vm.expectRevert(abi.encodeWithSelector(CannotReplaceImmutableFunction.selector, selectors[0]));
+        diamond.diamondCut(cuts, address(0), "");
+    }
+
+    function test_replaceFunctions_revertsZeroFacetAddress() public {
+        bytes4[] memory selectors = new bytes4[](1);
+        selectors[0] = TestFacetV1.foo.selector;
+        vm.prank(owner);
+        _addFacet(address(facetV1), selectors);
+
+        IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](1);
+        cuts[0] = IDiamond.FacetCut({
+            facetAddress: address(0),
+            action: IDiamond.FacetCutAction.Replace,
+            functionSelectors: selectors
+        });
+
+        vm.prank(owner);
+        vm.expectRevert(abi.encodeWithSelector(CannotReplaceFunctionsFromFacetWithZeroAddress.selector, selectors));
         diamond.diamondCut(cuts, address(0), "");
     }
 }
