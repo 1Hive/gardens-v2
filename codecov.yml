@@ -1,0 +1,16 @@
+coverage:
+  status:
+    project:
+      default:
+        target: auto        # compare against base branch
+        threshold: 0.1      # allow up to 0.1 percentage point drop
+        informational: false
+    patch:
+      default:
+        target: auto
+        threshold: 0.1
+        informational: false
+
+ignore:
+  - "pkg/contracts/script/**"
+  - "pkg/contracts/test/**"
