@@ -6,8 +6,7 @@ import "forge-std/Test.sol";
 import {BaseStrategyUpgradeable} from "../src/BaseStrategyUpgradeable.sol";
 import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import {IStrategy} from "allo-v2-contracts/core/interfaces/IStrategy.sol";
-import {UNAUTHORIZED, INVALID, ALREADY_INITIALIZED, NOT_INITIALIZED, POOL_INACTIVE, POOL_ACTIVE}
-    from "allo-v2-contracts/core/libraries/Errors.sol";
+import {Errors} from "allo-v2-contracts/core/libraries/Errors.sol";
 
 contract MockAllo {
     mapping(uint256 => mapping(address => bool)) public managers;
@@ -79,6 +78,8 @@ contract BaseStrategyUpgradeableHarness is BaseStrategyUpgradeable {
 }
 
 contract BaseStrategyUpgradeableTest is Test {
+    event PoolActive(bool active);
+
     BaseStrategyUpgradeableHarness internal strategy;
     MockAllo internal allo;
     address internal owner = makeAddr("owner");
@@ -98,7 +99,7 @@ contract BaseStrategyUpgradeableTest is Test {
     }
 
     function test_onlyAlloGuard() public {
-        vm.expectRevert(abi.encodeWithSelector(UNAUTHORIZED.selector));
+        vm.expectRevert(abi.encodeWithSelector(Errors.UNAUTHORIZED.selector));
         strategy.exposedCheckOnlyAllo();
 
         vm.prank(address(allo));
@@ -107,7 +108,7 @@ contract BaseStrategyUpgradeableTest is Test {
 
     function test_BaseStrategyInit_validatesCallerAndPoolId() public {
         vm.prank(address(allo));
-        vm.expectRevert(abi.encodeWithSelector(INVALID.selector));
+        vm.expectRevert(abi.encodeWithSelector(Errors.INVALID.selector));
         strategy.callBaseStrategyInit(0);
 
         vm.prank(address(allo));
@@ -115,12 +116,12 @@ contract BaseStrategyUpgradeableTest is Test {
         assertEq(strategy.getPoolId(), 1);
 
         vm.prank(address(allo));
-        vm.expectRevert(abi.encodeWithSelector(ALREADY_INITIALIZED.selector));
+        vm.expectRevert(abi.encodeWithSelector(Errors.ALREADY_INITIALIZED.selector));
         strategy.callBaseStrategyInit(2);
     }
 
     function test_onlyInitializedGuard() public {
-        vm.expectRevert(abi.encodeWithSelector(NOT_INITIALIZED.selector));
+        vm.expectRevert(abi.encodeWithSelector(Errors.NOT_INITIALIZED.selector));
         strategy.exposedCheckOnlyInitialized();
 
         vm.prank(address(allo));
@@ -133,7 +134,7 @@ contract BaseStrategyUpgradeableTest is Test {
         vm.prank(address(allo));
         strategy.callBaseStrategyInit(3);
 
-        vm.expectRevert(abi.encodeWithSelector(UNAUTHORIZED.selector));
+        vm.expectRevert(abi.encodeWithSelector(Errors.UNAUTHORIZED.selector));
         strategy.exposedCheckOnlyPoolManager(manager);
 
         allo.setPoolManager(3, manager, true);
@@ -141,19 +142,19 @@ contract BaseStrategyUpgradeableTest is Test {
     }
 
     function test_poolActiveStateAndGuards() public {
-        vm.expectRevert(abi.encodeWithSelector(POOL_INACTIVE.selector));
+        vm.expectRevert(abi.encodeWithSelector(Errors.POOL_INACTIVE.selector));
         strategy.exposedCheckOnlyActivePool();
 
         strategy.exposedCheckInactivePool();
         assertFalse(strategy.exposedIsPoolActive());
 
         vm.expectEmit(false, false, false, true);
-        emit IStrategy.PoolActive(true);
+        emit PoolActive(true);
         strategy.exposedSetPoolActive(true);
 
         assertTrue(strategy.exposedIsPoolActive());
 
-        vm.expectRevert(abi.encodeWithSelector(POOL_ACTIVE.selector));
+        vm.expectRevert(abi.encodeWithSelector(Errors.POOL_ACTIVE.selector));
         strategy.exposedCheckInactivePool();
 
         strategy.exposedCheckOnlyActivePool();
