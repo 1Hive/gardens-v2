@@ -316,4 +316,14 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
         assertFalse(tied);
         assertFalse(overridden);
     }
+
+    function test_createDispute_tokenVariant_revertsNotSupported() public {
+        vm.expectRevert(bytes("Not supported"));
+        safeArbitrator.createDispute(2, "", IERC20(address(0xBEEF)), 1 ether);
+    }
+
+    function test_arbitrationCost_tokenVariant_revertsNotSupported() public {
+        vm.expectRevert(bytes("Not supported"));
+        safeArbitrator.arbitrationCost("", IERC20(address(0xBEEF)));
+    }
 }
