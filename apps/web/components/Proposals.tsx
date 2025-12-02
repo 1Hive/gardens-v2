@@ -38,6 +38,7 @@ import { ProposalCardProps, ProposalHandle } from "./ProposalCard";
 import { ProposalsModalSupport } from "./ProposalsModalSupport";
 import TooltipIfOverflow from "./TooltipIfOverflow";
 import {
+  Badge,
   Button,
   CheckSybil,
   InfoWrapper,
@@ -688,9 +689,13 @@ export function Proposals({
       ProposalStatus[x.proposalStatus] === "disputed",
   );
 
-  const { filter, setFilter, filteredAndSortedProposals } = useProposalFilter(
-    strategy.proposals,
-  );
+  const {
+    filter,
+    setFilter,
+    sortBy: sortBy,
+    setSortBy: setSortBy,
+    filtered: filteredAndSorted,
+  } = useProposalFilter(strategy.proposals);
 
   // Render
   return (
@@ -778,10 +783,13 @@ export function Proposals({
               ))}
         </header>
 
-        <button onClick={() => setFilter("active")}>Active</button>
-        <button onClick={() => setFilter("disputed")}>Disputed</button>
-        <button onClick={() => setFilter(null)}>All</button>
-        {filteredAndSortedProposals.map((proposalData) => (
+        <ProposalFiltersUI
+          filter={filter}
+          setFilter={setFilter}
+          sortBy={sortBy}
+          setSortBy={setSortBy}
+        />
+        {filteredAndSorted.map((proposalData) => (
           <Fragment key={proposalData.proposalNumber}>
             <ProposalCard
               proposalData={proposalData}
@@ -881,30 +889,157 @@ export function Proposals({
   );
 }
 
-export function useProposalFilter<T extends { proposalStatus: number }>(
-  proposals: T[],
-) {
-  const [filter, setFilter] = useState<"active" | "disputed" | null>(null);
+export function useProposalFilter<
+  T extends {
+    proposalStatus: string | number;
+    createdAt?: string | number;
+    stakedAmount?: string | number;
+    requestedAmount?: string | number;
+    convictionLast?: string | number;
+  },
+>(proposals: T[]) {
+  //
+  // FILTER
+  //
+  type FilterType =
+    | "all"
+    | "active"
+    | "cancelled"
+    | "executed"
+    | "disputed"
+    | null;
 
-  const filteredAndSortedProposals = useMemo(() => {
-    if (!filter) return proposals;
+  const [filter, setFilter] = useState<FilterType>("all");
 
-    if (filter === "active") {
-      return proposals.filter((p) => Number(p.proposalStatus) === 1);
-    }
+  const FILTER_STATUS: Record<Exclude<FilterType, null>, number> = {
+    all: 0,
+    active: 1,
+    cancelled: 3,
+    executed: 4,
+    disputed: 5,
+  };
 
-    if (filter === "disputed") {
-      return proposals.filter((p) => Number(p.proposalStatus) === 5);
-    }
+  const filteredProposals = useMemo(() => {
+    if (!filter || filter == "all") return proposals;
 
-    return proposals;
+    const status = FILTER_STATUS[filter];
+    return proposals.filter((p) => Number(p.proposalStatus) === status);
   }, [filter, proposals]);
+
+  //
+  // SORT
+  //
+  type SortType =
+    | "newest"
+    | "oldest"
+    | "mostSupported"
+    | "mostRequested"
+    | "mostConviction"
+    | null;
+
+  const [sortBy, setSortBy] = useState<SortType>("newest");
+
+  const filteredAndSorted = useMemo(() => {
+    if (!sortBy) return filteredProposals;
+
+    const list = [...filteredProposals];
+
+    switch (sortBy) {
+      case "newest":
+        return list.sort((a, b) => Number(b.createdAt) - Number(a.createdAt));
+
+      case "oldest":
+        return list.sort((a, b) => Number(a.createdAt) - Number(b.createdAt));
+
+      case "mostSupported":
+        return list.sort(
+          (a, b) => Number(b.stakedAmount) - Number(a.stakedAmount),
+        );
+
+      case "mostRequested":
+        return list.sort(
+          (a, b) => Number(b.requestedAmount) - Number(a.requestedAmount),
+        );
+
+      case "mostConviction":
+        return list.sort(
+          (a, b) => Number(b.convictionLast) - Number(a.convictionLast),
+        );
+
+      default:
+        return list;
+    }
+  }, [filteredProposals, sortBy]);
 
   return {
     filter,
     setFilter,
-    filteredAndSortedProposals,
+    sortBy: sortBy,
+    setSortBy: setSortBy,
+    filtered: filteredAndSorted,
   };
+}
+
+function ProposalFiltersUI({
+  filter,
+  setFilter,
+  sortBy,
+  setSortBy,
+}: {
+  filter: string | null;
+  setFilter: (v: any) => void;
+  sortBy: string | null;
+  setSortBy: (v: any) => void;
+}) {
+  const FILTERS = ["all", "active", "disputed", "executed", "cancelled", ,];
+
+  const SORT_OPTIONS = [
+    { key: "newest", label: "Newest first" },
+    { key: "oldest", label: "Oldest first" },
+    { key: "mostSupported", label: "Most Supported" },
+    { key: "mostConviction", label: "Most Conviction" },
+    { key: "mostRequested", label: "Requested Amount" },
+  ];
+
+  return (
+    <div className="flex flex-col sm:flex-row gap-3 justify-between border2">
+      {/* FILTERS */}
+      <div className="flex gap-2 flex-wrap">
+        {FILTERS.map((f) => (
+          <Button
+            onClick={() => setFilter(f === filter ? null : f)}
+            btnStyle={filter === f ? "filled" : "outline"}
+            color={filter === f ? "primary" : "disabled"}
+            className="rounded-full"
+            key={f}
+          >
+            {f}
+          </Button>
+        ))}
+      </div>
+
+      {/* SORT DROPDOWN */}
+      <div className="flex items-center gap-2">
+        <p className="text-sm text-neutral-soft-content">Sort by</p>
+        <div className="dropdown dropdown-hover dropdown-start">
+          <Button btnStyle="ghost">{sortBy}</Button>
+          <ul className="dropdown-content menu bg-primary rounded-box z-50 p-2 shadow w-[200px]">
+            {SORT_OPTIONS.map((option) => (
+              <li
+                key={option.key}
+                onClick={() => {
+                  setSortBy(option.key);
+                }}
+                className="cursor-pointer w-full flex justify-between items-start px-3 py-2 text-sm hover:bg-gray-100 rounded-md"
+              >
+                {option.label}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function UserAllocationStats({ stats }: { stats: Stats[] }) {
