@@ -27,6 +27,12 @@ contract ReentrantReceiver {
     }
 }
 
+contract RecipientRevertsOnReceive {
+    receive() external payable {
+        revert("no receive");
+    }
+}
+
 contract CollateralVaultTest is Test {
     CollateralVault internal vault;
     address internal owner = address(0xA11CE);
@@ -124,5 +130,15 @@ contract CollateralVaultTest is Test {
         // The internal reentrant attempt reverts, causing the external transfer to fail
         vm.expectRevert(CollateralVault.TransferFailed.selector);
         vault.withdrawCollateral(PROPOSAL_ID, address(reentrant), 1 ether);
+    }
+
+    function test_withdrawFor_revertsOnTransferFailure() public {
+        vm.prank(owner);
+        vault.depositCollateral{value: 1 ether}(PROPOSAL_ID, user);
+        RecipientRevertsOnReceive badRecipient = new RecipientRevertsOnReceive();
+
+        vm.prank(owner);
+        vm.expectRevert(CollateralVault.TransferFailed.selector);
+        vault.withdrawCollateralFor(PROPOSAL_ID, user, address(badRecipient), 0.4 ether);
     }
 }
