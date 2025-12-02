@@ -25,6 +25,12 @@ fs_permissions = [{ access = "read-write", path = "./"}]
 
 bytecode_hash = "none"
 
+[coverage]
+exclude = [
+  "script/**",
+  "test/**"
+]
+
 # fs_permissions = []
 remappings = [
   "solady/=lib/allo-v2/lib/solady/src",
