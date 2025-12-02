@@ -80,6 +80,7 @@ contract BaseStrategyUpgradeableHarness is BaseStrategyUpgradeable {
 
 contract BaseStrategyUpgradeableTest is Test {
     event PoolActive(bool active);
+    event Initialized(uint256 poolId, bytes data);
 
     BaseStrategyUpgradeableHarness internal strategy;
     MockAllo internal allo;
@@ -144,6 +145,37 @@ contract BaseStrategyUpgradeableTest is Test {
 
         allo.setPoolManager(3, manager, true);
         strategy.exposedCheckOnlyPoolManager(manager);
+    }
+
+    function test_initialize_requiresAllo() public {
+        vm.expectRevert(abi.encodeWithSelector(Errors.UNAUTHORIZED.selector));
+        strategy.initialize(5, "");
+    }
+
+    function test_initialize_setsPoolIdAndEmits() public {
+        bytes memory data = bytes("hello");
+        vm.expectEmit(true, true, true, true, address(strategy));
+        emit Initialized(9, data);
+
+        vm.prank(address(allo));
+        strategy.initialize(9, data);
+
+        assertEq(strategy.getPoolId(), 9);
+    }
+
+    function test_initialize_revertsIfAlreadyInitialized() public {
+        vm.prank(address(allo));
+        strategy.initialize(4, "");
+
+        vm.prank(address(allo));
+        vm.expectRevert(abi.encodeWithSelector(Errors.ALREADY_INITIALIZED.selector));
+        strategy.initialize(6, "");
+    }
+
+    function test_initialize_revertsIfPoolIdZero() public {
+        vm.prank(address(allo));
+        vm.expectRevert(abi.encodeWithSelector(Errors.INVALID.selector));
+        strategy.initialize(0, "");
     }
 
     function test_poolActiveStateAndGuards() public {
