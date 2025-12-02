@@ -318,12 +318,12 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
     }
 
     function test_createDispute_tokenVariant_revertsNotSupported() public {
-        vm.expectRevert(bytes("Not supported"));
+        vm.expectRevert(SafeArbitrator.NotSupported.selector);
         safeArbitrator.createDispute(2, "", IERC20(address(0xBEEF)), 1 ether);
     }
 
     function test_arbitrationCost_tokenVariant_revertsNotSupported() public {
-        vm.expectRevert(bytes("Not supported"));
+        vm.expectRevert(SafeArbitrator.NotSupported.selector);
         safeArbitrator.arbitrationCost("", IERC20(address(0xBEEF)));
     }
 }
