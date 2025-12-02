@@ -102,7 +102,7 @@ contract CollateralVaultTest is Test {
         reentrant.attemptReenter();
         vm.prank(owner);
         // The internal reentrant attempt reverts, causing the external transfer to fail
-        vm.expectRevert(bytes("Transfer failed"));
+        vm.expectRevert(CollateralVault.TransferFailed.selector);
         vault.withdrawCollateral(PROPOSAL_ID, address(reentrant), 1 ether);
     }
 }
