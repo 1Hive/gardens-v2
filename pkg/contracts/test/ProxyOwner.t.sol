@@ -14,6 +14,7 @@ contract ProxyOwnerTest is Test {
     address deployerWallet = makeAddr("deployerWallet");
     address anotherWallet = makeAddr("anotherWallet");
     address protocolFeeReceiver = makeAddr("multisigReceiver");
+    address newOwner = makeAddr("newOwner");
 
     function _deployProxyOwner() internal returns (ProxyOwner) {
         return ProxyOwner(
@@ -38,6 +39,56 @@ contract ProxyOwnerTest is Test {
             )
         );
         return RegistryFactory(payable(address(proxy)));
+    }
+
+    function test_initialize_setsOwner_once() public {
+        ProxyOwner proxyOwner = _deployProxyOwner();
+        assertEq(proxyOwner.owner(), deployerWallet);
+
+        vm.expectRevert("Initializable: contract is already initialized");
+        proxyOwner.initialize(deployerWallet);
+    }
+
+    function test_transferOwnership_setsPendingAndAccepts() public {
+        ProxyOwner proxyOwner = _deployProxyOwner();
+
+        vm.prank(deployerWallet);
+        proxyOwner.transferOwnership(newOwner);
+        assertEq(proxyOwner.pendingOwner(), newOwner);
+        assertEq(proxyOwner.owner(), deployerWallet);
+
+        vm.prank(newOwner);
+        proxyOwner.acceptOwnership();
+        assertEq(proxyOwner.owner(), newOwner);
+        assertEq(proxyOwner.pendingOwner(), address(0));
+    }
+
+    function test_transferOwnership_allowsCancelWithZero() public {
+        ProxyOwner proxyOwner = _deployProxyOwner();
+
+        vm.prank(deployerWallet);
+        proxyOwner.transferOwnership(newOwner);
+        assertEq(proxyOwner.pendingOwner(), newOwner);
+
+        vm.prank(deployerWallet);
+        proxyOwner.transferOwnership(address(0));
+        assertEq(proxyOwner.pendingOwner(), address(0));
+    }
+
+    function test_acceptOwnership_revertsIfNotPending() public {
+        ProxyOwner proxyOwner = _deployProxyOwner();
+
+        vm.prank(newOwner);
+        vm.expectRevert(abi.encodeWithSelector(ProxyOwner.OwnableUnauthorizedAccount.selector, newOwner));
+        proxyOwner.acceptOwnership();
+    }
+
+    function test_transferOwnership_revertsIfNotOwner() public {
+        ProxyOwner proxyOwner = _deployProxyOwner();
+
+        vm.prank(anotherWallet);
+        vm.expectRevert("Ownable: caller is not the owner");
+        proxyOwner.transferOwnership(newOwner);
     }
 
     function test_upgradeWithProxyOwner() public {
