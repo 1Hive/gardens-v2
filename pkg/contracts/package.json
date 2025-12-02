@@ -12,6 +12,6 @@
     "test": "forge test -vvv",
     "test:force": "forge test -vvv --force",
     "format": "forge fmt",
-    "coverage": "forge coverage --ir-minimum --match-path 'pkg/contracts/test/**' --exclude-tests --skip script --report lcov -r lcov.info && sed -i 's|^SF:pkg/contracts/|SF:|g' lcov.info"
+    "coverage": "forge coverage --ir-minimum --match-path 'test/**' --exclude-tests --report lcov -r lcov.info && sed -i 's|^SF:pkg/contracts/|SF:|g' lcov.info"
   }
 }
