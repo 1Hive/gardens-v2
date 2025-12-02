@@ -2,13 +2,11 @@
 pragma solidity ^0.8.19;
 
 import "forge-std/Test.sol";
-import {AlloSetup} from "allo-v2-test/foundry/shared/AlloSetup.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {RegistryFactory} from "../src/RegistryFactory/RegistryFactory.sol";
 import {RegistryCommunity} from "../src/RegistryCommunity/RegistryCommunity.sol";
 import {CVStrategy} from "../src/CVStrategy/CVStrategy.sol";
 import {CollateralVault} from "../src/CollateralVault.sol";
-import {Upgrades} from "@openzeppelin/foundry/LegacyUpgrades.sol";
 import {ProxyOwner} from "../src/ProxyOwner.sol";
 import {ProxyOwnableUpgrader} from "../src/ProxyOwnableUpgrader.sol";
 
@@ -17,116 +15,68 @@ contract ProxyOwnerTest is Test {
     address anotherWallet = makeAddr("anotherWallet");
     address protocolFeeReceiver = makeAddr("multisigReceiver");
 
-    function setUp() public {
-        // Skip until full build-info is available for OZ upgrade validation during coverage
-        vm.skip(true);
-    }
-
-    function test_upgradeWithProxyAdmin() public {
-        vm.startPrank(deployerWallet);
-
-        ProxyOwner proxyOwner = ProxyOwner(
+    function _deployProxyOwner() internal returns (ProxyOwner) {
+        return ProxyOwner(
             address(
                 new ERC1967Proxy(
                     address(new ProxyOwner()), abi.encodeWithSelector(ProxyOwner.initialize.selector, deployerWallet)
                 )
             )
         );
+    }
 
-        ERC1967Proxy proxyRegistryFactory = new ERC1967Proxy(
+    function _deployRegistryFactory(address ownerAddr) internal returns (RegistryFactory) {
+        ERC1967Proxy proxy = new ERC1967Proxy(
             address(new RegistryFactory()),
             abi.encodeWithSelector(
                 RegistryFactory.initialize.selector,
-                address(proxyOwner), // owner
+                ownerAddr, // owner
                 address(protocolFeeReceiver), // gardensFeeReceiver
                 address(new RegistryCommunity()), // registryCommunityTemplate
                 address(new CVStrategy()), // strategyTemplate
                 address(new CollateralVault()) // collateralVaultTemplate
             )
         );
+        return RegistryFactory(payable(address(proxy)));
+    }
 
-        Upgrades.upgradeProxy(
-            address(proxyRegistryFactory),
-            "RegistryFactory.sol",
-            abi.encodeWithSelector(RegistryFactory.initialize.selector, deployerWallet, protocolFeeReceiver, address(new RegistryCommunity()), address(new CVStrategy()), address(new CollateralVault()))
-        );
+    function test_upgradeWithProxyOwner() public {
+        ProxyOwner proxyOwner = _deployProxyOwner();
+        RegistryFactory factory = _deployRegistryFactory(address(proxyOwner));
+        RegistryFactory newImpl = new RegistryFactory();
+
+        vm.prank(deployerWallet);
+        factory.upgradeTo(address(newImpl));
     }
 
     function test_upgradeWithEOAOwner() public {
-        vm.startPrank(deployerWallet);
+        RegistryFactory factory = _deployRegistryFactory(deployerWallet);
+        RegistryFactory newImpl = new RegistryFactory();
 
-        ERC1967Proxy proxyRegistryFactory = new ERC1967Proxy(
-            address(new RegistryFactory()),
-            abi.encodeWithSelector(
-                RegistryFactory.initialize.selector,
-                address(deployerWallet), // owner
-                address(protocolFeeReceiver), // gardensFeeReceiver
-                address(new RegistryCommunity()), // registryCommunityTemplate
-                address(new CVStrategy()), // strategyTemplate
-                address(new CollateralVault()) // collateralVaultTemplate
-            )
-        );
-
-        Upgrades.upgradeProxy(
-            address(proxyRegistryFactory),
-            "RegistryFactory.sol",
-            abi.encodeWithSelector(RegistryFactory.initialize.selector, deployerWallet, protocolFeeReceiver, address(new RegistryCommunity()), address(new CVStrategy()), address(new CollateralVault()))
-        );
+        vm.prank(deployerWallet);
+        factory.upgradeTo(address(newImpl));
     }
 
-    function test_Revert_transferProxyAdminOwnershipNotExpectedOwner() public {
-        vm.startPrank(deployerWallet);
+    function test_Revert_upgradeWithProxyOwnerNotAuthorized() public {
+        ProxyOwner proxyOwner = _deployProxyOwner();
+        RegistryFactory factory = _deployRegistryFactory(address(proxyOwner));
+        RegistryFactory newImpl = new RegistryFactory();
 
-        ProxyOwner proxyOwner = ProxyOwner(
-            address(
-                new ERC1967Proxy(
-                    address(new ProxyOwner()), abi.encodeWithSelector(ProxyOwner.initialize.selector, deployerWallet)
-                )
-            )
+        vm.prank(anotherWallet);
+        vm.expectRevert(
+            abi.encodeWithSelector(ProxyOwnableUpgrader.CallerNotOwner.selector, anotherWallet, deployerWallet)
         );
-
-        ERC1967Proxy proxyRegistryFactory = new ERC1967Proxy(
-            address(new RegistryFactory()),
-            abi.encodeWithSelector(
-                RegistryFactory.initialize.selector,
-                address(proxyOwner), // owner
-                address(protocolFeeReceiver), // gardensFeeReceiver
-                address(new RegistryCommunity()), // registryCommunityTemplate
-                address(new CVStrategy()), // strategyTemplate
-                address(new CollateralVault()) // collateralVaultTemplate
-            )
-        );
-
-        vm.expectRevert();
-
-        Upgrades.upgradeProxy(
-            address(proxyRegistryFactory),
-            "RegistryFactory.sol",
-            abi.encodeWithSelector(RegistryFactory.initialize.selector, deployerWallet, protocolFeeReceiver, address(new RegistryCommunity()), address(new CVStrategy()), address(new CollateralVault()))
-        );
+        factory.upgradeTo(address(newImpl));
     }
 
     function test_Revert_upgradeWithEOANotExpectedOwner() public {
-        vm.startPrank(deployerWallet);
+        RegistryFactory factory = _deployRegistryFactory(anotherWallet);
+        RegistryFactory newImpl = new RegistryFactory();
 
-        ERC1967Proxy proxyRegistryFactory = new ERC1967Proxy(
-            address(new RegistryFactory()),
-            abi.encodeWithSelector(
-                RegistryFactory.initialize.selector,
-                address(anotherWallet), // owner
-                address(protocolFeeReceiver), // gardensFeeReceiver
-                address(new RegistryCommunity()), // registryCommunityTemplate
-                address(new CVStrategy()), // strategyTemplate
-                address(new CollateralVault()) // collateralVaultTemplate
-            )
+        vm.prank(deployerWallet);
+        vm.expectRevert(
+            abi.encodeWithSelector(ProxyOwnableUpgrader.CallerNotOwner.selector, deployerWallet, anotherWallet)
         );
-
-        vm.expectRevert();
-
-        Upgrades.upgradeProxy(
-            address(proxyRegistryFactory),
-            "RegistryFactory.sol",
-            abi.encodeWithSelector(RegistryFactory.initialize.selector, anotherWallet, protocolFeeReceiver, address(new RegistryCommunity()), address(new CVStrategy()), address(new CollateralVault()))
-        );
+        factory.upgradeTo(address(newImpl));
     }
 }
