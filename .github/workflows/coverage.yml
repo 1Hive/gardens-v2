@@ -43,3 +43,8 @@ jobs:
           name: forge-coverage-lcov
           path: lcov.info
           if-no-files-found: warn
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
