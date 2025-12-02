@@ -1,0 +1,161 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+pragma solidity ^0.8.19;
+
+import "forge-std/Test.sol";
+
+import {BaseStrategyUpgradeable} from "../src/BaseStrategyUpgradeable.sol";
+import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
+import {IStrategy} from "allo-v2-contracts/core/interfaces/IStrategy.sol";
+import {UNAUTHORIZED, INVALID, ALREADY_INITIALIZED, NOT_INITIALIZED, POOL_INACTIVE, POOL_ACTIVE}
+    from "allo-v2-contracts/core/libraries/Errors.sol";
+
+contract MockAllo {
+    mapping(uint256 => mapping(address => bool)) public managers;
+
+    function setPoolManager(uint256 poolId, address manager, bool allowed) external {
+        managers[poolId][manager] = allowed;
+    }
+
+    function isPoolManager(uint256 poolId, address account) external view returns (bool) {
+        return managers[poolId][account];
+    }
+}
+
+contract BaseStrategyUpgradeableHarness is BaseStrategyUpgradeable {
+    function initializeHarness(address allo_, string memory name_, address owner_) external initializer {
+        init(allo_, name_, owner_);
+    }
+
+    // IStrategy implementation stubs for compilation
+    function initialize(uint256 poolId_, bytes memory data) external override {
+        __BaseStrategy_init(poolId_);
+        emit Initialized(poolId_, data);
+    }
+
+    function registerRecipient(bytes memory, address) external payable override returns (address) {
+        return address(0);
+    }
+
+    function allocate(bytes memory, address) external payable override {}
+
+    function distribute(address[] memory, bytes memory, address) external override {}
+
+    function getPoolAmount() external view override returns (uint256) {
+        return poolAmount;
+    }
+
+    function callBaseStrategyInit(uint256 poolId_) external {
+        __BaseStrategy_init(poolId_);
+    }
+
+    // Exposed helpers to reach internal checks
+    function exposedCheckOnlyAllo() external view {
+        _checkOnlyAllo();
+    }
+
+    function exposedCheckOnlyPoolManager(address sender) external view {
+        _checkOnlyPoolManager(sender);
+    }
+
+    function exposedCheckOnlyActivePool() external view {
+        _checkOnlyActivePool();
+    }
+
+    function exposedCheckInactivePool() external view {
+        _checkInactivePool();
+    }
+
+    function exposedCheckOnlyInitialized() external view {
+        _checkOnlyInitialized();
+    }
+
+    function exposedSetPoolActive(bool active) external {
+        _setPoolActive(active);
+    }
+
+    function exposedIsPoolActive() external view returns (bool) {
+        return _isPoolActive();
+    }
+}
+
+contract BaseStrategyUpgradeableTest is Test {
+    BaseStrategyUpgradeableHarness internal strategy;
+    MockAllo internal allo;
+    address internal owner = makeAddr("owner");
+    address internal manager = makeAddr("manager");
+    address internal rando = makeAddr("rando");
+
+    function setUp() public {
+        allo = new MockAllo();
+        strategy = new BaseStrategyUpgradeableHarness();
+        strategy.initializeHarness(address(allo), "TEST_STRATEGY", owner);
+    }
+
+    function test_initSetsOwnerAndAllo() public {
+        assertEq(address(strategy.getAllo()), address(allo));
+        assertEq(strategy.owner(), owner);
+        assertEq(strategy.getPoolId(), 0);
+    }
+
+    function test_onlyAlloGuard() public {
+        vm.expectRevert(abi.encodeWithSelector(UNAUTHORIZED.selector));
+        strategy.exposedCheckOnlyAllo();
+
+        vm.prank(address(allo));
+        strategy.exposedCheckOnlyAllo();
+    }
+
+    function test_BaseStrategyInit_validatesCallerAndPoolId() public {
+        vm.prank(address(allo));
+        vm.expectRevert(abi.encodeWithSelector(INVALID.selector));
+        strategy.callBaseStrategyInit(0);
+
+        vm.prank(address(allo));
+        strategy.callBaseStrategyInit(1);
+        assertEq(strategy.getPoolId(), 1);
+
+        vm.prank(address(allo));
+        vm.expectRevert(abi.encodeWithSelector(ALREADY_INITIALIZED.selector));
+        strategy.callBaseStrategyInit(2);
+    }
+
+    function test_onlyInitializedGuard() public {
+        vm.expectRevert(abi.encodeWithSelector(NOT_INITIALIZED.selector));
+        strategy.exposedCheckOnlyInitialized();
+
+        vm.prank(address(allo));
+        strategy.callBaseStrategyInit(7);
+
+        strategy.exposedCheckOnlyInitialized();
+    }
+
+    function test_onlyPoolManagerGuard() public {
+        vm.prank(address(allo));
+        strategy.callBaseStrategyInit(3);
+
+        vm.expectRevert(abi.encodeWithSelector(UNAUTHORIZED.selector));
+        strategy.exposedCheckOnlyPoolManager(manager);
+
+        allo.setPoolManager(3, manager, true);
+        strategy.exposedCheckOnlyPoolManager(manager);
+    }
+
+    function test_poolActiveStateAndGuards() public {
+        vm.expectRevert(abi.encodeWithSelector(POOL_INACTIVE.selector));
+        strategy.exposedCheckOnlyActivePool();
+
+        strategy.exposedCheckInactivePool();
+        assertFalse(strategy.exposedIsPoolActive());
+
+        vm.expectEmit(false, false, false, true);
+        emit IStrategy.PoolActive(true);
+        strategy.exposedSetPoolActive(true);
+
+        assertTrue(strategy.exposedIsPoolActive());
+
+        vm.expectRevert(abi.encodeWithSelector(POOL_ACTIVE.selector));
+        strategy.exposedCheckInactivePool();
+
+        strategy.exposedCheckOnlyActivePool();
+    }
+}
