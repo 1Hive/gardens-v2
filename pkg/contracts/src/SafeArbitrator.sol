@@ -161,7 +161,7 @@ contract SafeArbitrator is IArbitrator, ProxyOwnableUpgrader, ReentrancyGuardUpg
         IERC20 /*_feeToken*/
     )
         public
-        pure
+        view
         override
         returns (
             uint256 /*cost*/
