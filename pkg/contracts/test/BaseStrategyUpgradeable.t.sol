@@ -7,6 +7,7 @@ import {BaseStrategyUpgradeable} from "../src/BaseStrategyUpgradeable.sol";
 import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import {IStrategy} from "allo-v2-contracts/core/interfaces/IStrategy.sol";
 import {Errors} from "allo-v2-contracts/core/libraries/Errors.sol";
+import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 contract MockAllo {
     mapping(uint256 => mapping(address => bool)) public managers;
@@ -88,8 +89,12 @@ contract BaseStrategyUpgradeableTest is Test {
 
     function setUp() public {
         allo = new MockAllo();
-        strategy = new BaseStrategyUpgradeableHarness();
-        strategy.initializeHarness(address(allo), "TEST_STRATEGY", owner);
+        BaseStrategyUpgradeableHarness impl = new BaseStrategyUpgradeableHarness();
+        ERC1967Proxy proxy = new ERC1967Proxy(
+            address(impl),
+            abi.encodeWithSelector(BaseStrategyUpgradeableHarness.initializeHarness.selector, address(allo), "TEST_STRATEGY", owner)
+        );
+        strategy = BaseStrategyUpgradeableHarness(payable(address(proxy)));
     }
 
     function test_initSetsOwnerAndAllo() public {
