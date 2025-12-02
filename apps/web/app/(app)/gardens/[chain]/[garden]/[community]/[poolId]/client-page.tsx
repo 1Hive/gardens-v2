@@ -143,31 +143,32 @@ export default function ClientPage({
     watch: true,
   });
 
-  const totalPointsActivatedInPool =
-    poolToken ?
-      formatTokenAmount(
-        strategy?.totalEffectiveActivePoints,
-        +poolToken.decimals,
-      )
-    : 0;
+  const communityTokenDecimals =
+    strategy?.registryCommunity?.garden?.decimals != null ?
+      Number(strategy.registryCommunity.garden.decimals)
+    : undefined;
+  const decimalsForPoints = communityTokenDecimals ?? poolToken?.decimals ?? 18;
 
-  const minThresholdPoints =
-    poolToken ?
-      formatTokenAmount(
-        strategy?.config.minThresholdPoints,
-        +poolToken.decimals,
-      )
-    : "0";
+  const totalPointsActivatedInPool = formatTokenAmount(
+    strategy?.totalEffectiveActivePoints,
+    decimalsForPoints,
+  );
+
+  const minThresholdPoints = formatTokenAmount(
+    strategy?.config.minThresholdPoints,
+    decimalsForPoints,
+  );
 
   const minThGtTotalEffPoints =
     +minThresholdPoints > +totalPointsActivatedInPool;
 
   const poolType = proposalType != null ? PoolTypes[proposalType] : undefined;
   const needsFundingToken = poolType === "funding";
+  const isMissingFundingToken = needsFundingToken && !poolToken;
   const [hasWaitedForPoolToken, setHasWaitedForPoolToken] = useState(false);
 
   useEffect(() => {
-    if (needsFundingToken && strategy && !poolToken && !error) {
+    if (isMissingFundingToken && strategy && !error) {
       const timer = window.setTimeout(() => {
         setHasWaitedForPoolToken(true);
       }, 1500);
@@ -178,14 +179,14 @@ export default function ClientPage({
 
     setHasWaitedForPoolToken(false);
     return undefined;
-  }, [needsFundingToken, strategy, poolToken, error]);
+  }, [isMissingFundingToken, strategy, error]);
 
   const stillLoading =
     fetching ||
     (!data && !error) ||
-    (needsFundingToken && !poolToken && !error && !hasWaitedForPoolToken);
+    (isMissingFundingToken && !error && !hasWaitedForPoolToken);
 
-  if ((!strategy || (needsFundingToken && !poolToken)) && stillLoading) {
+  if ((!strategy || isMissingFundingToken) && stillLoading) {
     console.debug("Loading pool data, waiting for", {
       strategy,
       poolTokenIfFundingPool: poolToken,
@@ -203,7 +204,7 @@ export default function ClientPage({
     expectedChainId != null &&
     connectedChainId !== expectedChainId;
 
-  if (!strategy || (poolType === "funding" && !poolToken)) {
+  if (!strategy) {
     const title =
       isWrongNetwork ? "Switch network to continue" : "Pool unavailable";
     const description =
@@ -225,6 +226,7 @@ export default function ClientPage({
     );
   }
 
+  const showMissingFundingTokenWarning = isMissingFundingToken && !error;
   const communityAddress = strategy.registryCommunity.id as Address;
   const alloInfo = data.allos[0];
 
@@ -232,6 +234,13 @@ export default function ClientPage({
 
   return (
     <>
+      {showMissingFundingTokenWarning && (
+        <div className="col-span-12 mt-4">
+          <InfoBox infoBoxType="warning" title="Funding token unavailable">
+            We could not load the funding token for this pool.
+          </InfoBox>
+        </div>
+      )}
       <PoolHeader
         poolToken={poolToken}
         strategy={strategy}
