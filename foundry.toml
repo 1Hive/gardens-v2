@@ -25,11 +25,6 @@ fs_permissions = [{ access = "read-write", path = "./"}]
 
 bytecode_hash = "none"
 
-[coverage]
-exclude = [
-  "script/**",
-  "test/**"
-]
 
 # fs_permissions = []
 remappings = [

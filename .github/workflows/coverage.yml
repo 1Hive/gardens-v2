@@ -37,7 +37,7 @@ jobs:
         run: git submodule update --init --recursive --depth 1 --jobs 4
 
       - name: Run coverage
-        run: forge coverage --ir-minimum --match-path 'pkg/contracts/test/**' --report lcov
+        run: forge coverage --ir-minimum --match-path 'pkg/contracts/test/**' --exclude-tests --skip script --report lcov
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
