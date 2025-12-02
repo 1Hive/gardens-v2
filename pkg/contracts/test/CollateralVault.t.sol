@@ -82,6 +82,26 @@ contract CollateralVaultTest is Test {
         assertEq(vault.proposalCollateral(PROPOSAL_ID, user), 0);
     }
 
+    function test_withdrawFor_fullAmountToRecipient() public {
+        vm.prank(owner);
+        vault.depositCollateral{value: 1 ether}(PROPOSAL_ID, user);
+
+        vm.prank(owner);
+        vault.withdrawCollateralFor(PROPOSAL_ID, user, receiver, 1 ether);
+
+        assertEq(receiver.balance, 1 ether);
+        assertEq(vault.proposalCollateral(PROPOSAL_ID, user), 0);
+    }
+
+    function test_withdrawFor_revertsForNonOwner() public {
+        vm.prank(owner);
+        vault.depositCollateral{value: 1 ether}(PROPOSAL_ID, user);
+
+        vm.prank(address(0xBEEF));
+        vm.expectRevert(CollateralVault.NotAuthorized.selector);
+        vault.withdrawCollateralFor(PROPOSAL_ID, user, receiver, 0.5 ether);
+    }
+
     function test_onlyOwnerControlsDepositAndWithdraw() public {
         vm.expectRevert(CollateralVault.NotAuthorized.selector);
         vault.depositCollateral{value: 1 ether}(PROPOSAL_ID, user);
