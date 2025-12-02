@@ -83,17 +83,22 @@ library LibDiamond {
             if (functionSelectors.length == 0) {
                 revert NoSelectorsProvidedForFacetForCut(facetAddress);
             }
-            IDiamondCut.FacetCutAction action = _diamondCut[facetIndex].action;
-            if (action == IDiamond.FacetCutAction.Add) {
+            uint8 action;
+            assembly {
+                // Each FacetCut occupies 0x60 bytes in memory: address, action, selectors pointer.
+                let element := add(add(_diamondCut, 0x20), mul(facetIndex, 0x60))
+                action := mload(add(element, 0x20))
+            }
+            if (action == uint8(IDiamond.FacetCutAction.Add)) {
                 addFunctions(facetAddress, functionSelectors);
-            } else if (action == IDiamond.FacetCutAction.Replace) {
+            } else if (action == uint8(IDiamond.FacetCutAction.Replace)) {
                 replaceFunctions(facetAddress, functionSelectors);
-            } else if (action == IDiamond.FacetCutAction.Remove) {
+            } else if (action == uint8(IDiamond.FacetCutAction.Remove)) {
                 removeFunctions(facetAddress, functionSelectors);
-            } else if (action == IDiamond.FacetCutAction.Auto) {
+            } else if (action == uint8(IDiamond.FacetCutAction.Auto)) {
                 _autoAddOrReplaceFunctions(facetAddress, functionSelectors);
             } else {
-                revert IncorrectFacetCutAction(uint8(action));
+                revert IncorrectFacetCutAction(action);
             }
         }
         emit DiamondCut(_diamondCut, _init, _calldata);

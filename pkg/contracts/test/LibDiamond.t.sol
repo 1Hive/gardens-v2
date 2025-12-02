@@ -34,6 +34,36 @@ contract LibDiamondHarness {
         LibDiamond.diamondCut(_diamondCut, _init, _calldata);
     }
 
+    // Receives a well-typed FacetCut array, then force-writes an arbitrary action value before executing.
+    function diamondCutForceInvalidAction(
+        IDiamond.FacetCut[] memory _diamondCut,
+        address _init,
+        bytes memory _calldata,
+        uint8 rawAction
+    ) external {
+        LibDiamond.enforceIsContractOwner();
+        address facet = _diamondCut[0].facetAddress;
+        bytes4[] memory selectors = _diamondCut[0].functionSelectors;
+        assembly {
+            let base := add(_diamondCut, 0x20) // first element
+            mstore(add(base, 0x20), rawAction)
+        }
+        // Restore other fields in case assembly clobbered them.
+        _diamondCut[0].facetAddress = facet;
+        _diamondCut[0].functionSelectors = selectors;
+        LibDiamond.diamondCut(_diamondCut, _init, _calldata);
+    }
+
+    // Allows injecting a raw action value without enum decoding guardrails to hit error paths.
+    function diamondCutRaw(FacetCutInput[] memory _diamondCut, address _init, bytes memory _calldata) external {
+        LibDiamond.enforceIsContractOwner();
+        IDiamond.FacetCut[] memory castCuts;
+        assembly {
+            castCuts := _diamondCut
+        }
+        LibDiamond.diamondCut(castCuts, _init, _calldata);
+    }
+
     function setOwnerRaw(address _newOwner) external {
         LibDiamond.setContractOwner(_newOwner);
     }
@@ -83,18 +113,18 @@ contract TestFacetV2 {
     }
 }
 
+struct FacetCutInput {
+    address facetAddress;
+    uint8 action;
+    bytes4[] functionSelectors;
+}
+
 contract InitReverter {
     error Boom();
 
     function fail() external pure {
         revert Boom();
     }
-}
-
-struct FacetCutInput {
-    address facetAddress;
-    uint8 action;
-    bytes4[] functionSelectors;
 }
 
 contract InitNoop {
@@ -187,15 +217,14 @@ contract LibDiamondTest is Test {
         bytes4[] memory selectors = new bytes4[](1);
         selectors[0] = TestFacetV1.foo.selector;
 
-        FacetCutInput[] memory cuts = new FacetCutInput[](1);
-        cuts[0] = FacetCutInput({facetAddress: address(facetV1), action: 99, functionSelectors: selectors});
+        IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](1);
+        cuts[0] =
+            IDiamond.FacetCut({facetAddress: address(facetV1), action: IDiamond.FacetCutAction.Add, functionSelectors: selectors});
 
+        uint8 invalidAction = uint8(uint160(address(facetV1))); // guaranteed to be outside valid 0-3 range
         vm.prank(owner);
-        vm.expectRevert(abi.encodeWithSelector(IncorrectFacetCutAction.selector, uint8(99)));
-        (bool ok,) = address(diamond).call(
-            abi.encodeWithSignature("diamondCut((address,uint8,bytes4[])[],address,bytes)", cuts, address(0), "")
-        );
-        assertFalse(ok);
+        vm.expectRevert(abi.encodeWithSelector(IncorrectFacetCutAction.selector, invalidAction));
+        diamond.diamondCutForceInvalidAction(cuts, address(0), "", invalidAction);
     }
 
     function test_diamondCut_replaceFacet() public {
