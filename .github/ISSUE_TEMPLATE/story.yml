@@ -46,9 +46,9 @@ body:
     validations:
       required: false
   - type: input
-      id: issue_type
-      attributes:
-        label: Type
-        value: "feature"
-      validations:
-        required: true
+    id: issue_type
+    attributes:
+      label: Type
+      value: "feature"
+    validations:
+      required: true

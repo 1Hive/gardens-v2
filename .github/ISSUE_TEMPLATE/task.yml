@@ -33,9 +33,9 @@ body:
     validations:
       required: false
   - type: input
-      id: issue_type
-      attributes:
-        label: Type
-        value: "task"
-      validations:
-        required: true
+    id: issue_type
+    attributes:
+      label: Type
+      value: "task"
+    validations:
+      required: true
