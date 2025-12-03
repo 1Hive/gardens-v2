@@ -2,14 +2,14 @@ name: Report Bug-type issues to Discord
 
 on:
   issues:
-    types: [opened]
+    types: [opened, typed]
 
 jobs:
   notify_discord:
     runs-on: ubuntu-latest
 
     # Only run for issues whose type is "Bug"
-    if: github.event.issue.issue_type == 'Bug'
+    if: github.event.issue.type == 'Bug'
 
     steps:
       - name: Send Discord notification
