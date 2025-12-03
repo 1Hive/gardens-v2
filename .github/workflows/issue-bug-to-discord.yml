@@ -8,8 +8,8 @@ jobs:
   notify_discord:
     runs-on: ubuntu-latest
 
-    # Only run for issues whose type is "Bug"
-    if: contains(github.event.issue.body, 'issue-type: task')
+    # Only run for issues whose hidden marker is "issue-type: bug"
+    if: ${{ contains(github.event.issue.body, 'issue-type: bug') }}
 
     steps:
       - name: Send Discord notification
@@ -30,11 +30,8 @@ jobs:
           payload=$(jq -n \
             --arg username "GitHub Bot" \
             --arg content "" \
-            --arg title "🐛 New Bug issue in $REPO_NAME" \
-            --arg desc "**#${ISSUE_NUMBER} – $ISSUE_TITLE**\n"\
-            "**Author:** $ISSUE_USER\n"\
-            "**Link:** $ISSUE_URL\n\n"\
-            "**Description (truncated):**\n$SHORT_BODY" \
+            --arg title "🐞 New Bug issue in $REPO_NAME" \
+            --arg desc "**#${ISSUE_NUMBER} – $ISSUE_TITLE**\n**Author:** $ISSUE_USER\n**Link:** $ISSUE_URL\n\n**Description (truncated):**\n$SHORT_BODY" \
             '{
               "username": $username,
               "content": $content,
