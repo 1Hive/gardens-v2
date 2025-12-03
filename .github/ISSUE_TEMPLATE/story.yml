@@ -7,7 +7,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        <!-- issue-type: story -->
+        <!-- issue-type=story -->
 
         Keep it lightweight: describe the problem, the outcome, and how we'll confirm it delivers value.
 

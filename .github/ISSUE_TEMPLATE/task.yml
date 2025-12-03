@@ -6,7 +6,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        <!-- issue-type: task -->
+        <!-- issue-type=task -->
 
         Capture the goal, the work needed, and how you'll know it's done.
 

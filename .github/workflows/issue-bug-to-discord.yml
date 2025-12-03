@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
 
     # Only run for issues whose hidden marker is "issue-type: bug"
-    if: ${{ contains(github.event.issue.body, 'issue-type: bug') }}
+    if: ${{ contains(github.event.issue.body, 'issue-type=bug') }}
 
     steps:
       - name: Send Discord notification
