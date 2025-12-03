@@ -7,9 +7,19 @@ on:
 
 jobs:
   notify_discord:
-    # Bug-form issues only, and don't send if "Skip notify Discord" is checked
-    if: ${{ contains(lower(github.event.issue.body), '### steps to reproduce') && !contains(lower(github.event.issue.body), '- [x] skip notify discord') }}
     runs-on: ubuntu-latest
+
+    # Run only for Bug issues (typed/label/hidden marker) and when the form didn't opt out of Discord
+    if: >
+      ${{
+        (
+          (github.event.issue.issue_type && github.event.issue.issue_type.name == 'Bug') ||
+          contains(github.event.issue.labels.*.name, 'bug') ||
+          contains(github.event.issue.labels.*.name, 'Bug') ||
+          contains(github.event.issue.body, 'issue-type=bug')
+        )
+        && !contains(github.event.issue.body, 'Skip Discord')
+      }}
 
     steps:
       - name: Send Discord notification
@@ -22,82 +32,35 @@ jobs:
           ISSUE_USER: ${{ github.event.issue.user.login }}
           REPO_NAME: ${{ github.repository }}
         run: |
-          extract_section () {
-            # $1 = heading text (e.g. "Steps to reproduce")
-            printf '%s\n' "$ISSUE_BODY" | awk -v heading="### $1" '
-              $0 == heading {flag=1; next}
-              /^### / && flag {flag=0}
-              flag
-            '
-          }
-
-          STEPS=$(extract_section "Steps to reproduce")
-          EXPECTED=$(extract_section "Expected result")
-          ACTUAL=$(extract_section "Actual result")
-          CONTEXT=$(extract_section "Extra context")
-
-          # Fallbacks if some sections are empty
-          [ -z "$STEPS" ] && STEPS="(not provided)"
-          [ -z "$EXPECTED" ] && EXPECTED="(not provided)"
-          [ -z "$ACTUAL" ] && ACTUAL="(not provided)"
-          [ -z "$CONTEXT" ] && CONTEXT="(none)"
-
+          # Trim body to avoid huge messages
           SHORT_BODY=$(printf '%s' "$ISSUE_BODY" | head -c 400)
           [ -z "$SHORT_BODY" ] && SHORT_BODY="(no description)"
 
+          # Build JSON payload for Discord
           payload=$(jq -n \
-            --arg username "Gardens Bot" \
-            --arg title "🐞 Bug #${ISSUE_NUMBER} – ${ISSUE_TITLE}" \
-            --arg issue_url "$ISSUE_URL" \
-            --arg repo "$REPO_NAME" \
-            --arg author "$ISSUE_USER" \
-            --arg steps "$STEPS" \
-            --arg expected "$EXPECTED" \
-            --arg actual "$ACTUAL" \
-            --arg context "$CONTEXT" \
-            --arg summary "$SHORT_BODY" \
-            --arg timestamp "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
+            --arg username "GitHub Bot" \
+            --arg content "" \
+            --arg title "🐞 New Bug issue in $REPO_NAME" \
+            --arg desc "$(cat <<EOF
+          **#${ISSUE_NUMBER} – $ISSUE_TITLE**
+          **Author:** $ISSUE_USER
+          **Link:** $ISSUE_URL
+
+          **Description (truncated):**
+          $SHORT_BODY
+          EOF
+          )" \
             '{
               "username": $username,
+              "content": $content,
               "embeds": [
                 {
                   "title": $title,
-                  "url": $issue_url,
-                  "color": 15158332,
-                  "description": ("Repository: **" + $repo + "**\nAuthor: **" + $author + "**"),
-                  "fields": [
-                    {
-                      "name": "📝 Summary",
-                      "value": ("> " + ($summary | gsub("\n"; "\n> ")))
-                    },
-                    {
-                      "name": "🐾 Steps to reproduce",
-                      "value": ("```" + "\n" + $steps + "\n```")
-                    },
-                    {
-                      "name": "🎯 Expected",
-                      "value": $expected
-                    },
-                    {
-                      "name": "💥 Actual",
-                      "value": $actual
-                    },
-                    {
-                      "name": "📎 Extra context",
-                      "value": $context
-                    },
-                    {
-                      "name": "🔗 Links",
-                      "value": ("[View issue](" + $issue_url + ")")
-                    }
-                  ],
-                  "footer": {
-                    "text": "Gardens bug report"
-                  },
-                  "timestamp": $timestamp
+                  "description": $desc
                 }
               ]
-            }')
+            }'
+          )
 
           curl -X POST \
             -H "Content-Type: application/json" \
