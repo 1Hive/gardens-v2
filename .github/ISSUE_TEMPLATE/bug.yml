@@ -1,4 +1,4 @@
-name: Bug report
+name: Bug
 description: Report a problem or unexpected behavior in the Gardens app.
 labels: ["triage"]
 type: "Bug"
