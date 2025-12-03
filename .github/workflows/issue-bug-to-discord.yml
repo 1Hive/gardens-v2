@@ -32,9 +32,9 @@ jobs:
             --arg content "" \
             --arg title "🐛 New Bug issue in $REPO_NAME" \
             --arg desc "**#${ISSUE_NUMBER} – $ISSUE_TITLE**\n"\
-"**Author:** $ISSUE_USER\n"\
-"**Link:** $ISSUE_URL\n\n"\
-"**Description (truncated):**\n$SHORT_BODY" \
+            "**Author:** $ISSUE_USER\n"\
+            "**Link:** $ISSUE_URL\n\n"\
+            "**Description (truncated):**\n$SHORT_BODY" \
             '{
               "username": $username,
               "content": $content,
