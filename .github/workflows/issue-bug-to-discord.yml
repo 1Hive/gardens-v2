@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
 
     # Only run for issues whose type is "Bug"
-    if: github.event.issue.type == 'Bug'
+    if: github.event.issue.issue_type == 'Bug'
 
     steps:
       - name: Send Discord notification

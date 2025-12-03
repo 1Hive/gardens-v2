@@ -32,3 +32,10 @@ body:
       description: Add references, related issues, or notes.
     validations:
       required: false
+  - type: input
+      id: issue_type
+      attributes:
+        label: Type
+        value: "task"
+      validations:
+        required: true
