@@ -6,7 +6,10 @@ body:
   - type: markdown
     attributes:
       value: |
+        <!-- issue-type: task -->
+
         Capture the goal, the work needed, and how you'll know it's done.
+
   - type: textarea
     id: outcome
     attributes:
@@ -15,6 +18,7 @@ body:
       placeholder: When complete...
     validations:
       required: true
+
   - type: textarea
     id: plan
     attributes:
@@ -25,6 +29,7 @@ body:
         - [ ] Step 2
     validations:
       required: false
+
   - type: textarea
     id: resources
     attributes:
@@ -32,10 +37,3 @@ body:
       description: Add references, related issues, or notes.
     validations:
       required: false
-  - type: input
-    id: issue_type
-    attributes:
-      label: Type
-      value: "task"
-    validations:
-      required: true

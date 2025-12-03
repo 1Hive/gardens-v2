@@ -7,10 +7,13 @@ body:
   - type: markdown
     attributes:
       value: |
+        <!-- issue-type: story -->
+
         Keep it lightweight: describe the problem, the outcome, and how we'll confirm it delivers value.
 
         **Figma:** [Gardens V2 UI](https://www.figma.com/design/v9ECAmLYs2pam1wguh3HUS/Gardens-V2-UI?node-id=1-25&p=f&t=QTrkzN8ykb9AdIi6-0)  
         **Miro:** [Design Collaboration Board](https://miro.com/app/board/uXjVJF2w8YI=/)
+
   - type: textarea
     id: problem
     attributes:
@@ -19,6 +22,7 @@ body:
       placeholder: As a ... I struggle with ...
     validations:
       required: true
+
   - type: textarea
     id: outcome
     attributes:
@@ -27,6 +31,7 @@ body:
       placeholder: Users can...
     validations:
       required: true
+
   - type: textarea
     id: acceptance
     attributes:
@@ -38,6 +43,7 @@ body:
         - Then ...
     validations:
       required: true
+
   - type: textarea
     id: notes
     attributes:
@@ -45,10 +51,3 @@ body:
       description: Links, designs, or open questions.
     validations:
       required: false
-  - type: input
-    id: issue_type
-    attributes:
-      label: Type
-      value: "feature"
-    validations:
-      required: true
