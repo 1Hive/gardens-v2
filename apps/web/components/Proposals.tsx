@@ -681,6 +681,29 @@ export function Proposals({
       ProposalStatus[x.proposalStatus] === "disputed",
   );
 
+  const STATUS_LABELS: Record<number, string> = {
+    0: "inactive",
+    1: "active",
+    2: "paused",
+    3: "cancelled",
+    4: "executed",
+    5: "disputed",
+    6: "rejected",
+  };
+
+  const proposalsCountByStatus = {
+    all: proposals.length,
+    ...Object.values(STATUS_LABELS).reduce(
+      (acc, statusName) => {
+        acc[statusName] = proposals.filter(
+          (p) => STATUS_LABELS[Number(p.proposalStatus)] === statusName,
+        ).length;
+        return acc;
+      },
+      {} as Record<string, number>,
+    ),
+  };
+
   const {
     filter,
     setFilter,
@@ -781,6 +804,7 @@ export function Proposals({
           sortBy={sortBy}
           setSortBy={setSortBy}
           poolType={strategy?.config?.proposalType}
+          counts={proposalsCountByStatus}
         />
 
         {loading ?
@@ -908,7 +932,7 @@ export function useProposalFilter<
     | "disputed"
     | null;
 
-  const [filter, setFilter] = useState<FilterType>("all");
+  const [filter, setFilter] = useState<FilterType>("active");
 
   const [isPending, startTransition] = useTransition();
 
@@ -938,7 +962,7 @@ export function useProposalFilter<
     | "mostConviction"
     | null;
 
-  const [sortBy, setSortBy] = useState<SortType>("newest");
+  const [sortBy, setSortBy] = useState<SortType>("mostConviction");
 
   const filteredAndSorted = useMemo(() => {
     if (!sortBy) return filteredProposals;
@@ -963,9 +987,7 @@ export function useProposalFilter<
         );
 
       case "mostConviction":
-        return list.sort(
-          (a, b) => Number(b.convictionLast) - Number(a.convictionLast),
-        );
+        return list;
 
       default:
         return list;
@@ -1001,12 +1023,14 @@ function ProposalFiltersUI({
   sortBy,
   setSortBy,
   poolType,
+  counts,
 }: {
   filter: string | null;
   setFilter: (v: any) => void;
   sortBy: string | null;
   setSortBy: (v: any) => void;
   poolType: number;
+  counts: Record<string, number>;
 }) {
   const FILTERS = ["all", "active", "disputed", "executed", "cancelled"];
 
@@ -1040,10 +1064,16 @@ function ProposalFiltersUI({
           <Button
             onClick={() => setFilter(f === filter ? null : f)}
             color={filter === f ? "primary" : "disabled"}
-            className="rounded-full"
             key={f}
           >
-            {f}
+            <div className="flex items-baseline gap-1">
+              <span className="capitalize text-sm font-semibold text-neutral-inverted-content  ">
+                {f}
+              </span>
+              <span className="text-xs font-semibold text-neutral-inverted-content  ">
+                ({counts[f] ?? 0})
+              </span>
+            </div>
           </Button>
         ))}
       </div>
