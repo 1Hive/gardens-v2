@@ -2,17 +2,15 @@ name: Report Bug-type issues to Discord
 
 on:
   issues:
-    types: [opened]
+    types:
+      - opened
 
 jobs:
   notify_discord:
     runs-on: ubuntu-latest
 
-    # Run only for Bug issues AND when Skip notify Discord is NOT checked
-    if: ${{ 
-      contains(github.event.issue.body, 'issue-type=bug') &&
-      !contains(github.event.issue.body, '- [x] Skip notify Discord')
-    }}
+    # Run only for Bug issues AND when "Skip notify Discord" is NOT checked
+    if: ${{ contains(github.event.issue.body, 'issue-type=bug') && !contains(github.event.issue.body, '- [x] Skip notify Discord') }}
 
     steps:
       - name: Send Discord notification
@@ -25,9 +23,11 @@ jobs:
           ISSUE_USER: ${{ github.event.issue.user.login }}
           REPO_NAME: ${{ github.repository }}
         run: |
+          # Trim body to avoid huge messages
           SHORT_BODY=$(printf '%s' "$ISSUE_BODY" | head -c 400)
           [ -z "$SHORT_BODY" ] && SHORT_BODY="(no description)"
 
+          # Build JSON payload for Discord
           payload=$(jq -n \
             --arg username "GitHub Bot" \
             --arg content "" \
