@@ -50,3 +50,13 @@ body:
         - Wallet:
     validations:
       required: false
+
+  - type: checkboxes
+    id: notify_discord
+    attributes:
+      label: Notify Discord
+      description: Uncheck if this bug shouldn't ping Discord.
+      options:
+        - label: Send to Discord
+          default: true
+          required: false
