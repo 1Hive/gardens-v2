@@ -9,8 +9,12 @@ jobs:
   notify_discord:
     runs-on: ubuntu-latest
 
-    # Run only for Bug issues AND when "Skip notify Discord" is NOT checked
-    if: ${{ contains(github.event.issue.body, 'issue-type=bug') && !contains(github.event.issue.body, '- [x] Skip notify Discord') }}
+    # Run only for Bug-form issues AND when "Skip notify Discord" is NOT checked
+    if: ${{ 
+      contains(github.event.issue.body, '### Steps to reproduce') &&
+      !contains(github.event.issue.body, '- [x] Skip notify Discord') &&
+      !contains(github.event.issue.body, '- [X] Skip notify Discord')
+    }}
 
     steps:
       - name: Send Discord notification

@@ -7,8 +7,6 @@ body:
   - type: markdown
     attributes:
       value: |
-        <!-- issue-type=bug -->
-
         Thanks for raising an issue. Share the essentials so we can reproduce and fix it quickly.
 
   - type: textarea

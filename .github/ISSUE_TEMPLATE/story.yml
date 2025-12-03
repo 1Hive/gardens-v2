@@ -7,8 +7,6 @@ body:
   - type: markdown
     attributes:
       value: |
-        <!-- issue-type=story -->
-
         Keep it lightweight: describe the problem, the outcome, and how we'll confirm it delivers value.
 
         **Figma:** [Gardens V2 UI](https://www.figma.com/design/v9ECAmLYs2pam1wguh3HUS/Gardens-V2-UI?node-id=1-25&p=f&t=QTrkzN8ykb9AdIi6-0)  
