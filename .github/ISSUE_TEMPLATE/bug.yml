@@ -51,12 +51,12 @@ body:
     validations:
       required: false
 
-  - type: checkboxes
+  - type: dropdown
     id: notify_discord
     attributes:
       label: Notify Discord
-      description: Uncheck if this bug shouldn't ping Discord.
+      description: Choose whether this bug should be sent to Discord.
       options:
-        - label: Send to Discord
-          default: true
-          required: false
+        - Send to Discord
+        - Skip Discord
+      default: Send to Discord
