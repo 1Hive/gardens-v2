@@ -2,7 +2,7 @@ name: Report Bug-type issues to Discord
 
 on:
   issues:
-    types: [opened, typed]
+    types: [opened]
 
 jobs:
   notify_discord:
