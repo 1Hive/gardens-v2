@@ -34,24 +34,33 @@
         "CV_STRATEGIES": [
           "0x00d33e504517a03fe14e05863bb95983660b0c2c",
           "0x07563fce80b58a67f5d4a5332ee84747bfb829b9",
+          "0x14507f0e947e1547a86fb187a4959858e5aaadbd",
           "0x15f3e3c557f0a9bed0eba3eadcc5837d964c50fd",
           "0x194a593887a27200bf5a2b6713c1072882136b6c",
           "0x2155378db737b5382d05bdc204f335b7da88af2b",
           "0x2c668e36496b2acd69e46418d5c1de0f43c9c4d2",
+          "0x2f0af7438699d6b9ee6849a906f85f7c5851b3e6",
+          "0x33482037160b54625e7844cbaa90f808b4dcc1ee",
+          "0x39e279272604b7c09ccffb23d4ab5311b5754d7d",
           "0x3bd8c9056a448c7ab3f398df2ffea114febd9139",
+          "0x4023e514a47c87a507623f08e748db7ae05da1c4",
           "0x4440e05839eaacc4927178756faa48ecc23386f8",
           "0x464f010f343bb52689e8579c84e76c8e04c7dbdc",
           "0x565f8f945d08a7dd3c67a926b2b0b25704718d8a",
           "0x61f0d03b1f00b872c7c9ee03a12224cb70e93ea2",
+          "0x62884d6a9b30cfbe52eddd3e365a996123d28c47",
           "0x6b999ed850de2c5c923eaafc3c15781bd2ccf9d6",
+          "0x8a3004467f9a4c3233f0ca20ab126d322ce14dc5",
+          "0x8b02e15e5e78a3e0baf99205fabab0b971f30ac3",
           "0x9dca528cd12c62cec0d37c17a9d23a4b8777d329",
           "0x9e9321526d2f36d521ad4f70786b1adba73023a2",
+          "0xbf1be81e895ddf480333e0aa7f23a17d170ce662",
           "0xd37fa4ad1791ac2c27b8dec1fdea5b318b9a444e",
           "0xd682ff9fb3c4c28c35dfa8830280d9a1c5bbfee4",
           "0xe6dedd7a954c51ddb283b751db6970a75d067cad"
         ]
       },
-      "hash": "ce5ada4bc6b763300ea09bfd1da672c00eb7e5c6"
+      "hash": "23e78eea4fd0e940cda093cccc192eaab0c85c89"
     },
     {
       "name": "opsepolia",
@@ -83,10 +92,12 @@
           "0x280976eaecf349b054e9eef80f1f8306c8b4149c",
           "0x7fff1689b505146949485c0df2194dd0baacc319",
           "0xb1f46e01cce016ab1c3c8ae6d4bd77c977fa24a0",
-          "0xc30ab02b25ca2667dd0efa1deb269c0f568c6147"
+          "0xb9b419d9330008f60c42e8dc40a48a8f00c158dd",
+          "0xc30ab02b25ca2667dd0efa1deb269c0f568c6147",
+          "0xd880e7d2af2bab5709c3a48b740fb2ecea563bf0"
         ]
       },
-      "hash": "dea8bc6319ade7608d38d769025947efc2638a46"
+      "hash": "fc1bc73474a90829f7997a5f45d297d020a45a96"
     },
     {
       "name": "sepolia",

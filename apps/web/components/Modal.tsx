@@ -9,7 +9,13 @@ interface ModalProps {
   children: ReactNode;
   isOpen: boolean;
   className?: string;
-  size?: "extra-small" | "small" | "medium" | "large" | "extra-large";
+  size?:
+    | "extra-small"
+    | "small"
+    | "medium"
+    | "large"
+    | "extra-large"
+    | "ultra-large";
   footer?: ReactNode | null;
 }
 
@@ -58,6 +64,7 @@ export function Modal({
     medium: "max-w-xl",
     large: "max-w-2xl",
     "extra-large": "max-w-4xl",
+    "ultra-large": "max-w-7xl",
   };
 
   return (

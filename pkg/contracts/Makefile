@@ -7,8 +7,38 @@ include .env
 # create RPC_URL_LOCALHOST variable
 RPC_URL_LOCALHOST = http://127.0.0.1:8545
 # print RPC_URL
-print : 
+print :
 	@echo $(RPC_URL)
+
+# Aggregate diamond ABIs (combines main contract + all facets into single ABI)
+aggregate-abi:
+	@echo "📦 Aggregating diamond ABIs..."
+	@node scripts/aggregate-diamond-abi.js
+	@echo "✅ ABI aggregation complete"
+
+# Aggregate ABIs with verbose output
+aggregate-abi-verbose:
+	@echo "📦 Aggregating diamond ABIs (verbose mode)..."
+	@node scripts/aggregate-diamond-abi.js --verbose
+	@echo "✅ ABI aggregation complete"
+
+# Verify diamond storage layouts (with build)
+verify-storage:
+	@echo "🔍 Verifying diamond storage layouts..."
+	@./scripts/verify-storage-layout.sh || (echo "❌ Storage verification FAILED! Fix storage alignment before deploying." && exit 1)
+	@echo "✅ Storage verification passed"
+
+# Verify diamond storage layouts (skip build - faster, assumes already compiled)
+verify-storage-quick:
+	@echo "🔍 Verifying diamond storage layouts (quick mode)..."
+	@./scripts/verify-storage-layout.sh --skip-build || (echo "❌ Storage verification FAILED! Fix storage alignment before deploying." && exit 1)
+	@echo "✅ Storage verification passed"
+
+# Verify diamond storage layouts with verbose output (shows detailed differences)
+verify-storage-verbose:
+	@echo "🔍 Verifying diamond storage layouts (verbose mode)..."
+	@./scripts/verify-storage-layout.sh --verbose || (echo "❌ Storage verification FAILED! Fix storage alignment before deploying." && exit 1)
+	@echo "✅ Storage verification passed"
 
 ### LOCLAHOST ###
 
@@ -39,7 +69,6 @@ deploy:
 	--rpc-url $(RPC_URL_LOCALHOST) \
 	--sender 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266 \
 	--unlocked \
-	--via-ir \
 	--broadcast -vvvvv
 
 add-strategy-local: #make add-strategy S=0x1234 
@@ -63,7 +92,6 @@ deploy-testnet-multi-sep:
 	--ffi \
 	--broadcast \
 	--legacy \
-	--via-ir \
 	-vvv
 	
 verify-testnet-multi-sep: 
@@ -74,7 +102,6 @@ verify-testnet-multi-sep:
 	--ffi \
 	--etherscan-api-key $(ETHERSCAN_API_KEY) \
 	--legacy \
-	--via-ir \
 	--verify \
 	-vvv
 
@@ -108,7 +135,7 @@ deploy-token-opsep:
 	--chain-id 11155420 \
 	--verify
 
-fork-testnet:
+fork-testnet-opsep:
 	anvil --host=0.0.0.0 -f $(RPC_URL_OP_TESTNET)
 
 deploy-verify-opsep: 
@@ -127,11 +154,10 @@ deploy-opsep:
 	--chain-id 11155420 \
 	--ffi \
 	--broadcast \
-	--via-ir \
 	--verify \
 	-vv
 
-upgrade-opsep: 
+upgrade-opsep:
 	-forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
 	--rpc-url $(RPC_URL_OP_TESTNET) \
 	--sig "run(string)" 'opsepolia' \
@@ -140,9 +166,63 @@ upgrade-opsep:
 	--chain-id 11155420 \
 	--ffi \
 	--broadcast \
-	--via-ir \
 	--verify \
-	-vvv 
+	-vvv
+
+upgrade-diamond-opsep: # verify-storage
+	-forge script script/UpgradeCVDiamond.s.sol:UpgradeCVDiamond \
+	--rpc-url $(RPC_URL_OP_TESTNET) \
+	--sig "run(string)" 'opsepolia' \
+	--account pkGarden \
+	--etherscan-api-key $(OPTIMISM_API_KEY) \
+	--chain-id 11155420 \
+	--broadcast \
+	--ffi \
+	--verify \
+	--slow \
+	-vvv
+
+upgrade-community-diamond-opsep:  
+	-forge script script/UpgradeRegistryCommunityDiamond.s.sol:UpgradeRegistryCommunityDiamond \
+	--rpc-url $(RPC_URL_OP_TESTNET) \
+	--sig "run(string)" 'opsepolia' \
+	--account pkGarden \
+	--etherscan-api-key $(OPTIMISM_API_KEY) \
+	--chain-id 11155420 \
+	--ffi \
+	--broadcast \
+	--verify \
+	-vvv
+
+verify-diamond-blockscout-opsep:
+	-forge script script/UpgradeCVDiamond.s.sol:UpgradeCVDiamondTest \
+	--rpc-url $(RPC_URL_OP_TESTNET) \
+	--sig "run(string)" 'opsepolia' \
+	--account pkGarden \
+	--verifier blockscout \
+	--verifier-url https://optimism.blockscout.com/api/ \
+	--chain-id 11155420 \
+	--ffi \
+	--verify \
+	--slow 
+
+verify-community-diamond-blockscout-opsep:
+	-forge script script/UpgradeRegistryCommunityDiamond.s.sol:UpgradeRegistryCommunityDiamond \
+	--rpc-url $(RPC_URL_OP_TESTNET) \
+	--sig "run(string)" 'opsepolia' \
+	--account pkGarden \
+	--verifier blockscout \
+	--verifier-url https://optimism.blockscout.com/api/ \
+	--chain-id 11155420 \
+	--ffi \
+	--verify \
+	--slow
+
+upgrade-all-diamond-opsep:verify-storage upgrade-diamond-opsep upgrade-community-diamond-opsep
+
+upgrade-and-verify-diamond-opsep: upgrade-diamond-opsep verify-diamond-blockscout-opsep
+
+upgrade-and-verify-community-diamond-opsep: upgrade-community-diamond-opsep verify-community-diamond-blockscout-opsep
 
 verify-blockscout-opsep: 
 	-forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
@@ -151,7 +231,6 @@ verify-blockscout-opsep:
 	--verifier blockscout \
 	--verifier-url https://optimism.blockscout.com/api/ \
 	--verify \
-	--via-ir \
 	--slow
 	
 
@@ -165,7 +244,6 @@ deploy-new-collateral-vault-template-opsep:
 	--chain-id 11155420 \
 	--legacy \
 	--broadcast \
-	--via-ir \
 	--with-gas-price 1301660000 \
 	--verify \
 	-vvv
@@ -179,7 +257,6 @@ transfer-ownership-opsep:
 	--sig "run(string)" 'opsepolia' \
 	--chain-id 11155420 \
 	--broadcast \
-	--via-ir \
 	--etherscan-api-key $(OPTIMISM_API_KEY) \
 	--verify \
 	-vvvv
@@ -191,7 +268,6 @@ deploy-passport-scorer-opsep:
 	--chain-id 11155420 \
 	--etherscan-api-key $(OPTIMISM_API_KEY) \
 	--account pkGarden \
-	--via-ir \
 	--verify \
 	--broadcast \
 	-vv
@@ -203,7 +279,6 @@ deploy-safe-arbitrator-opsep:
 	--chain-id 11155420 \
 	--etherscan-api-key $(OPTIMISM_API_KEY) \
 	--account pkGarden \
-	--via-ir \
 	--verify \
 	--broadcast \
 	-vv
@@ -215,14 +290,13 @@ deploy-or-upgrade-good-dollar-sybil-opsep:
 	--chain-id 11155420 \
 	--etherscan-api-key $(OPTIMISM_API_KEY) \
 	--account pkGarden \
-	--via-ir \
 	--verify \
 	--broadcast \
 	-vv
 
 ### ARBITRUM SEPOLIA ###
 
-fork-testnet:
+fork-testnet-arbsep:
 	anvil --host=0.0.0.0 -f $(RPC_URL_ARB_TESTNET)
 
 deploy-verify-arbsep: 
@@ -241,7 +315,6 @@ deploy-arbsep:
 	--chain-id 421614 \
 	--ffi \
 	--broadcast \
-	--via-ir \
 	--verify \
 	-vv
 
@@ -254,7 +327,6 @@ upgrade-arbsep:
 	--chain-id 421614 \
 	--ffi \
 	--broadcast \
-	--via-ir \
 	--verify \
 	-vvv 
 
@@ -265,7 +337,6 @@ verify-blockscout-arbsep:
 	--verifier blockscout \
 	--verifier-url https://arbitrum.blockscout.com/api/ \
 	--verify \
-	--via-ir \
 	--slow
 	
 deploy-verify: 
@@ -360,7 +431,6 @@ deploy-new-collateral-vault-template-arbitrum-sepolia:
 	--chain-id 421614 \
 	--legacy \
 	--broadcast \
-	--via-ir \
 	--with-gas-price 1301660000 \
 	--verify \
 	-vvv
@@ -374,7 +444,6 @@ transfer-ownership-arbsep:
 	--sig "run(string)" 'arbsepolia' \
 	--chain-id 421614 \
 	--broadcast \
-	--via-ir \
 	--etherscan-api-key $(ARBISCAN_API_KEY) \
 	--verify \
 	-vvvv
@@ -386,7 +455,6 @@ deploy-passport-scorer-arbsep:
 	--chain-id 421614 \
 	--etherscan-api-key $(ARBISCAN_API_KEY) \
 	--account pkGarden \
-	--via-ir \
 	--verify \
 	--broadcast \
 	-vv
@@ -398,7 +466,6 @@ deploy-or-upgrade-if-exists-safe-arbitrator-arbsep:
 	--chain-id 421614 \
 	--etherscan-api-key $(ARBISCAN_API_KEY) \
 	--account pkGarden \
-	--via-ir \
 	--verify \
 	--broadcast \
 	-vv
@@ -410,7 +477,6 @@ deploy-or-upgrade-good-dollar-sybil-arbsep:
 	--chain-id 421614 \
 	--etherscan-api-key $(ARBISCAN_API_KEY) \
 	--account pkGarden \
-	--via-ir \
 	--verify \
 	--broadcast \
 	-vv
@@ -428,7 +494,6 @@ transfer-ownership-arbitrum:
 	--sig "run(string)" 'arbitrum' \
 	--chain-id 42161 \
 	--broadcast \
-	--via-ir \
 	--etherscan-api-key $(ARBISCAN_API_KEY) \
 	--verify \
 	-vvv
@@ -443,7 +508,6 @@ deploy-new-collateral-vault-template-arbitrum:
 	--chain-id 42161 \
 	--legacy \
 	--broadcast \
-	--via-ir \
 	--verify \
 	-vvv
 
@@ -456,7 +520,6 @@ deploy-arbitrum:
 	--chain-id 42161 \
 	--broadcast \
 	--legacy \
-	--via-ir \
 	-vvv
 
 upgrade-arbitrum: 
@@ -468,7 +531,6 @@ upgrade-arbitrum:
 	--ffi \
 	--chain-id 42161 \
 	--broadcast \
-	--via-ir \
 	--verify \
 	-vvv
 
@@ -483,7 +545,6 @@ verify-blockscout-arbitrum:
 	--chain-id 42161 \
 	--legacy \
 	--verify \
-	--via-ir \
 	-vvv \
 	--slow
 
@@ -507,7 +568,6 @@ deploy-passport-scorer-arbitrum:
 	--chain-id 42161 \
 	--etherscan-api-key $(ARBISCAN_API_KEY) \
 	--account pkGarden \
-	--via-ir \
 	--verify \
 	--broadcast \
 	-vv
@@ -519,7 +579,6 @@ deploy-or-upgrade-if-exists-safe-arbitrator-arbitrum:
 	--chain-id 42161 \
 	--etherscan-api-key $(ARBISCAN_API_KEY) \
 	--account pkGarden \
-	--via-ir \
 	--verify \
 	--broadcast \
 	-vv
@@ -531,7 +590,6 @@ deploy-or-upgrade-good-dollar-sybil-arbitrum:
 	--chain-id 42161 \
 	--etherscan-api-key $(ARBISCAN_API_KEY) \
 	--account pkGarden \
-	--via-ir \
 	--verify \
 	--broadcast \
 	-vv
@@ -546,7 +604,6 @@ transfer-ownership-optimism:
 	--chain-id 10 \
 	--account pkGarden \
 	--broadcast \
-	--via-ir \
 	--verify \
 	-vvv
 
@@ -560,7 +617,6 @@ deploy-new-collateral-vault-template-optimism:
 	--ffi \
 	--legacy \
 	--broadcast \
-	--via-ir \
 	--verify \
 	-vvv
 
@@ -574,7 +630,6 @@ deploy-optimism:
 	--chain-id 10 \
 	--broadcast \
 	--legacy \
-	--via-ir \
 	--verify \
 	-vvv
 
@@ -588,7 +643,6 @@ upgrade-optimism:
 	--chain-id 10 \
 	--broadcast \
 	--legacy \
-	--via-ir \
 	--verify \
 	-vvv
 
@@ -603,7 +657,6 @@ verify-blockscout-optimism:
 	--chain-id 10 \
 	--legacy \
 	--verify \
-	--via-ir \
 	-vvv \
 	--slow
 
@@ -627,7 +680,6 @@ deploy-passport-scorer-optimism:
 	--chain-id 10 \
 	--etherscan-api-key $(OPTIMISM_API_KEY) \
 	--account pkGarden \
-	--via-ir \
 	--verify \
 	--broadcast \
 	-vv
@@ -639,7 +691,6 @@ deploy-or-upgrade-if-exists-safe-arbitrator-optimism:
 	--chain-id 10 \
 	--etherscan-api-key $(OPTIMISM_API_KEY) \
 	--account pkGarden \
-	--via-ir \
 	--verify \
 	--broadcast \
 	-vv
@@ -651,7 +702,6 @@ deploy-or-upgrade-good-dollar-sybil-optimism:
 	--chain-id 10 \
 	--etherscan-api-key $(OPTIMISM_API_KEY) \
 	--account pkGarden \
-	--via-ir \
 	--verify \
 	--broadcast \
 	-vv
@@ -666,7 +716,6 @@ transfer-ownership-polygon:
 	--chain-id 137 \
 	--account pkGarden \
 	--broadcast \
-	--via-ir \
 	--verify \
 	-vvv
 
@@ -680,7 +729,6 @@ deploy-new-collateral-vault-template-polygon:
 	--ffi \
 	--legacy \
 	--broadcast \
-	--via-ir \
 	--verify \
 	-vvv
 
@@ -693,7 +741,6 @@ deploy-polygon:
 	--chain-id 137 \
 	--broadcast \
 	--legacy \
-	--via-ir \
 	-vvv
 
 upgrade-polygon: 
@@ -706,7 +753,6 @@ upgrade-polygon:
 	--chain-id 137 \
 	--broadcast \
 	--legacy \
-	--via-ir \
 	--verify \
 	-vvv
 
@@ -721,7 +767,6 @@ verify-blockscout-polygon:
 	--chain-id 137 \
 	--legacy \
 	--verify \
-	--via-ir \
 	-vvv \
 	--slow
 
@@ -745,7 +790,6 @@ deploy-passport-scorer-polygon:
 	--chain-id 137 \
 	--etherscan-api-key $(POLYGONSCAN_API_KEY) \
 	--account pkGarden \
-	--via-ir \
 	--verify \
 	--broadcast \
 	-vv
@@ -757,7 +801,6 @@ deploy-or-upgrade-if-exists-safe-arbitrator-polygon:
 	--chain-id 137 \
 	--etherscan-api-key $(POLYGONSCAN_API_KEY) \
 	--account pkGarden \
-	--via-ir \
 	--verify \
 	--broadcast \
 	-vv
@@ -769,7 +812,6 @@ deploy-or-upgrade-good-dollar-sybil-polygon:
 	--chain-id 137 \
 	--etherscan-api-key $(POLYGONSCAN_API_KEY) \
 	--account pkGarden \
-	--via-ir \
 	--verify \
 	--broadcast \
 	-vv
@@ -784,7 +826,6 @@ transfer-ownership-gnosis:
 	--chain-id 100 \
 	--account pkGarden \
 	--broadcast \
-	--via-ir \
 	--verify \
 	-vvv
 
@@ -798,7 +839,6 @@ deploy-new-collateral-vault-template-gnosis:
 	--ffi \
 	--legacy \
 	--broadcast \
-	--via-ir \
 	--verify \
 	-vvv
 
@@ -813,7 +853,6 @@ deploy-gnosis:
 	--broadcast \
 	--legacy \
 	--verify \
-	--via-ir \
 	-vvv
 
 upgrade-gnosis: 
@@ -827,7 +866,6 @@ upgrade-gnosis:
 	--broadcast \
 	--legacy \
 	--verify \
-	--via-ir \
 	-vvv
 
 verify-blockscout-gnosis: 
@@ -841,7 +879,6 @@ verify-blockscout-gnosis:
 	--ffi \
 	--legacy \
 	--verify \
-	--via-ir \
 	-vvv \
 	--slow
 
@@ -852,7 +889,6 @@ deploy-passport-scorer-gnosis:
 	--chain-id 100 \
 	--etherscan-api-key $(GNOSISSCAN_API_KEY) \
 	--account pkGarden \
-	--via-ir \
 	--verify \
 	--broadcast \
 	-vv
@@ -864,7 +900,6 @@ deploy-or-upgrade-if-exists-safe-arbitrator-gnosis:
 	--chain-id 100 \
 	--etherscan-api-key $(GNOSISSCAN_API_KEY) \
 	--account pkGarden \
-	--via-ir \
 	--verify \
 	--broadcast \
 	-vv
@@ -880,7 +915,7 @@ deploy-or-upgrade-if-exists-safe-arbitrator-gnosis:
 # 	--chain-id 100 \
 # 	--legacy \
 # 	--verify \
-# 	--via-ir \
+#
 # 	-vvv \
 # 	--slow
 
@@ -913,7 +948,6 @@ deploy-or-upgrade-good-dollar-sybil-gnosis:
 	--chain-id 100 \
 	--etherscan-api-key $(GNOSISSCAN_API_KEY) \
 	--account pkGarden \
-	--via-ir \
 	--verify \
 	--broadcast \
 	-vv
@@ -927,7 +961,6 @@ transfer-ownership-base:
 	--sig "run(string)" 'base' \
 	--chain-id 8453 \
 	--broadcast \
-	--via-ir \
 	--etherscan-api-key $(BASESCAN_API_KEY) \
 	--verify \
 	-vvv
@@ -942,7 +975,6 @@ deploy-new-collateral-vault-template-base:
 	--chain-id 8453 \
 	--legacy \
 	--broadcast \
-	--via-ir \
 	--verify \
 	-vvv
 
@@ -956,7 +988,6 @@ deploy-base:
 	--ffi \
 	--broadcast \
 	--legacy \
-	--via-ir \
 	--verify \
 	-vvv
 
@@ -971,7 +1002,6 @@ upgrade-base:
 	--broadcast \
 	--legacy \
 	--verify \
-	--via-ir \
 	-vvv
 
 
@@ -986,7 +1016,6 @@ verify-blockscout-base:
 	--ffi \
 	--legacy \
 	--verify \
-	--via-ir \
 	-vvv \
 	--slow
 
@@ -1001,7 +1030,6 @@ verify-deploy-blockscout-base:
 	--chain-id 8453 \
 	--legacy \
 	--verify \
-	--via-ir \
 	-vvv \
 	--slow
 
@@ -1026,7 +1054,6 @@ deploy-passport-scorer-base:
 	--chain-id 8453 \
 	--etherscan-api-key $(BASESCAN_API_KEY) \
 	--account pkGarden \
-	--via-ir \
 	--verify \
 	--broadcast \
 	-vv
@@ -1038,7 +1065,6 @@ deploy-or-upgrade-if-exists-safe-arbitrator-base:
 	--chain-id 8453 \
 	--etherscan-api-key $(BASESCAN_API_KEY) \
 	--account pkGarden \
-	--via-ir \
 	--verify \
 	--broadcast \
 	-vv
@@ -1050,7 +1076,6 @@ deploy-proxy-owner-base:
 	--chain-id 8453 \
 	--etherscan-api-key $(BASESCAN_API_KEY) \
 	--account pkGarden \
-	--via-ir \
 	--verify \
 	--broadcast \
 	-vv
@@ -1062,7 +1087,6 @@ deploy-or-upgrade-good-dollar-sybil-base:
 	--chain-id 8453 \
 	--etherscan-api-key $(BASESCAN_API_KEY) \
 	--account pkGarden \
-	--via-ir \
 	--verify \
 	--broadcast \
 	-vv
@@ -1076,7 +1100,6 @@ transfer-ownership-celo:
 	--sig "run(string)" 'celo' \
 	--chain-id 42220 \
 	--broadcast \
-	--via-ir \
 	--etherscan-api-key $(CELOSCAN_API_KEY) \
 	--verify \
 	-vvv
@@ -1091,7 +1114,6 @@ deploy-new-collateral-vault-template-celo:
 	--chain-id 42220 \
 	--legacy \
 	--broadcast \
-	--via-ir \
 	--verify \
 	-vvv
 
@@ -1105,7 +1127,6 @@ deploy-celo:
 	--ffi \
 	--broadcast \
 	--legacy \
-	--via-ir \
 	--verify \
 	-vvv
 
@@ -1120,7 +1141,6 @@ upgrade-celo:
 	--broadcast \
 	--legacy \
 	--verify \
-	--via-ir \
 	-vvv
 
 
@@ -1135,7 +1155,6 @@ verify-blockscout-celo:
 	--ffi \
 	--legacy \
 	--verify \
-	--via-ir \
 	-vvv \
 	--slow
 
@@ -1150,7 +1169,6 @@ verify-deploy-blockscout-celo:
 	--chain-id 42220 \
 	--legacy \
 	--verify \
-	--via-ir \
 	-vvv \
 	--slow
 
@@ -1175,7 +1193,6 @@ deploy-passport-scorer-celo:
 	--chain-id 42220 \
 	--etherscan-api-key $(CELOSCAN_API_KEY) \
 	--account pkGarden \
-	--via-ir \
 	--verify \
 	--broadcast \
 	-vv
@@ -1188,7 +1205,6 @@ verify-blockscout-passport-scorer-celo:
 	--verifier blockscout \
 	--verifier-url https://celo.blockscout.com/api/ \
 	--account pkGarden \
-	--via-ir \
 	--verify \
 	-vv
 
@@ -1200,7 +1216,6 @@ deploy-or-upgrade-if-exists-safe-arbitrator-celo:
 	--verifier blockscout \
 	--verifier-url https://celo.blockscout.com/api/ \
 	--account pkGarden \
-	--via-ir \
 	--verify \
 	-vv \ 
 	
@@ -1213,7 +1228,6 @@ verify-blockscout-proxy-owner-celo:
 	--verifier blockscout \
 	--verifier-url https://celo.blockscout.com/api/ \
 	--account pkGarden \
-	--via-ir \
 	--verify \
 	-vv
 
@@ -1224,7 +1238,6 @@ deploy-or-upgrade-good-dollar-sybil-celo:
 	--chain-id 42220 \
 	--etherscan-api-key $(CELOSCAN_API_KEY) \
 	--account pkGarden \
-	--via-ir \
 	--verify \
 	--broadcast \
 	-vv
@@ -1240,7 +1253,7 @@ deploy-or-upgrade-good-dollar-sybil-celo:
 # 	--chain-id 1 \
 # 	--broadcast \
 # 	--legacy \
-# 	--via-ir \
+#
 # 	-vvv
 
 # verify-mainnet: 
@@ -1253,6 +1266,6 @@ deploy-or-upgrade-good-dollar-sybil-celo:
 # 	--chain-id 1 \
 # 	--legacy \
 # 	--verify \
-# 	--via-ir \
+#
 # 	-vvv \
 # 	--slow

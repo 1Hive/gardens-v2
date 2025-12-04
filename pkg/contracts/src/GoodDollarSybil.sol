@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import {ProxyOwnableUpgrader} from "./ProxyOwnableUpgrader.sol";
 import {ISybilScorer, Strategy} from "./ISybilScorer.sol";
-import {CVStrategyV0_0} from "./CVStrategy/CVStrategyV0_0.sol";
+import {CVStrategy} from "./CVStrategy/CVStrategy.sol";
 
 /// @custom:oz-upgrades-from PassportScorer
 contract GoodDollarSybil is ISybilScorer, ProxyOwnableUpgrader {
@@ -34,7 +34,7 @@ contract GoodDollarSybil is ISybilScorer, ProxyOwnableUpgrader {
     }
 
     modifier onlyCouncilOrAuthorized(address _strategy) {
-        address registryCommunity = address(CVStrategyV0_0(payable(_strategy)).registryCommunity());
+        address registryCommunity = address(CVStrategy(payable(_strategy)).registryCommunity());
         if (
             msg.sender == owner() || msg.sender == _strategy || msg.sender == registryCommunity
                 || msg.sender == listManager || msg.sender == strategies[_strategy].councilSafe
