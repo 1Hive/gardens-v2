@@ -15,6 +15,7 @@ import {IDiamond} from "../src/diamonds/interfaces/IDiamond.sol";
 import {IDiamondLoupe} from "../src/diamonds/interfaces/IDiamondLoupe.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {ProxyOwner} from "../src/ProxyOwner.sol";
+import {CommunityDiamondConfiguratorBase} from "../test/helpers/CommunityDiamondConfigurator.sol";
 import "forge-std/console2.sol";
 
 /**
@@ -22,7 +23,7 @@ import "forge-std/console2.sol";
  * @notice Upgrades RegistryCommunity contracts to diamond pattern with facets
  * @dev Can broadcast upgrades directly or generate Safe transaction payloads via a flag
  */
-contract UpgradeRegistryCommunityDiamond is BaseMultiChain {
+contract UpgradeRegistryCommunityDiamond is BaseMultiChain, CommunityDiamondConfiguratorBase {
     using stdJson for string;
 
     bool internal directBroadcastOverride;
@@ -78,7 +79,7 @@ contract UpgradeRegistryCommunityDiamond is BaseMultiChain {
 
         address[] memory registryCommunityProxies =
             networkJson.readAddressArray(getKeyNetwork(".PROXIES.REGISTRY_COMMUNITIES"));
-        IDiamond.FacetCut[] memory cuts = _getFacetCuts();
+        IDiamond.FacetCut[] memory cuts = _buildAllFacetCuts();
 
         if (directBroadcast) {
             _executeDirectUpgrades(
@@ -177,103 +178,15 @@ contract UpgradeRegistryCommunityDiamond is BaseMultiChain {
     }
 
     /**
-     * @notice Get facet cuts for diamond configuration
-     * @return cuts Array of FacetCut structs for RegistryCommunity facets
+     * @notice Build all facet cuts including DiamondLoupeFacet (6 total)
      */
-    function _getFacetCuts() internal view returns (IDiamond.FacetCut[] memory cuts) {
+    function _buildAllFacetCuts() internal view returns (IDiamond.FacetCut[] memory cuts) {
+        IDiamond.FacetCut[] memory baseCuts = _buildFacetCuts(adminFacet, memberFacet, poolFacet, powerFacet, strategyFacet);
         cuts = new IDiamond.FacetCut[](6);
-
-        // CommunityAdminFacet functions
-        bytes4[] memory adminSelectors = new bytes4[](9);
-        adminSelectors[0] = CommunityAdminFacet.setStrategyTemplate.selector;
-        adminSelectors[1] = CommunityAdminFacet.setCollateralVaultTemplate.selector;
-        adminSelectors[2] = CommunityAdminFacet.setArchived.selector;
-        adminSelectors[3] = CommunityAdminFacet.setBasisStakedAmount.selector;
-        adminSelectors[4] = CommunityAdminFacet.setCommunityFee.selector;
-        adminSelectors[5] = CommunityAdminFacet.setCouncilSafe.selector;
-        adminSelectors[6] = CommunityAdminFacet.acceptCouncilSafe.selector;
-        adminSelectors[7] = CommunityAdminFacet.setCommunityParams.selector;
-        adminSelectors[8] = CommunityAdminFacet.isCouncilMember.selector;
-        cuts[0] = IDiamond.FacetCut({
-            facetAddress: address(adminFacet),
-            action: IDiamond.FacetCutAction.Auto,
-            functionSelectors: adminSelectors
-        });
-
-        // CommunityMemberFacet functions
-        bytes4[] memory memberSelectors = new bytes4[](6);
-        memberSelectors[0] = CommunityMemberFacet.stakeAndRegisterMember.selector;
-        memberSelectors[1] = CommunityMemberFacet.unregisterMember.selector;
-        memberSelectors[2] = CommunityMemberFacet.kickMember.selector;
-        memberSelectors[3] = CommunityMemberFacet.isMember.selector;
-        memberSelectors[4] = CommunityMemberFacet.getBasisStakedAmount.selector;
-        memberSelectors[5] = CommunityMemberFacet.getStakeAmountWithFees.selector;
-        cuts[1] = IDiamond.FacetCut({
-            facetAddress: address(memberFacet),
-            action: IDiamond.FacetCutAction.Auto,
-            functionSelectors: memberSelectors
-        });
-
-        // CommunityPoolFacet functions
-        bytes4[] memory poolSelectors = new bytes4[](2);
-        // createPool has two overloads with different signatures
-        poolSelectors[0] = bytes4(
-            keccak256(
-                "createPool(address,(uint256,bool,bool,bool,(uint256,uint256,uint256,uint256,uint256),(uint256,uint256,uint256,uint256),address,address,uint256,address[],address,uint256),(uint256,string))"
-            )
-        );
-        poolSelectors[1] = bytes4(
-            keccak256(
-                "createPool(address,address,(uint256,bool,bool,bool,(uint256,uint256,uint256,uint256,uint256),(uint256,uint256,uint256,uint256),address,address,uint256,address[],address,uint256),(uint256,string))"
-            )
-        );
-        cuts[2] = IDiamond.FacetCut({
-            facetAddress: address(poolFacet),
-            action: IDiamond.FacetCutAction.Auto,
-            functionSelectors: poolSelectors
-        });
-
-        // CommunityPowerFacet functions
-        bytes4[] memory powerSelectors = new bytes4[](6);
-        powerSelectors[0] = CommunityPowerFacet.activateMemberInStrategy.selector;
-        powerSelectors[1] = CommunityPowerFacet.deactivateMemberInStrategy.selector;
-        powerSelectors[2] = CommunityPowerFacet.increasePower.selector;
-        powerSelectors[3] = CommunityPowerFacet.decreasePower.selector;
-        powerSelectors[4] = CommunityPowerFacet.getMemberPowerInStrategy.selector;
-        powerSelectors[5] = CommunityPowerFacet.getMemberStakedAmount.selector;
-        cuts[3] = IDiamond.FacetCut({
-            facetAddress: address(powerFacet),
-            action: IDiamond.FacetCutAction.Auto,
-            functionSelectors: powerSelectors
-        });
-
-        // CommunityStrategyFacet functions
-        bytes4[] memory strategySelectors = new bytes4[](5);
-        strategySelectors[0] = CommunityStrategyFacet.addStrategyByPoolId.selector;
-        strategySelectors[1] = CommunityStrategyFacet.addStrategy.selector;
-        strategySelectors[2] = CommunityStrategyFacet.removeStrategyByPoolId.selector;
-        strategySelectors[3] = CommunityStrategyFacet.removeStrategy.selector;
-        strategySelectors[4] = CommunityStrategyFacet.rejectPool.selector;
-        cuts[4] = IDiamond.FacetCut({
-            facetAddress: address(strategyFacet),
-            action: IDiamond.FacetCutAction.Auto,
-            functionSelectors: strategySelectors
-        });
-
-        // DiamondLoupeFacet functions - all 5 selectors including supportsInterface
-        bytes4[] memory loupeSelectors = new bytes4[](5);
-        loupeSelectors[0] = IDiamondLoupe.facets.selector;
-        loupeSelectors[1] = IDiamondLoupe.facetFunctionSelectors.selector;
-        loupeSelectors[2] = IDiamondLoupe.facetAddresses.selector;
-        loupeSelectors[3] = IDiamondLoupe.facetAddress.selector;
-        loupeSelectors[4] = IERC165.supportsInterface.selector;
-        cuts[5] = IDiamond.FacetCut({
-            facetAddress: address(loupeFacet),
-            action: IDiamond.FacetCutAction.Auto,
-            functionSelectors: loupeSelectors
-        });
-
-        return cuts;
+        for (uint256 i = 0; i < 5; i++) {
+            cuts[i] = baseCuts[i];
+        }
+        cuts[5] = _buildLoupeFacetCut(loupeFacet);
     }
 
     /**

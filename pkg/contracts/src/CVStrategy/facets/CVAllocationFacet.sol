@@ -2,7 +2,9 @@
 pragma solidity ^0.8.19;
 
 import {CVStrategyBaseFacet} from "../CVStrategyBaseFacet.sol";
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ProposalType, ProposalStatus, ProposalSupport, Proposal} from "../ICVStrategy.sol";
 import {ConvictionsUtils} from "../ConvictionsUtils.sol";
 import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
@@ -16,6 +18,7 @@ import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Librar
  */
 contract CVAllocationFacet is CVStrategyBaseFacet {
     using SuperTokenV1Library for ISuperToken;
+    using SafeERC20 for IERC20;
 
     /*|--------------------------------------------|*/
     /*|              EVENTS                        |*/
@@ -49,10 +52,10 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
         Proposal storage p = proposals[_proposalId];
         if (
             deltaSupport > 0
-                && (p.proposalStatus == ProposalStatus.Inactive
-                    || p.proposalStatus == ProposalStatus.Cancelled
-                    || p.proposalStatus == ProposalStatus.Executed
-                    || p.proposalStatus == ProposalStatus.Rejected)
+                && (
+                    p.proposalStatus == ProposalStatus.Inactive || p.proposalStatus == ProposalStatus.Cancelled
+                        || p.proposalStatus == ProposalStatus.Executed || p.proposalStatus == ProposalStatus.Rejected
+                )
         ) {
             revert ProposalInvalidForAllocation(_proposalId, p.proposalStatus);
         }
@@ -172,9 +175,7 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
         /*_recipientIds */
         bytes memory _data,
         address /*_sender */
-    )
-        external
-    {
+    ) external {
         _checkOnlyAllo();
         _checkOnlyInitialized();
 
@@ -192,7 +193,7 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
         // Unwrap supertoken if needed
         if (address(superfluidToken) != address(0)) {
             if (
-                ERC20(proposals[proposalId].requestedToken).balanceOf(address(this))
+                IERC20(proposals[proposalId].requestedToken).balanceOf(address(this))
                     < proposals[proposalId].requestedAmount
             ) {
                 superfluidToken.downgrade(superfluidToken.balanceOf(address(this))); // Unwrap all available
@@ -281,6 +282,25 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
         return proposal.convictionLast;
     }
 
+    function getPoolAmount() internal view override returns (uint256) {
+        address token = allo.getPool(poolId).token;
+
+        if (token == NATIVE_TOKEN) {
+            return address(this).balance;
+        }
+
+        uint256 base = IERC20(token).balanceOf(address(this));
+        uint256 sf = address(superfluidToken) == address(0) ? 0 : superfluidToken.balanceOf(address(this));
+
+        uint8 d = IERC20Metadata(token).decimals();
+        if (d < 18) {
+            sf /= 10 ** (18 - d); // downscale 18 -> d
+        } else if (d > 18) {
+            sf *= 10 ** (d - 18); // upscale 18 -> d  (unlikely)
+        }
+        return base + sf;
+    }
+
     function _transferAmount(address _token, address _to, uint256 _amount) internal {
         if (_token == NATIVE_TOKEN) {
             (bool success,) = payable(_to).call{value: _amount}("");
@@ -288,7 +308,7 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
                 revert NativeTransferFailed(_to, _amount);
             }
         } else {
-            ERC20(_token).transfer(_to, _amount);
+            SafeERC20.safeTransfer(IERC20(_token), _to, _amount);
         }
     }
 }

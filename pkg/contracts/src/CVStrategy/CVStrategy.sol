@@ -153,6 +153,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     uint256 public proposalCounter;
     uint256 public currentArbitrableConfigVersion;
     uint256 public totalStaked;
+    // slither-disable-next-line uninitialized-state
     uint256 public totalPointsActivated;
     CVParams public cvParams;
     ProposalType public proposalType;
@@ -181,6 +182,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     // constructor(address _allo) BaseStrategy(address(_allo), "CVStrategy") {}
     function init(address _allo, address _collateralVaultTemplate, address _owner) external initializer {
         super.init(_allo, "CVStrategy", _owner);
+        LibDiamond.setContractOwner(_owner);
         collateralVaultTemplate = _collateralVaultTemplate;
     }
 
@@ -638,8 +640,12 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
 
     // disputeProposal and rule removed - now in DisputeFacet
     // Stub needed for tests to call - delegates to facet
-    // Sig: 0xb41596ec
-    function disputeProposal(uint256, string calldata, bytes calldata) external payable returns (uint256) {
+    // slither-disable-next-line incorrect-return
+    function disputeProposal(uint256 proposalId, string calldata context, bytes calldata _extraData)
+        external
+        payable
+        returns (uint256)
+    {
         _delegateToFacet();
     }
 

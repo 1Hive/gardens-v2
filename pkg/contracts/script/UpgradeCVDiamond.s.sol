@@ -16,6 +16,7 @@ import {IDiamond} from "../src/diamonds/interfaces/IDiamond.sol";
 import {IDiamondLoupe} from "../src/diamonds/interfaces/IDiamondLoupe.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {ProxyOwner} from "../src/ProxyOwner.sol";
+import {DiamondConfiguratorBase} from "../test/helpers/DiamondConfigurator.sol";
 import "forge-std/console2.sol";
 
 /**
@@ -23,7 +24,7 @@ import "forge-std/console2.sol";
  * @notice Upgrades CVStrategy contracts to diamond pattern with facets
  * @dev Can broadcast upgrades directly or generate Safe transaction payloads via a flag
  */
-contract UpgradeCVDiamond is BaseMultiChain {
+contract UpgradeCVDiamond is BaseMultiChain, DiamondConfiguratorBase {
     using stdJson for string;
 
     bool internal directBroadcastOverride;
@@ -78,7 +79,7 @@ contract UpgradeCVDiamond is BaseMultiChain {
         address[] memory registryCommunityProxies =
             networkJson.readAddressArray(getKeyNetwork(".PROXIES.REGISTRY_COMMUNITIES"));
         address[] memory cvStrategyProxies = networkJson.readAddressArray(getKeyNetwork(".PROXIES.CV_STRATEGIES"));
-        IDiamond.FacetCut[] memory cuts = _getFacetCuts();
+        IDiamond.FacetCut[] memory cuts = _buildAllFacetCuts();
 
         if (directBroadcast) {
             RegistryFactory registryFactory = RegistryFactory(payable(registryFactoryProxy));
@@ -200,77 +201,15 @@ contract UpgradeCVDiamond is BaseMultiChain {
     }
 
     /**
-     * @notice Get facet cuts for diamond configuration
-     * @return cuts Array of FacetCut structs matching DiamondConfigurator pattern
+     * @notice Build all facet cuts including DiamondLoupeFacet (6 total)
      */
-    function _getFacetCuts() internal view returns (IDiamond.FacetCut[] memory cuts) {
+    function _buildAllFacetCuts() internal view returns (IDiamond.FacetCut[] memory cuts) {
+        IDiamond.FacetCut[] memory baseCuts = _buildFacetCuts(adminFacet, allocationFacet, disputeFacet, powerFacet, proposalFacet);
         cuts = new IDiamond.FacetCut[](6);
-
-        // CVAdminFacet functions
-        bytes4[] memory adminSelectors = new bytes4[](3);
-        adminSelectors[0] = CVAdminFacet.setPoolParams.selector;
-        adminSelectors[1] = CVAdminFacet.connectSuperfluidGDA.selector;
-        adminSelectors[2] = CVAdminFacet.disconnectSuperfluidGDA.selector;
-        cuts[0] = IDiamond.FacetCut({
-            facetAddress: address(adminFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: adminSelectors
-        });
-
-        // CVAllocationFacet functions
-        bytes4[] memory allocationSelectors = new bytes4[](2);
-        allocationSelectors[0] = CVAllocationFacet.allocate.selector;
-        allocationSelectors[1] = CVAllocationFacet.distribute.selector;
-        cuts[1] = IDiamond.FacetCut({
-            facetAddress: address(allocationFacet),
-            action: IDiamond.FacetCutAction.Auto,
-            functionSelectors: allocationSelectors
-        });
-
-        // CVDisputeFacet functions
-        bytes4[] memory disputeSelectors = new bytes4[](2);
-        disputeSelectors[0] = CVDisputeFacet.disputeProposal.selector;
-        disputeSelectors[1] = CVDisputeFacet.rule.selector;
-        cuts[2] = IDiamond.FacetCut({
-            facetAddress: address(disputeFacet),
-            action: IDiamond.FacetCutAction.Auto,
-            functionSelectors: disputeSelectors
-        });
-
-        // CVPowerFacet functions
-        bytes4[] memory powerSelectors = new bytes4[](5);
-        powerSelectors[0] = CVPowerFacet.activatePoints.selector;
-        powerSelectors[1] = CVPowerFacet.increasePower.selector;
-        powerSelectors[2] = CVPowerFacet.decreasePower.selector;
-        powerSelectors[3] = bytes4(keccak256("deactivatePoints()")); // No-parameter version
-        powerSelectors[4] = bytes4(keccak256("deactivatePoints(address)")); // With address parameter
-        cuts[3] = IDiamond.FacetCut({
-            facetAddress: address(powerFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: powerSelectors
-        });
-
-        // CVProposalFacet functions
-        bytes4[] memory proposalSelectors = new bytes4[](3);
-        proposalSelectors[0] = CVProposalFacet.registerRecipient.selector;
-        proposalSelectors[1] = CVProposalFacet.cancelProposal.selector;
-        proposalSelectors[2] = CVProposalFacet.editProposal.selector;
-        cuts[4] = IDiamond.FacetCut({
-            facetAddress: address(proposalFacet),
-            action: IDiamond.FacetCutAction.Auto,
-            functionSelectors: proposalSelectors
-        });
-
-        // DiamondLoupeFacet functions - all 5 selectors including supportsInterface
-        bytes4[] memory loupeSelectors = new bytes4[](5);
-        loupeSelectors[0] = IDiamondLoupe.facets.selector;
-        loupeSelectors[1] = IDiamondLoupe.facetFunctionSelectors.selector;
-        loupeSelectors[2] = IDiamondLoupe.facetAddresses.selector;
-        loupeSelectors[3] = IDiamondLoupe.facetAddress.selector;
-        loupeSelectors[4] = IERC165.supportsInterface.selector;
-        cuts[5] = IDiamond.FacetCut({
-            facetAddress: address(loupeFacet),
-            action: IDiamond.FacetCutAction.Auto,
-            functionSelectors: loupeSelectors
-        });
-
-        return cuts;
+        for (uint256 i = 0; i < 5; i++) {
+            cuts[i] = baseCuts[i];
+        }
+        cuts[5] = _buildLoupeFacetCut(loupeFacet);
     }
 
     /**
