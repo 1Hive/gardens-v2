@@ -785,6 +785,19 @@ verify-blockscout-polygon:
 
 upgrade-and-verify-polygon: upgrade-polygon verify-blockscout-polygon
 
+upgrade-diamond-polygon:
+	-forge script script/UpgradeCVDiamond.s.sol:UpgradeCVDiamond \
+	--rpc-url $(RPC_URL_POLYGON) \
+	--sig "run(string)" 'polygon' \
+	--account pkGarden \
+	--etherscan-api-key $(POLYGONSCAN_API_KEY) \
+	--chain-id 137 \
+	--broadcast \
+	--legacy \
+	--verify \
+	--slow \
+	-vvv
+
 change-passport-manager-polygon: 
 	-forge script script/PassportScorerWriter.s.sol:PassportScorerWriter \
 	--rpc-url $(RPC_URL_POLYGON) \
