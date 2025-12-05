@@ -20,6 +20,8 @@ import {
   Battery50Icon,
   CurrencyDollarIcon,
   EllipsisVerticalIcon,
+  EllipsisHorizontalCircleIcon,
+  HandRaisedIcon,
 } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { Id, toast } from "react-toastify";
@@ -720,29 +722,75 @@ export function Proposals({
       <section className="col-span-12 xl:col-span-9 flex flex-col gap-10">
         <header
           ref={proposalSectionRef}
-          className={`flex border2 ${
+          className={`flex gap-6 ${
             proposals.length === 0 ?
-              "items-start justify-start"
+              "flex-col items-start justify-start"
             : "items-center justify-between"
           }`}
         >
-          <h3 className="text-left border2">Proposals</h3>
+          <div className="flex items-center">
+            <h3 className="text-left">Proposals</h3>
+            {activeOrDisputedProposals.length > 0 &&
+              proposalCardRefs.current.size ===
+                activeOrDisputedProposals.length && (
+                <div className="dropdown dropdown-hover dropdown-start">
+                  <Button
+                    btnStyle="outline"
+                    className="bg-none hover:bg-nuetral-content border-none hover:border-none  rotate-90"
+                    icon={
+                      <EllipsisHorizontalCircleIcon className="w-5 h-5 text-neutral-content" />
+                    }
+                  />
+
+                  <div className="dropdown-content menu bg-primary flex flex-col items-center gap-2 rounded-box z-50 shadow w-[230px] ">
+                    <>
+                      <Button
+                        btnStyle="link"
+                        color="primary"
+                        tooltip="Download proposals conviction results (CSV)"
+                        forceShowTooltip={true}
+                        icon={<ArrowDownTrayIcon className="w-6 h-6" />}
+                        onClick={handleDownloadCVResults}
+                      >
+                        Download CV results
+                      </Button>
+                      <Link href={createProposalUrl}>
+                        <Button
+                          className="w-full"
+                          btnStyle="filled"
+                          icon={<PlusIcon height={24} width={24} />}
+                          disabled={
+                            !isConnected || missmatchUrl || !isMemberCommunity
+                          }
+                          tooltip={
+                            !isConnected ? "Connect your wallet"
+                            : !isMemberCommunity ?
+                              "Join the community first"
+                            : "Create a proposal"
+                          }
+                        >
+                          Create a proposal
+                        </Button>
+                      </Link>
+                    </>
+                  </div>
+                </div>
+              )}
+          </div>
 
           {strategy.isEnabled &&
             (proposals.length === 0 ?
-              <div className="text-center py-12  w-full flex flex-col items-center justify-center border2">
-                <div className="w-16 h-16 bg-neutral-soft-2 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <UsersIcon className="w-8 h-8 text-gray-400" />
+              <div className="section-layout text-center py-12  w-full flex flex-col items-center justify-center">
+                <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-4">
+                  <HandRaisedIcon className="w-8 h-8 text-neutral-soft-content" />
                 </div>
-                <h5 className="text-lg font-medium text-gray-900 mb-2">
-                  No proposals yet
-                </h5>
+                <h5 className="text-lg font-medium mb-2">No proposals yet</h5>
                 <p className="text-neutral-content text-center mb-6">
                   Submit the first proposal to kickstart pool governance.
                 </p>
                 <Link href={createProposalUrl}>
                   <Button
-                    btnStyle="outline"
+                    btnStyle="filled"
                     icon={<PlusIcon height={24} width={24} />}
                     disabled={
                       !isConnected || missmatchUrl || !isMemberCommunity
@@ -760,50 +808,6 @@ export function Proposals({
               </div>
             : !allocationView && (
                 <>
-                  <div className="dropdown dropdown-hover dropdown-start">
-                    <Button
-                      btnStyle="outline"
-                      icon={<EllipsisVerticalIcon className="w-5 h-5" />}
-                    />
-                    <div className="dropdown-content menu bg-primary flex flex-col items-start gap-2 rounded-box z-50 shadow w-[240px] ">
-                      {activeOrDisputedProposals.length > 0 &&
-                        proposalCardRefs.current.size ===
-                          activeOrDisputedProposals.length && (
-                          <>
-                            <Button
-                              btnStyle="link"
-                              color="primary"
-                              tooltip="Download proposals conviction results (CSV)"
-                              forceShowTooltip={true}
-                              icon={<ArrowDownTrayIcon className="w-6 h-6" />}
-                              onClick={handleDownloadCVResults}
-                            >
-                              Download CV results
-                            </Button>
-                            <Link href={createProposalUrl}>
-                              <Button
-                                className="w-full"
-                                btnStyle="outline"
-                                icon={<PlusIcon height={24} width={24} />}
-                                disabled={
-                                  !isConnected ||
-                                  missmatchUrl ||
-                                  !isMemberCommunity
-                                }
-                                tooltip={
-                                  !isConnected ? "Connect your wallet"
-                                  : !isMemberCommunity ?
-                                    "Join the community first"
-                                  : "Create a proposal"
-                                }
-                              >
-                                Create a proposal
-                              </Button>
-                            </Link>
-                          </>
-                        )}
-                    </div>
-                  </div>
                   <div className="flex items-center gap-4 ">
                     {/* Manage Support */}
                     <div
@@ -836,14 +840,16 @@ export function Proposals({
               ))}
         </header>
 
-        <ProposalFiltersUI
-          filter={filter}
-          setFilter={setFilter}
-          sortBy={sortBy}
-          setSortBy={setSortBy}
-          poolType={strategy?.config?.proposalType}
-          counts={proposalsCountByStatus}
-        />
+        {strategy.isEnabled && proposals.length > 0 && (
+          <ProposalFiltersUI
+            filter={filter}
+            setFilter={setFilter}
+            sortBy={sortBy}
+            setSortBy={setSortBy}
+            poolType={strategy?.config?.proposalType}
+            counts={proposalsCountByStatus}
+          />
+        )}
 
         {loading ?
           <ProposalListLoading />
@@ -1116,6 +1122,8 @@ function ProposalFiltersUI({
         ))}
       </div>
 
+      <div className="block sm:hidden w-full border-t border-border-neutral" />
+
       {/* SORT DROPDOWN */}
       <div className="flex justify-between items-center gap-1 ">
         <p className="text-sm text-neutral-soft-content">Sort by</p>
@@ -1134,7 +1142,7 @@ function ProposalFiltersUI({
                 <li
                   key={option.key}
                   onClick={() => setSortBy(option.key)}
-                  className="cursor-pointer w-full flex justify-between items-start text-xs hover:bg-primary-soft dark:hover:bg-primary-hover-content rounded-md"
+                  className="cursor-pointer w-full flex justify-between items-start text-xs hover:bg-primary-soft dark:hover:bg-primary-content rounded-md"
                 >
                   <span className="flex items-center gap-2 text-sm">
                     <Icon className="w-4 h-4" />
