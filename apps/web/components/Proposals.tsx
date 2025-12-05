@@ -5,14 +5,21 @@ import React, {
   Fragment,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
+  useTransition,
 } from "react";
 import {
   AdjustmentsHorizontalIcon,
   ArrowDownTrayIcon,
   PlusIcon,
   UsersIcon,
+  ArrowDownIcon,
+  ArrowUpIcon,
+  Battery50Icon,
+  CurrencyDollarIcon,
+  EllipsisVerticalIcon,
 } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { Id, toast } from "react-toastify";
@@ -33,17 +40,18 @@ import {
 import { LoadingSpinner } from "./LoadingSpinner";
 import { PoolGovernanceProps } from "./PoolGovernance";
 import { ProposalCardProps, ProposalHandle } from "./ProposalCard";
+import { ProposalsModalSupport } from "./ProposalsModalSupport";
 import TooltipIfOverflow from "./TooltipIfOverflow";
 import {
   Button,
   CheckSybil,
   InfoWrapper,
-  PoolGovernance,
+  Modal,
   ProposalCard,
 } from "@/components";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
-import { SubscriptionId, usePubSubContext } from "@/contexts/pubsub.context";
+import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import useCheckAllowList from "@/hooks/useCheckAllowList";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
@@ -61,8 +69,7 @@ export type ProposalInputItem = {
   value: bigint;
 };
 
-export type MemberStrategyData =
-  getMembersStrategyQuery["memberStrategies"][0];
+export type MemberStrategyData = getMembersStrategyQuery["memberStrategies"][0];
 
 // export type Strategy = getStrategyByPoolQuery["cvstrategies"][number];
 // export type Proposal = CVStrategy["proposals"][number];
@@ -138,7 +145,6 @@ export function Proposals({
   const chainId = useChainIdFromPath();
   const allowList = (strategy?.config?.allowlist as Address[]) ?? [];
   const isAllowed = useCheckAllowList(allowList, wallet);
-  const { subscribe, unsubscribe, connected } = usePubSubContext();
 
   const tokenDecimals = strategy.registryCommunity.garden.decimals;
   const searchParams = useCollectQueryParams();
@@ -215,7 +221,7 @@ export function Proposals({
   );
 
   // Contract reads
-  const { data: memberPower, refetch: refetchMemberPower } = useContractRead({
+  const { data: memberPower } = useContractRead({
     address: communityAddress,
     abi: registryCommunityABI,
     functionName: "getMemberPowerInStrategy",
@@ -224,34 +230,11 @@ export function Proposals({
     enabled: !!wallet,
   });
 
-  const subscritionId = useRef<SubscriptionId>();
-  useEffect(() => {
-    subscritionId.current = subscribe(
-      {
-        topic: "member",
-        id: wallet,
-        containerId: strategy.poolId,
-        type: "update",
-      },
-      () => {
-        return refetchMemberPower();
-      },
-    );
-    return () => {
-      if (subscritionId.current) {
-        unsubscribe(subscritionId.current);
-      }
-    };
-  }, [connected]);
-
   // Derived state
   const isMemberCommunity =
     !!memberData?.member?.memberCommunity?.[0]?.isRegistered;
   const memberActivatedStrategy =
     memberStrategyData?.memberStrategy?.activatedPoints > 0n;
-  const memberTokensInCommunity = BigInt(
-    memberData?.member?.memberCommunity?.[0]?.stakedTokens ?? 0,
-  );
 
   const proposals = strategy.proposals.sort((a, b) => {
     const aConviction =
@@ -341,23 +324,12 @@ export function Proposals({
     },
   ];
 
-  const disableCreateProposalBtnCondition: ConditionObject[] = [
-    {
-      condition: !isMemberCommunity,
-      message: "Join community first",
-    },
-  ];
-
   const disableManageSupportButton = disableManageSupportBtnCondition.some(
     (cond) => cond.condition,
   );
 
   const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons(
     disableManageSupportBtnCondition,
-  );
-
-  const { tooltipMessage: createProposalTooltipMessage } = useDisableButtons(
-    disableCreateProposalBtnCondition,
   );
 
   useEffect(() => {
@@ -610,15 +582,7 @@ export function Proposals({
     },
   ];
 
-  const endedProposals = proposals.filter(
-    (x) =>
-      ProposalStatus[x.proposalStatus] === "cancelled" ||
-      ProposalStatus[x.proposalStatus] === "rejected" ||
-      ProposalStatus[x.proposalStatus] === "executed",
-  );
-
-  const membersStrategies = membersStrategyData?.memberStrategies;
-
+  // STATUS MAP — número → string para UI
   const handleDownloadCVResults = () => {
     let headers = [
       "Proposal ID",
@@ -718,23 +682,55 @@ export function Proposals({
       ProposalStatus[x.proposalStatus] === "disputed",
   );
 
-  // Render
+  const STATUS_LABELS: Record<number, string> = {
+    0: "inactive",
+    1: "active",
+    2: "paused",
+    3: "cancelled",
+    4: "executed",
+    5: "disputed",
+    6: "rejected",
+  };
+
+  const proposalsCountByStatus = {
+    all: proposals.length,
+    ...Object.values(STATUS_LABELS).reduce(
+      (acc, statusName) => {
+        acc[statusName] = proposals.filter(
+          (p) => STATUS_LABELS[Number(p.proposalStatus)] === statusName,
+        ).length;
+        return acc;
+      },
+      {} as Record<string, number>,
+    ),
+  };
+
+  const {
+    filter,
+    setFilter,
+    sortBy: sortBy,
+    setSortBy: setSortBy,
+    filtered: filteredAndSorted,
+    loading,
+  } = useProposalFilter(strategy.proposals);
+
   return (
     <>
       {/* Proposals section */}
       <section className="col-span-12 xl:col-span-9 flex flex-col gap-10">
         <header
           ref={proposalSectionRef}
-          className={`flex ${
+          className={`flex border2 ${
             proposals.length === 0 ?
-              "flex-col items-start justify-start"
+              "items-start justify-start"
             : "items-center justify-between"
-          } gap-10 flex-wrap`}
+          }`}
         >
-          <h3 className="text-left w-52">Proposals</h3>
+          <h3 className="text-left border2">Proposals</h3>
+
           {strategy.isEnabled &&
             (proposals.length === 0 ?
-              <div className="text-center py-12  w-full flex flex-col items-center justify-center">
+              <div className="text-center py-12  w-full flex flex-col items-center justify-center border2">
                 <div className="w-16 h-16 bg-neutral-soft-2 rounded-full flex items-center justify-center mx-auto mb-4">
                   <UsersIcon className="w-8 h-8 text-gray-400" />
                 </div>
@@ -763,225 +759,436 @@ export function Proposals({
                 </Link>
               </div>
             : !allocationView && (
-                <div className="flex items-center gap-4">
-                  {activeOrDisputedProposals.length > 0 &&
-                    proposalCardRefs.current.size ===
-                      activeOrDisputedProposals.length && (
-                      <Button
-                        btnStyle="link"
-                        color="primary"
-                        tooltip="Download conviction results (CSV)"
-                        forceShowTooltip={true}
-                        icon={<ArrowDownTrayIcon className="w-6 h-6" />}
-                        onClick={handleDownloadCVResults}
-                      />
-                    )}
-                  <div onMouseLeave={() => setShowManageSupportTooltip(false)}>
-                    <CheckSybil
-                      strategy={strategy}
-                      enableCheck={strategy.sybil?.type === "Passport"}
-                    >
-                      <Button
-                        icon={
-                          <AdjustmentsHorizontalIcon height={24} width={24} />
-                        }
-                        onClick={() => setAllocationView((prev) => !prev)}
-                        popTooltip={showManageSupportTooltip}
-                        disabled={
-                          !isConnected ||
-                          missmatchUrl ||
-                          !memberActivatedStrategy ||
-                          !isAllowed
-                        }
-                        tooltip={tooltipMessage}
-                      >
-                        Manage support
-                      </Button>
-                    </CheckSybil>
+                <>
+                  <div className="dropdown dropdown-hover dropdown-start">
+                    <Button
+                      btnStyle="outline"
+                      icon={<EllipsisVerticalIcon className="w-5 h-5" />}
+                    />
+                    <div className="dropdown-content menu bg-primary flex flex-col items-start gap-2 rounded-box z-50 shadow w-[240px] ">
+                      {activeOrDisputedProposals.length > 0 &&
+                        proposalCardRefs.current.size ===
+                          activeOrDisputedProposals.length && (
+                          <>
+                            <Button
+                              btnStyle="link"
+                              color="primary"
+                              tooltip="Download proposals conviction results (CSV)"
+                              forceShowTooltip={true}
+                              icon={<ArrowDownTrayIcon className="w-6 h-6" />}
+                              onClick={handleDownloadCVResults}
+                            >
+                              Download CV results
+                            </Button>
+                            <Link href={createProposalUrl}>
+                              <Button
+                                className="w-full"
+                                btnStyle="outline"
+                                icon={<PlusIcon height={24} width={24} />}
+                                disabled={
+                                  !isConnected ||
+                                  missmatchUrl ||
+                                  !isMemberCommunity
+                                }
+                                tooltip={
+                                  !isConnected ? "Connect your wallet"
+                                  : !isMemberCommunity ?
+                                    "Join the community first"
+                                  : "Create a proposal"
+                                }
+                              >
+                                Create a proposal
+                              </Button>
+                            </Link>
+                          </>
+                        )}
+                    </div>
                   </div>
-                </div>
+                  <div className="flex items-center gap-4 ">
+                    {/* Manage Support */}
+                    <div
+                      onMouseLeave={() => setShowManageSupportTooltip(false)}
+                    >
+                      <CheckSybil
+                        strategy={strategy}
+                        enableCheck={strategy.sybil?.type === "Passport"}
+                      >
+                        <Button
+                          icon={
+                            <AdjustmentsHorizontalIcon height={24} width={24} />
+                          }
+                          onClick={() => setAllocationView((prev) => !prev)}
+                          popTooltip={showManageSupportTooltip}
+                          disabled={
+                            !isConnected ||
+                            missmatchUrl ||
+                            !memberActivatedStrategy ||
+                            !isAllowed
+                          }
+                          tooltip={tooltipMessage}
+                        >
+                          Manage support
+                        </Button>
+                      </CheckSybil>
+                    </div>
+                  </div>
+                </>
               ))}
         </header>
-        {allocationView && <UserAllocationStats stats={stats} />}
 
-        <div className="flex flex-col gap-6">
-          {inputs != null ?
-            <>
-              {activeOrDisputedProposals.map((proposalData) => (
-                <Fragment key={proposalData.id}>
-                  <ProposalCard
-                    ref={makeRef(proposalData.id)}
-                    proposalData={proposalData}
-                    strategyConfig={strategy.config}
-                    inputData={inputs[proposalData.id]}
-                    stakedFilter={stakedFilters[proposalData.id]}
-                    isAllocationView={allocationView}
-                    memberActivatedPoints={memberActivatedPoints}
-                    memberPoolWeight={memberPoolWeight}
-                    executeDisabled={
-                      proposalData.proposalStatus == 4 ||
-                      !isConnected ||
-                      missmatchUrl
-                    }
-                    poolToken={poolToken}
-                    tokenDecimals={tokenDecimals}
-                    alloInfo={alloInfo}
-                    inputHandler={inputHandler}
-                    communityToken={strategy.registryCommunity.garden}
-                    isPoolEnabled={strategy.isEnabled}
-                    minThGtTotalEffPoints={minThGtTotalEffPoints}
-                  />
-                </Fragment>
-              ))}
-              {!!endedProposals.length && (
-                <div className="collapse collapse-arrow">
-                  <input type="checkbox" />
-                  <div className="collapse-title text-lg font-medium">
-                    Click to show/hide ended proposals
-                  </div>
-                  <div className="collapse-content flex flex-col gap-6 px-0">
-                    {endedProposals.map((proposalData) => (
-                      <Fragment key={proposalData.proposalNumber}>
-                        <ProposalCard
-                          proposalData={proposalData}
-                          strategyConfig={strategy.config}
-                          inputData={inputs[proposalData.id]}
-                          stakedFilter={stakedFilters[proposalData.id]}
-                          isAllocationView={allocationView}
-                          memberActivatedPoints={memberActivatedPoints}
-                          memberPoolWeight={memberPoolWeight}
-                          executeDisabled={
-                            proposalData.proposalStatus == 4 ||
-                            !isConnected ||
-                            missmatchUrl
-                          }
-                          poolToken={poolToken}
-                          tokenDecimals={tokenDecimals}
-                          alloInfo={alloInfo}
-                          inputHandler={inputHandler}
-                          communityToken={strategy.registryCommunity.garden}
-                          isPoolEnabled={strategy.isEnabled}
-                          minThGtTotalEffPoints={minThGtTotalEffPoints}
-                        />
-                      </Fragment>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </>
-          : <LoadingSpinner />}
-        </div>
+        <ProposalFiltersUI
+          filter={filter}
+          setFilter={setFilter}
+          sortBy={sortBy}
+          setSortBy={setSortBy}
+          poolType={strategy?.config?.proposalType}
+          counts={proposalsCountByStatus}
+        />
 
-        {strategy.isEnabled && allocationView && proposals.length > 0 && (
-          <>
-            <div className="flex justify-end gap-4">
-              <Button
-                btnStyle="outline"
-                color="danger"
-                onClick={() => setAllocationView((prev) => !prev)}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={submit}
-                isLoading={allocateStatus === "loading"}
-                disabled={
-                  inputs == null ||
-                  !getProposalsInputsDifferences(inputs, stakedFilters).length
+        {loading ?
+          <ProposalListLoading />
+        : filteredAndSorted.map((proposalData) => (
+            <Fragment key={proposalData.proposalNumber}>
+              <ProposalCard
+                proposalData={proposalData}
+                strategyConfig={strategy.config}
+                inputData={inputs[proposalData.id]}
+                stakedFilter={stakedFilters[proposalData.id]}
+                isAllocationView={allocationView}
+                memberActivatedPoints={memberActivatedPoints}
+                memberPoolWeight={memberPoolWeight}
+                executeDisabled={
+                  proposalData.proposalStatus == 4 ||
+                  !isConnected ||
+                  missmatchUrl
                 }
-                tooltip="Make changes in proposals support first"
-              >
-                Submit your support
-              </Button>
-            </div>
-            <div>
-              <div className="flex items-center justify-center gap-6">
-                <Link href={createProposalUrl}>
-                  <Button
-                    icon={<PlusIcon height={24} width={24} />}
-                    disabled={
-                      !isConnected || missmatchUrl || !isMemberCommunity
-                    }
-                    tooltip={
-                      !isConnected ? "Connect your wallet"
-                      : !isMemberCommunity ?
-                        "Join the community first"
-                      : "Create a proposal"
-                    }
-                  >
-                    Create a proposal
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </>
-        )}
-        {proposals.length > 0 && !allocationView && (
-          <div className="flex items-center justify-center gap-6">
-            <Link href={createProposalUrl}>
-              <Button
-                icon={<PlusIcon height={24} width={24} />}
-                disabled={!isConnected || missmatchUrl || !isMemberCommunity}
-                tooltip={createProposalTooltipMessage}
-              >
-                Create a proposal
-              </Button>
-            </Link>
-          </div>
-        )}
-      </section>
+                poolToken={poolToken}
+                tokenDecimals={tokenDecimals}
+                alloInfo={alloInfo}
+                inputHandler={inputHandler}
+                communityToken={strategy.registryCommunity.garden}
+                isPoolEnabled={strategy.isEnabled}
+                minThGtTotalEffPoints={minThGtTotalEffPoints}
+              />
+            </Fragment>
+          ))
+        }
 
-      {/* Pool Governace */}
-      {strategy.isEnabled && (
-        <div className="col-span-12 xl:col-span-3">
-          <div className="backdrop-blur-sm rounded-lg flex flex-col gap-2 sticky top-32">
-            <PoolGovernance
-              memberPoolWeight={memberPoolWeight}
-              tokenDecimals={tokenDecimals}
-              strategy={strategy}
-              communityAddress={communityAddress}
-              memberTokensInCommunity={memberTokensInCommunity}
-              isMemberCommunity={isMemberCommunity}
-              memberActivatedStrategy={memberActivatedStrategy}
-              membersStrategyData={membersStrategyData}
-            />
-          </div>
-        </div>
-      )}
+        {/* Modal Manage Support section */}
+        {inputs != null ?
+          <>
+            <Modal
+              isOpen={allocationView}
+              onClose={() => setAllocationView(false)}
+              size="extra-large"
+              title="Manage Your Support"
+            >
+              <div className="flex flex-col gap-4">
+                <UserAllocationStats stats={stats} />
+                {activeOrDisputedProposals.map((proposalData) => (
+                  <Fragment key={proposalData.id}>
+                    <ProposalsModalSupport
+                      ref={makeRef(proposalData.id)}
+                      proposalData={proposalData}
+                      strategyConfig={strategy.config}
+                      inputData={inputs[proposalData.id]}
+                      stakedFilter={stakedFilters[proposalData.id]}
+                      isAllocationView={allocationView}
+                      memberActivatedPoints={memberActivatedPoints}
+                      memberPoolWeight={memberPoolWeight}
+                      executeDisabled={
+                        proposalData.proposalStatus == 4 ||
+                        !isConnected ||
+                        missmatchUrl
+                      }
+                      poolToken={poolToken}
+                      tokenDecimals={tokenDecimals}
+                      alloInfo={alloInfo}
+                      inputHandler={inputHandler}
+                      communityToken={strategy.registryCommunity.garden}
+                      isPoolEnabled={strategy.isEnabled}
+                      minThGtTotalEffPoints={minThGtTotalEffPoints}
+                    />
+                  </Fragment>
+                ))}
+                {strategy.isEnabled &&
+                  allocationView &&
+                  proposals.length > 0 && (
+                    <>
+                      <div className="flex justify-end gap-4">
+                        <Button
+                          btnStyle="outline"
+                          color="danger"
+                          onClick={() => setAllocationView((prev) => !prev)}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          onClick={submit}
+                          isLoading={allocateStatus === "loading"}
+                          disabled={
+                            inputs == null ||
+                            !getProposalsInputsDifferences(
+                              inputs,
+                              stakedFilters,
+                            ).length
+                          }
+                          tooltip="Make changes in proposals support first"
+                        >
+                          Submit your support
+                        </Button>
+                      </div>
+                      <div />
+                    </>
+                  )}
+              </div>
+            </Modal>
+          </>
+        : <LoadingSpinner />}
+      </section>
     </>
+  );
+}
+
+export function useProposalFilter<
+  T extends {
+    proposalStatus: string | number;
+    createdAt?: string | number;
+    stakedAmount?: string | number;
+    requestedAmount?: string | number;
+    convictionLast?: string | number;
+  },
+>(proposals: T[]) {
+  //
+  // FILTER
+  //
+  type FilterType =
+    | "all"
+    | "active"
+    | "cancelled"
+    | "executed"
+    | "disputed"
+    | null;
+
+  const [filter, setFilter] = useState<FilterType>("active");
+
+  const [isPending, startTransition] = useTransition();
+
+  const FILTER_STATUS: Record<Exclude<FilterType, null>, number> = {
+    all: 0,
+    active: 1,
+    cancelled: 3,
+    executed: 4,
+    disputed: 5,
+  };
+
+  const filteredProposals = useMemo(() => {
+    if (!filter || filter == "all") return proposals;
+
+    const status = FILTER_STATUS[filter];
+    return proposals.filter((p) => Number(p.proposalStatus) === status);
+  }, [filter, proposals]);
+
+  //
+  // SORT
+  //
+  type SortType =
+    | "newest"
+    | "oldest"
+    | "mostSupported"
+    | "mostRequested"
+    | "mostConviction"
+    | null;
+
+  const [sortBy, setSortBy] = useState<SortType>("mostConviction");
+
+  const filteredAndSorted = useMemo(() => {
+    if (!sortBy) return filteredProposals;
+
+    const list = [...filteredProposals];
+
+    switch (sortBy) {
+      case "newest":
+        return list.sort((a, b) => Number(b.createdAt) - Number(a.createdAt));
+
+      case "oldest":
+        return list.sort((a, b) => Number(a.createdAt) - Number(b.createdAt));
+
+      case "mostSupported":
+        return list.sort(
+          (a, b) => Number(b.stakedAmount) - Number(a.stakedAmount),
+        );
+
+      case "mostRequested":
+        return list.sort(
+          (a, b) => Number(b.requestedAmount) - Number(a.requestedAmount),
+        );
+
+      case "mostConviction":
+        return list;
+
+      default:
+        return list;
+    }
+  }, [filteredProposals, sortBy]);
+
+  // Wrapped setters with loading state
+  const setFilterWithLoading = (newFilter: FilterType) => {
+    startTransition(() => {
+      setFilter(newFilter);
+    });
+  };
+
+  const setSortByWithLoading = (newSort: SortType) => {
+    startTransition(() => {
+      setSortBy(newSort);
+    });
+  };
+
+  return {
+    filter,
+    setFilter: setFilterWithLoading,
+    sortBy: sortBy,
+    setSortBy: setSortByWithLoading,
+    filtered: filteredAndSorted,
+    loading: isPending,
+  };
+}
+
+function ProposalFiltersUI({
+  filter,
+  setFilter,
+  sortBy,
+  setSortBy,
+  poolType,
+  counts,
+}: {
+  filter: string | null;
+  setFilter: (v: any) => void;
+  sortBy: string | null;
+  setSortBy: (v: any) => void;
+  poolType: number;
+  counts: Record<string, number>;
+}) {
+  const FILTERS = ["all", "active", "disputed", "executed", "cancelled"];
+
+  const SORT_OPTIONS = useMemo(() => {
+    const options = [
+      { key: "newest", label: "Newest first", icon: ArrowUpIcon },
+      { key: "oldest", label: "Oldest first", icon: ArrowDownIcon },
+      { key: "mostSupported", label: "Most Supported", icon: UsersIcon },
+      { key: "mostConviction", label: "Most Conviction", icon: Battery50Icon },
+      {
+        key: "mostRequested",
+        label: "Requested Amount",
+        icon: CurrencyDollarIcon,
+      },
+    ];
+
+    // Remove "Requested Amount" option when poolType is a signlaing pool
+    return +poolType === 0 ?
+        options.filter((opt) => opt.key !== "mostRequested")
+      : options;
+  }, [poolType]);
+
+  const currentSortOption = SORT_OPTIONS.find((o) => o.key === sortBy);
+  const CurrentIcon = currentSortOption?.icon;
+
+  return (
+    <div className="flex flex-col lg:flex-row gap-3 justify-between bg-neutral py-2 px-4 rounded-2xl ">
+      {/* FILTERS */}
+      <div className="flex gap-2 sm:justify-between flex-wrap ">
+        {FILTERS.map((f) => (
+          <Button
+            onClick={() => setFilter(f === filter ? null : f)}
+            color={filter === f ? "primary" : "disabled"}
+            key={f}
+          >
+            <div className="flex items-baseline gap-1">
+              <span className="capitalize text-sm font-semibold text-neutral-inverted-content  ">
+                {f}
+              </span>
+              <span className="text-xs font-semibold text-neutral-inverted-content  ">
+                ({counts[f] ?? 0})
+              </span>
+            </div>
+          </Button>
+        ))}
+      </div>
+
+      {/* SORT DROPDOWN */}
+      <div className="flex justify-between items-center gap-1 ">
+        <p className="text-sm text-neutral-soft-content">Sort by</p>
+        <div className="dropdown dropdown-hover dropdown-start">
+          <Button
+            btnStyle="ghost"
+            icon={CurrentIcon && <CurrentIcon className="w-4 h-4" />}
+          >
+            {currentSortOption?.label}
+          </Button>
+          <ul className="dropdown-content menu bg-primary rounded-box z-50 shadow w-[180px] sm:w-[210px]">
+            {SORT_OPTIONS.map((option) => {
+              const Icon = option.icon;
+
+              return (
+                <li
+                  key={option.key}
+                  onClick={() => setSortBy(option.key)}
+                  className="cursor-pointer w-full flex justify-between items-start text-xs hover:bg-primary-soft dark:hover:bg-primary-hover-content rounded-md"
+                >
+                  <span className="flex items-center gap-2 text-sm">
+                    <Icon className="w-4 h-4" />
+                    {option.label}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProposalListLoading() {
+  return (
+    <div className="flex flex-col items-center justify-center py-12 space-y-4">
+      {/* Spinner */}
+      <div className="relative w-12 h-12">
+        <div className="absolute inset-0 border-4 border-neutral rounded-full" />
+        <div className="absolute inset-0 border-4 border-primary-content border-t-transparent rounded-full animate-spin" />
+      </div>
+    </div>
   );
 }
 
 function UserAllocationStats({ stats }: { stats: Stats[] }) {
   return (
-    <div className="mt-10">
-      <h5>Support Overview</h5>
-      <div className="mt-5 grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-2">
-        {stats.map((stat) => (
-          <div key={`stat_${stat.id}`} className="section-layout flex gap-4">
-            <div
-              className={`radial-progress rounded-full border-4 border-neutral transition-all duration-300 ease-in-out ${stat.className}`}
-              style={{
-                // @ts-ignore
-                "--value": stat.stat,
-                "--size": "4.2rem",
-                "--thickness": "0.35rem",
-              }}
-              role="progressbar"
-            >
-              <span className="text-xs dark:text-black">{stat.stat} %</span>
-            </div>
-            <div className="flex flex-col items-start justify-center">
-              <InfoWrapper tooltip={stat.info}>
-                <h5>
-                  <TooltipIfOverflow>{stat.name}</TooltipIfOverflow>
-                </h5>
-              </InfoWrapper>
-              <p className="text-2xl font-semibold text-right">{stat.stat} %</p>
-            </div>
+    <div className="mt-5 grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-2">
+      {stats.map((stat) => (
+        <div key={`stat_${stat.id}`} className="section-layout flex gap-4">
+          <div
+            className={`radial-progress rounded-full border-4 border-neutral transition-all duration-300 ease-in-out ${stat.className}`}
+            style={{
+              // @ts-ignore
+              "--value": stat.stat,
+              "--size": "4.2rem",
+              "--thickness": "0.35rem",
+            }}
+            role="progressbar"
+          >
+            <span className="text-xs dark:text-black">{stat.stat} %</span>
           </div>
-        ))}
-      </div>
+          <div className="flex flex-col items-start justify-center">
+            <InfoWrapper tooltip={stat.info}>
+              <h4>
+                <TooltipIfOverflow>{stat.name}</TooltipIfOverflow>
+              </h4>
+            </InfoWrapper>
+            <p className="text-xl font-semibold text-right">{stat.stat} %</p>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
