@@ -19,6 +19,7 @@ import {
   ArrowUpIcon,
   Battery50Icon,
   CurrencyDollarIcon,
+  EllipsisVerticalIcon,
 } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { Id, toast } from "react-toastify";
@@ -719,17 +720,17 @@ export function Proposals({
       <section className="col-span-12 xl:col-span-9 flex flex-col gap-10">
         <header
           ref={proposalSectionRef}
-          className={`flex ${
+          className={`flex border2 ${
             proposals.length === 0 ?
-              "flex-col items-start justify-start"
+              "items-start justify-start"
             : "items-center justify-between"
-          } gap-10 flex-wrap`}
+          }`}
         >
-          <h3 className="text-left w-52">Proposals</h3>
+          <h3 className="text-left border2">Proposals</h3>
 
           {strategy.isEnabled &&
             (proposals.length === 0 ?
-              <div className="text-center py-12  w-full flex flex-col items-center justify-center">
+              <div className="text-center py-12  w-full flex flex-col items-center justify-center border2">
                 <div className="w-16 h-16 bg-neutral-soft-2 rounded-full flex items-center justify-center mx-auto mb-4">
                   <UsersIcon className="w-8 h-8 text-gray-400" />
                 </div>
@@ -758,43 +759,80 @@ export function Proposals({
                 </Link>
               </div>
             : !allocationView && (
-                <div className="flex items-center gap-4">
-                  {activeOrDisputedProposals.length > 0 &&
-                    proposalCardRefs.current.size ===
-                      activeOrDisputedProposals.length && (
-                      <Button
-                        btnStyle="link"
-                        color="primary"
-                        tooltip="Download conviction results (CSV)"
-                        forceShowTooltip={true}
-                        icon={<ArrowDownTrayIcon className="w-6 h-6" />}
-                        onClick={handleDownloadCVResults}
-                      />
-                    )}
-                  <div onMouseLeave={() => setShowManageSupportTooltip(false)}>
-                    <CheckSybil
-                      strategy={strategy}
-                      enableCheck={strategy.sybil?.type === "Passport"}
-                    >
-                      <Button
-                        icon={
-                          <AdjustmentsHorizontalIcon height={24} width={24} />
-                        }
-                        onClick={() => setAllocationView((prev) => !prev)}
-                        popTooltip={showManageSupportTooltip}
-                        disabled={
-                          !isConnected ||
-                          missmatchUrl ||
-                          !memberActivatedStrategy ||
-                          !isAllowed
-                        }
-                        tooltip={tooltipMessage}
-                      >
-                        Manage support
-                      </Button>
-                    </CheckSybil>
+                <>
+                  <div className="dropdown dropdown-hover dropdown-start">
+                    <Button
+                      btnStyle="outline"
+                      icon={<EllipsisVerticalIcon className="w-5 h-5" />}
+                    />
+                    <div className="dropdown-content menu bg-primary flex flex-col items-start gap-2 rounded-box z-50 shadow w-[240px] ">
+                      {activeOrDisputedProposals.length > 0 &&
+                        proposalCardRefs.current.size ===
+                          activeOrDisputedProposals.length && (
+                          <>
+                            <Button
+                              btnStyle="link"
+                              color="primary"
+                              tooltip="Download proposals conviction results (CSV)"
+                              forceShowTooltip={true}
+                              icon={<ArrowDownTrayIcon className="w-6 h-6" />}
+                              onClick={handleDownloadCVResults}
+                            >
+                              Download CV results
+                            </Button>
+                            <Link href={createProposalUrl}>
+                              <Button
+                                className="w-full"
+                                btnStyle="outline"
+                                icon={<PlusIcon height={24} width={24} />}
+                                disabled={
+                                  !isConnected ||
+                                  missmatchUrl ||
+                                  !isMemberCommunity
+                                }
+                                tooltip={
+                                  !isConnected ? "Connect your wallet"
+                                  : !isMemberCommunity ?
+                                    "Join the community first"
+                                  : "Create a proposal"
+                                }
+                              >
+                                Create a proposal
+                              </Button>
+                            </Link>
+                          </>
+                        )}
+                    </div>
                   </div>
-                </div>
+                  <div className="flex items-center gap-4 ">
+                    {/* Manage Support */}
+                    <div
+                      onMouseLeave={() => setShowManageSupportTooltip(false)}
+                    >
+                      <CheckSybil
+                        strategy={strategy}
+                        enableCheck={strategy.sybil?.type === "Passport"}
+                      >
+                        <Button
+                          icon={
+                            <AdjustmentsHorizontalIcon height={24} width={24} />
+                          }
+                          onClick={() => setAllocationView((prev) => !prev)}
+                          popTooltip={showManageSupportTooltip}
+                          disabled={
+                            !isConnected ||
+                            missmatchUrl ||
+                            !memberActivatedStrategy ||
+                            !isAllowed
+                          }
+                          tooltip={tooltipMessage}
+                        >
+                          Manage support
+                        </Button>
+                      </CheckSybil>
+                    </div>
+                  </div>
+                </>
               ))}
         </header>
 
@@ -1057,9 +1095,9 @@ function ProposalFiltersUI({
   const CurrentIcon = currentSortOption?.icon;
 
   return (
-    <div className="flex flex-col sm:flex-row gap-3 justify-between bg-neutral py-2 px-4 rounded-2xl">
+    <div className="flex flex-col lg:flex-row gap-3 justify-between bg-neutral py-2 px-4 rounded-2xl ">
       {/* FILTERS */}
-      <div className="flex gap-2 flex-wrap">
+      <div className="flex gap-2 sm:justify-between flex-wrap ">
         {FILTERS.map((f) => (
           <Button
             onClick={() => setFilter(f === filter ? null : f)}
@@ -1079,7 +1117,7 @@ function ProposalFiltersUI({
       </div>
 
       {/* SORT DROPDOWN */}
-      <div className="flex items-center gap-1">
+      <div className="flex justify-between items-center gap-1 ">
         <p className="text-sm text-neutral-soft-content">Sort by</p>
         <div className="dropdown dropdown-hover dropdown-start">
           <Button
@@ -1088,7 +1126,7 @@ function ProposalFiltersUI({
           >
             {currentSortOption?.label}
           </Button>
-          <ul className="dropdown-content menu bg-primary rounded-box z-50 shadow w-[210px]">
+          <ul className="dropdown-content menu bg-primary rounded-box z-50 shadow w-[180px] sm:w-[210px]">
             {SORT_OPTIONS.map((option) => {
               const Icon = option.icon;
 
