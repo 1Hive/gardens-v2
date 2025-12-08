@@ -853,6 +853,12 @@ export function Proposals({
 
         {loading ?
           <ProposalListLoading />
+        : filteredAndSorted.length === 0 ?
+          <div className="section-layout flex flex-col items-center justify-center text-center">
+            <p className="text-neutral-soft-content text-sm">
+              There are no proposals matching this filter.
+            </p>
+          </div>
         : filteredAndSorted.map((proposalData) => (
             <Fragment key={proposalData.proposalNumber}>
               <ProposalCard
@@ -923,13 +929,6 @@ export function Proposals({
                     <>
                       <div className="flex justify-end gap-4">
                         <Button
-                          btnStyle="outline"
-                          color="danger"
-                          onClick={() => setAllocationView((prev) => !prev)}
-                        >
-                          Cancel
-                        </Button>
-                        <Button
                           onClick={submit}
                           isLoading={allocateStatus === "loading"}
                           disabled={
@@ -940,6 +939,7 @@ export function Proposals({
                             ).length
                           }
                           tooltip="Make changes in proposals support first"
+                          tooltipSide="tooltip-left"
                         >
                           Submit your support
                         </Button>
