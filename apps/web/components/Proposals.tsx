@@ -853,7 +853,7 @@ export function Proposals({
 
         {loading ?
           <ProposalListLoading />
-        : filteredAndSorted.length === 0 ?
+        : proposals.length !== 0 && filteredAndSorted.length === 0 ?
           <div className="section-layout flex flex-col items-center justify-center text-center">
             <p className="text-neutral-soft-content text-sm">
               There are no proposals matching this filter.
@@ -1086,7 +1086,7 @@ function ProposalFiltersUI({
       { key: "mostConviction", label: "Most Conviction", icon: Battery50Icon },
       {
         key: "mostRequested",
-        label: "Requested Amount",
+        label: "Highest Requested Amount",
         icon: CurrencyDollarIcon,
       },
     ];
@@ -1103,15 +1103,16 @@ function ProposalFiltersUI({
   return (
     <div className="flex flex-col lg:flex-row gap-3 justify-between bg-neutral py-2 px-4 rounded-2xl ">
       {/* FILTERS */}
-      <div className="flex gap-2 sm:justify-between flex-wrap ">
+      <div className="flex gap-2 sm:justify-between flex-wrap">
         {FILTERS.map((f) => (
           <Button
-            onClick={() => setFilter(f === filter ? null : f)}
+            // style={filter === f ? { cursor: "not-allowed" } : {}}
+            onClick={() => setFilter(f)}
             color={filter === f ? "primary" : "disabled"}
             key={f}
           >
             <div className="flex items-baseline gap-1">
-              <span className="capitalize text-sm font-semibold text-neutral-inverted-content  ">
+              <span className="capitalize text-sm font-semibold text-neutral-inverted-content">
                 {f}
               </span>
               <span className="text-xs font-semibold text-neutral-inverted-content  ">
