@@ -83,13 +83,11 @@ export function useSuperfluidToken({
               break;
             }
 
-            // Is listed
             if (returnedToken.isListed) {
               foundSuperToken = returnedToken;
               break;
             }
 
-            // Query the contract to check if it has been upgraded
             const adminChangedAbi = parseAbi([
               "event AdminChanged(address indexed previousAdmin, address indexed newAdmin)",
             ]);
@@ -114,6 +112,11 @@ export function useSuperfluidToken({
               foundSuperToken = returnedToken;
             }
           }
+        }
+
+        // Fallback: pick first returned token if nothing matched
+        if (!foundSuperToken && returnedTokens.length > 0) {
+          foundSuperToken = returnedTokens[0];
         }
 
         if (!foundSuperToken) {
