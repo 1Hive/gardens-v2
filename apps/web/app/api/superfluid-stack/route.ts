@@ -550,7 +550,7 @@ const PINATA_CREATION_CACHE_NAME =
   process.env.SUPERFLUID_BLOCK_CACHE_NAME ?? "superfluid-creation-blocks";
 const PINATA_TRANSFER_CACHE_NAME =
   process.env.SUPERFLUID_TRANSFER_CACHE_NAME ?? "superfluid-transfer-logs";
-const PINATA_POINTS_SNAPSHOT_NAME = "superfluid-activity-points";
+export const PINATA_POINTS_SNAPSHOT_NAME = "superfluid-activity-points";
 const PINATA_POINTS_SNAPSHOT_CID =
   process.env.SUPERFLUID_POINTS_SNAPSHOT_CID ?? null;
 const PINATA_PRICE_CACHE_NAME =
