@@ -8,6 +8,9 @@ import { getConfigByChain } from "@/configs/chains";
 import { queryByChain } from "@/providers/urql";
 import { ProposalStatus } from "@/types";
 
+export const dynamic = "force-dynamic"; // ensure latest proposal status for OG
+export const revalidate = 0; // do not cache this route
+export const fetchCache = "force-no-store"; // always fetch fresh metadata data
 export const FALLBACK_TITLE = "Gardens proposal";
 export const ACTIVE_PROPOSAL_DESCRIPTION =
   "This proposal is active and can receive support from members";
@@ -16,6 +19,7 @@ export const DISPUTED_PROPOSAL_DESCRIPTION =
 export const ENDED_PROPOSAL_DESCRIPTION =
   "This proposal has ended and can no longer receive support.";
 export const OG_IMAGE_TOKEN = "opengraph-image-1eoc0x";
+export const OG_IMAGE_VERSION = "v=3";
 
 type PageProps = {
   params: ProposalPageParams;
@@ -24,9 +28,18 @@ type PageProps = {
 export function buildOgImagePath(
   params: ProposalPageParams,
   status?: string,
+  title?: string,
 ): string {
-  const statusQuery = status ? `?status=${status.toLowerCase()}` : "";
-  return `/gardens/${params.chain}/${params.garden}/${params.community}/${params.poolId}/${params.proposalId}/${OG_IMAGE_TOKEN}${statusQuery}`;
+  const paramsList = [];
+  if (status) {
+    paramsList.push(`status=${encodeURIComponent(status.toLowerCase())}`);
+  }
+  if (title) {
+    paramsList.push(`title=${encodeURIComponent(title)}`);
+  }
+  paramsList.push(OG_IMAGE_VERSION);
+  const query = paramsList.length ? `?${paramsList.join("&")}` : "";
+  return `/gardens/${params.chain}/${params.garden}/${params.community}/${params.poolId}/${params.proposalId}/${OG_IMAGE_TOKEN}${query}`;
 }
 
 export function getDescriptionFromStatus(
@@ -119,6 +132,8 @@ export async function generateMetadata({
     const title =
       titlePrefix +
       (rawTitle && rawTitle.length > 0 ? rawTitle : FALLBACK_TITLE);
+    const imageTitle =
+      rawTitle && rawTitle.length > 0 ? rawTitle : FALLBACK_TITLE;
 
     return {
       title,
@@ -128,7 +143,7 @@ export async function generateMetadata({
         description,
         images: [
           {
-            url: buildOgImagePath(params, status),
+            url: buildOgImagePath(params, status, imageTitle),
             alt: titleCaseStatus(status) ?? "Proposal",
           },
         ],
@@ -137,7 +152,7 @@ export async function generateMetadata({
         card: "summary_large_image",
         title,
         description,
-        images: [buildOgImagePath(params, status)],
+        images: [buildOgImagePath(params, status, imageTitle)],
       },
     };
   } catch (error) {

@@ -15,6 +15,9 @@ import { queryByChain } from "@/providers/urql";
 import { PoolTypes } from "@/types";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic"; // keep OG image aligned with live status
+export const revalidate = 0; // disable ISR to avoid stale previews
+export const fetchCache = "force-no-store"; // always fetch latest subgraph data
 
 // Image metadata
 export const alt = "Gardens Pool";
@@ -463,9 +466,13 @@ export async function generateMetadata({
   }
 
   try {
-    const poolResult = await queryByChain(chainConfig, getPoolTitleDocument, {
-      poolId,
-    });
+    const poolResult = await queryByChain(
+      chainConfig,
+      getPoolTitleDocument,
+      { poolId },
+      { requestPolicy: "network-only" },
+      true,
+    );
 
     if (poolResult.error) {
       console.error("Error fetching pool metadata for OG image.", {
@@ -520,9 +527,13 @@ export default async function Image({ params }: { params: ImageParams }) {
   }
 
   try {
-    const poolResult = await queryByChain(chainConfig, getPoolTitleDocument, {
-      poolId,
-    });
+    const poolResult = await queryByChain(
+      chainConfig,
+      getPoolTitleDocument,
+      { poolId },
+      { requestPolicy: "network-only" },
+      true,
+    );
 
     if (poolResult.error) {
       console.error("Error fetching pool data for OG image.", {
