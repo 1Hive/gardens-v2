@@ -86,9 +86,19 @@ const stripSnapshot = (data: any) => {
           checksum,
           nativeSuperToken,
           nativeToken,
+          targetPoints,
+          bonusPoints,
+          communityPoints,
           ...rest
         } = w;
-        return rest;
+        const renamed: Record<string, any> = { ...rest };
+        if (typeof bonusPoints === "number") {
+          renamed.superfluidActivityPoints = bonusPoints;
+        }
+        if (typeof communityPoints === "number") {
+          renamed.governanceStakePoints = communityPoints;
+        }
+        return renamed;
       }),
     };
   }
