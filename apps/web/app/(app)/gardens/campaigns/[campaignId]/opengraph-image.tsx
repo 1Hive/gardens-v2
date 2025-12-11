@@ -1,91 +1,122 @@
+import fs from "node:fs/promises";
+import { fileURLToPath } from "node:url";
 import type { Metadata } from "next";
 import { ImageResponse } from "next/og";
-import { getCommunityNameDocument } from "#/subgraph/.graphclient";
-import {
-  COMMUNITY_IMAGE_BASE64,
-  GARDEN_LOGO_BASE64,
-} from "../../[chain]/[garden]/[community]/ogAssets";
-import { chainConfigMap, ChainIcon } from "@/configs/chains";
-import { queryByChain } from "@/providers/urql";
 
 export const runtime = "nodejs";
 
-// Image metadata
-export const alt = "Community Discussion";
+export const alt = "Superfluid Ecosystem Rewards";
 export const size = {
   width: 1200,
   height: 630,
 };
-
 export const contentType = "image/png";
-export const description =
-  "Gardens community for collective decision-making and funding.";
-export const FALLBACK_TITLE = "Community";
 
-// Image generation
+const CAMPAIGN_TITLE = "Superfluid Ecosystem Rewards";
+const CAMPAIGN_DESCRIPTION =
+  "Earn SUP rewards by staking governance tokens, adding funds to pools, and following Gardens on Farcaster.";
+const CAMPAIGN_ENDS = "Ends 25 Feb 2025";
+const TOTAL_SUP = "848K SUP";
+const PARTICIPANTS = "1K participants";
+
+export const description = CAMPAIGN_DESCRIPTION;
+export const FALLBACK_TITLE = CAMPAIGN_TITLE;
+
 type ImageParams = {
-  chain: string;
-  garden: string;
-  community: string;
+  campaignId: string;
 };
 
-let cachedCommunityImageDataUrl: string | null = null;
+let cachedBanner: string | null = null;
+let cachedLogo: string | null = null;
 
-let cachedGardenLogoDataUrl: string | null = null;
+const bannerAssetUrl = new URL(
+  "../../../../../assets/superfluid-banner.png",
+  import.meta.url,
+);
+const logoAssetUrl = new URL(
+  "../../../../../assets/superfluid-logo-dark.svg",
+  import.meta.url,
+);
 
-const FOOTER_MESSAGES = [
-  "Collaborate • Propose ideas • Grow your community",
-  "Decide together • Fund change • Build your future",
-  "Create proposals • Vote collectively • Shape impact",
-  "Connect • Govern • Thrive",
-  "Empower your community • Make decisions • Bloom with purpose",
-];
-
-async function getCommunityImageDataUrl() {
-  if (cachedCommunityImageDataUrl) {
-    return cachedCommunityImageDataUrl;
-  }
-
-  cachedCommunityImageDataUrl = `data:image/png;base64,${COMMUNITY_IMAGE_BASE64}`;
-
-  return cachedCommunityImageDataUrl;
-}
-
-async function getGardenLogoDataUrl() {
-  if (cachedGardenLogoDataUrl) {
-    return cachedGardenLogoDataUrl;
-  }
-
-  cachedGardenLogoDataUrl = `data:image/png;base64,${GARDEN_LOGO_BASE64}`;
-
-  return cachedGardenLogoDataUrl;
-}
-
-function formatTitle(title: string) {
-  const trimmed = title?.trim() ?? "Community";
-  return trimmed.length > 80 ? `${trimmed.slice(0, 77)}...` : trimmed;
-}
-
-async function renderImage(title: string, chainId: number) {
-  let communityImageSrc: string | null = null;
-  let gardenImageSrc: string | null = null;
-
+async function getAssetDataUrl(
+  assetUrl: URL,
+  mimeType: string,
+): Promise<string | null> {
   try {
-    communityImageSrc = await getCommunityImageDataUrl();
+    const filePath = fileURLToPath(assetUrl);
+    const fileBuffer = await fs.readFile(filePath);
+    return `data:${mimeType};base64,${fileBuffer.toString("base64")}`;
   } catch (error) {
-    console.error("Failed to load community OG image asset.", { error });
+    console.error("Failed to load OG asset.", {
+      assetUrl: assetUrl.href,
+      error,
+    });
+    return null;
+  }
+}
+
+async function getBanner() {
+  if (cachedBanner) {
+    return cachedBanner;
   }
 
-  try {
-    gardenImageSrc = await getGardenLogoDataUrl();
-  } catch (error) {
-    console.error("Failed to load garden logo image asset.", { error });
+  cachedBanner = await getAssetDataUrl(bannerAssetUrl, "image/png");
+
+  return cachedBanner;
+}
+
+async function getLogo() {
+  if (cachedLogo) {
+    return cachedLogo;
   }
 
-  const safeTitle = formatTitle(title);
-  const footerMessage =
-    FOOTER_MESSAGES[Math.floor(Math.random() * FOOTER_MESSAGES.length)] ??
-    FOOTER_MESSAGES[0];
+  cachedLogo = await getAssetDataUrl(logoAssetUrl, "image/svg+xml");
+
+  return cachedLogo;
+}
+
+function statBlock(label: string, value: string) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        padding: "14px 16px",
+        background: "#111822",
+        borderRadius: "14px",
+        border: "1px solid #1f2a38",
+        minWidth: "180px",
+        gap: "6px",
+      }}
+    >
+      <span
+        style={{
+          fontSize: "18px",
+          color: "#9fb4cc",
+          letterSpacing: "-0.01em",
+        }}
+      >
+        {label}
+      </span>
+      <span
+        style={{
+          fontSize: "26px",
+          fontWeight: 700,
+          color: "#f2f6fb",
+          letterSpacing: "-0.01em",
+        }}
+      >
+        {value}
+      </span>
+    </div>
+  );
+}
+
+async function renderImage() {
+  const [bannerDataUrl, logoDataUrl] = await Promise.all([
+    getBanner(),
+    getLogo(),
+  ]);
 
   return new ImageResponse(
     (
@@ -94,157 +125,187 @@ async function renderImage(title: string, chainId: number) {
           width: "100%",
           height: "100%",
           display: "flex",
-          flexDirection: "column",
-          justifyContent: "space-between",
-          backgroundColor: "#F8FAFC",
-          padding: "64px",
-          color: "#0F172A",
-          fontFamily:
-            '"Inter", "Manrope", "Helvetica Neue", "Arial", sans-serif',
-          gap: "48px",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "#05080f",
+          padding: "32px",
+          fontFamily: '"Inter", "Helvetica Neue", Arial, sans-serif',
         }}
       >
         <div
           style={{
+            width: "1120px",
+            height: "566px",
+            background: "#0c1118",
+            borderRadius: "28px",
+            border: "1px solid #1b2432",
             display: "flex",
-            alignItems: "flex-start",
-            justifyContent: "space-between",
+            flexDirection: "column",
+            overflow: "hidden",
+            boxShadow: "0 28px 120px rgba(0,0,0,0.45)",
           }}
         >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "20px",
-            }}
-          >
-            {gardenImageSrc ?
-              // eslint-disable-next-line @next/next/no-img-element -- Rendering inside ImageResponse.
-              <img
-                alt="Gardens logo"
-                src={gardenImageSrc}
+          <div style={{ position: "relative", height: "280px" }}>
+            {bannerDataUrl ?
+              <div
                 style={{
-                  height: "50px",
-                  width: "50px",
+                  position: "absolute",
+                  inset: 0,
+                  backgroundImage: `url(${bannerDataUrl})`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
                 }}
               />
-            : <span
+            : <div
                 style={{
-                  fontSize: "48px",
-                  fontWeight: 700,
-                  color: "#15803D",
+                  position: "absolute",
+                  inset: 0,
+                  background:
+                    "radial-gradient(circle at 20% 20%, #1f8a5d, #0c1118 55%)",
                 }}
-              >
-                🌱
-              </span>
+              />
             }
-            <span
-              style={{
-                fontSize: "32px",
-                fontWeight: 600,
-                color: "#1c1d1c",
-                lineHeight: 1,
-                fontFamily:
-                  '"Inter", "Inter Fallback", system-ui, Arial, sans-serif',
-              }}
-            >
-              Gardens
-            </span>
-          </div>
 
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "flex-end",
-              gap: "12px",
-            }}
-          >
-            <ChainIcon chain={chainId} height={50} width={50} />
-          </div>
-        </div>
-
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "48px",
-            flexGrow: 1,
-          }}
-        >
-          {communityImageSrc ?
-            // eslint-disable-next-line @next/next/no-img-element -- Rendering inside ImageResponse.
-            <img
-              alt="Community illustration"
-              src={communityImageSrc}
+            <div
               style={{
-                width: "200px",
-                height: "200px",
+                position: "absolute",
+                inset: 0,
+                background:
+                  "linear-gradient(180deg, rgba(5,8,15,0.05) 0%, rgba(5,8,15,0.92) 100%)",
               }}
             />
-          : <div
+
+            <div
               style={{
-                width: "200px",
-                height: "200px",
-                borderRadius: "40px",
-                backgroundColor: "#DDD6FE",
+                position: "absolute",
+                top: 24,
+                left: 24,
+                width: "76px",
+                height: "76px",
+                borderRadius: "18px",
+                background: "rgba(5,8,15,0.55)",
+                padding: "14px",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                fontSize: "88px",
-                fontWeight: 700,
-                color: "#6D28D9",
+                border: "1px solid rgba(255,255,255,0.08)",
+                boxShadow: "0 16px 42px rgba(0,0,0,0.35)",
               }}
             >
-              🌱
+              {logoDataUrl ?
+                // eslint-disable-next-line @next/next/no-img-element -- Rendering inside ImageResponse.
+                <img
+                  src={logoDataUrl}
+                  alt="Superfluid logo"
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "contain",
+                  }}
+                />
+              : <span style={{ fontSize: "42px" }}>💧</span>}
             </div>
-          }
+
+            <div
+              style={{
+                position: "absolute",
+                bottom: 30,
+                left: 28,
+                right: 28,
+                display: "flex",
+                flexDirection: "column",
+                gap: "10px",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: "42px",
+                  fontWeight: 800,
+                  color: "#f7fafc",
+                  letterSpacing: "-0.02em",
+                  textShadow: "0 8px 24px rgba(0,0,0,0.35)",
+                }}
+              >
+                {CAMPAIGN_TITLE}
+              </div>
+              <div
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  padding: "10px 14px",
+                  borderRadius: "14px",
+                  background: "rgba(12,17,24,0.65)",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  color: "#d8e7f5",
+                  width: "fit-content",
+                  fontSize: "20px",
+                  letterSpacing: "-0.01em",
+                }}
+              >
+                <span aria-hidden style={{ fontSize: "18px" }}>
+                  📅
+                </span>
+                {CAMPAIGN_ENDS}
+              </div>
+            </div>
+          </div>
 
           <div
             style={{
+              padding: "32px",
               display: "flex",
               flexDirection: "column",
-              gap: "15px",
-              maxWidth: "640px",
+              gap: "22px",
+              color: "#dbe7f3",
+              flex: 1,
             }}
           >
-            <span
+            <div
               style={{
-                fontSize: "72px",
-                fontWeight: 700,
-                lineHeight: 1.05,
+                fontSize: "22px",
+                lineHeight: 1.5,
+                color: "#c3d4e7",
+                maxWidth: "960px",
+                letterSpacing: "-0.01em",
               }}
             >
-              {safeTitle}
-            </span>
+              {CAMPAIGN_DESCRIPTION}
+            </div>
 
-            <span
+            <div
               style={{
-                fontSize: "32px",
-                color: "#475569",
-                lineHeight: 1.4,
+                display: "flex",
+                gap: "16px",
+                flexWrap: "wrap",
               }}
             >
-              A Gardens community for collective decision-making and funding.
-            </span>
+              {statBlock("Total to distribute", TOTAL_SUP)}
+              {statBlock("Campaign ends", CAMPAIGN_ENDS)}
+              {statBlock("Community momentum", PARTICIPANTS)}
+            </div>
+
+            <div
+              style={{
+                marginTop: "auto",
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+                color: "#9fb4cc",
+                fontSize: "18px",
+                letterSpacing: "-0.01em",
+              }}
+            >
+              <span aria-hidden style={{ fontSize: "18px" }}>
+                🌱
+              </span>
+              Rewards campaign on Gardens
+            </div>
           </div>
-        </div>
-
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "flex-end",
-            fontSize: "32px",
-            color: "#1E293B",
-          }}
-        >
-          <span style={{ color: "#475569" }}>{footerMessage}</span>
         </div>
       </div>
     ),
-    {
-      ...size,
-    },
+    { ...size },
   );
 }
 
@@ -253,102 +314,12 @@ export async function generateMetadata({
 }: {
   params: ImageParams;
 }): Promise<Metadata> {
-  const chainId = Number(params.chain);
-  const chainConfig = chainConfigMap[params.chain] ?? chainConfigMap[chainId];
-
-  const fallbackMetadata: Metadata = {
-    title: FALLBACK_TITLE,
-    description,
+  return {
+    title: `${CAMPAIGN_TITLE} - Campaign ${params.campaignId}`,
+    description: CAMPAIGN_DESCRIPTION,
   };
-
-  if (chainConfig == null) {
-    console.error(
-      "Unsupported chainId for community opengraph-image metadata.",
-      { chainId: params.chain },
-    );
-    return fallbackMetadata;
-  }
-
-  try {
-    const communityResult = await queryByChain(
-      chainConfig,
-      getCommunityNameDocument,
-      {
-        communityAddr: params.community,
-      },
-    );
-
-    if (communityResult.error) {
-      console.error("Error fetching community metadata for OG image.", {
-        chainId: params.chain,
-        community: params.community,
-        error: communityResult.error,
-      });
-      return fallbackMetadata;
-    }
-
-    const communityName =
-      communityResult?.data?.registryCommunity?.communityName?.trim();
-
-    if (!communityName) {
-      return fallbackMetadata;
-    }
-
-    return {
-      title: communityName,
-      description,
-    };
-  } catch (error) {
-    console.error("Failed to generate metadata for community OG image.", {
-      chainId: params.chain,
-      community: params.community,
-      error,
-    });
-    return fallbackMetadata;
-  }
 }
 
-export default async function Image({ params }: { params: ImageParams }) {
-  const chainId = Number(params.chain);
-  const chainConfig = chainConfigMap[params.chain] ?? chainConfigMap[chainId];
-
-  if (chainConfig == null) {
-    console.error(
-      "Unsupported chainId for community opengraph-image generation.",
-      { chainId: params.chain },
-    );
-    return renderImage("Community", chainId);
-  }
-
-  try {
-    const communityResult = await queryByChain(
-      chainConfig,
-      getCommunityNameDocument,
-      {
-        communityAddr: params.community,
-      },
-    );
-
-    if (communityResult.error) {
-      console.error("Error fetching community data for OG image.", {
-        chainId: params.chain,
-        community: params.community,
-        error: communityResult.error,
-      });
-      return await renderImage("Community", chainId);
-    }
-
-    const communityName =
-      communityResult?.data?.registryCommunity?.communityName?.trim() ??
-      "Community";
-
-    return await renderImage(communityName, chainId);
-  } catch (error) {
-    console.error("Failed to fetch community data for OG image.", {
-      chainId: params.chain,
-      community: params.community,
-      error,
-    });
-    return await renderImage("Community", chainId);
-  }
+export default async function Image() {
+  return renderImage();
 }
