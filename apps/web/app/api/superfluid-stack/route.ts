@@ -596,6 +596,7 @@ if (FARCASTER_DISABLED) {
 }
 let farcasterUsernameCache = new Map<string, string>();
 let ensNameCache = new Map<string, string>();
+let ensAvatarCache = new Map<string, string>();
 let nativeSuperTokenCache = new Map<string, string>();
 let nativeTokenCache = new Map<string, string>();
 let latestPointsSnapshotCid: string | null = PINATA_POINTS_SNAPSHOT_CID;
@@ -609,6 +610,16 @@ const tokenPriceCache = new Map<
 let priceCacheDirty = false;
 let latestPriceCacheCid: string | null = null;
 const ensLookupFailures = new Set<string>();
+let ensCacheDay: string | null = null;
+const ensureEnsCacheFresh = () => {
+  const today = new Date().toISOString().slice(0, 10);
+  if (ensCacheDay !== today) {
+    ensCacheDay = today;
+    ensNameCache.clear();
+    ensAvatarCache.clear();
+    ensLookupFailures.clear();
+  }
+};
 const farcasterAuthHeader =
   FARCASTER_AUTH_TOKEN ? `Bearer ${FARCASTER_AUTH_TOKEN}` : null;
 
@@ -713,30 +724,60 @@ const getMainnetClient = () => {
   return mainnetClient;
 };
 
-const fetchEnsNameByAddress = async (
+const fetchEnsIdentityByAddress = async (
   address: string,
-): Promise<string | null> => {
-  if (!address || !address.toLowerCase().startsWith("0x")) return null;
-  if (ensNameCache.has(address)) return ensNameCache.get(address) ?? null;
+): Promise<{ name: string | null; avatar: string | null }> => {
+  if (!address || !address.toLowerCase().startsWith("0x")) {
+    return { name: null, avatar: null };
+  }
+  ensureEnsCacheFresh();
+  const cachedNameRaw = ensNameCache.get(address);
+  const cachedAvatarRaw = ensAvatarCache.get(address);
+  const cachedName = cachedNameRaw === "" ? null : cachedNameRaw ?? null;
+  const cachedAvatar = cachedAvatarRaw === "" ? null : cachedAvatarRaw ?? null;
+  if (cachedName !== null && cachedAvatar !== null) {
+    return { name: cachedName, avatar: cachedAvatar };
+  }
   try {
     const client = getMainnetClient();
-    const name = await client.getEnsName({ address: address as Address });
+    const name = cachedName ??
+      (await client.getEnsName({ address: address as Address }));
     const ens = typeof name === "string" ? name : null;
     if (ens) {
       ensNameCache.set(address, ens);
     } else {
       console.log("[superfluid-stack] ens not found for address", { address });
+      ensNameCache.set(address, "");
     }
-    return ens;
+
+    let avatar: string | null = null;
+    if (cachedAvatar !== null) {
+      avatar = cachedAvatar;
+    } else if (ens) {
+      avatar = await client.getEnsAvatar({ name: ens });
+      if (avatar) {
+        ensAvatarCache.set(address, avatar);
+      } else {
+        console.log("[superfluid-stack] ens avatar not found for name", {
+          ens,
+        });
+        ensAvatarCache.set(address, "");
+      }
+    }
+    return { name: ens, avatar };
   } catch (error) {
     const message = (error as Error)?.message ?? "";
     if (message.includes("reverse")) {
       // Reverse resolver often reverts when unset; ignore quietly after first hit
       ensLookupFailures.add(address);
-      return null;
+      ensNameCache.set(address, "");
+      ensAvatarCache.set(address, "");
+      return { name: null, avatar: null };
     }
     console.warn("[superfluid-stack] ens lookup failed", { address, error });
-    return null;
+    ensNameCache.set(address, "");
+    ensAvatarCache.set(address, "");
+    return { name: null, avatar: null };
   }
 };
 
@@ -1161,6 +1202,7 @@ const hydratePointsSnapshotFromIpfs = async () => {
   });
   const farcasterMap = new Map<string, string>();
   const ensMap = new Map<string, string>();
+  const ensAvatarMap = new Map<string, string>();
   const nativeSuperMap = new Map<string, string>();
   const nativeTokenMap = new Map<string, string>();
   for (const w of wallets) {
@@ -1172,6 +1214,9 @@ const hydratePointsSnapshotFromIpfs = async () => {
     if (typeof w?.ensName === "string") {
       ensMap.set(addr, w.ensName);
     }
+    if (typeof w?.ensAvatar === "string") {
+      ensAvatarMap.set(addr, w.ensAvatar);
+    }
     if (typeof w?.nativeSuperToken === "string") {
       nativeSuperMap.set(addr, w.nativeSuperToken as Address);
     }
@@ -1181,6 +1226,7 @@ const hydratePointsSnapshotFromIpfs = async () => {
   }
   farcasterUsernameCache = farcasterMap;
   ensNameCache = ensMap;
+  ensAvatarCache = ensAvatarMap;
   nativeSuperTokenCache = nativeSuperMap;
   nativeTokenCache = nativeTokenMap;
 };
@@ -1379,6 +1425,7 @@ const pinPointsSnapshotToIpfs = async (
     totalPoints: number;
     farcasterUsername: string | null;
     ensName: string | null;
+    ensAvatar: string | null;
     nativeSuperToken: string | null;
     nativeToken: string | null;
   }[],
@@ -2479,6 +2526,7 @@ export async function GET(req: Request) {
   if (apiKey !== process.env.CRON_SECRET) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  ensureEnsCacheFresh();
   if (Date.now() > campaignEndMS) {
     return NextResponse.json(
       { message: "Campaign ended; sync not executed." },
@@ -2529,9 +2577,36 @@ export async function GET(req: Request) {
       priceCacheCid: pricePin ?? latestPriceCacheCid ?? null,
     };
   };
+  const logPinnedArtifacts = (extras?: {
+    pointsSnapshotCid?: string | null;
+    creationBlockCacheCid?: string | null;
+    transferLogCacheCid?: string | null;
+    priceCacheCid?: string | null;
+  }) => {
+    console.log("[superfluid-stack] pinned IPFS artifacts", {
+      creationBlockCacheCid:
+        extras?.creationBlockCacheCid ??
+        responseCreationCid ??
+        latestCreationBlockCacheCid ??
+        null,
+      transferLogCacheCid:
+        extras?.transferLogCacheCid ??
+        responseTransferCid ??
+        latestTransferLogCacheCid ??
+        null,
+      priceCacheCid:
+        extras?.priceCacheCid ?? latestPriceCacheCid ?? pinnedPriceCacheCid ?? null,
+      pointsSnapshotCid:
+        extras?.pointsSnapshotCid ??
+        responsePointsCid ??
+        latestPointsSnapshotCid ??
+        null,
+    });
+  };
   let responseCreationCid: string | null = null;
   let responseTransferCid: string | null = null;
   let responsePointsCid: string | null = null;
+  let pinnedPriceCacheCid: string | null = null;
   const notionExistingPages = new Map<
     string,
     { pageId: string; totalPts: number; checksum: string | null }
@@ -2546,10 +2621,14 @@ export async function GET(req: Request) {
     const farcasterFollowerWalletsSet = new Set<string>();
     const farcasterUsernameByWallet = new Map<string, string>();
     const ensNameByWallet = new Map<string, string>();
+    const ensAvatarByWallet = new Map<string, string>();
     const nativeSuperTokenByWallet = new Map<string, string>();
     const nativeTokenByWallet = new Map<string, string>();
     for (const [addr, name] of ensNameCache.entries()) {
       ensNameByWallet.set(addr, name);
+    }
+    for (const [addr, avatar] of ensAvatarCache.entries()) {
+      ensAvatarByWallet.set(addr, avatar);
     }
     for (const [addr, token] of nativeSuperTokenCache.entries()) {
       nativeSuperTokenByWallet.set(addr, token);
@@ -2757,6 +2836,7 @@ export async function GET(req: Request) {
       totalPoints: number;
       farcasterUsername: string | null;
       ensName: string | null;
+      ensAvatar: string | null;
       nativeSuperToken: string | null;
       nativeToken: string | null;
       checksum: string;
@@ -2773,9 +2853,12 @@ export async function GET(req: Request) {
 
     if (!SKIP_IDENTITY_RESOLUTION) {
       for (const address of allAddresses) {
-        if (ensNameByWallet.has(address)) continue;
-        const ens = await fetchEnsNameByAddress(address);
-        if (ens) ensNameByWallet.set(address, ens);
+        if (ensNameByWallet.has(address) && ensAvatarByWallet.has(address)) {
+          continue;
+        }
+        const { name, avatar } = await fetchEnsIdentityByAddress(address);
+        if (name) ensNameByWallet.set(address, name);
+        if (avatar) ensAvatarByWallet.set(address, avatar);
       }
     }
     // Pre-fill Farcaster points (+1 per follower wallet)
@@ -2964,7 +3047,8 @@ export async function GET(req: Request) {
         totalPoints: wallet.totalPoints,
         farcasterUsername:
           farcasterUsernameByWallet.get(wallet.address) ?? null,
-        ensName: ensNameByWallet.get(wallet.address) ?? null,
+        ensName: ensNameByWallet.get(wallet.address) || null,
+        ensAvatar: ensAvatarByWallet.get(wallet.address) || null,
         nativeSuperToken: nativeSuperTokenByWallet.get(wallet.address) ?? null,
         nativeToken: nativeTokenByWallet.get(wallet.address) ?? null,
         checksum: [
@@ -3180,6 +3264,8 @@ export async function GET(req: Request) {
     const pinned = await flushCaches();
     responseCreationCid = pinned.creationBlockCacheCid;
     responseTransferCid = pinned.transferLogCacheCid;
+    pinnedPriceCacheCid = pinned.priceCacheCid ?? pinnedPriceCacheCid;
+    logPinnedArtifacts({ pointsSnapshotCid: responsePointsCid });
 
     return NextResponse.json(
       {
@@ -3224,6 +3310,8 @@ export async function GET(req: Request) {
     const pinned = await flushCaches();
     responseCreationCid = pinned.creationBlockCacheCid;
     responseTransferCid = pinned.transferLogCacheCid;
+    pinnedPriceCacheCid = pinned.priceCacheCid ?? pinnedPriceCacheCid;
+    logPinnedArtifacts({ pointsSnapshotCid: responsePointsCid });
     console.error("Superfluid stack cron error", error);
     const message =
       error instanceof Error ? error.message : "Internal server error";
