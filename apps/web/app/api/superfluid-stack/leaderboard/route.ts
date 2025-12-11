@@ -79,18 +79,14 @@ const stripSnapshot = (data: any) => {
       ...data,
       wallets: data.wallets.map((w: any) => {
         if (!w || typeof w !== "object") return w;
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const {
-          existingPoints,
-          addedPoints,
-          checksum,
-          nativeSuperToken,
-          nativeToken,
-          targetPoints,
-          bonusPoints,
-          communityPoints,
-          ...rest
-        } = w;
+        const { bonusPoints, communityPoints, ...rest } = w;
+        delete (rest as any).existingPoints;
+        delete (rest as any).addedPoints;
+        delete (rest as any).checksum;
+        delete (rest as any).nativeSuperToken;
+        delete (rest as any).nativeToken;
+        delete (rest as any).targetPoints;
+
         const renamed: Record<string, any> = { ...rest };
         if (typeof bonusPoints === "number") {
           renamed.superfluidActivityPoints = bonusPoints;
