@@ -494,7 +494,11 @@ export default async function Image({
     return chainConfig?.id ?? (Number.isFinite(numericChainId) ? numericChainId : 0);
   })();
 
-  if (searchTitle || searchStatus || searchPoolType) {
+  const hasSearchParams = [searchTitle, searchStatus, searchPoolType].some(
+    (v) => v !== undefined && v !== null && v !== "",
+  );
+
+  if (hasSearchParams) {
     return renderImage({
       title: searchTitle && searchTitle.length > 0 ? searchTitle : FALLBACK_TITLE,
       status: searchStatus,
