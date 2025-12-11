@@ -6,7 +6,10 @@ import { Client, createClient, fetchExchange, gql } from "urql";
 import { Address, createPublicClient, formatUnits, http, parseAbi } from "viem";
 import { chainConfigMap } from "@/configs/chains";
 import { getTokenUsdPrice } from "@/services/coingecko";
-import { STACK_DRY_RUN, getSuperfluidStackClient } from "@/services/superfluid-stack";
+import {
+  STACK_DRY_RUN,
+  getSuperfluidStackClient,
+} from "@/services/superfluid-stack";
 import { erc20ABI } from "@/src/generated";
 import { ChainId } from "@/types";
 import { getViemChain } from "@/utils/web3";
@@ -568,11 +571,11 @@ const CAN_READ_IPFS = Boolean(IPFS_GATEWAY);
 const SKIP_IDENTITY_RESOLUTION =
   (process.env.SUPERFLUID_SKIP_IDENTITY_RESOLUTION ?? "").toLowerCase() ===
   "true";
+const FARCASTER_AUTH_TOKEN = (process.env.FARCASTER_API_KEY ?? "").trim();
 let latestCreationBlockCacheCid: string | null =
   process.env.SUPERFLUID_BLOCK_CACHE_CID ?? null;
 let latestTransferLogCacheCid: string | null =
   process.env.SUPERFLUID_TRANSFER_CACHE_CID ?? null;
-const FARCASTER_API_KEY = process.env.FARCASTER_API_KEY;
 const FARCASTER_GARDENS_USERNAME =
   process.env.FARCASTER_GARDENS_USERNAME ?? "gardens";
 let farcasterGardensFid: number | null = null;
@@ -584,7 +587,7 @@ type TransferLogCacheEntry = {
 const transferLogCache = new Map<string, TransferLogCacheEntry>();
 let transferLogCacheDirty = false;
 let notionDisabled = false;
-const FARCASTER_DISABLED = !FARCASTER_API_KEY;
+const FARCASTER_DISABLED = !FARCASTER_AUTH_TOKEN;
 
 if (FARCASTER_DISABLED) {
   console.log(
@@ -605,14 +608,21 @@ const tokenPriceCache = new Map<
 >();
 let priceCacheDirty = false;
 let latestPriceCacheCid: string | null = null;
+const ensLookupFailures = new Set<string>();
+const farcasterAuthHeader =
+  FARCASTER_AUTH_TOKEN ? `Bearer ${FARCASTER_AUTH_TOKEN}` : null;
 
 const getFarcasterHeaders = () => ({
-  Authorization: `Bearer ${FARCASTER_API_KEY}`,
+  Authorization: farcasterAuthHeader ?? "",
 });
 
 const fetchGardensFid = async (): Promise<number | null> => {
   if (FARCASTER_DISABLED) {
     console.log("[superfluid-stack] Farcaster disabled: no API key");
+    return null;
+  }
+  if (!farcasterAuthHeader) {
+    console.warn("[superfluid-stack] Farcaster auth header missing");
     return null;
   }
   if (farcasterGardensFid) return farcasterGardensFid;
@@ -690,42 +700,15 @@ const fetchFarcasterFollowerFids = async (
   return Array.from(fidsSet.values());
 };
 
-const fetchFarcasterUsernameByAddress = async (
-  address: string,
-): Promise<string | null> => {
-  if (FARCASTER_DISABLED) {
-    console.log("[superfluid-stack] Skipping Farcaster username: disabled");
-    return null;
-  }
-  if (!address) return null;
-  if (farcasterUsernameCache.has(address)) {
-    return farcasterUsernameCache.get(address) ?? null;
-  }
-  try {
-    const res = await fetch(
-      `https://api.farcaster.xyz/v2/user-by-verification?address=${address.toLowerCase()}`,
-      { headers: getFarcasterHeaders() },
-    );
-    if (!res.ok) {
-      return null;
-    }
-    const json = await res.json();
-    const username = json?.result?.user?.username;
-    const result = typeof username === "string" ? username : null;
-    if (result) farcasterUsernameCache.set(address, result);
-    return result;
-  } catch {
-    return null;
-  }
-};
-
 let mainnetClient: ReturnType<typeof createPublicClient> | null = null;
 const getMainnetClient = () => {
   if (mainnetClient) return mainnetClient;
   const chainCfg = getViemChain(1 as ChainId);
   mainnetClient = createPublicClient({
     chain: chainCfg,
-    transport: http(chainCfg.rpcUrls.default.http[0]),
+    transport: http(
+      process.env.RPC_URL_MAINNET ?? chainCfg.rpcUrls.default.http[0],
+    ),
   });
   return mainnetClient;
 };
@@ -739,19 +722,41 @@ const fetchEnsNameByAddress = async (
     const client = getMainnetClient();
     const name = await client.getEnsName({ address: address as Address });
     const ens = typeof name === "string" ? name : null;
-    if (ens) ensNameCache.set(address, ens);
+    if (ens) {
+      ensNameCache.set(address, ens);
+    } else {
+      console.log("[superfluid-stack] ens not found for address", { address });
+    }
     return ens;
-  } catch {
+  } catch (error) {
+    const message = (error as Error)?.message ?? "";
+    if (message.includes("reverse")) {
+      // Reverse resolver often reverts when unset; ignore quietly after first hit
+      ensLookupFailures.add(address);
+      return null;
+    }
+    console.warn("[superfluid-stack] ens lookup failed", { address, error });
     return null;
   }
 };
 
 const fetchFarcasterWalletsForFids = async (
   fids: number[],
-): Promise<{ primary: Set<string>; discarded: Set<string> }> => {
+): Promise<{
+  primary: Set<string>;
+  discarded: Set<string>;
+  usernames: Map<string, string>;
+}> => {
   const wallets = new Set<string>();
   const discarded = new Set<string>();
-  if (FARCASTER_DISABLED || !fids.length) return { primary: wallets, discarded };
+  const usernames = new Map<string, string>();
+  if (FARCASTER_DISABLED || !fids.length) {
+    return { primary: wallets, discarded, usernames };
+  }
+  if (!farcasterAuthHeader) {
+    console.warn("[superfluid-stack] Farcaster auth header missing");
+    return { primary: wallets, discarded, usernames };
+  }
   for (const fid of fids) {
     try {
       const res = await fetch(
@@ -784,17 +789,15 @@ const fetchFarcasterWalletsForFids = async (
       };
 
       const ethWallets = collectValid(extras?.ethWallets);
-      const custody = collectValid(
-        u?.custodyAddress ? [u.custodyAddress] : [],
-      );
+      const custody = collectValid(u?.custodyAddress ? [u.custodyAddress] : []);
       const verified = collectValid(u?.verifiedAddresses);
       const verifications = collectValid(u?.verifications);
       const labeled = collectValid(
-        Array.isArray(extras?.walletLabels)
-          ? extras.walletLabels
-              .map((l: any) => l?.address)
-              .filter((a: any) => typeof a === "string")
-          : [],
+        Array.isArray(extras?.walletLabels) ?
+          extras.walletLabels
+            .map((l: any) => l?.address)
+            .filter((a: any) => typeof a === "string")
+        : [],
       );
 
       // Priority: ethWallets first element, then custody, then verifiedAddresses, verifications, walletLabels.
@@ -818,6 +821,9 @@ const fetchFarcasterWalletsForFids = async (
       }
 
       wallets.add(chosen);
+      if (typeof u?.username === "string") {
+        usernames.set(chosen, u.username);
+      }
       for (const addr of others) discarded.add(addr);
     } catch (error) {
       console.warn("[superfluid-stack] farcaster single user fetch error", {
@@ -826,7 +832,7 @@ const fetchFarcasterWalletsForFids = async (
       });
     }
   }
-  return { primary: wallets, discarded };
+  return { primary: wallets, discarded, usernames };
 };
 const ensureLatestPinataCacheCid = async (): Promise<string | null> => {
   if (latestCreationBlockCacheCid) return latestCreationBlockCacheCid;
@@ -1806,7 +1812,11 @@ const calculateStreamUsdBySender = ({
   priceUsd: number;
   windowStart: number;
   windowEnd: number;
-}): { perSender: Map<string, number>; totalUsd: number; totalUsdAll: number } => {
+}): {
+  perSender: Map<string, number>;
+  totalUsd: number;
+  totalUsdAll: number;
+} => {
   const nowSec = Math.floor(Date.now() / 1000);
   const effectiveEnd = Math.min(nowSec, windowEnd);
   const updatesBySender = new Map<
@@ -2286,11 +2296,13 @@ const processChain = async ({
 
     const community = communityByPool.get(poolAddress);
     const bonusMultiplier =
-      chainId === 8453 &&
-      community &&
-      toLower(community.id) === toLower(BASE_BONUS_COMMUNITY) ?
-        2 :
-        1;
+      (
+        chainId === 8453 &&
+        community &&
+        toLower(community.id) === toLower(BASE_BONUS_COMMUNITY)
+      ) ?
+        2
+      : 1;
     const qualifiesForSuperfluidBonus =
       community && toLower(community.id) === toLower(BASE_BONUS_COMMUNITY);
 
@@ -2305,9 +2317,8 @@ const processChain = async ({
         priceUsd,
         userTotals,
         multiplier: bonusMultiplier,
-        superfluidActivityPoints: qualifiesForSuperfluidBonus ?
-          superfluidActivityPoints
-        : undefined,
+        superfluidActivityPoints:
+          qualifiesForSuperfluidBonus ? superfluidActivityPoints : undefined,
       });
     }
 
@@ -2331,14 +2342,13 @@ const processChain = async ({
         perSender: streamUsdBySender,
         totalUsd,
         totalUsdAll,
-      } =
-        calculateStreamUsdBySender({
-          flowUpdates,
-          tokenDecimals: superTokenDecimals,
-          priceUsd,
-          windowStart,
-          windowEnd,
-        });
+      } = calculateStreamUsdBySender({
+        flowUpdates,
+        tokenDecimals: superTokenDecimals,
+        priceUsd,
+        windowStart,
+        windowEnd,
+      });
       streamUsdTotalPoints = totalUsd;
       streamUsdTotalAll = totalUsdAll;
       for (const [sender, usd] of streamUsdBySender.entries()) {
@@ -2423,7 +2433,6 @@ const processChain = async ({
       });
       processedCommunities.set(community.id, processed);
     }
-
   }
 
   // Split community totals to members
@@ -2539,9 +2548,6 @@ export async function GET(req: Request) {
     const ensNameByWallet = new Map<string, string>();
     const nativeSuperTokenByWallet = new Map<string, string>();
     const nativeTokenByWallet = new Map<string, string>();
-    for (const [addr, username] of farcasterUsernameCache.entries()) {
-      farcasterUsernameByWallet.set(addr, username);
-    }
     for (const [addr, name] of ensNameCache.entries()) {
       ensNameByWallet.set(addr, name);
     }
@@ -2618,16 +2624,29 @@ export async function GET(req: Request) {
       const gardensFid = await fetchGardensFid();
       if (gardensFid) {
         const followerFids = await fetchFarcasterFollowerFids(gardensFid);
-        const { primary: followerWallets, discarded } =
-          await fetchFarcasterWalletsForFids(followerFids);
-        followerWallets.forEach((addr) => farcasterFollowerWalletsSet.add(addr));
+        const {
+          primary: followerWallets,
+          discarded,
+          usernames,
+        } = await fetchFarcasterWalletsForFids(followerFids);
+        followerWallets.forEach((addr) =>
+          farcasterFollowerWalletsSet.add(addr),
+        );
         discarded.forEach((addr) => farcasterDiscardedWallets.push(addr));
+        for (const [addr, username] of usernames.entries()) {
+          farcasterUsernameByWallet.set(addr, username);
+        }
       } else {
         console.log(
           "[superfluid-stack] skipping farcaster follower scan because gardens fid could not be resolved",
         );
       }
       farcasterFollowerWallets.push(...farcasterFollowerWalletsSet);
+    }
+    for (const [addr, username] of farcasterUsernameCache.entries()) {
+      if (farcasterFollowerWalletsSet.has(addr)) {
+        farcasterUsernameByWallet.set(addr, username);
+      }
     }
     const existingFarcasterAddresses = await fetchExistingFarcasterAddresses();
 
@@ -2752,13 +2771,6 @@ export async function GET(req: Request) {
       ...existingFarcasterAddresses.values(),
     ]);
 
-    if (!FARCASTER_DISABLED) {
-      for (const address of allAddresses) {
-        if (farcasterUsernameByWallet.has(address)) continue;
-        const username = await fetchFarcasterUsernameByAddress(address);
-        if (username) farcasterUsernameByWallet.set(address, username);
-      }
-    }
     if (!SKIP_IDENTITY_RESOLUTION) {
       for (const address of allAddresses) {
         if (ensNameByWallet.has(address)) continue;
@@ -2861,10 +2873,13 @@ export async function GET(req: Request) {
           const key = addr.toLowerCase();
           const existingTotals =
             existingMap.get(key) ??
-            EVENT_NAMES.reduce((acc, n) => {
-              acc[n] = 0;
-              return acc;
-            }, {} as Record<string, number>);
+            EVENT_NAMES.reduce(
+              (acc, n) => {
+                acc[n] = 0;
+                return acc;
+              },
+              {} as Record<string, number>,
+            );
           existingTotals[name] = (existingTotals[name] ?? 0) + pts;
           existingMap.set(key, existingTotals);
         }
@@ -2880,10 +2895,13 @@ export async function GET(req: Request) {
     }> = [];
     const existingTotalsByAddress = await fetchExistingTotalsByAddress();
 
-    const emptyCategoryTotals = EVENT_NAMES.reduce((acc, n) => {
-      acc[n] = 0;
-      return acc;
-    }, {} as Record<string, number>);
+    const emptyCategoryTotals = EVENT_NAMES.reduce(
+      (acc, n) => {
+        acc[n] = 0;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
 
     for (const wallet of walletPointTargets) {
       const existingByCategory =
