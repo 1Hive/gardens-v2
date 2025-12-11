@@ -96,6 +96,6 @@ export async function generateMetadata({
   }
 }
 
-export default function Page(props: PageParams) {
-  return <ClientPage {...props} />;
+export default function Page() {
+  return <ClientPage />;
 }
