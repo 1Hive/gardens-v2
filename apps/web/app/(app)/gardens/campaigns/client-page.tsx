@@ -15,14 +15,12 @@ import { SuperBanner, SuperLogo, PlantBanner } from "@/assets";
 import { Badge } from "@/components/Badge";
 import { Button } from "@/components/Button";
 
-const STATUS_FILTERS = ["Ongoing", "Ended"];
-
 interface Campaign {
   id: string;
   name: string;
   description: string;
   category: "Rewards" | "Grants" | "Airdrops";
-  status: "ongoing" | "ended";
+  status: "active" | "ended";
   endDate: string;
   tokenAllocated?: number;
   tokenClaimed?: number;
@@ -44,9 +42,9 @@ const campaigns: Campaign[] = [
     description:
       "Earn SUP rewards by staking governance tokens, adding funds to pools, and following Gardens on Farcaster.",
     category: "Rewards",
-    status: "ongoing",
+    status: "active",
     endDate: "25 Feb 2025",
-    tokenAllocated: 847676,
+    tokenAllocated: 847000,
     tokenClaimed: 0,
     tokenSymbol: "SUP",
     participants: 1243,
@@ -64,7 +62,7 @@ const campaigns: Campaign[] = [
   //   description:
   //     "Join the liquidity race! 14 teams competing for $100 USDGLO daily rewards at 31% APR.",
   //   category: "Rewards",
-  //   status: "ongoing",
+  //   status: "active",
   //   endDate: "31 Dec 2024",
   //   tokenAllocated: 100,
   //   tokenClaimed: 0,
@@ -105,14 +103,12 @@ function formatNumber(num: number) {
 }
 
 export default function CampaignsPage() {
-  const [activeStatus, setActiveStatus] = useState("Ongoing");
+  const [activeStatus, setActiveStatus] = useState("active");
   const [activeCategory, setActiveCategory] = useState("All");
 
   const filteredCampaigns = campaigns.filter((c) => {
     const statusMatch =
-      activeStatus === "Ongoing" ?
-        c.status === "ongoing"
-      : c.status === "ended";
+      activeStatus === "active" ? c.status === "active" : c.status === "ended";
     const categoryMatch =
       activeCategory === "All" || c.category === activeCategory;
     return statusMatch && categoryMatch;
@@ -135,7 +131,7 @@ export default function CampaignsPage() {
 
         <div className="relative mx-auto max-w-7xl px-4 py-32">
           <h1 className="text-center font-bold mb-4">
-            Gardens Ecosystems Campaigns
+            Gardens Ecosystem Campaigns
           </h1>
           <p className="mx-auto text-center text-lg ">
             Get rewarded for supporting your favorite communities on Gardens.
@@ -151,7 +147,7 @@ export default function CampaignsPage() {
         {filteredCampaigns.length > 0 ?
           <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
             <div className="flex items-center justify-center gap-2 mb-12">
-              <Button>Ongoing</Button>
+              <Button>Active</Button>
               <Button disabled>Ended</Button>
             </div>
             {filteredCampaigns.map((c) => (
@@ -184,7 +180,7 @@ export default function CampaignsPage() {
                     <h3 className="font-bold drop-shadow">{c.name}</h3>
                     <div className="flex items-center gap-2 text-sm mt-1 ">
                       <CalendarIcon className="h-4 w-4" />
-                      <span className="">Ends {c.endDate}</span>
+                      <span>Ends {c.endDate}</span>
                     </div>
                   </div>
                 </div>

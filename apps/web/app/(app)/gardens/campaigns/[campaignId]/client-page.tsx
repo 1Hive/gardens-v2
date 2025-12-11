@@ -55,13 +55,66 @@ const participationSteps = [
   },
 ];
 
-const activityColors = {
-  "Add Funds": "bg-blue-500/10 text-blue-700 border-blue-500/20",
-  "Stream Funds": "bg-green-500/10 text-green-700 border-green-500/20",
-  "Governance Stake": "bg-purple-500/10 text-purple-700 border-purple-500/20",
+type LeaderboardResponse = {
+  cid: string;
+  snapshot: {
+    wallets: Array<{
+      address: string;
+      superfluidActivityPoints?: number;
+      governanceStakePoints?: number;
+      [key: string]: any;
+    }>;
+  };
+  totalStreamedSup: number;
+  targetStreamSup: number;
 };
 
-export default function GardensGrowthInitiativePage() {
+/**
+ * Fetch Superfluid leaderboard data from the API.
+ * Returns `null` on any failure.
+ */
+async function fetchSuperfluidLeaderboard(): Promise<LeaderboardResponse | null> {
+  try {
+    const response = await fetch("/api/superfluid-stack/leaderboard", {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+
+    if (!response.ok) {
+      console.error(
+        "[fetchSuperfluidLeaderboard] Request failed",
+        response.status,
+        response.statusText,
+      );
+      return null;
+    }
+
+    const data = (await response.json()) as LeaderboardResponse;
+    return data ?? null;
+  } catch (error) {
+    console.error("[fetchSuperfluidLeaderboard] Unexpected error:", error);
+    return null;
+  }
+}
+
+export default async function GardensGrowthInitiativePage() {
+  // const [data, setData] = useState<LeaderboardResponse | null>(null);
+  // const [loading, setLoading] = useState<boolean>(true);
+
+  // // Fetch once on page load
+  // useEffect(() => {
+  //   async function load() {
+  //     setLoading(true);
+
+  //     const result = await fetchSuperfluidLeaderboard();
+  //     setData(result);
+
+  //     setLoading(false);
+  //   }
+
+  //   load();
+  // }, []);
+
   return (
     <div className="min-h-screen">
       {/* Hero Banner */}
@@ -134,7 +187,7 @@ export default function GardensGrowthInitiativePage() {
               <h2 className="text-2xl font-bold mb-6">How to Participate</h2>
 
               <div className="space-y-4 p-6">
-                {participationSteps.map((step, index) => (
+                {participationSteps.map((step) => (
                   <div
                     key={step.title}
                     className={`rounded-xl border-[1px] border-border-neutral  hover:shadow-md transition-all ${step.highlighted ? "border-2  border-primary-content bg-primary-soft" : ""}`}
@@ -158,12 +211,7 @@ export default function GardensGrowthInitiativePage() {
                             </h3>
                             <div className="flex gap-1.5 flex-wrap justify-end">
                               {step.activities.map((activity) => (
-                                <Badge
-                                  key={activity}
-                                  className={`text-xs ${activityColors[activity as keyof typeof activityColors]}`}
-                                >
-                                  {activity}
-                                </Badge>
+                                <Badge key={activity}>{activity}</Badge>
                               ))}
                             </div>
                           </div>
