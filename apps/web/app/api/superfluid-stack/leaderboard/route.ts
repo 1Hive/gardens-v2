@@ -103,6 +103,10 @@ const stripSnapshot = (data: any) => {
 
 export const revalidate = 0;
 
+// Temporary static totals in SUP (token units) until we can compute from snapshot data
+const TOTAL_STREAMED_SUP = 0;
+const TARGET_STREAM_SUP = 847_000;
+
 export async function GET(request: Request) {
   try {
     const url = new URL(request.url);
@@ -129,7 +133,12 @@ export async function GET(request: Request) {
 
     const sanitized = stripSnapshot(data);
 
-    return NextResponse.json({ cid, snapshot: sanitized });
+    return NextResponse.json({
+      cid,
+      snapshot: sanitized,
+      totalStreamedSup: TOTAL_STREAMED_SUP,
+      targetStreamSup: TARGET_STREAM_SUP,
+    });
   } catch (error) {
     console.error("[leaderboard] unexpected error", { error });
     return NextResponse.json(
