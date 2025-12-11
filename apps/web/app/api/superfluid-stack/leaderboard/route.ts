@@ -104,7 +104,7 @@ const stripSnapshot = (data: any) => {
 export const revalidate = 0;
 
 // Temporary static totals in SUP (token units) until we can compute from snapshot data
-const TOTAL_STREAMED_SUP = 0;
+const TOTAL_STREAMED_SUP = 3_578;
 const TARGET_STREAM_SUP = 847_000;
 
 export async function GET(request: Request) {
