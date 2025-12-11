@@ -1807,7 +1807,7 @@ const calculateStreamUsdBySender = ({
   priceUsd: number;
   windowStart: number;
   windowEnd: number;
-}): { perSender: Map<string, number>; totalUsd: number } => {
+}): { perSender: Map<string, number>; totalUsd: number; totalUsdAll: number } => {
   const nowSec = Math.floor(Date.now() / 1000);
   const effectiveEnd = Math.min(nowSec, windowEnd);
   const updatesBySender = new Map<
@@ -1826,7 +1826,8 @@ const calculateStreamUsdBySender = ({
   }
 
   const usdBySender = new Map<string, number>();
-  let totalUsd = 0;
+  let totalUsd = 0; // only senders above threshold
+  let totalUsdAll = 0; // all senders, no threshold
 
   for (const [sender, updates] of updatesBySender.entries()) {
     updates.sort((a, b) => a.timestamp - b.timestamp);
@@ -1835,15 +1836,23 @@ const calculateStreamUsdBySender = ({
     let usdTotal = 0;
 
     for (const upd of updates) {
-      const segStart = Math.max(lastTs, windowStart);
-      const segEnd = Math.min(upd.timestamp, effectiveEnd);
+      const ts = upd.timestamp;
+      if (ts <= windowStart) {
+        // Update current rate before the window without counting pre-window time.
+        lastRate = upd.flowRate;
+        lastTs = windowStart;
+        continue;
+      }
+
+      const segStart = lastTs;
+      const segEnd = Math.min(ts, effectiveEnd);
       if (segStart < segEnd && lastRate > 0n) {
         const duration = BigInt(segEnd - segStart);
         const streamedAmount = lastRate * duration;
         const amount = Number(formatUnits(streamedAmount, tokenDecimals));
         usdTotal += amount * priceUsd;
       }
-      lastTs = upd.timestamp;
+      lastTs = ts;
       lastRate = upd.flowRate;
       if (lastTs >= effectiveEnd) break;
     }
@@ -1855,55 +1864,18 @@ const calculateStreamUsdBySender = ({
       usdTotal += amount * priceUsd;
     }
 
-    if (usdTotal >= 10) {
-      totalUsd += usdTotal;
-      if (isValidAddr(sender)) {
-        usdBySender.set(sender, usdTotal);
+    if (usdTotal > 0) {
+      totalUsdAll += usdTotal;
+      if (usdTotal >= 10) {
+        totalUsd += usdTotal;
+        if (isValidAddr(sender)) {
+          usdBySender.set(sender, usdTotal);
+        }
       }
     }
   }
 
-  return { perSender: usdBySender, totalUsd };
-};
-
-const accumulateBonusStreams = async ({
-  streams,
-  tokenDecimals,
-  priceUsd,
-  windowStart,
-  windowEnd,
-  bonusTotals,
-}: {
-  streams: StreamEntry[];
-  tokenDecimals: number;
-  priceUsd: number;
-  windowStart: number;
-  windowEnd: number;
-  bonusTotals: Map<string, number>;
-}) => {
-  const nowSec = Math.floor(Date.now() / 1000);
-  const effectiveEnd = Math.min(nowSec, windowEnd);
-  for (const stream of streams) {
-    const startTs = Math.max(
-      windowStart,
-      Number(stream.createdAtTimestamp ?? 0),
-    );
-    const endTs =
-      stream.updatedAtTimestamp ?
-        Math.min(Number(stream.updatedAtTimestamp), effectiveEnd)
-      : effectiveEnd;
-    if (startTs >= endTs) continue;
-    const flowRate = BigInt(stream.currentFlowRate ?? "0");
-    if (flowRate <= 0n) continue;
-    const duration = BigInt(endTs - startTs);
-    const streamedAmount = flowRate * duration;
-    const amount = Number(formatUnits(streamedAmount, tokenDecimals));
-    const usd = amount * priceUsd;
-    if (usd < 10) continue;
-    const key = toLower(stream.sender.id);
-    const prev = bonusTotals.get(key) ?? 0;
-    bonusTotals.set(key, prev + usd * 2);
-  }
+  return { perSender: usdBySender, totalUsd, totalUsdAll };
 };
 
 const accumulateFundingPoints = async ({
@@ -1915,6 +1887,8 @@ const accumulateFundingPoints = async ({
   tokenDecimals,
   priceUsd,
   userTotals,
+  multiplier = 1,
+  superfluidActivityPoints,
 }: {
   publicClient: ReturnType<typeof createPublicClient>;
   poolAddress: Address;
@@ -1924,6 +1898,8 @@ const accumulateFundingPoints = async ({
   tokenDecimals: number;
   priceUsd: number;
   userTotals: Map<string, { fundUsd: number; streamUsd: number }>;
+  multiplier?: number;
+  superfluidActivityPoints?: Map<string, number>;
 }) => {
   if (fromBlock > toBlock) return;
   let logs: any[] = [];
@@ -1950,7 +1926,16 @@ const accumulateFundingPoints = async ({
     if (usd < 10) continue;
     const key = toLower(from);
     const prev = userTotals.get(key) ?? { fundUsd: 0, streamUsd: 0 };
-    userTotals.set(key, { ...prev, fundUsd: prev.fundUsd + usd });
+    userTotals.set(key, {
+      ...prev,
+      fundUsd: prev.fundUsd + usd * multiplier,
+    });
+    if (superfluidActivityPoints) {
+      superfluidActivityPoints.set(
+        key,
+        (superfluidActivityPoints.get(key) ?? 0) + usd * multiplier,
+      );
+    }
   }
 };
 
@@ -1998,53 +1983,6 @@ const computeFundUsdToPool = async ({
     const usd = amount * priceUsd;
     return usd >= 10 ? acc + usd : acc;
   }, 0);
-};
-
-const accumulateBonusFunding = async ({
-  publicClient,
-  target,
-  token,
-  fromBlock,
-  toBlock,
-  tokenDecimals,
-  priceUsd,
-  bonusTotals,
-}: {
-  publicClient: ReturnType<typeof createPublicClient>;
-  target: Address;
-  token: Address;
-  fromBlock: bigint;
-  toBlock: bigint;
-  tokenDecimals: number;
-  priceUsd: number;
-  bonusTotals: Map<string, number>;
-}) => {
-  if (fromBlock > toBlock) return;
-  let logs: any[] = [];
-  try {
-    logs = await fetchTransferLogs({
-      publicClient,
-      token,
-      to: target,
-      fromBlock,
-      toBlock,
-    });
-  } catch (error) {
-    console.error("Failed to fetch bonus transfer logs", token, target, error);
-    return;
-  }
-
-  for (const log of logs) {
-    const value = "args" in log ? (log as any).args?.value : null;
-    const from = "args" in log ? (log as any).args?.from : null;
-    if (!value || !from || !isValidAddr(from)) continue;
-    const amount = Number(formatUnits(value as bigint, tokenDecimals));
-    const usd = amount * priceUsd;
-    if (usd < 10) continue;
-    const key = toLower(from);
-    const prev = bonusTotals.get(key) ?? 0;
-    bonusTotals.set(key, prev + usd * 2); // 2 points per $
-  }
 };
 
 const processChain = async ({
