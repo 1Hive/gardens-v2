@@ -1,4 +1,5 @@
 "use client";
+import { useEffect, useState } from "react";
 import {
   ArrowLeftIcon,
   TrophyIcon,
@@ -22,12 +23,12 @@ const participationSteps = [
     description:
       "Stay connected with the Gardens community and get updates on proposals and activities.",
     icon: <ChatBubbleLeftRightIcon className="h-5 w-5" />,
-    activities: ["Add Funds"],
+    activities: ["Farcaster Follow"],
   },
   {
     title: "Stream Funds into a Funding Pool",
     description:
-      "Stream funds into a Funding Pool, or for Super Token Funding Pools, add funds either as a stream or a one-time transfer.",
+      "Stream funds into a Funding Pool, or for Pure Super Token Funding Pools, add funds either as a stream or a one-time transfer.",
     icon: <ArrowTrendingUpIcon className="h-5 w-5" />,
     activities: ["Stream Funds"],
   },
@@ -36,7 +37,7 @@ const participationSteps = [
     description:
       "Become an active member and increase your stake to support the ecosystem.",
     icon: <UsersIcon className="h-5 w-5" />,
-    activities: ["Governance Stake"],
+    activities: ["Stake & Governance"],
   },
   {
     title: "Encourage Community Participation",
@@ -50,7 +51,7 @@ const participationSteps = [
     description:
       "Join the Superfluid DAO community, stake, and add funds to Funding Pools to maximize your rewards with double points.",
     icon: <CurrencyDollarIcon className="h-5 w-5" />,
-    activities: ["Stream Funds", "Governance Stake", "Add Funds"],
+    activities: ["Superfluid DAO member"],
     highlighted: true,
   },
 ];
@@ -58,6 +59,7 @@ const participationSteps = [
 type LeaderboardResponse = {
   cid: string;
   snapshot: {
+    updatedAt?: string;
     wallets: Array<{
       address: string;
       superfluidActivityPoints?: number;
@@ -98,23 +100,6 @@ async function fetchSuperfluidLeaderboard(): Promise<LeaderboardResponse | null>
 }
 
 export default async function GardensGrowthInitiativePage() {
-  // const [data, setData] = useState<LeaderboardResponse | null>(null);
-  // const [loading, setLoading] = useState<boolean>(true);
-
-  // // Fetch once on page load
-  // useEffect(() => {
-  //   async function load() {
-  //     setLoading(true);
-
-  //     const result = await fetchSuperfluidLeaderboard();
-  //     setData(result);
-
-  //     setLoading(false);
-  //   }
-
-  //   load();
-  // }, []);
-
   return (
     <div className="min-h-screen">
       {/* Hero Banner */}
