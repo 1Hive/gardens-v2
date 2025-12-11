@@ -91,10 +91,22 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <XMarkIcon className="w-5 h-5" />
             : <Bars3BottomLeftIcon className="w-5 h-5" />}
           </button> */}
+        </div>
 
-          {/* <div className="flex items-center gap-2">
-            <h4 className="">Gardens</h4>
-          </div> */}
+        <div className="w-full flex items-center justify-center gap-2">
+          <Link
+            href="/gardens/campaigns"
+            className="flex items-center gap-3 text-sm"
+          >
+            {/* <Image
+              src={newLogo}
+              alt="logo"
+              height={40}
+              width={40}
+              loading="lazy"
+            /> */}
+            <h6 className="hover:opacity-70">Ecosystems Campaigns</h6>
+          </Link>
         </div>
         <div className="flex items-center gap-2">
           <ConnectWallet />

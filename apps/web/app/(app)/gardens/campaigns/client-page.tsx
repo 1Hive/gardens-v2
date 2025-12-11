@@ -4,20 +4,18 @@ import { useState } from "react";
 import {
   CalendarIcon,
   UserGroupIcon,
-  TrophyIcon,
   ArrowRightIcon,
   SparklesIcon,
   GiftIcon,
   CurrencyDollarIcon,
-} from "@heroicons/react/24/solid";
-import Image from "next/image";
+} from "@heroicons/react/24/outline";
+import Image, { StaticImageData } from "next/image";
 import Link from "next/link";
+import { SuperBanner, SuperLogo, PlantBanner } from "@/assets";
 import { Badge } from "@/components/Badge";
 import { Button } from "@/components/Button";
-import { SuperfluidLeaderboardModal } from "@/components/SuperfluidLeaderboard";
 
 const STATUS_FILTERS = ["Ongoing", "Ended"];
-const CATEGORIES = ["All", "Rewards", "Grants", "Airdrops"];
 
 interface Campaign {
   id: string;
@@ -35,7 +33,7 @@ interface Campaign {
   icon: React.ReactNode;
   color: string;
   showStats?: boolean;
-  image?: string;
+  image?: string | StaticImageData;
   logo?: string;
 }
 
@@ -52,34 +50,34 @@ const campaigns: Campaign[] = [
     tokenClaimed: 89543,
     tokenSymbol: "SUP",
     participants: 1243,
-    ctaText: "Start Earning",
-    ctaLink: "/gardens",
+    ctaText: "How to participate",
+    ctaLink: "/gardens/campaigns/1",
     icon: <SparklesIcon className="h-6 w-6" />,
     color: "bg-primary",
     showStats: true,
-    image: "/superfluid-streams-green-flow.jpg",
-    logo: "/superfluid-logo.jpg",
+    image: SuperBanner,
+    logo: SuperLogo,
   },
-  {
-    id: "2",
-    name: "Spinach.fi – USDGLO on Celo",
-    description:
-      "Join the liquidity race! 14 teams competing for $100 USDGLO daily rewards at 31% APR.",
-    category: "Rewards",
-    status: "ongoing",
-    endDate: "31 Dec 2024",
-    tokenAllocated: 100,
-    tokenClaimed: 0,
-    tokenSymbol: "USDGLO/day",
-    participants: 14,
-    ctaText: "Add Liquidity",
-    ctaLink: "https://www.spinach.fi/celo",
-    icon: <CurrencyDollarIcon className="h-6 w-6" />,
-    color: "bg-emerald-500",
-    showStats: false,
-    image: "/spinach-celo-liquidity-green.jpg",
-    logo: "/spinach-logo.jpg",
-  },
+  // {
+  //   id: "2",
+  //   name: "Spinach.fi – USDGLO on Celo",
+  //   description:
+  //     "Join the liquidity race! 14 teams competing for $100 USDGLO daily rewards at 31% APR.",
+  //   category: "Rewards",
+  //   status: "ongoing",
+  //   endDate: "31 Dec 2024",
+  //   tokenAllocated: 100,
+  //   tokenClaimed: 0,
+  //   tokenSymbol: "USDGLO/day",
+  //   participants: 14,
+  //   ctaText: "Add Liquidity",
+  //   ctaLink: "https://www.spinach.fi/celo",
+  //   icon: <CurrencyDollarIcon className="h-6 w-6" />,
+  //   color: "bg-emerald-500",
+  //   showStats: false,
+  //   image: "/spinach-celo-liquidity-green.jpg",
+  //   logo: "/spinach-logo.jpg",
+  // },
   {
     id: "3",
     name: "Celo Ended example",
@@ -126,100 +124,40 @@ export default function CampaignsPage() {
       <div className="relative overflow-hidden">
         <div className="absolute inset-0">
           <Image
-            src="/gardens-hero-lush-landscape.jpg"
+            src={PlantBanner}
             alt="Gardens landscape"
             fill
             className="object-cover"
             priority
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-background/50 to-background" />
+          <div className="absolute inset-0 bg-gradient-to-b from-neutral/5 via-neutral to-neutral/5 dark:from-neutral/30 dark:to-neutral/30" />
         </div>
 
-        <div className="relative mx-auto max-w-7xl px-4 py-24">
+        <div className="relative mx-auto max-w-7xl px-4 py-32">
           <h1 className="text-center font-bold mb-4">
-            Gardens Ecosystem Campaigns
+            Gardens Ecosystems Campaigns
           </h1>
-          <p className="mx-auto text-center text-xl">
+          <p className="mx-auto text-center text-lg ">
             Get rewarded for supporting your favorite communities on Gardens.
           </p>
         </div>
       </div>
 
       {/* Content */}
-      <div className="mx-auto max-w-7xl px-4 py-12">
+      <div className="mx-auto max-w-7xl px-4">
         {/* Filters */}
-        <div className="flex flex-col sm:flex-row justify-between gap-4 mb-10">
-          {/* Status */}
-          <div className="flex gap-2">
-            {STATUS_FILTERS.map((status) => (
-              <Button
-                key={status}
-                onClick={() => setActiveStatus(status)}
-                className={`rounded-full ${
-                  activeStatus === status ? "bg-primary text-white" : ""
-                }`}
-              >
-                {status}
-                {status === "Ongoing" && (
-                  <span className="ml-2 h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                )}
-              </Button>
-            ))}
-          </div>
-
-          {/* Categories */}
-          <div className="flex gap-2">
-            {CATEGORIES.map((cat) => (
-              <Button
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
-                className={
-                  activeCategory === cat ? "bg-primary text-white" : ""
-                }
-              >
-                {cat}
-              </Button>
-            ))}
-          </div>
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-2 gap-4 mb-10">
-          <div className="border border-border rounded-xl p-4 flex items-center gap-3">
-            <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-              <TrophyIcon className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <p className="text-sm ">Active Campaigns</p>
-              <p className="text-xl font-semibold">
-                {campaigns.filter((c) => c.status === "ongoing").length}
-              </p>
-            </div>
-          </div>
-
-          <div className=" rounded-xl p-4 flex items-center gap-3">
-            <div className="h-10 w-10 rounded-lg flex items-center justify-center">
-              <CurrencyDollarIcon className="h-5 w-5 " />
-            </div>
-            <div>
-              <p className="text-sm ">Total Rewards</p>
-              <p className="text-xl font-semibold">
-                {formatNumber(
-                  campaigns.reduce((acc, c) => acc + c.tokenAllocated, 0),
-                )}
-                +
-              </p>
-            </div>
-          </div>
-        </div>
 
         {/* Campaigns */}
         {filteredCampaigns.length > 0 ?
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-center gap-2 mb-12">
+              <Button>Ongoing</Button>
+              <Button disabled>Ended</Button>
+            </div>
             {filteredCampaigns.map((c) => (
               <div
                 key={c.id}
-                className="section-layout rounded-xl overflow-hidden hover:shadow-lg transition"
+                className="section-layout max-w-2xl mx-auto rounded-xl overflow-hidden hover:shadow-lg transition"
               >
                 {/* Image */}
                 <div className="relative h-48 w-full">
@@ -227,12 +165,12 @@ export default function CampaignsPage() {
                     src={c.image ?? "/placeholder.svg"}
                     alt={c.name}
                     fill
-                    className="object-cover"
+                    className="object-cover rounded-xl"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-neutral to-transparent" />
 
                   {c.logo && (
-                    <div className="absolute top-4 left-4 h-12 w-12 bg-background/90 rounded-xl p-2 shadow-md backdrop-blur">
+                    <div className="absolute top-4 left-4 h-12 w-12  rounded-xl p-2 shadow-md backdrop-blur">
                       <Image
                         src={c.logo}
                         alt={`${c.name} logo`}
@@ -242,17 +180,11 @@ export default function CampaignsPage() {
                     </div>
                   )}
 
-                  <Badge className="absolute top-4 right-4 bg-background/80 backdrop-blur">
-                    {c.category}
-                  </Badge>
-
                   <div className="absolute bottom-4 left-4 right-4">
-                    <h3 className="font-bold text-xl text-foreground drop-shadow">
-                      {c.name}
-                    </h3>
-                    <div className="flex items-center gap-2 text-sm  mt-1">
+                    <h3 className="font-bold drop-shadow">{c.name}</h3>
+                    <div className="flex items-center gap-2 text-sm mt-1 ">
                       <CalendarIcon className="h-4 w-4" />
-                      <span>Ends {c.endDate}</span>
+                      <span className="">Ends {c.endDate}</span>
                     </div>
                   </div>
                 </div>
@@ -266,17 +198,19 @@ export default function CampaignsPage() {
                       <div className="flex justify-between text-sm mb-2">
                         <span className="">Claimed</span>
                         <span className="font-medium">
-                          {formatNumber(c.tokenClaimed)} /{" "}
-                          {formatNumber(c.tokenAllocated)} {c.tokenSymbol}
+                          {formatNumber(c.tokenClaimed ?? 0)} /{" "}
+                          {formatNumber(c.tokenAllocated ?? 0)} {c.tokenSymbol}
                         </span>
                       </div>
 
-                      <div className="h-2 bg-muted rounded-full overflow-hidden mb-4">
+                      <div className="h-2 bg-primary-soft rounded-full overflow-hidden mb-4">
                         <div
-                          className="h-full bg-primary transition-all"
+                          className="h-full bg-primary-co transition-all"
                           style={{
                             width: `${
-                              (c.tokenClaimed / c.tokenAllocated) * 100
+                              ((c.tokenClaimed ?? 1) /
+                                (c.tokenAllocated ?? 10)) *
+                              100
                             }%`,
                           }}
                         />
@@ -284,7 +218,7 @@ export default function CampaignsPage() {
 
                       <div className="flex items-center gap-2 text-sm mb-4">
                         <UserGroupIcon className="h-4 w-4" />
-                        {formatNumber(c.participants)} participants
+                        {formatNumber(c.participants ?? 0)} participants
                       </div>
 
                       <Link href={c.ctaLink} className="block">
@@ -293,15 +227,6 @@ export default function CampaignsPage() {
                           <ArrowRightIcon className="h-4 w-4 ml-2" />
                         </Button>
                       </Link>
-                      <SuperfluidLeaderboardModal
-                        campaignName={c.name}
-                        tokenSymbol={c.tokenSymbol}
-                        trigger={
-                          <Button btnStyle="outline">
-                            <TrophyIcon className="h-4 w-4" />
-                          </Button>
-                        }
-                      />
                     </>
                   : <>
                       <div className="flex gap-2 flex-wrap mb-4">
@@ -309,8 +234,6 @@ export default function CampaignsPage() {
                           <CurrencyDollarIcon className="h-4 w-4" />
                           {c.tokenAllocated} {c.tokenSymbol}
                         </Badge>
-                        {/* <Badge className="text-sm">31% APR</Badge>
-                        <Badge className="text-sm">$117K+ Liquidity</Badge> */}
                       </div>
 
                       <Link
