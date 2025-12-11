@@ -47,7 +47,7 @@ const campaigns: Campaign[] = [
     status: "ongoing",
     endDate: "25 Feb 2025",
     tokenAllocated: 847676,
-    tokenClaimed: 89543,
+    tokenClaimed: 0,
     tokenSymbol: "SUP",
     participants: 1243,
     ctaText: "How to participate",
@@ -203,9 +203,9 @@ export default function CampaignsPage() {
                         </span>
                       </div>
 
-                      <div className="h-2 bg-primary-soft rounded-full overflow-hidden mb-4">
+                      <div className="h-2 bg-neutral-soft dark:bg-neutral-soft-content rounded-full overflow-hidden mb-4">
                         <div
-                          className="h-full bg-primary-co transition-all"
+                          className="h-full bg-primary-content transition-all"
                           style={{
                             width: `${
                               ((c.tokenClaimed ?? 1) /
@@ -218,7 +218,8 @@ export default function CampaignsPage() {
 
                       <div className="flex items-center gap-2 text-sm mb-4">
                         <UserGroupIcon className="h-4 w-4" />
-                        {formatNumber(c.participants ?? 0)} participants
+                        {/* {formatNumber(c.participants ?? 0)} */}
+                        Onboarding participants
                       </div>
 
                       <Link href={c.ctaLink} className="block">

@@ -80,7 +80,7 @@ export default function GardensGrowthInitiativePage() {
         <div className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
           <Link
             href="/gardens/campaigns"
-            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors"
+            className="inline-flex items-center gap-2 text-sm  hover:text-foreground mb-6 transition-colors"
           >
             <ArrowLeftIcon className="h-4 w-4" />
             Back to Campaigns
@@ -98,26 +98,26 @@ export default function GardensGrowthInitiativePage() {
 
             <div className="flex-1">
               <h1 className="text-4xl font-bold tracking-tight mb-3">
-                Gardens Growth Initiative
+                Superfluid Ecosystem Rewards
               </h1>
-              <p className="text-lg text-muted-foreground max-w-3xl mb-6">
-                Earn SUP tokens by actively participating in community
-                governance. Support proposals, activate governance in pools, and
-                help shape the future of decentralized funding.
+              <p className="text-lg  max-w-3xl mb-6">
+                Earn SUP tokens by adding tokens to funding pool, join and stake
+                governance tokens in your favorite communities and help shape
+                the future of decentralized funding.
               </p>
 
               <div className="flex items-center gap-6 flex-wrap">
                 <div className="flex items-center gap-2 text-sm">
-                  <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-                  <span>Ends 15 Mar 2025</span>
+                  <CalendarIcon className="h-6 w-6 " />
+                  <span className="font-semibold">Ends 25 Feb 2025</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
-                  <UsersIcon className="h-4 w-4 text-muted-foreground" />
-                  <span>1,243 participants</span>
+                  <UsersIcon className="h-6 w-6 " />
+                  <span className="font-semibold">Onbaording participants</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
-                  <TrophyIcon className="h-4 w-4 text-muted-foreground" />
-                  <span>900K GDN allocated</span>
+                  <CurrencyDollarIcon className="h-6 w-6 " />
+                  <span className="font-semibold">847K SUP allocated</span>
                 </div>
               </div>
             </div>
@@ -133,11 +133,11 @@ export default function GardensGrowthInitiativePage() {
             <div>
               <h2 className="text-2xl font-bold mb-6">How to Participate</h2>
 
-              <div className="space-y-4">
+              <div className="space-y-4 p-6">
                 {participationSteps.map((step, index) => (
                   <div
-                    key={index}
-                    className={`hover:shadow-md transition-all ${step.highlighted ? "border-primary bg-primary/5" : ""}`}
+                    key={step.title}
+                    className={`rounded-xl border-[1px] border-border-neutral  hover:shadow-md transition-all ${step.highlighted ? "border-2  border-primary-content bg-primary-soft" : ""}`}
                   >
                     <div className="p-6">
                       <div className="flex gap-4">
@@ -145,7 +145,7 @@ export default function GardensGrowthInitiativePage() {
                           className={`h-10 w-10 rounded-full flex items-center justify-center flex-shrink-0 ${
                             step.highlighted ?
                               "bg-primary text-primary-foreground"
-                            : "bg-muted text-muted-foreground"
+                            : "bg-muted "
                           }`}
                         >
                           {step.icon}
@@ -167,9 +167,7 @@ export default function GardensGrowthInitiativePage() {
                               ))}
                             </div>
                           </div>
-                          <p className="text-muted-foreground leading-relaxed">
-                            {step.description}
-                          </p>
+                          <p className=" leading-relaxed">{step.description}</p>
                         </div>
                       </div>
                     </div>
@@ -180,16 +178,14 @@ export default function GardensGrowthInitiativePage() {
 
             {/* Campaign Stats */}
             <div>
-              <div className="p-6">
+              <div className="section-layout">
                 <h3 className="font-semibold text-lg mb-4">
                   Campaign Progress
                 </h3>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">
-                      Tokens Claimed
-                    </span>
-                    <span className="font-medium">89.5K / 900K GDN</span>
+                    <span className="">Tokens Claimed</span>
+                    <span className="font-medium">0 / 848K SUP</span>
                   </div>
                   <div className="h-3 bg-muted rounded-full overflow-hidden">
                     <div
@@ -197,9 +193,9 @@ export default function GardensGrowthInitiativePage() {
                       style={{ width: "10%" }}
                     />
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    Join 1,243 participants earning rewards by contributing to
-                    the Gardens ecosystem.
+                  <p className="text-xs ">
+                    oNBAORD participants earning rewards by contributing to the
+                    Gardens ecosystem.
                   </p>
                 </div>
               </div>
@@ -208,40 +204,32 @@ export default function GardensGrowthInitiativePage() {
 
           {/* Right Column - Leaderboard */}
           <div className="lg:col-span-1">
-            <div className="sticky top-24">
+            <div className="sticky top-20 section-layout">
               <div className="p-6">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <TrophyIcon className="h-5 w-5 text-primary" />
+                    <TrophyIcon className="h-7 w-7" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-lg">Leaderboard</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Top contributors
-                    </p>
+                    <h3 className="font-semibold">Leaderboard</h3>
+                    <p className="text-sm ">Top contributors</p>
                   </div>
                 </div>
 
                 {/* Connected Account Section */}
-                <div className="mb-6 p-4 rounded-lg bg-primary/10 border border-primary/20">
-                  <p className="text-xs text-muted-foreground mb-2">
-                    Your Position
-                  </p>
+                <div className="mb-6 py-2 rounded-lg bg-primary/10 border border-primary/20 border2">
+                  <p className="text-xs  mb-2">Your Position</p>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="text-2xl font-bold text-primary">
-                        #12
-                      </span>
+                      <span className="text-2xl font-bold">#12</span>
                       <span className="font-mono text-sm">0xmati...0x37</span>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold">2,045.127</p>
-                      <p className="text-xs text-muted-foreground">
-                        GDN Points
-                      </p>
+                      <p className="font-bold">3k </p>
+                      <p className="text-xs ">Points</p>
                     </div>
                   </div>
-                  <div className="flex gap-1.5 mt-3 flex-wrap">
+                  {/* <div className="flex gap-1.5 mt-3 flex-wrap">
                     <Badge className="text-xs bg-blue-500/10 text-blue-700 border-blue-500/20">
                       Add Funds
                     </Badge>
@@ -251,7 +239,7 @@ export default function GardensGrowthInitiativePage() {
                     <Badge className="text-xs bg-purple-500/10 text-purple-700 border-purple-500/20">
                       Governance Stake
                     </Badge>
-                  </div>
+                  </div> */}
                 </div>
 
                 {/* Top 3 Preview */}
@@ -266,9 +254,7 @@ export default function GardensGrowthInitiativePage() {
                       className="flex items-center justify-between text-sm"
                     >
                       <div className="flex items-center gap-2">
-                        <span className="font-medium text-muted-foreground">
-                          #{entry.rank}
-                        </span>
+                        <span className="font-medium ">#{entry.rank}</span>
                         <span className="font-mono">{entry.address}</span>
                       </div>
                       <span className="font-medium">{entry.points}</span>
