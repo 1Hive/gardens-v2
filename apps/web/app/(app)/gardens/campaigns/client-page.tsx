@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   CalendarIcon,
   UserGroupIcon,
@@ -12,6 +12,7 @@ import {
 import Image, { StaticImageData } from "next/image";
 import Link from "next/link";
 import { SuperBanner, SuperLogo, PlantBanner } from "@/assets";
+import { Statistic } from "@/components";
 import { Badge } from "@/components/Badge";
 import { Button } from "@/components/Button";
 
@@ -102,7 +103,94 @@ function formatNumber(num: number) {
   return num.toString();
 }
 
+function timeAgo(dateString: string | undefined): string {
+  if (!dateString) return "Unknown";
+
+  const past = new Date(dateString).getTime();
+  const now = Date.now();
+  const diff = now - past;
+
+  const seconds = Math.floor(diff / 1000);
+  if (seconds < 60) return `${seconds}s ago`;
+
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
+
+type LeaderboardResponse = {
+  cid: string;
+  snapshot: {
+    updatedAt?: string;
+    wallets: Array<{
+      address: string;
+      superfluidActivityPoints?: number;
+      governanceStakePoints?: number;
+      [key: string]: any;
+    }>;
+  };
+  totalStreamedSup: number;
+  targetStreamSup: number;
+};
+
+async function fetchSuperfluidLeaderboard(): Promise<LeaderboardResponse | null> {
+  try {
+    const response = await fetch("/api/superfluid-stack/leaderboard", {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+
+    if (!response.ok) {
+      console.error(
+        "[fetchSuperfluidLeaderboard] Request failed",
+        response.status,
+        response.statusText,
+      );
+      return null;
+    }
+
+    const data = (await response.json()) as LeaderboardResponse;
+    return data ?? null;
+  } catch (error) {
+    console.error("[fetchSuperfluidLeaderboard] Unexpected error:", error);
+    return null;
+  }
+}
+
 export default function CampaignsPage() {
+  const [totalStreamedSup, setTotalStreamedSup] = useState<number | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+  const [walletCount, setWalletCount] = useState<number | null>(null);
+
+  const [loading, setLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    async function load() {
+      setLoading(true);
+
+      const res = await fetchSuperfluidLeaderboard();
+
+      if (res) {
+        setTotalStreamedSup(res.totalStreamedSup);
+        setWalletCount(res.snapshot.wallets.length);
+
+        setLastUpdated(res.snapshot.updatedAt ?? null);
+      } else {
+        setTotalStreamedSup(null);
+        setLastUpdated(null);
+      }
+
+      setLoading(false);
+    }
+
+    load();
+  }, []);
+
   const [activeStatus, setActiveStatus] = useState("active");
   const [activeCategory, setActiveCategory] = useState("All");
 
@@ -194,7 +282,7 @@ export default function CampaignsPage() {
                       <div className="flex justify-between text-sm mb-2">
                         <span className="">Claimed</span>
                         <span className="font-medium">
-                          {formatNumber(c.tokenClaimed ?? 0)} /{" "}
+                          {formatNumber(totalStreamedSup ?? 0)} /{" "}
                           {formatNumber(c.tokenAllocated ?? 0)} {c.tokenSymbol}
                         </span>
                       </div>
@@ -204,7 +292,7 @@ export default function CampaignsPage() {
                           className="h-full bg-primary-content transition-all"
                           style={{
                             width: `${
-                              ((c.tokenClaimed ?? 1) /
+                              ((totalStreamedSup ?? 0) /
                                 (c.tokenAllocated ?? 10)) *
                               100
                             }%`,
@@ -212,10 +300,19 @@ export default function CampaignsPage() {
                         />
                       </div>
 
-                      <div className="flex items-center gap-2 text-sm mb-4">
-                        <UserGroupIcon className="h-4 w-4" />
-                        {/* {formatNumber(c.participants ?? 0)} */}
-                        Onboarding participants
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                          <UserGroupIcon className="h-5 w-5 text-neutral-soft-content" />
+                          <span className="text-neutral-soft-content text-sm">
+                            {walletCount} participants
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-neutral-soft-content text-sm">
+                            {" "}
+                            Last updated: {timeAgo(lastUpdated ?? undefined)}
+                          </span>
+                        </div>
                       </div>
 
                       <Link href={c.ctaLink} className="block">

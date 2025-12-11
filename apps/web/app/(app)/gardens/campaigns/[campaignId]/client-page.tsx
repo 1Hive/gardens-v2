@@ -1,4 +1,5 @@
 "use client";
+import { useEffect, useState } from "react";
 import {
   ArrowLeftIcon,
   TrophyIcon,
@@ -58,6 +59,7 @@ const participationSteps = [
 type LeaderboardResponse = {
   cid: string;
   snapshot: {
+    updatedAt?: string;
     wallets: Array<{
       address: string;
       superfluidActivityPoints?: number;
@@ -98,23 +100,6 @@ async function fetchSuperfluidLeaderboard(): Promise<LeaderboardResponse | null>
 }
 
 export default async function GardensGrowthInitiativePage() {
-  // const [data, setData] = useState<LeaderboardResponse | null>(null);
-  // const [loading, setLoading] = useState<boolean>(true);
-
-  // // Fetch once on page load
-  // useEffect(() => {
-  //   async function load() {
-  //     setLoading(true);
-
-  //     const result = await fetchSuperfluidLeaderboard();
-  //     setData(result);
-
-  //     setLoading(false);
-  //   }
-
-  //   load();
-  // }, []);
-
   return (
     <div className="min-h-screen">
       {/* Hero Banner */}
