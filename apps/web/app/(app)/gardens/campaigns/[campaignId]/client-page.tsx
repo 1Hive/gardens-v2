@@ -13,11 +13,14 @@ import {
 } from "@heroicons/react/24/outline";
 import Image from "next/image";
 import Link from "next/link";
+import { Address, useAccount } from "wagmi";
 import { SuperBanner, SuperLogo } from "@/assets";
+import { EthAddress } from "@/components";
 import { Badge } from "@/components/Badge";
 import { Button } from "@/components/Button";
 import { SuperfluidLeaderboardModal } from "@/components/SuperfluidLeaderboard";
 import { fetchSuperfluidLeaderboard, LeaderboardResponse } from "@/types";
+import { shortenAddress } from "@/utils/text";
 import { formatNumber, timeAgo } from "@/utils/time";
 
 const participationSteps = [
@@ -59,12 +62,40 @@ const participationSteps = [
   },
 ];
 
-export default async function GardensGrowthInitiativePage() {
+type WalletEntry = {
+  address: string;
+  totalPoints?: number;
+  [key: string]: any;
+};
+
+function getWalletRankAndPoints(
+  address: string,
+  rankingWallets: WalletEntry[],
+): { rank: number; totalPoints: number } | null {
+  const index = rankingWallets.findIndex(
+    (w) => w.address.toLowerCase() === address.toLowerCase(),
+  );
+
+  if (index === -1) return null;
+
+  return {
+    rank: index + 1,
+    totalPoints: rankingWallets[index].totalPoints ?? 0,
+  };
+}
+
+export default function GardensGrowthInitiativePage() {
   const [superfluidStreamsData, setSuperfluidStreamsData] =
     useState<LeaderboardResponse | null>(null);
-
   const [loading, setLoading] = useState<boolean>(true);
+  const [walletRank, setWalletRank] = useState<number | null>(null);
+  const [walletPoints, setWalletPoints] = useState<number | null>(null);
 
+  const { address: connectedAccount } = useAccount();
+
+  const wallets = superfluidStreamsData?.snapshot?.wallets;
+
+  //useEffects
   useEffect(() => {
     async function fetchPointsData() {
       setLoading(true);
@@ -74,7 +105,22 @@ export default async function GardensGrowthInitiativePage() {
     }
 
     fetchPointsData();
-  }, []);
+  }, [connectedAccount]);
+
+  useEffect(() => {
+    if (!connectedAccount) return;
+    if (!wallets || wallets.length === 0) return;
+
+    const result = getWalletRankAndPoints(connectedAccount, wallets);
+
+    if (result) {
+      setWalletRank(result.rank);
+      setWalletPoints(result.totalPoints);
+    } else {
+      setWalletRank(null);
+      setWalletPoints(null);
+    }
+  }, [connectedAccount, wallets]);
 
   return (
     <div className="min-h-screen">
@@ -142,13 +188,15 @@ export default async function GardensGrowthInitiativePage() {
           {/* Left Column - How to Participate */}
           <div className="lg:col-span-2 space-y-8">
             <div>
-              <h2 className="text-2xl font-bold mb-6">How to Participate</h2>
+              <h2 className="text-2xl font-bold mb-6 ml-6">
+                How to Participate
+              </h2>
 
               <div className="space-y-4 p-6">
                 {participationSteps.map((step) => (
                   <div
                     key={step.title}
-                    className={`rounded-xl border-[1px] border-border-neutral  hover:shadow-md transition-all ${step.highlighted ? "border-2  border-primary-content bg-primary-soft dark:bg-primary-dark-base dark:border-primary-dark-border" : ""}`}
+                    className={`rounded-xl border-[1px] border-border-neutral  hover:shadow-md transition-all bg-neutral ${step.highlighted ? "border-2  border-primary-content bg-primary-soft dark:bg-primary-dark-base dark:border-primary-dark-border" : ""}`}
                   >
                     <div className="p-6">
                       <div className="flex gap-4">
@@ -181,80 +229,44 @@ export default async function GardensGrowthInitiativePage() {
                 ))}
               </div>
             </div>
-
-            {/* Campaign Stats */}
-
-            <>
-              <div className="flex justify-between text-sm mb-2">
-                <span className="">Claimed</span>
-                <span className="font-medium">
-                  {formatNumber(superfluidStreamsData?.totalStreamedSup ?? 0)} /{" "}
-                  {formatNumber(847_000)} SUP
-                </span>
-              </div>
-
-              <div className="h-2 bg-neutral-soft dark:bg-neutral-soft-content rounded-full overflow-hidden mb-4">
-                <div
-                  className="h-full bg-primary-content transition-all"
-                  style={{
-                    width: `${
-                      ((superfluidStreamsData?.totalStreamedSup ?? 0) /
-                        847_000) *
-                      100
-                    }%`,
-                  }}
-                />
-              </div>
-
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <UserGroupIcon className="h-5 w-5 text-neutral-soft-content" />
-                  <span className="text-neutral-soft-content text-sm">
-                    {superfluidStreamsData?.snapshot?.wallets.length}{" "}
-                    participants
-                  </span>
-                </div>
-                <div>
-                  <span className="text-neutral-soft-content text-sm">
-                    {" "}
-                    Last updated:{" "}
-                    {timeAgo(
-                      superfluidStreamsData?.snapshot?.updatedAt ?? undefined,
-                    )}
-                  </span>
-                </div>
-              </div>
-            </>
           </div>
 
           {/* Right Column - Leaderboard */}
           <div className="lg:col-span-1">
-            <div className="sticky top-20 section-layout">
-              <div className="p-6">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <TrophyIcon className="h-7 w-7" />
+            <div className="">
+              <div className="border1 rounded-lg bg-neutral p-6 sticky top-10">
+                <div className="p-6">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="h-10 w-10 rounded-lg bg-primary-soft flex items-center justify-center ">
+                      <TrophyIcon className="h-7 w-7 text-primary-content" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold">Leaderboard</h3>
+                      <p className="text-sm text-neutral-soft-content ">
+                        Top contributors
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-semibold">Leaderboard</h3>
-                    <p className="text-sm ">Top contributors</p>
-                  </div>
-                </div>
 
-                {/* Connected Account Section */}
-                <div className="mb-6 py-2 rounded-lg bg-primary/10 border border-primary/20 border2">
-                  <p className="text-xs  mb-2">Your Position</p>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-2xl font-bold">#12</span>
-                      <span className="font-mono text-sm">0xmati...0x37</span>
+                  {/* Connected Account Section */}
+                  <div className="mb-6 p-4 rounded-lg bg-primary border-[1px]  border-primary-content">
+                    <p className="text-xs mb-2">Your Position</p>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-2xl font-bold">
+                          #{walletRank}
+                        </span>
+
+                        <span className="text-xs">
+                          {shortenAddress(connectedAccount ?? "0x")}
+                        </span>
+                      </div>
+                      <div className="flex items-baseline gap-1">
+                        <p className="font-bold text-xl">{walletPoints}</p>
+                        <p className="text-xs ">Pts.</p>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className="font-bold">3k </p>
-                      <p className="text-xs ">Points</p>
-                    </div>
-                  </div>
-                  {/* <div className="flex gap-1.5 mt-3 flex-wrap">
+                    {/* <div className="flex gap-1.5 mt-3 flex-wrap">
                     <Badge className="text-xs bg-blue-500/10 text-blue-700 border-blue-500/20">
                       Add Funds
                     </Badge>
@@ -265,38 +277,93 @@ export default async function GardensGrowthInitiativePage() {
                       Governance Stake
                     </Badge>
                   </div> */}
-                </div>
+                  </div>
 
-                {/* Top 3 Preview */}
-                <div className="space-y-3 mb-6">
-                  {[
-                    { rank: 1, address: "0x593c...5bB5", points: "55,047.295" },
-                    { rank: 2, address: "0x3c8d...B4ae", points: "6,007.791" },
-                    { rank: 3, address: "0xcBE3...2178", points: "4,603.527" },
-                  ].map((entry) => (
-                    <div
-                      key={entry.rank}
-                      className="flex items-center justify-between text-sm"
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium ">#{entry.rank}</span>
-                        <span className="font-mono">{entry.address}</span>
+                  {/* Top 3 Preview */}
+                  {/* <div className="space-y-3 mb-6">
+                    {[
+                      {
+                        rank: 1,
+                        address: "0x593c...5bB5",
+                        points: "55,047.295",
+                      },
+                      {
+                        rank: 2,
+                        address: "0x3c8d...B4ae",
+                        points: "6,007.791",
+                      },
+                      {
+                        rank: 3,
+                        address: "0xcBE3...2178",
+                        points: "4,603.527",
+                      },
+                    ].map((entry) => (
+                      <div
+                        key={entry.rank}
+                        className="flex items-center justify-between text-sm"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium ">#{entry.rank}</span>
+                          <span className="font-mono">{entry.address}</span>
+                        </div>
+                        <span className="font-medium">{entry.points}</span>
                       </div>
-                      <span className="font-medium">{entry.points}</span>
-                    </div>
-                  ))}
+                    ))}
+                  </div> */}
+
+                  <SuperfluidLeaderboardModal
+                    campaignName="Gardens Growth Initiative"
+                    tokenSymbol="GDN"
+                    trigger={
+                      <Button className="w-full" size="lg">
+                        <TrophyIcon className="h-5 w-5 mr-2" />
+                        View Full Leaderboard
+                      </Button>
+                    }
+                  />
+                </div>
+              </div>
+              {/* Campaign Stats */}
+              <div className="section-layout">
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="">Claimed</span>
+                  <span className="font-medium">
+                    {formatNumber(superfluidStreamsData?.totalStreamedSup ?? 0)}{" "}
+                    / {formatNumber(847_000)} SUP
+                  </span>
                 </div>
 
-                <SuperfluidLeaderboardModal
-                  campaignName="Gardens Growth Initiative"
-                  tokenSymbol="GDN"
-                  trigger={
-                    <Button className="w-full" size="lg">
-                      <TrophyIcon className="h-5 w-5 mr-2" />
-                      View Full Leaderboard
-                    </Button>
-                  }
-                />
+                <div className="h-2 bg-neutral-soft dark:bg-neutral-soft-content rounded-full overflow-hidden mb-4">
+                  <div
+                    className="h-full bg-primary-content transition-all"
+                    style={{
+                      width: `${
+                        ((superfluidStreamsData?.totalStreamedSup ?? 0) /
+                          847_000) *
+                        100
+                      }%`,
+                    }}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <UserGroupIcon className="h-5 w-5 text-neutral-soft-content" />
+                    <span className="text-neutral-soft-content text-sm">
+                      {superfluidStreamsData?.snapshot?.wallets.length}{" "}
+                      participants
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-neutral-soft-content text-sm">
+                      {" "}
+                      Last updated:{" "}
+                      {timeAgo(
+                        superfluidStreamsData?.snapshot?.updatedAt ?? undefined,
+                      )}
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
