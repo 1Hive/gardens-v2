@@ -6,7 +6,10 @@ import { Client, createClient, fetchExchange, gql } from "urql";
 import { Address, createPublicClient, formatUnits, http, parseAbi } from "viem";
 import { chainConfigMap } from "@/configs/chains";
 import { getTokenUsdPrice } from "@/services/coingecko";
-import { STACK_DRY_RUN, getSuperfluidStackClient } from "@/services/superfluid-stack";
+import {
+  STACK_DRY_RUN,
+  getSuperfluidStackClient,
+} from "@/services/superfluid-stack";
 import { erc20ABI } from "@/src/generated";
 import { ChainId } from "@/types";
 import { getViemChain } from "@/utils/web3";
@@ -751,7 +754,8 @@ const fetchFarcasterWalletsForFids = async (
 ): Promise<{ primary: Set<string>; discarded: Set<string> }> => {
   const wallets = new Set<string>();
   const discarded = new Set<string>();
-  if (FARCASTER_DISABLED || !fids.length) return { primary: wallets, discarded };
+  if (FARCASTER_DISABLED || !fids.length)
+    return { primary: wallets, discarded };
   for (const fid of fids) {
     try {
       const res = await fetch(
@@ -784,17 +788,15 @@ const fetchFarcasterWalletsForFids = async (
       };
 
       const ethWallets = collectValid(extras?.ethWallets);
-      const custody = collectValid(
-        u?.custodyAddress ? [u.custodyAddress] : [],
-      );
+      const custody = collectValid(u?.custodyAddress ? [u.custodyAddress] : []);
       const verified = collectValid(u?.verifiedAddresses);
       const verifications = collectValid(u?.verifications);
       const labeled = collectValid(
-        Array.isArray(extras?.walletLabels)
-          ? extras.walletLabels
-              .map((l: any) => l?.address)
-              .filter((a: any) => typeof a === "string")
-          : [],
+        Array.isArray(extras?.walletLabels) ?
+          extras.walletLabels
+            .map((l: any) => l?.address)
+            .filter((a: any) => typeof a === "string")
+        : [],
       );
 
       // Priority: ethWallets first element, then custody, then verifiedAddresses, verifications, walletLabels.
@@ -1806,7 +1808,11 @@ const calculateStreamUsdBySender = ({
   priceUsd: number;
   windowStart: number;
   windowEnd: number;
-}): { perSender: Map<string, number>; totalUsd: number; totalUsdAll: number } => {
+}): {
+  perSender: Map<string, number>;
+  totalUsd: number;
+  totalUsdAll: number;
+} => {
   const nowSec = Math.floor(Date.now() / 1000);
   const effectiveEnd = Math.min(nowSec, windowEnd);
   const updatesBySender = new Map<
@@ -2286,11 +2292,13 @@ const processChain = async ({
 
     const community = communityByPool.get(poolAddress);
     const bonusMultiplier =
-      chainId === 8453 &&
-      community &&
-      toLower(community.id) === toLower(BASE_BONUS_COMMUNITY) ?
-        2 :
-        1;
+      (
+        chainId === 8453 &&
+        community &&
+        toLower(community.id) === toLower(BASE_BONUS_COMMUNITY)
+      ) ?
+        2
+      : 1;
     const qualifiesForSuperfluidBonus =
       community && toLower(community.id) === toLower(BASE_BONUS_COMMUNITY);
 
@@ -2305,9 +2313,8 @@ const processChain = async ({
         priceUsd,
         userTotals,
         multiplier: bonusMultiplier,
-        superfluidActivityPoints: qualifiesForSuperfluidBonus ?
-          superfluidActivityPoints
-        : undefined,
+        superfluidActivityPoints:
+          qualifiesForSuperfluidBonus ? superfluidActivityPoints : undefined,
       });
     }
 
@@ -2331,14 +2338,13 @@ const processChain = async ({
         perSender: streamUsdBySender,
         totalUsd,
         totalUsdAll,
-      } =
-        calculateStreamUsdBySender({
-          flowUpdates,
-          tokenDecimals: superTokenDecimals,
-          priceUsd,
-          windowStart,
-          windowEnd,
-        });
+      } = calculateStreamUsdBySender({
+        flowUpdates,
+        tokenDecimals: superTokenDecimals,
+        priceUsd,
+        windowStart,
+        windowEnd,
+      });
       streamUsdTotalPoints = totalUsd;
       streamUsdTotalAll = totalUsdAll;
       for (const [sender, usd] of streamUsdBySender.entries()) {
@@ -2423,7 +2429,6 @@ const processChain = async ({
       });
       processedCommunities.set(community.id, processed);
     }
-
   }
 
   // Split community totals to members
@@ -2466,8 +2471,9 @@ const processChain = async ({
 };
 
 export async function GET(req: Request) {
-  const apiKey = req.headers.get("Authorization");
-  if (apiKey !== process.env.CRON_SECRET) {
+  const auth = req.headers.get("authorization")?.replace("Bearer ", "");
+
+  if (auth !== process.env.CRON_SECRET) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   if (Date.now() > campaignEndMS) {
@@ -2620,7 +2626,9 @@ export async function GET(req: Request) {
         const followerFids = await fetchFarcasterFollowerFids(gardensFid);
         const { primary: followerWallets, discarded } =
           await fetchFarcasterWalletsForFids(followerFids);
-        followerWallets.forEach((addr) => farcasterFollowerWalletsSet.add(addr));
+        followerWallets.forEach((addr) =>
+          farcasterFollowerWalletsSet.add(addr),
+        );
         discarded.forEach((addr) => farcasterDiscardedWallets.push(addr));
       } else {
         console.log(
@@ -2861,10 +2869,13 @@ export async function GET(req: Request) {
           const key = addr.toLowerCase();
           const existingTotals =
             existingMap.get(key) ??
-            EVENT_NAMES.reduce((acc, n) => {
-              acc[n] = 0;
-              return acc;
-            }, {} as Record<string, number>);
+            EVENT_NAMES.reduce(
+              (acc, n) => {
+                acc[n] = 0;
+                return acc;
+              },
+              {} as Record<string, number>,
+            );
           existingTotals[name] = (existingTotals[name] ?? 0) + pts;
           existingMap.set(key, existingTotals);
         }
@@ -2880,10 +2891,13 @@ export async function GET(req: Request) {
     }> = [];
     const existingTotalsByAddress = await fetchExistingTotalsByAddress();
 
-    const emptyCategoryTotals = EVENT_NAMES.reduce((acc, n) => {
-      acc[n] = 0;
-      return acc;
-    }, {} as Record<string, number>);
+    const emptyCategoryTotals = EVENT_NAMES.reduce(
+      (acc, n) => {
+        acc[n] = 0;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
 
     for (const wallet of walletPointTargets) {
       const existingByCategory =
