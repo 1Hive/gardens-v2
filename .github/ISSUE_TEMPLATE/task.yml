@@ -7,14 +7,7 @@ body:
     attributes:
       value: |
         Capture the goal, the work needed, and how you'll know it's done.
-  - type: input
-    id: summary
-    attributes:
-      label: Summary
-      description: Brief headline for the task.
-      placeholder: Publish docs update for...
-    validations:
-      required: true
+
   - type: textarea
     id: outcome
     attributes:
@@ -23,6 +16,7 @@ body:
       placeholder: When complete...
     validations:
       required: true
+
   - type: textarea
     id: plan
     attributes:
@@ -33,6 +27,7 @@ body:
         - [ ] Step 2
     validations:
       required: false
+
   - type: textarea
     id: resources
     attributes:
