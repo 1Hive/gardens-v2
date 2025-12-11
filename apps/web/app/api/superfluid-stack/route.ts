@@ -2476,7 +2476,7 @@ export async function GET(req: Request) {
       { status: 200 },
     );
   }
-  let superfluidStackClient;
+  let superfluidStackClient: ReturnType<typeof getSuperfluidStackClient>;
   try {
     superfluidStackClient = getSuperfluidStackClient();
   } catch (err) {
