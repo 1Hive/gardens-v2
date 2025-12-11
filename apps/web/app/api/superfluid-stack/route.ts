@@ -751,9 +751,10 @@ const fetchEnsNameByAddress = async (
 
 const fetchFarcasterWalletsForFids = async (
   fids: number[],
-): Promise<Set<string>> => {
+): Promise<{ primary: Set<string>; discarded: Set<string> }> => {
   const wallets = new Set<string>();
-  if (FARCASTER_DISABLED || !fids.length) return wallets;
+  const discarded = new Set<string>();
+  if (FARCASTER_DISABLED || !fids.length) return { primary: wallets, discarded };
   for (const fid of fids) {
     try {
       const res = await fetch(
@@ -774,34 +775,53 @@ const fetchFarcasterWalletsForFids = async (
       const u = json?.result?.user ?? null;
       const extras = json?.result?.extras ?? null;
       if (!u) continue;
-      const addrFields: string[] = [];
-      if (u?.custodyAddress) addrFields.push(u.custodyAddress);
-      if (Array.isArray(u?.verifiedAddresses)) {
-        addrFields.push(...u.verifiedAddresses);
-      }
-      if (Array.isArray(u?.verifications)) {
-        addrFields.push(...u.verifications);
-      }
-      if (Array.isArray(extras?.ethWallets)) {
-        addrFields.push(...extras.ethWallets);
-      }
-      if (Array.isArray(extras?.walletLabels)) {
-        for (const label of extras.walletLabels) {
-          if (label?.address) addrFields.push(label.address);
-        }
-      }
-      if (!addrFields.length) {
+      const collectValid = (list?: string[] | null): string[] => {
+        if (!Array.isArray(list)) return [];
+        return list
+          .filter(
+            (candidate) =>
+              typeof candidate === "string" &&
+              candidate.toLowerCase().startsWith("0x"),
+          )
+          .map((c) => c.toLowerCase());
+      };
+
+      const ethWallets = collectValid(extras?.ethWallets);
+      const custody = collectValid(
+        u?.custodyAddress ? [u.custodyAddress] : [],
+      );
+      const verified = collectValid(u?.verifiedAddresses);
+      const verifications = collectValid(u?.verifications);
+      const labeled = collectValid(
+        Array.isArray(extras?.walletLabels)
+          ? extras.walletLabels
+              .map((l: any) => l?.address)
+              .filter((a: any) => typeof a === "string")
+          : [],
+      );
+
+      // Priority: ethWallets first element, then custody, then verifiedAddresses, verifications, walletLabels.
+      const priorityList = [
+        ...ethWallets,
+        ...custody,
+        ...verified,
+        ...verifications,
+        ...labeled,
+      ];
+      const chosen = priorityList[0];
+      const others = priorityList.slice(1);
+
+      if (!chosen) {
         console.warn("[superfluid-stack] farcaster user has no addresses", {
           fid: u?.fid,
           displayName: u?.displayName,
           username: u?.username,
         });
+        continue;
       }
-      for (const addr of addrFields) {
-        if (typeof addr === "string" && addr.toLowerCase().startsWith("0x")) {
-          wallets.add(addr.toLowerCase());
-        }
-      }
+
+      wallets.add(chosen);
+      for (const addr of others) discarded.add(addr);
     } catch (error) {
       console.warn("[superfluid-stack] farcaster single user fetch error", {
         fid,
@@ -809,7 +829,7 @@ const fetchFarcasterWalletsForFids = async (
       });
     }
   }
-  return wallets;
+  return { primary: wallets, discarded };
 };
 const ensureLatestPinataCacheCid = async (): Promise<string | null> => {
   if (latestCreationBlockCacheCid) return latestCreationBlockCacheCid;
@@ -2574,18 +2594,50 @@ export async function GET(req: Request) {
     > = {};
     const communitiesByChain: Record<string, ProcessedCommunity[]> = {};
     const farcasterFollowerWallets: string[] = [];
+    const farcasterDiscardedWallets: string[] = [];
     const nativeSuperTokens: { address: string; token: string | null }[] = [];
     const nativeTokens: { address: string; token: string | null }[] = [];
+
+    const fetchExistingFarcasterAddresses = async (): Promise<Set<string>> => {
+      const addrs = new Set<string>();
+      const limit = 250;
+      let offset = 0;
+      while (true) {
+        const res = await superfluidStackClient.getEvents({
+          event: "farcasterPoints",
+          limit,
+          offset,
+        });
+        console.log("[superfluid-stack] stack getEvents farcaster sweep", {
+          offset,
+          limit,
+          count: Array.isArray(res) ? res.length : 0,
+        });
+        if (!Array.isArray(res) || res.length === 0) break;
+        for (const evt of res as any[]) {
+          const addr =
+            evt?.address ??
+            evt?.walletAddress ??
+            evt?.accountAddress ??
+            evt?.account;
+          if (typeof addr === "string" && addr.toLowerCase().startsWith("0x")) {
+            addrs.add(addr.toLowerCase());
+          }
+        }
+        offset += res.length;
+        if (res.length < limit) break;
+      }
+      return addrs;
+    };
 
     if (!FARCASTER_DISABLED) {
       const gardensFid = await fetchGardensFid();
       if (gardensFid) {
         const followerFids = await fetchFarcasterFollowerFids(gardensFid);
-        const followerWallets =
+        const { primary: followerWallets, discarded } =
           await fetchFarcasterWalletsForFids(followerFids);
-        followerWallets.forEach((addr) =>
-          farcasterFollowerWalletsSet.add(addr),
-        );
+        followerWallets.forEach((addr) => farcasterFollowerWalletsSet.add(addr));
+        discarded.forEach((addr) => farcasterDiscardedWallets.push(addr));
       } else {
         console.log(
           "[superfluid-stack] skipping farcaster follower scan because gardens fid could not be resolved",
@@ -2593,18 +2645,20 @@ export async function GET(req: Request) {
       }
       farcasterFollowerWallets.push(...farcasterFollowerWalletsSet);
     }
+    const existingFarcasterAddresses = await fetchExistingFarcasterAddresses();
 
     for (const chainId of TARGET_CHAINS) {
       const {
         totals: chainTotals,
         missingPrices,
-        bonusPoints,
-        communityPoints,
+        superfluidActivityPoints,
+        governanceStakePoints,
         blockBounds,
         nativePools,
         debug,
         processedCommunities,
         fetchedPrices,
+        streamTotalsByPool,
       } = await processChain({
         chainId,
         windowStart: start,
@@ -2701,9 +2755,11 @@ export async function GET(req: Request) {
 
     const allAddresses = new Set<string>([
       ...totals.keys(),
-      ...bonusPointsByWallet.keys(),
-      ...communityPointsByWallet.keys(),
+      ...superfluidActivityPointsByWallet.keys(),
+      ...governanceStakePointsByWallet.keys(),
       ...farcasterFollowerWalletsSet.values(),
+      ...farcasterDiscardedWallets.values(),
+      ...existingFarcasterAddresses.values(),
     ]);
 
     if (!FARCASTER_DISABLED) {
