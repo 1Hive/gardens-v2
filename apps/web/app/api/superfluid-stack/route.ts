@@ -6,10 +6,7 @@ import { Client, createClient, fetchExchange, gql } from "urql";
 import { Address, createPublicClient, formatUnits, http, parseAbi } from "viem";
 import { chainConfigMap } from "@/configs/chains";
 import { getTokenUsdPrice } from "@/services/coingecko";
-import {
-  STACK_DRY_RUN,
-  superfluidStackClient,
-} from "@/services/superfluid-stack";
+import { STACK_DRY_RUN, getSuperfluidStackClient } from "@/services/superfluid-stack";
 import { erc20ABI } from "@/src/generated";
 import { ChainId } from "@/types";
 import { getViemChain } from "@/utils/web3";
@@ -2477,6 +2474,16 @@ export async function GET(req: Request) {
     return NextResponse.json(
       { message: "Campaign ended; sync not executed." },
       { status: 200 },
+    );
+  }
+  let superfluidStackClient;
+  try {
+    superfluidStackClient = getSuperfluidStackClient();
+  } catch (err) {
+    console.error("[superfluid-stack] stack client init failed", err);
+    return NextResponse.json(
+      { error: "Stack client not configured" },
+      { status: 500 },
     );
   }
   // Reset transient state each run
