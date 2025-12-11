@@ -1,17 +1,13 @@
 import type { Metadata } from "next";
 import ClientPage from "./client-page";
 import { FALLBACK_TITLE, description } from "./opengraph-image";
+import { SuperBanner } from "@/assets";
 
 type PageParams = {
   params: {
     campaignId: string;
   };
 };
-
-function buildOgImagePath(params: PageParams["params"]) {
-  const version = "v=1"; // cache-busting query to avoid extra route segments
-  return `/gardens/campaigns/${params.campaignId}/opengraph-image?${version}`;
-}
 
 const titlePrefix = "Gardens - ";
 
@@ -23,19 +19,22 @@ const campaigns: { [key: string]: { name: string } } = {
 export async function generateMetadata({
   params,
 }: PageParams): Promise<Metadata> {
+  const campaignTitle = campaigns[params.campaignId]?.name ?? FALLBACK_TITLE;
+  const ogImage = typeof SuperBanner === "string" ? SuperBanner : SuperBanner.src;
+
   const fallbackMetadata: Metadata = {
-    title: titlePrefix + FALLBACK_TITLE,
+    title: titlePrefix + campaignTitle,
     description,
     openGraph: {
-      title: titlePrefix + FALLBACK_TITLE,
+      title: titlePrefix + campaignTitle,
       description,
-      // images: [{ url: buildOgImagePath(params) }],
+      images: [{ url: ogImage }],
     },
     twitter: {
       card: "summary_large_image",
-      title: titlePrefix + FALLBACK_TITLE,
+      title: titlePrefix + campaignTitle,
       description,
-      // images: [buildOgImagePath(params)],
+      images: [ogImage],
     },
   };
 
