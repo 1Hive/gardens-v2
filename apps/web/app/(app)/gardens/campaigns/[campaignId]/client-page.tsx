@@ -9,6 +9,7 @@ import {
   CurrencyDollarIcon,
   CalendarIcon,
   ChatBubbleLeftRightIcon,
+  UserGroupIcon,
 } from "@heroicons/react/24/outline";
 import Image from "next/image";
 import Link from "next/link";
@@ -16,6 +17,8 @@ import { SuperBanner, SuperLogo } from "@/assets";
 import { Badge } from "@/components/Badge";
 import { Button } from "@/components/Button";
 import { SuperfluidLeaderboardModal } from "@/components/SuperfluidLeaderboard";
+import { fetchSuperfluidLeaderboard, LeaderboardResponse } from "@/types";
+import { formatNumber, timeAgo } from "@/utils/time";
 
 const participationSteps = [
   {
@@ -56,50 +59,23 @@ const participationSteps = [
   },
 ];
 
-type LeaderboardResponse = {
-  cid: string;
-  snapshot: {
-    updatedAt?: string;
-    wallets: Array<{
-      address: string;
-      superfluidActivityPoints?: number;
-      governanceStakePoints?: number;
-      [key: string]: any;
-    }>;
-  };
-  totalStreamedSup: number;
-  targetStreamSup: number;
-};
+export default async function GardensGrowthInitiativePage() {
+  const [superfluidStreamsData, setSuperfluidStreamsData] =
+    useState<LeaderboardResponse | null>(null);
 
-/**
- * Fetch Superfluid leaderboard data from the API.
- * Returns `null` on any failure.
- */
-async function fetchSuperfluidLeaderboard(): Promise<LeaderboardResponse | null> {
-  try {
-    const response = await fetch("/api/superfluid-stack/leaderboard", {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-    });
+  const [loading, setLoading] = useState<boolean>(true);
 
-    if (!response.ok) {
-      console.error(
-        "[fetchSuperfluidLeaderboard] Request failed",
-        response.status,
-        response.statusText,
-      );
-      return null;
+  useEffect(() => {
+    async function fetchPointsData() {
+      setLoading(true);
+      const result = await fetchSuperfluidLeaderboard();
+      setSuperfluidStreamsData(result);
+      setLoading(false);
     }
 
-    const data = (await response.json()) as LeaderboardResponse;
-    return data ?? null;
-  } catch (error) {
-    console.error("[fetchSuperfluidLeaderboard] Unexpected error:", error);
-    return null;
-  }
-}
+    fetchPointsData();
+  }, []);
 
-export default async function GardensGrowthInitiativePage() {
   return (
     <div className="min-h-screen">
       {/* Hero Banner */}
@@ -149,10 +125,7 @@ export default async function GardensGrowthInitiativePage() {
                   <CalendarIcon className="h-6 w-6 " />
                   <span className="font-semibold">Ends 25 Feb 2025</span>
                 </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <UsersIcon className="h-6 w-6 " />
-                  <span className="font-semibold">Onbaording participants</span>
-                </div>
+
                 <div className="flex items-center gap-2 text-sm">
                   <CurrencyDollarIcon className="h-6 w-6 " />
                   <span className="font-semibold">847K SUP allocated</span>
@@ -175,15 +148,15 @@ export default async function GardensGrowthInitiativePage() {
                 {participationSteps.map((step) => (
                   <div
                     key={step.title}
-                    className={`rounded-xl border-[1px] border-border-neutral  hover:shadow-md transition-all ${step.highlighted ? "border-2  border-primary-content bg-primary-soft" : ""}`}
+                    className={`rounded-xl border-[1px] border-border-neutral  hover:shadow-md transition-all ${step.highlighted ? "border-2  border-primary-content bg-primary-soft dark:bg-primary-dark-base dark:border-primary-dark-border" : ""}`}
                   >
                     <div className="p-6">
                       <div className="flex gap-4">
                         <div
                           className={`h-10 w-10 rounded-full flex items-center justify-center flex-shrink-0 ${
                             step.highlighted ?
-                              "bg-primary text-primary-foreground"
-                            : "bg-muted "
+                              "bg-primary-soft dark:bg-primary-dark-base"
+                            : ""
                           }`}
                         >
                           {step.icon}
@@ -210,29 +183,48 @@ export default async function GardensGrowthInitiativePage() {
             </div>
 
             {/* Campaign Stats */}
-            <div>
-              <div className="section-layout">
-                <h3 className="font-semibold text-lg mb-4">
-                  Campaign Progress
-                </h3>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="">Tokens Claimed</span>
-                    <span className="font-medium">0 / 848K SUP</span>
-                  </div>
-                  <div className="h-3 bg-muted rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-primary rounded-full transition-all"
-                      style={{ width: "10%" }}
-                    />
-                  </div>
-                  <p className="text-xs ">
-                    oNBAORD participants earning rewards by contributing to the
-                    Gardens ecosystem.
-                  </p>
+
+            <>
+              <div className="flex justify-between text-sm mb-2">
+                <span className="">Claimed</span>
+                <span className="font-medium">
+                  {formatNumber(superfluidStreamsData?.totalStreamedSup ?? 0)} /{" "}
+                  {formatNumber(847_000)} SUP
+                </span>
+              </div>
+
+              <div className="h-2 bg-neutral-soft dark:bg-neutral-soft-content rounded-full overflow-hidden mb-4">
+                <div
+                  className="h-full bg-primary-content transition-all"
+                  style={{
+                    width: `${
+                      ((superfluidStreamsData?.totalStreamedSup ?? 0) /
+                        847_000) *
+                      100
+                    }%`,
+                  }}
+                />
+              </div>
+
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <UserGroupIcon className="h-5 w-5 text-neutral-soft-content" />
+                  <span className="text-neutral-soft-content text-sm">
+                    {superfluidStreamsData?.snapshot?.wallets.length}{" "}
+                    participants
+                  </span>
+                </div>
+                <div>
+                  <span className="text-neutral-soft-content text-sm">
+                    {" "}
+                    Last updated:{" "}
+                    {timeAgo(
+                      superfluidStreamsData?.snapshot?.updatedAt ?? undefined,
+                    )}
+                  </span>
                 </div>
               </div>
-            </div>
+            </>
           </div>
 
           {/* Right Column - Leaderboard */}

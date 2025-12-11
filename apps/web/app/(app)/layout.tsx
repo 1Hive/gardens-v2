@@ -93,7 +93,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </button> */}
         </div>
 
-        <div className="w-full flex items-center justify-center gap-2">
+        <div className="flex items-center justify-center gap-2">
           <Link
             href="/gardens/campaigns"
             className="flex items-center gap-3 text-sm"
@@ -105,7 +105,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               width={40}
               loading="lazy"
             /> */}
-            <h6 className="hover:opacity-70">Ecosystems Campaigns</h6>
+            <h6 className="hover:opacity-70">Ecosystem Campaigns</h6>
           </Link>
         </div>
         <div className="flex items-center gap-2">

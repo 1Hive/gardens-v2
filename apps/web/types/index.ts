@@ -63,3 +63,42 @@ export type Column<T> = {
   render: (item: T) => React.ReactNode;
   className?: string;
 };
+
+export type LeaderboardResponse = {
+  cid: string;
+  snapshot: {
+    updatedAt?: string;
+    wallets: Array<{
+      address: string;
+      superfluidActivityPoints?: number;
+      governanceStakePoints?: number;
+      [key: string]: any;
+    }>;
+  };
+  totalStreamedSup: number;
+  targetStreamSup: number;
+};
+
+export async function fetchSuperfluidLeaderboard(): Promise<LeaderboardResponse | null> {
+  try {
+    const response = await fetch("/api/superfluid-stack/leaderboard", {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+
+    if (!response.ok) {
+      console.error(
+        "[fetchSuperfluidLeaderboard] Request failed",
+        response.status,
+        response.statusText,
+      );
+      return null;
+    }
+
+    const data = (await response.json()) as LeaderboardResponse;
+    return data ?? null;
+  } catch (error) {
+    console.error("[fetchSuperfluidLeaderboard] Unexpected error:", error);
+    return null;
+  }
+}

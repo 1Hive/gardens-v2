@@ -12,9 +12,10 @@ import {
 import Image, { StaticImageData } from "next/image";
 import Link from "next/link";
 import { SuperBanner, SuperLogo, PlantBanner } from "@/assets";
-import { Statistic } from "@/components";
 import { Badge } from "@/components/Badge";
 import { Button } from "@/components/Button";
+import { fetchSuperfluidLeaderboard } from "@/types";
+import { formatNumber, timeAgo } from "@/utils/time";
 
 interface Campaign {
   id: string;
@@ -96,71 +97,6 @@ const campaigns: Campaign[] = [
     logo: "/spinach-logo.jpg",
   },
 ];
-
-function formatNumber(num: number) {
-  if (num >= 1_000_000) return (num / 1_000_000).toFixed(2) + "M";
-  if (num >= 1_000) return (num / 1_000).toFixed(0) + "K";
-  return num.toString();
-}
-
-function timeAgo(dateString: string | undefined): string {
-  if (!dateString) return "Unknown";
-
-  const past = new Date(dateString).getTime();
-  const now = Date.now();
-  const diff = now - past;
-
-  const seconds = Math.floor(diff / 1000);
-  if (seconds < 60) return `${seconds}s ago`;
-
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
-
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-
-  const days = Math.floor(hours / 24);
-  return `${days}d ago`;
-}
-
-type LeaderboardResponse = {
-  cid: string;
-  snapshot: {
-    updatedAt?: string;
-    wallets: Array<{
-      address: string;
-      superfluidActivityPoints?: number;
-      governanceStakePoints?: number;
-      [key: string]: any;
-    }>;
-  };
-  totalStreamedSup: number;
-  targetStreamSup: number;
-};
-
-async function fetchSuperfluidLeaderboard(): Promise<LeaderboardResponse | null> {
-  try {
-    const response = await fetch("/api/superfluid-stack/leaderboard", {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-    });
-
-    if (!response.ok) {
-      console.error(
-        "[fetchSuperfluidLeaderboard] Request failed",
-        response.status,
-        response.statusText,
-      );
-      return null;
-    }
-
-    const data = (await response.json()) as LeaderboardResponse;
-    return data ?? null;
-  } catch (error) {
-    console.error("[fetchSuperfluidLeaderboard] Unexpected error:", error);
-    return null;
-  }
-}
 
 export default function CampaignsPage() {
   const [totalStreamedSup, setTotalStreamedSup] = useState<number | null>(null);
