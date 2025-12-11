@@ -213,10 +213,10 @@ const buildWalletCsv = (
     address: string;
     fundPoints: number;
     streamPoints: number;
-    bonusPoints: number;
-    communityPoints: number;
+    superfluidActivityPoints: number;
+    governanceStakePoints: number;
     farcasterPoints: number;
-    targetPoints: number;
+    totalPoints: number;
   }[],
 ) => {
   const header = [
@@ -224,18 +224,18 @@ const buildWalletCsv = (
     "Total Pts",
     "Fund Pts",
     "Stream Pts",
-    "Bonus Pts",
-    "Community Pts",
+    "Superfluid Activity Pts",
+    "Governance Stake Pts",
     "Farcaster Pts",
   ];
   const rows = entries.map((e) =>
     [
       e.address,
-      e.targetPoints,
+      e.totalPoints,
       e.fundPoints,
       e.streamPoints,
-      e.bonusPoints,
-      e.communityPoints,
+      e.superfluidActivityPoints,
+      e.governanceStakePoints,
       e.farcasterPoints,
     ].join(","),
   );
@@ -344,16 +344,16 @@ const upsertNotionWallet = async ({
   address,
   fundPoints,
   streamPoints,
-  bonusPoints,
-  communityPoints,
+  superfluidActivityPoints,
+  governanceStakePoints,
   totalPoints,
   farcasterPoints,
 }: {
   address: string;
   fundPoints: number;
   streamPoints: number;
-  bonusPoints: number;
-  communityPoints: number;
+  superfluidActivityPoints: number;
+  governanceStakePoints: number;
   totalPoints: number;
   farcasterPoints: number;
 }): Promise<boolean> => {
@@ -370,8 +370,8 @@ const upsertNotionWallet = async ({
     normalized,
     fundPoints,
     streamPoints,
-    bonusPoints,
-    communityPoints,
+    superfluidActivityPoints,
+    governanceStakePoints,
     farcasterPoints,
     totalPoints,
   ].join("|");
@@ -379,8 +379,8 @@ const upsertNotionWallet = async ({
     Wallet: { title: [{ text: { content: normalized } }] },
     "Add Funds": { number: fundPoints },
     "Stream Funds": { number: streamPoints },
-    "2x Multiplier": { number: bonusPoints },
-    "Governance Stake": { number: communityPoints },
+    "2x Multiplier": { number: superfluidActivityPoints },
+    "Governance Stake": { number: governanceStakePoints },
     Farcaster: { number: farcasterPoints },
     "Total Pts": { number: totalPoints },
     Checksum: { rich_text: [{ text: { content: checksum } }] },
@@ -1350,12 +1350,10 @@ const pinPointsSnapshotToIpfs = async (
     streamUsd: number;
     fundPoints: number;
     streamPoints: number;
-    bonusPoints: number;
-    communityPoints: number;
+    superfluidActivityPoints: number;
+    governanceStakePoints: number;
     farcasterPoints: number;
-    targetPoints: number;
-    existingPoints: number;
-    addedPoints: number;
+    totalPoints: number;
     farcasterUsername: string | null;
     ensName: string | null;
     nativeSuperToken: string | null;
@@ -2690,12 +2688,10 @@ export async function GET(req: Request) {
       streamUsd: number;
       fundPoints: number;
       streamPoints: number;
-      bonusPoints: number;
-      communityPoints: number;
+      superfluidActivityPoints: number;
+      governanceStakePoints: number;
       farcasterPoints: number;
-      targetPoints: number;
-      existingPoints: number;
-      addedPoints: number;
+      totalPoints: number;
       farcasterUsername: string | null;
       ensName: string | null;
       nativeSuperToken: string | null;
@@ -2874,10 +2870,10 @@ export async function GET(req: Request) {
                 address: wallet.address,
                 fundPoints: wallet.fundPoints,
                 streamPoints: wallet.streamPoints,
-                bonusPoints: wallet.bonusPoints,
-                communityPoints: wallet.communityPoints,
+                superfluidActivityPoints: wallet.superfluidActivityPoints,
+                governanceStakePoints: wallet.governanceStakePoints,
                 farcasterPoints: wallet.farcasterPoints,
-                totalPoints: wallet.targetPoints,
+                totalPoints: wallet.totalPoints,
               });
             }),
           );
