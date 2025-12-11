@@ -1400,6 +1400,8 @@ const pinPointsSnapshotToIpfs = async (
     if (data?.IpfsHash) {
       console.log("[superfluid-stack] pinned points snapshot to IPFS", {
         cid: data.IpfsHash,
+        walletCount: wallets.length,
+        duplicate: Boolean((data as any)?.isDuplicate),
       });
       return data.IpfsHash;
     }
@@ -2000,14 +2002,15 @@ const processChain = async ({
 }): Promise<{
   totals: Map<string, { fundUsd: number; streamUsd: number }>;
   missingPrices: { address: Address; symbol: string }[];
-  bonusPoints: Map<string, number>;
-  communityPoints: Map<string, number>;
+  superfluidActivityPoints: Map<string, number>;
+  governanceStakePoints: Map<string, number>;
   blockBounds: { startBlock: bigint; endBlock: bigint };
+  streamTotalsByPool: Map<string, number>;
   debug: {
     poolsProcessed: number;
     flowUpdateCount: number;
-    bonusWallets: number;
-    communityCount: number;
+    superfluidActivityWallets: number;
+    governanceStakeCount: number;
   };
   nativePools: { poolAddress: Address; token: Address }[];
   processedCommunities: ProcessedCommunity[];
@@ -2051,6 +2054,8 @@ const processChain = async ({
     } catch (error) {
       console.warn("[superfluid-stack] super token resolution failed", {
         token,
+        chainId,
+        superfluidSubgraphUrl,
         error,
       });
       return null;
@@ -2067,7 +2072,6 @@ const processChain = async ({
 
   const userTotals = new Map<string, { fundUsd: number; streamUsd: number }>();
   const missingPrices: { address: Address; symbol: string }[] = [];
-  const bonusPoints = new Map<string, number>();
   const farcasterPoints = new Map<string, number>();
   const fetchedPrices: { token: Address; symbol: string; priceUsd: number }[] =
     [];
@@ -2151,6 +2155,7 @@ const processChain = async ({
     string,
     { fundUsd: number; streamUsd: number; members: CommunityInfo["members"] }
   >();
+  const streamTotalsByPool = new Map<string, number>();
   const processedCommunities = new Map<
     string,
     {
@@ -2168,6 +2173,8 @@ const processChain = async ({
   const nativePools: { poolAddress: Address; token: Address }[] = [];
   let poolsProcessed = 0;
   let flowUpdateCount = 0;
+  const superfluidActivityPoints = new Map<string, number>();
+  const governanceStakePoints = new Map<string, number>();
 
   const getCachedTokenPrice = async ({
     token,
@@ -2280,6 +2287,16 @@ const processChain = async ({
       continue;
     }
 
+    const community = communityByPool.get(poolAddress);
+    const bonusMultiplier =
+      chainId === 8453 &&
+      community &&
+      toLower(community.id) === toLower(BASE_BONUS_COMMUNITY) ?
+        2 :
+        1;
+    const qualifiesForSuperfluidBonus =
+      community && toLower(community.id) === toLower(BASE_BONUS_COMMUNITY);
+
     if (superToken.sameAsUnderlying) {
       await accumulateFundingPoints({
         publicClient,
@@ -2290,19 +2307,34 @@ const processChain = async ({
         tokenDecimals: tokenDecimals as number,
         priceUsd,
         userTotals,
+        multiplier: bonusMultiplier,
+        superfluidActivityPoints: qualifiesForSuperfluidBonus ?
+          superfluidActivityPoints
+        : undefined,
       });
     }
 
-    let streamUsdTotal = 0;
+    let streamUsdTotalPoints = 0;
+    let streamUsdTotalAll = 0;
     if (allowStreams && superTokenDecimals !== null) {
       const flowUpdates = await fetchFlowUpdates(superfluidClient, {
         receiver: poolAddress,
         token: superfluidTokenAddress as Address,
-        start: windowStart,
-        end: windowEnd,
       });
       flowUpdateCount += flowUpdates.length;
-      const { perSender: streamUsdBySender, totalUsd } =
+      if (flowUpdates.length === 0) {
+        console.log("[superfluid-stack] no flow updates for pool", {
+          chainId,
+          poolAddress,
+          token: underlyingToken,
+          superfluidToken: superfluidTokenAddress,
+        });
+      }
+      const {
+        perSender: streamUsdBySender,
+        totalUsd,
+        totalUsdAll,
+      } =
         calculateStreamUsdBySender({
           flowUpdates,
           tokenDecimals: superTokenDecimals,
@@ -2310,16 +2342,55 @@ const processChain = async ({
           windowStart,
           windowEnd,
         });
-      streamUsdTotal = totalUsd;
+      streamUsdTotalPoints = totalUsd;
+      streamUsdTotalAll = totalUsdAll;
       for (const [sender, usd] of streamUsdBySender.entries()) {
         if (usd < 10) continue;
         const key = toLower(sender);
         const prev = userTotals.get(key) ?? { fundUsd: 0, streamUsd: 0 };
-        userTotals.set(key, { ...prev, streamUsd: prev.streamUsd + usd });
+        userTotals.set(key, {
+          ...prev,
+          streamUsd: prev.streamUsd + usd * bonusMultiplier,
+        });
+        if (qualifiesForSuperfluidBonus) {
+          const existingActivity = superfluidActivityPoints.get(key) ?? 0;
+          superfluidActivityPoints.set(
+            key,
+            existingActivity + usd * bonusMultiplier,
+          );
+        }
+      }
+      if (flowUpdates.length > 0 && streamUsdTotalPoints === 0) {
+        console.log(
+          "[superfluid-stack] stream total below threshold, skipping pool entry",
+          {
+            chainId,
+            poolAddress,
+            token: underlyingToken,
+            superfluidToken: superfluidTokenAddress,
+            flowUpdates: flowUpdates.length,
+            totalUsd: totalUsd,
+            totalUsdAll: totalUsdAll,
+          },
+        );
       }
     }
+    if (streamUsdTotalAll > 0) {
+      const poolKey = toLower(poolAddress);
+      streamTotalsByPool.set(
+        poolKey,
+        (streamTotalsByPool.get(poolKey) ?? 0) + streamUsdTotalAll,
+      );
+      console.log("[superfluid-stack] stream total recorded for pool", {
+        chainId,
+        poolAddress,
+        token: underlyingToken,
+        superfluidToken: superfluidTokenAddress,
+        flowUpdates: flowUpdateCount,
+        streamUsdTotal: streamUsdTotalAll,
+      });
+    }
 
-    const community = communityByPool.get(poolAddress);
     if (community) {
       const entry = communityTotals.get(community.id) ?? {
         fundUsd: 0,
@@ -2336,9 +2407,9 @@ const processChain = async ({
           tokenDecimals: tokenDecimals as number,
           priceUsd,
         });
-        entry.fundUsd += fundUsd;
+        entry.fundUsd += fundUsd * bonusMultiplier;
       }
-      entry.streamUsd += streamUsdTotal;
+      entry.streamUsd += streamUsdTotalPoints * bonusMultiplier;
       communityTotals.set(community.id, entry);
 
       const processed = processedCommunities.get(community.id) ?? {
@@ -2356,49 +2427,9 @@ const processChain = async ({
       processedCommunities.set(community.id, processed);
     }
 
-    // Base bonus: transfers/streams to specified community address (any token)
-    if (chainId === 8453) {
-      // transfers
-      await accumulateBonusFunding({
-        publicClient,
-        target: BASE_BONUS_COMMUNITY,
-        token: underlyingToken,
-        fromBlock: startBlock,
-        toBlock: endBlock,
-        tokenDecimals: tokenDecimals ?? superTokenDecimals ?? 18,
-        priceUsd,
-        bonusTotals: bonusPoints,
-      });
-      // streams
-      if (
-        allowStreams &&
-        superTokenDecimals !== null &&
-        superfluidTokenAddress
-      ) {
-        const bonusFlowUpdates = await fetchFlowUpdates(superfluidClient, {
-          receiver: BASE_BONUS_COMMUNITY,
-          token: superfluidTokenAddress,
-          start: windowStart,
-          end: windowEnd,
-        });
-        const { perSender: bonusStreamUsd } = calculateStreamUsdBySender({
-          flowUpdates: bonusFlowUpdates,
-          tokenDecimals: superTokenDecimals,
-          priceUsd,
-          windowStart,
-          windowEnd,
-        });
-        for (const [sender, usd] of bonusStreamUsd.entries()) {
-          if (usd < 10) continue;
-          const prev = bonusPoints.get(toLower(sender)) ?? 0;
-          bonusPoints.set(toLower(sender), prev + usd * 2);
-        }
-      }
-    }
   }
 
   // Split community totals to members
-  const communityPoints = new Map<string, number>();
   for (const entry of communityTotals.values()) {
     const totalUsd = entry.fundUsd + entry.streamUsd;
     if (totalUsd < 10) continue;
@@ -2413,22 +2444,23 @@ const processChain = async ({
       const points = totalUsd * share;
       if (points <= 0) continue;
       const key = toLower(member.memberAddress);
-      const prev = communityPoints.get(key) ?? 0;
-      communityPoints.set(key, prev + points);
+      const prev = governanceStakePoints.get(key) ?? 0;
+      governanceStakePoints.set(key, prev + points);
     }
   }
 
   return {
     totals: userTotals,
     missingPrices,
-    bonusPoints,
-    communityPoints,
+    superfluidActivityPoints,
+    governanceStakePoints,
     blockBounds: { startBlock, endBlock },
+    streamTotalsByPool,
     debug: {
       poolsProcessed,
       flowUpdateCount,
-      bonusWallets: bonusPoints.size,
-      communityCount: communityTotals.size,
+      superfluidActivityWallets: superfluidActivityPoints.size,
+      governanceStakeCount: communityTotals.size,
     },
     nativePools,
     processedCommunities: Array.from(processedCommunities.values()),
@@ -2486,8 +2518,8 @@ export async function GET(req: Request) {
   try {
     const { start, end } = parseCampaignWindow();
     const totals = new Map<string, { fundUsd: number; streamUsd: number }>();
-    const bonusPointsByWallet = new Map<string, number>();
-    const communityPointsByWallet = new Map<string, number>();
+    const superfluidActivityPointsByWallet = new Map<string, number>();
+    const governanceStakePointsByWallet = new Map<string, number>();
     const farcasterPointsByWallet = new Map<string, number>();
     const farcasterFollowerWalletsSet = new Set<string>();
     const farcasterUsernameByWallet = new Map<string, string>();
@@ -2510,14 +2542,15 @@ export async function GET(req: Request) {
       chainId: ChainId;
       poolsProcessed: number;
       flowUpdateCount: number;
-      bonusWallets: number;
-      communityCount: number;
+      superfluidActivityWallets: number;
+      governanceStakeCount: number;
     }[] = [];
     const missingPriceEntries: {
       address: Address;
       symbol: string;
       chainId: ChainId;
     }[] = [];
+    const streamTotalsByChain: Record<string, Record<string, number>> = {};
     const fetchedPricesByChain: Record<
       string,
       { token: Address; symbol: string; priceUsd: number }[]
@@ -2614,15 +2647,18 @@ export async function GET(req: Request) {
       for (const miss of missingPrices) {
         missingPriceEntries.push({ ...miss, chainId });
       }
-      for (const [addr, pts] of bonusPoints.entries()) {
+      for (const [addr, pts] of superfluidActivityPoints.entries()) {
         const key = toLower(addr);
-        bonusPointsByWallet.set(key, (bonusPointsByWallet.get(key) ?? 0) + pts);
-      }
-      for (const [addr, pts] of communityPoints.entries()) {
-        const key = toLower(addr);
-        communityPointsByWallet.set(
+        superfluidActivityPointsByWallet.set(
           key,
-          (communityPointsByWallet.get(key) ?? 0) + pts,
+          (superfluidActivityPointsByWallet.get(key) ?? 0) + pts,
+        );
+      }
+      for (const [addr, pts] of governanceStakePoints.entries()) {
+        const key = toLower(addr);
+        governanceStakePointsByWallet.set(
+          key,
+          (governanceStakePointsByWallet.get(key) ?? 0) + pts,
         );
       }
       manualBoundsByChain[String(chainId)] = {
@@ -2657,6 +2693,9 @@ export async function GET(req: Request) {
             superfluidToken: p.superfluidToken?.toLowerCase() ?? undefined,
           })),
         }),
+      );
+      streamTotalsByChain[String(chainId)] = Object.fromEntries(
+        streamTotalsByPool.entries(),
       );
     }
 
@@ -2719,67 +2758,258 @@ export async function GET(req: Request) {
       farcasterPointsByWallet.set(addr, 1);
     }
 
+    const walletPointTargets: Array<{
+      address: string;
+      fundPoints: number;
+      streamPoints: number;
+      superfluidActivityPoints: number;
+      governanceStakePoints: number;
+      farcasterPoints: number;
+      totalPoints: number;
+      fundUsd: number;
+      streamUsd: number;
+    }> = [];
+
     for (const address of allAddresses) {
       const value = totals.get(address) ?? { fundUsd: 0, streamUsd: 0 };
       const fundPoints = value.fundUsd >= 10 ? Math.floor(value.fundUsd) : 0;
       const streamPoints =
         value.streamUsd >= 10 ? Math.floor(value.streamUsd) : 0;
-      const bonusPts = Math.floor(bonusPointsByWallet.get(address) ?? 0);
-      const communityPts = Math.floor(
-        communityPointsByWallet.get(address) ?? 0,
+      const superfluidActivityPts = Math.floor(
+        superfluidActivityPointsByWallet.get(address) ?? 0,
+      );
+      const governanceStakePts = Math.floor(
+        governanceStakePointsByWallet.get(address) ?? 0,
       );
       const farcasterPts = Math.floor(
         farcasterPointsByWallet.get(address) ?? 0,
       );
-      const targetPoints =
-        fundPoints + streamPoints + bonusPts + communityPts + farcasterPts;
-      if (targetPoints <= 0) continue;
+      const totalPoints =
+        fundPoints +
+        streamPoints +
+        superfluidActivityPts +
+        governanceStakePts +
+        farcasterPts;
+      if (totalPoints <= 0) continue;
 
-      const existingRaw = await superfluidStackClient.getPoints(address);
-      const existing =
-        typeof existingRaw === "number" ? existingRaw
-        : Array.isArray(existingRaw) && existingRaw.length > 0 ?
-          (existingRaw as any)[0]?.amount ?? 0
-        : 0;
-      const delta = targetPoints - existing;
-      if (delta > 0 && !STACK_DRY_RUN) {
-        await superfluidStackClient.pointsClient.addPoints({
-          address,
-          points: delta,
-        });
-      }
-      updates.push({
+      walletPointTargets.push({
         address,
-        added: delta > 0 ? delta : 0,
-        total: targetPoints,
-        existing,
-        target: targetPoints,
-      });
-      walletBreakdown.push({
-        address,
-        fundUsd: value.fundUsd,
-        streamUsd: value.streamUsd,
         fundPoints,
         streamPoints,
-        bonusPoints: bonusPts,
-        communityPoints: communityPts,
+        superfluidActivityPoints: superfluidActivityPts,
+        governanceStakePoints: governanceStakePts,
         farcasterPoints: farcasterPts,
-        targetPoints,
-        existingPoints: existing,
-        addedPoints: delta > 0 ? delta : 0,
-        farcasterUsername: farcasterUsernameByWallet.get(address) ?? null,
-        ensName: ensNameByWallet.get(address) ?? null,
-        nativeSuperToken: nativeSuperTokenByWallet.get(address) ?? null,
-        nativeToken: nativeTokenByWallet.get(address) ?? null,
+        totalPoints,
+        fundUsd: value.fundUsd,
+        streamUsd: value.streamUsd,
+      });
+    }
+
+    const EVENT_NAMES = [
+      "fundPoints",
+      "streamPoints",
+      "superfluidActivityPoints",
+      "governanceStakePoints",
+      "farcasterPoints",
+    ] as const;
+
+    const fetchExistingTotalsByAddress = async (): Promise<
+      Map<string, Record<string, number>>
+    > => {
+      const limit = 250;
+      let offset = 0;
+      const existingMap = new Map<string, Record<string, number>>();
+      while (true) {
+        console.log("[superfluid-stack] stack getEvents sweep request", {
+          offset,
+          limit,
+        });
+        const res = await superfluidStackClient.eventClient.getEvents({
+          query: { limit, offset },
+        });
+        console.log("[superfluid-stack] stack getEvents sweep response", {
+          offset,
+          limit,
+          count: Array.isArray(res) ? res.length : 0,
+        });
+        if (!Array.isArray(res) || res.length === 0) break;
+        for (const evt of res as any[]) {
+          const name = evt?.event as string;
+          if (!EVENT_NAMES.includes(name as (typeof EVENT_NAMES)[number]))
+            continue;
+          const pts = Number(evt?.points ?? 0);
+          const addr =
+            evt?.address ??
+            evt?.walletAddress ??
+            evt?.accountAddress ??
+            evt?.account;
+          if (typeof addr !== "string" || !addr.toLowerCase().startsWith("0x"))
+            continue;
+          const key = addr.toLowerCase();
+          const existingTotals =
+            existingMap.get(key) ??
+            EVENT_NAMES.reduce((acc, n) => {
+              acc[n] = 0;
+              return acc;
+            }, {} as Record<string, number>);
+          existingTotals[name] = (existingTotals[name] ?? 0) + pts;
+          existingMap.set(key, existingTotals);
+        }
+        offset += res.length;
+        if (res.length < limit) break;
+      }
+      return existingMap;
+    };
+
+    const allEventPayloads: Array<{
+      event: string;
+      payload: { account: string; points: number; metadata?: any };
+    }> = [];
+    const existingTotalsByAddress = await fetchExistingTotalsByAddress();
+
+    const emptyCategoryTotals = EVENT_NAMES.reduce((acc, n) => {
+      acc[n] = 0;
+      return acc;
+    }, {} as Record<string, number>);
+
+    for (const wallet of walletPointTargets) {
+      const existingByCategory =
+        existingTotalsByAddress.get(wallet.address) ?? emptyCategoryTotals;
+      const targetByCategory: Record<string, number> = {
+        fundPoints: wallet.fundPoints,
+        streamPoints: wallet.streamPoints,
+        superfluidActivityPoints: wallet.superfluidActivityPoints,
+        governanceStakePoints: wallet.governanceStakePoints,
+        farcasterPoints: wallet.farcasterPoints,
+      };
+      const deltas: Record<string, number> = {};
+      for (const name of EVENT_NAMES) {
+        deltas[name] = targetByCategory[name] - (existingByCategory[name] ?? 0);
+        if (deltas[name] !== 0) {
+          allEventPayloads.push({
+            event: name,
+            payload: {
+              account: wallet.address,
+              points: deltas[name],
+              metadata: {
+                category: name,
+                target: targetByCategory[name],
+                existing: existingByCategory[name] ?? 0,
+                fundPoints: wallet.fundPoints,
+                streamPoints: wallet.streamPoints,
+                superfluidActivityPoints: wallet.superfluidActivityPoints,
+                governanceStakePoints: wallet.governanceStakePoints,
+                farcasterPoints: wallet.farcasterPoints,
+              },
+            },
+          });
+        }
+      }
+      const existingTotal = Object.values(existingByCategory).reduce(
+        (acc, n) => acc + Number(n ?? 0),
+        0,
+      );
+      const addedDelta = Object.values(deltas).reduce(
+        (acc, n) => acc + (n > 0 ? n : 0),
+        0,
+      );
+
+      updates.push({
+        address: wallet.address,
+        added: addedDelta,
+        total: wallet.totalPoints,
+        existing: existingTotal,
+        target: wallet.totalPoints,
+      });
+      walletBreakdown.push({
+        address: wallet.address,
+        fundUsd: wallet.fundUsd,
+        streamUsd: wallet.streamUsd,
+        fundPoints: wallet.fundPoints,
+        streamPoints: wallet.streamPoints,
+        superfluidActivityPoints: wallet.superfluidActivityPoints,
+        governanceStakePoints: wallet.governanceStakePoints,
+        farcasterPoints: wallet.farcasterPoints,
+        totalPoints: wallet.totalPoints,
+        farcasterUsername:
+          farcasterUsernameByWallet.get(wallet.address) ?? null,
+        ensName: ensNameByWallet.get(wallet.address) ?? null,
+        nativeSuperToken: nativeSuperTokenByWallet.get(wallet.address) ?? null,
+        nativeToken: nativeTokenByWallet.get(wallet.address) ?? null,
         checksum: [
-          address.toLowerCase(),
-          fundPoints,
-          streamPoints,
-          bonusPts,
-          communityPts,
-          farcasterPts,
-          targetPoints,
+          wallet.address.toLowerCase(),
+          wallet.fundPoints,
+          wallet.streamPoints,
+          wallet.superfluidActivityPoints,
+          wallet.governanceStakePoints,
+          wallet.farcasterPoints,
+          wallet.totalPoints,
         ].join("|"),
+      });
+    }
+
+    // Remove accounts that are no longer in the current target list
+    for (const [address, existingByCategory] of existingTotalsByAddress) {
+      if (walletPointTargets.find((w) => w.address === address)) continue;
+      const targetByCategory: Record<string, number> = {
+        fundPoints: 0,
+        streamPoints: 0,
+        superfluidActivityPoints: 0,
+        governanceStakePoints: 0,
+        farcasterPoints: 0,
+      };
+      const deltas: Record<string, number> = {};
+      for (const name of EVENT_NAMES) {
+        deltas[name] = targetByCategory[name] - (existingByCategory[name] ?? 0);
+        if (deltas[name] !== 0) {
+          allEventPayloads.push({
+            event: name,
+            payload: {
+              account: address,
+              points: deltas[name],
+              metadata: {
+                category: name,
+                target: targetByCategory[name],
+                existing: existingByCategory[name] ?? 0,
+              },
+            },
+          });
+        }
+      }
+      const existingTotal = Object.values(existingByCategory).reduce(
+        (acc, n) => acc + Number(n ?? 0),
+        0,
+      );
+      updates.push({
+        address,
+        added: 0,
+        total: 0,
+        existing: existingTotal,
+        target: 0,
+      });
+    }
+
+    if (allEventPayloads.length && !STACK_DRY_RUN) {
+      console.log("[superfluid-stack] stack sendEvents request", {
+        count: allEventPayloads.length,
+      });
+      for (let i = 0; i < allEventPayloads.length; i += 250) {
+        const batch = allEventPayloads.slice(i, i + 250);
+        console.log("[superfluid-stack] stack sendEvents batch", {
+          batchStart: i,
+          batchEnd: i + batch.length - 1,
+          batchSize: batch.length,
+        });
+        const resp = await superfluidStackClient.eventClient.sendEvents(batch);
+        console.log("[superfluid-stack] stack sendEvents response", {
+          batchStart: i,
+          batchEnd: i + batch.length - 1,
+          response: resp,
+        });
+      }
+    } else if (STACK_DRY_RUN) {
+      console.log("[superfluid-stack] DRY RUN - skipping event pushes", {
+        eventCount: allEventPayloads.length,
       });
     }
 
@@ -2941,6 +3171,7 @@ export async function GET(req: Request) {
         notionSync,
         farcasterFollowerWallets,
         fetchedPricesByChain,
+        streamTotalsByChain,
         creationBlockCacheCid:
           responseCreationCid ?? latestCreationBlockCacheCid ?? null,
         transferLogCacheCid:
