@@ -150,20 +150,10 @@ const STREAMS_QUERY = gql`
 `;
 
 const FLOW_UPDATES_QUERY = gql`
-  query flowUpdates(
-    $receiver: String!
-    $token: String!
-    $start: BigInt!
-    $end: BigInt!
-  ) {
+  query flowUpdates($receiver: String!, $token: String!) {
     flowUpdatedEvents(
       first: 1000
-      where: {
-        receiver: $receiver
-        token: $token
-        timestamp_gte: $start
-        timestamp_lte: $end
-      }
+      where: { receiver: $receiver, token: $token }
       orderBy: timestamp
       orderDirection: asc
     ) {
@@ -1751,27 +1741,19 @@ const fetchFlowUpdates = async (
   {
     receiver,
     token,
-    start,
-    end,
   }: {
     receiver: Address;
     token: Address;
-    start: number;
-    end: number;
   },
 ): Promise<FlowUpdate[]> => {
   console.log("[superfluid-stack] Fetching flow updates", {
     receiver,
     token,
-    start,
-    end,
   });
   const result = await client
     .query<{ flowUpdatedEvents: any[] }>(FLOW_UPDATES_QUERY, {
       receiver: receiver.toLowerCase(),
       token: token.toLowerCase(),
-      start: start.toString(),
-      end: end.toString(),
     })
     .toPromise();
   if (result.error) {
