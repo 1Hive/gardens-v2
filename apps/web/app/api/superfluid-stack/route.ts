@@ -2473,6 +2473,12 @@ export async function GET(req: Request) {
   if (apiKey !== process.env.CRON_SECRET) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  if (Date.now() > campaignEndMS) {
+    return NextResponse.json(
+      { message: "Campaign ended; sync not executed." },
+      { status: 200 },
+    );
+  }
   // Reset transient state each run
   notionDisabled = false;
   await cacheHydrationPromise;
