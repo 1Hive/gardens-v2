@@ -51,32 +51,26 @@ function RankBadge({ rank }: { rank: number }) {
 
   if (rank === 1) {
     return (
-      <span className={`${baseClasses} bg-yellow-100 text-yellow-700`}>
-        <TrophyIcon className="h-3 w-3" />#{rank}
+      <span className={`${baseClasses} bg-yellow-200 text-yellow-700`}>
+        <TrophyIcon className="h-4 w-4" />#{rank}
       </span>
     );
   }
   if (rank === 2) {
     return (
       <span className={`${baseClasses} bg-gray-200 text-gray-600`}>
-        <TrophyIcon className="h-3 w-3" />#{rank}
+        <TrophyIcon className="h-4 w-4" />#{rank}
       </span>
     );
   }
   if (rank === 3) {
     return (
-      <span className={`${baseClasses} bg-amber-100 text-amber-700`}>
-        <TrophyIcon className="h-3 w-3" />#{rank}
+      <span className={`${baseClasses} bg-amber-200 text-amber-700`}>
+        <TrophyIcon className="h-4 w-4" />#{rank}
       </span>
     );
   }
-  if (rank <= 5) {
-    return (
-      <span className={`${baseClasses} bg-gray-100 text-gray-600`}>
-        <span className="h-2 w-2 rounded-full bg-gray-400" />#{rank}
-      </span>
-    );
-  }
+
   return (
     <span className={`${baseClasses} bg-gray-100 text-gray-500`}>#{rank}</span>
   );
@@ -132,7 +126,9 @@ function ScrollableActivities({ activities }: { activities: string[] }) {
       >
         <div className="flex flex-row gap-1 flex-nowrap">
           {activities.map((activity) => (
-            <Badge key={activity}>{activity}</Badge>
+            <Badge key={activity}>
+              <span className="text-xs font-bold text-nowrap">{activity}</span>
+            </Badge>
           ))}
         </div>
       </div>
@@ -181,7 +177,7 @@ export function SuperfluidLeaderboardModal({
 
   return (
     <Modal
-      title="Superfluid Ecosystem Rewards"
+      title="Superfluid Ecosystem Rewards Leaderboard"
       footer={
         <div className="flex items-center justify-center w-full">
           <p className="text-sm text-center">
@@ -194,9 +190,9 @@ export function SuperfluidLeaderboardModal({
       onClose={() => setOpenModal(false)}
       size="extra-large"
     >
-      <div className="flex-1 overflow-hidden flex flex-col min-w-0">
-        {currentUser && currentUserRank && (
-          <div className="mb-4 p-4 bg-primary border-[1px] border-primary-content rounded-lg">
+      <div className="flex-1 overflow-hidden flex flex-col gap-6 min-w-0">
+        {currentUser && currentUserRank != null && (
+          <div className="p-4 bg-primary-soft border-[1px] border-primary-content dark:bg-[#3c5b4b] dark:border-primary-dark-border rounded-xl">
             <p className="text-xs font-fold mb-2 uppercase tracking-wide">
               Your Position
             </p>
@@ -231,10 +227,10 @@ export function SuperfluidLeaderboardModal({
         )}
 
         {/* Search */}
-        <div className="relative mb-3">
-          <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <div className="relative">
+          <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 " />
 
-          <FormInput
+          <input
             // label="Search"
             type="text"
             value={searchQuery}
@@ -242,7 +238,7 @@ export function SuperfluidLeaderboardModal({
               target: { value: React.SetStateAction<string> };
             }) => setSearchQuery(e.target.value)}
             placeholder="Search by address, Ens"
-            className="w-full h-10"
+            className="border-[1px] border-neutral-content rounded-lg w-full h-10 px-8 bg-primary"
           />
         </div>
 
@@ -257,13 +253,13 @@ export function SuperfluidLeaderboardModal({
                 <th className="text-right py-3 px-3 font-medium w-[120px]">
                   Points
                 </th>
-                <th className="text-left py-3 px-3 font-medium w-[200px] hidden sm:table-cell">
+                <th className="text-center py-3 px-3 font-medium w-[200px] hidden sm:table-cell">
                   Activities
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y">
-              {filteredData?.map((entry, index) => {
+              {filteredData?.map((entry) => {
                 const rank = leaderboardData.indexOf(entry) + 1;
                 const activities = getActivities(entry);
                 const displayName =
@@ -279,14 +275,12 @@ export function SuperfluidLeaderboardModal({
                     </td>
                     <td className="py-3 px-3">
                       <div className="flex items-center gap-2 min-w-0">
-                        <span className="font-mono text-sm truncate">
-                          {displayName}
-                        </span>
+                        <span className="text-sm truncate">{displayName}</span>
                       </div>
                     </td>
                     <td className="py-3 px-3 text-right">
-                      <span className="font-mono font-semibold text-sm">
-                        {formatNumber(entry.totalPoints)}
+                      <span className="font-semibold text-sm">
+                        {entry.totalPoints}
                       </span>
                     </td>
                     <td className="py-3 px-3 hidden sm:table-cell">
