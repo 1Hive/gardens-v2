@@ -97,11 +97,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </div>
 
           <div className="hidden md:flex items-center justify-center gap-4">
+            <Link href="/gardens" className="flex items-center gap-3 text-sm">
+              <h6 className="hover:opacity-70">Communities</h6>
+            </Link>
             <Link
               href="/gardens/campaigns"
               className="flex items-center gap-3 text-sm"
             >
-              <h6 className="hover:opacity-70">Ecosystem Campaigns</h6>
+              <h6 className="hover:opacity-70">Campaigns</h6>
             </Link>
             <span
               aria-hidden
@@ -138,11 +141,18 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         {mobileMenuOpen && (
           <div className="md:hidden mt-3 flex flex-col gap-3 rounded-lg border border-border-neutral bg-neutral p-4 shadow-lg">
             <Link
+              href="/gardens/"
+              className="text-base font-medium hover:opacity-70 px-1 py-2 rounded-md"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Communities
+            </Link>
+            <Link
               href="/gardens/campaigns"
               className="text-base font-medium hover:opacity-70 px-1 py-2 rounded-md"
               onClick={() => setMobileMenuOpen(false)}
             >
-              Ecosystem Campaigns
+              Campaigns
             </Link>
             <a
               href="https://docs.gardens.fund"
