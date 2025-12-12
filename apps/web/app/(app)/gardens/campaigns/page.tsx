@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
 import ClientPage from "./client-page";
-import { FALLBACK_TITLE, description } from "./opengraph-image";
 import { PlantBanner } from "@/assets";
 
+export const description =
+  "Discover and join campaigns across the Gardens ecosystem.";
+export const FALLBACK_TITLE = "Gardens Campaigns";
 const titlePrefix = "Gardens - ";
-const ogImagePath = typeof PlantBanner === "string" ? PlantBanner : PlantBanner.src;
+const ogImagePath =
+  typeof PlantBanner === "string" ? PlantBanner : PlantBanner.src;
 
 export const metadata: Metadata = {
   title: titlePrefix + FALLBACK_TITLE,

@@ -14,6 +14,7 @@ import Link from "next/link";
 import { SuperBanner, SuperLogo, PlantBanner } from "@/assets";
 import { Badge } from "@/components/Badge";
 import { Button } from "@/components/Button";
+import { Skeleton } from "@/components/Skeleton";
 import { fetchSuperfluidLeaderboard } from "@/types";
 import { formatNumber, timeAgo } from "@/utils/time";
 
@@ -45,7 +46,7 @@ const campaigns: Campaign[] = [
       "Earn SUP rewards by staking governance tokens, adding funds to pools, and following Gardens on Farcaster.",
     category: "Rewards",
     status: "active",
-    endDate: "25 Feb 2025",
+    endDate: "25 Feb 2026",
     tokenAllocated: 847000,
     tokenClaimed: 0,
     tokenSymbol: "SUP",
@@ -174,10 +175,14 @@ export default function CampaignsPage() {
               <Button>Active</Button>
               <Button disabled>Ended</Button>
             </div>
+
             {filteredCampaigns.map((c) => (
-              <div
+              <Link
                 key={c.id}
-                className="section-layout max-w-2xl mx-auto rounded-xl overflow-hidden hover:shadow-lg transition"
+                href={c.ctaLink}
+                target={c.ctaLink.startsWith("http") ? "_blank" : undefined}
+                rel={c.ctaLink.startsWith("http") ? "noreferrer" : undefined}
+                className="block section-layout !p-0 max-w-2xl rounded-xl overflow-hidden hover:shadow-lg transition group"
               >
                 {/* Image */}
                 <div className="relative h-48 w-full">
@@ -185,7 +190,7 @@ export default function CampaignsPage() {
                     src={c.image ?? "/placeholder.svg"}
                     alt={c.name}
                     fill
-                    className="object-cover rounded-xl"
+                    className="object-cover !rounded-lg"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-neutral to-transparent" />
 
@@ -215,73 +220,58 @@ export default function CampaignsPage() {
 
                   {c.showStats ?
                     <>
-                      <div className="flex justify-between text-sm mb-2">
-                        <span className="">Claimed</span>
-                        <span className="font-medium">
-                          {formatNumber(totalStreamedSup ?? 0)} /{" "}
-                          {formatNumber(c.tokenAllocated ?? 0)} {c.tokenSymbol}
-                        </span>
-                      </div>
-
-                      <div className="h-2 bg-neutral-soft dark:bg-neutral-soft-content rounded-full overflow-hidden mb-4">
-                        <div
-                          className="h-full bg-primary-content transition-all"
-                          style={{
-                            width: `${
-                              ((totalStreamedSup ?? 0) /
-                                (c.tokenAllocated ?? 10)) *
-                              100
-                            }%`,
-                          }}
-                        />
-                      </div>
-
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-2">
-                          <UserGroupIcon className="h-5 w-5 text-neutral-soft-content" />
-                          <span className="text-neutral-soft-content text-sm">
-                            {walletCount} participants
+                      <Skeleton isLoading={loading} className="h-5 w-full mb-2">
+                        <div className="flex justify-between text-sm mb-2">
+                          <span className="">Claimed</span>
+                          <span className="font-medium">
+                            {formatNumber(totalStreamedSup ?? 0)} /{" "}
+                            {formatNumber(c.tokenAllocated ?? 0)}{" "}
+                            {c.tokenSymbol}
                           </span>
                         </div>
-                        <div>
-                          <span className="text-neutral-soft-content text-sm">
-                            {" "}
-                            Last updated: {timeAgo(lastUpdated ?? undefined)}
-                          </span>
-                        </div>
-                      </div>
+                      </Skeleton>
 
-                      <Link href={c.ctaLink} className="block">
-                        <Button className="w-full">
-                          {c.ctaText}
-                          <ArrowRightIcon className="h-4 w-4 ml-2" />
-                        </Button>
-                      </Link>
-                    </>
-                  : <>
-                      <div className="flex gap-2 flex-wrap mb-4">
-                        <Badge color="info">
-                          <CurrencyDollarIcon className="h-4 w-4" />
-                          {c.tokenAllocated} {c.tokenSymbol}
-                        </Badge>
-                      </div>
-
-                      <Link
-                        href={c.ctaLink}
-                        target={
-                          c.ctaLink.startsWith("http") ? "_blank" : undefined
-                        }
-                        className="block"
+                      <Skeleton
+                        isLoading={loading}
+                        className="h-2 w-full rounded-full mb-4"
                       >
-                        <Button className="w-full">
-                          {c.ctaText}
-                          <ArrowRightIcon className="h-4 w-4 ml-2" />
-                        </Button>
-                      </Link>
+                        <div className="h-2 bg-neutral-soft dark:bg-neutral-soft-content rounded-full overflow-hidden mb-4">
+                          <div
+                            className="h-full bg-primary-content transition-all"
+                            style={{
+                              width: `${
+                                ((totalStreamedSup ?? 0) /
+                                  (c.tokenAllocated ?? 10)) *
+                                100
+                              }%`,
+                            }}
+                          />
+                        </div>
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center gap-2">
+                            <UserGroupIcon className="h-5 w-5 text-neutral-soft-content" />
+                            <span className="text-neutral-soft-content text-sm">
+                              {walletCount} participants
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-neutral-soft-content text-sm">
+                              {" "}
+                              Last updated: {timeAgo(lastUpdated ?? undefined)}
+                            </span>
+                          </div>
+                        </div>
+                      </Skeleton>
                     </>
+                  : <div className="flex gap-2 flex-wrap mb-4">
+                      <Badge color="info">
+                        <CurrencyDollarIcon className="h-4 w-4" />
+                        {c.tokenAllocated} {c.tokenSymbol}
+                      </Badge>
+                    </div>
                   }
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         : <div className="border border-border rounded-xl p-12 text-center">

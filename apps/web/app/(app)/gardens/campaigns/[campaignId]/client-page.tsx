@@ -26,17 +26,32 @@ import { formatNumber, timeAgo } from "@/utils/time";
 const participationSteps = [
   {
     title: "Follow Gardens on Farcaster",
-    description:
-      "Stay connected with the Gardens community and get updates on proposals and activities.",
+    description: (
+      <>
+        Stay connected with the Gardens community and get updates on proposals
+        and activities.{" "}
+        <Link
+          href="https://farcaster.xyz/gardens"
+          target="_blank"
+          rel="noreferrer"
+          className="text-primary-content underline-offset-2 underline"
+        >
+          Follow Gardens on Farcaster
+        </Link>
+        .
+      </>
+    ),
     icon: <ChatBubbleLeftRightIcon className="h-5 w-5" />,
     activities: ["Farcaster Follow"],
+    pointsInfo: "1 point",
   },
   {
-    title: "Stream Funds into a Funding Pool",
+    title: "Add Funds into a Funding Pool",
     description:
       "Stream funds into a Funding Pool, or for Pure Super Token Funding Pools, add funds either as a stream or a one-time transfer.",
     icon: <ArrowTrendingUpIcon className="h-5 w-5" />,
-    activities: ["Stream Funds"],
+    activities: ["Add Funds"],
+    pointsInfo: "1 point per $1 added",
   },
   {
     title: "Join a Community & Increase Your Stake",
@@ -44,21 +59,29 @@ const participationSteps = [
       "Become an active member and increase your stake to support the ecosystem.",
     icon: <UsersIcon className="h-5 w-5" />,
     activities: ["Stake & Governance"],
-  },
-  {
-    title: "Encourage Community Participation",
-    description:
-      "Help grow the ecosystem by encouraging your community to stream funds or add funds to Super Token Funding Pools.",
-    icon: <SparklesIcon className="h-5 w-5" />,
-    activities: ["Add Funds", "Stream Funds"],
+    pointsInfo: "Total community points split based on stake size",
   },
   {
     title: "2x Bonus in Superfluid DAO",
-    description:
-      "Join the Superfluid DAO community, stake, and add funds to Funding Pools to maximize your rewards with double points.",
+    description: (
+      <>
+        Join the Superfluid DAO community, stake, and add funds to Funding Pools
+        to maximize your rewards with double points.{" "}
+        <Link
+          href="https://app.gardens.fund/gardens/8453/0xa69f80524381275a7ffdb3ae01c54150644c8792/0xec83d957f8aa4e9601bc74608ebcbc862eca52ab"
+          target="_blank"
+          rel="noreferrer"
+          className="text-primary-content underline underline-offset-2"
+        >
+          Join Superfluid Community
+        </Link>
+        .
+      </>
+    ),
     icon: <CurrencyDollarIcon className="h-5 w-5" />,
     activities: ["Superfluid DAO member"],
     highlighted: true,
+    pointsInfo: "x2 points multiplier",
   },
 ];
 
@@ -194,131 +217,195 @@ export default function GardensGrowthInitiativePage() {
               </h2>
 
               <div className="space-y-4 p-6">
-                {participationSteps.map((step) => (
-                  <div
-                    key={step.title}
-                    className={`rounded-xl border-[1px] border-border-neutral  hover:shadow-md transition-all bg-neutral ${step.highlighted ? "border-2  border-primary-content bg-primary-soft dark:bg-primary-dark-base dark:border-primary-dark-border" : ""}`}
-                  >
-                    <div className="p-6">
-                      <div className="flex gap-4">
-                        <div
-                          className={`h-10 w-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-                            step.highlighted ?
-                              "bg-primary-soft dark:bg-primary-dark-base"
-                            : ""
-                          }`}
-                        >
-                          {step.icon}
-                        </div>
-
-                        <div className="flex-1">
-                          <div className="flex items-start justify-between gap-4 mb-2">
-                            <h3 className="font-semibold text-lg">
-                              {step.title}
-                            </h3>
-                            <div className="flex gap-1.5 flex-wrap justify-end">
-                              {step.activities.map((activity) => (
-                                <Badge key={activity}>{activity}</Badge>
-                              ))}
+                {loading ?
+                  Array.from({ length: 4 }).map((_, idx) => (
+                    <div
+                      key={`step-skeleton-${idx}`}
+                      className="border1 rounded-lg bg-neutral dark:bg-[#3c5b4b] p-6 animate-pulse"
+                    >
+                      <div className="flex gap-4 items-start">
+                        <div className="h-10 w-10 rounded-full bg-neutral-soft dark:bg-neutral-soft-content/30" />
+                        <div className="flex-1 space-y-3">
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="h-5 w-40 rounded bg-neutral-soft dark:bg-neutral-soft-content/30" />
+                            <div className="flex gap-2">
+                              <div className="h-5 w-16 rounded bg-neutral-soft dark:bg-neutral-soft-content/30" />
+                              <div className="h-5 w-16 rounded bg-neutral-soft dark:bg-neutral-soft-content/30" />
                             </div>
                           </div>
-                          <p className=" leading-relaxed">{step.description}</p>
+                          <div className="h-4 w-full rounded bg-neutral-soft dark:bg-neutral-soft-content/30" />
+                          <div className="h-4 w-2/3 rounded bg-neutral-soft dark:bg-neutral-soft-content/30" />
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                : participationSteps.map((step) => (
+                    <div
+                      key={step.title}
+                      className={`border1 rounded-lg space-y-6 hover:shadow-md transition-all bg-neutral ${step.highlighted ? "border-2 border-primary-content dark:bg-[#3c5b4b] dark:border-primary-dark-border" : ""}`}
+                    >
+                      <div className="p-6">
+                        <div className="flex gap-4">
+                          <div
+                            className={`h-10 w-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                              step.highlighted ?
+                                "bg-primary-soft dark:bg-primary-dark-base"
+                              : ""
+                            }`}
+                          >
+                            {step.icon}
+                          </div>
+
+                          <div className="flex-1">
+                            <div className="flex items-start justify-between gap-4 mb-2">
+                              <h3 className="font-semibold text-lg">
+                                {step.title}
+                              </h3>
+                              <div className="flex gap-1.5 flex-wrap justify-end">
+                                {step.activities.map((activity) => (
+                                  <Badge key={activity}>{activity}</Badge>
+                                ))}
+                              </div>
+                            </div>
+                            <p className=" leading-relaxed">
+                              {step.description}
+                            </p>
+                            {step.pointsInfo && (
+                              <p className="text-sm text-neutral-soft-content mt-2 text-right">
+                                {step.pointsInfo}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                }
               </div>
             </div>
           </div>
 
           {/* Right Column - Leaderboard */}
           <div className="lg:col-span-1">
-            <div className="space-y-8">
-              <div className="border1 rounded-lg bg-neutral p-6 sticky top-10">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="h-10 w-10 rounded-lg bg-primary-soft flex items-center justify-center ">
-                    <TrophyIcon className="h-7 w-7 text-primary-content" />
+            <div className="border1 rounded-lg bg-neutral p-6 sticky top-10 space-y-6">
+              {loading ?
+                <div className="animate-pulse space-y-6">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-lg bg-neutral-soft dark:bg-neutral-soft-content/30" />
+                    <div className="space-y-2">
+                      <div className="h-4 w-32 rounded bg-neutral-soft dark:bg-neutral-soft-content/30" />
+                      <div className="h-3 w-24 rounded bg-neutral-soft dark:bg-neutral-soft-content/30" />
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-semibold">Leaderboard</h3>
-                    <p className="text-sm text-neutral-soft-content ">
-                      Top contributors
-                    </p>
+                  <div className="p-4 rounded-lg bg-neutral-soft dark:bg-neutral-soft-content/20 space-y-3">
+                    <div className="h-3 w-20 rounded bg-neutral-soft dark:bg-neutral-soft-content/30" />
+                    <div className="flex items-center justify-between">
+                      <div className="h-6 w-24 rounded bg-neutral-soft dark:bg-neutral-soft-content/30" />
+                      <div className="h-6 w-16 rounded bg-neutral-soft dark:bg-neutral-soft-content/30" />
+                    </div>
+                  </div>
+                  <div className="h-10 rounded bg-neutral-soft dark:bg-neutral-soft-content/30" />
+                  <div className="space-y-3">
+                    <div className="h-3 w-28 rounded bg-neutral-soft dark:bg-neutral-soft-content/30" />
+                    <div className="h-2 rounded bg-neutral-soft dark:bg-neutral-soft-content/30" />
+                    <div className="flex items-center justify-between">
+                      <div className="h-3 w-24 rounded bg-neutral-soft dark:bg-neutral-soft-content/30" />
+                      <div className="h-3 w-28 rounded bg-neutral-soft dark:bg-neutral-soft-content/30" />
+                    </div>
                   </div>
                 </div>
+              : <>
+                  <div>
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="h-10 w-10 rounded-lg bg-primary-soft flex items-center justify-center ">
+                        <TrophyIcon className="h-7 w-7 text-primary-content" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold">Leaderboard</h3>
+                        <p className="text-sm text-neutral-soft-content ">
+                          Top contributors
+                        </p>
+                      </div>
+                    </div>
 
-                {/* Connected Account Section */}
-                <div className="mb-6 p-4 rounded-lg bg-primary border-[1px]  border-primary-content">
-                  <p className="text-xs mb-2">Your Position</p>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-2xl font-bold">#{walletRank}</span>
+                    {/* Connected Account Section */}
+                    <div className="mb-6 p-4 rounded-lg bg-primary border-[1px]  border-primary-content">
+                      <p className="text-xs mb-2">Your Position</p>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-2xl font-bold">
+                            #{walletRank}
+                          </span>
 
-                      <span className="text-xs">
-                        {shortenAddress(connectedAccount ?? "0x")}
+                          <span className="text-xs">
+                            {shortenAddress(connectedAccount ?? "0x")}
+                          </span>
+                        </div>
+                        <div className="flex items-baseline gap-1">
+                          <p className="font-bold text-xl">{walletPoints}</p>
+                          <p className="text-xs ">Pts.</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <Button
+                      className="w-full"
+                      size="lg"
+                      onClick={() => setOpenModal(!openModal)}
+                    >
+                      <TrophyIcon className="h-5 w-5 mr-2" />
+                      View Full Leaderboard
+                    </Button>
+
+                    <SuperfluidLeaderboardModal leaderboardData={wallets} />
+                  </div>
+                  {/* Campaign Stats */}
+                  <div className="section-layout">
+                    <div className="flex justify-between mb-2">
+                      <span className="">Tokens Claimed</span>
+                      <span className="font-medium">
+                        {formatNumber(
+                          superfluidStreamsData?.totalStreamedSup ?? 0,
+                        )}{" "}
+                        / {formatNumber(847_000)} SUP
                       </span>
                     </div>
-                    <div className="flex items-baseline gap-1">
-                      <p className="font-bold text-xl">{walletPoints}</p>
-                      <p className="text-xs ">Pts.</p>
+
+                    <div className="h-2 bg-neutral-soft dark:bg-neutral-soft-content rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-primary-content transition-all"
+                        style={{
+                          width: `${
+                            ((superfluidStreamsData?.totalStreamedSup ?? 0) /
+                              847_000) *
+                            100
+                          }%`,
+                        }}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <UserGroupIcon className="h-5 w-5 text-neutral-soft-content" />
+                        <span className="text-neutral-soft-content text-sm">
+                          {superfluidStreamsData?.snapshot?.wallets.length}{" "}
+                          participants
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-neutral-soft-content text-sm">
+                          {" "}
+                          Last updated:{" "}
+                          {timeAgo(
+                            superfluidStreamsData?.snapshot?.updatedAt ??
+                              undefined,
+                          )}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-
-                <Button
-                  className="w-full"
-                  size="lg"
-                  onClick={() => setOpenModal(!openModal)}
-                >
-                  <TrophyIcon className="h-5 w-5 mr-2" />
-                  View Full Leaderboard
-                </Button>
-
-                <SuperfluidLeaderboardModal leaderboardData={wallets} />
-              </div>
-              {/* Campaign Stats */}
-              <div className="section-layout">
-                <div className="flex justify-between mb-2">
-                  <span className="">Tokens Claimed</span>
-                  <span className="font-medium">
-                    {formatNumber(superfluidStreamsData?.totalStreamedSup ?? 0)}{" "}
-                    / {formatNumber(847_000)} SUP
-                  </span>
-                </div>
-
-                <div className="h-2 bg-neutral-soft dark:bg-neutral-soft-content rounded-full overflow-hidden mb-4">
-                  <div
-                    className="h-full bg-primary-content transition-all"
-                    style={{
-                      width: `${
-                        ((superfluidStreamsData?.totalStreamedSup ?? 0) /
-                          847_000) *
-                        100
-                      }%`,
-                    }}
-                  />
-                </div>
-
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <UserGroupIcon className="h-5 w-5 text-neutral-soft-content" />
-                    <span className="text-neutral-soft-content text-sm">
-                      {superfluidStreamsData?.snapshot?.wallets.length}{" "}
-                      participants
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-neutral-soft-content text-sm">
-                      {" "}
-                      Last updated:{" "}
-                      {timeAgo(
-                        superfluidStreamsData?.snapshot?.updatedAt ?? undefined,
-                      )}
-                    </span>
-                  </div>
-                </div>
-              </div>
+                </>
+              }
             </div>
           </div>
         </div>
