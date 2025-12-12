@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ArrowTopRightOnSquareIcon,
   Bars3Icon,
@@ -8,6 +8,7 @@ import {
 } from "@heroicons/react/24/outline";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { newLogo } from "@/assets";
 import { Button, ConnectWallet, ThemeButton } from "@/components";
 
@@ -34,6 +35,30 @@ export function HeadphoneIcon() {
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showCampaignBadge, setShowCampaignBadge] = useState(true);
+  const pathname = usePathname();
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const storageKey = "gardensCampaignsBadgeSeen";
+    const isCampaignPath = pathname?.startsWith("/gardens/campaigns");
+    const hasSeen = window.localStorage.getItem(storageKey) === "true";
+
+    if (isCampaignPath) {
+      window.localStorage.setItem(storageKey, "true");
+      setShowCampaignBadge(false);
+      return;
+    }
+
+    setShowCampaignBadge(!hasSeen);
+  }, [pathname]);
+
+  const handleCampaignClick = () => {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("gardensCampaignsBadgeSeen", "true");
+    }
+    setShowCampaignBadge(false);
+  };
 
   return (
     <div className="min-h-screen bg-primary relative">
@@ -107,8 +132,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <Link
               href="/gardens/campaigns"
               className="flex items-center gap-3 text-sm"
+              onClick={handleCampaignClick}
             >
-              <h6 className="hover:opacity-70">Campaigns</h6>
+              <div className="relative inline-flex items-center">
+                <h6 className="hover:opacity-70">Campaigns</h6>
+                {showCampaignBadge && (
+                  <span className="absolute -top-2 -right-4 h-4 w-4 rounded-full bg-primary-content text-neutral text-[10px] font-bold leading-none flex items-center justify-center">
+                    1
+                  </span>
+                )}
+              </div>
             </Link>
 
             <a
@@ -152,9 +185,19 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <Link
               href="/gardens/campaigns"
               className="text-base font-medium hover:opacity-70 px-1 py-2 rounded-md"
-              onClick={() => setMobileMenuOpen(false)}
+              onClick={() => {
+                handleCampaignClick();
+                setMobileMenuOpen(false);
+              }}
             >
-              Campaigns
+              <span className="relative inline-flex items-center">
+                Campaigns
+                {showCampaignBadge && (
+                  <span className="absolute -top-2 -right-4 h-4 w-4 rounded-full bg-primary-content text-neutral text-[10px] font-bold leading-none flex items-center justify-center">
+                    1
+                  </span>
+                )}
+              </span>
             </Link>
 
             <a
