@@ -125,7 +125,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </button> */}
           </div>
 
-          <div className="hidden md:flex items-center justify-center gap-4">
+          <div className="hidden md:flex items-center justify-center gap-6">
             <Link href="/gardens" className="flex items-center gap-4 text-sm">
               <h6 className="hover:opacity-70">Communities</h6>
             </Link>
@@ -137,9 +137,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <div className="relative inline-flex items-center">
                 <h6 className="hover:opacity-70">Campaigns</h6>
                 {showCampaignBadge && (
-                  <span className="absolute -top-2 -right-4 h-4 w-4 rounded-full bg-primary-content text-neutral text-[10px] font-bold leading-none flex items-center justify-center">
-                    1
-                  </span>
+                  <span className="absolute bg-primary-content dark:bg-[#98ff98] -top-1 -right-2 rounded-full text-neutral w-2 h-2 font-bold leading-none flex items-center justify-center" />
                 )}
               </div>
             </Link>
