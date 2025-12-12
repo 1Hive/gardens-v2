@@ -261,7 +261,11 @@ export default function GardensGrowthInitiativePage() {
                               </h3>
                               <div className="flex gap-1.5 flex-wrap justify-end">
                                 {step.activities.map((activity) => (
-                                  <Badge key={activity}>{activity}</Badge>
+                                  <Badge key={activity}>
+                                    <span className="text-xs font-bold text-nowrap">
+                                      {activity}
+                                    </span>
+                                  </Badge>
                                 ))}
                               </div>
                             </div>
