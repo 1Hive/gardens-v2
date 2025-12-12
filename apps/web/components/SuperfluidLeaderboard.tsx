@@ -13,7 +13,6 @@ import Image from "next/image";
 import { Address } from "viem";
 import { useAccount } from "wagmi";
 import { Badge } from "@/components/Badge";
-import { FormInput } from "@/components/Forms";
 import { Modal } from "@/components/Modal";
 import { WalletEntry } from "@/types";
 
@@ -94,9 +93,6 @@ function ScrollableActivities({
 }) {
   const [isHovered, setIsHovered] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const tooltipText = activities
-    .map((activity) => `${activity.label}: ${activity.points} pts`)
-    .join(" • ");
 
   const scroll = (direction: "left" | "right") => {
     if (scrollContainerRef.current) {
@@ -112,8 +108,7 @@ function ScrollableActivities({
 
   return (
     <div
-      className="relative tooltip tooltip-top"
-      data-tip={tooltipText}
+      className="relative"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -254,7 +249,7 @@ export function SuperfluidLeaderboardModal({
         </div>
 
         <div className="flex-1 overflow-visible rounded-lg border bg-card min-w-0">
-          <div className="overflow-auto overflow-x-auto h-[75vh]">
+          <div className="overflow-auto h-[70vh]">
             <table className="w-full min-w-[680px] table-fixed">
               <thead className="sticky top-0 bg-muted/50 backdrop-blur-sm z-10">
                 <tr className="text-[11px] uppercase tracking-wider text-muted-foreground">
@@ -278,6 +273,11 @@ export function SuperfluidLeaderboardModal({
                     entry.ensName ?? entry.farcasterUsername ?? entry.address;
                   const ensAvatar = entry.ensAvatar;
                   const avatarSrc = ensAvatar ?? blo(entry.address as Address);
+                  const activitiesTooltip = getActivities(entry)
+                    .map(
+                      (activity) => `${activity.label}: ${activity.points} pts`,
+                    )
+                    .join("\n");
 
                   return (
                     <tr
@@ -304,7 +304,10 @@ export function SuperfluidLeaderboardModal({
                         </div>
                       </td>
                       <td className="py-3 px-3 text-right">
-                        <span className="font-mono font-semibold text-sm">
+                        <span
+                          className="font-mono font-semibold text-sm tooltip tooltip-top"
+                          data-tip={activitiesTooltip}
+                        >
                           {formatNumber(entry.totalPoints)}
                         </span>
                       </td>
