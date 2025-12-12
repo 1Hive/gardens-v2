@@ -1,7 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
-import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
+import {
+  ArrowTopRightOnSquareIcon,
+  Bars3Icon,
+  XMarkIcon,
+} from "@heroicons/react/24/outline";
 import Image from "next/image";
 import Link from "next/link";
 import { newLogo } from "@/assets";
@@ -117,6 +121,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               className="flex items-center gap-2 text-sm hover:opacity-70"
             >
               <span>Documentation</span>
+              <ArrowTopRightOnSquareIcon className="h-4 w-4" aria-hidden />
             </a>
           </div>
 
@@ -162,8 +167,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               onClick={() => setMobileMenuOpen(false)}
             >
               Documentation
+              <ArrowTopRightOnSquareIcon className="h-4 w-4" aria-hidden />
             </a>
-            <div className="border-t border-border-neutral/70 dark:border-border-neutral/40 pt-3 flex justify-end">
+            <div className="border-t border-border-neutral/70 dark:border-border-neutral/40 pt-3 flex items-center justify-between gap-3">
+              <span className="text-base font-medium">Theme</span>
               <ThemeButton />
             </div>
           </div>
