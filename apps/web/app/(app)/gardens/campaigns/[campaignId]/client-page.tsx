@@ -216,69 +216,70 @@ export default function GardensGrowthInitiativePage() {
               </h2>
 
               <div className="space-y-4 p-6">
-                {loading
-                  ? Array.from({ length: 4 }).map((_, idx) => (
-                      <div
-                        key={`step-skeleton-${idx}`}
-                        className="border1 rounded-lg bg-neutral dark:bg-[#3c5b4b] p-6 animate-pulse"
-                      >
-                        <div className="flex gap-4 items-start">
-                          <div className="h-10 w-10 rounded-full bg-neutral-soft dark:bg-neutral-soft-content/30" />
-                          <div className="flex-1 space-y-3">
-                            <div className="flex items-center justify-between gap-3">
-                              <div className="h-5 w-40 rounded bg-neutral-soft dark:bg-neutral-soft-content/30" />
-                              <div className="flex gap-2">
-                                <div className="h-5 w-16 rounded bg-neutral-soft dark:bg-neutral-soft-content/30" />
-                                <div className="h-5 w-16 rounded bg-neutral-soft dark:bg-neutral-soft-content/30" />
-                              </div>
+                {loading ?
+                  Array.from({ length: 4 }).map((_, idx) => (
+                    <div
+                      key={`step-skeleton-${idx}`}
+                      className="border1 rounded-lg bg-neutral dark:bg-[#3c5b4b] p-6 animate-pulse"
+                    >
+                      <div className="flex gap-4 items-start">
+                        <div className="h-10 w-10 rounded-full bg-neutral-soft dark:bg-neutral-soft-content/30" />
+                        <div className="flex-1 space-y-3">
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="h-5 w-40 rounded bg-neutral-soft dark:bg-neutral-soft-content/30" />
+                            <div className="flex gap-2">
+                              <div className="h-5 w-16 rounded bg-neutral-soft dark:bg-neutral-soft-content/30" />
+                              <div className="h-5 w-16 rounded bg-neutral-soft dark:bg-neutral-soft-content/30" />
                             </div>
-                            <div className="h-4 w-full rounded bg-neutral-soft dark:bg-neutral-soft-content/30" />
-                            <div className="h-4 w-2/3 rounded bg-neutral-soft dark:bg-neutral-soft-content/30" />
                           </div>
+                          <div className="h-4 w-full rounded bg-neutral-soft dark:bg-neutral-soft-content/30" />
+                          <div className="h-4 w-2/3 rounded bg-neutral-soft dark:bg-neutral-soft-content/30" />
                         </div>
                       </div>
-                    ))
-                  : participationSteps.map((step) => (
-                      <div
-                        key={step.title}
-                        className={`border1 rounded-lg space-y-6 hover:shadow-md transition-all bg-neutral ${step.highlighted ? "border-2  border-primary-content bg-primary-soft dark:bg-[#3c5b4b] dark:border-primary-dark-border" : ""}`}
-                      >
-                        <div className="p-6">
-                          <div className="flex gap-4">
-                            <div
-                              className={`h-10 w-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-                                step.highlighted ?
-                                  "bg-primary-soft dark:bg-primary-dark-base"
-                                : ""
-                              }`}
-                            >
-                              {step.icon}
-                            </div>
+                    </div>
+                  ))
+                : participationSteps.map((step) => (
+                    <div
+                      key={step.title}
+                      className={`border1 rounded-lg space-y-6 hover:shadow-md transition-all bg-neutral ${step.highlighted ? "border-2 border-primary-content dark:bg-[#3c5b4b] dark:border-primary-dark-border" : ""}`}
+                    >
+                      <div className="p-6">
+                        <div className="flex gap-4">
+                          <div
+                            className={`h-10 w-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                              step.highlighted ?
+                                "bg-primary-soft dark:bg-primary-dark-base"
+                              : ""
+                            }`}
+                          >
+                            {step.icon}
+                          </div>
 
-                            <div className="flex-1">
-                              <div className="flex items-start justify-between gap-4 mb-2">
-                                <h3 className="font-semibold text-lg">
-                                  {step.title}
-                                </h3>
-                                <div className="flex gap-1.5 flex-wrap justify-end">
-                                  {step.activities.map((activity) => (
-                                    <Badge key={activity}>{activity}</Badge>
-                                  ))}
-                                </div>
+                          <div className="flex-1">
+                            <div className="flex items-start justify-between gap-4 mb-2">
+                              <h3 className="font-semibold text-lg">
+                                {step.title}
+                              </h3>
+                              <div className="flex gap-1.5 flex-wrap justify-end">
+                                {step.activities.map((activity) => (
+                                  <Badge key={activity}>{activity}</Badge>
+                                ))}
                               </div>
-                              <p className=" leading-relaxed">
-                                {step.description}
-                              </p>
-                              {step.pointsInfo && (
-                                <p className="text-sm text-neutral-soft-content mt-2 text-right">
-                                  {step.pointsInfo}
-                                </p>
-                              )}
                             </div>
+                            <p className=" leading-relaxed">
+                              {step.description}
+                            </p>
+                            {step.pointsInfo && (
+                              <p className="text-sm text-neutral-soft-content mt-2 text-right">
+                                {step.pointsInfo}
+                              </p>
+                            )}
                           </div>
                         </div>
                       </div>
-                    ))}
+                    </div>
+                  ))
+                }
               </div>
             </div>
           </div>
@@ -286,7 +287,7 @@ export default function GardensGrowthInitiativePage() {
           {/* Right Column - Leaderboard */}
           <div className="lg:col-span-1">
             <div className="border1 rounded-lg bg-neutral p-6 sticky top-10 space-y-6">
-              {loading ? (
+              {loading ?
                 <div className="animate-pulse space-y-6">
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-10 rounded-lg bg-neutral-soft dark:bg-neutral-soft-content/30" />
@@ -312,8 +313,7 @@ export default function GardensGrowthInitiativePage() {
                     </div>
                   </div>
                 </div>
-              ) : (
-                <>
+              : <>
                   <div>
                     <div className="flex items-center gap-3 mb-6">
                       <div className="h-10 w-10 rounded-lg bg-primary-soft flex items-center justify-center ">
@@ -332,7 +332,9 @@ export default function GardensGrowthInitiativePage() {
                       <p className="text-xs mb-2">Your Position</p>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <span className="text-2xl font-bold">#{walletRank}</span>
+                          <span className="text-2xl font-bold">
+                            #{walletRank}
+                          </span>
 
                           <span className="text-xs">
                             {shortenAddress(connectedAccount ?? "0x")}
@@ -364,7 +366,9 @@ export default function GardensGrowthInitiativePage() {
                     <div className="flex justify-between text-sm">
                       <span className="">Claimed</span>
                       <span className="font-medium">
-                        {formatNumber(superfluidStreamsData?.totalStreamedSup ?? 0)}{" "}
+                        {formatNumber(
+                          superfluidStreamsData?.totalStreamedSup ?? 0,
+                        )}{" "}
                         / {formatNumber(847_000)} SUP
                       </span>
                     </div>
@@ -395,14 +399,15 @@ export default function GardensGrowthInitiativePage() {
                           {" "}
                           Last updated:{" "}
                           {timeAgo(
-                            superfluidStreamsData?.snapshot?.updatedAt ?? undefined,
+                            superfluidStreamsData?.snapshot?.updatedAt ??
+                              undefined,
                           )}
                         </span>
                       </div>
                     </div>
                   </div>
                 </>
-              )}
+              }
             </div>
           </div>
         </div>
