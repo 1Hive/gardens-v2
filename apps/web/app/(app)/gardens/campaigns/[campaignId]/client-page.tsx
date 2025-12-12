@@ -90,6 +90,7 @@ export default function GardensGrowthInitiativePage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [walletRank, setWalletRank] = useState<number | null>(null);
   const [walletPoints, setWalletPoints] = useState<number | null>(null);
+  const [openModal, setOpenModal] = useState(false);
 
   const { address: connectedAccount } = useAccount();
 
@@ -233,100 +234,53 @@ export default function GardensGrowthInitiativePage() {
 
           {/* Right Column - Leaderboard */}
           <div className="lg:col-span-1">
-            <div className="">
+            <div className="space-y-8">
               <div className="border1 rounded-lg bg-neutral p-6 sticky top-10">
-                <div className="p-6">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="h-10 w-10 rounded-lg bg-primary-soft flex items-center justify-center ">
-                      <TrophyIcon className="h-7 w-7 text-primary-content" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold">Leaderboard</h3>
-                      <p className="text-sm text-neutral-soft-content ">
-                        Top contributors
-                      </p>
-                    </div>
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="h-10 w-10 rounded-lg bg-primary-soft flex items-center justify-center ">
+                    <TrophyIcon className="h-7 w-7 text-primary-content" />
                   </div>
-
-                  {/* Connected Account Section */}
-                  <div className="mb-6 p-4 rounded-lg bg-primary border-[1px]  border-primary-content">
-                    <p className="text-xs mb-2">Your Position</p>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="text-2xl font-bold">
-                          #{walletRank}
-                        </span>
-
-                        <span className="text-xs">
-                          {shortenAddress(connectedAccount ?? "0x")}
-                        </span>
-                      </div>
-                      <div className="flex items-baseline gap-1">
-                        <p className="font-bold text-xl">{walletPoints}</p>
-                        <p className="text-xs ">Pts.</p>
-                      </div>
-                    </div>
-                    {/* <div className="flex gap-1.5 mt-3 flex-wrap">
-                    <Badge className="text-xs bg-blue-500/10 text-blue-700 border-blue-500/20">
-                      Add Funds
-                    </Badge>
-                    <Badge className="text-xs bg-green-500/10 text-green-700 border-green-500/20">
-                      Stream Funds
-                    </Badge>
-                    <Badge className="text-xs bg-purple-500/10 text-purple-700 border-purple-500/20">
-                      Governance Stake
-                    </Badge>
-                  </div> */}
+                  <div>
+                    <h3 className="font-semibold">Leaderboard</h3>
+                    <p className="text-sm text-neutral-soft-content ">
+                      Top contributors
+                    </p>
                   </div>
-
-                  {/* Top 3 Preview */}
-                  {/* <div className="space-y-3 mb-6">
-                    {[
-                      {
-                        rank: 1,
-                        address: "0x593c...5bB5",
-                        points: "55,047.295",
-                      },
-                      {
-                        rank: 2,
-                        address: "0x3c8d...B4ae",
-                        points: "6,007.791",
-                      },
-                      {
-                        rank: 3,
-                        address: "0xcBE3...2178",
-                        points: "4,603.527",
-                      },
-                    ].map((entry) => (
-                      <div
-                        key={entry.rank}
-                        className="flex items-center justify-between text-sm"
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium ">#{entry.rank}</span>
-                          <span className="font-mono">{entry.address}</span>
-                        </div>
-                        <span className="font-medium">{entry.points}</span>
-                      </div>
-                    ))}
-                  </div> */}
-
-                  <SuperfluidLeaderboardModal
-                    campaignName="Gardens Growth Initiative"
-                    tokenSymbol="GDN"
-                    trigger={
-                      <Button className="w-full" size="lg">
-                        <TrophyIcon className="h-5 w-5 mr-2" />
-                        View Full Leaderboard
-                      </Button>
-                    }
-                  />
                 </div>
+
+                {/* Connected Account Section */}
+                <div className="mb-6 p-4 rounded-lg bg-primary border-[1px]  border-primary-content">
+                  <p className="text-xs mb-2">Your Position</p>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl font-bold">#{walletRank}</span>
+
+                      <span className="text-xs">
+                        {shortenAddress(connectedAccount ?? "0x")}
+                      </span>
+                    </div>
+                    <div className="flex items-baseline gap-1">
+                      <p className="font-bold text-xl">{walletPoints}</p>
+                      <p className="text-xs ">Pts.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <Button
+                  className="w-full"
+                  size="lg"
+                  onClick={() => setOpenModal(!openModal)}
+                >
+                  <TrophyIcon className="h-5 w-5 mr-2" />
+                  View Full Leaderboard
+                </Button>
+
+                <SuperfluidLeaderboardModal leaderboardData={wallets} />
               </div>
               {/* Campaign Stats */}
               <div className="section-layout">
-                <div className="flex justify-between text-sm mb-2">
-                  <span className="">Claimed</span>
+                <div className="flex justify-between mb-2">
+                  <span className="">Tokens Claimed</span>
                   <span className="font-medium">
                     {formatNumber(superfluidStreamsData?.totalStreamedSup ?? 0)}{" "}
                     / {formatNumber(847_000)} SUP

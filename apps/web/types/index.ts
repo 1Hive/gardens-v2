@@ -64,15 +64,26 @@ export type Column<T> = {
   className?: string;
 };
 
+export type WalletEntry = {
+  address: string;
+  fundUsd: number;
+  streamUsd: number;
+  fundPoints: number;
+  streamPoints: number;
+  superfluidActivityPoints: number;
+  governanceStakePoints: number;
+  farcasterPoints: number;
+  totalPoints: number;
+  farcasterUsername: string | null;
+  ensName: string | null;
+  [key: string]: any; // for flexibility
+};
+
 export type LeaderboardResponse = {
   cid: string;
   snapshot: {
-    updatedAt?: string;
-    wallets: Array<{
-      address: string;
-      totalPoints?: number;
-      [key: string]: any;
-    }>;
+    updatedAt: string;
+    wallets: WalletEntry[];
   };
   totalStreamedSup: number;
   targetStreamSup: number;

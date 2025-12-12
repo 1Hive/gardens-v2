@@ -1,68 +1,42 @@
 "use client";
 
-import React, { useState } from "react";
-
+import type React from "react";
+import { useState, useRef } from "react";
 import { Dialog } from "@headlessui/react";
 import {
   TrophyIcon,
-  StarIcon,
   MagnifyingGlassIcon,
+  ClipboardDocumentIcon,
   ArrowTopRightOnSquareIcon,
+  SparklesIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  SparklesIcon,
 } from "@heroicons/react/24/outline";
-
+import { useAccount } from "wagmi";
+import { Badge } from "@/components/Badge";
 import { Button } from "@/components/Button";
+import { FormInput } from "@/components/Forms";
+import { Modal } from "@/components/Modal";
 
 interface LeaderboardEntry {
-  rank: number;
   address: string;
-  ensName?: string;
-  points: number;
-  activities: string[];
+  fundUsd: number;
+  streamUsd: number;
+  fundPoints: number;
+  streamPoints: number;
+  superfluidActivityPoints: number;
+  governanceStakePoints: number;
+  farcasterPoints: number;
+  totalPoints: number;
+  farcasterUsername: string | null;
+  ensName: string | null;
 }
 
-const leaderboardData: LeaderboardEntry[] = [
-  {
-    rank: 1,
-    address: "0x593c...5bB5",
-    points: 55047.295,
-    activities: ["Staking", "Voting", "Proposals"],
-  },
-  {
-    rank: 2,
-    address: "0x3c8d...B4ae",
-    points: 6007.791,
-    activities: ["Staking", "Voting", "Referrals"],
-  },
-  {
-    rank: 3,
-    address: "0xcBE3...2178",
-    points: 4603.527,
-    activities: ["Staking", "Proposals"],
-  },
-  {
-    rank: 4,
-    address: "0x42ed...CE37",
-    ensName: "gardens.eth",
-    points: 4334.113,
-    activities: ["Staking", "Voting", "Referrals", "Proposals"],
-  },
-  {
-    rank: 5,
-    address: "0xd733...d525",
-    points: 3379.55,
-    activities: ["Staking", "Voting"],
-  },
-];
-
-const currentUser: LeaderboardEntry | null = {
-  rank: 47,
-  address: "0xYOUR...ADDR",
-  points: 854.23,
-  activities: ["Staking", "Voting"],
-};
+interface CampaignLeaderboardModalProps {
+  openModal: boolean;
+  setOpenModal: () => boolean;
+  leaderboardData: LeaderboardEntry[];
+}
 
 function formatNumber(num: number): string {
   return num.toLocaleString("en-US", {
@@ -72,40 +46,42 @@ function formatNumber(num: number): string {
 }
 
 function RankBadge({ rank }: { rank: number }) {
-  const base =
+  const baseClasses =
     "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium";
 
-  if (rank === 1)
+  if (rank === 1) {
     return (
-      <span className={`${base} bg-yellow-100 text-yellow-700`}>
+      <span className={`${baseClasses} bg-yellow-100 text-yellow-700`}>
         <TrophyIcon className="h-3 w-3" />#{rank}
       </span>
     );
-
-  if (rank === 2)
+  }
+  if (rank === 2) {
     return (
-      <span className={`${base} bg-gray-200 text-gray-600`}>
-        <StarIcon className="h-3 w-3" />#{rank}
+      <span className={`${baseClasses} bg-gray-200 text-gray-600`}>
+        <TrophyIcon className="h-3 w-3" />#{rank}
       </span>
     );
-
-  if (rank === 3)
+  }
+  if (rank === 3) {
     return (
-      <span className={`${base} bg-amber-100 text-amber-700`}>
-        <StarIcon className="h-3 w-3" />#{rank}
+      <span className={`${baseClasses} bg-amber-100 text-amber-700`}>
+        <TrophyIcon className="h-3 w-3" />#{rank}
       </span>
     );
-
-  return <span className={`${base} bg-gray-100 text-gray-500`}>#{rank}</span>;
+  }
+  if (rank <= 5) {
+    return (
+      <span className={`${baseClasses} bg-gray-100 text-gray-600`}>
+        <span className="h-2 w-2 rounded-full bg-gray-400" />#{rank}
+      </span>
+    );
+  }
+  return (
+    <span className={`${baseClasses} bg-gray-100 text-gray-500`}>#{rank}</span>
+  );
 }
 
-function ActivityBadge({ activity }: { activity: string }) {
-  const colors: Record<string, string> = {
-    Staking: "bg-blue-50 text-blue-600 border-blue-200",
-    Voting: "bg-purple-50 text-purple-600 border-purple-200",
-    Proposals: "bg-green-50 text-green-600 border-green-200",
-    Referrals: "bg-orange-50 text-orange-600 border-orange-200",
-  };
 
   return (
     <span
@@ -116,162 +92,227 @@ function ActivityBadge({ activity }: { activity: string }) {
   );
 }
 
-interface SuperfluidLeaderboardModalProps {
-  trigger?: React.ReactNode;
-  campaignName?: string;
-  tokenSymbol?: string;
+function getActivities(entry: LeaderboardEntry): string[] {
+  const activities: string[] = [];
+  if (entry.fundPoints >= 1) activities.push("Add Funds");
+  if (entry.streamPoints >= 1) activities.push("Stream Funds");
+  if (entry.governanceStakePoints >= 1) activities.push("Governance Stake");
+  if (entry.farcasterPoints >= 1) activities.push("Farcaster");
+  if (entry.superfluidActivityPoints >= 1)
+    activities.push("Superfluid Activity");
+  return activities;
+}
+
+function ScrollableActivities({ activities }: { activities: string[] }) {
+  const [isHovered, setIsHovered] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  const scroll = (direction: "left" | "right") => {
+    if (scrollContainerRef.current) {
+      const scrollAmount = 120;
+      scrollContainerRef.current.scrollBy({
+        left: direction === "left" ? -scrollAmount : scrollAmount,
+        behavior: "smooth",
+      });
+    }
+  };
+
+  if (activities.length === 0) return null;
+
+  return (
+    <div
+      className="relative"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {/* Left Arrow */}
+      {isHovered && (
+        <button
+          onClick={() => scroll("left")}
+          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-background/80 backdrop-blur-sm border rounded-full p-1 shadow-sm hover:bg-background transition-opacity"
+        >
+          <ChevronLeftIcon className="h-3 w-3" />
+        </button>
+      )}
+
+      {/* Scrollable Container */}
+      <div
+        ref={scrollContainerRef}
+        className="overflow-x-scroll px-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+      >
+        <div className="flex flex-row gap-1 flex-nowrap">
+          {activities.map((activity) => (
+            <Badge key={activity}>{activity}</Badge>
+          ))}
+        </div>
+      </div>
+
+      {/* Right Arrow */}
+      {isHovered && (
+        <button
+          onClick={() => scroll("right")}
+          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-background/80 backdrop-blur-sm border rounded-full p-1 shadow-sm hover:bg-background transition-opacity"
+        >
+          <ChevronRightIcon className="h-3 w-3" />
+        </button>
+      )}
+    </div>
+  );
 }
 
 export function SuperfluidLeaderboardModal({
-  trigger,
-  campaignName = "Superfluid Ecosystem Rewards",
-}: SuperfluidLeaderboardModalProps) {
+  leaderboardData,
+  openModal,
+  setOpenModal,
+}: CampaignLeaderboardModalProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [open, setOpen] = useState(false);
+
+  const { address: connectedAccount } = useAccount();
+
+  const filteredData = leaderboardData?.filter(
+    (entry) =>
+      entry.address.toLowerCase().includes(searchQuery.toLowerCase()) ??
+      entry.ensName?.toLowerCase().includes(searchQuery.toLowerCase()) ??
+      entry.farcasterUsername
+        ?.toLowerCase()
+        .includes(searchQuery.toLowerCase()),
+  );
+
+  const currentUser =
+    connectedAccount ?
+      leaderboardData?.find(
+        (entry) =>
+          entry.address.toLowerCase() === connectedAccount.toLowerCase(),
+      )
+    : null;
+
+  const currentUserRank =
+    currentUser ? leaderboardData?.indexOf(currentUser) + 1 : null;
+
 
   return (
-    <div>
-      <div onClick={() => setOpen(true)}>
-        {trigger ?? (
-          <Button size="sm">
-            <TrophyIcon className="h-4 w-4 mr-2" />
-            Leaderboard
-          </Button>
-        )}
-      </div>
-
-      <Dialog
-        open={open}
-        onClose={() => setOpen(false)}
-        className="relative z-50"
-      >
-        <Dialog.Overlay className="fixed inset-0 bg-black/40" />
-
-        <div className="fixed inset-0 flex items-center justify-center p-4">
-          <Dialog.Panel className="w-full max-w-4xl bg-white rounded-xl shadow-xl max-h-[85vh] flex flex-col">
-            <div className="border-b p-4 flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center text-primary-foreground">
-                <SparklesIcon className="h-5 w-5" />
-              </div>
-              <div>
-                <Dialog.Title className="text-xl">{campaignName}</Dialog.Title>
-                <p className="text-sm text-muted-foreground">
-                  Leaderboard Rankings
-                </p>
-              </div>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-4">
-              {/* Current User */}
-              {currentUser && (
-                <div className="py-3 px-4 bg-primary/10 border border-primary/20 rounded-lg mb-4">
-                  <p className="text-xs font-medium text-primary mb-2 uppercase tracking-wide">
-                    Your Position
-                  </p>
-                  <div className="flex items-center justify-between flex-wrap gap-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">
-                        #{currentUser.rank}
-                      </div>
-                      <div>
-                        <p className="font-mono text-sm">
-                          {currentUser.address}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Connected Wallet
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-4">
-                      <div className="text-right">
-                        <p className="font-bold font-mono text-sm">
-                          {formatNumber(currentUser.points)}
-                        </p>
-                        <p className="text-xs text-muted-foreground">points</p>
-                      </div>
-                      <div className="flex gap-1">
-                        {currentUser.activities.map((a) => (
-                          <ActivityBadge key={a} activity={a} />
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Leaderboard */}
-              <div className="border rounded-lg overflow-hidden">
-                <table className="w-full">
-                  <thead className="sticky top-0 bg-muted/40 backdrop-blur">
-                    <tr className="text-[11px] uppercase tracking-wider text-muted-foreground">
-                      <th className="text-left py-3 px-3 font-medium w-[70px]">
-                        Rank
-                      </th>
-                      <th className="text-left py-3 px-3 font-medium">
-                        Address
-                      </th>
-                      <th className="text-right py-3 px-3 font-medium w-[120px]">
-                        Points
-                      </th>
-                    </tr>
-                  </thead>
-
-                  <tbody className="divide-y">
-                    {leaderboardData.map((entry) => (
-                      <tr
-                        key={entry.rank}
-                        className="hover:bg-muted/20 transition"
-                      >
-                        <td className="py-3 px-3">
-                          <RankBadge rank={entry.rank} />
-                        </td>
-
-                        <td className="py-3 px-3">
-                          <div className="flex items-center gap-2">
-                            <span className="font-mono text-sm">
-                              {entry.ensName ?? entry.address}
-                            </span>
-
-                            <a
-                              href={`https://etherscan.io/address/${entry.address}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="opacity-50 hover:opacity-100 transition"
-                            >
-                              <ArrowTopRightOnSquareIcon className="h-4 w-4" />
-                            </a>
-                          </div>
-                        </td>
-
-                        <td className="py-3 px-3 text-right">
-                          <span className="font-mono font-semibold text-sm">
-                            {formatNumber(entry.points)}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Pagination (Static in this shortened version) */}
-              <div className="flex items-center justify-between pt-4">
-                <p className="text-sm text-muted-foreground">Page 1 of 1</p>
-
-                <div className="flex items-center gap-2">
-                  <Button size="sm" disabled>
-                    <ChevronLeftIcon className="h-4 w-4" />
-                  </Button>
-                  <Button size="sm" disabled>
-                    <ChevronRightIcon className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </Dialog.Panel>
+    <Modal
+      title="Superfluid Ecosystem Rewards"
+      footer={
+        <div className="flex items-center justify-center w-full">
+          <p className="text-sm text-center">
+            Showing {filteredData?.length} of {leaderboardData?.length}{" "}
+            participants
+          </p>
         </div>
-      </Dialog>
-    </div>
+      }
+      isOpen
+      onClose={setOpenModal}
+      size="extra-large"
+    >
+      <div className="flex-1 overflow-hidden flex flex-col min-w-0">
+        {currentUser && currentUserRank && (
+          <div className="py-3 px-4 bg-primary/10 border-b border-primary/20 rounded-lg my-3">
+            <p className="text-xs font-medium text-primary mb-2 uppercase tracking-wide">
+              Your Position
+            </p>
+            <div className="flex items-center justify-between gap-4 flex-wrap sm:flex-nowrap">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center justify-center w-9 h-9 rounded-full bg-primary text-primary-foreground font-bold">
+                  #{currentUserRank}
+                </div>
+                <div>
+                  <p className="font-semibold font-mono text-sm">
+                    {currentUser.ensName ??
+                      currentUser.farcasterUsername ??
+                      currentUser.address}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Connected Wallet
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="text-right">
+                  <p className="font-bold font-mono text-sm">
+                    {formatNumber(currentUser.totalPoints)}
+                  </p>
+                  <p className="text-xs text-muted-foreground">points</p>
+                </div>
+                <div className="max-w-[200px]">
+                  <ScrollableActivities
+                    activities={getActivities(currentUser)}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Search */}
+        <div className="relative mb-3">
+          <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+
+          <FormInput
+            // label="Search"
+            type="text"
+            value={searchQuery}
+            onChange={(e: {
+              target: { value: React.SetStateAction<string> };
+            }) => setSearchQuery(e.target.value)}
+            placeholder="Search by address, Ens"
+            className="w-full h-10"
+          />
+        </div>
+
+        <div className="flex-1 overflow-y-auto rounded-lg border bg-card min-w-0">
+          <table className="w-full table-fixed">
+            <thead className="sticky top-0 bg-muted/50 backdrop-blur-sm z-10">
+              <tr className="text-[11px] uppercase tracking-wider text-muted-foreground">
+                <th className="text-left py-3 px-3 font-medium w-[80px]">
+                  Rank
+                </th>
+                <th className="text-left py-3 px-3 font-medium">Address</th>
+                <th className="text-right py-3 px-3 font-medium w-[120px]">
+                  Points
+                </th>
+                <th className="text-left py-3 px-3 font-medium w-[200px] hidden sm:table-cell">
+                  Activities
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {filteredData?.map((entry, index) => {
+                const rank = leaderboardData.indexOf(entry) + 1;
+                const activities = getActivities(entry);
+                const displayName =
+                  entry.ensName ?? entry.farcasterUsername ?? entry.address;
+
+                return (
+                  <tr
+                    key={entry.address}
+                    className="hover:bg-muted/30 transition-colors group"
+                  >
+                    <td className="py-3 px-3">
+                      <RankBadge rank={rank} />
+                    </td>
+                    <td className="py-3 px-3">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="font-mono text-sm truncate">
+                          {displayName}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="py-3 px-3 text-right">
+                      <span className="font-mono font-semibold text-sm">
+                        {formatNumber(entry.totalPoints)}
+                      </span>
+                    </td>
+                    <td className="py-3 px-3 hidden sm:table-cell">
+                      <ScrollableActivities activities={activities} />
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </Modal>
   );
 }
