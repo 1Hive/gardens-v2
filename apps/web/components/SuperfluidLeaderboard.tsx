@@ -207,13 +207,13 @@ export function SuperfluidLeaderboardModal({
     >
       <div className="flex-1 overflow-hidden flex flex-col min-w-0">
         {currentUser && currentUserRank && (
-          <div className="py-3 px-4 bg-primary/10 border-b border-primary/20 rounded-lg my-3">
-            <p className="text-xs font-medium text-primary mb-2 uppercase tracking-wide">
+          <div className="mb-4 p-4 bg-primary border-[1px] border-primary-content rounded-lg">
+            <p className="text-xs font-fold mb-2 uppercase tracking-wide">
               Your Position
             </p>
             <div className="flex items-center justify-between gap-4 flex-wrap sm:flex-nowrap">
               <div className="flex items-center gap-3">
-                <div className="flex items-center justify-center w-9 h-9 rounded-full bg-primary text-primary-foreground font-bold">
+                <div className="flex items-center justify-center w-9 h-9 rounded-full bg-primary-content text-neutral font-bold">
                   #{currentUserRank}
                 </div>
                 <div>
@@ -222,17 +222,14 @@ export function SuperfluidLeaderboardModal({
                       currentUser.farcasterUsername ??
                       currentUser.address}
                   </p>
-                  <p className="text-xs text-muted-foreground">
-                    Connected Wallet
-                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-4">
-                <div className="text-right">
-                  <p className="font-bold font-mono text-sm">
-                    {formatNumber(currentUser.totalPoints)}
+                <div className="flex items-baseline gap-1">
+                  <p className="font-bold text-xl">
+                    {currentUser?.totalPoints}
                   </p>
-                  <p className="text-xs text-muted-foreground">points</p>
+                  <p className="text-xs ">Pts.</p>
                 </div>
                 <div className="max-w-[200px]">
                   <ScrollableActivities
