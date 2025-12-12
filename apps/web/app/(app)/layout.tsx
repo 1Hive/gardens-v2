@@ -101,7 +101,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </div>
 
           <div className="hidden md:flex items-center justify-center gap-4">
-            <Link href="/gardens" className="flex items-center gap-3 text-sm">
+            <Link href="/gardens" className="flex items-center gap-4 text-sm">
               <h6 className="hover:opacity-70">Communities</h6>
             </Link>
             <Link
@@ -110,10 +110,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             >
               <h6 className="hover:opacity-70">Campaigns</h6>
             </Link>
-            <span
-              aria-hidden
-              className="h-5 w-px bg-border-neutral/70 dark:bg-border-neutral/40"
-            />
+
             <a
               href="https://docs.gardens.fund"
               target="_blank"
@@ -159,11 +156,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             >
               Campaigns
             </Link>
+
             <a
               href="https://docs.gardens.fund"
               target="_blank"
               rel="noreferrer"
-              className="text-base font-medium hover:opacity-70 px-1 py-2 rounded-md"
+              className="text-base font-medium hover:opacity-70 px-1 py-2 rounded-md flex items-center gap-2"
               onClick={() => setMobileMenuOpen(false)}
             >
               Documentation

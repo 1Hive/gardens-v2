@@ -34,7 +34,7 @@ interface LeaderboardEntry {
 
 interface CampaignLeaderboardModalProps {
   openModal: boolean;
-  setOpenModal: () => boolean;
+  setOpenModal: (_: boolean) => void;
   leaderboardData: LeaderboardEntry[];
 }
 
@@ -79,16 +79,6 @@ function RankBadge({ rank }: { rank: number }) {
   }
   return (
     <span className={`${baseClasses} bg-gray-100 text-gray-500`}>#{rank}</span>
-  );
-}
-
-
-  return (
-    <span
-      className={`inline-flex px-2 py-0.5 text-[10px] font-medium rounded border ${colors[activity] || "bg-gray-50 text-gray-600 border-gray-200"}`}
-    >
-      {activity}
-    </span>
   );
 }
 
@@ -189,7 +179,6 @@ export function SuperfluidLeaderboardModal({
   const currentUserRank =
     currentUser ? leaderboardData?.indexOf(currentUser) + 1 : null;
 
-
   return (
     <Modal
       title="Superfluid Ecosystem Rewards"
@@ -201,8 +190,8 @@ export function SuperfluidLeaderboardModal({
           </p>
         </div>
       }
-      isOpen
-      onClose={setOpenModal}
+      isOpen={openModal}
+      onClose={() => setOpenModal(false)}
       size="extra-large"
     >
       <div className="flex-1 overflow-hidden flex flex-col min-w-0">

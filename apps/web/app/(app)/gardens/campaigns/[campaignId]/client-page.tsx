@@ -242,7 +242,7 @@ export default function GardensGrowthInitiativePage() {
                 : participationSteps.map((step) => (
                     <div
                       key={step.title}
-                      className={`border1 rounded-lg space-y-6 hover:shadow-md transition-all bg-neutral ${step.highlighted ? "border-2 border-primary-content dark:bg-[#3c5b4b] dark:border-primary-dark-border" : ""}`}
+                      className={`rounded-lg space-y-6 hover:shadow-md transition-all bg-neutral ${step.highlighted ? "bg-primary-soft border-[1px] border-primary-content dark:bg-[#3c5b4b] dark:border-primary-dark-border" : "border1"}`}
                     >
                       <div className="p-6">
                         <div className="flex gap-4">
@@ -351,16 +351,20 @@ export default function GardensGrowthInitiativePage() {
                     <Button
                       className="w-full"
                       size="lg"
-                      onClick={() => setOpenModal(!openModal)}
+                      onClick={() => setOpenModal(true)}
                     >
                       <TrophyIcon className="h-5 w-5 mr-2" />
-                      View Full Leaderboard
+                      View Leaderboard
                     </Button>
 
-                    <SuperfluidLeaderboardModal leaderboardData={wallets} />
+                    <SuperfluidLeaderboardModal
+                      leaderboardData={wallets}
+                      openModal={openModal}
+                      setOpenModal={setOpenModal}
+                    />
                   </div>
                   {/* Campaign Stats */}
-                  <div className="section-layout">
+                  <div className="flex flex-col gap-2">
                     <div className="flex justify-between mb-2">
                       <span className="">Tokens Claimed</span>
                       <span className="font-medium">
