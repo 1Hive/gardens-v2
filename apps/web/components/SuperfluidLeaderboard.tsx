@@ -203,30 +203,22 @@ export function SuperfluidLeaderboardModal({
               Your Position
             </p>
             <div className="flex items-center justify-between gap-4 flex-wrap sm:flex-nowrap">
-              <div className="flex items-center gap-3">
-                <div className="flex items-center justify-center w-9 h-9 rounded-full bg-primary-content text-neutral font-bold">
-                  #{currentUserRank}
-                </div>
-                <div>
-                  <p className="font-semibold text-sm">
-                    {currentUser.ensName ??
-                      currentUser.farcasterUsername ??
-                      currentUser.address}
-                  </p>
-                </div>
+              <div className="flex items-center justify-center w-9 h-9 rounded-full bg-primary-content text-neutral font-bold">
+                #{currentUserRank}
               </div>
-              <div className="flex items-center gap-4">
-                <div className="flex items-baseline gap-1">
-                  <p className="font-bold text-xl">
-                    {currentUser?.totalPoints}
-                  </p>
-                  <p className="text-xs ">Pts.</p>
-                </div>
-                <div className="max-w-[200px]">
-                  <ScrollableActivities
-                    activities={getActivities(currentUser)}
-                  />
-                </div>
+              <div>
+                <p className="font-semibold font-mono text-sm">
+                  {currentUser.ensName ??
+                    currentUser.farcasterUsername ??
+                    currentUser.address}
+                </p>
+              </div>
+              <div className="flex items-baseline gap-1">
+                <p className="font-bold text-xl">{currentUser?.totalPoints}</p>
+                <p className="text-xs ">Pts.</p>
+              </div>
+              <div>
+                <ScrollableActivities activities={getActivities(currentUser)} />
               </div>
             </div>
           </div>
@@ -248,26 +240,26 @@ export function SuperfluidLeaderboardModal({
           />
         </div>
 
-        <div className="flex-1 overflow-visible rounded-lg border border-border-neutral bg-card min-w-0">
+        <div className="flex-1 overflow-visible rounded-lg bg-card min-w-0">
           <div className="overflow-auto h-[60vh]">
             <table className="w-full min-w-[900px] table-fixed">
               <thead className="sticky top-0 bg-muted/50 backdrop-blur-sm z-10">
                 <tr className="text-[11px] uppercase tracking-wider text-muted-foreground">
-                  <th className="text-left py-3 px-3 font-medium w-[80px]">
+                  <th className="text-left py-3 px-3 font-medium w-[80px] bg-card">
                     Rank
                   </th>
-                  <th className="text-left py-3 px-3 font-medium w-[400px]">
+                  <th className="text-left py-3 px-3 font-medium w-[400px] bg-card">
                     Address
                   </th>
-                  <th className="text-right py-3 px-3 font-medium w-[120px]">
+                  <th className="text-right py-3 px-3 font-medium w-[120px] bg-card">
                     Points
                   </th>
-                  <th className="text-center py-3 px-3 font-medium w-[200px] hidden sm:table-cell">
+                  <th className="text-center py-3 px-3 font-medium w-[200px] hidden sm:table-cell bg-card">
                     Activities
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y">
+              <tbody>
                 {(filteredData ?? []).map((entry) => {
                   const rank = leaderboardData.indexOf(entry) + 1;
                   const activities = getActivities(entry);
@@ -306,13 +298,12 @@ export function SuperfluidLeaderboardModal({
                         </div>
                       </td>
                       <td className="py-3 px-3 text-right">
-                        <span className=" font-semibold text-sm">
+                        <span
+                          className="font-semibold text-sm tooltip tooltip-top relative z-20 text-primary-content cursor-pointer"
+                          data-tip={activitiesTooltip}
+                        >
                           {entry.totalPoints}
                         </span>
-                        <span
-                          className="font-mono font-semibold text-sm tooltip tooltip-top relative z-20"
-                          data-tip={activitiesTooltip}
-                        />
                       </td>
                       <td className="py-3 px-3 hidden sm:table-cell">
                         <ScrollableActivities activities={activities} />

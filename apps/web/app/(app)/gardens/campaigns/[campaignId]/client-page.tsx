@@ -191,7 +191,7 @@ export default function GardensGrowthInitiativePage() {
               <div className="flex items-center gap-6 flex-wrap">
                 <div className="flex items-center gap-2 text-sm">
                   <CalendarIcon className="h-6 w-6 " />
-                  <span className="font-semibold">Ends 25 Feb 2025</span>
+                  <span className="font-semibold">Ends 25 Feb 2026</span>
                 </div>
 
                 <div className="flex items-center gap-2 text-sm">
