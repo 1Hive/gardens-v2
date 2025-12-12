@@ -218,6 +218,7 @@ export default function GardensGrowthInitiativePage() {
                 {loading ?
                   Array.from({ length: 4 }).map((_, idx) => (
                     <div
+                      // eslint-disable-next-line react/no-array-index-key
                       key={`step-skeleton-${idx}`}
                       className="border1 rounded-lg bg-neutral dark:bg-[#3c5b4b] p-6 animate-pulse"
                     >

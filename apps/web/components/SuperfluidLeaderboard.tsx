@@ -27,13 +27,6 @@ type ActivityWithPoints = {
   points: number;
 };
 
-function formatNumber(num: number): string {
-  return num.toLocaleString("en-US", {
-    minimumFractionDigits: 3,
-    maximumFractionDigits: 3,
-  });
-}
-
 function RankBadge({ rank }: { rank: number }) {
   const baseClasses =
     "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium";
@@ -215,7 +208,7 @@ export function SuperfluidLeaderboardModal({
             <div className="flex items-center justify-center w-9 h-9 rounded-full bg-primary-content text-neutral font-bold">
               #{currentUserRank}
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 w-full truncate">
               {currentAvatarSrc && (
                 <Image
                   src={currentAvatarSrc}
@@ -225,7 +218,7 @@ export function SuperfluidLeaderboardModal({
                   className="h-6 w-6 rounded-full object-cover flex-shrink-0"
                 />
               )}
-              <p className="font-semibold font-mono text-sm">
+              <p className="font-semibold font-mono text-sm w-full truncate">
                 {currentDisplayName}
               </p>
             </div>
