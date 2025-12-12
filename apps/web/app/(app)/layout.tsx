@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import { BookOpenIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
 import Link from "next/link";
 import { newLogo } from "@/assets";
@@ -93,7 +92,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </button> */}
         </div>
 
-        <div className="flex items-center justify-center gap-2">
+        <div className="flex items-center justify-center gap-4">
           <Link
             href="/gardens/campaigns"
             className="flex items-center gap-3 text-sm"
@@ -107,19 +106,17 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             /> */}
             <h6 className="hover:opacity-70">Ecosystem Campaigns</h6>
           </Link>
-        </div>
-        <div className="flex items-center gap-2">
-          <ConnectWallet />
-
           <a
             href="https://docs.gardens.fund"
             target="_blank"
             rel="noreferrer"
-            className="flex items-center gap-1 rounded-md hover:bg-neutral-soft dark:hover:bg-primary p-2"
+            className="flex items-center gap-2 text-sm hover:opacity-70"
           >
-            <BookOpenIcon className="h-6 w-6" />
-            <span>Docs</span>
+            <span>Documentation</span>
           </a>
+        </div>
+        <div className="flex items-center gap-2">
+          <ConnectWallet />
           <ThemeButton />
         </div>
       </nav>
