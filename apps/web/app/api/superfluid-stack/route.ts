@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 import { Client as NotionClient } from "@notionhq/client";
 import pinataSDK from "@pinata/sdk";
@@ -63,6 +64,8 @@ type CommunityInfo = {
 type ProcessedCommunity = {
   communityId: string;
   communityName?: string | null;
+  streamUsd?: number;
+  fundUsd?: number;
   pools: {
     poolAddress: string;
     token: string;
@@ -744,8 +747,8 @@ const fetchEnsIdentityByAddress = async (
   }
   try {
     const client = getMainnetClient();
-    const name = cachedName ??
-      (await client.getEnsName({ address: address as Address }));
+    const name =
+      cachedName ?? (await client.getEnsName({ address: address as Address }));
     const ens = typeof name === "string" ? name : null;
     if (ens) {
       ensNameCache.set(address, ens);
@@ -2111,6 +2114,7 @@ const processChain = async ({
   nativePools: { poolAddress: Address; token: Address }[];
   processedCommunities: ProcessedCommunity[];
   fetchedPrices: { token: Address; symbol: string; priceUsd: number }[];
+  bonusCommunityMembers: string[];
 }> => {
   const chainConfig = chainConfigMap[chainId];
   if (!chainConfig?.subgraphUrl || !chainConfig?.rpcUrl) {
@@ -2171,6 +2175,7 @@ const processChain = async ({
   const farcasterPoints = new Map<string, number>();
   const fetchedPrices: { token: Address; symbol: string; priceUsd: number }[] =
     [];
+  const bonusCommunityMembers = new Set<string>();
 
   let [startBlock, endBlock] = await Promise.all([
     findBlockNumberAtOrAfter(publicClient, windowStart),
@@ -2226,6 +2231,16 @@ const processChain = async ({
         memberAddress: m.memberAddress as Address,
         stakedTokens: BigInt(m.stakedTokens ?? "0"),
       })) ?? [];
+    if (
+      chainId === 8453 &&
+      toLower(comm.id) === toLower(BASE_BONUS_COMMUNITY)
+    ) {
+      for (const member of members) {
+        if (isValidAddr(member.memberAddress)) {
+          bonusCommunityMembers.add(toLower(member.memberAddress));
+        }
+      }
+    }
     const poolsForComm =
       comm.strategies?.map((s) => ({
         poolAddress: s.id as Address,
@@ -2252,19 +2267,7 @@ const processChain = async ({
     { fundUsd: number; streamUsd: number; members: CommunityInfo["members"] }
   >();
   const streamTotalsByPool = new Map<string, number>();
-  const processedCommunities = new Map<
-    string,
-    {
-      communityId: string;
-      communityName?: string | null;
-      pools: {
-        poolAddress: string;
-        token: string;
-        superfluidToken?: string | null;
-        title?: string | null;
-      }[];
-    }
-  >();
+  const processedCommunities = new Map<string, ProcessedCommunity>();
 
   const nativePools: { poolAddress: Address; token: Address }[] = [];
   let poolsProcessed = 0;
@@ -2493,8 +2496,9 @@ const processChain = async ({
         streamUsd: 0,
         members: community.members,
       };
+      let fundUsdForCommunity = 0;
       if (superToken.sameAsUnderlying) {
-        const fundUsd = await computeFundUsdToPool({
+        fundUsdForCommunity = await computeFundUsdToPool({
           publicClient,
           poolAddress,
           token: underlyingToken,
@@ -2503,16 +2507,25 @@ const processChain = async ({
           tokenDecimals: tokenDecimals as number,
           priceUsd,
         });
-        entry.fundUsd += fundUsd * bonusMultiplier;
+        entry.fundUsd += fundUsdForCommunity * bonusMultiplier;
       }
-      entry.streamUsd += streamUsdTotalPoints * bonusMultiplier;
+      entry.streamUsd += streamUsdTotalAll * bonusMultiplier;
       communityTotals.set(community.id, entry);
 
       const processed = processedCommunities.get(community.id) ?? {
         communityId: community.id,
         communityName: community.communityName,
+        streamUsd: 0,
+        fundUsd: 0,
         pools: [],
       };
+      processed.streamUsd =
+        (processed.streamUsd ?? 0) + streamUsdTotalAll * bonusMultiplier;
+      if (superToken.sameAsUnderlying) {
+        processed.fundUsd =
+          (processed.fundUsd ?? 0) +
+          fundUsdForCommunity * bonusMultiplier;
+      }
       processed.pools.push({
         poolAddress: toLower(poolAddress),
         token: toLower(underlyingToken),
@@ -2527,7 +2540,7 @@ const processChain = async ({
   // Split community totals to members
   for (const entry of communityTotals.values()) {
     const totalUsd = entry.fundUsd + entry.streamUsd;
-    if (totalUsd < 10) continue;
+    if (totalUsd <= 0) continue;
     const totalStake = entry.members.reduce(
       (acc, m) => acc + m.stakedTokens,
       0n,
@@ -2560,6 +2573,7 @@ const processChain = async ({
     nativePools,
     processedCommunities: Array.from(processedCommunities.values()),
     fetchedPrices,
+    bonusCommunityMembers: Array.from(bonusCommunityMembers.values()),
   };
 };
 
@@ -2575,9 +2589,7 @@ export async function GET(req: Request) {
     (...args: any[]) => {
       try {
         const text = args
-          .map((arg) =>
-            typeof arg === "string" ? arg : safeStringify(arg),
-          )
+          .map((arg) => (typeof arg === "string" ? arg : safeStringify(arg)))
           .join(" ");
         runLogBuffer.push(`[${level}] ${text}`);
       } catch {
@@ -2670,7 +2682,10 @@ export async function GET(req: Request) {
         latestTransferLogCacheCid ??
         null,
       priceCacheCid:
-        extras?.priceCacheCid ?? latestPriceCacheCid ?? pinnedPriceCacheCid ?? null,
+        extras?.priceCacheCid ??
+        latestPriceCacheCid ??
+        pinnedPriceCacheCid ??
+        null,
       pointsSnapshotCid:
         extras?.pointsSnapshotCid ??
         responsePointsCid ??
@@ -2743,6 +2758,7 @@ export async function GET(req: Request) {
     const farcasterDiscardedWallets: string[] = [];
     const nativeSuperTokens: { address: string; token: string | null }[] = [];
     const nativeTokens: { address: string; token: string | null }[] = [];
+    const bonusCommunityMembers = new Set<string>();
 
     const fetchExistingFarcasterAddresses = async (): Promise<Set<string>> => {
       const addrs = new Set<string>();
@@ -2818,6 +2834,7 @@ export async function GET(req: Request) {
         processedCommunities,
         fetchedPrices,
         streamTotalsByPool,
+        bonusCommunityMembers: chainBonusMembers,
       } = await processChain({
         chainId,
         windowStart: start,
@@ -2854,6 +2871,9 @@ export async function GET(req: Request) {
         endBlock: blockBounds.endBlock.toString(),
       };
       nativePoolsByChain[String(chainId)] = nativePools;
+      chainBonusMembers.forEach((addr) =>
+        bonusCommunityMembers.add(toLower(addr)),
+      );
       // Track native super tokens per pool address
       nativePools.forEach((p) => {
         nativeSuperTokenByWallet.set(p.poolAddress.toLowerCase(), p.token);
@@ -2874,6 +2894,8 @@ export async function GET(req: Request) {
           ...c,
           communityId: c.communityId.toLowerCase(),
           communityName: c.communityName,
+          streamUsd: c.streamUsd ?? 0,
+          fundUsd: c.fundUsd ?? 0,
           pools: c.pools.map((p: ProcessedCommunity["pools"][number]) => ({
             ...p,
             poolAddress: p.poolAddress.toLowerCase(),
@@ -2926,6 +2948,7 @@ export async function GET(req: Request) {
       ...farcasterFollowerWalletsSet.values(),
       ...farcasterDiscardedWallets.values(),
       ...existingFarcasterAddresses.values(),
+      ...bonusCommunityMembers.values(),
     ]);
 
     if (!SKIP_IDENTITY_RESOLUTION) {
@@ -2963,9 +2986,16 @@ export async function GET(req: Request) {
       const superfluidActivityPts = Math.floor(
         superfluidActivityPointsByWallet.get(address) ?? 0,
       );
-      const governanceStakePts = Math.floor(
-        governanceStakePointsByWallet.get(address) ?? 0,
-      );
+      const governanceStakePtsRaw =
+        governanceStakePointsByWallet.get(address) ?? 0;
+      const isBonusCommunityMember = bonusCommunityMembers.has(address);
+      const governanceStakePts =
+        governanceStakePtsRaw > 0 ?
+          Math.max(
+            Math.floor(governanceStakePtsRaw),
+            isBonusCommunityMember ? 1 : 0,
+          )
+        : 0;
       const farcasterPts = Math.floor(
         farcasterPointsByWallet.get(address) ?? 0,
       );
