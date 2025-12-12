@@ -33,6 +33,7 @@ module.exports = {
       "infura-ipfs.io", // Infura IPFS gateway
       "images.mirror-media.xyz", // Mirror avatars
       "zerion-dna.s3.us-east-1.amazonaws.com", // Zerion ENS avatars
+      "api2.clovers.network", // Clovers ENS avatar service
     ],
     remotePatterns: [
       {

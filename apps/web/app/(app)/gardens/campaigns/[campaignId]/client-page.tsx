@@ -10,11 +10,11 @@ import {
   ChatBubbleLeftRightIcon,
   UserGroupIcon,
 } from "@heroicons/react/24/outline";
+import { blo } from "blo";
 import Image from "next/image";
 import Link from "next/link";
-import { useAccount } from "wagmi";
-import { blo } from "blo";
 import { Address } from "viem";
+import { useAccount } from "wagmi";
 import { SuperBanner, SuperLogo } from "@/assets";
 import { Badge } from "@/components/Badge";
 import { Button } from "@/components/Button";
