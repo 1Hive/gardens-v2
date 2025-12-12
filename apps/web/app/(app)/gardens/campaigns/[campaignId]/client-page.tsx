@@ -26,17 +26,32 @@ import { formatNumber, timeAgo } from "@/utils/time";
 const participationSteps = [
   {
     title: "Follow Gardens on Farcaster",
-    description:
-      "Stay connected with the Gardens community and get updates on proposals and activities.",
+    description: (
+      <>
+        Stay connected with the Gardens community and get updates on proposals
+        and activities.{" "}
+        <Link
+          href="https://farcaster.xyz/gardens"
+          target="_blank"
+          rel="noreferrer"
+          className="text-primary-content underline-offset-2 underline"
+        >
+          Follow Gardens on Farcaster
+        </Link>
+        .
+      </>
+    ),
     icon: <ChatBubbleLeftRightIcon className="h-5 w-5" />,
     activities: ["Farcaster Follow"],
+    pointsInfo: "1 point",
   },
   {
-    title: "Stream Funds into a Funding Pool",
+    title: "Add Funds into a Funding Pool",
     description:
       "Stream funds into a Funding Pool, or for Pure Super Token Funding Pools, add funds either as a stream or a one-time transfer.",
     icon: <ArrowTrendingUpIcon className="h-5 w-5" />,
-    activities: ["Stream Funds"],
+    activities: ["Add Funds"],
+    pointsInfo: "1 point per $1 added",
   },
   {
     title: "Join a Community & Increase Your Stake",
@@ -44,21 +59,29 @@ const participationSteps = [
       "Become an active member and increase your stake to support the ecosystem.",
     icon: <UsersIcon className="h-5 w-5" />,
     activities: ["Stake & Governance"],
-  },
-  {
-    title: "Encourage Community Participation",
-    description:
-      "Help grow the ecosystem by encouraging your community to stream funds or add funds to Super Token Funding Pools.",
-    icon: <SparklesIcon className="h-5 w-5" />,
-    activities: ["Add Funds", "Stream Funds"],
+    pointsInfo: "Total community points split based on stake size",
   },
   {
     title: "2x Bonus in Superfluid DAO",
-    description:
-      "Join the Superfluid DAO community, stake, and add funds to Funding Pools to maximize your rewards with double points.",
+    description: (
+      <>
+        Join the Superfluid DAO community, stake, and add funds to Funding Pools
+        to maximize your rewards with double points.{" "}
+        <Link
+          href="https://app.gardens.fund/gardens/8453/0xa69f80524381275a7ffdb3ae01c54150644c8792/0xec83d957f8aa4e9601bc74608ebcbc862eca52ab"
+          target="_blank"
+          rel="noreferrer"
+          className="text-primary-content underline underline-offset-2"
+        >
+          Join this community
+        </Link>
+        .
+      </>
+    ),
     icon: <CurrencyDollarIcon className="h-5 w-5" />,
     activities: ["Superfluid DAO member"],
     highlighted: true,
+    pointsInfo: "x2 points multiplier",
   },
 ];
 
@@ -222,6 +245,11 @@ export default function GardensGrowthInitiativePage() {
                             </div>
                           </div>
                           <p className=" leading-relaxed">{step.description}</p>
+                          {step.pointsInfo && (
+                            <p className="text-sm text-neutral-soft-content mt-2 text-right">
+                              {step.pointsInfo}
+                            </p>
+                          )}
                         </div>
                       </div>
                     </div>
