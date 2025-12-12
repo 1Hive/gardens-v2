@@ -2,41 +2,31 @@
 
 import type React from "react";
 import { useState, useRef } from "react";
-import { Dialog } from "@headlessui/react";
 import {
   TrophyIcon,
   MagnifyingGlassIcon,
-  ClipboardDocumentIcon,
-  ArrowTopRightOnSquareIcon,
-  SparklesIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
 } from "@heroicons/react/24/outline";
+import { blo } from "blo";
+import Image from "next/image";
+import { Address } from "viem";
 import { useAccount } from "wagmi";
 import { Badge } from "@/components/Badge";
-import { Button } from "@/components/Button";
 import { FormInput } from "@/components/Forms";
 import { Modal } from "@/components/Modal";
-
-interface LeaderboardEntry {
-  address: string;
-  fundUsd: number;
-  streamUsd: number;
-  fundPoints: number;
-  streamPoints: number;
-  superfluidActivityPoints: number;
-  governanceStakePoints: number;
-  farcasterPoints: number;
-  totalPoints: number;
-  farcasterUsername: string | null;
-  ensName: string | null;
-}
+import { WalletEntry } from "@/types";
 
 interface CampaignLeaderboardModalProps {
   openModal: boolean;
   setOpenModal: (_: boolean) => void;
-  leaderboardData: LeaderboardEntry[];
+  leaderboardData: WalletEntry[];
 }
+
+type ActivityWithPoints = {
+  label: string;
+  points: number;
+};
 
 function formatNumber(num: number): string {
   return num.toLocaleString("en-US", {
@@ -82,18 +72,32 @@ function RankBadge({ rank }: { rank: number }) {
   );
 }
 
-function getActivities(entry: LeaderboardEntry): string[] {
-  const activities: string[] = [];
-  if (entry.fundPoints >= 1) activities.push("Add Funds");
-  if (entry.streamPoints >= 1) activities.push("Stream Funds");
-  if (entry.governanceStakePoints >= 1) activities.push("Governance Stake");
-  if (entry.farcasterPoints >= 1) activities.push("Farcaster");
+function getActivities(entry: WalletEntry): ActivityWithPoints[] {
+  const activities: ActivityWithPoints[] = [];
+  if (entry.fundPoints >= 1)
+    activities.push({ label: "Add Funds", points: entry.fundPoints });
+  if (entry.streamPoints >= 1)
+    activities.push({ label: "Stream Funds", points: entry.streamPoints });
+  if (entry.governanceStakePoints >= 1)
+    activities.push({
+      label: "Governance Stake",
+      points: entry.governanceStakePoints,
+    });
+  if (entry.farcasterPoints >= 1)
+    activities.push({ label: "Farcaster", points: entry.farcasterPoints });
   if (entry.superfluidActivityPoints >= 1)
-    activities.push("Superfluid Activity");
+    activities.push({
+      label: "Superfluid Activity",
+      points: entry.superfluidActivityPoints,
+    });
   return activities;
 }
 
-function ScrollableActivities({ activities }: { activities: string[] }) {
+function ScrollableActivities({
+  activities,
+}: {
+  activities: ActivityWithPoints[];
+}) {
   const [isHovered, setIsHovered] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -132,7 +136,13 @@ function ScrollableActivities({ activities }: { activities: string[] }) {
       >
         <div className="flex flex-row gap-1 flex-nowrap">
           {activities.map((activity) => (
-            <Badge key={activity}>{activity}</Badge>
+            <Badge
+              key={activity.label}
+              tooltip={`${activity.points} pts`}
+              className="whitespace-nowrap"
+            >
+              {activity.label}
+            </Badge>
           ))}
         </div>
       </div>
@@ -161,8 +171,9 @@ export function SuperfluidLeaderboardModal({
 
   const filteredData = leaderboardData?.filter(
     (entry) =>
-      entry.address.toLowerCase().includes(searchQuery.toLowerCase()) ??
-      entry.ensName?.toLowerCase().includes(searchQuery.toLowerCase()) ??
+      entry.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+      entry.ensName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       entry.farcasterUsername
         ?.toLowerCase()
         .includes(searchQuery.toLowerCase()),
@@ -192,7 +203,7 @@ export function SuperfluidLeaderboardModal({
       }
       isOpen={openModal}
       onClose={() => setOpenModal(false)}
-      size="extra-large"
+      size="xx-large"
     >
       <div className="flex-1 overflow-hidden flex flex-col min-w-0">
         {currentUser && currentUserRank && (
@@ -249,8 +260,8 @@ export function SuperfluidLeaderboardModal({
           />
         </div>
 
-        <div className="flex-1 overflow-y-auto rounded-lg border bg-card min-w-0">
-          <table className="w-full table-fixed">
+        <div className="flex-1 overflow-auto rounded-lg border bg-card min-w-0">
+          <table className="w-full table-fixed h-[80vh]">
             <thead className="sticky top-0 bg-muted/50 backdrop-blur-sm z-10">
               <tr className="text-[11px] uppercase tracking-wider text-muted-foreground">
                 <th className="text-left py-3 px-3 font-medium w-[80px]">
@@ -266,22 +277,33 @@ export function SuperfluidLeaderboardModal({
               </tr>
             </thead>
             <tbody className="divide-y">
-              {filteredData?.map((entry, index) => {
+              {(filteredData ?? []).map((entry) => {
                 const rank = leaderboardData.indexOf(entry) + 1;
                 const activities = getActivities(entry);
                 const displayName =
                   entry.ensName ?? entry.farcasterUsername ?? entry.address;
+                const ensAvatar = entry.ensAvatar;
+                const avatarSrc = ensAvatar ?? blo(entry.address as Address);
 
                 return (
                   <tr
                     key={entry.address}
-                    className="hover:bg-muted/30 transition-colors group"
+                    className="hover:bg-muted/30 transition-colors group h-[53px]"
                   >
                     <td className="py-3 px-3">
                       <RankBadge rank={rank} />
                     </td>
                     <td className="py-3 px-3">
                       <div className="flex items-center gap-2 min-w-0">
+                        {avatarSrc && (
+                          <Image
+                            src={avatarSrc}
+                            alt={`${displayName} avatar`}
+                            width={24}
+                            height={24}
+                            className="h-6 w-6 rounded-full object-cover flex-shrink-0"
+                          />
+                        )}
                         <span className="font-mono text-sm truncate">
                           {displayName}
                         </span>
@@ -298,6 +320,19 @@ export function SuperfluidLeaderboardModal({
                   </tr>
                 );
               })}
+              {Array.from({
+                length: Math.max(0, 10 - (filteredData?.length ?? 0)),
+              }).map((_, idx) => (
+                <tr
+                  key={`placeholder-${idx}`}
+                  className="h-[53px] bg-transparent pointer-events-none"
+                >
+                  <td className="py-3 px-3" />
+                  <td className="py-3 px-3" />
+                  <td className="py-3 px-3" />
+                  <td className="py-3 px-3 hidden sm:table-cell" />
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>

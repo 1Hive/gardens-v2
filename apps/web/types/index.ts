@@ -76,7 +76,7 @@ export type WalletEntry = {
   totalPoints: number;
   farcasterUsername: string | null;
   ensName: string | null;
-  [key: string]: any; // for flexibility
+  ensAvatar: string | null;
 };
 
 export type LeaderboardResponse = {
