@@ -226,7 +226,7 @@ export function SuperfluidLeaderboardModal({
               <p className="font-bold text-xl">{currentUser?.totalPoints}</p>
               <p className="text-xs ">Pts.</p>
             </div>
-            <div className="flex gap-1">
+            <div className="flex gap-1 flex-wrap">
               {activities.map((activity) => (
                 <Badge key={activity.label} tooltip={activity.points + " pts"}>
                   <span className="text-xs font-bold text-nowrap">
