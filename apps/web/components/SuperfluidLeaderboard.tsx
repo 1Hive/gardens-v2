@@ -181,6 +181,19 @@ export function SuperfluidLeaderboardModal({
   const currentUserRank =
     currentUser ? leaderboardData?.indexOf(currentUser) + 1 : null;
 
+  const activities = currentUser ? getActivities(currentUser) : [];
+  const currentAvatarSrc =
+    currentUser ?
+      currentUser.ensAvatar ?? blo(currentUser.address as Address)
+    : null;
+
+  const currentDisplayName =
+    currentUser ?
+      currentUser.ensName ??
+      currentUser.farcasterUsername ??
+      currentUser.address
+    : "";
+
   return (
     <Modal
       title="Superfluid Ecosystem Rewards Leaderboard"
@@ -196,30 +209,38 @@ export function SuperfluidLeaderboardModal({
       onClose={() => setOpenModal(false)}
       size="xx-large"
     >
-      <div className="flex-1 overflow-hidden flex flex-col gap-6 min-w-0">
+      <div className="flex-1 overflow-visible flex flex-col gap-6 min-w-0">
         {currentUser && currentUserRank != null && (
-          <div className="p-4 bg-primary-soft border-[1px] border-primary-content dark:bg-[#3c5b4b] dark:border-primary-dark-border rounded-xl">
-            <p className="text-xs font-fold mb-2 uppercase tracking-wide">
-              Your Position
-            </p>
-            <div className="flex items-center justify-between gap-4 flex-wrap sm:flex-nowrap">
-              <div className="flex items-center justify-center w-9 h-9 rounded-full bg-primary-content text-neutral font-bold">
-                #{currentUserRank}
-              </div>
-              <div>
-                <p className="font-semibold font-mono text-sm">
-                  {currentUser.ensName ??
-                    currentUser.farcasterUsername ??
-                    currentUser.address}
-                </p>
-              </div>
-              <div className="flex items-baseline gap-1">
-                <p className="font-bold text-xl">{currentUser?.totalPoints}</p>
-                <p className="text-xs ">Pts.</p>
-              </div>
-              <div>
-                <ScrollableActivities activities={getActivities(currentUser)} />
-              </div>
+          <div className="p-4 bg-primary-soft border-[1px] border-primary-content dark:bg-[#3c5b4b] dark:border-primary-dark-border rounded-xl flex flex-wrap justify-between items-center gap-4">
+            <div className="flex items-center justify-center w-9 h-9 rounded-full bg-primary-content text-neutral font-bold">
+              #{currentUserRank}
+            </div>
+            <div className="flex items-center gap-4">
+              {currentAvatarSrc && (
+                <Image
+                  src={currentAvatarSrc}
+                  alt={`${currentDisplayName} avatar`}
+                  width={24}
+                  height={24}
+                  className="h-6 w-6 rounded-full object-cover flex-shrink-0"
+                />
+              )}
+              <p className="font-semibold font-mono text-sm">
+                {currentDisplayName}
+              </p>
+            </div>
+            <div className="flex items-baseline gap-1">
+              <p className="font-bold text-xl">{currentUser?.totalPoints}</p>
+              <p className="text-xs ">Pts.</p>
+            </div>
+            <div className="flex gap-1">
+              {activities.map((activity) => (
+                <Badge key={activity.label} tooltip={activity.points + " pts"}>
+                  <span className="text-xs font-bold text-nowrap">
+                    {activity.label}
+                  </span>
+                </Badge>
+              ))}
             </div>
           </div>
         )}
@@ -248,13 +269,13 @@ export function SuperfluidLeaderboardModal({
                   <th className="text-left py-3 px-3 font-medium w-[80px] bg-card">
                     Rank
                   </th>
-                  <th className="text-left py-3 px-3 font-medium w-[400px] bg-card">
+                  <th className="text-left py-3 px-3 font-medium max-w-[400px] bg-card">
                     Address
                   </th>
-                  <th className="text-right py-3 px-3 font-medium w-[120px] bg-card">
+                  <th className="text-right py-3 px-3 font-medium max-w-[120px] bg-card">
                     Points
                   </th>
-                  <th className="text-center py-3 px-3 font-medium w-[200px] hidden sm:table-cell bg-card">
+                  <th className="text-center py-3 px-3 font-medium max-w-[200px] hidden sm:table-cell bg-card">
                     Activities
                   </th>
                 </tr>
@@ -262,7 +283,6 @@ export function SuperfluidLeaderboardModal({
               <tbody>
                 {(filteredData ?? []).map((entry) => {
                   const rank = leaderboardData.indexOf(entry) + 1;
-                  const activities = getActivities(entry);
                   const displayName =
                     entry.ensName ?? entry.farcasterUsername ?? entry.address;
                   const ensAvatar = entry.ensAvatar;

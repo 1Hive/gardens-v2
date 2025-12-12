@@ -243,7 +243,7 @@ export default function GardensGrowthInitiativePage() {
                       className={`rounded-lg space-y-6 hover:shadow-md transition-all bg-neutral ${step.highlighted ? "bg-primary-soft border-[1px] border-primary-content dark:bg-[#3c5b4b] dark:border-primary-dark-border" : "border1"}`}
                     >
                       <div className="p-6">
-                        <div className="flex gap-4">
+                        <div className="flex gap-4 flex-wrap">
                           <div
                             className={`h-10 w-10 rounded-full flex items-center justify-center flex-shrink-0 ${
                               step.highlighted ?
@@ -331,7 +331,7 @@ export default function GardensGrowthInitiativePage() {
                     </div>
 
                     {/* Connected Account Section */}
-                    <div className="mb-6 p-4 rounded-lg bg-primary border-[1px]  border-primary-content">
+                    <div className="mb-6 p-4 rounded-lg bg-primary border-[1px] border-primary-content">
                       <p className="text-xs mb-2">Your Position</p>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
