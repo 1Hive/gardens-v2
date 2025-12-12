@@ -1,5 +1,7 @@
 import pinataSDK from "@pinata/sdk";
 import { NextResponse } from "next/server";
+import { createClient, fetchExchange, gql } from "urql";
+import { chainConfigMap } from "@/configs/chains";
 
 const PINATA_POINTS_SNAPSHOT_NAME = "superfluid-activity-points";
 const PINATA_POINTS_SNAPSHOT_CID =
@@ -103,9 +105,62 @@ const stripSnapshot = (data: any) => {
 
 export const revalidate = 0;
 
-// Temporary static totals in SUP (token units) until we can compute from snapshot data
-const TOTAL_STREAMED_SUP = 0;
+// Pull total streamed from Superfluid subgraph (Base mainnet)
+const SUPERFLUID_CHAIN_ID = 8453;
+const GARDENS_GDA_ID = "0x5f86aeb40ea66373c7ce337f777c37951fdaaeea";
+const SUPERFLUID_POOL_TOTALS_QUERY = gql`
+  query poolTotals($id: ID!) {
+    pool(id: $id) {
+      totalAmountDistributedUntilUpdatedAt
+    }
+  }
+`;
+const TOTAL_STREAMED_SUP_FALLBACK = 3_578;
 const TARGET_STREAM_SUP = 847_000;
+
+const fetchSuperfluidTotals = async (): Promise<number | null> => {
+  const chainConfig = chainConfigMap[SUPERFLUID_CHAIN_ID];
+  const superfluidSubgraphUrl =
+    chainConfig?.publishedSuperfluidSubgraphUrl ??
+    chainConfig?.superfluidSubgraphUrl;
+
+  if (!superfluidSubgraphUrl) {
+    console.warn("[leaderboard] missing superfluid subgraph url", {
+      chainId: SUPERFLUID_CHAIN_ID,
+    });
+    return null;
+  }
+
+  try {
+    const client = createClient({
+      url: superfluidSubgraphUrl,
+      exchanges: [fetchExchange],
+    });
+    const res = await client
+      .query(SUPERFLUID_POOL_TOTALS_QUERY, {
+        id: GARDENS_GDA_ID.toLowerCase(),
+      })
+      .toPromise();
+
+    if (res.error) {
+      console.warn("[leaderboard] superfluid pool totals query failed", {
+        error: res.error.message,
+      });
+      return null;
+    }
+
+    const total =
+      res.data?.pool?.totalAmountDistributedUntilUpdatedAt ?? null;
+    if (!total) return null;
+
+    const totalSup = Number(BigInt(total)) / 1e18;
+    if (Number.isNaN(totalSup)) return null;
+    return totalSup;
+  } catch (error) {
+    console.warn("[leaderboard] superfluid pool totals fetch error", { error });
+    return null;
+  }
+};
 
 export async function GET(request: Request) {
   try {
@@ -132,11 +187,13 @@ export async function GET(request: Request) {
     }
 
     const sanitized = stripSnapshot(data);
+    const totalStreamedSup =
+      (await fetchSuperfluidTotals()) ?? TOTAL_STREAMED_SUP_FALLBACK;
 
     return NextResponse.json({
       cid,
       snapshot: sanitized,
-      totalStreamedSup: TOTAL_STREAMED_SUP,
+      totalStreamedSup,
       targetStreamSup: TARGET_STREAM_SUP,
     });
   } catch (error) {

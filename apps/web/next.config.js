@@ -15,6 +15,24 @@ module.exports = {
       "gateway.pinata.cloud", // Pinata IPFS Gateway (often used for ENS avatars)
       "cloudflare-ipfs.com", // Cloudflare's IPFS gateway (faster alternative)
       "euc.li", // ENS avatar gateway
+      "api2.clovers.network", // Clovers ENS avatar service
+      "avatars.dicebear.com", // Dicebear avatars
+      "lh3.googleusercontent.com", // Google-hosted avatars (e.g., from Google accounts)
+      "pbs.twimg.com", // Twitter-hosted avatars
+      "avatars.githubusercontent.com", // GitHub-hosted avatars
+      "cdn.stamp.fyi", // Stamp avatars
+      "www.gravatar.com", // Gravatar-hosted avatars
+      "avatars.twitch.tv", // Twitch-hosted avatars
+      "cdn.discordapp.com", // Discord-hosted avatars
+      "media-exp1.licdn.com", // LinkedIn-hosted avatars
+      "s.gravatar.com", // Secure Gravatar
+      "cloudflare-ipfs.com", // Cloudflare IPFS gateway
+      "openseauserdata.com", // OpenSea user avatars
+      "ccip.ens.xyz", // ENS CCIP gateway
+      "dweb.link", // Another IPFS gateway
+      "infura-ipfs.io", // Infura IPFS gateway
+      "images.mirror-media.xyz", // Mirror avatars
+      "zerion-dna.s3.us-east-1.amazonaws.com", // Zerion ENS avatars
     ],
     remotePatterns: [
       {
@@ -24,6 +42,11 @@ module.exports = {
       {
         protocol: "https",
         hostname: "**.limo", // LIMO ENS gateway for decentralized websites
+      },
+      {
+        // Fallback so avatars from unexpected hosts don't hard-error
+        protocol: "https",
+        hostname: "**",
       },
     ],
   },
