@@ -61,7 +61,7 @@ module.exports = {
           "neutral-soft-content": "#ACACAC",
           "primary-hover-content": "#58A885",
           "primary-soft-dark": "#1A1A1A",
-          "primary-button": "#3F8F65",
+          "primary-button": "#3c5b4b",
           "danger-hover-content": "#E57373",
           "danger-soft": "#FFE6E6",
           "warning-content": "#E28400",
