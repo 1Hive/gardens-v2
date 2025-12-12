@@ -165,7 +165,7 @@ export default function CampaignsPage() {
       </div>
 
       {/* Content */}
-      <div className="mx-auto max-w-7xl px-4">
+      <div className="mx-auto max-w-7xl px-4 flex flex-col items-center">
         {/* Filters */}
 
         {/* Campaigns */}

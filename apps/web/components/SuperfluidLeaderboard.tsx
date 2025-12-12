@@ -47,14 +47,18 @@ function RankBadge({ rank }: { rank: number }) {
   }
   if (rank === 3) {
     return (
-      <span className={`${baseClasses} bg-amber-200 text-amber-700`}>
+      <span className={`${baseClasses} bg-orange-200 text-amber-700`}>
         <TrophyIcon className="h-4 w-4" />#{rank}
       </span>
     );
   }
 
   return (
-    <span className={`${baseClasses} bg-gray-200 text-gray-500`}>#{rank}</span>
+    <span
+      className={`${baseClasses} bg-neutral-soft-content dark:bg-neutral-content text-neutral`}
+    >
+      #{rank}
+    </span>
   );
 }
 
