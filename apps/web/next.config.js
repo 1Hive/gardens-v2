@@ -48,21 +48,6 @@ module.exports = {
         protocol: "https",
         hostname: "**",
       },
-      {
-        // Fallback so avatars from unexpected hosts don't hard-error
-        protocol: "ipfs:",
-        hostname: "**",
-      },
-      {
-        // Fallback so avatars from unexpected hosts don't hard-error
-        protocol: "ipfns:",
-        hostname: "**",
-      },
-      {
-        // Fallback so avatars from unexpected hosts don't hard-error
-        protocol: "eip155:",
-        hostname: "**",
-      },
     ],
   },
   experimental: {
