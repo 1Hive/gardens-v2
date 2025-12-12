@@ -94,6 +94,9 @@ function ScrollableActivities({
 }) {
   const [isHovered, setIsHovered] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const tooltipText = activities
+    .map((activity) => `${activity.label}: ${activity.points} pts`)
+    .join(" • ");
 
   const scroll = (direction: "left" | "right") => {
     if (scrollContainerRef.current) {
@@ -109,7 +112,8 @@ function ScrollableActivities({
 
   return (
     <div
-      className="relative"
+      className="relative tooltip tooltip-top"
+      data-tip={tooltipText}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -130,8 +134,10 @@ function ScrollableActivities({
       >
         <div className="flex flex-row gap-1 flex-nowrap">
           {activities.map((activity) => (
-            <Badge key={activity}>
-              <span className="text-xs font-bold text-nowrap">{activity}</span>
+            <Badge key={activity.label} tooltip={activity.points + " pts"}>
+              <span className="text-xs font-bold text-nowrap">
+                {activity.label}
+              </span>
             </Badge>
           ))}
         </div>
@@ -247,81 +253,70 @@ export function SuperfluidLeaderboardModal({
           />
         </div>
 
-        <div className="flex-1 overflow-auto rounded-lg border bg-card min-w-0">
-          <table className="w-full table-fixed h-[80vh]">
-            <thead className="sticky top-0 bg-muted/50 backdrop-blur-sm z-10">
-              <tr className="text-[11px] uppercase tracking-wider text-muted-foreground">
-                <th className="text-left py-3 px-3 font-medium w-[80px]">
-                  Rank
-                </th>
-                <th className="text-left py-3 px-3 font-medium">Address</th>
-                <th className="text-right py-3 px-3 font-medium w-[120px]">
-                  Points
-                </th>
-                <th className="text-center py-3 px-3 font-medium w-[200px] hidden sm:table-cell">
-                  Activities
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {(filteredData ?? []).map((entry) => {
-                const rank = leaderboardData.indexOf(entry) + 1;
-                const activities = getActivities(entry);
-                const displayName =
-                  entry.ensName ?? entry.farcasterUsername ?? entry.address;
-                const ensAvatar = entry.ensAvatar;
-                const avatarSrc = ensAvatar ?? blo(entry.address as Address);
-
-                return (
-                  <tr
-                    key={entry.address}
-                    className="hover:bg-muted/30 transition-colors group h-[53px]"
-                  >
-                    <td className="py-3 px-3">
-                      <RankBadge rank={rank} />
-                    </td>
-                    <td className="py-3 px-3">
-                      <div className="flex items-center gap-2 min-w-0">
-                        {avatarSrc && (
-                          <Image
-                            src={avatarSrc}
-                            alt={`${displayName} avatar`}
-                            width={24}
-                            height={24}
-                            className="h-6 w-6 rounded-full object-cover flex-shrink-0"
-                          />
-                        )}
-                        <span className="font-mono text-sm truncate">
-                          {displayName}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="py-3 px-3 text-right">
-                      <span className="font-semibold text-sm">
-                        {entry.totalPoints}
-                      </span>
-                    </td>
-                    <td className="py-3 px-3 hidden sm:table-cell">
-                      <ScrollableActivities activities={activities} />
-                    </td>
-                  </tr>
-                );
-              })}
-              {Array.from({
-                length: Math.max(0, 10 - (filteredData?.length ?? 0)),
-              }).map((_, idx) => (
-                <tr
-                  key={`placeholder-${idx}`}
-                  className="h-[53px] bg-transparent pointer-events-none"
-                >
-                  <td className="py-3 px-3" />
-                  <td className="py-3 px-3" />
-                  <td className="py-3 px-3" />
-                  <td className="py-3 px-3 hidden sm:table-cell" />
+        <div className="flex-1 overflow-visible rounded-lg border bg-card min-w-0">
+          <div className="overflow-auto overflow-x-auto h-[75vh]">
+            <table className="w-full min-w-[680px] table-fixed">
+              <thead className="sticky top-0 bg-muted/50 backdrop-blur-sm z-10">
+                <tr className="text-[11px] uppercase tracking-wider text-muted-foreground">
+                  <th className="text-left py-3 px-3 font-medium w-[80px]">
+                    Rank
+                  </th>
+                  <th className="text-left py-3 px-3 font-medium">Address</th>
+                  <th className="text-right py-3 px-3 font-medium w-[120px]">
+                    Points
+                  </th>
+                  <th className="text-left py-3 px-3 font-medium w-[200px] hidden sm:table-cell">
+                    Activities
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y">
+                {(filteredData ?? []).map((entry) => {
+                  const rank = leaderboardData.indexOf(entry) + 1;
+                  const activities = getActivities(entry);
+                  const displayName =
+                    entry.ensName ?? entry.farcasterUsername ?? entry.address;
+                  const ensAvatar = entry.ensAvatar;
+                  const avatarSrc = ensAvatar ?? blo(entry.address as Address);
+
+                  return (
+                    <tr
+                      key={entry.address}
+                      className="hover:bg-muted/30 transition-colors group h-[53px]"
+                    >
+                      <td className="py-3 px-3">
+                        <RankBadge rank={rank} />
+                      </td>
+                      <td className="py-3 px-3">
+                        <div className="flex items-center gap-2 min-w-0">
+                          {avatarSrc && (
+                            <Image
+                              src={avatarSrc}
+                              alt={`${displayName} avatar`}
+                              width={24}
+                              height={24}
+                              className="h-6 w-6 rounded-full object-cover flex-shrink-0"
+                            />
+                          )}
+                          <span className="font-mono text-sm truncate">
+                            {displayName}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="py-3 px-3 text-right">
+                        <span className="font-mono font-semibold text-sm">
+                          {formatNumber(entry.totalPoints)}
+                        </span>
+                      </td>
+                      <td className="py-3 px-3 hidden sm:table-cell">
+                        <ScrollableActivities activities={activities} />
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </Modal>
