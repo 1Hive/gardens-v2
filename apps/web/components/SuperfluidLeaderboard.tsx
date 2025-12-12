@@ -310,9 +310,7 @@ export function SuperfluidLeaderboardModal({
                         <span
                           className="font-mono font-semibold text-sm tooltip tooltip-top"
                           data-tip={activitiesTooltip}
-                        >
-                          {formatNumber(entry.totalPoints)}
-                        </span>
+                        />
                       </td>
                       <td className="py-3 px-3 hidden sm:table-cell">
                         <ScrollableActivities activities={activities} />
