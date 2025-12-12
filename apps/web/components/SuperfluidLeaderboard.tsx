@@ -306,6 +306,7 @@ export function SuperfluidLeaderboardModal({
                       <td className="py-3 px-3 text-right">
                         <span className=" font-semibold text-sm">
                           {entry.totalPoints}
+                        </span>
                         <span
                           className="font-mono font-semibold text-sm tooltip tooltip-top"
                           data-tip={activitiesTooltip}
