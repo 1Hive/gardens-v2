@@ -183,6 +183,7 @@ const safeStringify = (value: unknown) => {
     return "[]";
   }
 };
+
 const normalizeForPinata = <T>(payload: T): T => {
   try {
     return JSON.parse(
@@ -541,6 +542,7 @@ const PINATA_CREATION_CACHE_NAME =
 const PINATA_TRANSFER_CACHE_NAME =
   process.env.SUPERFLUID_TRANSFER_CACHE_NAME ?? "superfluid-transfer-logs";
 export const PINATA_POINTS_SNAPSHOT_NAME = "superfluid-activity-points";
+const PINATA_RUN_LOG_NAME = "superfluid-stack-run-logs";
 const PINATA_POINTS_SNAPSHOT_CID =
   process.env.SUPERFLUID_POINTS_SNAPSHOT_CID ?? null;
 const PINATA_PRICE_CACHE_NAME =
@@ -571,6 +573,8 @@ const CAN_READ_IPFS = Boolean(IPFS_GATEWAY);
 const SKIP_IDENTITY_RESOLUTION =
   (process.env.SUPERFLUID_SKIP_IDENTITY_RESOLUTION ?? "").toLowerCase() ===
   "true";
+const SHOULD_PIN_RUN_LOGS =
+  (process.env.SUPERFLUID_PIN_RUN_LOGS ?? "").toLowerCase() === "true";
 const FARCASTER_AUTH_TOKEN = (process.env.FARCASTER_API_KEY ?? "").trim();
 let latestCreationBlockCacheCid: string | null =
   process.env.SUPERFLUID_BLOCK_CACHE_CID ?? null;
@@ -1460,6 +1464,44 @@ const pinPointsSnapshotToIpfs = async (
     console.warn("[superfluid-stack] pinata pinJSONToIPFS error (points)", {
       error,
     });
+    return null;
+  }
+};
+
+const pinRunLogsToIpfs = async (logs: string[]): Promise<string | null> => {
+  if (!SHOULD_PIN_RUN_LOGS || !CAN_WRITE_PINATA || logs.length === 0) {
+    return null;
+  }
+  const payload = {
+    updatedAt: new Date().toISOString(),
+    campaignVersion: CAMPAIGN_VERSION,
+    lines: logs,
+  };
+  try {
+    const data = await pinataClient?.pinJSONToIPFS(
+      normalizeForPinata(payload),
+      {
+        pinataMetadata: {
+          name: PINATA_RUN_LOG_NAME,
+          keyvalues: {
+            updatedAt: payload.updatedAt,
+            campaignVersion: CAMPAIGN_VERSION,
+          },
+        } as any,
+        pinataOptions:
+          PINATA_GROUP_ID ? ({ groupId: PINATA_GROUP_ID } as any) : undefined,
+      },
+    );
+    if (data?.IpfsHash) {
+      console.log("[superfluid-stack] pinned run logs to IPFS", {
+        cid: data.IpfsHash,
+        lines: logs.length,
+      });
+      return data.IpfsHash;
+    }
+    return null;
+  } catch (error) {
+    console.warn("[superfluid-stack] failed to pin run logs", { error });
     return null;
   }
 };
@@ -2522,13 +2564,44 @@ const processChain = async ({
 };
 
 export async function GET(req: Request) {
+  const runLogBuffer: string[] = [];
+  const originalConsole = {
+    log: console.log,
+    warn: console.warn,
+    error: console.error,
+  };
+  const record =
+    (level: "log" | "warn" | "error") =>
+    (...args: any[]) => {
+      try {
+        const text = args
+          .map((arg) =>
+            typeof arg === "string" ? arg : safeStringify(arg),
+          )
+          .join(" ");
+        runLogBuffer.push(`[${level}] ${text}`);
+      } catch {
+        /* ignore */
+      }
+      originalConsole[level](...args);
+    };
+  console.log = record("log") as typeof console.log;
+  console.warn = record("warn") as typeof console.warn;
+  console.error = record("error") as typeof console.error;
+
   const auth = req.headers.get("authorization")?.replace("Bearer ", "");
 
   if (auth !== process.env.CRON_SECRET) {
+    console.log = originalConsole.log;
+    console.warn = originalConsole.warn;
+    console.error = originalConsole.error;
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   ensureEnsCacheFresh();
   if (Date.now() > campaignEndMS) {
+    console.log = originalConsole.log;
+    console.warn = originalConsole.warn;
+    console.error = originalConsole.error;
     return NextResponse.json(
       { message: "Campaign ended; sync not executed." },
       { status: 200 },
@@ -2583,6 +2656,7 @@ export async function GET(req: Request) {
     creationBlockCacheCid?: string | null;
     transferLogCacheCid?: string | null;
     priceCacheCid?: string | null;
+    runLogsCid?: string | null;
   }) => {
     console.log("[superfluid-stack] pinned IPFS artifacts", {
       creationBlockCacheCid:
@@ -2602,12 +2676,14 @@ export async function GET(req: Request) {
         responsePointsCid ??
         latestPointsSnapshotCid ??
         null,
+      runLogsCid: extras?.runLogsCid ?? responseRunLogsCid ?? null,
     });
   };
   let responseCreationCid: string | null = null;
   let responseTransferCid: string | null = null;
   let responsePointsCid: string | null = null;
   let pinnedPriceCacheCid: string | null = null;
+  let responseRunLogsCid: string | null = null;
   const notionExistingPages = new Map<
     string,
     { pageId: string; totalPts: number; checksum: string | null }
@@ -3266,7 +3342,14 @@ export async function GET(req: Request) {
     responseCreationCid = pinned.creationBlockCacheCid;
     responseTransferCid = pinned.transferLogCacheCid;
     pinnedPriceCacheCid = pinned.priceCacheCid ?? pinnedPriceCacheCid;
-    logPinnedArtifacts({ pointsSnapshotCid: responsePointsCid });
+    responseRunLogsCid = await pinRunLogsToIpfs(runLogBuffer);
+    logPinnedArtifacts({
+      pointsSnapshotCid: responsePointsCid,
+      runLogsCid: responseRunLogsCid,
+    });
+    console.log = originalConsole.log;
+    console.warn = originalConsole.warn;
+    console.error = originalConsole.error;
 
     return NextResponse.json(
       {
@@ -3296,6 +3379,7 @@ export async function GET(req: Request) {
           responseTransferCid ?? latestTransferLogCacheCid ?? null,
         priceCacheCid: pinned.priceCacheCid ?? latestPriceCacheCid ?? null,
         pointsSnapshotCid: responsePointsCid,
+        runLogsCid: responseRunLogsCid,
         campaignWindow: {
           start,
           end,
@@ -3312,7 +3396,14 @@ export async function GET(req: Request) {
     responseCreationCid = pinned.creationBlockCacheCid;
     responseTransferCid = pinned.transferLogCacheCid;
     pinnedPriceCacheCid = pinned.priceCacheCid ?? pinnedPriceCacheCid;
-    logPinnedArtifacts({ pointsSnapshotCid: responsePointsCid });
+    responseRunLogsCid = await pinRunLogsToIpfs(runLogBuffer);
+    logPinnedArtifacts({
+      pointsSnapshotCid: responsePointsCid,
+      runLogsCid: responseRunLogsCid,
+    });
+    console.log = originalConsole.log;
+    console.warn = originalConsole.warn;
+    console.error = originalConsole.error;
     console.error("Superfluid stack cron error", error);
     const message =
       error instanceof Error ? error.message : "Internal server error";
@@ -3323,6 +3414,7 @@ export async function GET(req: Request) {
           responseCreationCid ?? latestCreationBlockCacheCid ?? null,
         transferLogCacheCid:
           responseTransferCid ?? latestTransferLogCacheCid ?? null,
+        runLogsCid: responseRunLogsCid,
       },
       { status: 500 },
     );
