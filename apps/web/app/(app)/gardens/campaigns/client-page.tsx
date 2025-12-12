@@ -176,123 +176,119 @@ export default function CampaignsPage() {
               <Button disabled>Ended</Button>
             </div>
             {filteredCampaigns.map((c) => (
-              <div
+              <Link
                 key={c.id}
-                className="section-layout max-w-2xl mx-auto rounded-xl overflow-hidden hover:shadow-lg transition"
+                href={c.ctaLink}
+                target={c.ctaLink.startsWith("http") ? "_blank" : undefined}
+                rel={c.ctaLink.startsWith("http") ? "noreferrer" : undefined}
+                className="block"
               >
-                {/* Image */}
-                <div className="relative h-48 w-full">
-                  <Image
-                    src={c.image ?? "/placeholder.svg"}
-                    alt={c.name}
-                    fill
-                    className="object-cover rounded-xl"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-neutral to-transparent" />
+                <div className="section-layout max-w-2xl mx-auto rounded-xl overflow-hidden hover:shadow-lg transition group">
+                  {/* Image */}
+                  <div className="relative h-48 w-full">
+                    <Image
+                      src={c.image ?? "/placeholder.svg"}
+                      alt={c.name}
+                      fill
+                      className="object-cover rounded-xl"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-neutral to-transparent" />
 
-                  {c.logo && (
-                    <div className="absolute top-4 left-4 h-12 w-12  rounded-xl p-2 shadow-md backdrop-blur">
-                      <Image
-                        src={c.logo}
-                        alt={`${c.name} logo`}
-                        fill
-                        className="object-contain p-1"
-                      />
-                    </div>
-                  )}
+                    {c.logo && (
+                      <div className="absolute top-4 left-4 h-12 w-12  rounded-xl p-2 shadow-md backdrop-blur">
+                        <Image
+                          src={c.logo}
+                          alt={`${c.name} logo`}
+                          fill
+                          className="object-contain p-1"
+                        />
+                      </div>
+                    )}
 
-                  <div className="absolute bottom-4 left-4 right-4">
-                    <h3 className="font-bold drop-shadow">{c.name}</h3>
-                    <div className="flex items-center gap-2 text-sm mt-1 ">
-                      <CalendarIcon className="h-4 w-4" />
-                      <span>Ends {c.endDate}</span>
+                    <div className="absolute bottom-4 left-4 right-4">
+                      <h3 className="font-bold drop-shadow">{c.name}</h3>
+                      <div className="flex items-center gap-2 text-sm mt-1 ">
+                        <CalendarIcon className="h-4 w-4" />
+                        <span>Ends {c.endDate}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Content */}
-                <div className="p-6">
-                  <p className="text-sm  mb-4 line-clamp-3">{c.description}</p>
+                  {/* Content */}
+                  <div className="p-6">
+                    <p className="text-sm  mb-4 line-clamp-3">
+                      {c.description}
+                    </p>
 
-                  {c.showStats ?
-                    <>
-                      <Skeleton isLoading={loading} className="h-5 w-full mb-2">
-                        <div className="flex justify-between text-sm mb-2">
-                          <span className="">Claimed</span>
-                          <span className="font-medium">
-                            {formatNumber(totalStreamedSup ?? 0)} /{" "}
-                            {formatNumber(c.tokenAllocated ?? 0)}{" "}
-                            {c.tokenSymbol}
-                          </span>
-                        </div>
-                      </Skeleton>
-
-                      <Skeleton
-                        isLoading={loading}
-                        className="h-2 w-full rounded-full mb-4"
-                      >
-                        <div className="h-2 bg-neutral-soft dark:bg-neutral-soft-content rounded-full overflow-hidden mb-4">
-                          <div
-                            className="h-full bg-primary-content transition-all"
-                            style={{
-                              width: `${
-                                ((totalStreamedSup ?? 0) /
-                                  (c.tokenAllocated ?? 10)) *
-                                100
-                              }%`,
-                            }}
-                          />
-                        </div>
-                      </Skeleton>
-
-                      <Skeleton isLoading={loading} className="h-5 w-full mb-4">
-                        <div className="flex items-center justify-between mb-4">
-                          <div className="flex items-center gap-2">
-                            <UserGroupIcon className="h-5 w-5 text-neutral-soft-content" />
-                            <span className="text-neutral-soft-content text-sm">
-                              {walletCount} participants
+                    {c.showStats ?
+                      <>
+                        <Skeleton
+                          isLoading={loading}
+                          className="h-5 w-full mb-2"
+                        >
+                          <div className="flex justify-between text-sm mb-2">
+                            <span className="">Claimed</span>
+                            <span className="font-medium">
+                              {formatNumber(totalStreamedSup ?? 0)} /{" "}
+                              {formatNumber(c.tokenAllocated ?? 0)}{" "}
+                              {c.tokenSymbol}
                             </span>
                           </div>
-                          <div>
-                            <span className="text-neutral-soft-content text-sm">
-                              {" "}
-                              Last updated: {timeAgo(lastUpdated ?? undefined)}
-                            </span>
-                          </div>
-                        </div>
-                      </Skeleton>
+                        </Skeleton>
 
-                      <Link href={c.ctaLink} className="block">
-                        <Button className="w-full">
-                          {c.ctaText}
-                          <ArrowRightIcon className="h-4 w-4 ml-2" />
-                        </Button>
-                      </Link>
-                    </>
-                  : <>
-                      <div className="flex gap-2 flex-wrap mb-4">
+                        <Skeleton
+                          isLoading={loading}
+                          className="h-2 w-full rounded-full mb-4"
+                        >
+                          <div className="h-2 bg-neutral-soft dark:bg-neutral-soft-content rounded-full overflow-hidden mb-4">
+                            <div
+                              className="h-full bg-primary-content transition-all"
+                              style={{
+                                width: `${
+                                  ((totalStreamedSup ?? 0) /
+                                    (c.tokenAllocated ?? 10)) *
+                                  100
+                                }%`,
+                              }}
+                            />
+                          </div>
+                        </Skeleton>
+
+                        <Skeleton
+                          isLoading={loading}
+                          className="h-5 w-full mb-4"
+                        >
+                          <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-2">
+                              <UserGroupIcon className="h-5 w-5 text-neutral-soft-content" />
+                              <span className="text-neutral-soft-content text-sm">
+                                {walletCount} participants
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-neutral-soft-content text-sm">
+                                {" "}
+                                Last updated: {timeAgo(lastUpdated ?? undefined)}
+                              </span>
+                            </div>
+                          </div>
+                        </Skeleton>
+                      </>
+                    : <div className="flex gap-2 flex-wrap mb-4">
                         <Badge color="info">
                           <CurrencyDollarIcon className="h-4 w-4" />
                           {c.tokenAllocated} {c.tokenSymbol}
                         </Badge>
                       </div>
+                    }
 
-                      <Link
-                        href={c.ctaLink}
-                        target={
-                          c.ctaLink.startsWith("http") ? "_blank" : undefined
-                        }
-                        className="block"
-                      >
-                        <Button className="w-full">
-                          {c.ctaText}
-                          <ArrowRightIcon className="h-4 w-4 ml-2" />
-                        </Button>
-                      </Link>
-                    </>
-                  }
+                    <div className="flex items-center gap-2 text-sm font-medium text-primary mt-2">
+                      <ArrowRightIcon className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                      <span>Open to see how to participate</span>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         : <div className="border border-border rounded-xl p-12 text-center">
