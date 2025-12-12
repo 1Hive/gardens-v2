@@ -331,26 +331,28 @@ export default function GardensGrowthInitiativePage() {
                     </div>
 
                     {/* Connected Account Section */}
-                    <div className="mb-6 p-4 rounded-lg bg-primary border-[1px]  border-primary-content">
-                      <p className="text-xs mb-2">Your Position</p>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className="text-2xl font-bold">
-                            #{walletRank ?? 0}
-                          </span>
+                    {connectedAccount && (
+                      <div className="mb-6 p-4 rounded-lg bg-primary border-[1px]  border-primary-content">
+                        <p className="text-xs mb-2">Your Position</p>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="text-2xl font-bold">
+                              #{walletRank ?? 0}
+                            </span>
 
-                          <span className="text-xs">
-                            {shortenAddress(connectedAccount ?? "0x")}
-                          </span>
-                        </div>
-                        <div className="flex items-baseline gap-1">
-                          <p className="font-bold text-xl">
-                            {walletPoints ?? 0}
-                          </p>
-                          <p className="text-xs ">Pts.</p>
+                            <span className="text-xs">
+                              {shortenAddress(connectedAccount ?? "0x")}
+                            </span>
+                          </div>
+                          <div className="flex items-baseline gap-1">
+                            <p className="font-bold text-xl">
+                              {walletPoints ?? 0}
+                            </p>
+                            <p className="text-xs ">Pts.</p>
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    )}
 
                     <Button
                       className="w-full"

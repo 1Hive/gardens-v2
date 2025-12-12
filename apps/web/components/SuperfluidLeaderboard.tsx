@@ -208,7 +208,7 @@ export function SuperfluidLeaderboardModal({
                   #{currentUserRank}
                 </div>
                 <div>
-                  <p className="font-semibold font-mono text-sm">
+                  <p className="font-semibold text-sm">
                     {currentUser.ensName ??
                       currentUser.farcasterUsername ??
                       currentUser.address}
