@@ -106,6 +106,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             /> */}
             <h6 className="hover:opacity-70">Ecosystem Campaigns</h6>
           </Link>
+          <span
+            aria-hidden
+            className="h-5 w-px bg-border-neutral/70 dark:bg-border-neutral/40"
+          />
           <a
             href="https://docs.gardens.fund"
             target="_blank"
