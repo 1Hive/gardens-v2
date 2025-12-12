@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeftIcon,
   TrophyIcon,
@@ -13,11 +13,17 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { useAccount } from "wagmi";
+import { blo } from "blo";
+import { Address } from "viem";
 import { SuperBanner, SuperLogo } from "@/assets";
 import { Badge } from "@/components/Badge";
 import { Button } from "@/components/Button";
 import { SuperfluidLeaderboardModal } from "@/components/SuperfluidLeaderboard";
-import { fetchSuperfluidLeaderboard, LeaderboardResponse } from "@/types";
+import {
+  fetchSuperfluidLeaderboard,
+  LeaderboardResponse,
+  WalletEntry,
+} from "@/types";
 import { shortenAddress } from "@/utils/text";
 import { formatNumber, timeAgo } from "@/utils/time";
 
@@ -83,16 +89,10 @@ const participationSteps = [
   },
 ];
 
-type WalletEntry = {
-  address: string;
-  totalPoints?: number;
-  [key: string]: any;
-};
-
 function getWalletRankAndPoints(
   address: string,
   rankingWallets: WalletEntry[],
-): { rank: number; totalPoints: number } | null {
+) {
   const index = rankingWallets.findIndex(
     (w) => w.address.toLowerCase() === address.toLowerCase(),
   );
@@ -100,22 +100,41 @@ function getWalletRankAndPoints(
   if (index === -1) return null;
 
   return {
+    ...rankingWallets[index],
     rank: index + 1,
-    totalPoints: rankingWallets[index].totalPoints ?? 0,
   };
 }
+
+type WalletPointsInfo = WalletEntry & {
+  rank: number;
+};
 
 export default function GardensGrowthInitiativePage() {
   const [superfluidStreamsData, setSuperfluidStreamsData] =
     useState<LeaderboardResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [walletRank, setWalletRank] = useState<number | null>(null);
-  const [walletPoints, setWalletPoints] = useState<number | null>(null);
+  const [walletPoints, setWalletPoints] = useState<WalletPointsInfo | null>(
+    null,
+  );
   const [openModal, setOpenModal] = useState(false);
 
   const { address: connectedAccount } = useAccount();
 
   const wallets = superfluidStreamsData?.snapshot?.wallets ?? [];
+
+  const connectedDisplayName = useMemo(() => {
+    if (!connectedAccount) return null;
+    return (
+      walletPoints?.ensName ??
+      walletPoints?.farcasterUsername ??
+      shortenAddress(connectedAccount)
+    );
+  }, [connectedAccount, walletPoints]);
+
+  const connectedAvatar = useMemo(() => {
+    if (!connectedAccount) return null;
+    return walletPoints?.ensAvatar ?? blo(connectedAccount as Address);
+  }, [connectedAccount, walletPoints]);
 
   //useEffects
   useEffect(() => {
@@ -134,14 +153,7 @@ export default function GardensGrowthInitiativePage() {
     if (wallets.length === 0) return;
 
     const result = getWalletRankAndPoints(connectedAccount, wallets);
-
-    if (result) {
-      setWalletRank(result.rank);
-      setWalletPoints(result.totalPoints);
-    } else {
-      setWalletRank(null);
-      setWalletPoints(null);
-    }
+    setWalletPoints(result);
   }, [connectedAccount, wallets]);
 
   return (
@@ -336,18 +348,27 @@ export default function GardensGrowthInitiativePage() {
                       <div className="mb-6 p-4 rounded-lg bg-primary border-[1px]  border-primary-content">
                         <p className="text-xs mb-2">Your Position</p>
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-3">
+                            {connectedAvatar && (
+                              <Image
+                                src={connectedAvatar}
+                                alt={`${connectedDisplayName ?? "Account"} avatar`}
+                                width={32}
+                                height={32}
+                                className="h-8 w-8 rounded-full object-cover"
+                              />
+                            )}
                             <span className="text-2xl font-bold">
-                              #{walletRank ?? 0}
+                              #{walletPoints?.rank ?? 0}
                             </span>
 
                             <span className="text-xs">
-                              {shortenAddress(connectedAccount ?? "0x")}
+                              {connectedDisplayName}
                             </span>
                           </div>
                           <div className="flex items-baseline gap-1">
                             <p className="font-bold text-xl">
-                              {walletPoints ?? 0}
+                              {walletPoints?.totalPoints ?? 0}
                             </p>
                             <p className="text-xs ">Pts.</p>
                           </div>
