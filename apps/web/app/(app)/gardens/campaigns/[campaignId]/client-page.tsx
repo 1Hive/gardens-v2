@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import {
   ArrowLeftIcon,
   TrophyIcon,
-  SparklesIcon,
   UsersIcon,
   ArrowTrendingUpIcon,
   CurrencyDollarIcon,
@@ -13,9 +12,8 @@ import {
 } from "@heroicons/react/24/outline";
 import Image from "next/image";
 import Link from "next/link";
-import { Address, useAccount } from "wagmi";
+import { useAccount } from "wagmi";
 import { SuperBanner, SuperLogo } from "@/assets";
-import { EthAddress } from "@/components";
 import { Badge } from "@/components/Badge";
 import { Button } from "@/components/Button";
 import { SuperfluidLeaderboardModal } from "@/components/SuperfluidLeaderboard";
@@ -117,7 +115,7 @@ export default function GardensGrowthInitiativePage() {
 
   const { address: connectedAccount } = useAccount();
 
-  const wallets = superfluidStreamsData?.snapshot?.wallets;
+  const wallets = superfluidStreamsData?.snapshot?.wallets ?? [];
 
   //useEffects
   useEffect(() => {
@@ -133,7 +131,7 @@ export default function GardensGrowthInitiativePage() {
 
   useEffect(() => {
     if (!connectedAccount) return;
-    if (!wallets || wallets.length === 0) return;
+    if (wallets.length === 0) return;
 
     const result = getWalletRankAndPoints(connectedAccount, wallets);
 
