@@ -3,6 +3,7 @@
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![CodeQL](https://github.com/1Hive/gardens-v2/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/1Hive/gardens-v2/actions/workflows/github-code-scanning/codeql)
 [![CI](https://github.com/1Hive/gardens-v2/actions/workflows/ci.yaml/badge.svg)](https://github.com/1Hive/gardens-v2/actions/workflows/ci.yaml)
 [![Copilot](https://github.com/1Hive/gardens-v2/actions/workflows/copilot-swe-agent/copilot/badge.svg)](https://github.com/1Hive/gardens-v2/actions/workflows/copilot-swe-agent/copilot)
+[![Known Vulnerabilities](https://snyk.io/test/github/1Hive/gardens-v2/badge.svg)](https://snyk.io/test/github/1Hive/gardens-v2)
 
 [![Discord](https://img.shields.io/discord/749888500467054356?label=Discord&logo=discord&logoColor=white&color=7389D8&style=flat)](https://discord.gg/tJWPg69ZWG)
 [![Twitter Follow](https://img.shields.io/twitter/follow/gardens_fund?style=social)](https://twitter.com/gardens_fund)
