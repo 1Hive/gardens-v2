@@ -61,7 +61,7 @@ function RankBadge({ rank }: { rank: number }) {
   }
 
   return (
-    <span className={`${baseClasses} bg-gray-100 text-gray-500`}>#{rank}</span>
+    <span className={`${baseClasses} bg-gray-200 text-gray-500`}>#{rank}</span>
   );
 }
 
@@ -262,7 +262,7 @@ export function SuperfluidLeaderboardModal({
                   <th className="text-right py-3 px-3 font-medium w-[120px]">
                     Points
                   </th>
-                  <th className="text-left py-3 px-3 font-medium w-[200px] hidden sm:table-cell">
+                  <th className="text-center py-3 px-3 font-medium w-[200px] hidden sm:table-cell">
                     Activities
                   </th>
                 </tr>
@@ -300,12 +300,15 @@ export function SuperfluidLeaderboardModal({
                               className="h-6 w-6 rounded-full object-cover flex-shrink-0"
                             />
                           )}
-                          <span className="font-mono text-sm truncate">
+                          <span className=" text-sm truncate">
                             {displayName}
                           </span>
                         </div>
                       </td>
                       <td className="py-3 px-3 text-right">
+                        <span className=" font-semibold text-sm">
+                          {entry.totalPoints}
+                        </span>
                         <span
                           className="font-mono font-semibold text-sm tooltip tooltip-top relative z-20"
                           data-tip={activitiesTooltip}
