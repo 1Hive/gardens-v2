@@ -357,6 +357,8 @@ export default function GardensGrowthInitiativePage() {
                       View Leaderboard
                     </Button>
 
+                    <hr className="w-full mt-6 opacity-90 dark:opacity-70" />
+
                     <SuperfluidLeaderboardModal
                       leaderboardData={wallets}
                       openModal={openModal}
