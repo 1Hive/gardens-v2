@@ -133,7 +133,7 @@ const updateScores = async (chain: string) => {
 };
 
 export async function GET(req: Request, { params }: Params) {
-  const apiKey = req.headers.get("Authorization");
+  const apiKey = req.headers.get("authorization")?.replace("Bearer ", "");
   const { chain } = params;
 
   if (apiKey !== process.env.CRON_SECRET) {

@@ -2522,8 +2522,9 @@ const processChain = async ({
 };
 
 export async function GET(req: Request) {
-  const apiKey = req.headers.get("Authorization");
-  if (apiKey !== process.env.CRON_SECRET) {
+  const auth = req.headers.get("authorization")?.replace("Bearer ", "");
+
+  if (auth !== process.env.CRON_SECRET) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   ensureEnsCacheFresh();
