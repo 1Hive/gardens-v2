@@ -233,40 +233,37 @@ export default function GardensGrowthInitiativePage() {
 
           {/* Right Column - Leaderboard */}
           <div className="lg:col-span-1">
-            <div className="">
-              <div className="border1 rounded-lg bg-neutral p-6 sticky top-10">
-                <div className="p-6">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="h-10 w-10 rounded-lg bg-primary-soft flex items-center justify-center ">
-                      <TrophyIcon className="h-7 w-7 text-primary-content" />
+            <div className="border1 rounded-lg bg-neutral p-6 sticky top-10 space-y-6">
+              <div>
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="h-10 w-10 rounded-lg bg-primary-soft flex items-center justify-center ">
+                    <TrophyIcon className="h-7 w-7 text-primary-content" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold">Leaderboard</h3>
+                    <p className="text-sm text-neutral-soft-content ">
+                      Top contributors
+                    </p>
+                  </div>
+                </div>
+
+                {/* Connected Account Section */}
+                <div className="mb-6 p-4 rounded-lg bg-primary border-[1px]  border-primary-content">
+                  <p className="text-xs mb-2">Your Position</p>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl font-bold">#{walletRank}</span>
+
+                      <span className="text-xs">
+                        {shortenAddress(connectedAccount ?? "0x")}
+                      </span>
                     </div>
-                    <div>
-                      <h3 className="font-semibold">Leaderboard</h3>
-                      <p className="text-sm text-neutral-soft-content ">
-                        Top contributors
-                      </p>
+                    <div className="flex items-baseline gap-1">
+                      <p className="font-bold text-xl">{walletPoints}</p>
+                      <p className="text-xs ">Pts.</p>
                     </div>
                   </div>
-
-                  {/* Connected Account Section */}
-                  <div className="mb-6 p-4 rounded-lg bg-primary border-[1px]  border-primary-content">
-                    <p className="text-xs mb-2">Your Position</p>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="text-2xl font-bold">
-                          #{walletRank}
-                        </span>
-
-                        <span className="text-xs">
-                          {shortenAddress(connectedAccount ?? "0x")}
-                        </span>
-                      </div>
-                      <div className="flex items-baseline gap-1">
-                        <p className="font-bold text-xl">{walletPoints}</p>
-                        <p className="text-xs ">Pts.</p>
-                      </div>
-                    </div>
-                    {/* <div className="flex gap-1.5 mt-3 flex-wrap">
+                  {/* <div className="flex gap-1.5 mt-3 flex-wrap">
                     <Badge className="text-xs bg-blue-500/10 text-blue-700 border-blue-500/20">
                       Add Funds
                     </Badge>
@@ -277,10 +274,10 @@ export default function GardensGrowthInitiativePage() {
                       Governance Stake
                     </Badge>
                   </div> */}
-                  </div>
+                </div>
 
-                  {/* Top 3 Preview */}
-                  {/* <div className="space-y-3 mb-6">
+                {/* Top 3 Preview */}
+                {/* <div className="space-y-3 mb-6">
                     {[
                       {
                         rank: 1,
@@ -311,21 +308,23 @@ export default function GardensGrowthInitiativePage() {
                     ))}
                   </div> */}
 
-                  <SuperfluidLeaderboardModal
-                    campaignName="Gardens Growth Initiative"
-                    tokenSymbol="GDN"
-                    trigger={
-                      <Button className="w-full" size="lg">
-                        <TrophyIcon className="h-5 w-5 mr-2" />
-                        View Full Leaderboard
-                      </Button>
-                    }
-                  />
-                </div>
+                <SuperfluidLeaderboardModal
+                  campaignName="Gardens Growth Initiative"
+                  tokenSymbol="GDN"
+                  trigger={
+                    <Button className="w-full" size="lg">
+                      <TrophyIcon className="h-5 w-5 mr-2" />
+                      View Full Leaderboard
+                    </Button>
+                  }
+                />
               </div>
+
+              <div className="border-t border-border-neutral/70 dark:border-border-neutral/40" />
+
               {/* Campaign Stats */}
-              <div className="section-layout">
-                <div className="flex justify-between text-sm mb-2">
+              <div className="space-y-4">
+                <div className="flex justify-between text-sm">
                   <span className="">Claimed</span>
                   <span className="font-medium">
                     {formatNumber(superfluidStreamsData?.totalStreamedSup ?? 0)}{" "}
@@ -333,7 +332,7 @@ export default function GardensGrowthInitiativePage() {
                   </span>
                 </div>
 
-                <div className="h-2 bg-neutral-soft dark:bg-neutral-soft-content rounded-full overflow-hidden mb-4">
+                <div className="h-2 bg-neutral-soft dark:bg-neutral-soft-content rounded-full overflow-hidden">
                   <div
                     className="h-full bg-primary-content transition-all"
                     style={{
@@ -346,7 +345,7 @@ export default function GardensGrowthInitiativePage() {
                   />
                 </div>
 
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <UserGroupIcon className="h-5 w-5 text-neutral-soft-content" />
                     <span className="text-neutral-soft-content text-sm">

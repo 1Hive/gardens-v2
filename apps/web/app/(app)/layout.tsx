@@ -1,6 +1,7 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
+import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
 import Link from "next/link";
 import { newLogo } from "@/assets";
@@ -28,6 +29,8 @@ export function HeadphoneIcon() {
 }
 
 export default function Layout({ children }: { children: React.ReactNode }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   return (
     <div className="min-h-screen bg-primary relative">
       {/* Left Sidebar - Fixed with higher z-index */}
@@ -69,20 +72,21 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </aside> */}
 
       {/* Top Navigation Bar - Fixed with lower z-index */}
-      <nav className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 lg:px-6 py-2 bg-neutral min-h-[71px] border-b border-border-neutral dark:border-border-neutral/50">
-        <div className="flex items-center gap-2">
-          <Link href="/gardens" className="flex items-center gap-3 text-sm">
-            <Image
-              src={newLogo}
-              alt="logo"
-              height={40}
-              width={40}
-              loading="lazy"
-            />
-            <h5>Gardens</h5>
-          </Link>
-          {/* Mobile Menu Button */}
-          {/* <button
+      <nav className="fixed top-0 left-0 right-0 z-40 px-4 lg:px-6 py-3 bg-neutral min-h-[71px] border-b border-border-neutral dark:border-border-neutral/50 flex flex-col">
+        <div className="flex items-center justify-between h-full gap-3">
+          <div className="flex items-center gap-2">
+            <Link href="/gardens" className="flex items-center gap-3 text-sm">
+              <Image
+                src={newLogo}
+                alt="logo"
+                height={40}
+                width={40}
+                loading="lazy"
+              />
+              <h5>Gardens</h5>
+            </Link>
+            {/* Mobile Menu Button */}
+            {/* <button
             className="lg:hidden btn btn-ghost"
             onClick={toggleMobileMenu}
           >
@@ -90,39 +94,70 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <XMarkIcon className="w-5 h-5" />
             : <Bars3BottomLeftIcon className="w-5 h-5" />}
           </button> */}
+          </div>
+
+          <div className="hidden md:flex items-center justify-center gap-4">
+            <Link
+              href="/gardens/campaigns"
+              className="flex items-center gap-3 text-sm"
+            >
+              <h6 className="hover:opacity-70">Ecosystem Campaigns</h6>
+            </Link>
+            <span
+              aria-hidden
+              className="h-5 w-px bg-border-neutral/70 dark:bg-border-neutral/40"
+            />
+            <a
+              href="https://docs.gardens.fund"
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-2 text-sm hover:opacity-70"
+            >
+              <span>Documentation</span>
+            </a>
+          </div>
+
+          <div className="flex items-center gap-2 md:gap-3">
+            <ConnectWallet />
+            <div className="hidden md:block">
+              <ThemeButton />
+            </div>
+            <button
+              type="button"
+              className="md:hidden inline-flex items-center justify-center rounded-md p-3 hover:bg-neutral-soft dark:hover:bg-primary focus:outline-none focus:ring-2 focus:ring-primary"
+              aria-label="Toggle navigation menu"
+              onClick={() => setMobileMenuOpen((open) => !open)}
+            >
+              {mobileMenuOpen ?
+                <XMarkIcon className="h-6 w-6" />
+              : <Bars3Icon className="h-6 w-6" />}
+            </button>
+          </div>
         </div>
 
-        <div className="flex items-center justify-center gap-4">
-          <Link
-            href="/gardens/campaigns"
-            className="flex items-center gap-3 text-sm"
-          >
-            {/* <Image
-              src={newLogo}
-              alt="logo"
-              height={40}
-              width={40}
-              loading="lazy"
-            /> */}
-            <h6 className="hover:opacity-70">Ecosystem Campaigns</h6>
-          </Link>
-          <span
-            aria-hidden
-            className="h-5 w-px bg-border-neutral/70 dark:bg-border-neutral/40"
-          />
-          <a
-            href="https://docs.gardens.fund"
-            target="_blank"
-            rel="noreferrer"
-            className="flex items-center gap-2 text-sm hover:opacity-70"
-          >
-            <span>Documentation</span>
-          </a>
-        </div>
-        <div className="flex items-center gap-2">
-          <ConnectWallet />
-          <ThemeButton />
-        </div>
+        {mobileMenuOpen && (
+          <div className="md:hidden mt-3 flex flex-col gap-3 rounded-lg border border-border-neutral bg-neutral p-4 shadow-lg">
+            <Link
+              href="/gardens/campaigns"
+              className="text-base font-medium hover:opacity-70 px-1 py-2 rounded-md"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Ecosystem Campaigns
+            </Link>
+            <a
+              href="https://docs.gardens.fund"
+              target="_blank"
+              rel="noreferrer"
+              className="text-base font-medium hover:opacity-70 px-1 py-2 rounded-md"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Documentation
+            </a>
+            <div className="border-t border-border-neutral/70 dark:border-border-neutral/40 pt-3 flex justify-end">
+              <ThemeButton />
+            </div>
+          </div>
+        )}
       </nav>
 
       <div className="flex justify-center items-start pt-[71px] min-h-screen">
