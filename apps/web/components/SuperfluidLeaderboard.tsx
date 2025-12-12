@@ -323,7 +323,9 @@ export function SuperfluidLeaderboardModal({
                         </span>
                       </td>
                       <td className="py-3 px-3 hidden sm:table-cell">
-                        <ScrollableActivities activities={activities} />
+                        <ScrollableActivities
+                          activities={getActivities(entry)}
+                        />
                       </td>
                     </tr>
                   );
