@@ -602,14 +602,15 @@ if (FARCASTER_DISABLED) {
   );
 }
 let farcasterUsernameCache = new Map<string, string>();
-let ensNameCache = new Map<string, string>();
-let ensAvatarCache = new Map<string, string>();
+type EnsCacheEntry = { name: string | null; avatar: string | null; fetchedAt: number };
+let ensIdentityCache = new Map<string, EnsCacheEntry>();
 let nativeSuperTokenCache = new Map<string, string>();
 let nativeTokenCache = new Map<string, string>();
 let latestPointsSnapshotCid: string | null = PINATA_POINTS_SNAPSHOT_CID;
 let creationCacheCampaignVersion: string | null = null;
 let transferCacheCampaignVersion: string | null = null;
 const TOKEN_PRICE_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const ENS_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const tokenPriceCache = new Map<
   string,
   { price: number; fetchedAt: number; symbol: string }
@@ -622,8 +623,7 @@ const ensureEnsCacheFresh = () => {
   const today = new Date().toISOString().slice(0, 10);
   if (ensCacheDay !== today) {
     ensCacheDay = today;
-    ensNameCache.clear();
-    ensAvatarCache.clear();
+    ensIdentityCache.clear();
     ensLookupFailures.clear();
   }
 };
@@ -738,52 +738,39 @@ const fetchEnsIdentityByAddress = async (
     return { name: null, avatar: null };
   }
   ensureEnsCacheFresh();
-  const cachedNameRaw = ensNameCache.get(address);
-  const cachedAvatarRaw = ensAvatarCache.get(address);
-  const cachedName = cachedNameRaw === "" ? null : cachedNameRaw ?? null;
-  const cachedAvatar = cachedAvatarRaw === "" ? null : cachedAvatarRaw ?? null;
-  if (cachedName !== null && cachedAvatar !== null) {
-    return { name: cachedName, avatar: cachedAvatar };
+  const key = address.toLowerCase();
+  const cached = ensIdentityCache.get(key);
+  const now = Date.now();
+  if (cached && now - cached.fetchedAt < ENS_CACHE_TTL_MS) {
+    return { name: cached.name, avatar: cached.avatar };
   }
   try {
     const client = getMainnetClient();
-    const name =
-      cachedName ?? (await client.getEnsName({ address: address as Address }));
+    const name = await client.getEnsName({ address: address as Address });
     const ens = typeof name === "string" ? name : null;
-    if (ens) {
-      ensNameCache.set(address, ens);
-    } else {
-      console.log("[superfluid-stack] ens not found for address", { address });
-      ensNameCache.set(address, "");
-    }
-
     let avatar: string | null = null;
-    if (cachedAvatar !== null) {
-      avatar = cachedAvatar;
-    } else if (ens) {
+    if (ens) {
       avatar = await client.getEnsAvatar({ name: ens });
-      if (avatar) {
-        ensAvatarCache.set(address, avatar);
-      } else {
+      if (!avatar) {
         console.log("[superfluid-stack] ens avatar not found for name", {
           ens,
         });
-        ensAvatarCache.set(address, "");
       }
+    } else {
+      console.log("[superfluid-stack] ens not found for address", { address });
     }
+    ensIdentityCache.set(key, { name: ens, avatar, fetchedAt: now });
     return { name: ens, avatar };
   } catch (error) {
     const message = (error as Error)?.message ?? "";
     if (message.includes("reverse")) {
       // Reverse resolver often reverts when unset; ignore quietly after first hit
       ensLookupFailures.add(address);
-      ensNameCache.set(address, "");
-      ensAvatarCache.set(address, "");
+      ensIdentityCache.set(key, { name: null, avatar: null, fetchedAt: Date.now() });
       return { name: null, avatar: null };
     }
     console.warn("[superfluid-stack] ens lookup failed", { address, error });
-    ensNameCache.set(address, "");
-    ensAvatarCache.set(address, "");
+    ensIdentityCache.set(key, { name: null, avatar: null, fetchedAt: Date.now() });
     return { name: null, avatar: null };
   }
 };
@@ -1208,21 +1195,38 @@ const hydratePointsSnapshotFromIpfs = async () => {
     count: wallets.length,
   });
   const farcasterMap = new Map<string, string>();
-  const ensMap = new Map<string, string>();
-  const ensAvatarMap = new Map<string, string>();
+  const ensMap = new Map<string, EnsCacheEntry>();
   const nativeSuperMap = new Map<string, string>();
   const nativeTokenMap = new Map<string, string>();
+  const ensCacheEntries = Array.isArray((data as any)?.ensCache) ?
+    (data as any).ensCache
+  : [];
+  for (const entry of ensCacheEntries) {
+    const addr =
+      typeof entry?.address === "string" ? entry.address.toLowerCase() : "";
+    if (!addr.startsWith("0x")) continue;
+    const fetchedAt =
+      typeof entry?.fetchedAt === "number" ? entry.fetchedAt : Date.now();
+    const name =
+      typeof entry?.name === "string" ? entry.name : entry?.name ?? null;
+    const avatar =
+      typeof entry?.avatar === "string" ? entry.avatar : entry?.avatar ?? null;
+    ensMap.set(addr, { name, avatar, fetchedAt });
+  }
   for (const w of wallets) {
     const addr = typeof w?.address === "string" ? w.address.toLowerCase() : "";
     if (!addr.startsWith("0x")) continue;
     if (typeof w?.farcasterUsername === "string") {
       farcasterMap.set(addr, w.farcasterUsername);
     }
-    if (typeof w?.ensName === "string") {
-      ensMap.set(addr, w.ensName);
-    }
-    if (typeof w?.ensAvatar === "string") {
-      ensAvatarMap.set(addr, w.ensAvatar);
+    if (!ensMap.has(addr)) {
+      const name =
+        typeof w?.ensName === "string" ? (w.ensName as string) : null;
+      const avatar =
+        typeof w?.ensAvatar === "string" ? (w.ensAvatar as string) : null;
+      if (name !== null || avatar !== null) {
+        ensMap.set(addr, { name, avatar, fetchedAt: Date.now() });
+      }
     }
     if (typeof w?.nativeSuperToken === "string") {
       nativeSuperMap.set(addr, w.nativeSuperToken as Address);
@@ -1232,8 +1236,7 @@ const hydratePointsSnapshotFromIpfs = async () => {
     }
   }
   farcasterUsernameCache = farcasterMap;
-  ensNameCache = ensMap;
-  ensAvatarCache = ensAvatarMap;
+  ensIdentityCache = ensMap;
   nativeSuperTokenCache = nativeSuperMap;
   nativeTokenCache = nativeTokenMap;
 };
@@ -1441,6 +1444,14 @@ const pinPointsSnapshotToIpfs = async (
   const payload = {
     updatedAt: new Date().toISOString(),
     wallets,
+    ensCache: Array.from(ensIdentityCache.entries()).map(
+      ([address, entry]) => ({
+        address,
+        name: entry.name,
+        avatar: entry.avatar,
+        fetchedAt: entry.fetchedAt,
+      }),
+    ),
   };
   try {
     const data = await pinataClient?.pinJSONToIPFS(
@@ -2716,11 +2727,9 @@ export async function GET(req: Request) {
     const ensAvatarByWallet = new Map<string, string>();
     const nativeSuperTokenByWallet = new Map<string, string>();
     const nativeTokenByWallet = new Map<string, string>();
-    for (const [addr, name] of ensNameCache.entries()) {
-      ensNameByWallet.set(addr, name);
-    }
-    for (const [addr, avatar] of ensAvatarCache.entries()) {
-      ensAvatarByWallet.set(addr, avatar);
+    for (const [addr, entry] of ensIdentityCache.entries()) {
+      ensNameByWallet.set(addr, entry.name ?? "");
+      ensAvatarByWallet.set(addr, entry.avatar ?? "");
     }
     for (const [addr, token] of nativeSuperTokenCache.entries()) {
       nativeSuperTokenByWallet.set(addr, token);
