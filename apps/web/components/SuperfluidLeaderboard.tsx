@@ -248,15 +248,17 @@ export function SuperfluidLeaderboardModal({
           />
         </div>
 
-        <div className="flex-1 overflow-visible rounded-lg border bg-card min-w-0">
-          <div className="overflow-auto h-[70vh]">
-            <table className="w-full min-w-[680px] table-fixed">
+        <div className="flex-1 overflow-visible rounded-lg border border-border-neutral bg-card min-w-0">
+          <div className="overflow-auto h-[60vh]">
+            <table className="w-full min-w-[900px] table-fixed">
               <thead className="sticky top-0 bg-muted/50 backdrop-blur-sm z-10">
                 <tr className="text-[11px] uppercase tracking-wider text-muted-foreground">
                   <th className="text-left py-3 px-3 font-medium w-[80px]">
                     Rank
                   </th>
-                  <th className="text-left py-3 px-3 font-medium">Address</th>
+                  <th className="text-left py-3 px-3 font-medium w-[400px]">
+                    Address
+                  </th>
                   <th className="text-right py-3 px-3 font-medium w-[120px]">
                     Points
                   </th>
@@ -308,7 +310,7 @@ export function SuperfluidLeaderboardModal({
                           {entry.totalPoints}
                         </span>
                         <span
-                          className="font-mono font-semibold text-sm tooltip tooltip-top"
+                          className="font-mono font-semibold text-sm tooltip tooltip-top relative z-20"
                           data-tip={activitiesTooltip}
                         />
                       </td>
