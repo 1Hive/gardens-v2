@@ -336,7 +336,7 @@ export default function GardensGrowthInitiativePage() {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <span className="text-2xl font-bold">
-                            #{walletRank}
+                            #{walletRank ?? 0}
                           </span>
 
                           <span className="text-xs">
@@ -344,7 +344,9 @@ export default function GardensGrowthInitiativePage() {
                           </span>
                         </div>
                         <div className="flex items-baseline gap-1">
-                          <p className="font-bold text-xl">{walletPoints}</p>
+                          <p className="font-bold text-xl">
+                            {walletPoints ?? 0}
+                          </p>
                           <p className="text-xs ">Pts.</p>
                         </div>
                       </div>
