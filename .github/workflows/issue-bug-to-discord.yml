@@ -9,15 +9,10 @@ jobs:
   notify_discord:
     runs-on: ubuntu-latest
 
-    # Run only for Bug issues (typed/label/hidden marker) and when the form didn't opt out of Discord
+    # Run only when the issue body includes the bug form section "Steps to reproduce" and the form didn't opt out of Discord
     if: >
       ${{
-        (
-          (github.event.issue.issue_type && github.event.issue.issue_type.name == 'Bug') ||
-          contains(github.event.issue.labels.*.name, 'bug') ||
-          contains(github.event.issue.labels.*.name, 'Bug') ||
-          contains(github.event.issue.body, 'issue-type=bug')
-        )
+        contains(github.event.issue.body, 'Steps to reproduce')
         && !contains(github.event.issue.body, 'Skip Discord')
       }}
 
