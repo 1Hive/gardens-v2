@@ -1,15 +1,18 @@
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 
 import { getDataSuffix, submitReferral } from "@divvi/referral-sdk";
 import { WriteContractMode } from "@wagmi/core";
 import { Abi, Address, TransactionReceipt } from "viem";
 import { celo } from "viem/chains";
 import {
+  useAccount,
   useChainId,
   useContractWrite,
   UseContractWriteConfig,
+  usePublicClient,
   useWaitForTransaction,
 } from "wagmi";
+import { toast } from "react-toastify";
 import { useChainIdFromPath } from "./useChainIdFromPath";
 import { useTransactionNotification } from "./useTransactionNotification";
 import { chainConfigMap } from "@/configs/chains";
@@ -55,11 +58,13 @@ export function useContractWriteWithConfirmations<
   const toastId = props.contractName + "_" + props.functionName;
   const chainIdFromWallet = useChainId();
   const chainIdFromPath = useChainIdFromPath();
+  const { connector } = useAccount();
   const resolvedChaindId = +(
     props.chainId ??
     chainIdFromPath ??
     chainIdFromWallet
   );
+  const publicClient = usePublicClient({ chainId: resolvedChaindId });
 
   const shouldDivviTrack = useMemo(() => {
     return resolvedChaindId === celo.id;
@@ -91,6 +96,80 @@ export function useContractWriteWithConfirmations<
 
   const txResult = useContractWrite(
     propsWithChainId as UseContractWriteConfig<TAbi, TFunctionName, TMode>,
+  );
+
+  const simulationToastId = `${toastId}_sim`;
+
+  const simulateAndWriteAsync = useCallback(
+    async (
+      overrides?: Parameters<
+        NonNullable<typeof txResult.writeAsync>
+      >[0] extends undefined
+        ? undefined
+        : Parameters<NonNullable<typeof txResult.writeAsync>>[0],
+    ) => {
+      const isMockConnector = connector?.id === "mock";
+      if (!isMockConnector) {
+        return txResult.writeAsync?.(overrides as any);
+      }
+      // If we can't simulate, fall back to normal write
+      if (!publicClient || !props.address || !props.abi || !props.functionName) {
+        return txResult.writeAsync?.(overrides as any);
+      }
+
+      try {
+        await publicClient.simulateContract({
+          address: props.address as Address,
+          abi: props.abi,
+          functionName: props.functionName as any,
+          args:
+            (overrides as any)?.args ??
+            (props as any)?.args ??
+            (txResult.variables as any)?.args,
+          value:
+            (overrides as any)?.value ??
+            (props as any)?.value ??
+            (txResult.variables as any)?.value,
+          account:
+            (overrides as any)?.account ??
+            (props as any)?.account ??
+            undefined,
+          chainId: resolvedChaindId,
+        });
+        toast.success("Simulation successful", { toastId: simulationToastId });
+      } catch (error) {
+        console.error("[Simulation failed]", error);
+        toast.error("Simulation failed. See console for details.", {
+          toastId: simulationToastId,
+        });
+        throw error;
+      }
+
+      return txResult.writeAsync?.(overrides as any);
+    },
+    [
+      connector?.id,
+      publicClient,
+      props.address,
+      props.abi,
+      props.functionName,
+      props.args,
+      props.value,
+      (props as any)?.account,
+      resolvedChaindId,
+      txResult.writeAsync,
+      txResult.variables,
+      simulationToastId,
+    ],
+  );
+
+  const simulateAndWrite = useCallback(
+    (overrides?: Parameters<NonNullable<typeof txResult.write>>[0]) => {
+      simulateAndWriteAsync(overrides).catch(() => {
+        /* error already surfaced via toast/console */
+      });
+    },
+    [simulateAndWriteAsync, txResult.write],
   );
 
   propsWithChainId.onError = (
@@ -157,6 +236,8 @@ export function useContractWriteWithConfirmations<
   return {
     ...txResult,
     ...txWaitResult,
+    write: simulateAndWrite,
+    writeAsync: simulateAndWriteAsync,
     isLoading: txResult.isLoading || txWaitResult.isLoading,
     transactionStatus: computedStatus as ComputedStatus | undefined,
     transactionData: txResult.data,
