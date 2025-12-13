@@ -3114,12 +3114,13 @@ export async function GET(req: Request) {
       });
     }
 
-    const EVENT_NAMES = [
+    const BASE_EVENT_NAMES = [
       "fundPoints",
       "streamPoints",
       "governanceStakePoints",
       "farcasterPoints",
     ] as const;
+    const eventNames = new Set<string>(BASE_EVENT_NAMES);
 
     const fetchExistingTotalsByAddress = async (): Promise<
       Map<string, Record<string, number>>
@@ -3143,8 +3144,8 @@ export async function GET(req: Request) {
         if (!Array.isArray(res) || res.length === 0) break;
         for (const evt of res as any[]) {
           const name = evt?.event as string;
-          if (!EVENT_NAMES.includes(name as (typeof EVENT_NAMES)[number]))
-            continue;
+          if (typeof name !== "string" || !name.length) continue;
+          eventNames.add(name);
           const pts = Number(evt?.points ?? 0);
           const addr =
             evt?.address ??
@@ -3156,7 +3157,7 @@ export async function GET(req: Request) {
           const key = addr.toLowerCase();
           const existingTotals =
             existingMap.get(key) ??
-            EVENT_NAMES.reduce(
+            Array.from(eventNames).reduce(
               (acc, n) => {
                 acc[n] = 0;
                 return acc;
@@ -3178,7 +3179,7 @@ export async function GET(req: Request) {
     }> = [];
     const existingTotalsByAddress = await fetchExistingTotalsByAddress();
 
-    const emptyCategoryTotals = EVENT_NAMES.reduce(
+    const emptyCategoryTotals = Array.from(eventNames).reduce(
       (acc, n) => {
         acc[n] = 0;
         return acc;
@@ -3189,14 +3190,21 @@ export async function GET(req: Request) {
     for (const wallet of walletPointTargets) {
       const existingByCategory =
         existingTotalsByAddress.get(wallet.address) ?? emptyCategoryTotals;
-      const targetByCategory: Record<string, number> = {
-        fundPoints: wallet.fundPoints,
-        streamPoints: wallet.streamPoints,
-        governanceStakePoints: wallet.governanceStakePoints,
-        farcasterPoints: wallet.farcasterPoints,
-      };
+      const targetByCategory: Record<string, number> = {};
+      for (const name of eventNames) {
+        targetByCategory[name] =
+          name === "fundPoints" ?
+            wallet.fundPoints
+          : name === "streamPoints" ?
+            wallet.streamPoints
+          : name === "governanceStakePoints" ?
+            wallet.governanceStakePoints
+          : name === "farcasterPoints" ?
+            wallet.farcasterPoints
+          : 0;
+      }
       const deltas: Record<string, number> = {};
-      for (const name of EVENT_NAMES) {
+      for (const name of eventNames) {
         deltas[name] = targetByCategory[name] - (existingByCategory[name] ?? 0);
         if (deltas[name] !== 0) {
           allEventPayloads.push({
@@ -3263,14 +3271,12 @@ export async function GET(req: Request) {
     // Remove accounts that are no longer in the current target list
     for (const [address, existingByCategory] of existingTotalsByAddress) {
       if (walletPointTargets.find((w) => w.address === address)) continue;
-      const targetByCategory: Record<string, number> = {
-        fundPoints: 0,
-        streamPoints: 0,
-        governanceStakePoints: 0,
-        farcasterPoints: 0,
-      };
+      const targetByCategory: Record<string, number> = {};
+      for (const name of eventNames) {
+        targetByCategory[name] = 0;
+      }
       const deltas: Record<string, number> = {};
-      for (const name of EVENT_NAMES) {
+      for (const name of eventNames) {
         deltas[name] = targetByCategory[name] - (existingByCategory[name] ?? 0);
         if (deltas[name] !== 0) {
           allEventPayloads.push({
