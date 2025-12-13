@@ -16,6 +16,7 @@
   },
   "devDependencies": {
     "eslint-config-custom": "workspace:*",
+    "node-gyp-build": "^4.8.4",
     "prettier": "latest",
     "turbo": "^1.7.4"
   },

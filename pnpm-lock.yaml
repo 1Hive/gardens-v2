@@ -74,6 +74,9 @@ importers:
       eslint-config-custom:
         specifier: workspace:*
         version: link:pkg/eslint-config-custom
+      node-gyp-build:
+        specifier: ^4.8.4
+        version: 4.8.4
       prettier:
         specifier: latest
         version: 3.3.3
@@ -331,6 +334,9 @@ importers:
       eslint-plugin-react-hooks:
         specifier: ^4.6.0
         version: 4.6.2(eslint@8.57.0)
+      node-gyp-build:
+        specifier: ^4.8.4
+        version: 4.8.4
       postcss:
         specifier: ^8.4.32
         version: 8.4.38
@@ -12306,7 +12312,7 @@ packages:
     engines: {node: '>=6.14.2'}
     requiresBuild: true
     dependencies:
-      node-gyp-build: 4.8.1
+      node-gyp-build: 4.8.4
 
   /bundle-require@3.1.2(esbuild@0.16.10):
     resolution: {integrity: sha512-Of6l6JBAxiyQ5axFxUM6dYeP/W7X2Sozeo/4EYB9sJhL+dqL7TKjg+shwxp6jlu/6ZSERfsYtIpSJ1/x3XkAEA==}
@@ -17840,7 +17846,7 @@ packages:
     requiresBuild: true
     dependencies:
       node-addon-api: 2.0.2
-      node-gyp-build: 4.8.1
+      node-gyp-build: 4.8.4
       readable-stream: 3.6.2
     dev: false
 
@@ -19679,8 +19685,9 @@ packages:
     engines: {node: '>= 6.13.0'}
     dev: false
 
-  /node-gyp-build@4.8.1:
-    resolution: {integrity: sha512-OSs33Z9yWr148JZcbZd5WiAXhh/n9z8TxQcdMhIOlpN9AhWpLfvVFO73+m77bBABQMaY9XSvIa+qk0jlI7Gcaw==}
+  /node-gyp-build@4.8.4:
+    resolution: {integrity: sha512-LA4ZjwlnUblHVgq0oBF3Jl/6h/Nvs5fzBLwdEF4nuxnFdsfajde4WfxtJr3CaiH+F6ewcIB/q4jQ4UzPyid+CQ==}
+    hasBin: true
 
   /node-gyp@10.2.0:
     resolution: {integrity: sha512-sp3FonBAaFe4aYTcFdZUn2NYkbP7xroPGYvQmP4Nl5PxamznItBnNCgjrVTKrEfQynInMsJvZrdmqUnysCJ8rw==}
@@ -22003,7 +22010,7 @@ packages:
     dependencies:
       elliptic: 6.6.1
       node-addon-api: 5.1.0
-      node-gyp-build: 4.8.1
+      node-gyp-build: 4.8.4
     dev: false
 
   /section-matter@1.0.0:
@@ -24038,7 +24045,7 @@ packages:
     engines: {node: '>=6.14.2'}
     requiresBuild: true
     dependencies:
-      node-gyp-build: 4.8.1
+      node-gyp-build: 4.8.4
 
   /utf8@3.0.0:
     resolution: {integrity: sha512-E8VjFIQ/TyQgp+TZfS6l8yp/xWppSAHzidGiRrqe4bK4XP9pTRyKFgGJpO3SN7zdX4DeomTrwaseCHovfpFcqQ==}
