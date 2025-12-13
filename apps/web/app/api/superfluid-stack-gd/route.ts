@@ -45,6 +45,19 @@ type ManualBoundEntry = {
   endBlock?: bigint;
 };
 
+type WalletActivity = {
+  type: "fund" | "stream" | "governance";
+  amountGd: number;
+  poolAddress: string | null;
+  poolName?: string | null;
+  communityId?: string | null;
+  communityName?: string | null;
+  sharePercent?: number;
+  token: string;
+  chainId: ChainId;
+  bonusApplied: boolean;
+};
+
 type CommunityInfo = {
   id: string;
   communityName?: string | null;
@@ -760,9 +773,19 @@ const fetchEnsNameByAddress = async (
     const client = getMainnetClient();
     const name = await client.getEnsName({ address: address as Address });
     const ens = typeof name === "string" ? name : null;
-    if (ens) ensNameCache.set(address, ens);
+    if (ens) {
+      ensNameCache.set(address, ens);
+    } else {
+      console.log("[superfluid-stack-gd] ens not found for address", {
+        address,
+      });
+    }
     return ens;
-  } catch {
+  } catch (error) {
+    console.warn("[superfluid-stack-gd] ens lookup failed", {
+      address,
+      error,
+    });
     return null;
   }
 };
@@ -817,7 +840,8 @@ const fetchFarcasterWalletsForFids = async (
               (a: any) =>
                 typeof a.address === "string" &&
                 a.address.toLowerCase().startsWith("0x") &&
-                a.label.includes("primary"),
+                typeof a.label === "string" &&
+                a.label.toLowerCase().includes("primary"),
             )
             .map((l: any) => l?.address)
         : [],
@@ -1920,6 +1944,7 @@ const accumulateFundingPoints = async ({
   tokenDecimals,
   userTotals,
   multiplier = 1,
+  recordActivity,
 }: {
   publicClient: ReturnType<typeof createPublicClient>;
   poolAddress: Address;
@@ -1929,6 +1954,7 @@ const accumulateFundingPoints = async ({
   tokenDecimals: number;
   userTotals: Map<string, { fundUsd: number; streamUsd: number }>;
   multiplier?: number;
+  recordActivity?: (args: { from: string; amount: number }) => void;
 }) => {
   if (fromBlock > toBlock) return;
   let logs: any[] = [];
@@ -1957,6 +1983,9 @@ const accumulateFundingPoints = async ({
       ...prev,
       fundUsd: prev.fundUsd + amount * multiplier,
     });
+    if (recordActivity) {
+      recordActivity({ from: key, amount: amount * multiplier });
+    }
   }
 };
 
@@ -2033,6 +2062,7 @@ const processChain = async ({
   nativePools: { poolAddress: Address; token: Address }[];
   processedCommunities: ProcessedCommunity[];
   fetchedPrices: { token: Address; symbol: string; priceUsd: number }[];
+  walletActivities: Map<string, WalletActivity[]>;
 }> => {
   const chainConfig = chainConfigMap[chainId];
   if (!chainConfig?.subgraphUrl || !chainConfig?.rpcUrl) {
@@ -2201,6 +2231,7 @@ const processChain = async ({
   let poolsProcessed = 0;
   let flowUpdateCount = 0;
   const governanceStakePoints = new Map<string, number>();
+  const walletActivities = new Map<string, WalletActivity[]>();
 
   for (const pool of pools) {
     poolsProcessed++;
@@ -2254,6 +2285,21 @@ const processChain = async ({
       tokenDecimals,
       userTotals,
       multiplier: bonusMultiplier,
+      recordActivity: ({ from, amount }) => {
+        const list = walletActivities.get(from) ?? [];
+        list.push({
+          type: "fund",
+          amountGd: amount,
+          poolAddress: toLower(poolAddress),
+          poolName: poolTitle,
+          communityId: community?.id ? toLower(community.id) : null,
+          communityName: community?.communityName ?? null,
+          token: toLower(underlyingToken),
+          chainId,
+          bonusApplied: bonusMultiplier > 1,
+        });
+        walletActivities.set(from, list);
+      },
     });
 
     let streamUsdTotalPoints = 0;
@@ -2291,6 +2337,19 @@ const processChain = async ({
           ...prev,
           streamUsd: prev.streamUsd + tokens * bonusMultiplier,
         });
+        const list = walletActivities.get(key) ?? [];
+        list.push({
+          type: "stream",
+          amountGd: tokens * bonusMultiplier,
+          poolAddress: toLower(poolAddress),
+          poolName: poolTitle,
+          communityId: community?.id ? toLower(community.id) : null,
+          communityName: community?.communityName ?? null,
+          token: toLower(underlyingToken),
+          chainId,
+          bonusApplied: bonusMultiplier > 1,
+        });
+        walletActivities.set(key, list);
       }
       if (streamUsdTotalAll > 0) {
         const poolKey = toLower(poolAddress);
@@ -2346,7 +2405,7 @@ const processChain = async ({
   }
 
   // Split community totals to members
-  for (const entry of communityTotals.values()) {
+  for (const [communityId, entry] of communityTotals.entries()) {
     let totalTokens = entry.fundGd + entry.streamGd;
     if (totalTokens <= 0) continue;
     const totalStake = entry.members.reduce(
@@ -2365,6 +2424,35 @@ const processChain = async ({
       const key = toLower(member.memberAddress);
       const prev = governanceStakePoints.get(key) ?? 0;
       governanceStakePoints.set(key, prev + points);
+      const processedCommunity = processedCommunities.get(communityId);
+      const firstPool = processedCommunity?.pools?.[0];
+      const communityIdLower =
+        processedCommunity?.communityId ?
+          toLower(processedCommunity.communityId)
+        : toLower(communityId);
+      const communityName =
+        processedCommunity?.communityName ??
+        processedCommunity?.communityId ??
+        null;
+      const poolAddress =
+        firstPool && firstPool.poolAddress ?
+          toLower(firstPool.poolAddress)
+        : null;
+      const poolName = firstPool?.title ?? null;
+      const list = walletActivities.get(key) ?? [];
+      list.push({
+        type: "governance",
+        amountGd: totalTokens * share,
+        poolAddress,
+        poolName,
+        communityId: communityIdLower,
+        communityName,
+        sharePercent: share * 100,
+        token: "aggregate",
+        chainId,
+        bonusApplied: entry.isBonus,
+      });
+      walletActivities.set(key, list);
     }
   }
 
@@ -2403,6 +2491,7 @@ const processChain = async ({
     nativePools,
     processedCommunities: Array.from(processedCommunities.values()),
     fetchedPrices,
+    walletActivities,
   };
 };
 
@@ -2521,6 +2610,7 @@ export async function GET(req: Request) {
     const farcasterDiscardedWallets: string[] = [];
     const nativeSuperTokens: { address: string; token: string | null }[] = [];
     const nativeTokens: { address: string; token: string | null }[] = [];
+    const walletActivitiesByWallet = new Map<string, WalletActivity[]>();
 
     const fetchExistingFarcasterAddresses = async (): Promise<Set<string>> => {
       const addrs = new Set<string>();
@@ -2585,6 +2675,7 @@ export async function GET(req: Request) {
         fetchedPrices,
         streamTotalsByPool,
         communityBreakdown,
+        walletActivities,
       } = await processChain({
         chainId,
         windowStart: start,
@@ -2646,6 +2737,11 @@ export async function GET(req: Request) {
       streamTotalsByChain[String(chainId)] = Object.fromEntries(
         streamTotalsByPool.entries(),
       );
+      for (const [addr, acts] of walletActivities.entries()) {
+        const list = walletActivitiesByWallet.get(addr) ?? [];
+        list.push(...acts);
+        walletActivitiesByWallet.set(addr, list);
+      }
       // Expose GoodDollar community totals (G$) for campaign
       (communitiesByChain as any)[String(chainId)].push(
         ...communityBreakdown.map((c) => ({
@@ -2687,6 +2783,7 @@ export async function GET(req: Request) {
       ensName: string | null;
       nativeSuperToken: string | null;
       nativeToken: string | null;
+      activities: WalletActivity[];
       checksum: string;
     }[] = [];
 
@@ -2696,6 +2793,7 @@ export async function GET(req: Request) {
       ...farcasterFollowerWalletsSet.values(),
       ...farcasterDiscardedWallets.values(),
       ...existingFarcasterAddresses.values(),
+      ...walletActivitiesByWallet.keys(),
     ]);
 
     if (!FARCASTER_DISABLED) {
@@ -2882,6 +2980,7 @@ export async function GET(req: Request) {
         ensName: ensNameByWallet.get(wallet.address) ?? null,
         nativeSuperToken: nativeSuperTokenByWallet.get(wallet.address) ?? null,
         nativeToken: nativeTokenByWallet.get(wallet.address) ?? null,
+        activities: walletActivitiesByWallet.get(wallet.address) ?? [],
         checksum: [
           wallet.address.toLowerCase(),
           wallet.fundPoints,
@@ -3096,7 +3195,7 @@ export async function GET(req: Request) {
     return NextResponse.json(
       {
         csv: walletBreakdownCsv,
-        message: "Superfluid stack sync completed",
+        message: "Superfluid stack sync completed for GoodDollar campaign",
         updated: updates,
         totals: Object.fromEntries(totals.entries()),
         missingPrices: missingPriceEntries,

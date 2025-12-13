@@ -224,6 +224,10 @@ const NOTION_DB_ID_NORMALIZED =
   NOTION_DB_ID_TRIMMED?.match(/[0-9a-f]{32}/i)?.[0]?.replace(/-/g, "") ??
   NOTION_DB_ID_TRIMMED;
 const NOTION_DATA_SOURCE_ID = process.env.NOTION_DATA_SOURCE_ID?.trim() ?? null;
+const BONUS_MULTIPLIER =
+  process.env.SUPERFLUID_BONUS_MULTIPLIER ?
+    Number(process.env.SUPERFLUID_BONUS_MULTIPLIER)
+  : 3;
 let notionDataSourceId: string | null = NOTION_DATA_SOURCE_ID;
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const buildWalletCsv = (
@@ -2449,7 +2453,7 @@ const processChain = async ({
         community &&
         toLower(community.id) === toLower(BASE_BONUS_COMMUNITY)
       ) ?
-        2
+        BONUS_MULTIPLIER
       : 1;
 
     if (superToken.sameAsUnderlying) {
@@ -2617,7 +2621,7 @@ const processChain = async ({
     if (totalPts <= 0) continue;
 
     if (entry.isBonus) {
-      totalPts *= 2;
+      totalPts *= BONUS_MULTIPLIER;
     }
 
     const totalStake = entry.members.reduce(
@@ -3193,14 +3197,10 @@ export async function GET(req: Request) {
       const targetByCategory: Record<string, number> = {};
       for (const name of eventNames) {
         targetByCategory[name] =
-          name === "fundPoints" ?
-            wallet.fundPoints
-          : name === "streamPoints" ?
-            wallet.streamPoints
-          : name === "governanceStakePoints" ?
-            wallet.governanceStakePoints
-          : name === "farcasterPoints" ?
-            wallet.farcasterPoints
+          name === "fundPoints" ? wallet.fundPoints
+          : name === "streamPoints" ? wallet.streamPoints
+          : name === "governanceStakePoints" ? wallet.governanceStakePoints
+          : name === "farcasterPoints" ? wallet.farcasterPoints
           : 0;
       }
       const deltas: Record<string, number> = {};

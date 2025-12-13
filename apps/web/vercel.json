@@ -23,10 +23,6 @@
     {
       "path": "/api/superfluid-stack",
       "schedule": "*/15 * * * *"
-    },
-    {
-      "path": "/api/superfluid-stack-gd",
-      "schedule": "*/15 * * * *"
     }
   ]
 }
