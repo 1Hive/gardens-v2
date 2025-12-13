@@ -55,7 +55,7 @@ const participationSteps = [
       "Stream funds into a Funding Pool, or for Pure Super Token Funding Pools, add funds either as a stream or a one-time transfer.",
     icon: <ArrowTrendingUpIcon className="h-5 w-5" />,
     activities: ["Add Funds"],
-    pointsInfo: "1 point per $1 added",
+    pointsInfo: "1 point per $1 added (minimum $10)",
   },
   {
     title: "Join a Community & Increase Your Stake",
