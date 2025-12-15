@@ -574,6 +574,8 @@ const PINATA_POINTS_SNAPSHOT_CID =
   process.env.SUPERFLUID_GD_POINTS_SNAPSHOT_CID ??
   process.env.SUPERFLUID_POINTS_SNAPSHOT_CID ??
   null;
+const BASE_POINTS_SNAPSHOT_NAME = "superfluid-activity-points";
+const BASE_POINTS_SNAPSHOT_CID = process.env.SUPERFLUID_POINTS_SNAPSHOT_CID;
 const EXCLUDED_WALLETS_GD: Set<string> = new Set(
   (process.env.SUPERFLUID_GD_EXCLUDE_WALLETS ?? "")
     .split(",")
@@ -1209,40 +1211,68 @@ const ensureLatestPointsSnapshotCid = async (): Promise<string | null> => {
 };
 
 const hydratePointsSnapshotFromIpfs = async () => {
-  const cid =
+  const hydrateFromCid = async (cid: string | null) => {
+    if (!cid) return;
+    const data = await fetchIpfsJson(cid);
+    const wallets = (data as any)?.wallets;
+    if (!Array.isArray(wallets)) return;
+    console.log("[superfluid-stack] hydrating points snapshot cache", {
+      cid,
+      count: wallets.length,
+    });
+    for (const w of wallets) {
+      const addr =
+        typeof w?.address === "string" ? w.address.toLowerCase() : "";
+      if (!addr.startsWith("0x")) continue;
+      if (typeof w?.farcasterUsername === "string") {
+        if (!farcasterUsernameCache.has(addr)) {
+          farcasterUsernameCache.set(addr, w.farcasterUsername);
+        }
+      }
+      if (typeof w?.ensName === "string") {
+        if (!ensNameCache.has(addr)) {
+          ensNameCache.set(addr, w.ensName);
+        }
+      }
+      if (typeof w?.nativeSuperToken === "string") {
+        if (!nativeSuperTokenCache.has(addr)) {
+          nativeSuperTokenCache.set(addr, w.nativeSuperToken as Address);
+        }
+      }
+      if (typeof w?.nativeToken === "string") {
+        if (!nativeTokenCache.has(addr)) {
+          nativeTokenCache.set(addr, w.nativeToken as Address);
+        }
+      }
+    }
+  };
+
+  const cidGd =
     latestPointsSnapshotCid ?? (await ensureLatestPointsSnapshotCid()) ?? null;
-  if (!cid) return;
-  const data = await fetchIpfsJson(cid);
-  const wallets = (data as any)?.wallets;
-  if (!Array.isArray(wallets)) return;
-  console.log("[superfluid-stack] hydrating points snapshot cache", {
-    cid,
-    count: wallets.length,
-  });
-  const farcasterMap = new Map<string, string>();
-  const ensMap = new Map<string, string>();
-  const nativeSuperMap = new Map<string, string>();
-  const nativeTokenMap = new Map<string, string>();
-  for (const w of wallets) {
-    const addr = typeof w?.address === "string" ? w.address.toLowerCase() : "";
-    if (!addr.startsWith("0x")) continue;
-    if (typeof w?.farcasterUsername === "string") {
-      farcasterMap.set(addr, w.farcasterUsername);
-    }
-    if (typeof w?.ensName === "string") {
-      ensMap.set(addr, w.ensName);
-    }
-    if (typeof w?.nativeSuperToken === "string") {
-      nativeSuperMap.set(addr, w.nativeSuperToken as Address);
-    }
-    if (typeof w?.nativeToken === "string") {
-      nativeTokenMap.set(addr, w.nativeToken as Address);
+  await hydrateFromCid(cidGd);
+
+  if (!latestPointsSnapshotCid && !cidGd && BASE_POINTS_SNAPSHOT_CID) {
+    await hydrateFromCid(BASE_POINTS_SNAPSHOT_CID);
+  } else if (BASE_POINTS_SNAPSHOT_NAME && pinataClient) {
+    try {
+      const data = await pinataClient?.pinList({
+        status: "pinned",
+        metadata: { name: BASE_POINTS_SNAPSHOT_NAME, keyvalues: {} },
+        pageLimit: 1,
+        pageOffset: 0,
+      });
+      const baseCid =
+        BASE_POINTS_SNAPSHOT_CID ??
+        data?.rows?.[0]?.ipfs_pin_hash ??
+        null;
+      await hydrateFromCid(baseCid);
+    } catch (error) {
+      console.warn(
+        "[superfluid-stack] pinata pinList error (points snapshot base)",
+        { error },
+      );
     }
   }
-  farcasterUsernameCache = farcasterMap;
-  ensNameCache = ensMap;
-  nativeSuperTokenCache = nativeSuperMap;
-  nativeTokenCache = nativeTokenMap;
 };
 
 const findContractCreationBlock = async ({
