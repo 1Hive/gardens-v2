@@ -2075,9 +2075,17 @@ const processChain = async ({
     throw new Error(`Missing superfluid subgraph for chain ${chainId}`);
   }
 
-  const urqlClient = createGraphClient(
-    chainConfig.publishedSubgraphUrl ?? chainConfig.subgraphUrl,
-  );
+  const primarySubgraphUrl =
+    chainConfig.publishedSubgraphUrl ?? chainConfig.subgraphUrl;
+  const fallbackSubgraphUrl =
+    chainConfig.subgraphUrl &&
+    chainConfig.subgraphUrl !== primarySubgraphUrl ?
+      chainConfig.subgraphUrl
+    : undefined;
+  const urqlClient = createGraphClient(primarySubgraphUrl);
+  const urqlFallbackClient = fallbackSubgraphUrl ?
+    createGraphClient(fallbackSubgraphUrl)
+  : null;
   const superfluidClient = createGraphClient(superfluidSubgraphUrl);
   const publicClient = createPublicClient({
     chain: getViemChain(chainId),
@@ -2109,6 +2117,21 @@ const processChain = async ({
       return null;
     }
   };
+  const runQueryWithFallback = async <T, V>(
+    queryDoc: any,
+    vars: V,
+  ): Promise<{ data?: T; error?: any }> => {
+    const res = await urqlClient.query<T>(queryDoc, vars).toPromise();
+    if (res.error && urqlFallbackClient) {
+      console.warn("[superfluid-stack-gd] primary subgraph failed, retrying", {
+        primarySubgraphUrl,
+        fallbackSubgraphUrl,
+        error: res.error?.message,
+      });
+      return urqlFallbackClient.query<T>(queryDoc, vars).toPromise();
+    }
+    return res;
+  };
 
   const getCachedDecimals = async (token: Address) => {
     const key = toLower(token);
@@ -2133,9 +2156,9 @@ const processChain = async ({
   if (startBlock > latestBlock) startBlock = latestBlock;
 
   console.log("[superfluid-stack] Fetching pools", { chainId });
-  const poolsResult = await urqlClient
-    .query<{ cvstrategies: Strategy[] }>(SUPERFLUID_POOLS_QUERY, {})
-    .toPromise();
+  const poolsResult = await runQueryWithFallback<{
+    cvstrategies: Strategy[];
+  }, {}>(SUPERFLUID_POOLS_QUERY, {});
   if (poolsResult.error) {
     throw new Error(
       `Failed to fetch pools for chain ${chainId}: ${poolsResult.error.message}`,
@@ -2150,24 +2173,22 @@ const processChain = async ({
 
   // Community mapping
   console.log("[superfluid-stack] Fetching communities", { chainId });
-  const communitiesResult = await urqlClient
-    .query<{
-      registryCommunities: {
+  const communitiesResult = await runQueryWithFallback<{
+    registryCommunities: {
+      id: string;
+      communityName?: string | null;
+      members: { memberAddress: string; stakedTokens: string }[];
+      strategies: {
         id: string;
-        communityName?: string | null;
-        members: { memberAddress: string; stakedTokens: string }[];
-        strategies: {
-          id: string;
-          token: string;
-          metadata?: { title?: string | null } | null;
-          config: {
-            superfluidToken?: string | null;
-            proposalType?: string | null;
-          };
-        }[];
+        token: string;
+        metadata?: { title?: string | null } | null;
+        config: {
+          superfluidToken?: string | null;
+          proposalType?: string | null;
+        };
       }[];
-    }>(COMMUNITY_QUERY, {})
-    .toPromise();
+    }[];
+  }, {}>(COMMUNITY_QUERY, {});
   if (communitiesResult.error) {
     throw new Error(
       `Failed to fetch communities for chain ${chainId}: ${communitiesResult.error.message}`,
