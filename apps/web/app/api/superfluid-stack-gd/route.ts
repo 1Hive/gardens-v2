@@ -569,6 +569,7 @@ const PINATA_CREATION_CACHE_NAME =
 const PINATA_TRANSFER_CACHE_NAME =
   process.env.SUPERFLUID_TRANSFER_CACHE_NAME ?? "superfluid-transfer-logs";
 export const PINATA_POINTS_SNAPSHOT_NAME = "superfluid-activity-points-gd";
+const PINATA_RUN_LOG_NAME = "superfluid-stack-run-logs-gd";
 const PINATA_POINTS_SNAPSHOT_CID =
   process.env.SUPERFLUID_GD_POINTS_SNAPSHOT_CID ??
   process.env.SUPERFLUID_POINTS_SNAPSHOT_CID ??
@@ -608,6 +609,9 @@ const CAN_READ_IPFS = Boolean(IPFS_GATEWAY);
 const SKIP_IDENTITY_RESOLUTION =
   (process.env.SUPERFLUID_SKIP_IDENTITY_RESOLUTION ?? "").toLowerCase() ===
   "true";
+const SHOULD_PIN_RUN_LOGS =
+  process.env.VERCEL === "1" &&
+  (process.env.SUPERFLUID_PIN_RUN_LOGS ?? "").toLowerCase() === "true";
 let latestCreationBlockCacheCid: string | null =
   process.env.SUPERFLUID_BLOCK_CACHE_CID ?? null;
 let latestTransferLogCacheCid: string | null =

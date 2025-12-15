@@ -658,6 +658,7 @@ const SKIP_IDENTITY_RESOLUTION =
   (process.env.SUPERFLUID_SKIP_IDENTITY_RESOLUTION ?? "").toLowerCase() ===
   "true";
 const SHOULD_PIN_RUN_LOGS =
+  process.env.VERCEL === "1" &&
   (process.env.SUPERFLUID_PIN_RUN_LOGS ?? "").toLowerCase() === "true";
 const FARCASTER_AUTH_TOKEN = (process.env.FARCASTER_API_KEY ?? "").trim();
 let latestCreationBlockCacheCid: string | null =
