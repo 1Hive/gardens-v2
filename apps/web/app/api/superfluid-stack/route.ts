@@ -490,12 +490,40 @@ const upsertNotionWallet = async ({
     const messageRaw = String((error as any)?.message ?? "");
     const message = messageRaw.toLowerCase();
     const code = (error as any)?.code ?? (error as any)?.status;
+    const messageRaw = String((error as any)?.message ?? "");
     if (
       message.includes("could not find database") ||
       String(code) === "invalid_request_url"
     ) {
       console.error("[superfluid-stack] Notion unreachable, disabling sync");
       notionDisabled = true;
+    }
+    if (
+      message.includes("archived") &&
+      pageId &&
+      !message.includes("before editing")
+    ) {
+      // Attempt to unarchive and retry once
+      try {
+        await notionClient.pages.update({ page_id: pageId, archived: false });
+        console.log("[superfluid-stack] Retrying Notion upsert after unarchive", {
+          pageId,
+          address,
+        });
+        return await upsertNotionWallet({
+          address,
+          fundPoints,
+          streamPoints,
+          governanceStakePoints,
+          farcasterPoints,
+          totalPoints,
+        });
+      } catch (retryErr) {
+        console.error(
+          "[superfluid-stack] Retry after unarchive failed",
+          retryErr,
+        );
+      }
     }
     console.error("[superfluid-stack] Notion upsert error details", {
       code,
