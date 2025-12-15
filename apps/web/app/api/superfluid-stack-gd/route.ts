@@ -632,7 +632,7 @@ if (FARCASTER_DISABLED) {
   );
 }
 let farcasterUsernameCache = new Map<string, string>();
-let ensNameCache = new Map<string, string>();
+let ensNameCache = new Map<string, string | null>();
 let nativeSuperTokenCache = new Map<string, string>();
 let nativeTokenCache = new Map<string, string>();
 let latestPointsSnapshotCid: string | null = PINATA_POINTS_SNAPSHOT_CID;
@@ -777,21 +777,23 @@ const fetchEnsNameByAddress = async (
   if (ensNameCache.has(address)) return ensNameCache.get(address) ?? null;
   try {
     const client = getMainnetClient();
-    const name = await client.getEnsName({ address: address as Address });
+    const name = await client.getEnsName({
+      address: address as Address,
+    });
     const ens = typeof name === "string" ? name : null;
     if (ens) {
       ensNameCache.set(address, ens);
-    } else {
-      console.log("[superfluid-stack-gd] ens not found for address", {
-        address,
-      });
+      return ens;
     }
-    return ens;
-  } catch (error) {
-    console.warn("[superfluid-stack-gd] ens lookup failed", {
+    console.log("[superfluid-stack-gd] ens not found for address", {
       address,
-      error,
     });
+    ensNameCache.set(address, null);
+    return null;
+  } catch (error) {
+    // Handle reverse resolver reverts/other ENS failures gracefully
+    console.warn("[superfluid-stack-gd] ens lookup failed", { address, error });
+    ensNameCache.set(address, null);
     return null;
   }
 };
@@ -2603,7 +2605,7 @@ export async function GET(req: Request) {
       farcasterUsernameByWallet.set(addr, username);
     }
     for (const [addr, name] of ensNameCache.entries()) {
-      ensNameByWallet.set(addr, name);
+      if (name) ensNameByWallet.set(addr, name);
     }
     for (const [addr, token] of nativeSuperTokenCache.entries()) {
       nativeSuperTokenByWallet.set(addr, token);
