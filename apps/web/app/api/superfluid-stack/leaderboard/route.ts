@@ -64,10 +64,28 @@ const resolveLatestPointsCid = async (): Promise<string | null> => {
     const res = await pinataClient.pinList({
       status: "pinned",
       metadata: { name: PINATA_POINTS_SNAPSHOT_NAME, keyvalues: {} },
-      pageLimit: 1,
+      pageLimit: 20,
       pageOffset: 0,
     });
-    return res?.rows?.[0]?.ipfs_pin_hash ?? null;
+    const rows = Array.isArray(res?.rows) ? res.rows : [];
+    let latest: { cid: string; pinnedAt: number } | null = null;
+    for (const row of rows) {
+      const name = row?.metadata?.name;
+      const cid = row?.ipfs_pin_hash;
+      if (name !== PINATA_POINTS_SNAPSHOT_NAME || !cid) continue;
+      const pinnedAtStr = row?.date_pinned ?? row?.metadata?.timestamp;
+      const pinnedAt = pinnedAtStr ? Date.parse(pinnedAtStr) : Number.NaN;
+      const pinnedAtMs = Number.isNaN(pinnedAt) ? 0 : pinnedAt;
+      if (!latest || pinnedAtMs > latest.pinnedAt) {
+        latest = { cid, pinnedAt: pinnedAtMs };
+      }
+    }
+    if (!latest) {
+      console.warn("[leaderboard] no exact points snapshot found", {
+        totalPins: rows.length,
+      });
+    }
+    return latest?.cid ?? null;
   } catch (error) {
     console.warn("[leaderboard] pinList error", { error });
     return null;
