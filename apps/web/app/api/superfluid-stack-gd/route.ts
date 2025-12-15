@@ -4,13 +4,7 @@ import { Client as NotionClient } from "@notionhq/client";
 import pinataSDK from "@pinata/sdk";
 import { StackClient } from "@stackso/js-core";
 import { NextResponse } from "next/server";
-import {
-  AnyVariables,
-  Client,
-  createClient,
-  fetchExchange,
-  gql,
-} from "urql";
+import { AnyVariables, Client, createClient, fetchExchange, gql } from "urql";
 import { Address, createPublicClient, formatUnits, http, parseAbi } from "viem";
 import { chainConfigMap } from "@/configs/chains";
 import { erc20ABI } from "@/src/generated";
@@ -2147,7 +2141,6 @@ const processChain = async ({
 
   const userTotals = new Map<string, { fundUsd: number; streamUsd: number }>();
   const missingPrices: { address: Address; symbol: string }[] = [];
-  const farcasterPoints = new Map<string, number>();
   const fetchedPrices: { token: Address; symbol: string; priceUsd: number }[] =
     [];
 

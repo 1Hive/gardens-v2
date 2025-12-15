@@ -435,6 +435,25 @@ const upsertNotionWallet = async ({
     }
 
     if (pageId) {
+      const isArchived =
+        (existingResult?.results?.[0] as any)?.archived === true;
+      if (isArchived) {
+        try {
+          await notionClient.pages.update({
+            page_id: pageId,
+            archived: false,
+          });
+          console.log("[superfluid-stack] notion unarchived page", {
+            pageId,
+            address: normalized,
+          });
+        } catch (err) {
+          console.error(
+            "[superfluid-stack] Failed to unarchive Notion page before update",
+            { pageId, err },
+          );
+        }
+      }
       const existingChecksum = (existingResult?.results?.[0]?.properties as any)
         ?.Checksum?.rich_text?.[0]?.plain_text;
       if (existingChecksum === checksum) {

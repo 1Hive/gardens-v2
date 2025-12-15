@@ -69,6 +69,7 @@ const SUBGRAPH_PRODNET_VERSION = Subgraph.VERSION_PROD;
 const getGatewayKey = () => {
   const serverKey =
     typeof window === "undefined" ? process.env.SERVER_SUBGRAPH_KEY : null;
+  // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
   return serverKey || process.env.NEXT_PUBLIC_SUBGRAPH_KEY || "";
 };
 
