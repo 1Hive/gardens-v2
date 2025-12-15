@@ -2690,6 +2690,8 @@ const processChain = async ({
 
 export async function GET(req: Request) {
   const runLogBuffer: string[] = [];
+  const isLocalEnv =
+    process.env.VERCEL !== "1" && process.env.NODE_ENV !== "production";
   const originalConsole = {
     log: console.log,
     warn: console.warn,
@@ -2706,7 +2708,10 @@ export async function GET(req: Request) {
       } catch {
         /* ignore */
       }
-      originalConsole[level](...args);
+      // Only surface warnings/errors to stdout when not running locally; keep everything in runLogBuffer for IPFS
+      if (isLocalEnv || level !== "log") {
+        originalConsole[level](...args);
+      }
     };
   console.log = record("log") as typeof console.log;
   console.warn = record("warn") as typeof console.warn;

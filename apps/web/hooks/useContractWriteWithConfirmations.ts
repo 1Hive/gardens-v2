@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo } from "react";
 
 import { getDataSuffix, submitReferral } from "@divvi/referral-sdk";
 import { WriteContractMode } from "@wagmi/core";
-import { Abi, Address, TransactionReceipt } from "viem";
+import { Abi, Address, TransactionReceipt, isAddress } from "viem";
 import { celo } from "viem/chains";
 import {
   useAccount,
@@ -16,6 +16,8 @@ import { toast } from "react-toastify";
 import { useChainIdFromPath } from "./useChainIdFromPath";
 import { useTransactionNotification } from "./useTransactionNotification";
 import { chainConfigMap } from "@/configs/chains";
+import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
+import { useFlag } from "@/hooks/useFlag";
 
 export type ComputedStatus =
   | "loading"
@@ -58,13 +60,27 @@ export function useContractWriteWithConfirmations<
   const toastId = props.contractName + "_" + props.functionName;
   const chainIdFromWallet = useChainId();
   const chainIdFromPath = useChainIdFromPath();
-  const { connector } = useAccount();
+  const { connector, address: connectedAddress } = useAccount();
+  const queryParams = useCollectQueryParams();
   const resolvedChaindId = +(
     props.chainId ??
     chainIdFromPath ??
     chainIdFromWallet
   );
   const publicClient = usePublicClient({ chainId: resolvedChaindId });
+  const forceSimulate = useFlag("showAsCouncilSafe");
+
+  const councilSafeFromFlag = useMemo(() => {
+    const queryVal = queryParams?.["flag_showAsCouncilSafe"];
+    if (queryVal && isAddress(queryVal)) return queryVal as Address;
+    const envVal = process.env.NEXT_PUBLIC_FLAG_SHOWASCOUNCILSAFE;
+    if (envVal && isAddress(envVal)) return envVal as Address;
+    if (typeof window !== "undefined") {
+      const stored = window.localStorage?.getItem("flag_showAsCouncilSafe");
+      if (stored && isAddress(stored)) return stored as Address;
+    }
+    return undefined;
+  }, [queryParams]);
 
   const shouldDivviTrack = useMemo(() => {
     return resolvedChaindId === celo.id;
@@ -109,13 +125,20 @@ export function useContractWriteWithConfirmations<
         : Parameters<NonNullable<typeof txResult.writeAsync>>[0],
     ) => {
       const isMockConnector = connector?.id === "mock";
-      if (!isMockConnector) {
+      if (!isMockConnector && !forceSimulate) {
         return txResult.writeAsync?.(overrides as any);
       }
       // If we can't simulate, fall back to normal write
       if (!publicClient || !props.address || !props.abi || !props.functionName) {
         return txResult.writeAsync?.(overrides as any);
       }
+
+      const accountForSimulation =
+        (overrides as any)?.account ??
+        (props as any)?.account ??
+        (txResult.variables as any)?.account ??
+        (forceSimulate ? councilSafeFromFlag : undefined) ??
+        connectedAddress;
 
       try {
         await publicClient.simulateContract({
@@ -130,15 +153,15 @@ export function useContractWriteWithConfirmations<
             (overrides as any)?.value ??
             (props as any)?.value ??
             (txResult.variables as any)?.value,
-          account:
-            (overrides as any)?.account ??
-            (props as any)?.account ??
-            undefined,
+          account: accountForSimulation,
           chainId: resolvedChaindId,
         });
         toast.success("Simulation successful", { toastId: simulationToastId });
       } catch (error) {
-        console.error("[Simulation failed]", error);
+        console.error("[Simulation failed]", {
+          error,
+          from: accountForSimulation,
+        });
         toast.error("Simulation failed. See console for details.", {
           toastId: simulationToastId,
         });
@@ -149,6 +172,8 @@ export function useContractWriteWithConfirmations<
     },
     [
       connector?.id,
+      forceSimulate,
+      councilSafeFromFlag,
       publicClient,
       props.address,
       props.abi,
