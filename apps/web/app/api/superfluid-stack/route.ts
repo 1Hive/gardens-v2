@@ -621,6 +621,12 @@ const PINATA_TRANSFER_CACHE_NAME =
   process.env.SUPERFLUID_TRANSFER_CACHE_NAME ?? "superfluid-transfer-logs";
 export const PINATA_POINTS_SNAPSHOT_NAME = "superfluid-activity-points";
 const PINATA_RUN_LOG_NAME = "superfluid-stack-run-logs";
+const EXCLUDED_WALLETS: Set<string> = new Set(
+  (process.env.SUPERFLUID_EXCLUDE_WALLETS ?? "")
+    .split(",")
+    .map((a) => a.trim().toLowerCase())
+    .filter((a) => a.startsWith("0x")),
+);
 const PINATA_POINTS_SNAPSHOT_CID =
   process.env.SUPERFLUID_POINTS_SNAPSHOT_CID ?? null;
 const PINATA_PRICE_CACHE_NAME =
@@ -3174,6 +3180,7 @@ export async function GET(req: Request) {
     }> = [];
 
     for (const address of allAddresses) {
+      if (EXCLUDED_WALLETS.has(address)) continue;
       const value = totals.get(address) ?? { fundUsd: 0, streamUsd: 0 };
       const fundPoints = value.fundUsd >= 10 ? Math.floor(value.fundUsd) : 0;
       const streamPoints =

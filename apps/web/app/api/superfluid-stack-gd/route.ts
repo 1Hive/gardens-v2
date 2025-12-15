@@ -573,6 +573,12 @@ const PINATA_POINTS_SNAPSHOT_CID =
   process.env.SUPERFLUID_GD_POINTS_SNAPSHOT_CID ??
   process.env.SUPERFLUID_POINTS_SNAPSHOT_CID ??
   null;
+const EXCLUDED_WALLETS_GD: Set<string> = new Set(
+  (process.env.SUPERFLUID_GD_EXCLUDE_WALLETS ?? "")
+    .split(",")
+    .map((a) => a.trim().toLowerCase())
+    .filter((a) => a.startsWith("0x")),
+);
 const PINATA_PRICE_CACHE_NAME =
   process.env.SUPERFLUID_PRICE_CACHE_NAME ?? "superfluid-token-prices";
 const PINATA_GROUP_ID =
@@ -2846,6 +2852,7 @@ export async function GET(req: Request) {
     }> = [];
 
     for (const address of allAddresses) {
+      if (EXCLUDED_WALLETS_GD.has(address)) continue;
       const value = totals.get(address) ?? { fundUsd: 0, streamUsd: 0 };
       const fundPoints = Math.floor(value.fundUsd / 1000);
       const streamPoints = Math.floor(value.streamUsd / 1000);
