@@ -4,6 +4,19 @@ module.exports = {
   webpack: (config) => {
     config.resolve.fallback = { fs: false, net: false, tls: false };
     config.externals.push("pino-pretty", "lokijs", "encoding");
+    // Silence dynamic require warnings coming from GraphQL Mesh/Yoga packages bundled via .graphclient
+    const criticalRequestExpr = "Critical dependency: the request of a dependency is an expression";
+    const meshModules = /@graphql-mesh|@whatwg-node\/fetch|graphql-yoga/;
+    const existingIgnore = config.ignoreWarnings ?? [];
+    config.ignoreWarnings = [
+      ...existingIgnore,
+      (warning) => {
+        const msg = typeof warning?.message === "string" ? warning.message : "";
+        const resource =
+          (warning?.module && warning.module.resource) || "";
+        return msg.includes(criticalRequestExpr) && meshModules.test(resource);
+      },
+    ];
     return config;
   },
   images: {

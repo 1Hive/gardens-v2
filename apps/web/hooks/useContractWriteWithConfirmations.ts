@@ -141,9 +141,9 @@ export function useContractWriteWithConfirmations<
         connectedAddress;
 
       try {
-        await publicClient.simulateContract({
+        await (publicClient as any).simulateContract({
           address: props.address as Address,
-          abi: props.abi,
+          abi: props.abi as Abi,
           functionName: props.functionName as any,
           args:
             (overrides as any)?.args ??
@@ -153,7 +153,7 @@ export function useContractWriteWithConfirmations<
             (overrides as any)?.value ??
             (props as any)?.value ??
             (txResult.variables as any)?.value,
-          account: accountForSimulation,
+          account: accountForSimulation as Address | undefined,
           chainId: resolvedChaindId,
         });
         toast.success("Simulation successful", { toastId: simulationToastId });

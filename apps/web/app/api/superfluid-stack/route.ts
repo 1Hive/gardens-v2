@@ -3476,6 +3476,12 @@ export async function GET(req: Request) {
       pointsSnapshotCid: responsePointsCid,
       runLogsCid: responseRunLogsCid,
     });
+    if (responseRunLogsCid) {
+      console.log("[superfluid-stack] run logs pinned", {
+        cid: responseRunLogsCid,
+        url: `https://gateway.pinata.cloud/ipfs/${responseRunLogsCid}`,
+      });
+    }
     console.log = originalConsole.log;
     console.warn = originalConsole.warn;
     console.error = originalConsole.error;
@@ -3530,6 +3536,12 @@ export async function GET(req: Request) {
       pointsSnapshotCid: responsePointsCid,
       runLogsCid: responseRunLogsCid,
     });
+    if (responseRunLogsCid) {
+      console.log("[superfluid-stack] run logs pinned", {
+        cid: responseRunLogsCid,
+        url: `https://gateway.pinata.cloud/ipfs/${responseRunLogsCid}`,
+      });
+    }
     console.log = originalConsole.log;
     console.warn = originalConsole.warn;
     console.error = originalConsole.error;
