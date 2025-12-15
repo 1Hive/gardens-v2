@@ -3,7 +3,13 @@
 import { Client as NotionClient } from "@notionhq/client";
 import pinataSDK from "@pinata/sdk";
 import { NextResponse } from "next/server";
-import { Client, createClient, fetchExchange, gql } from "urql";
+import {
+  AnyVariables,
+  Client,
+  createClient,
+  fetchExchange,
+  gql,
+} from "urql";
 import { Address, createPublicClient, formatUnits, http, parseAbi } from "viem";
 import { chainConfigMap } from "@/configs/chains";
 import { getTokenUsdPrice } from "@/services/coingecko";
@@ -2194,7 +2200,7 @@ const processChain = async ({
     createGraphClient(fallbackSubgraphUrl)
   : null;
   const superfluidClient = createGraphClient(superfluidSubgraphUrl);
-  const runQueryWithFallback = async <T, V>(
+  const runQueryWithFallback = async <T, V extends AnyVariables>(
     queryDoc: any,
     vars: V,
   ): Promise<{ data?: T; error?: any }> => {
@@ -2267,7 +2273,7 @@ const processChain = async ({
   console.log("[superfluid-stack] Fetching pools", { chainId });
   const poolsResult = await runQueryWithFallback<{
     cvstrategies: Strategy[];
-  }, {}>(SUPERFLUID_POOLS_QUERY, {});
+  }, Record<string, never>>(SUPERFLUID_POOLS_QUERY, {});
   if (poolsResult.error) {
     throw new Error(
       `Failed to fetch pools for chain ${chainId}: ${poolsResult.error.message}`,
@@ -2295,7 +2301,7 @@ const processChain = async ({
         };
       }[];
     }[];
-  }, {}>(COMMUNITY_QUERY, {});
+  }, Record<string, never>>(COMMUNITY_QUERY, {});
   if (communitiesResult.error) {
     throw new Error(
       `Failed to fetch communities for chain ${chainId}: ${communitiesResult.error.message}`,

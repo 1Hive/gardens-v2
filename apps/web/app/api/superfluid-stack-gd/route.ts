@@ -4,7 +4,13 @@ import { Client as NotionClient } from "@notionhq/client";
 import pinataSDK from "@pinata/sdk";
 import { StackClient } from "@stackso/js-core";
 import { NextResponse } from "next/server";
-import { Client, createClient, fetchExchange, gql } from "urql";
+import {
+  AnyVariables,
+  Client,
+  createClient,
+  fetchExchange,
+  gql,
+} from "urql";
 import { Address, createPublicClient, formatUnits, http, parseAbi } from "viem";
 import { chainConfigMap } from "@/configs/chains";
 import { erc20ABI } from "@/src/generated";
@@ -2078,14 +2084,12 @@ const processChain = async ({
   const primarySubgraphUrl =
     chainConfig.publishedSubgraphUrl ?? chainConfig.subgraphUrl;
   const fallbackSubgraphUrl =
-    chainConfig.subgraphUrl &&
-    chainConfig.subgraphUrl !== primarySubgraphUrl ?
+    chainConfig.subgraphUrl && chainConfig.subgraphUrl !== primarySubgraphUrl ?
       chainConfig.subgraphUrl
     : undefined;
   const urqlClient = createGraphClient(primarySubgraphUrl);
-  const urqlFallbackClient = fallbackSubgraphUrl ?
-    createGraphClient(fallbackSubgraphUrl)
-  : null;
+  const urqlFallbackClient =
+    fallbackSubgraphUrl ? createGraphClient(fallbackSubgraphUrl) : null;
   const superfluidClient = createGraphClient(superfluidSubgraphUrl);
   const publicClient = createPublicClient({
     chain: getViemChain(chainId),
@@ -2117,7 +2121,7 @@ const processChain = async ({
       return null;
     }
   };
-  const runQueryWithFallback = async <T, V>(
+  const runQueryWithFallback = async <T, V extends AnyVariables>(
     queryDoc: any,
     vars: V,
   ): Promise<{ data?: T; error?: any }> => {
@@ -2156,9 +2160,12 @@ const processChain = async ({
   if (startBlock > latestBlock) startBlock = latestBlock;
 
   console.log("[superfluid-stack] Fetching pools", { chainId });
-  const poolsResult = await runQueryWithFallback<{
-    cvstrategies: Strategy[];
-  }, {}>(SUPERFLUID_POOLS_QUERY, {});
+  const poolsResult = await runQueryWithFallback<
+    {
+      cvstrategies: Strategy[];
+    },
+    Record<string, never>
+  >(SUPERFLUID_POOLS_QUERY, {});
   if (poolsResult.error) {
     throw new Error(
       `Failed to fetch pools for chain ${chainId}: ${poolsResult.error.message}`,
@@ -2173,22 +2180,25 @@ const processChain = async ({
 
   // Community mapping
   console.log("[superfluid-stack] Fetching communities", { chainId });
-  const communitiesResult = await runQueryWithFallback<{
-    registryCommunities: {
-      id: string;
-      communityName?: string | null;
-      members: { memberAddress: string; stakedTokens: string }[];
-      strategies: {
+  const communitiesResult = await runQueryWithFallback<
+    {
+      registryCommunities: {
         id: string;
-        token: string;
-        metadata?: { title?: string | null } | null;
-        config: {
-          superfluidToken?: string | null;
-          proposalType?: string | null;
-        };
+        communityName?: string | null;
+        members: { memberAddress: string; stakedTokens: string }[];
+        strategies: {
+          id: string;
+          token: string;
+          metadata?: { title?: string | null } | null;
+          config: {
+            superfluidToken?: string | null;
+            proposalType?: string | null;
+          };
+        }[];
       }[];
-    }[];
-  }, {}>(COMMUNITY_QUERY, {});
+    },
+    Record<string, never>
+  >(COMMUNITY_QUERY, {});
   if (communitiesResult.error) {
     throw new Error(
       `Failed to fetch communities for chain ${chainId}: ${communitiesResult.error.message}`,
