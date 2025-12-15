@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo } from "react";
 
 import { getDataSuffix, submitReferral } from "@divvi/referral-sdk";
 import { WriteContractMode } from "@wagmi/core";
+import { toast } from "react-toastify";
 import { Abi, Address, TransactionReceipt, isAddress } from "viem";
 import { celo } from "viem/chains";
 import {
@@ -12,7 +13,6 @@ import {
   usePublicClient,
   useWaitForTransaction,
 } from "wagmi";
-import { toast } from "react-toastify";
 import { useChainIdFromPath } from "./useChainIdFromPath";
 import { useTransactionNotification } from "./useTransactionNotification";
 import { chainConfigMap } from "@/configs/chains";
@@ -71,7 +71,7 @@ export function useContractWriteWithConfirmations<
   const forceSimulate = useFlag("showAsCouncilSafe");
 
   const councilSafeFromFlag = useMemo(() => {
-    const queryVal = queryParams?.["flag_showAsCouncilSafe"];
+    const queryVal = queryParams?.flag_showAsCouncilSafe;
     if (queryVal && isAddress(queryVal)) return queryVal as Address;
     const envVal = process.env.NEXT_PUBLIC_FLAG_SHOWASCOUNCILSAFE;
     if (envVal && isAddress(envVal)) return envVal as Address;
@@ -120,16 +120,21 @@ export function useContractWriteWithConfirmations<
     async (
       overrides?: Parameters<
         NonNullable<typeof txResult.writeAsync>
-      >[0] extends undefined
-        ? undefined
-        : Parameters<NonNullable<typeof txResult.writeAsync>>[0],
+      >[0] extends undefined ?
+        undefined
+      : Parameters<NonNullable<typeof txResult.writeAsync>>[0],
     ) => {
       const isMockConnector = connector?.id === "mock";
       if (!isMockConnector && !forceSimulate) {
         return txResult.writeAsync?.(overrides as any);
       }
       // If we can't simulate, fall back to normal write
-      if (!publicClient || !props.address || !props.abi || !props.functionName) {
+      if (
+        !publicClient ||
+        !props.address ||
+        !props.abi ||
+        !props.functionName
+      ) {
         return txResult.writeAsync?.(overrides as any);
       }
 
@@ -190,7 +195,7 @@ export function useContractWriteWithConfirmations<
 
   const simulateAndWrite = useCallback(
     (overrides?: Parameters<NonNullable<typeof txResult.write>>[0]) => {
-      simulateAndWriteAsync(overrides).catch(() => {
+      simulateAndWriteAsync(overrides as any).catch(() => {
         /* error already surfaced via toast/console */
       });
     },
