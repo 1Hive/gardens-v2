@@ -1514,6 +1514,44 @@ const pinPointsSnapshotToIpfs = async (
   }
 };
 
+const pinRunLogsToIpfs = async (logs: string[]): Promise<string | null> => {
+  if (!SHOULD_PIN_RUN_LOGS || !CAN_WRITE_PINATA || logs.length === 0) {
+    return null;
+  }
+  const payload = {
+    updatedAt: new Date().toISOString(),
+    campaignVersion: CAMPAIGN_VERSION,
+    lines: logs,
+  };
+  try {
+    const data = await pinataClient?.pinJSONToIPFS(
+      normalizeForPinata(payload),
+      {
+        pinataMetadata: {
+          name: PINATA_RUN_LOG_NAME,
+          keyvalues: {
+            updatedAt: payload.updatedAt,
+            campaignVersion: CAMPAIGN_VERSION,
+          },
+        } as any,
+        pinataOptions:
+          PINATA_GROUP_ID ? ({ groupId: PINATA_GROUP_ID } as any) : undefined,
+      },
+    );
+    if (data?.IpfsHash) {
+      console.log("[superfluid-stack-gd] pinned run logs to IPFS", {
+        cid: data.IpfsHash,
+        lines: logs.length,
+      });
+      return data.IpfsHash;
+    }
+    return null;
+  } catch (error) {
+    console.warn("[superfluid-stack-gd] failed to pin run logs", { error });
+    return null;
+  }
+};
+
 const parseBlockNumber = (value: any): bigint => {
   try {
     if (typeof value === "bigint") return value;
@@ -2565,12 +2603,42 @@ const processChain = async ({
 };
 
 export async function GET(req: Request) {
+  const runLogBuffer: string[] = [];
+  const originalConsole = {
+    log: console.log,
+    warn: console.warn,
+    error: console.error,
+  };
+  const record =
+    (level: "log" | "warn" | "error") =>
+    (...args: any[]) => {
+      try {
+        const text = args
+          .map((arg) => (typeof arg === "string" ? arg : safeStringify(arg)))
+          .join(" ");
+        runLogBuffer.push(`[${level}] ${text}`);
+      } catch {
+        /* ignore */
+      }
+      originalConsole[level](...args);
+    };
+  console.log = record("log") as typeof console.log;
+  console.warn = record("warn") as typeof console.warn;
+  console.error = record("error") as typeof console.error;
+
+  let responseRunLogsCid: string | null = null;
   const auth = req.headers.get("authorization")?.replace("Bearer ", "");
 
   if (auth !== process.env.CRON_SECRET) {
+    console.log = originalConsole.log;
+    console.warn = originalConsole.warn;
+    console.error = originalConsole.error;
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   if (Date.now() > campaignEndMS) {
+    console.log = originalConsole.log;
+    console.warn = originalConsole.warn;
+    console.error = originalConsole.error;
     return NextResponse.json(
       { message: "Campaign ended; sync not executed." },
       { status: 200 },
@@ -3261,6 +3329,16 @@ export async function GET(req: Request) {
     const pinned = await flushCaches();
     responseCreationCid = pinned.creationBlockCacheCid;
     responseTransferCid = pinned.transferLogCacheCid;
+    responseRunLogsCid = await pinRunLogsToIpfs(runLogBuffer);
+    if (responseRunLogsCid) {
+      console.log("[superfluid-stack-gd] run logs pinned", {
+        cid: responseRunLogsCid,
+        url: `https://gateway.pinata.cloud/ipfs/${responseRunLogsCid}`,
+      });
+    }
+    console.log = originalConsole.log;
+    console.warn = originalConsole.warn;
+    console.error = originalConsole.error;
 
     return NextResponse.json(
       {
@@ -3290,6 +3368,7 @@ export async function GET(req: Request) {
           responseTransferCid ?? latestTransferLogCacheCid ?? null,
         priceCacheCid: pinned.priceCacheCid ?? latestPriceCacheCid ?? null,
         pointsSnapshotCid: responsePointsCid,
+        runLogsCid: responseRunLogsCid,
         campaignWindow: {
           start,
           end,
@@ -3305,6 +3384,16 @@ export async function GET(req: Request) {
     const pinned = await flushCaches();
     responseCreationCid = pinned.creationBlockCacheCid;
     responseTransferCid = pinned.transferLogCacheCid;
+    responseRunLogsCid = await pinRunLogsToIpfs(runLogBuffer);
+    if (responseRunLogsCid) {
+      console.log("[superfluid-stack-gd] run logs pinned", {
+        cid: responseRunLogsCid,
+        url: `https://gateway.pinata.cloud/ipfs/${responseRunLogsCid}`,
+      });
+    }
+    console.log = originalConsole.log;
+    console.warn = originalConsole.warn;
+    console.error = originalConsole.error;
     console.error("Superfluid stack cron error", error);
     const message =
       error instanceof Error ? error.message : "Internal server error";
