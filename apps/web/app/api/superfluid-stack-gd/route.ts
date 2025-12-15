@@ -774,10 +774,12 @@ const getMainnetClient = () => {
   return mainnetClient;
 };
 
+let ensLookupDisabled = false;
 const fetchEnsNameByAddress = async (
   address: string,
 ): Promise<string | null> => {
   if (!address || !address.toLowerCase().startsWith("0x")) return null;
+  if (ensLookupDisabled) return null;
   if (ensNameCache.has(address)) return ensNameCache.get(address) ?? null;
   try {
     const client = getMainnetClient();
@@ -797,6 +799,7 @@ const fetchEnsNameByAddress = async (
   } catch (error) {
     // Handle reverse resolver reverts/other ENS failures gracefully
     console.warn("[superfluid-stack-gd] ens lookup failed", { address, error });
+    ensLookupDisabled = true;
     ensNameCache.set(address, null);
     return null;
   }
