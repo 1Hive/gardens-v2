@@ -13,6 +13,7 @@ export default function MarkdownWrapper({ source }: Props) {
       <MarkdownEditor.Markdown
         source={normalized}
         remarkPlugins={[remarkGfm]}
+        disableCopy
       />
     </div>
   );
