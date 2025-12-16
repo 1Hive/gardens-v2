@@ -1125,7 +1125,7 @@ function ProposalFiltersUI({
             {currentSortOption?.label}
           </button>
 
-          <ul className="dropdown-content menu bg-primary rounded-box z-50 shadow w-full lg:w-[240px]">
+          <ul className="dropdown-content menu bg-primary rounded-box z-50 shadow w-full lg:w-[250px]">
             {SORT_OPTIONS.map((option) => {
               const Icon = option.icon;
 
