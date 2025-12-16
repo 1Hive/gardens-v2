@@ -570,7 +570,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
           )}
 
           <label className="flex flex-col gap-2">
-            Stream amount:
+            {Boolean(currentFlowRateBn) ? "Change" : ""} Stream amount:
             {fundAmountInput}
           </label>
           <div className="border rounded-md flex flex-col p-4 gap-4 bg-base-200">
