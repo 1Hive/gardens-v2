@@ -397,6 +397,8 @@ dialog * {
 .mdxeditor-root-contenteditable,
 .wmde-markdown {
   @apply leading-7 text-base;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 
   > * {
     margin-top: 0;

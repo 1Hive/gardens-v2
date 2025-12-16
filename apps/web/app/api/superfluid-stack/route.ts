@@ -1,8 +1,15 @@
+/* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 import { Client as NotionClient } from "@notionhq/client";
 import pinataSDK from "@pinata/sdk";
 import { NextResponse } from "next/server";
-import { Client, createClient, fetchExchange, gql } from "urql";
+import {
+  AnyVariables,
+  Client,
+  createClient,
+  fetchExchange,
+  gql,
+} from "urql";
 import { Address, createPublicClient, formatUnits, http, parseAbi } from "viem";
 import { chainConfigMap } from "@/configs/chains";
 import { getTokenUsdPrice } from "@/services/coingecko";
@@ -48,6 +55,19 @@ type ManualBoundEntry = {
   endBlock?: bigint;
 };
 
+type WalletActivity = {
+  type: "fund" | "stream" | "governance";
+  amountUsd: number;
+  poolAddress: string | null;
+  poolName?: string | null;
+  communityId?: string | null;
+  communityName?: string | null;
+  sharePercent?: number;
+  token: string;
+  chainId: ChainId;
+  bonusApplied: boolean;
+};
+
 type CommunityInfo = {
   id: string;
   communityName?: string | null;
@@ -63,6 +83,8 @@ type CommunityInfo = {
 type ProcessedCommunity = {
   communityId: string;
   communityName?: string | null;
+  streamUsd?: number;
+  fundUsd?: number;
   pools: {
     poolAddress: string;
     token: string;
@@ -76,7 +98,7 @@ const BASE_BONUS_COMMUNITY: Address =
   "0xec83d957f8aa4e9601bc74608ebcbc862eca52ab";
 const SUPERFLUID_POOLS_QUERY = gql`
   query superfluidPools {
-    cvstrategies(where: { isEnabled: true, archived: false }) {
+    cvstrategies(where: { isEnabled: true, archived: false }, first: 1000) {
       id
       poolId
       token
@@ -102,6 +124,7 @@ const SUPER_TOKEN_QUERY = gql`
       }
       orderBy: isListed
       orderDirection: desc
+      first: 1000
     ) {
       id
       name
@@ -114,14 +137,14 @@ const SUPER_TOKEN_QUERY = gql`
 
 const COMMUNITY_QUERY = gql`
   query communities {
-    registryCommunities(where: { archived: false }) {
+    registryCommunities(where: { archived: false }, first: 1000) {
       id
       communityName
-      members {
+      members(first: 1000) {
         memberAddress
         stakedTokens
       }
-      strategies(where: { archived: false, isEnabled: true }) {
+      strategies(where: { archived: false, isEnabled: true }, first: 1000) {
         id
         token
         metadata {
@@ -138,7 +161,7 @@ const COMMUNITY_QUERY = gql`
 
 const STREAMS_QUERY = gql`
   query streamToPool($receiver: String!, $token: String!) {
-    streams(where: { receiver: $receiver, token: $token }) {
+    streams(where: { receiver: $receiver, token: $token }, first: 1000) {
       sender {
         id
       }
@@ -183,6 +206,7 @@ const safeStringify = (value: unknown) => {
     return "[]";
   }
 };
+
 const normalizeForPinata = <T>(payload: T): T => {
   try {
     return JSON.parse(
@@ -206,6 +230,10 @@ const NOTION_DB_ID_NORMALIZED =
   NOTION_DB_ID_TRIMMED?.match(/[0-9a-f]{32}/i)?.[0]?.replace(/-/g, "") ??
   NOTION_DB_ID_TRIMMED;
 const NOTION_DATA_SOURCE_ID = process.env.NOTION_DATA_SOURCE_ID?.trim() ?? null;
+const BONUS_MULTIPLIER =
+  process.env.SUPERFLUID_BONUS_MULTIPLIER ?
+    Number(process.env.SUPERFLUID_BONUS_MULTIPLIER)
+  : 3;
 let notionDataSourceId: string | null = NOTION_DATA_SOURCE_ID;
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const buildWalletCsv = (
@@ -213,7 +241,6 @@ const buildWalletCsv = (
     address: string;
     fundPoints: number;
     streamPoints: number;
-    superfluidActivityPoints: number;
     governanceStakePoints: number;
     farcasterPoints: number;
     totalPoints: number;
@@ -234,7 +261,6 @@ const buildWalletCsv = (
       e.totalPoints,
       e.fundPoints,
       e.streamPoints,
-      e.superfluidActivityPoints,
       e.governanceStakePoints,
       e.farcasterPoints,
     ].join(","),
@@ -344,7 +370,6 @@ const upsertNotionWallet = async ({
   address,
   fundPoints,
   streamPoints,
-  superfluidActivityPoints,
   governanceStakePoints,
   totalPoints,
   farcasterPoints,
@@ -352,7 +377,6 @@ const upsertNotionWallet = async ({
   address: string;
   fundPoints: number;
   streamPoints: number;
-  superfluidActivityPoints: number;
   governanceStakePoints: number;
   totalPoints: number;
   farcasterPoints: number;
@@ -370,7 +394,6 @@ const upsertNotionWallet = async ({
     normalized,
     fundPoints,
     streamPoints,
-    superfluidActivityPoints,
     governanceStakePoints,
     farcasterPoints,
     totalPoints,
@@ -379,7 +402,6 @@ const upsertNotionWallet = async ({
     Wallet: { title: [{ text: { content: normalized } }] },
     "Add Funds": { number: fundPoints },
     "Stream Funds": { number: streamPoints },
-    "2x Multiplier": { number: superfluidActivityPoints },
     "Governance Stake": { number: governanceStakePoints },
     Farcaster: { number: farcasterPoints },
     "Total Pts": { number: totalPoints },
@@ -413,6 +435,25 @@ const upsertNotionWallet = async ({
     }
 
     if (pageId) {
+      const isArchived =
+        (existingResult?.results?.[0] as any)?.archived === true;
+      if (isArchived) {
+        try {
+          await notionClient.pages.update({
+            page_id: pageId,
+            archived: false,
+          });
+          console.log("[superfluid-stack] notion unarchived page", {
+            pageId,
+            address: normalized,
+          });
+        } catch (err) {
+          console.error(
+            "[superfluid-stack] Failed to unarchive Notion page before update",
+            { pageId, err },
+          );
+        }
+      }
       const existingChecksum = (existingResult?.results?.[0]?.properties as any)
         ?.Checksum?.rich_text?.[0]?.plain_text;
       if (existingChecksum === checksum) {
@@ -455,6 +496,44 @@ const upsertNotionWallet = async ({
     ) {
       console.error("[superfluid-stack] Notion unreachable, disabling sync");
       notionDisabled = true;
+    }
+    // Attempt to unarchive if archived error (retry once)
+    if (message.includes("archived") && !message.includes("before editing")) {
+      try {
+        const retryLookup = await notionQueryDb({
+          filter: {
+            property: "Wallet",
+            title: { equals: address.toLowerCase() },
+          },
+        });
+        const retryPageId = retryLookup?.results?.[0]?.id ?? null;
+        if (retryPageId) {
+          await notionClient.pages.update({
+            page_id: retryPageId,
+            archived: false,
+          });
+          console.log(
+            "[superfluid-stack] Retrying Notion upsert after unarchive",
+            {
+              pageId: retryPageId,
+              address,
+            },
+          );
+          return await upsertNotionWallet({
+            address,
+            fundPoints,
+            streamPoints,
+            governanceStakePoints,
+            farcasterPoints,
+            totalPoints,
+          });
+        }
+      } catch (retryErr) {
+        console.error(
+          "[superfluid-stack] Retry after unarchive failed",
+          retryErr,
+        );
+      }
     }
     console.error("[superfluid-stack] Notion upsert error details", {
       code,
@@ -541,6 +620,13 @@ const PINATA_CREATION_CACHE_NAME =
 const PINATA_TRANSFER_CACHE_NAME =
   process.env.SUPERFLUID_TRANSFER_CACHE_NAME ?? "superfluid-transfer-logs";
 export const PINATA_POINTS_SNAPSHOT_NAME = "superfluid-activity-points";
+const PINATA_RUN_LOG_NAME = "superfluid-stack-run-logs";
+const EXCLUDED_WALLETS: Set<string> = new Set(
+  (process.env.SUPERFLUID_EXCLUDE_WALLETS ?? "")
+    .split(",")
+    .map((a) => a.trim().toLowerCase())
+    .filter((a) => a.startsWith("0x")),
+);
 const PINATA_POINTS_SNAPSHOT_CID =
   process.env.SUPERFLUID_POINTS_SNAPSHOT_CID ?? null;
 const PINATA_PRICE_CACHE_NAME =
@@ -571,11 +657,14 @@ const CAN_READ_IPFS = Boolean(IPFS_GATEWAY);
 const SKIP_IDENTITY_RESOLUTION =
   (process.env.SUPERFLUID_SKIP_IDENTITY_RESOLUTION ?? "").toLowerCase() ===
   "true";
+const SHOULD_PIN_RUN_LOGS =
+  process.env.VERCEL === "1" &&
+  (process.env.SUPERFLUID_PIN_RUN_LOGS ?? "").toLowerCase() === "true";
+const FARCASTER_AUTH_TOKEN = (process.env.FARCASTER_API_KEY ?? "").trim();
 let latestCreationBlockCacheCid: string | null =
   process.env.SUPERFLUID_BLOCK_CACHE_CID ?? null;
 let latestTransferLogCacheCid: string | null =
   process.env.SUPERFLUID_TRANSFER_CACHE_CID ?? null;
-const FARCASTER_API_KEY = process.env.FARCASTER_API_KEY;
 const FARCASTER_GARDENS_USERNAME =
   process.env.FARCASTER_GARDENS_USERNAME ?? "gardens";
 let farcasterGardensFid: number | null = null;
@@ -587,7 +676,7 @@ type TransferLogCacheEntry = {
 const transferLogCache = new Map<string, TransferLogCacheEntry>();
 let transferLogCacheDirty = false;
 let notionDisabled = false;
-const FARCASTER_DISABLED = !FARCASTER_API_KEY;
+const FARCASTER_DISABLED = !FARCASTER_AUTH_TOKEN;
 
 if (FARCASTER_DISABLED) {
   console.log(
@@ -595,27 +684,49 @@ if (FARCASTER_DISABLED) {
   );
 }
 let farcasterUsernameCache = new Map<string, string>();
-let ensNameCache = new Map<string, string>();
+type EnsCacheEntry = {
+  name: string | null;
+  avatar: string | null;
+  fetchedAt: number;
+};
+let ensIdentityCache = new Map<string, EnsCacheEntry>();
 let nativeSuperTokenCache = new Map<string, string>();
 let nativeTokenCache = new Map<string, string>();
 let latestPointsSnapshotCid: string | null = PINATA_POINTS_SNAPSHOT_CID;
 let creationCacheCampaignVersion: string | null = null;
 let transferCacheCampaignVersion: string | null = null;
 const TOKEN_PRICE_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const ENS_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const tokenPriceCache = new Map<
   string,
   { price: number; fetchedAt: number; symbol: string }
 >();
 let priceCacheDirty = false;
 let latestPriceCacheCid: string | null = null;
+const ensLookupFailures = new Set<string>();
+let ensCacheDay: string | null = null;
+const ensureEnsCacheFresh = () => {
+  const today = new Date().toISOString().slice(0, 10);
+  if (ensCacheDay !== today) {
+    ensCacheDay = today;
+    ensIdentityCache.clear();
+    ensLookupFailures.clear();
+  }
+};
+const farcasterAuthHeader =
+  FARCASTER_AUTH_TOKEN ? `Bearer ${FARCASTER_AUTH_TOKEN}` : null;
 
 const getFarcasterHeaders = () => ({
-  Authorization: `Bearer ${FARCASTER_API_KEY}`,
+  Authorization: farcasterAuthHeader ?? "",
 });
 
 const fetchGardensFid = async (): Promise<number | null> => {
   if (FARCASTER_DISABLED) {
     console.log("[superfluid-stack] Farcaster disabled: no API key");
+    return null;
+  }
+  if (!farcasterAuthHeader) {
+    console.warn("[superfluid-stack] Farcaster auth header missing");
     return null;
   }
   if (farcasterGardensFid) return farcasterGardensFid;
@@ -693,69 +804,88 @@ const fetchFarcasterFollowerFids = async (
   return Array.from(fidsSet.values());
 };
 
-const fetchFarcasterUsernameByAddress = async (
-  address: string,
-): Promise<string | null> => {
-  if (FARCASTER_DISABLED) {
-    console.log("[superfluid-stack] Skipping Farcaster username: disabled");
-    return null;
-  }
-  if (!address) return null;
-  if (farcasterUsernameCache.has(address)) {
-    return farcasterUsernameCache.get(address) ?? null;
-  }
-  try {
-    const res = await fetch(
-      `https://api.farcaster.xyz/v2/user-by-verification?address=${address.toLowerCase()}`,
-      { headers: getFarcasterHeaders() },
-    );
-    if (!res.ok) {
-      return null;
-    }
-    const json = await res.json();
-    const username = json?.result?.user?.username;
-    const result = typeof username === "string" ? username : null;
-    if (result) farcasterUsernameCache.set(address, result);
-    return result;
-  } catch {
-    return null;
-  }
-};
-
 let mainnetClient: ReturnType<typeof createPublicClient> | null = null;
 const getMainnetClient = () => {
   if (mainnetClient) return mainnetClient;
   const chainCfg = getViemChain(1 as ChainId);
   mainnetClient = createPublicClient({
     chain: chainCfg,
-    transport: http(chainCfg.rpcUrls.default.http[0]),
+    transport: http(
+      process.env.RPC_URL_MAINNET ?? chainCfg.rpcUrls.default.http[0],
+    ),
   });
   return mainnetClient;
 };
 
-const fetchEnsNameByAddress = async (
+const fetchEnsIdentityByAddress = async (
   address: string,
-): Promise<string | null> => {
-  if (!address || !address.toLowerCase().startsWith("0x")) return null;
-  if (ensNameCache.has(address)) return ensNameCache.get(address) ?? null;
+): Promise<{ name: string | null; avatar: string | null }> => {
+  if (!address || !address.toLowerCase().startsWith("0x")) {
+    return { name: null, avatar: null };
+  }
+  ensureEnsCacheFresh();
+  const key = address.toLowerCase();
+  const cached = ensIdentityCache.get(key);
+  const now = Date.now();
+  if (cached && now - cached.fetchedAt < ENS_CACHE_TTL_MS) {
+    return { name: cached.name, avatar: cached.avatar };
+  }
   try {
     const client = getMainnetClient();
     const name = await client.getEnsName({ address: address as Address });
     const ens = typeof name === "string" ? name : null;
-    if (ens) ensNameCache.set(address, ens);
-    return ens;
-  } catch {
-    return null;
+    let avatar: string | null = null;
+    if (ens) {
+      avatar = await client.getEnsAvatar({ name: ens });
+      if (!avatar) {
+        console.log("[superfluid-stack] ens avatar not found for name", {
+          ens,
+        });
+      }
+    } else {
+      console.log("[superfluid-stack] ens not found for address", { address });
+    }
+    ensIdentityCache.set(key, { name: ens, avatar, fetchedAt: now });
+    return { name: ens, avatar };
+  } catch (error) {
+    const message = (error as Error)?.message ?? "";
+    if (message.includes("reverse")) {
+      // Reverse resolver often reverts when unset; ignore quietly after first hit
+      ensLookupFailures.add(address);
+      ensIdentityCache.set(key, {
+        name: null,
+        avatar: null,
+        fetchedAt: Date.now(),
+      });
+      return { name: null, avatar: null };
+    }
+    console.warn("[superfluid-stack] ens lookup failed", { address, error });
+    ensIdentityCache.set(key, {
+      name: null,
+      avatar: null,
+      fetchedAt: Date.now(),
+    });
+    return { name: null, avatar: null };
   }
 };
 
 const fetchFarcasterWalletsForFids = async (
   fids: number[],
-): Promise<{ primary: Set<string>; discarded: Set<string> }> => {
+): Promise<{
+  primary: Set<string>;
+  discarded: Set<string>;
+  usernames: Map<string, string>;
+}> => {
   const wallets = new Set<string>();
   const discarded = new Set<string>();
-  if (FARCASTER_DISABLED || !fids.length)
-    return { primary: wallets, discarded };
+  const usernames = new Map<string, string>();
+  if (FARCASTER_DISABLED || !fids.length) {
+    return { primary: wallets, discarded, usernames };
+  }
+  if (!farcasterAuthHeader) {
+    console.warn("[superfluid-stack] Farcaster auth header missing");
+    return { primary: wallets, discarded, usernames };
+  }
   for (const fid of fids) {
     try {
       const res = await fetch(
@@ -794,18 +924,25 @@ const fetchFarcasterWalletsForFids = async (
       const labeled = collectValid(
         Array.isArray(extras?.walletLabels) ?
           extras.walletLabels
+            .filter(
+              (a: any) =>
+                a &&
+                typeof a.address === "string" &&
+                a.address.toLowerCase().startsWith("0x") &&
+                typeof a.label === "string" &&
+                a.label.toLowerCase().includes("primary"),
+            )
             .map((l: any) => l?.address)
-            .filter((a: any) => typeof a === "string")
         : [],
       );
 
       // Priority: ethWallets first element, then custody, then verifiedAddresses, verifications, walletLabels.
       const priorityList = [
+        ...labeled,
+        ...verified,
         ...ethWallets,
         ...custody,
-        ...verified,
         ...verifications,
-        ...labeled,
       ];
       const chosen = priorityList[0];
       const others = priorityList.slice(1);
@@ -820,6 +957,9 @@ const fetchFarcasterWalletsForFids = async (
       }
 
       wallets.add(chosen);
+      if (typeof u?.username === "string") {
+        usernames.set(chosen, u.username);
+      }
       for (const addr of others) discarded.add(addr);
     } catch (error) {
       console.warn("[superfluid-stack] farcaster single user fetch error", {
@@ -828,7 +968,7 @@ const fetchFarcasterWalletsForFids = async (
       });
     }
   }
-  return { primary: wallets, discarded };
+  return { primary: wallets, discarded, usernames };
 };
 const ensureLatestPinataCacheCid = async (): Promise<string | null> => {
   if (latestCreationBlockCacheCid) return latestCreationBlockCacheCid;
@@ -1156,17 +1296,37 @@ const hydratePointsSnapshotFromIpfs = async () => {
     count: wallets.length,
   });
   const farcasterMap = new Map<string, string>();
-  const ensMap = new Map<string, string>();
+  const ensMap = new Map<string, EnsCacheEntry>();
   const nativeSuperMap = new Map<string, string>();
   const nativeTokenMap = new Map<string, string>();
+  const ensCacheEntries =
+    Array.isArray((data as any)?.ensCache) ? (data as any).ensCache : [];
+  for (const entry of ensCacheEntries) {
+    const addr =
+      typeof entry?.address === "string" ? entry.address.toLowerCase() : "";
+    if (!addr.startsWith("0x")) continue;
+    const fetchedAt =
+      typeof entry?.fetchedAt === "number" ? entry.fetchedAt : Date.now();
+    const name =
+      typeof entry?.name === "string" ? entry.name : entry?.name ?? null;
+    const avatar =
+      typeof entry?.avatar === "string" ? entry.avatar : entry?.avatar ?? null;
+    ensMap.set(addr, { name, avatar, fetchedAt });
+  }
   for (const w of wallets) {
     const addr = typeof w?.address === "string" ? w.address.toLowerCase() : "";
     if (!addr.startsWith("0x")) continue;
     if (typeof w?.farcasterUsername === "string") {
       farcasterMap.set(addr, w.farcasterUsername);
     }
-    if (typeof w?.ensName === "string") {
-      ensMap.set(addr, w.ensName);
+    if (!ensMap.has(addr)) {
+      const name =
+        typeof w?.ensName === "string" ? (w.ensName as string) : null;
+      const avatar =
+        typeof w?.ensAvatar === "string" ? (w.ensAvatar as string) : null;
+      if (name !== null || avatar !== null) {
+        ensMap.set(addr, { name, avatar, fetchedAt: Date.now() });
+      }
     }
     if (typeof w?.nativeSuperToken === "string") {
       nativeSuperMap.set(addr, w.nativeSuperToken as Address);
@@ -1176,7 +1336,7 @@ const hydratePointsSnapshotFromIpfs = async () => {
     }
   }
   farcasterUsernameCache = farcasterMap;
-  ensNameCache = ensMap;
+  ensIdentityCache = ensMap;
   nativeSuperTokenCache = nativeSuperMap;
   nativeTokenCache = nativeTokenMap;
 };
@@ -1369,12 +1529,12 @@ const pinPointsSnapshotToIpfs = async (
     streamUsd: number;
     fundPoints: number;
     streamPoints: number;
-    superfluidActivityPoints: number;
     governanceStakePoints: number;
     farcasterPoints: number;
     totalPoints: number;
     farcasterUsername: string | null;
     ensName: string | null;
+    ensAvatar: string | null;
     nativeSuperToken: string | null;
     nativeToken: string | null;
   }[],
@@ -1383,6 +1543,14 @@ const pinPointsSnapshotToIpfs = async (
   const payload = {
     updatedAt: new Date().toISOString(),
     wallets,
+    ensCache: Array.from(ensIdentityCache.entries()).map(
+      ([address, entry]) => ({
+        address,
+        name: entry.name,
+        avatar: entry.avatar,
+        fetchedAt: entry.fetchedAt,
+      }),
+    ),
   };
   try {
     const data = await pinataClient?.pinJSONToIPFS(
@@ -1409,6 +1577,44 @@ const pinPointsSnapshotToIpfs = async (
     console.warn("[superfluid-stack] pinata pinJSONToIPFS error (points)", {
       error,
     });
+    return null;
+  }
+};
+
+const pinRunLogsToIpfs = async (logs: string[]): Promise<string | null> => {
+  if (!SHOULD_PIN_RUN_LOGS || !CAN_WRITE_PINATA || logs.length === 0) {
+    return null;
+  }
+  const payload = {
+    updatedAt: new Date().toISOString(),
+    campaignVersion: CAMPAIGN_VERSION,
+    lines: logs,
+  };
+  try {
+    const data = await pinataClient?.pinJSONToIPFS(
+      normalizeForPinata(payload),
+      {
+        pinataMetadata: {
+          name: PINATA_RUN_LOG_NAME,
+          keyvalues: {
+            updatedAt: payload.updatedAt,
+            campaignVersion: CAMPAIGN_VERSION,
+          },
+        } as any,
+        pinataOptions:
+          PINATA_GROUP_ID ? ({ groupId: PINATA_GROUP_ID } as any) : undefined,
+      },
+    );
+    if (data?.IpfsHash) {
+      console.log("[superfluid-stack] pinned run logs to IPFS", {
+        cid: data.IpfsHash,
+        lines: logs.length,
+      });
+      return data.IpfsHash;
+    }
+    return null;
+  } catch (error) {
+    console.warn("[superfluid-stack] failed to pin run logs", { error });
     return null;
   }
 };
@@ -1893,7 +2099,8 @@ const accumulateFundingPoints = async ({
   priceUsd,
   userTotals,
   multiplier = 1,
-  superfluidActivityPoints,
+  recordActivity,
+  chainId,
 }: {
   publicClient: ReturnType<typeof createPublicClient>;
   poolAddress: Address;
@@ -1904,7 +2111,17 @@ const accumulateFundingPoints = async ({
   priceUsd: number;
   userTotals: Map<string, { fundUsd: number; streamUsd: number }>;
   multiplier?: number;
-  superfluidActivityPoints?: Map<string, number>;
+  recordActivity?: (params: {
+    from: string;
+    usd: number;
+    poolAddress?: string | null;
+    poolName?: string | null;
+    communityId?: string | null;
+    communityName?: string | null;
+    chainId: ChainId;
+    bonusApplied: boolean;
+  }) => void;
+  chainId: ChainId;
 }) => {
   if (fromBlock > toBlock) return;
   let logs: any[] = [];
@@ -1931,15 +2148,22 @@ const accumulateFundingPoints = async ({
     if (usd < 10) continue;
     const key = toLower(from);
     const prev = userTotals.get(key) ?? { fundUsd: 0, streamUsd: 0 };
+    const delta = usd * multiplier;
     userTotals.set(key, {
       ...prev,
-      fundUsd: prev.fundUsd + usd * multiplier,
+      fundUsd: prev.fundUsd + delta,
     });
-    if (superfluidActivityPoints) {
-      superfluidActivityPoints.set(
-        key,
-        (superfluidActivityPoints.get(key) ?? 0) + usd * multiplier,
-      );
+    if (recordActivity) {
+      recordActivity({
+        from: key,
+        usd: delta,
+        poolAddress: toLower(poolAddress),
+        poolName: null,
+        communityId: null,
+        communityName: null,
+        chainId,
+        bonusApplied: multiplier > 1,
+      });
     }
   }
 };
@@ -1994,8 +2218,6 @@ const processChain = async ({
   chainId,
   windowStart,
   windowEnd,
-  campaignStart,
-  campaignEnd,
 }: {
   chainId: ChainId;
   windowStart: number;
@@ -2005,19 +2227,19 @@ const processChain = async ({
 }): Promise<{
   totals: Map<string, { fundUsd: number; streamUsd: number }>;
   missingPrices: { address: Address; symbol: string }[];
-  superfluidActivityPoints: Map<string, number>;
   governanceStakePoints: Map<string, number>;
   blockBounds: { startBlock: bigint; endBlock: bigint };
   streamTotalsByPool: Map<string, number>;
   debug: {
     poolsProcessed: number;
     flowUpdateCount: number;
-    superfluidActivityWallets: number;
     governanceStakeCount: number;
   };
   nativePools: { poolAddress: Address; token: Address }[];
   processedCommunities: ProcessedCommunity[];
   fetchedPrices: { token: Address; symbol: string; priceUsd: number }[];
+  bonusCommunityMembers: string[];
+  walletActivities: Map<string, WalletActivity[]>;
 }> => {
   const chainConfig = chainConfigMap[chainId];
   if (!chainConfig?.subgraphUrl || !chainConfig?.rpcUrl) {
@@ -2030,10 +2252,33 @@ const processChain = async ({
     throw new Error(`Missing superfluid subgraph for chain ${chainId}`);
   }
 
-  const urqlClient = createGraphClient(
-    chainConfig.publishedSubgraphUrl ?? chainConfig.subgraphUrl,
-  );
+  const primarySubgraphUrl =
+    chainConfig.publishedSubgraphUrl ?? chainConfig.subgraphUrl;
+  const fallbackSubgraphUrl =
+    chainConfig.subgraphUrl &&
+    chainConfig.subgraphUrl !== primarySubgraphUrl ?
+      chainConfig.subgraphUrl
+    : undefined;
+  const urqlClient = createGraphClient(primarySubgraphUrl);
+  const urqlFallbackClient = fallbackSubgraphUrl ?
+    createGraphClient(fallbackSubgraphUrl)
+  : null;
   const superfluidClient = createGraphClient(superfluidSubgraphUrl);
+  const runQueryWithFallback = async <T, V extends AnyVariables>(
+    queryDoc: any,
+    vars: V,
+  ): Promise<{ data?: T; error?: any }> => {
+    const res = await urqlClient.query<T>(queryDoc, vars).toPromise();
+    if (res.error && urqlFallbackClient) {
+      console.warn("[superfluid-stack] primary subgraph failed, retrying", {
+        primarySubgraphUrl,
+        fallbackSubgraphUrl,
+        error: res.error?.message,
+      });
+      return urqlFallbackClient.query<T>(queryDoc, vars).toPromise();
+    }
+    return res;
+  };
   const publicClient = createPublicClient({
     chain: getViemChain(chainId),
     transport: http(chainConfig.rpcUrl),
@@ -2078,6 +2323,8 @@ const processChain = async ({
   const farcasterPoints = new Map<string, number>();
   const fetchedPrices: { token: Address; symbol: string; priceUsd: number }[] =
     [];
+  const bonusCommunityMembers = new Set<string>();
+  const walletActivities = new Map<string, WalletActivity[]>();
 
   let [startBlock, endBlock] = await Promise.all([
     findBlockNumberAtOrAfter(publicClient, windowStart),
@@ -2088,9 +2335,9 @@ const processChain = async ({
   if (startBlock > latestBlock) startBlock = latestBlock;
 
   console.log("[superfluid-stack] Fetching pools", { chainId });
-  const poolsResult = await urqlClient
-    .query<{ cvstrategies: Strategy[] }>(SUPERFLUID_POOLS_QUERY, {})
-    .toPromise();
+  const poolsResult = await runQueryWithFallback<{
+    cvstrategies: Strategy[];
+  }, Record<string, never>>(SUPERFLUID_POOLS_QUERY, {});
   if (poolsResult.error) {
     throw new Error(
       `Failed to fetch pools for chain ${chainId}: ${poolsResult.error.message}`,
@@ -2103,24 +2350,22 @@ const processChain = async ({
 
   // Community mapping
   console.log("[superfluid-stack] Fetching communities", { chainId });
-  const communitiesResult = await urqlClient
-    .query<{
-      registryCommunities: {
+  const communitiesResult = await runQueryWithFallback<{
+    registryCommunities: {
+      id: string;
+      communityName?: string | null;
+      members: { memberAddress: string; stakedTokens: string }[];
+      strategies: {
         id: string;
-        communityName?: string | null;
-        members: { memberAddress: string; stakedTokens: string }[];
-        strategies: {
-          id: string;
-          token: string;
-          metadata?: { title?: string | null } | null;
-          config: {
-            superfluidToken?: string | null;
-            proposalType?: string | null;
-          };
-        }[];
+        token: string;
+        metadata?: { title?: string | null } | null;
+        config: {
+          superfluidToken?: string | null;
+          proposalType?: string | null;
+        };
       }[];
-    }>(COMMUNITY_QUERY, {})
-    .toPromise();
+    }[];
+  }, Record<string, never>>(COMMUNITY_QUERY, {});
   if (communitiesResult.error) {
     throw new Error(
       `Failed to fetch communities for chain ${chainId}: ${communitiesResult.error.message}`,
@@ -2133,6 +2378,16 @@ const processChain = async ({
         memberAddress: m.memberAddress as Address,
         stakedTokens: BigInt(m.stakedTokens ?? "0"),
       })) ?? [];
+    if (
+      chainId === 8453 &&
+      toLower(comm.id) === toLower(BASE_BONUS_COMMUNITY)
+    ) {
+      for (const member of members) {
+        if (isValidAddr(member.memberAddress)) {
+          bonusCommunityMembers.add(toLower(member.memberAddress));
+        }
+      }
+    }
     const poolsForComm =
       comm.strategies?.map((s) => ({
         poolAddress: s.id as Address,
@@ -2156,27 +2411,19 @@ const processChain = async ({
 
   const communityTotals = new Map<
     string,
-    { fundUsd: number; streamUsd: number; members: CommunityInfo["members"] }
-  >();
-  const streamTotalsByPool = new Map<string, number>();
-  const processedCommunities = new Map<
-    string,
     {
-      communityId: string;
-      communityName?: string | null;
-      pools: {
-        poolAddress: string;
-        token: string;
-        superfluidToken?: string | null;
-        title?: string | null;
-      }[];
+      fundUsd: number;
+      streamUsd: number;
+      members: CommunityInfo["members"];
+      isBonus: boolean;
     }
   >();
+  const streamTotalsByPool = new Map<string, number>();
+  const processedCommunities = new Map<string, ProcessedCommunity>();
 
   const nativePools: { poolAddress: Address; token: Address }[] = [];
   let poolsProcessed = 0;
   let flowUpdateCount = 0;
-  const superfluidActivityPoints = new Map<string, number>();
   const governanceStakePoints = new Map<string, number>();
 
   const getCachedTokenPrice = async ({
@@ -2297,10 +2544,8 @@ const processChain = async ({
         community &&
         toLower(community.id) === toLower(BASE_BONUS_COMMUNITY)
       ) ?
-        2
+        BONUS_MULTIPLIER
       : 1;
-    const qualifiesForSuperfluidBonus =
-      community && toLower(community.id) === toLower(BASE_BONUS_COMMUNITY);
 
     if (superToken.sameAsUnderlying) {
       await accumulateFundingPoints({
@@ -2313,8 +2558,22 @@ const processChain = async ({
         priceUsd,
         userTotals,
         multiplier: bonusMultiplier,
-        superfluidActivityPoints:
-          qualifiesForSuperfluidBonus ? superfluidActivityPoints : undefined,
+        recordActivity: ({ from, usd }) => {
+          const list = walletActivities.get(from) ?? [];
+          list.push({
+            type: "fund",
+            amountUsd: usd,
+            poolAddress: toLower(poolAddress),
+            poolName: poolTitle,
+            communityId: community?.id ? toLower(community.id) : null,
+            communityName: community?.communityName ?? null,
+            token: toLower(underlyingToken),
+            chainId,
+            bonusApplied: bonusMultiplier > 1,
+          });
+          walletActivities.set(from, list);
+        },
+        chainId,
       });
     }
 
@@ -2345,8 +2604,8 @@ const processChain = async ({
         windowStart,
         windowEnd,
       });
-      streamUsdTotalPoints = totalUsd;
-      streamUsdTotalAll = totalUsdAll;
+      streamUsdTotalPoints = totalUsd * bonusMultiplier;
+      streamUsdTotalAll = totalUsdAll * bonusMultiplier;
       for (const [sender, usd] of streamUsdBySender.entries()) {
         if (usd < 10) continue;
         const key = toLower(sender);
@@ -2355,13 +2614,19 @@ const processChain = async ({
           ...prev,
           streamUsd: prev.streamUsd + usd * bonusMultiplier,
         });
-        if (qualifiesForSuperfluidBonus) {
-          const existingActivity = superfluidActivityPoints.get(key) ?? 0;
-          superfluidActivityPoints.set(
-            key,
-            existingActivity + usd * bonusMultiplier,
-          );
-        }
+        const list = walletActivities.get(key) ?? [];
+        list.push({
+          type: "stream",
+          amountUsd: usd * bonusMultiplier,
+          poolAddress: toLower(poolAddress),
+          poolName: poolTitle,
+          communityId: community?.id ? toLower(community.id) : null,
+          communityName: community?.communityName ?? null,
+          token: toLower(underlyingToken),
+          chainId,
+          bonusApplied: bonusMultiplier > 1,
+        });
+        walletActivities.set(key, list);
       }
       if (flowUpdates.length > 0 && streamUsdTotalPoints === 0) {
         console.log(
@@ -2399,9 +2664,11 @@ const processChain = async ({
         fundUsd: 0,
         streamUsd: 0,
         members: community.members,
+        isBonus: false,
       };
+      let fundUsdForCommunity = 0;
       if (superToken.sameAsUnderlying) {
-        const fundUsd = await computeFundUsdToPool({
+        fundUsdForCommunity = await computeFundUsdToPool({
           publicClient,
           poolAddress,
           token: underlyingToken,
@@ -2410,16 +2677,23 @@ const processChain = async ({
           tokenDecimals: tokenDecimals as number,
           priceUsd,
         });
-        entry.fundUsd += fundUsd * bonusMultiplier;
+        entry.fundUsd += fundUsdForCommunity;
       }
-      entry.streamUsd += streamUsdTotalPoints * bonusMultiplier;
+      entry.streamUsd += streamUsdTotalAll;
+      entry.isBonus = bonusMultiplier > 1;
       communityTotals.set(community.id, entry);
 
       const processed = processedCommunities.get(community.id) ?? {
         communityId: community.id,
         communityName: community.communityName,
+        streamUsd: 0,
+        fundUsd: 0,
         pools: [],
       };
+      processed.streamUsd = (processed.streamUsd ?? 0) + streamUsdTotalAll;
+      if (superToken.sameAsUnderlying) {
+        processed.fundUsd = (processed.fundUsd ?? 0) + fundUsdForCommunity;
+      }
       processed.pools.push({
         poolAddress: toLower(poolAddress),
         token: toLower(underlyingToken),
@@ -2432,9 +2706,15 @@ const processChain = async ({
   }
 
   // Split community totals to members
-  for (const entry of communityTotals.values()) {
-    const totalUsd = entry.fundUsd + entry.streamUsd;
-    if (totalUsd < 10) continue;
+  for (const [communityId, entry] of communityTotals.entries()) {
+    let totalPts = entry.fundUsd + entry.streamUsd;
+
+    if (totalPts <= 0) continue;
+
+    if (entry.isBonus) {
+      totalPts *= BONUS_MULTIPLIER;
+    }
+
     const totalStake = entry.members.reduce(
       (acc, m) => acc + m.stakedTokens,
       0n,
@@ -2443,40 +2723,104 @@ const processChain = async ({
     for (const member of entry.members) {
       if (!isValidAddr(member.memberAddress)) continue;
       const share = Number(member.stakedTokens) / Number(totalStake);
-      const points = totalUsd * share;
+      const points = totalPts * share;
       if (points <= 0) continue;
+      const processedCommunity = processedCommunities.get(communityId);
+      const firstPool = processedCommunity?.pools?.[0];
+      const communityIdLower =
+        processedCommunity?.communityId ?
+          toLower(processedCommunity.communityId)
+        : toLower(communityId);
+      const communityName =
+        processedCommunity?.communityName ??
+        processedCommunity?.communityId ??
+        null;
+      const poolAddress =
+        firstPool && firstPool.poolAddress ?
+          toLower(firstPool.poolAddress)
+        : null;
+      const poolName = firstPool?.title ?? null;
       const key = toLower(member.memberAddress);
       const prev = governanceStakePoints.get(key) ?? 0;
       governanceStakePoints.set(key, prev + points);
+      const list = walletActivities.get(key) ?? [];
+      list.push({
+        type: "governance",
+        amountUsd: points,
+        poolAddress,
+        poolName,
+        communityId: communityIdLower,
+        communityName,
+        sharePercent: share * 100,
+        token: "aggregate",
+        chainId,
+        bonusApplied: entry.isBonus,
+      });
+      walletActivities.set(key, list);
     }
   }
 
   return {
     totals: userTotals,
     missingPrices,
-    superfluidActivityPoints,
     governanceStakePoints,
     blockBounds: { startBlock, endBlock },
     streamTotalsByPool,
     debug: {
       poolsProcessed,
       flowUpdateCount,
-      superfluidActivityWallets: superfluidActivityPoints.size,
       governanceStakeCount: communityTotals.size,
     },
     nativePools,
     processedCommunities: Array.from(processedCommunities.values()),
     fetchedPrices,
+    bonusCommunityMembers: Array.from(bonusCommunityMembers.values()),
+    walletActivities,
   };
 };
 
 export async function GET(req: Request) {
+  const runLogBuffer: string[] = [];
+  const isLocalEnv =
+    process.env.VERCEL !== "1" && process.env.NODE_ENV !== "production";
+  const originalConsole = {
+    log: console.log,
+    warn: console.warn,
+    error: console.error,
+  };
+  const record =
+    (level: "log" | "warn" | "error") =>
+    (...args: any[]) => {
+      try {
+        const text = args
+          .map((arg) => (typeof arg === "string" ? arg : safeStringify(arg)))
+          .join(" ");
+        runLogBuffer.push(`[${level}] ${text}`);
+      } catch {
+        /* ignore */
+      }
+      // Only surface warnings/errors to stdout when not running locally; keep everything in runLogBuffer for IPFS
+      if (isLocalEnv || level !== "log") {
+        originalConsole[level](...args);
+      }
+    };
+  console.log = record("log") as typeof console.log;
+  console.warn = record("warn") as typeof console.warn;
+  console.error = record("error") as typeof console.error;
+
   const auth = req.headers.get("authorization")?.replace("Bearer ", "");
 
   if (auth !== process.env.CRON_SECRET) {
+    console.log = originalConsole.log;
+    console.warn = originalConsole.warn;
+    console.error = originalConsole.error;
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  ensureEnsCacheFresh();
   if (Date.now() > campaignEndMS) {
+    console.log = originalConsole.log;
+    console.warn = originalConsole.warn;
+    console.error = originalConsole.error;
     return NextResponse.json(
       { message: "Campaign ended; sync not executed." },
       { status: 200 },
@@ -2526,9 +2870,42 @@ export async function GET(req: Request) {
       priceCacheCid: pricePin ?? latestPriceCacheCid ?? null,
     };
   };
+  const logPinnedArtifacts = (extras?: {
+    pointsSnapshotCid?: string | null;
+    creationBlockCacheCid?: string | null;
+    transferLogCacheCid?: string | null;
+    priceCacheCid?: string | null;
+    runLogsCid?: string | null;
+  }) => {
+    console.log("[superfluid-stack] pinned IPFS artifacts", {
+      creationBlockCacheCid:
+        extras?.creationBlockCacheCid ??
+        responseCreationCid ??
+        latestCreationBlockCacheCid ??
+        null,
+      transferLogCacheCid:
+        extras?.transferLogCacheCid ??
+        responseTransferCid ??
+        latestTransferLogCacheCid ??
+        null,
+      priceCacheCid:
+        extras?.priceCacheCid ??
+        latestPriceCacheCid ??
+        pinnedPriceCacheCid ??
+        null,
+      pointsSnapshotCid:
+        extras?.pointsSnapshotCid ??
+        responsePointsCid ??
+        latestPointsSnapshotCid ??
+        null,
+      runLogsCid: extras?.runLogsCid ?? responseRunLogsCid ?? null,
+    });
+  };
   let responseCreationCid: string | null = null;
   let responseTransferCid: string | null = null;
   let responsePointsCid: string | null = null;
+  let pinnedPriceCacheCid: string | null = null;
+  let responseRunLogsCid: string | null = null;
   const notionExistingPages = new Map<
     string,
     { pageId: string; totalPts: number; checksum: string | null }
@@ -2537,19 +2914,17 @@ export async function GET(req: Request) {
   try {
     const { start, end } = parseCampaignWindow();
     const totals = new Map<string, { fundUsd: number; streamUsd: number }>();
-    const superfluidActivityPointsByWallet = new Map<string, number>();
     const governanceStakePointsByWallet = new Map<string, number>();
     const farcasterPointsByWallet = new Map<string, number>();
     const farcasterFollowerWalletsSet = new Set<string>();
     const farcasterUsernameByWallet = new Map<string, string>();
     const ensNameByWallet = new Map<string, string>();
+    const ensAvatarByWallet = new Map<string, string>();
     const nativeSuperTokenByWallet = new Map<string, string>();
     const nativeTokenByWallet = new Map<string, string>();
-    for (const [addr, username] of farcasterUsernameCache.entries()) {
-      farcasterUsernameByWallet.set(addr, username);
-    }
-    for (const [addr, name] of ensNameCache.entries()) {
-      ensNameByWallet.set(addr, name);
+    for (const [addr, entry] of ensIdentityCache.entries()) {
+      ensNameByWallet.set(addr, entry.name ?? "");
+      ensAvatarByWallet.set(addr, entry.avatar ?? "");
     }
     for (const [addr, token] of nativeSuperTokenCache.entries()) {
       nativeSuperTokenByWallet.set(addr, token);
@@ -2561,7 +2936,6 @@ export async function GET(req: Request) {
       chainId: ChainId;
       poolsProcessed: number;
       flowUpdateCount: number;
-      superfluidActivityWallets: number;
       governanceStakeCount: number;
     }[] = [];
     const missingPriceEntries: {
@@ -2587,6 +2961,8 @@ export async function GET(req: Request) {
     const farcasterDiscardedWallets: string[] = [];
     const nativeSuperTokens: { address: string; token: string | null }[] = [];
     const nativeTokens: { address: string; token: string | null }[] = [];
+    const bonusCommunityMembers = new Set<string>();
+    const walletActivitiesByWallet = new Map<string, WalletActivity[]>();
 
     const fetchExistingFarcasterAddresses = async (): Promise<Set<string>> => {
       const addrs = new Set<string>();
@@ -2624,12 +3000,18 @@ export async function GET(req: Request) {
       const gardensFid = await fetchGardensFid();
       if (gardensFid) {
         const followerFids = await fetchFarcasterFollowerFids(gardensFid);
-        const { primary: followerWallets, discarded } =
-          await fetchFarcasterWalletsForFids(followerFids);
+        const {
+          primary: followerWallets,
+          discarded,
+          usernames,
+        } = await fetchFarcasterWalletsForFids(followerFids);
         followerWallets.forEach((addr) =>
           farcasterFollowerWalletsSet.add(addr),
         );
         discarded.forEach((addr) => farcasterDiscardedWallets.push(addr));
+        for (const [addr, username] of usernames.entries()) {
+          farcasterUsernameByWallet.set(addr, username);
+        }
       } else {
         console.log(
           "[superfluid-stack] skipping farcaster follower scan because gardens fid could not be resolved",
@@ -2637,13 +3019,17 @@ export async function GET(req: Request) {
       }
       farcasterFollowerWallets.push(...farcasterFollowerWalletsSet);
     }
+    for (const [addr, username] of farcasterUsernameCache.entries()) {
+      if (farcasterFollowerWalletsSet.has(addr)) {
+        farcasterUsernameByWallet.set(addr, username);
+      }
+    }
     const existingFarcasterAddresses = await fetchExistingFarcasterAddresses();
 
     for (const chainId of TARGET_CHAINS) {
       const {
         totals: chainTotals,
         missingPrices,
-        superfluidActivityPoints,
         governanceStakePoints,
         blockBounds,
         nativePools,
@@ -2651,6 +3037,8 @@ export async function GET(req: Request) {
         processedCommunities,
         fetchedPrices,
         streamTotalsByPool,
+        bonusCommunityMembers: chainBonusMembers,
+        walletActivities,
       } = await processChain({
         chainId,
         windowStart: start,
@@ -2668,13 +3056,7 @@ export async function GET(req: Request) {
       for (const miss of missingPrices) {
         missingPriceEntries.push({ ...miss, chainId });
       }
-      for (const [addr, pts] of superfluidActivityPoints.entries()) {
-        const key = toLower(addr);
-        superfluidActivityPointsByWallet.set(
-          key,
-          (superfluidActivityPointsByWallet.get(key) ?? 0) + pts,
-        );
-      }
+
       for (const [addr, pts] of governanceStakePoints.entries()) {
         const key = toLower(addr);
         governanceStakePointsByWallet.set(
@@ -2687,6 +3069,9 @@ export async function GET(req: Request) {
         endBlock: blockBounds.endBlock.toString(),
       };
       nativePoolsByChain[String(chainId)] = nativePools;
+      chainBonusMembers.forEach((addr) =>
+        bonusCommunityMembers.add(toLower(addr)),
+      );
       // Track native super tokens per pool address
       nativePools.forEach((p) => {
         nativeSuperTokenByWallet.set(p.poolAddress.toLowerCase(), p.token);
@@ -2707,6 +3092,8 @@ export async function GET(req: Request) {
           ...c,
           communityId: c.communityId.toLowerCase(),
           communityName: c.communityName,
+          streamUsd: c.streamUsd ?? 0,
+          fundUsd: c.fundUsd ?? 0,
           pools: c.pools.map((p: ProcessedCommunity["pools"][number]) => ({
             ...p,
             poolAddress: p.poolAddress.toLowerCase(),
@@ -2718,6 +3105,11 @@ export async function GET(req: Request) {
       streamTotalsByChain[String(chainId)] = Object.fromEntries(
         streamTotalsByPool.entries(),
       );
+      for (const [addr, acts] of walletActivities.entries()) {
+        const list = walletActivitiesByWallet.get(addr) ?? [];
+        list.push(...acts);
+        walletActivitiesByWallet.set(addr, list);
+      }
     }
 
     const manualBounds = {
@@ -2740,38 +3132,36 @@ export async function GET(req: Request) {
       streamUsd: number;
       fundPoints: number;
       streamPoints: number;
-      superfluidActivityPoints: number;
       governanceStakePoints: number;
       farcasterPoints: number;
       totalPoints: number;
       farcasterUsername: string | null;
       ensName: string | null;
+      ensAvatar: string | null;
       nativeSuperToken: string | null;
       nativeToken: string | null;
+      activities: WalletActivity[];
       checksum: string;
     }[] = [];
 
     const allAddresses = new Set<string>([
       ...totals.keys(),
-      ...superfluidActivityPointsByWallet.keys(),
       ...governanceStakePointsByWallet.keys(),
       ...farcasterFollowerWalletsSet.values(),
       ...farcasterDiscardedWallets.values(),
       ...existingFarcasterAddresses.values(),
+      ...bonusCommunityMembers.values(),
+      ...walletActivitiesByWallet.keys(),
     ]);
 
-    if (!FARCASTER_DISABLED) {
-      for (const address of allAddresses) {
-        if (farcasterUsernameByWallet.has(address)) continue;
-        const username = await fetchFarcasterUsernameByAddress(address);
-        if (username) farcasterUsernameByWallet.set(address, username);
-      }
-    }
     if (!SKIP_IDENTITY_RESOLUTION) {
       for (const address of allAddresses) {
-        if (ensNameByWallet.has(address)) continue;
-        const ens = await fetchEnsNameByAddress(address);
-        if (ens) ensNameByWallet.set(address, ens);
+        if (ensNameByWallet.has(address) && ensAvatarByWallet.has(address)) {
+          continue;
+        }
+        const { name, avatar } = await fetchEnsIdentityByAddress(address);
+        if (name) ensNameByWallet.set(address, name);
+        if (avatar) ensAvatarByWallet.set(address, avatar);
       }
     }
     // Pre-fill Farcaster points (+1 per follower wallet)
@@ -2783,7 +3173,6 @@ export async function GET(req: Request) {
       address: string;
       fundPoints: number;
       streamPoints: number;
-      superfluidActivityPoints: number;
       governanceStakePoints: number;
       farcasterPoints: number;
       totalPoints: number;
@@ -2792,32 +3181,32 @@ export async function GET(req: Request) {
     }> = [];
 
     for (const address of allAddresses) {
+      if (EXCLUDED_WALLETS.has(address)) continue;
       const value = totals.get(address) ?? { fundUsd: 0, streamUsd: 0 };
       const fundPoints = value.fundUsd >= 10 ? Math.floor(value.fundUsd) : 0;
       const streamPoints =
         value.streamUsd >= 10 ? Math.floor(value.streamUsd) : 0;
-      const superfluidActivityPts = Math.floor(
-        superfluidActivityPointsByWallet.get(address) ?? 0,
-      );
-      const governanceStakePts = Math.floor(
-        governanceStakePointsByWallet.get(address) ?? 0,
-      );
+      const governanceStakePtsRaw =
+        governanceStakePointsByWallet.get(address) ?? 0;
+      const isBonusCommunityMember = bonusCommunityMembers.has(address);
+      const governanceStakePts =
+        governanceStakePtsRaw > 0 ?
+          Math.max(
+            Math.floor(governanceStakePtsRaw),
+            isBonusCommunityMember ? 1 : 0,
+          )
+        : 0;
       const farcasterPts = Math.floor(
         farcasterPointsByWallet.get(address) ?? 0,
       );
       const totalPoints =
-        fundPoints +
-        streamPoints +
-        superfluidActivityPts +
-        governanceStakePts +
-        farcasterPts;
+        fundPoints + streamPoints + governanceStakePts + farcasterPts;
       if (totalPoints <= 0) continue;
 
       walletPointTargets.push({
         address,
         fundPoints,
         streamPoints,
-        superfluidActivityPoints: superfluidActivityPts,
         governanceStakePoints: governanceStakePts,
         farcasterPoints: farcasterPts,
         totalPoints,
@@ -2826,13 +3215,13 @@ export async function GET(req: Request) {
       });
     }
 
-    const EVENT_NAMES = [
+    const BASE_EVENT_NAMES = [
       "fundPoints",
       "streamPoints",
-      "superfluidActivityPoints",
       "governanceStakePoints",
       "farcasterPoints",
     ] as const;
+    const eventNames = new Set<string>(BASE_EVENT_NAMES);
 
     const fetchExistingTotalsByAddress = async (): Promise<
       Map<string, Record<string, number>>
@@ -2856,8 +3245,8 @@ export async function GET(req: Request) {
         if (!Array.isArray(res) || res.length === 0) break;
         for (const evt of res as any[]) {
           const name = evt?.event as string;
-          if (!EVENT_NAMES.includes(name as (typeof EVENT_NAMES)[number]))
-            continue;
+          if (typeof name !== "string" || !name.length) continue;
+          eventNames.add(name);
           const pts = Number(evt?.points ?? 0);
           const addr =
             evt?.address ??
@@ -2869,7 +3258,7 @@ export async function GET(req: Request) {
           const key = addr.toLowerCase();
           const existingTotals =
             existingMap.get(key) ??
-            EVENT_NAMES.reduce(
+            Array.from(eventNames).reduce(
               (acc, n) => {
                 acc[n] = 0;
                 return acc;
@@ -2891,7 +3280,7 @@ export async function GET(req: Request) {
     }> = [];
     const existingTotalsByAddress = await fetchExistingTotalsByAddress();
 
-    const emptyCategoryTotals = EVENT_NAMES.reduce(
+    const emptyCategoryTotals = Array.from(eventNames).reduce(
       (acc, n) => {
         acc[n] = 0;
         return acc;
@@ -2902,15 +3291,17 @@ export async function GET(req: Request) {
     for (const wallet of walletPointTargets) {
       const existingByCategory =
         existingTotalsByAddress.get(wallet.address) ?? emptyCategoryTotals;
-      const targetByCategory: Record<string, number> = {
-        fundPoints: wallet.fundPoints,
-        streamPoints: wallet.streamPoints,
-        superfluidActivityPoints: wallet.superfluidActivityPoints,
-        governanceStakePoints: wallet.governanceStakePoints,
-        farcasterPoints: wallet.farcasterPoints,
-      };
+      const targetByCategory: Record<string, number> = {};
+      for (const name of eventNames) {
+        targetByCategory[name] =
+          name === "fundPoints" ? wallet.fundPoints
+          : name === "streamPoints" ? wallet.streamPoints
+          : name === "governanceStakePoints" ? wallet.governanceStakePoints
+          : name === "farcasterPoints" ? wallet.farcasterPoints
+          : 0;
+      }
       const deltas: Record<string, number> = {};
-      for (const name of EVENT_NAMES) {
+      for (const name of eventNames) {
         deltas[name] = targetByCategory[name] - (existingByCategory[name] ?? 0);
         if (deltas[name] !== 0) {
           allEventPayloads.push({
@@ -2924,7 +3315,6 @@ export async function GET(req: Request) {
                 existing: existingByCategory[name] ?? 0,
                 fundPoints: wallet.fundPoints,
                 streamPoints: wallet.streamPoints,
-                superfluidActivityPoints: wallet.superfluidActivityPoints,
                 governanceStakePoints: wallet.governanceStakePoints,
                 farcasterPoints: wallet.farcasterPoints,
               },
@@ -2954,20 +3344,20 @@ export async function GET(req: Request) {
         streamUsd: wallet.streamUsd,
         fundPoints: wallet.fundPoints,
         streamPoints: wallet.streamPoints,
-        superfluidActivityPoints: wallet.superfluidActivityPoints,
         governanceStakePoints: wallet.governanceStakePoints,
         farcasterPoints: wallet.farcasterPoints,
         totalPoints: wallet.totalPoints,
         farcasterUsername:
           farcasterUsernameByWallet.get(wallet.address) ?? null,
-        ensName: ensNameByWallet.get(wallet.address) ?? null,
+        ensName: ensNameByWallet.get(wallet.address) || null,
+        ensAvatar: ensAvatarByWallet.get(wallet.address) || null,
         nativeSuperToken: nativeSuperTokenByWallet.get(wallet.address) ?? null,
         nativeToken: nativeTokenByWallet.get(wallet.address) ?? null,
+        activities: walletActivitiesByWallet.get(wallet.address) ?? [],
         checksum: [
           wallet.address.toLowerCase(),
           wallet.fundPoints,
           wallet.streamPoints,
-          wallet.superfluidActivityPoints,
           wallet.governanceStakePoints,
           wallet.farcasterPoints,
           wallet.totalPoints,
@@ -2978,15 +3368,12 @@ export async function GET(req: Request) {
     // Remove accounts that are no longer in the current target list
     for (const [address, existingByCategory] of existingTotalsByAddress) {
       if (walletPointTargets.find((w) => w.address === address)) continue;
-      const targetByCategory: Record<string, number> = {
-        fundPoints: 0,
-        streamPoints: 0,
-        superfluidActivityPoints: 0,
-        governanceStakePoints: 0,
-        farcasterPoints: 0,
-      };
+      const targetByCategory: Record<string, number> = {};
+      for (const name of eventNames) {
+        targetByCategory[name] = 0;
+      }
       const deltas: Record<string, number> = {};
-      for (const name of EVENT_NAMES) {
+      for (const name of eventNames) {
         deltas[name] = targetByCategory[name] - (existingByCategory[name] ?? 0);
         if (deltas[name] !== 0) {
           allEventPayloads.push({
@@ -3121,7 +3508,6 @@ export async function GET(req: Request) {
                 address: wallet.address,
                 fundPoints: wallet.fundPoints,
                 streamPoints: wallet.streamPoints,
-                superfluidActivityPoints: wallet.superfluidActivityPoints,
                 governanceStakePoints: wallet.governanceStakePoints,
                 farcasterPoints: wallet.farcasterPoints,
                 totalPoints: wallet.totalPoints,
@@ -3176,6 +3562,21 @@ export async function GET(req: Request) {
     const pinned = await flushCaches();
     responseCreationCid = pinned.creationBlockCacheCid;
     responseTransferCid = pinned.transferLogCacheCid;
+    pinnedPriceCacheCid = pinned.priceCacheCid ?? pinnedPriceCacheCid;
+    responseRunLogsCid = await pinRunLogsToIpfs(runLogBuffer);
+    logPinnedArtifacts({
+      pointsSnapshotCid: responsePointsCid,
+      runLogsCid: responseRunLogsCid,
+    });
+    if (responseRunLogsCid) {
+      console.log("[superfluid-stack] run logs pinned", {
+        cid: responseRunLogsCid,
+        url: `https://gateway.pinata.cloud/ipfs/${responseRunLogsCid}`,
+      });
+    }
+    console.log = originalConsole.log;
+    console.warn = originalConsole.warn;
+    console.error = originalConsole.error;
 
     return NextResponse.json(
       {
@@ -3205,6 +3606,7 @@ export async function GET(req: Request) {
           responseTransferCid ?? latestTransferLogCacheCid ?? null,
         priceCacheCid: pinned.priceCacheCid ?? latestPriceCacheCid ?? null,
         pointsSnapshotCid: responsePointsCid,
+        runLogsCid: responseRunLogsCid,
         campaignWindow: {
           start,
           end,
@@ -3220,6 +3622,21 @@ export async function GET(req: Request) {
     const pinned = await flushCaches();
     responseCreationCid = pinned.creationBlockCacheCid;
     responseTransferCid = pinned.transferLogCacheCid;
+    pinnedPriceCacheCid = pinned.priceCacheCid ?? pinnedPriceCacheCid;
+    responseRunLogsCid = await pinRunLogsToIpfs(runLogBuffer);
+    logPinnedArtifacts({
+      pointsSnapshotCid: responsePointsCid,
+      runLogsCid: responseRunLogsCid,
+    });
+    if (responseRunLogsCid) {
+      console.log("[superfluid-stack] run logs pinned", {
+        cid: responseRunLogsCid,
+        url: `https://gateway.pinata.cloud/ipfs/${responseRunLogsCid}`,
+      });
+    }
+    console.log = originalConsole.log;
+    console.warn = originalConsole.warn;
+    console.error = originalConsole.error;
     console.error("Superfluid stack cron error", error);
     const message =
       error instanceof Error ? error.message : "Internal server error";
@@ -3230,6 +3647,7 @@ export async function GET(req: Request) {
           responseCreationCid ?? latestCreationBlockCacheCid ?? null,
         transferLogCacheCid:
           responseTransferCid ?? latestTransferLogCacheCid ?? null,
+        runLogsCid: responseRunLogsCid,
       },
       { status: 500 },
     );
