@@ -760,7 +760,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
         <section className="section-layout gap-2 flex flex-col">
           <h3>Pool Funds</h3>
           <div className="flex flex-col gap-2">
-            <div className="flex justify-between items-center gap-3 z-o">
+            <div className="flex justify-between items-center gap-3">
               <p className="subtitle2">Funds in pool:</p>
               <div className="flex items-center gap-1">
                 <DisplayNumber
@@ -820,7 +820,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
             )}
           </div>
           <div
-            className={`w-full dropdown dropdown-hover dropdown-start ${missmatchUrl || !isConnected ? "" : "tooltip"} z-50`}
+            className={`z-[9999] w-full dropdown dropdown-hover dropdown-top ${missmatchUrl || !isConnected ? "" : "tooltip"}`}
           >
             <Button
               type="submit"
@@ -836,7 +836,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
               Add Funds
             </Button>
             {!missmatchUrl && isConnected && (
-              <ul className="dropdown-content menu bg-primary rounded-box z-50 w-full p-2 shadow">
+              <ul className="dropdown-content menu bg-primary rounded-box w-full p-2 shadow fixed z-[9999] left-0 top-full mt-2">
                 <li>
                   <Button
                     type="submit"
@@ -859,7 +859,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                       "Not enabled yet, the community's Council Safe can connect to enable streaming for this Pool"
                     }
                     icon={<ArrowPathRoundedSquareIcon className="w-5 h-5" />}
-                    className="w-full mt-1 xl:!justify-start"
+                    className="w-full mt-1 xl:!justify-start z-50"
                     onClick={() => setIsStreamModalOpened(true)}
                   >
                     Stream Funds
