@@ -728,55 +728,7 @@ export function Proposals({
             : "items-center justify-between"
           }`}
         >
-          <div className="flex items-center">
-            <h3 className="text-left">Proposals</h3>
-            {activeOrDisputedProposals.length > 0 &&
-              proposalCardRefs.current.size ===
-                activeOrDisputedProposals.length && (
-                <div className="dropdown dropdown-hover dropdown-start">
-                  <Button
-                    btnStyle="outline"
-                    className="bg-none hover:bg-nuetral-content border-none hover:border-none  rotate-90"
-                    icon={
-                      <EllipsisHorizontalCircleIcon className="w-5 h-5 text-neutral-content" />
-                    }
-                  />
-
-                  <div className="dropdown-content menu bg-primary flex flex-col items-center gap-2 rounded-box z-50 shadow w-[230px] ">
-                    <>
-                      <Button
-                        btnStyle="link"
-                        color="primary"
-                        tooltip="Download proposals conviction results (CSV)"
-                        forceShowTooltip={true}
-                        icon={<ArrowDownTrayIcon className="w-6 h-6" />}
-                        onClick={handleDownloadCVResults}
-                      >
-                        Download CV results
-                      </Button>
-                      <Link href={createProposalUrl}>
-                        <Button
-                          className="w-full"
-                          btnStyle="filled"
-                          icon={<PlusIcon height={24} width={24} />}
-                          disabled={
-                            !isConnected || missmatchUrl || !isMemberCommunity
-                          }
-                          tooltip={
-                            !isConnected ? "Connect your wallet"
-                            : !isMemberCommunity ?
-                              "Join the community first"
-                            : "Create a proposal"
-                          }
-                        >
-                          Create a proposal
-                        </Button>
-                      </Link>
-                    </>
-                  </div>
-                </div>
-              )}
-          </div>
+          <h3 className="text-left">Proposals</h3>
 
           {strategy.isEnabled &&
             (proposals.length === 0 ?
@@ -808,8 +760,34 @@ export function Proposals({
               </div>
             : !allocationView && (
                 <>
-                  <div className="flex items-center gap-4 ">
+                  <div className="flex items-center justify-center gap-2">
                     {/* Manage Support */}
+                    {activeOrDisputedProposals.length > 0 &&
+                      proposalCardRefs.current.size ===
+                        activeOrDisputedProposals.length && (
+                        <div className="dropdown dropdown-hover dropdown-start">
+                          <Button
+                            btnStyle="outline"
+                            className="bg-none hover:bg-nuetral-content border-none hover:border-none  rotate-90"
+                            icon={
+                              <EllipsisHorizontalCircleIcon className="w-5 h-5 text-neutral-content" />
+                            }
+                          />
+
+                          <div className="dropdown-content menu bg-primary flex flex-col items-center gap-2 rounded-box z-50 shadow w-[230px] ">
+                            <Button
+                              btnStyle="link"
+                              color="primary"
+                              tooltip="Download proposals conviction results (CSV)"
+                              forceShowTooltip={true}
+                              icon={<ArrowDownTrayIcon className="w-6 h-6" />}
+                              onClick={handleDownloadCVResults}
+                            >
+                              Download CV results
+                            </Button>
+                          </div>
+                        </div>
+                      )}
                     <div
                       onMouseLeave={() => setShowManageSupportTooltip(false)}
                     >
@@ -897,6 +875,15 @@ export function Proposals({
             >
               <div className="flex flex-col gap-4">
                 <UserAllocationStats stats={stats} />
+                {activeOrDisputedProposals.length === 0 && (
+                  <div className="section-layout flex flex-col items-center justify-center text-center">
+                    <p className="text-neutral-soft-content text-sm">
+                      There are currently no active or disputed proposals to
+                      support.
+                    </p>
+                  </div>
+                )}
+
                 {activeOrDisputedProposals.map((proposalData) => (
                   <Fragment key={proposalData.id}>
                     <ProposalsModalSupport
@@ -909,7 +896,7 @@ export function Proposals({
                       memberActivatedPoints={memberActivatedPoints}
                       memberPoolWeight={memberPoolWeight}
                       executeDisabled={
-                        proposalData.proposalStatus == 4 ||
+                        proposalData.proposalStatus === 4 ||
                         !isConnected ||
                         missmatchUrl
                       }
@@ -923,6 +910,7 @@ export function Proposals({
                     />
                   </Fragment>
                 ))}
+
                 {strategy.isEnabled &&
                   allocationView &&
                   proposals.length > 0 && (
@@ -1101,7 +1089,7 @@ function ProposalFiltersUI({
   const CurrentIcon = currentSortOption?.icon;
 
   return (
-    <div className="flex flex-col lg:flex-row gap-3 justify-between bg-neutral py-2 px-4 rounded-2xl ">
+    <div className="flex flex-col lg:flex-row gap-3 justify-between bg-neutral py-2 px-4 rounded-2xl border2 items-center">
       {/* FILTERS */}
       <div className="flex gap-2 sm:justify-between flex-wrap">
         {FILTERS.map((f) => (
@@ -1126,15 +1114,13 @@ function ProposalFiltersUI({
       <div className="block sm:hidden w-full border-t border-border-neutral" />
 
       {/* SORT DROPDOWN */}
-      <div className="flex justify-between items-center gap-1 ">
+      <div className="flex justify-between items-center gap-1 border2 w-[298px] ">
         <p className="text-sm text-neutral-soft-content">Sort by</p>
-        <div className="dropdown dropdown-hover dropdown-start">
-          <Button
-            btnStyle="ghost"
-            icon={CurrentIcon && <CurrentIcon className="w-4 h-4" />}
-          >
+        <div className="dropdown dropdown-hover dropdown-start border2 w-full">
+          <button className="btn text-primary-content text-xs border2 flex items-center">
+            {CurrentIcon && <CurrentIcon className="w-4 h-4" />}
             {currentSortOption?.label}
-          </Button>
+          </button>
           <ul className="dropdown-content menu bg-primary rounded-box z-50 shadow w-[180px] sm:w-[210px]">
             {SORT_OPTIONS.map((option) => {
               const Icon = option.icon;
