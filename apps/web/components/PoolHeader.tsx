@@ -235,7 +235,10 @@ export default function PoolHeader({
       sybilResistanceType = "goodDollar";
       sybilResistanceValue = undefined;
     }
-  } else {
+  } else if (
+    allowList &&
+    !(allowList.length > 0 && allowList[0] === zeroAddress)
+  ) {
     sybilResistanceType = "allowList";
     sybilResistanceValue = allowList as Address[] | undefined;
   }

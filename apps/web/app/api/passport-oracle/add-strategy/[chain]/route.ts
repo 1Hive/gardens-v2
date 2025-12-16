@@ -23,7 +23,7 @@ const LIST_MANAGER_PRIVATE_KEY = process.env.LIST_MANAGER_PRIVATE_KEY;
 const LOCAL_RPC = "http://127.0.0.1:8545";
 
 export async function POST(req: Request, { params }: Params) {
-  const apiKey = req.headers.get("Authorization");
+  const apiKey = req.headers.get("authorization")?.replace("Bearer ", "");
   const { chain } = params;
 
   if (apiKey !== process.env.CRON_SECRET) {

@@ -13,15 +13,6 @@ body:
         **Miro:** [Design Collaboration Board](https://miro.com/app/board/uXjVJF2w8YI=/)
 
   - type: textarea
-    id: summary
-    attributes:
-      label: Summary
-      description: Briefly describe the design goal or problem to solve.
-      placeholder: Improve visual hierarchy in proposal cards...
-    validations:
-      required: true
-
-  - type: textarea
     id: context
     attributes:
       label: Context and rationale
