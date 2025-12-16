@@ -19,10 +19,11 @@ import {
   ArrowUpIcon,
   Battery50Icon,
   CurrencyDollarIcon,
-  EllipsisVerticalIcon,
+  ChevronDownIcon,
   EllipsisHorizontalCircleIcon,
   HandRaisedIcon,
 } from "@heroicons/react/24/outline";
+
 import Link from "next/link";
 import { Id, toast } from "react-toastify";
 import { parseAbiParameters, encodeAbiParameters, formatUnits } from "viem";
@@ -1089,9 +1090,9 @@ function ProposalFiltersUI({
   const CurrentIcon = currentSortOption?.icon;
 
   return (
-    <div className="flex flex-col lg:flex-row gap-3 justify-between bg-neutral py-2 px-4 rounded-2xl border2 items-center">
+    <div className="flex flex-col lg:flex-row justify-between bg-neutral py-4 px-2 rounded-2xl items-center gap-4 lg:gap-10">
       {/* FILTERS */}
-      <div className="flex gap-2 sm:justify-between flex-wrap">
+      <div className="flex w-full gap-2 sm:justify-between flex-wrap ">
         {FILTERS.map((f) => (
           <Button
             // style={filter === f ? { cursor: "not-allowed" } : {}}
@@ -1111,17 +1112,20 @@ function ProposalFiltersUI({
         ))}
       </div>
 
-      <div className="block sm:hidden w-full border-t border-border-neutral" />
+      <div className="block sm:hidden w-full border-t border-border-neutral my-1 opacity-70" />
 
       {/* SORT DROPDOWN */}
-      <div className="flex justify-between items-center gap-1 border2 w-[298px] ">
-        <p className="text-sm text-neutral-soft-content">Sort by</p>
-        <div className="dropdown dropdown-hover dropdown-start border2 w-full">
-          <button className="btn text-primary-content text-xs border2 flex items-center">
+      <div className="w-full lg:w-fit sm:flex justify-between items-center gap-0 ">
+        <div className="w-[70px]">
+          <p className="text-sm text-neutral-soft-content">Sort by</p>
+        </div>
+        <div className="dropdown dropdown-hover dropdown-start  w-full relative group">
+          <button className="text-primary-content text-sm  flex gap-2 items-center w-full lg:w-[240px] px-1 py-2">
             {CurrentIcon && <CurrentIcon className="w-4 h-4" />}
             {currentSortOption?.label}
           </button>
-          <ul className="dropdown-content menu bg-primary rounded-box z-50 shadow w-[180px] sm:w-[210px]">
+
+          <ul className="dropdown-content menu bg-primary rounded-box z-50 shadow w-full lg:w-[240px]">
             {SORT_OPTIONS.map((option) => {
               const Icon = option.icon;
 
@@ -1139,6 +1143,7 @@ function ProposalFiltersUI({
               );
             })}
           </ul>
+          <ChevronDownIcon className="w-4 h-4 absolute top-[12px] right-1 group-hover:rotate-180 transition-all duration-150 ease-in-out" />
         </div>
       </div>
     </div>
