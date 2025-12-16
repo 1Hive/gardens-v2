@@ -1118,7 +1118,10 @@ function ProposalFiltersUI({
           <p className="text-sm text-neutral-soft-content">Sort by</p>
         </div>
         <div className="dropdown dropdown-hover dropdown-start  w-full relative group">
-          <button className="text-primary-content text-sm  flex gap-2 items-center w-full lg:w-[255px] px-3.5 py-2 bg-primary rounded-lg">
+          <button
+            tabIndex={0}
+            className="text-primary-content text-sm  flex gap-2 items-center w-full lg:w-[255px] px-3.5 py-2 bg-primary rounded-lg"
+          >
             {CurrentIcon && <CurrentIcon className="w-4 h-4" />}
             {currentSortOption?.label}
           </button>
@@ -1129,6 +1132,7 @@ function ProposalFiltersUI({
 
               return (
                 <li
+                  tabIndex={0}
                   key={option.key}
                   onClick={() => setSortBy(option.key)}
                   className="cursor-pointer w-full flex justify-between items-start text-xs hover:bg-primary-soft dark:hover:bg-primary-content rounded-md"
