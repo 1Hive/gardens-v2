@@ -33,17 +33,18 @@ import {
 import { LoadingSpinner } from "./LoadingSpinner";
 import { PoolGovernanceProps } from "./PoolGovernance";
 import { ProposalCardProps, ProposalHandle } from "./ProposalCard";
+import { ProposalsModalSupport } from "./ProposalsModalSupport";
 import TooltipIfOverflow from "./TooltipIfOverflow";
 import {
   Button,
   CheckSybil,
   InfoWrapper,
-  PoolGovernance,
+  Modal,
   ProposalCard,
 } from "@/components";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
-import { SubscriptionId, usePubSubContext } from "@/contexts/pubsub.context";
+import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import useCheckAllowList from "@/hooks/useCheckAllowList";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
@@ -61,8 +62,7 @@ export type ProposalInputItem = {
   value: bigint;
 };
 
-export type MemberStrategyData =
-  getMembersStrategyQuery["memberStrategies"][0];
+export type MemberStrategyData = getMembersStrategyQuery["memberStrategies"][0];
 
 // export type Strategy = getStrategyByPoolQuery["cvstrategies"][number];
 // export type Proposal = CVStrategy["proposals"][number];
@@ -138,7 +138,6 @@ export function Proposals({
   const chainId = useChainIdFromPath();
   const allowList = (strategy?.config?.allowlist as Address[]) ?? [];
   const isAllowed = useCheckAllowList(allowList, wallet);
-  const { subscribe, unsubscribe, connected } = usePubSubContext();
 
   const tokenDecimals = strategy.registryCommunity.garden.decimals;
   const searchParams = useCollectQueryParams();
@@ -215,7 +214,7 @@ export function Proposals({
   );
 
   // Contract reads
-  const { data: memberPower, refetch: refetchMemberPower } = useContractRead({
+  const { data: memberPower } = useContractRead({
     address: communityAddress,
     abi: registryCommunityABI,
     functionName: "getMemberPowerInStrategy",
@@ -224,34 +223,11 @@ export function Proposals({
     enabled: !!wallet,
   });
 
-  const subscritionId = useRef<SubscriptionId>();
-  useEffect(() => {
-    subscritionId.current = subscribe(
-      {
-        topic: "member",
-        id: wallet,
-        containerId: strategy.poolId,
-        type: "update",
-      },
-      () => {
-        return refetchMemberPower();
-      },
-    );
-    return () => {
-      if (subscritionId.current) {
-        unsubscribe(subscritionId.current);
-      }
-    };
-  }, [connected]);
-
   // Derived state
   const isMemberCommunity =
     !!memberData?.member?.memberCommunity?.[0]?.isRegistered;
   const memberActivatedStrategy =
     memberStrategyData?.memberStrategy?.activatedPoints > 0n;
-  const memberTokensInCommunity = BigInt(
-    memberData?.member?.memberCommunity?.[0]?.stakedTokens ?? 0,
-  );
 
   const proposals = strategy.proposals.sort((a, b) => {
     const aConviction =
@@ -341,23 +317,12 @@ export function Proposals({
     },
   ];
 
-  const disableCreateProposalBtnCondition: ConditionObject[] = [
-    {
-      condition: !isMemberCommunity,
-      message: "Join community first",
-    },
-  ];
-
   const disableManageSupportButton = disableManageSupportBtnCondition.some(
     (cond) => cond.condition,
   );
 
   const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons(
     disableManageSupportBtnCondition,
-  );
-
-  const { tooltipMessage: createProposalTooltipMessage } = useDisableButtons(
-    disableCreateProposalBtnCondition,
   );
 
   useEffect(() => {
@@ -617,8 +582,6 @@ export function Proposals({
       ProposalStatus[x.proposalStatus] === "executed",
   );
 
-  const membersStrategies = membersStrategyData?.memberStrategies;
-
   const handleDownloadCVResults = () => {
     let headers = [
       "Proposal ID",
@@ -732,6 +695,7 @@ export function Proposals({
           } gap-10 flex-wrap`}
         >
           <h3 className="text-left w-52">Proposals</h3>
+
           {strategy.isEnabled &&
             (proposals.length === 0 ?
               <div className="text-center py-12  w-full flex flex-col items-center justify-center">
@@ -802,38 +766,101 @@ export function Proposals({
                 </div>
               ))}
         </header>
-        {allocationView && <UserAllocationStats stats={stats} />}
 
-        <div className="flex flex-col gap-6">
-          {inputs != null ?
-            <>
-              {activeOrDisputedProposals.map((proposalData) => (
-                <Fragment key={proposalData.id}>
-                  <ProposalCard
-                    ref={makeRef(proposalData.id)}
-                    proposalData={proposalData}
-                    strategyConfig={strategy.config}
-                    inputData={inputs[proposalData.id]}
-                    stakedFilter={stakedFilters[proposalData.id]}
-                    isAllocationView={allocationView}
-                    memberActivatedPoints={memberActivatedPoints}
-                    memberPoolWeight={memberPoolWeight}
-                    executeDisabled={
-                      proposalData.proposalStatus == 4 ||
-                      !isConnected ||
-                      missmatchUrl
-                    }
-                    poolToken={poolToken}
-                    tokenDecimals={tokenDecimals}
-                    alloInfo={alloInfo}
-                    inputHandler={inputHandler}
-                    communityToken={strategy.registryCommunity.garden}
-                    isPoolEnabled={strategy.isEnabled}
-                    minThGtTotalEffPoints={minThGtTotalEffPoints}
-                  />
-                </Fragment>
-              ))}
-              {!!endedProposals.length && (
+        {activeOrDisputedProposals.map((proposalData) => (
+          <Fragment key={proposalData.id}>
+            <ProposalCard
+              ref={makeRef(proposalData.id)}
+              proposalData={proposalData}
+              strategyConfig={strategy.config}
+              inputData={inputs[proposalData.id]}
+              stakedFilter={stakedFilters[proposalData.id]}
+              isAllocationView={allocationView}
+              memberActivatedPoints={memberActivatedPoints}
+              memberPoolWeight={memberPoolWeight}
+              executeDisabled={
+                proposalData.proposalStatus == 4 || !isConnected || missmatchUrl
+              }
+              poolToken={poolToken}
+              tokenDecimals={tokenDecimals}
+              alloInfo={alloInfo}
+              inputHandler={inputHandler}
+              communityToken={strategy.registryCommunity.garden}
+              isPoolEnabled={strategy.isEnabled}
+              minThGtTotalEffPoints={minThGtTotalEffPoints}
+            />
+          </Fragment>
+        ))}
+
+        {/* Modal Manage Support section */}
+        {inputs != null ?
+          <>
+            <Modal
+              isOpen={allocationView}
+              onClose={() => setAllocationView(false)}
+              size="extra-large"
+              title="Manage Your Support"
+            >
+              <div className="flex flex-col gap-4">
+                <UserAllocationStats stats={stats} />
+                {activeOrDisputedProposals.map((proposalData) => (
+                  <Fragment key={proposalData.id}>
+                    <ProposalsModalSupport
+                      ref={makeRef(proposalData.id)}
+                      proposalData={proposalData}
+                      strategyConfig={strategy.config}
+                      inputData={inputs[proposalData.id]}
+                      stakedFilter={stakedFilters[proposalData.id]}
+                      isAllocationView={allocationView}
+                      memberActivatedPoints={memberActivatedPoints}
+                      memberPoolWeight={memberPoolWeight}
+                      executeDisabled={
+                        proposalData.proposalStatus == 4 ||
+                        !isConnected ||
+                        missmatchUrl
+                      }
+                      poolToken={poolToken}
+                      tokenDecimals={tokenDecimals}
+                      alloInfo={alloInfo}
+                      inputHandler={inputHandler}
+                      communityToken={strategy.registryCommunity.garden}
+                      isPoolEnabled={strategy.isEnabled}
+                      minThGtTotalEffPoints={minThGtTotalEffPoints}
+                    />
+                  </Fragment>
+                ))}
+                {strategy.isEnabled &&
+                  allocationView &&
+                  proposals.length > 0 && (
+                    <>
+                      <div className="flex justify-end gap-4">
+                        <Button
+                          btnStyle="outline"
+                          color="danger"
+                          onClick={() => setAllocationView((prev) => !prev)}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          onClick={submit}
+                          isLoading={allocateStatus === "loading"}
+                          disabled={
+                            inputs == null ||
+                            !getProposalsInputsDifferences(
+                              inputs,
+                              stakedFilters,
+                            ).length
+                          }
+                          tooltip="Make changes in proposals support first"
+                        >
+                          Submit your support
+                        </Button>
+                      </div>
+                      <div />
+                    </>
+                  )}
+              </div>
+              {/* {!!endedProposals.length && (
                 <div className="collapse collapse-arrow">
                   <input type="checkbox" />
                   <div className="collapse-title text-lg font-medium">
@@ -867,121 +894,42 @@ export function Proposals({
                     ))}
                   </div>
                 </div>
-              )}
-            </>
-          : <LoadingSpinner />}
-        </div>
-
-        {strategy.isEnabled && allocationView && proposals.length > 0 && (
-          <>
-            <div className="flex justify-end gap-4">
-              <Button
-                btnStyle="outline"
-                color="danger"
-                onClick={() => setAllocationView((prev) => !prev)}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={submit}
-                isLoading={allocateStatus === "loading"}
-                disabled={
-                  inputs == null ||
-                  !getProposalsInputsDifferences(inputs, stakedFilters).length
-                }
-                tooltip="Make changes in proposals support first"
-              >
-                Submit your support
-              </Button>
-            </div>
-            <div>
-              <div className="flex items-center justify-center gap-6">
-                <Link href={createProposalUrl}>
-                  <Button
-                    icon={<PlusIcon height={24} width={24} />}
-                    disabled={
-                      !isConnected || missmatchUrl || !isMemberCommunity
-                    }
-                    tooltip={
-                      !isConnected ? "Connect your wallet"
-                      : !isMemberCommunity ?
-                        "Join the community first"
-                      : "Create a proposal"
-                    }
-                  >
-                    Create a proposal
-                  </Button>
-                </Link>
-              </div>
-            </div>
+              )} */}
+            </Modal>
           </>
-        )}
-        {proposals.length > 0 && !allocationView && (
-          <div className="flex items-center justify-center gap-6">
-            <Link href={createProposalUrl}>
-              <Button
-                icon={<PlusIcon height={24} width={24} />}
-                disabled={!isConnected || missmatchUrl || !isMemberCommunity}
-                tooltip={createProposalTooltipMessage}
-              >
-                Create a proposal
-              </Button>
-            </Link>
-          </div>
-        )}
+        : <LoadingSpinner />}
       </section>
-
-      {/* Pool Governace */}
-      {strategy.isEnabled && (
-        <div className="col-span-12 xl:col-span-3">
-          <div className="backdrop-blur-sm rounded-lg flex flex-col gap-2 sticky top-32">
-            <PoolGovernance
-              memberPoolWeight={memberPoolWeight}
-              tokenDecimals={tokenDecimals}
-              strategy={strategy}
-              communityAddress={communityAddress}
-              memberTokensInCommunity={memberTokensInCommunity}
-              isMemberCommunity={isMemberCommunity}
-              memberActivatedStrategy={memberActivatedStrategy}
-              membersStrategyData={membersStrategyData}
-            />
-          </div>
-        </div>
-      )}
     </>
   );
 }
 
 function UserAllocationStats({ stats }: { stats: Stats[] }) {
   return (
-    <div className="mt-10">
-      <h5>Support Overview</h5>
-      <div className="mt-5 grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-2">
-        {stats.map((stat) => (
-          <div key={`stat_${stat.id}`} className="section-layout flex gap-4">
-            <div
-              className={`radial-progress rounded-full border-4 border-neutral transition-all duration-300 ease-in-out ${stat.className}`}
-              style={{
-                // @ts-ignore
-                "--value": stat.stat,
-                "--size": "4.2rem",
-                "--thickness": "0.35rem",
-              }}
-              role="progressbar"
-            >
-              <span className="text-xs dark:text-black">{stat.stat} %</span>
-            </div>
-            <div className="flex flex-col items-start justify-center">
-              <InfoWrapper tooltip={stat.info}>
-                <h5>
-                  <TooltipIfOverflow>{stat.name}</TooltipIfOverflow>
-                </h5>
-              </InfoWrapper>
-              <p className="text-2xl font-semibold text-right">{stat.stat} %</p>
-            </div>
+    <div className="mt-5 grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-2">
+      {stats.map((stat) => (
+        <div key={`stat_${stat.id}`} className="section-layout flex gap-4">
+          <div
+            className={`radial-progress rounded-full border-4 border-neutral transition-all duration-300 ease-in-out ${stat.className}`}
+            style={{
+              // @ts-ignore
+              "--value": stat.stat,
+              "--size": "4.2rem",
+              "--thickness": "0.35rem",
+            }}
+            role="progressbar"
+          >
+            <span className="text-xs dark:text-black">{stat.stat} %</span>
           </div>
-        ))}
-      </div>
+          <div className="flex flex-col items-start justify-center">
+            <InfoWrapper tooltip={stat.info}>
+              <h4>
+                <TooltipIfOverflow>{stat.name}</TooltipIfOverflow>
+              </h4>
+            </InfoWrapper>
+            <p className="text-xl font-semibold text-right">{stat.stat} %</p>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
