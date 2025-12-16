@@ -140,6 +140,13 @@ export default function PoolEditForm({
   setModalOpen,
 }: Props) {
   const {
+    id: chainId,
+    nativeCurrency,
+    arbitrator,
+    globalTribunal,
+  } = useChainFromPath()!;
+  const nativeDecimals = nativeCurrency?.decimals ?? ETH_DECIMALS;
+  const {
     register,
     handleSubmit,
     setValue,
@@ -171,11 +178,11 @@ export default function PoolEditForm({
           ),
           proposalCollateral: formatUnits(
             BigInt(initValues.proposalCollateral),
-            ETH_DECIMALS,
+            nativeDecimals,
           ),
           disputeCollateral: formatUnits(
             BigInt(initValues.disputeCollateral),
-            ETH_DECIMALS,
+            nativeDecimals,
           ),
           tribunalAddress: initValues.tribunalAddress,
         }
@@ -226,12 +233,6 @@ export default function PoolEditForm({
 
   const [loading, setLoading] = useState(false);
   const { publish } = usePubSubContext();
-  const {
-    id: chainId,
-    nativeCurrency,
-    arbitrator,
-    globalTribunal,
-  } = useChainFromPath()!;
 
   const formRowTypes: Record<string, any> = {
     spendingLimit: {
@@ -377,11 +378,11 @@ export default function PoolEditForm({
           tribunalSafe: tribunalAddress as Address,
           submitterCollateralAmount: parseUnits(
             previewData.proposalCollateral.toString(),
-            token?.decimals,
+            nativeDecimals,
           ),
           challengerCollateralAmount: parseUnits(
             previewData.disputeCollateral.toString(),
-            token?.decimals,
+            nativeDecimals,
           ),
           defaultRuling: BigInt(previewData.defaultResolution),
           defaultRulingTimeout: BigInt(
@@ -618,8 +619,8 @@ export default function PoolEditForm({
                 registerKey="proposalCollateral"
                 required
                 otherProps={{
-                  step: 1 / 10 ** ETH_DECIMALS,
-                  min: 1 / 10 ** ETH_DECIMALS,
+                  step: 1 / 10 ** nativeDecimals,
+                  min: 1 / 10 ** nativeDecimals,
                 }}
                 suffix={nativeCurrency?.symbol ?? ""}
               />
@@ -633,8 +634,8 @@ export default function PoolEditForm({
                 registerKey="disputeCollateral"
                 required
                 otherProps={{
-                  step: 1 / 10 ** ETH_DECIMALS,
-                  min: 1 / 10 ** ETH_DECIMALS,
+                  step: 1 / 10 ** nativeDecimals,
+                  min: 1 / 10 ** nativeDecimals,
                 }}
                 suffix={nativeCurrency?.symbol ?? ""}
               />
