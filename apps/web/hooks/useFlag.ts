@@ -57,10 +57,7 @@ export const useFlag = (flag: CheatName) => {
         console.info("🚩Flags commands:");
         cheats.forEach((c) => {
           const enabled = localStorage.getItem("flag_" + c) === "true";
-          console.info(
-            `localStorage.setItem("flag_${c}", ${!enabled})`,
-            enabled ? "enabled" : "disabled",
-          );
+          console.info(`localStorage.setItem("flag_${c}", ${!enabled})`);
         });
       };
     }
