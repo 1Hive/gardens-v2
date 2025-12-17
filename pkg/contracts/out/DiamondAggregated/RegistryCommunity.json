@@ -2132,11 +2132,6 @@
           "name": "_selector",
           "type": "bytes4",
           "internalType": "bytes4"
-        },
-        {
-          "name": "_selectorSignature",
-          "type": "string",
-          "internalType": "string"
         }
       ]
     },
@@ -2248,17 +2243,6 @@
       "type": "error",
       "name": "DecreaseUnderMinimum",
       "inputs": []
-    },
-    {
-      "type": "error",
-      "name": "IncorrectFacetCutAction",
-      "inputs": [
-        {
-          "name": "_action",
-          "type": "uint8",
-          "internalType": "uint8"
-        }
-      ]
     },
     {
       "type": "error",
@@ -2384,6 +2368,11 @@
     {
       "type": "error",
       "name": "ValueCannotBeZero",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "StrategyNotEnabled",
       "inputs": []
     }
   ]

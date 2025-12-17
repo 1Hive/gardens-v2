@@ -41,6 +41,7 @@ import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Librar
 // Diamond Pattern imports
 import {LibDiamond} from "../diamonds/libraries/LibDiamond.sol";
 import {IDiamondCut} from "../diamonds/interfaces/IDiamondCut.sol";
+import {IDiamondLoupe} from "../diamonds/interfaces/IDiamondLoupe.sol";
 
 /// @custom:oz-upgrades-from CVStrategy
 contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
@@ -224,12 +225,8 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
                 ip.arbitrableConfig.defaultRulingTimeout
             );
         }
-        if (
-            !(
-                ip.cvParams.decay == 0 && ip.cvParams.weight == 0 && ip.cvParams.maxRatio == 0
-                    && ip.cvParams.minThresholdPoints == 0
-            )
-        ) {
+        if (!(ip.cvParams.decay == 0 && ip.cvParams.weight == 0 && ip.cvParams.maxRatio == 0
+                    && ip.cvParams.minThresholdPoints == 0)) {
             cvParams = ip.cvParams;
             emit CVParamsUpdated(ip.cvParams);
         }
@@ -285,10 +282,10 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         Proposal storage p = proposals[_proposalId];
         if (
             deltaSupport > 0
-                && (
-                    p.proposalStatus == ProposalStatus.Inactive || p.proposalStatus == ProposalStatus.Cancelled
-                        || p.proposalStatus == ProposalStatus.Executed || p.proposalStatus == ProposalStatus.Rejected
-                )
+                && (p.proposalStatus == ProposalStatus.Inactive
+                    || p.proposalStatus == ProposalStatus.Cancelled
+                    || p.proposalStatus == ProposalStatus.Executed
+                    || p.proposalStatus == ProposalStatus.Rejected)
         ) {
             revert ProposalInvalidForAllocation(_proposalId, p.proposalStatus);
         }
@@ -462,6 +459,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     function getProposalStakedAmount(uint256 _proposalId) external view returns (uint256) {
         return proposals[_proposalId].stakedAmount;
     }
+
     //    do a internal function to get the total voter stake
 
     // Goss: Commented because accessible through public fields
@@ -723,9 +721,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     /// @param _diamondCut Array of FacetCut structs defining facet changes
     /// @param _init Address of contract to execute with delegatecall (can be address(0))
     /// @param _calldata Function call data to execute on _init address
-    function diamondCut(IDiamondCut.FacetCut[] calldata _diamondCut, address _init, bytes calldata _calldata)
-        external
-    {
+    function diamondCut(IDiamondCut.FacetCut[] calldata _diamondCut, address _init, bytes calldata _calldata) external {
         _checkOwner();
         LibDiamond.diamondCut(_diamondCut, _init, _calldata);
     }
@@ -757,6 +753,50 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     }
 
     receive() external payable {}
+
+    /// @notice Returns the configured facets registered with the diamond
+    function getFacets() external view returns (IDiamondLoupe.Facet[] memory facets_) {
+        LibDiamond.DiamondStorage storage ds = LibDiamond.diamondStorage();
+        uint256 selectorCount = ds.selectors.length;
+        facets_ = new IDiamondLoupe.Facet[](selectorCount);
+        uint16[] memory numFacetSelectors = new uint16[](selectorCount);
+        uint256 numFacets;
+
+        for (uint256 selectorIndex; selectorIndex < selectorCount; selectorIndex++) {
+            bytes4 selector = ds.selectors[selectorIndex];
+            address facetAddress_ = ds.facetAddressAndSelectorPosition[selector].facetAddress;
+            bool continueLoop;
+            for (uint256 facetIndex; facetIndex < numFacets; facetIndex++) {
+                if (facets_[facetIndex].facetAddress == facetAddress_) {
+                    facets_[facetIndex].functionSelectors[numFacetSelectors[facetIndex]] = selector;
+                    numFacetSelectors[facetIndex]++;
+                    continueLoop = true;
+                    break;
+                }
+            }
+            if (continueLoop) {
+                continueLoop = false;
+                continue;
+            }
+            facets_[numFacets].facetAddress = facetAddress_;
+            facets_[numFacets].functionSelectors = new bytes4[](selectorCount);
+            facets_[numFacets].functionSelectors[0] = selector;
+            numFacetSelectors[numFacets] = 1;
+            numFacets++;
+        }
+
+        for (uint256 facetIndex; facetIndex < numFacets; facetIndex++) {
+            bytes4[] memory selectors = facets_[facetIndex].functionSelectors;
+            uint256 selectorLength = numFacetSelectors[facetIndex];
+            assembly {
+                mstore(selectors, selectorLength)
+            }
+        }
+
+        assembly {
+            mstore(facets_, numFacets)
+        }
+    }
 
     // Note: Storage gap is inherited from CVStrategyStorage base contract
 

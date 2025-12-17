@@ -708,6 +708,19 @@ deploy-or-upgrade-good-dollar-sybil-optimism:
 
 ### POLYGON ###
 
+upgrade-diamond-polygon: verify-storage
+	-forge script script/UpgradeCVDiamond.s.sol:UpgradeCVDiamond \
+	--rpc-url $(RPC_URL_POLYGON) \
+	--sig "run(string)" 'polygon' \
+	--account pkGarden \
+	--etherscan-api-key $(POLYGONSCAN_API_KEY) \
+	--chain-id 137 \
+	--broadcast \
+	--ffi \
+	--verify \
+	--slow \
+	-vvv
+
 transfer-ownership-polygon:
 	-forge script script/TransferOwnershipAllContracts.s.sol:TransferOwnershipAllContracts \
 	--rpc-url $(RPC_URL_POLYGON) \

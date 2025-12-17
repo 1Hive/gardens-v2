@@ -381,17 +381,17 @@
       "name": "disputeProposal",
       "inputs": [
         {
-          "name": "",
+          "name": "proposalId",
           "type": "uint256",
           "internalType": "uint256"
         },
         {
-          "name": "",
+          "name": "context",
           "type": "string",
           "internalType": "string"
         },
         {
-          "name": "",
+          "name": "_extraData",
           "type": "bytes",
           "internalType": "bytes"
         }
@@ -2512,11 +2512,6 @@
           "name": "_selector",
           "type": "bytes4",
           "internalType": "bytes4"
-        },
-        {
-          "name": "_selectorSignature",
-          "type": "string",
-          "internalType": "string"
         }
       ]
     },
@@ -2652,17 +2647,6 @@
       "type": "error",
       "name": "IS_APPROVED_STRATEGY",
       "inputs": []
-    },
-    {
-      "type": "error",
-      "name": "IncorrectFacetCutAction",
-      "inputs": [
-        {
-          "name": "_action",
-          "type": "uint8",
-          "internalType": "uint8"
-        }
-      ]
     },
     {
       "type": "error",
@@ -3431,13 +3415,7 @@
     {
       "type": "error",
       "name": "ArbitratorNotSet",
-      "inputs": [
-        {
-          "name": "arbitrator",
-          "type": "address",
-          "internalType": "address"
-        }
-      ]
+      "inputs": []
     },
     {
       "type": "error",
