@@ -205,6 +205,9 @@ export const FormAddressInput = ({
     },
   };
 
+  const isValidInputAddress = isAddress(inputValue ?? "");
+  const hasEnsAvatar = Boolean(avatarUrl);
+
   return (
     <div className="w-full max-w-[29rem]">
       <FormInput
@@ -233,15 +236,23 @@ export const FormAddressInput = ({
           suffix ??
           (isValidatingSafe || isValidatingERC20 ?
             <LoadingSpinner className="text-neutral-soft-content" />
-          : debouncedValue && (
-              <Image
-                alt=""
-                className="rounded-full"
-                src={avatarUrl ? avatarUrl : blo(debouncedValue as Address)}
-                width="30"
-                height="30"
-              />
-            ))
+          : hasEnsAvatar ?
+            <Image
+              alt=""
+              className="rounded-full"
+              src={avatarUrl!}
+              width={30}
+              height={30}
+            />
+          : isValidInputAddress ?
+            <Image
+              alt=""
+              className="rounded-full"
+              src={blo(inputValue as Address)}
+              width={30}
+              height={30}
+            />
+          : null)
         }
       />
     </div>

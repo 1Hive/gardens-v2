@@ -301,7 +301,7 @@ export function AddressListInput({
             required={required && addresses.length === 0}
             onChange={(e) => setNewAddress(e.target.value)}
             value={newAddress}
-            className="w-[22rem] sm:w-[27.5rem]"
+            className="w-[22rem] sm:w-full"
           />
           <Button
             type="button"
