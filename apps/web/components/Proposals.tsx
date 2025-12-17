@@ -1118,7 +1118,7 @@ function ProposalFiltersUI({
           <p className="text-sm text-neutral-soft-content">Sort by</p>
         </div>
         <div className="dropdown dropdown-hover dropdown-start  w-full relative group">
-          <button className="text-primary-content text-sm  flex gap-2 items-center w-full lg:w-[255px] px-3.5 py-2 bg-primary rounded-lg">
+          <button className="text-primary-content text-sm  flex gap-2 items-center w-full lg:w-[255px] px-3.5 py-2 bg-primary-soft dark:bg-primary rounded-lg">
             {CurrentIcon && <CurrentIcon className="w-4 h-4" />}
             {currentSortOption?.label}
           </button>
