@@ -1,13 +1,20 @@
 import React from "react";
 
-export const BaseLogo = ({ className }: { className?: string }) => {
+export const BaseLogo: React.FC<React.SVGProps<SVGSVGElement>> = ({
+  className,
+  width = "24",
+  height = "24",
+  ...props
+}) => {
   return (
     <svg
-      height="14"
+      width={width}
+      height={height}
       viewBox="0 0 146 146"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className={className}
+      {...props}
     >
       <circle cx="73" cy="73" r="73" fill="#0052FF" />
       <path

@@ -75,7 +75,7 @@ export function useSuperfluidStream({
         console.error("Error fetching superfluid stream:", error);
         return null;
       });
-    if (result) {
+    if (result?.data) {
       let toPoolFlowRate: bigint = result.data.receiverStreams.reduce(
         (
           acc: bigint,

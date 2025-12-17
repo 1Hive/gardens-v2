@@ -131,7 +131,9 @@ export function ConnectWallet() {
                       width={20}
                       loading="lazy"
                     />
-                    <span className="hidden sm:block">Connect wallet</span>
+                    <span className="hidden sm:block text-white">
+                      Connect wallet
+                    </span>
                   </Button>
                 );
               }

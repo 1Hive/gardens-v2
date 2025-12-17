@@ -235,7 +235,10 @@ export default function PoolHeader({
       sybilResistanceType = "goodDollar";
       sybilResistanceValue = undefined;
     }
-  } else {
+  } else if (
+    allowList &&
+    !(allowList.length > 0 && allowList[0] === zeroAddress)
+  ) {
     sybilResistanceType = "allowList";
     sybilResistanceValue = allowList as Address[] | undefined;
   }
@@ -610,9 +613,7 @@ export default function PoolHeader({
 
   return (
     <>
-      <div
-        className={`col-span-12 ${PoolTypes[proposalType] === "funding" ? "xl:col-span-9" : "xl:col-span-12"}`}
-      >
+      <div className="col-span-12 xl:col-span-9">
         <section className="section-layout flex flex-col gap-6">
           {/* Title - Badge poolType - Addresses and Button(when council memeber is connected) */}
           <header className="flex flex-col gap-2">

@@ -66,11 +66,19 @@ const SUBGRAPH_ARBSEP_VERSION = Subgraph.VERSION_ARBSEP;
 const SUBGRAPH_OPSEP_VERSION = Subgraph.VERSION_OPSEP;
 const SUBGRAPH_PRODNET_VERSION = Subgraph.VERSION_PROD;
 
+const getGatewayKey = () => {
+  const serverKey =
+    typeof window === "undefined" ? process.env.SERVER_SUBGRAPH_KEY : null;
+  // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+  return serverKey || process.env.NEXT_PUBLIC_SUBGRAPH_KEY || "";
+};
+
 const getSuperfluidSubgraphUrls = (publishedId: string) => {
+  const gatewayKey = getGatewayKey();
   return {
     publishedSuperfluidSubgraphUrl:
-      process.env.NEXT_PUBLIC_SUBGRAPH_KEY ?
-        `https://gateway.thegraph.com/api/${process.env.NEXT_PUBLIC_SUBGRAPH_KEY}/subgraphs/id/${publishedId}`
+      gatewayKey ?
+        `https://gateway.thegraph.com/api/${gatewayKey}/subgraphs/id/${publishedId}`
       : undefined,
   };
 };
@@ -81,11 +89,12 @@ const getSubgraphUrls = (
   subgraphVersion: string,
   accountNumber: number = 102093,
 ) => {
+  const gatewayKey = getGatewayKey();
   const versionedEndpoint = `https://api.studio.thegraph.com/query/${accountNumber}/${subgraphSlug}`;
   return {
     publishedSubgraphUrl:
-      process.env.NEXT_PUBLIC_SUBGRAPH_KEY ?
-        `https://gateway.thegraph.com/api/${process.env.NEXT_PUBLIC_SUBGRAPH_KEY}/subgraphs/id/${publishedId}`
+      gatewayKey ?
+        `https://gateway.thegraph.com/api/${gatewayKey}/subgraphs/id/${publishedId}`
       : undefined,
     subgraphUrl: `${versionedEndpoint}/${subgraphVersion}`,
   };
