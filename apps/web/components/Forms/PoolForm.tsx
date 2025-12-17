@@ -345,7 +345,9 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
       parse: (value: string) => (
         <div className="flex gap-2 items-center">
           <EthAddress address={value as Address} />
-          <span className="text-black">{customTokenData?.symbol}</span>
+          <span className="text-neutral-content">
+            {customTokenData?.symbol}
+          </span>
         </div>
       ),
     },
