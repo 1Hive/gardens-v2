@@ -92,7 +92,7 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
                     }
                   />
                   <InfoWrapper
-                    tooltip={`${poolSystem > 0 ? "Stake more tokens to increase your\voting power in this pool." : "Fixed voting power"}`}
+                    tooltip={`${poolSystem > 0 ? "Stake more tokens to \nincrease your voting \npower in this pool." : "Fixed voting power"}`}
                     className="hidden md:block text-black"
                     size="sm"
                   />
