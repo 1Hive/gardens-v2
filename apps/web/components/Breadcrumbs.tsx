@@ -80,7 +80,7 @@ export function Breadcrumbs() {
       const parsedResult = await queryItem.parseResult(result.data);
 
       if (isStaticSegment) {
-        parsedResult.push(parseStaticSegment(segments[segmentsLength - 1])); 
+        parsedResult.push(parseStaticSegment(segments[segmentsLength - 1]));
       }
 
       return parsedResult;
@@ -131,7 +131,7 @@ export function Breadcrumbs() {
   return (
     <>
       <div className="my-[2px] border-l-2 border-solid border-neutral-soft-content h-5" />
-      <div aria-label="Breadcrumbs" className="flex w-full items-center">
+      <div aria-label="Breadcrumbs" className="flex w-full items-center pt-1px">
         <ol className="flex w-full items-center overflow-hidden">
           {breadcrumbs.map(({ href, label }, index) => (
             <li

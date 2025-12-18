@@ -748,12 +748,7 @@ export function Proposals({
                     disabled={
                       !isConnected || missmatchUrl || !isMemberCommunity
                     }
-                    tooltip={
-                      !isConnected ? "Connect your wallet"
-                      : !isMemberCommunity ?
-                        "Join the community first"
-                      : "Create a proposal"
-                    }
+                    tooltip={tooltipMessage}
                   >
                     Create a proposal
                   </Button>
@@ -1088,7 +1083,7 @@ function ProposalFiltersUI({
   const CurrentIcon = currentSortOption?.icon;
 
   return (
-    <div className="flex flex-col lg:flex-row justify-between bg-neutral py-4 px-2 rounded-2xl items-center md:gap-2 lg:gap-10">
+    <div className="flex flex-col lg:flex-row justify-between bg-neutral py-4 px-2 rounded-2xl items-center md:gap-2 lg:gap-8">
       {/* FILTERS */}
       <div className="flex w-full gap-2 lg:gap-1 sm:justify-between flex-wrap ">
         {FILTERS.map((f) => (
