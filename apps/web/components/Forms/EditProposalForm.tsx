@@ -105,8 +105,8 @@ export const EditProposalForm = ({
     tokenData: poolToken,
     enabled: Boolean(strategy.id && proposal.proposalNumber),
   });
-  const canEditAmount =
-    BigInt(proposalConviction.currentConvictionPct ?? "0") === 0n;
+  const currentConvictionPct = proposalConviction.currentConvictionPct ?? 0;
+  const canEditAmount = currentConvictionPct === 0;
   const chainId = useChainIdFromPath();
   const { address: connectedWallet } = useAccount();
   const beneficiary = watch("beneficiary");

@@ -35,7 +35,7 @@ export default function DiamondAdminPage() {
   } = useContractRead({
     address: diamondAddress,
     abi: DIAMOND_LOUPE_ABI,
-    functionName: "facets",
+    functionName: "getFacets",
     enabled: Boolean(diamondAddress),
     chainId: selectedChainId,
   });
