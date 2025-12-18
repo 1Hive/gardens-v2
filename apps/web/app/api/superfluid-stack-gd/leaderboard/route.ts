@@ -21,20 +21,21 @@ const PINATA_KEY = process.env.PINATA_KEY;
 const PINATA_SECRET = process.env.PINATA_SECRET;
 
 const pinataClient =
-  PINATA_JWT || (PINATA_KEY && PINATA_SECRET)
-    ? (() => {
-        try {
-          return new pinataSDK({
-            pinataJWTKey: PINATA_JWT,
-            pinataApiKey: PINATA_KEY,
-            pinataSecretApiKey: PINATA_SECRET,
-          });
-        } catch (error) {
-          console.warn("[leaderboard-gd] failed to init pinata SDK", error);
-          return null;
-        }
-      })()
-    : null;
+  // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+  PINATA_JWT || (PINATA_KEY && PINATA_SECRET) ?
+    (() => {
+      try {
+        return new pinataSDK({
+          pinataJWTKey: PINATA_JWT,
+          pinataApiKey: PINATA_KEY,
+          pinataSecretApiKey: PINATA_SECRET,
+        });
+      } catch (error) {
+        console.warn("[leaderboard-gd] failed to init pinata SDK", error);
+        return null;
+      }
+    })()
+  : null;
 
 const fetchIpfsJson = async <T = any>(cid: string): Promise<T | null> => {
   if (!cid) return null;
