@@ -64,7 +64,7 @@ export function Modal({
     medium: "max-w-xl",
     large: "max-w-2xl",
     "extra-large": "max-w-4xl",
-    "ultra-large": "max-w-7xl",
+    "ultra-large": "max-w-6xl",
   };
 
   return (
