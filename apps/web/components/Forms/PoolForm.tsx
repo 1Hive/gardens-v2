@@ -578,7 +578,6 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
       }
       contractWrite(ipfsHash);
     }
-    setLoading(false);
   };
 
   const formatFormRows = () => {
@@ -1184,7 +1183,6 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
             <Button
               onClick={() => {
                 setShowPreview(false);
-                setLoading(false);
               }}
               btnStyle="outline"
             >
