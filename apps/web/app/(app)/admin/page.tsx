@@ -1,9 +1,8 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import { Abi, Address, isAddress } from "viem";
+import { Address, isAddress } from "viem";
 import { useContractRead } from "wagmi";
-import diamondLoupeJson from "#/contracts/out/interfaces/IDiamondLoupe.sol/IDiamondLoupe.json";
 import { Button } from "@/components/Button";
 import { InfoBox } from "@/components/InfoBox";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
@@ -14,8 +13,6 @@ type DiamondFacet = {
   facetAddress: Address;
   functionSelectors: string[];
 };
-
-const DIAMOND_LOUPE_ABI = diamondLoupeJson.abi as Abi;
 
 export default function DiamondAdminPage() {
   const [addressInput, setAddressInput] = useState("");
@@ -34,7 +31,33 @@ export default function DiamondAdminPage() {
     refetch,
   } = useContractRead({
     address: diamondAddress,
-    abi: DIAMOND_LOUPE_ABI,
+    abi: [
+      {
+        inputs: [],
+        name: "getFacets",
+        outputs: [
+          {
+            components: [
+              {
+                internalType: "address",
+                name: "facetAddress",
+                type: "address",
+              },
+              {
+                internalType: "bytes4[]",
+                name: "functionSelectors",
+                type: "bytes4[]",
+              },
+            ],
+            internalType: "struct IDiamondLoupe.Facet[]",
+            name: "facets_",
+            type: "tuple[]",
+          },
+        ],
+        stateMutability: "view",
+        type: "function",
+      },
+    ],
     functionName: "getFacets",
     enabled: Boolean(diamondAddress),
     chainId: selectedChainId,
