@@ -238,7 +238,7 @@ export const chainConfigMap: {
     ...getSubgraphUrls(
       "4vsznmRkUGm9DZFBwvC6PDvGPVfVLQcUUr5ExdTNZiUc",
       "gardens-v2---polygon",
-      SUBGRAPH_PRODNET_VERSION,
+      "0.2.2",
     ),
     ...getSuperfluidSubgraphUrls(
       "CvVf1MiypnZhwWZjbxMH9A8nR2qdcfTozC5DQ1cw4X9n",
