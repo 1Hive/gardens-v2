@@ -51,6 +51,7 @@
   "dependencies": {
     "@graphprotocol/graph-cli": "^0.98.1",
     "@graphprotocol/graph-ts": "^0.34.0",
+    "@graphprotocol/client-cli": "^3.0.0",
     "@types/node": "*",
     "node-fetch": "*",
     "process": "^0.11.10",
