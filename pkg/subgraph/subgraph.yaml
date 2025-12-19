@@ -6,15 +6,15 @@ schema:
 dataSources:
   - kind: ethereum/contract
     name: RegistryFactory
-    network: arbitrum-one
+    network: matic
     context:
       chainId: 
         type: Int
-        data: 42161
+        data: 137
     source:
-      address: "0xc1c2e092b7dbc8413e1ac02e92c161b0bda783f6"
+      address: "0x57a9835b204dbcc101dbf981625a3625e8043b9c"
       abi: RegistryFactory
-      startBlock: 251465002
+      startBlock: 61584764
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -44,15 +44,15 @@ dataSources:
 
   - kind: ethereum/contract
     name: PassportScorer
-    network: arbitrum-one
+    network: matic
     context:
       chainId: 
         type: Int
-        data: 42161
+        data: 137
     source:
-      address: "0x8cd4bA4ad10d85A550fe45d567a49E49e1D23CE1"
+      address: "0x190Fa730E6FfC64Ebd0031bE59b3007cC9eE2bB3"
       abi: PassportScorer
-      startBlock: 251465002
+      startBlock: 61584764
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -81,15 +81,15 @@ dataSources:
 
   - kind: ethereum/contract
     name: GoodDollarSybil
-    network: arbitrum-one
+    network: matic
     context:
       chainId: 
         type: Int
-        data: 42161
+        data: 137
     source:
-      address: "0x3015DC7D831D19786C726Ab1A49b30b31356f78D"
+      address: "0x7D08db0138fc0f0Dcc9C7120b301Ff07D3A7b300"
       abi: GoodDollarSybil
-      startBlock: 251465002
+      startBlock: 61584764
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -113,7 +113,7 @@ dataSources:
 templates:
   - kind: ethereum/contract
     name: RegistryCommunity
-    network: arbitrum-one
+    network: matic
     source:
       abi: RegistryCommunity
     mapping:
@@ -187,7 +187,7 @@ templates:
 
   - kind: ethereum/contract
     name: CVStrategy
-    network: arbitrum-one
+    network: matic
     source:
       abi: CVStrategy
     mapping:
@@ -254,7 +254,7 @@ templates:
 
   - kind: ethereum/contract
     name: CollateralVault
-    network: arbitrum-one
+    network: matic
     source:
       abi: CollateralVault
     mapping:
