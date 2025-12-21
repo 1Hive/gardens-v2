@@ -40,5 +40,7 @@ export { default as GreenWave } from "./GreenWave.png";
 export { default as OneHiveLogo } from "./OneHiveLogo.png";
 export { default as SuperfluidStream } from "./ReceivingStream-green.png";
 export { default as SuperLogo } from "./superfluid-logo-dark.svg";
+export { default as GoodDollarLogo } from "./gd-logo.svg";
 export { default as SuperBanner } from "./superfluid-banner.png";
 export { default as PlantBanner } from "./plante-banner.png";
+export { default as GoodDollarBanner } from "./gd-banner.png";
