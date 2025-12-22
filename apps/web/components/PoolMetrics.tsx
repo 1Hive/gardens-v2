@@ -755,129 +755,120 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
           </div>
         </div>
       </Modal>
-      <div className="col-span-12 xl:col-span-3 h-fit mb-16">
-        <div className="backdrop-blur-sm rounded-lg">
-          <section className="section-layout gap-2 flex flex-col">
-            <h3>Pool Funds</h3>
-            <div className="flex flex-col gap-2">
-              <div className="flex justify-between items-center gap-3 z-o">
-                <p className="subtitle2">Funds in pool:</p>
-                <div className="flex items-center gap-1">
-                  <DisplayNumber
-                    copiable={true}
-                    number={[poolToken.balance, poolToken.decimals]}
-                    tokenSymbol={poolToken.symbol}
-                    compact={true}
-                    valueClassName="text-2xl mr-1 font-bold"
-                  />
-                </div>
+
+      <div className="backdrop-blur-sm rounded-lg">
+        <section className="section-layout gap-2 flex flex-col">
+          <h3>Pool Funds</h3>
+          <div className="flex flex-col gap-2">
+            <div className="flex justify-between items-center gap-3">
+              <p className="subtitle2">Funds in pool:</p>
+              <div className="flex items-center gap-1">
+                <DisplayNumber
+                  copiable={true}
+                  number={[poolToken.balance, poolToken.decimals]}
+                  tokenSymbol={poolToken.symbol}
+                  compact={true}
+                  valueClassName="text-2xl mr-1 font-bold"
+                />
               </div>
-              {currentFlowRateBn != null &&
-                currentFlowPerMonth != null &&
-                currentFlowRateBn > 0n && (
-                  <div className="flex justify-between gap-3 items-center">
-                    <p className="subtitle2">Incoming Stream:</p>
-                    <div className="flex items-center gap-1">
-                      <p className="flex items-center whitespace-nowrap tooltip">
-                        <div
-                          data-tip={`${currentFlowPerMonth} ${poolToken.symbol}/mo`}
-                          className="tooltip"
-                        >
-                          {roundToSignificant(currentFlowPerMonth, 3)}
-                        </div>{" "}
-                        {poolToken.symbol}
-                        /mo
-                      </p>
+            </div>
+            {currentFlowRateBn != null &&
+              currentFlowPerMonth != null &&
+              currentFlowRateBn > 0n && (
+                <div className="flex justify-between gap-3 items-center">
+                  <p className="subtitle2">Incoming Stream:</p>
+                  <div className="flex items-center gap-1">
+                    <p className="flex items-center whitespace-nowrap tooltip">
                       <div
-                        className="tooltip tooltip-top-left cursor-pointer w-8"
-                        data-tip={`This pool is receiving ${roundToSignificant(currentFlowPerMonth, 4)} ${poolToken.symbol}/month through Superfluid streaming`}
+                        data-tip={`${currentFlowPerMonth} ${poolToken.symbol}/mo`}
+                        className="tooltip"
                       >
-                        <Image
-                          src={SuperfluidStream}
-                          alt="Incoming Stream"
-                          width={32}
-                          height={32}
-                          className="mb-[1.6px]"
-                        />
-                      </div>
+                        {roundToSignificant(currentFlowPerMonth, 3)}
+                      </div>{" "}
+                      {poolToken.symbol}
+                      /mo
+                    </p>
+                    <div
+                      className="tooltip tooltip-top-left cursor-pointer w-8"
+                      data-tip={`This pool is receiving ${roundToSignificant(currentFlowPerMonth, 4)} ${poolToken.symbol}/month through Superfluid streaming`}
+                    >
+                      <Image
+                        src={SuperfluidStream}
+                        alt="Incoming Stream"
+                        width={32}
+                        height={32}
+                        className="mb-[1.6px]"
+                      />
                     </div>
                   </div>
-                )}
-              {accountAddress && (
-                <div className="flex justify-between items-center">
-                  <p className="text-sm">Wallet:</p>
-                  <DisplayNumber
-                    number={[
-                      walletBalance?.value ?? BigInt(0),
-                      poolToken.decimals,
-                    ]}
-                    tokenSymbol={poolToken.symbol}
-                    compact={true}
-                    valueClassName="text-lg"
-                    symbolClassName="text-sm"
-                  />
                 </div>
               )}
-            </div>
-            <div
-              className={`w-full dropdown dropdown-hover dropdown-start ${missmatchUrl || !isConnected ? "" : "tooltip"} z-50`}
+            {accountAddress && (
+              <div className="flex justify-between items-center">
+                <p className="text-sm">Wallet:</p>
+                <DisplayNumber
+                  number={[
+                    walletBalance?.value ?? BigInt(0),
+                    poolToken.decimals,
+                  ]}
+                  tokenSymbol={poolToken.symbol}
+                  compact={true}
+                  valueClassName="text-lg"
+                  symbolClassName="text-sm"
+                />
+              </div>
+            )}
+          </div>
+          <div
+            className={`z-[9999] w-full dropdown dropdown-hover dropdown-top ${missmatchUrl || !isConnected ? "" : "tooltip"}`}
+          >
+            <Button
+              type="submit"
+              btnStyle="outline"
+              color="primary"
+              disabled={missmatchUrl || !isConnected}
+              tooltip={
+                missmatchUrl || !isConnected ? tooltipMessage : undefined
+              }
+              icon={<PlusIcon className="w-5 h-5" />}
+              className="w-full mt-1"
             >
-              <Button
-                type="submit"
-                btnStyle="outline"
-                color="primary"
-                disabled={missmatchUrl || !isConnected}
-                tooltip={
-                  missmatchUrl || !isConnected ? tooltipMessage : undefined
-                }
-                icon={<PlusIcon className="w-5 h-5" />}
-                className="w-full mt-1"
-              >
-                Add Funds
-              </Button>
-              {!missmatchUrl && isConnected && (
-                <ul className="dropdown-content menu bg-primary rounded-box z-[1] w-full p-2 shadow">
-                  <li>
-                    <Button
-                      type="submit"
-                      btnStyle="ghost"
-                      color="primary"
-                      disabled={missmatchUrl || !isConnected}
-                      tooltip={
-                        missmatchUrl || !isConnected ? tooltipMessage : (
-                          undefined
-                        )
-                      }
-                      icon={<BanknotesIcon className="w-5 h-5" />}
-                      className="w-full mt-1 xl:!justify-start"
-                      onClick={() => setIsTransferModalOpened(true)}
-                    >
-                      1-time Transfer
-                    </Button>
-                  </li>
-                  <li>
-                    <Button
-                      type="submit"
-                      btnStyle="ghost"
-                      color="secondary"
-                      disabled={missmatchUrl || !isConnected || !superToken}
-                      tooltip={
-                        missmatchUrl || !isConnected ? tooltipMessage : (
-                          "Not enabled yet, the community's Council Safe can connect to enable streaming for this Pool"
-                        )
-                      }
-                      icon={<ArrowPathRoundedSquareIcon className="w-5 h-5" />}
-                      className="w-full mt-1 xl:!justify-start"
-                      onClick={() => setIsStreamModalOpened(true)}
-                    >
-                      Stream Funds
-                    </Button>
-                  </li>
-                </ul>
-              )}
-            </div>
-          </section>
-        </div>
+              Add Funds
+            </Button>
+            {!missmatchUrl && isConnected && (
+              <ul className="dropdown-content menu bg-primary rounded-box w-full p-2 shadow fixed z-[9999] left-0 top-full mt-2">
+                <li>
+                  <Button
+                    type="submit"
+                    btnStyle="ghost"
+                    color="primary"
+                    icon={<BanknotesIcon className="w-5 h-5" />}
+                    className="w-full mt-1 xl:!justify-start"
+                    onClick={() => setIsTransferModalOpened(true)}
+                  >
+                    1-time Transfer
+                  </Button>
+                </li>
+                <li>
+                  <Button
+                    type="submit"
+                    btnStyle="ghost"
+                    color="secondary"
+                    disabled={!superToken}
+                    tooltip={
+                      "Not enabled yet, the community's Council Safe can connect to enable streaming for this Pool"
+                    }
+                    icon={<ArrowPathRoundedSquareIcon className="w-5 h-5" />}
+                    className="w-full mt-1 xl:!justify-start z-50"
+                    onClick={() => setIsStreamModalOpened(true)}
+                  >
+                    Stream Funds
+                  </Button>
+                </li>
+              </ul>
+            )}
+          </div>
+        </section>
       </div>
     </>
   );
