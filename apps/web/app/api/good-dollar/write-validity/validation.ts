@@ -9,8 +9,8 @@ import { privateKeyToAccount } from "viem/accounts";
 import { chainConfigMap, getConfigByChain } from "@/configs/chains";
 import { goodDollarABI } from "@/src/generated";
 import { ChainId } from "@/types";
-import { getViemChain } from "@/utils/web3";
 import { fetchGooddollarWhitelisted } from "@/utils/goodDollar";
+import { getViemChain } from "@/utils/web3";
 
 const LOCAL_RPC = "http://127.0.0.1:8545";
 const LIST_MANAGER_PRIVATE_KEY = process.env.LIST_MANAGER_PRIVATE_KEY;
@@ -102,9 +102,7 @@ export async function validateUserOnChain(
     });
 
     const walletClient = createWalletClient({
-      account: privateKeyToAccount(
-        (LIST_MANAGER_PRIVATE_KEY as Address) || "",
-      ),
+      account: privateKeyToAccount((LIST_MANAGER_PRIVATE_KEY as Address) || ""),
       chain,
       transport: custom(client.transport),
     });

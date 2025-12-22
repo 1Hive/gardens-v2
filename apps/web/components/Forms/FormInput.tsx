@@ -67,7 +67,7 @@ export function FormInput({
   };
 
   const disabledInputClassname =
-    "!border-gray-400 focus:border-gray-400 focus:outline-none cursor-not-allowed bg-transparent opacity-60";
+    "!border-gray-400 focus:border-gray-400 focus:outline-none text-neutral-content cursor-not-allowed opacity-40";
 
   return (
     <div className={`flex flex-col ${wide ? "w-full" : ""}`}>
@@ -89,7 +89,13 @@ export function FormInput({
           }
         </label>
       )}
-      {subLabel && <p className="mb-1 text-xs">{subLabel}</p>}
+      {subLabel && (
+        <p
+          className={`mb-1 ml-1 text-xs ${readOnly || disabled ? "text-neutral-content" : "text-neutral-soft-content"}̀`}
+        >
+          {subLabel}
+        </p>
+      )}
       <div
         className={`relative ${type !== "textarea" && type !== "markdown" && "max-w-[29rem]"}`}
       >
@@ -143,12 +149,14 @@ export function FormInput({
             readOnly={readOnly || disabled}
             onChange={registered?.onChange ?? onChange}
             value={value}
-            className="input input-info dark:bg-primary-soft-dark"
+            className={`input input-info dark:bg-primary-soft-dark ${disabled || readOnly ? disabledInputClassname : ""}`}
             {...otherProps}
           />
         }
         {Boolean(suffix) && (
-          <span className="absolute right-[10px] top-1/2 -translate-y-1/2 text-neutral-content">
+          <span
+            className={`absolute right-[10px] top-1/2 -translate-y-1/2 text-neutral-content ${disabled || readOnly ? "opacity-60" : ""}`}
+          >
             {suffix}
           </span>
         )}

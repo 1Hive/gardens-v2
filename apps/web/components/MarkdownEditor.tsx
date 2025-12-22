@@ -64,7 +64,16 @@ type MarkdownEditorProps = {
 
 const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorProps>(
   function MarkdownEditor(
-    { id, value, onChange, className, errors, disabled = false, readOnly = false, ...rest },
+    {
+      id,
+      value,
+      onChange,
+      className,
+      errors,
+      disabled = false,
+      readOnly = false,
+      ...rest
+    },
     ref,
   ) {
     const wrapRef = useRef<HTMLDivElement>(null);
@@ -226,12 +235,17 @@ const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorProps>(
     };
 
     return (
-      <div ref={wrapRef} className="relative bg-neutral rounded-2xl">
+      <div
+        ref={wrapRef}
+        className={`relative ${readOnly || disabled ? "!bg-transparent dark:!bg-primary-soft-dark opacity-40" : "bg-neutral"} rounded-2xl`}
+      >
         <div
           className={`markdown-editor-shell p-2 min-h-60 rounded-2xl border ${
             id && errors?.[id] ? "input-error" : "input-info"
           } ${className ?? ""} ${
-            disabled ? "!border-gray-400 opacity-60 cursor-not-allowed" : ""
+            disabled ?
+              "!border-gray-400 cursor-not-allowed !bg-transparent dark:!bg-primary-soft-dark"
+            : ""
           } ${
             isFullscreenActive ?
               "markdown-editor-shell--fullscreen"
@@ -247,7 +261,9 @@ const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorProps>(
             markdown={value ?? ""}
             readOnly={readOnly || disabled}
             className={`rounded-2xl !h-full mdxeditor-theme ${resolvedTheme === "darkTheme" ? "dark-theme dark-editor" : ""} ${
-              readOnly || disabled ? "pointer-events-none" : ""
+              readOnly || disabled ?
+                "pointer-events-none !bg-transparent dark:!bg-primary-soft-dark"
+              : ""
             }`}
             {...rest}
             plugins={[
@@ -277,56 +293,56 @@ const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorProps>(
               }),
               toolbarPlugin({
                 toolbarClassName: "",
-                toolbarContents: () => (
-                  <>
-                    <DiffSourceToggleWrapper>
-                      <UndoRedo />
-                      <Separator />
-                      <BoldItalicUnderlineToggles />
-                      <Separator />
-                      <ListsToggle />
-                      <Separator />
-                      <CodeToggle />
-                      <StrikeThroughSupSubToggles />
-                      <Separator />
-                      <InsertThematicBreak />
-                      <InsertTable />
-                      <CreateLink />
-                      <InsertImage />
-                      <Separator />
-                      <ConditionalContents
-                        options={[
-                          {
-                            when: (editor) => editor?.editorType === "codeblock",
-                            contents: () => <ChangeCodeMirrorLanguage />,
-                          },
-                          {
-                            fallback: () => (
-                              <>
-                                <InsertCodeBlock />
-                              </>
-                            ),
-                          },
-                        ]}
-                      />
-                      <Separator />
-                      <BlockTypeSelect />
-                    </DiffSourceToggleWrapper>
-                    <div className="ml-auto">
-                      <ButtonWithTooltip
-                        title="Toggle fullscreen"
-                        onClick={toggleFs}
-                        aria-label="Toggle fullscreen"
-                      >
-                        {isFs ? (
-                          <ArrowsPointingInIcon width={24} height={24} />
-                        ) : (
-                          <ArrowsPointingOutIcon width={24} height={24} />
-                        )}
-                      </ButtonWithTooltip>
-                    </div>
-                  </>
-                ),
+                toolbarContents: () =>
+                  !readOnly && !disabled ?
+                    <>
+                      <DiffSourceToggleWrapper>
+                        <UndoRedo />
+                        <Separator />
+                        <BoldItalicUnderlineToggles />
+                        <Separator />
+                        <ListsToggle />
+                        <Separator />
+                        <CodeToggle />
+                        <StrikeThroughSupSubToggles />
+                        <Separator />
+                        <InsertThematicBreak />
+                        <InsertTable />
+                        <CreateLink />
+                        <InsertImage />
+                        <Separator />
+                        <ConditionalContents
+                          options={[
+                            {
+                              when: (editor) =>
+                                editor?.editorType === "codeblock",
+                              contents: () => <ChangeCodeMirrorLanguage />,
+                            },
+                            {
+                              fallback: () => (
+                                <>
+                                  <InsertCodeBlock />
+                                </>
+                              ),
+                            },
+                          ]}
+                        />
+                        <Separator />
+                        <BlockTypeSelect />
+                      </DiffSourceToggleWrapper>
+                      <div className="ml-auto">
+                        <ButtonWithTooltip
+                          title="Toggle fullscreen"
+                          onClick={toggleFs}
+                          aria-label="Toggle fullscreen"
+                        >
+                          {isFs ?
+                            <ArrowsPointingInIcon width={24} height={24} />
+                          : <ArrowsPointingOutIcon width={24} height={24} />}
+                        </ButtonWithTooltip>
+                      </div>
+                    </>
+                  : <div className="bg-transparent" />,
               }),
               listsPlugin(),
               markdownShortcutPlugin(),

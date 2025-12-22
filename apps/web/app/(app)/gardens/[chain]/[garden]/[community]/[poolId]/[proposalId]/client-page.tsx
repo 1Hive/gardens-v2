@@ -588,8 +588,8 @@ export default function ClientPage({ params }: ClientPageProps) {
             <section className="section-layout gap-4 flex flex-col">
               <InfoBox
                 infoBoxType="info"
-                contentStyle="text-tertiary-content"
                 content="As the original author, you can edit or cancel this proposal."
+                title="Actions"
               />
               {proposalDataForActions && (
                 <>

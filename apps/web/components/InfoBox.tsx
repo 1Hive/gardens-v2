@@ -1,7 +1,7 @@
 import React from "react";
 import { InformationCircleIcon } from "@heroicons/react/24/outline";
 
-type InfoBoxStyles = "success" | "warning" | "error" | "info";
+type InfoBoxStyles = "success" | "warning" | "error" | "info" | "disabled";
 
 type InfoBoxProps = {
   infoBoxType: InfoBoxStyles;
@@ -25,6 +25,8 @@ const infoBoxStyles: Record<InfoBoxStyles, string> = {
     "bg-secondary-soft text-secondary-hover-content dark:bg-secondary-dark-base/70 dark:text-secondary-dark-text-hover dark:border-secondary-dark-border/80",
   error:
     "bg-danger-soft text-danger-hover-content dark:bg-danger-dark-base/70 dark:text-danger-dark-text-hover dark:border-danger-dark-border/80",
+  disabled:
+    "bg-neutral-soft text-neutral-content dark:bg-neutral-soft-content dark:text-neutral-content dark:border-neutral-content",
 };
 
 export function InfoBox({

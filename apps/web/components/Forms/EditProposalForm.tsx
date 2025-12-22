@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from "react";
+import { LockClosedIcon, LockOpenIcon } from "@heroicons/react/24/outline";
 import { useForm } from "react-hook-form";
 import { Address, formatUnits, parseUnits } from "viem";
 import { useAccount, useContractRead } from "wagmi";
@@ -106,7 +107,8 @@ export const EditProposalForm = ({
     enabled: Boolean(strategy.id && proposal.proposalNumber),
   });
   const currentConvictionPct = proposalConviction.currentConvictionPct ?? 0;
-  const canEditAmount = currentConvictionPct === 0;
+  const canEditAmount =
+    currentConvictionPct === 0 && proposalConviction.totalSupportPct === 0;
   const chainId = useChainIdFromPath();
   const { address: connectedWallet } = useAccount();
   const beneficiary = watch("beneficiary");
@@ -324,7 +326,25 @@ export const EditProposalForm = ({
         />
       : <div className="flex flex-col gap-2 overflow-hidden p-1">
           {proposalTypeName === "funding" && (
-            <div className="relative flex flex-col">
+            <InfoBox
+              infoBoxType={canEditAmount ? "info" : "disabled"}
+              title={`Requested amount${canEditAmount ? "" : " locked"}`}
+              icon={canEditAmount ? <LockOpenIcon /> : <LockClosedIcon />}
+            >
+              <div className="mb-4">
+                {canEditMetadata ?
+                  <>
+                    You can adjust the requested amount until someone supports
+                    this proposal.
+                  </>
+                : <>
+                    This proposal has support from the community - its requested
+                    amount can no longer be edited. <br />
+                    To request a different amount, cancel the proposal and
+                    create a new one.
+                  </>
+                }
+              </div>
               <FormInput
                 label="Requested amount"
                 subLabel={`Pool Funds: ${poolToken?.formatted} ${poolToken?.symbol} - Spending limit: ${spendingLimitPct.toFixed(1)}% = ${spendingLimit} ${poolToken?.symbol}.`}
@@ -355,159 +375,145 @@ export const EditProposalForm = ({
                 placeholder="0"
                 suffix={poolToken?.symbol}
               />
-              {canEditAmount && (
-                <InfoBox
-                  infoBoxType="info"
-                  title="Editable until first support"
-                  className="mt-3"
-                >
-                  You can adjust the requested amount until someone supports
-                  this proposal.
-                </InfoBox>
-              )}
-              {!canEditAmount && (
-                <InfoBox
-                  infoBoxType="warning"
-                  title="Requested amount locked"
-                  className="mt-3"
-                >
-                  The requested amount can no longer be changed after receiving
-                  the first support.
-                </InfoBox>
-              )}
-            </div>
-          )}
 
-          {requestedAmount && thresholdPct !== 0 && (
-            <InfoBox
-              title={`Conviction required:${" "} ${thresholdPct > 100 ? "Over 100" : thresholdPct}%`}
-              infoBoxType={thColor}
-            >
-              <div className="flex flex-wrap w-full">
-                The{" "}
-                <InfoWrapper
-                  tooltip={`Conviction accumulates over time based on both the level of support on a proposal and the duration defined by the Conviction Growth parameter (${convictionGrowth} ${convictionGrowthUnit}).`}
-                  size="sm"
-                  hoverOnChildren={true}
-                  hideIcon={true}
-                  className={`tooltip-top-right border-b border-dashed border-${thColor} text-sm`}
+              {requestedAmount && thresholdPct !== 0 && canEditAmount && (
+                <InfoBox
+                  title={`Conviction required:${" "} ${thresholdPct > 100 ? "Over 100" : thresholdPct}%`}
+                  infoBoxType={thColor}
                 >
-                  conviction
-                </InfoWrapper>{" "}
-                required for the proposal to pass within the request amount is{" "}
-                {thresholdPct}%.{" "}
-                {requestedAmount &&
-                  thresholdPct > 50 &&
-                  (thresholdPct < 100 ?
-                    "It may be difficult to pass."
-                  : "It will not pass unless more funds are added to the pool")}
-              </div>
+                  <div className="flex flex-wrap w-full">
+                    The{" "}
+                    <InfoWrapper
+                      tooltip={`Conviction accumulates over time based on both the level of support on a proposal and the duration defined by the Conviction Growth parameter (${convictionGrowth} ${convictionGrowthUnit}).`}
+                      size="sm"
+                      hoverOnChildren={true}
+                      hideIcon={true}
+                      className={`tooltip-top-right border-b border-dashed border-${thColor} text-sm`}
+                    >
+                      conviction
+                    </InfoWrapper>{" "}
+                    required for the proposal to pass within the request amount
+                    is {thresholdPct}%.{" "}
+                    {requestedAmount &&
+                      thresholdPct > 50 &&
+                      (thresholdPct < 100 ?
+                        "It may be difficult to pass."
+                      : "It will not pass unless more funds are added to the pool")}
+                  </div>
+                </InfoBox>
+              )}
             </InfoBox>
           )}
-          {proposalTypeName !== "signaling" && (
+
+          <InfoBox
+            infoBoxType={canEditMetadata ? "info" : "disabled"}
+            title={"Metadata"}
+            className="mt-3"
+            icon={canEditMetadata ? <LockOpenIcon /> : <LockClosedIcon />}
+          >
+            <div className="flex flex-row gap-1 align-middle mb-4">
+              {canEditMetadata ?
+                <div className="flex flex-col">
+                  <div className="flex flex-row items-center">
+                    <b>Time remaining to edit: </b>&nbsp;
+                    <Countdown
+                      endTimestamp={metadataEditDeadlineSeconds}
+                      format="minutes"
+                      display="inline"
+                      showTimeout={false}
+                      className="items-end text-xs font-semibold"
+                    />
+                  </div>
+                  You can edit the following for 1 hour after creating.
+                </div>
+              : <>
+                  <b>
+                    {proposalTypeName !== "signaling" ? "Beneficiary, " : ""}
+                  </b>
+                  <b>Title</b> and&nbsp;<b>Description</b> can only be edited
+                  within one hour after creation.
+                </>
+              }
+            </div>
+
+            {proposalTypeName !== "signaling" && (
+              <div className="flex flex-col">
+                <FormAddressInput
+                  label="Beneficiary address"
+                  register={register}
+                  registerKey="beneficiary"
+                  value={beneficiary}
+                  onChange={(e) => {
+                    setValue("beneficiary", e.target.value);
+                  }}
+                  required
+                  errors={errors}
+                  disabled={!canEditMetadata}
+                  tooltip={
+                    canEditMetadata ? undefined : (
+                      "Beneficiary can only be changed within the first hour."
+                    )
+                  }
+                />
+              </div>
+            )}
             <div className="flex flex-col">
-              <FormAddressInput
-                label="Beneficiary address"
+              <FormInput
+                label="Title"
                 register={register}
-                registerKey="beneficiary"
-                value={beneficiary}
-                onChange={(e) => {
-                  setValue("beneficiary", e.target.value);
-                }}
                 required
                 errors={errors}
+                registerKey="title"
+                type="text"
+                placeholder="Example Title"
                 disabled={!canEditMetadata}
-                tooltip={
-                  canEditMetadata ? undefined : (
-                    "Beneficiary can only be changed within the first hour."
-                  )
-                }
               />
             </div>
-          )}
-          <div className="flex flex-col">
-            <FormInput
-              label="Title"
-              register={register}
-              required
-              errors={errors}
-              registerKey="title"
-              type="text"
-              placeholder="Example Title"
-              disabled={!canEditMetadata}
-            />
-          </div>
-          <div className="flex flex-col">
-            <FormInput
-              label="Proposal description"
-              register={register}
-              required
-              errors={errors}
-              registerKey="description"
-              onChange={(e) => {
-                setValue("description", e.target.value);
-              }}
-              value={getValues("description")}
-              type="markdown"
-              rows={10}
-              placeholder="Proposal description"
-              disabled={!canEditMetadata}
-            />
-            {canEditMetadata && metadataTimeLeft > 0 && (
-              <InfoBox
-                infoBoxType="info"
-                title="Metadata editing window"
-                className="mt-3"
-              >
-                <div className="flex flex-row gap-1 align-middle">
-                  You can edit the beneficiary, title, and description for{" "}
-                  <Countdown
-                    endTimestamp={metadataEditDeadlineSeconds}
-                    format="minutes"
-                    display="inline"
-                    showTimeout={false}
-                    className="items-end text-xs font-semibold"
-                  />
-                  .
-                </div>
-              </InfoBox>
-            )}
-            {!canEditMetadata && (
-              <InfoBox
-                infoBoxType="warning"
-                title="Metadata locked"
-                className="mt-3"
-              >
-                Title, description, and beneficiary can only be edited within
-                one hour after creation.
-              </InfoBox>
-            )}
-          </div>
+            <div className="flex flex-col">
+              <FormInput
+                label="Proposal description"
+                register={register}
+                required
+                errors={errors}
+                registerKey="description"
+                onChange={(e) => {
+                  setValue("description", e.target.value);
+                }}
+                value={getValues("description")}
+                type="markdown"
+                rows={10}
+                placeholder="Proposal description"
+                disabled={!canEditMetadata}
+              />
+            </div>
+          </InfoBox>
         </div>
       }
-      <div className="flex w-full items-center justify-end py-6 flex-wrap">
-        {showPreview ?
-          <div className="flex items-center gap-10">
-            <Button
-              onClick={() => {
-                setShowPreview(false);
-                setLoading(false);
-              }}
-              btnStyle="outline"
-            >
-              Edit
-            </Button>
-            <Button
-              onClick={() => editProposal()}
-              isLoading={loading}
-              disabled={isButtonDisabled}
-              tooltip={tooltipMessage}
-            >
-              Submit
-            </Button>
-          </div>
-        : <Button type="submit">Preview</Button>}
-      </div>
+      {(canEditAmount || canEditMetadata) && (
+        <div className="flex w-full items-center justify-end py-6 flex-wrap">
+          {showPreview ?
+            <div className="flex items-center gap-10">
+              <Button
+                onClick={() => {
+                  setShowPreview(false);
+                  setLoading(false);
+                }}
+                btnStyle="outline"
+              >
+                Edit
+              </Button>
+              <Button
+                onClick={() => editProposal()}
+                isLoading={loading}
+                disabled={isButtonDisabled}
+                tooltip={tooltipMessage}
+              >
+                Submit
+              </Button>
+            </div>
+          : <Button type="submit">Preview</Button>}
+        </div>
+      )}
     </form>
   );
 };
