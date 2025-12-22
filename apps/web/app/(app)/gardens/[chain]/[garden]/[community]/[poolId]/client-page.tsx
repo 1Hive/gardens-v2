@@ -88,7 +88,7 @@ export default function ClientPage({
 
   const chainId = useChainIdFromPath();
 
-  //New querys and logic for PoolGovernance component
+  //New queries and logic for PoolGovernance component
   const { data: memberPower, refetch: refetchMemberPower } = useContractRead({
     address: communityAddress,
     abi: registryCommunityABI,
