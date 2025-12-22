@@ -1,5 +1,6 @@
 import { SVGProps } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { newLogo } from "@/assets";
 
 const navigation = [
@@ -70,14 +71,16 @@ export default function Footer() {
           ))}
         </div>
         <div className="flex  items-center gap-2 text-sm">
-          <Image
-            src={newLogo}
-            alt="logo"
-            height={20}
-            width={20}
-            loading="lazy"
-          />
-          <h6>Gardens</h6>
+          <Link href="/gardens" className="flex items-center gap-3 text-sm">
+            <Image
+              src={newLogo}
+              alt="logo"
+              height={20}
+              width={20}
+              loading="lazy"
+            />
+            <h6>Gardens</h6>
+          </Link>
         </div>
       </div>
     </footer>

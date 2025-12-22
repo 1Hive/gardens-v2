@@ -100,6 +100,26 @@ export const PARTICIPATION_BY_CAMPAIGN: Record<string, ParticipationStep[]> = {
 
   "2": [
     {
+      title: "Follow GoodDollar on Farcaster",
+      description: (
+        <>
+          Stay connected with the GoodDollar community.{" "}
+          <Link
+            href="https://farcaster.xyz/gooddollar"
+            target="_blank"
+            rel="noreferrer"
+            className="underline"
+          >
+            Follow GoodDollar on Farcaster
+          </Link>
+          .
+        </>
+      ),
+      icon: <ChatBubbleLeftRightIcon className="h-5 w-5" />,
+      activities: ["Farcaster Follow"],
+      pointsInfo: "1 point",
+    },
+    {
       title: "Add $G to Funding Pools",
       description:
         "Add $G as a one-time transfer or stream $G into any Funding Pool in the GoodDollar Builders Community.",
