@@ -109,11 +109,45 @@ export const PARTICIPATION_BY_CAMPAIGN: Record<string, ParticipationStep[]> = {
     },
     {
       title: "Join the Community & Increase Your Stake",
-      description:
-        "Become an active member of the GoodDollar Builders community and stake $G.",
+      description: (
+        <>
+          Become an active member of the GoodGov community and stake $G.{" "}
+          <Link
+            href="https://app.gardens.fund/gardens/42220/0x62b8b11039fcfe5ab0c56e502b1c372a3d2a9c7a/0x2ac2b63689a33fe0c8d3d4f70a45cf589ecdd0ac"
+            target="_blank"
+            rel="noreferrer"
+            className="underline"
+          >
+            Join GoodGov Community
+          </Link>
+          .
+        </>
+      ),
+
       icon: <UsersIcon className="h-5 w-5" />,
       activities: ["Stake & Governance"],
       pointsInfo: "Points split proportionally based on staked $G",
+    },
+    {
+      title: "2x Bonus in GoodDollar Builders DAO",
+      description: (
+        <>
+          Join the GoodDollar Builders DAO to earn double points.{" "}
+          <Link
+            href="https://app.gardens.fund/gardens/42220/0x62b8b11039fcfe5ab0c56e502b1c372a3d2a9c7a/0xf42c9ca2b10010142e2bac34ebdddb0b82177684"
+            target="_blank"
+            rel="noreferrer"
+            className="underline"
+          >
+            Join GoodDollar Builders Community
+          </Link>
+          .
+        </>
+      ),
+      icon: <CurrencyDollarIcon className="h-5 w-5" />,
+      activities: ["GoodDollar Builders DAO member"],
+      pointsInfo: "x2 points multiplier",
+      highlighted: true,
     },
   ],
 };
