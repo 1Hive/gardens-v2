@@ -88,7 +88,7 @@ export default function ClientPage({
 
   const chainId = useChainIdFromPath();
 
-  //New querys and logic for PoolGovernance component
+  //New queries and logic for PoolGovernance component
   const { data: memberPower, refetch: refetchMemberPower } = useContractRead({
     address: communityAddress,
     abi: registryCommunityABI,
@@ -168,9 +168,9 @@ export default function ClientPage({
 
   const { subscribe, unsubscribe, connected } = usePubSubContext();
 
-  const subscritionId = useRef<SubscriptionId>();
+  const subscriptionId = useRef<SubscriptionId>();
   useEffect(() => {
-    subscritionId.current = subscribe(
+    subscriptionId.current = subscribe(
       {
         topic: "member",
         id: wallet,
@@ -182,8 +182,8 @@ export default function ClientPage({
       },
     );
     return () => {
-      if (subscritionId.current) {
-        unsubscribe(subscritionId.current);
+      if (subscriptionId.current) {
+        unsubscribe(subscriptionId.current);
       }
     };
   }, [connected]);
@@ -417,8 +417,8 @@ export default function ClientPage({
         minThGtTotalEffPoints={minThGtTotalEffPoints}
       />
 
-      <div className="col-span-12 xl:col-span-3 flex flex-col gap-10">
-        {isEnabled && (
+      {isEnabled && (
+        <div className="col-span-12 xl:col-span-3 flex flex-col gap-10">
           <>
             {poolToken && PoolTypes[proposalType] !== "signaling" && (
               <PoolMetrics
@@ -437,37 +437,31 @@ export default function ClientPage({
               />
             )}
           </>
-        )}
 
-        <div className="section-layout flex flex-col items-start xl:items-center gap-4">
-          <div className="flex flex-col gap-4">
-            <h3>Have an idea ?</h3>
-            <span className="text-sm">
-              Submit a proposal{" "}
-              {PoolTypes[proposalType] !== "signaling" ?
-                "to request funding from the pool."
-              : "to share your vision and build community support."}
-            </span>
-          </div>
-          <div className="w-full flex items-center justify-center">
-            <Link href={createProposalUrl}>
-              <Button
-                icon={<PlusIcon height={24} width={24} />}
-                disabled={!isConnected || missmatchUrl || !isMemberCommunity}
-                tooltip={
-                  !isConnected ? "Connect your wallet"
-                  : !isMemberCommunity ?
-                    "Join the community first"
-                  : "Create a proposal"
-                }
-              >
-                Create a proposal
-              </Button>
-            </Link>
-          </div>
-        </div>
+          <div className="section-layout flex flex-col items-start xl:items-center gap-4">
+            <div className="flex flex-col gap-4">
+              <h3>Have an idea ?</h3>
+              <span className="text-sm">
+                Submit a proposal{" "}
+                {PoolTypes[proposalType] !== "signaling" ?
+                  "to request funding from the pool."
+                : "to share your vision and build community support."}
+              </span>
+            </div>
 
-        {isEnabled && (
+            <div className="w-full flex items-center justify-center">
+              <Link href={createProposalUrl}>
+                <Button
+                  icon={<PlusIcon height={24} width={24} />}
+                  disabled={!isConnected || missmatchUrl || !isMemberCommunity}
+                  tooltip={tooltipMessage}
+                >
+                  Create a proposal
+                </Button>
+              </Link>
+            </div>
+          </div>
+
           <PoolGovernance
             memberPoolWeight={memberPoolWeight}
             tokenDecimals={tokenDecimals}
@@ -482,8 +476,8 @@ export default function ClientPage({
               : undefined
             }
           />
-        )}
-      </div>
+        </div>
+      )}
 
       {isEnabled && (
         <Proposals

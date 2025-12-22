@@ -748,12 +748,7 @@ export function Proposals({
                     disabled={
                       !isConnected || missmatchUrl || !isMemberCommunity
                     }
-                    tooltip={
-                      !isConnected ? "Connect your wallet"
-                      : !isMemberCommunity ?
-                        "Join the community first"
-                      : "Create a proposal"
-                    }
+                    tooltip={tooltipMessage}
                   >
                     Create a proposal
                   </Button>
@@ -766,28 +761,16 @@ export function Proposals({
                     {activeOrDisputedProposals.length > 0 &&
                       proposalCardRefs.current.size ===
                         activeOrDisputedProposals.length && (
-                        <div className="dropdown dropdown-hover dropdown-start">
-                          <Button
-                            btnStyle="outline"
-                            className="bg-none hover:bg-nuetral-content border-none hover:border-none  rotate-90"
-                            icon={
-                              <EllipsisHorizontalCircleIcon className="w-5 h-5 text-neutral-content" />
-                            }
-                          />
-
-                          <div className="dropdown-content menu bg-primary flex flex-col items-center gap-2 rounded-box z-50 shadow w-[230px] ">
-                            <Button
-                              btnStyle="link"
-                              color="primary"
-                              tooltip="Download proposals conviction results (CSV)"
-                              forceShowTooltip={true}
-                              icon={<ArrowDownTrayIcon className="w-6 h-6" />}
-                              onClick={handleDownloadCVResults}
-                            >
-                              Download CV results
-                            </Button>
-                          </div>
-                        </div>
+                        <Button
+                          btnStyle="link"
+                          color="primary"
+                          tooltip="Download proposals conviction results (CSV)"
+                          forceShowTooltip={true}
+                          icon={<ArrowDownTrayIcon className="w-6 h-6" />}
+                          onClick={handleDownloadCVResults}
+                        >
+                          Export conviction results
+                        </Button>
                       )}
                     <div
                       onMouseLeave={() => setShowManageSupportTooltip(false)}
@@ -1078,7 +1061,7 @@ function ProposalFiltersUI({
       },
     ];
 
-    // Remove "Requested Amount" option when poolType is a signlaing pool
+    // Remove "Requested Amount" option when poolType is a signaling pool
     return +poolType === 0 ?
         options.filter((opt) => opt.key !== "mostRequested")
       : options;
@@ -1088,7 +1071,7 @@ function ProposalFiltersUI({
   const CurrentIcon = currentSortOption?.icon;
 
   return (
-    <div className="flex flex-col lg:flex-row justify-between bg-neutral py-4 px-2 rounded-2xl items-center md:gap-2 lg:gap-10">
+    <div className="flex flex-col lg:flex-row justify-between bg-neutral py-4 px-2 rounded-2xl items-center md:gap-2 lg:gap-8">
       {/* FILTERS */}
       <div className="flex w-full gap-2 lg:gap-1 sm:justify-between flex-wrap ">
         {FILTERS.map((f) => (
