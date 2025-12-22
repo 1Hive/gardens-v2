@@ -688,7 +688,7 @@ const ProposalSupportersTable = ({
           <p className="">{totalStakedAmount} %</p>
         </div>
       }
-      className="border1 rounded-lg bg-neutral"
+      className="border1 rounded-lg bg-neutral p-2"
     />
   );
 };

@@ -88,7 +88,7 @@ export default function ClientPage({
 
   const chainId = useChainIdFromPath();
 
-  //New querys and logic for PoolGovernance component
+  //New queries and logic for PoolGovernance component
   const { data: memberPower, refetch: refetchMemberPower } = useContractRead({
     address: communityAddress,
     abi: registryCommunityABI,
@@ -168,9 +168,9 @@ export default function ClientPage({
 
   const { subscribe, unsubscribe, connected } = usePubSubContext();
 
-  const subscritionId = useRef<SubscriptionId>();
+  const subscriptionId = useRef<SubscriptionId>();
   useEffect(() => {
-    subscritionId.current = subscribe(
+    subscriptionId.current = subscribe(
       {
         topic: "member",
         id: wallet,
@@ -182,8 +182,8 @@ export default function ClientPage({
       },
     );
     return () => {
-      if (subscritionId.current) {
-        unsubscribe(subscritionId.current);
+      if (subscriptionId.current) {
+        unsubscribe(subscriptionId.current);
       }
     };
   }, [connected]);
