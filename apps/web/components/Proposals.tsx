@@ -20,7 +20,6 @@ import {
   Battery50Icon,
   CurrencyDollarIcon,
   ChevronDownIcon,
-  EllipsisHorizontalCircleIcon,
   HandRaisedIcon,
 } from "@heroicons/react/24/outline";
 
@@ -38,7 +37,6 @@ import {
   CVStrategy,
   RegistryCommunity,
   getMembersStrategyQuery,
-  getMembersStrategyDocument,
 } from "#/subgraph/.graphclient";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { PoolGovernanceProps } from "./PoolGovernance";
@@ -201,23 +199,6 @@ export function Proposals({
       enabled: !!wallet,
     },
   );
-
-  const { data: membersStrategyData } =
-    useSubgraphQuery<getMembersStrategyQuery>({
-      query: getMembersStrategyDocument,
-      variables: {
-        strategyId: `${strategy.id.toLowerCase()}`,
-      },
-      changeScope: [
-        {
-          topic: "proposal",
-          containerId: strategy.poolId,
-          type: "update",
-        },
-        { topic: "member", containerId: strategy.poolId },
-      ],
-      enabled: !!strategy.id,
-    });
 
   const memberActivatedPoints: bigint = BigInt(
     memberStrategyData?.memberStrategy?.activatedPoints ?? 0,
@@ -714,7 +695,6 @@ export function Proposals({
     sortBy: sortBy,
     setSortBy: setSortBy,
     filtered: filteredAndSorted,
-    loading,
   } = useProposalFilter(strategy.proposals);
 
   return (
@@ -769,7 +749,7 @@ export function Proposals({
                           icon={<ArrowDownTrayIcon className="w-6 h-6" />}
                           onClick={handleDownloadCVResults}
                         >
-                          Export conviction results
+                          Export
                         </Button>
                       )}
                     <div
@@ -1076,7 +1056,9 @@ function ProposalFiltersUI({
       <div className="flex w-full gap-2 lg:gap-1 sm:justify-between flex-wrap ">
         {FILTERS.map((f) => (
           <Button
-            // style={filter === f ? { cursor: "not-allowed" } : {}}
+            className={
+              filter === f ? "!cursor-default !bg-primary-dark-base" : ""
+            }
             onClick={() => setFilter(f)}
             color={filter === f ? "primary" : "disabled"}
             key={f}
@@ -1103,7 +1085,7 @@ function ProposalFiltersUI({
         <div className="dropdown dropdown-hover dropdown-start  w-full relative group">
           <button
             tabIndex={0}
-            className="text-primary-content text-sm  flex gap-2 items-center w-full lg:w-[255px] px-3.5 py-2 bg-primary rounded-lg"
+            className="text-primary-content text-sm  flex gap-2 items-center w-full lg:w-[255px] px-3.5 py-2 bg-primary-soft dark:bg-primary rounded-lg"
           >
             {CurrentIcon && <CurrentIcon className="w-4 h-4" />}
             {currentSortOption?.label}
@@ -1130,18 +1112,6 @@ function ProposalFiltersUI({
           </ul>
           <ChevronDownIcon className="w-4 h-4 absolute top-[11px] right-3 lg:right-5 group-hover:rotate-180 transition-all duration-150 ease-in-out" />
         </div>
-      </div>
-    </div>
-  );
-}
-
-function ProposalListLoading() {
-  return (
-    <div className="flex flex-col items-center justify-center py-12 space-y-4">
-      {/* Spinner */}
-      <div className="relative w-12 h-12">
-        <div className="absolute inset-0 border-4 border-neutral rounded-full" />
-        <div className="absolute inset-0 border-4 border-primary-content border-t-transparent rounded-full animate-spin" />
       </div>
     </div>
   );
