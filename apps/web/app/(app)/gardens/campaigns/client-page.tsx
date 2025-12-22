@@ -1,15 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  CalendarIcon,
-  UserGroupIcon,
-  CurrencyDollarIcon,
-} from "@heroicons/react/24/outline";
+import { CalendarIcon, UserGroupIcon } from "@heroicons/react/24/outline";
 import Image, { StaticImageData } from "next/image";
 import Link from "next/link";
 import { PlantBanner } from "@/assets";
-import { Badge } from "@/components/Badge";
 import { Button } from "@/components/Button";
 import { Skeleton } from "@/components/Skeleton";
 import { fetchSuperfluidLeaderboard } from "@/types";
@@ -23,10 +18,6 @@ type CampaignStats = {
 };
 
 export default function CampaignsPage() {
-  const [totalStreamedSup, setTotalStreamedSup] = useState<number | null>(null);
-  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
-  const [walletCount, setWalletCount] = useState<number | null>(null);
-
   const [statsByCampaign, setStatsByCampaign] = useState<
     Record<string, CampaignStats>
   >({});
@@ -34,27 +25,6 @@ export default function CampaignsPage() {
   const [loading, setLoading] = useState<boolean>(true);
 
   const campaigns = Object.values(CAMPAIGNS);
-
-  useEffect(() => {
-    async function load() {
-      setLoading(true);
-
-      // Campaign 1 is the default stats source for the list
-      const res = await fetchSuperfluidLeaderboard(
-        CAMPAIGNS["1"].leaderboardEndpoint,
-      );
-
-      if (res) {
-        setTotalStreamedSup(res.totalStreamedSup);
-        setWalletCount(res.snapshot.wallets.length);
-        setLastUpdated(res.snapshot.updatedAt ?? null);
-      }
-
-      setLoading(false);
-    }
-
-    load();
-  }, []);
 
   useEffect(() => {
     async function load() {
@@ -119,7 +89,7 @@ export default function CampaignsPage() {
       </div>
 
       {/* Content */}
-      <div className="mx-auto max-w-7xl px-4 flex flex-col gap-10  items-center border2">
+      <div className="mx-auto max-w-7xl px-4 flex flex-col gap-10  items-center">
         <div className="flex items-center justify-center gap-2 mt-10">
           <Button>Active</Button>
           <Button disabled>Ended</Button>
