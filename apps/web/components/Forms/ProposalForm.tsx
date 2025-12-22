@@ -220,7 +220,6 @@ export const ProposalForm = ({
 
       write({ args: [BigInt(poolId), encodedData] });
     }
-    setLoading(false);
   };
 
   const handlePreview = (data: FormInputs) => {
