@@ -1,9 +1,4 @@
-import {
-  SuperBanner,
-  SuperLogo,
-  GoodDollarBanner,
-  GoodDollarLogo,
-} from "@/assets";
+import { SuperBanner, SuperLogo, GoodDollarLogo } from "@/assets";
 
 export type CampaignId = "1" | "2";
 
@@ -19,7 +14,7 @@ export interface CampaignConfig {
   leaderboardEndpoint: string;
 }
 
-export const CAMPAIGNS: Record<CampaignId, CampaignConfig> = {
+export const CAMPAIGNS = {
   "1": {
     id: "1",
     name: "Superfluid Ecosystem Rewards",
@@ -40,8 +35,8 @@ export const CAMPAIGNS: Record<CampaignId, CampaignConfig> = {
     tokenAllocated: 837_370,
     tokenSymbol: "SUP",
     endDate: "25 Feb 2026",
-    banner: GoodDollarBanner,
+    banner: SuperBanner,
     logo: GoodDollarLogo,
     leaderboardEndpoint: "/api/superfluid-stack-gd/leaderboard",
   },
-};
+} as const;

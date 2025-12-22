@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import ClientPage from "./client-page";
 import { SuperBanner } from "@/assets";
+import { CampaignId } from "@/utils/campaigns";
 
 type PageParams = {
   params: {
-    campaignId: string;
+    campaignId: CampaignId;
   };
 };
 
@@ -45,6 +46,6 @@ export async function generateMetadata({
   return fallbackMetadata;
 }
 
-export default function Page() {
-  return <ClientPage />;
+export default function Page({ params }: PageParams) {
+  return <ClientPage campaignId={params.campaignId} />;
 }
