@@ -3,13 +3,7 @@
 import { Client as NotionClient } from "@notionhq/client";
 import pinataSDK from "@pinata/sdk";
 import { NextResponse } from "next/server";
-import {
-  AnyVariables,
-  Client,
-  createClient,
-  fetchExchange,
-  gql,
-} from "urql";
+import { AnyVariables, Client, createClient, fetchExchange, gql } from "urql";
 import { Address, createPublicClient, formatUnits, http, parseAbi } from "viem";
 import { chainConfigMap } from "@/configs/chains";
 import { getTokenUsdPrice } from "@/services/coingecko";
@@ -48,11 +42,6 @@ type SuperTokenResult = {
   symbol: string;
   isListed?: boolean;
   createdAtBlockNumber?: string;
-};
-
-type ManualBoundEntry = {
-  startBlock?: bigint;
-  endBlock?: bigint;
 };
 
 type WalletActivity = {
@@ -697,13 +686,16 @@ let creationCacheCampaignVersion: string | null = null;
 let transferCacheCampaignVersion: string | null = null;
 const TOKEN_PRICE_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const ENS_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const ENS_AVATAR_RETRY_MS = 60 * 60 * 1000;
 const ENS_METADATA_AVATAR_BASE_URL =
   "https://metadata.ens.domains/mainnet/avatar";
 
 const buildEnsMetadataAvatarUrl = (name: string) =>
   `${ENS_METADATA_AVATAR_BASE_URL}/${encodeURIComponent(name.toLowerCase())}`;
 
-const fetchEnsAvatarFromMetadata = async (name: string): Promise<string | null> => {
+const fetchEnsAvatarFromMetadata = async (
+  name: string,
+): Promise<string | null> => {
   try {
     const url = buildEnsMetadataAvatarUrl(name);
     const response = await fetch(url, { method: "HEAD" });
@@ -847,7 +839,7 @@ const resolveEnsAvatarWithFallback = async (
   } catch {
     // ignore resolver errors
   }
-  return await fetchEnsAvatarFromMetadata(name);
+  return fetchEnsAvatarFromMetadata(name);
 };
 
 const fetchEnsIdentityByAddress = async (
@@ -861,7 +853,38 @@ const fetchEnsIdentityByAddress = async (
   const cached = ensIdentityCache.get(key);
   const now = Date.now();
   if (cached && now - cached.fetchedAt < ENS_CACHE_TTL_MS) {
-    return { name: cached.name, avatar: cached.avatar };
+    if (cached.avatar) {
+      return { name: cached.name, avatar: cached.avatar };
+    }
+    const cachedName = cached.name;
+    const shouldRefreshAvatar =
+      typeof cachedName === "string" &&
+      cachedName.length > 0 &&
+      now - cached.fetchedAt >= ENS_AVATAR_RETRY_MS;
+    if (!shouldRefreshAvatar) {
+      return { name: cached.name, avatar: cached.avatar };
+    }
+    try {
+      const client = getMainnetClient();
+      const avatar = await resolveEnsAvatarWithFallback(client, cachedName);
+      if (!avatar) {
+        console.log("[superfluid-stack] ens avatar not found for name", {
+          ens: cachedName,
+        });
+      }
+      ensIdentityCache.set(key, {
+        name: cachedName,
+        avatar,
+        fetchedAt: now,
+      });
+      return { name: cachedName, avatar };
+    } catch (error) {
+      console.warn("[superfluid-stack] ens avatar refresh failed", {
+        address,
+        error,
+      });
+      return { name: cached.name, avatar: cached.avatar };
+    }
   }
   try {
     const client = getMainnetClient();
@@ -2288,14 +2311,12 @@ const processChain = async ({
   const primarySubgraphUrl =
     chainConfig.publishedSubgraphUrl ?? chainConfig.subgraphUrl;
   const fallbackSubgraphUrl =
-    chainConfig.subgraphUrl &&
-    chainConfig.subgraphUrl !== primarySubgraphUrl ?
+    chainConfig.subgraphUrl && chainConfig.subgraphUrl !== primarySubgraphUrl ?
       chainConfig.subgraphUrl
     : undefined;
   const urqlClient = createGraphClient(primarySubgraphUrl);
-  const urqlFallbackClient = fallbackSubgraphUrl ?
-    createGraphClient(fallbackSubgraphUrl)
-  : null;
+  const urqlFallbackClient =
+    fallbackSubgraphUrl ? createGraphClient(fallbackSubgraphUrl) : null;
   const superfluidClient = createGraphClient(superfluidSubgraphUrl);
   const runQueryWithFallback = async <T, V extends AnyVariables>(
     queryDoc: any,
@@ -2368,9 +2389,12 @@ const processChain = async ({
   if (startBlock > latestBlock) startBlock = latestBlock;
 
   console.log("[superfluid-stack] Fetching pools", { chainId });
-  const poolsResult = await runQueryWithFallback<{
-    cvstrategies: Strategy[];
-  }, Record<string, never>>(SUPERFLUID_POOLS_QUERY, {});
+  const poolsResult = await runQueryWithFallback<
+    {
+      cvstrategies: Strategy[];
+    },
+    Record<string, never>
+  >(SUPERFLUID_POOLS_QUERY, {});
   if (poolsResult.error) {
     throw new Error(
       `Failed to fetch pools for chain ${chainId}: ${poolsResult.error.message}`,
@@ -2383,22 +2407,25 @@ const processChain = async ({
 
   // Community mapping
   console.log("[superfluid-stack] Fetching communities", { chainId });
-  const communitiesResult = await runQueryWithFallback<{
-    registryCommunities: {
-      id: string;
-      communityName?: string | null;
-      members: { memberAddress: string; stakedTokens: string }[];
-      strategies: {
+  const communitiesResult = await runQueryWithFallback<
+    {
+      registryCommunities: {
         id: string;
-        token: string;
-        metadata?: { title?: string | null } | null;
-        config: {
-          superfluidToken?: string | null;
-          proposalType?: string | null;
-        };
+        communityName?: string | null;
+        members: { memberAddress: string; stakedTokens: string }[];
+        strategies: {
+          id: string;
+          token: string;
+          metadata?: { title?: string | null } | null;
+          config: {
+            superfluidToken?: string | null;
+            proposalType?: string | null;
+          };
+        }[];
       }[];
-    }[];
-  }, Record<string, never>>(COMMUNITY_QUERY, {});
+    },
+    Record<string, never>
+  >(COMMUNITY_QUERY, {});
   if (communitiesResult.error) {
     throw new Error(
       `Failed to fetch communities for chain ${chainId}: ${communitiesResult.error.message}`,
@@ -2956,8 +2983,8 @@ export async function GET(req: Request) {
     const nativeSuperTokenByWallet = new Map<string, string>();
     const nativeTokenByWallet = new Map<string, string>();
     for (const [addr, entry] of ensIdentityCache.entries()) {
-      ensNameByWallet.set(addr, entry.name ?? "");
-      ensAvatarByWallet.set(addr, entry.avatar ?? "");
+      if (entry.name) ensNameByWallet.set(addr, entry.name);
+      if (entry.avatar) ensAvatarByWallet.set(addr, entry.avatar);
     }
     for (const [addr, token] of nativeSuperTokenCache.entries()) {
       nativeSuperTokenByWallet.set(addr, token);
