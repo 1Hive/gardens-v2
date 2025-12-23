@@ -22,7 +22,7 @@ const PINATA_JWT = process.env.PINATA_JWT;
 const PINATA_KEY = process.env.PINATA_KEY;
 const PINATA_SECRET = process.env.PINATA_SECRET;
 
-const GARDENS_GDA_ID = "0x5f86aeb40ea66373c7ce337f777c37951fdaaeea";
+const GOODDOLLAR_GDA_ID = "0x24cf8b766b5b1e4ef25a4878842742758e466831";
 
 const SUPERFLUID_POOL_TOTALS_QUERY = gql`
   query poolTotals($id: ID!) {
@@ -69,7 +69,7 @@ const fetchSuperfluidTotals = async (): Promise<number | null> => {
     });
     const res = await client
       .query(SUPERFLUID_POOL_TOTALS_QUERY, {
-        id: GARDENS_GDA_ID.toLowerCase(),
+        id: GOODDOLLAR_GDA_ID.toLowerCase(),
       })
       .toPromise();
 
@@ -83,16 +83,7 @@ const fetchSuperfluidTotals = async (): Promise<number | null> => {
     const total = res.data?.pool?.totalAmountDistributedUntilUpdatedAt ?? null;
     if (!total) return null;
 
-    const totalBigInt = BigInt(total);
-    const maxSafeBigInt = BigInt(Number.MAX_SAFE_INTEGER);
-    if (totalBigInt > maxSafeBigInt) {
-      console.warn("[leaderboard] superfluid pool total exceeds Number.MAX_SAFE_INTEGER; skipping to avoid precision loss", {
-        rawTotal: total,
-      });
-      return null;
-    }
-
-    const totalSup = Number(totalBigInt) / 1e18;
+    const totalSup = Number(BigInt(total)) / 1e18;
     if (Number.isNaN(totalSup)) return null;
     return totalSup;
   } catch (error) {
@@ -194,10 +185,10 @@ const parseNumberEnv = (value?: string, fallback = 0) => {
 export const revalidate = 0;
 
 const TARGET_STREAM_SUP = parseNumberEnv(
-  process.env.SUPERFLUID_GD_TARGET_STREAM_SUP,
+  process.env.SUPERFLUID_GD_TARGET_STREAM_SUP ?? "837370",
 );
-const TOTAL_STREAMED_SUP_FALLBACK = parseNumberEnv(
-  process.env.SUPERFLUID_GD_TOTAL_STREAMED_SUP_FALLBACK,
+const TOTAL_STREAMED_SUP_FALLBACK = BigInt(
+  process.env.SUPERFLUID_GD_TOTAL_STREAMED_SUP_FALLBACK ?? "0",
 );
 
 export async function GET(request: Request) {
