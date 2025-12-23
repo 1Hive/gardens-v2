@@ -54,6 +54,7 @@ export const useConvictionRead = ({
     functionName: "calculateProposalConviction",
     args: [BigInt(proposalData?.proposalNumber ?? 0)],
     enabled,
+    watch: true,
   });
 
   const { data: thresholdFromContract, error: errorThreshold } =

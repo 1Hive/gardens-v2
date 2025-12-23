@@ -1,25 +1,43 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { PlusIcon } from "@heroicons/react/24/outline";
+import Link from "next/link";
 import { Address } from "viem";
-import { useBalance, useAccount, useChainId } from "wagmi";
+import { useBalance, useAccount, useChainId, useContractRead } from "wagmi";
 import {
   getAlloQuery,
+  getMembersStrategyDocument,
+  getMembersStrategyQuery,
+  getMemberStrategyDocument,
+  getMemberStrategyQuery,
   getPoolDataDocument,
   getPoolDataQuery,
+  isMemberDocument,
+  isMemberQuery,
 } from "#/subgraph/.graphclient";
-import { InfoBox, PoolMetrics, Proposals } from "@/components";
+import {
+  Button,
+  InfoBox,
+  PoolGovernance,
+  PoolMetrics,
+  Proposals,
+} from "@/components";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import PoolHeader from "@/components/PoolHeader";
 import { chainConfigMap } from "@/configs/chains";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
+import { SubscriptionId, usePubSubContext } from "@/contexts/pubsub.context";
+import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
+import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { usePoolToken } from "@/hooks/usePoolToken";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { useSuperfluidToken } from "@/hooks/useSuperfluidToken";
+import { registryCommunityABI } from "@/src/generated";
 import { PoolTypes } from "@/types";
-import { formatTokenAmount } from "@/utils/numbers";
+import { calculatePercentageBigInt, formatTokenAmount } from "@/utils/numbers";
 
 export type AlloQuery = getAlloQuery["allos"][number];
 
@@ -59,7 +77,118 @@ export default function ClientPage({
       ],
     },
   );
+
   const strategy = data?.cvstrategies?.[0];
+
+  const communityAddress = strategy?.registryCommunity.id as Address;
+
+  const { address: wallet } = useAccount();
+
+  const tokenDecimals = strategy?.registryCommunity.garden.decimals;
+
+  const chainId = useChainIdFromPath();
+
+  //New queries and logic for PoolGovernance component
+  const { data: memberPower, refetch: refetchMemberPower } = useContractRead({
+    address: communityAddress,
+    abi: registryCommunityABI,
+    functionName: "getMemberPowerInStrategy",
+    args: [wallet as Address, strategy?.id as Address],
+    chainId: chainId,
+    enabled: !!wallet,
+  });
+
+  const { data: memberData, error: errorMemberData } =
+    useSubgraphQuery<isMemberQuery>({
+      query: isMemberDocument,
+      variables: {
+        me: wallet?.toLowerCase(),
+        comm: strategy?.registryCommunity.id.toLowerCase(),
+      },
+      changeScope: [
+        {
+          topic: "member",
+          id: wallet,
+          containerId: strategy?.poolId,
+        },
+        {
+          topic: "proposal",
+          containerId: strategy?.poolId,
+          function: "allocate",
+        },
+      ],
+      enabled: !!wallet && !!strategy?.registryCommunity?.id,
+    });
+  const { data: memberStrategyData } = useSubgraphQuery<getMemberStrategyQuery>(
+    {
+      query: getMemberStrategyDocument,
+      variables: {
+        member_strategy: `${wallet?.toLowerCase()}-${strategy?.id.toLowerCase()}`,
+      },
+      changeScope: [
+        {
+          topic: "proposal",
+          containerId: strategy?.poolId,
+          type: "update",
+        },
+        { topic: "member", id: wallet, containerId: strategy?.poolId },
+      ],
+      enabled: !!wallet && !!strategy?.id,
+    },
+  );
+
+  const memberTokensInCommunity = BigInt(
+    memberData?.member?.memberCommunity?.[0]?.stakedTokens ?? 0,
+  );
+
+  const { data: membersStrategyData } =
+    useSubgraphQuery<getMembersStrategyQuery>({
+      query: getMembersStrategyDocument,
+      variables: {
+        strategyId: `${strategy?.id.toLowerCase()}`,
+      },
+      changeScope: [
+        {
+          topic: "proposal",
+          containerId: strategy?.poolId,
+          type: "update",
+        },
+        { topic: "member", id: wallet, containerId: strategy?.poolId },
+      ],
+      enabled: !!wallet,
+    });
+
+  const membersStrategies = membersStrategyData?.memberStrategies;
+
+  const isMemberCommunity =
+    !!memberData?.member?.memberCommunity?.[0]?.isRegistered;
+
+  const memberActivatedStrategy =
+    memberStrategyData?.memberStrategy?.activatedPoints > 0n;
+
+  const { subscribe, unsubscribe, connected } = usePubSubContext();
+
+  const subscriptionId = useRef<SubscriptionId>();
+  useEffect(() => {
+    subscriptionId.current = subscribe(
+      {
+        topic: "member",
+        id: wallet,
+        containerId: strategy?.poolId,
+        type: "update",
+      },
+      () => {
+        return refetchMemberPower();
+      },
+    );
+    return () => {
+      if (subscriptionId.current) {
+        unsubscribe(subscriptionId.current);
+      }
+    };
+  }, [connected]);
+  //
+
   const poolTokenAddr = strategy?.token as Address;
   const proposalType = strategy?.config.proposalType;
 
@@ -77,6 +206,13 @@ export default function ClientPage({
     (expectedChainId != null ?
       `chain ${expectedChainId}`
     : "the selected network");
+
+  // Effects
+  useEffect(() => {
+    if (errorMemberData) {
+      console.error("Error while fetching member data: ", errorMemberData);
+    }
+  }, [errorMemberData]);
 
   useEffect(() => {
     if (error) {
@@ -98,13 +234,13 @@ export default function ClientPage({
       superTokenCandidate.id
     : null);
 
-  const { address } = useAccount();
   const connectedChainId = useChainId();
+
   const { data: superTokenInfo } = useBalance({
-    address: address as Address,
+    address: wallet as Address,
     token: effectiveSuperToken as Address,
     watch: true,
-    enabled: !!effectiveSuperToken && !!address,
+    enabled: !!effectiveSuperToken && !!wallet,
   });
 
   const { data: metadataResult } = useMetadataIpfsFetch({
@@ -167,6 +303,17 @@ export default function ClientPage({
   const isMissingFundingToken = needsFundingToken && !poolToken;
   const [hasWaitedForPoolToken, setHasWaitedForPoolToken] = useState(false);
 
+  const disableCreateProposalBtnCondition: ConditionObject[] = [
+    {
+      condition: !isMemberCommunity,
+      message: "Join community first",
+    },
+  ];
+
+  const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons(
+    disableCreateProposalBtnCondition,
+  );
+
   useEffect(() => {
     if (isMissingFundingToken && strategy && !error) {
       const timer = window.setTimeout(() => {
@@ -227,10 +374,19 @@ export default function ClientPage({
   }
 
   const showMissingFundingTokenWarning = isMissingFundingToken && !error;
-  const communityAddress = strategy.registryCommunity.id as Address;
   const alloInfo = data.allos[0];
 
   const isEnabled = data.cvstrategies?.[0]?.isEnabled as boolean;
+
+  const createProposalUrl = `/gardens/${chain}/${garden}/${communityAddress}/${poolId}/create-proposal`;
+
+  const memberPoolWeight =
+    memberPower != null && +strategy.totalEffectiveActivePoints > 0 ?
+      calculatePercentageBigInt(
+        memberPower,
+        BigInt(strategy.totalEffectiveActivePoints),
+      )
+    : undefined;
 
   return (
     <>
@@ -262,24 +418,65 @@ export default function ClientPage({
       />
 
       {isEnabled && (
-        <>
-          {poolToken && PoolTypes[proposalType] !== "signaling" && (
-            <PoolMetrics
-              communityAddress={communityAddress}
-              strategy={strategy}
-              poolId={poolId}
-              poolToken={poolToken}
-              chainId={Number(chain)}
-              superToken={
-                superTokenInfo && {
-                  ...superTokenInfo,
-                  sameAsUnderlying: superTokenCandidate?.sameAsUnderlying,
-                  address: effectiveSuperToken as Address,
+        <div className="col-span-12 xl:col-span-3 flex flex-col gap-10">
+          <>
+            {poolToken && PoolTypes[proposalType] !== "signaling" && (
+              <PoolMetrics
+                communityAddress={communityAddress}
+                strategy={strategy}
+                poolId={poolId}
+                poolToken={poolToken}
+                chainId={Number(chain)}
+                superToken={
+                  superTokenInfo && {
+                    ...superTokenInfo,
+                    sameAsUnderlying: superTokenCandidate?.sameAsUnderlying,
+                    address: effectiveSuperToken as Address,
+                  }
                 }
-              }
-            />
-          )}
-        </>
+              />
+            )}
+          </>
+
+          <div className="section-layout flex flex-col items-start xl:items-center gap-4">
+            <div className="flex flex-col gap-4">
+              <h3>Have an idea ?</h3>
+              <span className="text-sm">
+                Submit a proposal{" "}
+                {PoolTypes[proposalType] !== "signaling" ?
+                  "to request funding from the pool."
+                : "to share your vision and build community support."}
+              </span>
+            </div>
+
+            <div className="w-full flex items-center justify-center">
+              <Link href={createProposalUrl}>
+                <Button
+                  icon={<PlusIcon height={24} width={24} />}
+                  disabled={!isConnected || missmatchUrl || !isMemberCommunity}
+                  tooltip={tooltipMessage}
+                >
+                  Create a proposal
+                </Button>
+              </Link>
+            </div>
+          </div>
+
+          <PoolGovernance
+            memberPoolWeight={memberPoolWeight}
+            tokenDecimals={tokenDecimals}
+            strategy={strategy}
+            communityAddress={communityAddress}
+            memberTokensInCommunity={memberTokensInCommunity}
+            isMemberCommunity={isMemberCommunity}
+            memberActivatedStrategy={memberActivatedStrategy}
+            membersStrategyData={
+              membersStrategies ?
+                { memberStrategies: membersStrategies }
+              : undefined
+            }
+          />
+        </div>
       )}
 
       {isEnabled && (
@@ -288,7 +485,7 @@ export default function ClientPage({
           strategy={{ ...strategy, title: metadata?.title }}
           alloInfo={alloInfo}
           communityAddress={communityAddress}
-          createProposalUrl={`/gardens/${chain}/${garden}/${communityAddress}/${poolId}/create-proposal`}
+          createProposalUrl={createProposalUrl}
           proposalType={proposalType}
           minThGtTotalEffPoints={minThGtTotalEffPoints}
         />
