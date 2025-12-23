@@ -89,7 +89,7 @@ export default function CampaignsPage() {
       </div>
 
       {/* Content */}
-      <div className="mx-auto max-w-7xl px-4 flex flex-col gap-10  items-center">
+      <div className="mx-auto max-w-7xl px-4 pb-10 flex flex-col gap-10 items-center">
         <div className="flex items-center justify-center gap-2 mt-10">
           <Button>Active</Button>
           <Button disabled>Ended</Button>
