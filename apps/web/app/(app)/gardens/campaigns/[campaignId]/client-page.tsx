@@ -78,16 +78,16 @@ export const PARTICIPATION_BY_CAMPAIGN: Record<string, ParticipationStep[]> = {
       title: "2x Bonus in Superfluid DAO",
       description: (
         <>
-          Join the Superfluid DAO to earn double points.{" "}
+          Join the{" "}
           <Link
             href="https://app.gardens.fund/gardens/8453/0xa69f80524381275a7ffdb3ae01c54150644c8792/0xec83d957f8aa4e9601bc74608ebcbc862eca52ab"
             target="_blank"
             rel="noreferrer"
             className="underline"
           >
-            Join Superfluid Community
-          </Link>
-          .
+            Superfluid DAO
+          </Link>{" "}
+          to earn double points.
         </>
       ),
       icon: <CurrencyDollarIcon className="h-5 w-5" />,
@@ -109,7 +109,7 @@ export const PARTICIPATION_BY_CAMPAIGN: Record<string, ParticipationStep[]> = {
             rel="noreferrer"
             className="underline"
           >
-            Follow Gardens on Farcaster
+            Follow GoodDollar on Farcaster
           </Link>
           .
         </>
@@ -143,17 +143,16 @@ export const PARTICIPATION_BY_CAMPAIGN: Record<string, ParticipationStep[]> = {
       title: "2x Bonus in GoodDollar Builders DAO",
       description: (
         <>
-          Join the GoodDollar Builders DAO to earn double points for all the
-          previous activities.{" "}
+          Join the{" "}
           <Link
             href="https://app.gardens.fund/gardens/42220/0x62b8b11039fcfe5ab0c56e502b1c372a3d2a9c7a/0xf42c9ca2b10010142e2bac34ebdddb0b82177684"
             target="_blank"
             rel="noreferrer"
             className="underline"
           >
-            Join GoodDollar Builders Community
-          </Link>
-          .
+            GoodDollar Builders DAO
+          </Link>{" "}
+          to earn double points for all the previous activities.
         </>
       ),
       icon: <CurrencyDollarIcon className="h-5 w-5" />,

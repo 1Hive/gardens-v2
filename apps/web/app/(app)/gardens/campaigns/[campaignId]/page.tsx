@@ -21,7 +21,7 @@ const campaigns: { [key: string]: { name: string; description: string } } = {
   "2": {
     name: "Superfluid x GoodDollar on Gardens",
     description:
-      "Earn SUP tokens by adding $G to funding pools and staking in communities using G$",
+      "Earn SUP tokens by adding $G to funding pools and staking in communities that allocate G$ in pools.",
   },
 };
 
