@@ -431,7 +431,7 @@ export default function GardensGrowthInitiativePage({
                     </div>
 
                     {/* Connected Account Section */}
-                    {connectedAccount && (
+                    {connectedAccount && Boolean(walletPoints?.totalPoints) && (
                       <div className="mb-6 p-4 rounded-lg bg-primary border-[1px]  border-primary-content">
                         <p className="text-xs mb-2">Your Position</p>
                         <div className="flex items-center justify-between">
