@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { CalendarIcon, UserGroupIcon } from "@heroicons/react/24/outline";
-import Image, { StaticImageData } from "next/image";
+import Image from "next/image";
 import Link from "next/link";
 import { PlantBanner } from "@/assets";
 import { Button } from "@/components/Button";
@@ -13,6 +13,7 @@ import { formatNumber, timeAgo } from "@/utils/time";
 
 type CampaignStats = {
   totalStreamedSup: number;
+  targetStreamSup: number;
   walletCount: number;
   lastUpdated: string | null;
 };
@@ -45,6 +46,7 @@ export default function CampaignsPage() {
                 totalStreamedSup: res.totalStreamedSup,
                 walletCount: res.snapshot.wallets.length,
                 lastUpdated: res.snapshot.updatedAt ?? null,
+                targetStreamSup: res.targetStreamSup,
               },
             ] as const;
           }),
@@ -142,7 +144,11 @@ export default function CampaignsPage() {
                       {formatNumber(
                         statsByCampaign[c.id]?.totalStreamedSup ?? 0,
                       )}{" "}
-                      / {formatNumber(c.tokenAllocated ?? 0)} {c.tokenSymbol}
+                      /{" "}
+                      {formatNumber(
+                        statsByCampaign[c.id]?.targetStreamSup ?? 0,
+                      )}{" "}
+                      {c.tokenSymbol}
                     </span>
                   </div>
                 </Skeleton>
@@ -157,7 +163,7 @@ export default function CampaignsPage() {
                       style={{
                         width: `${
                           ((statsByCampaign[c.id]?.totalStreamedSup ?? 0) /
-                            (c.tokenAllocated ?? 10)) *
+                            (statsByCampaign[c.id]?.targetStreamSup ?? 10)) *
                           100
                         }%`,
                       }}
