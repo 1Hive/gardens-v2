@@ -79,6 +79,12 @@ export type WalletEntry = {
   ensAvatar: string | null;
 };
 
+export type CurrentWalletProfile = {
+  address: string;
+  ensName: string | null;
+  ensAvatar: string | null;
+};
+
 export type LeaderboardResponse = {
   cid: string;
   snapshot: {
@@ -87,6 +93,7 @@ export type LeaderboardResponse = {
   };
   totalStreamedSup: number;
   targetStreamSup: number;
+  currentWallet?: CurrentWalletProfile | null;
 };
 
 /**
@@ -95,9 +102,17 @@ export type LeaderboardResponse = {
  */
 export async function fetchSuperfluidLeaderboard(
   endpoint: string,
+  walletAddress?: string,
 ): Promise<LeaderboardResponse | null> {
   try {
-    const response = await fetch(endpoint, {
+    let requestUrl = endpoint;
+    if (walletAddress) {
+      const separator = endpoint.includes("?") ? "&" : "?";
+      requestUrl = `${endpoint}${separator}walletAddress=${encodeURIComponent(
+        walletAddress,
+      )}`;
+    }
+    const response = await fetch(requestUrl, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
     });

@@ -14,12 +14,13 @@ import { blo } from "blo";
 import Image from "next/image";
 import Link from "next/link";
 import { Address } from "viem";
-import { useAccount } from "wagmi";
+import { useAccount, useEnsAvatar, useEnsName } from "wagmi";
 
 import { Badge } from "@/components/Badge";
 import { Button } from "@/components/Button";
 import { SuperfluidLeaderboardModal } from "@/components/SuperfluidLeaderboard";
 import {
+  CurrentWalletProfile,
   fetchSuperfluidLeaderboard,
   LeaderboardResponse,
   WalletEntry,
@@ -195,6 +196,8 @@ export default function GardensGrowthInitiativePage({
   const [walletPoints, setWalletPoints] = useState<WalletPointsInfo | null>(
     null,
   );
+  const [connectedWalletProfile, setConnectedWalletProfile] =
+    useState<CurrentWalletProfile | null>(null);
   const [openModal, setOpenModal] = useState(false);
 
   const campaigns = CAMPAIGNS[campaignId];
@@ -203,21 +206,52 @@ export default function GardensGrowthInitiativePage({
 
   const { address: connectedAccount } = useAccount();
 
+  const { data: localEnsName } = useEnsName({
+    address: connectedAccount as Address,
+    enabled: Boolean(connectedAccount) && !walletPoints?.ensName,
+    chainId: 1,
+    cacheTime: 30_000,
+  });
+
+  const { data: localEnsAvatar } = useEnsAvatar({
+    name: localEnsName,
+    enabled: Boolean(localEnsName) && !walletPoints?.ensAvatar,
+    chainId: 1,
+    cacheTime: 30_000,
+  });
+
   const wallets = superfluidStreamsData?.snapshot?.wallets ?? [];
 
   const connectedDisplayName = useMemo(() => {
     if (!connectedAccount) return null;
     return (
+      localEnsName ??
+      connectedWalletProfile?.ensName ??
       walletPoints?.ensName ??
       walletPoints?.farcasterUsername ??
       shortenAddress(connectedAccount)
     );
-  }, [connectedAccount, walletPoints]);
+  }, [
+    connectedAccount,
+    connectedWalletProfile,
+    localEnsName,
+    walletPoints,
+  ]);
 
   const connectedAvatar = useMemo(() => {
     if (!connectedAccount) return null;
-    return walletPoints?.ensAvatar ?? blo(connectedAccount as Address);
-  }, [connectedAccount, walletPoints]);
+    return (
+      localEnsAvatar ??
+      connectedWalletProfile?.ensAvatar ??
+      walletPoints?.ensAvatar ??
+      blo(connectedAccount as Address)
+    );
+  }, [
+    connectedAccount,
+    connectedWalletProfile,
+    localEnsAvatar,
+    walletPoints,
+  ]);
 
   //useEffects
   useEffect(() => {
@@ -225,13 +259,23 @@ export default function GardensGrowthInitiativePage({
       setLoading(true);
       const result = await fetchSuperfluidLeaderboard(
         campaigns?.leaderboardEndpoint,
+        connectedAccount ?? undefined,
       );
       setSuperfluidStreamsData(result);
+      if (
+        connectedAccount &&
+        result?.currentWallet?.address?.toLowerCase() ===
+          connectedAccount.toLowerCase()
+      ) {
+        setConnectedWalletProfile(result.currentWallet ?? null);
+      } else {
+        setConnectedWalletProfile(null);
+      }
       setLoading(false);
     }
 
     fetchPointsData();
-  }, [connectedAccount]);
+  }, [campaigns?.leaderboardEndpoint, connectedAccount]);
 
   useEffect(() => {
     if (!connectedAccount) return;
