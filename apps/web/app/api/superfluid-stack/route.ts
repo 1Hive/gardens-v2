@@ -697,6 +697,24 @@ let creationCacheCampaignVersion: string | null = null;
 let transferCacheCampaignVersion: string | null = null;
 const TOKEN_PRICE_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const ENS_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const ENS_METADATA_AVATAR_BASE_URL =
+  "https://metadata.ens.domains/mainnet/avatar";
+
+const buildEnsMetadataAvatarUrl = (name: string) =>
+  `${ENS_METADATA_AVATAR_BASE_URL}/${encodeURIComponent(name.toLowerCase())}`;
+
+const fetchEnsAvatarFromMetadata = async (name: string): Promise<string | null> => {
+  try {
+    const url = buildEnsMetadataAvatarUrl(name);
+    const response = await fetch(url, { method: "HEAD" });
+    if (response.ok) {
+      return url;
+    }
+  } catch {
+    // ignore
+  }
+  return null;
+};
 const tokenPriceCache = new Map<
   string,
   { price: number; fetchedAt: number; symbol: string }
@@ -817,6 +835,21 @@ const getMainnetClient = () => {
   return mainnetClient;
 };
 
+const resolveEnsAvatarWithFallback = async (
+  client: ReturnType<typeof createPublicClient>,
+  name: string,
+): Promise<string | null> => {
+  try {
+    const avatar = await client.getEnsAvatar({ name });
+    if (avatar) {
+      return avatar;
+    }
+  } catch {
+    // ignore resolver errors
+  }
+  return await fetchEnsAvatarFromMetadata(name);
+};
+
 const fetchEnsIdentityByAddress = async (
   address: string,
 ): Promise<{ name: string | null; avatar: string | null }> => {
@@ -836,7 +869,7 @@ const fetchEnsIdentityByAddress = async (
     const ens = typeof name === "string" ? name : null;
     let avatar: string | null = null;
     if (ens) {
-      avatar = await client.getEnsAvatar({ name: ens });
+      avatar = await resolveEnsAvatarWithFallback(client, ens);
       if (!avatar) {
         console.log("[superfluid-stack] ens avatar not found for name", {
           ens,

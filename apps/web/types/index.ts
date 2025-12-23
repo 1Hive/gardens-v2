@@ -93,19 +93,17 @@ export type LeaderboardResponse = {
  * Fetch Superfluid leaderboard data and sort wallets by totalPoints DESC.
  * Returns `null` on any failure.
  */
-export async function fetchSuperfluidLeaderboard(): Promise<LeaderboardResponse | null> {
+export async function fetchSuperfluidLeaderboard(
+  endpoint: string,
+): Promise<LeaderboardResponse | null> {
   try {
-    const response = await fetch("/api/superfluid-stack/leaderboard", {
+    const response = await fetch(endpoint, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
     });
 
     if (!response.ok) {
-      console.error(
-        "[fetchSuperfluidLeaderboard] Request failed",
-        response.status,
-        response.statusText,
-      );
+      console.error("[fetchLeaderboard] Request failed", response.status);
       return null;
     }
 
@@ -113,7 +111,6 @@ export async function fetchSuperfluidLeaderboard(): Promise<LeaderboardResponse 
 
     if (!data?.snapshot?.wallets) return data ?? null;
 
-    // SORT HERE
     const sortedWallets = [...data.snapshot.wallets].sort(
       (a, b) => (b.totalPoints ?? 0) - (a.totalPoints ?? 0),
     );
@@ -126,7 +123,7 @@ export async function fetchSuperfluidLeaderboard(): Promise<LeaderboardResponse 
       },
     };
   } catch (error) {
-    console.error("[fetchSuperfluidLeaderboard] Unexpected error:", error);
+    console.error("[fetchLeaderboard] Unexpected error:", error);
     return null;
   }
 }

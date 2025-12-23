@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/strict-boolean-expressions */
 /* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 import { Client as NotionClient } from "@notionhq/client";
@@ -19,30 +20,10 @@ type Strategy = {
   config: { superfluidToken?: Address | null; proposalType?: string | null };
 };
 
-type StreamEntry = {
-  sender: { id: Address };
-  currentFlowRate: string;
-  createdAtTimestamp: string;
-  updatedAtTimestamp: string;
-};
-
 type FlowUpdate = {
   sender: { id: Address };
   flowRate: string;
   timestamp: string;
-};
-
-type SuperTokenResult = {
-  id: Address;
-  name: string;
-  symbol: string;
-  isListed?: boolean;
-  createdAtBlockNumber?: string;
-};
-
-type ManualBoundEntry = {
-  startBlock?: bigint;
-  endBlock?: bigint;
 };
 
 type WalletActivity = {
@@ -102,28 +83,6 @@ const SUPERFLUID_POOLS_QUERY = gql`
   }
 `;
 
-const SUPER_TOKEN_QUERY = gql`
-  query superToken($token: String!) {
-    tokens(
-      where: {
-        and: [
-          { isSuperToken: true }
-          { or: [{ underlyingToken: $token }, { id: $token }] }
-        ]
-      }
-      orderBy: isListed
-      orderDirection: desc
-      first: 1000
-    ) {
-      id
-      name
-      isListed
-      symbol
-      createdAtBlockNumber
-    }
-  }
-`;
-
 const COMMUNITY_QUERY = gql`
   query communities {
     registryCommunities(where: { archived: false }, first: 1000) {
@@ -144,19 +103,6 @@ const COMMUNITY_QUERY = gql`
           proposalType
         }
       }
-    }
-  }
-`;
-
-const STREAMS_QUERY = gql`
-  query streamToPool($receiver: String!, $token: String!) {
-    streams(where: { receiver: $receiver, token: $token }, first: 1000) {
-      sender {
-        id
-      }
-      currentFlowRate
-      createdAtTimestamp
-      updatedAtTimestamp
     }
   }
 `;
@@ -619,8 +565,8 @@ let latestCreationBlockCacheCid: string | null =
 let latestTransferLogCacheCid: string | null =
   process.env.SUPERFLUID_TRANSFER_CACHE_CID ?? null;
 const FARCASTER_API_KEY = process.env.FARCASTER_API_KEY;
-const FARCASTER_GARDENS_USERNAME =
-  process.env.FARCASTER_GARDENS_USERNAME ?? "gardens";
+const FARCASTER_GOODDOLLAR_USERNAME =
+  process.env.FARCASTER_GOODDOLLAR_USERNAME ?? "gooddollar";
 let farcasterGardensFid: number | null = null;
 type TransferLogCacheEntry = {
   startBlock: bigint;
@@ -664,7 +610,7 @@ const fetchGardensFid = async (): Promise<number | null> => {
   if (farcasterGardensFid) return farcasterGardensFid;
   try {
     const res = await fetch(
-      `https://api.farcaster.xyz/v2/user-by-username?username=${encodeURIComponent(FARCASTER_GARDENS_USERNAME)}`,
+      `https://api.farcaster.xyz/v2/user-by-username?username=${encodeURIComponent(FARCASTER_GOODDOLLAR_USERNAME)}`,
       {
         headers: getFarcasterHeaders(),
       },
@@ -1262,9 +1208,7 @@ const hydratePointsSnapshotFromIpfs = async () => {
         pageOffset: 0,
       });
       const baseCid =
-        BASE_POINTS_SNAPSHOT_CID ??
-        data?.rows?.[0]?.ipfs_pin_hash ??
-        null;
+        BASE_POINTS_SNAPSHOT_CID ?? data?.rows?.[0]?.ipfs_pin_hash ?? null;
       await hydrateFromCid(baseCid);
     } catch (error) {
       console.warn(
@@ -1820,80 +1764,6 @@ const getDecimals = async (
   }
 };
 
-const getSymbol = async (
-  client: ReturnType<typeof createPublicClient>,
-  token: Address,
-): Promise<string> => {
-  try {
-    const symbol = await client.readContract({
-      address: token,
-      abi: erc20ABI,
-      functionName: "symbol",
-    });
-    return typeof symbol === "string" ? symbol : token;
-  } catch (error) {
-    console.warn(
-      `Failed to fetch symbol for token ${token}, falling back to address`,
-      error,
-    );
-    return token;
-  }
-};
-
-const resolveSuperToken = async (
-  client: Client,
-  token: Address,
-): Promise<{ id: Address; sameAsUnderlying: boolean } | null> => {
-  console.log("[superfluid-stack] Resolving super token", { token });
-  const result = await client
-    .query<{ tokens: SuperTokenResult[] }>(SUPER_TOKEN_QUERY, {
-      token: token.toLowerCase(),
-    })
-    .toPromise();
-  if (result.error) {
-    throw new Error(
-      `Failed to fetch super token for ${token}: ${result.error.message}`,
-    );
-  }
-
-  const tokens = result.data?.tokens ?? [];
-  if (!tokens.length) return null;
-
-  const found: SuperTokenResult =
-    tokens.find((t) => toLower(t.id) === toLower(token)) ?? tokens[0];
-
-  return {
-    id: found.id,
-    sameAsUnderlying: toLower(found.id) === toLower(token),
-  };
-};
-
-const fetchStreams = async (
-  client: Client,
-  {
-    receiver,
-    token,
-  }: {
-    receiver: Address;
-    token: Address;
-  },
-): Promise<StreamEntry[]> => {
-  console.log("[superfluid-stack] Fetching streams", { receiver, token });
-  const result = await client
-    .query<{ streams: StreamEntry[] }>(STREAMS_QUERY, {
-      receiver: receiver.toLowerCase(),
-      token: token.toLowerCase(),
-    })
-    .toPromise();
-  if (result.error) {
-    throw new Error(
-      `Failed to fetch streams for receiver ${receiver} token ${token}: ${result.error.message}`,
-    );
-  }
-  if (!result.data?.streams) return [];
-  return result.data.streams;
-};
-
 const fetchFlowUpdates = async (
   client: Client,
   {
@@ -2172,32 +2042,9 @@ const processChain = async ({
     chain: getViemChain(chainId),
     transport: http(chainConfig.rpcUrl),
   });
-  const superTokenCache = new Map<
-    string,
-    { id: Address; sameAsUnderlying: boolean }
-  >();
+
   const decimalsCache = new Map<string, number>();
 
-  const getCachedSuperToken = async (token: Address) => {
-    const key = toLower(token);
-    const cached = superTokenCache.get(key);
-    if (cached) return cached;
-    try {
-      const resolved = await resolveSuperToken(superfluidClient, token);
-      if (resolved) {
-        superTokenCache.set(key, resolved);
-      }
-      return resolved;
-    } catch (error) {
-      console.warn("[superfluid-stack] super token resolution failed", {
-        token,
-        chainId,
-        superfluidSubgraphUrl,
-        error,
-      });
-      return null;
-    }
-  };
   const runQueryWithFallback = async <T, V extends AnyVariables>(
     queryDoc: any,
     vars: V,
@@ -2700,7 +2547,6 @@ export async function GET(req: Request) {
     const { start, end } = parseCampaignWindow();
     const totals = new Map<string, { fundUsd: number; streamUsd: number }>();
     const governanceStakePointsByWallet = new Map<string, number>();
-    const farcasterPointsByWallet = new Map<string, number>();
     const farcasterFollowerWalletsSet = new Set<string>();
     const farcasterUsernameByWallet = new Map<string, string>();
     const ensNameByWallet = new Map<string, string>();

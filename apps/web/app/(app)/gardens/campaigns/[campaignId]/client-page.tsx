@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { ReactNode, useEffect, useMemo, useState } from "react";
 import {
   ArrowLeftIcon,
   TrophyIcon,
@@ -15,7 +15,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Address } from "viem";
 import { useAccount } from "wagmi";
-import { SuperBanner, SuperLogo } from "@/assets";
+
 import { Badge } from "@/components/Badge";
 import { Button } from "@/components/Button";
 import { SuperfluidLeaderboardModal } from "@/components/SuperfluidLeaderboard";
@@ -24,70 +24,144 @@ import {
   LeaderboardResponse,
   WalletEntry,
 } from "@/types";
+import { CAMPAIGNS, CampaignId } from "@/utils/campaigns";
 import { shortenAddress } from "@/utils/text";
 import { formatNumber, timeAgo } from "@/utils/time";
 
-const participationSteps = [
-  {
-    title: "Follow Gardens on Farcaster",
-    description: (
-      <>
-        Stay connected with the Gardens community and get updates on proposals
-        and activities.{" "}
-        <Link
-          href="https://farcaster.xyz/gardens"
-          target="_blank"
-          rel="noreferrer"
-          className="text-primary-content underline-offset-2 underline"
-        >
-          Follow Gardens on Farcaster
-        </Link>
-        .
-      </>
-    ),
-    icon: <ChatBubbleLeftRightIcon className="h-5 w-5" />,
-    activities: ["Farcaster Follow"],
-    pointsInfo: "1 point",
-  },
-  {
-    title: "Add Funds into a Funding Pool",
-    description:
-      "Stream funds into a Funding Pool, or for Pure Super Token Funding Pools, add funds either as a stream or a one-time transfer.",
-    icon: <ArrowTrendingUpIcon className="h-5 w-5" />,
-    activities: ["Add Funds"],
-    pointsInfo: "1 point per $1 added (minimum $10)",
-  },
-  {
-    title: "Join a Community & Increase Your Stake",
-    description:
-      "Become an active member and increase your stake to support the ecosystem.",
-    icon: <UsersIcon className="h-5 w-5" />,
-    activities: ["Stake & Governance"],
-    pointsInfo: "Total community points split based on stake size",
-  },
-  {
-    title: "2x Bonus in Superfluid DAO",
-    description: (
-      <>
-        Join the Superfluid DAO community, stake, and add funds to Funding Pools
-        to maximize your rewards with double points.{" "}
-        <Link
-          href="https://app.gardens.fund/gardens/8453/0xa69f80524381275a7ffdb3ae01c54150644c8792/0xec83d957f8aa4e9601bc74608ebcbc862eca52ab"
-          target="_blank"
-          rel="noreferrer"
-          className="text-primary-content underline underline-offset-2"
-        >
-          Join Superfluid Community
-        </Link>
-        .
-      </>
-    ),
-    icon: <CurrencyDollarIcon className="h-5 w-5" />,
-    activities: ["Superfluid DAO member"],
-    highlighted: true,
-    pointsInfo: "x2 points multiplier",
-  },
-];
+export type ParticipationStep = {
+  title: string;
+  description: ReactNode;
+  icon: ReactNode;
+  activities: [string];
+  pointsInfo: string;
+  highlighted?: boolean;
+};
+export const PARTICIPATION_BY_CAMPAIGN: Record<string, ParticipationStep[]> = {
+  "1": [
+    {
+      title: "Follow Gardens on Farcaster",
+      description: (
+        <>
+          Stay connected with the Gardens community.{" "}
+          <Link
+            href="https://farcaster.xyz/gardens"
+            target="_blank"
+            rel="noreferrer"
+            className="underline"
+          >
+            Follow Gardens on Farcaster
+          </Link>
+          .
+        </>
+      ),
+      icon: <ChatBubbleLeftRightIcon className="h-5 w-5" />,
+      activities: ["Farcaster Follow"],
+      pointsInfo: "1 point",
+    },
+    {
+      title: "Add Funds into a Funding Pool",
+      description:
+        "Stream funds or make a one-time transfer into a Funding Pool.",
+      icon: <ArrowTrendingUpIcon className="h-5 w-5" />,
+      activities: ["Add Funds"],
+      pointsInfo: "1 point per $1 added (minimum $10)",
+    },
+    {
+      title: "Join a Community & Increase Your Stake",
+      description: "Become an active member and increase your stake.",
+      icon: <UsersIcon className="h-5 w-5" />,
+      activities: ["Stake & Governance"],
+
+      pointsInfo: "Points split based on stake size",
+    },
+    {
+      title: "2x Bonus in Superfluid DAO",
+      description: (
+        <>
+          Join the{" "}
+          <Link
+            href="https://app.gardens.fund/gardens/8453/0xa69f80524381275a7ffdb3ae01c54150644c8792/0xec83d957f8aa4e9601bc74608ebcbc862eca52ab"
+            target="_blank"
+            rel="noreferrer"
+            className="underline"
+          >
+            Superfluid DAO
+          </Link>{" "}
+          to earn double points.
+        </>
+      ),
+      icon: <CurrencyDollarIcon className="h-5 w-5" />,
+      activities: ["Superfluid DAO member"],
+      pointsInfo: "x2 points multiplier",
+      highlighted: true,
+    },
+  ],
+
+  "2": [
+    {
+      title: "Follow GoodDollar on Farcaster",
+      description: (
+        <>
+          Stay connected with the GoodDollar community.{" "}
+          <Link
+            href="https://farcaster.xyz/gooddollar"
+            target="_blank"
+            rel="noreferrer"
+            className="underline"
+          >
+            Follow GoodDollar on Farcaster
+          </Link>
+          .
+        </>
+      ),
+      icon: <ChatBubbleLeftRightIcon className="h-5 w-5" />,
+      activities: ["Farcaster Follow"],
+      pointsInfo: "1 point",
+    },
+    {
+      title: "Add $G to Funding Pools",
+      description:
+        "One time transfer or stream into any G$ Funding Pool in Gardens.",
+      icon: <ArrowTrendingUpIcon className="h-5 w-5" />,
+      activities: ["Add Funds"],
+      pointsInfo: "1 point per 1,000 $G added",
+    },
+    {
+      title: "Join the Community & Increase Your Stake",
+      description: (
+        <>
+          Become an active participant in the communities that allocate G$ in
+          their pools.
+        </>
+      ),
+
+      icon: <UsersIcon className="h-5 w-5" />,
+      activities: ["Stake & Governance"],
+      pointsInfo: "Points split based on stake size",
+    },
+    {
+      title: "2x Bonus in GoodDollar Builders DAO",
+      description: (
+        <>
+          Join the{" "}
+          <Link
+            href="https://app.gardens.fund/gardens/42220/0x62b8b11039fcfe5ab0c56e502b1c372a3d2a9c7a/0xf42c9ca2b10010142e2bac34ebdddb0b82177684"
+            target="_blank"
+            rel="noreferrer"
+            className="underline"
+          >
+            GoodDollar Builders DAO
+          </Link>{" "}
+          to earn double points for all the previous activities.
+        </>
+      ),
+      icon: <CurrencyDollarIcon className="h-5 w-5" />,
+      activities: ["GoodDollar Builders DAO member"],
+      pointsInfo: "x2 points multiplier",
+      highlighted: true,
+    },
+  ],
+};
 
 function getWalletRankAndPoints(
   address: string,
@@ -108,8 +182,13 @@ function getWalletRankAndPoints(
 type WalletPointsInfo = WalletEntry & {
   rank: number;
 };
+type ClientPageProps = {
+  campaignId: CampaignId;
+};
 
-export default function GardensGrowthInitiativePage() {
+export default function GardensGrowthInitiativePage({
+  campaignId,
+}: ClientPageProps) {
   const [superfluidStreamsData, setSuperfluidStreamsData] =
     useState<LeaderboardResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -117,6 +196,10 @@ export default function GardensGrowthInitiativePage() {
     null,
   );
   const [openModal, setOpenModal] = useState(false);
+
+  const campaigns = CAMPAIGNS[campaignId];
+
+  const howToParticipate = PARTICIPATION_BY_CAMPAIGN[campaignId];
 
   const { address: connectedAccount } = useAccount();
 
@@ -140,7 +223,9 @@ export default function GardensGrowthInitiativePage() {
   useEffect(() => {
     async function fetchPointsData() {
       setLoading(true);
-      const result = await fetchSuperfluidLeaderboard();
+      const result = await fetchSuperfluidLeaderboard(
+        campaigns?.leaderboardEndpoint,
+      );
       setSuperfluidStreamsData(result);
       setLoading(false);
     }
@@ -162,7 +247,7 @@ export default function GardensGrowthInitiativePage() {
       <div className="relative overflow-hidden">
         <div className="absolute inset-0">
           <Image
-            src={SuperBanner}
+            src={campaigns?.banner}
             alt="Gardens Growth Initiative"
             fill
             className="object-cover"
@@ -183,7 +268,7 @@ export default function GardensGrowthInitiativePage() {
           <div className="flex items-start gap-6">
             <div className="h-20 w-20 rounded-2xl bg-background/90 backdrop-blur-sm p-4 shadow-lg flex-shrink-0">
               <Image
-                src={SuperLogo}
+                src={campaigns?.logo}
                 alt="Campaign logo"
                 fill
                 className="object-contain p-1"
@@ -195,20 +280,24 @@ export default function GardensGrowthInitiativePage() {
                 Superfluid Ecosystem Rewards
               </h1>
               <p className="text-lg  max-w-3xl mb-6">
-                Earn SUP tokens by adding tokens to funding pool, join and stake
-                governance tokens in your favorite communities and help shape
-                the future of decentralized funding.
+                {campaigns?.description}
               </p>
 
               <div className="flex items-center gap-6 flex-wrap">
                 <div className="flex items-center gap-2 text-sm">
                   <CalendarIcon className="h-6 w-6 " />
-                  <span className="font-semibold">Ends 25 Feb 2026</span>
+                  <span className="font-semibold">
+                    Ends {campaigns?.endDate}
+                  </span>
                 </div>
 
                 <div className="flex items-center gap-2 text-sm">
                   <CurrencyDollarIcon className="h-6 w-6 " />
-                  <span className="font-semibold">847K SUP allocated</span>
+                  <span className="font-semibold">
+                    {superfluidStreamsData?.targetStreamSup != null ?
+                      `${formatNumber(superfluidStreamsData.targetStreamSup)} SUP allocated`
+                    : "SUP allocated"}
+                  </span>
                 </div>
               </div>
             </div>
@@ -250,7 +339,7 @@ export default function GardensGrowthInitiativePage() {
                       </div>
                     </div>
                   ))
-                : participationSteps.map((step) => (
+                : howToParticipate.map((step) => (
                     <div
                       key={step.title}
                       className={`rounded-lg space-y-6 hover:shadow-md transition-all bg-neutral ${step.highlighted ? "bg-primary-soft border-[1px] border-primary-content dark:bg-[#3c5b4b] dark:border-primary-dark-border" : "border1"}`}
@@ -344,7 +433,7 @@ export default function GardensGrowthInitiativePage() {
                     </div>
 
                     {/* Connected Account Section */}
-                    {connectedAccount && (
+                    {connectedAccount && Boolean(walletPoints?.totalPoints) && (
                       <div className="mb-6 p-4 rounded-lg bg-primary border-[1px]  border-primary-content">
                         <p className="text-xs mb-2">Your Position</p>
                         <div className="flex items-center justify-between">
