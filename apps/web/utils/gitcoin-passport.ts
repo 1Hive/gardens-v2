@@ -10,6 +10,13 @@ export interface ApiScore {
 }
 
 export async function fetchPassportScore(account: string): Promise<number> {
+  // Validate input to prevent SSRF (must be a proper Ethereum address)
+  if (
+    typeof account !== "string" ||
+    !/^0x[a-fA-F0-9]{40}$/.test(account)
+  ) {
+    throw new Error("Invalid account address format");
+  }
   const apiKey = process.env.GITCOIN_PASSPORT_API_KEY;
   const scorerId = process.env.SCORER_ID;
   const endpoint = `https://api.scorer.gitcoin.co/registry/score/${scorerId}/${account}`;
