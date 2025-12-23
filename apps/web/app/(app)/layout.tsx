@@ -11,6 +11,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { newLogo } from "@/assets";
 import { Button, ConnectWallet, ThemeButton } from "@/components";
+import Footer from "@/components/Footer";
 
 export function HeadphoneIcon() {
   return (
@@ -245,6 +246,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           className="!p-2"
         />
       </a>
+      <Footer />
     </div>
   );
 }
