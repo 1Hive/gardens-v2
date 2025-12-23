@@ -20,7 +20,6 @@ import { Badge } from "@/components/Badge";
 import { Button } from "@/components/Button";
 import { SuperfluidLeaderboardModal } from "@/components/SuperfluidLeaderboard";
 import {
-  CurrentWalletProfile,
   fetchSuperfluidLeaderboard,
   LeaderboardResponse,
   WalletEntry,
@@ -196,8 +195,7 @@ export default function GardensGrowthInitiativePage({
   const [walletPoints, setWalletPoints] = useState<WalletPointsInfo | null>(
     null,
   );
-  const [connectedWalletProfile, setConnectedWalletProfile] =
-    useState<CurrentWalletProfile | null>(null);
+
   const [openModal, setOpenModal] = useState(false);
 
   const campaigns = CAMPAIGNS[campaignId];
@@ -224,34 +222,34 @@ export default function GardensGrowthInitiativePage({
 
   const connectedDisplayName = useMemo(() => {
     if (!connectedAccount) return null;
-    return (
+    const name =
       localEnsName ??
-      connectedWalletProfile?.ensName ??
       walletPoints?.ensName ??
       walletPoints?.farcasterUsername ??
-      shortenAddress(connectedAccount)
+      shortenAddress(connectedAccount);
+    const listEntry = superfluidStreamsData?.snapshot.wallets.find(
+      (w) => w.address.toLowerCase() === connectedAccount.toLowerCase(),
     );
-  }, [
-    connectedAccount,
-    connectedWalletProfile,
-    localEnsName,
-    walletPoints,
-  ]);
+    if (listEntry) {
+      listEntry.ensName = name;
+    }
+    return name;
+  }, [connectedAccount, localEnsName, walletPoints]);
 
   const connectedAvatar = useMemo(() => {
     if (!connectedAccount) return null;
-    return (
+    const avatar =
       localEnsAvatar ??
-      connectedWalletProfile?.ensAvatar ??
       walletPoints?.ensAvatar ??
-      blo(connectedAccount as Address)
+      blo(connectedAccount as Address);
+    const listEntry = superfluidStreamsData?.snapshot.wallets.find(
+      (w) => w.address.toLowerCase() === connectedAccount.toLowerCase(),
     );
-  }, [
-    connectedAccount,
-    connectedWalletProfile,
-    localEnsAvatar,
-    walletPoints,
-  ]);
+    if (listEntry) {
+      listEntry.ensAvatar = avatar;
+    }
+    return avatar;
+  }, [connectedAccount, localEnsAvatar, walletPoints]);
 
   //useEffects
   useEffect(() => {
@@ -262,15 +260,7 @@ export default function GardensGrowthInitiativePage({
         connectedAccount ?? undefined,
       );
       setSuperfluidStreamsData(result);
-      if (
-        connectedAccount &&
-        result?.currentWallet?.address?.toLowerCase() ===
-          connectedAccount.toLowerCase()
-      ) {
-        setConnectedWalletProfile(result.currentWallet ?? null);
-      } else {
-        setConnectedWalletProfile(null);
-      }
+
       setLoading(false);
     }
 

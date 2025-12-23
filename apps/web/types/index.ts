@@ -79,12 +79,6 @@ export type WalletEntry = {
   ensAvatar: string | null;
 };
 
-export type CurrentWalletProfile = {
-  address: string;
-  ensName: string | null;
-  ensAvatar: string | null;
-};
-
 export type LeaderboardResponse = {
   cid: string;
   snapshot: {
@@ -93,7 +87,6 @@ export type LeaderboardResponse = {
   };
   totalStreamedSup: number;
   targetStreamSup: number;
-  currentWallet?: CurrentWalletProfile | null;
 };
 
 /**
@@ -124,7 +117,7 @@ export async function fetchSuperfluidLeaderboard(
 
     const data = (await response.json()) as LeaderboardResponse;
 
-    if (!data?.snapshot?.wallets) return data ?? null;
+    if (!data?.snapshot?.wallets.length) return data ?? null;
 
     const sortedWallets = [...data.snapshot.wallets].sort(
       (a, b) => (b.totalPoints ?? 0) - (a.totalPoints ?? 0),
