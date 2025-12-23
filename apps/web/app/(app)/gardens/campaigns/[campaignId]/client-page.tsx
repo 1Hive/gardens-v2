@@ -121,7 +121,7 @@ export const PARTICIPATION_BY_CAMPAIGN: Record<string, ParticipationStep[]> = {
     {
       title: "Add $G to Funding Pools",
       description:
-        "On timne transfer or stream into any G$ Funding Pool in Gardens.",
+        "One time transfer or stream into any G$ Funding Pool in Gardens.",
       icon: <ArrowTrendingUpIcon className="h-5 w-5" />,
       activities: ["Add Funds"],
       pointsInfo: "1 point per 1,000 $G added",
