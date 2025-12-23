@@ -83,7 +83,16 @@ const fetchSuperfluidTotals = async (): Promise<number | null> => {
     const total = res.data?.pool?.totalAmountDistributedUntilUpdatedAt ?? null;
     if (!total) return null;
 
-    const totalSup = Number(BigInt(total)) / 1e18;
+    const totalBigInt = BigInt(total);
+    const maxSafeBigInt = BigInt(Number.MAX_SAFE_INTEGER);
+    if (totalBigInt > maxSafeBigInt) {
+      console.warn("[leaderboard] superfluid pool total exceeds Number.MAX_SAFE_INTEGER; skipping to avoid precision loss", {
+        rawTotal: total,
+      });
+      return null;
+    }
+
+    const totalSup = Number(totalBigInt) / 1e18;
     if (Number.isNaN(totalSup)) return null;
     return totalSup;
   } catch (error) {
