@@ -20,7 +20,6 @@ export const CAMPAIGNS = {
     name: "Superfluid Ecosystem Rewards",
     description:
       "Earn SUP rewards by staking governance tokens, adding funds to pools, and following Gardens on Farcaster.",
-    tokenAllocated: 847_000,
     tokenSymbol: "SUP",
     endDate: "25 Feb 2026",
     banner: SuperBanner,
@@ -32,7 +31,6 @@ export const CAMPAIGNS = {
     name: "GoodDollar on Gardens",
     description:
       "Earn SUP tokens by adding $G to funding pools and staking in communities that allocate G$ in pools.",
-    tokenAllocated: 837_370,
     tokenSymbol: "SUP",
     endDate: "25 Feb 2026",
     banner: SuperBanner,
