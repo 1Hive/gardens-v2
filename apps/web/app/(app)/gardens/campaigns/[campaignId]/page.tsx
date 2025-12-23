@@ -18,6 +18,11 @@ const campaigns: { [key: string]: { name: string; description: string } } = {
     description:
       "Earn SUP rewards by staking governance tokens, adding funds to pools, and following Gardens on Farcaster.",
   },
+  "2": {
+    name: "Superfluid x GoodDollar on Gardens",
+    description:
+      "Earn SUP tokens by adding $G to funding pools and staking in communities using G$",
+  },
 };
 
 export async function generateMetadata({
