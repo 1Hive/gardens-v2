@@ -1,11 +1,7 @@
 import pinataSDK from "@pinata/sdk";
 import { NextResponse } from "next/server";
 import { createClient, fetchExchange, gql } from "urql";
-import { createPublicClient, http } from "viem";
-import { Address } from "viem";
 import { chainConfigMap } from "@/configs/chains";
-import { getViemChain } from "@/utils/web3";
-import { ChainId, CurrentWalletProfile } from "@/types";
 
 const PINATA_POINTS_SNAPSHOT_NAME = "superfluid-activity-points";
 const PINATA_POINTS_SNAPSHOT_CID =
@@ -20,76 +16,6 @@ const normalizeGateway = (gw?: string | null) => {
   return `https://${trimmed}`;
 };
 const IPFS_GATEWAY = normalizeGateway(process.env.IPFS_GATEWAY);
-
-const ENS_METADATA_AVATAR_BASE_URL =
-  "https://metadata.ens.domains/mainnet/avatar";
-
-const buildEnsMetadataAvatarUrl = (name: string) =>
-  `${ENS_METADATA_AVATAR_BASE_URL}/${encodeURIComponent(name.toLowerCase())}`;
-
-const fetchEnsAvatarFromMetadata = async (name: string): Promise<string | null> => {
-  try {
-    const response = await fetch(buildEnsMetadataAvatarUrl(name), {
-      method: "HEAD",
-    });
-    if (response.ok) {
-      return buildEnsMetadataAvatarUrl(name);
-    }
-  } catch {
-    // ignore
-  }
-  return null;
-};
-
-let leaderboardMainnetClient: ReturnType<typeof createPublicClient> | null =
-  null;
-
-const getLeaderboardMainnetClient = () => {
-  if (leaderboardMainnetClient) return leaderboardMainnetClient;
-  const chainCfg = getViemChain(1 as ChainId);
-  leaderboardMainnetClient = createPublicClient({
-    chain: chainCfg,
-    transport: http(
-      process.env.RPC_URL_MAINNET ?? chainCfg.rpcUrls.default.http[0],
-    ),
-  });
-  return leaderboardMainnetClient;
-};
-
-const resolveEnsAvatarWithFallback = async (
-  client: ReturnType<typeof createPublicClient>,
-  name: string,
-): Promise<string | null> => {
-  try {
-    const avatar = await client.getEnsAvatar({ name });
-    if (avatar) return avatar;
-  } catch {
-    // ignore
-  }
-  return await fetchEnsAvatarFromMetadata(name);
-};
-
-const resolveCurrentWalletProfile = async (
-  address: string,
-): Promise<CurrentWalletProfile> => {
-  const client = getLeaderboardMainnetClient();
-  try {
-    const name = await client.getEnsName({ address: address as Address });
-    const ensName = typeof name === "string" ? name : null;
-    let ensAvatar: string | null = null;
-    if (ensName) {
-      ensAvatar = await resolveEnsAvatarWithFallback(client, ensName);
-    }
-    return {
-      address,
-      ensName,
-      ensAvatar,
-    };
-  } catch (error) {
-    console.warn("[leaderboard] ens lookup failed", { address, error });
-    return { address, ensName: null, ensAvatar: null };
-  }
-};
 
 const PINATA_JWT = process.env.PINATA_JWT;
 const PINATA_KEY = process.env.PINATA_KEY;
@@ -241,8 +167,7 @@ const fetchSuperfluidTotals = async (): Promise<number | null> => {
       return null;
     }
 
-    const total =
-      res.data?.pool?.totalAmountDistributedUntilUpdatedAt ?? null;
+    const total = res.data?.pool?.totalAmountDistributedUntilUpdatedAt ?? null;
     if (!total) return null;
 
     const totalSup = Number(BigInt(total)) / 1e18;
@@ -260,10 +185,9 @@ export async function GET(request: Request) {
     const cidFromQuery = url.searchParams.get("cid");
     const walletAddressParam = url.searchParams.get("walletAddress");
     const normalizedWalletAddress =
-      walletAddressParam &&
-      walletAddressParam.toLowerCase().startsWith("0x")
-        ? walletAddressParam.toLowerCase()
-        : null;
+      walletAddressParam && walletAddressParam.toLowerCase().startsWith("0x") ?
+        walletAddressParam.toLowerCase()
+      : null;
     const cid =
       cidFromQuery ??
       PINATA_POINTS_SNAPSHOT_CID ??
@@ -287,19 +211,12 @@ export async function GET(request: Request) {
     const sanitized = stripSnapshot(data);
     const totalStreamedSup =
       (await fetchSuperfluidTotals()) ?? TOTAL_STREAMED_SUP_FALLBACK;
-    let currentWallet: CurrentWalletProfile | null = null;
-    if (normalizedWalletAddress) {
-      currentWallet = await resolveCurrentWalletProfile(
-        normalizedWalletAddress,
-      );
-    }
 
     return NextResponse.json({
       cid,
       snapshot: sanitized,
       totalStreamedSup,
       targetStreamSup: TARGET_STREAM_SUP,
-      currentWallet,
     });
   } catch (error) {
     console.error("[leaderboard] unexpected error", { error });

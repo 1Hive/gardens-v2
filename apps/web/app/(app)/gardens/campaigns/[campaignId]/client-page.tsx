@@ -257,7 +257,6 @@ export default function GardensGrowthInitiativePage({
       setLoading(true);
       const result = await fetchSuperfluidLeaderboard(
         campaigns?.leaderboardEndpoint,
-        connectedAccount ?? undefined,
       );
       setSuperfluidStreamsData(result);
 

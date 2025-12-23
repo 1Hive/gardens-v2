@@ -95,16 +95,10 @@ export type LeaderboardResponse = {
  */
 export async function fetchSuperfluidLeaderboard(
   endpoint: string,
-  walletAddress?: string,
 ): Promise<LeaderboardResponse | null> {
   try {
     let requestUrl = endpoint;
-    if (walletAddress) {
-      const separator = endpoint.includes("?") ? "&" : "?";
-      requestUrl = `${endpoint}${separator}walletAddress=${encodeURIComponent(
-        walletAddress,
-      )}`;
-    }
+
     const response = await fetch(requestUrl, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
