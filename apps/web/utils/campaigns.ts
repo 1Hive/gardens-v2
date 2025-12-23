@@ -31,7 +31,7 @@ export const CAMPAIGNS = {
     id: "2",
     name: "GoodDollar on Gardens",
     description:
-      "Earn SUP tokens by adding $G to funding pools and staking $G in the community",
+      "Earn SUP tokens by adding $G to funding pools and staking in communities using G$",
     tokenAllocated: 837_370,
     tokenSymbol: "SUP",
     endDate: "25 Feb 2026",

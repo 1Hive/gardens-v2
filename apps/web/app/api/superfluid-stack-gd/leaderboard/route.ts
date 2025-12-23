@@ -187,7 +187,9 @@ export const revalidate = 0;
 const TARGET_STREAM_SUP = parseNumberEnv(
   process.env.SUPERFLUID_GD_TARGET_STREAM_SUP,
 );
-const TOTAL_STREAMED_SUP_FALLBACK = parseNumberEnv(55_868);
+const TOTAL_STREAMED_SUP_FALLBACK = parseNumberEnv(
+  process.env.SUPERFLUID_GD_TOTAL_STREAMED_SUP_FALLBACK,
+);
 
 export async function GET(request: Request) {
   try {

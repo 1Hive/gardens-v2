@@ -15,7 +15,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { Address } from "viem";
 import { useAccount } from "wagmi";
-import { SuperBanner, SuperLogo } from "@/assets";
 
 import { Badge } from "@/components/Badge";
 import { Button } from "@/components/Button";
@@ -110,7 +109,7 @@ export const PARTICIPATION_BY_CAMPAIGN: Record<string, ParticipationStep[]> = {
             rel="noreferrer"
             className="underline"
           >
-            Follow GoodDollar on Farcaster
+            Follow Gardens on Farcaster
           </Link>
           .
         </>
@@ -122,7 +121,7 @@ export const PARTICIPATION_BY_CAMPAIGN: Record<string, ParticipationStep[]> = {
     {
       title: "Add $G to Funding Pools",
       description:
-        "Add $G as a one-time transfer or stream $G into any Funding Pool in the GoodDollar Builders Community.",
+        "On timne transfer or stream into any G$ Funding Pool in Gardens.",
       icon: <ArrowTrendingUpIcon className="h-5 w-5" />,
       activities: ["Add Funds"],
       pointsInfo: "1 point per 1,000 $G added",
@@ -131,28 +130,21 @@ export const PARTICIPATION_BY_CAMPAIGN: Record<string, ParticipationStep[]> = {
       title: "Join the Community & Increase Your Stake",
       description: (
         <>
-          Become an active member of the GoodGov community and stake $G.{" "}
-          <Link
-            href="https://app.gardens.fund/gardens/42220/0x62b8b11039fcfe5ab0c56e502b1c372a3d2a9c7a/0x2ac2b63689a33fe0c8d3d4f70a45cf589ecdd0ac"
-            target="_blank"
-            rel="noreferrer"
-            className="underline"
-          >
-            Join GoodGov Community
-          </Link>
-          .
+          Become an active participant in the communities that allocate G$ in
+          their pools.
         </>
       ),
 
       icon: <UsersIcon className="h-5 w-5" />,
       activities: ["Stake & Governance"],
-      pointsInfo: "Points split proportionally based on staked $G",
+      pointsInfo: "Points split based on stake size",
     },
     {
       title: "2x Bonus in GoodDollar Builders DAO",
       description: (
         <>
-          Join the GoodDollar Builders DAO to earn double points.{" "}
+          Join the GoodDollar Builders DAO to earn double points for all the
+          previous activities.{" "}
           <Link
             href="https://app.gardens.fund/gardens/42220/0x62b8b11039fcfe5ab0c56e502b1c372a3d2a9c7a/0xf42c9ca2b10010142e2bac34ebdddb0b82177684"
             target="_blank"
