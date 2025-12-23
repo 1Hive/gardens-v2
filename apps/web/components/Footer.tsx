@@ -70,7 +70,7 @@ export default function Footer() {
             </a>
           ))}
         </div>
-        <div className="flex  items-center gap-2 text-sm">
+        <div className="flex items-center gap-2 text-sm">
           <Link href="/gardens" className="flex items-center gap-3 text-sm">
             <Image
               src={newLogo}
