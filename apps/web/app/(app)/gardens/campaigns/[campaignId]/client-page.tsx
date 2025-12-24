@@ -140,7 +140,7 @@ export const PARTICIPATION_BY_CAMPAIGN: Record<string, ParticipationStep[]> = {
       pointsInfo: "Points split based on stake size",
     },
     {
-      title: "2x Bonus in GoodDollar Builders DAO",
+      title: "2x Bonus in GoodDollar GoodBuilders Community",
       description: (
         <>
           Join the{" "}
@@ -150,13 +150,13 @@ export const PARTICIPATION_BY_CAMPAIGN: Record<string, ParticipationStep[]> = {
             rel="noreferrer"
             className="underline"
           >
-            GoodDollar Builders DAO
+            GoodDollar GoodBuilders Community
           </Link>{" "}
           to earn double points for all the previous activities.
         </>
       ),
       icon: <CurrencyDollarIcon className="h-5 w-5" />,
-      activities: ["GoodDollar Builders DAO member"],
+      activities: ["GoodDollar GoodBuilders Community member"],
       pointsInfo: "x2 points multiplier",
       highlighted: true,
     },
