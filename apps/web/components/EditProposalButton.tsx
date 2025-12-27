@@ -17,6 +17,7 @@ type Props = {
 
 function EditProposalButton({ proposalData, poolToken }: Props) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDisabled, setIsDisabled] = useState(false);
 
   const spendingLimitPctValue =
     (Number(proposalData.strategy.config.maxRatio || 0) / CV_SCALE_PRECISION) *
@@ -50,6 +51,13 @@ function EditProposalButton({ proposalData, poolToken }: Props) {
         btnStyle="outline"
         color="primary"
         onClick={() => setIsModalOpen(true)}
+        disabled={isDisabled}
+        className="w-full"
+        tooltip={
+          isDisabled ?
+            "Editing is disabled once an hour has passed and the proposal has received support."
+          : undefined
+        }
       >
         Edit
       </Button>
@@ -72,6 +80,7 @@ function EditProposalButton({ proposalData, poolToken }: Props) {
                 spendingLimit={spendingLimitValueNum}
                 spendingLimitPct={spendingLimitValuePct}
                 onClose={() => setIsModalOpen(false)}
+                setIsDisabled={setIsDisabled}
               />
             )}
         </div>

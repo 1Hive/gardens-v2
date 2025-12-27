@@ -57,6 +57,7 @@ type EditProposalFormProps = {
   >;
   poolToken: ReturnType<typeof usePoolToken>;
   onClose: () => void;
+  setIsDisabled?: (isDisabled: boolean) => void;
 };
 
 type FormRowTypes = {
@@ -71,6 +72,7 @@ export const EditProposalForm = ({
   proposal,
   poolToken,
   onClose,
+  setIsDisabled,
 }: EditProposalFormProps) => {
   const {
     register,
@@ -109,6 +111,7 @@ export const EditProposalForm = ({
   const currentConvictionPct = proposalConviction.currentConvictionPct ?? 0;
   const canEditAmount =
     currentConvictionPct === 0 && proposalConviction.totalSupportPct === 0;
+
   const chainId = useChainIdFromPath();
   const { address: connectedWallet } = useAccount();
   const beneficiary = watch("beneficiary");
@@ -144,10 +147,8 @@ export const EditProposalForm = ({
   const disableSubmitBtn = useMemo<ConditionObject[]>(
     () => [
       {
-        condition: !strategy.registryCommunity?.members?.find(
-          (x) => x.memberAddress === connectedWallet?.toLowerCase(),
-        ),
-        message: "Join the community to create a proposal",
+        condition: !canEditAmount && !canEditMetadata,
+        message: "This proposal is not editable anymore.",
       },
     ],
     [connectedWallet, strategy.registryCommunity?.members],
@@ -186,6 +187,10 @@ export const EditProposalForm = ({
       formatUnits(proposal.requestedAmount, poolToken?.decimals ?? 18),
     );
   }, [proposal.requestedAmount, poolToken?.decimals]);
+
+  useEffect(() => {
+    setIsDisabled?.(isButtonDisabled);
+  }, [isButtonDisabled, setIsDisabled]);
 
   const editProposal = async () => {
     setLoading(true);
