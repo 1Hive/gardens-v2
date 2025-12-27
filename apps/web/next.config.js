@@ -1,9 +1,13 @@
 /** @type {import('next').NextConfig} */
 module.exports = {
   reactStrictMode: true,
-  webpack: (config) => {
+  webpack: (config, { isServer }) => {
     config.resolve.fallback = { fs: false, net: false, tls: false };
     config.externals.push("pino-pretty", "lokijs", "encoding");
+    if (isServer) {
+      config.output = config.output || {};
+      config.output.chunkFilename = "chunks/[name].js";
+    }
     // Silence dynamic require warnings coming from GraphQL Mesh/Yoga packages bundled via .graphclient
     const criticalRequestExpr = "Critical dependency: the request of a dependency is an expression";
     const meshModules = /@graphql-mesh|@whatwg-node\/fetch|graphql-yoga/;

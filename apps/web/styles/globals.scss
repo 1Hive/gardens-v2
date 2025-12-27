@@ -518,6 +518,7 @@ dialog * {
 }
 
 .mdxeditor-toolbar {
+  background: transparent !important;
   button {
     cursor: pointer;
   }
@@ -536,10 +537,6 @@ dialog * {
   ._selectTrigger_1e2ox_308 {
     background-color: var(--baseBase);
     color: var(--color-text);
-  }
-
-  ._placeholder_1e2ox_1106 p {
-    color: #9f9f9f;
   }
 
   .cm-editor {
@@ -573,5 +570,12 @@ dialog * {
     left: 0;
     line-height: var(--line-height-md, 1.75rem);
     margin-top: 0;
+    p {
+      color: #9f9f9f;
+    }
   }
+}
+
+.modal-action {
+  margin-top: 0.5rem;
 }
