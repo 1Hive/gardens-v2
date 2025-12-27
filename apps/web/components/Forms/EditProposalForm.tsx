@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from "react";
-import { LockClosedIcon, LockOpenIcon } from "@heroicons/react/24/outline";
 import { useForm } from "react-hook-form";
 import { Address, formatUnits, parseUnits } from "viem";
 import { useAccount, useContractRead } from "wagmi";
@@ -330,26 +329,14 @@ export const EditProposalForm = ({
           formRows={formatFormRows()}
         />
       : <div className="flex flex-col gap-2 overflow-hidden p-1">
-          {proposalTypeName === "funding" && (
-            <InfoBox
-              infoBoxType={canEditAmount ? "info" : "disabled"}
-              title={`Requested amount${canEditAmount ? "" : " locked"}`}
-              icon={canEditAmount ? <LockOpenIcon /> : <LockClosedIcon />}
-            >
-              <div className="mb-4">
-                {canEditMetadata ?
-                  <>
-                    You can adjust the requested amount until someone supports
-                    this proposal.
-                  </>
-                : <>
-                    This proposal has support from the community - its requested
-                    amount can no longer be edited. <br />
-                    To request a different amount, cancel the proposal and
-                    create a new one.
-                  </>
-                }
-              </div>
+          {proposalTypeName === "funding" && canEditAmount && (
+            <div className="border-2 border-neutral-soft dark:border-neutral rounded-lg p-2">
+              <InfoBox infoBoxType={"info"} className="mb-2" hideIcon>
+                <div className="font-bold">
+                  The requested amount is only editable until support is
+                  received.
+                </div>
+              </InfoBox>
               <FormInput
                 label="Requested amount"
                 subLabel={`Pool Funds: ${poolToken?.formatted} ${poolToken?.symbol} - Spending limit: ${spendingLimitPct.toFixed(1)}% = ${spendingLimit} ${poolToken?.symbol}.`}
@@ -407,91 +394,80 @@ export const EditProposalForm = ({
                   </div>
                 </InfoBox>
               )}
-            </InfoBox>
+            </div>
           )}
 
-          <InfoBox
-            infoBoxType={canEditMetadata ? "info" : "disabled"}
-            title={"Metadata"}
-            className="mt-3"
-            icon={canEditMetadata ? <LockOpenIcon /> : <LockClosedIcon />}
-          >
-            <div className="flex flex-row gap-1 align-middle mb-4">
-              {canEditMetadata ?
-                <div className="flex flex-col">
-                  <div className="flex flex-row items-center">
-                    <b>Time remaining to edit: </b>&nbsp;
-                    <Countdown
-                      endTimestamp={metadataEditDeadlineSeconds}
-                      format="minutes"
-                      display="inline"
-                      showTimeout={false}
-                      className="items-end text-xs font-semibold"
-                    />
+          {canEditMetadata && (
+            <div className="flex flex-col mt-4 border-2  border-neutral-soft dark:border-neutral rounded-lg p-2">
+              <InfoBox infoBoxType={"info"} className="mb-2" hideIcon>
+                <div className="flex flex-row gap-1 align-middle font-bold">
+                  <div className="flex flex-col">
+                    <div className="flex flex-row items-center">
+                      <Countdown
+                        endTimestamp={metadataEditDeadlineSeconds}
+                        format="minutes"
+                        display="inline"
+                        showTimeout={false}
+                        className="items-end text-xs font-semibold"
+                      />
+                      &nbsp;left to edit for this section.
+                    </div>
                   </div>
-                  You can edit the following for 1 hour after creating.
                 </div>
-              : <>
-                  <b>
-                    {proposalTypeName !== "signaling" ? "Beneficiary, " : ""}
-                  </b>
-                  <b>Title</b> and&nbsp;<b>Description</b> can only be edited
-                  within one hour after creation.
-                </>
-              }
-            </div>
+              </InfoBox>
 
-            {proposalTypeName !== "signaling" && (
+              {proposalTypeName !== "signaling" && (
+                <div className="flex flex-col">
+                  <FormAddressInput
+                    label="Beneficiary address"
+                    register={register}
+                    registerKey="beneficiary"
+                    value={beneficiary}
+                    onChange={(e) => {
+                      setValue("beneficiary", e.target.value);
+                    }}
+                    required
+                    errors={errors}
+                    disabled={!canEditMetadata}
+                    tooltip={
+                      canEditMetadata ? undefined : (
+                        "Beneficiary can only be changed within the first hour."
+                      )
+                    }
+                  />
+                </div>
+              )}
               <div className="flex flex-col">
-                <FormAddressInput
-                  label="Beneficiary address"
+                <FormInput
+                  label="Title"
                   register={register}
-                  registerKey="beneficiary"
-                  value={beneficiary}
-                  onChange={(e) => {
-                    setValue("beneficiary", e.target.value);
-                  }}
                   required
                   errors={errors}
+                  registerKey="title"
+                  type="text"
+                  placeholder="Example Title"
                   disabled={!canEditMetadata}
-                  tooltip={
-                    canEditMetadata ? undefined : (
-                      "Beneficiary can only be changed within the first hour."
-                    )
-                  }
                 />
               </div>
-            )}
-            <div className="flex flex-col">
-              <FormInput
-                label="Title"
-                register={register}
-                required
-                errors={errors}
-                registerKey="title"
-                type="text"
-                placeholder="Example Title"
-                disabled={!canEditMetadata}
-              />
+              <div className="flex flex-col">
+                <FormInput
+                  label="Proposal description"
+                  register={register}
+                  required
+                  errors={errors}
+                  registerKey="description"
+                  onChange={(e) => {
+                    setValue("description", e.target.value);
+                  }}
+                  value={getValues("description")}
+                  type="markdown"
+                  rows={10}
+                  placeholder="Proposal description"
+                  disabled={!canEditMetadata}
+                />
+              </div>
             </div>
-            <div className="flex flex-col">
-              <FormInput
-                label="Proposal description"
-                register={register}
-                required
-                errors={errors}
-                registerKey="description"
-                onChange={(e) => {
-                  setValue("description", e.target.value);
-                }}
-                value={getValues("description")}
-                type="markdown"
-                rows={10}
-                placeholder="Proposal description"
-                disabled={!canEditMetadata}
-              />
-            </div>
-          </InfoBox>
+          )}
         </div>
       }
       {(canEditAmount || canEditMetadata) && (

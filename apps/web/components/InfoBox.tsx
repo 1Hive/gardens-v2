@@ -43,14 +43,16 @@ export function InfoBox({
     <div
       className={`${BASE_STYLES} ${infoBoxStyles[infoBoxType]} ${className ?? ""}`.trim()}
     >
-      <div className="flex items-center gap-2">
-        {!hideIcon && (
-          <div className="flex h-5 w-5 items-center justify-center text-inherit">
-            {icon ?? <InformationCircleIcon className="h-5 w-5" />}
-          </div>
-        )}
-        <h6 className="text-inherit">{title}</h6>
-      </div>
+      {(!!title || !hideIcon) && (
+        <div className="flex items-center gap-2">
+          {!hideIcon && (
+            <div className="flex h-5 w-5 items-center justify-center text-inherit">
+              {icon ?? <InformationCircleIcon className="h-5 w-5" />}
+            </div>
+          )}
+          <h6 className="text-inherit">{title}</h6>
+        </div>
+      )}
       <p
         className={`text-sm leading-5 text-inherit first-letter:uppercase text-left ${contentStyle ?? ""}`.trim()}
       >
