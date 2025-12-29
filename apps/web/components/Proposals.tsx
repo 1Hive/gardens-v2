@@ -220,6 +220,28 @@ export function Proposals({
   const memberActivatedStrategy =
     memberStrategyData?.memberStrategy?.activatedPoints > 0n;
 
+  const [sortedProposals, setSortedProposals] = useState(strategy.proposals);
+
+  useEffect(() => {
+    const sorted = [...strategy.proposals].sort((a, b) => {
+      const aConviction =
+        proposalCardRefs.current.get(a.id)?.getProposalConviction()
+          ?.conviction ?? 0n;
+
+      const bConviction =
+        proposalCardRefs.current.get(b.id)?.getProposalConviction()
+          ?.conviction ?? 0n;
+
+      return (
+        aConviction < bConviction ? 1
+        : aConviction > bConviction ? -1
+        : 0
+      );
+    });
+
+    setSortedProposals(sorted);
+  }, []);
+
   const proposals = strategy.proposals.sort((a, b) => {
     const aConviction =
       proposalCardRefs.current.get(b.id)?.getProposalConviction()?.conviction ??
@@ -228,8 +250,8 @@ export function Proposals({
       proposalCardRefs.current.get(a.id)?.getProposalConviction()?.conviction ??
       0n;
     return (
-      aConviction < bConviction ? -1
-      : aConviction > bConviction ? 1
+      aConviction < bConviction ? 1
+      : aConviction > bConviction ? -1
       : 0
     );
   });
@@ -695,7 +717,7 @@ export function Proposals({
     sortBy: sortBy,
     setSortBy: setSortBy,
     filtered: filteredAndSorted,
-  } = useProposalFilter(strategy.proposals);
+  } = useProposalFilter(sortedProposals);
 
   return (
     <>
@@ -1056,9 +1078,7 @@ function ProposalFiltersUI({
       <div className="flex w-full gap-2 lg:gap-1 sm:justify-between flex-wrap ">
         {FILTERS.map((f) => (
           <Button
-            className={
-              filter === f ? "!cursor-default !bg-primary-dark-base" : ""
-            }
+            className={filter === f ? "!cursor-default !bg-soft-primary-" : ""}
             onClick={() => setFilter(f)}
             color={filter === f ? "primary" : "disabled"}
             key={f}
@@ -1080,12 +1100,14 @@ function ProposalFiltersUI({
       {/* SORT DROPDOWN */}
       <div className="w-full lg:w-fit sm:flex justify-between items-center">
         <div className="w-[70px]">
-          <p className="text-sm text-neutral-soft-content">Sort by</p>
+          <p className="text-sm text-neutral-soft-content mb-1 sm:mb-0">
+            Sort by
+          </p>
         </div>
         <div className="dropdown dropdown-hover dropdown-start  w-full relative group">
           <button
             tabIndex={0}
-            className="text-primary-content text-sm  flex gap-2 items-center w-full lg:w-[255px] px-3.5 py-2 bg-primary-soft dark:bg-primary rounded-lg"
+            className="text-primary-content text-sm flex gap-2 items-center w-full lg:w-[255px] px-3.5 py-2 bg-primary-soft dark:bg-primary rounded-lg"
           >
             {CurrentIcon && <CurrentIcon className="w-4 h-4" />}
             {currentSortOption?.label}
@@ -1099,13 +1121,17 @@ function ProposalFiltersUI({
                 <li
                   tabIndex={0}
                   key={option.key}
-                  onClick={() => setSortBy(option.key)}
-                  className="cursor-pointer w-full flex justify-between items-start text-xs hover:bg-primary-soft dark:hover:bg-primary-content rounded-md"
+                  className="cursor-pointer flex justify-between items-start text-xs hover:bg-primary-soft dark:hover:bg-primary-content rounded-md"
                 >
-                  <span className="flex items-center gap-2 text-sm">
-                    <Icon className="w-4 h-4" />
-                    {option.label}
-                  </span>
+                  <button
+                    className="w-full"
+                    onClick={() => setSortBy(option.key)}
+                  >
+                    <span className="flex items-center gap-2 text-sm">
+                      <Icon className="w-4 h-4" />
+                      {option.label}
+                    </span>
+                  </button>
                 </li>
               );
             })}
