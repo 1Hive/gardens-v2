@@ -167,8 +167,7 @@ const fetchSuperfluidTotals = async (): Promise<number | null> => {
       return null;
     }
 
-    const total =
-      res.data?.pool?.totalAmountDistributedUntilUpdatedAt ?? null;
+    const total = res.data?.pool?.totalAmountDistributedUntilUpdatedAt ?? null;
     if (!total) return null;
 
     const totalSup = Number(BigInt(total)) / 1e18;
@@ -184,6 +183,11 @@ export async function GET(request: Request) {
   try {
     const url = new URL(request.url);
     const cidFromQuery = url.searchParams.get("cid");
+    const walletAddressParam = url.searchParams.get("walletAddress");
+    const normalizedWalletAddress =
+      walletAddressParam && walletAddressParam.toLowerCase().startsWith("0x") ?
+        walletAddressParam.toLowerCase()
+      : null;
     const cid =
       cidFromQuery ??
       PINATA_POINTS_SNAPSHOT_CID ??

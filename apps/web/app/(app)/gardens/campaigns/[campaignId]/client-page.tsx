@@ -14,7 +14,7 @@ import { blo } from "blo";
 import Image from "next/image";
 import Link from "next/link";
 import { Address } from "viem";
-import { useAccount } from "wagmi";
+import { useAccount, useEnsAvatar, useEnsName } from "wagmi";
 
 import { Badge } from "@/components/Badge";
 import { Button } from "@/components/Button";
@@ -140,7 +140,7 @@ export const PARTICIPATION_BY_CAMPAIGN: Record<string, ParticipationStep[]> = {
       pointsInfo: "Points split based on stake size",
     },
     {
-      title: "2x Bonus in GoodDollar Builders DAO",
+      title: "2x Bonus in GoodDollar GoodBuilders Community",
       description: (
         <>
           Join the{" "}
@@ -150,13 +150,13 @@ export const PARTICIPATION_BY_CAMPAIGN: Record<string, ParticipationStep[]> = {
             rel="noreferrer"
             className="underline"
           >
-            GoodDollar Builders DAO
+            GoodDollar GoodBuilders Community
           </Link>{" "}
           to earn double points for all the previous activities.
         </>
       ),
       icon: <CurrencyDollarIcon className="h-5 w-5" />,
-      activities: ["GoodDollar Builders DAO member"],
+      activities: ["GoodDollar GoodBuilders Community member"],
       pointsInfo: "x2 points multiplier",
       highlighted: true,
     },
@@ -195,6 +195,7 @@ export default function GardensGrowthInitiativePage({
   const [walletPoints, setWalletPoints] = useState<WalletPointsInfo | null>(
     null,
   );
+
   const [openModal, setOpenModal] = useState(false);
 
   const campaigns = CAMPAIGNS[campaignId];
@@ -203,21 +204,52 @@ export default function GardensGrowthInitiativePage({
 
   const { address: connectedAccount } = useAccount();
 
+  const { data: localEnsName } = useEnsName({
+    address: connectedAccount as Address,
+    enabled: Boolean(connectedAccount) && !walletPoints?.ensName,
+    chainId: 1,
+    cacheTime: 30_000,
+  });
+
+  const { data: localEnsAvatar } = useEnsAvatar({
+    name: localEnsName,
+    enabled: Boolean(localEnsName) && !walletPoints?.ensAvatar,
+    chainId: 1,
+    cacheTime: 30_000,
+  });
+
   const wallets = superfluidStreamsData?.snapshot?.wallets ?? [];
 
   const connectedDisplayName = useMemo(() => {
     if (!connectedAccount) return null;
-    return (
+    const name =
+      localEnsName ??
       walletPoints?.ensName ??
       walletPoints?.farcasterUsername ??
-      shortenAddress(connectedAccount)
+      shortenAddress(connectedAccount);
+    const listEntry = superfluidStreamsData?.snapshot.wallets.find(
+      (w) => w.address.toLowerCase() === connectedAccount.toLowerCase(),
     );
-  }, [connectedAccount, walletPoints]);
+    if (listEntry) {
+      listEntry.ensName = name;
+    }
+    return name;
+  }, [connectedAccount, localEnsName, walletPoints]);
 
   const connectedAvatar = useMemo(() => {
     if (!connectedAccount) return null;
-    return walletPoints?.ensAvatar ?? blo(connectedAccount as Address);
-  }, [connectedAccount, walletPoints]);
+    const avatar =
+      localEnsAvatar ??
+      walletPoints?.ensAvatar ??
+      blo(connectedAccount as Address);
+    const listEntry = superfluidStreamsData?.snapshot.wallets.find(
+      (w) => w.address.toLowerCase() === connectedAccount.toLowerCase(),
+    );
+    if (listEntry) {
+      listEntry.ensAvatar = avatar;
+    }
+    return avatar;
+  }, [connectedAccount, localEnsAvatar, walletPoints]);
 
   //useEffects
   useEffect(() => {
@@ -227,11 +259,12 @@ export default function GardensGrowthInitiativePage({
         campaigns?.leaderboardEndpoint,
       );
       setSuperfluidStreamsData(result);
+
       setLoading(false);
     }
 
     fetchPointsData();
-  }, [connectedAccount]);
+  }, [campaigns?.leaderboardEndpoint, connectedAccount]);
 
   useEffect(() => {
     if (!connectedAccount) return;

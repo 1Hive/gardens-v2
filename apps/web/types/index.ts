@@ -97,7 +97,9 @@ export async function fetchSuperfluidLeaderboard(
   endpoint: string,
 ): Promise<LeaderboardResponse | null> {
   try {
-    const response = await fetch(endpoint, {
+    let requestUrl = endpoint;
+
+    const response = await fetch(requestUrl, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
     });
@@ -109,7 +111,7 @@ export async function fetchSuperfluidLeaderboard(
 
     const data = (await response.json()) as LeaderboardResponse;
 
-    if (!data?.snapshot?.wallets) return data ?? null;
+    if (!data?.snapshot?.wallets.length) return data ?? null;
 
     const sortedWallets = [...data.snapshot.wallets].sort(
       (a, b) => (b.totalPoints ?? 0) - (a.totalPoints ?? 0),
