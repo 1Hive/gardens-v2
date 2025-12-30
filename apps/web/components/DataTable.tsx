@@ -3,7 +3,7 @@ import { Modal } from "./Modal";
 
 interface DataTableProps {
   title?: string;
-  description: string;
+  description?: string;
   data: any[] | undefined;
   columns: TableColumn[];
   footer?: React.ReactNode;

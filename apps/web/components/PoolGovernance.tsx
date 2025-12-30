@@ -1,11 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import {
-  ChevronUpIcon,
-  QuestionMarkCircleIcon,
-} from "@heroicons/react/24/outline";
-import cn from "classnames";
+import { QuestionMarkCircleIcon } from "@heroicons/react/24/outline";
 import { Dnum } from "dnum";
 import { Address, useAccount } from "wagmi";
 
