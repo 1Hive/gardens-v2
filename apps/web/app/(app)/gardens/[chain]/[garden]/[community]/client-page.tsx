@@ -412,7 +412,7 @@ export default function ClientPage({
 
                 {/* Statistic + Register/Leave Button */}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
-                  <div className="flex flex-col sm:flex-row gap-2 md:gap-6">
+                  <div className="w-full flex flex-col sm:flex-row gap-2 md:gap-6 sm:justify-between sm:flex-wrap">
                     <Statistic
                       label="members"
                       count={members?.length ?? 0}
@@ -477,7 +477,7 @@ export default function ClientPage({
                   </div>
                 </div>
 
-                {/* Registration Stake Value + View members Button*/}
+                {/* Registration Stake Value + Community staking leaderboard Button*/}
                 <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center mt-2 sm:justify-between">
                   <div className="flex gap-1 items-center ">
                     <p className="subtitle2">Registration stake:</p>
