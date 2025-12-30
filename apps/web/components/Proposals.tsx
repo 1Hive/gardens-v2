@@ -220,42 +220,29 @@ export function Proposals({
   const memberActivatedStrategy =
     memberStrategyData?.memberStrategy?.activatedPoints > 0n;
 
-  const [sortedProposals, setSortedProposals] = useState(strategy.proposals);
+  // const [sortedProposals, setSortedProposals] = useState(strategy.proposals);
 
-  useEffect(() => {
-    const sorted = [...strategy.proposals].sort((a, b) => {
-      const aConviction =
-        proposalCardRefs.current.get(a.id)?.getProposalConviction()
-          ?.conviction ?? 0n;
+  // useEffect(() => {
+  //   const sorted = [...strategy.proposals].sort((a, b) => {
+  //     const aConviction =
+  //       proposalCardRefs.current.get(a.id)?.getProposalConviction()
+  //         ?.conviction ?? 0n;
 
-      const bConviction =
-        proposalCardRefs.current.get(b.id)?.getProposalConviction()
-          ?.conviction ?? 0n;
+  //     const bConviction =
+  //       proposalCardRefs.current.get(b.id)?.getProposalConviction()
+  //         ?.conviction ?? 0n;
 
-      return (
-        aConviction < bConviction ? 1
-        : aConviction > bConviction ? -1
-        : 0
-      );
-    });
+  //     return (
+  //       aConviction < bConviction ? 1
+  //       : aConviction > bConviction ? -1
+  //       : 0
+  //     );
+  //   });
 
-    setSortedProposals(sorted);
-  }, []);
+  //   setSortedProposals(sorted);
+  // }, []);
 
-  const proposals = strategy.proposals.sort((a, b) => {
-    const aConviction =
-      proposalCardRefs.current.get(b.id)?.getProposalConviction()?.conviction ??
-      0n;
-    const bConviction =
-      proposalCardRefs.current.get(a.id)?.getProposalConviction()?.conviction ??
-      0n;
-    return (
-      aConviction < bConviction ? 1
-      : aConviction > bConviction ? -1
-      : 0
-    );
-  });
-
+  const proposals = strategy.proposals;
   // Effects
   useEffect(() => {
     if (error) {
@@ -717,7 +704,7 @@ export function Proposals({
     sortBy: sortBy,
     setSortBy: setSortBy,
     filtered: filteredAndSorted,
-  } = useProposalFilter(sortedProposals);
+  } = useProposalFilter(proposals);
 
   return (
     <>
@@ -1113,7 +1100,7 @@ function ProposalFiltersUI({
             {currentSortOption?.label}
           </button>
 
-          <ul className="dropdown-content menu bg-primary rounded-box z-50 shadow w-full lg:w-[255px]">
+          <ul className="dropdown-content menu bg-primary rounded-md z-50 shadow w-full lg:w-[255px]">
             {SORT_OPTIONS.map((option) => {
               const Icon = option.icon;
 
@@ -1127,7 +1114,7 @@ function ProposalFiltersUI({
                     className="w-full"
                     onClick={() => setSortBy(option.key)}
                   >
-                    <span className="flex items-center gap-2 text-sm">
+                    <span className="flex items-center gap-2 text-sm rounded-md">
                       <Icon className="w-4 h-4" />
                       {option.label}
                     </span>
