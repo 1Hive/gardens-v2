@@ -72,8 +72,12 @@ export const Countdown = ({
         <div
           className={`flex ${display !== "inline" ? "flex-col" : "items-center"}`}
         >
-          <span className="countdown font-mono text-5xl">
-            <span style={{ "--value": days } as React.CSSProperties} />
+          <span className="countdown font-mono text-5xl text-inherit">
+            <span
+              style={
+                { "--value": days, color: "inherit" } as React.CSSProperties
+              }
+            />
           </span>
           days
         </div>
@@ -84,8 +88,12 @@ export const Countdown = ({
         <div
           className={`flex ${display !== "inline" ? "flex-col" : "items-center"}`}
         >
-          <span className="countdown font-mono text-5xl">
-            <span style={{ "--value": hours } as React.CSSProperties} />
+          <span className="countdown font-mono text-5xl text-inherit">
+            <span
+              style={
+                { "--value": hours, color: "inherit" } as React.CSSProperties
+              }
+            />
           </span>
           hrs
         </div>
@@ -96,8 +104,12 @@ export const Countdown = ({
         <div
           className={`flex ${display !== "inline" ? "flex-col" : "items-center"}`}
         >
-          <span className="countdown font-mono text-5xl">
-            <span style={{ "--value": minutes } as React.CSSProperties} />
+          <span className="countdown font-mono text-5xl text-inherit">
+            <span
+              style={
+                { "--value": minutes, color: "inherit" } as React.CSSProperties
+              }
+            />
           </span>
           min
         </div>
@@ -106,8 +118,12 @@ export const Countdown = ({
         <div
           className={`flex ${display !== "inline" ? "flex-col" : "items-center"}`}
         >
-          <span className="countdown font-mono text-5xl">
-            <span style={{ "--value": seconds } as React.CSSProperties} />
+          <span className="countdown font-mono text-5xl text-inherit">
+            <span
+              style={
+                { "--value": seconds, color: "inherit" } as React.CSSProperties
+              }
+            />
           </span>
           sec
         </div>
