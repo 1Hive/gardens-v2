@@ -68,7 +68,12 @@ query getMembersStrategy($strategyId: String!) {
         memberAddress
         isRegistered
       }
-      stakes(first: 1000, where: { proposal_: { strategy: $strategyId, proposalStatus_in: [1, 5] } }) {
+      stakes(
+        first: 1000
+        where: {
+          proposal_: { strategy: $strategyId, proposalStatus_in: [1, 5] }
+        }
+      ) {
         amount
         proposal {
           proposalStatus
@@ -371,7 +376,7 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
         memberAddress
       }
     }
-    proposals(first: 1000, orderBy: createdAt, orderDirection: desc) {
+    proposals(first: 1000, orderBy: convictionLast, orderDirection: desc) {
       id
       proposalNumber
       metadataHash

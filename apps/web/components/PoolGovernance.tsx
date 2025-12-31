@@ -1,11 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import {
-  ChevronUpIcon,
-  QuestionMarkCircleIcon,
-} from "@heroicons/react/24/outline";
-import cn from "classnames";
+import { QuestionMarkCircleIcon } from "@heroicons/react/24/outline";
 import { Dnum } from "dnum";
 import { Address, useAccount } from "wagmi";
 
@@ -56,9 +52,10 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
 }) => {
   const showPoolGovernanceData = isMemberCommunity && memberActivatedStrategy;
   const poolSystem = strategy.config.pointSystem;
-  const [openGovDetails, setOpenGovDetails] = useState(false);
   const { address } = useAccount();
   const [triggerSybilCheckModalClose, setTriggerSybilCheckModalClose] =
+    useState(false);
+  const [openGovernanceDetailsModal, setOpenGovernanceDetailsModal] =
     useState(false);
 
   const poolSystemDefinition: { [key: number]: string } = {
@@ -143,23 +140,22 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
             </CheckSybil>
           </div>
           <Button
-            onClick={() => setOpenGovDetails(!openGovDetails)}
-            btnStyle="link"
-            color="tertiary"
-            icon={
-              <ChevronUpIcon
-                className={`h-4 w-4 font-bold transition-transform duration-200 ease-in-out ${cn(
-                  {
-                    "rotate-180": !openGovDetails,
-                  },
-                )} `}
-              />
+            onClick={() =>
+              setOpenGovernanceDetailsModal(!openGovernanceDetailsModal)
             }
+            btnStyle="outline"
+            color="tertiary"
+            // icon={<ChevronUpIcon className="h-4 w-4" />}
           >
-            {openGovDetails ? "Hide" : "View"} governance details
+            {openGovernanceDetailsModal ? "Close" : "Open"} governance details
           </Button>
-          {openGovDetails && membersStrategyData && (
-            <PoolGovernanceDetails membersStrategyData={membersStrategyData} />
+
+          {membersStrategyData && (
+            <PoolGovernanceDetails
+              membersStrategyData={membersStrategyData}
+              openGovernanceDetailsModal={openGovernanceDetailsModal}
+              setOpenGovernanceDetailsModal={setOpenGovernanceDetailsModal}
+            />
           )}
         </section>
       </div>
@@ -171,7 +167,13 @@ type MemberColumn = Column<getMembersStrategyQuery["memberStrategies"][0]>;
 
 const PoolGovernanceDetails: React.FC<{
   membersStrategyData: getMembersStrategyQuery;
-}> = ({ membersStrategyData }) => {
+  openGovernanceDetailsModal: boolean;
+  setOpenGovernanceDetailsModal: (open: boolean) => void;
+}> = ({
+  membersStrategyData,
+  openGovernanceDetailsModal,
+  setOpenGovernanceDetailsModal,
+}) => {
   const columns: MemberColumn[] = [
     {
       header: "Member",
@@ -214,6 +216,9 @@ const PoolGovernanceDetails: React.FC<{
 
   return (
     <DataTable
+      title="Supporters Voting Power"
+      setOpenModal={setOpenGovernanceDetailsModal}
+      openModal={openGovernanceDetailsModal}
       description="A list of all the community members and their activity in this pool."
       data={membersStrategyData.memberStrategies}
       columns={columns}
