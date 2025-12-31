@@ -782,7 +782,7 @@ export function Proposals({
                           }
                           tooltip={tooltipMessage}
                         >
-                          Manage support
+                          Vote on Proposals
                         </Button>
                       </CheckSybil>
                     </div>
