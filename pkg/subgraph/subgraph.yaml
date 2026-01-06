@@ -6,15 +6,15 @@ schema:
 dataSources:
   - kind: ethereum/contract
     name: RegistryFactory
-    network: celo
+    network: optimism-sepolia
     context:
       chainId: 
         type: Int
-        data: 42220
+        data: 11155420
     source:
-      address: "0xA71023bc64c9711C2037ab491DE80fd74504bd55"
+      address: "0xEC8824e9a9498520891ec678e98c5bd3e65229c2"
       abi: RegistryFactory
-      startBlock: 31270470
+      startBlock: 29036730
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -44,15 +44,15 @@ dataSources:
 
   - kind: ethereum/contract
     name: PassportScorer
-    network: celo
+    network: optimism-sepolia
     context:
       chainId: 
         type: Int
-        data: 42220
+        data: 11155420
     source:
-      address: "0xb39dfa15f96055664179e8ecaa890f3fa26c21e9"
+      address: "0xe3DC6e82B599cD80904aCf0a3cd9f7401d92CC37"
       abi: PassportScorer
-      startBlock: 31270470
+      startBlock: 29036730
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -81,15 +81,15 @@ dataSources:
 
   - kind: ethereum/contract
     name: GoodDollarSybil
-    network: celo
+    network: optimism-sepolia
     context:
       chainId: 
         type: Int
-        data: 42220
+        data: 11155420
     source:
-      address: "0xABfa0Ed0142642651EBe8dd3f22acdd709782a61"
+      address: "0xb01AC9015E04ecC424E646eBAb32dfa7670Ae8a6"
       abi: GoodDollarSybil
-      startBlock: 31270470
+      startBlock: 29036730
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -113,7 +113,7 @@ dataSources:
 templates:
   - kind: ethereum/contract
     name: RegistryCommunity
-    network: celo
+    network: optimism-sepolia
     source:
       abi: RegistryCommunity
     mapping:
@@ -187,7 +187,7 @@ templates:
 
   - kind: ethereum/contract
     name: CVStrategy
-    network: celo
+    network: optimism-sepolia
     source:
       abi: CVStrategy
     mapping:
@@ -254,7 +254,7 @@ templates:
 
   - kind: ethereum/contract
     name: CollateralVault
-    network: celo
+    network: optimism-sepolia
     source:
       abi: CollateralVault
     mapping:
