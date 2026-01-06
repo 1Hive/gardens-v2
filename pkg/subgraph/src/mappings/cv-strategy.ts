@@ -341,6 +341,7 @@ export function handleDistributed(event: Distributed): void {
   );
 
   cvp.proposalStatus = proposalStatus;
+  cvp.executedAt = event.block.timestamp;
   cvp.save();
 }
 
@@ -746,18 +747,19 @@ export function handleProposalEdited(event: ProposalEdited): void {
   let proposal = CVProposal.load(proposalId);
 
   if (proposal == null) {
-    log.error("CVStrategy: handleProposalEdited proposal not found: {} (block: {})", [
-      proposalId,
-      event.block.number.toString()
-    ]);
+    log.error(
+      "CVStrategy: handleProposalEdited proposal not found: {} (block: {})",
+      [proposalId, event.block.number.toString()]
+    );
     return;
   }
 
   const pointer = event.params.metadata.pointer;
   if (pointer.length == 0) {
-    log.warning("CVStrategy: handleProposalEdited empty metadata pointer for proposal {}", [
-      proposalId
-    ]);
+    log.warning(
+      "CVStrategy: handleProposalEdited empty metadata pointer for proposal {}",
+      [proposalId]
+    );
   } else if (proposal.metadataHash != pointer) {
     proposal.metadata = pointer;
     proposal.metadataHash = pointer;

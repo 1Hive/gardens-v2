@@ -6,15 +6,15 @@ schema:
 dataSources:
   - kind: ethereum/contract
     name: RegistryFactory
-    network: matic
+    network: celo
     context:
       chainId: 
         type: Int
-        data: 137
+        data: 42220
     source:
-      address: "0x57a9835b204dbcc101dbf981625a3625e8043b9c"
+      address: "0xA71023bc64c9711C2037ab491DE80fd74504bd55"
       abi: RegistryFactory
-      startBlock: 61584764
+      startBlock: 31270470
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -44,15 +44,15 @@ dataSources:
 
   - kind: ethereum/contract
     name: PassportScorer
-    network: matic
+    network: celo
     context:
       chainId: 
         type: Int
-        data: 137
+        data: 42220
     source:
-      address: "0x190Fa730E6FfC64Ebd0031bE59b3007cC9eE2bB3"
+      address: "0xb39dfa15f96055664179e8ecaa890f3fa26c21e9"
       abi: PassportScorer
-      startBlock: 61584764
+      startBlock: 31270470
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -81,15 +81,15 @@ dataSources:
 
   - kind: ethereum/contract
     name: GoodDollarSybil
-    network: matic
+    network: celo
     context:
       chainId: 
         type: Int
-        data: 137
+        data: 42220
     source:
-      address: "0x7D08db0138fc0f0Dcc9C7120b301Ff07D3A7b300"
+      address: "0xABfa0Ed0142642651EBe8dd3f22acdd709782a61"
       abi: GoodDollarSybil
-      startBlock: 61584764
+      startBlock: 31270470
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -113,7 +113,7 @@ dataSources:
 templates:
   - kind: ethereum/contract
     name: RegistryCommunity
-    network: matic
+    network: celo
     source:
       abi: RegistryCommunity
     mapping:
@@ -187,7 +187,7 @@ templates:
 
   - kind: ethereum/contract
     name: CVStrategy
-    network: matic
+    network: celo
     source:
       abi: CVStrategy
     mapping:
@@ -254,7 +254,7 @@ templates:
 
   - kind: ethereum/contract
     name: CollateralVault
-    network: matic
+    network: celo
     source:
       abi: CollateralVault
     mapping:
