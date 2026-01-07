@@ -194,16 +194,20 @@ export const EditProposalForm = ({
 
   const editProposal = async () => {
     setLoading(true);
+    try {
+      const ipfsHash =
+        proposalMetadataChanged ?
+          await ipfsJsonUpload({
+            title: proposalTitle,
+            description: proposalDescription,
+          })
+        : proposal.metadataHash;
 
-    const ipfsHash =
-      proposalMetadataChanged ?
-        await ipfsJsonUpload({
-          title: proposalTitle,
-          description: proposalDescription,
-        })
-      : proposal.metadataHash;
+      if (!ipfsHash) {
+        setLoading(false);
+        return;
+      }
 
-    if (ipfsHash) {
       if (previewData === undefined) {
         throw new Error("No preview data");
       }
@@ -222,8 +226,10 @@ export const EditProposalForm = ({
           amount,
         ],
       });
+    } catch (error) {
+      console.error(error);
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handlePreview = (data: FormInputs) => {
@@ -240,6 +246,9 @@ export const EditProposalForm = ({
     onSuccess: () => {
       setLoading(true);
       onClose();
+    },
+    onError: () => {
+      setLoading(false);
     },
     onConfirmations: () => {
       publish({
@@ -331,6 +340,14 @@ export const EditProposalForm = ({
           title={previewData?.title ?? ""}
           description={previewData?.description ?? ""}
           formRows={formatFormRows()}
+          onEdit={() => {
+            setShowPreview(false);
+            setLoading(false);
+          }}
+          onSubmit={() => {
+            if (isButtonDisabled) return;
+            editProposal();
+          }}
         />
       : <div className="flex flex-col gap-2 overflow-hidden p-1">
           {proposalTypeName === "funding" && canEditAmount && (

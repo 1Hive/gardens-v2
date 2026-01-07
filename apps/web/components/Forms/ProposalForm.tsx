@@ -200,6 +200,9 @@ export const ProposalForm = ({
     functionName: "registerRecipient",
     fallbackErrorMessage: "Error creating Proposal, please report a bug.",
     value: arbitrableConfig?.submitterCollateralAmount,
+    onError: () => {
+      setLoading(false);
+    },
     onConfirmations: (receipt) => {
       const proposalId = getEventFromReceipt(
         receipt,
@@ -345,6 +348,13 @@ export const ProposalForm = ({
           title={previewData?.title ?? ""}
           description={previewData?.description ?? ""}
           formRows={formatFormRows()}
+          onEdit={() => {
+            setShowPreview(false);
+          }}
+          onSubmit={() => {
+            if (isButtonDisabled) return;
+            createProposal();
+          }}
         />
       : <div className="flex flex-col gap-2 overflow-hidden p-1">
           {proposalTypeName === "funding" && (
