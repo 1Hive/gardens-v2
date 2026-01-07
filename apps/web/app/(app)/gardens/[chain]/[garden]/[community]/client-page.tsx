@@ -412,7 +412,7 @@ export default function ClientPage({
 
                 {/* Statistic + Register/Leave Button */}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
-                  <div className="w-full flex flex-col sm:flex-row gap-2 md:gap-6 sm:justify-between sm:flex-wrap">
+                  <div className="w-full flex flex-col sm:flex-row gap-2 md:gap-6 sm:flex-wrap">
                     <Statistic
                       label="members"
                       count={members?.length ?? 0}
@@ -520,7 +520,6 @@ export default function ClientPage({
             </div>
 
             {/* Community members stats */}
-
             <CommunityDetailsTable
               membersStaked={registryCommunity.members as MembersStaked[]}
               tokenGarden={tokenGarden}
@@ -664,7 +663,7 @@ const CommunityDetailsTable = ({
       columns={columns}
       className="max-h-screen w-full"
       footer={
-        <div className="flex justify-between items-center gap-2 mr-4">
+        <div className="flex justify-between items-center gap-2 mr-8 sm:mr-12">
           <p className="subtitle">Total Staked: </p>
           <DisplayNumber
             number={[BigInt(communityStakedTokens), tokenGarden.decimals]}

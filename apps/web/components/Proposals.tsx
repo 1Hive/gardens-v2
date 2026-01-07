@@ -739,7 +739,7 @@ export function Proposals({
                     }
                     tooltip={tooltipMessage}
                   >
-                    Create a proposal
+                    Add a proposal
                   </Button>
                 </Link>
               </div>
@@ -802,6 +802,20 @@ export function Proposals({
           />
         )}
 
+        {strategy.isEnabled && proposals.length > 0 && (
+          <Link href={createProposalUrl}>
+            <Button
+              btnStyle="filled"
+              icon={<PlusIcon height={24} width={24} />}
+              disabled={!isConnected || missmatchUrl || !isMemberCommunity}
+              tooltip={tooltipMessage}
+              className="w-full"
+            >
+              Add a proposal
+            </Button>
+          </Link>
+        )}
+
         {proposals.length !== 0 && filteredAndSorted.length === 0 ?
           <div className="section-layout flex flex-col items-center justify-center text-center">
             <p className="text-neutral-soft-content text-sm">
@@ -842,7 +856,7 @@ export function Proposals({
               isOpen={allocationView}
               onClose={() => setAllocationView(false)}
               size="extra-large"
-              title="Manage Your Support"
+              title="Vote on Proposals"
             >
               <div className="flex flex-col gap-4">
                 <UserAllocationStats stats={stats} />

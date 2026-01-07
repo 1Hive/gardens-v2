@@ -486,7 +486,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                   <InfoBox
                     title="Information"
                     infoBoxType="info"
-                    content={`${isSignalingType ? "This proposal is open and can be supported or disputed by the community. Only the proposal creator can cancel" : "This proposal is currently open. It will pass if nobody successfully challenges it and it receives enough support."}`}
+                    content={`${isSignalingType ? "This proposal is open and can be supported or disputed by the community. Only the proposal creator can cancel" : "This proposal is currently open. It will pass if nobody successfully disputes it and it receives enough support."}`}
                   />
                 )}
               </div>
@@ -540,7 +540,7 @@ export default function ClientPage({ params }: ClientPageProps) {
       </div>
 
       {/* Proposal Description */}
-      <section className="px-8 col-span-12 xl:col-span-9 mt-6 flex flex-col gap-6">
+      <section className="section-layout col-span-12 xl:col-span-9 mt-6 flex flex-col gap-6">
         <h3>Proposal Description</h3>
         <div>
           <Skeleton rows={5} isLoading={!Boolean(metadata)}>
@@ -611,7 +611,7 @@ const ProposalSupportersTable = ({
       data={supporters}
       columns={columns}
       footer={
-        <div className="flex justify-between items-end gap-2">
+        <div className="flex justify-between items-end gap-2 mr-6 sm:mr-10">
           <p className="subtitle">Total Support: </p>
           <p className=""> {totalStakedAmount} %</p>
         </div>

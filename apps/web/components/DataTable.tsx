@@ -45,7 +45,7 @@ export const DataTable: React.FC<DataTableProps> = ({
                   <th
                     key={(col.header ?? "").toString()}
                     scope="col"
-                    className={`py-3.5  ${col.className ?? ""}`}
+                    className={`py-2.5 sm:py-3.5 px-[1px]  ${col.className ?? ""}`}
                   >
                     <h6 className="text-sm">{col.header}</h6>
                   </th>
@@ -70,7 +70,7 @@ export const DataTable: React.FC<DataTableProps> = ({
                   </tr>
                 ))}
             </tbody>
-            {footer != null && (
+            {/* {footer != null && (
               <tfoot>
                 <tr>
                   <td className="pt-2 sm:table-cel" colSpan={columns.length}>
@@ -78,7 +78,7 @@ export const DataTable: React.FC<DataTableProps> = ({
                   </td>
                 </tr>
               </tfoot>
-            )}
+            )} */}
           </table>
         </div>
       </div>
