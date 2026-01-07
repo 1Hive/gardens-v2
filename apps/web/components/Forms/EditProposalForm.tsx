@@ -26,6 +26,7 @@ import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 import {
   calculatePercentageBigInt,
   convertSecondsToReadableTime,
+  safeParseUnits,
 } from "@/utils/numbers";
 
 //protocol : 1 => means ipfs!, to do some checks later
@@ -236,6 +237,10 @@ export const EditProposalForm = ({
     contractName: "CV Strategy",
     functionName: "editProposal",
     fallbackErrorMessage: "Error creating Proposal, please report a bug.",
+    onSuccess: () => {
+      setLoading(true);
+      onClose();
+    },
     onConfirmations: () => {
       publish({
         topic: "proposal",
@@ -246,7 +251,6 @@ export const EditProposalForm = ({
         chainId,
       });
       setLoading(false);
-      onClose();
     },
   });
 
@@ -260,7 +264,7 @@ export const EditProposalForm = ({
     functionName: "calculateThreshold",
     args: [
       requestedAmount ?
-        parseUnits(requestedAmount, poolToken?.decimals ?? 0)
+        safeParseUnits(requestedAmount, poolToken?.decimals ?? 0)
       : 0n,
     ],
     enabled:
