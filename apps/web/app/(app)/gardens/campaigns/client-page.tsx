@@ -1,143 +1,69 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  CalendarIcon,
-  UserGroupIcon,
-  ArrowRightIcon,
-  SparklesIcon,
-  GiftIcon,
-  CurrencyDollarIcon,
-} from "@heroicons/react/24/outline";
-import Image, { StaticImageData } from "next/image";
+import { CalendarIcon, UserGroupIcon } from "@heroicons/react/24/outline";
+import Image from "next/image";
 import Link from "next/link";
-import { SuperBanner, SuperLogo, PlantBanner } from "@/assets";
-import { Badge } from "@/components/Badge";
+import { PlantBanner } from "@/assets";
 import { Button } from "@/components/Button";
 import { Skeleton } from "@/components/Skeleton";
 import { fetchSuperfluidLeaderboard } from "@/types";
+import { CAMPAIGNS } from "@/utils/campaigns";
 import { formatNumber, timeAgo } from "@/utils/time";
 
-interface Campaign {
-  id: string;
-  name: string;
-  description: string;
-  category: "Rewards" | "Grants" | "Airdrops";
-  status: "active" | "ended";
-  endDate: string;
-  tokenAllocated?: number;
-  tokenClaimed?: number;
-  tokenSymbol?: string;
-  participants?: number;
-  ctaText: string;
-  ctaLink: string;
-  icon: React.ReactNode;
-  color: string;
-  showStats?: boolean;
-  image?: string | StaticImageData;
-  logo?: string;
-}
-
-const campaigns: Campaign[] = [
-  {
-    id: "1",
-    name: "Superfluid Ecosystem Rewards",
-    description:
-      "Earn SUP rewards by staking governance tokens, adding funds to pools, and following Gardens on Farcaster.",
-    category: "Rewards",
-    status: "active",
-    endDate: "25 Feb 2026",
-    tokenAllocated: 847000,
-    tokenClaimed: 0,
-    tokenSymbol: "SUP",
-    participants: 1243,
-    ctaText: "How to participate",
-    ctaLink: "/gardens/campaigns/1",
-    icon: <SparklesIcon className="h-6 w-6" />,
-    color: "bg-primary",
-    showStats: true,
-    image: SuperBanner,
-    logo: SuperLogo,
-  },
-  // {
-  //   id: "2",
-  //   name: "Spinach.fi – USDGLO on Celo",
-  //   description:
-  //     "Join the liquidity race! 14 teams competing for $100 USDGLO daily rewards at 31% APR.",
-  //   category: "Rewards",
-  //   status: "active",
-  //   endDate: "31 Dec 2024",
-  //   tokenAllocated: 100,
-  //   tokenClaimed: 0,
-  //   tokenSymbol: "USDGLO/day",
-  //   participants: 14,
-  //   ctaText: "Add Liquidity",
-  //   ctaLink: "https://www.spinach.fi/celo",
-  //   icon: <CurrencyDollarIcon className="h-6 w-6" />,
-  //   color: "bg-emerald-500",
-  //   showStats: false,
-  //   image: "/spinach-celo-liquidity-green.jpg",
-  //   logo: "/spinach-logo.jpg",
-  // },
-  {
-    id: "3",
-    name: "Celo Ended example",
-    description:
-      "Join the liquidity race! 14 teams competing for $100 USDGLO daily rewards at 31% APR.",
-    category: "Rewards",
-    status: "ended",
-    endDate: "31 Dec 2024",
-    tokenSymbol: "USDGLO/day",
-    participants: 14,
-    ctaText: "Add Liquidity",
-    ctaLink: "https://www.spinach.fi/celo",
-    icon: <CurrencyDollarIcon className="h-6 w-6" />,
-    color: "bg-emerald-500",
-    showStats: false,
-    image: "/spinach-celo-liquidity-green.jpg",
-    logo: "/spinach-logo.jpg",
-  },
-];
+type CampaignStats = {
+  totalStreamedSup: number;
+  targetStreamSup: number;
+  walletCount: number;
+  lastUpdated: string | null;
+};
 
 export default function CampaignsPage() {
-  const [totalStreamedSup, setTotalStreamedSup] = useState<number | null>(null);
-  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
-  const [walletCount, setWalletCount] = useState<number | null>(null);
+  const [statsByCampaign, setStatsByCampaign] = useState<
+    Record<string, CampaignStats>
+  >({});
 
   const [loading, setLoading] = useState<boolean>(true);
+
+  const campaigns = Object.values(CAMPAIGNS);
 
   useEffect(() => {
     async function load() {
       setLoading(true);
 
-      const res = await fetchSuperfluidLeaderboard();
+      try {
+        const entries = await Promise.all(
+          Object.values(CAMPAIGNS).map(async (campaign) => {
+            const res = await fetchSuperfluidLeaderboard(
+              campaign.leaderboardEndpoint,
+            );
 
-      if (res) {
-        setTotalStreamedSup(res.totalStreamedSup);
-        setWalletCount(res.snapshot.wallets.length);
+            if (!res) return null;
 
-        setLastUpdated(res.snapshot.updatedAt ?? null);
-      } else {
-        setTotalStreamedSup(null);
-        setLastUpdated(null);
+            return [
+              campaign.id,
+              {
+                totalStreamedSup: res.totalStreamedSup,
+                walletCount: res.snapshot.wallets.length,
+                lastUpdated: res.snapshot.updatedAt ?? null,
+                targetStreamSup: res.targetStreamSup,
+              },
+            ] as const;
+          }),
+        );
+
+        const statsMap = Object.fromEntries(
+          entries.filter(Boolean) as Array<[string, CampaignStats]>,
+        );
+
+        setStatsByCampaign(statsMap);
+      } finally {
+        setLoading(false);
       }
-
-      setLoading(false);
     }
 
     load();
   }, []);
-
-  const [activeStatus, setActiveStatus] = useState("active");
-  const [activeCategory, setActiveCategory] = useState("All");
-
-  const filteredCampaigns = campaigns.filter((c) => {
-    const statusMatch =
-      activeStatus === "active" ? c.status === "active" : c.status === "ended";
-    const categoryMatch =
-      activeCategory === "All" || c.category === activeCategory;
-    return statusMatch && categoryMatch;
-  });
 
   return (
     <div className="min-h-screen">
@@ -165,123 +91,106 @@ export default function CampaignsPage() {
       </div>
 
       {/* Content */}
-      <div className="mx-auto max-w-7xl px-4 flex flex-col items-center">
-        {/* Filters */}
+      <div className="mx-auto max-w-7xl px-4 pb-10 flex flex-col gap-10 items-center">
+        <div className="flex items-center justify-center gap-2 mt-10">
+          <Button>Active</Button>
+          <Button disabled>Ended</Button>
+        </div>
 
-        {/* Campaigns */}
-        {filteredCampaigns.length > 0 ?
-          <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-center gap-2 mb-12">
-              <Button>Active</Button>
-              <Button disabled>Ended</Button>
+        {campaigns.map((c) => (
+          <Link
+            key={c.id}
+            href={`/gardens/campaigns/${c.id}`}
+            className="section-layout !p-0  rounded-xl overflow-hidden hover:shadow-lg transition group w-full max-w-2xl"
+          >
+            {/* Image */}
+            <div className="relative h-48 w-full">
+              <Image
+                src={c.banner ?? "/placeholder.svg"}
+                alt={c.name}
+                fill
+                className="object-cover !rounded-lg"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-neutral to-transparent" />
+
+              {c.logo && (
+                <div className="absolute top-4 left-4 h-12 w-12  rounded-xl p-2 shadow-md backdrop-blur">
+                  <Image
+                    src={c.logo}
+                    alt={`${c.name} logo`}
+                    fill
+                    className="object-contain p-1"
+                  />
+                </div>
+              )}
+
+              <div className="absolute bottom-4 left-4 right-4">
+                <h3 className="font-bold drop-shadow">{c.name}</h3>
+                <div className="flex items-center gap-2 text-sm mt-1 ">
+                  <CalendarIcon className="h-4 w-4" />
+                  <span>Ends {c.endDate}</span>
+                </div>
+              </div>
             </div>
 
-            {filteredCampaigns.map((c) => (
-              <Link
-                key={c.id}
-                href={c.ctaLink}
-                target={c.ctaLink.startsWith("http") ? "_blank" : undefined}
-                rel={c.ctaLink.startsWith("http") ? "noreferrer" : undefined}
-                className="block section-layout !p-0 max-w-2xl rounded-xl overflow-hidden hover:shadow-lg transition group"
-              >
-                {/* Image */}
-                <div className="relative h-48 w-full">
-                  <Image
-                    src={c.image ?? "/placeholder.svg"}
-                    alt={c.name}
-                    fill
-                    className="object-cover !rounded-lg"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-neutral to-transparent" />
+            {/* Content */}
+            <div className="p-6">
+              <p className="text-sm  mb-4 line-clamp-3">{c.description}</p>
+              <>
+                <Skeleton isLoading={loading} className="h-5 w-full mb-2">
+                  <div className="flex justify-between text-sm mb-2">
+                    <span className="">Claimed</span>
+                    <span className="font-medium">
+                      {formatNumber(
+                        statsByCampaign[c.id]?.totalStreamedSup ?? 0,
+                      )}{" "}
+                      /{" "}
+                      {formatNumber(
+                        statsByCampaign[c.id]?.targetStreamSup ?? 0,
+                      )}{" "}
+                      {c.tokenSymbol}
+                    </span>
+                  </div>
+                </Skeleton>
 
-                  {c.logo && (
-                    <div className="absolute top-4 left-4 h-12 w-12  rounded-xl p-2 shadow-md backdrop-blur">
-                      <Image
-                        src={c.logo}
-                        alt={`${c.name} logo`}
-                        fill
-                        className="object-contain p-1"
-                      />
+                <Skeleton
+                  isLoading={loading}
+                  className="h-2 w-full rounded-full mb-4"
+                >
+                  <div className="h-2 bg-neutral-soft dark:bg-neutral-soft-content rounded-full overflow-hidden mb-4">
+                    <div
+                      className="h-full bg-primary-content transition-all"
+                      style={{
+                        width: `${
+                          ((statsByCampaign[c.id]?.totalStreamedSup ?? 0) /
+                            (statsByCampaign[c.id]?.targetStreamSup ?? 10)) *
+                          100
+                        }%`,
+                      }}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <UserGroupIcon className="h-5 w-5 text-neutral-soft-content" />
+                      <span className="text-neutral-soft-content text-sm">
+                        {statsByCampaign[c.id]?.walletCount} participants
+                      </span>
                     </div>
-                  )}
-
-                  <div className="absolute bottom-4 left-4 right-4">
-                    <h3 className="font-bold drop-shadow">{c.name}</h3>
-                    <div className="flex items-center gap-2 text-sm mt-1 ">
-                      <CalendarIcon className="h-4 w-4" />
-                      <span>Ends {c.endDate}</span>
+                    <div>
+                      <span className="text-neutral-soft-content text-sm">
+                        {" "}
+                        Last updated:{" "}
+                        {timeAgo(
+                          statsByCampaign[c.id]?.lastUpdated ?? undefined,
+                        )}
+                      </span>
                     </div>
                   </div>
-                </div>
-
-                {/* Content */}
-                <div className="p-6">
-                  <p className="text-sm  mb-4 line-clamp-3">{c.description}</p>
-
-                  {c.showStats ?
-                    <>
-                      <Skeleton isLoading={loading} className="h-5 w-full mb-2">
-                        <div className="flex justify-between text-sm mb-2">
-                          <span className="">Claimed</span>
-                          <span className="font-medium">
-                            {formatNumber(totalStreamedSup ?? 0)} /{" "}
-                            {formatNumber(c.tokenAllocated ?? 0)}{" "}
-                            {c.tokenSymbol}
-                          </span>
-                        </div>
-                      </Skeleton>
-
-                      <Skeleton
-                        isLoading={loading}
-                        className="h-2 w-full rounded-full mb-4"
-                      >
-                        <div className="h-2 bg-neutral-soft dark:bg-neutral-soft-content rounded-full overflow-hidden mb-4">
-                          <div
-                            className="h-full bg-primary-content transition-all"
-                            style={{
-                              width: `${
-                                ((totalStreamedSup ?? 0) /
-                                  (c.tokenAllocated ?? 10)) *
-                                100
-                              }%`,
-                            }}
-                          />
-                        </div>
-                        <div className="flex items-center justify-between mb-4">
-                          <div className="flex items-center gap-2">
-                            <UserGroupIcon className="h-5 w-5 text-neutral-soft-content" />
-                            <span className="text-neutral-soft-content text-sm">
-                              {walletCount} participants
-                            </span>
-                          </div>
-                          <div>
-                            <span className="text-neutral-soft-content text-sm">
-                              {" "}
-                              Last updated: {timeAgo(lastUpdated ?? undefined)}
-                            </span>
-                          </div>
-                        </div>
-                      </Skeleton>
-                    </>
-                  : <div className="flex gap-2 flex-wrap mb-4">
-                      <Badge color="info">
-                        <CurrencyDollarIcon className="h-4 w-4" />
-                        {c.tokenAllocated} {c.tokenSymbol}
-                      </Badge>
-                    </div>
-                  }
-                </div>
-              </Link>
-            ))}
-          </div>
-        : <div className="border border-border rounded-xl p-12 text-center">
-            <GiftIcon className="h-12 w-12 mx-auto  mb-4" />
-            <h3 className="text-lg font-medium mb-2">No campaigns found</h3>
-            <p className="">
-              Try adjusting your filters to see available campaigns.
-            </p>
-          </div>
-        }
+                </Skeleton>
+              </>
+            </div>
+          </Link>
+        ))}
       </div>
     </div>
   );

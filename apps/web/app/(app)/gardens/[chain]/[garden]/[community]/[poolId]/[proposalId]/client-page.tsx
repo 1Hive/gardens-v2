@@ -72,6 +72,7 @@ export type ClientPageProps = {
 export default function ClientPage({ params }: ClientPageProps) {
   const { proposalId, garden, community: communityAddr, poolId } = params;
   const [convictionRefreshing, setConvictionRefreshing] = useState(true);
+  const [openSupportersModal, setOpenSupportersModal] = useState(false);
   const router = useRouter();
 
   const { address } = useAccount();
@@ -572,7 +573,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                 )}
               </div>
             </div>
-            <div className="flex items-end">
+            <div className="flex flex-col gap-2">
               {(status === "active" || status === "disputed") &&
                 proposalData.strategy?.isEnabled &&
                 proposalDataForActions && (
@@ -581,6 +582,15 @@ export default function ClientPage({ params }: ClientPageProps) {
                     proposalData={proposalDataForActions}
                   />
                 )}
+              <Button
+                onClick={() => setOpenSupportersModal(!openSupportersModal)}
+                btnStyle="outline"
+                color="tertiary"
+                className=""
+                // icon={<ChevronUpIcon className="h-4 w-4" />}
+              >
+                View Supporters
+              </Button>
             </div>
           </section>
 
@@ -612,6 +622,8 @@ export default function ClientPage({ params }: ClientPageProps) {
                   submitter={submitter}
                   totalActivePoints={totalEffectiveActivePoints}
                   totalStakedAmount={totalSupportPct}
+                  openSupportersModal={openSupportersModal}
+                  setOpenSupportersModal={setOpenSupportersModal}
                 />
               </section>
             )}
@@ -635,12 +647,18 @@ const ProposalSupportersTable = ({
   supporters,
   totalActivePoints,
   totalStakedAmount,
+  openSupportersModal,
+  setOpenSupportersModal,
+  beneficiary,
+  submitter,
 }: {
   supporters: ProposalSupporter[];
   beneficiary: string | undefined;
   submitter: string | undefined;
   totalActivePoints: number;
   totalStakedAmount: number;
+  openSupportersModal: boolean;
+  setOpenSupportersModal: (open: boolean) => void;
 }) => {
   const columns: SupporterColumn[] = [
     {
@@ -655,15 +673,15 @@ const ProposalSupportersTable = ({
         />
       ),
     },
-    // {
-    //   header: "Role",
-    //   render: (supporter: ProposalSupporter) =>
-    //     supporter.id === beneficiary ? "Beneficiary"
-    //     : supporter.id === submitter ? "Submitter"
-    //     : "Member",
-    // },
     {
-      header: "",
+      header: "Role",
+      render: (supporter: ProposalSupporter) =>
+        supporter.id === beneficiary ? "Beneficiary"
+        : supporter.id === submitter ? "Submitter"
+        : "Member",
+    },
+    {
+      header: "Support",
       render: (supporter: ProposalSupporter) =>
         totalActivePoints > 0 ?
           `${calculatePercentageBigInt(
@@ -671,21 +689,22 @@ const ProposalSupportersTable = ({
             BigInt(totalActivePoints),
           )} %`
         : undefined,
-      className: "flex items-center justify-center",
+      className: "flex items-center justify-end",
     },
   ];
 
   return (
     <DataTable
-      // title="Supported By"
+      openModal={openSupportersModal}
+      setOpenModal={setOpenSupportersModal}
+      title="Proposal Supporters"
       // description="A list of all the community members that are supporting this proposal."
       data={supporters}
       columns={columns}
       footer={
-        //
-        <div className="flex justify-between">
-          <p className="">Total Support:</p>
-          <p className="">{totalStakedAmount} %</p>
+        <div className="flex justify-between items-end gap-2">
+          <p className="subtitle">Total Support: </p>
+          <p className=""> {totalStakedAmount} %</p>
         </div>
       }
       className="border1 rounded-lg bg-neutral p-2"
