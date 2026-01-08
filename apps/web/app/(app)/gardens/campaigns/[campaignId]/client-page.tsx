@@ -64,7 +64,7 @@ export const PARTICIPATION_BY_CAMPAIGN: Record<string, ParticipationStep[]> = {
         <>
           Stream funds or make a one-time transfer in{" "}
           <Link
-            href="https://docs.superfluid.org/docs/concepts/overview/super-tokens"
+            href="https://docs.superfluid.org/docs/concepts/overview/super-tokens#pure-super-tokens"
             target="_blank"
             rel="noreferrer"
             className="underline"
