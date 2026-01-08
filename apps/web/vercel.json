@@ -19,6 +19,14 @@
     {
       "path": "/api/passport-oracles/daily-job/421614",
       "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/superfluid-stack",
+      "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/superfluid-stack-gd",
+      "schedule": "10/15 * * * *"
     }
   ]
 }

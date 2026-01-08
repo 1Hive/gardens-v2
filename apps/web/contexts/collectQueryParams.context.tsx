@@ -8,7 +8,7 @@ import {
   useEffect,
   useRef,
 } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { logOnce } from "@/utils/log";
 
@@ -57,6 +57,13 @@ const persistParams = (params: Record<string, string>) => {
   });
 };
 
+const replaceUrlWithoutSearch = (path: string) => {
+  if (typeof window === "undefined") {
+    return;
+  }
+  window.history.replaceState(null, "", path);
+};
+
 // Define the context
 interface QueryParamsContextType {
   [key: string]: string;
@@ -68,7 +75,6 @@ const QueryParamsContext = createContext<QueryParamsContextType | undefined>(
 // Create a provider component
 export const QueryParamsProvider = ({ children }: { children: ReactNode }) => {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const path = usePathname();
   const [queryParams, setQueryParams] = useState<{ [k: string]: string }>({});
   const pathRef = useRef(path);
@@ -103,7 +109,7 @@ export const QueryParamsProvider = ({ children }: { children: ReactNode }) => {
         "QueryParamsProvider: collected query params",
         newParams,
       );
-      router.replace(path);
+      replaceUrlWithoutSearch(path);
       return;
     }
 
@@ -113,7 +119,7 @@ export const QueryParamsProvider = ({ children }: { children: ReactNode }) => {
       }
       return persistedParams;
     });
-  }, [searchParams, path, router]);
+  }, [searchParams, path]);
 
   return (
     <QueryParamsContext.Provider value={queryParams}>

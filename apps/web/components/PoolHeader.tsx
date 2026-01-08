@@ -235,16 +235,19 @@ export default function PoolHeader({
       sybilResistanceType = "goodDollar";
       sybilResistanceValue = undefined;
     }
-  } else {
+  } else if (
+    allowList &&
+    !(allowList.length > 0 && allowList[0] === zeroAddress)
+  ) {
     sybilResistanceType = "allowList";
     sybilResistanceValue = allowList as Address[] | undefined;
   }
 
   const sybilResistanceLabel: Record<SybilResistanceType, string> = {
-    allowList: "Allowlist",
-    gitcoinPassport: "Gitcoin Passport",
-    goodDollar: "GoodDollar",
-    noSybilResist: "None",
+    allowList: "Members in Allowlist",
+    gitcoinPassport: "Gitcoin Passport verified members",
+    goodDollar: "GoodDollar verified members",
+    noSybilResist: "All community members",
   };
 
   const sybilResistanceInfo: Record<SybilResistanceType, string> = {
@@ -289,7 +292,7 @@ export default function PoolHeader({
       info: "Staking above this specified limit won’t increase your voting weight.",
     },
     {
-      label: "Protection",
+      label: "Who can vote?",
       info: sybilResistanceInfo[sybilResistanceType],
       value:
         sybilResistanceType === "allowList" ?
@@ -611,7 +614,9 @@ export default function PoolHeader({
   return (
     <>
       <div
-        className={`col-span-12 ${PoolTypes[proposalType] === "funding" ? "xl:col-span-9" : "xl:col-span-12"}`}
+        className={`col-span-12 ${
+          isEnabled ? "xl:col-span-9" : "xl:col-span-12"
+        }`}
       >
         <section className="section-layout flex flex-col gap-6">
           {/* Title - Badge poolType - Addresses and Button(when council memeber is connected) */}

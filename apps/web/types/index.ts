@@ -63,3 +63,69 @@ export type Column<T> = {
   render: (item: T) => React.ReactNode;
   className?: string;
 };
+
+export type WalletEntry = {
+  address: string;
+  fundUsd: number;
+  streamUsd: number;
+  fundPoints: number;
+  streamPoints: number;
+  superfluidActivityPoints: number;
+  governanceStakePoints: number;
+  farcasterPoints: number;
+  totalPoints: number;
+  farcasterUsername: string | null;
+  ensName: string | null;
+  ensAvatar: string | null;
+};
+
+export type LeaderboardResponse = {
+  cid: string;
+  snapshot: {
+    updatedAt: string;
+    wallets: WalletEntry[];
+  };
+  totalStreamedSup: number;
+  targetStreamSup: number;
+};
+
+/**
+ * Fetch Superfluid leaderboard data and sort wallets by totalPoints DESC.
+ * Returns `null` on any failure.
+ */
+export async function fetchSuperfluidLeaderboard(
+  endpoint: string,
+): Promise<LeaderboardResponse | null> {
+  try {
+    let requestUrl = endpoint;
+
+    const response = await fetch(requestUrl, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+
+    if (!response.ok) {
+      console.error("[fetchLeaderboard] Request failed", response.status);
+      return null;
+    }
+
+    const data = (await response.json()) as LeaderboardResponse;
+
+    if (!data?.snapshot?.wallets.length) return data ?? null;
+
+    const sortedWallets = [...data.snapshot.wallets].sort(
+      (a, b) => (b.totalPoints ?? 0) - (a.totalPoints ?? 0),
+    );
+
+    return {
+      ...data,
+      snapshot: {
+        ...data.snapshot,
+        wallets: sortedWallets,
+      },
+    };
+  } catch (error) {
+    console.error("[fetchLeaderboard] Unexpected error:", error);
+    return null;
+  }
+}

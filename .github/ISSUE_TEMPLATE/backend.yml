@@ -2,11 +2,6 @@ name: Backend
 description: Track a backend development task for Gardens V2 (Contracts or Subgraph).
 projects: ["1Hive/17"]
 body:
-  - type: markdown
-    attributes:
-      value: |
-        Use this template for backend work such as contract updates, indexing logic, or subgraph schema improvements.
-
   - type: dropdown
     id: domain
     attributes:
@@ -15,15 +10,6 @@ body:
       options:
         - Contracts
         - Subgraph
-    validations:
-      required: true
-
-  - type: input
-    id: summary
-    attributes:
-      label: Summary
-      description: Short headline describing the backend task.
-      placeholder: Implement CVStrategy upgradeable version
     validations:
       required: true
 

@@ -105,6 +105,7 @@ export default function DesignSystemPage() {
   const addressListSetValue = useMemo(() => (() => undefined) as any, []);
   const [isCheckboxChecked, setIsCheckboxChecked] = useState(false);
   const [isCheckboxErrorChecked, setIsCheckboxErrorChecked] = useState(false);
+  const [openModal, setOpenModal] = useState(false);
   const textInputErrors = useMemo(
     () => ({
       "demo-error-input": {
@@ -486,6 +487,8 @@ export default function DesignSystemPage() {
               description="Example of our DataTable component"
               data={sampleTableData}
               columns={tableColumns}
+              openModal={openModal}
+              setOpenModal={setOpenModal}
             />
           </DemoCard>
 

@@ -1,8 +1,8 @@
-import type { Metadata } from "next";
+import type { Metadata, ServerRuntime } from "next";
 import { ImageResponse } from "next/og";
 import { GARDENS_COVER_BASE64 } from "./[chain]/[garden]/[community]/ogAssets";
 
-export const runtime = "nodejs";
+export const runtime: ServerRuntime = "nodejs";
 
 export const alt = "Gardens";
 export const size = {

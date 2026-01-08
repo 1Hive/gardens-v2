@@ -1,17 +1,14 @@
 "use client";
 
 import React, { useState } from "react";
-import {
-  ChevronUpIcon,
-  QuestionMarkCircleIcon,
-} from "@heroicons/react/24/outline";
-import cn from "classnames";
+import { QuestionMarkCircleIcon } from "@heroicons/react/24/outline";
 import { Dnum } from "dnum";
 import { Address, useAccount } from "wagmi";
 
 import {
   CVStrategy,
   CVStrategyConfig,
+  getMembersStrategyQuery,
   TokenGarden,
 } from "#/subgraph/.graphclient";
 import { MemberStrategyData } from "./Proposals";
@@ -40,7 +37,7 @@ export type PoolGovernanceProps = {
   memberTokensInCommunity: bigint;
   isMemberCommunity: boolean;
   memberActivatedStrategy: boolean;
-  membersStrategyData: any;
+  membersStrategyData: getMembersStrategyQuery | undefined;
 };
 
 export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
@@ -55,9 +52,10 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
 }) => {
   const showPoolGovernanceData = isMemberCommunity && memberActivatedStrategy;
   const poolSystem = strategy.config.pointSystem;
-  const [openGovDetails, setOpenGovDetails] = useState(false);
   const { address } = useAccount();
   const [triggerSybilCheckModalClose, setTriggerSybilCheckModalClose] =
+    useState(false);
+  const [openGovernanceDetailsModal, setOpenGovernanceDetailsModal] =
     useState(false);
 
   const poolSystemDefinition: { [key: number]: string } = {
@@ -72,120 +70,118 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
 
   return (
     <>
-      <section className={"section-layout flex flex-wrap flex-col gap-4"}>
-        <header className="flex justify-between flex-wrap">
-          <h3>Governance</h3>
-          <Badge status={memberActivatedStrategy ? 1 : 0} />
-        </header>
-        {address && (
-          <div className="flex-1 flex flex-col items-start gap-1">
-            <div className="w-full flex items-center justify-between">
-              <h4 className="subtitle2">Your stake: </h4>
-              <div className="flex items-center gap-1">
-                <DisplayNumber
-                  tokenSymbol={strategy.registryCommunity.garden.symbol}
-                  compact={true}
-                  number={
-                    [BigInt(memberTokensInCommunity), tokenDecimals] as Dnum
-                  }
-                />
-                <InfoWrapper
-                  tooltip={`${poolSystem > 0 ? "Stake more tokens to increase your\voting power in this pool." : "Fixed voting power"}`}
-                  className="hidden md:block text-black"
-                  size="sm"
-                />
-              </div>
-            </div>
-
-            {showPoolGovernanceData && (
+      <div className="backdrop-blur-sm rounded-lg flex flex-col gap-2">
+        <section className={"section-layout flex flex-wrap flex-col gap-4"}>
+          <header className="flex justify-between flex-wrap">
+            <h3>Governance</h3>
+            <Badge status={memberActivatedStrategy ? 1 : 0} />
+          </header>
+          {address && (
+            <div className="flex-1 flex flex-col items-start gap-1">
               <div className="w-full flex items-center justify-between">
-                <h4 className="subtitle2">Voting power:</h4>
+                <h4 className="subtitle2">Your stake: </h4>
                 <div className="flex items-center gap-1">
-                  <p className="text-xl font-bold text-primary-content">
-                    {memberPoolWeight?.toFixed(2)} %
-                  </p>
-                  <a
-                    href="https://docs.gardens.fund/start-here/voting-power"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="rounded-md hover:bg-neutral-soft dark:hover:bg-primary p-2"
-                  >
-                    <QuestionMarkCircleIcon className="h-6 w-6 text-primary-content" />
-                  </a>
+                  <DisplayNumber
+                    tokenSymbol={strategy.registryCommunity.garden.symbol}
+                    compact={true}
+                    number={
+                      [BigInt(memberTokensInCommunity), tokenDecimals] as Dnum
+                    }
+                  />
+                  <InfoWrapper
+                    tooltip={`${poolSystem > 0 ? "Stake more tokens to \nincrease your voting \npower in this pool." : "Fixed voting power"}`}
+                    className="hidden md:block text-black"
+                    size="sm"
+                  />
                 </div>
               </div>
-            )}
-          </div>
-        )}
-        <InfoBox
-          title="Pool Voting System"
-          content={poolSystemDefinition[poolSystem]}
-          infoBoxType="info"
-          className="flex-1 w-full"
-        />
 
-        {/* Activate-Deactivate Button */}
-        <div className="flex items-center flex-col gap-2">
-          <CheckSybil
-            strategy={strategy}
-            enableCheck={!memberActivatedStrategy}
-            triggerClose={triggerSybilCheckModalClose}
-          >
-            <ActivatePoints
+              {showPoolGovernanceData && (
+                <div className="w-full flex items-center justify-between">
+                  <h4 className="subtitle2">Voting power:</h4>
+                  <div className="flex items-center gap-1">
+                    <p className="text-xl font-bold text-primary-content">
+                      {memberPoolWeight?.toFixed(2)} %
+                    </p>
+                    <a
+                      href="https://docs.gardens.fund/start-here/voting-power"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="rounded-md hover:bg-neutral-soft dark:hover:bg-primary p-2"
+                    >
+                      <QuestionMarkCircleIcon className="h-6 w-6 text-primary-content" />
+                    </a>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          <InfoBox
+            title="Pool Voting System"
+            content={poolSystemDefinition[poolSystem]}
+            infoBoxType="info"
+            className="flex-1 w-full"
+          />
+
+          {/* Activate-Deactivate Button */}
+          <div className="flex items-center flex-col gap-2">
+            <CheckSybil
               strategy={strategy}
-              communityAddress={communityAddress}
-              isMemberActivated={memberActivatedStrategy}
-              isMember={isMemberCommunity}
-              handleTxSuccess={() => setTriggerSybilCheckModalClose(true)}
+              enableCheck={!memberActivatedStrategy}
+              triggerClose={triggerSybilCheckModalClose}
+            >
+              <ActivatePoints
+                strategy={strategy}
+                communityAddress={communityAddress}
+                isMemberActivated={memberActivatedStrategy}
+                isMember={isMemberCommunity}
+                handleTxSuccess={() => setTriggerSybilCheckModalClose(true)}
+              />
+            </CheckSybil>
+          </div>
+          <Button
+            onClick={() =>
+              setOpenGovernanceDetailsModal(!openGovernanceDetailsModal)
+            }
+            btnStyle="outline"
+            color="tertiary"
+            // icon={<ChevronUpIcon className="h-4 w-4" />}
+          >
+            {openGovernanceDetailsModal ? "Close" : "Open"} governance details
+          </Button>
+
+          {membersStrategyData && (
+            <PoolGovernanceDetails
+              membersStrategyData={membersStrategyData}
+              openGovernanceDetailsModal={openGovernanceDetailsModal}
+              setOpenGovernanceDetailsModal={setOpenGovernanceDetailsModal}
             />
-          </CheckSybil>
-        </div>
-        <Button
-          onClick={() => setOpenGovDetails(!openGovDetails)}
-          btnStyle="link"
-          color="tertiary"
-          icon={
-            <ChevronUpIcon
-              className={`h-4 w-4 font-bold transition-transform duration-200 ease-in-out ${cn(
-                {
-                  "rotate-180": !openGovDetails,
-                },
-              )} `}
-            />
-          }
-        >
-          {openGovDetails ? "Hide" : "View"} governance details
-        </Button>
-        {openGovDetails && (
-          <PoolGovernanceDetails membersStrategyData={membersStrategyData} />
-        )}
-      </section>
+          )}
+        </section>
+      </div>
     </>
   );
 };
 
-type MemberColumn = Column<MemberStrategyData>;
+type MemberColumn = Column<getMembersStrategyQuery["memberStrategies"][0]>;
 
 const PoolGovernanceDetails: React.FC<{
-  membersStrategyData: {
-    id: string;
-    activatedPoints: string;
-    totalStakedPoints: string;
-    member: {
-      memberCommunity: {
-        memberAddress: string;
-      }[];
-    };
-  }[];
-}> = ({ membersStrategyData }) => {
+  membersStrategyData: getMembersStrategyQuery;
+  openGovernanceDetailsModal: boolean;
+  setOpenGovernanceDetailsModal: (open: boolean) => void;
+}> = ({
+  membersStrategyData,
+  openGovernanceDetailsModal,
+  setOpenGovernanceDetailsModal,
+}) => {
   const columns: MemberColumn[] = [
     {
       header: "Member",
       render: (member) => (
         <EthAddress
           address={
-            Array.isArray(member?.member?.memberCommunity) ?
-              (member?.member?.memberCommunity[0]?.memberAddress as Address)
+            Array.isArray(member.member.memberCommunity) ?
+              (member.member.memberCommunity[0]?.memberAddress as Address)
             : undefined
           }
           shortenAddress={true}
@@ -197,23 +193,34 @@ const PoolGovernanceDetails: React.FC<{
     },
     {
       header: "Voting power used",
-      render: (member) => (
-        <span>
-          {calculatePercentageBigInt(
-            BigInt(member.totalStakedPoints),
-            BigInt(member.activatedPoints),
-          )}{" "}
-          %
-        </span>
-      ),
+      render: (member) => {
+        // Calculate total staked points from active (1) and disputed (5) proposals only
+        const activeStakedPoints =
+          member?.member.stakes?.reduce((sum, stake) => {
+            return sum + BigInt(stake.amount);
+          }, 0n) ?? 0n;
+
+        return (
+          <span>
+            {calculatePercentageBigInt(
+              activeStakedPoints,
+              BigInt(member.activatedPoints),
+            )}{" "}
+            %
+          </span>
+        );
+      },
       className: "flex justify-end",
     },
   ];
 
   return (
     <DataTable
+      title="Supporters Voting Power"
+      setOpenModal={setOpenGovernanceDetailsModal}
+      openModal={openGovernanceDetailsModal}
       description="A list of all the community members and their activity in this pool."
-      data={membersStrategyData}
+      data={membersStrategyData.memberStrategies}
       columns={columns}
     />
   );

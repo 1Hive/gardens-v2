@@ -1,0 +1,63 @@
+name: Report Bug-type issues to Discord
+
+on:
+  issues:
+    types:
+      - opened
+
+jobs:
+  notify_discord:
+    runs-on: ubuntu-latest
+
+    # Run only when the issue body includes the bug form section "Steps to reproduce" and the form didn't opt out of Discord
+    if: >
+      ${{
+        contains(github.event.issue.body, 'Steps to reproduce')
+        && !contains(github.event.issue.body, 'Skip Discord')
+      }}
+
+    steps:
+      - name: Send Discord notification
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_URL: ${{ github.event.issue.html_url }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_USER: ${{ github.event.issue.user.login }}
+          REPO_NAME: ${{ github.repository }}
+        run: |
+          # Trim body to avoid huge messages
+          SHORT_BODY=$(printf '%s' "$ISSUE_BODY" | head -c 400)
+          [ -z "$SHORT_BODY" ] && SHORT_BODY="(no description)"
+
+          # Build JSON payload for Discord
+          payload=$(jq -n \
+            --arg username "GitHub Bot" \
+            --arg content "" \
+            --arg title "🐞 New Bug issue in $REPO_NAME" \
+            --arg desc "$(cat <<EOF
+          **#${ISSUE_NUMBER} – $ISSUE_TITLE**
+          **Author:** $ISSUE_USER
+          **Link:** $ISSUE_URL
+
+          **Description (truncated):**
+          $SHORT_BODY
+          EOF
+          )" \
+            '{
+              "username": $username,
+              "content": $content,
+              "embeds": [
+                {
+                  "title": $title,
+                  "description": $desc
+                }
+              ]
+            }'
+          )
+
+          curl -X POST \
+            -H "Content-Type: application/json" \
+            -d "$payload" \
+            "$DISCORD_WEBHOOK_URL"

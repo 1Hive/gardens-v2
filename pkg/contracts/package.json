@@ -10,6 +10,7 @@
     "lint": "forge fmt",
     "test": "forge test -vvv",
     "test:force": "forge test -vvv --force",
-    "format": "forge fmt"
+    "format": "forge fmt",
+    "coverage": "forge coverage --ir-minimum --match-path 'pkg/contracts/test/**' --report lcov"
   }
 }

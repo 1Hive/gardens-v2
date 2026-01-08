@@ -55,7 +55,7 @@ const btnStyles: BtnStyles = {
     danger:
       "bg-danger-button text-neutral-inverted-content hover:bg-danger-hover-content dark:bg-danger-dark-base/70 dark:text-neutral-inverted-content dark:hover:bg-danger-dark-border-hover",
     disabled:
-      "bg-neutral-button text-neutral-inverted-content dark:bg-disabled-dark-button dark:text-disabled-dark-text",
+      "bg-neutral-button text-neutral-inverted-content dark:bg-disabled-dark-button dark:text-disabled-dark-text hover:opacity-70",
   },
   outline: {
     primary:
@@ -90,7 +90,7 @@ const btnStyles: BtnStyles = {
     danger:
       "text-danger-button border border-transparent hover:text-danger-hover-content hover:border-danger-button dark:text-danger-dark-border dark:border-transparent dark:hover:text-danger-dark-border-hover dark:hover:border-danger-dark-border-hover",
     disabled:
-      "text-neutral-soft-content border border-transparent opacity-70 dark:text-white/30",
+      "text-neutral-soft-content border border-transparent opacity-70 hover:opacity-90 dark:text-white/30",
   },
 };
 
