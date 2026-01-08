@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   ArrowTopRightOnSquareIcon,
   Bars3Icon,
@@ -8,7 +8,7 @@ import {
 } from "@heroicons/react/24/outline";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { newLogo } from "@/assets";
 import { Button, ConnectWallet, ThemeButton } from "@/components";
 import Footer from "@/components/Footer";
@@ -38,6 +38,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showCampaignBadge, setShowCampaignBadge] = useState(true);
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const currentUrl = useMemo(() => {
+    const query = searchParams?.toString();
+    return query ? `${pathname}?${query}` : pathname || "/";
+  }, [pathname, searchParams]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -53,6 +58,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
     setShowCampaignBadge(!hasSeen);
   }, [pathname]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const reset = () => {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    };
+    requestAnimationFrame(() => requestAnimationFrame(reset));
+  }, [currentUrl]);
 
   const handleCampaignClick = () => {
     if (typeof window !== "undefined") {
