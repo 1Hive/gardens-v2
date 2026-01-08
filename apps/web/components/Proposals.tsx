@@ -803,13 +803,15 @@ export function Proposals({
         )}
 
         {strategy.isEnabled && proposals.length > 0 && (
-          <Link href={createProposalUrl}>
+          <Link
+            href={createProposalUrl}
+            className="flex items-center justify-center"
+          >
             <Button
               btnStyle="filled"
               icon={<PlusIcon height={24} width={24} />}
               disabled={!isConnected || missmatchUrl || !isMemberCommunity}
               tooltip={tooltipMessage}
-              className="w-full"
             >
               Add a proposal
             </Button>
