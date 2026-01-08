@@ -491,7 +491,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                 )}
               </div>
             </div>
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-4">
               {(status === "active" || status === "disputed") &&
                 proposalData.strategy.isEnabled && (
                   <DisputeModal
