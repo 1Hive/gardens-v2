@@ -60,8 +60,21 @@ export const PARTICIPATION_BY_CAMPAIGN: Record<string, ParticipationStep[]> = {
     },
     {
       title: "Add Funds into a Funding Pool",
-      description:
-        "Stream funds or make a one-time transfer into a Funding Pool.",
+      description: (
+        <>
+          Stream funds or make a one-time transfer in{" "}
+          <Link
+            href="https://docs.superfluid.org/docs/concepts/overview/super-tokens#pure-super-tokens"
+            target="_blank"
+            rel="noreferrer"
+            className="underline"
+          >
+            Pure Super Token
+          </Link>{" "}
+          into a funding pool.{" "}
+        </>
+      ),
+
       icon: <ArrowTrendingUpIcon className="h-5 w-5" />,
       activities: ["Add Funds"],
       pointsInfo: "1 point per $1 added (minimum $10)",
