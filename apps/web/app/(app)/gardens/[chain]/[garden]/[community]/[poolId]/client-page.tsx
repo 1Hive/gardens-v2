@@ -438,7 +438,7 @@ export default function ClientPage({
             )}
           </>
 
-          <div className="section-layout flex flex-col items-start xl:items-center gap-4">
+          {/* <div className="section-layout flex flex-col items-start xl:items-center gap-4">
             <div className="flex flex-col gap-4">
               <h3>Have an idea ?</h3>
               <span className="text-sm">
@@ -460,7 +460,7 @@ export default function ClientPage({
                 </Button>
               </Link>
             </div>
-          </div>
+          </div> */}
 
           <PoolGovernance
             memberPoolWeight={memberPoolWeight}

@@ -7,6 +7,7 @@ import {
   CircleStackIcon,
   CurrencyDollarIcon,
   PlusIcon,
+  TrophyIcon,
   UserGroupIcon,
 } from "@heroicons/react/24/outline";
 
@@ -81,7 +82,10 @@ type MembersStaked = {
 type CommunityMetricsProps = {
   membersStaked: MembersStaked[] | undefined;
   tokenGarden: FetchTokenResult;
+  communityName: string;
   communityStakedTokens: number | bigint;
+  openMembersModal: boolean;
+  setOpenMembersModal: (open: boolean) => void;
 };
 
 type MemberColumn = Column<MembersStaked>;
@@ -94,10 +98,10 @@ export default function ClientPage({
   const searchParams = useCollectQueryParams();
   const { address: accountAddress } = useAccount();
   const showArchived = useFlag("showArchived");
-  const [openCommDetails, setOpenCommDetails] = useState(false);
   const isFetchingNFT = useRef<boolean>(false);
   const { publish } = usePubSubContext();
   const chain = useChainFromPath();
+  const [openMembersModal, setOpenMembersModal] = useState(false);
 
   const covenantSectionRef = useRef<HTMLDivElement>(null);
   const { data: tokenGarden } = useToken({
@@ -408,7 +412,7 @@ export default function ClientPage({
 
                 {/* Statistic + Register/Leave Button */}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
-                  <div className="flex flex-col sm:flex-row gap-2 md:gap-6">
+                  <div className="w-full flex flex-col sm:flex-row gap-2 md:gap-6 sm:flex-wrap">
                     <Statistic
                       label="members"
                       count={members?.length ?? 0}
@@ -473,8 +477,8 @@ export default function ClientPage({
                   </div>
                 </div>
 
-                {/* Registration Stake Value + View members Button*/}
-                <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center mt-2">
+                {/* Registration Stake Value + Community staking leaderboard Button*/}
+                <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center mt-2 sm:justify-between">
                   <div className="flex gap-1 items-center ">
                     <p className="subtitle2">Registration stake:</p>
                     <InfoWrapper
@@ -504,33 +508,26 @@ export default function ClientPage({
                     </InfoWrapper>
                   </div>
                   <Button
-                    onClick={() => setOpenCommDetails(!openCommDetails)}
-                    btnStyle="link"
+                    onClick={() => setOpenMembersModal(!openMembersModal)}
+                    btnStyle="outline"
                     color="tertiary"
-                    icon={
-                      <ChevronUpIcon
-                        className={`h-4 w-4 font-bold transition-transform duration-200 ease-in-out ${cn(
-                          {
-                            "rotate-180": !openCommDetails,
-                          },
-                        )} `}
-                      />
-                    }
+                    icon={<TrophyIcon className="h-4 w-4" />}
                   >
-                    {openCommDetails ? "Close" : "View"} Members
+                    Community Staking Leaderboard
                   </Button>
                 </div>
               </div>
             </div>
 
             {/* Community members stats */}
-            {openCommDetails && (
-              <CommunityDetailsTable
-                membersStaked={registryCommunity.members as MembersStaked[]}
-                tokenGarden={tokenGarden}
-                communityStakedTokens={communityStakedTokens}
-              />
-            )}
+            <CommunityDetailsTable
+              membersStaked={registryCommunity.members as MembersStaked[]}
+              tokenGarden={tokenGarden}
+              communityName={communityName ?? "Community"}
+              communityStakedTokens={communityStakedTokens}
+              openMembersModal={openMembersModal}
+              setOpenMembersModal={setOpenMembersModal}
+            />
           </header>
 
           <header className="flex items-center justify-between">
@@ -607,10 +604,19 @@ export default function ClientPage({
 
 const CommunityDetailsTable = ({
   membersStaked,
+  communityName,
   tokenGarden,
   communityStakedTokens,
+  openMembersModal,
+  setOpenMembersModal,
 }: CommunityMetricsProps) => {
   const columns: MemberColumn[] = [
+    // commented this NEW rank section for now
+    // {
+    //   header: "Rank",
+    //   render: (memberData: MembersStaked) =>
+    //     membersStaked ? indexOf(membersStaked, memberData) + 1 : 0,
+    // },
     {
       header: `Members (${membersStaked?.length})`,
       render: (memberData: MembersStaked) => (
@@ -623,6 +629,7 @@ const CommunityDetailsTable = ({
         />
       ),
     },
+
     {
       header: "Staked tokens",
       render: (memberData: MembersStaked) => (
@@ -648,14 +655,16 @@ const CommunityDetailsTable = ({
 
   return (
     <DataTable
-      title="Community Members"
+      openModal={openMembersModal}
+      setOpenModal={() => setOpenMembersModal}
+      title={communityName + " Staking Leaderboard"}
       data={membersStaked as MembersStaked[]}
       description="Overview of all community members and the total amount of tokens they have staked."
       columns={columns}
       className="max-h-screen w-full"
       footer={
-        <div className="flex justify-between py-2">
-          <p className="subtitle">Total Staked:</p>
+        <div className="flex justify-between items-center gap-2 mr-8 sm:mr-12">
+          <p className="subtitle">Total Staked: </p>
           <DisplayNumber
             number={[BigInt(communityStakedTokens), tokenGarden.decimals]}
             compact={true}
