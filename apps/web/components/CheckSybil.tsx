@@ -437,6 +437,7 @@ export function CheckSybil({
         {children}
       </div>
       <Modal
+        id="sybil"
         title={modalTitle()}
         isOpen={isModalOpened}
         onClose={() => setIsModalOpen(false)}

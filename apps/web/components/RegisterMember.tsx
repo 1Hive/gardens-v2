@@ -188,6 +188,7 @@ export function RegisterMember({
         transactions={[covenantAgreementTx, allowanceTx, registrationTx]}
         onClose={() => setIsOpenModal(false)}
         isOpen={isOpenModal}
+        testId="register"
       />
       <div className="flex gap-4">
         <div className="flex items-center justify-center">

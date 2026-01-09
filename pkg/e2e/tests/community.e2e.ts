@@ -1,11 +1,8 @@
 import { testWithSynpress } from "@synthetixio/synpress";
-import {
-  getExtensionId,
-  MetaMask,
-  metaMaskFixtures
-} from "@synthetixio/synpress/playwright";
+import { MetaMask } from "@synthetixio/synpress/playwright";
+import { metaMaskFixtures } from "./support/metaMaskFixtures";
 import basicSetup from "../wallet-setup/basic.setup";
-import { BrowserContext, Page } from "@playwright/test";
+import { Page } from "@playwright/test";
 
 const test = testWithSynpress(metaMaskFixtures(basicSetup));
 
@@ -15,71 +12,125 @@ const { expect } = test;
 test.setTimeout(240000);
 
 async function approveTokenAllowance({
-  context,
   page,
-  metamask
+  metamask,
+  extensionId
 }: {
-  context: BrowserContext;
   page: Page;
   metamask: MetaMask;
+  extensionId: string;
 }) {
   metamask.approveTokenPermission;
   // Need to wait for Metamask Notification page to exist, does not exist immediately after clicking 'Approve' button.
   // In Synpress source code, they use this logic in every method interacting with the Metamask notification page.
-  const extensionId = await getExtensionId(context, "MetaMask");
   const notificationPageUrl = `chrome-extension://${extensionId}/notification.html`;
 
-  // If allowance was already approved, the notification window will never open; bail out after waiting a bit
-  let notificationPage: Page | undefined;
-  for (let i = 0; i < 40; i++) {
-    notificationPage = metamask.page
+  const findNotificationPage = () =>
+    metamask.page
       .context()
       .pages()
-      .find((page) => page.url().includes(notificationPageUrl));
-    if (notificationPage) break;
-    await page.waitForTimeout(250);
-  }
+      .find((notification) => notification.url().includes(notificationPageUrl));
 
-  if (!notificationPage) {
-    // Skipped because allowance already granted
+  const waitForNotificationPage = async () => {
+    for (let i = 0; i < 40; i++) {
+      const notification = findNotificationPage();
+      if (notification) {
+        return notification;
+      }
+      await page.waitForTimeout(250);
+    }
+
+    return undefined;
+  };
+
+  const clickWhenVisible = async (
+    label: string,
+    locatorFactory: (target: Page) => ReturnType<Page["locator"]>
+  ) => {
+    for (let i = 0; i < 60; i++) {
+      const targetPage = findNotificationPage();
+      if (!targetPage) {
+        await page.waitForTimeout(250);
+        continue;
+      }
+
+      try {
+        const locator = locatorFactory(targetPage);
+        if (await locator.isVisible().catch(() => false)) {
+          await locator.first().click({ timeout: 10000 });
+          return;
+        }
+      } catch {
+        await page.waitForTimeout(250);
+        continue;
+      }
+
+      await page.waitForTimeout(250);
+    }
+
+    throw new Error(`MetaMask allowance ${label} button not found.`);
+  };
+
+  // Approval was required — finish the flow
+  const hydratedNotificationPage = await waitForNotificationPage();
+  if (!hydratedNotificationPage) {
+    return;
+  }
+  await hydratedNotificationPage.waitForLoadState("domcontentloaded", {
+    timeout: 10000
+  });
+  await hydratedNotificationPage.waitForLoadState("networkidle", {
+    timeout: 10000
+  });
+
+  const hasAllowanceField = await (async () => {
+    for (let i = 0; i < 20; i++) {
+      const targetPage = findNotificationPage();
+      if (!targetPage) {
+        await page.waitForTimeout(250);
+        continue;
+      }
+
+      try {
+        const allowanceInput = targetPage.getByTestId(
+          "custom-spending-cap-input"
+        );
+        const maxButton = targetPage.getByTestId(
+          "custom-spending-cap-max-button"
+        );
+        if (
+          (await allowanceInput.isVisible().catch(() => false)) ||
+          (await maxButton.isVisible().catch(() => false))
+        ) {
+          return true;
+        }
+      } catch {
+        await page.waitForTimeout(250);
+        continue;
+      }
+
+      await page.waitForTimeout(250);
+    }
+
+    return false;
+  })();
+
+  if (!hasAllowanceField) {
+    console.warn(
+      "MetaMask allowance already approved; skipping allowance step."
+    );
     return;
   }
 
-  try {
-    // Approval was required — finish the flow
-    const hydratedNotificationPage = notificationPage
-      .context()
-      .pages()
-      .find((page) => page.url().includes(notificationPageUrl)) as Page;
-    await hydratedNotificationPage.waitForLoadState("domcontentloaded", {
-      timeout: 10000
-    });
-    await hydratedNotificationPage.waitForLoadState("networkidle", {
-      timeout: 10000
-    });
-    await metamask.page.reload();
-    // Unsure if commented out below are required to mitigate flakiness
-    // await metamask.page.waitForLoadState("domcontentloaded", { timeout: PAGE_TIMEOUT });
-    // await metamask.page.waitForLoadState("networkidle", { timeout: PAGE_TIMEOUT });
-    const nextBtn = metamask.page.getByRole("button", {
-      name: "Next",
-      exact: true
-    });
-    // Unsure if commented out below are required to mitigate flakiness
-    // await expect(nextBtn).toBeVisible();
-    // await expect(nextBtn).toBeEnabled();
-    await nextBtn.click({ timeout: 10000 });
-    const approveMMBtn = hydratedNotificationPage.getByRole("button", {
-      name: "Approve",
-      exact: true
-    });
-    await approveMMBtn.click({ timeout: 10000 });
-  } catch (error) {
-    console.warn(
-      "MetaMask allowance approval skipped due to timeout/error, continuing:",
-      error
-    );
-  }
+  await clickWhenVisible("Next", (targetPage) =>
+    targetPage.locator(
+      '[data-testid="page-container-footer-next"], button:has-text("Next")'
+    )
+  );
+
+  await clickWhenVisible("Approve", (targetPage) =>
+    targetPage.locator('button:has-text("Approve"), button:has-text("Confirm")')
+  );
 }
 
 async function expectNoErrorToast(page: Page) {
@@ -90,13 +141,12 @@ async function expectNoErrorToast(page: Page) {
 }
 
 async function confirmTransaction({
-  context,
-  metamask
+  metamask,
+  extensionId
 }: {
-  context: BrowserContext;
   metamask: MetaMask;
+  extensionId: string;
 }) {
-  const extensionId = await getExtensionId(context, "MetaMask");
   const notificationPageUrl = `chrome-extension://${extensionId}/notification.html`;
   let notificationPage: Page | undefined;
 
@@ -115,27 +165,20 @@ async function confirmTransaction({
     return;
   }
 
-  try {
-    await notificationPage.waitForLoadState("domcontentloaded", {
-      timeout: 15000
-    });
-    await notificationPage.waitForLoadState("networkidle", {
-      timeout: 15000
-    });
+  await notificationPage.waitForLoadState("domcontentloaded", {
+    timeout: 15000
+  });
+  await notificationPage.waitForLoadState("networkidle", {
+    timeout: 15000
+  });
 
-    const confirmBtn = notificationPage.getByRole("button", {
-      name: "Confirm",
-      exact: true
-    });
+  const confirmBtn = notificationPage.getByRole("button", {
+    name: "Confirm",
+    exact: true
+  });
 
-    await confirmBtn.click({ timeout: 40000 });
-    await metamask.page.waitForTimeout(1000);
-  } catch (error) {
-    console.warn(
-      "MetaMask transaction confirm button not found or timed out; continuing:",
-      error
-    );
-  }
+  await confirmBtn.click({ timeout: 40000 });
+  await metamask.page.waitForTimeout(1000);
 }
 
 // Define a basic test case
@@ -173,7 +216,7 @@ test("should join and leave community", async ({
   );
 
   await page
-    .getByTestId("community-card-0x6f9074a0bc5b92e839da4fd52f84be9d50e065a9") // Celo - Gardens on Celo
+    .getByTestId("community-card-0x9ee73d7afd1d75d9d3468ab7845150180936dec4") // Opt - 🧪 End-to-End Test Playground
     .click();
 
   // Wait for page loaded
@@ -194,29 +237,7 @@ test("should join and leave community", async ({
   await metamask.confirmSignature();
 
   // 2. Token allowance approval
-  // // Wait for the metamask page to load
-  // await metamaskPage.waitForTimeout(1000);
-  // await metamaskPage.waitForLoadState("networkidle");
-  // await metamaskPage.locator("body").click();
-  // for (let i = 0; i < 6; i++) {
-  //   await metamaskPage.keyboard.press("Tab");
-  // }
-  // await metamaskPage.keyboard.press("Enter");
-  // await metamaskPage.waitForTimeout(1000);
-  // await metamaskPage.waitForLoadState("networkidle");
-  // await metamaskPage.locator("body").click();
-  // for (let i = 0; i < 12; i++) {
-  //   await metamaskPage.keyboard.press("Tab");
-  // }
-  // await metamaskPage.keyboard.press("Enter");
-  // await metamask.approveTokenPermission({
-  //   spendLimit: "max"
-  // });
-  await approveTokenAllowance({
-    context,
-    page,
-    metamask
-  });
+  await approveTokenAllowance({ page, metamask, extensionId });
   // Wait for next tx to launch
   await page.waitForTimeout(1000);
 
@@ -227,11 +248,11 @@ test("should join and leave community", async ({
 
   // 3. Join the community
   await page.waitForTimeout(1000); // Wait for the tx to open
-  await confirmTransaction({ context, metamask });
+  await confirmTransaction({ metamask, extensionId });
   await expectNoErrorToast(page);
 
   // Close the modal
-  await page.keyboard.press("Escape");
+  await page.getByTestId("modal-close-button-register").click();
 
   // 4. Leave the community
   const leaveBtn = page
@@ -239,11 +260,10 @@ test("should join and leave community", async ({
     .getByText("Leave");
   if (await leaveBtn.isVisible({ timeout: 10000 }).catch(() => false)) {
     await leaveBtn.click();
-    await page.getByTestId("register-member-button").click();
     await page.waitForTimeout(1000); // Wait for the tx to open
-    await confirmTransaction({ context, metamask });
+    await confirmTransaction({ metamask, extensionId });
     await expectNoErrorToast(page);
   } else {
-    console.warn("Leave button not visible; skipping leave step");
+    throw new Error("Leave button not visible; cannot complete leave flow.");
   }
 });

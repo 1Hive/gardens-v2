@@ -27,6 +27,7 @@ export type TransactionModalProps = {
   transactions: TransactionProps[];
   onClose: () => void;
   isOpen: boolean;
+  testId?: string;
 };
 
 export function TransactionModal({
@@ -35,15 +36,22 @@ export function TransactionModal({
   transactions,
   onClose,
   isOpen,
+  testId,
 }: TransactionModalProps) {
   return (
-    <Modal title={label} onClose={onClose} isOpen={isOpen} size="small">
+    <Modal
+      title={label}
+      onClose={onClose}
+      isOpen={isOpen}
+      size="small"
+      testId={testId}
+    >
       {children}
       <div className="w-[420px]">
         {transactions.map((props, index) => {
           return (
             <React.Fragment key={`${props.contractName + "_" + index + 1}`}>
-              <TransactionStatusNotification {...props} index={index + 1}/>
+              <TransactionStatusNotification {...props} index={index + 1} />
               {index < transactions.length - 1 && (
                 <div className="h-[50px] w-0.5 bg-gray-300 ml-[19px] my-2" />
               )}

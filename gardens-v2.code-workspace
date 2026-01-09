@@ -21,7 +21,7 @@
       "path": "./pkg/services",
     },
     {
-      "name": "E2E Tests",
+      "name": "E2E",
       "path": "./pkg/e2e",
     },
     {
