@@ -96,7 +96,7 @@ abstract contract CommunityDiamondConfiguratorBase {
         });
     }
 
-    function _buildLoupeFacetCut(DiamondLoupeFacet _loupeFacet) internal pure returns (IDiamond.FacetCut memory) {
+    function _buildLoupeFacetCut(DiamondLoupeFacet _loupeFacet) internal pure virtual returns (IDiamond.FacetCut memory) {
         bytes4[] memory loupeSelectors = new bytes4[](5);
         loupeSelectors[0] = IDiamondLoupe.facets.selector;
         loupeSelectors[1] = IDiamondLoupe.facetFunctionSelectors.selector;

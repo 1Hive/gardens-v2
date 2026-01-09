@@ -220,6 +220,21 @@ verify-community-diamond-blockscout-opsep:
 
 upgrade-all-diamond-opsep:verify-storage upgrade-diamond-opsep upgrade-community-diamond-opsep
 
+# Atomic diamond upgrade (CVStrategy + RegistryCommunity in single Safe transaction)
+upgrade-atomic-diamond-opsep: verify-storage
+	-forge script script/UpgradeAllDiamonds.s.sol:UpgradeAllDiamonds \
+	--rpc-url $(RPC_URL_OP_TESTNET) \
+	--sig "run(string)" 'opsepolia' \
+	--account pkGarden \
+	--etherscan-api-key $(OPTIMISM_API_KEY) \
+	--chain-id 11155420 \
+	--broadcast \
+	--ffi \
+	--verify \
+	--slow \
+	--via-ir \
+	-vvv
+
 upgrade-and-verify-diamond-opsep: upgrade-diamond-opsep verify-diamond-blockscout-opsep
 
 upgrade-and-verify-community-diamond-opsep: upgrade-community-diamond-opsep verify-community-diamond-blockscout-opsep
@@ -796,6 +811,36 @@ upgrade-diamond-polygon:
 	--legacy \
 	--verify \
 	--slow \
+	-vvv
+
+upgrade-community-diamond-polygon:
+	-forge script script/UpgradeRegistryCommunityDiamond.s.sol:UpgradeRegistryCommunityDiamond \
+	--rpc-url $(RPC_URL_POLYGON) \
+	--sig "run(string)" 'polygon' \
+	--account pkGarden \
+	--etherscan-api-key $(POLYGONSCAN_API_KEY) \
+	--chain-id 137 \
+	--broadcast \
+	--legacy \
+	--ffi \
+	--verify \
+	--slow \
+	-vvv
+
+# Atomic diamond upgrade (CVStrategy + RegistryCommunity in single Safe transaction)
+upgrade-atomic-diamond-polygon: verify-storage
+	-forge script script/UpgradeAllDiamonds.s.sol:UpgradeAllDiamonds \
+	--rpc-url $(RPC_URL_POLYGON) \
+	--sig "run(string)" 'polygon' \
+	--account pkGarden \
+	--etherscan-api-key $(POLYGONSCAN_API_KEY) \
+	--chain-id 137 \
+	--broadcast \
+	--legacy \
+	--ffi \
+	--verify \
+	--slow \
+	--via-ir \
 	-vvv
 
 change-passport-manager-polygon: 
