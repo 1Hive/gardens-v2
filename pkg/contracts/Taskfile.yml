@@ -7,43 +7,53 @@ env:
 
 tasks:
   print:
+    desc: Print
     cmds:
       - echo ${RPC_URL}
   aggregate-abi:
+    desc: Aggregate abi
     cmds:
       - echo "📦 Aggregating diamond ABIs..."
       - node scripts/aggregate-diamond-abi.js
       - echo "✅ ABI aggregation complete"
   aggregate-abi-verbose:
+    desc: Aggregate abi verbose
     cmds:
       - echo "📦 Aggregating diamond ABIs (verbose mode)..."
       - node scripts/aggregate-diamond-abi.js --verbose
       - echo "✅ ABI aggregation complete"
   verify-storage:
+    desc: Verify storage
     cmds:
       - echo "🔍 Verifying diamond storage layouts..."
       - ./scripts/verify-storage-layout.sh || (echo "❌ Storage verification FAILED! Fix storage alignment before deploying." && exit 1)
       - echo "✅ Storage verification passed"
   verify-storage-quick:
+    desc: Verify storage quick
     cmds:
       - echo "🔍 Verifying diamond storage layouts (quick mode)..."
       - ./scripts/verify-storage-layout.sh --skip-build || (echo "❌ Storage verification FAILED! Fix storage alignment before deploying." && exit 1)
       - echo "✅ Storage verification passed"
   verify-storage-verbose:
+    desc: Verify storage verbose
     cmds:
       - echo "🔍 Verifying diamond storage layouts (verbose mode)..."
       - ./scripts/verify-storage-layout.sh --verbose || (echo "❌ Storage verification FAILED! Fix storage alignment before deploying." && exit 1)
       - echo "✅ Storage verification passed"
   fork:
+    desc: Fork
     cmds:
       - anvil --chain-id 1337
   fork0:
+    desc: Fork0
     cmds:
       - anvil --host=0.0.0.0 --chain-id 1337
   fork0b5:
+    desc: Fork0b5
     cmds:
       - anvil --host=0.0.0.0 --chain-id 1337 -b 5
   fund_arb:
+    desc: Fund arb
     cmds:
       - cmd: |
           cast send \
@@ -52,16 +62,19 @@ tasks:
           --value 100ether \
           --rpc-url=${RPC_URL_LOCALHOST}
   test1:
+    desc: Test1
     cmds:
       - cmd: |
           forge test --fork-url ${RPC_URL_LOCALHOST} --mc CVStrategyTest \
           --sender 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266 -vv
   cast1:
+    desc: Cast1
     cmds:
       - cmd: |
           cast send --account pk --rpc-url ${RPC_URL_LOCALHOST} \
           "0xfEcFbe13c84595Ba47464CD4d8d3bb359372Fc6f" "nonce()"
   deploy:
+    desc: Deploy
     cmds:
       - cmd: |
           forge script script/DeployCV.s.sol:DeployCV \
@@ -71,6 +84,7 @@ tasks:
           --broadcast -vvvvv
         ignore_error: true
   add-strategy-local:
+    desc: Add strategy local
     cmds:
       - cmd: |
           forge script script/AddStrategy.s.sol:AddStrategy \
@@ -82,6 +96,7 @@ tasks:
           -vvvv
         ignore_error: true
   deploy-testnet-multi-sep:
+    desc: Deploy testnet multi sep
     cmds:
       - cmd: |
           forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
@@ -94,6 +109,7 @@ tasks:
           -vvv
         ignore_error: true
   verify-testnet-multi-sep:
+    desc: Verify testnet multi sep
     cmds:
       - cmd: |
           forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
@@ -107,6 +123,7 @@ tasks:
           -vvv
         ignore_error: true
   add-strategy-ethsep:
+    desc: Add strategy ethsep
     cmds:
       - cmd: |
           forge script script/AddStrategy.s.sol:AddStrategy \
@@ -118,6 +135,7 @@ tasks:
           -vvvv
         ignore_error: true
   add-strategy-ethsep-pool:
+    desc: Add strategy ethsep pool
     cmds:
       - cmd: |
           forge script script/AddStrategy.s.sol:AddStrategy \
@@ -129,6 +147,7 @@ tasks:
           -vvvv
         ignore_error: true
   deploy-token-opsep:
+    desc: Deploy token opsep
     cmds:
       - cmd: |
           forge script script/DeployERC20.s.sol:DeployERC20 \
@@ -142,15 +161,18 @@ tasks:
           --verify
         ignore_error: true
   fork-testnet-opsep:
+    desc: Fork testnet opsep
     cmds:
       - anvil --host=0.0.0.0 -f ${RPC_URL_OP_TESTNET}
   deploy-verify-opsep:
+    desc: Deploy verify opsep
     cmds:
       - cmd: |
           forge verify-contract \
           --etherscan-api-key ${OPTIMISM_API_KEY}
         ignore_error: true
   deploy-opsep:
+    desc: Deploy opsep
     cmds:
       - cmd: |
           forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
@@ -165,6 +187,7 @@ tasks:
           -vv
         ignore_error: true
   upgrade-opsep:
+    desc: Upgrade opsep
     cmds:
       - cmd: |
           forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
@@ -179,6 +202,7 @@ tasks:
           -vvv
         ignore_error: true
   upgrade-diamond-opsep:
+    desc: Upgrade diamond opsep
     cmds:
       - cmd: |
           forge script script/UpgradeCVDiamond.s.sol:UpgradeCVDiamond \
@@ -194,6 +218,7 @@ tasks:
           -vvv
         ignore_error: true
   upgrade-community-diamond-opsep:
+    desc: Upgrade community diamond opsep
     cmds:
       - cmd: |
           forge script script/UpgradeRegistryCommunityDiamond.s.sol:UpgradeRegistryCommunityDiamond \
@@ -208,6 +233,7 @@ tasks:
           -vvv
         ignore_error: true
   verify-diamond-blockscout-opsep:
+    desc: Verify diamond blockscout opsep
     cmds:
       - cmd: |
           forge script script/UpgradeCVDiamond.s.sol:UpgradeCVDiamondTest \
@@ -222,6 +248,7 @@ tasks:
           --slow
         ignore_error: true
   verify-community-diamond-blockscout-opsep:
+    desc: Verify community diamond blockscout opsep
     cmds:
       - cmd: |
           forge script script/UpgradeRegistryCommunityDiamond.s.sol:UpgradeRegistryCommunityDiamond \
@@ -236,12 +263,14 @@ tasks:
           --slow
         ignore_error: true
   upgrade-all-diamond-opsep:
+    desc: Upgrade all diamond opsep
     deps:
       - verify-storage
       - upgrade-diamond-opsep
       - upgrade-community-diamond-opsep
     cmds: []
   upgrade-atomic-diamond-opsep:
+    desc: Upgrade atomic diamond opsep
     deps:
       - verify-storage
     cmds:
@@ -260,16 +289,19 @@ tasks:
           -vvv
         ignore_error: true
   upgrade-and-verify-diamond-opsep:
+    desc: Upgrade and verify diamond opsep
     deps:
       - upgrade-diamond-opsep
       - verify-diamond-blockscout-opsep
     cmds: []
   upgrade-and-verify-community-diamond-opsep:
+    desc: Upgrade and verify community diamond opsep
     deps:
       - upgrade-community-diamond-opsep
       - verify-community-diamond-blockscout-opsep
     cmds: []
   verify-blockscout-opsep:
+    desc: Verify blockscout opsep
     cmds:
       - cmd: |
           forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
@@ -281,6 +313,7 @@ tasks:
           --slow
         ignore_error: true
   deploy-new-collateral-vault-template-opsep:
+    desc: Deploy new collateral vault template opsep
     cmds:
       - cmd: |
           forge script script/DeployCollateralVaultTemplate.s.sol:DeployCollateralVaultTemplate \
@@ -297,11 +330,13 @@ tasks:
           -vvv
         ignore_error: true
   upgrade-and-verify-opsep:
+    desc: Upgrade and verify opsep
     deps:
       - upgrade-opsep
       - verify-blockscout-opsep
     cmds: []
   transfer-ownership-opsep:
+    desc: Transfer ownership opsep
     cmds:
       - cmd: |
           forge script script/TransferOwnershipAllContracts.s.sol:TransferOwnershipAllContracts \
@@ -315,6 +350,7 @@ tasks:
           -vvvv
         ignore_error: true
   deploy-passport-scorer-opsep:
+    desc: Deploy passport scorer opsep
     cmds:
       - cmd: |
           forge script script/DeployPassportScorer.s.sol:DeployPassportScorer \
@@ -328,6 +364,7 @@ tasks:
           -vv
         ignore_error: true
   deploy-safe-arbitrator-opsep:
+    desc: Deploy safe arbitrator opsep
     cmds:
       - cmd: |
           forge script script/DeploySafeArbitrator.s.sol:DeploySafeArbitrator \
@@ -341,6 +378,7 @@ tasks:
           -vv
         ignore_error: true
   deploy-or-upgrade-good-dollar-sybil-opsep:
+    desc: Deploy or upgrade good dollar sybil opsep
     cmds:
       - cmd: |
           forge script script/DeployGoodDollarSybil.s.sol:DeployGoodDollarSybil \
@@ -354,15 +392,18 @@ tasks:
           -vv
         ignore_error: true
   fork-testnet-arbsep:
+    desc: Fork testnet arbsep
     cmds:
       - anvil --host=0.0.0.0 -f ${RPC_URL_ARB_TESTNET}
   deploy-verify-arbsep:
+    desc: Deploy verify arbsep
     cmds:
       - cmd: |
           forge verify-contract \
           --etherscan-api-key ${ETHERSCAN_API_KEY}
         ignore_error: true
   deploy-arbsep:
+    desc: Deploy arbsep
     cmds:
       - cmd: |
           forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
@@ -377,6 +418,7 @@ tasks:
           -vv
         ignore_error: true
   upgrade-arbsep:
+    desc: Upgrade arbsep
     cmds:
       - cmd: |
           forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
@@ -391,6 +433,7 @@ tasks:
           -vvv
         ignore_error: true
   verify-blockscout-arbsep:
+    desc: Verify blockscout arbsep
     cmds:
       - cmd: |
           forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
@@ -402,6 +445,7 @@ tasks:
           --slow
         ignore_error: true
   deploy-verify:
+    desc: Deploy verify
     cmds:
       - cmd: |
           forge script script/DeployCVArbSepolia.s.sol:DeployCVArbSepolia \
@@ -412,6 +456,7 @@ tasks:
           -vv
         ignore_error: true
   deploy-pool-testnet:
+    desc: Deploy pool testnet
     cmds:
       - cmd: |
           forge script script/DeployCVArbSepoliaPool.s.sol:DeployCVArbSepoliaPool \
@@ -422,6 +467,7 @@ tasks:
           --broadcast -vv
         ignore_error: true
   deploy-commfee-testnet:
+    desc: Deploy commfee testnet
     cmds:
       - cmd: |
           forge script script/DeployCVArbSepoliaCommFee.s.sol:DeployCVArbSepoliaCommFee \
@@ -432,6 +478,7 @@ tasks:
           --broadcast -vv
         ignore_error: true
   deploy-testnet:
+    desc: Deploy testnet
     cmds:
       - cmd: |
           forge script script/DeployCVArbSepolia.s.sol:DeployCVArbSepolia \
@@ -443,6 +490,7 @@ tasks:
           -vv
         ignore_error: true
   create_safe_arbsep:
+    desc: Create safe arbsep
     cmds:
       - cmd: |
           forge script script/CreateSafe.s.sol \
@@ -456,6 +504,7 @@ tasks:
           -vvvv
         ignore_error: true
   deploy-testnet-dry:
+    desc: Deploy testnet dry
     cmds:
       - cmd: |
           forge script script/DeployCVArbSepolia.s.sol:DeployCVArbSepolia \
@@ -464,6 +513,7 @@ tasks:
           -vvvv
         ignore_error: true
   add-owner:
+    desc: Add owner
     cmds:
       - cmd: |
           forge script script/AddOwner.s.sol:AddOwner \
@@ -474,6 +524,7 @@ tasks:
           -vvvv
         ignore_error: true
   add-strategy:
+    desc: Add strategy
     cmds:
       - cmd: |
           forge script script/AddStrategy.s.sol:AddStrategy \
@@ -484,6 +535,7 @@ tasks:
           -vvvv
         ignore_error: true
   deploy-test-arb:
+    desc: Deploy test arb
     cmds:
       - cmd: |
           forge script script/VerifyTest.s.sol:VerifyTest \
@@ -499,6 +551,7 @@ tasks:
           -vvv
         ignore_error: true
   deploy-new-collateral-vault-template-arbitrum-sepolia:
+    desc: Deploy new collateral vault template arbitrum sepolia
     cmds:
       - cmd: |
           forge script script/DeployCollateralVaultTemplate.s.sol:DeployCollateralVaultTemplate \
@@ -515,11 +568,13 @@ tasks:
           -vvv
         ignore_error: true
   upgrade-and-verify-arbsep:
+    desc: Upgrade and verify arbsep
     deps:
       - upgrade-arbsep
       - verify-blockscout-arbsep
     cmds: []
   transfer-ownership-arbsep:
+    desc: Transfer ownership arbsep
     cmds:
       - cmd: |
           forge script script/TransferOwnershipAllContracts.s.sol:TransferOwnershipAllContracts \
@@ -533,6 +588,7 @@ tasks:
           -vvvv
         ignore_error: true
   deploy-passport-scorer-arbsep:
+    desc: Deploy passport scorer arbsep
     cmds:
       - cmd: |
           forge script script/DeployPassportScorer.s.sol:DeployPassportScorer \
@@ -546,6 +602,7 @@ tasks:
           -vv
         ignore_error: true
   deploy-or-upgrade-if-exists-safe-arbitrator-arbsep:
+    desc: Deploy or upgrade if exists safe arbitrator arbsep
     cmds:
       - cmd: |
           forge script script/DeploySafeArbitrator.s.sol:DeploySafeArbitrator \
@@ -559,6 +616,7 @@ tasks:
           -vv
         ignore_error: true
   deploy-or-upgrade-good-dollar-sybil-arbsep:
+    desc: Deploy or upgrade good dollar sybil arbsep
     cmds:
       - cmd: |
           forge script script/DeployGoodDollarSybil.s.sol:DeployGoodDollarSybil \
@@ -572,6 +630,7 @@ tasks:
           -vv
         ignore_error: true
   transfer-ownership-arbitrum:
+    desc: Transfer ownership arbitrum
     cmds:
       - cmd: |
           forge script script/TransferOwnershipAllContracts.s.sol:TransferOwnershipAllContracts \
@@ -585,6 +644,7 @@ tasks:
           -vvv
         ignore_error: true
   deploy-new-collateral-vault-template-arbitrum:
+    desc: Deploy new collateral vault template arbitrum
     cmds:
       - cmd: |
           forge script script/DeployCollateralVaultTemplate.s.sol:DeployCollateralVaultTemplate \
@@ -600,6 +660,7 @@ tasks:
           -vvv
         ignore_error: true
   deploy-arbitrum:
+    desc: Deploy arbitrum
     cmds:
       - cmd: |
           forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
@@ -613,6 +674,7 @@ tasks:
           -vvv
         ignore_error: true
   upgrade-arbitrum:
+    desc: Upgrade arbitrum
     cmds:
       - cmd: |
           forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
@@ -627,6 +689,7 @@ tasks:
           -vvv
         ignore_error: true
   verify-blockscout-arbitrum:
+    desc: Verify blockscout arbitrum
     cmds:
       - cmd: |
           forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
@@ -643,11 +706,13 @@ tasks:
           --slow
         ignore_error: true
   upgrade-and-verify-arbitrum:
+    desc: Upgrade and verify arbitrum
     deps:
       - upgrade-arbitrum
       - verify-blockscout-arbitrum
     cmds: []
   change-passport-manager-arbitrum:
+    desc: Change passport manager arbitrum
     cmds:
       - cmd: |
           forge script script/PassportScorerWriter.s.sol:PassportScorerWriter \
@@ -661,6 +726,7 @@ tasks:
           -vvv
         ignore_error: true
   deploy-passport-scorer-arbitrum:
+    desc: Deploy passport scorer arbitrum
     cmds:
       - cmd: |
           forge script script/DeployPassportScorer.s.sol:DeployPassportScorer \
@@ -674,6 +740,7 @@ tasks:
           -vv
         ignore_error: true
   deploy-or-upgrade-if-exists-safe-arbitrator-arbitrum:
+    desc: Deploy or upgrade if exists safe arbitrator arbitrum
     cmds:
       - cmd: |
           forge script script/DeploySafeArbitrator.s.sol:DeploySafeArbitrator \
@@ -687,6 +754,7 @@ tasks:
           -vv
         ignore_error: true
   deploy-or-upgrade-good-dollar-sybil-arbitrum:
+    desc: Deploy or upgrade good dollar sybil arbitrum
     cmds:
       - cmd: |
           forge script script/DeployGoodDollarSybil.s.sol:DeployGoodDollarSybil \
@@ -700,6 +768,7 @@ tasks:
           -vv
         ignore_error: true
   transfer-ownership-optimism:
+    desc: Transfer ownership optimism
     cmds:
       - cmd: |
           forge script script/TransferOwnershipAllContracts.s.sol:TransferOwnershipAllContracts \
@@ -713,6 +782,7 @@ tasks:
           -vvv
         ignore_error: true
   deploy-new-collateral-vault-template-optimism:
+    desc: Deploy new collateral vault template optimism
     cmds:
       - cmd: |
           forge script script/DeployCollateralVaultTemplate.s.sol:DeployCollateralVaultTemplate \
@@ -728,6 +798,7 @@ tasks:
           -vvv
         ignore_error: true
   deploy-optimism:
+    desc: Deploy optimism
     cmds:
       - cmd: |
           forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
@@ -743,6 +814,7 @@ tasks:
           -vvv
         ignore_error: true
   upgrade-optimism:
+    desc: Upgrade optimism
     cmds:
       - cmd: |
           forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
@@ -758,6 +830,7 @@ tasks:
           -vvv
         ignore_error: true
   verify-blockscout-optimism:
+    desc: Verify blockscout optimism
     cmds:
       - cmd: |
           forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
@@ -774,11 +847,13 @@ tasks:
           --slow
         ignore_error: true
   upgrade-and-verify-optimism:
+    desc: Upgrade and verify optimism
     deps:
       - upgrade-optimism
       - verify-blockscout-optimism
     cmds: []
   change-passport-manager-optimism:
+    desc: Change passport manager optimism
     cmds:
       - cmd: |
           forge script script/PassportScorerWriter.s.sol:PassportScorerWriter \
@@ -792,6 +867,7 @@ tasks:
           -vvv
         ignore_error: true
   deploy-passport-scorer-optimism:
+    desc: Deploy passport scorer optimism
     cmds:
       - cmd: |
           forge script script/DeployPassportScorer.s.sol:DeployPassportScorer \
@@ -805,6 +881,7 @@ tasks:
           -vv
         ignore_error: true
   deploy-or-upgrade-if-exists-safe-arbitrator-optimism:
+    desc: Deploy or upgrade if exists safe arbitrator optimism
     cmds:
       - cmd: |
           forge script script/DeploySafeArbitrator.s.sol:DeploySafeArbitrator \
@@ -818,6 +895,7 @@ tasks:
           -vv
         ignore_error: true
   deploy-or-upgrade-good-dollar-sybil-optimism:
+    desc: Deploy or upgrade good dollar sybil optimism
     cmds:
       - cmd: |
           forge script script/DeployGoodDollarSybil.s.sol:DeployGoodDollarSybil \
@@ -831,6 +909,7 @@ tasks:
           -vv
         ignore_error: true
   upgrade-diamond-polygon:
+    desc: Upgrade diamond polygon
     deps:
       - verify-storage
     cmds:
@@ -848,6 +927,7 @@ tasks:
           -vvv
         ignore_error: true
   upgrade-community-diamond-polygon:
+    desc: Upgrade community diamond polygon
     cmds:
       - cmd: |
           forge script script/UpgradeRegistryCommunityDiamond.s.sol:UpgradeRegistryCommunityDiamond \
@@ -864,6 +944,7 @@ tasks:
           -vvv
         ignore_error: true
   upgrade-atomic-diamond-polygon:
+    desc: Upgrade atomic diamond polygon
     deps:
       - verify-storage
     cmds:
@@ -883,6 +964,7 @@ tasks:
           -vvv
         ignore_error: true
   transfer-ownership-polygon:
+    desc: Transfer ownership polygon
     cmds:
       - cmd: |
           forge script script/TransferOwnershipAllContracts.s.sol:TransferOwnershipAllContracts \
@@ -896,6 +978,7 @@ tasks:
           -vvv
         ignore_error: true
   deploy-new-collateral-vault-template-polygon:
+    desc: Deploy new collateral vault template polygon
     cmds:
       - cmd: |
           forge script script/DeployCollateralVaultTemplate.s.sol:DeployCollateralVaultTemplate \
@@ -911,6 +994,7 @@ tasks:
           -vvv
         ignore_error: true
   deploy-polygon:
+    desc: Deploy polygon
     cmds:
       - cmd: |
           forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
@@ -924,6 +1008,7 @@ tasks:
           -vvv
         ignore_error: true
   upgrade-polygon:
+    desc: Upgrade polygon
     cmds:
       - cmd: |
           forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
@@ -939,6 +1024,7 @@ tasks:
           -vvv
         ignore_error: true
   verify-blockscout-polygon:
+    desc: Verify blockscout polygon
     cmds:
       - cmd: |
           forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
@@ -955,11 +1041,13 @@ tasks:
           --slow
         ignore_error: true
   upgrade-and-verify-polygon:
+    desc: Upgrade and verify polygon
     deps:
       - upgrade-polygon
       - verify-blockscout-polygon
     cmds: []
   change-passport-manager-polygon:
+    desc: Change passport manager polygon
     cmds:
       - cmd: |
           forge script script/PassportScorerWriter.s.sol:PassportScorerWriter \
@@ -973,6 +1061,7 @@ tasks:
           -vvv
         ignore_error: true
   deploy-passport-scorer-polygon:
+    desc: Deploy passport scorer polygon
     cmds:
       - cmd: |
           forge script script/DeployPassportScorer.s.sol:DeployPassportScorer \
@@ -986,6 +1075,7 @@ tasks:
           -vv
         ignore_error: true
   deploy-or-upgrade-if-exists-safe-arbitrator-polygon:
+    desc: Deploy or upgrade if exists safe arbitrator polygon
     cmds:
       - cmd: |
           forge script script/DeploySafeArbitrator.s.sol:DeploySafeArbitrator \
@@ -999,6 +1089,7 @@ tasks:
           -vv
         ignore_error: true
   deploy-or-upgrade-good-dollar-sybil-polygon:
+    desc: Deploy or upgrade good dollar sybil polygon
     cmds:
       - cmd: |
           forge script script/DeployGoodDollarSybil.s.sol:DeployGoodDollarSybil \
@@ -1012,6 +1103,7 @@ tasks:
           -vv
         ignore_error: true
   transfer-ownership-gnosis:
+    desc: Transfer ownership gnosis
     cmds:
       - cmd: |
           forge script script/TransferOwnershipAllContracts.s.sol:TransferOwnershipAllContracts \
@@ -1025,6 +1117,7 @@ tasks:
           -vvv
         ignore_error: true
   deploy-new-collateral-vault-template-gnosis:
+    desc: Deploy new collateral vault template gnosis
     cmds:
       - cmd: |
           forge script script/DeployCollateralVaultTemplate.s.sol:DeployCollateralVaultTemplate \
@@ -1040,6 +1133,7 @@ tasks:
           -vvv
         ignore_error: true
   deploy-gnosis:
+    desc: Deploy gnosis
     cmds:
       - cmd: |
           forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
@@ -1055,6 +1149,7 @@ tasks:
           -vvv
         ignore_error: true
   upgrade-gnosis:
+    desc: Upgrade gnosis
     cmds:
       - cmd: |
           forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
@@ -1070,6 +1165,7 @@ tasks:
           -vvv
         ignore_error: true
   verify-blockscout-gnosis:
+    desc: Verify blockscout gnosis
     cmds:
       - cmd: |
           forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
@@ -1086,6 +1182,7 @@ tasks:
           --slow
         ignore_error: true
   deploy-passport-scorer-gnosis:
+    desc: Deploy passport scorer gnosis
     cmds:
       - cmd: |
           forge script script/DeployPassportScorer.s.sol:DeployPassportScorer \
@@ -1099,6 +1196,7 @@ tasks:
           -vv
         ignore_error: true
   deploy-or-upgrade-if-exists-safe-arbitrator-gnosis:
+    desc: Deploy or upgrade if exists safe arbitrator gnosis
     cmds:
       - cmd: |
           forge script script/DeploySafeArbitrator.s.sol:DeploySafeArbitrator \
@@ -1112,15 +1210,18 @@ tasks:
           -vv
         ignore_error: true
   verify-tenderly-gnosis:
+    desc: Verify tenderly gnosis
     cmds:
       - cmd: forge verify-contract \
         ignore_error: true
   upgrade-and-verify-gnosis:
+    desc: Upgrade and verify gnosis
     deps:
       - upgrade-gnosis
       - verify-blockscout-gnosis
     cmds: []
   change-passport-manager-gnosis:
+    desc: Change passport manager gnosis
     cmds:
       - cmd: |
           forge script script/PassportScorerWriter.s.sol:PassportScorerWriter \
@@ -1134,6 +1235,7 @@ tasks:
           -vvv
         ignore_error: true
   deploy-or-upgrade-good-dollar-sybil-gnosis:
+    desc: Deploy or upgrade good dollar sybil gnosis
     cmds:
       - cmd: |
           forge script script/DeployGoodDollarSybil.s.sol:DeployGoodDollarSybil \
@@ -1147,6 +1249,7 @@ tasks:
           -vv
         ignore_error: true
   transfer-ownership-base:
+    desc: Transfer ownership base
     cmds:
       - cmd: |
           forge script script/TransferOwnershipAllContracts.s.sol:TransferOwnershipAllContracts \
@@ -1160,6 +1263,7 @@ tasks:
           -vvv
         ignore_error: true
   deploy-new-collateral-vault-template-base:
+    desc: Deploy new collateral vault template base
     cmds:
       - cmd: |
           forge script script/DeployCollateralVaultTemplate.s.sol:DeployCollateralVaultTemplate \
@@ -1175,6 +1279,7 @@ tasks:
           -vvv
         ignore_error: true
   deploy-base:
+    desc: Deploy base
     cmds:
       - cmd: |
           forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
@@ -1190,6 +1295,7 @@ tasks:
           -vvv
         ignore_error: true
   upgrade-base:
+    desc: Upgrade base
     cmds:
       - cmd: |
           forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
@@ -1205,6 +1311,7 @@ tasks:
           -vvv
         ignore_error: true
   verify-blockscout-base:
+    desc: Verify blockscout base
     cmds:
       - cmd: |
           forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
@@ -1221,6 +1328,7 @@ tasks:
           --slow
         ignore_error: true
   verify-deploy-blockscout-base:
+    desc: Verify deploy blockscout base
     cmds:
       - cmd: |
           forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
@@ -1237,16 +1345,19 @@ tasks:
           --slow
         ignore_error: true
   deploy-and-verify-base:
+    desc: Deploy and verify base
     deps:
       - deploy-base
       - verify-deploy-blockscout-base
     cmds: []
   upgrade-and-verify-base:
+    desc: Upgrade and verify base
     deps:
       - upgrade-base
       - verify-blockscout-base
     cmds: []
   change-passport-manager-base:
+    desc: Change passport manager base
     cmds:
       - cmd: |
           forge script script/PassportScorerWriter.s.sol:PassportScorerWriter \
@@ -1260,6 +1371,7 @@ tasks:
           -vvv
         ignore_error: true
   deploy-passport-scorer-base:
+    desc: Deploy passport scorer base
     cmds:
       - cmd: |
           forge script script/DeployPassportScorer.s.sol:DeployPassportScorer \
@@ -1273,6 +1385,7 @@ tasks:
           -vv
         ignore_error: true
   deploy-or-upgrade-if-exists-safe-arbitrator-base:
+    desc: Deploy or upgrade if exists safe arbitrator base
     cmds:
       - cmd: |
           forge script script/DeploySafeArbitrator.s.sol:DeploySafeArbitrator \
@@ -1286,6 +1399,7 @@ tasks:
           -vv
         ignore_error: true
   deploy-proxy-owner-base:
+    desc: Deploy proxy owner base
     cmds:
       - cmd: |
           forge script script/DeployProxyOwner.s.sol:DeployProxyOwner \
@@ -1299,6 +1413,7 @@ tasks:
           -vv
         ignore_error: true
   deploy-or-upgrade-good-dollar-sybil-base:
+    desc: Deploy or upgrade good dollar sybil base
     cmds:
       - cmd: |
           forge script script/DeployGoodDollarSybil.s.sol:DeployGoodDollarSybil \
@@ -1312,6 +1427,7 @@ tasks:
           -vv
         ignore_error: true
   transfer-ownership-celo:
+    desc: Transfer ownership celo
     cmds:
       - cmd: |
           forge script script/TransferOwnershipAllContracts.s.sol:TransferOwnershipAllContracts \
@@ -1325,6 +1441,7 @@ tasks:
           -vvv
         ignore_error: true
   deploy-new-collateral-vault-template-celo:
+    desc: Deploy new collateral vault template celo
     cmds:
       - cmd: |
           forge script script/DeployCollateralVaultTemplate.s.sol:DeployCollateralVaultTemplate \
@@ -1340,6 +1457,7 @@ tasks:
           -vvv
         ignore_error: true
   deploy-celo:
+    desc: Deploy celo
     cmds:
       - cmd: |
           forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
@@ -1355,6 +1473,7 @@ tasks:
           -vvv
         ignore_error: true
   upgrade-celo:
+    desc: Upgrade celo
     cmds:
       - cmd: |
           forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
@@ -1370,6 +1489,7 @@ tasks:
           -vvv
         ignore_error: true
   verify-blockscout-celo:
+    desc: Verify blockscout celo
     cmds:
       - cmd: |
           forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
@@ -1386,6 +1506,7 @@ tasks:
           --slow
         ignore_error: true
   verify-deploy-blockscout-celo:
+    desc: Verify deploy blockscout celo
     cmds:
       - cmd: |
           forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
@@ -1402,16 +1523,19 @@ tasks:
           --slow
         ignore_error: true
   deploy-and-verify-celo:
+    desc: Deploy and verify celo
     deps:
       - deploy-celo
       - verify-deploy-blockscout-celo
     cmds: []
   upgrade-and-verify-celo:
+    desc: Upgrade and verify celo
     deps:
       - upgrade-celo
       - verify-blockscout-celo
     cmds: []
   change-passport-manager-celo:
+    desc: Change passport manager celo
     cmds:
       - cmd: |
           forge script script/PassportScorerWriter.s.sol:PassportScorerWriter \
@@ -1425,6 +1549,7 @@ tasks:
           -vvv
         ignore_error: true
   deploy-passport-scorer-celo:
+    desc: Deploy passport scorer celo
     cmds:
       - cmd: |
           forge script script/DeployPassportScorer.s.sol:DeployPassportScorer \
@@ -1438,6 +1563,7 @@ tasks:
           -vv
         ignore_error: true
   verify-blockscout-passport-scorer-celo:
+    desc: Verify blockscout passport scorer celo
     cmds:
       - cmd: |
           forge script script/DeployPassportScorer.s.sol:DeployPassportScorer \
@@ -1451,6 +1577,7 @@ tasks:
           -vv
         ignore_error: true
   deploy-or-upgrade-if-exists-safe-arbitrator-celo:
+    desc: Deploy or upgrade if exists safe arbitrator celo
     cmds:
       - cmd: |
           forge script script/DeploySafeArbitrator.s.sol:DeploySafeArbitrator \
@@ -1464,6 +1591,7 @@ tasks:
           -vv \
         ignore_error: true
   verify-blockscout-proxy-owner-celo:
+    desc: Verify blockscout proxy owner celo
     cmds:
       - cmd: |
           forge script script/DeployProxyOwner.s.sol:DeployProxyOwner \
@@ -1477,6 +1605,7 @@ tasks:
           -vv
         ignore_error: true
   deploy-or-upgrade-good-dollar-sybil-celo:
+    desc: Deploy or upgrade good dollar sybil celo
     cmds:
       - cmd: |
           forge script script/DeployGoodDollarSybil.s.sol:DeployGoodDollarSybil \
