@@ -55,6 +55,17 @@ contract UpgradeAllDiamonds is BaseMultiChain, DiamondConfiguratorBase, Communit
     // Shared DiamondLoupe facet (can be reused)
     DiamondLoupeFacet public loupeFacet;
 
+    struct RunContext {
+        address registryFactoryProxy;
+        address[] registryCommunityProxies;
+        address[] cvStrategyProxies;
+        address strategyImplementation;
+        address communityImplementation;
+        address collateralVaultTemplate;
+        IDiamond.FacetCut[] cvCuts;
+        IDiamond.FacetCut[] communityCuts;
+    }
+
     function runCurrentNetwork(string memory networkJson) public override {
         bool directBroadcast = directBroadcastOverride || networkJson.readBool(getKeyNetwork(".no-safe"));
 
@@ -65,21 +76,37 @@ contract UpgradeAllDiamonds is BaseMultiChain, DiamondConfiguratorBase, Communit
         );
         console2.log("This will upgrade BOTH CVStrategy AND RegistryCommunity to diamond pattern");
 
-        // 1. Deploy all implementations and facets
         console2.log(
             directBroadcast
                 ? "\n[1/5] Deploying implementations and facets..."
                 : "\n[1/6] Deploying implementations and facets..."
         );
 
-        address strategyImplementation = address(new CVStrategy());
-        console2.log("  CVStrategy impl:", strategyImplementation);
+        RunContext memory context = _buildRunContext(networkJson);
+        _executeRun(networkJson, directBroadcast, context);
 
-        address communityImplementation = address(new RegistryCommunity());
-        console2.log("  RegistryCommunity impl:", communityImplementation);
+        console2.log("\n=== Summary ===");
+        console2.log("Registry Factory: %s", context.registryFactoryProxy);
+        console2.log("Registry Communities: %s", context.registryCommunityProxies.length);
+        console2.log("CV Strategies: %s", context.cvStrategyProxies.length);
+        if (!directBroadcast) {
+            uint256 totalTxs = 3 + // Factory templates (strategy + community + collateral vault)
+                (context.registryCommunityProxies.length * 2) + // Community setStrategyTemplate + setCollateralVaultTemplate
+                (context.cvStrategyProxies.length * 3) + // CV upgradeTo + diamondCut + setCollateralVaultTemplate
+                (context.registryCommunityProxies.length * 2); // Community upgradeTo + diamondCut
+            console2.log("Total atomic transactions: %s", totalTxs);
+        }
+    }
 
-        address collateralVaultTemplate = address(new CollateralVault());
-        console2.log("  CollateralVault template:", collateralVaultTemplate);
+    function _buildRunContext(string memory networkJson) internal returns (RunContext memory context) {
+        context.strategyImplementation = address(new CVStrategy());
+        console2.log("  CVStrategy impl:", context.strategyImplementation);
+
+        context.communityImplementation = address(new RegistryCommunity());
+        console2.log("  RegistryCommunity impl:", context.communityImplementation);
+
+        context.collateralVaultTemplate = address(new CollateralVault());
+        console2.log("  CollateralVault template:", context.collateralVaultTemplate);
 
         // Deploy CVStrategy facets
         cvAdminFacet = new CVAdminFacet();
@@ -118,56 +145,49 @@ contract UpgradeAllDiamonds is BaseMultiChain, DiamondConfiguratorBase, Communit
         console2.log("  DiamondLoupeFacet (shared):", address(loupeFacet));
 
         // Read network configuration
-        address registryFactoryProxy = networkJson.readAddress(getKeyNetwork(".PROXIES.REGISTRY_FACTORY"));
-        address[] memory registryCommunityProxies =
-            networkJson.readAddressArray(getKeyNetwork(".PROXIES.REGISTRY_COMMUNITIES"));
-        address[] memory cvStrategyProxies = networkJson.readAddressArray(getKeyNetwork(".PROXIES.CV_STRATEGIES"));
+        context.registryFactoryProxy = networkJson.readAddress(getKeyNetwork(".PROXIES.REGISTRY_FACTORY"));
+        context.registryCommunityProxies = networkJson.readAddressArray(getKeyNetwork(".PROXIES.REGISTRY_COMMUNITIES"));
+        context.cvStrategyProxies = networkJson.readAddressArray(getKeyNetwork(".PROXIES.CV_STRATEGIES"));
 
         // Build facet cuts
-        IDiamond.FacetCut[] memory cvCuts = _buildCVFacetCuts();
-        IDiamond.FacetCut[] memory communityCuts = _buildCommunityFacetCuts();
+        context.cvCuts = _buildCVFacetCuts();
+        context.communityCuts = _buildCommunityFacetCuts();
+    }
 
+    function _executeRun(string memory networkJson, bool directBroadcast, RunContext memory context) internal {
         if (directBroadcast) {
-            RegistryFactory registryFactory = RegistryFactory(payable(registryFactoryProxy));
+            RegistryFactory registryFactory = RegistryFactory(payable(context.registryFactoryProxy));
             _executeDirectUpgrades(
                 registryFactory,
-                registryFactoryProxy,
-                registryCommunityProxies,
-                cvStrategyProxies,
-                strategyImplementation,
-                communityImplementation,
-                collateralVaultTemplate,
-                cvCuts,
-                communityCuts
+                context.registryFactoryProxy,
+                context.registryCommunityProxies,
+                context.cvStrategyProxies,
+                context.strategyImplementation,
+                context.communityImplementation,
+                context.collateralVaultTemplate,
+                context.cvCuts,
+                context.communityCuts
             );
         } else {
-            address proxyOwner = networkJson.readAddress(getKeyNetwork(".ENVS.PROXY_OWNER"));
-            address safeOwner = ProxyOwner(proxyOwner).owner();
-            _generateSafeTransactions(
-                registryFactoryProxy,
-                registryCommunityProxies,
-                cvStrategyProxies,
-                strategyImplementation,
-                communityImplementation,
-                collateralVaultTemplate,
-                cvCuts,
-                communityCuts,
-                safeOwner,
-                networkJson
-            );
+            _executeSafeUpgrade(networkJson, context);
         }
+    }
 
-        console2.log("\n=== Summary ===");
-        console2.log("Registry Factory: %s", registryFactoryProxy);
-        console2.log("Registry Communities: %s", registryCommunityProxies.length);
-        console2.log("CV Strategies: %s", cvStrategyProxies.length);
-        if (!directBroadcast) {
-            uint256 totalTxs = 3 + // Factory templates (strategy + community + collateral vault)
-                (registryCommunityProxies.length * 2) + // Community setStrategyTemplate + setCollateralVaultTemplate
-                (cvStrategyProxies.length * 3) + // CV upgradeTo + diamondCut + setCollateralVaultTemplate
-                (registryCommunityProxies.length * 2); // Community upgradeTo + diamondCut
-            console2.log("Total atomic transactions: %s", totalTxs);
-        }
+    function _executeSafeUpgrade(string memory networkJson, RunContext memory context) internal {
+        address proxyOwner = networkJson.readAddress(getKeyNetwork(".ENVS.PROXY_OWNER"));
+        address safeOwner = ProxyOwner(proxyOwner).owner();
+        _generateSafeTransactions(
+            context.registryFactoryProxy,
+            context.registryCommunityProxies,
+            context.cvStrategyProxies,
+            context.strategyImplementation,
+            context.communityImplementation,
+            context.collateralVaultTemplate,
+            context.cvCuts,
+            context.communityCuts,
+            safeOwner,
+            networkJson
+        );
     }
 
     function _executeDirectUpgrades(
