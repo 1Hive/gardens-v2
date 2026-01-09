@@ -18,6 +18,7 @@ import {CommunityStrategyFacet} from "../src/RegistryCommunity/facets/CommunityS
 import {RegistryCommunityDiamondInit} from "../src/RegistryCommunity/RegistryCommunityDiamondInit.sol";
 import {DiamondLoupeFacet} from "../src/diamonds/facets/DiamondLoupeFacet.sol";
 import {RegistryFactory} from "../src/RegistryFactory/RegistryFactory.sol";
+import {CollateralVault} from "../src/CollateralVault.sol";
 import {IDiamond} from "../src/diamonds/interfaces/IDiamond.sol";
 import {IDiamondLoupe} from "../src/diamonds/interfaces/IDiamondLoupe.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
@@ -77,6 +78,9 @@ contract UpgradeAllDiamonds is BaseMultiChain, DiamondConfiguratorBase, Communit
         address communityImplementation = address(new RegistryCommunity());
         console2.log("  RegistryCommunity impl:", communityImplementation);
 
+        address collateralVaultTemplate = address(new CollateralVault());
+        console2.log("  CollateralVault template:", collateralVaultTemplate);
+
         // Deploy CVStrategy facets
         cvAdminFacet = new CVAdminFacet();
         console2.log("  CVAdminFacet:", address(cvAdminFacet));
@@ -132,6 +136,7 @@ contract UpgradeAllDiamonds is BaseMultiChain, DiamondConfiguratorBase, Communit
                 cvStrategyProxies,
                 strategyImplementation,
                 communityImplementation,
+                collateralVaultTemplate,
                 cvCuts,
                 communityCuts
             );
@@ -144,6 +149,7 @@ contract UpgradeAllDiamonds is BaseMultiChain, DiamondConfiguratorBase, Communit
                 cvStrategyProxies,
                 strategyImplementation,
                 communityImplementation,
+                collateralVaultTemplate,
                 cvCuts,
                 communityCuts,
                 safeOwner,
@@ -156,9 +162,9 @@ contract UpgradeAllDiamonds is BaseMultiChain, DiamondConfiguratorBase, Communit
         console2.log("Registry Communities: %s", registryCommunityProxies.length);
         console2.log("CV Strategies: %s", cvStrategyProxies.length);
         if (!directBroadcast) {
-            uint256 totalTxs = 2 + // Factory templates (strategy + community)
-                registryCommunityProxies.length + // Community setStrategyTemplate
-                (cvStrategyProxies.length * 2) + // CV upgradeTo + diamondCut
+            uint256 totalTxs = 3 + // Factory templates (strategy + community + collateral vault)
+                (registryCommunityProxies.length * 2) + // Community setStrategyTemplate + setCollateralVaultTemplate
+                (cvStrategyProxies.length * 3) + // CV upgradeTo + diamondCut + setCollateralVaultTemplate
                 (registryCommunityProxies.length * 2); // Community upgradeTo + diamondCut
             console2.log("Total atomic transactions: %s", totalTxs);
         }
@@ -171,6 +177,7 @@ contract UpgradeAllDiamonds is BaseMultiChain, DiamondConfiguratorBase, Communit
         address[] memory cvStrategyProxies,
         address strategyImplementation,
         address communityImplementation,
+        address collateralVaultTemplate,
         IDiamond.FacetCut[] memory cvCuts,
         IDiamond.FacetCut[] memory communityCuts
     ) internal {
@@ -181,11 +188,15 @@ contract UpgradeAllDiamonds is BaseMultiChain, DiamondConfiguratorBase, Communit
         registryFactory.setRegistryCommunityTemplate(communityImplementation);
         console2.log("  Community template updated:", registryFactoryProxy);
 
+        registryFactory.setCollateralVaultTemplate(collateralVaultTemplate);
+        console2.log("  CollateralVault template updated:", registryFactoryProxy);
+
         console2.log("\n[3/5] Updating RegistryCommunity strategy templates...");
         for (uint256 i = 0; i < registryCommunityProxies.length; i++) {
             RegistryCommunity registryCommunity = RegistryCommunity(payable(address(registryCommunityProxies[i])));
             registryCommunity.setStrategyTemplate(strategyImplementation);
-            console2.log("  Community", i + 1, "strategy template updated:", registryCommunityProxies[i]);
+            registryCommunity.setCollateralVaultTemplate(collateralVaultTemplate);
+            console2.log("  Community", i + 1, "templates updated:", registryCommunityProxies[i]);
         }
 
         console2.log("\n[4/5] Upgrading CVStrategy proxies and applying diamond cuts...");
@@ -196,6 +207,7 @@ contract UpgradeAllDiamonds is BaseMultiChain, DiamondConfiguratorBase, Communit
             CVStrategy cvStrategy = CVStrategy(payable(address(cvStrategyProxies[i])));
             cvStrategy.upgradeTo(strategyImplementation);
             cvStrategy.diamondCut(cvCuts, address(cvInitContract), abi.encodeCall(CVStrategyDiamondInit.init, ()));
+            cvStrategy.setCollateralVaultTemplate(collateralVaultTemplate);
             console2.log("  Strategy", i + 1, "upgraded with diamond facets:", cvStrategyProxies[i]);
         }
 
@@ -217,6 +229,7 @@ contract UpgradeAllDiamonds is BaseMultiChain, DiamondConfiguratorBase, Communit
         address[] cvStrategyProxies;
         address strategyImplementation;
         address communityImplementation;
+        address collateralVaultTemplate;
         address safeOwner;
         string networkJson;
     }
@@ -227,6 +240,7 @@ contract UpgradeAllDiamonds is BaseMultiChain, DiamondConfiguratorBase, Communit
         address[] memory cvStrategyProxies,
         address strategyImplementation,
         address communityImplementation,
+        address collateralVaultTemplate,
         IDiamond.FacetCut[] memory cvCuts,
         IDiamond.FacetCut[] memory communityCuts,
         address safeOwner,
@@ -238,6 +252,7 @@ contract UpgradeAllDiamonds is BaseMultiChain, DiamondConfiguratorBase, Communit
             cvStrategyProxies: cvStrategyProxies,
             strategyImplementation: strategyImplementation,
             communityImplementation: communityImplementation,
+            collateralVaultTemplate: collateralVaultTemplate,
             safeOwner: safeOwner,
             networkJson: networkJson
         });
@@ -258,19 +273,38 @@ contract UpgradeAllDiamonds is BaseMultiChain, DiamondConfiguratorBase, Communit
         );
         console2.log("  Factory community template update added");
 
+        json = string(
+            abi.encodePacked(json, _createTransactionJson(params.registryFactoryProxy,
+                abi.encodeWithSelector(RegistryFactory.setCollateralVaultTemplate.selector, params.collateralVaultTemplate)), ",")
+        );
+        console2.log("  Factory CollateralVault template update added");
+
         console2.log("\n[3/6] Building RegistryCommunity strategy template updates...");
         bytes memory communitySetStrategyData =
             abi.encodeWithSelector(RegistryCommunity.setStrategyTemplate.selector, params.strategyImplementation);
+        bytes memory communitySetCollateralVaultData =
+            abi.encodeWithSelector(RegistryCommunity.setCollateralVaultTemplate.selector, params.collateralVaultTemplate);
         for (uint256 i = 0; i < params.registryCommunityProxies.length; i++) {
             json = string(
                 abi.encodePacked(
                     json, _createTransactionJson(params.registryCommunityProxies[i], communitySetStrategyData), ","
                 )
             );
+            json = string(
+                abi.encodePacked(
+                    json, _createTransactionJson(params.registryCommunityProxies[i], communitySetCollateralVaultData), ","
+                )
+            );
             console2.log("  Community", i + 1, "added to batch:", params.registryCommunityProxies[i]);
         }
 
-        json = _buildCVStrategyTransactions(json, params.cvStrategyProxies, params.strategyImplementation, cvCuts);
+        json = _buildCVStrategyTransactions(
+            json,
+            params.cvStrategyProxies,
+            params.strategyImplementation,
+            params.collateralVaultTemplate,
+            cvCuts
+        );
 
         json = _buildCommunityTransactions(json, params.registryCommunityProxies, params.communityImplementation, communityCuts);
 
@@ -285,6 +319,7 @@ contract UpgradeAllDiamonds is BaseMultiChain, DiamondConfiguratorBase, Communit
         string memory json,
         address[] memory cvStrategyProxies,
         address strategyImplementation,
+        address collateralVaultTemplate,
         IDiamond.FacetCut[] memory cvCuts
     ) internal returns (string memory) {
         console2.log("\n[4/6] Building CVStrategy upgrade + diamond cut transactions...");
@@ -295,10 +330,15 @@ contract UpgradeAllDiamonds is BaseMultiChain, DiamondConfiguratorBase, Communit
         bytes memory cvDiamondCutCalldata =
             abi.encodeWithSelector(CVStrategy.diamondCut.selector, cvCuts, address(cvInitContract), abi.encodeCall(CVStrategyDiamondInit.init, ()));
         bytes memory cvUpgradeCalldata = abi.encodeWithSelector(upgradeSelector, strategyImplementation);
+        bytes memory cvSetCollateralVaultCalldata =
+            abi.encodeWithSelector(CVStrategy.setCollateralVaultTemplate.selector, collateralVaultTemplate);
 
         for (uint256 i = 0; i < cvStrategyProxies.length; i++) {
             json = string(abi.encodePacked(json, _createTransactionJson(cvStrategyProxies[i], cvUpgradeCalldata), ","));
             json = string(abi.encodePacked(json, _createTransactionJson(cvStrategyProxies[i], cvDiamondCutCalldata), ","));
+            json = string(
+                abi.encodePacked(json, _createTransactionJson(cvStrategyProxies[i], cvSetCollateralVaultCalldata), ",")
+            );
             console2.log("  Strategy", i + 1, "added to batch:", cvStrategyProxies[i]);
         }
 

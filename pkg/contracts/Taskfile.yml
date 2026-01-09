@@ -1,6 +1,7 @@
-version: '3'
+silent: true
+version: "3"
 
-dotenv: ['.env']
+dotenv: [".env"]
 
 env:
   RPC_URL_LOCALHOST: http://127.0.0.1:8545
@@ -430,6 +431,25 @@ tasks:
           --ffi \
           --broadcast \
           --verify \
+          -vvv
+        ignore_error: true
+  upgrade-atomic-diamond-arbsep:
+    desc: Upgrade atomic diamond arbsep
+    deps:
+      - verify-storage
+    cmds:
+      - cmd: |
+          forge script script/UpgradeAllDiamonds.s.sol:UpgradeAllDiamonds \
+          --rpc-url ${RPC_URL_ARB_TESTNET} \
+          --sig "run(string)" 'arbsepolia' \
+          --account pkGarden \
+          --etherscan-api-key ${ARBISCAN_API_KEY} \
+          --chain-id 421614 \
+          --broadcast \
+          --ffi \
+          --verify \
+          --slow \
+          --via-ir \
           -vvv
         ignore_error: true
   verify-blockscout-arbsep:
