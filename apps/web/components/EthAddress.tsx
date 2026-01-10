@@ -18,6 +18,7 @@ type EthAddressProps = {
   label?: React.ReactNode;
   showPopup?: boolean;
   textColor?: string;
+  explorer?: "explorer" | "louper";
 };
 
 //TODO: handle theme change by create a theme object and pass it to Addre
@@ -32,6 +33,7 @@ export const EthAddress = ({
   showPopup = true,
   label,
   textColor = "var(--color-green-500)",
+  explorer = "explorer",
 }: EthAddressProps) => {
   const divParentRef = React.useRef<HTMLDivElement>(null);
   const chain = useChainFromPath();
@@ -105,9 +107,15 @@ export const EthAddress = ({
           address={address as Address}
           popupNode={showPopup ? undefined : document.createElement("div")}
           explorer={(addr: string) => ({
-            name: "Louper",
-            url: `https://louper.dev/diamond/${addr}?network=${encodeURIComponent(louperNetworkSlug ?? "")}`,
-            accountUrl: `https://louper.dev/diamond/${addr}?network=${encodeURIComponent(louperNetworkSlug ?? "")}`,
+            name: explorer === "explorer" ? "Explorer" : "Louper",
+            url:
+              explorer === "explorer" ?
+                `${chain.explorer}/address/${addr}`
+              : `https://louper.dev/diamond/${addr}?network=${encodeURIComponent(louperNetworkSlug ?? "")}`,
+            accountUrl:
+              explorer === "explorer" ?
+                `${chain.explorer}/address/${addr}`
+              : `https://louper.dev/diamond/${addr}?network=${encodeURIComponent(louperNetworkSlug ?? "")}`,
           })}
         />
       </div>
