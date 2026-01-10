@@ -60,7 +60,12 @@
           "0xe6dedd7a954c51ddb283b751db6970a75d067cad"
         ]
       },
-      "hash": "23e78eea4fd0e940cda093cccc192eaab0c85c89"
+      "hash": "23e78eea4fd0e940cda093cccc192eaab0c85c89",
+      "IMPLEMENTATIONS": {
+        "CV_STRATEGY": "0xed9a35c3a11d258d0d8267c2e64b69929c7ae530",
+        "REGISTRY_COMMUNITY": "0xb0a89a25caace1008f9e904ae31bdaae3607b3ca",
+        "COLLATERAL_VAULT": "0x5d5a26a0b5b14ca4c8b116db7d04289bbe52d9e0"
+      }
     },
     {
       "name": "opsepolia",

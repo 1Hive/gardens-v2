@@ -37,6 +37,7 @@ contract UpgradeAllDiamonds is BaseMultiChain, DiamondConfiguratorBase, Communit
     using stdJson for string;
 
     bool internal directBroadcastOverride;
+    bytes32 constant IMPLEMENTATION_SLOT = bytes32(uint256(keccak256("eip1967.proxy.implementation")) - 1);
 
     // CVStrategy facets
     CVAdminFacet public cvAdminFacet;
@@ -64,6 +65,11 @@ contract UpgradeAllDiamonds is BaseMultiChain, DiamondConfiguratorBase, Communit
         address collateralVaultTemplate;
         IDiamond.FacetCut[] cvCuts;
         IDiamond.FacetCut[] communityCuts;
+    }
+
+    struct DeploymentCache {
+        address cached;
+        bool reused;
     }
 
     function runCurrentNetwork(string memory networkJson) public override {
@@ -99,14 +105,39 @@ contract UpgradeAllDiamonds is BaseMultiChain, DiamondConfiguratorBase, Communit
     }
 
     function _buildRunContext(string memory networkJson) internal returns (RunContext memory context) {
-        context.strategyImplementation = address(new CVStrategy());
-        console2.log("  CVStrategy impl:", context.strategyImplementation);
+        DeploymentCache memory strategyCache = _reuseDeployment(
+            "CVStrategy impl",
+            _readAddressOrZero(".IMPLEMENTATIONS.CV_STRATEGY"),
+            _runtimeCodeHash("src/CVStrategy/CVStrategy.sol:CVStrategy")
+        );
+        context.strategyImplementation = strategyCache.reused ? strategyCache.cached : address(new CVStrategy());
+        _logDeploymentResult("CVStrategy impl", strategyCache.reused, context.strategyImplementation);
+        if (!strategyCache.reused) {
+            _writeNetworkAddress(".IMPLEMENTATIONS.CV_STRATEGY", context.strategyImplementation);
+        }
 
-        context.communityImplementation = address(new RegistryCommunity());
-        console2.log("  RegistryCommunity impl:", context.communityImplementation);
+        DeploymentCache memory communityCache = _reuseDeployment(
+            "RegistryCommunity impl",
+            _readAddressOrZero(".IMPLEMENTATIONS.REGISTRY_COMMUNITY"),
+            _runtimeCodeHash("src/RegistryCommunity/RegistryCommunity.sol:RegistryCommunity")
+        );
+        context.communityImplementation = communityCache.reused ? communityCache.cached : address(new RegistryCommunity());
+        _logDeploymentResult("RegistryCommunity impl", communityCache.reused, context.communityImplementation);
+        if (!communityCache.reused) {
+            _writeNetworkAddress(".IMPLEMENTATIONS.REGISTRY_COMMUNITY", context.communityImplementation);
+        }
 
-        context.collateralVaultTemplate = address(new CollateralVault());
-        console2.log("  CollateralVault template:", context.collateralVaultTemplate);
+        DeploymentCache memory collateralCache = _reuseDeployment(
+            "CollateralVault template",
+            _readAddressOrZero(".IMPLEMENTATIONS.COLLATERAL_VAULT"),
+            _runtimeCodeHash("src/CollateralVault.sol:CollateralVault")
+        );
+        context.collateralVaultTemplate =
+            collateralCache.reused ? collateralCache.cached : address(new CollateralVault());
+        _logDeploymentResult("CollateralVault template", collateralCache.reused, context.collateralVaultTemplate);
+        if (!collateralCache.reused) {
+            _writeNetworkAddress(".IMPLEMENTATIONS.COLLATERAL_VAULT", context.collateralVaultTemplate);
+        }
 
         // Deploy CVStrategy facets
         cvAdminFacet = new CVAdminFacet();
@@ -154,6 +185,154 @@ contract UpgradeAllDiamonds is BaseMultiChain, DiamondConfiguratorBase, Communit
         context.communityCuts = _buildCommunityFacetCuts();
     }
 
+    function _reuseDeployment(
+        string memory label,
+        address cached,
+        bytes32 expectedCodeHash
+    ) internal returns (DeploymentCache memory result) {
+        result.cached = cached;
+        if (cached == address(0)) {
+            return result;
+        }
+
+        if (cached.code.length == 0) {
+            console2.log("  Cached", label, "has no code; redeploying");
+            result.cached = address(0);
+            return result;
+        }
+
+        if (cached.codehash != expectedCodeHash) {
+            console2.log("  Cached", label, "bytecode mismatch; redeploying");
+            result.cached = address(0);
+            return result;
+        }
+
+        result.reused = true;
+    }
+
+    function _logDeploymentResult(string memory label, bool reused, address deployed) internal {
+        if (reused) {
+            console2.log("  Reusing", label, ":", deployed);
+        } else {
+            console2.log("  Deployed", label, ":", deployed);
+        }
+    }
+
+    function _readAddressOrZero(string memory key) internal returns (address) {
+        string memory root = vm.projectRoot();
+        string memory path = string.concat(root, "/pkg/contracts/config/networks.json");
+        string memory command = string.concat(
+            "jq -r '(.networks[] | select(.name==\"",
+            CURRENT_NETWORK,
+            "\") | ",
+            key,
+            " // empty)' ",
+            path
+        );
+
+        string[] memory inputs = new string[](3);
+        inputs[0] = "bash";
+        inputs[1] = "-c";
+        inputs[2] = command;
+        bytes memory result = vm.ffi(inputs);
+        string memory value = _trim(string(result));
+        if (bytes(value).length == 0) {
+            return address(0);
+        }
+        if (keccak256(bytes(value)) == keccak256(bytes("null"))) {
+            return address(0);
+        }
+        return _parseAddress(value);
+    }
+
+    function _trim(string memory input) internal pure returns (string memory) {
+        bytes memory inputBytes = bytes(input);
+        uint256 start = 0;
+        uint256 end = inputBytes.length;
+        while (start < end && _isWhitespace(inputBytes[start])) {
+            start++;
+        }
+        while (end > start && _isWhitespace(inputBytes[end - 1])) {
+            end--;
+        }
+        bytes memory trimmed = new bytes(end - start);
+        for (uint256 i = 0; i < trimmed.length; i++) {
+            trimmed[i] = inputBytes[start + i];
+        }
+        return string(trimmed);
+    }
+
+    function _isWhitespace(bytes1 char) internal pure returns (bool) {
+        return char == 0x20 || char == 0x0a || char == 0x0d || char == 0x09;
+    }
+
+    function _parseAddress(string memory value) internal pure returns (address) {
+        bytes memory data = bytes(value);
+        if (data.length != 42 || data[0] != "0" || data[1] != "x") {
+            return address(0);
+        }
+        uint160 result = 0;
+        for (uint256 i = 2; i < 42; i++) {
+            uint8 nibble = _fromHexChar(data[i]);
+            if (nibble > 15) {
+                return address(0);
+            }
+            result = (result << 4) | uint160(nibble);
+        }
+        return address(result);
+    }
+
+    function _fromHexChar(bytes1 char) internal pure returns (uint8) {
+        uint8 value = uint8(char);
+        if (value >= 48 && value <= 57) {
+            return value - 48;
+        }
+        if (value >= 65 && value <= 70) {
+            return value - 55;
+        }
+        if (value >= 97 && value <= 102) {
+            return value - 87;
+        }
+        return 255;
+    }
+
+    function _runtimeCodeHash(string memory artifactId) internal returns (bytes32) {
+        bytes memory deployedCode = vm.getDeployedCode(artifactId);
+        if (deployedCode.length == 0) {
+            revert("Missing deployed bytecode for artifact");
+        }
+        return keccak256(deployedCode);
+    }
+
+    function _writeNetworkAddress(string memory key, address value) internal {
+        string memory root = vm.projectRoot();
+        string memory path = string.concat(root, "/pkg/contracts/config/networks.json");
+        string memory tmpPath = string.concat(root, "/pkg/contracts/config/.networks.tmp.json");
+        string memory command = string.concat(
+            "jq '(.networks[] | select(.name==\"",
+            CURRENT_NETWORK,
+            "\") | ",
+            key,
+            ") = \"",
+            _addressToString(value),
+            "\"' ",
+            path,
+            " > ",
+            tmpPath,
+            " && mv ",
+            tmpPath,
+            " ",
+            path
+        );
+
+        string[] memory inputs = new string[](3);
+        inputs[0] = "bash";
+        inputs[1] = "-c";
+        inputs[2] = command;
+        vm.ffi(inputs);
+        console2.log("  Cached deployment in networks.json:", key);
+    }
+
     function _executeRun(string memory networkJson, bool directBroadcast, RunContext memory context) internal {
         if (directBroadcast) {
             RegistryFactory registryFactory = RegistryFactory(payable(context.registryFactoryProxy));
@@ -171,6 +350,11 @@ contract UpgradeAllDiamonds is BaseMultiChain, DiamondConfiguratorBase, Communit
         } else {
             _executeSafeUpgrade(networkJson, context);
         }
+    }
+
+    function _currentImplementation(address proxy) internal view returns (address) {
+        bytes32 data = vm.load(proxy, IMPLEMENTATION_SLOT);
+        return address(uint160(uint256(data)));
     }
 
     function _executeSafeUpgrade(string memory networkJson, RunContext memory context) internal {
@@ -225,7 +409,12 @@ contract UpgradeAllDiamonds is BaseMultiChain, DiamondConfiguratorBase, Communit
 
         for (uint256 i = 0; i < cvStrategyProxies.length; i++) {
             CVStrategy cvStrategy = CVStrategy(payable(address(cvStrategyProxies[i])));
-            cvStrategy.upgradeTo(strategyImplementation);
+            address currentImplementation = _currentImplementation(address(cvStrategyProxies[i]));
+            if (currentImplementation != strategyImplementation) {
+                cvStrategy.upgradeTo(strategyImplementation);
+            } else {
+                console2.log("  Strategy", i + 1, "already at implementation; skipping upgradeTo");
+            }
             cvStrategy.diamondCut(cvCuts, address(cvInitContract), abi.encodeCall(CVStrategyDiamondInit.init, ()));
             cvStrategy.setCollateralVaultTemplate(collateralVaultTemplate);
             console2.log("  Strategy", i + 1, "upgraded with diamond facets:", cvStrategyProxies[i]);
@@ -237,7 +426,12 @@ contract UpgradeAllDiamonds is BaseMultiChain, DiamondConfiguratorBase, Communit
 
         for (uint256 i = 0; i < registryCommunityProxies.length; i++) {
             RegistryCommunity community = RegistryCommunity(payable(address(registryCommunityProxies[i])));
-            community.upgradeTo(communityImplementation);
+            address currentImplementation = _currentImplementation(address(registryCommunityProxies[i]));
+            if (currentImplementation != communityImplementation) {
+                community.upgradeTo(communityImplementation);
+            } else {
+                console2.log("  Community", i + 1, "already at implementation; skipping upgradeTo");
+            }
             community.diamondCut(communityCuts, address(communityInitContract), abi.encodeCall(RegistryCommunityDiamondInit.init, ()));
             console2.log("  Community", i + 1, "upgraded with diamond facets:", registryCommunityProxies[i]);
         }
@@ -354,7 +548,12 @@ contract UpgradeAllDiamonds is BaseMultiChain, DiamondConfiguratorBase, Communit
             abi.encodeWithSelector(CVStrategy.setCollateralVaultTemplate.selector, collateralVaultTemplate);
 
         for (uint256 i = 0; i < cvStrategyProxies.length; i++) {
-            json = string(abi.encodePacked(json, _createTransactionJson(cvStrategyProxies[i], cvUpgradeCalldata), ","));
+            address currentImplementation = _currentImplementation(address(cvStrategyProxies[i]));
+            if (currentImplementation != strategyImplementation) {
+                json = string(abi.encodePacked(json, _createTransactionJson(cvStrategyProxies[i], cvUpgradeCalldata), ","));
+            } else {
+                console2.log("  Strategy", i + 1, "already at implementation; skipping upgradeTo");
+            }
             json = string(abi.encodePacked(json, _createTransactionJson(cvStrategyProxies[i], cvDiamondCutCalldata), ","));
             json = string(
                 abi.encodePacked(json, _createTransactionJson(cvStrategyProxies[i], cvSetCollateralVaultCalldata), ",")
@@ -382,9 +581,14 @@ contract UpgradeAllDiamonds is BaseMultiChain, DiamondConfiguratorBase, Communit
         bytes memory communityUpgradeCalldata = abi.encodeWithSelector(upgradeSelector, communityImplementation);
 
         for (uint256 i = 0; i < registryCommunityProxies.length; i++) {
-            json = string(
-                abi.encodePacked(json, _createTransactionJson(registryCommunityProxies[i], communityUpgradeCalldata), ",")
-            );
+            address currentImplementation = _currentImplementation(address(registryCommunityProxies[i]));
+            if (currentImplementation != communityImplementation) {
+                json = string(
+                    abi.encodePacked(json, _createTransactionJson(registryCommunityProxies[i], communityUpgradeCalldata), ",")
+                );
+            } else {
+                console2.log("  Community", i + 1, "already at implementation; skipping upgradeTo");
+            }
             json = string(
                 abi.encodePacked(json, _createTransactionJson(registryCommunityProxies[i], communityDiamondCutCalldata), ",")
             );
