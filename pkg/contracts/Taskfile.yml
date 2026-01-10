@@ -448,9 +448,7 @@ tasks:
           --broadcast \
           --ffi \
           --verify \
-          --slow \
-          --via-ir \
-          -vvv
+          --via-ir
         ignore_error: true
   verify-blockscout-arbsep:
     desc: Verify blockscout arbsep
