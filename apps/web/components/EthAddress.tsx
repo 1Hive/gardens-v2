@@ -36,6 +36,10 @@ export const EthAddress = ({
   const divParentRef = React.useRef<HTMLDivElement>(null);
   const chain = useChainFromPath();
   const { resolvedTheme } = useTheme();
+  const louperNetworkSlug = chain?.network?.replace(
+    /-([a-z])/g,
+    (_, letter: string) => letter.toUpperCase(),
+  );
 
   const { data: ensName } = useEnsName({
     address: address as Address,
@@ -101,9 +105,9 @@ export const EthAddress = ({
           address={address as Address}
           popupNode={showPopup ? undefined : document.createElement("div")}
           explorer={(addr: string) => ({
-            name: chain.name,
-            url: `${chain.explorer}/address/${addr}`,
-            accountUrl: `${chain.explorer}/address/${addr}`,
+            name: "Louper",
+            url: `https://louper.dev/diamond/${addr}?network=${encodeURIComponent(louperNetworkSlug ?? "")}`,
+            accountUrl: `https://louper.dev/diamond/${addr}?network=${encodeURIComponent(louperNetworkSlug ?? "")}`,
           })}
         />
       </div>
