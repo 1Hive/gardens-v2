@@ -11,7 +11,7 @@ This package uses Taskfile.dev for common Foundry workflows.
 
 - List tasks: `task -l`
 - Aggregate ABIs: `task aggregate-abi`
-- Verify storage (quick): `task verify-storage-quick`
+- Verify storage (quick): `task verify-storage-quick` (uses cached layouts in `cache/storage-layout` when available)
 - Run local fork: `task fork`
 - Deploy locally: `task deploy`
 - Add strategy (local): `S=0x... C=0x... task add-strategy-local`
