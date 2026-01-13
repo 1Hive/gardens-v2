@@ -35,6 +35,7 @@ export const DataTable: React.FC<DataTableProps> = ({
       className={`overflow-x-hidden max-h-[500px] ${withModal ? "" : "section-layout"} `}
     >
       <div className="inline-block min-w-full py-2 align-middle sm:px-4 lg:px-6">
+        <h5 className="mb-4">{title}</h5>
         <table className="min-w-full">
           <thead className="sticky top-0 bg-none backdrop-blur-sm z-10">
             <tr className="text-[11px] uppercase tracking-wider">
@@ -44,7 +45,9 @@ export const DataTable: React.FC<DataTableProps> = ({
                   scope="col"
                   className={`py-2.5 sm:py-3.5 px-[1px] ${col.className ?? ""}`}
                 >
-                  <h6 className="text-sm">{col.header}</h6>
+                  <h6 className="text-sm text-neutral-soft-content">
+                    {col.header}
+                  </h6>
                 </th>
               ))}
             </tr>
@@ -56,7 +59,7 @@ export const DataTable: React.FC<DataTableProps> = ({
                 {columns.map((col, i) => (
                   <td
                     key={`col-${i + 1}-${item.id}`}
-                    className={`whitespace-nowrap py-1 pr-1 text-sm text-neutral-soft-content ${col.className ?? ""}`}
+                    className={`whitespace-nowrap py-1 pr-1 text-sm  ${col.className ?? ""}`}
                   >
                     <div className="text-base font-normal leading-6 text-left">
                       {col.render(item)}
@@ -67,7 +70,7 @@ export const DataTable: React.FC<DataTableProps> = ({
             ))}
           </tbody>
           {!withModal && footer != null && (
-            <tfoot>
+            <tfoot className="border-t-[1px] border-neutral-soft-content/50 mt-2">
               <tr>
                 <td className="pt-2 sm:table-cel" colSpan={columns.length}>
                   {footer}

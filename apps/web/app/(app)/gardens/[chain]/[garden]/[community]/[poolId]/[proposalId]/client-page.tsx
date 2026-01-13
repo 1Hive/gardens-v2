@@ -871,7 +871,6 @@ const ProposalSupportersTable = ({
       openModal={openSupportersModal}
       setOpenModal={setOpenSupportersModal}
       title="Proposal Supporters"
-      // description="A list of all the community members that are supporting this proposal."
       data={supporters}
       columns={columns}
       footer={
