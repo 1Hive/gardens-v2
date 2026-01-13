@@ -562,7 +562,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                   key={label}
                   className={({ selected }) =>
                     `
-              flex-1 bg-neutral text-center font-medium rounded-full px-2 py-3 text-sm transition-all duration-200
+              flex-1 bg-neutral text-center font-medium rounded-full px-3 py-2 text-sm transition-all duration-200
               ${
                 selected ?
                   "bg-primary-button text-neutral shadow"
@@ -787,15 +787,6 @@ export default function ClientPage({ params }: ClientPageProps) {
                         proposalData={{ ...proposalData, ...metadata }}
                       />
                     )}
-                  <Button
-                    onClick={() => setOpenSupportersModal(!openSupportersModal)}
-                    btnStyle="outline"
-                    color="tertiary"
-                    className=""
-                    // icon={<ChevronUpIcon className="h-4 w-4" />}
-                  >
-                    View Supporters
-                  </Button>
                 </div>
               </section>
             </Tab.Panel>
@@ -812,6 +803,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                     totalStakedAmount={totalSupportPct}
                     openSupportersModal={openSupportersModal}
                     setOpenSupportersModal={setOpenSupportersModal}
+                    withModal={false}
                   />
                 )}
             </Tab.Panel>
@@ -830,6 +822,7 @@ const ProposalSupportersTable = ({
   setOpenSupportersModal,
   beneficiary,
   submitter,
+  withModal = true,
 }: {
   supporters: ProposalSupporter[];
   beneficiary: string | undefined;
@@ -838,10 +831,11 @@ const ProposalSupportersTable = ({
   totalStakedAmount: number;
   openSupportersModal: boolean;
   setOpenSupportersModal: (open: boolean) => void;
+  withModal?: boolean;
 }) => {
   const columns: SupporterColumn[] = [
     {
-      header: supporters.length > 1 ? "Supporters" : "Supporter",
+      header: `Member${(supporters?.length ?? 0) === 1 ? "" : "s"}`,
       render: (supporter: ProposalSupporter) => (
         <EthAddress
           address={supporter.id as Address}
@@ -881,12 +875,13 @@ const ProposalSupportersTable = ({
       data={supporters}
       columns={columns}
       footer={
-        <div className="flex justify-between items-end gap-2 mr-6 sm:mr-10">
+        <div className="flex justify-between items-end gap-2 mr-1 sm:mr-10">
           <p className="subtitle">Total Support: </p>
           <p className=""> {totalStakedAmount} %</p>
         </div>
       }
       className="border1 rounded-lg bg-neutral p-2"
+      withModal={withModal}
     />
   );
 };
