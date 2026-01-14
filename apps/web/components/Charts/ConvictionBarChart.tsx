@@ -414,6 +414,9 @@ export const ConvictionBarChart = ({
             growing={growing}
             isSignalingType={isSignalingType}
             proposalStatus={proposalStatus}
+            support={proposalSupportPct}
+            threshold={thresholdPct}
+            conviction={currentConvictionPct}
           >
             {chart}
           </ChartWrapper>

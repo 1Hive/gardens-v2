@@ -424,7 +424,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                   className="w-full"
                   btnStyle="outline"
                 >
-                  Go to manage support
+                  Go to Vote on Proposals
                 </Button>
                 {!isSignalingType && (
                   <Button
@@ -583,7 +583,7 @@ export default function ClientPage({ params }: ClientPageProps) {
               <div
                 className={`section-layout flex flex-col gap-8  ${status === "disputed" ? "!border-error-content" : ""} ${status === "executed" ? "!border-primary-content" : ""}`}
               >
-                <div className="flex flex-col items-start gap-10  sm:flex-row">
+                <div className="flex flex-col items-start gap-10 sm:flex-row">
                   <div className="flex w-full flex-col gap-6">
                     {/* Title - author - beneficairy - request - created - type */}
                     <header className="flex flex-col items-start gap-4">
@@ -600,7 +600,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                       </div>
 
                       <div className="w-full flex flex-col sm:flex-row items-start justify-between gap-2">
-                        <div className="flex flex-col gap-1 ">
+                        <div className="flex flex-col gap-1">
                           <Statistic label={"Author"}>
                             <EthAddress
                               address={submitter}
@@ -619,7 +619,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                           )}
                         </div>
 
-                        <div className="flex flex-col items-start justify-between gap-2">
+                        <div className="flex flex-col items-start justify-between gap-1">
                           <Statistic label={"Created"}>
                             <span className="font-medium dark:text-neutral-content">
                               {prettyTimestamp(proposalData?.createdAt ?? 0)}
@@ -703,7 +703,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                         className="w-full"
                         btnStyle="outline"
                       >
-                        Go to manage support
+                        Go to Vote on Proposals
                       </Button>
                       {!isSignalingType && (
                         <Button
@@ -737,7 +737,7 @@ export default function ClientPage({ params }: ClientPageProps) {
 
             {/* DESCRIPTION */}
             <Tab.Panel className="section-layout">
-              <h3>Proposal Description</h3>
+              <h3 className="mb-4">Proposal Description</h3>
               <Skeleton rows={5} isLoading={!Boolean(metadata)}>
                 <MarkdownWrapper source={metadata?.description} />
               </Skeleton>

@@ -38,7 +38,7 @@ export const DataTable: React.FC<DataTableProps> = ({
         <h5 className="mb-4">{title}</h5>
         <table className="min-w-full">
           <thead className="sticky top-0 bg-none backdrop-blur-sm z-10">
-            <tr className="text-[11px] uppercase tracking-wider">
+            <tr className=" uppercase tracking-wider">
               {columns.map((col) => (
                 <th
                   key={(col.header ?? "").toString()}
