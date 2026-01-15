@@ -35,7 +35,8 @@ export const DataTable: React.FC<DataTableProps> = ({
       className={`overflow-x-hidden max-h-[500px] ${withModal ? "" : "section-layout"} `}
     >
       <div className="inline-block min-w-full py-2 align-middle sm:px-4 lg:px-6">
-        <h5 className="mb-4">{title}</h5>
+        {!withModal && title && <h5 className="mb-4">{title}</h5>}
+
         <table className="min-w-full">
           <thead className="sticky top-0 bg-none backdrop-blur-sm z-10">
             <tr className=" uppercase tracking-wider">

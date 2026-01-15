@@ -35,7 +35,7 @@ const PROPOSAL_STATUS_STYLES = [
 ];
 
 const BASE_STYLES =
-  "border-none rounded-lg leading-5 py-1 px-2 cursor-default inline-flex flex-wrap items-center gap-1 whitespace-normal break-words";
+  "border-none rounded-full leading-5 py-1 px-3 cursor-default inline-flex flex-wrap items-center gap-1 whitespace-normal break-words";
 
 export function Badge({
   type,

@@ -14,9 +14,9 @@ type ChartWrapperProps = {
   growing?: boolean | null;
   isSignalingType?: boolean;
   proposalStatus?: string;
-  support: number;
-  threshold: number;
-  conviction: number;
+  support?: number;
+  threshold?: number;
+  conviction?: number;
 };
 
 export const ChartWrapper = ({
@@ -84,7 +84,7 @@ export const ChartWrapper = ({
                     : <div className={`${item.className}`} style={item.style} />
                     }
                     <p className="text-sm">{item.name}: </p>
-                    <p className="font-medium">{item.value}%</p>
+                    <p className="font-medium">{item.value} VP</p>
                   </div>
                 </InfoWrapper>
               </Fragment>

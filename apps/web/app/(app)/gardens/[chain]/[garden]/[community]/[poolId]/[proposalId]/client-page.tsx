@@ -789,6 +789,18 @@ export default function ClientPage({ params }: ClientPageProps) {
                     )}
                 </div>
               </section>
+              {isProposerConnected && proposalStatus === "active" && (
+                <section className="section-layout gap-4 flex flex-col mt-5">
+                  <InfoBox
+                    infoBoxType="info"
+                    contentStyle="text-tertiary-content"
+                    content="As the original author, you can remove this proposal from consideration."
+                  />
+                  <CancelButton
+                    proposalData={{ ...proposalData, ...metadata }}
+                  />
+                </section>
+              )}
             </Tab.Panel>
 
             {/* SUPPORTERS */}
