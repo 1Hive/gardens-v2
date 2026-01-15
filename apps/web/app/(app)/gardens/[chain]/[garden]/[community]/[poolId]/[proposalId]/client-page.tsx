@@ -793,7 +793,6 @@ export default function ClientPage({ params }: ClientPageProps) {
                 <section className="section-layout gap-4 flex flex-col mt-5">
                   <InfoBox
                     infoBoxType="info"
-                    contentStyle="text-tertiary-content"
                     content="As the original author, you can remove this proposal from consideration."
                   />
                   <CancelButton
@@ -872,7 +871,7 @@ const ProposalSupportersTable = ({
           `${calculatePercentageBigInt(
             BigInt(supporter?.stakes[0]?.amount),
             BigInt(totalActivePoints),
-          )} %`
+          )} VP`
         : undefined,
       className: "flex items-center justify-end",
     },
@@ -888,7 +887,7 @@ const ProposalSupportersTable = ({
       footer={
         <div className="flex justify-between items-end gap-2 mr-1 sm:mr-10">
           <p className="subtitle">Total Support: </p>
-          <p className=""> {totalStakedAmount} %</p>
+          <p className=""> {totalStakedAmount} VP</p>
         </div>
       }
       className="border1 rounded-lg bg-neutral p-2"

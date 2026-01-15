@@ -94,7 +94,7 @@ export const ConvictionBarChart = ({
         proposalSupportPct < thresholdPct,
       details: [
         {
-          message: `This proposal needs ${supportNeeded} % more support to reach ${thresholdPct}%`,
+          message: `This proposal needs ${supportNeeded} VP more support to reach ${thresholdPct} threshold.`,
           growing: true,
         },
       ],
@@ -118,7 +118,7 @@ export const ConvictionBarChart = ({
         currentConvictionPct < thresholdPct,
       details: [
         {
-          message: `This proposal needs ${supportNeeded} % more support to reach ${thresholdPct}%`,
+          message: `This proposal needs ${supportNeeded} VP more support to reach ${thresholdPct} threshold.`,
           growing: false,
         },
       ],
@@ -168,7 +168,7 @@ export const ConvictionBarChart = ({
         proposalSupportPct < thresholdPct,
       details: [
         {
-          message: `This proposal needs ${supportNeeded} % more support to reach ${thresholdPct}%`,
+          message: `This proposal needs ${supportNeeded} VP more support to reach ${thresholdPct} threshold.`,
           growing: null,
         },
       ],

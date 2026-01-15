@@ -39,14 +39,14 @@ export const ChartWrapper = ({
       name: "Support",
       className: "h-3 w-8 rounded-md",
       style: { backgroundColor: chartColors.support },
-      info: "Represents the total pool weight currently allocated to a proposal.",
+      info: "Represents the total support currently allocated to a proposal.",
       value: support,
     },
     {
       name: "Conviction",
       className: "h-3 w-8 rounded-md",
       style: { backgroundColor: chartColors.conviction },
-      info: "Accumulated pool weight for a proposal, increasing over time, based on the conviction growth.",
+      info: "Accumulated conviction for a proposal, increasing over time, based on the conviction growth.",
       value: conviction,
     },
     {
