@@ -774,6 +774,7 @@ export default function PoolHeader({
                 address={strategy.id as Address}
                 label="Pool address"
                 textColor="var(--color-grey-800)"
+                explorer="louper"
               />
               <div className="flex">
                 <a

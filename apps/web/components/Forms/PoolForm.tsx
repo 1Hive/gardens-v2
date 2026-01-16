@@ -501,6 +501,9 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
     contractName: "Registry Community",
     functionName: "createPool",
     fallbackErrorMessage: "Error creating a pool, please report a bug.",
+    onError: () => {
+      setLoading(false);
+    },
     onConfirmations: async (receipt) => {
       const newPoolData = getEventFromReceipt(
         receipt,
@@ -656,6 +659,13 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
           title={previewData?.title ?? ""}
           description={previewData?.description ?? ""}
           formRows={formatFormRows()}
+          onEdit={() => {
+            setShowPreview(false);
+          }}
+          onSubmit={() => {
+            if (!isConnected || missmatchUrl) return;
+            createPool();
+          }}
         />
       : <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-4">

@@ -66,6 +66,7 @@ type CVProposal @entity(immutable: false) {
   createdAt: BigInt!
   updatedAt: BigInt!
   arbitrableConfig: ArbitrableConfig!
+  executedAt: BigInt
 }
 
 # type ProposalMeta @entity(immutable: false) {

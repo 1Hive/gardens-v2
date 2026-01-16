@@ -19,8 +19,8 @@
       abis:
         - name: {{name}}
           file: ../contracts/out/{{name}}.sol/{{name}}.json
-        - name: RegistryCommunityV0_0
-          file: ../contracts/out/RegistryCommunityV0_0.sol/RegistryCommunityV0_0.json
+        - name: RegistryCommunity
+          file: ../contracts/out/DiamondAggregated/RegistryCommunity.json
       eventHandlers:
         - event: CommunityCreated(address)
           handler: handleCommunityCreated

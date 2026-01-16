@@ -4,14 +4,14 @@ pragma solidity ^0.8.19;
 import "forge-std/console.sol";
 import {Allo} from "allo-v2-contracts/core/Allo.sol";
 import {
-    CVStrategyV0_0,
+    CVStrategy,
     ProposalType,
     PointSystem,
     CreateProposal,
     PointSystemConfig,
     ArbitrableConfig,
     CVStrategyInitializeParamsV0_2
-} from "../src/CVStrategy/CVStrategyV0_0.sol";
+} from "../src/CVStrategy/CVStrategy.sol";
 import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
 import {IRegistry, Metadata} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 
@@ -29,7 +29,7 @@ contract CVStrategyHelpers is Native, Accounts {
     uint256 internal constant TWO_128 = 2 ** 128;
     uint256 internal constant D = 10 ** 7;
 
-    // function poolProfile_id1(RegistryCommunityV0_0 registryCommunity) public virtual returns (bytes32) {
+    // function poolProfile_id1(RegistryCommunity registryCommunity) public virtual returns (bytes32) {
     function poolProfile_id1(IRegistry registry, address pool_admin, address[] memory pool_managers)
         public
         virtual
@@ -131,7 +131,7 @@ contract CVStrategyHelpers is Native, Accounts {
             _pool_managers
         );
 
-        assert(CVStrategyV0_0(payable(strategy)).proposalType() == proposalType);
+        assert(CVStrategy(payable(strategy)).proposalType() == proposalType);
     }
 
     function createPool(
@@ -193,7 +193,7 @@ contract CVStrategyHelpers is Native, Accounts {
         return (((atTWO_128 * _lastConv) + ((_oldAmount * D * (TWO_128 - atTWO_128)) / (D - decay))) + TWO_127) >> 128;
     }
 
-    function getDecay(CVStrategyV0_0 strategy) public view returns (uint256) {
+    function getDecay(CVStrategy strategy) public view returns (uint256) {
         (,, uint256 decay,) = strategy.cvParams();
         return decay;
     }
