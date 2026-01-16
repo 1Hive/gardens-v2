@@ -48,6 +48,7 @@ import {
   RegisterMember,
   Statistic,
 } from "@/components";
+import { ExpandableComponent } from "@/components/Expandable";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import MarkdownWrapper from "@/components/MarkdownWrapper";
 import { Skeleton } from "@/components/Skeleton";
@@ -696,43 +697,16 @@ const PoolSection = ({
   pools,
   defaultExpanded = true,
 }: PoolSectionProps) => {
-  const [expanded, setExpanded] = useState(defaultExpanded);
-
   return (
-    <div className="flex flex-col gap-2">
-      <button
-        onClick={() => setExpanded(!expanded)}
-        className="flex items-center gap-2"
-        aria-label={expanded ? "Collapse" : "Expand"}
-      >
-        <h4>
-          {title} ({pools.length})
-        </h4>
-        <motion.div
-          animate={{ rotate: expanded ? 0 : 180 }}
-          transition={{ duration: 0.3 }}
-        >
-          <ChevronUpIcon className="w-5 h-5" strokeWidth={3} />
-        </motion.div>
-      </button>
-
-      <AnimatePresence initial={false}>
-        {expanded && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3 }}
-            className="overflow-hidden"
-          >
-            <div className="pool-layout">
-              {pools.map((pool) => (
-                <PoolCard key={pool.poolId} pool={pool} token={pool.token} />
-              ))}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+    <ExpandableComponent
+      title={`${title} (${pools.length})`}
+      defaultExpanded={defaultExpanded}
+    >
+      <div className="pool-layout">
+        {pools.map((pool) => (
+          <PoolCard key={pool.poolId} pool={pool} token={pool.token} />
+        ))}
+      </div>
+    </ExpandableComponent>
   );
 };
