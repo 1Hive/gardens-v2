@@ -85,9 +85,10 @@ h2 {
   text-align: left;
   color: var(--color-text);
 
-  /* @media only screen and (max-width: 680px) {
-    font-size: 2rem;
-  } */
+  @media only screen and (max-width: 680px) {
+    font-size: 24px;
+    line-height: 23px;
+  }
 }
 
 h3 {
