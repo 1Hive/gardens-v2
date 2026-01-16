@@ -32,14 +32,14 @@ export const DataTable: React.FC<DataTableProps> = ({
 }) => {
   const content = (
     <div
-      className={`overflow-x-hidden max-h-[500px] ${withModal ? "" : "section-layout"} `}
+      className={`overflow-x-hidden max-h-[750px] ${withModal ? "" : "section-layout"} `}
     >
       <div className="inline-block min-w-full py-2 align-middle sm:px-4 lg:px-6">
         {!withModal && title && <h5 className="mb-4">{title}</h5>}
 
         <table className="min-w-full">
           <thead className="sticky top-0 bg-none backdrop-blur-sm z-10">
-            <tr className=" uppercase tracking-wider">
+            <tr className="uppercase tracking-wider">
               {columns.map((col) => (
                 <th
                   key={(col.header ?? "").toString()}
@@ -60,7 +60,7 @@ export const DataTable: React.FC<DataTableProps> = ({
                 {columns.map((col, i) => (
                   <td
                     key={`col-${i + 1}-${item.id}`}
-                    className={`whitespace-nowrap py-1 pr-1 text-sm  ${col.className ?? ""}`}
+                    className={`whitespace-nowrap py-1 pr-1 text-sm ${col.className ?? ""}`}
                   >
                     <div className="text-base font-normal leading-6 text-left">
                       {col.render(item)}
@@ -73,7 +73,7 @@ export const DataTable: React.FC<DataTableProps> = ({
           {!withModal && footer != null && (
             <tfoot className="border-t-[1px] border-neutral-soft-content/50 mt-2">
               <tr>
-                <td className="pt-2 sm:table-cel" colSpan={columns.length}>
+                <td className="pt-4 sm:table-cell" colSpan={columns.length}>
                   {footer}
                 </td>
               </tr>

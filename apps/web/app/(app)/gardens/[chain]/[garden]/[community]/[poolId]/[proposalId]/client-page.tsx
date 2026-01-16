@@ -320,7 +320,7 @@ export default function ClientPage({ params }: ClientPageProps) {
             <div className="flex w-full flex-col gap-6">
               {/* Title - author - beneficairy - request - created - type */}
               <header className="flex flex-col items-start gap-4">
-                <div className=" flex items-center justify-between w-full gap-4 sm:gap-8">
+                <div className="flex items-center justify-between w-full gap-4 sm:gap-8">
                   <Skeleton isLoading={metadata == null} className="!w-96 h-8">
                     <h2>{metadata?.title}</h2>
                   </Skeleton>
@@ -587,7 +587,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                   <div className="flex w-full flex-col gap-6">
                     {/* Title - author - beneficairy - request - created - type */}
                     <header className="flex flex-col items-start gap-4">
-                      <div className=" flex items-center justify-between w-full gap-4 sm:gap-8">
+                      <div className="flex flex-col items-start justify-between w-full gap-4">
                         <Skeleton
                           isLoading={metadata == null}
                           className="!w-96 h-8"
@@ -873,7 +873,7 @@ const ProposalSupportersTable = ({
             BigInt(totalActivePoints),
           )} VP`
         : undefined,
-      className: "flex items-center justify-end",
+      className: "flex items-center justify-end mt-2",
     },
   ];
 

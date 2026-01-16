@@ -50,7 +50,7 @@ export function InfoBox({
         <h6 className="text-inherit">{title}</h6>
       </div>
       <p
-        className={`text-sm leading-5 text-inherit first-letter:uppercase text-left ${contentStyle ?? ""}`.trim()}
+        className={`text-xs sm:text-sm leading-5 text-inherit first-letter:uppercase text-left ${contentStyle ?? ""}`.trim()}
       >
         {children ?? content}
       </p>

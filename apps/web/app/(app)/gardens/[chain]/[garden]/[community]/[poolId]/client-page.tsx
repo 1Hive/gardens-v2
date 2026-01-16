@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { PlusIcon } from "@heroicons/react/24/outline";
-import Link from "next/link";
+import { Tab } from "@headlessui/react";
 import { Address } from "viem";
 import { useBalance, useAccount, useChainId, useContractRead } from "wagmi";
 import {
@@ -397,6 +396,8 @@ export default function ClientPage({
           </InfoBox>
         </div>
       )}
+      {/* ================= DESKTOP ================= */}
+
       <PoolHeader
         poolToken={poolToken}
         strategy={strategy}
@@ -418,7 +419,7 @@ export default function ClientPage({
       />
 
       {isEnabled && (
-        <div className="col-span-12 xl:col-span-3 flex flex-col gap-10">
+        <div className="hidden sm:col-span-12 xl:col-span-3 sm:flex flex-col gap-10">
           <>
             {poolToken && PoolTypes[proposalType] !== "signaling" && (
               <PoolMetrics
@@ -437,30 +438,6 @@ export default function ClientPage({
               />
             )}
           </>
-
-          {/* <div className="section-layout flex flex-col items-start xl:items-center gap-4">
-            <div className="flex flex-col gap-4">
-              <h3>Have an idea ?</h3>
-              <span className="text-sm">
-                Submit a proposal{" "}
-                {PoolTypes[proposalType] !== "signaling" ?
-                  "to request funding from the pool."
-                : "to share your vision and build community support."}
-              </span>
-            </div>
-
-            <div className="w-full flex items-center justify-center">
-              <Link href={createProposalUrl}>
-                <Button
-                  icon={<PlusIcon height={24} width={24} />}
-                  disabled={!isConnected || missmatchUrl || !isMemberCommunity}
-                  tooltip={tooltipMessage}
-                >
-                  Create a proposal
-                </Button>
-              </Link>
-            </div>
-          </div> */}
 
           <PoolGovernance
             memberPoolWeight={memberPoolWeight}
@@ -490,6 +467,80 @@ export default function ClientPage({
           minThGtTotalEffPoints={minThGtTotalEffPoints}
         />
       )}
+
+      {/* ================= MOBILE ================= */}
+
+      <div className="block md:hidden col-span-12">
+        <Tab.Group>
+          <Tab.List className="flex bg-primary rounded-lg p-1 gap-1 z-10">
+            {["Overview", "Proposals", "Governance", "Settings"].map(
+              (label) => (
+                <Tab
+                  key={label}
+                  className={({ selected }) =>
+                    `
+                    flex-1 bg-neutral text-center font-medium rounded-full px-3 py-2 text-sm transition-all duration-200
+                    ${
+                      selected ?
+                        "bg-primary-button text-neutral shadow"
+                      : "text-base-content/70"
+                    }
+                  `
+                  }
+                >
+                  {label}
+                </Tab>
+              ),
+            )}
+          </Tab.List>
+          <Tab.Panels className="mt-4">
+            <Tab.Panel>
+              {isEnabled && (
+                <div className="col-span-12">
+                  <>
+                    {poolToken && PoolTypes[proposalType] !== "signaling" && (
+                      <PoolMetrics
+                        communityAddress={communityAddress}
+                        strategy={strategy}
+                        poolId={poolId}
+                        poolToken={poolToken}
+                        chainId={Number(chain)}
+                        superToken={
+                          superTokenInfo && {
+                            ...superTokenInfo,
+                            sameAsUnderlying:
+                              superTokenCandidate?.sameAsUnderlying,
+                            address: effectiveSuperToken as Address,
+                          }
+                        }
+                      />
+                    )}
+                  </>
+                </div>
+              )}
+            </Tab.Panel>
+            <Tab.Panel>
+              {isEnabled && (
+                <Proposals
+                  poolToken={poolToken}
+                  strategy={{ ...strategy, title: metadata?.title }}
+                  alloInfo={alloInfo}
+                  communityAddress={communityAddress}
+                  createProposalUrl={createProposalUrl}
+                  proposalType={proposalType}
+                  minThGtTotalEffPoints={minThGtTotalEffPoints}
+                />
+              )}
+            </Tab.Panel>
+            <Tab.Panel>
+              <div>Governance Content</div>
+            </Tab.Panel>
+            <Tab.Panel>
+              <div>Settings Content</div>
+            </Tab.Panel>
+          </Tab.Panels>
+        </Tab.Group>
+      </div>
     </>
   );
 }
