@@ -102,7 +102,12 @@
           "0xd880e7d2af2bab5709c3a48b740fb2ecea563bf0"
         ]
       },
-      "hash": "fc1bc73474a90829f7997a5f45d297d020a45a96"
+      "hash": "fc1bc73474a90829f7997a5f45d297d020a45a96",
+      "IMPLEMENTATIONS": {
+        "CV_STRATEGY": "0x26d7999195b096f06af5882e70038efdf094930c",
+        "REGISTRY_COMMUNITY": "0x664591262918fa0d7bd29c22348795e7590f981b",
+        "COLLATERAL_VAULT": "0xb60d6b4c50e8a3b073c3d408fe7786c4a939720e"
+      }
     },
     {
       "name": "sepolia",
@@ -202,13 +207,18 @@
           "0xfa7299335e6b6d1305ec968ef23471d27002d682"
         ]
       },
-      "hash": "f2b5ef355831a3189e3ea9d48e58c2eebf77b365"
+      "hash": "f2b5ef355831a3189e3ea9d48e58c2eebf77b365",
+      "IMPLEMENTATIONS": {
+        "CV_STRATEGY": "0xadf824ba45c648433a5cc108636834db1b4c2410",
+        "REGISTRY_COMMUNITY": "0x7b001c3773d95a1213848260430c090676917d39",
+        "COLLATERAL_VAULT": "0x9728e2d20f191fc1a35e6742b494b3c4566a9485"
+      }
     },
     {
       "name": "optimism",
       "chainId": 10,
       "testnet": false,
-      "no-safe": false,
+      "no-safe": true,
       "ENVS": {
         "SENDER": "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD",
         "PROXY_OWNER": "0x129f253F78E33A0312EF8E59fae7699Ef6e8Dbef",
@@ -335,7 +345,12 @@
           "0xfed43acfa82e0e924d507124892878b6086b581d"
         ]
       },
-      "hash": "b384e06a5f5295263a7e6a81f7d8f5fce84a55b7"
+      "hash": "b384e06a5f5295263a7e6a81f7d8f5fce84a55b7",
+      "IMPLEMENTATIONS": {
+        "CV_STRATEGY": "0x118c20b2739b6aa924067b03741460c5bfdfb51e",
+        "REGISTRY_COMMUNITY": "0x4746affa50795796ceb69d0e56eebd4b0ed58493",
+        "COLLATERAL_VAULT": "0xcdc43a6b6ea7f8c4a8715be1278f366e1de0d749"
+      }
     },
     {
       "name": "polygon",
@@ -388,7 +403,12 @@
           "0xe8216b6a9e8b87560dbeb0f4dc0f256fb9fedf1b"
         ]
       },
-      "hash": "0e97c2c16fa1896e9b96b384c0e7d4f6afefdca6"
+      "hash": "0e97c2c16fa1896e9b96b384c0e7d4f6afefdca6",
+      "IMPLEMENTATIONS": {
+        "CV_STRATEGY": "0x1722e9bf99564dd60ba33ac5944cfe6568e4d574",
+        "REGISTRY_COMMUNITY": "0xaacd2b58217db70c97a1c039057f2e52ec39836a",
+        "COLLATERAL_VAULT": "0xb8af8c1edb1c57fbed62bc9c3abda53e87769e76"
+      }
     },
     {
       "name": "gnosis",
@@ -506,7 +526,12 @@
           "0xfbad687a935390ff59b36cd6c9462d0b1948e378"
         ]
       },
-      "hash": "faa946a1fe1b190e20c847c0c8eba2139a73b238"
+      "hash": "faa946a1fe1b190e20c847c0c8eba2139a73b238",
+      "IMPLEMENTATIONS": {
+        "CV_STRATEGY": "0xaf28a98782629ffd86cfd5fe80eb6f25f3733e5f",
+        "REGISTRY_COMMUNITY": "0x079d8da0da434385ff31d1d894abf4d6fe7125f3",
+        "COLLATERAL_VAULT": "0xd9bb041191668d2bc74f3b1aa2b16dc09fba5f15"
+      }
     },
     {
       "name": "base",
@@ -533,12 +558,14 @@
           "0x1e00ac71f40d1156f7e37af8a3acf51f930ef376",
           "0x253930b3ae9af00bbec1cb03656f507480340a48",
           "0x3bc577894cc71f649b0b0e2499a60304a508134d",
+          "0x3cb37cfc1a9564256702eb254b5804726c345110",
           "0x3d9f6fbb8c84f098e3b2ac4ffa6eefb27691b1cd",
           "0x4a912f78500101cd35103ebe40cadd713f5c4e29",
           "0x585094bc142b67a184f53db6bbb9b7439ef11c17",
           "0x5da9fa78ee847387ddccd5319fafa2f699087fad",
           "0x69c85b99e2cecb18df235d751406a0e6338c7234",
           "0x75112eb479dae30c34f2c2b60792a29c8d17d66a",
+          "0x7c6f82c77cd0ca1eac659d73ce75bdd9f44df8af",
           "0x897ce468d3968b5ca7376faedcdaa705e9b34856",
           "0x95c4bf86ce70f495951813c11595ab060968e188",
           "0x96aa42ac2a15b897a12d736a28fbbc831f389d96",
@@ -563,6 +590,7 @@
           "0x25863eed6cb38422f74d4aff476e8962fed9241b",
           "0x28a94d291ffcd62b75c2b523a2b6348ced13fa06",
           "0x336866f1ad9db88100f23924323119136a192df5",
+          "0x36a3a40d1afff6392cd1f4591d4f2d46aff779d9",
           "0x3f281d944b8272a84765dd397ae87cb4076df085",
           "0x5e492f773dc17d7796efe64c3cd1614d46c69df8",
           "0x6b57c434de064306e7981662895868d700683dcc",
@@ -578,7 +606,12 @@
           "0xf51f81d34fbfc56bb57dca0a3a4f1591065bf499"
         ]
       },
-      "hash": "a3f733ecd09390fd40411c2909434c25a20ac869"
+      "hash": "b7f1b5dac492c40f2c212a27a74441bb5e77a786",
+      "IMPLEMENTATIONS": {
+        "CV_STRATEGY": "0x58515b0b2bbaac6ebe3f015fe30753b631a03514",
+        "REGISTRY_COMMUNITY": "0x20965c5c8a021ac6ffed5de7a402f7ceac3b0a82",
+        "COLLATERAL_VAULT": "0x3d58c50f0c6d6d05915840dcbfa37e16c3e8df63"
+      }
     },
     {
       "name": "celo",
@@ -677,7 +710,12 @@
           "0xf917f955ca02eb7455a399cd4e1b2ca7ed1b84b4"
         ]
       },
-      "hash": "0fe3445d034905119add3f33dffd3ce0e0524c87"
+      "hash": "0fe3445d034905119add3f33dffd3ce0e0524c87",
+      "IMPLEMENTATIONS": {
+        "CV_STRATEGY": "0xe86a28aa50ad5750532f73b77375ed0d5e23a330",
+        "REGISTRY_COMMUNITY": "0xd8b6e37a5958a8a3082635ecabf76e0826e8e9d7",
+        "COLLATERAL_VAULT": "0x3311f83bf9bfdc3dd395e0e63bc69580487b83b8"
+      }
     },
     {
       "name": "mainnet",

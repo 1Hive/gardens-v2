@@ -521,6 +521,31 @@
     },
     {
       "type": "function",
+      "name": "getFacets",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "facets_",
+          "type": "tuple[]",
+          "internalType": "struct IDiamondLoupe.Facet[]",
+          "components": [
+            {
+              "name": "facetAddress",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "functionSelectors",
+              "type": "bytes4[]",
+              "internalType": "bytes4[]"
+            }
+          ]
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
       "name": "getMaxAmount",
       "inputs": [],
       "outputs": [

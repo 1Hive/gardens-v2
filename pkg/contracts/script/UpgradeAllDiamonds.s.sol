@@ -448,6 +448,11 @@ contract UpgradeAllDiamonds is BaseMultiChain, DiamondConfiguratorBase, Communit
         string networkJson;
     }
 
+    struct JsonWriter {
+        string path;
+        bool hasEntries;
+    }
+
     function _generateSafeTransactions(
         address registryFactoryProxy,
         address[] memory registryCommunityProxies,
@@ -470,26 +475,39 @@ contract UpgradeAllDiamonds is BaseMultiChain, DiamondConfiguratorBase, Communit
             safeOwner: safeOwner,
             networkJson: networkJson
         });
-        console2.log("\n[2/6] Building RegistryFactory template updates...");
-        string memory json = string(abi.encodePacked("["));
 
-        // 1. Update Factory CVStrategy template
-        json = string(
-            abi.encodePacked(json, _createTransactionJson(params.registryFactoryProxy,
-                abi.encodeWithSelector(RegistryFactory.setStrategyTemplate.selector, params.strategyImplementation)), ",")
+        JsonWriter memory writer = _initPayloadWriter(params.safeOwner, params.networkJson);
+        console2.log("\n[2/6] Building RegistryFactory template updates...");
+        writer = _appendTransaction(
+            writer,
+            _createTransactionJson(
+                params.registryFactoryProxy,
+                abi.encodeWithSelector(RegistryFactory.setStrategyTemplate.selector, params.strategyImplementation)
+            )
         );
         console2.log("  Factory strategy template update added");
 
-        // 2. Update Factory RegistryCommunity template
-        json = string(
-            abi.encodePacked(json, _createTransactionJson(params.registryFactoryProxy,
-                abi.encodeWithSelector(RegistryFactory.setRegistryCommunityTemplate.selector, params.communityImplementation)), ",")
+        writer = _appendTransaction(
+            writer,
+            _createTransactionJson(
+                params.registryFactoryProxy,
+                abi.encodeWithSelector(
+                    RegistryFactory.setRegistryCommunityTemplate.selector,
+                    params.communityImplementation
+                )
+            )
         );
         console2.log("  Factory community template update added");
 
-        json = string(
-            abi.encodePacked(json, _createTransactionJson(params.registryFactoryProxy,
-                abi.encodeWithSelector(RegistryFactory.setCollateralVaultTemplate.selector, params.collateralVaultTemplate)), ",")
+        writer = _appendTransaction(
+            writer,
+            _createTransactionJson(
+                params.registryFactoryProxy,
+                abi.encodeWithSelector(
+                    RegistryFactory.setCollateralVaultTemplate.selector,
+                    params.collateralVaultTemplate
+                )
+            )
         );
         console2.log("  Factory CollateralVault template update added");
 
@@ -499,43 +517,44 @@ contract UpgradeAllDiamonds is BaseMultiChain, DiamondConfiguratorBase, Communit
         bytes memory communitySetCollateralVaultData =
             abi.encodeWithSelector(RegistryCommunity.setCollateralVaultTemplate.selector, params.collateralVaultTemplate);
         for (uint256 i = 0; i < params.registryCommunityProxies.length; i++) {
-            json = string(
-                abi.encodePacked(
-                    json, _createTransactionJson(params.registryCommunityProxies[i], communitySetStrategyData), ","
-                )
+            writer = _appendTransaction(
+                writer,
+                _createTransactionJson(params.registryCommunityProxies[i], communitySetStrategyData)
             );
-            json = string(
-                abi.encodePacked(
-                    json, _createTransactionJson(params.registryCommunityProxies[i], communitySetCollateralVaultData), ","
-                )
+            writer = _appendTransaction(
+                writer,
+                _createTransactionJson(params.registryCommunityProxies[i], communitySetCollateralVaultData)
             );
             console2.log("  Community", i + 1, "added to batch:", params.registryCommunityProxies[i]);
         }
 
-        json = _buildCVStrategyTransactions(
-            json,
+        writer = _buildCVStrategyTransactions(
+            writer,
             params.cvStrategyProxies,
             params.strategyImplementation,
             params.collateralVaultTemplate,
             cvCuts
         );
 
-        json = _buildCommunityTransactions(json, params.registryCommunityProxies, params.communityImplementation, communityCuts);
+        writer = _buildCommunityTransactions(
+            writer,
+            params.registryCommunityProxies,
+            params.communityImplementation,
+            communityCuts
+        );
 
-        json = string(abi.encodePacked(_removeLastChar(json), "]"));
-
-        _writePayloadFile(json, params.safeOwner, params.networkJson);
+        _finalizePayloadWriter(writer);
 
         console2.log("\n[6/6] Atomic Safe Transaction Builder JSON generated!");
     }
 
     function _buildCVStrategyTransactions(
-        string memory json,
+        JsonWriter memory writer,
         address[] memory cvStrategyProxies,
         address strategyImplementation,
         address collateralVaultTemplate,
         IDiamond.FacetCut[] memory cvCuts
-    ) internal returns (string memory) {
+    ) internal returns (JsonWriter memory) {
         console2.log("\n[4/6] Building CVStrategy upgrade + diamond cut transactions...");
         CVStrategyDiamondInit cvInitContract = new CVStrategyDiamondInit();
         console2.log("  CVStrategyDiamondInit deployed:", address(cvInitContract));
@@ -550,26 +569,33 @@ contract UpgradeAllDiamonds is BaseMultiChain, DiamondConfiguratorBase, Communit
         for (uint256 i = 0; i < cvStrategyProxies.length; i++) {
             address currentImplementation = _currentImplementation(address(cvStrategyProxies[i]));
             if (currentImplementation != strategyImplementation) {
-                json = string(abi.encodePacked(json, _createTransactionJson(cvStrategyProxies[i], cvUpgradeCalldata), ","));
+                writer = _appendTransaction(
+                    writer,
+                    _createTransactionJson(cvStrategyProxies[i], cvUpgradeCalldata)
+                );
             } else {
                 console2.log("  Strategy", i + 1, "already at implementation; skipping upgradeTo");
             }
-            json = string(abi.encodePacked(json, _createTransactionJson(cvStrategyProxies[i], cvDiamondCutCalldata), ","));
-            json = string(
-                abi.encodePacked(json, _createTransactionJson(cvStrategyProxies[i], cvSetCollateralVaultCalldata), ",")
+            writer = _appendTransaction(
+                writer,
+                _createTransactionJson(cvStrategyProxies[i], cvDiamondCutCalldata)
+            );
+            writer = _appendTransaction(
+                writer,
+                _createTransactionJson(cvStrategyProxies[i], cvSetCollateralVaultCalldata)
             );
             console2.log("  Strategy", i + 1, "added to batch:", cvStrategyProxies[i]);
         }
 
-        return json;
+        return writer;
     }
 
     function _buildCommunityTransactions(
-        string memory json,
+        JsonWriter memory writer,
         address[] memory registryCommunityProxies,
         address communityImplementation,
         IDiamond.FacetCut[] memory communityCuts
-    ) internal returns (string memory) {
+    ) internal returns (JsonWriter memory) {
         console2.log("\n[5/6] Building RegistryCommunity upgrade + diamond cut transactions...");
         RegistryCommunityDiamondInit communityInitContract = new RegistryCommunityDiamondInit();
         console2.log("  RegistryCommunityDiamondInit deployed:", address(communityInitContract));
@@ -583,19 +609,21 @@ contract UpgradeAllDiamonds is BaseMultiChain, DiamondConfiguratorBase, Communit
         for (uint256 i = 0; i < registryCommunityProxies.length; i++) {
             address currentImplementation = _currentImplementation(address(registryCommunityProxies[i]));
             if (currentImplementation != communityImplementation) {
-                json = string(
-                    abi.encodePacked(json, _createTransactionJson(registryCommunityProxies[i], communityUpgradeCalldata), ",")
+                writer = _appendTransaction(
+                    writer,
+                    _createTransactionJson(registryCommunityProxies[i], communityUpgradeCalldata)
                 );
             } else {
                 console2.log("  Community", i + 1, "already at implementation; skipping upgradeTo");
             }
-            json = string(
-                abi.encodePacked(json, _createTransactionJson(registryCommunityProxies[i], communityDiamondCutCalldata), ",")
+            writer = _appendTransaction(
+                writer,
+                _createTransactionJson(registryCommunityProxies[i], communityDiamondCutCalldata)
             );
             console2.log("  Community", i + 1, "added to batch:", registryCommunityProxies[i]);
         }
 
-        return json;
+        return writer;
     }
 
     function _buildCVFacetCuts() internal view returns (IDiamond.FacetCut[] memory cuts) {
@@ -633,8 +661,15 @@ contract UpgradeAllDiamonds is BaseMultiChain, DiamondConfiguratorBase, Communit
         });
     }
 
-    function _writePayloadFile(string memory transactionsJson, address safeOwner, string memory networkJson) internal {
-        string memory payload = string.concat(
+    function _initPayloadWriter(address safeOwner, string memory networkJson) internal returns (JsonWriter memory writer) {
+        vm.createDir("transaction-builder", true);
+        writer.path = string.concat(
+            vm.projectRoot(),
+            "/pkg/contracts/transaction-builder/",
+            CURRENT_NETWORK,
+            "-atomic-diamond-upgrade-payload.json"
+        );
+        string memory payloadHeader = string.concat(
             "{",
             '"version":"1.0",',
             '"chainId":"',
@@ -656,28 +691,24 @@ contract UpgradeAllDiamonds is BaseMultiChain, DiamondConfiguratorBase, Communit
             '"hash":"',
             networkJson.readString(getKeyNetwork(".hash")),
             '"},',
-            '"transactions":',
-            transactionsJson,
-            "}"
+            '"transactions":['
         );
-
-        vm.createDir("transaction-builder", true);
-        string memory path = string.concat(
-            vm.projectRoot(), "/pkg/contracts/transaction-builder/", CURRENT_NETWORK, "-atomic-diamond-upgrade-payload.json"
-        );
-
-        vm.writeFile(path, payload);
-        console2.log("  File: %s", path);
+        vm.writeFile(writer.path, payloadHeader);
     }
 
-    function _removeLastChar(string memory input) internal pure returns (string memory) {
-        bytes memory inputBytes = bytes(input);
-        require(inputBytes.length > 0, "String is empty");
-        bytes memory trimmedBytes = new bytes(inputBytes.length - 1);
-        for (uint256 i = 0; i < inputBytes.length - 1; i++) {
-            trimmedBytes[i] = inputBytes[i];
-        }
-        return string(trimmedBytes);
+    function _appendTransaction(JsonWriter memory writer, string memory transactionJson)
+        internal
+        returns (JsonWriter memory)
+    {
+        string memory entry = writer.hasEntries ? string.concat(",", transactionJson) : transactionJson;
+        vm.writeLine(writer.path, entry);
+        writer.hasEntries = true;
+        return writer;
+    }
+
+    function _finalizePayloadWriter(JsonWriter memory writer) internal {
+        vm.writeLine(writer.path, "]}");
+        console2.log("  File: %s", writer.path);
     }
 
     function _createTransactionJson(address to, bytes memory data) internal pure returns (string memory) {

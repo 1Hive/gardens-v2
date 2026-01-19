@@ -154,7 +154,7 @@ tasks:
           forge script script/DeployERC20.s.sol:DeployERC20 \
           --rpc-url ${RPC_URL_OP_TESTNET} \
           --account pkGarden \
-          --etherscan-api-key ${OPTIMISM_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --sig "run(string,string)" 'Honey' 'HNY' \
           --ffi \
           --broadcast \
@@ -170,7 +170,7 @@ tasks:
     cmds:
       - cmd: |
           forge verify-contract \
-          --etherscan-api-key ${OPTIMISM_API_KEY}
+          --etherscan-api-key ${ETHERSCAN_API_KEY}
         ignore_error: true
   deploy-opsep:
     desc: Deploy opsep
@@ -180,7 +180,7 @@ tasks:
           --rpc-url ${RPC_URL_OP_TESTNET} \
           --sig "run(string)" 'opsepolia' \
           --account pkGarden \
-          --etherscan-api-key ${OPTIMISM_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 11155420 \
           --ffi \
           --broadcast \
@@ -195,7 +195,7 @@ tasks:
           --rpc-url ${RPC_URL_OP_TESTNET} \
           --sig "run(string)" 'opsepolia' \
           --account pkGarden \
-          --etherscan-api-key ${OPTIMISM_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 11155420 \
           --ffi \
           --broadcast \
@@ -210,7 +210,7 @@ tasks:
           --rpc-url ${RPC_URL_OP_TESTNET} \
           --sig "run(string)" 'opsepolia' \
           --account pkGarden \
-          --etherscan-api-key ${OPTIMISM_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 11155420 \
           --broadcast \
           --ffi \
@@ -226,7 +226,7 @@ tasks:
           --rpc-url ${RPC_URL_OP_TESTNET} \
           --sig "run(string)" 'opsepolia' \
           --account pkGarden \
-          --etherscan-api-key ${OPTIMISM_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 11155420 \
           --ffi \
           --broadcast \
@@ -280,7 +280,7 @@ tasks:
           --rpc-url ${RPC_URL_OP_TESTNET} \
           --sig "run(string)" 'opsepolia' \
           --account pkGarden \
-          --etherscan-api-key ${OPTIMISM_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 11155420 \
           --broadcast \
           --ffi \
@@ -321,7 +321,7 @@ tasks:
           --rpc-url ${RPC_URL_OP_TESTNET} \
           --sig "run(string)" 'opsepolia' \
           --account pkGarden \
-          --etherscan-api-key ${OPTIMISM_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --ffi \
           --chain-id 11155420 \
           --legacy \
@@ -346,7 +346,7 @@ tasks:
           --sig "run(string)" 'opsepolia' \
           --chain-id 11155420 \
           --broadcast \
-          --etherscan-api-key ${OPTIMISM_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --verify \
           -vvvv
         ignore_error: true
@@ -358,7 +358,7 @@ tasks:
           --rpc-url ${RPC_URL_OP_TESTNET} \
           --sig "run(string)" 'opsepolia' \
           --chain-id 11155420 \
-          --etherscan-api-key ${OPTIMISM_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --account pkGarden \
           --verify \
           --broadcast \
@@ -372,7 +372,7 @@ tasks:
           --rpc-url ${RPC_URL_OP_TESTNET} \
           --sig "run(string)" 'opsepolia' \
           --chain-id 11155420 \
-          --etherscan-api-key ${OPTIMISM_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --account pkGarden \
           --verify \
           --broadcast \
@@ -386,7 +386,7 @@ tasks:
           --rpc-url ${RPC_URL_OP_TESTNET} \
           --sig "run(string)" 'opsepolia' \
           --chain-id 11155420 \
-          --etherscan-api-key ${OPTIMISM_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --account pkGarden \
           --verify \
           --broadcast \
@@ -411,7 +411,7 @@ tasks:
           --rpc-url ${RPC_URL_ARB_TESTNET} \
           --sig "run(string)" 'arbsepolia' \
           --account pkGarden \
-          --etherscan-api-key ${ARBISCAN_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 421614 \
           --ffi \
           --broadcast \
@@ -426,7 +426,7 @@ tasks:
           --rpc-url ${RPC_URL_ARB_TESTNET} \
           --sig "run(string)" 'arbsepolia' \
           --account pkGarden \
-          --etherscan-api-key ${ARBISCAN_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 421614 \
           --ffi \
           --broadcast \
@@ -443,11 +443,12 @@ tasks:
           --rpc-url ${RPC_URL_ARB_TESTNET} \
           --sig "run(string)" 'arbsepolia' \
           --account pkGarden \
-          --etherscan-api-key ${ARBISCAN_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 421614 \
           --broadcast \
           --ffi \
           --verify \
+          --slow \
           --via-ir
         ignore_error: true
   verify-blockscout-arbsep:
@@ -517,7 +518,7 @@ tasks:
           --sig "run()" \
           --broadcast \
           --verify \
-          --etherscan-api-key ${ARBISCAN_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 421614 \
           -vvvv
         ignore_error: true
@@ -576,7 +577,7 @@ tasks:
           --rpc-url ${RPC_URL_ARB_TESTNET} \
           --sig "run(string)" 'arbsepolia' \
           --account pkGarden \
-          --etherscan-api-key ${ARBISCAN_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --ffi \
           --chain-id 421614 \
           --legacy \
@@ -601,7 +602,7 @@ tasks:
           --sig "run(string)" 'arbsepolia' \
           --chain-id 421614 \
           --broadcast \
-          --etherscan-api-key ${ARBISCAN_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --verify \
           -vvvv
         ignore_error: true
@@ -613,7 +614,7 @@ tasks:
           --rpc-url ${RPC_URL_ARB_TESTNET} \
           --sig "run(string)" 'arbsepolia' \
           --chain-id 421614 \
-          --etherscan-api-key ${ARBISCAN_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --account pkGarden \
           --verify \
           --broadcast \
@@ -627,7 +628,7 @@ tasks:
           --rpc-url ${RPC_URL_ARB_TESTNET} \
           --sig "run(string)" 'arbsepolia' \
           --chain-id 421614 \
-          --etherscan-api-key ${ARBISCAN_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --account pkGarden \
           --verify \
           --broadcast \
@@ -641,7 +642,7 @@ tasks:
           --rpc-url ${RPC_URL_ARB_TESTNET} \
           --sig "run(string)" 'arbsepolia' \
           --chain-id 421614 \
-          --etherscan-api-key ${ARBISCAN_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --account pkGarden \
           --verify \
           --broadcast \
@@ -657,7 +658,7 @@ tasks:
           --sig "run(string)" 'arbitrum' \
           --chain-id 42161 \
           --broadcast \
-          --etherscan-api-key ${ARBISCAN_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --verify \
           -vvv
         ignore_error: true
@@ -669,7 +670,7 @@ tasks:
           --rpc-url ${RPC_URL_ARB} \
           --sig "run(string)" 'arbitrum' \
           --account pkGarden \
-          --etherscan-api-key ${ARBISCAN_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --ffi \
           --chain-id 42161 \
           --legacy \
@@ -699,12 +700,30 @@ tasks:
           --rpc-url ${RPC_URL_ARB} \
           --sig "run(string)" 'arbitrum' \
           --account pkGarden \
-          --etherscan-api-key ${ARBISCAN_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --ffi \
           --chain-id 42161 \
           --broadcast \
           --verify \
           -vvv
+        ignore_error: true
+  upgrade-atomic-diamond-arbitrum:
+    desc: Upgrade atomic diamond arbitrum
+    deps:
+      - verify-storage
+    cmds:
+      - cmd: |
+          forge script script/UpgradeAllDiamonds.s.sol:UpgradeAllDiamonds \
+          --rpc-url ${RPC_URL_ARB} \
+          --sig "run(string)" 'arbitrum' \
+          --account pkGarden \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --chain-id 42161 \
+          --broadcast \
+          --ffi \
+          --verify \
+          --slow \
+          --via-ir
         ignore_error: true
   verify-blockscout-arbitrum:
     desc: Verify blockscout arbitrum
@@ -751,7 +770,7 @@ tasks:
           --rpc-url ${RPC_URL_ARB} \
           --sig "run(string)" 'arbitrum' \
           --chain-id 42161 \
-          --etherscan-api-key ${ARBISCAN_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --account pkGarden \
           --verify \
           --broadcast \
@@ -765,7 +784,7 @@ tasks:
           --rpc-url ${RPC_URL_ARB} \
           --sig "run(string)" 'arbitrum' \
           --chain-id 42161 \
-          --etherscan-api-key ${ARBISCAN_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --account pkGarden \
           --verify \
           --broadcast \
@@ -779,7 +798,7 @@ tasks:
           --rpc-url ${RPC_URL_ARB} \
           --sig "run(string)" 'arbitrum' \
           --chain-id 42161 \
-          --etherscan-api-key ${ARBISCAN_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --account pkGarden \
           --verify \
           --broadcast \
@@ -792,7 +811,7 @@ tasks:
           forge script script/TransferOwnershipAllContracts.s.sol:TransferOwnershipAllContracts \
           --rpc-url ${RPC_URL_OPT} \
           --sig "run(string)" 'optimism' \
-          --etherscan-api-key ${OPTIMISM_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 10 \
           --account pkGarden \
           --broadcast \
@@ -806,7 +825,7 @@ tasks:
           forge script script/DeployCollateralVaultTemplate.s.sol:DeployCollateralVaultTemplate \
           --rpc-url ${RPC_URL_OPT} \
           --sig "run(string)" 'optimism' \
-          --etherscan-api-key ${OPTIMISM_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 10 \
           --account pkGarden \
           --ffi \
@@ -823,7 +842,7 @@ tasks:
           --rpc-url ${RPC_URL_OPT} \
           --sig "run(string)" 'optimism' \
           --account pkGarden \
-          --etherscan-api-key ${OPTIMISM_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --ffi \
           --chain-id 10 \
           --broadcast \
@@ -839,13 +858,31 @@ tasks:
           --rpc-url ${RPC_URL_OPT} \
           --sig "run(string)" 'optimism' \
           --account pkGarden \
-          --etherscan-api-key ${OPTIMISM_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --ffi \
           --chain-id 10 \
           --broadcast \
           --legacy \
           --verify \
           -vvv
+        ignore_error: true
+  upgrade-atomic-diamond-optimism:
+    desc: Upgrade atomic diamond optimism
+    deps:
+      - verify-storage
+    cmds:
+      - cmd: |
+          forge script script/UpgradeAllDiamonds.s.sol:UpgradeAllDiamonds \
+          --rpc-url ${RPC_URL_OPT} \
+          --sig "run(string)" 'optimism' \
+          --account pkGarden \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --chain-id 10 \
+          --broadcast \
+          --ffi \
+          --verify \
+          --slow \
+          --via-ir
         ignore_error: true
   verify-blockscout-optimism:
     desc: Verify blockscout optimism
@@ -892,7 +929,7 @@ tasks:
           --rpc-url ${RPC_URL_OPT} \
           --sig "run(string)" 'optimism' \
           --chain-id 10 \
-          --etherscan-api-key ${OPTIMISM_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --account pkGarden \
           --verify \
           --broadcast \
@@ -906,7 +943,7 @@ tasks:
           --rpc-url ${RPC_URL_OPT} \
           --sig "run(string)" 'optimism' \
           --chain-id 10 \
-          --etherscan-api-key ${OPTIMISM_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --account pkGarden \
           --verify \
           --broadcast \
@@ -920,7 +957,7 @@ tasks:
           --rpc-url ${RPC_URL_OPT} \
           --sig "run(string)" 'optimism' \
           --chain-id 10 \
-          --etherscan-api-key ${OPTIMISM_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --account pkGarden \
           --verify \
           --broadcast \
@@ -936,7 +973,7 @@ tasks:
           --rpc-url ${RPC_URL_POLYGON} \
           --sig "run(string)" 'polygon' \
           --account pkGarden \
-          --etherscan-api-key ${POLYGONSCAN_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 137 \
           --broadcast \
           --ffi \
@@ -952,7 +989,7 @@ tasks:
           --rpc-url ${RPC_URL_POLYGON} \
           --sig "run(string)" 'polygon' \
           --account pkGarden \
-          --etherscan-api-key ${POLYGONSCAN_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 137 \
           --broadcast \
           --legacy \
@@ -971,7 +1008,7 @@ tasks:
           --rpc-url ${RPC_URL_POLYGON} \
           --sig "run(string)" 'polygon' \
           --account pkGarden \
-          --etherscan-api-key ${POLYGONSCAN_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 137 \
           --broadcast \
           --legacy \
@@ -988,7 +1025,7 @@ tasks:
           forge script script/TransferOwnershipAllContracts.s.sol:TransferOwnershipAllContracts \
           --rpc-url ${RPC_URL_POLYGON} \
           --sig "run(string)" 'polygon' \
-          --etherscan-api-key ${POLYGONSCAN_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 137 \
           --account pkGarden \
           --broadcast \
@@ -1002,7 +1039,7 @@ tasks:
           forge script script/DeployCollateralVaultTemplate.s.sol:DeployCollateralVaultTemplate \
           --rpc-url ${RPC_URL_POLYGON} \
           --sig "run(string)" 'polygon' \
-          --etherscan-api-key ${POLYGONSCAN_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 137 \
           --account pkGarden \
           --ffi \
@@ -1033,7 +1070,7 @@ tasks:
           --rpc-url ${RPC_URL_POLYGON} \
           --sig "run(string)" 'polygon' \
           --account pkGarden \
-          --etherscan-api-key ${POLYGONSCAN_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --ffi \
           --chain-id 137 \
           --broadcast \
@@ -1086,7 +1123,7 @@ tasks:
           --rpc-url ${RPC_URL_POLYGON} \
           --sig "run(string)" 'polygon' \
           --chain-id 137 \
-          --etherscan-api-key ${POLYGONSCAN_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --account pkGarden \
           --verify \
           --broadcast \
@@ -1100,7 +1137,7 @@ tasks:
           --rpc-url ${RPC_URL_POLYGON} \
           --sig "run(string)" 'polygon' \
           --chain-id 137 \
-          --etherscan-api-key ${POLYGONSCAN_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --account pkGarden \
           --verify \
           --broadcast \
@@ -1114,7 +1151,7 @@ tasks:
           --rpc-url ${RPC_URL_POLYGON} \
           --sig "run(string)" 'polygon' \
           --chain-id 137 \
-          --etherscan-api-key ${POLYGONSCAN_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --account pkGarden \
           --verify \
           --broadcast \
@@ -1127,7 +1164,7 @@ tasks:
           forge script script/TransferOwnershipAllContracts.s.sol:TransferOwnershipAllContracts \
           --rpc-url ${RPC_URL_GNOSIS} \
           --sig "run(string)" 'gnosis' \
-          --etherscan-api-key ${GNOSISSCAN_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 100 \
           --account pkGarden \
           --broadcast \
@@ -1141,13 +1178,14 @@ tasks:
           forge script script/DeployCollateralVaultTemplate.s.sol:DeployCollateralVaultTemplate \
           --rpc-url ${RPC_URL_GNOSIS} \
           --sig "run(string)" 'gnosis' \
-          --etherscan-api-key ${GNOSISSCAN_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 100 \
           --account pkGarden \
           --ffi \
           --legacy \
           --broadcast \
           --verify \
+          --slow \
           -vvv
         ignore_error: true
   deploy-gnosis:
@@ -1158,7 +1196,7 @@ tasks:
           --rpc-url ${RPC_URL_GNOSIS} \
           --sig "run(string)" 'gnosis' \
           --account pkGarden \
-          --etherscan-api-key ${GNOSISSCAN_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --ffi \
           --chain-id 100 \
           --broadcast \
@@ -1174,13 +1212,31 @@ tasks:
           --rpc-url ${RPC_URL_GNOSIS} \
           --sig "run(string)" 'gnosis' \
           --account pkGarden \
-          --etherscan-api-key ${GNOSISSCAN_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --ffi \
           --chain-id 100 \
           --broadcast \
           --legacy \
           --verify \
           -vvv
+        ignore_error: true
+  upgrade-atomic-diamond-gnosis:
+    desc: Upgrade atomic diamond gnosis
+    deps:
+      - verify-storage
+    cmds:
+      - cmd: |
+          forge script script/UpgradeAllDiamonds.s.sol:UpgradeAllDiamonds \
+          --rpc-url ${RPC_URL_GNOSIS} \
+          --sig "run(string)" 'gnosis' \
+          --account pkGarden \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --chain-id 100 \
+          --broadcast \
+          --ffi \
+          --verify \
+          --slow \
+          --via-ir
         ignore_error: true
   verify-blockscout-gnosis:
     desc: Verify blockscout gnosis
@@ -1207,7 +1263,7 @@ tasks:
           --rpc-url ${RPC_URL_GNOSIS} \
           --sig "run(string)" 'gnosis' \
           --chain-id 100 \
-          --etherscan-api-key ${GNOSISSCAN_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --account pkGarden \
           --verify \
           --broadcast \
@@ -1221,7 +1277,7 @@ tasks:
           --rpc-url ${RPC_URL_GNOSIS} \
           --sig "run(string)" 'gnosis' \
           --chain-id 100 \
-          --etherscan-api-key ${GNOSISSCAN_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --account pkGarden \
           --verify \
           --broadcast \
@@ -1260,7 +1316,7 @@ tasks:
           --rpc-url ${RPC_URL_GNOSIS} \
           --sig "run(string)" 'gnosis' \
           --chain-id 100 \
-          --etherscan-api-key ${GNOSISSCAN_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --account pkGarden \
           --verify \
           --broadcast \
@@ -1276,7 +1332,7 @@ tasks:
           --sig "run(string)" 'base' \
           --chain-id 8453 \
           --broadcast \
-          --etherscan-api-key ${BASESCAN_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --verify \
           -vvv
         ignore_error: true
@@ -1288,7 +1344,7 @@ tasks:
           --rpc-url ${RPC_URL_BASE} \
           --sig "run(string)" 'base' \
           --account pkGarden \
-          --etherscan-api-key ${BASESCAN_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --ffi \
           --chain-id 8453 \
           --legacy \
@@ -1305,7 +1361,7 @@ tasks:
           --sig "run(string)" 'base' \
           --chain-id 8453 \
           --account pkGarden \
-          --etherscan-api-key ${BASESCAN_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --ffi \
           --broadcast \
           --legacy \
@@ -1320,13 +1376,31 @@ tasks:
           --rpc-url ${RPC_URL_BASE} \
           --sig "run(string)" 'base' \
           --account pkGarden \
-          --etherscan-api-key ${BASESCAN_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --ffi \
           --chain-id 8453 \
           --broadcast \
           --legacy \
           --verify \
           -vvv
+        ignore_error: true
+  upgrade-atomic-diamond-base:
+    desc: Upgrade atomic diamond base
+    deps:
+      - verify-storage
+    cmds:
+      - cmd: |
+          forge script script/UpgradeAllDiamonds.s.sol:UpgradeAllDiamonds \
+          --rpc-url ${RPC_URL_BASE} \
+          --sig "run(string)" 'base' \
+          --account pkGarden \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --chain-id 8453 \
+          --broadcast \
+          --ffi \
+          --verify \
+          --slow \
+          --via-ir
         ignore_error: true
   verify-blockscout-base:
     desc: Verify blockscout base
@@ -1396,7 +1470,7 @@ tasks:
           --rpc-url ${RPC_URL_BASE} \
           --sig "run(string)" 'base' \
           --chain-id 8453 \
-          --etherscan-api-key ${BASESCAN_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --account pkGarden \
           --verify \
           --broadcast \
@@ -1410,7 +1484,7 @@ tasks:
           --rpc-url ${RPC_URL_BASE} \
           --sig "run(string)" 'base' \
           --chain-id 8453 \
-          --etherscan-api-key ${BASESCAN_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --account pkGarden \
           --verify \
           --broadcast \
@@ -1424,7 +1498,7 @@ tasks:
           --rpc-url ${RPC_URL_BASE} \
           --sig "run(string)" 'base' \
           --chain-id 8453 \
-          --etherscan-api-key ${BASESCAN_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --account pkGarden \
           --verify \
           --broadcast \
@@ -1438,7 +1512,7 @@ tasks:
           --rpc-url ${RPC_URL_BASE} \
           --sig "run(string)" 'base' \
           --chain-id 8453 \
-          --etherscan-api-key ${BASESCAN_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --account pkGarden \
           --verify \
           --broadcast \
@@ -1454,7 +1528,7 @@ tasks:
           --sig "run(string)" 'celo' \
           --chain-id 42220 \
           --broadcast \
-          --etherscan-api-key ${CELOSCAN_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --verify \
           -vvv
         ignore_error: true
@@ -1466,7 +1540,7 @@ tasks:
           --rpc-url ${RPC_URL_CELO} \
           --sig "run(string)" 'celo' \
           --account pkGarden \
-          --etherscan-api-key ${CELOSCAN_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --ffi \
           --chain-id 42220 \
           --legacy \
@@ -1483,7 +1557,7 @@ tasks:
           --sig "run(string)" 'celo' \
           --chain-id 42220 \
           --account pkGarden \
-          --etherscan-api-key ${CELOSCAN_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --ffi \
           --broadcast \
           --legacy \
@@ -1498,13 +1572,31 @@ tasks:
           --rpc-url ${RPC_URL_CELO} \
           --sig "run(string)" 'celo' \
           --account pkGarden \
-          --etherscan-api-key ${CELOSCAN_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --ffi \
           --chain-id 42220 \
           --broadcast \
           --legacy \
           --verify \
           -vvv
+        ignore_error: true
+  upgrade-atomic-diamond-celo:
+    desc: Upgrade atomic diamond celo
+    deps:
+      - verify-storage
+    cmds:
+      - cmd: |
+          forge script script/UpgradeAllDiamonds.s.sol:UpgradeAllDiamonds \
+          --rpc-url ${RPC_URL_CELO} \
+          --sig "run(string)" 'celo' \
+          --account pkGarden \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --chain-id 42220 \
+          --broadcast \
+          --ffi \
+          --verify \
+          --slow \
+          --via-ir
         ignore_error: true
   verify-blockscout-celo:
     desc: Verify blockscout celo
@@ -1574,7 +1666,7 @@ tasks:
           --rpc-url ${RPC_URL_CELO} \
           --sig "run(string)" 'celo' \
           --chain-id 42220 \
-          --etherscan-api-key ${CELOSCAN_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --account pkGarden \
           --verify \
           --broadcast \
@@ -1630,7 +1722,7 @@ tasks:
           --rpc-url ${RPC_URL_CELO} \
           --sig "run(string)" 'celo' \
           --chain-id 42220 \
-          --etherscan-api-key ${CELOSCAN_API_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --account pkGarden \
           --verify \
           --broadcast \
