@@ -709,7 +709,7 @@ export function Proposals({
   return (
     <>
       {/* Proposals section */}
-      <section className="col-span-12 xl:col-span-9 flex flex-col gap-10">
+      <section className="col-span-12 xl:col-span-9 flex flex-col gap-6 section-layout">
         <header
           ref={proposalSectionRef}
           className={`flex gap-6 ${
@@ -739,13 +739,13 @@ export function Proposals({
                     }
                     tooltip={tooltipMessage}
                   >
-                    Add a proposal
+                    Add new proposal
                   </Button>
                 </Link>
               </div>
             : !allocationView && (
                 <>
-                  <div className="flex items-center justify-center gap-2">
+                  <div className="flex items-center justify-center gap-2 ">
                     {/* Manage Support */}
                     {activeOrDisputedProposals.length > 0 &&
                       proposalCardRefs.current.size ===
@@ -761,6 +761,25 @@ export function Proposals({
                           Export
                         </Button>
                       )}
+
+                    {strategy.isEnabled && proposals.length > 0 && (
+                      <Link
+                        href={createProposalUrl}
+                        className="flex items-center justify-center"
+                      >
+                        <Button
+                          btnStyle="filled"
+                          icon={<PlusIcon height={24} width={24} />}
+                          disabled={
+                            !isConnected || missmatchUrl || !isMemberCommunity
+                          }
+                          tooltip={tooltipMessage}
+                        >
+                          Add new proposal
+                        </Button>
+                      </Link>
+                    )}
+
                     <div
                       onMouseLeave={() => setShowManageSupportTooltip(false)}
                     >
@@ -800,22 +819,6 @@ export function Proposals({
             poolType={strategy?.config?.proposalType}
             counts={proposalsCountByStatus}
           />
-        )}
-
-        {strategy.isEnabled && proposals.length > 0 && (
-          <Link
-            href={createProposalUrl}
-            className="flex items-center justify-center"
-          >
-            <Button
-              btnStyle="filled"
-              icon={<PlusIcon height={24} width={24} />}
-              disabled={!isConnected || missmatchUrl || !isMemberCommunity}
-              tooltip={tooltipMessage}
-            >
-              Add a proposal
-            </Button>
-          </Link>
         )}
 
         {proposals.length !== 0 && filteredAndSorted.length === 0 ?
@@ -1061,7 +1064,7 @@ function ProposalFiltersUI({
       { key: "mostConviction", label: "Most Conviction", icon: Battery50Icon },
       {
         key: "mostRequested",
-        label: "Highest Requested Amount",
+        label: "Highest Requested",
         icon: CurrencyDollarIcon,
       },
     ];
@@ -1110,13 +1113,13 @@ function ProposalFiltersUI({
         <div className="dropdown dropdown-hover dropdown-start  w-full relative group">
           <button
             tabIndex={0}
-            className="text-primary-content text-sm flex gap-2 items-center w-full lg:w-[255px] px-3.5 py-2 bg-primary-soft dark:bg-primary rounded-lg"
+            className="text-primary-content text-sm flex gap-2 items-center w-full lg:w-[215px] px-3.5 py-2 bg-primary-soft dark:bg-primary rounded-lg"
           >
             {CurrentIcon && <CurrentIcon className="w-4 h-4" />}
             {currentSortOption?.label}
           </button>
 
-          <ul className="dropdown-content menu bg-primary rounded-md z-50 shadow w-full lg:w-[255px]">
+          <ul className="dropdown-content menu bg-primary rounded-md z-50 shadow w-full lg:w-[215px]">
             {SORT_OPTIONS.map((option) => {
               const Icon = option.icon;
 

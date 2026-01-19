@@ -633,7 +633,7 @@ export default function PoolHeader({
   return (
     <>
       <div
-        className={`col-span-12 space-y-6 ${
+        className={`col-span-12 space-y-6 max-h-fit ${
           isEnabled ? "xl:col-span-9" : "xl:col-span-12"
         }`}
       >
@@ -654,7 +654,6 @@ export default function PoolHeader({
                   tooltip={
                     VOTING_POINT_SYSTEM_DESCRIPTION[PointSystems[pointSystem]]
                   }
-                  icon={<BoltIcon />}
                 />
               </div>
             </div>
@@ -996,29 +995,6 @@ export default function PoolHeader({
       </div>
     </>
   );
-}
-
-{
-  /* <div className="flex flex-col sm:flex-row items-start justify-between gap-2 flex-wrap">
-            <div className="flex flex-col gap-2 sm:flex-row items-start sm:items-center">
-              <h4>Voting System:</h4>
-              <div className="flex gap-2 items-center">
-                <Badge
-                  color="info"
-                  label="conviction voting"
-                  icon={<Battery50Icon />}
-                />
-                <Badge
-                  color="info"
-                  label={PointSystems[pointSystem]}
-                  tooltip={
-                    VOTING_POINT_SYSTEM_DESCRIPTION[PointSystems[pointSystem]]
-                  }
-                  icon={<BoltIcon />}
-                />
-              </div>
-            </div>
-          </div> */
 }
 
 const XIcon = ({ ...props }: React.SVGProps<SVGSVGElement>) => {

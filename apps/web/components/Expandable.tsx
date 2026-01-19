@@ -54,7 +54,7 @@ export const ExpandableComponent = ({
               damping: 30,
               mass: 0.8,
             }}
-            className="overflow-hidden mt-1"
+            className="mt-1"
           >
             {children}
           </motion.div>

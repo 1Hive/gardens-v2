@@ -419,7 +419,7 @@ export default function ClientPage({
       />
 
       {isEnabled && (
-        <div className="hidden sm:col-span-12 xl:col-span-3 sm:flex flex-col gap-10">
+        <div className="hidden sm:col-span-12 xl:col-span-3 sm:flex flex-col gap-6">
           <>
             {poolToken && PoolTypes[proposalType] !== "signaling" && (
               <PoolMetrics

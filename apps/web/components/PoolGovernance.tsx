@@ -70,7 +70,7 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
 
   return (
     <>
-      <div className="backdrop-blur-sm rounded-lg flex flex-col gap-2">
+      <div className="backdrop-blur-sm rounded-lg flex flex-col gap-2 xl:max-h-16">
         <section className={"section-layout flex flex-wrap flex-col gap-4"}>
           <header className="flex justify-between flex-wrap">
             <h3>Governance</h3>
