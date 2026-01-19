@@ -242,7 +242,7 @@ export const EditProposalForm = ({
     abi: cvStrategyABI,
     contractName: "CV Strategy",
     functionName: "editProposal",
-    fallbackErrorMessage: "Error creating Proposal, please report a bug.",
+    fallbackErrorMessage: "Error editing Proposal, please report a bug.",
     onSuccess: () => {
       setLoading(true);
       onClose();
@@ -351,7 +351,7 @@ export const EditProposalForm = ({
         />
       : <div className="flex flex-col gap-2 overflow-hidden p-1">
           {proposalTypeName === "funding" && canEditAmount && (
-            <div className="border-2 border-neutral-soft dark:border-neutral rounded-lg p-2">
+            <div className="border-2 border-neutral-soft dark:border-neutral rounded-lg p-4">
               <InfoBox infoBoxType={"info"} className="mb-2" hideIcon>
                 <div className="font-bold">
                   The requested amount is only editable until support is
@@ -419,7 +419,7 @@ export const EditProposalForm = ({
           )}
 
           {canEditMetadata && (
-            <div className="flex flex-col mt-4 border-2  border-neutral-soft dark:border-neutral rounded-lg p-2">
+            <div className="flex flex-col mt-4 border-2 border-neutral-soft dark:border-neutral rounded-lg p-4">
               <InfoBox infoBoxType={"info"} className="mb-2" hideIcon>
                 <div className="flex flex-row gap-1 align-middle font-bold">
                   <div className="flex flex-col">
