@@ -7,23 +7,29 @@ interface ExpandableComponentProps {
   count?: number;
   defaultExpanded?: boolean;
   children: React.ReactNode;
+  withLayout?: boolean;
 }
 
 export const ExpandableComponent = ({
   title,
   defaultExpanded = true,
   children,
+  withLayout = false,
 }: ExpandableComponentProps) => {
   const [expanded, setExpanded] = useState(defaultExpanded);
 
   return (
-    <div className="flex flex-col gap-2">
+    <div
+      className={`flex flex-col gap-2 ${withLayout ? "section-layout" : ""}`}
+    >
       <button
         onClick={() => setExpanded((v) => !v)}
         className="flex items-center gap-2 text-left"
         aria-expanded={expanded}
       >
-        <h4>{title}</h4>
+        {withLayout ?
+          <h3>{title}</h3>
+        : <h4>{title}</h4>}
         <motion.div
           animate={{ rotate: expanded ? 0 : 180 }}
           transition={{
@@ -48,7 +54,7 @@ export const ExpandableComponent = ({
               damping: 30,
               mass: 0.8,
             }}
-            className="overflow-hidden"
+            className="overflow-hidden mt-1"
           >
             {children}
           </motion.div>
