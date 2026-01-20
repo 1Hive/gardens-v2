@@ -70,14 +70,14 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
 
   return (
     <>
-      <div className="backdrop-blur-sm rounded-lg flex flex-col gap-2 xl:max-h-16">
-        <section className={"section-layout flex flex-wrap flex-col gap-4"}>
-          <header className="flex justify-between flex-wrap">
-            <h3>Governance</h3>
+      <div className="rounded-lg flex flex-col gap-2 xl:max-h-16 ">
+        <section className="section-layout flex flex-wrap flex-col gap-4 !bg-primary-soft dark:!bg-primary-soft-dark !border-primary-button">
+          <header className="flex justify-between items-center flex-wrap">
+            <h4>Your voting power</h4>
             <Badge status={memberActivatedStrategy ? 1 : 0} />
           </header>
           {address && (
-            <div className="flex-1 flex flex-col items-start gap-1">
+            <div className="flex-1 flex flex-col items-start gap-4 border2">
               <div className="w-full flex items-center justify-between">
                 <h4 className="subtitle2">Your stake: </h4>
                 <div className="flex items-center gap-1">
@@ -97,12 +97,11 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
               </div>
 
               {showPoolGovernanceData && (
-                <div className="w-full flex items-center justify-between">
-                  <h4 className="subtitle2">Voting power:</h4>
-                  <div className="flex items-center gap-1">
-                    <p className="text-xl font-bold text-primary-content">
-                      {memberPoolWeight?.toFixed(2)} %
-                    </p>
+                <div className="flex w-full flex-col gap-2 border2">
+                  <div className="flex w-full items-center justify-between gap-0">
+                    <h5 className="text-2xl text-primary-content">
+                      {memberPoolWeight?.toFixed(2)} VP
+                    </h5>
                     <a
                       href="https://docs.gardens.fund/start-here/voting-power"
                       target="_blank"
@@ -112,19 +111,32 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
                       <QuestionMarkCircleIcon className="h-6 w-6 text-primary-content" />
                     </a>
                   </div>
+                  <span className="text-xs sm:text-sm text-neutral-soft-content">
+                    Your share of this pools total 100 VP
+                  </span>
                 </div>
               )}
+              <div className="border2 flex flex-col gap-2 w-full">
+                <div className="flex items-baseline justify-between w-full">
+                  <p className="text-neutral-soft-content">Allocated</p>
+                  <p>{} 55% (18.3 VP)</p>
+                </div>
+                <div className="flex items-baseline justify-between w-full">
+                  <p className="text-neutral-soft-content">Available</p>
+                  <p>45% (13.3 VP)</p>
+                </div>
+              </div>
             </div>
           )}
-          <InfoBox
+          {/* <InfoBox
             title="Pool Voting System"
             content={poolSystemDefinition[poolSystem]}
             infoBoxType="info"
             className="flex-1 w-full"
-          />
+          /> */}
 
           {/* Activate-Deactivate Button */}
-          <div className="flex items-center flex-col gap-2">
+          {/* <div className="flex items-center flex-col gap-2">
             <CheckSybil
               strategy={strategy}
               enableCheck={!memberActivatedStrategy}
@@ -138,8 +150,8 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
                 handleTxSuccess={() => setTriggerSybilCheckModalClose(true)}
               />
             </CheckSybil>
-          </div>
-          <Button
+          </div> */}
+          {/* <Button
             onClick={() =>
               setOpenGovernanceDetailsModal(!openGovernanceDetailsModal)
             }
@@ -148,15 +160,15 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
             // icon={<ChevronUpIcon className="h-4 w-4" />}
           >
             {openGovernanceDetailsModal ? "Close" : "Open"} governance details
-          </Button>
+          </Button> */}
 
-          {membersStrategyData && (
+          {/* {membersStrategyData && (
             <PoolGovernanceDetails
               membersStrategyData={membersStrategyData}
               openGovernanceDetailsModal={openGovernanceDetailsModal}
               setOpenGovernanceDetailsModal={setOpenGovernanceDetailsModal}
             />
-          )}
+          )} */}
         </section>
       </div>
     </>

@@ -878,7 +878,7 @@ export default function PoolHeader({
                         className="w-full mt-1 xl:!justify-start"
                         onClick={handleCopyLink}
                       >
-                        Copy Pool Link
+                        Copy Link
                       </Button>
                     </li>
                     <li>
@@ -973,7 +973,7 @@ export default function PoolHeader({
             {filteredPoolConfig.map((config) => (
               <div
                 key={config.label}
-                className="flex items-center gap-4 bg-primary px-2 py-4 rounded-lg"
+                className="flex items-center justify-between gap-4 bg-primary p-3 rounded-xl "
               >
                 <Statistic
                   label={config.label}
@@ -985,8 +985,9 @@ export default function PoolHeader({
                     />
                   }
                   tooltip={config.info}
+                  className=" w-full"
                 >
-                  <p className="subtitle">{config.value}</p>
+                  <p className="subtitle ">{config.value}</p>
                 </Statistic>
               </div>
             ))}
