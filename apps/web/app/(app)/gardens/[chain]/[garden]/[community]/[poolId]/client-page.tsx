@@ -3,7 +3,13 @@
 import { useEffect, useRef, useState } from "react";
 import { Tab } from "@headlessui/react";
 import { Address } from "viem";
-import { useBalance, useAccount, useChainId, useContractRead } from "wagmi";
+import {
+  useBalance,
+  useAccount,
+  useChainId,
+  useContractRead,
+  useToken,
+} from "wagmi";
 import {
   getAlloQuery,
   getMembersStrategyDocument,
@@ -21,6 +27,7 @@ import {
   PoolGovernance,
   PoolMetrics,
   Proposals,
+  RegisterMember,
 } from "@/components";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import PoolHeader from "@/components/PoolHeader";
@@ -189,6 +196,7 @@ export default function ClientPage({
   //
 
   const poolTokenAddr = strategy?.token as Address;
+
   const proposalType = strategy?.config.proposalType;
 
   const numericChainId = Number(chain);
@@ -241,6 +249,14 @@ export default function ClientPage({
     watch: true,
     enabled: !!effectiveSuperToken && !!wallet,
   });
+
+  const { data: tokenGarden } = useToken({
+    address: strategy?.token as Address,
+    chainId: chainId,
+    enabled: !isMemberCommunity,
+  });
+
+  console.log("token pool", tokenGarden);
 
   const { data: metadataResult } = useMetadataIpfsFetch({
     hash: strategy?.metadataHash,
@@ -455,6 +471,13 @@ export default function ClientPage({
           />
         </div>
       )}
+
+      {/* <RegisterMember
+        memberData={wallet ? memberData : undefined}
+        registrationCost={totalRegistrationCost}
+        token={tokenGarden}
+        registryCommunity={registryCommunity}
+      /> */}
 
       {isEnabled && (
         <Proposals

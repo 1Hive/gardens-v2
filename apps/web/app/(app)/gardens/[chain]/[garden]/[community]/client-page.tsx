@@ -105,6 +105,7 @@ export default function ClientPage({
   const [openMembersModal, setOpenMembersModal] = useState(false);
 
   const covenantSectionRef = useRef<HTMLDivElement>(null);
+
   const { data: tokenGarden } = useToken({
     address: tokenAddr as Address,
     chainId: chain?.id,

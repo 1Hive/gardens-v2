@@ -70,7 +70,7 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
 
   return (
     <>
-      <div className="rounded-lg flex flex-col gap-2 xl:max-h-16 ">
+      <div className="rounded-lg flex flex-col gap-6 xl:max-h-16 ">
         <section className="section-layout flex flex-wrap flex-col gap-4 !bg-primary-soft dark:!bg-primary-soft-dark !border-primary-button">
           <header className="flex justify-between items-center flex-wrap">
             <h4>Your voting power</h4>
@@ -135,22 +135,6 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
             className="flex-1 w-full"
           /> */}
 
-          {/* Activate-Deactivate Button */}
-          {/* <div className="flex items-center flex-col gap-2">
-            <CheckSybil
-              strategy={strategy}
-              enableCheck={!memberActivatedStrategy}
-              triggerClose={triggerSybilCheckModalClose}
-            >
-              <ActivatePoints
-                strategy={strategy}
-                communityAddress={communityAddress}
-                isMemberActivated={memberActivatedStrategy}
-                isMember={isMemberCommunity}
-                handleTxSuccess={() => setTriggerSybilCheckModalClose(true)}
-              />
-            </CheckSybil>
-          </div> */}
           {/* <Button
             onClick={() =>
               setOpenGovernanceDetailsModal(!openGovernanceDetailsModal)
@@ -170,6 +154,27 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
             />
           )} */}
         </section>
+        {/* Activate-Deactivate Button */}
+        <div className="section-layout flex items-start flex-col gap-4">
+          <h4 className="text-left">Pool Governance</h4>
+          <p className="text-xs sm:text-sm text-neutral-soft-content text-justify">
+            You have activated governance in this pool. You can deactivate at
+            any time, but your VP allocations will be removed.
+          </p>
+          <CheckSybil
+            strategy={strategy}
+            enableCheck={!memberActivatedStrategy}
+            triggerClose={triggerSybilCheckModalClose}
+          >
+            <ActivatePoints
+              strategy={strategy}
+              communityAddress={communityAddress}
+              isMemberActivated={memberActivatedStrategy}
+              isMember={isMemberCommunity}
+              handleTxSuccess={() => setTriggerSybilCheckModalClose(true)}
+            />
+          </CheckSybil>
+        </div>
       </div>
     </>
   );
