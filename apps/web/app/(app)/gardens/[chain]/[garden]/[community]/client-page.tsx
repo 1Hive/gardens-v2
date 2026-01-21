@@ -399,6 +399,7 @@ export default function ClientPage({
                     address={communityAddr as Address}
                     label="Community address"
                     textColor="var(--color-grey-900)"
+                    explorer="louper"
                   />
                   {registryCommunity?.councilSafe && (
                     <EthAddress
