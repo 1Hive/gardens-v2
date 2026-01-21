@@ -218,7 +218,7 @@
       "name": "optimism",
       "chainId": 10,
       "testnet": false,
-      "no-safe": true,
+      "no-safe": false,
       "ENVS": {
         "SENDER": "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD",
         "PROXY_OWNER": "0x129f253F78E33A0312EF8E59fae7699Ef6e8Dbef",
