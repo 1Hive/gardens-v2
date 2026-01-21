@@ -243,19 +243,21 @@ abstract contract CVStrategyBaseFacet {
     /**
      * @notice Ensure only Allo contract can call this function
      */
-    function _checkOnlyAllo() internal view {
+    modifier onlyAllo() {
         if (msg.sender != address(allo)) {
             revert OnlyAllo(msg.sender, address(allo));
         }
+        _;
     }
 
     /**
      * @notice Ensure the pool has been initialized (poolId != 0)
      */
-    function _checkOnlyInitialized() internal view {
+    modifier onlyInitialized() {
         if (poolId == 0) {
             revert OnlyInitialized(poolId);
         }
+        _;
     }
 
     /**
