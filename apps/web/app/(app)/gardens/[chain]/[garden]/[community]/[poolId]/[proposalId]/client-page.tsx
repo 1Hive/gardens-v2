@@ -555,17 +555,17 @@ export default function ClientPage({ params }: ClientPageProps) {
       {/* ================= MOBILE ================= */}
       <div className="block md:hidden col-span-12">
         <Tab.Group>
-          <Tab.List className="flex bg-primary rounded-lg p-1 gap-1 z-10">
+          <Tab.List className="flex bg-primary rounded-lg p-1 gap-2 z-10">
             {["Overview", "Description", "Status", "Supporters"].map(
               (label) => (
                 <Tab
                   key={label}
                   className={({ selected }) =>
                     `
-              flex-1 bg-neutral text-center font-medium rounded-full px-3 py-2 text-sm transition-all duration-200
+              flex-1 bg-neutral-button text-neutral-inverted-content dark:bg-disabled-dark-button hover:opacity-80 text-center font-medium rounded-lg px-3 py-2 text-sm transition-all duration-200
               ${
                 selected ?
-                  "bg-primary-button text-neutral shadow"
+                  "bg-primary-button hover:bg-primary-hover-content dark:bg-primary-dark-base dark:hover:bg-primary-dark-hoverbg-primary-content dark:text-neutral-inverted-content"
                 : "text-base-content/70"
               }
             `
@@ -703,7 +703,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                         className="w-full"
                         btnStyle="outline"
                       >
-                        Go to Vote on Proposals
+                        Vote on Proposals
                       </Button>
                       {!isSignalingType && (
                         <Button

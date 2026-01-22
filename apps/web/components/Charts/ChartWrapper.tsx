@@ -39,14 +39,14 @@ export const ChartWrapper = ({
       name: "Support",
       className: "h-3 w-8 rounded-md",
       style: { backgroundColor: chartColors.support },
-      info: "Represents the total support currently allocated to a proposal.",
+      info: "Represents the Total Voting Power allocated to a proposal (out of 100 VP).",
       value: support,
     },
     {
       name: "Conviction",
       className: "h-3 w-8 rounded-md",
       style: { backgroundColor: chartColors.conviction },
-      info: "Accumulated conviction for a proposal, increasing over time, based on the conviction growth.",
+      info: "Voting Power accumulated as conviction for a proposal. Conviction grows or shrinks over time to meet support.",
       value: conviction,
     },
     {

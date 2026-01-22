@@ -1081,7 +1081,7 @@ function ProposalFiltersUI({
       <div className="flex w-full gap-2 lg:gap-1 sm:justify-between flex-wrap ">
         {FILTERS.map((f) => (
           <Button
-            className={filter === f ? "!cursor-default !bg-soft-primary-" : ""}
+            className={filter === f ? "!cursor-default !bg-soft-primary" : ""}
             onClick={() => setFilter(f)}
             color={filter === f ? "primary" : "disabled"}
             key={f}
