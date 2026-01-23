@@ -100,6 +100,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     event InitializedCV(uint256 poolId, CVStrategyInitializeParamsV0_0 data);
     event InitializedCV2(uint256 poolId, CVStrategyInitializeParamsV0_1 data);
     event InitializedCV3(uint256 poolId, CVStrategyInitializeParamsV0_2 data);
+    event InitializedCV4(uint256 poolId, CVStrategyInitializeParamsV0_3 data);
     event Distributed(uint256 proposalId, address beneficiary, uint256 amount);
     event ProposalCreated(uint256 poolId, uint256 proposalId);
     event PointsDeactivated(address member);
@@ -201,7 +202,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         collateralVault = ICollateralVault(Clone.createClone(collateralVaultTemplate, cloneNonce++));
         collateralVault.initialize();
 
-        CVStrategyInitializeParamsV0_2 memory ip = abi.decode(_data, (CVStrategyInitializeParamsV0_2));
+        CVStrategyInitializeParamsV0_4 memory ip = abi.decode(_data, (CVStrategyInitializeParamsV0_4));
 
         // if (ip.registryCommunity == address(0)) {
         //     revert RegistryCannotBeZero();
@@ -214,8 +215,25 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         pointConfig = ip.pointConfig;
         sybilScorer = ISybilScorer(ip.sybilScorer);
         superfluidToken = ISuperToken(ip.superfluidToken);
+        streamingRatePerSecond = ip.streamingRatePerSecond;
 
-        emit InitializedCV3(_poolId, ip);
+        emit InitializedCV4(_poolId, ip);
+
+        if (ip.proposalType == ProposalType.Streaming) {
+            if (
+                address(superfluidToken) == address(0) || address(superfluidGDA) == address(0)
+                    || streamingRatePerSecond == 0
+            ) {
+                revert ProposalDataIsEmpty();
+            }
+            IGDAv1Forwarder gdaForwarder = GDAv1Forwarder(0x6DA13Bde224A05a288748d857b9e7DDEffd1dE08); // same address for all chains
+            (, ISuperfluidPool pool) = gdaForwarder.createPool(
+                ISuperfluidToken(superfluidToken),
+                address(this), // pool admin = your StreamingPool contract
+                IGDAv1Forwarder.PoolConfig({transferabilityForUnitsOwner: false, distributionFromAnyAddress: false})
+            );
+            superfluidGDA = pool;
+        }
 
         // Initialize pool params (simplified version of _setPoolParams for initialization only)
         if (ip.arbitrableConfig.tribunalSafe != address(0) && address(ip.arbitrableConfig.arbitrator) != address(0)) {

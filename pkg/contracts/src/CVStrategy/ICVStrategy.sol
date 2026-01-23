@@ -136,6 +136,20 @@ struct CVStrategyInitializeParamsV0_2 {
     address superfluidToken;
 }
 
+struct CVStrategyInitializeParamsV0_3 {
+    CVParams cvParams;
+    ProposalType proposalType;
+    PointSystem pointSystem;
+    PointSystemConfig pointConfig;
+    ArbitrableConfig arbitrableConfig;
+    address registryCommunity;
+    address sybilScorer;
+    uint256 sybilScorerThreshold;
+    address[] initialAllowlist;
+    address superfluidToken;
+    uint256 streamingRatePerSecond;
+}
+
 interface ICVStrategy {
     function setPoolParams(
         ArbitrableConfig memory _arbitrableConfig,
