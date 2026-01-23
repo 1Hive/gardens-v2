@@ -36,7 +36,12 @@ import { prettyTimestamp } from "@/utils/text";
 export type ProposalCardProps = {
   proposalData: Pick<
     CVProposal,
-    "id" | "proposalStatus" | "metadataHash" | "createdAt" | "submitter"
+    | "id"
+    | "proposalStatus"
+    | "metadataHash"
+    | "createdAt"
+    | "submitter"
+    | "executedAt"
   > &
     ProposalDataLight & {
       metadata?: Maybe<Pick<ProposalMetadata, "title">>;
@@ -100,8 +105,15 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
 
     const metadata = proposalData.metadata ?? metadataResult;
 
-    const { id, proposalNumber, proposalStatus, requestedAmount, submitter } =
-      proposalData;
+    const {
+      id,
+      proposalNumber,
+      proposalStatus,
+      requestedAmount,
+      submitter,
+      createdAt,
+      executedAt,
+    } = proposalData;
     const pathname = usePathname();
 
     const searchParams = useCollectQueryParams();
@@ -298,7 +310,8 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
                     <div className="hidden sm:block w-1 h-1 rounded-full bg-neutral-soft-content" />
                     <div>
                       <p className="text-sm text-neutral-soft-content">
-                        {prettyTimestamp(proposalData.createdAt ?? 0)}
+                        {prettyTimestamp(createdAt ?? 0)}
+                        {executedAt && " - " + prettyTimestamp(executedAt)}
                       </p>
                     </div>
                   </div>

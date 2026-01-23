@@ -3891,7 +3891,7 @@ export type getPoolDataQuery = {
             garden: Pick<TokenGarden, 'id' | 'symbol' | 'decimals'>;
             members?: Maybe<Array<Pick<MemberCommunity, 'memberAddress'>>>;
         });
-        proposals: Array<(Pick<CVProposal, 'id' | 'proposalNumber' | 'metadataHash' | 'beneficiary' | 'requestedAmount' | 'requestedToken' | 'proposalStatus' | 'stakedAmount' | 'convictionLast' | 'createdAt' | 'blockLast' | 'submitter'> & {
+        proposals: Array<(Pick<CVProposal, 'id' | 'proposalNumber' | 'metadataHash' | 'beneficiary' | 'requestedAmount' | 'requestedToken' | 'proposalStatus' | 'stakedAmount' | 'convictionLast' | 'createdAt' | 'executedAt' | 'blockLast' | 'submitter'> & {
             metadata?: Maybe<Pick<ProposalMetadata, 'title' | 'description'>>;
             strategy: Pick<CVStrategy, 'id' | 'maxCVSupply' | 'totalEffectiveActivePoints'>;
         })>;
@@ -3907,7 +3907,7 @@ export type getProposalDataQuery = {
     allos: Array<Pick<Allo, 'id' | 'chainId' | 'tokenNative'>>;
     tokenGarden?: Maybe<Pick<TokenGarden, 'name' | 'symbol' | 'decimals'>>;
     registryCommunity?: Maybe<Pick<RegistryCommunity, 'councilSafe'>>;
-    cvproposal?: Maybe<(Pick<CVProposal, 'id' | 'proposalNumber' | 'beneficiary' | 'blockLast' | 'convictionLast' | 'createdAt' | 'metadataHash' | 'proposalStatus' | 'requestedAmount' | 'requestedToken' | 'stakedAmount' | 'submitter' | 'updatedAt' | 'version'> & {
+    cvproposal?: Maybe<(Pick<CVProposal, 'id' | 'proposalNumber' | 'beneficiary' | 'blockLast' | 'convictionLast' | 'createdAt' | 'metadataHash' | 'proposalStatus' | 'requestedAmount' | 'requestedToken' | 'stakedAmount' | 'submitter' | 'updatedAt' | 'executedAt' | 'version'> & {
         metadata?: Maybe<Pick<ProposalMetadata, 'title' | 'description'>>;
         strategy: (Pick<CVStrategy, 'id' | 'token' | 'maxCVSupply' | 'totalEffectiveActivePoints' | 'poolId' | 'isEnabled'> & {
             registryCommunity: (Pick<RegistryCommunity, 'id' | 'councilSafe' | 'isValid'> & {

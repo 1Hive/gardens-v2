@@ -395,6 +395,7 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
       stakedAmount
       convictionLast
       createdAt
+      executedAt
       blockLast
       submitter
       strategy {
@@ -451,6 +452,7 @@ query getProposalData($garden: ID!, $proposalId: ID!, $communityId: ID!) {
     stakedAmount
     submitter
     updatedAt
+    executedAt
     version
     strategy {
       id
