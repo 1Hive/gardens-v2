@@ -147,6 +147,7 @@ export default function ClientPage({
     communityFee,
     registerStakeAmount,
     protocolFee,
+    membersCount,
   } = registryCommunity ?? {};
 
   const is1hive =
@@ -416,7 +417,7 @@ export default function ClientPage({
                   <div className="w-full flex flex-col sm:flex-row gap-2 md:gap-6 sm:flex-wrap">
                     <Statistic
                       label="members"
-                      count={members?.length ?? 0}
+                      count={membersCount ?? 0}
                       icon={<UserGroupIcon />}
                     />
 

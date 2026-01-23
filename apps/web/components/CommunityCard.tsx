@@ -32,6 +32,7 @@ type CommunityCardProps = {
     | undefined;
   strategies?: Maybe<Pick<CVStrategy, "id">[]> | undefined;
   isProtopian?: boolean;
+  membersCount: number;
 };
 
 export function CommunityCard({
@@ -39,12 +40,12 @@ export function CommunityCard({
   communityName,
   garden,
   members,
+  membersCount,
   strategies,
   isProtopian = false,
 }: CommunityCardProps) {
   const { address: tokenAddr, chainId, symbol: tokenSymbol, decimals } = garden;
 
-  const membersCount = members?.length ?? 0;
   const poolsCount = strategies?.length ?? 0;
   const communityStakedTokens =
     members?.reduce(

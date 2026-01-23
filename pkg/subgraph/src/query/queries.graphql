@@ -27,6 +27,7 @@ query getFactories {
           minThresholdPoints
         }
       }
+      membersCount
     }
   }
 }
@@ -217,6 +218,7 @@ query getGardenCommunities($chainId: BigInt!, $tokenGarden: ID!) {
       totalEffectiveActivePoints
       poolId
     }
+    membersCount
   }
 }
 
@@ -247,6 +249,7 @@ query getCommunities {
       memberAddress
       stakedTokens
     }
+    membersCount
   }
 }
 
@@ -295,6 +298,7 @@ query getCommunity($communityAddr: ID!, $tokenAddr: ID!) {
     registerStakeAmount
     registerToken
     councilSafe
+    membersCount
   }
   tokenGarden(id: $tokenAddr) {
     symbol
