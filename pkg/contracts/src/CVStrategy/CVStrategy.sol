@@ -226,11 +226,11 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
             ) {
                 revert ProposalDataIsEmpty();
             }
-            IGDAv1Forwarder gdaForwarder = GDAv1Forwarder(0x6DA13Bde224A05a288748d857b9e7DDEffd1dE08); // same address for all chains
+            GDAv1Forwarder gdaForwarder = GDAv1Forwarder(0x6DA13Bde224A05a288748d857b9e7DDEffd1dE08); // same address for all chains
             (, ISuperfluidPool pool) = gdaForwarder.createPool(
                 ISuperfluidToken(superfluidToken),
                 address(this), // pool admin = your StreamingPool contract
-                IGDAv1Forwarder.PoolConfig({transferabilityForUnitsOwner: false, distributionFromAnyAddress: false})
+                GDAv1Forwarder.PoolConfig({transferabilityForUnitsOwner: false, distributionFromAnyAddress: false})
             );
             superfluidGDA = pool;
         }
