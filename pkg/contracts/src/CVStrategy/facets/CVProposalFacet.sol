@@ -92,6 +92,16 @@ contract CVProposalFacet is CVStrategyBaseFacet {
         p.arbitrableConfigVersion = currentArbitrableConfigVersion;
         collateralVault.depositCollateral{value: msg.value}(proposalId, p.submitter);
 
+        // Streaming proposal handling
+        if (proposalType == ProposalType.Streaming) {
+            // Add a member to the GDA pool with 0 units initially
+            superfluidGDA.addMember(
+                ISuperfluidToken(superfluidToken),
+                p.beneficiary,
+                0 // initial units
+            );
+        }
+
         emit ProposalCreated(poolId, proposalId);
         // casting proposalId to address is safe - standard pattern for unique addresses
         // forge-lint: disable-next-line(unsafe-typecast)
@@ -114,6 +124,13 @@ contract CVProposalFacet is CVStrategyBaseFacet {
         );
 
         proposals[proposalId].proposalStatus = ProposalStatus.Cancelled;
+
+        // Streaming proposal handling
+        if (proposalType == ProposalType.Streaming) {
+            // Remove member from the GDA pool
+            superfluidGDA.removeMember(ISuperfluidToken(superfluidToken), proposals[proposalId].beneficiary);
+        }
+
         emit ProposalCancelled(proposalId);
     }
 
@@ -153,6 +170,12 @@ contract CVProposalFacet is CVStrategyBaseFacet {
             }
 
             proposal.beneficiary = _beneficiary;
+
+            // Streaming proposal handling
+            if (proposalType == ProposalType.Streaming) {
+                // Update member address in the GDA pool
+                superfluidGDA.updateMemberAddress(ISuperfluidToken(superfluidToken), proposal.beneficiary, _beneficiary);
+            }
         }
 
         if (!proposal.metadata.pointer.equal(_metadata.pointer)) {
