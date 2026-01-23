@@ -9,6 +9,7 @@ import {ISybilScorer} from "../ISybilScorer.sol";
 import {ProposalType, PointSystem, Proposal, PointSystemConfig, ArbitrableConfig, CVParams} from "./ICVStrategy.sol";
 import {ConvictionsUtils} from "./ConvictionsUtils.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Library.sol";
+import "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/gdav1/ISuperfluidPool.sol";
 import {LibDiamond} from "@src/diamonds/libraries/LibDiamond.sol";
 
 /**
@@ -170,9 +171,19 @@ abstract contract CVStrategyBaseFacet {
     // slither-disable-next-line uninitialized-state
     ISuperToken public superfluidToken;
 
+    /// @notice Superfluid GDA contract address
+    /// @dev Slot 130+
+    // slither-disable-next-line uninitialized-state
+    ISuperfluidPool public superfluidGDA;
+
+    /// @notice Streaming rate per second for superfluid payments
+    /// @dev Slot 131+
+    // slither-disable-next-line uninitialized-state
+    uint256 public streamingRatePerSecond;
+
     /// @dev Reserved storage space to allow for layout changes in the future
     /// @dev This gap is at the end of storage to allow adding new variables without shifting slots
-    uint256[49] private __gap;
+    uint256[47] private __gap;
 
     /*|--------------------------------------------|*/
     /*|         SHARED HELPER FUNCTIONS            |*/

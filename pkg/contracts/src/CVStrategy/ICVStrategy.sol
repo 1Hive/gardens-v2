@@ -145,4 +145,8 @@ interface ICVStrategy {
         address[] memory _membersToRemove,
         address _superfluidToken
     ) external;
+
+    function connectSuperfluidGDA(address) external;
+
+    function disconnectSuperfluidGDA(address) external;
 }

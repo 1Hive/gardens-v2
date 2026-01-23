@@ -38,6 +38,9 @@ import {PowerManagementUtils} from "./PowerManagementUtils.sol";
 
 import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Library.sol";
 
+import "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/gdav1/ISuperfluidPool.sol";
+import "@superfluid-finance/ethereum-contracts/contracts/utils/GDAv1Forwarder.sol";
+
 // Diamond Pattern imports
 import {LibDiamond} from "../diamonds/libraries/LibDiamond.sol";
 import {IDiamondCut} from "../diamonds/interfaces/IDiamondCut.sol";
@@ -168,7 +171,11 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     mapping(address => uint256[]) public voterStakedProposals;
     mapping(uint256 => uint256) public disputeIdToProposalId;
     mapping(uint256 => ArbitrableConfig) public arbitrableConfigs;
+
+    // Superfluid
     ISuperToken public superfluidToken;
+    ISuperfluidPool public superfluidGDA; // Streaming pool only
+    uint256 public streamingRatePerSecond; // Streaming pool only
 
     // Constants (also defined in CVStrategyBaseFacet for facet access)
     uint256 public constant RULING_OPTIONS = 3;
