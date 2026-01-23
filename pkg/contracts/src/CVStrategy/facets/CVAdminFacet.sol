@@ -65,7 +65,7 @@ contract CVAdminFacet is CVStrategyBaseFacet {
         }
     }
 
-    function connectSuperfluidGDA(address gda) external {
+    function connectSuperfluidGDA(address gda) external nonReentrant {
         onlyCouncilSafeOrMember();
         ISuperToken supertoken =
             address(superfluidToken) != address(0) ? superfluidToken : ISuperToken(allo.getPool(poolId).token);
@@ -76,7 +76,7 @@ contract CVAdminFacet is CVStrategyBaseFacet {
         emit SuperfluidGDAConnected(gda, msg.sender);
     }
 
-    function disconnectSuperfluidGDA(address gda) external {
+    function disconnectSuperfluidGDA(address gda) external nonReentrant {
         onlyCouncilSafeOrMember();
         ISuperToken supertoken =
             address(superfluidToken) != address(0) ? superfluidToken : ISuperToken(allo.getPool(poolId).token);
