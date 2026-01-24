@@ -69,6 +69,7 @@ import { registryCommunityABI } from "@/src/generated";
 import { Column, PoolTypes } from "@/types";
 import {
   calculatePercentageBigInt,
+  formatCountWhenPlus1k,
   parseToken,
   SCALE_PRECISION,
   SCALE_PRECISION_DECIMALS,
@@ -620,7 +621,7 @@ const CommunityDetailsTable = ({
     //     membersStaked ? indexOf(membersStaked, memberData) + 1 : 0,
     // },
     {
-      header: `Members (${membersStaked?.length})`,
+      header: `Members (${formatCountWhenPlus1k(membersStaked?.length ?? 0)})`,
       render: (memberData: MembersStaked) => (
         <EthAddress
           address={memberData.memberAddress as Address}
