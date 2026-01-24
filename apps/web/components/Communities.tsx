@@ -26,6 +26,7 @@ export type LightCommunity = Pick<RegistryCommunity, "id" | "communityName"> & {
     Array<Pick<MemberCommunity, "id" | "memberAddress" | "stakedTokens">>
   >;
   isProtopian: boolean;
+  membersCount: number;
 };
 
 interface CommunitySectionProps {

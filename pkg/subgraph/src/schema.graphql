@@ -108,6 +108,7 @@ type RegistryCommunity @entity(immutable: false) {
   garden: TokenGarden!
   isValid: Boolean!
   archived: Boolean!
+  membersCount: BigInt!
 }
 
 type Member @entity(immutable: false) {

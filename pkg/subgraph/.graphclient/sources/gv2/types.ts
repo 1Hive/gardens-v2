@@ -267,6 +267,7 @@ export type CVProposal = {
   createdAt: Scalars['BigInt']['output'];
   updatedAt: Scalars['BigInt']['output'];
   arbitrableConfig: ArbitrableConfig;
+  executedAt?: Maybe<Scalars['BigInt']['output']>;
 };
 
 export type CVProposal_filter = {
@@ -501,6 +502,14 @@ export type CVProposal_filter = {
   arbitrableConfig_not_ends_with?: InputMaybe<Scalars['String']['input']>;
   arbitrableConfig_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
   arbitrableConfig_?: InputMaybe<ArbitrableConfig_filter>;
+  executedAt?: InputMaybe<Scalars['BigInt']['input']>;
+  executedAt_not?: InputMaybe<Scalars['BigInt']['input']>;
+  executedAt_gt?: InputMaybe<Scalars['BigInt']['input']>;
+  executedAt_lt?: InputMaybe<Scalars['BigInt']['input']>;
+  executedAt_gte?: InputMaybe<Scalars['BigInt']['input']>;
+  executedAt_lte?: InputMaybe<Scalars['BigInt']['input']>;
+  executedAt_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  executedAt_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
   and?: InputMaybe<Array<InputMaybe<CVProposal_filter>>>;
@@ -544,7 +553,8 @@ export type CVProposal_orderBy =
   | 'arbitrableConfig__challengerCollateralAmount'
   | 'arbitrableConfig__submitterCollateralAmount'
   | 'arbitrableConfig__defaultRuling'
-  | 'arbitrableConfig__defaultRulingTimeout';
+  | 'arbitrableConfig__defaultRulingTimeout'
+  | 'executedAt';
 
 export type CVStrategy = {
   id: Scalars['ID']['output'];
@@ -937,6 +947,7 @@ export type CVStrategy_orderBy =
   | 'registryCommunity__alloAddress'
   | 'registryCommunity__isValid'
   | 'registryCommunity__archived'
+  | 'registryCommunity__membersCount'
   | 'config'
   | 'config__id'
   | 'config__D'
@@ -1541,6 +1552,7 @@ export type MemberCommunity_orderBy =
   | 'registryCommunity__alloAddress'
   | 'registryCommunity__isValid'
   | 'registryCommunity__archived'
+  | 'registryCommunity__membersCount'
   | 'covenantSignature';
 
 export type MemberStrategy = {
@@ -2164,6 +2176,7 @@ export type ProposalDispute_orderBy =
   | 'proposal__submitter'
   | 'proposal__createdAt'
   | 'proposal__updatedAt'
+  | 'proposal__executedAt'
   | 'status'
   | 'challenger'
   | 'context'
@@ -2752,6 +2765,7 @@ export type RegistryCommunity = {
   garden: TokenGarden;
   isValid: Scalars['Boolean']['output'];
   archived: Scalars['Boolean']['output'];
+  membersCount: Scalars['BigInt']['output'];
 };
 
 
@@ -3070,6 +3084,14 @@ export type RegistryCommunity_filter = {
   archived_not?: InputMaybe<Scalars['Boolean']['input']>;
   archived_in?: InputMaybe<Array<Scalars['Boolean']['input']>>;
   archived_not_in?: InputMaybe<Array<Scalars['Boolean']['input']>>;
+  membersCount?: InputMaybe<Scalars['BigInt']['input']>;
+  membersCount_not?: InputMaybe<Scalars['BigInt']['input']>;
+  membersCount_gt?: InputMaybe<Scalars['BigInt']['input']>;
+  membersCount_lt?: InputMaybe<Scalars['BigInt']['input']>;
+  membersCount_gte?: InputMaybe<Scalars['BigInt']['input']>;
+  membersCount_lte?: InputMaybe<Scalars['BigInt']['input']>;
+  membersCount_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  membersCount_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
   and?: InputMaybe<Array<InputMaybe<RegistryCommunity_filter>>>;
@@ -3111,7 +3133,8 @@ export type RegistryCommunity_orderBy =
   | 'garden__decimals'
   | 'garden__address'
   | 'isValid'
-  | 'archived';
+  | 'archived'
+  | 'membersCount';
 
 export type RegistryFactory = {
   id: Scalars['ID']['output'];
@@ -3270,6 +3293,7 @@ export type Stake_orderBy =
   | 'proposal__submitter'
   | 'proposal__createdAt'
   | 'proposal__updatedAt'
+  | 'proposal__executedAt'
   | 'amount'
   | 'createdAt';
 
