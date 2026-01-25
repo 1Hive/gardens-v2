@@ -181,8 +181,9 @@ contract UpgradeCVDiamond is BaseMultiChain, StrategyDiamondConfiguratorBase {
         console2.log("  CVStrategyDiamondInit deployed:", address(initContract));
 
         bytes4 upgradeSelector = bytes4(keccak256("upgradeTo(address)"));
-        bytes memory diamondCutCalldata =
-            abi.encodeWithSelector(CVStrategy.diamondCut.selector, cuts, address(initContract), abi.encodeCall(CVStrategyDiamondInit.init, ()));
+        bytes memory diamondCutCalldata = abi.encodeWithSelector(
+            CVStrategy.diamondCut.selector, cuts, address(initContract), abi.encodeCall(CVStrategyDiamondInit.init, ())
+        );
         bytes memory upgradeCalldata = abi.encodeWithSelector(upgradeSelector, strategyImplementation);
 
         for (uint256 i = 0; i < cvStrategyProxies.length; i++) {
@@ -204,7 +205,8 @@ contract UpgradeCVDiamond is BaseMultiChain, StrategyDiamondConfiguratorBase {
      * @notice Build all facet cuts including DiamondLoupeFacet (6 total)
      */
     function _buildAllFacetCuts() internal view returns (IDiamond.FacetCut[] memory cuts) {
-        IDiamond.FacetCut[] memory baseCuts = _buildFacetCuts(adminFacet, allocationFacet, disputeFacet, powerFacet, proposalFacet);
+        IDiamond.FacetCut[] memory baseCuts =
+            _buildFacetCuts(adminFacet, allocationFacet, disputeFacet, powerFacet, proposalFacet);
         cuts = new IDiamond.FacetCut[](6);
         for (uint256 i = 0; i < 5; i++) {
             cuts[i] = baseCuts[i];
