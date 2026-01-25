@@ -15,6 +15,7 @@ import {IRegistry} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 import {ISafe} from "../interfaces/ISafe.sol";
 import {FAllo} from "../interfaces/FAllo.sol";
 import {Clone} from "allo-v2-contracts/core/libraries/Clone.sol";
+import {IDiamondCut} from "../diamonds/interfaces/IDiamondCut.sol";
 
 /// @notice Member struct for storing member information
 struct Member {
@@ -120,5 +121,10 @@ abstract contract CommunityBaseFacet is ProxyOwnableUpgrader, ReentrancyGuardUpg
     // slither-disable-next-line uninitialized-state
     uint256 public totalMembers;
 
-    uint256[49] private __gap;
+    /// @notice Facet configuration for CVStrategy instances
+    IDiamondCut.FacetCut[] internal strategyFacetCuts;
+    address internal strategyInit;
+    bytes internal strategyInitCalldata;
+
+    uint256[46] private __gap;
 }

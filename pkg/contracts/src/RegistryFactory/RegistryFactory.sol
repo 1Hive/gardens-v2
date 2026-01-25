@@ -6,6 +6,7 @@ import {ProxyOwnableUpgrader} from "../ProxyOwnableUpgrader.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {ISafe} from "../interfaces/ISafe.sol";
 import {Clone} from "allo-v2-contracts/core/libraries/Clone.sol";
+import {IDiamondCut} from "../diamonds/interfaces/IDiamondCut.sol";
 
 struct CommunityInfo {
     uint256 fee;
@@ -24,6 +25,13 @@ contract RegistryFactory is ProxyOwnableUpgrader {
     address public collateralVaultTemplate;
     mapping(address => bool) public protopiansAddresses;
     mapping(address => bool) public keepersAddresses;
+
+    IDiamondCut.FacetCut[] internal communityFacetCuts;
+    address internal communityInit;
+    bytes internal communityInitCalldata;
+    IDiamondCut.FacetCut[] internal strategyFacetCuts;
+    address internal strategyInit;
+    bytes internal strategyInitCalldata;
 
     /*|--------------------------------------------|*/
     /*|                 EVENTS                     |*/
@@ -186,5 +194,5 @@ contract RegistryFactory is ProxyOwnableUpgrader {
         return communityToInfo[_community].fee;
     }
 
-    uint256[50] private __gap;
+    uint256[44] private __gap;
 }

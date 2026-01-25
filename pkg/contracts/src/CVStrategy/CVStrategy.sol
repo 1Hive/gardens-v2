@@ -194,6 +194,8 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         collateralVault = ICollateralVault(Clone.createClone(collateralVaultTemplate, cloneNonce++));
         collateralVault.initialize();
 
+        _initializeFacets();
+
         CVStrategyInitializeParamsV0_2 memory ip = abi.decode(_data, (CVStrategyInitializeParamsV0_2));
 
         // if (ip.registryCommunity == address(0)) {
@@ -233,6 +235,9 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         if (address(sybilScorer) != address(0x0)) {
             _registerToSybilScorer(ip.sybilScorerThreshold);
         }
+    }
+
+    function _initializeFacets() internal {
     }
 
     /*|--------------------------------------------|*/

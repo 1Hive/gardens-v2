@@ -197,6 +197,11 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
     /// @notice The total number of members in the community
     uint256 public totalMembers;
 
+    /// @notice Facet configuration for CVStrategy instances
+    IDiamondCut.FacetCut[] internal strategyFacetCuts;
+    address internal strategyInit;
+    bytes internal strategyInitCalldata;
+
     /*|--------------------------------------------|*/
     /*|                 ROLES                      |*/
     /*|--------------------------------------------|*/
@@ -559,6 +564,6 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
 
     // receive() external payable {}
 
-    uint256[49] private __gap;
+    uint256[46] private __gap;
 }
 // slither-disable-end uninitialized-state
