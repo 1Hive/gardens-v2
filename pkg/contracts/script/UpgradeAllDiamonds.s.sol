@@ -23,7 +23,7 @@ import {IDiamond} from "../src/diamonds/interfaces/IDiamond.sol";
 import {IDiamondLoupe} from "../src/diamonds/interfaces/IDiamondLoupe.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {ProxyOwner} from "../src/ProxyOwner.sol";
-import {DiamondConfiguratorBase} from "../test/helpers/DiamondConfigurator.sol";
+import {StrategyDiamondConfiguratorBase} from "../test/helpers/StrategyDiamondConfigurator.sol";
 import {CommunityDiamondConfiguratorBase} from "../test/helpers/CommunityDiamondConfigurator.sol";
 import "forge-std/console2.sol";
 
@@ -33,7 +33,7 @@ import "forge-std/console2.sol";
  * @dev Generates a single Safe Transaction Builder JSON payload containing all upgrade transactions
  *      Ensures atomicity: all contracts upgrade together or none upgrade (via Safe multisig)
  */
-contract UpgradeAllDiamonds is BaseMultiChain, DiamondConfiguratorBase, CommunityDiamondConfiguratorBase {
+contract UpgradeAllDiamonds is BaseMultiChain, StrategyDiamondConfiguratorBase, CommunityDiamondConfiguratorBase {
     using stdJson for string;
 
     bool internal directBroadcastOverride;

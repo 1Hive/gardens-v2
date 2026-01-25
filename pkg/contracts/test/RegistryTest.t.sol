@@ -44,7 +44,7 @@ import {CVStrategyHelpers} from "./CVStrategyHelpers.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import {DiamondConfigurator} from "./helpers/DiamondConfigurator.sol";
+import {DiamondConfigurator} from "./helpers/StrategyDiamondConfigurator.sol";
 import {CommunityDiamondConfigurator} from "./helpers/CommunityDiamondConfigurator.sol";
 // @dev Run forge test --mc RegistryTest -vvvvv
 
