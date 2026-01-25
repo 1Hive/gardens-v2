@@ -91,28 +91,123 @@ contract RegistryFactory is ProxyOwnableUpgrader {
         // setReceiverAddress(_gardensFeeReceiver); //onlyOwner
     }
 
+    function initializeV2(
+        IDiamondCut.FacetCut[] memory communityFacetCuts_,
+        address communityInit_,
+        bytes memory communityInitCalldata_,
+        IDiamondCut.FacetCut[] memory strategyFacetCuts_,
+        address strategyInit_,
+        bytes memory strategyInitCalldata_
+    ) public reinitializer(2) onlyOwner {
+        setCommunityFacets(communityFacetCuts_, communityInit_, communityInitCalldata_);
+        setStrategyFacets(strategyFacetCuts_, strategyInit_, strategyInitCalldata_);
+    }
+
+    function setCommunityFacets(
+        IDiamondCut.FacetCut[] memory communityFacetCuts_,
+        address communityInit_,
+        bytes memory communityInitCalldata_
+    ) public onlyOwner {
+        _setFacetCuts(communityFacetCuts_, communityFacetCuts);
+        communityInit = communityInit_;
+        communityInitCalldata = communityInitCalldata_;
+    }
+
+    function setStrategyFacets(
+        IDiamondCut.FacetCut[] memory strategyFacetCuts_,
+        address strategyInit_,
+        bytes memory strategyInitCalldata_
+    ) public onlyOwner {
+        _setFacetCuts(strategyFacetCuts_, strategyFacetCuts);
+        strategyInit = strategyInit_;
+        strategyInitCalldata = strategyInitCalldata_;
+    }
+
     function createRegistry(RegistryCommunityInitializeParams memory params)
         public
         virtual
         returns (address _createdRegistryAddress)
     {
+        require(communityFacetCuts.length > 0, "Community facets not set");
+        require(strategyFacetCuts.length > 0, "Strategy facets not set");
+        return _createRegistry(
+            params,
+            _copyFacetCuts(communityFacetCuts),
+            communityInit,
+            communityInitCalldata,
+            _copyFacetCuts(strategyFacetCuts),
+            strategyInit,
+            strategyInitCalldata
+        );
+    }
+
+    function _createRegistry(
+        RegistryCommunityInitializeParams memory params,
+        IDiamondCut.FacetCut[] memory facetCuts,
+        address init,
+        bytes memory initCalldata,
+        IDiamondCut.FacetCut[] memory strategyFacetCuts_,
+        address strategyInit_,
+        bytes memory strategyInitCalldata_
+    ) internal returns (address _createdRegistryAddress) {
         params._nonce = nonce++;
         params._registryFactory = address(this);
 
         ERC1967Proxy proxy = new ERC1967Proxy(
             address(registryCommunityTemplate),
             abi.encodeWithSelector(
-                RegistryCommunity.initialize.selector, params, strategyTemplate, collateralVaultTemplate, proxyOwner()
+                RegistryCommunity.initialize.selector,
+                params,
+                strategyTemplate,
+                collateralVaultTemplate,
+                proxyOwner(),
+                facetCuts,
+                init,
+                initCalldata,
+                strategyFacetCuts_,
+                strategyInit_,
+                strategyInitCalldata_
             )
         );
 
         RegistryCommunity registryCommunity = RegistryCommunity(payable(address(proxy)));
         address createdRegistry = address(registryCommunity);
 
-        // registryCommunity.initialize(params);
         communityToInfo[createdRegistry].valid = true;
         emit CommunityCreated(createdRegistry);
         return createdRegistry;
+    }
+
+    function _setFacetCuts(IDiamondCut.FacetCut[] memory source, IDiamondCut.FacetCut[] storage target) internal {
+        delete target;
+        for (uint256 i = 0; i < source.length; i++) {
+            target.push();
+            IDiamondCut.FacetCut storage dest = target[i];
+            dest.facetAddress = source[i].facetAddress;
+            dest.action = source[i].action;
+            bytes4[] memory selectors = source[i].functionSelectors;
+            for (uint256 j = 0; j < selectors.length; j++) {
+                dest.functionSelectors.push(selectors[j]);
+            }
+        }
+    }
+
+    function _copyFacetCuts(IDiamondCut.FacetCut[] storage source)
+        internal
+        view
+        returns (IDiamondCut.FacetCut[] memory)
+    {
+        IDiamondCut.FacetCut[] memory dest = new IDiamondCut.FacetCut[](source.length);
+        for (uint256 i = 0; i < source.length; i++) {
+            dest[i].facetAddress = source[i].facetAddress;
+            dest[i].action = source[i].action;
+            bytes4[] storage selectors = source[i].functionSelectors;
+            dest[i].functionSelectors = new bytes4[](selectors.length);
+            for (uint256 j = 0; j < selectors.length; j++) {
+                dest[i].functionSelectors[j] = selectors[j];
+            }
+        }
+        return dest;
     }
 
     function setReceiverAddress(address _newFeeReceiver) public virtual onlyOwner {
