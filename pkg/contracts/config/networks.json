@@ -563,6 +563,7 @@
           "0x4a912f78500101cd35103ebe40cadd713f5c4e29",
           "0x585094bc142b67a184f53db6bbb9b7439ef11c17",
           "0x5da9fa78ee847387ddccd5319fafa2f699087fad",
+          "0x641dfcb54cedd749ed97cd8169e8c95872395144",
           "0x69c85b99e2cecb18df235d751406a0e6338c7234",
           "0x75112eb479dae30c34f2c2b60792a29c8d17d66a",
           "0x7c6f82c77cd0ca1eac659d73ce75bdd9f44df8af",
@@ -606,7 +607,7 @@
           "0xf51f81d34fbfc56bb57dca0a3a4f1591065bf499"
         ]
       },
-      "hash": "b7f1b5dac492c40f2c212a27a74441bb5e77a786",
+      "hash": "8b4accc859935e0f8c25b97b0e3e3bc4aa32e2f9",
       "IMPLEMENTATIONS": {
         "CV_STRATEGY": "0xca52f3a0a730f977b80ac9a02f256de6f7526116",
         "REGISTRY_COMMUNITY": "0x7ffa9482a1753b93de61bec126a80a5662828700",
