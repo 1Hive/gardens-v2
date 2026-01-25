@@ -46,13 +46,14 @@ import {ConvictionsUtils} from "../src/CVStrategy/ConvictionsUtils.sol";
 
 import {ISybilScorer} from "../src/ISybilScorer.sol";
 import {PassportScorer} from "../src/PassportScorer.sol";
+import {RegistryCommunityDiamondInit} from "../src/RegistryCommunity/RegistryCommunityDiamondInit.sol";
+import {CVStrategyDiamondInit} from "../src/CVStrategy/CVStrategyDiamondInit.sol";
 
 import {GasHelpers2} from "./shared/GasHelpers2.sol";
 import {SafeSetup} from "./shared/SafeSetup.sol";
 import {CVStrategyHelpers} from "./CVStrategyHelpers.sol";
-import {DiamondConfigurator} from "./helpers/DiamondConfigurator.sol";
+import {DiamondConfigurator} from "./helpers/StrategyDiamondConfigurator.sol";
 import {CommunityDiamondConfigurator} from "./helpers/CommunityDiamondConfigurator.sol";
-import {IDiamond} from "../src/diamonds/interfaces/IDiamond.sol";
 
 import {ABDKMath64x64} from "./ABDKMath64x64.sol";
 import {Upgrades} from "@openzeppelin/foundry/LegacyUpgrades.sol";
@@ -150,6 +151,15 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
 
         registryFactory = RegistryFactory(address(proxy));
 
+        registryFactory.initializeV2(
+            communityDiamondConfigurator.getFacetCuts(),
+            address(communityDiamondConfigurator.diamondInit()),
+            abi.encodeCall(RegistryCommunityDiamondInit.init, ()),
+            diamondConfigurator.getFacetCuts(),
+            address(diamondConfigurator.diamondInit()),
+            abi.encodeCall(CVStrategyDiamondInit.init, ())
+        );
+
         vm.stopPrank();
 
         RegistryCommunityInitializeParams memory params;
@@ -164,12 +174,6 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         params._councilSafe = payable(address(_councilSafe()));
 
         registryCommunity = RegistryCommunity(payable(registryFactory.createRegistry(params)));
-
-        // Configure RegistryCommunity diamond facets (must be called as owner)
-        vm.startPrank(factoryOwner);
-        IDiamond.FacetCut[] memory communityFacetCuts = communityDiamondConfigurator.getFacetCuts();
-        registryCommunity.diamondCut(communityFacetCuts, address(0), "");
-        vm.stopPrank();
 
         proxy = new ERC1967Proxy(
             address(new PassportScorer()),

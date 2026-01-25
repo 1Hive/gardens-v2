@@ -37,6 +37,8 @@ import {
     CommunityParams,
     RegistryCommunityInitializeParams
 } from "../src/RegistryCommunity/RegistryCommunity.sol";
+import {RegistryCommunityDiamondInit} from "../src/RegistryCommunity/RegistryCommunityDiamondInit.sol";
+import {CVStrategyDiamondInit} from "../src/CVStrategy/CVStrategyDiamondInit.sol";
 import {SafeSetup} from "./shared/SafeSetup.sol";
 
 import {CVStrategyHelpers} from "./CVStrategyHelpers.sol";
@@ -122,6 +124,9 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         vm.startPrank(allo_owner());
         allo().transferOwnership(local());
         vm.stopPrank();
+        diamondConfigurator = new DiamondConfigurator();
+        communityDiamondConfigurator = new CommunityDiamondConfigurator();
+
         vm.startPrank(gardenOwner);
         ERC1967Proxy proxy = new ERC1967Proxy(
             address(new RegistryFactory()),
@@ -137,13 +142,19 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
 
         registryFactory = RegistryFactory(address(proxy));
 
+        registryFactory.initializeV2(
+            communityDiamondConfigurator.getFacetCuts(),
+            address(communityDiamondConfigurator.diamondInit()),
+            abi.encodeCall(RegistryCommunityDiamondInit.init, ()),
+            diamondConfigurator.getFacetCuts(),
+            address(diamondConfigurator.diamondInit()),
+            abi.encodeCall(CVStrategyDiamondInit.init, ())
+        );
+
         // registryFactory = new RegistryFactory();
         // _registryFactory().setReceiverAddress(address(protocolFeeReceiver));
 
         vm.stopPrank();
-
-        diamondConfigurator = new DiamondConfigurator();
-        communityDiamondConfigurator = new CommunityDiamondConfigurator();
 
         RegistryCommunityInitializeParams memory params;
         params._allo = address(allo());
@@ -157,9 +168,6 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         params._isKickEnabled = true;
 
         registryCommunity = RegistryCommunity(registryFactory.createRegistry(params));
-        vm.startPrank(gardenOwner);
-        registryCommunity.diamondCut(communityDiamondConfigurator.getFacetCuts(), address(0), "");
-        vm.stopPrank();
         ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
         (uint256 returnedPoolId, address strategyProxy) = registryCommunity.createPool(
             NATIVE,
@@ -178,9 +186,6 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         );
         strategy = CVStrategy(payable(strategyProxy));
         poolId = returnedPoolId;
-        vm.startPrank(strategy.owner());
-        strategy.diamondCut(diamondConfigurator.getFacetCuts(), address(0), "");
-        vm.stopPrank();
         assertEq(registryFactory.nonce(), 1, "nonce before upgrade");
 
         vm.startPrank(gardenOwner);
@@ -188,22 +193,18 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
 
         params._isKickEnabled = false;
         nonKickableCommunity = RegistryCommunity(registryFactory.createRegistry(params));
-        vm.startPrank(gardenOwner);
-        nonKickableCommunity.diamondCut(communityDiamondConfigurator.getFacetCuts(), address(0), "");
-        vm.stopPrank();
     }
 
-    function _updateAllowlist(CVStrategy target, address[] memory membersToAdd, address[] memory membersToRemove) internal {
-        ArbitrableConfig memory emptyArbConfig =
-            ArbitrableConfig(IArbitrator(address(0)), address(0), 0, 0, 0, 0);
+    function _updateAllowlist(CVStrategy target, address[] memory membersToAdd, address[] memory membersToRemove)
+        internal
+    {
+        ArbitrableConfig memory emptyArbConfig = ArbitrableConfig(IArbitrator(address(0)), address(0), 0, 0, 0, 0);
         CVParams memory emptyCvParams = CVParams(0, 0, 0, 0);
         target.setPoolParams(emptyArbConfig, emptyCvParams, 0, membersToAdd, membersToRemove, address(0));
     }
 
     function _configureStrategy(CVStrategy target) internal {
-        vm.startPrank(target.owner());
-        target.diamondCut(diamondConfigurator.getFacetCuts(), address(0), "");
-        vm.stopPrank();
+        target;
     }
 
     function _registryCommunity() internal view returns (RegistryCommunity) {

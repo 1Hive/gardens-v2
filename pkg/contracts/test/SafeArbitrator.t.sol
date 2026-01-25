@@ -21,8 +21,10 @@ import {IArbitrable} from "../src/interfaces/IArbitrable.sol";
 import {GV2ERC20} from "../script/GV2ERC20.sol";
 import {CVStrategyHelpers} from "./CVStrategyHelpers.sol";
 import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
-import {DiamondConfigurator} from "./helpers/DiamondConfigurator.sol";
+import {DiamondConfigurator} from "./helpers/StrategyDiamondConfigurator.sol";
 import {CommunityDiamondConfigurator} from "./helpers/CommunityDiamondConfigurator.sol";
+import {RegistryCommunityDiamondInit} from "../src/RegistryCommunity/RegistryCommunityDiamondInit.sol";
+import {CVStrategyDiamondInit} from "../src/CVStrategy/CVStrategyDiamondInit.sol";
 
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -98,31 +100,34 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
         params._metadata = metadata;
         params._councilSafe = payable(address(_councilSafe()));
 
-        registryCommunity = RegistryCommunity(
-            RegistryFactory(
-                    address(
-                        new ERC1967Proxy(
-                            address(new RegistryFactory()),
-                            abi.encodeWithSelector(
-                                RegistryFactory.initialize.selector,
-                                address(factoryOwner),
-                                address(2),
-                                address(new RegistryCommunity()),
-                                address(new CVStrategy()),
-                                address(new CollateralVault())
-                            )
-                        )
-                    )
-                ).createRegistry(params)
-        );
-
-        // Configure community diamond facets
-        communityDiamondConfigurator = new CommunityDiamondConfigurator();
-        vm.startPrank(factoryOwner);
-        registryCommunity.diamondCut(communityDiamondConfigurator.getFacetCuts(), address(0), "");
-        vm.stopPrank();
-
         diamondConfigurator = new DiamondConfigurator();
+        communityDiamondConfigurator = new CommunityDiamondConfigurator();
+        RegistryFactory factory = RegistryFactory(
+            address(
+                new ERC1967Proxy(
+                    address(new RegistryFactory()),
+                    abi.encodeWithSelector(
+                        RegistryFactory.initialize.selector,
+                        address(factoryOwner),
+                        address(2),
+                        address(new RegistryCommunity()),
+                        address(new CVStrategy()),
+                        address(new CollateralVault())
+                    )
+                )
+            )
+        );
+        vm.startPrank(factoryOwner);
+        factory.initializeV2(
+            communityDiamondConfigurator.getFacetCuts(),
+            address(communityDiamondConfigurator.diamondInit()),
+            abi.encodeCall(RegistryCommunityDiamondInit.init, ()),
+            diamondConfigurator.getFacetCuts(),
+            address(diamondConfigurator.diamondInit()),
+            abi.encodeCall(CVStrategyDiamondInit.init, ())
+        );
+        vm.stopPrank();
+        registryCommunity = RegistryCommunity(factory.createRegistry(params));
 
         uint256 _poolId;
         address _strategy;
@@ -149,11 +154,6 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
 
         poolId = _poolId;
         cvStrategy = CVStrategy(payable(_strategy));
-
-        // configure strategy diamond facets
-        vm.startPrank(cvStrategy.owner());
-        cvStrategy.diamondCut(diamondConfigurator.getFacetCuts(), address(0), "");
-        vm.stopPrank();
 
         // register tribunal safe for this arbitrable strategy
         vm.prank(address(cvStrategy));
