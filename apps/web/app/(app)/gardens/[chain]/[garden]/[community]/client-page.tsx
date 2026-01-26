@@ -3,7 +3,6 @@
 import React, { useEffect, useRef, useState } from "react";
 
 import {
-  ChevronUpIcon,
   CircleStackIcon,
   CurrencyDollarIcon,
   PlusIcon,
@@ -12,8 +11,6 @@ import {
 } from "@heroicons/react/24/outline";
 
 import { FetchTokenResult } from "@wagmi/core";
-import cn from "classnames";
-
 import { Dnum, multiply } from "dnum";
 import { Maybe } from "graphql/jsutils/Maybe";
 import { AnimatePresence, motion } from "motion/react";

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Tab } from "@headlessui/react";
+import { UserGroupIcon } from "@heroicons/react/24/outline";
 import { Address } from "viem";
 import {
   useBalance,
@@ -12,6 +13,8 @@ import {
 } from "wagmi";
 import {
   getAlloQuery,
+  getCommunityDocument,
+  getCommunityQuery,
   getMembersStrategyDocument,
   getMembersStrategyQuery,
   getMemberStrategyDocument,
@@ -43,7 +46,11 @@ import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { useSuperfluidToken } from "@/hooks/useSuperfluidToken";
 import { registryCommunityABI } from "@/src/generated";
 import { PoolTypes } from "@/types";
-import { calculatePercentageBigInt, formatTokenAmount } from "@/utils/numbers";
+import {
+  calculatePercentageBigInt,
+  formatTokenAmount,
+  SCALE_PRECISION,
+} from "@/utils/numbers";
 
 export type AlloQuery = getAlloQuery["allos"][number];
 
@@ -103,6 +110,56 @@ export default function ClientPage({
     chainId: chainId,
     enabled: !!wallet,
   });
+
+  //Community Query and Register Member data
+  const {
+    data: result,
+    error: errorCommunityQuery,
+    refetch: refetchCommunityQuery,
+  } = useSubgraphQuery<getCommunityQuery>({
+    query: getCommunityDocument,
+    enabled: !!wallet && !!strategy?.token,
+    variables: {
+      communityAddr: _community.toLowerCase(),
+      tokenAddr: garden.toLocaleLowerCase(),
+    },
+    changeScope: [
+      { topic: "community", id: communityAddress },
+      { topic: "member", containerId: communityAddress },
+    ],
+  });
+
+  console.log("result", result?.registryCommunity);
+
+  const registryCommunity = result?.registryCommunity;
+  let {
+    communityName,
+    members,
+    strategies,
+    communityFee,
+    registerStakeAmount,
+    protocolFee,
+  } = registryCommunity ?? {};
+
+  const registerStakeAmountValue = registerStakeAmount ?? 0;
+  const registerStakeAmountBn = BigInt(registerStakeAmountValue);
+  const protocolFeeScaled = protocolFee != null ? BigInt(protocolFee) : 0n;
+  const communityFeeScaled = communityFee != null ? BigInt(communityFee) : 0n;
+
+  const communityFeeAmount =
+    communityFeeScaled > 0n ?
+      (registerStakeAmountBn * communityFeeScaled) / BigInt(SCALE_PRECISION)
+    : 0n;
+  const protocolFeeAmount =
+    protocolFeeScaled > 0n ?
+      (registerStakeAmountBn * protocolFeeScaled) / BigInt(SCALE_PRECISION)
+    : 0n;
+
+  const totalRegistrationCost =
+    registerStakeAmountBn + // Min stake
+    communityFeeAmount + // Community fee as % of min stake
+    protocolFeeAmount; // Protocol fee as extra
+  //
 
   const { data: memberData, error: errorMemberData } =
     useSubgraphQuery<isMemberQuery>({
@@ -256,8 +313,6 @@ export default function ClientPage({
     enabled: !isMemberCommunity,
   });
 
-  console.log("token pool", tokenGarden);
-
   const { data: metadataResult } = useMetadataIpfsFetch({
     hash: strategy?.metadataHash,
     enabled: strategy && !strategy?.metadata,
@@ -389,6 +444,7 @@ export default function ClientPage({
   }
 
   const showMissingFundingTokenWarning = isMissingFundingToken && !error;
+
   const alloInfo = data.allos[0];
 
   const isEnabled = data.cvstrategies?.[0]?.isEnabled as boolean;
@@ -414,25 +470,78 @@ export default function ClientPage({
       )}
       {/* ================= DESKTOP ================= */}
 
-      <PoolHeader
-        poolToken={poolToken}
-        strategy={strategy}
-        arbitrableConfig={data.arbitrableConfigs[0]}
-        poolId={poolId}
-        ipfsResult={metadata}
-        isEnabled={isEnabled}
-        maxAmount={maxAmount}
-        superTokenCandidate={superTokenCandidate}
-        superToken={
-          superTokenInfo && {
-            ...superTokenInfo,
-            sameAsUnderlying: superTokenCandidate?.sameAsUnderlying,
-            address: effectiveSuperToken as Address,
+      {/*  Join community - Activate governace path and description from pool page */}
+      <div className="sm:col-span-12 xl:col-span-9 sm:flex flex-col-reverse gap-6">
+        {!isMemberCommunity && registryCommunity && (
+          <div className="border-[1px] rounded-xl shadow-md border-tertiary-content bg-tertiary-soft p-6 dark:bg-primary-soft-dark">
+            <div className="flex items-start gap-4">
+              <div className="rounded-full bg-tertiary-content/10 p-3 flex-shrink-0">
+                <UserGroupIcon
+                  className="h-6 w-6 text-tertiary-content"
+                  aria-hidden="true"
+                />
+              </div>
+              <div className="flex-1 space-y-4">
+                <div>
+                  <h4 className="mb-2">
+                    {`Join ${communityName} Community to Activate Governance`}
+                  </h4>
+                  <p className="subtitle2 text-xs sm:text-sm">
+                    You must be a member of this community before you can
+                    activate governance and vote on proposals.
+                  </p>
+                </div>
+
+                <div className="rounded-lg bg-tertiary/50 space-y-2 ">
+                  <div className="flex items-start">
+                    <InfoBox
+                      infoBoxType="info"
+                      title="Required steps"
+                      className="w-full rounded-xl bg-neutral"
+                    >
+                      <ol className="list-decimal list-inside space-y-1 ml-2">
+                        <li>{`Join the ${communityName} community.`}</li>
+                        <li>Activate governance in this pool.</li>
+                        <li>
+                          Receive Voting Power (VP) and vote on proposals.
+                        </li>
+                      </ol>
+                    </InfoBox>
+                  </div>
+                </div>
+                {tokenGarden && (
+                  <RegisterMember
+                    memberData={wallet ? memberData : undefined}
+                    registrationCost={totalRegistrationCost}
+                    token={tokenGarden}
+                    registryCommunity={registryCommunity}
+                  />
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        <PoolHeader
+          poolToken={poolToken}
+          strategy={strategy}
+          arbitrableConfig={data.arbitrableConfigs[0]}
+          poolId={poolId}
+          ipfsResult={metadata}
+          isEnabled={isEnabled}
+          maxAmount={maxAmount}
+          superTokenCandidate={superTokenCandidate}
+          superToken={
+            superTokenInfo && {
+              ...superTokenInfo,
+              sameAsUnderlying: superTokenCandidate?.sameAsUnderlying,
+              address: effectiveSuperToken as Address,
+            }
           }
-        }
-        setSuperTokenCandidate={setSuperTokenCandidate}
-        minThGtTotalEffPoints={minThGtTotalEffPoints}
-      />
+          setSuperTokenCandidate={setSuperTokenCandidate}
+          minThGtTotalEffPoints={minThGtTotalEffPoints}
+        />
+      </div>
 
       {isEnabled && (
         <div className="hidden sm:col-span-12 xl:col-span-3 sm:flex flex-col gap-6">
@@ -471,13 +580,6 @@ export default function ClientPage({
           />
         </div>
       )}
-
-      {/* <RegisterMember
-        memberData={wallet ? memberData : undefined}
-        registrationCost={totalRegistrationCost}
-        token={tokenGarden}
-        registryCommunity={registryCommunity}
-      /> */}
 
       {isEnabled && (
         <Proposals
