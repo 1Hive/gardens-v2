@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Tab } from "@headlessui/react";
-import { UserGroupIcon } from "@heroicons/react/24/outline";
+import { PowerIcon, UserGroupIcon } from "@heroicons/react/24/outline";
 import { Address } from "viem";
 import {
   useBalance,
@@ -25,7 +25,9 @@ import {
   isMemberQuery,
 } from "#/subgraph/.graphclient";
 import {
+  ActivatePoints,
   Button,
+  CheckSybil,
   InfoBox,
   PoolGovernance,
   PoolMetrics,
@@ -129,7 +131,18 @@ export default function ClientPage({
     ],
   });
 
-  console.log("result", result?.registryCommunity);
+  const { data: isMemberResult } = useSubgraphQuery<isMemberQuery>({
+    query: isMemberDocument,
+    variables: {
+      me: wallet?.toLowerCase(),
+      comm: _community.toLowerCase(),
+    },
+    changeScope: [
+      { topic: "community", id: communityAddress },
+      { topic: "member", containerId: communityAddress },
+    ],
+    enabled: wallet !== undefined,
+  });
 
   const registryCommunity = result?.registryCommunity;
   let {
@@ -159,6 +172,9 @@ export default function ClientPage({
     registerStakeAmountBn + // Min stake
     communityFeeAmount + // Community fee as % of min stake
     protocolFeeAmount; // Protocol fee as extra
+
+  const [triggerSybilCheckModalClose, setTriggerSybilCheckModalClose] =
+    useState(false);
   //
 
   const { data: memberData, error: errorMemberData } =
@@ -166,7 +182,7 @@ export default function ClientPage({
       query: isMemberDocument,
       variables: {
         me: wallet?.toLowerCase(),
-        comm: strategy?.registryCommunity.id.toLowerCase(),
+        comm: communityAddress?.toLowerCase(),
       },
       changeScope: [
         {
@@ -182,6 +198,7 @@ export default function ClientPage({
       ],
       enabled: !!wallet && !!strategy?.registryCommunity?.id,
     });
+
   const { data: memberStrategyData } = useSubgraphQuery<getMemberStrategyQuery>(
     {
       query: getMemberStrategyDocument,
@@ -459,6 +476,10 @@ export default function ClientPage({
       )
     : undefined;
 
+  const isMember = memberData?.member?.memberCommunity?.[0]?.isRegistered;
+
+  console.log("isMember", isMember);
+
   return (
     <>
       {showMissingFundingTokenWarning && (
@@ -472,8 +493,9 @@ export default function ClientPage({
 
       {/*  Join community - Activate governace path and description from pool page */}
       <div className="sm:col-span-12 xl:col-span-9 sm:flex flex-col-reverse gap-6">
+        {/* Join community box */}
         {!isMemberCommunity && registryCommunity && (
-          <div className="border-[1px] rounded-xl shadow-md border-tertiary-content bg-tertiary-soft p-6 dark:bg-primary-soft-dark">
+          <div className="border rounded-xl shadow-md border-tertiary-content bg-tertiary-soft p-6 dark:bg-primary-soft-dark">
             <div className="flex items-start gap-4">
               <div className="rounded-full bg-tertiary-content/10 p-3 flex-shrink-0">
                 <UserGroupIcon
@@ -481,37 +503,33 @@ export default function ClientPage({
                   aria-hidden="true"
                 />
               </div>
+
               <div className="flex-1 space-y-4">
                 <div>
                   <h4 className="mb-2">
-                    {`Join ${communityName} Community to Activate Governance`}
+                    {`Join ${communityName} to Enable Governance`}
                   </h4>
                   <p className="subtitle2 text-xs sm:text-sm">
-                    You must be a member of this community before you can
-                    activate governance and vote on proposals.
+                    You must be a member of this community before activating
+                    governance or voting on proposals.
                   </p>
                 </div>
 
-                <div className="rounded-lg bg-tertiary/50 space-y-2 ">
-                  <div className="flex items-start">
-                    <InfoBox
-                      infoBoxType="info"
-                      title="Required steps"
-                      className="w-full rounded-xl bg-neutral"
-                    >
-                      <ol className="list-decimal list-inside space-y-1 ml-2">
-                        <li>{`Join the ${communityName} community.`}</li>
-                        <li>Activate governance in this pool.</li>
-                        <li>
-                          Receive Voting Power (VP) and vote on proposals.
-                        </li>
-                      </ol>
-                    </InfoBox>
-                  </div>
-                </div>
+                <InfoBox
+                  infoBoxType="info"
+                  title="Steps to get started"
+                  className="w-full rounded-xl bg-neutral"
+                >
+                  <ul className="list-disc list-inside space-y-1 ml-2 font-press">
+                    <li>{`Join the ${communityName} community.`}</li>
+                    <li>Activate governance in this pool.</li>
+                    <li>Receive Voting Power (VP) and vote on proposals.</li>
+                  </ul>
+                </InfoBox>
+
                 {tokenGarden && (
                   <RegisterMember
-                    memberData={wallet ? memberData : undefined}
+                    memberData={wallet ? isMemberResult : undefined}
                     registrationCost={totalRegistrationCost}
                     token={tokenGarden}
                     registryCommunity={registryCommunity}
@@ -522,6 +540,70 @@ export default function ClientPage({
           </div>
         )}
 
+        {/* Activate governance box */}
+        {isMemberCommunity && !memberActivatedStrategy && (
+          <div className="border rounded-xl shadow-md border-primary-content bg-primary-soft p-6 dark:bg-primary-soft-dark">
+            <div className="flex items-start gap-4">
+              <div className="rounded-full bg-primary-content/10 p-3 flex-shrink-0">
+                <PowerIcon
+                  className="h-6 w-6 text-primary-content"
+                  aria-hidden="true"
+                />
+              </div>
+
+              <div className="flex-1 space-y-4">
+                <div>
+                  <h4 className="mb-2">Activate Governance & Start Voting</h4>
+                  <p className="subtitle2 text-xs sm:text-sm">
+                    You are already a community member. Activate governance in
+                    this pool to receive Voting Power (VP) and participate in
+                    decision-making.
+                  </p>
+                </div>
+
+                <InfoBox
+                  infoBoxType="success"
+                  title="How voting works"
+                  className="w-full rounded-xl bg-neutral"
+                >
+                  <ul className="list-disc list-inside space-y-2 ml-2 font-press">
+                    <li>
+                      The pool has a total of <strong>100 VP</strong>, shared
+                      among all activated members.
+                    </li>
+                    <li>
+                      Your VP represents your influence in the pool, based on
+                      your stake.
+                    </li>
+                    <li>
+                      You can distribute your VP across multiple proposals at
+                      the same time using percentages. Higher VP allocation
+                      increases a proposal’s conviction.
+                    </li>
+                  </ul>
+                </InfoBox>
+
+                <div className="flex flex-col gap-4">
+                  <CheckSybil
+                    strategy={strategy}
+                    enableCheck={!memberActivatedStrategy}
+                    triggerClose={triggerSybilCheckModalClose}
+                  >
+                    <ActivatePoints
+                      strategy={strategy}
+                      communityAddress={communityAddress}
+                      isMemberActivated={memberActivatedStrategy}
+                      isMember={isMemberCommunity}
+                      handleTxSuccess={() =>
+                        setTriggerSybilCheckModalClose(true)
+                      }
+                    />
+                  </CheckSybil>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
         <PoolHeader
           poolToken={poolToken}
           strategy={strategy}

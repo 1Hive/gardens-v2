@@ -55,6 +55,7 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
   const { address } = useAccount();
   const [triggerSybilCheckModalClose, setTriggerSybilCheckModalClose] =
     useState(false);
+
   const [openGovernanceDetailsModal, setOpenGovernanceDetailsModal] =
     useState(false);
 
