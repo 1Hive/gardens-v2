@@ -144,7 +144,8 @@ export function ActivatePoints({
       onClick={handleDeactivate}
       btnStyle="filled"
       color="danger"
-      disabled={!isMemberActivated}
+      disabled={missmatchUrl || disableActiveBtn || !isMemberActivated}
+      tooltip={tooltipMessage}
       isLoading={isLoadingDeactivatePoints}
       className="w-full"
     >

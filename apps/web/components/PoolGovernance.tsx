@@ -50,9 +50,10 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
   memberActivatedStrategy,
   membersStrategyData,
 }) => {
-  const showVotingPowerBox = isMemberCommunity && memberActivatedStrategy;
-  const poolSystem = strategy.config.pointSystem;
   const { address } = useAccount();
+  const showVotingPowerBox =
+    isMemberCommunity && memberActivatedStrategy && address;
+  const poolSystem = strategy.config.pointSystem;
   const [triggerSybilCheckModalClose, setTriggerSybilCheckModalClose] =
     useState(false);
 
