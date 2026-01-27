@@ -858,7 +858,9 @@ export default function PoolHeader({
                   </div>
                 )}
 
-                <div className="z-[9999] dropdown dropdown-hover dropdown-end">
+                <div
+                  className={`z-[9999] dropdown dropdown-hover dropdown-end ${!!isCouncilMember || isCouncilSafe ? "w-fit" : "w-full flex justify-end"}`}
+                >
                   <Button
                     btnStyle="outline"
                     color="primary"

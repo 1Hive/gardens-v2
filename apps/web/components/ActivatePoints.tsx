@@ -21,6 +21,7 @@ type ActiveMemberProps = {
   isMemberActivated: boolean | undefined;
   isMember: boolean | undefined;
   handleTxSuccess?: () => void;
+  activate?: boolean;
 };
 
 export function ActivatePoints({
@@ -28,6 +29,7 @@ export function ActivatePoints({
   isMember,
   isMemberActivated,
   handleTxSuccess = () => {},
+  activate = true,
 }: ActiveMemberProps) {
   const { address: connectedAccount } = useAccount();
   const { openConnectModal } = useConnectModal();
@@ -90,18 +92,14 @@ export function ActivatePoints({
   useErrorDetails(errorActivatePoints, "activatePoints");
   useErrorDetails(errorDeactivatePoints, "deactivatePoints");
 
-  async function handleClick() {
-    if (connectedAccount) {
-      if (isMemberActivated) {
-        writeDeactivatePoints?.({ args: [] });
-      } else {
-        writeActivatePoints?.({
-          args: [],
-        });
-      }
-    } else {
-      openConnectModal?.();
-    }
+  function handleActivate() {
+    if (!connectedAccount) return openConnectModal?.();
+    writeActivatePoints?.({ args: [] });
+  }
+
+  function handleDeactivate() {
+    if (!connectedAccount) return openConnectModal?.();
+    writeDeactivatePoints?.({ args: [] });
   }
 
   // Activate Disable Button condition => message mapping
@@ -124,16 +122,33 @@ export function ActivatePoints({
     disableActiveBtnCondition,
   );
 
+  // ACTIVATE BUTTON
+  if (activate) {
+    return (
+      <Button
+        onClick={handleActivate}
+        btnStyle="filled"
+        color="primary"
+        disabled={missmatchUrl || disableActiveBtn}
+        tooltip={tooltipMessage}
+        isLoading={isLoadingActivatePoints}
+      >
+        Activate governance
+      </Button>
+    );
+  }
+
+  // DEACTIVATE BUTTON
   return (
     <Button
-      onClick={handleClick}
-      btnStyle={isMemberActivated ? "outline" : "filled"}
-      color={isMemberActivated ? "danger" : "primary"}
-      disabled={missmatchUrl || disableActiveBtn || !isAllowed}
-      tooltip={tooltipMessage}
-      isLoading={isLoadingActivatePoints || isLoadingDeactivatePoints}
+      onClick={handleDeactivate}
+      btnStyle="filled"
+      color="danger"
+      disabled={!isMemberActivated}
+      isLoading={isLoadingDeactivatePoints}
+      className="w-full"
     >
-      {isMemberActivated ? "Deactivate governance" : "Activate governance"}
+      Deactivate governance
     </Button>
   );
 }
