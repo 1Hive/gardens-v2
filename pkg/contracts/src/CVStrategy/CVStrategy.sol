@@ -194,8 +194,6 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         collateralVault = ICollateralVault(Clone.createClone(collateralVaultTemplate, cloneNonce++));
         collateralVault.initialize();
 
-        _initializeFacets();
-
         CVStrategyInitializeParamsV0_2 memory ip = abi.decode(_data, (CVStrategyInitializeParamsV0_2));
 
         // if (ip.registryCommunity == address(0)) {
@@ -268,6 +266,14 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     function onlyCouncilSafe() internal view {
         if (msg.sender != address(registryCommunity.councilSafe()) && msg.sender != owner()) {
             revert OnlyCouncilSafe(msg.sender, address(registryCommunity.councilSafe()), owner());
+        }
+    }
+
+    function _checkOwner() internal view override {
+        address directOwner = proxyOwner();
+        address resolvedOwner = owner();
+        if (msg.sender != directOwner && msg.sender != resolvedOwner) {
+            revert("Ownable: caller is not the owner");
         }
     }
 

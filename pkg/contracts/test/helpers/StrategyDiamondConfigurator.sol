@@ -27,14 +27,14 @@ abstract contract StrategyDiamondConfiguratorBase {
         adminSelectors[0] = CVAdminFacet.setPoolParams.selector;
         adminSelectors[1] = CVAdminFacet.connectSuperfluidGDA.selector;
         adminSelectors[2] = CVAdminFacet.disconnectSuperfluidGDA.selector;
-        cuts[1] = IDiamond.FacetCut({
+        cuts[0] = IDiamond.FacetCut({
             facetAddress: address(_adminFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: adminSelectors
         });
 
         bytes4[] memory allocationSelectors = new bytes4[](2);
         allocationSelectors[0] = CVAllocationFacet.allocate.selector;
         allocationSelectors[1] = CVAllocationFacet.distribute.selector;
-        cuts[2] = IDiamond.FacetCut({
+        cuts[1] = IDiamond.FacetCut({
             facetAddress: address(_allocationFacet),
             action: IDiamond.FacetCutAction.Auto,
             functionSelectors: allocationSelectors
@@ -43,7 +43,7 @@ abstract contract StrategyDiamondConfiguratorBase {
         bytes4[] memory disputeSelectors = new bytes4[](2);
         disputeSelectors[0] = CVDisputeFacet.disputeProposal.selector;
         disputeSelectors[1] = CVDisputeFacet.rule.selector;
-        cuts[3] = IDiamond.FacetCut({
+        cuts[2] = IDiamond.FacetCut({
             facetAddress: address(_disputeFacet),
             action: IDiamond.FacetCutAction.Auto,
             functionSelectors: disputeSelectors
@@ -55,7 +55,7 @@ abstract contract StrategyDiamondConfiguratorBase {
         powerSelectors[2] = CVPowerFacet.decreasePower.selector;
         powerSelectors[3] = bytes4(keccak256("deactivatePoints()"));
         powerSelectors[4] = bytes4(keccak256("deactivatePoints(address)"));
-        cuts[4] = IDiamond.FacetCut({
+        cuts[3] = IDiamond.FacetCut({
             facetAddress: address(_powerFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: powerSelectors
         });
 
@@ -63,7 +63,7 @@ abstract contract StrategyDiamondConfiguratorBase {
         proposalSelectors[0] = CVProposalFacet.registerRecipient.selector;
         proposalSelectors[1] = CVProposalFacet.cancelProposal.selector;
         proposalSelectors[2] = CVProposalFacet.editProposal.selector;
-        cuts[5] = IDiamond.FacetCut({
+        cuts[4] = IDiamond.FacetCut({
             facetAddress: address(_proposalFacet),
             action: IDiamond.FacetCutAction.Auto,
             functionSelectors: proposalSelectors
@@ -124,8 +124,8 @@ contract DiamondConfigurator is StrategyDiamondConfiguratorBase {
         // Add loupe facet as 6th facet
         cuts = new IDiamond.FacetCut[](6);
         cuts[0] = _buildLoupeFacetCut(loupeFacet);
-        for (uint256 i = 1; i <= 5; i++) {
-            cuts[i] = baseCuts[i];
+        for (uint256 i = 0; i < 5; i++) {
+            cuts[i + 1] = baseCuts[i];
         }
     }
 
@@ -146,8 +146,8 @@ contract DiamondConfigurator is StrategyDiamondConfiguratorBase {
 
         cuts = new IDiamond.FacetCut[](6);
         cuts[0] = _buildLoupeFacetCut(_loupeFacet);
-        for (uint256 i = 1; i <= 5; i++) {
-            cuts[i] = baseCuts[i];
+        for (uint256 i = 0; i < 5; i++) {
+            cuts[i + 1] = baseCuts[i];
         }
     }
 

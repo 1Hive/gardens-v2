@@ -364,7 +364,9 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
     }
 
     function _setFacetCuts(IDiamondCut.FacetCut[] memory source, IDiamondCut.FacetCut[] storage target) internal {
-        delete target;
+        while (target.length > 0) {
+            target.pop();
+        }
         for (uint256 i = 0; i < source.length; i++) {
             target.push();
             IDiamondCut.FacetCut storage dest = target[i];

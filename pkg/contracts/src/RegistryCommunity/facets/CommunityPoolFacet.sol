@@ -82,7 +82,7 @@ contract CommunityPoolFacet is CommunityBaseFacet {
         if (strategyFacetCuts.length > 0 || strategyInit != address(0)) {
             IDiamondCut(strategyProxy).diamondCut(strategyFacetCuts, strategyInit, strategyInitCalldata);
         }
-        CVStrategy(strategyProxy).transferOwnership(proxyOwner());
+        CVStrategy(payable(strategyProxy)).transferOwnership(proxyOwner());
     }
 
     function createPool(

@@ -33,7 +33,7 @@ abstract contract CommunityDiamondConfiguratorBase {
         adminSelectors[6] = CommunityAdminFacet.acceptCouncilSafe.selector;
         adminSelectors[7] = CommunityAdminFacet.setCommunityParams.selector;
         adminSelectors[8] = CommunityAdminFacet.isCouncilMember.selector;
-        cuts[1] = IDiamond.FacetCut({
+        cuts[0] = IDiamond.FacetCut({
             facetAddress: address(_adminFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: adminSelectors
         });
 
@@ -44,7 +44,7 @@ abstract contract CommunityDiamondConfiguratorBase {
         memberSelectors[3] = CommunityMemberFacet.isMember.selector;
         memberSelectors[4] = CommunityMemberFacet.getBasisStakedAmount.selector;
         memberSelectors[5] = CommunityMemberFacet.getStakeAmountWithFees.selector;
-        cuts[2] = IDiamond.FacetCut({
+        cuts[1] = IDiamond.FacetCut({
             facetAddress: address(_memberFacet),
             action: IDiamond.FacetCutAction.Auto,
             functionSelectors: memberSelectors
@@ -61,7 +61,7 @@ abstract contract CommunityDiamondConfiguratorBase {
                 "createPool(address,address,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address,uint256,address[],address),(uint256,string))"
             )
         );
-        cuts[3] = IDiamond.FacetCut({
+        cuts[2] = IDiamond.FacetCut({
             facetAddress: address(_poolFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: poolSelectors
         });
 
@@ -72,7 +72,7 @@ abstract contract CommunityDiamondConfiguratorBase {
         powerSelectors[3] = CommunityPowerFacet.decreasePower.selector;
         powerSelectors[4] = CommunityPowerFacet.getMemberPowerInStrategy.selector;
         powerSelectors[5] = CommunityPowerFacet.getMemberStakedAmount.selector;
-        cuts[4] = IDiamond.FacetCut({
+        cuts[3] = IDiamond.FacetCut({
             facetAddress: address(_powerFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: powerSelectors
         });
 
@@ -82,7 +82,7 @@ abstract contract CommunityDiamondConfiguratorBase {
         strategySelectors[2] = CommunityStrategyFacet.removeStrategyByPoolId.selector;
         strategySelectors[3] = CommunityStrategyFacet.removeStrategy.selector;
         strategySelectors[4] = CommunityStrategyFacet.rejectPool.selector;
-        cuts[5] = IDiamond.FacetCut({
+        cuts[4] = IDiamond.FacetCut({
             facetAddress: address(_strategyFacet),
             action: IDiamond.FacetCutAction.Auto,
             functionSelectors: strategySelectors
@@ -143,8 +143,8 @@ contract CommunityDiamondConfigurator is CommunityDiamondConfiguratorBase {
         // Add loupe facet as 6th facet
         cuts = new IDiamond.FacetCut[](6);
         cuts[0] = _buildLoupeFacetCut(loupeFacet);
-        for (uint256 i = 1; i <= 5; i++) {
-            cuts[i] = baseCuts[i];
+        for (uint256 i = 0; i < 5; i++) {
+            cuts[i + 1] = baseCuts[i];
         }
     }
 
@@ -165,8 +165,8 @@ contract CommunityDiamondConfigurator is CommunityDiamondConfiguratorBase {
 
         cuts = new IDiamond.FacetCut[](6);
         cuts[0] = _buildLoupeFacetCut(_loupeFacet);
-        for (uint256 i = 1; i <= 5; i++) {
-            cuts[i] = baseCuts[i];
+        for (uint256 i = 0; i < 5; i++) {
+            cuts[i + 1] = baseCuts[i];
         }
     }
 

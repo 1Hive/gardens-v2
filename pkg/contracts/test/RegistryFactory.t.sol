@@ -9,6 +9,7 @@ import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.s
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Metadata} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 import {IDiamondCut} from "../src/diamonds/interfaces/IDiamondCut.sol";
+import {IDiamond} from "../src/diamonds/interfaces/IDiamond.sol";
 
 contract MockSafe {
     address[] internal _owners;
@@ -79,12 +80,12 @@ contract RegistryFactoryTest is Test {
                 )
             )
         );
-        IDiamondCut.FacetCut[] memory dummyCuts = new IDiamondCut.FacetCut[](1);
+        IDiamond.FacetCut[] memory dummyCuts = new IDiamond.FacetCut[](1);
         bytes4[] memory selectors = new bytes4[](1);
         selectors[0] = bytes4(keccak256("dummy()"));
-        dummyCuts[0] = IDiamondCut.FacetCut({
+        dummyCuts[0] = IDiamond.FacetCut({
             facetAddress: address(0x1),
-            action: IDiamondCut.FacetCutAction.Add,
+            action: IDiamond.FacetCutAction.Add,
             functionSelectors: selectors
         });
         vm.prank(owner);

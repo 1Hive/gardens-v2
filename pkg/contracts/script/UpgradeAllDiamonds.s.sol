@@ -519,15 +519,15 @@ contract UpgradeAllDiamonds is BaseMultiChain, StrategyDiamondConfiguratorBase, 
         );
         console2.log("  Factory CollateralVault template update added");
 
-        IDiamondCut.FacetCut[] memory cvCuts = _buildCVFacetCuts();
-        IDiamondCut.FacetCut[] memory communityCuts = _buildCommunityFacetCuts();
+        IDiamondCut.FacetCut[] memory cvCutsLocal = _buildCVFacetCuts();
+        IDiamondCut.FacetCut[] memory communityCutsLocal = _buildCommunityFacetCuts();
         writer = _appendTransaction(
             writer,
             _createTransactionJson(
                 params.registryFactoryProxy,
                 abi.encodeWithSelector(
                     RegistryFactory.setCommunityFacets.selector,
-                    communityCuts,
+                    communityCutsLocal,
                     address(new RegistryCommunityDiamondInit()),
                     abi.encodeCall(RegistryCommunityDiamondInit.init, ())
                 )
@@ -541,7 +541,7 @@ contract UpgradeAllDiamonds is BaseMultiChain, StrategyDiamondConfiguratorBase, 
                 params.registryFactoryProxy,
                 abi.encodeWithSelector(
                     RegistryFactory.setStrategyFacets.selector,
-                    cvCuts,
+                    cvCutsLocal,
                     address(new CVStrategyDiamondInit()),
                     abi.encodeCall(CVStrategyDiamondInit.init, ())
                 )
@@ -666,10 +666,10 @@ contract UpgradeAllDiamonds is BaseMultiChain, StrategyDiamondConfiguratorBase, 
         IDiamond.FacetCut[] memory baseCuts =
             _buildFacetCuts(cvAdminFacet, cvAllocationFacet, cvDisputeFacet, cvPowerFacet, cvProposalFacet);
         cuts = new IDiamond.FacetCut[](6);
+        cuts[0] = _buildLoupeFacetCut(loupeFacet);
         for (uint256 i = 0; i < 5; i++) {
-            cuts[i] = baseCuts[i];
+            cuts[i + 1] = baseCuts[i];
         }
-        cuts[5] = _buildLoupeFacetCut(loupeFacet);
     }
 
     function _buildCommunityFacetCuts() internal view returns (IDiamond.FacetCut[] memory cuts) {
@@ -677,10 +677,10 @@ contract UpgradeAllDiamonds is BaseMultiChain, StrategyDiamondConfiguratorBase, 
             communityAdminFacet, communityMemberFacet, communityPoolFacet, communityPowerFacet, communityStrategyFacet
         );
         cuts = new IDiamond.FacetCut[](6);
+        cuts[0] = _buildLoupeFacetCut(loupeFacet);
         for (uint256 i = 0; i < 5; i++) {
-            cuts[i] = baseCuts[i];
+            cuts[i + 1] = baseCuts[i];
         }
-        cuts[5] = _buildLoupeFacetCut(loupeFacet);
     }
 
     // Override to resolve ambiguity between DiamondConfiguratorBase and CommunityDiamondConfiguratorBase
