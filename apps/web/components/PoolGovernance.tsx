@@ -89,7 +89,7 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
         {showVotingPowerBox && (
           <section className="section-layout flex flex-wrap flex-col gap-4 !bg-primary-soft dark:!bg-primary-soft-dark !border-primary-button">
             <div className="flex justify-between items-center flex-wrap ">
-              <h4>Your voting power</h4>
+              <h4>Your Voting Power</h4>
               <Badge status={memberActivatedStrategy ? 1 : 0} />
 
               <div className="flex w-full flex-col gap-1">
@@ -149,7 +149,10 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
         {/* Activate-Deactivate Button */}
         <div className="section-layout ">
           <div className="flex items-start flex-col gap-4">
-            <h4 className="text-left">Pool Governance</h4>
+            <div className="flex items-center justify-between w-full gap-2">
+              <h4 className="text-left">Pool Governance</h4>
+              <Badge color="info" label={PointSystems[poolSystem]} />
+            </div>
             <InfoBox
               title={`Pool type: ${poolSystemDefinition[poolSystem].label}`}
               content={poolSystemDefinition[poolSystem].description}

@@ -648,13 +648,6 @@ export default function PoolHeader({
               </h2>
               <div className="flex items-center gap-2">
                 <Badge type={parseInt(proposalType)} />
-                <Badge
-                  color="info"
-                  label={PointSystems[pointSystem]}
-                  tooltip={
-                    VOTING_POINT_SYSTEM_DESCRIPTION[PointSystems[pointSystem]]
-                  }
-                />
               </div>
             </div>
 
@@ -664,7 +657,7 @@ export default function PoolHeader({
                 <EthAddress
                   icon={false}
                   address={strategy.id as Address}
-                  label="Pool address:"
+                  label="Pool Address:"
                   textColor="var(--color-grey-800)"
                 />
                 <div className="flex">
@@ -674,7 +667,7 @@ export default function PoolHeader({
                     target="_blank"
                     rel="noreferrer"
                   >
-                    Council safe:
+                    Council Safe:
                     <ArrowTopRightOnSquareIcon width={16} height={16} />:
                   </a>
                   <EthAddress
@@ -692,7 +685,7 @@ export default function PoolHeader({
                     target="_blank"
                     rel="noreferrer"
                   >
-                    Tribunal safe:
+                    Tribunal Safe:
                     <ArrowTopRightOnSquareIcon width={16} height={16} />:
                   </a>
                   <EthAddress
@@ -865,7 +858,7 @@ export default function PoolHeader({
                     btnStyle="outline"
                     color="primary"
                     icon={<ShareIcon className="w-5 h-5" />}
-                    className="absolute"
+                    className="absolute dropdown dropdown-hover dropdown-end"
                   >
                     Share
                   </Button>
@@ -957,7 +950,7 @@ export default function PoolHeader({
         {/* Pool Description */}
         <ExpandableComponent
           defaultExpanded={false}
-          title="Pool description"
+          title="Pool Description"
           withLayout
         >
           <Skeleton rows={5} isLoading={!ipfsResult}>
@@ -968,7 +961,7 @@ export default function PoolHeader({
         {/* Pool Settings */}
         <ExpandableComponent
           defaultExpanded={false}
-          title="Pool settings"
+          title="Pool Settings"
           withLayout
         >
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
