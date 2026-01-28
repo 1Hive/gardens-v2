@@ -322,7 +322,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
                         "
                         >
                           <div>
-                            <h5 className="text-xs sm:text-sm flex items-baseline gap-1">
+                            <h5 className="text-xs sm:text-sm flex items-center gap-1">
                               Progress:{" "}
                               <span className="text-xs">
                                 {ProposalCountDown}
