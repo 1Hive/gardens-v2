@@ -88,6 +88,7 @@ type Stats = {
   stat: number | undefined;
   className: string;
   info: string;
+  symbol: string;
 };
 
 interface ProposalsProps {
@@ -560,7 +561,8 @@ export function Proposals({
       name: "Your voting power",
       stat: memberPoolWeight,
       className: poolWeightClassName,
-      info: "Indicates the amount of voting power you hold within this pool.",
+      info: "Indicates the amount of Voting Power you hold within this pool.",
+      symbol: "VP",
     },
     {
       id: 2,
@@ -571,7 +573,8 @@ export function Proposals({
           "bg-secondary-content text-secondary-soft border-secondary-content"
         : "bg-primary-content text-primary-soft border-primary-content"
       }`,
-      info: "Shows the percentage of your voting power currently allocated to support proposals.",
+      info: "Indicates the percentage of your Voting Power currently allocated to support proposals.",
+      symbol: "%",
     },
   ];
 
@@ -581,9 +584,9 @@ export function Proposals({
       "Proposal ID",
       "Proposal Name",
       "Support",
-      "Support %",
+      "Support VP",
       "Conviction",
-      "Conviction %",
+      "Conviction VP",
       "Threshold",
       "Recipient Address",
     ];
@@ -620,8 +623,8 @@ export function Proposals({
         totalSupport > 0 ?
           ((proposalConvictionMap[proposal.id]?.support || 0) / totalSupport) *
             100 +
-          "%"
-        : "0%";
+          "VP"
+        : "0 VP";
       const conviction = formatUnits(
         proposalConvictionMap[proposal.id]?.conviction || 0n,
         tokenDecimals,
@@ -630,7 +633,7 @@ export function Proposals({
         calculatePercentageBigInt(
           proposalConvictionMap[proposal.id]?.conviction || 0n,
           totalConviction,
-        ) + "%";
+        ) + "VP";
       const threshold = proposalConvictionMap[proposal.id]?.threshold || 0;
       return [
         proposalNumber,
@@ -869,7 +872,7 @@ export function Proposals({
                   <div className="section-layout flex flex-col items-center justify-center text-center">
                     <p className="text-neutral-soft-content text-sm">
                       There are currently no active or disputed proposals to
-                      support.
+                      vote.
                     </p>
                   </div>
                 )}
@@ -919,7 +922,7 @@ export function Proposals({
                           tooltip="Make changes in proposals support first"
                           tooltipSide="tooltip-left"
                         >
-                          Submit your support
+                          Submit your vote
                         </Button>
                       </div>
                       <div />
@@ -1164,7 +1167,9 @@ function UserAllocationStats({ stats }: { stats: Stats[] }) {
             }}
             role="progressbar"
           >
-            <span className="text-xs dark:text-black">{stat.stat} %</span>
+            <span className="text-xs dark:text-black">
+              {stat.stat} {stat.symbol}
+            </span>
           </div>
           <div className="flex flex-col items-start justify-center">
             <InfoWrapper tooltip={stat.info}>
@@ -1172,7 +1177,9 @@ function UserAllocationStats({ stats }: { stats: Stats[] }) {
                 <TooltipIfOverflow>{stat.name}</TooltipIfOverflow>
               </h4>
             </InfoWrapper>
-            <p className="text-xl font-semibold text-right">{stat.stat} %</p>
+            <p className="text-xl font-semibold text-right">
+              {stat.stat} {stat.symbol}
+            </p>
           </div>
         </div>
       ))}
