@@ -550,7 +550,7 @@ export default function ClientPage({
                 />
               </div>
 
-              <div className="flex-1 space-y-2">
+              <div className="flex-1 space-y-4">
                 <div>
                   <h4 className="mb-2">Activate Governance & Start Voting</h4>
                   <p className="subtitle2 text-xs sm:text-sm">
