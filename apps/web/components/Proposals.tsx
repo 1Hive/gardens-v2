@@ -560,7 +560,7 @@ export function Proposals({
       name: "Your voting power",
       stat: memberPoolWeight,
       className: poolWeightClassName,
-      info: "Indicates the amount of Voting Power you hold within this pool.",
+      info: "Your total Voting Power (VP) in this pool, out of 100. VP represents how much support you can allocate to proposals.",
       symbol: "VP",
     },
     {
@@ -572,7 +572,7 @@ export function Proposals({
           "bg-secondary-content text-secondary-soft border-secondary-content"
         : "bg-primary-content text-primary-soft border-primary-content"
       }`,
-      info: "Indicates the percentage of your Voting Power currently allocated to support proposals.",
+      info: "The percentage of your Voting Power currently allocated as support across proposals.",
       symbol: "%",
     },
   ];

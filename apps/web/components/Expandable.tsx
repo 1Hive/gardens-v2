@@ -39,13 +39,11 @@ export const ExpandableComponent = ({
         className="flex items-center gap-2 text-left"
         aria-expanded={expanded}
       >
-        {withLayout ?
-          <h3>{title}</h3>
-        : <h4>{title}</h4>}
+        <h3>{title}</h3>
 
         <motion.div
           animate={{ rotate: expanded ? 0 : 180 }}
-          transition={{ type: "spring", stiffness: 260, damping: 20 }}
+          transition={{ type: "spring", stiffness: 100, damping: 20 }}
         >
           <ChevronUpIcon className="w-5 h-5" strokeWidth={3} />
         </motion.div>
@@ -63,9 +61,9 @@ export const ExpandableComponent = ({
             exit={{ opacity: 0, height: 0 }}
             transition={{
               type: "spring",
-              stiffness: 180,
-              damping: 30,
-              mass: 0.8,
+              stiffness: 240,
+              damping: 15,
+              mass: 0.3,
             }}
             className="relative overflow-hidden mt-1"
           >
