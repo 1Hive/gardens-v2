@@ -622,6 +622,7 @@ export default function ClientPage({
           }
           setSuperTokenCandidate={setSuperTokenCandidate}
           minThGtTotalEffPoints={minThGtTotalEffPoints}
+          communityName={communityName ?? ""}
         />
       </div>
 

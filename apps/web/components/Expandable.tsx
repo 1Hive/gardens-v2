@@ -26,7 +26,8 @@ export const ExpandableComponent = ({
 }: ExpandableComponentProps) => {
   const [expanded, setExpanded] = useState(defaultExpanded);
 
-  const isPreviewMode = previewHeight !== undefined && previewHeight > 0 && !expanded;
+  const isPreviewMode =
+    previewHeight !== undefined && previewHeight > 0 && !expanded;
 
   return (
     <div
@@ -74,13 +75,13 @@ export const ExpandableComponent = ({
             {isPreviewMode && (
               <>
                 {/* Blur gradient */}
-                <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-base-100 to-transparent backdrop-blur-sm" />
+                <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-primary to-transparent backdrop-blur-sm" />
 
                 {/* CTA */}
                 <div className="absolute bottom-2 left-0 right-0 flex justify-center">
                   <button
                     onClick={() => setExpanded(true)}
-                    className="btn btn-sm btn-ghost"
+                    className="btn btn-sm btn-ghost w-full"
                   >
                     {readMoreLabel}
                   </button>
@@ -95,7 +96,7 @@ export const ExpandableComponent = ({
       {expanded && previewHeight && (
         <button
           onClick={() => setExpanded(false)}
-          className="self-start text-sm text-base-content/70 hover:underline"
+          className="self-start text-sm hover:underline"
         >
           {readLessLabel}
         </button>

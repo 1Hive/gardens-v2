@@ -620,8 +620,7 @@ export function Proposals({
       const support = formatUnits(p.stakedAmount, tokenDecimals);
       const supportPercent =
         totalSupport > 0 ?
-          ((proposalConvictionMap[proposal.id]?.support || 0) / totalSupport) *
-            100 +
+          ((proposalConvictionMap[p.id]?.support || 0) / totalSupport) * 100 +
           "VP"
         : "0 VP";
       const conviction = formatUnits(
@@ -633,7 +632,7 @@ export function Proposals({
           proposalConvictionMap[p.id]?.conviction || 0n,
           totalConviction,
         ) + "VP";
-      const threshold = proposalConvictionMap[proposal.id]?.threshold || 0;
+      const threshold = proposalConvictionMap[p.id]?.threshold || 0;
       return [
         proposalNumber,
         proposalTitle,
@@ -764,7 +763,7 @@ export function Proposals({
                         </Button>
                       )}
 
-                    {strategy.isEnabled && proposals.length > 0 && (
+                    {strategy.isEnabled && filteredAndSorted.length > 0 && (
                       <Link
                         href={createProposalUrl}
                         className="flex items-center justify-center"

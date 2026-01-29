@@ -103,6 +103,7 @@ type Props = {
   superTokenCandidate: SuperToken | null;
   setSuperTokenCandidate: (token: SuperToken | null) => void;
   minThGtTotalEffPoints: boolean;
+  communityName: string;
 };
 
 export function calculateConvictionGrowthInSeconds(
@@ -143,6 +144,7 @@ export default function PoolHeader({
   superTokenCandidate,
   setSuperTokenCandidate,
   minThGtTotalEffPoints,
+  communityName,
 }: Props) {
   const [isOpenModal, setIsOpenModal] = useState(false);
   const { publish } = usePubSubContext();
@@ -621,10 +623,10 @@ export default function PoolHeader({
 
   const handleShareOnX = () => {
     const poolName = ipfsResult?.title ?? "This pool";
-    // const communityName = "" + strategy.registryCommunity.;
+
     const pooltype = PoolTypes[proposalType];
     const text =
-      "Check out " + poolName + ", a " + pooltype + " pool on Gardens!";
+      "Check out " + poolName + ", a " + pooltype + " pool on " + communityName;
     const url = window.location.href;
     const xUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
     window.open(xUrl, "_blank", "noopener,noreferrer");
@@ -655,7 +657,7 @@ export default function PoolHeader({
             <ExpandableComponent
               defaultExpanded={false}
               title="Pool Description"
-              previewHeight={240}
+              previewHeight={161}
             >
               <Skeleton rows={5} isLoading={!ipfsResult}>
                 <MarkdownWrapper source={ipfsResult?.description ?? ""} />
