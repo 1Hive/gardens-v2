@@ -8,6 +8,11 @@ interface ExpandableComponentProps {
   defaultExpanded?: boolean;
   children: React.ReactNode;
   withLayout?: boolean;
+
+  /** NEW */
+  previewHeight?: number; // px, e.g. 120
+  readMoreLabel?: string;
+  readLessLabel?: string;
 }
 
 export const ExpandableComponent = ({
@@ -15,13 +20,19 @@ export const ExpandableComponent = ({
   defaultExpanded = true,
   children,
   withLayout = false,
+  previewHeight,
+  readMoreLabel = "Read more",
+  readLessLabel = "Show less",
 }: ExpandableComponentProps) => {
   const [expanded, setExpanded] = useState(defaultExpanded);
+
+  const isPreviewMode = previewHeight !== undefined && previewHeight > 0 && !expanded;
 
   return (
     <div
       className={`flex flex-col gap-2 ${withLayout ? "section-layout" : ""}`}
     >
+      {/* Header */}
       <button
         onClick={() => setExpanded((v) => !v)}
         className="flex items-center gap-2 text-left"
@@ -30,23 +41,24 @@ export const ExpandableComponent = ({
         {withLayout ?
           <h3>{title}</h3>
         : <h4>{title}</h4>}
+
         <motion.div
           animate={{ rotate: expanded ? 0 : 180 }}
-          transition={{
-            type: "spring",
-            stiffness: 260,
-            damping: 20,
-          }}
+          transition={{ type: "spring", stiffness: 260, damping: 20 }}
         >
           <ChevronUpIcon className="w-5 h-5" strokeWidth={3} />
         </motion.div>
       </button>
 
+      {/* Content */}
       <AnimatePresence initial={false}>
-        {expanded && (
+        {(expanded || previewHeight) && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
+            animate={{
+              opacity: 1,
+              height: expanded ? "auto" : previewHeight,
+            }}
             exit={{ opacity: 0, height: 0 }}
             transition={{
               type: "spring",
@@ -54,12 +66,40 @@ export const ExpandableComponent = ({
               damping: 30,
               mass: 0.8,
             }}
-            className="mt-1"
+            className="relative overflow-hidden mt-1"
           >
             {children}
+
+            {/* Blur + Read more */}
+            {isPreviewMode && (
+              <>
+                {/* Blur gradient */}
+                <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-base-100 to-transparent backdrop-blur-sm" />
+
+                {/* CTA */}
+                <div className="absolute bottom-2 left-0 right-0 flex justify-center">
+                  <button
+                    onClick={() => setExpanded(true)}
+                    className="btn btn-sm btn-ghost"
+                  >
+                    {readMoreLabel}
+                  </button>
+                </div>
+              </>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Optional collapse CTA */}
+      {expanded && previewHeight && (
+        <button
+          onClick={() => setExpanded(false)}
+          className="self-start text-sm text-base-content/70 hover:underline"
+        >
+          {readLessLabel}
+        </button>
+      )}
     </div>
   );
 };

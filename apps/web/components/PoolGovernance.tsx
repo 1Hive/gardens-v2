@@ -154,7 +154,7 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
               <Badge color="info" label={PointSystems[poolSystem]} />
             </div>
             <InfoBox
-              title={`Pool type: ${poolSystemDefinition[poolSystem].label}`}
+              title={`${poolSystemDefinition[poolSystem].label}`}
               content={poolSystemDefinition[poolSystem].description}
               infoBoxType="info"
               className="flex-1 w-full"

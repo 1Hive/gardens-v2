@@ -478,8 +478,6 @@ export default function ClientPage({
 
   const isMember = memberData?.member?.memberCommunity?.[0]?.isRegistered;
 
-  console.log("isMember", isMember);
-
   return (
     <>
       {showMissingFundingTokenWarning && (
@@ -495,7 +493,7 @@ export default function ClientPage({
       <div className="sm:col-span-12 xl:col-span-9 sm:flex flex-col-reverse gap-6">
         {/* Join community box */}
         {!isMemberCommunity && registryCommunity && (
-          <div className="border rounded-xl shadow-md border-tertiary-content bg-tertiary-soft p-6 dark:bg-primary-soft-dark">
+          <div className="border rounded-xl shadow-md border-tertiary-content bg-primary p-6 dark:bg-primary-soft-dark">
             <div className="flex items-start gap-4">
               <div className="rounded-full bg-tertiary-content/10 p-3 flex-shrink-0">
                 <UserGroupIcon
@@ -506,9 +504,7 @@ export default function ClientPage({
 
               <div className="flex-1 space-y-4">
                 <div>
-                  <h4 className="mb-2">
-                    {`Join ${communityName} to Enable Governance`}
-                  </h4>
+                  <h4 className="mb-2">{`Join ${communityName} community`}</h4>
                   <p className="subtitle2 text-xs sm:text-sm">
                     You must be a member of this community before activating
                     governance or voting on proposals.
@@ -522,8 +518,11 @@ export default function ClientPage({
                 >
                   <ul className="list-disc list-inside space-y-1 ml-2 font-press">
                     <li>{`Join the ${communityName} community.`}</li>
-                    <li>Activate governance in this pool.</li>
-                    <li>Receive Voting Power (VP) and vote on proposals.</li>
+                    <li>
+                      If eligible to vote - activate governance in this pool to
+                      get Voting Power (VP).
+                    </li>
+                    <li>Vote on proposals</li>
                   </ul>
                 </InfoBox>
 
@@ -542,7 +541,7 @@ export default function ClientPage({
 
         {/* Activate governance box */}
         {isMemberCommunity && !memberActivatedStrategy && (
-          <div className="border rounded-xl shadow-md border-primary-content bg-primary-soft p-6 dark:bg-primary-soft-dark">
+          <div className="border rounded-xl shadow-md border-primary-content bg-primary p-6 dark:bg-primary-soft-dark">
             <div className="flex items-start gap-4">
               <div className="rounded-full bg-primary-content/10 p-3 flex-shrink-0">
                 <PowerIcon
@@ -551,13 +550,13 @@ export default function ClientPage({
                 />
               </div>
 
-              <div className="flex-1 space-y-4">
+              <div className="flex-1 space-y-2">
                 <div>
                   <h4 className="mb-2">Activate Governance & Start Voting</h4>
                   <p className="subtitle2 text-xs sm:text-sm">
                     You are already a community member. Activate governance in
-                    this pool to receive Voting Power (VP) and participate in
-                    decision-making.
+                    this pool to receive Voting Power (VP) and vote on
+                    proposals.
                   </p>
                 </div>
 
@@ -569,16 +568,17 @@ export default function ClientPage({
                   <ul className="list-disc list-inside space-y-2 ml-2 font-press">
                     <li>
                       The pool has a total of <strong>100 VP</strong>, shared
-                      among all activated members.
+                      between all activated members.
                     </li>
                     <li>
-                      Your VP represents your influence in the pool, based on
-                      your stake.
+                      Your VP is your influence in the pool, based on your stake
+                      and pool governance system.
                     </li>
                     <li>
-                      You can distribute your VP across multiple proposals at
-                      the same time using percentages. Higher VP allocation
-                      increases a proposal’s conviction.
+                      If you’re eligible to vote, you can allocate your Voting
+                      Power (VP) across multiple proposals at the same time—
+                      this means you’re giving support to a proposal. The more
+                      VP you allocate, the faster its conviction grows.
                     </li>
                   </ul>
                 </InfoBox>

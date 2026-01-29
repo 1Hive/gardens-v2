@@ -651,6 +651,17 @@ export default function PoolHeader({
               </div>
             </div>
 
+            {/* Pool Description */}
+            <ExpandableComponent
+              defaultExpanded={false}
+              title="Pool Description"
+              previewHeight={240}
+            >
+              <Skeleton rows={5} isLoading={!ipfsResult}>
+                <MarkdownWrapper source={ipfsResult?.description ?? ""} />
+              </Skeleton>
+            </ExpandableComponent>
+
             <div className="flex flex-col gap-4">
               {/* Addresses */}
               <div className="flex flex-col sm:flex-row items-baseline justify-between">
@@ -851,44 +862,47 @@ export default function PoolHeader({
                   </div>
                 )}
 
+                {/* Share button dropdown */}
                 <div
-                  className={`z-[9999] dropdown dropdown-hover dropdown-end ${!!isCouncilMember || isCouncilSafe ? "w-fit" : "w-full flex justify-end"}`}
+                  className={`z-[9999] ${!!isCouncilMember || isCouncilSafe ? "w-fit" : "w-full flex justify-end"}`}
                 >
-                  <Button
-                    btnStyle="outline"
-                    color="primary"
-                    icon={<ShareIcon className="w-5 h-5" />}
-                    className="absolute dropdown dropdown-hover dropdown-end"
-                  >
-                    Share
-                  </Button>
+                  <div className="z-[9999] dropdown dropdown-hover dropdown-start">
+                    <Button
+                      btnStyle="outline"
+                      color="primary"
+                      icon={<ShareIcon className="w-5 h-5" />}
+                      className="absolute"
+                    >
+                      Share
+                    </Button>
 
-                  <ul className="dropdown-content menu bg-primary rounded-box w-[200px] p-2 shadow fixed z-[9999] left-0 top-full mt-2">
-                    <li>
-                      <Button
-                        type="submit"
-                        btnStyle="ghost"
-                        color="primary"
-                        icon={<LinkIcon className="w-5 h-5" />}
-                        className="w-full mt-1 xl:!justify-start"
-                        onClick={handleCopyLink}
-                      >
-                        Copy Link
-                      </Button>
-                    </li>
-                    <li>
-                      <Button
-                        type="submit"
-                        btnStyle="ghost"
-                        color="primary"
-                        icon={<XIcon className="w-5 h-5" />}
-                        className="w-full mt-1 xl:!justify-start z-50"
-                        onClick={handleShareOnX}
-                      >
-                        Share on X
-                      </Button>
-                    </li>
-                  </ul>
+                    <ul className="dropdown-content dropdown-close menu bg-primary rounded-box w-[200px] p-2 shadow fixed z-[9999] left-0 top-full mt-2">
+                      <li>
+                        <Button
+                          type="submit"
+                          btnStyle="ghost"
+                          color="primary"
+                          icon={<LinkIcon className="w-5 h-5" />}
+                          className="w-full mt-1 xl:!justify-start"
+                          onClick={handleCopyLink}
+                        >
+                          Copy Link
+                        </Button>
+                      </li>
+                      <li>
+                        <Button
+                          type="submit"
+                          btnStyle="ghost"
+                          color="primary"
+                          icon={<XIcon className="w-5 h-5" />}
+                          className="w-full mt-1 xl:!justify-start z-50"
+                          onClick={handleShareOnX}
+                        >
+                          Share on X
+                        </Button>
+                      </li>
+                    </ul>
+                  </div>
                 </div>
               </div>
             </div>
@@ -947,23 +961,8 @@ export default function PoolHeader({
           )}
         </section>
 
-        {/* Pool Description */}
-        <ExpandableComponent
-          defaultExpanded={false}
-          title="Pool Description"
-          withLayout
-        >
-          <Skeleton rows={5} isLoading={!ipfsResult}>
-            <MarkdownWrapper source={ipfsResult?.description ?? ""} />
-          </Skeleton>
-        </ExpandableComponent>
-
         {/* Pool Settings */}
-        <ExpandableComponent
-          defaultExpanded={false}
-          title="Pool Settings"
-          withLayout
-        >
+        <ExpandableComponent title="Pool Settings" withLayout>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
             {filteredPoolConfig.map((config) => (
               <div
@@ -1000,3 +999,5 @@ const XIcon = ({ ...props }: React.SVGProps<SVGSVGElement>) => {
     </svg>
   );
 };
+
+// information box remove ort change - bg in dark
