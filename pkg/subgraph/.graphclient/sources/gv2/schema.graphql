@@ -266,6 +266,7 @@ type CVProposal {
   createdAt: BigInt!
   updatedAt: BigInt!
   arbitrableConfig: ArbitrableConfig!
+  executedAt: BigInt
 }
 
 input CVProposal_filter {
@@ -500,6 +501,14 @@ input CVProposal_filter {
   arbitrableConfig_not_ends_with: String
   arbitrableConfig_not_ends_with_nocase: String
   arbitrableConfig_: ArbitrableConfig_filter
+  executedAt: BigInt
+  executedAt_not: BigInt
+  executedAt_gt: BigInt
+  executedAt_lt: BigInt
+  executedAt_gte: BigInt
+  executedAt_lte: BigInt
+  executedAt_in: [BigInt!]
+  executedAt_not_in: [BigInt!]
   """Filter for the block changed event."""
   _change_block: BlockChangedFilter
   and: [CVProposal_filter]
@@ -544,6 +553,7 @@ enum CVProposal_orderBy {
   arbitrableConfig__submitterCollateralAmount
   arbitrableConfig__defaultRuling
   arbitrableConfig__defaultRulingTimeout
+  executedAt
 }
 
 type CVStrategy {
@@ -920,6 +930,7 @@ enum CVStrategy_orderBy {
   registryCommunity__alloAddress
   registryCommunity__isValid
   registryCommunity__archived
+  registryCommunity__membersCount
   config
   config__id
   config__D
@@ -1506,6 +1517,7 @@ enum MemberCommunity_orderBy {
   registryCommunity__alloAddress
   registryCommunity__isValid
   registryCommunity__archived
+  registryCommunity__membersCount
   covenantSignature
 }
 
@@ -2137,6 +2149,7 @@ enum ProposalDispute_orderBy {
   proposal__submitter
   proposal__createdAt
   proposal__updatedAt
+  proposal__executedAt
   status
   challenger
   context
@@ -2866,6 +2879,7 @@ type RegistryCommunity {
   garden: TokenGarden!
   isValid: Boolean!
   archived: Boolean!
+  membersCount: BigInt!
 }
 
 input RegistryCommunity_filter {
@@ -3166,6 +3180,14 @@ input RegistryCommunity_filter {
   archived_not: Boolean
   archived_in: [Boolean!]
   archived_not_in: [Boolean!]
+  membersCount: BigInt
+  membersCount_not: BigInt
+  membersCount_gt: BigInt
+  membersCount_lt: BigInt
+  membersCount_gte: BigInt
+  membersCount_lte: BigInt
+  membersCount_in: [BigInt!]
+  membersCount_not_in: [BigInt!]
   """Filter for the block changed event."""
   _change_block: BlockChangedFilter
   and: [RegistryCommunity_filter]
@@ -3208,6 +3230,7 @@ enum RegistryCommunity_orderBy {
   garden__address
   isValid
   archived
+  membersCount
 }
 
 type RegistryFactory {
@@ -3359,6 +3382,7 @@ enum Stake_orderBy {
   proposal__submitter
   proposal__createdAt
   proposal__updatedAt
+  proposal__executedAt
   amount
   createdAt
 }

@@ -1,15 +1,15 @@
-import { RegistryCommunityV0_0 as CommunityTemplate } from "../../generated/templates";
+import { RegistryCommunity as CommunityTemplate } from "../../generated/templates";
 import {
   RegistryFactory,
   RegistryCommunity,
-  Member,
+  Member
 } from "../../generated/schema";
 
 import {
   BigInt,
   DataSourceContext,
   dataSource,
-  log,
+  log
 } from "@graphprotocol/graph-ts";
 import {
   CommunityCreated,
@@ -17,8 +17,8 @@ import {
   ProtocolFeeSet,
   Initialized,
   KeepersChanged,
-  ProtopiansChanged,
-} from "../../generated/RegistryFactoryV0_0/RegistryFactoryV0_0";
+  ProtopiansChanged
+} from "../../generated/RegistryFactory/RegistryFactory";
 // import {RegistryCommunity}from "../../generated/RegistryCommunity/RegistryCommunity";
 
 export const CTX_FACTORY_ADDRESS = "factoryAddress";
@@ -26,7 +26,7 @@ export const CTX_CHAIN_ID = "chainId";
 
 export function handleRegistryInitialized(event: Initialized): void {
   log.debug("RegistryFactory: handleRegistryInitialized: {}", [
-    event.address.toHexString(),
+    event.address.toHexString()
   ]);
   const addr_id = event.address.toHexString();
   let factory = RegistryFactory.load(addr_id);
@@ -40,7 +40,7 @@ export function handleRegistryInitialized(event: Initialized): void {
 
 export function handleCommunityCreated(event: CommunityCreated): void {
   log.debug("RegistryFactory: handleCommunityCreated: {}", [
-    event.address.toHexString(),
+    event.address.toHexString()
   ]);
   const addr_id = event.address.toHexString();
   let context = new DataSourceContext();
@@ -52,7 +52,7 @@ export function handleCommunityCreated(event: CommunityCreated): void {
 
 export function handleProtocolFeeSet(event: ProtocolFeeSet): void {
   log.debug("RegistryFactory: handleProtocolFeeSet: {}", [
-    event.address.toHexString(),
+    event.address.toHexString()
   ]);
   const addr_id = event.address.toHexString();
   let community = RegistryCommunity.load(event.params._community.toHexString());
@@ -67,7 +67,7 @@ export function handleProtocolFeeSet(event: ProtocolFeeSet): void {
 //event CommunityValiditySet
 export function handleCommunityValiditySet(event: CommunityValiditySet): void {
   log.debug("RegistryFactory: handleCommunityValiditySet: {}", [
-    event.address.toHexString(),
+    event.address.toHexString()
   ]);
   let community = RegistryCommunity.load(event.params._community.toHexString());
   if (community == null) {
@@ -80,7 +80,7 @@ export function handleCommunityValiditySet(event: CommunityValiditySet): void {
 
 export function handleKeepersChanged(event: KeepersChanged): void {
   log.debug("RegistryFactory: handleKeepersChanged: {}", [
-    event.address.toHexString(),
+    event.address.toHexString()
   ]);
 
   // New keepers
@@ -110,7 +110,7 @@ export function handleKeepersChanged(event: KeepersChanged): void {
 
 export function handleProtopiansChanged(event: ProtopiansChanged): void {
   log.debug("RegistryFactory: handleProtopiansChanged: {}", [
-    event.address.toHexString(),
+    event.address.toHexString()
   ]);
 
   // New keepers

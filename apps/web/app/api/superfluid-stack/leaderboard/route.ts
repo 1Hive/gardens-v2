@@ -64,7 +64,7 @@ const resolveLatestPointsCid = async (): Promise<string | null> => {
     const res = await pinataClient.pinList({
       status: "pinned",
       metadata: { name: PINATA_POINTS_SNAPSHOT_NAME, keyvalues: {} },
-      pageLimit: 20,
+      pageLimit: 100,
       pageOffset: 0,
     });
     const rows = Array.isArray(res?.rows) ? res.rows : [];

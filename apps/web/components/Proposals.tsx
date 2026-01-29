@@ -209,7 +209,7 @@ export function Proposals({
   const { data: memberPower } = useContractRead({
     address: communityAddress,
     abi: registryCommunityABI,
-    functionName: "getMemberPowerInStrategy",
+    functionName: "memberPowerInStrategy",
     args: [wallet as Address, strategy.id as Address],
     chainId: chainId,
     enabled: !!wallet,
@@ -221,29 +221,28 @@ export function Proposals({
   const memberActivatedStrategy =
     memberStrategyData?.memberStrategy?.activatedPoints > 0n;
 
-  // const [sortedProposals, setSortedProposals] = useState(strategy.proposals);
+  const [sortedProposals, setSortedProposals] = useState(strategy.proposals);
 
-  // useEffect(() => {
-  //   const sorted = [...strategy.proposals].sort((a, b) => {
-  //     const aConviction =
-  //       proposalCardRefs.current.get(a.id)?.getProposalConviction()
-  //         ?.conviction ?? 0n;
+  useEffect(() => {
+    const sorted = [...strategy.proposals].sort((a, b) => {
+      const aConviction =
+        proposalCardRefs.current.get(a.id)?.getProposalConviction()
+          ?.conviction ?? 0n;
 
-  //     const bConviction =
-  //       proposalCardRefs.current.get(b.id)?.getProposalConviction()
-  //         ?.conviction ?? 0n;
+      const bConviction =
+        proposalCardRefs.current.get(b.id)?.getProposalConviction()
+          ?.conviction ?? 0n;
 
-  //     return (
-  //       aConviction < bConviction ? 1
-  //       : aConviction > bConviction ? -1
-  //       : 0
-  //     );
-  //   });
+      return (
+        aConviction < bConviction ? 1
+        : aConviction > bConviction ? -1
+        : 0
+      );
+    });
 
-  //   setSortedProposals(sorted);
-  // }, []);
+    setSortedProposals(sorted);
+  }, [strategy.proposals]);
 
-  const proposals = strategy.proposals;
   // Effects
   useEffect(() => {
     if (error) {
@@ -366,11 +365,11 @@ export function Proposals({
   }, [proposalSectionRef.current, searchParams]);
 
   useEffect(() => {
-    if (proposals == null) return;
+    if (sortedProposals == null) return;
 
     const newInputs: { [key: string]: ProposalInputItem } = {};
 
-    proposals.forEach(({ id, proposalNumber, proposalStatus }) => {
+    sortedProposals.forEach(({ id, proposalNumber, proposalStatus }) => {
       const proposalEnded =
         ProposalStatus[proposalStatus] !== "active" &&
         ProposalStatus[proposalStatus] !== "disputed";
@@ -398,13 +397,13 @@ export function Proposals({
         fromStake: stakedFilters[input.proposalId]?.value.toString() ?? "0",
         status:
           ProposalStatus[
-            proposals.find((p) => p.id === input.proposalId)?.proposalStatus ??
-              0
+            sortedProposals.find((p) => p.id === input.proposalId)
+              ?.proposalStatus ?? 0
           ],
       }));
       console.info("[Proposals][InitialInputs]", snapshot);
     }
-  }, [proposals, stakedFilters]);
+  }, [sortedProposals, stakedFilters]);
 
   const getProposalsInputsDifferences = (
     inputData: { [key: string]: ProposalInputItem },
@@ -612,13 +611,13 @@ export function Proposals({
       0n,
     );
 
-    let rows = activeOrDisputedProposals.map((proposal) => {
-      const proposalNumber = proposal.proposalNumber;
+    let rows = activeOrDisputedProposals.map((p) => {
+      const proposalNumber = p.proposalNumber;
       const proposalTitle = `"${
-        proposal.metadata?.title?.replace(/"/g, '""') ?? "Untitled"
+        p.metadata?.title?.replace(/"/g, '""') ?? "Untitled"
       }"`; // Escape quotes in title
-      const beneficiary = proposal.beneficiary;
-      const support = formatUnits(proposal.stakedAmount, tokenDecimals);
+      const beneficiary = p.beneficiary;
+      const support = formatUnits(p.stakedAmount, tokenDecimals);
       const supportPercent =
         totalSupport > 0 ?
           ((proposalConvictionMap[proposal.id]?.support || 0) / totalSupport) *
@@ -626,12 +625,12 @@ export function Proposals({
           "VP"
         : "0 VP";
       const conviction = formatUnits(
-        proposalConvictionMap[proposal.id]?.conviction || 0n,
+        proposalConvictionMap[p.id]?.conviction || 0n,
         tokenDecimals,
       );
       const convictionPercent =
         calculatePercentageBigInt(
-          proposalConvictionMap[proposal.id]?.conviction || 0n,
+          proposalConvictionMap[p.id]?.conviction || 0n,
           totalConviction,
         ) + "VP";
       const threshold = proposalConvictionMap[proposal.id]?.threshold || 0;
@@ -672,7 +671,7 @@ export function Proposals({
     URL.revokeObjectURL(url);
   };
 
-  const activeOrDisputedProposals = proposals.filter(
+  const activeOrDisputedProposals = sortedProposals.filter(
     (x) =>
       ProposalStatus[x.proposalStatus] === "active" ||
       ProposalStatus[x.proposalStatus] === "disputed",
@@ -689,10 +688,10 @@ export function Proposals({
   };
 
   const proposalsCountByStatus = {
-    all: proposals.length,
+    all: sortedProposals.length,
     ...Object.values(STATUS_LABELS).reduce(
       (acc, statusName) => {
-        acc[statusName] = proposals.filter(
+        acc[statusName] = sortedProposals.filter(
           (p) => STATUS_LABELS[Number(p.proposalStatus)] === statusName,
         ).length;
         return acc;
@@ -707,7 +706,7 @@ export function Proposals({
     sortBy: sortBy,
     setSortBy: setSortBy,
     filtered: filteredAndSorted,
-  } = useProposalFilter(proposals);
+  } = useProposalFilter(sortedProposals);
 
   return (
     <>
@@ -716,7 +715,7 @@ export function Proposals({
         <header
           ref={proposalSectionRef}
           className={`flex gap-6 ${
-            proposals.length === 0 ?
+            sortedProposals.length === 0 ?
               "flex-col items-start justify-start"
             : "items-center justify-between"
           }`}
@@ -724,7 +723,7 @@ export function Proposals({
           <h3 className="text-left">Proposals</h3>
 
           {strategy.isEnabled &&
-            (proposals.length === 0 ?
+            (sortedProposals.length === 0 ?
               <div className="section-layout text-center py-12  w-full flex flex-col items-center justify-center">
                 <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-4">
                   <HandRaisedIcon className="w-8 h-8 text-neutral-soft-content" />
@@ -813,7 +812,7 @@ export function Proposals({
               ))}
         </header>
 
-        {strategy.isEnabled && proposals.length > 0 && (
+        {strategy.isEnabled && sortedProposals.length > 0 && (
           <ProposalFiltersUI
             filter={filter}
             setFilter={setFilter}
@@ -824,7 +823,7 @@ export function Proposals({
           />
         )}
 
-        {proposals.length !== 0 && filteredAndSorted.length === 0 ?
+        {sortedProposals.length !== 0 && filteredAndSorted.length === 0 ?
           <div className="section-layout flex flex-col items-center justify-center text-center">
             <p className="text-neutral-soft-content text-sm">
               There are no proposals matching this filter.
@@ -906,7 +905,7 @@ export function Proposals({
 
                 {strategy.isEnabled &&
                   allocationView &&
-                  proposals.length > 0 && (
+                  sortedProposals.length > 0 && (
                     <>
                       <div className="flex justify-end gap-4">
                         <Button

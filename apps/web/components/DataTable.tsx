@@ -21,11 +21,9 @@ interface TableColumn {
 
 export const DataTable: React.FC<DataTableProps> = ({
   title,
-  description,
   data,
   columns,
   footer,
-  className = "",
   openModal,
   setOpenModal,
   withModal = true,
@@ -94,7 +92,7 @@ export const DataTable: React.FC<DataTableProps> = ({
       footer={footer}
       isOpen={openModal}
       onClose={() => setOpenModal(false)}
-      size="xx-large"
+      size="ultra-large"
     >
       {content}
     </Modal>

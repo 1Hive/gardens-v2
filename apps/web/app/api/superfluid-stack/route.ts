@@ -3024,38 +3024,6 @@ export async function GET(req: Request) {
     const bonusCommunityMembers = new Set<string>();
     const walletActivitiesByWallet = new Map<string, WalletActivity[]>();
 
-    const fetchExistingFarcasterAddresses = async (): Promise<Set<string>> => {
-      const addrs = new Set<string>();
-      const limit = 250;
-      let offset = 0;
-      while (true) {
-        const res = await superfluidStackClient.getEvents({
-          event: "farcasterPoints",
-          limit,
-          offset,
-        });
-        console.log("[superfluid-stack] stack getEvents farcaster sweep", {
-          offset,
-          limit,
-          count: Array.isArray(res) ? res.length : 0,
-        });
-        if (!Array.isArray(res) || res.length === 0) break;
-        for (const evt of res as any[]) {
-          const addr =
-            evt?.address ??
-            evt?.walletAddress ??
-            evt?.accountAddress ??
-            evt?.account;
-          if (typeof addr === "string" && addr.toLowerCase().startsWith("0x")) {
-            addrs.add(addr.toLowerCase());
-          }
-        }
-        offset += res.length;
-        if (res.length < limit) break;
-      }
-      return addrs;
-    };
-
     if (!FARCASTER_DISABLED) {
       const gardensFid = await fetchGardensFid();
       if (gardensFid) {
@@ -3084,8 +3052,6 @@ export async function GET(req: Request) {
         farcasterUsernameByWallet.set(addr, username);
       }
     }
-    const existingFarcasterAddresses = await fetchExistingFarcasterAddresses();
-
     for (const chainId of TARGET_CHAINS) {
       const {
         totals: chainTotals,
@@ -3209,7 +3175,6 @@ export async function GET(req: Request) {
       ...governanceStakePointsByWallet.keys(),
       ...farcasterFollowerWalletsSet.values(),
       ...farcasterDiscardedWallets.values(),
-      ...existingFarcasterAddresses.values(),
       ...bonusCommunityMembers.values(),
       ...walletActivitiesByWallet.keys(),
     ]);
