@@ -107,7 +107,7 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
                   </a>
                 </div>
                 <span className="text-xs sm:text-sm text-neutral-soft-content">
-                  Your share of this pools total 100 VP
+                  Your share of the pool’s 100 VP
                 </span>
               </div>
             </div>
