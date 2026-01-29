@@ -428,15 +428,22 @@ export default function ClientPage({ params }: ClientPageProps) {
                     )}
                   </div>
 
-                  <div className="flex flex-col items-start justify-between gap-2">
+                  <div className="flex flex-col items-start justify-between gap-3 sm:items-end">
                     <Statistic label={"Created"}>
                       <span className="font-medium dark:text-neutral-content">
                         {prettyTimestamp(proposalData?.createdAt ?? 0)}
                       </span>
                     </Statistic>
+                    {proposalData?.executedAt && (
+                      <Statistic label={"Executed"}>
+                        <span className="font-medium dark:text-neutral-content">
+                          {prettyTimestamp(proposalData?.executedAt)}
+                        </span>
+                      </Statistic>
+                    )}
                     {!isSignalingType && (
                       <>
-                        <Statistic label={"request amount"} className="pt-2">
+                        <Statistic label={"request amount"}>
                           <DisplayNumber
                             number={formatUnits(
                               requestedAmount,

@@ -307,3 +307,6 @@ export const MONTH_TO_SEC = 1 / SEC_TO_MONTH;
 
 export const bigNumberMax = (a: bigint, b: bigint) => (a > b ? a : b);
 export const bigNumberMin = (a: bigint, b: bigint) => (a < b ? a : b);
+
+export const formatCountWhenPlus1k = (count: number) =>
+  count >= 1000 ? "1000+" : count;

@@ -69,6 +69,7 @@ import { registryCommunityABI } from "@/src/generated";
 import { Column, PoolTypes } from "@/types";
 import {
   calculatePercentageBigInt,
+  formatCountWhenPlus1k,
   parseToken,
   SCALE_PRECISION,
   SCALE_PRECISION_DECIMALS,
@@ -147,6 +148,7 @@ export default function ClientPage({
     communityFee,
     registerStakeAmount,
     protocolFee,
+    membersCount,
   } = registryCommunity ?? {};
 
   const is1hive =
@@ -416,7 +418,7 @@ export default function ClientPage({
                   <div className="w-full flex flex-col sm:flex-row gap-2 md:gap-6 sm:flex-wrap">
                     <Statistic
                       label="members"
-                      count={members?.length ?? 0}
+                      count={membersCount ?? 0}
                       icon={<UserGroupIcon />}
                     />
 
@@ -619,7 +621,7 @@ const CommunityDetailsTable = ({
     //     membersStaked ? indexOf(membersStaked, memberData) + 1 : 0,
     // },
     {
-      header: `Members (${membersStaked?.length})`,
+      header: `Members (${formatCountWhenPlus1k(membersStaked?.length ?? 0)})`,
       render: (memberData: MembersStaked) => (
         <EthAddress
           address={memberData.memberAddress as Address}
