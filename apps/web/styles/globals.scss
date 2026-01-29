@@ -85,9 +85,10 @@ h2 {
   text-align: left;
   color: var(--color-text);
 
-  /* @media only screen and (max-width: 680px) {
-    font-size: 2rem;
-  } */
+  @media only screen and (max-width: 680px) {
+    font-size: 24px;
+    line-height: 23px;
+  }
 }
 
 h3 {
@@ -131,7 +132,7 @@ h5,
 h6,
 .subtitle2 {
   font-family: var(--font-inter);
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 500;
   line-height: 20px;
   text-align: left;
@@ -184,7 +185,7 @@ caption {
 }
 
 .section-layout {
-  @apply border1 relative rounded-lg bg-neutral p-6;
+  @apply border1 relative rounded-xl bg-neutral p-6 shadow-md;
 }
 
 .page-layout {

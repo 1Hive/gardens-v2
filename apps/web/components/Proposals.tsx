@@ -88,6 +88,7 @@ type Stats = {
   stat: number | undefined;
   className: string;
   info: string;
+  symbol: string;
 };
 
 interface ProposalsProps {
@@ -559,7 +560,8 @@ export function Proposals({
       name: "Your voting power",
       stat: memberPoolWeight,
       className: poolWeightClassName,
-      info: "Indicates the amount of voting power you hold within this pool.",
+      info: "Your total Voting Power (VP) in this pool, out of 100. VP represents how much support you can allocate to proposals.",
+      symbol: "VP",
     },
     {
       id: 2,
@@ -570,7 +572,8 @@ export function Proposals({
           "bg-secondary-content text-secondary-soft border-secondary-content"
         : "bg-primary-content text-primary-soft border-primary-content"
       }`,
-      info: "Shows the percentage of your voting power currently allocated to support proposals.",
+      info: "The percentage of your Voting Power currently allocated as support across proposals.",
+      symbol: "%",
     },
   ];
 
@@ -580,9 +583,9 @@ export function Proposals({
       "Proposal ID",
       "Proposal Name",
       "Support",
-      "Support %",
+      "Support VP",
       "Conviction",
-      "Conviction %",
+      "Conviction VP",
       "Threshold",
       "Recipient Address",
     ];
@@ -618,8 +621,8 @@ export function Proposals({
       const supportPercent =
         totalSupport > 0 ?
           ((proposalConvictionMap[p.id]?.support || 0) / totalSupport) * 100 +
-          "%"
-        : "0%";
+          "VP"
+        : "0 VP";
       const conviction = formatUnits(
         proposalConvictionMap[p.id]?.conviction || 0n,
         tokenDecimals,
@@ -628,7 +631,7 @@ export function Proposals({
         calculatePercentageBigInt(
           proposalConvictionMap[p.id]?.conviction || 0n,
           totalConviction,
-        ) + "%";
+        ) + "VP";
       const threshold = proposalConvictionMap[p.id]?.threshold || 0;
       return [
         proposalNumber,
@@ -707,7 +710,7 @@ export function Proposals({
   return (
     <>
       {/* Proposals section */}
-      <section className="col-span-12 xl:col-span-9 flex flex-col gap-10">
+      <section className="col-span-12 xl:col-span-9 flex flex-col gap-6 section-layout">
         <header
           ref={proposalSectionRef}
           className={`flex gap-6 ${
@@ -737,13 +740,13 @@ export function Proposals({
                     }
                     tooltip={tooltipMessage}
                   >
-                    Add a proposal
+                    Add new proposal
                   </Button>
                 </Link>
               </div>
             : !allocationView && (
                 <>
-                  <div className="flex items-center justify-center gap-2">
+                  <div className="flex items-center justify-center gap-2 ">
                     {/* Manage Support */}
                     {activeOrDisputedProposals.length > 0 &&
                       proposalCardRefs.current.size ===
@@ -759,6 +762,25 @@ export function Proposals({
                           Export
                         </Button>
                       )}
+
+                    {strategy.isEnabled && filteredAndSorted.length > 0 && (
+                      <Link
+                        href={createProposalUrl}
+                        className="flex items-center justify-center"
+                      >
+                        <Button
+                          btnStyle="filled"
+                          icon={<PlusIcon height={24} width={24} />}
+                          disabled={
+                            !isConnected || missmatchUrl || !isMemberCommunity
+                          }
+                          tooltip={tooltipMessage}
+                        >
+                          Add new proposal
+                        </Button>
+                      </Link>
+                    )}
+
                     <div
                       onMouseLeave={() => setShowManageSupportTooltip(false)}
                     >
@@ -798,22 +820,6 @@ export function Proposals({
             poolType={strategy?.config?.proposalType}
             counts={proposalsCountByStatus}
           />
-        )}
-
-        {strategy.isEnabled && sortedProposals.length > 0 && (
-          <Link
-            href={createProposalUrl}
-            className="flex items-center justify-center"
-          >
-            <Button
-              btnStyle="filled"
-              icon={<PlusIcon height={24} width={24} />}
-              disabled={!isConnected || missmatchUrl || !isMemberCommunity}
-              tooltip={tooltipMessage}
-            >
-              Add a proposal
-            </Button>
-          </Link>
         )}
 
         {sortedProposals.length !== 0 && filteredAndSorted.length === 0 ?
@@ -864,7 +870,7 @@ export function Proposals({
                   <div className="section-layout flex flex-col items-center justify-center text-center">
                     <p className="text-neutral-soft-content text-sm">
                       There are currently no active or disputed proposals to
-                      support.
+                      vote.
                     </p>
                   </div>
                 )}
@@ -914,7 +920,7 @@ export function Proposals({
                           tooltip="Make changes in proposals support first"
                           tooltipSide="tooltip-left"
                         >
-                          Submit your support
+                          Submit your vote
                         </Button>
                       </div>
                       <div />
@@ -1059,7 +1065,7 @@ function ProposalFiltersUI({
       { key: "mostConviction", label: "Most Conviction", icon: Battery50Icon },
       {
         key: "mostRequested",
-        label: "Highest Requested Amount",
+        label: "Highest Requested",
         icon: CurrencyDollarIcon,
       },
     ];
@@ -1079,7 +1085,7 @@ function ProposalFiltersUI({
       <div className="flex w-full gap-2 lg:gap-1 sm:justify-between flex-wrap ">
         {FILTERS.map((f) => (
           <Button
-            className={filter === f ? "!cursor-default !bg-soft-primary-" : ""}
+            className={filter === f ? "!cursor-default !bg-soft-primary" : ""}
             onClick={() => setFilter(f)}
             color={filter === f ? "primary" : "disabled"}
             key={f}
@@ -1108,13 +1114,13 @@ function ProposalFiltersUI({
         <div className="dropdown dropdown-hover dropdown-start  w-full relative group">
           <button
             tabIndex={0}
-            className="text-primary-content text-sm flex gap-2 items-center w-full lg:w-[255px] px-3.5 py-2 bg-primary-soft dark:bg-primary rounded-lg"
+            className="text-primary-content text-sm flex gap-2 items-center w-full lg:w-[215px] px-3.5 py-2 bg-primary-soft dark:bg-primary rounded-lg"
           >
             {CurrentIcon && <CurrentIcon className="w-4 h-4" />}
             {currentSortOption?.label}
           </button>
 
-          <ul className="dropdown-content menu bg-primary rounded-md z-50 shadow w-full lg:w-[255px]">
+          <ul className="dropdown-content menu bg-primary rounded-md z-50 shadow w-full lg:w-[215px]">
             {SORT_OPTIONS.map((option) => {
               const Icon = option.icon;
 
@@ -1159,7 +1165,9 @@ function UserAllocationStats({ stats }: { stats: Stats[] }) {
             }}
             role="progressbar"
           >
-            <span className="text-xs dark:text-black">{stat.stat} %</span>
+            <span className="text-xs dark:text-black">
+              {stat.stat} {stat.symbol}
+            </span>
           </div>
           <div className="flex flex-col items-start justify-center">
             <InfoWrapper tooltip={stat.info}>
@@ -1167,7 +1175,9 @@ function UserAllocationStats({ stats }: { stats: Stats[] }) {
                 <TooltipIfOverflow>{stat.name}</TooltipIfOverflow>
               </h4>
             </InfoWrapper>
-            <p className="text-xl font-semibold text-right">{stat.stat} %</p>
+            <p className="text-xl font-semibold text-right">
+              {stat.stat} {stat.symbol}
+            </p>
           </div>
         </div>
       ))}

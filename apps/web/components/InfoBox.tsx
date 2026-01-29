@@ -54,7 +54,7 @@ export function InfoBox({
         </div>
       )}
       <p
-        className={`text-sm leading-5 text-inherit first-letter:uppercase text-left ${contentStyle ?? ""}`.trim()}
+        className={`text-xs sm:text-sm leading-5 text-inherit first-letter:uppercase text-left ${contentStyle ?? ""}`.trim()}
       >
         {children ?? content}
       </p>
