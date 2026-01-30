@@ -8,7 +8,7 @@
 [![Discord](https://img.shields.io/discord/749888500467054356?label=Discord&logo=discord&logoColor=white&color=7389D8&style=flat)](https://discord.gg/tJWPg69ZWG)
 [![Twitter Follow](https://img.shields.io/twitter/follow/gardens_fund?style=social)](https://twitter.com/gardens_fund)
 [![Farcaster](https://img.shields.io/badge/Farcaster-Protocol-purple?logo=farcaster&logoColor=white&labelColor=8A63D2)](https://farcaster.xyz/gardens)
-[![codecov](https://codecov.io/gh/1Hive/gardens-v2/graph/badge.svg?token=BUZW5IPQap)](https://codecov.io/gh/1Hive/gardens-v2)
+[![codecov](https://codecov.io/gh/1Hive/gardens-v2/branch/dev/graph/badge.svg?token=BUZW5IPQap)](https://codecov.io/gh/1Hive/gardens-v2)
 
 Gardens v2 is a modular governance framework that enables communities to create and manage multiple governance pools with customizable parameters and voting mechanisms. Our smart contracts are built to optimize for secure, flexible, intuitive, multi-network governance solutions.
 
