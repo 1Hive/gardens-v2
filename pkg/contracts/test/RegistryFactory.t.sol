@@ -8,6 +8,8 @@ import {RegistryCommunityInitializeParams} from "../src/RegistryCommunity/Regist
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Metadata} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
+import {IDiamondCut} from "../src/diamonds/interfaces/IDiamondCut.sol";
+import {IDiamond} from "../src/diamonds/interfaces/IDiamond.sol";
 
 contract MockSafe {
     address[] internal _owners;
@@ -28,7 +30,13 @@ contract MockRegistryCommunity {
         RegistryCommunityInitializeParams memory params,
         address,
         address,
-        address
+        address,
+        IDiamondCut.FacetCut[] memory,
+        address,
+        bytes memory,
+        IDiamondCut.FacetCut[] memory,
+        address,
+        bytes memory
     ) external {
         councilSafe = params._councilSafe;
     }
@@ -72,6 +80,16 @@ contract RegistryFactoryTest is Test {
                 )
             )
         );
+        IDiamond.FacetCut[] memory dummyCuts = new IDiamond.FacetCut[](1);
+        bytes4[] memory selectors = new bytes4[](1);
+        selectors[0] = bytes4(keccak256("dummy()"));
+        dummyCuts[0] = IDiamond.FacetCut({
+            facetAddress: address(0x1),
+            action: IDiamond.FacetCutAction.Add,
+            functionSelectors: selectors
+        });
+        vm.prank(owner);
+        factory.initializeV2(dummyCuts, address(0), "", dummyCuts, address(0), "");
 
         params._allo = address(this);
         params._gardenToken = IERC20(address(0xBEEF));

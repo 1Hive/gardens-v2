@@ -235,6 +235,9 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         }
     }
 
+    function _initializeFacets() internal {
+    }
+
     /*|--------------------------------------------|*/
     /*|                 MODIFIERS                  |*/
     /*|--------------------------------------------|*/
@@ -263,6 +266,14 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     function onlyCouncilSafe() internal view {
         if (msg.sender != address(registryCommunity.councilSafe()) && msg.sender != owner()) {
             revert OnlyCouncilSafe(msg.sender, address(registryCommunity.councilSafe()), owner());
+        }
+    }
+
+    function _checkOwner() internal view override {
+        address directOwner = proxyOwner();
+        address resolvedOwner = owner();
+        if (msg.sender != directOwner && msg.sender != resolvedOwner) {
+            revert("Ownable: caller is not the owner");
         }
     }
 

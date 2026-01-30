@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.19;
 
-import {RegistryCommunity} from "../../src/RegistryCommunity/RegistryCommunity.sol";
 import {CommunityMemberFacet} from "../../src/RegistryCommunity/facets/CommunityMemberFacet.sol";
 import {CommunityPowerFacet} from "../../src/RegistryCommunity/facets/CommunityPowerFacet.sol";
 import {CommunityStrategyFacet} from "../../src/RegistryCommunity/facets/CommunityStrategyFacet.sol";
@@ -35,9 +34,7 @@ abstract contract CommunityDiamondConfiguratorBase {
         adminSelectors[7] = CommunityAdminFacet.setCommunityParams.selector;
         adminSelectors[8] = CommunityAdminFacet.isCouncilMember.selector;
         cuts[0] = IDiamond.FacetCut({
-            facetAddress: address(_adminFacet),
-            action: IDiamond.FacetCutAction.Auto,
-            functionSelectors: adminSelectors
+            facetAddress: address(_adminFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: adminSelectors
         });
 
         bytes4[] memory memberSelectors = new bytes4[](6);
@@ -65,9 +62,7 @@ abstract contract CommunityDiamondConfiguratorBase {
             )
         );
         cuts[2] = IDiamond.FacetCut({
-            facetAddress: address(_poolFacet),
-            action: IDiamond.FacetCutAction.Auto,
-            functionSelectors: poolSelectors
+            facetAddress: address(_poolFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: poolSelectors
         });
 
         bytes4[] memory powerSelectors = new bytes4[](6);
@@ -78,9 +73,7 @@ abstract contract CommunityDiamondConfiguratorBase {
         powerSelectors[4] = CommunityPowerFacet.getMemberPowerInStrategy.selector;
         powerSelectors[5] = CommunityPowerFacet.getMemberStakedAmount.selector;
         cuts[3] = IDiamond.FacetCut({
-            facetAddress: address(_powerFacet),
-            action: IDiamond.FacetCutAction.Auto,
-            functionSelectors: powerSelectors
+            facetAddress: address(_powerFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: powerSelectors
         });
 
         bytes4[] memory strategySelectors = new bytes4[](5);
@@ -96,7 +89,12 @@ abstract contract CommunityDiamondConfiguratorBase {
         });
     }
 
-    function _buildLoupeFacetCut(DiamondLoupeFacet _loupeFacet) internal pure virtual returns (IDiamond.FacetCut memory) {
+    function _buildLoupeFacetCut(DiamondLoupeFacet _loupeFacet)
+        internal
+        pure
+        virtual
+        returns (IDiamond.FacetCut memory)
+    {
         bytes4[] memory loupeSelectors = new bytes4[](5);
         loupeSelectors[0] = IDiamondLoupe.facets.selector;
         loupeSelectors[1] = IDiamondLoupe.facetFunctionSelectors.selector;
@@ -104,9 +102,7 @@ abstract contract CommunityDiamondConfiguratorBase {
         loupeSelectors[3] = IDiamondLoupe.facetAddress.selector;
         loupeSelectors[4] = IERC165.supportsInterface.selector;
         return IDiamond.FacetCut({
-            facetAddress: address(_loupeFacet),
-            action: IDiamond.FacetCutAction.Auto,
-            functionSelectors: loupeSelectors
+            facetAddress: address(_loupeFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: loupeSelectors
         });
     }
 }
@@ -141,14 +137,15 @@ contract CommunityDiamondConfigurator is CommunityDiamondConfiguratorBase {
      * @return cuts Array of FacetCut structs to pass to diamondCut()
      */
     function getFacetCuts() public view returns (IDiamond.FacetCut[] memory cuts) {
-        IDiamond.FacetCut[] memory baseCuts = _buildFacetCuts(adminFacet, memberFacet, poolFacet, powerFacet, strategyFacet);
+        IDiamond.FacetCut[] memory baseCuts =
+            _buildFacetCuts(adminFacet, memberFacet, poolFacet, powerFacet, strategyFacet);
 
         // Add loupe facet as 6th facet
         cuts = new IDiamond.FacetCut[](6);
+        cuts[0] = _buildLoupeFacetCut(loupeFacet);
         for (uint256 i = 0; i < 5; i++) {
-            cuts[i] = baseCuts[i];
+            cuts[i + 1] = baseCuts[i];
         }
-        cuts[5] = _buildLoupeFacetCut(loupeFacet);
     }
 
     /**
@@ -162,13 +159,15 @@ contract CommunityDiamondConfigurator is CommunityDiamondConfiguratorBase {
         CommunityStrategyFacet _strategyFacet,
         DiamondLoupeFacet _loupeFacet
     ) public pure returns (IDiamond.FacetCut[] memory cuts) {
-        IDiamond.FacetCut[] memory baseCuts = _buildFacetCuts(_adminFacet, _memberFacet, _poolFacet, _powerFacet, _strategyFacet);
+        IDiamond.FacetCut[] memory baseCuts = _buildFacetCuts(
+            _adminFacet, _memberFacet, _poolFacet, _powerFacet, _strategyFacet
+        );
 
         cuts = new IDiamond.FacetCut[](6);
+        cuts[0] = _buildLoupeFacetCut(_loupeFacet);
         for (uint256 i = 0; i < 5; i++) {
-            cuts[i] = baseCuts[i];
+            cuts[i + 1] = baseCuts[i];
         }
-        cuts[5] = _buildLoupeFacetCut(_loupeFacet);
     }
 
     /**
@@ -178,6 +177,8 @@ contract CommunityDiamondConfigurator is CommunityDiamondConfiguratorBase {
      */
     function configureFacets(address community) external {
         IDiamond.FacetCut[] memory cuts = getFacetCuts();
-        RegistryCommunity(payable(community)).diamondCut(cuts, address(diamondInit), abi.encodeCall(RegistryCommunityDiamondInit.init, ()));
+        IDiamondCut(community).diamondCut(
+            cuts, address(diamondInit), abi.encodeCall(RegistryCommunityDiamondInit.init, ())
+        );
     }
 }
