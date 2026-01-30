@@ -529,9 +529,12 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     function calculateThreshold(uint256 _requestedAmount) external view returns (uint256) {
         uint256 poolAmount = getPoolAmount();
         uint256 maxAllowed = (cvParams.maxRatio * poolAmount) / ConvictionsUtils.D;
-        if (_requestedAmount * ConvictionsUtils.D > cvParams.maxRatio * poolAmount) {
-            revert AmountOverMaxRatio(_requestedAmount, maxAllowed, poolAmount);
-        }
+
+        // Goss: Removed to allow threshold calculation even if over max ratio
+        // if (_requestedAmount * ConvictionsUtils.D > cvParams.maxRatio * poolAmount) {
+        //     revert AmountOverMaxRatio(_requestedAmount, maxAllowed, poolAmount);
+        // }
+
         return ConvictionsUtils.calculateThreshold(
             _requestedAmount,
             poolAmount,
