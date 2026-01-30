@@ -109,13 +109,13 @@ export const EthAddress = ({
           explorer={(addr: string) => ({
             name: explorer === "explorer" ? "Explorer" : "Louper",
             url:
-              explorer === "explorer" ?
-                `${chain.explorer}/address/${addr}`
-              : `https://louper.dev/diamond/${addr}?network=${encodeURIComponent(louperNetworkSlug ?? "")}`,
+              // explorer === "explorer" ?
+              `${chain.explorer}/address/${addr}`,
+            // : `https://louper.dev/diamond/${addr}?network=${encodeURIComponent(louperNetworkSlug ?? "")}`,
             accountUrl:
-              explorer === "explorer" ?
-                `${chain.explorer}/address/${addr}`
-              : `https://louper.dev/diamond/${addr}?network=${encodeURIComponent(louperNetworkSlug ?? "")}`,
+              // explorer === "explorer" ?
+              `${chain.explorer}/address/${addr}`,
+            // : `https://louper.dev/diamond/${addr}?network=${encodeURIComponent(louperNetworkSlug ?? "")}`,
           })}
         />
       </div>
