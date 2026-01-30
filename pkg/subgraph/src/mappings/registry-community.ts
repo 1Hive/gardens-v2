@@ -122,6 +122,7 @@ export function handleInitialized(event: RegistryInitialized): void {
     tg.save();
     newRC.garden = tg.id;
     newRC.archived = false;
+    newRC.membersCount = BigInt.fromI32(0);
 
     newRC.save();
 
@@ -184,6 +185,17 @@ export function handleMemberRegisteredWithCovenant(
   newMemberCommunity.isRegistered = true;
   newMemberCommunity.covenantSignature = event.params._covenantSig;
   newMemberCommunity.save();
+
+  // handle community members count
+  let communityEntity = RegistryCommunity.load(community);
+  if (communityEntity == null) {
+    log.error("RegistryCommunity: Community not found: {}", [community]);
+    return;
+  }
+  communityEntity.membersCount = communityEntity.membersCount.plus(
+    BigInt.fromI32(1)
+  );
+  communityEntity.save();
 }
 
 export function handleMemberRegistered(event: MemberRegistered): void {
@@ -231,6 +243,18 @@ export function handleMemberRegistered(event: MemberRegistered): void {
 
   newMemberCommunity.isRegistered = true;
   newMemberCommunity.save();
+
+  // handle community members count
+  let communityEntity = RegistryCommunity.load(community);
+  if (communityEntity == null) {
+    log.error("RegistryCommunity: Community not found: {}", [community]);
+    return;
+  }
+
+  communityEntity.membersCount = communityEntity.membersCount.plus(
+    BigInt.fromI32(1)
+  );
+  communityEntity.save();
 }
 
 //handleMemberUnregistered
@@ -251,6 +275,20 @@ export function handleMemberUnregistered(event: MemberRegistered): void {
   memberCommunity.stakedTokens = BigInt.fromI32(0);
 
   memberCommunity.save();
+
+  // handle community members count
+  let communityEntity = RegistryCommunity.load(event.address.toHexString());
+  if (communityEntity == null) {
+    log.error("RegistryCommunity: Community not found: {}", [
+      event.address.toHexString()
+    ]);
+    return;
+  }
+
+  communityEntity.membersCount = communityEntity.membersCount.minus(
+    BigInt.fromI32(1)
+  );
+  communityEntity.save();
 }
 
 // handleMemberKicked
@@ -276,6 +314,20 @@ export function handleMemberKicked(event: MemberKicked): void {
   memberCommunity.isRegistered = false;
   memberCommunity.stakedTokens = BigInt.fromI32(0);
   memberCommunity.save();
+
+  // handle community members count
+  let communityEntity = RegistryCommunity.load(event.address.toHexString());
+  if (communityEntity == null) {
+    log.error("RegistryCommunity: Community not found: {}", [
+      event.address.toHexString()
+    ]);
+    return;
+  }
+
+  communityEntity.membersCount = communityEntity.membersCount.minus(
+    BigInt.fromI32(1)
+  );
+  communityEntity.save();
 }
 
 // handleStrategyAdded
