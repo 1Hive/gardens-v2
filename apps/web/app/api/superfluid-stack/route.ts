@@ -686,7 +686,7 @@ let creationCacheCampaignVersion: string | null = null;
 let transferCacheCampaignVersion: string | null = null;
 const TOKEN_PRICE_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const ENS_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
-const ENS_AVATAR_RETRY_MS = 60 * 60 * 1000;
+const ENS_AVATAR_RETRY_MS = ENS_CACHE_TTL_MS;
 const ENS_METADATA_AVATAR_BASE_URL =
   "https://metadata.ens.domains/mainnet/avatar";
 
@@ -713,14 +713,16 @@ const tokenPriceCache = new Map<
 >();
 let priceCacheDirty = false;
 let latestPriceCacheCid: string | null = null;
-const ensLookupFailures = new Set<string>();
-let ensCacheDay: string | null = null;
+let lastEnsCachePrune = 0;
+const ENS_CACHE_PRUNE_INTERVAL_MS = 60 * 60 * 1000;
 const ensureEnsCacheFresh = () => {
-  const today = new Date().toISOString().slice(0, 10);
-  if (ensCacheDay !== today) {
-    ensCacheDay = today;
-    ensIdentityCache.clear();
-    ensLookupFailures.clear();
+  const now = Date.now();
+  if (now - lastEnsCachePrune < ENS_CACHE_PRUNE_INTERVAL_MS) return;
+  lastEnsCachePrune = now;
+  for (const [addr, entry] of ensIdentityCache.entries()) {
+    if (now - entry.fetchedAt >= ENS_CACHE_TTL_MS) {
+      ensIdentityCache.delete(addr);
+    }
   }
 };
 const farcasterAuthHeader =
@@ -907,7 +909,6 @@ const fetchEnsIdentityByAddress = async (
     const message = (error as Error)?.message ?? "";
     if (message.includes("reverse")) {
       // Reverse resolver often reverts when unset; ignore quietly after first hit
-      ensLookupFailures.add(address);
       ensIdentityCache.set(key, {
         name: null,
         avatar: null,
@@ -3510,46 +3511,65 @@ export async function GET(req: Request) {
       console.log("[superfluid-stack] Syncing wallet points to Notion", {
         count: walletBreakdown.length,
       });
-      const batchSize = 3;
-      const delayMs = 350;
+      const batchSize = 50;
+      let delayMs = 350;
+      const maxDelayMs = 10_000;
+      const minDelayMs = 200;
       const seen = new Set<string>();
       try {
-        for (let i = 0; i < walletBreakdown.length; i += batchSize) {
+        let i = 0;
+        while (i < walletBreakdown.length) {
           const batch = walletBreakdown.slice(i, i + batchSize);
           console.log("[superfluid-stack] Notion batch start", {
             batchStart: i,
             batchEnd: i + batch.length - 1,
             batchSize: batch.length,
+            delayMs,
           });
-          const results = await Promise.all(
-            batch.map((wallet) => {
-              seen.add(wallet.address.toLowerCase());
-              // Skip update if checksum matches existing
-              const existing = notionExistingPages.get(
-                wallet.address.toLowerCase(),
-              );
-              if (existing?.checksum === wallet.checksum) return true;
-              return upsertNotionWallet({
-                address: wallet.address,
-                fundPoints: wallet.fundPoints,
-                streamPoints: wallet.streamPoints,
-                governanceStakePoints: wallet.governanceStakePoints,
-                farcasterPoints: wallet.farcasterPoints,
-                totalPoints: wallet.totalPoints,
-              });
-            }),
-          );
-          results.forEach((ok) => {
-            notionSync.processed += 1;
-            if (!ok) notionSync.failed += 1;
-          });
-          console.log("[superfluid-stack] Notion batch complete", {
-            processed: notionSync.processed,
-            failed: notionSync.failed,
-            remaining: walletBreakdown.length - notionSync.processed,
-          });
-          if (i + batchSize < walletBreakdown.length) {
-            await sleep(delayMs); // Stay under Notion rate limits
+          try {
+            const results = await Promise.all(
+              batch.map((wallet) => {
+                seen.add(wallet.address.toLowerCase());
+                // Skip update if checksum matches existing
+                const existing = notionExistingPages.get(
+                  wallet.address.toLowerCase(),
+                );
+                if (existing?.checksum === wallet.checksum) return true;
+                return upsertNotionWallet({
+                  address: wallet.address,
+                  fundPoints: wallet.fundPoints,
+                  streamPoints: wallet.streamPoints,
+                  governanceStakePoints: wallet.governanceStakePoints,
+                  farcasterPoints: wallet.farcasterPoints,
+                  totalPoints: wallet.totalPoints,
+                });
+              }),
+            );
+            results.forEach((ok) => {
+              notionSync.processed += 1;
+              if (!ok) notionSync.failed += 1;
+            });
+            console.log("[superfluid-stack] Notion batch complete", {
+              processed: notionSync.processed,
+              failed: notionSync.failed,
+              remaining: walletBreakdown.length - notionSync.processed,
+            });
+            delayMs = Math.max(minDelayMs, Math.floor(delayMs * 0.85));
+            i += batchSize;
+          } catch (error: any) {
+            const status = error?.status ?? error?.code;
+            const isRateLimit = status === 429;
+            delayMs = Math.min(maxDelayMs, Math.floor(delayMs * 2));
+            console.warn("[superfluid-stack] Notion batch retrying", {
+              batchStart: i,
+              batchEnd: i + batch.length - 1,
+              delayMs,
+              isRateLimit,
+              error,
+            });
+          }
+          if (i < walletBreakdown.length) {
+            await sleep(delayMs);
           }
         }
         // Archive rows no longer present
