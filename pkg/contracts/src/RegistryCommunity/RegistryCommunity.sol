@@ -307,26 +307,9 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
         registry = IRegistry(allo.getRegistry());
 
         address[] memory pool_initialMembers;
-        // Support EOA as council safe
-        if (address(councilSafe).code.length == 0) {
-            pool_initialMembers = new address[](3);
-            pool_initialMembers[0] = msg.sender;
-        } else {
-            address[] memory owners = councilSafe.getOwners();
-            pool_initialMembers = new address[](owners.length + 2);
-            for (uint256 i = 0; i < owners.length; i++) {
-                pool_initialMembers[i] = owners[i];
-            }
-        }
 
-        pool_initialMembers[pool_initialMembers.length - 1] = address(councilSafe);
-        pool_initialMembers[pool_initialMembers.length - 2] = address(this);
-
-        // console.log("initialMembers length", pool_initialMembers.length);
         profileId =
-            registry.createProfile(params._nonce, communityName, params._metadata, address(this), pool_initialMembers);
-
-        initialMembers = pool_initialMembers;
+            registry.createProfile(params._nonce, communityName, params._metadata, address(this), new address[](0));
 
         strategyTemplate = _strategyTemplate;
         collateralVaultTemplate = _collateralVaultTemplate;
