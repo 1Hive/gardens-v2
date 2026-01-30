@@ -584,13 +584,22 @@ if (FARCASTER_DISABLED) {
   );
 }
 let farcasterUsernameCache = new Map<string, string>();
-let ensNameCache = new Map<string, string | null>();
+type EnsCacheEntry = {
+  name: string | null;
+  avatar: string | null;
+  fetchedAt: number;
+};
+let ensIdentityCache = new Map<string, EnsCacheEntry>();
 let nativeSuperTokenCache = new Map<string, string>();
 let nativeTokenCache = new Map<string, string>();
 let latestPointsSnapshotCid: string | null = PINATA_POINTS_SNAPSHOT_CID;
 let creationCacheCampaignVersion: string | null = null;
 let transferCacheCampaignVersion: string | null = null;
 const TOKEN_PRICE_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const ENS_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const ENS_AVATAR_RETRY_MS = ENS_CACHE_TTL_MS;
+const ENS_METADATA_AVATAR_BASE_URL =
+  "https://metadata.ens.domains/mainnet/avatar";
 const tokenPriceCache = new Map<
   string,
   { price: number; fetchedAt: number; symbol: string }
@@ -722,34 +731,125 @@ const getMainnetClient = () => {
   return mainnetClient;
 };
 
-let ensLookupDisabled = false;
-const fetchEnsNameByAddress = async (
-  address: string,
+const buildEnsMetadataAvatarUrl = (name: string) =>
+  `${ENS_METADATA_AVATAR_BASE_URL}/${encodeURIComponent(name.toLowerCase())}`;
+
+const fetchEnsAvatarFromMetadata = async (
+  name: string,
 ): Promise<string | null> => {
-  if (!address || !address.toLowerCase().startsWith("0x")) return null;
-  if (ensLookupDisabled) return null;
-  if (ensNameCache.has(address)) return ensNameCache.get(address) ?? null;
+  try {
+    const url = buildEnsMetadataAvatarUrl(name);
+    const response = await fetch(url, { method: "HEAD" });
+    if (response.ok) {
+      return url;
+    }
+  } catch {
+    // ignore
+  }
+  return null;
+};
+
+const resolveEnsAvatarWithFallback = async (
+  client: ReturnType<typeof createPublicClient>,
+  name: string,
+): Promise<string | null> => {
+  try {
+    const avatar = await client.getEnsAvatar({ name });
+    if (avatar) {
+      return avatar;
+    }
+  } catch {
+    // ignore resolver errors
+  }
+  return fetchEnsAvatarFromMetadata(name);
+};
+
+let lastEnsCachePrune = 0;
+const ENS_CACHE_PRUNE_INTERVAL_MS = 60 * 60 * 1000;
+const ensureEnsCacheFresh = () => {
+  const now = Date.now();
+  if (now - lastEnsCachePrune < ENS_CACHE_PRUNE_INTERVAL_MS) return;
+  lastEnsCachePrune = now;
+  for (const [addr, entry] of ensIdentityCache.entries()) {
+    if (now - entry.fetchedAt >= ENS_CACHE_TTL_MS) {
+      ensIdentityCache.delete(addr);
+    }
+  }
+};
+
+const fetchEnsIdentityByAddress = async (
+  address: string,
+): Promise<{ name: string | null; avatar: string | null }> => {
+  if (!address || !address.toLowerCase().startsWith("0x")) {
+    return { name: null, avatar: null };
+  }
+  ensureEnsCacheFresh();
+  const key = address.toLowerCase();
+  const cached = ensIdentityCache.get(key);
+  const now = Date.now();
+  if (cached && now - cached.fetchedAt < ENS_CACHE_TTL_MS) {
+    if (cached.avatar) {
+      return { name: cached.name, avatar: cached.avatar };
+    }
+    const cachedName = cached.name;
+    const shouldRefreshAvatar =
+      typeof cachedName === "string" &&
+      cachedName.length > 0 &&
+      now - cached.fetchedAt >= ENS_AVATAR_RETRY_MS;
+    if (!shouldRefreshAvatar) {
+      return { name: cached.name, avatar: cached.avatar };
+    }
+    try {
+      const client = getMainnetClient();
+      const avatar = await resolveEnsAvatarWithFallback(client, cachedName);
+      if (!avatar) {
+        console.log("[superfluid-stack-gd] ens avatar not found for name", {
+          ens: cachedName,
+        });
+      }
+      ensIdentityCache.set(key, {
+        name: cachedName,
+        avatar,
+        fetchedAt: now,
+      });
+      return { name: cachedName, avatar };
+    } catch (error) {
+      console.warn("[superfluid-stack-gd] ens avatar refresh failed", {
+        address,
+        error,
+      });
+      return { name: cached.name, avatar: cached.avatar };
+    }
+  }
   try {
     const client = getMainnetClient();
     const name = await client.getEnsName({
       address: address as Address,
     });
     const ens = typeof name === "string" ? name : null;
+    let avatar: string | null = null;
     if (ens) {
-      ensNameCache.set(address, ens);
-      return ens;
+      avatar = await resolveEnsAvatarWithFallback(client, ens);
+      if (!avatar) {
+        console.log("[superfluid-stack-gd] ens avatar not found for name", {
+          ens,
+        });
+      }
+    } else {
+      console.log("[superfluid-stack-gd] ens not found for address", {
+        address,
+      });
     }
-    console.log("[superfluid-stack-gd] ens not found for address", {
-      address,
-    });
-    ensNameCache.set(address, null);
-    return null;
+    ensIdentityCache.set(key, { name: ens, avatar, fetchedAt: now });
+    return { name: ens, avatar };
   } catch (error) {
-    // Handle reverse resolver reverts/other ENS failures gracefully
     console.warn("[superfluid-stack-gd] ens lookup failed", { address, error });
-    ensLookupDisabled = true;
-    ensNameCache.set(address, null);
-    return null;
+    ensIdentityCache.set(key, {
+      name: null,
+      avatar: null,
+      fetchedAt: Date.now(),
+    });
+    return { name: null, avatar: null };
   }
 };
 
@@ -1176,8 +1276,12 @@ const hydratePointsSnapshotFromIpfs = async () => {
         }
       }
       if (typeof w?.ensName === "string") {
-        if (!ensNameCache.has(addr)) {
-          ensNameCache.set(addr, w.ensName);
+        if (!ensIdentityCache.has(addr)) {
+          ensIdentityCache.set(addr, {
+            name: w.ensName,
+            avatar: null,
+            fetchedAt: Date.now(),
+          });
         }
       }
       if (typeof w?.nativeSuperToken === "string") {
@@ -2555,8 +2659,8 @@ export async function GET(req: Request) {
     for (const [addr, username] of farcasterUsernameCache.entries()) {
       farcasterUsernameByWallet.set(addr, username);
     }
-    for (const [addr, name] of ensNameCache.entries()) {
-      if (name) ensNameByWallet.set(addr, name);
+    for (const [addr, entry] of ensIdentityCache.entries()) {
+      if (entry.name) ensNameByWallet.set(addr, entry.name);
     }
     for (const [addr, token] of nativeSuperTokenCache.entries()) {
       nativeSuperTokenByWallet.set(addr, token);
@@ -2789,8 +2893,8 @@ export async function GET(req: Request) {
     if (!SKIP_IDENTITY_RESOLUTION) {
       for (const address of allAddresses) {
         if (ensNameByWallet.has(address)) continue;
-        const ens = await fetchEnsNameByAddress(address);
-        if (ens) ensNameByWallet.set(address, ens);
+        const { name } = await fetchEnsIdentityByAddress(address);
+        if (name) ensNameByWallet.set(address, name);
       }
     }
     const walletPointTargets: Array<{
@@ -3098,46 +3202,65 @@ export async function GET(req: Request) {
       console.log("[superfluid-stack] Syncing wallet points to Notion", {
         count: walletBreakdown.length,
       });
-      const batchSize = 3;
-      const delayMs = 350;
+      const batchSize = 50;
+      let delayMs = 350;
+      const maxDelayMs = 10_000;
+      const minDelayMs = 200;
       const seen = new Set<string>();
       try {
-        for (let i = 0; i < walletBreakdown.length; i += batchSize) {
+        let i = 0;
+        while (i < walletBreakdown.length) {
           const batch = walletBreakdown.slice(i, i + batchSize);
           console.log("[superfluid-stack] Notion batch start", {
             batchStart: i,
             batchEnd: i + batch.length - 1,
             batchSize: batch.length,
+            delayMs,
           });
-          const results = await Promise.all(
-            batch.map((wallet) => {
-              seen.add(wallet.address.toLowerCase());
-              // Skip update if checksum matches existing
-              const existing = notionExistingPages.get(
-                wallet.address.toLowerCase(),
-              );
-              if (existing?.checksum === wallet.checksum) return true;
-              return upsertNotionWallet({
-                address: wallet.address,
-                fundPoints: wallet.fundPoints,
-                streamPoints: wallet.streamPoints,
-                governanceStakePoints: wallet.governanceStakePoints,
-                farcasterPoints: wallet.farcasterPoints,
-                totalPoints: wallet.totalPoints,
-              });
-            }),
-          );
-          results.forEach((ok) => {
-            notionSync.processed += 1;
-            if (!ok) notionSync.failed += 1;
-          });
-          console.log("[superfluid-stack] Notion batch complete", {
-            processed: notionSync.processed,
-            failed: notionSync.failed,
-            remaining: walletBreakdown.length - notionSync.processed,
-          });
-          if (i + batchSize < walletBreakdown.length) {
-            await sleep(delayMs); // Stay under Notion rate limits
+          try {
+            const results = await Promise.all(
+              batch.map((wallet) => {
+                seen.add(wallet.address.toLowerCase());
+                // Skip update if checksum matches existing
+                const existing = notionExistingPages.get(
+                  wallet.address.toLowerCase(),
+                );
+                if (existing?.checksum === wallet.checksum) return true;
+                return upsertNotionWallet({
+                  address: wallet.address,
+                  fundPoints: wallet.fundPoints,
+                  streamPoints: wallet.streamPoints,
+                  governanceStakePoints: wallet.governanceStakePoints,
+                  farcasterPoints: wallet.farcasterPoints,
+                  totalPoints: wallet.totalPoints,
+                });
+              }),
+            );
+            results.forEach((ok) => {
+              notionSync.processed += 1;
+              if (!ok) notionSync.failed += 1;
+            });
+            console.log("[superfluid-stack] Notion batch complete", {
+              processed: notionSync.processed,
+              failed: notionSync.failed,
+              remaining: walletBreakdown.length - notionSync.processed,
+            });
+            delayMs = Math.max(minDelayMs, Math.floor(delayMs * 0.85));
+            i += batchSize;
+          } catch (error: any) {
+            const status = error?.status ?? error?.code;
+            const isRateLimit = status === 429;
+            delayMs = Math.min(maxDelayMs, Math.floor(delayMs * 2));
+            console.warn("[superfluid-stack] Notion batch retrying", {
+              batchStart: i,
+              batchEnd: i + batch.length - 1,
+              delayMs,
+              isRateLimit,
+              error,
+            });
+          }
+          if (i < walletBreakdown.length) {
+            await sleep(delayMs);
           }
         }
         // Archive rows no longer present
