@@ -47,7 +47,7 @@ type PointsClient = {
 };
 
 const SUPERFLUID_POINTS_BASE_URL =
-  process.env.SUPERFLUID_POINT_API_BASE_URL?.trim() ||
+  process.env.SUPERFLUID_POINT_API_BASE_URL?.trim() ??
   "https://cms.superfluid.pro";
 
 const resolveCampaignId = () =>
@@ -89,8 +89,7 @@ const fetchJson = async <T>(
       "Content-Type": "application/json",
       ...(options.headers ?? {}),
     },
-    body:
-      options.body !== undefined ? JSON.stringify(options.body) : undefined,
+    body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
   });
   const text = await res.text();
   let json: any = null;
@@ -113,7 +112,7 @@ const fetchJson = async <T>(
 
 let cachedPointsClient: PointsClient | null = null;
 
-export const getSuperfluidStackClient = (): PointsClient => {
+export const getSuperfluidPointsClient = (): PointsClient => {
   if (cachedPointsClient) return cachedPointsClient;
   const apiKey = process.env.SUPERFLUID_POINT_API_KEY;
   const campaignId = resolveCampaignId();
@@ -150,8 +149,7 @@ export const getSuperfluidStackClient = (): PointsClient => {
         },
       });
       const events = (data.events ?? []).map(toPointsEvent);
-      const slice =
-        offsetWithin > 0 ? events.slice(offsetWithin) : events;
+      const slice = offsetWithin > 0 ? events.slice(offsetWithin) : events;
       collected.push(...slice);
       if (!data.pagination?.hasNextPage || events.length === 0) break;
       page += 1;
@@ -167,9 +165,8 @@ export const getSuperfluidStackClient = (): PointsClient => {
     }: {
       query?: { limit?: number; offset?: number };
     }): Promise<PointsEvent[]> => {
-      const requestedLimit = Number.isFinite(query?.limit)
-        ? Math.max(1, query?.limit ?? 0)
-        : 0;
+      const requestedLimit =
+        Number.isFinite(query?.limit) ? Math.max(1, query?.limit ?? 0) : 0;
       const pageLimit = normalizeLimit(requestedLimit || 100);
       const startOffset = Math.max(0, query?.offset ?? 0);
       let page = Math.floor(startOffset / pageLimit) + 1;
@@ -185,8 +182,7 @@ export const getSuperfluidStackClient = (): PointsClient => {
           },
         });
         const events = (data.events ?? []).map(toPointsEvent);
-        const slice =
-          offsetWithin > 0 ? events.slice(offsetWithin) : events;
+        const slice = offsetWithin > 0 ? events.slice(offsetWithin) : events;
         collected.push(...slice);
         if (!data.pagination?.hasNextPage || events.length === 0) break;
         page += 1;

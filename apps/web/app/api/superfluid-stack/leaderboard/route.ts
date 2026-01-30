@@ -10,7 +10,7 @@ export async function GET(request: Request) {
     {
       error: "Deprecated endpoint",
       message:
-        "Use /api/superfluid-points/leaderboard instead of /api/superfluid-stack/leaderboard.",
+        "Use /api/superfluid-points/leaderboard instead of /api/superfluid-points/leaderboard.",
       redirect: redirectPath,
     },
     { status: 410 },
