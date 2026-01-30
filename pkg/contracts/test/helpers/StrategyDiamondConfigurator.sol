@@ -89,11 +89,11 @@ abstract contract StrategyDiamondConfiguratorBase {
 }
 
 /**
- * @title DiamondConfigurator
+ * @title StrategyDiamondConfigurator
  * @notice Helper contract to deploy and configure CVStrategy diamond facets
  * @dev Used in tests to properly set up the diamond pattern after strategy deployment
  */
-contract DiamondConfigurator is StrategyDiamondConfiguratorBase {
+contract StrategyDiamondConfigurator is StrategyDiamondConfiguratorBase {
     CVAdminFacet public adminFacet;
     CVAllocationFacet public allocationFacet;
     CVDisputeFacet public disputeFacet;

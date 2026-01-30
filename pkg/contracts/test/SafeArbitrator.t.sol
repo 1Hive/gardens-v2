@@ -28,6 +28,7 @@ import {CVStrategyDiamondInit} from "../src/CVStrategy/CVStrategyDiamondInit.sol
 
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {CVDisputeFacet} from "../src/CVStrategy/facets/CVDisputeFacet.sol";
 
 contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHelpers, SafeSetup {
     SafeArbitrator safeArbitrator;
@@ -51,6 +52,7 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
     uint256 constant ARBITRATION_FEE = 2 ether;
     uint256 public constant STAKE_WITH_FEES =
         MINIMUM_STAKE + (MINIMUM_STAKE * (COMMUNITY_FEE_PERCENTAGE + PROTOCOL_FEE_PERCENTAGE)) / 100;
+    uint256 public constant DISPUTE_COOLDOWN_SEC = 2 hours;
 
     function setUp() public {
         //TODO - Abstract all this setup into a shared function that could be used on cvstrategy test also
@@ -247,6 +249,43 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
         assertEq(uint256(status), uint256(SafeArbitrator.DisputeStatus.Solved));
     }
 
+    function testRevert_ExecuteRuling_InvalidProposalStatus() public {
+        uint256 proposalId = createProposal();
+        vm.deal(challenger, 10 ether);
+
+        // Register safe
+        vm.prank(address(cvStrategy));
+        safeArbitrator.registerSafe(address(_councilSafe()));
+
+        // First dispute - should succeed
+        vm.prank(challenger);
+        uint256 disputeID1 = cvStrategy.disputeProposal{value: 0.01 ether + ARBITRATION_FEE}(proposalId, "", "");
+
+        // Resolve the first dispute (so proposal goes back to Active and can be disputed again)
+        vm.startPrank(address(_councilSafe()));
+        safeArbitrator.executeRuling(disputeID1, 1, address(cvStrategy)); // Ruling that keeps proposal active
+        vm.expectRevert(abi.encodeWithSelector(CVDisputeFacet.ProposalStatusInvalid.selector, 1, 1));
+        cvStrategy.rule(disputeID1, 1);
+        vm.stopPrank();
+    }
+
+    function testRevert_ExecuteRuling_senderNotArbitrator() public {
+        uint256 proposalId = createProposal();
+        vm.deal(challenger, 10 ether);
+
+        // Register safe
+        vm.prank(address(cvStrategy));
+        safeArbitrator.registerSafe(address(_councilSafe()));
+
+        // First dispute - should succeed
+        vm.prank(challenger);
+        uint256 disputeID1 = cvStrategy.disputeProposal{value: 0.01 ether + ARBITRATION_FEE}(proposalId, "", "");
+        vm.expectRevert(
+            abi.encodeWithSelector(CVDisputeFacet.OnlyArbitrator.selector, address(this), address(safeArbitrator))
+        );
+        cvStrategy.rule(disputeID1, 1);
+    }
+
     function testArbitrationCost() public view {
         uint256 cost = safeArbitrator.arbitrationCost("");
         assertEq(cost, ARBITRATION_FEE);
@@ -257,6 +296,83 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
         vm.prank(challenger);
         vm.expectRevert(SafeArbitrator.NotEnoughArbitrationFees.selector);
         safeArbitrator.createDispute{value: ARBITRATION_FEE - 1}(3, "");
+    }
+
+    function testRevert_CreateDispute_ProposalInvalid() public {
+        uint256 proposalId = createProposal();
+        vm.deal(challenger, 10 ether);
+        vm.prank(address(cvStrategy));
+        safeArbitrator.registerSafe(address(_councilSafe()));
+        vm.prank(challenger);
+        vm.expectRevert(abi.encodeWithSelector(CVDisputeFacet.ProposalStatusInvalid.selector, 0, 0));
+        uint256 disputeID = cvStrategy.disputeProposal{value: 0.01 ether}(0, "", "");
+        // (, address configTribunalSafe,,,,) = cvStrategy.arbitrableConfigs(cvStrategy.currentArbitrableConfigVersion());
+
+        // // fund this contract to cover the direct call below
+        // vm.deal(address(this), ARBITRATION_FEE - 1);
+        // safeArbitrator.createDispute{value: ARBITRATION_FEE}(3, "");
+
+        // (
+        //     ,,
+        //     uint256 choices,
+        //     uint256 arbitrationFee,
+        //     uint256 ruling,
+        //     SafeArbitrator.DisputeStatus status,
+        //     address tribunalSafe
+        // ) = safeArbitrator.disputes(disputeID - 1);
+
+        // assertEq(choices, 3);
+        // assertEq(arbitrationFee, ARBITRATION_FEE);
+        // assertEq(ruling, 0);
+        // assertEq(uint256(status), uint256(SafeArbitrator.DisputeStatus.Waiting));
+        // assertEq(tribunalSafe, configTribunalSafe);
+    }
+
+    function testRevert_CreateDispute_ChallengerCollateralTooLow() public {
+        uint256 proposalId = createProposal();
+        vm.deal(challenger, 10 ether);
+        vm.prank(address(cvStrategy));
+        safeArbitrator.registerSafe(address(_councilSafe()));
+        vm.prank(challenger);
+        vm.expectRevert(abi.encodeWithSelector(CVDisputeFacet.ChallengerCollateralTooLow.selector, 0, 0.01 ether));
+        uint256 disputeID = cvStrategy.disputeProposal{value: 0.0 ether}(proposalId, "", "");
+    }
+
+    function testRevert_CreateDispute_DisputeCooldownActive() public {
+        uint256 proposalId = createProposal();
+        vm.deal(challenger, 10 ether);
+
+        // Register safe
+        vm.prank(address(cvStrategy));
+        safeArbitrator.registerSafe(address(_councilSafe()));
+
+        // First dispute - should succeed
+        vm.prank(challenger);
+        uint256 disputeID1 = cvStrategy.disputeProposal{value: 0.01 ether + ARBITRATION_FEE}(proposalId, "", "");
+
+        // Resolve the first dispute (so proposal goes back to Active and can be disputed again)
+        vm.prank(address(_councilSafe()));
+        safeArbitrator.executeRuling(disputeID1, 1, address(cvStrategy)); // Ruling that keeps proposal active
+
+        // Try to create a second dispute immediately - should revert due to cooldown
+        // vm.deal(challenger, 10 ether); // Refund challenger
+        vm.prank(challenger);
+
+        // Calculate remaining cooldown time
+
+        uint256 remainingCooldown = DISPUTE_COOLDOWN_SEC; // Full cooldown since we just resolved
+
+        vm.expectRevert(
+            abi.encodeWithSelector(CVDisputeFacet.DisputeCooldownActive.selector, proposalId, remainingCooldown)
+        );
+        cvStrategy.disputeProposal{value: 0.01 ether + ARBITRATION_FEE}(proposalId, "", "");
+
+        // Fast forward past cooldown period
+        vm.warp(block.timestamp + DISPUTE_COOLDOWN_SEC + 1);
+
+        // // Now dispute should succeed
+        vm.prank(challenger);
+        uint256 disputeID2 = cvStrategy.disputeProposal{value: 0.01 ether + ARBITRATION_FEE}(proposalId, "", "");
     }
 
     function testCannotExecuteRulingFromNonSafe() public {
