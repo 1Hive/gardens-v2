@@ -22,7 +22,7 @@ import {ISybilScorer} from "../src/ISybilScorer.sol";
 import {PassportScorer} from "../src/PassportScorer.sol";
 import {SafeSetup} from "../test/shared/SafeSetup.sol";
 import {CommunityDiamondConfigurator} from "../test/helpers/CommunityDiamondConfigurator.sol";
-import {DiamondConfigurator} from "../test/helpers/StrategyDiamondConfigurator.sol";
+import {StrategyDiamondConfigurator} from "../test/helpers/StrategyDiamondConfigurator.sol";
 // import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
 import {IRegistry, Metadata} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 import {Accounts} from "allo-v2-test/foundry/shared/Accounts.sol";
@@ -308,7 +308,7 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         params._communityName = "Pioneers of Matias";
 
         CommunityDiamondConfigurator communityDiamondConfigurator = new CommunityDiamondConfigurator();
-        DiamondConfigurator diamondConfigurator = new DiamondConfigurator();
+        StrategyDiamondConfigurator diamondConfigurator = new StrategyDiamondConfigurator();
         registryFactory.initializeV2(
             communityDiamondConfigurator.getFacetCuts(),
             address(communityDiamondConfigurator.diamondInit()),

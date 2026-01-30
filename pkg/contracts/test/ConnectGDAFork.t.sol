@@ -5,7 +5,7 @@ import "forge-std/Test.sol";
 import {console} from "forge-std/console.sol";
 import {CVStrategy, ArbitrableConfig, CVParams} from "../src/CVStrategy/CVStrategy.sol";
 import {IArbitrator} from "../src/interfaces/IArbitrator.sol";
-import {DiamondConfigurator} from "./helpers/StrategyDiamondConfigurator.sol";
+import {StrategyDiamondConfigurator} from "./helpers/StrategyDiamondConfigurator.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Library.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
@@ -25,7 +25,7 @@ contract ConnectGDAForkTest is Test {
         cvStrategy.upgradeTo(address(upgrade));
 
         // Configure diamond facets after upgrade
-        DiamondConfigurator configurator = new DiamondConfigurator();
+        StrategyDiamondConfigurator configurator = new StrategyDiamondConfigurator();
         address owner = cvStrategy.owner();
         vm.startPrank(owner);
         cvStrategy.diamondCut(configurator.getFacetCuts(), address(0), "");

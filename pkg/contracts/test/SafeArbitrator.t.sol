@@ -21,7 +21,7 @@ import {IArbitrable} from "../src/interfaces/IArbitrable.sol";
 import {GV2ERC20} from "../script/GV2ERC20.sol";
 import {CVStrategyHelpers} from "./CVStrategyHelpers.sol";
 import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
-import {DiamondConfigurator} from "./helpers/StrategyDiamondConfigurator.sol";
+import {StrategyDiamondConfigurator} from "./helpers/StrategyDiamondConfigurator.sol";
 import {CommunityDiamondConfigurator} from "./helpers/CommunityDiamondConfigurator.sol";
 import {RegistryCommunityDiamondInit} from "../src/RegistryCommunity/RegistryCommunityDiamondInit.sol";
 import {CVStrategyDiamondInit} from "../src/CVStrategy/CVStrategyDiamondInit.sol";
@@ -41,7 +41,7 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
     // address local = address(0x5);
     // address pool_admin = address(3);
     address challenger = address(3);
-    DiamondConfigurator public diamondConfigurator;
+    StrategyDiamondConfigurator public diamondConfigurator;
     CommunityDiamondConfigurator public communityDiamondConfigurator;
 
     uint256 public constant POOL_AMOUNT = 15000 ether;
@@ -102,7 +102,7 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
         params._metadata = metadata;
         params._councilSafe = payable(address(_councilSafe()));
 
-        diamondConfigurator = new DiamondConfigurator();
+        diamondConfigurator = new StrategyDiamondConfigurator();
         communityDiamondConfigurator = new CommunityDiamondConfigurator();
         RegistryFactory factory = RegistryFactory(
             address(

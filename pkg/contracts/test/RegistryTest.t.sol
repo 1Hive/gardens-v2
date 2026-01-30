@@ -46,7 +46,7 @@ import {CVStrategyHelpers} from "./CVStrategyHelpers.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import {DiamondConfigurator} from "./helpers/StrategyDiamondConfigurator.sol";
+import {StrategyDiamondConfigurator} from "./helpers/StrategyDiamondConfigurator.sol";
 import {CommunityDiamondConfigurator} from "./helpers/CommunityDiamondConfigurator.sol";
 // @dev Run forge test --mc RegistryTest -vvvvv
 
@@ -70,7 +70,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
     RegistryFactory internal registryFactory;
     RegistryCommunity internal registryCommunity;
     RegistryCommunity internal nonKickableCommunity;
-    DiamondConfigurator public diamondConfigurator;
+    StrategyDiamondConfigurator public diamondConfigurator;
     CommunityDiamondConfigurator public communityDiamondConfigurator;
 
     address gardenOwner = makeAddr("communityGardenOwner");
@@ -124,7 +124,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         vm.startPrank(allo_owner());
         allo().transferOwnership(local());
         vm.stopPrank();
-        diamondConfigurator = new DiamondConfigurator();
+        diamondConfigurator = new StrategyDiamondConfigurator();
         communityDiamondConfigurator = new CommunityDiamondConfigurator();
 
         vm.startPrank(gardenOwner);
@@ -204,7 +204,9 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
     }
 
     function _configureStrategy(CVStrategy target) internal {
-        target;
+        vm.startPrank(target.owner());
+        target.diamondCut(diamondConfigurator.getFacetCuts(), address(0), "");
+        vm.stopPrank();
     }
 
     function _registryCommunity() internal view returns (RegistryCommunity) {

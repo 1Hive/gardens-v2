@@ -28,7 +28,7 @@ import {CVStrategyDiamondInit} from "../src/CVStrategy/CVStrategyDiamondInit.sol
 import {ISafe as Safe, SafeProxyFactory, Enum} from "../src/interfaces/ISafe.sol";
 import {CollateralVault} from "../src/CollateralVault.sol";
 import {CommunityDiamondConfigurator} from "../test/helpers/CommunityDiamondConfigurator.sol";
-import {DiamondConfigurator} from "../test/helpers/StrategyDiamondConfigurator.sol";
+import {StrategyDiamondConfigurator} from "../test/helpers/StrategyDiamondConfigurator.sol";
 // import {SafeProxyFactory} from "safe-smart-account/contracts/proxies/SafeProxyFactory.sol";
 import {Upgrades} from "@openzeppelin/foundry/LegacyUpgrades.sol";
 
@@ -200,7 +200,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
         console2.log("Registry Factory Addr: %s", address(REGISTRY_FACTORY));
 
         CommunityDiamondConfigurator communityDiamondConfigurator = new CommunityDiamondConfigurator();
-        DiamondConfigurator diamondConfigurator = new DiamondConfigurator();
+        StrategyDiamondConfigurator diamondConfigurator = new StrategyDiamondConfigurator();
         try REGISTRY_FACTORY.initializeV2(
             communityDiamondConfigurator.getFacetCuts(),
             address(communityDiamondConfigurator.diamondInit()),
@@ -208,7 +208,8 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
             diamondConfigurator.getFacetCuts(),
             address(diamondConfigurator.diamondInit()),
             abi.encodeCall(CVStrategyDiamondInit.init, ())
-        ) {} catch {}
+        ) {}
+            catch {}
 
         assertTrue(REGISTRY_FACTORY.registryCommunityTemplate() != address(0x0), "Registry Community Template not set");
         assertTrue(REGISTRY_FACTORY.collateralVaultTemplate() != address(0x0), "Collateral Vault Template not set");
