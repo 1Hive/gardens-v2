@@ -22,6 +22,7 @@ contract RegistryFactory is ProxyOwnableUpgrader {
     address public registryCommunityTemplate;
     address public strategyTemplate;
     address public collateralVaultTemplate;
+    address public streamingEscrowFactory;
     mapping(address => bool) public protopiansAddresses;
     mapping(address => bool) public keepersAddresses;
 
@@ -35,6 +36,7 @@ contract RegistryFactory is ProxyOwnableUpgrader {
     event CommunityValiditySet(address _community, bool _isValid);
     event ProtopiansChanged(address[] _new, address[] _removed);
     event KeepersChanged(address[] _new, address[] _removed);
+    event StreamingEscrowFactorySet(address _newFactory);
 
     /*|--------------------------------------------|*/
     /*|                 ERRORS                     |*/
@@ -63,6 +65,11 @@ contract RegistryFactory is ProxyOwnableUpgrader {
         collateralVaultTemplate = template;
     }
 
+    function setStreamingEscrowFactory(address factory) external virtual onlyOwner {
+        _revertZeroAddress(factory);
+        streamingEscrowFactory = factory;
+        emit StreamingEscrowFactorySet(factory);
+    }
     function initialize(
         address _owner,
         address _gardensFeeReceiver,
@@ -115,6 +122,10 @@ contract RegistryFactory is ProxyOwnableUpgrader {
 
     function getGardensFeeReceiver() external view virtual returns (address) {
         return gardensFeeReceiver;
+    }
+
+    function getStreamingEscrowFactory() external view virtual returns (address) {
+        return streamingEscrowFactory;
     }
 
     function setProtocolFee(address _community, uint256 _newProtocolFee) public virtual onlyOwner {

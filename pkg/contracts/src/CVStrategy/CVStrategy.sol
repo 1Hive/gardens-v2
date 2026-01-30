@@ -689,6 +689,15 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         _delegateToFacet();
     }
 
+    /**
+     * Streaming Facets
+     * @notice Rebalance the streaming members units based on conviction
+     * @dev Delegates to facet
+     */
+    function rebalance() external {
+        _delegateToFacet();
+    }
+
     // _addToAllowList and _removeFromAllowList removed - now in AdminFacet
 
     function _registerToSybilScorer(uint256 threshold) internal {

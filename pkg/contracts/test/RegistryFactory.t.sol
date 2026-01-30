@@ -121,6 +121,16 @@ contract RegistryFactoryTest is Test {
         assertEq(factory.collateralVaultTemplate(), address(0x789));
     }
 
+    function test_setStreamingEscrowFactory_onlyOwner() public {
+        vm.prank(owner);
+        factory.setStreamingEscrowFactory(address(0xABC));
+        assertEq(factory.getStreamingEscrowFactory(), address(0xABC));
+
+        vm.prank(owner);
+        vm.expectRevert();
+        factory.setStreamingEscrowFactory(address(0));
+    }
+
     function test_getProtocolFee_returnsFee() public {
         address registryAddr = factory.createRegistry(params);
 

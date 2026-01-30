@@ -2,6 +2,10 @@
 pragma solidity ^0.8.19;
 
 import {CVStrategyBaseFacet} from "../CVStrategyBaseFacet.sol";
+import {CVStreamingStorage, CVStreamingBase} from "../CVStreamingStorage.sol";
+import {StreamingEscrowFactory} from "../StreamingEscrowFactory.sol";
+import {StreamingEscrow} from "../StreamingEscrow.sol";
+import {IRegistryFactory} from "../../IRegistryFactory.sol";
 import {ProposalType, CreateProposal, Proposal, ProposalStatus} from "../ICVStrategy.sol";
 import {IAllo, Metadata} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import {ConvictionsUtils} from "../ConvictionsUtils.sol";
@@ -14,7 +18,7 @@ import "@openzeppelin/contracts/utils/Strings.sol";
  * @dev This facet is called via delegatecall from CVStrategy
  *      CRITICAL: Inherits storage layout from CVStrategyBaseFacet
  */
-contract CVProposalFacet is CVStrategyBaseFacet {
+contract CVProposalFacet is CVStrategyBaseFacet, CVStreamingBase {
     using SuperTokenV1Library for ISuperToken;
     using Strings for string;
 
@@ -32,6 +36,7 @@ contract CVProposalFacet is CVStrategyBaseFacet {
         uint256 proposalId, string currentMetadata, string newMetadata, uint256 creationTimestamp
     ); // 0x7195b4df
     error CannotEditRequestedAmountWithActiveSupport(uint256 proposalId, uint256 currentAmount, uint256 newAmount); // 0xb5018617
+    error StreamingEscrowFactoryNotSet(); // 0x1dd8d4b9
 
     /*|--------------------------------------------|*/
     /*|              EVENTS                        |*/
@@ -94,12 +99,17 @@ contract CVProposalFacet is CVStrategyBaseFacet {
 
         // Streaming proposal handling
         if (proposalType == ProposalType.Streaming) {
-            // Add a member to the GDA pool with 0 units initially
-            superfluidGDA.addMember(
-                ISuperfluidToken(superfluidToken),
-                p.beneficiary,
-                0 // initial units
+            address factory = IRegistryFactory(registryCommunity.registryFactory()).getStreamingEscrowFactory();
+            if (factory == address(0)) {
+                revert StreamingEscrowFactoryNotSet();
+            }
+            address escrow = StreamingEscrowFactory(factory).deployEscrow(
+                superfluidToken, superfluidGDA, p.beneficiary, address(this)
             );
+            setStreamingEscrow(proposalId, escrow);
+
+            // Add a member to the GDA pool with 0 units initially
+            superfluidGDA.addMember(ISuperfluidToken(superfluidToken), address(escrow), 0);
         }
 
         emit ProposalCreated(poolId, proposalId);
@@ -127,8 +137,15 @@ contract CVProposalFacet is CVStrategyBaseFacet {
 
         // Streaming proposal handling
         if (proposalType == ProposalType.Streaming) {
+            address escrow = streamingEscrow(proposalId);
             // Remove member from the GDA pool
-            superfluidGDA.removeMember(ISuperfluidToken(superfluidToken), proposals[proposalId].beneficiary);
+            superfluidGDA.removeMember(
+                ISuperfluidToken(superfluidToken),
+                escrow == address(0) ? proposals[proposalId].beneficiary : escrow
+            );
+            if (escrow != address(0)) {
+                setStreamingEscrow(proposalId, address(0));
+            }
         }
 
         emit ProposalCancelled(proposalId);
@@ -173,8 +190,10 @@ contract CVProposalFacet is CVStrategyBaseFacet {
 
             // Streaming proposal handling
             if (proposalType == ProposalType.Streaming) {
-                // Update member address in the GDA pool
-                superfluidGDA.updateMemberAddress(ISuperfluidToken(superfluidToken), proposal.beneficiary, _beneficiary);
+                address escrow = streamingEscrow(_proposalId);
+                if (escrow != address(0)) {
+                    StreamingEscrow(escrow).setBeneficiary(_beneficiary);
+                }
             }
         }
 

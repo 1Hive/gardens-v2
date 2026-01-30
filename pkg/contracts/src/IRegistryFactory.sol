@@ -6,4 +6,6 @@ interface IRegistryFactory {
     function getGardensFeeReceiver() external view returns (address);
 
     function getProtocolFee(address _community) external view returns (uint256);
+
+    function getStreamingEscrowFactory() external view returns (address);
 }
