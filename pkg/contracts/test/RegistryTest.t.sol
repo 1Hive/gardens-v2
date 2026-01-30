@@ -193,6 +193,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
 
         params._isKickEnabled = false;
         nonKickableCommunity = RegistryCommunity(registryFactory.createRegistry(params));
+        vm.stopPrank();
     }
 
     function _updateAllowlist(CVStrategy target, address[] memory membersToAdd, address[] memory membersToRemove)

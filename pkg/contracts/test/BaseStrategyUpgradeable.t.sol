@@ -76,6 +76,16 @@ contract BaseStrategyUpgradeableHarness is BaseStrategyUpgradeable {
     function exposedIsPoolActive() external view returns (bool) {
         return _isPoolActive();
     }
+
+    function onlyAlloModifier() external onlyAllo {}
+
+    function onlyPoolManagerModifier(address sender) external onlyPoolManager(sender) {}
+
+    function onlyActivePoolModifier() external onlyActivePool {}
+
+    function onlyInactivePoolModifier() external onlyInactivePool {}
+
+    function onlyInitializedModifier() external onlyInitialized {}
 }
 
 contract BaseStrategyUpgradeableTest is Test {
@@ -195,5 +205,37 @@ contract BaseStrategyUpgradeableTest is Test {
         strategy.exposedCheckInactivePool();
 
         strategy.exposedCheckOnlyActivePool();
+    }
+
+    function test_modifiers_executePaths() public {
+        vm.expectRevert(abi.encodeWithSelector(Errors.UNAUTHORIZED.selector));
+        strategy.onlyAlloModifier();
+
+        vm.prank(address(allo));
+        strategy.onlyAlloModifier();
+
+        vm.expectRevert(abi.encodeWithSelector(Errors.NOT_INITIALIZED.selector));
+        strategy.onlyInitializedModifier();
+
+        vm.prank(address(allo));
+        strategy.callBaseStrategyInit(11);
+        strategy.onlyInitializedModifier();
+
+        vm.expectRevert(abi.encodeWithSelector(Errors.UNAUTHORIZED.selector));
+        strategy.onlyPoolManagerModifier(manager);
+
+        allo.setPoolManager(11, manager, true);
+        strategy.onlyPoolManagerModifier(manager);
+
+        vm.expectRevert(abi.encodeWithSelector(Errors.POOL_INACTIVE.selector));
+        strategy.onlyActivePoolModifier();
+
+        strategy.onlyInactivePoolModifier();
+
+        strategy.exposedSetPoolActive(true);
+        strategy.onlyActivePoolModifier();
+
+        vm.expectRevert(abi.encodeWithSelector(Errors.POOL_ACTIVE.selector));
+        strategy.onlyInactivePoolModifier();
     }
 }
