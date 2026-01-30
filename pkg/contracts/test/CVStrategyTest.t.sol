@@ -163,6 +163,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = MINIMUM_STAKE;
         params._communityFee = COMMUNITY_FEE_PERCENTAGE;
+        params._isKickEnabled = true;
 
         params._feeReceiver = address(this);
 
@@ -1216,8 +1217,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         assertEq(cv.getProposalStakedAmount(proposalId), 0);
     }
 
-    // TODO: Fix
-    function xtest_disputeAbstain() public {
+    function test_disputeAbstain() public {
         (IAllo.Pool memory pool,, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
         CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
         vm.deal(address(pool_admin()), 1 ether);
@@ -1230,7 +1230,59 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
 
         vm.startPrank(tribunalSafe);
         safeArbitrator.executeRuling(disputeId, abstainRulingOutcome, address(cv));
+
         vm.stopPrank();
+    }
+
+    function xtest_rule_TimeoutDefaultRulingRejected_ProposalRejected() public {
+        (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
+        CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
+        address challenger = makeAddr("challenger");
+
+        // Change arbitrable config to have defaultRuling = 2
+        vm.startPrank(address(_councilSafe()));
+        ArbitrableConfig memory newConfig = ArbitrableConfig({
+            arbitrator: safeArbitrator,
+            tribunalSafe: payable(tribunalSafe),
+            submitterCollateralAmount: 0.02 ether,
+            challengerCollateralAmount: 0.01 ether,
+            defaultRuling: 2, // Set to 2
+            defaultRulingTimeout: 300
+        });
+        cv.setPoolParams(newConfig, CVParams(0, 0, 0, 0), 0, new address[](0), new address[](0), address(0));
+        vm.stopPrank();
+
+        vm.deal(challenger, 10 ether);
+
+        // Register safe
+        vm.prank(address(cv));
+        safeArbitrator.registerSafe(address(_councilSafe()));
+
+        // Create dispute
+        vm.prank(challenger);
+        uint256 disputeID = cv.disputeProposal{value: 0.02 ether}(proposalId, "context", "");
+
+        // Get timeout
+        (,,,,, uint256 defaultRulingTimeout) = cv.getArbitrableConfig();
+
+        // Fast forward past timeout
+        vm.warp(block.timestamp + defaultRulingTimeout + 1);
+
+        // Anyone can call rule after timeout
+        vm.prank(address(0x999));
+        cv.rule(disputeID, 0); // Triggers defaultRuling = 2
+
+        // Verify proposal is Rejected (line 117)
+        (
+            ,,,,, // address submitter,
+            // address beneficiary
+            // address requestedToken,
+            // uint256 requestedAmount
+            // uint256 stakedTokens,
+            ProposalStatus proposalStatus, // uint256 blockLast, // uint256 convictionLast // uint256 threshold // uint256 voterPointsPct
+            ,,,,,
+        ) = cv.getProposal(proposalId);
+        assertEq(uint256(proposalStatus), uint256(ProposalStatus.Rejected));
     }
 
     function test_setPoolActive() public {
@@ -1263,8 +1315,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         assertEq(protocol, 1);
     }
 
-    // TODO: Fix
-    function xtest_conviction_check_function() public {
+    function test_conviction_check_function() public {
         (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
 
         CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
@@ -1297,14 +1348,15 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         assertEq(cv.getProposalVoterStake(proposalId, address(this)), AMOUNT_STAKED);
         assertEq(cv.getProposalStakedAmount(proposalId), AMOUNT_STAKED);
 
-        uint256 cv_amount = cv.calculateProposalConviction(proposalId);
-        console.log("cv_amount: %s", cv_amount);
         uint256 cv_cmp = _calculateConviction(10, 0, AMOUNT_STAKED, 0.9 ether / 10 ** 11);
         console.log("cv_cmp: %s", cv_cmp);
+        vm.roll(block.number + 10);
+        uint256 cv_amount = cv.calculateProposalConviction(proposalId);
+        console.log("cv_amount: %s", cv_amount);
         assertEq(cv_amount, cv_cmp);
     }
 
-    function xtest_conviction_check_as_js_test() public {
+    function test_conviction_check_as_js_test() public {
         (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
 
         CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
@@ -1315,6 +1367,9 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
 
         ArbitrableConfig memory arbConfig;
         vm.startPrank(address(_councilSafe()));
+        // registryCommunity.kickMember(address(pool_admin()), address(pool_admin()));
+        registryCommunity.kickMember(address(this), address(gardenMember));
+        registryCommunity.kickMember(address(pool_admin()), address(gardenMember));
         cv.setPoolParams(
             arbConfig,
             CVParams({
@@ -1328,28 +1383,38 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
             new address[](0),
             address(0)
         );
-        vm.stopPrank();
 
         uint256 AMOUNT_STAKED = 45000;
+        registryCommunity.setBasisStakedAmount(AMOUNT_STAKED);
+        vm.stopPrank();
 
-        // registryCommunity.setBasisStakedAmount(AMOUNT_STAKED);
-        safeHelper(
-            address(registryCommunity),
-            0,
-            abi.encodeWithSelector(registryCommunity.setBasisStakedAmount.selector, AMOUNT_STAKED)
-        );
         /**
+         *
          * ASSERTS
          */
         // startMeasuringGas("Support a Proposal");
+        vm.startPrank(pool_admin());
+        _registryCommunity().gardenToken().approve(address(registryCommunity), STAKE_WITH_FEES);
+        _registryCommunity().stakeAndRegisterMember("");
+        cv.activatePoints();
+        vm.stopPrank();
+
+        vm.startPrank(address(this));
+
+        _registryCommunity().gardenToken().approve(address(registryCommunity), STAKE_WITH_FEES);
+        _registryCommunity().stakeAndRegisterMember("");
+        cv.activatePoints();
+
         ProposalSupport[] memory votes = new ProposalSupport[](1);
         votes[0] = ProposalSupport(proposalId, 100);
         bytes memory data = abi.encode(votes);
         allo().allocate(poolId, data);
+        vm.stopPrank();
+
         stopMeasuringGas();
 
-        assertEq(cv.getProposalVoterStake(proposalId, address(this)), AMOUNT_STAKED);
-        assertEq(cv.getProposalStakedAmount(proposalId), AMOUNT_STAKED);
+        assertEq(cv.getProposalVoterStake(proposalId, address(this)), 100);
+        assertEq(cv.getProposalStakedAmount(proposalId), 100);
 
         uint256 AMOUNT_STAKED_1 = 15000;
         uint256 cv_amount = ConvictionsUtils.calculateConviction(10, 0, AMOUNT_STAKED_1, getDecay(cv));
@@ -1362,13 +1427,6 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         assertEq(AMOUNT_STAKED_1, 15000);
         assertEq(AMOUNT_STAKED, 45000);
         assertEq(cv_amount, 97698);
-
-        // registryCommunity.setBasisStakedAmount(MINIMUM_STAKE);
-        safeHelper(
-            address(registryCommunity),
-            0,
-            abi.encodeWithSelector(registryCommunity.setBasisStakedAmount.selector, MINIMUM_STAKE)
-        );
     }
 
     function disabled_test_threshold_check_as_js_test() public {
@@ -3345,6 +3403,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         params._feeReceiver = address(this);
         params._metadata = metadata;
         params._councilSafe = payable(address(_councilSafe()));
+        params._isKickEnabled = true;
 
         registryCommunity = RegistryCommunity(registryFactory.createRegistry(params));
         // CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
