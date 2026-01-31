@@ -7,6 +7,15 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Metadata} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import {IStrategy} from "allo-v2-contracts/core/interfaces/IStrategy.sol";
+import {
+    CVStrategyInitializeParamsV0_2,
+    CVParams,
+    PointSystemConfig,
+    PointSystem,
+    ProposalType,
+    ArbitrableConfig
+} from "../src/CVStrategy/ICVStrategy.sol";
+import {IArbitrator} from "../src/interfaces/IArbitrator.sol";
 
 import {
     RegistryCommunity,
@@ -28,6 +37,104 @@ contract AddStrategyFacet {
     function addStrategy(address strategy) external {
         emit StrategyAdded(strategy);
     }
+}
+
+contract PoolFacet {
+    event PoolCreated(uint256 poolId, address strategy);
+
+    function createPool(address, CVStrategyInitializeParamsV0_2 memory, Metadata memory)
+        external
+        returns (uint256 poolId, address strategy)
+    {
+        poolId = 1;
+        strategy = address(0xBEEF);
+        emit PoolCreated(poolId, strategy);
+    }
+
+    function createPool(address, address, CVStrategyInitializeParamsV0_2 memory, Metadata memory)
+        external
+        returns (uint256 poolId, address strategy)
+    {
+        poolId = 2;
+        strategy = address(0xCAFE);
+        emit PoolCreated(poolId, strategy);
+    }
+}
+
+contract AllStubsFacet {
+    function createPool(address, CVStrategyInitializeParamsV0_2 memory, Metadata memory)
+        external
+        returns (uint256 poolId, address strategy)
+    {
+        return (11, address(0xBEEF));
+    }
+
+    function createPool(address, address, CVStrategyInitializeParamsV0_2 memory, Metadata memory)
+        external
+        returns (uint256 poolId, address strategy)
+    {
+        return (12, address(0xCAFE));
+    }
+
+    function setArchived(bool) external {}
+
+    function activateMemberInStrategy(address, address) external {}
+
+    function deactivateMemberInStrategy(address, address) external {}
+
+    function increasePower(uint256) external {}
+
+    function decreasePower(uint256) external {}
+
+    function getMemberPowerInStrategy(address, address) external pure returns (uint256) {
+        return 42;
+    }
+
+    function getMemberStakedAmount(address) external pure returns (uint256) {
+        return 5;
+    }
+
+    function addStrategyByPoolId(uint256) external {}
+
+    function addStrategy(address) external {}
+
+    function rejectPool(address) external {}
+
+    function removeStrategyByPoolId(uint256) external {}
+
+    function removeStrategy(address) external {}
+
+    function setCouncilSafe(address payable) external {}
+
+    function acceptCouncilSafe() external {}
+
+    function isMember(address) external pure returns (bool) {
+        return true;
+    }
+
+    function stakeAndRegisterMember(string memory) external {}
+
+    function getStakeAmountWithFees() external pure returns (uint256) {
+        return 7;
+    }
+
+    function getBasisStakedAmount() external pure returns (uint256) {
+        return 9;
+    }
+
+    function setBasisStakedAmount(uint256) external {}
+
+    function setCommunityParams(CommunityParams memory) external {}
+
+    function setCommunityFee(uint256) external {}
+
+    function isCouncilMember(address) external pure returns (bool) {
+        return true;
+    }
+
+    function unregisterMember() external {}
+
+    function kickMember(address, address) external {}
 }
 
 contract MockRegistry {
@@ -97,6 +204,18 @@ contract RegistryCommunityHarness is RegistryCommunity {
         totalMembers = count;
     }
 
+    function setOwner(address owner_) external {
+        _transferOwnership(owner_);
+    }
+
+    function grantCouncilRole(address member) external {
+        _grantRole(COUNCIL_MEMBER, member);
+    }
+
+    function exposedOnlyCouncilSafe() external view {
+        onlyCouncilSafe();
+    }
+
     function exposedOnlyRegistryMemberSender() external {
         onlyRegistryMemberSender();
     }
@@ -121,6 +240,14 @@ contract RegistryCommunityHarness is RegistryCommunity {
         _revertZeroAddress(addr);
     }
 
+    function strategyFacetCutsLength() external view returns (uint256) {
+        return strategyFacetCuts.length;
+    }
+
+    function strategyFacetSelectorAt(uint256 index, uint256 selectorIndex) external view returns (bytes4) {
+        return strategyFacetCuts[index].functionSelectors[selectorIndex];
+    }
+
     function isMember(address member) public view override returns (bool) {
         return addressToMemberInfo[member].isRegistered;
     }
@@ -130,6 +257,8 @@ contract RegistryCommunityTest is Test {
     address internal owner = makeAddr("owner");
     address internal councilSafe = makeAddr("councilSafe");
     address internal feeReceiver = makeAddr("feeReceiver");
+    bytes4 internal constant CREATE_POOL_WITH_TOKEN_SELECTOR = 0x499ac57f;
+    bytes4 internal constant CREATE_POOL_WITH_STRATEGY_SELECTOR = 0xcd564dae;
 
     function _facetCuts(address facet) internal pure returns (IDiamond.FacetCut[] memory cuts) {
         cuts = new IDiamond.FacetCut[](1);
@@ -146,6 +275,54 @@ contract RegistryCommunityTest is Test {
         cuts = new IDiamond.FacetCut[](1);
         bytes4[] memory selectors = new bytes4[](1);
         selectors[0] = RegistryCommunity.addStrategy.selector;
+        cuts[0] = IDiamond.FacetCut({
+            facetAddress: facet,
+            action: IDiamond.FacetCutAction.Add,
+            functionSelectors: selectors
+        });
+    }
+
+    function _facetCutsForCreatePool(address facet) internal pure returns (IDiamond.FacetCut[] memory cuts) {
+        cuts = new IDiamond.FacetCut[](1);
+        bytes4[] memory selectors = new bytes4[](2);
+        selectors[0] = CREATE_POOL_WITH_TOKEN_SELECTOR;
+        selectors[1] = CREATE_POOL_WITH_STRATEGY_SELECTOR;
+        cuts[0] = IDiamond.FacetCut({
+            facetAddress: facet,
+            action: IDiamond.FacetCutAction.Add,
+            functionSelectors: selectors
+        });
+    }
+
+    function _facetCutsForAllStubs(address facet) internal pure returns (IDiamond.FacetCut[] memory cuts) {
+        cuts = new IDiamond.FacetCut[](1);
+        bytes4[] memory selectors = new bytes4[](26);
+        selectors[0] = CREATE_POOL_WITH_TOKEN_SELECTOR;
+        selectors[1] = CREATE_POOL_WITH_STRATEGY_SELECTOR;
+        selectors[2] = RegistryCommunity.setArchived.selector;
+        selectors[3] = RegistryCommunity.activateMemberInStrategy.selector;
+        selectors[4] = RegistryCommunity.deactivateMemberInStrategy.selector;
+        selectors[5] = RegistryCommunity.increasePower.selector;
+        selectors[6] = RegistryCommunity.decreasePower.selector;
+        selectors[7] = RegistryCommunity.getMemberPowerInStrategy.selector;
+        selectors[8] = RegistryCommunity.getMemberStakedAmount.selector;
+        selectors[9] = RegistryCommunity.addStrategyByPoolId.selector;
+        selectors[10] = RegistryCommunity.addStrategy.selector;
+        selectors[11] = RegistryCommunity.rejectPool.selector;
+        selectors[12] = RegistryCommunity.removeStrategyByPoolId.selector;
+        selectors[13] = RegistryCommunity.removeStrategy.selector;
+        selectors[14] = RegistryCommunity.setCouncilSafe.selector;
+        selectors[15] = RegistryCommunity.acceptCouncilSafe.selector;
+        selectors[16] = RegistryCommunity.isMember.selector;
+        selectors[17] = RegistryCommunity.stakeAndRegisterMember.selector;
+        selectors[18] = RegistryCommunity.getStakeAmountWithFees.selector;
+        selectors[19] = RegistryCommunity.getBasisStakedAmount.selector;
+        selectors[20] = RegistryCommunity.setBasisStakedAmount.selector;
+        selectors[21] = RegistryCommunity.setCommunityParams.selector;
+        selectors[22] = RegistryCommunity.setCommunityFee.selector;
+        selectors[23] = RegistryCommunity.isCouncilMember.selector;
+        selectors[24] = RegistryCommunity.unregisterMember.selector;
+        selectors[25] = RegistryCommunity.kickMember.selector;
         cuts[0] = IDiamond.FacetCut({
             facetAddress: facet,
             action: IDiamond.FacetCutAction.Add,
@@ -469,6 +646,45 @@ contract RegistryCommunityTest is Test {
         community.onlyStrategyEnabled(strategy);
     }
 
+    function test_onlyCouncilSafe_and_strategyFacetCuts() public {
+        RegistryCommunityHarness community = new RegistryCommunityHarness();
+        address council = makeAddr("council");
+
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.UserNotInCouncil.selector, address(this)));
+        community.exposedOnlyCouncilSafe();
+
+        community.grantCouncilRole(council);
+        vm.prank(council);
+        community.exposedOnlyCouncilSafe();
+
+        address ownerAddr = makeAddr("ownerAddr");
+        community.setOwner(ownerAddr);
+
+        IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](1);
+        bytes4[] memory selectors = new bytes4[](1);
+        selectors[0] = DummyCommunityFacet.dummy.selector;
+        cuts[0] = IDiamond.FacetCut({
+            facetAddress: address(0x1),
+            action: IDiamond.FacetCutAction.Add,
+            functionSelectors: selectors
+        });
+
+        vm.prank(ownerAddr);
+        community.setStrategyFacets(cuts, address(0), "");
+        assertEq(community.strategyFacetCutsLength(), 1);
+        assertEq(community.strategyFacetSelectorAt(0, 0), DummyCommunityFacet.dummy.selector);
+
+        bytes4[] memory selectors2 = new bytes4[](2);
+        selectors2[0] = RegistryCommunity.addStrategy.selector;
+        selectors2[1] = RegistryCommunity.removeStrategy.selector;
+        cuts[0].functionSelectors = selectors2;
+        vm.prank(ownerAddr);
+        community.setStrategyFacets(cuts, address(0), "");
+        assertEq(community.strategyFacetCutsLength(), 1);
+        assertEq(community.strategyFacetSelectorAt(0, 0), RegistryCommunity.addStrategy.selector);
+        assertEq(community.strategyFacetSelectorAt(0, 1), RegistryCommunity.removeStrategy.selector);
+    }
+
     function test_stub_functions_revert_without_facets() public {
         RegistryCommunity community = new RegistryCommunity();
         CommunityParams memory communityParams = CommunityParams({
@@ -677,7 +893,7 @@ contract RegistryCommunityTest is Test {
 
     function test_diamondCut_and_delegate_success_paths() public {
         DummyCommunityFacet facet = new DummyCommunityFacet();
-        AddStrategyFacet addFacet = new AddStrategyFacet();
+        AllStubsFacet allStubs = new AllStubsFacet();
         MockAllo allo = new MockAllo();
         MockRegistry registry = new MockRegistry();
         allo.setRegistry(address(registry));
@@ -689,14 +905,83 @@ contract RegistryCommunityTest is Test {
         (bool ok, ) = address(community).call(abi.encodeWithSelector(DummyCommunityFacet.dummy.selector));
         assertTrue(ok);
 
-        vm.expectRevert();
-        community.diamondCut(_facetCutsForAddStrategy(address(addFacet)), address(0), "");
-
+        address[] memory allowlist = new address[](0);
         vm.prank(owner);
-        community.diamondCut(_facetCutsForAddStrategy(address(addFacet)), address(0), "");
+        community.diamondCut(_facetCutsForAllStubs(address(allStubs)), address(0), "");
 
-        // addStrategy stub should now delegate successfully
-        community.addStrategy(address(0xBEEF));
+        (uint256 poolId, address strategyAddr) = community.createPool(
+            address(0x1),
+            CVStrategyInitializeParamsV0_2({
+                cvParams: CVParams(0, 0, 0, 0),
+                proposalType: ProposalType.Funding,
+                pointSystem: PointSystem.Unlimited,
+                pointConfig: PointSystemConfig(0),
+                arbitrableConfig: ArbitrableConfig(IArbitrator(address(0)), address(0), 0, 0, 0, 0),
+                registryCommunity: address(community),
+                sybilScorer: address(0),
+                sybilScorerThreshold: 0,
+                initialAllowlist: allowlist,
+                superfluidToken: address(0)
+            }),
+            Metadata({protocol: 1, pointer: "meta"})
+        );
+        assertEq(poolId, 11);
+        assertEq(strategyAddr, address(0xBEEF));
+
+        (poolId, strategyAddr) = community.createPool(
+            address(0x2),
+            address(0x3),
+            CVStrategyInitializeParamsV0_2({
+                cvParams: CVParams(0, 0, 0, 0),
+                proposalType: ProposalType.Funding,
+                pointSystem: PointSystem.Unlimited,
+                pointConfig: PointSystemConfig(0),
+                arbitrableConfig: ArbitrableConfig(IArbitrator(address(0)), address(0), 0, 0, 0, 0),
+                registryCommunity: address(community),
+                sybilScorer: address(0),
+                sybilScorerThreshold: 0,
+                initialAllowlist: allowlist,
+                superfluidToken: address(0)
+            }),
+            Metadata({protocol: 1, pointer: "meta"})
+        );
+        assertEq(poolId, 12);
+        assertEq(strategyAddr, address(0xCAFE));
+
+        community.setArchived(true);
+        community.activateMemberInStrategy(address(0x1), address(0x2));
+        community.deactivateMemberInStrategy(address(0x1), address(0x2));
+        community.increasePower(1);
+        community.decreasePower(1);
+        assertEq(community.getMemberPowerInStrategy(address(0x1), address(0x2)), 42);
+        assertEq(community.getMemberStakedAmount(address(0x1)), 5);
+        community.addStrategyByPoolId(1);
+        community.addStrategy(address(0x3));
+        community.rejectPool(address(0x4));
+        community.removeStrategyByPoolId(2);
+        community.removeStrategy(address(0x5));
+        community.setCouncilSafe(payable(address(0x6)));
+        community.acceptCouncilSafe();
+        assertTrue(community.isMember(address(0x7)));
+        community.stakeAndRegisterMember("sig");
+        assertEq(community.getStakeAmountWithFees(), 7);
+        assertEq(community.getBasisStakedAmount(), 9);
+        community.setBasisStakedAmount(2);
+        community.setCommunityParams(
+            CommunityParams({
+                councilSafe: address(0x8),
+                feeReceiver: address(0x9),
+                communityFee: 0,
+                communityName: "name",
+                registerStakeAmount: 1,
+                isKickEnabled: false,
+                covenantIpfsHash: "hash"
+            })
+        );
+        community.setCommunityFee(1);
+        assertTrue(community.isCouncilMember(address(0x10)));
+        community.unregisterMember();
+        community.kickMember(address(0x11), address(0x12));
     }
 
     function test_fallback_reverts_unknown_selector() public {
