@@ -117,6 +117,42 @@ contract RegistryFactoryTest is Test {
         assertEq(factory.nonce(), 1);
     }
 
+    function test_createRegistry_revertsWithoutFacetCuts() public {
+        RegistryFactory fresh = RegistryFactory(
+            address(
+                new ERC1967Proxy(
+                    address(new RegistryFactory()),
+                    abi.encodeWithSelector(
+                        RegistryFactory.initialize.selector,
+                        owner,
+                        gardensFeeReceiver,
+                        registryTemplate,
+                        strategyTemplate,
+                        collateralTemplate
+                    )
+                )
+            )
+        );
+
+        vm.expectRevert(bytes("Community facets not set"));
+        fresh.createRegistry(params);
+
+        IDiamond.FacetCut[] memory dummyCuts = new IDiamond.FacetCut[](1);
+        bytes4[] memory selectors = new bytes4[](1);
+        selectors[0] = bytes4(keccak256("dummy()"));
+        dummyCuts[0] = IDiamond.FacetCut({
+            facetAddress: address(0x1),
+            action: IDiamond.FacetCutAction.Add,
+            functionSelectors: selectors
+        });
+
+        vm.prank(owner);
+        fresh.setCommunityFacets(dummyCuts, address(0), "");
+
+        vm.expectRevert(bytes("Strategy facets not set"));
+        fresh.createRegistry(params);
+    }
+
     function test_setReceiverAddress_onlyOwner() public {
         vm.prank(owner);
         factory.setReceiverAddress(address(0xB0B));
@@ -137,6 +173,15 @@ contract RegistryFactoryTest is Test {
         assertEq(factory.registryCommunityTemplate(), address(0x123));
         assertEq(factory.strategyTemplate(), address(0x456));
         assertEq(factory.collateralVaultTemplate(), address(0x789));
+    }
+
+    function test_setTemplates_revertNonOwner() public {
+        vm.expectRevert();
+        factory.setRegistryCommunityTemplate(address(0x123));
+        vm.expectRevert();
+        factory.setStrategyTemplate(address(0x456));
+        vm.expectRevert();
+        factory.setCollateralVaultTemplate(address(0x789));
     }
 
     function test_getProtocolFee_returnsFee() public {
@@ -187,6 +232,17 @@ contract RegistryFactoryTest is Test {
         assertEq(fee, 0);
     }
 
+    function test_getProtocolFee_returnsFeeWhenCouncilSafeIsEOA() public {
+        params._councilSafe = payable(address(0xABCD));
+        address registryAddr = factory.createRegistry(params);
+
+        vm.prank(owner);
+        factory.setProtocolFee(registryAddr, 55);
+
+        uint256 fee = factory.getProtocolFee(registryAddr);
+        assertEq(fee, 55);
+    }
+
     function test_setProtopianAddress_removalBranch() public {
         address[] memory addrs = _toSingleton(address(0x2));
         vm.startPrank(owner);
@@ -203,6 +259,56 @@ contract RegistryFactoryTest is Test {
         factory.setKeeperAddress(keepers, false);
         vm.stopPrank();
         assertFalse(factory.keepersAddresses(address(0xB)));
+    }
+
+    function test_setCommunityValidity_and_getCommunityValidity() public {
+        address registryAddr = factory.createRegistry(params);
+
+        vm.prank(owner);
+        factory.setCommunityValidity(registryAddr, false);
+        assertFalse(factory.getCommunityValidity(registryAddr));
+
+        vm.prank(owner);
+        factory.setCommunityValidity(registryAddr, true);
+        assertTrue(factory.getCommunityValidity(registryAddr));
+    }
+
+    function test_setCommunityFacets_and_strategyFacets_onlyOwner() public {
+        IDiamond.FacetCut[] memory dummyCuts = new IDiamond.FacetCut[](1);
+        bytes4[] memory selectors = new bytes4[](2);
+        selectors[0] = bytes4(keccak256("dummy1()"));
+        selectors[1] = bytes4(keccak256("dummy2()"));
+        dummyCuts[0] = IDiamond.FacetCut({
+            facetAddress: address(0x1),
+            action: IDiamond.FacetCutAction.Add,
+            functionSelectors: selectors
+        });
+
+        vm.expectRevert();
+        factory.setCommunityFacets(dummyCuts, address(0), "");
+
+        vm.expectRevert();
+        factory.setStrategyFacets(dummyCuts, address(0), "");
+
+        vm.prank(owner);
+        factory.setCommunityFacets(dummyCuts, address(0), "");
+
+        vm.prank(owner);
+        factory.setStrategyFacets(dummyCuts, address(0), "");
+    }
+
+    function test_initializeV2_onlyOwner() public {
+        IDiamond.FacetCut[] memory dummyCuts = new IDiamond.FacetCut[](1);
+        bytes4[] memory selectors = new bytes4[](1);
+        selectors[0] = bytes4(keccak256("dummy()"));
+        dummyCuts[0] = IDiamond.FacetCut({
+            facetAddress: address(0x1),
+            action: IDiamond.FacetCutAction.Add,
+            functionSelectors: selectors
+        });
+
+        vm.expectRevert();
+        factory.initializeV2(dummyCuts, address(0), "", dummyCuts, address(0), "");
     }
 
     function _toSingleton(address a) internal pure returns (address[] memory arr) {
