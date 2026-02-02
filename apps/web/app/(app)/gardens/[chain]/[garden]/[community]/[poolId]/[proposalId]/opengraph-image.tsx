@@ -22,6 +22,9 @@ import { queryByChain } from "@/providers/urql";
 import { PoolTypes, ProposalStatus } from "@/types";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic"; // keep OG image fresh with live status
+export const revalidate = 0; // no ISR caching
+export const fetchCache = "force-no-store"; // always fetch live subgraph data
 
 export const alt = "Gardens Proposal";
 export const size = {
@@ -67,6 +70,21 @@ const POOL_TYPE_STYLES: Record<
 const DEFAULT_POOL_STYLE = { text: "#1F2937", background: "#E5E7EB" };
 
 let cachedGardenLogoDataUrl: string | null = null;
+const PROPOSAL_STATUS_VALUES = Object.values(ProposalStatus);
+
+function normalizeStatus(
+  status?: string | null,
+): (typeof ProposalStatus)[number] | undefined {
+  if (!status) return undefined;
+  const normalized = status.toLowerCase();
+  return (
+      PROPOSAL_STATUS_VALUES.includes(
+        normalized as (typeof ProposalStatus)[number],
+      )
+    ) ?
+      (normalized as (typeof ProposalStatus)[number])
+    : undefined;
+}
 
 function formatTitle(title: string) {
   const trimmed = title?.trim();
@@ -120,6 +138,8 @@ async function loadProposal(
       chainConfig,
       getProposalTitleDocument,
       { proposalId },
+      { requestPolicy: "network-only" },
+      true,
     );
 
     if (proposalResult.error) {
@@ -142,7 +162,9 @@ async function loadProposal(
     }
 
     const statusCode = proposal.proposalStatus?.toString?.();
-    const status = statusCode != null ? ProposalStatus[statusCode] : undefined;
+    const status = normalizeStatus(
+      statusCode != null ? ProposalStatus[statusCode] : undefined,
+    );
 
     const poolTypeCode = proposal.strategy?.config?.proposalType?.toString?.();
     const poolType = poolTypeCode != null ? PoolTypes[poolTypeCode] : undefined;
@@ -173,6 +195,19 @@ async function loadProposal(
   }
 }
 
+function normalizePoolType(
+  poolType?: string | null,
+): ProposalImageData["poolType"] {
+  const normalized = poolType?.toLowerCase();
+  return (
+    normalized === "funding" ||
+    normalized === "signaling" ||
+    normalized === "streaming"
+  ) ?
+      normalized
+    : undefined;
+}
+
 async function renderImage({
   title,
   status,
@@ -199,8 +234,7 @@ async function renderImage({
     : poolType === "signaling" ?
       `data:image/svg+xml;base64,${POOL_SIGNALING_ICON_BASE64}`
     : null;
-  const normalizedStatus =
-    status?.toLowerCase() as (typeof ProposalStatus)[number];
+  const normalizedStatus = normalizeStatus(status);
   const description = getDescriptionFromStatus(normalizedStatus);
   const safeTitle = formatTitle(title);
   const subHeaderText =
@@ -436,18 +470,58 @@ export async function generateMetadata({
 
 export default async function Image({
   params,
+  searchParams,
 }: {
   params: ProposalPageParams;
+  searchParams?: {
+    status?: string;
+    title?: string;
+    poolType?: string;
+    poolTitle?: string;
+    communityName?: string;
+  };
 }) {
-  const { chainId, data } = await loadProposal(params);
+  const searchStatus = normalizeStatus(searchParams?.status);
+  const searchTitle = searchParams?.title?.trim();
+  const searchPoolType = normalizePoolType(searchParams?.poolType);
+  const chainId = (() => {
+    const numericChainId = Number(params.chain);
+    const chainConfig =
+      getConfigByChain(params.chain) ??
+      (Number.isFinite(numericChainId) ?
+        getConfigByChain(numericChainId)
+      : undefined);
+    return chainConfig?.id ?? (Number.isFinite(numericChainId) ? numericChainId : 0);
+  })();
+
+  const hasSearchParams = [searchTitle, searchStatus, searchPoolType].some(
+    (v) => v !== undefined && v !== null && v !== "",
+  );
+
+  if (hasSearchParams) {
+    return renderImage({
+      title: searchTitle && searchTitle.length > 0 ? searchTitle : FALLBACK_TITLE,
+      status: searchStatus,
+      poolType: searchPoolType,
+      poolTitle: searchParams?.poolTitle?.trim() ?? null,
+      communityName: searchParams?.communityName?.trim() ?? null,
+      chainId,
+    });
+  }
+
+  const { data } = await loadProposal(params);
+  const status = searchStatus ?? data?.status;
 
   try {
     return await renderImage({
-      title: data?.title ?? FALLBACK_TITLE,
-      status: data?.status,
-      poolType: data?.poolType,
-      poolTitle: data?.poolTitle ?? null,
-      communityName: data?.communityName ?? null,
+      title: searchTitle && searchTitle.length > 0 ?
+        searchTitle
+      : data?.title ?? FALLBACK_TITLE,
+      status,
+      poolType: searchPoolType ?? data?.poolType,
+      poolTitle: searchParams?.poolTitle?.trim() ?? data?.poolTitle ?? null,
+      communityName:
+        searchParams?.communityName?.trim() ?? data?.communityName ?? null,
       chainId,
     });
   } catch (error) {

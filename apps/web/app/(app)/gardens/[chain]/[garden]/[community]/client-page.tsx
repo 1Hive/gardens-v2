@@ -7,6 +7,7 @@ import {
   CircleStackIcon,
   CurrencyDollarIcon,
   PlusIcon,
+  TrophyIcon,
   UserGroupIcon,
 } from "@heroicons/react/24/outline";
 
@@ -68,6 +69,7 @@ import { registryCommunityABI } from "@/src/generated";
 import { Column, PoolTypes } from "@/types";
 import {
   calculatePercentageBigInt,
+  formatCountWhenPlus1k,
   parseToken,
   SCALE_PRECISION,
   SCALE_PRECISION_DECIMALS,
@@ -81,7 +83,10 @@ type MembersStaked = {
 type CommunityMetricsProps = {
   membersStaked: MembersStaked[] | undefined;
   tokenGarden: FetchTokenResult;
+  communityName: string;
   communityStakedTokens: number | bigint;
+  openMembersModal: boolean;
+  setOpenMembersModal: (open: boolean) => void;
 };
 
 type MemberColumn = Column<MembersStaked>;
@@ -94,10 +99,10 @@ export default function ClientPage({
   const searchParams = useCollectQueryParams();
   const { address: accountAddress } = useAccount();
   const showArchived = useFlag("showArchived");
-  const [openCommDetails, setOpenCommDetails] = useState(false);
   const isFetchingNFT = useRef<boolean>(false);
   const { publish } = usePubSubContext();
   const chain = useChainFromPath();
+  const [openMembersModal, setOpenMembersModal] = useState(false);
 
   const covenantSectionRef = useRef<HTMLDivElement>(null);
   const { data: tokenGarden } = useToken({
@@ -143,6 +148,7 @@ export default function ClientPage({
     communityFee,
     registerStakeAmount,
     protocolFee,
+    membersCount,
   } = registryCommunity ?? {};
 
   const is1hive =
@@ -342,27 +348,24 @@ export default function ClientPage({
     tokenGarden.decimals,
   ] as Dnum;
 
-  const getTotalRegistrationCost = () => {
-    if (registerStakeAmount == undefined) {
-      registerStakeAmount = 0;
-    }
+  const registerStakeAmountValue = registerStakeAmount ?? 0;
+  const registerStakeAmountBn = BigInt(registerStakeAmountValue);
+  const protocolFeeScaled = protocolFee != null ? BigInt(protocolFee) : 0n;
+  const communityFeeScaled = communityFee != null ? BigInt(communityFee) : 0n;
 
-    const registerStakeAmountBn = BigInt(registerStakeAmount);
-    const protocolFeeBn =
-      protocolFee && BigInt(protocolFee * 100) / BigInt(SCALE_PRECISION);
-    const communityFeeBn =
-      communityFee && BigInt(communityFee * 100) / BigInt(SCALE_PRECISION);
+  const communityFeeAmount =
+    communityFeeScaled > 0n ?
+      (registerStakeAmountBn * communityFeeScaled) / BigInt(SCALE_PRECISION)
+    : 0n;
+  const protocolFeeAmount =
+    protocolFeeScaled > 0n ?
+      (registerStakeAmountBn * protocolFeeScaled) / BigInt(SCALE_PRECISION)
+    : 0n;
 
-    const res =
-      registerStakeAmountBn + // Min stake
-      (communityFee ?
-        (registerStakeAmountBn * communityFeeBn) / 100n
-      : BigInt(0)) + // Commuity fee as % of min stake
-      (protocolFeeBn ?
-        (registerStakeAmountBn * protocolFeeBn) / 100n
-      : BigInt(0)); // Protocol fee as extra
-    return res;
-  };
+  const totalRegistrationCost =
+    registerStakeAmountBn + // Min stake
+    communityFeeAmount + // Community fee as % of min stake
+    protocolFeeAmount; // Protocol fee as extra
 
   {
     /* Community Header */
@@ -398,6 +401,7 @@ export default function ClientPage({
                     address={communityAddr as Address}
                     label="Community address"
                     textColor="var(--color-grey-900)"
+                    explorer="louper"
                   />
                   {registryCommunity?.councilSafe && (
                     <EthAddress
@@ -411,10 +415,10 @@ export default function ClientPage({
 
                 {/* Statistic + Register/Leave Button */}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
-                  <div className="flex flex-col sm:flex-row gap-2 md:gap-6">
+                  <div className="w-full flex flex-col sm:flex-row gap-2 md:gap-6 sm:flex-wrap">
                     <Statistic
                       label="members"
-                      count={members?.length ?? 0}
+                      count={membersCount ?? 0}
                       icon={<UserGroupIcon />}
                     />
 
@@ -469,15 +473,15 @@ export default function ClientPage({
                     )}
                     <RegisterMember
                       memberData={accountAddress ? isMemberResult : undefined}
-                      registrationCost={getTotalRegistrationCost()}
+                      registrationCost={totalRegistrationCost}
                       token={tokenGarden}
                       registryCommunity={registryCommunity}
                     />
                   </div>
                 </div>
 
-                {/* Registration Stake Value + View members Button*/}
-                <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center mt-2">
+                {/* Registration Stake Value + Community staking leaderboard Button*/}
+                <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center mt-2 sm:justify-between">
                   <div className="flex gap-1 items-center ">
                     <p className="subtitle2">Registration stake:</p>
                     <InfoWrapper
@@ -492,7 +496,7 @@ export default function ClientPage({
                           label={
                             <DisplayNumber
                               number={[
-                                getTotalRegistrationCost(),
+                                totalRegistrationCost,
                                 tokenGarden?.decimals,
                               ]}
                               valueClassName="text-xl font-bold"
@@ -507,33 +511,26 @@ export default function ClientPage({
                     </InfoWrapper>
                   </div>
                   <Button
-                    onClick={() => setOpenCommDetails(!openCommDetails)}
-                    btnStyle="link"
+                    onClick={() => setOpenMembersModal(!openMembersModal)}
+                    btnStyle="outline"
                     color="tertiary"
-                    icon={
-                      <ChevronUpIcon
-                        className={`h-4 w-4 font-bold transition-transform duration-200 ease-in-out ${cn(
-                          {
-                            "rotate-180": !openCommDetails,
-                          },
-                        )} `}
-                      />
-                    }
+                    icon={<TrophyIcon className="h-4 w-4" />}
                   >
-                    {openCommDetails ? "Close" : "View"} Members
+                    Community Staking Leaderboard
                   </Button>
                 </div>
               </div>
             </div>
 
             {/* Community members stats */}
-            {openCommDetails && (
-              <CommunityDetailsTable
-                membersStaked={registryCommunity.members as MembersStaked[]}
-                tokenGarden={tokenGarden}
-                communityStakedTokens={communityStakedTokens}
-              />
-            )}
+            <CommunityDetailsTable
+              membersStaked={registryCommunity.members as MembersStaked[]}
+              tokenGarden={tokenGarden}
+              communityName={communityName ?? "Community"}
+              communityStakedTokens={communityStakedTokens}
+              openMembersModal={openMembersModal}
+              setOpenMembersModal={setOpenMembersModal}
+            />
           </header>
 
           <header className="flex items-center justify-between">
@@ -610,12 +607,21 @@ export default function ClientPage({
 
 const CommunityDetailsTable = ({
   membersStaked,
+  communityName,
   tokenGarden,
   communityStakedTokens,
+  openMembersModal,
+  setOpenMembersModal,
 }: CommunityMetricsProps) => {
   const columns: MemberColumn[] = [
+    // commented this NEW rank section for now
+    // {
+    //   header: "Rank",
+    //   render: (memberData: MembersStaked) =>
+    //     membersStaked ? indexOf(membersStaked, memberData) + 1 : 0,
+    // },
     {
-      header: `Members (${membersStaked?.length})`,
+      header: `Members (${formatCountWhenPlus1k(membersStaked?.length ?? 0)})`,
       render: (memberData: MembersStaked) => (
         <EthAddress
           address={memberData.memberAddress as Address}
@@ -626,6 +632,7 @@ const CommunityDetailsTable = ({
         />
       ),
     },
+
     {
       header: "Staked tokens",
       render: (memberData: MembersStaked) => (
@@ -651,14 +658,16 @@ const CommunityDetailsTable = ({
 
   return (
     <DataTable
-      title="Community Members"
+      openModal={openMembersModal}
+      setOpenModal={() => setOpenMembersModal}
+      title={communityName + " Staking Leaderboard"}
       data={membersStaked as MembersStaked[]}
       description="Overview of all community members and the total amount of tokens they have staked."
       columns={columns}
-      className="max-h-screen overflow-y-scroll w-full"
+      className="max-h-screen w-full"
       footer={
-        <div className="flex justify-between py-2">
-          <p className="subtitle">Total Staked:</p>
+        <div className="flex justify-between items-center gap-2 mr-8 sm:mr-12">
+          <p className="subtitle">Total Staked: </p>
           <DisplayNumber
             number={[BigInt(communityStakedTokens), tokenGarden.decimals]}
             compact={true}

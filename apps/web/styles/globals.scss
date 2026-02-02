@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+@import "../node_modules/@mdxeditor/editor/dist/style.css";
+@import "../node_modules/@uiw/react-markdown-editor/markdown-editor.css";
+
 :root {
   --color-primary: #82c837;
   --color-secondary: #4dafd6;
@@ -11,8 +14,8 @@
   --border-neutral: #d5d5d5;
   --border-hover: #ff9500;
   --base-orange: #fff4e6;
-  --color-text: #000000 /* add figma UI system color pallette light */
-    --color-grey-900: #000000;
+  --color-text: #000000; /* add figma UI system color pallette light */
+  --color-grey-900: #000000;
   --color-grey-500: #8c8c8c;
   --color-grey-400: #acacac;
   --color-grey-200: #eeeeee;
@@ -367,31 +370,135 @@ dialog * {
 
 /* MDXMarkdown */
 
+.markdown-editor-shell {
+  @apply bg-base-100 dark:bg-neutral;
+}
+
+.markdown-editor-shell--fullscreen {
+  position: fixed;
+  inset: 0;
+  margin: 1rem;
+  z-index: 9999;
+  width: calc(100vw - 2rem);
+  height: calc(100vh - 2rem);
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+  resize: none;
+  background-color: var(--baseBase);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.45);
+  border-radius: 1rem;
+}
+
+.markdown-editor-shell--fullscreen .mdxeditor-theme {
+  height: 100% !important;
+}
+
 .mdxeditor-root-contenteditable,
 .wmde-markdown {
+  @apply leading-7 text-base;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+
+  > * {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+
+  > * + * {
+    margin-top: 1rem;
+  }
+
+  p {
+    @apply leading-7;
+  }
+
   ul {
-    @apply list-disc ml-2;
+    @apply list-disc ml-5;
   }
+
   ol {
-    @apply list-decimal ml-2;
+    @apply list-decimal ml-5;
   }
+
+  li > ul,
+  li > ol {
+    margin-top: 0.5rem;
+  }
+
+  h1,
   h1 span {
     @apply text-3xl font-bold;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
   }
+
+  h2,
   h2 span {
     @apply text-2xl font-bold;
+    margin-top: 1.75rem;
+    margin-bottom: 0.75rem;
   }
+
+  h3,
   h3 span {
-    @apply text-xl font-bold;
+    @apply text-xl font-semibold;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
   }
+
+  h4,
   h4 span {
-    @apply text-lg font-bold;
+    @apply text-lg font-semibold;
+    margin-top: 1.25rem;
+    margin-bottom: 0.5rem;
   }
+
+  h5,
   h5 span {
-    @apply text-base font-bold;
+    @apply text-base font-semibold;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
   }
+
+  :is(h1, h2, h3, h4, h5, h6) > a[href^="#"] {
+    display: none;
+  }
+
+  blockquote {
+    @apply border-l-4 pl-4 italic;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  pre {
+    @apply rounded-lg bg-base-200 p-4 text-sm overflow-x-auto;
+    line-height: 1.6;
+  }
+
+  code {
+    @apply rounded bg-base-200 px-1.5 py-0.5 text-sm;
+  }
+
+  pre code {
+    @apply bg-transparent p-0;
+  }
+
+  table {
+    @apply w-full border-collapse text-left;
+  }
+
+  th,
+  td {
+    @apply border border-base-200 px-3 py-2;
+  }
+
   a {
     @apply text-accent underline;
+  }
+
+  img {
+    @apply max-w-full rounded-lg;
   }
 }
 
@@ -411,6 +518,7 @@ dialog * {
 }
 
 .mdxeditor-toolbar {
+  background: transparent !important;
   button {
     cursor: pointer;
   }
@@ -429,10 +537,6 @@ dialog * {
   ._selectTrigger_1e2ox_308 {
     background-color: var(--baseBase);
     color: var(--color-text);
-  }
-
-  ._placeholder_1e2ox_1106 p {
-    color: #9f9f9f;
   }
 
   .cm-editor {
@@ -458,4 +562,20 @@ dialog * {
       }
     }
   }
+}
+
+.mdxeditor-theme {
+  ._placeholder_1e2ox_1106 {
+    top: 0;
+    left: 0;
+    line-height: var(--line-height-md, 1.75rem);
+    margin-top: 0;
+    p {
+      color: #9f9f9f;
+    }
+  }
+}
+
+.modal-action {
+  margin-top: 0.5rem;
 }

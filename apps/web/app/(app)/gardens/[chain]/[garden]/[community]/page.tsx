@@ -13,8 +13,10 @@ type PageParams = {
   };
 };
 
+const OG_IMAGE_VERSION = "v=3";
+
 function buildOgImagePath(params: PageParams["params"]) {
-  return `/gardens/${params.chain}/${params.garden}/${params.community}/opengraph-image-w94mav`;
+  return `/gardens/${params.chain}/${params.garden}/${params.community}/opengraph-image-w94mav?${OG_IMAGE_VERSION}`;
 }
 
 const titlePrefix = "Gardens - ";
@@ -96,6 +98,6 @@ export async function generateMetadata({
   }
 }
 
-export default function Page(props: PageParams) {
-  return <ClientPage {...props} />;
+export default function Page({ params }: PageParams) {
+  return <ClientPage params={params} />;
 }

@@ -199,6 +199,9 @@ export const CommunityForm = () => {
     functionName: "createRegistry",
     contractName: "Registry Factory",
     fallbackErrorMessage: "Error creating community, please report a bug.",
+    onError: () => {
+      setLoading(false);
+    },
     onConfirmations: async (receipt) => {
       const newCommunityAddr = getEventFromReceipt(
         receipt,
@@ -319,7 +322,6 @@ export const CommunityForm = () => {
       });
     } catch (error) {
       console.error("Error creating community:", error);
-    } finally {
       setLoading(false);
     }
   }, [
@@ -398,6 +400,11 @@ export const CommunityForm = () => {
           title={previewData?.title ?? ""}
           description={previewData?.covenant ?? ""}
           formRows={formatFormRows()}
+          onEdit={handleBackToEdit}
+          onSubmit={() => {
+            if (!isConnected) return;
+            createCommunity();
+          }}
         />
       : <div className="flex flex-col gap-2 p-1">
           <div className="flex flex-col">

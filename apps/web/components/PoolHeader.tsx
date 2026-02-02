@@ -8,6 +8,7 @@ import {
   ArchiveBoxIcon,
   InformationCircleIcon,
   ArrowPathRoundedSquareIcon,
+  ChevronDoubleUpIcon,
 } from "@heroicons/react/24/outline";
 import {
   NoSymbolIcon,
@@ -15,7 +16,6 @@ import {
   Cog6ToothIcon,
 } from "@heroicons/react/24/solid";
 import sfMeta from "@superfluid-finance/metadata";
-import { isArray } from "lodash-es";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { toast } from "react-toastify";
@@ -235,16 +235,19 @@ export default function PoolHeader({
       sybilResistanceType = "goodDollar";
       sybilResistanceValue = undefined;
     }
-  } else {
+  } else if (
+    allowList &&
+    !(allowList.length > 0 && allowList[0] === zeroAddress)
+  ) {
     sybilResistanceType = "allowList";
     sybilResistanceValue = allowList as Address[] | undefined;
   }
 
   const sybilResistanceLabel: Record<SybilResistanceType, string> = {
-    allowList: "Allowlist",
-    gitcoinPassport: "Gitcoin Passport",
-    goodDollar: "GoodDollar",
-    noSybilResist: "None",
+    allowList: "Members in Allowlist",
+    gitcoinPassport: "Gitcoin Passport verified members",
+    goodDollar: "GoodDollar verified members",
+    noSybilResist: "All community members",
   };
 
   const sybilResistanceInfo: Record<SybilResistanceType, string> = {
@@ -289,13 +292,16 @@ export default function PoolHeader({
       info: "Staking above this specified limit won’t increase your voting weight.",
     },
     {
-      label: "Protection",
+      label: "Who can vote?",
       info: sybilResistanceInfo[sybilResistanceType],
       value:
         sybilResistanceType === "allowList" ?
           <div className="dropdown dropdown-hover dropdown-center dropdowm-bottom sm:dropdown-right">
             {/* Trigger for the dropdown */}
-            <p className="subtitle ml-1">Allowlist</p>
+            <div className="flex items-center gap-2 group">
+              <p className="subtitle ml-1">Allowlist</p>
+              <ChevronDoubleUpIcon className="w-4 h-4 group-hover:rotate-180 transition-all ease-in-out duration-250" />
+            </div>
             <div className="dropdown-content bg-primary rounded-box shadow z-10 p-2 max-h-[500px] overflow-y-auto w-64">
               <ul className="menu w-full gap-1">
                 {(allowList ?? []).length > 0 ?
@@ -608,7 +614,9 @@ export default function PoolHeader({
   return (
     <>
       <div
-        className={`col-span-12 ${PoolTypes[proposalType] === "funding" ? "xl:col-span-9" : "xl:col-span-12"}`}
+        className={`col-span-12 ${
+          isEnabled ? "xl:col-span-9" : "xl:col-span-12"
+        }`}
       >
         <section className="section-layout flex flex-col gap-6">
           {/* Title - Badge poolType - Addresses and Button(when council memeber is connected) */}
@@ -766,6 +774,7 @@ export default function PoolHeader({
                 address={strategy.id as Address}
                 label="Pool address"
                 textColor="var(--color-grey-800)"
+                explorer="louper"
               />
               <div className="flex">
                 <a
@@ -892,7 +901,7 @@ export default function PoolHeader({
             <InfoBox
               title="Min threshold"
               infoBoxType="warning"
-              content="Activated governance in this pool is too low. No proposals will pass unless more members activate their governance. You can still create and support proposals."
+              content="Not enough eligible members in this pool have activated their governance. No proposals will pass until more members do. You can still create and support proposals."
               className="mb-4"
             />
           )}

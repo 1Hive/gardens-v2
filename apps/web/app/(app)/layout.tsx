@@ -1,11 +1,17 @@
 "use client";
 
-import React from "react";
-import { BookOpenIcon } from "@heroicons/react/24/outline";
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  ArrowTopRightOnSquareIcon,
+  Bars3Icon,
+  XMarkIcon,
+} from "@heroicons/react/24/outline";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname, useSearchParams } from "next/navigation";
 import { newLogo } from "@/assets";
 import { Button, ConnectWallet, ThemeButton } from "@/components";
+import Footer from "@/components/Footer";
 
 export function HeadphoneIcon() {
   return (
@@ -29,6 +35,47 @@ export function HeadphoneIcon() {
 }
 
 export default function Layout({ children }: { children: React.ReactNode }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showCampaignBadge, setShowCampaignBadge] = useState(true);
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const currentUrl = useMemo(() => {
+    const query = searchParams?.toString();
+    return query ? `${pathname}?${query}` : pathname || "/";
+  }, [pathname, searchParams]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const storageKey = "gardensCampaignsBadgeSeen";
+    const isCampaignPath = pathname?.startsWith("/gardens/campaigns");
+    const hasSeen = window.localStorage.getItem(storageKey) === "true";
+
+    if (isCampaignPath) {
+      window.localStorage.setItem(storageKey, "true");
+      setShowCampaignBadge(false);
+      return;
+    }
+
+    setShowCampaignBadge(!hasSeen);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const reset = () => {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    };
+    requestAnimationFrame(() => requestAnimationFrame(reset));
+  }, [currentUrl]);
+
+  const handleCampaignClick = () => {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("gardensCampaignsBadgeSeen", "true");
+    }
+    setShowCampaignBadge(false);
+  };
+
   return (
     <div className="min-h-screen bg-primary relative">
       {/* Left Sidebar - Fixed with higher z-index */}
@@ -70,20 +117,21 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </aside> */}
 
       {/* Top Navigation Bar - Fixed with lower z-index */}
-      <nav className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 lg:px-6 py-2 bg-neutral min-h-[71px] border-b border-border-neutral dark:border-border-neutral/50">
-        <div className="flex items-center gap-2">
-          <Link href="/gardens" className="flex items-center gap-3 text-sm">
-            <Image
-              src={newLogo}
-              alt="logo"
-              height={40}
-              width={40}
-              loading="lazy"
-            />
-            <h5>Gardens</h5>
-          </Link>
-          {/* Mobile Menu Button */}
-          {/* <button
+      <nav className="fixed top-0 left-0 right-0 z-40 px-4 lg:px-6 py-3 bg-neutral min-h-[71px] border-b border-border-neutral dark:border-border-neutral/50 flex flex-col">
+        <div className="flex items-center justify-between h-full gap-3">
+          <div className="flex items-center gap-2">
+            <Link href="/gardens" className="flex items-center gap-3 text-sm">
+              <Image
+                src={newLogo}
+                alt="logo"
+                height={40}
+                width={40}
+                loading="lazy"
+              />
+              <h5>Gardens</h5>
+            </Link>
+            {/* Mobile Menu Button */}
+            {/* <button
             className="lg:hidden btn btn-ghost"
             onClick={toggleMobileMenu}
           >
@@ -91,25 +139,97 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <XMarkIcon className="w-5 h-5" />
             : <Bars3BottomLeftIcon className="w-5 h-5" />}
           </button> */}
+          </div>
 
-          {/* <div className="flex items-center gap-2">
-            <h4 className="">Gardens</h4>
-          </div> */}
-        </div>
-        <div className="flex items-center gap-2">
-          <ConnectWallet />
+          <div className="hidden md:flex items-center justify-center gap-6">
+            <Link href="/gardens" className="flex items-center gap-4 text-sm">
+              <h6 className="hover:opacity-70">Communities</h6>
+            </Link>
+            <Link
+              href="/gardens/campaigns"
+              className="flex items-center gap-3 text-sm"
+              onClick={handleCampaignClick}
+            >
+              <div className="relative inline-flex items-center">
+                <h6 className="hover:opacity-70">Campaigns</h6>
+                {showCampaignBadge && (
+                  <span className="absolute bg-primary-content dark:bg-[#98ff98] -top-1 -right-2 rounded-full text-neutral w-2 h-2 font-bold leading-none flex items-center justify-center" />
+                )}
+              </div>
+            </Link>
 
-          <a
-            href="https://docs.gardens.fund"
-            target="_blank"
-            rel="noreferrer"
-            className="flex items-center gap-1 rounded-md hover:bg-neutral-soft dark:hover:bg-primary p-2"
-          >
-            <BookOpenIcon className="h-6 w-6" />
-            <span>Docs</span>
-          </a>
-          <ThemeButton />
+            <a
+              href="https://docs.gardens.fund"
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-2 text-sm hover:opacity-70"
+            >
+              <span>Documentation</span>
+              <ArrowTopRightOnSquareIcon className="h-4 w-4" aria-hidden />
+            </a>
+          </div>
+
+          <div className="flex items-center gap-2 md:gap-3">
+            <ConnectWallet />
+            <div className="hidden md:block">
+              <ThemeButton />
+            </div>
+            <button
+              type="button"
+              className="md:hidden inline-flex items-center justify-center rounded-md p-3 hover:bg-neutral-soft dark:hover:bg-primary focus:outline-none focus:ring-2 focus:ring-primary"
+              aria-label="Toggle navigation menu"
+              onClick={() => setMobileMenuOpen((open) => !open)}
+            >
+              {mobileMenuOpen ?
+                <XMarkIcon className="h-6 w-6" />
+              : <Bars3Icon className="h-6 w-6" />}
+            </button>
+          </div>
         </div>
+
+        {mobileMenuOpen && (
+          <div className="md:hidden mt-3 flex flex-col gap-3 rounded-lg border border-border-neutral bg-neutral p-4 shadow-lg">
+            <Link
+              href="/gardens/"
+              className="text-base font-medium hover:opacity-70 px-1 py-2 rounded-md"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Communities
+            </Link>
+            <Link
+              href="/gardens/campaigns"
+              className="text-base font-medium hover:opacity-70 px-1 py-2 rounded-md"
+              onClick={() => {
+                handleCampaignClick();
+                setMobileMenuOpen(false);
+              }}
+            >
+              <span className="relative inline-flex items-center">
+                Campaigns
+                {showCampaignBadge && (
+                  <span className="absolute -top-2 -right-4 h-4 w-4 rounded-full bg-primary-content text-neutral text-[10px] font-bold leading-none flex items-center justify-center">
+                    1
+                  </span>
+                )}
+              </span>
+            </Link>
+
+            <a
+              href="https://docs.gardens.fund"
+              target="_blank"
+              rel="noreferrer"
+              className="text-base font-medium hover:opacity-70 px-1 py-2 rounded-md flex items-center gap-2"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Documentation
+              <ArrowTopRightOnSquareIcon className="h-4 w-4" aria-hidden />
+            </a>
+            <div className="border-t border-border-neutral/70 dark:border-border-neutral/40 pt-3 flex items-center justify-between gap-3">
+              <span className="text-base font-medium">Theme</span>
+              <ThemeButton />
+            </div>
+          </div>
+        )}
       </nav>
 
       <div className="flex justify-center items-start pt-[71px] min-h-screen">
@@ -141,6 +261,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           className="!p-2"
         />
       </a>
+      <Footer />
     </div>
   );
 }

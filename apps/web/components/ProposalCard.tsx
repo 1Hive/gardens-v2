@@ -36,7 +36,12 @@ import { prettyTimestamp } from "@/utils/text";
 export type ProposalCardProps = {
   proposalData: Pick<
     CVProposal,
-    "id" | "proposalStatus" | "metadataHash" | "createdAt" | "submitter"
+    | "id"
+    | "proposalStatus"
+    | "metadataHash"
+    | "createdAt"
+    | "submitter"
+    | "executedAt"
   > &
     ProposalDataLight & {
       metadata?: Maybe<Pick<ProposalMetadata, "title">>;
@@ -89,7 +94,6 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
       memberActivatedPoints,
       memberPoolWeight,
       communityToken: tokenData,
-      inputHandler,
       minThGtTotalEffPoints,
     },
     ref,
@@ -101,8 +105,15 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
 
     const metadata = proposalData.metadata ?? metadataResult;
 
-    const { id, proposalNumber, proposalStatus, requestedAmount, submitter } =
-      proposalData;
+    const {
+      id,
+      proposalNumber,
+      proposalStatus,
+      requestedAmount,
+      submitter,
+      createdAt,
+      executedAt,
+    } = proposalData;
     const pathname = usePathname();
 
     const searchParams = useCollectQueryParams();
@@ -184,13 +195,13 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
         <div className="text-neutral-soft-content text-xs sm:text-sm">
           {!isSignalingType && impossibleToPass ?
             <div
-              className="flex items-center justify-center gap-1 tooltip"
+              className="flex items-center justify-center gap-1 tooltip tooltip-top sm:tooltip-right"
               data-tip={`${
                 thresholdPct === 0 ?
-                  "No eligible members in this pool have activated their governance."
+                  "Not enough eligible voters in this pool have activated their governance."
                 : `This proposal will not pass unless more ${
                     minThGtTotalEffPoints ?
-                      "eligible members activate their governance"
+                      "eligible voters activate their governance"
                     : "funds are added"
                   }`
               }`}
@@ -198,7 +209,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
               <ExclamationTriangleIcon className="w-5 h-5 text-secondary-content" />
               <span className="text-xs sm:text-sm text-secondary-content">
                 {thresholdPct === 0 ?
-                  "Threshold is 0%."
+                  "Threshold out of reach"
                 : "Threshold over 100%."}
               </span>
             </div>
@@ -248,10 +259,10 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
                   </Skeleton>
                   {isPoolEnabled && (
                     <div className="flex items-center gap-4">
-                      <p className="hidden sm:flex text-sm  items-center bg-neutral-soft-2 rounded-md px-2 dark:bg-primary-soft-dark py-1">
+                      {/* <p className="hidden sm:flex text-sm  items-center bg-neutral-soft-2 rounded-md px-2 dark:bg-primary-soft-dark py-1">
                         ID:{" "}
                         <span className="text-md ml-1">{proposalNumber}</span>
-                      </p>
+                      </p> */}
                       <Badge
                         status={proposalStatus}
                         icon={<HandRaisedIcon />}
@@ -299,7 +310,8 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
                     <div className="hidden sm:block w-1 h-1 rounded-full bg-neutral-soft-content" />
                     <div>
                       <p className="text-sm text-neutral-soft-content">
-                        {prettyTimestamp(proposalData.createdAt ?? 0)}
+                        {prettyTimestamp(createdAt ?? 0)}
+                        {executedAt && " - " + prettyTimestamp(executedAt)}
                       </p>
                     </div>
                   </div>
@@ -313,112 +325,49 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
             <div className="flex gap-12 flex-wrap w-full ">
               <div className="mt-4 w-full">
                 {/* manage support view */}
-                {isAllocationView ?
-                  <div className="flex w-full flex-wrap items-center justify-between gap-6">
-                    <div className="flex items-center gap-8 flex-grow flex-wrap">
-                      <div className={"flex-grow sm:max-w-[460px]"}>
-                        <input
-                          type="range"
-                          min={0}
-                          max={Number(memberActivatedPoints)}
-                          value={
-                            inputData ? Number(inputData.value) : undefined
-                          }
-                          className={
-                            "range range-md cursor-pointer bg-neutral-soft [--range-bg:var(--color-grey-200)] dark:[--range-bg:#373737] dark:bg-[#373737] [--range-shdw:var(--color-green-500)] dark:[--range-shdw:#4E9F80] "
-                          }
-                          step={Number(memberActivatedPoints) / 100}
-                          onChange={(e) => {
-                            inputHandler(
-                              proposalData.id,
-                              BigInt(Math.floor(Number(e.target.value))),
-                            );
-                          }}
-                        />
+                <div className="w-full ">
+                  {currentConvictionPct != null &&
+                    thresholdPct != null &&
+                    totalSupportPct != null && (
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <div>
+                            <p className="text-xs sm:text-sm">
+                              Total Support:{" "}
+                              <span className="font-medium">
+                                {totalSupportPct}% of pool weight
+                              </span>{" "}
+                            </p>
+                          </div>
 
-                        <div className="flex w-full justify-between px-2.5">
-                          {[...Array(21)].map((_, i) => (
-                            // eslint-disable-next-line react/no-array-index-key
-                            <span className="text-[8px]" key={`span_${i}`}>
-                              |
-                            </span>
-                          ))}
+                          {ProposalCountDown}
+                        </div>
+                        <div className="h-3 flex items-center mb-2">
+                          <ConvictionBarChart
+                            compact
+                            currentConvictionPct={currentConvictionPct}
+                            thresholdPct={isSignalingType ? 0 : thresholdPct}
+                            proposalSupportPct={totalSupportPct}
+                            isSignalingType={isSignalingType}
+                            proposalNumber={proposalNumber}
+                            refreshConviction={triggerConvictionRefetch}
+                            proposalStatus={proposalStatus}
+                          />
                         </div>
                       </div>
-
-                      {inputValue > 0 && (
-                        <div className="mb-2">
-                          <>
-                            <div className="flex gap-10">
-                              <div className="flex flex-col items-center justify-center">
-                                <p className="subtitle2">
-                                  <span className="text-2xl font-semibold text-primary-content">
-                                    {poolWeightAllocatedInProposal}
-                                  </span>
-                                  /{memberPoolWeight}%{" "}
-                                  <span className="text-neutral-soft-content text-sm">
-                                    ({inputValue}% of your voting power)
-                                  </span>
-                                </p>
-                                {/* <p className="text-primary-content">Support</p> */}
-                              </div>
-                            </div>
-                          </>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                : <div className="w-full ">
-                    {currentConvictionPct != null &&
-                      thresholdPct != null &&
-                      totalSupportPct != null && (
-                        <div>
-                          <div className="flex items-center gap-2 mb-2">
-                            <div>
-                              <p className="text-xs sm:text-sm">
-                                Total Support:{" "}
-                                <span className="font-medium">
-                                  {totalSupportPct}% of pool weight
-                                </span>{" "}
-                              </p>
-                            </div>
-                            {!isSignalingType && poolToken && (
-                              <div className="w-1 h-1 rounded-full bg-neutral-soft-content" />
-                            )}
-
-                            {ProposalCountDown}
-                          </div>
-                          <div className="h-3 flex items-center mb-2">
-                            <ConvictionBarChart
-                              compact
-                              currentConvictionPct={currentConvictionPct}
-                              thresholdPct={isSignalingType ? 0 : thresholdPct}
-                              proposalSupportPct={totalSupportPct}
-                              isSignalingType={isSignalingType}
-                              proposalNumber={proposalNumber}
-                              refreshConviction={triggerConvictionRefetch}
-                              proposalStatus={proposalStatus}
-                            />
-                          </div>
-                        </div>
-                      )}
-                  </div>
-                }
+                    )}
+                </div>
               </div>
             </div>
           )}
-        </div>
-        {isPoolEnabled &&
-          !isAllocationView &&
-          stakedFilter != null &&
-          stakedFilter?.value > 0 &&
-          Number(poolWeightAllocatedInProposal) > 0 && (
-            <Badge color="warning" className="self-center justify-self-start">
+          {isPoolEnabled && stakedFilter?.value > 0 && (
+            <Badge color="info" className="self-center justify-self-start">
               <p className="text-xs font-semibold">
                 Your support: {poolWeightAllocatedInProposal}%
               </p>
             </Badge>
           )}
+        </div>
         {/* TODO: fetch every member stake */}
         {/* {!isAllocationView && <p className="text-sm mt-1">3 Supporters</p>} */}
       </>

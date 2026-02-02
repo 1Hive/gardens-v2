@@ -86,6 +86,7 @@ export function ConnectWallet() {
   const [selectedNFTIndex, setSelectedNFTIndex] = useState(0);
 
   const wallet = connectors[0].name;
+  const isMockConnection = account.connector?.id === "mock";
 
   const { data: token } = useBalance({
     address: account?.address,
@@ -130,7 +131,9 @@ export function ConnectWallet() {
                       width={20}
                       loading="lazy"
                     />
-                    <span className="hidden sm:block">Connect wallet</span>
+                    <span className="hidden sm:block text-white">
+                      Connect wallet
+                    </span>
                   </Button>
                 );
               }
@@ -163,7 +166,21 @@ export function ConnectWallet() {
                             />
                           }
                           <div className="hidden sm:flex flex-col">
-                            <h5 className={"text-left "}>
+                            <h5
+                              className={cn(
+                                "text-left",
+                                "tooltip tooltip-bottom",
+                                {
+                                  "text-warning-content dark:text-warning-content":
+                                    isMockConnection,
+                                },
+                              )}
+                              data-tip={
+                                isMockConnection ? "Simulated wallet" : (
+                                  undefined
+                                )
+                              }
+                            >
                               {ensName ?? formatAddress(acc.address)}
                             </h5>
                             <div className="flex items-center">

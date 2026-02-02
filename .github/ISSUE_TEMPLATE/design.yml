@@ -1,0 +1,57 @@
+name: Design
+description: Propose or refine a UI/UX design element for Gardens V2.
+labels: ["👩‍🎨 design"]
+projects: ["1Hive/17"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form to request new designs, updates to existing components, or UX refinements.  
+        Reference the design system and include enough context for handoff.
+
+        **Figma:** [Gardens V2 UI](https://www.figma.com/design/v9ECAmLYs2pam1wguh3HUS/Gardens-V2-UI?node-id=1-25&p=f&t=QTrkzN8ykb9AdIi6-0)  
+        **Miro:** [Design Collaboration Board](https://miro.com/app/board/uXjVJF2w8YI=/)
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context and rationale
+      description: Explain why this design work is needed. Mention any related issues or product goals.
+      placeholder: Current layout causes confusion between proposal states...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: design_type
+    attributes:
+      label: Design category
+      description: Select the kind of work this involves.
+      options:
+        - New feature / component
+        - UX refinement
+        - Visual polish
+        - Design system update
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: deliverables
+    attributes:
+      label: Expected deliverables
+      description: List what should result from this design task (screens, components, flow diagrams, etc.).
+      placeholder: |
+        - Updated Figma components  
+        - Interaction flow prototype  
+        - Accessibility review notes
+    validations:
+      required: false
+
+  - type: textarea
+    id: links
+    attributes:
+      label: References or assets
+      description: Include links to mockups, specifications, or related materials.
+      placeholder: Figma link, Miro frames, screenshots, Notion doc, etc.
+    validations:
+      required: false

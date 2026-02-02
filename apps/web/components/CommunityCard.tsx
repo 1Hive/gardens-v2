@@ -4,6 +4,7 @@ import React from "react";
 import {
   CheckBadgeIcon,
   CircleStackIcon,
+  CurrencyDollarIcon,
   UserGroupIcon,
 } from "@heroicons/react/24/outline";
 import Image from "next/image";
@@ -14,6 +15,7 @@ import {
   TokenGarden,
 } from "#/subgraph/.graphclient";
 import { Card } from "./Card";
+import { DisplayNumber } from "./DisplayNumber";
 import { Statistic } from "./Statistic";
 import TooltipIfOverflow from "./TooltipIfOverflow";
 import { CommunityLogo, ProtopianLogo } from "@/assets";
@@ -24,10 +26,13 @@ import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 type CommunityCardProps = {
   id: string;
   communityName?: Maybe<string> | undefined;
-  garden: Pick<TokenGarden, "address" | "chainId" | "symbol">;
-  members?: Maybe<Pick<MemberCommunity, "id" | "memberAddress">[]> | undefined;
+  garden: Pick<TokenGarden, "address" | "chainId" | "symbol" | "decimals">;
+  members?:
+    | Maybe<Pick<MemberCommunity, "id" | "memberAddress" | "stakedTokens">[]>
+    | undefined;
   strategies?: Maybe<Pick<CVStrategy, "id">[]> | undefined;
   isProtopian?: boolean;
+  membersCount: number;
 };
 
 export function CommunityCard({
@@ -35,13 +40,19 @@ export function CommunityCard({
   communityName,
   garden,
   members,
+  membersCount,
   strategies,
   isProtopian = false,
 }: CommunityCardProps) {
-  const { address: tokenAddr, chainId, symbol: tokenSymbol } = garden;
+  const { address: tokenAddr, chainId, symbol: tokenSymbol, decimals } = garden;
 
-  const membersCount = members?.length ?? 0;
   const poolsCount = strategies?.length ?? 0;
+  const communityStakedTokens =
+    members?.reduce(
+      (acc: bigint, member) => acc + BigInt(member?.stakedTokens),
+      0n,
+    ) ?? 0;
+
   const chain = getChain(chainId);
 
   const searchParams = useCollectQueryParams();
@@ -104,6 +115,15 @@ export function CommunityCard({
           icon={<CircleStackIcon />}
           count={poolsCount}
         />
+        <Statistic label="staked tokens" icon={<CurrencyDollarIcon />}>
+          <DisplayNumber
+            number={[BigInt(communityStakedTokens), decimals]}
+            compact={true}
+            tokenSymbol={tokenSymbol}
+            valueClassName="text-inherit"
+            symbolClassName="text-inherit"
+          />
+        </Statistic>
       </div>
     </Card>
   );

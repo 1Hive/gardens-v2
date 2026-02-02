@@ -16,6 +16,7 @@ import { getConfigByChain } from "@/configs/chains";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useFlag } from "@/hooks/useFlag";
 import { safeABI } from "@/src/customAbis";
+import { erc20ABI } from "@/src/generated";
 import { isENS } from "@/utils/web3";
 
 type Props = {
@@ -31,6 +32,7 @@ type Props = {
   value?: string;
   tooltip?: string;
   validateSafe?: boolean;
+  validateERC20?: boolean;
   registerOptions?: RegisterOptions;
   onChange?: React.ChangeEventHandler<HTMLInputElement>;
   suffix?: React.ReactNode;
@@ -50,6 +52,7 @@ export const FormAddressInput = ({
   value,
   tooltip,
   validateSafe = false,
+  validateERC20 = false,
   onChange,
   registerOptions,
   // trigger,
@@ -63,6 +66,7 @@ export const FormAddressInput = ({
 
   const [inputValue, setInputValue] = useState<string>(value ?? "");
   const [isValidatingSafe, setIsValidatingSafe] = useState<boolean>(false);
+  const [isValidatingERC20, setIsValidatingERC20] = useState<boolean>(false);
   const bypassSafeCheck = useFlag("bypassSafeCheck");
 
   useEffect(() => {
@@ -135,6 +139,42 @@ export const FormAddressInput = ({
     }
   };
 
+  const validateErc20Address = async (address: string) => {
+    if (!validateERC20) {
+      return true;
+    }
+
+    if (!Boolean(publicClient)) {
+      return "Unable to validate token address without an RPC client.";
+    }
+
+    try {
+      setIsValidatingERC20(true);
+      const [symbol, decimals] = await Promise.all([
+        publicClient.readContract({
+          address: address as Address,
+          abi: erc20ABI,
+          functionName: "symbol",
+        }),
+        publicClient.readContract({
+          address: address as Address,
+          abi: erc20ABI,
+          functionName: "decimals",
+        }),
+      ]);
+
+      if (typeof symbol === "string" && symbol.length > 0 && decimals != null) {
+        return true;
+      }
+      return "Not a valid ERC20 token";
+    } catch (error) {
+      console.error("ERC20 validation failed:", error);
+      return "Not a valid ERC20 token";
+    } finally {
+      setIsValidatingERC20(false);
+    }
+  };
+
   const extendedRegisterOptions = {
     ...registerOptions,
     validate: async (validateValue: string) => {
@@ -156,12 +196,20 @@ export const FormAddressInput = ({
         return isValid;
       }
 
+      if (validateERC20) {
+        const erc20Validation = await validateErc20Address(validateValue);
+        return erc20Validation;
+      }
+
       return true;
     },
   };
 
+  const isValidInputAddress = isAddress(inputValue ?? "");
+  const hasEnsAvatar = Boolean(avatarUrl);
+
   return (
-    <div className="max-w-[29rem]">
+    <div className="w-full max-w-[29rem]">
       <FormInput
         {...rest}
         label={label}
@@ -186,17 +234,25 @@ export const FormAddressInput = ({
         wide={true}
         suffix={
           suffix ??
-          (isValidatingSafe ?
+          (isValidatingSafe || isValidatingERC20 ?
             <LoadingSpinner className="text-neutral-soft-content" />
-          : debouncedValue && (
-              <Image
-                alt=""
-                className="rounded-full"
-                src={avatarUrl ? avatarUrl : blo(debouncedValue as Address)}
-                width="30"
-                height="30"
-              />
-            ))
+          : hasEnsAvatar ?
+            <Image
+              alt=""
+              className="rounded-full"
+              src={avatarUrl!}
+              width={30}
+              height={30}
+            />
+          : isValidInputAddress ?
+            <Image
+              alt=""
+              className="rounded-full"
+              src={blo(inputValue as Address)}
+              width={30}
+              height={30}
+            />
+          : null)
         }
       />
     </div>

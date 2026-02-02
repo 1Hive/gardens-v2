@@ -105,6 +105,7 @@ export default function DesignSystemPage() {
   const addressListSetValue = useMemo(() => (() => undefined) as any, []);
   const [isCheckboxChecked, setIsCheckboxChecked] = useState(false);
   const [isCheckboxErrorChecked, setIsCheckboxErrorChecked] = useState(false);
+  const [openModal, setOpenModal] = useState(false);
   const textInputErrors = useMemo(
     () => ({
       "demo-error-input": {
@@ -235,6 +236,9 @@ export default function DesignSystemPage() {
               </InfoBox>
               <InfoBox infoBoxType="error" title="Error">
                 Something went wrong that needs fixing.
+              </InfoBox>
+              <InfoBox infoBoxType="disabled" title="Disabled">
+                This feature is currently disabled.
               </InfoBox>
             </div>
           </DemoCard>
@@ -486,6 +490,8 @@ export default function DesignSystemPage() {
               description="Example of our DataTable component"
               data={sampleTableData}
               columns={tableColumns}
+              openModal={openModal}
+              setOpenModal={setOpenModal}
             />
           </DemoCard>
 

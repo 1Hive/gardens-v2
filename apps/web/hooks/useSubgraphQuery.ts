@@ -175,7 +175,7 @@ export function useSubgraphQuery<
   const refetch = async (
     retryCount?: number,
   ): Promise<Awaited<ReturnType<typeof fetch>>> => {
-    if (!retryCount) {
+    if (retryCount == null) {
       retryCount = 0;
     }
 
@@ -236,7 +236,7 @@ export function useSubgraphQuery<
       return result;
     } else {
       console.debug(
-        `⚡ Subgraph result not yet updated, retrying with incremental delays... (retry count: ${retryCount + 1}/${CHANGE_EVENT_MAX_RETRIES})`,
+        `⚡ Subgraph result not yet updated, retrying in ${(CHANGE_EVENT_INITIAL_DELAY * 2 ** retryCount) / 1000}s... (retry count: ${retryCount + 1}/${CHANGE_EVENT_MAX_RETRIES})`,
         {
           latestResult: latestResponse.current.response.data,
           result: result.data,

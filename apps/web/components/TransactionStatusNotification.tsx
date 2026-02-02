@@ -69,8 +69,8 @@ export function TransactionStatusNotification({
           )}
         </div>
       )}
-      <div className="flex flex-col gap-1">
-        <div className={`${textClass} font-medium text-base whitespace-nowrap`}>
+      <div className="flex flex-col gap-1 min-w-0">
+        <div className={`${textClass} font-medium text-base break-words whitespace-normal`}>
           {message}
         </div>
         {chain?.blockExplorers?.default.url && showClickToExplorer && (

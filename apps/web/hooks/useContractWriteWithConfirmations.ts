@@ -1,18 +1,24 @@
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 
 import { getDataSuffix, submitReferral } from "@divvi/referral-sdk";
 import { WriteContractMode } from "@wagmi/core";
-import { Abi, Address, TransactionReceipt } from "viem";
+import { toast } from "react-toastify";
+import { Abi, Address, TransactionReceipt, isAddress } from "viem";
 import { celo } from "viem/chains";
 import {
+  useAccount,
   useChainId,
   useContractWrite,
   UseContractWriteConfig,
+  usePublicClient,
   useWaitForTransaction,
 } from "wagmi";
 import { useChainIdFromPath } from "./useChainIdFromPath";
 import { useTransactionNotification } from "./useTransactionNotification";
 import { chainConfigMap } from "@/configs/chains";
+import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
+import { useFlag } from "@/hooks/useFlag";
+import { abiWithErrors } from "@/utils/abi";
 
 export type ComputedStatus =
   | "loading"
@@ -55,18 +61,40 @@ export function useContractWriteWithConfirmations<
   const toastId = props.contractName + "_" + props.functionName;
   const chainIdFromWallet = useChainId();
   const chainIdFromPath = useChainIdFromPath();
+  const { connector, address: connectedAddress } = useAccount();
+  const queryParams = useCollectQueryParams();
   const resolvedChaindId = +(
     props.chainId ??
     chainIdFromPath ??
     chainIdFromWallet
   );
+  const publicClient = usePublicClient({ chainId: resolvedChaindId });
+  const forceSimulate = useFlag("showAsCouncilSafe");
+
+  const councilSafeFromFlag = useMemo(() => {
+    const queryVal = queryParams?.flag_showAsCouncilSafe;
+    if (queryVal && isAddress(queryVal)) return queryVal as Address;
+    const envVal = process.env.NEXT_PUBLIC_FLAG_SHOWASCOUNCILSAFE;
+    if (envVal && isAddress(envVal)) return envVal as Address;
+    if (typeof window !== "undefined") {
+      const stored = window.localStorage?.getItem("flag_showAsCouncilSafe");
+      if (stored && isAddress(stored)) return stored as Address;
+    }
+    return undefined;
+  }, [queryParams]);
 
   const shouldDivviTrack = useMemo(() => {
     return resolvedChaindId === celo.id;
   }, [resolvedChaindId]);
 
-  let propsWithChainId = {
+  const abiWithCustomErrors = useMemo(() => {
+    if (!props.abi) return undefined;
+    return abiWithErrors(props.abi as Abi);
+  }, [props.abi]);
+
+  const propsWithChainId = {
     ...props,
+    abi: (abiWithCustomErrors ?? props.abi) as TAbi,
     chainId: resolvedChaindId,
     dataSuffix:
       shouldDivviTrack ?
@@ -85,12 +113,105 @@ export function useContractWriteWithConfirmations<
   function logError(error: any, variables: any, context: string) {
     console.error(
       `Error with transaction [${props.contractName} -> ${props.functionName}]`,
-      { error, variables, context },
+      {
+        error,
+        variables,
+        context,
+        cause: error?.cause?.message || error?.message,
+      },
     );
   }
 
   const txResult = useContractWrite(
     propsWithChainId as UseContractWriteConfig<TAbi, TFunctionName, TMode>,
+  );
+
+  const simulationToastId = `${toastId}_sim`;
+
+  const simulateAndWriteAsync = useCallback(
+    async (
+      overrides?: Parameters<
+        NonNullable<typeof txResult.writeAsync>
+      >[0] extends undefined ?
+        undefined
+      : Parameters<NonNullable<typeof txResult.writeAsync>>[0],
+    ) => {
+      const isMockConnector = connector?.id === "mock";
+      if (!isMockConnector && !forceSimulate) {
+        return txResult.writeAsync?.(overrides as any);
+      }
+      // If we can't simulate, fall back to normal write
+      if (
+        !publicClient ||
+        !props.address ||
+        !props.abi ||
+        !props.functionName
+      ) {
+        return txResult.writeAsync?.(overrides as any);
+      }
+
+      const accountForSimulation =
+        (overrides as any)?.account ??
+        (props as any)?.account ??
+        (txResult.variables as any)?.account ??
+        (forceSimulate ? councilSafeFromFlag : undefined) ??
+        connectedAddress;
+
+      try {
+        await (publicClient as any).simulateContract({
+          address: props.address as Address,
+          abi: props.abi as Abi,
+          functionName: props.functionName as any,
+          args:
+            (overrides as any)?.args ??
+            (props as any)?.args ??
+            (txResult.variables as any)?.args,
+          value:
+            (overrides as any)?.value ??
+            (props as any)?.value ??
+            (txResult.variables as any)?.value,
+          account: accountForSimulation as Address | undefined,
+          chainId: resolvedChaindId,
+        });
+        toast.success("Simulation successful", { toastId: simulationToastId });
+      } catch (error) {
+        console.error("[Simulation failed]", {
+          error,
+          from: accountForSimulation,
+        });
+        toast.error("Simulation failed. See console for details.", {
+          toastId: simulationToastId,
+        });
+        throw error;
+      }
+
+      return txResult.writeAsync?.(overrides as any);
+    },
+    [
+      connector?.id,
+      forceSimulate,
+      councilSafeFromFlag,
+      publicClient,
+      props.address,
+      props.abi,
+      props.functionName,
+      props.args,
+      props.value,
+      (props as any)?.account,
+      resolvedChaindId,
+      txResult.writeAsync,
+      txResult.variables,
+      simulationToastId,
+    ],
+  );
+
+  const simulateAndWrite = useCallback(
+    (overrides?: Parameters<NonNullable<typeof txResult.write>>[0]) => {
+      simulateAndWriteAsync(overrides as any).catch(() => {
+        /* error already surfaced via toast/console */
+      });
+    },
+    [simulateAndWriteAsync, txResult.write],
   );
 
   propsWithChainId.onError = (
@@ -157,6 +278,8 @@ export function useContractWriteWithConfirmations<
   return {
     ...txResult,
     ...txWaitResult,
+    write: simulateAndWrite,
+    writeAsync: simulateAndWriteAsync,
     isLoading: txResult.isLoading || txWaitResult.isLoading,
     transactionStatus: computedStatus as ComputedStatus | undefined,
     transactionData: txResult.data,

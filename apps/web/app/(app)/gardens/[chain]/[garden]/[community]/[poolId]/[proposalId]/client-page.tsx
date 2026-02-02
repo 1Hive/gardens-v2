@@ -6,10 +6,10 @@ import {
   CheckIcon,
   BoltIcon,
 } from "@heroicons/react/24/outline";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "react-toastify";
 import { Address, encodeAbiParameters, formatUnits } from "viem";
-import { useAccount, useToken } from "wagmi";
+import { useAccount } from "wagmi";
 import {
   getProposalDataDocument,
   getProposalDataQuery,
@@ -30,16 +30,19 @@ import {
 import CancelButton from "@/components/CancelButton";
 import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
 import { DisputeModal } from "@/components/DisputeModal";
+import EditProposalButton from "@/components/EditProposalButton";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import MarkdownWrapper from "@/components/MarkdownWrapper";
 import { Skeleton } from "@/components/Skeleton";
 import { QUERY_PARAMS } from "@/constants/query-params";
+import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useConvictionRead } from "@/hooks/useConvictionRead";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
-import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
+import { MetadataV1, useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
+import { usePoolToken } from "@/hooks/usePoolToken";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { alloABI } from "@/src/generated";
 import { PoolTypes, ProposalStatus, Column } from "@/types";
@@ -69,12 +72,23 @@ export type ClientPageProps = {
 export default function ClientPage({ params }: ClientPageProps) {
   const { proposalId, garden, community: communityAddr, poolId } = params;
   const [convictionRefreshing, setConvictionRefreshing] = useState(true);
+  const [openSupportersModal, setOpenSupportersModal] = useState(false);
   const router = useRouter();
 
   const { address } = useAccount();
+  const routerSearchParams = useSearchParams();
+  const collectedParams = useCollectQueryParams();
+  const [initialSearchParams] = useState<Record<string, string> | null>(() => {
+    if (typeof window === "undefined") return null;
+    return Object.fromEntries(new URLSearchParams(window.location.search));
+  });
 
   const [, proposalNumber] = proposalId.split("-");
-  const { data } = useSubgraphQuery<getProposalDataQuery>({
+  const {
+    data,
+    fetching,
+    refetch: refetchProposal,
+  } = useSubgraphQuery<getProposalDataQuery>({
     query: getProposalDataDocument,
     variables: {
       garden: garden.toLowerCase(),
@@ -113,7 +127,18 @@ export default function ClientPage({ params }: ClientPageProps) {
     !!memberData?.member?.memberCommunity?.[0]?.isRegistered;
   //
 
-  const proposalData = data?.cvproposal;
+  type ProposalData = NonNullable<getProposalDataQuery["cvproposal"]>;
+  const proposalData:
+    | (ProposalData & {
+        registryCommunity?: getProposalDataQuery["registryCommunity"];
+      })
+    | undefined =
+    data?.cvproposal ?
+      {
+        ...data.cvproposal,
+        registryCommunity: data?.registryCommunity,
+      }
+    : undefined;
   const proposalSupporters = supportersData?.members;
 
   const filteredAndSortedProposalSupporters: ProposalSupporter[] =
@@ -144,7 +169,7 @@ export default function ClientPage({ params }: ClientPageProps) {
       BigInt(proposalData.proposalNumber)
     : undefined;
 
-  const poolTokenAddr = proposalData?.strategy.token as Address;
+  const poolTokenAddr = proposalData?.strategy?.token as Address;
 
   const { publish } = usePubSubContext();
   const chainId = useChainIdFromPath();
@@ -154,20 +179,64 @@ export default function ClientPage({ params }: ClientPageProps) {
   });
   const path = usePathname();
   const metadata = proposalData?.metadata ?? ipfsResult ?? null;
+  const metadataForActions: MetadataV1 = (metadata ?? {
+    title: undefined,
+    description: undefined,
+  }) as MetadataV1;
+  const proposalDataForActions =
+    proposalData ?
+      {
+        ...proposalData,
+        ...metadataForActions,
+        metadata: metadataForActions,
+      }
+    : undefined;
   const isProposerConnected =
     proposalData?.submitter === address?.toLowerCase();
+  const pendingProposalParam =
+    collectedParams[QUERY_PARAMS.proposalPage.pendingProposal] ??
+    routerSearchParams.get(QUERY_PARAMS.proposalPage.pendingProposal) ??
+    initialSearchParams?.[QUERY_PARAMS.proposalPage.pendingProposal] ??
+    undefined;
+  const pendingProposalTitleParam =
+    collectedParams[QUERY_PARAMS.proposalPage.pendingProposalTitle] ??
+    routerSearchParams.get(QUERY_PARAMS.proposalPage.pendingProposalTitle) ??
+    initialSearchParams?.[QUERY_PARAMS.proposalPage.pendingProposalTitle] ??
+    undefined;
+  const pendingProposalTitle =
+    pendingProposalTitleParam ?
+      (() => {
+        try {
+          return decodeURIComponent(pendingProposalTitleParam);
+        } catch (error) {
+          console.warn("Unable to decode pending proposal title", {
+            pendingProposalTitleParam,
+            error,
+          });
+          return pendingProposalTitleParam;
+        }
+      })()
+    : undefined;
 
-  const proposalType = proposalData?.strategy.config?.proposalType;
+  const isAwaitingProposal = !!pendingProposalParam && proposalData == null;
+
+  useEffect(() => {
+    if (fetching || !isAwaitingProposal) return;
+    refetchProposal();
+  }, [fetching, isAwaitingProposal]);
+
+  const proposalType = proposalData?.strategy?.config?.proposalType;
   const isSignalingType = PoolTypes[proposalType] === "signaling";
   const requestedAmount = proposalData?.requestedAmount;
   const beneficiary = proposalData?.beneficiary as Address | undefined;
   const submitter = proposalData?.submitter as Address | undefined;
   const proposalStatus = ProposalStatus[proposalData?.proposalStatus];
 
-  const { data: poolToken } = useToken({
-    address: poolTokenAddr,
-    enabled: !!poolTokenAddr && !isSignalingType,
-    chainId,
+  const poolToken = usePoolToken({
+    poolAddress: proposalData?.strategy?.id,
+    poolTokenAddr,
+    enabled:
+      !!poolTokenAddr && !!proposalData?.strategy?.id && !isSignalingType,
   });
 
   const {
@@ -178,10 +247,10 @@ export default function ClientPage({ params }: ClientPageProps) {
     timeToPass,
     triggerConvictionRefetch,
   } = useConvictionRead({
-    proposalData,
+    proposalData: proposalData as getProposalDataQuery["cvproposal"],
     strategyConfig: proposalData?.strategy?.config,
     tokenData: data?.tokenGarden?.decimals,
-    enabled: proposalData?.proposalNumber != null,
+    enabled: proposalData?.proposalNumber != null && proposalData != null,
   });
 
   useEffect(() => {
@@ -253,15 +322,13 @@ export default function ClientPage({ params }: ClientPageProps) {
   const { tooltipMessage, isConnected, missmatchUrl } =
     useDisableButtons(disableManSupportBtn);
 
-  const convictionPctLessThanSupport =
-    thresholdPct != null &&
-    currentConvictionPct != null &&
-    currentConvictionPct <= thresholdPct;
-
   const disableExecuteButton = useMemo<ConditionObject[]>(
     () => [
       {
-        condition: convictionPctLessThanSupport,
+        condition:
+          currentConvictionPct == null ||
+          thresholdPct == null ||
+          currentConvictionPct <= thresholdPct,
         message: "Proposal has not reached the threshold yet",
       },
       {
@@ -269,17 +336,27 @@ export default function ClientPage({ params }: ClientPageProps) {
         message: "Proposal is being disputed",
       },
     ],
-    [
-      address,
-      thresholdPct,
-      currentConvictionPct,
-      convictionPctLessThanSupport,
-      proposalStatus,
-    ],
+    [address, thresholdPct, currentConvictionPct, proposalStatus],
   );
 
-  const { tooltipMessage: executeBtnTooltipMessage } =
-    useDisableButtons(disableExecuteButton);
+  const {
+    tooltipMessage: executeBtnTooltipMessage,
+    isButtonDisabled: isExecuteButtonDisabled,
+  } = useDisableButtons(disableExecuteButton);
+
+  if (isAwaitingProposal) {
+    return (
+      <div className="col-span-12 flex min-h-[60vh] flex-col items-center justify-center gap-6">
+        <InfoBox
+          infoBoxType="info"
+          title="Finalizing proposal creation"
+          className="max-w-2xl"
+        >
+          {`Waiting for "${pendingProposalTitle ?? "newly created proposal"}" to be indexed...`}
+        </InfoBox>
+      </div>
+    );
+  }
 
   if (
     !proposalData ||
@@ -289,7 +366,7 @@ export default function ClientPage({ params }: ClientPageProps) {
     updatedConviction == null
   ) {
     return (
-      <div className="mt-96 col-span-12">
+      <div className="col-span-12 flex min-h-[40vh] items-center justify-center">
         <LoadingSpinner />
       </div>
     );
@@ -345,35 +422,38 @@ export default function ClientPage({ params }: ClientPageProps) {
                     )}
                   </div>
 
-                  <div className="flex flex-col items-start justify-between gap-2">
-                    <Statistic label={"Created"}>
-                      <span className="font-medium dark:text-neutral-content">
-                        {prettyTimestamp(proposalData?.createdAt ?? 0)}
-                      </span>
-                    </Statistic>
-                    {!isSignalingType && (
-                      <>
-                        <Statistic label={"request amount"} className="pt-2">
-                          <DisplayNumber
-                            number={formatUnits(
-                              requestedAmount,
-                              poolToken?.decimals ?? 18,
-                            )}
-                            tokenSymbol={poolToken?.symbol}
-                            compact={true}
-                            valueClassName="font-medium dark:text-neutral-content"
-                            symbolClassName="font-medium dark:text-neutral-content"
-                          />
-                        </Statistic>
-                      </>
-                    )}
-                  </div>
+                  {status !== "executed" && (
+                    <div className="flex flex-col items-start justify-between gap-3 sm:items-end">
+                      <Statistic label={"Created"}>
+                        <span className="font-medium dark:text-neutral-content">
+                          {prettyTimestamp(proposalData?.createdAt ?? 0)}
+                        </span>
+                      </Statistic>
+
+                      {!isSignalingType && (
+                        <>
+                          <Statistic label={"request amount"}>
+                            <DisplayNumber
+                              number={formatUnits(
+                                requestedAmount,
+                                poolToken?.decimals ?? 18,
+                              )}
+                              tokenSymbol={poolToken?.symbol}
+                              compact={true}
+                              valueClassName="font-medium dark:text-neutral-content"
+                              symbolClassName="font-medium dark:text-neutral-content"
+                            />
+                          </Statistic>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
               </header>
               {/* Divider */}
 
               {/* Conviction Progress */}
-              {proposalData.strategy.isEnabled &&
+              {proposalData.strategy?.isEnabled &&
                 currentConvictionPct != null &&
                 thresholdPct != null &&
                 totalSupportPct != null && (
@@ -402,7 +482,7 @@ export default function ClientPage({ params }: ClientPageProps) {
             </div>
           </div>
 
-          {!proposalData.strategy.isEnabled && (
+          {!proposalData.strategy?.isEnabled && (
             <InfoBox infoBoxType="warning">The pool is not enabled.</InfoBox>
           )}
 
@@ -430,15 +510,15 @@ export default function ClientPage({ params }: ClientPageProps) {
                       writeDistribute?.({
                         args: [
                           BigInt(poolId),
-                          [proposalData?.strategy.id as Address],
+                          [proposalData?.strategy?.id as Address],
                           encodedDataProposalId(proposalIdNumber),
                         ],
                       })
                     }
                     disabled={
+                      isExecuteButtonDisabled ||
                       !isConnected ||
                       missmatchUrl ||
-                      convictionPctLessThanSupport ||
                       proposalStatus === "disputed"
                     }
                     tooltip={executeBtnTooltipMessage}
@@ -453,51 +533,102 @@ export default function ClientPage({ params }: ClientPageProps) {
       </section>
 
       {/* Right side */}
-      <div className="col-span-12 xl:col-span-3">
+      <div className="col-span-12 xl:col-span-3 xl:h-10 overflow-visible ">
         <div className="backdrop-blur-sm rounded-lg flex flex-col gap-4 sticky top-32">
           <section className="section-layout gap-4 flex flex-col">
             <div className="flex items-center justify-between">
               <h5>Status</h5>
               <Badge status={proposalData.proposalStatus} />
             </div>
+
+            {status === "executed" && (
+              <ul className="timeline timeline-vertical  relative">
+                <li className=" flex items-center justify-start z-50">
+                  <div className="timeline-middle rounded-full text-tertiary-soft bg-primary-content m-0.5">
+                    <CheckIcon className="w-4 m-0.5" />
+                  </div>
+                  <div className="timeline-end  flex flex-col">
+                    <p className="text-md font-semibold">Created</p>
+                    <p className="text-sm text-neutral-soft-content">
+                      {prettyTimestamp(proposalData?.createdAt)}
+                    </p>
+                  </div>
+                  {/* <hr className="bg-tertiary-content w-8" />; */}
+                </li>
+
+                <div className="bg-primary-content h-20 w-[4px] absolute left-[9.5px] top-6" />
+                <li className=" flex items-center justify-start mt-4">
+                  <div className="timeline-middle rounded-full text-tertiary-soft bg-primary-content m-0.5">
+                    <CheckIcon className="w-4 m-0.5" />
+                  </div>
+                  <div className="timeline-end  flex flex-col pt-2">
+                    <p className="text-md font-semibold">Executed</p>
+                    <p className="text-sm text-neutral-soft-content">
+                      {prettyTimestamp(proposalData?.executedAt)}
+                    </p>
+
+                    {!isSignalingType && (
+                      <>
+                        <Statistic
+                          label={"Funded: "}
+                          className="-ml-1 text-neutral-soft-content dark:text-neutral-content"
+                        >
+                          <DisplayNumber
+                            number={formatUnits(
+                              requestedAmount,
+                              poolToken?.decimals ?? 18,
+                            )}
+                            tokenSymbol={poolToken?.symbol}
+                            compact={true}
+                            valueClassName="text-neutral-soft-content dark:text-neutral-content"
+                            symbolClassName="text-neutral-soft-content dark:text-neutral-content"
+                          />
+                        </Statistic>
+                      </>
+                    )}
+                  </div>
+                </li>
+              </ul>
+            )}
             <div>
               <div className="flex flex-col gap-2">
-                {!isSignalingType && (
+                {!isSignalingType && status === "cancelled" && (
                   <>
-                    {status === "executed" ?
-                      <div className="flex items-center gap-2">
-                        <CheckIcon className="w-5 h-5 text-primary-content" />
-                        <p className="text-primary-content subtitle2">
-                          Passed and Executed
-                        </p>
-                      </div>
-                    : status === "cancelled" ?
-                      <div className="flex items-center gap-2">
-                        <XMarkIcon className="w-5 h-5 text-error-content" />
-                        <p className="text-error-content subtitle2">
-                          Cancelled
-                        </p>
-                      </div>
-                    : null}
+                    <div className="flex items-center gap-2">
+                      <XMarkIcon className="w-5 h-5 text-error-content" />
+                      <p className="text-error-content subtitle2">Cancelled</p>
+                    </div>
                   </>
                 )}
                 {status !== "executed" && status !== "cancelled" && (
                   <InfoBox
                     title="Information"
                     infoBoxType="info"
-                    content={`${isSignalingType ? "This proposal is open and can be supported or disputed by the community. Only the proposal creator can cancel" : "This proposal is currently open. It will pass if nobody successfully challenges it and it receives enough support."}`}
+                    content={`${isSignalingType ? "This proposal is open and can be supported or disputed by the community. Only the proposal creator can cancel" : "This proposal is currently open. It will pass if nobody successfully disputes it and it receives enough support."}`}
                   />
                 )}
               </div>
             </div>
-            <div className="flex items-end">
+            <div className="flex flex-col gap-4">
               {(status === "active" || status === "disputed") &&
-                proposalData.strategy.isEnabled && (
+                proposalData.strategy?.isEnabled &&
+                proposalDataForActions && (
                   <DisputeModal
                     isMemberCommunity={isMemberCommunity}
-                    proposalData={{ ...proposalData, ...metadata }}
+                    proposalData={proposalDataForActions}
                   />
                 )}
+              {status !== "executed" && status !== "cancelled" && (
+                <Button
+                  onClick={() => setOpenSupportersModal(!openSupportersModal)}
+                  btnStyle="outline"
+                  color="tertiary"
+                  className=""
+                  // icon={<ChevronUpIcon className="h-4 w-4" />}
+                >
+                  View Supporters
+                </Button>
+              )}
             </div>
           </section>
 
@@ -505,10 +636,18 @@ export default function ClientPage({ params }: ClientPageProps) {
             <section className="section-layout gap-4 flex flex-col">
               <InfoBox
                 infoBoxType="info"
-                contentStyle="text-tertiary-content"
-                content="As the original author, you can remove this proposal from consideration."
+                content="As the original author, you can edit or cancel this proposal."
+                title="Actions"
               />
-              <CancelButton proposalData={{ ...proposalData, ...metadata }} />
+              {proposalDataForActions && (
+                <>
+                  <EditProposalButton
+                    proposalData={proposalDataForActions}
+                    poolToken={poolToken}
+                  />
+                  <CancelButton proposalData={proposalDataForActions} />
+                </>
+              )}
             </section>
           )}
 
@@ -521,6 +660,8 @@ export default function ClientPage({ params }: ClientPageProps) {
                   submitter={submitter}
                   totalActivePoints={totalEffectiveActivePoints}
                   totalStakedAmount={totalSupportPct}
+                  openSupportersModal={openSupportersModal}
+                  setOpenSupportersModal={setOpenSupportersModal}
                 />
               </section>
             )}
@@ -528,7 +669,7 @@ export default function ClientPage({ params }: ClientPageProps) {
       </div>
 
       {/* Proposal Description */}
-      <section className="px-8 col-span-12 xl:col-span-9 mt-6 flex flex-col gap-6">
+      <section className="section-layout col-span-12 xl:col-span-9 mt-6 flex flex-col gap-6">
         <h3>Proposal Description</h3>
         <div>
           <Skeleton rows={5} isLoading={!Boolean(metadata)}>
@@ -544,12 +685,18 @@ const ProposalSupportersTable = ({
   supporters,
   totalActivePoints,
   totalStakedAmount,
+  openSupportersModal,
+  setOpenSupportersModal,
+  beneficiary,
+  submitter,
 }: {
   supporters: ProposalSupporter[];
   beneficiary: string | undefined;
   submitter: string | undefined;
   totalActivePoints: number;
   totalStakedAmount: number;
+  openSupportersModal: boolean;
+  setOpenSupportersModal: (open: boolean) => void;
 }) => {
   const columns: SupporterColumn[] = [
     {
@@ -564,15 +711,15 @@ const ProposalSupportersTable = ({
         />
       ),
     },
-    // {
-    //   header: "Role",
-    //   render: (supporter: ProposalSupporter) =>
-    //     supporter.id === beneficiary ? "Beneficiary"
-    //     : supporter.id === submitter ? "Submitter"
-    //     : "Member",
-    // },
     {
-      header: "",
+      header: "Role",
+      render: (supporter: ProposalSupporter) =>
+        supporter.id === beneficiary ? "Beneficiary"
+        : supporter.id === submitter ? "Submitter"
+        : "Member",
+    },
+    {
+      header: "Support",
       render: (supporter: ProposalSupporter) =>
         totalActivePoints > 0 ?
           `${calculatePercentageBigInt(
@@ -580,24 +727,25 @@ const ProposalSupportersTable = ({
             BigInt(totalActivePoints),
           )} %`
         : undefined,
-      className: "flex items-center justify-center",
+      className: "flex items-center justify-end",
     },
   ];
 
   return (
     <DataTable
-      // title="Supported By"
+      openModal={openSupportersModal}
+      setOpenModal={setOpenSupportersModal}
+      title="Proposal Supporters"
       // description="A list of all the community members that are supporting this proposal."
       data={supporters}
       columns={columns}
       footer={
-        //
-        <div className="flex justify-between">
-          <p className="">Total Support:</p>
-          <p className="">{totalStakedAmount} %</p>
+        <div className="flex justify-between items-end gap-2 mr-6 sm:mr-10">
+          <p className="subtitle">Total Support: </p>
+          <p className=""> {totalStakedAmount} %</p>
         </div>
       }
-      className="border1 rounded-lg bg-neutral"
+      className="border1 rounded-lg bg-neutral p-2"
     />
   );
 };

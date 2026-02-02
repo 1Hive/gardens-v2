@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Address, useContractRead } from "wagmi";
+import { Address, useContractRead, useContractReads } from "wagmi";
 import {
   CVProposal,
   CVStrategy,
@@ -54,23 +54,44 @@ export const useConvictionRead = ({
     functionName: "calculateProposalConviction",
     args: [BigInt(proposalData?.proposalNumber ?? 0)],
     enabled,
+    watch: true,
   });
-
-  const { data: thresholdFromContract, error: errorThreshold } =
-    useContractRead({
-      ...cvStrategyContract,
-      functionName: "calculateThreshold",
-      args: [proposalData?.requestedAmount ?? 0],
-      enabled: enabled && PoolTypes[strategyConfig?.proposalType] === "funding",
-    });
-
-  if (errorThreshold) {
-    logOnce("error", "Error reading threshold", errorThreshold);
-  }
 
   if (errorConviction) {
     logOnce("error", "Error reading conviction", errorConviction);
   }
+  const shouldReadThreshold =
+    enabled && PoolTypes[strategyConfig?.proposalType] === "funding";
+
+  const { data: thresholdReads } = useContractReads({
+    allowFailure: true,
+    contracts:
+      shouldReadThreshold ?
+        [
+          {
+            ...cvStrategyContract,
+            functionName: "calculateThreshold",
+            args: [proposalData?.requestedAmount ?? 0],
+          },
+        ]
+      : [],
+    enabled: shouldReadThreshold,
+  });
+
+  const thresholdRes = thresholdReads?.[0];
+
+  if (
+    thresholdRes?.error &&
+    thresholdRes.error.message.includes("AmountOverMaxRatio") === false
+  ) {
+    logOnce(
+      "error",
+      "Error reading threshold from contract",
+      thresholdRes?.error,
+    );
+  }
+
+  const thresholdFromContract = thresholdRes?.result;
 
   //calculate time to pass for proposal te be executed
   const alphaDecay = +strategyConfig?.decay / CV_SCALE_PRECISION;
@@ -101,7 +122,7 @@ export const useConvictionRead = ({
 
   let thresholdPct = useMemo(
     () =>
-      initialized ?
+      initialized && thresholdFromContract != null ?
         calculatePercentageBigInt(
           thresholdFromContract as bigint,
           BigInt(proposalData.strategy.maxCVSupply),

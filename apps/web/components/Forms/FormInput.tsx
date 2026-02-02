@@ -1,11 +1,10 @@
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 "use client";
 
-import { HTMLInputTypeAttribute } from "react";
-import React from "react";
+import React, { HTMLInputTypeAttribute, useRef } from "react";
 import { RegisterOptions, UseFormRegister } from "react-hook-form";
 import { InfoWrapper } from "../InfoWrapper";
-import MarkdownEditor from "../MarkdownEditor";
+import MarkdownEditor, { type MarkdownEditorHandle } from "../MarkdownEditor";
 
 type Props = {
   label?: string;
@@ -59,14 +58,25 @@ export function FormInput({
     value: value ?? registerOptions?.value,
     onChange: onChange ?? registerOptions?.onChange,
   });
+  const { ref: registerRef, ...registeredProps } = registered ?? {};
+  const markdownEditorRef = useRef<MarkdownEditorHandle>(null);
+  const handleLabelClick = (event: React.MouseEvent<HTMLLabelElement>) => {
+    if (type !== "markdown") return;
+    event.preventDefault();
+    markdownEditorRef.current?.focus();
+  };
 
-  const fixedInputClassname =
-    "!border-gray-300 focus:border-gray-300 focus:outline-gray-300 cursor-not-allowed bg-transparent";
+  const disabledInputClassname =
+    "!border-gray-400 focus:border-gray-400 focus:outline-none text-neutral-content cursor-not-allowed opacity-40";
 
   return (
     <div className={`flex flex-col ${wide ? "w-full" : ""}`}>
       {label && (
-        <label htmlFor={registerKey} className="label cursor-pointer w-fit">
+        <label
+          htmlFor={registerKey}
+          className="label cursor-pointer w-fit"
+          onClick={handleLabelClick}
+        >
           {tooltip ?
             <InfoWrapper tooltip={tooltip}>
               {label}
@@ -79,13 +89,20 @@ export function FormInput({
           }
         </label>
       )}
-      {subLabel && <p className="mb-1 text-xs">{subLabel}</p>}
+      {subLabel && (
+        <p
+          className={`mb-1 ml-1 text-xs ${readOnly || disabled ? "text-neutral-content" : "text-neutral-soft-content"}̀`}
+        >
+          {subLabel}
+        </p>
+      )}
       <div
         className={`relative ${type !== "textarea" && type !== "markdown" && "max-w-[29rem]"}`}
       >
         {type !== "textarea" && type !== "markdown" ?
           <input
-            {...registered}
+            {...registeredProps}
+            ref={registerRef}
             id={registerKey}
             type={type}
             placeholder={placeholder}
@@ -93,7 +110,9 @@ export function FormInput({
               errors[registerKey] ?
                 "input-error dark:dark:bg-primary-soft-dark"
               : "input-info dark:bg-primary-soft-dark"
-            } w-full ${readOnly && fixedInputClassname} ${className}`}
+            } w-full ${
+              disabled || readOnly ? disabledInputClassname : ""
+            } ${className}`}
             required={required}
             step={step}
             disabled={disabled || readOnly}
@@ -103,12 +122,13 @@ export function FormInput({
           />
         : type === "textarea" ?
           <textarea
-            {...registered}
+            {...registeredProps}
+            ref={registerRef}
             id={registerKey}
             placeholder={placeholder}
             className={`${className} textarea textarea-info line-clamp-5 w-full overflow-auto h-24 dark:bg-primary-soft-dark ${
               errors[registerKey] ? "input-error" : "input-info"
-            }`}
+            } ${disabled || readOnly ? disabledInputClassname : ""}`}
             required={required}
             rows={rows}
             disabled={disabled || readOnly}
@@ -118,7 +138,8 @@ export function FormInput({
             {...otherProps}
           />
         : <MarkdownEditor
-            {...registered}
+            {...registeredProps}
+            ref={markdownEditorRef}
             id={registerKey}
             placeholder={placeholder}
             required={required}
@@ -128,12 +149,14 @@ export function FormInput({
             readOnly={readOnly || disabled}
             onChange={registered?.onChange ?? onChange}
             value={value}
-            className="input input-info dark:bg-primary-soft-dark"
+            className={`input input-info dark:bg-primary-soft-dark ${disabled || readOnly ? disabledInputClassname : ""}`}
             {...otherProps}
           />
         }
         {Boolean(suffix) && (
-          <span className="absolute right-[10px] top-1/2 -translate-y-1/2 text-neutral-content">
+          <span
+            className={`absolute right-[10px] top-1/2 -translate-y-1/2 text-neutral-content ${disabled || readOnly ? "opacity-60" : ""}`}
+          >
             {suffix}
           </span>
         )}

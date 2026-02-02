@@ -76,6 +76,7 @@ export const IncreasePower = ({
 
   const urlChainId = useChainIdFromPath();
 
+  const [hasInteracted, setHasInteracted] = useState(false);
   const roundedStakedAmount = roundToSignificant(+stakedAmount, 4);
 
   const { data: accountTokenBalance } = useBalance({
@@ -195,6 +196,7 @@ export const IncreasePower = ({
 
   useEffect(() => {
     if (accountTokenBalancePlusStakeAmount == null) return;
+    if (hasInteracted) return;
     setStakedAmount(
       roundToSignificant(initialStakedAmount ?? 0, 4, {
         showPrecisionMissIndicator: false,
@@ -206,7 +208,16 @@ export const IncreasePower = ({
       : (initialStakedAmount / accountTokenBalancePlusStakeAmount) * 100
       ).toString(),
     );
-  }, [accountTokenBalancePlusStakeAmount]);
+  }, [
+    accountTokenBalance?.value,
+    accountTokenBalancePlusStakeAmount,
+    hasInteracted,
+    initialStakedAmount,
+  ]);
+
+  useEffect(() => {
+    setHasInteracted(false);
+  }, [accountAddress, communityAddress, initialStakedAmountBn]);
 
   const { allowanceTxProps: allowanceTx, handleAllowance } = useHandleAllowance(
     accountAddress,
@@ -325,6 +336,7 @@ export const IncreasePower = ({
                   max={accountTokenBalancePlusStakeAmount}
                   onChange={(e) => {
                     const amount = e.target.value;
+                    setHasInteracted(true);
                     setStakedAmount(amount);
                     if (accountTokenBalancePlusStakeAmount != null)
                       setAmountPerc(
@@ -356,6 +368,7 @@ export const IncreasePower = ({
                 title=""
                 onChange={(e) => {
                   const percentage = e.target.value;
+                  setHasInteracted(true);
                   if (
                     accountTokenBalancePlusStakeAmount != null &&
                     accountTokenBalancePlusStakeAmount > 0

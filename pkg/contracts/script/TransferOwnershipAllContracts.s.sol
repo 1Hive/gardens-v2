@@ -2,9 +2,9 @@
 pragma solidity ^0.8.13;
 
 import "./BaseMultiChain.s.sol";
-import {CVStrategyV0_0} from "../src/CVStrategy/CVStrategyV0_0.sol";
-import {RegistryCommunityV0_0} from "../src/RegistryCommunity/RegistryCommunityV0_0.sol";
-import {RegistryFactoryV0_0} from "../src/RegistryFactory/RegistryFactoryV0_0.sol";
+import {CVStrategy} from "../src/CVStrategy/CVStrategy.sol";
+import {RegistryCommunity} from "../src/RegistryCommunity/RegistryCommunity.sol";
+import {RegistryFactory} from "../src/RegistryFactory/RegistryFactory.sol";
 import {ProxyOwner} from "../src/ProxyOwner.sol";
 
 contract TransferOwnershipAllContracts is BaseMultiChain {
@@ -32,19 +32,19 @@ contract TransferOwnershipAllContracts is BaseMultiChain {
 
         // REGISTRY FACTORY
         address registryFactoryProxy = networkJson.readAddress(getKeyNetwork(".PROXIES.REGISTRY_FACTORY"));
-        RegistryFactoryV0_0(payable(address(registryFactoryProxy))).transferOwnership(proxyOwner);
+        RegistryFactory(payable(address(registryFactoryProxy))).transferOwnership(proxyOwner);
 
         // REGISTRY COMMUNITIES
         address[] memory registryCommunityProxies =
             networkJson.readAddressArray(getKeyNetwork(".PROXIES.REGISTRY_COMMUNITIES"));
         for (uint256 i = 0; i < registryCommunityProxies.length; i++) {
-            RegistryCommunityV0_0(payable(address(registryCommunityProxies[i]))).transferOwnership(proxyOwner);
+            RegistryCommunity(payable(address(registryCommunityProxies[i]))).transferOwnership(proxyOwner);
         }
 
         // CV STRATEGIES
         address[] memory cvStrategyProxies = networkJson.readAddressArray(getKeyNetwork(".PROXIES.CV_STRATEGIES"));
         for (uint256 i = 0; i < cvStrategyProxies.length; i++) {
-            CVStrategyV0_0(payable(address(cvStrategyProxies[i]))).transferOwnership(proxyOwner);
+            CVStrategy(payable(address(cvStrategyProxies[i]))).transferOwnership(proxyOwner);
         }
     }
 }

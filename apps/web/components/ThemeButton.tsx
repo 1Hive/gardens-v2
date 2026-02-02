@@ -46,6 +46,7 @@ export function ThemeButton() {
       ref={rootRef}
     >
       <button
+        id="btn-theme"
         className="p-2 rounded-md inline-flex h-10 w-11 items-center justify-center"
         aria-haspopup="menu"
         aria-expanded={open}

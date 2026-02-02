@@ -1,7 +1,7 @@
 query getFactories {
-  registryFactories {
+  registryFactories(first: 1000) {
     id
-    registryCommunities {
+    registryCommunities(first: 1000) {
       id
       chainId
       isValid
@@ -15,7 +15,7 @@ query getFactories {
       members(first: 1000) {
         memberAddress
       }
-      strategies {
+      strategies(first: 1000) {
         id
         poolId
         isEnabled
@@ -27,19 +27,20 @@ query getFactories {
           minThresholdPoints
         }
       }
+      membersCount
     }
   }
 }
 
 query getTokenGardens {
-  tokenGardens {
+  tokenGardens(first: 1000) {
     id
     chainId
     name
     symbol
     decimals
     totalBalance
-    communities {
+    communities(first: 1000) {
       id
       chainId
       covenantIpfsHash
@@ -49,7 +50,7 @@ query getTokenGardens {
       communityFee
       isValid
       communityName
-      strategies {
+      strategies(first: 1000) {
         id
       }
       members(first: 1000) {
@@ -67,6 +68,17 @@ query getMembersStrategy($strategyId: String!) {
       memberCommunity {
         memberAddress
         isRegistered
+      }
+      stakes(
+        first: 1000
+        where: {
+          proposal_: { strategy: $strategyId, proposalStatus_in: [1, 5] }
+        }
+      ) {
+        amount
+        proposal {
+          proposalStatus
+        }
       }
     }
     totalStakedPoints
@@ -91,7 +103,7 @@ query getMemberStrategy($member_strategy: ID!) {
 query isMember($me: ID!, $comm: String!) {
   member(id: $me) {
     id
-    stakes {
+    stakes(first: 1000) {
       id
       amount
       proposal {
@@ -114,7 +126,7 @@ query isMember($me: ID!, $comm: String!) {
         }
       }
     }
-    memberCommunity(where: { registryCommunity_contains: $comm }) {
+    memberCommunity(first: 1000, where: { registryCommunity_contains: $comm }) {
       stakedTokens
       isRegistered
       registryCommunity {
@@ -127,7 +139,7 @@ query isMember($me: ID!, $comm: String!) {
 query getMember($me: ID!) {
   member(id: $me) {
     id
-    memberCommunity {
+    memberCommunity(first: 1000) {
       id
       stakedTokens
       isRegistered
@@ -136,7 +148,7 @@ query getMember($me: ID!) {
         isValid
       }
     }
-    stakes {
+    stakes(first: 1000) {
       id
       proposal {
         proposalNumber
@@ -154,7 +166,7 @@ query getPoolCreationData($communityAddr: ID!, $tokenAddr: ID!) {
     id
     symbol
   }
-  allos {
+  allos(first: 1000) {
     id
   }
   registryCommunity(id: $communityAddr) {
@@ -166,7 +178,7 @@ query getPoolCreationData($communityAddr: ID!, $tokenAddr: ID!) {
 query getProposalSupporters($proposalId: String!) {
   members(first: 1000) {
     id
-    stakes(where: { proposal: $proposalId }) {
+    stakes(where: { proposal: $proposalId }, first: 1000) {
       amount
       proposal {
         proposalNumber
@@ -178,6 +190,7 @@ query getProposalSupporters($proposalId: String!) {
 
 query getGardenCommunities($chainId: BigInt!, $tokenGarden: ID!) {
   registryCommunities(
+    first: 1000
     where: { chainId: $chainId, garden_: { id: $tokenGarden } }
   ) {
     id
@@ -200,16 +213,17 @@ query getGardenCommunities($chainId: BigInt!, $tokenGarden: ID!) {
       id
       memberAddress
     }
-    strategies(where: { isEnabled: true }) {
+    strategies(first: 1000, where: { isEnabled: true }) {
       id
       totalEffectiveActivePoints
       poolId
     }
+    membersCount
   }
 }
 
 query getCommunities {
-  registryCommunities(where: { isValid: true }) {
+  registryCommunities(first: 1000, where: { isValid: true }) {
     id
     councilSafe
     communityName
@@ -219,16 +233,23 @@ query getCommunities {
       chainId
       symbol
       name
+      decimals
     }
-    strategies(where: { isEnabled: true }) {
+    strategies(first: 1000, where: { isEnabled: true }) {
       id
       totalEffectiveActivePoints
       poolId
+      proposals(first: 1000, where: { proposalStatus: 1 }) {
+        id
+        proposalStatus
+      }
     }
     members(first: 1000, where: { stakedTokens_gt: "0" }) {
       id
       memberAddress
+      stakedTokens
     }
+    membersCount
   }
 }
 
@@ -246,9 +267,9 @@ query getCommunity($communityAddr: ID!, $tokenAddr: ID!) {
       memberAddress
       stakedTokens
     }
-    strategies(orderBy: poolId, orderDirection: desc) {
+    strategies(first: 1000, orderBy: poolId, orderDirection: desc) {
       id
-      proposals {
+      proposals(first: 1000) {
         id
       }
       archived
@@ -264,7 +285,7 @@ query getCommunity($communityAddr: ID!, $tokenAddr: ID!) {
         proposalType
         pointSystem
       }
-      proposals {
+      proposals(first: 1000) {
         id
       }
     }
@@ -277,6 +298,7 @@ query getCommunity($communityAddr: ID!, $tokenAddr: ID!) {
     registerStakeAmount
     registerToken
     councilSafe
+    membersCount
   }
   tokenGarden(id: $tokenAddr) {
     symbol
@@ -286,20 +308,20 @@ query getCommunity($communityAddr: ID!, $tokenAddr: ID!) {
 }
 
 query getCommunityCreationData {
-  registryFactories {
+  registryFactories(first: 1000) {
     id
   }
 }
 
 query getRegistryFactoryData {
-  registryFactories {
+  registryFactories(first: 1000) {
     id
     chainId
   }
 }
 
 query getPoolData($garden: ID!, $poolId: BigInt!) {
-  allos {
+  allos(first: 1000) {
     id
     chainId
     tokenNative
@@ -313,7 +335,7 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
     ipfsCovenant
     decimals
   }
-  cvstrategies(where: { poolId: $poolId }) {
+  cvstrategies(first: 1000, where: { poolId: $poolId }) {
     token
     metadataHash
     metadata {
@@ -330,7 +352,7 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
       id
       type
     }
-    memberActive {
+    memberActive(first: 1000) {
       id
     }
     config {
@@ -354,11 +376,11 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
         symbol
         decimals
       }
-      members {
+      members(first: 1000) {
         memberAddress
       }
     }
-    proposals(orderBy: createdAt, orderDirection: desc) {
+    proposals(first: 1000, orderBy: convictionLast, orderDirection: desc) {
       id
       proposalNumber
       metadataHash
@@ -373,6 +395,7 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
       stakedAmount
       convictionLast
       createdAt
+      executedAt
       blockLast
       submitter
       strategy {
@@ -398,7 +421,7 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
 }
 
 query getProposalData($garden: ID!, $proposalId: ID!, $communityId: ID!) {
-  allos {
+  allos(first: 1000) {
     id
     chainId
     tokenNative
@@ -429,6 +452,7 @@ query getProposalData($garden: ID!, $proposalId: ID!, $communityId: ID!) {
     stakedAmount
     submitter
     updatedAt
+    executedAt
     version
     strategy {
       id
@@ -437,11 +461,29 @@ query getProposalData($garden: ID!, $proposalId: ID!, $communityId: ID!) {
       totalEffectiveActivePoints
       poolId
       isEnabled
+      registryCommunity {
+        id
+        councilSafe
+        isValid
+        garden {
+          id
+          symbol
+          decimals
+        }
+        members(first: 1000) {
+          memberAddress
+        }
+      }
       config {
         proposalType
         pointSystem
         minThresholdPoints
         decay
+        weight
+        maxRatio
+        maxAmount
+        allowlist
+        superfluidToken
       }
     }
     arbitrableConfig {
@@ -456,7 +498,7 @@ query getProposalData($garden: ID!, $proposalId: ID!, $communityId: ID!) {
 }
 
 query getAllo {
-  allos {
+  allos(first: 1000) {
     id
     chainId
     tokenNative
@@ -464,7 +506,7 @@ query getAllo {
 }
 
 query getStrategyByPool($poolId: BigInt!) {
-  cvstrategies(where: { poolId: $poolId }) {
+  cvstrategies(first: 1000, where: { poolId: $poolId }) {
     id
     poolId
     totalEffectiveActivePoints
@@ -476,7 +518,7 @@ query getStrategyByPool($poolId: BigInt!) {
       pointSystem
       minThresholdPoints
     }
-    memberActive {
+    memberActive(first: 1000) {
       id
     }
     registryCommunity {
@@ -488,7 +530,7 @@ query getStrategyByPool($poolId: BigInt!) {
         decimals
       }
     }
-    proposals {
+    proposals(first: 1000) {
       id
       proposalNumber
       metadataHash
@@ -521,7 +563,7 @@ query getCommunityTitles($communityAddr: ID!) {
 }
 
 query getPoolTitles($poolId: BigInt!) {
-  cvstrategies(where: { poolId: $poolId }) {
+  cvstrategies(first: 1000, where: { poolId: $poolId }) {
     poolId
     metadataHash
     metadata {
@@ -606,7 +648,7 @@ query getGoodDollarUser($userId: ID!) {
 }
 
 query getProposalDisputes($proposalId: ID!) {
-  proposalDisputes(where: { proposal_: { id: $proposalId } }) {
+  proposalDisputes(first: 1000, where: { proposal_: { id: $proposalId } }) {
     id
     disputeId
     status
@@ -623,7 +665,7 @@ query getProposalDisputes($proposalId: ID!) {
 }
 
 query getArbitrableConfigs($strategyId: String!) {
-  arbitrableConfigs(where: { strategy: $strategyId }) {
+  arbitrableConfigs(first: 1000, where: { strategy: $strategyId }) {
     arbitrator
     challengerCollateralAmount
     submitterCollateralAmount
@@ -635,7 +677,7 @@ query getArbitrableConfigs($strategyId: String!) {
 
 query getMemberPassportAndCommunities($memberId: ID!) {
   member(id: $memberId) {
-    memberCommunity {
+    memberCommunity(first: 1000) {
       id
     }
   }

@@ -345,7 +345,9 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
       parse: (value: string) => (
         <div className="flex gap-2 items-center">
           <EthAddress address={value as Address} />
-          <span className="text-black">{customTokenData?.symbol}</span>
+          <span className="text-neutral-content">
+            {customTokenData?.symbol}
+          </span>
         </div>
       ),
     },
@@ -499,6 +501,9 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
     contractName: "Registry Community",
     functionName: "createPool",
     fallbackErrorMessage: "Error creating a pool, please report a bug.",
+    onError: () => {
+      setLoading(false);
+    },
     onConfirmations: async (receipt) => {
       const newPoolData = getEventFromReceipt(
         receipt,
@@ -578,7 +583,6 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
       }
       contractWrite(ipfsHash);
     }
-    setLoading(false);
   };
 
   const formatFormRows = () => {
@@ -655,6 +659,13 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
           title={previewData?.title ?? ""}
           description={previewData?.description ?? ""}
           formRows={formatFormRows()}
+          onEdit={() => {
+            setShowPreview(false);
+          }}
+          onSubmit={() => {
+            if (!isConnected || missmatchUrl) return;
+            createPool();
+          }}
         />
       : <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-4">
@@ -699,19 +710,17 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
                   label="Pool token ERC20 address"
                   register={register}
                   required
+                  validateERC20
                   registerOptions={{
                     pattern: {
                       value: ethAddressRegEx,
                       message: "Invalid Eth Address",
                     },
-                    validate: () =>
-                      customTokenData?.symbol !== undefined ||
-                      "Not a supported ERC20 token",
                   }}
                   errors={errors}
                   registerKey="poolTokenAddress"
                   placeholder="0x.."
-                  className="font-mono text-sm"
+                  className="font-mono text-sm w-full max-w-[29rem]"
                   suffix={customTokenData?.symbol}
                 />
                 {networkSfMetadata && poolTokenAddress && customTokenData && (
@@ -1041,7 +1050,7 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
                         chain.globalTribunal?.toLowerCase()
                     ) ?
                       ""
-                    : (chain.globalTribunal ?? ""),
+                    : chain.globalTribunal ?? "",
                   );
                 }}
               />
@@ -1186,7 +1195,6 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
             <Button
               onClick={() => {
                 setShowPreview(false);
-                setLoading(false);
               }}
               btnStyle="outline"
             >

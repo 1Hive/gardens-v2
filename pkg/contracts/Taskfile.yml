@@ -1,0 +1,1858 @@
+silent: true
+version: "3"
+
+dotenv: [".env"]
+
+env:
+  RPC_URL_LOCALHOST: http://127.0.0.1:8545
+
+tasks:
+  print:
+    desc: Print
+    cmds:
+      - echo ${RPC_URL}
+  aggregate-abi:
+    desc: Aggregate abi
+    cmds:
+      - echo "📦 Aggregating diamond ABIs..."
+      - node scripts/aggregate-diamond-abi.js
+      - echo "✅ ABI aggregation complete"
+  aggregate-abi-verbose:
+    desc: Aggregate abi verbose
+    cmds:
+      - echo "📦 Aggregating diamond ABIs (verbose mode)..."
+      - node scripts/aggregate-diamond-abi.js --verbose
+      - echo "✅ ABI aggregation complete"
+  verify-storage:
+    desc: Verify storage
+    cmds:
+      - echo "🔍 Verifying diamond storage layouts..."
+      - ./scripts/verify-storage-layout.sh || (echo "❌ Storage verification FAILED! Fix storage alignment before deploying." && exit 1)
+      - echo "✅ Storage verification passed"
+  verify-storage-quick:
+    desc: Verify storage quick
+    cmds:
+      - echo "🔍 Verifying diamond storage layouts (quick mode)..."
+      - ./scripts/verify-storage-layout.sh --skip-build || (echo "❌ Storage verification FAILED! Fix storage alignment before deploying." && exit 1)
+      - echo "✅ Storage verification passed"
+  verify-storage-verbose:
+    desc: Verify storage verbose
+    cmds:
+      - echo "🔍 Verifying diamond storage layouts (verbose mode)..."
+      - ./scripts/verify-storage-layout.sh --verbose || (echo "❌ Storage verification FAILED! Fix storage alignment before deploying." && exit 1)
+      - echo "✅ Storage verification passed"
+  fork:
+    desc: Fork
+    cmds:
+      - anvil --chain-id 1337
+  fork0:
+    desc: Fork0
+    cmds:
+      - anvil --host=0.0.0.0 --chain-id 1337
+  fork0b5:
+    desc: Fork0b5
+    cmds:
+      - anvil --host=0.0.0.0 --chain-id 1337 -b 5
+  fund_arb:
+    desc: Fund arb
+    cmds:
+      - cmd: |
+          cast send \
+          --from 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 \
+          --unlocked 0xefeab1ea32a5d7c6b1de6192ee531a2ef51198d9 \
+          --value 100ether \
+          --rpc-url=${RPC_URL_LOCALHOST}
+  test1:
+    desc: Test1
+    cmds:
+      - cmd: |
+          forge test --fork-url ${RPC_URL_LOCALHOST} --mc CVStrategyTest \
+          --sender 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266 -vv
+  cast1:
+    desc: Cast1
+    cmds:
+      - cmd: |
+          cast send --account pk --rpc-url ${RPC_URL_LOCALHOST} \
+          "0xfEcFbe13c84595Ba47464CD4d8d3bb359372Fc6f" "nonce()"
+  deploy:
+    desc: Deploy
+    cmds:
+      - cmd: |
+          forge script script/DeployCV.s.sol:DeployCV \
+          --rpc-url ${RPC_URL_LOCALHOST} \
+          --sender 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266 \
+          --unlocked \
+          --broadcast -vvvvv
+        ignore_error: true
+  add-strategy-local:
+    desc: Add strategy local
+    cmds:
+      - cmd: |
+          forge script script/AddStrategy.s.sol:AddStrategy \
+          --rpc-url ${RPC_URL_LOCALHOST} \
+          --sender 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266 \
+          --unlocked \
+          --sig "run(address,address)" ${S} ${C} \
+          --broadcast \
+          -vvvv
+        ignore_error: true
+  deploy-testnet-multi-sep:
+    desc: Deploy testnet multi sep
+    cmds:
+      - cmd: |
+          forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
+          --rpc-url ${RPC_URL_SEP_TESTNET} \
+          --private-key ${PRIVATE_KEY} \
+          --sig "run(string)" 'sepolia' \
+          --ffi \
+          --broadcast \
+          --legacy \
+          -vvv
+        ignore_error: true
+  verify-testnet-multi-sep:
+    desc: Verify testnet multi sep
+    cmds:
+      - cmd: |
+          forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
+          --rpc-url ${RPC_URL_SEP_TESTNET} \
+          --private-key ${PRIVATE_KEY} \
+          --sig "run(string)" 'sepolia' \
+          --ffi \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --legacy \
+          --verify \
+          -vvv
+        ignore_error: true
+  add-strategy-ethsep:
+    desc: Add strategy ethsep
+    cmds:
+      - cmd: |
+          forge script script/AddStrategy.s.sol:AddStrategy \
+          --rpc-url ${RPC_URL_SEP_TESTNET} \
+          --private-key ${PRIVATE_KEY} \
+          --sig "run(address,address)" ${S} ${C} \
+          --broadcast \
+          --legacy \
+          -vvvv
+        ignore_error: true
+  add-strategy-ethsep-pool:
+    desc: Add strategy ethsep pool
+    cmds:
+      - cmd: |
+          forge script script/AddStrategy.s.sol:AddStrategy \
+          --rpc-url ${RPC_URL_SEP_TESTNET} \
+          --private-key ${PRIVATE_KEY} \
+          --sig "run(uint256,address)" ${P} ${C} \
+          --broadcast \
+          --legacy \
+          -vvvv
+        ignore_error: true
+  deploy-token-opsep:
+    desc: Deploy token opsep
+    cmds:
+      - cmd: |
+          forge script script/DeployERC20.s.sol:DeployERC20 \
+          --rpc-url ${RPC_URL_OP_TESTNET} \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --sig "run(string,string)" 'Honey' 'HNY' \
+          --ffi \
+          --broadcast \
+          --chain-id 11155420 \
+          --verify
+        ignore_error: true
+  fork-testnet-opsep:
+    desc: Fork testnet opsep
+    cmds:
+      - anvil --host=0.0.0.0 -f ${RPC_URL_OP_TESTNET}
+  deploy-verify-opsep:
+    desc: Deploy verify opsep
+    cmds:
+      - cmd: |
+          forge verify-contract \
+          --etherscan-api-key ${ETHERSCAN_API_KEY}
+        ignore_error: true
+  deploy-opsep:
+    desc: Deploy opsep
+    cmds:
+      - cmd: |
+          forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
+          --rpc-url ${RPC_URL_OP_TESTNET} \
+          --sig "run(string)" 'opsepolia' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --chain-id 11155420 \
+          --ffi \
+          --broadcast \
+          --verify \
+          -vv
+        ignore_error: true
+  upgrade-opsep:
+    desc: Upgrade opsep
+    cmds:
+      - cmd: |
+          forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
+          --rpc-url ${RPC_URL_OP_TESTNET} \
+          --sig "run(string)" 'opsepolia' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --chain-id 11155420 \
+          --ffi \
+          --broadcast \
+          --verify \
+          -vvv
+        ignore_error: true
+  upgrade-diamond-opsep:
+    desc: Upgrade diamond opsep
+    cmds:
+      - cmd: |
+          forge script script/UpgradeCVDiamond.s.sol:UpgradeCVDiamond \
+          --rpc-url ${RPC_URL_OP_TESTNET} \
+          --sig "run(string)" 'opsepolia' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --chain-id 11155420 \
+          --broadcast \
+          --ffi \
+          --verify \
+          --slow \
+          -vvv
+        ignore_error: true
+  upgrade-community-diamond-opsep:
+    desc: Upgrade community diamond opsep
+    cmds:
+      - cmd: |
+          forge script script/UpgradeRegistryCommunityDiamond.s.sol:UpgradeRegistryCommunityDiamond \
+          --rpc-url ${RPC_URL_OP_TESTNET} \
+          --sig "run(string)" 'opsepolia' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --chain-id 11155420 \
+          --ffi \
+          --broadcast \
+          --verify \
+          -vvv
+        ignore_error: true
+  verify-diamond-blockscout-opsep:
+    desc: Verify diamond blockscout opsep
+    cmds:
+      - cmd: |
+          forge script script/UpgradeCVDiamond.s.sol:UpgradeCVDiamondTest \
+          --rpc-url ${RPC_URL_OP_TESTNET} \
+          --sig "run(string)" 'opsepolia' \
+          --private-key ${PRIVATE_KEY} \
+          --verifier blockscout \
+          --verifier-url https://optimism.blockscout.com/api/ \
+          --chain-id 11155420 \
+          --ffi \
+          --verify \
+          --slow
+        ignore_error: true
+  verify-community-diamond-blockscout-opsep:
+    desc: Verify community diamond blockscout opsep
+    cmds:
+      - cmd: |
+          forge script script/UpgradeRegistryCommunityDiamond.s.sol:UpgradeRegistryCommunityDiamond \
+          --rpc-url ${RPC_URL_OP_TESTNET} \
+          --sig "run(string)" 'opsepolia' \
+          --private-key ${PRIVATE_KEY} \
+          --verifier blockscout \
+          --verifier-url https://optimism.blockscout.com/api/ \
+          --chain-id 11155420 \
+          --ffi \
+          --verify \
+          --slow
+        ignore_error: true
+  upgrade-all-diamond-opsep:
+    desc: Upgrade all diamond opsep
+    deps:
+      - verify-storage
+      - upgrade-diamond-opsep
+      - upgrade-community-diamond-opsep
+    cmds: []
+  upgrade-atomic-diamond-opsep:
+    desc: Upgrade atomic diamond opsep
+    deps:
+      - verify-storage
+    cmds:
+      - cmd: |
+          forge script script/UpgradeAllDiamonds.s.sol:UpgradeAllDiamonds \
+          --rpc-url ${RPC_URL_OP_TESTNET} \
+          --sig "run(string)" 'opsepolia' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --chain-id 11155420 \
+          --broadcast \
+          --ffi \
+          --verify \
+          --slow \
+          --via-ir \
+          -vvv
+        ignore_error: true
+  upgrade-and-verify-diamond-opsep:
+    desc: Upgrade and verify diamond opsep
+    deps:
+      - upgrade-diamond-opsep
+      - verify-diamond-blockscout-opsep
+    cmds: []
+  upgrade-and-verify-community-diamond-opsep:
+    desc: Upgrade and verify community diamond opsep
+    deps:
+      - upgrade-community-diamond-opsep
+      - verify-community-diamond-blockscout-opsep
+    cmds: []
+  verify-blockscout-opsep:
+    desc: Verify blockscout opsep
+    cmds:
+      - cmd: |
+          forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
+          --rpc-url ${RPC_URL_OP_TESTNET} \
+          --private-key ${PRIVATE_KEY} \
+          --verifier blockscout \
+          --verifier-url https://optimism.blockscout.com/api/ \
+          --verify \
+          --slow
+        ignore_error: true
+  deploy-new-collateral-vault-template-opsep:
+    desc: Deploy new collateral vault template opsep
+    cmds:
+      - cmd: |
+          forge script script/DeployCollateralVaultTemplate.s.sol:DeployCollateralVaultTemplate \
+          --rpc-url ${RPC_URL_OP_TESTNET} \
+          --sig "run(string)" 'opsepolia' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --ffi \
+          --chain-id 11155420 \
+          --legacy \
+          --broadcast \
+          --with-gas-price 1301660000 \
+          --verify \
+          -vvv
+        ignore_error: true
+  upgrade-and-verify-opsep:
+    desc: Upgrade and verify opsep
+    deps:
+      - upgrade-opsep
+      - verify-blockscout-opsep
+    cmds: []
+  transfer-ownership-opsep:
+    desc: Transfer ownership opsep
+    cmds:
+      - cmd: |
+          forge script script/TransferOwnershipAllContracts.s.sol:TransferOwnershipAllContracts \
+          --rpc-url ${RPC_URL_OP_TESTNET} \
+          --private-key ${PRIVATE_KEY} \
+          --sig "run(string)" 'opsepolia' \
+          --chain-id 11155420 \
+          --broadcast \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --verify \
+          -vvvv
+        ignore_error: true
+  deploy-passport-scorer-opsep:
+    desc: Deploy passport scorer opsep
+    cmds:
+      - cmd: |
+          forge script script/DeployPassportScorer.s.sol:DeployPassportScorer \
+          --rpc-url ${RPC_URL_OP_TESTNET} \
+          --sig "run(string)" 'opsepolia' \
+          --chain-id 11155420 \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --private-key ${PRIVATE_KEY} \
+          --verify \
+          --broadcast \
+          -vv
+        ignore_error: true
+  deploy-safe-arbitrator-opsep:
+    desc: Deploy safe arbitrator opsep
+    cmds:
+      - cmd: |
+          forge script script/DeploySafeArbitrator.s.sol:DeploySafeArbitrator \
+          --rpc-url ${RPC_URL_OP_TESTNET} \
+          --sig "run(string)" 'opsepolia' \
+          --chain-id 11155420 \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --private-key ${PRIVATE_KEY} \
+          --verify \
+          --broadcast \
+          -vv
+        ignore_error: true
+  deploy-or-upgrade-good-dollar-sybil-opsep:
+    desc: Deploy or upgrade good dollar sybil opsep
+    cmds:
+      - cmd: |
+          forge script script/DeployGoodDollarSybil.s.sol:DeployGoodDollarSybil \
+          --rpc-url ${RPC_URL_OP_TESTNET} \
+          --sig "run(string)" 'opsepolia' \
+          --chain-id 11155420 \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --private-key ${PRIVATE_KEY} \
+          --verify \
+          --broadcast \
+          -vv
+        ignore_error: true
+  fork-testnet-arbsep:
+    desc: Fork testnet arbsep
+    cmds:
+      - anvil --host=0.0.0.0 -f ${RPC_URL_ARB_TESTNET}
+  deploy-verify-arbsep:
+    desc: Deploy verify arbsep
+    cmds:
+      - cmd: |
+          forge verify-contract \
+          --etherscan-api-key ${ETHERSCAN_API_KEY}
+        ignore_error: true
+  deploy-arbsep:
+    desc: Deploy arbsep
+    cmds:
+      - cmd: |
+          forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
+          --rpc-url ${RPC_URL_ARB_TESTNET} \
+          --sig "run(string)" 'arbsepolia' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --chain-id 421614 \
+          --ffi \
+          --broadcast \
+          --verify \
+          -vv
+        ignore_error: true
+  upgrade-arbsep:
+    desc: Upgrade arbsep
+    cmds:
+      - cmd: |
+          forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
+          --rpc-url ${RPC_URL_ARB_TESTNET} \
+          --sig "run(string)" 'arbsepolia' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --chain-id 421614 \
+          --ffi \
+          --broadcast \
+          --verify \
+          -vvv
+        ignore_error: true
+  upgrade-atomic-diamond-arbsep:
+    desc: Upgrade atomic diamond arbsep
+    deps:
+      - verify-storage
+    cmds:
+      - cmd: |
+          forge script script/UpgradeAllDiamonds.s.sol:UpgradeAllDiamonds \
+          --rpc-url ${RPC_URL_ARB_TESTNET} \
+          --sig "run(string)" 'arbsepolia' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --chain-id 421614 \
+          --broadcast \
+          --ffi \
+          --verify \
+          --slow \
+          --via-ir
+        ignore_error: true
+  verify-blockscout-arbsep:
+    desc: Verify blockscout arbsep
+    cmds:
+      - cmd: |
+          forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
+          --rpc-url ${RPC_URL_ARB_TESTNET} \
+          --private-key ${PRIVATE_KEY} \
+          --verifier blockscout \
+          --verifier-url https://arbitrum.blockscout.com/api/ \
+          --verify \
+          --slow
+        ignore_error: true
+  deploy-verify:
+    desc: Deploy verify
+    cmds:
+      - cmd: |
+          forge script script/DeployCVArbSepolia.s.sol:DeployCVArbSepolia \
+          --rpc-url ${RPC_URL_ARB_TESTNET} \
+          --private-key ${PRIVATE_KEY} \
+          --verify \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          -vv
+        ignore_error: true
+  deploy-pool-testnet:
+    desc: Deploy pool testnet
+    cmds:
+      - cmd: |
+          forge script script/DeployCVArbSepoliaPool.s.sol:DeployCVArbSepoliaPool \
+          --rpc-url ${RPC_URL_ARB_TESTNET} \
+          --private-key ${PRIVATE_KEY} \
+          --verify \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --broadcast -vv
+        ignore_error: true
+  deploy-commfee-testnet:
+    desc: Deploy commfee testnet
+    cmds:
+      - cmd: |
+          forge script script/DeployCVArbSepoliaCommFee.s.sol:DeployCVArbSepoliaCommFee \
+          --rpc-url ${RPC_URL_ARB_TESTNET} \
+          --private-key ${PRIVATE_KEY} \
+          --verify \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --broadcast -vv
+        ignore_error: true
+  deploy-testnet:
+    desc: Deploy testnet
+    cmds:
+      - cmd: |
+          forge script script/DeployCVArbSepolia.s.sol:DeployCVArbSepolia \
+          --rpc-url ${RPC_URL_ARB_TESTNET} \
+          --private-key ${PRIVATE_KEY} \
+          --verify \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --broadcast \
+          -vv
+        ignore_error: true
+  create_safe_arbsep:
+    desc: Create safe arbsep
+    cmds:
+      - cmd: |
+          forge script script/CreateSafe.s.sol \
+          --rpc-url ${RPC_URL_ARB_TESTNET} \
+          --private-key ${PRIVATE_KEY} \
+          --sig "run()" \
+          --broadcast \
+          --verify \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --chain-id 421614 \
+          -vvvv
+        ignore_error: true
+  deploy-testnet-dry:
+    desc: Deploy testnet dry
+    cmds:
+      - cmd: |
+          forge script script/DeployCVArbSepolia.s.sol:DeployCVArbSepolia \
+          --rpc-url ${RPC_URL_ARB_TESTNET} \
+          --private-key ${PRIVATE_KEY} \
+          -vvvv
+        ignore_error: true
+  add-owner:
+    desc: Add owner
+    cmds:
+      - cmd: |
+          forge script script/AddOwner.s.sol:AddOwner \
+          --rpc-url ${RPC_URL_ARB_TESTNET} \
+          --private-key ${PRIVATE_KEY} \
+          --sig "run(address,address)" ${owner} ${safe} \
+          --broadcast \
+          -vvvv
+        ignore_error: true
+  add-strategy:
+    desc: Add strategy
+    cmds:
+      - cmd: |
+          forge script script/AddStrategy.s.sol:AddStrategy \
+          --rpc-url ${RPC_URL_ARB_TESTNET} \
+          --private-key ${PRIVATE_KEY} \
+          --sig "run(address,address)" ${S} ${C} \
+          --broadcast \
+          -vvvv
+        ignore_error: true
+  deploy-test-arb:
+    desc: Deploy test arb
+    cmds:
+      - cmd: |
+          forge script script/VerifyTest.s.sol:VerifyTest \
+          --rpc-url ${RPC_URL_ARB_TESTNET} \
+          --sig "run(string)" 'arbsepolia' \
+          --private-key ${PRIVATE_KEY} \
+          --ffi \
+          --chain-id 421614 \
+          --broadcast \
+          --legacy \
+          --force \
+          --verify \
+          -vvv
+        ignore_error: true
+  deploy-new-collateral-vault-template-arbitrum-sepolia:
+    desc: Deploy new collateral vault template arbitrum sepolia
+    cmds:
+      - cmd: |
+          forge script script/DeployCollateralVaultTemplate.s.sol:DeployCollateralVaultTemplate \
+          --rpc-url ${RPC_URL_ARB_TESTNET} \
+          --sig "run(string)" 'arbsepolia' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --ffi \
+          --chain-id 421614 \
+          --legacy \
+          --broadcast \
+          --with-gas-price 1301660000 \
+          --verify \
+          -vvv
+        ignore_error: true
+  upgrade-and-verify-arbsep:
+    desc: Upgrade and verify arbsep
+    deps:
+      - upgrade-arbsep
+      - verify-blockscout-arbsep
+    cmds: []
+  transfer-ownership-arbsep:
+    desc: Transfer ownership arbsep
+    cmds:
+      - cmd: |
+          forge script script/TransferOwnershipAllContracts.s.sol:TransferOwnershipAllContracts \
+          --rpc-url ${RPC_URL_ARB_TESTNET} \
+          --private-key ${PRIVATE_KEY} \
+          --sig "run(string)" 'arbsepolia' \
+          --chain-id 421614 \
+          --broadcast \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --verify \
+          -vvvv
+        ignore_error: true
+  deploy-passport-scorer-arbsep:
+    desc: Deploy passport scorer arbsep
+    cmds:
+      - cmd: |
+          forge script script/DeployPassportScorer.s.sol:DeployPassportScorer \
+          --rpc-url ${RPC_URL_ARB_TESTNET} \
+          --sig "run(string)" 'arbsepolia' \
+          --chain-id 421614 \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --private-key ${PRIVATE_KEY} \
+          --verify \
+          --broadcast \
+          -vv
+        ignore_error: true
+  deploy-or-upgrade-if-exists-safe-arbitrator-arbsep:
+    desc: Deploy or upgrade if exists safe arbitrator arbsep
+    cmds:
+      - cmd: |
+          forge script script/DeploySafeArbitrator.s.sol:DeploySafeArbitrator \
+          --rpc-url ${RPC_URL_ARB_TESTNET} \
+          --sig "run(string)" 'arbsepolia' \
+          --chain-id 421614 \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --private-key ${PRIVATE_KEY} \
+          --verify \
+          --broadcast \
+          -vv
+        ignore_error: true
+  deploy-or-upgrade-good-dollar-sybil-arbsep:
+    desc: Deploy or upgrade good dollar sybil arbsep
+    cmds:
+      - cmd: |
+          forge script script/DeployGoodDollarSybil.s.sol:DeployGoodDollarSybil \
+          --rpc-url ${RPC_URL_ARB_TESTNET} \
+          --sig "run(string)" 'arbsepolia' \
+          --chain-id 421614 \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --private-key ${PRIVATE_KEY} \
+          --verify \
+          --broadcast \
+          -vv
+        ignore_error: true
+  transfer-ownership-arbitrum:
+    desc: Transfer ownership arbitrum
+    cmds:
+      - cmd: |
+          forge script script/TransferOwnershipAllContracts.s.sol:TransferOwnershipAllContracts \
+          --rpc-url ${RPC_URL_ARB} \
+          --private-key ${PRIVATE_KEY} \
+          --sig "run(string)" 'arbitrum' \
+          --chain-id 42161 \
+          --broadcast \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --verify \
+          -vvv
+        ignore_error: true
+  deploy-new-collateral-vault-template-arbitrum:
+    desc: Deploy new collateral vault template arbitrum
+    cmds:
+      - cmd: |
+          forge script script/DeployCollateralVaultTemplate.s.sol:DeployCollateralVaultTemplate \
+          --rpc-url ${RPC_URL_ARB} \
+          --sig "run(string)" 'arbitrum' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --ffi \
+          --chain-id 42161 \
+          --legacy \
+          --broadcast \
+          --verify \
+          -vvv
+        ignore_error: true
+  deploy-arbitrum:
+    desc: Deploy arbitrum
+    cmds:
+      - cmd: |
+          forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
+          --rpc-url ${RPC_URL_ARB} \
+          --sig "run(string)" 'arbitrum' \
+          --private-key ${PRIVATE_KEY} \
+          --ffi \
+          --chain-id 42161 \
+          --broadcast \
+          --legacy \
+          -vvv
+        ignore_error: true
+  upgrade-arbitrum:
+    desc: Upgrade arbitrum
+    cmds:
+      - cmd: |
+          forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
+          --rpc-url ${RPC_URL_ARB} \
+          --sig "run(string)" 'arbitrum' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --ffi \
+          --chain-id 42161 \
+          --broadcast \
+          --verify \
+          -vvv
+        ignore_error: true
+  upgrade-atomic-diamond-arbitrum:
+    desc: Upgrade atomic diamond arbitrum
+    deps:
+      - verify-storage
+    cmds:
+      - cmd: |
+          forge script script/UpgradeAllDiamonds.s.sol:UpgradeAllDiamonds \
+          --rpc-url ${RPC_URL_ARB} \
+          --sig "run(string)" 'arbitrum' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --chain-id 42161 \
+          --broadcast \
+          --ffi \
+          --verify \
+          --slow \
+          --via-ir
+        ignore_error: true
+  verify-blockscout-arbitrum:
+    desc: Verify blockscout arbitrum
+    cmds:
+      - cmd: |
+          forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
+          --rpc-url ${RPC_URL_ARB} \
+          --sig "run(string)" 'arbitrum' \
+          --private-key ${PRIVATE_KEY} \
+          --verifier blockscout \
+          --verifier-url https://arbitrum.blockscout.com/api/ \
+          --ffi \
+          --chain-id 42161 \
+          --legacy \
+          --verify \
+          -vvv \
+          --slow
+        ignore_error: true
+  upgrade-and-verify-arbitrum:
+    desc: Upgrade and verify arbitrum
+    cmds:
+      - task: upgrade-arbitrum
+      - task: verify-blockscout-arbitrum
+  change-passport-manager-arbitrum:
+    desc: Change passport manager arbitrum
+    cmds:
+      - cmd: |
+          forge script script/PassportScorerWriter.s.sol:PassportScorerWriter \
+          --rpc-url ${RPC_URL_ARB} \
+          --sig "run(string)" 'arbitrum' \
+          --chain-id 42161 \
+          --private-key ${PRIVATE_KEY} \
+          --ffi \
+          --broadcast \
+          --legacy \
+          -vvv
+        ignore_error: true
+  deploy-passport-scorer-arbitrum:
+    desc: Deploy passport scorer arbitrum
+    cmds:
+      - cmd: |
+          forge script script/DeployPassportScorer.s.sol:DeployPassportScorer \
+          --rpc-url ${RPC_URL_ARB} \
+          --sig "run(string)" 'arbitrum' \
+          --chain-id 42161 \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --private-key ${PRIVATE_KEY} \
+          --verify \
+          --broadcast \
+          -vv
+        ignore_error: true
+  deploy-or-upgrade-if-exists-safe-arbitrator-arbitrum:
+    desc: Deploy or upgrade if exists safe arbitrator arbitrum
+    cmds:
+      - cmd: |
+          forge script script/DeploySafeArbitrator.s.sol:DeploySafeArbitrator \
+          --rpc-url ${RPC_URL_ARB} \
+          --sig "run(string)" 'arbitrum' \
+          --chain-id 42161 \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --private-key ${PRIVATE_KEY} \
+          --verify \
+          --broadcast \
+          -vv
+        ignore_error: true
+  deploy-or-upgrade-good-dollar-sybil-arbitrum:
+    desc: Deploy or upgrade good dollar sybil arbitrum
+    cmds:
+      - cmd: |
+          forge script script/DeployGoodDollarSybil.s.sol:DeployGoodDollarSybil \
+          --rpc-url ${RPC_URL_ARB} \
+          --sig "run(string)" 'arbitrum' \
+          --chain-id 42161 \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --private-key ${PRIVATE_KEY} \
+          --verify \
+          --broadcast \
+          -vv
+        ignore_error: true
+  transfer-ownership-optimism:
+    desc: Transfer ownership optimism
+    cmds:
+      - cmd: |
+          forge script script/TransferOwnershipAllContracts.s.sol:TransferOwnershipAllContracts \
+          --rpc-url ${RPC_URL_OPT} \
+          --sig "run(string)" 'optimism' \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --chain-id 10 \
+          --private-key ${PRIVATE_KEY} \
+          --broadcast \
+          --verify \
+          -vvv
+        ignore_error: true
+  deploy-new-collateral-vault-template-optimism:
+    desc: Deploy new collateral vault template optimism
+    cmds:
+      - cmd: |
+          forge script script/DeployCollateralVaultTemplate.s.sol:DeployCollateralVaultTemplate \
+          --rpc-url ${RPC_URL_OPT} \
+          --sig "run(string)" 'optimism' \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --chain-id 10 \
+          --private-key ${PRIVATE_KEY} \
+          --ffi \
+          --legacy \
+          --broadcast \
+          --verify \
+          -vvv
+        ignore_error: true
+  deploy-optimism:
+    desc: Deploy optimism
+    cmds:
+      - cmd: |
+          forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
+          --rpc-url ${RPC_URL_OPT} \
+          --sig "run(string)" 'optimism' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --ffi \
+          --chain-id 10 \
+          --broadcast \
+          --legacy \
+          --verify \
+          -vvv
+        ignore_error: true
+  upgrade-optimism:
+    desc: Upgrade optimism
+    cmds:
+      - cmd: |
+          forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
+          --rpc-url ${RPC_URL_OPT} \
+          --sig "run(string)" 'optimism' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --ffi \
+          --chain-id 10 \
+          --broadcast \
+          --legacy \
+          --verify \
+          -vvv
+        ignore_error: true
+  upgrade-atomic-diamond-optimism:
+    desc: Upgrade atomic diamond optimism
+    deps:
+      - verify-storage
+    cmds:
+      - cmd: |
+          forge script script/UpgradeAllDiamonds.s.sol:UpgradeAllDiamonds \
+          --rpc-url ${RPC_URL_OPT} \
+          --sig "run(string)" 'optimism' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --chain-id 10 \
+          --broadcast \
+          --ffi \
+          --verify \
+          --slow \
+          --via-ir
+        ignore_error: true
+  verify-blockscout-optimism:
+    desc: Verify blockscout optimism
+    cmds:
+      - cmd: |
+          forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
+          --rpc-url ${RPC_URL_OPT} \
+          --sig "run(string)" 'optimism' \
+          --private-key ${PRIVATE_KEY} \
+          --verifier blockscout \
+          --verifier-url https://optimism.blockscout.com/api/ \
+          --chain-id 10 \
+          --legacy \
+          --verify \
+          -vvv \
+          --slow
+        ignore_error: true
+  upgrade-and-verify-optimism:
+    desc: Upgrade and verify optimism
+    cmds:
+      - task: upgrade-optimism
+      - task: verify-blockscout-optimism
+  change-passport-manager-optimism:
+    desc: Change passport manager optimism
+    cmds:
+      - cmd: |
+          forge script script/PassportScorerWriter.s.sol:PassportScorerWriter \
+          --rpc-url ${RPC_URL_OPT} \
+          --sig "run(string)" 'optimism' \
+          --chain-id 10 \
+          --private-key ${PRIVATE_KEY} \
+          --ffi \
+          --broadcast \
+          --legacy \
+          -vvv
+        ignore_error: true
+  deploy-passport-scorer-optimism:
+    desc: Deploy passport scorer optimism
+    cmds:
+      - cmd: |
+          forge script script/DeployPassportScorer.s.sol:DeployPassportScorer \
+          --rpc-url ${RPC_URL_OPT} \
+          --sig "run(string)" 'optimism' \
+          --chain-id 10 \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --private-key ${PRIVATE_KEY} \
+          --verify \
+          --broadcast \
+          -vv
+        ignore_error: true
+  deploy-or-upgrade-if-exists-safe-arbitrator-optimism:
+    desc: Deploy or upgrade if exists safe arbitrator optimism
+    cmds:
+      - cmd: |
+          forge script script/DeploySafeArbitrator.s.sol:DeploySafeArbitrator \
+          --rpc-url ${RPC_URL_OPT} \
+          --sig "run(string)" 'optimism' \
+          --chain-id 10 \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --private-key ${PRIVATE_KEY} \
+          --verify \
+          --broadcast \
+          -vv
+        ignore_error: true
+  deploy-or-upgrade-good-dollar-sybil-optimism:
+    desc: Deploy or upgrade good dollar sybil optimism
+    cmds:
+      - cmd: |
+          forge script script/DeployGoodDollarSybil.s.sol:DeployGoodDollarSybil \
+          --rpc-url ${RPC_URL_OPT} \
+          --sig "run(string)" 'optimism' \
+          --chain-id 10 \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --private-key ${PRIVATE_KEY} \
+          --verify \
+          --broadcast \
+          -vv
+        ignore_error: true
+  upgrade-diamond-polygon:
+    desc: Upgrade diamond polygon
+    deps:
+      - verify-storage
+    cmds:
+      - cmd: |
+          forge script script/UpgradeCVDiamond.s.sol:UpgradeCVDiamond \
+          --rpc-url ${RPC_URL_POLYGON} \
+          --sig "run(string)" 'polygon' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --chain-id 137 \
+          --broadcast \
+          --ffi \
+          --verify \
+          --slow \
+          -vvv
+        ignore_error: true
+  upgrade-community-diamond-polygon:
+    desc: Upgrade community diamond polygon
+    cmds:
+      - cmd: |
+          forge script script/UpgradeRegistryCommunityDiamond.s.sol:UpgradeRegistryCommunityDiamond \
+          --rpc-url ${RPC_URL_POLYGON} \
+          --sig "run(string)" 'polygon' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --chain-id 137 \
+          --broadcast \
+          --legacy \
+          --ffi \
+          --verify \
+          --slow \
+          -vvv
+        ignore_error: true
+  upgrade-atomic-diamond-polygon:
+    desc: Upgrade atomic diamond polygon
+    deps:
+      - verify-storage
+    cmds:
+      - cmd: |
+          forge script script/UpgradeAllDiamonds.s.sol:UpgradeAllDiamonds \
+          --rpc-url ${RPC_URL_POLYGON} \
+          --sig "run(string)" 'polygon' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --chain-id 137 \
+          --broadcast \
+          --legacy \
+          --ffi \
+          --verify \
+          --slow \
+          --via-ir \
+          -vvv
+        ignore_error: true
+  transfer-ownership-polygon:
+    desc: Transfer ownership polygon
+    cmds:
+      - cmd: |
+          forge script script/TransferOwnershipAllContracts.s.sol:TransferOwnershipAllContracts \
+          --rpc-url ${RPC_URL_POLYGON} \
+          --sig "run(string)" 'polygon' \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --chain-id 137 \
+          --private-key ${PRIVATE_KEY} \
+          --broadcast \
+          --verify \
+          -vvv
+        ignore_error: true
+  deploy-new-collateral-vault-template-polygon:
+    desc: Deploy new collateral vault template polygon
+    cmds:
+      - cmd: |
+          forge script script/DeployCollateralVaultTemplate.s.sol:DeployCollateralVaultTemplate \
+          --rpc-url ${RPC_URL_POLYGON} \
+          --sig "run(string)" 'polygon' \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --chain-id 137 \
+          --private-key ${PRIVATE_KEY} \
+          --ffi \
+          --legacy \
+          --broadcast \
+          --verify \
+          -vvv
+        ignore_error: true
+  deploy-polygon:
+    desc: Deploy polygon
+    cmds:
+      - cmd: |
+          forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
+          --rpc-url ${RPC_URL_POLYGON} \
+          --sig "run(string)" 'polygon' \
+          --private-key ${PRIVATE_KEY} \
+          --ffi \
+          --chain-id 137 \
+          --broadcast \
+          --legacy \
+          -vvv
+        ignore_error: true
+  upgrade-polygon:
+    desc: Upgrade polygon
+    cmds:
+      - cmd: |
+          forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
+          --rpc-url ${RPC_URL_POLYGON} \
+          --sig "run(string)" 'polygon' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --ffi \
+          --chain-id 137 \
+          --broadcast \
+          --legacy \
+          --verify \
+          -vvv
+        ignore_error: true
+  verify-blockscout-polygon:
+    desc: Verify blockscout polygon
+    cmds:
+      - cmd: |
+          forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
+          --rpc-url ${RPC_URL_POLYGON} \
+          --sig "run(string)" 'polygon' \
+          --private-key ${PRIVATE_KEY} \
+          --verifier blockscout \
+          --verifier-url https://polygon.blockscout.com/api/ \
+          --ffi \
+          --chain-id 137 \
+          --legacy \
+          --verify \
+          -vvv \
+          --slow
+        ignore_error: true
+  upgrade-and-verify-polygon:
+    desc: Upgrade and verify polygon
+    cmds:
+      - task: upgrade-polygon
+      - task: verify-blockscout-polygon
+  change-passport-manager-polygon:
+    desc: Change passport manager polygon
+    cmds:
+      - cmd: |
+          forge script script/PassportScorerWriter.s.sol:PassportScorerWriter \
+          --rpc-url ${RPC_URL_POLYGON} \
+          --sig "run(string)" 'polygon' \
+          --chain-id 137 \
+          --private-key ${PRIVATE_KEY} \
+          --ffi \
+          --broadcast \
+          --legacy \
+          -vvv
+        ignore_error: true
+  deploy-passport-scorer-polygon:
+    desc: Deploy passport scorer polygon
+    cmds:
+      - cmd: |
+          forge script script/DeployPassportScorer.s.sol:DeployPassportScorer \
+          --rpc-url ${RPC_URL_POLYGON} \
+          --sig "run(string)" 'polygon' \
+          --chain-id 137 \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --private-key ${PRIVATE_KEY} \
+          --verify \
+          --broadcast \
+          -vv
+        ignore_error: true
+  deploy-or-upgrade-if-exists-safe-arbitrator-polygon:
+    desc: Deploy or upgrade if exists safe arbitrator polygon
+    cmds:
+      - cmd: |
+          forge script script/DeploySafeArbitrator.s.sol:DeploySafeArbitrator \
+          --rpc-url ${RPC_URL_POLYGON} \
+          --sig "run(string)" 'polygon' \
+          --chain-id 137 \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --private-key ${PRIVATE_KEY} \
+          --verify \
+          --broadcast \
+          -vv
+        ignore_error: true
+  deploy-or-upgrade-good-dollar-sybil-polygon:
+    desc: Deploy or upgrade good dollar sybil polygon
+    cmds:
+      - cmd: |
+          forge script script/DeployGoodDollarSybil.s.sol:DeployGoodDollarSybil \
+          --rpc-url ${RPC_URL_POLYGON} \
+          --sig "run(string)" 'polygon' \
+          --chain-id 137 \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --private-key ${PRIVATE_KEY} \
+          --verify \
+          --broadcast \
+          -vv
+        ignore_error: true
+  transfer-ownership-gnosis:
+    desc: Transfer ownership gnosis
+    cmds:
+      - cmd: |
+          forge script script/TransferOwnershipAllContracts.s.sol:TransferOwnershipAllContracts \
+          --rpc-url ${RPC_URL_GNOSIS} \
+          --sig "run(string)" 'gnosis' \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --chain-id 100 \
+          --private-key ${PRIVATE_KEY} \
+          --broadcast \
+          --verify \
+          -vvv
+        ignore_error: true
+  deploy-new-collateral-vault-template-gnosis:
+    desc: Deploy new collateral vault template gnosis
+    cmds:
+      - cmd: |
+          forge script script/DeployCollateralVaultTemplate.s.sol:DeployCollateralVaultTemplate \
+          --rpc-url ${RPC_URL_GNOSIS} \
+          --sig "run(string)" 'gnosis' \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --chain-id 100 \
+          --private-key ${PRIVATE_KEY} \
+          --ffi \
+          --legacy \
+          --broadcast \
+          --verify \
+          --slow \
+          -vvv
+        ignore_error: true
+  deploy-gnosis:
+    desc: Deploy gnosis
+    cmds:
+      - cmd: |
+          forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
+          --rpc-url ${RPC_URL_GNOSIS} \
+          --sig "run(string)" 'gnosis' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --ffi \
+          --chain-id 100 \
+          --broadcast \
+          --legacy \
+          --verify \
+          -vvv
+        ignore_error: true
+  upgrade-gnosis:
+    desc: Upgrade gnosis
+    cmds:
+      - cmd: |
+          forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
+          --rpc-url ${RPC_URL_GNOSIS} \
+          --sig "run(string)" 'gnosis' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --ffi \
+          --chain-id 100 \
+          --broadcast \
+          --legacy \
+          --verify \
+          --gas-price 20000000000 \
+          -vvv
+        ignore_error: true
+  upgrade-atomic-diamond-gnosis:
+    desc: Upgrade atomic diamond gnosis
+    deps:
+      - verify-storage
+    cmds:
+      - cmd: |
+          forge script script/UpgradeAllDiamonds.s.sol:UpgradeAllDiamonds \
+          --rpc-url ${RPC_URL_GNOSIS} \
+          --sig "run(string)" 'gnosis' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --chain-id 100 \
+          --broadcast \
+          --ffi \
+          --verify \
+          --slow \
+          --via-ir
+        ignore_error: true
+  verify-blockscout-gnosis:
+    desc: Verify blockscout gnosis
+    cmds:
+      - cmd: |
+          forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
+          --rpc-url ${RPC_URL_GNOSIS} \
+          --sig "run(string)" 'gnosis' \
+          --chain-id 100 \
+          --private-key ${PRIVATE_KEY} \
+          --verifier blockscout \
+          --verifier-url https://gnosis.blockscout.com/api/ \
+          --ffi \
+          --legacy \
+          --verify \
+          -vvv \
+          --slow
+        ignore_error: true
+  deploy-passport-scorer-gnosis:
+    desc: Deploy passport scorer gnosis
+    cmds:
+      - cmd: |
+          forge script script/DeployPassportScorer.s.sol:DeployPassportScorer \
+          --rpc-url ${RPC_URL_GNOSIS} \
+          --sig "run(string)" 'gnosis' \
+          --chain-id 100 \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --private-key ${PRIVATE_KEY} \
+          --verify \
+          --broadcast \
+          -vv
+        ignore_error: true
+  deploy-or-upgrade-if-exists-safe-arbitrator-gnosis:
+    desc: Deploy or upgrade if exists safe arbitrator gnosis
+    cmds:
+      - cmd: |
+          forge script script/DeploySafeArbitrator.s.sol:DeploySafeArbitrator \
+          --rpc-url ${RPC_URL_GNOSIS} \
+          --sig "run(string)" 'gnosis' \
+          --chain-id 100 \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --private-key ${PRIVATE_KEY} \
+          --verify \
+          --broadcast \
+          -vv
+        ignore_error: true
+  verify-tenderly-gnosis:
+    desc: Verify tenderly gnosis
+    cmds:
+      - cmd: forge verify-contract \
+        ignore_error: true
+  upgrade-and-verify-gnosis:
+    desc: Upgrade and verify gnosis
+    cmds:
+      - task: upgrade-gnosis
+      - task: verify-blockscout-gnosis
+  change-passport-manager-gnosis:
+    desc: Change passport manager gnosis
+    cmds:
+      - cmd: |
+          forge script script/PassportScorerWriter.s.sol:PassportScorerWriter \
+          --rpc-url ${RPC_URL_GNOSIS} \
+          --sig "run(string)" 'gnosis' \
+          --private-key ${PRIVATE_KEY} \
+          --ffi \
+          --chain-id 100 \
+          --broadcast \
+          --legacy \
+          -vvv
+        ignore_error: true
+  deploy-or-upgrade-good-dollar-sybil-gnosis:
+    desc: Deploy or upgrade good dollar sybil gnosis
+    cmds:
+      - cmd: |
+          forge script script/DeployGoodDollarSybil.s.sol:DeployGoodDollarSybil \
+          --rpc-url ${RPC_URL_GNOSIS} \
+          --sig "run(string)" 'gnosis' \
+          --chain-id 100 \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --private-key ${PRIVATE_KEY} \
+          --verify \
+          --broadcast \
+          -vv
+        ignore_error: true
+  transfer-ownership-base:
+    desc: Transfer ownership base
+    cmds:
+      - cmd: |
+          forge script script/TransferOwnershipAllContracts.s.sol:TransferOwnershipAllContracts \
+          --rpc-url ${RPC_URL_BASE} \
+          --private-key ${PRIVATE_KEY} \
+          --sig "run(string)" 'base' \
+          --chain-id 8453 \
+          --broadcast \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --verify \
+          -vvv
+        ignore_error: true
+  deploy-new-collateral-vault-template-base:
+    desc: Deploy new collateral vault template base
+    cmds:
+      - cmd: |
+          forge script script/DeployCollateralVaultTemplate.s.sol:DeployCollateralVaultTemplate \
+          --rpc-url ${RPC_URL_BASE} \
+          --sig "run(string)" 'base' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --ffi \
+          --chain-id 8453 \
+          --legacy \
+          --broadcast \
+          --verify \
+          -vvv
+        ignore_error: true
+  deploy-base:
+    desc: Deploy base
+    cmds:
+      - cmd: |
+          forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
+          --rpc-url ${RPC_URL_BASE} \
+          --sig "run(string)" 'base' \
+          --chain-id 8453 \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --ffi \
+          --broadcast \
+          --legacy \
+          --verify \
+          -vvv
+        ignore_error: true
+  upgrade-base:
+    desc: Upgrade base
+    cmds:
+      - cmd: |
+          forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
+          --rpc-url ${RPC_URL_BASE} \
+          --sig "run(string)" 'base' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --ffi \
+          --chain-id 8453 \
+          --broadcast \
+          --legacy \
+          --verify \
+          -vvv
+        ignore_error: true
+  upgrade-atomic-diamond-base:
+    desc: Upgrade atomic diamond base
+    deps:
+      - verify-storage
+    cmds:
+      - cmd: |
+          forge script script/UpgradeAllDiamonds.s.sol:UpgradeAllDiamonds \
+          --rpc-url ${RPC_URL_BASE} \
+          --sig "run(string)" 'base' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --chain-id 8453 \
+          --broadcast \
+          --ffi \
+          --verify \
+          --slow \
+          --via-ir
+        ignore_error: true
+  verify-blockscout-base:
+    desc: Verify blockscout base
+    cmds:
+      - cmd: |
+          forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
+          --rpc-url ${RPC_URL_BASE} \
+          --sig "run(string)" 'base' \
+          --chain-id 8453 \
+          --private-key ${PRIVATE_KEY} \
+          --verifier blockscout \
+          --verifier-url https://base.blockscout.com/api/ \
+          --ffi \
+          --legacy \
+          --verify \
+          -vvv \
+          --slow
+        ignore_error: true
+  verify-deploy-blockscout-base:
+    desc: Verify deploy blockscout base
+    cmds:
+      - cmd: |
+          forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
+          --rpc-url ${RPC_URL_BASE} \
+          --sig "run(string)" 'base' \
+          --private-key ${PRIVATE_KEY} \
+          --verifier blockscout \
+          --verifier-url https://base.blockscout.com/api/ \
+          --ffi \
+          --chain-id 8453 \
+          --legacy \
+          --verify \
+          -vvv \
+          --slow
+        ignore_error: true
+  deploy-and-verify-base:
+    desc: Deploy and verify base
+    deps:
+      - deploy-base
+      - verify-deploy-blockscout-base
+    cmds: []
+  upgrade-and-verify-base:
+    desc: Upgrade and verify base
+    cmds:
+      - task: upgrade-base
+      - task: verify-blockscout-base
+  change-passport-manager-base:
+    desc: Change passport manager base
+    cmds:
+      - cmd: |
+          forge script script/PassportScorerWriter.s.sol:PassportScorerWriter \
+          --rpc-url ${RPC_URL_BASE} \
+          --sig "run(string)" 'base' \
+          --chain-id 8453 \
+          --private-key ${PRIVATE_KEY} \
+          --ffi \
+          --broadcast \
+          --legacy \
+          -vvv
+        ignore_error: true
+  deploy-passport-scorer-base:
+    desc: Deploy passport scorer base
+    cmds:
+      - cmd: |
+          forge script script/DeployPassportScorer.s.sol:DeployPassportScorer \
+          --rpc-url ${RPC_URL_BASE} \
+          --sig "run(string)" 'base' \
+          --chain-id 8453 \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --private-key ${PRIVATE_KEY} \
+          --verify \
+          --broadcast \
+          -vv
+        ignore_error: true
+  deploy-or-upgrade-if-exists-safe-arbitrator-base:
+    desc: Deploy or upgrade if exists safe arbitrator base
+    cmds:
+      - cmd: |
+          forge script script/DeploySafeArbitrator.s.sol:DeploySafeArbitrator \
+          --rpc-url ${RPC_URL_BASE} \
+          --sig "run(string)" 'base' \
+          --chain-id 8453 \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --private-key ${PRIVATE_KEY} \
+          --verify \
+          --broadcast \
+          -vv
+        ignore_error: true
+  deploy-proxy-owner-base:
+    desc: Deploy proxy owner base
+    cmds:
+      - cmd: |
+          forge script script/DeployProxyOwner.s.sol:DeployProxyOwner \
+          --rpc-url ${RPC_URL_BASE} \
+          --sig "run(string)" 'base' \
+          --chain-id 8453 \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --private-key ${PRIVATE_KEY} \
+          --verify \
+          --broadcast \
+          -vv
+        ignore_error: true
+  deploy-or-upgrade-good-dollar-sybil-base:
+    desc: Deploy or upgrade good dollar sybil base
+    cmds:
+      - cmd: |
+          forge script script/DeployGoodDollarSybil.s.sol:DeployGoodDollarSybil \
+          --rpc-url ${RPC_URL_BASE} \
+          --sig "run(string)" 'base' \
+          --chain-id 8453 \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --private-key ${PRIVATE_KEY} \
+          --verify \
+          --broadcast \
+          -vv
+        ignore_error: true
+  transfer-ownership-celo:
+    desc: Transfer ownership celo
+    cmds:
+      - cmd: |
+          forge script script/TransferOwnershipAllContracts.s.sol:TransferOwnershipAllContracts \
+          --rpc-url ${RPC_URL_CELO} \
+          --private-key ${PRIVATE_KEY} \
+          --sig "run(string)" 'celo' \
+          --chain-id 42220 \
+          --broadcast \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --verify \
+          -vvv
+        ignore_error: true
+  deploy-new-collateral-vault-template-celo:
+    desc: Deploy new collateral vault template celo
+    cmds:
+      - cmd: |
+          forge script script/DeployCollateralVaultTemplate.s.sol:DeployCollateralVaultTemplate \
+          --rpc-url ${RPC_URL_CELO} \
+          --sig "run(string)" 'celo' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --ffi \
+          --chain-id 42220 \
+          --legacy \
+          --broadcast \
+          --verify \
+          -vvv
+        ignore_error: true
+  deploy-celo:
+    desc: Deploy celo
+    cmds:
+      - cmd: |
+          forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
+          --rpc-url ${RPC_URL_CELO} \
+          --sig "run(string)" 'celo' \
+          --chain-id 42220 \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --ffi \
+          --broadcast \
+          --legacy \
+          --verify \
+          -vvv
+        ignore_error: true
+  upgrade-celo:
+    desc: Upgrade celo
+    cmds:
+      - cmd: |
+          forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
+          --rpc-url ${RPC_URL_CELO} \
+          --sig "run(string)" 'celo' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --ffi \
+          --chain-id 42220 \
+          --broadcast \
+          --legacy \
+          --verify \
+          -vvv
+        ignore_error: true
+  upgrade-atomic-diamond-celo:
+    desc: Upgrade atomic diamond celo
+    deps:
+      - verify-storage
+    cmds:
+      - cmd: |
+          forge script script/UpgradeAllDiamonds.s.sol:UpgradeAllDiamonds \
+          --rpc-url ${RPC_URL_CELO} \
+          --sig "run(string)" 'celo' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --chain-id 42220 \
+          --broadcast \
+          --ffi \
+          --verify \
+          --slow \
+          --via-ir
+        ignore_error: true
+  verify-blockscout-celo:
+    desc: Verify blockscout celo
+    cmds:
+      - cmd: |
+          forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
+          --rpc-url ${RPC_URL_CELO} \
+          --sig "run(string)" 'celo' \
+          --chain-id 42220 \
+          --private-key ${PRIVATE_KEY} \
+          --verifier blockscout \
+          --verifier-url https://celo.blockscout.com/api/ \
+          --ffi \
+          --legacy \
+          --verify \
+          -vvv \
+          --slow
+        ignore_error: true
+  verify-deploy-blockscout-celo:
+    desc: Verify deploy blockscout celo
+    cmds:
+      - cmd: |
+          forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
+          --rpc-url ${RPC_URL_CELO} \
+          --sig "run(string)" 'base' \
+          --private-key ${PRIVATE_KEY} \
+          --verifier blockscout \
+          --verifier-url https://celo.blockscout.com/api/ \
+          --ffi \
+          --chain-id 42220 \
+          --legacy \
+          --verify \
+          -vvv \
+          --slow
+        ignore_error: true
+  deploy-and-verify-celo:
+    desc: Deploy and verify celo
+    deps:
+      - deploy-celo
+      - verify-deploy-blockscout-celo
+    cmds: []
+  upgrade-and-verify-celo:
+    desc: Upgrade and verify celo
+    cmds:
+      - task: upgrade-celo
+      - task: verify-blockscout-celo
+  upgrade-and-verify-all-mainnets:
+    desc: Upgrade and verify arbitrum, optimism, polygon, gnosis, base, celo
+    cmds:
+      - cmd: |
+          set +e
+          declare -a pids
+          declare -a names
+          failed=0
+
+          task upgrade-arbitrum & pids+=($!); names+=("arbitrum")
+          task upgrade-optimism & pids+=($!); names+=("optimism")
+          task upgrade-polygon & pids+=($!); names+=("polygon")
+          task upgrade-gnosis & pids+=($!); names+=("gnosis")
+          task upgrade-base & pids+=($!); names+=("base")
+          task upgrade-celo & pids+=($!); names+=("celo")
+
+          for i in "${!pids[@]}"; do
+            if wait "${pids[$i]}"; then
+              echo "✅ ${names[$i]}: success"
+            else
+              echo "❌ ${names[$i]}: failed"
+              failed=1
+            fi
+          done
+
+          if [ "$failed" -ne 0 ]; then
+            echo "One or more networks failed."
+          else
+            echo "All networks succeeded."
+          fi
+          exit 0
+  submit-safe-payloads:
+    desc: Submit Safe Transaction Builder payloads to the Safe Transaction Service
+    cmds:
+      - cmd: |
+          python scripts/submit_safe_payloads.py \
+          --safe 0x9a17De1f0caD0c592F656410997E4B685d339029 \
+          --keystore ~/.foundry/keystores/pkMetamask
+  submit-safe-payloads-test:
+    desc: Submit Safe Transaction Builder payloads to the Safe Transaction Service
+    cmds:
+      - cmd: |
+          python scripts/submit_safe_payloads.py \
+          --safe 0x9a17De1f0caD0c592F656410997E4B685d339029 \
+          --keystore ~/.foundry/keystores/pkMetamask \
+          --test
+  submit-safe-payloads-force:
+    desc: Submit Safe Transaction Builder payloads to the Safe Transaction Service
+    cmds:
+      - cmd: |
+          python scripts/submit_safe_payloads.py \
+          --safe 0x9a17De1f0caD0c592F656410997E4B685d339029 \
+          --keystore ~/.foundry/keystores/pkMetamask \
+          --force
+  submit-safe-payloads-test-force:
+    desc: Submit Safe Transaction Builder payloads to the Safe Transaction Service
+    cmds:
+      - cmd: |
+          python scripts/submit_safe_payloads.py \
+          --safe 0x9a17De1f0caD0c592F656410997E4B685d339029 \
+          --keystore ~/.foundry/keystores/pkMetamask \
+          --test \
+          --force
+  submit-safe-payloads-arbitrum:
+    desc: Submit Safe payload for arbitrum
+    cmds:
+      - cmd: |
+          python scripts/submit_safe_payloads.py \
+          --safe 0x9a17De1f0caD0c592F656410997E4B685d339029 \
+          --keystore ~/.foundry/keystores/pkMetamask \
+          --chains arbitrum
+  submit-safe-payloads-optimism:
+    desc: Submit Safe payload for optimism
+    cmds:
+      - cmd: |
+          python scripts/submit_safe_payloads.py \
+          --safe 0x9a17De1f0caD0c592F656410997E4B685d339029 \
+          --keystore ~/.foundry/keystores/pkMetamask \
+          --chains optimism
+  submit-safe-payloads-polygon:
+    desc: Submit Safe payload for polygon
+    cmds:
+      - cmd: |
+          python scripts/submit_safe_payloads.py \
+          --safe 0x9a17De1f0caD0c592F656410997E4B685d339029 \
+          --keystore ~/.foundry/keystores/pkMetamask \
+          --chains polygon
+  submit-safe-payloads-gnosis:
+    desc: Submit Safe payload for gnosis
+    cmds:
+      - cmd: |
+          python scripts/submit_safe_payloads.py \
+          --safe 0x9a17De1f0caD0c592F656410997E4B685d339029 \
+          --keystore ~/.foundry/keystores/pkMetamask \
+          --chains gnosis
+  submit-safe-payloads-base:
+    desc: Submit Safe payload for base
+    cmds:
+      - cmd: |
+          python scripts/submit_safe_payloads.py \
+          --safe 0x9a17De1f0caD0c592F656410997E4B685d339029 \
+          --keystore ~/.foundry/keystores/pkMetamask \
+          --chains base
+  submit-safe-payloads-celo:
+    desc: Submit Safe payload for celo
+    cmds:
+      - cmd: |
+          python scripts/submit_safe_payloads.py \
+          --safe 0x9a17De1f0caD0c592F656410997E4B685d339029 \
+          --keystore ~/.foundry/keystores/pkMetamask \
+          --chains celo
+  clear-safe-queue:
+    desc: Clear queued Safe transactions via Safe Transaction Service
+    cmds:
+      - cmd: |
+          python scripts/clear_safe_queue.py \
+          --safe 0x9a17De1f0caD0c592F656410997E4B685d339029 \
+          --keystore ~/.foundry/keystores/pkMetamask
+  clear-safe-queue-test:
+    desc: Clear queued Safe transactions in sandbox Safe
+    cmds:
+      - cmd: |
+          python scripts/clear_safe_queue.py \
+          --safe 0x9a17De1f0caD0c592F656410997E4B685d339029 \
+          --keystore ~/.foundry/keystores/pkMetamask \
+          --test
+  list-safe-queue:
+    desc: List queued Safe transactions and proposers
+    cmds:
+      - cmd: |
+          python scripts/clear_safe_queue.py \
+          --safe 0x9a17De1f0caD0c592F656410997E4B685d339029 \
+          --keystore ~/.foundry/keystores/pkMetamask \
+          --list
+  change-passport-manager-celo:
+    desc: Change passport manager celo
+    cmds:
+      - cmd: |
+          forge script script/PassportScorerWriter.s.sol:PassportScorerWriter \
+          --rpc-url ${RPC_URL_CELO} \
+          --sig "run(string)" 'celo' \
+          --chain-id 42220 \
+          --private-key ${PRIVATE_KEY} \
+          --ffi \
+          --broadcast \
+          --legacy \
+          -vvv
+        ignore_error: true
+  deploy-passport-scorer-celo:
+    desc: Deploy passport scorer celo
+    cmds:
+      - cmd: |
+          forge script script/DeployPassportScorer.s.sol:DeployPassportScorer \
+          --rpc-url ${RPC_URL_CELO} \
+          --sig "run(string)" 'celo' \
+          --chain-id 42220 \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --private-key ${PRIVATE_KEY} \
+          --verify \
+          --broadcast \
+          -vv
+        ignore_error: true
+  verify-blockscout-passport-scorer-celo:
+    desc: Verify blockscout passport scorer celo
+    cmds:
+      - cmd: |
+          forge script script/DeployPassportScorer.s.sol:DeployPassportScorer \
+          --rpc-url ${RPC_URL_CELO} \
+          --sig "run(string)" 'celo' \
+          --chain-id 42220 \
+          --verifier blockscout \
+          --verifier-url https://celo.blockscout.com/api/ \
+          --private-key ${PRIVATE_KEY} \
+          --verify \
+          -vv
+        ignore_error: true
+  deploy-or-upgrade-if-exists-safe-arbitrator-celo:
+    desc: Deploy or upgrade if exists safe arbitrator celo
+    cmds:
+      - cmd: |
+          forge script script/DeploySafeArbitrator.s.sol:DeploySafeArbitrator \
+          --rpc-url ${RPC_URL_CELO} \
+          --sig "run(string)" 'celo' \
+          --chain-id 42220 \
+          --verifier blockscout \
+          --verifier-url https://celo.blockscout.com/api/ \
+          --private-key ${PRIVATE_KEY} \
+          --verify \
+          -vv \
+        ignore_error: true
+  verify-blockscout-proxy-owner-celo:
+    desc: Verify blockscout proxy owner celo
+    cmds:
+      - cmd: |
+          forge script script/DeployProxyOwner.s.sol:DeployProxyOwner \
+          --rpc-url ${RPC_URL_CELO} \
+          --sig "run(string)" 'celo' \
+          --chain-id 42220 \
+          --verifier blockscout \
+          --verifier-url https://celo.blockscout.com/api/ \
+          --private-key ${PRIVATE_KEY} \
+          --verify \
+          -vv
+        ignore_error: true
+  deploy-or-upgrade-good-dollar-sybil-celo:
+    desc: Deploy or upgrade good dollar sybil celo
+    cmds:
+      - cmd: |
+          forge script script/DeployGoodDollarSybil.s.sol:DeployGoodDollarSybil \
+          --rpc-url ${RPC_URL_CELO} \
+          --sig "run(string)" 'celo' \
+          --chain-id 42220 \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --private-key ${PRIVATE_KEY} \
+          --verify \
+          --broadcast \
+          -vv
+        ignore_error: true

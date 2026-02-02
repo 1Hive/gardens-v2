@@ -1,92 +1,71 @@
-// api/passport-oracle/write-score
-
-import { Params } from "next/dist/shared/lib/router/utils/route-matcher";
 import { NextResponse } from "next/server";
-import {
-  createPublicClient,
-  http,
-  createWalletClient,
-  custom,
-  Address,
-} from "viem";
-import { privateKeyToAccount } from "viem/accounts";
-import { getConfigByChain } from "@/configs/chains";
-import { goodDollarABI } from "@/src/generated";
-import { fetchGooddollarWhitelisted } from "@/utils/goodDollar";
-import { getViemChain } from "@/utils/web3";
+import { isGoodDollarWhitelisted, validateUserOnChain } from "../validation";
 
-const LIST_MANAGER_PRIVATE_KEY = process.env.LIST_MANAGER_PRIVATE_KEY;
-const LOCAL_RPC = "http://127.0.0.1:8545";
+interface Params {
+  params: { chain?: string };
+}
 
 export async function POST(req: Request, { params }: Params) {
-  const { chain: chainId } = params as { chain: string };
-  const { user } = await req.json();
-  if (typeof user !== "string") {
+  const { chain: chainId } = params ?? {};
+
+  if (!chainId) {
     return NextResponse.json(
-      {
-        error: "User address is required",
-      },
+      { error: "Chain id is required" },
       { status: 400 },
     );
   }
 
-  const chain = getViemChain(chainId);
-  const chainConfig = getConfigByChain(chainId);
+  let user: unknown;
+  try {
+    ({ user } = await req.json());
+  } catch (error) {
+    console.error("Failed to parse body", error);
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
+
+  if (typeof user !== "string") {
+    return NextResponse.json(
+      { error: "User address is required" },
+      { status: 400 },
+    );
+  }
 
   try {
-    const client = createPublicClient({
-      chain: chain,
-      transport: http(chainConfig?.rpcUrl ?? LOCAL_RPC),
-    });
-
-    const walletClient = createWalletClient({
-      account: privateKeyToAccount(
-        (`${LIST_MANAGER_PRIVATE_KEY}` as Address) || "",
-      ),
-      chain: chain,
-      transport: custom(client.transport),
-    });
-
-    const isWhitelisted = await fetchGooddollarWhitelisted(user);
-
-    if (!chainConfig?.goodDollar) {
-      console.error("Gooddoll Sybil contract address is missing");
+    const isWhitelisted = await isGoodDollarWhitelisted(user);
+    if (!isWhitelisted) {
       return NextResponse.json(
-        { error: "Internal server error" },
-        { status: 500 },
+        { error: "User is not whitelisted in GoodDollar" },
+        { status: 400 },
       );
     }
-    if (isWhitelisted) {
-      const isAlreadyValid = (await client.readContract({
-        abi: goodDollarABI,
-        address: chainConfig.goodDollar,
-        functionName: "userValidity",
-        args: [user as Address],
-      })) as boolean;
 
-      if (isAlreadyValid) {
-        return NextResponse.json({
-          message: "User already validated on Gooddollar Sybil smart contract",
-          isValid: true,
-        });
-      }
+    const result = await validateUserOnChain(chainId, user, isWhitelisted);
 
-      const hash = await walletClient.writeContract({
-        abi: goodDollarABI,
-        address: chainConfig.goodDollar,
-        functionName: "validateUser",
-        chain: chain,
-        args: [user as Address],
-      });
-
-      // Wait for transaction to be mined
-      await client.waitForTransactionReceipt({ hash });
-
+    if (result.status === "success") {
       return NextResponse.json({
         message: "Validity set successfully",
-        transactionHash: hash,
+        transactionHash: result.transactionHash,
       });
     }
+
+    if (result.status === "already-valid") {
+      return NextResponse.json({
+        message: "User already validated on Gooddollar Sybil smart contract",
+        isValid: true,
+      });
+    }
+
+    if (result.status === "skipped") {
+      return NextResponse.json(
+        { error: result.message },
+        { status: 400 },
+      );
+    }
+
+    return NextResponse.json(
+      { error: result.message },
+      { status: 500 },
+    );
   } catch (error) {
     console.error("Error validating user", error);
     return NextResponse.json(
