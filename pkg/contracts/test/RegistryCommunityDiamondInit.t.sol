@@ -4,29 +4,34 @@ pragma solidity ^0.8.19;
 import "forge-std/Test.sol";
 
 import {RegistryCommunityDiamondInit} from "../src/RegistryCommunity/RegistryCommunityDiamondInit.sol";
-import {IERC165} from "../src/diamonds/interfaces/IERC165.sol";
-import {IDiamondCut} from "../src/diamonds/interfaces/IDiamondCut.sol";
+import {LibDiamond} from "../src/diamonds/libraries/LibDiamond.sol";
 import {IDiamondLoupe} from "../src/diamonds/interfaces/IDiamondLoupe.sol";
+import {IDiamondCut} from "../src/diamonds/interfaces/IDiamondCut.sol";
 import {IERC173} from "../src/diamonds/interfaces/IERC173.sol";
+import {IERC165} from "../src/diamonds/interfaces/IERC165.sol";
+
+contract DiamondInitHarness {
+    function callInit(address init) external {
+        (bool ok, ) = init.delegatecall(abi.encodeWithSelector(RegistryCommunityDiamondInit.init.selector));
+        require(ok, "init failed");
+    }
+
+    function supportsInterface(bytes4 interfaceId) external view returns (bool) {
+        LibDiamond.DiamondStorage storage ds = LibDiamond.diamondStorage();
+        return ds.supportedInterfaces[interfaceId];
+    }
+}
 
 contract RegistryCommunityDiamondInitTest is Test {
-    function test_init_registersInterfaces() public {
+    function test_init_registers_interfaces() public {
         RegistryCommunityDiamondInit init = new RegistryCommunityDiamondInit();
-        init.init();
+        DiamondInitHarness harness = new DiamondInitHarness();
 
-        bytes32 position = keccak256("diamond.standard.diamond.storage");
-        bytes32 supportedInterfacesSlot = bytes32(uint256(position) + 2);
+        harness.callInit(address(init));
 
-        bytes32 key = keccak256(abi.encode(type(IERC165).interfaceId, supportedInterfacesSlot));
-        assertEq(vm.load(address(init), key), bytes32(uint256(1)));
-
-        key = keccak256(abi.encode(type(IDiamondCut).interfaceId, supportedInterfacesSlot));
-        assertEq(vm.load(address(init), key), bytes32(uint256(1)));
-
-        key = keccak256(abi.encode(type(IDiamondLoupe).interfaceId, supportedInterfacesSlot));
-        assertEq(vm.load(address(init), key), bytes32(uint256(1)));
-
-        key = keccak256(abi.encode(type(IERC173).interfaceId, supportedInterfacesSlot));
-        assertEq(vm.load(address(init), key), bytes32(uint256(1)));
+        assertTrue(harness.supportsInterface(type(IERC165).interfaceId));
+        assertTrue(harness.supportsInterface(type(IDiamondCut).interfaceId));
+        assertTrue(harness.supportsInterface(type(IDiamondLoupe).interfaceId));
+        assertTrue(harness.supportsInterface(type(IERC173).interfaceId));
     }
 }

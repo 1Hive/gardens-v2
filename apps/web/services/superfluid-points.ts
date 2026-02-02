@@ -27,7 +27,7 @@ type PointsPushResponse = {
   eventCount: number;
 };
 
-type PointsClient = {
+export type PointsClient = {
   getEvents: (args: {
     event?: string;
     limit?: number;
@@ -46,12 +46,9 @@ type PointsClient = {
   };
 };
 
-const SUPERFLUID_POINTS_BASE_URL =
+const resolveBaseUrl = () =>
   process.env.SUPERFLUID_POINT_API_BASE_URL?.trim() ??
   "https://cms.superfluid.pro";
-
-const resolveCampaignId = () =>
-  Number(process.env.SUPERFLUID_POINT_SYSTEM_ID ?? "") || 0;
 
 const normalizeLimit = (limit?: number) => {
   if (!limit || Number.isNaN(limit)) return 50;
@@ -67,6 +64,7 @@ const toPointsEvent = (evt: PointsEvent): PointsEvent => ({
 });
 
 const fetchJson = async <T>(
+  baseUrl: string,
   path: string,
   options: {
     method?: string;
@@ -75,7 +73,7 @@ const fetchJson = async <T>(
     body?: any;
   } = {},
 ): Promise<T> => {
-  const url = new URL(path, SUPERFLUID_POINTS_BASE_URL);
+  const url = new URL(path, baseUrl);
   const { query } = options;
   if (query) {
     Object.entries(query).forEach(([key, value]) => {
@@ -110,18 +108,17 @@ const fetchJson = async <T>(
   return json as T;
 };
 
-let cachedPointsClient: PointsClient | null = null;
+const cachedPointsClients = new Map<string, PointsClient>();
 
-export const getSuperfluidPointsClient = (): PointsClient => {
-  if (cachedPointsClient) return cachedPointsClient;
-  const apiKey = process.env.SUPERFLUID_POINT_API_KEY;
-  const campaignId = resolveCampaignId();
-  if (!apiKey) {
-    throw new Error("SUPERFLUID_POINT_API_KEY is required");
-  }
-  if (!campaignId) {
-    throw new Error("SUPERFLUID_POINT_SYSTEM_ID is required");
-  }
+const createSuperfluidPointsClient = ({
+  apiKey,
+  campaignId,
+  baseUrl,
+}: {
+  apiKey: string;
+  campaignId: number;
+  baseUrl: string;
+}): PointsClient => {
 
   const getEvents = async ({
     event,
@@ -140,7 +137,7 @@ export const getSuperfluidPointsClient = (): PointsClient => {
     const collected: PointsEvent[] = [];
 
     while (!requestedLimit || collected.length < requestedLimit) {
-      const data = await fetchJson<PointsEventsResponse>("/points/events", {
+      const data = await fetchJson<PointsEventsResponse>(baseUrl, "/points/events", {
         query: {
           campaignId,
           eventName: event,
@@ -174,7 +171,7 @@ export const getSuperfluidPointsClient = (): PointsClient => {
       const collected: PointsEvent[] = [];
 
       while (!requestedLimit || collected.length < requestedLimit) {
-        const data = await fetchJson<PointsEventsResponse>("/points/events", {
+        const data = await fetchJson<PointsEventsResponse>(baseUrl, "/points/events", {
           query: {
             campaignId,
             limit: pageLimit,
@@ -202,7 +199,7 @@ export const getSuperfluidPointsClient = (): PointsClient => {
         account: entry.payload.account,
         points: entry.payload.points,
       }));
-      return fetchJson<PointsPushResponse>("/points/push", {
+      return fetchJson<PointsPushResponse>(baseUrl, "/points/push", {
         method: "POST",
         headers: {
           "X-API-Key": apiKey,
@@ -215,11 +212,41 @@ export const getSuperfluidPointsClient = (): PointsClient => {
     },
   };
 
-  cachedPointsClient = {
+  return {
     getEvents,
     eventClient,
   };
-  return cachedPointsClient;
+};
+
+export const getSuperfluidPointsClientByEnv = ({
+  apiKeyEnvVar,
+  campaignIdEnvVar,
+}: {
+  apiKeyEnvVar: string;
+  campaignIdEnvVar: string;
+}): PointsClient => {
+  const apiKey = process.env[apiKeyEnvVar];
+  const campaignId = Number(process.env[campaignIdEnvVar] ?? "") || 0;
+  if (!apiKey) {
+    throw new Error(`${apiKeyEnvVar} is required`);
+  }
+  if (!campaignId) {
+    throw new Error(`${campaignIdEnvVar} is required`);
+  }
+  const baseUrl = resolveBaseUrl();
+  const cacheKey = `${baseUrl}|${campaignId}|${apiKey}`;
+  const cached = cachedPointsClients.get(cacheKey);
+  if (cached) return cached;
+  const created = createSuperfluidPointsClient({ apiKey, campaignId, baseUrl });
+  cachedPointsClients.set(cacheKey, created);
+  return created;
+};
+
+export const getSuperfluidPointsClient = (): PointsClient => {
+  return getSuperfluidPointsClientByEnv({
+    apiKeyEnvVar: "SUPERFLUID_POINT_API_KEY",
+    campaignIdEnvVar: "SUPERFLUID_POINT_SYSTEM_ID",
+  });
 };
 
 export const STACK_DRY_RUN =

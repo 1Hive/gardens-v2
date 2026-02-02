@@ -782,7 +782,7 @@ const fetchFarcasterFollowerFids = async (
     while (true) {
       const params = new URLSearchParams({
         fid: String(targetFid),
-        limit: "150",
+        limit: "50",
       });
       if (cursor) params.set("cursor", cursor);
       const res = await fetch(
