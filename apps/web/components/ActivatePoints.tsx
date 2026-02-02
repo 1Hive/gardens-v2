@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { PowerIcon } from "@heroicons/react/24/outline";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { Address, useAccount } from "wagmi";
 import { CVStrategy, CVStrategyConfig } from "#/subgraph/.graphclient";
@@ -148,6 +149,7 @@ export function ActivatePoints({
       tooltip={tooltipMessage}
       isLoading={isLoadingDeactivatePoints}
       className="w-full"
+      icon={<PowerIcon className="h-5 w-5" />}
     >
       Deactivate governance
     </Button>

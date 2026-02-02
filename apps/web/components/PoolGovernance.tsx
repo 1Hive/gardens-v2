@@ -113,7 +113,7 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
             </div>
             {address && (
               <div className="flex-1 flex flex-col items-start gap-4 ">
-                <div className="w-full h-[0.10px] bg-neutral-soft-content opacity-50" />
+                <div className="w-full h-[0.10px] bg-neutral-soft-content opacity-30" />
                 <div className="w-full flex items-center justify-between">
                   <h4 className="subtitle2">Your stake: </h4>
                   <div className="flex items-center gap-1">
@@ -162,8 +162,8 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
             {isMemberCommunity && memberActivatedStrategy && (
               <>
                 <p className="text-xs sm:text-sm text-neutral-soft-content text-justify">
-                  You have activated governance in this pool. You can deactivate
-                  at any time, but your VP allocations will be removed.
+                  You have activated governance in this pool. Deactivate to
+                  leave the pool and remove all your voting power.
                 </p>
 
                 <CheckSybil
@@ -192,7 +192,7 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
               className="w-full"
               // icon={<ChevronUpIcon className="h-4 w-4" />}
             >
-              {openGovernanceDetailsModal ? "Close" : "Open"} governance details
+              {openGovernanceDetailsModal ? "Close" : "Show"} Active Members
             </Button>
 
             {membersStrategyData && (

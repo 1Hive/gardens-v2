@@ -576,9 +576,9 @@ export default function ClientPage({
                     </li>
                     <li>
                       If you’re eligible to vote, you can allocate your Voting
-                      Power (VP) across multiple proposals at the same time—
-                      this means you’re giving support to a proposal. The more
-                      VP you allocate, the faster its conviction grows.
+                      Power (VP) across multiple proposals at the same time as
+                      support. The more VP you allocate, the faster its
+                      conviction grows.
                     </li>
                   </ul>
                 </InfoBox>

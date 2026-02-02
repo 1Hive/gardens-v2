@@ -335,24 +335,20 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
                         "
                         >
                           <div>
-                            <h5 className="text-xs sm:text-sm flex items-center gap-1">
-                              Progress:{" "}
-                              <span className="text-xs">
-                                {ProposalCountDown}
-                              </span>
-                            </h5>
+                            <span className="text-xs">{ProposalCountDown}</span>
                           </div>
                           <ul className="flex gap-2 items-baseline text-xs sm:text-sm">
                             <li>
-                              <span className="text-xs text-primary-button">
-                                support: {totalSupportPct} VP
-                              </span>
-                            </li>
-                            <li>
-                              <span className="text-xs  text-primary-content">
+                              <span className="text-xs text-[#74c898] dark:text-primary-dark-base ">
                                 conviction: {currentConvictionPct} VP
                               </span>
                             </li>
+                            <li>
+                              <span className="text-xs text-primary-button dark:text-dark-chart-support">
+                                support: {totalSupportPct} VP
+                              </span>
+                            </li>
+
                             <li>
                               <span className="text-xs text-neutral-soft-content">
                                 threshold: {thresholdPct} VP
@@ -361,7 +357,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
                           </ul>
                         </div>
 
-                        <div className="h-3 flex items-center mb-2">
+                        <div className="h-3 flex items-center mb-3">
                           <ConvictionBarChart
                             compact
                             currentConvictionPct={currentConvictionPct}

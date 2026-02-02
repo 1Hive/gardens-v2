@@ -658,11 +658,15 @@ export default function PoolHeader({
               defaultExpanded={false}
               title="Pool Description"
               previewHeight={161}
+              withDescription
             >
               <Skeleton rows={5} isLoading={!ipfsResult}>
                 <MarkdownWrapper source={ipfsResult?.description ?? ""} />
               </Skeleton>
             </ExpandableComponent>
+
+            {/* Separetor */}
+            <div className="w-full h-[0.10px] bg-neutral-soft-content opacity-30" />
 
             <div className="flex flex-col gap-4">
               {/* Addresses */}
@@ -712,7 +716,7 @@ export default function PoolHeader({
               </div>
 
               {/* Separetor */}
-              <div className="w-full h-[0.10px] bg-neutral-soft-content opacity-50" />
+              <div className="w-full h-[0.10px] bg-neutral-soft-content opacity-30" />
 
               {/* Buttons: disable - edit - archive - create steam token  */}
               <div className="flex justify-between items-baseline flex-wrap gap-2">

@@ -740,7 +740,7 @@ export function Proposals({
                     }
                     tooltip={tooltipMessage}
                   >
-                    Add new proposal
+                    Add New Proposal
                   </Button>
                 </Link>
               </div>
@@ -776,7 +776,7 @@ export function Proposals({
                           }
                           tooltip={tooltipMessage}
                         >
-                          Add new proposal
+                          Add New Proposal
                         </Button>
                       </Link>
                     )}

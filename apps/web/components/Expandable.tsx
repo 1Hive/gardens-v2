@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { ChevronUpIcon } from "@heroicons/react/24/outline";
 import { motion, AnimatePresence } from "motion/react";
+import { Button } from "./Button";
 
 interface ExpandableComponentProps {
   title: string;
@@ -9,10 +10,13 @@ interface ExpandableComponentProps {
   children: React.ReactNode;
   withLayout?: boolean;
 
-  /** NEW */
-  previewHeight?: number; // px, e.g. 120
+  /** Preview mode props */
+  previewHeight?: number; // altura en px para el preview
   readMoreLabel?: string;
   readLessLabel?: string;
+
+  /** Description mode - solo read more/less, sin header expandible */
+  withDescription?: boolean;
 }
 
 export const ExpandableComponent = ({
@@ -20,15 +24,96 @@ export const ExpandableComponent = ({
   defaultExpanded = true,
   children,
   withLayout = false,
-  previewHeight,
+  previewHeight = 100,
   readMoreLabel = "Read more",
   readLessLabel = "Show less",
+  withDescription = false,
 }: ExpandableComponentProps) => {
   const [expanded, setExpanded] = useState(defaultExpanded);
+  const [needsExpansion, setNeedsExpansion] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
 
-  const isPreviewMode =
-    previewHeight !== undefined && previewHeight > 0 && !expanded;
+  // Detectar si el contenido es más alto que el preview
+  useEffect(() => {
+    if (!contentRef.current || !withDescription) return;
 
+    const element = contentRef.current;
+    const hasOverflow = element.scrollHeight > previewHeight;
+    setNeedsExpansion(hasOverflow);
+  }, [children, previewHeight, withDescription]);
+
+  const showPreview = !expanded && previewHeight && withDescription;
+
+  // Modo descripción: sin header clicable
+  if (withDescription) {
+    return (
+      <div
+        className={`flex flex-col gap-2 ${withLayout ? "section-layout" : ""}`}
+      >
+        {/* Content */}
+        <AnimatePresence initial={false}>
+          {(expanded || showPreview) && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{
+                opacity: 1,
+                height: expanded ? "auto" : previewHeight,
+              }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{
+                type: "spring",
+                stiffness: 240,
+                damping: 15,
+                mass: 0.3,
+              }}
+              className="relative"
+              style={{ overflow: showPreview ? "hidden" : "visible" }}
+            >
+              <div ref={contentRef}>{children}</div>
+
+              {/* Gradient fade */}
+              {/* {showPreview && needsExpansion && (
+                <div
+                  className="absolute bottom-0 left-0 right-0 h-8 pointer-events-none"
+                  style={{
+                    background:
+                      "linear-gradient(to bottom, transparent, white 50%)",
+                  }}
+                />
+              )} */}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Read more button */}
+        {showPreview && needsExpansion && (
+          <div className="flex items-baseline gap-[2px] -mt-6">
+            <span>...</span>
+            <Button
+              onClick={() => setExpanded(true)}
+              btnStyle="ghost"
+              className="!py-1 !px-2 !h-auto text-sm"
+            >
+              {readMoreLabel}
+            </Button>
+          </div>
+        )}
+
+        {/* Show less button */}
+        {expanded && needsExpansion && (
+          <Button
+            onClick={() => setExpanded(false)}
+            btnStyle="ghost"
+            className="self-start !py-1 !px-2 !h-auto text-sm"
+          >
+            {readLessLabel}
+          </Button>
+        )}
+      </div>
+    );
+  }
+
+  // Modo normal: con header expandible, SIN botones read more/less
   return (
     <div
       className={`flex flex-col gap-2 ${withLayout ? "section-layout" : ""}`}
@@ -51,12 +136,12 @@ export const ExpandableComponent = ({
 
       {/* Content */}
       <AnimatePresence initial={false}>
-        {(expanded || previewHeight) && (
+        {expanded && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{
               opacity: 1,
-              height: expanded ? "auto" : previewHeight,
+              height: "auto",
             }}
             exit={{ opacity: 0, height: 0 }}
             transition={{
@@ -65,40 +150,11 @@ export const ExpandableComponent = ({
               damping: 15,
               mass: 0.3,
             }}
-            className="relative overflow-hidden mt-1"
           >
             {children}
-
-            {/* Blur + Read more */}
-            {isPreviewMode && (
-              <>
-                {/* Blur gradient */}
-                <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-primary to-transparent backdrop-blur-sm" />
-
-                {/* CTA */}
-                <div className="absolute bottom-2 left-0 right-0 flex justify-center">
-                  <button
-                    onClick={() => setExpanded(true)}
-                    className="btn btn-sm btn-ghost w-full"
-                  >
-                    {readMoreLabel}
-                  </button>
-                </div>
-              </>
-            )}
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Optional collapse CTA */}
-      {expanded && previewHeight && (
-        <button
-          onClick={() => setExpanded(false)}
-          className="self-start text-sm hover:underline"
-        >
-          {readLessLabel}
-        </button>
-      )}
     </div>
   );
 };
