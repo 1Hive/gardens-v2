@@ -380,8 +380,28 @@ contract CVStrategyHarness is CVStrategy {
         arbitrableConfigs[version] = config;
     }
 
+    function setProposalVoterStake(uint256 proposalId, address voter, uint256 amount) external {
+        proposals[proposalId].voterStakedPoints[voter] = amount;
+    }
+
+    function setProposalStakedAmount(uint256 proposalId, uint256 amount) external {
+        proposals[proposalId].stakedAmount = amount;
+    }
+
     function setTotalPointsActivated(uint256 amount) external {
         totalPointsActivated = amount;
+    }
+
+    function exposedCalculateAndSetConviction(uint256 proposalId, uint256 oldStaked) external {
+        _calculateAndSetConviction(proposals[proposalId], oldStaked);
+    }
+
+    function exposedCheckBlockAndCalculateConviction(uint256 proposalId, uint256 oldStaked)
+        external
+        view
+        returns (uint256 conviction, uint256 blockNumber)
+    {
+        return _checkBlockAndCalculateConviction(proposals[proposalId], oldStaked);
     }
 
     function exposedCheckSenderIsMember(address sender) external {
