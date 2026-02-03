@@ -25,7 +25,7 @@
       "schedule": "*/15 * * * *"
     },
     {
-      "path": "/api/superfluid-stack-gd",
+      "path": "/api/superfluid-points-gd",
       "schedule": "10/15 * * * *"
     }
   ]

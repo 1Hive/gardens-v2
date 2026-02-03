@@ -427,36 +427,32 @@ export default function ClientPage({ params }: ClientPageProps) {
                     )}
                   </div>
 
-                  <div className="flex flex-col items-start justify-between gap-3 sm:items-end">
-                    <Statistic label={"Created"}>
-                      <span className="font-medium dark:text-neutral-content">
-                        {prettyTimestamp(proposalData?.createdAt ?? 0)}
-                      </span>
-                    </Statistic>
-                    {proposalData?.executedAt && (
-                      <Statistic label={"Executed"}>
+                  {status !== "executed" && (
+                    <div className="flex flex-col items-start justify-between gap-3 sm:items-end">
+                      <Statistic label={"Created"}>
                         <span className="font-medium dark:text-neutral-content">
-                          {prettyTimestamp(proposalData?.executedAt)}
+                          {prettyTimestamp(proposalData?.createdAt ?? 0)}
                         </span>
                       </Statistic>
-                    )}
-                    {!isSignalingType && (
-                      <>
-                        <Statistic label={"request amount"}>
-                          <DisplayNumber
-                            number={formatUnits(
-                              requestedAmount,
-                              poolToken?.decimals ?? 18,
-                            )}
-                            tokenSymbol={poolToken?.symbol}
-                            compact={true}
-                            valueClassName="font-medium dark:text-neutral-content"
-                            symbolClassName="font-medium dark:text-neutral-content"
-                          />
-                        </Statistic>
-                      </>
-                    )}
-                  </div>
+
+                      {!isSignalingType && (
+                        <>
+                          <Statistic label={"request amount"}>
+                            <DisplayNumber
+                              number={formatUnits(
+                                requestedAmount,
+                                poolToken?.decimals ?? 18,
+                              )}
+                              tokenSymbol={poolToken?.symbol}
+                              compact={true}
+                              valueClassName="font-medium dark:text-neutral-content"
+                              symbolClassName="font-medium dark:text-neutral-content"
+                            />
+                          </Statistic>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
               </header>
               {/* Divider */}
@@ -549,25 +545,64 @@ export default function ClientPage({ params }: ClientPageProps) {
               <h5>Status</h5>
               <Badge status={proposalData.proposalStatus} />
             </div>
+
+            {status === "executed" && (
+              <ul className="timeline timeline-vertical  relative">
+                <li className=" flex items-center justify-start z-50">
+                  <div className="timeline-middle rounded-full text-tertiary-soft bg-primary-content m-0.5">
+                    <CheckIcon className="w-4 m-0.5" />
+                  </div>
+                  <div className="timeline-end  flex flex-col">
+                    <p className="text-md font-semibold">Created</p>
+                    <p className="text-sm text-neutral-soft-content">
+                      {prettyTimestamp(proposalData?.createdAt)}
+                    </p>
+                  </div>
+                  {/* <hr className="bg-tertiary-content w-8" />; */}
+                </li>
+
+                <div className="bg-primary-content h-20 w-[4px] absolute left-[9.5px] top-6" />
+                <li className=" flex items-center justify-start mt-4">
+                  <div className="timeline-middle rounded-full text-tertiary-soft bg-primary-content m-0.5">
+                    <CheckIcon className="w-4 m-0.5" />
+                  </div>
+                  <div className="timeline-end  flex flex-col pt-2">
+                    <p className="text-md font-semibold">Executed</p>
+                    <p className="text-sm text-neutral-soft-content">
+                      {prettyTimestamp(proposalData?.executedAt)}
+                    </p>
+
+                    {!isSignalingType && (
+                      <>
+                        <Statistic
+                          label={"Funded: "}
+                          className="-ml-1 text-neutral-soft-content dark:text-neutral-content"
+                        >
+                          <DisplayNumber
+                            number={formatUnits(
+                              requestedAmount,
+                              poolToken?.decimals ?? 18,
+                            )}
+                            tokenSymbol={poolToken?.symbol}
+                            compact={true}
+                            valueClassName="text-neutral-soft-content dark:text-neutral-content"
+                            symbolClassName="text-neutral-soft-content dark:text-neutral-content"
+                          />
+                        </Statistic>
+                      </>
+                    )}
+                  </div>
+                </li>
+              </ul>
+            )}
             <div>
               <div className="flex flex-col gap-2">
-                {!isSignalingType && (
+                {!isSignalingType && status === "cancelled" && (
                   <>
-                    {status === "executed" ?
-                      <div className="flex items-center gap-2">
-                        <CheckIcon className="w-5 h-5 text-primary-content" />
-                        <p className="text-primary-content subtitle2">
-                          Passed and Executed
-                        </p>
-                      </div>
-                    : status === "cancelled" ?
-                      <div className="flex items-center gap-2">
-                        <XMarkIcon className="w-5 h-5 text-error-content" />
-                        <p className="text-error-content subtitle2">
-                          Cancelled
-                        </p>
-                      </div>
-                    : null}
+                    <div className="flex items-center gap-2">
+                      <XMarkIcon className="w-5 h-5 text-error-content" />
+                      <p className="text-error-content subtitle2">Cancelled</p>
+                    </div>
                   </>
                 )}
                 {status !== "executed" && status !== "cancelled" && (
@@ -588,15 +623,17 @@ export default function ClientPage({ params }: ClientPageProps) {
                     proposalData={proposalDataForActions}
                   />
                 )}
-              <Button
-                onClick={() => setOpenSupportersModal(!openSupportersModal)}
-                btnStyle="outline"
-                color="tertiary"
-                className=""
-                // icon={<ChevronUpIcon className="h-4 w-4" />}
-              >
-                View Supporters
-              </Button>
+              {status !== "executed" && status !== "cancelled" && (
+                <Button
+                  onClick={() => setOpenSupportersModal(!openSupportersModal)}
+                  btnStyle="outline"
+                  color="tertiary"
+                  className=""
+                  // icon={<ChevronUpIcon className="h-4 w-4" />}
+                >
+                  View Supporters
+                </Button>
+              )}
             </div>
           </section>
 
