@@ -189,13 +189,10 @@ export function RegisterMember({
         onClose={() => setIsOpenModal(false)}
         isOpen={isOpenModal}
       />
-      <div className="flex gap-4">
-        <div className="flex items-center justify-center">
-          <Button {...buttonProps} isLoading={isUnregistering}>
-            {isMember ? "Leave" : "Join"}
-          </Button>
-        </div>
-      </div>
+
+      <Button {...buttonProps} isLoading={isUnregistering} className="!w-full">
+        {isMember ? "Leave" : "Join"}
+      </Button>
     </>
   );
 }

@@ -414,7 +414,7 @@ export const IncreasePower = ({
                     <ArrowTrendingUpIcon className="h-5 w-5" />
                   : <ArrowTrendingDownIcon className="h-5 w-5" />
                 }
-                className="w-full"
+                className="!w-full"
                 isLoading={
                   increasePowerStatus === "loading" ||
                   decreaseStatus === "loading"
