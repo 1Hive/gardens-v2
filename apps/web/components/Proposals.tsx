@@ -1080,23 +1080,19 @@ function ProposalFiltersUI({
   const CurrentIcon = currentSortOption?.icon;
 
   return (
-    <div className="flex flex-col lg:flex-row justify-between bg-neutral py-4 px-2 rounded-2xl items-center md:gap-2 lg:gap-8">
+    <div className="flex flex-col lg:flex-row justify-between bg-neutral py-4 px-2 rounded-2xl items-center md:gap-2 lg:gap-4">
       {/* FILTERS */}
-      <div className="flex w-full gap-2 lg:gap-1 sm:justify-between flex-wrap ">
+      <div className="flex w-full gap-2 lg:gap-[4px] sm:justify-between flex-wrap ">
         {FILTERS.map((f) => (
           <Button
-            className={filter === f ? "!cursor-default !bg-soft-primary" : ""}
+            // className={filter === f ? "!cursor-default !bg-soft-primary" : ""}
             onClick={() => setFilter(f)}
+            btnStyle="tab"
             color={filter === f ? "primary" : "disabled"}
             key={f}
           >
             <div className="flex items-baseline gap-1">
-              <span className="capitalize text-sm font-semibold text-neutral-inverted-content">
-                {f}
-              </span>
-              <span className="text-xs font-semibold text-neutral-inverted-content  ">
-                ({counts[f] ?? 0})
-              </span>
+              {f} ({counts[f] ?? 0})
             </div>
           </Button>
         ))}

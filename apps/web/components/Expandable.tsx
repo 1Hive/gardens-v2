@@ -33,7 +33,6 @@ export const ExpandableComponent = ({
   const [needsExpansion, setNeedsExpansion] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
 
-  // Detectar si el contenido es más alto que el preview
   useEffect(() => {
     if (!contentRef.current || !withDescription) return;
 
@@ -44,7 +43,6 @@ export const ExpandableComponent = ({
 
   const showPreview = !expanded && previewHeight && withDescription;
 
-  // Modo descripción: sin header clicable
   if (withDescription) {
     return (
       <div
@@ -70,22 +68,10 @@ export const ExpandableComponent = ({
               style={{ overflow: showPreview ? "hidden" : "visible" }}
             >
               <div ref={contentRef}>{children}</div>
-
-              {/* Gradient fade */}
-              {/* {showPreview && needsExpansion && (
-                <div
-                  className="absolute bottom-0 left-0 right-0 h-8 pointer-events-none"
-                  style={{
-                    background:
-                      "linear-gradient(to bottom, transparent, white 50%)",
-                  }}
-                />
-              )} */}
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Read more button */}
         {showPreview && needsExpansion && (
           <div className="flex items-baseline gap-[2px] -mt-6">
             <span>...</span>
@@ -99,7 +85,6 @@ export const ExpandableComponent = ({
           </div>
         )}
 
-        {/* Show less button */}
         {expanded && needsExpansion && (
           <Button
             onClick={() => setExpanded(false)}
@@ -113,7 +98,6 @@ export const ExpandableComponent = ({
     );
   }
 
-  // Modo normal: con header expandible, SIN botones read more/less
   return (
     <div
       className={`flex flex-col gap-2 ${withLayout ? "section-layout" : ""}`}

@@ -39,7 +39,7 @@ export type Color =
   | "tertiary"
   | "danger"
   | "disabled";
-export type BtnStyle = "filled" | "outline" | "link" | "ghost";
+export type BtnStyle = "filled" | "outline" | "link" | "ghost" | "tab";
 
 type BtnStyles = Record<BtnStyle, Record<Color, string>>;
 
@@ -90,6 +90,15 @@ const btnStyles: BtnStyles = {
       "text-danger-button border border-transparent hover:text-danger-hover-content hover:border-danger-button dark:text-danger-dark-border dark:border-transparent dark:hover:text-danger-dark-border-hover dark:hover:border-danger-dark-border-hover",
     disabled:
       "text-neutral-soft-content border border-transparent opacity-70 hover:opacity-90 dark:text-white/30",
+  },
+  tab: {
+    primary:
+      "cursor-none bg-primary-soft dark:bg-primary capitalize text-primary-button dark:text-primary-content border-[1px] border-primary-button transition-all ease-out duration-200",
+    secondary: "",
+    tertiary: "",
+    danger: "",
+    disabled:
+      "bg-neutral-button text-neutral-inverted-content dark:bg-disabled-dark-button dark:text-disabled-dark-text hover:opacity-80 capitalize",
   },
 };
 
