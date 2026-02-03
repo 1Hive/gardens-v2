@@ -175,6 +175,7 @@ export default function ClientPage({
 
   const [triggerSybilCheckModalClose, setTriggerSybilCheckModalClose] =
     useState(false);
+  const [selectedTab, setSelectedTab] = useState(0);
   //
 
   const { data: memberData, error: errorMemberData } =
@@ -478,19 +479,9 @@ export default function ClientPage({
 
   const isMember = memberData?.member?.memberCommunity?.[0]?.isRegistered;
 
-  return (
-    <>
-      {showMissingFundingTokenWarning && (
-        <div className="col-span-12 mt-4">
-          <InfoBox infoBoxType="warning" title="Funding token unavailable">
-            We could not load the funding token for this pool.
-          </InfoBox>
-        </div>
-      )}
-      {/* ================= DESKTOP ================= */}
-
-      {/*  Join community - Activate governace path and description from pool page */}
-      <div className="col-span-12 xl:col-span-9 sm:flex flex-col-reverse gap-6">
+  const RegisterAndActivateFromPool = () => {
+    return (
+      <>
         {/* Join community box */}
         {!isMemberCommunity && registryCommunity && (
           <div className="border rounded-xl shadow-md border-tertiary-content bg-primary p-6 dark:bg-primary-soft-dark">
@@ -604,6 +595,23 @@ export default function ClientPage({
             </div>
           </div>
         )}
+      </>
+    );
+  };
+
+  return (
+    <>
+      {showMissingFundingTokenWarning && (
+        <div className="col-span-12 mt-4">
+          <InfoBox infoBoxType="warning" title="Funding token unavailable">
+            We could not load the funding token for this pool.
+          </InfoBox>
+        </div>
+      )}
+      {/* ================= DESKTOP ================= */}
+
+      {/*  Join community - Activate governace path and description from pool page */}
+      <div className="hidden col-span-12 xl:col-span-9 sm:flex flex-col gap-6">
         <PoolHeader
           poolToken={poolToken}
           strategy={strategy}
@@ -624,6 +632,7 @@ export default function ClientPage({
           minThGtTotalEffPoints={minThGtTotalEffPoints}
           communityName={communityName ?? ""}
         />
+        <RegisterAndActivateFromPool />
       </div>
 
       {isEnabled && (
@@ -665,54 +674,51 @@ export default function ClientPage({
       )}
 
       {isEnabled && (
-        <Proposals
-          poolToken={poolToken}
-          strategy={{ ...strategy, title: metadata?.title }}
-          alloInfo={alloInfo}
-          communityAddress={communityAddress}
-          createProposalUrl={createProposalUrl}
-          proposalType={proposalType}
-          minThGtTotalEffPoints={minThGtTotalEffPoints}
-        />
+        <section className="hidden col-span-12 xl:col-span-9 sm:flex flex-col gap-4 sm:gap-8">
+          <Proposals
+            poolToken={poolToken}
+            strategy={{ ...strategy, title: metadata?.title }}
+            alloInfo={alloInfo}
+            communityAddress={communityAddress}
+            createProposalUrl={createProposalUrl}
+            proposalType={proposalType}
+            minThGtTotalEffPoints={minThGtTotalEffPoints}
+          />
+        </section>
       )}
 
       {/* ================= MOBILE ================= */}
 
       <div className="block md:hidden col-span-12">
-        <Tab.Group>
+        <Tab.Group selectedIndex={selectedTab} onChange={setSelectedTab}>
           <Tab.List className="flex bg-primary rounded-lg p-1 gap-1 z-10">
-            {["Overview", "Proposals", "Governance", "Settings"].map(
-              (label) => (
-                <Tab
-                  key={label}
-                  className={({ selected }) =>
-                    `
-                    flex-1 bg-neutral text-center font-medium rounded-full px-3 py-2 text-sm transition-all duration-200
-                    ${
-                      selected ?
-                        "bg-primary-button text-neutral shadow"
-                      : "text-base-content/70"
-                    }
-                  `
-                  }
+            {["Overview", "Proposals", "Governance"].map((label, index) => (
+              <Tab key={label} className="tab-reset">
+                <Button
+                  btnStyle="tab"
+                  color={selectedTab === index ? "primary" : "disabled"}
+                  className="w-full"
                 >
                   {label}
-                </Tab>
-              ),
-            )}
+                </Button>
+              </Tab>
+            ))}
           </Tab.List>
           <Tab.Panels className="mt-4">
             <Tab.Panel>
               {isEnabled && (
                 <div className="col-span-12">
                   <>
-                    {poolToken && PoolTypes[proposalType] !== "signaling" && (
-                      <PoolMetrics
-                        communityAddress={communityAddress}
-                        strategy={strategy}
-                        poolId={poolId}
+                    <div className="col-span-12 sm:hidden space-y-6">
+                      <PoolHeader
                         poolToken={poolToken}
-                        chainId={Number(chain)}
+                        strategy={strategy}
+                        arbitrableConfig={data.arbitrableConfigs[0]}
+                        poolId={poolId}
+                        ipfsResult={metadata}
+                        isEnabled={isEnabled}
+                        maxAmount={maxAmount}
+                        superTokenCandidate={superTokenCandidate}
                         superToken={
                           superTokenInfo && {
                             ...superTokenInfo,
@@ -721,8 +727,29 @@ export default function ClientPage({
                             address: effectiveSuperToken as Address,
                           }
                         }
+                        setSuperTokenCandidate={setSuperTokenCandidate}
+                        minThGtTotalEffPoints={minThGtTotalEffPoints}
+                        communityName={communityName ?? ""}
                       />
-                    )}
+                      <RegisterAndActivateFromPool />
+                      {poolToken && PoolTypes[proposalType] !== "signaling" && (
+                        <PoolMetrics
+                          communityAddress={communityAddress}
+                          strategy={strategy}
+                          poolId={poolId}
+                          poolToken={poolToken}
+                          chainId={Number(chain)}
+                          superToken={
+                            superTokenInfo && {
+                              ...superTokenInfo,
+                              sameAsUnderlying:
+                                superTokenCandidate?.sameAsUnderlying,
+                              address: effectiveSuperToken as Address,
+                            }
+                          }
+                        />
+                      )}
+                    </div>
                   </>
                 </div>
               )}
@@ -741,10 +768,20 @@ export default function ClientPage({
               )}
             </Tab.Panel>
             <Tab.Panel>
-              <div>Governance Content</div>
-            </Tab.Panel>
-            <Tab.Panel>
-              <div>Settings Content</div>
+              <PoolGovernance
+                memberPoolWeight={memberPoolWeight}
+                tokenDecimals={tokenDecimals}
+                strategy={strategy}
+                communityAddress={communityAddress}
+                memberTokensInCommunity={memberTokensInCommunity}
+                isMemberCommunity={isMemberCommunity}
+                memberActivatedStrategy={memberActivatedStrategy}
+                membersStrategyData={
+                  membersStrategies ?
+                    { memberStrategies: membersStrategies }
+                  : undefined
+                }
+              />
             </Tab.Panel>
           </Tab.Panels>
         </Tab.Group>

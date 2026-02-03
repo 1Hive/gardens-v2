@@ -711,7 +711,7 @@ export function Proposals({
   return (
     <>
       {/* Proposals section */}
-      <section className="col-span-12 xl:col-span-9 flex flex-col gap-4 sm:gap-8 section-layout">
+      <div className="flex flex-col gap-4 sm:gap-8 section-layout">
         <header
           ref={proposalSectionRef}
           className={`flex gap-6 ${
@@ -935,7 +935,7 @@ export function Proposals({
             </Modal>
           </>
         : <LoadingSpinner />}
-      </section>
+      </div>
     </>
   );
 }
@@ -1085,9 +1085,9 @@ function ProposalFiltersUI({
   const CurrentIcon = currentSortOption?.icon;
 
   return (
-    <div className="flex flex-col lg:flex-row justify-between bg-neutral px-2 rounded-2xl items-center gap-2 lg:gap-4 ">
+    <div className="flex flex-col lg:flex-row justify-between bg-neutral rounded-2xl items-center gap-2 lg:gap-4">
       {/* FILTERS */}
-      <div className="flex w-full gap-2 lg:gap-[4px] sm:justify-between flex-wrap  ">
+      <div className="flex w-full gap-2 lg:gap-[3px] sm:justify-between flex-wrap">
         {FILTERS.map((f) => (
           <Button
             // className={filter === f ? "!cursor-default !bg-soft-primary" : ""}

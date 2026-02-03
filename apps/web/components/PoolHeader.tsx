@@ -29,6 +29,7 @@ import {
 } from "#/subgraph/.graphclient";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
+import { Divider } from "./Diivider";
 import { EthAddress } from "./EthAddress";
 import { ExpandableComponent } from "./Expandable";
 import PoolEditForm from "./Forms/PoolEditForm";
@@ -666,7 +667,7 @@ export default function PoolHeader({
             </ExpandableComponent>
 
             {/* Separetor */}
-            <div className="w-full h-[0.10px] bg-neutral-soft-content opacity-30" />
+            <Divider />
 
             <div className="flex flex-col gap-4">
               {/* Addresses */}
@@ -715,8 +716,7 @@ export default function PoolHeader({
                 </div>
               </div>
 
-              {/* Separetor */}
-              <div className="w-full h-[0.10px] bg-neutral-soft-content opacity-30" />
+              <Divider />
 
               {/* Buttons: disable - edit - archive - create steam token  */}
               <div className="flex flex-col sm:flex-row justify-between items-baseline flex-wrap gap-2">
@@ -869,16 +869,20 @@ export default function PoolHeader({
                   </div>
                 )}
 
-                <div className="block sm:hidden w-full h-[0.10px] my-2 bg-neutral-soft-content opacity-30" />
+                <Divider className="sm:hidden" />
                 {/* Share button dropdown */}
                 <div
-                  className={`z-[9999] ${!!isCouncilMember || isCouncilSafe ? "w-fit" : "w-full flex justify-end"}`}
+                  className={`z-[9999] ${!!isCouncilMember || isCouncilSafe ? "w-full sm:w-fit" : "w-full flex justify-end"}`}
                 >
-                  <div className="z-[9999] dropdown dropdown-hover dropdown-start">
+                  <div
+                    className="z-[9999] dropdown dropdown-hover dropdown-start w-full sm:w-auto
+                  "
+                  >
                     <Button
                       btnStyle="outline"
                       color="primary"
                       icon={<ShareIcon className="w-5 h-5" />}
+                      className="!w-full"
                     >
                       Share
                     </Button>

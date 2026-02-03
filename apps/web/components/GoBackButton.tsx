@@ -29,7 +29,7 @@ export const GoBackButton = () => {
           btnStyle="link"
           color="primary"
           onClick={onBackClicked}
-          className="w-fit !p-0"
+          className="!w-fit !p-0"
           icon={<ArrowLeftIcon className="h-4 w-4" />}
         >
           Back
