@@ -580,3 +580,19 @@ dialog * {
 .modal-action {
   margin-top: 0.5rem;
 }
+
+.tab-reset {
+  flex: 1;
+  outline: none;
+  box-shadow: none;
+}
+
+.tab-reset:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.tab-reset:focus-visible {
+  outline: none;
+  box-shadow: none;
+}

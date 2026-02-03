@@ -74,6 +74,8 @@ export default function ClientPage({ params }: ClientPageProps) {
   const { proposalId, garden, community: communityAddr, poolId } = params;
   const [convictionRefreshing, setConvictionRefreshing] = useState(true);
   const [openSupportersModal, setOpenSupportersModal] = useState(false);
+  const [selectedTab, setSelectedTab] = useState(0);
+
   const router = useRouter();
 
   const { address } = useAccount();
@@ -646,24 +648,18 @@ export default function ClientPage({ params }: ClientPageProps) {
 
       {/* ================= MOBILE ================= */}
       <div className="block md:hidden col-span-12">
-        <Tab.Group>
-          <Tab.List className="flex bg-primary rounded-lg p-1 gap-2 z-10">
+        <Tab.Group selectedIndex={selectedTab} onChange={setSelectedTab}>
+          <Tab.List className="flex bg-primary rounded-lg p-1 gap-2 z-10 flex-wrap">
             {["Overview", "Description", "Status", "Supporters"].map(
-              (label) => (
-                <Tab
-                  key={label}
-                  className={({ selected }) =>
-                    `
-              flex-1 bg-neutral-button text-neutral-inverted-content dark:bg-disabled-dark-button hover:opacity-80 text-center font-medium rounded-lg px-3 py-2 text-sm transition-all duration-200
-              ${
-                selected ?
-                  "bg-primary-button hover:bg-primary-hover-content dark:bg-primary-dark-base dark:hover:bg-primary-dark-hoverbg-primary-content dark:text-neutral-inverted-content"
-                : "text-base-content/70"
-              }
-            `
-                  }
-                >
-                  {label}
+              (label, index) => (
+                <Tab key={label} className="tab-reset">
+                  <Button
+                    btnStyle="tab"
+                    color={selectedTab === index ? "primary" : "disabled"}
+                    className="w-full"
+                  >
+                    {label}
+                  </Button>
                 </Tab>
               ),
             )}
@@ -805,15 +801,15 @@ export default function ClientPage({ params }: ClientPageProps) {
                             writeDistribute?.({
                               args: [
                                 BigInt(poolId),
-                                [proposalData?.strategy.id as Address],
+                                [proposalData?.strategy?.id as Address],
                                 encodedDataProposalId(proposalIdNumber),
                               ],
                             })
                           }
                           disabled={
+                            isExecuteButtonDisabled ||
                             !isConnected ||
                             missmatchUrl ||
-                            convictionPctLessThanSupport ||
                             proposalStatus === "disputed"
                           }
                           tooltip={executeBtnTooltipMessage}
