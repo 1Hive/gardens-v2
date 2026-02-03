@@ -2,13 +2,14 @@ import { useEffect, useState } from "react";
 import {
   ArrowTopRightOnSquareIcon,
   BoltIcon,
-  Battery50Icon,
   CheckIcon,
   ClockIcon,
   ArchiveBoxIcon,
   InformationCircleIcon,
   ArrowPathRoundedSquareIcon,
   ChevronDoubleUpIcon,
+  LinkIcon,
+  ShareIcon,
 } from "@heroicons/react/24/outline";
 import {
   NoSymbolIcon,
@@ -29,6 +30,7 @@ import {
 import { Badge } from "./Badge";
 import { Button } from "./Button";
 import { EthAddress } from "./EthAddress";
+import { ExpandableComponent } from "./Expandable";
 import PoolEditForm from "./Forms/PoolEditForm";
 import { InfoBox } from "./InfoBox";
 import MarkdownWrapper from "./MarkdownWrapper";
@@ -101,6 +103,7 @@ type Props = {
   superTokenCandidate: SuperToken | null;
   setSuperTokenCandidate: (token: SuperToken | null) => void;
   minThGtTotalEffPoints: boolean;
+  communityName: string;
 };
 
 export function calculateConvictionGrowthInSeconds(
@@ -141,6 +144,7 @@ export default function PoolHeader({
   superTokenCandidate,
   setSuperTokenCandidate,
   minThGtTotalEffPoints,
+  communityName,
 }: Props) {
   const [isOpenModal, setIsOpenModal] = useState(false);
   const { publish } = usePubSubContext();
@@ -611,207 +615,304 @@ export default function PoolHeader({
     }
   };
 
+  const handleCopyLink = () => {
+    const url = window.location.href;
+    navigator.clipboard.writeText(url);
+    toast.success("Pool link copied to clipboard!");
+  };
+
+  const handleShareOnX = () => {
+    const poolName = ipfsResult?.title ?? "This pool";
+
+    const pooltype = PoolTypes[proposalType];
+    const text =
+      "Check out " + poolName + ", a " + pooltype + " pool on " + communityName;
+    const url = window.location.href;
+    const xUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+    window.open(xUrl, "_blank", "noopener,noreferrer");
+  };
+
   return (
     <>
       <div
-        className={`col-span-12 ${
+        className={`col-span-12 space-y-6 max-h-fit ${
           isEnabled ? "xl:col-span-9" : "xl:col-span-12"
         }`}
       >
-        <section className="section-layout flex flex-col gap-6">
-          {/* Title - Badge poolType - Addresses and Button(when council memeber is connected) */}
-          <header className="flex flex-col gap-2">
-            <div className="flex justify-between items-center flex-wrap">
+        <section className="section-layout flex flex-col g-6">
+          {/* Title - Badge poolType - Addresses and Buttons -> (when council memeber is connected) */}
+          <header className="flex flex-col gap-4">
+            <div className="flex justify-between items-center flex-wrap gap-4">
               <h2>
                 <Skeleton isLoading={!ipfsResult} className="sm:!w-96 h-8">
                   {ipfsResult?.title}
                 </Skeleton>
               </h2>
-              <div>
+              <div className="flex items-center gap-2">
                 <Badge type={parseInt(proposalType)} />
               </div>
             </div>
-            {(!!isCouncilMember || isCouncilSafe) && (
-              <div className="flex gap-2 flex-wrap">
-                {isArchived ?
-                  <Button
-                    icon={<CheckIcon height={20} width={20} />}
-                    disabled={
-                      !isConnected || missmatchUrl || disableCouncilSafeButtons
-                    }
-                    tooltip={
-                      tooltipMessage ?? "Restore the pool will also enable it."
-                    }
-                    forceShowTooltip={true}
-                    onClick={() => addStrategyByPoolId()}
+
+            {/* Pool Description */}
+            <ExpandableComponent
+              defaultExpanded={false}
+              title="Pool Description"
+              previewHeight={161}
+              withDescription
+            >
+              <Skeleton rows={5} isLoading={!ipfsResult}>
+                <MarkdownWrapper source={ipfsResult?.description ?? ""} />
+              </Skeleton>
+            </ExpandableComponent>
+
+            {/* Separetor */}
+            <div className="w-full h-[0.10px] bg-neutral-soft-content opacity-30" />
+
+            <div className="flex flex-col gap-4">
+              {/* Addresses */}
+              <div className="flex flex-col sm:flex-row items-baseline justify-between">
+                <EthAddress
+                  icon={false}
+                  address={strategy.id as Address}
+                  label="Pool Address:"
+                  textColor="var(--color-grey-800)"
+                />
+                <div className="flex">
+                  <a
+                    href={`https://app.safe.global/transactions/queue?safe=${safePrefix}:${strategy.registryCommunity.councilSafe}`}
+                    className="whitespace-nowrap flex flex-nowrap gap-1 items-center"
+                    target="_blank"
+                    rel="noreferrer"
                   >
-                    Restore
-                  </Button>
-                : isEnabled ?
-                  <>
-                    <Button
-                      icon={<StopIcon height={20} width={20} />}
-                      disabled={
-                        !isConnected ||
-                        missmatchUrl ||
-                        disableCouncilSafeButtons
-                      }
-                      tooltip={
-                        tooltipMessage ??
-                        "Disable pool will pause all interactions with this pool. It is possible to enable it back."
-                      }
-                      forceShowTooltip={true}
-                      onClick={() => removeStrategyByPoolId()}
-                      btnStyle="outline"
-                      color="secondary"
-                    >
-                      Disable
-                    </Button>
-                    <Button
-                      icon={<ArchiveBoxIcon height={20} width={20} />}
-                      disabled={
-                        !isConnected ||
-                        missmatchUrl ||
-                        disableCouncilSafeButtons
-                      }
-                      tooltip={
-                        tooltipMessage ??
-                        "Archive pool will remove it from the list of pools. Need to contact the Gardens team to restore it."
-                      }
-                      forceShowTooltip={true}
-                      onClick={() => rejectPoolWrite()}
-                      btnStyle="outline"
-                      color="danger"
-                    >
-                      Archive
-                    </Button>
-                  </>
-                : <>
-                    <Button
-                      icon={<CheckIcon height={20} width={20} />}
-                      disabled={
-                        !isConnected ||
-                        missmatchUrl ||
-                        disableCouncilSafeButtons
-                      }
-                      tooltip={tooltipMessage ?? "Approve pool to enable it."}
-                      forceShowTooltip={true}
-                      onClick={() => addStrategyByPoolId()}
-                    >
-                      Approve
-                    </Button>
-                    <Button
-                      icon={<NoSymbolIcon height={20} width={20} />}
-                      disabled={
-                        !isConnected ||
-                        missmatchUrl ||
-                        disableCouncilSafeButtons
-                      }
-                      tooltip={
-                        tooltipMessage ??
-                        "Reject pool will remove it from the list. \nNeed to contact the Gardens team to\n restore it."
-                      }
-                      forceShowTooltip={true}
-                      onClick={() => rejectPoolWrite()}
-                      btnStyle="outline"
-                      color="danger"
-                    >
-                      Reject
-                    </Button>
-                  </>
-                }
-                <Button
-                  btnStyle="outline"
-                  icon={<Cog6ToothIcon height={20} width={20} />}
-                  disabled={
-                    !isConnected || missmatchUrl || disableCouncilSafeButtons
-                  }
-                  tooltip={tooltipMessage}
-                  onClick={() => setIsOpenModal(true)}
-                >
-                  Edit
-                </Button>
-                {!superToken &&
-                  PoolTypes[proposalType] !== "signaling" &&
-                  networkSfMetadata?.contractsV1.superTokenFactory && (
-                    <>
+                    Council Safe:
+                    <ArrowTopRightOnSquareIcon width={16} height={16} />:
+                  </a>
+                  <EthAddress
+                    address={strategy.registryCommunity.councilSafe as Address}
+                    shortenAddress={true}
+                    actions="copy"
+                    icon={false}
+                    textColor="var(--color-grey-800)"
+                  />
+                </div>
+                <div className="flex">
+                  <a
+                    href={`https://app.safe.global/transactions/queue?safe=${safePrefix}:${tribunalAddress}`}
+                    className="whitespace-nowrap flex flex-nowrap gap-1 items-center"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Tribunal Safe:
+                    <ArrowTopRightOnSquareIcon width={16} height={16} />:
+                  </a>
+                  <EthAddress
+                    address={tribunalAddress as Address}
+                    shortenAddress={true}
+                    actions="copy"
+                    icon={false}
+                    textColor="var(--color-grey-800)"
+                  />
+                </div>
+              </div>
+
+              {/* Separetor */}
+              <div className="w-full h-[0.10px] bg-neutral-soft-content opacity-30" />
+
+              {/* Buttons: disable - edit - archive - create steam token  */}
+              <div className="flex justify-between items-baseline flex-wrap gap-2">
+                {(!!isCouncilMember || isCouncilSafe) && (
+                  <div className="flex gap-2 flex-wrap mt-2">
+                    {isArchived ?
                       <Button
-                        btnStyle="outline"
-                        color="tertiary"
-                        icon={
-                          <ArrowPathRoundedSquareIcon height={20} width={20} />
-                        }
+                        icon={<CheckIcon height={20} width={20} />}
                         disabled={
                           !isConnected ||
                           missmatchUrl ||
-                          !!(isCouncilMember && superTokenCandidate)
+                          disableCouncilSafeButtons
                         }
                         tooltip={
-                          (isCouncilMember &&
-                            superTokenCandidate &&
-                            // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-                            tooltipMessage) ||
-                          "This allows people to add funds to the pool via streaming (Superfluid)."
+                          tooltipMessage ??
+                          "Restore the pool will also enable it."
                         }
                         forceShowTooltip={true}
-                        onClick={() => handleEnableStreamFunding()}
-                        isLoading={
-                          isEnableStreamFundingLoading ||
-                          isCreateSuperTokenLoading
-                        }
+                        onClick={() => addStrategyByPoolId()}
                       >
-                        {superTokenCandidate ?
-                          "Enable Streaming"
-                        : "Create Stream Token"}
+                        Restore
                       </Button>
-                    </>
-                  )}
-              </div>
-            )}
-            <div className="flex px-1 flex-col sm:flex-row bg-primary py-2 rounded-lg items-baseline justify-between">
-              <EthAddress
-                icon={false}
-                address={strategy.id as Address}
-                label="Pool address"
-                textColor="var(--color-grey-800)"
-              />
-              <div className="flex">
-                <a
-                  href={`https://app.safe.global/transactions/queue?safe=${safePrefix}:${strategy.registryCommunity.councilSafe}`}
-                  className="whitespace-nowrap flex flex-nowrap gap-1 items-center"
-                  target="_blank"
-                  rel="noreferrer"
+                    : isEnabled ?
+                      <>
+                        <Button
+                          icon={<StopIcon height={20} width={20} />}
+                          disabled={
+                            !isConnected ||
+                            missmatchUrl ||
+                            disableCouncilSafeButtons
+                          }
+                          tooltip={
+                            tooltipMessage ??
+                            "Disable pool will pause all interactions with this pool. It is possible to enable it back."
+                          }
+                          forceShowTooltip={true}
+                          onClick={() => removeStrategyByPoolId()}
+                          btnStyle="outline"
+                          color="secondary"
+                        >
+                          Disable
+                        </Button>
+                        <Button
+                          icon={<ArchiveBoxIcon height={20} width={20} />}
+                          disabled={
+                            !isConnected ||
+                            missmatchUrl ||
+                            disableCouncilSafeButtons
+                          }
+                          tooltip={
+                            tooltipMessage ??
+                            "Archive pool will remove it from the list of pools. Need to contact the Gardens team to restore it."
+                          }
+                          forceShowTooltip={true}
+                          onClick={() => rejectPoolWrite()}
+                          btnStyle="outline"
+                          color="danger"
+                        >
+                          Archive
+                        </Button>
+                      </>
+                    : <>
+                        <Button
+                          icon={<CheckIcon height={20} width={20} />}
+                          disabled={
+                            !isConnected ||
+                            missmatchUrl ||
+                            disableCouncilSafeButtons
+                          }
+                          tooltip={
+                            tooltipMessage ?? "Approve pool to enable it."
+                          }
+                          forceShowTooltip={true}
+                          onClick={() => addStrategyByPoolId()}
+                        >
+                          Approve
+                        </Button>
+                        <Button
+                          icon={<NoSymbolIcon height={20} width={20} />}
+                          disabled={
+                            !isConnected ||
+                            missmatchUrl ||
+                            disableCouncilSafeButtons
+                          }
+                          tooltip={
+                            tooltipMessage ??
+                            "Reject pool will remove it from the list. \nNeed to contact the Gardens team to\n restore it."
+                          }
+                          forceShowTooltip={true}
+                          onClick={() => rejectPoolWrite()}
+                          btnStyle="outline"
+                          color="danger"
+                        >
+                          Reject
+                        </Button>
+                      </>
+                    }
+                    <Button
+                      btnStyle="outline"
+                      icon={<Cog6ToothIcon height={20} width={20} />}
+                      disabled={
+                        !isConnected ||
+                        missmatchUrl ||
+                        disableCouncilSafeButtons
+                      }
+                      tooltip={tooltipMessage}
+                      onClick={() => setIsOpenModal(true)}
+                    >
+                      Edit
+                    </Button>
+                    {!superToken &&
+                      PoolTypes[proposalType] !== "signaling" &&
+                      networkSfMetadata?.contractsV1.superTokenFactory && (
+                        <>
+                          <Button
+                            btnStyle="outline"
+                            color="tertiary"
+                            icon={
+                              <ArrowPathRoundedSquareIcon
+                                height={20}
+                                width={20}
+                              />
+                            }
+                            disabled={
+                              !isConnected ||
+                              missmatchUrl ||
+                              !!(isCouncilMember && superTokenCandidate)
+                            }
+                            tooltip={
+                              (isCouncilMember &&
+                                superTokenCandidate &&
+                                // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+                                tooltipMessage) ||
+                              "This allows people to add funds to the pool via streaming (Superfluid)."
+                            }
+                            forceShowTooltip={true}
+                            onClick={() => handleEnableStreamFunding()}
+                            isLoading={
+                              isEnableStreamFundingLoading ||
+                              isCreateSuperTokenLoading
+                            }
+                          >
+                            {superTokenCandidate ?
+                              "Enable Streaming"
+                            : "Create Stream Token"}
+                          </Button>
+                        </>
+                      )}
+                  </div>
+                )}
+
+                {/* Share button dropdown */}
+                <div
+                  className={`z-[9999] ${!!isCouncilMember || isCouncilSafe ? "w-fit" : "w-full flex justify-end"}`}
                 >
-                  Council safe
-                  <ArrowTopRightOnSquareIcon width={16} height={16} />:
-                </a>
-                <EthAddress
-                  address={strategy.registryCommunity.councilSafe as Address}
-                  shortenAddress={true}
-                  actions="copy"
-                  icon={false}
-                  textColor="var(--color-grey-800)"
-                />
-              </div>
-              <div className="flex">
-                <a
-                  href={`https://app.safe.global/transactions/queue?safe=${safePrefix}:${tribunalAddress}`}
-                  className="whitespace-nowrap flex flex-nowrap gap-1 items-center"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Tribunal safe
-                  <ArrowTopRightOnSquareIcon width={16} height={16} />:
-                </a>
-                <EthAddress
-                  address={tribunalAddress as Address}
-                  shortenAddress={true}
-                  actions="copy"
-                  icon={false}
-                  textColor="var(--color-grey-800)"
-                />
+                  <div className="z-[9999] dropdown dropdown-hover dropdown-start">
+                    <Button
+                      btnStyle="outline"
+                      color="primary"
+                      icon={<ShareIcon className="w-5 h-5" />}
+                      className="absolute"
+                    >
+                      Share
+                    </Button>
+
+                    <ul className="dropdown-content dropdown-close menu bg-primary rounded-box w-[200px] p-2 shadow fixed z-[9999] left-0 top-full mt-2">
+                      <li>
+                        <Button
+                          type="submit"
+                          btnStyle="ghost"
+                          color="primary"
+                          icon={<LinkIcon className="w-5 h-5" />}
+                          className="w-full mt-1 xl:!justify-start"
+                          onClick={handleCopyLink}
+                        >
+                          Copy Link
+                        </Button>
+                      </li>
+                      <li>
+                        <Button
+                          type="submit"
+                          btnStyle="ghost"
+                          color="primary"
+                          icon={<XIcon className="w-5 h-5" />}
+                          className="w-full mt-1 xl:!justify-start z-50"
+                          onClick={handleShareOnX}
+                        >
+                          Share on X
+                        </Button>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
               </div>
             </div>
+
             <Modal
               title={`Edit ${ipfsResult?.title} #${poolId}`}
               isOpen={isOpenModal}
@@ -843,59 +944,7 @@ export default function PoolHeader({
             </Modal>
           </header>
 
-          {/* Description */}
-          <Skeleton rows={5} isLoading={!ipfsResult}>
-            <MarkdownWrapper source={ipfsResult?.description ?? ""} />
-          </Skeleton>
-
-          {/* Pool Params */}
-          <h4>Pool Settings:</h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-            {filteredPoolConfig.map((config) => (
-              <div
-                key={config.label}
-                className="flex items-center gap-4 bg-primary px-2 py-4 rounded-lg"
-              >
-                <Statistic
-                  label={config.label}
-                  icon={
-                    <InformationCircleIcon
-                      className="stroke-2 text-primary-content"
-                      width={22}
-                      height={22}
-                    />
-                  }
-                  tooltip={config.info}
-                >
-                  <p className="subtitle">{config.value}</p>
-                </Statistic>
-              </div>
-            ))}
-          </div>
-
-          {/* Voting weight + Dispute Address */}
-          <div className="flex flex-col sm:flex-row items-start justify-between gap-2 flex-wrap">
-            <div className="flex flex-col gap-2 sm:flex-row items-start sm:items-center">
-              <h4>Voting System:</h4>
-              <div className="flex gap-2 items-center">
-                <Badge
-                  color="info"
-                  label="conviction voting"
-                  icon={<Battery50Icon />}
-                />
-                <Badge
-                  color="info"
-                  label={PointSystems[pointSystem]}
-                  tooltip={
-                    VOTING_POINT_SYSTEM_DESCRIPTION[PointSystems[pointSystem]]
-                  }
-                  icon={<BoltIcon />}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* InfoBox - Banner or Image */}
+          {/* InfoBox - Banner when pool is not-enabled or Archived */}
           {minThGtTotalEffPoints && isEnabled && (
             <InfoBox
               title="Min threshold"
@@ -917,7 +966,44 @@ export default function PoolHeader({
             </div>
           )}
         </section>
+
+        {/* Pool Settings */}
+        <ExpandableComponent title="Pool Settings" withLayout>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+            {filteredPoolConfig.map((config) => (
+              <div
+                key={config.label}
+                className="flex items-center justify-between gap-4 bg-primary p-3 rounded-xl "
+              >
+                <Statistic
+                  label={config.label}
+                  icon={
+                    <InformationCircleIcon
+                      className="stroke-2 text-primary-content"
+                      width={22}
+                      height={22}
+                    />
+                  }
+                  tooltip={config.info}
+                  className=" w-full"
+                >
+                  <p className="subtitle ">{config.value}</p>
+                </Statistic>
+              </div>
+            ))}
+          </div>
+        </ExpandableComponent>
       </div>
     </>
   );
 }
+
+const XIcon = ({ ...props }: React.SVGProps<SVGSVGElement>) => {
+  return (
+    <svg fill="currentColor" viewBox="0 0 24 24" {...props}>
+      <path d="M13.6823 10.6218L20.2391 3H18.6854L12.9921 9.61788L8.44486 3H3.2002L10.0765 13.0074L3.2002 21H4.75404L10.7663 14.0113L15.5685 21H20.8131L13.6819 10.6218H13.6823ZM11.5541 13.0956L10.8574 12.0991L5.31391 4.16971H7.70053L12.1742 10.5689L12.8709 11.5655L18.6861 19.8835H16.2995L11.5541 13.096V13.0956Z" />
+    </svg>
+  );
+};
+
+// information box remove ort change - bg in dark

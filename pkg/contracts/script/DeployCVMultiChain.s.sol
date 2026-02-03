@@ -7,27 +7,28 @@ import "forge-std/StdJson.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "@openzeppelin/contracts/utils/Strings.sol";
-import "../src/CVStrategy/CVStrategyV0_0.sol";
+import "../src/CVStrategy/CVStrategy.sol";
 import {SafeArbitrator} from "../src/SafeArbitrator.sol";
 import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import {Allo} from "allo-v2-contracts/core/Allo.sol";
 import {IRegistry} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 import {Registry} from "allo-v2-contracts/core/Registry.sol";
 import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
-import {CVStrategyHelpers, CVStrategyV0_0} from "../test/CVStrategyHelpers.sol";
+import {CVStrategyHelpers, CVStrategy} from "../test/CVStrategyHelpers.sol";
 import {GV2ERC20} from "./GV2ERC20.sol";
 import {SafeSetup} from "../test/shared/SafeSetup.sol";
 import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
 import {Accounts} from "allo-v2-test/foundry/shared/Accounts.sol";
 
-import {RegistryFactoryV0_0} from "../src/RegistryFactory/RegistryFactoryV0_0.sol";
+import {RegistryFactory} from "../src/RegistryFactory/RegistryFactory.sol";
 
-import {
-    RegistryCommunityV0_0,
-    RegistryCommunityInitializeParamsV0_0
-} from "../src/RegistryCommunity/RegistryCommunityV0_0.sol";
+import {RegistryCommunity, RegistryCommunityInitializeParams} from "../src/RegistryCommunity/RegistryCommunity.sol";
+import {RegistryCommunityDiamondInit} from "../src/RegistryCommunity/RegistryCommunityDiamondInit.sol";
+import {CVStrategyDiamondInit} from "../src/CVStrategy/CVStrategyDiamondInit.sol";
 import {ISafe as Safe, SafeProxyFactory, Enum} from "../src/interfaces/ISafe.sol";
 import {CollateralVault} from "../src/CollateralVault.sol";
+import {CommunityDiamondConfigurator} from "../test/helpers/CommunityDiamondConfigurator.sol";
+import {StrategyDiamondConfigurator} from "../test/helpers/StrategyDiamondConfigurator.sol";
 // import {SafeProxyFactory} from "safe-smart-account/contracts/proxies/SafeProxyFactory.sol";
 import {Upgrades} from "@openzeppelin/foundry/LegacyUpgrades.sol";
 
@@ -54,7 +55,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
     address BENEFICIARY = 0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD;
 
     address public PROXY_OWNER;
-    RegistryFactoryV0_0 public REGISTRY_FACTORY; // = RegistryFactoryV0_0(0xd7b72Fcb6A4e2857685175F609D1498ff5392E46);
+    RegistryFactory public REGISTRY_FACTORY; // = RegistryFactory(0xd7b72Fcb6A4e2857685175F609D1498ff5392E46);
     PassportScorer PASSPORT_SCORER;
     SafeArbitrator ARBITRATOR;
 
@@ -180,23 +181,35 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
         console2.log("Arbitrator Addr: %s", address(ARBITRATOR));
 
         if (address(REGISTRY_FACTORY) == address(0)) {
-            // REGISTRY_FACTORY = RegistryFactoryV0_0(json.readAddress(getKeyNetwork(".PROXIES.REGISTRY_FACTORY")));
+            // REGISTRY_FACTORY = RegistryFactory(json.readAddress(getKeyNetwork(".PROXIES.REGISTRY_FACTORY")));
             if (address(REGISTRY_FACTORY) == address(0)) {
                 proxy = new ERC1967Proxy(
-                    address(new RegistryFactoryV0_0()),
+                    address(new RegistryFactory()),
                     abi.encodeWithSelector(
-                        RegistryFactoryV0_0.initialize.selector,
+                        RegistryFactory.initialize.selector,
                         address(PROXY_OWNER),
                         address(SENDER),
-                        address(new RegistryCommunityV0_0()),
-                        address(new CVStrategyV0_0()),
+                        address(new RegistryCommunity()),
+                        address(new CVStrategy()),
                         address(new CollateralVault())
                     )
                 );
-                REGISTRY_FACTORY = RegistryFactoryV0_0(address(proxy));
+                REGISTRY_FACTORY = RegistryFactory(address(proxy));
             }
         }
         console2.log("Registry Factory Addr: %s", address(REGISTRY_FACTORY));
+
+        CommunityDiamondConfigurator communityDiamondConfigurator = new CommunityDiamondConfigurator();
+        StrategyDiamondConfigurator diamondConfigurator = new StrategyDiamondConfigurator();
+        try REGISTRY_FACTORY.initializeV2(
+            communityDiamondConfigurator.getFacetCuts(),
+            address(communityDiamondConfigurator.diamondInit()),
+            abi.encodeCall(RegistryCommunityDiamondInit.init, ()),
+            diamondConfigurator.getFacetCuts(),
+            address(diamondConfigurator.diamondInit()),
+            abi.encodeCall(CVStrategyDiamondInit.init, ())
+        ) {}
+            catch {}
 
         assertTrue(REGISTRY_FACTORY.registryCommunityTemplate() != address(0x0), "Registry Community Template not set");
         assertTrue(REGISTRY_FACTORY.collateralVaultTemplate() != address(0x0), "Collateral Vault Template not set");
@@ -220,7 +233,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
             assertTrue(token != GV2ERC20(address(0)));
             assertTrue(TOKEN != address(0));
 
-            RegistryCommunityInitializeParamsV0_0 memory params;
+            RegistryCommunityInitializeParams memory params;
 
             metadata = Metadata({protocol: 1, pointer: "QmX5jPva6koRnn88s7ZcPnNXKg1UzmYaZu9h15d8kzH1CN"});
             params._metadata = metadata; // convenant ipfs
@@ -236,7 +249,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
 
             assertTrue(params._councilSafe != address(0));
 
-            RegistryCommunityV0_0 registryCommunity = RegistryCommunityV0_0(REGISTRY_FACTORY.createRegistry(params));
+            RegistryCommunity registryCommunity = RegistryCommunity(REGISTRY_FACTORY.createRegistry(params));
 
             // PointSystemConfig memory pointConfig;
             // pointConfig.maxAmount = MINIMUM_STAKE * 2;
@@ -268,9 +281,9 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
             //     address(0), paramsCV, Metadata({protocol: 1, pointer: "QmReQ5dwWgVZTMKkJ4EWHSM6MBmKN21PQN45YtRRAUHiLG"})
             // );
 
-            // CVStrategyV0_0 strategy2 = CVStrategyV0_0(payable(_strategy2));
+            // CVStrategy strategy2 = CVStrategy(payable(_strategy2));
 
-            // CVStrategyV0_0 strategy1 = CVStrategyV0_0(payable(_strategy1));
+            // CVStrategy strategy1 = CVStrategy(payable(_strategy1));
 
             // if (isNoSafe()) {
             //     registryCommunity.addStrategy(_strategy1);

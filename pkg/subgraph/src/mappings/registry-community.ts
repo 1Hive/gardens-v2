@@ -1,7 +1,7 @@
 import {
-  CVStrategyV0_0 as CVStrategyTemplate,
+  CVStrategy as CVStrategyTemplate,
   PoolMetadata as PoolMetadataTemplate,
-  Covenant as CovenantTemplate,
+  Covenant as CovenantTemplate
 } from "../../generated/templates";
 import {
   Member,
@@ -11,13 +11,13 @@ import {
   Allo,
   CVStrategy,
   CVStrategyConfig,
-  MemberStrategy,
+  MemberStrategy
 } from "../../generated/schema";
 
 import { BigInt, dataSource, log } from "@graphprotocol/graph-ts";
 import {
   RegistryInitialized,
-  RegistryCommunityV0_0 as RegistryCommunityContract,
+  RegistryCommunity as RegistryCommunityContract,
   MemberRegistered,
   MemberActivatedStrategy,
   StrategyAdded,
@@ -39,13 +39,13 @@ import {
   KickEnabledUpdated,
   PoolRejected,
   CommunityArchived
-} from "../../generated/templates/RegistryCommunityV0_0/RegistryCommunityV0_0";
+} from "../../generated/templates/RegistryCommunity/RegistryCommunity";
 
-import { RegistryFactoryV0_0 as RegistryFactoryContract } from "../../generated/RegistryFactoryV0_0/RegistryFactoryV0_0";
+import { RegistryFactory as RegistryFactoryContract } from "../../generated/RegistryFactory/RegistryFactory";
 
-import { CVStrategyV0_0 as CVStrategyContract } from "../../generated/templates/CVStrategyV0_0/CVStrategyV0_0";
+import { CVStrategy as CVStrategyContract } from "../../generated/templates/CVStrategy/CVStrategy";
 
-import { ERC20 as ERC20Contract } from "../../generated/templates/RegistryCommunityV0_0/ERC20";
+import { ERC20 as ERC20Contract } from "../../generated/templates/RegistryCommunity/ERC20";
 import { CTX_CHAIN_ID, CTX_FACTORY_ADDRESS } from "./registry-factory";
 
 const TOKEN_NATIVE = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
@@ -122,6 +122,7 @@ export function handleInitialized(event: RegistryInitialized): void {
     tg.save();
     newRC.garden = tg.id;
     newRC.archived = false;
+    newRC.membersCount = BigInt.fromI32(0);
 
     newRC.save();
 
@@ -184,6 +185,17 @@ export function handleMemberRegisteredWithCovenant(
   newMemberCommunity.isRegistered = true;
   newMemberCommunity.covenantSignature = event.params._covenantSig;
   newMemberCommunity.save();
+
+  // handle community members count
+  let communityEntity = RegistryCommunity.load(community);
+  if (communityEntity == null) {
+    log.error("RegistryCommunity: Community not found: {}", [community]);
+    return;
+  }
+  communityEntity.membersCount = communityEntity.membersCount.plus(
+    BigInt.fromI32(1)
+  );
+  communityEntity.save();
 }
 
 export function handleMemberRegistered(event: MemberRegistered): void {
@@ -231,6 +243,18 @@ export function handleMemberRegistered(event: MemberRegistered): void {
 
   newMemberCommunity.isRegistered = true;
   newMemberCommunity.save();
+
+  // handle community members count
+  let communityEntity = RegistryCommunity.load(community);
+  if (communityEntity == null) {
+    log.error("RegistryCommunity: Community not found: {}", [community]);
+    return;
+  }
+
+  communityEntity.membersCount = communityEntity.membersCount.plus(
+    BigInt.fromI32(1)
+  );
+  communityEntity.save();
 }
 
 //handleMemberUnregistered
@@ -251,6 +275,20 @@ export function handleMemberUnregistered(event: MemberRegistered): void {
   memberCommunity.stakedTokens = BigInt.fromI32(0);
 
   memberCommunity.save();
+
+  // handle community members count
+  let communityEntity = RegistryCommunity.load(event.address.toHexString());
+  if (communityEntity == null) {
+    log.error("RegistryCommunity: Community not found: {}", [
+      event.address.toHexString()
+    ]);
+    return;
+  }
+
+  communityEntity.membersCount = communityEntity.membersCount.minus(
+    BigInt.fromI32(1)
+  );
+  communityEntity.save();
 }
 
 // handleMemberKicked
@@ -276,6 +314,20 @@ export function handleMemberKicked(event: MemberKicked): void {
   memberCommunity.isRegistered = false;
   memberCommunity.stakedTokens = BigInt.fromI32(0);
   memberCommunity.save();
+
+  // handle community members count
+  let communityEntity = RegistryCommunity.load(event.address.toHexString());
+  if (communityEntity == null) {
+    log.error("RegistryCommunity: Community not found: {}", [
+      event.address.toHexString()
+    ]);
+    return;
+  }
+
+  communityEntity.membersCount = communityEntity.membersCount.minus(
+    BigInt.fromI32(1)
+  );
+  communityEntity.save();
 }
 
 // handleStrategyAdded

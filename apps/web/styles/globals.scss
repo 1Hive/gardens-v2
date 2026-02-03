@@ -132,7 +132,7 @@ h5,
 h6,
 .subtitle2 {
   font-family: var(--font-inter);
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 500;
   line-height: 20px;
   text-align: left;
@@ -185,7 +185,7 @@ caption {
 }
 
 .section-layout {
-  @apply border1 relative rounded-lg bg-neutral p-6;
+  @apply border1 relative rounded-xl bg-neutral p-6 shadow-md;
 }
 
 .page-layout {
@@ -519,6 +519,7 @@ dialog * {
 }
 
 .mdxeditor-toolbar {
+  background: transparent !important;
   button {
     cursor: pointer;
   }
@@ -537,10 +538,6 @@ dialog * {
   ._selectTrigger_1e2ox_308 {
     background-color: var(--baseBase);
     color: var(--color-text);
-  }
-
-  ._placeholder_1e2ox_1106 p {
-    color: #9f9f9f;
   }
 
   .cm-editor {
@@ -574,5 +571,12 @@ dialog * {
     left: 0;
     line-height: var(--line-height-md, 1.75rem);
     margin-top: 0;
+    p {
+      color: #9f9f9f;
+    }
   }
+}
+
+.modal-action {
+  margin-top: 0.5rem;
 }

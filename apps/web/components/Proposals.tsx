@@ -88,6 +88,7 @@ type Stats = {
   stat: number | undefined;
   className: string;
   info: string;
+  symbol: string;
 };
 
 interface ProposalsProps {
@@ -208,7 +209,7 @@ export function Proposals({
   const { data: memberPower } = useContractRead({
     address: communityAddress,
     abi: registryCommunityABI,
-    functionName: "getMemberPowerInStrategy",
+    functionName: "memberPowerInStrategy",
     args: [wallet as Address, strategy.id as Address],
     chainId: chainId,
     enabled: !!wallet,
@@ -220,29 +221,28 @@ export function Proposals({
   const memberActivatedStrategy =
     memberStrategyData?.memberStrategy?.activatedPoints > 0n;
 
-  // const [sortedProposals, setSortedProposals] = useState(strategy.proposals);
+  const [sortedProposals, setSortedProposals] = useState(strategy.proposals);
 
-  // useEffect(() => {
-  //   const sorted = [...strategy.proposals].sort((a, b) => {
-  //     const aConviction =
-  //       proposalCardRefs.current.get(a.id)?.getProposalConviction()
-  //         ?.conviction ?? 0n;
+  useEffect(() => {
+    const sorted = [...strategy.proposals].sort((a, b) => {
+      const aConviction =
+        proposalCardRefs.current.get(a.id)?.getProposalConviction()
+          ?.conviction ?? 0n;
 
-  //     const bConviction =
-  //       proposalCardRefs.current.get(b.id)?.getProposalConviction()
-  //         ?.conviction ?? 0n;
+      const bConviction =
+        proposalCardRefs.current.get(b.id)?.getProposalConviction()
+          ?.conviction ?? 0n;
 
-  //     return (
-  //       aConviction < bConviction ? 1
-  //       : aConviction > bConviction ? -1
-  //       : 0
-  //     );
-  //   });
+      return (
+        aConviction < bConviction ? 1
+        : aConviction > bConviction ? -1
+        : 0
+      );
+    });
 
-  //   setSortedProposals(sorted);
-  // }, []);
+    setSortedProposals(sorted);
+  }, [strategy.proposals]);
 
-  const proposals = strategy.proposals;
   // Effects
   useEffect(() => {
     if (error) {
@@ -365,11 +365,11 @@ export function Proposals({
   }, [proposalSectionRef.current, searchParams]);
 
   useEffect(() => {
-    if (proposals == null) return;
+    if (sortedProposals == null) return;
 
     const newInputs: { [key: string]: ProposalInputItem } = {};
 
-    proposals.forEach(({ id, proposalNumber, proposalStatus }) => {
+    sortedProposals.forEach(({ id, proposalNumber, proposalStatus }) => {
       const proposalEnded =
         ProposalStatus[proposalStatus] !== "active" &&
         ProposalStatus[proposalStatus] !== "disputed";
@@ -397,13 +397,13 @@ export function Proposals({
         fromStake: stakedFilters[input.proposalId]?.value.toString() ?? "0",
         status:
           ProposalStatus[
-            proposals.find((p) => p.id === input.proposalId)?.proposalStatus ??
-              0
+            sortedProposals.find((p) => p.id === input.proposalId)
+              ?.proposalStatus ?? 0
           ],
       }));
       console.info("[Proposals][InitialInputs]", snapshot);
     }
-  }, [proposals, stakedFilters]);
+  }, [sortedProposals, stakedFilters]);
 
   const getProposalsInputsDifferences = (
     inputData: { [key: string]: ProposalInputItem },
@@ -560,7 +560,8 @@ export function Proposals({
       name: "Your voting power",
       stat: memberPoolWeight,
       className: poolWeightClassName,
-      info: "Indicates the amount of voting power you hold within this pool.",
+      info: "Your total Voting Power (VP) in this pool, out of 100. VP represents how much support you can allocate to proposals.",
+      symbol: "VP",
     },
     {
       id: 2,
@@ -571,7 +572,8 @@ export function Proposals({
           "bg-secondary-content text-secondary-soft border-secondary-content"
         : "bg-primary-content text-primary-soft border-primary-content"
       }`,
-      info: "Shows the percentage of your voting power currently allocated to support proposals.",
+      info: "The percentage of your Voting Power currently allocated as support across proposals.",
+      symbol: "%",
     },
   ];
 
@@ -581,9 +583,9 @@ export function Proposals({
       "Proposal ID",
       "Proposal Name",
       "Support",
-      "Support %",
+      "Support VP",
       "Conviction",
-      "Conviction %",
+      "Conviction VP",
       "Threshold",
       "Recipient Address",
     ];
@@ -609,29 +611,28 @@ export function Proposals({
       0n,
     );
 
-    let rows = activeOrDisputedProposals.map((proposal) => {
-      const proposalNumber = proposal.proposalNumber;
+    let rows = activeOrDisputedProposals.map((p) => {
+      const proposalNumber = p.proposalNumber;
       const proposalTitle = `"${
-        proposal.metadata?.title?.replace(/"/g, '""') ?? "Untitled"
+        p.metadata?.title?.replace(/"/g, '""') ?? "Untitled"
       }"`; // Escape quotes in title
-      const beneficiary = proposal.beneficiary;
-      const support = formatUnits(proposal.stakedAmount, tokenDecimals);
+      const beneficiary = p.beneficiary;
+      const support = formatUnits(p.stakedAmount, tokenDecimals);
       const supportPercent =
         totalSupport > 0 ?
-          ((proposalConvictionMap[proposal.id]?.support || 0) / totalSupport) *
-            100 +
-          "%"
-        : "0%";
+          ((proposalConvictionMap[p.id]?.support || 0) / totalSupport) * 100 +
+          "VP"
+        : "0 VP";
       const conviction = formatUnits(
-        proposalConvictionMap[proposal.id]?.conviction || 0n,
+        proposalConvictionMap[p.id]?.conviction || 0n,
         tokenDecimals,
       );
       const convictionPercent =
         calculatePercentageBigInt(
-          proposalConvictionMap[proposal.id]?.conviction || 0n,
+          proposalConvictionMap[p.id]?.conviction || 0n,
           totalConviction,
-        ) + "%";
-      const threshold = proposalConvictionMap[proposal.id]?.threshold || 0;
+        ) + "VP";
+      const threshold = proposalConvictionMap[p.id]?.threshold || 0;
       return [
         proposalNumber,
         proposalTitle,
@@ -669,7 +670,7 @@ export function Proposals({
     URL.revokeObjectURL(url);
   };
 
-  const activeOrDisputedProposals = proposals.filter(
+  const activeOrDisputedProposals = sortedProposals.filter(
     (x) =>
       ProposalStatus[x.proposalStatus] === "active" ||
       ProposalStatus[x.proposalStatus] === "disputed",
@@ -686,10 +687,10 @@ export function Proposals({
   };
 
   const proposalsCountByStatus = {
-    all: proposals.length,
+    all: sortedProposals.length,
     ...Object.values(STATUS_LABELS).reduce(
       (acc, statusName) => {
-        acc[statusName] = proposals.filter(
+        acc[statusName] = sortedProposals.filter(
           (p) => STATUS_LABELS[Number(p.proposalStatus)] === statusName,
         ).length;
         return acc;
@@ -704,16 +705,16 @@ export function Proposals({
     sortBy: sortBy,
     setSortBy: setSortBy,
     filtered: filteredAndSorted,
-  } = useProposalFilter(proposals);
+  } = useProposalFilter(sortedProposals);
 
   return (
     <>
       {/* Proposals section */}
-      <section className="col-span-12 xl:col-span-9 flex flex-col gap-10">
+      <section className="col-span-12 xl:col-span-9 flex flex-col gap-6 section-layout">
         <header
           ref={proposalSectionRef}
           className={`flex gap-6 ${
-            proposals.length === 0 ?
+            sortedProposals.length === 0 ?
               "flex-col items-start justify-start"
             : "items-center justify-between"
           }`}
@@ -721,7 +722,7 @@ export function Proposals({
           <h3 className="text-left">Proposals</h3>
 
           {strategy.isEnabled &&
-            (proposals.length === 0 ?
+            (sortedProposals.length === 0 ?
               <div className="section-layout text-center py-12  w-full flex flex-col items-center justify-center">
                 <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-4">
                   <HandRaisedIcon className="w-8 h-8 text-neutral-soft-content" />
@@ -739,13 +740,13 @@ export function Proposals({
                     }
                     tooltip={tooltipMessage}
                   >
-                    Add a proposal
+                    Add New Proposal
                   </Button>
                 </Link>
               </div>
             : !allocationView && (
                 <>
-                  <div className="flex items-center justify-center gap-2">
+                  <div className="flex items-center justify-center gap-2 ">
                     {/* Manage Support */}
                     {activeOrDisputedProposals.length > 0 &&
                       proposalCardRefs.current.size ===
@@ -761,6 +762,25 @@ export function Proposals({
                           Export
                         </Button>
                       )}
+
+                    {strategy.isEnabled && filteredAndSorted.length > 0 && (
+                      <Link
+                        href={createProposalUrl}
+                        className="flex items-center justify-center"
+                      >
+                        <Button
+                          btnStyle="filled"
+                          icon={<PlusIcon height={24} width={24} />}
+                          disabled={
+                            !isConnected || missmatchUrl || !isMemberCommunity
+                          }
+                          tooltip={tooltipMessage}
+                        >
+                          Add New Proposal
+                        </Button>
+                      </Link>
+                    )}
+
                     <div
                       onMouseLeave={() => setShowManageSupportTooltip(false)}
                     >
@@ -791,7 +811,7 @@ export function Proposals({
               ))}
         </header>
 
-        {strategy.isEnabled && proposals.length > 0 && (
+        {strategy.isEnabled && sortedProposals.length > 0 && (
           <ProposalFiltersUI
             filter={filter}
             setFilter={setFilter}
@@ -802,23 +822,7 @@ export function Proposals({
           />
         )}
 
-        {strategy.isEnabled && proposals.length > 0 && (
-          <Link
-            href={createProposalUrl}
-            className="flex items-center justify-center"
-          >
-            <Button
-              btnStyle="filled"
-              icon={<PlusIcon height={24} width={24} />}
-              disabled={!isConnected || missmatchUrl || !isMemberCommunity}
-              tooltip={tooltipMessage}
-            >
-              Add a proposal
-            </Button>
-          </Link>
-        )}
-
-        {proposals.length !== 0 && filteredAndSorted.length === 0 ?
+        {sortedProposals.length !== 0 && filteredAndSorted.length === 0 ?
           <div className="section-layout flex flex-col items-center justify-center text-center">
             <p className="text-neutral-soft-content text-sm">
               There are no proposals matching this filter.
@@ -866,7 +870,7 @@ export function Proposals({
                   <div className="section-layout flex flex-col items-center justify-center text-center">
                     <p className="text-neutral-soft-content text-sm">
                       There are currently no active or disputed proposals to
-                      support.
+                      vote.
                     </p>
                   </div>
                 )}
@@ -900,7 +904,7 @@ export function Proposals({
 
                 {strategy.isEnabled &&
                   allocationView &&
-                  proposals.length > 0 && (
+                  sortedProposals.length > 0 && (
                     <>
                       <div className="flex justify-end gap-4">
                         <Button
@@ -916,7 +920,7 @@ export function Proposals({
                           tooltip="Make changes in proposals support first"
                           tooltipSide="tooltip-left"
                         >
-                          Submit your support
+                          Submit your vote
                         </Button>
                       </div>
                       <div />
@@ -1061,7 +1065,7 @@ function ProposalFiltersUI({
       { key: "mostConviction", label: "Most Conviction", icon: Battery50Icon },
       {
         key: "mostRequested",
-        label: "Highest Requested Amount",
+        label: "Highest Requested",
         icon: CurrencyDollarIcon,
       },
     ];
@@ -1076,23 +1080,19 @@ function ProposalFiltersUI({
   const CurrentIcon = currentSortOption?.icon;
 
   return (
-    <div className="flex flex-col lg:flex-row justify-between bg-neutral py-4 px-2 rounded-2xl items-center md:gap-2 lg:gap-8">
+    <div className="flex flex-col lg:flex-row justify-between bg-neutral py-4 px-2 rounded-2xl items-center md:gap-2 lg:gap-4">
       {/* FILTERS */}
-      <div className="flex w-full gap-2 lg:gap-1 sm:justify-between flex-wrap ">
+      <div className="flex w-full gap-2 lg:gap-[4px] sm:justify-between flex-wrap ">
         {FILTERS.map((f) => (
           <Button
-            className={filter === f ? "!cursor-default !bg-soft-primary" : ""}
+            // className={filter === f ? "!cursor-default !bg-soft-primary" : ""}
             onClick={() => setFilter(f)}
+            btnStyle="tab"
             color={filter === f ? "primary" : "disabled"}
             key={f}
           >
             <div className="flex items-baseline gap-1">
-              <span className="capitalize text-sm font-semibold text-neutral-inverted-content">
-                {f}
-              </span>
-              <span className="text-xs font-semibold text-neutral-inverted-content  ">
-                ({counts[f] ?? 0})
-              </span>
+              {f} ({counts[f] ?? 0})
             </div>
           </Button>
         ))}
@@ -1110,13 +1110,13 @@ function ProposalFiltersUI({
         <div className="dropdown dropdown-hover dropdown-start  w-full relative group">
           <button
             tabIndex={0}
-            className="text-primary-content text-sm flex gap-2 items-center w-full lg:w-[255px] px-3.5 py-2 bg-primary-soft dark:bg-primary rounded-lg"
+            className="text-primary-content text-sm flex gap-2 items-center w-full lg:w-[215px] px-3.5 py-2 bg-primary-soft dark:bg-primary rounded-lg"
           >
             {CurrentIcon && <CurrentIcon className="w-4 h-4" />}
             {currentSortOption?.label}
           </button>
 
-          <ul className="dropdown-content menu bg-primary rounded-md z-50 shadow w-full lg:w-[255px]">
+          <ul className="dropdown-content menu bg-primary rounded-md z-50 shadow w-full lg:w-[215px]">
             {SORT_OPTIONS.map((option) => {
               const Icon = option.icon;
 
@@ -1161,7 +1161,9 @@ function UserAllocationStats({ stats }: { stats: Stats[] }) {
             }}
             role="progressbar"
           >
-            <span className="text-xs dark:text-black">{stat.stat} %</span>
+            <span className="text-xs dark:text-black">
+              {stat.stat} {stat.symbol}
+            </span>
           </div>
           <div className="flex flex-col items-start justify-center">
             <InfoWrapper tooltip={stat.info}>
@@ -1169,7 +1171,9 @@ function UserAllocationStats({ stats }: { stats: Stats[] }) {
                 <TooltipIfOverflow>{stat.name}</TooltipIfOverflow>
               </h4>
             </InfoWrapper>
-            <p className="text-xl font-semibold text-right">{stat.stat} %</p>
+            <p className="text-xl font-semibold text-right">
+              {stat.stat} {stat.symbol}
+            </p>
           </div>
         </div>
       ))}

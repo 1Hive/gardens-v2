@@ -2,115 +2,199 @@
 pragma solidity ^0.8.0;
 
 import "./BaseMultiChain.s.sol";
-import {CVStrategyV0_0} from "../src/CVStrategy/CVStrategyV0_0.sol";
-import {RegistryCommunityV0_0} from "../src/RegistryCommunity/RegistryCommunityV0_0.sol";
-import {RegistryFactoryV0_0} from "../src/RegistryFactory/RegistryFactoryV0_0.sol";
+import {CVStrategy} from "../src/CVStrategy/CVStrategy.sol";
+import {CVAdminFacet} from "../src/CVStrategy/facets/CVAdminFacet.sol";
+import {CVAllocationFacet} from "../src/CVStrategy/facets/CVAllocationFacet.sol";
+import {CVDisputeFacet} from "../src/CVStrategy/facets/CVDisputeFacet.sol";
+import {CVPowerFacet} from "../src/CVStrategy/facets/CVPowerFacet.sol";
+import {CVProposalFacet} from "../src/CVStrategy/facets/CVProposalFacet.sol";
+import {CVStrategyDiamondInit} from "../src/CVStrategy/CVStrategyDiamondInit.sol";
+import {RegistryCommunity} from "../src/RegistryCommunity/RegistryCommunity.sol";
+import {CommunityAdminFacet} from "../src/RegistryCommunity/facets/CommunityAdminFacet.sol";
+import {CommunityMemberFacet} from "../src/RegistryCommunity/facets/CommunityMemberFacet.sol";
+import {CommunityPoolFacet} from "../src/RegistryCommunity/facets/CommunityPoolFacet.sol";
+import {CommunityPowerFacet} from "../src/RegistryCommunity/facets/CommunityPowerFacet.sol";
+import {CommunityStrategyFacet} from "../src/RegistryCommunity/facets/CommunityStrategyFacet.sol";
+import {RegistryCommunityDiamondInit} from "../src/RegistryCommunity/RegistryCommunityDiamondInit.sol";
+import {RegistryFactory} from "../src/RegistryFactory/RegistryFactory.sol";
 import {ICVStrategy} from "../src/CVStrategy/ICVStrategy.sol";
 import {ProxyOwner} from "../src/ProxyOwner.sol";
+import {DiamondLoupeFacet} from "../src/diamonds/facets/DiamondLoupeFacet.sol";
+import {IDiamond} from "../src/diamonds/interfaces/IDiamond.sol";
+import {IDiamondLoupe} from "../src/diamonds/interfaces/IDiamondLoupe.sol";
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import {StrategyDiamondConfiguratorBase} from "../test/helpers/StrategyDiamondConfigurator.sol";
+import {CommunityDiamondConfiguratorBase} from "../test/helpers/CommunityDiamondConfigurator.sol";
 
-contract UpgradeCVMultichainProd is BaseMultiChain {
+contract UpgradeCVMultichainProd is BaseMultiChain, StrategyDiamondConfiguratorBase, CommunityDiamondConfiguratorBase {
     using stdJson for string;
 
-    function runCurrentNetwork(string memory networkJson) public override {
-        // address registryFactoryImplementation = address(new RegistryFactoryV0_0());
-        address registryImplementation = address(new RegistryCommunityV0_0());
-        address strategyImplementation = address(new CVStrategyV0_0());
-        // address passportScorer = networkJson.readAddress(getKeyNetwork(".ENVS.PASSPORT_SCORER"));
-        address safeArbitrator = networkJson.readAddress(getKeyNetwork(".ENVS.ARBITRATOR"));
-        address proxyOwner = networkJson.readAddress(getKeyNetwork(".ENVS.PROXY_OWNER"));
-        address safeOwner = ProxyOwner(proxyOwner).owner();
+    struct JsonWriter {
+        string path;
+        bool hasEntries;
+    }
 
-        string memory json = string(abi.encodePacked("["));
+    struct FacetCuts {
+        IDiamond.FacetCut[] cvCuts;
+        IDiamond.FacetCut[] communityCuts;
+    }
+
+    struct UpgradeContext {
+        address registryFactoryImplementation;
+        address registryImplementation;
+        address strategyImplementation;
+        address registryFactoryProxy;
+        address safeOwner;
+        IDiamond.FacetCut[] cvCuts;
+        IDiamond.FacetCut[] communityCuts;
+        IDiamond.FacetCut[] upgradedCommunityCuts;
+        JsonWriter writer;
+    }
+
+    function runCurrentNetwork(string memory networkJson) public override {
+        UpgradeContext memory context;
+        context.registryFactoryImplementation = address(new RegistryFactory());
+        context.registryImplementation = address(new RegistryCommunity());
+        context.strategyImplementation = address(new CVStrategy());
+        // address passportScorer = networkJson.readAddress(getKeyNetwork(".ENVS.PASSPORT_SCORER"));
+        address proxyOwner = networkJson.readAddress(getKeyNetwork(".ENVS.PROXY_OWNER"));
+        context.safeOwner = ProxyOwner(proxyOwner).owner();
+
+        FacetCuts memory facetCuts = _buildFacetCuts();
+        context.cvCuts = facetCuts.cvCuts;
+        context.communityCuts = facetCuts.communityCuts;
+        context.upgradedCommunityCuts = _buildUpgradedCommunityFacetCuts();
+
+        context.writer = _initPayloadWriter(context.safeOwner, networkJson);
 
         // 1. REGISTRY FACTORY UPGRADE
-        address registryFactoryProxy = networkJson.readAddress(getKeyNetwork(".PROXIES.REGISTRY_FACTORY"));
-        {
-            RegistryFactoryV0_0 registryFactory = RegistryFactoryV0_0(payable(address(registryFactoryProxy)));
-
-            // 1.a -- Upgrade the Registry Factory --
-            // {
-            //     bytes memory upgradeRegistryFactory =
-            //         abi.encodeWithSelector(registryFactory.upgradeTo.selector, registryFactoryImplementation);
-            //     json = string(
-            //         abi.encodePacked(json, _createTransactionJson(registryFactoryProxy, upgradeRegistryFactory), ",")
-            //     );
-            // }
-
-            // 1.b -- Set the Registry Community Template --
-            // {
-            //     bytes memory setRegistryCommunityTemplate = abi.encodeWithSelector(
-            //         registryFactory.setRegistryCommunityTemplate.selector, registryImplementation
-            //     );
-            //     json = string(
-            //         abi.encodePacked(
-            //             json, _createTransactionJson(registryFactoryProxy, setRegistryCommunityTemplate), ","
-            //         )
-            //     );
-            // }
-
-            // 1.c -- Set the Strategy Template --
-            {
-                bytes memory setStrategyTemplate =
-                    abi.encodeWithSelector(registryFactory.setStrategyTemplate.selector, strategyImplementation);
-                json = string(
-                    abi.encodePacked(json, _createTransactionJson(registryFactoryProxy, setStrategyTemplate), ",")
-                );
-            }
-        }
+        context.registryFactoryProxy = networkJson.readAddress(getKeyNetwork(".PROXIES.REGISTRY_FACTORY"));
+        context = _writeRegistryFactoryUpgrades(context);
 
         // 2. REGISTRY COMMUNITIES UPGRADES
-        {
-            address[] memory registryCommunityProxies =
-                networkJson.readAddressArray(getKeyNetwork(".PROXIES.REGISTRY_COMMUNITIES"));
-            bytes[] memory registryTransactions = new bytes[](registryCommunityProxies.length * 2);
-            for (uint256 i = 0; i < registryCommunityProxies.length; i++) {
-                (registryTransactions[i * 2], registryTransactions[i * 2 + 1]) = _upgradeRegistryCommunity(
-                    registryCommunityProxies[i], registryImplementation, strategyImplementation
-                );
-            }
-            for (uint256 i = 0; i < registryCommunityProxies.length; i++) {
-                // 2.a -- Upgrade the Registry Community --
-                // json = string(
-                //     abi.encodePacked(
-                //         json, _createTransactionJson(registryCommunityProxies[i], registryTransactions[i * 2]), ","
-                //     )
-                // );
-                // 2.b -- Set the Strategy Template --
-                json = string(
-                    abi.encodePacked(
-                        json, _createTransactionJson(registryCommunityProxies[i], registryTransactions[i * 2 + 1]), ","
-                    )
-                );
-            }
-        }
+        context = _writeCommunityUpgrades(context, networkJson);
 
         // 3. CV STRATEGIES UPGRADES
-        {
-            address[] memory cvStrategyProxies = networkJson.readAddressArray(getKeyNetwork(".PROXIES.CV_STRATEGIES"));
-            bytes[] memory upgradeCVStrategies = new bytes[](cvStrategyProxies.length);
-            bytes[] memory initStategies = new bytes[](cvStrategyProxies.length);
-            bytes[] memory setPoolParams = new bytes[](cvStrategyProxies.length);
-            for (uint256 i = 0; i < cvStrategyProxies.length; i++) {
-                (upgradeCVStrategies[i], initStategies[i], setPoolParams[i]) =
-                    _upgradeCVStrategy(cvStrategyProxies[i], strategyImplementation, safeArbitrator);
-            }
-            for (uint256 i = 0; i < cvStrategyProxies.length; i++) {
-                // 3.a -- Upgrade the CV Strategy --
-                json = string(
-                    abi.encodePacked(json, _createTransactionJson(cvStrategyProxies[i], upgradeCVStrategies[i]), ",")
+        context = _writeStrategyUpgrades(context, networkJson);
+
+        _finalizePayload(context.writer, context.safeOwner, context.registryFactoryProxy, networkJson);
+    }
+
+    function _writeRegistryFactoryUpgrades(UpgradeContext memory context)
+        internal
+        returns (UpgradeContext memory)
+    {
+        RegistryFactory registryFactory = RegistryFactory(payable(address(context.registryFactoryProxy)));
+
+        bytes memory upgradeRegistryFactory = abi.encodeWithSelector(
+            registryFactory.upgradeTo.selector, context.registryFactoryImplementation
+        );
+        context.writer = _appendTransaction(
+            context.writer, _createTransactionJson(context.registryFactoryProxy, upgradeRegistryFactory)
+        );
+
+        bytes memory setCommunityFacets = abi.encodeWithSelector(
+            registryFactory.setCommunityFacets.selector,
+            context.communityCuts,
+            address(new RegistryCommunityDiamondInit()),
+            abi.encodeCall(RegistryCommunityDiamondInit.init, ())
+        );
+        context.writer = _appendTransaction(
+            context.writer, _createTransactionJson(context.registryFactoryProxy, setCommunityFacets)
+        );
+        bytes memory setStrategyFacets = abi.encodeWithSelector(
+            registryFactory.setStrategyFacets.selector,
+            context.cvCuts,
+            address(new CVStrategyDiamondInit()),
+            abi.encodeCall(CVStrategyDiamondInit.init, ())
+        );
+        context.writer = _appendTransaction(
+            context.writer, _createTransactionJson(context.registryFactoryProxy, setStrategyFacets)
+        );
+
+        bytes memory setRegistryCommunityTemplate = abi.encodeWithSelector(
+            registryFactory.setRegistryCommunityTemplate.selector, context.registryImplementation
+        );
+        context.writer = _appendTransaction(
+            context.writer, _createTransactionJson(context.registryFactoryProxy, setRegistryCommunityTemplate)
+        );
+
+        bytes memory setStrategyTemplate = abi.encodeWithSelector(
+            registryFactory.setStrategyTemplate.selector, context.strategyImplementation
+        );
+        context.writer = _appendTransaction(
+            context.writer, _createTransactionJson(context.registryFactoryProxy, setStrategyTemplate)
+        );
+
+        return context;
+    }
+
+    function _writeCommunityUpgrades(UpgradeContext memory context, string memory networkJson)
+        internal
+        returns (UpgradeContext memory)
+    {
+        address[] memory registryCommunityProxies =
+            networkJson.readAddressArray(getKeyNetwork(".PROXIES.REGISTRY_COMMUNITIES"));
+        bytes[] memory registryTransactions = new bytes[](registryCommunityProxies.length * 3);
+        for (uint256 i = 0; i < registryCommunityProxies.length; i++) {
+            (registryTransactions[i * 3], registryTransactions[i * 3 + 1], registryTransactions[i * 3 + 2]) =
+                _upgradeRegistryCommunity(
+                    registryCommunityProxies[i],
+                    context.registryImplementation,
+                    context.strategyImplementation,
+                    context.cvCuts
                 );
-
-                // 3.b -- Init the Strategy --
-                // json =
-                //     string(abi.encodePacked(json, _createTransactionJson(cvStrategyProxies[i], initStategies[i]), ","));
-
-                // 3.c -- Set the Pool Params --
-                // json =
-                //     string(abi.encodePacked(json, _createTransactionJson(cvStrategyProxies[i], setPoolParams[i]), ","));
+        }
+        for (uint256 i = 0; i < registryCommunityProxies.length; i++) {
+            context.writer = _appendTransaction(
+                context.writer, _createTransactionJson(registryCommunityProxies[i], registryTransactions[i * 3])
+            );
+            context.writer = _appendTransaction(
+                context.writer, _createTransactionJson(registryCommunityProxies[i], registryTransactions[i * 3 + 1])
+            );
+            context.writer = _appendTransaction(
+                context.writer, _createTransactionJson(registryCommunityProxies[i], registryTransactions[i * 3 + 2])
+            );
+            if (context.upgradedCommunityCuts.length > 0) {
+                bytes memory communityDiamondCut = abi.encodeWithSelector(
+                    RegistryCommunity.diamondCut.selector,
+                    context.upgradedCommunityCuts,
+                    address(new RegistryCommunityDiamondInit()),
+                    abi.encodeCall(RegistryCommunityDiamondInit.init, ())
+                );
+                context.writer = _appendTransaction(
+                    context.writer, _createTransactionJson(registryCommunityProxies[i], communityDiamondCut)
+                );
             }
         }
 
-        // Console log how many factory / registry / strategy has been upgraded in 3 lines
+        return context;
+    }
+
+    function _writeStrategyUpgrades(UpgradeContext memory context, string memory networkJson)
+        internal
+        returns (UpgradeContext memory)
+    {
+        address[] memory cvStrategyProxies = networkJson.readAddressArray(getKeyNetwork(".PROXIES.CV_STRATEGIES"));
+        bytes[] memory upgradeCVStrategies = new bytes[](cvStrategyProxies.length);
+        for (uint256 i = 0; i < cvStrategyProxies.length; i++) {
+            upgradeCVStrategies[i] = _upgradeCVStrategy(cvStrategyProxies[i], context.strategyImplementation);
+        }
+        for (uint256 i = 0; i < cvStrategyProxies.length; i++) {
+            context.writer = _appendTransaction(
+                context.writer, _createTransactionJson(cvStrategyProxies[i], upgradeCVStrategies[i])
+            );
+        }
+
+        return context;
+    }
+
+    function _finalizePayload(
+        JsonWriter memory writer,
+        address safeOwner,
+        address registryFactoryProxy,
+        string memory networkJson
+    ) internal {
         console2.log("Upgraded Registry Factory: %s", registryFactoryProxy);
         console2.log(
             "Upgraded Registry Communities: %s",
@@ -120,17 +204,165 @@ contract UpgradeCVMultichainProd is BaseMultiChain {
             "Upgraded CV Strategies: %s", networkJson.readAddressArray(getKeyNetwork(".PROXIES.CV_STRATEGIES")).length
         );
 
-        // Remove the last comma and close the JSON array
-        json = string(abi.encodePacked(_removeLastChar(json), "]"));
+        _finalizePayloadWriter(writer);
+        console2.log("Wrote %s", writer.path);
+    }
 
-        // ensure folder exists
+    function _removeLastChar(string memory input) internal pure returns (string memory) {
+        bytes memory inputBytes = bytes(input);
+        require(inputBytes.length > 0, "String is empty");
+        // Create a new bytes array with one less length
+        bytes memory trimmedBytes = new bytes(inputBytes.length - 1);
+        for (uint256 i = 0; i < inputBytes.length - 1; i++) {
+            trimmedBytes[i] = inputBytes[i];
+        }
+        return string(trimmedBytes);
+    }
+
+    function _upgradeRegistryCommunity(
+        address registryProxy,
+        address registryImplementation,
+        address strategyImplementation,
+        IDiamond.FacetCut[] memory cvCuts
+    ) internal returns (bytes memory, bytes memory, bytes memory) {
+        RegistryCommunity registryCommunity = RegistryCommunity(payable(registryProxy));
+        bytes memory upgradeRegistryCommunity =
+            abi.encodeWithSelector(registryCommunity.upgradeTo.selector, registryImplementation);
+        bytes memory setStrategyTemplateCommunity =
+            abi.encodeWithSelector(registryCommunity.setStrategyTemplate.selector, strategyImplementation);
+        bytes memory setStrategyFacets = abi.encodeWithSelector(
+            registryCommunity.setStrategyFacets.selector,
+            cvCuts,
+            address(new CVStrategyDiamondInit()),
+            abi.encodeCall(CVStrategyDiamondInit.init, ())
+        );
+
+        return (upgradeRegistryCommunity, setStrategyTemplateCommunity, setStrategyFacets);
+    }
+
+    function _upgradeCVStrategy(address _cvStrategyProxy, address _strategyImplementation)
+        internal
+        view
+        returns (bytes memory)
+    {
+        CVStrategy cvStrategy = CVStrategy(payable(_cvStrategyProxy));
+        return abi.encodeWithSelector(cvStrategy.upgradeTo.selector, _strategyImplementation);
+    }
+
+    function _buildUpgradedCommunityFacetCuts() internal returns (IDiamond.FacetCut[] memory cuts) {
+        CommunityPoolFacet communityPoolFacet = new CommunityPoolFacet();
+        bytes4[] memory poolSelectors = new bytes4[](2);
+        poolSelectors[0] = bytes4(
+            keccak256(
+                "createPool(address,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address,uint256,address[],address),(uint256,string))"
+            )
+        );
+        poolSelectors[1] = bytes4(
+            keccak256(
+                "createPool(address,address,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address,uint256,address[],address),(uint256,string))"
+            )
+        );
+        cuts = new IDiamond.FacetCut[](1);
+        cuts[0] = IDiamond.FacetCut({
+            facetAddress: address(communityPoolFacet),
+            action: IDiamond.FacetCutAction.Auto,
+            functionSelectors: poolSelectors
+        });
+    }
+
+    function _buildUpgradedStrategyFacetCuts() internal returns (IDiamond.FacetCut[] memory cuts) {
+        cuts = new IDiamond.FacetCut[](0);
+    }
+
+    function _buildFacetCuts() internal returns (FacetCuts memory cuts) {
+        CVAdminFacet cvAdminFacet = new CVAdminFacet();
+        CVAllocationFacet cvAllocationFacet = new CVAllocationFacet();
+        CVDisputeFacet cvDisputeFacet = new CVDisputeFacet();
+        CVPowerFacet cvPowerFacet = new CVPowerFacet();
+        CVProposalFacet cvProposalFacet = new CVProposalFacet();
+
+        CommunityAdminFacet communityAdminFacet = new CommunityAdminFacet();
+        CommunityMemberFacet communityMemberFacet = new CommunityMemberFacet();
+        CommunityPoolFacet communityPoolFacet = new CommunityPoolFacet();
+        CommunityPowerFacet communityPowerFacet = new CommunityPowerFacet();
+        CommunityStrategyFacet communityStrategyFacet = new CommunityStrategyFacet();
+
+        DiamondLoupeFacet loupeFacet = new DiamondLoupeFacet();
+
+        cuts.cvCuts = _buildCVFacetCuts(
+            cvAdminFacet, cvAllocationFacet, cvDisputeFacet, cvPowerFacet, cvProposalFacet, loupeFacet
+        );
+        cuts.communityCuts = _buildCommunityFacetCuts(
+            communityAdminFacet,
+            communityMemberFacet,
+            communityPoolFacet,
+            communityPowerFacet,
+            communityStrategyFacet,
+            loupeFacet
+        );
+    }
+
+    function _buildCVFacetCuts(
+        CVAdminFacet cvAdminFacet,
+        CVAllocationFacet cvAllocationFacet,
+        CVDisputeFacet cvDisputeFacet,
+        CVPowerFacet cvPowerFacet,
+        CVProposalFacet cvProposalFacet,
+        DiamondLoupeFacet loupeFacet
+    ) internal pure returns (IDiamond.FacetCut[] memory cuts) {
+        IDiamond.FacetCut[] memory baseCuts =
+            _buildFacetCuts(cvAdminFacet, cvAllocationFacet, cvDisputeFacet, cvPowerFacet, cvProposalFacet);
+        cuts = new IDiamond.FacetCut[](6);
+        cuts[0] = _buildLoupeFacetCut(loupeFacet);
+        for (uint256 i = 0; i < 5; i++) {
+            cuts[i + 1] = baseCuts[i];
+        }
+    }
+
+    function _buildCommunityFacetCuts(
+        CommunityAdminFacet communityAdminFacet,
+        CommunityMemberFacet communityMemberFacet,
+        CommunityPoolFacet communityPoolFacet,
+        CommunityPowerFacet communityPowerFacet,
+        CommunityStrategyFacet communityStrategyFacet,
+        DiamondLoupeFacet loupeFacet
+    ) internal pure returns (IDiamond.FacetCut[] memory cuts) {
+        IDiamond.FacetCut[] memory baseCuts = CommunityDiamondConfiguratorBase._buildFacetCuts(
+            communityAdminFacet, communityMemberFacet, communityPoolFacet, communityPowerFacet, communityStrategyFacet
+        );
+        cuts = new IDiamond.FacetCut[](6);
+        cuts[0] = _buildLoupeFacetCut(loupeFacet);
+        for (uint256 i = 0; i < 5; i++) {
+            cuts[i + 1] = baseCuts[i];
+        }
+    }
+
+    function _buildLoupeFacetCut(DiamondLoupeFacet _loupeFacet)
+        internal
+        pure
+        override(StrategyDiamondConfiguratorBase, CommunityDiamondConfiguratorBase)
+        returns (IDiamond.FacetCut memory)
+    {
+        bytes4[] memory loupeSelectors = new bytes4[](5);
+        loupeSelectors[0] = IDiamondLoupe.facets.selector;
+        loupeSelectors[1] = IDiamondLoupe.facetFunctionSelectors.selector;
+        loupeSelectors[2] = IDiamondLoupe.facetAddresses.selector;
+        loupeSelectors[3] = IDiamondLoupe.facetAddress.selector;
+        loupeSelectors[4] = IERC165.supportsInterface.selector;
+        return IDiamond.FacetCut({
+            facetAddress: address(_loupeFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: loupeSelectors
+        });
+    }
+
+    function _initPayloadWriter(address safeOwner, string memory networkJson)
+        internal
+        returns (JsonWriter memory writer)
+    {
         vm.createDir("transaction-builder", true);
-        // write file at ./transaction-builder/arbitrum-payload.json
-        string memory path =
-            string.concat(vm.projectRoot(), "/pkg/contracts/transaction-builder/", CURRENT_NETWORK, "-payload.json");
-        // [read the file and compare hash first]
-
-        string memory payload = string.concat(
+        writer.path = string.concat(
+            vm.projectRoot(), "/pkg/contracts/transaction-builder/", CURRENT_NETWORK, "-payload.json"
+        );
+        string memory payloadHeader = string.concat(
             "{",
             '"version":"1.0",',
             '"chainId":"',
@@ -152,87 +384,23 @@ contract UpgradeCVMultichainProd is BaseMultiChain {
             '"hash":"',
             networkJson.readString(getKeyNetwork(".hash")),
             '"},',
-            '"transactions":',
-            json,
-            "}"
+            '"transactions":['
         );
-
-        vm.writeFile(path, payload);
-
-        console2.log("Wrote %s", path);
-        console2.log(payload);
+        vm.writeFile(writer.path, payloadHeader);
     }
 
-    function _removeLastChar(string memory input) internal pure returns (string memory) {
-        bytes memory inputBytes = bytes(input);
-        require(inputBytes.length > 0, "String is empty");
-        // Create a new bytes array with one less length
-        bytes memory trimmedBytes = new bytes(inputBytes.length - 1);
-        for (uint256 i = 0; i < inputBytes.length - 1; i++) {
-            trimmedBytes[i] = inputBytes[i];
-        }
-        return string(trimmedBytes);
-    }
-
-    function _upgradeRegistryCommunity(
-        address registryProxy,
-        address registryImplementation,
-        address strategyImplementation
-    ) internal pure returns (bytes memory, bytes memory) {
-        RegistryCommunityV0_0 registryCommunity = RegistryCommunityV0_0(payable(registryProxy));
-        bytes memory upgradeRegistryCommunity =
-            abi.encodeWithSelector(registryCommunity.upgradeTo.selector, registryImplementation);
-        bytes memory setStrategyTemplateCommunity =
-            abi.encodeWithSelector(registryCommunity.setStrategyTemplate.selector, strategyImplementation);
-
-        return (upgradeRegistryCommunity, setStrategyTemplateCommunity);
-    }
-
-    function _upgradeCVStrategy(address _cvStrategyProxy, address _strategyImplementation, address _safeArbitrator)
-        // address passportScorer
+    function _appendTransaction(JsonWriter memory writer, string memory transactionJson)
         internal
-        view
-        returns (bytes memory, bytes memory, bytes memory)
+        returns (JsonWriter memory)
     {
-        CVStrategyV0_0 cvStrategy = CVStrategyV0_0(payable(_cvStrategyProxy));
-        bytes memory upgradeCVStrategy = abi.encodeWithSelector(cvStrategy.upgradeTo.selector, _strategyImplementation);
-        bytes memory initStrategy = abi.encodeWithSelector(CVStrategyV0_0.init.selector);
-        // address oldPassport = address(cvStrategy.sybilScorer());
-        // bytes memory setSybilScorer = "";
-        // if (oldPassport != address(0)) {
-        //     (uint256 threshold,,) = PassportScorer(oldPassport).strategies(cvStrategyProxy);
-        //     setSybilScorer = abi.encodeWithSelector(cvStrategy.setSybilScorer.selector, passportScorer, threshold);
-        // }
-        ArbitrableConfig memory arbitrableConfig;
-        {
-            (
-                IArbitrator safeArbitrator,
-                address tribunalSafe,
-                uint256 submitterCollateralAmount,
-                uint256 challengerCollateralAmount,
-                uint256 defaultRuling,
-                uint256 defaultRulingTimeout
-            ) = cvStrategy.arbitrableConfigs(cvStrategy.currentArbitrableConfigVersion());
-            arbitrableConfig = ArbitrableConfig(
-                safeArbitrator,
-                tribunalSafe,
-                submitterCollateralAmount,
-                challengerCollateralAmount,
-                defaultRuling,
-                defaultRulingTimeout
-            );
-        }
-        CVParams memory cvParams;
-        {
-            (uint256 maxRatio, uint256 weight, uint256 decay, uint256 minThresholdPoints) = cvStrategy.cvParams();
-            // Take current decay that its based on block time 3.8 sec and rescale it for block time 2 secs
-            // uint256 newDecay = DecayRescale.rescale(decay(), 38e17 / 1e18, /*3.8*/ 2); // or pass (38,2) if you use integers
-            // cvParams = CVParams(maxRatio, weight, newDecay, minThresholdPoints);
-        }
-        bytes memory setPoolParams =
-            abi.encodeWithSelector(ICVStrategy.setPoolParams.selector, arbitrableConfig, cvParams);
+        string memory entry = writer.hasEntries ? string.concat(",", transactionJson) : transactionJson;
+        vm.writeLine(writer.path, entry);
+        writer.hasEntries = true;
+        return writer;
+    }
 
-        return (upgradeCVStrategy, initStrategy, setPoolParams);
+    function _finalizePayloadWriter(JsonWriter memory writer) internal {
+        vm.writeLine(writer.path, "]}");
     }
 
     function _createTransactionJson(address to, bytes memory data) internal pure returns (string memory) {

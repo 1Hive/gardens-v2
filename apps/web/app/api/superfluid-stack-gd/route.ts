@@ -137,7 +137,7 @@ const safeStringify = (value: unknown) => {
       typeof val === "bigint" ? val.toString() : val,
     );
   } catch (err) {
-    console.warn("[superfluid-stack] safeStringify failed", err);
+    console.warn("[superfluid-points] safeStringify failed", err);
     return "[]";
   }
 };
@@ -149,7 +149,7 @@ const normalizeForPinata = <T>(payload: T): T => {
       ),
     );
   } catch (error) {
-    console.warn("[superfluid-stack] normalizeForPinata failed", error);
+    console.warn("[superfluid-points] normalizeForPinata failed", error);
     return payload;
   }
 };
@@ -232,10 +232,10 @@ const ensureNotionDataSourceId = async (): Promise<string | null> => {
       notionDataSourceId = dsId;
       return notionDataSourceId;
     }
-    console.error("[superfluid-stack] No data_sources found on database");
+    console.error("[superfluid-points] No data_sources found on database");
     return null;
   } catch (err) {
-    console.error("[superfluid-stack] failed to retrieve Notion database", {
+    console.error("[superfluid-points] failed to retrieve Notion database", {
       err,
     });
     return null;
@@ -263,12 +263,12 @@ const ensureNotionChecksumProperty = async (): Promise<boolean> => {
     });
     notionChecksumEnsured = true;
     console.log(
-      "[superfluid-stack] added Checksum property to Notion database",
+      "[superfluid-points] added Checksum property to Notion database",
       { databaseId: NOTION_DB_ID_NORMALIZED },
     );
     return true;
   } catch (error) {
-    console.error("[superfluid-stack] failed to ensure Checksum property", {
+    console.error("[superfluid-points] failed to ensure Checksum property", {
       error,
     });
     return false;
@@ -282,7 +282,7 @@ const notionQueryDb = async (
   try {
     const dataSourceId = await ensureNotionDataSourceId();
     if (!dataSourceId) throw new Error("No Notion data_source_id available");
-    console.log("[superfluid-stack] notion query", {
+    console.log("[superfluid-points] notion query", {
       dataSource: dataSourceId,
       body,
     });
@@ -296,7 +296,7 @@ const notionQueryDb = async (
     const status = (error as any)?.status ?? (error as any)?.statusCode;
     const bodyText = (error as any)?.body;
     const requestId = (error as any)?.request_id ?? (error as any)?.requestId;
-    console.error("[superfluid-stack] notion query failed", {
+    console.error("[superfluid-points] notion query failed", {
       code,
       status,
       message,
@@ -310,7 +310,7 @@ const notionQueryDb = async (
     });
     if (String(code) === "invalid_request_url") {
       console.error(
-        "[superfluid-stack] Disabling Notion sync due to invalid_request_url",
+        "[superfluid-points] Disabling Notion sync due to invalid_request_url",
       );
       notionDisabled = true;
     }
@@ -337,7 +337,7 @@ const upsertNotionWallet = async ({
   const checksumReady = await ensureNotionChecksumProperty();
   if (!checksumReady) {
     console.warn(
-      "[superfluid-stack] skipping Notion upsert because Checksum column is missing and could not be created",
+      "[superfluid-points] skipping Notion upsert because Checksum column is missing and could not be created",
     );
     return false;
   }
@@ -361,7 +361,7 @@ const upsertNotionWallet = async ({
   } as Record<string, any>;
 
   try {
-    console.log("[superfluid-stack] notion upsert lookup", {
+    console.log("[superfluid-points] notion upsert lookup", {
       address: normalized,
     });
     let pageId: string | null = null;
@@ -380,7 +380,7 @@ const upsertNotionWallet = async ({
         pageId = existingResult.results[0].id;
       }
     } catch (err) {
-      console.warn("[superfluid-stack] notion lookup failed, will create", {
+      console.warn("[superfluid-points] notion lookup failed, will create", {
         address: normalized,
         err,
       });
@@ -392,7 +392,7 @@ const upsertNotionWallet = async ({
       if (existingChecksum === checksum) {
         return true; // no changes needed
       }
-      console.log("[superfluid-stack] notion updating page", {
+      console.log("[superfluid-points] notion updating page", {
         pageId,
         address: normalized,
         props,
@@ -406,7 +406,7 @@ const upsertNotionWallet = async ({
       if (!dataSourceId) {
         throw new Error("No Notion data_source_id available for create");
       }
-      console.log("[superfluid-stack] notion creating page", {
+      console.log("[superfluid-points] notion creating page", {
         address: normalized,
         props,
       });
@@ -427,16 +427,16 @@ const upsertNotionWallet = async ({
       message.includes("could not find database") ||
       String(code) === "invalid_request_url"
     ) {
-      console.error("[superfluid-stack] Notion unreachable, disabling sync");
+      console.error("[superfluid-points] Notion unreachable, disabling sync");
       notionDisabled = true;
     }
-    console.error("[superfluid-stack] Notion upsert error details", {
+    console.error("[superfluid-points] Notion upsert error details", {
       code,
       status: (error as any)?.status ?? (error as any)?.statusCode,
       body: (error as any)?.body,
     });
     console.error(
-      "[superfluid-stack] Failed to upsert Notion wallet points",
+      "[superfluid-points] Failed to upsert Notion wallet points",
       address,
       error,
     );
@@ -515,7 +515,7 @@ const PINATA_CREATION_CACHE_NAME =
 const PINATA_TRANSFER_CACHE_NAME =
   process.env.SUPERFLUID_TRANSFER_CACHE_NAME ?? "superfluid-transfer-logs";
 export const PINATA_POINTS_SNAPSHOT_NAME = "superfluid-activity-points-gd";
-const PINATA_RUN_LOG_NAME = "superfluid-stack-run-logs-gd";
+const PINATA_RUN_LOG_NAME = "superfluid-points-run-logs-gd";
 const PINATA_POINTS_SNAPSHOT_CID =
   process.env.SUPERFLUID_GD_POINTS_SNAPSHOT_CID ??
   process.env.SUPERFLUID_POINTS_SNAPSHOT_CID ??
@@ -546,7 +546,7 @@ const pinataClient =
           pinataSecretApiKey: PINATA_SECRET,
         });
       } catch (error) {
-        console.warn("[superfluid-stack] failed to init pinata SDK", error);
+        console.warn("[superfluid-points] failed to init pinata SDK", error);
         return null;
       }
     })()
@@ -580,17 +580,26 @@ const FARCASTER_DISABLED = !FARCASTER_API_KEY;
 
 if (FARCASTER_DISABLED) {
   console.log(
-    "[superfluid-stack] skipping farcaster resolution because FARCASTER_API_KEY is missing",
+    "[superfluid-points] skipping farcaster resolution because FARCASTER_API_KEY is missing",
   );
 }
 let farcasterUsernameCache = new Map<string, string>();
-let ensNameCache = new Map<string, string | null>();
+type EnsCacheEntry = {
+  name: string | null;
+  avatar: string | null;
+  fetchedAt: number;
+};
+let ensIdentityCache = new Map<string, EnsCacheEntry>();
 let nativeSuperTokenCache = new Map<string, string>();
 let nativeTokenCache = new Map<string, string>();
 let latestPointsSnapshotCid: string | null = PINATA_POINTS_SNAPSHOT_CID;
 let creationCacheCampaignVersion: string | null = null;
 let transferCacheCampaignVersion: string | null = null;
 const TOKEN_PRICE_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const ENS_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const ENS_AVATAR_RETRY_MS = ENS_CACHE_TTL_MS;
+const ENS_METADATA_AVATAR_BASE_URL =
+  "https://metadata.ens.domains/mainnet/avatar";
 const tokenPriceCache = new Map<
   string,
   { price: number; fetchedAt: number; symbol: string }
@@ -604,7 +613,7 @@ const getFarcasterHeaders = () => ({
 
 const fetchGardensFid = async (): Promise<number | null> => {
   if (FARCASTER_DISABLED) {
-    console.log("[superfluid-stack] Farcaster disabled: no API key");
+    console.log("[superfluid-points] Farcaster disabled: no API key");
     return null;
   }
   if (farcasterGardensFid) return farcasterGardensFid;
@@ -616,7 +625,7 @@ const fetchGardensFid = async (): Promise<number | null> => {
       },
     );
     if (!res.ok) {
-      console.warn("[superfluid-stack] farcaster user fetch failed", {
+      console.warn("[superfluid-points] farcaster user fetch failed", {
         status: res.status,
         statusText: res.statusText,
       });
@@ -630,7 +639,7 @@ const fetchGardensFid = async (): Promise<number | null> => {
     }
     return null;
   } catch (error) {
-    console.warn("[superfluid-stack] farcaster user fetch error", error);
+    console.warn("[superfluid-points] farcaster user fetch error", error);
     return null;
   }
 };
@@ -639,7 +648,7 @@ const fetchFarcasterFollowerFids = async (
   targetFid: number,
 ): Promise<number[]> => {
   if (FARCASTER_DISABLED) {
-    console.log("[superfluid-stack] Skipping Farcaster followers: disabled");
+    console.log("[superfluid-points] Skipping Farcaster followers: disabled");
     return [];
   }
   const fidsSet = new Set<number>();
@@ -657,7 +666,7 @@ const fetchFarcasterFollowerFids = async (
       );
       if (!res.ok) {
         const body = await res.text().catch(() => "");
-        console.warn("[superfluid-stack] farcaster followers fetch failed", {
+        console.warn("[superfluid-points] farcaster followers fetch failed", {
           status: res.status,
           statusText: res.statusText,
           body,
@@ -677,7 +686,7 @@ const fetchFarcasterFollowerFids = async (
   try {
     await fetchPage();
   } catch (error) {
-    console.warn("[superfluid-stack] farcaster followers fetch error", error);
+    console.warn("[superfluid-points] farcaster followers fetch error", error);
   }
   return Array.from(fidsSet.values());
 };
@@ -686,7 +695,7 @@ const fetchFarcasterUsernameByAddress = async (
   address: string,
 ): Promise<string | null> => {
   if (FARCASTER_DISABLED) {
-    console.log("[superfluid-stack] Skipping Farcaster username: disabled");
+    console.log("[superfluid-points] Skipping Farcaster username: disabled");
     return null;
   }
   if (!address) return null;
@@ -722,34 +731,128 @@ const getMainnetClient = () => {
   return mainnetClient;
 };
 
-let ensLookupDisabled = false;
-const fetchEnsNameByAddress = async (
-  address: string,
+const buildEnsMetadataAvatarUrl = (name: string) =>
+  `${ENS_METADATA_AVATAR_BASE_URL}/${encodeURIComponent(name.toLowerCase())}`;
+
+const fetchEnsAvatarFromMetadata = async (
+  name: string,
 ): Promise<string | null> => {
-  if (!address || !address.toLowerCase().startsWith("0x")) return null;
-  if (ensLookupDisabled) return null;
-  if (ensNameCache.has(address)) return ensNameCache.get(address) ?? null;
+  try {
+    const url = buildEnsMetadataAvatarUrl(name);
+    const response = await fetch(url, { method: "HEAD" });
+    if (response.ok) {
+      return url;
+    }
+  } catch {
+    // ignore
+  }
+  return null;
+};
+
+const resolveEnsAvatarWithFallback = async (
+  client: ReturnType<typeof createPublicClient>,
+  name: string,
+): Promise<string | null> => {
+  try {
+    const avatar = await client.getEnsAvatar({ name });
+    if (avatar) {
+      return avatar;
+    }
+  } catch {
+    // ignore resolver errors
+  }
+  return fetchEnsAvatarFromMetadata(name);
+};
+
+let lastEnsCachePrune = 0;
+const ENS_CACHE_PRUNE_INTERVAL_MS = 60 * 60 * 1000;
+const ensureEnsCacheFresh = () => {
+  const now = Date.now();
+  if (now - lastEnsCachePrune < ENS_CACHE_PRUNE_INTERVAL_MS) return;
+  lastEnsCachePrune = now;
+  for (const [addr, entry] of ensIdentityCache.entries()) {
+    if (now - entry.fetchedAt >= ENS_CACHE_TTL_MS) {
+      ensIdentityCache.delete(addr);
+    }
+  }
+};
+
+const fetchEnsIdentityByAddress = async (
+  address: string,
+): Promise<{ name: string | null; avatar: string | null }> => {
+  if (!address || !address.toLowerCase().startsWith("0x")) {
+    return { name: null, avatar: null };
+  }
+  ensureEnsCacheFresh();
+  const key = address.toLowerCase();
+  const cached = ensIdentityCache.get(key);
+  const now = Date.now();
+  if (cached && now - cached.fetchedAt < ENS_CACHE_TTL_MS) {
+    if (cached.avatar) {
+      return { name: cached.name, avatar: cached.avatar };
+    }
+    const cachedName = cached.name;
+    const shouldRefreshAvatar =
+      typeof cachedName === "string" &&
+      cachedName.length > 0 &&
+      now - cached.fetchedAt >= ENS_AVATAR_RETRY_MS;
+    if (!shouldRefreshAvatar) {
+      return { name: cached.name, avatar: cached.avatar };
+    }
+    try {
+      const client = getMainnetClient();
+      const avatar = await resolveEnsAvatarWithFallback(client, cachedName);
+      if (!avatar) {
+        console.log("[superfluid-points-gd] ens avatar not found for name", {
+          ens: cachedName,
+        });
+      }
+      ensIdentityCache.set(key, {
+        name: cachedName,
+        avatar,
+        fetchedAt: now,
+      });
+      return { name: cachedName, avatar };
+    } catch (error) {
+      console.warn("[superfluid-points-gd] ens avatar refresh failed", {
+        address,
+        error,
+      });
+      return { name: cached.name, avatar: cached.avatar };
+    }
+  }
   try {
     const client = getMainnetClient();
     const name = await client.getEnsName({
       address: address as Address,
     });
     const ens = typeof name === "string" ? name : null;
+    let avatar: string | null = null;
     if (ens) {
-      ensNameCache.set(address, ens);
-      return ens;
+      avatar = await resolveEnsAvatarWithFallback(client, ens);
+      if (!avatar) {
+        console.log("[superfluid-points-gd] ens avatar not found for name", {
+          ens,
+        });
+      }
+    } else {
+      console.log("[superfluid-points-gd] ens not found for address", {
+        address,
+      });
     }
-    console.log("[superfluid-stack-gd] ens not found for address", {
-      address,
-    });
-    ensNameCache.set(address, null);
-    return null;
+    ensIdentityCache.set(key, { name: ens, avatar, fetchedAt: now });
+    return { name: ens, avatar };
   } catch (error) {
-    // Handle reverse resolver reverts/other ENS failures gracefully
-    console.warn("[superfluid-stack-gd] ens lookup failed", { address, error });
-    ensLookupDisabled = true;
-    ensNameCache.set(address, null);
-    return null;
+    console.warn("[superfluid-points-gd] ens lookup failed", {
+      address,
+      error,
+    });
+    ensIdentityCache.set(key, {
+      name: null,
+      avatar: null,
+      fetchedAt: Date.now(),
+    });
+    return { name: null, avatar: null };
   }
 };
 
@@ -768,7 +871,7 @@ const fetchFarcasterWalletsForFids = async (
       );
       if (!res.ok) {
         const body = await res.text();
-        console.warn("[superfluid-stack] farcaster single user failed", {
+        console.warn("[superfluid-points] farcaster single user failed", {
           fid,
           status: res.status,
           statusText: res.statusText,
@@ -822,7 +925,7 @@ const fetchFarcasterWalletsForFids = async (
       const others = priorityList.slice(1);
 
       if (!chosen) {
-        console.warn("[superfluid-stack] farcaster user has no addresses", {
+        console.warn("[superfluid-points] farcaster user has no addresses", {
           fid: u?.fid,
           displayName: u?.displayName,
           username: u?.username,
@@ -833,7 +936,7 @@ const fetchFarcasterWalletsForFids = async (
       wallets.add(chosen);
       for (const addr of others) discarded.add(addr);
     } catch (error) {
-      console.warn("[superfluid-stack] farcaster single user fetch error", {
+      console.warn("[superfluid-points] farcaster single user fetch error", {
         fid,
         error,
       });
@@ -859,14 +962,14 @@ const ensureLatestPinataCacheCid = async (): Promise<string | null> => {
     const cid = data?.rows?.[0]?.ipfs_pin_hash;
     if (cid) {
       latestCreationBlockCacheCid = cid;
-      console.log("[superfluid-stack] loaded latest cache CID from pinata", {
+      console.log("[superfluid-points] loaded latest cache CID from pinata", {
         cid,
       });
       return cid;
     }
     return null;
   } catch (error) {
-    console.warn("[superfluid-stack] pinata pinList error", error);
+    console.warn("[superfluid-points] pinata pinList error", error);
     return null;
   }
 };
@@ -900,7 +1003,7 @@ const ensureLatestTransferCacheCid = async (): Promise<string | null> => {
     if (cid) {
       latestTransferLogCacheCid = cid;
       console.log(
-        "[superfluid-stack] loaded latest transfer cache CID from pinata",
+        "[superfluid-points] loaded latest transfer cache CID from pinata",
         {
           cid,
         },
@@ -910,7 +1013,7 @@ const ensureLatestTransferCacheCid = async (): Promise<string | null> => {
     return null;
   } catch (error) {
     console.warn(
-      "[superfluid-stack] pinata pinList error (transfer cache)",
+      "[superfluid-points] pinata pinList error (transfer cache)",
       error,
     );
     return null;
@@ -927,7 +1030,7 @@ const fetchIpfsJson = async (
     const url = `${gateway}/ipfs/${cid}`;
     const res = await fetch(url, { method: "GET" });
     if (!res.ok) {
-      console.warn("[superfluid-stack] IPFS fetch failed", {
+      console.warn("[superfluid-points] IPFS fetch failed", {
         cid,
         status: res.status,
         statusText: res.statusText,
@@ -936,7 +1039,7 @@ const fetchIpfsJson = async (
     }
     return (await res.json()) as any;
   } catch (error) {
-    console.warn("[superfluid-stack] IPFS fetch error", { cid, error });
+    console.warn("[superfluid-points] IPFS fetch error", { cid, error });
     return null;
   }
 };
@@ -955,7 +1058,7 @@ const hydrateCreationBlockCacheFromIpfs = async () => {
     campaignVersion !== CAMPAIGN_VERSION
   )
     return;
-  console.log("[superfluid-stack] hydrating creation block cache from IPFS", {
+  console.log("[superfluid-points] hydrating creation block cache from IPFS", {
     cid: latestCreationBlockCacheCid,
     entries: Object.keys(remote.entries).length,
   });
@@ -987,7 +1090,7 @@ const hydrateTransferLogCacheFromIpfs = async () => {
       (remote as any).entries
     : null;
   if (!entries || typeof entries !== "object") return;
-  console.log("[superfluid-stack] hydrating transfer log cache from IPFS", {
+  console.log("[superfluid-points] hydrating transfer log cache from IPFS", {
     cid: latestTransferLogCacheCid,
     entries: Object.keys(entries).length,
   });
@@ -1045,14 +1148,14 @@ const pinCreationBlockCacheToIpfs = async (): Promise<string | null> => {
     );
     if (data?.IpfsHash) {
       latestCreationBlockCacheCid = data.IpfsHash;
-      console.log("[superfluid-stack] pinned creation block cache to IPFS", {
+      console.log("[superfluid-points] pinned creation block cache to IPFS", {
         cid: data.IpfsHash,
       });
       return data.IpfsHash;
     }
     return null;
   } catch (error) {
-    console.warn("[superfluid-stack] pinata pinJSONToIPFS error", error);
+    console.warn("[superfluid-points] pinata pinJSONToIPFS error", error);
     return null;
   }
 };
@@ -1119,14 +1222,14 @@ const cacheHydrationPromise = Promise.all([
       hydrated++;
     }
     if (hydrated > 0) {
-      console.log("[superfluid-stack] hydrated token price cache from IPFS", {
+      console.log("[superfluid-points] hydrated token price cache from IPFS", {
         cid,
         entries: hydrated,
       });
     }
   })(),
 ]).catch((error) => {
-  console.warn("[superfluid-stack] cache hydration error", error);
+  console.warn("[superfluid-points] cache hydration error", error);
 });
 
 const ensureLatestPointsSnapshotCid = async (): Promise<string | null> => {
@@ -1142,14 +1245,14 @@ const ensureLatestPointsSnapshotCid = async (): Promise<string | null> => {
     const cid = data?.rows?.[0]?.ipfs_pin_hash;
     if (cid) {
       latestPointsSnapshotCid = cid;
-      console.log("[superfluid-stack] loaded latest points snapshot CID", {
+      console.log("[superfluid-points] loaded latest points snapshot CID", {
         cid,
       });
       return cid;
     }
     return null;
   } catch (error) {
-    console.warn("[superfluid-stack] pinata pinList error (points snapshot)", {
+    console.warn("[superfluid-points] pinata pinList error (points snapshot)", {
       error,
     });
     return null;
@@ -1162,7 +1265,7 @@ const hydratePointsSnapshotFromIpfs = async () => {
     const data = await fetchIpfsJson(cid);
     const wallets = (data as any)?.wallets;
     if (!Array.isArray(wallets)) return;
-    console.log("[superfluid-stack] hydrating points snapshot cache", {
+    console.log("[superfluid-points] hydrating points snapshot cache", {
       cid,
       count: wallets.length,
     });
@@ -1176,8 +1279,12 @@ const hydratePointsSnapshotFromIpfs = async () => {
         }
       }
       if (typeof w?.ensName === "string") {
-        if (!ensNameCache.has(addr)) {
-          ensNameCache.set(addr, w.ensName);
+        if (!ensIdentityCache.has(addr)) {
+          ensIdentityCache.set(addr, {
+            name: w.ensName,
+            avatar: null,
+            fetchedAt: Date.now(),
+          });
         }
       }
       if (typeof w?.nativeSuperToken === "string") {
@@ -1212,7 +1319,7 @@ const hydratePointsSnapshotFromIpfs = async () => {
       await hydrateFromCid(baseCid);
     } catch (error) {
       console.warn(
-        "[superfluid-stack] pinata pinList error (points snapshot base)",
+        "[superfluid-points] pinata pinList error (points snapshot base)",
         { error },
       );
     }
@@ -1255,11 +1362,14 @@ const findContractCreationBlock = async ({
     });
     hasCode = Boolean(code && code !== "0x");
   } catch (error) {
-    console.warn("[superfluid-stack] creation block upper bound check failed", {
-      address,
-      upperBound: upperBound.toString(),
-      error,
-    });
+    console.warn(
+      "[superfluid-points] creation block upper bound check failed",
+      {
+        address,
+        upperBound: upperBound.toString(),
+        error,
+      },
+    );
   }
   if (!hasCode) {
     creationBlockCache.set(cacheKey, null);
@@ -1287,7 +1397,7 @@ const findContractCreationBlock = async ({
       }
     } catch (error) {
       console.warn(
-        "[superfluid-stack] creation block probe failed, advancing",
+        "[superfluid-points] creation block probe failed, advancing",
         { address, mid: mid.toString(), error },
       );
       low = mid + 1n;
@@ -1335,7 +1445,7 @@ const pinTransferLogCacheToIpfs = async (): Promise<string | null> => {
     );
     if (data?.IpfsHash) {
       latestTransferLogCacheCid = data.IpfsHash;
-      console.log("[superfluid-stack] pinned transfer log cache to IPFS", {
+      console.log("[superfluid-points] pinned transfer log cache to IPFS", {
         cid: data.IpfsHash,
       });
       return data.IpfsHash;
@@ -1343,7 +1453,7 @@ const pinTransferLogCacheToIpfs = async (): Promise<string | null> => {
     return null;
   } catch (error) {
     console.warn(
-      "[superfluid-stack] pinata pinJSONToIPFS error (transfer)",
+      "[superfluid-points] pinata pinJSONToIPFS error (transfer)",
       error,
     );
     return null;
@@ -1385,14 +1495,14 @@ const pinPriceCacheToIpfs = async (): Promise<string | null> => {
     );
     if (data?.IpfsHash) {
       latestPriceCacheCid = data.IpfsHash;
-      console.log("[superfluid-stack] pinned token price cache to IPFS", {
+      console.log("[superfluid-points] pinned token price cache to IPFS", {
         cid: data.IpfsHash,
       });
       return data.IpfsHash;
     }
     return null;
   } catch (error) {
-    console.warn("[superfluid-stack] pinata pinJSONToIPFS error (prices)", {
+    console.warn("[superfluid-points] pinata pinJSONToIPFS error (prices)", {
       error,
     });
     return null;
@@ -1442,7 +1552,7 @@ const pinPointsSnapshotToIpfs = async (
       },
     );
     if (data?.IpfsHash) {
-      console.log("[superfluid-stack] pinned points snapshot to IPFS", {
+      console.log("[superfluid-points] pinned points snapshot to IPFS", {
         cid: data.IpfsHash,
         walletCount: wallets.length,
         duplicate: Boolean((data as any)?.isDuplicate),
@@ -1451,7 +1561,7 @@ const pinPointsSnapshotToIpfs = async (
     }
     return null;
   } catch (error) {
-    console.warn("[superfluid-stack] pinata pinJSONToIPFS error (points)", {
+    console.warn("[superfluid-points] pinata pinJSONToIPFS error (points)", {
       error,
     });
     return null;
@@ -1483,7 +1593,7 @@ const pinRunLogsToIpfs = async (logs: string[]): Promise<string | null> => {
       },
     );
     if (data?.IpfsHash) {
-      console.log("[superfluid-stack-gd] pinned run logs to IPFS", {
+      console.log("[superfluid-points-gd] pinned run logs to IPFS", {
         cid: data.IpfsHash,
         lines: logs.length,
       });
@@ -1491,7 +1601,7 @@ const pinRunLogsToIpfs = async (logs: string[]): Promise<string | null> => {
     }
     return null;
   } catch (error) {
-    console.warn("[superfluid-stack-gd] failed to pin run logs", { error });
+    console.warn("[superfluid-points-gd] failed to pin run logs", { error });
     return null;
   }
 };
@@ -1562,7 +1672,7 @@ const fetchTransferLogsFromChain = async ({
     const chunkEnd = chunkEndPreClamp > latest ? latest : chunkEndPreClamp;
     if (chunkEnd < start) break;
     try {
-      console.log("[superfluid-stack] fetchTransferLogs request", {
+      console.log("[superfluid-points] fetchTransferLogs request", {
         token,
         to,
         fromBlock: start.toString(),
@@ -1578,7 +1688,7 @@ const fetchTransferLogsFromChain = async ({
       logs.push(...chunk);
       const chunkSize = Array.isArray(chunk) ? chunk.length : 0;
       totalLogs += chunkSize;
-      console.log("[superfluid-stack] fetchTransferLogs page", {
+      console.log("[superfluid-points] fetchTransferLogs page", {
         fromBlock: start.toString(),
         toBlock: chunkEnd.toString(),
         pageSize: chunkSize,
@@ -1587,7 +1697,7 @@ const fetchTransferLogsFromChain = async ({
       const processed = chunkEnd - fromBlock + 1n;
       const percent =
         totalRange > 0n ? Number((processed * 100n) / totalRange) : 100;
-      console.log("[superfluid-stack] fetchTransferLogs progress", {
+      console.log("[superfluid-points] fetchTransferLogs progress", {
         token,
         to,
         processed: processed.toString(),
@@ -1608,7 +1718,7 @@ const fetchTransferLogsFromChain = async ({
         range = range / 2n;
         if (range < minRange) range = minRange;
         console.warn(
-          "[superfluid-stack] fetchTransferLogs reducing range after error",
+          "[superfluid-points] fetchTransferLogs reducing range after error",
           { token, to, range: range.toString() },
         );
         const refreshedLatest = await publicClient.getBlockNumber();
@@ -1620,7 +1730,7 @@ const fetchTransferLogsFromChain = async ({
       }
       if (retryable) {
         console.warn(
-          "[superfluid-stack] fetchTransferLogs retryable error at min range, skipping this chunk",
+          "[superfluid-points] fetchTransferLogs retryable error at min range, skipping this chunk",
           {
             range: range.toString(),
             error: message,
@@ -1657,7 +1767,7 @@ const fetchTransferLogs = async ({
   const latestBlockForRun = await publicClient.getBlockNumber();
   if (fromBlock > latestBlockForRun) {
     console.warn(
-      "[superfluid-stack] fetchTransferLogs start beyond latest, skipping",
+      "[superfluid-points] fetchTransferLogs start beyond latest, skipping",
       {
         start: fromBlock.toString(),
         latest: latestBlockForRun.toString(),
@@ -1733,11 +1843,11 @@ const fetchTransferLogs = async ({
     logs: merged,
   });
   transferLogCacheDirty = true;
-  console.log("[superfluid-stack] fetchTransferLogs completed", {
+  console.log("[superfluid-points] fetchTransferLogs completed", {
     cacheKey,
     count: merged.length,
   });
-  console.log("[superfluid-stack] fetchTransferLogs cache payload", {
+  console.log("[superfluid-points] fetchTransferLogs cache payload", {
     cacheKey,
     logs: safeStringify(merged),
   });
@@ -1774,7 +1884,7 @@ const fetchFlowUpdates = async (
     token: Address;
   },
 ): Promise<FlowUpdate[]> => {
-  console.log("[superfluid-stack] Fetching flow updates", {
+  console.log("[superfluid-points] Fetching flow updates", {
     receiver,
     token,
   });
@@ -2051,7 +2161,7 @@ const processChain = async ({
   ): Promise<{ data?: T; error?: any }> => {
     const res = await urqlClient.query<T>(queryDoc, vars).toPromise();
     if (res.error && urqlFallbackClient) {
-      console.warn("[superfluid-stack-gd] primary subgraph failed, retrying", {
+      console.warn("[superfluid-points-gd] primary subgraph failed, retrying", {
         primarySubgraphUrl,
         fallbackSubgraphUrl,
         error: res.error?.message,
@@ -2082,7 +2192,7 @@ const processChain = async ({
   if (endBlock > latestBlock) endBlock = latestBlock;
   if (startBlock > latestBlock) startBlock = latestBlock;
 
-  console.log("[superfluid-stack] Fetching pools", { chainId });
+  console.log("[superfluid-points] Fetching pools", { chainId });
   const poolsResult = await runQueryWithFallback<
     {
       cvstrategies: Strategy[];
@@ -2102,7 +2212,7 @@ const processChain = async ({
   );
 
   // Community mapping
-  console.log("[superfluid-stack] Fetching communities", { chainId });
+  console.log("[superfluid-points] Fetching communities", { chainId });
   const communitiesResult = await runQueryWithFallback<
     {
       registryCommunities: {
@@ -2265,7 +2375,7 @@ const processChain = async ({
       });
       flowUpdateCount += flowUpdates.length;
       if (flowUpdates.length === 0) {
-        console.log("[superfluid-stack] no flow updates for pool", {
+        console.log("[superfluid-points] no flow updates for pool", {
           chainId,
           poolAddress,
           token: underlyingToken,
@@ -2311,7 +2421,7 @@ const processChain = async ({
           poolKey,
           (streamTotalsByPool.get(poolKey) ?? 0) + streamUsdTotalAll,
         );
-        console.log("[superfluid-stack] stream total recorded for pool", {
+        console.log("[superfluid-points] stream total recorded for pool", {
           chainId,
           poolAddress,
           token: underlyingToken,
@@ -2424,7 +2534,7 @@ const processChain = async ({
     },
   );
   if (communityBreakdown.length) {
-    console.log("[superfluid-stack-gd] community breakdown (G$)", {
+    console.log("[superfluid-points-gd] community breakdown (G$)", {
       chainId,
       communities: communityBreakdown,
     });
@@ -2495,7 +2605,7 @@ export async function GET(req: Request) {
   try {
     superfluidStackClient = getSuperfluidStackClient();
   } catch (err) {
-    console.error("[superfluid-stack] stack client init failed", err);
+    console.error("[superfluid-points] stack client init failed", err);
     return NextResponse.json(
       { error: "Stack client not configured" },
       { status: 500 },
@@ -2555,8 +2665,8 @@ export async function GET(req: Request) {
     for (const [addr, username] of farcasterUsernameCache.entries()) {
       farcasterUsernameByWallet.set(addr, username);
     }
-    for (const [addr, name] of ensNameCache.entries()) {
-      if (name) ensNameByWallet.set(addr, name);
+    for (const [addr, entry] of ensIdentityCache.entries()) {
+      if (entry.name) ensNameByWallet.set(addr, entry.name);
     }
     for (const [addr, token] of nativeSuperTokenCache.entries()) {
       nativeSuperTokenByWallet.set(addr, token);
@@ -2605,7 +2715,7 @@ export async function GET(req: Request) {
           limit,
           offset,
         });
-        console.log("[superfluid-stack] stack getEvents farcaster sweep", {
+        console.log("[superfluid-points] stack getEvents farcaster sweep", {
           offset,
           limit,
           count: Array.isArray(res) ? res.length : 0,
@@ -2639,7 +2749,7 @@ export async function GET(req: Request) {
         discarded.forEach((addr) => farcasterDiscardedWallets.push(addr));
       } else {
         console.log(
-          "[superfluid-stack] skipping farcaster follower scan because gardens fid could not be resolved",
+          "[superfluid-points] skipping farcaster follower scan because gardens fid could not be resolved",
         );
       }
       farcasterFollowerWallets.push(...farcasterFollowerWalletsSet);
@@ -2789,8 +2899,8 @@ export async function GET(req: Request) {
     if (!SKIP_IDENTITY_RESOLUTION) {
       for (const address of allAddresses) {
         if (ensNameByWallet.has(address)) continue;
-        const ens = await fetchEnsNameByAddress(address);
-        if (ens) ensNameByWallet.set(address, ens);
+        const { name } = await fetchEnsIdentityByAddress(address);
+        if (name) ensNameByWallet.set(address, name);
       }
     }
     const walletPointTargets: Array<{
@@ -2843,14 +2953,14 @@ export async function GET(req: Request) {
       let offset = 0;
       const existingMap = new Map<string, Record<string, number>>();
       while (true) {
-        console.log("[superfluid-stack] stack getEvents sweep request", {
+        console.log("[superfluid-points] stack getEvents sweep request", {
           offset,
           limit,
         });
         const res = await superfluidStackClient.eventClient.getEvents({
           query: { limit, offset },
         });
-        console.log("[superfluid-stack] stack getEvents sweep response", {
+        console.log("[superfluid-points] stack getEvents sweep response", {
           offset,
           limit,
           count: Array.isArray(res) ? res.length : 0,
@@ -3017,25 +3127,25 @@ export async function GET(req: Request) {
     }
 
     if (allEventPayloads.length && !STACK_GD_DRY_RUN) {
-      console.log("[superfluid-stack] stack sendEvents request", {
+      console.log("[superfluid-points] stack sendEvents request", {
         count: allEventPayloads.length,
       });
       for (let i = 0; i < allEventPayloads.length; i += 250) {
         const batch = allEventPayloads.slice(i, i + 250);
-        console.log("[superfluid-stack] stack sendEvents batch", {
+        console.log("[superfluid-points] stack sendEvents batch", {
           batchStart: i,
           batchEnd: i + batch.length - 1,
           batchSize: batch.length,
         });
         const resp = await superfluidStackClient.eventClient.sendEvents(batch);
-        console.log("[superfluid-stack] stack sendEvents response", {
+        console.log("[superfluid-points] stack sendEvents response", {
           batchStart: i,
           batchEnd: i + batch.length - 1,
           response: resp,
         });
       }
     } else if (STACK_GD_DRY_RUN) {
-      console.log("[superfluid-stack] DRY RUN - skipping event pushes", {
+      console.log("[superfluid-points] DRY RUN - skipping event pushes", {
         eventCount: allEventPayloads.length,
       });
     }
@@ -3086,58 +3196,77 @@ export async function GET(req: Request) {
             }
           }
         } while (cursor);
-        console.log("[superfluid-stack] Notion existing pages fetched", {
+        console.log("[superfluid-points] Notion existing pages fetched", {
           count: fetched,
         });
       } catch (error) {
-        console.error("[superfluid-stack] Failed to read Notion database", {
+        console.error("[superfluid-points] Failed to read Notion database", {
           error,
         });
       }
 
-      console.log("[superfluid-stack] Syncing wallet points to Notion", {
+      console.log("[superfluid-points] Syncing wallet points to Notion", {
         count: walletBreakdown.length,
       });
-      const batchSize = 3;
-      const delayMs = 350;
+      const batchSize = 50;
+      let delayMs = 350;
+      const maxDelayMs = 10_000;
+      const minDelayMs = 200;
       const seen = new Set<string>();
       try {
-        for (let i = 0; i < walletBreakdown.length; i += batchSize) {
+        let i = 0;
+        while (i < walletBreakdown.length) {
           const batch = walletBreakdown.slice(i, i + batchSize);
-          console.log("[superfluid-stack] Notion batch start", {
+          console.log("[superfluid-points] Notion batch start", {
             batchStart: i,
             batchEnd: i + batch.length - 1,
             batchSize: batch.length,
+            delayMs,
           });
-          const results = await Promise.all(
-            batch.map((wallet) => {
-              seen.add(wallet.address.toLowerCase());
-              // Skip update if checksum matches existing
-              const existing = notionExistingPages.get(
-                wallet.address.toLowerCase(),
-              );
-              if (existing?.checksum === wallet.checksum) return true;
-              return upsertNotionWallet({
-                address: wallet.address,
-                fundPoints: wallet.fundPoints,
-                streamPoints: wallet.streamPoints,
-                governanceStakePoints: wallet.governanceStakePoints,
-                farcasterPoints: wallet.farcasterPoints,
-                totalPoints: wallet.totalPoints,
-              });
-            }),
-          );
-          results.forEach((ok) => {
-            notionSync.processed += 1;
-            if (!ok) notionSync.failed += 1;
-          });
-          console.log("[superfluid-stack] Notion batch complete", {
-            processed: notionSync.processed,
-            failed: notionSync.failed,
-            remaining: walletBreakdown.length - notionSync.processed,
-          });
-          if (i + batchSize < walletBreakdown.length) {
-            await sleep(delayMs); // Stay under Notion rate limits
+          try {
+            const results = await Promise.all(
+              batch.map((wallet) => {
+                seen.add(wallet.address.toLowerCase());
+                // Skip update if checksum matches existing
+                const existing = notionExistingPages.get(
+                  wallet.address.toLowerCase(),
+                );
+                if (existing?.checksum === wallet.checksum) return true;
+                return upsertNotionWallet({
+                  address: wallet.address,
+                  fundPoints: wallet.fundPoints,
+                  streamPoints: wallet.streamPoints,
+                  governanceStakePoints: wallet.governanceStakePoints,
+                  farcasterPoints: wallet.farcasterPoints,
+                  totalPoints: wallet.totalPoints,
+                });
+              }),
+            );
+            results.forEach((ok) => {
+              notionSync.processed += 1;
+              if (!ok) notionSync.failed += 1;
+            });
+            console.log("[superfluid-points] Notion batch complete", {
+              processed: notionSync.processed,
+              failed: notionSync.failed,
+              remaining: walletBreakdown.length - notionSync.processed,
+            });
+            delayMs = Math.max(minDelayMs, Math.floor(delayMs * 0.85));
+            i += batchSize;
+          } catch (error: any) {
+            const status = error?.status ?? error?.code;
+            const isRateLimit = status === 429;
+            delayMs = Math.min(maxDelayMs, Math.floor(delayMs * 2));
+            console.warn("[superfluid-points] Notion batch retrying", {
+              batchStart: i,
+              batchEnd: i + batch.length - 1,
+              delayMs,
+              isRateLimit,
+              error,
+            });
+          }
+          if (i < walletBreakdown.length) {
+            await sleep(delayMs);
           }
         }
         // Archive rows no longer present
@@ -3149,18 +3278,18 @@ export async function GET(req: Request) {
           await notionClient.pages.update({ page_id: pageId, archived: true });
         }
         if (toArchive.length) {
-          console.log("[superfluid-stack] Notion archived removed rows", {
+          console.log("[superfluid-points] Notion archived removed rows", {
             archived: toArchive.length,
           });
         }
       } catch (error) {
-        console.error("[superfluid-stack] Notion sync failure", error);
+        console.error("[superfluid-points] Notion sync failure", error);
         notionSync.failed += walletBreakdown.length - notionSync.processed;
       }
       notionSync.success = notionSync.failed === 0;
     } else {
       if (!notionSync.attempted) {
-        console.log("[superfluid-stack] Skipping Notion sync", {
+        console.log("[superfluid-points] Skipping Notion sync", {
           hasClient: Boolean(notionClient),
           hasDbId: Boolean(NOTION_DB_ID_TRIMMED),
           notionDisabled,
@@ -3177,7 +3306,7 @@ export async function GET(req: Request) {
     responseTransferCid = pinned.transferLogCacheCid;
     responseRunLogsCid = await pinRunLogsToIpfs(runLogBuffer);
     if (responseRunLogsCid) {
-      console.log("[superfluid-stack-gd] run logs pinned", {
+      console.log("[superfluid-points-gd] run logs pinned", {
         cid: responseRunLogsCid,
         url: `https://gateway.pinata.cloud/ipfs/${responseRunLogsCid}`,
       });
@@ -3232,7 +3361,7 @@ export async function GET(req: Request) {
     responseTransferCid = pinned.transferLogCacheCid;
     responseRunLogsCid = await pinRunLogsToIpfs(runLogBuffer);
     if (responseRunLogsCid) {
-      console.log("[superfluid-stack-gd] run logs pinned", {
+      console.log("[superfluid-points-gd] run logs pinned", {
         cid: responseRunLogsCid,
         url: `https://gateway.pinata.cloud/ipfs/${responseRunLogsCid}`,
       });
