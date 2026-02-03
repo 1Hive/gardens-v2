@@ -235,6 +235,9 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         }
     }
 
+    function _initializeFacets() internal {
+    }
+
     /*|--------------------------------------------|*/
     /*|                 MODIFIERS                  |*/
     /*|--------------------------------------------|*/
@@ -263,6 +266,14 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     function onlyCouncilSafe() internal view {
         if (msg.sender != address(registryCommunity.councilSafe()) && msg.sender != owner()) {
             revert OnlyCouncilSafe(msg.sender, address(registryCommunity.councilSafe()), owner());
+        }
+    }
+
+    function _checkOwner() internal view override {
+        address directOwner = proxyOwner();
+        address resolvedOwner = owner();
+        if (msg.sender != directOwner && msg.sender != resolvedOwner) {
+            revert("Ownable: caller is not the owner");
         }
     }
 
@@ -529,9 +540,12 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     function calculateThreshold(uint256 _requestedAmount) external view returns (uint256) {
         uint256 poolAmount = getPoolAmount();
         uint256 maxAllowed = (cvParams.maxRatio * poolAmount) / ConvictionsUtils.D;
-        if (_requestedAmount * ConvictionsUtils.D > cvParams.maxRatio * poolAmount) {
-            revert AmountOverMaxRatio(_requestedAmount, maxAllowed, poolAmount);
-        }
+
+        // Goss: Removed to allow threshold calculation even if over max ratio
+        // if (_requestedAmount * ConvictionsUtils.D > cvParams.maxRatio * poolAmount) {
+        //     revert AmountOverMaxRatio(_requestedAmount, maxAllowed, poolAmount);
+        // }
+
         return ConvictionsUtils.calculateThreshold(
             _requestedAmount,
             poolAmount,

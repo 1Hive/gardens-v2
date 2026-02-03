@@ -16,7 +16,7 @@ import {IDiamond} from "../src/diamonds/interfaces/IDiamond.sol";
 import {IDiamondLoupe} from "../src/diamonds/interfaces/IDiamondLoupe.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {ProxyOwner} from "../src/ProxyOwner.sol";
-import {DiamondConfiguratorBase} from "../test/helpers/DiamondConfigurator.sol";
+import {StrategyDiamondConfiguratorBase} from "../test/helpers/StrategyDiamondConfigurator.sol";
 import "forge-std/console2.sol";
 
 /**
@@ -24,7 +24,7 @@ import "forge-std/console2.sol";
  * @notice Upgrades CVStrategy contracts to diamond pattern with facets
  * @dev Can broadcast upgrades directly or generate Safe transaction payloads via a flag
  */
-contract UpgradeCVDiamond is BaseMultiChain, DiamondConfiguratorBase {
+contract UpgradeCVDiamond is BaseMultiChain, StrategyDiamondConfiguratorBase {
     using stdJson for string;
 
     bool internal directBroadcastOverride;
@@ -181,8 +181,9 @@ contract UpgradeCVDiamond is BaseMultiChain, DiamondConfiguratorBase {
         console2.log("  CVStrategyDiamondInit deployed:", address(initContract));
 
         bytes4 upgradeSelector = bytes4(keccak256("upgradeTo(address)"));
-        bytes memory diamondCutCalldata =
-            abi.encodeWithSelector(CVStrategy.diamondCut.selector, cuts, address(initContract), abi.encodeCall(CVStrategyDiamondInit.init, ()));
+        bytes memory diamondCutCalldata = abi.encodeWithSelector(
+            CVStrategy.diamondCut.selector, cuts, address(initContract), abi.encodeCall(CVStrategyDiamondInit.init, ())
+        );
         bytes memory upgradeCalldata = abi.encodeWithSelector(upgradeSelector, strategyImplementation);
 
         for (uint256 i = 0; i < cvStrategyProxies.length; i++) {
@@ -204,7 +205,8 @@ contract UpgradeCVDiamond is BaseMultiChain, DiamondConfiguratorBase {
      * @notice Build all facet cuts including DiamondLoupeFacet (6 total)
      */
     function _buildAllFacetCuts() internal view returns (IDiamond.FacetCut[] memory cuts) {
-        IDiamond.FacetCut[] memory baseCuts = _buildFacetCuts(adminFacet, allocationFacet, disputeFacet, powerFacet, proposalFacet);
+        IDiamond.FacetCut[] memory baseCuts =
+            _buildFacetCuts(adminFacet, allocationFacet, disputeFacet, powerFacet, proposalFacet);
         cuts = new IDiamond.FacetCut[](6);
         for (uint256 i = 0; i < 5; i++) {
             cuts[i] = baseCuts[i];

@@ -323,15 +323,13 @@ export default function ClientPage({ params }: ClientPageProps) {
   const { tooltipMessage, isConnected, missmatchUrl } =
     useDisableButtons(disableManSupportBtn);
 
-  const convictionPctLessThanSupport =
-    thresholdPct != null &&
-    currentConvictionPct != null &&
-    currentConvictionPct <= thresholdPct;
-
   const disableExecuteButton = useMemo<ConditionObject[]>(
     () => [
       {
-        condition: convictionPctLessThanSupport,
+        condition:
+          currentConvictionPct == null ||
+          thresholdPct == null ||
+          currentConvictionPct <= thresholdPct,
         message: "Proposal has not reached the threshold yet",
       },
       {
@@ -339,17 +337,13 @@ export default function ClientPage({ params }: ClientPageProps) {
         message: "Proposal is being disputed",
       },
     ],
-    [
-      address,
-      thresholdPct,
-      currentConvictionPct,
-      convictionPctLessThanSupport,
-      proposalStatus,
-    ],
+    [address, thresholdPct, currentConvictionPct, proposalStatus],
   );
 
-  const { tooltipMessage: executeBtnTooltipMessage } =
-    useDisableButtons(disableExecuteButton);
+  const {
+    tooltipMessage: executeBtnTooltipMessage,
+    isButtonDisabled: isExecuteButtonDisabled,
+  } = useDisableButtons(disableExecuteButton);
 
   if (isAwaitingProposal) {
     return (
@@ -529,9 +523,9 @@ export default function ClientPage({ params }: ClientPageProps) {
                       })
                     }
                     disabled={
+                      isExecuteButtonDisabled ||
                       !isConnected ||
                       missmatchUrl ||
-                      convictionPctLessThanSupport ||
                       proposalStatus === "disputed"
                     }
                     tooltip={executeBtnTooltipMessage}

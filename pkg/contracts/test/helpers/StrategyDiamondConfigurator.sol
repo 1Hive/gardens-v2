@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.19;
 
-import {CVStrategy} from "../../src/CVStrategy/CVStrategy.sol";
 import {CVAdminFacet} from "../../src/CVStrategy/facets/CVAdminFacet.sol";
 import {CVAllocationFacet} from "../../src/CVStrategy/facets/CVAllocationFacet.sol";
 import {CVDisputeFacet} from "../../src/CVStrategy/facets/CVDisputeFacet.sol";
@@ -14,7 +13,7 @@ import {IDiamond} from "../../src/diamonds/interfaces/IDiamond.sol";
 import {IDiamondLoupe} from "../../src/diamonds/interfaces/IDiamondLoupe.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
-abstract contract DiamondConfiguratorBase {
+abstract contract StrategyDiamondConfiguratorBase {
     function _buildFacetCuts(
         CVAdminFacet _adminFacet,
         CVAllocationFacet _allocationFacet,
@@ -29,9 +28,7 @@ abstract contract DiamondConfiguratorBase {
         adminSelectors[1] = CVAdminFacet.connectSuperfluidGDA.selector;
         adminSelectors[2] = CVAdminFacet.disconnectSuperfluidGDA.selector;
         cuts[0] = IDiamond.FacetCut({
-            facetAddress: address(_adminFacet),
-            action: IDiamond.FacetCutAction.Auto,
-            functionSelectors: adminSelectors
+            facetAddress: address(_adminFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: adminSelectors
         });
 
         bytes4[] memory allocationSelectors = new bytes4[](2);
@@ -59,9 +56,7 @@ abstract contract DiamondConfiguratorBase {
         powerSelectors[3] = bytes4(keccak256("deactivatePoints()"));
         powerSelectors[4] = bytes4(keccak256("deactivatePoints(address)"));
         cuts[3] = IDiamond.FacetCut({
-            facetAddress: address(_powerFacet),
-            action: IDiamond.FacetCutAction.Auto,
-            functionSelectors: powerSelectors
+            facetAddress: address(_powerFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: powerSelectors
         });
 
         bytes4[] memory proposalSelectors = new bytes4[](3);
@@ -75,7 +70,12 @@ abstract contract DiamondConfiguratorBase {
         });
     }
 
-    function _buildLoupeFacetCut(DiamondLoupeFacet _loupeFacet) internal pure virtual returns (IDiamond.FacetCut memory) {
+    function _buildLoupeFacetCut(DiamondLoupeFacet _loupeFacet)
+        internal
+        pure
+        virtual
+        returns (IDiamond.FacetCut memory)
+    {
         bytes4[] memory loupeSelectors = new bytes4[](5);
         loupeSelectors[0] = IDiamondLoupe.facets.selector;
         loupeSelectors[1] = IDiamondLoupe.facetFunctionSelectors.selector;
@@ -83,19 +83,17 @@ abstract contract DiamondConfiguratorBase {
         loupeSelectors[3] = IDiamondLoupe.facetAddress.selector;
         loupeSelectors[4] = IERC165.supportsInterface.selector;
         return IDiamond.FacetCut({
-            facetAddress: address(_loupeFacet),
-            action: IDiamond.FacetCutAction.Auto,
-            functionSelectors: loupeSelectors
+            facetAddress: address(_loupeFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: loupeSelectors
         });
     }
 }
 
 /**
- * @title DiamondConfigurator
+ * @title StrategyDiamondConfigurator
  * @notice Helper contract to deploy and configure CVStrategy diamond facets
  * @dev Used in tests to properly set up the diamond pattern after strategy deployment
  */
-contract DiamondConfigurator is DiamondConfiguratorBase {
+contract StrategyDiamondConfigurator is StrategyDiamondConfiguratorBase {
     CVAdminFacet public adminFacet;
     CVAllocationFacet public allocationFacet;
     CVDisputeFacet public disputeFacet;
@@ -120,14 +118,15 @@ contract DiamondConfigurator is DiamondConfiguratorBase {
      * @return cuts Array of FacetCut structs to pass to diamondCut()
      */
     function getFacetCuts() public view returns (IDiamond.FacetCut[] memory cuts) {
-        IDiamond.FacetCut[] memory baseCuts = _buildFacetCuts(adminFacet, allocationFacet, disputeFacet, powerFacet, proposalFacet);
+        IDiamond.FacetCut[] memory baseCuts =
+            _buildFacetCuts(adminFacet, allocationFacet, disputeFacet, powerFacet, proposalFacet);
 
         // Add loupe facet as 6th facet
         cuts = new IDiamond.FacetCut[](6);
+        cuts[0] = _buildLoupeFacetCut(loupeFacet);
         for (uint256 i = 0; i < 5; i++) {
-            cuts[i] = baseCuts[i];
+            cuts[i + 1] = baseCuts[i];
         }
-        cuts[5] = _buildLoupeFacetCut(loupeFacet);
     }
 
     /**
@@ -141,13 +140,15 @@ contract DiamondConfigurator is DiamondConfiguratorBase {
         CVProposalFacet _proposalFacet,
         DiamondLoupeFacet _loupeFacet
     ) public pure returns (IDiamond.FacetCut[] memory cuts) {
-        IDiamond.FacetCut[] memory baseCuts = _buildFacetCuts(_adminFacet, _allocationFacet, _disputeFacet, _powerFacet, _proposalFacet);
+        IDiamond.FacetCut[] memory baseCuts = _buildFacetCuts(
+            _adminFacet, _allocationFacet, _disputeFacet, _powerFacet, _proposalFacet
+        );
 
         cuts = new IDiamond.FacetCut[](6);
+        cuts[0] = _buildLoupeFacetCut(_loupeFacet);
         for (uint256 i = 0; i < 5; i++) {
-            cuts[i] = baseCuts[i];
+            cuts[i + 1] = baseCuts[i];
         }
-        cuts[5] = _buildLoupeFacetCut(_loupeFacet);
     }
 
     /**
@@ -157,6 +158,6 @@ contract DiamondConfigurator is DiamondConfiguratorBase {
      */
     function configureFacets(address payable strategy) external {
         IDiamond.FacetCut[] memory cuts = getFacetCuts();
-        CVStrategy(strategy).diamondCut(cuts, address(diamondInit), abi.encodeCall(CVStrategyDiamondInit.init, ()));
+        IDiamondCut(strategy).diamondCut(cuts, address(diamondInit), abi.encodeCall(CVStrategyDiamondInit.init, ()));
     }
 }

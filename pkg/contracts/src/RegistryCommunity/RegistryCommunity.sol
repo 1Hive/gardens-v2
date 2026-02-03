@@ -197,6 +197,11 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
     /// @notice The total number of members in the community
     uint256 public totalMembers;
 
+    /// @notice Facet configuration for CVStrategy instances
+    IDiamondCut.FacetCut[] internal strategyFacetCuts;
+    address internal strategyInit;
+    bytes internal strategyInitCalldata;
+
     /*|--------------------------------------------|*/
     /*|                 ROLES                      |*/
     /*|--------------------------------------------|*/
@@ -259,6 +264,16 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
         strategyTemplate = template;
     }
 
+    function setStrategyFacets(
+        IDiamondCut.FacetCut[] memory facetCuts,
+        address init,
+        bytes memory initCalldata
+    ) external onlyOwner {
+        _setFacetCuts(facetCuts, strategyFacetCuts);
+        strategyInit = init;
+        strategyInitCalldata = initCalldata;
+    }
+
     function setCollateralVaultTemplate(address template) external onlyOwner {
         collateralVaultTemplate = template;
     }
@@ -269,10 +284,24 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
         RegistryCommunityInitializeParams memory params,
         address _strategyTemplate,
         address _collateralVaultTemplate,
-        address _owner
+        address _owner,
+        IDiamondCut.FacetCut[] memory facetCuts,
+        address init,
+        bytes memory initCalldata,
+        IDiamondCut.FacetCut[] memory strategyFacetCuts_,
+        address strategyInit_,
+        bytes memory strategyInitCalldata_
     ) public initializer {
+        require(facetCuts.length > 0, "Community facets required");
+        require(strategyFacetCuts_.length > 0, "Strategy facets required");
         super.initialize(_owner);
         LibDiamond.setContractOwner(_owner);
+
+        LibDiamond.diamondCut(facetCuts, init, initCalldata);
+        _setFacetCuts(strategyFacetCuts_, strategyFacetCuts);
+        strategyInit = strategyInit_;
+        strategyInitCalldata = strategyInitCalldata_;
+
         __ReentrancyGuard_init();
         __AccessControl_init();
 
@@ -307,31 +336,30 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
         registry = IRegistry(allo.getRegistry());
 
         address[] memory pool_initialMembers;
-        // Support EOA as council safe
-        if (address(councilSafe).code.length == 0) {
-            pool_initialMembers = new address[](3);
-            pool_initialMembers[0] = msg.sender;
-        } else {
-            address[] memory owners = councilSafe.getOwners();
-            pool_initialMembers = new address[](owners.length + 2);
-            for (uint256 i = 0; i < owners.length; i++) {
-                pool_initialMembers[i] = owners[i];
-            }
-        }
 
-        pool_initialMembers[pool_initialMembers.length - 1] = address(councilSafe);
-        pool_initialMembers[pool_initialMembers.length - 2] = address(this);
-
-        // console.log("initialMembers length", pool_initialMembers.length);
         profileId =
-            registry.createProfile(params._nonce, communityName, params._metadata, address(this), pool_initialMembers);
-
-        initialMembers = pool_initialMembers;
+            registry.createProfile(params._nonce, communityName, params._metadata, address(this), new address[](0));
 
         strategyTemplate = _strategyTemplate;
         collateralVaultTemplate = _collateralVaultTemplate;
 
         emit RegistryInitialized(profileId, communityName, params._metadata);
+    }
+
+    function _setFacetCuts(IDiamondCut.FacetCut[] memory source, IDiamondCut.FacetCut[] storage target) internal {
+        while (target.length > 0) {
+            target.pop();
+        }
+        for (uint256 i = 0; i < source.length; i++) {
+            target.push();
+            IDiamondCut.FacetCut storage dest = target[i];
+            dest.facetAddress = source[i].facetAddress;
+            dest.action = source[i].action;
+            bytes4[] memory selectors = source[i].functionSelectors;
+            for (uint256 j = 0; j < selectors.length; j++) {
+                dest.functionSelectors.push(selectors[j]);
+            }
+        }
     }
 
     // Stub - delegates to CommunityPoolFacet
@@ -559,6 +587,6 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
 
     // receive() external payable {}
 
-    uint256[49] private __gap;
+    uint256[46] private __gap;
 }
 // slither-disable-end uninitialized-state

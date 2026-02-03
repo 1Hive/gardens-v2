@@ -7,6 +7,7 @@ import {IRegistry, Metadata} from "allo-v2-contracts/core/interfaces/IRegistry.s
 import {CVStrategyInitializeParamsV0_2} from "../../CVStrategy/ICVStrategy.sol";
 import {CVStrategy} from "../../CVStrategy/CVStrategy.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {IDiamondCut} from "../../diamonds/interfaces/IDiamondCut.sol";
 
 /// @notice Initialize parameters for the contract
 struct RegistryCommunityInitializeParams {
@@ -54,9 +55,10 @@ contract CommunityPoolFacet is CommunityBaseFacet {
         address strategyProxy = address(
             new ERC1967Proxy(
                 address(strategyTemplate),
-                abi.encodeWithSelector(CVStrategy.init.selector, address(allo), collateralVaultTemplate, proxyOwner())
+                abi.encodeWithSelector(CVStrategy.init.selector, address(allo), collateralVaultTemplate, address(this))
             )
         );
+        _configureStrategyFacets(strategyProxy);
         (poolId, strategy) = createPool(strategyProxy, _token, _params, _metadata);
 
         if (address(_params.sybilScorer) == address(0)) {
@@ -74,6 +76,13 @@ contract CommunityPoolFacet is CommunityBaseFacet {
             keccak256(abi.encodePacked("ALLOWLIST", poolId)), keccak256(abi.encodePacked("ALLOWLIST_ADMIN", poolId))
         );
         _grantRole(keccak256(abi.encodePacked("ALLOWLIST_ADMIN", poolId)), strategy);
+    }
+
+    function _configureStrategyFacets(address strategyProxy) internal {
+        if (strategyFacetCuts.length > 0 || strategyInit != address(0)) {
+            IDiamondCut(strategyProxy).diamondCut(strategyFacetCuts, strategyInit, strategyInitCalldata);
+        }
+        CVStrategy(payable(strategyProxy)).transferOwnership(proxyOwner());
     }
 
     function createPool(

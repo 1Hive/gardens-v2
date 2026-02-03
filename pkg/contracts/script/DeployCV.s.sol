@@ -16,9 +16,13 @@ import {TERC20} from "../test/shared/TERC20.sol";
 import {CVStrategy} from "../src/CVStrategy/CVStrategy.sol";
 import {RegistryFactory} from "../src/RegistryFactory/RegistryFactory.sol";
 import {RegistryCommunity, RegistryCommunityInitializeParams} from "../src/RegistryCommunity/RegistryCommunity.sol";
+import {RegistryCommunityDiamondInit} from "../src/RegistryCommunity/RegistryCommunityDiamondInit.sol";
+import {CVStrategyDiamondInit} from "../src/CVStrategy/CVStrategyDiamondInit.sol";
 import {ISybilScorer} from "../src/ISybilScorer.sol";
 import {PassportScorer} from "../src/PassportScorer.sol";
 import {SafeSetup} from "../test/shared/SafeSetup.sol";
+import {CommunityDiamondConfigurator} from "../test/helpers/CommunityDiamondConfigurator.sol";
+import {StrategyDiamondConfigurator} from "../test/helpers/StrategyDiamondConfigurator.sol";
 // import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
 import {IRegistry, Metadata} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 import {Accounts} from "allo-v2-test/foundry/shared/Accounts.sol";
@@ -303,6 +307,16 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         params._councilSafe = payable(address(_councilSafe()));
         params._communityName = "Pioneers of Matias";
 
+        CommunityDiamondConfigurator communityDiamondConfigurator = new CommunityDiamondConfigurator();
+        StrategyDiamondConfigurator diamondConfigurator = new StrategyDiamondConfigurator();
+        registryFactory.initializeV2(
+            communityDiamondConfigurator.getFacetCuts(),
+            address(communityDiamondConfigurator.diamondInit()),
+            abi.encodeCall(RegistryCommunityDiamondInit.init, ()),
+            diamondConfigurator.getFacetCuts(),
+            address(diamondConfigurator.diamondInit()),
+            abi.encodeCall(CVStrategyDiamondInit.init, ())
+        );
         RegistryCommunity registryCommunity = RegistryCommunity(registryFactory.createRegistry(params));
 
         console.log("Registry Community Addr: %s", address(registryCommunity));
