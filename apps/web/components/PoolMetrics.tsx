@@ -831,7 +831,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                 missmatchUrl || !isConnected ? tooltipMessage : undefined
               }
               icon={<PlusIcon className="w-5 h-5" />}
-              className="w-full mt-1"
+              className="!w-full mt-1"
             >
               Add Funds
             </Button>

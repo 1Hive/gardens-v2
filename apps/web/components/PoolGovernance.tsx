@@ -189,7 +189,7 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
               }
               btnStyle="outline"
               color="tertiary"
-              className="w-full"
+              className="!w-full"
               // icon={<ChevronUpIcon className="h-4 w-4" />}
             >
               {openGovernanceDetailsModal ? "Close" : "Show"} Active Members

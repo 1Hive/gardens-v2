@@ -73,8 +73,8 @@ export const ExpandableComponent = ({
         </AnimatePresence>
 
         {showPreview && needsExpansion && (
-          <div className="flex items-baseline gap-[2px] -mt-6">
-            <span>...</span>
+          <div className="flex items-baseline gap-[2px] mt-1 sm:-mt-6">
+            <span className="hidden sm:block">...</span>
             <Button
               onClick={() => setExpanded(true)}
               btnStyle="ghost"

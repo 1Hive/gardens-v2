@@ -719,9 +719,9 @@ export default function PoolHeader({
               <div className="w-full h-[0.10px] bg-neutral-soft-content opacity-30" />
 
               {/* Buttons: disable - edit - archive - create steam token  */}
-              <div className="flex justify-between items-baseline flex-wrap gap-2">
+              <div className="flex flex-col sm:flex-row justify-between items-baseline flex-wrap gap-2">
                 {(!!isCouncilMember || isCouncilSafe) && (
-                  <div className="flex gap-2 flex-wrap mt-2">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap w-full sm:w-auto mt-2">
                     {isArchived ?
                       <Button
                         icon={<CheckIcon height={20} width={20} />}
@@ -756,6 +756,7 @@ export default function PoolHeader({
                           onClick={() => removeStrategyByPoolId()}
                           btnStyle="outline"
                           color="secondary"
+                          // className="!w-full sm:!w-auto"
                         >
                           Disable
                         </Button>
@@ -868,6 +869,7 @@ export default function PoolHeader({
                   </div>
                 )}
 
+                <div className="block sm:hidden w-full h-[0.10px] my-2 bg-neutral-soft-content opacity-30" />
                 {/* Share button dropdown */}
                 <div
                   className={`z-[9999] ${!!isCouncilMember || isCouncilSafe ? "w-fit" : "w-full flex justify-end"}`}
@@ -877,7 +879,6 @@ export default function PoolHeader({
                       btnStyle="outline"
                       color="primary"
                       icon={<ShareIcon className="w-5 h-5" />}
-                      className="absolute"
                     >
                       Share
                     </Button>

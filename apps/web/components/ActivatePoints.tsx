@@ -148,7 +148,7 @@ export function ActivatePoints({
       disabled={missmatchUrl || disableActiveBtn || !isMemberActivated}
       tooltip={tooltipMessage}
       isLoading={isLoadingDeactivatePoints}
-      className="w-full"
+      className="!w-full"
       icon={<PowerIcon className="h-5 w-5" />}
     >
       Deactivate governance

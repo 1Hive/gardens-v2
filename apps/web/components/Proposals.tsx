@@ -38,6 +38,7 @@ import {
   RegistryCommunity,
   getMembersStrategyQuery,
 } from "#/subgraph/.graphclient";
+import { Divider } from "./Diivider";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { PoolGovernanceProps } from "./PoolGovernance";
 import { ProposalCardProps, ProposalHandle } from "./ProposalCard";
@@ -710,16 +711,16 @@ export function Proposals({
   return (
     <>
       {/* Proposals section */}
-      <section className="col-span-12 xl:col-span-9 flex flex-col gap-6 section-layout">
+      <section className="col-span-12 xl:col-span-9 flex flex-col gap-4 sm:gap-8 section-layout">
         <header
           ref={proposalSectionRef}
           className={`flex gap-6 ${
             sortedProposals.length === 0 ?
               "flex-col items-start justify-start"
-            : "items-center justify-between"
+            : "flex-col sm:flex-row items-center justify-between "
           }`}
         >
-          <h3 className="text-left">Proposals</h3>
+          <h3 className="text-left  w-full sm:w-auto">Proposals</h3>
 
           {strategy.isEnabled &&
             (sortedProposals.length === 0 ?
@@ -746,13 +747,13 @@ export function Proposals({
               </div>
             : !allocationView && (
                 <>
-                  <div className="flex items-center justify-center gap-2 ">
+                  <div className="flex w-full sm:w-auto flex-wrap sm:items-center justify-center gap-2 ">
                     {/* Manage Support */}
                     {activeOrDisputedProposals.length > 0 &&
                       proposalCardRefs.current.size ===
                         activeOrDisputedProposals.length && (
                         <Button
-                          btnStyle="link"
+                          btnStyle="ghost"
                           color="primary"
                           tooltip="Download proposals conviction results (CSV)"
                           forceShowTooltip={true}
@@ -766,7 +767,7 @@ export function Proposals({
                     {strategy.isEnabled && filteredAndSorted.length > 0 && (
                       <Link
                         href={createProposalUrl}
-                        className="flex items-center justify-center"
+                        className="flex items-center justify-center w-full sm:w-auto"
                       >
                         <Button
                           btnStyle="filled"
@@ -775,6 +776,7 @@ export function Proposals({
                             !isConnected || missmatchUrl || !isMemberCommunity
                           }
                           tooltip={tooltipMessage}
+                          className="!w-full sm:!w-auto"
                         >
                           Add New Proposal
                         </Button>
@@ -783,6 +785,7 @@ export function Proposals({
 
                     <div
                       onMouseLeave={() => setShowManageSupportTooltip(false)}
+                      className=" w-full sm:w-auto"
                     >
                       <CheckSybil
                         strategy={strategy}
@@ -810,6 +813,8 @@ export function Proposals({
                 </>
               ))}
         </header>
+
+        <Divider className="sm:hidden" />
 
         {strategy.isEnabled && sortedProposals.length > 0 && (
           <ProposalFiltersUI
@@ -1080,9 +1085,9 @@ function ProposalFiltersUI({
   const CurrentIcon = currentSortOption?.icon;
 
   return (
-    <div className="flex flex-col lg:flex-row justify-between bg-neutral py-4 px-2 rounded-2xl items-center md:gap-2 lg:gap-4">
+    <div className="flex flex-col lg:flex-row justify-between bg-neutral px-2 rounded-2xl items-center gap-2 lg:gap-4 ">
       {/* FILTERS */}
-      <div className="flex w-full gap-2 lg:gap-[4px] sm:justify-between flex-wrap ">
+      <div className="flex w-full gap-2 lg:gap-[4px] sm:justify-between flex-wrap  ">
         {FILTERS.map((f) => (
           <Button
             // className={filter === f ? "!cursor-default !bg-soft-primary" : ""}
@@ -1098,7 +1103,7 @@ function ProposalFiltersUI({
         ))}
       </div>
 
-      <div className="block lg:hidden w-full border-t border-border-neutral my-3 opacity-40" />
+      <Divider className="sm:hidden my-2 sm:my-0" />
 
       {/* SORT DROPDOWN */}
       <div className="w-full lg:w-fit sm:flex justify-between items-center">

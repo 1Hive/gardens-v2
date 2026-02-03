@@ -490,7 +490,7 @@ export default function ClientPage({
       {/* ================= DESKTOP ================= */}
 
       {/*  Join community - Activate governace path and description from pool page */}
-      <div className="sm:col-span-12 xl:col-span-9 sm:flex flex-col-reverse gap-6">
+      <div className="col-span-12 xl:col-span-9 sm:flex flex-col-reverse gap-6">
         {/* Join community box */}
         {!isMemberCommunity && registryCommunity && (
           <div className="border rounded-xl shadow-md border-tertiary-content bg-primary p-6 dark:bg-primary-soft-dark">

@@ -506,7 +506,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                   onClick={() => manageSupportClicked()}
                   disabled={!isConnected || missmatchUrl || !isMemberCommunity}
                   tooltip={tooltipMessage}
-                  className="w-full"
+                  className="!w-full"
                   btnStyle="outline"
                 >
                   Go to Vote on Proposals
@@ -514,7 +514,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                 {!isSignalingType && (
                   <Button
                     icon={<BoltIcon height={18} width={18} />}
-                    className="w-full"
+                    className="!w-full"
                     onClick={() =>
                       writeDistribute?.({
                         args: [
@@ -878,15 +878,24 @@ export default function ClientPage({ params }: ClientPageProps) {
                 </div>
               </section>
               {isProposerConnected && proposalStatus === "active" && (
-                <section className="section-layout gap-4 flex flex-col mt-5">
-                  <InfoBox
-                    infoBoxType="info"
-                    content="As the original author, you can remove this proposal from consideration."
-                  />
-                  <CancelButton
-                    proposalData={{ ...proposalData, ...metadata }}
-                  />
-                </section>
+                <>
+                  <section className="section-layout gap-4 flex flex-col mt-4">
+                    <InfoBox
+                      infoBoxType="info"
+                      content="As the original author, you can edit or cancel this proposal."
+                      title="Actions"
+                    />
+                    {proposalDataForActions && (
+                      <>
+                        <EditProposalButton
+                          proposalData={proposalDataForActions}
+                          poolToken={poolToken}
+                        />
+                        <CancelButton proposalData={proposalDataForActions} />
+                      </>
+                    )}
+                  </section>
+                </>
               )}
             </Tab.Panel>
 
