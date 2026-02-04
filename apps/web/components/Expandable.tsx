@@ -100,7 +100,7 @@ export const ExpandableComponent = ({
 
   return (
     <div
-      className={`flex flex-col gap-2 ${withLayout ? "section-layout" : ""}`}
+      className={`flex flex-col gap-4 ${withLayout ? "section-layout" : ""}`}
     >
       {/* Header */}
       <button

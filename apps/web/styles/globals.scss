@@ -99,9 +99,9 @@ h3 {
   text-align: left;
   color: var(--color-text);
 
-  /* @media only screen and (max-width: 680px) {
-    font-size: 1.75rem;
-  } */
+  @media only screen and (max-width: 680px) {
+    font-size: 16px;
+  }
 }
 
 h4 {

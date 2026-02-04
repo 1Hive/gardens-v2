@@ -255,7 +255,7 @@ export const IncreasePower = ({
   // }, [votingPowerTx.status]);
 
   return (
-    <section className="section-layout space-y-5">
+    <section className="section-layout space-y-4">
       <h3>Staking</h3>
       <TransactionModal
         label={`Stake ${tokenSymbol} in ${communityName}`}

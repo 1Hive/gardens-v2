@@ -45,6 +45,7 @@ import {
   RegisterMember,
   Statistic,
 } from "@/components";
+import { Divider } from "@/components/Diivider";
 import { ExpandableComponent } from "@/components/Expandable";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import MarkdownWrapper from "@/components/MarkdownWrapper";
@@ -365,9 +366,9 @@ export default function ClientPage({
                 </div>
               </div>
 
-              <div className="flex-1 flex-col lg:items-start lg:justify-between gap-2">
+              <div className="flex-1 flex-col lg:items-start lg:justify-between sm:gap-4 ">
                 {/* Community name + Address */}
-                <div className="mb-3 ">
+                <div className=" flex-flex-col">
                   <h2>{communityName}</h2>
                   <EthAddress
                     icon={false}
@@ -387,7 +388,7 @@ export default function ClientPage({
                 </div>
 
                 {/* Statistic + Register/Leave Button */}
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between ">
                   <div className="w-full flex flex-col sm:flex-row gap-2 md:gap-6 sm:flex-wrap">
                     <Statistic
                       label="members"
@@ -412,18 +413,15 @@ export default function ClientPage({
                         ]}
                         compact={true}
                         tokenSymbol={tokenGarden.symbol}
-                        valueClassName="text-inherit"
-                        symbolClassName="text-inherit"
                       />
                     </Statistic>
                   </div>
-                  <div className="absolute top-12 md:top-7 right-5 flex items-center gap-2">
+                  <div className="absolute top-12 md:top-7 right-5 flex items-center gap-2 z-50">
                     {(isCouncilMember || isCouncilSafe) && (
                       <Button
                         btnStyle="outline"
                         color="secondary"
                         disabled={isButtonDisabled || isCouncilMember}
-                        tooltipSide="tooltip-bottom"
                         tooltip={
                           tooltipMessage ? tooltipMessage
                           : isCouncilMember ?
@@ -523,24 +521,30 @@ export default function ClientPage({
               </Link>
             </div>
             {/* Pools Section */}
-            <PoolSection title="Funding" pools={fundingPools} defaultExpanded />
-            <PoolSection
-              title="Signaling"
-              pools={signalingPools}
-              defaultExpanded
-            />
-            <PoolSection
-              title="In Review"
-              pools={poolsInReview}
-              defaultExpanded={false}
-            />
-            {(!!isCouncilMember || isCouncilSafe || showArchived) && (
+            <div className="flex flex-col gap-8">
               <PoolSection
-                title="Archived"
-                pools={poolsArchived}
+                title="Funding"
+                pools={fundingPools}
+                defaultExpanded
+              />
+              <PoolSection
+                title="Signaling"
+                pools={signalingPools}
+                defaultExpanded
+              />
+              <PoolSection
+                title="In Review"
+                pools={poolsInReview}
                 defaultExpanded={false}
               />
-            )}
+              {(!!isCouncilMember || isCouncilSafe || showArchived) && (
+                <PoolSection
+                  title="Archived"
+                  pools={poolsArchived}
+                  defaultExpanded={false}
+                />
+              )}
+            </div>
           </section>
 
           <section ref={covenantSectionRef} className="p-8 section-layout">
@@ -613,7 +617,7 @@ export default function ClientPage({
                       </div>
                     </div>
 
-                    <div className="flex-1 w-full flex-col gap-2">
+                    <div className="flex-1 w-full flex-col gap-4">
                       {/* Community name + Address */}
                       <div className="mb-3">
                         <h2>{communityName}</h2>
@@ -659,11 +663,11 @@ export default function ClientPage({
                             ]}
                             compact={true}
                             tokenSymbol={tokenGarden.symbol}
-                            valueClassName="text-inherit"
-                            symbolClassName="text-inherit"
                           />
                         </Statistic>
                       </div>
+
+                      <Divider />
 
                       {/* Action Buttons */}
                       <div className="flex flex-col gap-2 mt-4">
@@ -672,7 +676,6 @@ export default function ClientPage({
                             btnStyle="outline"
                             color="secondary"
                             disabled={isButtonDisabled || isCouncilMember}
-                            tooltipSide="tooltip-bottom"
                             tooltip={
                               tooltipMessage ? tooltipMessage
                               : isCouncilMember ?
@@ -706,8 +709,10 @@ export default function ClientPage({
                         />
                       </div>
 
+                      <Divider className="mt-4" />
+
                       {/* Registration Stake Value */}
-                      <div className="flex flex-col gap-2 mt-4">
+                      <div className="flex flex-col gap-2">
                         <div className="flex gap-1 items-center flex-wrap">
                           <p className="subtitle2">Registration stake:</p>
                           <InfoWrapper
@@ -795,28 +800,33 @@ export default function ClientPage({
                 </div>
 
                 {/* Pools Section */}
-                <PoolSection
-                  title="Funding"
-                  pools={fundingPools}
-                  defaultExpanded
-                />
-                <PoolSection
-                  title="Signaling"
-                  pools={signalingPools}
-                  defaultExpanded
-                />
-                <PoolSection
-                  title="In Review"
-                  pools={poolsInReview}
-                  defaultExpanded={false}
-                />
-                {(!!isCouncilMember || isCouncilSafe || showArchived) && (
+                <div
+                  className="flex flex-col gap-6
+                 "
+                >
                   <PoolSection
-                    title="Archived"
-                    pools={poolsArchived}
+                    title="Funding"
+                    pools={fundingPools}
+                    defaultExpanded
+                  />
+                  <PoolSection
+                    title="Signaling"
+                    pools={signalingPools}
+                    defaultExpanded
+                  />
+                  <PoolSection
+                    title="In Review"
+                    pools={poolsInReview}
                     defaultExpanded={false}
                   />
-                )}
+                  {(!!isCouncilMember || isCouncilSafe || showArchived) && (
+                    <PoolSection
+                      title="Archived"
+                      pools={poolsArchived}
+                      defaultExpanded={false}
+                    />
+                  )}
+                </div>
               </section>
             </Tab.Panel>
 
