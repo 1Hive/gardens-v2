@@ -185,7 +185,7 @@ caption {
 }
 
 .section-layout {
-  @apply border1 relative rounded-xl bg-neutral p-6 shadow-md;
+  @apply border1 relative rounded-xl bg-neutral p-4 sm:p-4 lg:p-6 shadow-md;
 }
 
 .page-layout {
