@@ -54,9 +54,13 @@ contract CVProposalFacet is CVStrategyBaseFacet, CVStreamingBase {
     /*|              FUNCTIONS                     |*/
     /*|--------------------------------------------|*/
 
-    function registerRecipient(bytes memory _data, address _sender) external payable returns (address) {
-        _checkOnlyAllo();
-        _checkOnlyInitialized();
+    function registerRecipient(bytes memory _data, address _sender)
+        external
+        payable
+        onlyAllo
+        onlyInitialized
+        returns (address)
+    {
         checkSenderIsMember(_sender);
         registryCommunity.onlyStrategyEnabled(address(this));
 

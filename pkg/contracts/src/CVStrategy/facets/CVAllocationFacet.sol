@@ -44,6 +44,7 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
     error SupportUnderflow(uint256 _support, int256 _delta, int256 _result); // 0x3bbc7142
     error ProposalInvalidForAllocation(uint256 _proposalId, ProposalStatus _proposalStatus); // 0x9c3f44fe
     error NativeTransferFailed(address recipient, uint256 amount); // 0xa5b05eec
+    error ProposalSupportDuplicated(uint256 _proposalId, uint256 index); //0xadebb154
 
     /*|--------------------------------------------|*/
     /*|              MODIFIERS                     |*/
@@ -52,10 +53,10 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
         Proposal storage p = proposals[_proposalId];
         if (
             deltaSupport > 0
-                && (
-                    p.proposalStatus == ProposalStatus.Inactive || p.proposalStatus == ProposalStatus.Cancelled
-                        || p.proposalStatus == ProposalStatus.Executed || p.proposalStatus == ProposalStatus.Rejected
-                )
+                && (p.proposalStatus == ProposalStatus.Inactive
+                    || p.proposalStatus == ProposalStatus.Cancelled
+                    || p.proposalStatus == ProposalStatus.Executed
+                    || p.proposalStatus == ProposalStatus.Rejected)
         ) {
             revert ProposalInvalidForAllocation(_proposalId, p.proposalStatus);
         }
@@ -65,10 +66,7 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
     /*|              FUNCTIONS                     |*/
     /*|--------------------------------------------|*/
 
-    function allocate(bytes memory _data, address _sender) external payable {
-        _checkOnlyAllo();
-        _checkOnlyInitialized();
-
+    function allocate(bytes memory _data, address _sender) external payable onlyAllo onlyInitialized {
         ProposalSupport[] memory pv = abi.decode(_data, (ProposalSupport[]));
         for (uint256 i = 0; i < pv.length; i++) {
             _checkProposalAllocationValidity(pv[i].proposalId, pv[i].deltaSupport);
@@ -86,14 +84,15 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
                 if (!canAddSupport && pv[i].deltaSupport > 0) {
                     revert UserCannotExecuteAction(_sender);
                 }
-                if (pv[i].proposalId == 0) {
-                    //@todo: check better way to do that.
-                    continue;
-                }
-                uint256 proposalId = pv[i].proposalId;
-                if (!proposalExists(proposalId)) {
-                    revert ProposalNotInList(proposalId);
-                }
+                // Unreachable code because of _checkAllocationValidity
+                // if (pv[i].proposalId == 0) {
+                //     //@todo: check better way to do that.
+                //     continue;
+                // }
+                // uint256 proposalId = pv[i].proposalId;
+                // if (!proposalExists(proposalId)) {
+                //     revert ProposalNotInList(proposalId);
+                // }
                 deltaSupportSum += pv[i].deltaSupport;
             }
             uint256 newTotalVotingSupport = _applyDelta(totalVoterStakePct[_sender], deltaSupportSum);
@@ -119,8 +118,7 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
                     // 1
                     if (proposalsIds[j] == proposalId) {
                         exist = true;
-                        // revert ProposalSupportDuplicated(proposalId, j);
-                        break; // TODO: Uncommented when contract size fixed with diamond
+                        revert ProposalSupportDuplicated(proposalId, j);
                     }
                 }
                 if (!exist) {
@@ -175,10 +173,11 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
         /*_recipientIds */
         bytes memory _data,
         address /*_sender */
-    ) external {
-        _checkOnlyAllo();
-        _checkOnlyInitialized();
-
+    )
+        external
+        onlyAllo
+        onlyInitialized
+    {
         if (_data.length <= 0) {
             revert ProposalDataIsEmpty(_data.length);
         }

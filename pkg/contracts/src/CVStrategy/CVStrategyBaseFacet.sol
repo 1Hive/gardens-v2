@@ -208,15 +208,6 @@ abstract contract CVStrategyBaseFacet {
     }
 
     /**
-     * @notice Ensure only the registry community can call this function
-     */
-    function onlyRegistryCommunity() internal view {
-        if (msg.sender != address(registryCommunity)) {
-            revert OnlyRegistryCommunity(msg.sender, address(registryCommunity));
-        }
-    }
-
-    /**
      * @notice Ensure only council safe or contract owner can call this function
      */
     function onlyCouncilSafe() internal view {
@@ -254,19 +245,31 @@ abstract contract CVStrategyBaseFacet {
     /**
      * @notice Ensure only Allo contract can call this function
      */
-    function _checkOnlyAllo() internal view {
+    modifier onlyAllo() {
         if (msg.sender != address(allo)) {
             revert OnlyAllo(msg.sender, address(allo));
         }
+        _;
     }
 
     /**
      * @notice Ensure the pool has been initialized (poolId != 0)
      */
-    function _checkOnlyInitialized() internal view {
+    modifier onlyInitialized() {
         if (poolId == 0) {
             revert OnlyInitialized(poolId);
         }
+        _;
+    }
+
+    /**
+     * @notice Ensure only the registry community can call this function
+     */
+    modifier onlyRegistryCommunity() {
+        if (msg.sender != address(registryCommunity)) {
+            revert OnlyRegistryCommunity(msg.sender, address(registryCommunity));
+        }
+        _;
     }
 
     /**
