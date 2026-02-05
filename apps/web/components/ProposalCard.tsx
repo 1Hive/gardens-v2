@@ -242,6 +242,8 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
       ProposalStatus[proposalStatus] === "rejected" ||
       ProposalStatus[proposalStatus] === "executed";
 
+    console.log("threshold", thresholdPct != null && isSignalingType);
+
     const proposalCardContent = (
       <>
         <div
@@ -326,36 +328,34 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
               <div className="mt-4 w-full">
                 {/* manage support view */}
                 <div className="w-full ">
-                  {currentConvictionPct != null &&
-                    thresholdPct != null &&
-                    totalSupportPct != null && (
-                      <div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <div>
-                            <p className="text-xs sm:text-sm">
-                              Total Support:{" "}
-                              <span className="font-medium">
-                                {totalSupportPct}% of pool weight
-                              </span>{" "}
-                            </p>
-                          </div>
+                  {currentConvictionPct != null && totalSupportPct != null && (
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <div>
+                          <p className="text-xs sm:text-sm">
+                            Total Support:{" "}
+                            <span className="font-medium">
+                              {totalSupportPct}% of pool weight
+                            </span>{" "}
+                          </p>
+                        </div>
 
-                          {ProposalCountDown}
-                        </div>
-                        <div className="h-3 flex items-center mb-2">
-                          <ConvictionBarChart
-                            compact
-                            currentConvictionPct={currentConvictionPct}
-                            thresholdPct={isSignalingType ? 0 : thresholdPct}
-                            proposalSupportPct={totalSupportPct}
-                            isSignalingType={isSignalingType}
-                            proposalNumber={proposalNumber}
-                            refreshConviction={triggerConvictionRefetch}
-                            proposalStatus={proposalStatus}
-                          />
-                        </div>
+                        {ProposalCountDown}
                       </div>
-                    )}
+                      <div className="h-3 flex items-center mb-2">
+                        <ConvictionBarChart
+                          compact
+                          currentConvictionPct={currentConvictionPct}
+                          thresholdPct={isSignalingType ? 0 : thresholdPct}
+                          proposalSupportPct={totalSupportPct}
+                          isSignalingType={isSignalingType}
+                          proposalNumber={proposalNumber}
+                          refreshConviction={triggerConvictionRefetch}
+                          proposalStatus={proposalStatus}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
