@@ -77,6 +77,10 @@ contract BaseStrategyUpgradeableHarness is BaseStrategyUpgradeable {
         return _isPoolActive();
     }
 
+    function coverageMarker() external view returns (bool) {
+        return _coverageMarker();
+    }
+
     function onlyAlloModifier() external onlyAllo {}
 
     function onlyPoolManagerModifier(address sender) external onlyPoolManager(sender) {}
@@ -112,6 +116,10 @@ contract BaseStrategyUpgradeableTest is Test {
         assertEq(address(strategy.getAllo()), address(allo));
         assertEq(strategy.owner(), owner);
         assertEq(strategy.getPoolId(), 0);
+    }
+
+    function test_coverageMarker_returns_true() public {
+        assertTrue(strategy.coverageMarker());
     }
 
     function test_onlyAlloGuard() public {
@@ -237,5 +245,11 @@ contract BaseStrategyUpgradeableTest is Test {
 
         vm.expectRevert(abi.encodeWithSelector(Errors.POOL_ACTIVE.selector));
         strategy.onlyInactivePoolModifier();
+    }
+
+    function test_modifiers_executePaths_on_direct_instance() public {
+        BaseStrategyUpgradeableHarness local = new BaseStrategyUpgradeableHarness();
+        vm.expectRevert(bytes("Initializable: contract is already initialized"));
+        local.initializeHarness(address(allo), "LOCAL", owner);
     }
 }

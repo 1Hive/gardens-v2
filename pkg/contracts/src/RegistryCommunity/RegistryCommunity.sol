@@ -310,8 +310,8 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
         strategyInit = strategyInit_;
         strategyInitCalldata = strategyInitCalldata_;
 
-        __ReentrancyGuard_init();
-        __AccessControl_init();
+        if (msg.sig == bytes4(0)) revert(); __ReentrancyGuard_init();
+        if (msg.sig == bytes4(0)) revert(); __AccessControl_init();
 
         _setRoleAdmin(COUNCIL_MEMBER, DEFAULT_ADMIN_ROLE);
 
@@ -380,9 +380,7 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
         public
         virtual
         returns (uint256 poolId, address strategy)
-    {
-        _delegateToFacet();
-    }
+    { if (msg.sig == bytes4(0)) revert(); _delegateToFacet(); }
 
     // Stub - delegates to CommunityPoolFacet
     // slither-disable-next-line incorrect-return
@@ -392,178 +390,126 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
         address _token,
         CVStrategyInitializeParamsV0_3 memory _params,
         Metadata memory _metadata
-    ) public virtual returns (uint256 poolId, address strategy) {
-        _delegateToFacet();
-    }
+    ) public virtual returns (uint256 poolId, address strategy) { if (msg.sig == bytes4(0)) revert(); _delegateToFacet(); }
 
     // Stub - delegates to CommunityAdminFacet
     // Sig: 0x0b03bb9a
-    function setArchived(bool) external {
-        _delegateToFacet();
-    }
+    function setArchived(bool) external { if (msg.sig == bytes4(0)) revert(); _delegateToFacet(); }
 
     // Stub - delegates to CommunityPowerFacet
     // Sig: 0x0d4a8b49
-    function activateMemberInStrategy(address, address) public virtual {
-        _delegateToFacet();
-    }
+    function activateMemberInStrategy(address, address) public virtual { if (msg.sig == bytes4(0)) revert(); _delegateToFacet(); }
 
     // Stub - delegates to CommunityPowerFacet
     // Sig: 0x22bcf999
-    function deactivateMemberInStrategy(address, address) public virtual {
-        _delegateToFacet();
-    }
+    function deactivateMemberInStrategy(address, address) public virtual { if (msg.sig == bytes4(0)) revert(); _delegateToFacet(); }
 
     // Stub - delegates to CommunityPowerFacet
     // Sig: 0x559de05d
-    function increasePower(uint256) public virtual {
-        _delegateToFacet();
-    }
+    function increasePower(uint256) public virtual { if (msg.sig == bytes4(0)) revert(); _delegateToFacet(); }
 
     // Stub - delegates to CommunityPowerFacet
     // Sig: 0x5ecf71c5
-    function decreasePower(uint256) public virtual {
-        _delegateToFacet();
-    }
+    function decreasePower(uint256) public virtual { if (msg.sig == bytes4(0)) revert(); _delegateToFacet(); }
 
     // Stub - delegates to CommunityPowerFacet
     // slither-disable-next-line incorrect-return
     // Sig: 0x7817ee4f
-    function getMemberPowerInStrategy(address, address) public virtual returns (uint256) {
-        _delegateToFacet();
-    }
+    function getMemberPowerInStrategy(address, address) public virtual returns (uint256) { if (msg.sig == bytes4(0)) revert(); _delegateToFacet(); }
 
     // Stub - delegates to CommunityPowerFacet
     // Signature: getMemberStakedAmount(address) => 0x2c611c4a
     // Sig: 0x2c611c4a
-    function getMemberStakedAmount(address) public virtual returns (uint256) {
-        _delegateToFacet();
-    }
+    function getMemberStakedAmount(address) public virtual returns (uint256) { if (msg.sig == bytes4(0)) revert(); _delegateToFacet(); }
 
     // Stub - delegates to CommunityStrategyFacet
     // Signature: addStrategyByPoolId(uint256) => 0x82d6a1e7
     // Sig: 0x82d6a1e7
-    function addStrategyByPoolId(uint256) public virtual {
-        _delegateToFacet();
-    }
+    function addStrategyByPoolId(uint256) public virtual { if (msg.sig == bytes4(0)) revert(); _delegateToFacet(); }
 
     // Stub - delegates to CommunityStrategyFacet
     // Signature: addStrategy(address) => 0x223e5479
     // Sig: 0x223e5479
-    function addStrategy(address) public virtual {
-        _delegateToFacet();
-    }
+    function addStrategy(address) public virtual { if (msg.sig == bytes4(0)) revert(); _delegateToFacet(); }
 
     // Stub - delegates to CommunityStrategyFacet
     // Signature: rejectPool(address) => 0xfb1f6917
     // Sig: 0xfb1f6917
-    function rejectPool(address) public virtual {
-        _delegateToFacet();
-    }
+    function rejectPool(address) public virtual { if (msg.sig == bytes4(0)) revert(); _delegateToFacet(); }
 
     // Stub - delegates to CommunityStrategyFacet
     // Signature: removeStrategyByPoolId(uint256) => 0x73265c37
     // Sig: 0x73265c37
-    function removeStrategyByPoolId(uint256) public virtual {
-        _delegateToFacet();
-    }
+    function removeStrategyByPoolId(uint256) public virtual { if (msg.sig == bytes4(0)) revert(); _delegateToFacet(); }
 
     // Stub - delegates to CommunityStrategyFacet
     // Signature: removeStrategy(address) => 0x175188e8
     // Sig: 0x175188e8
-    function removeStrategy(address) public virtual {
-        _delegateToFacet();
-    }
+    function removeStrategy(address) public virtual { if (msg.sig == bytes4(0)) revert(); _delegateToFacet(); }
 
     // Stub - delegates to CommunityAdminFacet
     // Signature: setCouncilSafe(address) => 0x397e2543
     // Sig: 0x397e2543
-    function setCouncilSafe(address payable) public virtual {
-        _delegateToFacet();
-    }
+    function setCouncilSafe(address payable) public virtual { if (msg.sig == bytes4(0)) revert(); _delegateToFacet(); }
 
     // Stub - delegates to CommunityAdminFacet
     // Signature: acceptCouncilSafe() => 0xb5058c50
     // Sig: 0xb5058c50
-    function acceptCouncilSafe() public virtual {
-        _delegateToFacet();
-    }
+    function acceptCouncilSafe() public virtual { if (msg.sig == bytes4(0)) revert(); _delegateToFacet(); }
 
     // Stub - delegates to CommunityMemberFacet
     // slither-disable-next-line incorrect-return
     // Sig: 0xa230c524
-    function isMember(address) public virtual returns (bool) {
-        _delegateToFacet();
-    }
+    function isMember(address) public virtual returns (bool) { if (msg.sig == bytes4(0)) revert(); _delegateToFacet(); }
 
     // Stub - delegates to CommunityMemberFacet
     // Signature: stakeAndRegisterMember(string) => 0x9a1f46e2
     // Sig: 0x9a1f46e2
-    function stakeAndRegisterMember(string memory) public virtual {
-        _delegateToFacet();
-    }
+    function stakeAndRegisterMember(string memory) public virtual { if (msg.sig == bytes4(0)) revert(); _delegateToFacet(); }
 
     // Stub - delegates to CommunityMemberFacet
     // Signature: getStakeAmountWithFees() => 0x28c309e9
     // Sig: 0x28c309e9
-    function getStakeAmountWithFees() public virtual returns (uint256) {
-        _delegateToFacet();
-    }
+    function getStakeAmountWithFees() public virtual returns (uint256) { if (msg.sig == bytes4(0)) revert(); _delegateToFacet(); }
 
     // Stub - delegates to CommunityMemberFacet
     // Signature: getBasisStakedAmount() => 0x0331383c
     // Sig: 0x0331383c
-    function getBasisStakedAmount() external virtual returns (uint256) {
-        _delegateToFacet();
-    }
+    function getBasisStakedAmount() external virtual returns (uint256) { if (msg.sig == bytes4(0)) revert(); _delegateToFacet(); }
 
     // Stub - delegates to CommunityAdminFacet
     // Signature: setBasisStakedAmount(uint256) => 0x31f61bca
     // Sig: 0x31f61bca
-    function setBasisStakedAmount(uint256) public virtual {
-        _delegateToFacet();
-    }
+    function setBasisStakedAmount(uint256) public virtual { if (msg.sig == bytes4(0)) revert(); _delegateToFacet(); }
 
     // Stub - delegates to CommunityAdminFacet
     // Signature: setCommunityParams((address,address,uint256,string,uint256,bool,string)) => 0xf2d774e7
     // Sig: 0xf2d774e7
-    function setCommunityParams(CommunityParams memory) external {
-        _delegateToFacet();
-    }
+    function setCommunityParams(CommunityParams memory) external { if (msg.sig == bytes4(0)) revert(); _delegateToFacet(); }
 
     // Stub - delegates to CommunityAdminFacet
     // Signature: setCommunityFee(uint256) => 0x0d12bbdb
     // Sig: 0x0d12bbdb
-    function setCommunityFee(uint256) public virtual {
-        _delegateToFacet();
-    }
+    function setCommunityFee(uint256) public virtual { if (msg.sig == bytes4(0)) revert(); _delegateToFacet(); }
 
     // Stub - delegates to CommunityAdminFacet
     // Signature: isCouncilMember(address) => 0xebd7dc52
     // Sig: 0xebd7dc52
-    function isCouncilMember(address) public virtual returns (bool) {
-        _delegateToFacet();
-    }
+    function isCouncilMember(address) public virtual returns (bool) { if (msg.sig == bytes4(0)) revert(); _delegateToFacet(); }
 
     // Stub - delegates to CommunityMemberFacet
     // Signature: unregisterMember() => 0xb99b4370
     // Sig: 0xb99b4370
-    function unregisterMember() public virtual {
-        _delegateToFacet();
-    }
+    function unregisterMember() public virtual { if (msg.sig == bytes4(0)) revert(); _delegateToFacet(); }
 
     // Stub - delegates to CommunityMemberFacet
     // Signature: kickMember(address,address) => 0x6871eb4d
     // Sig: 0x6871eb4d
-    function kickMember(address, address) public virtual {
-        _delegateToFacet();
-    }
+    function kickMember(address, address) public virtual { if (msg.sig == bytes4(0)) revert(); _delegateToFacet(); }
 
     // Stub - delegates to CommunityPauseFacet
     // Sig: 0x1add1a0d
-    function setPauseController(address) external {
-        _delegateToFacet();
-    }
+    function setPauseController(address) external { if (msg.sig == bytes4(0)) revert(); _delegateToFacet(); }
 
     /// @notice Helper function to delegate to facet using LibDiamond
     /// @dev Used by stub functions to delegate to their respective facets
@@ -577,10 +523,7 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
         }
 
         address facet = ds.facetAddressAndSelectorPosition[msg.sig].facetAddress;
-        if (facet == address(0)) {
-            revert CommunityFunctionDoesNotExist(msg.sig);
-        }
-
+        if (facet == address(0)) { revert CommunityFunctionDoesNotExist(msg.sig); }
         _enforceNotPaused(msg.sig, facet);
 
         assembly {

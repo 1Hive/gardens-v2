@@ -564,7 +564,6 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         cv.deactivatePoints(address(pool_admin()));
     }
 
-    // @todo uncoment with diamond, this non critical revert logic has been commented out to save space
     function testRevert_allocate_ProposalIdDuplicated() public {
         (,
             /*IAllo.Pool memory pool*/
@@ -3508,7 +3507,6 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         // assertEq(registryCommunity.isMember(pool_admin()), false, "isMember");
     }
 
-    // @todo uncomment when uncomenting setSybilScorer
     function test_activatePoints_with_enough_score() public {
         (IAllo.Pool memory pool, uint256 poolId,) = _createProposal(NATIVE, 0, 0);
         CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
@@ -3535,7 +3533,6 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         assertEq(cv.totalPointsActivated(), MINIMUM_STAKE * 2, "Points should be activated");
     }
 
-    // @todo uncomment when uncomenting setSybilScorer
     function test_activatePoints_fails_not_enough_score() public {
         (IAllo.Pool memory pool, uint256 poolId,) = _createProposal(NATIVE, 0, 0);
         CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
@@ -3563,7 +3560,6 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         vm.stopPrank();
     }
 
-    // @todo uncomment when uncomenting setSybilScorer
     function test_activatePoints_success_not_activated_strategy() public {
         (IAllo.Pool memory pool, uint256 poolId,) = _createProposal(NATIVE, 0, 0);
         CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
@@ -3591,7 +3587,6 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         assertEq(cv.totalPointsActivated(), MINIMUM_STAKE * 2, "Points should be activated");
     }
 
-    // @todo uncomment when uncomenting setSybilScorer
     function test_activatePoints_success_not_sybyl_scorer_set() public {
         (IAllo.Pool memory pool, uint256 poolId,) = _createProposal(NATIVE, 0, 0);
         CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
@@ -3614,7 +3609,6 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         assertEq(cv.totalPointsActivated(), MINIMUM_STAKE * 2, "Points should be activated");
     }
 
-    // @todo uncomment when uncomenting setSybilScorer
     function test_allocate_not_enough_score() public {
         (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
 
@@ -3647,7 +3641,6 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         vm.stopPrank();
     }
 
-    // @todo uncomment when uncomenting setSybilScorer
     function test_allocate_success_enough_score() public {
         (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
 

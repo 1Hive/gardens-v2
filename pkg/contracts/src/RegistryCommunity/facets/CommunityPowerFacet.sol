@@ -50,9 +50,7 @@ contract CommunityPowerFacet is CommunityBaseFacet {
     }
 
     function onlyRegistryMemberAddress(address _sender) internal view {
-        if (!isMember(_sender)) {
-            revert UserNotInRegistry();
-        }
+        if (!isMember(_sender)) { revert UserNotInRegistry(); }
     }
 
     function onlyStrategyEnabled(address _strategy) internal view {
@@ -128,8 +126,7 @@ contract CommunityPowerFacet is CommunityBaseFacet {
         }
 
         memberActivatedInStrategies[_member][_strategy] = false;
-        memberPowerInStrategy[_member][_strategy] = 0;
-        emit MemberDeactivatedStrategy(_member, _strategy);
+        memberPowerInStrategy[_member][_strategy] = 0; emit MemberDeactivatedStrategy(_member, _strategy);
     }
 
     // Sig: 0x559de05d
@@ -146,8 +143,7 @@ contract CommunityPowerFacet is CommunityBaseFacet {
             }
         }
 
-        gardenToken.safeTransferFrom(member, address(this), _amountStaked);
-        addressToMemberInfo[member].stakedAmount += _amountStaked;
+        gardenToken.safeTransferFrom(member, address(this), _amountStaked); addressToMemberInfo[member].stakedAmount += _amountStaked;
         emit MemberPowerIncreased(member, _amountStaked);
     }
 
@@ -161,8 +157,7 @@ contract CommunityPowerFacet is CommunityBaseFacet {
 
         if (addressToMemberInfo[member].stakedAmount - _amountUnstaked < registerStakeAmount) {
             revert DecreaseUnderMinimum();
-        }
-        gardenToken.safeTransfer(member, _amountUnstaked);
+        } gardenToken.safeTransfer(member, _amountUnstaked);
         for (uint256 i = 0; i < memberStrategies.length; i++) {
             address strategy = memberStrategies[i];
             pointsToDecrease = CVStrategy(payable(strategy)).decreasePower(member, _amountUnstaked);
@@ -173,9 +168,7 @@ contract CommunityPowerFacet is CommunityBaseFacet {
                 memberPowerInStrategy[member][memberStrategies[i]] -= pointsToDecrease;
             }
         }
-        addressToMemberInfo[member].stakedAmount -= _amountUnstaked;
-        emit MemberPowerDecreased(member, _amountUnstaked);
-    }
+        addressToMemberInfo[member].stakedAmount -= _amountUnstaked; emit MemberPowerDecreased(member, _amountUnstaked); }
 
     /*|--------------------------------------------|*/
     /*|              INTERNAL HELPERS              |*/

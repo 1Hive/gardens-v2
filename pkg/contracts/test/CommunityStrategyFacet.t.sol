@@ -127,10 +127,37 @@ contract CommunityStrategyFacetTest is Test {
         assertFalse(facet.enabledStrategies(strategy));
     }
 
+    function test_addStrategyByPoolId_requires_council() public {
+        vm.expectRevert(abi.encodeWithSelector(CommunityStrategyFacet.UserNotInCouncil.selector, address(this)));
+        facet.addStrategyByPoolId(1);
+    }
+
     function test_removeStrategy_reverts_when_not_enabled() public {
         vm.prank(council);
         vm.expectRevert(CommunityStrategyFacet.StrategyNotEnabled.selector);
         facet.removeStrategy(address(0xBEEF));
+    }
+
+    function test_removeStrategy_reverts_zero_address() public {
+        vm.prank(council);
+        vm.expectRevert(CommunityStrategyFacet.ValueCannotBeZero.selector);
+        facet.removeStrategy(address(0));
+    }
+
+    function test_removeStrategyByPoolId_reverts_zero_strategy() public {
+        vm.prank(council);
+        vm.expectRevert(CommunityStrategyFacet.ValueCannotBeZero.selector);
+        facet.removeStrategyByPoolId(999);
+    }
+
+    function test_removeStrategyByPoolId_requires_council() public {
+        vm.expectRevert(abi.encodeWithSelector(CommunityStrategyFacet.UserNotInCouncil.selector, address(this)));
+        facet.removeStrategyByPoolId(1);
+    }
+
+    function test_rejectPool_requires_council() public {
+        vm.expectRevert(abi.encodeWithSelector(CommunityStrategyFacet.UserNotInCouncil.selector, address(this)));
+        facet.rejectPool(address(0xBEEF));
     }
 
     function test_rejectPool_branches() public {

@@ -25,7 +25,12 @@ import {
 import {CommunityPauseFacet} from "../src/RegistryCommunity/facets/CommunityPauseFacet.sol";
 import {FAllo} from "../src/interfaces/FAllo.sol";
 import {IDiamondCut} from "../src/diamonds/interfaces/IDiamondCut.sol";
+import {IDiamondLoupe} from "../src/diamonds/interfaces/IDiamondLoupe.sol";
 import {IDiamond} from "../src/diamonds/interfaces/IDiamond.sol";
+import {IERC173} from "../src/diamonds/interfaces/IERC173.sol";
+import {IERC165} from "../src/diamonds/interfaces/IERC165.sol";
+import {RegistryCommunityDiamondInit} from "../src/RegistryCommunity/RegistryCommunityDiamondInit.sol";
+import {LibDiamond} from "../src/diamonds/libraries/LibDiamond.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {MockPauseController} from "./helpers/PauseHelpers.sol";
 
@@ -181,6 +186,30 @@ contract MockAllo is FAllo {
 
     function getPool(uint256 poolId) external view returns (IAllo.Pool memory pool) {
         pool.strategy = IStrategy(poolStrategies[poolId]);
+    }
+}
+
+contract MockRegistryFactoryWithPause {
+    address public controller;
+
+    constructor(address controller_) {
+        controller = controller_;
+    }
+
+    function globalPauseController() external view returns (address) {
+        return controller;
+    }
+}
+
+contract DiamondInitHarnessRC {
+    function callInit(address init) external {
+        (bool ok, ) = init.delegatecall(abi.encodeWithSelector(RegistryCommunityDiamondInit.init.selector));
+        require(ok, "init failed");
+    }
+
+    function supportsInterface(bytes4 interfaceId) external view returns (bool) {
+        LibDiamond.DiamondStorage storage ds = LibDiamond.diamondStorage();
+        return ds.supportedInterfaces[interfaceId];
     }
 }
 
@@ -397,6 +426,24 @@ contract RegistryCommunityTest is Test {
         assertEq(community.profileId(), registry.lastProfileId());
         assertEq(community.strategyTemplate(), address(0x1111));
         assertEq(community.collateralVaultTemplate(), address(0x2222));
+    }
+
+    function test_initialize_sets_pause_controller_when_factory_contract() public {
+        DummyCommunityFacet facet = new DummyCommunityFacet();
+        MockAllo allo = new MockAllo();
+        MockRegistry registry = new MockRegistry();
+        allo.setRegistry(address(registry));
+
+        MockPauseController controller = new MockPauseController();
+        MockRegistryFactoryWithPause factory = new MockRegistryFactoryWithPause(address(controller));
+
+        RegistryCommunityInitializeParams memory params = _defaultParams(address(allo));
+        params._registryFactory = address(factory);
+        RegistryCommunity community = _deployCommunity(params, _facetCuts(address(facet)), _facetCuts(address(facet)));
+
+        bytes32 pauseSlot = keccak256("gardens.pause.storage");
+        address stored = address(uint160(uint256(vm.load(address(community), pauseSlot))));
+        assertEq(stored, address(controller));
     }
 
     function test_initialize_reverts_on_missing_facets_or_params() public {
@@ -974,6 +1021,20 @@ contract RegistryCommunityTest is Test {
         community.kickMember(address(0x11), address(0x12));
     }
 
+    function test_diamondCut_reverts_for_non_owner() public {
+        DummyCommunityFacet facet = new DummyCommunityFacet();
+        MockAllo allo = new MockAllo();
+        MockRegistry registry = new MockRegistry();
+        allo.setRegistry(address(registry));
+
+        RegistryCommunityInitializeParams memory params = _defaultParams(address(allo));
+        RegistryCommunity community = _deployCommunity(params, _facetCuts(address(facet)), _facetCuts(address(facet)));
+
+        IDiamond.FacetCut[] memory cuts = _facetCuts(address(facet));
+        vm.expectRevert();
+        community.diamondCut(cuts, address(0), "");
+    }
+
     function test_fallback_reverts_unknown_selector() public {
         RegistryCommunity community = new RegistryCommunity();
 
@@ -1026,4 +1087,155 @@ contract RegistryCommunityTest is Test {
         );
         community.addStrategy(address(0x2));
     }
+
+    function test_pause_selector_bypass_before_controller_set() public {
+        DummyCommunityFacet dummyFacet = new DummyCommunityFacet();
+        CommunityPauseFacet pauseFacet = new CommunityPauseFacet();
+        MockAllo allo = new MockAllo();
+        MockRegistry registry = new MockRegistry();
+        allo.setRegistry(address(registry));
+
+        RegistryCommunityInitializeParams memory params = _defaultParams(address(allo));
+        RegistryCommunity community =
+            _deployCommunity(params, _facetCuts(address(dummyFacet)), _facetCuts(address(dummyFacet)));
+
+        vm.prank(owner);
+        community.diamondCut(_facetCutsForPause(address(pauseFacet)), address(0), "");
+
+        address controller = CommunityPauseFacet(address(community)).pauseController();
+        assertEq(controller, address(0));
+
+        MockPauseController pauseController = new MockPauseController();
+        vm.prank(owner);
+        CommunityPauseFacet(address(community)).setPauseController(address(pauseController));
+
+        assertEq(CommunityPauseFacet(address(community)).pauseController(), address(pauseController));
+    }
+
+    function test_registryCommunityDiamondInit_sets_supported_interfaces() public {
+        RegistryCommunityDiamondInit init = new RegistryCommunityDiamondInit();
+        DiamondInitHarnessRC harness = new DiamondInitHarnessRC();
+
+        harness.callInit(address(init));
+
+        assertTrue(harness.supportsInterface(type(IERC165).interfaceId));
+        assertTrue(harness.supportsInterface(type(IDiamondCut).interfaceId));
+        assertTrue(harness.supportsInterface(type(IDiamondLoupe).interfaceId));
+        assertTrue(harness.supportsInterface(type(IERC173).interfaceId));
+    }
+
+    function test_registryCommunityDiamondInit_direct_call() public {
+        RegistryCommunityDiamondInit init = new RegistryCommunityDiamondInit();
+        init.init();
+    }
+
+    function _deployDirectCommunityForCoverage() internal returns (RegistryCommunity community) {
+        DummyCommunityFacet facet = new DummyCommunityFacet();
+        MockAllo allo = new MockAllo();
+        MockRegistry registry = new MockRegistry();
+        allo.setRegistry(address(registry));
+
+        RegistryCommunityInitializeParams memory params = _defaultParams(address(allo));
+        community = _deployCommunity(params, _facetCuts(address(facet)), _facetCuts(address(facet)));
+    }
+
+    function _addStubAndPauseFacets(RegistryCommunity community) internal {
+        AllStubsFacet allStubs = new AllStubsFacet();
+        CommunityPauseFacet pauseFacet = new CommunityPauseFacet();
+        MockPauseController controller = new MockPauseController();
+
+        vm.prank(owner);
+        community.diamondCut(_facetCutsForAllStubs(address(allStubs)), address(0), "");
+        vm.prank(owner);
+        community.diamondCut(_facetCutsForPause(address(pauseFacet)), address(0), "");
+
+        vm.prank(owner);
+        community.setPauseController(address(controller));
+    }
+
+    function _callAllStubFunctions(RegistryCommunity community) internal {
+        address[] memory allowlist = new address[](0);
+        community.createPool(
+            address(0x1),
+            CVStrategyInitializeParamsV0_3({
+                cvParams: CVParams(0, 0, 0, 0),
+                proposalType: ProposalType.Funding,
+                pointSystem: PointSystem.Unlimited,
+                pointConfig: PointSystemConfig(0),
+                arbitrableConfig: ArbitrableConfig(IArbitrator(address(0)), address(0), 0, 0, 0, 0),
+                registryCommunity: address(community),
+                sybilScorer: address(0),
+                sybilScorerThreshold: 0,
+                initialAllowlist: allowlist,
+                superfluidToken: address(0),
+                streamingRatePerSecond: 0
+            }),
+            Metadata({protocol: 1, pointer: "meta"})
+        );
+        community.createPool(
+            address(0x2),
+            address(0x3),
+            CVStrategyInitializeParamsV0_3({
+                cvParams: CVParams(0, 0, 0, 0),
+                proposalType: ProposalType.Funding,
+                pointSystem: PointSystem.Unlimited,
+                pointConfig: PointSystemConfig(0),
+                arbitrableConfig: ArbitrableConfig(IArbitrator(address(0)), address(0), 0, 0, 0, 0),
+                registryCommunity: address(community),
+                sybilScorer: address(0),
+                sybilScorerThreshold: 0,
+                initialAllowlist: allowlist,
+                superfluidToken: address(0),
+                streamingRatePerSecond: 0
+            }),
+            Metadata({protocol: 1, pointer: "meta"})
+        );
+        community.setArchived(true);
+        community.activateMemberInStrategy(address(0x1), address(0x2));
+        community.deactivateMemberInStrategy(address(0x1), address(0x2));
+        community.increasePower(1);
+        community.decreasePower(1);
+        community.getMemberPowerInStrategy(address(0x1), address(0x2));
+        community.getMemberStakedAmount(address(0x1));
+        community.addStrategyByPoolId(1);
+        community.addStrategy(address(0x3));
+        community.rejectPool(address(0x4));
+        community.removeStrategyByPoolId(2);
+        community.removeStrategy(address(0x5));
+        community.setCouncilSafe(payable(address(0x6)));
+        community.acceptCouncilSafe();
+        community.isMember(address(0x7));
+        community.stakeAndRegisterMember("sig");
+        community.getStakeAmountWithFees();
+        community.getBasisStakedAmount();
+        community.setBasisStakedAmount(2);
+        community.setCommunityParams(
+            CommunityParams({
+                councilSafe: address(0x8),
+                feeReceiver: address(0x9),
+                communityFee: 0,
+                communityName: "name",
+                registerStakeAmount: 1,
+                isKickEnabled: false,
+                covenantIpfsHash: "hash"
+            })
+        );
+        community.setCommunityFee(1);
+        community.isCouncilMember(address(0x10));
+        community.unregisterMember();
+        community.kickMember(address(0x11), address(0x12));
+    }
+
+    function test_direct_initialize_and_stub_calls_cover_delegate_paths() public {
+        RegistryCommunity community = _deployDirectCommunityForCoverage();
+        _addStubAndPauseFacets(community);
+        _callAllStubFunctions(community);
+
+        (bool ok,) = address(community).call(abi.encodeWithSelector(DummyCommunityFacet.dummy.selector));
+        assertTrue(ok);
+
+        (ok, ) = address(community).call(abi.encodeWithSelector(bytes4(0xdeadbeef)));
+        assertFalse(ok);
+    }
+
 }

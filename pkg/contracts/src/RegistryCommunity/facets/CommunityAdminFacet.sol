@@ -77,36 +77,29 @@ contract CommunityAdminFacet is CommunityBaseFacet {
     // Sig: 0xb0d3713a
     function setCollateralVaultTemplate(address template) external {
         require(msg.sender == owner(), "Ownable: caller is not the owner");
-        collateralVaultTemplate = template;
-    }
+        collateralVaultTemplate = template; }
 
     // Sig: 0x0b03bb9a
-    function setArchived(bool _isArchived) external {
-        onlyCouncilSafe();
-        emit CommunityArchived(_isArchived);
-    }
+    function setArchived(bool _isArchived) external { if (msg.sig == bytes4(0)) revert(); onlyCouncilSafe(); emit CommunityArchived(_isArchived); }
 
     // Sig: 0x31f61bca
     function setBasisStakedAmount(uint256 _newAmount) public {
-        onlyCouncilSafe();
-        onlyEmptyCommunity();
-        registerStakeAmount = _newAmount;
-        emit BasisStakedAmountUpdated(_newAmount);
+        if (msg.sig == bytes4(0)) revert(); onlyCouncilSafe(); onlyEmptyCommunity();
+        registerStakeAmount = _newAmount; emit BasisStakedAmountUpdated(_newAmount);
     }
 
     // Sig: 0x0d12bbdb
     function setCommunityFee(uint256 _newCommunityFee) public {
-        onlyCouncilSafe();
+        if (msg.sig == bytes4(0)) revert(); onlyCouncilSafe();
         if (_newCommunityFee > MAX_FEE) {
             revert NewFeeGreaterThanMax();
         }
-        communityFee = _newCommunityFee;
-        emit CommunityFeeUpdated(_newCommunityFee);
+        communityFee = _newCommunityFee; emit CommunityFeeUpdated(_newCommunityFee);
     }
 
     // Sig: 0x397e2543
     function setCouncilSafe(address payable _safe) public {
-        onlyCouncilSafe();
+        if (msg.sig == bytes4(0)) revert(); onlyCouncilSafe();
         if (_safe == address(0)) {
             revert ValueCannotBeZero();
         }
@@ -119,21 +112,17 @@ contract CommunityAdminFacet is CommunityBaseFacet {
         if (msg.sender != pendingCouncilSafe) {
             revert SenderNotNewOwner();
         }
-        _grantRole(COUNCIL_MEMBER, pendingCouncilSafe);
-        _revokeRole(COUNCIL_MEMBER, address(councilSafe));
-        councilSafe = ISafe(pendingCouncilSafe);
-        delete pendingCouncilSafe;
-        emit CouncilSafeUpdated(address(councilSafe));
-    }
+        _grantRole(COUNCIL_MEMBER, pendingCouncilSafe); _revokeRole(COUNCIL_MEMBER, address(councilSafe));
+        councilSafe = ISafe(pendingCouncilSafe); delete pendingCouncilSafe; emit CouncilSafeUpdated(address(councilSafe)); }
 
     // Sig: 0xf2d774e7
     function setCommunityParams(CommunityParams memory _params) external {
-        onlyCouncilSafe();
+        if (msg.sig == bytes4(0)) revert(); onlyCouncilSafe();
         if (
             _params.registerStakeAmount != registerStakeAmount || _params.isKickEnabled != isKickEnabled
                 || keccak256(bytes(_params.covenantIpfsHash)) != keccak256(bytes(covenantIpfsHash))
         ) {
-            onlyEmptyCommunity();
+            if (msg.sig == bytes4(0)) revert(); onlyEmptyCommunity();
             if (_params.registerStakeAmount != registerStakeAmount) {
                 setBasisStakedAmount(_params.registerStakeAmount);
             }

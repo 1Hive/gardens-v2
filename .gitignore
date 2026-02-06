@@ -55,3 +55,9 @@ lcov.info
 # foundry build artifacts
 pkg/contracts/out/
 pkg/contracts/script/Playground.s.sol
+
+apps/web/.osmium/contracts.json
+
+apps/web/.osmium/environments.json
+
+apps/web/.osmium/wallets.json
