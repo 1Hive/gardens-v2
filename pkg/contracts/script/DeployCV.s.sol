@@ -34,7 +34,7 @@ import {
     ProposalType,
     CreateProposal
 } from "../src/CVStrategy/CVStrategy.sol";
-import {CVStrategyInitializeParamsV0_2} from "../src/CVStrategy/CVStrategy.sol";
+import {CVStrategyInitializeParamsV0_3} from "../src/CVStrategy/CVStrategy.sol";
 import {Upgrades} from "@openzeppelin/foundry/LegacyUpgrades.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
@@ -121,7 +121,7 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         RegistryCommunity registryCommunity = RegistryCommunity(registryFactory.createRegistry(params));
         token.mint(address(pool_admin()), 10_000 ether);
 
-        CVStrategyInitializeParamsV0_2 memory paramsCV;
+        CVStrategyInitializeParamsV0_3 memory paramsCV;
 
         // CVParams
         paramsCV.cvParams.decay = _etherToFloat(0.9999799 ether); // alpha = decay
@@ -134,6 +134,7 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         paramsCV.pointSystem = PointSystem.Unlimited;
         paramsCV.sybilScorer = address(sybilScorer);
         paramsCV.sybilScorerThreshold = 1;
+        paramsCV.streamingRatePerSecond = 0;
 
         // Point config
         PointSystemConfig memory pointConfig;

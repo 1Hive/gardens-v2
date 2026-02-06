@@ -196,7 +196,7 @@ abstract contract CVStrategyBaseFacet {
     /**
      * @notice Get the owner of the contract
      * @dev Accesses the _owner storage variable from OwnableUpgradeable layout
-     * @sig: 8da5cb5b
+     * Sig: 0x8da5cb5b
      */
     function owner() internal view returns (address) {
         return LibDiamond.contractOwner();
