@@ -730,7 +730,7 @@ export default function ClientPage({
                                       totalRegistrationCost,
                                       tokenGarden?.decimals,
                                     ]}
-                                    valueClassName="text-xl font-bold"
+                                    valueClassName="text-md sm:text-lg font-bold"
                                     disableTooltip={true}
                                     compact={true}
                                     copiable={true}
@@ -792,7 +792,7 @@ export default function ClientPage({
                       disabled={!isConnected || missmatchUrl}
                       tooltip={tooltipMessage}
                       icon={<PlusIcon height={24} width={24} />}
-                      className="text-sm"
+                      className="!w-full sm:!w-auto"
                     >
                       Create New Pool
                     </Button>

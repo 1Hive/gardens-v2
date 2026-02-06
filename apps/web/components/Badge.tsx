@@ -99,9 +99,11 @@ export function Badge({
       data-tip={tooltip}
     >
       {Boolean(iconIncluded) && (
-        <span className={"h-5 w-5 text-inherit"}>{iconIncluded}</span>
+        <span className={"w-4 h-4 sm:h-5 sm:w-5 text-inherit"}>
+          {iconIncluded}
+        </span>
       )}
-      <p className="first-letter:uppercase text-sm font-semibold text-inherit">
+      <p className="first-letter:uppercase text-xs sm:text-sm font-semibold text-inherit">
         {content}
       </p>
     </div>

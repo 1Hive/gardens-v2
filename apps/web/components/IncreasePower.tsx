@@ -313,7 +313,7 @@ export const IncreasePower = ({
           <>
             {/* Available to stake*/}
             <div className="flex-1 flex items-baseline justify-between">
-              <p className="text-sm">Available</p>
+              <p className="text-xs sm:text-sm">Available</p>
               <DisplayNumber
                 number={roundToSignificant(
                   accountTokenBalancePlusStakeAmount ?? 0,
@@ -321,8 +321,8 @@ export const IncreasePower = ({
                 )}
                 tokenSymbol={tokenSymbol}
                 compact={true}
-                valueClassName="text-lg"
-                symbolClassName="text-sm"
+                valueClassName="text-md sm:text-lg"
+                symbolClassName="text-xs sm:text-sm"
               />
             </div>
             <div className="relative w-full">
@@ -347,7 +347,7 @@ export const IncreasePower = ({
                       );
                   }}
                 />
-                <span className="">{tokenSymbol}</span>
+                <span className="text-sm sm:text-md">{tokenSymbol}</span>
               </label>
             </div>
 
