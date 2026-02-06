@@ -12,7 +12,7 @@ import {
     CVParams,
     PointSystemConfig,
     ArbitrableConfig,
-    CVStrategyInitializeParamsV0_2
+    CVStrategyInitializeParamsV0_3
 } from "../src/CVStrategy/CVStrategy.sol";
 import {ConvictionsUtils} from "../src/CVStrategy/ConvictionsUtils.sol";
 import {IDiamondLoupe} from "../src/diamonds/interfaces/IDiamondLoupe.sol";
@@ -95,11 +95,8 @@ contract CVStrategyTest is Test {
         selectors[9] = bytes4(keccak256("isPaused(bytes4)"));
         selectors[10] = bytes4(keccak256("pausedUntil()"));
         selectors[11] = bytes4(keccak256("pausedSelectorUntil(bytes4)"));
-        cuts[0] = IDiamond.FacetCut({
-            facetAddress: facet,
-            action: IDiamond.FacetCutAction.Add,
-            functionSelectors: selectors
-        });
+        cuts[0] =
+            IDiamond.FacetCut({facetAddress: facet, action: IDiamond.FacetCutAction.Add, functionSelectors: selectors});
     }
 
     function test_checkSenderIsMember_branches() public {
@@ -155,9 +152,7 @@ contract CVStrategyTest is Test {
     }
 
     function test_onlyCouncilSafeOrMember_branches() public {
-        vm.expectRevert(
-            abi.encodeWithSelector(CVStrategy.OnlyCouncilSafeOrMember.selector, address(this), councilSafe)
-        );
+        vm.expectRevert(abi.encodeWithSelector(CVStrategy.OnlyCouncilSafeOrMember.selector, address(this), councilSafe));
         strategy.exposedOnlyCouncilSafeOrMember();
 
         bytes32 role = keccak256(abi.encodePacked("ALLOWLIST", uint256(1)));
@@ -262,8 +257,7 @@ contract CVStrategyTest is Test {
 
     function test_getters_and_conviction() public {
         MockArbitrator arb = new MockArbitrator();
-        ArbitrableConfig memory config =
-            ArbitrableConfig(IArbitrator(address(arb)), address(0xBEEF), 1, 2, 3, 4);
+        ArbitrableConfig memory config = ArbitrableConfig(IArbitrator(address(arb)), address(0xBEEF), 1, 2, 3, 4);
         strategy.setArbitrableConfig(2, config);
 
         (
@@ -389,12 +383,16 @@ contract CVStrategyTest is Test {
         );
 
         vm.expectRevert(
-            abi.encodeWithSelector(CVStrategy.StrategyFunctionDoesNotExist.selector, CVStrategy.connectSuperfluidGDA.selector)
+            abi.encodeWithSelector(
+                CVStrategy.StrategyFunctionDoesNotExist.selector, CVStrategy.connectSuperfluidGDA.selector
+            )
         );
         strategy.connectSuperfluidGDA(address(0));
 
         vm.expectRevert(
-            abi.encodeWithSelector(CVStrategy.StrategyFunctionDoesNotExist.selector, CVStrategy.disconnectSuperfluidGDA.selector)
+            abi.encodeWithSelector(
+                CVStrategy.StrategyFunctionDoesNotExist.selector, CVStrategy.disconnectSuperfluidGDA.selector
+            )
         );
         strategy.disconnectSuperfluidGDA(address(0));
 
@@ -425,14 +423,12 @@ contract CVStrategyTest is Test {
         CVStrategyStubFacet facet = new CVStrategyStubFacet();
 
         CVStrategyHarness local = CVStrategyHarness(
-            payable(
-                address(
+            payable(address(
                     new ERC1967Proxy(
                         address(new CVStrategyHarness()),
                         abi.encodeWithSelector(CVStrategy.init.selector, address(allo), address(0xBEEF), ownerAddr)
                     )
-                )
-            )
+                ))
         );
 
         IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](1);
@@ -440,9 +436,7 @@ contract CVStrategyTest is Test {
         selectors[0] = CVStrategy.activatePoints.selector;
         selectors[1] = CVStrategyStubFacet.ping.selector;
         cuts[0] = IDiamond.FacetCut({
-            facetAddress: address(facet),
-            action: IDiamond.FacetCutAction.Add,
-            functionSelectors: selectors
+            facetAddress: address(facet), action: IDiamond.FacetCutAction.Add, functionSelectors: selectors
         });
 
         vm.expectRevert(bytes("Ownable: caller is not the owner"));
@@ -482,7 +476,7 @@ contract CVStrategyTest is Test {
         local.setAllo(address(localAllo));
         local.setCollateralVaultTemplateRaw(address(template));
 
-        CVStrategyInitializeParamsV0_2 memory params;
+        CVStrategyInitializeParamsV0_3 memory params;
         params.registryCommunity = address(localRegistry);
         params.proposalType = ProposalType.Funding;
         params.pointSystem = PointSystem.Unlimited;
@@ -515,7 +509,7 @@ contract CVStrategyTest is Test {
         local.setAllo(address(localAllo));
         local.setCollateralVaultTemplateRaw(address(template));
 
-        CVStrategyInitializeParamsV0_2 memory params;
+        CVStrategyInitializeParamsV0_3 memory params;
         params.registryCommunity = address(registryCommunity);
         params.proposalType = ProposalType.Funding;
         params.pointSystem = PointSystem.Unlimited;
@@ -538,14 +532,12 @@ contract CVStrategyTest is Test {
         address otherAddr = makeAddr("otherAddr");
 
         CVStrategyHarness local = CVStrategyHarness(
-            payable(
-                address(
+            payable(address(
                     new ERC1967Proxy(
                         address(new CVStrategyHarness()),
                         abi.encodeWithSelector(CVStrategy.init.selector, address(allo), address(0xBEEF), ownerAddr)
                     )
-                )
-            )
+                ))
         );
 
         vm.prank(ownerAddr);
@@ -563,14 +555,12 @@ contract CVStrategyTest is Test {
         MockPauseController controller = new MockPauseController();
 
         CVStrategyHarness local = CVStrategyHarness(
-            payable(
-                address(
+            payable(address(
                     new ERC1967Proxy(
                         address(new CVStrategyHarness()),
                         abi.encodeWithSelector(CVStrategy.init.selector, address(allo), address(0xBEEF), ownerAddr)
                     )
-                )
-            )
+                ))
         );
 
         IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](2);
@@ -578,9 +568,7 @@ contract CVStrategyTest is Test {
         stubSelectors[0] = CVStrategy.activatePoints.selector;
         stubSelectors[1] = CVStrategyStubFacet.ping.selector;
         cuts[0] = IDiamond.FacetCut({
-            facetAddress: address(facet),
-            action: IDiamond.FacetCutAction.Add,
-            functionSelectors: stubSelectors
+            facetAddress: address(facet), action: IDiamond.FacetCutAction.Add, functionSelectors: stubSelectors
         });
         cuts[1] = _facetCutsForPause(address(pauseFacet))[0];
 
@@ -606,9 +594,7 @@ contract CVStrategyTest is Test {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                CVStrategy.StrategySelectorPaused.selector,
-                CVStrategy.activatePoints.selector,
-                address(controller)
+                CVStrategy.StrategySelectorPaused.selector, CVStrategy.activatePoints.selector, address(controller)
             )
         );
         local.activatePoints();

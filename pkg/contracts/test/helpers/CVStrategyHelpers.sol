@@ -17,7 +17,7 @@ import {
     CVParams,
     PointSystemConfig,
     ArbitrableConfig,
-    CVStrategyInitializeParamsV0_2
+    CVStrategyInitializeParamsV0_3
 } from "../../src/CVStrategy/CVStrategy.sol";
 import {CVProposalFacet} from "../../src/CVStrategy/facets/CVProposalFacet.sol";
 import {CVStrategyBaseFacet} from "../../src/CVStrategy/CVStrategyBaseFacet.sol";

@@ -31,7 +31,7 @@ import {
     CVStrategy,
     ProposalType,
     ProposalStatus,
-    CVStrategyInitializeParamsV0_2,
+    CVStrategyInitializeParamsV0_3,
     ArbitrableConfig,
     PointSystemConfig,
     PointSystem,
@@ -236,7 +236,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
 
         ArbitrableConfig memory arbitrableConfig =
             ArbitrableConfig(safeArbitrator, payable(tribunalSafe), 0.02 ether, 0.01 ether, 1, 300);
-        CVStrategyInitializeParamsV0_2 memory params;
+        CVStrategyInitializeParamsV0_3 memory params;
 
         if (requestAmount == 12345) {
             params = getParams(
@@ -248,7 +248,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
                 new address[](1),
                 address(0),
                 0,
-                address(superfluidToken)
+                address(superfluidToken),
+                0
             );
         } else {
             params = getParams(
@@ -260,7 +261,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
                 new address[](1),
                 address(0),
                 0,
-                address(0)
+                address(0),
+                0
             );
         }
         // CVStrategy strategy = new CVStrategy(address(allo()));
@@ -3180,7 +3182,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
     //     address collateralVaultTemplate = address(new CollateralVault());
     //     ArbitrableConfig memory arbitrableConfig =
     //         ArbitrableConfig(safeArbitrator, payable(address(_councilSafe())), 3 ether, 2 ether, 1, 300);
-    //     CVStrategyInitializeParamsV0_2 memory params = getParams(
+    //     CVStrategyInitializeParamsV0_3 memory params = getParams(
     //         address(0),
     //         ProposalType.Funding,
     //         PointSystem.Unlimited,
@@ -3205,7 +3207,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
     //     // Setup pool initialization parameters
     //     ArbitrableConfig memory arbitrableConfig =
     //         ArbitrableConfig(safeArbitrator, payable(address(_councilSafe())), 3 ether, 2 ether, 1, 300);
-    //     CVStrategyInitializeParamsV0_2 memory params = getParams(
+    //     CVStrategyInitializeParamsV0_3 memory params = getParams(
     //         address(_registryCommunity()),
     //         ProposalType.Funding,
     //         PointSystem.Unlimited,

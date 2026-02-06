@@ -74,12 +74,12 @@ abstract contract CommunityDiamondConfiguratorBase {
         bytes4[] memory poolSelectors = new bytes4[](2);
         poolSelectors[0] = bytes4(
             keccak256(
-                "createPool(address,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address,uint256,address[],address),(uint256,string))"
+                "createPool(address,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address,uint256,address[],address,uint256),(uint256,string))"
             )
         );
         poolSelectors[1] = bytes4(
             keccak256(
-                "createPool(address,address,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address,uint256,address[],address),(uint256,string))"
+                "createPool(address,address,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address,uint256,address[],address,uint256),(uint256,string))"
             )
         );
         cuts[3] = IDiamond.FacetCut({

@@ -17,7 +17,7 @@ import {IRegistry, Metadata} from "allo-v2-contracts/core/interfaces/IRegistry.s
 import {FAllo} from "../interfaces/FAllo.sol";
 import {ISafe} from "../interfaces/ISafe.sol";
 import {IRegistryFactory} from "../IRegistryFactory.sol";
-import {CVStrategyInitializeParamsV0_2, PointSystem} from "../CVStrategy/ICVStrategy.sol";
+import {CVStrategyInitializeParamsV0_3, PointSystem} from "../CVStrategy/ICVStrategy.sol";
 import {CVStrategy} from "../CVStrategy/CVStrategy.sol";
 import {Upgrades} from "@openzeppelin/foundry/LegacyUpgrades.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
@@ -268,11 +268,10 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
         strategyTemplate = template;
     }
 
-    function setStrategyFacets(
-        IDiamondCut.FacetCut[] memory facetCuts,
-        address init,
-        bytes memory initCalldata
-    ) external onlyOwner {
+    function setStrategyFacets(IDiamondCut.FacetCut[] memory facetCuts, address init, bytes memory initCalldata)
+        external
+        onlyOwner
+    {
         _setFacetCuts(facetCuts, strategyFacetCuts);
         strategyInit = init;
         strategyInitCalldata = initCalldata;
@@ -331,6 +330,9 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
         covenantIpfsHash = params.covenantIpfsHash;
 
         registryFactory = params._registryFactory;
+        if (params._registryFactory.code.length != 0) {
+            LibPauseStorage.layout().pauseController = IRegistryFactory(params._registryFactory).globalPauseController();
+        }
         feeReceiver = params._feeReceiver;
         councilSafe = ISafe(params._councilSafe);
         totalMembers = 0;
@@ -368,7 +370,7 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
 
     // Stub - delegates to CommunityPoolFacet
     // slither-disable-next-line incorrect-return
-    function createPool(address _token, CVStrategyInitializeParamsV0_2 memory _params, Metadata memory _metadata)
+    function createPool(address _token, CVStrategyInitializeParamsV0_3 memory _params, Metadata memory _metadata)
         public
         virtual
         returns (uint256 poolId, address strategy)
@@ -381,7 +383,7 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
     function createPool(
         address _strategy,
         address _token,
-        CVStrategyInitializeParamsV0_2 memory _params,
+        CVStrategyInitializeParamsV0_3 memory _params,
         Metadata memory _metadata
     ) public virtual returns (uint256 poolId, address strategy) {
         _delegateToFacet();
@@ -576,14 +578,10 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
     function _isPauseSelector(bytes4 selector) private pure returns (bool) {
         return selector == bytes4(keccak256("setPauseController(address)"))
             || selector == bytes4(keccak256("setPauseFacet(address)"))
-            || selector == bytes4(keccak256("pause(uint256)"))
-            || selector == bytes4(keccak256("pause(bytes4,uint256)"))
-            || selector == bytes4(keccak256("unpause()"))
-            || selector == bytes4(keccak256("unpause(bytes4)"))
-            || selector == bytes4(keccak256("pauseFacet()"))
-            || selector == bytes4(keccak256("pauseController()"))
-            || selector == bytes4(keccak256("isPaused()"))
-            || selector == bytes4(keccak256("isPaused(bytes4)"))
+            || selector == bytes4(keccak256("pause(uint256)")) || selector == bytes4(keccak256("pause(bytes4,uint256)"))
+            || selector == bytes4(keccak256("unpause()")) || selector == bytes4(keccak256("unpause(bytes4)"))
+            || selector == bytes4(keccak256("pauseFacet()")) || selector == bytes4(keccak256("pauseController()"))
+            || selector == bytes4(keccak256("isPaused()")) || selector == bytes4(keccak256("isPaused(bytes4)"))
             || selector == bytes4(keccak256("pausedUntil()"))
             || selector == bytes4(keccak256("pausedSelectorUntil(bytes4)"));
     }

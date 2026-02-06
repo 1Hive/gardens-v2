@@ -364,6 +364,20 @@ tasks:
           --broadcast \
           -vv
         ignore_error: true
+  deploy-global-pause-controller-opsep:
+    desc: Deploy global pause controller opsep
+    cmds:
+      - cmd: |
+          forge script script/DeployGlobalPauseController.s.sol:DeployGlobalPauseController \
+          --rpc-url ${RPC_URL_OP_TESTNET} \
+          --sig "run(string)" 'opsepolia' \
+          --chain-id 11155420 \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --private-key ${PRIVATE_KEY} \
+          --verify \
+          --broadcast \
+          -vv
+        ignore_error: true
   deploy-safe-arbitrator-opsep:
     desc: Deploy safe arbitrator opsep
     cmds:
@@ -620,6 +634,20 @@ tasks:
           --broadcast \
           -vv
         ignore_error: true
+  deploy-global-pause-controller-arbsep:
+    desc: Deploy global pause controller arbsep
+    cmds:
+      - cmd: |
+          forge script script/DeployGlobalPauseController.s.sol:DeployGlobalPauseController \
+          --rpc-url ${RPC_URL_ARB_TESTNET} \
+          --sig "run(string)" 'arbsepolia' \
+          --chain-id 421614 \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --private-key ${PRIVATE_KEY} \
+          --verify \
+          --broadcast \
+          -vv
+        ignore_error: true
   deploy-or-upgrade-if-exists-safe-arbitrator-arbsep:
     desc: Deploy or upgrade if exists safe arbitrator arbsep
     cmds:
@@ -766,6 +794,20 @@ tasks:
     cmds:
       - cmd: |
           forge script script/DeployPassportScorer.s.sol:DeployPassportScorer \
+          --rpc-url ${RPC_URL_ARB} \
+          --sig "run(string)" 'arbitrum' \
+          --chain-id 42161 \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --private-key ${PRIVATE_KEY} \
+          --verify \
+          --broadcast \
+          -vv
+        ignore_error: true
+  deploy-global-pause-controller-arbitrum:
+    desc: Deploy global pause controller arbitrum
+    cmds:
+      - cmd: |
+          forge script script/DeployGlobalPauseController.s.sol:DeployGlobalPauseController \
           --rpc-url ${RPC_URL_ARB} \
           --sig "run(string)" 'arbitrum' \
           --chain-id 42161 \
@@ -923,6 +965,20 @@ tasks:
     cmds:
       - cmd: |
           forge script script/DeployPassportScorer.s.sol:DeployPassportScorer \
+          --rpc-url ${RPC_URL_OPT} \
+          --sig "run(string)" 'optimism' \
+          --chain-id 10 \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --private-key ${PRIVATE_KEY} \
+          --verify \
+          --broadcast \
+          -vv
+        ignore_error: true
+  deploy-global-pause-controller-optimism:
+    desc: Deploy global pause controller optimism
+    cmds:
+      - cmd: |
+          forge script script/DeployGlobalPauseController.s.sol:DeployGlobalPauseController \
           --rpc-url ${RPC_URL_OPT} \
           --sig "run(string)" 'optimism' \
           --chain-id 10 \
@@ -1125,6 +1181,20 @@ tasks:
           --broadcast \
           -vv
         ignore_error: true
+  deploy-global-pause-controller-polygon:
+    desc: Deploy global pause controller polygon
+    cmds:
+      - cmd: |
+          forge script script/DeployGlobalPauseController.s.sol:DeployGlobalPauseController \
+          --rpc-url ${RPC_URL_POLYGON} \
+          --sig "run(string)" 'polygon' \
+          --chain-id 137 \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --private-key ${PRIVATE_KEY} \
+          --verify \
+          --broadcast \
+          -vv
+        ignore_error: true
   deploy-or-upgrade-if-exists-safe-arbitrator-polygon:
     desc: Deploy or upgrade if exists safe arbitrator polygon
     cmds:
@@ -1257,6 +1327,20 @@ tasks:
     cmds:
       - cmd: |
           forge script script/DeployPassportScorer.s.sol:DeployPassportScorer \
+          --rpc-url ${RPC_URL_GNOSIS} \
+          --sig "run(string)" 'gnosis' \
+          --chain-id 100 \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --private-key ${PRIVATE_KEY} \
+          --verify \
+          --broadcast \
+          -vv
+        ignore_error: true
+  deploy-global-pause-controller-gnosis:
+    desc: Deploy global pause controller gnosis
+    cmds:
+      - cmd: |
+          forge script script/DeployGlobalPauseController.s.sol:DeployGlobalPauseController \
           --rpc-url ${RPC_URL_GNOSIS} \
           --sig "run(string)" 'gnosis' \
           --chain-id 100 \
@@ -1462,6 +1546,20 @@ tasks:
     cmds:
       - cmd: |
           forge script script/DeployPassportScorer.s.sol:DeployPassportScorer \
+          --rpc-url ${RPC_URL_BASE} \
+          --sig "run(string)" 'base' \
+          --chain-id 8453 \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --private-key ${PRIVATE_KEY} \
+          --verify \
+          --broadcast \
+          -vv
+        ignore_error: true
+  deploy-global-pause-controller-base:
+    desc: Deploy global pause controller base
+    cmds:
+      - cmd: |
+          forge script script/DeployGlobalPauseController.s.sol:DeployGlobalPauseController \
           --rpc-url ${RPC_URL_BASE} \
           --sig "run(string)" 'base' \
           --chain-id 8453 \
@@ -1791,6 +1889,20 @@ tasks:
     cmds:
       - cmd: |
           forge script script/DeployPassportScorer.s.sol:DeployPassportScorer \
+          --rpc-url ${RPC_URL_CELO} \
+          --sig "run(string)" 'celo' \
+          --chain-id 42220 \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --private-key ${PRIVATE_KEY} \
+          --verify \
+          --broadcast \
+          -vv
+        ignore_error: true
+  deploy-global-pause-controller-celo:
+    desc: Deploy global pause controller celo
+    cmds:
+      - cmd: |
+          forge script script/DeployGlobalPauseController.s.sol:DeployGlobalPauseController \
           --rpc-url ${RPC_URL_CELO} \
           --sig "run(string)" 'celo' \
           --chain-id 42220 \

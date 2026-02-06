@@ -9,6 +9,7 @@ import {CVDisputeFacet} from "../src/CVStrategy/facets/CVDisputeFacet.sol";
 import {CVPauseFacet} from "../src/CVStrategy/facets/CVPauseFacet.sol";
 import {CVPowerFacet} from "../src/CVStrategy/facets/CVPowerFacet.sol";
 import {CVProposalFacet} from "../src/CVStrategy/facets/CVProposalFacet.sol";
+import {CVStreamingFacet} from "../src/CVStrategy/facets/CVStreamingFacet.sol";
 import {CVStrategyDiamondInit} from "../src/CVStrategy/CVStrategyDiamondInit.sol";
 import {RegistryCommunity} from "../src/RegistryCommunity/RegistryCommunity.sol";
 import {CommunityAdminFacet} from "../src/RegistryCommunity/facets/CommunityAdminFacet.sol";
@@ -40,6 +41,10 @@ contract UpgradeCVMultichainTest is BaseMultiChain, StrategyDiamondConfiguratorB
     }
 
     function runCurrentNetwork(string memory networkJson) public override {
+        address pauseController = networkJson.readAddress(getKeyNetwork(".ENVS.PAUSE_CONTROLLER"));
+        if (pauseController == address(0)) {
+            revert("PAUSE_CONTROLLER not set in networks.json");
+        }
         address registryImplementation = address(new RegistryCommunity());
         address strategyImplementation = address(new CVStrategy());
         address registryFactoryImplementation = address(new RegistryFactory());
@@ -72,6 +77,9 @@ contract UpgradeCVMultichainTest is BaseMultiChain, StrategyDiamondConfiguratorB
         registryFactory.setStrategyFacets(
             cvCuts, address(new CVStrategyDiamondInit()), abi.encodeCall(CVStrategyDiamondInit.init, ())
         );
+
+        // 1.b.1 -- Set the Global Pause Controller --
+        registryFactory.setGlobalPauseController(pauseController);
 
         // 1.c -- Set the Registry Community Template --
         registryFactory.setRegistryCommunityTemplate(registryImplementation);
@@ -112,6 +120,7 @@ contract UpgradeCVMultichainTest is BaseMultiChain, StrategyDiamondConfiguratorB
                         abi.encodeCall(RegistryCommunityDiamondInit.init, ())
                     );
             }
+
         }
 
         // 3. CV STRATEGIES UPGRADES
@@ -169,12 +178,12 @@ contract UpgradeCVMultichainTest is BaseMultiChain, StrategyDiamondConfiguratorB
         bytes4[] memory poolSelectors = new bytes4[](2);
         poolSelectors[0] = bytes4(
             keccak256(
-                "createPool(address,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address,uint256,address[],address),(uint256,string))"
+                "createPool(address,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address,uint256,address[],address,uint256),(uint256,string))"
             )
         );
         poolSelectors[1] = bytes4(
             keccak256(
-                "createPool(address,address,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address,uint256,address[],address),(uint256,string))"
+                "createPool(address,address,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address,uint256,address[],address,uint256),(uint256,string))"
             )
         );
         cuts = new IDiamond.FacetCut[](1);
@@ -186,6 +195,7 @@ contract UpgradeCVMultichainTest is BaseMultiChain, StrategyDiamondConfiguratorB
     }
 
     function _buildUpgradedStrategyFacetCuts() internal returns (IDiamond.FacetCut[] memory cuts) {
+        // Existing pools do not need the streaming facet.
         cuts = new IDiamond.FacetCut[](0);
     }
 
@@ -196,6 +206,7 @@ contract UpgradeCVMultichainTest is BaseMultiChain, StrategyDiamondConfiguratorB
         CVPauseFacet cvPauseFacet = new CVPauseFacet();
         CVPowerFacet cvPowerFacet = new CVPowerFacet();
         CVProposalFacet cvProposalFacet = new CVProposalFacet();
+        CVStreamingFacet cvStreamingFacet = new CVStreamingFacet();
 
         CommunityAdminFacet communityAdminFacet = new CommunityAdminFacet();
         CommunityMemberFacet communityMemberFacet = new CommunityMemberFacet();
@@ -207,7 +218,14 @@ contract UpgradeCVMultichainTest is BaseMultiChain, StrategyDiamondConfiguratorB
         DiamondLoupeFacet loupeFacet = new DiamondLoupeFacet();
 
         cuts.cvCuts = _buildCVFacetCuts(
-            cvAdminFacet, cvAllocationFacet, cvDisputeFacet, cvPauseFacet, cvPowerFacet, cvProposalFacet, loupeFacet
+            cvAdminFacet,
+            cvAllocationFacet,
+            cvDisputeFacet,
+            cvPauseFacet,
+            cvPowerFacet,
+            cvProposalFacet,
+            cvStreamingFacet,
+            loupeFacet
         );
         cuts.communityCuts = _buildCommunityFacetCuts(
             communityAdminFacet,
@@ -227,6 +245,7 @@ contract UpgradeCVMultichainTest is BaseMultiChain, StrategyDiamondConfiguratorB
         CVPauseFacet cvPauseFacet,
         CVPowerFacet cvPowerFacet,
         CVProposalFacet cvProposalFacet,
+        CVStreamingFacet cvStreamingFacet,
         DiamondLoupeFacet loupeFacet
     ) internal pure returns (IDiamond.FacetCut[] memory cuts) {
         IDiamond.FacetCut[] memory baseCuts = _buildFacetCuts(
@@ -237,11 +256,18 @@ contract UpgradeCVMultichainTest is BaseMultiChain, StrategyDiamondConfiguratorB
             cvPowerFacet,
             cvProposalFacet
         );
-        cuts = new IDiamond.FacetCut[](7);
+        cuts = new IDiamond.FacetCut[](8);
         cuts[0] = _buildLoupeFacetCut(loupeFacet);
         for (uint256 i = 0; i < 6; i++) {
             cuts[i + 1] = baseCuts[i];
         }
+        bytes4[] memory streamingSelectors = new bytes4[](1);
+        streamingSelectors[0] = CVStreamingFacet.rebalance.selector;
+        cuts[7] = IDiamond.FacetCut({
+            facetAddress: address(cvStreamingFacet),
+            action: IDiamond.FacetCutAction.Auto,
+            functionSelectors: streamingSelectors
+        });
     }
 
     function _buildCommunityFacetCuts(

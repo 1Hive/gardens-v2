@@ -47,6 +47,7 @@ contract UpgradeCVMultichainProd is BaseMultiChain, StrategyDiamondConfiguratorB
         address strategyImplementation;
         address registryFactoryProxy;
         address safeOwner;
+        address pauseController;
         IDiamond.FacetCut[] cvCuts;
         IDiamond.FacetCut[] communityCuts;
         IDiamond.FacetCut[] upgradedCommunityCuts;
@@ -60,6 +61,10 @@ contract UpgradeCVMultichainProd is BaseMultiChain, StrategyDiamondConfiguratorB
         context.strategyImplementation = address(new CVStrategy());
         // address passportScorer = networkJson.readAddress(getKeyNetwork(".ENVS.PASSPORT_SCORER"));
         address proxyOwner = networkJson.readAddress(getKeyNetwork(".ENVS.PROXY_OWNER"));
+        context.pauseController = networkJson.readAddress(getKeyNetwork(".ENVS.PAUSE_CONTROLLER"));
+        if (context.pauseController == address(0)) {
+            revert("PAUSE_CONTROLLER not set in networks.json");
+        }
         context.safeOwner = ProxyOwner(proxyOwner).owner();
 
         FacetCuts memory facetCuts = _buildFacetCuts();
@@ -112,6 +117,13 @@ contract UpgradeCVMultichainProd is BaseMultiChain, StrategyDiamondConfiguratorB
         );
         context.writer = _appendTransaction(
             context.writer, _createTransactionJson(context.registryFactoryProxy, setStrategyFacets)
+        );
+
+        bytes memory setGlobalPauseController = abi.encodeWithSelector(
+            registryFactory.setGlobalPauseController.selector, context.pauseController
+        );
+        context.writer = _appendTransaction(
+            context.writer, _createTransactionJson(context.registryFactoryProxy, setGlobalPauseController)
         );
 
         bytes memory setRegistryCommunityTemplate = abi.encodeWithSelector(
@@ -256,12 +268,12 @@ contract UpgradeCVMultichainProd is BaseMultiChain, StrategyDiamondConfiguratorB
         bytes4[] memory poolSelectors = new bytes4[](2);
         poolSelectors[0] = bytes4(
             keccak256(
-                "createPool(address,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address,uint256,address[],address),(uint256,string))"
+                "createPool(address,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address,uint256,address[],address,uint256),(uint256,string))"
             )
         );
         poolSelectors[1] = bytes4(
             keccak256(
-                "createPool(address,address,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address,uint256,address[],address),(uint256,string))"
+                "createPool(address,address,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address,uint256,address[],address,uint256),(uint256,string))"
             )
         );
         cuts = new IDiamond.FacetCut[](1);

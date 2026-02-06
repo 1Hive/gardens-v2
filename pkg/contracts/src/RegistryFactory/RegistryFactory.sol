@@ -24,6 +24,7 @@ contract RegistryFactory is ProxyOwnableUpgrader {
     address public strategyTemplate;
     address public collateralVaultTemplate;
     address public streamingEscrowFactory;
+    address public globalPauseController;
     mapping(address => bool) public protopiansAddresses;
     mapping(address => bool) public keepersAddresses;
 
@@ -45,6 +46,7 @@ contract RegistryFactory is ProxyOwnableUpgrader {
     event ProtopiansChanged(address[] _new, address[] _removed);
     event KeepersChanged(address[] _new, address[] _removed);
     event StreamingEscrowFactorySet(address _newFactory);
+    event GlobalPauseControllerSet(address _newController);
 
     /*|--------------------------------------------|*/
     /*|                 ERRORS                     |*/
@@ -77,6 +79,12 @@ contract RegistryFactory is ProxyOwnableUpgrader {
         _revertZeroAddress(factory);
         streamingEscrowFactory = factory;
         emit StreamingEscrowFactorySet(factory);
+    }
+
+    function setGlobalPauseController(address controller) external virtual onlyOwner {
+        _revertZeroAddress(controller);
+        globalPauseController = controller;
+        emit GlobalPauseControllerSet(controller);
     }
     function initialize(
         address _owner,

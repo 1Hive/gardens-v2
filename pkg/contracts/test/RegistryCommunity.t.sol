@@ -8,7 +8,7 @@ import {Metadata} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import {IStrategy} from "allo-v2-contracts/core/interfaces/IStrategy.sol";
 import {
-    CVStrategyInitializeParamsV0_2,
+    CVStrategyInitializeParamsV0_3,
     CVParams,
     PointSystemConfig,
     PointSystem,
@@ -44,7 +44,7 @@ contract AddStrategyFacet {
 contract PoolFacet {
     event PoolCreated(uint256 poolId, address strategy);
 
-    function createPool(address, CVStrategyInitializeParamsV0_2 memory, Metadata memory)
+    function createPool(address, CVStrategyInitializeParamsV0_3 memory, Metadata memory)
         external
         returns (uint256 poolId, address strategy)
     {
@@ -53,7 +53,7 @@ contract PoolFacet {
         emit PoolCreated(poolId, strategy);
     }
 
-    function createPool(address, address, CVStrategyInitializeParamsV0_2 memory, Metadata memory)
+    function createPool(address, address, CVStrategyInitializeParamsV0_3 memory, Metadata memory)
         external
         returns (uint256 poolId, address strategy)
     {
@@ -64,14 +64,14 @@ contract PoolFacet {
 }
 
 contract AllStubsFacet {
-    function createPool(address, CVStrategyInitializeParamsV0_2 memory, Metadata memory)
+    function createPool(address, CVStrategyInitializeParamsV0_3 memory, Metadata memory)
         external
         returns (uint256 poolId, address strategy)
     {
         return (11, address(0xBEEF));
     }
 
-    function createPool(address, address, CVStrategyInitializeParamsV0_2 memory, Metadata memory)
+    function createPool(address, address, CVStrategyInitializeParamsV0_3 memory, Metadata memory)
         external
         returns (uint256 poolId, address strategy)
     {
@@ -142,13 +142,10 @@ contract AllStubsFacet {
 contract MockRegistry {
     bytes32 public lastProfileId;
 
-    function createProfile(
-        uint256 nonce,
-        string memory name,
-        Metadata memory,
-        address owner,
-        address[] memory
-    ) external returns (bytes32) {
+    function createProfile(uint256 nonce, string memory name, Metadata memory, address owner, address[] memory)
+        external
+        returns (bytes32)
+    {
         lastProfileId = keccak256(abi.encodePacked(nonce, name, owner));
         return lastProfileId;
     }
@@ -259,29 +256,23 @@ contract RegistryCommunityTest is Test {
     address internal owner = makeAddr("owner");
     address internal councilSafe = makeAddr("councilSafe");
     address internal feeReceiver = makeAddr("feeReceiver");
-    bytes4 internal constant CREATE_POOL_WITH_TOKEN_SELECTOR = 0x499ac57f;
-    bytes4 internal constant CREATE_POOL_WITH_STRATEGY_SELECTOR = 0xcd564dae;
+    bytes4 internal constant CREATE_POOL_WITH_TOKEN_SELECTOR = 0xfebf64a1;
+    bytes4 internal constant CREATE_POOL_WITH_STRATEGY_SELECTOR = 0x85a19b6d;
 
     function _facetCuts(address facet) internal pure returns (IDiamond.FacetCut[] memory cuts) {
         cuts = new IDiamond.FacetCut[](1);
         bytes4[] memory selectors = new bytes4[](1);
         selectors[0] = DummyCommunityFacet.dummy.selector;
-        cuts[0] = IDiamond.FacetCut({
-            facetAddress: facet,
-            action: IDiamond.FacetCutAction.Add,
-            functionSelectors: selectors
-        });
+        cuts[0] =
+            IDiamond.FacetCut({facetAddress: facet, action: IDiamond.FacetCutAction.Add, functionSelectors: selectors});
     }
 
     function _facetCutsForAddStrategy(address facet) internal pure returns (IDiamond.FacetCut[] memory cuts) {
         cuts = new IDiamond.FacetCut[](1);
         bytes4[] memory selectors = new bytes4[](1);
         selectors[0] = RegistryCommunity.addStrategy.selector;
-        cuts[0] = IDiamond.FacetCut({
-            facetAddress: facet,
-            action: IDiamond.FacetCutAction.Add,
-            functionSelectors: selectors
-        });
+        cuts[0] =
+            IDiamond.FacetCut({facetAddress: facet, action: IDiamond.FacetCutAction.Add, functionSelectors: selectors});
     }
 
     function _facetCutsForCreatePool(address facet) internal pure returns (IDiamond.FacetCut[] memory cuts) {
@@ -289,11 +280,8 @@ contract RegistryCommunityTest is Test {
         bytes4[] memory selectors = new bytes4[](2);
         selectors[0] = CREATE_POOL_WITH_TOKEN_SELECTOR;
         selectors[1] = CREATE_POOL_WITH_STRATEGY_SELECTOR;
-        cuts[0] = IDiamond.FacetCut({
-            facetAddress: facet,
-            action: IDiamond.FacetCutAction.Add,
-            functionSelectors: selectors
-        });
+        cuts[0] =
+            IDiamond.FacetCut({facetAddress: facet, action: IDiamond.FacetCutAction.Add, functionSelectors: selectors});
     }
 
     function _facetCutsForAllStubs(address facet) internal pure returns (IDiamond.FacetCut[] memory cuts) {
@@ -325,11 +313,8 @@ contract RegistryCommunityTest is Test {
         selectors[23] = RegistryCommunity.isCouncilMember.selector;
         selectors[24] = RegistryCommunity.unregisterMember.selector;
         selectors[25] = RegistryCommunity.kickMember.selector;
-        cuts[0] = IDiamond.FacetCut({
-            facetAddress: facet,
-            action: IDiamond.FacetCutAction.Add,
-            functionSelectors: selectors
-        });
+        cuts[0] =
+            IDiamond.FacetCut({facetAddress: facet, action: IDiamond.FacetCutAction.Add, functionSelectors: selectors});
     }
 
     function _facetCutsForPause(address facet) internal pure returns (IDiamond.FacetCut[] memory cuts) {
@@ -347,11 +332,8 @@ contract RegistryCommunityTest is Test {
         selectors[9] = bytes4(keccak256("isPaused(bytes4)"));
         selectors[10] = bytes4(keccak256("pausedUntil()"));
         selectors[11] = bytes4(keccak256("pausedSelectorUntil(bytes4)"));
-        cuts[0] = IDiamond.FacetCut({
-            facetAddress: facet,
-            action: IDiamond.FacetCutAction.Add,
-            functionSelectors: selectors
-        });
+        cuts[0] =
+            IDiamond.FacetCut({facetAddress: facet, action: IDiamond.FacetCutAction.Add, functionSelectors: selectors});
     }
 
     function _defaultParams(address alloAddr) internal view returns (RegistryCommunityInitializeParams memory params) {
@@ -688,9 +670,7 @@ contract RegistryCommunityTest is Test {
         bytes4[] memory selectors = new bytes4[](1);
         selectors[0] = DummyCommunityFacet.dummy.selector;
         cuts[0] = IDiamond.FacetCut({
-            facetAddress: address(0x1),
-            action: IDiamond.FacetCutAction.Add,
-            functionSelectors: selectors
+            facetAddress: address(0x1), action: IDiamond.FacetCutAction.Add, functionSelectors: selectors
         });
 
         vm.prank(ownerAddr);
@@ -723,32 +703,28 @@ contract RegistryCommunityTest is Test {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                RegistryCommunity.CommunityFunctionDoesNotExist.selector,
-                RegistryCommunity.addStrategy.selector
+                RegistryCommunity.CommunityFunctionDoesNotExist.selector, RegistryCommunity.addStrategy.selector
             )
         );
         community.addStrategy(address(0x1));
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                RegistryCommunity.CommunityFunctionDoesNotExist.selector,
-                RegistryCommunity.addStrategyByPoolId.selector
+                RegistryCommunity.CommunityFunctionDoesNotExist.selector, RegistryCommunity.addStrategyByPoolId.selector
             )
         );
         community.addStrategyByPoolId(1);
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                RegistryCommunity.CommunityFunctionDoesNotExist.selector,
-                RegistryCommunity.removeStrategy.selector
+                RegistryCommunity.CommunityFunctionDoesNotExist.selector, RegistryCommunity.removeStrategy.selector
             )
         );
         community.removeStrategy(address(0x2));
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                RegistryCommunity.CommunityFunctionDoesNotExist.selector,
-                RegistryCommunity.rejectPool.selector
+                RegistryCommunity.CommunityFunctionDoesNotExist.selector, RegistryCommunity.rejectPool.selector
             )
         );
         community.rejectPool(address(0x3));
@@ -763,32 +739,28 @@ contract RegistryCommunityTest is Test {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                RegistryCommunity.CommunityFunctionDoesNotExist.selector,
-                RegistryCommunity.setCommunityFee.selector
+                RegistryCommunity.CommunityFunctionDoesNotExist.selector, RegistryCommunity.setCommunityFee.selector
             )
         );
         community.setCommunityFee(1);
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                RegistryCommunity.CommunityFunctionDoesNotExist.selector,
-                RegistryCommunity.setCommunityParams.selector
+                RegistryCommunity.CommunityFunctionDoesNotExist.selector, RegistryCommunity.setCommunityParams.selector
             )
         );
         community.setCommunityParams(communityParams);
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                RegistryCommunity.CommunityFunctionDoesNotExist.selector,
-                RegistryCommunity.isCouncilMember.selector
+                RegistryCommunity.CommunityFunctionDoesNotExist.selector, RegistryCommunity.isCouncilMember.selector
             )
         );
         community.isCouncilMember(address(0x4));
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                RegistryCommunity.CommunityFunctionDoesNotExist.selector,
-                RegistryCommunity.isMember.selector
+                RegistryCommunity.CommunityFunctionDoesNotExist.selector, RegistryCommunity.isMember.selector
             )
         );
         community.isMember(address(0x5));
@@ -827,24 +799,21 @@ contract RegistryCommunityTest is Test {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                RegistryCommunity.CommunityFunctionDoesNotExist.selector,
-                RegistryCommunity.setCouncilSafe.selector
+                RegistryCommunity.CommunityFunctionDoesNotExist.selector, RegistryCommunity.setCouncilSafe.selector
             )
         );
         community.setCouncilSafe(payable(address(0x9)));
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                RegistryCommunity.CommunityFunctionDoesNotExist.selector,
-                RegistryCommunity.acceptCouncilSafe.selector
+                RegistryCommunity.CommunityFunctionDoesNotExist.selector, RegistryCommunity.acceptCouncilSafe.selector
             )
         );
         community.acceptCouncilSafe();
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                RegistryCommunity.CommunityFunctionDoesNotExist.selector,
-                RegistryCommunity.setArchived.selector
+                RegistryCommunity.CommunityFunctionDoesNotExist.selector, RegistryCommunity.setArchived.selector
             )
         );
         community.setArchived(true);
@@ -867,16 +836,14 @@ contract RegistryCommunityTest is Test {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                RegistryCommunity.CommunityFunctionDoesNotExist.selector,
-                RegistryCommunity.increasePower.selector
+                RegistryCommunity.CommunityFunctionDoesNotExist.selector, RegistryCommunity.increasePower.selector
             )
         );
         community.increasePower(1);
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                RegistryCommunity.CommunityFunctionDoesNotExist.selector,
-                RegistryCommunity.decreasePower.selector
+                RegistryCommunity.CommunityFunctionDoesNotExist.selector, RegistryCommunity.decreasePower.selector
             )
         );
         community.decreasePower(1);
@@ -899,20 +866,17 @@ contract RegistryCommunityTest is Test {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                RegistryCommunity.CommunityFunctionDoesNotExist.selector,
-                RegistryCommunity.unregisterMember.selector
+                RegistryCommunity.CommunityFunctionDoesNotExist.selector, RegistryCommunity.unregisterMember.selector
             )
         );
         community.unregisterMember();
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                RegistryCommunity.CommunityFunctionDoesNotExist.selector,
-                RegistryCommunity.kickMember.selector
+                RegistryCommunity.CommunityFunctionDoesNotExist.selector, RegistryCommunity.kickMember.selector
             )
         );
         community.kickMember(address(0x6), address(0x7));
-
     }
 
     function test_diamondCut_and_delegate_success_paths() public {
@@ -926,7 +890,7 @@ contract RegistryCommunityTest is Test {
         RegistryCommunity community = _deployCommunity(params, _facetCuts(address(facet)), _facetCuts(address(facet)));
 
         // Fallback should route to DummyCommunityFacet
-        (bool ok, ) = address(community).call(abi.encodeWithSelector(DummyCommunityFacet.dummy.selector));
+        (bool ok,) = address(community).call(abi.encodeWithSelector(DummyCommunityFacet.dummy.selector));
         assertTrue(ok);
 
         address[] memory allowlist = new address[](0);
@@ -935,7 +899,7 @@ contract RegistryCommunityTest is Test {
 
         (uint256 poolId, address strategyAddr) = community.createPool(
             address(0x1),
-            CVStrategyInitializeParamsV0_2({
+            CVStrategyInitializeParamsV0_3({
                 cvParams: CVParams(0, 0, 0, 0),
                 proposalType: ProposalType.Funding,
                 pointSystem: PointSystem.Unlimited,
@@ -945,7 +909,8 @@ contract RegistryCommunityTest is Test {
                 sybilScorer: address(0),
                 sybilScorerThreshold: 0,
                 initialAllowlist: allowlist,
-                superfluidToken: address(0)
+                superfluidToken: address(0),
+                streamingRatePerSecond: 0
             }),
             Metadata({protocol: 1, pointer: "meta"})
         );
@@ -955,7 +920,7 @@ contract RegistryCommunityTest is Test {
         (poolId, strategyAddr) = community.createPool(
             address(0x2),
             address(0x3),
-            CVStrategyInitializeParamsV0_2({
+            CVStrategyInitializeParamsV0_3({
                 cvParams: CVParams(0, 0, 0, 0),
                 proposalType: ProposalType.Funding,
                 pointSystem: PointSystem.Unlimited,
@@ -965,7 +930,8 @@ contract RegistryCommunityTest is Test {
                 sybilScorer: address(0),
                 sybilScorerThreshold: 0,
                 initialAllowlist: allowlist,
-                superfluidToken: address(0)
+                superfluidToken: address(0),
+                streamingRatePerSecond: 0
             }),
             Metadata({protocol: 1, pointer: "meta"})
         );
@@ -1026,7 +992,8 @@ contract RegistryCommunityTest is Test {
         allo.setRegistry(address(registry));
 
         RegistryCommunityInitializeParams memory params = _defaultParams(address(allo));
-        RegistryCommunity community = _deployCommunity(params, _facetCuts(address(dummyFacet)), _facetCuts(address(dummyFacet)));
+        RegistryCommunity community =
+            _deployCommunity(params, _facetCuts(address(dummyFacet)), _facetCuts(address(dummyFacet)));
 
         vm.prank(owner);
         community.diamondCut(_facetCutsForAddStrategy(address(addStrategyFacet)), address(0), "");

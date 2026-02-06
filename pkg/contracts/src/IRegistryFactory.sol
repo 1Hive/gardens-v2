@@ -8,4 +8,6 @@ interface IRegistryFactory {
     function getProtocolFee(address _community) external view returns (uint256);
 
     function getStreamingEscrowFactory() external view returns (address);
+
+    function globalPauseController() external view returns (address);
 }
