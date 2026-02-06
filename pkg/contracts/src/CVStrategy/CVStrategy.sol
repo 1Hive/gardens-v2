@@ -775,6 +775,78 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         return base + sf;
     }
 
+    // Stub - delegates to CVPauseFacet
+    // Sig: 0x1add1a0d
+    function setPauseController(address) external {
+        _delegateToFacet();
+    }
+
+    // Stub - delegates to CVPauseFacet
+    // Sig: 0x222a3a04
+    function setPauseFacet(address) external {
+        _delegateToFacet();
+    }
+
+    // Stub - delegates to CVPauseFacet
+    // Sig: 0x136439dd
+    function pause(uint256) external {
+        _delegateToFacet();
+    }
+
+    // Stub - delegates to CVPauseFacet
+    // Sig: 0x80c4a65f
+    function pause(bytes4, uint256) external {
+        _delegateToFacet();
+    }
+
+    // Stub - delegates to CVPauseFacet
+    // Sig: 0x3f4ba83a
+    function unpause() external {
+        _delegateToFacet();
+    }
+
+    // Stub - delegates to CVPauseFacet
+    // Sig: 0xbac1e94b
+    function unpause(bytes4) external {
+        _delegateToFacet();
+    }
+
+    // Stub - delegates to CVPauseFacet
+    // Sig: 0xadaf157b
+    function pauseFacet() external returns (address) {
+        _delegateToFacet();
+    }
+
+    // Stub - delegates to CVPauseFacet
+    // Sig: 0x60b47789
+    function pauseController() external returns (address) {
+        _delegateToFacet();
+    }
+
+    // Stub - delegates to CVPauseFacet
+    // Sig: 0xb187bd26
+    function isPaused() external returns (bool) {
+        _delegateToFacet();
+    }
+
+    // Stub - delegates to CVPauseFacet
+    // Sig: 0x09b65e66
+    function isPaused(bytes4) external returns (bool) {
+        _delegateToFacet();
+    }
+
+    // Stub - delegates to CVPauseFacet
+    // Sig: 0xda748b10
+    function pausedUntil() external returns (uint256) {
+        _delegateToFacet();
+    }
+
+    // Stub - delegates to CVPauseFacet
+    // Sig: 0x2d2ebbef
+    function pausedSelectorUntil(bytes4) external returns (uint256) {
+        _delegateToFacet();
+    }
+
     /// @notice Helper function to delegate to facet using LibDiamond
     /// @dev Used by stub functions to delegate to their respective facets
     /// @dev This function never returns - it either reverts or returns via assembly

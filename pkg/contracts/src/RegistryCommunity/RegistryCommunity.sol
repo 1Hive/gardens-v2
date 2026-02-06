@@ -559,6 +559,12 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
         _delegateToFacet();
     }
 
+    // Stub - delegates to CommunityPauseFacet
+    // Sig: 0x1add1a0d
+    function setPauseController(address) external {
+        _delegateToFacet();
+    }
+
     /// @notice Helper function to delegate to facet using LibDiamond
     /// @dev Used by stub functions to delegate to their respective facets
     /// @dev This function never returns - it either reverts or returns via assembly
