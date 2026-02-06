@@ -71,14 +71,17 @@ contract CommunityPowerFacet is CommunityBaseFacet {
     /*|              FUNCTIONS                     |*/
     /*|--------------------------------------------|*/
 
+    // Sig: 0x7817ee4f
     function getMemberPowerInStrategy(address _member, address _strategy) public view returns (uint256) {
         return memberPowerInStrategy[_member][_strategy];
     }
 
+    // Sig: 0x2c611c4a
     function getMemberStakedAmount(address _member) public view returns (uint256) {
         return addressToMemberInfo[_member].stakedAmount;
     }
 
+    // Sig: 0x0d4a8b49
     function activateMemberInStrategy(address _member, address _strategy) public {
         onlyRegistryMemberAddress(_member);
         onlyStrategyEnabled(_strategy);
@@ -116,6 +119,7 @@ contract CommunityPowerFacet is CommunityBaseFacet {
         emit MemberActivatedStrategy(_member, _strategy, pointsToIncrease);
     }
 
+    // Sig: 0x22bcf999
     function deactivateMemberInStrategy(address _member, address _strategy) public {
         onlyStrategyAddress(msg.sender, _strategy);
         onlyRegistryMemberAddress(_member);
@@ -128,6 +132,7 @@ contract CommunityPowerFacet is CommunityBaseFacet {
         emit MemberDeactivatedStrategy(_member, _strategy);
     }
 
+    // Sig: 0x559de05d
     function increasePower(uint256 _amountStaked) public {
         onlyRegistryMemberSender();
         address member = msg.sender;
@@ -146,6 +151,7 @@ contract CommunityPowerFacet is CommunityBaseFacet {
         emit MemberPowerIncreased(member, _amountStaked);
     }
 
+    // Sig: 0x5ecf71c5
     function decreasePower(uint256 _amountUnstaked) public {
         onlyRegistryMemberSender();
         address member = msg.sender;

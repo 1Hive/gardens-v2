@@ -54,6 +54,7 @@ contract CVProposalFacet is CVStrategyBaseFacet, CVStreamingBase {
     /*|              FUNCTIONS                     |*/
     /*|--------------------------------------------|*/
 
+    // Sig: 0x2bbe0cae
     function registerRecipient(bytes memory _data, address _sender)
         external
         payable
@@ -122,6 +123,7 @@ contract CVProposalFacet is CVStrategyBaseFacet, CVStreamingBase {
         return address(uint160(proposalId));
     }
 
+    // Sig: 0xe0a8f6f5
     function cancelProposal(uint256 proposalId) external {
         if (proposals[proposalId].proposalStatus != ProposalStatus.Active) {
             revert ProposalNotActive(proposalId, uint8(proposals[proposalId].proposalStatus));
@@ -155,6 +157,7 @@ contract CVProposalFacet is CVStrategyBaseFacet, CVStreamingBase {
         emit ProposalCancelled(proposalId);
     }
 
+    // Sig: 0x141e3b38
     function editProposal(
         uint256 _proposalId,
         Metadata memory _metadata,

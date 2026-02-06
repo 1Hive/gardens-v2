@@ -196,6 +196,7 @@ abstract contract CVStrategyBaseFacet {
     /**
      * @notice Get the owner of the contract
      * @dev Accesses the _owner storage variable from OwnableUpgradeable layout
+     * @sig: 8da5cb5b
      */
     function owner() internal view returns (address) {
         return LibDiamond.contractOwner();
@@ -236,14 +237,10 @@ abstract contract CVStrategyBaseFacet {
 
     function _isPauseSelector(bytes4 selector) internal pure returns (bool) {
         return selector == bytes4(keccak256("setPauseController(address)"))
-            || selector == bytes4(keccak256("pause(uint256)"))
-            || selector == bytes4(keccak256("pause(bytes4,uint256)"))
-            || selector == bytes4(keccak256("unpause()"))
-            || selector == bytes4(keccak256("unpause(bytes4)"))
-            || selector == bytes4(keccak256("pauseController()"))
-            || selector == bytes4(keccak256("isPaused()"))
-            || selector == bytes4(keccak256("isPaused(bytes4)"))
-            || selector == bytes4(keccak256("pausedUntil()"))
+            || selector == bytes4(keccak256("pause(uint256)")) || selector == bytes4(keccak256("pause(bytes4,uint256)"))
+            || selector == bytes4(keccak256("unpause()")) || selector == bytes4(keccak256("unpause(bytes4)"))
+            || selector == bytes4(keccak256("pauseController()")) || selector == bytes4(keccak256("isPaused()"))
+            || selector == bytes4(keccak256("isPaused(bytes4)")) || selector == bytes4(keccak256("pausedUntil()"))
             || selector == bytes4(keccak256("pausedSelectorUntil(bytes4)"));
     }
 

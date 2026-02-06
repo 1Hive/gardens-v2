@@ -12,6 +12,7 @@ abstract contract PauseFacetBase {
     event PauseControllerUpdated(address indexed controller);
     event PauseFacetUpdated(address indexed facet);
 
+    // Sig: 0x1add1a0d
     function setPauseController(address controller) external {
         _enforceOwner();
         _registerPauseFacet();
@@ -19,43 +20,51 @@ abstract contract PauseFacetBase {
         emit PauseControllerUpdated(controller);
     }
 
+    // Sig: 0x222a3a04
     function setPauseFacet(address facet) external {
         _enforceOwner();
         _setPauseFacet(facet);
     }
 
+    // Sig: 0xadaf157b
     function pauseFacet() external view returns (address) {
         return LibPauseStorage.layout().pauseFacet;
     }
 
+    // Sig: 0x60b47789
     function pauseController() external view returns (address) {
         return LibPauseStorage.layout().pauseController;
     }
 
+    // Sig: 0x136439dd
     function pause(uint256 duration) external {
         _enforceOwner();
         _registerPauseFacet();
         _pauseController().pause(address(this), duration);
     }
 
+    // Sig: 0x80c4a65f
     function pause(bytes4 selector, uint256 duration) external {
         _enforceOwner();
         _registerPauseFacet();
         _pauseController().pauseSelector(address(this), selector, duration);
     }
 
+    // Sig: 0x3f4ba83a
     function unpause() external {
         _enforceOwner();
         _registerPauseFacet();
         _pauseController().unpause(address(this));
     }
 
+    // Sig: 0xbac1e94b
     function unpause(bytes4 selector) external {
         _enforceOwner();
         _registerPauseFacet();
         _pauseController().unpauseSelector(address(this), selector);
     }
 
+    // Sig: 0xb187bd26
     function isPaused() external view returns (bool) {
         address controller = LibPauseStorage.layout().pauseController;
         if (controller == address(0)) {
@@ -64,6 +73,7 @@ abstract contract PauseFacetBase {
         return IPauseController(controller).isPaused(address(this));
     }
 
+    // Sig: 0x09b65e66
     function isPaused(bytes4 selector) external view returns (bool) {
         address controller = LibPauseStorage.layout().pauseController;
         if (controller == address(0)) {
@@ -72,10 +82,12 @@ abstract contract PauseFacetBase {
         return IPauseController(controller).isPaused(address(this), selector);
     }
 
+    // Sig: 0xda748b10
     function pausedUntil() external view returns (uint256) {
         return _pauseController().pausedUntil(address(this));
     }
 
+    // Sig: 0x2d2ebbef
     function pausedSelectorUntil(bytes4 selector) external view returns (uint256) {
         return _pauseController().pausedSelectorUntil(address(this), selector);
     }

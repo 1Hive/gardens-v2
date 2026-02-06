@@ -40,28 +40,33 @@ contract CommunityStrategyFacet is CommunityBaseFacet {
     /*|              FUNCTIONS                     |*/
     /*|--------------------------------------------|*/
 
+    // Sig: 0x82d6a1e7
     function addStrategyByPoolId(uint256 poolId) public {
         onlyCouncilSafe();
         address strategy = address(allo.getPool(poolId).strategy);
         _addStrategy(strategy);
     }
 
+    // Sig: 0x223e5479
     function addStrategy(address _newStrategy) public {
         onlyCouncilSafe();
         _addStrategy(_newStrategy);
     }
 
+    // Sig: 0x73265c37
     function removeStrategyByPoolId(uint256 poolId) public {
         onlyCouncilSafe();
         address strategy = address(allo.getPool(poolId).strategy);
         _removeStrategy(strategy);
     }
 
+    // Sig: 0x175188e8
     function removeStrategy(address _strategy) public {
         onlyCouncilSafe();
         _removeStrategy(_strategy);
     }
 
+    // Sig: 0xfb1f6917
     function rejectPool(address _strategy) public {
         onlyCouncilSafe();
         if (enabledStrategies[_strategy]) {

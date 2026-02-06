@@ -66,6 +66,7 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
     /*|              FUNCTIONS                     |*/
     /*|--------------------------------------------|*/
 
+    // Sig: 0xef2920fc
     function allocate(bytes memory _data, address _sender) external payable onlyAllo onlyInitialized {
         ProposalSupport[] memory pv = abi.decode(_data, (ProposalSupport[]));
         for (uint256 i = 0; i < pv.length; i++) {
@@ -168,6 +169,7 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
         }
     }
 
+    // Sig: 0x0a6f0ee9
     function distribute(
         address[] memory,
         /*_recipientIds */

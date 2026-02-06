@@ -49,14 +49,17 @@ contract CommunityMemberFacet is CommunityBaseFacet {
     /*|              FUNCTIONS                     |*/
     /*|--------------------------------------------|*/
 
+    // Sig: 0xa230c524
     function isMember(address _member) public view returns (bool) {
         return addressToMemberInfo[_member].isRegistered;
     }
 
+    // Sig: 0x0331383c
     function getBasisStakedAmount() external view returns (uint256) {
         return registerStakeAmount;
     }
 
+    // Sig: 0x28c309e9
     function getStakeAmountWithFees() public view returns (uint256) {
         uint256 communityFeeAmount = (registerStakeAmount * communityFee) / (100 * PRECISION_SCALE);
         uint256 gardensFeeAmount = (
@@ -66,6 +69,7 @@ contract CommunityMemberFacet is CommunityBaseFacet {
         return registerStakeAmount + communityFeeAmount + gardensFeeAmount;
     }
 
+    // Sig: 0x9a1f46e2
     function stakeAndRegisterMember(string memory covenantSig) public {
         IRegistryFactory gardensFactory = IRegistryFactory(registryFactory);
         uint256 communityFeeAmount = (registerStakeAmount * communityFee) / (100 * PRECISION_SCALE);
@@ -92,6 +96,7 @@ contract CommunityMemberFacet is CommunityBaseFacet {
         }
     }
 
+    // Sig: 0xb99b4370
     function unregisterMember() public {
         onlyRegistryMemberSender();
         address _member = msg.sender;
@@ -107,6 +112,7 @@ contract CommunityMemberFacet is CommunityBaseFacet {
         emit MemberUnregistered(_member, member.stakedAmount);
     }
 
+    // Sig: 0x6871eb4d
     function kickMember(address _member, address _transferAddress) public {
         onlyCouncilSafe();
         if (!isKickEnabled) {

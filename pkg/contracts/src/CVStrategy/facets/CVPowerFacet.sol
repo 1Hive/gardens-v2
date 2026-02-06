@@ -31,6 +31,7 @@ contract CVPowerFacet is CVStrategyBaseFacet {
     /*|              FUNCTIONS                     |*/
     /*|--------------------------------------------|*/
 
+    // Sig: 0x814516ad
     function activatePoints() external {
         if (!_canExecuteAction(msg.sender)) {
             revert UserCannotExecuteAction(msg.sender);
@@ -39,6 +40,7 @@ contract CVPowerFacet is CVStrategyBaseFacet {
         totalPointsActivated += registryCommunity.getMemberPowerInStrategy(msg.sender, address(this));
     }
 
+    // Sig: 0x782aadff
     function increasePower(address _member, uint256 _amountToStake) external onlyRegistryCommunity returns (uint256) {
         if (!_canExecuteAction(_member)) {
             revert UserCannotExecuteAction(_member);
@@ -55,6 +57,7 @@ contract CVPowerFacet is CVStrategyBaseFacet {
         return pointsToIncrease;
     }
 
+    // Sig: 0x2ed04b2b
     function decreasePower(address _member, uint256 _amountToUnstake) external onlyRegistryCommunity returns (uint256) {
         uint256 pointsToDecrease = PowerManagementUtils.decreasePower(
             registryCommunity, _member, _amountToUnstake, pointSystem, pointConfig.maxAmount
@@ -91,10 +94,12 @@ contract CVPowerFacet is CVStrategyBaseFacet {
         return pointsToDecrease;
     }
 
+    // Sig: 0x1ddf1e23
     function deactivatePoints() external {
         _deactivatePoints(msg.sender);
     }
 
+    // Sig: 0x6453d9c4
     function deactivatePoints(address _member) external onlyRegistryCommunity {
         _deactivatePoints(_member);
     }

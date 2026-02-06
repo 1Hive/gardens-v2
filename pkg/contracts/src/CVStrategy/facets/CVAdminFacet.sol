@@ -46,6 +46,7 @@ contract CVAdminFacet is CVStrategyBaseFacet {
     /*|              FUNCTIONS                     |*/
     /*|--------------------------------------------|*/
 
+    // Sig: 0xd5b7cc54
     function setPoolParams(
         ArbitrableConfig memory _arbitrableConfig,
         CVParams memory _cvParams,
@@ -67,6 +68,7 @@ contract CVAdminFacet is CVStrategyBaseFacet {
     }
 
 
+    // Sig: 0x924e6704
     function connectSuperfluidGDA(address gda) external {
         onlyCouncilSafeOrMember();
         ISuperToken supertoken =
@@ -78,6 +80,7 @@ contract CVAdminFacet is CVStrategyBaseFacet {
         emit SuperfluidGDAConnected(gda, msg.sender);
     }
 
+    // Sig: 0xc69271ec
     function disconnectSuperfluidGDA(address gda) external {
         onlyCouncilSafeOrMember();
         ISuperToken supertoken =

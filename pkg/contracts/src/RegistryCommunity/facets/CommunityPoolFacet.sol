@@ -27,6 +27,7 @@ struct RegistryCommunityInitializeParams {
 }
 
 interface IPauseFacet {
+    // Sig: 0x1add1a0d
     function setPauseController(address controller) external;
 }
 
@@ -53,6 +54,7 @@ contract CommunityPoolFacet is CommunityBaseFacet {
     /*|              FUNCTIONS                     |*/
     /*|--------------------------------------------|*/
 
+    // Sig: 0xfebf64a1
     function createPool(address _token, CVStrategyInitializeParamsV0_3 memory _params, Metadata memory _metadata)
         public
         returns (uint256 poolId, address strategy)
@@ -94,6 +96,7 @@ contract CommunityPoolFacet is CommunityBaseFacet {
         CVStrategy(payable(strategyProxy)).transferOwnership(proxyOwner());
     }
 
+    // Sig: 0x85a19b6d
     function createPool(
         address _strategy,
         address _token,

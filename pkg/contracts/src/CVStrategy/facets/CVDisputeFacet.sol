@@ -43,6 +43,7 @@ contract CVDisputeFacet is CVStrategyBaseFacet {
     /*|              FUNCTIONS                     |*/
     /*|--------------------------------------------|*/
 
+    // Sig: 0xb41596ec
     function disputeProposal(uint256 proposalId, string calldata context, bytes calldata _extraData)
         external
         payable
@@ -100,6 +101,7 @@ contract CVDisputeFacet is CVStrategyBaseFacet {
         );
     }
 
+    // Sig: 0x311a6c56
     function rule(uint256 _disputeID, uint256 _ruling) external {
         uint256 proposalId = disputeIdToProposalId[_disputeID];
         Proposal storage proposal = proposals[proposalId];

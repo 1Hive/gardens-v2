@@ -24,6 +24,7 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
      * @notice Rebalance the outgoing streams based on current active proposals and their conviction levels
      * @dev This function should be called periodically to ensure that the outgoing streams reflect the current
      *      state of active proposals and their conviction levels. (rate limiting to be implemented in future)
+     * Sig: 0x7d7c2a1c
      */
     function rebalance() external {
         // Rate limiting

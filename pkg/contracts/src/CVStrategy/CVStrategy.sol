@@ -196,12 +196,14 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     /*|              CONSTRUCTORS                  |*/
     /*|--------------------------------------------|*/
     // constructor(address _allo) BaseStrategy(address(_allo), "CVStrategy") {}
+    // Sig: 0x184b9559
     function init(address _allo, address _collateralVaultTemplate, address _owner) external initializer {
         super.init(_allo, "CVStrategy", _owner);
         LibDiamond.setContractOwner(_owner);
         collateralVaultTemplate = _collateralVaultTemplate;
     }
 
+    // Sig: 0xedd146cc
     function initialize(uint256 _poolId, bytes memory _data) external override {
         _checkOnlyAllo();
         __BaseStrategy_init(_poolId);
@@ -340,6 +342,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         }
     }
 
+    // Sig: 0xb0d3713a
     function setCollateralVaultTemplate(address template) external {
         _checkOwner();
         collateralVaultTemplate = template;
@@ -352,34 +355,42 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
 
     // registerRecipient removed - now in ProposalManagementFacet
     // Stub needed for IStrategy interface - delegates to facet
+    // Sig: 0x2bbe0cae
     function registerRecipient(bytes memory, address) external payable returns (address) {
         _delegateToFacet();
     }
 
+    // Sig: 0x814516ad
     function activatePoints() external {
         _delegateToFacet();
     }
 
+    // Sig: 0x1ddf1e23
     function deactivatePoints() external {
         _delegateToFacet();
     }
 
+    // Sig: 0x782aadff
     function increasePower(address, uint256) external returns (uint256) {
         _delegateToFacet();
     }
 
+    // Sig: 0x2ed04b2b
     function decreasePower(address, uint256) external returns (uint256) {
         _delegateToFacet();
     }
 
+    // Sig: 0x6453d9c4
     function deactivatePoints(address) external {
         _delegateToFacet();
     }
 
+    // Sig: 0x0ba95909
     function getMaxAmount() public view returns (uint256) {
         return pointConfig.maxAmount;
     }
 
+    // Sig: 0xc3292171
     function getPointSystem() public view returns (PointSystem) {
         return pointSystem;
     }
@@ -395,22 +406,26 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
 
     // allocate removed - now in AllocationFacet
     // Stub needed for IStrategy interface - delegates to facet
+    // Sig: 0xef2920fc
     function allocate(bytes memory, address) external payable {
         _delegateToFacet();
     }
 
     // distribute removed - now in AllocationFacet
     // Stub needed for IStrategy interface - delegates to facet
+    // Sig: 0x0a6f0ee9
     function distribute(address[] memory, bytes memory, address) external override {
         _delegateToFacet();
     }
 
+    // Sig: 0xb5f620ce
     function setPoolActive(bool _active) external {
         _setPoolActive(_active);
     }
 
     // withdraw removed - now in PowerManagementFacet
 
+    // Sig: 0xc7f758a8
     /**
      * @dev Get proposal details
      * @param _proposalId Proposal id
@@ -488,6 +503,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     //     return proposal.metadata;
     // }
 
+    // Sig: 0xe0dd2c38
     /**
      * @notice Get stake of voter `_voter` on proposal #`_proposalId`
      * @param _proposalId Proposal id
@@ -499,6 +515,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     }
 
     // TODO :Goss: Commented because accessible through public fields
+    // Sig: 0xdc96ff2d
     function getProposalStakedAmount(uint256 _proposalId) external view returns (uint256) {
         return proposals[_proposalId].stakedAmount;
     }
@@ -511,6 +528,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     // }
 
     // Goss: Commented because accessible through public fields
+    // Sig: 0x059351cd
     function getArbitrableConfig()
         external
         view
@@ -562,6 +580,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         return uint256(result);
     }
 
+    // Sig: 0x60b0645a
     function calculateProposalConviction(uint256 _proposalId) public view returns (uint256) {
         Proposal storage proposal = proposals[_proposalId];
         return ConvictionsUtils.calculateConviction(
@@ -569,6 +588,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         );
     }
 
+    // Sig: 0x59a5db8b
     function calculateThreshold(uint256 _requestedAmount) external view returns (uint256) {
         uint256 poolAmount = getPoolAmount();
         uint256 maxAllowed = (cvParams.maxRatio * poolAmount) / ConvictionsUtils.D;
@@ -626,6 +646,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
 
     // _setPoolParams removed - now in AdminFacet
 
+    // Sig: 0x1aa91a9e
     function updateProposalConviction(uint256 proposalId) public returns (uint256) {
         Proposal storage proposal = proposals[proposalId];
 
@@ -648,6 +669,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     //     emit RegistryUpdated(_registryCommunity);
     // }
 
+    // Sig: 0x3864d366
     function setSybilScorer(address _sybilScorer, uint256 threshold) external {
         if (msg.sender != address(registryCommunity.councilSafe()) && msg.sender != owner()) {
             revert OnlyCouncilSafe(msg.sender, address(registryCommunity.councilSafe()), owner());
@@ -661,6 +683,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
 
     // setPoolParams removed - now in AdminFacet
     // Stub needed for tests to call - delegates to facet
+    // Sig: 0xd5b7cc54
     function setPoolParams(
         ArbitrableConfig memory,
         CVParams memory,
@@ -674,10 +697,12 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
 
     // connectSuperfluidGDA and disconnectSuperfluidGDA removed - now in AdminFacet
     // Stubs needed for tests to call - delegates to facet
+    // Sig: 0x924e6704
     function connectSuperfluidGDA(address) external {
         _delegateToFacet();
     }
 
+    // Sig: 0xc69271ec
     function disconnectSuperfluidGDA(address) external {
         _delegateToFacet();
     }
@@ -685,6 +710,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     // disputeProposal and rule removed - now in DisputeFacet
     // Stub needed for tests to call - delegates to facet
     // slither-disable-next-line incorrect-return
+    // Sig: 0xb41596ec
     function disputeProposal(uint256 proposalId, string calldata context, bytes calldata _extraData)
         external
         payable
@@ -706,10 +732,12 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         _delegateToFacet();
     }
 
+    // Sig: 0x141e3b38
     function editProposal(uint256, Metadata memory, address, uint256) external {
         _delegateToFacet();
     }
 
+    // Sig: 0x7d7c2a1c
     /**
      * Streaming Facets
      * @notice Rebalance the streaming members units based on conviction
@@ -725,6 +753,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         sybilScorer.addStrategy(address(this), threshold, address(registryCommunity.councilSafe()));
     }
 
+    // Sig: 0x4ab4ba42
     /// @notice Getter for the 'poolAmount'.
     /// @return The balance of the pool
     function getPoolAmount() public view override returns (uint256) {
@@ -808,6 +837,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
             || selector == bytes4(keccak256("pausedSelectorUntil(bytes4)"));
     }
 
+    // Sig: 0x1f931c1c
     /// @notice Manage facets using diamond cut (owner only)
     /// @param _diamondCut Array of FacetCut structs defining facet changes
     /// @param _init Address of contract to execute with delegatecall (can be address(0))
@@ -847,6 +877,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
 
     receive() external payable {}
 
+    // Sig: 0x662ea47d
     /// @notice Returns the configured facets registered with the diamond
     function getFacets() external view returns (IDiamondLoupe.Facet[] memory facets_) {
         LibDiamond.DiamondStorage storage ds = LibDiamond.diamondStorage();
