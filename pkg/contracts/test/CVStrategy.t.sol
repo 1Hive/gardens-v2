@@ -21,7 +21,9 @@ import {IDiamond} from "../src/diamonds/interfaces/IDiamond.sol";
 import {IArbitrator} from "../src/interfaces/IArbitrator.sol";
 import {ISybilScorer} from "../src/ISybilScorer.sol";
 import {RegistryCommunity} from "../src/RegistryCommunity/RegistryCommunity.sol";
+import {CVPauseFacet} from "../src/CVStrategy/facets/CVPauseFacet.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {MockPauseController} from "./helpers/PauseHelpers.sol";
 
 import {TERC20} from "./shared/TERC20.sol";
 
@@ -76,6 +78,26 @@ contract CVStrategyTest is Test {
         strategy.setRegistryCommunity(address(registryCommunity));
 
         allo.setPoolToken(1, address(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE));
+    }
+
+    function _facetCutsForPause(address facet) internal pure returns (IDiamond.FacetCut[] memory cuts) {
+        cuts = new IDiamond.FacetCut[](1);
+        bytes4[] memory selectors = new bytes4[](10);
+        selectors[0] = CVPauseFacet.setPauseController.selector;
+        selectors[1] = bytes4(keccak256("pause(uint256)"));
+        selectors[2] = bytes4(keccak256("pause(bytes4,uint256)"));
+        selectors[3] = bytes4(keccak256("unpause()"));
+        selectors[4] = bytes4(keccak256("unpause(bytes4)"));
+        selectors[5] = CVPauseFacet.pauseController.selector;
+        selectors[6] = bytes4(keccak256("isPaused()"));
+        selectors[7] = bytes4(keccak256("isPaused(bytes4)"));
+        selectors[8] = CVPauseFacet.pausedUntil.selector;
+        selectors[9] = CVPauseFacet.pausedSelectorUntil.selector;
+        cuts[0] = IDiamond.FacetCut({
+            facetAddress: facet,
+            action: IDiamond.FacetCutAction.Add,
+            functionSelectors: selectors
+        });
     }
 
     function test_checkSenderIsMember_branches() public {
@@ -530,5 +552,63 @@ contract CVStrategyTest is Test {
         vm.prank(otherAddr);
         vm.expectRevert(bytes("Ownable: caller is not the owner"));
         local.setCollateralVaultTemplate(address(0xD00D));
+    }
+
+    function test_pause_enforcement_and_selector_exceptions() public {
+        address ownerAddr = makeAddr("strategyOwner");
+        CVStrategyStubFacet facet = new CVStrategyStubFacet();
+        CVPauseFacet pauseFacet = new CVPauseFacet();
+        MockPauseController controller = new MockPauseController();
+
+        CVStrategyHarness local = CVStrategyHarness(
+            payable(
+                address(
+                    new ERC1967Proxy(
+                        address(new CVStrategyHarness()),
+                        abi.encodeWithSelector(CVStrategy.init.selector, address(allo), address(0xBEEF), ownerAddr)
+                    )
+                )
+            )
+        );
+
+        IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](2);
+        bytes4[] memory stubSelectors = new bytes4[](2);
+        stubSelectors[0] = CVStrategy.activatePoints.selector;
+        stubSelectors[1] = CVStrategyStubFacet.ping.selector;
+        cuts[0] = IDiamond.FacetCut({
+            facetAddress: address(facet),
+            action: IDiamond.FacetCutAction.Add,
+            functionSelectors: stubSelectors
+        });
+        cuts[1] = _facetCutsForPause(address(pauseFacet))[0];
+
+        vm.prank(ownerAddr);
+        local.diamondCut(cuts, address(0), "");
+
+        vm.prank(ownerAddr);
+        CVPauseFacet(address(local)).setPauseController(address(controller));
+
+        controller.setGlobalPaused(true);
+
+        vm.expectRevert(abi.encodeWithSelector(CVStrategy.StrategyPaused.selector, address(controller)));
+        local.activatePoints();
+
+        vm.expectRevert(abi.encodeWithSelector(CVStrategy.StrategyPaused.selector, address(controller)));
+        CVStrategyStubFacet(address(local)).ping();
+
+        vm.prank(ownerAddr);
+        CVPauseFacet(address(local)).pause(1);
+
+        controller.setGlobalPaused(false);
+        controller.setSelectorPaused(CVStrategy.activatePoints.selector, true);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                CVStrategy.StrategySelectorPaused.selector,
+                CVStrategy.activatePoints.selector,
+                address(controller)
+            )
+        );
+        local.activatePoints();
     }
 }

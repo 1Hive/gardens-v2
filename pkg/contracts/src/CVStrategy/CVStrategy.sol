@@ -30,7 +30,8 @@ import {
     CVParams,
     CVStrategyInitializeParamsV0_0,
     CVStrategyInitializeParamsV0_1,
-    CVStrategyInitializeParamsV0_2
+    CVStrategyInitializeParamsV0_2,
+    CVStrategyInitializeParamsV0_3
 } from "./ICVStrategy.sol";
 
 import {ConvictionsUtils} from "./ConvictionsUtils.sol";
@@ -40,11 +41,15 @@ import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Librar
 
 import "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/gdav1/ISuperfluidPool.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/utils/GDAv1Forwarder.sol";
+import {PoolConfig} from
+    "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/gdav1/IGeneralDistributionAgreementV1.sol";
 
 // Diamond Pattern imports
 import {LibDiamond} from "../diamonds/libraries/LibDiamond.sol";
 import {IDiamondCut} from "../diamonds/interfaces/IDiamondCut.sol";
 import {IDiamondLoupe} from "../diamonds/interfaces/IDiamondLoupe.sol";
+import {IPauseController} from "../interfaces/IPauseController.sol";
+import {LibPauseStorage} from "../pausing/LibPauseStorage.sol";
 
 /// @custom:oz-upgrades-from CVStrategy
 contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
@@ -92,6 +97,8 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     error StrategyFunctionDoesNotExist(bytes4 selector); // 0x66bda40a
     error RegistryCommunityCannotBeZero(address registry); // 0x2199ab77
     error OnlyCouncilSafeOrMember(address sender, address councilSafe); // 0xfa33758e
+    error StrategyPaused(address controller);
+    error StrategySelectorPaused(bytes4 selector, address controller);
 
     /*|--------------------------------------------|*/
     /*|              CUSTOM EVENTS                 |*/
@@ -202,7 +209,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         collateralVault = ICollateralVault(Clone.createClone(collateralVaultTemplate, cloneNonce++));
         collateralVault.initialize();
 
-        CVStrategyInitializeParamsV0_4 memory ip = abi.decode(_data, (CVStrategyInitializeParamsV0_4));
+        CVStrategyInitializeParamsV0_3 memory ip = abi.decode(_data, (CVStrategyInitializeParamsV0_3));
 
         // if (ip.registryCommunity == address(0)) {
         //     revert RegistryCannotBeZero();
@@ -230,7 +237,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
             (, ISuperfluidPool pool) = gdaForwarder.createPool(
                 ISuperfluidToken(superfluidToken),
                 address(this), // pool admin = your StreamingPool contract
-                GDAv1Forwarder.PoolConfig({transferabilityForUnitsOwner: false, distributionFromAnyAddress: false})
+                PoolConfig({transferabilityForUnitsOwner: false, distributionFromAnyAddress: false})
             );
             superfluidGDA = pool;
         }
@@ -743,6 +750,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     /// @dev Used by stub functions to delegate to their respective facets
     /// @dev This function never returns - it either reverts or returns via assembly
     function _delegateToFacet() private {
+        _enforceNotPaused(msg.sig);
         LibDiamond.DiamondStorage storage ds;
         bytes32 position = LibDiamond.DIAMOND_STORAGE_POSITION;
 
@@ -765,6 +773,35 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         }
     }
 
+    function _enforceNotPaused(bytes4 selector) private view {
+        if (_isPauseSelector(selector)) {
+            return;
+        }
+        address controller = LibPauseStorage.layout().pauseController;
+        if (controller == address(0)) {
+            return;
+        }
+        if (IPauseController(controller).isPaused(address(this))) {
+            revert StrategyPaused(controller);
+        }
+        if (IPauseController(controller).isPaused(address(this), selector)) {
+            revert StrategySelectorPaused(selector, controller);
+        }
+    }
+
+    function _isPauseSelector(bytes4 selector) private pure returns (bool) {
+        return selector == bytes4(keccak256("setPauseController(address)"))
+            || selector == bytes4(keccak256("pause(uint256)"))
+            || selector == bytes4(keccak256("pause(bytes4,uint256)"))
+            || selector == bytes4(keccak256("unpause()"))
+            || selector == bytes4(keccak256("unpause(bytes4)"))
+            || selector == bytes4(keccak256("pauseController()"))
+            || selector == bytes4(keccak256("isPaused()"))
+            || selector == bytes4(keccak256("isPaused(bytes4)"))
+            || selector == bytes4(keccak256("pausedUntil()"))
+            || selector == bytes4(keccak256("pausedSelectorUntil(bytes4)"));
+    }
+
     /// @notice Manage facets using diamond cut (owner only)
     /// @param _diamondCut Array of FacetCut structs defining facet changes
     /// @param _init Address of contract to execute with delegatecall (can be address(0))
@@ -777,6 +814,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     /// @notice Fallback function delegates calls to facets based on function selector
     /// @dev Uses Diamond storage to find facet address for the called function
     fallback() external payable {
+        _enforceNotPaused(msg.sig);
         LibDiamond.DiamondStorage storage ds;
         bytes32 position = LibDiamond.DIAMOND_STORAGE_POSITION;
 

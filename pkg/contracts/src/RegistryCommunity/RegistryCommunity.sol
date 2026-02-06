@@ -23,6 +23,8 @@ import {Upgrades} from "@openzeppelin/foundry/LegacyUpgrades.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {ProxyOwnableUpgrader} from "../ProxyOwnableUpgrader.sol";
 import {ISybilScorer} from "../ISybilScorer.sol";
+import {IPauseController} from "../interfaces/IPauseController.sol";
+import {LibPauseStorage} from "../pausing/LibPauseStorage.sol";
 
 // Diamond Pattern imports
 import {LibDiamond} from "../diamonds/libraries/LibDiamond.sol";
@@ -130,6 +132,8 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
     error DecreaseUnderMinimum(); // 0x9c47d02e
     error CantDecreaseMoreThanPower(uint256 _decreaseAmount, uint256 _currentPower); // 0x8a11f318
     error CommunityFunctionDoesNotExist(bytes4 selector); // 0x8e2ba36a
+    error CommunityPaused(address controller);
+    error CommunitySelectorPaused(bytes4 selector, address controller);
 
     using ERC165Checker for address;
     using SafeERC20 for IERC20;
@@ -526,6 +530,7 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
     /// @dev Used by stub functions to delegate to their respective facets
     /// @dev This function never returns - it either reverts or returns via assembly
     function _delegateToFacet() private {
+        _enforceNotPaused(msg.sig);
         LibDiamond.DiamondStorage storage ds;
         bytes32 position = LibDiamond.DIAMOND_STORAGE_POSITION;
 
@@ -548,6 +553,35 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
         }
     }
 
+    function _enforceNotPaused(bytes4 selector) private view {
+        if (_isPauseSelector(selector)) {
+            return;
+        }
+        address controller = LibPauseStorage.layout().pauseController;
+        if (controller == address(0)) {
+            return;
+        }
+        if (IPauseController(controller).isPaused(address(this))) {
+            revert CommunityPaused(controller);
+        }
+        if (IPauseController(controller).isPaused(address(this), selector)) {
+            revert CommunitySelectorPaused(selector, controller);
+        }
+    }
+
+    function _isPauseSelector(bytes4 selector) private pure returns (bool) {
+        return selector == bytes4(keccak256("setPauseController(address)"))
+            || selector == bytes4(keccak256("pause(uint256)"))
+            || selector == bytes4(keccak256("pause(bytes4,uint256)"))
+            || selector == bytes4(keccak256("unpause()"))
+            || selector == bytes4(keccak256("unpause(bytes4)"))
+            || selector == bytes4(keccak256("pauseController()"))
+            || selector == bytes4(keccak256("isPaused()"))
+            || selector == bytes4(keccak256("isPaused(bytes4)"))
+            || selector == bytes4(keccak256("pausedUntil()"))
+            || selector == bytes4(keccak256("pausedSelectorUntil(bytes4)"));
+    }
+
     /// @notice Manage facets using diamond cut (owner only)
     /// @param _diamondCut Array of FacetCut structs defining facet changes
     /// @param _init Address of contract to execute with delegatecall (can be address(0))
@@ -562,6 +596,7 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
     /// @notice Fallback function delegates calls to facets based on function selector
     /// @dev Uses Diamond storage to find facet address for the called function
     fallback() external {
+        _enforceNotPaused(msg.sig);
         LibDiamond.DiamondStorage storage ds;
         bytes32 position = LibDiamond.DIAMOND_STORAGE_POSITION;
 

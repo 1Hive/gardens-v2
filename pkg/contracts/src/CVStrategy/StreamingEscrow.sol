@@ -65,7 +65,7 @@ contract StreamingEscrow is ProxyOwnableUpgrader, SuperAppBase {
 
         host = ISuperfluid(_superToken.getHost());
         gda = IGeneralDistributionAgreementV1(
-            host.getAgreementClass(keccak256("org.superfluid-finance.agreements.GeneralDistributionAgreement.v1"))
+            address(host.getAgreementClass(keccak256("org.superfluid-finance.agreements.GeneralDistributionAgreement.v1")))
         );
 
         bool success = _superToken.connectPool(_pool);

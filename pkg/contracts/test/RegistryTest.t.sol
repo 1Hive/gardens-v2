@@ -451,9 +451,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         console.log("MINIMUM_STAKE:", MINIMUM_STAKE / DECIMALS);
         console.log("CAPPED_MAX_AMOUNT- MINIMUM_STAKE:", MIN_AMOUNT_TO_MAX);
 
-        vm.assume(tokenAmount <= MIN_AMOUNT_TO_MAX * 2);
-        vm.assume(tokenAmount >= MIN_AMOUNT_TO_MAX);
-        // vm.assume(tokenAmount > 0);
+        tokenAmount = bound(tokenAmount, MIN_AMOUNT_TO_MAX, MIN_AMOUNT_TO_MAX * 2);
 
         vm.startPrank(pool_admin());
         ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();

@@ -11,6 +11,8 @@ import {ConvictionsUtils} from "./ConvictionsUtils.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Library.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/gdav1/ISuperfluidPool.sol";
 import {LibDiamond} from "@src/diamonds/libraries/LibDiamond.sol";
+import {IPauseController} from "../interfaces/IPauseController.sol";
+import {LibPauseStorage} from "../pausing/LibPauseStorage.sol";
 
 /**
  * @title CVStrategyBaseFacet
@@ -46,6 +48,8 @@ abstract contract CVStrategyBaseFacet {
     error ProposalDoesNotExist(uint256 proposalID);
     error OnlyActiveProposal(uint256 proposalId);
     error OnlySubmitter(uint256 proposalId, address submitter, address sender);
+    error StrategyPaused(address controller);
+    error StrategySelectorPaused(bytes4 selector, address controller);
 
     /*|--------------------------------------------|*/
     /*|              CONSTANTS                     |*/
@@ -195,6 +199,52 @@ abstract contract CVStrategyBaseFacet {
      */
     function owner() internal view returns (address) {
         return LibDiamond.contractOwner();
+    }
+
+    /*|--------------------------------------------|*/
+    /*|              PAUSE HELPERS                 |*/
+    /*|--------------------------------------------|*/
+    modifier whenNotPaused() {
+        _enforceNotPaused(msg.sig);
+        _;
+    }
+
+    modifier whenSelectorNotPaused(bytes4 selector) {
+        _enforceSelectorNotPaused(selector);
+        _;
+    }
+
+    function _enforceNotPaused(bytes4 selector) internal view {
+        if (_isPauseSelector(selector)) {
+            return;
+        }
+        address controller = LibPauseStorage.layout().pauseController;
+        if (controller != address(0) && IPauseController(controller).isPaused(address(this))) {
+            revert StrategyPaused(controller);
+        }
+    }
+
+    function _enforceSelectorNotPaused(bytes4 selector) internal view {
+        if (_isPauseSelector(selector)) {
+            return;
+        }
+        address controller = LibPauseStorage.layout().pauseController;
+        if (controller != address(0) && IPauseController(controller).isPaused(address(this), selector)) {
+            revert StrategySelectorPaused(selector, controller);
+        }
+    }
+
+    function _isPauseSelector(bytes4 selector) internal pure returns (bool) {
+        return selector == bytes4(keccak256("setPauseController(address)"))
+            || selector == bytes4(keccak256("pause(uint256)"))
+            || selector == bytes4(keccak256("pause(bytes4,uint256)"))
+            || selector == bytes4(keccak256("unpause()"))
+            || selector == bytes4(keccak256("unpause(bytes4)"))
+            || selector == bytes4(keccak256("pauseController()"))
+            || selector == bytes4(keccak256("isPaused()"))
+            || selector == bytes4(keccak256("isPaused(bytes4)"))
+            || selector == bytes4(keccak256("pausedUntil()"))
+            || selector == bytes4(keccak256("pausedSelectorUntil(bytes4)"));
     }
 
     /**

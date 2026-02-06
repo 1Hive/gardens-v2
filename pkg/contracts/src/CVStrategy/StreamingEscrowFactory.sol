@@ -3,9 +3,11 @@ pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {ProxyOwnableUpgrader} from "../ProxyOwnableUpgrader.sol";
-import "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
+import {
+    ISuperfluid,
+    SuperAppDefinitions
+} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperApp.sol";
-import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperAppDefinitions.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperToken.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/gdav1/ISuperfluidPool.sol";
 
@@ -38,12 +40,10 @@ contract StreamingEscrowFactory is ProxyOwnableUpgrader {
         escrowImplementation = _escrowImplementation;
     }
 
-    function deployEscrow(
-        ISuperToken superToken,
-        ISuperfluidPool pool,
-        address beneficiary,
-        address treasury
-    ) external returns (address escrow) {
+    function deployEscrow(ISuperToken superToken, ISuperfluidPool pool, address beneficiary, address treasury)
+        external
+        returns (address escrow)
+    {
         if (msg.sender != strategy) {
             revert OnlyStrategy(msg.sender);
         }
@@ -51,14 +51,12 @@ contract StreamingEscrowFactory is ProxyOwnableUpgrader {
             revert InvalidAddress();
         }
 
-        bytes memory initData = abi.encodeCall(
-            StreamingEscrow.initialize, (superToken, pool, beneficiary, strategy, treasury)
-        );
+        bytes memory initData =
+            abi.encodeCall(StreamingEscrow.initialize, (superToken, pool, beneficiary, strategy, treasury));
         escrow = address(new ERC1967Proxy(escrowImplementation, initData));
 
-        uint256 configWord = SuperAppDefinitions.APP_LEVEL_FINAL
-            | SuperAppDefinitions.BEFORE_AGREEMENT_CREATED_NOOP | SuperAppDefinitions.BEFORE_AGREEMENT_UPDATED_NOOP
-            | SuperAppDefinitions.BEFORE_AGREEMENT_TERMINATED_NOOP;
+        uint256 configWord = SuperAppDefinitions.APP_LEVEL_FINAL | SuperAppDefinitions.BEFORE_AGREEMENT_CREATED_NOOP
+            | SuperAppDefinitions.BEFORE_AGREEMENT_UPDATED_NOOP | SuperAppDefinitions.BEFORE_AGREEMENT_TERMINATED_NOOP;
         host.registerAppByFactory(ISuperApp(escrow), configWord);
     }
 

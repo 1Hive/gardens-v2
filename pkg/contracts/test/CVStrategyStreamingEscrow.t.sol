@@ -9,14 +9,17 @@ import {IArbitrator} from "../src/interfaces/IArbitrator.sol";
 import {Metadata} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import {ICollateralVault} from "../src/interfaces/ICollateralVault.sol";
+import {RegistryCommunity} from "../src/RegistryCommunity/RegistryCommunity.sol";
 
 import {StreamingEscrow} from "../src/CVStrategy/StreamingEscrow.sol";
 import {StreamingEscrowFactory} from "../src/CVStrategy/StreamingEscrowFactory.sol";
 
 import "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperApp.sol";
+import "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperAgreement.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperToken.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/gdav1/ISuperfluidPool.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
+import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 contract MockCollateralVault {
     function depositCollateral(uint256, address) external payable {}
@@ -46,10 +49,6 @@ contract MockRegistryCommunity {
     }
 
     function onlyStrategyEnabled(address) external pure {}
-
-    function registryFactory() external view returns (address) {
-        return registryFactory;
-    }
 }
 
 contract MockGDA {
@@ -70,6 +69,10 @@ contract MockHost {
         return gda;
     }
 
+    function callAgreement(ISuperAgreement, bytes calldata, bytes calldata) external pure returns (bytes memory) {
+        return "";
+    }
+
     function registerAppByFactory(ISuperApp app, uint256) external {
         lastApp = address(app);
     }
@@ -79,9 +82,10 @@ contract MockPool {
     address public lastMember;
     uint128 public lastUnits;
 
-    function addMember(ISuperfluidToken, address member, uint128 units) external {
+    function updateMemberUnits(address member, uint128 units) external returns (bool) {
         lastMember = member;
         lastUnits = units;
+        return true;
     }
 }
 
@@ -159,13 +163,25 @@ contract CVStrategyStreamingEscrowTest is Test {
         token = new MockSuperToken(address(host));
         pool = new MockPool();
 
+        harness = new CVProposalFacetHarness();
+
         escrowImpl = new StreamingEscrow();
-        factory = new StreamingEscrowFactory();
-        factory.initialize(address(this), ISuperfluid(address(host)), address(escrowImpl));
+        factory = StreamingEscrowFactory(
+            address(
+                new ERC1967Proxy(
+                    address(new StreamingEscrowFactory()),
+                    abi.encodeWithSelector(
+                        StreamingEscrowFactory.initialize.selector,
+                        address(harness),
+                        ISuperfluid(address(host)),
+                        address(escrowImpl)
+                    )
+                )
+            )
+        );
 
         registryFactory.set(address(factory));
 
-        harness = new CVProposalFacetHarness();
         harness.setAllo(address(this));
         harness.setPoolId(1);
         harness.setRegistryCommunity(address(registryCommunity));
@@ -191,8 +207,8 @@ contract CVStrategyStreamingEscrowTest is Test {
         address recipient = harness.registerRecipient(data, address(0xCAFE));
 
         assertTrue(recipient != address(0));
-        assertEq(pool.lastMember, host.lastApp);
-        assertTrue(pool.lastMember != beneficiary);
+        assertEq(pool.lastMember(), host.lastApp());
+        assertTrue(pool.lastMember() != beneficiary);
     }
 
     function test_registerRecipient_revertsWhenFactoryMissing() public {

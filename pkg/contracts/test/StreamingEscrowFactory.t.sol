@@ -6,9 +6,11 @@ import "forge-std/Test.sol";
 import {StreamingEscrow} from "../src/CVStrategy/StreamingEscrow.sol";
 import {StreamingEscrowFactory} from "../src/CVStrategy/StreamingEscrowFactory.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperApp.sol";
+import "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperAgreement.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperToken.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/gdav1/ISuperfluidPool.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
+import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 contract MockGDA {
     function getAccountFlowInfo(ISuperfluidToken, address) external pure returns (uint256, int96, uint256) {
@@ -27,6 +29,10 @@ contract MockHost {
 
     function getAgreementClass(bytes32) external view returns (address) {
         return gda;
+    }
+
+    function callAgreement(ISuperAgreement, bytes calldata, bytes calldata) external pure returns (bytes memory) {
+        return "";
     }
 
     function registerAppByFactory(ISuperApp app, uint256 configWord) external {
@@ -98,15 +104,26 @@ contract StreamingEscrowFactoryTest is Test {
         pool = new MockPool();
 
         escrowImpl = new StreamingEscrow();
-        factory = new StreamingEscrowFactory();
-        factory.initialize(address(this), ISuperfluid(address(host)), address(escrowImpl));
+        factory = StreamingEscrowFactory(
+            address(
+                new ERC1967Proxy(
+                    address(new StreamingEscrowFactory()),
+                    abi.encodeWithSelector(
+                        StreamingEscrowFactory.initialize.selector,
+                        address(this),
+                        ISuperfluid(address(host)),
+                        address(escrowImpl)
+                    )
+                )
+            )
+        );
     }
 
     function test_deployEscrow_registersAppAndInitializes() public {
         address escrow =
             factory.deployEscrow(ISuperToken(address(token)), ISuperfluidPool(address(pool)), beneficiary, treasury);
 
-        assertEq(host.lastApp, escrow);
+        assertEq(host.lastApp(), escrow);
         assertEq(StreamingEscrow(escrow).strategy(), address(this));
         assertEq(StreamingEscrow(escrow).beneficiary(), beneficiary);
         assertEq(StreamingEscrow(escrow).treasury(), treasury);

@@ -22,10 +22,12 @@ import {
     RegistryCommunityInitializeParams,
     CommunityParams
 } from "../src/RegistryCommunity/RegistryCommunity.sol";
+import {CommunityPauseFacet} from "../src/RegistryCommunity/facets/CommunityPauseFacet.sol";
 import {FAllo} from "../src/interfaces/FAllo.sol";
 import {IDiamondCut} from "../src/diamonds/interfaces/IDiamondCut.sol";
 import {IDiamond} from "../src/diamonds/interfaces/IDiamond.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {MockPauseController} from "./helpers/PauseHelpers.sol";
 
 contract DummyCommunityFacet {
     function dummy() external {}
@@ -323,6 +325,26 @@ contract RegistryCommunityTest is Test {
         selectors[23] = RegistryCommunity.isCouncilMember.selector;
         selectors[24] = RegistryCommunity.unregisterMember.selector;
         selectors[25] = RegistryCommunity.kickMember.selector;
+        cuts[0] = IDiamond.FacetCut({
+            facetAddress: facet,
+            action: IDiamond.FacetCutAction.Add,
+            functionSelectors: selectors
+        });
+    }
+
+    function _facetCutsForPause(address facet) internal pure returns (IDiamond.FacetCut[] memory cuts) {
+        cuts = new IDiamond.FacetCut[](1);
+        bytes4[] memory selectors = new bytes4[](10);
+        selectors[0] = CommunityPauseFacet.setPauseController.selector;
+        selectors[1] = bytes4(keccak256("pause(uint256)"));
+        selectors[2] = bytes4(keccak256("pause(bytes4,uint256)"));
+        selectors[3] = bytes4(keccak256("unpause()"));
+        selectors[4] = bytes4(keccak256("unpause(bytes4)"));
+        selectors[5] = CommunityPauseFacet.pauseController.selector;
+        selectors[6] = bytes4(keccak256("isPaused()"));
+        selectors[7] = bytes4(keccak256("isPaused(bytes4)"));
+        selectors[8] = CommunityPauseFacet.pausedUntil.selector;
+        selectors[9] = CommunityPauseFacet.pausedSelectorUntil.selector;
         cuts[0] = IDiamond.FacetCut({
             facetAddress: facet,
             action: IDiamond.FacetCutAction.Add,
@@ -990,5 +1012,49 @@ contract RegistryCommunityTest is Test {
         (bool ok, bytes memory data) = address(community).call(abi.encodeWithSelector(bytes4(0xdeadbeef)));
         assertFalse(ok);
         assertEq(bytes4(data), RegistryCommunity.CommunityFunctionDoesNotExist.selector);
+    }
+
+    function test_pause_enforcement_and_selector_exceptions() public {
+        DummyCommunityFacet dummyFacet = new DummyCommunityFacet();
+        AddStrategyFacet addStrategyFacet = new AddStrategyFacet();
+        CommunityPauseFacet pauseFacet = new CommunityPauseFacet();
+        MockPauseController controller = new MockPauseController();
+        MockAllo allo = new MockAllo();
+        MockRegistry registry = new MockRegistry();
+        allo.setRegistry(address(registry));
+
+        RegistryCommunityInitializeParams memory params = _defaultParams(address(allo));
+        RegistryCommunity community = _deployCommunity(params, _facetCuts(address(dummyFacet)), _facetCuts(address(dummyFacet)));
+
+        vm.prank(owner);
+        community.diamondCut(_facetCutsForAddStrategy(address(addStrategyFacet)), address(0), "");
+        vm.prank(owner);
+        community.diamondCut(_facetCutsForPause(address(pauseFacet)), address(0), "");
+
+        vm.prank(owner);
+        CommunityPauseFacet(address(community)).setPauseController(address(controller));
+
+        controller.setGlobalPaused(true);
+
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.CommunityPaused.selector, address(controller)));
+        community.addStrategy(address(0x1));
+
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.CommunityPaused.selector, address(controller)));
+        DummyCommunityFacet(address(community)).dummy();
+
+        vm.prank(owner);
+        CommunityPauseFacet(address(community)).pause(1);
+
+        controller.setGlobalPaused(false);
+        controller.setSelectorPaused(RegistryCommunity.addStrategy.selector, true);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                RegistryCommunity.CommunitySelectorPaused.selector,
+                RegistryCommunity.addStrategy.selector,
+                address(controller)
+            )
+        );
+        community.addStrategy(address(0x2));
     }
 }
