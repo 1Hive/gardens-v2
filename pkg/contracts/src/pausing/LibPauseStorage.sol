@@ -6,6 +6,7 @@ library LibPauseStorage {
 
     struct Layout {
         address pauseController;
+        address pauseFacet;
     }
 
     function layout() internal pure returns (Layout storage l) {

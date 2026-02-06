@@ -334,17 +334,19 @@ contract RegistryCommunityTest is Test {
 
     function _facetCutsForPause(address facet) internal pure returns (IDiamond.FacetCut[] memory cuts) {
         cuts = new IDiamond.FacetCut[](1);
-        bytes4[] memory selectors = new bytes4[](10);
-        selectors[0] = CommunityPauseFacet.setPauseController.selector;
-        selectors[1] = bytes4(keccak256("pause(uint256)"));
-        selectors[2] = bytes4(keccak256("pause(bytes4,uint256)"));
-        selectors[3] = bytes4(keccak256("unpause()"));
-        selectors[4] = bytes4(keccak256("unpause(bytes4)"));
-        selectors[5] = CommunityPauseFacet.pauseController.selector;
-        selectors[6] = bytes4(keccak256("isPaused()"));
-        selectors[7] = bytes4(keccak256("isPaused(bytes4)"));
-        selectors[8] = CommunityPauseFacet.pausedUntil.selector;
-        selectors[9] = CommunityPauseFacet.pausedSelectorUntil.selector;
+        bytes4[] memory selectors = new bytes4[](12);
+        selectors[0] = bytes4(keccak256("setPauseController(address)"));
+        selectors[1] = bytes4(keccak256("setPauseFacet(address)"));
+        selectors[2] = bytes4(keccak256("pauseFacet()"));
+        selectors[3] = bytes4(keccak256("pause(uint256)"));
+        selectors[4] = bytes4(keccak256("pause(bytes4,uint256)"));
+        selectors[5] = bytes4(keccak256("unpause()"));
+        selectors[6] = bytes4(keccak256("unpause(bytes4)"));
+        selectors[7] = bytes4(keccak256("pauseController()"));
+        selectors[8] = bytes4(keccak256("isPaused()"));
+        selectors[9] = bytes4(keccak256("isPaused(bytes4)"));
+        selectors[10] = bytes4(keccak256("pausedUntil()"));
+        selectors[11] = bytes4(keccak256("pausedSelectorUntil(bytes4)"));
         cuts[0] = IDiamond.FacetCut({
             facetAddress: facet,
             action: IDiamond.FacetCutAction.Add,

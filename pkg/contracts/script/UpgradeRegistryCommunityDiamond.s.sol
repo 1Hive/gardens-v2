@@ -6,6 +6,7 @@ import {RegistryCommunity} from "../src/RegistryCommunity/RegistryCommunity.sol"
 import {RegistryFactory} from "../src/RegistryFactory/RegistryFactory.sol";
 import {CommunityAdminFacet} from "../src/RegistryCommunity/facets/CommunityAdminFacet.sol";
 import {CommunityMemberFacet} from "../src/RegistryCommunity/facets/CommunityMemberFacet.sol";
+import {CommunityPauseFacet} from "../src/RegistryCommunity/facets/CommunityPauseFacet.sol";
 import {CommunityPoolFacet} from "../src/RegistryCommunity/facets/CommunityPoolFacet.sol";
 import {CommunityPowerFacet} from "../src/RegistryCommunity/facets/CommunityPowerFacet.sol";
 import {CommunityStrategyFacet} from "../src/RegistryCommunity/facets/CommunityStrategyFacet.sol";
@@ -31,6 +32,7 @@ contract UpgradeRegistryCommunityDiamond is BaseMultiChain, CommunityDiamondConf
     // Deployed facet addresses
     CommunityAdminFacet public adminFacet;
     CommunityMemberFacet public memberFacet;
+    CommunityPauseFacet public pauseFacet;
     CommunityPoolFacet public poolFacet;
     CommunityPowerFacet public powerFacet;
     CommunityStrategyFacet public strategyFacet;
@@ -61,6 +63,9 @@ contract UpgradeRegistryCommunityDiamond is BaseMultiChain, CommunityDiamondConf
 
         memberFacet = new CommunityMemberFacet();
         console2.log("  CommunityMemberFacet:", address(memberFacet));
+
+        pauseFacet = new CommunityPauseFacet();
+        console2.log("  CommunityPauseFacet:", address(pauseFacet));
 
         poolFacet = new CommunityPoolFacet();
         console2.log("  CommunityPoolFacet:", address(poolFacet));
@@ -178,15 +183,16 @@ contract UpgradeRegistryCommunityDiamond is BaseMultiChain, CommunityDiamondConf
     }
 
     /**
-     * @notice Build all facet cuts including DiamondLoupeFacet (6 total)
+     * @notice Build all facet cuts including DiamondLoupeFacet (7 total)
      */
     function _buildAllFacetCuts() internal view returns (IDiamond.FacetCut[] memory cuts) {
-        IDiamond.FacetCut[] memory baseCuts = _buildFacetCuts(adminFacet, memberFacet, poolFacet, powerFacet, strategyFacet);
-        cuts = new IDiamond.FacetCut[](6);
-        for (uint256 i = 0; i < 5; i++) {
+        IDiamond.FacetCut[] memory baseCuts =
+            _buildFacetCuts(adminFacet, memberFacet, pauseFacet, poolFacet, powerFacet, strategyFacet);
+        cuts = new IDiamond.FacetCut[](7);
+        for (uint256 i = 0; i < 6; i++) {
             cuts[i] = baseCuts[i];
         }
-        cuts[5] = _buildLoupeFacetCut(loupeFacet);
+        cuts[6] = _buildLoupeFacetCut(loupeFacet);
     }
 
     /**
@@ -207,7 +213,7 @@ contract UpgradeRegistryCommunityDiamond is BaseMultiChain, CommunityDiamondConf
             ",",
             '"meta":{',
             '"name":"RegistryCommunity Diamond Pattern Upgrade",',
-            '"description":"Upgrades RegistryCommunity contracts to diamond pattern with 5 facets (Admin, Member, Pool, Power, Strategy)",',
+            '"description":"Upgrades RegistryCommunity contracts to diamond pattern with 6 facets (Admin, Member, Pause, Pool, Power, Strategy)",',
             '"txBuilderVersion":"1.18.0",',
             '"createdFromSafeAddress":"',
             _addressToString(safeOwner),

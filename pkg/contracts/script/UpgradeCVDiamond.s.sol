@@ -6,6 +6,7 @@ import {CVStrategy} from "../src/CVStrategy/CVStrategy.sol";
 import {CVAdminFacet} from "../src/CVStrategy/facets/CVAdminFacet.sol";
 import {CVAllocationFacet} from "../src/CVStrategy/facets/CVAllocationFacet.sol";
 import {CVDisputeFacet} from "../src/CVStrategy/facets/CVDisputeFacet.sol";
+import {CVPauseFacet} from "../src/CVStrategy/facets/CVPauseFacet.sol";
 import {CVPowerFacet} from "../src/CVStrategy/facets/CVPowerFacet.sol";
 import {CVProposalFacet} from "../src/CVStrategy/facets/CVProposalFacet.sol";
 import {DiamondLoupeFacet} from "../src/diamonds/facets/DiamondLoupeFacet.sol";
@@ -33,6 +34,7 @@ contract UpgradeCVDiamond is BaseMultiChain, StrategyDiamondConfiguratorBase {
     CVAdminFacet public adminFacet;
     CVAllocationFacet public allocationFacet;
     CVDisputeFacet public disputeFacet;
+    CVPauseFacet public pauseFacet;
     CVPowerFacet public powerFacet;
     CVProposalFacet public proposalFacet;
     DiamondLoupeFacet public loupeFacet;
@@ -65,6 +67,9 @@ contract UpgradeCVDiamond is BaseMultiChain, StrategyDiamondConfiguratorBase {
 
         disputeFacet = new CVDisputeFacet();
         console2.log("  CVDisputeFacet:", address(disputeFacet));
+
+        pauseFacet = new CVPauseFacet();
+        console2.log("  CVPauseFacet:", address(pauseFacet));
 
         powerFacet = new CVPowerFacet();
         console2.log("  CVPowerFacet:", address(powerFacet));
@@ -202,16 +207,16 @@ contract UpgradeCVDiamond is BaseMultiChain, StrategyDiamondConfiguratorBase {
     }
 
     /**
-     * @notice Build all facet cuts including DiamondLoupeFacet (6 total)
+     * @notice Build all facet cuts including DiamondLoupeFacet (7 total)
      */
     function _buildAllFacetCuts() internal view returns (IDiamond.FacetCut[] memory cuts) {
         IDiamond.FacetCut[] memory baseCuts =
-            _buildFacetCuts(adminFacet, allocationFacet, disputeFacet, powerFacet, proposalFacet);
-        cuts = new IDiamond.FacetCut[](6);
-        for (uint256 i = 0; i < 5; i++) {
+            _buildFacetCuts(adminFacet, allocationFacet, disputeFacet, pauseFacet, powerFacet, proposalFacet);
+        cuts = new IDiamond.FacetCut[](7);
+        for (uint256 i = 0; i < 6; i++) {
             cuts[i] = baseCuts[i];
         }
-        cuts[5] = _buildLoupeFacetCut(loupeFacet);
+        cuts[6] = _buildLoupeFacetCut(loupeFacet);
     }
 
     /**
@@ -232,7 +237,7 @@ contract UpgradeCVDiamond is BaseMultiChain, StrategyDiamondConfiguratorBase {
             ",",
             '"meta":{',
             '"name":"CVStrategy Diamond Pattern Upgrade",',
-            '"description":"Upgrades CVStrategy contracts to diamond pattern with 5 facets (Admin, Allocation, Dispute, Power, Proposal)",',
+            '"description":"Upgrades CVStrategy contracts to diamond pattern with 6 facets (Admin, Allocation, Dispute, Pause, Power, Proposal)",',
             '"txBuilderVersion":"1.18.0",',
             '"createdFromSafeAddress":"',
             _addressToString(safeOwner),

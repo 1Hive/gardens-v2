@@ -530,7 +530,6 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
     /// @dev Used by stub functions to delegate to their respective facets
     /// @dev This function never returns - it either reverts or returns via assembly
     function _delegateToFacet() private {
-        _enforceNotPaused(msg.sig);
         LibDiamond.DiamondStorage storage ds;
         bytes32 position = LibDiamond.DIAMOND_STORAGE_POSITION;
 
@@ -543,6 +542,8 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
             revert CommunityFunctionDoesNotExist(msg.sig);
         }
 
+        _enforceNotPaused(msg.sig, facet);
+
         assembly {
             calldatacopy(0, 0, calldatasize())
             let result := delegatecall(gas(), facet, 0, calldatasize(), 0, 0)
@@ -553,7 +554,10 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
         }
     }
 
-    function _enforceNotPaused(bytes4 selector) private view {
+    function _enforceNotPaused(bytes4 selector, address facet) private view {
+        if (facet == LibPauseStorage.layout().pauseFacet) {
+            return;
+        }
         if (_isPauseSelector(selector)) {
             return;
         }
@@ -571,10 +575,12 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
 
     function _isPauseSelector(bytes4 selector) private pure returns (bool) {
         return selector == bytes4(keccak256("setPauseController(address)"))
+            || selector == bytes4(keccak256("setPauseFacet(address)"))
             || selector == bytes4(keccak256("pause(uint256)"))
             || selector == bytes4(keccak256("pause(bytes4,uint256)"))
             || selector == bytes4(keccak256("unpause()"))
             || selector == bytes4(keccak256("unpause(bytes4)"))
+            || selector == bytes4(keccak256("pauseFacet()"))
             || selector == bytes4(keccak256("pauseController()"))
             || selector == bytes4(keccak256("isPaused()"))
             || selector == bytes4(keccak256("isPaused(bytes4)"))
@@ -596,7 +602,6 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
     /// @notice Fallback function delegates calls to facets based on function selector
     /// @dev Uses Diamond storage to find facet address for the called function
     fallback() external {
-        _enforceNotPaused(msg.sig);
         LibDiamond.DiamondStorage storage ds;
         bytes32 position = LibDiamond.DIAMOND_STORAGE_POSITION;
 
@@ -609,6 +614,8 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
         if (facet == address(0)) {
             revert CommunityFunctionDoesNotExist(msg.sig);
         }
+
+        _enforceNotPaused(msg.sig, facet);
 
         assembly {
             calldatacopy(0, 0, calldatasize())

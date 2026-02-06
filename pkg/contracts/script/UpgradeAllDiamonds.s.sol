@@ -8,10 +8,12 @@ import {CVAllocationFacet} from "../src/CVStrategy/facets/CVAllocationFacet.sol"
 import {CVDisputeFacet} from "../src/CVStrategy/facets/CVDisputeFacet.sol";
 import {CVPowerFacet} from "../src/CVStrategy/facets/CVPowerFacet.sol";
 import {CVProposalFacet} from "../src/CVStrategy/facets/CVProposalFacet.sol";
+import {CVPauseFacet} from "../src/CVStrategy/facets/CVPauseFacet.sol";
 import {CVStrategyDiamondInit} from "../src/CVStrategy/CVStrategyDiamondInit.sol";
 import {RegistryCommunity} from "../src/RegistryCommunity/RegistryCommunity.sol";
 import {CommunityAdminFacet} from "../src/RegistryCommunity/facets/CommunityAdminFacet.sol";
 import {CommunityMemberFacet} from "../src/RegistryCommunity/facets/CommunityMemberFacet.sol";
+import {CommunityPauseFacet} from "../src/RegistryCommunity/facets/CommunityPauseFacet.sol";
 import {CommunityPoolFacet} from "../src/RegistryCommunity/facets/CommunityPoolFacet.sol";
 import {CommunityPowerFacet} from "../src/RegistryCommunity/facets/CommunityPowerFacet.sol";
 import {CommunityStrategyFacet} from "../src/RegistryCommunity/facets/CommunityStrategyFacet.sol";
@@ -43,12 +45,14 @@ contract UpgradeAllDiamonds is BaseMultiChain, StrategyDiamondConfiguratorBase, 
     CVAdminFacet public cvAdminFacet;
     CVAllocationFacet public cvAllocationFacet;
     CVDisputeFacet public cvDisputeFacet;
+    CVPauseFacet public cvPauseFacet;
     CVPowerFacet public cvPowerFacet;
     CVProposalFacet public cvProposalFacet;
 
     // RegistryCommunity facets
     CommunityAdminFacet public communityAdminFacet;
     CommunityMemberFacet public communityMemberFacet;
+    CommunityPauseFacet public communityPauseFacet;
     CommunityPoolFacet public communityPoolFacet;
     CommunityPowerFacet public communityPowerFacet;
     CommunityStrategyFacet public communityStrategyFacet;
@@ -150,6 +154,9 @@ contract UpgradeAllDiamonds is BaseMultiChain, StrategyDiamondConfiguratorBase, 
         cvDisputeFacet = new CVDisputeFacet();
         console2.log("  CVDisputeFacet:", address(cvDisputeFacet));
 
+        cvPauseFacet = new CVPauseFacet();
+        console2.log("  CVPauseFacet:", address(cvPauseFacet));
+
         cvPowerFacet = new CVPowerFacet();
         console2.log("  CVPowerFacet:", address(cvPowerFacet));
 
@@ -162,6 +169,9 @@ contract UpgradeAllDiamonds is BaseMultiChain, StrategyDiamondConfiguratorBase, 
 
         communityMemberFacet = new CommunityMemberFacet();
         console2.log("  CommunityMemberFacet:", address(communityMemberFacet));
+
+        communityPauseFacet = new CommunityPauseFacet();
+        console2.log("  CommunityPauseFacet:", address(communityPauseFacet));
 
         communityPoolFacet = new CommunityPoolFacet();
         console2.log("  CommunityPoolFacet:", address(communityPoolFacet));
@@ -664,21 +674,33 @@ contract UpgradeAllDiamonds is BaseMultiChain, StrategyDiamondConfiguratorBase, 
 
     function _buildCVFacetCuts() internal view returns (IDiamond.FacetCut[] memory cuts) {
         IDiamond.FacetCut[] memory baseCuts =
-            _buildFacetCuts(cvAdminFacet, cvAllocationFacet, cvDisputeFacet, cvPowerFacet, cvProposalFacet);
-        cuts = new IDiamond.FacetCut[](6);
+            _buildFacetCuts(
+                cvAdminFacet,
+                cvAllocationFacet,
+                cvDisputeFacet,
+                cvPauseFacet,
+                cvPowerFacet,
+                cvProposalFacet
+            );
+        cuts = new IDiamond.FacetCut[](7);
         cuts[0] = _buildLoupeFacetCut(loupeFacet);
-        for (uint256 i = 0; i < 5; i++) {
+        for (uint256 i = 0; i < 6; i++) {
             cuts[i + 1] = baseCuts[i];
         }
     }
 
     function _buildCommunityFacetCuts() internal view returns (IDiamond.FacetCut[] memory cuts) {
         IDiamond.FacetCut[] memory baseCuts = CommunityDiamondConfiguratorBase._buildFacetCuts(
-            communityAdminFacet, communityMemberFacet, communityPoolFacet, communityPowerFacet, communityStrategyFacet
+            communityAdminFacet,
+            communityMemberFacet,
+            communityPauseFacet,
+            communityPoolFacet,
+            communityPowerFacet,
+            communityStrategyFacet
         );
-        cuts = new IDiamond.FacetCut[](6);
+        cuts = new IDiamond.FacetCut[](7);
         cuts[0] = _buildLoupeFacetCut(loupeFacet);
-        for (uint256 i = 0; i < 5; i++) {
+        for (uint256 i = 0; i < 6; i++) {
             cuts[i + 1] = baseCuts[i];
         }
     }

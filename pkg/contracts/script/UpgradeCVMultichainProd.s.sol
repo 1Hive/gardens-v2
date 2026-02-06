@@ -6,12 +6,14 @@ import {CVStrategy} from "../src/CVStrategy/CVStrategy.sol";
 import {CVAdminFacet} from "../src/CVStrategy/facets/CVAdminFacet.sol";
 import {CVAllocationFacet} from "../src/CVStrategy/facets/CVAllocationFacet.sol";
 import {CVDisputeFacet} from "../src/CVStrategy/facets/CVDisputeFacet.sol";
+import {CVPauseFacet} from "../src/CVStrategy/facets/CVPauseFacet.sol";
 import {CVPowerFacet} from "../src/CVStrategy/facets/CVPowerFacet.sol";
 import {CVProposalFacet} from "../src/CVStrategy/facets/CVProposalFacet.sol";
 import {CVStrategyDiamondInit} from "../src/CVStrategy/CVStrategyDiamondInit.sol";
 import {RegistryCommunity} from "../src/RegistryCommunity/RegistryCommunity.sol";
 import {CommunityAdminFacet} from "../src/RegistryCommunity/facets/CommunityAdminFacet.sol";
 import {CommunityMemberFacet} from "../src/RegistryCommunity/facets/CommunityMemberFacet.sol";
+import {CommunityPauseFacet} from "../src/RegistryCommunity/facets/CommunityPauseFacet.sol";
 import {CommunityPoolFacet} from "../src/RegistryCommunity/facets/CommunityPoolFacet.sol";
 import {CommunityPowerFacet} from "../src/RegistryCommunity/facets/CommunityPowerFacet.sol";
 import {CommunityStrategyFacet} from "../src/RegistryCommunity/facets/CommunityStrategyFacet.sol";
@@ -278,11 +280,13 @@ contract UpgradeCVMultichainProd is BaseMultiChain, StrategyDiamondConfiguratorB
         CVAdminFacet cvAdminFacet = new CVAdminFacet();
         CVAllocationFacet cvAllocationFacet = new CVAllocationFacet();
         CVDisputeFacet cvDisputeFacet = new CVDisputeFacet();
+        CVPauseFacet cvPauseFacet = new CVPauseFacet();
         CVPowerFacet cvPowerFacet = new CVPowerFacet();
         CVProposalFacet cvProposalFacet = new CVProposalFacet();
 
         CommunityAdminFacet communityAdminFacet = new CommunityAdminFacet();
         CommunityMemberFacet communityMemberFacet = new CommunityMemberFacet();
+        CommunityPauseFacet communityPauseFacet = new CommunityPauseFacet();
         CommunityPoolFacet communityPoolFacet = new CommunityPoolFacet();
         CommunityPowerFacet communityPowerFacet = new CommunityPowerFacet();
         CommunityStrategyFacet communityStrategyFacet = new CommunityStrategyFacet();
@@ -290,11 +294,12 @@ contract UpgradeCVMultichainProd is BaseMultiChain, StrategyDiamondConfiguratorB
         DiamondLoupeFacet loupeFacet = new DiamondLoupeFacet();
 
         cuts.cvCuts = _buildCVFacetCuts(
-            cvAdminFacet, cvAllocationFacet, cvDisputeFacet, cvPowerFacet, cvProposalFacet, loupeFacet
+            cvAdminFacet, cvAllocationFacet, cvDisputeFacet, cvPauseFacet, cvPowerFacet, cvProposalFacet, loupeFacet
         );
         cuts.communityCuts = _buildCommunityFacetCuts(
             communityAdminFacet,
             communityMemberFacet,
+            communityPauseFacet,
             communityPoolFacet,
             communityPowerFacet,
             communityStrategyFacet,
@@ -306,15 +311,23 @@ contract UpgradeCVMultichainProd is BaseMultiChain, StrategyDiamondConfiguratorB
         CVAdminFacet cvAdminFacet,
         CVAllocationFacet cvAllocationFacet,
         CVDisputeFacet cvDisputeFacet,
+        CVPauseFacet cvPauseFacet,
         CVPowerFacet cvPowerFacet,
         CVProposalFacet cvProposalFacet,
         DiamondLoupeFacet loupeFacet
     ) internal pure returns (IDiamond.FacetCut[] memory cuts) {
         IDiamond.FacetCut[] memory baseCuts =
-            _buildFacetCuts(cvAdminFacet, cvAllocationFacet, cvDisputeFacet, cvPowerFacet, cvProposalFacet);
-        cuts = new IDiamond.FacetCut[](6);
+            _buildFacetCuts(
+                cvAdminFacet,
+                cvAllocationFacet,
+                cvDisputeFacet,
+                cvPauseFacet,
+                cvPowerFacet,
+                cvProposalFacet
+            );
+        cuts = new IDiamond.FacetCut[](7);
         cuts[0] = _buildLoupeFacetCut(loupeFacet);
-        for (uint256 i = 0; i < 5; i++) {
+        for (uint256 i = 0; i < 6; i++) {
             cuts[i + 1] = baseCuts[i];
         }
     }
@@ -322,17 +335,23 @@ contract UpgradeCVMultichainProd is BaseMultiChain, StrategyDiamondConfiguratorB
     function _buildCommunityFacetCuts(
         CommunityAdminFacet communityAdminFacet,
         CommunityMemberFacet communityMemberFacet,
+        CommunityPauseFacet communityPauseFacet,
         CommunityPoolFacet communityPoolFacet,
         CommunityPowerFacet communityPowerFacet,
         CommunityStrategyFacet communityStrategyFacet,
         DiamondLoupeFacet loupeFacet
     ) internal pure returns (IDiamond.FacetCut[] memory cuts) {
         IDiamond.FacetCut[] memory baseCuts = CommunityDiamondConfiguratorBase._buildFacetCuts(
-            communityAdminFacet, communityMemberFacet, communityPoolFacet, communityPowerFacet, communityStrategyFacet
+            communityAdminFacet,
+            communityMemberFacet,
+            communityPauseFacet,
+            communityPoolFacet,
+            communityPowerFacet,
+            communityStrategyFacet
         );
-        cuts = new IDiamond.FacetCut[](6);
+        cuts = new IDiamond.FacetCut[](7);
         cuts[0] = _buildLoupeFacetCut(loupeFacet);
-        for (uint256 i = 0; i < 5; i++) {
+        for (uint256 i = 0; i < 6; i++) {
             cuts[i + 1] = baseCuts[i];
         }
     }
