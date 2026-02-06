@@ -25,13 +25,13 @@ templates:
         - Member
       abis:
         - name: RegistryCommunity
-          file: ../contracts/out/DiamondAggregated/RegistryCommunity.json
+          file: ../contracts/abis/DiamondAggregated/RegistryCommunity.json
         - name: ERC20
-          file: ../contracts/out/ERC20.sol/ERC20.json
+          file: ../contracts/abis/ERC20.sol/ERC20.json
         - name: CVStrategy
-          file: ../contracts/out/DiamondAggregated/CVStrategy.json
+          file: ../contracts/abis/DiamondAggregated/CVStrategy.json
         - name: RegistryFactory
-          file: ../contracts/out/RegistryFactory.sol/RegistryFactory.json
+          file: ../contracts/abis/RegistryFactory.sol/RegistryFactory.json
      
       eventHandlers:
         - event: RegistryInitialized(bytes32,string,(uint256,string))
@@ -98,11 +98,11 @@ templates:
         - Allo
       abis:
         - name: CVStrategy
-          file: ../contracts/out/DiamondAggregated/CVStrategy.json
+          file: ../contracts/abis/DiamondAggregated/CVStrategy.json
         - name: RegistryCommunity
-          file: ../contracts/out/DiamondAggregated/RegistryCommunity.json
+          file: ../contracts/abis/DiamondAggregated/RegistryCommunity.json
         - name: Allo
-          file: ../contracts/out/Allo.sol/Allo.json
+          file: ../contracts/abis/Allo.sol/Allo.json
       eventHandlers:
         - event: InitializedCV(uint256,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address))
           handler: handleInitialized
@@ -163,7 +163,7 @@ templates:
         - CollateralVaultDeposit
       abis:
         - name: CollateralVault
-          file: ../contracts/out/CollateralVault.sol/CollateralVault.json
+          file: ../contracts/abis/CollateralVault.sol/CollateralVault.json
       eventHandlers:
         - event: CollateralDeposited(uint256,indexed address,uint256)
           handler: handleCollateralDeposited
@@ -184,7 +184,7 @@ templates:
         - ProposalDisputeMetadata
       abis:
         - name: CVStrategy
-          file: ../contracts/out/CVStrategy.sol/CVStrategy.json
+          file: ../contracts/abis/CVStrategy.sol/CVStrategy.json
   
   - name: ProposalMetadata
     kind: file/ipfs
@@ -197,7 +197,7 @@ templates:
         - ProposalMetadata
       abis:
         - name: CVStrategy
-          file: ../contracts/out/CVStrategy.sol/CVStrategy.json
+          file: ../contracts/abis/CVStrategy.sol/CVStrategy.json
   
   - name: PoolMetadata
     kind: file/ipfs
@@ -210,7 +210,7 @@ templates:
         - PoolMetadata
       abis:
         - name: CVStrategy
-          file: ../contracts/out/CVStrategy.sol/CVStrategy.json
+          file: ../contracts/abis/CVStrategy.sol/CVStrategy.json
 
   - name: Covenant
     kind: file/ipfs
@@ -223,4 +223,4 @@ templates:
         - Covenant
       abis:
         - name: CVStrategy
-          file: ../contracts/out/CVStrategy.sol/CVStrategy.json
+          file: ../contracts/abis/CVStrategy.sol/CVStrategy.json

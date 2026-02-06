@@ -76,7 +76,7 @@ function aggregateDiamondABI(mainContract, facets) {
   log(colors.blue, `\nProcessing ${mainContract}...`);
 
   // Create output directory
-  const outputDir = 'out/DiamondAggregated';
+  const outputDir = 'abis/DiamondAggregated';
   if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir, { recursive: true });
   }
@@ -284,7 +284,7 @@ function main() {
 
   log(colors.blue, '\n=== Summary ===');
   log(colors.green, '✓ Diamond ABI aggregation complete!');
-  log(colors.green, '  Aggregated ABIs available in: out/DiamondAggregated/');
+  log(colors.green, '  Aggregated ABIs available in: abis/DiamondAggregated/');
 }
 
 // Run

@@ -52,8 +52,6 @@ cookies.json
 .graphclientrc.yml
 
 lcov.info
-# some abi should be ignored
-# pkg/contracts/out/**
-# !pkg/contracts/out/CVStrategy.sol/CVStrategy.json
-# pkg/contracts/out
+# foundry build artifacts
+pkg/contracts/out/
 pkg/contracts/script/Playground.s.sol

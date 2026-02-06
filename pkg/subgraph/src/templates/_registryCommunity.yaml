@@ -11,7 +11,7 @@
         - RegistryCommunity
       abis:
         - name: RegistryCommunity
-          file: ../contracts/out/DiamondAggregated/RegistryCommunity.json
+          file: ../contracts/abis/DiamondAggregated/RegistryCommunity.json
       eventHandlers:
         - event: RegistryInitialized(bytes32,string,(uint256,string))
           handler: handleInitialized
