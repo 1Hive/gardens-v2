@@ -65,6 +65,8 @@ module.exports = {
           "danger-hover-content": "#E57373",
           "danger-soft": "#FFE6E6",
           "warning-content": "#E28400",
+          "dark-chart-support": "#88B358",
+          "light-chart-support": "#A8E066",
         },
       },
     ],
@@ -138,6 +140,8 @@ module.exports = {
         "tertiary-dark-border-hover": "#72d3f0",
         "tertiary-dark-base": "#125c88",
         "tertiary-dark-hover": "#1d7fb5",
+        "dark-chart-support": "#88B358",
+        "light-chart-support": "#A8E066",
       },
       transitionProperty: {
         height: "height",

@@ -143,7 +143,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
           <div className="hidden md:flex items-center justify-center gap-6">
             <Link href="/gardens" className="flex items-center gap-4 text-sm">
-              <h6 className="hover:opacity-70">Communities</h6>
+              <h5 className="hover:opacity-70">Communities</h5>
             </Link>
             <Link
               href="/gardens/campaigns"
@@ -151,7 +151,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               onClick={handleCampaignClick}
             >
               <div className="relative inline-flex items-center">
-                <h6 className="hover:opacity-70">Campaigns</h6>
+                <h5 className="hover:opacity-70">Campaigns</h5>
                 {showCampaignBadge && (
                   <span className="absolute bg-primary-content dark:bg-[#98ff98] -top-1 -right-2 rounded-full text-neutral w-2 h-2 font-bold leading-none flex items-center justify-center" />
                 )}
@@ -164,7 +164,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               rel="noreferrer"
               className="flex items-center gap-2 text-sm hover:opacity-70"
             >
-              <span>Documentation</span>
+              <h5 className="hover:opacity-70">Documentation</h5>
               <ArrowTopRightOnSquareIcon className="h-4 w-4" aria-hidden />
             </a>
           </div>
@@ -243,7 +243,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       {/* Bootom floating divs */}
       <div
-        className="fixed bottom-4 left-4 tooltip tooltip-top-right tooltip-warning z-50 badge bg-secondary-soft dark:bg-secondary-soft-dark text-secondary-content cursor-pointer"
+        className="hidden sm:fixed bottom-4 left-4 tooltip tooltip-top-right tooltip-warning z-50 badge bg-secondary-soft dark:bg-secondary-soft-dark text-secondary-content cursor-pointer"
         data-tip="️️Disclaimer: our smart contracts have not undergone a third party security audit, use at your own risk."
       >
         Beta
@@ -258,7 +258,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           forceShowTooltip
           tooltip={"Discord\nSupport"}
           icon={<HeadphoneIcon />}
-          className="!p-2"
+          className="!p-2 !hidden sm:!block"
         />
       </a>
       <Footer />

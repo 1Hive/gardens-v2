@@ -757,11 +757,11 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
       </Modal>
 
       <div className="backdrop-blur-sm rounded-lg">
-        <section className="section-layout gap-2 flex flex-col">
-          <h3>Pool Funds</h3>
+        <section className="section-layout gap-4 flex flex-col">
+          <h4>Pool Funds</h4>
           <div className="flex flex-col gap-2">
             <div className="flex justify-between items-center gap-3">
-              <p className="subtitle2">Funds in pool:</p>
+              <p className="text-sm">Funds in pool:</p>
               <div className="flex items-center gap-1">
                 <DisplayNumber
                   copiable={true}
@@ -831,7 +831,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                 missmatchUrl || !isConnected ? tooltipMessage : undefined
               }
               icon={<PlusIcon className="w-5 h-5" />}
-              className="w-full mt-1"
+              className="!w-full mt-1"
             >
               Add Funds
             </Button>

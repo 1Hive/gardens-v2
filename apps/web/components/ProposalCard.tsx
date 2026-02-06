@@ -210,7 +210,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
               <span className="text-xs sm:text-sm text-secondary-content">
                 {thresholdPct === 0 ?
                   "Threshold out of reach"
-                : "Threshold over 100%."}
+                : "Threshold over 100 VP"}
               </span>
             </div>
           : (
@@ -218,7 +218,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
             !alreadyExecuted &&
             !readyToBeExecuted
           ) ?
-            `At least ${supportNeededToPass}% needed`
+            `At least ${supportNeededToPass} VP needed`
           : proposalWillPass ?
             "Estimated time to pass:"
           : !alreadyExecuted && readyToBeExecuted && !isSignalingType ?
@@ -330,19 +330,34 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
                     thresholdPct != null &&
                     totalSupportPct != null && (
                       <div>
-                        <div className="flex items-center gap-2 mb-2">
+                        <div
+                          className="flex items-baseline justify-between gap-4 mb-1
+                        "
+                        >
                           <div>
-                            <p className="text-xs sm:text-sm">
-                              Total Support:{" "}
-                              <span className="font-medium">
-                                {totalSupportPct}% of pool weight
-                              </span>{" "}
-                            </p>
+                            <span className="text-xs">{ProposalCountDown}</span>
                           </div>
+                          <ul className="flex gap-2 items-baseline text-xs sm:text-sm">
+                            <li>
+                              <span className="text-xs text-[#74c898] dark:text-primary-dark-base ">
+                                conviction: {currentConvictionPct} VP
+                              </span>
+                            </li>
+                            <li>
+                              <span className="text-xs text-primary-button dark:text-dark-chart-support">
+                                support: {totalSupportPct} VP
+                              </span>
+                            </li>
 
-                          {ProposalCountDown}
+                            <li>
+                              <span className="text-xs text-neutral-soft-content">
+                                threshold: {thresholdPct} VP
+                              </span>
+                            </li>
+                          </ul>
                         </div>
-                        <div className="h-3 flex items-center mb-2">
+
+                        <div className="h-3 flex items-center mb-3">
                           <ConvictionBarChart
                             compact
                             currentConvictionPct={currentConvictionPct}
@@ -361,9 +376,9 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
             </div>
           )}
           {isPoolEnabled && stakedFilter?.value > 0 && (
-            <Badge color="info" className="self-center justify-self-start">
-              <p className="text-xs font-semibold">
-                Your support: {poolWeightAllocatedInProposal}%
+            <Badge color="success" className="self-center justify-self-start">
+              <p className="text-xs">
+                Your support: {poolWeightAllocatedInProposal} VP
               </p>
             </Badge>
           )}
