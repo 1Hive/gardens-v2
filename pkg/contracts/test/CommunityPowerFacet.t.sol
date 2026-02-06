@@ -138,6 +138,12 @@ contract CommunityPowerFacetTest is Test {
         facet.activateMemberInStrategy(member, address(strategy));
     }
 
+    function test_getMemberPowerInStrategy_returns_value() public {
+        address strategy = address(0xBEEF);
+        facet.setActivated(member, strategy, true, 42);
+        assertEq(facet.getMemberPowerInStrategy(member, strategy), 42);
+    }
+
     function test_deactivateMemberInStrategy_reverts_and_succeeds() public {
         MockPowerStrategy strategy = new MockPowerStrategy(PointSystem.Fixed, 0, 0);
         facet.setMember(member, true, 0);

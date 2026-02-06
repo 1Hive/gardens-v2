@@ -34,7 +34,7 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
         setLastRebalanceAt(block.timestamp);
 
         // Check if funds that needs to be wrapped
-        bool shouldStartStream = false;
+        bool shouldStartStream = _shouldStartStream();
         if (shouldStartStream) {
             // TODO: Start the stream
             emit StreamStarted(address(superfluidToken), 0);
@@ -42,5 +42,9 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
 
         // Rebalancing logic
 
+    }
+
+    function _shouldStartStream() internal view virtual returns (bool) {
+        return false;
     }
 }

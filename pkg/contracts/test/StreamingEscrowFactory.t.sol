@@ -135,4 +135,39 @@ contract StreamingEscrowFactoryTest is Test {
         vm.expectRevert(abi.encodeWithSelector(StreamingEscrowFactory.OnlyStrategy.selector, address(0xB0B)));
         factory.deployEscrow(ISuperToken(address(token)), ISuperfluidPool(address(pool)), beneficiary, treasury);
     }
+
+    function test_initialize_reverts_on_zero_addresses() public {
+        StreamingEscrowFactory fresh = new StreamingEscrowFactory();
+        vm.expectRevert(StreamingEscrowFactory.InvalidAddress.selector);
+        fresh.initialize(address(0), ISuperfluid(address(host)), address(escrowImpl));
+
+        fresh = new StreamingEscrowFactory();
+        vm.expectRevert(StreamingEscrowFactory.InvalidAddress.selector);
+        fresh.initialize(address(this), ISuperfluid(address(0)), address(escrowImpl));
+
+        fresh = new StreamingEscrowFactory();
+        vm.expectRevert(StreamingEscrowFactory.InvalidAddress.selector);
+        fresh.initialize(address(this), ISuperfluid(address(host)), address(0));
+    }
+
+    function test_deployEscrow_reverts_on_invalid_addresses() public {
+        vm.expectRevert(StreamingEscrowFactory.InvalidAddress.selector);
+        factory.deployEscrow(ISuperToken(address(token)), ISuperfluidPool(address(pool)), address(0), treasury);
+
+        vm.expectRevert(StreamingEscrowFactory.InvalidAddress.selector);
+        factory.deployEscrow(ISuperToken(address(token)), ISuperfluidPool(address(pool)), beneficiary, address(0));
+    }
+
+    function test_setEscrowImplementation_onlyOwner_and_nonzero() public {
+        vm.prank(address(0xB0B));
+        vm.expectRevert("Ownable: caller is not the owner");
+        factory.setEscrowImplementation(address(0x1234));
+
+        vm.expectRevert(StreamingEscrowFactory.InvalidAddress.selector);
+        factory.setEscrowImplementation(address(0));
+
+        address newImpl = address(new StreamingEscrow());
+        factory.setEscrowImplementation(newImpl);
+        assertEq(factory.escrowImplementation(), newImpl);
+    }
 }

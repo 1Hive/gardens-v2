@@ -5,6 +5,7 @@ import "forge-std/Test.sol";
 
 import {GV2ERC20} from "../script/GV2ERC20.sol";
 import {CVStrategyBaseFacet} from "../src/CVStrategy/CVStrategyBaseFacet.sol";
+import {MockPauseController} from "./helpers/PauseHelpers.sol";
 
 import {
     CVStrategyBaseFacetHarness,
@@ -107,6 +108,12 @@ contract CVStrategyBaseFacetTest is Test {
         facet.exposedOnlyCouncilSafeOrMember();
     }
 
+    function test_canExecuteAction_allowlist_false() public {
+        bytes32 role = keccak256(abi.encodePacked("ALLOWLIST", uint256(1)));
+        registryCommunity.setRole(role, address(0), false);
+        assertFalse(facet.exposedCanExecuteAction(other));
+    }
+
     function test_canExecuteAction_sybilScorer() public {
         facet.setSybilScorer(address(sybil));
         sybil.setCanExecute(other, false);
@@ -132,6 +139,71 @@ contract CVStrategyBaseFacetTest is Test {
         assertGt(blockNumber, 0);
     }
 
+    function test_pauseHelpers_enforceNotPaused() public {
+        MockPauseController controller = new MockPauseController();
+        facet.setPauseController(address(controller));
+
+        bytes4 selector = bytes4(keccak256("doThing()"));
+        controller.setGlobalPaused(false);
+        facet.exposedEnforceNotPaused(selector);
+
+        controller.setGlobalPaused(true);
+        vm.expectRevert(
+            abi.encodeWithSelector(CVStrategyBaseFacet.StrategyPaused.selector, address(controller))
+        );
+        facet.exposedEnforceNotPaused(selector);
+
+        bytes4 pauseSelector = bytes4(keccak256("pause(uint256)"));
+        facet.exposedEnforceNotPaused(pauseSelector);
+    }
+
+    function test_pauseHelpers_enforceSelectorNotPaused() public {
+        MockPauseController controller = new MockPauseController();
+        facet.setPauseController(address(controller));
+
+        bytes4 selector = bytes4(keccak256("doOther()"));
+        controller.setSelectorPaused(selector, true);
+        vm.expectRevert(
+            abi.encodeWithSelector(CVStrategyBaseFacet.StrategySelectorPaused.selector, selector, address(controller))
+        );
+        facet.exposedEnforceSelectorNotPaused(selector);
+
+        controller.setSelectorPaused(selector, false);
+        facet.exposedEnforceSelectorNotPaused(selector);
+
+        bytes4 pauseSelector = bytes4(keccak256("pause(bytes4,uint256)"));
+        controller.setSelectorPaused(pauseSelector, true);
+        facet.exposedEnforceSelectorNotPaused(pauseSelector);
+    }
+
+    function test_pauseHelpers_modifiers() public {
+        MockPauseController controller = new MockPauseController();
+        facet.setPauseController(address(controller));
+
+        controller.setGlobalPaused(true);
+        vm.expectRevert(
+            abi.encodeWithSelector(CVStrategyBaseFacet.StrategyPaused.selector, address(controller))
+        );
+        facet.guardedWhenNotPaused();
+
+        bytes4 selector = bytes4(keccak256("someAction()"));
+        controller.setGlobalPaused(false);
+        controller.setSelectorPaused(selector, true);
+        vm.expectRevert(
+            abi.encodeWithSelector(CVStrategyBaseFacet.StrategySelectorPaused.selector, selector, address(controller))
+        );
+        facet.guardedWhenSelectorNotPaused(selector);
+
+        controller.setSelectorPaused(selector, false);
+        facet.guardedWhenSelectorNotPaused(selector);
+    }
+
+    function test_isPauseSelector_flags() public {
+        bytes4 pauseSelector = bytes4(keccak256("pause(uint256)"));
+        assertTrue(facet.exposedIsPauseSelector(pauseSelector));
+        assertFalse(facet.exposedIsPauseSelector(bytes4(0x12345678)));
+    }
+
     function test_getPoolAmount_scaling() public {
         baseToken.mint(address(facet), 1000);
         superToken.mint(address(facet), 2 ether);
@@ -144,5 +216,18 @@ contract CVStrategyBaseFacetTest is Test {
         vm.deal(address(facet), 5 ether);
         amount = facet.exposedGetPoolAmount();
         assertEq(amount, 5 ether);
+    }
+
+    function test_getPoolAmount_upscale_when_decimals_gt_18() public {
+        GV2ERC20 highDecimals = new GV2ERC20("High", "H", 20);
+        GV2ERC20 superHigh = new GV2ERC20("SuperHigh", "SH", 18);
+        allo.setPoolToken(1, address(highDecimals));
+        facet.setSuperfluidToken(address(superHigh));
+
+        highDecimals.mint(address(facet), 1000);
+        superHigh.mint(address(facet), 1 ether);
+
+        uint256 amount = facet.exposedGetPoolAmount();
+        assertEq(amount, 1000 + 1e20);
     }
 }

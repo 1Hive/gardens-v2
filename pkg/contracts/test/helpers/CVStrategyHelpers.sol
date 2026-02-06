@@ -24,6 +24,7 @@ import {CVStrategyBaseFacet} from "../../src/CVStrategy/CVStrategyBaseFacet.sol"
 import {ICollateralVault} from "../../src/interfaces/ICollateralVault.sol";
 import {IArbitrator} from "../../src/interfaces/IArbitrator.sol";
 import {LibDiamond} from "../../src/diamonds/libraries/LibDiamond.sol";
+import {LibPauseStorage} from "../../src/pausing/LibPauseStorage.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Library.sol";
 
 contract MockAlloWithPool {
@@ -277,6 +278,10 @@ contract CVStrategyBaseFacetHarness is CVStrategyBaseFacet {
         LibDiamond.setContractOwner(owner_);
     }
 
+    function setPauseController(address controller) external {
+        LibPauseStorage.layout().pauseController = controller;
+    }
+
     function exposedOnlyAllo() external onlyAllo {}
 
     function exposedOnlyInitialized() external onlyInitialized {}
@@ -314,6 +319,22 @@ contract CVStrategyBaseFacetHarness is CVStrategyBaseFacet {
     {
         return _checkBlockAndCalculateConviction(proposals[proposalId], oldStaked);
     }
+
+    function exposedIsPauseSelector(bytes4 selector) external pure returns (bool) {
+        return _isPauseSelector(selector);
+    }
+
+    function exposedEnforceNotPaused(bytes4 selector) external view {
+        _enforceNotPaused(selector);
+    }
+
+    function exposedEnforceSelectorNotPaused(bytes4 selector) external view {
+        _enforceSelectorNotPaused(selector);
+    }
+
+    function guardedWhenNotPaused() external whenNotPaused {}
+
+    function guardedWhenSelectorNotPaused(bytes4 selector) external whenSelectorNotPaused(selector) {}
 
     function exposedGetPoolAmount() external view returns (uint256) {
         return getPoolAmount();
