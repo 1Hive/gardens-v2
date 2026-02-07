@@ -41,13 +41,15 @@ import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Librar
 
 import "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/gdav1/ISuperfluidPool.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/utils/GDAv1Forwarder.sol";
-import {PoolConfig} from
-    "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/gdav1/IGeneralDistributionAgreementV1.sol";
+import {
+    PoolConfig
+} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/gdav1/IGeneralDistributionAgreementV1.sol";
 
 // Diamond Pattern imports
 import {LibDiamond} from "../diamonds/libraries/LibDiamond.sol";
 import {IDiamondCut} from "../diamonds/interfaces/IDiamondCut.sol";
 import {IDiamondLoupe} from "../diamonds/interfaces/IDiamondLoupe.sol";
+import {IVotingPowerRegistry} from "../interfaces/IVotingPowerRegistry.sol";
 import {IPauseController} from "../interfaces/IPauseController.sol";
 import {LibPauseStorage} from "../pausing/LibPauseStorage.sol";
 
@@ -185,6 +187,8 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     ISuperfluidPool public superfluidGDA; // Streaming pool only
     uint256 public streamingRatePerSecond; // Streaming pool only
 
+    IVotingPowerRegistry public votingPowerRegistry;
+
     // Constants (also defined in CVStrategyBaseFacet for facet access)
     uint256 public constant RULING_OPTIONS = 3;
     uint256 public constant DISPUTE_COOLDOWN_SEC = 2 hours;
@@ -218,6 +222,9 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         // }
         // Set councilsafe to whitelist admin
         registryCommunity = RegistryCommunity(ip.registryCommunity);
+        votingPowerRegistry = ip.votingPowerRegistry == address(0)
+            ? IVotingPowerRegistry(ip.registryCommunity)
+            : IVotingPowerRegistry(ip.votingPowerRegistry);
 
         proposalType = ip.proposalType;
         pointSystem = ip.pointSystem;
@@ -235,11 +242,12 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
             ) {
                 revert ProposalDataIsEmpty();
             }
-            (, ISuperfluidPool pool) = GDAv1Forwarder(0x6DA13Bde224A05a288748d857b9e7DDEffd1dE08).createPool(
-                ISuperfluidToken(superfluidToken),
-                address(this), // pool admin = your StreamingPool contract
-                PoolConfig({transferabilityForUnitsOwner: false, distributionFromAnyAddress: false})
-            );
+            (, ISuperfluidPool pool) = GDAv1Forwarder(0x6DA13Bde224A05a288748d857b9e7DDEffd1dE08)
+                .createPool(
+                    ISuperfluidToken(superfluidToken),
+                    address(this), // pool admin = your StreamingPool contract
+                    PoolConfig({transferabilityForUnitsOwner: false, distributionFromAnyAddress: false})
+                );
             superfluidGDA = pool;
         }
 
@@ -268,8 +276,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         }
     }
 
-    function _initializeFacets() internal {
-    }
+    function _initializeFacets() internal {}
 
     /*|--------------------------------------------|*/
     /*|                 MODIFIERS                  |*/
@@ -305,28 +312,33 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     function _checkOwner() internal view override {
         address directOwner = proxyOwner();
         address resolvedOwner = owner();
-        if (msg.sender != directOwner && msg.sender != resolvedOwner) { revert("Ownable: caller is not the owner"); } }
+        if (msg.sender != directOwner && msg.sender != resolvedOwner) revert("Ownable: caller is not the owner");
+    }
 
     function _canExecuteAction(address _user) internal view returns (bool) {
         if (address(sybilScorer) == address(0)) {
             bytes32 allowlistRole = keccak256(abi.encodePacked("ALLOWLIST", poolId));
-            return registryCommunity.hasRole(allowlistRole, address(0))
-                || registryCommunity.hasRole(allowlistRole, _user);
+            return
+                registryCommunity.hasRole(allowlistRole, address(0)) || registryCommunity.hasRole(allowlistRole, _user);
         }
         return sybilScorer.canExecuteAction(_user, address(this));
     }
 
     function _checkProposalAllocationValidity(uint256 _proposalId, int256 deltaSupport) internal view {
         Proposal storage p = proposals[_proposalId];
-        if (deltaSupport > 0
+        if (
+            deltaSupport > 0
                 && (p.proposalStatus == ProposalStatus.Inactive
                     || p.proposalStatus == ProposalStatus.Cancelled
                     || p.proposalStatus == ProposalStatus.Executed
-                    || p.proposalStatus == ProposalStatus.Rejected)) { revert ProposalInvalidForAllocation(_proposalId, p.proposalStatus); }
+                    || p.proposalStatus == ProposalStatus.Rejected)
+        ) revert ProposalInvalidForAllocation(_proposalId, p.proposalStatus);
     }
 
     function onlyCouncilSafeOrMember() internal view {
-        if (msg.sender != address(registryCommunity.councilSafe()) && false == _canExecuteAction(msg.sender)) { revert OnlyCouncilSafeOrMember(msg.sender, address(registryCommunity.councilSafe())); }
+        if (msg.sender != address(registryCommunity.councilSafe()) && false == _canExecuteAction(msg.sender)) {
+            revert OnlyCouncilSafeOrMember(msg.sender, address(registryCommunity.councilSafe()));
+        }
     }
 
     // Sig: 0xb0d3713a
@@ -343,22 +355,40 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     // registerRecipient removed - now in ProposalManagementFacet
     // Stub needed for IStrategy interface - delegates to facet
     // Sig: 0x2bbe0cae
-    function registerRecipient(bytes memory, address) external payable returns (address) { if (msg.sig == bytes4(0)) revert(); _delegateToFacet(); }
+    function registerRecipient(bytes memory, address) external payable returns (address) {
+        if (msg.sig == bytes4(0)) revert();
+        _delegateToFacet();
+    }
 
     // Sig: 0x814516ad
-    function activatePoints() external { if (msg.sig == bytes4(0)) revert(); _delegateToFacet(); }
+    function activatePoints() external {
+        if (msg.sig == bytes4(0)) revert();
+        _delegateToFacet();
+    }
 
     // Sig: 0x1ddf1e23
-    function deactivatePoints() external { if (msg.sig == bytes4(0)) revert(); _delegateToFacet(); }
+    function deactivatePoints() external {
+        if (msg.sig == bytes4(0)) revert();
+        _delegateToFacet();
+    }
 
     // Sig: 0x782aadff
-    function increasePower(address, uint256) external returns (uint256) { if (msg.sig == bytes4(0)) revert(); _delegateToFacet(); }
+    function increasePower(address, uint256) external returns (uint256) {
+        if (msg.sig == bytes4(0)) revert();
+        _delegateToFacet();
+    }
 
     // Sig: 0x2ed04b2b
-    function decreasePower(address, uint256) external returns (uint256) { if (msg.sig == bytes4(0)) revert(); _delegateToFacet(); }
+    function decreasePower(address, uint256) external returns (uint256) {
+        if (msg.sig == bytes4(0)) revert();
+        _delegateToFacet();
+    }
 
     // Sig: 0x6453d9c4
-    function deactivatePoints(address) external { if (msg.sig == bytes4(0)) revert(); _delegateToFacet(); }
+    function deactivatePoints(address) external {
+        if (msg.sig == bytes4(0)) revert();
+        _delegateToFacet();
+    }
 
     // Sig: 0x0ba95909
     function getMaxAmount() public view returns (uint256) {
@@ -382,12 +412,18 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     // allocate removed - now in AllocationFacet
     // Stub needed for IStrategy interface - delegates to facet
     // Sig: 0xef2920fc
-    function allocate(bytes memory, address) external payable { if (msg.sig == bytes4(0)) revert(); _delegateToFacet(); }
+    function allocate(bytes memory, address) external payable {
+        if (msg.sig == bytes4(0)) revert();
+        _delegateToFacet();
+    }
 
     // distribute removed - now in AllocationFacet
     // Stub needed for IStrategy interface - delegates to facet
     // Sig: 0x0a6f0ee9
-    function distribute(address[] memory, bytes memory, address) external override { if (msg.sig == bytes4(0)) revert(); _delegateToFacet(); }
+    function distribute(address[] memory, bytes memory, address) external override {
+        if (msg.sig == bytes4(0)) revert();
+        _delegateToFacet();
+    }
 
     // Sig: 0xb5f620ce
     function setPoolActive(bool _active) external {
@@ -607,14 +643,17 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
             return (0, 0); // Conviction already stored
         }
         // calculateConviction and store it
-        conviction = ConvictionsUtils.calculateConviction(blockNumber - _proposal.blockLast, _proposal.convictionLast, _oldStaked, cvParams.decay); }
+        conviction = ConvictionsUtils.calculateConviction(
+            blockNumber - _proposal.blockLast, _proposal.convictionLast, _oldStaked, cvParams.decay
+        );
+    }
 
     // _setPoolParams removed - now in AdminFacet
 
     // Sig: 0x1aa91a9e
     function updateProposalConviction(uint256 proposalId) public returns (uint256) {
         Proposal storage proposal = proposals[proposalId];
-        if (proposal.proposalId != proposalId) { revert ProposalNotInList(proposalId); }
+        if (proposal.proposalId != proposalId) revert ProposalNotInList(proposalId);
 
         // Goss: Remove it to have access to this when disputed or proposal closed (to see the chart)
         // if (proposal.proposalStatus != ProposalStatus.Active) {
@@ -652,15 +691,24 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         address[] memory,
         address[] memory,
         address
-    ) external { if (msg.sig == bytes4(0)) revert(); _delegateToFacet(); }
+    ) external {
+        if (msg.sig == bytes4(0)) revert();
+        _delegateToFacet();
+    }
 
     // connectSuperfluidGDA and disconnectSuperfluidGDA removed - now in AdminFacet
     // Stubs needed for tests to call - delegates to facet
     // Sig: 0x924e6704
-    function connectSuperfluidGDA(address) external { if (msg.sig == bytes4(0)) revert(); _delegateToFacet(); }
+    function connectSuperfluidGDA(address) external {
+        if (msg.sig == bytes4(0)) revert();
+        _delegateToFacet();
+    }
 
     // Sig: 0xc69271ec
-    function disconnectSuperfluidGDA(address) external { if (msg.sig == bytes4(0)) revert(); _delegateToFacet(); }
+    function disconnectSuperfluidGDA(address) external {
+        if (msg.sig == bytes4(0)) revert();
+        _delegateToFacet();
+    }
 
     // disputeProposal and rule removed - now in DisputeFacet
     // Stub needed for tests to call - delegates to facet
@@ -670,19 +718,31 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         external
         payable
         returns (uint256)
-    { if (msg.sig == bytes4(0)) revert(); _delegateToFacet(); }
+    {
+        if (msg.sig == bytes4(0)) revert();
+        _delegateToFacet();
+    }
 
     // Stub to satisfy IArbitrable interface - delegates to facet
     // Sig: 0x311a6c56
-    function rule(uint256, uint256) external virtual override { if (msg.sig == bytes4(0)) revert(); _delegateToFacet(); }
+    function rule(uint256, uint256) external virtual override {
+        if (msg.sig == bytes4(0)) revert();
+        _delegateToFacet();
+    }
 
     // cancelProposal removed - now in ProposalManagementFacet
     // Stub needed for frontend to call - delegates to facet
     // Sig: 0xe0a8f6f5
-    function cancelProposal(uint256) external { if (msg.sig == bytes4(0)) revert(); _delegateToFacet(); }
+    function cancelProposal(uint256) external {
+        if (msg.sig == bytes4(0)) revert();
+        _delegateToFacet();
+    }
 
     // Sig: 0x141e3b38
-    function editProposal(uint256, Metadata memory, address, uint256) external { if (msg.sig == bytes4(0)) revert(); _delegateToFacet(); }
+    function editProposal(uint256, Metadata memory, address, uint256) external {
+        if (msg.sig == bytes4(0)) revert();
+        _delegateToFacet();
+    }
 
     // Sig: 0x7d7c2a1c
     /**
@@ -690,7 +750,10 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
      * @notice Rebalance the streaming members units based on conviction
      * @dev Delegates to facet
      */
-    function rebalance() external { if (msg.sig == bytes4(0)) revert(); _delegateToFacet(); }
+    function rebalance() external {
+        if (msg.sig == bytes4(0)) revert();
+        _delegateToFacet();
+    }
 
     // _addToAllowList and _removeFromAllowList removed - now in AdminFacet
 
@@ -702,9 +765,10 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     /// @notice Getter for the 'poolAmount'.
     /// @return The balance of the pool
     function getPoolAmount() public view override returns (uint256) {
-        address token = allo.getPool(poolId).token; if (token == NATIVE_TOKEN) { return address(this).balance; }
-        uint256 base = ERC20(token).balanceOf(address(this)); uint256 sf =
-            address(superfluidToken) == address(0) ? 0 : superfluidToken.balanceOf(address(this));
+        address token = allo.getPool(poolId).token;
+        if (token == NATIVE_TOKEN) return address(this).balance;
+        uint256 base = ERC20(token).balanceOf(address(this));
+        uint256 sf = address(superfluidToken) == address(0) ? 0 : superfluidToken.balanceOf(address(this));
 
         uint8 d = ERC20(token).decimals();
         if (d < 18) {
@@ -717,51 +781,87 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
 
     // Stub - delegates to CVPauseFacet
     // Sig: 0x1add1a0d
-    function setPauseController(address) external { if (msg.sig == bytes4(0)) revert(); _delegateToFacet(); }
+    function setPauseController(address) external {
+        if (msg.sig == bytes4(0)) revert();
+        _delegateToFacet();
+    }
 
     // Stub - delegates to CVPauseFacet
     // Sig: 0x222a3a04
-    function setPauseFacet(address) external { if (msg.sig == bytes4(0)) revert(); _delegateToFacet(); }
+    function setPauseFacet(address) external {
+        if (msg.sig == bytes4(0)) revert();
+        _delegateToFacet();
+    }
 
     // Stub - delegates to CVPauseFacet
     // Sig: 0x136439dd
-    function pause(uint256) external { if (msg.sig == bytes4(0)) revert(); _delegateToFacet(); }
+    function pause(uint256) external {
+        if (msg.sig == bytes4(0)) revert();
+        _delegateToFacet();
+    }
 
     // Stub - delegates to CVPauseFacet
     // Sig: 0x80c4a65f
-    function pause(bytes4, uint256) external { if (msg.sig == bytes4(0)) revert(); _delegateToFacet(); }
+    function pause(bytes4, uint256) external {
+        if (msg.sig == bytes4(0)) revert();
+        _delegateToFacet();
+    }
 
     // Stub - delegates to CVPauseFacet
     // Sig: 0x3f4ba83a
-    function unpause() external { if (msg.sig == bytes4(0)) revert(); _delegateToFacet(); }
+    function unpause() external {
+        if (msg.sig == bytes4(0)) revert();
+        _delegateToFacet();
+    }
 
     // Stub - delegates to CVPauseFacet
     // Sig: 0xbac1e94b
-    function unpause(bytes4) external { if (msg.sig == bytes4(0)) revert(); _delegateToFacet(); }
+    function unpause(bytes4) external {
+        if (msg.sig == bytes4(0)) revert();
+        _delegateToFacet();
+    }
 
     // Stub - delegates to CVPauseFacet
     // Sig: 0xadaf157b
-    function pauseFacet() external returns (address) { if (msg.sig == bytes4(0)) revert(); _delegateToFacet(); }
+    function pauseFacet() external returns (address) {
+        if (msg.sig == bytes4(0)) revert();
+        _delegateToFacet();
+    }
 
     // Stub - delegates to CVPauseFacet
     // Sig: 0x60b47789
-    function pauseController() external returns (address) { if (msg.sig == bytes4(0)) revert(); _delegateToFacet(); }
+    function pauseController() external returns (address) {
+        if (msg.sig == bytes4(0)) revert();
+        _delegateToFacet();
+    }
 
     // Stub - delegates to CVPauseFacet
     // Sig: 0xb187bd26
-    function isPaused() external returns (bool) { if (msg.sig == bytes4(0)) revert(); _delegateToFacet(); }
+    function isPaused() external returns (bool) {
+        if (msg.sig == bytes4(0)) revert();
+        _delegateToFacet();
+    }
 
     // Stub - delegates to CVPauseFacet
     // Sig: 0x09b65e66
-    function isPaused(bytes4) external returns (bool) { if (msg.sig == bytes4(0)) revert(); _delegateToFacet(); }
+    function isPaused(bytes4) external returns (bool) {
+        if (msg.sig == bytes4(0)) revert();
+        _delegateToFacet();
+    }
 
     // Stub - delegates to CVPauseFacet
     // Sig: 0xda748b10
-    function pausedUntil() external returns (uint256) { if (msg.sig == bytes4(0)) revert(); _delegateToFacet(); }
+    function pausedUntil() external returns (uint256) {
+        if (msg.sig == bytes4(0)) revert();
+        _delegateToFacet();
+    }
 
     // Stub - delegates to CVPauseFacet
     // Sig: 0x2d2ebbef
-    function pausedSelectorUntil(bytes4) external returns (uint256) { if (msg.sig == bytes4(0)) revert(); _delegateToFacet(); }
+    function pausedSelectorUntil(bytes4) external returns (uint256) {
+        if (msg.sig == bytes4(0)) revert();
+        _delegateToFacet();
+    }
 
     /// @notice Helper function to delegate to facet using LibDiamond
     /// @dev Used by stub functions to delegate to their respective facets
@@ -813,14 +913,10 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     function _isPauseSelector(bytes4 selector) private pure returns (bool) {
         return selector == bytes4(keccak256("setPauseController(address)"))
             || selector == bytes4(keccak256("setPauseFacet(address)"))
-            || selector == bytes4(keccak256("pause(uint256)"))
-            || selector == bytes4(keccak256("pause(bytes4,uint256)"))
-            || selector == bytes4(keccak256("unpause()"))
-            || selector == bytes4(keccak256("unpause(bytes4)"))
-            || selector == bytes4(keccak256("pauseFacet()"))
-            || selector == bytes4(keccak256("pauseController()"))
-            || selector == bytes4(keccak256("isPaused()"))
-            || selector == bytes4(keccak256("isPaused(bytes4)"))
+            || selector == bytes4(keccak256("pause(uint256)")) || selector == bytes4(keccak256("pause(bytes4,uint256)"))
+            || selector == bytes4(keccak256("unpause()")) || selector == bytes4(keccak256("unpause(bytes4)"))
+            || selector == bytes4(keccak256("pauseFacet()")) || selector == bytes4(keccak256("pauseController()"))
+            || selector == bytes4(keccak256("isPaused()")) || selector == bytes4(keccak256("isPaused(bytes4)"))
             || selector == bytes4(keccak256("pausedUntil()"))
             || selector == bytes4(keccak256("pausedSelectorUntil(bytes4)"));
     }
@@ -911,6 +1007,5 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     }
 
     // Note: Storage gap is inherited from CVStrategyStorage base contract
-
-    uint256[49] private __gap;
+    uint256[46] private __gap;
 }

@@ -67,7 +67,6 @@ contract CVAdminFacet is CVStrategyBaseFacet {
         }
     }
 
-
     // Sig: 0x924e6704
     function connectSuperfluidGDA(address gda) external {
         onlyCouncilSafeOrMember();
@@ -181,7 +180,7 @@ contract CVAdminFacet is CVStrategyBaseFacet {
     }
 
     function _deactivatePoints(address _member) internal {
-        totalPointsActivated -= registryCommunity.getMemberPowerInStrategy(_member, address(this));
+        totalPointsActivated -= votingPowerRegistry.getMemberPowerInStrategy(_member, address(this));
         registryCommunity.deactivateMemberInStrategy(_member, address(this));
         // remove support from all proposals
         _withdraw(_member);

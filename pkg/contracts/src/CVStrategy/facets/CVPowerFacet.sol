@@ -37,7 +37,7 @@ contract CVPowerFacet is CVStrategyBaseFacet {
             revert UserCannotExecuteAction(msg.sender);
         }
         registryCommunity.activateMemberInStrategy(msg.sender, address(this));
-        totalPointsActivated += registryCommunity.getMemberPowerInStrategy(msg.sender, address(this));
+        totalPointsActivated += votingPowerRegistry.getMemberPowerInStrategy(msg.sender, address(this));
     }
 
     // Sig: 0x782aadff
@@ -46,7 +46,7 @@ contract CVPowerFacet is CVStrategyBaseFacet {
             revert UserCannotExecuteAction(_member);
         }
         uint256 pointsToIncrease = PowerManagementUtils.increasePower(
-            registryCommunity, _member, _amountToStake, pointSystem, pointConfig.maxAmount
+            votingPowerRegistry, _member, _amountToStake, pointSystem, pointConfig.maxAmount
         );
 
         bool isActivated = registryCommunity.memberActivatedInStrategies(_member, address(this));
@@ -60,13 +60,13 @@ contract CVPowerFacet is CVStrategyBaseFacet {
     // Sig: 0x2ed04b2b
     function decreasePower(address _member, uint256 _amountToUnstake) external onlyRegistryCommunity returns (uint256) {
         uint256 pointsToDecrease = PowerManagementUtils.decreasePower(
-            registryCommunity, _member, _amountToUnstake, pointSystem, pointConfig.maxAmount
+            votingPowerRegistry, _member, _amountToUnstake, pointSystem, pointConfig.maxAmount
         );
 
         uint256 voterStake = totalVoterStakePct[_member];
         uint256 unusedPower;
         {
-            uint256 memberPower = registryCommunity.getMemberPowerInStrategy(_member, address(this));
+            uint256 memberPower = votingPowerRegistry.getMemberPowerInStrategy(_member, address(this));
             unusedPower = memberPower > voterStake ? memberPower - voterStake : 0;
         }
         if (unusedPower < pointsToDecrease) {
@@ -109,7 +109,7 @@ contract CVPowerFacet is CVStrategyBaseFacet {
     /*|--------------------------------------------|*/
 
     function _deactivatePoints(address _member) internal {
-        totalPointsActivated -= registryCommunity.getMemberPowerInStrategy(_member, address(this));
+        totalPointsActivated -= votingPowerRegistry.getMemberPowerInStrategy(_member, address(this));
         registryCommunity.deactivateMemberInStrategy(_member, address(this));
         // remove support from all proposals
         _withdraw(_member);

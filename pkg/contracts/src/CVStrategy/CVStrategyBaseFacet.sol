@@ -12,6 +12,7 @@ import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Librar
 import "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/gdav1/ISuperfluidPool.sol";
 import {LibDiamond} from "@src/diamonds/libraries/LibDiamond.sol";
 import {IPauseController} from "../interfaces/IPauseController.sol";
+import {IVotingPowerRegistry} from "../interfaces/IVotingPowerRegistry.sol";
 import {LibPauseStorage} from "../pausing/LibPauseStorage.sol";
 
 /**
@@ -185,9 +186,14 @@ abstract contract CVStrategyBaseFacet {
     // slither-disable-next-line uninitialized-state
     uint256 public streamingRatePerSecond;
 
+    /// @notice Reference to the Voting Power Registry contract
+    /// @dev Slot 132+
+    // slither-disable-next-line uninitialized-state
+    IVotingPowerRegistry public votingPowerRegistry;
+
     /// @dev Reserved storage space to allow for layout changes in the future
     /// @dev This gap is at the end of storage to allow adding new variables without shifting slots
-    uint256[47] private __gap;
+    uint256[46] private __gap;
 
     /*|--------------------------------------------|*/
     /*|         SHARED HELPER FUNCTIONS            |*/

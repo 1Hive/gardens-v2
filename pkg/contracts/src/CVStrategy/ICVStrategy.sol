@@ -143,6 +143,7 @@ struct CVStrategyInitializeParamsV0_3 {
     PointSystemConfig pointConfig;
     ArbitrableConfig arbitrableConfig;
     address registryCommunity;
+    address votingPowerRegistry;
     address sybilScorer;
     uint256 sybilScorerThreshold;
     address[] initialAllowlist;

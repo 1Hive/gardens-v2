@@ -285,8 +285,8 @@ contract RegistryCommunityTest is Test {
     address internal owner = makeAddr("owner");
     address internal councilSafe = makeAddr("councilSafe");
     address internal feeReceiver = makeAddr("feeReceiver");
-    bytes4 internal constant CREATE_POOL_WITH_TOKEN_SELECTOR = 0xfebf64a1;
-    bytes4 internal constant CREATE_POOL_WITH_STRATEGY_SELECTOR = 0x85a19b6d;
+    bytes4 internal constant CREATE_POOL_WITH_TOKEN_SELECTOR = 0xce7e2cd3;
+    bytes4 internal constant CREATE_POOL_WITH_STRATEGY_SELECTOR = 0x82b18ef4;
 
     function _facetCuts(address facet) internal pure returns (IDiamond.FacetCut[] memory cuts) {
         cuts = new IDiamond.FacetCut[](1);
@@ -953,6 +953,7 @@ contract RegistryCommunityTest is Test {
                 pointConfig: PointSystemConfig(0),
                 arbitrableConfig: ArbitrableConfig(IArbitrator(address(0)), address(0), 0, 0, 0, 0),
                 registryCommunity: address(community),
+                votingPowerRegistry: address(community),
                 sybilScorer: address(0),
                 sybilScorerThreshold: 0,
                 initialAllowlist: allowlist,
@@ -974,6 +975,7 @@ contract RegistryCommunityTest is Test {
                 pointConfig: PointSystemConfig(0),
                 arbitrableConfig: ArbitrableConfig(IArbitrator(address(0)), address(0), 0, 0, 0, 0),
                 registryCommunity: address(community),
+                votingPowerRegistry: address(community),
                 sybilScorer: address(0),
                 sybilScorerThreshold: 0,
                 initialAllowlist: allowlist,
@@ -1164,6 +1166,7 @@ contract RegistryCommunityTest is Test {
                 pointConfig: PointSystemConfig(0),
                 arbitrableConfig: ArbitrableConfig(IArbitrator(address(0)), address(0), 0, 0, 0, 0),
                 registryCommunity: address(community),
+                votingPowerRegistry: address(community),
                 sybilScorer: address(0),
                 sybilScorerThreshold: 0,
                 initialAllowlist: allowlist,
@@ -1182,6 +1185,7 @@ contract RegistryCommunityTest is Test {
                 pointConfig: PointSystemConfig(0),
                 arbitrableConfig: ArbitrableConfig(IArbitrator(address(0)), address(0), 0, 0, 0, 0),
                 registryCommunity: address(community),
+                votingPowerRegistry: address(community),
                 sybilScorer: address(0),
                 sybilScorerThreshold: 0,
                 initialAllowlist: allowlist,

@@ -54,7 +54,7 @@ contract CommunityPoolFacet is CommunityBaseFacet {
     /*|              FUNCTIONS                     |*/
     /*|--------------------------------------------|*/
 
-    // Sig: 0xfebf64a1
+    // Sig: 0xce7e2cd3
     function createPool(address _token, CVStrategyInitializeParamsV0_3 memory _params, Metadata memory _metadata)
         public
         returns (uint256 poolId, address strategy)
@@ -96,7 +96,7 @@ contract CommunityPoolFacet is CommunityBaseFacet {
         CVStrategy(payable(strategyProxy)).transferOwnership(proxyOwner());
     }
 
-    // Sig: 0x85a19b6d
+    // Sig: 0x82b18ef4
     function createPool(
         address _strategy,
         address _token,

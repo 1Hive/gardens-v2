@@ -97,7 +97,7 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
                 deltaSupportSum += pv[i].deltaSupport;
             }
             uint256 newTotalVotingSupport = _applyDelta(totalVoterStakePct[_sender], deltaSupportSum);
-            uint256 participantBalance = registryCommunity.getMemberPowerInStrategy(_sender, address(this));
+            uint256 participantBalance = votingPowerRegistry.getMemberPowerInStrategy(_sender, address(this));
             // Check that the sum of support is not greater than the participant balance
             if (newTotalVotingSupport > participantBalance) {
                 revert NotEnoughPointsToSupport(newTotalVotingSupport, participantBalance);

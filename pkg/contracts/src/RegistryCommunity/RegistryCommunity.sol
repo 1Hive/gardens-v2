@@ -375,7 +375,7 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
 
     // Stub - delegates to CommunityPoolFacet
     // slither-disable-next-line incorrect-return
-    // Sig: 0xfebf64a1
+    // Sig: 0xce7e2cd3
     function createPool(address _token, CVStrategyInitializeParamsV0_3 memory _params, Metadata memory _metadata)
         public
         virtual
@@ -384,7 +384,7 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
 
     // Stub - delegates to CommunityPoolFacet
     // slither-disable-next-line incorrect-return
-    // Sig: 0x85a19b6d
+    // Sig: 0x82b18ef4
     function createPool(
         address _strategy,
         address _token,
