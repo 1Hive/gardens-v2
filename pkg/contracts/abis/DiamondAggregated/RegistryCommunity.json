@@ -364,6 +364,11 @@
               "internalType": "address"
             },
             {
+              "name": "votingPowerRegistry",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
               "name": "sybilScorer",
               "type": "address",
               "internalType": "address"
@@ -524,6 +529,11 @@
             },
             {
               "name": "registryCommunity",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "votingPowerRegistry",
               "type": "address",
               "internalType": "address"
             },
@@ -1450,6 +1460,19 @@
           "name": "",
           "type": "address",
           "internalType": "address payable"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "setPauseController",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
         }
       ],
       "outputs": [],
@@ -2661,19 +2684,6 @@
         }
       ],
       "stateMutability": "view"
-    },
-    {
-      "type": "function",
-      "name": "setPauseController",
-      "inputs": [
-        {
-          "name": "controller",
-          "type": "address",
-          "internalType": "address"
-        }
-      ],
-      "outputs": [],
-      "stateMutability": "nonpayable"
     },
     {
       "type": "function",

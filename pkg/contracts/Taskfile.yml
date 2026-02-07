@@ -115,6 +115,20 @@ tasks:
           -vvv
         ignore_error: true
       - task: sync-abis
+  deploy-core-ethsep:
+    desc: Deploy core contracts ethsepolia
+    cmds:
+      - cmd: |
+          forge script script/DeployCoreContracts.s.sol:DeployCoreContracts \
+          --rpc-url ${RPC_URL_SEP_TESTNET} \
+          --private-key ${PRIVATE_KEY} \
+          --sig "run(string)" 'ethsepolia' \
+          --ffi \
+          --broadcast \
+          --legacy \
+          -vvv
+        ignore_error: true
+      - task: sync-abis
   verify-testnet-multi-sep:
     desc: Verify testnet multi sep
     cmds:

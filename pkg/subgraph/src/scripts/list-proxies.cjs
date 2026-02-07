@@ -13,6 +13,12 @@ const optimismSepoliaSubgraph =
   "https://api.studio.thegraph.com/query/70985/gardens-v-2-optimism-sepolia/" +
   subgraphConfig.VERSION_OPSEP;
 
+const ethSepoliaSubgraph =
+  process.env.SUBGRAPH_URL_ETH_SEP ||
+  process.env.NEXT_PUBLIC_SUBGRAPH_URL_ETH_SEP ||
+  "https://api.studio.thegraph.com/query/70985/gv2-ethsepolia/" +
+    subgraphConfig.VERSION_ETHSEP;
+
 const arbitrumSubgraph =
   "https://api.studio.thegraph.com/query/102093/gardens-v2---arbitrum/" +
   subgraphConfig.VERSION_PROD;
@@ -42,7 +48,7 @@ const jsons = {
   // @ts-ignore
   [viemChains.arbitrumSepolia.id]: arbitrumSepoliaSubgraph,
   [viemChains.optimismSepolia.id]: optimismSepoliaSubgraph,
-  // [viemChains.sepolia.id]: sepoliaLatest,
+  [viemChains.sepolia.id]: ethSepoliaSubgraph,
 
   // @ts-ignore
   [viemChains.arbitrum.id]: arbitrumSubgraph,

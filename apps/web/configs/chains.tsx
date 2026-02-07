@@ -1,5 +1,10 @@
 import React, { FC } from "react";
-import { Arbitrum, Optimism, Polygon } from "@thirdweb-dev/chain-icons";
+import {
+  Arbitrum,
+  Ethereum,
+  Optimism,
+  Polygon,
+} from "@thirdweb-dev/chain-icons";
 import { Address } from "viem";
 import {
   arbitrum,
@@ -64,6 +69,7 @@ export type ChainData = {
 
 const SUBGRAPH_ARBSEP_VERSION = Subgraph.VERSION_ARBSEP;
 const SUBGRAPH_OPSEP_VERSION = Subgraph.VERSION_OPSEP;
+const SUBGRAPH_ETHSEP_VERSION = Subgraph.VERSION_ETHSEP;
 const SUBGRAPH_PRODNET_VERSION = Subgraph.VERSION_PROD;
 
 const getGatewayKey = () => {
@@ -162,21 +168,27 @@ export const chainConfigMap: {
     goodDollar: "0xb01AC9015E04ecC424E646eBAb32dfa7670Ae8a6",
     isTestnet: true,
   },
-  // 11155111: {
-  //   id: 11155111,
-  //   name: sepolia.name,
-  //   icon: Ethereum,
-  //   explorer: "https://eth-sepolia.blockscout.com",
-  //   blockTime: 12,
-  //   confirmations: 1, // 3
-  //   rpcUrl: process.env.RPC_URL_ETH_TESTNET!,
-  //   subgraphUrl: `${process.env.NEXT_PUBLIC_SUBGRAPH_URL_ETH_SEP?.replace("/version/latest", "")}/${SUBGRAPH_TESTNET_VERSION}`,
-  //   globalTribunal: "0xc6Eaf449f79B081300F5317122B2Dff3f039ad0b",
-  //   allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
-  //   arbitrator: "0x",
-  //   passportScorer: "0xc137c30ac0f21ce75bb484e88fb8701024f82d25",
-  //   isTestnet: true,
-  // },
+  11155111: {
+    id: 11155111,
+    name: sepolia.name,
+    icon: Ethereum,
+    explorer: "https://eth-sepolia.blockscout.com",
+    blockTime: 12,
+    confirmations: 1, // 3
+    rpcUrl: process.env.RPC_URL_ETH_TESTNET!,
+    ...getSubgraphUrls(
+      "5xWqmgdaKXziaJg4EuV5pzWFCNmX2eRLsHKBissnbDNx",
+      "gardens-v-2-sepolia",
+      SUBGRAPH_ETHSEP_VERSION,
+      70985,
+    ),
+    globalTribunal: "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD",
+    allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
+    arbitrator: "0x13ea0f97bc7733985e81adb75e4d55255320b5c5",
+    passportScorer: "0xd58ff588177f02cc535a0e235a4c002a17e27202",
+    goodDollar: "0xa50ec350146e42b1ad15705da04c7cb6929e1f2a",
+    isTestnet: true,
+  },
 
   // Prodnets
   42161: {

@@ -1,6 +1,33 @@
 {
   "networks": [
     {
+      "name": "ethsepolia",
+      "chainId": 11155111,
+      "testnet": true,
+      "no-safe": true,
+      "ENVS": {
+        "SENDER": "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD",
+        "PROXY_OWNER": "0x54c320947549349a22719076832d546a2d21c6ad",
+        "ALLO_PROXY": "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
+        "ALLO_IMPL": "0xB087535DB0df98fC4327136e897A5985E5Cfbd66",
+        "REGISTRY": "0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3",
+        "ARBITRATOR": "0xfd2afa3f784b3e9c0b2ed7d139ede8a6ea3279c8",
+        "PASSPORT_SCORER": "0xd58ff588177f02cc535a0e235a4c002a17e27202",
+        "GOOD_DOLLAR_SYBIL": "0xa50ec350146e42b1ad15705da04c7cb6929e1f2a"
+      },
+      "PROXIES": {
+        "REGISTRY_FACTORY": "0x4177f64568e90fd58884579864923aa0345248f0",
+        "REGISTRY_COMMUNITIES": [],
+        "CV_STRATEGIES": []
+      },
+      "hash": "",
+      "IMPLEMENTATIONS": {
+        "CV_STRATEGY": "0xdc627c4b80ca90e43cdb217587a206be52e7e9ac",
+        "REGISTRY_COMMUNITY": "0xccbac15eb0d8c241d4b6a74e650de089c292d131",
+        "COLLATERAL_VAULT": "0xf66f0d7487c585c0a9847f9a6adf56c4ff10e8ae"
+      }
+    },
+    {
       "name": "arbsepolia",
       "chainId": 421614,
       "testnet": true,
@@ -108,21 +135,6 @@
         "CV_STRATEGY": "0x26d7999195b096f06af5882e70038efdf094930c",
         "REGISTRY_COMMUNITY": "0x664591262918fa0d7bd29c22348795e7590f981b",
         "COLLATERAL_VAULT": "0xb60d6b4c50e8a3b073c3d408fe7786c4a939720e"
-      }
-    },
-    {
-      "name": "sepolia",
-      "chainId": 11155111,
-      "testnet": true,
-      "no-safe": false,
-      "ENVS": {
-        "SENDER": "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD",
-        "COUNCIL_SAFE": "0xc6Eaf449f79B081300F5317122B2Dff3f039ad0b",
-        "SAFE_PROXY_FACTORY": "0xC22834581EbC8527d974F8a1c97E1bEA4EF910BC",
-        "TOKEN": "0xb34d5a6186fe1aee35005886271f3b2ca2d17c20",
-        "ALLO_PROXY": "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
-        "ALLO_IMPL": "0xB087535DB0df98fC4327136e897A5985E5Cfbd66",
-        "REGISTRY": "0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3"
       }
     },
     {
