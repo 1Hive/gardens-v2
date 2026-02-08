@@ -255,7 +255,7 @@ abstract contract CVStrategyBaseFacet {
      * @param _sender Address to check
      */
     function checkSenderIsMember(address _sender) internal {
-        if (!registryCommunity.isMember(_sender)) {
+        if (!votingPowerRegistry.isMember(_sender)) {
             revert OnlyMember(_sender, address(registryCommunity));
         }
     }

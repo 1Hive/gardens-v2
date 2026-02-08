@@ -11,4 +11,5 @@ interface IVotingPowerRegistry {
     function getMemberPowerInStrategy(address _member, address _strategy) external view returns (uint256);
     function getMemberStakedAmount(address _member) external view returns (uint256);
     function ercAddress() external view returns (address);
+    function isMember(address _member) external view returns (bool);
 }

@@ -288,7 +288,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         if (address(registryCommunity) == address(0)) {
             revert RegistryCannotBeZero(address(registryCommunity));
         }
-        if (!registryCommunity.isMember(_sender)) {
+        if (!votingPowerRegistry.isMember(_sender)) {
             revert UserNotInRegistry(_sender, address(registryCommunity));
         }
     }
