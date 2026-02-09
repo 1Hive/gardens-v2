@@ -723,7 +723,7 @@ export function Proposals({
           <h3 className="text-left  w-full sm:w-auto">Proposals</h3>
 
           {strategy.isEnabled &&
-            (sortedProposals.length === 0 ?
+            (strategy.proposals.length === 0 ?
               <div className="section-layout text-center py-12  w-full flex flex-col items-center justify-center">
                 <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-4">
                   <HandRaisedIcon className="w-8 h-8 text-neutral-soft-content" />
@@ -764,7 +764,7 @@ export function Proposals({
                         </Button>
                       )}
 
-                    {strategy.isEnabled && filteredAndSorted.length > 0 && (
+                    {strategy.isEnabled && (
                       <Link
                         href={createProposalUrl}
                         className="flex items-center justify-center w-full sm:w-auto"
@@ -828,9 +828,9 @@ export function Proposals({
         )}
 
         {sortedProposals.length !== 0 && filteredAndSorted.length === 0 ?
-          <div className="section-layout flex flex-col items-center justify-center text-center">
+          <div className="flex flex-col items-center justify-center text-center">
             <p className="text-neutral-soft-content text-sm">
-              There are no proposals matching this filter.
+              There are no {filter && filter} proposals at the moment.
             </p>
           </div>
         : filteredAndSorted.map((proposalData) => (
@@ -872,7 +872,7 @@ export function Proposals({
               <div className="flex flex-col gap-4">
                 <UserAllocationStats stats={stats} />
                 {activeOrDisputedProposals.length === 0 && (
-                  <div className="section-layout flex flex-col items-center justify-center text-center">
+                  <div className="flex flex-col items-center justify-center text-center my-4">
                     <p className="text-neutral-soft-content text-sm">
                       There are currently no active or disputed proposals to
                       vote.
@@ -909,7 +909,8 @@ export function Proposals({
 
                 {strategy.isEnabled &&
                   allocationView &&
-                  sortedProposals.length > 0 && (
+                  sortedProposals.length > 0 &&
+                  activeOrDisputedProposals.length !== 0 && (
                     <>
                       <div className="flex justify-end gap-4">
                         <Button
@@ -1060,7 +1061,14 @@ function ProposalFiltersUI({
   poolType: number;
   counts: Record<string, number>;
 }) {
-  const FILTERS = ["all", "active", "disputed", "executed", "cancelled"];
+  const FILTERS = useMemo(() => {
+    const allFilters = ["all", "active", "disputed", "executed", "cancelled"];
+
+    // Remove "executed" filter when poolType is a signaling pool
+    return +poolType === 0 ?
+        allFilters.filter((f) => f !== "executed")
+      : allFilters;
+  }, [poolType]);
 
   const SORT_OPTIONS = useMemo(() => {
     const options = [
@@ -1081,6 +1089,8 @@ function ProposalFiltersUI({
       : options;
   }, [poolType]);
 
+  // Rest of your code remains the same...;
+
   const currentSortOption = SORT_OPTIONS.find((o) => o.key === sortBy);
   const CurrentIcon = currentSortOption?.icon;
   const [isSortDropdownLocked, setIsSortDropdownLocked] = useState(false);
@@ -1088,7 +1098,7 @@ function ProposalFiltersUI({
   return (
     <div className="flex flex-col lg:flex-row justify-between bg-neutral rounded-2xl items-center gap-2 lg:gap-4">
       {/* FILTERS */}
-      <div className="flex w-full gap-2 lg:gap-[3px] sm:justify-between flex-wrap">
+      <div className="flex  gap-2 lg:gap-2 sm:justify-between flex-wrap">
         {FILTERS.map((f) => (
           <Button
             // className={filter === f ? "!cursor-default !bg-soft-primary" : ""}
@@ -1107,8 +1117,8 @@ function ProposalFiltersUI({
       <Divider className="sm:hidden my-2 sm:my-0" />
 
       {/* SORT DROPDOWN */}
-      <div className="w-full lg:w-fit sm:flex justify-between items-center">
-        <div className="w-[70px]">
+      <div className="w-full lg:w-fit flex justify-between items-center ">
+        <div className="w-[70px]  flex items-start justify-center">
           <p className="text-sm text-neutral-soft-content mb-1 sm:mb-0">
             Sort by
           </p>

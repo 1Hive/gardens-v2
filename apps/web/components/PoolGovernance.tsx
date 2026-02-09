@@ -150,7 +150,7 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
         <div className="section-layout ">
           <div className="flex items-start flex-col gap-4">
             <div className="flex items-center justify-between w-full gap-2">
-              <h4 className="text-left">Pool Governance</h4>
+              <h4 className="text-left">Governance</h4>
               <Badge color="info" label={PointSystems[poolSystem]} />
             </div>
             <InfoBox

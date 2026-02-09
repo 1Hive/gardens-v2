@@ -136,7 +136,6 @@ export function PoolCard({ pool, token }: Props) {
             />
 
             <Statistic
-              icon={<HandRaisedIcon />}
               count={proposals.length}
               label="proposals"
               className={`${isEnabled ? "visible" : "invisible"}`}

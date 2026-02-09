@@ -289,7 +289,7 @@ export default function PoolHeader({
     {
       label: "Min threshold",
       value: `${minThresholdPoints}`,
-      info: "A fixed amount of voting weight that overrides minimum conviction when not enough members have activated their governance.",
+      info: "A fixed amount of Voting Power that overrides minimum conviction when not enough members have activated their governance.",
     },
     {
       label: "Max voting weight",
@@ -645,7 +645,7 @@ export default function PoolHeader({
         <section className="section-layout flex flex-col g-6">
           {/* Title - Badge poolType - Addresses and Buttons -> (when council memeber is connected) */}
           <header className="flex flex-col gap-4">
-            <div className="flex justify-between items-center flex-wrap gap-4">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center flex-wrap gap-">
               <h2>
                 <Skeleton isLoading={!ipfsResult} className="sm:!w-96 h-8">
                   {ipfsResult?.title}
@@ -998,9 +998,9 @@ export default function PoolHeader({
                     />
                   }
                   tooltip={config.info}
-                  className=" w-full"
+                  className="w-full"
                 >
-                  <p className="subtitle ">{config.value}</p>
+                  <p className="subtitle">{config.value}</p>
                 </Statistic>
               </div>
             ))}
