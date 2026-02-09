@@ -1083,6 +1083,7 @@ function ProposalFiltersUI({
 
   const currentSortOption = SORT_OPTIONS.find((o) => o.key === sortBy);
   const CurrentIcon = currentSortOption?.icon;
+  const [isSortDropdownLocked, setIsSortDropdownLocked] = useState(false);
 
   return (
     <div className="flex flex-col lg:flex-row justify-between bg-neutral rounded-2xl items-center gap-2 lg:gap-4">
@@ -1112,16 +1113,22 @@ function ProposalFiltersUI({
             Sort by
           </p>
         </div>
-        <div className="dropdown dropdown-hover dropdown-start  w-full relative group">
+        <div
+          className="dropdown dropdown-hover dropdown-start w-full relative group"
+          onMouseLeave={() => setIsSortDropdownLocked(false)}
+        >
           <button
             tabIndex={0}
+            type="button"
             className="text-primary-content text-sm flex gap-2 items-center w-full lg:w-[215px] px-3.5 py-2 bg-primary-soft dark:bg-primary rounded-lg"
           >
             {CurrentIcon && <CurrentIcon className="w-4 h-4" />}
             {currentSortOption?.label}
           </button>
 
-          <ul className="dropdown-content menu bg-primary rounded-md z-50 shadow w-full lg:w-[215px]">
+          <ul
+            className={`dropdown-content menu bg-primary rounded-md z-50 shadow w-full lg:w-[215px] ${isSortDropdownLocked ? "!invisible !opacity-0 !pointer-events-none" : ""}`}
+          >
             {SORT_OPTIONS.map((option) => {
               const Icon = option.icon;
 
@@ -1133,7 +1140,11 @@ function ProposalFiltersUI({
                 >
                   <button
                     className="w-full"
-                    onClick={() => setSortBy(option.key)}
+                    type="button"
+                    onClick={() => {
+                      setSortBy(option.key);
+                      setIsSortDropdownLocked(true);
+                    }}
                   >
                     <span className="flex items-center gap-2 text-sm rounded-md">
                       <Icon className="w-4 h-4" />

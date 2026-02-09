@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import {
   ArrowTopRightOnSquareIcon,
-  BoltIcon,
   CheckIcon,
   ClockIcon,
   ArchiveBoxIcon,
@@ -156,6 +155,7 @@ export default function PoolHeader({
   const [superTokenCopied, setSuperTokenCopied] = useState(false);
   const [isEnableStreamTxModalOpened, setIsEnableStreamTxModalOpened] =
     useState(false);
+  const [isShareDropdownLocked, setIsShareDropdownLocked] = useState(false);
   const [toastId, setToastId] = useState<ReturnType<typeof toast>>();
 
   const { data: passportStrategyData } =
@@ -620,6 +620,7 @@ export default function PoolHeader({
     const url = window.location.href;
     navigator.clipboard.writeText(url);
     toast.success("Pool link copied to clipboard!");
+    setIsShareDropdownLocked(true);
   };
 
   const handleShareOnX = () => {
@@ -631,6 +632,7 @@ export default function PoolHeader({
     const url = window.location.href;
     const xUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
     window.open(xUrl, "_blank", "noopener,noreferrer");
+    setIsShareDropdownLocked(true);
   };
 
   return (
@@ -875,19 +877,25 @@ export default function PoolHeader({
                   className={`z-[9999] ${!!isCouncilMember || isCouncilSafe ? "w-full sm:w-fit" : "w-full flex justify-end"}`}
                 >
                   <div
-                    className="z-[9999] dropdown dropdown-hover dropdown-start w-full sm:w-auto
-                  "
+                    className="z-[9999] dropdown dropdown-hover dropdown-start w-full sm:w-auto"
+                    onMouseLeave={() => setIsShareDropdownLocked(false)}
                   >
                     <Button
+                      type="button"
                       btnStyle="outline"
                       color="primary"
                       icon={<ShareIcon className="w-5 h-5" />}
                       className="!w-full"
+                      onClick={() =>
+                        setIsShareDropdownLocked((locked) => !locked)
+                      }
                     >
                       Share
                     </Button>
 
-                    <ul className="dropdown-content dropdown-close menu bg-primary rounded-box w-[200px] p-2 shadow fixed z-[9999] left-0 top-full mt-2">
+                    <ul
+                      className={`dropdown-content dropdown-close menu bg-primary rounded-box w-[200px] p-2 shadow fixed z-[9999] left-0 top-full mt-2 ${isShareDropdownLocked ? "!invisible !opacity-0 !pointer-events-none" : ""}`}
+                    >
                       <li>
                         <Button
                           type="submit"
