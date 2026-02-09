@@ -394,11 +394,11 @@ export default function ClientPage({ params }: ClientPageProps) {
         <div
           className={`section-layout flex flex-col gap-8  ${status === "disputed" ? "!border-error-content" : ""} ${status === "executed" ? "!border-primary-content" : ""}`}
         >
-          <div className="flex flex-col items-start gap-10  sm:flex-row">
+          <div className="flex flex-col items-start gap-10 sm:flex-row">
             <div className="flex w-full flex-col gap-6">
               {/* Title - author - beneficairy - request - created - type */}
-              <header className="flex flex-col items-start gap-4">
-                <div className="flex items-center justify-between w-full gap-4 sm:gap-8">
+              <header className="flex flex-col items-start gap-4 ">
+                <div className="flex items-center justify-between flex-wrap w-full gap-2 sm:gap-4">
                   <Skeleton isLoading={metadata == null} className="!w-96 h-8">
                     <h2>{metadata?.title}</h2>
                   </Skeleton>
@@ -538,8 +538,8 @@ export default function ClientPage({ params }: ClientPageProps) {
       </section>
 
       {/* Right side: Status + view supporters + cancel button */}
-      <div className="hidden sm:block sm:col-span-12 xl:col-span-3">
-        <div className="backdrop-blur-sm rounded-lg flex flex-col gap-4 sticky top-32">
+      <div className="hidden sm:block sm:col-span-12 xl:col-span-3 xl:h-10 xl:overflow-visible">
+        <div className="backdrop-blur-sm rounded-lg flex flex-col gap-6 sticky top-32">
           <section className="section-layout gap-4 flex flex-col">
             <div className="flex items-center justify-between">
               <h5>Status</h5>
