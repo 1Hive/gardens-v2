@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Tab } from "@headlessui/react";
 import { PowerIcon, UserGroupIcon } from "@heroicons/react/24/outline";
 import { Address } from "viem";
 import {
@@ -690,101 +689,97 @@ export default function ClientPage({
       {/* ================= MOBILE ================= */}
 
       <div className="block md:hidden col-span-12">
-        <Tab.Group selectedIndex={selectedTab} onChange={setSelectedTab}>
-          <Tab.List className="flex bg-primary rounded-lg p-1 gap-1 z-10">
-            {["Overview", "Proposals", "Governance"].map((label, index) => (
-              <Tab key={label} className="tab-reset">
-                <Button
-                  btnStyle="tab"
-                  color={selectedTab === index ? "primary" : "disabled"}
-                  className="w-full"
-                >
-                  {label}
-                </Button>
-              </Tab>
-            ))}
-          </Tab.List>
-          <Tab.Panels className="mt-4">
-            <Tab.Panel>
-              {isEnabled && (
-                <div className="col-span-12">
-                  <>
-                    <div className="col-span-12 sm:hidden space-y-6">
-                      <PoolHeader
-                        poolToken={poolToken}
-                        strategy={strategy}
-                        arbitrableConfig={data.arbitrableConfigs[0]}
-                        poolId={poolId}
-                        ipfsResult={metadata}
-                        isEnabled={isEnabled}
-                        maxAmount={maxAmount}
-                        superTokenCandidate={superTokenCandidate}
-                        superToken={
-                          superTokenInfo && {
-                            ...superTokenInfo,
-                            sameAsUnderlying:
-                              superTokenCandidate?.sameAsUnderlying,
-                            address: effectiveSuperToken as Address,
-                          }
-                        }
-                        setSuperTokenCandidate={setSuperTokenCandidate}
-                        minThGtTotalEffPoints={minThGtTotalEffPoints}
-                        communityName={communityName ?? ""}
-                      />
-                      <RegisterAndActivateFromPool />
-                      {poolToken && PoolTypes[proposalType] !== "signaling" && (
-                        <PoolMetrics
-                          communityAddress={communityAddress}
-                          strategy={strategy}
-                          poolId={poolId}
-                          poolToken={poolToken}
-                          chainId={Number(chain)}
-                          superToken={
-                            superTokenInfo && {
-                              ...superTokenInfo,
-                              sameAsUnderlying:
-                                superTokenCandidate?.sameAsUnderlying,
-                              address: effectiveSuperToken as Address,
-                            }
-                          }
-                        />
-                      )}
-                    </div>
-                  </>
-                </div>
-              )}
-            </Tab.Panel>
-            <Tab.Panel>
-              {isEnabled && (
-                <Proposals
-                  poolToken={poolToken}
-                  strategy={{ ...strategy, title: metadata?.title }}
-                  alloInfo={alloInfo}
+        <div
+          role="tablist"
+          className="tabs tabs-boxed w-full border1 bg-neutral p-1"
+          aria-label="Pool sections"
+        >
+          {["Overview", "Proposals", "Governance"].map((label, index) => (
+            <button
+              key={label}
+              type="button"
+              role="tab"
+              className={`tab rounded-lg border-0 text-neutral-soft-content ${selectedTab === index ? "tab-active !bg-primary-button dark:!bg-primary-dark-base !text-neutral-inverted-content" : "hover:text-neutral-content"}`}
+              aria-selected={selectedTab === index}
+              onClick={() => setSelectedTab(index)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        <div className="mt-4">
+          {selectedTab === 0 && isEnabled && (
+            <div className="col-span-12 sm:hidden space-y-6">
+              <PoolHeader
+                poolToken={poolToken}
+                strategy={strategy}
+                arbitrableConfig={data.arbitrableConfigs[0]}
+                poolId={poolId}
+                ipfsResult={metadata}
+                isEnabled={isEnabled}
+                maxAmount={maxAmount}
+                superTokenCandidate={superTokenCandidate}
+                superToken={
+                  superTokenInfo && {
+                    ...superTokenInfo,
+                    sameAsUnderlying: superTokenCandidate?.sameAsUnderlying,
+                    address: effectiveSuperToken as Address,
+                  }
+                }
+                setSuperTokenCandidate={setSuperTokenCandidate}
+                minThGtTotalEffPoints={minThGtTotalEffPoints}
+                communityName={communityName ?? ""}
+              />
+              <RegisterAndActivateFromPool />
+              {poolToken && PoolTypes[proposalType] !== "signaling" && (
+                <PoolMetrics
                   communityAddress={communityAddress}
-                  createProposalUrl={createProposalUrl}
-                  proposalType={proposalType}
-                  minThGtTotalEffPoints={minThGtTotalEffPoints}
+                  strategy={strategy}
+                  poolId={poolId}
+                  poolToken={poolToken}
+                  chainId={Number(chain)}
+                  superToken={
+                    superTokenInfo && {
+                      ...superTokenInfo,
+                      sameAsUnderlying: superTokenCandidate?.sameAsUnderlying,
+                      address: effectiveSuperToken as Address,
+                    }
+                  }
                 />
               )}
-            </Tab.Panel>
-            <Tab.Panel>
-              <PoolGovernance
-                memberPoolWeight={memberPoolWeight}
-                tokenDecimals={tokenDecimals}
-                strategy={strategy}
-                communityAddress={communityAddress}
-                memberTokensInCommunity={memberTokensInCommunity}
-                isMemberCommunity={isMemberCommunity}
-                memberActivatedStrategy={memberActivatedStrategy}
-                membersStrategyData={
-                  membersStrategies ?
-                    { memberStrategies: membersStrategies }
-                  : undefined
-                }
-              />
-            </Tab.Panel>
-          </Tab.Panels>
-        </Tab.Group>
+            </div>
+          )}
+
+          {selectedTab === 1 && isEnabled && (
+            <Proposals
+              poolToken={poolToken}
+              strategy={{ ...strategy, title: metadata?.title }}
+              alloInfo={alloInfo}
+              communityAddress={communityAddress}
+              createProposalUrl={createProposalUrl}
+              proposalType={proposalType}
+              minThGtTotalEffPoints={minThGtTotalEffPoints}
+            />
+          )}
+
+          {selectedTab === 2 && (
+            <PoolGovernance
+              memberPoolWeight={memberPoolWeight}
+              tokenDecimals={tokenDecimals}
+              strategy={strategy}
+              communityAddress={communityAddress}
+              memberTokensInCommunity={memberTokensInCommunity}
+              isMemberCommunity={isMemberCommunity}
+              memberActivatedStrategy={memberActivatedStrategy}
+              membersStrategyData={
+                membersStrategies ?
+                  { memberStrategies: membersStrategies }
+                : undefined
+              }
+            />
+          )}
+        </div>
       </div>
     </>
   );

@@ -1,6 +1,5 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
-import { Tab } from "@headlessui/react";
 import {
   AdjustmentsHorizontalIcon,
   XMarkIcon,
@@ -685,26 +684,30 @@ export default function ClientPage({ params }: ClientPageProps) {
 
       {/* ================= MOBILE ================= */}
       <div className="block md:hidden col-span-12">
-        <Tab.Group selectedIndex={selectedTab} onChange={setSelectedTab}>
-          <Tab.List className="flex bg-primary rounded-lg p-1 gap-2 z-10 flex-wrap">
-            {["Overview", "Description", "Status", "Supporters"].map(
-              (label, index) => (
-                <Tab key={label} className="tab-reset">
-                  <Button
-                    btnStyle="tab"
-                    color={selectedTab === index ? "primary" : "disabled"}
-                    className="w-full"
-                  >
-                    {label}
-                  </Button>
-                </Tab>
-              ),
-            )}
-          </Tab.List>
+        <div
+          role="tablist"
+          className="tabs tabs-boxed w-full border1 bg-neutral p-1"
+          aria-label="Proposal sections"
+        >
+          {["Overview", "Description", "Status", "Supporters"].map(
+            (label, index) => (
+              <button
+                key={label}
+                type="button"
+                role="tab"
+                className={`tab rounded-lg border-0 text-neutral-soft-content ${selectedTab === index ? "tab-active !bg-primary-button dark:!bg-primary-dark-base !text-neutral-inverted-content" : "hover:text-neutral-content"}`}
+                aria-selected={selectedTab === index}
+                onClick={() => setSelectedTab(index)}
+              >
+                {label}
+              </button>
+            ),
+          )}
+        </div>
 
-          <Tab.Panels className="mt-4">
-            {/* OVERVIEW */}
-            <Tab.Panel className="flex flex-col gap-6">
+        <div className="mt-4">
+          {selectedTab === 0 && (
+            <div className="flex flex-col gap-6">
               <div
                 className={`section-layout flex flex-col gap-8  ${status === "disputed" ? "!border-error-content" : ""} ${status === "executed" ? "!border-primary-content" : ""}`}
               >
@@ -751,28 +754,22 @@ export default function ClientPage({ params }: ClientPageProps) {
                             </span>
                           </Statistic>
                           {!isSignalingType && (
-                            <>
-                              <Statistic
-                                label={"request amount"}
-                                className="pt-2"
-                              >
-                                <DisplayNumber
-                                  number={formatUnits(
-                                    requestedAmount,
-                                    poolToken?.decimals ?? 18,
-                                  )}
-                                  tokenSymbol={poolToken?.symbol}
-                                  compact={true}
-                                  valueClassName="font-medium dark:text-neutral-content"
-                                  symbolClassName="font-medium dark:text-neutral-content"
-                                />
-                              </Statistic>
-                            </>
+                            <Statistic label={"request amount"} className="pt-2">
+                              <DisplayNumber
+                                number={formatUnits(
+                                  requestedAmount,
+                                  poolToken?.decimals ?? 18,
+                                )}
+                                tokenSymbol={poolToken?.symbol}
+                                compact={true}
+                                valueClassName="font-medium dark:text-neutral-content"
+                                symbolClassName="font-medium dark:text-neutral-content"
+                              />
+                            </Statistic>
                           )}
                         </div>
                       </div>
                     </header>
-                    {/* Divider */}
 
                     {/* Conviction Progress */}
                     {proposalData.strategy.isEnabled &&
@@ -858,17 +855,20 @@ export default function ClientPage({ params }: ClientPageProps) {
                   </div>
                 )}
               </div>
-            </Tab.Panel>
+            </div>
+          )}
 
-            {/* DESCRIPTION */}
-            <Tab.Panel className="section-layout">
+          {selectedTab === 1 && (
+            <section className="section-layout">
               <h3 className="mb-4">Proposal Description</h3>
               <Skeleton rows={5} isLoading={!Boolean(metadata)}>
                 <MarkdownWrapper source={metadata?.description} />
               </Skeleton>
-            </Tab.Panel>
+            </section>
+          )}
 
-            <Tab.Panel>
+          {selectedTab === 2 && (
+            <>
               <section className="section-layout gap-4 flex flex-col">
                 <div className="flex items-center justify-between">
                   <h5>Status</h5>
@@ -915,45 +915,41 @@ export default function ClientPage({ params }: ClientPageProps) {
                 </div>
               </section>
               {isProposerConnected && proposalStatus === "active" && (
-                <>
-                  <section className="section-layout gap-4 flex flex-col mt-4">
-                    <InfoBox
-                      infoBoxType="info"
-                      content="As the original author, you can edit or cancel this proposal."
-                      title="Actions"
-                    />
-                    {proposalDataForActions && (
-                      <>
-                        <EditProposalButton
-                          proposalData={proposalDataForActions}
-                          poolToken={poolToken}
-                        />
-                        <CancelButton proposalData={proposalDataForActions} />
-                      </>
-                    )}
-                  </section>
-                </>
-              )}
-            </Tab.Panel>
-
-            {/* SUPPORTERS */}
-            <Tab.Panel>
-              {filteredAndSortedProposalSupporters.length > 0 &&
-                totalSupportPct != null && (
-                  <ProposalSupportersTable
-                    supporters={filteredAndSortedProposalSupporters}
-                    beneficiary={beneficiary}
-                    submitter={submitter}
-                    totalActivePoints={totalEffectiveActivePoints}
-                    totalStakedAmount={totalSupportPct}
-                    openSupportersModal={openSupportersModal}
-                    setOpenSupportersModal={setOpenSupportersModal}
-                    withModal={false}
+                <section className="section-layout gap-4 flex flex-col mt-4">
+                  <InfoBox
+                    infoBoxType="info"
+                    content="As the original author, you can edit or cancel this proposal."
+                    title="Actions"
                   />
-                )}
-            </Tab.Panel>
-          </Tab.Panels>
-        </Tab.Group>
+                  {proposalDataForActions && (
+                    <>
+                      <EditProposalButton
+                        proposalData={proposalDataForActions}
+                        poolToken={poolToken}
+                      />
+                      <CancelButton proposalData={proposalDataForActions} />
+                    </>
+                  )}
+                </section>
+              )}
+            </>
+          )}
+
+          {selectedTab === 3 &&
+            filteredAndSortedProposalSupporters.length > 0 &&
+            totalSupportPct != null && (
+              <ProposalSupportersTable
+                supporters={filteredAndSortedProposalSupporters}
+                beneficiary={beneficiary}
+                submitter={submitter}
+                totalActivePoints={totalEffectiveActivePoints}
+                totalStakedAmount={totalSupportPct}
+                openSupportersModal={openSupportersModal}
+                setOpenSupportersModal={setOpenSupportersModal}
+                withModal={false}
+              />
+            )}
+        </div>
       </div>
     </>
   );

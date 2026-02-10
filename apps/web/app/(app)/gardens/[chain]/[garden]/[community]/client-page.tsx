@@ -583,7 +583,7 @@ export default function ClientPage({
       <div className="block md:hidden col-span-12">
         <div
           role="tablist"
-          className="tabs tabs-boxed w-full border border-gray-200 bg-neutral p-1"
+          className="tabs tabs-boxed w-full border1 bg-neutral p-1"
           aria-label="Community sections"
         >
           {["Overview", "Pools", "Covenant"].map((label, index) => (
@@ -591,7 +591,7 @@ export default function ClientPage({
               key={label}
               type="button"
               role="tab"
-              className={`tab rounded-lg border-0 text-neutral-soft-content ${selectedTab === index ? "tab-active !bg-primary-button !dark:bg-primary-dark-base !text-neutral-inverted-content" : "hover:text-neutral-content"}`}
+              className={`tab rounded-lg border-0 text-neutral-soft-content ${selectedTab === index ? "tab-active !bg-primary-button dark:!bg-primary-dark-base !text-neutral-inverted-content" : "hover:text-neutral-content"}`}
               aria-selected={selectedTab === index}
               onClick={() => setSelectedTab(index)}
             >
