@@ -9,6 +9,7 @@ import {Proposal, ProposalStatus, ProposalType, ArbitrableConfig} from "../src/C
 import {RegistryCommunity} from "../src/RegistryCommunity/RegistryCommunity.sol";
 import {ICollateralVault} from "../src/interfaces/ICollateralVault.sol";
 import {IArbitrator} from "../src/interfaces/IArbitrator.sol";
+import {IVotingPowerRegistry} from "../src/interfaces/IVotingPowerRegistry.sol";
 
 import {MockRegistryCommunity, MockArbitrator, MockCollateralVault} from "./helpers/CVStrategyHelpers.sol";
 
@@ -28,6 +29,10 @@ contract MockStreamingEscrow {
 contract CVDisputeFacetHarness is CVDisputeFacet {
     function setRegistryCommunity(address community) external {
         registryCommunity = RegistryCommunity(community);
+    }
+
+    function setVotingPowerRegistry(address registry) external {
+        votingPowerRegistry = IVotingPowerRegistry(registry);
     }
 
     function setCollateralVault(address vault) external {
@@ -95,6 +100,7 @@ contract CVDisputeFacetTest is Test {
         vm.deal(member, 10 ether);
 
         facet.setRegistryCommunity(address(registry));
+        facet.setVotingPowerRegistry(address(registry));
         facet.setCollateralVault(address(vault));
     }
 

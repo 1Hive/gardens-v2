@@ -38,6 +38,7 @@ contract CVStrategyBaseFacetTest is Test {
         facet.setAllo(address(allo));
         facet.setPoolId(1);
         facet.setRegistryCommunity(address(registryCommunity));
+        facet.setVotingPowerRegistry(address(registryCommunity));
         registryCommunity.setCouncilSafe(councilSafe);
         facet.setContractOwner(owner);
 

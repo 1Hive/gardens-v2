@@ -188,6 +188,7 @@ contract CVStrategyTest is Test {
         registryCommunity.setCouncilSafe(councilSafe);
         registryCommunity.setMember(member, true);
         strategy.setRegistryCommunity(address(registryCommunity));
+        strategy.setVotingPowerRegistry(address(registryCommunity));
 
         allo.setPoolToken(1, address(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE));
     }

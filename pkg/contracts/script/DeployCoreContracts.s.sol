@@ -260,13 +260,14 @@ contract DeployCoreContracts is BaseMultiChain {
             facetAddress: address(poolFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: poolSelectors
         });
 
-        bytes4[] memory powerSelectors = new bytes4[](6);
+        bytes4[] memory powerSelectors = new bytes4[](7);
         powerSelectors[0] = CommunityPowerFacet.activateMemberInStrategy.selector;
         powerSelectors[1] = CommunityPowerFacet.deactivateMemberInStrategy.selector;
         powerSelectors[2] = CommunityPowerFacet.increasePower.selector;
         powerSelectors[3] = CommunityPowerFacet.decreasePower.selector;
         powerSelectors[4] = CommunityPowerFacet.getMemberPowerInStrategy.selector;
         powerSelectors[5] = CommunityPowerFacet.getMemberStakedAmount.selector;
+        powerSelectors[6] = CommunityPowerFacet.ercAddress.selector;
         baseCuts[4] = IDiamond.FacetCut({
             facetAddress: address(powerFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: powerSelectors
         });

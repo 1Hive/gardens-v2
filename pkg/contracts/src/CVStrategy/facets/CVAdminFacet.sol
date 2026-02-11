@@ -3,7 +3,9 @@ pragma solidity ^0.8.19;
 
 import {CVStrategyBaseFacet} from "../CVStrategyBaseFacet.sol";
 import {CVStreamingStorage} from "../CVStreamingStorage.sol";
+import {CVRegistryWhitelistStorage} from "../CVRegistryWhitelistStorage.sol";
 import {IArbitrator} from "../../interfaces/IArbitrator.sol";
+import {IVotingPowerRegistry} from "../../interfaces/IVotingPowerRegistry.sol";
 import {Proposal, ArbitrableConfig, CVParams} from "../ICVStrategy.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Library.sol";
 
@@ -41,6 +43,8 @@ contract CVAdminFacet is CVStrategyBaseFacet {
     event SuperfluidGDAConnected(address indexed gda, address indexed by);
     event SuperfluidGDADisconnected(address indexed gda, address indexed by);
     event PointsDeactivated(address member);
+    event AllowedVotingPowerRegistryUpdated(address indexed registry, bool allowed);
+    event VotingPowerRegistryUpdated(address indexed oldRegistry, address indexed newRegistry);
 
     /*|--------------------------------------------|*/
     /*|              FUNCTIONS                     |*/
@@ -89,6 +93,39 @@ contract CVAdminFacet is CVStrategyBaseFacet {
             revert SuperfluidGDADisconnectFailed(gda, address(supertoken), msg.sender);
         }
         emit SuperfluidGDADisconnected(gda, msg.sender);
+    }
+
+    /*|--------------------------------------------|*/
+    /*|      VOTING POWER REGISTRY MANAGEMENT     |*/
+    /*|--------------------------------------------|*/
+
+    /// @notice Whitelist a voting power registry for use in pool config
+    /// @dev Only callable by council safe or contract owner
+    function setAllowedVotingPowerRegistry(address _registry, bool _allowed) external {
+        onlyCouncilSafe();
+        CVRegistryWhitelistStorage.layout().allowedRegistries[_registry] = _allowed;
+        emit AllowedVotingPowerRegistryUpdated(_registry, _allowed);
+    }
+
+    /// @notice Check if a registry is whitelisted
+    function isAllowedVotingPowerRegistry(address _registry) external view returns (bool) {
+        return CVRegistryWhitelistStorage.layout().allowedRegistries[_registry];
+    }
+
+    /// @notice Update the voting power registry for this pool
+    /// @dev Only callable by council safe. Registry must be whitelisted or address(0) for default.
+    function setVotingPowerRegistry(address _registry) external {
+        onlyCouncilSafe();
+        require(
+            _registry == address(0) || CVRegistryWhitelistStorage.layout().allowedRegistries[_registry],
+            "Registry not whitelisted"
+        );
+
+        address oldRegistry = address(votingPowerRegistry);
+        votingPowerRegistry = _registry == address(0)
+            ? IVotingPowerRegistry(address(registryCommunity))
+            : IVotingPowerRegistry(_registry);
+        emit VotingPowerRegistryUpdated(oldRegistry, address(votingPowerRegistry));
     }
 
     /*|--------------------------------------------|*/

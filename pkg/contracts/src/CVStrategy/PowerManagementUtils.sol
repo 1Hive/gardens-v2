@@ -21,6 +21,9 @@ library PowerManagementUtils {
             pointsToIncrease = increasePowerCapped(_votingPowerRegistry, _member, _amountToStake, _pointConfigMaxAmount);
         } else if (_pointSystem == PointSystem.Quadratic) {
             pointsToIncrease = increasePowerQuadratic(_votingPowerRegistry, _member, _amountToStake);
+        } else if (_pointSystem == PointSystem.Custom) {
+            // Custom: registry is single source of truth, return current power as-is
+            pointsToIncrease = _votingPowerRegistry.getMemberPowerInStrategy(_member, address(this));
         }
     }
 
@@ -79,6 +82,9 @@ library PowerManagementUtils {
                 pointsToDecrease =
                     _pointConfigMaxAmount - (_votingPowerRegistry.getMemberStakedAmount(_member) - _amountToUnstake);
             }
+        } else if (_pointSystem == PointSystem.Custom) {
+            // Custom: registry is single source of truth, return current power as-is
+            pointsToDecrease = _votingPowerRegistry.getMemberPowerInStrategy(_member, address(this));
         }
     }
 

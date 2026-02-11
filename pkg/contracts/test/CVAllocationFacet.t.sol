@@ -10,6 +10,7 @@ import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import {ICollateralVault} from "../src/interfaces/ICollateralVault.sol";
 import {ISybilScorer} from "../src/ISybilScorer.sol";
 import {IArbitrator} from "../src/interfaces/IArbitrator.sol";
+import {IVotingPowerRegistry} from "../src/interfaces/IVotingPowerRegistry.sol";
 import {ConvictionsUtils} from "../src/CVStrategy/ConvictionsUtils.sol";
 import {TERC20} from "./shared/TERC20.sol";
 import {ISuperToken} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperToken.sol";
@@ -52,6 +53,15 @@ contract MockRegistryCommunityAlloc {
 
     function grantRole(bytes32 role, address account) external {
         roles[role][account] = true;
+    }
+
+    // IVotingPowerRegistry compatibility stubs
+    function getMemberStakedAmount(address) external pure returns (uint256) {
+        return 0;
+    }
+
+    function ercAddress() external pure returns (address) {
+        return address(0);
     }
 }
 
@@ -97,6 +107,10 @@ contract CVAllocationFacetHarness is CVAllocationFacet {
 
     function setRegistryCommunity(address community) external {
         registryCommunity = RegistryCommunity(community);
+    }
+
+    function setVotingPowerRegistry(address registry) external {
+        votingPowerRegistry = IVotingPowerRegistry(registry);
     }
 
     function setSybilScorer(address scorer) external {
@@ -216,6 +230,7 @@ contract CVAllocationFacetTest is Test {
         facet.setAllo(address(allo));
         facet.setPoolId(1);
         facet.setRegistryCommunity(address(registry));
+        facet.setVotingPowerRegistry(address(registry));
         facet.setCollateralVault(address(vault));
 
         registry.setMember(member, true);

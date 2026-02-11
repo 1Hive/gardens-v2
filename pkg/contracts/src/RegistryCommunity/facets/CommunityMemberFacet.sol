@@ -69,6 +69,16 @@ contract CommunityMemberFacet is CommunityBaseFacet {
         return registerStakeAmount + communityFeeAmount + gardensFeeAmount;
     }
 
+    /// @notice Register as a member without staking (for NFT/Custom power pools)
+    /// @dev Only registers — no token transfer. Power comes from votingPowerRegistry.
+    function registerMember() public {
+        if (!isMember(msg.sender)) {
+            addressToMemberInfo[msg.sender].isRegistered = true;
+            totalMembers += 1;
+            emit MemberRegisteredWithCovenant(msg.sender, 0, "");
+        }
+    }
+
     // Sig: 0x9a1f46e2
     function stakeAndRegisterMember(string memory covenantSig) public {
         IRegistryFactory gardensFactory = IRegistryFactory(registryFactory);

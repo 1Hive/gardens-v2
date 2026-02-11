@@ -9,6 +9,7 @@ import {RegistryCommunity} from "../src/RegistryCommunity/RegistryCommunity.sol"
 import {ISybilScorer} from "../src/ISybilScorer.sol";
 import {IArbitrator} from "../src/interfaces/IArbitrator.sol";
 import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
+import {IVotingPowerRegistry} from "../src/interfaces/IVotingPowerRegistry.sol";
 import {LibDiamond} from "../src/diamonds/libraries/LibDiamond.sol";
 import {MockArbitrator} from "./helpers/CVStrategyHelpers.sol";
 
@@ -42,6 +43,19 @@ contract MockRegistryCommunityAdmin {
     }
 
     function deactivateMemberInStrategy(address, address) external {}
+
+    // IVotingPowerRegistry compatibility stubs
+    function isMember(address member) external view returns (bool) {
+        return power[member] > 0;
+    }
+
+    function getMemberStakedAmount(address) external pure returns (uint256) {
+        return 0;
+    }
+
+    function ercAddress() external pure returns (address) {
+        return address(0);
+    }
 }
 
 contract MockSybilScorerAdmin is ISybilScorer {
@@ -112,6 +126,10 @@ contract CVAdminFacetHarness is CVAdminFacet {
         registryCommunity = RegistryCommunity(community);
     }
 
+    function forceVotingPowerRegistry(address registry) external {
+        votingPowerRegistry = IVotingPowerRegistry(registry);
+    }
+
     function setSybilScorer(address scorer) external {
         sybilScorer = ISybilScorer(scorer);
     }
@@ -180,6 +198,7 @@ contract CVAdminFacetTest is Test {
         arbitrator = new MockArbitrator();
 
         facet.setRegistryCommunity(address(registry));
+        facet.forceVotingPowerRegistry(address(registry));
         facet.setSybilScorer(address(sybil));
         facet.setOwner(councilSafe);
         facet.setPoolId(1);

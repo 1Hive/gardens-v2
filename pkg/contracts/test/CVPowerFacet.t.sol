@@ -8,6 +8,7 @@ import {CVStrategyBaseFacet} from "../src/CVStrategy/CVStrategyBaseFacet.sol";
 import {Proposal, ProposalStatus, PointSystem, PointSystemConfig} from "../src/CVStrategy/ICVStrategy.sol";
 import {RegistryCommunity} from "../src/RegistryCommunity/RegistryCommunity.sol";
 import {ISybilScorer} from "../src/ISybilScorer.sol";
+import {IVotingPowerRegistry} from "../src/interfaces/IVotingPowerRegistry.sol";
 import {TERC20} from "./shared/TERC20.sol";
 import {MockSybilScorer} from "./helpers/CVStrategyHelpers.sol";
 
@@ -60,11 +61,23 @@ contract MockRegistryCommunityPower {
         activated[member] = false;
         lastDeactivated = member;
     }
+
+    function ercAddress() external view returns (address) {
+        return address(token);
+    }
+
+    function isMember(address member) external view returns (bool) {
+        return power[member] > 0;
+    }
 }
 
 contract CVPowerFacetHarness is CVPowerFacet {
     function setRegistryCommunity(address community) external {
         registryCommunity = RegistryCommunity(community);
+    }
+
+    function setVotingPowerRegistry(address registry) external {
+        votingPowerRegistry = IVotingPowerRegistry(registry);
     }
 
     function setSybilScorer(address scorer) external {
@@ -122,6 +135,7 @@ contract CVPowerFacetTest is Test {
 
         facet = new CVPowerFacetHarness();
         facet.setRegistryCommunity(address(registry));
+        facet.setVotingPowerRegistry(address(registry));
         facet.setSybilScorer(address(sybil));
         facet.setPointSystem(PointSystem.Unlimited);
     }
