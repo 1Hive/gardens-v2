@@ -7,6 +7,7 @@ import {CVRegistryAllowlistStorage} from "../CVRegistryAllowlistStorage.sol";
 import {IArbitrator} from "../../interfaces/IArbitrator.sol";
 import {IVotingPowerRegistry} from "../../interfaces/IVotingPowerRegistry.sol";
 import {Proposal, ArbitrableConfig, CVParams} from "../ICVStrategy.sol";
+import {LibDiamond} from "../../diamonds/libraries/LibDiamond.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Library.sol";
 
 /**
@@ -102,7 +103,8 @@ contract CVAdminFacet is CVStrategyBaseFacet {
 
     /// @notice Allowlist a voting power registry for use in pool config
     /// @dev Only callable by contract owner
-    function setAllowedVotingPowerRegistry(address _registry, bool _allowed) external onlyOwner {
+    function setAllowedVotingPowerRegistry(address _registry, bool _allowed) external {
+        LibDiamond.enforceIsContractOwner();
         CVRegistryAllowlistStorage.layout().allowedRegistries[_registry] = _allowed;
         emit AllowedVotingPowerRegistryUpdated(_registry, _allowed);
     }
