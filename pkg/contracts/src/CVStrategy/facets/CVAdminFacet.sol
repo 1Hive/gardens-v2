@@ -101,8 +101,7 @@ contract CVAdminFacet is CVStrategyBaseFacet {
 
     /// @notice Whitelist a voting power registry for use in pool config
     /// @dev Only callable by council safe or contract owner
-    function setAllowedVotingPowerRegistry(address _registry, bool _allowed) external {
-        onlyCouncilSafe();
+    function setAllowedVotingPowerRegistry(address _registry, bool _allowed) external onlyOwner {
         CVRegistryWhitelistStorage.layout().allowedRegistries[_registry] = _allowed;
         emit AllowedVotingPowerRegistryUpdated(_registry, _allowed);
     }
