@@ -28,7 +28,8 @@ enum PointSystem {
     Fixed,
     Capped,
     Unlimited,
-    Quadratic
+    Quadratic,
+    Custom // Uses votingPowerRegistry.getMemberPowerInStrategy() as-is, no transformation
 }
 
 struct CreateProposal {
