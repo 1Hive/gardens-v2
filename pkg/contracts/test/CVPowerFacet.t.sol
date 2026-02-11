@@ -71,6 +71,30 @@ contract MockRegistryCommunityPower {
     }
 }
 
+contract MockExternalVotingPowerRegistry {
+    mapping(address => uint256) public power;
+
+    function setMemberPower(address member, uint256 amount) external {
+        power[member] = amount;
+    }
+
+    function getMemberPowerInStrategy(address member, address) external view returns (uint256) {
+        return power[member];
+    }
+
+    function getMemberStakedAmount(address) external pure returns (uint256) {
+        return 0;
+    }
+
+    function ercAddress() external pure returns (address) {
+        return address(0);
+    }
+
+    function isMember(address member) external view returns (bool) {
+        return power[member] > 0;
+    }
+}
+
 contract CVPowerFacetHarness is CVPowerFacet {
     function setRegistryCommunity(address community) external {
         registryCommunity = RegistryCommunity(community);
@@ -124,6 +148,7 @@ contract CVPowerFacetHarness is CVPowerFacet {
 contract CVPowerFacetTest is Test {
     CVPowerFacetHarness internal facet;
     MockRegistryCommunityPower internal registry;
+    MockExternalVotingPowerRegistry internal externalRegistry;
     MockSybilScorer internal sybil;
     TERC20 internal token;
     address internal member = makeAddr("member");
@@ -131,6 +156,7 @@ contract CVPowerFacetTest is Test {
     function setUp() public {
         token = new TERC20("Token", "TOK", 18);
         registry = new MockRegistryCommunityPower(token);
+        externalRegistry = new MockExternalVotingPowerRegistry();
         sybil = new MockSybilScorer();
 
         facet = new CVPowerFacetHarness();
@@ -255,5 +281,27 @@ contract CVPowerFacetTest is Test {
 
         assertEq(facet.totalStaked(), 0);
         assertEq(facet.totalVoterStakePct(member), 0);
+    }
+
+    function test_increasePower_custom_usesDeltaNotAbsolute() public {
+        sybil.setCanExecute(member, true);
+        facet.setPointSystem(PointSystem.Custom);
+        facet.setVotingPowerRegistry(address(externalRegistry));
+        registry.setActivated(member, true);
+        registry.setMemberPower(member, 0);
+        externalRegistry.setMemberPower(member, 10);
+
+        vm.prank(address(registry));
+        uint256 firstIncrease = facet.increasePower(member, 0);
+        assertEq(firstIncrease, 10);
+        assertEq(facet.totalPointsActivated(), 10);
+
+        // Mirror registry-community bookkeeping after first increase.
+        registry.setMemberPower(member, 10);
+
+        vm.prank(address(registry));
+        uint256 secondIncrease = facet.increasePower(member, 0);
+        assertEq(secondIncrease, 0);
+        assertEq(facet.totalPointsActivated(), 10);
     }
 }

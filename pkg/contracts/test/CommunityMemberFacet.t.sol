@@ -139,6 +139,23 @@ contract CommunityMemberFacetTest is Test {
         assertEq(facet.totalMembers(), 1);
     }
 
+    function test_registerMember_reverts_when_stake_required() public {
+        vm.prank(member);
+        vm.expectRevert(CommunityMemberFacet.StakeRequiredForMembership.selector);
+        facet.registerMember();
+    }
+
+    function test_registerMember_succeeds_when_stake_requirement_is_zero() public {
+        facet.setRegisterStakeAmount(0);
+
+        vm.prank(member);
+        facet.registerMember();
+
+        assertTrue(facet.isMember(member));
+        assertEq(facet.totalMembers(), 1);
+        assertEq(token.balanceOf(address(facet)), 0);
+    }
+
     function test_unregisterMember_handles_zero_totalMembers() public {
         MockStrategyDeactivate strategy = new MockStrategyDeactivate();
         facet.setMember(member, true, 123);

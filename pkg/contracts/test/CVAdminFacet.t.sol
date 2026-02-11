@@ -121,6 +121,24 @@ contract MockAlloPool {
     }
 }
 
+contract MockVotingRegistryAdmin is IVotingPowerRegistry {
+    function isMember(address) external pure returns (bool) {
+        return true;
+    }
+
+    function getMemberPowerInStrategy(address, address) external pure returns (uint256) {
+        return 1;
+    }
+
+    function getMemberStakedAmount(address) external pure returns (uint256) {
+        return 0;
+    }
+
+    function ercAddress() external pure returns (address) {
+        return address(0);
+    }
+}
+
 contract CVAdminFacetHarness is CVAdminFacet {
     function setRegistryCommunity(address community) external {
         registryCommunity = RegistryCommunity(community);
@@ -186,6 +204,7 @@ contract CVAdminFacetTest is Test {
     MockSybilScorerAdmin internal sybil;
     MockAlloPool internal allo;
     MockArbitrator internal arbitrator;
+    MockVotingRegistryAdmin internal customRegistry;
 
     address internal councilSafe = makeAddr("councilSafe");
     address internal member = makeAddr("member");
@@ -196,6 +215,7 @@ contract CVAdminFacetTest is Test {
         sybil = new MockSybilScorerAdmin();
         allo = new MockAlloPool();
         arbitrator = new MockArbitrator();
+        customRegistry = new MockVotingRegistryAdmin();
 
         facet.setRegistryCommunity(address(registry));
         facet.forceVotingPowerRegistry(address(registry));
@@ -268,5 +288,45 @@ contract CVAdminFacetTest is Test {
 
         vm.prank(councilSafe);
         facet.disconnectSuperfluidGDA(address(0xB0B));
+    }
+
+    function test_setAllowedVotingPowerRegistry_updatesAllowlist() public {
+        vm.prank(councilSafe);
+        facet.setAllowedVotingPowerRegistry(address(customRegistry), true);
+        assertTrue(facet.isAllowedVotingPowerRegistry(address(customRegistry)));
+    }
+
+    function test_setVotingPowerRegistry_revertsIfNotAllowed() public {
+        vm.prank(councilSafe);
+        vm.expectRevert(
+            abi.encodeWithSelector(CVAdminFacet.VotingPowerRegistryNotAllowed.selector, address(customRegistry))
+        );
+        facet.setVotingPowerRegistry(address(customRegistry));
+    }
+
+    function test_setVotingPowerRegistry_allowsAllowlistedRegistry() public {
+        vm.startPrank(councilSafe);
+        facet.setAllowedVotingPowerRegistry(address(customRegistry), true);
+        facet.setVotingPowerRegistry(address(customRegistry));
+        vm.stopPrank();
+
+        assertEq(address(facet.votingPowerRegistry()), address(customRegistry));
+    }
+
+    function test_setVotingPowerRegistry_allowsRegistryCommunityAddress() public {
+        vm.prank(councilSafe);
+        facet.setVotingPowerRegistry(address(registry));
+
+        assertEq(address(facet.votingPowerRegistry()), address(registry));
+    }
+
+    function test_setVotingPowerRegistry_zeroResetsToRegistryCommunity() public {
+        vm.startPrank(councilSafe);
+        facet.setAllowedVotingPowerRegistry(address(customRegistry), true);
+        facet.setVotingPowerRegistry(address(customRegistry));
+        facet.setVotingPowerRegistry(address(0));
+        vm.stopPrank();
+
+        assertEq(address(facet.votingPowerRegistry()), address(registry));
     }
 }

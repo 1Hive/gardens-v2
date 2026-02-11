@@ -40,6 +40,7 @@ contract NFTPowerRegistry is IVotingPowerRegistry {
 
     error NoPowerSources();
     error ZeroAddress();
+    error HatsProtocolRequired();
 
     /*|--------------------------------------------|*/
     /*|              STORAGE (immutable-like)      |*/
@@ -63,6 +64,9 @@ contract NFTPowerRegistry is IVotingPowerRegistry {
 
         for (uint256 i = 0; i < _powerSources.length; i++) {
             if (_powerSources[i].token == address(0)) revert ZeroAddress();
+            if (_powerSources[i].nftType == NFTType.HAT && _hatsProtocol == address(0)) {
+                revert HatsProtocolRequired();
+            }
             powerSources.push(_powerSources[i]);
         }
     }

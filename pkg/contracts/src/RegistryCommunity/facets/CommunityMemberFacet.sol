@@ -29,6 +29,7 @@ contract CommunityMemberFacet is CommunityBaseFacet {
     error UserNotInCouncil(address _user);
     error UserNotInRegistry();
     error KickNotEnabled();
+    error StakeRequiredForMembership();
 
     /*|--------------------------------------------|*/
     /*|              MODIFIERS                     |*/
@@ -70,8 +71,12 @@ contract CommunityMemberFacet is CommunityBaseFacet {
     }
 
     /// @notice Register as a member without staking (for NFT/Custom power pools)
-    /// @dev Only registers — no token transfer. Power comes from votingPowerRegistry.
+    /// @dev Only available when community membership stake requirement is zero.
+    ///      This prevents bypassing staking requirements in stake-based communities.
     function registerMember() public {
+        if (registerStakeAmount > 0) {
+            revert StakeRequiredForMembership();
+        }
         if (!isMember(msg.sender)) {
             addressToMemberInfo[msg.sender].isRegistered = true;
             totalMembers += 1;

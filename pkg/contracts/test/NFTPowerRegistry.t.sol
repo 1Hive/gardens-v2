@@ -88,6 +88,20 @@ contract NFTPowerRegistryTest is Test {
         new NFTPowerRegistry(address(mockHats), sources);
     }
 
+    function test_constructor_revertsWhenHatSourceAndNoHatsProtocol() public {
+        NFTPowerRegistry.NFTPowerSource[] memory sources = new NFTPowerRegistry.NFTPowerSource[](1);
+        sources[0] = NFTPowerRegistry.NFTPowerSource({
+            token: address(mockHats),
+            nftType: NFTPowerRegistry.NFTType.HAT,
+            weight: 10000,
+            tokenId: 0,
+            hatId: GARDENER_HAT_ID
+        });
+
+        vm.expectRevert(NFTPowerRegistry.HatsProtocolRequired.selector);
+        new NFTPowerRegistry(address(0), sources);
+    }
+
     function test_constructor_storesSourcesCorrectly() public {
         NFTPowerRegistry.NFTPowerSource[] memory sources = new NFTPowerRegistry.NFTPowerSource[](2);
         sources[0] = NFTPowerRegistry.NFTPowerSource({

@@ -22,8 +22,8 @@ library PowerManagementUtils {
         } else if (_pointSystem == PointSystem.Quadratic) {
             pointsToIncrease = increasePowerQuadratic(_votingPowerRegistry, _member, _amountToStake);
         } else if (_pointSystem == PointSystem.Custom) {
-            // Custom: registry is single source of truth, return current power as-is
-            pointsToIncrease = _votingPowerRegistry.getMemberPowerInStrategy(_member, address(this));
+            // Custom is handled directly in CVPowerFacet, where current and previous values are available.
+            pointsToIncrease = 0;
         }
     }
 
@@ -83,8 +83,8 @@ library PowerManagementUtils {
                     _pointConfigMaxAmount - (_votingPowerRegistry.getMemberStakedAmount(_member) - _amountToUnstake);
             }
         } else if (_pointSystem == PointSystem.Custom) {
-            // Custom: registry is single source of truth, return current power as-is
-            pointsToDecrease = _votingPowerRegistry.getMemberPowerInStrategy(_member, address(this));
+            // Custom is handled directly in CVPowerFacet, where current and previous values are available.
+            pointsToDecrease = 0;
         }
     }
 

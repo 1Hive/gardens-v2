@@ -9,6 +9,7 @@ import {CVDisputeFacet} from "../src/CVStrategy/facets/CVDisputeFacet.sol";
 import {CVPauseFacet} from "../src/CVStrategy/facets/CVPauseFacet.sol";
 import {CVPowerFacet} from "../src/CVStrategy/facets/CVPowerFacet.sol";
 import {CVProposalFacet} from "../src/CVStrategy/facets/CVProposalFacet.sol";
+import {CVSyncPowerFacet} from "../src/CVStrategy/facets/CVSyncPowerFacet.sol";
 import {CVStrategyDiamondInit} from "../src/CVStrategy/CVStrategyDiamondInit.sol";
 import {RegistryCommunity} from "../src/RegistryCommunity/RegistryCommunity.sol";
 import {CommunityAdminFacet} from "../src/RegistryCommunity/facets/CommunityAdminFacet.sol";
@@ -295,6 +296,7 @@ contract UpgradeCVMultichainProd is BaseMultiChain, StrategyDiamondConfiguratorB
         CVPauseFacet cvPauseFacet = new CVPauseFacet();
         CVPowerFacet cvPowerFacet = new CVPowerFacet();
         CVProposalFacet cvProposalFacet = new CVProposalFacet();
+        CVSyncPowerFacet cvSyncPowerFacet = new CVSyncPowerFacet();
 
         CommunityAdminFacet communityAdminFacet = new CommunityAdminFacet();
         CommunityMemberFacet communityMemberFacet = new CommunityMemberFacet();
@@ -306,7 +308,14 @@ contract UpgradeCVMultichainProd is BaseMultiChain, StrategyDiamondConfiguratorB
         DiamondLoupeFacet loupeFacet = new DiamondLoupeFacet();
 
         cuts.cvCuts = _buildCVFacetCuts(
-            cvAdminFacet, cvAllocationFacet, cvDisputeFacet, cvPauseFacet, cvPowerFacet, cvProposalFacet, loupeFacet
+            cvAdminFacet,
+            cvAllocationFacet,
+            cvDisputeFacet,
+            cvPauseFacet,
+            cvPowerFacet,
+            cvProposalFacet,
+            cvSyncPowerFacet,
+            loupeFacet
         );
         cuts.communityCuts = _buildCommunityFacetCuts(
             communityAdminFacet,
@@ -326,6 +335,7 @@ contract UpgradeCVMultichainProd is BaseMultiChain, StrategyDiamondConfiguratorB
         CVPauseFacet cvPauseFacet,
         CVPowerFacet cvPowerFacet,
         CVProposalFacet cvProposalFacet,
+        CVSyncPowerFacet cvSyncPowerFacet,
         DiamondLoupeFacet loupeFacet
     ) internal pure returns (IDiamond.FacetCut[] memory cuts) {
         IDiamond.FacetCut[] memory baseCuts =
@@ -335,11 +345,12 @@ contract UpgradeCVMultichainProd is BaseMultiChain, StrategyDiamondConfiguratorB
                 cvDisputeFacet,
                 cvPauseFacet,
                 cvPowerFacet,
-                cvProposalFacet
+                cvProposalFacet,
+                cvSyncPowerFacet
             );
-        cuts = new IDiamond.FacetCut[](7);
+        cuts = new IDiamond.FacetCut[](8);
         cuts[0] = _buildLoupeFacetCut(loupeFacet);
-        for (uint256 i = 0; i < 6; i++) {
+        for (uint256 i = 0; i < 7; i++) {
             cuts[i + 1] = baseCuts[i];
         }
     }

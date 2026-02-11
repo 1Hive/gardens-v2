@@ -9,6 +9,7 @@ import {CVDisputeFacet} from "../src/CVStrategy/facets/CVDisputeFacet.sol";
 import {CVPauseFacet} from "../src/CVStrategy/facets/CVPauseFacet.sol";
 import {CVPowerFacet} from "../src/CVStrategy/facets/CVPowerFacet.sol";
 import {CVProposalFacet} from "../src/CVStrategy/facets/CVProposalFacet.sol";
+import {CVSyncPowerFacet} from "../src/CVStrategy/facets/CVSyncPowerFacet.sol";
 import {DiamondLoupeFacet} from "../src/diamonds/facets/DiamondLoupeFacet.sol";
 import {CVStrategyDiamondInit} from "../src/CVStrategy/CVStrategyDiamondInit.sol";
 import {RegistryCommunity} from "../src/RegistryCommunity/RegistryCommunity.sol";
@@ -37,6 +38,7 @@ contract UpgradeCVDiamond is BaseMultiChain, StrategyDiamondConfiguratorBase {
     CVPauseFacet public pauseFacet;
     CVPowerFacet public powerFacet;
     CVProposalFacet public proposalFacet;
+    CVSyncPowerFacet public syncPowerFacet;
     DiamondLoupeFacet public loupeFacet;
 
     function runCurrentNetwork(string memory networkJson) public override {
@@ -76,6 +78,9 @@ contract UpgradeCVDiamond is BaseMultiChain, StrategyDiamondConfiguratorBase {
 
         proposalFacet = new CVProposalFacet();
         console2.log("  CVProposalFacet:", address(proposalFacet));
+
+        syncPowerFacet = new CVSyncPowerFacet();
+        console2.log("  CVSyncPowerFacet:", address(syncPowerFacet));
 
         loupeFacet = new DiamondLoupeFacet();
         console2.log("  DiamondLoupeFacet:", address(loupeFacet));
@@ -211,12 +216,12 @@ contract UpgradeCVDiamond is BaseMultiChain, StrategyDiamondConfiguratorBase {
      */
     function _buildAllFacetCuts() internal view returns (IDiamond.FacetCut[] memory cuts) {
         IDiamond.FacetCut[] memory baseCuts =
-            _buildFacetCuts(adminFacet, allocationFacet, disputeFacet, pauseFacet, powerFacet, proposalFacet);
-        cuts = new IDiamond.FacetCut[](7);
-        for (uint256 i = 0; i < 6; i++) {
+            _buildFacetCuts(adminFacet, allocationFacet, disputeFacet, pauseFacet, powerFacet, proposalFacet, syncPowerFacet);
+        cuts = new IDiamond.FacetCut[](8);
+        for (uint256 i = 0; i < 7; i++) {
             cuts[i] = baseCuts[i];
         }
-        cuts[6] = _buildLoupeFacetCut(loupeFacet);
+        cuts[7] = _buildLoupeFacetCut(loupeFacet);
     }
 
     /**

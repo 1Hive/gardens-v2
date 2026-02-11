@@ -90,53 +90,51 @@ contract CVSyncPowerFacet is CVStrategyBaseFacet {
     /*|--------------------------------------------|*/
 
     function _syncPowerInternal(address _member) internal {
-        // Read cached power from community registry
-        uint256 oldPower = registryCommunity.getMemberPowerInStrategy(_member, address(this));
+        CVSyncPowerStorage.Layout storage syncLayout = CVSyncPowerStorage.layout();
+        // Use strategy-local baseline first; fallback to registry cache for first sync.
+        uint256 oldPower = syncLayout.hasSyncedPower[_member]
+            ? syncLayout.syncedPower[_member]
+            : registryCommunity.getMemberPowerInStrategy(_member, address(this));
         // Read live power from voting power registry
         uint256 newPower = votingPowerRegistry.getMemberPowerInStrategy(_member, address(this));
 
-        if (newPower == oldPower) return;
+        // Keep baseline fresh even when power is unchanged.
+        if (newPower == oldPower) {
+            syncLayout.syncedPower[_member] = newPower;
+            syncLayout.hasSyncedPower[_member] = true;
+            return;
+        }
 
         if (newPower < oldPower) {
             uint256 decrease = oldPower - newPower;
-            _handlePowerDecrease(_member, decrease);
+            _handlePowerDecrease(_member, decrease, oldPower);
             emit MemberPowerRevoked(_member, decrease);
         } else {
             uint256 increase = newPower - oldPower;
             _handlePowerIncrease(_member, increase);
         }
 
+        syncLayout.syncedPower[_member] = newPower;
+        syncLayout.hasSyncedPower[_member] = true;
         emit PowerSynced(_member, oldPower, newPower);
     }
 
     /// @dev Handle power decrease — rebalance proposals proportionally
     ///      Mirrors the logic in CVPowerFacet.decreasePower()
-    function _handlePowerDecrease(address _member, uint256 _decrease) internal {
+    function _handlePowerDecrease(address _member, uint256 _decrease, uint256 _oldPower) internal {
         uint256 voterStake = totalVoterStakePct[_member];
 
         // Calculate unused (unallocated) power
-        uint256 memberPower = registryCommunity.getMemberPowerInStrategy(_member, address(this));
+        uint256 memberPower = _oldPower;
         uint256 unusedPower = memberPower > voterStake ? memberPower - voterStake : 0;
 
-        if (unusedPower < _decrease) {
+        if (unusedPower < _decrease && voterStake > 0) {
             // Must reduce conviction on active proposals
             uint256 reductionNeeded = _decrease - unusedPower;
             uint256 balancingRatio = (reductionNeeded << 128) / voterStake;
 
             for (uint256 i = 0; i < voterStakedProposals[_member].length; i++) {
-                uint256 proposalId = voterStakedProposals[_member][i];
-                Proposal storage proposal = proposals[proposalId];
-                uint256 stakedPoints = proposal.voterStakedPoints[_member];
-                uint256 newStakedPoints = stakedPoints - ((stakedPoints * balancingRatio + (1 << 127)) >> 128);
-
-                uint256 oldStake = proposal.stakedAmount;
-                proposal.stakedAmount -= stakedPoints - newStakedPoints;
-                proposal.voterStakedPoints[_member] = newStakedPoints;
-                totalStaked -= stakedPoints - newStakedPoints;
-                totalVoterStakePct[_member] -= stakedPoints - newStakedPoints;
-                _calculateAndSetConviction(proposal, oldStake);
-
-                emit SupportAdded(_member, proposalId, newStakedPoints, proposal.stakedAmount, proposal.convictionLast);
+                _rebalanceProposalStake(_member, voterStakedProposals[_member][i], balancingRatio);
             }
         }
 
@@ -149,5 +147,21 @@ contract CVSyncPowerFacet is CVStrategyBaseFacet {
         if (isActivated) {
             totalPointsActivated += _increase;
         }
+    }
+
+    function _rebalanceProposalStake(address _member, uint256 _proposalId, uint256 _balancingRatio) internal {
+        Proposal storage proposal = proposals[_proposalId];
+        uint256 stakedPoints = proposal.voterStakedPoints[_member];
+        uint256 newStakedPoints = stakedPoints - ((stakedPoints * _balancingRatio + (1 << 127)) >> 128);
+        uint256 stakeDelta = stakedPoints - newStakedPoints;
+        uint256 oldStake = proposal.stakedAmount;
+
+        proposal.stakedAmount -= stakeDelta;
+        proposal.voterStakedPoints[_member] = newStakedPoints;
+        totalStaked -= stakeDelta;
+        totalVoterStakePct[_member] -= stakeDelta;
+        _calculateAndSetConviction(proposal, oldStake);
+
+        emit SupportAdded(_member, _proposalId, newStakedPoints, proposal.stakedAmount, proposal.convictionLast);
     }
 }

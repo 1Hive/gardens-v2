@@ -20,6 +20,7 @@ import {CVDisputeFacet} from "../src/CVStrategy/facets/CVDisputeFacet.sol";
 import {CVPauseFacet} from "../src/CVStrategy/facets/CVPauseFacet.sol";
 import {CVPowerFacet} from "../src/CVStrategy/facets/CVPowerFacet.sol";
 import {CVProposalFacet} from "../src/CVStrategy/facets/CVProposalFacet.sol";
+import {CVSyncPowerFacet} from "../src/CVStrategy/facets/CVSyncPowerFacet.sol";
 import {CollateralVault} from "../src/CollateralVault.sol";
 import {PassportScorer} from "../src/PassportScorer.sol";
 import {GoodDollarSybil} from "../src/GoodDollarSybil.sol";
@@ -179,11 +180,12 @@ contract DeployCoreContracts is BaseMultiChain {
         CVPauseFacet pauseFacet = new CVPauseFacet();
         CVPowerFacet powerFacet = new CVPowerFacet();
         CVProposalFacet proposalFacet = new CVProposalFacet();
+        CVSyncPowerFacet syncPowerFacet = new CVSyncPowerFacet();
         DiamondLoupeFacet loupeFacet = new DiamondLoupeFacet();
         CVStrategyDiamondInit diamondInit = new CVStrategyDiamondInit();
 
         cuts = _buildStrategyFacetCuts(
-            adminFacet, allocationFacet, disputeFacet, pauseFacet, powerFacet, proposalFacet, loupeFacet
+            adminFacet, allocationFacet, disputeFacet, pauseFacet, powerFacet, proposalFacet, syncPowerFacet, loupeFacet
         );
         init = address(diamondInit);
     }
@@ -298,14 +300,18 @@ contract DeployCoreContracts is BaseMultiChain {
         CVPauseFacet pauseFacet,
         CVPowerFacet powerFacet,
         CVProposalFacet proposalFacet,
+        CVSyncPowerFacet syncPowerFacet,
         DiamondLoupeFacet loupeFacet
     ) internal pure returns (IDiamond.FacetCut[] memory cuts) {
-        IDiamond.FacetCut[] memory baseCuts = new IDiamond.FacetCut[](6);
+        IDiamond.FacetCut[] memory baseCuts = new IDiamond.FacetCut[](7);
 
-        bytes4[] memory adminSelectors = new bytes4[](3);
+        bytes4[] memory adminSelectors = new bytes4[](6);
         adminSelectors[0] = CVAdminFacet.setPoolParams.selector;
         adminSelectors[1] = CVAdminFacet.connectSuperfluidGDA.selector;
         adminSelectors[2] = CVAdminFacet.disconnectSuperfluidGDA.selector;
+        adminSelectors[3] = CVAdminFacet.setAllowedVotingPowerRegistry.selector;
+        adminSelectors[4] = CVAdminFacet.isAllowedVotingPowerRegistry.selector;
+        adminSelectors[5] = CVAdminFacet.setVotingPowerRegistry.selector;
         baseCuts[0] = IDiamond.FacetCut({
             facetAddress: address(adminFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: adminSelectors
         });
@@ -365,9 +371,18 @@ contract DeployCoreContracts is BaseMultiChain {
             functionSelectors: proposalSelectors
         });
 
-        cuts = new IDiamond.FacetCut[](7);
+        bytes4[] memory syncSelectors = new bytes4[](4);
+        syncSelectors[0] = CVSyncPowerFacet.setAuthorizedSyncCaller.selector;
+        syncSelectors[1] = CVSyncPowerFacet.isAuthorizedSyncCaller.selector;
+        syncSelectors[2] = CVSyncPowerFacet.syncPower.selector;
+        syncSelectors[3] = CVSyncPowerFacet.batchSyncPower.selector;
+        baseCuts[6] = IDiamond.FacetCut({
+            facetAddress: address(syncPowerFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: syncSelectors
+        });
+
+        cuts = new IDiamond.FacetCut[](8);
         cuts[0] = _buildLoupeFacetCut(loupeFacet);
-        for (uint256 i = 0; i < 6; i++) {
+        for (uint256 i = 0; i < 7; i++) {
             cuts[i + 1] = baseCuts[i];
         }
     }

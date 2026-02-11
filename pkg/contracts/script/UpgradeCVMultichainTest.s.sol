@@ -9,6 +9,7 @@ import {CVDisputeFacet} from "../src/CVStrategy/facets/CVDisputeFacet.sol";
 import {CVPauseFacet} from "../src/CVStrategy/facets/CVPauseFacet.sol";
 import {CVPowerFacet} from "../src/CVStrategy/facets/CVPowerFacet.sol";
 import {CVProposalFacet} from "../src/CVStrategy/facets/CVProposalFacet.sol";
+import {CVSyncPowerFacet} from "../src/CVStrategy/facets/CVSyncPowerFacet.sol";
 import {CVStreamingFacet} from "../src/CVStrategy/facets/CVStreamingFacet.sol";
 import {CVStrategyDiamondInit} from "../src/CVStrategy/CVStrategyDiamondInit.sol";
 import {RegistryCommunity} from "../src/RegistryCommunity/RegistryCommunity.sol";
@@ -200,40 +201,36 @@ contract UpgradeCVMultichainTest is BaseMultiChain, StrategyDiamondConfiguratorB
     }
 
     function _buildFacetCuts() internal returns (FacetCuts memory cuts) {
-        CVAdminFacet cvAdminFacet = new CVAdminFacet();
-        CVAllocationFacet cvAllocationFacet = new CVAllocationFacet();
-        CVDisputeFacet cvDisputeFacet = new CVDisputeFacet();
-        CVPauseFacet cvPauseFacet = new CVPauseFacet();
-        CVPowerFacet cvPowerFacet = new CVPowerFacet();
-        CVProposalFacet cvProposalFacet = new CVProposalFacet();
-        CVStreamingFacet cvStreamingFacet = new CVStreamingFacet();
-
-        CommunityAdminFacet communityAdminFacet = new CommunityAdminFacet();
-        CommunityMemberFacet communityMemberFacet = new CommunityMemberFacet();
-        CommunityPauseFacet communityPauseFacet = new CommunityPauseFacet();
-        CommunityPoolFacet communityPoolFacet = new CommunityPoolFacet();
-        CommunityPowerFacet communityPowerFacet = new CommunityPowerFacet();
-        CommunityStrategyFacet communityStrategyFacet = new CommunityStrategyFacet();
-
         DiamondLoupeFacet loupeFacet = new DiamondLoupeFacet();
+        cuts.cvCuts = _buildCVCutsWithFreshFacets(loupeFacet);
+        cuts.communityCuts = _buildCommunityCutsWithFreshFacets(loupeFacet);
+    }
 
-        cuts.cvCuts = _buildCVFacetCuts(
-            cvAdminFacet,
-            cvAllocationFacet,
-            cvDisputeFacet,
-            cvPauseFacet,
-            cvPowerFacet,
-            cvProposalFacet,
-            cvStreamingFacet,
+    function _buildCVCutsWithFreshFacets(DiamondLoupeFacet loupeFacet) internal returns (IDiamond.FacetCut[] memory) {
+        return _buildCVFacetCuts(
+            new CVAdminFacet(),
+            new CVAllocationFacet(),
+            new CVDisputeFacet(),
+            new CVPauseFacet(),
+            new CVPowerFacet(),
+            new CVProposalFacet(),
+            new CVSyncPowerFacet(),
+            new CVStreamingFacet(),
             loupeFacet
         );
-        cuts.communityCuts = _buildCommunityFacetCuts(
-            communityAdminFacet,
-            communityMemberFacet,
-            communityPauseFacet,
-            communityPoolFacet,
-            communityPowerFacet,
-            communityStrategyFacet,
+    }
+
+    function _buildCommunityCutsWithFreshFacets(DiamondLoupeFacet loupeFacet)
+        internal
+        returns (IDiamond.FacetCut[] memory)
+    {
+        return _buildCommunityFacetCuts(
+            new CommunityAdminFacet(),
+            new CommunityMemberFacet(),
+            new CommunityPauseFacet(),
+            new CommunityPoolFacet(),
+            new CommunityPowerFacet(),
+            new CommunityStrategyFacet(),
             loupeFacet
         );
     }
@@ -245,6 +242,7 @@ contract UpgradeCVMultichainTest is BaseMultiChain, StrategyDiamondConfiguratorB
         CVPauseFacet cvPauseFacet,
         CVPowerFacet cvPowerFacet,
         CVProposalFacet cvProposalFacet,
+        CVSyncPowerFacet cvSyncPowerFacet,
         CVStreamingFacet cvStreamingFacet,
         DiamondLoupeFacet loupeFacet
     ) internal pure returns (IDiamond.FacetCut[] memory cuts) {
@@ -254,16 +252,17 @@ contract UpgradeCVMultichainTest is BaseMultiChain, StrategyDiamondConfiguratorB
             cvDisputeFacet,
             cvPauseFacet,
             cvPowerFacet,
-            cvProposalFacet
+            cvProposalFacet,
+            cvSyncPowerFacet
         );
-        cuts = new IDiamond.FacetCut[](8);
+        cuts = new IDiamond.FacetCut[](9);
         cuts[0] = _buildLoupeFacetCut(loupeFacet);
-        for (uint256 i = 0; i < 6; i++) {
+        for (uint256 i = 0; i < 7; i++) {
             cuts[i + 1] = baseCuts[i];
         }
         bytes4[] memory streamingSelectors = new bytes4[](1);
         streamingSelectors[0] = CVStreamingFacet.rebalance.selector;
-        cuts[7] = IDiamond.FacetCut({
+        cuts[8] = IDiamond.FacetCut({
             facetAddress: address(cvStreamingFacet),
             action: IDiamond.FacetCutAction.Auto,
             functionSelectors: streamingSelectors

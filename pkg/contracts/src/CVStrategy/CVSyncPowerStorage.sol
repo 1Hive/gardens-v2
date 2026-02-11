@@ -10,6 +10,10 @@ library CVSyncPowerStorage {
     struct Layout {
         /// @notice Addresses authorized to call syncPower (e.g., Hats modules)
         mapping(address => bool) authorizedSyncCallers;
+        /// @notice Last power value used as sync baseline for each member
+        mapping(address => uint256) syncedPower;
+        /// @notice Whether a member has an initialized sync baseline
+        mapping(address => bool) hasSyncedPower;
     }
 
     function layout() internal pure returns (Layout storage l) {

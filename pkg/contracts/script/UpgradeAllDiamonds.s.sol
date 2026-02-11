@@ -9,6 +9,7 @@ import {CVDisputeFacet} from "../src/CVStrategy/facets/CVDisputeFacet.sol";
 import {CVPowerFacet} from "../src/CVStrategy/facets/CVPowerFacet.sol";
 import {CVProposalFacet} from "../src/CVStrategy/facets/CVProposalFacet.sol";
 import {CVPauseFacet} from "../src/CVStrategy/facets/CVPauseFacet.sol";
+import {CVSyncPowerFacet} from "../src/CVStrategy/facets/CVSyncPowerFacet.sol";
 import {CVStrategyDiamondInit} from "../src/CVStrategy/CVStrategyDiamondInit.sol";
 import {RegistryCommunity} from "../src/RegistryCommunity/RegistryCommunity.sol";
 import {CommunityAdminFacet} from "../src/RegistryCommunity/facets/CommunityAdminFacet.sol";
@@ -48,6 +49,7 @@ contract UpgradeAllDiamonds is BaseMultiChain, StrategyDiamondConfiguratorBase, 
     CVPauseFacet public cvPauseFacet;
     CVPowerFacet public cvPowerFacet;
     CVProposalFacet public cvProposalFacet;
+    CVSyncPowerFacet public cvSyncPowerFacet;
 
     // RegistryCommunity facets
     CommunityAdminFacet public communityAdminFacet;
@@ -162,6 +164,9 @@ contract UpgradeAllDiamonds is BaseMultiChain, StrategyDiamondConfiguratorBase, 
 
         cvProposalFacet = new CVProposalFacet();
         console2.log("  CVProposalFacet:", address(cvProposalFacet));
+
+        cvSyncPowerFacet = new CVSyncPowerFacet();
+        console2.log("  CVSyncPowerFacet:", address(cvSyncPowerFacet));
 
         // Deploy RegistryCommunity facets
         communityAdminFacet = new CommunityAdminFacet();
@@ -680,11 +685,12 @@ contract UpgradeAllDiamonds is BaseMultiChain, StrategyDiamondConfiguratorBase, 
                 cvDisputeFacet,
                 cvPauseFacet,
                 cvPowerFacet,
-                cvProposalFacet
+                cvProposalFacet,
+                cvSyncPowerFacet
             );
-        cuts = new IDiamond.FacetCut[](7);
+        cuts = new IDiamond.FacetCut[](8);
         cuts[0] = _buildLoupeFacetCut(loupeFacet);
-        for (uint256 i = 0; i < 6; i++) {
+        for (uint256 i = 0; i < 7; i++) {
             cuts[i + 1] = baseCuts[i];
         }
     }
