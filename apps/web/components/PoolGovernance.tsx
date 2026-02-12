@@ -87,7 +87,7 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
     <>
       <div className="rounded-lg flex flex-col gap-6 xl:max-h-16 ">
         {showVotingPowerBox && (
-          <section className="section-layout flex flex-wrap flex-col gap-4 !bg-primary-soft dark:!bg-primary-soft-dark !border-primary-button">
+          <section className="section-layout flex flex-wrap flex-col gap-4 !bg-primary-soft dark:!bg-primary-soft-dark !border-primary-button dark:!border-primary-dark-border">
             <div className="flex justify-between items-center flex-wrap ">
               <h4>Your Voting Power</h4>
               <Badge status={memberActivatedStrategy ? 1 : 0} />

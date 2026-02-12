@@ -30,7 +30,7 @@ const PROPOSAL_STATUS_STYLES = [
   "bg-secondary-soft dark:bg-secondary-soft-dark text-secondary-content",
   "bg-danger-soft dark:bg-danger-soft-dark text-danger-content",
   "bg-tertiary-soft dark:bg-tertiary-dark text-tertiary-content",
-  "bg-danger-soft dark:bg-danger-soft-dark text-danger-content",
+  "bg-secondary-soft dark:bg-secondary-soft-dark text-secondary-content",
   "bg-danger-soft dark:bg-danger-soft-dark text-danger-content",
 ];
 

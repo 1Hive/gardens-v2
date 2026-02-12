@@ -621,6 +621,9 @@ export default function PoolHeader({
     navigator.clipboard.writeText(url);
     toast.success("Pool link copied to clipboard!");
     setIsShareDropdownLocked(true);
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
   };
 
   const handleShareOnX = () => {
@@ -633,6 +636,9 @@ export default function PoolHeader({
     const xUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
     window.open(xUrl, "_blank", "noopener,noreferrer");
     setIsShareDropdownLocked(true);
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
   };
 
   return (
@@ -645,7 +651,7 @@ export default function PoolHeader({
         <section className="section-layout flex flex-col g-6">
           {/* Title - Badge poolType - Addresses and Buttons -> (when council memeber is connected) */}
           <header className="flex flex-col gap-4">
-            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center flex-wrap gap-">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center flex-wrap gap-4">
               <h2>
                 <Skeleton isLoading={!ipfsResult} className="sm:!w-96 h-8">
                   {ipfsResult?.title}
@@ -877,7 +883,7 @@ export default function PoolHeader({
                   className={`z-[9999] ${!!isCouncilMember || isCouncilSafe ? "w-full sm:w-fit" : "w-full flex justify-end"}`}
                 >
                   <div
-                    className="z-[9999] dropdown dropdown-hover dropdown-start w-full sm:w-auto"
+                    className=" z-[9999] dropdown dropdown-hover dropdown-start w-full sm:w-auto"
                     onMouseLeave={() => setIsShareDropdownLocked(false)}
                   >
                     <Button
@@ -886,19 +892,17 @@ export default function PoolHeader({
                       color="primary"
                       icon={<ShareIcon className="w-5 h-5" />}
                       className="!w-full"
-                      onClick={() =>
-                        setIsShareDropdownLocked((locked) => !locked)
-                      }
+                      onClick={() => setIsShareDropdownLocked(true)}
                     >
                       Share
                     </Button>
 
                     <ul
-                      className={`dropdown-content dropdown-close menu bg-primary rounded-box w-[200px] p-2 shadow fixed z-[9999] left-0 top-full mt-2 ${isShareDropdownLocked ? "!invisible !opacity-0 !pointer-events-none" : ""}`}
+                      className={`dropdown-content dropdown-close menu bg-primary rounded-box w-full  sm:w-[200px] p-2 shadow fixed z-[9999] left-0 top-full ${isShareDropdownLocked ? "!invisible !opacity-0 !pointer-events-none" : ""}`}
                     >
                       <li>
                         <Button
-                          type="submit"
+                          type="button"
                           btnStyle="ghost"
                           color="primary"
                           icon={<LinkIcon className="w-5 h-5" />}
@@ -910,7 +914,7 @@ export default function PoolHeader({
                       </li>
                       <li>
                         <Button
-                          type="submit"
+                          type="button"
                           btnStyle="ghost"
                           color="primary"
                           icon={<XIcon className="w-5 h-5" />}

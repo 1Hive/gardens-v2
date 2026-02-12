@@ -707,6 +707,10 @@ export function Proposals({
     setSortBy: setSortBy,
     filtered: filteredAndSorted,
   } = useProposalFilter(sortedProposals);
+  const selectedFilterTitle =
+    filter == null || filter === "all" ?
+      "All Proposals"
+    : `${filter.charAt(0).toUpperCase()}${filter.slice(1)} Proposals`;
 
   return (
     <>
@@ -724,14 +728,16 @@ export function Proposals({
 
           {strategy.isEnabled &&
             (strategy.proposals.length === 0 ?
-              <div className="section-layout text-center py-12  w-full flex flex-col items-center justify-center">
-                <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-4">
-                  <HandRaisedIcon className="w-8 h-8 text-neutral-soft-content" />
+              <div className="section-layout text-center py-12  w-full flex flex-col items-center justify-center !shadow-none">
+                <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center mx-auto mb-4">
+                  <HandRaisedIcon className="w-6 h-5 sm:w-6 sm:h-6 text-neutral-soft-content" />
                 </div>
-                <h5 className="text-lg font-medium mb-2">No proposals yet</h5>
-                <p className="text-neutral-content text-center mb-6">
+                <h6 className="mb-4 text-neutral-soft-content">
+                  No proposals yet
+                </h6>
+                <h6 className="text-neutral-soft-content text-center mb-4">
                   Submit the first proposal to kickstart pool governance.
-                </p>
+                </h6>
                 <Link href={createProposalUrl}>
                   <Button
                     btnStyle="filled"
@@ -833,31 +839,38 @@ export function Proposals({
               There are no {filter && filter} proposals at the moment.
             </p>
           </div>
-        : filteredAndSorted.map((proposalData) => (
-            <Fragment key={proposalData.proposalNumber}>
-              <ProposalCard
-                proposalData={proposalData}
-                strategyConfig={strategy.config}
-                inputData={inputs[proposalData.id]}
-                stakedFilter={stakedFilters[proposalData.id]}
-                isAllocationView={allocationView}
-                memberActivatedPoints={memberActivatedPoints}
-                memberPoolWeight={memberPoolWeight}
-                executeDisabled={
-                  proposalData.proposalStatus == 4 ||
-                  !isConnected ||
-                  missmatchUrl
-                }
-                poolToken={poolToken}
-                tokenDecimals={tokenDecimals}
-                alloInfo={alloInfo}
-                inputHandler={inputHandler}
-                communityToken={strategy.registryCommunity.garden}
-                isPoolEnabled={strategy.isEnabled}
-                minThGtTotalEffPoints={minThGtTotalEffPoints}
-              />
-            </Fragment>
-          ))
+        : <>
+            {strategy.proposals.length !== 0 && (
+              <h6 className="text-left w-full pl-1 sm:-my-4 text-neutral-soft-content">
+                {selectedFilterTitle}
+              </h6>
+            )}
+            {filteredAndSorted.map((proposalData) => (
+              <Fragment key={proposalData.proposalNumber}>
+                <ProposalCard
+                  proposalData={proposalData}
+                  strategyConfig={strategy.config}
+                  inputData={inputs[proposalData.id]}
+                  stakedFilter={stakedFilters[proposalData.id]}
+                  isAllocationView={allocationView}
+                  memberActivatedPoints={memberActivatedPoints}
+                  memberPoolWeight={memberPoolWeight}
+                  executeDisabled={
+                    proposalData.proposalStatus == 4 ||
+                    !isConnected ||
+                    missmatchUrl
+                  }
+                  poolToken={poolToken}
+                  tokenDecimals={tokenDecimals}
+                  alloInfo={alloInfo}
+                  inputHandler={inputHandler}
+                  communityToken={strategy.registryCommunity.garden}
+                  isPoolEnabled={strategy.isEnabled}
+                  minThGtTotalEffPoints={minThGtTotalEffPoints}
+                />
+              </Fragment>
+            ))}
+          </>
         }
 
         {/* Modal Manage Support section */}
@@ -1094,23 +1107,35 @@ function ProposalFiltersUI({
   const currentSortOption = SORT_OPTIONS.find((o) => o.key === sortBy);
   const CurrentIcon = currentSortOption?.icon;
   const [isSortDropdownLocked, setIsSortDropdownLocked] = useState(false);
+  const FILTER_BADGE_STYLES: Record<string, string> = {
+    all: "bg-tertiary-soft text-tertiary-content dark:bg-tertiary-dark",
+    active: "bg-primary-soft text-primary-content dark:bg-primary-soft-dark",
+    disputed:
+      "bg-secondary-soft dark:bg-secondary-soft-dark text-secondary-content",
+    executed: "bg-tertiary-soft dark:bg-tertiary-dark text-tertiary-content",
+    cancelled: "bg-danger-soft text-danger-content dark:bg-danger-soft-dark",
+  };
 
   return (
     <div className="flex flex-col lg:flex-row justify-between bg-neutral rounded-2xl items-center gap-2 lg:gap-4">
       {/* FILTERS */}
       <div className="flex  gap-2 lg:gap-2 sm:justify-between flex-wrap">
         {FILTERS.map((f) => (
-          <Button
-            // className={filter === f ? "!cursor-default !bg-soft-primary" : ""}
-            onClick={() => setFilter(f)}
-            btnStyle="tab"
-            color={filter === f ? "primary" : "disabled"}
+          <button
             key={f}
+            type="button"
+            onClick={() => setFilter(f)}
+            className={`rounded-full px-3 py-1.5 font-semibold border transition-all duration-150 ease-out ${
+              filter === f ?
+                `${FILTER_BADGE_STYLES[f]} border-transparent`
+              : "bg-transparent border-neutral-soft-content/30 text-neutral-soft-content hover:border-neutral-soft-content hover:text-primary-content"
+            }`}
           >
-            <div className="flex items-baseline gap-1">
-              {f} ({counts[f] ?? 0})
-            </div>
-          </Button>
+            <span className="capitalize text-sm sm:text-md">{f}</span>
+            <span className="ml-1 opacity-80 text-xs sm:text-sm">
+              ({counts[f] ?? 0})
+            </span>
+          </button>
         ))}
       </div>
 
@@ -1146,11 +1171,13 @@ function ProposalFiltersUI({
                 <li
                   tabIndex={0}
                   key={option.key}
-                  className="cursor-pointer flex justify-between items-start text-xs hover:bg-primary-soft dark:hover:bg-primary-content rounded-md"
+                  className="cursor-pointer flex justify-between items-start text-xs dark:hover:bg-hover-content rounded-md"
                 >
-                  <button
-                    className="w-full"
+                  <Button
+                    btnStyle="ghost"
+                    color="primary"
                     type="button"
+                    className="!w-full !justify-start "
                     onClick={() => {
                       setSortBy(option.key);
                       setIsSortDropdownLocked(true);
@@ -1160,7 +1187,7 @@ function ProposalFiltersUI({
                       <Icon className="w-4 h-4" />
                       {option.label}
                     </span>
-                  </button>
+                  </Button>
                 </li>
               );
             })}
