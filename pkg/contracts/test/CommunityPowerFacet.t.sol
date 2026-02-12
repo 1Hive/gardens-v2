@@ -144,13 +144,15 @@ contract CommunityPowerFacetTest is Test {
         assertEq(facet.getMemberPowerInStrategy(member, strategy), 42);
     }
 
-    function test_deactivateMemberInStrategy_reverts_and_succeeds() public {
+    function test_deactivateMemberInStrategy_returns_when_not_activated_and_succeeds() public {
         MockPowerStrategy strategy = new MockPowerStrategy(PointSystem.Fixed, 0, 0);
         facet.setMember(member, true, 0);
 
         vm.prank(address(strategy));
-        vm.expectRevert(CommunityPowerFacet.PointsDeactivated.selector);
         facet.deactivateMemberInStrategy(member, address(strategy));
+
+        assertFalse(facet.memberActivatedInStrategies(member, address(strategy)));
+        assertEq(facet.memberPowerInStrategy(member, address(strategy)), 0);
 
         facet.setActivated(member, address(strategy), true, 4);
         vm.prank(address(strategy));
