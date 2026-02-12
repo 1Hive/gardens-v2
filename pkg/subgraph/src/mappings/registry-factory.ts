@@ -2,7 +2,8 @@ import { RegistryCommunity as CommunityTemplate } from "../../generated/template
 import {
   RegistryFactory,
   RegistryCommunity,
-  Member
+  Member,
+  StreamingInfo
 } from "../../generated/schema";
 
 import {
@@ -17,7 +18,8 @@ import {
   ProtocolFeeSet,
   Initialized,
   KeepersChanged,
-  ProtopiansChanged
+  ProtopiansChanged,
+  StreamingEscrowFactorySet
 } from "../../generated/RegistryFactory/RegistryFactory";
 // import {RegistryCommunity}from "../../generated/RegistryCommunity/RegistryCommunity";
 
@@ -136,4 +138,31 @@ export function handleProtopiansChanged(event: ProtopiansChanged): void {
     member.isProtopian = false;
     member.save();
   }
+}
+
+export function handleStreamingEscrowFactorySet(
+  event: StreamingEscrowFactorySet
+): void {
+  const id = `${event.address.toHexString()}-streaming`;
+  let streamingInfo = StreamingInfo.load(id);
+  if (streamingInfo == null) {
+    streamingInfo = new StreamingInfo(id);
+    streamingInfo.contractAddress = event.address.toHexString();
+    streamingInfo.contractType = "RegistryFactory";
+    streamingInfo.strategy = null;
+    streamingInfo.registryFactory = event.address.toHexString();
+    streamingInfo.superfluidToken = null;
+    streamingInfo.superfluidGDA = [];
+    streamingInfo.streamLastStartedGDA = null;
+    streamingInfo.streamLastFlowRate = null;
+    streamingInfo.streamLastMember = null;
+    streamingInfo.streamLastMemberUnit = null;
+    streamingInfo.streamingEscrowFactory = null;
+    streamingInfo.createdAt = event.block.timestamp;
+    streamingInfo.updatedAt = event.block.timestamp;
+  }
+
+  streamingInfo.streamingEscrowFactory = event.params._newFactory.toHexString();
+  streamingInfo.updatedAt = event.block.timestamp;
+  streamingInfo.save();
 }

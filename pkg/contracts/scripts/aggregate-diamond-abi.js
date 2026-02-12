@@ -71,6 +71,32 @@ function hasFallback(filePath) {
   }
 }
 
+// Rename overloaded "Distributed" from Allo strategy base to avoid The Graph
+// generating Distributed/Distributed1 and breaking mapping type imports.
+function normalizeAbiItem(item) {
+  if (item.type !== 'event' || item.name !== 'Distributed') {
+    return item;
+  }
+
+  const isAlloDistributed =
+    Array.isArray(item.inputs) &&
+    item.inputs.length === 4 &&
+    item.inputs[0]?.type === 'address' &&
+    item.inputs[0]?.indexed === true &&
+    item.inputs[1]?.type === 'address' &&
+    item.inputs[2]?.type === 'uint256' &&
+    item.inputs[3]?.type === 'address';
+
+  if (!isAlloDistributed) {
+    return item;
+  }
+
+  return {
+    ...item,
+    name: 'AlloDistributed',
+  };
+}
+
 // Aggregate ABIs for a diamond contract
 function aggregateDiamondABI(mainContract, facets) {
   log(colors.blue, `\nProcessing ${mainContract}...`);
@@ -96,7 +122,8 @@ function aggregateDiamondABI(mainContract, facets) {
   const errorNames = new Set();
   const aggregatedABI = [];
 
-  for (const item of mainJSON.abi) {
+  for (const rawItem of mainJSON.abi) {
+    const item = normalizeAbiItem(rawItem);
     if (item.type === 'function') {
       functionNames.add(item.name);
       aggregatedABI.push(item);
@@ -134,7 +161,8 @@ function aggregateDiamondABI(mainContract, facets) {
     let functionsAdded = 0;
     let eventsAdded = 0;
     let errorsAdded = 0;
-    for (const item of facetJSON.abi) {
+    for (const rawItem of facetJSON.abi) {
+      const item = normalizeAbiItem(rawItem);
       if (item.type === 'function' && !functionNames.has(item.name)) {
         aggregatedABI.push(item);
         functionNames.add(item.name);

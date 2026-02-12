@@ -6,15 +6,15 @@ schema:
 dataSources:
   - kind: ethereum/contract
     name: RegistryFactory
-    network: sepolia
+    network: localhost
     context:
       chainId: 
         type: Int
-        data: 11155111
+        data: 1337
     source:
-      address: "0x4177f64568e90fd58884579864923aa0345248f0"
+      address: "0xb7f8bc63bbcad18155201308c8f3540b07f84f5e"
       abi: RegistryFactory
-      startBlock: 5998577
+      startBlock: 0
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -22,6 +22,7 @@ dataSources:
       entities:
         - RegistryFactory
         - RegistryCommunity
+        - StreamingInfo
       abis:
         - name: RegistryFactory
           file: ../contracts/abis/RegistryFactory.sol/RegistryFactory.json
@@ -38,21 +39,23 @@ dataSources:
           handler: handleProtopiansChanged  
         - event: KeepersChanged(address[],address[])
           handler: handleKeepersChanged
+        - event: StreamingEscrowFactorySet(address)
+          handler: handleStreamingEscrowFactorySet
         - event: Initialized(uint8)
           handler: handleRegistryInitialized  
       file: ./src/mappings/registry-factory.ts
 
   - kind: ethereum/contract
     name: PassportScorer
-    network: sepolia
+    network: localhost
     context:
       chainId: 
         type: Int
-        data: 11155111
+        data: 1337
     source:
-      address: "0xd58ff588177f02cc535a0e235a4c002a17e27202"
+      address: "0x0165878a594ca255338adfa4d48449f69242eb8f"
       abi: PassportScorer
-      startBlock: 5998577
+      startBlock: 0
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -79,41 +82,10 @@ dataSources:
           handler: handleThresholdModified
       file: ./src/mappings/passport-scorer.ts
 
-  - kind: ethereum/contract
-    name: GoodDollarSybil
-    network: sepolia
-    context:
-      chainId: 
-        type: Int
-        data: 11155111
-    source:
-      address: "0xa50ec350146e42b1ad15705da04c7cb6929e1f2a"
-      abi: GoodDollarSybil
-      startBlock: 5998577
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.7
-      language: wasm/assemblyscript
-      entities:
-        - GoodDollarSybil
-      abis:
-        - name: GoodDollarSybil
-          file: ../contracts/abis/GoodDollarSybil.sol/GoodDollarSybil.json
-      eventHandlers:
-        - event: Initialized(uint8)
-          handler: handleInitialized
-        - event: UserValidated(address)
-          handler: handleUserValidated
-        - event: UserInvalidated(indexed address)
-          handler: handleUserInvalidated
-        - event: GoodDollarStrategyAdded(indexed address,address)
-          handler: handleStrategyAdded
-      file: ./src/mappings/good-dollar-sybil.ts
-
 templates:
   - kind: ethereum/contract
     name: RegistryCommunity
-    network: sepolia
+    network: localhost
     source:
       abi: RegistryCommunity
     mapping:
@@ -187,7 +159,7 @@ templates:
 
   - kind: ethereum/contract
     name: CVStrategy
-    network: sepolia
+    network: localhost
     source:
       abi: CVStrategy
     mapping:
@@ -198,6 +170,7 @@ templates:
         - CVStrategy
         - CVStrategyConfig
         - CVProposal
+        - StreamingInfo
         - Allo
       abis:
         - name: CVStrategy
@@ -247,6 +220,10 @@ templates:
           handler: handleSuperfluidGDAConnected
         - event: SuperfluidGDADisconnected(indexed address,indexed address)
           handler: handleSuperfluidGDADisconnected
+        - event: StreamStarted(indexed address,uint256)
+          handler: handleStreamStarted
+        - event: StreamMemberUnitUpdated(indexed address,int96)
+          handler: handleStreamMemberUnitUpdated
         - event: ProposalEdited(uint256,(uint256,string),address,uint256)
           handler: handleProposalEdited
 
@@ -254,7 +231,7 @@ templates:
 
   - kind: ethereum/contract
     name: CollateralVault
-    network: sepolia
+    network: localhost
     source:
       abi: CollateralVault
     mapping:

@@ -95,6 +95,7 @@ templates:
         - CVStrategy
         - CVStrategyConfig
         - CVProposal
+        - StreamingInfo
         - Allo
       abis:
         - name: CVStrategy
@@ -144,6 +145,10 @@ templates:
           handler: handleSuperfluidGDAConnected
         - event: SuperfluidGDADisconnected(indexed address,indexed address)
           handler: handleSuperfluidGDADisconnected
+        - event: StreamStarted(indexed address,uint256)
+          handler: handleStreamStarted
+        - event: StreamMemberUnitUpdated(indexed address,int96)
+          handler: handleStreamMemberUnitUpdated
         - event: ProposalEdited(uint256,(uint256,string),address,uint256)
           handler: handleProposalEdited
 
