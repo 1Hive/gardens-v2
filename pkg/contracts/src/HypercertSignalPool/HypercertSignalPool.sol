@@ -18,11 +18,13 @@ import {
     HypercertAlreadyRegistered,
     HypercertNotRegistered,
     HypercertNotActive,
+    HypercertStillActive,
     NotEligibleVoter,
     PointBudgetExceeded,
     InvalidDecay,
     InvalidPointsPerVoter,
-    ZeroHypercertId
+    ZeroHypercertId,
+    StakesReclaimed
 } from "./IHypercertSignalPool.sol";
 
 /// @title HypercertSignalPool
@@ -261,6 +263,31 @@ contract HypercertSignalPool is BaseStrategyUpgradeable {
         pointsPerVoter = _pointsPerVoter;
 
         emit PointsPerVoterUpdated(oldPoints, _pointsPerVoter);
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    //                      STAKE RECOVERY
+    // ══════════════════════════════════════════════════════════════════
+
+    /// @notice Reclaim support points stranded on deregistered hypercerts.
+    /// @dev Frees the voter's budget by zeroing stakes on inactive hypercerts.
+    ///      Also decrements stakedAmounts to keep data consistent.
+    /// @param _hypercertIds Array of deregistered hypercert IDs to reclaim from
+    function reclaimStakes(uint256[] calldata _hypercertIds) external {
+        for (uint256 i = 0; i < _hypercertIds.length;) {
+            uint256 hcId = _hypercertIds[i];
+            if (hypercertActive[hcId]) revert HypercertStillActive(hcId);
+
+            uint256 stake = voterStakes[hcId][msg.sender];
+            if (stake > 0) {
+                voterStakes[hcId][msg.sender] = 0;
+                voterUsedPoints[msg.sender] -= stake;
+                stakedAmounts[hcId] -= stake;
+                emit StakesReclaimed(msg.sender, hcId, stake);
+            }
+
+            unchecked { ++i; }
+        }
     }
 
     // ══════════════════════════════════════════════════════════════════
