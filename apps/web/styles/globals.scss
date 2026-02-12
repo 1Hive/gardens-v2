@@ -85,9 +85,10 @@ h2 {
   text-align: left;
   color: var(--color-text);
 
-  /* @media only screen and (max-width: 680px) {
-    font-size: 2rem;
-  } */
+  @media only screen and (max-width: 680px) {
+    font-size: 24px;
+    line-height: 23px;
+  }
 }
 
 h3 {
@@ -98,14 +99,14 @@ h3 {
   text-align: left;
   color: var(--color-text);
 
-  /* @media only screen and (max-width: 680px) {
-    font-size: 1.75rem;
-  } */
+  @media only screen and (max-width: 680px) {
+    font-size: 16px;
+  }
 }
 
 h4 {
   font-family: var(--font-inter);
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 500;
   line-height: auto;
   text-align: left;
@@ -120,7 +121,7 @@ h4 {
 h5,
 .subtitle {
   font-family: var(--font-inter);
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 500;
   line-height: 22px;
   text-align: left;
@@ -131,7 +132,7 @@ h5,
 h6,
 .subtitle2 {
   font-family: var(--font-inter);
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 500;
   line-height: 20px;
   text-align: left;
@@ -184,7 +185,7 @@ caption {
 }
 
 .section-layout {
-  @apply border1 relative rounded-lg bg-neutral p-6;
+  @apply border1 relative rounded-xl bg-neutral p-4 sm:p-4 lg:p-6 shadow-md;
 }
 
 .page-layout {
@@ -578,4 +579,20 @@ dialog * {
 
 .modal-action {
   margin-top: 0.5rem;
+}
+
+.tab-reset {
+  flex: 1;
+  outline: none;
+  box-shadow: none;
+}
+
+.tab-reset:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.tab-reset:focus-visible {
+  outline: none;
+  box-shadow: none;
 }

@@ -39,7 +39,7 @@ export type Color =
   | "tertiary"
   | "danger"
   | "disabled";
-export type BtnStyle = "filled" | "outline" | "link" | "ghost";
+export type BtnStyle = "filled" | "outline" | "link" | "ghost" | "tab";
 
 type BtnStyles = Record<BtnStyle, Record<Color, string>>;
 
@@ -54,7 +54,7 @@ const btnStyles: BtnStyles = {
     danger:
       "bg-danger-button text-neutral-inverted-content hover:bg-danger-hover-content dark:bg-danger-dark-base/70 dark:text-neutral-inverted-content dark:hover:bg-danger-dark-border-hover",
     disabled:
-      "bg-neutral-button text-neutral-inverted-content dark:bg-disabled-dark-button dark:text-disabled-dark-text hover:opacity-70",
+      "bg-neutral-button text-neutral-inverted-content dark:bg-disabled-dark-button dark:text-disabled-dark-text hover:opacity-80",
   },
   outline: {
     primary:
@@ -91,6 +91,15 @@ const btnStyles: BtnStyles = {
     disabled:
       "text-neutral-soft-content border border-transparent opacity-70 hover:opacity-90 dark:text-white/30",
   },
+  tab: {
+    primary:
+      "cursor-none bg-primary-soft dark:bg-primary capitalize text-primary-button dark:text-primary-content border-[1px] border-primary-button transition-all ease-out duration-200",
+    secondary: "",
+    tertiary: "",
+    danger: "",
+    disabled:
+      "bg-neutral-button text-neutral-inverted-content dark:bg-disabled-dark-button dark:text-disabled-dark-text hover:opacity-80 capitalize",
+  },
 };
 
 export function Button({
@@ -113,7 +122,7 @@ export function Button({
   const buttonElement = (
     <button
       type={type}
-      className={`${btnStyles[btnStyle][disabled ? "disabled" : color]} flex relative cursor-pointer justify-center rounded-lg px-4 py-2 transition-all ease-out disabled:cursor-not-allowed disabled:shadow-none h-fit text-sm gap-2 ${className}`}
+      className={`${btnStyles[btnStyle][disabled ? "disabled" : color]} flex relative cursor-pointer justify-center rounded-lg px-4 w-full sm:w-auto py-2 transition-all ease-out disabled:cursor-not-allowed disabled:shadow-none h-fit text-sm gap-2 ${className}`}
       onClick={onClick}
       disabled={disabled || isLoading}
       style={style}

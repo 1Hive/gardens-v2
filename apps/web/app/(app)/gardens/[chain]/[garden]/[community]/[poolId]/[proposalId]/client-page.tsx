@@ -73,6 +73,8 @@ export default function ClientPage({ params }: ClientPageProps) {
   const { proposalId, garden, community: communityAddr, poolId } = params;
   const [convictionRefreshing, setConvictionRefreshing] = useState(true);
   const [openSupportersModal, setOpenSupportersModal] = useState(false);
+  const [selectedTab, setSelectedTab] = useState(0);
+
   const router = useRouter();
 
   const { address } = useAccount();
@@ -384,16 +386,18 @@ export default function ClientPage({ params }: ClientPageProps) {
 
   return (
     <>
-      {/* main section */}
-      <section className="col-span-12 xl:col-span-9">
+      {/* ================= DESKTOP ================= */}
+
+      {/* main section: proposal details + conviction progress + go to & execute buttons */}
+      <section className="hidden sm:block sm:col-span-12 xl:col-span-9">
         <div
           className={`section-layout flex flex-col gap-8  ${status === "disputed" ? "!border-error-content" : ""} ${status === "executed" ? "!border-primary-content" : ""}`}
         >
-          <div className="flex flex-col items-start gap-10  sm:flex-row">
+          <div className="flex flex-col items-start gap-10 sm:flex-row">
             <div className="flex w-full flex-col gap-6">
               {/* Title - author - beneficairy - request - created - type */}
-              <header className="flex flex-col items-start gap-4">
-                <div className=" flex items-center justify-between w-full gap-4 sm:gap-8">
+              <header className="flex flex-col items-start gap-4 ">
+                <div className="flex items-center justify-between flex-wrap w-full gap-2 sm:gap-4">
                   <Skeleton isLoading={metadata == null} className="!w-96 h-8">
                     <h2>{metadata?.title}</h2>
                   </Skeleton>
@@ -497,15 +501,15 @@ export default function ClientPage({ params }: ClientPageProps) {
                   onClick={() => manageSupportClicked()}
                   disabled={!isConnected || missmatchUrl || !isMemberCommunity}
                   tooltip={tooltipMessage}
-                  className="w-full"
+                  className="!w-full"
                   btnStyle="outline"
                 >
-                  Go to manage support
+                  Go to Vote on Proposals
                 </Button>
                 {!isSignalingType && (
                   <Button
                     icon={<BoltIcon height={18} width={18} />}
-                    className="w-full"
+                    className="!w-full"
                     onClick={() =>
                       writeDistribute?.({
                         args: [
@@ -532,9 +536,9 @@ export default function ClientPage({ params }: ClientPageProps) {
         </div>
       </section>
 
-      {/* Right side */}
-      <div className="col-span-12 xl:col-span-3 xl:h-10 overflow-visible ">
-        <div className="backdrop-blur-sm rounded-lg flex flex-col gap-4 sticky top-32">
+      {/* Right side: Status + view supporters + cancel button */}
+      <div className="hidden sm:block sm:col-span-12 xl:col-span-3 xl:h-10 xl:overflow-visible">
+        <div className="backdrop-blur-sm rounded-lg flex flex-col gap-6 sticky top-32">
           <section className="section-layout gap-4 flex flex-col">
             <div className="flex items-center justify-between">
               <h5>Status</h5>
@@ -669,7 +673,7 @@ export default function ClientPage({ params }: ClientPageProps) {
       </div>
 
       {/* Proposal Description */}
-      <section className="section-layout col-span-12 xl:col-span-9 mt-6 flex flex-col gap-6">
+      <section className="hidden section-layout col-span-12 xl:col-span-9 mt-6 sm:flex flex-col gap-6">
         <h3>Proposal Description</h3>
         <div>
           <Skeleton rows={5} isLoading={!Boolean(metadata)}>
@@ -677,6 +681,276 @@ export default function ClientPage({ params }: ClientPageProps) {
           </Skeleton>
         </div>
       </section>
+
+      {/* ================= MOBILE ================= */}
+      <div className="block md:hidden col-span-12">
+        <div
+          role="tablist"
+          className="tabs tabs-boxed w-full border1 bg-neutral p-1"
+          aria-label="Proposal sections"
+        >
+          {["Overview", "Description", "Status", "Supporters"].map(
+            (label, index) => (
+              <button
+                key={label}
+                type="button"
+                role="tab"
+                className={`tab rounded-lg border-0 text-neutral-soft-content ${selectedTab === index ? "tab-active !bg-primary-button dark:!bg-primary-dark-base !text-neutral-inverted-content" : "hover:text-neutral-content"}`}
+                aria-selected={selectedTab === index}
+                onClick={() => setSelectedTab(index)}
+              >
+                {label}
+              </button>
+            ),
+          )}
+        </div>
+
+        <div className="mt-4">
+          {selectedTab === 0 && (
+            <div className="flex flex-col gap-6">
+              <div
+                className={`section-layout flex flex-col gap-8  ${status === "disputed" ? "!border-error-content" : ""} ${status === "executed" ? "!border-primary-content" : ""}`}
+              >
+                <div className="flex flex-col items-start gap-10 sm:flex-row">
+                  <div className="flex w-full flex-col gap-6">
+                    {/* Title - author - beneficairy - request - created - type */}
+                    <header className="flex flex-col items-start gap-4">
+                      <div className="flex flex-col items-start justify-between w-full gap-4">
+                        <Skeleton
+                          isLoading={metadata == null}
+                          className="!w-96 h-8"
+                        >
+                          <h2>{metadata?.title}</h2>
+                        </Skeleton>
+                        <div className="flex items-center gap-2">
+                          <Badge type={proposalType} />
+                        </div>
+                      </div>
+
+                      <div className="w-full flex flex-col sm:flex-row items-start justify-between gap-2">
+                        <div className="flex flex-col gap-1">
+                          <Statistic label={"Author"}>
+                            <EthAddress
+                              address={submitter}
+                              actions="none"
+                              textColor="var(--color-grey-900)"
+                            />
+                          </Statistic>
+                          {!isSignalingType && (
+                            <Statistic label={"beneficiary"}>
+                              <EthAddress
+                                address={beneficiary}
+                                actions="none"
+                                textColor="var(--color-grey-900)"
+                              />
+                            </Statistic>
+                          )}
+                        </div>
+
+                        <div className="flex flex-col items-start justify-between gap-1">
+                          <Statistic label={"Created"}>
+                            <span className="font-medium dark:text-neutral-content">
+                              {prettyTimestamp(proposalData?.createdAt ?? 0)}
+                            </span>
+                          </Statistic>
+                          {!isSignalingType && (
+                            <Statistic label={"request amount"} className="pt-2">
+                              <DisplayNumber
+                                number={formatUnits(
+                                  requestedAmount,
+                                  poolToken?.decimals ?? 18,
+                                )}
+                                tokenSymbol={poolToken?.symbol}
+                                compact={true}
+                                valueClassName="font-medium dark:text-neutral-content"
+                                symbolClassName="font-medium dark:text-neutral-content"
+                              />
+                            </Statistic>
+                          )}
+                        </div>
+                      </div>
+                    </header>
+
+                    {/* Conviction Progress */}
+                    {proposalData.strategy.isEnabled &&
+                      currentConvictionPct != null &&
+                      thresholdPct != null &&
+                      totalSupportPct != null && (
+                        <div className="">
+                          {(status === "active" || status === "disputed") && (
+                            <div className="flex flex-col gap-2">
+                              <div className="w-full h-[0.10px] bg-neutral-soft-content" />
+                              <h4 className="mt-4">Progress</h4>
+                              <div className="flex flex-col gap-2">
+                                <ConvictionBarChart
+                                  currentConvictionPct={currentConvictionPct}
+                                  thresholdPct={thresholdPct}
+                                  proposalSupportPct={totalSupportPct}
+                                  isSignalingType={isSignalingType}
+                                  proposalNumber={Number(proposalIdNumber)}
+                                  timeToPass={Number(timeToPass)}
+                                  onReadyToExecute={triggerConvictionRefetch}
+                                  defaultChartMaxValue
+                                  proposalStatus={proposalStatus}
+                                />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                  </div>
+                </div>
+
+                {!proposalData.strategy.isEnabled && (
+                  <InfoBox infoBoxType="warning">
+                    The pool is not enabled.
+                  </InfoBox>
+                )}
+
+                {/* Action Buttons */}
+                {status && status === "active" && (
+                  <div className="flex flex-col gap-2 -mt-2">
+                    <div className="w-full h-[0.10px] bg-neutral-soft-content" />
+                    <h6 className="mt-4 mb-2">Actions</h6>
+                    <div className="flex flex-col sm:flex-row items-center gap-4 w-full">
+                      <Button
+                        icon={
+                          <AdjustmentsHorizontalIcon height={18} width={18} />
+                        }
+                        onClick={() => manageSupportClicked()}
+                        disabled={
+                          !isConnected || missmatchUrl || !isMemberCommunity
+                        }
+                        tooltip={tooltipMessage}
+                        className="w-full"
+                        btnStyle="outline"
+                      >
+                        Vote on Proposals
+                      </Button>
+                      {!isSignalingType && (
+                        <Button
+                          icon={<BoltIcon height={18} width={18} />}
+                          className="w-full"
+                          onClick={() =>
+                            writeDistribute?.({
+                              args: [
+                                BigInt(poolId),
+                                [proposalData?.strategy?.id as Address],
+                                encodedDataProposalId(proposalIdNumber),
+                              ],
+                            })
+                          }
+                          disabled={
+                            isExecuteButtonDisabled ||
+                            !isConnected ||
+                            missmatchUrl ||
+                            proposalStatus === "disputed"
+                          }
+                          tooltip={executeBtnTooltipMessage}
+                        >
+                          Execute
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {selectedTab === 1 && (
+            <section className="section-layout">
+              <h3 className="mb-4">Proposal Description</h3>
+              <Skeleton rows={5} isLoading={!Boolean(metadata)}>
+                <MarkdownWrapper source={metadata?.description} />
+              </Skeleton>
+            </section>
+          )}
+
+          {selectedTab === 2 && (
+            <>
+              <section className="section-layout gap-4 flex flex-col">
+                <div className="flex items-center justify-between">
+                  <h5>Status</h5>
+                  <Badge status={proposalData.proposalStatus} />
+                </div>
+                <div>
+                  <div className="flex flex-col gap-2">
+                    {!isSignalingType && (
+                      <>
+                        {status === "executed" ?
+                          <div className="flex items-center gap-2">
+                            <CheckIcon className="w-5 h-5 text-primary-content" />
+                            <p className="text-primary-content subtitle2">
+                              Passed and Executed
+                            </p>
+                          </div>
+                        : status === "cancelled" ?
+                          <div className="flex items-center gap-2">
+                            <XMarkIcon className="w-5 h-5 text-error-content" />
+                            <p className="text-error-content subtitle2">
+                              Cancelled
+                            </p>
+                          </div>
+                        : null}
+                      </>
+                    )}
+                    {status !== "executed" && status !== "cancelled" && (
+                      <InfoBox
+                        title="Information"
+                        infoBoxType="info"
+                        content={`${isSignalingType ? "This proposal is open and can be supported or disputed by the community. Only the proposal creator can cancel" : "This proposal is currently open. It will pass if nobody successfully disputes it and it receives enough support."}`}
+                      />
+                    )}
+                  </div>
+                </div>
+                <div className="flex flex-col gap-4">
+                  {(status === "active" || status === "disputed") &&
+                    proposalData.strategy.isEnabled && (
+                      <DisputeModal
+                        isMemberCommunity={isMemberCommunity}
+                        proposalData={{ ...proposalData, ...metadata }}
+                      />
+                    )}
+                </div>
+              </section>
+              {isProposerConnected && proposalStatus === "active" && (
+                <section className="section-layout gap-4 flex flex-col mt-4">
+                  <InfoBox
+                    infoBoxType="info"
+                    content="As the original author, you can edit or cancel this proposal."
+                    title="Actions"
+                  />
+                  {proposalDataForActions && (
+                    <>
+                      <EditProposalButton
+                        proposalData={proposalDataForActions}
+                        poolToken={poolToken}
+                      />
+                      <CancelButton proposalData={proposalDataForActions} />
+                    </>
+                  )}
+                </section>
+              )}
+            </>
+          )}
+
+          {selectedTab === 3 &&
+            filteredAndSortedProposalSupporters.length > 0 &&
+            totalSupportPct != null && (
+              <ProposalSupportersTable
+                supporters={filteredAndSortedProposalSupporters}
+                beneficiary={beneficiary}
+                submitter={submitter}
+                totalActivePoints={totalEffectiveActivePoints}
+                totalStakedAmount={totalSupportPct}
+                openSupportersModal={openSupportersModal}
+                setOpenSupportersModal={setOpenSupportersModal}
+                withModal={false}
+              />
+            )}
+        </div>
+      </div>
     </>
   );
 }
@@ -689,6 +963,7 @@ const ProposalSupportersTable = ({
   setOpenSupportersModal,
   beneficiary,
   submitter,
+  withModal = true,
 }: {
   supporters: ProposalSupporter[];
   beneficiary: string | undefined;
@@ -697,10 +972,11 @@ const ProposalSupportersTable = ({
   totalStakedAmount: number;
   openSupportersModal: boolean;
   setOpenSupportersModal: (open: boolean) => void;
+  withModal?: boolean;
 }) => {
   const columns: SupporterColumn[] = [
     {
-      header: supporters.length > 1 ? "Supporters" : "Supporter",
+      header: `Member${(supporters?.length ?? 0) === 1 ? "" : "s"}`,
       render: (supporter: ProposalSupporter) => (
         <EthAddress
           address={supporter.id as Address}
@@ -725,9 +1001,9 @@ const ProposalSupportersTable = ({
           `${calculatePercentageBigInt(
             BigInt(supporter?.stakes[0]?.amount),
             BigInt(totalActivePoints),
-          )} %`
+          )} VP`
         : undefined,
-      className: "flex items-center justify-end",
+      className: "flex items-center justify-end mt-2",
     },
   ];
 
@@ -736,16 +1012,16 @@ const ProposalSupportersTable = ({
       openModal={openSupportersModal}
       setOpenModal={setOpenSupportersModal}
       title="Proposal Supporters"
-      // description="A list of all the community members that are supporting this proposal."
       data={supporters}
       columns={columns}
       footer={
-        <div className="flex justify-between items-end gap-2 mr-6 sm:mr-10">
+        <div className="flex justify-between items-end gap-2 mr-1 sm:mr-10">
           <p className="subtitle">Total Support: </p>
-          <p className=""> {totalStakedAmount} %</p>
+          <p className=""> {totalStakedAmount} VP</p>
         </div>
       }
       className="border1 rounded-lg bg-neutral p-2"
+      withModal={withModal}
     />
   );
 };
