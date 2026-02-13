@@ -22,3 +22,6 @@
 [submodule "lib/protocol-monorepo"]
 	path = lib/protocol-monorepo
 	url = https://github.com/superfluid-org/protocol-monorepo
+[submodule "lib/octant-v2-core"]
+	path = lib/octant-v2-core
+	url = https://github.com/golemfoundation/octant-v2-core
