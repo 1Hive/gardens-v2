@@ -14,8 +14,7 @@
     },
     "build": {
       "dependsOn": [
-        "^build",
-        "web#generate"
+        "^build"
       ],
       "outputs": [
         "dist/**",
@@ -97,6 +96,11 @@
     },
     "web#generate": {
       "cache": false
+    },
+    "web#build": {
+      "dependsOn": [
+        "web#generate"
+      ]
     },
     "subgraph#build": {
       "dependsOn": [

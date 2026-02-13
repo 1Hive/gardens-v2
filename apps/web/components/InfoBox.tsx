@@ -1,7 +1,7 @@
 import React from "react";
 import { InformationCircleIcon } from "@heroicons/react/24/outline";
 
-type InfoBoxStyles = "success" | "warning" | "error" | "info";
+type InfoBoxStyles = "success" | "warning" | "error" | "info" | "disabled";
 
 type InfoBoxProps = {
   infoBoxType: InfoBoxStyles;
@@ -25,6 +25,8 @@ const infoBoxStyles: Record<InfoBoxStyles, string> = {
     "bg-secondary-soft text-secondary-hover-content dark:bg-secondary-dark-base/70 dark:text-secondary-dark-text-hover dark:border-secondary-dark-border/80",
   error:
     "bg-danger-soft text-danger-hover-content dark:bg-danger-dark-base/70 dark:text-danger-dark-text-hover dark:border-danger-dark-border/80",
+  disabled:
+    "bg-neutral-soft text-neutral-content dark:bg-neutral-soft-content dark:text-neutral-content dark:border-neutral-content",
 };
 
 export function InfoBox({
@@ -41,14 +43,16 @@ export function InfoBox({
     <div
       className={`${BASE_STYLES} ${infoBoxStyles[infoBoxType]} ${className ?? ""}`.trim()}
     >
-      <div className="flex items-center gap-2">
-        {!hideIcon && (
-          <div className="flex h-5 w-5 items-center justify-center text-inherit">
-            {icon ?? <InformationCircleIcon className="h-5 w-5" />}
-          </div>
-        )}
-        <h6 className="text-inherit">{title}</h6>
-      </div>
+      {(!!title || !hideIcon) && (
+        <div className="flex items-center gap-2">
+          {!hideIcon && (
+            <div className="flex h-5 w-5 items-center justify-center text-inherit">
+              {icon ?? <InformationCircleIcon className="h-5 w-5" />}
+            </div>
+          )}
+          <h6 className="text-inherit">{title}</h6>
+        </div>
+      )}
       <p
         className={`text-sm leading-5 text-inherit first-letter:uppercase text-left ${contentStyle ?? ""}`.trim()}
       >

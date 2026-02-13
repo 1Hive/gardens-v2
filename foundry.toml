@@ -25,6 +25,7 @@ fs_permissions = [{ access = "read-write", path = "./"}]
 
 bytecode_hash = "none"
 
+
 # fs_permissions = []
 remappings = [
   "solady/=lib/allo-v2/lib/solady/src",

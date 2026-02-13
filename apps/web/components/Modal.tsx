@@ -15,7 +15,7 @@ interface ModalProps {
     | "medium"
     | "large"
     | "extra-large"
-    | "xx-large";
+    | "ultra-large";
   footer?: ReactNode | null;
   testId?: string;
 }
@@ -66,7 +66,7 @@ export function Modal({
     medium: "max-w-xl",
     large: "max-w-2xl",
     "extra-large": "max-w-4xl",
-    "xx-large": "max-w-6xl",
+    "ultra-large": "max-w-6xl",
   };
 
   return (

@@ -5,28 +5,28 @@ schema:
   file: ./src/schema.graphql
 dataSources:
   - kind: ethereum/contract
-    name: RegistryFactoryV0_0
-    network: localhost
+    name: RegistryFactory
+    network: arbitrum-sepolia
     context:
       chainId: 
         type: Int
-        data: 1337
+        data: 421614
     source:
-      address: "0xb7f8bc63bbcad18155201308c8f3540b07f84f5e"
-      abi: RegistryFactoryV0_0
-      startBlock: 0
+      address: "0xf42f88c13804147b2fdda13c093ce14219aea395"
+      abi: RegistryFactory
+      startBlock: 112011139
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
       language: wasm/assemblyscript
       entities:
-        - RegistryFactoryV0_0
+        - RegistryFactory
         - RegistryCommunity
       abis:
-        - name: RegistryFactoryV0_0
-          file: ../contracts/out/RegistryFactoryV0_0.sol/RegistryFactoryV0_0.json
-        - name: RegistryCommunityV0_0
-          file: ../contracts/out/RegistryCommunityV0_0.sol/RegistryCommunityV0_0.json
+        - name: RegistryFactory
+          file: ../contracts/out/RegistryFactory.sol/RegistryFactory.json
+        - name: RegistryCommunity
+          file: ../contracts/out/DiamondAggregated/RegistryCommunity.json
       eventHandlers:
         - event: CommunityCreated(address)
           handler: handleCommunityCreated
@@ -44,15 +44,15 @@ dataSources:
 
   - kind: ethereum/contract
     name: PassportScorer
-    network: localhost
+    network: arbitrum-sepolia
     context:
       chainId: 
         type: Int
-        data: 1337
+        data: 421614
     source:
-      address: "0x0165878a594ca255338adfa4d48449f69242eb8f"
+      address: "0x6ad70508F44aa0e86E7Af80Ccc4fc1f160C2df46"
       abi: PassportScorer
-      startBlock: 0
+      startBlock: 112011139
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -79,12 +79,43 @@ dataSources:
           handler: handleThresholdModified
       file: ./src/mappings/passport-scorer.ts
 
+  - kind: ethereum/contract
+    name: GoodDollarSybil
+    network: arbitrum-sepolia
+    context:
+      chainId: 
+        type: Int
+        data: 421614
+    source:
+      address: "0x9DdE3cE47cC11ee04Ea1e2C440116B3De6f11Ed8"
+      abi: GoodDollarSybil
+      startBlock: 181411130
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - GoodDollarSybil
+      abis:
+        - name: GoodDollarSybil
+          file: ../contracts/out/GoodDollarSybil.sol/GoodDollarSybil.json
+      eventHandlers:
+        - event: Initialized(uint8)
+          handler: handleInitialized
+        - event: UserValidated(address)
+          handler: handleUserValidated
+        - event: UserInvalidated(indexed address)
+          handler: handleUserInvalidated
+        - event: GoodDollarStrategyAdded(indexed address,address)
+          handler: handleStrategyAdded
+      file: ./src/mappings/good-dollar-sybil.ts
+
 templates:
   - kind: ethereum/contract
-    name: RegistryCommunityV0_0
-    network: localhost
+    name: RegistryCommunity
+    network: arbitrum-sepolia
     source:
-      abi: RegistryCommunityV0_0
+      abi: RegistryCommunity
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -96,14 +127,14 @@ templates:
         - TokenGarden
         - Member
       abis:
-        - name: RegistryCommunityV0_0
-          file: ../contracts/out/RegistryCommunityV0_0.sol/RegistryCommunityV0_0.json
+        - name: RegistryCommunity
+          file: ../contracts/out/DiamondAggregated/RegistryCommunity.json
         - name: ERC20
           file: ../contracts/out/ERC20.sol/ERC20.json
-        - name: CVStrategyV0_0
-          file: ../contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json
-        - name: RegistryFactoryV0_0
-          file: ../contracts/out/RegistryFactoryV0_0.sol/RegistryFactoryV0_0.json
+        - name: CVStrategy
+          file: ../contracts/out/DiamondAggregated/CVStrategy.json
+        - name: RegistryFactory
+          file: ../contracts/out/RegistryFactory.sol/RegistryFactory.json
      
       eventHandlers:
         - event: RegistryInitialized(bytes32,string,(uint256,string))
@@ -155,10 +186,10 @@ templates:
       file: ./src/mappings/registry-community.ts
 
   - kind: ethereum/contract
-    name: CVStrategyV0_0
-    network: localhost
+    name: CVStrategy
+    network: arbitrum-sepolia
     source:
-      abi: CVStrategyV0_0
+      abi: CVStrategy
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -169,10 +200,10 @@ templates:
         - CVProposal
         - Allo
       abis:
-        - name: CVStrategyV0_0
-          file: ../contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json
-        - name: RegistryCommunityV0_0
-          file: ../contracts/out/RegistryCommunityV0_0.sol/RegistryCommunityV0_0.json
+        - name: CVStrategy
+          file: ../contracts/out/DiamondAggregated/CVStrategy.json
+        - name: RegistryCommunity
+          file: ../contracts/out/DiamondAggregated/RegistryCommunity.json
         - name: Allo
           file: ../contracts/out/Allo.sol/Allo.json
       eventHandlers:
@@ -216,12 +247,14 @@ templates:
           handler: handleSuperfluidGDAConnected
         - event: SuperfluidGDADisconnected(indexed address,indexed address)
           handler: handleSuperfluidGDADisconnected
+        - event: ProposalEdited(uint256,(uint256,string),address,uint256)
+          handler: handleProposalEdited
 
       file: ./src/mappings/cv-strategy.ts
 
   - kind: ethereum/contract
     name: CollateralVault
-    network: localhost
+    network: arbitrum-sepolia
     source:
       abi: CollateralVault
     mapping:
@@ -253,8 +286,8 @@ templates:
       entities:
         - ProposalDisputeMetadata
       abis:
-        - name: CVStrategyV0_0
-          file: ../contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json
+        - name: CVStrategy
+          file: ../contracts/out/CVStrategy.sol/CVStrategy.json
   
   - name: ProposalMetadata
     kind: file/ipfs
@@ -266,8 +299,8 @@ templates:
       entities:
         - ProposalMetadata
       abis:
-        - name: CVStrategyV0_0
-          file: ../contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json
+        - name: CVStrategy
+          file: ../contracts/out/CVStrategy.sol/CVStrategy.json
   
   - name: PoolMetadata
     kind: file/ipfs
@@ -279,8 +312,8 @@ templates:
       entities:
         - PoolMetadata
       abis:
-        - name: CVStrategyV0_0
-          file: ../contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json
+        - name: CVStrategy
+          file: ../contracts/out/CVStrategy.sol/CVStrategy.json
 
   - name: Covenant
     kind: file/ipfs
@@ -292,5 +325,5 @@ templates:
       entities:
         - Covenant
       abis:
-        - name: CVStrategyV0_0
-          file: ../contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json
+        - name: CVStrategy
+          file: ../contracts/out/CVStrategy.sol/CVStrategy.json

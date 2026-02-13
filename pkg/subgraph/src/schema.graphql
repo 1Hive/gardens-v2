@@ -66,6 +66,7 @@ type CVProposal @entity(immutable: false) {
   createdAt: BigInt!
   updatedAt: BigInt!
   arbitrableConfig: ArbitrableConfig!
+  executedAt: BigInt
 }
 
 # type ProposalMeta @entity(immutable: false) {
@@ -107,6 +108,7 @@ type RegistryCommunity @entity(immutable: false) {
   garden: TokenGarden!
   isValid: Boolean!
   archived: Boolean!
+  membersCount: BigInt!
 }
 
 type Member @entity(immutable: false) {

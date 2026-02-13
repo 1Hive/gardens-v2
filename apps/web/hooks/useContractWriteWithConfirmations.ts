@@ -18,6 +18,7 @@ import { useTransactionNotification } from "./useTransactionNotification";
 import { chainConfigMap } from "@/configs/chains";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import { useFlag } from "@/hooks/useFlag";
+import { abiWithErrors } from "@/utils/abi";
 
 export type ComputedStatus =
   | "loading"
@@ -89,8 +90,14 @@ export function useContractWriteWithConfirmations<
     return !IS_E2E && resolvedChaindId === celo.id;
   }, [resolvedChaindId]);
 
-  let propsWithChainId = {
+  const abiWithCustomErrors = useMemo(() => {
+    if (!props.abi) return undefined;
+    return abiWithErrors(props.abi as Abi);
+  }, [props.abi]);
+
+  const propsWithChainId = {
     ...props,
+    abi: (abiWithCustomErrors ?? props.abi) as TAbi,
     chainId: resolvedChaindId,
     dataSuffix:
       shouldDivviTrack
@@ -109,7 +116,12 @@ export function useContractWriteWithConfirmations<
   function logError(error: any, variables: any, context: string) {
     console.error(
       `Error with transaction [${props.contractName} -> ${props.functionName}]`,
-      { error, variables, context },
+      {
+        error,
+        variables,
+        context,
+        cause: error?.cause?.message || error?.message,
+      },
     );
   }
 

@@ -49,11 +49,3 @@ body:
     validations:
       required: false
 
-  - type: checkboxes
-    id: skip_discord
-    attributes:
-      label: Skip Discord notification
-      description: Check this if you do NOT want this bug to be reported to Gardens Discord's server.
-      options:
-        - label: Skip notify Discord
-          required: false

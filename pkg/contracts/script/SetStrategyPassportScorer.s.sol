@@ -2,9 +2,9 @@
 pragma solidity ^0.8.13;
 
 import "./BaseMultiChain.s.sol";
-import {CVStrategyV0_0} from "../src/CVStrategy/CVStrategyV0_0.sol";
-import {RegistryCommunityV0_0} from "../src/RegistryCommunity/RegistryCommunityV0_0.sol";
-import {RegistryFactoryV0_0} from "../src/RegistryFactory/RegistryFactoryV0_0.sol";
+import {CVStrategy} from "../src/CVStrategy/CVStrategy.sol";
+import {RegistryCommunity} from "../src/RegistryCommunity/RegistryCommunity.sol";
+import {RegistryFactory} from "../src/RegistryFactory/RegistryFactory.sol";
 
 // Uncoment setSybilScorer
 // contract SetStrategyPassportScorer is BaseMultiChain {
@@ -16,7 +16,7 @@ import {RegistryFactoryV0_0} from "../src/RegistryFactory/RegistryFactoryV0_0.so
 
 //         address[] memory cvStrategyProxies = networkJson.readAddressArray(getKeyNetwork(".PROXIES.CV_STRATEGIES"));
 //         for (uint256 i = 0; i < cvStrategyProxies.length; i++) {
-//             CVStrategyV0_0 strategy = CVStrategyV0_0(payable(address(cvStrategyProxies[i])));
+//             CVStrategy strategy = CVStrategy(payable(address(cvStrategyProxies[i])));
 //             (uint256 threshold,,) = passportScorer.strategies(address(strategy));
 //             strategy.setSybilScorer(passportScorerProxy, threshold);
 //         }

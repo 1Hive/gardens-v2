@@ -237,6 +237,9 @@ export default function DesignSystemPage() {
               <InfoBox infoBoxType="error" title="Error">
                 Something went wrong that needs fixing.
               </InfoBox>
+              <InfoBox infoBoxType="disabled" title="Disabled">
+                This feature is currently disabled.
+              </InfoBox>
             </div>
           </DemoCard>
 

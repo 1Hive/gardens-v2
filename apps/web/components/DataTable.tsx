@@ -20,11 +20,9 @@ interface TableColumn {
 
 export const DataTable: React.FC<DataTableProps> = ({
   title,
-  description,
   data,
   columns,
   footer,
-  className = "",
   openModal,
   setOpenModal,
 }) => {
@@ -34,7 +32,7 @@ export const DataTable: React.FC<DataTableProps> = ({
       footer={footer}
       isOpen={openModal}
       onClose={() => setOpenModal(false)}
-      size="xx-large"
+      size="ultra-large"
     >
       <div className="overflow-x-hidden max-h-[500px]">
         <div className="inline-block min-w-full py-2 align-middle sm:px-4 lg:px-6">

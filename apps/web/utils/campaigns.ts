@@ -24,7 +24,7 @@ export const CAMPAIGNS = {
     endDate: "25 Feb 2026",
     banner: SuperBanner,
     logo: SuperLogo,
-    leaderboardEndpoint: "/api/superfluid-stack/leaderboard",
+    leaderboardEndpoint: "/api/superfluid-points/leaderboard",
   },
   "2": {
     id: "2",
@@ -35,6 +35,6 @@ export const CAMPAIGNS = {
     endDate: "25 Feb 2026",
     banner: SuperBanner,
     logo: GoodDollarLogo,
-    leaderboardEndpoint: "/api/superfluid-stack-gd/leaderboard",
+    leaderboardEndpoint: "/api/superfluid-points-gd/leaderboard",
   },
 } as const;

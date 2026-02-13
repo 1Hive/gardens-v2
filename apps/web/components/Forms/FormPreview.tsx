@@ -1,4 +1,4 @@
-import React, { ReactNode } from "react";
+import React, { ReactNode, useEffect } from "react";
 import MarkdownWrapper from "../MarkdownWrapper";
 import TooltipIfOverflow from "../TooltipIfOverflow";
 
@@ -8,9 +8,49 @@ type Props = {
   formRows?: FormRow[];
   title?: string;
   description?: string;
+  onSubmit?: () => void;
+  onEdit?: () => void;
 };
 
-export function FormPreview({ title, description, formRows }: Props) {
+const isTypingField = (target: EventTarget | null) => {
+  if (!(target instanceof HTMLElement)) return false;
+
+  const tagName = target.tagName;
+  return (
+    tagName === "INPUT" ||
+    tagName === "TEXTAREA" ||
+    tagName === "SELECT" ||
+    target.isContentEditable ||
+    Boolean(target.closest("[contenteditable='true']"))
+  );
+};
+
+export function FormPreview({
+  title,
+  description,
+  formRows,
+  onSubmit,
+  onEdit,
+}: Props) {
+  useEffect(() => {
+    if (!onSubmit && !onEdit) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (isTypingField(event.target)) return;
+
+      if (event.key === "Enter" && onSubmit) {
+        event.preventDefault();
+        onSubmit();
+      } else if (event.key === "Backspace" && onEdit) {
+        event.preventDefault();
+        onEdit();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onSubmit, onEdit]);
+
   if (!formRows) {
     return <>Error no Data</>;
   }

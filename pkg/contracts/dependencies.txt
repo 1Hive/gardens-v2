@@ -86,13 +86,13 @@ pkg/contracts/script/AddOwner.s.sol ^0.8.19
 ├── pkg/contracts/test/CVStrategyHelpersV0_0.sol ^0.8.19
 │   ├── lib/forge-std/src/console.sol >=0.4.22, <0.9.0
 │   ├── lib/allo-v2/contracts/core/Allo.sol =0.8.19 (*)
-│   ├── pkg/contracts/src/CVStrategy/CVStrategyV0_0.sol ^0.8.19
+│   ├── pkg/contracts/src/CVStrategy/CVStrategy.sol ^0.8.19
 │   │   ├── lib/allo-v2/contracts/core/libraries/Metadata.sol =0.8.19
 │   │   ├── lib/allo-v2/contracts/strategies/BaseStrategy.sol ^0.8.19
 │   │   │   ├── lib/allo-v2/contracts/core/interfaces/IStrategy.sol ^0.8.19 (*)
 │   │   │   ├── lib/allo-v2/contracts/core/libraries/Transfer.sol =0.8.19 (*)
 │   │   │   └── lib/allo-v2/contracts/core/libraries/Errors.sol =0.8.19
-│   │   ├── pkg/contracts/src/RegistryCommunity/RegistryCommunityV0_0.sol ^0.8.19
+│   │   ├── pkg/contracts/src/RegistryCommunity/RegistryCommunity.sol ^0.8.19
 │   │   │   ├── lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol ^0.8.0
 │   │   │   ├── lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol ^0.8.0
 │   │   │   │   ├── lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol ^0.8.0
@@ -118,7 +118,7 @@ pkg/contracts/script/AddOwner.s.sol ^0.8.19
 │   │   │   │   └── lib/allo-v2/contracts/core/interfaces/IRegistry.sol ^0.8.19 (*)
 │   │   │   ├── pkg/contracts/src/interfaces/ISafe.sol ^0.8.19
 │   │   │   ├── pkg/contracts/src/IRegistryFactory.sol ^0.8.19
-│   │   │   ├── pkg/contracts/src/CVStrategy/CVStrategyV0_0.sol ^0.8.19 (*)
+│   │   │   ├── pkg/contracts/src/CVStrategy/CVStrategy.sol ^0.8.19 (*)
 │   │   │   ├── lib/openzeppelin-foundry-upgrades/src/LegacyUpgrades.sol ^0.8.0
 │   │   │   │   ├── lib/openzeppelin-foundry-upgrades/src/Options.sol ^0.8.0
 │   │   │   │   └── lib/openzeppelin-foundry-upgrades/src/internal/Core.sol ^0.8.0
@@ -184,8 +184,8 @@ pkg/contracts/script/AddOwner.s.sol ^0.8.19
 │   ├── lib/allo-v2/contracts/core/interfaces/IRegistry.sol ^0.8.19 (*)
 │   └── lib/allo-v2/test/foundry/shared/Accounts.sol ^0.8.19
 │       └── lib/forge-std/src/StdCheats.sol >=0.6.2, <0.9.0 (*)
-├── pkg/contracts/src/RegistryFactory/RegistryFactoryV0_0.sol ^0.8.19
-│   ├── pkg/contracts/src/RegistryCommunity/RegistryCommunityV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/src/RegistryFactory/RegistryFactory.sol ^0.8.19
+│   ├── pkg/contracts/src/RegistryCommunity/RegistryCommunity.sol ^0.8.19 (*)
 │   ├── pkg/contracts/src/ProxyOwnableUpgrader.sol ^0.8.19 (*)
 │   ├── lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol ^0.8.0 (*)
 │   └── lib/allo-v2/contracts/core/libraries/Clone.sol =0.8.19 (*)
@@ -225,8 +225,8 @@ pkg/contracts/script/AddStrategy.s.sol ^0.8.13
 ├── lib/allo-v2/contracts/core/Registry.sol =0.8.19 (*)
 ├── lib/allo-v2/contracts/core/libraries/Native.sol =0.8.19
 ├── pkg/contracts/test/CVStrategyHelpersV0_0.sol ^0.8.19 (*)
-├── pkg/contracts/src/RegistryFactory/RegistryFactoryV0_0.sol ^0.8.19 (*)
-├── pkg/contracts/src/RegistryCommunity/RegistryCommunityV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/src/RegistryFactory/RegistryFactory.sol ^0.8.19 (*)
+├── pkg/contracts/src/RegistryCommunity/RegistryCommunity.sol ^0.8.19 (*)
 ├── pkg/contracts/test/shared/SafeSetup.sol ^0.8.19 (*)
 ├── lib/allo-v2/contracts/core/libraries/Metadata.sol =0.8.19
 ├── lib/allo-v2/test/foundry/shared/Accounts.sol ^0.8.19 (*)
@@ -239,7 +239,7 @@ pkg/contracts/script/BaseMultiChain.s.sol ^0.8.13
 ├── lib/forge-std/src/StdJson.sol >=0.6.0, <0.9.0 (*)
 ├── lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol ^0.8.0
 ├── lib/openzeppelin-contracts/contracts/utils/Strings.sol ^0.8.0 (*)
-├── pkg/contracts/src/CVStrategy/CVStrategyV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/src/CVStrategy/CVStrategy.sol ^0.8.19 (*)
 ├── pkg/contracts/src/SafeArbitrator.sol ^0.8.19
 │   ├── lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol ^0.8.0
 │   ├── lib/openzeppelin-contracts/contracts/proxy/utils/UUPSUpgradeable.sol ^0.8.0 (*)
@@ -257,8 +257,8 @@ pkg/contracts/script/BaseMultiChain.s.sol ^0.8.13
 ├── pkg/contracts/test/shared/SafeSetup.sol ^0.8.19 (*)
 ├── lib/allo-v2/contracts/core/libraries/Metadata.sol =0.8.19
 ├── lib/allo-v2/test/foundry/shared/Accounts.sol ^0.8.19 (*)
-├── pkg/contracts/src/RegistryFactory/RegistryFactoryV0_0.sol ^0.8.19 (*)
-├── pkg/contracts/src/RegistryCommunity/RegistryCommunityV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/src/RegistryFactory/RegistryFactory.sol ^0.8.19 (*)
+├── pkg/contracts/src/RegistryCommunity/RegistryCommunity.sol ^0.8.19 (*)
 ├── pkg/contracts/src/interfaces/ISafe.sol ^0.8.19
 ├── pkg/contracts/src/CollateralVault.sol ^0.8.19
 │   ├── lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol ^0.8.0
@@ -286,15 +286,15 @@ pkg/contracts/script/DeployCV.s.sol ^0.8.13
 ├── pkg/contracts/test/CVStrategyHelpersV0_0.sol ^0.8.19 (*)
 ├── pkg/contracts/test/shared/TERC20.sol ^0.8.19
 │   └── lib/allo-v2/lib/solady/src/tokens/ERC20.sol ^0.8.4
-├── pkg/contracts/src/CVStrategy/CVStrategyV0_0.sol ^0.8.19 (*)
-├── pkg/contracts/src/RegistryFactory/RegistryFactoryV0_0.sol ^0.8.19 (*)
-├── pkg/contracts/src/RegistryCommunity/RegistryCommunityV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/src/CVStrategy/CVStrategy.sol ^0.8.19 (*)
+├── pkg/contracts/src/RegistryFactory/RegistryFactory.sol ^0.8.19 (*)
+├── pkg/contracts/src/RegistryCommunity/RegistryCommunity.sol ^0.8.19 (*)
 ├── pkg/contracts/src/ISybilScorer.sol ^0.8.19
 ├── pkg/contracts/src/PassportScorer.sol ^0.8.19 (*)
 ├── pkg/contracts/test/shared/SafeSetup.sol ^0.8.19 (*)
 ├── lib/allo-v2/contracts/core/interfaces/IRegistry.sol ^0.8.19 (*)
 ├── lib/allo-v2/test/foundry/shared/Accounts.sol ^0.8.19 (*)
-├── pkg/contracts/src/CVStrategy/CVStrategyV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/src/CVStrategy/CVStrategy.sol ^0.8.19 (*)
 ├── lib/openzeppelin-foundry-upgrades/src/LegacyUpgrades.sol ^0.8.0 (*)
 └── lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol ^0.8.0 (*)
 pkg/contracts/script/DeployCVArbSepolia.s.sol ^0.8.13
@@ -309,8 +309,8 @@ pkg/contracts/script/DeployCVArbSepolia.s.sol ^0.8.13
 ├── pkg/contracts/test/CVStrategyHelpersV0_0.sol ^0.8.19 (*)
 ├── pkg/contracts/src/SafeArbitrator.sol ^0.8.19 (*)
 ├── pkg/contracts/src/CollateralVault.sol ^0.8.19 (*)
-├── pkg/contracts/src/RegistryCommunity/RegistryCommunityV0_0.sol ^0.8.19 (*)
-├── pkg/contracts/src/RegistryFactory/RegistryFactoryV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/src/RegistryCommunity/RegistryCommunity.sol ^0.8.19 (*)
+├── pkg/contracts/src/RegistryFactory/RegistryFactory.sol ^0.8.19 (*)
 ├── pkg/contracts/test/shared/SafeSetup.sol ^0.8.19 (*)
 ├── lib/allo-v2/contracts/core/libraries/Metadata.sol =0.8.19
 ├── lib/allo-v2/test/foundry/shared/Accounts.sol ^0.8.19 (*)
@@ -329,8 +329,8 @@ pkg/contracts/script/DeployCVArbSepoliaCommFee.s.sol ^0.8.13
 ├── lib/allo-v2/contracts/core/libraries/Native.sol =0.8.19
 ├── pkg/contracts/test/CVStrategyHelpersV0_0.sol ^0.8.19 (*)
 ├── pkg/contracts/src/CollateralVault.sol ^0.8.19 (*)
-├── pkg/contracts/src/RegistryFactory/RegistryFactoryV0_0.sol ^0.8.19 (*)
-├── pkg/contracts/src/RegistryCommunity/RegistryCommunityV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/src/RegistryFactory/RegistryFactory.sol ^0.8.19 (*)
+├── pkg/contracts/src/RegistryCommunity/RegistryCommunity.sol ^0.8.19 (*)
 ├── pkg/contracts/test/shared/SafeSetup.sol ^0.8.19 (*)
 ├── lib/allo-v2/contracts/core/libraries/Metadata.sol =0.8.19
 ├── lib/allo-v2/test/foundry/shared/Accounts.sol ^0.8.19 (*)
@@ -350,8 +350,8 @@ pkg/contracts/script/DeployCVArbSepoliaPool.s.sol ^0.8.13
 ├── pkg/contracts/test/CVStrategyHelpersV0_0.sol ^0.8.19 (*)
 ├── pkg/contracts/src/SafeArbitrator.sol ^0.8.19 (*)
 ├── pkg/contracts/src/CollateralVault.sol ^0.8.19 (*)
-├── pkg/contracts/src/RegistryCommunity/RegistryCommunityV0_0.sol ^0.8.19 (*)
-├── pkg/contracts/src/RegistryFactory/RegistryFactoryV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/src/RegistryCommunity/RegistryCommunity.sol ^0.8.19 (*)
+├── pkg/contracts/src/RegistryFactory/RegistryFactory.sol ^0.8.19 (*)
 ├── pkg/contracts/test/shared/SafeSetup.sol ^0.8.19 (*)
 ├── lib/allo-v2/contracts/core/libraries/Metadata.sol =0.8.19
 ├── lib/allo-v2/test/foundry/shared/Accounts.sol ^0.8.19 (*)
@@ -364,7 +364,7 @@ pkg/contracts/script/DeployCVMultiChain.s.sol ^0.8.13
 ├── lib/forge-std/src/StdJson.sol >=0.6.0, <0.9.0 (*)
 ├── lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol ^0.8.0
 ├── lib/openzeppelin-contracts/contracts/utils/Strings.sol ^0.8.0 (*)
-├── pkg/contracts/src/CVStrategy/CVStrategyV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/src/CVStrategy/CVStrategy.sol ^0.8.19 (*)
 ├── pkg/contracts/src/SafeArbitrator.sol ^0.8.19 (*)
 ├── lib/allo-v2/contracts/core/interfaces/IAllo.sol ^0.8.19 (*)
 ├── lib/allo-v2/contracts/core/Allo.sol =0.8.19 (*)
@@ -376,8 +376,8 @@ pkg/contracts/script/DeployCVMultiChain.s.sol ^0.8.13
 ├── pkg/contracts/test/shared/SafeSetup.sol ^0.8.19 (*)
 ├── lib/allo-v2/contracts/core/libraries/Metadata.sol =0.8.19
 ├── lib/allo-v2/test/foundry/shared/Accounts.sol ^0.8.19 (*)
-├── pkg/contracts/src/RegistryFactory/RegistryFactoryV0_0.sol ^0.8.19 (*)
-├── pkg/contracts/src/RegistryCommunity/RegistryCommunityV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/src/RegistryFactory/RegistryFactory.sol ^0.8.19 (*)
+├── pkg/contracts/src/RegistryCommunity/RegistryCommunity.sol ^0.8.19 (*)
 ├── pkg/contracts/src/interfaces/ISafe.sol ^0.8.19
 ├── pkg/contracts/src/CollateralVault.sol ^0.8.19 (*)
 ├── lib/openzeppelin-foundry-upgrades/src/LegacyUpgrades.sol ^0.8.0 (*)
@@ -409,14 +409,14 @@ pkg/contracts/script/Playground.sol ^0.8.19
 pkg/contracts/script/UpgradeCVMultichain.s.sol ^0.8.13
 ├── pkg/contracts/script/BaseMultiChain.s.sol ^0.8.13 (*)
 └── pkg/contracts/src/RegistryFactory/RegistryFactoryV0_1.sol ^0.8.19
-    └── pkg/contracts/src/RegistryFactory/RegistryFactoryV0_0.sol ^0.8.19 (*)
+    └── pkg/contracts/src/RegistryFactory/RegistryFactory.sol ^0.8.19 (*)
 pkg/contracts/script/VerifyTest.s.sol ^0.8.13
 ├── lib/forge-std/src/console2.sol >=0.4.22, <0.9.0
 ├── lib/forge-std/src/Script.sol >=0.6.2, <0.9.0 (*)
 ├── lib/forge-std/src/StdJson.sol >=0.6.0, <0.9.0 (*)
 ├── lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol ^0.8.0
 ├── lib/openzeppelin-contracts/contracts/utils/Strings.sol ^0.8.0 (*)
-├── pkg/contracts/src/CVStrategy/CVStrategyV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/src/CVStrategy/CVStrategy.sol ^0.8.19 (*)
 ├── pkg/contracts/src/SafeArbitrator.sol ^0.8.19 (*)
 ├── lib/allo-v2/contracts/core/interfaces/IAllo.sol ^0.8.19 (*)
 ├── lib/allo-v2/contracts/core/Allo.sol =0.8.19 (*)
@@ -428,8 +428,8 @@ pkg/contracts/script/VerifyTest.s.sol ^0.8.13
 ├── pkg/contracts/test/shared/SafeSetup.sol ^0.8.19 (*)
 ├── lib/allo-v2/contracts/core/libraries/Metadata.sol =0.8.19
 ├── lib/allo-v2/test/foundry/shared/Accounts.sol ^0.8.19 (*)
-├── pkg/contracts/src/RegistryFactory/RegistryFactoryV0_0.sol ^0.8.19 (*)
-├── pkg/contracts/src/RegistryCommunity/RegistryCommunityV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/src/RegistryFactory/RegistryFactory.sol ^0.8.19 (*)
+├── pkg/contracts/src/RegistryCommunity/RegistryCommunity.sol ^0.8.19 (*)
 ├── pkg/contracts/src/interfaces/ISafe.sol ^0.8.19
 ├── pkg/contracts/src/CollateralVault.sol ^0.8.19 (*)
 ├── lib/openzeppelin-foundry-upgrades/src/LegacyUpgrades.sol ^0.8.0 (*)
@@ -438,7 +438,7 @@ pkg/contracts/script/VerifyTest.s.sol ^0.8.13
 ├── pkg/contracts/src/ISybilScorer.sol ^0.8.19
 └── pkg/contracts/script/BaseMultiChain.s.sol ^0.8.13 (*)
 pkg/contracts/src/BaseStrategyUpgradeable.sol ^0.8.19 (*)
-pkg/contracts/src/CVStrategy/CVStrategyV0_0.sol ^0.8.19 (*)
+pkg/contracts/src/CVStrategy/CVStrategy.sol ^0.8.19 (*)
 pkg/contracts/src/CollateralVault.sol ^0.8.19 (*)
 pkg/contracts/src/IRegistryFactory.sol ^0.8.19
 pkg/contracts/src/ISafe.sol ^0.8.19
@@ -446,8 +446,8 @@ pkg/contracts/src/ISybilScorer.sol ^0.8.19
 pkg/contracts/src/PassportScorer.sol ^0.8.19 (*)
 pkg/contracts/src/ProxyOwnableUpgrader.sol ^0.8.19 (*)
 pkg/contracts/src/ProxyOwner.sol ^0.8.19 (*)
-pkg/contracts/src/RegistryCommunity/RegistryCommunityV0_0.sol ^0.8.19 (*)
-pkg/contracts/src/RegistryFactory/RegistryFactoryV0_0.sol ^0.8.19 (*)
+pkg/contracts/src/RegistryCommunity/RegistryCommunity.sol ^0.8.19 (*)
+pkg/contracts/src/RegistryFactory/RegistryFactory.sol ^0.8.19 (*)
 pkg/contracts/src/RegistryFactory/RegistryFactoryV0_1.sol ^0.8.19 (*)
 pkg/contracts/src/SafeArbitrator.sol ^0.8.19 (*)
 pkg/contracts/src/interfaces/FAllo.sol ^0.8.19 (*)
@@ -485,10 +485,10 @@ pkg/contracts/test/CVStrategyTest.t.sol ^0.8.19
 │   └── lib/allo-v2/contracts/strategies/BaseStrategy.sol ^0.8.19 (*)
 ├── pkg/contracts/src/interfaces/IArbitrator.sol ^0.8.19 (*)
 ├── pkg/contracts/script/GV2ERC20.sol ^0.8.19 (*)
-├── pkg/contracts/src/RegistryCommunity/RegistryCommunityV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/src/RegistryCommunity/RegistryCommunity.sol ^0.8.19 (*)
 ├── pkg/contracts/src/CollateralVault.sol ^0.8.19 (*)
-├── pkg/contracts/src/RegistryFactory/RegistryFactoryV0_0.sol ^0.8.19 (*)
-├── pkg/contracts/src/CVStrategy/CVStrategyV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/src/RegistryFactory/RegistryFactory.sol ^0.8.19 (*)
+├── pkg/contracts/src/CVStrategy/CVStrategy.sol ^0.8.19 (*)
 ├── pkg/contracts/src/ISybilScorer.sol ^0.8.19
 ├── pkg/contracts/src/PassportScorer.sol ^0.8.19 (*)
 ├── pkg/contracts/test/shared/GasHelpers2.sol ^0.8.19
@@ -498,7 +498,7 @@ pkg/contracts/test/CVStrategyTest.t.sol ^0.8.19
 ├── pkg/contracts/test/ABDKMath64x64.sol ^0.8.0
 ├── lib/openzeppelin-foundry-upgrades/src/LegacyUpgrades.sol ^0.8.0 (*)
 ├── lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol ^0.8.0 (*)
-└── pkg/contracts/src/RegistryCommunity/RegistryCommunityV0_0.sol ^0.8.19 (*)
+└── pkg/contracts/src/RegistryCommunity/RegistryCommunity.sol ^0.8.19 (*)
 pkg/contracts/test/PassportScorerTest.t.sol ^0.8.19
 ├── lib/forge-std/src/Test.sol >=0.6.2, <0.9.0 (*)
 ├── pkg/contracts/src/PassportScorer.sol ^0.8.19 (*)
@@ -508,10 +508,10 @@ pkg/contracts/test/ProxyOwnerTest.t.sol ^0.8.19
 ├── lib/forge-std/src/Test.sol >=0.6.2, <0.9.0 (*)
 ├── lib/allo-v2/test/foundry/shared/AlloSetup.sol ^0.8.19 (*)
 ├── lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol ^0.8.0 (*)
-├── pkg/contracts/src/RegistryFactory/RegistryFactoryV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/src/RegistryFactory/RegistryFactory.sol ^0.8.19 (*)
 ├── pkg/contracts/src/RegistryFactory/RegistryFactoryV0_1.sol ^0.8.19 (*)
-├── pkg/contracts/src/RegistryCommunity/RegistryCommunityV0_0.sol ^0.8.19 (*)
-├── pkg/contracts/src/CVStrategy/CVStrategyV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/src/RegistryCommunity/RegistryCommunity.sol ^0.8.19 (*)
+├── pkg/contracts/src/CVStrategy/CVStrategy.sol ^0.8.19 (*)
 ├── pkg/contracts/src/CollateralVault.sol ^0.8.19 (*)
 ├── lib/openzeppelin-foundry-upgrades/src/LegacyUpgrades.sol ^0.8.0 (*)
 ├── pkg/contracts/src/ProxyOwner.sol ^0.8.19 (*)
@@ -534,12 +534,12 @@ pkg/contracts/test/RegistryTest.t.sol ^0.8.19
 ├── lib/allo-v2/test/utils/MockStrategy.sol ^0.8.19 (*)
 ├── pkg/contracts/script/GV2ERC20.sol ^0.8.19 (*)
 ├── pkg/contracts/test/shared/GasHelpers2.sol ^0.8.19 (*)
-├── pkg/contracts/src/RegistryFactory/RegistryFactoryV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/src/RegistryFactory/RegistryFactory.sol ^0.8.19 (*)
 ├── pkg/contracts/src/RegistryFactory/RegistryFactoryV0_1.sol ^0.8.19 (*)
-├── pkg/contracts/src/CVStrategy/CVStrategyV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/src/CVStrategy/CVStrategy.sol ^0.8.19 (*)
 ├── pkg/contracts/src/CollateralVault.sol ^0.8.19 (*)
 ├── pkg/contracts/src/SafeArbitrator.sol ^0.8.19 (*)
-├── pkg/contracts/src/RegistryCommunity/RegistryCommunityV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/src/RegistryCommunity/RegistryCommunity.sol ^0.8.19 (*)
 ├── pkg/contracts/src/interfaces/ISafe.sol ^0.8.19
 ├── pkg/contracts/test/shared/SafeSetup.sol ^0.8.19 (*)
 ├── pkg/contracts/test/CVStrategyHelpersV0_0.sol ^0.8.19 (*)
@@ -550,9 +550,9 @@ pkg/contracts/test/RegistryTest.t.sol ^0.8.19
 pkg/contracts/test/SafeArbitratorTest.t.sol ^0.8.19
 ├── lib/forge-std/src/Test.sol >=0.6.2, <0.9.0 (*)
 ├── pkg/contracts/src/SafeArbitrator.sol ^0.8.19 (*)
-├── pkg/contracts/src/CVStrategy/CVStrategyV0_0.sol ^0.8.19 (*)
-├── pkg/contracts/src/RegistryCommunity/RegistryCommunityV0_0.sol ^0.8.19 (*)
-├── pkg/contracts/src/RegistryFactory/RegistryFactoryV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/src/CVStrategy/CVStrategy.sol ^0.8.19 (*)
+├── pkg/contracts/src/RegistryCommunity/RegistryCommunity.sol ^0.8.19 (*)
+├── pkg/contracts/src/RegistryFactory/RegistryFactory.sol ^0.8.19 (*)
 ├── pkg/contracts/src/CollateralVault.sol ^0.8.19 (*)
 ├── lib/allo-v2/test/foundry/shared/RegistrySetup.sol ^0.8.19 (*)
 ├── lib/allo-v2/test/foundry/shared/AlloSetup.sol ^0.8.19 (*)

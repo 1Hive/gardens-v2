@@ -312,7 +312,7 @@ export default function PoolEditForm({
         chainId: chainId,
       });
     },
-    onSettled: () => {
+    onError: () => {
       setLoading(false);
     },
     onSuccess: () => {
@@ -458,7 +458,14 @@ export default function PoolEditForm({
         />
 
         {showPreview ?
-          <FormPreview formRows={formatFormRows()} />
+          <FormPreview
+            formRows={formatFormRows()}
+            onEdit={() => {
+              setShowPreview(false);
+              setLoading(false);
+            }}
+            onSubmit={() => contractWrite()}
+          />
         : <div className="flex flex-col gap-6">
             <div className="flex flex-col gap-4">
               {derivedType === "gitcoinPassport" ?

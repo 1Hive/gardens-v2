@@ -6,11 +6,12 @@
     "dev": "make deploy",
     "fork": "make fork",
     "build": "forge build --sizes",
+    "postbuild": "node scripts/aggregate-diamond-abi.js",
     "build:ir": "forge build --sizes --via-ir",
     "lint": "forge fmt",
     "test": "forge test -vvv",
     "test:force": "forge test -vvv --force",
     "format": "forge fmt",
-    "coverage": "forge coverage --ir-minimum --match-path 'pkg/contracts/test/**' --report lcov"
+    "coverage": "forge coverage --ir-minimum --match-path 'pkg/contracts/test/**' --exclude-tests --report lcov -r lcov.info && sed -i 's|^SF:pkg/contracts/|SF:|g' lcov.info"
   }
 }

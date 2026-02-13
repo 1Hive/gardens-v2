@@ -14,4 +14,8 @@ export const QUERY_PARAMS = {
     goodDollar: "goodDollar",
     goodDollarVerified: "verified",
   },
+  proposalPage: {
+    pendingProposal: "pendingProposal",
+    pendingProposalTitle: "pendingProposalTitle",
+  },
 } as const;

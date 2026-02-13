@@ -91,40 +91,6 @@ const abiParameters = [
   },
 ];
 
-// function formatNumber(num: string | number): string {
-//   if (num == 0) {
-//     return "0";
-//   }
-//   // Convert to number if it's a string
-//   const number = typeof num === "string" ? parseFloat(num) : num;
-
-//   // Check if the number is NaN
-//   if (isNaN(number)) {
-//     return "Invalid Number";
-//   }
-
-//   // If the absolute value is greater than or equal to 1, use toFixed(2)
-//   if (Math.abs(number) >= 1) {
-//     return number.toFixed(2);
-//   }
-
-//   // For numbers between 0 and 1 (exclusive)
-//   const parts = number.toString().split("e");
-//   const exponent = parts[1] ? parseInt(parts[1]) : 0;
-
-//   if (exponent < -3) {
-//     // For very small numbers, use exponential notation with 4 significant digits
-//     return number.toPrecision(4);
-//   } else {
-//     // For numbers between 0.001 and 1, show at least 4 decimal places
-//     const decimalPlaces = Math.max(
-//       4,
-//       -Math.floor(Math.log10(Math.abs(number))) + 3,
-//     );
-//     return number.toFixed(decimalPlaces);
-//   }
-// }
-
 export const ProposalForm = ({
   strategy,
   arbitrableConfig,
@@ -234,6 +200,9 @@ export const ProposalForm = ({
     functionName: "registerRecipient",
     fallbackErrorMessage: "Error creating Proposal, please report a bug.",
     value: arbitrableConfig?.submitterCollateralAmount,
+    onError: () => {
+      setLoading(false);
+    },
     onConfirmations: (receipt) => {
       const proposalId = getEventFromReceipt(
         receipt,
@@ -252,9 +221,21 @@ export const ProposalForm = ({
       if (pathname) {
         const newPath = pathname.replace(
           "/create-proposal",
-          `?${QUERY_PARAMS.poolPage.newProposal}=${proposalId}`,
+          `/${strategy.id}-${proposalId}`,
         );
-        router.push(newPath);
+        const searchParams = new URLSearchParams();
+        searchParams.set(
+          QUERY_PARAMS.proposalPage.pendingProposal,
+          proposalId.toString(),
+        );
+        const titleValue = getValues("title");
+        if (titleValue) {
+          searchParams.set(
+            QUERY_PARAMS.proposalPage.pendingProposalTitle,
+            encodeURIComponent(titleValue),
+          );
+        }
+        router.push(`${newPath}?${searchParams.toString()}`);
       }
     },
   });
@@ -367,6 +348,13 @@ export const ProposalForm = ({
           title={previewData?.title ?? ""}
           description={previewData?.description ?? ""}
           formRows={formatFormRows()}
+          onEdit={() => {
+            setShowPreview(false);
+          }}
+          onSubmit={() => {
+            if (isButtonDisabled) return;
+            createProposal();
+          }}
         />
       : <div className="flex flex-col gap-2 overflow-hidden p-1">
           {proposalTypeName === "funding" && (
@@ -488,6 +476,7 @@ export const ProposalForm = ({
         {showPreview ?
           <div className="flex items-center gap-10">
             <Button
+              type="button"
               onClick={() => {
                 setShowPreview(false);
                 setLoading(false);
@@ -497,6 +486,7 @@ export const ProposalForm = ({
               Edit
             </Button>
             <Button
+              type="button"
               onClick={() => createProposal()}
               isLoading={loading}
               disabled={isButtonDisabled}

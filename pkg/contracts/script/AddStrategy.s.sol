@@ -9,9 +9,9 @@ import {Allo} from "allo-v2-contracts/core/Allo.sol";
 import {IRegistry} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 import {Registry} from "allo-v2-contracts/core/Registry.sol";
 import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
-import {CVStrategyHelpers, CVStrategyV0_0} from "../test/CVStrategyHelpers.sol";
-import {RegistryFactoryV0_0} from "../src/RegistryFactory/RegistryFactoryV0_0.sol";
-import {RegistryCommunityV0_0} from "../src/RegistryCommunity/RegistryCommunityV0_0.sol";
+import {CVStrategyHelpers, CVStrategy} from "../test/CVStrategyHelpers.sol";
+import {RegistryFactory} from "../src/RegistryFactory/RegistryFactory.sol";
+import {RegistryCommunity} from "../src/RegistryCommunity/RegistryCommunity.sol";
 import {SafeSetup} from "../test/shared/SafeSetup.sol";
 import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
 import {Accounts} from "allo-v2-test/foundry/shared/Accounts.sol";
@@ -97,7 +97,7 @@ contract AddStrategy is Native, CVStrategyHelpers, Script, SafeSetup {
             COMMUNITY = _comm;
         }
 
-        RegistryCommunityV0_0 registryCommunity = RegistryCommunityV0_0(COMMUNITY);
+        RegistryCommunity registryCommunity = RegistryCommunity(COMMUNITY);
 
         if (SAFE == address(0)) {
             SAFE = address(registryCommunity.councilSafe());
@@ -109,7 +109,7 @@ contract AddStrategy is Native, CVStrategyHelpers, Script, SafeSetup {
         assertTrue(address(registryCommunity.councilSafe()) != address(0), "Council Safe not set");
         assertTrue(address(councilSafeDeploy) != address(0), "Council Safe empty");
 
-        CVStrategyV0_0 strategy1 = CVStrategyV0_0(_strategy);
+        CVStrategy strategy1 = CVStrategy(_strategy);
 
         safeHelper(
             councilSafeDeploy,

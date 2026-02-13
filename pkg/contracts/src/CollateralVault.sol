@@ -27,6 +27,7 @@ contract CollateralVault is ReentrancyGuard, ICollateralVault {
     error NotAuthorized();
     error InsufficientCollateral(uint256 requested, uint256 available);
     error InvalidAddress();
+    error TransferFailed();
     // Goss: Support zero colateral
     // error AmountCanNotBeZero();
 
@@ -66,7 +67,9 @@ contract CollateralVault is ReentrancyGuard, ICollateralVault {
         }
         proposalCollateral[_proposalId][_user] -= _amount;
         (bool success,) = _user.call{value: _amount}("");
-        require(success, "Transfer failed");
+        if (!success) {
+            revert TransferFailed();
+        }
         emit CollateralWithdrawn(_proposalId, _user, _amount, isInsufficientAvailableAmount);
     }
 
@@ -89,7 +92,9 @@ contract CollateralVault is ReentrancyGuard, ICollateralVault {
         }
         proposalCollateral[_proposalId][_fromUser] -= _amount;
         (bool success,) = _toUser.call{value: _amount}("");
-        require(success, "Transfer failed");
+        if (!success) {
+            revert TransferFailed();
+        }
         emit CollateralWithdrawn(_proposalId, _fromUser, _toUser, _amount, isInsufficientAvailableAmount);
     }
 }

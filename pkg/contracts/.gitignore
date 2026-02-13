@@ -1,5 +1,6 @@
 !out/
 out/*
+!out/DiamondAggregated/
 !out/*CV*
 !out/*Allo.*
 !out/*Registry*

@@ -33,20 +33,21 @@ jobs:
         with:
           version: nightly
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8.14.0
+          run_install: false
+
       - name: Init required submodules
         run: git submodule update --init --recursive --depth 1 --jobs 4
 
       - name: Run coverage
-        run: forge coverage --ir-minimum --match-path 'pkg/contracts/test/**' --report lcov
-
-      - name: Upload coverage report
-        uses: actions/upload-artifact@v4
-        with:
-          name: forge-coverage-lcov
-          path: lcov.info
-          if-no-files-found: warn
+        run: pnpm --dir pkg/contracts run coverage
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          files: pkg/contracts/lcov.info
+          fail_ci_if_error: true

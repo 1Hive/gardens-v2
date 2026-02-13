@@ -9,10 +9,10 @@ dataSources:
 {{/dataSources}}
 templates:
   - kind: ethereum/contract
-    name: RegistryCommunityV0_0
+    name: RegistryCommunity
     network: {{network}}
     source:
-      abi: RegistryCommunityV0_0
+      abi: RegistryCommunity
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -24,14 +24,14 @@ templates:
         - TokenGarden
         - Member
       abis:
-        - name: RegistryCommunityV0_0
-          file: ../contracts/out/RegistryCommunityV0_0.sol/RegistryCommunityV0_0.json
+        - name: RegistryCommunity
+          file: ../contracts/out/DiamondAggregated/RegistryCommunity.json
         - name: ERC20
           file: ../contracts/out/ERC20.sol/ERC20.json
-        - name: CVStrategyV0_0
-          file: ../contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json
-        - name: RegistryFactoryV0_0
-          file: ../contracts/out/RegistryFactoryV0_0.sol/RegistryFactoryV0_0.json
+        - name: CVStrategy
+          file: ../contracts/out/DiamondAggregated/CVStrategy.json
+        - name: RegistryFactory
+          file: ../contracts/out/RegistryFactory.sol/RegistryFactory.json
      
       eventHandlers:
         - event: RegistryInitialized(bytes32,string,(uint256,string))
@@ -83,10 +83,10 @@ templates:
       file: ./src/mappings/registry-community.ts
 
   - kind: ethereum/contract
-    name: CVStrategyV0_0
+    name: CVStrategy
     network: {{network}}
     source:
-      abi: CVStrategyV0_0
+      abi: CVStrategy
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -97,10 +97,10 @@ templates:
         - CVProposal
         - Allo
       abis:
-        - name: CVStrategyV0_0
-          file: ../contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json
-        - name: RegistryCommunityV0_0
-          file: ../contracts/out/RegistryCommunityV0_0.sol/RegistryCommunityV0_0.json
+        - name: CVStrategy
+          file: ../contracts/out/DiamondAggregated/CVStrategy.json
+        - name: RegistryCommunity
+          file: ../contracts/out/DiamondAggregated/RegistryCommunity.json
         - name: Allo
           file: ../contracts/out/Allo.sol/Allo.json
       eventHandlers:
@@ -144,6 +144,8 @@ templates:
           handler: handleSuperfluidGDAConnected
         - event: SuperfluidGDADisconnected(indexed address,indexed address)
           handler: handleSuperfluidGDADisconnected
+        - event: ProposalEdited(uint256,(uint256,string),address,uint256)
+          handler: handleProposalEdited
 
       file: ./src/mappings/cv-strategy.ts
 
@@ -181,8 +183,8 @@ templates:
       entities:
         - ProposalDisputeMetadata
       abis:
-        - name: CVStrategyV0_0
-          file: ../contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json
+        - name: CVStrategy
+          file: ../contracts/out/CVStrategy.sol/CVStrategy.json
   
   - name: ProposalMetadata
     kind: file/ipfs
@@ -194,8 +196,8 @@ templates:
       entities:
         - ProposalMetadata
       abis:
-        - name: CVStrategyV0_0
-          file: ../contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json
+        - name: CVStrategy
+          file: ../contracts/out/CVStrategy.sol/CVStrategy.json
   
   - name: PoolMetadata
     kind: file/ipfs
@@ -207,8 +209,8 @@ templates:
       entities:
         - PoolMetadata
       abis:
-        - name: CVStrategyV0_0
-          file: ../contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json
+        - name: CVStrategy
+          file: ../contracts/out/CVStrategy.sol/CVStrategy.json
 
   - name: Covenant
     kind: file/ipfs
@@ -220,5 +222,5 @@ templates:
       entities:
         - Covenant
       abis:
-        - name: CVStrategyV0_0
-          file: ../contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json
+        - name: CVStrategy
+          file: ../contracts/out/CVStrategy.sol/CVStrategy.json

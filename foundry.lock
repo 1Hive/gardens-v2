@@ -1,0 +1,26 @@
+{
+  "lib/allo-v2": {
+    "rev": "fd7740abd3bf00957c191a1b61c333592ef32db1"
+  },
+  "lib/forge-std": {
+    "rev": "e4aef94c1768803a16fe19f7ce8b65defd027cfd"
+  },
+  "lib/openzeppelin-contracts": {
+    "rev": "54b3f14346da01ba0d159114b399197fea8b7cda"
+  },
+  "lib/openzeppelin-contracts-upgradeable": {
+    "rev": "2d081f24cac1a867f6f73d512f2022e1fa987854"
+  },
+  "lib/openzeppelin-foundry-upgrades": {
+    "rev": "4cd15fc50b141c77d8cc9ff8efb44d00e841a299"
+  },
+  "lib/protocol-monorepo": {
+    "rev": "264d158d4d5ce919c0467512c6153175d353e571"
+  },
+  "lib/safe-smart-account": {
+    "rev": "bf943f80fec5ac647159d26161446ac5d716a294"
+  },
+  "protocol-monorepo": {
+    "rev": "264d158d4d5ce919c0467512c6153175d353e571"
+  }
+}

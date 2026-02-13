@@ -6,8 +6,9 @@ import {ProxyOwnableUpgrader} from "./ProxyOwnableUpgrader.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
-import {ReentrancyGuardUpgradeable} from
-    "openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
+import {
+    ReentrancyGuardUpgradeable
+} from "openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
 import {IArbitrable} from "./interfaces/IArbitrable.sol";
 import {IArbitrator} from "./interfaces/IArbitrator.sol";
 
@@ -21,7 +22,6 @@ contract SafeArbitrator is IArbitrator, ProxyOwnableUpgrader, ReentrancyGuardUpg
     enum DisputeStatus {
         Waiting, // The dispute is waiting for the ruling or not created.
         Solved // The dispute is resolved.
-
     }
 
     struct DisputeStruct {
@@ -44,6 +44,7 @@ contract SafeArbitrator is IArbitrator, ProxyOwnableUpgrader, ReentrancyGuardUpg
     error NotEnoughArbitrationFees();
     error InvalidRuling();
     error DisputeAlreadySolved();
+    error NotSupported();
 
     modifier onlySafe(uint256 _disputeID) {
         address tribunalSafe = disputes[_disputeID - 1].tribunalSafe;
@@ -108,8 +109,13 @@ contract SafeArbitrator is IArbitrator, ProxyOwnableUpgrader, ReentrancyGuardUpg
         bytes calldata, /*_extraData*/
         IERC20, /*_feeToken*/
         uint256 /*_feeAmount*/
-    ) external pure override returns (uint256) {
-        revert("Not supported");
+    )
+        external
+        pure
+        override
+        returns (uint256)
+    {
+        revert NotSupported();
     }
 
     /// @dev Give a ruling to a dispute.
@@ -137,18 +143,31 @@ contract SafeArbitrator is IArbitrator, ProxyOwnableUpgrader, ReentrancyGuardUpg
     }
 
     /// @inheritdoc IArbitrator
-    function arbitrationCost(bytes calldata /*_extraData*/ ) public view override returns (uint256 fee) {
+    function arbitrationCost(
+        bytes calldata /*_extraData*/
+    )
+        public
+        view
+        override
+        returns (uint256 fee)
+    {
         return arbitrationFee;
     }
 
     /// @inheritdoc IArbitrator
-    function arbitrationCost(bytes calldata, /*_extraData*/ IERC20 /*_feeToken*/ )
+    function arbitrationCost(
+        bytes calldata,
+        /*_extraData*/
+        IERC20 /*_feeToken*/
+    )
         public
-        pure
+        view
         override
-        returns (uint256 /*cost*/ )
+        returns (
+            uint256 /*cost*/
+        )
     {
-        revert("Not supported");
+        revert NotSupported();
     }
 
     function currentRuling(uint256 _disputeID) public view returns (uint256 ruling, bool tied, bool overridden) {

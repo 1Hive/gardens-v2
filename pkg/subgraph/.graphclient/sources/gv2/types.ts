@@ -267,6 +267,7 @@ export type CVProposal = {
   createdAt: Scalars['BigInt']['output'];
   updatedAt: Scalars['BigInt']['output'];
   arbitrableConfig: ArbitrableConfig;
+  executedAt?: Maybe<Scalars['BigInt']['output']>;
 };
 
 export type CVProposal_filter = {
@@ -501,6 +502,14 @@ export type CVProposal_filter = {
   arbitrableConfig_not_ends_with?: InputMaybe<Scalars['String']['input']>;
   arbitrableConfig_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
   arbitrableConfig_?: InputMaybe<ArbitrableConfig_filter>;
+  executedAt?: InputMaybe<Scalars['BigInt']['input']>;
+  executedAt_not?: InputMaybe<Scalars['BigInt']['input']>;
+  executedAt_gt?: InputMaybe<Scalars['BigInt']['input']>;
+  executedAt_lt?: InputMaybe<Scalars['BigInt']['input']>;
+  executedAt_gte?: InputMaybe<Scalars['BigInt']['input']>;
+  executedAt_lte?: InputMaybe<Scalars['BigInt']['input']>;
+  executedAt_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  executedAt_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
   and?: InputMaybe<Array<InputMaybe<CVProposal_filter>>>;
@@ -544,7 +553,8 @@ export type CVProposal_orderBy =
   | 'arbitrableConfig__challengerCollateralAmount'
   | 'arbitrableConfig__submitterCollateralAmount'
   | 'arbitrableConfig__defaultRuling'
-  | 'arbitrableConfig__defaultRulingTimeout';
+  | 'arbitrableConfig__defaultRulingTimeout'
+  | 'executedAt';
 
 export type CVStrategy = {
   id: Scalars['ID']['output'];
@@ -937,6 +947,7 @@ export type CVStrategy_orderBy =
   | 'registryCommunity__alloAddress'
   | 'registryCommunity__isValid'
   | 'registryCommunity__archived'
+  | 'registryCommunity__membersCount'
   | 'config'
   | 'config__id'
   | 'config__D'
@@ -1541,6 +1552,7 @@ export type MemberCommunity_orderBy =
   | 'registryCommunity__alloAddress'
   | 'registryCommunity__isValid'
   | 'registryCommunity__archived'
+  | 'registryCommunity__membersCount'
   | 'covenantSignature';
 
 export type MemberStrategy = {
@@ -2164,6 +2176,7 @@ export type ProposalDispute_orderBy =
   | 'proposal__submitter'
   | 'proposal__createdAt'
   | 'proposal__updatedAt'
+  | 'proposal__executedAt'
   | 'status'
   | 'challenger'
   | 'context'
@@ -2244,6 +2257,8 @@ export type Query = {
   cvstrategies: Array<CVStrategy>;
   cvstrategyConfig?: Maybe<CVStrategyConfig>;
   cvstrategyConfigs: Array<CVStrategyConfig>;
+  streamingInfo?: Maybe<StreamingInfo>;
+  streamingInfos: Array<StreamingInfo>;
   arbitrableConfig?: Maybe<ArbitrableConfig>;
   arbitrableConfigs: Array<ArbitrableConfig>;
   cvproposal?: Maybe<CVProposal>;
@@ -2324,6 +2339,24 @@ export type QuerycvstrategyConfigsArgs = {
   orderBy?: InputMaybe<CVStrategyConfig_orderBy>;
   orderDirection?: InputMaybe<OrderDirection>;
   where?: InputMaybe<CVStrategyConfig_filter>;
+  block?: InputMaybe<Block_height>;
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type QuerystreamingInfoArgs = {
+  id: Scalars['ID']['input'];
+  block?: InputMaybe<Block_height>;
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type QuerystreamingInfosArgs = {
+  skip?: InputMaybe<Scalars['Int']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  orderBy?: InputMaybe<StreamingInfo_orderBy>;
+  orderDirection?: InputMaybe<OrderDirection>;
+  where?: InputMaybe<StreamingInfo_filter>;
   block?: InputMaybe<Block_height>;
   subgraphError?: _SubgraphErrorPolicy_;
 };
@@ -2752,6 +2785,7 @@ export type RegistryCommunity = {
   garden: TokenGarden;
   isValid: Scalars['Boolean']['output'];
   archived: Scalars['Boolean']['output'];
+  membersCount: Scalars['BigInt']['output'];
 };
 
 
@@ -3070,6 +3104,14 @@ export type RegistryCommunity_filter = {
   archived_not?: InputMaybe<Scalars['Boolean']['input']>;
   archived_in?: InputMaybe<Array<Scalars['Boolean']['input']>>;
   archived_not_in?: InputMaybe<Array<Scalars['Boolean']['input']>>;
+  membersCount?: InputMaybe<Scalars['BigInt']['input']>;
+  membersCount_not?: InputMaybe<Scalars['BigInt']['input']>;
+  membersCount_gt?: InputMaybe<Scalars['BigInt']['input']>;
+  membersCount_lt?: InputMaybe<Scalars['BigInt']['input']>;
+  membersCount_gte?: InputMaybe<Scalars['BigInt']['input']>;
+  membersCount_lte?: InputMaybe<Scalars['BigInt']['input']>;
+  membersCount_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  membersCount_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
   and?: InputMaybe<Array<InputMaybe<RegistryCommunity_filter>>>;
@@ -3111,7 +3153,8 @@ export type RegistryCommunity_orderBy =
   | 'garden__decimals'
   | 'garden__address'
   | 'isValid'
-  | 'archived';
+  | 'archived'
+  | 'membersCount';
 
 export type RegistryFactory = {
   id: Scalars['ID']['output'];
@@ -3270,8 +3313,267 @@ export type Stake_orderBy =
   | 'proposal__submitter'
   | 'proposal__createdAt'
   | 'proposal__updatedAt'
+  | 'proposal__executedAt'
   | 'amount'
   | 'createdAt';
+
+export type StreamingInfo = {
+  id: Scalars['ID']['output'];
+  contractAddress: Scalars['String']['output'];
+  contractType: Scalars['String']['output'];
+  strategy?: Maybe<CVStrategy>;
+  registryFactory?: Maybe<RegistryFactory>;
+  superfluidToken?: Maybe<Scalars['String']['output']>;
+  superfluidGDA: Array<Scalars['String']['output']>;
+  streamLastStartedGDA?: Maybe<Scalars['String']['output']>;
+  streamLastFlowRate?: Maybe<Scalars['BigInt']['output']>;
+  streamLastMember?: Maybe<Scalars['String']['output']>;
+  streamLastMemberUnit?: Maybe<Scalars['BigInt']['output']>;
+  streamingEscrowFactory?: Maybe<Scalars['String']['output']>;
+  createdAt: Scalars['BigInt']['output'];
+  updatedAt: Scalars['BigInt']['output'];
+};
+
+export type StreamingInfo_filter = {
+  id?: InputMaybe<Scalars['ID']['input']>;
+  id_not?: InputMaybe<Scalars['ID']['input']>;
+  id_gt?: InputMaybe<Scalars['ID']['input']>;
+  id_lt?: InputMaybe<Scalars['ID']['input']>;
+  id_gte?: InputMaybe<Scalars['ID']['input']>;
+  id_lte?: InputMaybe<Scalars['ID']['input']>;
+  id_in?: InputMaybe<Array<Scalars['ID']['input']>>;
+  id_not_in?: InputMaybe<Array<Scalars['ID']['input']>>;
+  contractAddress?: InputMaybe<Scalars['String']['input']>;
+  contractAddress_not?: InputMaybe<Scalars['String']['input']>;
+  contractAddress_gt?: InputMaybe<Scalars['String']['input']>;
+  contractAddress_lt?: InputMaybe<Scalars['String']['input']>;
+  contractAddress_gte?: InputMaybe<Scalars['String']['input']>;
+  contractAddress_lte?: InputMaybe<Scalars['String']['input']>;
+  contractAddress_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  contractAddress_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  contractAddress_contains?: InputMaybe<Scalars['String']['input']>;
+  contractAddress_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  contractAddress_not_contains?: InputMaybe<Scalars['String']['input']>;
+  contractAddress_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  contractAddress_starts_with?: InputMaybe<Scalars['String']['input']>;
+  contractAddress_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  contractAddress_not_starts_with?: InputMaybe<Scalars['String']['input']>;
+  contractAddress_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  contractAddress_ends_with?: InputMaybe<Scalars['String']['input']>;
+  contractAddress_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  contractAddress_not_ends_with?: InputMaybe<Scalars['String']['input']>;
+  contractAddress_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  contractType?: InputMaybe<Scalars['String']['input']>;
+  contractType_not?: InputMaybe<Scalars['String']['input']>;
+  contractType_gt?: InputMaybe<Scalars['String']['input']>;
+  contractType_lt?: InputMaybe<Scalars['String']['input']>;
+  contractType_gte?: InputMaybe<Scalars['String']['input']>;
+  contractType_lte?: InputMaybe<Scalars['String']['input']>;
+  contractType_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  contractType_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  contractType_contains?: InputMaybe<Scalars['String']['input']>;
+  contractType_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  contractType_not_contains?: InputMaybe<Scalars['String']['input']>;
+  contractType_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  contractType_starts_with?: InputMaybe<Scalars['String']['input']>;
+  contractType_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  contractType_not_starts_with?: InputMaybe<Scalars['String']['input']>;
+  contractType_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  contractType_ends_with?: InputMaybe<Scalars['String']['input']>;
+  contractType_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  contractType_not_ends_with?: InputMaybe<Scalars['String']['input']>;
+  contractType_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  strategy?: InputMaybe<Scalars['String']['input']>;
+  strategy_not?: InputMaybe<Scalars['String']['input']>;
+  strategy_gt?: InputMaybe<Scalars['String']['input']>;
+  strategy_lt?: InputMaybe<Scalars['String']['input']>;
+  strategy_gte?: InputMaybe<Scalars['String']['input']>;
+  strategy_lte?: InputMaybe<Scalars['String']['input']>;
+  strategy_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  strategy_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  strategy_contains?: InputMaybe<Scalars['String']['input']>;
+  strategy_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  strategy_not_contains?: InputMaybe<Scalars['String']['input']>;
+  strategy_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  strategy_starts_with?: InputMaybe<Scalars['String']['input']>;
+  strategy_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  strategy_not_starts_with?: InputMaybe<Scalars['String']['input']>;
+  strategy_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  strategy_ends_with?: InputMaybe<Scalars['String']['input']>;
+  strategy_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  strategy_not_ends_with?: InputMaybe<Scalars['String']['input']>;
+  strategy_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  strategy_?: InputMaybe<CVStrategy_filter>;
+  registryFactory?: InputMaybe<Scalars['String']['input']>;
+  registryFactory_not?: InputMaybe<Scalars['String']['input']>;
+  registryFactory_gt?: InputMaybe<Scalars['String']['input']>;
+  registryFactory_lt?: InputMaybe<Scalars['String']['input']>;
+  registryFactory_gte?: InputMaybe<Scalars['String']['input']>;
+  registryFactory_lte?: InputMaybe<Scalars['String']['input']>;
+  registryFactory_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  registryFactory_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  registryFactory_contains?: InputMaybe<Scalars['String']['input']>;
+  registryFactory_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  registryFactory_not_contains?: InputMaybe<Scalars['String']['input']>;
+  registryFactory_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  registryFactory_starts_with?: InputMaybe<Scalars['String']['input']>;
+  registryFactory_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  registryFactory_not_starts_with?: InputMaybe<Scalars['String']['input']>;
+  registryFactory_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  registryFactory_ends_with?: InputMaybe<Scalars['String']['input']>;
+  registryFactory_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  registryFactory_not_ends_with?: InputMaybe<Scalars['String']['input']>;
+  registryFactory_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  registryFactory_?: InputMaybe<RegistryFactory_filter>;
+  superfluidToken?: InputMaybe<Scalars['String']['input']>;
+  superfluidToken_not?: InputMaybe<Scalars['String']['input']>;
+  superfluidToken_gt?: InputMaybe<Scalars['String']['input']>;
+  superfluidToken_lt?: InputMaybe<Scalars['String']['input']>;
+  superfluidToken_gte?: InputMaybe<Scalars['String']['input']>;
+  superfluidToken_lte?: InputMaybe<Scalars['String']['input']>;
+  superfluidToken_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  superfluidToken_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  superfluidToken_contains?: InputMaybe<Scalars['String']['input']>;
+  superfluidToken_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  superfluidToken_not_contains?: InputMaybe<Scalars['String']['input']>;
+  superfluidToken_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  superfluidToken_starts_with?: InputMaybe<Scalars['String']['input']>;
+  superfluidToken_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  superfluidToken_not_starts_with?: InputMaybe<Scalars['String']['input']>;
+  superfluidToken_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  superfluidToken_ends_with?: InputMaybe<Scalars['String']['input']>;
+  superfluidToken_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  superfluidToken_not_ends_with?: InputMaybe<Scalars['String']['input']>;
+  superfluidToken_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  superfluidGDA?: InputMaybe<Array<Scalars['String']['input']>>;
+  superfluidGDA_not?: InputMaybe<Array<Scalars['String']['input']>>;
+  superfluidGDA_contains?: InputMaybe<Array<Scalars['String']['input']>>;
+  superfluidGDA_contains_nocase?: InputMaybe<Array<Scalars['String']['input']>>;
+  superfluidGDA_not_contains?: InputMaybe<Array<Scalars['String']['input']>>;
+  superfluidGDA_not_contains_nocase?: InputMaybe<Array<Scalars['String']['input']>>;
+  streamLastStartedGDA?: InputMaybe<Scalars['String']['input']>;
+  streamLastStartedGDA_not?: InputMaybe<Scalars['String']['input']>;
+  streamLastStartedGDA_gt?: InputMaybe<Scalars['String']['input']>;
+  streamLastStartedGDA_lt?: InputMaybe<Scalars['String']['input']>;
+  streamLastStartedGDA_gte?: InputMaybe<Scalars['String']['input']>;
+  streamLastStartedGDA_lte?: InputMaybe<Scalars['String']['input']>;
+  streamLastStartedGDA_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  streamLastStartedGDA_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  streamLastStartedGDA_contains?: InputMaybe<Scalars['String']['input']>;
+  streamLastStartedGDA_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  streamLastStartedGDA_not_contains?: InputMaybe<Scalars['String']['input']>;
+  streamLastStartedGDA_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  streamLastStartedGDA_starts_with?: InputMaybe<Scalars['String']['input']>;
+  streamLastStartedGDA_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  streamLastStartedGDA_not_starts_with?: InputMaybe<Scalars['String']['input']>;
+  streamLastStartedGDA_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  streamLastStartedGDA_ends_with?: InputMaybe<Scalars['String']['input']>;
+  streamLastStartedGDA_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  streamLastStartedGDA_not_ends_with?: InputMaybe<Scalars['String']['input']>;
+  streamLastStartedGDA_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  streamLastFlowRate?: InputMaybe<Scalars['BigInt']['input']>;
+  streamLastFlowRate_not?: InputMaybe<Scalars['BigInt']['input']>;
+  streamLastFlowRate_gt?: InputMaybe<Scalars['BigInt']['input']>;
+  streamLastFlowRate_lt?: InputMaybe<Scalars['BigInt']['input']>;
+  streamLastFlowRate_gte?: InputMaybe<Scalars['BigInt']['input']>;
+  streamLastFlowRate_lte?: InputMaybe<Scalars['BigInt']['input']>;
+  streamLastFlowRate_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  streamLastFlowRate_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  streamLastMember?: InputMaybe<Scalars['String']['input']>;
+  streamLastMember_not?: InputMaybe<Scalars['String']['input']>;
+  streamLastMember_gt?: InputMaybe<Scalars['String']['input']>;
+  streamLastMember_lt?: InputMaybe<Scalars['String']['input']>;
+  streamLastMember_gte?: InputMaybe<Scalars['String']['input']>;
+  streamLastMember_lte?: InputMaybe<Scalars['String']['input']>;
+  streamLastMember_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  streamLastMember_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  streamLastMember_contains?: InputMaybe<Scalars['String']['input']>;
+  streamLastMember_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  streamLastMember_not_contains?: InputMaybe<Scalars['String']['input']>;
+  streamLastMember_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  streamLastMember_starts_with?: InputMaybe<Scalars['String']['input']>;
+  streamLastMember_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  streamLastMember_not_starts_with?: InputMaybe<Scalars['String']['input']>;
+  streamLastMember_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  streamLastMember_ends_with?: InputMaybe<Scalars['String']['input']>;
+  streamLastMember_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  streamLastMember_not_ends_with?: InputMaybe<Scalars['String']['input']>;
+  streamLastMember_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  streamLastMemberUnit?: InputMaybe<Scalars['BigInt']['input']>;
+  streamLastMemberUnit_not?: InputMaybe<Scalars['BigInt']['input']>;
+  streamLastMemberUnit_gt?: InputMaybe<Scalars['BigInt']['input']>;
+  streamLastMemberUnit_lt?: InputMaybe<Scalars['BigInt']['input']>;
+  streamLastMemberUnit_gte?: InputMaybe<Scalars['BigInt']['input']>;
+  streamLastMemberUnit_lte?: InputMaybe<Scalars['BigInt']['input']>;
+  streamLastMemberUnit_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  streamLastMemberUnit_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  streamingEscrowFactory?: InputMaybe<Scalars['String']['input']>;
+  streamingEscrowFactory_not?: InputMaybe<Scalars['String']['input']>;
+  streamingEscrowFactory_gt?: InputMaybe<Scalars['String']['input']>;
+  streamingEscrowFactory_lt?: InputMaybe<Scalars['String']['input']>;
+  streamingEscrowFactory_gte?: InputMaybe<Scalars['String']['input']>;
+  streamingEscrowFactory_lte?: InputMaybe<Scalars['String']['input']>;
+  streamingEscrowFactory_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  streamingEscrowFactory_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  streamingEscrowFactory_contains?: InputMaybe<Scalars['String']['input']>;
+  streamingEscrowFactory_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  streamingEscrowFactory_not_contains?: InputMaybe<Scalars['String']['input']>;
+  streamingEscrowFactory_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  streamingEscrowFactory_starts_with?: InputMaybe<Scalars['String']['input']>;
+  streamingEscrowFactory_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  streamingEscrowFactory_not_starts_with?: InputMaybe<Scalars['String']['input']>;
+  streamingEscrowFactory_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  streamingEscrowFactory_ends_with?: InputMaybe<Scalars['String']['input']>;
+  streamingEscrowFactory_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  streamingEscrowFactory_not_ends_with?: InputMaybe<Scalars['String']['input']>;
+  streamingEscrowFactory_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  createdAt?: InputMaybe<Scalars['BigInt']['input']>;
+  createdAt_not?: InputMaybe<Scalars['BigInt']['input']>;
+  createdAt_gt?: InputMaybe<Scalars['BigInt']['input']>;
+  createdAt_lt?: InputMaybe<Scalars['BigInt']['input']>;
+  createdAt_gte?: InputMaybe<Scalars['BigInt']['input']>;
+  createdAt_lte?: InputMaybe<Scalars['BigInt']['input']>;
+  createdAt_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  createdAt_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  updatedAt?: InputMaybe<Scalars['BigInt']['input']>;
+  updatedAt_not?: InputMaybe<Scalars['BigInt']['input']>;
+  updatedAt_gt?: InputMaybe<Scalars['BigInt']['input']>;
+  updatedAt_lt?: InputMaybe<Scalars['BigInt']['input']>;
+  updatedAt_gte?: InputMaybe<Scalars['BigInt']['input']>;
+  updatedAt_lte?: InputMaybe<Scalars['BigInt']['input']>;
+  updatedAt_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  updatedAt_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  /** Filter for the block changed event. */
+  _change_block?: InputMaybe<BlockChangedFilter>;
+  and?: InputMaybe<Array<InputMaybe<StreamingInfo_filter>>>;
+  or?: InputMaybe<Array<InputMaybe<StreamingInfo_filter>>>;
+};
+
+export type StreamingInfo_orderBy =
+  | 'id'
+  | 'contractAddress'
+  | 'contractType'
+  | 'strategy'
+  | 'strategy__id'
+  | 'strategy__poolId'
+  | 'strategy__metadataHash'
+  | 'strategy__maxCVSupply'
+  | 'strategy__totalEffectiveActivePoints'
+  | 'strategy__isEnabled'
+  | 'strategy__token'
+  | 'strategy__archived'
+  | 'registryFactory'
+  | 'registryFactory__id'
+  | 'registryFactory__chainId'
+  | 'superfluidToken'
+  | 'superfluidGDA'
+  | 'streamLastStartedGDA'
+  | 'streamLastFlowRate'
+  | 'streamLastMember'
+  | 'streamLastMemberUnit'
+  | 'streamingEscrowFactory'
+  | 'createdAt'
+  | 'updatedAt';
 
 export type SybilProtection = {
   id: Scalars['ID']['output'];
@@ -3544,6 +3846,10 @@ export type _SubgraphErrorPolicy_ =
   cvstrategyConfig: InContextSdkMethod<Query['cvstrategyConfig'], QuerycvstrategyConfigArgs, MeshContext>,
   /** null **/
   cvstrategyConfigs: InContextSdkMethod<Query['cvstrategyConfigs'], QuerycvstrategyConfigsArgs, MeshContext>,
+  /** null **/
+  streamingInfo: InContextSdkMethod<Query['streamingInfo'], QuerystreamingInfoArgs, MeshContext>,
+  /** null **/
+  streamingInfos: InContextSdkMethod<Query['streamingInfos'], QuerystreamingInfosArgs, MeshContext>,
   /** null **/
   arbitrableConfig: InContextSdkMethod<Query['arbitrableConfig'], QueryarbitrableConfigArgs, MeshContext>,
   /** null **/
