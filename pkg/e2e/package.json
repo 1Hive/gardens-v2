@@ -5,6 +5,7 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
+    "build-cache:force": "pnpm exec synpress wallet-setup --force",
     "build-cache": "pnpm exec synpress wallet-setup",
     "test": "pnpm run build-cache && playwright test",
     "test:headed": "pnpm run build-cache && playwright test --headed",
