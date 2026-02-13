@@ -250,6 +250,12 @@ export default function ClientPage({
       strategy.isEnabled,
   );
 
+  const streamingPools = strategies.filter(
+    (strategy) =>
+      PoolTypes[strategy.config?.proposalType] === "streaming" &&
+      strategy.isEnabled,
+  );
+
   const activePools = strategies?.filter((strategy) => strategy?.isEnabled);
 
   const poolsInReview = strategies.filter(
@@ -529,6 +535,11 @@ export default function ClientPage({
               <PoolSection
                 title="Signaling"
                 pools={signalingPools}
+                defaultExpanded
+              />
+              <PoolSection
+                title="Streaming"
+                pools={streamingPools}
                 defaultExpanded
               />
               <PoolSection

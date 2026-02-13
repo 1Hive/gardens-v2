@@ -2,7 +2,6 @@
 
 import {
   ArchiveBoxIcon,
-  ArrowDownCircleIcon,
   ArrowDownIcon,
   BoltIcon,
   ClockIcon,
@@ -77,7 +76,7 @@ export function PoolCard({ pool, token }: Props) {
     <>
       <Card
         href={`${pathname}/${poolId}`}
-        className={`group w-full bg-primary  ${isNewPool ? "shadow-2xl" : ""}`}
+        className={`group w-full bg-primary dark:bg-neutral dark:border-border-neutral/60 ${isNewPool ? "shadow-2xl" : ""}`}
       >
         {/* <div className="absolute inset-0 opacity-[0.05]">
           {poolType != null && PoolTypes[poolType] === "funding" ?

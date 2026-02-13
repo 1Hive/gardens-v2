@@ -271,7 +271,20 @@ export default function ClientPage({
 
   const poolTokenAddr = strategy?.token as Address;
 
-  const proposalType = strategy?.config.proposalType;
+  // TODO REMOVE BEFORE COMMIT: temporary override to force streaming pool UI on this page.
+  const FORCE_STREAMING_POOL_FOR_TESTING = true;
+  const proposalType =
+    FORCE_STREAMING_POOL_FOR_TESTING ? 2 : strategy?.config.proposalType;
+  const effectiveStrategy =
+    strategy && strategy.config ?
+      {
+        ...strategy,
+        config: {
+          ...strategy.config,
+          proposalType,
+        },
+      }
+    : strategy;
 
   const numericChainId = Number(chain);
   const chainConfig =
@@ -361,7 +374,7 @@ export default function ClientPage({
     poolTokenAddr: poolTokenAddr,
     enabled:
       !!strategy &&
-      PoolTypes[strategy.config.proposalType] !== "signaling" &&
+      PoolTypes[proposalType] !== "signaling" &&
       !!poolTokenAddr,
     watch: true,
   });
@@ -386,6 +399,7 @@ export default function ClientPage({
     +minThresholdPoints > +totalPointsActivatedInPool;
 
   const poolType = proposalType != null ? PoolTypes[proposalType] : undefined;
+  const isStreamingPool = poolType === "streaming";
   const needsFundingToken = poolType === "funding";
   const isMissingFundingToken = needsFundingToken && !poolToken;
   const [hasWaitedForPoolToken, setHasWaitedForPoolToken] = useState(false);
@@ -575,12 +589,12 @@ export default function ClientPage({
 
                 <div className="flex flex-col gap-4">
                   <CheckSybil
-                    strategy={strategy}
+                    strategy={effectiveStrategy}
                     enableCheck={!memberActivatedStrategy}
                     triggerClose={triggerSybilCheckModalClose}
                   >
                     <ActivatePoints
-                      strategy={strategy}
+                      strategy={effectiveStrategy}
                       communityAddress={communityAddress}
                       isMemberActivated={memberActivatedStrategy}
                       isMember={isMemberCommunity}
@@ -595,6 +609,21 @@ export default function ClientPage({
           </div>
         )}
       </>
+    );
+  };
+
+  const StreamingPoolInfo = () => {
+    if (!isStreamingPool) return null;
+
+    return (
+      <InfoBox
+        infoBoxType="info"
+        title="Streaming pool"
+        className="rounded-xl bg-neutral"
+      >
+        This pool supports continuous funding via Superfluid streams. Pool
+        balances and proposal execution can change over time as streams flow in.
+      </InfoBox>
     );
   };
 
@@ -613,7 +642,7 @@ export default function ClientPage({
       <div className="hidden col-span-12 xl:col-span-9 sm:flex flex-col gap-6">
         <PoolHeader
           poolToken={poolToken}
-          strategy={strategy}
+          strategy={effectiveStrategy}
           arbitrableConfig={data.arbitrableConfigs[0]}
           poolId={poolId}
           ipfsResult={metadata}
@@ -631,6 +660,7 @@ export default function ClientPage({
           minThGtTotalEffPoints={minThGtTotalEffPoints}
           communityName={communityName ?? ""}
         />
+        <StreamingPoolInfo />
         <RegisterAndActivateFromPool />
       </div>
 
@@ -640,7 +670,7 @@ export default function ClientPage({
             {poolToken && PoolTypes[proposalType] !== "signaling" && (
               <PoolMetrics
                 communityAddress={communityAddress}
-                strategy={strategy}
+                strategy={effectiveStrategy}
                 poolId={poolId}
                 poolToken={poolToken}
                 chainId={Number(chain)}
@@ -658,7 +688,7 @@ export default function ClientPage({
           <PoolGovernance
             memberPoolWeight={memberPoolWeight}
             tokenDecimals={tokenDecimals}
-            strategy={strategy}
+            strategy={effectiveStrategy}
             communityAddress={communityAddress}
             memberTokensInCommunity={memberTokensInCommunity}
             isMemberCommunity={isMemberCommunity}
@@ -676,7 +706,7 @@ export default function ClientPage({
         <section className="hidden col-span-12 xl:col-span-9 sm:flex flex-col gap-4 sm:gap-8">
           <Proposals
             poolToken={poolToken}
-            strategy={{ ...strategy, title: metadata?.title }}
+            strategy={{ ...effectiveStrategy, title: metadata?.title }}
             alloInfo={alloInfo}
             communityAddress={communityAddress}
             createProposalUrl={createProposalUrl}
@@ -713,7 +743,7 @@ export default function ClientPage({
             <div className="col-span-12 sm:hidden space-y-6">
               <PoolHeader
                 poolToken={poolToken}
-                strategy={strategy}
+                strategy={effectiveStrategy}
                 arbitrableConfig={data.arbitrableConfigs[0]}
                 poolId={poolId}
                 ipfsResult={metadata}
@@ -731,11 +761,12 @@ export default function ClientPage({
                 minThGtTotalEffPoints={minThGtTotalEffPoints}
                 communityName={communityName ?? ""}
               />
+              <StreamingPoolInfo />
               <RegisterAndActivateFromPool />
               {poolToken && PoolTypes[proposalType] !== "signaling" && (
                 <PoolMetrics
                   communityAddress={communityAddress}
-                  strategy={strategy}
+                  strategy={effectiveStrategy}
                   poolId={poolId}
                   poolToken={poolToken}
                   chainId={Number(chain)}
@@ -754,7 +785,7 @@ export default function ClientPage({
           {selectedTab === 1 && isEnabled && (
             <Proposals
               poolToken={poolToken}
-              strategy={{ ...strategy, title: metadata?.title }}
+              strategy={{ ...effectiveStrategy, title: metadata?.title }}
               alloInfo={alloInfo}
               communityAddress={communityAddress}
               createProposalUrl={createProposalUrl}
@@ -767,7 +798,7 @@ export default function ClientPage({
             <PoolGovernance
               memberPoolWeight={memberPoolWeight}
               tokenDecimals={tokenDecimals}
-              strategy={strategy}
+              strategy={effectiveStrategy}
               communityAddress={communityAddress}
               memberTokensInCommunity={memberTokensInCommunity}
               isMemberCommunity={isMemberCommunity}

@@ -24,6 +24,7 @@ import { InfoBox } from "@/components/InfoBox";
 import { InfoWrapper } from "@/components/InfoWrapper";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { LoadingToast } from "@/components/LoadingToast";
+import { PoolCard } from "@/components/PoolCard";
 import { Skeleton } from "@/components/Skeleton";
 import { TransactionStatusNotification } from "@/components/TransactionStatusNotification";
 import { WalletBalance } from "@/components/WalletBalance";
@@ -92,6 +93,109 @@ const demoAddressList: Address[] = [
   "0x0000000000000000000000000000000000000002",
   "0x0000000000000000000000000000000000000003",
 ] as Address[];
+
+type DemoPoolCard = {
+  label: string;
+  token: string;
+  pool: {
+    id: string;
+    isEnabled: boolean;
+    archived: boolean;
+    poolId: string;
+    metadataHash: string | null;
+    metadata: { title: string; description: string };
+    proposals: { id: string }[];
+    config: { proposalType: number; pointSystem: number };
+  };
+};
+
+const demoPoolCards: DemoPoolCard[] = [
+  {
+    label: "Funding - Active",
+    token: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+    pool: {
+      id: "0x0000000000000000000000000000000000001001",
+      isEnabled: true,
+      archived: false,
+      poolId: "101",
+      metadataHash: null,
+      metadata: {
+        title: "Core Grants Pool",
+        description: "Funding pool for ecosystem grants.",
+      },
+      proposals: [{ id: "p-1" }, { id: "p-2" }],
+      config: { proposalType: 1, pointSystem: 0 },
+    },
+  },
+  {
+    label: "Signaling - Active",
+    token: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+    pool: {
+      id: "0x0000000000000000000000000000000000001002",
+      isEnabled: true,
+      archived: false,
+      poolId: "102",
+      metadataHash: null,
+      metadata: {
+        title: "Governance Signals",
+        description: "Signaling pool for collective preferences.",
+      },
+      proposals: [{ id: "p-1" }, { id: "p-2" }, { id: "p-3" }],
+      config: { proposalType: 0, pointSystem: 3 },
+    },
+  },
+  {
+    label: "Streaming - Active",
+    token: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+    pool: {
+      id: "0x0000000000000000000000000000000000001003",
+      isEnabled: true,
+      archived: false,
+      poolId: "103",
+      metadataHash: null,
+      metadata: {
+        title: "Continuous Support",
+        description: "Streaming pool with monthly budgets.",
+      },
+      proposals: [{ id: "p-1" }],
+      config: { proposalType: 2, pointSystem: 1 },
+    },
+  },
+  {
+    label: "In Review",
+    token: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+    pool: {
+      id: "0x0000000000000000000000000000000000001004",
+      isEnabled: false,
+      archived: false,
+      poolId: "104",
+      metadataHash: null,
+      metadata: {
+        title: "Incoming Proposals",
+        description: "Pool waiting for council approval.",
+      },
+      proposals: [],
+      config: { proposalType: 1, pointSystem: 2 },
+    },
+  },
+  {
+    label: "Archived",
+    token: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+    pool: {
+      id: "0x0000000000000000000000000000000000001005",
+      isEnabled: false,
+      archived: true,
+      poolId: "105",
+      metadataHash: null,
+      metadata: {
+        title: "Archived Pilot",
+        description: "Deprecated pool kept for reference.",
+      },
+      proposals: [],
+      config: { proposalType: 0, pointSystem: 0 },
+    },
+  },
+];
 
 export default function DesignSystemPage() {
   const [radioValue, setRadioValue] = useState("option-a");
@@ -251,6 +355,7 @@ export default function DesignSystemPage() {
               <div className="flex flex-wrap gap-3">
                 <Badge type={0} />
                 <Badge type={1} />
+                <Badge type={2} />
               </div>
               <span className="w-20 text-sm font-semibold capitalize">
                 Proposal status:
@@ -509,6 +614,23 @@ export default function DesignSystemPage() {
             </div>
           </DemoCard>
         </div>
+        <DemoCard title="PoolCards Layouts">
+          <div className="space-y-4">
+            <p className="text-sm text-neutral-soft-content">
+              Variants for pool types and states in grid/card layouts.
+            </p>
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {demoPoolCards.map(({ label, pool, token }) => (
+                <div key={pool.id} className="space-y-2">
+                  <p className="text-xs uppercase tracking-wide text-neutral-soft-content">
+                    {label}
+                  </p>
+                  <PoolCard pool={pool} token={token} />
+                </div>
+              ))}
+            </div>
+          </div>
+        </DemoCard>
       </Section>
 
       <Section title="Utilities">
