@@ -68,17 +68,19 @@ export const ExpandableComponent = ({
               style={{ overflow: showPreview ? "hidden" : "visible" }}
             >
               <div ref={contentRef}>{children}</div>
+              {showPreview && needsExpansion && (
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-base-100 to-transparent dark:from-neutral  " />
+              )}
             </motion.div>
           )}
         </AnimatePresence>
 
         {showPreview && needsExpansion && (
-          <div className="flex items-baseline gap-[2px] mt-1 sm:-mt-6">
-            <span className="hidden sm:block">...</span>
+          <div className="flex items-baseline mt-1">
             <Button
               onClick={() => setExpanded(true)}
-              btnStyle="ghost"
-              className="!py-1 !px-2 !h-auto text-sm"
+              btnStyle="outline"
+              color="primary"
             >
               {readMoreLabel}
             </Button>
@@ -88,8 +90,9 @@ export const ExpandableComponent = ({
         {expanded && needsExpansion && (
           <Button
             onClick={() => setExpanded(false)}
-            btnStyle="ghost"
-            className="self-start !py-1 !px-2 !h-auto text-sm"
+            btnStyle="outline"
+            color="primary"
+            className="self-start"
           >
             {readLessLabel}
           </Button>

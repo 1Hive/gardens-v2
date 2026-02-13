@@ -546,7 +546,7 @@ export default function ClientPage({ params }: ClientPageProps) {
             </div>
 
             {status === "executed" && (
-              <ul className="timeline timeline-vertical  relative">
+              <ul className="timeline timeline-vertical relative">
                 <li className=" flex items-center justify-start z-50">
                   <div className="timeline-middle rounded-full text-tertiary-soft bg-primary-content m-0.5">
                     <CheckIcon className="w-4 m-0.5" />
@@ -574,7 +574,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                     {!isSignalingType && (
                       <>
                         <Statistic
-                          label={"Funded: "}
+                          label={"Funded"}
                           className="-ml-1 text-neutral-soft-content dark:text-neutral-content"
                         >
                           <DisplayNumber
@@ -584,7 +584,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                             )}
                             tokenSymbol={poolToken?.symbol}
                             compact={true}
-                            valueClassName="text-neutral-soft-content dark:text-neutral-content"
+                            valueClassName="text-neutral-soft-content dark:text-neutral-content ml-1"
                             symbolClassName="text-neutral-soft-content dark:text-neutral-content"
                           />
                         </Statistic>
@@ -754,7 +754,10 @@ export default function ClientPage({ params }: ClientPageProps) {
                             </span>
                           </Statistic>
                           {!isSignalingType && (
-                            <Statistic label={"request amount"} className="pt-2">
+                            <Statistic
+                              label={"request amount"}
+                              className="pt-2"
+                            >
                               <DisplayNumber
                                 number={formatUnits(
                                   requestedAmount,
