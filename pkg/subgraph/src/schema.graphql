@@ -31,6 +31,23 @@ type CVStrategyConfig @entity(immutable: false) {
   superfluidGDA: [String!]!
 }
 
+type StreamingInfo @entity(immutable: false) {
+  id: ID!
+  contractAddress: String!
+  contractType: String!
+  strategy: CVStrategy
+  registryFactory: RegistryFactory
+  superfluidToken: String
+  superfluidGDA: [String!]!
+  streamLastStartedGDA: String
+  streamLastFlowRate: BigInt
+  streamLastMember: String
+  streamLastMemberUnit: BigInt
+  streamingEscrowFactory: String
+  createdAt: BigInt!
+  updatedAt: BigInt!
+}
+
 type ArbitrableConfig @entity(immutable: false) {
   id: ID!
   version: BigInt!

@@ -129,9 +129,8 @@ contract CommunityPowerFacet is CommunityBaseFacet {
     // Sig: 0x22bcf999
     function deactivateMemberInStrategy(address _member, address _strategy) public {
         onlyStrategyAddress(msg.sender, _strategy);
-        onlyRegistryMemberAddress(_member);
         if (!memberActivatedInStrategies[_member][_strategy]) {
-            revert PointsDeactivated();
+            return;
         }
 
         memberActivatedInStrategies[_member][_strategy] = false;

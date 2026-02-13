@@ -52,7 +52,7 @@ function EditProposalButton({ proposalData, poolToken }: Props) {
         color="primary"
         onClick={() => setIsModalOpen(true)}
         disabled={isDisabled}
-        className="w-full"
+        className="!w-full"
         tooltip={
           isDisabled ?
             "Editing is disabled once an hour has passed and the proposal has received support."

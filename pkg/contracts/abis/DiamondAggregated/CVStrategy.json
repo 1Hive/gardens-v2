@@ -1885,7 +1885,7 @@
     },
     {
       "type": "event",
-      "name": "Distributed",
+      "name": "AlloDistributed",
       "inputs": [
         {
           "name": "recipientId",

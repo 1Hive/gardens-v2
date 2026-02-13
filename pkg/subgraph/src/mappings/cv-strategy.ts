@@ -3,6 +3,7 @@ import {
   CVProposal,
   CVStrategy,
   CVStrategyConfig,
+  StreamingInfo,
   MemberStrategy,
   Stake,
   Member,
@@ -39,7 +40,9 @@ import {
   ProposalEdited,
   SuperfluidTokenUpdated,
   SuperfluidGDAConnected,
-  SuperfluidGDADisconnected
+  SuperfluidGDADisconnected,
+  StreamStarted,
+  StreamMemberUnitUpdated
 } from "../../generated/templates/CVStrategy/CVStrategy";
 
 import { Allo as AlloContract } from "../../generated/templates/CVStrategy/Allo";
@@ -78,18 +81,23 @@ export function handleInitialized(event: InitializedCV): void {
   const data3 = changetype<InitializedCV3DataStruct>(event.params.data);
   data3[8] = ethereum.Value.fromAddressArray([Address.zero()]); // Initialize allowlist to everyone allowed
   data3[9] = ethereum.Value.fromAddress(Address.zero()); // Initialize allowlist to everyone allowed
-  computeInitialize(event.address, event.params.poolId, data3);
+  computeInitialize(event.address, event.params.poolId, data3, event.block.timestamp);
 }
 
 export function handleInitializedV2(event: InitializedCV2): void {
   // @ts-ignore
   const data3 = changetype<InitializedCV3DataStruct>(event.params.data);
   data3[9] = ethereum.Value.fromAddress(Address.zero()); // Initialize allowlist to everyone allowed
-  computeInitialize(event.address, event.params.poolId, data3);
+  computeInitialize(event.address, event.params.poolId, data3, event.block.timestamp);
 }
 
 export function handleInitializedV3(event: InitializedCV3): void {
-  computeInitialize(event.address, event.params.poolId, event.params.data);
+  computeInitialize(
+    event.address,
+    event.params.poolId,
+    event.params.data,
+    event.block.timestamp
+  );
 }
 
 export function handleProposalCreated(event: ProposalCreated): void {
@@ -666,6 +674,11 @@ export function handleSybilScorerUpdated(event: SybilScorerUpdated): void {
 export function handleSuperfluidTokenUpdated(
   event: SuperfluidTokenUpdated
 ): void {
+  let streamingInfo = getOrCreateStrategyStreamingInfo(
+    event.address,
+    event.block.timestamp
+  );
+
   let config = CVStrategyConfig.load(`${event.address.toHex()}-config`);
 
   if (config == null) {
@@ -679,16 +692,25 @@ export function handleSuperfluidTokenUpdated(
 
   if (token == Address.zero()) {
     config.superfluidToken = null;
+    streamingInfo.superfluidToken = null;
   } else {
     config.superfluidToken = token.toHexString();
+    streamingInfo.superfluidToken = token.toHexString();
   }
 
   config.save();
+  streamingInfo.updatedAt = event.block.timestamp;
+  streamingInfo.save();
 }
 
 export function handleSuperfluidGDAConnected(
   event: SuperfluidGDAConnected
 ): void {
+  let streamingInfo = getOrCreateStrategyStreamingInfo(
+    event.address,
+    event.block.timestamp
+  );
+
   let config = CVStrategyConfig.load(`${event.address.toHex()}-config`);
   if (config == null) {
     log.error(
@@ -699,12 +721,22 @@ export function handleSuperfluidGDAConnected(
   }
 
   config.superfluidGDA.push(event.params.gda.toHexString());
+  if (streamingInfo.superfluidGDA.indexOf(event.params.gda.toHexString()) == -1) {
+    streamingInfo.superfluidGDA.push(event.params.gda.toHexString());
+  }
   config.save();
+  streamingInfo.updatedAt = event.block.timestamp;
+  streamingInfo.save();
 }
 
 export function handleSuperfluidGDADisconnected(
   event: SuperfluidGDADisconnected
 ): void {
+  let streamingInfo = getOrCreateStrategyStreamingInfo(
+    event.address,
+    event.block.timestamp
+  );
+
   let config = CVStrategyConfig.load(`${event.address.toHex()}-config`);
   if (config == null) {
     log.error(
@@ -724,6 +756,41 @@ export function handleSuperfluidGDADisconnected(
       [`${event.address.toHex()}-config`, event.block.number.toString()]
     );
   }
+
+  const infoIndex = streamingInfo.superfluidGDA.indexOf(
+    event.params.gda.toHexString()
+  );
+  if (infoIndex > -1) {
+    streamingInfo.superfluidGDA.splice(infoIndex, 1);
+  }
+  streamingInfo.updatedAt = event.block.timestamp;
+  streamingInfo.save();
+}
+
+export function handleStreamStarted(event: StreamStarted): void {
+  let streamingInfo = getOrCreateStrategyStreamingInfo(
+    event.address,
+    event.block.timestamp
+  );
+
+  streamingInfo.streamLastStartedGDA = event.params.gda.toHexString();
+  streamingInfo.streamLastFlowRate = event.params.flowRate;
+  streamingInfo.updatedAt = event.block.timestamp;
+  streamingInfo.save();
+}
+
+export function handleStreamMemberUnitUpdated(
+  event: StreamMemberUnitUpdated
+): void {
+  let streamingInfo = getOrCreateStrategyStreamingInfo(
+    event.address,
+    event.block.timestamp
+  );
+
+  streamingInfo.streamLastMember = event.params.member.toHexString();
+  streamingInfo.streamLastMemberUnit = event.params.newUnit;
+  streamingInfo.updatedAt = event.block.timestamp;
+  streamingInfo.save();
 }
 
 export function handlePoolMetadata(content: Bytes): void {
@@ -822,7 +889,8 @@ function computeAllowList(
 function computeInitialize(
   contractAddress: Address,
   poolId: BigInt,
-  data: InitializedCV3DataStruct
+  data: InitializedCV3DataStruct,
+  timestamp: BigInt
 ): void {
   log.debug("CVStrategy: handleInitialized {}", [poolId.toString()]);
   const registryCommunity = data.registryCommunity.toHexString();
@@ -873,6 +941,19 @@ function computeInitialize(
     config.superfluidToken = superfluidToken.toHexString();
   }
 
+  let streamingInfo = getOrCreateStrategyStreamingInfo(
+    contractAddress,
+    timestamp
+  );
+  streamingInfo.superfluidGDA = [];
+  if (superfluidToken == Address.zero()) {
+    streamingInfo.superfluidToken = null;
+  } else {
+    streamingInfo.superfluidToken = superfluidToken.toHexString();
+  }
+  streamingInfo.updatedAt = timestamp;
+  streamingInfo.save();
+
   // @ts-ignore
   let cvParams = changetype<CVParamsUpdatedCvParamsStruct>(data.cvParams);
 
@@ -902,4 +983,31 @@ function getProposalStatus(
     return defaultStatus;
   }
   return BigInt.fromI32(proposal.value.getProposalStatus());
+}
+
+function getOrCreateStrategyStreamingInfo(
+  strategyAddress: Address,
+  timestamp: BigInt
+): StreamingInfo {
+  const id = `${strategyAddress.toHexString()}-streaming`;
+  let streamingInfo = StreamingInfo.load(id);
+
+  if (streamingInfo == null) {
+    streamingInfo = new StreamingInfo(id);
+    streamingInfo.contractAddress = strategyAddress.toHexString();
+    streamingInfo.contractType = "CVStrategy";
+    streamingInfo.strategy = strategyAddress.toHexString();
+    streamingInfo.registryFactory = null;
+    streamingInfo.superfluidToken = null;
+    streamingInfo.superfluidGDA = [];
+    streamingInfo.streamLastStartedGDA = null;
+    streamingInfo.streamLastFlowRate = null;
+    streamingInfo.streamLastMember = null;
+    streamingInfo.streamLastMemberUnit = null;
+    streamingInfo.streamingEscrowFactory = null;
+    streamingInfo.createdAt = timestamp;
+    streamingInfo.updatedAt = timestamp;
+  }
+
+  return streamingInfo;
 }
