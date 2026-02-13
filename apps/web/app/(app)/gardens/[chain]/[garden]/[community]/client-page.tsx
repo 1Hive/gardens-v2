@@ -492,15 +492,6 @@ export default function ClientPage({
               </div>
             </div>
 
-            {/* Community members stats */}
-            <CommunityDetailsTable
-              membersStaked={registryCommunity.members as MembersStaked[]}
-              tokenGarden={tokenGarden}
-              communityName={communityName ?? "Community"}
-              communityStakedTokens={communityStakedTokens}
-              openMembersModal={openMembersModal}
-              setOpenMembersModal={setOpenMembersModal}
-            />
           </header>
 
           <section className="flex flex-col gap-6 section-layout">
@@ -754,15 +745,6 @@ export default function ClientPage({
                   </div>
                 </div>
 
-                {/* Community members stats */}
-                <CommunityDetailsTable
-                  membersStaked={registryCommunity.members as MembersStaked[]}
-                  tokenGarden={tokenGarden}
-                  communityName={communityName ?? "Community"}
-                  communityStakedTokens={communityStakedTokens}
-                  openMembersModal={openMembersModal}
-                  setOpenMembersModal={setOpenMembersModal}
-                />
               </header>
 
               {/* Stake component for mobile */}
@@ -852,6 +834,16 @@ export default function ClientPage({
           )}
         </div>
       </div>
+
+      {/* Shared members modal: keep a single dialog instance mounted */}
+      <CommunityDetailsTable
+        membersStaked={registryCommunity.members as MembersStaked[]}
+        tokenGarden={tokenGarden}
+        communityName={communityName ?? "Community"}
+        communityStakedTokens={communityStakedTokens}
+        openMembersModal={openMembersModal}
+        setOpenMembersModal={setOpenMembersModal}
+      />
     </>
   );
 }
@@ -904,7 +896,7 @@ const CommunityDetailsTable = ({
   return (
     <DataTable
       openModal={openMembersModal}
-      setOpenModal={() => setOpenMembersModal}
+      setOpenModal={setOpenMembersModal}
       title={communityName + " Staking Leaderboard"}
       data={membersStaked as MembersStaked[]}
       description="Overview of all community members and the total amount of tokens they have staked."

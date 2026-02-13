@@ -117,7 +117,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </aside> */}
 
       {/* Top Navigation Bar - Fixed with lower z-index */}
-      <nav className="fixed top-0 left-0 right-0 z-40 px-4 lg:px-6 py-3 bg-neutral min-h-[71px] border-b border-border-neutral dark:border-border-neutral/50 flex flex-col">
+      <nav className="fixed top-0 left-0 right-0 z-40 h-[79px] px-4 lg:px-6 py-3 bg-neutral border-b border-border-neutral dark:border-border-neutral/50 flex flex-col justify-center">
         <div className="flex items-center justify-between h-full gap-3">
           <div className="flex items-center gap-2">
             <Link href="/gardens" className="flex items-center gap-3 text-sm">
@@ -232,7 +232,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         )}
       </nav>
 
-      <div className="flex justify-center items-start pt-[71px] min-h-screen">
+      <div className="flex justify-center items-start pt-[79px] min-h-screen">
         <div className="w-full mx-auto">
           <div className="min-h-[400px]">
             {/* Main content */}

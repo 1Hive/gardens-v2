@@ -459,8 +459,8 @@ export default function ClientPage({ params }: ClientPageProps) {
               {/* Conviction Progress */}
               {proposalData.strategy?.isEnabled &&
                 currentConvictionPct != null &&
-                thresholdPct != null &&
-                totalSupportPct != null && (
+                (isSignalingType ||
+                  (thresholdPct != null && totalSupportPct != null)) && (
                   <div className="">
                     {(status === "active" || status === "disputed") && (
                       <div className="flex flex-col gap-2">
@@ -469,8 +469,8 @@ export default function ClientPage({ params }: ClientPageProps) {
                         <div className="flex flex-col gap-2">
                           <ConvictionBarChart
                             currentConvictionPct={currentConvictionPct}
-                            thresholdPct={thresholdPct}
-                            proposalSupportPct={totalSupportPct}
+                            thresholdPct={thresholdPct ?? 0}
+                            proposalSupportPct={totalSupportPct ?? 0}
                             isSignalingType={isSignalingType}
                             proposalNumber={Number(proposalIdNumber)}
                             timeToPass={Number(timeToPass)}
@@ -777,8 +777,8 @@ export default function ClientPage({ params }: ClientPageProps) {
                     {/* Conviction Progress */}
                     {proposalData.strategy.isEnabled &&
                       currentConvictionPct != null &&
-                      thresholdPct != null &&
-                      totalSupportPct != null && (
+                      (isSignalingType ||
+                        (thresholdPct != null && totalSupportPct != null)) && (
                         <div className="">
                           {(status === "active" || status === "disputed") && (
                             <div className="flex flex-col gap-2">
@@ -787,8 +787,8 @@ export default function ClientPage({ params }: ClientPageProps) {
                               <div className="flex flex-col gap-2">
                                 <ConvictionBarChart
                                   currentConvictionPct={currentConvictionPct}
-                                  thresholdPct={thresholdPct}
-                                  proposalSupportPct={totalSupportPct}
+                                  thresholdPct={thresholdPct ?? 0}
+                                  proposalSupportPct={totalSupportPct ?? 0}
                                   isSignalingType={isSignalingType}
                                   proposalNumber={Number(proposalIdNumber)}
                                   timeToPass={Number(timeToPass)}

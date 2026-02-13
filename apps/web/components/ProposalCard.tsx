@@ -323,16 +323,15 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
           {/* support description or slider */}
           {isPoolEnabled && !isProposalEnded && (
             <div className="flex gap-12 flex-wrap w-full ">
-              <div className="mt-4 w-full">
+              <div className={`w-full ${isSignalingType ? "mt-2" : "mt-4"}`}>
                 {/* manage support view */}
                 <div className="w-full ">
                   {currentConvictionPct != null &&
-                    thresholdPct != null &&
-                    totalSupportPct != null && (
+                    (isSignalingType ||
+                      (thresholdPct != null && totalSupportPct != null)) && (
                       <div>
                         <div
-                          className="flex items-baseline justify-between gap-4 mb-1
-                        "
+                          className={`flex items-baseline justify-between gap-4 ${isSignalingType ? "mb-0" : "mb-1"}`}
                         >
                           <div>
                             <span className="text-xs">{ProposalCountDown}</span>
@@ -349,20 +348,24 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
                               </span>
                             </li>
 
-                            <li>
-                              <span className="text-xs text-neutral-soft-content">
-                                threshold: {thresholdPct} VP
-                              </span>
-                            </li>
+                            {!isSignalingType && (
+                              <li>
+                                <span className="text-xs text-neutral-soft-content">
+                                  threshold: {thresholdPct} VP
+                                </span>
+                              </li>
+                            )}
                           </ul>
                         </div>
 
-                        <div className="h-3 flex items-center mb-3">
+                        <div
+                          className={`flex items-center ${isSignalingType ? "mb-1" : "h-3 mb-3"}`}
+                        >
                           <ConvictionBarChart
                             compact
                             currentConvictionPct={currentConvictionPct}
-                            thresholdPct={isSignalingType ? 0 : thresholdPct}
-                            proposalSupportPct={totalSupportPct}
+                            thresholdPct={thresholdPct ?? 0}
+                            proposalSupportPct={totalSupportPct ?? 0}
                             isSignalingType={isSignalingType}
                             proposalNumber={proposalNumber}
                             refreshConviction={triggerConvictionRefetch}
