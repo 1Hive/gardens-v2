@@ -91,7 +91,6 @@ contract UpgradeCVMultichainTest is BaseMultiChain, StrategyDiamondConfiguratorB
         // 2. REGISTRY COMMUNITIES UPGRADES
         address[] memory registryCommunityProxies =
             networkJson.readAddressArray(getKeyNetwork(".PROXIES.REGISTRY_COMMUNITIES"));
-        IDiamond.FacetCut[] memory upgradedCommunityCuts = _buildUpgradedCommunityFacetCuts();
         for (uint256 i = 0; i < registryCommunityProxies.length; i++) {
             RegistryCommunity registryCommunity = RegistryCommunity(payable(address(registryCommunityProxies[i])));
 
@@ -113,10 +112,12 @@ contract UpgradeCVMultichainTest is BaseMultiChain, StrategyDiamondConfiguratorB
             );
 
             // 2.d -- Apply community facet cuts --
-            if (upgradedCommunityCuts.length > 0) {
+            IDiamond.FacetCut[] memory changedCommunityCuts =
+                _buildChangedFacetCuts(registryCommunityProxies[i], communityCuts);
+            if (changedCommunityCuts.length > 0) {
                 IDiamondCut(registryCommunityProxies[i])
                     .diamondCut(
-                        upgradedCommunityCuts,
+                        changedCommunityCuts,
                         address(new RegistryCommunityDiamondInit()),
                         abi.encodeCall(RegistryCommunityDiamondInit.init, ())
                     );
@@ -198,6 +199,56 @@ contract UpgradeCVMultichainTest is BaseMultiChain, StrategyDiamondConfiguratorB
     function _buildUpgradedStrategyFacetCuts() internal returns (IDiamond.FacetCut[] memory cuts) {
         // Existing pools do not need the streaming facet.
         cuts = new IDiamond.FacetCut[](0);
+    }
+
+    function _buildChangedFacetCuts(address diamondProxy, IDiamond.FacetCut[] memory desiredCuts)
+        internal
+        view
+        returns (IDiamond.FacetCut[] memory changedCuts)
+    {
+        bytes4[][] memory selectorsByCut = new bytes4[][](desiredCuts.length);
+        uint256[] memory selectorCountByCut = new uint256[](desiredCuts.length);
+        uint256 changedCutCount = 0;
+
+        for (uint256 i = 0; i < desiredCuts.length; i++) {
+            bytes4[] memory desiredSelectors = desiredCuts[i].functionSelectors;
+            selectorsByCut[i] = new bytes4[](desiredSelectors.length);
+            uint256 changedSelectorCount = 0;
+
+            for (uint256 j = 0; j < desiredSelectors.length; j++) {
+                bytes4 selector = desiredSelectors[j];
+                address currentFacet = IDiamondLoupe(diamondProxy).facetAddress(selector);
+                if (currentFacet != desiredCuts[i].facetAddress) {
+                    selectorsByCut[i][changedSelectorCount] = selector;
+                    changedSelectorCount++;
+                }
+            }
+
+            selectorCountByCut[i] = changedSelectorCount;
+            if (changedSelectorCount > 0) {
+                changedCutCount++;
+            }
+        }
+
+        changedCuts = new IDiamond.FacetCut[](changedCutCount);
+        uint256 changedIndex = 0;
+
+        for (uint256 i = 0; i < desiredCuts.length; i++) {
+            uint256 selectorCount = selectorCountByCut[i];
+            if (selectorCount == 0) continue;
+
+            bytes4[] memory changedSelectors = new bytes4[](selectorCount);
+            for (uint256 j = 0; j < selectorCount; j++) {
+                changedSelectors[j] = selectorsByCut[i][j];
+            }
+
+            changedCuts[changedIndex] = IDiamond.FacetCut({
+                facetAddress: desiredCuts[i].facetAddress,
+                action: desiredCuts[i].action,
+                functionSelectors: changedSelectors
+            });
+            changedIndex++;
+        }
     }
 
     function _buildFacetCuts() internal returns (FacetCuts memory cuts) {

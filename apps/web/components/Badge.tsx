@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
 import {
+  ArrowDownCircleIcon,
   CurrencyDollarIcon,
   HandThumbUpIcon,
 } from "@heroicons/react/24/outline";
@@ -21,6 +22,7 @@ type BadgeProps = {
 const POOL_TYPE_STYLES = [
   "bg-primary-soft text-primary-content dark:bg-primary-soft-dark",
   "bg-tertiary-soft dark:bg-tertiary-dark text-tertiary-content",
+  "bg-secondary-soft text-secondary-content dark:bg-secondary-dark-base/70 dark:text-secondary-dark-text",
 ];
 
 // Styles for different proposal status badge
@@ -30,12 +32,12 @@ const PROPOSAL_STATUS_STYLES = [
   "bg-secondary-soft dark:bg-secondary-soft-dark text-secondary-content",
   "bg-danger-soft dark:bg-danger-soft-dark text-danger-content",
   "bg-tertiary-soft dark:bg-tertiary-dark text-tertiary-content",
-  "bg-danger-soft dark:bg-danger-soft-dark text-danger-content",
+  "bg-secondary-soft dark:bg-secondary-soft-dark text-secondary-content",
   "bg-danger-soft dark:bg-danger-soft-dark text-danger-content",
 ];
 
 const BASE_STYLES =
-  "border-none rounded-lg leading-5 py-1 px-2 cursor-default inline-flex flex-wrap items-center gap-1 whitespace-normal break-words";
+  "border-none rounded-full leading-5 py-1 px-3 cursor-default inline-flex flex-wrap items-center gap-1 whitespace-normal break-words";
 
 export function Badge({
   type,
@@ -89,6 +91,7 @@ export function Badge({
       const iconMap: { [key: string]: React.ReactNode } = {
         signaling: <HandThumbUpIcon />,
         funding: <CurrencyDollarIcon />,
+        streaming: <ArrowDownCircleIcon />,
       };
       return type != null ? iconMap[PoolTypes[type]] ?? null : null;
     })();
@@ -99,9 +102,11 @@ export function Badge({
       data-tip={tooltip}
     >
       {Boolean(iconIncluded) && (
-        <span className={"h-5 w-5 text-inherit"}>{iconIncluded}</span>
+        <span className={"w-4 h-4 sm:h-5 sm:w-5 text-inherit"}>
+          {iconIncluded}
+        </span>
       )}
-      <p className="first-letter:uppercase text-sm font-semibold text-inherit">
+      <p className="first-letter:uppercase text-xs sm:text-sm font-semibold text-inherit">
         {content}
       </p>
     </div>

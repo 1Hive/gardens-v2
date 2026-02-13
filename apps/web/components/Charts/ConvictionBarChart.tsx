@@ -31,8 +31,8 @@ export function getChartColors(isDarkTheme?: boolean) {
   return {
     background:
       isDarkTheme ? "rgba(48, 48, 48, 0.55)" : "rgba(180, 180, 180, 0.2)",
-    support: isDarkTheme ? "#88b358" : "#A8E066",
-    conviction: isDarkTheme ? "#457b08" : "#4F8E13",
+    support: isDarkTheme ? "#88b358" : "#65AD18",
+    conviction: isDarkTheme ? "#3f8f65" : "#74c898",
     threshold:
       isDarkTheme ? "rgba(79, 161, 118, 0.35)" : "rgba(150, 211, 105, 0.45)",
     markLine: isDarkTheme ? "#E8E8E8" : "#191919",
@@ -94,7 +94,7 @@ export const ConvictionBarChart = ({
         proposalSupportPct < thresholdPct,
       details: [
         {
-          message: `This proposal needs ${supportNeeded} % more support to reach ${thresholdPct}%`,
+          message: `This proposal needs ${supportNeeded} VP more support to reach ${thresholdPct} VP threshold.`,
           growing: true,
         },
       ],
@@ -118,7 +118,7 @@ export const ConvictionBarChart = ({
         currentConvictionPct < thresholdPct,
       details: [
         {
-          message: `This proposal needs ${supportNeeded} % more support to reach ${thresholdPct}%`,
+          message: `This proposal needs ${supportNeeded} VP more support to reach ${thresholdPct} VP threshold.`,
           growing: false,
         },
       ],
@@ -168,7 +168,7 @@ export const ConvictionBarChart = ({
         proposalSupportPct < thresholdPct,
       details: [
         {
-          message: `This proposal needs ${supportNeeded} % more support to reach ${thresholdPct}%`,
+          message: `This proposal needs ${supportNeeded} VP more support to reach ${thresholdPct} VP threshold.`,
           growing: null,
         },
       ],
@@ -227,13 +227,13 @@ export const ConvictionBarChart = ({
     disabled: true,
   };
 
-  const borderRadius = defaultChartMaxValue ? [50, 50] : [50, 4, 4, 50];
+  const borderRadius = defaultChartMaxValue ? [50, 50] : [50, 0, 0, 50];
 
   const markLine: MarkLineComponentOption = {
     symbol: "none",
     label: {
       position: "start",
-      formatter: "{@score} %",
+      formatter: "{@score} VP",
       fontSize: compact ? 10 : 14,
       color: chartColors.label,
     },
@@ -254,7 +254,7 @@ export const ConvictionBarChart = ({
           },
         ],
         lineStyle: {
-          width: compact ? 0.5 : 1,
+          width: compact ? 0.75 : 1,
           color: chartColors.markLine,
           dashOffset: 30,
         },
@@ -280,7 +280,7 @@ export const ConvictionBarChart = ({
       splitLine: { show: false },
       axisLabel: {
         show: false,
-        formatter: "{value}%",
+        formatter: "{value } VP",
         fontSize: 8,
       },
       axisLine: {
@@ -290,7 +290,7 @@ export const ConvictionBarChart = ({
     },
     tooltip: {
       trigger: "axis",
-      valueFormatter: (value) => value + "%",
+      valueFormatter: (value) => value + " VP",
       borderWidth: 1,
       borderColor: chartColors.tooltipBorder,
       backgroundColor: chartColors.tooltipBackground,
@@ -304,7 +304,7 @@ export const ConvictionBarChart = ({
     grid: {
       show: false,
       left: "0%",
-      right: "3%",
+      right: compact ? "0%" : "4%",
       top: compact ? "0%" : "25%",
       bottom: compact ? "0%" : "25%",
       containLabel: false,
@@ -330,7 +330,7 @@ export const ConvictionBarChart = ({
           position: "insideRight",
           color: chartColors.label,
           fontSize: 8,
-          formatter: "{@score} %",
+          formatter: "{@score } VP",
         },
         z:
           supportGtConv ? 1
@@ -351,7 +351,7 @@ export const ConvictionBarChart = ({
           position: "insideRight",
           color: "#FFFFFF",
           fontSize: 8,
-          formatter: "{@score} %",
+          formatter: "{@score } VP",
           width: 0,
         },
         barWidth: 18,
@@ -414,6 +414,9 @@ export const ConvictionBarChart = ({
             growing={growing}
             isSignalingType={isSignalingType}
             proposalStatus={proposalStatus}
+            support={proposalSupportPct}
+            threshold={thresholdPct}
+            conviction={currentConvictionPct}
           >
             {chart}
           </ChartWrapper>

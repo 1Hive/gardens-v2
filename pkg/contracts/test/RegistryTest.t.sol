@@ -1254,14 +1254,13 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         stopMeasuringGas();
     }
 
-    function test_revert_deactivateMember_alreadyDeactivated() public {
+    function test_deactivateMember_alreadyDeactivated_returns() public {
         startMeasuringGas("Registering and kicking member");
         vm.startPrank(gardenMember);
         token.approve(address(registryCommunity), STAKE_WITH_FEES);
         _registryCommunity().stakeAndRegisterMember("");
         vm.stopPrank();
         vm.startPrank(address(strategy));
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.PointsDeactivated.selector));
         _registryCommunity().deactivateMemberInStrategy(gardenMember, address(strategy));
         vm.stopPrank();
         stopMeasuringGas();

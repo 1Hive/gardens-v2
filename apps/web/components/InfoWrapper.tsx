@@ -14,8 +14,8 @@ type InfoWrapperProps = {
 
 const sizeMap = {
   sm: { width: 18, height: 18 },
-  md: { width: 22, height: 22 },
-  lg: { width: 2, height: 2 },
+  md: { width: 20, height: 20 },
+  lg: { width: 24, height: 24 },
 };
 
 export function InfoWrapper({
@@ -44,7 +44,7 @@ export function InfoWrapper({
         )}
         {!hideIcon &&
           (customIcon ?? (
-            <InformationCircleIcon width={width} height={height} />
+            <InformationCircleIcon className="w-3 h-3 sm:w-4 sm:h-4" />
           ))}
       </div>
     </div>

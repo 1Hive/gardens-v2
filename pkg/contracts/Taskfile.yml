@@ -168,6 +168,41 @@ tasks:
           --legacy \
           -vvvv
         ignore_error: true
+  upgrade-ethsep:
+    desc: Upgrade ethsep
+    cmds:
+      - cmd: |
+          forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
+          --rpc-url ${RPC_URL_SEP_TESTNET} \
+          --sig "run(string)" 'ethsepolia' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --chain-id 11155111 \
+          --ffi \
+          --broadcast \
+          --verify \
+          -vvv
+        ignore_error: true
+  upgrade-and-verify-ethsep:
+    desc: Upgrade and verify ethsep
+    deps:
+      - upgrade-ethsep
+    cmds: []
+  deploy-global-pause-controller-ethsep:
+    desc: Deploy global pause controller ethsep
+    cmds:
+      - cmd: |
+          forge script script/DeployGlobalPauseController.s.sol:DeployGlobalPauseController \
+          --rpc-url ${RPC_URL_SEP_TESTNET} \
+          --sig "run(string)" 'ethsepolia' \
+          --chain-id 11155111 \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --private-key ${PRIVATE_KEY} \
+          --verify \
+          --broadcast \
+          -vv
+        ignore_error: true
+      - task: sync-abis
   deploy-token-opsep:
     desc: Deploy token opsep
     cmds:

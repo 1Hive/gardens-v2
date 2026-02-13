@@ -1,12 +1,19 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { PlusIcon } from "@heroicons/react/24/outline";
-import Link from "next/link";
+import { PowerIcon, UserGroupIcon } from "@heroicons/react/24/outline";
 import { Address } from "viem";
-import { useBalance, useAccount, useChainId, useContractRead } from "wagmi";
+import {
+  useBalance,
+  useAccount,
+  useChainId,
+  useContractRead,
+  useToken,
+} from "wagmi";
 import {
   getAlloQuery,
+  getCommunityDocument,
+  getCommunityQuery,
   getMembersStrategyDocument,
   getMembersStrategyQuery,
   getMemberStrategyDocument,
@@ -17,11 +24,14 @@ import {
   isMemberQuery,
 } from "#/subgraph/.graphclient";
 import {
+  ActivatePoints,
   Button,
+  CheckSybil,
   InfoBox,
   PoolGovernance,
   PoolMetrics,
   Proposals,
+  RegisterMember,
 } from "@/components";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import PoolHeader from "@/components/PoolHeader";
@@ -37,7 +47,11 @@ import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { useSuperfluidToken } from "@/hooks/useSuperfluidToken";
 import { registryCommunityABI } from "@/src/generated";
 import { PoolTypes } from "@/types";
-import { calculatePercentageBigInt, formatTokenAmount } from "@/utils/numbers";
+import {
+  calculatePercentageBigInt,
+  formatTokenAmount,
+  SCALE_PRECISION,
+} from "@/utils/numbers";
 
 export type AlloQuery = getAlloQuery["allos"][number];
 
@@ -98,12 +112,77 @@ export default function ClientPage({
     enabled: !!wallet,
   });
 
+  //Community Query and Register Member data
+  const {
+    data: result,
+    error: errorCommunityQuery,
+    refetch: refetchCommunityQuery,
+  } = useSubgraphQuery<getCommunityQuery>({
+    query: getCommunityDocument,
+    enabled: !!wallet && !!strategy?.token,
+    variables: {
+      communityAddr: _community.toLowerCase(),
+      tokenAddr: garden.toLocaleLowerCase(),
+    },
+    changeScope: [
+      { topic: "community", id: communityAddress },
+      { topic: "member", containerId: communityAddress },
+    ],
+  });
+
+  const { data: isMemberResult } = useSubgraphQuery<isMemberQuery>({
+    query: isMemberDocument,
+    variables: {
+      me: wallet?.toLowerCase(),
+      comm: _community.toLowerCase(),
+    },
+    changeScope: [
+      { topic: "community", id: communityAddress },
+      { topic: "member", containerId: communityAddress },
+    ],
+    enabled: wallet !== undefined,
+  });
+
+  const registryCommunity = result?.registryCommunity;
+  let {
+    communityName,
+    members,
+    strategies,
+    communityFee,
+    registerStakeAmount,
+    protocolFee,
+  } = registryCommunity ?? {};
+
+  const registerStakeAmountValue = registerStakeAmount ?? 0;
+  const registerStakeAmountBn = BigInt(registerStakeAmountValue);
+  const protocolFeeScaled = protocolFee != null ? BigInt(protocolFee) : 0n;
+  const communityFeeScaled = communityFee != null ? BigInt(communityFee) : 0n;
+
+  const communityFeeAmount =
+    communityFeeScaled > 0n ?
+      (registerStakeAmountBn * communityFeeScaled) / BigInt(SCALE_PRECISION)
+    : 0n;
+  const protocolFeeAmount =
+    protocolFeeScaled > 0n ?
+      (registerStakeAmountBn * protocolFeeScaled) / BigInt(SCALE_PRECISION)
+    : 0n;
+
+  const totalRegistrationCost =
+    registerStakeAmountBn + // Min stake
+    communityFeeAmount + // Community fee as % of min stake
+    protocolFeeAmount; // Protocol fee as extra
+
+  const [triggerSybilCheckModalClose, setTriggerSybilCheckModalClose] =
+    useState(false);
+  const [selectedTab, setSelectedTab] = useState(0);
+  //
+
   const { data: memberData, error: errorMemberData } =
     useSubgraphQuery<isMemberQuery>({
       query: isMemberDocument,
       variables: {
         me: wallet?.toLowerCase(),
-        comm: strategy?.registryCommunity.id.toLowerCase(),
+        comm: communityAddress?.toLowerCase(),
       },
       changeScope: [
         {
@@ -119,6 +198,7 @@ export default function ClientPage({
       ],
       enabled: !!wallet && !!strategy?.registryCommunity?.id,
     });
+
   const { data: memberStrategyData } = useSubgraphQuery<getMemberStrategyQuery>(
     {
       query: getMemberStrategyDocument,
@@ -190,7 +270,21 @@ export default function ClientPage({
   //
 
   const poolTokenAddr = strategy?.token as Address;
-  const proposalType = strategy?.config.proposalType;
+
+  // TODO REMOVE BEFORE COMMIT: temporary override to force streaming pool UI on this page.
+  const FORCE_STREAMING_POOL_FOR_TESTING = true;
+  const proposalType =
+    FORCE_STREAMING_POOL_FOR_TESTING ? 2 : strategy?.config.proposalType;
+  const effectiveStrategy =
+    strategy && strategy.config ?
+      {
+        ...strategy,
+        config: {
+          ...strategy.config,
+          proposalType,
+        },
+      }
+    : strategy;
 
   const numericChainId = Number(chain);
   const chainConfig =
@@ -243,6 +337,12 @@ export default function ClientPage({
     enabled: !!effectiveSuperToken && !!wallet,
   });
 
+  const { data: tokenGarden } = useToken({
+    address: strategy?.token as Address,
+    chainId: chainId,
+    enabled: !isMemberCommunity,
+  });
+
   const { data: metadataResult } = useMetadataIpfsFetch({
     hash: strategy?.metadataHash,
     enabled: strategy && !strategy?.metadata,
@@ -274,7 +374,7 @@ export default function ClientPage({
     poolTokenAddr: poolTokenAddr,
     enabled:
       !!strategy &&
-      PoolTypes[strategy.config.proposalType] !== "signaling" &&
+      PoolTypes[proposalType] !== "signaling" &&
       !!poolTokenAddr,
     watch: true,
   });
@@ -299,6 +399,7 @@ export default function ClientPage({
     +minThresholdPoints > +totalPointsActivatedInPool;
 
   const poolType = proposalType != null ? PoolTypes[proposalType] : undefined;
+  const isStreamingPool = poolType === "streaming";
   const needsFundingToken = poolType === "funding";
   const isMissingFundingToken = needsFundingToken && !poolToken;
   const [hasWaitedForPoolToken, setHasWaitedForPoolToken] = useState(false);
@@ -374,6 +475,7 @@ export default function ClientPage({
   }
 
   const showMissingFundingTokenWarning = isMissingFundingToken && !error;
+
   const alloInfo = data.allos[0];
 
   const isEnabled = data.cvstrategies?.[0]?.isEnabled as boolean;
@@ -388,6 +490,143 @@ export default function ClientPage({
       )
     : undefined;
 
+  const isMember = memberData?.member?.memberCommunity?.[0]?.isRegistered;
+
+  const RegisterAndActivateFromPool = () => {
+    return (
+      <>
+        {/* Join community box */}
+        {!isMemberCommunity && registryCommunity && (
+          <div className="border rounded-xl shadow-md border-tertiary-content bg-primary p-6 dark:bg-primary-soft-dark">
+            <div className="flex items-start gap-4">
+              <div className="rounded-full bg-tertiary-content/10 p-3 flex-shrink-0">
+                <UserGroupIcon
+                  className="h-6 w-6 text-tertiary-content"
+                  aria-hidden="true"
+                />
+              </div>
+
+              <div className="flex-1 space-y-4">
+                <div>
+                  <h4 className="mb-2">{`Join ${communityName} community`}</h4>
+                  <p className="subtitle2 text-xs sm:text-sm">
+                    You must be a member of this community before activating
+                    governance or voting on proposals.
+                  </p>
+                </div>
+
+                <InfoBox
+                  infoBoxType="info"
+                  title="Steps to get started"
+                  className="w-full rounded-xl bg-neutral"
+                >
+                  <ul className="list-disc list-inside space-y-1 ml-2 font-press">
+                    <li>{`Join the ${communityName} community.`}</li>
+                    <li>
+                      If eligible to vote - activate governance in this pool to
+                      get Voting Power (VP).
+                    </li>
+                    <li>Vote on proposals</li>
+                  </ul>
+                </InfoBox>
+
+                {tokenGarden && (
+                  <RegisterMember
+                    memberData={wallet ? isMemberResult : undefined}
+                    registrationCost={totalRegistrationCost}
+                    token={tokenGarden}
+                    registryCommunity={registryCommunity}
+                  />
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Activate governance box */}
+        {isMemberCommunity && !memberActivatedStrategy && (
+          <div className="border rounded-xl shadow-md border-primary-content bg-primary p-6 dark:bg-primary-soft-dark">
+            <div className="flex items-start gap-4">
+              <div className="rounded-full bg-primary-content/10 p-3 flex-shrink-0">
+                <PowerIcon
+                  className="h-6 w-6 text-primary-content"
+                  aria-hidden="true"
+                />
+              </div>
+
+              <div className="flex-1 space-y-4">
+                <div>
+                  <h4 className="mb-2">Activate Governance & Start Voting</h4>
+                  <p className="subtitle2 text-xs sm:text-sm">
+                    You are already a community member. Activate governance in
+                    this pool to receive Voting Power (VP) and vote on
+                    proposals.
+                  </p>
+                </div>
+
+                <InfoBox
+                  infoBoxType="success"
+                  title="How voting works"
+                  className="w-full rounded-xl bg-neutral"
+                >
+                  <ul className="list-disc list-inside space-y-2 ml-2 font-press">
+                    <li>
+                      The pool has a total of <strong>100 VP</strong>, shared
+                      between all activated members.
+                    </li>
+                    <li>
+                      Your VP is your influence in the pool, based on your stake
+                      and pool governance system.
+                    </li>
+                    <li>
+                      If you’re eligible to vote, you can allocate your Voting
+                      Power (VP) across multiple proposals at the same time as
+                      support. The more VP you allocate, the faster its
+                      conviction grows.
+                    </li>
+                  </ul>
+                </InfoBox>
+
+                <div className="flex flex-col gap-4">
+                  <CheckSybil
+                    strategy={effectiveStrategy}
+                    enableCheck={!memberActivatedStrategy}
+                    triggerClose={triggerSybilCheckModalClose}
+                  >
+                    <ActivatePoints
+                      strategy={effectiveStrategy}
+                      communityAddress={communityAddress}
+                      isMemberActivated={memberActivatedStrategy}
+                      isMember={isMemberCommunity}
+                      handleTxSuccess={() =>
+                        setTriggerSybilCheckModalClose(true)
+                      }
+                    />
+                  </CheckSybil>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </>
+    );
+  };
+
+  const StreamingPoolInfo = () => {
+    if (!isStreamingPool) return null;
+
+    return (
+      <InfoBox
+        infoBoxType="info"
+        title="Streaming pool"
+        className="rounded-xl bg-neutral"
+      >
+        This pool supports continuous funding via Superfluid streams. Pool
+        balances and proposal execution can change over time as streams flow in.
+      </InfoBox>
+    );
+  };
+
   return (
     <>
       {showMissingFundingTokenWarning && (
@@ -397,33 +636,41 @@ export default function ClientPage({
           </InfoBox>
         </div>
       )}
-      <PoolHeader
-        poolToken={poolToken}
-        strategy={strategy}
-        arbitrableConfig={data.arbitrableConfigs[0]}
-        poolId={poolId}
-        ipfsResult={metadata}
-        isEnabled={isEnabled}
-        maxAmount={maxAmount}
-        superTokenCandidate={superTokenCandidate}
-        superToken={
-          superTokenInfo && {
-            ...superTokenInfo,
-            sameAsUnderlying: superTokenCandidate?.sameAsUnderlying,
-            address: effectiveSuperToken as Address,
+      {/* ================= DESKTOP ================= */}
+
+      {/*  Join community - Activate governace path and description from pool page */}
+      <div className="hidden col-span-12 xl:col-span-9 sm:flex flex-col gap-6">
+        <PoolHeader
+          poolToken={poolToken}
+          strategy={effectiveStrategy}
+          arbitrableConfig={data.arbitrableConfigs[0]}
+          poolId={poolId}
+          ipfsResult={metadata}
+          isEnabled={isEnabled}
+          maxAmount={maxAmount}
+          superTokenCandidate={superTokenCandidate}
+          superToken={
+            superTokenInfo && {
+              ...superTokenInfo,
+              sameAsUnderlying: superTokenCandidate?.sameAsUnderlying,
+              address: effectiveSuperToken as Address,
+            }
           }
-        }
-        setSuperTokenCandidate={setSuperTokenCandidate}
-        minThGtTotalEffPoints={minThGtTotalEffPoints}
-      />
+          setSuperTokenCandidate={setSuperTokenCandidate}
+          minThGtTotalEffPoints={minThGtTotalEffPoints}
+          communityName={communityName ?? ""}
+        />
+        <StreamingPoolInfo />
+        <RegisterAndActivateFromPool />
+      </div>
 
       {isEnabled && (
-        <div className="col-span-12 xl:col-span-3 flex flex-col gap-10">
+        <div className="hidden sm:col-span-12 xl:col-span-3 sm:flex flex-col gap-6">
           <>
             {poolToken && PoolTypes[proposalType] !== "signaling" && (
               <PoolMetrics
                 communityAddress={communityAddress}
-                strategy={strategy}
+                strategy={effectiveStrategy}
                 poolId={poolId}
                 poolToken={poolToken}
                 chainId={Number(chain)}
@@ -438,34 +685,10 @@ export default function ClientPage({
             )}
           </>
 
-          {/* <div className="section-layout flex flex-col items-start xl:items-center gap-4">
-            <div className="flex flex-col gap-4">
-              <h3>Have an idea ?</h3>
-              <span className="text-sm">
-                Submit a proposal{" "}
-                {PoolTypes[proposalType] !== "signaling" ?
-                  "to request funding from the pool."
-                : "to share your vision and build community support."}
-              </span>
-            </div>
-
-            <div className="w-full flex items-center justify-center">
-              <Link href={createProposalUrl}>
-                <Button
-                  icon={<PlusIcon height={24} width={24} />}
-                  disabled={!isConnected || missmatchUrl || !isMemberCommunity}
-                  tooltip={tooltipMessage}
-                >
-                  Create a proposal
-                </Button>
-              </Link>
-            </div>
-          </div> */}
-
           <PoolGovernance
             memberPoolWeight={memberPoolWeight}
             tokenDecimals={tokenDecimals}
-            strategy={strategy}
+            strategy={effectiveStrategy}
             communityAddress={communityAddress}
             memberTokensInCommunity={memberTokensInCommunity}
             isMemberCommunity={isMemberCommunity}
@@ -480,16 +703,115 @@ export default function ClientPage({
       )}
 
       {isEnabled && (
-        <Proposals
-          poolToken={poolToken}
-          strategy={{ ...strategy, title: metadata?.title }}
-          alloInfo={alloInfo}
-          communityAddress={communityAddress}
-          createProposalUrl={createProposalUrl}
-          proposalType={proposalType}
-          minThGtTotalEffPoints={minThGtTotalEffPoints}
-        />
+        <section className="hidden col-span-12 xl:col-span-9 sm:flex flex-col gap-4 sm:gap-8">
+          <Proposals
+            poolToken={poolToken}
+            strategy={{ ...effectiveStrategy, title: metadata?.title }}
+            alloInfo={alloInfo}
+            communityAddress={communityAddress}
+            createProposalUrl={createProposalUrl}
+            proposalType={proposalType}
+            minThGtTotalEffPoints={minThGtTotalEffPoints}
+          />
+        </section>
       )}
+
+      {/* ================= MOBILE ================= */}
+
+      <div className="block md:hidden col-span-12">
+        <div
+          role="tablist"
+          className="tabs tabs-boxed w-full border1 bg-neutral p-1"
+          aria-label="Pool sections"
+        >
+          {["Overview", "Proposals", "Governance"].map((label, index) => (
+            <button
+              key={label}
+              type="button"
+              role="tab"
+              className={`tab rounded-lg border-0 text-neutral-soft-content ${selectedTab === index ? "tab-active !bg-primary-button dark:!bg-primary-dark-base !text-neutral-inverted-content" : "hover:text-neutral-content"}`}
+              aria-selected={selectedTab === index}
+              onClick={() => setSelectedTab(index)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        <div className="mt-4">
+          {selectedTab === 0 && isEnabled && (
+            <div className="col-span-12 sm:hidden space-y-6">
+              <PoolHeader
+                poolToken={poolToken}
+                strategy={effectiveStrategy}
+                arbitrableConfig={data.arbitrableConfigs[0]}
+                poolId={poolId}
+                ipfsResult={metadata}
+                isEnabled={isEnabled}
+                maxAmount={maxAmount}
+                superTokenCandidate={superTokenCandidate}
+                superToken={
+                  superTokenInfo && {
+                    ...superTokenInfo,
+                    sameAsUnderlying: superTokenCandidate?.sameAsUnderlying,
+                    address: effectiveSuperToken as Address,
+                  }
+                }
+                setSuperTokenCandidate={setSuperTokenCandidate}
+                minThGtTotalEffPoints={minThGtTotalEffPoints}
+                communityName={communityName ?? ""}
+              />
+              <StreamingPoolInfo />
+              <RegisterAndActivateFromPool />
+              {poolToken && PoolTypes[proposalType] !== "signaling" && (
+                <PoolMetrics
+                  communityAddress={communityAddress}
+                  strategy={effectiveStrategy}
+                  poolId={poolId}
+                  poolToken={poolToken}
+                  chainId={Number(chain)}
+                  superToken={
+                    superTokenInfo && {
+                      ...superTokenInfo,
+                      sameAsUnderlying: superTokenCandidate?.sameAsUnderlying,
+                      address: effectiveSuperToken as Address,
+                    }
+                  }
+                />
+              )}
+            </div>
+          )}
+
+          {selectedTab === 1 && isEnabled && (
+            <Proposals
+              poolToken={poolToken}
+              strategy={{ ...effectiveStrategy, title: metadata?.title }}
+              alloInfo={alloInfo}
+              communityAddress={communityAddress}
+              createProposalUrl={createProposalUrl}
+              proposalType={proposalType}
+              minThGtTotalEffPoints={minThGtTotalEffPoints}
+            />
+          )}
+
+          {selectedTab === 2 && (
+            <PoolGovernance
+              memberPoolWeight={memberPoolWeight}
+              tokenDecimals={tokenDecimals}
+              strategy={effectiveStrategy}
+              communityAddress={communityAddress}
+              memberTokensInCommunity={memberTokensInCommunity}
+              isMemberCommunity={isMemberCommunity}
+              memberActivatedStrategy={memberActivatedStrategy}
+              membersStrategyData={
+                membersStrategies ?
+                  { memberStrategies: membersStrategies }
+                : undefined
+              }
+            />
+          )}
+        </div>
+      </div>
     </>
   );
 }
