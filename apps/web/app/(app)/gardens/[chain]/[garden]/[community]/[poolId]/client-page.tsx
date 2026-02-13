@@ -476,11 +476,8 @@ export default function ClientPage({
       )
     : undefined;
 
-  const isMember = memberData?.member?.memberCommunity?.[0]?.isRegistered;
-
-  const RegisterAndActivateFromPool = () => {
-    return (
-      <>
+  const registerAndActivateFromPool = (
+    <>
         {/* Join community box */}
         {!isMemberCommunity && registryCommunity && (
           <div className="border rounded-xl shadow-md border-tertiary-content bg-primary p-6 dark:bg-primary-soft-dark">
@@ -594,9 +591,8 @@ export default function ClientPage({
             </div>
           </div>
         )}
-      </>
-    );
-  };
+    </>
+  );
 
   return (
     <>
@@ -631,7 +627,7 @@ export default function ClientPage({
           minThGtTotalEffPoints={minThGtTotalEffPoints}
           communityName={communityName ?? ""}
         />
-        <RegisterAndActivateFromPool />
+        {registerAndActivateFromPool}
       </div>
 
       {isEnabled && (
@@ -731,7 +727,7 @@ export default function ClientPage({
                 minThGtTotalEffPoints={minThGtTotalEffPoints}
                 communityName={communityName ?? ""}
               />
-              <RegisterAndActivateFromPool />
+              {registerAndActivateFromPool}
               {poolToken && PoolTypes[proposalType] !== "signaling" && (
                 <PoolMetrics
                   communityAddress={communityAddress}
