@@ -37,6 +37,7 @@ event SupportAllocated(address indexed voter, uint256 indexed hypercertId, int25
 event ConvictionUpdated(uint256 indexed hypercertId, uint256 conviction, uint256 stakedAmount);
 event DecayUpdated(uint256 oldDecay, uint256 newDecay);
 event PointsPerVoterUpdated(uint256 oldPoints, uint256 newPoints);
+event StakesReclaimed(address indexed voter, uint256 indexed hypercertId, uint256 amount);
 
 // ── Errors ─────────────────────────────────────────────────────────
 
@@ -48,3 +49,4 @@ error PointBudgetExceeded(uint256 used, uint256 budget);
 error InvalidDecay(uint256 decay);
 error InvalidPointsPerVoter(uint256 points);
 error ZeroHypercertId();
+error HypercertStillActive(uint256 hypercertId);

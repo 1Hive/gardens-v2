@@ -19,11 +19,13 @@ import {
     HypercertAlreadyRegistered,
     HypercertNotRegistered,
     HypercertNotActive,
+    HypercertStillActive,
     NotEligibleVoter,
     PointBudgetExceeded,
     InvalidDecay,
     InvalidPointsPerVoter,
-    ZeroHypercertId
+    ZeroHypercertId,
+    StakesReclaimed
 } from "../src/HypercertSignalPool/IHypercertSignalPool.sol";
 
 // ── Mocks ────────────────────────────────────────────────────────────
@@ -799,6 +801,103 @@ contract HypercertSignalPoolTest is Test {
         assertEq(pool.voterStakes(1001, voter1), 70); // 40 + 30
         assertEq(pool.voterStakes(1002, voter1), 0);
         assertEq(pool.voterUsedPoints(voter1), 100); // 100 - 30 + 30 = 100 (net zero change)
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    //                      RECLAIM STAKES
+    // ═══════════════════════════════════════════════════════════════════
+
+    function test_reclaimStakes_success() public {
+        _registerHypercert(1001);
+
+        // Allocate 60 points
+        HypercertSignal[] memory signals = new HypercertSignal[](1);
+        signals[0] = HypercertSignal({hypercertId: 1001, deltaSupport: 60});
+        _allocate(voter1, signals);
+
+        assertEq(pool.voterUsedPoints(voter1), 60);
+        assertEq(pool.stakedAmounts(1001), 60);
+
+        // Deregister the hypercert
+        vm.prank(operator);
+        pool.deregisterHypercert(1001);
+
+        // Reclaim stakes
+        uint256[] memory ids = new uint256[](1);
+        ids[0] = 1001;
+
+        vm.expectEmit(true, true, false, true);
+        emit StakesReclaimed(voter1, 1001, 60);
+
+        vm.prank(voter1);
+        pool.reclaimStakes(ids);
+
+        assertEq(pool.voterStakes(1001, voter1), 0);
+        assertEq(pool.voterUsedPoints(voter1), 0);
+        assertEq(pool.stakedAmounts(1001), 0);
+    }
+
+    function test_reclaimStakes_revertsIfActive() public {
+        _registerHypercert(1001);
+
+        uint256[] memory ids = new uint256[](1);
+        ids[0] = 1001;
+
+        vm.prank(voter1);
+        vm.expectRevert(abi.encodeWithSelector(HypercertStillActive.selector, 1001));
+        pool.reclaimStakes(ids);
+    }
+
+    function test_reclaimStakes_noOpIfNoStake() public {
+        _registerHypercert(1001);
+
+        vm.prank(operator);
+        pool.deregisterHypercert(1001);
+
+        // Reclaim with no prior stake — should succeed silently
+        uint256[] memory ids = new uint256[](1);
+        ids[0] = 1001;
+
+        vm.prank(voter1);
+        pool.reclaimStakes(ids);
+
+        assertEq(pool.voterUsedPoints(voter1), 0);
+    }
+
+    function test_reclaimStakes_freesBudgetForNewAllocations() public {
+        _registerHypercert(1001);
+        _registerHypercert(1002);
+
+        // Use full budget on 1001
+        HypercertSignal[] memory signals = new HypercertSignal[](1);
+        signals[0] = HypercertSignal({hypercertId: 1001, deltaSupport: int256(DEFAULT_POINTS)});
+        _allocate(voter1, signals);
+
+        // Deregister 1001
+        vm.prank(operator);
+        pool.deregisterHypercert(1001);
+
+        // Can't allocate to 1002 — budget fully consumed
+        HypercertSignal[] memory s2 = new HypercertSignal[](1);
+        s2[0] = HypercertSignal({hypercertId: 1002, deltaSupport: 10});
+
+        vm.roll(block.number + 1);
+        vm.prank(address(allo));
+        vm.expectRevert(abi.encodeWithSelector(PointBudgetExceeded.selector, DEFAULT_POINTS + 10, DEFAULT_POINTS));
+        pool.allocate(abi.encode(s2), voter1);
+
+        // Reclaim from 1001
+        uint256[] memory ids = new uint256[](1);
+        ids[0] = 1001;
+        vm.prank(voter1);
+        pool.reclaimStakes(ids);
+
+        // Now allocation to 1002 should succeed
+        vm.roll(block.number + 1);
+        _allocate(voter1, s2);
+
+        assertEq(pool.voterStakes(1002, voter1), 10);
+        assertEq(pool.voterUsedPoints(voter1), 10);
     }
 
     function test_budgetEnforcementAcrossMultipleAllocations() public {
