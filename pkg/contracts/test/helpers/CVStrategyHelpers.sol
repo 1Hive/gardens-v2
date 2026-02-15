@@ -280,6 +280,10 @@ contract CVStrategyBaseFacetHarness is CVStrategyBaseFacet {
         sybilScorer = ISybilScorer(sybilScorer_);
     }
 
+    function setPointSystem(PointSystem system) external {
+        pointSystem = system;
+    }
+
     function setCvParams(CVParams memory params) external {
         cvParams = params;
     }
