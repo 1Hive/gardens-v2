@@ -233,6 +233,8 @@ export default function ClientPage({ params }: ClientPageProps) {
   const beneficiary = proposalData?.beneficiary as Address | undefined;
   const submitter = proposalData?.submitter as Address | undefined;
   const proposalStatus = ProposalStatus[proposalData?.proposalStatus];
+  const shouldShowSupportersTab =
+    proposalStatus !== "executed" && proposalStatus !== "cancelled";
 
   const poolToken = usePoolToken({
     poolAddress: proposalData?.strategy?.id,
@@ -260,6 +262,12 @@ export default function ClientPage({ params }: ClientPageProps) {
       setConvictionRefreshing(false);
     }
   }, [convictionRefreshing, currentConvictionPct]);
+
+  useEffect(() => {
+    if (!shouldShowSupportersTab && selectedTab === 3) {
+      setSelectedTab(0);
+    }
+  }, [selectedTab, shouldShowSupportersTab]);
 
   //encode proposal id to pass as argument to distribute function
   const encodedDataProposalId = (proposalId_: bigint) => {
@@ -684,25 +692,37 @@ export default function ClientPage({ params }: ClientPageProps) {
 
       {/* ================= MOBILE ================= */}
       <div className="block md:hidden col-span-12">
-        <div
-          role="tablist"
-          className="tabs tabs-boxed w-full border1 bg-neutral p-1"
-          aria-label="Proposal sections"
-        >
-          {["Overview", "Description", "Status", "Supporters"].map(
-            (label, index) => (
+        <div className="w-full overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+          <div
+            role="tablist"
+            className={`tabs tabs-boxed border1 bg-neutral ${shouldShowSupportersTab ? " inline-flex min-w-full justify-between" : ""}`}
+            aria-label="Proposal sections"
+          >
+            {[
+              "Overview",
+              "Description",
+              "Status",
+              ...(shouldShowSupportersTab ? ["Supporters"] : []),
+            ].map((label, index) => (
               <button
                 key={label}
                 type="button"
                 role="tab"
-                className={`tab rounded-lg border-0 text-neutral-soft-content ${selectedTab === index ? "tab-active !bg-primary-button dark:!bg-primary-dark-base !text-neutral-inverted-content" : "hover:text-neutral-content"}`}
+                className={`tab rounded-lg border-0 px-4 text-neutral-soft-content ${selectedTab === index ? "tab-active !bg-primary-button dark:!bg-primary-dark-base !text-neutral-inverted-content" : "hover:text-neutral-content"}`}
                 aria-selected={selectedTab === index}
-                onClick={() => setSelectedTab(index)}
+                onClick={(event) => {
+                  setSelectedTab(index);
+                  event.currentTarget.scrollIntoView({
+                    behavior: "smooth",
+                    inline: "center",
+                    block: "nearest",
+                  });
+                }}
               >
                 {label}
               </button>
-            ),
-          )}
+            ))}
+          </div>
         </div>
 
         <div className="mt-4">
@@ -938,7 +958,8 @@ export default function ClientPage({ params }: ClientPageProps) {
             </>
           )}
 
-          {selectedTab === 3 &&
+          {shouldShowSupportersTab &&
+            selectedTab === 3 &&
             filteredAndSortedProposalSupporters.length > 0 &&
             totalSupportPct != null && (
               <ProposalSupportersTable
