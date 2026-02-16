@@ -147,6 +147,30 @@ contract MockGDAv1Forwarder {
     }
 }
 
+contract MockExternalVotingPowerRegistryForStrategy {
+    mapping(address => uint256) public power;
+
+    function setMemberPower(address _member, uint256 amount) external {
+        power[_member] = amount;
+    }
+
+    function getMemberPowerInStrategy(address _member, address) external view returns (uint256) {
+        return power[_member];
+    }
+
+    function getMemberStakedAmount(address) external pure returns (uint256) {
+        return 0;
+    }
+
+    function ercAddress() external pure returns (address) {
+        return address(0);
+    }
+
+    function isMember(address _member) external view returns (bool) {
+        return power[_member] > 0;
+    }
+}
+
 contract CVStrategyCoverageHarness is CVStrategyHarness {
     function setSuperfluidGDA(address gda) external {
         superfluidGDA = ISuperfluidPool(gda);
@@ -272,6 +296,25 @@ contract CVStrategyTest is Test {
         assertFalse(strategy.exposedCanExecuteAction(other));
         sybil.setCanExecute(other, true);
         assertTrue(strategy.exposedCanExecuteAction(other));
+    }
+
+    function test_canExecuteAction_customPointSystem_nftGating() public {
+        MockExternalVotingPowerRegistryForStrategy extRegistry = new MockExternalVotingPowerRegistryForStrategy();
+
+        strategy.setPointSystem(PointSystem.Custom);
+        strategy.setVotingPowerRegistry(address(extRegistry));
+
+        // Non-member denied
+        assertFalse(strategy.exposedCanExecuteAction(other));
+
+        // Member allowed
+        extRegistry.setMemberPower(other, 3);
+        assertTrue(strategy.exposedCanExecuteAction(other));
+
+        // Sybil scorer takes priority when set
+        strategy.setSybilScorer(address(sybil));
+        sybil.setCanExecute(other, false);
+        assertFalse(strategy.exposedCanExecuteAction(other));
     }
 
     function test_onlyCouncilSafeOrMember_branches() public {

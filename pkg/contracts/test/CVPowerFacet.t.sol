@@ -304,4 +304,26 @@ contract CVPowerFacetTest is Test {
         assertEq(secondIncrease, 0);
         assertEq(facet.totalPointsActivated(), 10);
     }
+
+    function test_activatePoints_customPointSystem_nftGating() public {
+        // Set up Custom point system with external registry, no sybil scorer
+        facet.setSybilScorer(address(0));
+        facet.setPointSystem(PointSystem.Custom);
+        facet.setVotingPowerRegistry(address(externalRegistry));
+
+        // Non-member should be denied
+        address nonMember = makeAddr("nonMember");
+        vm.prank(nonMember);
+        vm.expectRevert(abi.encodeWithSelector(CVPowerFacet.UserCannotExecuteAction.selector, nonMember));
+        facet.activatePoints();
+
+        // Member with power should pass the gate
+        externalRegistry.setMemberPower(member, 7);
+        registry.setMemberPower(member, 7);
+
+        vm.prank(member);
+        facet.activatePoints();
+
+        assertEq(facet.totalPointsActivated(), 7);
+    }
 }

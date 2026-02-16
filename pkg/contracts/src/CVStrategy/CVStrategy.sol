@@ -316,12 +316,17 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     }
 
     function _canExecuteAction(address _user) internal view returns (bool) {
-        if (address(sybilScorer) == address(0)) {
-            bytes32 allowlistRole = keccak256(abi.encodePacked("ALLOWLIST", poolId));
-            return
-                registryCommunity.hasRole(allowlistRole, address(0)) || registryCommunity.hasRole(allowlistRole, _user);
+        if (address(sybilScorer) != address(0)) {
+            return sybilScorer.canExecuteAction(_user, address(this));
         }
-        return sybilScorer.canExecuteAction(_user, address(this));
+        // Custom point system with external registry: NFT ownership IS the gate
+        if (pointSystem == PointSystem.Custom && address(votingPowerRegistry) != address(registryCommunity)) {
+            return votingPowerRegistry.isMember(_user);
+        }
+        // Default: allowlist-based gating
+        bytes32 allowlistRole = keccak256(abi.encodePacked("ALLOWLIST", poolId));
+        return registryCommunity.hasRole(allowlistRole, address(0))
+            || registryCommunity.hasRole(allowlistRole, _user);
     }
 
     function _checkProposalAllocationValidity(uint256 _proposalId, int256 deltaSupport) internal view {
