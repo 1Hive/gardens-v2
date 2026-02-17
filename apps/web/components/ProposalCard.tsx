@@ -250,10 +250,10 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
           <div className="flex flex-col sm:flex-row w-full">
             {/* icon title and id */}
             <header className="flex-1 justify-between items-start gap-3">
-              <div className="flex-1 items-start flex-col gap-1 ">
-                <div className="flex items-center justify-between">
+              <div className="flex-1 items-start flex flex-col gap-1 sm:gap-2">
+                <div className="flex items-center justify-between w-full">
                   <Skeleton isLoading={!metadata}>
-                    <h3 className="flex items-start max-w-[165px] sm:max-w-md">
+                    <h3 className="flex items-start  max-w-[150px] sm:max-w-md">
                       <TooltipIfOverflow>{metadata?.title}</TooltipIfOverflow>
                     </h3>
                   </Skeleton>
@@ -291,7 +291,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
                       {!isSignalingType && poolToken && (
                         <div className="flex items-center gap-1 justify-self-end">
                           <div className="hidden sm:block w-1 h-1 rounded-full bg-neutral-soft-content" />
-                          <p className="text-sm ml-1 dark:text-neutral-soft-content">
+                          <p className="text-sm sm:ml-1 dark:text-neutral-soft-content">
                             Requesting:{" "}
                           </p>
                           <DisplayNumber

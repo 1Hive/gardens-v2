@@ -558,22 +558,22 @@ export function Proposals({
   const stats: Stats[] = [
     {
       id: 1,
-      name: "Your voting power",
+      name: "Your Voting Power",
       stat: memberPoolWeight,
       className: poolWeightClassName,
-      info: "Your total Voting Power (VP) in this pool, out of 100. VP represents how much support you can allocate to proposals.",
+      info: "Your total Voting Power (VP) in this pool, out of 100. Represents how much support you can allocate to proposals.",
       symbol: "VP",
     },
     {
       id: 2,
-      name: "Voting power used",
+      name: "Voting Power Used",
       stat: memberSupportedProposalsPct,
       className: `${
         memberSupportedProposalsPct >= 100 ?
           "bg-secondary-content text-secondary-soft border-secondary-content"
         : "bg-primary-content text-primary-soft border-primary-content"
       }`,
-      info: "The percentage of your Voting Power currently allocated as support across proposals.",
+      info: "The % of Voting Power allocated.",
       symbol: "%",
     },
   ];

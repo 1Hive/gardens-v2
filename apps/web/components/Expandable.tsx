@@ -46,7 +46,7 @@ export const ExpandableComponent = ({
   if (withDescription) {
     return (
       <div
-        className={`flex flex-col gap-2 ${withLayout ? "section-layout" : ""}`}
+        className={`flex flex-col gap-0 ${withLayout ? "section-layout" : ""}`}
       >
         {/* Content */}
         <AnimatePresence initial={false}>
@@ -69,18 +69,19 @@ export const ExpandableComponent = ({
             >
               <div ref={contentRef}>{children}</div>
               {showPreview && needsExpansion && (
-                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-base-100 to-transparent dark:from-neutral  " />
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-base-100 to-transparent dark:from-neutral " />
               )}
             </motion.div>
           )}
         </AnimatePresence>
 
         {showPreview && needsExpansion && (
-          <div className="flex items-baseline mt-1">
+          <div className="flex items-start">
             <Button
               onClick={() => setExpanded(true)}
-              btnStyle="outline"
+              btnStyle="link"
               color="primary"
+              className="!-ml-2"
             >
               {readMoreLabel}
             </Button>
@@ -90,7 +91,7 @@ export const ExpandableComponent = ({
         {expanded && needsExpansion && (
           <Button
             onClick={() => setExpanded(false)}
-            btnStyle="outline"
+            btnStyle="link"
             color="primary"
             className="self-start"
           >
