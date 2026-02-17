@@ -573,7 +573,7 @@ export function Proposals({
           "bg-secondary-content text-secondary-soft border-secondary-content"
         : "bg-primary-content text-primary-soft border-primary-content"
       }`,
-      info: "The % of Voting Power allocated.",
+      info: "Voting Power Allocated to Proposals",
       symbol: "%",
     },
   ];
@@ -939,7 +939,8 @@ export function Proposals({
                             ).length
                           }
                           tooltip="Make changes in proposals support first"
-                          tooltipSide="tooltip-left"
+                          tooltipDesktopSide="tooltip-left"
+                          className="!w-full sm:!w-auto"
                         >
                           Submit your vote
                         </Button>

@@ -3,6 +3,14 @@
 import React from "react";
 import { Size } from "@/types";
 
+type TooltipSide =
+  | "tooltip-top"
+  | "tooltip-bottom"
+  | "tooltip-left"
+  | "tooltip-right"
+  | "tooltip-top-right"
+  | "tooltip-top-left";
+
 type ButtonProps = {
   type?:
     | "button"
@@ -18,13 +26,8 @@ type ButtonProps = {
   disabled?: boolean;
   tooltip?: string;
   tooltipClassName?: string;
-  tooltipSide?:
-    | "tooltip-top"
-    | "tooltip-bottom"
-    | "tooltip-left"
-    | "tooltip-right"
-    | "tooltip-top-right"
-    | "tooltip-top-left";
+  tooltipSide?: TooltipSide | string;
+  tooltipDesktopSide?: TooltipSide;
   children?: React.ReactNode;
   isLoading?: boolean;
   size?: Size;
@@ -111,6 +114,7 @@ export function Button({
   popTooltip = false,
   tooltipClassName: tooltipStyles = "",
   tooltipSide = "tooltip-top",
+  tooltipDesktopSide,
   children,
   btnStyle = "filled",
   color = "primary",
@@ -144,9 +148,11 @@ export function Button({
     </button>
   );
 
+  const tooltipPositionClasses = `${tooltipSide} ${tooltipDesktopSide ? `sm:${tooltipDesktopSide}` : ""}`.trim();
+
   return disabled || forceShowTooltip ?
       <div
-        className={`${className} ${tooltip ? "tooltip" : ""} ${tooltipSide} ${tooltipStyles} ${popTooltip ? "tooltip-open" : ""}`}
+        className={`${className} ${tooltip ? "tooltip" : ""} ${tooltipPositionClasses} ${tooltipStyles} ${popTooltip ? "tooltip-open" : ""}`}
         data-tip={tooltip}
       >
         {buttonElement}
