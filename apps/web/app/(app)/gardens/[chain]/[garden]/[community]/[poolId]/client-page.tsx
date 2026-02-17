@@ -1,7 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { PowerIcon, UserGroupIcon } from "@heroicons/react/24/outline";
+import {
+  InformationCircleIcon,
+  PowerIcon,
+  UserGroupIcon,
+} from "@heroicons/react/24/outline";
 import { Address } from "viem";
 import {
   useBalance,
@@ -478,119 +482,122 @@ export default function ClientPage({
 
   const registerAndActivateFromPool = (
     <>
-        {/* Join community box */}
-        {!isMemberCommunity && registryCommunity && (
-          <div className="border rounded-xl shadow-md border-tertiary-content bg-primary p-6 dark:bg-primary-soft-dark">
-            <div className="flex items-start gap-4">
-              <div className="rounded-full bg-tertiary-content/10 p-3 flex-shrink-0">
-                <UserGroupIcon
-                  className="h-6 w-6 text-tertiary-content"
-                  aria-hidden="true"
-                />
+      {/* Join community box */}
+      {!isMemberCommunity && registryCommunity && (
+        <div className="border rounded-xl shadow-md border-tertiary-content bg-primary p-4 sm:p-6 dark:bg-primary-soft-dark mt-6 sm:mt-0">
+          <div className="flex items-start gap-3 sm:gap-4">
+            <div className="rounded-full bg-tertiary-content/10 p-3 flex-shrink-0">
+              <UserGroupIcon
+                className="h-5 w-5 sm:h-6 sm:w-6 text-tertiary-content"
+                aria-hidden="true"
+              />
+            </div>
+
+            <div className="flex-1 space-y-4">
+              <div>
+                <h4 className="mb-1 sm:mb-2">{`Join ${communityName} community`}</h4>
+                <p className="subtitle2 text-xs sm:text-sm">
+                  You must be a member of this community before activating
+                  governance or voting on proposals.
+                </p>
               </div>
 
-              <div className="flex-1 space-y-4">
-                <div>
-                  <h4 className="mb-2">{`Join ${communityName} community`}</h4>
-                  <p className="subtitle2 text-xs sm:text-sm">
-                    You must be a member of this community before activating
-                    governance or voting on proposals.
-                  </p>
-                </div>
-
-                <InfoBox
-                  infoBoxType="info"
-                  title="Steps to get started"
-                  className="w-full rounded-xl bg-neutral"
-                >
-                  <ul className="list-disc list-inside space-y-1 ml-2 font-press">
+              <div>
+                <div className="w-full rounded-xl border border-tertiary-content/25 bg-tertiary-soft dark:bg-tertiary-dark-base/70 dark:border-tertiary-dark-border/40 p-3 sm:p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <InformationCircleIcon className="h-4 w-4 sm:h-5 sm:w-5 text-tertiary-content" />
+                    <h6 className="text-tertiary-content">
+                      Steps to get started
+                    </h6>
+                  </div>
+                  <ul className="list-disc pl-5 space-y-1.5 text-xs sm:text-sm leading-5 sm:leading-6 text-tertiary-hover-content dark:text-tertiary-dark-text-hover">
                     <li>{`Join the ${communityName} community.`}</li>
                     <li>
-                      If eligible to vote - activate governance in this pool to
+                      If eligible to vote, activate governance in this pool to
                       get Voting Power (VP).
                     </li>
-                    <li>Vote on proposals</li>
+                    <li>Vote on proposals.</li>
                   </ul>
-                </InfoBox>
-
-                {tokenGarden && (
-                  <RegisterMember
-                    memberData={wallet ? isMemberResult : undefined}
-                    registrationCost={totalRegistrationCost}
-                    token={tokenGarden}
-                    registryCommunity={registryCommunity}
-                  />
-                )}
+                </div>
               </div>
-            </div>
-          </div>
-        )}
 
-        {/* Activate governance box */}
-        {isMemberCommunity && !memberActivatedStrategy && (
-          <div className="border rounded-xl shadow-md border-primary-content bg-primary p-6 dark:bg-primary-soft-dark">
-            <div className="flex items-start gap-4">
-              <div className="rounded-full bg-primary-content/10 p-3 flex-shrink-0">
-                <PowerIcon
-                  className="h-6 w-6 text-primary-content"
-                  aria-hidden="true"
+              {tokenGarden && (
+                <RegisterMember
+                  memberData={wallet ? isMemberResult : undefined}
+                  registrationCost={totalRegistrationCost}
+                  token={tokenGarden}
+                  registryCommunity={registryCommunity}
                 />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Activate governance box */}
+      {isMemberCommunity && !memberActivatedStrategy && (
+        <div className="border rounded-xl shadow-md border-primary-content bg-primary p-4 sm:p-6 dark:bg-primary-soft-dark mt-6 sm:mt-0">
+          <div className="flex items-start gap-3 sm:gap-4">
+            <div className="rounded-full bg-primary-content/10 p-3 flex-shrink-0">
+              <PowerIcon
+                className="h-4 w-4 sm:h-6 sm:w-6 text-primary-content"
+                aria-hidden="true"
+              />
+            </div>
+
+            <div className="flex-1 space-y-4">
+              <div>
+                <h4 className="mb-2 sm:mb-3">
+                  Activate Governance & Start Voting
+                </h4>
+                <p className="subtitle2 text-xs sm:text-sm">
+                  You are already a community member. Activate governance in
+                  this pool to receive Voting Power (VP) and vote on proposals.
+                </p>
               </div>
 
-              <div className="flex-1 space-y-4">
-                <div>
-                  <h4 className="mb-2">Activate Governance & Start Voting</h4>
-                  <p className="subtitle2 text-xs sm:text-sm">
-                    You are already a community member. Activate governance in
-                    this pool to receive Voting Power (VP) and vote on
-                    proposals.
-                  </p>
-                </div>
+              <InfoBox
+                infoBoxType="success"
+                title="How voting works"
+                className="w-full rounded-xl bg-neutral"
+              >
+                <ul className="list-disc list-inside space-y-2 ml-2 font-press">
+                  <li>
+                    The pool has a total of <strong>100 VP</strong>, shared
+                    between all activated members.
+                  </li>
+                  <li>
+                    Your VP is your influence in the pool, based on your stake
+                    and pool governance system.
+                  </li>
+                  <li>
+                    If you’re eligible to vote, you can allocate your Voting
+                    Power (VP) across multiple proposals at the same time as
+                    support. The more VP you allocate, the faster its conviction
+                    grows.
+                  </li>
+                </ul>
+              </InfoBox>
 
-                <InfoBox
-                  infoBoxType="success"
-                  title="How voting works"
-                  className="w-full rounded-xl bg-neutral"
+              <div className="flex flex-col gap-4">
+                <CheckSybil
+                  strategy={strategy}
+                  enableCheck={!memberActivatedStrategy}
+                  triggerClose={triggerSybilCheckModalClose}
                 >
-                  <ul className="list-disc list-inside space-y-2 ml-2 font-press">
-                    <li>
-                      The pool has a total of <strong>100 VP</strong>, shared
-                      between all activated members.
-                    </li>
-                    <li>
-                      Your VP is your influence in the pool, based on your stake
-                      and pool governance system.
-                    </li>
-                    <li>
-                      If you’re eligible to vote, you can allocate your Voting
-                      Power (VP) across multiple proposals at the same time as
-                      support. The more VP you allocate, the faster its
-                      conviction grows.
-                    </li>
-                  </ul>
-                </InfoBox>
-
-                <div className="flex flex-col gap-4">
-                  <CheckSybil
+                  <ActivatePoints
                     strategy={strategy}
-                    enableCheck={!memberActivatedStrategy}
-                    triggerClose={triggerSybilCheckModalClose}
-                  >
-                    <ActivatePoints
-                      strategy={strategy}
-                      communityAddress={communityAddress}
-                      isMemberActivated={memberActivatedStrategy}
-                      isMember={isMemberCommunity}
-                      handleTxSuccess={() =>
-                        setTriggerSybilCheckModalClose(true)
-                      }
-                    />
-                  </CheckSybil>
-                </div>
+                    communityAddress={communityAddress}
+                    isMemberActivated={memberActivatedStrategy}
+                    isMember={isMemberCommunity}
+                    handleTxSuccess={() => setTriggerSybilCheckModalClose(true)}
+                  />
+                </CheckSybil>
               </div>
             </div>
           </div>
-        )}
+        </div>
+      )}
     </>
   );
 
@@ -727,7 +734,7 @@ export default function ClientPage({
                 minThGtTotalEffPoints={minThGtTotalEffPoints}
                 communityName={communityName ?? ""}
               />
-              {registerAndActivateFromPool}
+
               {poolToken && PoolTypes[proposalType] !== "signaling" && (
                 <PoolMetrics
                   communityAddress={communityAddress}
@@ -760,20 +767,23 @@ export default function ClientPage({
           )}
 
           {selectedTab === 2 && (
-            <PoolGovernance
-              memberPoolWeight={memberPoolWeight}
-              tokenDecimals={tokenDecimals}
-              strategy={strategy}
-              communityAddress={communityAddress}
-              memberTokensInCommunity={memberTokensInCommunity}
-              isMemberCommunity={isMemberCommunity}
-              memberActivatedStrategy={memberActivatedStrategy}
-              membersStrategyData={
-                membersStrategies ?
-                  { memberStrategies: membersStrategies }
-                : undefined
-              }
-            />
+            <>
+              <PoolGovernance
+                memberPoolWeight={memberPoolWeight}
+                tokenDecimals={tokenDecimals}
+                strategy={strategy}
+                communityAddress={communityAddress}
+                memberTokensInCommunity={memberTokensInCommunity}
+                isMemberCommunity={isMemberCommunity}
+                memberActivatedStrategy={memberActivatedStrategy}
+                membersStrategyData={
+                  membersStrategies ?
+                    { memberStrategies: membersStrategies }
+                  : undefined
+                }
+              />
+              {registerAndActivateFromPool}
+            </>
           )}
         </div>
       </div>

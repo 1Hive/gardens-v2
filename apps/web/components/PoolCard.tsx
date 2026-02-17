@@ -89,7 +89,7 @@ export function PoolCard({ pool, token }: Props) {
         <div className="mb-8 flex flex-col gap-2">
           <Statistic
             icon={<BoltIcon />}
-            label="voting weight"
+            label="governance"
             count={capitalize(PointSystems[config?.pointSystem])}
           />
           <Statistic
@@ -125,7 +125,7 @@ export function PoolCard({ pool, token }: Props) {
               : grass
             }
             alt="Garden land"
-            className="h-14 w-full rounded-lg object-cover"
+            className="h-12 sm:h-14 w-full rounded-lg object-cover"
           />
         }
       </Card>{" "}
