@@ -396,7 +396,7 @@ export default function ClientPage({ params }: ClientPageProps) {
     <>
       {/* ================= DESKTOP ================= */}
 
-      {/* main section: proposal details + conviction progress + go to & execute buttons */}
+      {/* main section: proposal details + conviction progress + vote proposals & execute buttons */}
       <section className="hidden sm:block sm:col-span-12 xl:col-span-9">
         <div
           className={`section-layout flex flex-col gap-8  ${status === "disputed" ? "!border-error-content" : ""} ${status === "executed" ? "!border-primary-content" : ""}`}
@@ -726,6 +726,7 @@ export default function ClientPage({ params }: ClientPageProps) {
         </div>
 
         <div className="mt-4">
+          {/* Overview  */}
           {selectedTab === 0 && (
             <div className="flex flex-col gap-6">
               <div
@@ -767,7 +768,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                           )}
                         </div>
 
-                        <div className="flex flex-col items-start justify-between gap-1">
+                        {/* <div className="flex flex-col items-start justify-between gap-1">
                           <Statistic label={"Created"}>
                             <span className="font-medium dark:text-neutral-content">
                               {prettyTimestamp(proposalData?.createdAt ?? 0)}
@@ -790,7 +791,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                               />
                             </Statistic>
                           )}
-                        </div>
+                        </div> */}
                       </div>
                     </header>
 
@@ -881,6 +882,7 @@ export default function ClientPage({ params }: ClientPageProps) {
             </div>
           )}
 
+          {/* Description */}
           {selectedTab === 1 && (
             <section className="section-layout">
               <h3 className="mb-4">Proposal Description</h3>
@@ -890,6 +892,7 @@ export default function ClientPage({ params }: ClientPageProps) {
             </section>
           )}
 
+          {/* Status */}
           {selectedTab === 2 && (
             <>
               <section className="section-layout gap-4 flex flex-col">
@@ -898,34 +901,55 @@ export default function ClientPage({ params }: ClientPageProps) {
                   <Badge status={proposalData.proposalStatus} />
                 </div>
                 <div>
-                  <div className="flex flex-col gap-2">
-                    {!isSignalingType && (
-                      <>
-                        {status === "executed" ?
-                          <div className="flex items-center gap-2">
-                            <CheckIcon className="w-5 h-5 text-primary-content" />
-                            <p className="text-primary-content subtitle2">
-                              Passed and Executed
-                            </p>
-                          </div>
-                        : status === "cancelled" ?
-                          <div className="flex items-center gap-2">
-                            <XMarkIcon className="w-5 h-5 text-error-content" />
-                            <p className="text-error-content subtitle2">
-                              Cancelled
-                            </p>
-                          </div>
-                        : null}
-                      </>
-                    )}
-                    {status !== "executed" && status !== "cancelled" && (
-                      <InfoBox
-                        title="Information"
-                        infoBoxType="info"
-                        content={`${isSignalingType ? "This proposal is open and can be supported or disputed by the community. Only the proposal creator can cancel" : "This proposal is currently open. It will pass if nobody successfully disputes it and it receives enough support."}`}
-                      />
-                    )}
-                  </div>
+                  {status === "executed" && (
+                    <ul className="timeline timeline-vertical relative">
+                      <li className=" flex items-center justify-start z-50">
+                        <div className="timeline-middle rounded-full text-tertiary-soft bg-primary-content m-0.5">
+                          <CheckIcon className="w-4 m-0.5" />
+                        </div>
+                        <div className="timeline-end  flex flex-col">
+                          <p className="text-md font-semibold">Created</p>
+                          <p className="text-sm text-neutral-soft-content">
+                            {prettyTimestamp(proposalData?.createdAt)}
+                          </p>
+                        </div>
+                        {/* <hr className="bg-tertiary-content w-8" />; */}
+                      </li>
+
+                      <div className="bg-primary-content h-20 w-[4px] absolute left-[9.5px] top-6" />
+                      <li className=" flex items-center justify-start mt-4">
+                        <div className="timeline-middle rounded-full text-tertiary-soft bg-primary-content m-0.5">
+                          <CheckIcon className="w-4 m-0.5" />
+                        </div>
+                        <div className="timeline-end  flex flex-col pt-2">
+                          <p className="text-md font-semibold">Executed</p>
+                          <p className="text-sm text-neutral-soft-content">
+                            {prettyTimestamp(proposalData?.executedAt)}
+                          </p>
+
+                          {!isSignalingType && (
+                            <>
+                              <Statistic
+                                label={"Funded"}
+                                className="-ml-1 text-neutral-soft-content dark:text-neutral-content"
+                              >
+                                <DisplayNumber
+                                  number={formatUnits(
+                                    requestedAmount,
+                                    poolToken?.decimals ?? 18,
+                                  )}
+                                  tokenSymbol={poolToken?.symbol}
+                                  compact={true}
+                                  valueClassName="text-neutral-soft-content dark:text-neutral-content ml-1"
+                                  symbolClassName="text-neutral-soft-content dark:text-neutral-content"
+                                />
+                              </Statistic>
+                            </>
+                          )}
+                        </div>
+                      </li>
+                    </ul>
+                  )}
                 </div>
                 <div className="flex flex-col gap-4">
                   {(status === "active" || status === "disputed") &&
