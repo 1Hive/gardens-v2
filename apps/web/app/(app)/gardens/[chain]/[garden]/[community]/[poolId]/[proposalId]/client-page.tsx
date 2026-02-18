@@ -580,23 +580,22 @@ export default function ClientPage({ params }: ClientPageProps) {
                     </p>
 
                     {!isSignalingType && (
-                      <>
-                        <Statistic
-                          label={"Funded"}
-                          className="-ml-1 text-neutral-soft-content dark:text-neutral-content"
-                        >
-                          <DisplayNumber
-                            number={formatUnits(
-                              requestedAmount,
-                              poolToken?.decimals ?? 18,
-                            )}
-                            tokenSymbol={poolToken?.symbol}
-                            compact={true}
-                            valueClassName="text-neutral-soft-content dark:text-neutral-content ml-1"
-                            symbolClassName="text-neutral-soft-content dark:text-neutral-content"
-                          />
-                        </Statistic>
-                      </>
+                      <div
+                        className="flex items-baseline
+                            gap-1"
+                      >
+                        <h6 className="text-neutral-soft-content">Funded: </h6>
+                        <DisplayNumber
+                          number={formatUnits(
+                            requestedAmount,
+                            poolToken?.decimals ?? 18,
+                          )}
+                          tokenSymbol={poolToken?.symbol}
+                          compact={true}
+                          valueClassName="text-neutral-soft-content"
+                          symbolClassName="text-neutral-soft-content "
+                        />
+                      </div>
                     )}
                   </div>
                 </li>
@@ -768,6 +767,33 @@ export default function ClientPage({ params }: ClientPageProps) {
                           )}
                         </div>
 
+                        {status !== "executed" && (
+                          <div className="flex flex-col items-start justify-between gap-3 sm:items-end">
+                            <Statistic label={"Created"}>
+                              <span className="font-medium dark:text-neutral-content">
+                                {prettyTimestamp(proposalData?.createdAt ?? 0)}
+                              </span>
+                            </Statistic>
+
+                            {!isSignalingType && (
+                              <>
+                                <Statistic label={"request amount"}>
+                                  <DisplayNumber
+                                    number={formatUnits(
+                                      requestedAmount,
+                                      poolToken?.decimals ?? 18,
+                                    )}
+                                    tokenSymbol={poolToken?.symbol}
+                                    compact={true}
+                                    valueClassName="font-medium dark:text-neutral-content"
+                                    symbolClassName="font-medium dark:text-neutral-content"
+                                  />
+                                </Statistic>
+                              </>
+                            )}
+                          </div>
+                        )}
+
                         {/* <div className="flex flex-col items-start justify-between gap-1">
                           <Statistic label={"Created"}>
                             <span className="font-medium dark:text-neutral-content">
@@ -901,6 +927,13 @@ export default function ClientPage({ params }: ClientPageProps) {
                   <Badge status={proposalData.proposalStatus} />
                 </div>
                 <div>
+                  {status !== "executed" && status !== "cancelled" && (
+                    <InfoBox
+                      title="Information"
+                      infoBoxType="info"
+                      content={`${isSignalingType ? "This proposal is open and can be supported or disputed by the community. Only the proposal creator can cancel" : "This proposal is currently open. It will pass if nobody successfully disputes it and it receives enough support."}`}
+                    />
+                  )}
                   {status === "executed" && (
                     <ul className="timeline timeline-vertical relative">
                       <li className=" flex items-center justify-start z-50">
@@ -928,23 +961,24 @@ export default function ClientPage({ params }: ClientPageProps) {
                           </p>
 
                           {!isSignalingType && (
-                            <>
-                              <Statistic
-                                label={"Funded"}
-                                className="-ml-1 text-neutral-soft-content dark:text-neutral-content"
-                              >
-                                <DisplayNumber
-                                  number={formatUnits(
-                                    requestedAmount,
-                                    poolToken?.decimals ?? 18,
-                                  )}
-                                  tokenSymbol={poolToken?.symbol}
-                                  compact={true}
-                                  valueClassName="text-neutral-soft-content dark:text-neutral-content ml-1"
-                                  symbolClassName="text-neutral-soft-content dark:text-neutral-content"
-                                />
-                              </Statistic>
-                            </>
+                            <div
+                              className="flex items-baseline
+                            gap-1"
+                            >
+                              <h6 className="text-neutral-soft-content">
+                                Funded:{" "}
+                              </h6>
+                              <DisplayNumber
+                                number={formatUnits(
+                                  requestedAmount,
+                                  poolToken?.decimals ?? 18,
+                                )}
+                                tokenSymbol={poolToken?.symbol}
+                                compact={true}
+                                valueClassName="text-neutral-soft-content"
+                                symbolClassName="text-neutral-soft-content "
+                              />
+                            </div>
                           )}
                         </div>
                       </li>
