@@ -967,7 +967,7 @@ export default function PoolHeader({
               title="Min threshold"
               infoBoxType="warning"
               content="Not enough eligible members in this pool have activated their governance. No proposals will pass until more members do. You can still create and support proposals."
-              className="mb-4"
+              className="my-4"
             />
           )}
           {!isEnabled && (
