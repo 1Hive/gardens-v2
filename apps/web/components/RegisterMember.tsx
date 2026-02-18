@@ -190,7 +190,11 @@ export function RegisterMember({
         isOpen={isOpenModal}
       />
 
-      <Button {...buttonProps} isLoading={isUnregistering} className="!w-full">
+      <Button
+        {...buttonProps}
+        isLoading={isUnregistering}
+        className="!w-full sm:!w-auto"
+      >
         {isMember ? "Leave" : "Join"}
       </Button>
     </>

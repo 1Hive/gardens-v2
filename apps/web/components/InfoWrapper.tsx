@@ -31,7 +31,7 @@ export function InfoWrapper({
   const { width, height } = sizeMap[size];
 
   return (
-    <div className="flex gap-1 items-center mx-1 h-fit">
+    <div className="flex gap-1 items-center justify-center mx-1 h-fit">
       {!hoverOnChildren && (
         <div className={`${contentFlex ? "flex-1" : ""}`}>{children}</div>
       )}
@@ -44,7 +44,7 @@ export function InfoWrapper({
         )}
         {!hideIcon &&
           (customIcon ?? (
-            <InformationCircleIcon className="w-3 h-3 sm:w-4 sm:h-4" />
+            <InformationCircleIcon className="w-4 h-4 sm:w-5 sm:h-5" />
           ))}
       </div>
     </div>

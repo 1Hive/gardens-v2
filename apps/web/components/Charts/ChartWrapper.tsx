@@ -62,8 +62,8 @@ export const ChartWrapper = ({
 
   return (
     <>
-      <div className="flex flex-col gap-6 mt-2">
-        <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4">
+      <div className="flex flex-col gap-2 sm:gap-4 mt-2">
+        <div className="flex flex-col sm:flex-row flex-wrap items-start gap-2 sm:gap-4">
           {legend
             .filter((item) => !(isSignalingType && item.name === "Threshold"))
             .map((item) => (

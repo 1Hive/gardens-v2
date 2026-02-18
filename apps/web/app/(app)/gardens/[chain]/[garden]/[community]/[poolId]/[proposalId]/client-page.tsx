@@ -233,6 +233,8 @@ export default function ClientPage({ params }: ClientPageProps) {
   const beneficiary = proposalData?.beneficiary as Address | undefined;
   const submitter = proposalData?.submitter as Address | undefined;
   const proposalStatus = ProposalStatus[proposalData?.proposalStatus];
+  const shouldShowSupportersTab =
+    proposalStatus !== "executed" && proposalStatus !== "cancelled";
 
   const poolToken = usePoolToken({
     poolAddress: proposalData?.strategy?.id,
@@ -260,6 +262,12 @@ export default function ClientPage({ params }: ClientPageProps) {
       setConvictionRefreshing(false);
     }
   }, [convictionRefreshing, currentConvictionPct]);
+
+  useEffect(() => {
+    if (!shouldShowSupportersTab && selectedTab === 3) {
+      setSelectedTab(0);
+    }
+  }, [selectedTab, shouldShowSupportersTab]);
 
   //encode proposal id to pass as argument to distribute function
   const encodedDataProposalId = (proposalId_: bigint) => {
@@ -388,7 +396,7 @@ export default function ClientPage({ params }: ClientPageProps) {
     <>
       {/* ================= DESKTOP ================= */}
 
-      {/* main section: proposal details + conviction progress + go to & execute buttons */}
+      {/* main section: proposal details + conviction progress + vote proposals & execute buttons */}
       <section className="hidden sm:block sm:col-span-12 xl:col-span-9">
         <div
           className={`section-layout flex flex-col gap-8  ${status === "disputed" ? "!border-error-content" : ""} ${status === "executed" ? "!border-primary-content" : ""}`}
@@ -459,8 +467,8 @@ export default function ClientPage({ params }: ClientPageProps) {
               {/* Conviction Progress */}
               {proposalData.strategy?.isEnabled &&
                 currentConvictionPct != null &&
-                thresholdPct != null &&
-                totalSupportPct != null && (
+                (isSignalingType ||
+                  (thresholdPct != null && totalSupportPct != null)) && (
                   <div className="">
                     {(status === "active" || status === "disputed") && (
                       <div className="flex flex-col gap-2">
@@ -469,8 +477,8 @@ export default function ClientPage({ params }: ClientPageProps) {
                         <div className="flex flex-col gap-2">
                           <ConvictionBarChart
                             currentConvictionPct={currentConvictionPct}
-                            thresholdPct={thresholdPct}
-                            proposalSupportPct={totalSupportPct}
+                            thresholdPct={thresholdPct ?? 0}
+                            proposalSupportPct={totalSupportPct ?? 0}
                             isSignalingType={isSignalingType}
                             proposalNumber={Number(proposalIdNumber)}
                             timeToPass={Number(timeToPass)}
@@ -546,7 +554,7 @@ export default function ClientPage({ params }: ClientPageProps) {
             </div>
 
             {status === "executed" && (
-              <ul className="timeline timeline-vertical  relative">
+              <ul className="timeline timeline-vertical relative">
                 <li className=" flex items-center justify-start z-50">
                   <div className="timeline-middle rounded-full text-tertiary-soft bg-primary-content m-0.5">
                     <CheckIcon className="w-4 m-0.5" />
@@ -572,23 +580,22 @@ export default function ClientPage({ params }: ClientPageProps) {
                     </p>
 
                     {!isSignalingType && (
-                      <>
-                        <Statistic
-                          label={"Funded: "}
-                          className="-ml-1 text-neutral-soft-content dark:text-neutral-content"
-                        >
-                          <DisplayNumber
-                            number={formatUnits(
-                              requestedAmount,
-                              poolToken?.decimals ?? 18,
-                            )}
-                            tokenSymbol={poolToken?.symbol}
-                            compact={true}
-                            valueClassName="text-neutral-soft-content dark:text-neutral-content"
-                            symbolClassName="text-neutral-soft-content dark:text-neutral-content"
-                          />
-                        </Statistic>
-                      </>
+                      <div
+                        className="flex items-baseline
+                            gap-1"
+                      >
+                        <h6 className="text-neutral-soft-content">Funded: </h6>
+                        <DisplayNumber
+                          number={formatUnits(
+                            requestedAmount,
+                            poolToken?.decimals ?? 18,
+                          )}
+                          tokenSymbol={poolToken?.symbol}
+                          compact={true}
+                          valueClassName="text-neutral-soft-content"
+                          symbolClassName="text-neutral-soft-content "
+                        />
+                      </div>
                     )}
                   </div>
                 </li>
@@ -684,28 +691,41 @@ export default function ClientPage({ params }: ClientPageProps) {
 
       {/* ================= MOBILE ================= */}
       <div className="block md:hidden col-span-12">
-        <div
-          role="tablist"
-          className="tabs tabs-boxed w-full border1 bg-neutral p-1"
-          aria-label="Proposal sections"
-        >
-          {["Overview", "Description", "Status", "Supporters"].map(
-            (label, index) => (
+        <div className="w-full overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+          <div
+            role="tablist"
+            className={`tabs tabs-boxed border1 bg-neutral ${shouldShowSupportersTab ? " inline-flex min-w-full justify-between" : ""}`}
+            aria-label="Proposal sections"
+          >
+            {[
+              "Overview",
+              "Description",
+              "Status",
+              ...(shouldShowSupportersTab ? ["Supporters"] : []),
+            ].map((label, index) => (
               <button
                 key={label}
                 type="button"
                 role="tab"
-                className={`tab rounded-lg border-0 text-neutral-soft-content ${selectedTab === index ? "tab-active !bg-primary-button dark:!bg-primary-dark-base !text-neutral-inverted-content" : "hover:text-neutral-content"}`}
+                className={`tab rounded-lg border-0 px-4 text-neutral-soft-content ${selectedTab === index ? "tab-active !bg-primary-button dark:!bg-primary-dark-base !text-neutral-inverted-content" : "hover:text-neutral-content"}`}
                 aria-selected={selectedTab === index}
-                onClick={() => setSelectedTab(index)}
+                onClick={(event) => {
+                  setSelectedTab(index);
+                  event.currentTarget.scrollIntoView({
+                    behavior: "smooth",
+                    inline: "center",
+                    block: "nearest",
+                  });
+                }}
               >
                 {label}
               </button>
-            ),
-          )}
+            ))}
+          </div>
         </div>
 
         <div className="mt-4">
+          {/* Overview  */}
           {selectedTab === 0 && (
             <div className="flex flex-col gap-6">
               <div
@@ -747,14 +767,44 @@ export default function ClientPage({ params }: ClientPageProps) {
                           )}
                         </div>
 
-                        <div className="flex flex-col items-start justify-between gap-1">
+                        {status !== "executed" && (
+                          <div className="flex flex-col items-start justify-between gap-3 sm:items-end">
+                            <Statistic label={"Created"}>
+                              <span className="font-medium dark:text-neutral-content">
+                                {prettyTimestamp(proposalData?.createdAt ?? 0)}
+                              </span>
+                            </Statistic>
+
+                            {!isSignalingType && (
+                              <>
+                                <Statistic label={"request amount"}>
+                                  <DisplayNumber
+                                    number={formatUnits(
+                                      requestedAmount,
+                                      poolToken?.decimals ?? 18,
+                                    )}
+                                    tokenSymbol={poolToken?.symbol}
+                                    compact={true}
+                                    valueClassName="font-medium dark:text-neutral-content"
+                                    symbolClassName="font-medium dark:text-neutral-content"
+                                  />
+                                </Statistic>
+                              </>
+                            )}
+                          </div>
+                        )}
+
+                        {/* <div className="flex flex-col items-start justify-between gap-1">
                           <Statistic label={"Created"}>
                             <span className="font-medium dark:text-neutral-content">
                               {prettyTimestamp(proposalData?.createdAt ?? 0)}
                             </span>
                           </Statistic>
                           {!isSignalingType && (
-                            <Statistic label={"request amount"} className="pt-2">
+                            <Statistic
+                              label={"request amount"}
+                              className="pt-2"
+                            >
                               <DisplayNumber
                                 number={formatUnits(
                                   requestedAmount,
@@ -767,15 +817,15 @@ export default function ClientPage({ params }: ClientPageProps) {
                               />
                             </Statistic>
                           )}
-                        </div>
+                        </div> */}
                       </div>
                     </header>
 
                     {/* Conviction Progress */}
                     {proposalData.strategy.isEnabled &&
                       currentConvictionPct != null &&
-                      thresholdPct != null &&
-                      totalSupportPct != null && (
+                      (isSignalingType ||
+                        (thresholdPct != null && totalSupportPct != null)) && (
                         <div className="">
                           {(status === "active" || status === "disputed") && (
                             <div className="flex flex-col gap-2">
@@ -784,8 +834,8 @@ export default function ClientPage({ params }: ClientPageProps) {
                               <div className="flex flex-col gap-2">
                                 <ConvictionBarChart
                                   currentConvictionPct={currentConvictionPct}
-                                  thresholdPct={thresholdPct}
-                                  proposalSupportPct={totalSupportPct}
+                                  thresholdPct={thresholdPct ?? 0}
+                                  proposalSupportPct={totalSupportPct ?? 0}
                                   isSignalingType={isSignalingType}
                                   proposalNumber={Number(proposalIdNumber)}
                                   timeToPass={Number(timeToPass)}
@@ -858,6 +908,7 @@ export default function ClientPage({ params }: ClientPageProps) {
             </div>
           )}
 
+          {/* Description */}
           {selectedTab === 1 && (
             <section className="section-layout">
               <h3 className="mb-4">Proposal Description</h3>
@@ -867,6 +918,7 @@ export default function ClientPage({ params }: ClientPageProps) {
             </section>
           )}
 
+          {/* Status */}
           {selectedTab === 2 && (
             <>
               <section className="section-layout gap-4 flex flex-col">
@@ -875,34 +927,63 @@ export default function ClientPage({ params }: ClientPageProps) {
                   <Badge status={proposalData.proposalStatus} />
                 </div>
                 <div>
-                  <div className="flex flex-col gap-2">
-                    {!isSignalingType && (
-                      <>
-                        {status === "executed" ?
-                          <div className="flex items-center gap-2">
-                            <CheckIcon className="w-5 h-5 text-primary-content" />
-                            <p className="text-primary-content subtitle2">
-                              Passed and Executed
-                            </p>
-                          </div>
-                        : status === "cancelled" ?
-                          <div className="flex items-center gap-2">
-                            <XMarkIcon className="w-5 h-5 text-error-content" />
-                            <p className="text-error-content subtitle2">
-                              Cancelled
-                            </p>
-                          </div>
-                        : null}
-                      </>
-                    )}
-                    {status !== "executed" && status !== "cancelled" && (
-                      <InfoBox
-                        title="Information"
-                        infoBoxType="info"
-                        content={`${isSignalingType ? "This proposal is open and can be supported or disputed by the community. Only the proposal creator can cancel" : "This proposal is currently open. It will pass if nobody successfully disputes it and it receives enough support."}`}
-                      />
-                    )}
-                  </div>
+                  {status !== "executed" && status !== "cancelled" && (
+                    <InfoBox
+                      title="Information"
+                      infoBoxType="info"
+                      content={`${isSignalingType ? "This proposal is open and can be supported or disputed by the community. Only the proposal creator can cancel" : "This proposal is currently open. It will pass if nobody successfully disputes it and it receives enough support."}`}
+                    />
+                  )}
+                  {status === "executed" && (
+                    <ul className="timeline timeline-vertical relative">
+                      <li className=" flex items-center justify-start z-50">
+                        <div className="timeline-middle rounded-full text-tertiary-soft bg-primary-content m-0.5">
+                          <CheckIcon className="w-4 m-0.5" />
+                        </div>
+                        <div className="timeline-end  flex flex-col">
+                          <p className="text-md font-semibold">Created</p>
+                          <p className="text-sm text-neutral-soft-content">
+                            {prettyTimestamp(proposalData?.createdAt)}
+                          </p>
+                        </div>
+                        {/* <hr className="bg-tertiary-content w-8" />; */}
+                      </li>
+
+                      <div className="bg-primary-content h-20 w-[4px] absolute left-[9.5px] top-6" />
+                      <li className=" flex items-center justify-start mt-4">
+                        <div className="timeline-middle rounded-full text-tertiary-soft bg-primary-content m-0.5">
+                          <CheckIcon className="w-4 m-0.5" />
+                        </div>
+                        <div className="timeline-end  flex flex-col pt-2">
+                          <p className="text-md font-semibold">Executed</p>
+                          <p className="text-sm text-neutral-soft-content">
+                            {prettyTimestamp(proposalData?.executedAt)}
+                          </p>
+
+                          {!isSignalingType && (
+                            <div
+                              className="flex items-baseline
+                            gap-1"
+                            >
+                              <h6 className="text-neutral-soft-content">
+                                Funded:{" "}
+                              </h6>
+                              <DisplayNumber
+                                number={formatUnits(
+                                  requestedAmount,
+                                  poolToken?.decimals ?? 18,
+                                )}
+                                tokenSymbol={poolToken?.symbol}
+                                compact={true}
+                                valueClassName="text-neutral-soft-content"
+                                symbolClassName="text-neutral-soft-content "
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </li>
+                    </ul>
+                  )}
                 </div>
                 <div className="flex flex-col gap-4">
                   {(status === "active" || status === "disputed") &&
@@ -935,7 +1016,8 @@ export default function ClientPage({ params }: ClientPageProps) {
             </>
           )}
 
-          {selectedTab === 3 &&
+          {shouldShowSupportersTab &&
+            selectedTab === 3 &&
             filteredAndSortedProposalSupporters.length > 0 &&
             totalSupportPct != null && (
               <ProposalSupportersTable

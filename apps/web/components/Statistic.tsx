@@ -30,7 +30,7 @@ export const Statistic = ({
         )}
       </div>
       {label != null && (
-        <p className="first-letter:uppercase text-sm sm:text-md text-neutral-content">
+        <p className="first-letter:uppercase text-sm sm:text-[16px] text-neutral-content">
           {label}: {count}
         </p>
       )}

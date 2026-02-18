@@ -648,10 +648,10 @@ export default function PoolHeader({
           isEnabled ? "xl:col-span-9" : "xl:col-span-12"
         }`}
       >
-        <section className="section-layout flex flex-col g-6">
+        <section className="section-layout flex flex-col">
           {/* Title - Badge poolType - Addresses and Buttons -> (when council memeber is connected) */}
           <header className="flex flex-col gap-4">
-            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center flex-wrap gap-4">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center flex-wrap gap-2 sm:gap-4">
               <h2>
                 <Skeleton isLoading={!ipfsResult} className="sm:!w-96 h-8">
                   {ipfsResult?.title}
@@ -724,7 +724,7 @@ export default function PoolHeader({
                 </div>
               </div>
 
-              <Divider />
+              <Divider className="hidden sm:block" />
 
               {/* Buttons: disable - edit - archive - create steam token  */}
               <div className="flex flex-col sm:flex-row justify-between items-baseline flex-wrap gap-2">
