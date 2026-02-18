@@ -2,7 +2,6 @@
 pragma solidity ^0.8.19;
 
 import "forge-std/Test.sol";
-import "forge-std/console.sol";
 
 import {CVStrategyTest} from "./CVStrategyTest.t.sol";
 import {CVStrategy} from "../src/CVStrategy/CVStrategy.sol";
@@ -41,8 +40,6 @@ contract DiamondUpgradeTest is CVStrategyTest {
         uint256 totalStakedBefore = strategy.totalStaked();
         uint256 proposalCounterBefore = strategy.proposalCounter();
 
-        console.log("Total staked before upgrade:", totalStakedBefore);
-        console.log("Proposal counter before:", proposalCounterBefore);
 
         // Deploy upgraded facet
         adminFacetV2 = new CVAdminFacetV2();
@@ -79,7 +76,6 @@ contract DiamondUpgradeTest is CVStrategyTest {
         strategy.diamondCut(cuts, address(0), "");
         vm.stopPrank();
 
-        console.log("Diamond cut executed successfully");
 
         // Verify storage is intact after upgrade
         assertEq(strategy.totalStaked(), totalStakedBefore, "Total staked changed after upgrade");
@@ -93,7 +89,6 @@ contract DiamondUpgradeTest is CVStrategyTest {
         string memory version = CVAdminFacetV2(payable(address(strategy))).VERSION();
         assertEq(version, "v2", "VERSION function not working");
 
-        console.log("Replace facet test passed - storage intact, new function works");
     }
 
     /**
@@ -112,7 +107,6 @@ contract DiamondUpgradeTest is CVStrategyTest {
 
         // Record state before adding facet (no need to allocate, just having a proposal is enough)
         uint256 proposalCounterBefore = strategy.proposalCounter();
-        console.log("Proposal counter before adding facet:", proposalCounterBefore);
         assertTrue(proposalCounterBefore > 0, "Should have at least one proposal");
 
         // Deploy new test facet
@@ -135,7 +129,6 @@ contract DiamondUpgradeTest is CVStrategyTest {
         strategy.diamondCut(cuts, address(0), "");
         vm.stopPrank();
 
-        console.log("New facet added successfully");
 
         // Test new facet is callable
         uint256 result = CVTestFacet(payable(address(strategy))).testFunction();
@@ -150,7 +143,6 @@ contract DiamondUpgradeTest is CVStrategyTest {
         assertTrue(proposalId > 0 && proposalId <= strategy.proposalCounter(), "Existing proposal check broken");
         assertEq(strategy.proposalCounter(), proposalCounterBefore, "Existing storage corrupted");
 
-        console.log("Add facet test passed - new functions work, old functions intact");
     }
 
     /**
@@ -168,7 +160,6 @@ contract DiamondUpgradeTest is CVStrategyTest {
         CVStrategy strategy = CVStrategy(payable(address(pool.strategy)));
 
         uint256 proposalCounterBefore = strategy.proposalCounter();
-        console.log("Proposal counter before removal:", proposalCounterBefore);
 
         // Prepare to remove connectSuperfluidGDA function
         bytes4[] memory selectorsToRemove = new bytes4[](1);
@@ -186,7 +177,6 @@ contract DiamondUpgradeTest is CVStrategyTest {
         strategy.diamondCut(cuts, address(0), "");
         vm.stopPrank();
 
-        console.log("Function removed successfully");
 
         // Verify removed function reverts
         vm.expectRevert();
@@ -201,6 +191,5 @@ contract DiamondUpgradeTest is CVStrategyTest {
         // Verify proposal counter still valid
         assertTrue(proposalId > 0 && proposalId <= strategy.proposalCounter(), "Proposal lost");
 
-        console.log("Remove function test passed - function removed, others work, storage intact");
     }
 }

@@ -3,9 +3,9 @@ pragma solidity ^0.8.19;
 
 import {CVStrategyBaseFacet} from "../CVStrategyBaseFacet.sol";
 import {CVStreamingStorage} from "../CVStreamingStorage.sol";
-import {CVRegistryAllowlistStorage} from "../CVRegistryAllowlistStorage.sol";
 import {IArbitrator} from "../../interfaces/IArbitrator.sol";
 import {IVotingPowerRegistry} from "../../interfaces/IVotingPowerRegistry.sol";
+import {IRegistryFactory} from "../../IRegistryFactory.sol";
 import {Proposal, ArbitrableConfig, CVParams} from "../ICVStrategy.sol";
 import {LibDiamond} from "../../diamonds/libraries/LibDiamond.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Library.sol";
@@ -24,7 +24,7 @@ contract CVAdminFacet is CVStrategyBaseFacet {
     /*|--------------------------------------------|*/
     error SuperfluidGDAConnectFailed(address gda, address superToken, address caller); // 0x9bd2355f
     error SuperfluidGDADisconnectFailed(address gda, address superToken, address caller); // 0x3746bbff
-    error VotingPowerRegistryNotAllowed(address registry);
+    error VotingPowerRegistryNotAllowed(address target);
 
     /*|--------------------------------------------|*/
     /*|              EVENTS                        |*/
@@ -45,7 +45,6 @@ contract CVAdminFacet is CVStrategyBaseFacet {
     event SuperfluidGDAConnected(address indexed gda, address indexed by);
     event SuperfluidGDADisconnected(address indexed gda, address indexed by);
     event PointsDeactivated(address member);
-    event AllowedVotingPowerRegistryUpdated(address indexed registry, bool allowed);
     event VotingPowerRegistryUpdated(address indexed oldRegistry, address indexed newRegistry);
 
     /*|--------------------------------------------|*/
@@ -101,27 +100,17 @@ contract CVAdminFacet is CVStrategyBaseFacet {
     /*|      VOTING POWER REGISTRY MANAGEMENT     |*/
     /*|--------------------------------------------|*/
 
-    /// @notice Allowlist a voting power registry for use in pool config
-    /// @dev Only callable by contract owner
-    function setAllowedVotingPowerRegistry(address _registry, bool _allowed) external {
-        LibDiamond.enforceIsContractOwner();
-        CVRegistryAllowlistStorage.layout().allowedRegistries[_registry] = _allowed;
-        emit AllowedVotingPowerRegistryUpdated(_registry, _allowed);
-    }
-
-    /// @notice Check if a registry is allowlisted
-    function isAllowedVotingPowerRegistry(address _registry) external view returns (bool) {
-        return CVRegistryAllowlistStorage.layout().allowedRegistries[_registry];
-    }
-
     /// @notice Update the voting power registry for this pool
     /// @dev Only callable by council safe.
-    ///      Registry must be allowlisted, `address(registryCommunity)`, or `address(0)` for default.
+    ///      Registry must be registered on RegistryFactory
     function setVotingPowerRegistry(address _registry) public {
         onlyCouncilSafe();
-        bool allowed = _registry == address(0) || _registry == address(registryCommunity)
-            || CVRegistryAllowlistStorage.layout().allowedRegistries[_registry];
-        if (!allowed) revert VotingPowerRegistryNotAllowed(_registry);
+
+        if (_registry != address(0) && _registry != address(registryCommunity)) {
+            if (!IRegistryFactory(registryCommunity.registryFactory()).isContractRegistered(_registry)) {
+                revert VotingPowerRegistryNotAllowed(_registry);
+            }
+        }
 
         address oldRegistry = address(votingPowerRegistry);
         votingPowerRegistry = _registry == address(0)

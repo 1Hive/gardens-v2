@@ -2597,6 +2597,18 @@
     },
     {
       "type": "function",
+      "name": "registerMember",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "error",
+      "name": "StakeRequiredForMembership",
+      "inputs": []
+    },
+    {
+      "type": "function",
       "name": "isPaused",
       "inputs": [
         {
@@ -2751,6 +2763,19 @@
       "type": "error",
       "name": "PauseControllerNotSet",
       "inputs": []
+    },
+    {
+      "type": "function",
+      "name": "ercAddress",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
     },
     {
       "type": "error",

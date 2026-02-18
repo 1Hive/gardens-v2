@@ -2,7 +2,6 @@
 pragma solidity ^0.8.19;
 
 import "forge-std/Test.sol";
-import {console} from "forge-std/console.sol";
 
 import {CVStreamingFacet} from "../src/CVStrategy/facets/CVStreamingFacet.sol";
 import {CVStreamingStorage, CVStreamingBase} from "../src/CVStrategy/CVStreamingStorage.sol";

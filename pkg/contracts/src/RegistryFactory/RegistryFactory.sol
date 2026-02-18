@@ -23,8 +23,6 @@ contract RegistryFactory is ProxyOwnableUpgrader {
     address public registryCommunityTemplate;
     address public strategyTemplate;
     address public collateralVaultTemplate;
-    address public streamingEscrowFactory;
-    address public globalPauseController;
     mapping(address => bool) public protopiansAddresses;
     mapping(address => bool) public keepersAddresses;
 
@@ -34,6 +32,12 @@ contract RegistryFactory is ProxyOwnableUpgrader {
     IDiamondCut.FacetCut[] internal strategyFacetCuts;
     address internal strategyInit;
     bytes internal strategyInitCalldata;
+    mapping(address => bool) public registeredContracts;
+
+    address public streamingEscrowFactory;
+    address public globalPauseController;
+
+    uint256[42] private __gap;
 
     /*|--------------------------------------------|*/
     /*|                 EVENTS                     |*/
@@ -47,6 +51,8 @@ contract RegistryFactory is ProxyOwnableUpgrader {
     event KeepersChanged(address[] _new, address[] _removed);
     event StreamingEscrowFactorySet(address _newFactory);
     event GlobalPauseControllerSet(address _newController);
+    event ContractRegistered(address indexed target);
+    event ContractUnregistered(address indexed target);
 
     /*|--------------------------------------------|*/
     /*|                 ERRORS                     |*/
@@ -86,6 +92,23 @@ contract RegistryFactory is ProxyOwnableUpgrader {
         globalPauseController = controller;
         emit GlobalPauseControllerSet(controller);
     }
+
+    function registerContract(address target) external virtual onlyOwner {
+        _revertZeroAddress(target);
+        registeredContracts[target] = true;
+        emit ContractRegistered(target);
+    }
+
+    function unregisterContract(address target) external virtual onlyOwner {
+        _revertZeroAddress(target);
+        registeredContracts[target] = false;
+        emit ContractUnregistered(target);
+    }
+
+    function isContractRegistered(address target) external view virtual returns (bool) {
+        return registeredContracts[target];
+    }
+
     function initialize(
         address _owner,
         address _gardensFeeReceiver,
@@ -138,6 +161,42 @@ contract RegistryFactory is ProxyOwnableUpgrader {
         strategyInitCalldata = strategyInitCalldata_;
     }
 
+    function clearCommunityFacetCuts() external onlyOwner {
+        _clearFacetCuts(communityFacetCuts);
+    }
+
+    function clearStrategyFacetCuts() external onlyOwner {
+        _clearFacetCuts(strategyFacetCuts);
+    }
+
+    function upsertCommunityFacetCut(
+        uint256 index,
+        address facetAddress,
+        IDiamondCut.FacetCutAction action,
+        bytes4[] memory selectors
+    ) external onlyOwner {
+        _upsertFacetCut(communityFacetCuts, index, facetAddress, action, selectors);
+    }
+
+    function upsertStrategyFacetCut(
+        uint256 index,
+        address facetAddress,
+        IDiamondCut.FacetCutAction action,
+        bytes4[] memory selectors
+    ) external onlyOwner {
+        _upsertFacetCut(strategyFacetCuts, index, facetAddress, action, selectors);
+    }
+
+    function setCommunityFacetInit(address init, bytes memory initCalldata) external onlyOwner {
+        communityInit = init;
+        communityInitCalldata = initCalldata;
+    }
+
+    function setStrategyFacetInit(address init, bytes memory initCalldata) external onlyOwner {
+        strategyInit = init;
+        strategyInitCalldata = initCalldata;
+    }
+
     function createRegistry(RegistryCommunityInitializeParams memory params)
         public
         virtual
@@ -145,26 +204,10 @@ contract RegistryFactory is ProxyOwnableUpgrader {
     {
         require(communityFacetCuts.length > 0, "Community facets not set");
         require(strategyFacetCuts.length > 0, "Strategy facets not set");
-        return _createRegistry(
-            params,
-            _copyFacetCuts(communityFacetCuts),
-            communityInit,
-            communityInitCalldata,
-            _copyFacetCuts(strategyFacetCuts),
-            strategyInit,
-            strategyInitCalldata
-        );
+        return _createRegistry(params);
     }
 
-    function _createRegistry(
-        RegistryCommunityInitializeParams memory params,
-        IDiamondCut.FacetCut[] memory facetCuts,
-        address init,
-        bytes memory initCalldata,
-        IDiamondCut.FacetCut[] memory strategyFacetCuts_,
-        address strategyInit_,
-        bytes memory strategyInitCalldata_
-    ) internal returns (address _createdRegistryAddress) {
+    function _createRegistry(RegistryCommunityInitializeParams memory params) internal returns (address _createdRegistryAddress) {
         params._nonce = nonce++;
         params._registryFactory = address(this);
 
@@ -175,13 +218,7 @@ contract RegistryFactory is ProxyOwnableUpgrader {
                 params,
                 strategyTemplate,
                 collateralVaultTemplate,
-                proxyOwner(),
-                facetCuts,
-                init,
-                initCalldata,
-                strategyFacetCuts_,
-                strategyInit_,
-                strategyInitCalldata_
+                proxyOwner()
             )
         );
 
@@ -194,18 +231,39 @@ contract RegistryFactory is ProxyOwnableUpgrader {
     }
 
     function _setFacetCuts(IDiamondCut.FacetCut[] memory source, IDiamondCut.FacetCut[] storage target) internal {
-        while (target.length > 0) {
-            target.pop();
-        }
+        _clearFacetCuts(target);
         for (uint256 i = 0; i < source.length; i++) {
+            _upsertFacetCut(target, i, source[i].facetAddress, source[i].action, source[i].functionSelectors);
+        }
+    }
+
+    function _clearFacetCuts(IDiamondCut.FacetCut[] storage target) internal {
+        assembly {
+            sstore(target.slot, 0)
+        }
+    }
+
+    function _upsertFacetCut(
+        IDiamondCut.FacetCut[] storage target,
+        uint256 index,
+        address facetAddress,
+        IDiamondCut.FacetCutAction action,
+        bytes4[] memory selectors
+    ) internal {
+        require(index <= target.length, "invalid facet index");
+        if (index == target.length) {
             target.push();
-            IDiamondCut.FacetCut storage dest = target[i];
-            dest.facetAddress = source[i].facetAddress;
-            dest.action = source[i].action;
-            bytes4[] memory selectors = source[i].functionSelectors;
-            for (uint256 j = 0; j < selectors.length; j++) {
-                dest.functionSelectors.push(selectors[j]);
-            }
+        }
+
+        IDiamondCut.FacetCut storage dest = target[index];
+        dest.facetAddress = facetAddress;
+        dest.action = action;
+
+        while (dest.functionSelectors.length > 0) {
+            dest.functionSelectors.pop();
+        }
+        for (uint256 j = 0; j < selectors.length; j++) {
+            dest.functionSelectors.push(selectors[j]);
         }
     }
 
@@ -239,6 +297,24 @@ contract RegistryFactory is ProxyOwnableUpgrader {
 
     function getStreamingEscrowFactory() external view virtual returns (address) {
         return streamingEscrowFactory;
+    }
+
+    function getCommunityFacets()
+        external
+        view
+        virtual
+        returns (IDiamondCut.FacetCut[] memory facetCuts, address init, bytes memory initCalldata)
+    {
+        return (_copyFacetCuts(communityFacetCuts), communityInit, communityInitCalldata);
+    }
+
+    function getStrategyFacets()
+        external
+        view
+        virtual
+        returns (IDiamondCut.FacetCut[] memory facetCuts, address init, bytes memory initCalldata)
+    {
+        return (_copyFacetCuts(strategyFacetCuts), strategyInit, strategyInitCalldata);
     }
 
     function setProtocolFee(address _community, uint256 _newProtocolFee) public virtual onlyOwner {
@@ -309,6 +385,4 @@ contract RegistryFactory is ProxyOwnableUpgrader {
 
         return communityToInfo[_community].fee;
     }
-
-    uint256[44] private __gap;
 }

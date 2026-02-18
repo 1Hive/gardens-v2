@@ -37,6 +37,8 @@ import {
   SybilScorerUpdated,
   InitializedCV3,
   InitializedCV3DataStruct,
+  InitializedCV4,
+  InitializedCV4DataStruct,
   ProposalEdited,
   SuperfluidTokenUpdated,
   SuperfluidGDAConnected,
@@ -93,6 +95,15 @@ export function handleInitializedV2(event: InitializedCV2): void {
 
 export function handleInitializedV3(event: InitializedCV3): void {
   computeInitialize(
+    event.address,
+    event.params.poolId,
+    event.params.data,
+    event.block.timestamp
+  );
+}
+
+export function handleInitializedV4(event: InitializedCV4): void {
+  computeInitializeV4(
     event.address,
     event.params.poolId,
     event.params.data,
@@ -960,6 +971,82 @@ function computeInitialize(
   computeConfig(config, cvParams);
 
   // With allowlist
+  computeAllowList(config, data.initialAllowlist, []);
+
+  config.D = D;
+  config.save();
+  cvs.config = config.id;
+  cvs.save();
+}
+
+function computeInitializeV4(
+  contractAddress: Address,
+  poolId: BigInt,
+  data: InitializedCV4DataStruct,
+  timestamp: BigInt
+): void {
+  log.debug("CVStrategy: handleInitializedV4 {}", [poolId.toString()]);
+  const registryCommunity = data.registryCommunity.toHexString();
+  const pType = data.proposalType;
+  const maxAmount = data.pointConfig.maxAmount;
+  const pointSystem = data.pointSystem;
+
+  const cvc = CVStrategyContract.bind(contractAddress);
+  const strategyId = contractAddress.toHex();
+  let cvs = CVStrategy.load(strategyId);
+  if (cvs == null) {
+    cvs = new CVStrategy(strategyId);
+  }
+  let alloAddr = cvc.getAllo();
+  log.debug("CVStrategy: alloAddr:{}", [alloAddr.toHexString()]);
+  const allo = AlloContract.bind(alloAddr);
+  const alloPool = allo.getPool(poolId);
+  let metadata = alloPool.metadata.pointer;
+  if (metadata.length > 0) {
+    log.debug("CVStrategy: metadata:{}", [metadata.toString()]);
+    PoolMetadataTemplate.create(metadata);
+    cvs.metadata = metadata;
+    cvs.metadataHash = metadata;
+  } else {
+    cvs.metadata = null;
+    cvs.metadataHash = null;
+  }
+  cvs.token = alloPool.token.toHexString();
+  cvs.poolId = poolId;
+  cvs.registryCommunity = registryCommunity;
+  let config = new CVStrategyConfig(`${contractAddress.toHex()}-config`);
+  config.superfluidGDA = [];
+  cvs.maxCVSupply = BigInt.fromI32(0);
+  cvs.totalEffectiveActivePoints = cvc.totalPointsActivated();
+  cvs.isEnabled = false;
+  cvs.sybil = data.sybilScorer.toHexString();
+  cvs.archived = false;
+  config.proposalType = BigInt.fromI32(pType);
+  config.pointSystem = BigInt.fromI32(pointSystem);
+  config.maxAmount = maxAmount;
+  const superfluidToken = data.superfluidToken;
+  if (superfluidToken == Address.zero()) {
+    config.superfluidToken = null;
+  } else {
+    config.superfluidToken = superfluidToken.toHexString();
+  }
+
+  let streamingInfo = getOrCreateStrategyStreamingInfo(
+    contractAddress,
+    timestamp
+  );
+  streamingInfo.superfluidGDA = [];
+  if (superfluidToken == Address.zero()) {
+    streamingInfo.superfluidToken = null;
+  } else {
+    streamingInfo.superfluidToken = superfluidToken.toHexString();
+  }
+  streamingInfo.updatedAt = timestamp;
+  streamingInfo.save();
+
+  // @ts-ignore
+  let cvParams = changetype<CVParamsUpdatedCvParamsStruct>(data.cvParams);
+  computeConfig(config, cvParams);
   computeAllowList(config, data.initialAllowlist, []);
 
   config.D = D;

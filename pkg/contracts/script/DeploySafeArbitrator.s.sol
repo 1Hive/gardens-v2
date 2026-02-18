@@ -23,10 +23,8 @@ contract DeploySafeArbitrator is BaseMultiChain {
                     abi.encodeWithSelector(SafeArbitrator.initialize.selector, 0.001 ether, address(proxyOwner))
                 )
             );
-            console.log("New Safe Arbitrator: ", newSafeArbitrator);
         } else {
             SafeArbitrator(safeArbitrator).upgradeTo(newImplementation);
-            console.log("Safe Arbitrator upgraded: ", safeArbitrator);
         }
 
         // CV STRATEGIES

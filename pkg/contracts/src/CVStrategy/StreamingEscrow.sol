@@ -37,6 +37,7 @@ contract StreamingEscrow is ProxyOwnableUpgrader, SuperAppBase {
     address public beneficiary;
     address public treasury;
     bool public disputed;
+    uint256[45] private __gap;
 
     /*|--------------------------------------------|*/
     /*|              INITIALIZER                   |*/
@@ -208,5 +209,4 @@ contract StreamingEscrow is ProxyOwnableUpgrader, SuperAppBase {
         superToken.flow(receiver, flowRate);
     }
 
-    uint256[45] private __gap;
 }

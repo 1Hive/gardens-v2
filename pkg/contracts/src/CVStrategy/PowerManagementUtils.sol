@@ -33,13 +33,10 @@ library PowerManagementUtils {
         uint256 _amountToStake,
         uint256 _pointConfigMaxAmount
     ) internal returns (uint256) {
-        // console.log("POINTS TO INCREASE", _amountToStake);
         uint256 memberPower = _votingPowerRegistry.getMemberPowerInStrategy(_member, address(this));
-        // console.log("MEMBERPOWER", memberPower);
         if (memberPower + _amountToStake > _pointConfigMaxAmount) {
             _amountToStake = _pointConfigMaxAmount - memberPower;
         }
-        // console.log("POINTS TO INCREASE END", _amountToStake);
 
         return _amountToStake;
     }
@@ -54,7 +51,6 @@ library PowerManagementUtils {
         try ERC20(address(_votingPowerRegistry.ercAddress())).decimals() returns (uint8 _decimal) {
             decimal = uint256(_decimal);
         } catch {
-            // console.log("Error getting decimal");
         }
         uint256 newTotalPoints = Math.sqrt(totalStake * 10 ** decimal);
         uint256 currentPoints = _votingPowerRegistry.getMemberPowerInStrategy(_member, address(this));
@@ -97,11 +93,8 @@ library PowerManagementUtils {
         try ERC20(address(_votingPowerRegistry.ercAddress())).decimals() returns (uint8 _decimal) {
             decimal = uint256(_decimal);
         } catch {
-            // console.log("Error getting decimal");
         }
-        // console.log("_amountToUnstake", _amountToUnstake);
         uint256 newTotalStake = _votingPowerRegistry.getMemberStakedAmount(_member) - _amountToUnstake;
-        // console.log("newTotalStake", newTotalStake);
         uint256 newTotalPoints = Math.sqrt(newTotalStake * 10 ** decimal);
         uint256 pointsToDecrease =
             _votingPowerRegistry.getMemberPowerInStrategy(_member, address(this)) - newTotalPoints;

@@ -41,7 +41,6 @@ contract DeployCoreContracts is BaseMultiChain {
                 address(new ProxyOwner()), abi.encodeWithSelector(ProxyOwner.initialize.selector, address(SENDER))
             )
         );
-        console2.log("ProxyOwner (upgrade admin): %s", proxyOwner);
         _writeNetworkAddress(".ENVS.PROXY_OWNER", proxyOwner);
 
         address communityImpl = address(new RegistryCommunity());
@@ -61,7 +60,6 @@ contract DeployCoreContracts is BaseMultiChain {
                 )
             )
         );
-        console2.log("RegistryFactory: %s", registryFactoryProxy);
         _writeNetworkAddress(".PROXIES.REGISTRY_FACTORY", registryFactoryProxy);
         _writeNetworkAddress(".IMPLEMENTATIONS.REGISTRY_COMMUNITY", communityImpl);
         _writeNetworkAddress(".IMPLEMENTATIONS.CV_STRATEGY", strategyImpl);
@@ -77,9 +75,7 @@ contract DeployCoreContracts is BaseMultiChain {
             strategyInit,
             abi.encodeCall(CVStrategyDiamondInit.init, ())
         ) {
-            console2.log("RegistryFactory facet cuts initialized");
         } catch {
-            console2.log("RegistryFactory facet cuts already set (skipping)");
         }
 
         address listManager = address(SENDER);
@@ -90,7 +86,6 @@ contract DeployCoreContracts is BaseMultiChain {
                 abi.encodeWithSelector(PassportScorer.initialize.selector, listManager, proxyOwner)
             )
         );
-        console2.log("PassportScorer: %s", passportScorer);
         _writeNetworkAddress(".ENVS.PASSPORT_SCORER", passportScorer);
 
         address goodDollarSybil = address(
@@ -99,7 +94,6 @@ contract DeployCoreContracts is BaseMultiChain {
                 abi.encodeWithSelector(GoodDollarSybil.initialize.selector, listManager, proxyOwner)
             )
         );
-        console2.log("GoodDollarSybil: %s", goodDollarSybil);
         _writeNetworkAddress(".ENVS.GOOD_DOLLAR_SYBIL", goodDollarSybil);
 
         address safeArbitrator = address(
@@ -108,7 +102,6 @@ contract DeployCoreContracts is BaseMultiChain {
                 abi.encodeWithSelector(SafeArbitrator.initialize.selector, 0.001 ether, proxyOwner)
             )
         );
-        console2.log("SafeArbitrator: %s", safeArbitrator);
         _writeNetworkAddress(".ENVS.ARBITRATOR", safeArbitrator);
 
         networkJson;
@@ -140,7 +133,6 @@ contract DeployCoreContracts is BaseMultiChain {
         inputs[1] = "-c";
         inputs[2] = command;
         vm.ffi(inputs);
-        console2.log("  Cached deployment in networks.json:", key);
     }
 
     function _addressToString(address _addr) internal pure returns (string memory) {
@@ -305,13 +297,11 @@ contract DeployCoreContracts is BaseMultiChain {
     ) internal pure returns (IDiamond.FacetCut[] memory cuts) {
         IDiamond.FacetCut[] memory baseCuts = new IDiamond.FacetCut[](7);
 
-        bytes4[] memory adminSelectors = new bytes4[](6);
+        bytes4[] memory adminSelectors = new bytes4[](4);
         adminSelectors[0] = CVAdminFacet.setPoolParams.selector;
         adminSelectors[1] = CVAdminFacet.connectSuperfluidGDA.selector;
         adminSelectors[2] = CVAdminFacet.disconnectSuperfluidGDA.selector;
-        adminSelectors[3] = CVAdminFacet.setAllowedVotingPowerRegistry.selector;
-        adminSelectors[4] = CVAdminFacet.isAllowedVotingPowerRegistry.selector;
-        adminSelectors[5] = CVAdminFacet.setVotingPowerRegistry.selector;
+        adminSelectors[3] = CVAdminFacet.setVotingPowerRegistry.selector;
         baseCuts[0] = IDiamond.FacetCut({
             facetAddress: address(adminFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: adminSelectors
         });

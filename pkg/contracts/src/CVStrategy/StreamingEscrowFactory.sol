@@ -24,6 +24,7 @@ contract StreamingEscrowFactory is ProxyOwnableUpgrader {
     address public strategy;
     ISuperfluid public host;
     address public escrowImplementation;
+    uint256[45] private __gap;
 
     function initialize(address _strategy, ISuperfluid _host, address _escrowImplementation) external initializer {
         if (_strategy == address(0) || address(_host) == address(0)) {
@@ -67,5 +68,4 @@ contract StreamingEscrowFactory is ProxyOwnableUpgrader {
         escrowImplementation = implementation;
     }
 
-    uint256[45] private __gap;
 }

@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import "forge-std/console2.sol";
 import "forge-std/Script.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
@@ -73,7 +72,6 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
 
         token = new TERC20("sepolia Honey", "sepHNY", 18);
 
-        console2.log("sepHNY Token Addr: %s", address(token));
 
         registry = allo.getRegistry();
 
@@ -98,7 +96,6 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
             )
         );
         registryFactory = RegistryFactory(address(factoryProxy));
-        console2.log("Registry Factory Addr: %s", address(registryFactory));
 
         ERC1967Proxy arbitratorProxy = new ERC1967Proxy(
             address(new SafeArbitrator()), abi.encodeWithSelector(SafeArbitrator.initialize.selector, 2 ether)
@@ -106,7 +103,6 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
 
         safeArbitrator = SafeArbitrator(payable(address(arbitratorProxy)));
 
-        console2.log("Safe Arbitrator Addr: %s", address(safeArbitrator));
 
         RegistryCommunityInitializeParams memory params;
 
@@ -260,25 +256,13 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         allo.registerRecipient{value: 3 ether}(poolIdFixed, data2);
         vm.stopBroadcast();
 
-        console2.log("Scorer Address: %s", address(sybilScorer));
 
         create_community();
 
-        console2.log("PoolId: %s", poolId);
-        console2.log("Strategy1 Addr: %s", address(strategy1));
 
-        console2.log("poolIdQuadratic: %s", poolIdFixed);
-        console2.log("Strategy2 Addr: %s", address(strategy2));
 
-        console2.log("Allo Addr: %s", address(allo));
-        console2.log("Token Addr: %s", address(token));
-        console2.log("Token Native Addr: %s", address(NATIVE));
 
-        console2.log("Registry Gardens Addr: %s", address(registryCommunity));
 
-        console2.log("Allo Registry Addr: %s", address(registry));
-        console2.log("Pool Admin Addr: %s", pool_admin());
-        console2.log("Council Safe Addr: %s", address(_councilSafe()));
     }
 
     function _getPointConfig() internal pure returns (PointSystemConfig memory) {
@@ -294,7 +278,6 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
 
         // RegistryFactory registryFactory = new RegistryFactory();
 
-        // console2.log("Registry Factory Addr: %s", address(registryFactory));
 
         RegistryCommunityInitializeParams memory params;
 
@@ -320,7 +303,6 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         );
         RegistryCommunity registryCommunity = RegistryCommunity(registryFactory.createRegistry(params));
 
-        console.log("Registry Community Addr: %s", address(registryCommunity));
 
         token.mint(address(pool_admin()), 10_000 ether);
         ERC1967Proxy strategy1Proxy = new ERC1967Proxy(
@@ -466,21 +448,10 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
 
         vm.stopBroadcast();
 
-        console2.log("PoolId: %s", poolId);
-        console2.log("Strategy1 Addr: %s", address(strategy1));
 
-        console2.log("poolIdFixed: %s", poolIdFixed);
-        console2.log("Strategy2 Addr: %s", address(strategy2));
 
-        console2.log("Allo Addr: %s", address(allo));
-        console2.log("Token Addr: %s", address(token));
-        console2.log("Token Native Addr: %s", address(NATIVE));
 
-        console2.log("Registry Gardens Addr: %s", address(registryCommunity));
 
-        console2.log("Allo Registry Addr: %s", address(registry));
-        console2.log("Pool Admin Addr: %s", pool_admin());
-        console2.log("Council Safe Addr: %s", address(_councilSafe()));
     }
 
     function deployAllo() public returns (address) {

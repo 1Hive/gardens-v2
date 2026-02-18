@@ -51,7 +51,6 @@ contract DeployGlobalPauseControllerProd is BaseMultiChain {
         }
 
         _finalizePayloadWriter(writer);
-        console2.log("Wrote %s", writer.path);
     }
 
     function _initPayloadWriter(address safeOwner, string memory networkJson)

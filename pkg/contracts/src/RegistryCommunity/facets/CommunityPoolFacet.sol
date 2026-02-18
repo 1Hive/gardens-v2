@@ -65,8 +65,7 @@ contract CommunityPoolFacet is CommunityBaseFacet {
                 abi.encodeWithSelector(CVStrategy.init.selector, address(allo), collateralVaultTemplate, address(this))
             )
         );
-        address pauseController = IRegistryFactory(registryFactory).globalPauseController();
-        _configureStrategyFacets(strategyProxy, pauseController);
+        _configureStrategyFacets(strategyProxy);
         (poolId, strategy) = createPool(strategyProxy, _token, _params, _metadata);
 
         if (address(_params.sybilScorer) == address(0)) {
@@ -86,10 +85,13 @@ contract CommunityPoolFacet is CommunityBaseFacet {
         _grantRole(keccak256(abi.encodePacked("ALLOWLIST_ADMIN", poolId)), strategy);
     }
 
-    function _configureStrategyFacets(address strategyProxy, address pauseController) internal {
-        if (strategyFacetCuts.length > 0 || strategyInit != address(0)) {
-            IDiamondCut(strategyProxy).diamondCut(strategyFacetCuts, strategyInit, strategyInitCalldata);
+    function _configureStrategyFacets(address strategyProxy) internal {
+        (IDiamondCut.FacetCut[] memory strategyFacetCuts_, address strategyInit_, bytes memory strategyInitCalldata_) =
+            IRegistryFactory(registryFactory).getStrategyFacets();
+        if (strategyFacetCuts_.length > 0 || strategyInit_ != address(0)) {
+            IDiamondCut(strategyProxy).diamondCut(strategyFacetCuts_, strategyInit_, strategyInitCalldata_);
         }
+        address pauseController = IRegistryFactory(registryFactory).globalPauseController();
         if (pauseController != address(0)) {
             IPauseFacet(strategyProxy).setPauseController(pauseController);
         }

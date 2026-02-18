@@ -20,11 +20,9 @@ contract PrintRegistryCommunitySelectors is Script {
         string memory artifactJson = vm.readFile(artifactPath);
         string[] memory signatures = vm.parseJsonKeys(artifactJson, ".methodIdentifiers");
 
-        console2.log("RegistryCommunity function selectors:", signatures.length);
         for (uint256 i = 0; i < signatures.length; ++i) {
             string memory selectorPath = string.concat(".methodIdentifiers[\"", signatures[i], "\"]");
             string memory selector = artifactJson.readString(selectorPath);
-            console2.log(string.concat(signatures[i], " => 0x", selector));
         }
     }
 }

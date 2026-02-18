@@ -111,6 +111,8 @@ templates:
           handler: handleInitializedV2
         - event: InitializedCV3(uint256,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address,uint256,address[],address))
           handler: handleInitializedV3
+        - event: InitializedCV4(uint256,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address,address,uint256,address[],address,uint256))
+          handler: handleInitializedV4
         - event: ProposalCreated(uint256,uint256)
           handler: handleProposalCreated
         - event: SupportAdded(address,uint256,uint256,uint256,uint256)

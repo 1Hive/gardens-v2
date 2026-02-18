@@ -271,10 +271,7 @@ export default function ClientPage({
 
   const poolTokenAddr = strategy?.token as Address;
 
-  // TODO REMOVE BEFORE COMMIT: temporary override to force streaming pool UI on this page.
-  const FORCE_STREAMING_POOL_FOR_TESTING = true;
-  const proposalType =
-    FORCE_STREAMING_POOL_FOR_TESTING ? 2 : strategy?.config.proposalType;
+  const proposalType = strategy?.config.proposalType;
   const effectiveStrategy =
     strategy && strategy.config ?
       {
