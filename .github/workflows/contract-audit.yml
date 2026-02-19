@@ -8,12 +8,14 @@ on:
       - dev
     paths:
       - pkg/contracts/src/**/*.sol
+      - .github/workflows/contract-audit.yml
   pull_request:
     branches:
       - main
       - dev
     paths:
       - pkg/contracts/src/**/*.sol
+      - .github/workflows/contract-audit.yml
 
 jobs:
   analyze:
