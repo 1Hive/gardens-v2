@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { formatEther, parseEther } from "viem";
 import { base } from "viem/chains";
-import { usePublicClient, useWriteContract } from "wagmi";
+import { useContractWrite, usePublicClient } from "wagmi";
 
 const TOP_DAWG_PARTNER_ABI = [
   {
@@ -44,7 +44,14 @@ export default function MarkeeModal({
   const [isSuccess, setIsSuccess] = useState(false);
   const dialogRef = useRef<HTMLDialogElement>(null);
 
-  const { writeContractAsync, isPending } = useWriteContract();
+  // wagmi v1 API
+  const { writeAsync, isLoading: isPending } = useContractWrite({
+    address: strategyAddress,
+    abi: TOP_DAWG_PARTNER_ABI,
+    functionName: "createMarkee",
+    chainId: base.id,
+  });
+
   const publicClient = usePublicClient({ chainId: base.id });
 
   // Open dialog on mount
@@ -81,20 +88,16 @@ export default function MarkeeModal({
   };
 
   const handleSubmit = async () => {
-    if (!validate()) return;
+    if (!validate() || !writeAsync) return;
     try {
-      const txHash = await writeContractAsync({
-        address: strategyAddress,
-        abi: TOP_DAWG_PARTNER_ABI,
-        functionName: "createMarkee",
+      const { hash } = await writeAsync({
         args: [message.trim(), name.trim()],
         value: parseEther(ethAmount),
-        chainId: base.id,
       });
 
-      if (txHash && publicClient) {
+      if (hash && publicClient) {
         setIsConfirming(true);
-        await publicClient.waitForTransactionReceipt({ hash: txHash });
+        await publicClient.waitForTransactionReceipt({ hash });
         setIsConfirming(false);
         setIsSuccess(true);
         onSuccess();
