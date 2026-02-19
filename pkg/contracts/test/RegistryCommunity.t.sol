@@ -536,15 +536,19 @@ contract RegistryCommunityTest is Test {
         DummyCommunityFacet facet = new DummyCommunityFacet();
         IDiamond.FacetCut[] memory cuts = _facetCuts(address(facet));
 
+        MockAllo localAllo = new MockAllo();
+        MockRegistry localRegistry = new MockRegistry();
+        localAllo.setRegistry(address(localRegistry));
+        params = _defaultParams(address(localAllo));
         params._registryFactory = address(_deployFactoryWithFacets(cuts, emptyCuts, address(0)));
         impl = address(new RegistryCommunity());
-        vm.expectRevert(bytes("Strategy facets required"));
-        new ERC1967Proxy(
+        RegistryCommunity community = RegistryCommunity(payable(address(new ERC1967Proxy(
             impl,
             abi.encodeWithSelector(
                 RegistryCommunity.initialize.selector, params, address(0x1111), address(0x2222), owner
             )
-        );
+        ))));
+        assertEq(community.registryFactory(), params._registryFactory);
 
         params._registerStakeAmount = 0;
         params._registryFactory = address(_deployFactoryWithFacets(cuts, cuts, address(0)));
