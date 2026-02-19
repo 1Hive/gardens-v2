@@ -44,7 +44,7 @@ export const DataTable: React.FC<DataTableProps> = ({
                   scope="col"
                   className={`py-2.5 sm:py-3.5 px-[1px] ${col.className ?? ""}`}
                 >
-                  <h6 className="text-sm text-neutral-soft-content">
+                  <h6 className="text-xs sm:text-sm text-neutral-soft-content ">
                     {col.header}
                   </h6>
                 </th>
@@ -58,9 +58,9 @@ export const DataTable: React.FC<DataTableProps> = ({
                 {columns.map((col, i) => (
                   <td
                     key={`col-${i + 1}-${item.id}`}
-                    className={`whitespace-nowrap py-1 pr-1 text-sm ${col.className ?? ""}`}
+                    className={`whitespace-nowrap py-1 pr-1  ${col.className ?? ""}`}
                   >
-                    <div className="text-base font-normal leading-6 text-left">
+                    <div className="text-xs sm:text-sm font-normal leading-6 ">
                       {col.render(item)}
                     </div>
                   </td>
