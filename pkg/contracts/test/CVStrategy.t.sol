@@ -734,7 +734,7 @@ contract CVStrategyTest is Test {
         params.arbitrableConfig = ArbitrableConfig(IArbitrator(address(0)), address(0), 0, 0, 0, 0);
 
         vm.prank(address(localAllo));
-        vm.expectRevert(CVStrategy.ProposalDataIsEmpty.selector);
+        vm.expectRevert(abi.encodeWithSelector(CVStrategy.TokenCannotBeZero.selector, address(0)));
         local.initialize(1, abi.encode(params));
     }
 
