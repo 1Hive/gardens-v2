@@ -40,7 +40,12 @@ jobs:
           run_install: false
 
       - name: Init required submodules
-        run: git submodule update --init --recursive --depth 1 --jobs 4
+        run: |
+          # Cleanup for clones that still have the removed octant submodule cached.
+          git config --local --remove-section submodule.lib/octant-v2-core || true
+          rm -rf .git/modules/lib/octant-v2-core lib/octant-v2-core
+          git submodule sync --recursive
+          git submodule update --init --recursive --depth 1 --jobs 4
 
       - name: Run coverage
         run: pnpm --dir pkg/contracts run coverage
