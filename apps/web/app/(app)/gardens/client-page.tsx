@@ -18,6 +18,7 @@ import {
   gardensNight,
 } from "@/assets";
 import { Button, Communities } from "@/components";
+import MarkeeSign from "@/components/MarkeeSign";
 import { LightCommunity } from "@/components/Communities";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useFlag } from "@/hooks/useFlag";
@@ -45,10 +46,11 @@ const Header = () => {
             <h1 className="max-w-xl text-center text-neutral-content">
               Welcome to Gardens
             </h1>
-            <p className="text-xl  text-center">
+            <p className="text-xl text-center">
               Where communities grow through collective decision-making
             </p>
-            <Link href="/gardens/create-community" className="mt-6 z-10">
+            <MarkeeSign />
+            <Link href="/gardens/create-community" className="mt-10 z-10">
               <Button
                 btnStyle="filled"
                 disabled={!isConnected}
@@ -144,7 +146,6 @@ export default function ClientPage() {
                 protopianOwners.length > 0 &&
                 x.chain.safePrefix
               ) {
-                // Council Safe supported
                 const councilSafeAddress = x.councilSafe as Address;
                 try {
                   const communityCouncil = await readContract({
@@ -156,7 +157,6 @@ export default function ClientPage() {
 
                   return {
                     ...x,
-                    // Consider Protopian can be transferred to councilSafe
                     isProtopian: !![
                       ...communityCouncil,
                       councilSafeAddress,
