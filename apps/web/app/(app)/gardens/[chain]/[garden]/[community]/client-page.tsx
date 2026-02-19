@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 
 import {
   CircleStackIcon,
@@ -45,7 +45,6 @@ import {
   Statistic,
 } from "@/components";
 import { Divider } from "@/components/Diivider";
-import { ExpandableComponent } from "@/components/Expandable";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import MarkdownWrapper from "@/components/MarkdownWrapper";
 import { Skeleton } from "@/components/Skeleton";
@@ -238,6 +237,9 @@ export default function ClientPage({
 
   strategies = strategies ?? [];
 
+  const canSeeArchivedPools =
+    !!isCouncilMember || isCouncilSafe || showArchived;
+
   const signalingPools = strategies.filter(
     (strategy) =>
       PoolTypes[strategy.config?.proposalType] === "signaling" &&
@@ -250,6 +252,12 @@ export default function ClientPage({
       strategy.isEnabled,
   );
 
+  const streamingPools = strategies.filter(
+    (strategy) =>
+      PoolTypes[strategy.config?.proposalType] === "streaming" &&
+      strategy.isEnabled,
+  );
+
   const activePools = strategies?.filter((strategy) => strategy?.isEnabled);
 
   const poolsInReview = strategies.filter(
@@ -257,6 +265,133 @@ export default function ClientPage({
   );
 
   const poolsArchived = strategies.filter((strategy) => strategy.archived);
+
+  const [selectedPoolFilters, setSelectedPoolFilters] = useState<
+    PoolFilterKey[]
+  >(["funding"]);
+  const [poolFilterHint, setPoolFilterHint] = useState<string | null>(null);
+
+  const poolCounts = useMemo<Record<PoolFilterKey, number>>(
+    () => ({
+      funding: fundingPools.length,
+      signaling: signalingPools.length,
+      streaming: streamingPools.length,
+      inReview: poolsInReview.length,
+      archive: poolsArchived.length,
+    }),
+    [
+      fundingPools.length,
+      signalingPools.length,
+      streamingPools.length,
+      poolsInReview.length,
+      poolsArchived.length,
+    ],
+  );
+
+  const filteredPools = useMemo(() => {
+    const poolGroups: Record<PoolFilterKey, Pool[]> = {
+      funding: fundingPools,
+      signaling: signalingPools,
+      streaming: streamingPools,
+      inReview: poolsInReview,
+      archive: canSeeArchivedPools ? poolsArchived : [],
+    };
+    const seenPools = new Set<string>();
+
+    return selectedPoolFilters
+      .flatMap((filterKey) => poolGroups[filterKey] ?? [])
+      .filter((pool) => {
+        const poolKey = (pool.poolId || pool.id) as string;
+        if (seenPools.has(poolKey)) return false;
+        seenPools.add(poolKey);
+        return true;
+      });
+  }, [
+    selectedPoolFilters,
+    fundingPools,
+    signalingPools,
+    streamingPools,
+    poolsInReview,
+    poolsArchived,
+    canSeeArchivedPools,
+  ]);
+
+  const selectedPoolFiltersTitle = useMemo(() => {
+    const labels = selectedPoolFilters.map(
+      (filter) => POOL_FILTER_LABELS[filter],
+    );
+    return `${labels.join(", ")} Pools`;
+  }, [selectedPoolFilters]);
+
+  const togglePoolFilter = (filter: PoolFilterKey) => {
+    setPoolFilterHint(null);
+    setSelectedPoolFilters((currentFilters) => {
+      if (currentFilters.includes(filter)) {
+        const nextFilters = currentFilters.filter((f) => f !== filter);
+        return nextFilters.length === 0 ?
+            [getPreferredPoolFilter(poolCounts, canSeeArchivedPools)]
+          : nextFilters;
+      }
+      return [...currentFilters, filter];
+    });
+  };
+
+  const selectAllPoolFilters = () => {
+    setPoolFilterHint(null);
+    setSelectedPoolFilters(getVisiblePoolFilterPriority(canSeeArchivedPools));
+  };
+
+  const clearAllPoolFilters = () => {
+    setPoolFilterHint(null);
+    setSelectedPoolFilters([
+      getPreferredPoolFilter(poolCounts, canSeeArchivedPools),
+    ]);
+  };
+
+  useEffect(() => {
+    const visibleFilters =
+      canSeeArchivedPools ? selectedPoolFilters : (
+        selectedPoolFilters.filter((filter) => filter !== "archive")
+      );
+
+    let nextFilters = visibleFilters;
+    let nextHint: string | null = null;
+
+    if (nextFilters.length === 0) {
+      nextFilters = [getPreferredPoolFilter(poolCounts, canSeeArchivedPools)];
+    }
+
+    if (
+      nextFilters.length === 1 &&
+      nextFilters[0] === "funding" &&
+      poolCounts.funding === 0
+    ) {
+      const fundingFallback = getFundingFallbackPoolFilter(
+        poolCounts,
+        canSeeArchivedPools,
+      );
+      if (fundingFallback !== "funding") {
+        nextFilters = [fundingFallback];
+        nextHint = `No Funding pools yet. Showing ${POOL_FILTER_LABELS[fundingFallback]} (${poolCounts[fundingFallback]}).`;
+      }
+    }
+
+    const hasSelectionChanged =
+      nextFilters.length !== selectedPoolFilters.length ||
+      nextFilters.some(
+        (filter, index) => filter !== selectedPoolFilters[index],
+      );
+
+    if (hasSelectionChanged) {
+      setSelectedPoolFilters(nextFilters);
+      setPoolFilterHint(nextHint);
+      return;
+    }
+
+    if (poolFilterHint !== nextHint) {
+      setPoolFilterHint(nextHint);
+    }
+  }, [canSeeArchivedPools, poolCounts, selectedPoolFilters, poolFilterHint]);
 
   useEffect(() => {
     const newPoolId = searchParams[QUERY_PARAMS.communityPage.newPool];
@@ -491,7 +626,6 @@ export default function ClientPage({
                 </div>
               </div>
             </div>
-
           </header>
 
           <section className="flex flex-col gap-6 section-layout">
@@ -511,29 +645,37 @@ export default function ClientPage({
               </Link>
             </div>
             {/* Pools Section */}
-            <div className="flex flex-col gap-8">
-              <PoolSection
-                title="Funding"
-                pools={fundingPools}
-                defaultExpanded
+            <div className="flex flex-col gap-4 ">
+              <PoolFiltersUI
+                selectedFilters={selectedPoolFilters}
+                onToggleFilter={togglePoolFilter}
+                onSelectAll={selectAllPoolFilters}
+                onClearAll={clearAllPoolFilters}
+                counts={poolCounts}
+                showArchiveFilter={canSeeArchivedPools}
               />
-              <PoolSection
-                title="Signaling"
-                pools={signalingPools}
-                defaultExpanded
-              />
-              <PoolSection
-                title="In Review"
-                pools={poolsInReview}
-                defaultExpanded={false}
-              />
-              {(!!isCouncilMember || isCouncilSafe || showArchived) && (
-                <PoolSection
-                  title="Archived"
-                  pools={poolsArchived}
-                  defaultExpanded={false}
-                />
+              {poolFilterHint && (
+                <p className="sm:text-sm text-neutral-soft-content ">
+                  {poolFilterHint}
+                </p>
               )}
+              <h6 className=" text-neutral-soft-content">
+                {selectedPoolFiltersTitle}
+              </h6>
+              {filteredPools.length > 0 ?
+                <div className="pool-layout">
+                  {filteredPools.map((pool) => (
+                    <PoolCard
+                      key={pool.poolId}
+                      pool={pool}
+                      token={pool.token}
+                    />
+                  ))}
+                </div>
+              : <p className="text-neutral-soft-content ">
+                  There are no pools for the selected filters.
+                </p>
+              }
             </div>
           </section>
 
@@ -744,7 +886,6 @@ export default function ClientPage({
                     </div>
                   </div>
                 </div>
-
               </header>
 
               {/* Stake component for mobile */}
@@ -782,32 +923,37 @@ export default function ClientPage({
               </div>
 
               {/* Pools Section */}
-              <div
-                className="flex flex-col gap-6
-                 "
-              >
-                <PoolSection
-                  title="Funding"
-                  pools={fundingPools}
-                  defaultExpanded
+              <div className="flex flex-col gap-4">
+                <PoolFiltersUI
+                  selectedFilters={selectedPoolFilters}
+                  onToggleFilter={togglePoolFilter}
+                  onSelectAll={selectAllPoolFilters}
+                  onClearAll={clearAllPoolFilters}
+                  counts={poolCounts}
+                  showArchiveFilter={canSeeArchivedPools}
                 />
-                <PoolSection
-                  title="Signaling"
-                  pools={signalingPools}
-                  defaultExpanded
-                />
-                <PoolSection
-                  title="In Review"
-                  pools={poolsInReview}
-                  defaultExpanded={false}
-                />
-                {(!!isCouncilMember || isCouncilSafe || showArchived) && (
-                  <PoolSection
-                    title="Archived"
-                    pools={poolsArchived}
-                    defaultExpanded={false}
-                  />
+                {poolFilterHint && (
+                  <p className="text-xs text-neutral-soft-content">
+                    {poolFilterHint}
+                  </p>
                 )}
+                <h6 className="text-neutral-soft-content">
+                  {selectedPoolFiltersTitle}
+                </h6>
+                {filteredPools.length > 0 ?
+                  <div className="pool-layout">
+                    {filteredPools.map((pool) => (
+                      <PoolCard
+                        key={pool.poolId}
+                        pool={pool}
+                        token={pool.token}
+                      />
+                    ))}
+                  </div>
+                : <p className="text-neutral-soft-content ">
+                    There are no pools for the selected filters.
+                  </p>
+                }
               </div>
             </section>
           )}
@@ -820,7 +966,7 @@ export default function ClientPage({
                 <Skeleton isLoading={!covenant} rows={5}>
                   <MarkdownWrapper source={covenant} />
                 </Skeleton>
-              : <p className="italic">No covenant was submitted.</p>}
+              : <p className="">No covenant was submitted.</p>}
               <div className="mt-10 flex justify-center">
                 <Image
                   src={groupFlowers}
@@ -916,7 +1062,7 @@ const CommunityDetailsTable = ({
   );
 };
 
-//pool section component and types
+// Pool filtering components and types
 type Pool = Pick<
   CVStrategy,
   "id" | "archived" | "isEnabled" | "poolId" | "metadataHash"
@@ -926,26 +1072,128 @@ type Pool = Pick<
   token: any;
   metadata?: Maybe<Omit<PoolMetadata, "id">>;
 };
-interface PoolSectionProps {
-  title: string;
-  pools: Pool[];
-  defaultExpanded?: boolean;
+
+type PoolFilterKey =
+  | "funding"
+  | "signaling"
+  | "streaming"
+  | "inReview"
+  | "archive";
+
+const POOL_FILTERS: { key: PoolFilterKey; label: string }[] = [
+  { key: "funding", label: "Funding" },
+  { key: "streaming", label: "Streaming" },
+  { key: "signaling", label: "Signaling" },
+  { key: "inReview", label: "In Review" },
+  { key: "archive", label: "Archive" },
+];
+
+const POOL_FILTER_PRIORITY: PoolFilterKey[] = [
+  "funding",
+  "streaming",
+  "signaling",
+  "inReview",
+  "archive",
+];
+
+const POOL_FILTER_LABELS: Record<PoolFilterKey, string> = {
+  funding: "Funding",
+  streaming: "Streaming",
+  signaling: "Signaling",
+  inReview: "In Review",
+  archive: "Archive",
+};
+
+const POOL_FILTER_BADGE_STYLES: Record<PoolFilterKey, string> = {
+  funding: "bg-tertiary-soft dark:bg-tertiary-dark text-tertiary-content",
+  signaling: "bg-primary-soft text-primary-content dark:bg-primary-soft-dark",
+  streaming: "bg-tertiary-soft text-tertiary-content dark:bg-tertiary-dark",
+  inReview:
+    "bg-secondary-soft dark:bg-secondary-soft-dark text-secondary-content",
+  archive: "bg-danger-soft text-danger-content dark:bg-danger-soft-dark",
+};
+
+const getVisiblePoolFilterPriority = (
+  canSeeArchivedPools: boolean,
+): PoolFilterKey[] =>
+  canSeeArchivedPools ? POOL_FILTER_PRIORITY : (
+    POOL_FILTER_PRIORITY.filter((filter) => filter !== "archive")
+  );
+
+const getPreferredPoolFilter = (
+  counts: Record<PoolFilterKey, number>,
+  canSeeArchivedPools: boolean,
+): PoolFilterKey =>
+  getVisiblePoolFilterPriority(canSeeArchivedPools).find(
+    (filter) => counts[filter] > 0,
+  ) ?? "funding";
+
+const getFundingFallbackPoolFilter = (
+  counts: Record<PoolFilterKey, number>,
+  canSeeArchivedPools: boolean,
+): PoolFilterKey =>
+  getVisiblePoolFilterPriority(canSeeArchivedPools).find(
+    (filter) => filter !== "funding" && counts[filter] > 0,
+  ) ?? "funding";
+
+interface PoolFiltersUIProps {
+  selectedFilters: PoolFilterKey[];
+  onToggleFilter: (filter: PoolFilterKey) => void;
+  onSelectAll: () => void;
+  onClearAll: () => void;
+  counts: Record<PoolFilterKey, number>;
+  showArchiveFilter: boolean;
 }
-const PoolSection = ({
-  title,
-  pools,
-  defaultExpanded = true,
-}: PoolSectionProps) => {
+
+const PoolFiltersUI = ({
+  selectedFilters,
+  onToggleFilter,
+  onSelectAll,
+  onClearAll,
+  counts,
+  showArchiveFilter,
+}: PoolFiltersUIProps) => {
+  const visibleFilters =
+    showArchiveFilter ? POOL_FILTERS : (
+      POOL_FILTERS.filter((filter) => filter.key !== "archive")
+    );
+
   return (
-    <ExpandableComponent
-      title={`${title} (${pools.length})`}
-      defaultExpanded={defaultExpanded}
-    >
-      <div className="pool-layout">
-        {pools.map((pool) => (
-          <PoolCard key={pool.poolId} pool={pool} token={pool.token} />
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
+      <div className="flex gap-2 sm:gap-3 flex-wrap ">
+        {visibleFilters.map((filter) => (
+          <button
+            key={filter.key}
+            type="button"
+            onClick={() => onToggleFilter(filter.key)}
+            className={`rounded-full px-3 py-1.5 font-semibold border transition-all duration-150 ease-out ${
+              selectedFilters.includes(filter.key) ?
+                `${POOL_FILTER_BADGE_STYLES[filter.key]} border-transparent`
+              : "bg-transparent border-neutral-soft-content/30 text-neutral-soft-content hover:border-neutral-soft-content hover:text-primary-content"
+            }`}
+          >
+            <span className="text-sm sm:text-md">{filter.label}</span>
+            <span className="ml-1 opacity-80 text-xs sm:text-sm">
+              ({counts[filter.key] ?? 0})
+            </span>
+          </button>
         ))}
       </div>
-    </ExpandableComponent>
+      <Divider className="sm:hidden" />
+      <div className="flex flex-col sm:flex-row items-center gap-2  w-full sm:w-auto">
+        <Button onClick={onSelectAll} btnStyle="outline">
+          Select all
+        </Button>
+        <Button
+          type="button"
+          btnStyle="outline"
+          color="danger"
+          onClick={onClearAll}
+        >
+          Clear all
+        </Button>
+      </div>
+      <Divider className="sm:hidden" />
+    </div>
   );
 };

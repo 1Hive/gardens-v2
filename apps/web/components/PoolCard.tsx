@@ -79,7 +79,7 @@ export function PoolCard({ pool, token }: Props) {
         <header className="mb-4 flex flex-col w-full justify-between items-start gap-2">
           <div className="flex w-full justify-between items-center gap-1">
             <Skeleton isLoading={!metadata}>
-              <h3 className="flex items-center justify-between max-w-[150px] sm:max-w-[265px]">
+              <h3 className="flex items-center justify-between max-w-[150px] sm:max-w-[250px]">
                 <TooltipIfOverflow>{metadata?.title}</TooltipIfOverflow>
               </h3>
             </Skeleton>
@@ -98,10 +98,13 @@ export function PoolCard({ pool, token }: Props) {
             label="proposals"
             className={`${isEnabled ? "visible" : "invisible"}`}
           />
-          {isEnabled &&
-            poolToken &&
-            poolType != null &&
-            PoolTypes[poolType] === "funding" && (
+          {
+            (
+              isEnabled &&
+              poolToken &&
+              poolType != null &&
+              PoolTypes[poolType] === "funding"
+            ) ?
               <Statistic icon={<CurrencyDollarIcon />} label="funds">
                 <DisplayNumber
                   number={poolToken.formatted || "0"}
@@ -109,7 +112,9 @@ export function PoolCard({ pool, token }: Props) {
                   tokenSymbol={poolToken.symbol}
                 />
               </Statistic>
-            )}
+              // "ghost" div to keep cards height proportional
+            : <div className="h-[24px]" />
+          }
         </div>
         {!isEnabled ?
           <div className="banner md:min-w-[262px]">
