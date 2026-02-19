@@ -1360,6 +1360,103 @@
           "name": "",
           "type": "address",
           "internalType": "address"
+        },
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "setPoolParams",
+      "inputs": [
+        {
+          "name": "",
+          "type": "tuple",
+          "internalType": "struct ArbitrableConfig",
+          "components": [
+            {
+              "name": "arbitrator",
+              "type": "address",
+              "internalType": "contract IArbitrator"
+            },
+            {
+              "name": "tribunalSafe",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "submitterCollateralAmount",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "challengerCollateralAmount",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "defaultRuling",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "defaultRulingTimeout",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ]
+        },
+        {
+          "name": "",
+          "type": "tuple",
+          "internalType": "struct CVParams",
+          "components": [
+            {
+              "name": "maxRatio",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "weight",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "decay",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "minThresholdPoints",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ]
+        },
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
         }
       ],
       "outputs": [],
@@ -2768,6 +2865,31 @@
     },
     {
       "type": "event",
+      "name": "SuperfluidPoolCreated",
+      "inputs": [
+        {
+          "name": "gda",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "superfluidToken",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "maxStreamingRate",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
       "name": "SuperfluidTokenUpdated",
       "inputs": [
         {
@@ -3620,6 +3742,19 @@
     },
     {
       "type": "event",
+      "name": "SuperfluidStreamingRateUpdated",
+      "inputs": [
+        {
+          "name": "streamingRatePerSecond",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
       "name": "VotingPowerRegistryUpdated",
       "inputs": [
         {
@@ -3991,7 +4126,7 @@
     },
     {
       "type": "event",
-      "name": "StreamStarted",
+      "name": "StreamRateUpdated",
       "inputs": [
         {
           "name": "gda",
@@ -4124,6 +4259,17 @@
       "inputs": [],
       "outputs": [],
       "stateMutability": "nonpayable"
+    },
+    {
+      "type": "error",
+      "name": "StreamingRateOverflow",
+      "inputs": [
+        {
+          "name": "streamingRatePerSecond",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
     },
     {
       "type": "function",

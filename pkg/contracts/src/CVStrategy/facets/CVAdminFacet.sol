@@ -42,6 +42,7 @@ contract CVAdminFacet is CVStrategyBaseFacet {
     event AllowlistMembersRemoved(uint256 poolId, address[] members);
     event AllowlistMembersAdded(uint256 poolId, address[] members);
     event SuperfluidTokenUpdated(address superfluidToken);
+    event SuperfluidStreamingRateUpdated(uint256 streamingRatePerSecond);
     event SuperfluidGDAConnected(address indexed gda, address indexed by);
     event SuperfluidGDADisconnected(address indexed gda, address indexed by);
     event PointsDeactivated(address member);
@@ -60,10 +61,52 @@ contract CVAdminFacet is CVStrategyBaseFacet {
         address[] memory _membersToRemove,
         address _superfluidToken
     ) external {
+        _setPoolParamsWithStreaming(
+            _arbitrableConfig,
+            _cvParams,
+            _sybilScoreThreshold,
+            _membersToAdd,
+            _membersToRemove,
+            _superfluidToken,
+            streamingRatePerSecond
+        );
+    }
+
+    function setPoolParams(
+        ArbitrableConfig memory _arbitrableConfig,
+        CVParams memory _cvParams,
+        uint256 _sybilScoreThreshold,
+        address[] memory _membersToAdd,
+        address[] memory _membersToRemove,
+        address _superfluidToken,
+        uint256 _streamingRatePerSecond
+    ) external {
+        _setPoolParamsWithStreaming(
+            _arbitrableConfig,
+            _cvParams,
+            _sybilScoreThreshold,
+            _membersToAdd,
+            _membersToRemove,
+            _superfluidToken,
+            _streamingRatePerSecond
+        );
+    }
+
+    function _setPoolParamsWithStreaming(
+        ArbitrableConfig memory _arbitrableConfig,
+        CVParams memory _cvParams,
+        uint256 _sybilScoreThreshold,
+        address[] memory _membersToAdd,
+        address[] memory _membersToRemove,
+        address _superfluidToken,
+        uint256 _streamingRatePerSecond
+    ) internal {
         onlyCouncilSafe();
 
         superfluidToken = ISuperToken(_superfluidToken);
+        streamingRatePerSecond = _streamingRatePerSecond;
         emit SuperfluidTokenUpdated(_superfluidToken);
+        emit SuperfluidStreamingRateUpdated(_streamingRatePerSecond);
 
         _setPoolParams(_arbitrableConfig, _cvParams, _membersToAdd, _membersToRemove);
 

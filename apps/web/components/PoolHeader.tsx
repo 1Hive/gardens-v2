@@ -19,7 +19,7 @@ import sfMeta from "@superfluid-finance/metadata";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { toast } from "react-toastify";
-import { Address, zeroAddress } from "viem";
+import { formatUnits, Address, zeroAddress } from "viem";
 import {
   ArbitrableConfig,
   getPassportStrategyDocument,
@@ -65,6 +65,7 @@ import {
   CV_PASSPORT_THRESHOLD_SCALE,
   CV_SCALE_PRECISION,
   formatTokenAmount,
+  SEC_TO_MONTH,
   MAX_RATIO_CONSTANT,
   roundToSignificant,
 } from "@/utils/numbers";
@@ -223,6 +224,16 @@ export default function PoolHeader({
   const pointSystem = strategy.config.pointSystem;
   const allowList = strategy.config.allowlist;
   const rulingTime = arbitrableConfig.defaultRulingTimeout;
+  const streamingRatePerSecond = strategy.stream?.maxFlowRate;
+  const streamingRatePerMonth =
+    streamingRatePerSecond != null ?
+      Number(
+        formatUnits(
+          BigInt(streamingRatePerSecond),
+          superToken?.decimals ?? poolToken?.decimals ?? 18,
+        ),
+      ) * SEC_TO_MONTH
+    : null;
 
   const proposalOnDispute = strategy.proposals?.some(
     (proposal) => ProposalStatus[proposal.proposalStatus] === "disputed",
@@ -372,6 +383,19 @@ export default function PoolHeader({
           )}
         </div>
       ),
+    },
+    {
+      label: "Max monthly streaming",
+      info: "Target flow rate configured for this streaming pool.",
+      value:
+        (
+          streamingRatePerMonth != null &&
+          PoolTypes[proposalType] === "streaming"
+        ) ?
+          `${roundToSignificant(streamingRatePerMonth, 4)} ${
+            poolToken?.symbol
+          }/month`
+        : null,
     },
   ] as const;
 

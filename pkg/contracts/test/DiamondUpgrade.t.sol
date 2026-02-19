@@ -47,7 +47,11 @@ contract DiamondUpgradeTest is CVStrategyTest {
         // Prepare diamondCut to replace CVAdminFacet functions with V2
         // We'll replace all 3 existing functions from CVAdminFacet
         bytes4[] memory selectorsToReplace = new bytes4[](3);
-        selectorsToReplace[0] = CVAdminFacet.setPoolParams.selector;
+        selectorsToReplace[0] = bytes4(
+            keccak256(
+                "setPoolParams((address,address,uint256,uint256,uint256,uint256),(uint256,uint256,uint256,uint256),uint256,address[],address[],address)"
+            )
+        );
         selectorsToReplace[1] = CVAdminFacet.connectSuperfluidGDA.selector;
         selectorsToReplace[2] = CVAdminFacet.disconnectSuperfluidGDA.selector;
 

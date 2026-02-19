@@ -2642,12 +2642,12 @@ BRDA:127,9,0,-
 DA:128,0
 DA:130,0
 DA:133,0
-FN:133,StreamingEscrow.resolveToBeneficiary
-FNDA:0,StreamingEscrow.resolveToBeneficiary
+FN:133,StreamingEscrow.drainToBeneficiary
+FNDA:0,StreamingEscrow.drainToBeneficiary
 DA:134,0
 DA:137,0
-FN:137,StreamingEscrow.resolveToTreasury
-FNDA:0,StreamingEscrow.resolveToTreasury
+FN:137,StreamingEscrow.drainToStrategy
+FNDA:0,StreamingEscrow.drainToStrategy
 DA:138,0
 DA:144,0
 FN:144,StreamingEscrow.afterAgreementCreated

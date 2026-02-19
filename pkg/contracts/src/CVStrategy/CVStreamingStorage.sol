@@ -29,7 +29,7 @@ abstract contract CVStreamingBase {
     /*|              EVENTS                        |*/
     /*|--------------------------------------------|*/
     event StreamMemberUnitUpdated(address indexed member, int96 newUnit);
-    event StreamStarted(address indexed gda, uint256 flowRate);
+    event StreamRateUpdated(address indexed gda, uint256 flowRate);
 
     function lastRebalanceAt() internal view returns (uint256) {
         return CVStreamingStorage.layout().lastRebalanceAt;

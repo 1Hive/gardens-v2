@@ -2,11 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import {
+  ArrowPathIcon,
   InformationCircleIcon,
   PowerIcon,
   UserGroupIcon,
 } from "@heroicons/react/24/outline";
-import { Address } from "viem";
+import { Address, formatUnits } from "viem";
 import {
   useBalance,
   useAccount,
@@ -29,6 +30,7 @@ import {
 } from "#/subgraph/.graphclient";
 import {
   ActivatePoints,
+  Button,
   CheckSybil,
   InfoBox,
   PoolGovernance,
@@ -43,16 +45,18 @@ import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import { SubscriptionId, usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
+import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { usePoolToken } from "@/hooks/usePoolToken";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { useSuperfluidToken } from "@/hooks/useSuperfluidToken";
-import { registryCommunityABI } from "@/src/generated";
+import { cvStrategyABI, registryCommunityABI } from "@/src/generated";
 import { PoolTypes } from "@/types";
 import {
   calculatePercentageBigInt,
   formatTokenAmount,
+  SEC_TO_MONTH,
   SCALE_PRECISION,
 } from "@/utils/numbers";
 
@@ -412,6 +416,31 @@ export default function ClientPage({
   const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons(
     disableCreateProposalBtnCondition,
   );
+  const {
+    tooltipMessage: syncStreamTooltipMessage,
+    isConnected: isSyncStreamConnected,
+    missmatchUrl: isSyncStreamWrongNetwork,
+  } = useDisableButtons();
+  const { write: writeRebalance, isLoading: isRebalanceLoading } =
+    useContractWriteWithConfirmations({
+      address: strategy?.id as Address,
+      abi: cvStrategyABI,
+      functionName: "rebalance",
+      contractName: "CVStrategy",
+      fallbackErrorMessage:
+        "Failed to sync stream for this strategy. Please try again.",
+      onConfirmations: () => {
+        refetch();
+      },
+    });
+
+  const streamInfo = strategy?.stream;
+  const streamTokenDecimals =
+    superTokenInfo?.decimals ?? poolToken?.decimals ?? 18;
+  const maxFlowRateForDisplay =
+    streamInfo?.maxFlowRate as bigint | null | undefined;
+  const currentFlowRateForDisplay =
+    streamInfo?.streamLastFlowRate as bigint | null | undefined;
 
   useEffect(() => {
     if (isMissingFundingToken && strategy && !error) {
@@ -487,6 +516,64 @@ export default function ClientPage({
         BigInt(strategy.totalEffectiveActivePoints),
       )
     : undefined;
+
+  const formatFlowPerMonth = (flowRate?: bigint | null) => {
+    if (flowRate == null) return "--";
+    const monthlyFlow =
+      Number(formatUnits(flowRate, streamTokenDecimals)) * SEC_TO_MONTH;
+    if (!Number.isFinite(monthlyFlow)) return "--";
+    const value = monthlyFlow.toLocaleString(undefined, {
+      maximumFractionDigits: 4,
+    });
+    return poolToken?.symbol ? `${value} ${poolToken.symbol}` : value;
+  };
+
+  const StreamingInfoCard = () => {
+    if (!isStreamingPool) return null;
+
+    return (
+      <section className="section-layout">
+        <div className="flex flex-col gap-3">
+          <h4>Stream Info</h4>
+          <div className="rounded-lg border border-neutral-soft-content/20 p-3 flex flex-col gap-2">
+            <div className="flex items-center justify-between gap-3">
+              <p className="subtitle2">Budget</p>
+              <p className="text-right">
+                {formatFlowPerMonth(maxFlowRateForDisplay)}/month
+              </p>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <p className="subtitle2">Streaming</p>
+              <p className="text-right">
+                {formatFlowPerMonth(currentFlowRateForDisplay)}/month
+              </p>
+            </div>
+          </div>
+          {(currentFlowRateForDisplay ?? 0n) === 0n && (
+            <InfoBox
+              infoBoxType="info"
+              className="w-full"
+              title="No active stream"
+            >
+              This pool currently has no active outflow.
+            </InfoBox>
+          )}
+          <Button
+            btnStyle="outline"
+            color="primary"
+            className="sm:w-full"
+            disabled={!isSyncStreamConnected || isSyncStreamWrongNetwork}
+            tooltip={syncStreamTooltipMessage}
+            isLoading={isRebalanceLoading}
+            onClick={() => writeRebalance?.()}
+            icon={<ArrowPathIcon className="h-4 w-4" />}
+          >
+            Sync Stream
+          </Button>
+        </div>
+      </section>
+    );
+  };
 
   const registerAndActivateFromPool = (
     <>
@@ -681,6 +768,7 @@ export default function ClientPage({
                 />
               )}
             </>
+            <StreamingInfoCard />
 
             <PoolGovernance
               memberPoolWeight={memberPoolWeight}
@@ -775,6 +863,7 @@ export default function ClientPage({
                     }
                   />
                 )}
+                <StreamingInfoCard />
               </div>
             )}
 

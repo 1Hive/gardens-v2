@@ -108,9 +108,8 @@ contract CVProposalFacet is CVStrategyBaseFacet, CVStreamingBase {
             if (factory == address(0)) {
                 revert StreamingEscrowFactoryNotSet();
             }
-            address escrow = StreamingEscrowFactory(factory).deployEscrow(
-                superfluidToken, superfluidGDA, p.beneficiary, address(this)
-            );
+            address escrow = StreamingEscrowFactory(factory)
+                .deployEscrow(superfluidToken, superfluidGDA, p.beneficiary, address(this));
             setStreamingEscrow(proposalId, escrow);
 
             // Add a member to the GDA pool with 0 units initially
@@ -145,10 +144,7 @@ contract CVProposalFacet is CVStrategyBaseFacet, CVStreamingBase {
         if (proposalType == ProposalType.Streaming) {
             address escrow = streamingEscrow(proposalId);
             // Remove member from the GDA pool
-            superfluidGDA.updateMemberUnits(
-                escrow == address(0) ? proposals[proposalId].beneficiary : escrow,
-                0
-            );
+            superfluidGDA.updateMemberUnits(escrow == address(0) ? proposals[proposalId].beneficiary : escrow, 0);
             if (escrow != address(0)) {
                 setStreamingEscrow(proposalId, address(0));
             }

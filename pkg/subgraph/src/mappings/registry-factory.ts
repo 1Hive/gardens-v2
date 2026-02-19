@@ -3,10 +3,11 @@ import {
   RegistryFactory,
   RegistryCommunity,
   Member,
-  StreamingInfo
+  StreamInfo
 } from "../../generated/schema";
 
 import {
+  Address,
   BigInt,
   DataSourceContext,
   dataSource,
@@ -144,25 +145,20 @@ export function handleStreamingEscrowFactorySet(
   event: StreamingEscrowFactorySet
 ): void {
   const id = `${event.address.toHexString()}-streaming`;
-  let streamingInfo = StreamingInfo.load(id);
-  if (streamingInfo == null) {
-    streamingInfo = new StreamingInfo(id);
-    streamingInfo.contractAddress = event.address.toHexString();
-    streamingInfo.contractType = "RegistryFactory";
-    streamingInfo.strategy = null;
-    streamingInfo.registryFactory = event.address.toHexString();
-    streamingInfo.superfluidToken = null;
-    streamingInfo.superfluidGDA = [];
-    streamingInfo.streamLastStartedGDA = null;
-    streamingInfo.streamLastFlowRate = null;
-    streamingInfo.streamLastMember = null;
-    streamingInfo.streamLastMemberUnit = null;
-    streamingInfo.streamingEscrowFactory = null;
-    streamingInfo.createdAt = event.block.timestamp;
-    streamingInfo.updatedAt = event.block.timestamp;
+  let streamInfo = StreamInfo.load(id);
+  if (streamInfo == null) {
+    streamInfo = new StreamInfo(id);
+    streamInfo.contractAddress = event.address.toHexString();
+    streamInfo.contractType = "RegistryFactory";
+    streamInfo.strategy = null;
+    streamInfo.superfluidToken = null;
+    streamInfo.maxFlowRate = null;
+    streamInfo.superfluidGDA = Address.zero().toHexString();
+    streamInfo.streamLastFlowRate = null;
+    streamInfo.createdAt = event.block.timestamp;
+    streamInfo.updatedAt = event.block.timestamp;
   }
 
-  streamingInfo.streamingEscrowFactory = event.params._newFactory.toHexString();
-  streamingInfo.updatedAt = event.block.timestamp;
-  streamingInfo.save();
+  streamInfo.updatedAt = event.block.timestamp;
+  streamInfo.save();
 }

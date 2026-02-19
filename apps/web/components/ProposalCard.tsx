@@ -24,13 +24,19 @@ import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
 import { Skeleton } from "@/components/Skeleton";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
+import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import {
   ProposalDataLight,
   useConvictionRead,
 } from "@/hooks/useConvictionRead";
 import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
+import { useSuperfluidStream } from "@/hooks/useSuperfluidStream";
 import { PoolTypes, ProposalStatus } from "@/types";
-import { calculatePercentageBigInt } from "@/utils/numbers";
+import {
+  SEC_TO_MONTH,
+  calculatePercentageBigInt,
+  roundToSignificant,
+} from "@/utils/numbers";
 import { prettyTimestamp } from "@/utils/text";
 
 export type ProposalCardProps = {
@@ -48,7 +54,7 @@ export type ProposalCardProps = {
     };
   strategyConfig: Pick<
     CVStrategyConfig,
-    "decay" | "proposalType" | "allowlist"
+    "decay" | "proposalType" | "allowlist" | "superfluidToken"
   >;
   inputData?: ProposalInputItem;
   stakedFilter: ProposalInputItem;
@@ -115,6 +121,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
       executedAt,
     } = proposalData;
     const pathname = usePathname();
+    const chainId = useChainIdFromPath();
 
     const searchParams = useCollectQueryParams();
     const isNewProposal =
@@ -173,6 +180,32 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
 
     const isSignalingType =
       PoolTypes[strategyConfig.proposalType] === "signaling";
+    const isStreamingType =
+      PoolTypes[strategyConfig.proposalType] === "streaming";
+
+    const { currentFlowRateBn, liveTotalStreamedBn } = useSuperfluidStream({
+      receiver: proposalData.beneficiary as Address,
+      superToken: strategyConfig.superfluidToken as Address,
+      chainId,
+    });
+
+    const proposalFlowPerMonth =
+      (
+        isStreamingType &&
+        poolToken &&
+        currentFlowRateBn != null &&
+        currentFlowRateBn > 0n
+      ) ?
+        +formatUnits(currentFlowRateBn, poolToken.decimals) * SEC_TO_MONTH
+      : null;
+    const proposalTotalStreamed =
+      isStreamingType && poolToken && liveTotalStreamedBn != null ?
+        +formatUnits(liveTotalStreamedBn, poolToken.decimals)
+      : null;
+    const proposalTotalStreamedDisplay =
+      poolToken ?
+        `${(proposalTotalStreamed ?? 0).toFixed(4)} ${poolToken.symbol}`
+      : null;
 
     const alreadyExecuted = proposalStatus[proposalStatus] === "executed";
 
@@ -288,7 +321,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
                       />
                     </div>
                     <div className="flex gap-6 text-neutral-soft-content justify-end">
-                      {!isSignalingType && poolToken && (
+                      {!isSignalingType && poolToken && !isStreamingType && (
                         <div className="flex items-center gap-1 justify-self-end">
                           <div className="hidden sm:block w-1 h-1 rounded-full bg-neutral-soft-content" />
                           <p className="text-sm sm:ml-1 dark:text-neutral-soft-content">
@@ -304,6 +337,26 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
                             valueClassName="dark:text-neutral-soft-content"
                             symbolClassName="dark:text-neutral-soft-content"
                           />
+                        </div>
+                      )}
+                      {!isSignalingType && poolToken && isStreamingType && (
+                        <div className="flex items-center gap-2 justify-self-end">
+                          <div className="hidden sm:block w-1 h-1 rounded-full bg-neutral-soft-content" />
+                          <p className="text-sm dark:text-neutral-soft-content">
+                            Stream:{" "}
+                          </p>
+                          <span className="text-sm dark:text-neutral-soft-content">
+                            {proposalFlowPerMonth != null ?
+                              `${roundToSignificant(proposalFlowPerMonth, 4)} ${poolToken.symbol}/mo`
+                            : "No active stream"}
+                          </span>
+                          <span className="hidden sm:inline text-neutral-soft-content">
+                            ·
+                          </span>
+                          <span className="text-sm dark:text-neutral-soft-content">
+                            Total streamed:{" "}
+                            {proposalTotalStreamedDisplay}
+                          </span>
                         </div>
                       )}
                     </div>

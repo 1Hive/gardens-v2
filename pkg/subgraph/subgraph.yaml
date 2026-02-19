@@ -6,15 +6,15 @@ schema:
 dataSources:
   - kind: ethereum/contract
     name: RegistryFactory
-    network: optimism-sepolia
+    network: sepolia
     context:
       chainId: 
         type: Int
-        data: 11155420
+        data: 11155111
     source:
-      address: "0xEC8824e9a9498520891ec678e98c5bd3e65229c2"
+      address: "0xe01464829b1b888bf92a8d1cec3114bb9787984d"
       abi: RegistryFactory
-      startBlock: 29036730
+      startBlock: 5998577
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -47,15 +47,15 @@ dataSources:
 
   - kind: ethereum/contract
     name: PassportScorer
-    network: optimism-sepolia
+    network: sepolia
     context:
       chainId: 
         type: Int
-        data: 11155420
+        data: 11155111
     source:
-      address: "0xe3DC6e82B599cD80904aCf0a3cd9f7401d92CC37"
+      address: "0xd58ff588177f02cc535a0e235a4c002a17e27202"
       abi: PassportScorer
-      startBlock: 29036730
+      startBlock: 5998577
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -84,15 +84,15 @@ dataSources:
 
   - kind: ethereum/contract
     name: GoodDollarSybil
-    network: optimism-sepolia
+    network: sepolia
     context:
       chainId: 
         type: Int
-        data: 11155420
+        data: 11155111
     source:
-      address: "0xb01AC9015E04ecC424E646eBAb32dfa7670Ae8a6"
+      address: "0xa50ec350146e42b1ad15705da04c7cb6929e1f2a"
       abi: GoodDollarSybil
-      startBlock: 29036730
+      startBlock: 5998577
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -116,7 +116,7 @@ dataSources:
 templates:
   - kind: ethereum/contract
     name: RegistryCommunity
-    network: optimism-sepolia
+    network: sepolia
     source:
       abi: RegistryCommunity
     mapping:
@@ -190,7 +190,7 @@ templates:
 
   - kind: ethereum/contract
     name: CVStrategy
-    network: optimism-sepolia
+    network: sepolia
     source:
       abi: CVStrategy
     mapping:
@@ -201,7 +201,7 @@ templates:
         - CVStrategy
         - CVStrategyConfig
         - CVProposal
-        - StreamingInfo
+        - StreamInfo
         - Allo
       abis:
         - name: CVStrategy
@@ -249,14 +249,16 @@ templates:
           handler: handleSybilScorerUpdated
         - event: SuperfluidTokenUpdated(address)
           handler: handleSuperfluidTokenUpdated
+        - event: SuperfluidPoolCreated(indexed address,indexed address,uint256)
+          handler: handleSuperfluidPoolCreated
+        - event: SuperfluidStreamingRateUpdated(uint256)
+          handler: handleSuperfluidStreamingRateUpdated
         - event: SuperfluidGDAConnected(indexed address,indexed address)
           handler: handleSuperfluidGDAConnected
         - event: SuperfluidGDADisconnected(indexed address,indexed address)
           handler: handleSuperfluidGDADisconnected
-        - event: StreamStarted(indexed address,uint256)
-          handler: handleStreamStarted
-        - event: StreamMemberUnitUpdated(indexed address,int96)
-          handler: handleStreamMemberUnitUpdated
+        - event: StreamRateUpdated(indexed address,uint256)
+          handler: handleStreamRateUpdated
         - event: ProposalEdited(uint256,(uint256,string),address,uint256)
           handler: handleProposalEdited
 
@@ -264,7 +266,7 @@ templates:
 
   - kind: ethereum/contract
     name: CollateralVault
-    network: optimism-sepolia
+    network: sepolia
     source:
       abi: CollateralVault
     mapping:

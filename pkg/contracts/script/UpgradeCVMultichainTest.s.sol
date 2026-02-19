@@ -181,7 +181,7 @@ contract UpgradeCVMultichainTest is BaseMultiChain, StrategyDiamondConfiguratorB
         }
 
         if (doStrategies) {
-            _upgradeStrategies(networkJson, strategyImplementation);
+            _upgradeStrategies(networkJson, strategyImplementation, cvCuts);
         }
     }
 
@@ -335,11 +335,41 @@ contract UpgradeCVMultichainTest is BaseMultiChain, StrategyDiamondConfiguratorB
         }
     }
 
-    function _upgradeStrategies(string memory networkJson, address strategyImplementation) internal {
+    function _upgradeStrategies(
+        string memory networkJson,
+        address strategyImplementation,
+        IDiamond.FacetCut[] memory cvCuts
+    ) internal {
         address[] memory cvStrategyProxies = networkJson.readAddressArray(getKeyNetwork(".PROXIES.CV_STRATEGIES"));
         for (uint256 i = 0; i < cvStrategyProxies.length; i++) {
             CVStrategy cvStrategy = CVStrategy(payable(address(cvStrategyProxies[i])));
             cvStrategy.upgradeTo(strategyImplementation); // DOESNT VALIDATE SAFE UPGRADING
+
+            IDiamond.FacetCut[] memory staleStrategyRemovals =
+                _buildStaleSelectorRemovalCuts(cvStrategyProxies[i], cvCuts);
+            IDiamond.FacetCut[] memory changedStrategyCuts =
+                _buildChangedFacetCuts(cvStrategyProxies[i], cvCuts);
+
+            uint256 totalCuts = staleStrategyRemovals.length + changedStrategyCuts.length;
+            if (totalCuts > 0) {
+                IDiamond.FacetCut[] memory allCuts = new IDiamond.FacetCut[](totalCuts);
+                uint256 cutIndex = 0;
+                for (uint256 j = 0; j < staleStrategyRemovals.length; j++) {
+                    allCuts[cutIndex] = staleStrategyRemovals[j];
+                    cutIndex++;
+                }
+                for (uint256 j = 0; j < changedStrategyCuts.length; j++) {
+                    allCuts[cutIndex] = changedStrategyCuts[j];
+                    cutIndex++;
+                }
+
+                IDiamondCut(cvStrategyProxies[i]).diamondCut(
+                    allCuts,
+                    address(new CVStrategyDiamondInit()),
+                    abi.encodeCall(CVStrategyDiamondInit.init, ())
+                );
+            } else {
+            }
         }
     }
 

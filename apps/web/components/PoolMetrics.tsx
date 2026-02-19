@@ -66,6 +66,7 @@ interface PoolMetricsProps {
         sameAsUnderlying?: boolean;
       }
     | undefined;
+  streamingRatePerSecond?: bigint | string | number | null;
 }
 
 export const PoolMetrics: FC<PoolMetricsProps> = ({
@@ -73,6 +74,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
   poolToken,
   chainId,
   superToken,
+  streamingRatePerSecond,
 }) => {
   const { id: poolAddress, poolId } = strategy;
   const [amountInput, setAmount] = useState<string>("");
@@ -88,6 +90,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     currentUserOtherFlowRateBn,
     currentFlowRateBn,
     currentUserFlowRateBn,
+    totalAmountDistributedBn,
     setCurrentUserFlowRateBn,
     setCurrentFlowRateBn,
     refetch: refetchSuperfluidStream,
@@ -125,6 +128,30 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
   const currentUserFlowPerMonth =
     superToken && currentUserFlowRateBn != null ?
       +formatUnits(currentUserFlowRateBn, superToken.decimals) * SEC_TO_MONTH
+    : null;
+
+  const configuredFlowPerSecondBn =
+    streamingRatePerSecond != null ?
+      (() => {
+        try {
+          return BigInt(streamingRatePerSecond);
+        } catch (_error) {
+          return null;
+        }
+      })()
+    : null;
+
+  const configuredFlowPerMonth =
+    superToken && configuredFlowPerSecondBn != null ?
+      +formatUnits(configuredFlowPerSecondBn, superToken.decimals) * SEC_TO_MONTH
+    : null;
+
+  const totalAmountDistributed =
+    totalAmountDistributedBn != null ?
+      +formatUnits(
+        totalAmountDistributedBn,
+        superToken?.decimals ?? poolToken.decimals,
+      )
     : null;
 
   const requestedStreamPerMonth =
@@ -776,7 +803,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
               currentFlowPerMonth != null &&
               currentFlowRateBn > 0n && (
                 <div className="flex justify-between gap-3 items-center">
-                  <p className="subtitle2">Incoming Stream:</p>
+                  <p className="subtitle2">Current Flow to GDA:</p>
                   <div className="flex items-center gap-1">
                     <p className="flex items-center whitespace-nowrap tooltip">
                       <div
@@ -788,6 +815,12 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                       {poolToken.symbol}
                       /mo
                     </p>
+                    {configuredFlowPerMonth != null && (
+                      <p className="text-xs text-neutral-soft-content whitespace-nowrap">
+                        target {roundToSignificant(configuredFlowPerMonth, 3)}{" "}
+                        {poolToken.symbol}/mo
+                      </p>
+                    )}
                     <div
                       className="tooltip tooltip-top-left cursor-pointer w-8"
                       data-tip={`This pool is receiving ${roundToSignificant(currentFlowPerMonth, 4)} ${poolToken.symbol}/month through Superfluid streaming`}
@@ -803,6 +836,15 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                   </div>
                 </div>
               )}
+            {totalAmountDistributed != null && totalAmountDistributed > 0 && (
+              <div className="flex justify-between items-center gap-3">
+                <p className="text-sm">Total Streamed via GDA:</p>
+                <p className="text-sm font-medium">
+                  {roundToSignificant(totalAmountDistributed, 4)}{" "}
+                  {superToken?.symbol ?? poolToken.symbol}
+                </p>
+              </div>
+            )}
             {accountAddress && (
               <div className="flex justify-between items-center">
                 <p className="text-sm">Wallet:</p>

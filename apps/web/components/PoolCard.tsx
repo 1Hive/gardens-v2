@@ -2,7 +2,6 @@
 
 import {
   ArchiveBoxIcon,
-  ArrowDownIcon,
   BoltIcon,
   ClockIcon,
   CurrencyDollarIcon,

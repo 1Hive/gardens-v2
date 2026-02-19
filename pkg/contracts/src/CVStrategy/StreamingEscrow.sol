@@ -9,6 +9,10 @@ import "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/g
 import "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperToken.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
 
+interface ICFAv1ForwarderLike {
+    function getBufferAmountByFlowrate(ISuperToken token, int96 flowrate) external view returns (uint256);
+}
+
 /**
  * @title StreamingEscrow
  * @notice Receives Superfluid GDA pool distributions and forwards them to the beneficiary unless disputed.
@@ -33,11 +37,11 @@ contract StreamingEscrow is ProxyOwnableUpgrader, SuperAppBase {
     ISuperfluid public host;
     IGeneralDistributionAgreementV1 public gda;
     address public strategy;
+    address public constant CFA_V1_FORWARDER = 0xcfA132E353cB4E398080B9700609bb008eceB125;
 
     address public beneficiary;
-    address public treasury;
     bool public disputed;
-    uint256[45] private __gap;
+    uint256[46] private __gap;
 
     /*|--------------------------------------------|*/
     /*|              INITIALIZER                   |*/
@@ -46,27 +50,28 @@ contract StreamingEscrow is ProxyOwnableUpgrader, SuperAppBase {
         ISuperToken _superToken,
         ISuperfluidPool _pool,
         address _beneficiary,
-        address _strategy,
-        address _treasury
+        address _initialOwner,
+        address _strategy
     ) external initializer {
         if (address(_superToken) == address(0) || address(_pool) == address(0) || _beneficiary == address(0)) {
             revert InvalidAddress();
         }
-        if (_strategy == address(0) || _treasury == address(0)) {
+        if (_initialOwner == address(0) || _strategy == address(0)) {
             revert InvalidAddress();
         }
 
-        ProxyOwnableUpgrader.initialize(_strategy);
+        ProxyOwnableUpgrader.initialize(_initialOwner);
 
         superToken = _superToken;
         pool = _pool;
         beneficiary = _beneficiary;
         strategy = _strategy;
-        treasury = _treasury;
 
         host = ISuperfluid(_superToken.getHost());
         gda = IGeneralDistributionAgreementV1(
-            address(host.getAgreementClass(keccak256("org.superfluid-finance.agreements.GeneralDistributionAgreement.v1")))
+            address(
+                host.getAgreementClass(keccak256("org.superfluid-finance.agreements.GeneralDistributionAgreement.v1"))
+            )
         );
 
         bool success = _superToken.connectPool(_pool);
@@ -80,6 +85,13 @@ contract StreamingEscrow is ProxyOwnableUpgrader, SuperAppBase {
     /*|--------------------------------------------|*/
     modifier onlyStrategy() {
         if (msg.sender != strategy) {
+            revert OnlyStrategy(msg.sender);
+        }
+        _;
+    }
+
+    modifier onlyStrategyOrOwner() {
+        if (msg.sender != strategy && msg.sender != owner()) {
             revert OnlyStrategy(msg.sender);
         }
         _;
@@ -108,13 +120,6 @@ contract StreamingEscrow is ProxyOwnableUpgrader, SuperAppBase {
         }
     }
 
-    function setTreasury(address _treasury) external onlyStrategy {
-        if (_treasury == address(0)) {
-            revert InvalidAddress();
-        }
-        treasury = _treasury;
-    }
-
     function setDisputed(bool _disputed) external onlyStrategy {
         disputed = _disputed;
         if (disputed) {
@@ -124,19 +129,41 @@ contract StreamingEscrow is ProxyOwnableUpgrader, SuperAppBase {
         }
     }
 
+    function syncOutflow() external onlyStrategyOrOwner {
+        _drainExcessToBeneficiary();
+        _setOutflow(disputed ? int96(0) : _currentGDAFlowRate(), beneficiary);
+    }
+
+    function drainToBeneficiary() external onlyStrategy {
+        _drainTo(beneficiary);
+    }
+
+    function drainToStrategy() external onlyStrategy {
+        _drainTo(strategy);
+    }
+
     function claim() external {
         if (disputed) {
             revert Disputed();
         }
-        _drainTo(beneficiary);
+        _drainExcessToBeneficiary();
     }
 
-    function resolveToBeneficiary() external onlyStrategy {
-        _drainTo(beneficiary);
-    }
+    function depositAmount() public view returns (uint256) {
+        int96 flowRate = _currentGDAFlowRate();
+        if (flowRate <= 0) {
+            return 0;
+        }
 
-    function resolveToTreasury() external onlyStrategy {
-        _drainTo(treasury);
+        // Keep compatibility with older forwarder ABI shape requested by strategy integration.
+        (bool ok, bytes memory data) = CFA_V1_FORWARDER.staticcall(
+            abi.encodeWithSignature("getDepositRequiredForFlowRate(address,int96)", address(this), flowRate)
+        );
+        if (ok && data.length >= 32) {
+            return abi.decode(data, (uint256));
+        }
+
+        return ICFAv1ForwarderLike(CFA_V1_FORWARDER).getBufferAmountByFlowrate(superToken, flowRate);
     }
 
     /*|--------------------------------------------|*/
@@ -185,6 +212,14 @@ contract StreamingEscrow is ProxyOwnableUpgrader, SuperAppBase {
         }
     }
 
+    function _drainExcessToBeneficiary() internal {
+        uint256 balance = superToken.balanceOf(address(this));
+        uint256 reservedDeposit = depositAmount();
+        if (balance > reservedDeposit) {
+            superToken.transfer(beneficiary, balance - reservedDeposit);
+        }
+    }
+
     function _afterAgreementChanged(ISuperToken token, address agreementClass, bytes calldata ctx)
         internal
         returns (bytes memory newCtx)
@@ -198,8 +233,8 @@ contract StreamingEscrow is ProxyOwnableUpgrader, SuperAppBase {
     }
 
     function _currentGDAFlowRate() internal view returns (int96) {
-        (, int96 gdaFlowRate,) = gda.getAccountFlowInfo(superToken, address(this));
-        return gdaFlowRate > 0 ? gdaFlowRate : int96(0);
+        int96 memberFlowRate = pool.getMemberFlowRate(address(this));
+        return memberFlowRate > 0 ? memberFlowRate : int96(0);
     }
 
     function _setOutflow(int96 flowRate, address receiver) internal {
@@ -208,5 +243,4 @@ contract StreamingEscrow is ProxyOwnableUpgrader, SuperAppBase {
         }
         superToken.flow(receiver, flowRate);
     }
-
 }

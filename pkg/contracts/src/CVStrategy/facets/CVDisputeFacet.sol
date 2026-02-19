@@ -179,8 +179,10 @@ contract CVDisputeFacet is CVStrategyBaseFacet {
         }
         if (active) {
             StreamingEscrow(escrow).setDisputed(false);
+            StreamingEscrow(escrow).drainToBeneficiary();
         } else {
-            StreamingEscrow(escrow).resolveToTreasury();
+            StreamingEscrow(escrow).drainToStrategy();
+            CVStreamingStorage.layout().proposalEscrow[proposalId] = address(0);
         }
     }
 }

@@ -461,7 +461,7 @@ export function Proposals({
   const {
     write: writeAllocate,
     error: errorAllocate,
-    status: allocateStatus,
+    isLoading: isAllocateLoading,
   } = useContractWriteWithConfirmations({
     address: alloInfo.id as Address,
     abi: alloABI,
@@ -930,7 +930,7 @@ export function Proposals({
                       <div className="flex justify-end gap-4">
                         <Button
                           onClick={submit}
-                          isLoading={allocateStatus === "loading"}
+                          isLoading={isAllocateLoading}
                           disabled={
                             inputs == null ||
                             !getProposalsInputsDifferences(

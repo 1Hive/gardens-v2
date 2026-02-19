@@ -298,7 +298,11 @@ contract DeployCoreContracts is BaseMultiChain {
         IDiamond.FacetCut[] memory baseCuts = new IDiamond.FacetCut[](7);
 
         bytes4[] memory adminSelectors = new bytes4[](4);
-        adminSelectors[0] = CVAdminFacet.setPoolParams.selector;
+        adminSelectors[0] = bytes4(
+            keccak256(
+                "setPoolParams((address,address,uint256,uint256,uint256,uint256),(uint256,uint256,uint256,uint256),uint256,address[],address[],address)"
+            )
+        );
         adminSelectors[1] = CVAdminFacet.connectSuperfluidGDA.selector;
         adminSelectors[2] = CVAdminFacet.disconnectSuperfluidGDA.selector;
         adminSelectors[3] = CVAdminFacet.setVotingPowerRegistry.selector;

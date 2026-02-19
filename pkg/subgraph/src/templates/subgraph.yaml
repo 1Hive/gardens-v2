@@ -95,7 +95,7 @@ templates:
         - CVStrategy
         - CVStrategyConfig
         - CVProposal
-        - StreamingInfo
+        - StreamInfo
         - Allo
       abis:
         - name: CVStrategy
@@ -143,14 +143,16 @@ templates:
           handler: handleSybilScorerUpdated
         - event: SuperfluidTokenUpdated(address)
           handler: handleSuperfluidTokenUpdated
+        - event: SuperfluidPoolCreated(indexed address,indexed address,uint256)
+          handler: handleSuperfluidPoolCreated
+        - event: SuperfluidStreamingRateUpdated(uint256)
+          handler: handleSuperfluidStreamingRateUpdated
         - event: SuperfluidGDAConnected(indexed address,indexed address)
           handler: handleSuperfluidGDAConnected
         - event: SuperfluidGDADisconnected(indexed address,indexed address)
           handler: handleSuperfluidGDADisconnected
-        - event: StreamStarted(indexed address,uint256)
-          handler: handleStreamStarted
-        - event: StreamMemberUnitUpdated(indexed address,int96)
-          handler: handleStreamMemberUnitUpdated
+        - event: StreamRateUpdated(indexed address,uint256)
+          handler: handleStreamRateUpdated
         - event: ProposalEdited(uint256,(uint256,string),address,uint256)
           handler: handleProposalEdited
 

@@ -367,6 +367,17 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
       allowlist
       superfluidToken
     }
+    stream {
+      id
+      contractAddress
+      contractType
+      superfluidToken
+      maxFlowRate
+      superfluidGDA
+      streamLastFlowRate
+      createdAt
+      updatedAt
+    }
     registryCommunity {
       id
       councilSafe

@@ -549,7 +549,14 @@ contract CVStrategyTest is Test {
         strategy.distribute(new address[](0), "", address(0));
 
         vm.expectRevert(
-            abi.encodeWithSelector(CVStrategy.StrategyFunctionDoesNotExist.selector, CVStrategy.setPoolParams.selector)
+            abi.encodeWithSelector(
+                CVStrategy.StrategyFunctionDoesNotExist.selector,
+                bytes4(
+                    keccak256(
+                        "setPoolParams((address,address,uint256,uint256,uint256,uint256),(uint256,uint256,uint256,uint256),uint256,address[],address[],address)"
+                    )
+                )
+            )
         );
         strategy.setPoolParams(
             ArbitrableConfig(IArbitrator(address(0)), address(0), 0, 0, 0, 0),
@@ -917,7 +924,11 @@ contract CVStrategyTest is Test {
         addSelectors[4] = deactivatePointsAddrSelector;
         addSelectors[5] = CVStrategy.allocate.selector;
         addSelectors[6] = CVStrategy.distribute.selector;
-        addSelectors[7] = CVStrategy.setPoolParams.selector;
+        addSelectors[7] = bytes4(
+            keccak256(
+                "setPoolParams((address,address,uint256,uint256,uint256,uint256),(uint256,uint256,uint256,uint256),uint256,address[],address[],address)"
+            )
+        );
         addSelectors[8] = CVStrategy.connectSuperfluidGDA.selector;
         addSelectors[9] = CVStrategy.disconnectSuperfluidGDA.selector;
         addSelectors[10] = CVStrategy.disputeProposal.selector;

@@ -44,11 +44,16 @@ import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { MetadataV1, useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { usePoolToken } from "@/hooks/usePoolToken";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
+import { useSuperfluidStream } from "@/hooks/useSuperfluidStream";
 import { alloABI } from "@/src/generated";
 import { PoolTypes, ProposalStatus, Column } from "@/types";
 
 import { useErrorDetails } from "@/utils/getErrorName";
-import { calculatePercentageBigInt } from "@/utils/numbers";
+import {
+  SEC_TO_MONTH,
+  calculatePercentageBigInt,
+  roundToSignificant,
+} from "@/utils/numbers";
 import { prettyTimestamp } from "@/utils/text";
 
 type ProposalSupporter = {
@@ -229,6 +234,7 @@ export default function ClientPage({ params }: ClientPageProps) {
 
   const proposalType = proposalData?.strategy?.config?.proposalType;
   const isSignalingType = PoolTypes[proposalType] === "signaling";
+  const isStreamingType = PoolTypes[proposalType] === "streaming";
   const requestedAmount = proposalData?.requestedAmount;
   const beneficiary = proposalData?.beneficiary as Address | undefined;
   const submitter = proposalData?.submitter as Address | undefined;
@@ -242,6 +248,33 @@ export default function ClientPage({ params }: ClientPageProps) {
     enabled:
       !!poolTokenAddr && !!proposalData?.strategy?.id && !isSignalingType,
   });
+
+  const {
+    currentFlowRateBn: proposalFlowRateBn,
+    liveTotalStreamedBn: proposalTotalStreamedBn,
+  } = useSuperfluidStream({
+    receiver: beneficiary as Address,
+    superToken: proposalData?.strategy?.config?.superfluidToken as Address,
+    chainId,
+  });
+
+  const proposalFlowPerMonth =
+    (
+      isStreamingType &&
+      poolToken &&
+      proposalFlowRateBn != null &&
+      proposalFlowRateBn > 0n
+    ) ?
+      +formatUnits(proposalFlowRateBn, poolToken.decimals) * SEC_TO_MONTH
+    : null;
+  const proposalTotalStreamed =
+    isStreamingType && poolToken && proposalTotalStreamedBn != null ?
+      +formatUnits(proposalTotalStreamedBn, poolToken.decimals)
+    : null;
+  const proposalTotalStreamedDisplay =
+    poolToken ?
+      `${(proposalTotalStreamed ?? 0).toFixed(4)} ${poolToken.symbol}`
+    : null;
 
   const {
     currentConvictionPct,
@@ -442,19 +475,33 @@ export default function ClientPage({ params }: ClientPageProps) {
                         </span>
                       </Statistic>
 
-                      {!isSignalingType && (
+                      {!isSignalingType && !isStreamingType && (
+                        <Statistic label={"request amount"}>
+                          <DisplayNumber
+                            number={formatUnits(
+                              requestedAmount,
+                              poolToken?.decimals ?? 18,
+                            )}
+                            tokenSymbol={poolToken?.symbol}
+                            compact={true}
+                            valueClassName="font-medium dark:text-neutral-content"
+                            symbolClassName="font-medium dark:text-neutral-content"
+                          />
+                        </Statistic>
+                      )}
+                      {!isSignalingType && isStreamingType && (
                         <>
-                          <Statistic label={"request amount"}>
-                            <DisplayNumber
-                              number={formatUnits(
-                                requestedAmount,
-                                poolToken?.decimals ?? 18,
-                              )}
-                              tokenSymbol={poolToken?.symbol}
-                              compact={true}
-                              valueClassName="font-medium dark:text-neutral-content"
-                              symbolClassName="font-medium dark:text-neutral-content"
-                            />
+                          <Statistic label={"stream"}>
+                            <span className="font-medium dark:text-neutral-content">
+                              {proposalFlowPerMonth != null ?
+                                `${roundToSignificant(proposalFlowPerMonth, 4)} ${poolToken?.symbol ?? ""}/mo`
+                              : "No active stream"}
+                            </span>
+                          </Statistic>
+                          <Statistic label={"total streamed"}>
+                            <span className="font-medium dark:text-neutral-content">
+                              {proposalTotalStreamedDisplay}
+                            </span>
                           </Statistic>
                         </>
                       )}
@@ -579,7 +626,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                       {prettyTimestamp(proposalData?.executedAt)}
                     </p>
 
-                    {!isSignalingType && (
+                    {!isSignalingType && !isStreamingType && (
                       <div
                         className="flex items-baseline
                             gap-1"
@@ -595,6 +642,28 @@ export default function ClientPage({ params }: ClientPageProps) {
                           valueClassName="text-neutral-soft-content"
                           symbolClassName="text-neutral-soft-content "
                         />
+                      </div>
+                    )}
+                    {!isSignalingType && isStreamingType && (
+                      <div className="flex flex-col items-start gap-1">
+                        <div className="flex items-baseline gap-1">
+                          <h6 className="text-neutral-soft-content">
+                            Stream:{" "}
+                          </h6>
+                          <p className="text-neutral-soft-content text-sm">
+                            {proposalFlowPerMonth != null ?
+                              `${roundToSignificant(proposalFlowPerMonth, 4)} ${poolToken?.symbol ?? ""}/mo`
+                            : "No active stream"}
+                          </p>
+                        </div>
+                        <div className="flex items-baseline gap-1">
+                          <h6 className="text-neutral-soft-content">
+                            Total streamed:
+                          </h6>
+                          <p className="text-neutral-soft-content text-sm">
+                            {proposalTotalStreamedDisplay}
+                          </p>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -775,19 +844,33 @@ export default function ClientPage({ params }: ClientPageProps) {
                               </span>
                             </Statistic>
 
-                            {!isSignalingType && (
+                            {!isSignalingType && !isStreamingType && (
+                              <Statistic label={"request amount"}>
+                                <DisplayNumber
+                                  number={formatUnits(
+                                    requestedAmount,
+                                    poolToken?.decimals ?? 18,
+                                  )}
+                                  tokenSymbol={poolToken?.symbol}
+                                  compact={true}
+                                  valueClassName="font-medium dark:text-neutral-content"
+                                  symbolClassName="font-medium dark:text-neutral-content"
+                                />
+                              </Statistic>
+                            )}
+                            {isStreamingType && (
                               <>
-                                <Statistic label={"request amount"}>
-                                  <DisplayNumber
-                                    number={formatUnits(
-                                      requestedAmount,
-                                      poolToken?.decimals ?? 18,
-                                    )}
-                                    tokenSymbol={poolToken?.symbol}
-                                    compact={true}
-                                    valueClassName="font-medium dark:text-neutral-content"
-                                    symbolClassName="font-medium dark:text-neutral-content"
-                                  />
+                                <Statistic label={"stream "}>
+                                  <span className="font-medium dark:text-neutral-content">
+                                    {proposalFlowPerMonth != null ?
+                                      `${roundToSignificant(proposalFlowPerMonth, 4)} ${poolToken?.symbol ?? ""}/mo`
+                                    : "No active stream"}
+                                  </span>
+                                </Statistic>
+                                <Statistic label={"total streamed"}>
+                                  <span className="font-medium dark:text-neutral-content">
+                                    {proposalTotalStreamedDisplay}
+                                  </span>
                                 </Statistic>
                               </>
                             )}
@@ -960,7 +1043,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                             {prettyTimestamp(proposalData?.executedAt)}
                           </p>
 
-                          {!isSignalingType && (
+                          {!isSignalingType && !isStreamingType && (
                             <div
                               className="flex items-baseline
                             gap-1"
@@ -978,6 +1061,28 @@ export default function ClientPage({ params }: ClientPageProps) {
                                 valueClassName="text-neutral-soft-content"
                                 symbolClassName="text-neutral-soft-content "
                               />
+                            </div>
+                          )}
+                          {!isSignalingType && isStreamingType && (
+                            <div className="flex flex-col items-start gap-1">
+                              <div className="flex items-baseline gap-1">
+                                <h6 className="text-neutral-soft-content">
+                                  Stream:{" "}
+                                </h6>
+                                <p className="text-neutral-soft-content text-sm">
+                                  {proposalFlowPerMonth != null ?
+                                    `${roundToSignificant(proposalFlowPerMonth, 4)} ${poolToken?.symbol ?? ""}/mo`
+                                  : "No active stream"}
+                                </p>
+                              </div>
+                              <div className="flex items-baseline gap-1">
+                                <h6 className="text-neutral-soft-content">
+                                  Total streamed:
+                                </h6>
+                                <p className="text-neutral-soft-content text-sm">
+                                  {proposalTotalStreamedDisplay}
+                                </p>
+                              </div>
                             </div>
                           )}
                         </div>

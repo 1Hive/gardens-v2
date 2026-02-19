@@ -545,6 +545,7 @@ export type CVStrategy = {
     token: Scalars['String']['output'];
     sybil?: Maybe<SybilProtection>;
     archived: Scalars['Boolean']['output'];
+    stream: StreamInfo;
 };
 export type CVStrategyproposalsArgs = {
     skip?: InputMaybe<Scalars['Int']['input']>;
@@ -573,7 +574,6 @@ export type CVStrategyConfig = {
     maxAmount?: Maybe<Scalars['BigInt']['output']>;
     allowlist?: Maybe<Array<Scalars['String']['output']>>;
     superfluidToken?: Maybe<Scalars['String']['output']>;
-    superfluidGDA: Array<Scalars['String']['output']>;
 };
 export type CVStrategyConfig_filter = {
     id?: InputMaybe<Scalars['ID']['input']>;
@@ -675,18 +675,12 @@ export type CVStrategyConfig_filter = {
     superfluidToken_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
     superfluidToken_not_ends_with?: InputMaybe<Scalars['String']['input']>;
     superfluidToken_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
-    superfluidGDA?: InputMaybe<Array<Scalars['String']['input']>>;
-    superfluidGDA_not?: InputMaybe<Array<Scalars['String']['input']>>;
-    superfluidGDA_contains?: InputMaybe<Array<Scalars['String']['input']>>;
-    superfluidGDA_contains_nocase?: InputMaybe<Array<Scalars['String']['input']>>;
-    superfluidGDA_not_contains?: InputMaybe<Array<Scalars['String']['input']>>;
-    superfluidGDA_not_contains_nocase?: InputMaybe<Array<Scalars['String']['input']>>;
     /** Filter for the block changed event. */
     _change_block?: InputMaybe<BlockChangedFilter>;
     and?: InputMaybe<Array<InputMaybe<CVStrategyConfig_filter>>>;
     or?: InputMaybe<Array<InputMaybe<CVStrategyConfig_filter>>>;
 };
-export type CVStrategyConfig_orderBy = 'id' | 'strategy' | 'strategy__id' | 'strategy__poolId' | 'strategy__metadataHash' | 'strategy__maxCVSupply' | 'strategy__totalEffectiveActivePoints' | 'strategy__isEnabled' | 'strategy__token' | 'strategy__archived' | 'D' | 'decay' | 'maxRatio' | 'minThresholdPoints' | 'weight' | 'proposalType' | 'pointSystem' | 'maxAmount' | 'allowlist' | 'superfluidToken' | 'superfluidGDA';
+export type CVStrategyConfig_orderBy = 'id' | 'strategy' | 'strategy__id' | 'strategy__poolId' | 'strategy__metadataHash' | 'strategy__maxCVSupply' | 'strategy__totalEffectiveActivePoints' | 'strategy__isEnabled' | 'strategy__token' | 'strategy__archived' | 'D' | 'decay' | 'maxRatio' | 'minThresholdPoints' | 'weight' | 'proposalType' | 'pointSystem' | 'maxAmount' | 'allowlist' | 'superfluidToken';
 export type CVStrategy_filter = {
     id?: InputMaybe<Scalars['ID']['input']>;
     id_not?: InputMaybe<Scalars['ID']['input']>;
@@ -860,12 +854,33 @@ export type CVStrategy_filter = {
     archived_not?: InputMaybe<Scalars['Boolean']['input']>;
     archived_in?: InputMaybe<Array<Scalars['Boolean']['input']>>;
     archived_not_in?: InputMaybe<Array<Scalars['Boolean']['input']>>;
+    stream?: InputMaybe<Scalars['String']['input']>;
+    stream_not?: InputMaybe<Scalars['String']['input']>;
+    stream_gt?: InputMaybe<Scalars['String']['input']>;
+    stream_lt?: InputMaybe<Scalars['String']['input']>;
+    stream_gte?: InputMaybe<Scalars['String']['input']>;
+    stream_lte?: InputMaybe<Scalars['String']['input']>;
+    stream_in?: InputMaybe<Array<Scalars['String']['input']>>;
+    stream_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
+    stream_contains?: InputMaybe<Scalars['String']['input']>;
+    stream_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+    stream_not_contains?: InputMaybe<Scalars['String']['input']>;
+    stream_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+    stream_starts_with?: InputMaybe<Scalars['String']['input']>;
+    stream_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    stream_not_starts_with?: InputMaybe<Scalars['String']['input']>;
+    stream_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    stream_ends_with?: InputMaybe<Scalars['String']['input']>;
+    stream_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    stream_not_ends_with?: InputMaybe<Scalars['String']['input']>;
+    stream_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    stream_?: InputMaybe<StreamInfo_filter>;
     /** Filter for the block changed event. */
     _change_block?: InputMaybe<BlockChangedFilter>;
     and?: InputMaybe<Array<InputMaybe<CVStrategy_filter>>>;
     or?: InputMaybe<Array<InputMaybe<CVStrategy_filter>>>;
 };
-export type CVStrategy_orderBy = 'id' | 'poolId' | 'metadata' | 'metadata__id' | 'metadata__title' | 'metadata__description' | 'metadataHash' | 'registryCommunity' | 'registryCommunity__id' | 'registryCommunity__chainId' | 'registryCommunity__strategyTemplate' | 'registryCommunity__profileId' | 'registryCommunity__communityFee' | 'registryCommunity__protocolFee' | 'registryCommunity__protocolFeeReceiver' | 'registryCommunity__communityName' | 'registryCommunity__covenantIpfsHash' | 'registryCommunity__councilSafe' | 'registryCommunity__pendingNewCouncilSafe' | 'registryCommunity__isKickEnabled' | 'registryCommunity__registerStakeAmount' | 'registryCommunity__registerToken' | 'registryCommunity__alloAddress' | 'registryCommunity__isValid' | 'registryCommunity__archived' | 'registryCommunity__membersCount' | 'config' | 'config__id' | 'config__D' | 'config__decay' | 'config__maxRatio' | 'config__minThresholdPoints' | 'config__weight' | 'config__proposalType' | 'config__pointSystem' | 'config__maxAmount' | 'config__superfluidToken' | 'proposals' | 'memberActive' | 'maxCVSupply' | 'totalEffectiveActivePoints' | 'isEnabled' | 'token' | 'sybil' | 'sybil__id' | 'sybil__type' | 'archived';
+export type CVStrategy_orderBy = 'id' | 'poolId' | 'metadata' | 'metadata__id' | 'metadata__title' | 'metadata__description' | 'metadataHash' | 'registryCommunity' | 'registryCommunity__id' | 'registryCommunity__chainId' | 'registryCommunity__strategyTemplate' | 'registryCommunity__profileId' | 'registryCommunity__communityFee' | 'registryCommunity__protocolFee' | 'registryCommunity__protocolFeeReceiver' | 'registryCommunity__communityName' | 'registryCommunity__covenantIpfsHash' | 'registryCommunity__councilSafe' | 'registryCommunity__pendingNewCouncilSafe' | 'registryCommunity__isKickEnabled' | 'registryCommunity__registerStakeAmount' | 'registryCommunity__registerToken' | 'registryCommunity__alloAddress' | 'registryCommunity__isValid' | 'registryCommunity__archived' | 'registryCommunity__membersCount' | 'config' | 'config__id' | 'config__D' | 'config__decay' | 'config__maxRatio' | 'config__minThresholdPoints' | 'config__weight' | 'config__proposalType' | 'config__pointSystem' | 'config__maxAmount' | 'config__superfluidToken' | 'proposals' | 'memberActive' | 'maxCVSupply' | 'totalEffectiveActivePoints' | 'isEnabled' | 'token' | 'sybil' | 'sybil__id' | 'sybil__type' | 'archived' | 'stream' | 'stream__id' | 'stream__contractAddress' | 'stream__contractType' | 'stream__superfluidToken' | 'stream__maxFlowRate' | 'stream__superfluidGDA' | 'stream__streamLastFlowRate' | 'stream__createdAt' | 'stream__updatedAt';
 export type CollateralVault = {
     id: Scalars['ID']['output'];
     strategy: CVStrategy;
@@ -1950,8 +1965,8 @@ export type Query = {
     cvstrategies: Array<CVStrategy>;
     cvstrategyConfig?: Maybe<CVStrategyConfig>;
     cvstrategyConfigs: Array<CVStrategyConfig>;
-    streamingInfo?: Maybe<StreamingInfo>;
-    streamingInfos: Array<StreamingInfo>;
+    streamInfo?: Maybe<StreamInfo>;
+    streamInfos: Array<StreamInfo>;
     arbitrableConfig?: Maybe<ArbitrableConfig>;
     arbitrableConfigs: Array<ArbitrableConfig>;
     cvproposal?: Maybe<CVProposal>;
@@ -2027,17 +2042,17 @@ export type QuerycvstrategyConfigsArgs = {
     block?: InputMaybe<Block_height>;
     subgraphError?: _SubgraphErrorPolicy_;
 };
-export type QuerystreamingInfoArgs = {
+export type QuerystreamInfoArgs = {
     id: Scalars['ID']['input'];
     block?: InputMaybe<Block_height>;
     subgraphError?: _SubgraphErrorPolicy_;
 };
-export type QuerystreamingInfosArgs = {
+export type QuerystreamInfosArgs = {
     skip?: InputMaybe<Scalars['Int']['input']>;
     first?: InputMaybe<Scalars['Int']['input']>;
-    orderBy?: InputMaybe<StreamingInfo_orderBy>;
+    orderBy?: InputMaybe<StreamInfo_orderBy>;
     orderDirection?: InputMaybe<OrderDirection>;
-    where?: InputMaybe<StreamingInfo_filter>;
+    where?: InputMaybe<StreamInfo_filter>;
     block?: InputMaybe<Block_height>;
     subgraphError?: _SubgraphErrorPolicy_;
 };
@@ -2828,23 +2843,19 @@ export type Stake_filter = {
     or?: InputMaybe<Array<InputMaybe<Stake_filter>>>;
 };
 export type Stake_orderBy = 'id' | 'member' | 'member__id' | 'member__isProtopian' | 'member__isKeeper' | 'poolId' | 'proposal' | 'proposal__id' | 'proposal__proposalNumber' | 'proposal__metadataHash' | 'proposal__version' | 'proposal__beneficiary' | 'proposal__requestedAmount' | 'proposal__requestedToken' | 'proposal__proposalStatus' | 'proposal__blockLast' | 'proposal__convictionLast' | 'proposal__maxCVStaked' | 'proposal__stakedAmount' | 'proposal__submitter' | 'proposal__createdAt' | 'proposal__updatedAt' | 'proposal__executedAt' | 'amount' | 'createdAt';
-export type StreamingInfo = {
+export type StreamInfo = {
     id: Scalars['ID']['output'];
     contractAddress: Scalars['String']['output'];
     contractType: Scalars['String']['output'];
     strategy?: Maybe<CVStrategy>;
-    registryFactory?: Maybe<RegistryFactory>;
     superfluidToken?: Maybe<Scalars['String']['output']>;
-    superfluidGDA: Array<Scalars['String']['output']>;
-    streamLastStartedGDA?: Maybe<Scalars['String']['output']>;
+    maxFlowRate?: Maybe<Scalars['BigInt']['output']>;
+    superfluidGDA: Scalars['String']['output'];
     streamLastFlowRate?: Maybe<Scalars['BigInt']['output']>;
-    streamLastMember?: Maybe<Scalars['String']['output']>;
-    streamLastMemberUnit?: Maybe<Scalars['BigInt']['output']>;
-    streamingEscrowFactory?: Maybe<Scalars['String']['output']>;
     createdAt: Scalars['BigInt']['output'];
     updatedAt: Scalars['BigInt']['output'];
 };
-export type StreamingInfo_filter = {
+export type StreamInfo_filter = {
     id?: InputMaybe<Scalars['ID']['input']>;
     id_not?: InputMaybe<Scalars['ID']['input']>;
     id_gt?: InputMaybe<Scalars['ID']['input']>;
@@ -2914,27 +2925,6 @@ export type StreamingInfo_filter = {
     strategy_not_ends_with?: InputMaybe<Scalars['String']['input']>;
     strategy_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
     strategy_?: InputMaybe<CVStrategy_filter>;
-    registryFactory?: InputMaybe<Scalars['String']['input']>;
-    registryFactory_not?: InputMaybe<Scalars['String']['input']>;
-    registryFactory_gt?: InputMaybe<Scalars['String']['input']>;
-    registryFactory_lt?: InputMaybe<Scalars['String']['input']>;
-    registryFactory_gte?: InputMaybe<Scalars['String']['input']>;
-    registryFactory_lte?: InputMaybe<Scalars['String']['input']>;
-    registryFactory_in?: InputMaybe<Array<Scalars['String']['input']>>;
-    registryFactory_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
-    registryFactory_contains?: InputMaybe<Scalars['String']['input']>;
-    registryFactory_contains_nocase?: InputMaybe<Scalars['String']['input']>;
-    registryFactory_not_contains?: InputMaybe<Scalars['String']['input']>;
-    registryFactory_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
-    registryFactory_starts_with?: InputMaybe<Scalars['String']['input']>;
-    registryFactory_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
-    registryFactory_not_starts_with?: InputMaybe<Scalars['String']['input']>;
-    registryFactory_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
-    registryFactory_ends_with?: InputMaybe<Scalars['String']['input']>;
-    registryFactory_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
-    registryFactory_not_ends_with?: InputMaybe<Scalars['String']['input']>;
-    registryFactory_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
-    registryFactory_?: InputMaybe<RegistryFactory_filter>;
     superfluidToken?: InputMaybe<Scalars['String']['input']>;
     superfluidToken_not?: InputMaybe<Scalars['String']['input']>;
     superfluidToken_gt?: InputMaybe<Scalars['String']['input']>;
@@ -2955,32 +2945,34 @@ export type StreamingInfo_filter = {
     superfluidToken_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
     superfluidToken_not_ends_with?: InputMaybe<Scalars['String']['input']>;
     superfluidToken_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
-    superfluidGDA?: InputMaybe<Array<Scalars['String']['input']>>;
-    superfluidGDA_not?: InputMaybe<Array<Scalars['String']['input']>>;
-    superfluidGDA_contains?: InputMaybe<Array<Scalars['String']['input']>>;
-    superfluidGDA_contains_nocase?: InputMaybe<Array<Scalars['String']['input']>>;
-    superfluidGDA_not_contains?: InputMaybe<Array<Scalars['String']['input']>>;
-    superfluidGDA_not_contains_nocase?: InputMaybe<Array<Scalars['String']['input']>>;
-    streamLastStartedGDA?: InputMaybe<Scalars['String']['input']>;
-    streamLastStartedGDA_not?: InputMaybe<Scalars['String']['input']>;
-    streamLastStartedGDA_gt?: InputMaybe<Scalars['String']['input']>;
-    streamLastStartedGDA_lt?: InputMaybe<Scalars['String']['input']>;
-    streamLastStartedGDA_gte?: InputMaybe<Scalars['String']['input']>;
-    streamLastStartedGDA_lte?: InputMaybe<Scalars['String']['input']>;
-    streamLastStartedGDA_in?: InputMaybe<Array<Scalars['String']['input']>>;
-    streamLastStartedGDA_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
-    streamLastStartedGDA_contains?: InputMaybe<Scalars['String']['input']>;
-    streamLastStartedGDA_contains_nocase?: InputMaybe<Scalars['String']['input']>;
-    streamLastStartedGDA_not_contains?: InputMaybe<Scalars['String']['input']>;
-    streamLastStartedGDA_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
-    streamLastStartedGDA_starts_with?: InputMaybe<Scalars['String']['input']>;
-    streamLastStartedGDA_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
-    streamLastStartedGDA_not_starts_with?: InputMaybe<Scalars['String']['input']>;
-    streamLastStartedGDA_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
-    streamLastStartedGDA_ends_with?: InputMaybe<Scalars['String']['input']>;
-    streamLastStartedGDA_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
-    streamLastStartedGDA_not_ends_with?: InputMaybe<Scalars['String']['input']>;
-    streamLastStartedGDA_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    maxFlowRate?: InputMaybe<Scalars['BigInt']['input']>;
+    maxFlowRate_not?: InputMaybe<Scalars['BigInt']['input']>;
+    maxFlowRate_gt?: InputMaybe<Scalars['BigInt']['input']>;
+    maxFlowRate_lt?: InputMaybe<Scalars['BigInt']['input']>;
+    maxFlowRate_gte?: InputMaybe<Scalars['BigInt']['input']>;
+    maxFlowRate_lte?: InputMaybe<Scalars['BigInt']['input']>;
+    maxFlowRate_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+    maxFlowRate_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+    superfluidGDA?: InputMaybe<Scalars['String']['input']>;
+    superfluidGDA_not?: InputMaybe<Scalars['String']['input']>;
+    superfluidGDA_gt?: InputMaybe<Scalars['String']['input']>;
+    superfluidGDA_lt?: InputMaybe<Scalars['String']['input']>;
+    superfluidGDA_gte?: InputMaybe<Scalars['String']['input']>;
+    superfluidGDA_lte?: InputMaybe<Scalars['String']['input']>;
+    superfluidGDA_in?: InputMaybe<Array<Scalars['String']['input']>>;
+    superfluidGDA_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
+    superfluidGDA_contains?: InputMaybe<Scalars['String']['input']>;
+    superfluidGDA_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+    superfluidGDA_not_contains?: InputMaybe<Scalars['String']['input']>;
+    superfluidGDA_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+    superfluidGDA_starts_with?: InputMaybe<Scalars['String']['input']>;
+    superfluidGDA_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    superfluidGDA_not_starts_with?: InputMaybe<Scalars['String']['input']>;
+    superfluidGDA_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    superfluidGDA_ends_with?: InputMaybe<Scalars['String']['input']>;
+    superfluidGDA_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    superfluidGDA_not_ends_with?: InputMaybe<Scalars['String']['input']>;
+    superfluidGDA_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
     streamLastFlowRate?: InputMaybe<Scalars['BigInt']['input']>;
     streamLastFlowRate_not?: InputMaybe<Scalars['BigInt']['input']>;
     streamLastFlowRate_gt?: InputMaybe<Scalars['BigInt']['input']>;
@@ -2989,54 +2981,6 @@ export type StreamingInfo_filter = {
     streamLastFlowRate_lte?: InputMaybe<Scalars['BigInt']['input']>;
     streamLastFlowRate_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
     streamLastFlowRate_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
-    streamLastMember?: InputMaybe<Scalars['String']['input']>;
-    streamLastMember_not?: InputMaybe<Scalars['String']['input']>;
-    streamLastMember_gt?: InputMaybe<Scalars['String']['input']>;
-    streamLastMember_lt?: InputMaybe<Scalars['String']['input']>;
-    streamLastMember_gte?: InputMaybe<Scalars['String']['input']>;
-    streamLastMember_lte?: InputMaybe<Scalars['String']['input']>;
-    streamLastMember_in?: InputMaybe<Array<Scalars['String']['input']>>;
-    streamLastMember_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
-    streamLastMember_contains?: InputMaybe<Scalars['String']['input']>;
-    streamLastMember_contains_nocase?: InputMaybe<Scalars['String']['input']>;
-    streamLastMember_not_contains?: InputMaybe<Scalars['String']['input']>;
-    streamLastMember_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
-    streamLastMember_starts_with?: InputMaybe<Scalars['String']['input']>;
-    streamLastMember_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
-    streamLastMember_not_starts_with?: InputMaybe<Scalars['String']['input']>;
-    streamLastMember_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
-    streamLastMember_ends_with?: InputMaybe<Scalars['String']['input']>;
-    streamLastMember_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
-    streamLastMember_not_ends_with?: InputMaybe<Scalars['String']['input']>;
-    streamLastMember_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
-    streamLastMemberUnit?: InputMaybe<Scalars['BigInt']['input']>;
-    streamLastMemberUnit_not?: InputMaybe<Scalars['BigInt']['input']>;
-    streamLastMemberUnit_gt?: InputMaybe<Scalars['BigInt']['input']>;
-    streamLastMemberUnit_lt?: InputMaybe<Scalars['BigInt']['input']>;
-    streamLastMemberUnit_gte?: InputMaybe<Scalars['BigInt']['input']>;
-    streamLastMemberUnit_lte?: InputMaybe<Scalars['BigInt']['input']>;
-    streamLastMemberUnit_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
-    streamLastMemberUnit_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
-    streamingEscrowFactory?: InputMaybe<Scalars['String']['input']>;
-    streamingEscrowFactory_not?: InputMaybe<Scalars['String']['input']>;
-    streamingEscrowFactory_gt?: InputMaybe<Scalars['String']['input']>;
-    streamingEscrowFactory_lt?: InputMaybe<Scalars['String']['input']>;
-    streamingEscrowFactory_gte?: InputMaybe<Scalars['String']['input']>;
-    streamingEscrowFactory_lte?: InputMaybe<Scalars['String']['input']>;
-    streamingEscrowFactory_in?: InputMaybe<Array<Scalars['String']['input']>>;
-    streamingEscrowFactory_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
-    streamingEscrowFactory_contains?: InputMaybe<Scalars['String']['input']>;
-    streamingEscrowFactory_contains_nocase?: InputMaybe<Scalars['String']['input']>;
-    streamingEscrowFactory_not_contains?: InputMaybe<Scalars['String']['input']>;
-    streamingEscrowFactory_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
-    streamingEscrowFactory_starts_with?: InputMaybe<Scalars['String']['input']>;
-    streamingEscrowFactory_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
-    streamingEscrowFactory_not_starts_with?: InputMaybe<Scalars['String']['input']>;
-    streamingEscrowFactory_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
-    streamingEscrowFactory_ends_with?: InputMaybe<Scalars['String']['input']>;
-    streamingEscrowFactory_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
-    streamingEscrowFactory_not_ends_with?: InputMaybe<Scalars['String']['input']>;
-    streamingEscrowFactory_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
     createdAt?: InputMaybe<Scalars['BigInt']['input']>;
     createdAt_not?: InputMaybe<Scalars['BigInt']['input']>;
     createdAt_gt?: InputMaybe<Scalars['BigInt']['input']>;
@@ -3055,10 +2999,10 @@ export type StreamingInfo_filter = {
     updatedAt_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
     /** Filter for the block changed event. */
     _change_block?: InputMaybe<BlockChangedFilter>;
-    and?: InputMaybe<Array<InputMaybe<StreamingInfo_filter>>>;
-    or?: InputMaybe<Array<InputMaybe<StreamingInfo_filter>>>;
+    and?: InputMaybe<Array<InputMaybe<StreamInfo_filter>>>;
+    or?: InputMaybe<Array<InputMaybe<StreamInfo_filter>>>;
 };
-export type StreamingInfo_orderBy = 'id' | 'contractAddress' | 'contractType' | 'strategy' | 'strategy__id' | 'strategy__poolId' | 'strategy__metadataHash' | 'strategy__maxCVSupply' | 'strategy__totalEffectiveActivePoints' | 'strategy__isEnabled' | 'strategy__token' | 'strategy__archived' | 'registryFactory' | 'registryFactory__id' | 'registryFactory__chainId' | 'superfluidToken' | 'superfluidGDA' | 'streamLastStartedGDA' | 'streamLastFlowRate' | 'streamLastMember' | 'streamLastMemberUnit' | 'streamingEscrowFactory' | 'createdAt' | 'updatedAt';
+export type StreamInfo_orderBy = 'id' | 'contractAddress' | 'contractType' | 'strategy' | 'strategy__id' | 'strategy__poolId' | 'strategy__metadataHash' | 'strategy__maxCVSupply' | 'strategy__totalEffectiveActivePoints' | 'strategy__isEnabled' | 'strategy__token' | 'strategy__archived' | 'superfluidToken' | 'maxFlowRate' | 'superfluidGDA' | 'streamLastFlowRate' | 'createdAt' | 'updatedAt';
 export type SybilProtection = {
     id: Scalars['ID']['output'];
     type: SybilProtectionType;
@@ -3407,9 +3351,9 @@ export type ResolversTypes = ResolversObject<{
     Stake: ResolverTypeWrapper<Stake>;
     Stake_filter: Stake_filter;
     Stake_orderBy: Stake_orderBy;
-    StreamingInfo: ResolverTypeWrapper<StreamingInfo>;
-    StreamingInfo_filter: StreamingInfo_filter;
-    StreamingInfo_orderBy: StreamingInfo_orderBy;
+    StreamInfo: ResolverTypeWrapper<StreamInfo>;
+    StreamInfo_filter: StreamInfo_filter;
+    StreamInfo_orderBy: StreamInfo_orderBy;
     String: ResolverTypeWrapper<Scalars['String']['output']>;
     SybilProtection: ResolverTypeWrapper<SybilProtection>;
     SybilProtectionType: SybilProtectionType;
@@ -3480,8 +3424,8 @@ export type ResolversParentTypes = ResolversObject<{
     RegistryFactory_filter: RegistryFactory_filter;
     Stake: Stake;
     Stake_filter: Stake_filter;
-    StreamingInfo: StreamingInfo;
-    StreamingInfo_filter: StreamingInfo_filter;
+    StreamInfo: StreamInfo;
+    StreamInfo_filter: StreamInfo_filter;
     String: Scalars['String']['output'];
     SybilProtection: SybilProtection;
     SybilProtection_filter: SybilProtection_filter;
@@ -3566,6 +3510,7 @@ export type CVStrategyResolvers<ContextType = MeshContext, ParentType extends Re
     token?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
     sybil?: Resolver<Maybe<ResolversTypes['SybilProtection']>, ParentType, ContextType>;
     archived?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+    stream?: Resolver<ResolversTypes['StreamInfo'], ParentType, ContextType>;
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
 export type CVStrategyConfigResolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['CVStrategyConfig'] = ResolversParentTypes['CVStrategyConfig']> = ResolversObject<{
@@ -3581,7 +3526,6 @@ export type CVStrategyConfigResolvers<ContextType = MeshContext, ParentType exte
     maxAmount?: Resolver<Maybe<ResolversTypes['BigInt']>, ParentType, ContextType>;
     allowlist?: Resolver<Maybe<Array<ResolversTypes['String']>>, ParentType, ContextType>;
     superfluidToken?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-    superfluidGDA?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
 export type CollateralVaultResolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['CollateralVault'] = ResolversParentTypes['CollateralVault']> = ResolversObject<{
@@ -3703,8 +3647,8 @@ export type QueryResolvers<ContextType = MeshContext, ParentType extends Resolve
     cvstrategies?: Resolver<Array<ResolversTypes['CVStrategy']>, ParentType, ContextType, RequireFields<QuerycvstrategiesArgs, 'skip' | 'first' | 'subgraphError'>>;
     cvstrategyConfig?: Resolver<Maybe<ResolversTypes['CVStrategyConfig']>, ParentType, ContextType, RequireFields<QuerycvstrategyConfigArgs, 'id' | 'subgraphError'>>;
     cvstrategyConfigs?: Resolver<Array<ResolversTypes['CVStrategyConfig']>, ParentType, ContextType, RequireFields<QuerycvstrategyConfigsArgs, 'skip' | 'first' | 'subgraphError'>>;
-    streamingInfo?: Resolver<Maybe<ResolversTypes['StreamingInfo']>, ParentType, ContextType, RequireFields<QuerystreamingInfoArgs, 'id' | 'subgraphError'>>;
-    streamingInfos?: Resolver<Array<ResolversTypes['StreamingInfo']>, ParentType, ContextType, RequireFields<QuerystreamingInfosArgs, 'skip' | 'first' | 'subgraphError'>>;
+    streamInfo?: Resolver<Maybe<ResolversTypes['StreamInfo']>, ParentType, ContextType, RequireFields<QuerystreamInfoArgs, 'id' | 'subgraphError'>>;
+    streamInfos?: Resolver<Array<ResolversTypes['StreamInfo']>, ParentType, ContextType, RequireFields<QuerystreamInfosArgs, 'skip' | 'first' | 'subgraphError'>>;
     arbitrableConfig?: Resolver<Maybe<ResolversTypes['ArbitrableConfig']>, ParentType, ContextType, RequireFields<QueryarbitrableConfigArgs, 'id' | 'subgraphError'>>;
     arbitrableConfigs?: Resolver<Array<ResolversTypes['ArbitrableConfig']>, ParentType, ContextType, RequireFields<QueryarbitrableConfigsArgs, 'skip' | 'first' | 'subgraphError'>>;
     cvproposal?: Resolver<Maybe<ResolversTypes['CVProposal']>, ParentType, ContextType, RequireFields<QuerycvproposalArgs, 'id' | 'subgraphError'>>;
@@ -3792,19 +3736,15 @@ export type StakeResolvers<ContextType = MeshContext, ParentType extends Resolve
     createdAt?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
-export type StreamingInfoResolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['StreamingInfo'] = ResolversParentTypes['StreamingInfo']> = ResolversObject<{
+export type StreamInfoResolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['StreamInfo'] = ResolversParentTypes['StreamInfo']> = ResolversObject<{
     id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
     contractAddress?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
     contractType?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
     strategy?: Resolver<Maybe<ResolversTypes['CVStrategy']>, ParentType, ContextType>;
-    registryFactory?: Resolver<Maybe<ResolversTypes['RegistryFactory']>, ParentType, ContextType>;
     superfluidToken?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-    superfluidGDA?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
-    streamLastStartedGDA?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+    maxFlowRate?: Resolver<Maybe<ResolversTypes['BigInt']>, ParentType, ContextType>;
+    superfluidGDA?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
     streamLastFlowRate?: Resolver<Maybe<ResolversTypes['BigInt']>, ParentType, ContextType>;
-    streamLastMember?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-    streamLastMemberUnit?: Resolver<Maybe<ResolversTypes['BigInt']>, ParentType, ContextType>;
-    streamingEscrowFactory?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
     createdAt?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
     updatedAt?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
@@ -3873,7 +3813,7 @@ export type Resolvers<ContextType = MeshContext> = ResolversObject<{
     RegistryCommunity?: RegistryCommunityResolvers<ContextType>;
     RegistryFactory?: RegistryFactoryResolvers<ContextType>;
     Stake?: StakeResolvers<ContextType>;
-    StreamingInfo?: StreamingInfoResolvers<ContextType>;
+    StreamInfo?: StreamInfoResolvers<ContextType>;
     SybilProtection?: SybilProtectionResolvers<ContextType>;
     Timestamp?: GraphQLScalarType;
     TokenGarden?: TokenGardenResolvers<ContextType>;
@@ -4159,6 +4099,7 @@ export type getPoolDataQuery = {
         sybil?: Maybe<Pick<SybilProtection, 'id' | 'type'>>;
         memberActive?: Maybe<Array<Pick<Member, 'id'>>>;
         config: Pick<CVStrategyConfig, 'id' | 'weight' | 'decay' | 'maxAmount' | 'maxRatio' | 'minThresholdPoints' | 'pointSystem' | 'proposalType' | 'allowlist' | 'superfluidToken'>;
+        stream: Pick<StreamInfo, 'id' | 'contractAddress' | 'contractType' | 'superfluidToken' | 'maxFlowRate' | 'superfluidGDA' | 'streamLastFlowRate' | 'createdAt' | 'updatedAt'>;
         registryCommunity: (Pick<RegistryCommunity, 'id' | 'councilSafe' | 'isValid'> & {
             garden: Pick<TokenGarden, 'id' | 'symbol' | 'decimals'>;
             members?: Maybe<Array<Pick<MemberCommunity, 'memberAddress'>>>;

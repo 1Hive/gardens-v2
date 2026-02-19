@@ -13,6 +13,7 @@ type CVStrategy @entity(immutable: false) {
   token: String!
   sybil: SybilProtection
   archived: Boolean!
+  stream: StreamInfo
 }
 
 type CVStrategyConfig @entity(immutable: false) {
@@ -28,22 +29,17 @@ type CVStrategyConfig @entity(immutable: false) {
   maxAmount: BigInt
   allowlist: [String!]
   superfluidToken: String
-  superfluidGDA: [String!]!
 }
 
-type StreamingInfo @entity(immutable: false) {
+type StreamInfo @entity(immutable: false) {
   id: ID!
   contractAddress: String!
   contractType: String!
   strategy: CVStrategy
-  registryFactory: RegistryFactory
   superfluidToken: String
-  superfluidGDA: [String!]!
-  streamLastStartedGDA: String
+  maxFlowRate: BigInt
+  superfluidGDA: String!
   streamLastFlowRate: BigInt
-  streamLastMember: String
-  streamLastMemberUnit: BigInt
-  streamingEscrowFactory: String
   createdAt: BigInt!
   updatedAt: BigInt!
 }

@@ -1731,7 +1731,11 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
                 address(cv),
                 0,
                 abi.encodeWithSelector(
-                    ICVStrategy.setPoolParams.selector,
+                    bytes4(
+                        keccak256(
+                            "setPoolParams((address,address,uint256,uint256,uint256,uint256),(uint256,uint256,uint256,uint256),uint256,address[],address[],address)"
+                        )
+                    ),
                     0,
                     CVParams(_maxRatio, weight, decay, 0) // MinThresolds = 0
                 )
@@ -1995,7 +1999,11 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
             address(cv),
             0,
             abi.encodeWithSelector(
-                ICVStrategy.setPoolParams.selector,
+                bytes4(
+                    keccak256(
+                        "setPoolParams((address,address,uint256,uint256,uint256,uint256),(uint256,uint256,uint256,uint256),uint256,address[],address[],address)"
+                    )
+                ),
                 EMPTY_ARB_CONFIG,
                 CVParams({
                     maxRatio: _etherToFloat(0.1 ether),
@@ -2244,7 +2252,11 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
             address(cv),
             0,
             abi.encodeWithSelector(
-                ICVStrategy.setPoolParams.selector,
+                bytes4(
+                    keccak256(
+                        "setPoolParams((address,address,uint256,uint256,uint256,uint256),(uint256,uint256,uint256,uint256),uint256,address[],address[],address)"
+                    )
+                ),
                 EMPTY_ARB_CONFIG,
                 CVParams({
                     maxRatio: _etherToFloat(0.1 ether),

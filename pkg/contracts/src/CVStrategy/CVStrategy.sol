@@ -143,6 +143,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     event AllowlistMembersAdded(uint256 poolId, address[] members);
     event SybilScorerUpdated(address sybilScorer);
     event SuperfluidTokenUpdated(address superfluidToken);
+    event SuperfluidPoolCreated(address indexed gda, address indexed superfluidToken, uint256 maxStreamingRate);
     event SuperfluidGDAConnected(address indexed gda, address indexed by);
     event SuperfluidGDADisconnected(address indexed gda, address indexed by);
     // event Logger(string message, uint256 value);
@@ -249,6 +250,8 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
 
             superfluidGDA = pool;
         }
+
+        emit SuperfluidPoolCreated(address(superfluidGDA), address(superfluidToken), streamingRatePerSecond);
 
         // Initialize pool params (simplified version of _setPoolParams for initialization only)
         if (ip.arbitrableConfig.tribunalSafe != address(0) && address(ip.arbitrableConfig.arbitrator) != address(0)) {
@@ -684,6 +687,19 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         address[] memory,
         address[] memory,
         address
+    ) external {
+        _delegateToFacet();
+    }
+
+    // Sig: overloaded setPoolParams with streamingRatePerSecond
+    function setPoolParams(
+        ArbitrableConfig memory,
+        CVParams memory,
+        uint256,
+        address[] memory,
+        address[] memory,
+        address,
+        uint256
     ) external {
         _delegateToFacet();
     }
