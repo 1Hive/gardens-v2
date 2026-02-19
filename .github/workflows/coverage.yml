@@ -5,13 +5,15 @@ on:
   push:
     branches:
       - main
-      - develop
-      - edit-proposal
+      - dev
     paths:
       - pkg/contracts/**/*
       - foundry.toml
       - .github/workflows/coverage.yml
   pull_request:
+    branches:
+      - main
+      - dev
     paths:
       - pkg/contracts/**/*
       - foundry.toml
