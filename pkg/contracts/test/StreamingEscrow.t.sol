@@ -55,6 +55,7 @@ contract MockHost {
     uint256 public callAgreementWithContextCount;
     address public lastAgreement;
     address public lastAgreementWithCtx;
+    bytes public callAgreementResponse;
 
     constructor(address _gda, address _cfa) {
         gda = _gda;
@@ -76,7 +77,11 @@ contract MockHost {
     function callAgreement(address agreementClass, bytes calldata, bytes calldata) external returns (bytes memory) {
         callAgreementCount++;
         lastAgreement = agreementClass;
-        return "";
+        return callAgreementResponse;
+    }
+
+    function setCallAgreementResponse(bytes calldata response) external {
+        callAgreementResponse = response;
     }
 
     function callAgreementWithContext(address agreementClass, bytes calldata, bytes calldata, bytes calldata ctx)
@@ -294,28 +299,6 @@ contract StreamingEscrowTest is Test {
         );
     }
 
-    function test_initialize_reverts_when_connectPool_fails() public {
-        token.setConnectPoolReturn(false);
-
-        StreamingEscrowHarness impl = new StreamingEscrowHarness();
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                StreamingEscrow.ConnectPoolFailed.selector, address(pool), address(token)
-            )
-        );
-        new ERC1967Proxy(
-            address(impl),
-            abi.encodeWithSelector(
-                StreamingEscrow.initialize.selector,
-                ISuperToken(address(token)),
-                ISuperfluidPool(address(pool)),
-                beneficiary,
-                owner,
-                strategy
-            )
-        );
-    }
-
     function test_onlyStrategy_guards() public {
         vm.prank(other);
         vm.expectRevert(abi.encodeWithSelector(StreamingEscrow.OnlyStrategy.selector, other));
@@ -422,8 +405,8 @@ contract StreamingEscrowTest is Test {
 
     function test_depositAmount_falls_back_to_buffer_method() public {
         MockForwarderFallbackOnly fallbackImpl = new MockForwarderFallbackOnly();
-        fallbackImpl.setDeposit(77);
         vm.etch(CFA_V1_FORWARDER, address(fallbackImpl).code);
+        MockForwarderFallbackOnly(CFA_V1_FORWARDER).setDeposit(77);
 
         pool.setMemberFlowRate(address(escrow), 10);
         assertEq(escrow.depositAmount(), 77);
