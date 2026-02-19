@@ -26,6 +26,18 @@ contract MockForwarder {
     }
 }
 
+contract MockForwarderFallbackOnly {
+    uint256 public deposit;
+
+    function setDeposit(uint256 _deposit) external {
+        deposit = _deposit;
+    }
+
+    function getBufferAmountByFlowrate(ISuperToken, int96) external view returns (uint256) {
+        return deposit;
+    }
+}
+
 contract MockCFA {
     function getFlow(ISuperToken, address, address)
         external
@@ -282,6 +294,28 @@ contract StreamingEscrowTest is Test {
         );
     }
 
+    function test_initialize_reverts_when_connectPool_fails() public {
+        token.setConnectPoolReturn(false);
+
+        StreamingEscrowHarness impl = new StreamingEscrowHarness();
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                StreamingEscrow.ConnectPoolFailed.selector, address(pool), address(token)
+            )
+        );
+        new ERC1967Proxy(
+            address(impl),
+            abi.encodeWithSelector(
+                StreamingEscrow.initialize.selector,
+                ISuperToken(address(token)),
+                ISuperfluidPool(address(pool)),
+                beneficiary,
+                owner,
+                strategy
+            )
+        );
+    }
+
     function test_onlyStrategy_guards() public {
         vm.prank(other);
         vm.expectRevert(abi.encodeWithSelector(StreamingEscrow.OnlyStrategy.selector, other));
@@ -386,6 +420,15 @@ contract StreamingEscrowTest is Test {
         assertEq(escrow.depositAmount(), 33);
     }
 
+    function test_depositAmount_falls_back_to_buffer_method() public {
+        MockForwarderFallbackOnly fallbackImpl = new MockForwarderFallbackOnly();
+        fallbackImpl.setDeposit(77);
+        vm.etch(CFA_V1_FORWARDER, address(fallbackImpl).code);
+
+        pool.setMemberFlowRate(address(escrow), 10);
+        assertEq(escrow.depositAmount(), 77);
+    }
+
     function test_claim_transfers_balance_minus_deposit() public {
         pool.setMemberFlowRate(address(escrow), 10);
         forwarder.setDeposit(30);
@@ -432,6 +475,16 @@ contract StreamingEscrowTest is Test {
         escrow.afterAgreementCreated(ISuperToken(address(token)), address(0xDDAD), bytes32(0), "", "", "");
     }
 
+    function test_afterAgreementUpdated_onlyHost() public {
+        vm.expectRevert(abi.encodeWithSelector(StreamingEscrow.OnlyHost.selector, address(this)));
+        escrow.afterAgreementUpdated(ISuperToken(address(token)), address(0xDDAD), bytes32(0), "", "", "");
+    }
+
+    function test_afterAgreementTerminated_onlyHost() public {
+        vm.expectRevert(abi.encodeWithSelector(StreamingEscrow.OnlyHost.selector, address(this)));
+        escrow.afterAgreementTerminated(ISuperToken(address(token)), address(0xDDAD), bytes32(0), "", "", "");
+    }
+
     function test_afterAgreementChanged_returns_ctx_for_mismatch() public {
         bytes memory ctx = abi.encodePacked("ctx");
 
@@ -469,6 +522,19 @@ contract StreamingEscrowTest is Test {
         escrow.afterAgreementUpdated(ISuperToken(address(token)), address(0xDDAD), bytes32(0), "", "", ctx);
 
         assertEq(host.callAgreementWithContextCount(), 0);
+    }
+
+    function test_afterAgreementTerminated_calls_flow_when_matching() public {
+        pool.setMemberFlowRate(address(escrow), 88);
+        bytes memory ctx = abi.encodePacked("ctx-term");
+
+        vm.prank(address(host));
+        bytes memory result =
+            escrow.afterAgreementTerminated(ISuperToken(address(token)), address(0xDDAD), bytes32(0), "", "", ctx);
+
+        assertEq(result, ctx);
+        assertEq(host.callAgreementWithContextCount(), 1);
+        assertEq(host.lastAgreementWithCtx(), address(cfa));
     }
 
     function test_currentGDAFlowRate_nonpositive_returns_zero() public {
