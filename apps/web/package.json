@@ -53,7 +53,7 @@
     "lodash-es": "^4.17.23",
     "lokijs": "^1.5.12",
     "motion": "^12.4.7",
-    "next": "14.2.35",
+    "next": "15.5.10",
     "next-themes": "^0.2.1",
     "pino-pretty": "^10.2.3",
     "react": "18.2.0",
