@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { formatEther, parseEther } from "viem";
 import { base } from "viem/chains";
-import { useWaitForTransactionReceipt, useWriteContract } from "wagmi";
+import { usePublicClient, useWriteContract } from "wagmi";
 
 const TOP_DAWG_PARTNER_ABI = [
   {
@@ -40,26 +40,17 @@ export default function MarkeeModal({
   const [name, setName] = useState("");
   const [ethAmount, setEthAmount] = useState("");
   const [inputError, setInputError] = useState<string | null>(null);
+  const [isConfirming, setIsConfirming] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
   const dialogRef = useRef<HTMLDialogElement>(null);
 
-  const { writeContractAsync, isPending, data: txHash } = useWriteContract();
-
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
-    hash: txHash,
-    chainId: base.id,
-  });
+  const { writeContractAsync, isPending } = useWriteContract();
+  const publicClient = usePublicClient({ chainId: base.id });
 
   // Open dialog on mount
   useEffect(() => {
     dialogRef.current?.showModal();
   }, []);
-
-  // Call onSuccess after confirmation
-  useEffect(() => {
-    if (isSuccess) {
-      onSuccess();
-    }
-  }, [isSuccess, onSuccess]);
 
   // Close on backdrop click
   const handleBackdropClick = (e: React.MouseEvent<HTMLDialogElement>) => {
@@ -92,7 +83,7 @@ export default function MarkeeModal({
   const handleSubmit = async () => {
     if (!validate()) return;
     try {
-      await writeContractAsync({
+      const txHash = await writeContractAsync({
         address: strategyAddress,
         abi: TOP_DAWG_PARTNER_ABI,
         functionName: "createMarkee",
@@ -100,8 +91,16 @@ export default function MarkeeModal({
         value: parseEther(ethAmount),
         chainId: base.id,
       });
+
+      if (txHash && publicClient) {
+        setIsConfirming(true);
+        await publicClient.waitForTransactionReceipt({ hash: txHash });
+        setIsConfirming(false);
+        setIsSuccess(true);
+        onSuccess();
+      }
     } catch (err: any) {
-      // User rejected or other wallet error
+      setIsConfirming(false);
       if (!err?.message?.includes("User rejected")) {
         setInputError("Transaction failed. Please try again.");
       }
