@@ -1,0 +1,47 @@
+name: Contract Audit (Code Scanning)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - dev
+    paths:
+      - pkg/contracts/src/**/*.sol
+  pull_request:
+    branches:
+      - main
+      - dev
+    paths:
+      - pkg/contracts/src/**/*.sol
+
+jobs:
+  analyze:
+    name: Slither
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Run Slither
+        id: slither
+        uses: crytic/slither-action@v0.4.1
+        with:
+          target: .
+          sarif: results.sarif
+          fail-on: none
+
+      - name: Upload SARIF file
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: ${{ steps.slither.outputs.sarif }}
