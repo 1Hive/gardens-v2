@@ -42,10 +42,15 @@ jobs:
       - name: Init required submodules
         run: |
           # Cleanup for clones that still have the removed octant submodule cached.
-          git config --local --remove-section submodule.lib/octant-v2-core || true
+          git config --local --remove-section 'submodule "lib/octant-v2-core"' || true
           rm -rf .git/modules/lib/octant-v2-core lib/octant-v2-core
-          git submodule sync --recursive
-          git submodule update --init --recursive --depth 1 --jobs 4
+
+          # Update only submodules currently defined in .gitmodules.
+          mapfile -t submodule_paths < <(
+            git config --file .gitmodules --get-regexp '^submodule\..*\.path$' | awk '{print $2}'
+          )
+          git submodule sync --recursive -- "${submodule_paths[@]}"
+          git submodule update --init --recursive --depth 1 --jobs 4 -- "${submodule_paths[@]}"
 
       - name: Run coverage
         run: pnpm --dir pkg/contracts run coverage
