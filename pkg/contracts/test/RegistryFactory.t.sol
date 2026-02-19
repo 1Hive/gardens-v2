@@ -26,18 +26,7 @@ contract MockSafe {
 contract MockRegistryCommunity {
     address public councilSafe;
 
-    function initialize(
-        RegistryCommunityInitializeParams memory params,
-        address,
-        address,
-        address,
-        IDiamondCut.FacetCut[] memory,
-        address,
-        bytes memory,
-        IDiamondCut.FacetCut[] memory,
-        address,
-        bytes memory
-    ) external {
+    function initialize(RegistryCommunityInitializeParams memory params, address, address, address) external {
         councilSafe = params._councilSafe;
     }
 
