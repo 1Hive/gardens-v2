@@ -9,6 +9,7 @@ import {
   TrophyIcon,
   UserGroupIcon,
 } from "@heroicons/react/24/outline";
+import { CheckIcon } from "@heroicons/react/24/solid";
 
 import { FetchTokenResult } from "@wagmi/core";
 import { Dnum, multiply } from "dnum";
@@ -222,6 +223,7 @@ export default function ClientPage({
 
   const { tooltipMessage, isConnected, missmatchUrl, isButtonDisabled } =
     useDisableButtons();
+  const createPoolHref = `/gardens/${chain?.id}/${tokenAddr}/${communityAddr}/create-pool`;
 
   useEffect(() => {
     if (error) {
@@ -323,6 +325,20 @@ export default function ClientPage({
     return `${labels.join(", ")} Pools`;
   }, [selectedPoolFilters]);
 
+  const selectedPoolsSummary = useMemo(() => {
+    const poolCount = filteredPools.length;
+    return `Showing ${poolCount} pool${poolCount === 1 ? "" : "s"}`;
+  }, [filteredPools.length]);
+
+  const preferredPoolFilter = useMemo(
+    () => getPreferredPoolFilter(poolCounts, canSeeArchivedPools),
+    [poolCounts, canSeeArchivedPools],
+  );
+
+  const isClearAllDisabled =
+    selectedPoolFilters.length === 1 &&
+    selectedPoolFilters[0] === preferredPoolFilter;
+
   const togglePoolFilter = (filter: PoolFilterKey) => {
     setPoolFilterHint(null);
     setSelectedPoolFilters((currentFilters) => {
@@ -343,9 +359,7 @@ export default function ClientPage({
 
   const clearAllPoolFilters = () => {
     setPoolFilterHint(null);
-    setSelectedPoolFilters([
-      getPreferredPoolFilter(poolCounts, canSeeArchivedPools),
-    ]);
+    setSelectedPoolFilters([preferredPoolFilter]);
   };
 
   useEffect(() => {
@@ -631,9 +645,7 @@ export default function ClientPage({
           <section className="flex flex-col gap-6 section-layout">
             <div className="flex items-center justify-between">
               <h2>Pools</h2>
-              <Link
-                href={`/gardens/${chain?.id}/${tokenAddr}/${communityAddr}/create-pool`}
-              >
+              <Link href={createPoolHref}>
                 <Button
                   btnStyle="filled"
                   disabled={!isConnected || missmatchUrl}
@@ -651,6 +663,7 @@ export default function ClientPage({
                 onToggleFilter={togglePoolFilter}
                 onSelectAll={selectAllPoolFilters}
                 onClearAll={clearAllPoolFilters}
+                clearAllDisabled={isClearAllDisabled}
                 counts={poolCounts}
                 showArchiveFilter={canSeeArchivedPools}
               />
@@ -659,9 +672,14 @@ export default function ClientPage({
                   {poolFilterHint}
                 </p>
               )}
-              <h6 className=" text-neutral-soft-content">
-                {selectedPoolFiltersTitle}
-              </h6>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h6 className="text-neutral-soft-content">
+                  {selectedPoolFiltersTitle}
+                </h6>
+                <p className="text-xs text-neutral-soft-content">
+                  {selectedPoolsSummary}
+                </p>
+              </div>
               {filteredPools.length > 0 ?
                 <div className="pool-layout">
                   {filteredPools.map((pool) => (
@@ -672,9 +690,21 @@ export default function ClientPage({
                     />
                   ))}
                 </div>
-              : <p className="text-neutral-soft-content ">
-                  There are no pools for the selected filters.
-                </p>
+              : <div className="rounded-xl border border-neutral-soft-content/20 p-6 flex flex-col items-center text-center gap-3">
+                  <p className="text-neutral-soft-content">
+                    No pools match the selected filters.
+                  </p>
+                  <Link href={createPoolHref}>
+                    <Button
+                      btnStyle="outline"
+                      disabled={!isConnected || missmatchUrl}
+                      tooltip={tooltipMessage}
+                      icon={<PlusIcon height={16} width={16} />}
+                    >
+                      Create New Pool
+                    </Button>
+                  </Link>
+                </div>
               }
             </div>
           </section>
@@ -907,9 +937,7 @@ export default function ClientPage({
             <section className="backdrop-blur-sm flex flex-col gap-6 section-layout">
               <div className="flex flex-col gap-4">
                 <h2>Pools</h2>
-                <Link
-                  href={`/gardens/${chain?.id}/${tokenAddr}/${communityAddr}/create-pool`}
-                >
+                <Link href={createPoolHref}>
                   <Button
                     btnStyle="filled"
                     disabled={!isConnected || missmatchUrl}
@@ -929,6 +957,7 @@ export default function ClientPage({
                   onToggleFilter={togglePoolFilter}
                   onSelectAll={selectAllPoolFilters}
                   onClearAll={clearAllPoolFilters}
+                  clearAllDisabled={isClearAllDisabled}
                   counts={poolCounts}
                   showArchiveFilter={canSeeArchivedPools}
                 />
@@ -937,9 +966,14 @@ export default function ClientPage({
                     {poolFilterHint}
                   </p>
                 )}
-                <h6 className="text-neutral-soft-content">
-                  {selectedPoolFiltersTitle}
-                </h6>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h6 className="text-neutral-soft-content">
+                    {selectedPoolFiltersTitle}
+                  </h6>
+                  <p className="text-xs text-neutral-soft-content">
+                    {selectedPoolsSummary}
+                  </p>
+                </div>
                 {filteredPools.length > 0 ?
                   <div className="pool-layout">
                     {filteredPools.map((pool) => (
@@ -950,9 +984,22 @@ export default function ClientPage({
                       />
                     ))}
                   </div>
-                : <p className="text-neutral-soft-content ">
-                    There are no pools for the selected filters.
-                  </p>
+                : <div className="rounded-xl border border-neutral-soft-content/20 p-4 flex flex-col items-center text-center gap-3">
+                    <p className="text-neutral-soft-content">
+                      No pools match the selected filters.
+                    </p>
+                    <Link href={createPoolHref} className="w-full sm:w-auto">
+                      <Button
+                        btnStyle="outline"
+                        disabled={!isConnected || missmatchUrl}
+                        tooltip={tooltipMessage}
+                        icon={<PlusIcon height={16} width={16} />}
+                        className="w-full sm:w-auto"
+                      >
+                        Create New Pool
+                      </Button>
+                    </Link>
+                  </div>
                 }
               </div>
             </section>
@@ -1141,6 +1188,7 @@ interface PoolFiltersUIProps {
   onToggleFilter: (filter: PoolFilterKey) => void;
   onSelectAll: () => void;
   onClearAll: () => void;
+  clearAllDisabled: boolean;
   counts: Record<PoolFilterKey, number>;
   showArchiveFilter: boolean;
 }
@@ -1150,6 +1198,7 @@ const PoolFiltersUI = ({
   onToggleFilter,
   onSelectAll,
   onClearAll,
+  clearAllDisabled,
   counts,
   showArchiveFilter,
 }: PoolFiltersUIProps) => {
@@ -1157,43 +1206,54 @@ const PoolFiltersUI = ({
     showArchiveFilter ? POOL_FILTERS : (
       POOL_FILTERS.filter((filter) => filter.key !== "archive")
     );
+  const allVisibleSelected = visibleFilters.every((filter) =>
+    selectedFilters.includes(filter.key),
+  );
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
-      <div className="flex gap-2 sm:gap-3 flex-wrap ">
+    <div className="flex flex-col gap-4 sm:gap-3 xl:flex-row xl:items-center xl:justify-between">
+      <div className="flex gap-2 sm:gap-3 overflow-x-auto sm:overflow-visible pb-1 sm:pb-0">
         {visibleFilters.map((filter) => (
           <button
             key={filter.key}
             type="button"
             onClick={() => onToggleFilter(filter.key)}
-            className={`rounded-full px-3 py-1.5 font-semibold border transition-all duration-150 ease-out ${
+            className={`rounded-full px-3 py-1.5 font-semibold border transition-all duration-150 ease-out whitespace-nowrap ${
               selectedFilters.includes(filter.key) ?
-                `${POOL_FILTER_BADGE_STYLES[filter.key]} border-transparent`
+                `${POOL_FILTER_BADGE_STYLES[filter.key]} border-transparent shadow-sm ring-1 ring-black/10`
               : "bg-transparent border-neutral-soft-content/30 text-neutral-soft-content hover:border-neutral-soft-content hover:text-primary-content"
             }`}
           >
-            <span className="text-sm sm:text-md">{filter.label}</span>
+            <span className="inline-flex items-center gap-1 text-sm sm:text-md">
+              {selectedFilters.includes(filter.key) && (
+                <CheckIcon className="h-3.5 w-3.5" />
+              )}
+              {filter.label}
+            </span>
             <span className="ml-1 opacity-80 text-xs sm:text-sm">
               ({counts[filter.key] ?? 0})
             </span>
           </button>
         ))}
       </div>
-      <Divider className="sm:hidden" />
-      <div className="flex flex-col sm:flex-row items-center gap-2  w-full sm:w-auto">
-        <Button onClick={onSelectAll} btnStyle="outline">
-          Select all
-        </Button>
-        <Button
+      <div className="mt-1 sm:mt-0 flex items-center gap-5 sm:gap-4 self-end sm:self-auto">
+        <button
           type="button"
-          btnStyle="outline"
-          color="danger"
+          className="text-sm font-semibold text-primary-content hover:underline disabled:text-neutral-soft-content disabled:no-underline disabled:cursor-not-allowed"
+          onClick={onSelectAll}
+          disabled={allVisibleSelected}
+        >
+          Select all
+        </button>
+        <button
+          type="button"
+          className="text-sm font-semibold text-danger-content hover:underline disabled:text-neutral-soft-content disabled:no-underline disabled:cursor-not-allowed"
           onClick={onClearAll}
+          disabled={clearAllDisabled}
         >
           Clear all
-        </Button>
+        </button>
       </div>
-      <Divider className="sm:hidden" />
     </div>
   );
 };
