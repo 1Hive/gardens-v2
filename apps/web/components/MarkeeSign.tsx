@@ -8,7 +8,7 @@ const MARKEE_SUBGRAPH_ID = "8kMCKUHSY7o6sQbsvufeLVo8PifxrsnagjVTMGcs6KdF";
 const SUBGRAPH_GATEWAY_KEY = process.env.NEXT_PUBLIC_SUBGRAPH_KEY;
 const MARKEE_SUBGRAPH = SUBGRAPH_GATEWAY_KEY
   ? `https://gateway.thegraph.com/api/${SUBGRAPH_GATEWAY_KEY}/subgraphs/id/${MARKEE_SUBGRAPH_ID}`
-  : `https://gateway.thegraph.com/api/subgraphs/id/${MARKEE_SUBGRAPH_ID}`;
+  : `https://api.studio.thegraph.com/query/1742437/markee-base/version/latest`;
 
 const GARDENS_STRATEGY = "0x346419315740f085ba14ca7239d82105a9a2bdbe";
 
