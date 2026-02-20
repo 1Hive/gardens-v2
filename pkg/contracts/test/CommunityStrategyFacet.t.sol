@@ -9,6 +9,7 @@ import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import {IStrategy} from "allo-v2-contracts/core/interfaces/IStrategy.sol";
 import {FAllo} from "../src/interfaces/FAllo.sol";
 import {Metadata} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
+import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 contract MockAllo is FAllo {
     mapping(uint256 => address) public poolStrategies;
@@ -83,11 +84,15 @@ contract CommunityStrategyFacetTest is Test {
     address internal council = makeAddr("council");
 
     function setUp() public {
-        facet = new CommunityStrategyFacetHarness();
+        CommunityStrategyFacetHarness impl = new CommunityStrategyFacetHarness();
+        facet = CommunityStrategyFacetHarness(
+            payable(
+                address(new ERC1967Proxy(address(impl), abi.encodeWithSelector(impl.initOwner.selector, makeAddr("owner"))))
+            )
+        );
         allo = new MockAllo();
         sybil = new MockSybilScorer();
 
-        facet.initOwner(makeAddr("owner"));
         facet.grantCouncil(council);
         facet.setAllo(address(allo));
     }

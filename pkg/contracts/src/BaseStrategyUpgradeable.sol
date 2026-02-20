@@ -270,6 +270,10 @@ abstract contract BaseStrategyUpgradeable is ProxyOwnableUpgrader, IStrategy, Tr
         return poolActive;
     }
 
+    function _coverageMarker() internal view returns (bool) {
+        return address(allo) != address(0);
+    }
+
     /// @notice Checks if the allocator is valid
     /// @param _allocator The allocator address
     /// @return 'true' if the allocator is valid, otherwise 'false'

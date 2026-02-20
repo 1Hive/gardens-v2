@@ -9,6 +9,7 @@ import {Metadata} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 import {IDiamondCut} from "../src/diamonds/interfaces/IDiamondCut.sol";
 import {IDiamond} from "../src/diamonds/interfaces/IDiamond.sol";
 import {FAllo} from "../src/interfaces/FAllo.sol";
+import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 contract MockAlloPool {
     uint256 public nextPoolId = 1;
@@ -180,8 +181,10 @@ contract CommunityPoolFacetTest is Test {
     address internal owner = makeAddr("owner");
 
     function setUp() public {
-        facet = new CommunityPoolFacetHarness();
-        facet.initializeHarness(owner);
+        CommunityPoolFacetHarness impl = new CommunityPoolFacetHarness();
+        facet = CommunityPoolFacetHarness(
+            payable(address(new ERC1967Proxy(address(impl), abi.encodeWithSelector(impl.initializeHarness.selector, owner))))
+        );
 
         allo = new MockAlloPool();
         registryFactory = new MockRegistryFactoryPause();
