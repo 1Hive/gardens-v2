@@ -28,6 +28,7 @@ contract StreamingEscrow is ProxyOwnableUpgrader, SuperAppBase {
     error ConnectPoolFailed(address pool, address superToken); // 0x7df25d8e
     error InvalidAddress(); // 0x9f1f3e28
     error OnlyHost(address sender); // 0x1cb0a1d5
+    error SuperTokenTransferFailed(address to, uint256 amount);
 
     /*|--------------------------------------------|*/
     /*|              STORAGE                       |*/
@@ -208,7 +209,9 @@ contract StreamingEscrow is ProxyOwnableUpgrader, SuperAppBase {
     function _drainTo(address to) internal {
         uint256 balance = superToken.balanceOf(address(this));
         if (balance != 0) {
-            superToken.transfer(to, balance);
+            if (!superToken.transfer(to, balance)) {
+                revert SuperTokenTransferFailed(to, balance);
+            }
         }
     }
 
@@ -216,7 +219,10 @@ contract StreamingEscrow is ProxyOwnableUpgrader, SuperAppBase {
         uint256 balance = superToken.balanceOf(address(this));
         uint256 reservedDeposit = depositAmount();
         if (balance > reservedDeposit) {
-            superToken.transfer(beneficiary, balance - reservedDeposit);
+            uint256 amount = balance - reservedDeposit;
+            if (!superToken.transfer(beneficiary, amount)) {
+                revert SuperTokenTransferFailed(beneficiary, amount);
+            }
         }
     }
 

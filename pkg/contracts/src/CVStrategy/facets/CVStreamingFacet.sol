@@ -27,6 +27,7 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
     /*|              ERRORS                        |*/
     /*|--------------------------------------------|*/
     error StreamingRateOverflow(uint256 streamingRatePerSecond);
+    error SuperTokenTransferFailed(address to, uint256 amount);
 
     /*|--------------------------------------------|*/
     /*|              FUNCTIONS                     |*/
@@ -252,7 +253,9 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
 
         uint256 topUp = missingDeposit > strategyBalance ? strategyBalance : missingDeposit;
         if (topUp != 0) {
-            superfluidToken.transfer(escrow, topUp);
+            if (!superfluidToken.transfer(escrow, topUp)) {
+                revert SuperTokenTransferFailed(escrow, topUp);
+            }
         }
     }
 }
