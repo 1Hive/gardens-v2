@@ -119,7 +119,6 @@ export default function MarkeeModal({
       const { hash } = await writeAsync({
         args: [message.trim(), name.trim()],
         value: parseEther(ethAmount),
-        chainId: base.id,
       });
       await publicClient.waitForTransactionReceipt({ hash });
       onSuccess();
