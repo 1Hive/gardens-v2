@@ -34,13 +34,19 @@ type SignData = {
   minimumPrice: bigint;
 };
 
+const DEFAULT_DATA: SignData = {
+  message: "this is a sign.",
+  totalFundsAdded: BigInt(0),
+  minimumPrice: BigInt(0),
+};
+
 export default function MarkeeSign() {
-  const [data, setData] = useState<SignData | null>(null);
-  const [error, setError] = useState(false);
+  const [data, setData] = useState<SignData>(DEFAULT_DATA);
+  const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
 
   const fetchData = useCallback(() => {
-    setError(false);
+    setLoading(true);
     fetch(MARKEE_SUBGRAPH, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -51,7 +57,11 @@ export default function MarkeeSign() {
         return r.json();
       })
       .then((res) => {
-        if (res.errors) throw new Error(res.errors[0]?.message);
+        if (res.errors) {
+          console.error("[MarkeeSign] GraphQL errors:", res.errors);
+          return;
+        }
+        console.log("[MarkeeSign] subgraph response:", JSON.stringify(res.data));
         const markee = res.data?.markees?.[0];
         const strategy = res.data?.topDawgPartnerStrategy;
         setData({
@@ -60,7 +70,10 @@ export default function MarkeeSign() {
           minimumPrice: BigInt(strategy?.minimumPrice ?? 0),
         });
       })
-      .catch(() => setError(true));
+      .catch((err) => {
+        console.error("[MarkeeSign] fetch error:", err);
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   useEffect(() => {
@@ -68,7 +81,7 @@ export default function MarkeeSign() {
   }, [fetchData]);
 
   const ethDisplay =
-    data && data.totalFundsAdded > BigInt(0)
+    data.totalFundsAdded > BigInt(0)
       ? `${parseFloat(formatEther(data.totalFundsAdded)).toFixed(4)} ETH`
       : null;
 
@@ -82,7 +95,7 @@ export default function MarkeeSign() {
         {/* Sign body */}
         <div className="border border-neutral-content/30 rounded px-10 py-5 min-w-[280px] max-w-sm bg-neutral hover:border-primary-content/50 transition-colors duration-200">
           <p className="font-mono text-neutral-content text-base group-hover:text-primary-content transition-colors duration-200 text-center leading-snug">
-            {error ? "this is a sign." : data ? data.message : "loading..."}
+            {loading ? "loading..." : data.message}
           </p>
         </div>
         {/* ETH badge */}
@@ -91,14 +104,14 @@ export default function MarkeeSign() {
             {ethDisplay}
           </span>
         )}
-        {!ethDisplay && data && (
+        {!ethDisplay && !loading && (
           <span className="absolute -top-2.5 -right-2.5 rounded-full border border-neutral-content/30 bg-neutral px-2 py-0.5 text-xs text-neutral-content/50">
             be first!
           </span>
         )}
       </button>
 
-      {modalOpen && data && (
+      {modalOpen && (
         <MarkeeModal
           onClose={() => setModalOpen(false)}
           onSuccess={() => {
