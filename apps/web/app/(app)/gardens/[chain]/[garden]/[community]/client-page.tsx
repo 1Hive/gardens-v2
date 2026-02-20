@@ -865,6 +865,12 @@ export default function ClientPage({
                           : "Archive"}
                         </Button>
                       )}
+                      <RegisterMember
+                        memberData={accountAddress ? isMemberResult : undefined}
+                        registrationCost={totalRegistrationCost}
+                        token={tokenGarden}
+                        registryCommunity={registryCommunity}
+                      />
                     </div>
 
                     <Divider className="mt-4" />

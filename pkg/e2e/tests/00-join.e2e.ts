@@ -57,7 +57,10 @@ test("should join and leave community", async ({
   await page.waitForLoadState("networkidle");
 
   // Launch join flow
-  await page.getByTestId("register-member-button").click();
+  await page
+    .getByTestId("register-member-button")
+    .locator(":scope:visible")
+    .click();
 
   // 1. Sign the community covenant
   await metamask.confirmSignature();

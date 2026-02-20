@@ -41,6 +41,7 @@ test("should join and leave community", async ({
   // 4. Leave the community
   const leaveBtn = page
     .getByTestId("register-member-button")
+    .locator(":scope:visible")
     .getByText("Leave");
   await expect(leaveBtn).toBeVisible({ timeout: 60000 });
   await expect(leaveBtn).toBeEnabled({ timeout: 60000 });

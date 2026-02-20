@@ -46,11 +46,11 @@ test("should join and leave community", async ({
   await page.waitForTimeout(2000); // Wait for tx to succeed and UI to update
 
   // 5. Stake 0.2 tokens
-  const stakeInput = page.getByTestId("stake-input");
+  const stakeInput = page.getByTestId("stake-input").locator(":scope:visible");
   await expect(stakeInput).toBeVisible({ timeout: 60000 });
   await stakeInput.fill("0.2");
 
-  await page.getByTestId("btn-stake").click();
+  await page.getByTestId("btn-stake").locator(":scope:visible").click();
 
   // Approve token allowance for staking
   await approveTokenAllowance({ page, metamask, extensionId });
