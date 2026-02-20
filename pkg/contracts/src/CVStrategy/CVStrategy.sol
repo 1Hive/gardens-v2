@@ -591,6 +591,9 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     // Sig: 0x60b0645a
     function calculateProposalConviction(uint256 _proposalId) public view returns (uint256) {
         Proposal storage proposal = proposals[_proposalId];
+        if (!_isStrategyEnabled()) {
+            return proposal.convictionLast;
+        }
         return ConvictionsUtils.calculateConviction(
             block.number - proposal.blockLast, proposal.convictionLast, proposal.stakedAmount, cvParams.decay
         );
@@ -637,6 +640,10 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         view
         returns (uint256 conviction, uint256 blockNumber)
     {
+        if (!_isStrategyEnabled()) {
+            return (_proposal.convictionLast, block.number);
+        }
+
         blockNumber = block.number;
         assert(_proposal.blockLast <= blockNumber);
         if (_proposal.blockLast == blockNumber) {
@@ -646,6 +653,13 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         conviction = ConvictionsUtils.calculateConviction(
             blockNumber - _proposal.blockLast, _proposal.convictionLast, _oldStaked, cvParams.decay
         );
+    }
+
+    function _isStrategyEnabled() internal view returns (bool) {
+        if (address(registryCommunity) == address(0)) {
+            return true;
+        }
+        return registryCommunity.enabledStrategies(address(this));
     }
 
     // _setPoolParams removed - now in AdminFacet

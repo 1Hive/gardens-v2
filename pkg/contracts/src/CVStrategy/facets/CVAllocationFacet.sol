@@ -68,6 +68,7 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
 
     // Sig: 0xef2920fc
     function allocate(bytes memory _data, address _sender) external payable onlyAllo onlyInitialized {
+        registryCommunity.onlyStrategyEnabled(address(this));
         ProposalSupport[] memory pv = abi.decode(_data, (ProposalSupport[]));
         for (uint256 i = 0; i < pv.length; i++) {
             _checkProposalAllocationValidity(pv[i].proposalId, pv[i].deltaSupport);

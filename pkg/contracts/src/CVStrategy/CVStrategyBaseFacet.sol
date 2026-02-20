@@ -337,6 +337,21 @@ abstract contract CVStrategyBaseFacet {
     }
 
     /**
+     * @notice Calculate the current conviction for a proposal
+     * @param _proposalId The proposal ID
+     * @return uint256 The calculated conviction value
+     */
+    function calculateProposalConviction(uint256 _proposalId) public view virtual returns (uint256) {
+        Proposal storage proposal = proposals[_proposalId];
+        if (!_isStrategyEnabled()) {
+            return proposal.convictionLast;
+        }
+        return ConvictionsUtils.calculateConviction(
+            block.number - proposal.blockLast, proposal.convictionLast, proposal.stakedAmount, cvParams.decay
+        );
+    }
+
+    /**
      * @notice Calculate and store conviction for a proposal
      * @param _proposal Proposal storage reference
      * @param _oldStaked Previous staked amount
@@ -362,6 +377,10 @@ abstract contract CVStrategyBaseFacet {
         view
         returns (uint256 conviction, uint256 blockNumber)
     {
+        if (!_isStrategyEnabled()) {
+            return (_proposal.convictionLast, block.number);
+        }
+
         blockNumber = block.number;
         assert(_proposal.blockLast <= blockNumber);
         if (_proposal.blockLast == blockNumber) {
@@ -374,6 +393,13 @@ abstract contract CVStrategyBaseFacet {
             _oldStaked,
             cvParams.decay
         );
+    }
+
+    function _isStrategyEnabled() internal view returns (bool) {
+        if (address(registryCommunity) == address(0)) {
+            return true;
+        }
+        return registryCommunity.enabledStrategies(address(this));
     }
 
     /// @notice Getter for the 'poolAmount'.

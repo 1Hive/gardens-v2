@@ -48,6 +48,12 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
         }
         setLastRebalanceAt(block.timestamp);
 
+        bool strategyEnabled = _isStrategyEnabled();
+        if (!strategyEnabled) {
+            _rebalanceWhenDisabled();
+            return;
+        }
+
         wrapIfNeeded();
 
         uint256 poolAmount = getPoolAmount();
@@ -124,18 +130,6 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
             _topUpEscrowDepositIfNeeded(escrow);
             try IStreamingEscrowSync(escrow).syncOutflow() {} catch {}
         }
-    }
-
-    /**
-     * @notice Calculate the current conviction for a proposal
-     * @param _proposalId The proposal ID
-     * @return uint256 The calculated conviction value
-     */
-    function calculateProposalConviction(uint256 _proposalId) public view returns (uint256) {
-        Proposal storage proposal = proposals[_proposalId];
-        return ConvictionsUtils.calculateConviction(
-            block.number - proposal.blockLast, proposal.convictionLast, proposal.stakedAmount, cvParams.decay
-        );
     }
 
     /**
@@ -264,6 +258,18 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
             if (!superfluidToken.transfer(escrow, topUp)) {
                 revert SuperTokenTransferFailed(escrow, topUp);
             }
+        }
+    }
+
+    function _rebalanceWhenDisabled() internal {
+        if (address(superfluidToken) == address(0) || address(superfluidGDA) == address(0)) {
+            return;
+        }
+
+        int96 currentFlowRate = superfluidToken.getGDAFlowRate(address(this), superfluidGDA);
+        int96 actualFlowRate = superfluidToken.distributeFlow(superfluidGDA, 0);
+        if (currentFlowRate != actualFlowRate) {
+            emit StreamRateUpdated(address(superfluidGDA), 0);
         }
     }
 }

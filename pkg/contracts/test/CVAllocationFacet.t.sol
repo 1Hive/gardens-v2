@@ -18,10 +18,13 @@ import {ISuperToken} from "@superfluid-finance/ethereum-contracts/contracts/inte
 import {MockAlloWithPool, MockCollateralVault} from "./helpers/CVStrategyHelpers.sol";
 
 contract MockRegistryCommunityAlloc {
+    error StrategyDisabled();
+
     mapping(address => bool) public members;
     mapping(address => bool) public activated;
     mapping(address => uint256) public power;
     mapping(bytes32 => mapping(address => bool)) public roles;
+    bool public strategyEnabled = true;
 
     function setMember(address member, bool allowed) external {
         members[member] = allowed;
@@ -53,6 +56,20 @@ contract MockRegistryCommunityAlloc {
 
     function grantRole(bytes32 role, address account) external {
         roles[role][account] = true;
+    }
+
+    function setStrategyEnabled(bool enabled) external {
+        strategyEnabled = enabled;
+    }
+
+    function onlyStrategyEnabled(address) external view {
+        if (!strategyEnabled) {
+            revert StrategyDisabled();
+        }
+    }
+
+    function enabledStrategies(address) external view returns (bool) {
+        return strategyEnabled;
     }
 
     // IVotingPowerRegistry compatibility stubs
@@ -264,6 +281,15 @@ contract CVAllocationFacetTest is Test {
 
         vm.prank(address(allo));
         vm.expectRevert(abi.encodeWithSelector(CVAllocationFacet.UserIsInactive.selector, member));
+        facet.allocate(abi.encode(_support(1, 1)), member);
+    }
+
+    function test_allocate_reverts_when_strategy_disabled() public {
+        registry.setStrategyEnabled(false);
+        facet.setProposal(1, ProposalStatus.Active, 0, address(token), beneficiary, member, 0, 0, 0);
+
+        vm.prank(address(allo));
+        vm.expectRevert(abi.encodeWithSelector(MockRegistryCommunityAlloc.StrategyDisabled.selector));
         facet.allocate(abi.encode(_support(1, 1)), member);
     }
 

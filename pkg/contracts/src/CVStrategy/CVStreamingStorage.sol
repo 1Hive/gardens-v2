@@ -8,6 +8,8 @@ library CVStreamingStorage {
     struct Layout {
         uint256 lastRebalanceAt;
         uint256 rebalanceCooldown;
+        // Reserved to preserve storage layout compatibility with previous versions.
+        bool __deprecated_disabledConvictionSnapshotTaken;
         mapping(uint256 => address) proposalEscrow;
     }
 

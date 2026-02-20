@@ -7,7 +7,7 @@ import {GV2ERC20} from "../script/GV2ERC20.sol";
 import {CVStrategyBaseFacet} from "../src/CVStrategy/CVStrategyBaseFacet.sol";
 import {MockPauseController} from "./helpers/PauseHelpers.sol";
 
-import {PointSystem} from "../src/CVStrategy/CVStrategy.sol";
+import {PointSystem, CVParams} from "../src/CVStrategy/CVStrategy.sol";
 import {
     CVStrategyBaseFacetHarness,
     MockAlloWithPool,
@@ -163,6 +163,38 @@ contract CVStrategyBaseFacetTest is Test {
         vm.roll(block.number + 1);
         (conviction, blockNumber) = facet.exposedCheckBlockAndCalculateConviction(1, 100);
         assertGt(blockNumber, 0);
+    }
+
+    function test_conviction_snapshot_freezes_when_strategy_disabled_for_all_pool_types() public {
+        uint256 proposalId = 1;
+        facet.setCvParams(CVParams({maxRatio: 0, weight: 0, decay: 9_000_000, minThresholdPoints: 0}));
+        facet.setProposal(proposalId, member, block.number, 0);
+        vm.roll(block.number + 10);
+
+        facet.exposedCalculateAndSetConviction(proposalId, 100);
+        (uint256 blockBeforeDisable, uint256 convictionBeforeDisable) = facet.getProposalSnapshot(proposalId);
+        assertEq(blockBeforeDisable, block.number);
+        assertGt(convictionBeforeDisable, 0);
+
+        registryCommunity.setStrategyEnabled(false);
+        vm.roll(block.number + 5);
+        facet.exposedCalculateAndSetConviction(proposalId, 100);
+        (uint256 blockAtSnapshot, uint256 convictionAtSnapshot) = facet.getProposalSnapshot(proposalId);
+        assertEq(blockAtSnapshot, block.number);
+        assertEq(convictionAtSnapshot, convictionBeforeDisable);
+
+        vm.roll(block.number + 5);
+        facet.exposedCalculateAndSetConviction(proposalId, 100);
+        (uint256 blockStillFrozen, uint256 convictionStillFrozen) = facet.getProposalSnapshot(proposalId);
+        assertEq(blockStillFrozen, block.number);
+        assertEq(convictionStillFrozen, convictionAtSnapshot);
+
+        registryCommunity.setStrategyEnabled(true);
+        vm.roll(block.number + 5);
+        facet.exposedCalculateAndSetConviction(proposalId, 100);
+        (uint256 blockAfterEnable, uint256 convictionAfterEnable) = facet.getProposalSnapshot(proposalId);
+        assertEq(blockAfterEnable, block.number);
+        assertGt(convictionAfterEnable, convictionAtSnapshot);
     }
 
     function test_pauseHelpers_enforceNotPaused() public {

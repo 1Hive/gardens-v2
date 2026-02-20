@@ -15,6 +15,7 @@ import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import {IStrategy} from "allo-v2-contracts/core/interfaces/IStrategy.sol";
 import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {RegistryCommunity} from "../src/RegistryCommunity/RegistryCommunity.sol";
 
 contract MockGDAAgreement {
     int96 public flowRate;
@@ -188,6 +189,26 @@ contract MockAllo {
     }
 }
 
+contract MockRegistryCommunityStreaming {
+    error StrategyDisabled();
+
+    bool public strategyEnabled = true;
+
+    function setStrategyEnabled(bool enabled) external {
+        strategyEnabled = enabled;
+    }
+
+    function onlyStrategyEnabled(address) external view {
+        if (!strategyEnabled) {
+            revert StrategyDisabled();
+        }
+    }
+
+    function enabledStrategies(address) external view returns (bool) {
+        return strategyEnabled;
+    }
+}
+
 contract MockStreamingEscrowSync {
     uint256 public requiredDeposit;
     uint256 public syncCount;
@@ -277,6 +298,10 @@ contract CVStreamingFacetHarness is CVStreamingFacet {
         allo = IAllo(_allo);
     }
 
+    function setupRegistryCommunity(address _registry) external {
+        registryCommunity = RegistryCommunity(_registry);
+    }
+
     function setupPool(uint256 _poolId) external {
         poolId = _poolId;
     }
@@ -322,6 +347,15 @@ contract CVStreamingFacetHarness is CVStreamingFacet {
         proposals[proposalId].blockLast = blockLast;
         proposals[proposalId].submitter = address(0x1);
     }
+
+    function getProposalSnapshot(uint256 proposalId)
+        external
+        view
+        returns (uint256 blockLast, uint256 convictionLast, uint8 status)
+    {
+        Proposal storage p = proposals[proposalId];
+        return (p.blockLast, p.convictionLast, uint8(p.proposalStatus));
+    }
 }
 
 contract CVStreamingFacetTest is Test {
@@ -332,6 +366,7 @@ contract CVStreamingFacetTest is Test {
     MockHost internal host;
     MockSuperfluidPool internal gdaPool;
     MockAllo internal allo;
+    MockRegistryCommunityStreaming internal registry;
 
     address internal escrow1;
     address internal escrow2;
@@ -351,11 +386,13 @@ contract CVStreamingFacetTest is Test {
         superToken = new MockSuperToken(address(host), address(token));
         gdaPool = new MockSuperfluidPool();
         allo = new MockAllo();
+        registry = new MockRegistryCommunityStreaming();
         escrow1 = address(new MockStreamingEscrowSync());
         escrow2 = address(new MockStreamingEscrowSync());
         escrow3 = address(new MockStreamingEscrowSync());
 
         facet.setupAllo(address(allo));
+        facet.setupRegistryCommunity(address(registry));
         facet.setupPool(1);
         facet.setupSuperfluidToken(address(superToken));
         facet.setupSuperfluidGDA(address(gdaPool));
@@ -560,6 +597,46 @@ contract CVStreamingFacetTest is Test {
         facet.rebalance();
 
         assertEq(gdaPool.updateCount(), 0);
+    }
+
+    function test_rebalance_disabled_pool_sets_flow_to_zero_only() public {
+        superToken.mint(address(facet), 1_000 ether);
+        facet.setupStreamingRatePerSecond(1_000_000_000);
+        facet.setupTotalPointsActivated(1_000 * D);
+        facet.setupProposal(1, ProposalStatus.Active, 100 ether, 0, block.number - 10);
+        facet.setStreamingEscrowExternal(1, escrow1);
+
+        facet.rebalance();
+        assertGt(gdaPool.memberUnits(escrow1), 0);
+        gdaAgreement.setFlowRate(123);
+
+        registry.setStrategyEnabled(false);
+        vm.roll(block.number + 5);
+        facet.rebalance();
+
+        assertGt(gdaPool.memberUnits(escrow1), 0);
+        assertEq(gdaAgreement.flowRate(), 0);
+    }
+
+    function test_rebalance_disabled_pool_freezes_conviction_after_snapshot() public {
+        facet.setupProposal(1, ProposalStatus.Active, 100 ether, 0, block.number - 10);
+        facet.setStreamingEscrowExternal(1, escrow1);
+        (uint256 initialBlockLast, uint256 initialConviction,) = facet.getProposalSnapshot(1);
+
+        registry.setStrategyEnabled(false);
+        vm.roll(block.number + 5);
+        facet.rebalance();
+
+        (uint256 blockLastAfterSnapshot, uint256 convictionAfterSnapshot,) = facet.getProposalSnapshot(1);
+        assertEq(blockLastAfterSnapshot, initialBlockLast);
+        assertEq(convictionAfterSnapshot, initialConviction);
+
+        vm.roll(block.number + 12);
+        facet.rebalance();
+
+        (uint256 blockLastAfterSecondRebalance, uint256 convictionAfterSecondRebalance,) = facet.getProposalSnapshot(1);
+        assertEq(blockLastAfterSecondRebalance, blockLastAfterSnapshot);
+        assertEq(convictionAfterSecondRebalance, convictionAfterSnapshot);
     }
 
     // Note: Extreme edge case tests removed as they cause overflow in conviction calculation
