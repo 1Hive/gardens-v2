@@ -1,5 +1,8 @@
 // Import necessary Playwright and Synpress modules
 import { defineConfig, devices } from "@playwright/test";
+import { config } from "dotenv";
+
+config();
 
 const browserChannel = process.env.PLAYWRIGHT_BROWSER_CHANNEL;
 const browserExecutablePath = process.env.PLAYWRIGHT_EXECUTABLE_PATH;
@@ -13,10 +16,11 @@ const chromiumUse = {
 export default defineConfig({
   testDir: "./tests",
   testMatch: ["**/*.e2e.ts"],
-  fullyParallel: true,
+  fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  workers: process.env.CI === "true" ? 1 : undefined,
+  // workers: 1,
   reporter: "html",
   use: {
     // Set base URL for tests
