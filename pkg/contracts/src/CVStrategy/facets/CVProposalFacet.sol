@@ -135,13 +135,13 @@ contract CVProposalFacet is CVStrategyBaseFacet, CVStreamingBase {
             revert OnlySubmitter(proposalId, proposals[proposalId].submitter, msg.sender);
         }
 
+        proposals[proposalId].proposalStatus = ProposalStatus.Cancelled;
+
         collateralVault.withdrawCollateral(
             proposalId,
             proposals[proposalId].submitter,
             arbitrableConfigs[proposals[proposalId].arbitrableConfigVersion].submitterCollateralAmount
         );
-
-        proposals[proposalId].proposalStatus = ProposalStatus.Cancelled;
 
         // Streaming proposal handling
         if (proposalType == ProposalType.Streaming) {
@@ -187,26 +187,19 @@ contract CVProposalFacet is CVStrategyBaseFacet, CVStreamingBase {
 
         // 1763099258 - 1763007730  = 91528 > 3600
         bool timeout = block.timestamp - proposal.creationTimestamp > ONE_HOUR;
+        bool beneficiaryChanged = proposal.beneficiary != _beneficiary;
+        bool metadataChanged = !proposal.metadata.pointer.equal(_metadata.pointer);
 
-        if (proposal.beneficiary != _beneficiary) {
+        if (beneficiaryChanged) {
             if (timeout) {
                 revert BeneficiaryEditTimeout(
                     _proposalId, proposal.beneficiary, _beneficiary, proposal.creationTimestamp
                 );
             }
-
             proposal.beneficiary = _beneficiary;
-
-            // Streaming proposal handling
-            if (proposalType == ProposalType.Streaming) {
-                address escrow = streamingEscrow(_proposalId);
-                if (escrow != address(0)) {
-                    StreamingEscrow(escrow).setBeneficiary(_beneficiary);
-                }
-            }
         }
 
-        if (!proposal.metadata.pointer.equal(_metadata.pointer)) {
+        if (metadataChanged) {
             if (timeout) {
                 revert MetadataEditTimeout(
                     _proposalId, proposal.metadata.pointer, _metadata.pointer, proposal.creationTimestamp
@@ -214,6 +207,14 @@ contract CVProposalFacet is CVStrategyBaseFacet, CVStreamingBase {
             }
 
             proposal.metadata.pointer = _metadata.pointer;
+        }
+
+        // Streaming proposal handling
+        if (beneficiaryChanged && proposalType == ProposalType.Streaming) {
+            address escrow = streamingEscrow(_proposalId);
+            if (escrow != address(0)) {
+                StreamingEscrow(escrow).setBeneficiary(_beneficiary);
+            }
         }
 
         emit ProposalEdited(_proposalId, _metadata, _beneficiary, _requestedAmount);

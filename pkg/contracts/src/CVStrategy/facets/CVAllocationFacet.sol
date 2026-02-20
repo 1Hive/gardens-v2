@@ -236,11 +236,10 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
                 revert ConvictionUnderMinimumThreshold(convictionLast, threshold, proposals[proposalId].requestedAmount);
             }
 
+            proposals[proposalId].proposalStatus = ProposalStatus.Executed;
             _transferAmount(
                 allo.getPool(poolId).token, proposals[proposalId].beneficiary, proposals[proposalId].requestedAmount
             );
-
-            proposals[proposalId].proposalStatus = ProposalStatus.Executed;
             collateralVault.withdrawCollateral(
                 proposalId,
                 proposals[proposalId].submitter,
