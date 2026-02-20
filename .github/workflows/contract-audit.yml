@@ -37,6 +37,7 @@ jobs:
         uses: crytic/slither-action@v0.4.1
         with:
           target: .
+          node-version: 20
           sarif: results.sarif
           slither-args: --foundry-out-directory=pkg/contracts/out --exclude-dependencies --exclude-low --exclude-informational --exclude-optimization
           fail-on: high
