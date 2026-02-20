@@ -66,8 +66,25 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       document.documentElement.scrollTop = 0;
       document.body.scrollTop = 0;
     };
+    setMobileMenuOpen(false);
     requestAnimationFrame(() => requestAnimationFrame(reset));
   }, [currentUrl]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+
+    if (mobileMenuOpen) {
+      document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
+    }
+
+    return () => {
+      document.body.style.overflow = previousBodyOverflow;
+      document.documentElement.style.overflow = previousHtmlOverflow;
+    };
+  }, [mobileMenuOpen]);
 
   const handleCampaignClick = () => {
     if (typeof window !== "undefined") {
@@ -117,7 +134,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </aside> */}
 
       {/* Top Navigation Bar - Fixed with lower z-index */}
-      <nav className="fixed top-0 left-0 right-0 z-40 px-4 lg:px-6 py-3 bg-neutral min-h-[71px] border-b border-border-neutral dark:border-border-neutral/50 flex flex-col">
+      <nav className="fixed top-0 left-0 right-0 z-50 h-[79px] px-4 lg:px-6 py-3 bg-neutral border-b border-border-neutral dark:border-border-neutral/50 flex flex-col justify-center">
         <div className="flex items-center justify-between h-full gap-3">
           <div className="flex items-center gap-2">
             <Link href="/gardens" className="flex items-center gap-3 text-sm">
@@ -143,7 +160,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
           <div className="hidden md:flex items-center justify-center gap-6">
             <Link href="/gardens" className="flex items-center gap-4 text-sm">
-              <h6 className="hover:opacity-70">Communities</h6>
+              <h5 className="hover:opacity-70">Communities</h5>
             </Link>
             <Link
               href="/gardens/campaigns"
@@ -151,7 +168,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               onClick={handleCampaignClick}
             >
               <div className="relative inline-flex items-center">
-                <h6 className="hover:opacity-70">Campaigns</h6>
+                <h5 className="hover:opacity-70">Campaigns</h5>
                 {showCampaignBadge && (
                   <span className="absolute bg-primary-content dark:bg-[#98ff98] -top-1 -right-2 rounded-full text-neutral w-2 h-2 font-bold leading-none flex items-center justify-center" />
                 )}
@@ -164,7 +181,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               rel="noreferrer"
               className="flex items-center gap-2 text-sm hover:opacity-70"
             >
-              <span>Documentation</span>
+              <h5 className="hover:opacity-70">Documentation</h5>
               <ArrowTopRightOnSquareIcon className="h-4 w-4" aria-hidden />
             </a>
           </div>
@@ -188,51 +205,55 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </div>
 
         {mobileMenuOpen && (
-          <div className="md:hidden mt-3 flex flex-col gap-3 rounded-lg border border-border-neutral bg-neutral p-4 shadow-lg">
-            <Link
-              href="/gardens/"
-              className="text-base font-medium hover:opacity-70 px-1 py-2 rounded-md"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Communities
-            </Link>
-            <Link
-              href="/gardens/campaigns"
-              className="text-base font-medium hover:opacity-70 px-1 py-2 rounded-md"
-              onClick={() => {
-                handleCampaignClick();
-                setMobileMenuOpen(false);
-              }}
-            >
-              <span className="relative inline-flex items-center">
-                Campaigns
-                {showCampaignBadge && (
-                  <span className="absolute -top-2 -right-4 h-4 w-4 rounded-full bg-primary-content text-neutral text-[10px] font-bold leading-none flex items-center justify-center">
-                    1
+          <div className="md:hidden fixed top-[79px] left-0 right-0 z-50 border-b border-border-neutral dark:border-border-neutral/50 bg-neutral/95 backdrop-blur-sm">
+            <div className="px-4 py-2">
+              <div className="flex flex-col gap-3 rounded-lg border border-border-neutral bg-neutral p-4 shadow-lg">
+                <Link
+                  href="/gardens/"
+                  className="text-base font-medium hover:opacity-70 px-1 py-2 rounded-md"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Communities
+                </Link>
+                <Link
+                  href="/gardens/campaigns"
+                  className="text-base font-medium hover:opacity-70 px-1 py-2 rounded-md"
+                  onClick={() => {
+                    handleCampaignClick();
+                    setMobileMenuOpen(false);
+                  }}
+                >
+                  <span className="relative inline-flex items-center">
+                    Campaigns
+                    {showCampaignBadge && (
+                      <span className="absolute -top-2 -right-4 h-4 w-4 rounded-full bg-primary-content text-neutral text-[10px] font-bold leading-none flex items-center justify-center">
+                        1
+                      </span>
+                    )}
                   </span>
-                )}
-              </span>
-            </Link>
+                </Link>
 
-            <a
-              href="https://docs.gardens.fund"
-              target="_blank"
-              rel="noreferrer"
-              className="text-base font-medium hover:opacity-70 px-1 py-2 rounded-md flex items-center gap-2"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Documentation
-              <ArrowTopRightOnSquareIcon className="h-4 w-4" aria-hidden />
-            </a>
-            <div className="border-t border-border-neutral/70 dark:border-border-neutral/40 pt-3 flex items-center justify-between gap-3">
-              <span className="text-base font-medium">Theme</span>
-              <ThemeButton />
+                <a
+                  href="https://docs.gardens.fund"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-base font-medium hover:opacity-70 px-1 py-2 rounded-md flex items-center gap-2"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Documentation
+                  <ArrowTopRightOnSquareIcon className="h-4 w-4" aria-hidden />
+                </a>
+                <div className="border-t border-border-neutral/70 dark:border-border-neutral/40 pt-3 flex items-center justify-between gap-3">
+                  <span className="text-base font-medium">Theme</span>
+                  <ThemeButton />
+                </div>
+              </div>
             </div>
           </div>
         )}
       </nav>
 
-      <div className="flex justify-center items-start pt-[71px] min-h-screen">
+      <div className="flex justify-center items-start pt-[79px] min-h-screen">
         <div className="w-full mx-auto">
           <div className="min-h-[400px]">
             {/* Main content */}
@@ -243,7 +264,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       {/* Bootom floating divs */}
       <div
-        className="fixed bottom-4 left-4 tooltip tooltip-top-right tooltip-warning z-50 badge bg-secondary-soft dark:bg-secondary-soft-dark text-secondary-content cursor-pointer"
+        className="hidden sm:fixed bottom-4 left-4 tooltip tooltip-top-right tooltip-warning z-50 badge bg-secondary-soft dark:bg-secondary-soft-dark text-secondary-content cursor-pointer"
         data-tip="️️Disclaimer: our smart contracts have not undergone a third party security audit, use at your own risk."
       >
         Beta
@@ -258,7 +279,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           forceShowTooltip
           tooltip={"Discord\nSupport"}
           icon={<HeadphoneIcon />}
-          className="!p-2"
+          className="!p-2 !hidden sm:!block"
         />
       </a>
       <Footer />

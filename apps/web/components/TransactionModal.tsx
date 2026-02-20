@@ -27,6 +27,7 @@ export type TransactionModalProps = {
   transactions: TransactionProps[];
   onClose: () => void;
   isOpen: boolean;
+  testId?: string;
 };
 
 export function TransactionModal({
@@ -35,9 +36,16 @@ export function TransactionModal({
   transactions,
   onClose,
   isOpen,
+  testId,
 }: TransactionModalProps) {
   return (
-    <Modal title={label} onClose={onClose} isOpen={isOpen} size="small">
+    <Modal
+      title={label}
+      onClose={onClose}
+      isOpen={isOpen}
+      size="small"
+      testId={testId}
+    >
       {children}
       <div className="w-[420px]">
         {transactions.map((props, index) => {

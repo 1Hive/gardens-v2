@@ -123,7 +123,7 @@ export function ConnectWallet() {
               //button to connect wallet
               if (!connected) {
                 return (
-                  <Button onClick={openConnectModal}>
+                  <Button onClick={openConnectModal} testId="connectButton">
                     <Image
                       src={walletIcon}
                       alt="wallet"
@@ -180,6 +180,7 @@ export function ConnectWallet() {
                                   undefined
                                 )
                               }
+                              data-testid="accounts"
                             >
                               {ensName ?? formatAddress(acc.address)}
                             </h5>
@@ -193,8 +194,11 @@ export function ConnectWallet() {
                                   <ChainIcon chain={chain.id} height={14} />
                                   <p className="text-xs ml-1">{chain.name}</p>
                                 </>
-                              : <p className="text-xs text-danger-content dark:text-danger-content">
-                                  Switch to network {chainFromPath?.name ?? ""}
+                              : <p
+                                  className="text-xs text-danger-content dark:text-danger-content"
+                                  data-testid="wrong-network"
+                                >
+                                  Switch To {chainFromPath?.name ?? ""} Network
                                 </p>
                               }
                             </div>
@@ -285,6 +289,7 @@ export function ConnectWallet() {
                                       strokeWidth={10}
                                     />
                                   }
+                                  testId="switch-network-button"
                                 >
                                   <TooltipIfOverflow>
                                     {`Switch to ${chainFromPath?.name ?? ""}`}

@@ -255,7 +255,7 @@ export const IncreasePower = ({
   // }, [votingPowerTx.status]);
 
   return (
-    <section className="section-layout space-y-5">
+    <section className="section-layout space-y-4">
       <h3>Staking</h3>
       <TransactionModal
         label={`Stake ${tokenSymbol} in ${communityName}`}
@@ -313,7 +313,7 @@ export const IncreasePower = ({
           <>
             {/* Available to stake*/}
             <div className="flex-1 flex items-baseline justify-between">
-              <p className="text-sm">Available</p>
+              <p className="text-xs sm:text-sm">Available</p>
               <DisplayNumber
                 number={roundToSignificant(
                   accountTokenBalancePlusStakeAmount ?? 0,
@@ -321,13 +321,14 @@ export const IncreasePower = ({
                 )}
                 tokenSymbol={tokenSymbol}
                 compact={true}
-                valueClassName="text-lg"
-                symbolClassName="text-sm"
+                valueClassName="text-md sm:text-lg"
+                symbolClassName="text-xs sm:text-sm"
               />
             </div>
             <div className="relative w-full">
               <label className="input input-bordered input-info flex items-center gap-2 w-full dark:bg-primary-soft-dark">
                 <input
+                  data-testid="stake-input"
                   type="number"
                   value={stakedAmount}
                   placeholder="Amount"
@@ -347,7 +348,7 @@ export const IncreasePower = ({
                       );
                   }}
                 />
-                <span className="">{tokenSymbol}</span>
+                <span className="text-sm sm:text-md">{tokenSymbol}</span>
               </label>
             </div>
 
@@ -414,11 +415,12 @@ export const IncreasePower = ({
                     <ArrowTrendingUpIcon className="h-5 w-5" />
                   : <ArrowTrendingDownIcon className="h-5 w-5" />
                 }
-                className="w-full"
+                className="!w-full"
                 isLoading={
                   increasePowerStatus === "loading" ||
                   decreaseStatus === "loading"
                 }
+                testId="btn-stake"
               >
                 {stakeDifference >= 0 ? "Stake" : "Unstake"}
               </Button>

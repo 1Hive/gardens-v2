@@ -14,8 +14,8 @@ type InfoWrapperProps = {
 
 const sizeMap = {
   sm: { width: 18, height: 18 },
-  md: { width: 22, height: 22 },
-  lg: { width: 2, height: 2 },
+  md: { width: 20, height: 20 },
+  lg: { width: 24, height: 24 },
 };
 
 export function InfoWrapper({
@@ -31,7 +31,7 @@ export function InfoWrapper({
   const { width, height } = sizeMap[size];
 
   return (
-    <div className="flex gap-1 items-center mx-1 h-fit">
+    <div className="flex gap-1 items-center justify-center mx-1 h-fit">
       {!hoverOnChildren && (
         <div className={`${contentFlex ? "flex-1" : ""}`}>{children}</div>
       )}
@@ -44,7 +44,7 @@ export function InfoWrapper({
         )}
         {!hideIcon &&
           (customIcon ?? (
-            <InformationCircleIcon width={width} height={height} />
+            <InformationCircleIcon className="w-4 h-4 sm:w-5 sm:h-5" />
           ))}
       </div>
     </div>

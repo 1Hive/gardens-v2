@@ -1,5 +1,6 @@
 {
   "version": "0.2.0",
+  "runtimeExecutable": "/home/corantin/.nvm/versions/node/v18.20.4/bin/node",
   "configurations": [
     {
       "name": "Next.js: debug server-side",
