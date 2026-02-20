@@ -609,6 +609,7 @@ export default function ClientPage({
                   disabled={!isConnected || missmatchUrl}
                   tooltip={tooltipMessage}
                   icon={<PlusIcon height={24} width={24} />}
+                  testId="btn-create-pool"
                 >
                   Create New Pool
                 </Button>

@@ -36,6 +36,7 @@ type Props = {
   registerOptions?: RegisterOptions;
   onChange?: React.ChangeEventHandler<HTMLInputElement>;
   suffix?: React.ReactNode;
+  testId?: string;
   // trigger?: UseFormTrigger<any>;
 };
 
@@ -57,6 +58,7 @@ export const FormAddressInput = ({
   registerOptions,
   // trigger,
   suffix,
+  testId,
   ...rest
 }: Props) => {
   const debouncedValue = useDebounce(value, 500);
@@ -254,6 +256,7 @@ export const FormAddressInput = ({
             />
           : null)
         }
+        testId={testId}
       />
     </div>
   );

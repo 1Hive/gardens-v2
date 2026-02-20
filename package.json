@@ -12,7 +12,8 @@
     "lint": "turbo run lint",
     "test": "turbo run test",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "build:docs": "turbo run build --filter=docs..."
+    "build:docs": "turbo run build --filter=docs...",
+    "postinstall": "pnpm --filter e2e exec playwright install chromium"
   },
   "devDependencies": {
     "eslint-config-custom": "workspace:*",

@@ -677,6 +677,7 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
               registerKey="title"
               type="text"
               placeholder="Your pool name..."
+              testId="input-pool-name"
             />
             <FormInput
               label="Description"
@@ -690,6 +691,7 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
               type="markdown"
               rows={7}
               placeholder="Enter a description of your pool..."
+              testId="input-pool-description"
             />
             <FormSelect
               label="Pool type"
@@ -722,6 +724,7 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
                   placeholder="0x.."
                   className="font-mono text-sm w-full max-w-[29rem]"
                   suffix={customTokenData?.symbol}
+                  testId="input-token-address"
                 />
                 {networkSfMetadata && poolTokenAddress && customTokenData && (
                   <div className="mb-2">
@@ -1205,11 +1208,15 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
               isLoading={loading}
               disabled={!isConnected || missmatchUrl}
               tooltip={tooltipMessage}
+              testId="btn-submit-pool"
             >
               Submit
             </Button>
           </div>
-        : <Button type="submit">Preview</Button>}
+        : <Button type="submit" testId="btn-preview-pool">
+            Preview
+          </Button>
+        }
       </div>
     </form>
   );

@@ -34,6 +34,7 @@ type ButtonProps = {
   icon?: React.ReactNode;
   walletConnected?: boolean;
   style?: React.CSSProperties;
+  testId?: string;
 };
 
 export type Color =
@@ -122,6 +123,7 @@ export function Button({
   icon,
   type = "button",
   style,
+  testId,
 }: ButtonProps) {
   const buttonElement = (
     <button
@@ -138,6 +140,7 @@ export function Button({
           : ""
         : ""
       }
+      data-testid={testId ?? "button"}
     >
       {isLoading && (
         <span className={"loading loading-spinner loading-sm text-inherit"} />

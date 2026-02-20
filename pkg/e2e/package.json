@@ -1,0 +1,25 @@
+{
+  "name": "e2e",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "build-cache:force": "pnpm exec synpress wallet-setup --force",
+    "build-cache": "pnpm exec synpress wallet-setup",
+    "test": "pnpm run build-cache && playwright test",
+    "test:headed": "pnpm run build-cache && playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "test:debug": "playwright test --debug"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "1.48.2",
+    "@synthetixio/synpress": "4.1.1",
+    "@synthetixio/synpress-metamask": "0.0.12",
+    "@types/node": "^24.1.0",
+    "dotenv": "^17.2.1"
+  }
+}

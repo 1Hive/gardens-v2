@@ -60,6 +60,7 @@ type MarkdownEditorProps = {
   onChange?: React.ChangeEventHandler<HTMLInputElement>;
   disabled?: boolean;
   readOnly?: boolean;
+  testId?: string;
 } & Omit<React.ComponentProps<typeof MDXEditor>, "onChange" | "markdown">;
 
 const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorProps>(
@@ -72,6 +73,7 @@ const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorProps>(
       errors,
       disabled = false,
       readOnly = false,
+      testId,
       ...rest
     },
     ref,
@@ -255,6 +257,7 @@ const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorProps>(
           tabIndex={-1}
           onMouseDown={handleShellMouseDown}
           onFocus={handleShellFocus}
+          data-testid={testId}
         >
           <MDXEditor
             ref={editorRef}

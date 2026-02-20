@@ -17,6 +17,7 @@ interface ModalProps {
     | "extra-large"
     | "ultra-large";
   footer?: ReactNode | null;
+  testId?: string;
 }
 
 export function Modal({
@@ -28,6 +29,7 @@ export function Modal({
   className = "",
   size = "medium",
   footer = null,
+  testId,
 }: ModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
 
@@ -85,7 +87,11 @@ export function Modal({
             <h3>{title ?? ""}</h3>
           </div>
           <div className="flex items-center pl-16 overflow-auto h-4/5">
-            <button onClick={handleClose} className="h-7 w-7 cursor-pointer">
+            <button
+              onClick={handleClose}
+              className="h-7 w-7 cursor-pointer"
+              data-testid={`modal-close-button-${testId}`}
+            >
               <XMarkIcon />
             </button>
           </div>
@@ -101,7 +107,7 @@ export function Modal({
       </div>
 
       <form method="dialog" className="modal-backdrop">
-        <button>close</button>
+        <button data-testid={`modal-close-backdrop-${testId}`}>close</button>
       </form>
     </dialog>
   );
