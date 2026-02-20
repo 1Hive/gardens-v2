@@ -37,6 +37,7 @@ contract CVProposalFacet is CVStrategyBaseFacet, CVStreamingBase {
     ); // 0x7195b4df
     error CannotEditRequestedAmountWithActiveSupport(uint256 proposalId, uint256 currentAmount, uint256 newAmount); // 0xb5018617
     error StreamingEscrowFactoryNotSet(); // 0x1dd8d4b9
+    error UpdateMemberUnitsFailed(address member, uint128 units);
 
     /*|--------------------------------------------|*/
     /*|              EVENTS                        |*/
@@ -113,7 +114,9 @@ contract CVProposalFacet is CVStrategyBaseFacet, CVStreamingBase {
             setStreamingEscrow(proposalId, escrow);
 
             // Add a member to the GDA pool with 0 units initially
-            superfluidGDA.updateMemberUnits(address(escrow), 0);
+            if (!superfluidGDA.updateMemberUnits(address(escrow), 0)) {
+                revert UpdateMemberUnitsFailed(address(escrow), 0);
+            }
         }
 
         emit ProposalCreated(poolId, proposalId);
@@ -144,7 +147,10 @@ contract CVProposalFacet is CVStrategyBaseFacet, CVStreamingBase {
         if (proposalType == ProposalType.Streaming) {
             address escrow = streamingEscrow(proposalId);
             // Remove member from the GDA pool
-            superfluidGDA.updateMemberUnits(escrow == address(0) ? proposals[proposalId].beneficiary : escrow, 0);
+            address member = escrow == address(0) ? proposals[proposalId].beneficiary : escrow;
+            if (!superfluidGDA.updateMemberUnits(member, 0)) {
+                revert UpdateMemberUnitsFailed(member, 0);
+            }
             if (escrow != address(0)) {
                 setStreamingEscrow(proposalId, address(0));
             }

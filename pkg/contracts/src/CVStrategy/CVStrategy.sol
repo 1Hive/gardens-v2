@@ -100,6 +100,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     error OnlyCouncilSafeOrMember(address sender, address councilSafe); // 0xfa33758e
     error StrategyPaused(address controller);
     error StrategySelectorPaused(bytes4 selector, address controller);
+    error SuperfluidPoolCreationFailed();
 
     /*|--------------------------------------------|*/
     /*|              CUSTOM EVENTS                 |*/
@@ -241,12 +242,15 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
                 revert TokenCannotBeZero(address(superfluidToken));
             }
 
-            (, ISuperfluidPool pool) = GDAv1Forwarder(0x6DA13Bde224A05a288748d857b9e7DDEffd1dE08)
+            (bool success, ISuperfluidPool pool) = GDAv1Forwarder(0x6DA13Bde224A05a288748d857b9e7DDEffd1dE08)
                 .createPool(
                     ISuperfluidToken(superfluidToken),
                     address(this), // pool admin = your StreamingPool contract
                     PoolConfig({transferabilityForUnitsOwner: false, distributionFromAnyAddress: false})
                 );
+            if (!success || address(pool) == address(0)) {
+                revert SuperfluidPoolCreationFailed();
+            }
 
             superfluidGDA = pool;
         }

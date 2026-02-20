@@ -29,6 +29,7 @@ contract StreamingEscrow is ProxyOwnableUpgrader, SuperAppBase {
     error InvalidAddress(); // 0x9f1f3e28
     error OnlyHost(address sender); // 0x1cb0a1d5
     error SuperTokenTransferFailed(address to, uint256 amount);
+    error SetOutflowFailed(address receiver, int96 flowRate);
 
     /*|--------------------------------------------|*/
     /*|              STORAGE                       |*/
@@ -247,6 +248,8 @@ contract StreamingEscrow is ProxyOwnableUpgrader, SuperAppBase {
         if (receiver == address(0)) {
             return;
         }
-        superToken.flow(receiver, flowRate);
+        if (!superToken.flow(receiver, flowRate)) {
+            revert SetOutflowFailed(receiver, flowRate);
+        }
     }
 }

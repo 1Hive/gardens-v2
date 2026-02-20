@@ -28,6 +28,8 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
     /*|--------------------------------------------|*/
     error StreamingRateOverflow(uint256 streamingRatePerSecond);
     error SuperTokenTransferFailed(address to, uint256 amount);
+    error UpdateMemberUnitsFailed(address member, uint128 units);
+    error ApproveFailed(address token, address spender, uint256 amount);
 
     /*|--------------------------------------------|*/
     /*|              FUNCTIONS                     |*/
@@ -65,7 +67,9 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
             // Ensure non-active proposals never keep receiving pool share.
             if (proposal.proposalStatus != ProposalStatus.Active && proposal.proposalStatus != ProposalStatus.Disputed)
             {
-                superfluidGDA.updateMemberUnits(escrow, 0);
+                if (!superfluidGDA.updateMemberUnits(escrow, 0)) {
+                    revert UpdateMemberUnitsFailed(escrow, 0);
+                }
                 emit StreamMemberUnitUpdated(escrow, 0);
                 continue;
             }
@@ -87,7 +91,9 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
 
             // Update the member units in the GDA pool
             // This determines the proportional share of the total streaming flow
-            superfluidGDA.updateMemberUnits(escrow, units);
+            if (!superfluidGDA.updateMemberUnits(escrow, units)) {
+                revert UpdateMemberUnitsFailed(escrow, units);
+            }
 
             emit StreamMemberUnitUpdated(escrow, int96(int128(units)));
         }
@@ -160,7 +166,9 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
         }
 
         // Approve supertoken to spend the underlying tokens
-        IERC20(poolToken).approve(address(superfluidToken), unwrappedBalance);
+        if (!IERC20(poolToken).approve(address(superfluidToken), unwrappedBalance)) {
+            revert ApproveFailed(poolToken, address(superfluidToken), unwrappedBalance);
+        }
 
         // Wrap tokens to supertokens
         superfluidToken.upgrade(unwrappedBalance);
