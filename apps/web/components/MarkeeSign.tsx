@@ -6,14 +6,12 @@ import MarkeeModal from "./MarkeeModal";
 
 const MARKEE_SUBGRAPH_ID = "8kMCKUHSY7o6sQbsvufeLVo8PifxrsnagjVTMGcs6KdF";
 const SUBGRAPH_GATEWAY_KEY = process.env.NEXT_PUBLIC_SUBGRAPH_KEY;
-const MARKEE_SUBGRAPH = SUBGRAPH_GATEWAY_KEY
+export const MARKEE_SUBGRAPH_URL = SUBGRAPH_GATEWAY_KEY
   ? `https://gateway.thegraph.com/api/${SUBGRAPH_GATEWAY_KEY}/subgraphs/id/${MARKEE_SUBGRAPH_ID}`
   : `https://api.studio.thegraph.com/query/1742437/markee-base/version/latest`;
 
-const GARDENS_STRATEGY = "0x346419315740f085ba14ca7239d82105a9a2bdbe";
+export const GARDENS_STRATEGY = "0x346419315740f085ba14ca7239d82105a9a2bdbe";
 
-// Query the strategy directly and get markees as derived field
-// This avoids where-filter syntax issues
 const QUERY = `{
   topDawgPartnerStrategy(id: "${GARDENS_STRATEGY}") {
     minimumPrice
@@ -44,7 +42,7 @@ export default function MarkeeSign() {
 
   const fetchData = useCallback(() => {
     setLoading(true);
-    fetch(MARKEE_SUBGRAPH, {
+    fetch(MARKEE_SUBGRAPH_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ query: QUERY }),
@@ -82,30 +80,26 @@ export default function MarkeeSign() {
       ? `${parseFloat(formatEther(data.totalFundsAdded)).toFixed(4)} ETH`
       : null;
 
+  const badgeLabel = ethDisplay ? `${ethDisplay} to change` : "be first!";
+
   return (
     <>
       <button
         onClick={() => setModalOpen(true)}
-        className="group relative mx-auto mt-6 cursor-pointer"
+        className="group relative mx-auto mt-6 mb-4 cursor-pointer"
         aria-label="Click to edit this Markee sign"
       >
-        {/* Sign body */}
-        <div className="border border-neutral-content/30 rounded px-10 py-5 min-w-[280px] max-w-sm bg-neutral hover:border-primary-content/50 transition-colors duration-200">
-          <p className="font-mono text-neutral-content text-base group-hover:text-primary-content transition-colors duration-200 text-center leading-snug">
+        {/* Sign body — 1.5× original size */}
+        <div className="border border-neutral-content/30 rounded px-16 py-8 min-w-[420px] max-w-lg bg-neutral hover:border-primary-content/50 transition-colors duration-200">
+          <p className="font-mono text-neutral-content text-lg group-hover:text-primary-content transition-colors duration-200 text-center leading-snug">
             {loading ? "loading..." : data.message}
           </p>
         </div>
-        {/* ETH badge */}
-        {ethDisplay && (
-          <span className="absolute -top-2.5 -right-2.5 rounded-full bg-primary px-2 py-0.5 text-xs font-mono font-semibold text-primary-content shadow-sm">
-            {ethDisplay}
-          </span>
-        )}
-        {!ethDisplay && !loading && (
-          <span className="absolute -top-2.5 -right-2.5 rounded-full border border-neutral-content/30 bg-neutral px-2 py-0.5 text-xs text-neutral-content/50">
-            be first!
-          </span>
-        )}
+
+        {/* Price badge — bottom center on the card border */}
+        <span className="absolute -bottom-3 left-1/2 -translate-x-1/2 rounded-full border border-neutral-content/30 bg-neutral px-3 py-0.5 text-xs font-mono text-neutral-content/60 group-hover:border-primary-content/40 group-hover:text-primary-content/70 transition-colors duration-200 whitespace-nowrap">
+          {loading ? "···" : badgeLabel}
+        </span>
       </button>
 
       {modalOpen && (
@@ -117,7 +111,9 @@ export default function MarkeeSign() {
           }}
           strategyAddress="0x346419315740F085Ba14cA7239D82105a9a2BDBE"
           currentTopDawg={data.totalFundsAdded}
+          currentMessage={data.message}
           minimumPrice={data.minimumPrice}
+          subgraphUrl={MARKEE_SUBGRAPH_URL}
         />
       )}
     </>
