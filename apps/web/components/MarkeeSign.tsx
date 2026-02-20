@@ -12,19 +12,16 @@ const MARKEE_SUBGRAPH = SUBGRAPH_GATEWAY_KEY
 
 const GARDENS_STRATEGY = "0x346419315740f085ba14ca7239d82105a9a2bdbe";
 
+// Query the strategy directly and get markees as derived field
+// This avoids where-filter syntax issues
 const QUERY = `{
-  markees(
-    first: 1
-    orderBy: totalFundsAdded
-    orderDirection: desc
-    where: { partnerStrategy: "${GARDENS_STRATEGY}" }
-  ) {
-    message
-    name
-    totalFundsAdded
-  }
   topDawgPartnerStrategy(id: "${GARDENS_STRATEGY}") {
     minimumPrice
+    markees(first: 1, orderBy: totalFundsAdded, orderDirection: desc) {
+      message
+      name
+      totalFundsAdded
+    }
   }
 }`;
 
@@ -58,12 +55,12 @@ export default function MarkeeSign() {
       })
       .then((res) => {
         if (res.errors) {
-          console.error("[MarkeeSign] GraphQL errors:", res.errors);
+          console.error("[MarkeeSign] GraphQL errors:", JSON.stringify(res.errors));
           return;
         }
         console.log("[MarkeeSign] subgraph response:", JSON.stringify(res.data));
-        const markee = res.data?.markees?.[0];
         const strategy = res.data?.topDawgPartnerStrategy;
+        const markee = strategy?.markees?.[0];
         setData({
           message: markee?.message ?? "this is a sign.",
           totalFundsAdded: BigInt(markee?.totalFundsAdded ?? 0),
