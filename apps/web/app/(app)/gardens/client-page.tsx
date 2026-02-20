@@ -18,8 +18,8 @@ import {
   gardensNight,
 } from "@/assets";
 import { Button, Communities } from "@/components";
-import MarkeeSign from "@/components/MarkeeSign";
 import { LightCommunity } from "@/components/Communities";
+import MarkeeSign from "@/components/MarkeeSign";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useFlag } from "@/hooks/useFlag";
 import { useSubgraphQueryMultiChain } from "@/hooks/useSubgraphQueryMultiChain";
