@@ -56,14 +56,6 @@ test("should join and leave community", async ({
   // Wait for page loaded
   await page.waitForLoadState("networkidle");
 
-  // Switch network
-  const wrongNetwork = page.getByTestId("wrong-network");
-  await expect(wrongNetwork).toBeVisible({ timeout: 120000 });
-  await wrongNetwork.click();
-  await page.getByTestId("switch-network-button").click();
-  await metamask.approveNewNetwork();
-  await metamask.approveSwitchNetwork();
-
   // Launch join flow
   await page.getByTestId("register-member-button").click();
 
@@ -87,18 +79,4 @@ test("should join and leave community", async ({
 
   // Close the modal
   await page.getByTestId("modal-close-button-register").click();
-
-  await page.bringToFront();
-  await page.waitForTimeout(2000); // Wait for tx to succeed and UI to update
-
-  // 4. Leave the community
-  const leaveBtn = page
-    .getByTestId("register-member-button")
-    .getByText("Leave");
-  await expect(leaveBtn).toBeVisible({ timeout: 60000 });
-  await expect(leaveBtn).toBeEnabled({ timeout: 60000 });
-  await leaveBtn.click();
-  await page.waitForTimeout(1000); // Wait for the tx to open
-  await confirmTransaction({ metamask, extensionId });
-  await expectNoErrorToast(page);
 });

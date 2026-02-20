@@ -328,6 +328,7 @@ export const IncreasePower = ({
             <div className="relative w-full">
               <label className="input input-bordered input-info flex items-center gap-2 w-full dark:bg-primary-soft-dark">
                 <input
+                  data-testid="stake-input"
                   type="number"
                   value={stakedAmount}
                   placeholder="Amount"
@@ -419,6 +420,7 @@ export const IncreasePower = ({
                   increasePowerStatus === "loading" ||
                   decreaseStatus === "loading"
                 }
+                testId="btn-stake"
               >
                 {stakeDifference >= 0 ? "Stake" : "Unstake"}
               </Button>

@@ -168,7 +168,8 @@ export async function confirmTransaction({
 }) {
   const notificationPageUrl = `chrome-extension://${extensionId}/notification.html`;
   let notificationPage: Page | undefined;
-  const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+  const sleep = (ms: number) =>
+    new Promise((resolve) => setTimeout(resolve, ms));
 
   // Wait for the transaction confirmation popup
   for (let i = 0; i < 40; i++) {
@@ -199,4 +200,15 @@ export async function confirmTransaction({
 
   await confirmBtn.click({ timeout: 40000 });
   await metamask.page.waitForTimeout(1000);
+}
+
+export async function connectWallet(page: Page, metamask: MetaMask) {
+  await page.getByTestId("connectButton").click();
+  await page.getByTestId("rk-wallet-option-injected").click();
+  await metamask.connectToDapp();
+
+  // Verify the connected account address
+  await expect(page.locator("[data-testid='accounts']")).toHaveText(
+    "0x327F…7394"
+  );
 }

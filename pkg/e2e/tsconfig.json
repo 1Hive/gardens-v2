@@ -12,18 +12,13 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "types": [
-      "node",
-      "@playwright/test"
-    ]
+    "types": ["node", "@playwright/test"]
   },
   "include": [
     "test/**/*",
     "playwright.config.ts",
-    "tests/community.e2e.ts",
+    "tests/0-join.e2e.ts",
     "wallet-setup"
   ],
-  "exclude": [
-    "node_modules"
-  ]
+  "exclude": ["node_modules"]
 }

@@ -18,8 +18,13 @@ export default defineWalletSetup(PASSWORD, async (context, walletPage) => {
   // Import the wallet using the seed phrase
   await metamask.importWallet(SEED_PHRASE);
 
-  // Additional setup steps can be added here, such as:
-  // - Adding custom networks
-  // - Importing tokens
-  // - Setting up specific account states
+  // Add and switch to Optimism so all tests start on the correct network
+  await metamask.addNetwork({
+    name: "OP Mainnet",
+    rpcUrl: "https://mainnet.optimism.io",
+    chainId: 10,
+    symbol: "ETH",
+    blockExplorerUrl: "https://optimistic.etherscan.io"
+  });
+  await metamask.switchNetwork("OP Mainnet");
 });
