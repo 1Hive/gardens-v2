@@ -98,9 +98,9 @@ export function CommunityCard({
           <TooltipIfOverflow>{communityName ?? ""}</TooltipIfOverflow>
         </h3>
         <div className="flex gap-2 items-center">
-          <p className=" font-normal dark:text-opacity-80">
+          <p className="subtitle2 font-normal dark:text-opacity-80">
             Governance Token:
-            <span className="font-normal dark:text-opacity-80">
+            <span className="subtitle2 font-normal dark:text-opacity-80">
               {" "}
               {tokenSymbol}
             </span>
@@ -121,8 +121,6 @@ export function CommunityCard({
             number={[BigInt(communityStakedTokens), decimals]}
             compact={true}
             tokenSymbol={tokenSymbol}
-            valueClassName="text-inherit"
-            symbolClassName="text-inherit"
           />
         </Statistic>
       </div>

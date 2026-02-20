@@ -181,6 +181,8 @@ export function RegisterMember({
     ],
   );
 
+  // TODO: check token prop
+
   return (
     <>
       <TransactionModal
@@ -190,17 +192,15 @@ export function RegisterMember({
         isOpen={isOpenModal}
         testId="register"
       />
-      <div className="flex gap-4">
-        <div className="flex items-center justify-center">
-          <Button
-            {...buttonProps}
-            isLoading={isUnregistering}
-            testId="register-member-button"
-          >
-            {isMember ? "Leave" : "Join"}
-          </Button>
-        </div>
-      </div>
+
+      <Button
+        {...buttonProps}
+        isLoading={isUnregistering}
+        className="!w-full sm:!w-auto"
+        testId="register-member-button"
+      >
+        {isMember ? "Leave" : "Join"}
+      </Button>
     </>
   );
 }

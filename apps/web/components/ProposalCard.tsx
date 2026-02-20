@@ -210,7 +210,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
               <span className="text-xs sm:text-sm text-secondary-content">
                 {thresholdPct === 0 ?
                   "Threshold out of reach"
-                : "Threshold over 100%."}
+                : "Threshold over 100 VP"}
               </span>
             </div>
           : (
@@ -218,7 +218,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
             !alreadyExecuted &&
             !readyToBeExecuted
           ) ?
-            `At least ${supportNeededToPass}% needed`
+            `At least ${supportNeededToPass} VP needed`
           : proposalWillPass ?
             "Estimated time to pass:"
           : !alreadyExecuted && readyToBeExecuted && !isSignalingType ?
@@ -250,19 +250,15 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
           <div className="flex flex-col sm:flex-row w-full">
             {/* icon title and id */}
             <header className="flex-1 justify-between items-start gap-3">
-              <div className="flex-1 items-start flex-col gap-1 ">
-                <div className="flex items-center justify-between">
+              <div className="flex-1 items-start flex flex-col gap-1 sm:gap-2">
+                <div className="flex items-center justify-between w-full">
                   <Skeleton isLoading={!metadata}>
-                    <h3 className="flex items-start max-w-[165px] sm:max-w-md">
+                    <h3 className="flex items-start  max-w-[150px] sm:max-w-md">
                       <TooltipIfOverflow>{metadata?.title}</TooltipIfOverflow>
                     </h3>
                   </Skeleton>
                   {isPoolEnabled && (
                     <div className="flex items-center gap-4">
-                      {/* <p className="hidden sm:flex text-sm  items-center bg-neutral-soft-2 rounded-md px-2 dark:bg-primary-soft-dark py-1">
-                        ID:{" "}
-                        <span className="text-md ml-1">{proposalNumber}</span>
-                      </p> */}
                       <Badge
                         status={proposalStatus}
                         icon={<HandRaisedIcon />}
@@ -291,7 +287,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
                       {!isSignalingType && poolToken && (
                         <div className="flex items-center gap-1 justify-self-end">
                           <div className="hidden sm:block w-1 h-1 rounded-full bg-neutral-soft-content" />
-                          <p className="text-sm ml-1 dark:text-neutral-soft-content">
+                          <p className="text-sm sm:ml-1 dark:text-neutral-soft-content">
                             Requesting:{" "}
                           </p>
                           <DisplayNumber
@@ -322,32 +318,50 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
 
           {/* support description or slider */}
           {isPoolEnabled && !isProposalEnded && (
-            <div className="flex gap-12 flex-wrap w-full ">
-              <div className="mt-4 w-full">
+            <div className="flex gap-4 flex-wrap w-full">
+              <div className={`w-full ${isSignalingType ? "mt-2" : "mt-4"}`}>
                 {/* manage support view */}
                 <div className="w-full ">
                   {currentConvictionPct != null &&
-                    thresholdPct != null &&
-                    totalSupportPct != null && (
+                    (isSignalingType ||
+                      (thresholdPct != null && totalSupportPct != null)) && (
                       <div>
-                        <div className="flex items-center gap-2 mb-2">
+                        <div
+                          className={`flex items-baseline justify-between gap-4 ${isSignalingType ? "mb-0" : "mb-1"}`}
+                        >
                           <div>
-                            <p className="text-xs sm:text-sm">
-                              Total Support:{" "}
-                              <span className="font-medium">
-                                {totalSupportPct}% of pool weight
-                              </span>{" "}
-                            </p>
+                            <span className="text-xs">{ProposalCountDown}</span>
                           </div>
+                          <ul className="flex gap-2 items-baseline text-xs sm:text-sm">
+                            <li>
+                              <span className="text-xs text-[#74c898] dark:text-primary-dark-base ">
+                                conviction: {currentConvictionPct} VP
+                              </span>
+                            </li>
+                            <li>
+                              <span className="text-xs text-primary-button dark:text-dark-chart-support">
+                                support: {totalSupportPct} VP
+                              </span>
+                            </li>
 
-                          {ProposalCountDown}
+                            {!isSignalingType && (
+                              <li>
+                                <span className="text-xs text-neutral-soft-content">
+                                  threshold: {thresholdPct} VP
+                                </span>
+                              </li>
+                            )}
+                          </ul>
                         </div>
-                        <div className="h-3 flex items-center mb-2">
+
+                        <div
+                          className={`flex items-center h-2 sm:h-3 ${isSignalingType ? "mb-1" : "mb-3"}`}
+                        >
                           <ConvictionBarChart
                             compact
                             currentConvictionPct={currentConvictionPct}
-                            thresholdPct={isSignalingType ? 0 : thresholdPct}
-                            proposalSupportPct={totalSupportPct}
+                            thresholdPct={thresholdPct ?? 0}
+                            proposalSupportPct={totalSupportPct ?? 0}
                             isSignalingType={isSignalingType}
                             proposalNumber={proposalNumber}
                             refreshConviction={triggerConvictionRefetch}
@@ -360,10 +374,10 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
               </div>
             </div>
           )}
-          {isPoolEnabled && stakedFilter?.value > 0 && (
-            <Badge color="info" className="self-center justify-self-start">
-              <p className="text-xs font-semibold">
-                Your support: {poolWeightAllocatedInProposal}%
+          {isPoolEnabled && !isProposalEnded && stakedFilter?.value > 0 && (
+            <Badge color="success" className="self-center justify-self-start">
+              <p className="text-xs">
+                Your support: {poolWeightAllocatedInProposal} VP
               </p>
             </Badge>
           )}

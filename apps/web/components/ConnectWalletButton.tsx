@@ -198,7 +198,7 @@ export function ConnectWallet() {
                                   className="text-xs text-danger-content dark:text-danger-content"
                                   data-testid="wrong-network"
                                 >
-                                  Switch to network {chainFromPath?.name ?? ""}
+                                  Switch To {chainFromPath?.name ?? ""} Network
                                 </p>
                               }
                             </div>
