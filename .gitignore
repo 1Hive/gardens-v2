@@ -58,4 +58,4 @@ lcov.info
 # pkg/contracts/out
 pkg/contracts/script/Playground.s.sol
 
-.cache-synpress/
+pkg/e2e/.cache-synpress/
