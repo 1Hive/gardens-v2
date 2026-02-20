@@ -181,6 +181,8 @@ export function RegisterMember({
     ],
   );
 
+  // TODO: check token prop
+
   return (
     <>
       <TransactionModal

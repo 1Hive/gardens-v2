@@ -292,10 +292,6 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
                   </Skeleton>
                   {isPoolEnabled && (
                     <div className="flex items-center gap-4">
-                      {/* <p className="hidden sm:flex text-sm  items-center bg-neutral-soft-2 rounded-md px-2 dark:bg-primary-soft-dark py-1">
-                        ID:{" "}
-                        <span className="text-md ml-1">{proposalNumber}</span>
-                      </p> */}
                       <Badge
                         status={proposalStatus}
                         icon={<HandRaisedIcon />}
@@ -375,7 +371,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
 
           {/* support description or slider */}
           {isPoolEnabled && !isProposalEnded && (
-            <div className="flex gap-12 flex-wrap w-full ">
+            <div className="flex gap-4 flex-wrap w-full">
               <div className={`w-full ${isSignalingType ? "mt-2" : "mt-4"}`}>
                 {/* manage support view */}
                 <div className="w-full ">
@@ -412,7 +408,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
                         </div>
 
                         <div
-                          className={`flex items-center ${isSignalingType ? "mb-1" : "h-3 mb-3"}`}
+                          className={`flex items-center h-2 sm:h-3 ${isSignalingType ? "mb-1" : "mb-3"}`}
                         >
                           <ConvictionBarChart
                             compact
@@ -431,7 +427,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
               </div>
             </div>
           )}
-          {isPoolEnabled && stakedFilter?.value > 0 && (
+          {isPoolEnabled && !isProposalEnded && stakedFilter?.value > 0 && (
             <Badge color="success" className="self-center justify-self-start">
               <p className="text-xs">
                 Your support: {poolWeightAllocatedInProposal} VP
