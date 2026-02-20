@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { XMarkIcon } from "@heroicons/react/24/outline";
+import { ChevronDownIcon, ClipboardDocumentIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { CheckIcon } from "@heroicons/react/24/solid";
 import { formatEther, parseEther } from "viem";
 import { base } from "viem/chains";
 import {
@@ -28,12 +29,20 @@ const TOP_DAWG_PARTNER_ABI = [
 
 const MAX_MESSAGE_LENGTH = 100;
 
+type LeaderboardEntry = {
+  message: string;
+  name: string;
+  totalFundsAdded: string;
+};
+
 type Props = {
   onClose: () => void;
   onSuccess: () => void;
   strategyAddress: `0x${string}`;
   currentTopDawg: bigint;
+  currentMessage: string;
   minimumPrice: bigint;
+  subgraphUrl: string;
 };
 
 export default function MarkeeModal({
@@ -41,13 +50,19 @@ export default function MarkeeModal({
   onSuccess,
   strategyAddress,
   currentTopDawg,
+  currentMessage,
   minimumPrice,
+  subgraphUrl,
 }: Props) {
   const [message, setMessage] = useState("");
   const [name, setName] = useState("");
   const [ethAmount, setEthAmount] = useState("");
   const [inputError, setInputError] = useState<string | null>(null);
   const [isConfirming, setIsConfirming] = useState(false);
+  const [leaderboardOpen, setLeaderboardOpen] = useState(false);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [leaderboardLoading, setLeaderboardLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   const { address } = useAccount();
@@ -57,7 +72,6 @@ export default function MarkeeModal({
 
   const isOnBase = chain?.id === base.id;
 
-  // wagmi v1 API
   const { writeAsync, isLoading: isPending } = useContractWrite({
     address: strategyAddress,
     abi: TOP_DAWG_PARTNER_ABI,
@@ -69,6 +83,41 @@ export default function MarkeeModal({
   useEffect(() => {
     dialogRef.current?.showModal();
   }, []);
+
+  // Fetch leaderboard when expanded
+  useEffect(() => {
+    if (!leaderboardOpen || leaderboard.length > 0) return;
+    setLeaderboardLoading(true);
+    fetch(subgraphUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        query: `{
+          topDawgPartnerStrategy(id: "${strategyAddress.toLowerCase()}") {
+            markees(first: 10, orderBy: totalFundsAdded, orderDirection: desc) {
+              message
+              name
+              totalFundsAdded
+            }
+          }
+        }`,
+      }),
+    })
+      .then((r) => r.json())
+      .then((res) => {
+        const entries = res.data?.topDawgPartnerStrategy?.markees ?? [];
+        setLeaderboard(entries);
+      })
+      .catch((err) => console.error("[MarkeeModal] leaderboard fetch error:", err))
+      .finally(() => setLeaderboardLoading(false));
+  }, [leaderboardOpen, leaderboard.length, subgraphUrl, strategyAddress]);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(currentMessage).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
 
   const handleBackdropClick = (e: React.MouseEvent<HTMLDialogElement>) => {
     if (e.target === dialogRef.current) onClose();
@@ -144,7 +193,7 @@ export default function MarkeeModal({
     >
       <div className="modal-box bg-neutral border border-border-neutral max-w-md w-full">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-5">
           <div>
             <h3 className="text-lg font-semibold text-neutral-content">
               Edit the Gardens Sign
@@ -171,6 +220,69 @@ export default function MarkeeModal({
           </button>
         </div>
 
+        {/* Current message display */}
+        <div className="mb-5 rounded border border-neutral-content/20 bg-neutral-focus px-4 py-3">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-neutral-content/50 mb-1">Current message</p>
+              <p className="font-mono text-sm text-neutral-content break-words">
+                {currentMessage}
+              </p>
+            </div>
+            <button
+              onClick={handleCopy}
+              className="btn btn-ghost btn-xs btn-circle flex-shrink-0 mt-0.5"
+              aria-label="Copy current message"
+              title="Copy to clipboard"
+            >
+              {copied ? (
+                <CheckIcon className="h-4 w-4 text-success" />
+              ) : (
+                <ClipboardDocumentIcon className="h-4 w-4 text-neutral-content/50" />
+              )}
+            </button>
+          </div>
+
+          {/* Expandable leaderboard */}
+          <button
+            onClick={() => setLeaderboardOpen((o) => !o)}
+            className="mt-3 flex items-center gap-1 text-xs text-neutral-content/50 hover:text-neutral-content/80 transition-colors"
+          >
+            <ChevronDownIcon
+              className={`h-3.5 w-3.5 transition-transform duration-200 ${leaderboardOpen ? "rotate-180" : ""}`}
+            />
+            {leaderboardOpen ? "Hide leaderboard" : "Show leaderboard"}
+          </button>
+
+          {leaderboardOpen && (
+            <div className="mt-3 border-t border-neutral-content/10 pt-3 space-y-2">
+              {leaderboardLoading ? (
+                <p className="text-xs text-neutral-content/40 font-mono">loading...</p>
+              ) : leaderboard.length === 0 ? (
+                <p className="text-xs text-neutral-content/40">No entries yet.</p>
+              ) : (
+                leaderboard.map((entry, i) => (
+                  <div key={i} className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-mono text-xs text-neutral-content break-words">
+                        {entry.message}
+                      </p>
+                      {entry.name && (
+                        <p className="text-xs text-neutral-content/40 mt-0.5">
+                          {entry.name}
+                        </p>
+                      )}
+                    </div>
+                    <span className="text-xs font-mono text-neutral-content/50 flex-shrink-0 mt-0.5">
+                      {parseFloat(formatEther(BigInt(entry.totalFundsAdded))).toFixed(4)} ETH
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+        </div>
+
         {/* Wrong network banner */}
         {!isOnBase && (
           <div className="mb-5 rounded border border-yellow-500/30 bg-yellow-500/10 px-4 py-3 flex items-center justify-between">
@@ -187,21 +299,10 @@ export default function MarkeeModal({
           </div>
         )}
 
-        {/* Current top dawg info */}
-        {currentTopDawg > BigInt(0) && (
-          <div className="mb-5 rounded border border-border-neutral bg-neutral-soft px-4 py-3 text-sm text-neutral-content/70">
-            Current top dawg paid{" "}
-            <span className="font-mono font-semibold text-neutral-content">
-              {parseFloat(formatEther(currentTopDawg)).toFixed(4)} ETH
-            </span>
-            . Pay more to take the sign.
-          </div>
-        )}
-
         {/* Message input */}
         <div className="mb-4">
           <label className="block text-sm font-medium text-neutral-content mb-1.5">
-            Message{" "}
+            Your message{" "}
             <span className="text-neutral-content/50 font-normal">
               ({message.length}/{MAX_MESSAGE_LENGTH})
             </span>
