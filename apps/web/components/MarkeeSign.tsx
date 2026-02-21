@@ -77,10 +77,8 @@ export default function MarkeeSign() {
 
   const ethDisplay =
     data.totalFundsAdded > BigInt(0)
-      ? `${parseFloat(formatEther(data.totalFundsAdded)).toFixed(4)} ETH`
-      : null;
-
-  const badgeLabel = ethDisplay ? `${ethDisplay} to change` : "be first!";
+      ? `${parseFloat(formatEther(data.totalFundsAdded)).toFixed(3)} ETH to change`
+      : "be first!";
 
   return (
     <>
@@ -89,16 +87,16 @@ export default function MarkeeSign() {
         className="group relative mx-auto mt-6 mb-4 cursor-pointer"
         aria-label="Click to edit this Markee sign"
       >
-        {/* Sign body — 1.5× original size */}
+        {/* Sign body */}
         <div className="border border-neutral-content/30 rounded px-16 py-8 min-w-[420px] max-w-lg bg-neutral hover:border-primary-content/50 transition-colors duration-200">
           <p className="font-mono text-neutral-content text-lg group-hover:text-primary-content transition-colors duration-200 text-center leading-snug">
             {loading ? "loading..." : data.message}
           </p>
         </div>
 
-        {/* Price badge — bottom center on the card border */}
+        {/* Price badge — bottom center, only visible on hover */}
         <span className="absolute -bottom-3 left-1/2 -translate-x-1/2 rounded-full border border-neutral-content/30 bg-neutral px-3 py-0.5 text-xs font-mono text-neutral-content/60 opacity-0 group-hover:opacity-100 group-hover:border-primary-content/40 group-hover:text-primary-content/70 transition-all duration-200 whitespace-nowrap">
-          {loading ? "···" : badgeLabel}
+          {loading ? "···" : ethDisplay}
         </span>
       </button>
 
