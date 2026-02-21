@@ -851,6 +851,7 @@ export function Proposals({
               <Fragment key={proposalData.proposalNumber}>
                 <ProposalCard
                   proposalData={proposalData}
+                  poolId={Number(strategy.poolId)}
                   strategyConfig={strategy.config}
                   inputData={inputs[proposalData.id]}
                   stakedFilter={stakedFilters[proposalData.id]}

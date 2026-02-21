@@ -24,13 +24,11 @@ import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
 import { Skeleton } from "@/components/Skeleton";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
-import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import {
   ProposalDataLight,
   useConvictionRead,
 } from "@/hooks/useConvictionRead";
 import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
-import { useSuperfluidStream } from "@/hooks/useSuperfluidStream";
 import { PoolTypes, ProposalStatus } from "@/types";
 import {
   SEC_TO_MONTH,
@@ -48,9 +46,20 @@ export type ProposalCardProps = {
     | "createdAt"
     | "submitter"
     | "executedAt"
+    | "streamingEscrow"
   > &
     ProposalDataLight & {
       metadata?: Maybe<Pick<ProposalMetadata, "title">>;
+      proposalStream?: Maybe<{
+        currentFlowRate: bigint;
+        streamedUntilSnapshot: bigint;
+        lastSnapshotAt: bigint;
+      }>;
+      proposalStreams?: Array<{
+        currentFlowRate: bigint;
+        streamedUntilSnapshot: bigint;
+        lastSnapshotAt: bigint;
+      }>;
     };
   strategyConfig: Pick<
     CVStrategyConfig,
@@ -75,6 +84,7 @@ export type ProposalCardProps = {
   communityToken: Parameters<typeof useConvictionRead>[0]["tokenData"];
   inputHandler: (proposalId: string, value: bigint) => void;
   minThGtTotalEffPoints: boolean;
+  poolId: number;
 };
 
 export type ProposalHandle = {
@@ -101,6 +111,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
       memberPoolWeight,
       communityToken: tokenData,
       minThGtTotalEffPoints,
+      poolId,
     },
     ref,
   ) => {
@@ -121,8 +132,6 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
       executedAt,
     } = proposalData;
     const pathname = usePathname();
-    const chainId = useChainIdFromPath();
-
     const searchParams = useCollectQueryParams();
     const isNewProposal =
       searchParams[QUERY_PARAMS.poolPage.newProposal] ==
@@ -183,11 +192,20 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
     const isStreamingType =
       PoolTypes[strategyConfig.proposalType] === "streaming";
 
-    const { currentFlowRateBn, liveTotalStreamedBn } = useSuperfluidStream({
-      receiver: proposalData.beneficiary as Address,
-      superToken: strategyConfig.superfluidToken as Address,
-      chainId,
-    });
+    const proposalStream =
+      proposalData.proposalStream ?? proposalData.proposalStreams?.[0];
+
+    const currentFlowRateBn = proposalStream?.currentFlowRate ?? 0n;
+    const streamedUntilSnapshotBn = proposalStream?.streamedUntilSnapshot ?? 0n;
+    const lastSnapshotAtBn = proposalStream?.lastSnapshotAt ?? 0n;
+
+    const nowSec = BigInt(Math.floor(Date.now() / 1000));
+    const elapsedSec =
+      currentFlowRateBn > 0n && lastSnapshotAtBn > 0n && nowSec > lastSnapshotAtBn ?
+        nowSec - lastSnapshotAtBn
+      : 0n;
+    const liveTotalStreamedBn =
+      streamedUntilSnapshotBn + currentFlowRateBn * elapsedSec;
 
     const proposalFlowPerMonth =
       (
@@ -204,7 +222,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
       : null;
     const proposalTotalStreamedDisplay =
       poolToken ?
-        `${(proposalTotalStreamed ?? 0).toFixed(4)} ${poolToken.symbol}`
+        `${(proposalTotalStreamed ?? 0).toFixed(5)} ${poolToken.symbol}`
       : null;
 
     const alreadyExecuted = proposalStatus[proposalStatus] === "executed";
@@ -253,7 +271,9 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
           ) ?
             `At least ${supportNeededToPass} VP needed`
           : proposalWillPass ?
-            "Estimated time to pass:"
+            PoolTypes[strategyConfig.proposalType] === "funding" ?
+              "Estimated time to pass:"
+            : "Before stream start:"
           : !alreadyExecuted && readyToBeExecuted && !isSignalingType ?
             "Ready to be executed"
           : ""}
@@ -335,7 +355,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
                           />
                         </div>
                       )}
-                      {!isSignalingType && poolToken && isStreamingType && (
+                      {poolToken && isStreamingType && (
                         <div className="flex items-center gap-2 justify-self-end">
                           <div className="hidden sm:block w-1 h-1 rounded-full bg-neutral-soft-content" />
                           <p className="text-sm dark:text-neutral-soft-content">
@@ -346,13 +366,17 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
                               `${roundToSignificant(proposalFlowPerMonth, 4)} ${poolToken.symbol}/mo`
                             : "No active stream"}
                           </span>
+
                           <span className="hidden sm:inline text-neutral-soft-content">
                             ·
                           </span>
-                          <span className="text-sm dark:text-neutral-soft-content">
-                            Total streamed:{" "}
+                          <p className="text-sm dark:text-neutral-soft-content">
+                            Total:
+                          </p>
+
+                          <p className="text-sm dark:text-neutral-soft-content">
                             {proposalTotalStreamedDisplay}
-                          </span>
+                          </p>
                         </div>
                       )}
                     </div>
@@ -419,6 +443,9 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
                             proposalNumber={proposalNumber}
                             refreshConviction={triggerConvictionRefetch}
                             proposalStatus={proposalStatus}
+                            proposalType={
+                              PoolTypes[strategyConfig.proposalType]
+                            }
                           />
                         </div>
                       </div>
