@@ -97,7 +97,7 @@ export default function MarkeeSign() {
         </div>
 
         {/* Price badge — bottom center on the card border */}
-        <span className="absolute -bottom-3 left-1/2 -translate-x-1/2 rounded-full border border-neutral-content/30 bg-neutral px-3 py-0.5 text-xs font-mono text-neutral-content/60 group-hover:border-primary-content/40 group-hover:text-primary-content/70 transition-colors duration-200 whitespace-nowrap">
+        <span className="absolute -bottom-3 left-1/2 -translate-x-1/2 rounded-full border border-neutral-content/30 bg-neutral px-3 py-0.5 text-xs font-mono text-neutral-content/60 opacity-0 group-hover:opacity-100 group-hover:border-primary-content/40 group-hover:text-primary-content/70 transition-all duration-200 whitespace-nowrap">
           {loading ? "···" : badgeLabel}
         </span>
       </button>
