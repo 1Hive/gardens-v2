@@ -237,175 +237,133 @@ export default function ClientPage({
       0n,
     ) ?? 0;
 
-  strategies = strategies ?? [];
+  const communityStrategies = strategies ?? [];
 
   const canSeeArchivedPools =
     !!isCouncilMember || isCouncilSafe || showArchived;
 
-  const signalingPools = strategies.filter(
-    (strategy) =>
-      PoolTypes[strategy.config?.proposalType] === "signaling" &&
-      strategy.isEnabled,
+  const activePools = communityStrategies.filter(
+    (strategy) => strategy.isEnabled,
   );
 
-  const fundingPools = strategies.filter(
-    (strategy) =>
-      PoolTypes[strategy.config?.proposalType] === "funding" &&
-      strategy.isEnabled,
-  );
-
-  const streamingPools = strategies.filter(
-    (strategy) =>
-      PoolTypes[strategy.config?.proposalType] === "streaming" &&
-      strategy.isEnabled,
-  );
-
-  const activePools = strategies?.filter((strategy) => strategy?.isEnabled);
-
-  const poolsInReview = strategies.filter(
+  const poolsInReview = communityStrategies.filter(
     (strategy) => !strategy.isEnabled && !strategy.archived,
   );
 
-  const poolsArchived = strategies.filter((strategy) => strategy.archived);
+  const poolsArchived = communityStrategies.filter(
+    (strategy) => strategy.archived,
+  );
 
-  const [selectedPoolFilters, setSelectedPoolFilters] = useState<
-    PoolFilterKey[]
-  >(["funding"]);
-  const [poolFilterHint, setPoolFilterHint] = useState<string | null>(null);
+  const [poolStatusFilter, setPoolStatusFilter] =
+    useState<PoolStatusFilterKey>("active");
 
-  const poolCounts = useMemo<Record<PoolFilterKey, number>>(
+  const poolCounts = useMemo<Record<PoolStatusFilterKey, number>>(
     () => ({
-      funding: fundingPools.length,
-      signaling: signalingPools.length,
-      streaming: streamingPools.length,
+      all:
+        canSeeArchivedPools ?
+          communityStrategies.length
+        : communityStrategies.filter((strategy) => !strategy.archived).length,
+      active: activePools.length,
       inReview: poolsInReview.length,
-      archive: poolsArchived.length,
+      archive: canSeeArchivedPools ? poolsArchived.length : 0,
     }),
     [
-      fundingPools.length,
-      signalingPools.length,
-      streamingPools.length,
+      canSeeArchivedPools,
+      communityStrategies,
+      activePools.length,
       poolsInReview.length,
       poolsArchived.length,
     ],
   );
 
-  const filteredPools = useMemo(() => {
-    const poolGroups: Record<PoolFilterKey, Pool[]> = {
-      funding: fundingPools,
-      signaling: signalingPools,
-      streaming: streamingPools,
-      inReview: poolsInReview,
-      archive: canSeeArchivedPools ? poolsArchived : [],
-    };
-    const seenPools = new Set<string>();
+  const toBigIntSafe = (value: unknown): bigint => {
+    try {
+      if (typeof value === "bigint") return value;
+      if (typeof value === "number") return BigInt(Math.trunc(value));
+      if (typeof value === "string") return value ? BigInt(value) : 0n;
+      return 0n;
+    } catch {
+      return 0n;
+    }
+  };
 
-    return selectedPoolFilters
-      .flatMap((filterKey) => poolGroups[filterKey] ?? [])
-      .filter((pool) => {
-        const poolKey = (pool.poolId || pool.id) as string;
-        if (seenPools.has(poolKey)) return false;
-        seenPools.add(poolKey);
-        return true;
-      });
+  const activePoolsSorted = useMemo(() => {
+    const poolTypeRank = (pool: (typeof activePools)[number]) => {
+      const proposalType = Number(
+        (pool.config as { proposalType?: unknown })?.proposalType ?? -1,
+      );
+      const poolType = PoolTypes[proposalType];
+      if (poolType === "funding") return 0;
+      if (poolType === "streaming") return 1;
+      if (poolType === "signaling") return 2;
+      return 3;
+    };
+
+    return [...activePools].sort((poolA, poolB) => {
+      const typeRankDiff = poolTypeRank(poolA) - poolTypeRank(poolB);
+      if (typeRankDiff !== 0) return typeRankDiff;
+
+      const poolAId = toBigIntSafe(poolA.poolId);
+      const poolBId = toBigIntSafe(poolB.poolId);
+      if (poolAId === poolBId) return 0;
+      return poolAId > poolBId ? 1 : -1;
+    });
+  }, [activePools]);
+
+  const poolsInReviewSorted = useMemo(
+    () =>
+      [...poolsInReview].sort((poolA, poolB) => {
+        const poolAId = toBigIntSafe(poolA.poolId);
+        const poolBId = toBigIntSafe(poolB.poolId);
+        if (poolAId === poolBId) return 0;
+        return poolAId > poolBId ? 1 : -1;
+      }),
+    [poolsInReview],
+  );
+
+  const poolsArchivedSorted = useMemo(
+    () =>
+      [...poolsArchived].sort((poolA, poolB) => {
+        const poolAId = toBigIntSafe(poolA.poolId);
+        const poolBId = toBigIntSafe(poolB.poolId);
+        if (poolAId === poolBId) return 0;
+        return poolAId > poolBId ? 1 : -1;
+      }),
+    [poolsArchived],
+  );
+
+  const filteredPools = useMemo(() => {
+    switch (poolStatusFilter) {
+      case "all":
+        return canSeeArchivedPools ?
+            [
+              ...activePoolsSorted,
+              ...poolsInReviewSorted,
+              ...poolsArchivedSorted,
+            ]
+          : [...activePoolsSorted, ...poolsInReviewSorted];
+      case "active":
+        return activePoolsSorted;
+      case "inReview":
+        return poolsInReviewSorted;
+      case "archive":
+        return canSeeArchivedPools ? poolsArchivedSorted : [];
+      default:
+        return activePoolsSorted;
+    }
   }, [
-    selectedPoolFilters,
-    fundingPools,
-    signalingPools,
-    streamingPools,
-    poolsInReview,
-    poolsArchived,
+    poolStatusFilter,
+    activePoolsSorted,
+    poolsInReviewSorted,
+    poolsArchivedSorted,
     canSeeArchivedPools,
   ]);
 
-  const selectedPoolFiltersTitle = useMemo(() => {
-    const labels = selectedPoolFilters.map(
-      (filter) => POOL_FILTER_LABELS[filter],
-    );
-    return `${labels.join(", ")} Pools`;
-  }, [selectedPoolFilters]);
-
-  const selectedPoolsSummary = useMemo(() => {
-    const poolCount = filteredPools.length;
-    return `Showing ${poolCount} pool${poolCount === 1 ? "" : "s"}`;
-  }, [filteredPools.length]);
-
-  const preferredPoolFilter = useMemo(
-    () => getPreferredPoolFilter(poolCounts, canSeeArchivedPools),
-    [poolCounts, canSeeArchivedPools],
-  );
-
-  const isClearAllDisabled =
-    selectedPoolFilters.length === 1 &&
-    selectedPoolFilters[0] === preferredPoolFilter;
-
-  const togglePoolFilter = (filter: PoolFilterKey) => {
-    setPoolFilterHint(null);
-    setSelectedPoolFilters((currentFilters) => {
-      if (currentFilters.includes(filter)) {
-        const nextFilters = currentFilters.filter((f) => f !== filter);
-        return nextFilters.length === 0 ?
-            [getPreferredPoolFilter(poolCounts, canSeeArchivedPools)]
-          : nextFilters;
-      }
-      return [...currentFilters, filter];
-    });
-  };
-
-  const selectAllPoolFilters = () => {
-    setPoolFilterHint(null);
-    setSelectedPoolFilters(getVisiblePoolFilterPriority(canSeeArchivedPools));
-  };
-
-  const clearAllPoolFilters = () => {
-    setPoolFilterHint(null);
-    setSelectedPoolFilters([preferredPoolFilter]);
-  };
-
   useEffect(() => {
-    const visibleFilters =
-      canSeeArchivedPools ? selectedPoolFilters : (
-        selectedPoolFilters.filter((filter) => filter !== "archive")
-      );
-
-    let nextFilters = visibleFilters;
-    let nextHint: string | null = null;
-
-    if (nextFilters.length === 0) {
-      nextFilters = [getPreferredPoolFilter(poolCounts, canSeeArchivedPools)];
+    if (!canSeeArchivedPools && poolStatusFilter === "archive") {
+      setPoolStatusFilter("active");
     }
-
-    if (
-      nextFilters.length === 1 &&
-      nextFilters[0] === "funding" &&
-      poolCounts.funding === 0
-    ) {
-      const fundingFallback = getFundingFallbackPoolFilter(
-        poolCounts,
-        canSeeArchivedPools,
-      );
-      if (fundingFallback !== "funding") {
-        nextFilters = [fundingFallback];
-        nextHint = `No Funding pools yet. Showing ${POOL_FILTER_LABELS[fundingFallback]} (${poolCounts[fundingFallback]}).`;
-      }
-    }
-
-    const hasSelectionChanged =
-      nextFilters.length !== selectedPoolFilters.length ||
-      nextFilters.some(
-        (filter, index) => filter !== selectedPoolFilters[index],
-      );
-
-    if (hasSelectionChanged) {
-      setSelectedPoolFilters(nextFilters);
-      setPoolFilterHint(nextHint);
-      return;
-    }
-
-    if (poolFilterHint !== nextHint) {
-      setPoolFilterHint(nextHint);
-    }
-  }, [canSeeArchivedPools, poolCounts, selectedPoolFilters, poolFilterHint]);
+  }, [canSeeArchivedPools, poolStatusFilter]);
 
   useEffect(() => {
     const newPoolId = searchParams[QUERY_PARAMS.communityPage.newPool];
@@ -535,7 +493,7 @@ export default function ClientPage({
                   )}
                 </div>
 
-                {/* Statistic + Register/Leave Button */}
+                {/* Statistic + Join/Leave community Button */}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between ">
                   <div className="w-full flex flex-col sm:flex-row gap-2 md:gap-6 sm:flex-wrap">
                     <Statistic
@@ -659,27 +617,11 @@ export default function ClientPage({
             {/* Pools Section */}
             <div className="flex flex-col gap-4 ">
               <PoolFiltersUI
-                selectedFilters={selectedPoolFilters}
-                onToggleFilter={togglePoolFilter}
-                onSelectAll={selectAllPoolFilters}
-                onClearAll={clearAllPoolFilters}
-                clearAllDisabled={isClearAllDisabled}
+                selectedFilter={poolStatusFilter}
+                onSelectFilter={setPoolStatusFilter}
                 counts={poolCounts}
                 showArchiveFilter={canSeeArchivedPools}
               />
-              {poolFilterHint && (
-                <p className="sm:text-sm text-neutral-soft-content ">
-                  {poolFilterHint}
-                </p>
-              )}
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <h6 className="text-neutral-soft-content">
-                  {selectedPoolFiltersTitle}
-                </h6>
-                <p className="text-xs text-neutral-soft-content">
-                  {selectedPoolsSummary}
-                </p>
-              </div>
               {filteredPools.length > 0 ?
                 <div className="pool-layout">
                   {filteredPools.map((pool) => (
@@ -694,16 +636,6 @@ export default function ClientPage({
                   <p className="text-neutral-soft-content">
                     No pools match the selected filters.
                   </p>
-                  <Link href={createPoolHref}>
-                    <Button
-                      btnStyle="outline"
-                      disabled={!isConnected || missmatchUrl}
-                      tooltip={tooltipMessage}
-                      icon={<PlusIcon height={16} width={16} />}
-                    >
-                      Create New Pool
-                    </Button>
-                  </Link>
                 </div>
               }
             </div>
@@ -742,7 +674,8 @@ export default function ClientPage({
         </div>
       </div>
 
-      {/* Mobile Layout with Tabs */}
+      {/* ================= MOBILE ================= */}
+
       <div className="block md:hidden col-span-12">
         <div
           role="tablist"
@@ -950,30 +883,14 @@ export default function ClientPage({
                 </Link>
               </div>
 
-              {/* Pools Section */}
+              {/* Pools Tab */}
               <div className="flex flex-col gap-4">
                 <PoolFiltersUI
-                  selectedFilters={selectedPoolFilters}
-                  onToggleFilter={togglePoolFilter}
-                  onSelectAll={selectAllPoolFilters}
-                  onClearAll={clearAllPoolFilters}
-                  clearAllDisabled={isClearAllDisabled}
+                  selectedFilter={poolStatusFilter}
+                  onSelectFilter={setPoolStatusFilter}
                   counts={poolCounts}
                   showArchiveFilter={canSeeArchivedPools}
                 />
-                {poolFilterHint && (
-                  <p className="text-xs text-neutral-soft-content">
-                    {poolFilterHint}
-                  </p>
-                )}
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <h6 className="text-neutral-soft-content">
-                    {selectedPoolFiltersTitle}
-                  </h6>
-                  <p className="text-xs text-neutral-soft-content">
-                    {selectedPoolsSummary}
-                  </p>
-                </div>
                 {filteredPools.length > 0 ?
                   <div className="pool-layout">
                     {filteredPools.map((pool) => (
@@ -988,17 +905,6 @@ export default function ClientPage({
                     <p className="text-neutral-soft-content">
                       No pools match the selected filters.
                     </p>
-                    <Link href={createPoolHref} className="w-full sm:w-auto">
-                      <Button
-                        btnStyle="outline"
-                        disabled={!isConnected || missmatchUrl}
-                        tooltip={tooltipMessage}
-                        icon={<PlusIcon height={16} width={16} />}
-                        className="w-full sm:w-auto"
-                      >
-                        Create New Pool
-                      </Button>
-                    </Link>
                   </div>
                 }
               </div>
@@ -1028,7 +934,6 @@ export default function ClientPage({
         </div>
       </div>
 
-      {/* Shared members modal: keep a single dialog instance mounted */}
       <CommunityDetailsTable
         membersStaked={registryCommunity.members as MembersStaked[]}
         tokenGarden={tokenGarden}
@@ -1110,150 +1015,66 @@ const CommunityDetailsTable = ({
 };
 
 // Pool filtering components and types
-type Pool = Pick<
-  CVStrategy,
-  "id" | "archived" | "isEnabled" | "poolId" | "metadataHash"
-> & {
-  proposals: Pick<CVProposal, "id">[];
-  config: Pick<CVStrategyConfig, "proposalType" | "pointSystem">;
-  token: any;
-  metadata?: Maybe<Omit<PoolMetadata, "id">>;
-};
 
-type PoolFilterKey =
-  | "funding"
-  | "signaling"
-  | "streaming"
-  | "inReview"
-  | "archive";
+type PoolStatusFilterKey = "all" | "active" | "inReview" | "archive";
 
-const POOL_FILTERS: { key: PoolFilterKey; label: string }[] = [
-  { key: "funding", label: "Funding" },
-  { key: "streaming", label: "Streaming" },
-  { key: "signaling", label: "Signaling" },
+const POOL_STATUS_FILTERS: { key: PoolStatusFilterKey; label: string }[] = [
+  { key: "all", label: "All" },
+  { key: "active", label: "Active" },
   { key: "inReview", label: "In Review" },
-  { key: "archive", label: "Archive" },
+  { key: "archive", label: "Archived" },
 ];
 
-const POOL_FILTER_PRIORITY: PoolFilterKey[] = [
-  "funding",
-  "streaming",
-  "signaling",
-  "inReview",
-  "archive",
-];
-
-const POOL_FILTER_LABELS: Record<PoolFilterKey, string> = {
-  funding: "Funding",
-  streaming: "Streaming",
-  signaling: "Signaling",
-  inReview: "In Review",
-  archive: "Archive",
-};
-
-const POOL_FILTER_BADGE_STYLES: Record<PoolFilterKey, string> = {
-  funding: "bg-tertiary-soft dark:bg-tertiary-dark text-tertiary-content",
-  signaling: "bg-primary-soft text-primary-content dark:bg-primary-soft-dark",
-  streaming: "bg-tertiary-soft text-tertiary-content dark:bg-tertiary-dark",
+const POOL_STATUS_FILTER_BADGE_STYLES: Record<PoolStatusFilterKey, string> = {
+  all: "bg-tertiary-soft dark:bg-tertiary-dark text-tertiary-content",
+  active: "bg-primary-soft text-primary-content dark:bg-primary-soft-dark",
   inReview:
     "bg-secondary-soft dark:bg-secondary-soft-dark text-secondary-content",
   archive: "bg-danger-soft text-danger-content dark:bg-danger-soft-dark",
 };
 
-const getVisiblePoolFilterPriority = (
-  canSeeArchivedPools: boolean,
-): PoolFilterKey[] =>
-  canSeeArchivedPools ? POOL_FILTER_PRIORITY : (
-    POOL_FILTER_PRIORITY.filter((filter) => filter !== "archive")
-  );
-
-const getPreferredPoolFilter = (
-  counts: Record<PoolFilterKey, number>,
-  canSeeArchivedPools: boolean,
-): PoolFilterKey =>
-  getVisiblePoolFilterPriority(canSeeArchivedPools).find(
-    (filter) => counts[filter] > 0,
-  ) ?? "funding";
-
-const getFundingFallbackPoolFilter = (
-  counts: Record<PoolFilterKey, number>,
-  canSeeArchivedPools: boolean,
-): PoolFilterKey =>
-  getVisiblePoolFilterPriority(canSeeArchivedPools).find(
-    (filter) => filter !== "funding" && counts[filter] > 0,
-  ) ?? "funding";
-
 interface PoolFiltersUIProps {
-  selectedFilters: PoolFilterKey[];
-  onToggleFilter: (filter: PoolFilterKey) => void;
-  onSelectAll: () => void;
-  onClearAll: () => void;
-  clearAllDisabled: boolean;
-  counts: Record<PoolFilterKey, number>;
+  selectedFilter: PoolStatusFilterKey;
+  onSelectFilter: (filter: PoolStatusFilterKey) => void;
+  counts: Record<PoolStatusFilterKey, number>;
   showArchiveFilter: boolean;
 }
 
 const PoolFiltersUI = ({
-  selectedFilters,
-  onToggleFilter,
-  onSelectAll,
-  onClearAll,
-  clearAllDisabled,
+  selectedFilter,
+  onSelectFilter,
   counts,
   showArchiveFilter,
 }: PoolFiltersUIProps) => {
   const visibleFilters =
-    showArchiveFilter ? POOL_FILTERS : (
-      POOL_FILTERS.filter((filter) => filter.key !== "archive")
+    showArchiveFilter ? POOL_STATUS_FILTERS : (
+      POOL_STATUS_FILTERS.filter((filter) => filter.key !== "archive")
     );
-  const allVisibleSelected = visibleFilters.every((filter) =>
-    selectedFilters.includes(filter.key),
-  );
 
   return (
-    <div className="flex flex-col gap-4 sm:gap-3 xl:flex-row xl:items-center xl:justify-between">
-      <div className="flex gap-2 sm:gap-3 overflow-x-auto sm:overflow-visible pb-1 sm:pb-0">
-        {visibleFilters.map((filter) => (
-          <button
-            key={filter.key}
-            type="button"
-            onClick={() => onToggleFilter(filter.key)}
-            className={`rounded-full px-3 py-1.5 font-semibold border transition-all duration-150 ease-out whitespace-nowrap ${
-              selectedFilters.includes(filter.key) ?
-                `${POOL_FILTER_BADGE_STYLES[filter.key]} border-transparent shadow-sm ring-1 ring-black/10`
-              : "bg-transparent border-neutral-soft-content/30 text-neutral-soft-content hover:border-neutral-soft-content hover:text-primary-content"
-            }`}
-          >
-            <span className="inline-flex items-center gap-1 text-sm sm:text-md">
-              {selectedFilters.includes(filter.key) && (
-                <CheckIcon className="h-3.5 w-3.5" />
-              )}
-              {filter.label}
-            </span>
-            <span className="ml-1 opacity-80 text-xs sm:text-sm">
-              ({counts[filter.key] ?? 0})
-            </span>
-          </button>
-        ))}
-      </div>
-      <div className="mt-1 sm:mt-0 flex items-center gap-5 sm:gap-4 self-end sm:self-auto">
+    <div className="flex gap-2 sm:gap-3 overflow-x-auto sm:overflow-visible pb-1 sm:pb-0">
+      {visibleFilters.map((filter) => (
         <button
+          key={filter.key}
           type="button"
-          className="text-sm font-semibold text-primary-content hover:underline disabled:text-neutral-soft-content disabled:no-underline disabled:cursor-not-allowed"
-          onClick={onSelectAll}
-          disabled={allVisibleSelected}
+          onClick={() => onSelectFilter(filter.key)}
+          className={`rounded-full px-3 py-1.5 font-semibold border transition-all duration-150 ease-out whitespace-nowrap ${
+            selectedFilter === filter.key ?
+              `${POOL_STATUS_FILTER_BADGE_STYLES[filter.key]} border-transparent shadow-sm ring-1 ring-black/10`
+            : "bg-transparent border-neutral-soft-content/30 text-neutral-soft-content hover:border-neutral-soft-content hover:text-primary-content"
+          }`}
         >
-          Select all
+          <span className="inline-flex items-center gap-1 text-sm sm:text-md">
+            {selectedFilter === filter.key && (
+              <CheckIcon className="h-3.5 w-3.5" />
+            )}
+            {filter.label}
+          </span>
+          <span className="ml-1 opacity-80 text-xs sm:text-sm">
+            ({counts[filter.key] ?? 0})
+          </span>
         </button>
-        <button
-          type="button"
-          className="text-sm font-semibold text-danger-content hover:underline disabled:text-neutral-soft-content disabled:no-underline disabled:cursor-not-allowed"
-          onClick={onClearAll}
-          disabled={clearAllDisabled}
-        >
-          Clear all
-        </button>
-      </div>
+      ))}
     </div>
   );
 };
