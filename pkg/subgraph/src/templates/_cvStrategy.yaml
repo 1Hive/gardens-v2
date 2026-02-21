@@ -23,6 +23,8 @@
           handler: handleDisputeRuled
         - event: ProposalCreated(uint256,uint256)
           handler: handleProposalCreated
+        - event: ProposalCreated(uint256,uint256,address)
+          handler: handleProposalCreatedWithEscrow
         - event: SupportAdded(address,uint256,uint256,uint256)
           handler: handleSupportAdded
       file: ./src/mappings/cv-strategy.ts

@@ -40,8 +40,32 @@ type StreamInfo @entity(immutable: false) {
   maxFlowRate: BigInt
   superfluidGDA: String!
   streamLastFlowRate: BigInt
+  totalMemberUnits: BigInt!
+  proposalStreamIds: [String!]!
   createdAt: BigInt!
   updatedAt: BigInt!
+}
+
+type ProposalStream @entity(immutable: false) {
+  id: ID!
+  strategy: CVStrategy!
+  proposal: CVProposal!
+  escrow: String!
+  currentUnits: BigInt!
+  currentFlowRate: BigInt!
+  streamedUntilSnapshot: BigInt!
+  lastSnapshotAt: BigInt!
+  isStopped: Boolean!
+  createdAt: BigInt!
+  updatedAt: BigInt!
+}
+
+type ProposalEscrowIndex @entity(immutable: false) {
+  id: ID!
+  strategy: CVStrategy!
+  proposal: CVProposal!
+  proposalStream: ProposalStream!
+  escrow: String!
 }
 
 type ArbitrableConfig @entity(immutable: false) {
@@ -68,6 +92,7 @@ type CVProposal @entity(immutable: false) {
   requestedAmount: BigInt!
   requestedToken: String!
   proposalStatus: BigInt!
+  streamingEscrow: String
   blockLast: BigInt!
   convictionLast: BigInt!
   maxCVStaked: BigInt!
@@ -80,6 +105,7 @@ type CVProposal @entity(immutable: false) {
   updatedAt: BigInt!
   arbitrableConfig: ArbitrableConfig!
   executedAt: BigInt
+  proposalStream: ProposalStream
 }
 
 # type ProposalMeta @entity(immutable: false) {
