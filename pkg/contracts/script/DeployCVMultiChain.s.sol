@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import "forge-std/console2.sol";
 import "forge-std/Script.sol";
 import "forge-std/StdJson.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -76,7 +75,6 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
         inputs[2] = command;
 
         bytes memory result = vm.ffi(inputs);
-        console2.logBytes(result);
         return result;
     }
 
@@ -122,9 +120,6 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
         SENDER = json.readAddress(getKeyNetwork(".ENVS.SENDER"));
         ERC1967Proxy proxy;
 
-        console2.log("name: %s", name);
-        console2.log("sender: %s", SENDER);
-        console2.log("chainId : %s", chainId);
 
         allo_proxy = json.readAddress(getKeyNetwork(".ENVS.ALLO_PROXY"));
 
@@ -141,7 +136,6 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
 
         assertTrue(address(allo) != address(0));
 
-        console2.log("Allo Addr: %s", address(allo));
 
         if (address(PROXY_OWNER) == address(0)) {
             PROXY_OWNER = json.readAddress(getKeyNetwork(".ENVS.PROXY_OWNER"));
@@ -153,7 +147,6 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
                 PROXY_OWNER = address(proxyOwnerProxy);
             }
         }
-        console2.log("Proxy owner Addr: %s", PROXY_OWNER);
 
         if (address(PASSPORT_SCORER) == address(0)) {
             PASSPORT_SCORER = PassportScorer(json.readAddress(getKeyNetwork(".ENVS.PASSPORT_SCORER")));
@@ -166,7 +159,6 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
                 PASSPORT_SCORER = PassportScorer(payable(address(scorerProxy)));
             }
         }
-        console2.log("Passport Scorer Addr: %s", address(PASSPORT_SCORER));
 
         if (address(ARBITRATOR) == address(0)) {
             ARBITRATOR = SafeArbitrator(json.readAddress(getKeyNetwork(".ENVS.ARBITRATOR")));
@@ -178,7 +170,6 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
                 ARBITRATOR = SafeArbitrator(payable(address(proxy)));
             }
         }
-        console2.log("Arbitrator Addr: %s", address(ARBITRATOR));
 
         if (address(REGISTRY_FACTORY) == address(0)) {
             // REGISTRY_FACTORY = RegistryFactory(json.readAddress(getKeyNetwork(".PROXIES.REGISTRY_FACTORY")));
@@ -197,7 +188,6 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
                 REGISTRY_FACTORY = RegistryFactory(address(proxy));
             }
         }
-        console2.log("Registry Factory Addr: %s", address(REGISTRY_FACTORY));
 
         CommunityDiamondConfigurator communityDiamondConfigurator = new CommunityDiamondConfigurator();
         StrategyDiamondConfigurator diamondConfigurator = new StrategyDiamondConfigurator();
@@ -224,7 +214,6 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
             if (TOKEN == address(0)) {
                 // token = new GV2ERC20("HoneyV2", "HNYV2", 18);
                 token = new GV2ERC20("Seedling", "SEED", 18);
-                console2.log("Created Token Addr: %s", address(token));
                 TOKEN = address(token);
             } else {
                 token = GV2ERC20(TOKEN);

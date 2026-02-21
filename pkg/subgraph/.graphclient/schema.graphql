@@ -571,6 +571,7 @@ type CVStrategy {
   token: String!
   sybil: SybilProtection
   archived: Boolean!
+  stream: StreamInfo!
 }
 
 type CVStrategyConfig {
@@ -586,7 +587,6 @@ type CVStrategyConfig {
   maxAmount: BigInt
   allowlist: [String!]
   superfluidToken: String
-  superfluidGDA: [String!]!
 }
 
 input CVStrategyConfig_filter {
@@ -689,12 +689,6 @@ input CVStrategyConfig_filter {
   superfluidToken_ends_with_nocase: String
   superfluidToken_not_ends_with: String
   superfluidToken_not_ends_with_nocase: String
-  superfluidGDA: [String!]
-  superfluidGDA_not: [String!]
-  superfluidGDA_contains: [String!]
-  superfluidGDA_contains_nocase: [String!]
-  superfluidGDA_not_contains: [String!]
-  superfluidGDA_not_contains_nocase: [String!]
   """Filter for the block changed event."""
   _change_block: BlockChangedFilter
   and: [CVStrategyConfig_filter]
@@ -722,7 +716,6 @@ enum CVStrategyConfig_orderBy {
   maxAmount
   allowlist
   superfluidToken
-  superfluidGDA
 }
 
 input CVStrategy_filter {
@@ -898,6 +891,27 @@ input CVStrategy_filter {
   archived_not: Boolean
   archived_in: [Boolean!]
   archived_not_in: [Boolean!]
+  stream: String
+  stream_not: String
+  stream_gt: String
+  stream_lt: String
+  stream_gte: String
+  stream_lte: String
+  stream_in: [String!]
+  stream_not_in: [String!]
+  stream_contains: String
+  stream_contains_nocase: String
+  stream_not_contains: String
+  stream_not_contains_nocase: String
+  stream_starts_with: String
+  stream_starts_with_nocase: String
+  stream_not_starts_with: String
+  stream_not_starts_with_nocase: String
+  stream_ends_with: String
+  stream_ends_with_nocase: String
+  stream_not_ends_with: String
+  stream_not_ends_with_nocase: String
+  stream_: StreamInfo_filter
   """Filter for the block changed event."""
   _change_block: BlockChangedFilter
   and: [CVStrategy_filter]
@@ -952,6 +966,16 @@ enum CVStrategy_orderBy {
   sybil__id
   sybil__type
   archived
+  stream
+  stream__id
+  stream__contractAddress
+  stream__contractType
+  stream__superfluidToken
+  stream__maxFlowRate
+  stream__superfluidGDA
+  stream__streamLastFlowRate
+  stream__createdAt
+  stream__updatedAt
 }
 
 type CollateralVault {
@@ -2280,6 +2304,32 @@ type Query {
     """
     subgraphError: _SubgraphErrorPolicy_! = deny
   ): [CVStrategyConfig!]!
+  streamInfo(
+    id: ID!
+    """
+    The block at which the query should be executed. Can either be a `{ hash: Bytes }` value containing a block hash, a `{ number: Int }` containing the block number, or a `{ number_gte: Int }` containing the minimum block number. In the case of `number_gte`, the query will be executed on the latest block only if the subgraph has progressed to or past the minimum block number. Defaults to the latest block when omitted.
+    """
+    block: Block_height
+    """
+    Set to `allow` to receive data even if the subgraph has skipped over errors while syncing.
+    """
+    subgraphError: _SubgraphErrorPolicy_! = deny
+  ): StreamInfo
+  streamInfos(
+    skip: Int = 0
+    first: Int = 100
+    orderBy: StreamInfo_orderBy
+    orderDirection: OrderDirection
+    where: StreamInfo_filter
+    """
+    The block at which the query should be executed. Can either be a `{ hash: Bytes }` value containing a block hash, a `{ number: Int }` containing the block number, or a `{ number_gte: Int }` containing the minimum block number. In the case of `number_gte`, the query will be executed on the latest block only if the subgraph has progressed to or past the minimum block number. Defaults to the latest block when omitted.
+    """
+    block: Block_height
+    """
+    Set to `allow` to receive data even if the subgraph has skipped over errors while syncing.
+    """
+    subgraphError: _SubgraphErrorPolicy_! = deny
+  ): [StreamInfo!]!
   arbitrableConfig(
     id: ID!
     """
@@ -3385,6 +3435,188 @@ enum Stake_orderBy {
   proposal__executedAt
   amount
   createdAt
+}
+
+type StreamInfo {
+  id: ID!
+  contractAddress: String!
+  contractType: String!
+  strategy: CVStrategy
+  superfluidToken: String
+  maxFlowRate: BigInt
+  superfluidGDA: String!
+  streamLastFlowRate: BigInt
+  createdAt: BigInt!
+  updatedAt: BigInt!
+}
+
+input StreamInfo_filter {
+  id: ID
+  id_not: ID
+  id_gt: ID
+  id_lt: ID
+  id_gte: ID
+  id_lte: ID
+  id_in: [ID!]
+  id_not_in: [ID!]
+  contractAddress: String
+  contractAddress_not: String
+  contractAddress_gt: String
+  contractAddress_lt: String
+  contractAddress_gte: String
+  contractAddress_lte: String
+  contractAddress_in: [String!]
+  contractAddress_not_in: [String!]
+  contractAddress_contains: String
+  contractAddress_contains_nocase: String
+  contractAddress_not_contains: String
+  contractAddress_not_contains_nocase: String
+  contractAddress_starts_with: String
+  contractAddress_starts_with_nocase: String
+  contractAddress_not_starts_with: String
+  contractAddress_not_starts_with_nocase: String
+  contractAddress_ends_with: String
+  contractAddress_ends_with_nocase: String
+  contractAddress_not_ends_with: String
+  contractAddress_not_ends_with_nocase: String
+  contractType: String
+  contractType_not: String
+  contractType_gt: String
+  contractType_lt: String
+  contractType_gte: String
+  contractType_lte: String
+  contractType_in: [String!]
+  contractType_not_in: [String!]
+  contractType_contains: String
+  contractType_contains_nocase: String
+  contractType_not_contains: String
+  contractType_not_contains_nocase: String
+  contractType_starts_with: String
+  contractType_starts_with_nocase: String
+  contractType_not_starts_with: String
+  contractType_not_starts_with_nocase: String
+  contractType_ends_with: String
+  contractType_ends_with_nocase: String
+  contractType_not_ends_with: String
+  contractType_not_ends_with_nocase: String
+  strategy: String
+  strategy_not: String
+  strategy_gt: String
+  strategy_lt: String
+  strategy_gte: String
+  strategy_lte: String
+  strategy_in: [String!]
+  strategy_not_in: [String!]
+  strategy_contains: String
+  strategy_contains_nocase: String
+  strategy_not_contains: String
+  strategy_not_contains_nocase: String
+  strategy_starts_with: String
+  strategy_starts_with_nocase: String
+  strategy_not_starts_with: String
+  strategy_not_starts_with_nocase: String
+  strategy_ends_with: String
+  strategy_ends_with_nocase: String
+  strategy_not_ends_with: String
+  strategy_not_ends_with_nocase: String
+  strategy_: CVStrategy_filter
+  superfluidToken: String
+  superfluidToken_not: String
+  superfluidToken_gt: String
+  superfluidToken_lt: String
+  superfluidToken_gte: String
+  superfluidToken_lte: String
+  superfluidToken_in: [String!]
+  superfluidToken_not_in: [String!]
+  superfluidToken_contains: String
+  superfluidToken_contains_nocase: String
+  superfluidToken_not_contains: String
+  superfluidToken_not_contains_nocase: String
+  superfluidToken_starts_with: String
+  superfluidToken_starts_with_nocase: String
+  superfluidToken_not_starts_with: String
+  superfluidToken_not_starts_with_nocase: String
+  superfluidToken_ends_with: String
+  superfluidToken_ends_with_nocase: String
+  superfluidToken_not_ends_with: String
+  superfluidToken_not_ends_with_nocase: String
+  maxFlowRate: BigInt
+  maxFlowRate_not: BigInt
+  maxFlowRate_gt: BigInt
+  maxFlowRate_lt: BigInt
+  maxFlowRate_gte: BigInt
+  maxFlowRate_lte: BigInt
+  maxFlowRate_in: [BigInt!]
+  maxFlowRate_not_in: [BigInt!]
+  superfluidGDA: String
+  superfluidGDA_not: String
+  superfluidGDA_gt: String
+  superfluidGDA_lt: String
+  superfluidGDA_gte: String
+  superfluidGDA_lte: String
+  superfluidGDA_in: [String!]
+  superfluidGDA_not_in: [String!]
+  superfluidGDA_contains: String
+  superfluidGDA_contains_nocase: String
+  superfluidGDA_not_contains: String
+  superfluidGDA_not_contains_nocase: String
+  superfluidGDA_starts_with: String
+  superfluidGDA_starts_with_nocase: String
+  superfluidGDA_not_starts_with: String
+  superfluidGDA_not_starts_with_nocase: String
+  superfluidGDA_ends_with: String
+  superfluidGDA_ends_with_nocase: String
+  superfluidGDA_not_ends_with: String
+  superfluidGDA_not_ends_with_nocase: String
+  streamLastFlowRate: BigInt
+  streamLastFlowRate_not: BigInt
+  streamLastFlowRate_gt: BigInt
+  streamLastFlowRate_lt: BigInt
+  streamLastFlowRate_gte: BigInt
+  streamLastFlowRate_lte: BigInt
+  streamLastFlowRate_in: [BigInt!]
+  streamLastFlowRate_not_in: [BigInt!]
+  createdAt: BigInt
+  createdAt_not: BigInt
+  createdAt_gt: BigInt
+  createdAt_lt: BigInt
+  createdAt_gte: BigInt
+  createdAt_lte: BigInt
+  createdAt_in: [BigInt!]
+  createdAt_not_in: [BigInt!]
+  updatedAt: BigInt
+  updatedAt_not: BigInt
+  updatedAt_gt: BigInt
+  updatedAt_lt: BigInt
+  updatedAt_gte: BigInt
+  updatedAt_lte: BigInt
+  updatedAt_in: [BigInt!]
+  updatedAt_not_in: [BigInt!]
+  """Filter for the block changed event."""
+  _change_block: BlockChangedFilter
+  and: [StreamInfo_filter]
+  or: [StreamInfo_filter]
+}
+
+enum StreamInfo_orderBy {
+  id
+  contractAddress
+  contractType
+  strategy
+  strategy__id
+  strategy__poolId
+  strategy__metadataHash
+  strategy__maxCVSupply
+  strategy__totalEffectiveActivePoints
+  strategy__isEnabled
+  strategy__token
+  strategy__archived
+  superfluidToken
+  maxFlowRate
+  superfluidGDA
+  streamLastFlowRate
+  createdAt
+  updatedAt
 }
 
 type SybilProtection {

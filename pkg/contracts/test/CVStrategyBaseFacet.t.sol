@@ -7,12 +7,37 @@ import {GV2ERC20} from "../script/GV2ERC20.sol";
 import {CVStrategyBaseFacet} from "../src/CVStrategy/CVStrategyBaseFacet.sol";
 import {MockPauseController} from "./helpers/PauseHelpers.sol";
 
+import {PointSystem, CVParams} from "../src/CVStrategy/CVStrategy.sol";
 import {
     CVStrategyBaseFacetHarness,
     MockAlloWithPool,
     MockRegistryCommunity,
     MockSybilScorer
 } from "./helpers/CVStrategyHelpers.sol";
+
+contract MockExternalVotingPowerRegistryBase {
+    mapping(address => uint256) public power;
+
+    function setMemberPower(address _member, uint256 amount) external {
+        power[_member] = amount;
+    }
+
+    function getMemberPowerInStrategy(address _member, address) external view returns (uint256) {
+        return power[_member];
+    }
+
+    function getMemberStakedAmount(address) external pure returns (uint256) {
+        return 0;
+    }
+
+    function ercAddress() external pure returns (address) {
+        return address(0);
+    }
+
+    function isMember(address _member) external view returns (bool) {
+        return power[_member] > 0;
+    }
+}
 
 contract CVStrategyBaseFacetTest is Test {
     CVStrategyBaseFacetHarness internal facet;
@@ -38,6 +63,7 @@ contract CVStrategyBaseFacetTest is Test {
         facet.setAllo(address(allo));
         facet.setPoolId(1);
         facet.setRegistryCommunity(address(registryCommunity));
+        facet.setVotingPowerRegistry(address(registryCommunity));
         registryCommunity.setCouncilSafe(councilSafe);
         facet.setContractOwner(owner);
 
@@ -139,6 +165,38 @@ contract CVStrategyBaseFacetTest is Test {
         assertGt(blockNumber, 0);
     }
 
+    function test_conviction_snapshot_freezes_when_strategy_disabled_for_all_pool_types() public {
+        uint256 proposalId = 1;
+        facet.setCvParams(CVParams({maxRatio: 0, weight: 0, decay: 9_000_000, minThresholdPoints: 0}));
+        facet.setProposal(proposalId, member, block.number, 0);
+        vm.roll(block.number + 10);
+
+        facet.exposedCalculateAndSetConviction(proposalId, 100);
+        (uint256 blockBeforeDisable, uint256 convictionBeforeDisable) = facet.getProposalSnapshot(proposalId);
+        assertEq(blockBeforeDisable, block.number);
+        assertGt(convictionBeforeDisable, 0);
+
+        registryCommunity.setStrategyEnabled(false);
+        vm.roll(block.number + 5);
+        facet.exposedCalculateAndSetConviction(proposalId, 100);
+        (uint256 blockAtSnapshot, uint256 convictionAtSnapshot) = facet.getProposalSnapshot(proposalId);
+        assertEq(blockAtSnapshot, block.number);
+        assertEq(convictionAtSnapshot, convictionBeforeDisable);
+
+        vm.roll(block.number + 5);
+        facet.exposedCalculateAndSetConviction(proposalId, 100);
+        (uint256 blockStillFrozen, uint256 convictionStillFrozen) = facet.getProposalSnapshot(proposalId);
+        assertEq(blockStillFrozen, block.number);
+        assertEq(convictionStillFrozen, convictionAtSnapshot);
+
+        registryCommunity.setStrategyEnabled(true);
+        vm.roll(block.number + 5);
+        facet.exposedCalculateAndSetConviction(proposalId, 100);
+        (uint256 blockAfterEnable, uint256 convictionAfterEnable) = facet.getProposalSnapshot(proposalId);
+        assertEq(blockAfterEnable, block.number);
+        assertGt(convictionAfterEnable, convictionAtSnapshot);
+    }
+
     function test_pauseHelpers_enforceNotPaused() public {
         MockPauseController controller = new MockPauseController();
         facet.setPauseController(address(controller));
@@ -229,5 +287,55 @@ contract CVStrategyBaseFacetTest is Test {
 
         uint256 amount = facet.exposedGetPoolAmount();
         assertEq(amount, 1000 + 1e20);
+    }
+
+    function test_canExecuteAction_customPointSystem_externalRegistry_memberAllowed() public {
+        MockExternalVotingPowerRegistryBase extRegistry = new MockExternalVotingPowerRegistryBase();
+        extRegistry.setMemberPower(other, 5);
+
+        facet.setPointSystem(PointSystem.Custom);
+        facet.setVotingPowerRegistry(address(extRegistry));
+
+        assertTrue(facet.exposedCanExecuteAction(other));
+    }
+
+    function test_canExecuteAction_customPointSystem_externalRegistry_nonMemberDenied() public {
+        MockExternalVotingPowerRegistryBase extRegistry = new MockExternalVotingPowerRegistryBase();
+        // other has 0 power (default)
+
+        facet.setPointSystem(PointSystem.Custom);
+        facet.setVotingPowerRegistry(address(extRegistry));
+
+        assertFalse(facet.exposedCanExecuteAction(other));
+    }
+
+    function test_canExecuteAction_customPointSystem_defaultRegistry_fallsToAllowlist() public {
+        // votingPowerRegistry == registryCommunity (set in setUp) → should use allowlist path
+        facet.setPointSystem(PointSystem.Custom);
+
+        // No allowlist role set → should be false
+        assertFalse(facet.exposedCanExecuteAction(other));
+
+        // Grant allowlist → should be true
+        bytes32 role = keccak256(abi.encodePacked("ALLOWLIST", uint256(1)));
+        registryCommunity.setRole(role, other, true);
+        assertTrue(facet.exposedCanExecuteAction(other));
+    }
+
+    function test_canExecuteAction_nonCustomPointSystem_ignoresRegistry() public {
+        MockExternalVotingPowerRegistryBase extRegistry = new MockExternalVotingPowerRegistryBase();
+        extRegistry.setMemberPower(other, 10);
+
+        // Unlimited + external registry with power → still uses allowlist path
+        facet.setPointSystem(PointSystem.Unlimited);
+        facet.setVotingPowerRegistry(address(extRegistry));
+
+        // No allowlist → false despite having power in external registry
+        assertFalse(facet.exposedCanExecuteAction(other));
+
+        // Grant allowlist → true
+        bytes32 role = keccak256(abi.encodePacked("ALLOWLIST", uint256(1)));
+        registryCommunity.setRole(role, other, true);
+        assertTrue(facet.exposedCanExecuteAction(other));
     }
 }

@@ -4,7 +4,10 @@ pragma solidity ^0.8.19;
 import {CVStrategyBaseFacet} from "../CVStrategyBaseFacet.sol";
 import {CVStreamingStorage} from "../CVStreamingStorage.sol";
 import {IArbitrator} from "../../interfaces/IArbitrator.sol";
+import {IVotingPowerRegistry} from "../../interfaces/IVotingPowerRegistry.sol";
+import {IRegistryFactory} from "../../IRegistryFactory.sol";
 import {Proposal, ArbitrableConfig, CVParams} from "../ICVStrategy.sol";
+import {LibDiamond} from "../../diamonds/libraries/LibDiamond.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Library.sol";
 
 /**
@@ -21,6 +24,7 @@ contract CVAdminFacet is CVStrategyBaseFacet {
     /*|--------------------------------------------|*/
     error SuperfluidGDAConnectFailed(address gda, address superToken, address caller); // 0x9bd2355f
     error SuperfluidGDADisconnectFailed(address gda, address superToken, address caller); // 0x3746bbff
+    error VotingPowerRegistryNotAllowed(address target);
 
     /*|--------------------------------------------|*/
     /*|              EVENTS                        |*/
@@ -38,9 +42,11 @@ contract CVAdminFacet is CVStrategyBaseFacet {
     event AllowlistMembersRemoved(uint256 poolId, address[] members);
     event AllowlistMembersAdded(uint256 poolId, address[] members);
     event SuperfluidTokenUpdated(address superfluidToken);
+    event SuperfluidStreamingRateUpdated(uint256 streamingRatePerSecond);
     event SuperfluidGDAConnected(address indexed gda, address indexed by);
     event SuperfluidGDADisconnected(address indexed gda, address indexed by);
     event PointsDeactivated(address member);
+    event VotingPowerRegistryUpdated(address indexed oldRegistry, address indexed newRegistry);
 
     /*|--------------------------------------------|*/
     /*|              FUNCTIONS                     |*/
@@ -55,10 +61,52 @@ contract CVAdminFacet is CVStrategyBaseFacet {
         address[] memory _membersToRemove,
         address _superfluidToken
     ) external {
+        _setPoolParamsWithStreaming(
+            _arbitrableConfig,
+            _cvParams,
+            _sybilScoreThreshold,
+            _membersToAdd,
+            _membersToRemove,
+            _superfluidToken,
+            streamingRatePerSecond
+        );
+    }
+
+    function setPoolParams(
+        ArbitrableConfig memory _arbitrableConfig,
+        CVParams memory _cvParams,
+        uint256 _sybilScoreThreshold,
+        address[] memory _membersToAdd,
+        address[] memory _membersToRemove,
+        address _superfluidToken,
+        uint256 _streamingRatePerSecond
+    ) external {
+        _setPoolParamsWithStreaming(
+            _arbitrableConfig,
+            _cvParams,
+            _sybilScoreThreshold,
+            _membersToAdd,
+            _membersToRemove,
+            _superfluidToken,
+            _streamingRatePerSecond
+        );
+    }
+
+    function _setPoolParamsWithStreaming(
+        ArbitrableConfig memory _arbitrableConfig,
+        CVParams memory _cvParams,
+        uint256 _sybilScoreThreshold,
+        address[] memory _membersToAdd,
+        address[] memory _membersToRemove,
+        address _superfluidToken,
+        uint256 _streamingRatePerSecond
+    ) internal {
         onlyCouncilSafe();
 
         superfluidToken = ISuperToken(_superfluidToken);
+        streamingRatePerSecond = _streamingRatePerSecond;
         emit SuperfluidTokenUpdated(_superfluidToken);
+        emit SuperfluidStreamingRateUpdated(_streamingRatePerSecond);
 
         _setPoolParams(_arbitrableConfig, _cvParams, _membersToAdd, _membersToRemove);
 
@@ -89,6 +137,29 @@ contract CVAdminFacet is CVStrategyBaseFacet {
             revert SuperfluidGDADisconnectFailed(gda, address(supertoken), msg.sender);
         }
         emit SuperfluidGDADisconnected(gda, msg.sender);
+    }
+
+    /*|--------------------------------------------|*/
+    /*|      VOTING POWER REGISTRY MANAGEMENT     |*/
+    /*|--------------------------------------------|*/
+
+    /// @notice Update the voting power registry for this pool
+    /// @dev Only callable by council safe.
+    ///      Registry must be registered on RegistryFactory
+    function setVotingPowerRegistry(address _registry) public {
+        onlyCouncilSafe();
+
+        if (_registry != address(0) && _registry != address(registryCommunity)) {
+            if (!IRegistryFactory(registryCommunity.registryFactory()).isContractRegistered(_registry)) {
+                revert VotingPowerRegistryNotAllowed(_registry);
+            }
+        }
+
+        address oldRegistry = address(votingPowerRegistry);
+        votingPowerRegistry = _registry == address(0)
+            ? IVotingPowerRegistry(address(registryCommunity))
+            : IVotingPowerRegistry(_registry);
+        emit VotingPowerRegistryUpdated(oldRegistry, address(votingPowerRegistry));
     }
 
     /*|--------------------------------------------|*/

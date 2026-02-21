@@ -19,7 +19,7 @@ import sfMeta from "@superfluid-finance/metadata";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { toast } from "react-toastify";
-import { Address, zeroAddress } from "viem";
+import { formatUnits, Address, zeroAddress } from "viem";
 import {
   ArbitrableConfig,
   getPassportStrategyDocument,
@@ -65,6 +65,7 @@ import {
   CV_PASSPORT_THRESHOLD_SCALE,
   CV_SCALE_PRECISION,
   formatTokenAmount,
+  SEC_TO_MONTH,
   MAX_RATIO_CONSTANT,
   roundToSignificant,
 } from "@/utils/numbers";
@@ -223,6 +224,16 @@ export default function PoolHeader({
   const pointSystem = strategy.config.pointSystem;
   const allowList = strategy.config.allowlist;
   const rulingTime = arbitrableConfig.defaultRulingTimeout;
+  const streamingRatePerSecond = strategy.stream?.maxFlowRate;
+  const streamingRatePerMonth =
+    streamingRatePerSecond != null ?
+      Number(
+        formatUnits(
+          BigInt(streamingRatePerSecond),
+          superToken?.decimals ?? poolToken?.decimals ?? 18,
+        ),
+      ) * SEC_TO_MONTH
+    : null;
 
   const proposalOnDispute = strategy.proposals?.some(
     (proposal) => ProposalStatus[proposal.proposalStatus] === "disputed",
@@ -372,6 +383,19 @@ export default function PoolHeader({
           )}
         </div>
       ),
+    },
+    {
+      label: "Max monthly streaming",
+      info: "Target flow rate configured for this streaming pool.",
+      value:
+        (
+          streamingRatePerMonth != null &&
+          PoolTypes[proposalType] === "streaming"
+        ) ?
+          `${roundToSignificant(streamingRatePerMonth, 4)} ${
+            poolToken?.symbol
+          }/month`
+        : null,
     },
   ] as const;
 
@@ -648,10 +672,10 @@ export default function PoolHeader({
           isEnabled ? "xl:col-span-9" : "xl:col-span-12"
         }`}
       >
-        <section className="section-layout flex flex-col g-6">
+        <section className="section-layout flex flex-col">
           {/* Title - Badge poolType - Addresses and Buttons -> (when council memeber is connected) */}
           <header className="flex flex-col gap-4">
-            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center flex-wrap gap-4">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center flex-wrap gap-2 sm:gap-4">
               <h2>
                 <Skeleton isLoading={!ipfsResult} className="sm:!w-96 h-8">
                   {ipfsResult?.title}
@@ -724,7 +748,7 @@ export default function PoolHeader({
                 </div>
               </div>
 
-              <Divider />
+              <Divider className="hidden sm:block" />
 
               {/* Buttons: disable - edit - archive - create steam token  */}
               <div className="flex flex-col sm:flex-row justify-between items-baseline flex-wrap gap-2">
@@ -967,7 +991,7 @@ export default function PoolHeader({
               title="Min threshold"
               infoBoxType="warning"
               content="Not enough eligible members in this pool have activated their governance. No proposals will pass until more members do. You can still create and support proposals."
-              className="mb-4"
+              className="my-4"
             />
           )}
           {!isEnabled && (

@@ -69,6 +69,11 @@ contract CommunityPowerFacet is CommunityBaseFacet {
     /*|              FUNCTIONS                     |*/
     /*|--------------------------------------------|*/
 
+    // Sig: 0xeb5cbe43
+    function ercAddress() public view returns (address) {
+        return address(gardenToken);
+    }
+
     // Sig: 0x7817ee4f
     function getMemberPowerInStrategy(address _member, address _strategy) public view returns (uint256) {
         return memberPowerInStrategy[_member][_strategy];
@@ -94,9 +99,13 @@ contract CommunityPowerFacet is CommunityBaseFacet {
         uint256 totalStakedAmount = member.stakedAmount;
         uint256 pointsToIncrease = registerStakeAmount;
 
-        if (CVStrategy(payable(_strategy)).getPointSystem() == PointSystem.Quadratic) {
+        PointSystem ps = CVStrategy(payable(_strategy)).getPointSystem();
+        if (ps == PointSystem.Custom) {
+            // Custom: registry is the source of truth, power set via activatePoints() in CVPowerFacet
             pointsToIncrease = CVStrategy(payable(_strategy)).increasePower(_member, 0);
-        } else if (CVStrategy(payable(_strategy)).getPointSystem() != PointSystem.Fixed) {
+        } else if (ps == PointSystem.Quadratic) {
+            pointsToIncrease = CVStrategy(payable(_strategy)).increasePower(_member, 0);
+        } else if (ps != PointSystem.Fixed) {
             pointsToIncrease = CVStrategy(payable(_strategy)).increasePower(_member, totalStakedAmount);
         }
 

@@ -8,6 +8,8 @@ library CVStreamingStorage {
     struct Layout {
         uint256 lastRebalanceAt;
         uint256 rebalanceCooldown;
+        // Reserved to preserve storage layout compatibility with previous versions.
+        bool __deprecated_disabledConvictionSnapshotTaken;
         mapping(uint256 => address) proposalEscrow;
     }
 
@@ -29,7 +31,7 @@ abstract contract CVStreamingBase {
     /*|              EVENTS                        |*/
     /*|--------------------------------------------|*/
     event StreamMemberUnitUpdated(address indexed member, int96 newUnit);
-    event StreamStarted(address indexed gda, uint256 flowRate);
+    event StreamRateUpdated(address indexed gda, uint256 flowRate);
 
     function lastRebalanceAt() internal view returns (uint256) {
         return CVStreamingStorage.layout().lastRebalanceAt;

@@ -9,6 +9,7 @@ import {MockPauseController} from "./helpers/PauseHelpers.sol";
 import {CommunityPauseFacet} from "../src/RegistryCommunity/facets/CommunityPauseFacet.sol";
 import {CVPauseFacet} from "../src/CVStrategy/facets/CVPauseFacet.sol";
 import {LibDiamond} from "../src/diamonds/libraries/LibDiamond.sol";
+import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 contract PauseFacetBaseHarness is PauseFacetBase {
     address public owner;
@@ -157,8 +158,12 @@ contract PauseFacetBaseTest is Test {
     }
 
     function test_communityPauseFacet_uses_owner() public {
-        CommunityPauseFacetHarness community = new CommunityPauseFacetHarness();
-        community.initializeHarness(address(this));
+        CommunityPauseFacetHarness impl = new CommunityPauseFacetHarness();
+        CommunityPauseFacetHarness community = CommunityPauseFacetHarness(
+            payable(
+                address(new ERC1967Proxy(address(impl), abi.encodeWithSelector(impl.initializeHarness.selector, address(this))))
+            )
+        );
         community.setPauseController(address(controller));
         assertEq(community.pauseController(), address(controller));
 

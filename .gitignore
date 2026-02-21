@@ -61,3 +61,5 @@ apps/web/.osmium/contracts.json
 apps/web/.osmium/environments.json
 
 apps/web/.osmium/wallets.json
+tools/**/*.exe
+tools/**/*.zip

@@ -10,6 +10,7 @@ import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import {ICollateralVault} from "../src/interfaces/ICollateralVault.sol";
 import {ISybilScorer} from "../src/ISybilScorer.sol";
 import {IArbitrator} from "../src/interfaces/IArbitrator.sol";
+import {IVotingPowerRegistry} from "../src/interfaces/IVotingPowerRegistry.sol";
 import {ConvictionsUtils} from "../src/CVStrategy/ConvictionsUtils.sol";
 import {TERC20} from "./shared/TERC20.sol";
 import {ISuperToken} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperToken.sol";
@@ -17,10 +18,13 @@ import {ISuperToken} from "@superfluid-finance/ethereum-contracts/contracts/inte
 import {MockAlloWithPool, MockCollateralVault} from "./helpers/CVStrategyHelpers.sol";
 
 contract MockRegistryCommunityAlloc {
+    error StrategyDisabled();
+
     mapping(address => bool) public members;
     mapping(address => bool) public activated;
     mapping(address => uint256) public power;
     mapping(bytes32 => mapping(address => bool)) public roles;
+    bool public strategyEnabled = true;
 
     function setMember(address member, bool allowed) external {
         members[member] = allowed;
@@ -52,6 +56,29 @@ contract MockRegistryCommunityAlloc {
 
     function grantRole(bytes32 role, address account) external {
         roles[role][account] = true;
+    }
+
+    function setStrategyEnabled(bool enabled) external {
+        strategyEnabled = enabled;
+    }
+
+    function onlyStrategyEnabled(address) external view {
+        if (!strategyEnabled) {
+            revert StrategyDisabled();
+        }
+    }
+
+    function enabledStrategies(address) external view returns (bool) {
+        return strategyEnabled;
+    }
+
+    // IVotingPowerRegistry compatibility stubs
+    function getMemberStakedAmount(address) external pure returns (uint256) {
+        return 0;
+    }
+
+    function ercAddress() external pure returns (address) {
+        return address(0);
     }
 }
 
@@ -97,6 +124,10 @@ contract CVAllocationFacetHarness is CVAllocationFacet {
 
     function setRegistryCommunity(address community) external {
         registryCommunity = RegistryCommunity(community);
+    }
+
+    function setVotingPowerRegistry(address registry) external {
+        votingPowerRegistry = IVotingPowerRegistry(registry);
     }
 
     function setSybilScorer(address scorer) external {
@@ -216,6 +247,7 @@ contract CVAllocationFacetTest is Test {
         facet.setAllo(address(allo));
         facet.setPoolId(1);
         facet.setRegistryCommunity(address(registry));
+        facet.setVotingPowerRegistry(address(registry));
         facet.setCollateralVault(address(vault));
 
         registry.setMember(member, true);
@@ -249,6 +281,15 @@ contract CVAllocationFacetTest is Test {
 
         vm.prank(address(allo));
         vm.expectRevert(abi.encodeWithSelector(CVAllocationFacet.UserIsInactive.selector, member));
+        facet.allocate(abi.encode(_support(1, 1)), member);
+    }
+
+    function test_allocate_reverts_when_strategy_disabled() public {
+        registry.setStrategyEnabled(false);
+        facet.setProposal(1, ProposalStatus.Active, 0, address(token), beneficiary, member, 0, 0, 0);
+
+        vm.prank(address(allo));
+        vm.expectRevert(abi.encodeWithSelector(MockRegistryCommunityAlloc.StrategyDisabled.selector));
         facet.allocate(abi.encode(_support(1, 1)), member);
     }
 

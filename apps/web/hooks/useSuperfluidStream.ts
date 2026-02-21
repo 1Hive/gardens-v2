@@ -19,13 +19,13 @@ export const STREAM_TO_TARGET_QUERY = gql`
       }
     }
 
-    receiverStreams: streams(
-      where: { receiver: $receiver, token: $token, currentFlowRate_gt: "0" }
-    ) {
+    receiverStreams: streams(where: { receiver: $receiver, token: $token }) {
       receiver {
         id
       }
       currentFlowRate
+      streamedUntilUpdatedAt
+      updatedAtTimestamp
       sender {
         id
       }
@@ -36,8 +36,19 @@ export const STREAM_TO_TARGET_QUERY = gql`
         id
       }
     }
+
+    pool(id: $receiver) {
+      id
+      totalAmountDistributedUntilUpdatedAt
+    }
   }
 `;
+
+type ReceiverStreamSnapshot = {
+  currentFlowRate: bigint;
+  streamedUntilUpdatedAt: bigint;
+  updatedAtTimestamp: bigint;
+};
 
 export function useSuperfluidStream({
   receiver,
@@ -61,6 +72,31 @@ export function useSuperfluidStream({
   const [currentUserOtherFlowRateBn, setCurrentUserOtherFlowRateBn] = useState<
     bigint | null
   >(null);
+  const [totalAmountDistributedBn, setTotalAmountDistributedBn] = useState<
+    bigint | null
+  >(null);
+  const [liveTotalStreamedBn, setLiveTotalStreamedBn] = useState<
+    bigint | null
+  >(null);
+  const [receiverStreamsSnapshot, setReceiverStreamsSnapshot] = useState<
+    ReceiverStreamSnapshot[]
+  >([]);
+
+  const computeLiveTotalStreamed = (streams: ReceiverStreamSnapshot[]) => {
+    if (!streams.length) return null;
+    const nowInSec = BigInt(Math.floor(Date.now() / 1000));
+    return streams.reduce((acc, stream) => {
+      const elapsed =
+        nowInSec > stream.updatedAtTimestamp ?
+          nowInSec - stream.updatedAtTimestamp
+        : 0n;
+      return (
+        acc +
+        stream.streamedUntilUpdatedAt +
+        stream.currentFlowRate * elapsed
+      );
+    }, 0n);
+  };
 
   const fetch = async () => {
     if (!receiver || !superToken || !client) return;
@@ -76,6 +112,19 @@ export function useSuperfluidStream({
         return null;
       });
     if (result?.data) {
+      const receiverStreamsSnapshotData: ReceiverStreamSnapshot[] =
+        result.data.receiverStreams.map(
+          (flow: {
+            currentFlowRate: bigint;
+            streamedUntilUpdatedAt: bigint;
+            updatedAtTimestamp: bigint;
+          }) => ({
+            currentFlowRate: BigInt(flow.currentFlowRate),
+            streamedUntilUpdatedAt: BigInt(flow.streamedUntilUpdatedAt ?? "0"),
+            updatedAtTimestamp: BigInt(flow.updatedAtTimestamp ?? "0"),
+          }),
+        );
+
       let toPoolFlowRate: bigint = result.data.receiverStreams.reduce(
         (
           acc: bigint,
@@ -108,6 +157,15 @@ export function useSuperfluidStream({
       }
 
       setCurrentFlowRateBn(toPoolFlowRate);
+      setReceiverStreamsSnapshot(receiverStreamsSnapshotData);
+      setLiveTotalStreamedBn(
+        computeLiveTotalStreamed(receiverStreamsSnapshotData),
+      );
+      setTotalAmountDistributedBn(
+        result.data.pool?.totalAmountDistributedUntilUpdatedAt != null ?
+          BigInt(result.data.pool.totalAmountDistributedUntilUpdatedAt)
+        : null,
+      );
 
       if (connectedWalletAddress) {
         let toOtherRecipientFlowRate: bigint = result.data.senderStreams.reduce(
@@ -143,14 +201,30 @@ export function useSuperfluidStream({
   useEffect(() => {
     if (!client) return;
     fetch();
-  }, [client, superToken]);
+  }, [client, superToken, receiver, connectedWalletAddress]);
+
+  useEffect(() => {
+    if (!receiverStreamsSnapshot.length) {
+      setLiveTotalStreamedBn(null);
+      return;
+    }
+    const update = () =>
+      setLiveTotalStreamedBn(computeLiveTotalStreamed(receiverStreamsSnapshot));
+    update();
+    const interval = setInterval(update, 1000);
+    return () => {
+      clearInterval(interval);
+    };
+  }, [receiverStreamsSnapshot]);
 
   return {
     currentUserOtherFlowRateBn,
     currentFlowRateBn,
+    totalAmountDistributedBn,
     setCurrentFlowRateBn,
     refetch: fetch,
     currentUserFlowRateBn,
     setCurrentUserFlowRateBn,
+    liveTotalStreamedBn,
   };
 }

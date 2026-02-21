@@ -191,6 +191,12 @@ contract MockAllo is FAllo {
 
 contract MockRegistryFactoryWithPause {
     address public controller;
+    IDiamondCut.FacetCut[] internal communityFacetCuts;
+    IDiamondCut.FacetCut[] internal strategyFacetCuts;
+    address internal communityInit;
+    bytes internal communityInitCalldata;
+    address internal strategyInit;
+    bytes internal strategyInitCalldata;
 
     constructor(address controller_) {
         controller = controller_;
@@ -198,6 +204,72 @@ contract MockRegistryFactoryWithPause {
 
     function globalPauseController() external view returns (address) {
         return controller;
+    }
+
+    function setCommunityFacets(IDiamondCut.FacetCut[] memory facetCuts, address init, bytes memory initCalldata)
+        external
+    {
+        _setFacetCuts(facetCuts, communityFacetCuts);
+        communityInit = init;
+        communityInitCalldata = initCalldata;
+    }
+
+    function setStrategyFacets(IDiamondCut.FacetCut[] memory facetCuts, address init, bytes memory initCalldata)
+        external
+    {
+        _setFacetCuts(facetCuts, strategyFacetCuts);
+        strategyInit = init;
+        strategyInitCalldata = initCalldata;
+    }
+
+    function getCommunityFacets()
+        external
+        view
+        returns (IDiamondCut.FacetCut[] memory facetCuts, address init, bytes memory initCalldata)
+    {
+        return (_copyFacetCuts(communityFacetCuts), communityInit, communityInitCalldata);
+    }
+
+    function getStrategyFacets()
+        external
+        view
+        returns (IDiamondCut.FacetCut[] memory facetCuts, address init, bytes memory initCalldata)
+    {
+        return (_copyFacetCuts(strategyFacetCuts), strategyInit, strategyInitCalldata);
+    }
+
+    function _setFacetCuts(IDiamondCut.FacetCut[] memory source, IDiamondCut.FacetCut[] storage target) internal {
+        while (target.length > 0) {
+            target.pop();
+        }
+        for (uint256 i = 0; i < source.length; i++) {
+            target.push();
+            IDiamondCut.FacetCut storage dest = target[i];
+            dest.facetAddress = source[i].facetAddress;
+            dest.action = source[i].action;
+            bytes4[] memory selectors = source[i].functionSelectors;
+            for (uint256 j = 0; j < selectors.length; j++) {
+                dest.functionSelectors.push(selectors[j]);
+            }
+        }
+    }
+
+    function _copyFacetCuts(IDiamondCut.FacetCut[] storage source)
+        internal
+        view
+        returns (IDiamondCut.FacetCut[] memory)
+    {
+        IDiamondCut.FacetCut[] memory dest = new IDiamondCut.FacetCut[](source.length);
+        for (uint256 i = 0; i < source.length; i++) {
+            dest[i].facetAddress = source[i].facetAddress;
+            dest[i].action = source[i].action;
+            bytes4[] storage selectors = source[i].functionSelectors;
+            dest[i].functionSelectors = new bytes4[](selectors.length);
+            for (uint256 j = 0; j < selectors.length; j++) {
+                dest[i].functionSelectors[j] = selectors[j];
+            }
+        }
+        return dest;
     }
 }
 
@@ -266,14 +338,6 @@ contract RegistryCommunityHarness is RegistryCommunity {
 
     function exposedRevertZeroAddress(address addr) external pure {
         _revertZeroAddress(addr);
-    }
-
-    function strategyFacetCutsLength() external view returns (uint256) {
-        return strategyFacetCuts.length;
-    }
-
-    function strategyFacetSelectorAt(uint256 index, uint256 selectorIndex) external view returns (bytes4) {
-        return strategyFacetCuts[index].functionSelectors[selectorIndex];
     }
 
     function isMember(address member) public view override returns (bool) {
@@ -380,11 +444,24 @@ contract RegistryCommunityTest is Test {
         params.covenantIpfsHash = "hash";
     }
 
+    function _deployFactoryWithFacets(
+        IDiamond.FacetCut[] memory communityCuts,
+        IDiamond.FacetCut[] memory strategyCuts,
+        address controller
+    ) internal returns (MockRegistryFactoryWithPause factory) {
+        factory = new MockRegistryFactoryWithPause(controller);
+        factory.setCommunityFacets(communityCuts, address(0), "");
+        factory.setStrategyFacets(strategyCuts, address(0), "");
+    }
+
     function _deployCommunity(
         RegistryCommunityInitializeParams memory params,
         IDiamond.FacetCut[] memory communityCuts,
         IDiamond.FacetCut[] memory strategyCuts
     ) internal returns (RegistryCommunity community) {
+        if (params._registryFactory.code.length == 0) {
+            params._registryFactory = address(_deployFactoryWithFacets(communityCuts, strategyCuts, address(0)));
+        }
         community = RegistryCommunity(
             address(
                 new ERC1967Proxy(
@@ -394,13 +471,7 @@ contract RegistryCommunityTest is Test {
                         params,
                         address(0x1111),
                         address(0x2222),
-                        owner,
-                        communityCuts,
-                        address(0),
-                        "",
-                        strategyCuts,
-                        address(0),
-                        ""
+                        owner
                     )
                 )
             )
@@ -416,7 +487,7 @@ contract RegistryCommunityTest is Test {
         RegistryCommunityInitializeParams memory params = _defaultParams(address(allo));
         RegistryCommunity community = _deployCommunity(params, _facetCuts(address(facet)), _facetCuts(address(facet)));
 
-        assertEq(community.registryFactory(), params._registryFactory);
+        assertGt(community.registryFactory().code.length, 0);
         assertEq(address(community.gardenToken()), address(params._gardenToken));
         assertEq(address(community.councilSafe()), params._councilSafe);
         assertEq(community.communityFee(), params._communityFee);
@@ -436,6 +507,8 @@ contract RegistryCommunityTest is Test {
 
         MockPauseController controller = new MockPauseController();
         MockRegistryFactoryWithPause factory = new MockRegistryFactoryWithPause(address(controller));
+        factory.setCommunityFacets(_facetCuts(address(facet)), address(0), "");
+        factory.setStrategyFacets(_facetCuts(address(facet)), address(0), "");
 
         RegistryCommunityInitializeParams memory params = _defaultParams(address(allo));
         params._registryFactory = address(factory);
@@ -450,64 +523,41 @@ contract RegistryCommunityTest is Test {
         RegistryCommunityInitializeParams memory params = _defaultParams(address(new MockAllo()));
 
         IDiamond.FacetCut[] memory emptyCuts = new IDiamond.FacetCut[](0);
+        params._registryFactory = address(_deployFactoryWithFacets(emptyCuts, emptyCuts, address(0)));
         address impl = address(new RegistryCommunity());
         vm.expectRevert(bytes("Community facets required"));
         new ERC1967Proxy(
             impl,
             abi.encodeWithSelector(
-                RegistryCommunity.initialize.selector,
-                params,
-                address(0x1111),
-                address(0x2222),
-                owner,
-                emptyCuts,
-                address(0),
-                "",
-                emptyCuts,
-                address(0),
-                ""
+                RegistryCommunity.initialize.selector, params, address(0x1111), address(0x2222), owner
             )
         );
 
         DummyCommunityFacet facet = new DummyCommunityFacet();
         IDiamond.FacetCut[] memory cuts = _facetCuts(address(facet));
 
+        MockAllo localAllo = new MockAllo();
+        MockRegistry localRegistry = new MockRegistry();
+        localAllo.setRegistry(address(localRegistry));
+        params = _defaultParams(address(localAllo));
+        params._registryFactory = address(_deployFactoryWithFacets(cuts, emptyCuts, address(0)));
         impl = address(new RegistryCommunity());
-        vm.expectRevert(bytes("Strategy facets required"));
-        new ERC1967Proxy(
+        RegistryCommunity community = RegistryCommunity(payable(address(new ERC1967Proxy(
             impl,
             abi.encodeWithSelector(
-                RegistryCommunity.initialize.selector,
-                params,
-                address(0x1111),
-                address(0x2222),
-                owner,
-                cuts,
-                address(0),
-                "",
-                emptyCuts,
-                address(0),
-                ""
+                RegistryCommunity.initialize.selector, params, address(0x1111), address(0x2222), owner
             )
-        );
+        ))));
+        assertEq(community.registryFactory(), params._registryFactory);
 
         params._registerStakeAmount = 0;
+        params._registryFactory = address(_deployFactoryWithFacets(cuts, cuts, address(0)));
         impl = address(new RegistryCommunity());
         vm.expectRevert(RegistryCommunity.ValueCannotBeZero.selector);
         new ERC1967Proxy(
             impl,
             abi.encodeWithSelector(
-                RegistryCommunity.initialize.selector,
-                params,
-                address(0x1111),
-                address(0x2222),
-                owner,
-                cuts,
-                address(0),
-                "",
-                cuts,
-                address(0),
-                ""
+                RegistryCommunity.initialize.selector, params, address(0x1111), address(0x2222), owner
             )
         );
     }
@@ -516,6 +566,7 @@ contract RegistryCommunityTest is Test {
         DummyCommunityFacet facet = new DummyCommunityFacet();
         IDiamond.FacetCut[] memory cuts = _facetCuts(address(facet));
         RegistryCommunityInitializeParams memory params = _defaultParams(address(new MockAllo()));
+        params._registryFactory = address(_deployFactoryWithFacets(cuts, cuts, address(0)));
 
         params._gardenToken = IERC20(address(0));
         address impl = address(new RegistryCommunity());
@@ -523,58 +574,30 @@ contract RegistryCommunityTest is Test {
         new ERC1967Proxy(
             impl,
             abi.encodeWithSelector(
-                RegistryCommunity.initialize.selector,
-                params,
-                address(0x1111),
-                address(0x2222),
-                owner,
-                cuts,
-                address(0),
-                "",
-                cuts,
-                address(0),
-                ""
+                RegistryCommunity.initialize.selector, params, address(0x1111), address(0x2222), owner
             )
         );
 
         params = _defaultParams(address(0));
+        params._registryFactory = address(_deployFactoryWithFacets(cuts, cuts, address(0)));
         impl = address(new RegistryCommunity());
         vm.expectRevert(RegistryCommunity.ValueCannotBeZero.selector);
         new ERC1967Proxy(
             impl,
             abi.encodeWithSelector(
-                RegistryCommunity.initialize.selector,
-                params,
-                address(0x1111),
-                address(0x2222),
-                owner,
-                cuts,
-                address(0),
-                "",
-                cuts,
-                address(0),
-                ""
+                RegistryCommunity.initialize.selector, params, address(0x1111), address(0x2222), owner
             )
         );
 
         params = _defaultParams(address(new MockAllo()));
+        params._registryFactory = address(_deployFactoryWithFacets(cuts, cuts, address(0)));
         params._councilSafe = payable(address(0));
         impl = address(new RegistryCommunity());
         vm.expectRevert(RegistryCommunity.ValueCannotBeZero.selector);
         new ERC1967Proxy(
             impl,
             abi.encodeWithSelector(
-                RegistryCommunity.initialize.selector,
-                params,
-                address(0x1111),
-                address(0x2222),
-                owner,
-                cuts,
-                address(0),
-                "",
-                cuts,
-                address(0),
-                ""
+                RegistryCommunity.initialize.selector, params, address(0x1111), address(0x2222), owner
             )
         );
 
@@ -585,21 +608,12 @@ contract RegistryCommunityTest is Test {
         new ERC1967Proxy(
             impl,
             abi.encodeWithSelector(
-                RegistryCommunity.initialize.selector,
-                params,
-                address(0x1111),
-                address(0x2222),
-                owner,
-                cuts,
-                address(0),
-                "",
-                cuts,
-                address(0),
-                ""
+                RegistryCommunity.initialize.selector, params, address(0x1111), address(0x2222), owner
             )
         );
 
         params = _defaultParams(address(new MockAllo()));
+        params._registryFactory = address(_deployFactoryWithFacets(cuts, cuts, address(0)));
         params._communityFee = 1;
         params._feeReceiver = address(0);
         impl = address(new RegistryCommunity());
@@ -607,17 +621,7 @@ contract RegistryCommunityTest is Test {
         new ERC1967Proxy(
             impl,
             abi.encodeWithSelector(
-                RegistryCommunity.initialize.selector,
-                params,
-                address(0x1111),
-                address(0x2222),
-                owner,
-                cuts,
-                address(0),
-                "",
-                cuts,
-                address(0),
-                ""
+                RegistryCommunity.initialize.selector, params, address(0x1111), address(0x2222), owner
             )
         );
     }
@@ -639,14 +643,8 @@ contract RegistryCommunityTest is Test {
         community.setCollateralVaultTemplate(address(0xBBBB));
         assertEq(community.collateralVaultTemplate(), address(0xBBBB));
 
-        vm.prank(owner);
-        community.setStrategyFacets(_facetCuts(address(facet)), address(0), "");
-
         vm.expectRevert();
         community.setStrategyTemplate(address(0xCCCC));
-
-        vm.expectRevert();
-        community.setStrategyFacets(_facetCuts(address(facet)), address(0), "");
     }
 
     function test_onlyStrategyEnabled_reverts_when_disabled() public {
@@ -699,7 +697,7 @@ contract RegistryCommunityTest is Test {
         community.onlyStrategyEnabled(strategy);
     }
 
-    function test_onlyCouncilSafe_and_strategyFacetCuts() public {
+    function test_onlyCouncilSafe() public {
         RegistryCommunityHarness community = new RegistryCommunityHarness();
         address council = makeAddr("council");
 
@@ -712,28 +710,6 @@ contract RegistryCommunityTest is Test {
 
         address ownerAddr = makeAddr("ownerAddr");
         community.setOwner(ownerAddr);
-
-        IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](1);
-        bytes4[] memory selectors = new bytes4[](1);
-        selectors[0] = DummyCommunityFacet.dummy.selector;
-        cuts[0] = IDiamond.FacetCut({
-            facetAddress: address(0x1), action: IDiamond.FacetCutAction.Add, functionSelectors: selectors
-        });
-
-        vm.prank(ownerAddr);
-        community.setStrategyFacets(cuts, address(0), "");
-        assertEq(community.strategyFacetCutsLength(), 1);
-        assertEq(community.strategyFacetSelectorAt(0, 0), DummyCommunityFacet.dummy.selector);
-
-        bytes4[] memory selectors2 = new bytes4[](2);
-        selectors2[0] = RegistryCommunity.addStrategy.selector;
-        selectors2[1] = RegistryCommunity.removeStrategy.selector;
-        cuts[0].functionSelectors = selectors2;
-        vm.prank(ownerAddr);
-        community.setStrategyFacets(cuts, address(0), "");
-        assertEq(community.strategyFacetCutsLength(), 1);
-        assertEq(community.strategyFacetSelectorAt(0, 0), RegistryCommunity.addStrategy.selector);
-        assertEq(community.strategyFacetSelectorAt(0, 1), RegistryCommunity.removeStrategy.selector);
     }
 
     function test_stub_functions_revert_without_facets() public {

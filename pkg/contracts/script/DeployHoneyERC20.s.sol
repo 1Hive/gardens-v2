@@ -2,7 +2,6 @@
 pragma solidity ^0.8.13;
 
 import {Script} from "forge-std/Script.sol";
-import {console} from "forge-std/console.sol";
 import {GV2ERC20} from "./GV2ERC20.sol";
 
 contract DeployHoneyERC20 is Script {
@@ -17,6 +16,5 @@ contract DeployHoneyERC20 is Script {
         GV2ERC20 token = new GV2ERC20("Honey", "HNY", 18);
         vm.stopBroadcast();
 
-        console.log("HNY token address:", address(token));
     }
 }

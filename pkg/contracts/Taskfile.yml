@@ -87,7 +87,6 @@ tasks:
           --sender 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266 \
           --unlocked \
           --broadcast -vvvvv
-        ignore_error: true
       - task: sync-abis
   add-strategy-local:
     desc: Add strategy local
@@ -100,7 +99,6 @@ tasks:
           --sig "run(address,address)" ${S} ${C} \
           --broadcast \
           -vvvv
-        ignore_error: true
   deploy-testnet-multi-sep:
     desc: Deploy testnet multi sep
     cmds:
@@ -113,7 +111,6 @@ tasks:
           --broadcast \
           --legacy \
           -vvv
-        ignore_error: true
       - task: sync-abis
   deploy-core-ethsep:
     desc: Deploy core contracts ethsepolia
@@ -122,12 +119,13 @@ tasks:
           forge script script/DeployCoreContracts.s.sol:DeployCoreContracts \
           --rpc-url ${RPC_URL_SEP_TESTNET} \
           --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --sig "run(string)" 'ethsepolia' \
           --ffi \
           --broadcast \
           --legacy \
-          -vvv
-        ignore_error: true
+          -vvv \
+          --verify
       - task: sync-abis
   verify-testnet-multi-sep:
     desc: Verify testnet multi sep
@@ -170,6 +168,9 @@ tasks:
         ignore_error: true
   upgrade-ethsep:
     desc: Upgrade ethsep
+    deps:
+      - verify-storage
+      - task: refresh-facets-ethsep
     cmds:
       - cmd: |
           forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
@@ -182,12 +183,156 @@ tasks:
           --broadcast \
           --verify \
           -vvv
-        ignore_error: true
+  upgrade-ethsep-factory-upgrade-impl:
+    desc: Upgrade ethsep factory implementation only
+    deps:
+      - verify-storage
+      - task: refresh-facets-ethsep
+    cmds:
+      - cmd: |
+          forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
+          --rpc-url ${RPC_URL_SEP_TESTNET} \
+          --sig "runFactoryUpgradeImpl(string)" 'ethsepolia' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --chain-id 11155111 \
+          --ffi \
+          --skip-simulation \
+          --broadcast \
+          -v
   upgrade-and-verify-ethsep:
     desc: Upgrade and verify ethsep
     deps:
+      - verify-storage
       - upgrade-ethsep
+      - task: refresh-facets-ethsep
     cmds: []
+  refresh-facets-ethsep:
+    desc: Redeploy changed facet snapshots and write .FACETS addresses in networks.json (ethsepolia)
+    cmds:
+      - cmd: |
+          forge script script/RefreshFacetSnapshots.s.sol:RefreshFacetSnapshots \
+          --rpc-url ${RPC_URL_SEP_TESTNET} \
+          --sig "run(string)" 'ethsepolia' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --ffi \
+          --broadcast \
+          --verify \
+          --chain-id 11155111 \
+          -vv
+  refresh-facets-opsep:
+    desc: Redeploy changed facet snapshots and write .FACETS addresses in networks.json (opsepolia)
+    cmds:
+      - cmd: |
+          forge script script/RefreshFacetSnapshots.s.sol:RefreshFacetSnapshots \
+          --rpc-url ${RPC_URL_OP_TESTNET} \
+          --sig "run(string)" 'opsepolia' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --ffi \
+          --broadcast \
+          --verify \
+          --chain-id 11155420 \
+          -vv
+  refresh-facets-arbsep:
+    desc: Redeploy changed facet snapshots and write .FACETS addresses in networks.json (arbsepolia)
+    cmds:
+      - cmd: |
+          forge script script/RefreshFacetSnapshots.s.sol:RefreshFacetSnapshots \
+          --rpc-url ${RPC_URL_ARB_TESTNET} \
+          --sig "run(string)" 'arbsepolia' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --ffi \
+          --broadcast \
+          --verify \
+          --chain-id 421614 \
+          -vv
+  refresh-facets-arbitrum:
+    desc: Redeploy changed facet snapshots and write .FACETS addresses in networks.json (arbitrum)
+    cmds:
+      - cmd: |
+          forge script script/RefreshFacetSnapshots.s.sol:RefreshFacetSnapshots \
+          --rpc-url ${RPC_URL_ARB} \
+          --sig "run(string)" 'arbitrum' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --ffi \
+          --broadcast \
+          --verify \
+          --chain-id 42161 \
+          -vv
+  refresh-facets-optimism:
+    desc: Redeploy changed facet snapshots and write .FACETS addresses in networks.json (optimism)
+    cmds:
+      - cmd: |
+          forge script script/RefreshFacetSnapshots.s.sol:RefreshFacetSnapshots \
+          --rpc-url ${RPC_URL_OPT} \
+          --sig "run(string)" 'optimism' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --ffi \
+          --broadcast \
+          --verify \
+          --chain-id 10 \
+          -vv
+  refresh-facets-polygon:
+    desc: Redeploy changed facet snapshots and write .FACETS addresses in networks.json (polygon)
+    cmds:
+      - cmd: |
+          forge script script/RefreshFacetSnapshots.s.sol:RefreshFacetSnapshots \
+          --rpc-url ${RPC_URL_POLYGON} \
+          --sig "run(string)" 'polygon' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --ffi \
+          --broadcast \
+          --verify \
+          --chain-id 137 \
+          -vv
+  refresh-facets-gnosis:
+    desc: Redeploy changed facet snapshots and write .FACETS addresses in networks.json (gnosis)
+    cmds:
+      - cmd: |
+          forge script script/RefreshFacetSnapshots.s.sol:RefreshFacetSnapshots \
+          --rpc-url ${RPC_URL_GNOSIS} \
+          --sig "run(string)" 'gnosis' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --ffi \
+          --broadcast \
+          --verify \
+          --chain-id 100 \
+          -vv
+  refresh-facets-base:
+    desc: Redeploy changed facet snapshots and write .FACETS addresses in networks.json (base)
+    cmds:
+      - cmd: |
+          forge script script/RefreshFacetSnapshots.s.sol:RefreshFacetSnapshots \
+          --rpc-url ${RPC_URL_BASE} \
+          --sig "run(string)" 'base' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --ffi \
+          --broadcast \
+          --verify \
+          --chain-id 8453 \
+          -vv
+  refresh-facets-celo:
+    desc: Redeploy changed facet snapshots and write .FACETS addresses in networks.json (celo)
+    cmds:
+      - cmd: |
+          forge script script/RefreshFacetSnapshots.s.sol:RefreshFacetSnapshots \
+          --rpc-url ${RPC_URL_CELO} \
+          --sig "run(string)" 'celo' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --ffi \
+          --broadcast \
+          --verify \
+          --chain-id 42220 \
+          -vv
   deploy-global-pause-controller-ethsep:
     desc: Deploy global pause controller ethsep
     cmds:
@@ -203,6 +348,34 @@ tasks:
           -vv
         ignore_error: true
       - task: sync-abis
+  deploy-streaming-escrow-factory-ethsep:
+    desc: Deploy streaming escrow factory ethsep (set on registry factory)
+    cmds:
+      - cmd: |
+          forge script script/DeployStreamingEscrowFactory.s.sol:DeployStreamingEscrowFactory \
+          --rpc-url ${RPC_URL_SEP_TESTNET} \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --sig "run(string,uint256)" 'ethsepolia' ${P} \
+          --ffi \
+          --broadcast \
+          --verify \
+          --chain-id 11155111 \
+          -vvv
+  upgrade-streaming-escrows-ethsep:
+    desc: Deploy or upgrade streaming escrows on ethsep (networks.json managed in script, optional I implementation)
+    cmds:
+      - cmd: |
+          forge script script/DeployOrUpgradeStreamingEscrows.s.sol:DeployOrUpgradeStreamingEscrows \
+          --rpc-url ${RPC_URL_SEP_TESTNET} \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --sig "run(string,address)" 'ethsepolia' ${I:-0x0000000000000000000000000000000000000000} \
+          --ffi \
+          --broadcast \
+          --verify \
+          --chain-id 11155111 \
+          -vvv
   deploy-token-opsep:
     desc: Deploy token opsep
     cmds:
@@ -247,6 +420,9 @@ tasks:
       - task: sync-abis
   upgrade-opsep:
     desc: Upgrade opsep
+    deps:
+      - verify-storage
+      - task: refresh-facets-opsep
     cmds:
       - cmd: |
           forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
@@ -259,9 +435,162 @@ tasks:
           --broadcast \
           --verify \
           -vvv
-        ignore_error: true
+  upgrade-opsep-factory:
+    desc: Upgrade opsep factory
+    deps:
+      - verify-storage
+      - task: refresh-facets-opsep
+    cmds:
+      - cmd: |
+          forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
+          --rpc-url ${RPC_URL_OP_TESTNET} \
+          --sig "runFactory(string)" 'opsepolia' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --chain-id 11155420 \
+          --ffi \
+          --skip-simulation \
+          --broadcast \
+          -v
+  upgrade-opsep-factory-upgrade-impl:
+    desc: Upgrade opsep factory implementation only
+    deps:
+      - verify-storage
+      - task: refresh-facets-opsep
+    cmds:
+      - cmd: |
+          forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
+          --rpc-url ${RPC_URL_OP_TESTNET} \
+          --sig "runFactoryUpgradeImpl(string)" 'opsepolia' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --chain-id 11155420 \
+          --ffi \
+          --skip-simulation \
+          --broadcast \
+          -v
+  upgrade-opsep-factory-set-community-facets:
+    desc: Set opsep factory community facets only
+    deps:
+      - verify-storage
+      - task: refresh-facets-opsep
+    cmds:
+      - cmd: |
+          SPLIT_FACTORY_FACETS=true forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
+          --rpc-url ${RPC_URL_OP_TESTNET} \
+          --sig "runFactorySetCommunityFacets(string)" 'opsepolia' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --chain-id 11155420 \
+          --ffi \
+          --skip-simulation \
+          --broadcast \
+          -v
+  upgrade-opsep-factory-set-strategy-facets:
+    desc: Set opsep factory strategy facets only
+    deps:
+      - verify-storage
+      - task: refresh-facets-opsep
+    cmds:
+      - cmd: |
+          SPLIT_FACTORY_FACETS=true forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
+          --rpc-url ${RPC_URL_OP_TESTNET} \
+          --sig "runFactorySetStrategyFacets(string)" 'opsepolia' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --chain-id 11155420 \
+          --ffi \
+          --skip-simulation \
+          --broadcast \
+          -v
+  upgrade-opsep-factory-set-pause-controller:
+    desc: Set opsep factory pause controller only
+    deps:
+      - verify-storage
+      - task: refresh-facets-opsep
+    cmds:
+      - cmd: |
+          forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
+          --rpc-url ${RPC_URL_OP_TESTNET} \
+          --sig "runFactorySetPauseController(string)" 'opsepolia' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --chain-id 11155420 \
+          --ffi \
+          --skip-simulation \
+          --broadcast \
+          -v
+  upgrade-opsep-factory-set-registry-template:
+    desc: Set opsep factory registry template only
+    deps:
+      - verify-storage
+      - task: refresh-facets-opsep
+    cmds:
+      - cmd: |
+          forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
+          --rpc-url ${RPC_URL_OP_TESTNET} \
+          --sig "runFactorySetRegistryTemplate(string)" 'opsepolia' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --chain-id 11155420 \
+          --ffi \
+          --skip-simulation \
+          --broadcast \
+          -v
+  upgrade-opsep-factory-set-strategy-template:
+    desc: Set opsep factory strategy template only
+    deps:
+      - verify-storage
+      - task: refresh-facets-opsep
+    cmds:
+      - cmd: |
+          forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
+          --rpc-url ${RPC_URL_OP_TESTNET} \
+          --sig "runFactorySetStrategyTemplate(string)" 'opsepolia' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --chain-id 11155420 \
+          --ffi \
+          --skip-simulation \
+          --broadcast \
+          -v
+  upgrade-opsep-communities:
+    desc: Upgrade opsep communities
+    deps:
+      - verify-storage
+      - task: refresh-facets-opsep
+    cmds:
+      - cmd: |
+          forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
+          --rpc-url ${RPC_URL_OP_TESTNET} \
+          --sig "run(string,string)" 'opsepolia' 'communities' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --chain-id 11155420 \
+          --ffi \
+          --broadcast \
+          -vvv
+  upgrade-opsep-strategies:
+    desc: Upgrade opsep strategies
+    deps:
+      - verify-storage
+      - task: refresh-facets-opsep
+    cmds:
+      - cmd: |
+          forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
+          --rpc-url ${RPC_URL_OP_TESTNET} \
+          --sig "run(string,string)" 'opsepolia' 'strategies' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --chain-id 11155420 \
+          --ffi \
+          --broadcast \
+          -vvv
   upgrade-diamond-opsep:
     desc: Upgrade diamond opsep
+    deps:
+      - verify-storage
+      - task: refresh-facets-opsep
     cmds:
       - cmd: |
           forge script script/UpgradeCVDiamond.s.sol:UpgradeCVDiamond \
@@ -275,9 +604,11 @@ tasks:
           --verify \
           --slow \
           -vvv
-        ignore_error: true
   upgrade-community-diamond-opsep:
     desc: Upgrade community diamond opsep
+    deps:
+      - verify-storage
+      - task: refresh-facets-opsep
     cmds:
       - cmd: |
           forge script script/UpgradeRegistryCommunityDiamond.s.sol:UpgradeRegistryCommunityDiamond \
@@ -290,7 +621,6 @@ tasks:
           --broadcast \
           --verify \
           -vvv
-        ignore_error: true
   verify-diamond-blockscout-opsep:
     desc: Verify diamond blockscout opsep
     cmds:
@@ -327,11 +657,13 @@ tasks:
       - verify-storage
       - upgrade-diamond-opsep
       - upgrade-community-diamond-opsep
+      - task: refresh-facets-opsep
     cmds: []
   upgrade-atomic-diamond-opsep:
     desc: Upgrade atomic diamond opsep
     deps:
       - verify-storage
+      - task: refresh-facets-opsep
     cmds:
       - cmd: |
           forge script script/UpgradeAllDiamonds.s.sol:UpgradeAllDiamonds \
@@ -346,18 +678,21 @@ tasks:
           --slow \
           --via-ir \
           -vvv
-        ignore_error: true
   upgrade-and-verify-diamond-opsep:
     desc: Upgrade and verify diamond opsep
     deps:
+      - verify-storage
       - upgrade-diamond-opsep
       - verify-diamond-blockscout-opsep
+      - task: refresh-facets-opsep
     cmds: []
   upgrade-and-verify-community-diamond-opsep:
     desc: Upgrade and verify community diamond opsep
     deps:
+      - verify-storage
       - upgrade-community-diamond-opsep
       - verify-community-diamond-blockscout-opsep
+      - task: refresh-facets-opsep
     cmds: []
   verify-blockscout-opsep:
     desc: Verify blockscout opsep
@@ -365,9 +700,26 @@ tasks:
       - cmd: |
           forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
           --rpc-url ${RPC_URL_OP_TESTNET} \
+          --sig "run(string)" 'opsepolia' \
           --private-key ${PRIVATE_KEY} \
           --verifier blockscout \
           --verifier-url https://optimism.blockscout.com/api/ \
+          --chain-id 11155420 \
+          --ffi \
+          --verify \
+          --slow
+        ignore_error: true
+  verify-etherscan-opsep:
+    desc: Verify etherscan opsep
+    cmds:
+      - cmd: |
+          forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
+          --rpc-url ${RPC_URL_OP_TESTNET} \
+          --sig "run(string)" 'opsepolia' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --chain-id 11155420 \
+          --ffi \
           --verify \
           --slow
         ignore_error: true
@@ -392,8 +744,10 @@ tasks:
   upgrade-and-verify-opsep:
     desc: Upgrade and verify opsep
     deps:
+      - verify-storage
       - upgrade-opsep
-      - verify-blockscout-opsep
+      - verify-etherscan-opsep
+      - task: refresh-facets-opsep
     cmds: []
   transfer-ownership-opsep:
     desc: Transfer ownership opsep
@@ -434,11 +788,68 @@ tasks:
           --chain-id 11155420 \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --private-key ${PRIVATE_KEY} \
-          --verify \
           --broadcast \
-          -vv
+          -vv \
+          --verify
         ignore_error: true
       - task: sync-abis
+  deploy-streaming-escrow-factory-opsep:
+    desc: Deploy streaming escrow factory opsep (set on registry factory)
+    cmds:
+      - cmd: |
+          forge script script/DeployStreamingEscrowFactory.s.sol:DeployStreamingEscrowFactory \
+          --rpc-url ${RPC_URL_OP_TESTNET} \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --sig "run(string,uint256)" 'opsepolia' ${P} \
+          --ffi \
+          --broadcast \
+          --verify \
+          --chain-id 11155420 \
+          -vvv
+  upgrade-streaming-escrows-opsep:
+    desc: Deploy or upgrade streaming escrows on opsep (networks.json managed in script, optional I implementation)
+    cmds:
+      - cmd: |
+          forge script script/DeployOrUpgradeStreamingEscrows.s.sol:DeployOrUpgradeStreamingEscrows \
+          --rpc-url ${RPC_URL_OP_TESTNET} \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --sig "run(string,address)" 'opsepolia' ${I:-0x0000000000000000000000000000000000000000} \
+          --ffi \
+          --broadcast \
+          --verify \
+          --chain-id 11155420 \
+          -vvv
+  deploy-snapshot-strategy-facets-opsep:
+    desc: Deploy and snapshot strategy facets opsep
+    cmds:
+      - cmd: |
+          forge script script/DeploySnapshotFacets.s.sol:DeploySnapshotFacets \
+          --rpc-url ${RPC_URL_OP_TESTNET} \
+          --sig "run(string,string)" 'opsepolia' 'strategy' \
+          --chain-id 11155420 \
+          --private-key ${PRIVATE_KEY} \
+          --ffi \
+          --broadcast \
+          -vvv
+  deploy-facets-opsep:
+    desc: Deploy and snapshot all facets opsep
+    cmds:
+      - task: deploy-snapshot-strategy-facets-opsep
+      - task: deploy-snapshot-community-facets-opsep
+  deploy-snapshot-community-facets-opsep:
+    desc: Deploy and snapshot community facets opsep
+    cmds:
+      - cmd: |
+          forge script script/DeploySnapshotFacets.s.sol:DeploySnapshotFacets \
+          --rpc-url ${RPC_URL_OP_TESTNET} \
+          --sig "run(string,string)" 'opsepolia' 'community' \
+          --chain-id 11155420 \
+          --private-key ${PRIVATE_KEY} \
+          --ffi \
+          --broadcast \
+          -vvv
   deploy-safe-arbitrator-opsep:
     desc: Deploy safe arbitrator opsep
     cmds:
@@ -498,23 +909,170 @@ tasks:
       - task: sync-abis
   upgrade-arbsep:
     desc: Upgrade arbsep
+    deps:
+      - verify-storage
+      - task: refresh-facets-arbsep
+    cmds:
+      - task: deploy-facets-arbsep
+      - task: upgrade-arbsep-factory
+      - task: upgrade-arbsep-communities
+      - task: upgrade-arbsep-strategies
+  upgrade-arbsep-factory:
+    desc: Upgrade arbsep factory
+    deps:
+      - verify-storage
+      - task: refresh-facets-arbsep
     cmds:
       - cmd: |
           forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
           --rpc-url ${RPC_URL_ARB_TESTNET} \
-          --sig "run(string)" 'arbsepolia' \
+          --sig "runFactory(string)" 'arbsepolia' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --chain-id 421614 \
+          --ffi \
+          --skip-simulation \
+          --broadcast \
+          -v
+  upgrade-arbsep-factory-upgrade-impl:
+    desc: Upgrade arbsep factory implementation only
+    deps:
+      - verify-storage
+      - task: refresh-facets-arbsep
+    cmds:
+      - cmd: |
+          forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
+          --rpc-url ${RPC_URL_ARB_TESTNET} \
+          --sig "runFactoryUpgradeImpl(string)" 'arbsepolia' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --chain-id 421614 \
+          --ffi \
+          --skip-simulation \
+          --broadcast \
+          -v
+  upgrade-arbsep-factory-set-community-facets:
+    desc: Set arbsep factory community facets only
+    deps:
+      - verify-storage
+      - task: refresh-facets-arbsep
+    cmds:
+      - cmd: |
+          SPLIT_FACTORY_FACETS=true forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
+          --rpc-url ${RPC_URL_ARB_TESTNET} \
+          --sig "runFactorySetCommunityFacets(string)" 'arbsepolia' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --chain-id 421614 \
+          --ffi \
+          --skip-simulation \
+          --broadcast \
+          -v
+  upgrade-arbsep-factory-set-strategy-facets:
+    desc: Set arbsep factory strategy facets only
+    deps:
+      - verify-storage
+      - task: refresh-facets-arbsep
+    cmds:
+      - cmd: |
+          SPLIT_FACTORY_FACETS=true forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
+          --rpc-url ${RPC_URL_ARB_TESTNET} \
+          --sig "runFactorySetStrategyFacets(string)" 'arbsepolia' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --chain-id 421614 \
+          --ffi \
+          --skip-simulation \
+          --broadcast \
+          -v
+  upgrade-arbsep-factory-set-pause-controller:
+    desc: Set arbsep factory pause controller only
+    deps:
+      - verify-storage
+      - task: refresh-facets-arbsep
+    cmds:
+      - cmd: |
+          forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
+          --rpc-url ${RPC_URL_ARB_TESTNET} \
+          --sig "runFactorySetPauseController(string)" 'arbsepolia' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --chain-id 421614 \
+          --ffi \
+          --skip-simulation \
+          --broadcast \
+          -v
+  upgrade-arbsep-factory-set-registry-template:
+    desc: Set arbsep factory registry template only
+    deps:
+      - verify-storage
+      - task: refresh-facets-arbsep
+    cmds:
+      - cmd: |
+          forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
+          --rpc-url ${RPC_URL_ARB_TESTNET} \
+          --sig "runFactorySetRegistryTemplate(string)" 'arbsepolia' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --chain-id 421614 \
+          --ffi \
+          --skip-simulation \
+          --broadcast \
+          -v
+  upgrade-arbsep-factory-set-strategy-template:
+    desc: Set arbsep factory strategy template only
+    deps:
+      - verify-storage
+      - task: refresh-facets-arbsep
+    cmds:
+      - cmd: |
+          forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
+          --rpc-url ${RPC_URL_ARB_TESTNET} \
+          --sig "runFactorySetStrategyTemplate(string)" 'arbsepolia' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --chain-id 421614 \
+          --ffi \
+          --skip-simulation \
+          --broadcast \
+          -v
+  upgrade-arbsep-communities:
+    desc: Upgrade arbsep communities
+    deps:
+      - verify-storage
+      - task: refresh-facets-arbsep
+    cmds:
+      - cmd: |
+          forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
+          --rpc-url ${RPC_URL_ARB_TESTNET} \
+          --sig "run(string,string)" 'arbsepolia' 'communities' \
           --private-key ${PRIVATE_KEY} \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 421614 \
           --ffi \
           --broadcast \
-          --verify \
           -vvv
-        ignore_error: true
+  upgrade-arbsep-strategies:
+    desc: Upgrade arbsep strategies
+    deps:
+      - verify-storage
+      - task: refresh-facets-arbsep
+    cmds:
+      - cmd: |
+          forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
+          --rpc-url ${RPC_URL_ARB_TESTNET} \
+          --sig "run(string,string)" 'arbsepolia' 'strategies' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --chain-id 421614 \
+          --ffi \
+          --broadcast \
+          -vvv
   upgrade-atomic-diamond-arbsep:
     desc: Upgrade atomic diamond arbsep
     deps:
       - verify-storage
+      - task: refresh-facets-arbsep
     cmds:
       - cmd: |
           forge script script/UpgradeAllDiamonds.s.sol:UpgradeAllDiamonds \
@@ -528,7 +1086,6 @@ tasks:
           --verify \
           --slow \
           --via-ir
-        ignore_error: true
   verify-blockscout-arbsep:
     desc: Verify blockscout arbsep
     cmds:
@@ -673,8 +1230,10 @@ tasks:
   upgrade-and-verify-arbsep:
     desc: Upgrade and verify arbsep
     deps:
+      - verify-storage
       - upgrade-arbsep
       - verify-blockscout-arbsep
+      - task: refresh-facets-arbsep
     cmds: []
   transfer-ownership-arbsep:
     desc: Transfer ownership arbsep
@@ -750,6 +1309,37 @@ tasks:
           -vv
         ignore_error: true
       - task: sync-abis
+  deploy-snapshot-strategy-facets-arbsep:
+    desc: Deploy and snapshot strategy facets arbsep
+    cmds:
+      - cmd: |
+          forge script script/DeploySnapshotFacets.s.sol:DeploySnapshotFacets \
+          --rpc-url ${RPC_URL_ARB_TESTNET} \
+          --sig "run(string,string)" 'arbsepolia' 'strategy' \
+          --chain-id 421614 \
+          --private-key ${PRIVATE_KEY} \
+          --ffi \
+          --broadcast \
+          -vvv
+        ignore_error: true
+  deploy-facets-arbsep:
+    desc: Deploy and snapshot all facets arbsep
+    cmds:
+      - task: deploy-snapshot-strategy-facets-arbsep
+      - task: deploy-snapshot-community-facets-arbsep
+  deploy-snapshot-community-facets-arbsep:
+    desc: Deploy and snapshot community facets arbsep
+    cmds:
+      - cmd: |
+          forge script script/DeploySnapshotFacets.s.sol:DeploySnapshotFacets \
+          --rpc-url ${RPC_URL_ARB_TESTNET} \
+          --sig "run(string,string)" 'arbsepolia' 'community' \
+          --chain-id 421614 \
+          --private-key ${PRIVATE_KEY} \
+          --ffi \
+          --broadcast \
+          -vvv
+        ignore_error: true
   transfer-ownership-arbitrum:
     desc: Transfer ownership arbitrum
     cmds:
@@ -798,6 +1388,9 @@ tasks:
       - task: sync-abis
   upgrade-arbitrum:
     desc: Upgrade arbitrum
+    deps:
+      - verify-storage
+      - task: refresh-facets-arbitrum
     cmds:
       - cmd: |
           forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
@@ -810,11 +1403,11 @@ tasks:
           --broadcast \
           --verify \
           -vvv
-        ignore_error: true
   upgrade-atomic-diamond-arbitrum:
     desc: Upgrade atomic diamond arbitrum
     deps:
       - verify-storage
+      - task: refresh-facets-arbitrum
     cmds:
       - cmd: |
           forge script script/UpgradeAllDiamonds.s.sol:UpgradeAllDiamonds \
@@ -828,7 +1421,6 @@ tasks:
           --verify \
           --slow \
           --via-ir
-        ignore_error: true
   verify-blockscout-arbitrum:
     desc: Verify blockscout arbitrum
     cmds:
@@ -848,6 +1440,9 @@ tasks:
         ignore_error: true
   upgrade-and-verify-arbitrum:
     desc: Upgrade and verify arbitrum
+    deps:
+      - verify-storage
+      - task: refresh-facets-arbitrum
     cmds:
       - task: upgrade-arbitrum
       - task: verify-blockscout-arbitrum
@@ -975,6 +1570,9 @@ tasks:
       - task: sync-abis
   upgrade-optimism:
     desc: Upgrade optimism
+    deps:
+      - verify-storage
+      - task: refresh-facets-optimism
     cmds:
       - cmd: |
           forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
@@ -988,11 +1586,11 @@ tasks:
           --legacy \
           --verify \
           -vvv
-        ignore_error: true
   upgrade-atomic-diamond-optimism:
     desc: Upgrade atomic diamond optimism
     deps:
       - verify-storage
+      - task: refresh-facets-optimism
     cmds:
       - cmd: |
           forge script script/UpgradeAllDiamonds.s.sol:UpgradeAllDiamonds \
@@ -1006,7 +1604,6 @@ tasks:
           --verify \
           --slow \
           --via-ir
-        ignore_error: true
   verify-blockscout-optimism:
     desc: Verify blockscout optimism
     cmds:
@@ -1025,6 +1622,9 @@ tasks:
         ignore_error: true
   upgrade-and-verify-optimism:
     desc: Upgrade and verify optimism
+    deps:
+      - verify-storage
+      - task: refresh-facets-optimism
     cmds:
       - task: upgrade-optimism
       - task: verify-blockscout-optimism
@@ -1106,6 +1706,7 @@ tasks:
     desc: Upgrade diamond polygon
     deps:
       - verify-storage
+      - task: refresh-facets-polygon
     cmds:
       - cmd: |
           forge script script/UpgradeCVDiamond.s.sol:UpgradeCVDiamond \
@@ -1119,9 +1720,11 @@ tasks:
           --verify \
           --slow \
           -vvv
-        ignore_error: true
   upgrade-community-diamond-polygon:
     desc: Upgrade community diamond polygon
+    deps:
+      - verify-storage
+      - task: refresh-facets-polygon
     cmds:
       - cmd: |
           forge script script/UpgradeRegistryCommunityDiamond.s.sol:UpgradeRegistryCommunityDiamond \
@@ -1136,11 +1739,11 @@ tasks:
           --verify \
           --slow \
           -vvv
-        ignore_error: true
   upgrade-atomic-diamond-polygon:
     desc: Upgrade atomic diamond polygon
     deps:
       - verify-storage
+      - task: refresh-facets-polygon
     cmds:
       - cmd: |
           forge script script/UpgradeAllDiamonds.s.sol:UpgradeAllDiamonds \
@@ -1156,7 +1759,6 @@ tasks:
           --slow \
           --via-ir \
           -vvv
-        ignore_error: true
   transfer-ownership-polygon:
     desc: Transfer ownership polygon
     cmds:
@@ -1205,6 +1807,9 @@ tasks:
       - task: sync-abis
   upgrade-polygon:
     desc: Upgrade polygon
+    deps:
+      - verify-storage
+      - task: refresh-facets-polygon
     cmds:
       - cmd: |
           forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
@@ -1218,7 +1823,6 @@ tasks:
           --legacy \
           --verify \
           -vvv
-        ignore_error: true
   verify-blockscout-polygon:
     desc: Verify blockscout polygon
     cmds:
@@ -1238,6 +1842,9 @@ tasks:
         ignore_error: true
   upgrade-and-verify-polygon:
     desc: Upgrade and verify polygon
+    deps:
+      - verify-storage
+      - task: refresh-facets-polygon
     cmds:
       - task: upgrade-polygon
       - task: verify-blockscout-polygon
@@ -1366,6 +1973,9 @@ tasks:
       - task: sync-abis
   upgrade-gnosis:
     desc: Upgrade gnosis
+    deps:
+      - verify-storage
+      - task: refresh-facets-gnosis
     cmds:
       - cmd: |
           forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
@@ -1380,11 +1990,11 @@ tasks:
           --verify \
           --gas-price 20000000000 \
           -vvv
-        ignore_error: true
   upgrade-atomic-diamond-gnosis:
     desc: Upgrade atomic diamond gnosis
     deps:
       - verify-storage
+      - task: refresh-facets-gnosis
     cmds:
       - cmd: |
           forge script script/UpgradeAllDiamonds.s.sol:UpgradeAllDiamonds \
@@ -1398,7 +2008,6 @@ tasks:
           --verify \
           --slow \
           --via-ir
-        ignore_error: true
   verify-blockscout-gnosis:
     desc: Verify blockscout gnosis
     cmds:
@@ -1468,6 +2077,9 @@ tasks:
         ignore_error: true
   upgrade-and-verify-gnosis:
     desc: Upgrade and verify gnosis
+    deps:
+      - verify-storage
+      - task: refresh-facets-gnosis
     cmds:
       - task: upgrade-gnosis
       - task: verify-blockscout-gnosis
@@ -1550,6 +2162,9 @@ tasks:
       - task: sync-abis
   upgrade-base:
     desc: Upgrade base
+    deps:
+      - verify-storage
+      - task: refresh-facets-base
     cmds:
       - cmd: |
           forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
@@ -1563,11 +2178,11 @@ tasks:
           --legacy \
           --verify \
           -vvv
-        ignore_error: true
   upgrade-atomic-diamond-base:
     desc: Upgrade atomic diamond base
     deps:
       - verify-storage
+      - task: refresh-facets-base
     cmds:
       - cmd: |
           forge script script/UpgradeAllDiamonds.s.sol:UpgradeAllDiamonds \
@@ -1581,7 +2196,6 @@ tasks:
           --verify \
           --slow \
           --via-ir
-        ignore_error: true
   verify-blockscout-base:
     desc: Verify blockscout base
     cmds:
@@ -1625,6 +2239,9 @@ tasks:
     cmds: []
   upgrade-and-verify-base:
     desc: Upgrade and verify base
+    deps:
+      - verify-storage
+      - task: refresh-facets-base
     cmds:
       - task: upgrade-base
       - task: verify-blockscout-base
@@ -1767,6 +2384,9 @@ tasks:
       - task: sync-abis
   upgrade-celo:
     desc: Upgrade celo
+    deps:
+      - verify-storage
+      - task: refresh-facets-celo
     cmds:
       - cmd: |
           forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
@@ -1780,11 +2400,11 @@ tasks:
           --legacy \
           --verify \
           -vvv
-        ignore_error: true
   upgrade-atomic-diamond-celo:
     desc: Upgrade atomic diamond celo
     deps:
       - verify-storage
+      - task: refresh-facets-celo
     cmds:
       - cmd: |
           forge script script/UpgradeAllDiamonds.s.sol:UpgradeAllDiamonds \
@@ -1798,7 +2418,6 @@ tasks:
           --verify \
           --slow \
           --via-ir
-        ignore_error: true
   verify-blockscout-celo:
     desc: Verify blockscout celo
     cmds:
@@ -1842,11 +2461,22 @@ tasks:
     cmds: []
   upgrade-and-verify-celo:
     desc: Upgrade and verify celo
+    deps:
+      - verify-storage
+      - task: refresh-facets-celo
     cmds:
       - task: upgrade-celo
       - task: verify-blockscout-celo
   upgrade-and-verify-all-mainnets:
     desc: Upgrade and verify arbitrum, optimism, polygon, gnosis, base, celo
+    deps:
+      - verify-storage
+      - task: refresh-facets-base
+      - task: refresh-facets-gnosis
+      - task: refresh-facets-polygon
+      - task: refresh-facets-optimism
+      - task: refresh-facets-arbitrum
+      - task: refresh-facets-celo
     cmds:
       - cmd: |
           set +e

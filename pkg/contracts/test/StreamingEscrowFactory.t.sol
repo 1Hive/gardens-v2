@@ -12,11 +12,7 @@ import "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/g
 import "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
-contract MockGDA {
-    function getAccountFlowInfo(ISuperfluidToken, address) external pure returns (uint256, int96, uint256) {
-        return (0, 0, 0);
-    }
-}
+contract MockGDA {}
 
 contract MockHost {
     address public gda;
@@ -31,25 +27,24 @@ contract MockHost {
         return gda;
     }
 
-    function callAgreement(ISuperAgreement, bytes calldata, bytes calldata) external pure returns (bytes memory) {
-        return "";
-    }
-
     function registerAppByFactory(ISuperApp app, uint256 configWord) external {
         lastApp = address(app);
         lastConfig = configWord;
     }
+
+    function callAgreement(address, bytes calldata, bytes calldata) external pure returns (bytes memory) {
+        return "";
+    }
 }
 
-contract MockPool {}
+contract MockPool {
+    function getMemberFlowRate(address) external pure returns (int96) {
+        return 0;
+    }
+}
 
 contract MockSuperToken {
     address public host;
-
-    address public lastFlowReceiver;
-    int96 public lastFlowRate;
-
-    mapping(address => uint256) public balances;
 
     constructor(address _host) {
         host = _host;
@@ -62,28 +57,6 @@ contract MockSuperToken {
     function connectPool(ISuperfluidPool) external pure returns (bool) {
         return true;
     }
-
-    function balanceOf(address account) external view returns (uint256) {
-        return balances[account];
-    }
-
-    function transfer(address to, uint256 amount) external returns (bool) {
-        balances[msg.sender] -= amount;
-        balances[to] += amount;
-        return true;
-    }
-
-    function flow(address receiver, int96 flowRate) external returns (bool) {
-        lastFlowReceiver = receiver;
-        lastFlowRate = flowRate;
-        return true;
-    }
-
-    function flowWithCtx(address receiver, int96 flowRate, bytes calldata ctx) external returns (bytes memory) {
-        lastFlowReceiver = receiver;
-        lastFlowRate = flowRate;
-        return ctx;
-    }
 }
 
 contract StreamingEscrowFactoryTest is Test {
@@ -95,7 +68,6 @@ contract StreamingEscrowFactoryTest is Test {
     MockPool pool;
 
     address beneficiary = address(0xBEEF);
-    address treasury = address(0xFEE);
 
     function setUp() public {
         gda = new MockGDA();
@@ -121,38 +93,54 @@ contract StreamingEscrowFactoryTest is Test {
 
     function test_deployEscrow_registersAppAndInitializes() public {
         address escrow =
-            factory.deployEscrow(ISuperToken(address(token)), ISuperfluidPool(address(pool)), beneficiary, treasury);
+            factory.deployEscrow(ISuperToken(address(token)), ISuperfluidPool(address(pool)), beneficiary, address(this));
 
         assertEq(host.lastApp(), escrow);
         assertEq(StreamingEscrow(escrow).strategy(), address(this));
         assertEq(StreamingEscrow(escrow).beneficiary(), beneficiary);
-        assertEq(StreamingEscrow(escrow).treasury(), treasury);
         assertEq(StreamingEscrow(escrow).owner(), address(this));
     }
 
-    function test_deployEscrow_onlyStrategy() public {
+    function test_deployEscrow_reverts_when_sender_not_strategy() public {
         vm.prank(address(0xB0B));
-        vm.expectRevert(abi.encodeWithSelector(StreamingEscrowFactory.OnlyStrategy.selector, address(0xB0B)));
-        factory.deployEscrow(ISuperToken(address(token)), ISuperfluidPool(address(pool)), beneficiary, treasury);
+        vm.expectRevert(
+            abi.encodeWithSelector(StreamingEscrowFactory.UnauthorizedCaller.selector, address(0xB0B), address(this))
+        );
+        factory.deployEscrow(ISuperToken(address(token)), ISuperfluidPool(address(pool)), beneficiary, address(this));
     }
 
     function test_initialize_reverts_on_zero_addresses() public {
-        StreamingEscrowFactory fresh = new StreamingEscrowFactory();
+        address impl1 = address(new StreamingEscrowFactory());
         vm.expectRevert(StreamingEscrowFactory.InvalidAddress.selector);
-        fresh.initialize(address(0), ISuperfluid(address(host)), address(escrowImpl));
+        new ERC1967Proxy(
+            impl1,
+            abi.encodeWithSelector(
+                StreamingEscrowFactory.initialize.selector, address(0), ISuperfluid(address(host)), address(escrowImpl)
+            )
+        );
 
-        fresh = new StreamingEscrowFactory();
+        address impl2 = address(new StreamingEscrowFactory());
         vm.expectRevert(StreamingEscrowFactory.InvalidAddress.selector);
-        fresh.initialize(address(this), ISuperfluid(address(0)), address(escrowImpl));
+        new ERC1967Proxy(
+            impl2,
+            abi.encodeWithSelector(
+                StreamingEscrowFactory.initialize.selector, address(this), ISuperfluid(address(0)), address(escrowImpl)
+            )
+        );
 
-        fresh = new StreamingEscrowFactory();
+        address impl3 = address(new StreamingEscrowFactory());
         vm.expectRevert(StreamingEscrowFactory.InvalidAddress.selector);
-        fresh.initialize(address(this), ISuperfluid(address(host)), address(0));
+        new ERC1967Proxy(
+            impl3,
+            abi.encodeWithSelector(
+                StreamingEscrowFactory.initialize.selector, address(this), ISuperfluid(address(host)), address(0)
+            )
+        );
     }
 
     function test_deployEscrow_reverts_on_invalid_addresses() public {
         vm.expectRevert(StreamingEscrowFactory.InvalidAddress.selector);
-        factory.deployEscrow(ISuperToken(address(token)), ISuperfluidPool(address(pool)), address(0), treasury);
+        factory.deployEscrow(ISuperToken(address(token)), ISuperfluidPool(address(pool)), address(0), address(this));
 
         vm.expectRevert(StreamingEscrowFactory.InvalidAddress.selector);
         factory.deployEscrow(ISuperToken(address(token)), ISuperfluidPool(address(pool)), beneficiary, address(0));

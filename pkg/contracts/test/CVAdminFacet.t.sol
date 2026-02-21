@@ -9,6 +9,7 @@ import {RegistryCommunity} from "../src/RegistryCommunity/RegistryCommunity.sol"
 import {ISybilScorer} from "../src/ISybilScorer.sol";
 import {IArbitrator} from "../src/interfaces/IArbitrator.sol";
 import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
+import {IVotingPowerRegistry} from "../src/interfaces/IVotingPowerRegistry.sol";
 import {LibDiamond} from "../src/diamonds/libraries/LibDiamond.sol";
 import {MockArbitrator} from "./helpers/CVStrategyHelpers.sol";
 
@@ -16,9 +17,14 @@ contract MockRegistryCommunityAdmin {
     mapping(bytes32 => mapping(address => bool)) public roles;
     mapping(address => uint256) public power;
     address public councilSafe;
+    address public registryFactory;
 
     function setCouncilSafe(address safe) external {
         councilSafe = safe;
+    }
+
+    function setRegistryFactory(address _registryFactory) external {
+        registryFactory = _registryFactory;
     }
 
     function hasRole(bytes32 role, address account) external view returns (bool) {
@@ -42,6 +48,19 @@ contract MockRegistryCommunityAdmin {
     }
 
     function deactivateMemberInStrategy(address, address) external {}
+
+    // IVotingPowerRegistry compatibility stubs
+    function isMember(address member) external view returns (bool) {
+        return power[member] > 0;
+    }
+
+    function getMemberStakedAmount(address) external pure returns (uint256) {
+        return 0;
+    }
+
+    function ercAddress() external pure returns (address) {
+        return address(0);
+    }
 }
 
 contract MockSybilScorerAdmin is ISybilScorer {
@@ -107,9 +126,43 @@ contract MockAlloPool {
     }
 }
 
+contract MockVotingRegistryAdmin is IVotingPowerRegistry {
+    function isMember(address) external pure returns (bool) {
+        return true;
+    }
+
+    function getMemberPowerInStrategy(address, address) external pure returns (uint256) {
+        return 1;
+    }
+
+    function getMemberStakedAmount(address) external pure returns (uint256) {
+        return 0;
+    }
+
+    function ercAddress() external pure returns (address) {
+        return address(0);
+    }
+}
+
+contract MockFactoryAllowlist {
+    mapping(address => bool) internal allowed;
+
+    function setAllowed(address target, bool isAllowed) external {
+        allowed[target] = isAllowed;
+    }
+
+    function isContractRegistered(address target) external view returns (bool) {
+        return allowed[target];
+    }
+}
+
 contract CVAdminFacetHarness is CVAdminFacet {
     function setRegistryCommunity(address community) external {
         registryCommunity = RegistryCommunity(community);
+    }
+
+    function forceVotingPowerRegistry(address registry) external {
+        votingPowerRegistry = IVotingPowerRegistry(registry);
     }
 
     function setSybilScorer(address scorer) external {
@@ -168,6 +221,8 @@ contract CVAdminFacetTest is Test {
     MockSybilScorerAdmin internal sybil;
     MockAlloPool internal allo;
     MockArbitrator internal arbitrator;
+    MockVotingRegistryAdmin internal customRegistry;
+    MockFactoryAllowlist internal factoryAllowlist;
 
     address internal councilSafe = makeAddr("councilSafe");
     address internal member = makeAddr("member");
@@ -178,14 +233,18 @@ contract CVAdminFacetTest is Test {
         sybil = new MockSybilScorerAdmin();
         allo = new MockAlloPool();
         arbitrator = new MockArbitrator();
+        customRegistry = new MockVotingRegistryAdmin();
+        factoryAllowlist = new MockFactoryAllowlist();
 
         facet.setRegistryCommunity(address(registry));
+        facet.forceVotingPowerRegistry(address(registry));
         facet.setSybilScorer(address(sybil));
         facet.setOwner(councilSafe);
         facet.setPoolId(1);
         facet.setAllo(address(allo));
 
         registry.setCouncilSafe(councilSafe);
+        registry.setRegistryFactory(address(factoryAllowlist));
     }
 
     function test_setPoolParams_updates_allowlist_and_configs() public {
@@ -249,5 +308,37 @@ contract CVAdminFacetTest is Test {
 
         vm.prank(councilSafe);
         facet.disconnectSuperfluidGDA(address(0xB0B));
+    }
+
+    function test_setVotingPowerRegistry_revertsIfNotAllowed() public {
+        vm.prank(councilSafe);
+        vm.expectRevert(abi.encodeWithSelector(CVAdminFacet.VotingPowerRegistryNotAllowed.selector, address(customRegistry)));
+        facet.setVotingPowerRegistry(address(customRegistry));
+    }
+
+    function test_setVotingPowerRegistry_allowsAllowlistedRegistry() public {
+        factoryAllowlist.setAllowed(address(customRegistry), true);
+        vm.startPrank(councilSafe);
+        facet.setVotingPowerRegistry(address(customRegistry));
+        vm.stopPrank();
+
+        assertEq(address(facet.votingPowerRegistry()), address(customRegistry));
+    }
+
+    function test_setVotingPowerRegistry_allowsRegistryCommunityAddress() public {
+        vm.prank(councilSafe);
+        facet.setVotingPowerRegistry(address(registry));
+
+        assertEq(address(facet.votingPowerRegistry()), address(registry));
+    }
+
+    function test_setVotingPowerRegistry_zeroResetsToRegistryCommunity() public {
+        factoryAllowlist.setAllowed(address(customRegistry), true);
+        vm.startPrank(councilSafe);
+        facet.setVotingPowerRegistry(address(customRegistry));
+        facet.setVotingPowerRegistry(address(0));
+        vm.stopPrank();
+
+        assertEq(address(facet.votingPowerRegistry()), address(registry));
     }
 }

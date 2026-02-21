@@ -72,14 +72,16 @@ contract CVDisputeFacet is CVStrategyBaseFacet {
 
         uint256 arbitrationFee = msg.value - arbitrableConfig.challengerCollateralAmount;
 
+        // Effects before interactions to reduce reentrancy surface.
+        proposal.proposalStatus = ProposalStatus.Disputed;
+        proposal.disputeInfo.disputeTimestamp = block.timestamp;
+        proposal.disputeInfo.challenger = msg.sender;
+
         collateralVault.depositCollateral{value: arbitrableConfig.challengerCollateralAmount}(proposalId, msg.sender);
 
         disputeId = arbitrableConfig.arbitrator.createDispute{value: arbitrationFee}(RULING_OPTIONS, _extraData);
 
-        proposal.proposalStatus = ProposalStatus.Disputed;
         proposal.disputeInfo.disputeId = disputeId;
-        proposal.disputeInfo.disputeTimestamp = block.timestamp;
-        proposal.disputeInfo.challenger = msg.sender;
         disputeIdToProposalId[disputeId] = proposalId;
 
         if (proposalType == ProposalType.Streaming) {
@@ -179,8 +181,10 @@ contract CVDisputeFacet is CVStrategyBaseFacet {
         }
         if (active) {
             StreamingEscrow(escrow).setDisputed(false);
+            StreamingEscrow(escrow).drainToBeneficiary();
         } else {
-            StreamingEscrow(escrow).resolveToTreasury();
+            StreamingEscrow(escrow).drainToStrategy();
+            CVStreamingStorage.layout().proposalEscrow[proposalId] = address(0);
         }
     }
 }

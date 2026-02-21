@@ -24,7 +24,6 @@ contract DeployGlobalPauseController is BaseMultiChain {
             )
         );
 
-        console2.log("GlobalPauseController: %s", controller);
         _writeNetworkAddress(".ENVS.PAUSE_CONTROLLER", controller);
 
         address[] memory registryCommunityProxies =
@@ -44,9 +43,7 @@ contract DeployGlobalPauseController is BaseMultiChain {
         address current = pauseFacet.pauseController();
         if (current != controller) {
             pauseFacet.setPauseController(controller);
-            console2.log("  Pause controller set for: %s", target);
         } else {
-            console2.log("  Pause controller already set for: %s", target);
         }
     }
 
@@ -76,7 +73,6 @@ contract DeployGlobalPauseController is BaseMultiChain {
         inputs[1] = "-c";
         inputs[2] = command;
         vm.ffi(inputs);
-        console2.log("  Cached deployment in networks.json:", key);
     }
 
     function _addressToString(address _addr) internal pure returns (string memory) {

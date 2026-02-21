@@ -13,6 +13,7 @@ type CVStrategy @entity(immutable: false) {
   token: String!
   sybil: SybilProtection
   archived: Boolean!
+  stream: StreamInfo
 }
 
 type CVStrategyConfig @entity(immutable: false) {
@@ -28,24 +29,43 @@ type CVStrategyConfig @entity(immutable: false) {
   maxAmount: BigInt
   allowlist: [String!]
   superfluidToken: String
-  superfluidGDA: [String!]!
 }
 
-type StreamingInfo @entity(immutable: false) {
+type StreamInfo @entity(immutable: false) {
   id: ID!
   contractAddress: String!
   contractType: String!
   strategy: CVStrategy
-  registryFactory: RegistryFactory
   superfluidToken: String
-  superfluidGDA: [String!]!
-  streamLastStartedGDA: String
+  maxFlowRate: BigInt
+  superfluidGDA: String!
   streamLastFlowRate: BigInt
-  streamLastMember: String
-  streamLastMemberUnit: BigInt
-  streamingEscrowFactory: String
+  totalMemberUnits: BigInt!
+  proposalStreamIds: [String!]!
   createdAt: BigInt!
   updatedAt: BigInt!
+}
+
+type ProposalStream @entity(immutable: false) {
+  id: ID!
+  strategy: CVStrategy!
+  proposal: CVProposal!
+  escrow: String!
+  currentUnits: BigInt!
+  currentFlowRate: BigInt!
+  streamedUntilSnapshot: BigInt!
+  lastSnapshotAt: BigInt!
+  isStopped: Boolean!
+  createdAt: BigInt!
+  updatedAt: BigInt!
+}
+
+type ProposalEscrowIndex @entity(immutable: false) {
+  id: ID!
+  strategy: CVStrategy!
+  proposal: CVProposal!
+  proposalStream: ProposalStream!
+  escrow: String!
 }
 
 type ArbitrableConfig @entity(immutable: false) {
@@ -72,6 +92,7 @@ type CVProposal @entity(immutable: false) {
   requestedAmount: BigInt!
   requestedToken: String!
   proposalStatus: BigInt!
+  streamingEscrow: String
   blockLast: BigInt!
   convictionLast: BigInt!
   maxCVStaked: BigInt!
@@ -84,6 +105,7 @@ type CVProposal @entity(immutable: false) {
   updatedAt: BigInt!
   arbitrableConfig: ArbitrableConfig!
   executedAt: BigInt
+  proposalStream: ProposalStream
 }
 
 # type ProposalMeta @entity(immutable: false) {

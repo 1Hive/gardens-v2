@@ -14,6 +14,7 @@ contract GlobalPauseController is ProxyOwnableUpgrader {
 
     mapping(address => uint64) private pausedUntilByTarget;
     mapping(address => mapping(bytes4 => uint64)) private pausedSelectorUntilByTarget;
+    uint256[47] private __gap;
 
     function initialize(address initialOwner) public override initializer {
         ProxyOwnableUpgrader.initialize(initialOwner);
@@ -82,5 +83,4 @@ contract GlobalPauseController is ProxyOwnableUpgrader {
         _;
     }
 
-    uint256[47] private __gap;
 }

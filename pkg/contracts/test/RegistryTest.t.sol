@@ -2,7 +2,6 @@
 pragma solidity ^0.8.19;
 
 import "forge-std/Test.sol";
-import "forge-std/console.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import {IStrategy} from "allo-v2-contracts/core/interfaces/IStrategy.sol";
@@ -448,8 +447,6 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
     function testFuzz_increasePowerCapped(uint256 tokenAmount) public {
         uint256 CAPPED_MAX_AMOUNT = 200 * DECIMALS;
         uint256 MIN_AMOUNT_TO_MAX = (CAPPED_MAX_AMOUNT - MINIMUM_STAKE) / DECIMALS;
-        console.log("MINIMUM_STAKE:", MINIMUM_STAKE / DECIMALS);
-        console.log("CAPPED_MAX_AMOUNT- MINIMUM_STAKE:", MIN_AMOUNT_TO_MAX);
 
         tokenAmount = bound(tokenAmount, MIN_AMOUNT_TO_MAX, MIN_AMOUNT_TO_MAX * 2);
 
@@ -492,7 +489,6 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
 
         uint256 current = tokenAmount * DECIMALS + MINIMUM_STAKE;
 
-        console.log("Current:", current);
         // if (tokenAmount >= CAPPED_MAX_AMOUNT) {
         assertEq(memberPower, CAPPED_MAX_AMOUNT, "Power to 200");
         // } else {
@@ -638,7 +634,6 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
     //         ProposalType(0),
     //         PointSystem.Quadratic
     //     );
-    //     console.log("PoolId: %s", poolId);
     //     vm.stopPrank();
     //     vm.startPrank(address(councilSafe));
     //     _registryCommunity().addStrategy(address(strategy));
@@ -691,7 +686,6 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         );
         CVStrategy quadraticStrategy = CVStrategy(payable(strategyProxy));
         _configureStrategy(quadraticStrategy);
-        console.log("PoolId: %s", poolId);
         vm.stopPrank();
         vm.startPrank(address(councilSafe));
         _registryCommunity().addStrategy(address(quadraticStrategy));
@@ -766,7 +760,6 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         //     PointSystem.Unlimited,
         //     arbitrableConfig
         // );
-        // console.log("PoolId: %s", poolId);
         vm.stopPrank();
 
         vm.startPrank(address(councilSafe));

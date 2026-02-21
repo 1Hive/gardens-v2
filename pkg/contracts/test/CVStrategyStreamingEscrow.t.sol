@@ -9,6 +9,7 @@ import {IArbitrator} from "../src/interfaces/IArbitrator.sol";
 import {Metadata} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import {ICollateralVault} from "../src/interfaces/ICollateralVault.sol";
+import {IVotingPowerRegistry} from "../src/interfaces/IVotingPowerRegistry.sol";
 import {RegistryCommunity} from "../src/RegistryCommunity/RegistryCommunity.sol";
 
 import {StreamingEscrow} from "../src/CVStrategy/StreamingEscrow.sol";
@@ -39,6 +40,7 @@ contract MockRegistryFactory {
 
 contract MockRegistryCommunity {
     address public registryFactory;
+    bool public strategyEnabled = true;
 
     constructor(address _registryFactory) {
         registryFactory = _registryFactory;
@@ -49,6 +51,23 @@ contract MockRegistryCommunity {
     }
 
     function onlyStrategyEnabled(address) external pure {}
+
+    function enabledStrategies(address) external view returns (bool) {
+        return strategyEnabled;
+    }
+
+    // IVotingPowerRegistry compatibility stubs
+    function getMemberPowerInStrategy(address, address) external pure returns (uint256) {
+        return 1;
+    }
+
+    function getMemberStakedAmount(address) external pure returns (uint256) {
+        return 0;
+    }
+
+    function ercAddress() external pure returns (address) {
+        return address(0);
+    }
 }
 
 contract MockGDA {
@@ -118,6 +137,10 @@ contract CVProposalFacetHarness is CVProposalFacet {
         registryCommunity = RegistryCommunity(_registryCommunity);
     }
 
+    function setVotingPowerRegistry(address registry) external {
+        votingPowerRegistry = IVotingPowerRegistry(registry);
+    }
+
     function setProposalType(ProposalType _type) external {
         proposalType = _type;
     }
@@ -185,6 +208,7 @@ contract CVStrategyStreamingEscrowTest is Test {
         harness.setAllo(address(this));
         harness.setPoolId(1);
         harness.setRegistryCommunity(address(registryCommunity));
+        harness.setVotingPowerRegistry(address(registryCommunity));
         harness.setProposalType(ProposalType.Streaming);
         harness.setArbitrableConfig(
             ArbitrableConfig({arbitrator: IArbitrator(address(0x1234)), tribunalSafe: address(0), submitterCollateralAmount: 0, challengerCollateralAmount: 0, defaultRuling: 0, defaultRulingTimeout: 0})

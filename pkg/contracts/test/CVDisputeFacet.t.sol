@@ -9,6 +9,7 @@ import {Proposal, ProposalStatus, ProposalType, ArbitrableConfig} from "../src/C
 import {RegistryCommunity} from "../src/RegistryCommunity/RegistryCommunity.sol";
 import {ICollateralVault} from "../src/interfaces/ICollateralVault.sol";
 import {IArbitrator} from "../src/interfaces/IArbitrator.sol";
+import {IVotingPowerRegistry} from "../src/interfaces/IVotingPowerRegistry.sol";
 
 import {MockRegistryCommunity, MockArbitrator, MockCollateralVault} from "./helpers/CVStrategyHelpers.sol";
 
@@ -20,7 +21,11 @@ contract MockStreamingEscrow {
         disputed = value;
     }
 
-    function resolveToTreasury() external {
+    function drainToStrategy() external {
+        resolved = true;
+    }
+
+    function drainToBeneficiary() external {
         resolved = true;
     }
 }
@@ -28,6 +33,10 @@ contract MockStreamingEscrow {
 contract CVDisputeFacetHarness is CVDisputeFacet {
     function setRegistryCommunity(address community) external {
         registryCommunity = RegistryCommunity(community);
+    }
+
+    function setVotingPowerRegistry(address registry) external {
+        votingPowerRegistry = IVotingPowerRegistry(registry);
     }
 
     function setCollateralVault(address vault) external {
@@ -57,7 +66,9 @@ contract CVDisputeFacetHarness is CVDisputeFacet {
         p.submitter = address(0xBEEF);
     }
 
-    function setDisputeInfo(uint256 proposalId, uint256 disputeId, uint256 disputeTimestamp, address challenger) external {
+    function setDisputeInfo(uint256 proposalId, uint256 disputeId, uint256 disputeTimestamp, address challenger)
+        external
+    {
         Proposal storage p = proposals[proposalId];
         p.disputeInfo.disputeId = disputeId;
         p.disputeInfo.disputeTimestamp = disputeTimestamp;
@@ -70,6 +81,10 @@ contract CVDisputeFacetHarness is CVDisputeFacet {
 
     function setProposalEscrow(uint256 proposalId, address escrow) external {
         CVStreamingStorage.layout().proposalEscrow[proposalId] = escrow;
+    }
+
+    function getProposalEscrow(uint256 proposalId) external view returns (address) {
+        return CVStreamingStorage.layout().proposalEscrow[proposalId];
     }
 
     function setDisputeCount(uint64 count) external {
@@ -95,6 +110,7 @@ contract CVDisputeFacetTest is Test {
         vm.deal(member, 10 ether);
 
         facet.setRegistryCommunity(address(registry));
+        facet.setVotingPowerRegistry(address(registry));
         facet.setCollateralVault(address(vault));
     }
 
@@ -138,9 +154,7 @@ contract CVDisputeFacetTest is Test {
         facet.setProposal(1, ProposalStatus.Active, 1, block.timestamp);
 
         vm.prank(member);
-        vm.expectRevert(
-            abi.encodeWithSelector(CVDisputeFacet.DisputeCooldownActive.selector, 1, 2 hours)
-        );
+        vm.expectRevert(abi.encodeWithSelector(CVDisputeFacet.DisputeCooldownActive.selector, 1, 2 hours));
         facet.disputeProposal{value: 1 ether}(1, "ctx", "");
     }
 
@@ -165,9 +179,7 @@ contract CVDisputeFacetTest is Test {
         facet.setProposal(1, ProposalStatus.Active, 1, 0);
         facet.setDisputeId(1, 1);
 
-        vm.expectRevert(
-            abi.encodeWithSelector(CVDisputeFacet.ProposalStatusInvalid.selector, 1, ProposalStatus.Active)
-        );
+        vm.expectRevert(abi.encodeWithSelector(CVDisputeFacet.ProposalStatusInvalid.selector, 1, ProposalStatus.Active));
         facet.rule(1, 1);
     }
 
@@ -221,6 +233,7 @@ contract CVDisputeFacetTest is Test {
 
         facet.rule(5, 0);
         assertTrue(escrow.resolved());
+        assertEq(facet.getProposalEscrow(1), address(0));
     }
 
     function test_rule_ruling_one_transfers_to_council() public {

@@ -182,9 +182,11 @@ export const chainConfigMap: {
       SUBGRAPH_ETHSEP_VERSION,
       70985,
     ),
+    superfluidSubgraphUrl:
+      "https://subgraph-endpoints.superfluid.dev/eth-sepolia/protocol-v1",
     globalTribunal: "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
-    arbitrator: "0x13ea0f97bc7733985e81adb75e4d55255320b5c5",
+    arbitrator: "0x3678d8f5d4f04cb033b8ab4d85df384d0df9cb08",
     passportScorer: "0xd58ff588177f02cc535a0e235a4c002a17e27202",
     goodDollar: "0xa50ec350146e42b1ad15705da04c7cb6929e1f2a",
     isTestnet: true,

@@ -29,6 +29,7 @@ contract CommunityMemberFacet is CommunityBaseFacet {
     error UserNotInCouncil(address _user);
     error UserNotInRegistry();
     error KickNotEnabled();
+    error StakeRequiredForMembership();
 
     /*|--------------------------------------------|*/
     /*|              MODIFIERS                     |*/
@@ -69,6 +70,20 @@ contract CommunityMemberFacet is CommunityBaseFacet {
         return registerStakeAmount + communityFeeAmount + gardensFeeAmount;
     }
 
+    /// @notice Register as a member without staking (for NFT/Custom power pools)
+    /// @dev Only available when community membership stake requirement is zero.
+    ///      This prevents bypassing staking requirements in stake-based communities.
+    function registerMember() public {
+        if (registerStakeAmount > 0) {
+            revert StakeRequiredForMembership();
+        }
+        if (!isMember(msg.sender)) {
+            addressToMemberInfo[msg.sender].isRegistered = true;
+            totalMembers += 1;
+            emit MemberRegisteredWithCovenant(msg.sender, 0, "");
+        }
+    }
+
     // Sig: 0x9a1f46e2
     function stakeAndRegisterMember(string memory covenantSig) public {
         IRegistryFactory gardensFactory = IRegistryFactory(registryFactory);
@@ -100,14 +115,15 @@ contract CommunityMemberFacet is CommunityBaseFacet {
     function unregisterMember() public {
         onlyRegistryMemberSender();
         address _member = msg.sender;
-        deactivateAllStrategies(_member);
+        address[] memory memberStrategies = strategiesByMember[_member];
         Member memory member = addressToMemberInfo[_member];
-        delete addressToMemberInfo[_member];
         delete strategiesByMember[_member];
+        delete addressToMemberInfo[_member];
         // In order to resync older contracts that skipped this counter until upgrade (community-params-editable)
         if (totalMembers > 0) {
             totalMembers -= 1;
         }
+        deactivateAllStrategies(_member, memberStrategies);
         gardenToken.safeTransfer(_member, member.stakedAmount);
         emit MemberUnregistered(_member, member.stakedAmount);
     }
@@ -121,11 +137,13 @@ contract CommunityMemberFacet is CommunityBaseFacet {
         if (!isMember(_member)) {
             revert UserNotInRegistry();
         }
+        address[] memory memberStrategies = strategiesByMember[_member];
         Member memory member = addressToMemberInfo[_member];
-        deactivateAllStrategies(_member);
+        delete strategiesByMember[_member];
         delete addressToMemberInfo[_member];
         totalMembers -= 1;
 
+        deactivateAllStrategies(_member, memberStrategies);
         gardenToken.safeTransfer(_transferAddress, member.stakedAmount);
         emit MemberKicked(_member, _transferAddress, member.stakedAmount);
     }
@@ -134,8 +152,7 @@ contract CommunityMemberFacet is CommunityBaseFacet {
     /*|              INTERNAL HELPERS              |*/
     /*|--------------------------------------------|*/
 
-    function deactivateAllStrategies(address _member) internal {
-        address[] memory memberStrategies = strategiesByMember[_member];
+    function deactivateAllStrategies(address _member, address[] memory memberStrategies) internal {
         for (uint256 i = 0; i < memberStrategies.length; i++) {
             CVStrategy(payable(memberStrategies[i])).deactivatePoints(_member);
         }

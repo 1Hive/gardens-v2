@@ -95,7 +95,9 @@ templates:
         - CVStrategy
         - CVStrategyConfig
         - CVProposal
-        - StreamingInfo
+        - StreamInfo
+        - ProposalStream
+        - ProposalEscrowIndex
         - Allo
       abis:
         - name: CVStrategy
@@ -111,8 +113,12 @@ templates:
           handler: handleInitializedV2
         - event: InitializedCV3(uint256,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address,uint256,address[],address))
           handler: handleInitializedV3
+        - event: InitializedCV4(uint256,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address,address,uint256,address[],address,uint256))
+          handler: handleInitializedV4
         - event: ProposalCreated(uint256,uint256)
           handler: handleProposalCreated
+        - event: ProposalCreated(uint256,uint256,address)
+          handler: handleProposalCreatedWithEscrow
         - event: SupportAdded(address,uint256,uint256,uint256,uint256)
           handler: handleSupportAdded
         - event: Distributed(uint256,address,uint256)
@@ -141,14 +147,20 @@ templates:
           handler: handleSybilScorerUpdated
         - event: SuperfluidTokenUpdated(address)
           handler: handleSuperfluidTokenUpdated
+        - event: SuperfluidPoolCreated(indexed address,indexed address,uint256)
+          handler: handleSuperfluidPoolCreated
+        - event: SuperfluidStreamingRateUpdated(uint256)
+          handler: handleSuperfluidStreamingRateUpdated
         - event: SuperfluidGDAConnected(indexed address,indexed address)
           handler: handleSuperfluidGDAConnected
         - event: SuperfluidGDADisconnected(indexed address,indexed address)
           handler: handleSuperfluidGDADisconnected
-        - event: StreamStarted(indexed address,uint256)
-          handler: handleStreamStarted
+        - event: StreamRateUpdated(indexed address,uint256)
+          handler: handleStreamRateUpdated
         - event: StreamMemberUnitUpdated(indexed address,int96)
           handler: handleStreamMemberUnitUpdated
+        - event: EscrowStreamStopped(indexed address,indexed address)
+          handler: handleEscrowStreamStopped
         - event: ProposalEdited(uint256,(uint256,string),address,uint256)
           handler: handleProposalEdited
 

@@ -952,70 +952,6 @@
           "name": "_owner",
           "type": "address",
           "internalType": "address"
-        },
-        {
-          "name": "facetCuts",
-          "type": "tuple[]",
-          "internalType": "struct IDiamond.FacetCut[]",
-          "components": [
-            {
-              "name": "facetAddress",
-              "type": "address",
-              "internalType": "address"
-            },
-            {
-              "name": "action",
-              "type": "uint8",
-              "internalType": "enum IDiamond.FacetCutAction"
-            },
-            {
-              "name": "functionSelectors",
-              "type": "bytes4[]",
-              "internalType": "bytes4[]"
-            }
-          ]
-        },
-        {
-          "name": "init",
-          "type": "address",
-          "internalType": "address"
-        },
-        {
-          "name": "initCalldata",
-          "type": "bytes",
-          "internalType": "bytes"
-        },
-        {
-          "name": "strategyFacetCuts_",
-          "type": "tuple[]",
-          "internalType": "struct IDiamond.FacetCut[]",
-          "components": [
-            {
-              "name": "facetAddress",
-              "type": "address",
-              "internalType": "address"
-            },
-            {
-              "name": "action",
-              "type": "uint8",
-              "internalType": "enum IDiamond.FacetCutAction"
-            },
-            {
-              "name": "functionSelectors",
-              "type": "bytes4[]",
-              "internalType": "bytes4[]"
-            }
-          ]
-        },
-        {
-          "name": "strategyInit_",
-          "type": "address",
-          "internalType": "address"
-        },
-        {
-          "name": "strategyInitCalldata_",
-          "type": "bytes",
-          "internalType": "bytes"
         }
       ],
       "outputs": [],
@@ -1473,46 +1409,6 @@
           "name": "",
           "type": "address",
           "internalType": "address"
-        }
-      ],
-      "outputs": [],
-      "stateMutability": "nonpayable"
-    },
-    {
-      "type": "function",
-      "name": "setStrategyFacets",
-      "inputs": [
-        {
-          "name": "facetCuts",
-          "type": "tuple[]",
-          "internalType": "struct IDiamond.FacetCut[]",
-          "components": [
-            {
-              "name": "facetAddress",
-              "type": "address",
-              "internalType": "address"
-            },
-            {
-              "name": "action",
-              "type": "uint8",
-              "internalType": "enum IDiamond.FacetCutAction"
-            },
-            {
-              "name": "functionSelectors",
-              "type": "bytes4[]",
-              "internalType": "bytes4[]"
-            }
-          ]
-        },
-        {
-          "name": "init",
-          "type": "address",
-          "internalType": "address"
-        },
-        {
-          "name": "initCalldata",
-          "type": "bytes",
-          "internalType": "bytes"
         }
       ],
       "outputs": [],
@@ -2597,6 +2493,18 @@
     },
     {
       "type": "function",
+      "name": "registerMember",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "error",
+      "name": "StakeRequiredForMembership",
+      "inputs": []
+    },
+    {
+      "type": "function",
       "name": "isPaused",
       "inputs": [
         {
@@ -2751,6 +2659,19 @@
       "type": "error",
       "name": "PauseControllerNotSet",
       "inputs": []
+    },
+    {
+      "type": "function",
+      "name": "ercAddress",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
     },
     {
       "type": "error",

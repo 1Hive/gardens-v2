@@ -60,8 +60,8 @@ export const useConvictionRead = ({
   if (errorConviction) {
     logOnce("error", "Error reading conviction", errorConviction);
   }
-  const shouldReadThreshold =
-    enabled && PoolTypes[strategyConfig?.proposalType] === "funding";
+  const poolType = PoolTypes[strategyConfig?.proposalType];
+  const shouldReadThreshold = enabled && poolType !== "signaling";
 
   const { data: thresholdReads } = useContractReads({
     allowFailure: true,

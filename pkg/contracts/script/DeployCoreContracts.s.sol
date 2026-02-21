@@ -20,6 +20,7 @@ import {CVDisputeFacet} from "../src/CVStrategy/facets/CVDisputeFacet.sol";
 import {CVPauseFacet} from "../src/CVStrategy/facets/CVPauseFacet.sol";
 import {CVPowerFacet} from "../src/CVStrategy/facets/CVPowerFacet.sol";
 import {CVProposalFacet} from "../src/CVStrategy/facets/CVProposalFacet.sol";
+import {CVSyncPowerFacet} from "../src/CVStrategy/facets/CVSyncPowerFacet.sol";
 import {CollateralVault} from "../src/CollateralVault.sol";
 import {PassportScorer} from "../src/PassportScorer.sol";
 import {GoodDollarSybil} from "../src/GoodDollarSybil.sol";
@@ -40,7 +41,6 @@ contract DeployCoreContracts is BaseMultiChain {
                 address(new ProxyOwner()), abi.encodeWithSelector(ProxyOwner.initialize.selector, address(SENDER))
             )
         );
-        console2.log("ProxyOwner (upgrade admin): %s", proxyOwner);
         _writeNetworkAddress(".ENVS.PROXY_OWNER", proxyOwner);
 
         address communityImpl = address(new RegistryCommunity());
@@ -60,7 +60,6 @@ contract DeployCoreContracts is BaseMultiChain {
                 )
             )
         );
-        console2.log("RegistryFactory: %s", registryFactoryProxy);
         _writeNetworkAddress(".PROXIES.REGISTRY_FACTORY", registryFactoryProxy);
         _writeNetworkAddress(".IMPLEMENTATIONS.REGISTRY_COMMUNITY", communityImpl);
         _writeNetworkAddress(".IMPLEMENTATIONS.CV_STRATEGY", strategyImpl);
@@ -76,9 +75,7 @@ contract DeployCoreContracts is BaseMultiChain {
             strategyInit,
             abi.encodeCall(CVStrategyDiamondInit.init, ())
         ) {
-            console2.log("RegistryFactory facet cuts initialized");
         } catch {
-            console2.log("RegistryFactory facet cuts already set (skipping)");
         }
 
         address listManager = address(SENDER);
@@ -89,7 +86,6 @@ contract DeployCoreContracts is BaseMultiChain {
                 abi.encodeWithSelector(PassportScorer.initialize.selector, listManager, proxyOwner)
             )
         );
-        console2.log("PassportScorer: %s", passportScorer);
         _writeNetworkAddress(".ENVS.PASSPORT_SCORER", passportScorer);
 
         address goodDollarSybil = address(
@@ -98,7 +94,6 @@ contract DeployCoreContracts is BaseMultiChain {
                 abi.encodeWithSelector(GoodDollarSybil.initialize.selector, listManager, proxyOwner)
             )
         );
-        console2.log("GoodDollarSybil: %s", goodDollarSybil);
         _writeNetworkAddress(".ENVS.GOOD_DOLLAR_SYBIL", goodDollarSybil);
 
         address safeArbitrator = address(
@@ -107,7 +102,6 @@ contract DeployCoreContracts is BaseMultiChain {
                 abi.encodeWithSelector(SafeArbitrator.initialize.selector, 0.001 ether, proxyOwner)
             )
         );
-        console2.log("SafeArbitrator: %s", safeArbitrator);
         _writeNetworkAddress(".ENVS.ARBITRATOR", safeArbitrator);
 
         networkJson;
@@ -139,7 +133,6 @@ contract DeployCoreContracts is BaseMultiChain {
         inputs[1] = "-c";
         inputs[2] = command;
         vm.ffi(inputs);
-        console2.log("  Cached deployment in networks.json:", key);
     }
 
     function _addressToString(address _addr) internal pure returns (string memory) {
@@ -179,11 +172,12 @@ contract DeployCoreContracts is BaseMultiChain {
         CVPauseFacet pauseFacet = new CVPauseFacet();
         CVPowerFacet powerFacet = new CVPowerFacet();
         CVProposalFacet proposalFacet = new CVProposalFacet();
+        CVSyncPowerFacet syncPowerFacet = new CVSyncPowerFacet();
         DiamondLoupeFacet loupeFacet = new DiamondLoupeFacet();
         CVStrategyDiamondInit diamondInit = new CVStrategyDiamondInit();
 
         cuts = _buildStrategyFacetCuts(
-            adminFacet, allocationFacet, disputeFacet, pauseFacet, powerFacet, proposalFacet, loupeFacet
+            adminFacet, allocationFacet, disputeFacet, pauseFacet, powerFacet, proposalFacet, syncPowerFacet, loupeFacet
         );
         init = address(diamondInit);
     }
@@ -260,13 +254,14 @@ contract DeployCoreContracts is BaseMultiChain {
             facetAddress: address(poolFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: poolSelectors
         });
 
-        bytes4[] memory powerSelectors = new bytes4[](6);
+        bytes4[] memory powerSelectors = new bytes4[](7);
         powerSelectors[0] = CommunityPowerFacet.activateMemberInStrategy.selector;
         powerSelectors[1] = CommunityPowerFacet.deactivateMemberInStrategy.selector;
         powerSelectors[2] = CommunityPowerFacet.increasePower.selector;
         powerSelectors[3] = CommunityPowerFacet.decreasePower.selector;
         powerSelectors[4] = CommunityPowerFacet.getMemberPowerInStrategy.selector;
         powerSelectors[5] = CommunityPowerFacet.getMemberStakedAmount.selector;
+        powerSelectors[6] = CommunityPowerFacet.ercAddress.selector;
         baseCuts[4] = IDiamond.FacetCut({
             facetAddress: address(powerFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: powerSelectors
         });
@@ -297,14 +292,20 @@ contract DeployCoreContracts is BaseMultiChain {
         CVPauseFacet pauseFacet,
         CVPowerFacet powerFacet,
         CVProposalFacet proposalFacet,
+        CVSyncPowerFacet syncPowerFacet,
         DiamondLoupeFacet loupeFacet
     ) internal pure returns (IDiamond.FacetCut[] memory cuts) {
-        IDiamond.FacetCut[] memory baseCuts = new IDiamond.FacetCut[](6);
+        IDiamond.FacetCut[] memory baseCuts = new IDiamond.FacetCut[](7);
 
-        bytes4[] memory adminSelectors = new bytes4[](3);
-        adminSelectors[0] = CVAdminFacet.setPoolParams.selector;
+        bytes4[] memory adminSelectors = new bytes4[](4);
+        adminSelectors[0] = bytes4(
+            keccak256(
+                "setPoolParams((address,address,uint256,uint256,uint256,uint256),(uint256,uint256,uint256,uint256),uint256,address[],address[],address)"
+            )
+        );
         adminSelectors[1] = CVAdminFacet.connectSuperfluidGDA.selector;
         adminSelectors[2] = CVAdminFacet.disconnectSuperfluidGDA.selector;
+        adminSelectors[3] = CVAdminFacet.setVotingPowerRegistry.selector;
         baseCuts[0] = IDiamond.FacetCut({
             facetAddress: address(adminFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: adminSelectors
         });
@@ -364,9 +365,18 @@ contract DeployCoreContracts is BaseMultiChain {
             functionSelectors: proposalSelectors
         });
 
-        cuts = new IDiamond.FacetCut[](7);
+        bytes4[] memory syncSelectors = new bytes4[](4);
+        syncSelectors[0] = CVSyncPowerFacet.setAuthorizedSyncCaller.selector;
+        syncSelectors[1] = CVSyncPowerFacet.isAuthorizedSyncCaller.selector;
+        syncSelectors[2] = CVSyncPowerFacet.syncPower.selector;
+        syncSelectors[3] = CVSyncPowerFacet.batchSyncPower.selector;
+        baseCuts[6] = IDiamond.FacetCut({
+            facetAddress: address(syncPowerFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: syncSelectors
+        });
+
+        cuts = new IDiamond.FacetCut[](8);
         cuts[0] = _buildLoupeFacetCut(loupeFacet);
-        for (uint256 i = 0; i < 6; i++) {
+        for (uint256 i = 0; i < 7; i++) {
             cuts[i + 1] = baseCuts[i];
         }
     }

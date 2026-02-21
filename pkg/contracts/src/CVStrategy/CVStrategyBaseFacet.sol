@@ -284,15 +284,17 @@ abstract contract CVStrategyBaseFacet {
      * @return bool True if user can execute actions
      */
     function _canExecuteAction(address _user) internal view returns (bool) {
-        if (address(sybilScorer) == address(0)) {
-            bytes32 allowlistRole = keccak256(abi.encodePacked("ALLOWLIST", poolId));
-            if (registryCommunity.hasRole(allowlistRole, address(0))) {
-                return true;
-            } else {
-                return registryCommunity.hasRole(allowlistRole, _user);
-            }
+        if (address(sybilScorer) != address(0)) {
+            return sybilScorer.canExecuteAction(_user, address(this));
         }
-        return sybilScorer.canExecuteAction(_user, address(this));
+        // Custom point system with external registry: NFT ownership IS the gate
+        if (pointSystem == PointSystem.Custom && address(votingPowerRegistry) != address(registryCommunity)) {
+            return votingPowerRegistry.isMember(_user);
+        }
+        // Default: allowlist-based gating
+        bytes32 allowlistRole = keccak256(abi.encodePacked("ALLOWLIST", poolId));
+        return registryCommunity.hasRole(allowlistRole, address(0))
+            || registryCommunity.hasRole(allowlistRole, _user);
     }
 
     /**
@@ -335,6 +337,21 @@ abstract contract CVStrategyBaseFacet {
     }
 
     /**
+     * @notice Calculate the current conviction for a proposal
+     * @param _proposalId The proposal ID
+     * @return uint256 The calculated conviction value
+     */
+    function calculateProposalConviction(uint256 _proposalId) public view virtual returns (uint256) {
+        Proposal storage proposal = proposals[_proposalId];
+        if (!_isStrategyEnabled()) {
+            return proposal.convictionLast;
+        }
+        return ConvictionsUtils.calculateConviction(
+            block.number - proposal.blockLast, proposal.convictionLast, proposal.stakedAmount, cvParams.decay
+        );
+    }
+
+    /**
      * @notice Calculate and store conviction for a proposal
      * @param _proposal Proposal storage reference
      * @param _oldStaked Previous staked amount
@@ -360,6 +377,10 @@ abstract contract CVStrategyBaseFacet {
         view
         returns (uint256 conviction, uint256 blockNumber)
     {
+        if (!_isStrategyEnabled()) {
+            return (_proposal.convictionLast, block.number);
+        }
+
         blockNumber = block.number;
         assert(_proposal.blockLast <= blockNumber);
         if (_proposal.blockLast == blockNumber) {
@@ -372,6 +393,13 @@ abstract contract CVStrategyBaseFacet {
             _oldStaked,
             cvParams.decay
         );
+    }
+
+    function _isStrategyEnabled() internal view returns (bool) {
+        if (address(registryCommunity) == address(0)) {
+            return true;
+        }
+        return registryCommunity.enabledStrategies(address(this));
     }
 
     /// @notice Getter for the 'poolAmount'.

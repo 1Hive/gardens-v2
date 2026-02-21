@@ -9,6 +9,7 @@ import {Metadata} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 import {IDiamondCut} from "../src/diamonds/interfaces/IDiamondCut.sol";
 import {IDiamond} from "../src/diamonds/interfaces/IDiamond.sol";
 import {FAllo} from "../src/interfaces/FAllo.sol";
+import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 contract MockAlloPool {
     uint256 public nextPoolId = 1;
@@ -40,9 +41,45 @@ contract MockAlloPool {
 
 contract MockRegistryFactoryPause {
     address public pauseController;
+    IDiamondCut.FacetCut[] internal strategyFacetCuts;
+    address internal strategyInit;
+    bytes internal strategyInitCalldata;
 
     function setPauseController(address controller) external {
         pauseController = controller;
+    }
+
+    function setStrategyFacets(IDiamondCut.FacetCut[] memory cuts, address initAddr, bytes memory initCalldata_) external {
+        delete strategyFacetCuts;
+        for (uint256 i = 0; i < cuts.length; i++) {
+            strategyFacetCuts.push();
+            strategyFacetCuts[i].facetAddress = cuts[i].facetAddress;
+            strategyFacetCuts[i].action = cuts[i].action;
+            for (uint256 j = 0; j < cuts[i].functionSelectors.length; j++) {
+                strategyFacetCuts[i].functionSelectors.push(cuts[i].functionSelectors[j]);
+            }
+        }
+        strategyInit = initAddr;
+        strategyInitCalldata = initCalldata_;
+    }
+
+    function getStrategyFacets()
+        external
+        view
+        returns (IDiamondCut.FacetCut[] memory facetCuts, address initAddr, bytes memory initCalldata_)
+    {
+        facetCuts = new IDiamondCut.FacetCut[](strategyFacetCuts.length);
+        for (uint256 i = 0; i < strategyFacetCuts.length; i++) {
+            facetCuts[i].facetAddress = strategyFacetCuts[i].facetAddress;
+            facetCuts[i].action = strategyFacetCuts[i].action;
+            bytes4[] storage selectors = strategyFacetCuts[i].functionSelectors;
+            facetCuts[i].functionSelectors = new bytes4[](selectors.length);
+            for (uint256 j = 0; j < selectors.length; j++) {
+                facetCuts[i].functionSelectors[j] = selectors[j];
+            }
+        }
+        initAddr = strategyInit;
+        initCalldata_ = strategyInitCalldata;
     }
 
     function globalPauseController() external view returns (address) {
@@ -144,8 +181,10 @@ contract CommunityPoolFacetTest is Test {
     address internal owner = makeAddr("owner");
 
     function setUp() public {
-        facet = new CommunityPoolFacetHarness();
-        facet.initializeHarness(owner);
+        CommunityPoolFacetHarness impl = new CommunityPoolFacetHarness();
+        facet = CommunityPoolFacetHarness(
+            payable(address(new ERC1967Proxy(address(impl), abi.encodeWithSelector(impl.initializeHarness.selector, owner))))
+        );
 
         allo = new MockAlloPool();
         registryFactory = new MockRegistryFactoryPause();
@@ -212,8 +251,7 @@ contract CommunityPoolFacetTest is Test {
             functionSelectors: selectors
         });
 
-        facet.setStrategyFacetCuts(cuts);
-        facet.setStrategyInit(address(0xCAFE), "init");
+        registryFactory.setStrategyFacets(cuts, address(0xCAFE), "init");
 
         registryFactory.setPauseController(address(0xD00D));
 

@@ -8,6 +8,7 @@ import {CVStrategyBaseFacet} from "../src/CVStrategy/CVStrategyBaseFacet.sol";
 import {Proposal, ProposalStatus, PointSystem, PointSystemConfig} from "../src/CVStrategy/ICVStrategy.sol";
 import {RegistryCommunity} from "../src/RegistryCommunity/RegistryCommunity.sol";
 import {ISybilScorer} from "../src/ISybilScorer.sol";
+import {IVotingPowerRegistry} from "../src/interfaces/IVotingPowerRegistry.sol";
 import {TERC20} from "./shared/TERC20.sol";
 import {MockSybilScorer} from "./helpers/CVStrategyHelpers.sol";
 
@@ -60,11 +61,47 @@ contract MockRegistryCommunityPower {
         activated[member] = false;
         lastDeactivated = member;
     }
+
+    function ercAddress() external view returns (address) {
+        return address(token);
+    }
+
+    function isMember(address member) external view returns (bool) {
+        return power[member] > 0;
+    }
+}
+
+contract MockExternalVotingPowerRegistry {
+    mapping(address => uint256) public power;
+
+    function setMemberPower(address member, uint256 amount) external {
+        power[member] = amount;
+    }
+
+    function getMemberPowerInStrategy(address member, address) external view returns (uint256) {
+        return power[member];
+    }
+
+    function getMemberStakedAmount(address) external pure returns (uint256) {
+        return 0;
+    }
+
+    function ercAddress() external pure returns (address) {
+        return address(0);
+    }
+
+    function isMember(address member) external view returns (bool) {
+        return power[member] > 0;
+    }
 }
 
 contract CVPowerFacetHarness is CVPowerFacet {
     function setRegistryCommunity(address community) external {
         registryCommunity = RegistryCommunity(community);
+    }
+
+    function setVotingPowerRegistry(address registry) external {
+        votingPowerRegistry = IVotingPowerRegistry(registry);
     }
 
     function setSybilScorer(address scorer) external {
@@ -111,6 +148,7 @@ contract CVPowerFacetHarness is CVPowerFacet {
 contract CVPowerFacetTest is Test {
     CVPowerFacetHarness internal facet;
     MockRegistryCommunityPower internal registry;
+    MockExternalVotingPowerRegistry internal externalRegistry;
     MockSybilScorer internal sybil;
     TERC20 internal token;
     address internal member = makeAddr("member");
@@ -118,10 +156,12 @@ contract CVPowerFacetTest is Test {
     function setUp() public {
         token = new TERC20("Token", "TOK", 18);
         registry = new MockRegistryCommunityPower(token);
+        externalRegistry = new MockExternalVotingPowerRegistry();
         sybil = new MockSybilScorer();
 
         facet = new CVPowerFacetHarness();
         facet.setRegistryCommunity(address(registry));
+        facet.setVotingPowerRegistry(address(registry));
         facet.setSybilScorer(address(sybil));
         facet.setPointSystem(PointSystem.Unlimited);
     }
@@ -241,5 +281,49 @@ contract CVPowerFacetTest is Test {
 
         assertEq(facet.totalStaked(), 0);
         assertEq(facet.totalVoterStakePct(member), 0);
+    }
+
+    function test_increasePower_custom_usesDeltaNotAbsolute() public {
+        sybil.setCanExecute(member, true);
+        facet.setPointSystem(PointSystem.Custom);
+        facet.setVotingPowerRegistry(address(externalRegistry));
+        registry.setActivated(member, true);
+        registry.setMemberPower(member, 0);
+        externalRegistry.setMemberPower(member, 10);
+
+        vm.prank(address(registry));
+        uint256 firstIncrease = facet.increasePower(member, 0);
+        assertEq(firstIncrease, 10);
+        assertEq(facet.totalPointsActivated(), 10);
+
+        // Mirror registry-community bookkeeping after first increase.
+        registry.setMemberPower(member, 10);
+
+        vm.prank(address(registry));
+        uint256 secondIncrease = facet.increasePower(member, 0);
+        assertEq(secondIncrease, 0);
+        assertEq(facet.totalPointsActivated(), 10);
+    }
+
+    function test_activatePoints_customPointSystem_nftGating() public {
+        // Set up Custom point system with external registry, no sybil scorer
+        facet.setSybilScorer(address(0));
+        facet.setPointSystem(PointSystem.Custom);
+        facet.setVotingPowerRegistry(address(externalRegistry));
+
+        // Non-member should be denied
+        address nonMember = makeAddr("nonMember");
+        vm.prank(nonMember);
+        vm.expectRevert(abi.encodeWithSelector(CVPowerFacet.UserCannotExecuteAction.selector, nonMember));
+        facet.activatePoints();
+
+        // Member with power should pass the gate
+        externalRegistry.setMemberPower(member, 7);
+        registry.setMemberPower(member, 7);
+
+        vm.prank(member);
+        facet.activatePoints();
+
+        assertEq(facet.totalPointsActivated(), 7);
     }
 }

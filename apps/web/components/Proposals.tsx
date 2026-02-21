@@ -309,12 +309,12 @@ export function Proposals({
       message: "You need to join the community first",
     },
     {
-      condition: !memberActivatedStrategy,
-      message: "You need to activate your governance first",
+      condition: !isAllowed,
+      message: "You are not eligible to vote in this pool",
     },
     {
-      condition: !isAllowed,
-      message: "Address not in allowlist",
+      condition: !memberActivatedStrategy,
+      message: "You need to activate your governance first",
     },
   ];
 
@@ -461,7 +461,7 @@ export function Proposals({
   const {
     write: writeAllocate,
     error: errorAllocate,
-    status: allocateStatus,
+    isLoading: isAllocateLoading,
   } = useContractWriteWithConfirmations({
     address: alloInfo.id as Address,
     abi: alloABI,
@@ -558,22 +558,22 @@ export function Proposals({
   const stats: Stats[] = [
     {
       id: 1,
-      name: "Your voting power",
+      name: "Your Voting Power",
       stat: memberPoolWeight,
       className: poolWeightClassName,
-      info: "Your total Voting Power (VP) in this pool, out of 100. VP represents how much support you can allocate to proposals.",
+      info: "Your total Voting Power (VP) in this pool, out of 100. Represents how much support you can allocate to proposals.",
       symbol: "VP",
     },
     {
       id: 2,
-      name: "Voting power used",
+      name: "Voting Power Used",
       stat: memberSupportedProposalsPct,
       className: `${
         memberSupportedProposalsPct >= 100 ?
           "bg-secondary-content text-secondary-soft border-secondary-content"
         : "bg-primary-content text-primary-soft border-primary-content"
       }`,
-      info: "The percentage of your Voting Power currently allocated as support across proposals.",
+      info: "Voting Power Allocated to Proposals",
       symbol: "%",
     },
   ];
@@ -681,7 +681,7 @@ export function Proposals({
     0: "inactive",
     1: "active",
     2: "paused",
-    3: "cancelled",
+    3: "closed",
     4: "executed",
     5: "disputed",
     6: "rejected",
@@ -801,6 +801,7 @@ export function Proposals({
                           icon={
                             <AdjustmentsHorizontalIcon height={24} width={24} />
                           }
+                          className="!w-full sm:!w-auto"
                           onClick={() => setAllocationView((prev) => !prev)}
                           popTooltip={showManageSupportTooltip}
                           disabled={
@@ -820,7 +821,7 @@ export function Proposals({
               ))}
         </header>
 
-        <Divider className="sm:hidden" />
+        {sortedProposals.length > 0 && <Divider className="sm:hidden" />}
 
         {strategy.isEnabled && sortedProposals.length > 0 && (
           <ProposalFiltersUI
@@ -830,6 +831,7 @@ export function Proposals({
             setSortBy={setSortBy}
             poolType={strategy?.config?.proposalType}
             counts={proposalsCountByStatus}
+            disableSort={filteredAndSorted.length === 0}
           />
         )}
 
@@ -849,6 +851,7 @@ export function Proposals({
               <Fragment key={proposalData.proposalNumber}>
                 <ProposalCard
                   proposalData={proposalData}
+                  poolId={Number(strategy.poolId)}
                   strategyConfig={strategy.config}
                   inputData={inputs[proposalData.id]}
                   stakedFilter={stakedFilters[proposalData.id]}
@@ -928,7 +931,7 @@ export function Proposals({
                       <div className="flex justify-end gap-4">
                         <Button
                           onClick={submit}
-                          isLoading={allocateStatus === "loading"}
+                          isLoading={isAllocateLoading}
                           disabled={
                             inputs == null ||
                             !getProposalsInputsDifferences(
@@ -937,7 +940,8 @@ export function Proposals({
                             ).length
                           }
                           tooltip="Make changes in proposals support first"
-                          tooltipSide="tooltip-left"
+                          tooltipDesktopSide="tooltip-left"
+                          className="!w-full sm:!w-auto"
                         >
                           Submit your vote
                         </Button>
@@ -969,7 +973,7 @@ export function useProposalFilter<
   type FilterType =
     | "all"
     | "active"
-    | "cancelled"
+    | "closed"
     | "executed"
     | "disputed"
     | null;
@@ -978,10 +982,10 @@ export function useProposalFilter<
 
   const [isPending, startTransition] = useTransition();
 
-  const FILTER_STATUS: Record<Exclude<FilterType, null>, number> = {
+  const FILTER_STATUS: Record<Exclude<FilterType, null>, number | number[]> = {
     all: 0,
     active: 1,
-    cancelled: 3,
+    closed: [3, 6],
     executed: 4,
     disputed: 5,
   };
@@ -990,7 +994,10 @@ export function useProposalFilter<
     if (!filter || filter == "all") return proposals;
 
     const status = FILTER_STATUS[filter];
-    return proposals.filter((p) => Number(p.proposalStatus) === status);
+    const allowedStatuses = Array.isArray(status) ? status : [status];
+    return proposals.filter((p) =>
+      allowedStatuses.includes(Number(p.proposalStatus)),
+    );
   }, [filter, proposals]);
 
   //
@@ -1066,6 +1073,7 @@ function ProposalFiltersUI({
   setSortBy,
   poolType,
   counts,
+  disableSort,
 }: {
   filter: string | null;
   setFilter: (v: any) => void;
@@ -1073,9 +1081,10 @@ function ProposalFiltersUI({
   setSortBy: (v: any) => void;
   poolType: number;
   counts: Record<string, number>;
+  disableSort: boolean;
 }) {
   const FILTERS = useMemo(() => {
-    const allFilters = ["all", "active", "disputed", "executed", "cancelled"];
+    const allFilters = ["all", "active", "disputed", "executed", "closed"];
 
     // Remove "executed" filter when poolType is a signaling pool
     return +poolType === 0 ?
@@ -1113,7 +1122,7 @@ function ProposalFiltersUI({
     disputed:
       "bg-secondary-soft dark:bg-secondary-soft-dark text-secondary-content",
     executed: "bg-tertiary-soft dark:bg-tertiary-dark text-tertiary-content",
-    cancelled: "bg-danger-soft text-danger-content dark:bg-danger-soft-dark",
+    closed: "bg-danger-soft text-danger-content dark:bg-danger-soft-dark",
   };
 
   return (
@@ -1149,20 +1158,26 @@ function ProposalFiltersUI({
           </p>
         </div>
         <div
-          className="dropdown dropdown-hover dropdown-start w-full relative group"
+          className={`dropdown dropdown-start w-full relative group ${disableSort ? "pointer-events-none" : "dropdown-hover"}`}
           onMouseLeave={() => setIsSortDropdownLocked(false)}
         >
           <button
             tabIndex={0}
             type="button"
-            className="text-primary-content text-sm flex gap-2 items-center w-full lg:w-[215px] px-3.5 py-2 bg-primary-soft dark:bg-primary rounded-lg"
+            disabled={disableSort}
+            title={disableSort ? "No proposals to sort" : undefined}
+            className={`text-sm flex gap-2 items-center w-full lg:w-[215px] px-3.5 py-2 rounded-lg ${
+              disableSort ?
+                "bg-neutral text-neutral-soft-content cursor-not-allowed opacity-70"
+              : "text-primary-content bg-primary-soft dark:bg-primary"
+            }`}
           >
             {CurrentIcon && <CurrentIcon className="w-4 h-4" />}
             {currentSortOption?.label}
           </button>
 
           <ul
-            className={`dropdown-content menu bg-primary rounded-md z-50 shadow w-full lg:w-[215px] ${isSortDropdownLocked ? "!invisible !opacity-0 !pointer-events-none" : ""}`}
+            className={`dropdown-content menu bg-primary rounded-md z-50 shadow w-full lg:w-[215px] ${isSortDropdownLocked || disableSort ? "!invisible !opacity-0 !pointer-events-none" : ""}`}
           >
             {SORT_OPTIONS.map((option) => {
               const Icon = option.icon;
@@ -1181,6 +1196,9 @@ function ProposalFiltersUI({
                     onClick={() => {
                       setSortBy(option.key);
                       setIsSortDropdownLocked(true);
+                      if (document.activeElement instanceof HTMLElement) {
+                        document.activeElement.blur();
+                      }
                     }}
                   >
                     <span className="flex items-center gap-2 text-sm rounded-md">
@@ -1192,7 +1210,13 @@ function ProposalFiltersUI({
               );
             })}
           </ul>
-          <ChevronDownIcon className="w-4 h-4 absolute top-[11px] right-3 lg:right-5 group-hover:rotate-180 transition-all duration-150 ease-in-out" />
+          <ChevronDownIcon
+            className={`w-4 h-4 absolute top-[11px] right-3 lg:right-5 transition-all duration-150 ease-in-out ${
+              disableSort ?
+                "text-neutral-soft-content"
+              : "group-hover:rotate-180"
+            }`}
+          />
         </div>
       </div>
     </div>

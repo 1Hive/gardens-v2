@@ -1,7 +1,7 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 "use client";
 
-import { forwardRef, useEffect, useImperativeHandle } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from "react";
 import {
   HandRaisedIcon,
   ExclamationTriangleIcon,
@@ -24,13 +24,19 @@ import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
 import { Skeleton } from "@/components/Skeleton";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
+import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import {
   ProposalDataLight,
   useConvictionRead,
 } from "@/hooks/useConvictionRead";
 import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
+import { useSuperfluidStream } from "@/hooks/useSuperfluidStream";
 import { PoolTypes, ProposalStatus } from "@/types";
-import { calculatePercentageBigInt } from "@/utils/numbers";
+import {
+  SEC_TO_MONTH,
+  calculatePercentageBigInt,
+  roundToSignificant,
+} from "@/utils/numbers";
 import { prettyTimestamp } from "@/utils/text";
 
 export type ProposalCardProps = {
@@ -42,13 +48,24 @@ export type ProposalCardProps = {
     | "createdAt"
     | "submitter"
     | "executedAt"
+    | "streamingEscrow"
   > &
     ProposalDataLight & {
       metadata?: Maybe<Pick<ProposalMetadata, "title">>;
+      proposalStream?: Maybe<{
+        currentFlowRate: bigint;
+        streamedUntilSnapshot: bigint;
+        lastSnapshotAt: bigint;
+      }>;
+      proposalStreams?: Array<{
+        currentFlowRate: bigint;
+        streamedUntilSnapshot: bigint;
+        lastSnapshotAt: bigint;
+      }>;
     };
   strategyConfig: Pick<
     CVStrategyConfig,
-    "decay" | "proposalType" | "allowlist"
+    "decay" | "proposalType" | "allowlist" | "superfluidToken"
   >;
   inputData?: ProposalInputItem;
   stakedFilter: ProposalInputItem;
@@ -69,6 +86,7 @@ export type ProposalCardProps = {
   communityToken: Parameters<typeof useConvictionRead>[0]["tokenData"];
   inputHandler: (proposalId: string, value: bigint) => void;
   minThGtTotalEffPoints: boolean;
+  poolId: number;
 };
 
 export type ProposalHandle = {
@@ -95,6 +113,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
       memberPoolWeight,
       communityToken: tokenData,
       minThGtTotalEffPoints,
+      poolId,
     },
     ref,
   ) => {
@@ -115,7 +134,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
       executedAt,
     } = proposalData;
     const pathname = usePathname();
-
+    const chainId = useChainIdFromPath();
     const searchParams = useCollectQueryParams();
     const isNewProposal =
       searchParams[QUERY_PARAMS.poolPage.newProposal] ==
@@ -173,6 +192,81 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
 
     const isSignalingType =
       PoolTypes[strategyConfig.proposalType] === "signaling";
+    const isStreamingType =
+      PoolTypes[strategyConfig.proposalType] === "streaming";
+    const [nowMs, setNowMs] = useState<bigint>(() => BigInt(Date.now()));
+
+    const proposalStream =
+      proposalData.proposalStream ?? proposalData.proposalStreams?.[0];
+
+    const toBigInt = (value: unknown): bigint => {
+      if (typeof value === "bigint") return value;
+      if (typeof value === "number") return BigInt(Math.trunc(value));
+      if (typeof value === "string") {
+        try {
+          return BigInt(value);
+        } catch {
+          return 0n;
+        }
+      }
+      return 0n;
+    };
+
+    const currentFlowRateBn = toBigInt(proposalStream?.currentFlowRate);
+    const streamedUntilSnapshotBn = toBigInt(
+      proposalStream?.streamedUntilSnapshot,
+    );
+    const lastSnapshotAtBn = toBigInt(proposalStream?.lastSnapshotAt);
+
+    const lastSnapshotAtMs = lastSnapshotAtBn * 1000n;
+    const elapsedMs =
+      currentFlowRateBn > 0n && lastSnapshotAtMs > 0n && nowMs > lastSnapshotAtMs ?
+        nowMs - lastSnapshotAtMs
+      : 0n;
+    const liveTotalStreamedBn =
+      streamedUntilSnapshotBn + (currentFlowRateBn * elapsedMs) / 1000n;
+
+    const { liveTotalStreamedBn: explorerTotalStreamedBn } = useSuperfluidStream(
+      {
+        receiver: proposalData.streamingEscrow as Address,
+        superToken: strategyConfig.superfluidToken as Address,
+        chainId,
+        containerId: poolId,
+      },
+    );
+    const shouldTickFallback = useMemo(
+      () => isStreamingType && explorerTotalStreamedBn == null,
+      [isStreamingType, explorerTotalStreamedBn],
+    );
+
+    useEffect(() => {
+      if (!shouldTickFallback) return;
+      const interval = setInterval(() => {
+        setNowMs(BigInt(Date.now()));
+      }, 100);
+      return () => clearInterval(interval);
+    }, [shouldTickFallback]);
+
+    const proposalFlowPerMonth =
+      (
+        isStreamingType &&
+        poolToken &&
+        currentFlowRateBn != null &&
+        currentFlowRateBn > 0n
+      ) ?
+        +formatUnits(currentFlowRateBn, poolToken.decimals) * SEC_TO_MONTH
+      : null;
+    const proposalTotalStreamed =
+      isStreamingType && poolToken ?
+        +formatUnits(
+          explorerTotalStreamedBn ?? liveTotalStreamedBn,
+          poolToken.decimals,
+        )
+      : null;
+    const proposalTotalStreamedDisplay =
+      poolToken ?
+        `${(proposalTotalStreamed ?? 0).toFixed(5)} ${poolToken.symbol}`
+      : null;
 
     const alreadyExecuted = proposalStatus[proposalStatus] === "executed";
 
@@ -220,8 +314,13 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
           ) ?
             `At least ${supportNeededToPass} VP needed`
           : proposalWillPass ?
-            "Estimated time to pass:"
-          : !alreadyExecuted && readyToBeExecuted && !isSignalingType ?
+            PoolTypes[strategyConfig.proposalType] === "funding" ?
+              "Estimated time to pass:"
+            : "Before stream start:"
+          : !alreadyExecuted &&
+            readyToBeExecuted &&
+            !isSignalingType &&
+            !isStreamingType ?
             "Ready to be executed"
           : ""}
         </div>
@@ -250,19 +349,15 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
           <div className="flex flex-col sm:flex-row w-full">
             {/* icon title and id */}
             <header className="flex-1 justify-between items-start gap-3">
-              <div className="flex-1 items-start flex-col gap-1 ">
-                <div className="flex items-center justify-between">
+              <div className="flex-1 items-start flex flex-col gap-1 sm:gap-2">
+                <div className="flex items-center justify-between w-full">
                   <Skeleton isLoading={!metadata}>
-                    <h3 className="flex items-start max-w-[165px] sm:max-w-md">
+                    <h3 className="flex items-start  max-w-[150px] sm:max-w-md">
                       <TooltipIfOverflow>{metadata?.title}</TooltipIfOverflow>
                     </h3>
                   </Skeleton>
                   {isPoolEnabled && (
                     <div className="flex items-center gap-4">
-                      {/* <p className="hidden sm:flex text-sm  items-center bg-neutral-soft-2 rounded-md px-2 dark:bg-primary-soft-dark py-1">
-                        ID:{" "}
-                        <span className="text-md ml-1">{proposalNumber}</span>
-                      </p> */}
                       <Badge
                         status={proposalStatus}
                         icon={<HandRaisedIcon />}
@@ -288,10 +383,10 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
                       />
                     </div>
                     <div className="flex gap-6 text-neutral-soft-content justify-end">
-                      {!isSignalingType && poolToken && (
+                      {!isSignalingType && poolToken && !isStreamingType && (
                         <div className="flex items-center gap-1 justify-self-end">
                           <div className="hidden sm:block w-1 h-1 rounded-full bg-neutral-soft-content" />
-                          <p className="text-sm ml-1 dark:text-neutral-soft-content">
+                          <p className="text-sm sm:ml-1 dark:text-neutral-soft-content">
                             Requesting:{" "}
                           </p>
                           <DisplayNumber
@@ -304,6 +399,30 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
                             valueClassName="dark:text-neutral-soft-content"
                             symbolClassName="dark:text-neutral-soft-content"
                           />
+                        </div>
+                      )}
+                      {poolToken && isStreamingType && (
+                        <div className="flex items-center gap-2 justify-self-end">
+                          <div className="hidden sm:block w-1 h-1 rounded-full bg-neutral-soft-content" />
+                          <p className="text-sm dark:text-neutral-soft-content">
+                            Stream:{" "}
+                          </p>
+                          <span className="text-sm dark:text-neutral-soft-content">
+                            {proposalFlowPerMonth != null ?
+                              `${roundToSignificant(proposalFlowPerMonth, 4)} ${poolToken.symbol}/mo`
+                            : "No active stream"}
+                          </span>
+
+                          <span className="hidden sm:inline text-neutral-soft-content">
+                            ·
+                          </span>
+                          <p className="text-sm dark:text-neutral-soft-content">
+                            Total:
+                          </p>
+
+                          <p className="text-sm dark:text-neutral-soft-content">
+                            {proposalTotalStreamedDisplay}
+                          </p>
                         </div>
                       )}
                     </div>
@@ -322,17 +441,16 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
 
           {/* support description or slider */}
           {isPoolEnabled && !isProposalEnded && (
-            <div className="flex gap-12 flex-wrap w-full ">
-              <div className="mt-4 w-full">
+            <div className="flex gap-4 flex-wrap w-full">
+              <div className={`w-full ${isSignalingType ? "mt-2" : "mt-4"}`}>
                 {/* manage support view */}
                 <div className="w-full ">
                   {currentConvictionPct != null &&
-                    thresholdPct != null &&
-                    totalSupportPct != null && (
+                    (isSignalingType ||
+                      (thresholdPct != null && totalSupportPct != null)) && (
                       <div>
                         <div
-                          className="flex items-baseline justify-between gap-4 mb-1
-                        "
+                          className={`flex items-baseline justify-between gap-4 ${isSignalingType ? "mb-0" : "mb-1"}`}
                         >
                           <div>
                             <span className="text-xs">{ProposalCountDown}</span>
@@ -349,24 +467,31 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
                               </span>
                             </li>
 
-                            <li>
-                              <span className="text-xs text-neutral-soft-content">
-                                threshold: {thresholdPct} VP
-                              </span>
-                            </li>
+                            {!isSignalingType && (
+                              <li>
+                                <span className="text-xs text-neutral-soft-content">
+                                  threshold: {thresholdPct} VP
+                                </span>
+                              </li>
+                            )}
                           </ul>
                         </div>
 
-                        <div className="h-3 flex items-center mb-3">
+                        <div
+                          className={`flex items-center h-2 sm:h-3 ${isSignalingType ? "mb-1" : "mb-3"}`}
+                        >
                           <ConvictionBarChart
                             compact
                             currentConvictionPct={currentConvictionPct}
-                            thresholdPct={isSignalingType ? 0 : thresholdPct}
-                            proposalSupportPct={totalSupportPct}
+                            thresholdPct={thresholdPct ?? 0}
+                            proposalSupportPct={totalSupportPct ?? 0}
                             isSignalingType={isSignalingType}
                             proposalNumber={proposalNumber}
                             refreshConviction={triggerConvictionRefetch}
                             proposalStatus={proposalStatus}
+                            proposalType={
+                              PoolTypes[strategyConfig.proposalType]
+                            }
                           />
                         </div>
                       </div>
@@ -375,7 +500,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
               </div>
             </div>
           )}
-          {isPoolEnabled && stakedFilter?.value > 0 && (
+          {isPoolEnabled && !isProposalEnded && stakedFilter?.value > 0 && (
             <Badge color="success" className="self-center justify-self-start">
               <p className="text-xs">
                 Your support: {poolWeightAllocatedInProposal} VP
