@@ -47,6 +47,7 @@ import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { MetadataV1, useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { usePoolToken } from "@/hooks/usePoolToken";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
+import { useSuperfluidStream } from "@/hooks/useSuperfluidStream";
 import { superTokenABI } from "@/src/customAbis";
 import { alloABI, cvStrategyABI } from "@/src/generated";
 import { PoolTypes, ProposalStatus, Column } from "@/types";
@@ -178,6 +179,7 @@ export default function ClientPage({ params }: ClientPageProps) {
     proposalData?.proposalNumber != null ?
       BigInt(proposalData.proposalNumber)
     : undefined;
+  const [nowMs, setNowMs] = useState<bigint>(() => BigInt(Date.now()));
   const chainId = useChainIdFromPath();
 
   const poolTokenAddr = proposalData?.strategy?.token as Address;
@@ -312,13 +314,20 @@ export default function ClientPage({ params }: ClientPageProps) {
     "lastSnapshotAt" in proposalStream ?
       toBigInt(proposalStream.lastSnapshotAt)
     : 0n;
-  const nowSec = BigInt(Math.floor(Date.now() / 1000));
-  const elapsedSec =
-    proposalFlowRateBn > 0n && lastSnapshotAtBn > 0n && nowSec > lastSnapshotAtBn ?
-      nowSec - lastSnapshotAtBn
+  const lastSnapshotAtMs = lastSnapshotAtBn * 1000n;
+  const elapsedMs =
+    proposalFlowRateBn > 0n && lastSnapshotAtMs > 0n && nowMs > lastSnapshotAtMs ?
+      nowMs - lastSnapshotAtMs
     : 0n;
   const proposalTotalStreamedBn =
-    streamedUntilSnapshotBn + proposalFlowRateBn * elapsedSec;
+    streamedUntilSnapshotBn + (proposalFlowRateBn * elapsedMs) / 1000n;
+  const { liveTotalStreamedBn: explorerTotalStreamedBn } = useSuperfluidStream({
+    receiver: resolvedStreamingEscrow as Address,
+    superToken: proposalData?.strategy?.config?.superfluidToken as Address,
+    chainId,
+    containerId: +poolId,
+  });
+  const shouldTickFallback = isStreamingType && explorerTotalStreamedBn == null;
 
   const proposalFlowPerMonth =
     (
@@ -330,8 +339,11 @@ export default function ClientPage({ params }: ClientPageProps) {
       +formatUnits(proposalFlowRateBn, poolToken.decimals) * SEC_TO_MONTH
     : null;
   const proposalTotalStreamed =
-    isStreamingType && poolToken && proposalTotalStreamedBn != null ?
-      +formatUnits(proposalTotalStreamedBn, poolToken.decimals)
+    isStreamingType && poolToken ?
+      +formatUnits(
+        explorerTotalStreamedBn ?? proposalTotalStreamedBn,
+        poolToken.decimals,
+      )
     : null;
   const proposalTotalStreamedDisplay =
     poolToken ? (proposalTotalStreamed ?? 0).toFixed(5) : null;
@@ -367,6 +379,14 @@ export default function ClientPage({ params }: ClientPageProps) {
     tokenData: data?.tokenGarden?.decimals,
     enabled: proposalData?.proposalNumber != null && proposalData != null,
   });
+
+  useEffect(() => {
+    if (!shouldTickFallback) return;
+    const interval = setInterval(() => {
+      setNowMs(BigInt(Date.now()));
+    }, 100);
+    return () => clearInterval(interval);
+  }, [shouldTickFallback]);
 
   useEffect(() => {
     if (convictionRefreshing && currentConvictionPct != null) {
@@ -751,10 +771,9 @@ export default function ClientPage({ params }: ClientPageProps) {
                   <p className="subtitle2">Total</p>
                   <div className="flex items-center gap-2">
                     {proposalTotalStreamedDisplay != null ?
-                      <DisplayNumber
-                        number={proposalTotalStreamedDisplay}
-                        valueClassName="text-right"
-                      />
+                      <p className="text-right">
+                        {proposalTotalStreamedDisplay}
+                      </p>
                     : <p className="text-right">--</p>}
                     {poolToken?.address && poolToken?.symbol && (
                       <EthAddress
@@ -1272,17 +1291,16 @@ export default function ClientPage({ params }: ClientPageProps) {
                         {formatFlowPerMonth(currentFlowRateForDisplay)}/m
                       </p>
                     </div>
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="subtitle2">Total</p>
-                      <div className="flex items-center gap-2">
-                        {proposalTotalStreamedDisplay != null ?
-                          <DisplayNumber
-                            number={proposalTotalStreamedDisplay}
-                            valueClassName="text-right"
-                          />
-                        : <p className="text-right">--</p>}
-                        {poolToken?.address && poolToken?.symbol && (
-                          <EthAddress
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="subtitle2">Total</p>
+                    <div className="flex items-center gap-2">
+                      {proposalTotalStreamedDisplay != null ?
+                        <p className="text-right">
+                          {proposalTotalStreamedDisplay}
+                        </p>
+                      : <p className="text-right">--</p>}
+                      {poolToken?.address && poolToken?.symbol && (
+                        <EthAddress
                             address={poolToken.address}
                             label={poolToken.symbol}
                             shortenAddress={false}

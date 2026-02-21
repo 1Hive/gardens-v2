@@ -1,7 +1,7 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 "use client";
 
-import { forwardRef, useEffect, useImperativeHandle } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from "react";
 import {
   HandRaisedIcon,
   ExclamationTriangleIcon,
@@ -24,11 +24,13 @@ import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
 import { Skeleton } from "@/components/Skeleton";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
+import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import {
   ProposalDataLight,
   useConvictionRead,
 } from "@/hooks/useConvictionRead";
 import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
+import { useSuperfluidStream } from "@/hooks/useSuperfluidStream";
 import { PoolTypes, ProposalStatus } from "@/types";
 import {
   SEC_TO_MONTH,
@@ -132,6 +134,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
       executedAt,
     } = proposalData;
     const pathname = usePathname();
+    const chainId = useChainIdFromPath();
     const searchParams = useCollectQueryParams();
     const isNewProposal =
       searchParams[QUERY_PARAMS.poolPage.newProposal] ==
@@ -191,21 +194,58 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
       PoolTypes[strategyConfig.proposalType] === "signaling";
     const isStreamingType =
       PoolTypes[strategyConfig.proposalType] === "streaming";
+    const [nowMs, setNowMs] = useState<bigint>(() => BigInt(Date.now()));
 
     const proposalStream =
       proposalData.proposalStream ?? proposalData.proposalStreams?.[0];
 
-    const currentFlowRateBn = proposalStream?.currentFlowRate ?? 0n;
-    const streamedUntilSnapshotBn = proposalStream?.streamedUntilSnapshot ?? 0n;
-    const lastSnapshotAtBn = proposalStream?.lastSnapshotAt ?? 0n;
+    const toBigInt = (value: unknown): bigint => {
+      if (typeof value === "bigint") return value;
+      if (typeof value === "number") return BigInt(Math.trunc(value));
+      if (typeof value === "string") {
+        try {
+          return BigInt(value);
+        } catch {
+          return 0n;
+        }
+      }
+      return 0n;
+    };
 
-    const nowSec = BigInt(Math.floor(Date.now() / 1000));
-    const elapsedSec =
-      currentFlowRateBn > 0n && lastSnapshotAtBn > 0n && nowSec > lastSnapshotAtBn ?
-        nowSec - lastSnapshotAtBn
+    const currentFlowRateBn = toBigInt(proposalStream?.currentFlowRate);
+    const streamedUntilSnapshotBn = toBigInt(
+      proposalStream?.streamedUntilSnapshot,
+    );
+    const lastSnapshotAtBn = toBigInt(proposalStream?.lastSnapshotAt);
+
+    const lastSnapshotAtMs = lastSnapshotAtBn * 1000n;
+    const elapsedMs =
+      currentFlowRateBn > 0n && lastSnapshotAtMs > 0n && nowMs > lastSnapshotAtMs ?
+        nowMs - lastSnapshotAtMs
       : 0n;
     const liveTotalStreamedBn =
-      streamedUntilSnapshotBn + currentFlowRateBn * elapsedSec;
+      streamedUntilSnapshotBn + (currentFlowRateBn * elapsedMs) / 1000n;
+
+    const { liveTotalStreamedBn: explorerTotalStreamedBn } = useSuperfluidStream(
+      {
+        receiver: proposalData.streamingEscrow as Address,
+        superToken: strategyConfig.superfluidToken as Address,
+        chainId,
+        containerId: poolId,
+      },
+    );
+    const shouldTickFallback = useMemo(
+      () => isStreamingType && explorerTotalStreamedBn == null,
+      [isStreamingType, explorerTotalStreamedBn],
+    );
+
+    useEffect(() => {
+      if (!shouldTickFallback) return;
+      const interval = setInterval(() => {
+        setNowMs(BigInt(Date.now()));
+      }, 100);
+      return () => clearInterval(interval);
+    }, [shouldTickFallback]);
 
     const proposalFlowPerMonth =
       (
@@ -217,8 +257,11 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
         +formatUnits(currentFlowRateBn, poolToken.decimals) * SEC_TO_MONTH
       : null;
     const proposalTotalStreamed =
-      isStreamingType && poolToken && liveTotalStreamedBn != null ?
-        +formatUnits(liveTotalStreamedBn, poolToken.decimals)
+      isStreamingType && poolToken ?
+        +formatUnits(
+          explorerTotalStreamedBn ?? liveTotalStreamedBn,
+          poolToken.decimals,
+        )
       : null;
     const proposalTotalStreamedDisplay =
       poolToken ?
@@ -274,7 +317,10 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
             PoolTypes[strategyConfig.proposalType] === "funding" ?
               "Estimated time to pass:"
             : "Before stream start:"
-          : !alreadyExecuted && readyToBeExecuted && !isSignalingType ?
+          : !alreadyExecuted &&
+            readyToBeExecuted &&
+            !isSignalingType &&
+            !isStreamingType ?
             "Ready to be executed"
           : ""}
         </div>
