@@ -45,6 +45,7 @@ const TOP_DAWG_PARTNER_ABI = [
 
 const DEFAULT_MAX_MESSAGE = 100;
 const DEFAULT_MAX_NAME = 50;
+const MIN_INCREMENT = parseEther("0.001");
 
 type LeaderboardEntry = {
   message: string;
@@ -91,7 +92,6 @@ export default function MarkeeModal({
   const isOnBase = chain?.id === base.id;
   const isConnected = !!address;
 
-  // Pull character limits from contract
   const { data: maxMessageLength } = useContractRead({
     address: strategyAddress,
     abi: TOP_DAWG_PARTNER_ABI,
@@ -120,7 +120,6 @@ export default function MarkeeModal({
     dialogRef.current?.showModal();
   }, []);
 
-  // Fetch leaderboard when expanded
   useEffect(() => {
     if (!leaderboardOpen || leaderboard.length > 0) return;
     setLeaderboardLoading(true);
@@ -159,20 +158,19 @@ export default function MarkeeModal({
     if (e.target === dialogRef.current) onClose();
   };
 
-  // Minimum is 0.001 ETH above current top dawg (or minimumPrice if no top dawg)
-  const MIN_INCREMENT = parseEther("0.001");
-  const minBeat =
+  // Take top spot = currentTopDawg + 0.001 ETH (or minimumPrice if no top dawg)
+  const takeTopSpot =
     currentTopDawg > BigInt(0)
       ? currentTopDawg + MIN_INCREMENT
       : minimumPrice > BigInt(0)
         ? minimumPrice
         : MIN_INCREMENT;
-  const minBeatEth = parseFloat(formatEther(minBeat));
 
-  const handleFillMin = () => {
-    setEthAmount(minBeatEth.toFixed(6));
-    setInputError(null);
-  };
+  // Minimum to join = minimumPrice (or 0.001 if not set)
+  const minToJoin = minimumPrice > BigInt(0) ? minimumPrice : MIN_INCREMENT;
+
+  const takeTopSpotEth = parseFloat(formatEther(takeTopSpot)).toFixed(3);
+  const minToJoinEth = parseFloat(formatEther(minToJoin)).toFixed(3);
 
   const validate = () => {
     if (!message.trim()) {
@@ -190,10 +188,8 @@ export default function MarkeeModal({
       setInputError("Invalid ETH amount.");
       return false;
     }
-    if (parsedAmount < minBeat) {
-      setInputError(
-        `You need at least ${minBeatEth.toFixed(6)} ETH to take the top spot.`,
-      );
+    if (parsedAmount < minToJoin) {
+      setInputError(`Minimum is ${minToJoinEth} ETH to join the leaderboard.`);
       return false;
     }
     if (balance && parsedAmount > balance.value) {
@@ -230,6 +226,7 @@ export default function MarkeeModal({
   };
 
   const isLoading = isPending || isConfirming || isSwitching;
+  const canSubmit = isConnected && isOnBase && !!message.trim() && !!ethAmount && !isLoading;
 
   return (
     <dialog
@@ -243,7 +240,7 @@ export default function MarkeeModal({
         <div className="flex items-center justify-between mb-5">
           <div>
             <h3 className="text-lg font-semibold text-neutral-content">
-              Change the Markee Message on Gardens
+              Change the Markee Message
             </h3>
             <p className="text-xs text-neutral-content/60 mt-0.5">
               62% to Gardens Treasury · 38% to{" "}
@@ -319,11 +316,22 @@ export default function MarkeeModal({
                       )}
                     </div>
                     <span className="text-xs font-mono text-neutral-content/50 flex-shrink-0 mt-0.5">
-                      {parseFloat(formatEther(BigInt(entry.totalFundsAdded))).toFixed(4)} ETH
+                      {parseFloat(formatEther(BigInt(entry.totalFundsAdded))).toFixed(3)} ETH
                     </span>
                   </div>
                 ))
               )}
+              <p className="pt-2 text-xs text-neutral-content/40 border-t border-neutral-content/10">
+                Add funds and edit your existing messages at{" "}
+                <a
+                  href="https://www.markee.xyz/ecosystem/gardens"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="underline underline-offset-2 hover:text-neutral-content/70 transition-colors"
+                >
+                  markee.xyz/ecosystem/gardens
+                </a>
+              </p>
             </div>
           )}
         </div>
@@ -344,10 +352,10 @@ export default function MarkeeModal({
           </div>
         )}
 
-        {/* Message input */}
+        {/* Your Message */}
         <div className="mb-4">
           <label className="block text-sm font-medium text-neutral-content mb-1.5">
-            Your message{" "}
+            Your Message{" "}
             <span className="text-xs text-neutral-content/40 font-normal">
               ({message.length}/{maxMsg})
             </span>
@@ -365,10 +373,10 @@ export default function MarkeeModal({
           />
         </div>
 
-        {/* Name input */}
+        {/* Your Name */}
         <div className="mb-4">
           <label className="block text-sm font-medium text-neutral-content mb-1.5">
-            Your name{" "}
+            Your Name{" "}
             <span className="text-xs text-neutral-content/40 font-normal">
               (optional · {name.length}/{maxName})
             </span>
@@ -383,34 +391,61 @@ export default function MarkeeModal({
           />
         </div>
 
-        {/* ETH amount */}
+        {/* ETH Amount — 3 columns */}
         <div className="mb-5">
-          <label className="block text-sm font-medium text-neutral-content mb-1.5">
-            ETH amount
+          <label className="block text-sm font-medium text-neutral-content mb-2">
+            ETH Amount
             {balance && (
               <span className="text-xs text-neutral-content/40 font-normal ml-2">
-                (balance: {parseFloat(formatEther(balance.value)).toFixed(4)} ETH)
+                (balance: {parseFloat(formatEther(balance.value)).toFixed(3)} ETH)
               </span>
             )}
           </label>
-          <input
-            type="number"
-            className="input input-bordered w-full bg-neutral border-border-neutral text-neutral-content placeholder:text-neutral-content/30 font-mono text-sm"
-            placeholder={minBeatEth.toFixed(6)}
-            value={ethAmount}
-            min="0"
-            step="0.001"
-            onChange={(e) => {
-              setEthAmount(e.target.value);
-              setInputError(null);
-            }}
-          />
-          <button
-            onClick={handleFillMin}
-            className="mt-1 text-xs text-neutral-content/50 hover:text-primary-content transition-colors underline underline-offset-2"
-          >
-            minimum to take top spot: {minBeatEth.toFixed(6)} ETH
-          </button>
+          <div className="grid grid-cols-3 gap-2">
+            {/* Take top spot */}
+            <button
+              type="button"
+              onClick={() => { setEthAmount(takeTopSpotEth); setInputError(null); }}
+              className="flex flex-col items-center justify-center rounded border border-neutral-content/20 bg-neutral-focus hover:border-primary-content/40 hover:bg-neutral-focus/80 transition-colors px-2 py-2.5 text-center cursor-pointer"
+            >
+              <span className="text-xs font-mono font-semibold text-neutral-content">
+                {takeTopSpotEth} ETH
+              </span>
+              <span className="text-xs text-neutral-content/50 mt-0.5 leading-tight">
+                Take top spot
+              </span>
+            </button>
+
+            {/* Min to join */}
+            <button
+              type="button"
+              onClick={() => { setEthAmount(minToJoinEth); setInputError(null); }}
+              className="flex flex-col items-center justify-center rounded border border-neutral-content/20 bg-neutral-focus hover:border-primary-content/40 hover:bg-neutral-focus/80 transition-colors px-2 py-2.5 text-center cursor-pointer"
+            >
+              <span className="text-xs font-mono font-semibold text-neutral-content">
+                {minToJoinEth} ETH
+              </span>
+              <span className="text-xs text-neutral-content/50 mt-0.5 leading-tight">
+                Min to join
+              </span>
+            </button>
+
+            {/* Manual entry */}
+            <div className="relative">
+              <input
+                type="number"
+                className="input input-bordered w-full h-full bg-neutral border-border-neutral text-neutral-content placeholder:text-neutral-content/30 font-mono text-sm text-center"
+                placeholder="custom"
+                value={ethAmount}
+                min="0"
+                step="0.001"
+                onChange={(e) => {
+                  setEthAmount(e.target.value);
+                  setInputError(null);
+                }}
+              />
+            </div>
+          </div>
         </div>
 
         {/* Error */}
@@ -420,20 +455,28 @@ export default function MarkeeModal({
           </div>
         )}
 
-        {/* Action */}
-        <div className="flex justify-end">
+        {/* Action — centered */}
+        <div className="flex justify-center">
           {!isConnected ? (
             <button
-              onClick={openConnectModal}
-              className="btn btn-sm bg-primary text-primary-content hover:opacity-80 border-0"
+              onClick={() => {
+                // Close dialog first so RainbowKit modal isn't behind it
+                dialogRef.current?.close();
+                openConnectModal?.();
+              }}
+              className="btn btn-sm bg-primary text-primary-content hover:opacity-80 border-0 px-8"
             >
               Connect Wallet
             </button>
           ) : (
             <button
               onClick={handleSubmit}
-              className="btn btn-sm bg-primary text-primary-content hover:opacity-80 border-0"
-              disabled={isLoading || !isOnBase || !message.trim() || !ethAmount}
+              disabled={!canSubmit}
+              className={`btn btn-sm border-0 px-8 text-white transition-colors ${
+                canSubmit
+                  ? "bg-green-600 hover:bg-green-500"
+                  : "bg-neutral-content/20 cursor-not-allowed"
+              }`}
             >
               {isPending ?
                 "Confirm in wallet..."
