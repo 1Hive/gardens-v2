@@ -72,6 +72,7 @@ export function useSuperfluidStream({
 }) {
   const { subscribe, unsubscribe } = usePubSubContext();
   const latestResultSignatureRef = useRef<string>("");
+  const hasLoggedMemberFlowReadErrorRef = useRef(false);
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -192,21 +193,40 @@ export function useSuperfluidStream({
 
     let poolMemberSnapshotsData: PoolMemberSnapshot[] = [];
     if (result.data.poolMembers.length > 0) {
-      const memberFlows = await readContracts({
-        contracts: result.data.poolMembers.map((member: any) => ({
-          address: member.pool.id,
-          abi: superfluidPoolAbi,
-          functionName: "getMemberFlowRate",
-          args: [receiver],
-        })),
-      });
+      let memberFlows: Array<{ result?: unknown; error?: unknown }> = [];
+      try {
+        memberFlows = (await readContracts({
+          allowFailure: true,
+          contracts: result.data.poolMembers.map((member: any) => ({
+            address: member.pool.id,
+            abi: superfluidPoolAbi,
+            functionName: "getMemberFlowRate",
+            args: [receiver],
+          })),
+        })) as Array<{ result?: unknown; error?: unknown }>;
+      } catch (error) {
+        if (!hasLoggedMemberFlowReadErrorRef.current) {
+          console.warn(
+            "useSuperfluidStream: unable to read pool member flow rates; falling back to stream snapshots only",
+            error,
+          );
+          hasLoggedMemberFlowReadErrorRef.current = true;
+        }
+        memberFlows = result.data.poolMembers.map(() => ({ result: 0n }));
+      }
 
       toPoolFlowRate = memberFlows.reduce((acc: bigint, flow) => {
-        if (flow.error) {
-          console.error("Error fetching member flow rate:", flow.error);
+        if (flow?.error) {
+          if (!hasLoggedMemberFlowReadErrorRef.current) {
+            console.warn(
+              "useSuperfluidStream: failed to read some member flow rates; using zero for those entries",
+              flow.error,
+            );
+            hasLoggedMemberFlowReadErrorRef.current = true;
+          }
           return acc;
         }
-        return acc + BigInt((flow.result as any).toString());
+        return acc + BigInt(((flow?.result as any) ?? 0).toString());
       }, toPoolFlowRate);
 
       poolMemberSnapshotsData = result.data.poolMembers.map(

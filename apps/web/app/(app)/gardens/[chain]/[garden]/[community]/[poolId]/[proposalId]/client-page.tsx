@@ -962,11 +962,24 @@ export default function ClientPage({ params }: ClientPageProps) {
                     </div>
                   </>
                 )}
-                {status !== "executed" && status !== "cancelled" && (
+                {status !== "executed" &&
+                  status !== "cancelled" &&
+                  status !== "disputed" && (
                   <InfoBox
                     title="Information"
                     infoBoxType="info"
                     content={`${isSignalingType ? "This proposal is open and can be supported or disputed by the community. Only the proposal creator can cancel" : "This proposal is currently open. It will pass if nobody successfully disputes it and it receives enough support."}`}
+                  />
+                )}
+                {status === "disputed" && (
+                  <InfoBox
+                    title={isStreamingType ? "Streaming During Dispute" : "Proposal Disputed"}
+                    infoBoxType="warning"
+                    content={
+                      isStreamingType ?
+                        "Stream funds are accumulated while this proposal is disputed. When the dispute is ruled, accumulated funds are sent to the beneficiary if approved, or returned to the pool if rejected."
+                      : "This proposal is currently disputed. It cannot be executed until the dispute is ruled."
+                    }
                   />
                 )}
               </div>
@@ -1408,11 +1421,24 @@ export default function ClientPage({ params }: ClientPageProps) {
                   <Badge status={proposalData.proposalStatus} />
                 </div>
                 <div>
-                  {status !== "executed" && status !== "cancelled" && (
+                  {status !== "executed" &&
+                    status !== "cancelled" &&
+                    status !== "disputed" && (
                     <InfoBox
                       title="Information"
                       infoBoxType="info"
                       content={`${isSignalingType ? "This proposal is open and can be supported or disputed by the community. Only the proposal creator can cancel" : "This proposal is currently open. It will pass if nobody successfully disputes it and it receives enough support."}`}
+                    />
+                  )}
+                  {status === "disputed" && (
+                    <InfoBox
+                      title={isStreamingType ? "Streaming During Dispute" : "Proposal Disputed"}
+                      infoBoxType="warning"
+                      content={
+                        isStreamingType ?
+                          "Stream funds are accumulated while this proposal is disputed. When the dispute is ruled, accumulated funds are sent to the beneficiary if approved, or returned to the pool if rejected."
+                        : "This proposal is currently disputed. It cannot be executed until the dispute is ruled."
+                      }
                     />
                   )}
                   {status === "executed" && (
