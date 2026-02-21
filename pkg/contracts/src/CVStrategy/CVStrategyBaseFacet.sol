@@ -15,6 +15,10 @@ import {IPauseController} from "../interfaces/IPauseController.sol";
 import {IVotingPowerRegistry} from "../interfaces/IVotingPowerRegistry.sol";
 import {LibPauseStorage} from "../pausing/LibPauseStorage.sol";
 
+interface IOwnableLike {
+    function owner() external view returns (address);
+}
+
 /**
  * @title CVStrategyBaseFacet
  * @notice Base contract for all CVStrategy facets, providing shared storage layout and helper functions
@@ -51,6 +55,7 @@ abstract contract CVStrategyBaseFacet {
     error OnlySubmitter(uint256 proposalId, address submitter, address sender);
     error StrategyPaused(address controller);
     error StrategySelectorPaused(bytes4 selector, address controller);
+    error OnlyOwner(address sender, address ownerAddress);
 
     /*|--------------------------------------------|*/
     /*|              CONSTANTS                     |*/
@@ -151,7 +156,7 @@ abstract contract CVStrategyBaseFacet {
 
     /// @notice Mapping of proposal ID to Proposal struct
     /// @dev Slot 124+
-    mapping(uint256 => Proposal) public proposals;
+    mapping(uint256 => Proposal) internal proposals;
 
     /// @notice Mapping of voter address to total staked percentage
     /// @dev Slot 125+
@@ -204,8 +209,28 @@ abstract contract CVStrategyBaseFacet {
      * @dev Accesses the _owner storage variable from OwnableUpgradeable layout
      * Sig: 0x8da5cb5b
      */
-    function owner() internal view returns (address) {
-        return LibDiamond.contractOwner();
+    modifier onlyOwner() {
+        address _owner = effectiveOwner();
+        if (msg.sender != _owner) {
+            revert OnlyOwner(msg.sender, _owner);
+        }
+        _;
+    }
+
+    /**
+     * @notice Resolve effective owner, supporting owner-proxy contracts exposing owner()
+     * @dev Falls back to diamond owner when owner() cannot be resolved.
+     */
+    function effectiveOwner() internal view returns (address) {
+        address diamondOwner = LibDiamond.contractOwner();
+        if (diamondOwner.code.length == 0) {
+            return diamondOwner;
+        }
+        try IOwnableLike(diamondOwner).owner() returns (address resolvedOwner) {
+            return resolvedOwner == address(0) ? diamondOwner : resolvedOwner;
+        } catch {
+            return diamondOwner;
+        }
     }
 
     /*|--------------------------------------------|*/
@@ -264,8 +289,8 @@ abstract contract CVStrategyBaseFacet {
      * @notice Ensure only council safe or contract owner can call this function
      */
     function onlyCouncilSafe() internal view {
-        if (msg.sender != address(registryCommunity.councilSafe()) && msg.sender != owner()) {
-            revert OnlyCouncilSafe(msg.sender, address(registryCommunity.councilSafe()), owner());
+        if (msg.sender != address(registryCommunity.councilSafe()) && msg.sender != effectiveOwner()) {
+            revert OnlyCouncilSafe(msg.sender, address(registryCommunity.councilSafe()), effectiveOwner());
         }
     }
 
@@ -293,8 +318,7 @@ abstract contract CVStrategyBaseFacet {
         }
         // Default: allowlist-based gating
         bytes32 allowlistRole = keccak256(abi.encodePacked("ALLOWLIST", poolId));
-        return registryCommunity.hasRole(allowlistRole, address(0))
-            || registryCommunity.hasRole(allowlistRole, _user);
+        return registryCommunity.hasRole(allowlistRole, address(0)) || registryCommunity.hasRole(allowlistRole, _user);
     }
 
     /**
@@ -332,7 +356,7 @@ abstract contract CVStrategyBaseFacet {
      * @param _proposalID Proposal ID to check
      * @return bool True if proposal exists and has a valid submitter
      */
-    function proposalExists(uint256 _proposalID) internal view returns (bool) {
+    function proposalExists(uint256 _proposalID) public view returns (bool) {
         return proposals[_proposalID].proposalId > 0 && proposals[_proposalID].submitter != address(0);
     }
 
@@ -395,7 +419,7 @@ abstract contract CVStrategyBaseFacet {
         );
     }
 
-    function _isStrategyEnabled() internal view returns (bool) {
+    function _isStrategyEnabled() public view returns (bool) {
         if (address(registryCommunity) == address(0)) {
             return true;
         }
@@ -404,7 +428,7 @@ abstract contract CVStrategyBaseFacet {
 
     /// @notice Getter for the 'poolAmount'.
     /// @return The balance of the pool
-    function getPoolAmount() internal view virtual returns (uint256) {
+    function getPoolAmount() public view virtual returns (uint256) {
         address token = allo.getPool(poolId).token;
 
         if (token == NATIVE_TOKEN) {

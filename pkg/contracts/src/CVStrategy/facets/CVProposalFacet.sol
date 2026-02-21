@@ -43,6 +43,7 @@ contract CVProposalFacet is CVStrategyBaseFacet, CVStreamingBase {
     /*|              EVENTS                        |*/
     /*|--------------------------------------------|*/
     event ProposalCreated(uint256 poolId, uint256 proposalId);
+    event ProposalCreated(uint256 poolId, uint256 proposalId, address escrow);
     event ProposalCancelled(uint256 proposalId);
     event ProposalEdited(uint256 proposalId, Metadata metadata, address beneficiary, uint256 requestedAmount);
     event SupportAdded(
@@ -94,7 +95,7 @@ contract CVProposalFacet is CVStrategyBaseFacet, CVStreamingBase {
         p.submitter = _sender;
         p.beneficiary = proposal.beneficiary;
         p.requestedToken = proposal.requestedToken;
-        p.requestedAmount = proposal.amountRequested;
+        p.requestedAmount = proposalType == ProposalType.Funding ? proposal.amountRequested : 0;
         p.proposalStatus = ProposalStatus.Active;
         p.blockLast = block.number;
         p.creationTimestamp = block.timestamp;
@@ -103,6 +104,7 @@ contract CVProposalFacet is CVStrategyBaseFacet, CVStreamingBase {
         p.arbitrableConfigVersion = currentArbitrableConfigVersion;
         collateralVault.depositCollateral{value: msg.value}(proposalId, p.submitter);
 
+        address proposalEscrow = address(0);
         // Streaming proposal handling
         if (proposalType == ProposalType.Streaming) {
             address factory = IRegistryFactory(registryCommunity.registryFactory()).getStreamingEscrowFactory();
@@ -112,6 +114,7 @@ contract CVProposalFacet is CVStrategyBaseFacet, CVStreamingBase {
             address escrow = StreamingEscrowFactory(factory)
                 .deployEscrow(superfluidToken, superfluidGDA, p.beneficiary, address(this));
             setStreamingEscrow(proposalId, escrow);
+            proposalEscrow = escrow;
 
             // Add a member to the GDA pool with 0 units initially
             if (!superfluidGDA.updateMemberUnits(address(escrow), 0)) {
@@ -119,7 +122,7 @@ contract CVProposalFacet is CVStrategyBaseFacet, CVStreamingBase {
             }
         }
 
-        emit ProposalCreated(poolId, proposalId);
+        emit ProposalCreated(poolId, proposalId, proposalEscrow);
         // casting proposalId to address is safe - standard pattern for unique addresses
         // forge-lint: disable-next-line(unsafe-typecast)
         return address(uint160(proposalId));
@@ -151,9 +154,6 @@ contract CVProposalFacet is CVStrategyBaseFacet, CVStreamingBase {
             if (!superfluidGDA.updateMemberUnits(member, 0)) {
                 revert UpdateMemberUnitsFailed(member, 0);
             }
-            if (escrow != address(0)) {
-                setStreamingEscrow(proposalId, address(0));
-            }
         }
 
         emit ProposalCancelled(proposalId);
@@ -182,7 +182,7 @@ contract CVProposalFacet is CVStrategyBaseFacet, CVStreamingBase {
                     _proposalId, proposal.requestedAmount, _requestedAmount
                 );
             }
-            proposal.requestedAmount = _requestedAmount;
+            proposal.requestedAmount = proposalType == ProposalType.Funding ? _requestedAmount : 0;
         }
 
         // 1763099258 - 1763007730  = 91528 > 3600

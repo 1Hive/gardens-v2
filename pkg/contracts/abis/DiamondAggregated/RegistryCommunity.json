@@ -2674,6 +2674,25 @@
       "stateMutability": "view"
     },
     {
+      "type": "function",
+      "name": "isRegisteredMember",
+      "inputs": [
+        {
+          "name": "_member",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
       "type": "error",
       "name": "StrategyNotEnabled",
       "inputs": []

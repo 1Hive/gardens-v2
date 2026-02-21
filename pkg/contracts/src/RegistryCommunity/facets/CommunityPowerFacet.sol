@@ -39,18 +39,18 @@ contract CommunityPowerFacet is CommunityBaseFacet {
     /*|--------------------------------------------|*/
     /*|              MODIFIERS                     |*/
     /*|--------------------------------------------|*/
-    function isMember(address _member) internal view returns (bool) {
+    function isRegisteredMember(address _member) public view returns (bool) {
         return addressToMemberInfo[_member].isRegistered;
     }
 
     function onlyRegistryMemberSender() internal view {
-        if (!isMember(msg.sender)) {
+        if (!isRegisteredMember(msg.sender)) {
             revert UserNotInRegistry();
         }
     }
 
     function onlyRegistryMemberAddress(address _sender) internal view {
-        if (!isMember(_sender)) { revert UserNotInRegistry(); }
+        if (!isRegisteredMember(_sender)) { revert UserNotInRegistry(); }
     }
 
     function onlyStrategyEnabled(address _strategy) internal view {

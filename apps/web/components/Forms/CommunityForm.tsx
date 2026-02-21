@@ -222,7 +222,6 @@ export const CommunityForm = () => {
             `/${selectedChainId}/${tokenAddress}/${newCommunityAddr}?${QUERY_PARAMS.communityPage.newCommunity}=true`,
           ),
         );
-        setLoading(false);
       }
     },
     chainId: selectedChainId,

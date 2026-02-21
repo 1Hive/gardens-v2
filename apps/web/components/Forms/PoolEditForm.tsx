@@ -188,15 +188,18 @@ export default function PoolEditForm({
   } = useChainFromPath()!;
   const nativeDecimals = nativeCurrency?.decimals ?? ETH_DECIMALS;
   const monthlyBudget =
-    strategy.config != null &&
-    (strategy.config as any).streamingRatePerSecond != null ?
+    strategy.stream != null && strategy.stream.maxFlowRate != null ?
       Number(
-        formatUnits(
-          BigInt((strategy.config as any).streamingRatePerSecond),
-          token?.decimals ?? 18,
-        ),
+        formatUnits(BigInt(strategy.stream.maxFlowRate), token?.decimals ?? 18),
       ) * SEC_TO_MONTH
     : 0;
+  const monthlyBudgetDisplay =
+    Number.isFinite(monthlyBudget) ?
+      monthlyBudget.toLocaleString("en-US", {
+        useGrouping: false,
+        maximumFractionDigits: 18,
+      })
+    : "0";
   const {
     register,
     handleSubmit,
@@ -212,8 +215,7 @@ export default function PoolEditForm({
           sybilResistanceValue: initValues.sybilResistanceValue,
           sybilResistanceType: initValues.sybilResistanceType,
           //pool settings
-          monthlyBudget:
-            initValues.monthlyBudget ?? monthlyBudget.toFixed(6),
+          monthlyBudget: initValues.monthlyBudget ?? monthlyBudgetDisplay,
           spendingLimit: initValues.spendingLimit,
           minimumConviction: initValues.minimumConviction,
           convictionGrowth: parseTimeUnit(
@@ -297,8 +299,7 @@ export default function PoolEditForm({
     },
     monthlyBudget: {
       label: "Monthly stream budget:",
-      parse: (value: string | number) =>
-        `${value} ${token?.symbol ?? ""}/month`,
+      parse: (value: string | number) => `${value} ${token?.symbol ?? ""}/m`,
     },
     minimumConviction: {
       label: "Minimum conviction:",
@@ -437,7 +438,7 @@ export default function PoolEditForm({
     const streamingRatePerSecond =
       isStreamingPool ?
         safeParseUnits(monthlyBudgetValue * MONTH_TO_SEC, token?.decimals ?? 18)
-      : BigInt((strategy.config as any).streamingRatePerSecond ?? 0);
+      : BigInt(strategy.stream?.maxFlowRate ?? 0);
 
     setPoolParamsWrite({
       args: [

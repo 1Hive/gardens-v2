@@ -286,7 +286,7 @@ export default function PoolHeader({
     {
       label: "Min conviction",
       value: `${roundToSignificant(minimumConviction, 2, { showPrecisionMissIndicator: false })} %`,
-      info: "% of Pool's voting weight needed to pass the smallest funding proposal possible. Higher funding requests demand greater conviction to pass.",
+      info: `Minimum conviction required for a proposal ${PoolTypes[proposalType] === "streaming" ? "to start the stream" : " to be executed"}, regardless of the number of the requested amount.`,
     },
     {
       label: "Conviction growth",
@@ -343,7 +343,10 @@ export default function PoolHeader({
 
     {
       label: "Token",
-      info: "The token used in this pool to fund proposals.",
+      info:
+        PoolTypes[proposalType] === "streaming" ?
+          "The token used in this pool to fund proposals."
+        : "The token used in this pool for streaming.",
       value: (
         <div className="flex items-center">
           <EthAddress
@@ -386,7 +389,7 @@ export default function PoolHeader({
     },
     {
       label: "Max monthly streaming",
-      info: "Target flow rate configured for this streaming pool.",
+      info: "Target flow rate once 100% conviction has been reached.",
       value:
         (
           streamingRatePerMonth != null &&
@@ -394,7 +397,7 @@ export default function PoolHeader({
         ) ?
           `${roundToSignificant(streamingRatePerMonth, 4)} ${
             poolToken?.symbol
-          }/month`
+          }/m`
         : null,
     },
   ] as const;

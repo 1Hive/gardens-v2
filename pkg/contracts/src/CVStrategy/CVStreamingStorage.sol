@@ -33,7 +33,7 @@ abstract contract CVStreamingBase {
     event StreamMemberUnitUpdated(address indexed member, int96 newUnit);
     event StreamRateUpdated(address indexed gda, uint256 flowRate);
 
-    function lastRebalanceAt() internal view returns (uint256) {
+    function lastRebalanceAt() public view returns (uint256) {
         return CVStreamingStorage.layout().lastRebalanceAt;
     }
 
@@ -41,7 +41,7 @@ abstract contract CVStreamingBase {
         CVStreamingStorage.layout().lastRebalanceAt = _timestamp;
     }
 
-    function rebalanceCooldown() internal view returns (uint256) {
+    function rebalanceCooldown() public view returns (uint256) {
         return CVStreamingStorage.layout().rebalanceCooldown;
     }
 
@@ -49,7 +49,7 @@ abstract contract CVStreamingBase {
         CVStreamingStorage.layout().rebalanceCooldown = _cooldown;
     }
 
-    function streamingEscrow(uint256 proposalId) internal view returns (address) {
+    function streamingEscrow(uint256 proposalId) public view returns (address) {
         return CVStreamingStorage.layout().proposalEscrow[proposalId];
     }
 

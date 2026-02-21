@@ -258,6 +258,7 @@ type CVProposal {
   requestedAmount: BigInt!
   requestedToken: String!
   proposalStatus: BigInt!
+  streamingEscrow: String
   blockLast: BigInt!
   convictionLast: BigInt!
   maxCVStaked: BigInt!
@@ -267,6 +268,7 @@ type CVProposal {
   updatedAt: BigInt!
   arbitrableConfig: ArbitrableConfig!
   executedAt: BigInt
+  proposalStream: ProposalStream
 }
 
 input CVProposal_filter {
@@ -412,6 +414,26 @@ input CVProposal_filter {
   proposalStatus_lte: BigInt
   proposalStatus_in: [BigInt!]
   proposalStatus_not_in: [BigInt!]
+  streamingEscrow: String
+  streamingEscrow_not: String
+  streamingEscrow_gt: String
+  streamingEscrow_lt: String
+  streamingEscrow_gte: String
+  streamingEscrow_lte: String
+  streamingEscrow_in: [String!]
+  streamingEscrow_not_in: [String!]
+  streamingEscrow_contains: String
+  streamingEscrow_contains_nocase: String
+  streamingEscrow_not_contains: String
+  streamingEscrow_not_contains_nocase: String
+  streamingEscrow_starts_with: String
+  streamingEscrow_starts_with_nocase: String
+  streamingEscrow_not_starts_with: String
+  streamingEscrow_not_starts_with_nocase: String
+  streamingEscrow_ends_with: String
+  streamingEscrow_ends_with_nocase: String
+  streamingEscrow_not_ends_with: String
+  streamingEscrow_not_ends_with_nocase: String
   blockLast: BigInt
   blockLast_not: BigInt
   blockLast_gt: BigInt
@@ -509,6 +531,27 @@ input CVProposal_filter {
   executedAt_lte: BigInt
   executedAt_in: [BigInt!]
   executedAt_not_in: [BigInt!]
+  proposalStream: String
+  proposalStream_not: String
+  proposalStream_gt: String
+  proposalStream_lt: String
+  proposalStream_gte: String
+  proposalStream_lte: String
+  proposalStream_in: [String!]
+  proposalStream_not_in: [String!]
+  proposalStream_contains: String
+  proposalStream_contains_nocase: String
+  proposalStream_not_contains: String
+  proposalStream_not_contains_nocase: String
+  proposalStream_starts_with: String
+  proposalStream_starts_with_nocase: String
+  proposalStream_not_starts_with: String
+  proposalStream_not_starts_with_nocase: String
+  proposalStream_ends_with: String
+  proposalStream_ends_with_nocase: String
+  proposalStream_not_ends_with: String
+  proposalStream_not_ends_with_nocase: String
+  proposalStream_: ProposalStream_filter
   """Filter for the block changed event."""
   _change_block: BlockChangedFilter
   and: [CVProposal_filter]
@@ -537,6 +580,7 @@ enum CVProposal_orderBy {
   requestedAmount
   requestedToken
   proposalStatus
+  streamingEscrow
   blockLast
   convictionLast
   maxCVStaked
@@ -554,6 +598,16 @@ enum CVProposal_orderBy {
   arbitrableConfig__defaultRuling
   arbitrableConfig__defaultRulingTimeout
   executedAt
+  proposalStream
+  proposalStream__id
+  proposalStream__escrow
+  proposalStream__currentUnits
+  proposalStream__currentFlowRate
+  proposalStream__streamedUntilSnapshot
+  proposalStream__lastSnapshotAt
+  proposalStream__isStopped
+  proposalStream__createdAt
+  proposalStream__updatedAt
 }
 
 type CVStrategy {
@@ -571,7 +625,7 @@ type CVStrategy {
   token: String!
   sybil: SybilProtection
   archived: Boolean!
-  stream: StreamInfo!
+  stream: StreamInfo
 }
 
 type CVStrategyConfig {
@@ -974,6 +1028,7 @@ enum CVStrategy_orderBy {
   stream__maxFlowRate
   stream__superfluidGDA
   stream__streamLastFlowRate
+  stream__totalMemberUnits
   stream__createdAt
   stream__updatedAt
 }
@@ -2166,6 +2221,7 @@ enum ProposalDispute_orderBy {
   proposal__requestedAmount
   proposal__requestedToken
   proposal__proposalStatus
+  proposal__streamingEscrow
   proposal__blockLast
   proposal__convictionLast
   proposal__maxCVStaked
@@ -2182,6 +2238,154 @@ enum ProposalDispute_orderBy {
   metadata__reason
   rulingOutcome
   ruledAt
+}
+
+type ProposalEscrowIndex {
+  id: ID!
+  strategy: CVStrategy!
+  proposal: CVProposal!
+  proposalStream: ProposalStream!
+  escrow: String!
+}
+
+input ProposalEscrowIndex_filter {
+  id: ID
+  id_not: ID
+  id_gt: ID
+  id_lt: ID
+  id_gte: ID
+  id_lte: ID
+  id_in: [ID!]
+  id_not_in: [ID!]
+  strategy: String
+  strategy_not: String
+  strategy_gt: String
+  strategy_lt: String
+  strategy_gte: String
+  strategy_lte: String
+  strategy_in: [String!]
+  strategy_not_in: [String!]
+  strategy_contains: String
+  strategy_contains_nocase: String
+  strategy_not_contains: String
+  strategy_not_contains_nocase: String
+  strategy_starts_with: String
+  strategy_starts_with_nocase: String
+  strategy_not_starts_with: String
+  strategy_not_starts_with_nocase: String
+  strategy_ends_with: String
+  strategy_ends_with_nocase: String
+  strategy_not_ends_with: String
+  strategy_not_ends_with_nocase: String
+  strategy_: CVStrategy_filter
+  proposal: String
+  proposal_not: String
+  proposal_gt: String
+  proposal_lt: String
+  proposal_gte: String
+  proposal_lte: String
+  proposal_in: [String!]
+  proposal_not_in: [String!]
+  proposal_contains: String
+  proposal_contains_nocase: String
+  proposal_not_contains: String
+  proposal_not_contains_nocase: String
+  proposal_starts_with: String
+  proposal_starts_with_nocase: String
+  proposal_not_starts_with: String
+  proposal_not_starts_with_nocase: String
+  proposal_ends_with: String
+  proposal_ends_with_nocase: String
+  proposal_not_ends_with: String
+  proposal_not_ends_with_nocase: String
+  proposal_: CVProposal_filter
+  proposalStream: String
+  proposalStream_not: String
+  proposalStream_gt: String
+  proposalStream_lt: String
+  proposalStream_gte: String
+  proposalStream_lte: String
+  proposalStream_in: [String!]
+  proposalStream_not_in: [String!]
+  proposalStream_contains: String
+  proposalStream_contains_nocase: String
+  proposalStream_not_contains: String
+  proposalStream_not_contains_nocase: String
+  proposalStream_starts_with: String
+  proposalStream_starts_with_nocase: String
+  proposalStream_not_starts_with: String
+  proposalStream_not_starts_with_nocase: String
+  proposalStream_ends_with: String
+  proposalStream_ends_with_nocase: String
+  proposalStream_not_ends_with: String
+  proposalStream_not_ends_with_nocase: String
+  proposalStream_: ProposalStream_filter
+  escrow: String
+  escrow_not: String
+  escrow_gt: String
+  escrow_lt: String
+  escrow_gte: String
+  escrow_lte: String
+  escrow_in: [String!]
+  escrow_not_in: [String!]
+  escrow_contains: String
+  escrow_contains_nocase: String
+  escrow_not_contains: String
+  escrow_not_contains_nocase: String
+  escrow_starts_with: String
+  escrow_starts_with_nocase: String
+  escrow_not_starts_with: String
+  escrow_not_starts_with_nocase: String
+  escrow_ends_with: String
+  escrow_ends_with_nocase: String
+  escrow_not_ends_with: String
+  escrow_not_ends_with_nocase: String
+  """Filter for the block changed event."""
+  _change_block: BlockChangedFilter
+  and: [ProposalEscrowIndex_filter]
+  or: [ProposalEscrowIndex_filter]
+}
+
+enum ProposalEscrowIndex_orderBy {
+  id
+  strategy
+  strategy__id
+  strategy__poolId
+  strategy__metadataHash
+  strategy__maxCVSupply
+  strategy__totalEffectiveActivePoints
+  strategy__isEnabled
+  strategy__token
+  strategy__archived
+  proposal
+  proposal__id
+  proposal__proposalNumber
+  proposal__metadataHash
+  proposal__version
+  proposal__beneficiary
+  proposal__requestedAmount
+  proposal__requestedToken
+  proposal__proposalStatus
+  proposal__streamingEscrow
+  proposal__blockLast
+  proposal__convictionLast
+  proposal__maxCVStaked
+  proposal__stakedAmount
+  proposal__submitter
+  proposal__createdAt
+  proposal__updatedAt
+  proposal__executedAt
+  proposalStream
+  proposalStream__id
+  proposalStream__escrow
+  proposalStream__currentUnits
+  proposalStream__currentFlowRate
+  proposalStream__streamedUntilSnapshot
+  proposalStream__lastSnapshotAt
+  proposalStream__isStopped
+  proposalStream__createdAt
+  proposalStream__updatedAt
+  escrow
 }
 
 type ProposalMetadata {
@@ -2249,6 +2453,188 @@ enum ProposalMetadata_orderBy {
   id
   title
   description
+}
+
+type ProposalStream {
+  id: ID!
+  strategy: CVStrategy!
+  proposal: CVProposal!
+  escrow: String!
+  currentUnits: BigInt!
+  currentFlowRate: BigInt!
+  streamedUntilSnapshot: BigInt!
+  lastSnapshotAt: BigInt!
+  isStopped: Boolean!
+  createdAt: BigInt!
+  updatedAt: BigInt!
+}
+
+input ProposalStream_filter {
+  id: ID
+  id_not: ID
+  id_gt: ID
+  id_lt: ID
+  id_gte: ID
+  id_lte: ID
+  id_in: [ID!]
+  id_not_in: [ID!]
+  strategy: String
+  strategy_not: String
+  strategy_gt: String
+  strategy_lt: String
+  strategy_gte: String
+  strategy_lte: String
+  strategy_in: [String!]
+  strategy_not_in: [String!]
+  strategy_contains: String
+  strategy_contains_nocase: String
+  strategy_not_contains: String
+  strategy_not_contains_nocase: String
+  strategy_starts_with: String
+  strategy_starts_with_nocase: String
+  strategy_not_starts_with: String
+  strategy_not_starts_with_nocase: String
+  strategy_ends_with: String
+  strategy_ends_with_nocase: String
+  strategy_not_ends_with: String
+  strategy_not_ends_with_nocase: String
+  strategy_: CVStrategy_filter
+  proposal: String
+  proposal_not: String
+  proposal_gt: String
+  proposal_lt: String
+  proposal_gte: String
+  proposal_lte: String
+  proposal_in: [String!]
+  proposal_not_in: [String!]
+  proposal_contains: String
+  proposal_contains_nocase: String
+  proposal_not_contains: String
+  proposal_not_contains_nocase: String
+  proposal_starts_with: String
+  proposal_starts_with_nocase: String
+  proposal_not_starts_with: String
+  proposal_not_starts_with_nocase: String
+  proposal_ends_with: String
+  proposal_ends_with_nocase: String
+  proposal_not_ends_with: String
+  proposal_not_ends_with_nocase: String
+  proposal_: CVProposal_filter
+  escrow: String
+  escrow_not: String
+  escrow_gt: String
+  escrow_lt: String
+  escrow_gte: String
+  escrow_lte: String
+  escrow_in: [String!]
+  escrow_not_in: [String!]
+  escrow_contains: String
+  escrow_contains_nocase: String
+  escrow_not_contains: String
+  escrow_not_contains_nocase: String
+  escrow_starts_with: String
+  escrow_starts_with_nocase: String
+  escrow_not_starts_with: String
+  escrow_not_starts_with_nocase: String
+  escrow_ends_with: String
+  escrow_ends_with_nocase: String
+  escrow_not_ends_with: String
+  escrow_not_ends_with_nocase: String
+  currentUnits: BigInt
+  currentUnits_not: BigInt
+  currentUnits_gt: BigInt
+  currentUnits_lt: BigInt
+  currentUnits_gte: BigInt
+  currentUnits_lte: BigInt
+  currentUnits_in: [BigInt!]
+  currentUnits_not_in: [BigInt!]
+  currentFlowRate: BigInt
+  currentFlowRate_not: BigInt
+  currentFlowRate_gt: BigInt
+  currentFlowRate_lt: BigInt
+  currentFlowRate_gte: BigInt
+  currentFlowRate_lte: BigInt
+  currentFlowRate_in: [BigInt!]
+  currentFlowRate_not_in: [BigInt!]
+  streamedUntilSnapshot: BigInt
+  streamedUntilSnapshot_not: BigInt
+  streamedUntilSnapshot_gt: BigInt
+  streamedUntilSnapshot_lt: BigInt
+  streamedUntilSnapshot_gte: BigInt
+  streamedUntilSnapshot_lte: BigInt
+  streamedUntilSnapshot_in: [BigInt!]
+  streamedUntilSnapshot_not_in: [BigInt!]
+  lastSnapshotAt: BigInt
+  lastSnapshotAt_not: BigInt
+  lastSnapshotAt_gt: BigInt
+  lastSnapshotAt_lt: BigInt
+  lastSnapshotAt_gte: BigInt
+  lastSnapshotAt_lte: BigInt
+  lastSnapshotAt_in: [BigInt!]
+  lastSnapshotAt_not_in: [BigInt!]
+  isStopped: Boolean
+  isStopped_not: Boolean
+  isStopped_in: [Boolean!]
+  isStopped_not_in: [Boolean!]
+  createdAt: BigInt
+  createdAt_not: BigInt
+  createdAt_gt: BigInt
+  createdAt_lt: BigInt
+  createdAt_gte: BigInt
+  createdAt_lte: BigInt
+  createdAt_in: [BigInt!]
+  createdAt_not_in: [BigInt!]
+  updatedAt: BigInt
+  updatedAt_not: BigInt
+  updatedAt_gt: BigInt
+  updatedAt_lt: BigInt
+  updatedAt_gte: BigInt
+  updatedAt_lte: BigInt
+  updatedAt_in: [BigInt!]
+  updatedAt_not_in: [BigInt!]
+  """Filter for the block changed event."""
+  _change_block: BlockChangedFilter
+  and: [ProposalStream_filter]
+  or: [ProposalStream_filter]
+}
+
+enum ProposalStream_orderBy {
+  id
+  strategy
+  strategy__id
+  strategy__poolId
+  strategy__metadataHash
+  strategy__maxCVSupply
+  strategy__totalEffectiveActivePoints
+  strategy__isEnabled
+  strategy__token
+  strategy__archived
+  proposal
+  proposal__id
+  proposal__proposalNumber
+  proposal__metadataHash
+  proposal__version
+  proposal__beneficiary
+  proposal__requestedAmount
+  proposal__requestedToken
+  proposal__proposalStatus
+  proposal__streamingEscrow
+  proposal__blockLast
+  proposal__convictionLast
+  proposal__maxCVStaked
+  proposal__stakedAmount
+  proposal__submitter
+  proposal__createdAt
+  proposal__updatedAt
+  proposal__executedAt
+  escrow
+  currentUnits
+  currentFlowRate
+  streamedUntilSnapshot
+  lastSnapshotAt
+  isStopped
+  createdAt
+  updatedAt
 }
 
 type Query {
@@ -2330,6 +2716,58 @@ type Query {
     """
     subgraphError: _SubgraphErrorPolicy_! = deny
   ): [StreamInfo!]!
+  proposalStream(
+    id: ID!
+    """
+    The block at which the query should be executed. Can either be a `{ hash: Bytes }` value containing a block hash, a `{ number: Int }` containing the block number, or a `{ number_gte: Int }` containing the minimum block number. In the case of `number_gte`, the query will be executed on the latest block only if the subgraph has progressed to or past the minimum block number. Defaults to the latest block when omitted.
+    """
+    block: Block_height
+    """
+    Set to `allow` to receive data even if the subgraph has skipped over errors while syncing.
+    """
+    subgraphError: _SubgraphErrorPolicy_! = deny
+  ): ProposalStream
+  proposalStreams(
+    skip: Int = 0
+    first: Int = 100
+    orderBy: ProposalStream_orderBy
+    orderDirection: OrderDirection
+    where: ProposalStream_filter
+    """
+    The block at which the query should be executed. Can either be a `{ hash: Bytes }` value containing a block hash, a `{ number: Int }` containing the block number, or a `{ number_gte: Int }` containing the minimum block number. In the case of `number_gte`, the query will be executed on the latest block only if the subgraph has progressed to or past the minimum block number. Defaults to the latest block when omitted.
+    """
+    block: Block_height
+    """
+    Set to `allow` to receive data even if the subgraph has skipped over errors while syncing.
+    """
+    subgraphError: _SubgraphErrorPolicy_! = deny
+  ): [ProposalStream!]!
+  proposalEscrowIndex(
+    id: ID!
+    """
+    The block at which the query should be executed. Can either be a `{ hash: Bytes }` value containing a block hash, a `{ number: Int }` containing the block number, or a `{ number_gte: Int }` containing the minimum block number. In the case of `number_gte`, the query will be executed on the latest block only if the subgraph has progressed to or past the minimum block number. Defaults to the latest block when omitted.
+    """
+    block: Block_height
+    """
+    Set to `allow` to receive data even if the subgraph has skipped over errors while syncing.
+    """
+    subgraphError: _SubgraphErrorPolicy_! = deny
+  ): ProposalEscrowIndex
+  proposalEscrowIndexes(
+    skip: Int = 0
+    first: Int = 100
+    orderBy: ProposalEscrowIndex_orderBy
+    orderDirection: OrderDirection
+    where: ProposalEscrowIndex_filter
+    """
+    The block at which the query should be executed. Can either be a `{ hash: Bytes }` value containing a block hash, a `{ number: Int }` containing the block number, or a `{ number_gte: Int }` containing the minimum block number. In the case of `number_gte`, the query will be executed on the latest block only if the subgraph has progressed to or past the minimum block number. Defaults to the latest block when omitted.
+    """
+    block: Block_height
+    """
+    Set to `allow` to receive data even if the subgraph has skipped over errors while syncing.
+    """
+    subgraphError: _SubgraphErrorPolicy_! = deny
+  ): [ProposalEscrowIndex!]!
   arbitrableConfig(
     id: ID!
     """
@@ -3425,6 +3863,7 @@ enum Stake_orderBy {
   proposal__requestedAmount
   proposal__requestedToken
   proposal__proposalStatus
+  proposal__streamingEscrow
   proposal__blockLast
   proposal__convictionLast
   proposal__maxCVStaked
@@ -3446,6 +3885,8 @@ type StreamInfo {
   maxFlowRate: BigInt
   superfluidGDA: String!
   streamLastFlowRate: BigInt
+  totalMemberUnits: BigInt!
+  proposalStreamIds: [String!]!
   createdAt: BigInt!
   updatedAt: BigInt!
 }
@@ -3576,6 +4017,20 @@ input StreamInfo_filter {
   streamLastFlowRate_lte: BigInt
   streamLastFlowRate_in: [BigInt!]
   streamLastFlowRate_not_in: [BigInt!]
+  totalMemberUnits: BigInt
+  totalMemberUnits_not: BigInt
+  totalMemberUnits_gt: BigInt
+  totalMemberUnits_lt: BigInt
+  totalMemberUnits_gte: BigInt
+  totalMemberUnits_lte: BigInt
+  totalMemberUnits_in: [BigInt!]
+  totalMemberUnits_not_in: [BigInt!]
+  proposalStreamIds: [String!]
+  proposalStreamIds_not: [String!]
+  proposalStreamIds_contains: [String!]
+  proposalStreamIds_contains_nocase: [String!]
+  proposalStreamIds_not_contains: [String!]
+  proposalStreamIds_not_contains_nocase: [String!]
   createdAt: BigInt
   createdAt_not: BigInt
   createdAt_gt: BigInt
@@ -3615,6 +4070,8 @@ enum StreamInfo_orderBy {
   maxFlowRate
   superfluidGDA
   streamLastFlowRate
+  totalMemberUnits
+  proposalStreamIds
   createdAt
   updatedAt
 }

@@ -2,11 +2,10 @@
 pragma solidity ^0.8.19;
 
 import {CVStrategyBaseFacet} from "../CVStrategyBaseFacet.sol";
-import {CVStreamingStorage} from "../CVStreamingStorage.sol";
 import {IArbitrator} from "../../interfaces/IArbitrator.sol";
 import {IVotingPowerRegistry} from "../../interfaces/IVotingPowerRegistry.sol";
 import {IRegistryFactory} from "../../IRegistryFactory.sol";
-import {Proposal, ArbitrableConfig, CVParams} from "../ICVStrategy.sol";
+import {Proposal, ArbitrableConfig, CVParams, ProposalType} from "../ICVStrategy.sol";
 import {LibDiamond} from "../../diamonds/libraries/LibDiamond.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Library.sol";
 
@@ -25,6 +24,7 @@ contract CVAdminFacet is CVStrategyBaseFacet {
     error SuperfluidGDAConnectFailed(address gda, address superToken, address caller); // 0x9bd2355f
     error SuperfluidGDADisconnectFailed(address gda, address superToken, address caller); // 0x3746bbff
     error VotingPowerRegistryNotAllowed(address target);
+    error RebalanceCallFailed();
 
     /*|--------------------------------------------|*/
     /*|              EVENTS                        |*/
@@ -61,7 +61,7 @@ contract CVAdminFacet is CVStrategyBaseFacet {
         address[] memory _membersToRemove,
         address _superfluidToken
     ) external {
-        _setPoolParamsWithStreaming(
+        _setPoolParamsCore(
             _arbitrableConfig,
             _cvParams,
             _sybilScoreThreshold,
@@ -72,6 +72,7 @@ contract CVAdminFacet is CVStrategyBaseFacet {
         );
     }
 
+    // Sig: 0x2bbe0cae
     function setPoolParams(
         ArbitrableConfig memory _arbitrableConfig,
         CVParams memory _cvParams,
@@ -81,7 +82,7 @@ contract CVAdminFacet is CVStrategyBaseFacet {
         address _superfluidToken,
         uint256 _streamingRatePerSecond
     ) external {
-        _setPoolParamsWithStreaming(
+        _setPoolParamsCore(
             _arbitrableConfig,
             _cvParams,
             _sybilScoreThreshold,
@@ -92,7 +93,7 @@ contract CVAdminFacet is CVStrategyBaseFacet {
         );
     }
 
-    function _setPoolParamsWithStreaming(
+    function _setPoolParamsCore(
         ArbitrableConfig memory _arbitrableConfig,
         CVParams memory _cvParams,
         uint256 _sybilScoreThreshold,
@@ -103,6 +104,7 @@ contract CVAdminFacet is CVStrategyBaseFacet {
     ) internal {
         onlyCouncilSafe();
 
+        uint256 previousStreamingRatePerSecond = streamingRatePerSecond;
         superfluidToken = ISuperToken(_superfluidToken);
         streamingRatePerSecond = _streamingRatePerSecond;
         emit SuperfluidTokenUpdated(_superfluidToken);
@@ -112,6 +114,13 @@ contract CVAdminFacet is CVStrategyBaseFacet {
 
         if (address(sybilScorer) != address(0) && _sybilScoreThreshold > 0) {
             sybilScorer.modifyThreshold(address(this), _sybilScoreThreshold);
+        }
+
+        if (proposalType == ProposalType.Streaming && previousStreamingRatePerSecond != _streamingRatePerSecond) {
+            (bool success,) = address(this).call(abi.encodeWithSignature("rebalance()"));
+            if (!success) {
+                revert RebalanceCallFailed();
+            }
         }
     }
 

@@ -30,6 +30,9 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
     error SuperTokenTransferFailed(address to, uint256 amount);
     error UpdateMemberUnitsFailed(address member, uint128 units);
     error ApproveFailed(address token, address spender, uint256 amount);
+    error StreamingEscrowNotFound(address escrow);
+
+    event EscrowStreamStopped(address indexed escrow, address indexed stoppedBy);
 
     /*|--------------------------------------------|*/
     /*|              FUNCTIONS                     |*/
@@ -64,7 +67,6 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
         for (uint256 i = 1; i <= proposalCounter; i++) {
             Proposal storage proposal = proposals[i];
 
-            // Get the escrow address for this proposal
             address escrow = streamingEscrow(i);
             if (escrow == address(0)) {
                 continue; // Skip if no escrow (shouldn't happen for streaming proposals)
@@ -130,6 +132,23 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
             _topUpEscrowDepositIfNeeded(escrow);
             try IStreamingEscrowSync(escrow).syncOutflow() {} catch {}
         }
+    }
+
+    /// @notice Emergency stop stream for a specific escrow
+    /// @dev This sets GDA member units to zero for the escrow and requests an outflow sync.
+    function stopEscrowStream(address escrow) external onlyOwner {
+        if (escrow == address(0)) {
+            revert StreamingEscrowNotFound(escrow);
+        }
+
+        if (!superfluidGDA.updateMemberUnits(escrow, 0)) {
+            revert UpdateMemberUnitsFailed(escrow, 0);
+        }
+        emit StreamMemberUnitUpdated(escrow, 0);
+
+        // Best-effort to apply zero units immediately on escrow side.
+        try IStreamingEscrowSync(escrow).syncOutflow() {} catch {}
+        emit EscrowStreamStopped(escrow, msg.sender);
     }
 
     /**

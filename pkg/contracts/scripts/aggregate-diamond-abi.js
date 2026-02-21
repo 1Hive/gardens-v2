@@ -23,6 +23,11 @@
 
 const fs = require('fs');
 const path = require('path');
+const CONTRACTS_ROOT = path.resolve(__dirname, '..');
+const SRC_DIR = path.join(CONTRACTS_ROOT, 'src');
+const OUT_DIR = path.join(CONTRACTS_ROOT, 'out');
+const ABI_DIR = path.join(CONTRACTS_ROOT, 'abis');
+const AGGREGATED_ABI_DIR = path.join(ABI_DIR, 'DiamondAggregated');
 
 // Colors for console output
 const colors = {
@@ -102,13 +107,16 @@ function aggregateDiamondABI(mainContract, facets) {
   log(colors.blue, `\nProcessing ${mainContract}...`);
 
   // Create output directory
-  const outputDir = 'abis/DiamondAggregated';
-  if (!fs.existsSync(outputDir)) {
-    fs.mkdirSync(outputDir, { recursive: true });
+  if (!fs.existsSync(AGGREGATED_ABI_DIR)) {
+    fs.mkdirSync(AGGREGATED_ABI_DIR, { recursive: true });
   }
 
   // Load main contract ABI
-  const mainABIPath = `out/${mainContract}.sol/${mainContract}.json`;
+  const mainABIPath = path.join(
+    OUT_DIR,
+    `${mainContract}.sol`,
+    `${mainContract}.json`
+  );
   if (!fs.existsSync(mainABIPath)) {
     log(colors.red, `  ✗ Main contract ABI not found: ${mainABIPath}`);
     return false;
@@ -148,7 +156,11 @@ function aggregateDiamondABI(mainContract, facets) {
 
   // Add each facet's unique functions
   for (const facetName of facets) {
-    const facetABIPath = `out/${facetName}.sol/${facetName}.json`;
+    const facetABIPath = path.join(
+      OUT_DIR,
+      `${facetName}.sol`,
+      `${facetName}.json`
+    );
 
     if (!fs.existsSync(facetABIPath)) {
       log(colors.yellow, `  ⚠ Facet ABI not found: ${facetABIPath}`);
@@ -189,7 +201,7 @@ function aggregateDiamondABI(mainContract, facets) {
   }
 
   // Write aggregated ABI
-  const outputPath = `${outputDir}/${mainContract}.json`;
+  const outputPath = path.join(AGGREGATED_ABI_DIR, `${mainContract}.json`);
   fs.writeFileSync(
     outputPath,
     JSON.stringify({ abi: aggregatedABI }, null, 2)
@@ -287,7 +299,7 @@ function main() {
     processDirectory(options.specificPath);
   } else {
     // Auto-discover all directories with facets
-    const srcDir = 'src';
+    const srcDir = SRC_DIR;
 
     try {
       const dirs = fs.readdirSync(srcDir);
@@ -312,7 +324,10 @@ function main() {
 
   log(colors.blue, '\n=== Summary ===');
   log(colors.green, '✓ Diamond ABI aggregation complete!');
-  log(colors.green, '  Aggregated ABIs available in: abis/DiamondAggregated/');
+  log(
+    colors.green,
+    `  Aggregated ABIs available in: ${path.relative(process.cwd(), AGGREGATED_ABI_DIR) || AGGREGATED_ABI_DIR}/`
+  );
 }
 
 // Run

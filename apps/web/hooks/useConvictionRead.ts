@@ -93,7 +93,7 @@ export const useConvictionRead = ({
 
   const thresholdFromContract = thresholdRes?.result;
 
-  //calculate time to pass for proposal te be executed
+  // calculate time to pass for proposal te be executed
   const alphaDecay = +strategyConfig?.decay / CV_SCALE_PRECISION;
 
   const remainingBlocksToPass = useMemo(

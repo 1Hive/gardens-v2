@@ -138,6 +138,13 @@ contract UpgradeCVMultichainTest is BaseMultiChain, StrategyDiamondConfiguratorB
         address registryFactoryImplementation =
             (doFactory && _isFactoryAction(FactoryAction.UpgradeImpl)) ? address(new RegistryFactory()) : address(0);
 
+        if (strategyImplementation != address(0)) {
+            _writeNetworkAddress(".IMPLEMENTATIONS.CV_STRATEGY", strategyImplementation);
+        }
+        if (registryImplementation != address(0)) {
+            _writeNetworkAddress(".IMPLEMENTATIONS.REGISTRY_COMMUNITY", registryImplementation);
+        }
+
         IDiamond.FacetCut[] memory cvCuts;
         IDiamond.FacetCut[] memory communityCuts;
         bool needFactoryFacetCuts = doFactory
@@ -1386,8 +1393,9 @@ contract UpgradeCVMultichainTest is BaseMultiChain, StrategyDiamondConfiguratorB
         for (uint256 i = 0; i < 7; i++) {
             cuts[i + 1] = baseCuts[i];
         }
-        bytes4[] memory streamingSelectors = new bytes4[](1);
+        bytes4[] memory streamingSelectors = new bytes4[](2);
         streamingSelectors[0] = CVStreamingFacet.rebalance.selector;
+        streamingSelectors[1] = CVStreamingFacet.stopEscrowStream.selector;
         cuts[8] = IDiamond.FacetCut({
             facetAddress: address(cvStreamingFacet),
             action: IDiamond.FacetCutAction.Auto,

@@ -358,7 +358,7 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
     monthlyBudget: {
       label: "Monthly stream budget:",
       parse: (value: string) =>
-        `${value} ${customTokenData?.symbol ?? governanceToken.symbol}/month`,
+        `${value} ${customTokenData?.symbol ?? governanceToken.symbol}/m`,
     },
     superfluidEnabled: {
       label: "Stream funding",
@@ -537,7 +537,6 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
         containerId: communityAddr,
         chainId: chain.id,
       });
-      setLoading(false);
       router.push(
         pathname?.replace(
           "/create-pool",

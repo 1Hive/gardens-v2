@@ -233,7 +233,7 @@ contract CVDisputeFacetTest is Test {
 
         facet.rule(5, 0);
         assertTrue(escrow.resolved());
-        assertEq(facet.getProposalEscrow(1), address(0));
+        assertEq(facet.getProposalEscrow(1), address(escrow));
     }
 
     function test_rule_ruling_one_transfers_to_council() public {

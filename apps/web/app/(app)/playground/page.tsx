@@ -610,6 +610,7 @@ export default function DesignSystemPage() {
                 isSignalingType={false}
                 compact={false}
                 proposalStatus="active"
+                proposalType={"funding"}
               />
             </div>
           </DemoCard>

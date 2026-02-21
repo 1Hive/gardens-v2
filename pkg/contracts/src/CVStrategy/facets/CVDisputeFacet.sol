@@ -184,7 +184,6 @@ contract CVDisputeFacet is CVStrategyBaseFacet {
             StreamingEscrow(escrow).drainToBeneficiary();
         } else {
             StreamingEscrow(escrow).drainToStrategy();
-            CVStreamingStorage.layout().proposalEscrow[proposalId] = address(0);
         }
     }
 }

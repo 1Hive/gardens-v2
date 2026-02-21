@@ -317,7 +317,7 @@ contract StreamingEscrowTest is Test {
         escrow.drainToStrategy();
     }
 
-    function test_syncOutflow_callable_by_strategy_or_owner() public {
+    function test_syncOutflow_callable_by_anyone() public {
         pool.setMemberFlowRate(address(escrow), 42);
         uint256 start = host.callAgreementCount();
 
@@ -329,8 +329,8 @@ contract StreamingEscrowTest is Test {
         assertEq(host.callAgreementCount(), start + 2);
 
         vm.prank(other);
-        vm.expectRevert(abi.encodeWithSelector(StreamingEscrow.OnlyStrategy.selector, other));
         escrow.syncOutflow();
+        assertEq(host.callAgreementCount(), start + 3);
     }
 
     function test_syncOutflow_drains_excess_balance_above_deposit() public {

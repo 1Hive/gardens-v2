@@ -35,6 +35,7 @@ import {
 
 import {ConvictionsUtils} from "./ConvictionsUtils.sol";
 import {PowerManagementUtils} from "./PowerManagementUtils.sol";
+import {CVStreamingBase} from "./CVStreamingStorage.sol";
 
 import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Library.sol";
 
@@ -53,7 +54,7 @@ import {IPauseController} from "../interfaces/IPauseController.sol";
 import {LibPauseStorage} from "../pausing/LibPauseStorage.sol";
 
 /// @custom:oz-upgrades-from CVStrategy
-contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
+contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreamingBase {
     using SuperTokenV1Library for ISuperToken;
 
     /*|--------------------------------------------|*/
@@ -112,6 +113,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     event InitializedCV4(uint256 poolId, CVStrategyInitializeParamsV0_3 data);
     event Distributed(uint256 proposalId, address beneficiary, uint256 amount);
     event ProposalCreated(uint256 poolId, uint256 proposalId);
+    event ProposalCreated(uint256 poolId, uint256 proposalId, address escrow);
     event PointsDeactivated(address member);
     event PowerIncreased(address member, uint256 tokensStaked, uint256 pointsToIncrease);
     event PowerDecreased(address member, uint256 tokensUnStaked, uint256 pointsToDecrease);
@@ -177,7 +179,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     RegistryCommunity public registryCommunity;
     ICollateralVault public collateralVault;
     ISybilScorer public sybilScorer;
-    mapping(uint256 => Proposal) public proposals;
+    mapping(uint256 => Proposal) internal proposals;
     mapping(address => uint256) public totalVoterStakePct;
     mapping(address => uint256[]) public voterStakedProposals;
     mapping(uint256 => uint256) public disputeIdToProposalId;
@@ -448,6 +450,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
      * @return threshold Proposal threshold
      * @return voterStakedPoints Voter staked points
      * @return arbitrableConfigVersion Proposal arbitrable config id
+     * @return protocol Proposal metadata protocol
      */
     function getProposal(uint256 _proposalId)
         external
@@ -505,11 +508,9 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         );
     }
 
-    // Goss: Commented because accessible through public fields
-    // function getMetadata(uint256 _proposalId) external view  returns (Metadata memory) {
-    //     Proposal storage proposal = proposals[_proposalId];
-    //     return proposal.metadata;
-    // }
+    function getProposalMetadataPointer(uint256 _proposalId) external view returns (string memory) {
+        return proposals[_proposalId].metadata.pointer;
+    }
 
     // Sig: 0xe0dd2c38
     /**
@@ -522,20 +523,11 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         return _internal_getProposalVoterStake(_proposalId, _voter);
     }
 
-    // TODO :Goss: Commented because accessible through public fields
     // Sig: 0xdc96ff2d
     function getProposalStakedAmount(uint256 _proposalId) external view returns (uint256) {
         return proposals[_proposalId].stakedAmount;
     }
 
-    //    do a internal function to get the total voter stake
-
-    // Goss: Commented because accessible through public fields
-    // function getTotalVoterStakePct(address _voter) public view  returns (uint256) {
-    //     return totalVoterStakePct[_voter];
-    // }
-
-    // Goss: Commented because accessible through public fields
     // Sig: 0x059351cd
     function getArbitrableConfig()
         external

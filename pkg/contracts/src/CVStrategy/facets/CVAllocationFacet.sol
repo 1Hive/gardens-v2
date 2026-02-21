@@ -283,7 +283,7 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
         return proposal.convictionLast;
     }
 
-    function getPoolAmount() internal view override returns (uint256) {
+    function getPoolAmount() public view override returns (uint256) {
         address token = allo.getPool(poolId).token;
 
         if (token == NATIVE_TOKEN) {

@@ -93,10 +93,11 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     totalAmountDistributedBn,
     setCurrentUserFlowRateBn,
     setCurrentFlowRateBn,
-    refetch: refetchSuperfluidStream,
   } = useSuperfluidStream({
     receiver: poolAddress,
     superToken: superToken?.address as Address,
+    chainId,
+    containerId: poolId,
   });
 
   const amount = +(amountInput || 0);
@@ -113,12 +114,6 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
       contractName: "ERC20",
       args: [poolAddress as Address, requestedAmountBn],
     });
-
-  useEffect(() => {
-    if (!accountAddress || !poolAddress) return;
-    // Refetch superfluid stream when account address or pool address changes
-    refetchSuperfluidStream();
-  }, [accountAddress]);
 
   const currentFlowPerMonth =
     superToken && currentFlowRateBn != null ?
@@ -143,7 +138,8 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
 
   const configuredFlowPerMonth =
     superToken && configuredFlowPerSecondBn != null ?
-      +formatUnits(configuredFlowPerSecondBn, superToken.decimals) * SEC_TO_MONTH
+      +formatUnits(configuredFlowPerSecondBn, superToken.decimals) *
+      SEC_TO_MONTH
     : null;
 
   const totalAmountDistributed =
@@ -571,7 +567,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                       {roundToSignificant(currentUserFlowPerMonth, 4)}
                     </div>{" "}
                     {poolToken.symbol}
-                    /month
+                    /m
                   </div>
                 </div>
                 <button className="btn btn-ghost">
@@ -838,7 +834,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
               )}
             {totalAmountDistributed != null && totalAmountDistributed > 0 && (
               <div className="flex justify-between items-center gap-3">
-                <p className="text-sm">Total Streamed via GDA:</p>
+                <p className="text-sm">Total:</p>
                 <p className="text-sm font-medium">
                   {roundToSignificant(totalAmountDistributed, 4)}{" "}
                   {superToken?.symbol ?? poolToken.symbol}
