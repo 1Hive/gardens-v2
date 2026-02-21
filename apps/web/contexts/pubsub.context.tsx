@@ -197,9 +197,7 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
       const subscriptionId = uniqueId();
       console.debug(`⚡ WS: subscribe ${subscriptionId}`, scope);
       subMap.set(subscriptionId, {
-        scopes: (scope.length != undefined ?
-          scope
-        : [scope]) as ChangeEventScope[],
+        scopes: (Array.isArray(scope) ? scope : [scope]) as ChangeEventScope[],
         onChangeEvent,
       });
       return subscriptionId;

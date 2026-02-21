@@ -345,8 +345,8 @@ export default function PoolHeader({
       label: "Token",
       info:
         PoolTypes[proposalType] === "streaming" ?
-          "The token used in this pool to fund proposals."
-        : "The token used in this pool for streaming.",
+          "The token used in this pool for streaming."
+        : "The token used in this pool to fund proposals.",
       value: (
         <div className="flex items-center">
           <EthAddress

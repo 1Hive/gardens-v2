@@ -292,15 +292,6 @@ export const ProposalForm = ({
 
     const strAmount = previewData.amount?.toString() || "";
     const amount = parseUnits(strAmount, poolToken?.decimals ?? 0);
-    console.debug("Proposal payload:", {
-      poolId,
-      beneficiary:
-        previewData?.beneficiary ||
-        "0x0000000000000000000000000000000000000000",
-      amount,
-      poolTokenAddr,
-      metadata,
-    });
     const encodedData = encodeAbiParameters(abiParameters, [
       [
         poolId,
