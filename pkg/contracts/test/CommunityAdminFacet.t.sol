@@ -5,6 +5,7 @@ import "forge-std/Test.sol";
 
 import {CommunityAdminFacet, CommunityParams} from "../src/RegistryCommunity/facets/CommunityAdminFacet.sol";
 import {ISafe} from "../src/interfaces/ISafe.sol";
+import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 contract CommunityAdminFacetHarness is CommunityAdminFacet {
     function initOwner(address owner_) external {
@@ -44,8 +45,10 @@ contract CommunityAdminFacetTest is Test {
     address internal other = makeAddr("other");
 
     function setUp() public {
-        facet = new CommunityAdminFacetHarness();
-        facet.initOwner(owner);
+        CommunityAdminFacetHarness impl = new CommunityAdminFacetHarness();
+        facet = CommunityAdminFacetHarness(
+            payable(address(new ERC1967Proxy(address(impl), abi.encodeWithSelector(impl.initOwner.selector, owner))))
+        );
         facet.grantCouncil(council);
     }
 

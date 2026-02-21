@@ -255,10 +255,6 @@ abstract contract BaseStrategyUpgradeable is ProxyOwnableUpgrader, IStrategy, Tr
         if (poolId == 0) revert NOT_INITIALIZED();
     }
 
-    function _coverageMarker() internal view returns (bool) {
-        return poolId >= 0;
-    }
-
     /// @notice Set the pool to active or inactive status.
     /// @dev This will emit a 'PoolActive()' event. Used by the strategy implementation.
     /// @param _active The status to set, 'true' means active, 'false' means inactive
@@ -272,6 +268,10 @@ abstract contract BaseStrategyUpgradeable is ProxyOwnableUpgrader, IStrategy, Tr
     /// @return 'true' if the pool is active, otherwise 'false'
     function _isPoolActive() internal view returns (bool) {
         return poolActive;
+    }
+
+    function _coverageMarker() internal view returns (bool) {
+        return address(allo) != address(0);
     }
 
     /// @notice Checks if the allocator is valid

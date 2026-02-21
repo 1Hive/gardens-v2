@@ -27,6 +27,9 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
     /*|              ERRORS                        |*/
     /*|--------------------------------------------|*/
     error StreamingRateOverflow(uint256 streamingRatePerSecond);
+    error SuperTokenTransferFailed(address to, uint256 amount);
+    error UpdateMemberUnitsFailed(address member, uint128 units);
+    error ApproveFailed(address token, address spender, uint256 amount);
 
     /*|--------------------------------------------|*/
     /*|              FUNCTIONS                     |*/
@@ -44,6 +47,12 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
             revert RebalanceCooldownActive(lastRebalanceAt() + rebalanceCooldown() - block.timestamp);
         }
         setLastRebalanceAt(block.timestamp);
+
+        bool strategyEnabled = _isStrategyEnabled();
+        if (!strategyEnabled) {
+            _rebalanceWhenDisabled();
+            return;
+        }
 
         wrapIfNeeded();
 
@@ -64,7 +73,9 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
             // Ensure non-active proposals never keep receiving pool share.
             if (proposal.proposalStatus != ProposalStatus.Active && proposal.proposalStatus != ProposalStatus.Disputed)
             {
-                superfluidGDA.updateMemberUnits(escrow, 0);
+                if (!superfluidGDA.updateMemberUnits(escrow, 0)) {
+                    revert UpdateMemberUnitsFailed(escrow, 0);
+                }
                 emit StreamMemberUnitUpdated(escrow, 0);
                 continue;
             }
@@ -86,7 +97,9 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
 
             // Update the member units in the GDA pool
             // This determines the proportional share of the total streaming flow
-            superfluidGDA.updateMemberUnits(escrow, units);
+            if (!superfluidGDA.updateMemberUnits(escrow, units)) {
+                revert UpdateMemberUnitsFailed(escrow, units);
+            }
 
             emit StreamMemberUnitUpdated(escrow, int96(int128(units)));
         }
@@ -120,18 +133,6 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
     }
 
     /**
-     * @notice Calculate the current conviction for a proposal
-     * @param _proposalId The proposal ID
-     * @return uint256 The calculated conviction value
-     */
-    function calculateProposalConviction(uint256 _proposalId) public view returns (uint256) {
-        Proposal storage proposal = proposals[_proposalId];
-        return ConvictionsUtils.calculateConviction(
-            block.number - proposal.blockLast, proposal.convictionLast, proposal.stakedAmount, cvParams.decay
-        );
-    }
-
-    /**
      * @notice Wrap unwrapped pool tokens into supertokens if needed
      * @dev Checks the balance of the underlying pool token and wraps it to supertoken
      */
@@ -159,7 +160,9 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
         }
 
         // Approve supertoken to spend the underlying tokens
-        IERC20(poolToken).approve(address(superfluidToken), unwrappedBalance);
+        if (!IERC20(poolToken).approve(address(superfluidToken), unwrappedBalance)) {
+            revert ApproveFailed(poolToken, address(superfluidToken), unwrappedBalance);
+        }
 
         // Wrap tokens to supertokens
         superfluidToken.upgrade(unwrappedBalance);
@@ -252,7 +255,21 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
 
         uint256 topUp = missingDeposit > strategyBalance ? strategyBalance : missingDeposit;
         if (topUp != 0) {
-            superfluidToken.transfer(escrow, topUp);
+            if (!superfluidToken.transfer(escrow, topUp)) {
+                revert SuperTokenTransferFailed(escrow, topUp);
+            }
+        }
+    }
+
+    function _rebalanceWhenDisabled() internal {
+        if (address(superfluidToken) == address(0) || address(superfluidGDA) == address(0)) {
+            return;
+        }
+
+        int96 currentFlowRate = superfluidToken.getGDAFlowRate(address(this), superfluidGDA);
+        int96 actualFlowRate = superfluidToken.distributeFlow(superfluidGDA, 0);
+        if (currentFlowRate != actualFlowRate) {
+            emit StreamRateUpdated(address(superfluidGDA), 0);
         }
     }
 }

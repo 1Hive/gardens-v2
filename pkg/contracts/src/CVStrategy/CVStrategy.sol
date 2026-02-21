@@ -100,6 +100,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     error OnlyCouncilSafeOrMember(address sender, address councilSafe); // 0xfa33758e
     error StrategyPaused(address controller);
     error StrategySelectorPaused(bytes4 selector, address controller);
+    error SuperfluidPoolCreationFailed();
 
     /*|--------------------------------------------|*/
     /*|              CUSTOM EVENTS                 |*/
@@ -241,12 +242,15 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
                 revert TokenCannotBeZero(address(superfluidToken));
             }
 
-            (, ISuperfluidPool pool) = GDAv1Forwarder(0x6DA13Bde224A05a288748d857b9e7DDEffd1dE08)
+            (bool success, ISuperfluidPool pool) = GDAv1Forwarder(0x6DA13Bde224A05a288748d857b9e7DDEffd1dE08)
                 .createPool(
                     ISuperfluidToken(superfluidToken),
                     address(this), // pool admin = your StreamingPool contract
                     PoolConfig({transferabilityForUnitsOwner: false, distributionFromAnyAddress: false})
                 );
+            if (!success || address(pool) == address(0)) {
+                revert SuperfluidPoolCreationFailed();
+            }
 
             superfluidGDA = pool;
         }
@@ -587,6 +591,9 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
     // Sig: 0x60b0645a
     function calculateProposalConviction(uint256 _proposalId) public view returns (uint256) {
         Proposal storage proposal = proposals[_proposalId];
+        if (!_isStrategyEnabled()) {
+            return proposal.convictionLast;
+        }
         return ConvictionsUtils.calculateConviction(
             block.number - proposal.blockLast, proposal.convictionLast, proposal.stakedAmount, cvParams.decay
         );
@@ -633,6 +640,10 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         view
         returns (uint256 conviction, uint256 blockNumber)
     {
+        if (!_isStrategyEnabled()) {
+            return (_proposal.convictionLast, block.number);
+        }
+
         blockNumber = block.number;
         assert(_proposal.blockLast <= blockNumber);
         if (_proposal.blockLast == blockNumber) {
@@ -642,6 +653,13 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165 {
         conviction = ConvictionsUtils.calculateConviction(
             blockNumber - _proposal.blockLast, _proposal.convictionLast, _oldStaked, cvParams.decay
         );
+    }
+
+    function _isStrategyEnabled() internal view returns (bool) {
+        if (address(registryCommunity) == address(0)) {
+            return true;
+        }
+        return registryCommunity.enabledStrategies(address(this));
     }
 
     // _setPoolParams removed - now in AdminFacet

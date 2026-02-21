@@ -99,7 +99,7 @@ export function CommunityCard({
         <div className="flex gap-2 items-center">
           <p className="subtitle2 font-normal dark:text-opacity-80">
             Governance Token:
-            <span className="subtitle2 font-normal dark:text-opacity-80 bg-primary px-2 sm:px-3 py-1 rounded-xl ml-1">
+            <span className="subtitle2 font-normal dark:text-opacity-80">
               {" "}
               {tokenSymbol}
             </span>

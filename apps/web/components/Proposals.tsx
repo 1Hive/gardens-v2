@@ -681,7 +681,7 @@ export function Proposals({
     0: "inactive",
     1: "active",
     2: "paused",
-    3: "cancelled",
+    3: "closed",
     4: "executed",
     5: "disputed",
     6: "rejected",
@@ -851,6 +851,7 @@ export function Proposals({
               <Fragment key={proposalData.proposalNumber}>
                 <ProposalCard
                   proposalData={proposalData}
+                  poolId={Number(strategy.poolId)}
                   strategyConfig={strategy.config}
                   inputData={inputs[proposalData.id]}
                   stakedFilter={stakedFilters[proposalData.id]}
@@ -972,7 +973,7 @@ export function useProposalFilter<
   type FilterType =
     | "all"
     | "active"
-    | "cancelled"
+    | "closed"
     | "executed"
     | "disputed"
     | null;
@@ -981,10 +982,10 @@ export function useProposalFilter<
 
   const [isPending, startTransition] = useTransition();
 
-  const FILTER_STATUS: Record<Exclude<FilterType, null>, number> = {
+  const FILTER_STATUS: Record<Exclude<FilterType, null>, number | number[]> = {
     all: 0,
     active: 1,
-    cancelled: 3,
+    closed: [3, 6],
     executed: 4,
     disputed: 5,
   };
@@ -993,7 +994,10 @@ export function useProposalFilter<
     if (!filter || filter == "all") return proposals;
 
     const status = FILTER_STATUS[filter];
-    return proposals.filter((p) => Number(p.proposalStatus) === status);
+    const allowedStatuses = Array.isArray(status) ? status : [status];
+    return proposals.filter((p) =>
+      allowedStatuses.includes(Number(p.proposalStatus)),
+    );
   }, [filter, proposals]);
 
   //
@@ -1080,7 +1084,7 @@ function ProposalFiltersUI({
   disableSort: boolean;
 }) {
   const FILTERS = useMemo(() => {
-    const allFilters = ["all", "active", "disputed", "executed", "cancelled"];
+    const allFilters = ["all", "active", "disputed", "executed", "closed"];
 
     // Remove "executed" filter when poolType is a signaling pool
     return +poolType === 0 ?
@@ -1118,7 +1122,7 @@ function ProposalFiltersUI({
     disputed:
       "bg-secondary-soft dark:bg-secondary-soft-dark text-secondary-content",
     executed: "bg-tertiary-soft dark:bg-tertiary-dark text-tertiary-content",
-    cancelled: "bg-danger-soft text-danger-content dark:bg-danger-soft-dark",
+    closed: "bg-danger-soft text-danger-content dark:bg-danger-soft-dark",
   };
 
   return (

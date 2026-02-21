@@ -10,9 +10,6 @@ on:
       - pkg/contracts/src/**/*.sol
       - .github/workflows/contract-audit.yml
   pull_request:
-    branches:
-      - main
-      - dev
     paths:
       - pkg/contracts/src/**/*.sol
       - .github/workflows/contract-audit.yml
@@ -37,13 +34,23 @@ jobs:
 
       - name: Run Slither
         id: slither
+        continue-on-error: true
         uses: crytic/slither-action@v0.4.1
         with:
           target: .
+          node-version: 20
           sarif: results.sarif
-          fail-on: none
+          slither-args: --foundry-out-directory=pkg/contracts/out --exclude-dependencies --exclude-low --exclude-informational --exclude-optimization
+          fail-on: high
 
       - name: Upload SARIF file
+        if: always()
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: ${{ steps.slither.outputs.sarif }}
+
+      - name: Enforce High Severity Gate
+        if: steps.slither.outcome == 'failure'
+        run: |
+          echo "::error title=Contract Audit Failed::Slither found at least one HIGH-severity issue. Review Code Scanning alerts and the Slither log in this job."
+          exit 1

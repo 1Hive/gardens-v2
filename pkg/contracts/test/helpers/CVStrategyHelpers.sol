@@ -83,6 +83,10 @@ contract MockRegistryCommunity {
         require(strategyEnabled, "STRATEGY_DISABLED");
     }
 
+    function enabledStrategies(address) external view returns (bool) {
+        return strategyEnabled;
+    }
+
     function getBasisStakedAmount() external pure returns (uint256) {
         return 1;
     }
@@ -364,6 +368,11 @@ contract CVStrategyBaseFacetHarness is CVStrategyBaseFacet {
 
     function exposedGetPoolAmount() external view returns (uint256) {
         return getPoolAmount();
+    }
+
+    function getProposalSnapshot(uint256 proposalId) external view returns (uint256 blockLast, uint256 convictionLast) {
+        Proposal storage p = proposals[proposalId];
+        return (p.blockLast, p.convictionLast);
     }
 }
 

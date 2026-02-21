@@ -202,6 +202,8 @@ templates:
         - CVStrategyConfig
         - CVProposal
         - StreamInfo
+        - ProposalStream
+        - ProposalEscrowIndex
         - Allo
       abis:
         - name: CVStrategy
@@ -221,6 +223,8 @@ templates:
           handler: handleInitializedV4
         - event: ProposalCreated(uint256,uint256)
           handler: handleProposalCreated
+        - event: ProposalCreated(uint256,uint256,address)
+          handler: handleProposalCreatedWithEscrow
         - event: SupportAdded(address,uint256,uint256,uint256,uint256)
           handler: handleSupportAdded
         - event: Distributed(uint256,address,uint256)
@@ -259,6 +263,10 @@ templates:
           handler: handleSuperfluidGDADisconnected
         - event: StreamRateUpdated(indexed address,uint256)
           handler: handleStreamRateUpdated
+        - event: StreamMemberUnitUpdated(indexed address,int96)
+          handler: handleStreamMemberUnitUpdated
+        - event: EscrowStreamStopped(indexed address,indexed address)
+          handler: handleEscrowStreamStopped
         - event: ProposalEdited(uint256,(uint256,string),address,uint256)
           handler: handleProposalEdited
 

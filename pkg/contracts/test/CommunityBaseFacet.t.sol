@@ -6,6 +6,7 @@ import "forge-std/Test.sol";
 import {CommunityBaseFacet} from "../src/RegistryCommunity/CommunityBaseFacet.sol";
 import {LibPauseStorage} from "../src/pausing/LibPauseStorage.sol";
 import {MockPauseController} from "./helpers/PauseHelpers.sol";
+import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 contract CommunityBaseFacetHarness is CommunityBaseFacet {
     function initializeHarness(address owner_) external {
@@ -38,8 +39,12 @@ contract CommunityBaseFacetTest is Test {
     MockPauseController internal controller;
 
     function setUp() public {
-        facet = new CommunityBaseFacetHarness();
-        facet.initializeHarness(address(this));
+        CommunityBaseFacetHarness impl = new CommunityBaseFacetHarness();
+        facet = CommunityBaseFacetHarness(
+            payable(
+                address(new ERC1967Proxy(address(impl), abi.encodeWithSelector(impl.initializeHarness.selector, address(this))))
+            )
+        );
         controller = new MockPauseController();
     }
 

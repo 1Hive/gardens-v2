@@ -156,9 +156,12 @@ export function handleStreamingEscrowFactorySet(
     streamInfo.superfluidGDA = Address.zero().toHexString();
     streamInfo.streamLastFlowRate = null;
     streamInfo.createdAt = event.block.timestamp;
-    streamInfo.updatedAt = event.block.timestamp;
   }
 
+  // Keep required fields initialized for backward compatibility
+  // with entities created before these fields existed in schema.
+  streamInfo.totalMemberUnits = BigInt.fromI32(0);
+  streamInfo.proposalStreamIds = [];
   streamInfo.updatedAt = event.block.timestamp;
   streamInfo.save();
 }

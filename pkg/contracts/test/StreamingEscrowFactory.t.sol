@@ -110,17 +110,32 @@ contract StreamingEscrowFactoryTest is Test {
     }
 
     function test_initialize_reverts_on_zero_addresses() public {
-        StreamingEscrowFactory fresh = new StreamingEscrowFactory();
+        address impl1 = address(new StreamingEscrowFactory());
         vm.expectRevert(StreamingEscrowFactory.InvalidAddress.selector);
-        fresh.initialize(address(0), ISuperfluid(address(host)), address(escrowImpl));
+        new ERC1967Proxy(
+            impl1,
+            abi.encodeWithSelector(
+                StreamingEscrowFactory.initialize.selector, address(0), ISuperfluid(address(host)), address(escrowImpl)
+            )
+        );
 
-        fresh = new StreamingEscrowFactory();
+        address impl2 = address(new StreamingEscrowFactory());
         vm.expectRevert(StreamingEscrowFactory.InvalidAddress.selector);
-        fresh.initialize(address(this), ISuperfluid(address(0)), address(escrowImpl));
+        new ERC1967Proxy(
+            impl2,
+            abi.encodeWithSelector(
+                StreamingEscrowFactory.initialize.selector, address(this), ISuperfluid(address(0)), address(escrowImpl)
+            )
+        );
 
-        fresh = new StreamingEscrowFactory();
+        address impl3 = address(new StreamingEscrowFactory());
         vm.expectRevert(StreamingEscrowFactory.InvalidAddress.selector);
-        fresh.initialize(address(this), ISuperfluid(address(host)), address(0));
+        new ERC1967Proxy(
+            impl3,
+            abi.encodeWithSelector(
+                StreamingEscrowFactory.initialize.selector, address(this), ISuperfluid(address(host)), address(0)
+            )
+        );
     }
 
     function test_deployEscrow_reverts_on_invalid_addresses() public {

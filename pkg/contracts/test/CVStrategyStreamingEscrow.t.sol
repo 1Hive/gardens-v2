@@ -40,6 +40,7 @@ contract MockRegistryFactory {
 
 contract MockRegistryCommunity {
     address public registryFactory;
+    bool public strategyEnabled = true;
 
     constructor(address _registryFactory) {
         registryFactory = _registryFactory;
@@ -50,6 +51,10 @@ contract MockRegistryCommunity {
     }
 
     function onlyStrategyEnabled(address) external pure {}
+
+    function enabledStrategies(address) external view returns (bool) {
+        return strategyEnabled;
+    }
 
     // IVotingPowerRegistry compatibility stubs
     function getMemberPowerInStrategy(address, address) external pure returns (uint256) {

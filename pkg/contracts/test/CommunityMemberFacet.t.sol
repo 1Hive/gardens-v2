@@ -6,6 +6,7 @@ import "forge-std/Test.sol";
 import {CommunityMemberFacet} from "../src/RegistryCommunity/facets/CommunityMemberFacet.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {TERC20} from "./shared/TERC20.sol";
+import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 contract MockRegistryFactoryFees {
     uint256 public protocolFee;
@@ -93,8 +94,12 @@ contract CommunityMemberFacetTest is Test {
     address internal gardensFeeReceiver = makeAddr("gardensFeeReceiver");
 
     function setUp() public {
-        facet = new CommunityMemberFacetHarness();
-        facet.initializeHarness(address(this));
+        CommunityMemberFacetHarness impl = new CommunityMemberFacetHarness();
+        facet = CommunityMemberFacetHarness(
+            payable(
+                address(new ERC1967Proxy(address(impl), abi.encodeWithSelector(impl.initializeHarness.selector, address(this))))
+            )
+        );
 
         token = new TERC20("Token", "TOK", 18);
         factory = new MockRegistryFactoryFees();
