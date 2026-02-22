@@ -297,26 +297,36 @@ export default function ClientPage({ params }: ClientPageProps) {
   };
 
   const proposalFlowRateBn =
-    proposalStream &&
-    typeof proposalStream === "object" &&
-    "currentFlowRate" in proposalStream ?
+    (
+      proposalStream &&
+      typeof proposalStream === "object" &&
+      "currentFlowRate" in proposalStream
+    ) ?
       toBigInt(proposalStream.currentFlowRate)
     : 0n;
   const streamedUntilSnapshotBn =
-    proposalStream &&
-    typeof proposalStream === "object" &&
-    "streamedUntilSnapshot" in proposalStream ?
+    (
+      proposalStream &&
+      typeof proposalStream === "object" &&
+      "streamedUntilSnapshot" in proposalStream
+    ) ?
       toBigInt(proposalStream.streamedUntilSnapshot)
     : 0n;
   const lastSnapshotAtBn =
-    proposalStream &&
-    typeof proposalStream === "object" &&
-    "lastSnapshotAt" in proposalStream ?
+    (
+      proposalStream &&
+      typeof proposalStream === "object" &&
+      "lastSnapshotAt" in proposalStream
+    ) ?
       toBigInt(proposalStream.lastSnapshotAt)
     : 0n;
   const lastSnapshotAtMs = lastSnapshotAtBn * 1000n;
   const elapsedMs =
-    proposalFlowRateBn > 0n && lastSnapshotAtMs > 0n && nowMs > lastSnapshotAtMs ?
+    (
+      proposalFlowRateBn > 0n &&
+      lastSnapshotAtMs > 0n &&
+      nowMs > lastSnapshotAtMs
+    ) ?
       nowMs - lastSnapshotAtMs
     : 0n;
   const proposalTotalStreamedBn =
@@ -346,7 +356,7 @@ export default function ClientPage({ params }: ClientPageProps) {
       )
     : null;
   const proposalTotalStreamedDisplay =
-    poolToken ? (proposalTotalStreamed ?? 0).toFixed(5) : null;
+    poolToken ? (proposalTotalStreamed ?? 0).toFixed(4) : null;
   const streamInfo = proposalData?.strategy?.stream;
   const superTokenAddress = proposalData?.strategy?.config?.superfluidToken as
     | Address
@@ -383,8 +393,9 @@ export default function ClientPage({ params }: ClientPageProps) {
   useEffect(() => {
     if (!shouldTickFallback) return;
     const interval = setInterval(() => {
+      if (typeof document !== "undefined" && document.hidden) return;
       setNowMs(BigInt(Date.now()));
-    }, 100);
+    }, 1000);
     return () => clearInterval(interval);
   }, [shouldTickFallback]);
 
@@ -600,7 +611,7 @@ export default function ClientPage({ params }: ClientPageProps) {
       {/* main section: proposal details + conviction progress + vote proposals & execute buttons */}
       <section className="hidden sm:block sm:col-span-12 xl:col-span-9">
         <div
-          className={`section-layout flex flex-col gap-8  ${status === "disputed" ? "!border-error-content" : ""} ${status === "executed" ? "!border-primary-content" : ""}`}
+          className={`section-layout flex flex-col gap-8  ${status === "disputed" ? "!border-warning-content" : ""} ${status === "executed" ? "!border-primary-content" : ""}`}
         >
           <div className="flex flex-col items-start gap-10 sm:flex-row">
             <div className="flex w-full flex-col gap-6">
@@ -965,15 +976,19 @@ export default function ClientPage({ params }: ClientPageProps) {
                 {status !== "executed" &&
                   status !== "cancelled" &&
                   status !== "disputed" && (
-                  <InfoBox
-                    title="Information"
-                    infoBoxType="info"
-                    content={`${isSignalingType ? "This proposal is open and can be supported or disputed by the community. Only the proposal creator can cancel" : "This proposal is currently open. It will pass if nobody successfully disputes it and it receives enough support."}`}
-                  />
-                )}
+                    <InfoBox
+                      title="Information"
+                      infoBoxType="info"
+                      content={`${isSignalingType ? "This proposal is open and can be supported or disputed by the community. Only the proposal creator can cancel" : "This proposal is currently open. It will pass if nobody successfully disputes it and it receives enough support."}`}
+                    />
+                  )}
                 {status === "disputed" && (
                   <InfoBox
-                    title={isStreamingType ? "Streaming During Dispute" : "Proposal Disputed"}
+                    title={
+                      isStreamingType ?
+                        "Streaming During Dispute"
+                      : "Proposal Disputed"
+                    }
                     infoBoxType="warning"
                     content={
                       isStreamingType ?
@@ -1304,16 +1319,16 @@ export default function ClientPage({ params }: ClientPageProps) {
                         {formatFlowPerMonth(currentFlowRateForDisplay)}/m
                       </p>
                     </div>
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="subtitle2">Total</p>
-                    <div className="flex items-center gap-2">
-                      {proposalTotalStreamedDisplay != null ?
-                        <p className="text-right">
-                          {proposalTotalStreamedDisplay}
-                        </p>
-                      : <p className="text-right">--</p>}
-                      {poolToken?.address && poolToken?.symbol && (
-                        <EthAddress
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="subtitle2">Total</p>
+                      <div className="flex items-center gap-2">
+                        {proposalTotalStreamedDisplay != null ?
+                          <p className="text-right">
+                            {proposalTotalStreamedDisplay}
+                          </p>
+                        : <p className="text-right">--</p>}
+                        {poolToken?.address && poolToken?.symbol && (
+                          <EthAddress
                             address={poolToken.address}
                             label={poolToken.symbol}
                             shortenAddress={false}
@@ -1424,15 +1439,19 @@ export default function ClientPage({ params }: ClientPageProps) {
                   {status !== "executed" &&
                     status !== "cancelled" &&
                     status !== "disputed" && (
-                    <InfoBox
-                      title="Information"
-                      infoBoxType="info"
-                      content={`${isSignalingType ? "This proposal is open and can be supported or disputed by the community. Only the proposal creator can cancel" : "This proposal is currently open. It will pass if nobody successfully disputes it and it receives enough support."}`}
-                    />
-                  )}
+                      <InfoBox
+                        title="Information"
+                        infoBoxType="info"
+                        content={`${isSignalingType ? "This proposal is open and can be supported or disputed by the community. Only the proposal creator can cancel" : "This proposal is currently open. It will pass if nobody successfully disputes it and it receives enough support."}`}
+                      />
+                    )}
                   {status === "disputed" && (
                     <InfoBox
-                      title={isStreamingType ? "Streaming During Dispute" : "Proposal Disputed"}
+                      title={
+                        isStreamingType ?
+                          "Streaming During Dispute"
+                        : "Proposal Disputed"
+                      }
                       infoBoxType="warning"
                       content={
                         isStreamingType ?
