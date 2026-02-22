@@ -5,13 +5,15 @@ on:
   push:
     branches:
       - main
-      - develop
-      - edit-proposal
+      - dev
     paths:
       - pkg/contracts/**/*
       - foundry.toml
       - .github/workflows/coverage.yml
   pull_request:
+    branches:
+      - main
+      - dev
     paths:
       - pkg/contracts/**/*
       - foundry.toml
@@ -40,7 +42,9 @@ jobs:
           run_install: false
 
       - name: Init required submodules
-        run: git submodule update --init --recursive --depth 1 --jobs 4
+        run: |
+          git submodule sync --recursive
+          git submodule update --init --recursive --depth 1 --jobs 4
 
       - name: Run coverage
         run: pnpm --dir pkg/contracts run coverage

@@ -3,7 +3,6 @@
 pragma solidity ^0.8.19;
 
 import "forge-std/Test.sol";
-import "forge-std/console.sol";
 
 import {ISafe as Safe, SafeProxyFactory, Enum} from "../../src/interfaces/ISafe.sol";
 
@@ -66,7 +65,6 @@ contract SafeSetup is Test {
             size := extcodehash(_contract)
         }
         require(size > 0, "l not deployed");
-        // console.log("l: %s", address(_contract));
     }
 
     function isContract(address account) internal view returns (bool) {
@@ -78,7 +76,6 @@ contract SafeSetup is Test {
     }
 
     function _councilSafeWithOwner(address _owner, SafeProxyFactory _safeProxyFactory) public returns (Safe) {
-        // console.log("isContract 1", isContract(address(0x41675C099F32341bf84BFc5382aF534df5C7461a)));
         if (address(councilSafeOwner) == address(0)) {
             if (_safeProxyFactory == SafeProxyFactory(address(0))) {
                 address __safeSingletonInternal = address(_createSafe());
@@ -99,7 +96,6 @@ contract SafeSetup is Test {
     }
 
     function _councilSafe() public returns (Safe) {
-        // console.log("isContract 2", isContract(address(0x41675C099F32341bf84BFc5382aF534df5C7461a)));
         councilMember1 = vm.addr(councilMemberPK);
         vm.label(councilMember1, "councilMember1");
 
@@ -108,24 +104,15 @@ contract SafeSetup is Test {
 
             _safeSingleton = address(_createSafe());
             vm.label(address(spf), "SafeProxyFactory");
-            // console.log("SafeProxyFactory: %s", address(spf));
-            // console.log("SafeSingleton: %s", address(_safeSingleton));
 
             address sp = address(spf.createProxyWithNonce(address(_safeSingleton), bytes(hex"00"), SAFE_NONCE));
             councilSafe = Safe(payable(address(sp)));
-            // console.log("###2");
-            // console.log("councilSafe address: %s", address(councilSafe));
-            // console.log("###3");
             vm.label(address(councilSafe), "councilSafe");
-            // console.log("###4");
             address[] memory owners = new address[](3);
-            // console.log("###5");
             owners[0] = address(councilMember1);
             owners[1] = address(0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266);
             owners[2] = address(0x70997970C51812dc3A010C7d01b50e0d17dc79C8);
-            // console.log("###6");
             councilSafe.setup(owners, 1, address(0), "", address(0), address(0), 0, payable(address(0)));
-            // console.log("###7");
         }
         return councilSafe;
     }
@@ -141,9 +128,6 @@ contract SafeSetup is Test {
         view
         returns (bytes memory signature)
     {
-        // console.log("to_", to_);
-        // console.log("councilSafe_", address(councilSafe_));
-        // console.log("councilMemberPK_", councilMemberPK_);
 
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(councilMemberPK_, getHash(to_, data_, councilSafe_));
 

@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity ^0.8.19;
 
-import "forge-std/console.sol";
 import {Allo} from "allo-v2-contracts/core/Allo.sol";
 import {
     CVStrategy,
@@ -10,7 +9,7 @@ import {
     CreateProposal,
     PointSystemConfig,
     ArbitrableConfig,
-    CVStrategyInitializeParamsV0_2
+    CVStrategyInitializeParamsV0_3
 } from "../src/CVStrategy/CVStrategy.sol";
 import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
 import {IRegistry, Metadata} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
@@ -52,8 +51,9 @@ contract CVStrategyHelpers is Native, Accounts {
         address[] memory initialAllowlist,
         address sybilScorer,
         uint256 sybilScorerThreshold,
-        address superfluidToken
-    ) public pure returns (CVStrategyInitializeParamsV0_2 memory params) {
+        address superfluidToken,
+        uint256 streamingRatePerSecond
+    ) public pure returns (CVStrategyInitializeParamsV0_3 memory params) {
         // IAllo allo = IAllo(ALLO_PROXY_ADDRESS);
         // params.cvParams.decay = _etherToFloat(0.9999799 ether); // alpha = decay
         params.cvParams.decay = 9940581; // alpha = decay
@@ -72,6 +72,7 @@ contract CVStrategyHelpers is Native, Accounts {
         params.sybilScorer = sybilScorer;
         params.sybilScorerThreshold = sybilScorerThreshold;
         params.superfluidToken = superfluidToken;
+        params.streamingRatePerSecond = streamingRatePerSecond;
 
         if (pointConfig.maxAmount == 0) {
             // PointSystemConfig memory pointConfig;
@@ -82,6 +83,31 @@ contract CVStrategyHelpers is Native, Accounts {
         params.arbitrableConfig = arbitrableConfig;
         // params.initialAllowlist = new address[](1);
         params.initialAllowlist = initialAllowlist;
+    }
+
+    function getParams(
+        address registryCommunity,
+        ProposalType proposalType,
+        PointSystem pointSystem,
+        PointSystemConfig memory pointConfig,
+        ArbitrableConfig memory arbitrableConfig,
+        address[] memory initialAllowlist,
+        address sybilScorer,
+        uint256 sybilScorerThreshold,
+        address superfluidToken
+    ) public pure returns (CVStrategyInitializeParamsV0_3 memory params) {
+        return getParams(
+            registryCommunity,
+            proposalType,
+            pointSystem,
+            pointConfig,
+            arbitrableConfig,
+            initialAllowlist,
+            sybilScorer,
+            sybilScorerThreshold,
+            superfluidToken,
+            0
+        );
     }
 
     function createPool(
@@ -96,7 +122,7 @@ contract CVStrategyHelpers is Native, Accounts {
         ArbitrableConfig memory arbitrableConfig
     ) public returns (uint256 poolId) {
         // IAllo allo = IAllo(ALLO_PROXY_ADDRESS);
-        CVStrategyInitializeParamsV0_2 memory params = getParams(
+        CVStrategyInitializeParamsV0_3 memory params = getParams(
             registryCommunity,
             proposalType,
             pointSystem,
@@ -105,7 +131,8 @@ contract CVStrategyHelpers is Native, Accounts {
             new address[](1),
             address(0),
             0,
-            address(0)
+            address(0),
+            0
         );
 
         address[] memory _pool_managers = new address[](2);

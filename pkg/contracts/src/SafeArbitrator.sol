@@ -39,6 +39,7 @@ contract SafeArbitrator is IArbitrator, ProxyOwnableUpgrader, ReentrancyGuardUpg
     DisputeStruct[] public disputes; // Stores the dispute info. disputes[disputeID].
     uint256 lastDisputeID; // The ID of the last dispute.
     mapping(address arbitrable => address safe) public arbitrableTribunalSafe; //Map arbitrable address to tribunal safe address
+    uint256[50] private __gap;
 
     error OnlySafe(address sender, address safe);
     error NotEnoughArbitrationFees();
@@ -137,7 +138,6 @@ contract SafeArbitrator is IArbitrator, ProxyOwnableUpgrader, ReentrancyGuardUpg
 
         (bool success,) = payable(msg.sender).call{value: dispute.arbitrationFee}("");
         require(success, "Transfer failed");
-        // console.log("dispute.arbitrated: ", address(dispute.arbitrated));
         dispute.arbitrated.rule(_disputeID, dispute.ruling);
         emit Ruling(IArbitrable(_arbitrable), _disputeID, _ruling);
     }
@@ -177,5 +177,4 @@ contract SafeArbitrator is IArbitrator, ProxyOwnableUpgrader, ReentrancyGuardUpg
         overridden = false;
     }
 
-    uint256[50] private __gap;
 }

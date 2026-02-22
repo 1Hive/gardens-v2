@@ -5,14 +5,20 @@
     {
       "name": "RegistryFactory",
       "startBlock": 5998577,
-      "address": "0xbff8a6c13d6536d48dce27186fc3fb503539e5f0",
+      "address": "0xe01464829b1b888bf92a8d1cec3114bb9787984d",
       "customTemplate": "registryFactory"
     },
     {
       "name": "PassportScorer",
       "startBlock": 5998577,
-      "address": "0x0e3992731e4ba388ccbb6fc92a030f809ebffc23",
+      "address": "0xd58ff588177f02cc535a0e235a4c002a17e27202",
       "customTemplate": "passportScorer"
+    },
+    {
+      "name": "GoodDollarSybil",
+      "startBlock": 5998577,
+      "address": "0xa50ec350146e42b1ad15705da04c7cb6929e1f2a",
+      "customTemplate": "goodDollarSybil"
     }
   ]
 }

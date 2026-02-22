@@ -16,7 +16,6 @@ contract TransferOwnershipAllContracts is BaseMultiChain {
                 address(new ProxyOwner()), abi.encodeWithSelector(ProxyOwner.initialize.selector, address(SENDER))
             )
         );
-        console.log("ProxyOwner: ", proxyOwner);
 
         // address proxyOwner = networkJson.readAddress(getKeyNetwork(".ENVS.PROXY_OWNER"));
         ProxyOwner proxy = ProxyOwner(payable(address(proxyOwner)));

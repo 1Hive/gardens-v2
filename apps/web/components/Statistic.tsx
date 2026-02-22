@@ -19,7 +19,7 @@ export const Statistic = ({
 }: IdentifierProps) => {
   return (
     <div
-      className={`flex items-center text-neutral-soft-content ${icon ? "gap-2" : "gap-0"} ${className} `}
+      className={`flex items-center text-neutral-soft-content ${icon ? "gap-2" : "gap-1"} ${className} `}
     >
       <div
         className={"tooltip flex items-center gap-2 max-w-sm"}

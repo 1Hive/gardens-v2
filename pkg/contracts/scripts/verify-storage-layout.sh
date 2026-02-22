@@ -299,6 +299,61 @@ process_directory() {
     return $failed_facets
 }
 
+# Function to verify RegistryFactory storage layout invariants.
+# This catches accidental slot shifts in non-diamond upgradeable contracts.
+verify_registry_factory_storage() {
+    local contract_name="RegistryFactory"
+    local contract_path="src/RegistryFactory/RegistryFactory.sol"
+
+    if [ ! -f "$contract_path" ]; then
+        echo -e "${YELLOW}Skipping RegistryFactory check (file not found: $contract_path)${NC}"
+        return 0
+    fi
+
+    echo -e "${BLUE}=== Processing RegistryFactory ===${NC}"
+    printf "  Checking storage layout invariants... "
+
+    local layout_tmp="/tmp/registry_factory_layout_$$.txt"
+    FOUNDRY_DISABLE_NIGHTLY_WARNING=1 forge inspect "$contract_name" storageLayout > "$layout_tmp" 2>/dev/null
+
+    if [ ! -s "$layout_tmp" ]; then
+        echo -e "${RED}✗ FAILED${NC}"
+        echo -e "${RED}  Could not inspect RegistryFactory storage layout${NC}"
+        rm -f "$layout_tmp"
+        return 1
+    fi
+
+    local ok=true
+
+    if ! grep -q "| streamingEscrowFactory    | address" "$layout_tmp"; then
+        ok=false
+        [ "$VERBOSE" = true ] && echo -e "${RED}  Missing streamingEscrowFactory storage field${NC}"
+    fi
+    if ! grep -q "| globalPauseController     | address" "$layout_tmp"; then
+        ok=false
+        [ "$VERBOSE" = true ] && echo -e "${RED}  Missing globalPauseController storage field${NC}"
+    fi
+    if ! grep -q "| __gap                     | uint256\\[42\\]                              | 118" "$layout_tmp"; then
+        ok=false
+        [ "$VERBOSE" = true ] && echo -e "${RED}  Expected __gap (uint256[42]) at slot 118${NC}"
+    fi
+
+    rm -f "$layout_tmp"
+
+    if [ "$ok" = true ]; then
+        echo -e "${GREEN}✓ MATCH${NC}"
+        echo ""
+        return 0
+    fi
+
+    echo -e "${RED}✗ MISMATCH${NC}"
+    if [ "$VERBOSE" = false ]; then
+        echo -e "${YELLOW}  Run with --verbose to see detailed differences${NC}"
+    fi
+    echo ""
+    return 1
+}
+
 # Build contracts if not skipped
 if [ "$SKIP_BUILD" = false ]; then
     mkdir -p "$CACHE_DIR"
@@ -365,6 +420,11 @@ else
             ((TOTAL_FAILED += failed))
         fi
     done
+
+    # Verify non-diamond upgradeable contracts that still require storage safety checks
+    if ! verify_registry_factory_storage; then
+        ((TOTAL_FAILED += 1))
+    fi
 fi
 
 # Cleanup any remaining temp files
@@ -374,10 +434,10 @@ rm -f /tmp/main_*_$$.txt /tmp/facet_*_$$.txt
 echo -e "${BLUE}=== Summary ===${NC}"
 if [ $TOTAL_FAILED -eq 0 ]; then
     echo -e "${GREEN}✓ All storage layouts match!${NC}"
-    echo -e "${GREEN}  Diamond pattern storage alignment verified.${NC}"
+    echo -e "${GREEN}  Storage alignment verified (diamond facets + RegistryFactory).${NC}"
     exit 0
 else
-    echo -e "${RED}✗ $TOTAL_FAILED facet(s) have storage layout mismatches${NC}"
+    echo -e "${RED}✗ $TOTAL_FAILED storage check(s) failed${NC}"
     echo -e "${RED}  CRITICAL: Fix storage alignment before deployment!${NC}"
     echo -e "${YELLOW}  Run with --verbose to see detailed differences${NC}"
     exit 1

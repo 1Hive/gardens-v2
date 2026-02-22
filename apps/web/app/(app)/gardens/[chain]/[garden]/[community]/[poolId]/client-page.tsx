@@ -2,11 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import {
+  ArrowPathIcon,
+  ArrowTopRightOnSquareIcon,
   InformationCircleIcon,
   PowerIcon,
   UserGroupIcon,
 } from "@heroicons/react/24/outline";
-import { Address } from "viem";
+import { Address, formatUnits } from "viem";
 import {
   useBalance,
   useAccount,
@@ -31,6 +33,8 @@ import {
   ActivatePoints,
   Button,
   CheckSybil,
+  DisplayNumber,
+  EthAddress,
   InfoBox,
   PoolGovernance,
   PoolMetrics,
@@ -44,16 +48,19 @@ import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import { SubscriptionId, usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
-import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
+import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
+import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { usePoolToken } from "@/hooks/usePoolToken";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
+import { useSuperfluidStream } from "@/hooks/useSuperfluidStream";
 import { useSuperfluidToken } from "@/hooks/useSuperfluidToken";
-import { registryCommunityABI } from "@/src/generated";
+import { cvStrategyABI, registryCommunityABI } from "@/src/generated";
 import { PoolTypes } from "@/types";
 import {
   calculatePercentageBigInt,
   formatTokenAmount,
+  SEC_TO_MONTH,
   SCALE_PRECISION,
 } from "@/utils/numbers";
 
@@ -65,8 +72,8 @@ export default function ClientPage({
   params: { chain: string; poolId: number; garden: string; community: string };
 }) {
   const searchParams = useCollectQueryParams();
-
-  const { data, refetch, error, fetching } = useSubgraphQuery<getPoolDataQuery>(
+  const { publish } = usePubSubContext();
+  const { data, error, refetch, fetching } = useSubgraphQuery<getPoolDataQuery>(
     {
       query: getPoolDataDocument,
       variables: { poolId: poolId, garden: garden.toLowerCase() },
@@ -148,14 +155,8 @@ export default function ClientPage({
   });
 
   const registryCommunity = result?.registryCommunity;
-  let {
-    communityName,
-    members,
-    strategies,
-    communityFee,
-    registerStakeAmount,
-    protocolFee,
-  } = registryCommunity ?? {};
+  let { communityName, communityFee, registerStakeAmount, protocolFee } =
+    registryCommunity ?? {};
 
   const registerStakeAmountValue = registerStakeAmount ?? 0;
   const registerStakeAmountBn = BigInt(registerStakeAmountValue);
@@ -179,7 +180,6 @@ export default function ClientPage({
   const [triggerSybilCheckModalClose, setTriggerSybilCheckModalClose] =
     useState(false);
   const [selectedTab, setSelectedTab] = useState(0);
-  //
 
   const { data: memberData, error: errorMemberData } =
     useSubgraphQuery<isMemberQuery>({
@@ -271,11 +271,20 @@ export default function ClientPage({
       }
     };
   }, [connected]);
-  //
 
   const poolTokenAddr = strategy?.token as Address;
 
   const proposalType = strategy?.config.proposalType;
+  const effectiveStrategy =
+    strategy ?
+      {
+        ...strategy,
+        config: {
+          ...strategy.config,
+          proposalType,
+        },
+      }
+    : strategy;
 
   const numericChainId = Number(chain);
   const chainConfig =
@@ -364,9 +373,7 @@ export default function ClientPage({
     poolAddress: strategy?.id,
     poolTokenAddr: poolTokenAddr,
     enabled:
-      !!strategy &&
-      PoolTypes[strategy.config.proposalType] !== "signaling" &&
-      !!poolTokenAddr,
+      !!strategy && PoolTypes[proposalType] !== "signaling" && !!poolTokenAddr,
     watch: true,
   });
 
@@ -390,20 +397,64 @@ export default function ClientPage({
     +minThresholdPoints > +totalPointsActivatedInPool;
 
   const poolType = proposalType != null ? PoolTypes[proposalType] : undefined;
+  const isStreamingPool = poolType === "streaming";
   const needsFundingToken = poolType === "funding";
   const isMissingFundingToken = needsFundingToken && !poolToken;
   const [hasWaitedForPoolToken, setHasWaitedForPoolToken] = useState(false);
 
-  const disableCreateProposalBtnCondition: ConditionObject[] = [
-    {
-      condition: !isMemberCommunity,
-      message: "Join community first",
-    },
-  ];
+  const {
+    tooltipMessage: syncStreamTooltipMessage,
+    isConnected: isSyncStreamConnected,
+    missmatchUrl: isSyncStreamWrongNetwork,
+  } = useDisableButtons();
+  const { write: writeRebalance, isLoading: isRebalanceLoading } =
+    useContractWriteWithConfirmations({
+      address: strategy?.id as Address,
+      abi: cvStrategyABI,
+      functionName: "rebalance",
+      contractName: "CVStrategy",
+      fallbackErrorMessage:
+        "Failed to sync stream for this strategy. Please try again.",
+      onConfirmations: () => {
+        publish({
+          topic: "proposal",
+          containerId: poolId,
+          function: "rebalance",
+        });
+      },
+    });
 
-  const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons(
-    disableCreateProposalBtnCondition,
-  );
+  const streamInfo = strategy?.stream;
+  const superfluidExplorerBaseUrl =
+    chainId != null ?
+      chainConfigMap[chainId]?.superfluidExplorerUrl
+    : undefined;
+  const poolStreamExplorerUrl =
+    (
+      superfluidExplorerBaseUrl != null &&
+      superfluidExplorerBaseUrl !== "" &&
+      streamInfo?.superfluidGDA != null &&
+      streamInfo.superfluidGDA !== ""
+    ) ?
+      `${superfluidExplorerBaseUrl}/pools/${streamInfo.superfluidGDA}`
+    : undefined;
+  const streamTokenDecimals =
+    superTokenInfo?.decimals ?? poolToken?.decimals ?? 18;
+  const maxFlowRateForDisplay = streamInfo?.maxFlowRate as
+    | bigint
+    | null
+    | undefined;
+  const currentFlowRateForDisplay = streamInfo?.streamLastFlowRate as
+    | bigint
+    | null
+    | undefined;
+  const { totalAmountDistributedBn: totalStreamedFromGDA } =
+    useSuperfluidStream({
+      receiver: streamInfo?.superfluidGDA as Address,
+      superToken: effectiveSuperToken as Address,
+      chainId,
+      containerId: poolId,
+    });
 
   useEffect(() => {
     if (isMissingFundingToken && strategy && !error) {
@@ -479,6 +530,101 @@ export default function ClientPage({
         BigInt(strategy.totalEffectiveActivePoints),
       )
     : undefined;
+
+  const formatFlowPerMonth = (flowRate?: bigint | null) => {
+    if (flowRate == null) return "--";
+    const monthlyFlow =
+      Number(formatUnits(flowRate, streamTokenDecimals)) * SEC_TO_MONTH;
+    if (!Number.isFinite(monthlyFlow)) return "--";
+    const value = monthlyFlow.toLocaleString(undefined, {
+      maximumFractionDigits: 4,
+    });
+    return poolToken?.symbol ? `${value} ${poolToken.symbol}` : value;
+  };
+  const formatTotalStreamed = (amount?: bigint | null) => {
+    if (amount == null) return "--";
+    const value = Number(formatUnits(amount, streamTokenDecimals));
+    if (!Number.isFinite(value)) return "--";
+    return value.toLocaleString(undefined, {
+      maximumFractionDigits: 5,
+    });
+  };
+
+  const StreamingInfoCard = () => {
+    if (!isStreamingPool) return null;
+
+    return (
+      <section className="section-layout">
+        <div className="flex flex-col gap-3">
+          <h4>Stream Info</h4>
+          <div className="rounded-lg border border-neutral-soft-content/20 p-3 flex flex-col gap-2">
+            <div className="flex items-center justify-between gap-3">
+              <p className="subtitle2">Budget</p>
+              <p className="text-right">
+                {formatFlowPerMonth(maxFlowRateForDisplay)}/m
+              </p>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <p className="subtitle2">Streaming</p>
+              <p className="text-right">
+                {formatFlowPerMonth(currentFlowRateForDisplay)}/m
+              </p>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <p className="subtitle2">Total</p>
+              <div className="flex items-center gap-2">
+                <DisplayNumber
+                  number={formatTotalStreamed(totalStreamedFromGDA)}
+                  valueClassName="text-right"
+                />
+                {poolToken?.address && poolToken?.symbol && (
+                  <EthAddress
+                    address={poolToken.address}
+                    label={poolToken.symbol}
+                    shortenAddress={false}
+                    icon={false}
+                    actions="none"
+                  />
+                )}
+              </div>
+            </div>
+          </div>
+          {poolStreamExplorerUrl != null && poolStreamExplorerUrl !== "" && (
+            <a
+              href={poolStreamExplorerUrl}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="text-sm underline underline-offset-2 w-fit inline-flex items-center gap-1"
+            >
+              View on Superfluid Explorer
+              <ArrowTopRightOnSquareIcon className="h-4 w-4" />
+            </a>
+          )}
+          {(currentFlowRateForDisplay ?? 0n) === 0n && (
+            <InfoBox
+              infoBoxType="info"
+              className="w-full"
+              title="No active stream"
+            >
+              This pool currently has no active outflow.
+            </InfoBox>
+          )}
+          <Button
+            btnStyle="outline"
+            color="primary"
+            className="sm:w-full"
+            disabled={!isSyncStreamConnected || isSyncStreamWrongNetwork}
+            tooltip={syncStreamTooltipMessage}
+            isLoading={isRebalanceLoading}
+            onClick={() => writeRebalance?.()}
+            icon={<ArrowPathIcon className="h-4 w-4" />}
+          >
+            Sync Stream
+          </Button>
+        </div>
+      </section>
+    );
+  };
 
   const registerAndActivateFromPool = (
     <>
@@ -601,144 +747,65 @@ export default function ClientPage({
     </>
   );
 
-  return (
-    <>
-      {showMissingFundingTokenWarning && (
-        <div className="col-span-12 mt-4">
-          <InfoBox infoBoxType="warning" title="Funding token unavailable">
-            We could not load the funding token for this pool.
-          </InfoBox>
-        </div>
-      )}
-      {/* ================= DESKTOP ================= */}
+  const StreamingPoolInfo = () => {
+    if (!isStreamingPool) return null;
 
-      {/*  Join community - Activate governace path and description from pool page */}
-      <div className="hidden col-span-12 xl:col-span-9 sm:flex flex-col gap-6">
-        <PoolHeader
-          poolToken={poolToken}
-          strategy={strategy}
-          arbitrableConfig={data.arbitrableConfigs[0]}
-          poolId={poolId}
-          ipfsResult={metadata}
-          isEnabled={isEnabled}
-          maxAmount={maxAmount}
-          superTokenCandidate={superTokenCandidate}
-          superToken={
-            superTokenInfo && {
-              ...superTokenInfo,
-              sameAsUnderlying: superTokenCandidate?.sameAsUnderlying,
-              address: effectiveSuperToken as Address,
-            }
-          }
-          setSuperTokenCandidate={setSuperTokenCandidate}
-          minThGtTotalEffPoints={minThGtTotalEffPoints}
-          communityName={communityName ?? ""}
-        />
-        {registerAndActivateFromPool}
-      </div>
+    return (
+      <InfoBox
+        infoBoxType="info"
+        title="Streaming pool"
+        className="rounded-xl bg-neutral sm:p-4"
+      >
+        This pool supports continuous funding via Superfluid streams. Pool
+        balances and proposal execution can change over time as streams flow in.
+      </InfoBox>
+    );
+  };
 
-      {isEnabled && (
-        <div className="hidden sm:col-span-12 xl:col-span-3 sm:flex flex-col gap-6">
-          <>
-            {poolToken && PoolTypes[proposalType] !== "signaling" && (
-              <PoolMetrics
-                communityAddress={communityAddress}
-                strategy={strategy}
-                poolId={poolId}
-                poolToken={poolToken}
-                chainId={Number(chain)}
-                superToken={
-                  superTokenInfo && {
-                    ...superTokenInfo,
-                    sameAsUnderlying: superTokenCandidate?.sameAsUnderlying,
-                    address: effectiveSuperToken as Address,
-                  }
-                }
-              />
-            )}
-          </>
+  return effectiveStrategy ?
+      <>
+        {showMissingFundingTokenWarning && (
+          <div className="col-span-12 mt-4">
+            <InfoBox infoBoxType="warning" title="Funding token unavailable">
+              We could not load the funding token for this pool.
+            </InfoBox>
+          </div>
+        )}
+        {/* ================= DESKTOP ================= */}
 
-          <PoolGovernance
-            memberPoolWeight={memberPoolWeight}
-            tokenDecimals={tokenDecimals}
-            strategy={strategy}
-            communityAddress={communityAddress}
-            memberTokensInCommunity={memberTokensInCommunity}
-            isMemberCommunity={isMemberCommunity}
-            memberActivatedStrategy={memberActivatedStrategy}
-            membersStrategyData={
-              membersStrategies ?
-                { memberStrategies: membersStrategies }
-              : undefined
-            }
-          />
-        </div>
-      )}
-
-      {isEnabled && (
-        <section className="hidden col-span-12 xl:col-span-9 sm:flex flex-col gap-4 sm:gap-8">
-          <Proposals
+        {/*  Join community - Activate governace path and description from pool page */}
+        <div className="hidden col-span-12 xl:col-span-9 sm:flex flex-col gap-6">
+          <PoolHeader
             poolToken={poolToken}
-            strategy={{ ...strategy, title: metadata?.title }}
-            alloInfo={alloInfo}
-            communityAddress={communityAddress}
-            createProposalUrl={createProposalUrl}
-            proposalType={proposalType}
+            strategy={effectiveStrategy}
+            arbitrableConfig={data.arbitrableConfigs[0]}
+            poolId={poolId}
+            ipfsResult={metadata}
+            isEnabled={isEnabled}
+            maxAmount={maxAmount}
+            superTokenCandidate={superTokenCandidate}
+            superToken={
+              superTokenInfo && {
+                ...superTokenInfo,
+                sameAsUnderlying: superTokenCandidate?.sameAsUnderlying,
+                address: effectiveSuperToken as Address,
+              }
+            }
+            setSuperTokenCandidate={setSuperTokenCandidate}
             minThGtTotalEffPoints={minThGtTotalEffPoints}
+            communityName={communityName ?? ""}
           />
-        </section>
-      )}
-
-      {/* ================= MOBILE ================= */}
-
-      <div className="block md:hidden col-span-12">
-        <div
-          role="tablist"
-          className="tabs tabs-boxed w-full border1 bg-neutral p-1"
-          aria-label="Pool sections"
-        >
-          {["Overview", "Proposals", "Governance"].map((label, index) => (
-            <button
-              key={label}
-              type="button"
-              role="tab"
-              className={`tab rounded-lg border-0 text-neutral-soft-content ${selectedTab === index ? "tab-active !bg-primary-button dark:!bg-primary-dark-base !text-neutral-inverted-content" : "hover:text-neutral-content"}`}
-              aria-selected={selectedTab === index}
-              onClick={() => setSelectedTab(index)}
-            >
-              {label}
-            </button>
-          ))}
+          <StreamingPoolInfo />
+          {registerAndActivateFromPool}
         </div>
 
-        <div className="mt-4">
-          {selectedTab === 0 && isEnabled && (
-            <div className="col-span-12 sm:hidden space-y-6">
-              <PoolHeader
-                poolToken={poolToken}
-                strategy={strategy}
-                arbitrableConfig={data.arbitrableConfigs[0]}
-                poolId={poolId}
-                ipfsResult={metadata}
-                isEnabled={isEnabled}
-                maxAmount={maxAmount}
-                superTokenCandidate={superTokenCandidate}
-                superToken={
-                  superTokenInfo && {
-                    ...superTokenInfo,
-                    sameAsUnderlying: superTokenCandidate?.sameAsUnderlying,
-                    address: effectiveSuperToken as Address,
-                  }
-                }
-                setSuperTokenCandidate={setSuperTokenCandidate}
-                minThGtTotalEffPoints={minThGtTotalEffPoints}
-                communityName={communityName ?? ""}
-              />
-
+        {isEnabled && (
+          <div className="hidden sm:col-span-12 xl:col-span-3 sm:flex flex-col gap-6">
+            <>
               {poolToken && PoolTypes[proposalType] !== "signaling" && (
                 <PoolMetrics
                   communityAddress={communityAddress}
-                  strategy={strategy}
+                  strategy={effectiveStrategy}
                   poolId={poolId}
                   poolToken={poolToken}
                   chainId={Number(chain)}
@@ -751,42 +818,143 @@ export default function ClientPage({
                   }
                 />
               )}
-            </div>
-          )}
+            </>
+            <StreamingInfoCard />
 
-          {selectedTab === 1 && isEnabled && (
+            <PoolGovernance
+              memberPoolWeight={memberPoolWeight}
+              tokenDecimals={tokenDecimals}
+              strategy={effectiveStrategy}
+              communityAddress={communityAddress}
+              memberTokensInCommunity={memberTokensInCommunity}
+              isMemberCommunity={isMemberCommunity}
+              memberActivatedStrategy={memberActivatedStrategy}
+              membersStrategyData={
+                membersStrategies ?
+                  { memberStrategies: membersStrategies }
+                : undefined
+              }
+            />
+          </div>
+        )}
+
+        {isEnabled && (
+          <section className="hidden col-span-12 xl:col-span-9 sm:flex flex-col gap-4 sm:gap-8">
             <Proposals
               poolToken={poolToken}
-              strategy={{ ...strategy, title: metadata?.title }}
+              strategy={{ ...effectiveStrategy, title: metadata?.title }}
               alloInfo={alloInfo}
               communityAddress={communityAddress}
               createProposalUrl={createProposalUrl}
               proposalType={proposalType}
               minThGtTotalEffPoints={minThGtTotalEffPoints}
             />
-          )}
+          </section>
+        )}
 
-          {selectedTab === 2 && (
-            <>
-              <PoolGovernance
-                memberPoolWeight={memberPoolWeight}
-                tokenDecimals={tokenDecimals}
-                strategy={strategy}
+        {/* ================= MOBILE ================= */}
+
+        <div className="block md:hidden col-span-12">
+          <div
+            role="tablist"
+            className="tabs tabs-boxed w-full border1 bg-neutral p-1"
+            aria-label="Pool sections"
+          >
+            {["Overview", "Proposals", "Governance"].map((label, index) => (
+              <button
+                key={label}
+                type="button"
+                role="tab"
+                className={`tab rounded-lg border-0 text-neutral-soft-content ${selectedTab === index ? "tab-active !bg-primary-button dark:!bg-primary-dark-base !text-neutral-inverted-content" : "hover:text-neutral-content"}`}
+                aria-selected={selectedTab === index}
+                onClick={() => setSelectedTab(index)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          <div className="mt-4">
+            {selectedTab === 0 && isEnabled && (
+              <div className="col-span-12 sm:hidden space-y-6">
+                <PoolHeader
+                  poolToken={poolToken}
+                  strategy={effectiveStrategy}
+                  arbitrableConfig={data.arbitrableConfigs[0]}
+                  poolId={poolId}
+                  ipfsResult={metadata}
+                  isEnabled={isEnabled}
+                  maxAmount={maxAmount}
+                  superTokenCandidate={superTokenCandidate}
+                  superToken={
+                    superTokenInfo && {
+                      ...superTokenInfo,
+                      sameAsUnderlying: superTokenCandidate?.sameAsUnderlying,
+                      address: effectiveSuperToken as Address,
+                    }
+                  }
+                  setSuperTokenCandidate={setSuperTokenCandidate}
+                  minThGtTotalEffPoints={minThGtTotalEffPoints}
+                  communityName={communityName ?? ""}
+                />
+                <StreamingPoolInfo />
+                {poolToken && PoolTypes[proposalType] !== "signaling" && (
+                  <PoolMetrics
+                    communityAddress={communityAddress}
+                    strategy={effectiveStrategy}
+                    poolId={poolId}
+                    poolToken={poolToken}
+                    chainId={Number(chain)}
+                    superToken={
+                      superTokenInfo && {
+                        ...superTokenInfo,
+                        sameAsUnderlying: superTokenCandidate?.sameAsUnderlying,
+                        address: effectiveSuperToken as Address,
+                      }
+                    }
+                  />
+                )}
+                <StreamingInfoCard />
+              </div>
+            )}
+
+            {selectedTab === 1 && isEnabled && (
+              <Proposals
+                poolToken={poolToken}
+                strategy={{ ...effectiveStrategy, title: metadata?.title }}
+                alloInfo={alloInfo}
                 communityAddress={communityAddress}
-                memberTokensInCommunity={memberTokensInCommunity}
-                isMemberCommunity={isMemberCommunity}
-                memberActivatedStrategy={memberActivatedStrategy}
-                membersStrategyData={
-                  membersStrategies ?
-                    { memberStrategies: membersStrategies }
-                  : undefined
-                }
+                createProposalUrl={createProposalUrl}
+                proposalType={proposalType}
+                minThGtTotalEffPoints={minThGtTotalEffPoints}
               />
-              {registerAndActivateFromPool}
-            </>
-          )}
+            )}
+
+            {selectedTab === 2 && (
+              <>
+                <PoolGovernance
+                  memberPoolWeight={memberPoolWeight}
+                  tokenDecimals={tokenDecimals}
+                  strategy={strategy}
+                  communityAddress={communityAddress}
+                  memberTokensInCommunity={memberTokensInCommunity}
+                  isMemberCommunity={isMemberCommunity}
+                  memberActivatedStrategy={memberActivatedStrategy}
+                  membersStrategyData={
+                    membersStrategies ?
+                      { memberStrategies: membersStrategies }
+                    : undefined
+                  }
+                />
+                {registerAndActivateFromPool}
+              </>
+            )}
+          </div>
         </div>
-      </div>
-    </>
-  );
+      </>
+    : <>
+        <div className="mt-96 col-span-12">
+          <LoadingSpinner />
+        </div>
+      </>;
 }

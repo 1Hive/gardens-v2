@@ -23,6 +23,11 @@
 
 const fs = require('fs');
 const path = require('path');
+const CONTRACTS_ROOT = path.resolve(__dirname, '..');
+const SRC_DIR = path.join(CONTRACTS_ROOT, 'src');
+const OUT_DIR = path.join(CONTRACTS_ROOT, 'out');
+const ABI_DIR = path.join(CONTRACTS_ROOT, 'abis');
+const AGGREGATED_ABI_DIR = path.join(ABI_DIR, 'DiamondAggregated');
 
 // Colors for console output
 const colors = {
@@ -71,18 +76,47 @@ function hasFallback(filePath) {
   }
 }
 
+// Rename overloaded "Distributed" from Allo strategy base to avoid The Graph
+// generating Distributed/Distributed1 and breaking mapping type imports.
+function normalizeAbiItem(item) {
+  if (item.type !== 'event' || item.name !== 'Distributed') {
+    return item;
+  }
+
+  const isAlloDistributed =
+    Array.isArray(item.inputs) &&
+    item.inputs.length === 4 &&
+    item.inputs[0]?.type === 'address' &&
+    item.inputs[0]?.indexed === true &&
+    item.inputs[1]?.type === 'address' &&
+    item.inputs[2]?.type === 'uint256' &&
+    item.inputs[3]?.type === 'address';
+
+  if (!isAlloDistributed) {
+    return item;
+  }
+
+  return {
+    ...item,
+    name: 'AlloDistributed',
+  };
+}
+
 // Aggregate ABIs for a diamond contract
 function aggregateDiamondABI(mainContract, facets) {
   log(colors.blue, `\nProcessing ${mainContract}...`);
 
   // Create output directory
-  const outputDir = 'out/DiamondAggregated';
-  if (!fs.existsSync(outputDir)) {
-    fs.mkdirSync(outputDir, { recursive: true });
+  if (!fs.existsSync(AGGREGATED_ABI_DIR)) {
+    fs.mkdirSync(AGGREGATED_ABI_DIR, { recursive: true });
   }
 
   // Load main contract ABI
-  const mainABIPath = `out/${mainContract}.sol/${mainContract}.json`;
+  const mainABIPath = path.join(
+    OUT_DIR,
+    `${mainContract}.sol`,
+    `${mainContract}.json`
+  );
   if (!fs.existsSync(mainABIPath)) {
     log(colors.red, `  ✗ Main contract ABI not found: ${mainABIPath}`);
     return false;
@@ -96,7 +130,8 @@ function aggregateDiamondABI(mainContract, facets) {
   const errorNames = new Set();
   const aggregatedABI = [];
 
-  for (const item of mainJSON.abi) {
+  for (const rawItem of mainJSON.abi) {
+    const item = normalizeAbiItem(rawItem);
     if (item.type === 'function') {
       functionNames.add(item.name);
       aggregatedABI.push(item);
@@ -121,7 +156,11 @@ function aggregateDiamondABI(mainContract, facets) {
 
   // Add each facet's unique functions
   for (const facetName of facets) {
-    const facetABIPath = `out/${facetName}.sol/${facetName}.json`;
+    const facetABIPath = path.join(
+      OUT_DIR,
+      `${facetName}.sol`,
+      `${facetName}.json`
+    );
 
     if (!fs.existsSync(facetABIPath)) {
       log(colors.yellow, `  ⚠ Facet ABI not found: ${facetABIPath}`);
@@ -134,7 +173,8 @@ function aggregateDiamondABI(mainContract, facets) {
     let functionsAdded = 0;
     let eventsAdded = 0;
     let errorsAdded = 0;
-    for (const item of facetJSON.abi) {
+    for (const rawItem of facetJSON.abi) {
+      const item = normalizeAbiItem(rawItem);
       if (item.type === 'function' && !functionNames.has(item.name)) {
         aggregatedABI.push(item);
         functionNames.add(item.name);
@@ -161,7 +201,7 @@ function aggregateDiamondABI(mainContract, facets) {
   }
 
   // Write aggregated ABI
-  const outputPath = `${outputDir}/${mainContract}.json`;
+  const outputPath = path.join(AGGREGATED_ABI_DIR, `${mainContract}.json`);
   fs.writeFileSync(
     outputPath,
     JSON.stringify({ abi: aggregatedABI }, null, 2)
@@ -259,7 +299,7 @@ function main() {
     processDirectory(options.specificPath);
   } else {
     // Auto-discover all directories with facets
-    const srcDir = 'src';
+    const srcDir = SRC_DIR;
 
     try {
       const dirs = fs.readdirSync(srcDir);
@@ -284,7 +324,10 @@ function main() {
 
   log(colors.blue, '\n=== Summary ===');
   log(colors.green, '✓ Diamond ABI aggregation complete!');
-  log(colors.green, '  Aggregated ABIs available in: out/DiamondAggregated/');
+  log(
+    colors.green,
+    `  Aggregated ABIs available in: ${path.relative(process.cwd(), AGGREGATED_ABI_DIR) || AGGREGATED_ABI_DIR}/`
+  );
 }
 
 // Run

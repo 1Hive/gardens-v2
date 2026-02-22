@@ -15,7 +15,6 @@ import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useSuperfluidToken } from "@/hooks/useSuperfluidToken";
-import { cvStrategyABI } from "@/src/generated";
 import { DisputeOutcome, PoolTypes, SybilResistanceType } from "@/types";
 import {
   calculateDecay,
@@ -24,9 +23,50 @@ import {
   convertSecondsToReadableTime,
   CV_SCALE_PRECISION,
   ETH_DECIMALS,
+  MONTH_TO_SEC,
+  SEC_TO_MONTH,
+  safeParseUnits,
 } from "@/utils/numbers";
 import { capitalize } from "@/utils/text";
 import { parseTimeUnit } from "@/utils/time";
+
+const cvStrategySetPoolParamsV2Abi = [
+  {
+    type: "function",
+    stateMutability: "nonpayable",
+    name: "setPoolParams",
+    inputs: [
+      {
+        name: "_arbitrableConfig",
+        type: "tuple",
+        components: [
+          { name: "arbitrator", type: "address" },
+          { name: "tribunalSafe", type: "address" },
+          { name: "submitterCollateralAmount", type: "uint256" },
+          { name: "challengerCollateralAmount", type: "uint256" },
+          { name: "defaultRuling", type: "uint256" },
+          { name: "defaultRulingTimeout", type: "uint256" },
+        ],
+      },
+      {
+        name: "_cvParams",
+        type: "tuple",
+        components: [
+          { name: "maxRatio", type: "uint256" },
+          { name: "weight", type: "uint256" },
+          { name: "decay", type: "uint256" },
+          { name: "minThresholdPoints", type: "uint256" },
+        ],
+      },
+      { name: "_sybilScoreThreshold", type: "uint256" },
+      { name: "_membersToAdd", type: "address[]" },
+      { name: "_membersToRemove", type: "address[]" },
+      { name: "_superfluidToken", type: "address" },
+      { name: "_streamingRatePerSecond", type: "uint256" },
+    ],
+    outputs: [],
+  },
+] as const;
 
 type ArbitrationSettings = {
   defaultResolution: number;
@@ -37,6 +77,7 @@ type ArbitrationSettings = {
 };
 
 type FormInputs = {
+  monthlyBudget?: number | string;
   spendingLimit: number | string;
   minimumConviction: number | string;
   convictionGrowth: number | string;
@@ -47,7 +88,7 @@ type FormInputs = {
 
 type Props = {
   strategy: getPoolDataQuery["cvstrategies"][0];
-  token?: Pick<TokenGarden, "decimals">;
+  token?: Pick<TokenGarden, "decimals" | "symbol">;
   initValues: FormInputs | undefined;
   proposalType: string;
   pointSystemType: number;
@@ -146,6 +187,19 @@ export default function PoolEditForm({
     globalTribunal,
   } = useChainFromPath()!;
   const nativeDecimals = nativeCurrency?.decimals ?? ETH_DECIMALS;
+  const monthlyBudget =
+    strategy.stream != null && strategy.stream.maxFlowRate != null ?
+      Number(
+        formatUnits(BigInt(strategy.stream.maxFlowRate), token?.decimals ?? 18),
+      ) * SEC_TO_MONTH
+    : 0;
+  const monthlyBudgetDisplay =
+    Number.isFinite(monthlyBudget) ?
+      monthlyBudget.toLocaleString("en-US", {
+        useGrouping: false,
+        maximumFractionDigits: 18,
+      })
+    : "0";
   const {
     register,
     handleSubmit,
@@ -161,6 +215,7 @@ export default function PoolEditForm({
           sybilResistanceValue: initValues.sybilResistanceValue,
           sybilResistanceType: initValues.sybilResistanceType,
           //pool settings
+          monthlyBudget: initValues.monthlyBudget ?? monthlyBudgetDisplay,
           spendingLimit: initValues.spendingLimit,
           minimumConviction: initValues.minimumConviction,
           convictionGrowth: parseTimeUnit(
@@ -212,6 +267,9 @@ export default function PoolEditForm({
   const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** (token?.decimals ?? 18);
   const INPUT_MIN_THRESHOLD_VALUE = 0;
   const shouldRenderInput = (key: string): boolean => {
+    if (key === "monthlyBudget") {
+      return PoolTypes[proposalType] === "streaming";
+    }
     if (
       PoolTypes[proposalType] === "signaling" &&
       (key === "spendingLimit" ||
@@ -238,6 +296,10 @@ export default function PoolEditForm({
     spendingLimit: {
       label: "Spending limit:",
       parse: (value: string) => value + " %",
+    },
+    monthlyBudget: {
+      label: "Monthly stream budget:",
+      parse: (value: string | number) => `${value} ${token?.symbol ?? ""}/m`,
     },
     minimumConviction: {
       label: "Minimum conviction:",
@@ -318,7 +380,7 @@ export default function PoolEditForm({
     onSuccess: () => {
       setModalOpen(false);
     },
-    abi: cvStrategyABI,
+    abi: cvStrategySetPoolParamsV2Abi,
   });
 
   const contractWrite = () => {
@@ -371,6 +433,13 @@ export default function PoolEditForm({
 
     const sybilValue =
       +(previewData.sybilResistanceValue ?? 0) * CV_PASSPORT_THRESHOLD_SCALE;
+    const isStreamingPool = PoolTypes[proposalType] === "streaming";
+    const monthlyBudgetValue = Number(previewData.monthlyBudget ?? 0);
+    const streamingRatePerSecond =
+      isStreamingPool ?
+        safeParseUnits(monthlyBudgetValue * MONTH_TO_SEC, token?.decimals ?? 18)
+      : BigInt(strategy.stream?.maxFlowRate ?? 0);
+
     setPoolParamsWrite({
       args: [
         {
@@ -403,6 +472,7 @@ export default function PoolEditForm({
         (strategy.config.superfluidToken as Address) ??
           (superToken?.sameAsUnderlying ? undefined : superToken?.id) ??
           zeroAddress,
+        streamingRatePerSecond as bigint,
       ],
     });
   };
@@ -414,6 +484,7 @@ export default function PoolEditForm({
     let formattedRows: FormRow[] = [];
 
     const reorderedData = {
+      monthlyBudget: previewData.monthlyBudget,
       sybilResistanceType: previewData.sybilResistanceType,
       sybilResistanceValue: previewData.sybilResistanceValue,
       spendingLimit: previewData.spendingLimit,
@@ -506,6 +577,30 @@ export default function PoolEditForm({
             {/* pool settings section */}
             <div className="flex flex-col">
               <h6 className="mb-4">Conviction params</h6>
+              {PoolTypes[proposalType] === "streaming" && (
+                <div className="flex flex-col">
+                  <FormInput
+                    label="Monthly stream budget"
+                    tooltip="Amount to stream per month. This updates streamingRatePerSecond in setPoolParams."
+                    register={register}
+                    errors={errors}
+                    registerKey="monthlyBudget"
+                    type="number"
+                    required
+                    otherProps={{
+                      step: INPUT_TOKEN_MIN_VALUE,
+                      min: INPUT_TOKEN_MIN_VALUE,
+                    }}
+                    registerOptions={{
+                      min: {
+                        value: INPUT_TOKEN_MIN_VALUE,
+                        message: `Amount must be greater than ${INPUT_TOKEN_MIN_VALUE}`,
+                      },
+                    }}
+                    suffix={token?.symbol}
+                  />
+                </div>
+              )}
               {shouldRenderInput("spendingLimit") && (
                 <div className="flex flex-col">
                   <FormInput

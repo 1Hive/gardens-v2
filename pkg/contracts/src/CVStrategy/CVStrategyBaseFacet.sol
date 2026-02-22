@@ -9,7 +9,15 @@ import {ISybilScorer} from "../ISybilScorer.sol";
 import {ProposalType, PointSystem, Proposal, PointSystemConfig, ArbitrableConfig, CVParams} from "./ICVStrategy.sol";
 import {ConvictionsUtils} from "./ConvictionsUtils.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Library.sol";
+import "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/gdav1/ISuperfluidPool.sol";
 import {LibDiamond} from "@src/diamonds/libraries/LibDiamond.sol";
+import {IPauseController} from "../interfaces/IPauseController.sol";
+import {IVotingPowerRegistry} from "../interfaces/IVotingPowerRegistry.sol";
+import {LibPauseStorage} from "../pausing/LibPauseStorage.sol";
+
+interface IOwnableLike {
+    function owner() external view returns (address);
+}
 
 /**
  * @title CVStrategyBaseFacet
@@ -45,6 +53,9 @@ abstract contract CVStrategyBaseFacet {
     error ProposalDoesNotExist(uint256 proposalID);
     error OnlyActiveProposal(uint256 proposalId);
     error OnlySubmitter(uint256 proposalId, address submitter, address sender);
+    error StrategyPaused(address controller);
+    error StrategySelectorPaused(bytes4 selector, address controller);
+    error OnlyOwner(address sender, address ownerAddress);
 
     /*|--------------------------------------------|*/
     /*|              CONSTANTS                     |*/
@@ -145,7 +156,7 @@ abstract contract CVStrategyBaseFacet {
 
     /// @notice Mapping of proposal ID to Proposal struct
     /// @dev Slot 124+
-    mapping(uint256 => Proposal) public proposals;
+    mapping(uint256 => Proposal) internal proposals;
 
     /// @notice Mapping of voter address to total staked percentage
     /// @dev Slot 125+
@@ -170,9 +181,24 @@ abstract contract CVStrategyBaseFacet {
     // slither-disable-next-line uninitialized-state
     ISuperToken public superfluidToken;
 
+    /// @notice Superfluid GDA contract address
+    /// @dev Slot 130+
+    // slither-disable-next-line uninitialized-state
+    ISuperfluidPool public superfluidGDA;
+
+    /// @notice Streaming rate per second for superfluid payments
+    /// @dev Slot 131+
+    // slither-disable-next-line uninitialized-state
+    uint256 public streamingRatePerSecond;
+
+    /// @notice Reference to the Voting Power Registry contract
+    /// @dev Slot 132+
+    // slither-disable-next-line uninitialized-state
+    IVotingPowerRegistry public votingPowerRegistry;
+
     /// @dev Reserved storage space to allow for layout changes in the future
     /// @dev This gap is at the end of storage to allow adding new variables without shifting slots
-    uint256[49] private __gap;
+    uint256[46] private __gap;
 
     /*|--------------------------------------------|*/
     /*|         SHARED HELPER FUNCTIONS            |*/
@@ -181,9 +207,72 @@ abstract contract CVStrategyBaseFacet {
     /**
      * @notice Get the owner of the contract
      * @dev Accesses the _owner storage variable from OwnableUpgradeable layout
+     * Sig: 0x8da5cb5b
      */
-    function owner() internal view returns (address) {
-        return LibDiamond.contractOwner();
+    modifier onlyOwner() {
+        address _owner = effectiveOwner();
+        if (msg.sender != _owner) {
+            revert OnlyOwner(msg.sender, _owner);
+        }
+        _;
+    }
+
+    /**
+     * @notice Resolve effective owner, supporting owner-proxy contracts exposing owner()
+     * @dev Falls back to diamond owner when owner() cannot be resolved.
+     */
+    function effectiveOwner() internal view returns (address) {
+        address diamondOwner = LibDiamond.contractOwner();
+        if (diamondOwner.code.length == 0) {
+            return diamondOwner;
+        }
+        try IOwnableLike(diamondOwner).owner() returns (address resolvedOwner) {
+            return resolvedOwner == address(0) ? diamondOwner : resolvedOwner;
+        } catch {
+            return diamondOwner;
+        }
+    }
+
+    /*|--------------------------------------------|*/
+    /*|              PAUSE HELPERS                 |*/
+    /*|--------------------------------------------|*/
+    modifier whenNotPaused() {
+        _enforceNotPaused(msg.sig);
+        _;
+    }
+
+    modifier whenSelectorNotPaused(bytes4 selector) {
+        _enforceSelectorNotPaused(selector);
+        _;
+    }
+
+    function _enforceNotPaused(bytes4 selector) internal view {
+        if (_isPauseSelector(selector)) {
+            return;
+        }
+        address controller = LibPauseStorage.layout().pauseController;
+        if (controller != address(0) && IPauseController(controller).isPaused(address(this))) {
+            revert StrategyPaused(controller);
+        }
+    }
+
+    function _enforceSelectorNotPaused(bytes4 selector) internal view {
+        if (_isPauseSelector(selector)) {
+            return;
+        }
+        address controller = LibPauseStorage.layout().pauseController;
+        if (controller != address(0) && IPauseController(controller).isPaused(address(this), selector)) {
+            revert StrategySelectorPaused(selector, controller);
+        }
+    }
+
+    function _isPauseSelector(bytes4 selector) internal pure returns (bool) {
+        return selector == bytes4(keccak256("setPauseController(address)"))
+            || selector == bytes4(keccak256("pause(uint256)")) || selector == bytes4(keccak256("pause(bytes4,uint256)"))
+            || selector == bytes4(keccak256("unpause()")) || selector == bytes4(keccak256("unpause(bytes4)"))
+            || selector == bytes4(keccak256("pauseController()")) || selector == bytes4(keccak256("isPaused()"))
+            || selector == bytes4(keccak256("isPaused(bytes4)")) || selector == bytes4(keccak256("pausedUntil()"))
+            || selector == bytes4(keccak256("pausedSelectorUntil(bytes4)"));
     }
 
     /**
@@ -191,7 +280,7 @@ abstract contract CVStrategyBaseFacet {
      * @param _sender Address to check
      */
     function checkSenderIsMember(address _sender) internal {
-        if (!registryCommunity.isMember(_sender)) {
+        if (!votingPowerRegistry.isMember(_sender)) {
             revert OnlyMember(_sender, address(registryCommunity));
         }
     }
@@ -200,8 +289,8 @@ abstract contract CVStrategyBaseFacet {
      * @notice Ensure only council safe or contract owner can call this function
      */
     function onlyCouncilSafe() internal view {
-        if (msg.sender != address(registryCommunity.councilSafe()) && msg.sender != owner()) {
-            revert OnlyCouncilSafe(msg.sender, address(registryCommunity.councilSafe()), owner());
+        if (msg.sender != address(registryCommunity.councilSafe()) && msg.sender != effectiveOwner()) {
+            revert OnlyCouncilSafe(msg.sender, address(registryCommunity.councilSafe()), effectiveOwner());
         }
     }
 
@@ -220,15 +309,16 @@ abstract contract CVStrategyBaseFacet {
      * @return bool True if user can execute actions
      */
     function _canExecuteAction(address _user) internal view returns (bool) {
-        if (address(sybilScorer) == address(0)) {
-            bytes32 allowlistRole = keccak256(abi.encodePacked("ALLOWLIST", poolId));
-            if (registryCommunity.hasRole(allowlistRole, address(0))) {
-                return true;
-            } else {
-                return registryCommunity.hasRole(allowlistRole, _user);
-            }
+        if (address(sybilScorer) != address(0)) {
+            return sybilScorer.canExecuteAction(_user, address(this));
         }
-        return sybilScorer.canExecuteAction(_user, address(this));
+        // Custom point system with external registry: NFT ownership IS the gate
+        if (pointSystem == PointSystem.Custom && address(votingPowerRegistry) != address(registryCommunity)) {
+            return votingPowerRegistry.isMember(_user);
+        }
+        // Default: allowlist-based gating
+        bytes32 allowlistRole = keccak256(abi.encodePacked("ALLOWLIST", poolId));
+        return registryCommunity.hasRole(allowlistRole, address(0)) || registryCommunity.hasRole(allowlistRole, _user);
     }
 
     /**
@@ -266,8 +356,23 @@ abstract contract CVStrategyBaseFacet {
      * @param _proposalID Proposal ID to check
      * @return bool True if proposal exists and has a valid submitter
      */
-    function proposalExists(uint256 _proposalID) internal view returns (bool) {
+    function proposalExists(uint256 _proposalID) public view returns (bool) {
         return proposals[_proposalID].proposalId > 0 && proposals[_proposalID].submitter != address(0);
+    }
+
+    /**
+     * @notice Calculate the current conviction for a proposal
+     * @param _proposalId The proposal ID
+     * @return uint256 The calculated conviction value
+     */
+    function calculateProposalConviction(uint256 _proposalId) public view virtual returns (uint256) {
+        Proposal storage proposal = proposals[_proposalId];
+        if (!_isStrategyEnabled()) {
+            return proposal.convictionLast;
+        }
+        return ConvictionsUtils.calculateConviction(
+            block.number - proposal.blockLast, proposal.convictionLast, proposal.stakedAmount, cvParams.decay
+        );
     }
 
     /**
@@ -296,6 +401,10 @@ abstract contract CVStrategyBaseFacet {
         view
         returns (uint256 conviction, uint256 blockNumber)
     {
+        if (!_isStrategyEnabled()) {
+            return (_proposal.convictionLast, block.number);
+        }
+
         blockNumber = block.number;
         assert(_proposal.blockLast <= blockNumber);
         if (_proposal.blockLast == blockNumber) {
@@ -310,9 +419,16 @@ abstract contract CVStrategyBaseFacet {
         );
     }
 
+    function _isStrategyEnabled() public view returns (bool) {
+        if (address(registryCommunity) == address(0)) {
+            return true;
+        }
+        return registryCommunity.enabledStrategies(address(this));
+    }
+
     /// @notice Getter for the 'poolAmount'.
     /// @return The balance of the pool
-    function getPoolAmount() internal view virtual returns (uint256) {
+    function getPoolAmount() public view virtual returns (uint256) {
         address token = allo.getPool(poolId).token;
 
         if (token == NATIVE_TOKEN) {

@@ -6,15 +6,15 @@ schema:
 dataSources:
   - kind: ethereum/contract
     name: RegistryFactory
-    network: arbitrum-sepolia
+    network: sepolia
     context:
       chainId: 
         type: Int
-        data: 421614
+        data: 11155111
     source:
-      address: "0xf42f88c13804147b2fdda13c093ce14219aea395"
+      address: "0xe01464829b1b888bf92a8d1cec3114bb9787984d"
       abi: RegistryFactory
-      startBlock: 112011139
+      startBlock: 5998577
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -22,11 +22,12 @@ dataSources:
       entities:
         - RegistryFactory
         - RegistryCommunity
+        - StreamingInfo
       abis:
         - name: RegistryFactory
-          file: ../contracts/out/RegistryFactory.sol/RegistryFactory.json
+          file: ../contracts/abis/RegistryFactory.sol/RegistryFactory.json
         - name: RegistryCommunity
-          file: ../contracts/out/DiamondAggregated/RegistryCommunity.json
+          file: ../contracts/abis/DiamondAggregated/RegistryCommunity.json
       eventHandlers:
         - event: CommunityCreated(address)
           handler: handleCommunityCreated
@@ -38,21 +39,23 @@ dataSources:
           handler: handleProtopiansChanged  
         - event: KeepersChanged(address[],address[])
           handler: handleKeepersChanged
+        - event: StreamingEscrowFactorySet(address)
+          handler: handleStreamingEscrowFactorySet
         - event: Initialized(uint8)
           handler: handleRegistryInitialized  
       file: ./src/mappings/registry-factory.ts
 
   - kind: ethereum/contract
     name: PassportScorer
-    network: arbitrum-sepolia
+    network: sepolia
     context:
       chainId: 
         type: Int
-        data: 421614
+        data: 11155111
     source:
-      address: "0x6ad70508F44aa0e86E7Af80Ccc4fc1f160C2df46"
+      address: "0xd58ff588177f02cc535a0e235a4c002a17e27202"
       abi: PassportScorer
-      startBlock: 112011139
+      startBlock: 5998577
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -61,7 +64,7 @@ dataSources:
         - PassportScorer
       abis:
         - name: PassportScorer
-          file: ../contracts/out/PassportScorer.sol/PassportScorer.json
+          file: ../contracts/abis/PassportScorer.sol/PassportScorer.json
       eventHandlers:
         - event: Initialized(uint8)
           handler: handleInitialized
@@ -81,15 +84,15 @@ dataSources:
 
   - kind: ethereum/contract
     name: GoodDollarSybil
-    network: arbitrum-sepolia
+    network: sepolia
     context:
       chainId: 
         type: Int
-        data: 421614
+        data: 11155111
     source:
-      address: "0x9DdE3cE47cC11ee04Ea1e2C440116B3De6f11Ed8"
+      address: "0xa50ec350146e42b1ad15705da04c7cb6929e1f2a"
       abi: GoodDollarSybil
-      startBlock: 181411130
+      startBlock: 5998577
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -98,7 +101,7 @@ dataSources:
         - GoodDollarSybil
       abis:
         - name: GoodDollarSybil
-          file: ../contracts/out/GoodDollarSybil.sol/GoodDollarSybil.json
+          file: ../contracts/abis/GoodDollarSybil.sol/GoodDollarSybil.json
       eventHandlers:
         - event: Initialized(uint8)
           handler: handleInitialized
@@ -113,7 +116,7 @@ dataSources:
 templates:
   - kind: ethereum/contract
     name: RegistryCommunity
-    network: arbitrum-sepolia
+    network: sepolia
     source:
       abi: RegistryCommunity
     mapping:
@@ -128,13 +131,13 @@ templates:
         - Member
       abis:
         - name: RegistryCommunity
-          file: ../contracts/out/DiamondAggregated/RegistryCommunity.json
+          file: ../contracts/abis/DiamondAggregated/RegistryCommunity.json
         - name: ERC20
-          file: ../contracts/out/ERC20.sol/ERC20.json
+          file: ../contracts/abis/ERC20.sol/ERC20.json
         - name: CVStrategy
-          file: ../contracts/out/DiamondAggregated/CVStrategy.json
+          file: ../contracts/abis/DiamondAggregated/CVStrategy.json
         - name: RegistryFactory
-          file: ../contracts/out/RegistryFactory.sol/RegistryFactory.json
+          file: ../contracts/abis/RegistryFactory.sol/RegistryFactory.json
      
       eventHandlers:
         - event: RegistryInitialized(bytes32,string,(uint256,string))
@@ -187,7 +190,7 @@ templates:
 
   - kind: ethereum/contract
     name: CVStrategy
-    network: arbitrum-sepolia
+    network: sepolia
     source:
       abi: CVStrategy
     mapping:
@@ -198,14 +201,17 @@ templates:
         - CVStrategy
         - CVStrategyConfig
         - CVProposal
+        - StreamInfo
+        - ProposalStream
+        - ProposalEscrowIndex
         - Allo
       abis:
         - name: CVStrategy
-          file: ../contracts/out/DiamondAggregated/CVStrategy.json
+          file: ../contracts/abis/DiamondAggregated/CVStrategy.json
         - name: RegistryCommunity
-          file: ../contracts/out/DiamondAggregated/RegistryCommunity.json
+          file: ../contracts/abis/DiamondAggregated/RegistryCommunity.json
         - name: Allo
-          file: ../contracts/out/Allo.sol/Allo.json
+          file: ../contracts/abis/Allo.sol/Allo.json
       eventHandlers:
         - event: InitializedCV(uint256,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address))
           handler: handleInitialized
@@ -213,8 +219,12 @@ templates:
           handler: handleInitializedV2
         - event: InitializedCV3(uint256,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address,uint256,address[],address))
           handler: handleInitializedV3
+        - event: InitializedCV4(uint256,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address,address,uint256,address[],address,uint256))
+          handler: handleInitializedV4
         - event: ProposalCreated(uint256,uint256)
           handler: handleProposalCreated
+        - event: ProposalCreated(uint256,uint256,address)
+          handler: handleProposalCreatedWithEscrow
         - event: SupportAdded(address,uint256,uint256,uint256,uint256)
           handler: handleSupportAdded
         - event: Distributed(uint256,address,uint256)
@@ -243,10 +253,20 @@ templates:
           handler: handleSybilScorerUpdated
         - event: SuperfluidTokenUpdated(address)
           handler: handleSuperfluidTokenUpdated
+        - event: SuperfluidPoolCreated(indexed address,indexed address,uint256)
+          handler: handleSuperfluidPoolCreated
+        - event: SuperfluidStreamingRateUpdated(uint256)
+          handler: handleSuperfluidStreamingRateUpdated
         - event: SuperfluidGDAConnected(indexed address,indexed address)
           handler: handleSuperfluidGDAConnected
         - event: SuperfluidGDADisconnected(indexed address,indexed address)
           handler: handleSuperfluidGDADisconnected
+        - event: StreamRateUpdated(indexed address,uint256)
+          handler: handleStreamRateUpdated
+        - event: StreamMemberUnitUpdated(indexed address,int96)
+          handler: handleStreamMemberUnitUpdated
+        - event: EscrowStreamStopped(indexed address,indexed address)
+          handler: handleEscrowStreamStopped
         - event: ProposalEdited(uint256,(uint256,string),address,uint256)
           handler: handleProposalEdited
 
@@ -254,7 +274,7 @@ templates:
 
   - kind: ethereum/contract
     name: CollateralVault
-    network: arbitrum-sepolia
+    network: sepolia
     source:
       abi: CollateralVault
     mapping:
@@ -266,7 +286,7 @@ templates:
         - CollateralVaultDeposit
       abis:
         - name: CollateralVault
-          file: ../contracts/out/CollateralVault.sol/CollateralVault.json
+          file: ../contracts/abis/CollateralVault.sol/CollateralVault.json
       eventHandlers:
         - event: CollateralDeposited(uint256,indexed address,uint256)
           handler: handleCollateralDeposited
@@ -287,7 +307,7 @@ templates:
         - ProposalDisputeMetadata
       abis:
         - name: CVStrategy
-          file: ../contracts/out/CVStrategy.sol/CVStrategy.json
+          file: ../contracts/abis/CVStrategy.sol/CVStrategy.json
   
   - name: ProposalMetadata
     kind: file/ipfs
@@ -300,7 +320,7 @@ templates:
         - ProposalMetadata
       abis:
         - name: CVStrategy
-          file: ../contracts/out/CVStrategy.sol/CVStrategy.json
+          file: ../contracts/abis/CVStrategy.sol/CVStrategy.json
   
   - name: PoolMetadata
     kind: file/ipfs
@@ -313,7 +333,7 @@ templates:
         - PoolMetadata
       abis:
         - name: CVStrategy
-          file: ../contracts/out/CVStrategy.sol/CVStrategy.json
+          file: ../contracts/abis/CVStrategy.sol/CVStrategy.json
 
   - name: Covenant
     kind: file/ipfs
@@ -326,4 +346,4 @@ templates:
         - Covenant
       abis:
         - name: CVStrategy
-          file: ../contracts/out/CVStrategy.sol/CVStrategy.json
+          file: ../contracts/abis/CVStrategy.sol/CVStrategy.json

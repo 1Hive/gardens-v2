@@ -367,6 +367,19 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
       allowlist
       superfluidToken
     }
+    stream {
+      id
+      contractAddress
+      contractType
+      superfluidToken
+      maxFlowRate
+      superfluidGDA
+      streamLastFlowRate
+      totalMemberUnits
+      proposalStreamIds
+      createdAt
+      updatedAt
+    }
     registryCommunity {
       id
       councilSafe
@@ -389,6 +402,7 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
         description
       }
       beneficiary
+      streamingEscrow
       requestedAmount
       requestedToken
       proposalStatus
@@ -402,6 +416,20 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
         id
         maxCVSupply
         totalEffectiveActivePoints
+      }
+      proposalStream {
+        id
+        proposal {
+          id
+        }
+        escrow
+        currentUnits
+        currentFlowRate
+        streamedUntilSnapshot
+        lastSnapshotAt
+        isStopped
+        createdAt
+        updatedAt
       }
     }
   }
@@ -454,6 +482,21 @@ query getProposalData($garden: ID!, $proposalId: ID!, $communityId: ID!) {
     updatedAt
     executedAt
     version
+    streamingEscrow
+    proposalStream {
+      id
+      proposal {
+        id
+      }
+      escrow
+      currentUnits
+      currentFlowRate
+      streamedUntilSnapshot
+      lastSnapshotAt
+      isStopped
+      createdAt
+      updatedAt
+    }
     strategy {
       id
       token
@@ -461,6 +504,13 @@ query getProposalData($garden: ID!, $proposalId: ID!, $communityId: ID!) {
       totalEffectiveActivePoints
       poolId
       isEnabled
+      stream {
+        id
+        maxFlowRate
+        streamLastFlowRate
+        totalMemberUnits
+        proposalStreamIds
+      }
       registryCommunity {
         id
         councilSafe

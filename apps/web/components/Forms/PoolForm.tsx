@@ -52,6 +52,8 @@ import {
   CV_PASSPORT_THRESHOLD_SCALE,
   CV_SCALE_PRECISION,
   ETH_DECIMALS,
+  MONTH_TO_SEC,
+  safeParseUnits,
 } from "@/utils/numbers";
 import { capitalize, ethAddressRegEx } from "@/utils/text";
 import { parseTimeUnit } from "@/utils/time";
@@ -74,6 +76,7 @@ type FormInputs = {
   title: string;
   description: string;
   poolTokenAddress: string;
+  monthlyBudget?: number;
   strategyType: number;
   pointSystemType: number;
   optionType?: number;
@@ -124,22 +127,23 @@ const proposalInputMap: Record<string, number[]> = {
   title: [0, 1, 2],
   description: [0, 1, 2],
   strategyType: [0, 1, 2],
-  pointSystemType: [0, 1],
-  optionType: [0, 1],
-  maxAmount: [0, 1],
-  minThresholdPoints: [1],
+  pointSystemType: [0, 1, 2],
+  optionType: [0, 1, 2],
+  maxAmount: [0, 1, 2],
+  minThresholdPoints: [1, 2],
   spendingLimit: [1],
-  minimumConviction: [1],
-  convictionGrowth: [0, 1],
-  sybilResistanceType: [0, 1],
-  sybilResistanceValue: [0, 1],
-  defaultResolution: [0, 1],
-  rulingTime: [0, 1],
-  proposalCollateral: [0, 1],
-  disputeCollateral: [0, 1],
-  tribunalAddress: [0, 1],
-  poolTokenAddress: [0, 1],
-  superfluidEnabled: [1],
+  minimumConviction: [1, 2],
+  convictionGrowth: [0, 1, 2],
+  sybilResistanceType: [0, 1, 2],
+  sybilResistanceValue: [0, 1, 2],
+  defaultResolution: [0, 1, 2],
+  rulingTime: [0, 1, 2],
+  proposalCollateral: [0, 1, 2],
+  disputeCollateral: [0, 1, 2],
+  tribunalAddress: [0, 1, 2],
+  poolTokenAddress: [0, 1, 2],
+  monthlyBudget: [2],
+  superfluidEnabled: [1, 2],
 };
 
 const sybilResistancePreview = (
@@ -351,6 +355,11 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
         </div>
       ),
     },
+    monthlyBudget: {
+      label: "Monthly stream budget:",
+      parse: (value: string) =>
+        `${value} ${customTokenData?.symbol ?? governanceToken.symbol}/m`,
+    },
     superfluidEnabled: {
       label: "Stream funding",
       parse: (value: boolean) => (value ? "✅" : "❌"),
@@ -412,6 +421,14 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
     if (!previewData) {
       throw new Error("No preview data");
     }
+
+    const isStreamingPool =
+      PoolTypes[previewData.strategyType] === "streaming";
+    const monthlyBudget = Number(previewData.monthlyBudget ?? 0);
+    const streamingRatePerSecond =
+      isStreamingPool ?
+        safeParseUnits(monthlyBudget * MONTH_TO_SEC, governanceToken.decimals)
+      : 0n;
 
     // sybil resistance set
     let allowList: Address[] = [];
@@ -478,6 +495,8 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
           superfluidToken:
             (superToken?.sameAsUnderlying ? undefined : superToken?.id) ??
             zeroAddress,
+          votingPowerRegistry: zeroAddress, // Zero address is community address by default
+          streamingRatePerSecond: streamingRatePerSecond,
         },
         {
           protocol: 1n,
@@ -518,7 +537,6 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
         containerId: communityAddr,
         chainId: chain.id,
       });
-      setLoading(false);
       router.push(
         pathname?.replace(
           "/create-pool",
@@ -593,6 +611,7 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
 
     const reorderedData = {
       poolTokenAddress: previewData.poolTokenAddress,
+      monthlyBudget: previewData.monthlyBudget,
       strategyType: previewData.strategyType,
       pointSystemType: previewData.pointSystemType,
       maxAmount: previewData.maxAmount,
@@ -635,7 +654,9 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
         return false;
       }
     } else if (key === "poolTokenAddress") {
-      return !!previewData && PoolTypes[previewData.strategyType] === "funding";
+      return (
+        !!previewData && PoolTypes[previewData.strategyType] !== "signaling"
+      );
     } else {
       return shouldRenderInputMap(key, strategyType);
     }
@@ -697,14 +718,12 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
               errors={errors}
               registerKey="strategyType"
               required
-              options={Object.entries(PoolTypes)
-                .slice(0, -1)
-                .map(([value, text]) => ({
-                  label: capitalize(text),
-                  value: value,
-                }))}
+              options={Object.entries(PoolTypes).map(([value, text]) => ({
+                label: capitalize(text),
+                value: value,
+              }))}
             />
-            {PoolTypes[strategyType] === "funding" && (
+            {PoolTypes[strategyType] !== "signaling" && (
               <div className="flex items-end gap-4 flex-wrap md:flex-nowrap">
                 <FormAddressInput
                   label="Pool token ERC20 address"
@@ -779,6 +798,29 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
                   </div>
                 )}
               </div>
+            )}
+            {PoolTypes[strategyType] === "streaming" && (
+              <FormInput
+                label="Monthly stream budget"
+                tooltip="Amount to stream per month. This is converted to streamingRatePerSecond in the createPool call."
+                register={register}
+                required
+                registerOptions={{
+                  min: {
+                    value: INPUT_TOKEN_MIN_VALUE,
+                    message: `Amount must be greater than ${INPUT_TOKEN_MIN_VALUE}`,
+                  },
+                }}
+                otherProps={{
+                  step: INPUT_TOKEN_MIN_VALUE,
+                  min: INPUT_TOKEN_MIN_VALUE,
+                }}
+                errors={errors}
+                registerKey="monthlyBudget"
+                type="number"
+                placeholder="0"
+                suffix={customTokenData?.symbol ?? governanceToken.symbol}
+              />
             )}
             <div>
               <label className="label w-fit">

@@ -21,7 +21,6 @@ contract DeployPassportScorer is BaseMultiChain {
             )
         );
 
-        console.log("New Passport Scorer: ", newPassportScorer);
 
         // CV STRATEGIES
         // address[] memory cvStrategyProxies = networkJson.readAddressArray(getKeyNetwork(".PROXIES.CV_STRATEGIES"));

@@ -5,11 +5,12 @@ import {
   XMarkIcon,
   CheckIcon,
   BoltIcon,
+  ArrowTopRightOnSquareIcon,
 } from "@heroicons/react/24/outline";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "react-toastify";
 import { Address, encodeAbiParameters, formatUnits } from "viem";
-import { useAccount } from "wagmi";
+import { useAccount, useBalance } from "wagmi";
 import {
   getProposalDataDocument,
   getProposalDataQuery,
@@ -34,6 +35,8 @@ import EditProposalButton from "@/components/EditProposalButton";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import MarkdownWrapper from "@/components/MarkdownWrapper";
 import { Skeleton } from "@/components/Skeleton";
+import { chainConfigMap } from "@/configs/chains";
+import { isProd } from "@/configs/isProd";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import { usePubSubContext } from "@/contexts/pubsub.context";
@@ -44,11 +47,17 @@ import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { MetadataV1, useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { usePoolToken } from "@/hooks/usePoolToken";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
-import { alloABI } from "@/src/generated";
+import { useSuperfluidStream } from "@/hooks/useSuperfluidStream";
+import { superTokenABI } from "@/src/customAbis";
+import { alloABI, cvStrategyABI } from "@/src/generated";
 import { PoolTypes, ProposalStatus, Column } from "@/types";
 
 import { useErrorDetails } from "@/utils/getErrorName";
-import { calculatePercentageBigInt } from "@/utils/numbers";
+import {
+  SEC_TO_MONTH,
+  calculatePercentageBigInt,
+  roundToSignificant,
+} from "@/utils/numbers";
 import { prettyTimestamp } from "@/utils/text";
 
 type ProposalSupporter = {
@@ -167,14 +176,15 @@ export default function ClientPage({ params }: ClientPageProps) {
   //
 
   const proposalIdNumber =
-    proposalData?.proposalNumber ?
+    proposalData?.proposalNumber != null ?
       BigInt(proposalData.proposalNumber)
     : undefined;
+  const [nowMs, setNowMs] = useState<bigint>(() => BigInt(Date.now()));
+  const chainId = useChainIdFromPath();
 
   const poolTokenAddr = proposalData?.strategy?.token as Address;
 
   const { publish } = usePubSubContext();
-  const chainId = useChainIdFromPath();
   const { data: ipfsResult } = useMetadataIpfsFetch({
     hash: proposalData?.metadataHash,
     enabled: !proposalData?.metadata,
@@ -229,9 +239,28 @@ export default function ClientPage({ params }: ClientPageProps) {
 
   const proposalType = proposalData?.strategy?.config?.proposalType;
   const isSignalingType = PoolTypes[proposalType] === "signaling";
+  const isStreamingType = PoolTypes[proposalType] === "streaming";
   const requestedAmount = proposalData?.requestedAmount;
   const beneficiary = proposalData?.beneficiary as Address | undefined;
+  const streamingEscrowFromSubgraph = proposalData?.streamingEscrow as
+    | Address
+    | undefined;
+
+  const resolvedStreamingEscrow = streamingEscrowFromSubgraph;
+
   const submitter = proposalData?.submitter as Address | undefined;
+  const superfluidExplorerBaseUrl =
+    chainId != null ?
+      chainConfigMap[chainId]?.superfluidExplorerUrl
+    : undefined;
+  const superfluidExplorerUrl =
+    (
+      superfluidExplorerBaseUrl != null &&
+      superfluidExplorerBaseUrl !== "" &&
+      resolvedStreamingEscrow != null
+    ) ?
+      `${superfluidExplorerBaseUrl}/accounts/${resolvedStreamingEscrow.toLowerCase()}?tab=streams`
+    : undefined;
   const proposalStatus = ProposalStatus[proposalData?.proposalStatus];
   const shouldShowSupportersTab =
     proposalStatus !== "executed" && proposalStatus !== "cancelled";
@@ -242,6 +271,110 @@ export default function ClientPage({ params }: ClientPageProps) {
     enabled:
       !!poolTokenAddr && !!proposalData?.strategy?.id && !isSignalingType,
   });
+
+  const proposalStream =
+    // Backward-compatible read while graph client schema catches up.
+    (proposalData as { proposalStream?: unknown; proposalStreams?: unknown[] })
+      ?.proposalStream ??
+    (
+      proposalData as {
+        proposalStream?: unknown;
+        proposalStreams?: unknown[];
+      }
+    )?.proposalStreams?.[0];
+
+  const toBigInt = (value: unknown): bigint => {
+    if (typeof value === "bigint") return value;
+    if (typeof value === "number") return BigInt(Math.trunc(value));
+    if (typeof value === "string") {
+      try {
+        return BigInt(value);
+      } catch {
+        return 0n;
+      }
+    }
+    return 0n;
+  };
+
+  const proposalFlowRateBn =
+    (
+      proposalStream &&
+      typeof proposalStream === "object" &&
+      "currentFlowRate" in proposalStream
+    ) ?
+      toBigInt(proposalStream.currentFlowRate)
+    : 0n;
+  const streamedUntilSnapshotBn =
+    (
+      proposalStream &&
+      typeof proposalStream === "object" &&
+      "streamedUntilSnapshot" in proposalStream
+    ) ?
+      toBigInt(proposalStream.streamedUntilSnapshot)
+    : 0n;
+  const lastSnapshotAtBn =
+    (
+      proposalStream &&
+      typeof proposalStream === "object" &&
+      "lastSnapshotAt" in proposalStream
+    ) ?
+      toBigInt(proposalStream.lastSnapshotAt)
+    : 0n;
+  const lastSnapshotAtMs = lastSnapshotAtBn * 1000n;
+  const elapsedMs =
+    (
+      proposalFlowRateBn > 0n &&
+      lastSnapshotAtMs > 0n &&
+      nowMs > lastSnapshotAtMs
+    ) ?
+      nowMs - lastSnapshotAtMs
+    : 0n;
+  const proposalTotalStreamedBn =
+    streamedUntilSnapshotBn + (proposalFlowRateBn * elapsedMs) / 1000n;
+  const { liveTotalStreamedBn: explorerTotalStreamedBn } = useSuperfluidStream({
+    receiver: resolvedStreamingEscrow as Address,
+    superToken: proposalData?.strategy?.config?.superfluidToken as Address,
+    chainId,
+    containerId: +poolId,
+  });
+  const shouldTickFallback = isStreamingType && explorerTotalStreamedBn == null;
+
+  const proposalFlowPerMonth =
+    (
+      isStreamingType &&
+      poolToken &&
+      proposalFlowRateBn != null &&
+      proposalFlowRateBn > 0n
+    ) ?
+      +formatUnits(proposalFlowRateBn, poolToken.decimals) * SEC_TO_MONTH
+    : null;
+  const proposalTotalStreamed =
+    isStreamingType && poolToken ?
+      +formatUnits(
+        explorerTotalStreamedBn ?? proposalTotalStreamedBn,
+        poolToken.decimals,
+      )
+    : null;
+  const proposalTotalStreamedDisplay =
+    poolToken ? (proposalTotalStreamed ?? 0).toFixed(4) : null;
+  const streamInfo = proposalData?.strategy?.stream;
+  const superTokenAddress = proposalData?.strategy?.config?.superfluidToken as
+    | Address
+    | undefined;
+  const isBeneficiaryConnected = beneficiary === address?.toLowerCase();
+  const streamTokenDecimals = poolToken?.decimals ?? 18;
+  const maxFlowRateForDisplay = streamInfo?.maxFlowRate as
+    | bigint
+    | null
+    | undefined;
+  const currentFlowRateForDisplay = proposalFlowRateBn;
+  const { data: beneficiarySuperTokenBalance, refetch: refetchSuperToken } =
+    useBalance({
+      address: beneficiary,
+      token: superTokenAddress,
+      chainId,
+      enabled: isStreamingType && !!beneficiary && !!superTokenAddress,
+    });
 
   const {
     currentConvictionPct,
@@ -256,6 +389,15 @@ export default function ClientPage({ params }: ClientPageProps) {
     tokenData: data?.tokenGarden?.decimals,
     enabled: proposalData?.proposalNumber != null && proposalData != null,
   });
+
+  useEffect(() => {
+    if (!shouldTickFallback) return;
+    const interval = setInterval(() => {
+      if (typeof document !== "undefined" && document.hidden) return;
+      setNowMs(BigInt(Date.now()));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [shouldTickFallback]);
 
   useEffect(() => {
     if (convictionRefreshing && currentConvictionPct != null) {
@@ -331,6 +473,11 @@ export default function ClientPage({ params }: ClientPageProps) {
 
   const { tooltipMessage, isConnected, missmatchUrl } =
     useDisableButtons(disableManSupportBtn);
+  const {
+    tooltipMessage: syncStreamTooltipMessage,
+    isConnected: isSyncStreamConnected,
+    missmatchUrl: isSyncStreamWrongNetwork,
+  } = useDisableButtons();
 
   const disableExecuteButton = useMemo<ConditionObject[]>(
     () => [
@@ -353,6 +500,71 @@ export default function ClientPage({ params }: ClientPageProps) {
     tooltipMessage: executeBtnTooltipMessage,
     isButtonDisabled: isExecuteButtonDisabled,
   } = useDisableButtons(disableExecuteButton);
+  const { write: writeRebalance, isLoading: isRebalanceLoading } =
+    useContractWriteWithConfirmations({
+      address: proposalData?.strategy?.id as Address,
+      abi: cvStrategyABI,
+      functionName: "rebalance",
+      contractName: "CVStrategy",
+      fallbackErrorMessage:
+        "Failed to sync stream for this strategy. Please try again.",
+      onConfirmations: () => {
+        publish({
+          topic: "stream",
+          containerId: poolId,
+          function: "rebalance",
+        });
+      },
+    });
+
+  const { write: writeUnwrapSuperToken, isLoading: isUnwrapSuperTokenLoading } =
+    useContractWriteWithConfirmations({
+      address: superTokenAddress as Address,
+      abi: superTokenABI,
+      functionName: "downgrade",
+      contractName: "SuperToken",
+      fallbackErrorMessage:
+        "Failed to unwrap super token for this proposal. Please try again.",
+      onSuccess: async () => {
+        await refetchSuperToken();
+      },
+    });
+
+  const formatFlowPerMonth = (flowRate?: bigint | null) => {
+    if (flowRate == null) return "--";
+    const monthlyFlow =
+      Number(formatUnits(flowRate, streamTokenDecimals)) * SEC_TO_MONTH;
+    if (!Number.isFinite(monthlyFlow)) return "--";
+    const value = monthlyFlow.toLocaleString(undefined, {
+      maximumFractionDigits: 4,
+    });
+    return poolToken?.symbol ? `${value} ${poolToken.symbol}` : value;
+  };
+  const availableToUnwrapDisplay =
+    beneficiarySuperTokenBalance != null ?
+      roundToSignificant(beneficiarySuperTokenBalance.formatted, 4)
+    : "--";
+  const showUnwrapSuperTokenButton =
+    isStreamingType && (isProposerConnected || isBeneficiaryConnected);
+  const disableUnwrapBtnConditions: ConditionObject[] = [
+    {
+      condition: !isBeneficiaryConnected,
+      message: "Connect with beneficiary to unwrap super token",
+    },
+    {
+      condition: !superTokenAddress,
+      message: "Super token unavailable for this proposal",
+    },
+    {
+      condition: (beneficiarySuperTokenBalance?.value ?? 0n) <= 0n,
+      message: "No super token balance to unwrap",
+    },
+  ];
+  const {
+    tooltipMessage: unwrapSuperTokenTooltipMessage,
+    isConnected: isUnwrapConnected,
+    missmatchUrl: isUnwrapWrongNetwork,
+  } = useDisableButtons(disableUnwrapBtnConditions);
 
   if (isAwaitingProposal) {
     return (
@@ -399,7 +611,7 @@ export default function ClientPage({ params }: ClientPageProps) {
       {/* main section: proposal details + conviction progress + vote proposals & execute buttons */}
       <section className="hidden sm:block sm:col-span-12 xl:col-span-9">
         <div
-          className={`section-layout flex flex-col gap-8  ${status === "disputed" ? "!border-error-content" : ""} ${status === "executed" ? "!border-primary-content" : ""}`}
+          className={`section-layout flex flex-col gap-8  ${status === "disputed" ? "!border-warning-content" : ""} ${status === "executed" ? "!border-primary-content" : ""}`}
         >
           <div className="flex flex-col items-start gap-10 sm:flex-row">
             <div className="flex w-full flex-col gap-6">
@@ -442,21 +654,19 @@ export default function ClientPage({ params }: ClientPageProps) {
                         </span>
                       </Statistic>
 
-                      {!isSignalingType && (
-                        <>
-                          <Statistic label={"request amount"}>
-                            <DisplayNumber
-                              number={formatUnits(
-                                requestedAmount,
-                                poolToken?.decimals ?? 18,
-                              )}
-                              tokenSymbol={poolToken?.symbol}
-                              compact={true}
-                              valueClassName="font-medium dark:text-neutral-content"
-                              symbolClassName="font-medium dark:text-neutral-content"
-                            />
-                          </Statistic>
-                        </>
+                      {!isSignalingType && !isStreamingType && (
+                        <Statistic label={"request amount"}>
+                          <DisplayNumber
+                            number={formatUnits(
+                              requestedAmount,
+                              poolToken?.decimals ?? 18,
+                            )}
+                            tokenSymbol={poolToken?.symbol}
+                            compact={true}
+                            valueClassName="font-medium dark:text-neutral-content"
+                            symbolClassName="font-medium dark:text-neutral-content"
+                          />
+                        </Statistic>
                       )}
                     </div>
                   )}
@@ -485,6 +695,11 @@ export default function ClientPage({ params }: ClientPageProps) {
                             onReadyToExecute={triggerConvictionRefetch}
                             defaultChartMaxValue
                             proposalStatus={proposalStatus}
+                            proposalType={
+                              PoolTypes[
+                                proposalData.strategy.config.proposalType
+                              ]
+                            }
                           />
                         </div>
                       </div>
@@ -514,7 +729,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                 >
                   Go to Vote on Proposals
                 </Button>
-                {!isSignalingType && (
+                {!isSignalingType && !isStreamingType && (
                   <Button
                     icon={<BoltIcon height={18} width={18} />}
                     className="!w-full"
@@ -547,6 +762,133 @@ export default function ClientPage({ params }: ClientPageProps) {
       {/* Right side: Status + view supporters + cancel button */}
       <div className="hidden sm:block sm:col-span-12 xl:col-span-3 xl:h-10 xl:overflow-visible">
         <div className="backdrop-blur-sm rounded-lg flex flex-col gap-6 sticky top-32">
+          {isStreamingType && (
+            <section className="section-layout gap-4 flex flex-col">
+              <h5>Stream Info</h5>
+              <div className="rounded-lg border border-neutral-soft-content/20 p-3 flex flex-col gap-2">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="subtitle2">Budget</p>
+                  <p className="text-right">
+                    {formatFlowPerMonth(maxFlowRateForDisplay)}/m
+                  </p>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <p className="subtitle2">Streaming</p>
+                  <p className="text-right">
+                    {formatFlowPerMonth(currentFlowRateForDisplay)}/m
+                  </p>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <p className="subtitle2">Total</p>
+                  <div className="flex items-center gap-2">
+                    {proposalTotalStreamedDisplay != null ?
+                      <p className="text-right">
+                        {proposalTotalStreamedDisplay}
+                      </p>
+                    : <p className="text-right">--</p>}
+                    {poolToken?.address && poolToken?.symbol && (
+                      <EthAddress
+                        address={poolToken.address}
+                        label={poolToken.symbol}
+                        shortenAddress={false}
+                        icon={false}
+                        actions="none"
+                        showPopup={false}
+                      />
+                    )}
+                  </div>
+                </div>
+                {!isProd && (
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="subtitle2">Escrow</p>
+                    {resolvedStreamingEscrow ?
+                      <EthAddress
+                        address={resolvedStreamingEscrow as Address}
+                        shortenAddress={true}
+                        icon={false}
+                        actions="explorer"
+                      />
+                    : <p className="text-right">--</p>}
+                  </div>
+                )}
+                <div className="flex items-center justify-between gap-3">
+                  <p className="subtitle2">Available to unwrap</p>
+                  <div className="flex items-center gap-2">
+                    {beneficiarySuperTokenBalance != null ?
+                      <DisplayNumber
+                        number={availableToUnwrapDisplay}
+                        valueClassName="text-right font-semibold"
+                      />
+                    : <p className="text-right font-semibold">--</p>}
+                    {superTokenAddress &&
+                      beneficiarySuperTokenBalance?.symbol && (
+                        <EthAddress
+                          address={superTokenAddress}
+                          label={beneficiarySuperTokenBalance.symbol}
+                          actions="none"
+                          shortenAddress={false}
+                          icon={false}
+                        />
+                      )}
+                  </div>
+                </div>
+              </div>
+              {superfluidExplorerUrl != null &&
+                superfluidExplorerUrl !== "" && (
+                  <a
+                    href={superfluidExplorerUrl}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className="text-sm underline underline-offset-2 w-fit inline-flex items-center gap-1"
+                  >
+                    <span className="text-sm hover:opacity-70">
+                      View on Superfluid Explorer
+                    </span>
+                    <ArrowTopRightOnSquareIcon
+                      className="h-4 w-4"
+                      aria-hidden
+                    />
+                  </a>
+                )}
+              {(currentFlowRateForDisplay ?? 0n) === 0n && (
+                <InfoBox
+                  infoBoxType="info"
+                  className="w-full"
+                  title="No active stream"
+                >
+                  This pool currently has no active outflow.
+                </InfoBox>
+              )}
+              <Button
+                btnStyle="outline"
+                color="primary"
+                className="w-full"
+                disabled={!isSyncStreamConnected || isSyncStreamWrongNetwork}
+                tooltip={syncStreamTooltipMessage}
+                isLoading={isRebalanceLoading}
+                onClick={() => writeRebalance?.()}
+              >
+                Sync Stream
+              </Button>
+              {showUnwrapSuperTokenButton && (
+                <Button
+                  btnStyle="outline"
+                  color="secondary"
+                  className="w-full"
+                  disabled={!isUnwrapConnected || isUnwrapWrongNetwork}
+                  tooltip={unwrapSuperTokenTooltipMessage}
+                  isLoading={isUnwrapSuperTokenLoading}
+                  onClick={() =>
+                    writeUnwrapSuperToken?.({
+                      args: [beneficiarySuperTokenBalance?.value ?? 0n],
+                    })
+                  }
+                >
+                  Unwrap Super Token
+                </Button>
+              )}
+            </section>
+          )}
           <section className="section-layout gap-4 flex flex-col">
             <div className="flex items-center justify-between">
               <h5>Status</h5>
@@ -579,7 +921,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                       {prettyTimestamp(proposalData?.executedAt)}
                     </p>
 
-                    {!isSignalingType && (
+                    {!isSignalingType && !isStreamingType && (
                       <div
                         className="flex items-baseline
                             gap-1"
@@ -597,6 +939,26 @@ export default function ClientPage({ params }: ClientPageProps) {
                         />
                       </div>
                     )}
+                    {isStreamingType && (
+                      <div className="flex flex-col items-start gap-1">
+                        <div className="flex items-baseline gap-1">
+                          <h6 className="text-neutral-soft-content">
+                            Stream:{" "}
+                          </h6>
+                          <p className="text-neutral-soft-content text-sm">
+                            {proposalFlowPerMonth != null ?
+                              `${roundToSignificant(proposalFlowPerMonth, 4)} ${poolToken?.symbol ?? ""}/mo`
+                            : "No active stream"}
+                          </p>
+                        </div>
+                        <div className="flex items-baseline gap-1">
+                          <h6 className="text-neutral-soft-content">Total:</h6>
+                          <p className="text-neutral-soft-content text-sm">
+                            {proposalTotalStreamedDisplay}
+                          </p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </li>
               </ul>
@@ -611,11 +973,28 @@ export default function ClientPage({ params }: ClientPageProps) {
                     </div>
                   </>
                 )}
-                {status !== "executed" && status !== "cancelled" && (
+                {status !== "executed" &&
+                  status !== "cancelled" &&
+                  status !== "disputed" && (
+                    <InfoBox
+                      title="Information"
+                      infoBoxType="info"
+                      content={`${isSignalingType ? "This proposal is open and can be supported or disputed by the community. Only the proposal creator can cancel" : "This proposal is currently open. It will pass if nobody successfully disputes it and it receives enough support."}`}
+                    />
+                  )}
+                {status === "disputed" && (
                   <InfoBox
-                    title="Information"
-                    infoBoxType="info"
-                    content={`${isSignalingType ? "This proposal is open and can be supported or disputed by the community. Only the proposal creator can cancel" : "This proposal is currently open. It will pass if nobody successfully disputes it and it receives enough support."}`}
+                    title={
+                      isStreamingType ?
+                        "Streaming During Dispute"
+                      : "Proposal Disputed"
+                    }
+                    infoBoxType="warning"
+                    content={
+                      isStreamingType ?
+                        "Stream funds are accumulated while this proposal is disputed. When the dispute is ruled, accumulated funds are sent to the beneficiary if approved, or returned to the pool if rejected."
+                      : "This proposal is currently disputed. It cannot be executed until the dispute is ruled."
+                    }
                   />
                 )}
               </div>
@@ -775,21 +1154,19 @@ export default function ClientPage({ params }: ClientPageProps) {
                               </span>
                             </Statistic>
 
-                            {!isSignalingType && (
-                              <>
-                                <Statistic label={"request amount"}>
-                                  <DisplayNumber
-                                    number={formatUnits(
-                                      requestedAmount,
-                                      poolToken?.decimals ?? 18,
-                                    )}
-                                    tokenSymbol={poolToken?.symbol}
-                                    compact={true}
-                                    valueClassName="font-medium dark:text-neutral-content"
-                                    symbolClassName="font-medium dark:text-neutral-content"
-                                  />
-                                </Statistic>
-                              </>
+                            {!isSignalingType && !isStreamingType && (
+                              <Statistic label={"request amount"}>
+                                <DisplayNumber
+                                  number={formatUnits(
+                                    requestedAmount,
+                                    poolToken?.decimals ?? 18,
+                                  )}
+                                  tokenSymbol={poolToken?.symbol}
+                                  compact={true}
+                                  valueClassName="font-medium dark:text-neutral-content"
+                                  symbolClassName="font-medium dark:text-neutral-content"
+                                />
+                              </Statistic>
                             )}
                           </div>
                         )}
@@ -842,6 +1219,11 @@ export default function ClientPage({ params }: ClientPageProps) {
                                   onReadyToExecute={triggerConvictionRefetch}
                                   defaultChartMaxValue
                                   proposalStatus={proposalStatus}
+                                  proposalType={
+                                    PoolTypes[
+                                      proposalData.strategy.config.proposalType
+                                    ]
+                                  }
                                 />
                               </div>
                             </div>
@@ -877,7 +1259,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                       >
                         Vote on Proposals
                       </Button>
-                      {!isSignalingType && (
+                      {!isSignalingType && !isStreamingType && (
                         <Button
                           icon={<BoltIcon height={18} width={18} />}
                           className="w-full"
@@ -921,17 +1303,161 @@ export default function ClientPage({ params }: ClientPageProps) {
           {/* Status */}
           {selectedTab === 2 && (
             <>
+              {isStreamingType && (
+                <section className="section-layout gap-4 flex flex-col mb-4">
+                  <h5>Stream Info</h5>
+                  <div className="rounded-lg border border-neutral-soft-content/20 p-3 flex flex-col gap-2">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="subtitle2">Budget</p>
+                      <p className="text-right">
+                        {formatFlowPerMonth(maxFlowRateForDisplay)}/m
+                      </p>
+                    </div>
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="subtitle2">Streaming</p>
+                      <p className="text-right">
+                        {formatFlowPerMonth(currentFlowRateForDisplay)}/m
+                      </p>
+                    </div>
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="subtitle2">Total</p>
+                      <div className="flex items-center gap-2">
+                        {proposalTotalStreamedDisplay != null ?
+                          <p className="text-right">
+                            {proposalTotalStreamedDisplay}
+                          </p>
+                        : <p className="text-right">--</p>}
+                        {poolToken?.address && poolToken?.symbol && (
+                          <EthAddress
+                            address={poolToken.address}
+                            label={poolToken.symbol}
+                            shortenAddress={false}
+                            icon={false}
+                            actions="explorer"
+                          />
+                        )}
+                      </div>
+                    </div>
+                    {!isProd && (
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="subtitle2">StreamingEscrow</p>
+                        {resolvedStreamingEscrow ?
+                          <EthAddress
+                            address={resolvedStreamingEscrow as Address}
+                            actions="copy"
+                            shortenAddress={true}
+                          />
+                        : <p className="text-right">--</p>}
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="subtitle2">Available to unwrap</p>
+                      <div className="flex items-center gap-2">
+                        {beneficiarySuperTokenBalance != null ?
+                          <DisplayNumber
+                            number={availableToUnwrapDisplay}
+                            valueClassName="text-right font-semibold"
+                          />
+                        : <p className="text-right font-semibold">--</p>}
+                        {superTokenAddress &&
+                          beneficiarySuperTokenBalance?.symbol && (
+                            <EthAddress
+                              address={superTokenAddress}
+                              label={beneficiarySuperTokenBalance.symbol}
+                              shortenAddress={false}
+                              icon={false}
+                              actions="none"
+                            />
+                          )}
+                      </div>
+                    </div>
+                  </div>
+                  {superfluidExplorerUrl != null &&
+                    superfluidExplorerUrl !== "" && (
+                      <a
+                        href={superfluidExplorerUrl}
+                        target="_blank"
+                        rel="noreferrer noopener"
+                        className="text-sm underline underline-offset-2 w-fit inline-flex items-center gap-1"
+                      >
+                        <span className="text-sm hover:opacity-70">
+                          View on Superfluid Explorer
+                        </span>
+                        <ArrowTopRightOnSquareIcon
+                          className="h-4 w-4"
+                          aria-hidden
+                        />
+                      </a>
+                    )}
+                  {(currentFlowRateForDisplay ?? 0n) === 0n && (
+                    <InfoBox
+                      infoBoxType="info"
+                      className="w-full"
+                      title="No active stream"
+                    >
+                      This pool currently has no active outflow.
+                    </InfoBox>
+                  )}
+                  <Button
+                    btnStyle="outline"
+                    color="primary"
+                    className="w-full"
+                    disabled={
+                      !isSyncStreamConnected || isSyncStreamWrongNetwork
+                    }
+                    tooltip={syncStreamTooltipMessage}
+                    isLoading={isRebalanceLoading}
+                    onClick={() => writeRebalance?.()}
+                  >
+                    Sync Stream
+                  </Button>
+                  {showUnwrapSuperTokenButton && (
+                    <Button
+                      btnStyle="outline"
+                      color="secondary"
+                      className="w-full"
+                      disabled={!isUnwrapConnected || isUnwrapWrongNetwork}
+                      tooltip={unwrapSuperTokenTooltipMessage}
+                      isLoading={isUnwrapSuperTokenLoading}
+                      onClick={() =>
+                        writeUnwrapSuperToken?.({
+                          args: [beneficiarySuperTokenBalance?.value ?? 0n],
+                        })
+                      }
+                    >
+                      Unwrap Super Token
+                    </Button>
+                  )}
+                </section>
+              )}
               <section className="section-layout gap-4 flex flex-col">
                 <div className="flex items-center justify-between">
                   <h5>Status</h5>
                   <Badge status={proposalData.proposalStatus} />
                 </div>
                 <div>
-                  {status !== "executed" && status !== "cancelled" && (
+                  {status !== "executed" &&
+                    status !== "cancelled" &&
+                    status !== "disputed" && (
+                      <InfoBox
+                        title="Information"
+                        infoBoxType="info"
+                        content={`${isSignalingType ? "This proposal is open and can be supported or disputed by the community. Only the proposal creator can cancel" : "This proposal is currently open. It will pass if nobody successfully disputes it and it receives enough support."}`}
+                      />
+                    )}
+                  {status === "disputed" && (
                     <InfoBox
-                      title="Information"
-                      infoBoxType="info"
-                      content={`${isSignalingType ? "This proposal is open and can be supported or disputed by the community. Only the proposal creator can cancel" : "This proposal is currently open. It will pass if nobody successfully disputes it and it receives enough support."}`}
+                      title={
+                        isStreamingType ?
+                          "Streaming During Dispute"
+                        : "Proposal Disputed"
+                      }
+                      infoBoxType="warning"
+                      content={
+                        isStreamingType ?
+                          "Stream funds are accumulated while this proposal is disputed. When the dispute is ruled, accumulated funds are sent to the beneficiary if approved, or returned to the pool if rejected."
+                        : "This proposal is currently disputed. It cannot be executed until the dispute is ruled."
+                      }
                     />
                   )}
                   {status === "executed" && (
@@ -960,7 +1486,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                             {prettyTimestamp(proposalData?.executedAt)}
                           </p>
 
-                          {!isSignalingType && (
+                          {!isSignalingType && !isStreamingType && (
                             <div
                               className="flex items-baseline
                             gap-1"
@@ -978,6 +1504,28 @@ export default function ClientPage({ params }: ClientPageProps) {
                                 valueClassName="text-neutral-soft-content"
                                 symbolClassName="text-neutral-soft-content "
                               />
+                            </div>
+                          )}
+                          {isStreamingType && (
+                            <div className="flex flex-col items-start gap-1">
+                              <div className="flex items-baseline gap-1">
+                                <h6 className="text-neutral-soft-content">
+                                  Stream:{" "}
+                                </h6>
+                                <p className="text-neutral-soft-content text-sm">
+                                  {proposalFlowPerMonth != null ?
+                                    `${roundToSignificant(proposalFlowPerMonth, 4)} ${poolToken?.symbol ?? ""}/mo`
+                                  : "No active stream"}
+                                </p>
+                              </div>
+                              <div className="flex items-baseline gap-1">
+                                <h6 className="text-neutral-soft-content">
+                                  Total:
+                                </h6>
+                                <p className="text-neutral-soft-content text-sm">
+                                  {proposalTotalStreamedDisplay}
+                                </p>
+                              </div>
                             </div>
                           )}
                         </div>

@@ -182,6 +182,12 @@ load_proxies_for_network() {
     "$CONTRACTS_DIR/config/networks.json"
 }
 
+load_facets_for_network() {
+  local network="$1"
+  jq -r ".networks[] | select(.name==\"$network\") | .FACETS | to_entries[]? | .value" \
+    "$CONTRACTS_DIR/config/networks.json"
+}
+
 get_prod_networks() {
   jq -r '.networks[].name | select(test("sepolia|testnet") | not)' \
     "$CONTRACTS_DIR/config/networks.json"
@@ -194,12 +200,24 @@ verify_network() {
   shift 3
   local proxies=("$@")
   local -A seen=()
+  local -A expected_facets=()
   local display_name="${network:-custom}"
+  local unknown_facet_count=0
+
+  if [[ -n "$network" ]]; then
+    while read -r facet_impl; do
+      [[ -z "$facet_impl" ]] && continue
+      expected_facets["$(echo "$facet_impl" | tr '[:upper:]' '[:lower:]')"]=1
+    done < <(load_facets_for_network "$network")
+  fi
 
   echo "Network: $display_name"
   echo "  - Using RPC: $rpc_url"
   echo "  - Using chain-id: $chain_id"
   echo "  - Inspecting ${#proxies[@]} proxy(s)"
+  if [[ ${#expected_facets[@]} -gt 0 ]]; then
+    echo "  - Checking against ${#expected_facets[@]} facet implementation(s) from config/networks.json"
+  fi
 
   for proxy in "${proxies[@]}"; do
     echo "  - Inspecting proxy: $proxy"
@@ -209,6 +227,13 @@ verify_network() {
         continue
       fi
       seen["$facet"]=1
+
+      facet_lc=$(echo "$facet" | tr '[:upper:]' '[:lower:]')
+      if [[ ${#expected_facets[@]} -gt 0 && -z "${expected_facets[$facet_lc]:-}" ]]; then
+        echo "    - ERROR: facet $facet is not declared in config/networks.json FACETS for $network"
+        unknown_facet_count=$((unknown_facet_count + 1))
+        continue
+      fi
 
       echo "    - Fetching codehash for $facet"
       codehash=$(cast codehash --rpc-url "$rpc_url" "$facet")
@@ -230,6 +255,10 @@ verify_network() {
   local total
   total=$(printf '%s\n' "${!seen[@]}" | wc -l | tr -d ' ')
   echo "  - Done. Verified ${total} unique facet address(es)."
+  if [[ "$unknown_facet_count" -gt 0 ]]; then
+    echo "  - ERROR: Found ${unknown_facet_count} facet address(es) missing from config/networks.json FACETS." >&2
+    return 1
+  fi
 }
 
 build_contract_map

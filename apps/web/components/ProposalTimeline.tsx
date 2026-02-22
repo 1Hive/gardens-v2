@@ -8,11 +8,18 @@ import {
 import { Countdown } from "./Countdown";
 import { DateComponent } from "./DateComponent";
 import { InfoWrapper } from "./InfoWrapper";
-import { DisputeOutcome, DisputeStatus, ProposalStatus } from "@/types";
+import { DisputeOutcome, DisputeStatus, PoolTypes, ProposalStatus } from "@/types";
 import { convertSecondsToReadableTime } from "@/utils/numbers";
 
 type Props = {
   proposalData: Pick<CVProposal, "createdAt" | "proposalStatus"> & {
+    strategy?: {
+      id?: string | null;
+      poolId?: string | number | null;
+      config?: {
+        proposalType?: string | number | null;
+      } | null;
+    } | null;
     arbitrableConfig: Pick<
       ArbitrableConfig,
       "defaultRulingTimeout" | "defaultRuling"
@@ -42,6 +49,18 @@ export const ProposalTimeline: FC<Props> = ({
   const arbitrationConfig = proposalData.arbitrableConfig;
   const defaultRuling = DisputeOutcome[arbitrationConfig.defaultRuling];
   const proposalStatus = ProposalStatus[proposalData.proposalStatus];
+  const proposalType = proposalData.strategy?.config?.proposalType;
+  const poolType =
+    proposalType != null ? PoolTypes[String(proposalType)] : undefined;
+  const isStreamingType = poolType === "streaming";
+  const isFundingType = poolType === "funding";
+  const endNodeLabel = isFundingType ? "Executed" : "Ended";
+  const endNodeTooltip =
+    proposalStatus === "cancelled" ?
+      "Cancelled by proposal creator."
+    : proposalStatus === "rejected" ?
+      "Rejected after dispute resolution."
+    : undefined;
 
   const pastHR = <hr className="bg-tertiary-content w-8" />;
   const pastNode = (
@@ -112,7 +131,7 @@ export const ProposalTimeline: FC<Props> = ({
                 </div>
                 <div className="timeline-start shadow-lg p-2 border border-tertiary-content rounded-lg flex items-center">
                   <InfoWrapper
-                    className="[&>svg]:text-tertiary-content m-0.5"
+                    className="[&>svg]:text-tertiary-content m-0.5 tooltip-bottom"
                     tooltip={`The tribunal safe has ${rulingTimeout.value} ${rulingTimeout.unit} to rule the dispute. Past this delay and considering the abstain behavior on this pool, this proposal will be ${defaultRuling === "rejected" ? "closed as rejected" : "back to active"} and both collateral will be restored.`}
                   >
                     <Countdown endTimestamp={timeoutTimestamp} />
@@ -220,7 +239,11 @@ export const ProposalTimeline: FC<Props> = ({
           <li className="flex-grow">
             {futureHR}
             {futureNode}
-            <div className="timeline-end">Executed</div>
+            {endNodeTooltip ?
+              <InfoWrapper tooltip={endNodeTooltip}>
+                <div className="timeline-end">{endNodeLabel}</div>
+              </InfoWrapper>
+            : <div className="timeline-end">{endNodeLabel}</div>}
           </li>
         )}
     </ul>

@@ -2,8 +2,10 @@
 pragma solidity ^0.8.19;
 
 import {CVStrategyBaseFacet} from "../CVStrategyBaseFacet.sol";
+import {CVStreamingStorage} from "../CVStreamingStorage.sol";
+import {StreamingEscrow} from "../StreamingEscrow.sol";
 import {IArbitrator} from "../../interfaces/IArbitrator.sol";
-import {Proposal, ProposalStatus, ArbitrableConfig} from "../ICVStrategy.sol";
+import {Proposal, ProposalStatus, ProposalType, ArbitrableConfig} from "../ICVStrategy.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Library.sol";
 
 /**
@@ -41,6 +43,7 @@ contract CVDisputeFacet is CVStrategyBaseFacet {
     /*|              FUNCTIONS                     |*/
     /*|--------------------------------------------|*/
 
+    // Sig: 0xb41596ec
     function disputeProposal(uint256 proposalId, string calldata context, bytes calldata _extraData)
         external
         payable
@@ -69,15 +72,24 @@ contract CVDisputeFacet is CVStrategyBaseFacet {
 
         uint256 arbitrationFee = msg.value - arbitrableConfig.challengerCollateralAmount;
 
+        // Effects before interactions to reduce reentrancy surface.
+        proposal.proposalStatus = ProposalStatus.Disputed;
+        proposal.disputeInfo.disputeTimestamp = block.timestamp;
+        proposal.disputeInfo.challenger = msg.sender;
+
         collateralVault.depositCollateral{value: arbitrableConfig.challengerCollateralAmount}(proposalId, msg.sender);
 
         disputeId = arbitrableConfig.arbitrator.createDispute{value: arbitrationFee}(RULING_OPTIONS, _extraData);
 
-        proposal.proposalStatus = ProposalStatus.Disputed;
         proposal.disputeInfo.disputeId = disputeId;
-        proposal.disputeInfo.disputeTimestamp = block.timestamp;
-        proposal.disputeInfo.challenger = msg.sender;
         disputeIdToProposalId[disputeId] = proposalId;
+
+        if (proposalType == ProposalType.Streaming) {
+            address escrow = CVStreamingStorage.layout().proposalEscrow[proposalId];
+            if (escrow != address(0)) {
+                StreamingEscrow(escrow).setDisputed(true);
+            }
+        }
 
         disputeCount++;
 
@@ -91,6 +103,7 @@ contract CVDisputeFacet is CVStrategyBaseFacet {
         );
     }
 
+    // Sig: 0x311a6c56
     function rule(uint256 _disputeID, uint256 _ruling) external {
         uint256 proposalId = disputeIdToProposalId[_disputeID];
         Proposal storage proposal = proposals[proposalId];
@@ -112,9 +125,11 @@ contract CVDisputeFacet is CVStrategyBaseFacet {
             }
             if (arbitrableConfig.defaultRuling == 1) {
                 proposal.proposalStatus = ProposalStatus.Active;
+                _handleStreamingResolution(proposalId, true);
             }
             if (arbitrableConfig.defaultRuling == 2) {
                 proposal.proposalStatus = ProposalStatus.Rejected;
+                _handleStreamingResolution(proposalId, false);
                 collateralVault.withdrawCollateral(
                     proposalId, proposal.submitter, arbitrableConfig.submitterCollateralAmount
                 );
@@ -124,6 +139,7 @@ contract CVDisputeFacet is CVStrategyBaseFacet {
             );
         } else if (_ruling == 1) {
             proposal.proposalStatus = ProposalStatus.Active;
+            _handleStreamingResolution(proposalId, true);
             collateralVault.withdrawCollateralFor(
                 proposalId,
                 proposal.disputeInfo.challenger,
@@ -132,6 +148,7 @@ contract CVDisputeFacet is CVStrategyBaseFacet {
             );
         } else if (_ruling == 2) {
             proposal.proposalStatus = ProposalStatus.Rejected;
+            _handleStreamingResolution(proposalId, false);
             collateralVault.withdrawCollateral(
                 proposalId, proposal.disputeInfo.challenger, arbitrableConfig.challengerCollateralAmount
             );
@@ -152,5 +169,21 @@ contract CVDisputeFacet is CVStrategyBaseFacet {
         disputeCount--;
         proposal.lastDisputeCompletion = block.timestamp;
         emit Ruling(arbitrableConfig.arbitrator, _disputeID, _ruling);
+    }
+
+    function _handleStreamingResolution(uint256 proposalId, bool active) internal {
+        if (proposalType != ProposalType.Streaming) {
+            return;
+        }
+        address escrow = CVStreamingStorage.layout().proposalEscrow[proposalId];
+        if (escrow == address(0)) {
+            return;
+        }
+        if (active) {
+            StreamingEscrow(escrow).setDisputed(false);
+            StreamingEscrow(escrow).drainToBeneficiary();
+        } else {
+            StreamingEscrow(escrow).drainToStrategy();
+        }
     }
 }

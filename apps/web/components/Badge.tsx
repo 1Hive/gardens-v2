@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
 import {
+  ArrowDownCircleIcon,
   CurrencyDollarIcon,
   HandThumbUpIcon,
 } from "@heroicons/react/24/outline";
@@ -21,6 +22,7 @@ type BadgeProps = {
 const POOL_TYPE_STYLES = [
   "bg-primary-soft text-primary-content dark:bg-primary-soft-dark",
   "bg-tertiary-soft dark:bg-tertiary-dark text-tertiary-content",
+  "bg-secondary-soft text-secondary-content dark:bg-secondary-dark-base/70 dark:text-secondary-dark-text",
 ];
 
 // Styles for different proposal status badge
@@ -89,6 +91,7 @@ export function Badge({
       const iconMap: { [key: string]: React.ReactNode } = {
         signaling: <HandThumbUpIcon />,
         funding: <CurrencyDollarIcon />,
+        streaming: <ArrowDownCircleIcon />,
       };
       return type != null ? iconMap[PoolTypes[type]] ?? null : null;
     })();

@@ -6,12 +6,15 @@ import {CVStrategy} from "../src/CVStrategy/CVStrategy.sol";
 import {CVAdminFacet} from "../src/CVStrategy/facets/CVAdminFacet.sol";
 import {CVAllocationFacet} from "../src/CVStrategy/facets/CVAllocationFacet.sol";
 import {CVDisputeFacet} from "../src/CVStrategy/facets/CVDisputeFacet.sol";
+import {CVPauseFacet} from "../src/CVStrategy/facets/CVPauseFacet.sol";
 import {CVPowerFacet} from "../src/CVStrategy/facets/CVPowerFacet.sol";
 import {CVProposalFacet} from "../src/CVStrategy/facets/CVProposalFacet.sol";
+import {CVSyncPowerFacet} from "../src/CVStrategy/facets/CVSyncPowerFacet.sol";
 import {CVStrategyDiamondInit} from "../src/CVStrategy/CVStrategyDiamondInit.sol";
 import {RegistryCommunity} from "../src/RegistryCommunity/RegistryCommunity.sol";
 import {CommunityAdminFacet} from "../src/RegistryCommunity/facets/CommunityAdminFacet.sol";
 import {CommunityMemberFacet} from "../src/RegistryCommunity/facets/CommunityMemberFacet.sol";
+import {CommunityPauseFacet} from "../src/RegistryCommunity/facets/CommunityPauseFacet.sol";
 import {CommunityPoolFacet} from "../src/RegistryCommunity/facets/CommunityPoolFacet.sol";
 import {CommunityPowerFacet} from "../src/RegistryCommunity/facets/CommunityPowerFacet.sol";
 import {CommunityStrategyFacet} from "../src/RegistryCommunity/facets/CommunityStrategyFacet.sol";
@@ -45,6 +48,7 @@ contract UpgradeCVMultichainProd is BaseMultiChain, StrategyDiamondConfiguratorB
         address strategyImplementation;
         address registryFactoryProxy;
         address safeOwner;
+        address pauseController;
         IDiamond.FacetCut[] cvCuts;
         IDiamond.FacetCut[] communityCuts;
         IDiamond.FacetCut[] upgradedCommunityCuts;
@@ -58,6 +62,10 @@ contract UpgradeCVMultichainProd is BaseMultiChain, StrategyDiamondConfiguratorB
         context.strategyImplementation = address(new CVStrategy());
         // address passportScorer = networkJson.readAddress(getKeyNetwork(".ENVS.PASSPORT_SCORER"));
         address proxyOwner = networkJson.readAddress(getKeyNetwork(".ENVS.PROXY_OWNER"));
+        context.pauseController = networkJson.readAddress(getKeyNetwork(".ENVS.PAUSE_CONTROLLER"));
+        if (context.pauseController == address(0)) {
+            revert("PAUSE_CONTROLLER not set in networks.json");
+        }
         context.safeOwner = ProxyOwner(proxyOwner).owner();
 
         FacetCuts memory facetCuts = _buildFacetCuts();
@@ -112,6 +120,13 @@ contract UpgradeCVMultichainProd is BaseMultiChain, StrategyDiamondConfiguratorB
             context.writer, _createTransactionJson(context.registryFactoryProxy, setStrategyFacets)
         );
 
+        bytes memory setGlobalPauseController = abi.encodeWithSelector(
+            registryFactory.setGlobalPauseController.selector, context.pauseController
+        );
+        context.writer = _appendTransaction(
+            context.writer, _createTransactionJson(context.registryFactoryProxy, setGlobalPauseController)
+        );
+
         bytes memory setRegistryCommunityTemplate = abi.encodeWithSelector(
             registryFactory.setRegistryCommunityTemplate.selector, context.registryImplementation
         );
@@ -135,25 +150,21 @@ contract UpgradeCVMultichainProd is BaseMultiChain, StrategyDiamondConfiguratorB
     {
         address[] memory registryCommunityProxies =
             networkJson.readAddressArray(getKeyNetwork(".PROXIES.REGISTRY_COMMUNITIES"));
-        bytes[] memory registryTransactions = new bytes[](registryCommunityProxies.length * 3);
+        bytes[] memory registryTransactions = new bytes[](registryCommunityProxies.length * 2);
         for (uint256 i = 0; i < registryCommunityProxies.length; i++) {
-            (registryTransactions[i * 3], registryTransactions[i * 3 + 1], registryTransactions[i * 3 + 2]) =
+            (registryTransactions[i * 2], registryTransactions[i * 2 + 1]) =
                 _upgradeRegistryCommunity(
                     registryCommunityProxies[i],
                     context.registryImplementation,
-                    context.strategyImplementation,
-                    context.cvCuts
+                    context.strategyImplementation
                 );
         }
         for (uint256 i = 0; i < registryCommunityProxies.length; i++) {
             context.writer = _appendTransaction(
-                context.writer, _createTransactionJson(registryCommunityProxies[i], registryTransactions[i * 3])
+                context.writer, _createTransactionJson(registryCommunityProxies[i], registryTransactions[i * 2])
             );
             context.writer = _appendTransaction(
-                context.writer, _createTransactionJson(registryCommunityProxies[i], registryTransactions[i * 3 + 1])
-            );
-            context.writer = _appendTransaction(
-                context.writer, _createTransactionJson(registryCommunityProxies[i], registryTransactions[i * 3 + 2])
+                context.writer, _createTransactionJson(registryCommunityProxies[i], registryTransactions[i * 2 + 1])
             );
             if (context.upgradedCommunityCuts.length > 0) {
                 bytes memory communityDiamondCut = abi.encodeWithSelector(
@@ -195,17 +206,8 @@ contract UpgradeCVMultichainProd is BaseMultiChain, StrategyDiamondConfiguratorB
         address registryFactoryProxy,
         string memory networkJson
     ) internal {
-        console2.log("Upgraded Registry Factory: %s", registryFactoryProxy);
-        console2.log(
-            "Upgraded Registry Communities: %s",
-            networkJson.readAddressArray(getKeyNetwork(".PROXIES.REGISTRY_COMMUNITIES")).length
-        );
-        console2.log(
-            "Upgraded CV Strategies: %s", networkJson.readAddressArray(getKeyNetwork(".PROXIES.CV_STRATEGIES")).length
-        );
 
         _finalizePayloadWriter(writer);
-        console2.log("Wrote %s", writer.path);
     }
 
     function _removeLastChar(string memory input) internal pure returns (string memory) {
@@ -222,22 +224,14 @@ contract UpgradeCVMultichainProd is BaseMultiChain, StrategyDiamondConfiguratorB
     function _upgradeRegistryCommunity(
         address registryProxy,
         address registryImplementation,
-        address strategyImplementation,
-        IDiamond.FacetCut[] memory cvCuts
-    ) internal returns (bytes memory, bytes memory, bytes memory) {
+        address strategyImplementation
+    ) internal returns (bytes memory, bytes memory) {
         RegistryCommunity registryCommunity = RegistryCommunity(payable(registryProxy));
         bytes memory upgradeRegistryCommunity =
             abi.encodeWithSelector(registryCommunity.upgradeTo.selector, registryImplementation);
         bytes memory setStrategyTemplateCommunity =
             abi.encodeWithSelector(registryCommunity.setStrategyTemplate.selector, strategyImplementation);
-        bytes memory setStrategyFacets = abi.encodeWithSelector(
-            registryCommunity.setStrategyFacets.selector,
-            cvCuts,
-            address(new CVStrategyDiamondInit()),
-            abi.encodeCall(CVStrategyDiamondInit.init, ())
-        );
-
-        return (upgradeRegistryCommunity, setStrategyTemplateCommunity, setStrategyFacets);
+        return (upgradeRegistryCommunity, setStrategyTemplateCommunity);
     }
 
     function _upgradeCVStrategy(address _cvStrategyProxy, address _strategyImplementation)
@@ -254,12 +248,12 @@ contract UpgradeCVMultichainProd is BaseMultiChain, StrategyDiamondConfiguratorB
         bytes4[] memory poolSelectors = new bytes4[](2);
         poolSelectors[0] = bytes4(
             keccak256(
-                "createPool(address,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address,uint256,address[],address),(uint256,string))"
+                "createPool(address,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address,address,uint256,address[],address,uint256),(uint256,string))"
             )
         );
         poolSelectors[1] = bytes4(
             keccak256(
-                "createPool(address,address,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address,uint256,address[],address),(uint256,string))"
+                "createPool(address,address,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address,address,uint256,address[],address,uint256),(uint256,string))"
             )
         );
         cuts = new IDiamond.FacetCut[](1);
@@ -278,11 +272,14 @@ contract UpgradeCVMultichainProd is BaseMultiChain, StrategyDiamondConfiguratorB
         CVAdminFacet cvAdminFacet = new CVAdminFacet();
         CVAllocationFacet cvAllocationFacet = new CVAllocationFacet();
         CVDisputeFacet cvDisputeFacet = new CVDisputeFacet();
+        CVPauseFacet cvPauseFacet = new CVPauseFacet();
         CVPowerFacet cvPowerFacet = new CVPowerFacet();
         CVProposalFacet cvProposalFacet = new CVProposalFacet();
+        CVSyncPowerFacet cvSyncPowerFacet = new CVSyncPowerFacet();
 
         CommunityAdminFacet communityAdminFacet = new CommunityAdminFacet();
         CommunityMemberFacet communityMemberFacet = new CommunityMemberFacet();
+        CommunityPauseFacet communityPauseFacet = new CommunityPauseFacet();
         CommunityPoolFacet communityPoolFacet = new CommunityPoolFacet();
         CommunityPowerFacet communityPowerFacet = new CommunityPowerFacet();
         CommunityStrategyFacet communityStrategyFacet = new CommunityStrategyFacet();
@@ -290,11 +287,19 @@ contract UpgradeCVMultichainProd is BaseMultiChain, StrategyDiamondConfiguratorB
         DiamondLoupeFacet loupeFacet = new DiamondLoupeFacet();
 
         cuts.cvCuts = _buildCVFacetCuts(
-            cvAdminFacet, cvAllocationFacet, cvDisputeFacet, cvPowerFacet, cvProposalFacet, loupeFacet
+            cvAdminFacet,
+            cvAllocationFacet,
+            cvDisputeFacet,
+            cvPauseFacet,
+            cvPowerFacet,
+            cvProposalFacet,
+            cvSyncPowerFacet,
+            loupeFacet
         );
         cuts.communityCuts = _buildCommunityFacetCuts(
             communityAdminFacet,
             communityMemberFacet,
+            communityPauseFacet,
             communityPoolFacet,
             communityPowerFacet,
             communityStrategyFacet,
@@ -306,15 +311,25 @@ contract UpgradeCVMultichainProd is BaseMultiChain, StrategyDiamondConfiguratorB
         CVAdminFacet cvAdminFacet,
         CVAllocationFacet cvAllocationFacet,
         CVDisputeFacet cvDisputeFacet,
+        CVPauseFacet cvPauseFacet,
         CVPowerFacet cvPowerFacet,
         CVProposalFacet cvProposalFacet,
+        CVSyncPowerFacet cvSyncPowerFacet,
         DiamondLoupeFacet loupeFacet
     ) internal pure returns (IDiamond.FacetCut[] memory cuts) {
         IDiamond.FacetCut[] memory baseCuts =
-            _buildFacetCuts(cvAdminFacet, cvAllocationFacet, cvDisputeFacet, cvPowerFacet, cvProposalFacet);
-        cuts = new IDiamond.FacetCut[](6);
+            _buildFacetCuts(
+                cvAdminFacet,
+                cvAllocationFacet,
+                cvDisputeFacet,
+                cvPauseFacet,
+                cvPowerFacet,
+                cvProposalFacet,
+                cvSyncPowerFacet
+            );
+        cuts = new IDiamond.FacetCut[](8);
         cuts[0] = _buildLoupeFacetCut(loupeFacet);
-        for (uint256 i = 0; i < 5; i++) {
+        for (uint256 i = 0; i < 7; i++) {
             cuts[i + 1] = baseCuts[i];
         }
     }
@@ -322,17 +337,23 @@ contract UpgradeCVMultichainProd is BaseMultiChain, StrategyDiamondConfiguratorB
     function _buildCommunityFacetCuts(
         CommunityAdminFacet communityAdminFacet,
         CommunityMemberFacet communityMemberFacet,
+        CommunityPauseFacet communityPauseFacet,
         CommunityPoolFacet communityPoolFacet,
         CommunityPowerFacet communityPowerFacet,
         CommunityStrategyFacet communityStrategyFacet,
         DiamondLoupeFacet loupeFacet
     ) internal pure returns (IDiamond.FacetCut[] memory cuts) {
         IDiamond.FacetCut[] memory baseCuts = CommunityDiamondConfiguratorBase._buildFacetCuts(
-            communityAdminFacet, communityMemberFacet, communityPoolFacet, communityPowerFacet, communityStrategyFacet
+            communityAdminFacet,
+            communityMemberFacet,
+            communityPauseFacet,
+            communityPoolFacet,
+            communityPowerFacet,
+            communityStrategyFacet
         );
-        cuts = new IDiamond.FacetCut[](6);
+        cuts = new IDiamond.FacetCut[](7);
         cuts[0] = _buildLoupeFacetCut(loupeFacet);
-        for (uint256 i = 0; i < 5; i++) {
+        for (uint256 i = 0; i < 6; i++) {
             cuts[i + 1] = baseCuts[i];
         }
     }
