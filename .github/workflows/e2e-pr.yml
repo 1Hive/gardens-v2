@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   e2e:
-    name: E2E (vercel preview + synpress)
+    name: E2E (playwright + synpress)
     if: ${{ !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     timeout-minutes: 45

@@ -21,7 +21,10 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI === "true" ? 1 : undefined,
-  reporter: "html",
+  reporter:
+    process.env.CI ?
+      [["line"], ["github"], ["html", { open: "never" }]]
+    : [["html", { open: "never" }]],
   use: {
     // Set base URL for tests
     baseURL,
