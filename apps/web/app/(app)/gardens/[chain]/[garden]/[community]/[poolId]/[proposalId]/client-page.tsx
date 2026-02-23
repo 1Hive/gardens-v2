@@ -10,7 +10,7 @@ import {
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "react-toastify";
 import { Address, encodeAbiParameters, formatUnits } from "viem";
-import { useAccount, useBalance } from "wagmi";
+import { useAccount, useBalance, useContractRead } from "wagmi";
 import {
   getProposalDataDocument,
   getProposalDataQuery,
@@ -65,6 +65,7 @@ type ProposalSupporter = {
   stakes: { amount: number }[];
 };
 type SupporterColumn = Column<ProposalSupporter>;
+const SYNC_STREAM_HIDE_WINDOW_SECONDS = 15 * 60;
 
 export type ProposalPageParams = {
   proposalId: string;
@@ -83,6 +84,7 @@ export default function ClientPage({ params }: ClientPageProps) {
   const [convictionRefreshing, setConvictionRefreshing] = useState(true);
   const [openSupportersModal, setOpenSupportersModal] = useState(false);
   const [selectedTab, setSelectedTab] = useState(0);
+  const [nowTs, setNowTs] = useState(() => Math.floor(Date.now() / 1000));
 
   const router = useRouter();
 
@@ -500,6 +502,28 @@ export default function ClientPage({ params }: ClientPageProps) {
     tooltipMessage: executeBtnTooltipMessage,
     isButtonDisabled: isExecuteButtonDisabled,
   } = useDisableButtons(disableExecuteButton);
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setNowTs(Math.floor(Date.now() / 1000));
+    }, 15000);
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, []);
+
+  const { data: lastRebalanceAtValue, refetch: refetchLastRebalanceAt } =
+    useContractRead({
+      address: proposalData?.strategy?.id as Address,
+      abi: cvStrategyABI,
+      functionName: "lastRebalanceAt",
+      enabled: isStreamingType && !!proposalData?.strategy?.id,
+      watch: true,
+    });
+  const lastRebalanceAt = Number(lastRebalanceAtValue ?? 0n);
+  const hideSyncStreamButton =
+    lastRebalanceAt > 0 &&
+    nowTs - lastRebalanceAt < SYNC_STREAM_HIDE_WINDOW_SECONDS;
+
   const { write: writeRebalance, isLoading: isRebalanceLoading } =
     useContractWriteWithConfirmations({
       address: proposalData?.strategy?.id as Address,
@@ -509,6 +533,7 @@ export default function ClientPage({ params }: ClientPageProps) {
       fallbackErrorMessage:
         "Failed to sync stream for this strategy. Please try again.",
       onConfirmations: () => {
+        void refetchLastRebalanceAt();
         publish({
           topic: "stream",
           containerId: poolId,
@@ -859,17 +884,19 @@ export default function ClientPage({ params }: ClientPageProps) {
                   This pool currently has no active outflow.
                 </InfoBox>
               )}
-              <Button
-                btnStyle="outline"
-                color="primary"
-                className="w-full"
-                disabled={!isSyncStreamConnected || isSyncStreamWrongNetwork}
-                tooltip={syncStreamTooltipMessage}
-                isLoading={isRebalanceLoading}
-                onClick={() => writeRebalance?.()}
-              >
-                Sync Stream
-              </Button>
+              {!hideSyncStreamButton && (
+                <Button
+                  btnStyle="outline"
+                  color="primary"
+                  className="w-full"
+                  disabled={!isSyncStreamConnected || isSyncStreamWrongNetwork}
+                  tooltip={syncStreamTooltipMessage}
+                  isLoading={isRebalanceLoading}
+                  onClick={() => writeRebalance?.()}
+                >
+                  Sync Stream
+                </Button>
+              )}
               {showUnwrapSuperTokenButton && (
                 <Button
                   btnStyle="outline"
@@ -1398,19 +1425,21 @@ export default function ClientPage({ params }: ClientPageProps) {
                       This pool currently has no active outflow.
                     </InfoBox>
                   )}
-                  <Button
-                    btnStyle="outline"
-                    color="primary"
-                    className="w-full"
-                    disabled={
-                      !isSyncStreamConnected || isSyncStreamWrongNetwork
-                    }
-                    tooltip={syncStreamTooltipMessage}
-                    isLoading={isRebalanceLoading}
-                    onClick={() => writeRebalance?.()}
-                  >
-                    Sync Stream
-                  </Button>
+                  {!hideSyncStreamButton && (
+                    <Button
+                      btnStyle="outline"
+                      color="primary"
+                      className="w-full"
+                      disabled={
+                        !isSyncStreamConnected || isSyncStreamWrongNetwork
+                      }
+                      tooltip={syncStreamTooltipMessage}
+                      isLoading={isRebalanceLoading}
+                      onClick={() => writeRebalance?.()}
+                    >
+                      Sync Stream
+                    </Button>
+                  )}
                   {showUnwrapSuperTokenButton && (
                     <Button
                       btnStyle="outline"

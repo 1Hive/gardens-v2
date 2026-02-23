@@ -65,6 +65,7 @@ import {
 } from "@/utils/numbers";
 
 export type AlloQuery = getAlloQuery["allos"][number];
+const SYNC_STREAM_HIDE_WINDOW_SECONDS = 15 * 60;
 
 export default function ClientPage({
   params: { chain, poolId, garden, community: _community },
@@ -402,6 +403,29 @@ export default function ClientPage({
   const isMissingFundingToken = needsFundingToken && !poolToken;
   const [hasWaitedForPoolToken, setHasWaitedForPoolToken] = useState(false);
 
+  const [nowTs, setNowTs] = useState(() => Math.floor(Date.now() / 1000));
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setNowTs(Math.floor(Date.now() / 1000));
+    }, 15000);
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, []);
+
+  const { data: lastRebalanceAtValue, refetch: refetchLastRebalanceAt } =
+    useContractRead({
+      address: strategy?.id as Address,
+      abi: cvStrategyABI,
+      functionName: "lastRebalanceAt",
+      enabled: isStreamingPool && !!strategy?.id,
+      watch: true,
+    });
+  const lastRebalanceAt = Number(lastRebalanceAtValue ?? 0n);
+  const hideSyncStreamButton =
+    lastRebalanceAt > 0 &&
+    nowTs - lastRebalanceAt < SYNC_STREAM_HIDE_WINDOW_SECONDS;
+
   const {
     tooltipMessage: syncStreamTooltipMessage,
     isConnected: isSyncStreamConnected,
@@ -416,6 +440,7 @@ export default function ClientPage({
       fallbackErrorMessage:
         "Failed to sync stream for this strategy. Please try again.",
       onConfirmations: () => {
+        void refetchLastRebalanceAt();
         publish({
           topic: "proposal",
           containerId: poolId,
@@ -609,18 +634,20 @@ export default function ClientPage({
               This pool currently has no active outflow.
             </InfoBox>
           )}
-          <Button
-            btnStyle="outline"
-            color="primary"
-            className="sm:w-full"
-            disabled={!isSyncStreamConnected || isSyncStreamWrongNetwork}
-            tooltip={syncStreamTooltipMessage}
-            isLoading={isRebalanceLoading}
-            onClick={() => writeRebalance?.()}
-            icon={<ArrowPathIcon className="h-4 w-4" />}
-          >
-            Sync Stream
-          </Button>
+          {!hideSyncStreamButton && (
+            <Button
+              btnStyle="outline"
+              color="primary"
+              className="sm:w-full"
+              disabled={!isSyncStreamConnected || isSyncStreamWrongNetwork}
+              tooltip={syncStreamTooltipMessage}
+              isLoading={isRebalanceLoading}
+              onClick={() => writeRebalance?.()}
+              icon={<ArrowPathIcon className="h-4 w-4" />}
+            >
+              Sync Stream
+            </Button>
+          )}
         </div>
       </section>
     );
