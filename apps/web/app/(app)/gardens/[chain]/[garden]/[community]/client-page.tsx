@@ -1053,7 +1053,7 @@ const PoolFiltersUI = ({
           key={filter.key}
           type="button"
           onClick={() => onSelectFilter(filter.key)}
-          className={`rounded-full px-3 py-1.5 font-semibold border transition-all duration-150 ease-out whitespace-nowrap ${
+          className={`rounded-full px-3 py-1.5 font-semibold border transition-all duration-150 ease-out whitespace-nowrap flex items-center ${
             selectedFilter === filter.key ?
               `${POOL_STATUS_FILTER_BADGE_STYLES[filter.key]} border-transparent shadow-sm ring-1 ring-black/10`
             : "bg-transparent border-neutral-soft-content/30 text-neutral-soft-content hover:border-neutral-soft-content hover:text-primary-content"

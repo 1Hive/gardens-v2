@@ -891,7 +891,7 @@ export function Proposals({
                   <div className="flex flex-col items-center justify-center text-center my-4">
                     <p className="text-neutral-soft-content text-sm">
                       There are currently no active or disputed proposals to
-                      vote.
+                      vote on.
                     </p>
                   </div>
                 )}
@@ -1134,7 +1134,7 @@ function ProposalFiltersUI({
             key={f}
             type="button"
             onClick={() => setFilter(f)}
-            className={`shrink-0 rounded-full px-3 py-1.5 font-semibold border transition-all duration-150 ease-out ${
+            className={`shrink-0 rounded-full px-3 py-1.5 font-semibold border transition-all duration-150 ease-out flex items-center ${
               filter === f ?
                 `${FILTER_BADGE_STYLES[f]} border-transparent`
               : "bg-transparent border-neutral-soft-content/30 text-neutral-soft-content hover:border-neutral-soft-content hover:text-primary-content"
