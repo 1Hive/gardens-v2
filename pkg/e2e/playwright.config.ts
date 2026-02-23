@@ -29,10 +29,6 @@ export default defineConfig({
   },
   projects: [
     {
-      name: "chromium",
-      use: chromiumUse
-    },
-    {
       name: "00-join",
       testMatch: /00...e2e.ts/
     },
