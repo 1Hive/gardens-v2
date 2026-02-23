@@ -8,7 +8,7 @@ import {
   parseAbi,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { getConfigByChain } from "@/configs/chains";
+import { chainConfigMap, getConfigByChain } from "@/configs/chains";
 import { ChainId } from "@/types";
 import { getViemChain } from "@/utils/web3";
 
@@ -24,6 +24,14 @@ type StrategyCandidate = {
     proposalType?: string | number | null;
   } | null;
   proposals?: Array<{ id: string }> | null;
+};
+
+type ChainRunResult = {
+  chainId: number | string;
+  discoveredStrategies: number;
+  sent: Array<{ strategy: Address; txHash: `0x${string}` }>;
+  skipped: Array<{ strategy: Address; reason: string }>;
+  error?: string;
 };
 
 const REBALANCE_KEEPER_ABI = parseAbi([
@@ -137,74 +145,58 @@ async function fetchStrategyCandidates(
   );
 }
 
-export async function GET(req: Request, { params }: Params) {
-  const apiKey = req.headers.get("authorization")?.replace("Bearer ", "");
-  if (apiKey !== process.env.CRON_SECRET) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-  }
-
-  const chainParam = params.chain;
-  const chainId = /^\d+$/.test(chainParam) ? Number(chainParam) : chainParam;
-  const chainConfig = getConfigByChain(chainId as ChainId);
+async function runKeeperForChain({
+  chainId,
+  privateKey,
+  dryRun,
+  minSecondsLeft,
+}: {
+  chainId: ChainId;
+  privateKey: string;
+  dryRun: boolean;
+  minSecondsLeft: number;
+}): Promise<ChainRunResult> {
+  const chainConfig = getConfigByChain(chainId);
   if (!chainConfig) {
-    return NextResponse.json(
-      { error: `Unsupported chain: ${chainParam}` },
-      { status: 400 },
-    );
+    return {
+      chainId: String(chainId),
+      discoveredStrategies: 0,
+      sent: [],
+      skipped: [],
+      error: `Unsupported chain: ${String(chainId)}`,
+    };
   }
-
-  const privateKey = process.env.STREAMING_REBALANCER_ADDRESS ??
-    process.env.KEEPER_WALLET_ADDRESS;
-  if (!privateKey) {
-    return NextResponse.json(
-      {
-        error:
-          "Missing keeper private key env var (STREAMING_REBALANCER_ADDRESS / KEEPER_WALLET_ADDRESS)",
-      },
-      { status: 500 },
-    );
-  }
-
-  const publicClient = createPublicClient({
-    chain: getViemChain(chainId as ChainId),
-    transport: http(chainConfig.rpcUrl),
-  });
-  const account = privateKeyToAccount(privateKey as `0x${string}`);
-  const walletClient = createWalletClient({
-    account,
-    chain: getViemChain(chainId as ChainId),
-    transport: http(chainConfig.rpcUrl),
-  });
-
-  const subgraphPrimary = chainConfig.publishedSubgraphUrl ?? chainConfig.subgraphUrl;
-  const subgraphFallback =
-    chainConfig.subgraphUrl && chainConfig.subgraphUrl !== subgraphPrimary ?
-      chainConfig.subgraphUrl
-    : undefined;
-
-  const requestUrl = new URL(req.url);
-  const dryRun = requestUrl.searchParams.get("dryRun") === "1";
-  const minSecondsLeft = Number(requestUrl.searchParams.get("minSecondsLeft") ?? "3");
 
   try {
+    const publicClient = createPublicClient({
+      chain: getViemChain(chainId),
+      transport: http(chainConfig.rpcUrl),
+    });
+    const account = privateKeyToAccount(privateKey as `0x${string}`);
+    const walletClient = createWalletClient({
+      account,
+      chain: getViemChain(chainId),
+      transport: http(chainConfig.rpcUrl),
+    });
+
+    const subgraphPrimary =
+      chainConfig.publishedSubgraphUrl ?? chainConfig.subgraphUrl;
+    const subgraphFallback =
+      chainConfig.subgraphUrl && chainConfig.subgraphUrl !== subgraphPrimary ?
+        chainConfig.subgraphUrl
+      : undefined;
+
     const strategies = await fetchStrategyCandidates(
       subgraphPrimary,
       subgraphFallback,
     );
-
     if (!strategies.length) {
-      return NextResponse.json(
-        {
-          message:
-            "No eligible streaming strategies with active/disputed proposals. No tx sent.",
-          chainId: chainConfig.id,
-          dryRun,
-          discoveredStrategies: 0,
-          sent: [],
-          skipped: [],
-        },
-        { status: 200 },
-      );
+      return {
+        chainId: chainConfig.id,
+        discoveredStrategies: 0,
+        sent: [],
+        skipped: [],
+      };
     }
 
     const block = await publicClient.getBlock({ blockTag: "latest" });
@@ -262,30 +254,106 @@ export async function GET(req: Request, { params }: Params) {
         await publicClient.waitForTransactionReceipt({ hash });
         sent.push({ strategy, txHash: hash });
       } catch (error) {
-        const reason =
-          error instanceof Error ? error.message : "unknown_error";
-        skipped.push({ strategy, reason });
+        const reason = error instanceof Error ? error.message : "unknown_error";
+        const normalizedReason =
+          reason.includes("gas required exceeds allowance (0)") ?
+            `${reason}\nHint: keeper ${account.address} has no native balance on chain ${chainConfig.id}. Fund this wallet to pay gas.`
+          : reason;
+        skipped.push({ strategy, reason: normalizedReason });
       }
     }
 
+    return {
+      chainId: chainConfig.id,
+      discoveredStrategies: strategies.length,
+      sent,
+      skipped,
+    };
+  } catch (error) {
+    return {
+      chainId: String(chainId),
+      discoveredStrategies: 0,
+      sent: [],
+      skipped: [],
+      error: error instanceof Error ? error.message : "unknown_error",
+    };
+  }
+}
+
+export async function GET(req: Request, { params }: Params) {
+  const apiKey = req.headers.get("authorization")?.replace("Bearer ", "");
+  if (apiKey !== process.env.CRON_SECRET) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
+  const chainParam = params.chain;
+  const isAllChains =
+    chainParam.toLowerCase() === "all" ||
+    chainParam.toLowerCase() === "all-chains";
+  const chainId = /^\d+$/.test(chainParam) ? Number(chainParam) : chainParam;
+
+  const privateKey =
+    process.env.STREAMING_REBALANCER_PK ?? process.env.KEEPER_WALLET_PK;
+  if (!privateKey) {
     return NextResponse.json(
       {
-        message:
-          sent.length > 0 ?
-            "Rebalance keeper completed."
-          : "No rebalance tx sent after preflight checks.",
-        chainId: chainConfig.id,
-        dryRun,
-        discoveredStrategies: strategies.length,
-        sent,
-        skipped,
+        error:
+          "Missing keeper private key env var (STREAMING_REBALANCER_PK / KEEPER_WALLET_PK)",
       },
-      { status: 200 },
+      { status: 500 },
     );
-  } catch (error) {
-    console.error("[rebalance-keeper] cron error", error);
-    const message =
-      error instanceof Error ? error.message : "Internal server error";
-    return NextResponse.json({ error: message }, { status: 500 });
   }
+
+  const requestUrl = new URL(req.url);
+  const dryRun = requestUrl.searchParams.get("dryRun") === "1";
+  const minSecondsLeft = Number(
+    requestUrl.searchParams.get("minSecondsLeft") ?? "3",
+  );
+
+  const chainIds =
+    isAllChains ?
+      Array.from(
+        new Set(
+          Object.values(chainConfigMap)
+            .map((cfg) => cfg.id)
+            .filter((id): id is number => typeof id === "number"),
+        ),
+      )
+    : [chainId as ChainId];
+
+  const results = await Promise.all(
+    chainIds.map((id) =>
+      runKeeperForChain({
+        chainId: id as ChainId,
+        privateKey,
+        dryRun,
+        minSecondsLeft,
+      }),
+    ),
+  );
+
+  const totals = results.reduce(
+    (acc, curr) => ({
+      discoveredStrategies:
+        acc.discoveredStrategies + curr.discoveredStrategies,
+      sentTxs: acc.sentTxs + curr.sent.length,
+      skipped: acc.skipped + curr.skipped.length,
+      failedChains: acc.failedChains + (curr.error ? 1 : 0),
+    }),
+    { discoveredStrategies: 0, sentTxs: 0, skipped: 0, failedChains: 0 },
+  );
+
+  return NextResponse.json(
+    {
+      message:
+        totals.sentTxs > 0 ?
+          "Rebalance keeper completed."
+        : "No rebalance tx sent after preflight checks.",
+      mode: isAllChains ? "all_chains" : "single_chain",
+      dryRun,
+      totals,
+      results,
+    },
+    { status: totals.failedChains > 0 ? 207 : 200 },
+  );
 }
