@@ -10,7 +10,7 @@ permissions:
 jobs:
   e2e:
     name: E2E (vercel preview + synpress)
-    if: ${{ !github.event.pull_request.draft && secrets.E2E_WALLET_SEED_PHRASE != '' && secrets.VERCEL_TOKEN != '' && secrets.VERCEL_PROJECT_ID != '' }}
+    if: ${{ !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
@@ -23,29 +23,53 @@ jobs:
       PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
 
     steps:
+      - name: Preflight secrets check
+        id: preflight
+        shell: bash
+        run: |
+          missing=0
+          for key in E2E_WALLET_SEED_PHRASE VERCEL_TOKEN VERCEL_PROJECT_ID; do
+            if [ -z "${!key:-}" ]; then
+              echo "::warning::Missing required secret: ${key}"
+              missing=1
+            fi
+          done
+
+          if [ "$missing" -eq 1 ]; then
+            echo "run_e2e=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "run_e2e=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Checkout
+        if: steps.preflight.outputs.run_e2e == 'true'
         uses: actions/checkout@v4
         with:
           submodules: recursive
 
       - name: Setup pnpm
+        if: steps.preflight.outputs.run_e2e == 'true'
         uses: pnpm/action-setup@v4
         with:
           version: 8.14.0
 
       - name: Setup Node
+        if: steps.preflight.outputs.run_e2e == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: 18
           cache: pnpm
 
       - name: Install dependencies
+        if: steps.preflight.outputs.run_e2e == 'true'
         run: pnpm install --frozen-lockfile
 
       - name: Install Playwright browser and deps
+        if: steps.preflight.outputs.run_e2e == 'true'
         run: pnpm --filter e2e exec playwright install --with-deps chromium
 
       - name: Wait for Vercel preview deployment
+        if: steps.preflight.outputs.run_e2e == 'true'
         id: vercel
         shell: bash
         run: |
@@ -94,14 +118,19 @@ jobs:
           exit 1
 
       - name: Run E2E tests
+        if: steps.preflight.outputs.run_e2e == 'true'
         env:
           PLAYWRIGHT_BASE_URL: ${{ steps.vercel.outputs.preview_url }}
         run: pnpm --filter e2e test
 
       - name: Upload Playwright report
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.preflight.outputs.run_e2e == 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
           path: pkg/e2e/playwright-report
           retention-days: 14
+
+      - name: Skip E2E (missing secrets)
+        if: steps.preflight.outputs.run_e2e != 'true'
+        run: echo "Skipping E2E because required secrets are missing."
