@@ -18,7 +18,9 @@ import {
 } from "@/src/generated";
 import { getViemChain } from "@/utils/web3";
 
-const LIST_MANAGER_PRIVATE_KEY = process.env.LIST_MANAGER_PRIVATE_KEY;
+const PASSPORT_KEEPER_PRIVATE_KEY =
+  process.env.LIST_MANAGER_PRIVATE_KEY ??
+  process.env.KEEPER_WALLET_ADDRESS;
 
 const LOCAL_RPC = "http://127.0.0.1:8545";
 
@@ -58,7 +60,7 @@ export async function POST(req: Request, { params }: Params) {
     });
 
     const walletClient = createWalletClient({
-      account: privateKeyToAccount(`${LIST_MANAGER_PRIVATE_KEY}` as Address),
+      account: privateKeyToAccount(`${PASSPORT_KEEPER_PRIVATE_KEY}` as Address),
       chain: getViemChain(chain),
       transport: custom(client.transport),
     });
