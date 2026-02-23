@@ -22,6 +22,7 @@ import {
   ChevronDownIcon,
   HandRaisedIcon,
 } from "@heroicons/react/24/outline";
+import { CheckIcon } from "@heroicons/react/24/solid";
 
 import Link from "next/link";
 import { Id, toast } from "react-toastify";
@@ -837,7 +838,7 @@ export function Proposals({
 
         {sortedProposals.length !== 0 && filteredAndSorted.length === 0 ?
           <div className="flex flex-col items-center justify-center text-center">
-            <p className="text-neutral-soft-content text-sm">
+            <p className="text-neutral-soft-content text-xs sm:text-sm text-center">
               There are no {filter && filter} proposals at the moment.
             </p>
           </div>
@@ -1125,21 +1126,24 @@ function ProposalFiltersUI({
   };
 
   return (
-    <div className="flex flex-col lg:flex-row justify-between bg-neutral rounded-2xl items-center gap-2 lg:gap-4">
+    <div className="w-full min-w-0 flex flex-col lg:flex-row justify-between bg-neutral rounded-2xl items-stretch lg:items-center gap-2 lg:gap-4">
       {/* FILTERS */}
-      <div className="flex  gap-2 lg:gap-2 sm:justify-between flex-wrap">
+      <div className="min-w-0 flex gap-2 lg:gap-2 overflow-x-auto sm:overflow-visible pb-1 sm:pb-0 sm:justify-between  sm:flex-wrap items-center">
         {FILTERS.map((f) => (
           <button
             key={f}
             type="button"
             onClick={() => setFilter(f)}
-            className={`rounded-full px-3 py-1.5 font-semibold border transition-all duration-150 ease-out ${
+            className={`shrink-0 rounded-full px-3 py-1.5 font-semibold border transition-all duration-150 ease-out ${
               filter === f ?
                 `${FILTER_BADGE_STYLES[f]} border-transparent`
               : "bg-transparent border-neutral-soft-content/30 text-neutral-soft-content hover:border-neutral-soft-content hover:text-primary-content"
             }`}
           >
-            <span className="capitalize text-sm sm:text-md">{f}</span>
+            <span className="capitalize inline-flex items-center gap-1 text-sm sm:text-md">
+              {filter === f && <CheckIcon className="h-3.5 w-3.5" />}
+              {f}
+            </span>
             <span className="ml-1 opacity-80 text-xs sm:text-sm">
               ({counts[f] ?? 0})
             </span>
@@ -1150,14 +1154,14 @@ function ProposalFiltersUI({
       <Divider className="sm:hidden my-2 sm:my-0" />
 
       {/* SORT DROPDOWN */}
-      <div className="w-full lg:w-fit flex justify-between items-center ">
+      <div className="w-full min-w-0 lg:w-fit flex justify-between items-center ">
         <div className="w-[70px]  flex items-start justify-center">
           <p className="text-sm text-neutral-soft-content mb-1 sm:mb-0">
             Sort by
           </p>
         </div>
         <div
-          className={`dropdown dropdown-start w-full relative group ${disableSort ? "pointer-events-none" : "dropdown-hover"}`}
+          className={`dropdown dropdown-start w-full min-w-0 relative group ${disableSort ? "pointer-events-none" : "dropdown-hover"}`}
           onMouseLeave={() => setIsSortDropdownLocked(false)}
         >
           <button
