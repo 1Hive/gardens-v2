@@ -6,6 +6,7 @@ config();
 
 const browserChannel = process.env.PLAYWRIGHT_BROWSER_CHANNEL;
 const browserExecutablePath = process.env.PLAYWRIGHT_EXECUTABLE_PATH;
+const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000";
 const chromiumUse = {
   ...devices["Desktop Chrome"],
   ...(browserChannel ? { channel: browserChannel } : {}),
@@ -23,7 +24,7 @@ export default defineConfig({
   reporter: "html",
   use: {
     // Set base URL for tests
-    baseURL: "http://localhost:3000/gardens?flag_showArchived=true",
+    baseURL,
     trace: "on-first-retry"
   },
   projects: [

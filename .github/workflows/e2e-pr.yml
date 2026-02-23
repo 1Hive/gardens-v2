@@ -1,0 +1,107 @@
+name: E2E PR
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+
+jobs:
+  e2e:
+    name: E2E (vercel preview + synpress)
+    if: ${{ !github.event.pull_request.draft && secrets.E2E_WALLET_SEED_PHRASE != '' && secrets.VERCEL_TOKEN != '' && secrets.VERCEL_PROJECT_ID != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      CI: "true"
+      HEADLESS: "true"
+      E2E_WALLET_SEED_PHRASE: ${{ secrets.E2E_WALLET_SEED_PHRASE }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      VERCEL_TEAM_ID: ${{ secrets.VERCEL_TEAM_ID }}
+      PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8.14.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browser and deps
+        run: pnpm --filter e2e exec playwright install --with-deps chromium
+
+      - name: Wait for Vercel preview deployment
+        id: vercel
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          base_api="https://api.vercel.com/v6/deployments"
+          query="?projectId=${VERCEL_PROJECT_ID}&limit=20&meta-githubCommitSha=${PR_HEAD_SHA}"
+          if [ -n "${VERCEL_TEAM_ID:-}" ]; then
+            query="${query}&teamId=${VERCEL_TEAM_ID}"
+          fi
+
+          for i in {1..60}; do
+            response="$(curl -fsSL \
+              -H "Authorization: Bearer ${VERCEL_TOKEN}" \
+              "${base_api}${query}")"
+
+            deployment="$(echo "${response}" | jq -c --arg sha "${PR_HEAD_SHA}" \
+              '[.deployments[] | select(.meta.githubCommitSha == $sha)] | sort_by(.createdAt) | last')"
+
+            if [ "${deployment}" = "null" ] || [ -z "${deployment}" ]; then
+              echo "No Vercel deployment found yet for ${PR_HEAD_SHA}. Retrying..."
+              sleep 10
+              continue
+            fi
+
+            state="$(echo "${deployment}" | jq -r '.readyState // .state // ""')"
+            url="$(echo "${deployment}" | jq -r '.url // ""')"
+
+            echo "Found deployment state: ${state}"
+
+            if [ "${state}" = "READY" ] && [ -n "${url}" ]; then
+              echo "preview_url=https://${url}" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+
+            if [ "${state}" = "ERROR" ] || [ "${state}" = "FAILED" ] || [ "${state}" = "CANCELED" ]; then
+              echo "Vercel deployment ended in state ${state}"
+              echo "${deployment}"
+              exit 1
+            fi
+
+            sleep 10
+          done
+
+          echo "Timed out waiting for Vercel preview deployment."
+          exit 1
+
+      - name: Run E2E tests
+        env:
+          PLAYWRIGHT_BASE_URL: ${{ steps.vercel.outputs.preview_url }}
+        run: pnpm --filter e2e test
+
+      - name: Upload Playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: pkg/e2e/playwright-report
+          retention-days: 14
