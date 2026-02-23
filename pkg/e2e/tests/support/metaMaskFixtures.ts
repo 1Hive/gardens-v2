@@ -21,6 +21,7 @@ const CACHE_DIR_NAME = ".cache-synpress";
 
 const browserChannel = process.env.PLAYWRIGHT_BROWSER_CHANNEL;
 const browserExecutablePath = process.env.PLAYWRIGHT_EXECUTABLE_PATH;
+const isHeadless = process.env.HEADLESS === "true";
 const defaultChromiumPath = path.join(
   os.homedir(),
   ".cache",
@@ -212,7 +213,7 @@ export const metaMaskFixtures = (walletSetup: WalletSetup, slowMo = 0) => {
         `--load-extension=${metamaskPath}`
       ];
 
-      if (process.env.HEADLESS) {
+      if (isHeadless) {
         browserArgs.push("--headless=new");
 
         if (slowMo > 0) {
@@ -225,7 +226,7 @@ export const metaMaskFixtures = (walletSetup: WalletSetup, slowMo = 0) => {
       const context = await chromium.launchPersistentContext(_contextPath, {
         headless: false,
         args: browserArgs,
-        slowMo: process.env.HEADLESS ? 0 : slowMo,
+        slowMo: isHeadless ? 0 : slowMo,
         ignoreDefaultArgs: [
           "--disable-extensions",
           "--disable-component-extensions-with-background-pages"
