@@ -118,11 +118,7 @@ export default function ClientPage({
   });
 
   //Community Query and Register Member data
-  const {
-    data: result,
-    error: errorCommunityQuery,
-    refetch: refetchCommunityQuery,
-  } = useSubgraphQuery<getCommunityQuery>({
+  const { data: result } = useSubgraphQuery<getCommunityQuery>({
     query: getCommunityDocument,
     enabled: !!wallet && !!strategy?.token,
     variables: {
@@ -149,14 +145,8 @@ export default function ClientPage({
   });
 
   const registryCommunity = result?.registryCommunity;
-  let {
-    communityName,
-    members,
-    strategies,
-    communityFee,
-    registerStakeAmount,
-    protocolFee,
-  } = registryCommunity ?? {};
+  let { communityName, communityFee, registerStakeAmount, protocolFee } =
+    registryCommunity ?? {};
 
   const registerStakeAmountValue = registerStakeAmount ?? 0;
   const registerStakeAmountBn = BigInt(registerStakeAmountValue);
@@ -182,33 +172,36 @@ export default function ClientPage({
   const [selectedTab, setSelectedTab] = useState(0);
   //
 
-  const { data: memberData, error: errorMemberData } =
-    useSubgraphQuery<isMemberQuery>({
-      query: isMemberDocument,
-      variables: {
-        me: wallet?.toLowerCase(),
-        comm: communityAddress?.toLowerCase(),
+  const {
+    data: memberData,
+    error: errorMemberData,
+    refetch: refetchMemberData,
+  } = useSubgraphQuery<isMemberQuery>({
+    query: isMemberDocument,
+    variables: {
+      me: wallet?.toLowerCase(),
+      comm: communityAddress?.toLowerCase(),
+    },
+    changeScope: [
+      // Community membership changes (join/leave) are published with community containerId.
+      { topic: "member", containerId: communityScopeId },
+      { topic: "community", id: communityScopeId },
+      {
+        topic: "member",
+        id: wallet,
+        containerId: strategy?.poolId,
       },
-      changeScope: [
-        // Community membership changes (join/leave) are published with community containerId.
-        { topic: "member", containerId: communityScopeId },
-        { topic: "community", id: communityScopeId },
-        {
-          topic: "member",
-          id: wallet,
-          containerId: strategy?.poolId,
-        },
-        {
-          topic: "proposal",
-          containerId: strategy?.poolId,
-          function: "allocate",
-        },
-      ],
-      enabled: !!wallet && !!strategy?.registryCommunity?.id,
-    });
+      {
+        topic: "proposal",
+        containerId: strategy?.poolId,
+        function: "allocate",
+      },
+    ],
+    enabled: !!wallet && !!strategy?.registryCommunity?.id,
+  });
 
-  const { data: memberStrategyData } = useSubgraphQuery<getMemberStrategyQuery>(
-    {
+  const { data: memberStrategyData, refetch: refetchMemberStrategyData } =
+    useSubgraphQuery<getMemberStrategyQuery>({
       query: getMemberStrategyDocument,
       variables: {
         member_strategy: `${wallet?.toLowerCase()}-${strategy?.id.toLowerCase()}`,
@@ -222,8 +215,7 @@ export default function ClientPage({
         { topic: "member", id: wallet, containerId: strategy?.poolId },
       ],
       enabled: !!wallet && !!strategy?.id,
-    },
-  );
+    });
 
   const memberTokensInCommunity = BigInt(
     memberData?.member?.memberCommunity?.[0]?.stakedTokens ??
@@ -262,6 +254,10 @@ export default function ClientPage({
 
   const subscriptionId = useRef<SubscriptionId>();
   useEffect(() => {
+    if (!connected || !wallet || strategy?.poolId == null) {
+      return;
+    }
+
     subscriptionId.current = subscribe(
       {
         topic: "member",
@@ -270,7 +266,10 @@ export default function ClientPage({
         type: "update",
       },
       () => {
-        return refetchMemberPower();
+        void refetchMemberPower();
+        void refetchMemberData();
+        void refetchMemberStrategyData();
+        void refetch();
       },
     );
     return () => {
@@ -278,7 +277,17 @@ export default function ClientPage({
         unsubscribe(subscriptionId.current);
       }
     };
-  }, [connected]);
+  }, [
+    connected,
+    wallet,
+    strategy?.poolId,
+    subscribe,
+    unsubscribe,
+    refetchMemberPower,
+    refetchMemberData,
+    refetchMemberStrategyData,
+    refetch,
+  ]);
   //
 
   const poolTokenAddr = strategy?.token as Address;
@@ -401,17 +410,6 @@ export default function ClientPage({
   const needsFundingToken = poolType === "funding";
   const isMissingFundingToken = needsFundingToken && !poolToken;
   const [hasWaitedForPoolToken, setHasWaitedForPoolToken] = useState(false);
-
-  const disableCreateProposalBtnCondition: ConditionObject[] = [
-    {
-      condition: !isMemberCommunity,
-      message: "Join community first",
-    },
-  ];
-
-  const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons(
-    disableCreateProposalBtnCondition,
-  );
 
   useEffect(() => {
     if (isMissingFundingToken && strategy && !error) {
@@ -580,9 +578,8 @@ export default function ClientPage({
                   </li>
                   <li>
                     If you’re eligible to vote, you can allocate your Voting
-                    Power (VP) across multiple proposals at the same time as
-                    support. The more VP you allocate, the faster its conviction
-                    grows.
+                    Power (VP) across multiple proposals as support. The more VP
+                    you allocate, the faster its conviction grows.
                   </li>
                 </ul>
               </InfoBox>

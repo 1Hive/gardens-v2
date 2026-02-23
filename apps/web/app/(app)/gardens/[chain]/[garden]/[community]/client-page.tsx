@@ -13,20 +13,15 @@ import { CheckIcon } from "@heroicons/react/24/solid";
 
 import { FetchTokenResult } from "@wagmi/core";
 import { Dnum, multiply } from "dnum";
-import { Maybe } from "graphql/jsutils/Maybe";
 import Image from "next/image";
 import Link from "next/link";
 import { Address } from "viem";
 import { useAccount, useToken } from "wagmi";
 import {
-  CVProposal,
-  CVStrategy,
-  CVStrategyConfig,
   getCommunityDocument,
   getCommunityQuery,
   isMemberDocument,
   isMemberQuery,
-  PoolMetadata,
 } from "#/subgraph/.graphclient";
 import {
   CommunityLogo,
