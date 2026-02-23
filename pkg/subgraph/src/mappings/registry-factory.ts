@@ -2,10 +2,12 @@ import { RegistryCommunity as CommunityTemplate } from "../../generated/template
 import {
   RegistryFactory,
   RegistryCommunity,
-  Member
+  Member,
+  StreamInfo
 } from "../../generated/schema";
 
 import {
+  Address,
   BigInt,
   DataSourceContext,
   dataSource,
@@ -17,7 +19,8 @@ import {
   ProtocolFeeSet,
   Initialized,
   KeepersChanged,
-  ProtopiansChanged
+  ProtopiansChanged,
+  StreamingEscrowFactorySet
 } from "../../generated/RegistryFactory/RegistryFactory";
 // import {RegistryCommunity}from "../../generated/RegistryCommunity/RegistryCommunity";
 
@@ -136,4 +139,29 @@ export function handleProtopiansChanged(event: ProtopiansChanged): void {
     member.isProtopian = false;
     member.save();
   }
+}
+
+export function handleStreamingEscrowFactorySet(
+  event: StreamingEscrowFactorySet
+): void {
+  const id = `${event.address.toHexString()}-streaming`;
+  let streamInfo = StreamInfo.load(id);
+  if (streamInfo == null) {
+    streamInfo = new StreamInfo(id);
+    streamInfo.contractAddress = event.address.toHexString();
+    streamInfo.contractType = "RegistryFactory";
+    streamInfo.strategy = null;
+    streamInfo.superfluidToken = null;
+    streamInfo.maxFlowRate = null;
+    streamInfo.superfluidGDA = Address.zero().toHexString();
+    streamInfo.streamLastFlowRate = null;
+    streamInfo.createdAt = event.block.timestamp;
+  }
+
+  // Keep required fields initialized for backward compatibility
+  // with entities created before these fields existed in schema.
+  streamInfo.totalMemberUnits = BigInt.fromI32(0);
+  streamInfo.proposalStreamIds = [];
+  streamInfo.updatedAt = event.block.timestamp;
+  streamInfo.save();
 }

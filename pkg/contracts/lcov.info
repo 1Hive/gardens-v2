@@ -1,5 +1,5 @@
 TN:
-SF:pkg/contracts/script/AddOwner.s.sol
+SF:script/AddOwner.s.sol
 DA:30,0
 FN:30,AddOwner.pool_admin
 FNDA:0,AddOwner.pool_admin
@@ -30,7 +30,7 @@ BRF:2
 BRH:0
 end_of_record
 TN:
-SF:pkg/contracts/script/AddStrategy.s.sol
+SF:script/AddStrategy.s.sol
 DA:40,0
 FN:40,AddStrategy.pool_admin
 FNDA:0,AddStrategy.pool_admin
@@ -94,7 +94,7 @@ BRF:6
 BRH:0
 end_of_record
 TN:
-SF:pkg/contracts/script/BaseMultiChain.s.sol
+SF:script/BaseMultiChain.s.sol
 DA:63,0
 FN:63,BaseMultiChain.pool_admin
 FNDA:0,BaseMultiChain.pool_admin
@@ -161,7 +161,7 @@ BRF:2
 BRH:0
 end_of_record
 TN:
-SF:pkg/contracts/script/DeployCV.s.sol
+SF:script/DeployCV.s.sol
 DA:57,0
 FN:57,DeployCV.pool_admin
 FNDA:0,DeployCV.pool_admin
@@ -371,7 +371,7 @@ BRF:3
 BRH:0
 end_of_record
 TN:
-SF:pkg/contracts/script/DeployCVMultiChain.s.sol
+SF:script/DeployCVMultiChain.s.sol
 DA:67,0
 FN:67,DeployCVMultiChain.pool_admin
 FNDA:0,DeployCVMultiChain.pool_admin
@@ -508,7 +508,7 @@ BRF:14
 BRH:0
 end_of_record
 TN:
-SF:pkg/contracts/script/DeployCollateralVaultTemplate.s.sol
+SF:script/DeployCollateralVaultTemplate.s.sol
 DA:14,0
 FN:14,DeployCollateralVaultTemplate.runCurrentNetwork
 FNDA:0,DeployCollateralVaultTemplate.runCurrentNetwork
@@ -529,7 +529,7 @@ BRF:0
 BRH:0
 end_of_record
 TN:
-SF:pkg/contracts/script/DeployERC20.s.sol
+SF:script/DeployERC20.s.sol
 DA:15,0
 FN:15,DeployERC20.run
 FNDA:0,DeployERC20.run
@@ -545,7 +545,7 @@ BRF:0
 BRH:0
 end_of_record
 TN:
-SF:pkg/contracts/script/DeployGoodDollarSybil.s.sol
+SF:script/DeployGoodDollarSybil.s.sol
 DA:12,0
 FN:12,DeployGoodDollarSybil.runCurrentNetwork
 FNDA:0,DeployGoodDollarSybil.runCurrentNetwork
@@ -567,7 +567,7 @@ BRF:2
 BRH:0
 end_of_record
 TN:
-SF:pkg/contracts/script/DeployPassportScorer.s.sol
+SF:script/DeployPassportScorer.s.sol
 DA:12,0
 FN:12,DeployPassportScorer.runCurrentNetwork
 FNDA:0,DeployPassportScorer.runCurrentNetwork
@@ -583,7 +583,7 @@ BRF:0
 BRH:0
 end_of_record
 TN:
-SF:pkg/contracts/script/DeployProxyOwner.s.sol
+SF:script/DeployProxyOwner.s.sol
 DA:13,0
 FN:13,DeployProxyOwner.runCurrentNetwork
 FNDA:0,DeployProxyOwner.runCurrentNetwork
@@ -597,7 +597,7 @@ BRF:0
 BRH:0
 end_of_record
 TN:
-SF:pkg/contracts/script/DeploySafeArbitrator.s.sol
+SF:script/DeploySafeArbitrator.s.sol
 DA:13,0
 FN:13,DeploySafeArbitrator.runCurrentNetwork
 FNDA:0,DeploySafeArbitrator.runCurrentNetwork
@@ -619,7 +619,7 @@ BRF:2
 BRH:0
 end_of_record
 TN:
-SF:pkg/contracts/script/GV2ERC20.sol
+SF:script/GV2ERC20.sol
 DA:13,371
 FN:13,GV2ERC20.constructor
 FNDA:371,GV2ERC20.constructor
@@ -682,7 +682,7 @@ BRF:0
 BRH:0
 end_of_record
 TN:
-SF:pkg/contracts/script/PassportScorerWriter.s.sol
+SF:script/PassportScorerWriter.s.sol
 DA:9,0
 FN:9,PassportScorerWriter.runCurrentNetwork
 FNDA:0,PassportScorerWriter.runCurrentNetwork
@@ -698,7 +698,7 @@ BRF:0
 BRH:0
 end_of_record
 TN:
-SF:pkg/contracts/script/PrintRegistryCommunitySelectors.s.sol
+SF:script/PrintRegistryCommunitySelectors.s.sol
 DA:12,0
 FN:12,PrintRegistryCommunitySelectors.run
 FNDA:0,PrintRegistryCommunitySelectors.run
@@ -721,7 +721,7 @@ BRF:2
 BRH:0
 end_of_record
 TN:
-SF:pkg/contracts/script/TransferOwnershipAllContracts.s.sol
+SF:script/TransferOwnershipAllContracts.s.sol
 DA:13,0
 FN:13,TransferOwnershipAllContracts.runCurrentNetwork
 FNDA:0,TransferOwnershipAllContracts.runCurrentNetwork
@@ -750,7 +750,7 @@ BRF:0
 BRH:0
 end_of_record
 TN:
-SF:pkg/contracts/script/UpgradeAllDiamonds.s.sol
+SF:script/UpgradeAllDiamonds.s.sol
 DA:75,0
 FN:75,UpgradeAllDiamonds.runCurrentNetwork
 FNDA:0,UpgradeAllDiamonds.runCurrentNetwork
@@ -1153,7 +1153,7 @@ BRF:27
 BRH:0
 end_of_record
 TN:
-SF:pkg/contracts/script/UpgradeCVDiamond.s.sol
+SF:script/UpgradeCVDiamond.s.sol
 DA:40,0
 FN:40,UpgradeCVDiamond.runCurrentNetwork
 FNDA:0,UpgradeCVDiamond.runCurrentNetwork
@@ -1303,7 +1303,7 @@ BRF:5
 BRH:0
 end_of_record
 TN:
-SF:pkg/contracts/script/UpgradeCVMultichainProd.s.sol
+SF:script/UpgradeCVMultichainProd.s.sol
 DA:54,0
 FN:54,UpgradeCVMultichainProd.runCurrentNetwork
 FNDA:0,UpgradeCVMultichainProd.runCurrentNetwork
@@ -1508,7 +1508,7 @@ BRF:3
 BRH:0
 end_of_record
 TN:
-SF:pkg/contracts/script/UpgradeCVMultichainTest.s.sol
+SF:script/UpgradeCVMultichainTest.s.sol
 DA:40,0
 FN:40,UpgradeCVMultichainTest.runCurrentNetwork
 FNDA:0,UpgradeCVMultichainTest.runCurrentNetwork
@@ -1605,7 +1605,7 @@ BRF:1
 BRH:0
 end_of_record
 TN:
-SF:pkg/contracts/script/UpgradeRegistryCommunityDiamond.s.sol
+SF:script/UpgradeRegistryCommunityDiamond.s.sol
 DA:39,0
 FN:39,UpgradeRegistryCommunityDiamond.runCurrentNetwork
 FNDA:0,UpgradeRegistryCommunityDiamond.runCurrentNetwork
@@ -1741,7 +1741,7 @@ BRF:5
 BRH:0
 end_of_record
 TN:
-SF:pkg/contracts/src/BaseStrategyUpgradeable.sol
+SF:src/BaseStrategyUpgradeable.sol
 DA:42,737
 FN:42,BaseStrategyUpgradeable.init
 FNDA:737,BaseStrategyUpgradeable.init
@@ -1830,7 +1830,7 @@ BRF:7
 BRH:7
 end_of_record
 TN:
-SF:pkg/contracts/src/CVStrategy/CVStrategy.sol
+SF:src/CVStrategy/CVStrategy.sol
 DA:184,726
 FN:184,CVStrategy.init
 FNDA:726,CVStrategy.init
@@ -2207,7 +2207,7 @@ BRF:32
 BRH:29
 end_of_record
 TN:
-SF:pkg/contracts/src/CVStrategy/CVStrategyBaseFacet.sol
+SF:src/CVStrategy/CVStrategyBaseFacet.sol
 DA:185,7
 FN:185,CVStrategyBaseFacet.owner
 FNDA:7,CVStrategyBaseFacet.owner
@@ -2308,7 +2308,7 @@ BRF:15
 BRH:12
 end_of_record
 TN:
-SF:pkg/contracts/src/CVStrategy/CVStrategyDiamondInit.sol
+SF:src/CVStrategy/CVStrategyDiamondInit.sol
 DA:24,724
 FN:24,CVStrategyDiamondInit.init
 FNDA:724,CVStrategyDiamondInit.init
@@ -2326,7 +2326,7 @@ BRF:0
 BRH:0
 end_of_record
 TN:
-SF:pkg/contracts/src/CVStrategy/ConvictionsUtils.sol
+SF:src/CVStrategy/ConvictionsUtils.sol
 DA:19,35
 FN:19,ConvictionsUtils.calculateConviction
 FNDA:35,ConvictionsUtils.calculateConviction
@@ -2373,7 +2373,7 @@ BRF:3
 BRH:3
 end_of_record
 TN:
-SF:pkg/contracts/src/CVStrategy/PowerManagementUtils.sol
+SF:src/CVStrategy/PowerManagementUtils.sol
 DA:11,2277
 FN:11,PowerManagementUtils.increasePower
 FNDA:2277,PowerManagementUtils.increasePower
@@ -2447,7 +2447,7 @@ BRF:16
 BRH:13
 end_of_record
 TN:
-SF:pkg/contracts/src/CVStrategy/facets/CVAdminFacet.sol
+SF:src/CVStrategy/facets/CVAdminFacet.sol
 DA:48,22
 FN:48,CVAdminFacet.setPoolParams
 FNDA:22,CVAdminFacet.setPoolParams
@@ -2556,7 +2556,7 @@ BRF:13
 BRH:11
 end_of_record
 TN:
-SF:pkg/contracts/src/CVStrategy/facets/CVAllocationFacet.sol
+SF:src/CVStrategy/facets/CVAllocationFacet.sol
 DA:52,112
 FN:52,CVAllocationFacet._checkProposalAllocationValidity
 FNDA:112,CVAllocationFacet._checkProposalAllocationValidity
@@ -2736,7 +2736,7 @@ BRF:33
 BRH:24
 end_of_record
 TN:
-SF:pkg/contracts/src/CVStrategy/facets/CVDisputeFacet.sol
+SF:src/CVStrategy/facets/CVDisputeFacet.sol
 DA:44,15
 FN:44,CVDisputeFacet.disputeProposal
 FNDA:15,CVDisputeFacet.disputeProposal
@@ -2813,7 +2813,7 @@ BRF:13
 BRH:9
 end_of_record
 TN:
-SF:pkg/contracts/src/CVStrategy/facets/CVPowerFacet.sol
+SF:src/CVStrategy/facets/CVPowerFacet.sol
 DA:34,1253
 FN:34,CVPowerFacet.activatePoints
 FNDA:1253,CVPowerFacet.activatePoints
@@ -2900,7 +2900,7 @@ BRF:5
 BRH:5
 end_of_record
 TN:
-SF:pkg/contracts/src/CVStrategy/facets/CVProposalFacet.sol
+SF:src/CVStrategy/facets/CVProposalFacet.sol
 DA:52,164
 FN:52,CVProposalFacet.registerRecipient
 FNDA:164,CVProposalFacet.registerRecipient
@@ -2986,7 +2986,7 @@ BRF:14
 BRH:14
 end_of_record
 TN:
-SF:pkg/contracts/src/CollateralVault.sol
+SF:src/CollateralVault.sol
 DA:34,175
 FN:34,CollateralVault.onlyOwner
 FNDA:175,CollateralVault.onlyOwner
@@ -3043,7 +3043,7 @@ BRF:6
 BRH:6
 end_of_record
 TN:
-SF:pkg/contracts/src/GoodDollarSybil.sol
+SF:src/GoodDollarSybil.sol
 DA:28,8
 FN:28,GoodDollarSybil.onlyAuthorized
 FNDA:8,GoodDollarSybil.onlyAuthorized
@@ -3118,7 +3118,7 @@ BRF:5
 BRH:4
 end_of_record
 TN:
-SF:pkg/contracts/src/PassportScorer.sol
+SF:src/PassportScorer.sol
 DA:32,20
 FN:32,PassportScorer.onlyAuthorized
 FNDA:20,PassportScorer.onlyAuthorized
@@ -3218,7 +3218,7 @@ BRF:9
 BRH:8
 end_of_record
 TN:
-SF:pkg/contracts/src/ProxyOwnableUpgrader.sol
+SF:src/ProxyOwnableUpgrader.sol
 DA:10,1639
 FN:10,ProxyOwnableUpgrader.initialize
 FNDA:1639,ProxyOwnableUpgrader.initialize
@@ -3254,7 +3254,7 @@ BRF:5
 BRH:4
 end_of_record
 TN:
-SF:pkg/contracts/src/ProxyOwner.sol
+SF:src/ProxyOwner.sol
 DA:15,9
 FN:15,ProxyOwner.initialize
 FNDA:9,ProxyOwner.initialize
@@ -3287,7 +3287,7 @@ BRF:1
 BRH:1
 end_of_record
 TN:
-SF:pkg/contracts/src/RegistryCommunity/RegistryCommunity.sol
+SF:src/RegistryCommunity/RegistryCommunity.sol
 DA:215,2
 FN:215,RegistryCommunity.onlyCouncilSafe
 FNDA:2,RegistryCommunity.onlyCouncilSafe
@@ -3555,7 +3555,7 @@ BRF:16
 BRH:12
 end_of_record
 TN:
-SF:pkg/contracts/src/RegistryCommunity/RegistryCommunityDiamondInit.sol
+SF:src/RegistryCommunity/RegistryCommunityDiamondInit.sol
 DA:23,0
 FN:23,RegistryCommunityDiamondInit.init
 FNDA:0,RegistryCommunityDiamondInit.init
@@ -3572,7 +3572,7 @@ BRF:0
 BRH:0
 end_of_record
 TN:
-SF:pkg/contracts/src/RegistryCommunity/facets/CommunityAdminFacet.sol
+SF:src/RegistryCommunity/facets/CommunityAdminFacet.sol
 DA:50,30
 FN:50,CommunityAdminFacet.onlyCouncilSafe
 FNDA:30,CommunityAdminFacet.onlyCouncilSafe
@@ -3685,7 +3685,7 @@ BRF:17
 BRH:13
 end_of_record
 TN:
-SF:pkg/contracts/src/RegistryCommunity/facets/CommunityMemberFacet.sol
+SF:src/RegistryCommunity/facets/CommunityMemberFacet.sol
 DA:36,8
 FN:36,CommunityMemberFacet.onlyCouncilSafe
 FNDA:8,CommunityMemberFacet.onlyCouncilSafe
@@ -3773,7 +3773,7 @@ BRF:8
 BRH:8
 end_of_record
 TN:
-SF:pkg/contracts/src/RegistryCommunity/facets/CommunityPoolFacet.sol
+SF:src/RegistryCommunity/facets/CommunityPoolFacet.sol
 DA:51,724
 FN:51,CommunityPoolFacet.createPool.0
 FNDA:724,CommunityPoolFacet.createPool.0
@@ -3815,7 +3815,7 @@ BRF:4
 BRH:4
 end_of_record
 TN:
-SF:pkg/contracts/src/RegistryCommunity/facets/CommunityPowerFacet.sol
+SF:src/RegistryCommunity/facets/CommunityPowerFacet.sol
 DA:42,2612
 FN:42,CommunityPowerFacet.isMember
 FNDA:2612,CommunityPowerFacet.isMember
@@ -3948,7 +3948,7 @@ BRF:16
 BRH:12
 end_of_record
 TN:
-SF:pkg/contracts/src/RegistryCommunity/facets/CommunityStrategyFacet.sol
+SF:src/RegistryCommunity/facets/CommunityStrategyFacet.sol
 DA:33,1212
 FN:33,CommunityStrategyFacet.onlyCouncilSafe
 FNDA:1212,CommunityStrategyFacet.onlyCouncilSafe
@@ -4019,7 +4019,7 @@ BRF:7
 BRH:7
 end_of_record
 TN:
-SF:pkg/contracts/src/RegistryFactory/RegistryFactory.sol
+SF:src/RegistryFactory/RegistryFactory.sol
 DA:58,689
 FN:58,RegistryFactory._revertZeroAddress
 FNDA:689,RegistryFactory._revertZeroAddress
@@ -4187,7 +4187,7 @@ BRF:14
 BRH:10
 end_of_record
 TN:
-SF:pkg/contracts/src/SafeArbitrator.sol
+SF:src/SafeArbitrator.sol
 DA:49,10
 FN:49,SafeArbitrator.onlySafe
 FNDA:10,SafeArbitrator.onlySafe
@@ -4268,7 +4268,7 @@ BRF:7
 BRH:5
 end_of_record
 TN:
-SF:pkg/contracts/src/diamonds/facets/DiamondCutFacet.sol
+SF:src/diamonds/facets/DiamondCutFacet.sol
 DA:22,3
 FN:22,DiamondCutFacet.diamondCut
 FNDA:3,DiamondCutFacet.diamondCut
@@ -4282,7 +4282,7 @@ BRF:0
 BRH:0
 end_of_record
 TN:
-SF:pkg/contracts/src/diamonds/facets/DiamondLoupeFacet.sol
+SF:src/diamonds/facets/DiamondLoupeFacet.sol
 DA:27,1
 FN:27,DiamondLoupeFacet.facets
 FNDA:1,DiamondLoupeFacet.facets
@@ -4372,7 +4372,7 @@ BRF:5
 BRH:5
 end_of_record
 TN:
-SF:pkg/contracts/src/diamonds/facets/OwnershipFacet.sol
+SF:src/diamonds/facets/OwnershipFacet.sol
 DA:8,4
 FN:8,OwnershipFacet.transferOwnership
 FNDA:4,OwnershipFacet.transferOwnership
@@ -4390,7 +4390,7 @@ BRF:0
 BRH:0
 end_of_record
 TN:
-SF:pkg/contracts/src/diamonds/libraries/LibDiamond.sol
+SF:src/diamonds/libraries/LibDiamond.sol
 DA:56,18085
 FN:56,LibDiamond.diamondStorage
 FNDA:18085,LibDiamond.diamondStorage
@@ -4580,7 +4580,7 @@ BRF:29
 BRH:28
 end_of_record
 TN:
-SF:pkg/contracts/src/diamonds/upgradeInitializers/DiamondInit.sol
+SF:src/diamonds/upgradeInitializers/DiamondInit.sol
 DA:26,265
 FN:26,DiamondInit.init
 FNDA:265,DiamondInit.init
@@ -4597,7 +4597,7 @@ BRF:0
 BRH:0
 end_of_record
 TN:
-SF:pkg/contracts/src/diamonds/upgradeInitializers/DiamondMultiInit.sol
+SF:src/diamonds/upgradeInitializers/DiamondMultiInit.sol
 DA:18,2
 FN:18,DiamondMultiInit.multiInit
 FNDA:2,DiamondMultiInit.multiInit
@@ -4614,7 +4614,7 @@ BRF:1
 BRH:1
 end_of_record
 TN:
-SF:pkg/contracts/test/ABDKMath64x64.sol
+SF:test/ABDKMath64x64.sol
 DA:34,0
 FN:34,ABDKMath64x64.fromInt
 FNDA:0,ABDKMath64x64.fromInt
@@ -5276,7 +5276,7 @@ BRF:194
 BRH:7
 end_of_record
 TN:
-SF:pkg/contracts/test/BaseStrategyUpgradeable.t.sol
+SF:test/BaseStrategyUpgradeable.t.sol
 DA:15,2
 FN:15,MockAllo.setPoolManager
 FNDA:2,MockAllo.setPoolManager
@@ -5363,7 +5363,7 @@ BRF:0
 BRH:0
 end_of_record
 TN:
-SF:pkg/contracts/test/CVStrategy.t.sol
+SF:test/CVStrategy.t.sol
 DA:41,1
 FN:41,CVStrategyStubFacet.activatePoints
 FNDA:1,CVStrategyStubFacet.activatePoints
@@ -5380,7 +5380,7 @@ BRF:0
 BRH:0
 end_of_record
 TN:
-SF:pkg/contracts/test/CVStrategyHelpers.sol
+SF:test/CVStrategyHelpers.sol
 DA:33,0
 FN:33,CVStrategyHelpers.poolProfile_id1
 FNDA:0,CVStrategyHelpers.poolProfile_id1
@@ -5474,7 +5474,7 @@ BRF:11
 BRH:3
 end_of_record
 TN:
-SF:pkg/contracts/test/CollateralVault.t.sol
+SF:test/CollateralVault.t.sol
 DA:12,1
 FN:12,ReentrantReceiver.constructor
 FNDA:1,ReentrantReceiver.constructor
@@ -5503,7 +5503,7 @@ BRF:1
 BRH:1
 end_of_record
 TN:
-SF:pkg/contracts/test/CommunityAdminFacet.t.sol
+SF:test/CommunityAdminFacet.t.sol
 DA:10,7
 FN:10,CommunityAdminFacetHarness.initOwner
 FNDA:7,CommunityAdminFacetHarness.initOwner
@@ -5541,7 +5541,7 @@ BRF:0
 BRH:0
 end_of_record
 TN:
-SF:pkg/contracts/test/CommunityStrategyFacet.t.sol
+SF:test/CommunityStrategyFacet.t.sol
 DA:16,1
 FN:16,MockAllo.setPoolStrategy
 FNDA:1,MockAllo.setPoolStrategy
@@ -5596,7 +5596,7 @@ BRF:0
 BRH:0
 end_of_record
 TN:
-SF:pkg/contracts/test/DiamondCutFacet.t.sol
+SF:test/DiamondCutFacet.t.sol
 DA:19,3
 FN:19,DiamondCutHarness.constructor
 FNDA:3,DiamondCutHarness.constructor
@@ -5639,7 +5639,7 @@ BRF:1
 BRH:0
 end_of_record
 TN:
-SF:pkg/contracts/test/DiamondLoupeFacet.t.sol
+SF:test/DiamondLoupeFacet.t.sol
 DA:14,5
 FN:14,DiamondLoupeHarness.constructor
 FNDA:5,DiamondLoupeHarness.constructor
@@ -5691,7 +5691,7 @@ BRF:1
 BRH:0
 end_of_record
 TN:
-SF:pkg/contracts/test/DiamondUpgradeInitializers.t.sol
+SF:test/DiamondUpgradeInitializers.t.sol
 DA:18,2
 FN:18,InitSupportFacet.mark
 FNDA:2,InitSupportFacet.mark
@@ -5716,7 +5716,7 @@ BRF:0
 BRH:0
 end_of_record
 TN:
-SF:pkg/contracts/test/GoodDollarSybil.t.sol
+SF:test/GoodDollarSybil.t.sol
 DA:12,3
 FN:12,MockStrategy.constructor
 FNDA:3,MockStrategy.constructor
@@ -5733,7 +5733,7 @@ BRF:0
 BRH:0
 end_of_record
 TN:
-SF:pkg/contracts/test/LibDiamond.t.sol
+SF:test/LibDiamond.t.sol
 DA:13,24
 FN:13,LibDiamondHarness.constructor
 FNDA:24,LibDiamondHarness.constructor
@@ -5816,7 +5816,7 @@ BRF:1
 BRH:1
 end_of_record
 TN:
-SF:pkg/contracts/test/OwnershipFacet.t.sol
+SF:test/OwnershipFacet.t.sol
 DA:14,4
 FN:14,TestDiamond.constructor
 FNDA:4,TestDiamond.constructor
@@ -5847,7 +5847,7 @@ BRF:1
 BRH:0
 end_of_record
 TN:
-SF:pkg/contracts/test/PassportScorer.t.sol
+SF:test/PassportScorer.t.sol
 DA:11,1
 FN:11,MockStrategyMinimal.constructor
 FNDA:1,MockStrategyMinimal.constructor
@@ -5867,7 +5867,7 @@ BRF:0
 BRH:0
 end_of_record
 TN:
-SF:pkg/contracts/test/ProxyOwnableUpgrader.t.sol
+SF:test/ProxyOwnableUpgrader.t.sol
 DA:11,1
 FN:11,GoodOwner.constructor
 FNDA:1,GoodOwner.constructor
@@ -5888,7 +5888,7 @@ BRF:0
 BRH:0
 end_of_record
 TN:
-SF:pkg/contracts/test/ProxyOwner.t.sol
+SF:test/ProxyOwner.t.sol
 DA:14,1
 FN:14,ProxyOwnerV2.version
 FNDA:1,ProxyOwnerV2.version
@@ -5901,7 +5901,7 @@ BRF:0
 BRH:0
 end_of_record
 TN:
-SF:pkg/contracts/test/RegistryCommunity.t.sol
+SF:test/RegistryCommunity.t.sol
 DA:31,0
 FN:31,DummyCommunityFacet.dummy
 FNDA:0,DummyCommunityFacet.dummy
@@ -6106,7 +6106,7 @@ BRF:0
 BRH:0
 end_of_record
 TN:
-SF:pkg/contracts/test/RegistryCommunityDiamondInit.t.sol
+SF:test/RegistryCommunityDiamondInit.t.sol
 DA:14,1
 FN:14,DiamondInitHarness.callInit
 FNDA:1,DiamondInitHarness.callInit
@@ -6127,7 +6127,7 @@ BRF:2
 BRH:0
 end_of_record
 TN:
-SF:pkg/contracts/test/RegistryFactory.t.sol
+SF:test/RegistryFactory.t.sol
 DA:17,18
 FN:17,MockSafe.constructor
 FNDA:18,MockSafe.constructor
@@ -6155,7 +6155,7 @@ BRF:0
 BRH:0
 end_of_record
 TN:
-SF:pkg/contracts/test/helpers/CVStrategyHelpers.sol
+SF:test/helpers/CVStrategyHelpers.sol
 DA:33,46
 FN:33,MockAlloWithPool.setPoolToken
 FNDA:46,MockAlloWithPool.setPoolToken
@@ -6536,7 +6536,7 @@ BRF:3
 BRH:1
 end_of_record
 TN:
-SF:pkg/contracts/test/helpers/CommunityDiamondConfigurator.sol
+SF:test/helpers/CommunityDiamondConfigurator.sol
 DA:17,207
 FN:17,CommunityDiamondConfiguratorBase._buildFacetCuts
 FNDA:207,CommunityDiamondConfiguratorBase._buildFacetCuts
@@ -6629,7 +6629,7 @@ BRF:0
 BRH:0
 end_of_record
 TN:
-SF:pkg/contracts/test/helpers/StrategyDiamondConfigurator.sol
+SF:test/helpers/StrategyDiamondConfigurator.sol
 DA:17,868
 FN:17,StrategyDiamondConfiguratorBase._buildFacetCuts
 FNDA:868,StrategyDiamondConfiguratorBase._buildFacetCuts
@@ -6709,7 +6709,7 @@ BRF:0
 BRH:0
 end_of_record
 TN:
-SF:pkg/contracts/test/mocks/CVAdminFacetV2.sol
+SF:test/mocks/CVAdminFacetV2.sol
 DA:16,1
 FN:16,CVAdminFacetV2.VERSION
 FNDA:1,CVAdminFacetV2.VERSION
@@ -6722,7 +6722,7 @@ BRF:0
 BRH:0
 end_of_record
 TN:
-SF:pkg/contracts/test/shared/GasHelpers2.sol
+SF:test/shared/GasHelpers2.sol
 DA:12,0
 FN:12,GasHelpers2.setEnableGasLog
 FNDA:0,GasHelpers2.setEnableGasLog
@@ -6750,7 +6750,7 @@ BRF:2
 BRH:0
 end_of_record
 TN:
-SF:pkg/contracts/test/shared/SafeSetup.sol
+SF:test/shared/SafeSetup.sol
 DA:29,0
 FN:29,SafeSetup._councilSafeWithOwner.0
 FNDA:0,SafeSetup._councilSafeWithOwner.0
@@ -6856,7 +6856,7 @@ BRF:7
 BRH:1
 end_of_record
 TN:
-SF:pkg/contracts/test/shared/TERC20.sol
+SF:test/shared/TERC20.sol
 DA:13,0
 FN:13,TERC20.constructor
 FNDA:0,TERC20.constructor

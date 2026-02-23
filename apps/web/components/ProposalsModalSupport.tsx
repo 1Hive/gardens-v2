@@ -1,7 +1,7 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 "use client";
 
-import { forwardRef, useEffect, useImperativeHandle } from "react";
+import { forwardRef, useImperativeHandle } from "react";
 import {
   HandRaisedIcon,
   ExclamationTriangleIcon,
@@ -84,7 +84,6 @@ export const ProposalsModalSupport = forwardRef<
       strategyConfig,
       isPoolEnabled,
       inputData,
-      stakedFilter,
       poolToken,
       isAllocationView,
 
@@ -116,7 +115,6 @@ export const ProposalsModalSupport = forwardRef<
       thresholdPct,
       totalSupportPct,
       timeToPass,
-      triggerConvictionRefetch,
       updatedConviction,
     } = useConvictionRead({
       proposalData,
@@ -161,6 +159,8 @@ export const ProposalsModalSupport = forwardRef<
 
     const isSignalingType =
       PoolTypes[strategyConfig.proposalType] === "signaling";
+    const isStreamingType =
+      PoolTypes[strategyConfig.proposalType] === "streaming";
 
     const alreadyExecuted = ProposalStatus[proposalStatus] === "executed";
 
@@ -208,8 +208,13 @@ export const ProposalsModalSupport = forwardRef<
           ) ?
             `At least ${supportNeededToPass}% needed`
           : proposalWillPass ?
-            "Estimated time to pass:"
-          : !alreadyExecuted && readyToBeExecuted && !isSignalingType ?
+            PoolTypes[strategyConfig.proposalType] === "funding" ?
+              "Estimated time to pass:"
+            : "Before stream start:"
+          : !alreadyExecuted &&
+            readyToBeExecuted &&
+            !isSignalingType &&
+            !isStreamingType ?
             "Ready to be executed"
           : ""}
         </div>

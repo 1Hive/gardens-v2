@@ -9,6 +9,7 @@ import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import {IStrategy} from "allo-v2-contracts/core/interfaces/IStrategy.sol";
 import {FAllo} from "../src/interfaces/FAllo.sol";
 import {Metadata} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
+import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 contract MockAllo is FAllo {
     mapping(uint256 => address) public poolStrategies;
@@ -83,11 +84,15 @@ contract CommunityStrategyFacetTest is Test {
     address internal council = makeAddr("council");
 
     function setUp() public {
-        facet = new CommunityStrategyFacetHarness();
+        CommunityStrategyFacetHarness impl = new CommunityStrategyFacetHarness();
+        facet = CommunityStrategyFacetHarness(
+            payable(
+                address(new ERC1967Proxy(address(impl), abi.encodeWithSelector(impl.initOwner.selector, makeAddr("owner"))))
+            )
+        );
         allo = new MockAllo();
         sybil = new MockSybilScorer();
 
-        facet.initOwner(makeAddr("owner"));
         facet.grantCouncil(council);
         facet.setAllo(address(allo));
     }
@@ -127,10 +132,37 @@ contract CommunityStrategyFacetTest is Test {
         assertFalse(facet.enabledStrategies(strategy));
     }
 
+    function test_addStrategyByPoolId_requires_council() public {
+        vm.expectRevert(abi.encodeWithSelector(CommunityStrategyFacet.UserNotInCouncil.selector, address(this)));
+        facet.addStrategyByPoolId(1);
+    }
+
     function test_removeStrategy_reverts_when_not_enabled() public {
         vm.prank(council);
         vm.expectRevert(CommunityStrategyFacet.StrategyNotEnabled.selector);
         facet.removeStrategy(address(0xBEEF));
+    }
+
+    function test_removeStrategy_reverts_zero_address() public {
+        vm.prank(council);
+        vm.expectRevert(CommunityStrategyFacet.ValueCannotBeZero.selector);
+        facet.removeStrategy(address(0));
+    }
+
+    function test_removeStrategyByPoolId_reverts_zero_strategy() public {
+        vm.prank(council);
+        vm.expectRevert(CommunityStrategyFacet.ValueCannotBeZero.selector);
+        facet.removeStrategyByPoolId(999);
+    }
+
+    function test_removeStrategyByPoolId_requires_council() public {
+        vm.expectRevert(abi.encodeWithSelector(CommunityStrategyFacet.UserNotInCouncil.selector, address(this)));
+        facet.removeStrategyByPoolId(1);
+    }
+
+    function test_rejectPool_requires_council() public {
+        vm.expectRevert(abi.encodeWithSelector(CommunityStrategyFacet.UserNotInCouncil.selector, address(this)));
+        facet.rejectPool(address(0xBEEF));
     }
 
     function test_rejectPool_branches() public {

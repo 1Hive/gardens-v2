@@ -2,6 +2,7 @@
 pragma solidity ^0.8.19;
 
 import {CommunityMemberFacet} from "../../src/RegistryCommunity/facets/CommunityMemberFacet.sol";
+import {CommunityPauseFacet} from "../../src/RegistryCommunity/facets/CommunityPauseFacet.sol";
 import {CommunityPowerFacet} from "../../src/RegistryCommunity/facets/CommunityPowerFacet.sol";
 import {CommunityStrategyFacet} from "../../src/RegistryCommunity/facets/CommunityStrategyFacet.sol";
 import {CommunityAdminFacet} from "../../src/RegistryCommunity/facets/CommunityAdminFacet.sol";
@@ -17,11 +18,12 @@ abstract contract CommunityDiamondConfiguratorBase {
     function _buildFacetCuts(
         CommunityAdminFacet _adminFacet,
         CommunityMemberFacet _memberFacet,
+        CommunityPauseFacet _pauseFacet,
         CommunityPoolFacet _poolFacet,
         CommunityPowerFacet _powerFacet,
         CommunityStrategyFacet _strategyFacet
     ) internal pure returns (IDiamond.FacetCut[] memory cuts) {
-        cuts = new IDiamond.FacetCut[](5);
+        cuts = new IDiamond.FacetCut[](6);
 
         bytes4[] memory adminSelectors = new bytes4[](9);
         adminSelectors[0] = CommunityAdminFacet.setStrategyTemplate.selector;
@@ -50,29 +52,49 @@ abstract contract CommunityDiamondConfiguratorBase {
             functionSelectors: memberSelectors
         });
 
+        bytes4[] memory pauseSelectors = new bytes4[](12);
+        pauseSelectors[0] = bytes4(keccak256("setPauseController(address)"));
+        pauseSelectors[1] = bytes4(keccak256("setPauseFacet(address)"));
+        pauseSelectors[2] = bytes4(keccak256("pauseFacet()"));
+        pauseSelectors[3] = bytes4(keccak256("pauseController()"));
+        pauseSelectors[4] = bytes4(keccak256("pause(uint256)"));
+        pauseSelectors[5] = bytes4(keccak256("pause(bytes4,uint256)"));
+        pauseSelectors[6] = bytes4(keccak256("unpause()"));
+        pauseSelectors[7] = bytes4(keccak256("unpause(bytes4)"));
+        pauseSelectors[8] = bytes4(keccak256("isPaused()"));
+        pauseSelectors[9] = bytes4(keccak256("isPaused(bytes4)"));
+        pauseSelectors[10] = bytes4(keccak256("pausedUntil()"));
+        pauseSelectors[11] = bytes4(keccak256("pausedSelectorUntil(bytes4)"));
+        cuts[2] = IDiamond.FacetCut({
+            facetAddress: address(_pauseFacet),
+            action: IDiamond.FacetCutAction.Auto,
+            functionSelectors: pauseSelectors
+        });
+
         bytes4[] memory poolSelectors = new bytes4[](2);
         poolSelectors[0] = bytes4(
             keccak256(
-                "createPool(address,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address,uint256,address[],address),(uint256,string))"
+                "createPool(address,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address,address,uint256,address[],address,uint256),(uint256,string))"
             )
         );
         poolSelectors[1] = bytes4(
             keccak256(
-                "createPool(address,address,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address,uint256,address[],address),(uint256,string))"
+                "createPool(address,address,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address,address,uint256,address[],address,uint256),(uint256,string))"
             )
         );
-        cuts[2] = IDiamond.FacetCut({
+        cuts[3] = IDiamond.FacetCut({
             facetAddress: address(_poolFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: poolSelectors
         });
 
-        bytes4[] memory powerSelectors = new bytes4[](6);
+        bytes4[] memory powerSelectors = new bytes4[](7);
         powerSelectors[0] = CommunityPowerFacet.activateMemberInStrategy.selector;
         powerSelectors[1] = CommunityPowerFacet.deactivateMemberInStrategy.selector;
         powerSelectors[2] = CommunityPowerFacet.increasePower.selector;
         powerSelectors[3] = CommunityPowerFacet.decreasePower.selector;
         powerSelectors[4] = CommunityPowerFacet.getMemberPowerInStrategy.selector;
         powerSelectors[5] = CommunityPowerFacet.getMemberStakedAmount.selector;
-        cuts[3] = IDiamond.FacetCut({
+        powerSelectors[6] = CommunityPowerFacet.ercAddress.selector;
+        cuts[4] = IDiamond.FacetCut({
             facetAddress: address(_powerFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: powerSelectors
         });
 
@@ -82,7 +104,7 @@ abstract contract CommunityDiamondConfiguratorBase {
         strategySelectors[2] = CommunityStrategyFacet.removeStrategyByPoolId.selector;
         strategySelectors[3] = CommunityStrategyFacet.removeStrategy.selector;
         strategySelectors[4] = CommunityStrategyFacet.rejectPool.selector;
-        cuts[4] = IDiamond.FacetCut({
+        cuts[5] = IDiamond.FacetCut({
             facetAddress: address(_strategyFacet),
             action: IDiamond.FacetCutAction.Auto,
             functionSelectors: strategySelectors
@@ -115,6 +137,7 @@ abstract contract CommunityDiamondConfiguratorBase {
 contract CommunityDiamondConfigurator is CommunityDiamondConfiguratorBase {
     CommunityAdminFacet public adminFacet;
     CommunityMemberFacet public memberFacet;
+    CommunityPauseFacet public pauseFacet;
     CommunityPoolFacet public poolFacet;
     CommunityPowerFacet public powerFacet;
     CommunityStrategyFacet public strategyFacet;
@@ -125,6 +148,7 @@ contract CommunityDiamondConfigurator is CommunityDiamondConfiguratorBase {
         // Deploy all facets
         adminFacet = new CommunityAdminFacet();
         memberFacet = new CommunityMemberFacet();
+        pauseFacet = new CommunityPauseFacet();
         poolFacet = new CommunityPoolFacet();
         powerFacet = new CommunityPowerFacet();
         strategyFacet = new CommunityStrategyFacet();
@@ -138,12 +162,12 @@ contract CommunityDiamondConfigurator is CommunityDiamondConfiguratorBase {
      */
     function getFacetCuts() public view returns (IDiamond.FacetCut[] memory cuts) {
         IDiamond.FacetCut[] memory baseCuts =
-            _buildFacetCuts(adminFacet, memberFacet, poolFacet, powerFacet, strategyFacet);
+            _buildFacetCuts(adminFacet, memberFacet, pauseFacet, poolFacet, powerFacet, strategyFacet);
 
-        // Add loupe facet as 6th facet
-        cuts = new IDiamond.FacetCut[](6);
+        // Add loupe facet as 7th facet
+        cuts = new IDiamond.FacetCut[](7);
         cuts[0] = _buildLoupeFacetCut(loupeFacet);
-        for (uint256 i = 0; i < 5; i++) {
+        for (uint256 i = 0; i < 6; i++) {
             cuts[i + 1] = baseCuts[i];
         }
     }
@@ -154,18 +178,19 @@ contract CommunityDiamondConfigurator is CommunityDiamondConfiguratorBase {
     function getFacetCuts(
         CommunityAdminFacet _adminFacet,
         CommunityMemberFacet _memberFacet,
+        CommunityPauseFacet _pauseFacet,
         CommunityPoolFacet _poolFacet,
         CommunityPowerFacet _powerFacet,
         CommunityStrategyFacet _strategyFacet,
         DiamondLoupeFacet _loupeFacet
     ) public pure returns (IDiamond.FacetCut[] memory cuts) {
         IDiamond.FacetCut[] memory baseCuts = _buildFacetCuts(
-            _adminFacet, _memberFacet, _poolFacet, _powerFacet, _strategyFacet
+            _adminFacet, _memberFacet, _pauseFacet, _poolFacet, _powerFacet, _strategyFacet
         );
 
-        cuts = new IDiamond.FacetCut[](6);
+        cuts = new IDiamond.FacetCut[](7);
         cuts[0] = _buildLoupeFacetCut(_loupeFacet);
-        for (uint256 i = 0; i < 5; i++) {
+        for (uint256 i = 0; i < 6; i++) {
             cuts[i + 1] = baseCuts[i];
         }
     }

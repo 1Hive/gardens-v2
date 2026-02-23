@@ -7,7 +7,11 @@ import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeab
 contract ProxyOwnableUpgrader is OwnableUpgradeable, UUPSUpgradeable {
     error CallerNotOwner(address _caller, address _owner);
 
-    function initialize(address initialOwner) public initializer {
+    constructor() {
+        _disableInitializers();
+    }
+
+    function initialize(address initialOwner) public virtual initializer {
         _transferOwnership(initialOwner);
     }
 

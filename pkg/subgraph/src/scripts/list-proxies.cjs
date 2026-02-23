@@ -13,6 +13,10 @@ const optimismSepoliaSubgraph =
   "https://api.studio.thegraph.com/query/70985/gardens-v-2-optimism-sepolia/" +
   subgraphConfig.VERSION_OPSEP;
 
+const ethSepoliaSubgraph =
+  "https://api.studio.thegraph.com/query/70985/gardens-v-2-sepolia/" +
+    subgraphConfig.VERSION_ETHSEP;
+
 const arbitrumSubgraph =
   "https://api.studio.thegraph.com/query/102093/gardens-v2---arbitrum/" +
   subgraphConfig.VERSION_PROD;
@@ -42,7 +46,7 @@ const jsons = {
   // @ts-ignore
   [viemChains.arbitrumSepolia.id]: arbitrumSepoliaSubgraph,
   [viemChains.optimismSepolia.id]: optimismSepoliaSubgraph,
-  // [viemChains.sepolia.id]: sepoliaLatest,
+  [viemChains.sepolia.id]: ethSepoliaSubgraph,
 
   // @ts-ignore
   [viemChains.arbitrum.id]: arbitrumSubgraph,
@@ -59,7 +63,6 @@ async function extractProxies(chainId) {
   let registryFactoryProxy;
   let registryCommunityProxies = [];
   let cvStrategiesProxies = [];
-  let passportScorerProxy;
 
   let subgraphEndpoint;
 
@@ -94,9 +97,6 @@ async function extractProxies(chainId) {
   cvstrategies {
     id
   }
-  sybilProtections {
-    id
-  }
 }`;
 
   console.debug("Querying subgraph", subgraphEndpoint);
@@ -111,20 +111,29 @@ async function extractProxies(chainId) {
     }),
   });
 
+  const rawBody = await response.text();
+  let result;
+
+  try {
+    result = JSON.parse(rawBody);
+  } catch (error) {
+    throw new Error(
+      `Invalid JSON from subgraph (${response.status} ${response.statusText}): ${rawBody}`,
+    );
+  }
+
   if (response.status !== 200) {
     console.error({
       status: response.status,
       statusText: response.statusText,
-      response: await response.text(),
+      response: rawBody,
       url: response.url,
     });
     throw new Error(`HTTP error! status: ${response.status}`);
   }
 
-  const result = await response.json();
-
-  if (!result.data) {
-    throw new Error("Error in response: " + (await response.text()));
+  if (!result.data || (Array.isArray(result.errors) && result.errors.length > 0)) {
+    throw new Error(`Error in response: ${rawBody}`);
   }
 
   registryFactoryProxy = result.data.registryFactories?.[0]?.id;
@@ -136,9 +145,6 @@ async function extractProxies(chainId) {
   result.data.cvstrategies.forEach((strategy) => {
     cvStrategiesProxies.push(strategy.id);
   });
-
-  if (result.data.passportScorers?.[0]?.id)
-    passportScorerProxy = result.data.passportScorers?.[0]?.id;
 
   return {
     REGISTRY_FACTORY: registryFactoryProxy,
@@ -181,4 +187,7 @@ async function main() {
   }
 }
 
-main().catch(console.error);
+main().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});

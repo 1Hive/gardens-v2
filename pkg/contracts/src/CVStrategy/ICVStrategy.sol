@@ -28,7 +28,8 @@ enum PointSystem {
     Fixed,
     Capped,
     Unlimited,
-    Quadratic
+    Quadratic,
+    Custom // Uses votingPowerRegistry.getMemberPowerInStrategy() as-is, no transformation
 }
 
 struct CreateProposal {
@@ -136,6 +137,21 @@ struct CVStrategyInitializeParamsV0_2 {
     address superfluidToken;
 }
 
+struct CVStrategyInitializeParamsV0_3 {
+    CVParams cvParams;
+    ProposalType proposalType;
+    PointSystem pointSystem;
+    PointSystemConfig pointConfig;
+    ArbitrableConfig arbitrableConfig;
+    address registryCommunity;
+    address votingPowerRegistry;
+    address sybilScorer;
+    uint256 sybilScorerThreshold;
+    address[] initialAllowlist;
+    address superfluidToken;
+    uint256 streamingRatePerSecond;
+}
+
 interface ICVStrategy {
     function setPoolParams(
         ArbitrableConfig memory _arbitrableConfig,
@@ -145,4 +161,18 @@ interface ICVStrategy {
         address[] memory _membersToRemove,
         address _superfluidToken
     ) external;
+
+    function setPoolParams(
+        ArbitrableConfig memory _arbitrableConfig,
+        CVParams memory _cvParams,
+        uint256 _sybilScoreThreshold,
+        address[] memory _membersToAdd,
+        address[] memory _membersToRemove,
+        address _superfluidToken,
+        uint256 _streamingRatePerSecond
+    ) external;
+
+    function connectSuperfluidGDA(address) external;
+
+    function disconnectSuperfluidGDA(address) external;
 }

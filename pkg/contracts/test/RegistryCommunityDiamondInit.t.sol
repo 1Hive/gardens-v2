@@ -22,6 +22,13 @@ contract DiamondInitHarness {
     }
 }
 
+contract DirectDiamondInitHarness is RegistryCommunityDiamondInit {
+    function supportsInterface(bytes4 interfaceId) external view returns (bool) {
+        LibDiamond.DiamondStorage storage ds = LibDiamond.diamondStorage();
+        return ds.supportedInterfaces[interfaceId];
+    }
+}
+
 contract RegistryCommunityDiamondInitTest is Test {
     function test_init_registers_interfaces() public {
         RegistryCommunityDiamondInit init = new RegistryCommunityDiamondInit();
@@ -33,5 +40,16 @@ contract RegistryCommunityDiamondInitTest is Test {
         assertTrue(harness.supportsInterface(type(IDiamondCut).interfaceId));
         assertTrue(harness.supportsInterface(type(IDiamondLoupe).interfaceId));
         assertTrue(harness.supportsInterface(type(IERC173).interfaceId));
+    }
+
+    function test_init_direct_registers_interfaces() public {
+        DirectDiamondInitHarness init = new DirectDiamondInitHarness();
+
+        init.init();
+
+        assertTrue(init.supportsInterface(type(IERC165).interfaceId));
+        assertTrue(init.supportsInterface(type(IDiamondCut).interfaceId));
+        assertTrue(init.supportsInterface(type(IDiamondLoupe).interfaceId));
+        assertTrue(init.supportsInterface(type(IERC173).interfaceId));
     }
 }

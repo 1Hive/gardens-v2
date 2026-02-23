@@ -13,6 +13,7 @@ contract PassportScorer is ISybilScorer, ProxyOwnableUpgrader {
 
     mapping(address => uint256) public userScores;
     mapping(address => Strategy) public strategies;
+    uint256[50] private __gap;
 
     event UserScoreAdded(address indexed user, uint256 score);
     event UserRemoved(address indexed user);
@@ -152,5 +153,4 @@ contract PassportScorer is ISybilScorer, ProxyOwnableUpgrader {
         return userScore >= strategy.threshold;
     }
 
-    uint256[50] private __gap;
 }

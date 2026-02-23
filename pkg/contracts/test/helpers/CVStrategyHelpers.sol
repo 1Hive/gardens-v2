@@ -17,13 +17,15 @@ import {
     CVParams,
     PointSystemConfig,
     ArbitrableConfig,
-    CVStrategyInitializeParamsV0_2
+    CVStrategyInitializeParamsV0_3
 } from "../../src/CVStrategy/CVStrategy.sol";
 import {CVProposalFacet} from "../../src/CVStrategy/facets/CVProposalFacet.sol";
 import {CVStrategyBaseFacet} from "../../src/CVStrategy/CVStrategyBaseFacet.sol";
 import {ICollateralVault} from "../../src/interfaces/ICollateralVault.sol";
 import {IArbitrator} from "../../src/interfaces/IArbitrator.sol";
+import {IVotingPowerRegistry} from "../../src/interfaces/IVotingPowerRegistry.sol";
 import {LibDiamond} from "../../src/diamonds/libraries/LibDiamond.sol";
+import {LibPauseStorage} from "../../src/pausing/LibPauseStorage.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Library.sol";
 
 contract MockAlloWithPool {
@@ -81,8 +83,25 @@ contract MockRegistryCommunity {
         require(strategyEnabled, "STRATEGY_DISABLED");
     }
 
+    function enabledStrategies(address) external view returns (bool) {
+        return strategyEnabled;
+    }
+
     function getBasisStakedAmount() external pure returns (uint256) {
         return 1;
+    }
+
+    // IVotingPowerRegistry compatibility stubs
+    function getMemberPowerInStrategy(address member, address) external view returns (uint256) {
+        return members[member] ? 1 : 0;
+    }
+
+    function getMemberStakedAmount(address) external pure returns (uint256) {
+        return 0;
+    }
+
+    function ercAddress() external pure returns (address) {
+        return address(0);
     }
 }
 
@@ -183,6 +202,10 @@ contract CVProposalFacetHarness is CVProposalFacet {
         registryCommunity = RegistryCommunity(registryCommunity_);
     }
 
+    function setVotingPowerRegistry(address registry) external {
+        votingPowerRegistry = IVotingPowerRegistry(registry);
+    }
+
     function setProposalType(ProposalType proposalType_) external {
         proposalType = proposalType_;
     }
@@ -253,8 +276,16 @@ contract CVStrategyBaseFacetHarness is CVStrategyBaseFacet {
         registryCommunity = RegistryCommunity(registryCommunity_);
     }
 
+    function setVotingPowerRegistry(address registry) external {
+        votingPowerRegistry = IVotingPowerRegistry(registry);
+    }
+
     function setSybilScorer(address sybilScorer_) external {
         sybilScorer = ISybilScorer(sybilScorer_);
+    }
+
+    function setPointSystem(PointSystem system) external {
+        pointSystem = system;
     }
 
     function setCvParams(CVParams memory params) external {
@@ -275,6 +306,10 @@ contract CVStrategyBaseFacetHarness is CVStrategyBaseFacet {
 
     function setContractOwner(address owner_) external {
         LibDiamond.setContractOwner(owner_);
+    }
+
+    function setPauseController(address controller) external {
+        LibPauseStorage.layout().pauseController = controller;
     }
 
     function exposedOnlyAllo() external onlyAllo {}
@@ -315,8 +350,29 @@ contract CVStrategyBaseFacetHarness is CVStrategyBaseFacet {
         return _checkBlockAndCalculateConviction(proposals[proposalId], oldStaked);
     }
 
+    function exposedIsPauseSelector(bytes4 selector) external pure returns (bool) {
+        return _isPauseSelector(selector);
+    }
+
+    function exposedEnforceNotPaused(bytes4 selector) external view {
+        _enforceNotPaused(selector);
+    }
+
+    function exposedEnforceSelectorNotPaused(bytes4 selector) external view {
+        _enforceSelectorNotPaused(selector);
+    }
+
+    function guardedWhenNotPaused() external whenNotPaused {}
+
+    function guardedWhenSelectorNotPaused(bytes4 selector) external whenSelectorNotPaused(selector) {}
+
     function exposedGetPoolAmount() external view returns (uint256) {
         return getPoolAmount();
+    }
+
+    function getProposalSnapshot(uint256 proposalId) external view returns (uint256 blockLast, uint256 convictionLast) {
+        Proposal storage p = proposals[proposalId];
+        return (p.blockLast, p.convictionLast);
     }
 }
 
@@ -335,6 +391,10 @@ contract CVStrategyHarness is CVStrategy {
 
     function setRegistryCommunity(address registryCommunity_) external {
         registryCommunity = RegistryCommunity(registryCommunity_);
+    }
+
+    function setVotingPowerRegistry(address registry) external {
+        votingPowerRegistry = IVotingPowerRegistry(registry);
     }
 
     function setSybilScorer(address sybilScorer_) external {

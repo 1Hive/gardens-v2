@@ -16,6 +16,5 @@ contract DeployProxyOwner is BaseMultiChain {
                 address(new ProxyOwner()), abi.encodeWithSelector(ProxyOwner.initialize.selector, address(SENDER))
             )
         );
-        console.log("ProxyOwner: ", proxyOwner);
     }
 }

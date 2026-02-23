@@ -19,7 +19,7 @@ import sfMeta from "@superfluid-finance/metadata";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { toast } from "react-toastify";
-import { Address, zeroAddress } from "viem";
+import { formatUnits, Address, zeroAddress } from "viem";
 import {
   ArbitrableConfig,
   getPassportStrategyDocument,
@@ -65,6 +65,7 @@ import {
   CV_PASSPORT_THRESHOLD_SCALE,
   CV_SCALE_PRECISION,
   formatTokenAmount,
+  SEC_TO_MONTH,
   MAX_RATIO_CONSTANT,
   roundToSignificant,
 } from "@/utils/numbers";
@@ -223,6 +224,16 @@ export default function PoolHeader({
   const pointSystem = strategy.config.pointSystem;
   const allowList = strategy.config.allowlist;
   const rulingTime = arbitrableConfig.defaultRulingTimeout;
+  const streamingRatePerSecond = strategy.stream?.maxFlowRate;
+  const streamingRatePerMonth =
+    streamingRatePerSecond != null ?
+      Number(
+        formatUnits(
+          BigInt(streamingRatePerSecond),
+          superToken?.decimals ?? poolToken?.decimals ?? 18,
+        ),
+      ) * SEC_TO_MONTH
+    : null;
 
   const proposalOnDispute = strategy.proposals?.some(
     (proposal) => ProposalStatus[proposal.proposalStatus] === "disputed",
@@ -275,7 +286,7 @@ export default function PoolHeader({
     {
       label: "Min conviction",
       value: `${roundToSignificant(minimumConviction, 2, { showPrecisionMissIndicator: false })} %`,
-      info: "% of Pool's voting weight needed to pass the smallest funding proposal possible. Higher funding requests demand greater conviction to pass.",
+      info: `Minimum conviction required for a proposal ${PoolTypes[proposalType] === "streaming" ? "to start the stream" : " to be executed"}, regardless of the number of the requested amount.`,
     },
     {
       label: "Conviction growth",
@@ -332,7 +343,10 @@ export default function PoolHeader({
 
     {
       label: "Token",
-      info: "The token used in this pool to fund proposals.",
+      info:
+        PoolTypes[proposalType] === "streaming" ?
+          "The token used in this pool for streaming."
+        : "The token used in this pool to fund proposals.",
       value: (
         <div className="flex items-center">
           <EthAddress
@@ -345,7 +359,7 @@ export default function PoolHeader({
           {superToken && (
             <div
               className="tooltip"
-              data-tip={`Stream funding enabled on this pool. \nYou can stream ${superToken.symbol} tokens to this pool. Click to copy address.`}
+              data-tip={`${PoolTypes[proposalType] === "streaming" ? "Streaming" : "Stream funding"} enabled on this pool. \nYou can stream ${superToken.symbol} tokens to this pool. Click to copy address.`}
             >
               <button
                 className="btn btn-ghost btn-xs p-0"
@@ -372,6 +386,19 @@ export default function PoolHeader({
           )}
         </div>
       ),
+    },
+    {
+      label: "Max monthly streaming",
+      info: "Target flow rate once 100% conviction has been reached.",
+      value:
+        (
+          streamingRatePerMonth != null &&
+          PoolTypes[proposalType] === "streaming"
+        ) ?
+          `${roundToSignificant(streamingRatePerMonth, 4)} ${
+            poolToken?.symbol
+          }/m`
+        : null,
     },
   ] as const;
 
@@ -967,7 +994,7 @@ export default function PoolHeader({
               title="Min threshold"
               infoBoxType="warning"
               content="Not enough eligible members in this pool have activated their governance. No proposals will pass until more members do. You can still create and support proposals."
-              className="mb-4"
+              className="my-4"
             />
           )}
           {!isEnabled && (

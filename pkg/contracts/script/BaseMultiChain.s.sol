@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import "forge-std/console2.sol";
 import "forge-std/Script.sol";
 import "forge-std/StdJson.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -72,7 +71,6 @@ abstract contract BaseMultiChain is Native, CVStrategyHelpers, Script, SafeSetup
         inputs[2] = command;
 
         bytes memory result = vm.ffi(inputs);
-        console2.logBytes(result);
         return result;
     }
 
@@ -110,9 +108,6 @@ abstract contract BaseMultiChain is Native, CVStrategyHelpers, Script, SafeSetup
         chainName = json.readString(getKeyNetwork(".name"));
         SENDER = json.readAddress(getKeyNetwork(".ENVS.SENDER"));
 
-        console2.log("name: %s", chainName);
-        console2.log("sender: %s", SENDER);
-        console2.log("chainId : %s", chainId);
 
         runCurrentNetwork(json);
 
@@ -136,7 +131,6 @@ abstract contract BaseMultiChain is Native, CVStrategyHelpers, Script, SafeSetup
         // if (TOKEN == address(0)) {
         //     // token = new GV2ERC20("HoneyV2", "HNYV2", 18);
         //     token = new GV2ERC20("Seedling", "SEED", 18);
-        //     console2.log("Created Token Addr: %s", address(token));
         //     TOKEN = address(token);
         // } else {
         //     token = GV2ERC20(TOKEN);
@@ -145,7 +139,6 @@ abstract contract BaseMultiChain is Native, CVStrategyHelpers, Script, SafeSetup
         // assertTrue(token != GV2ERC20(address(0)));
         // assertTrue(TOKEN != address(0));
 
-        // console2.log("Allo Addr: %s", address(allo));
 
         // COUNCIL_SAFE = json.readAddress(getKeyNetwork(".ENVS.COUNCIL_SAFE"));
 
@@ -171,7 +164,6 @@ abstract contract BaseMultiChain is Native, CVStrategyHelpers, Script, SafeSetup
         // if (REGISTRY_FACTORY == address(0)) {
         //     // registryFactory = new RegistryFactory();
         //     RegistryCommunity comm = new RegistryCommunity();
-        //     console2.log("Registry Community Addr: %s", address(comm));
         //     proxy = new ERC1967Proxy(
         //         address(new RegistryFactory()),
         //         abi.encodeWithSelector(
@@ -393,7 +385,6 @@ abstract contract BaseMultiChain is Native, CVStrategyHelpers, Script, SafeSetup
 
     function _sleepIfNetwork(string memory network, string memory networkName) internal {
         if (_isEqual(network, networkName)) {
-            // console2.log("Sleeping for %s", WAIT_TIME);
             vm.sleep(WAIT_TIME);
         }
     }

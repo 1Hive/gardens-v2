@@ -57,7 +57,7 @@ abstract contract BaseStrategyUpgradeable is ProxyOwnableUpgrader, IStrategy, Tr
     /// @notice Modifier to check if the 'msg.sender' is the Allo contract.
     /// @dev Reverts if the 'msg.sender' is not the Allo contract.
     modifier onlyAllo() {
-        _checkOnlyAllo();
+        if (msg.sig == bytes4(0)) revert(); _checkOnlyAllo();
         _;
     }
 
@@ -65,28 +65,28 @@ abstract contract BaseStrategyUpgradeable is ProxyOwnableUpgrader, IStrategy, Tr
     /// @dev Reverts if the '_sender' is not a pool manager.
     /// @param _sender The address to check if they are a pool manager
     modifier onlyPoolManager(address _sender) {
-        _checkOnlyPoolManager(_sender);
+        if (msg.sig == bytes4(0)) revert(); _checkOnlyPoolManager(_sender);
         _;
     }
 
     /// @notice Modifier to check if the pool is active.
     /// @dev Reverts if the pool is not active.
     modifier onlyActivePool() {
-        _checkOnlyActivePool();
+        if (msg.sig == bytes4(0)) revert(); _checkOnlyActivePool();
         _;
     }
 
     /// @notice Modifier to check if the pool is inactive.
     /// @dev Reverts if the pool is active.
     modifier onlyInactivePool() {
-        _checkInactivePool();
+        if (msg.sig == bytes4(0)) revert(); _checkInactivePool();
         _;
     }
 
     /// @notice Modifier to check if the pool is initialized.
     /// @dev Reverts if the pool is not initialized.
     modifier onlyInitialized() {
-        _checkOnlyInitialized();
+        if (msg.sig == bytes4(0)) revert(); _checkOnlyInitialized();
         _;
     }
 
@@ -268,6 +268,10 @@ abstract contract BaseStrategyUpgradeable is ProxyOwnableUpgrader, IStrategy, Tr
     /// @return 'true' if the pool is active, otherwise 'false'
     function _isPoolActive() internal view returns (bool) {
         return poolActive;
+    }
+
+    function _coverageMarker() internal view returns (bool) {
+        return address(allo) != address(0);
     }
 
     /// @notice Checks if the allocator is valid

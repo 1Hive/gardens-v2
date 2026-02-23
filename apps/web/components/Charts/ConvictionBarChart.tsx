@@ -23,6 +23,7 @@ type ConvictionBarChartProps = {
   timeToPass?: number;
   defaultChartMaxValue?: boolean;
   proposalStatus: string;
+  proposalType: "funding" | "streaming" | "signaling";
   onReadyToExecute?: () => void;
   refreshConviction?: () => Promise<any>;
 };
@@ -43,7 +44,7 @@ export function getChartColors(isDarkTheme?: boolean) {
   };
 }
 
-export const ConvictionBarChart = ({
+const ConvictionBarChartBase = ({
   currentConvictionPct,
   thresholdPct,
   proposalSupportPct,
@@ -54,6 +55,7 @@ export const ConvictionBarChart = ({
   onReadyToExecute,
   defaultChartMaxValue = false,
   proposalStatus,
+  proposalType,
 }: ConvictionBarChartProps) => {
   const [convictionRefreshing, setConvictionRefreshing] = useState(true);
   const { resolvedTheme } = useTheme();
@@ -424,7 +426,12 @@ export const ConvictionBarChart = ({
             proposalWillPass &&
             !readyToBeExecuted && (
               <div className="flex items-center gap-2">
-                <p>Estimated time to pass:</p>
+                <p>
+                  {proposalType === "funding" ?
+                    "Estimated time to pass"
+                  : "Before stream start"}
+                  :
+                </p>
                 <Countdown
                   endTimestamp={Number(timeToPass)}
                   display="inline"
@@ -438,3 +445,26 @@ export const ConvictionBarChart = ({
     </>
   );
 };
+
+function areConvictionBarChartPropsEqual(
+  prev: ConvictionBarChartProps,
+  next: ConvictionBarChartProps,
+) {
+  return (
+    prev.currentConvictionPct === next.currentConvictionPct &&
+    prev.thresholdPct === next.thresholdPct &&
+    prev.proposalSupportPct === next.proposalSupportPct &&
+    prev.isSignalingType === next.isSignalingType &&
+    prev.proposalNumber === next.proposalNumber &&
+    prev.compact === next.compact &&
+    prev.timeToPass === next.timeToPass &&
+    prev.defaultChartMaxValue === next.defaultChartMaxValue &&
+    prev.proposalStatus === next.proposalStatus &&
+    prev.proposalType === next.proposalType
+  );
+}
+
+export const ConvictionBarChart = React.memo(
+  ConvictionBarChartBase,
+  areConvictionBarChartPropsEqual,
+);

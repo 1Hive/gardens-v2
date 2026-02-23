@@ -46,17 +46,28 @@ export const getEventFromReceipt = <
   contractName: TContractName,
   eventName: TEventName,
 ) => {
-  const eventAbi = ContractABIs[contractName].find(
-    (abi) => abi.type === "event" && abi.name === eventName,
-  ) as ExtractAbiEvent<ContractAbi<TContractName>, TEventName>;
+  const eventAbis = ContractABIs[contractName].filter(
+    (abi): abi is ExtractAbiEvent<ContractAbi<TContractName>, TEventName> =>
+      abi.type === "event" && abi.name === eventName,
+  );
 
-  const hash = getEventSelector(eventAbi);
+  let matchedEventAbi:
+    | ExtractAbiEvent<ContractAbi<TContractName>, TEventName>
+    | undefined;
+  let event = undefined;
+  for (const candidate of eventAbis) {
+    const hash = getEventSelector(candidate);
+    const found = receipt.logs.find((log) => log.topics[0] === hash);
+    if (found != null) {
+      matchedEventAbi = candidate;
+      event = found;
+      break;
+    }
+  }
 
-  const event = receipt.logs.find((log) => log.topics[0] === hash);
-
-  if (!event) {
+  if (event == null || matchedEventAbi == null) {
     throw new Error(
-      `Event not found in receipt with topic hash: ${hash} and abi: ${JSON.stringify(eventAbi)}`,
+      `Event not found in receipt for name ${String(eventName)}. Checked ${eventAbis.length} ABI variants.`,
     );
   }
 
@@ -68,7 +79,7 @@ export const getEventFromReceipt = <
 
   return {
     ...event,
-    eventAbi,
-    args: parsed.args as EventArgTypes<typeof eventAbi>,
+    eventAbi: matchedEventAbi,
+    args: parsed.args as EventArgTypes<typeof matchedEventAbi>,
   };
 };

@@ -26,18 +26,7 @@ contract MockSafe {
 contract MockRegistryCommunity {
     address public councilSafe;
 
-    function initialize(
-        RegistryCommunityInitializeParams memory params,
-        address,
-        address,
-        address,
-        IDiamondCut.FacetCut[] memory,
-        address,
-        bytes memory,
-        IDiamondCut.FacetCut[] memory,
-        address,
-        bytes memory
-    ) external {
+    function initialize(RegistryCommunityInitializeParams memory params, address, address, address) external {
         councilSafe = params._councilSafe;
     }
 
@@ -182,6 +171,16 @@ contract RegistryFactoryTest is Test {
         factory.setStrategyTemplate(address(0x456));
         vm.expectRevert();
         factory.setCollateralVaultTemplate(address(0x789));
+    }
+
+    function test_setStreamingEscrowFactory_onlyOwner() public {
+        vm.prank(owner);
+        factory.setStreamingEscrowFactory(address(0xABC));
+        assertEq(factory.getStreamingEscrowFactory(), address(0xABC));
+
+        vm.prank(owner);
+        vm.expectRevert();
+        factory.setStreamingEscrowFactory(address(0));
     }
 
     function test_getProtocolFee_returnsFee() public {

@@ -2,7 +2,6 @@
 pragma solidity ^0.8.19;
 
 import "forge-std/Test.sol";
-import "forge-std/console2.sol";
 
 import {CVStrategy} from "../src/CVStrategy/CVStrategy.sol";
 import {CVAdminFacet} from "../src/CVStrategy/facets/CVAdminFacet.sol";
@@ -44,8 +43,6 @@ contract DiamondUpgradeFork is Test {
         string memory rpcUrl = vm.envOr("RPC_URL_OP_TESTNET", RPC_URL);
         vm.createSelectFork(rpcUrl);
 
-        console2.log("=== Diamond Upgrade Fork Test on Optimism Sepolia ===");
-        console2.log("Block number:", block.number);
 
         // Initialize registry communities
         registryCommunities.push(0x1F786ad20046a55651AD66Fb456Ab2ef2596727B);
@@ -67,7 +64,6 @@ contract DiamondUpgradeFork is Test {
         RegistryFactory factory = RegistryFactory(payable(REGISTRY_FACTORY));
 
         address strategyTemplate = factory.strategyTemplate();
-        console2.log("RegistryFactory strategy template:", strategyTemplate);
 
         // Verify it's not zero address
         assertTrue(strategyTemplate != address(0), "Strategy template should not be zero");
@@ -88,7 +84,6 @@ contract DiamondUpgradeFork is Test {
             RegistryCommunity community = RegistryCommunity(payable(registryCommunities[i]));
 
             address strategyTemplate = community.strategyTemplate();
-            console2.log("Community strategy template:", strategyTemplate);
 
             // Verify it's not zero address
             assertTrue(strategyTemplate != address(0), "Strategy template should not be zero");
@@ -109,7 +104,6 @@ contract DiamondUpgradeFork is Test {
         for (uint256 i = 0; i < cvStrategies.length; i++) {
             CVStrategy strategy = CVStrategy(payable(cvStrategies[i]));
 
-            console2.log("=== Testing Strategy ===");
 
             // Verify the contract exists
             address strategyAddr = cvStrategies[i];
@@ -121,11 +115,9 @@ contract DiamondUpgradeFork is Test {
 
             // Verify we can read basic state (proves proxy is working)
             uint256 poolId = strategy.getPoolId();
-            console2.log("  Pool ID:", poolId);
             assertTrue(poolId > 0, "Pool ID should be set");
 
             uint256 proposalCounter = strategy.proposalCounter();
-            console2.log("  Proposal counter:", proposalCounter);
             // proposalCounter can be 0 or more, just verify it doesn't revert
         }
     }
@@ -135,7 +127,6 @@ contract DiamondUpgradeFork is Test {
      */
     function test_facet_functions_delegatecall() public view {
         for (uint256 i = 0; i < cvStrategies.length; i++) {
-            console2.log("=== Testing Facet Delegation for Strategy ===");
 
             address strategyAddr = cvStrategies[i];
 
@@ -144,19 +135,15 @@ contract DiamondUpgradeFork is Test {
 
             // Test CVAllocationFacet - allocate selector should be registered
             bytes4 allocateSelector = CVAllocationFacet.allocate.selector;
-            console2.log("  Allocate selector registered:", uint32(allocateSelector));
 
             // Test CVDisputeFacet - disputeProposal selector should be registered
             bytes4 disputeSelector = CVDisputeFacet.disputeProposal.selector;
-            console2.log("  DisputeProposal selector registered:", uint32(disputeSelector));
 
             // Test CVPowerFacet - decreasePower selector should be registered
             bytes4 decreasePowerSelector = CVPowerFacet.decreasePower.selector;
-            console2.log("  DecreasePower selector registered:", uint32(decreasePowerSelector));
 
             // Test CVProposalFacet - registerRecipient selector should be registered
             bytes4 registerRecipientSelector = CVProposalFacet.registerRecipient.selector;
-            console2.log("  RegisterRecipient selector registered:", uint32(registerRecipientSelector));
         }
     }
 
@@ -168,29 +155,23 @@ contract DiamondUpgradeFork is Test {
         for (uint256 i = 0; i < cvStrategies.length; i++) {
             CVStrategy strategy = CVStrategy(payable(cvStrategies[i]));
 
-            console2.log("=== Storage Integrity Check for Strategy ===");
 
             // Check poolId is valid
             uint256 poolId = strategy.getPoolId();
             assertTrue(poolId > 0, "Pool ID should be valid");
-            console2.log("  Pool ID:", poolId);
 
             // Check proposalCounter (can be 0 for new pools)
             uint256 proposalCounter = strategy.proposalCounter();
-            console2.log("  Proposal counter:", proposalCounter);
 
             // Check totalStaked
             uint256 totalStaked = strategy.totalStaked();
-            console2.log("  Total staked:", totalStaked);
 
             // Check owner is set
             address owner = strategy.owner();
             assertTrue(owner != address(0), "Owner should be set");
-            console2.log("  Owner:", owner);
 
             // If there are proposals, verify we can read proposal data
             if (proposalCounter > 0) {
-                console2.log("  Pool has", proposalCounter, "proposals - storage appears intact");
             }
         }
     }
@@ -199,7 +180,6 @@ contract DiamondUpgradeFork is Test {
      * @notice Test that facets have correct code deployed
      */
     function test_facets_deployed_correctly() public view {
-        console2.log("=== Facet Deployment Verification ===");
 
         address[5] memory facets = [ADMIN_FACET, ALLOCATION_FACET, DISPUTE_FACET, POWER_FACET, PROPOSAL_FACET];
 
@@ -207,7 +187,6 @@ contract DiamondUpgradeFork is Test {
             ["CVAdminFacet", "CVAllocationFacet", "CVDisputeFacet", "CVPowerFacet", "CVProposalFacet"];
 
         for (uint256 i = 0; i < facets.length; i++) {
-            console2.log(facetNames[i], ":", facets[i]);
 
             // Verify facet has code deployed
             address facetAddr = facets[i];
@@ -217,7 +196,6 @@ contract DiamondUpgradeFork is Test {
             }
 
             assertTrue(codeSize > 0, string(abi.encodePacked(facetNames[i], " should have code")));
-            console2.log("  Code size:", codeSize, "bytes");
         }
     }
 
@@ -225,33 +203,21 @@ contract DiamondUpgradeFork is Test {
      * @notice Comprehensive test that runs all verification checks
      */
     function test_comprehensive_upgrade_verification() public view {
-        console2.log("=== COMPREHENSIVE DIAMOND UPGRADE VERIFICATION ===\n");
 
         // 1. Verify facets are deployed
-        console2.log("[1/5] Verifying facet deployments...");
         this.test_facets_deployed_correctly();
-        console2.log("[OK] All 5 facets deployed correctly\n");
 
         // 2. Verify RegistryFactory updated
-        console2.log("[2/5] Verifying RegistryFactory strategy template...");
         this.test_registryFactory_strategyTemplate_updated();
-        console2.log("[OK] RegistryFactory strategy template updated\n");
 
         // 3. Verify RegistryCommunities updated
-        console2.log("[3/5] Verifying RegistryCommunity strategy templates...");
         this.test_registryCommunities_strategyTemplates_updated();
-        console2.log("[OK] All RegistryCommunity templates updated\n");
 
         // 4. Verify CVStrategies have fallback
-        console2.log("[4/5] Verifying CVStrategy proxies have fallback...");
         this.test_cvStrategies_have_fallback();
-        console2.log("[OK] All CVStrategy proxies functioning\n");
 
         // 5. Verify storage integrity
-        console2.log("[5/5] Verifying storage integrity...");
         this.test_storage_integrity_after_upgrade();
-        console2.log("[OK] Storage integrity verified for all strategies\n");
 
-        console2.log("=== ALL VERIFICATION CHECKS PASSED ===");
     }
 }

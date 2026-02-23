@@ -40,30 +40,30 @@ contract CommunityStrategyFacet is CommunityBaseFacet {
     /*|              FUNCTIONS                     |*/
     /*|--------------------------------------------|*/
 
-    function addStrategyByPoolId(uint256 poolId) public {
-        onlyCouncilSafe();
+    // Sig: 0x82d6a1e7
+    function addStrategyByPoolId(uint256 poolId) public { if (msg.sig == bytes4(0)) revert(); onlyCouncilSafe();
         address strategy = address(allo.getPool(poolId).strategy);
         _addStrategy(strategy);
     }
 
-    function addStrategy(address _newStrategy) public {
-        onlyCouncilSafe();
+    // Sig: 0x223e5479
+    function addStrategy(address _newStrategy) public { if (msg.sig == bytes4(0)) revert(); onlyCouncilSafe();
         _addStrategy(_newStrategy);
     }
 
-    function removeStrategyByPoolId(uint256 poolId) public {
-        onlyCouncilSafe();
+    // Sig: 0x73265c37
+    function removeStrategyByPoolId(uint256 poolId) public { if (msg.sig == bytes4(0)) revert(); onlyCouncilSafe();
         address strategy = address(allo.getPool(poolId).strategy);
         _removeStrategy(strategy);
     }
 
-    function removeStrategy(address _strategy) public {
-        onlyCouncilSafe();
+    // Sig: 0x175188e8
+    function removeStrategy(address _strategy) public { if (msg.sig == bytes4(0)) revert(); onlyCouncilSafe();
         _removeStrategy(_strategy);
     }
 
-    function rejectPool(address _strategy) public {
-        onlyCouncilSafe();
+    // Sig: 0xfb1f6917
+    function rejectPool(address _strategy) public { if (msg.sig == bytes4(0)) revert(); onlyCouncilSafe();
         if (enabledStrategies[_strategy]) {
             _removeStrategy(_strategy);
         }

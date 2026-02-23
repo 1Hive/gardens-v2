@@ -66,7 +66,9 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
     /*|              FUNCTIONS                     |*/
     /*|--------------------------------------------|*/
 
+    // Sig: 0xef2920fc
     function allocate(bytes memory _data, address _sender) external payable onlyAllo onlyInitialized {
+        registryCommunity.onlyStrategyEnabled(address(this));
         ProposalSupport[] memory pv = abi.decode(_data, (ProposalSupport[]));
         for (uint256 i = 0; i < pv.length; i++) {
             _checkProposalAllocationValidity(pv[i].proposalId, pv[i].deltaSupport);
@@ -96,7 +98,7 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
                 deltaSupportSum += pv[i].deltaSupport;
             }
             uint256 newTotalVotingSupport = _applyDelta(totalVoterStakePct[_sender], deltaSupportSum);
-            uint256 participantBalance = registryCommunity.getMemberPowerInStrategy(_sender, address(this));
+            uint256 participantBalance = votingPowerRegistry.getMemberPowerInStrategy(_sender, address(this));
             // Check that the sum of support is not greater than the participant balance
             if (newTotalVotingSupport > participantBalance) {
                 revert NotEnoughPointsToSupport(newTotalVotingSupport, participantBalance);
@@ -168,6 +170,7 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
         }
     }
 
+    // Sig: 0x0a6f0ee9
     function distribute(
         address[] memory,
         /*_recipientIds */
@@ -234,11 +237,10 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
                 revert ConvictionUnderMinimumThreshold(convictionLast, threshold, proposals[proposalId].requestedAmount);
             }
 
+            proposals[proposalId].proposalStatus = ProposalStatus.Executed;
             _transferAmount(
                 allo.getPool(poolId).token, proposals[proposalId].beneficiary, proposals[proposalId].requestedAmount
             );
-
-            proposals[proposalId].proposalStatus = ProposalStatus.Executed;
             collateralVault.withdrawCollateral(
                 proposalId,
                 proposals[proposalId].submitter,
@@ -281,7 +283,7 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
         return proposal.convictionLast;
     }
 
-    function getPoolAmount() internal view override returns (uint256) {
+    function getPoolAmount() public view override returns (uint256) {
         address token = allo.getPool(poolId).token;
 
         if (token == NATIVE_TOKEN) {

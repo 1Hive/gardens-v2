@@ -17,7 +17,7 @@
         - {{name}}
       abis:
         - name: {{name}}
-          file: ../contracts/out/{{name}}.sol/{{name}}.json
+          file: ../contracts/abis/{{name}}.sol/{{name}}.json
       eventHandlers:
         - event: Initialized(uint8)
           handler: handleInitialized

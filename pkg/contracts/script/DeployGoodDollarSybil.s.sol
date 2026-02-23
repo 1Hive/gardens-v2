@@ -28,6 +28,5 @@ contract DeployGoodDollarSybil is BaseMultiChain {
                 )
             );
         }
-        console.log("GoodDollar address: ", goodDollar);
     }
 }

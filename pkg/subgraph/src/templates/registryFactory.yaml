@@ -16,11 +16,12 @@
       entities:
         - {{name}}
         - RegistryCommunity
+        - StreamingInfo
       abis:
         - name: {{name}}
-          file: ../contracts/out/{{name}}.sol/{{name}}.json
+          file: ../contracts/abis/{{name}}.sol/{{name}}.json
         - name: RegistryCommunity
-          file: ../contracts/out/DiamondAggregated/RegistryCommunity.json
+          file: ../contracts/abis/DiamondAggregated/RegistryCommunity.json
       eventHandlers:
         - event: CommunityCreated(address)
           handler: handleCommunityCreated
@@ -32,6 +33,8 @@
           handler: handleProtopiansChanged  
         - event: KeepersChanged(address[],address[])
           handler: handleKeepersChanged
+        - event: StreamingEscrowFactorySet(address)
+          handler: handleStreamingEscrowFactorySet
         - event: Initialized(uint8)
           handler: handleRegistryInitialized  
       file: ./src/mappings/registry-factory.ts

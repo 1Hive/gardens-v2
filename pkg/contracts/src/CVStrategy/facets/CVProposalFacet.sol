@@ -2,6 +2,10 @@
 pragma solidity ^0.8.19;
 
 import {CVStrategyBaseFacet} from "../CVStrategyBaseFacet.sol";
+import {CVStreamingStorage, CVStreamingBase} from "../CVStreamingStorage.sol";
+import {StreamingEscrowFactory} from "../StreamingEscrowFactory.sol";
+import {StreamingEscrow} from "../StreamingEscrow.sol";
+import {IRegistryFactory} from "../../IRegistryFactory.sol";
 import {ProposalType, CreateProposal, Proposal, ProposalStatus} from "../ICVStrategy.sol";
 import {IAllo, Metadata} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import {ConvictionsUtils} from "../ConvictionsUtils.sol";
@@ -14,7 +18,7 @@ import "@openzeppelin/contracts/utils/Strings.sol";
  * @dev This facet is called via delegatecall from CVStrategy
  *      CRITICAL: Inherits storage layout from CVStrategyBaseFacet
  */
-contract CVProposalFacet is CVStrategyBaseFacet {
+contract CVProposalFacet is CVStrategyBaseFacet, CVStreamingBase {
     using SuperTokenV1Library for ISuperToken;
     using Strings for string;
 
@@ -32,11 +36,14 @@ contract CVProposalFacet is CVStrategyBaseFacet {
         uint256 proposalId, string currentMetadata, string newMetadata, uint256 creationTimestamp
     ); // 0x7195b4df
     error CannotEditRequestedAmountWithActiveSupport(uint256 proposalId, uint256 currentAmount, uint256 newAmount); // 0xb5018617
+    error StreamingEscrowFactoryNotSet(); // 0x1dd8d4b9
+    error UpdateMemberUnitsFailed(address member, uint128 units);
 
     /*|--------------------------------------------|*/
     /*|              EVENTS                        |*/
     /*|--------------------------------------------|*/
     event ProposalCreated(uint256 poolId, uint256 proposalId);
+    event ProposalCreated(uint256 poolId, uint256 proposalId, address escrow);
     event ProposalCancelled(uint256 proposalId);
     event ProposalEdited(uint256 proposalId, Metadata metadata, address beneficiary, uint256 requestedAmount);
     event SupportAdded(
@@ -49,6 +56,7 @@ contract CVProposalFacet is CVStrategyBaseFacet {
     /*|              FUNCTIONS                     |*/
     /*|--------------------------------------------|*/
 
+    // Sig: 0x2bbe0cae
     function registerRecipient(bytes memory _data, address _sender)
         external
         payable
@@ -87,7 +95,7 @@ contract CVProposalFacet is CVStrategyBaseFacet {
         p.submitter = _sender;
         p.beneficiary = proposal.beneficiary;
         p.requestedToken = proposal.requestedToken;
-        p.requestedAmount = proposal.amountRequested;
+        p.requestedAmount = proposalType == ProposalType.Funding ? proposal.amountRequested : 0;
         p.proposalStatus = ProposalStatus.Active;
         p.blockLast = block.number;
         p.creationTimestamp = block.timestamp;
@@ -96,12 +104,31 @@ contract CVProposalFacet is CVStrategyBaseFacet {
         p.arbitrableConfigVersion = currentArbitrableConfigVersion;
         collateralVault.depositCollateral{value: msg.value}(proposalId, p.submitter);
 
-        emit ProposalCreated(poolId, proposalId);
+        address proposalEscrow = address(0);
+        // Streaming proposal handling
+        if (proposalType == ProposalType.Streaming) {
+            address factory = IRegistryFactory(registryCommunity.registryFactory()).getStreamingEscrowFactory();
+            if (factory == address(0)) {
+                revert StreamingEscrowFactoryNotSet();
+            }
+            address escrow = StreamingEscrowFactory(factory)
+                .deployEscrow(superfluidToken, superfluidGDA, p.beneficiary, address(this));
+            setStreamingEscrow(proposalId, escrow);
+            proposalEscrow = escrow;
+
+            // Add a member to the GDA pool with 0 units initially
+            if (!superfluidGDA.updateMemberUnits(address(escrow), 0)) {
+                revert UpdateMemberUnitsFailed(address(escrow), 0);
+            }
+        }
+
+        emit ProposalCreated(poolId, proposalId, proposalEscrow);
         // casting proposalId to address is safe - standard pattern for unique addresses
         // forge-lint: disable-next-line(unsafe-typecast)
         return address(uint160(proposalId));
     }
 
+    // Sig: 0xe0a8f6f5
     function cancelProposal(uint256 proposalId) external {
         if (proposals[proposalId].proposalStatus != ProposalStatus.Active) {
             revert ProposalNotActive(proposalId, uint8(proposals[proposalId].proposalStatus));
@@ -111,16 +138,28 @@ contract CVProposalFacet is CVStrategyBaseFacet {
             revert OnlySubmitter(proposalId, proposals[proposalId].submitter, msg.sender);
         }
 
+        proposals[proposalId].proposalStatus = ProposalStatus.Cancelled;
+
         collateralVault.withdrawCollateral(
             proposalId,
             proposals[proposalId].submitter,
             arbitrableConfigs[proposals[proposalId].arbitrableConfigVersion].submitterCollateralAmount
         );
 
-        proposals[proposalId].proposalStatus = ProposalStatus.Cancelled;
+        // Streaming proposal handling
+        if (proposalType == ProposalType.Streaming) {
+            address escrow = streamingEscrow(proposalId);
+            // Remove member from the GDA pool
+            address member = escrow == address(0) ? proposals[proposalId].beneficiary : escrow;
+            if (!superfluidGDA.updateMemberUnits(member, 0)) {
+                revert UpdateMemberUnitsFailed(member, 0);
+            }
+        }
+
         emit ProposalCancelled(proposalId);
     }
 
+    // Sig: 0x141e3b38
     function editProposal(
         uint256 _proposalId,
         Metadata memory _metadata,
@@ -143,23 +182,24 @@ contract CVProposalFacet is CVStrategyBaseFacet {
                     _proposalId, proposal.requestedAmount, _requestedAmount
                 );
             }
-            proposal.requestedAmount = _requestedAmount;
+            proposal.requestedAmount = proposalType == ProposalType.Funding ? _requestedAmount : 0;
         }
 
         // 1763099258 - 1763007730  = 91528 > 3600
         bool timeout = block.timestamp - proposal.creationTimestamp > ONE_HOUR;
+        bool beneficiaryChanged = proposal.beneficiary != _beneficiary;
+        bool metadataChanged = !proposal.metadata.pointer.equal(_metadata.pointer);
 
-        if (proposal.beneficiary != _beneficiary) {
+        if (beneficiaryChanged) {
             if (timeout) {
                 revert BeneficiaryEditTimeout(
                     _proposalId, proposal.beneficiary, _beneficiary, proposal.creationTimestamp
                 );
             }
-
             proposal.beneficiary = _beneficiary;
         }
 
-        if (!proposal.metadata.pointer.equal(_metadata.pointer)) {
+        if (metadataChanged) {
             if (timeout) {
                 revert MetadataEditTimeout(
                     _proposalId, proposal.metadata.pointer, _metadata.pointer, proposal.creationTimestamp
@@ -167,6 +207,14 @@ contract CVProposalFacet is CVStrategyBaseFacet {
             }
 
             proposal.metadata.pointer = _metadata.pointer;
+        }
+
+        // Streaming proposal handling
+        if (beneficiaryChanged && proposalType == ProposalType.Streaming) {
+            address escrow = streamingEscrow(_proposalId);
+            if (escrow != address(0)) {
+                StreamingEscrow(escrow).setBeneficiary(_beneficiary);
+            }
         }
 
         emit ProposalEdited(_proposalId, _metadata, _beneficiary, _requestedAmount);

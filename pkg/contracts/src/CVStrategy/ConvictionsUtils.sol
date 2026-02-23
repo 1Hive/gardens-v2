@@ -2,6 +2,7 @@
 pragma solidity ^0.8.19;
 
 import {CVParams} from "./ICVStrategy.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
 library ConvictionsUtils {
     uint256 public constant D = 10000000; // 10**7
@@ -50,8 +51,10 @@ library ConvictionsUtils {
         uint256 _minThresholdPoints
     ) public pure returns (uint256 _threshold) {
         uint256 denom = (_maxRatio * 2 ** 64) / D - (_requestedAmount * 2 ** 64) / _poolAmount;
-        _threshold =
-            ((((((_weight << 128) / D) / ((denom * denom) >> 64)) * D) / (D - _decay)) * _totalPointsActivated) >> 64;
+        uint256 weightScaled = (_weight << 128) / D;
+        uint256 ratioTerm = Math.mulDiv(weightScaled, D, (denom * denom) >> 64);
+        uint256 decayAdjusted = ratioTerm / (D - _decay);
+        _threshold = Math.mulDiv(decayAdjusted, _totalPointsActivated, 2 ** 64);
 
         if (_totalPointsActivated != 0) {
             uint256 thresholdOverride = (

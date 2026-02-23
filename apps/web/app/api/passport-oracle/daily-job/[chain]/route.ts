@@ -18,7 +18,8 @@ import { ApiScore, fetchAllPassportScores } from "@/utils/gitcoin-passport";
 import { CV_PASSPORT_THRESHOLD_SCALE } from "@/utils/numbers";
 import { getViemChain } from "@/utils/web3";
 
-const LIST_MANAGER_PRIVATE_KEY = process.env.LIST_MANAGER_PRIVATE_KEY ?? "";
+const PASSPORT_KEEPER_PRIVATE_KEY =
+  process.env.LIST_MANAGER_PRIVATE_KEY ?? process.env.KEEPER_WALLET_PK ?? "";
 const LOCAL_RPC = "http://127.0.0.1:8545";
 
 interface PassportUser {
@@ -86,7 +87,7 @@ const updateScoresOnChain = async (
     });
 
     const walletClient = createWalletClient({
-      account: privateKeyToAccount(LIST_MANAGER_PRIVATE_KEY as Address),
+      account: privateKeyToAccount(PASSPORT_KEEPER_PRIVATE_KEY as Address),
       chain: getViemChain(chain),
       transport: custom(client.transport),
     });

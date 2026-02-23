@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import "forge-std/console2.sol";
 import "forge-std/Script.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
@@ -42,8 +41,6 @@ contract AddStrategy is Native, CVStrategyHelpers, Script, SafeSetup {
     }
 
     function run(uint256 poolId, address _comm) public {
-        console2.log("AddStrategy.run(%s)", poolId);
-        console2.log("AddStrategy.run(%s)", _comm);
         assertNotEq(_comm, address(0), "Community not set");
         assertNotEq(poolId, 0, "Pool ID not set");
 
@@ -56,14 +53,11 @@ contract AddStrategy is Native, CVStrategyHelpers, Script, SafeSetup {
 
         IAllo.Pool memory pool = allo.getPool(poolId);
 
-        console2.log("Pool Addr: %s", address(pool.strategy));
 
         run(payable(address(pool.strategy)), _comm);
     }
 
     function run(address payable _strategy, address _comm) public {
-        console2.log("AddStrategy.run(%s)", _strategy);
-        console2.log("AddStrategy.run(%s)", _comm);
         assertNotEq(_strategy, address(0), "Strategy not set");
         // get PK from env
         uint256 councilMemberPKEnv = vm.envUint("PK");
@@ -85,7 +79,6 @@ contract AddStrategy is Native, CVStrategyHelpers, Script, SafeSetup {
 
         IAllo.Pool memory pool = allo.getPool(172);
 
-        console2.log("Pool Addr: %s", address(pool.strategy));
         // address strategy = address(pool.strategy);
         // address strategy = address(pool.strategy);
 
@@ -104,7 +97,6 @@ contract AddStrategy is Native, CVStrategyHelpers, Script, SafeSetup {
         }
         Safe councilSafeDeploy = Safe(payable(SAFE));
 
-        console2.log("Comm Safe Addr: %s", address(registryCommunity.councilSafe()));
 
         assertTrue(address(registryCommunity.councilSafe()) != address(0), "Council Safe not set");
         assertTrue(address(councilSafeDeploy) != address(0), "Council Safe empty");

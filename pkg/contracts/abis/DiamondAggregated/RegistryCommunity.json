@@ -1,0 +1,2701 @@
+{
+  "abi": [
+    {
+      "type": "fallback",
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "COUNCIL_MEMBER",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "DEFAULT_ADMIN_ROLE",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "MAX_FEE",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "NATIVE",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "PRECISION_SCALE",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "VERSION",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "string",
+          "internalType": "string"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "acceptCouncilSafe",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "activateMemberInStrategy",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "addStrategy",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "addStrategyByPoolId",
+      "inputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "addressToMemberInfo",
+      "inputs": [
+        {
+          "name": "member",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "member",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "stakedAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "isRegistered",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "allo",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract FAllo"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "cloneNonce",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "collateralVaultTemplate",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "communityFee",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "communityName",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "string",
+          "internalType": "string"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "councilSafe",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract ISafe"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "covenantIpfsHash",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "string",
+          "internalType": "string"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "createPool",
+      "inputs": [
+        {
+          "name": "_strategy",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_params",
+          "type": "tuple",
+          "internalType": "struct CVStrategyInitializeParamsV0_3",
+          "components": [
+            {
+              "name": "cvParams",
+              "type": "tuple",
+              "internalType": "struct CVParams",
+              "components": [
+                {
+                  "name": "maxRatio",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "weight",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "decay",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "minThresholdPoints",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ]
+            },
+            {
+              "name": "proposalType",
+              "type": "uint8",
+              "internalType": "enum ProposalType"
+            },
+            {
+              "name": "pointSystem",
+              "type": "uint8",
+              "internalType": "enum PointSystem"
+            },
+            {
+              "name": "pointConfig",
+              "type": "tuple",
+              "internalType": "struct PointSystemConfig",
+              "components": [
+                {
+                  "name": "maxAmount",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ]
+            },
+            {
+              "name": "arbitrableConfig",
+              "type": "tuple",
+              "internalType": "struct ArbitrableConfig",
+              "components": [
+                {
+                  "name": "arbitrator",
+                  "type": "address",
+                  "internalType": "contract IArbitrator"
+                },
+                {
+                  "name": "tribunalSafe",
+                  "type": "address",
+                  "internalType": "address"
+                },
+                {
+                  "name": "submitterCollateralAmount",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "challengerCollateralAmount",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "defaultRuling",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "defaultRulingTimeout",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ]
+            },
+            {
+              "name": "registryCommunity",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "votingPowerRegistry",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "sybilScorer",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "sybilScorerThreshold",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "initialAllowlist",
+              "type": "address[]",
+              "internalType": "address[]"
+            },
+            {
+              "name": "superfluidToken",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "streamingRatePerSecond",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ]
+        },
+        {
+          "name": "_metadata",
+          "type": "tuple",
+          "internalType": "struct Metadata",
+          "components": [
+            {
+              "name": "protocol",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "pointer",
+              "type": "string",
+              "internalType": "string"
+            }
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "poolId",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "strategy",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "createPool",
+      "inputs": [
+        {
+          "name": "_token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_params",
+          "type": "tuple",
+          "internalType": "struct CVStrategyInitializeParamsV0_3",
+          "components": [
+            {
+              "name": "cvParams",
+              "type": "tuple",
+              "internalType": "struct CVParams",
+              "components": [
+                {
+                  "name": "maxRatio",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "weight",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "decay",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "minThresholdPoints",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ]
+            },
+            {
+              "name": "proposalType",
+              "type": "uint8",
+              "internalType": "enum ProposalType"
+            },
+            {
+              "name": "pointSystem",
+              "type": "uint8",
+              "internalType": "enum PointSystem"
+            },
+            {
+              "name": "pointConfig",
+              "type": "tuple",
+              "internalType": "struct PointSystemConfig",
+              "components": [
+                {
+                  "name": "maxAmount",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ]
+            },
+            {
+              "name": "arbitrableConfig",
+              "type": "tuple",
+              "internalType": "struct ArbitrableConfig",
+              "components": [
+                {
+                  "name": "arbitrator",
+                  "type": "address",
+                  "internalType": "contract IArbitrator"
+                },
+                {
+                  "name": "tribunalSafe",
+                  "type": "address",
+                  "internalType": "address"
+                },
+                {
+                  "name": "submitterCollateralAmount",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "challengerCollateralAmount",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "defaultRuling",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "defaultRulingTimeout",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ]
+            },
+            {
+              "name": "registryCommunity",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "votingPowerRegistry",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "sybilScorer",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "sybilScorerThreshold",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "initialAllowlist",
+              "type": "address[]",
+              "internalType": "address[]"
+            },
+            {
+              "name": "superfluidToken",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "streamingRatePerSecond",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ]
+        },
+        {
+          "name": "_metadata",
+          "type": "tuple",
+          "internalType": "struct Metadata",
+          "components": [
+            {
+              "name": "protocol",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "pointer",
+              "type": "string",
+              "internalType": "string"
+            }
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "poolId",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "strategy",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "deactivateMemberInStrategy",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "decreasePower",
+      "inputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "diamondCut",
+      "inputs": [
+        {
+          "name": "_diamondCut",
+          "type": "tuple[]",
+          "internalType": "struct IDiamond.FacetCut[]",
+          "components": [
+            {
+              "name": "facetAddress",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "action",
+              "type": "uint8",
+              "internalType": "enum IDiamond.FacetCutAction"
+            },
+            {
+              "name": "functionSelectors",
+              "type": "bytes4[]",
+              "internalType": "bytes4[]"
+            }
+          ]
+        },
+        {
+          "name": "_init",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_calldata",
+          "type": "bytes",
+          "internalType": "bytes"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "enabledStrategies",
+      "inputs": [
+        {
+          "name": "strategy",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "isEnabled",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "feeReceiver",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "gardenToken",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract IERC20"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "getBasisStakedAmount",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "getMemberPowerInStrategy",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "getMemberStakedAmount",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "getRoleAdmin",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "getStakeAmountWithFees",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "grantRole",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "hasRole",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "increasePower",
+      "inputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "initialize",
+      "inputs": [
+        {
+          "name": "params",
+          "type": "tuple",
+          "internalType": "struct RegistryCommunityInitializeParams",
+          "components": [
+            {
+              "name": "_allo",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "_gardenToken",
+              "type": "address",
+              "internalType": "contract IERC20"
+            },
+            {
+              "name": "_registerStakeAmount",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "_communityFee",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "_nonce",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "_registryFactory",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "_feeReceiver",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "_metadata",
+              "type": "tuple",
+              "internalType": "struct Metadata",
+              "components": [
+                {
+                  "name": "protocol",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "pointer",
+                  "type": "string",
+                  "internalType": "string"
+                }
+              ]
+            },
+            {
+              "name": "_councilSafe",
+              "type": "address",
+              "internalType": "address payable"
+            },
+            {
+              "name": "_communityName",
+              "type": "string",
+              "internalType": "string"
+            },
+            {
+              "name": "_isKickEnabled",
+              "type": "bool",
+              "internalType": "bool"
+            },
+            {
+              "name": "covenantIpfsHash",
+              "type": "string",
+              "internalType": "string"
+            }
+          ]
+        },
+        {
+          "name": "_strategyTemplate",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_collateralVaultTemplate",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "initialize",
+      "inputs": [
+        {
+          "name": "initialOwner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "isCouncilMember",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "isKickEnabled",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "isMember",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "kickMember",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "memberActivatedInStrategies",
+      "inputs": [
+        {
+          "name": "member",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "strategy",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "isActivated",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "memberPowerInStrategy",
+      "inputs": [
+        {
+          "name": "strategy",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "member",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "power",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "onlyStrategyEnabled",
+      "inputs": [
+        {
+          "name": "_strategy",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "owner",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "pendingCouncilSafe",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address payable"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "profileId",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "proxiableUUID",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "proxyOwner",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "registerStakeAmount",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "registry",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract IRegistry"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "registryFactory",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "rejectPool",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "removeStrategy",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "removeStrategyByPoolId",
+      "inputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "renounceOwnership",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "renounceRole",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "revokeRole",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "setArchived",
+      "inputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "setBasisStakedAmount",
+      "inputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "setCollateralVaultTemplate",
+      "inputs": [
+        {
+          "name": "template",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "setCommunityFee",
+      "inputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "setCommunityParams",
+      "inputs": [
+        {
+          "name": "",
+          "type": "tuple",
+          "internalType": "struct CommunityParams",
+          "components": [
+            {
+              "name": "councilSafe",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "feeReceiver",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "communityFee",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "communityName",
+              "type": "string",
+              "internalType": "string"
+            },
+            {
+              "name": "registerStakeAmount",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "isKickEnabled",
+              "type": "bool",
+              "internalType": "bool"
+            },
+            {
+              "name": "covenantIpfsHash",
+              "type": "string",
+              "internalType": "string"
+            }
+          ]
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "setCouncilSafe",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address payable"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "setPauseController",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "setStrategyTemplate",
+      "inputs": [
+        {
+          "name": "template",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "stakeAndRegisterMember",
+      "inputs": [
+        {
+          "name": "",
+          "type": "string",
+          "internalType": "string"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "strategiesByMember",
+      "inputs": [
+        {
+          "name": "member",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "strategiesAddresses",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "strategyTemplate",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "supportsInterface",
+      "inputs": [
+        {
+          "name": "interfaceId",
+          "type": "bytes4",
+          "internalType": "bytes4"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "totalMembers",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "transferOwnership",
+      "inputs": [
+        {
+          "name": "newOwner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "unregisterMember",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "upgradeTo",
+      "inputs": [
+        {
+          "name": "newImplementation",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "upgradeToAndCall",
+      "inputs": [
+        {
+          "name": "newImplementation",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "data",
+          "type": "bytes",
+          "internalType": "bytes"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "payable"
+    },
+    {
+      "type": "event",
+      "name": "AdminChanged",
+      "inputs": [
+        {
+          "name": "previousAdmin",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "newAdmin",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "BasisStakedAmountUpdated",
+      "inputs": [
+        {
+          "name": "_newAmount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "BeaconUpgraded",
+      "inputs": [
+        {
+          "name": "beacon",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "CommunityArchived",
+      "inputs": [
+        {
+          "name": "_archived",
+          "type": "bool",
+          "indexed": false,
+          "internalType": "bool"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "CommunityFeeUpdated",
+      "inputs": [
+        {
+          "name": "_newFee",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "CommunityNameUpdated",
+      "inputs": [
+        {
+          "name": "_communityName",
+          "type": "string",
+          "indexed": false,
+          "internalType": "string"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "CouncilSafeChangeStarted",
+      "inputs": [
+        {
+          "name": "_safeOwner",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "_newSafeOwner",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "CouncilSafeUpdated",
+      "inputs": [
+        {
+          "name": "_safe",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "CovenantIpfsHashUpdated",
+      "inputs": [
+        {
+          "name": "_covenantIpfsHash",
+          "type": "string",
+          "indexed": false,
+          "internalType": "string"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "DiamondCut",
+      "inputs": [
+        {
+          "name": "_diamondCut",
+          "type": "tuple[]",
+          "indexed": false,
+          "internalType": "struct IDiamond.FacetCut[]",
+          "components": [
+            {
+              "name": "facetAddress",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "action",
+              "type": "uint8",
+              "internalType": "enum IDiamond.FacetCutAction"
+            },
+            {
+              "name": "functionSelectors",
+              "type": "bytes4[]",
+              "internalType": "bytes4[]"
+            }
+          ]
+        },
+        {
+          "name": "_init",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "_calldata",
+          "type": "bytes",
+          "indexed": false,
+          "internalType": "bytes"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "FeeReceiverChanged",
+      "inputs": [
+        {
+          "name": "_feeReceiver",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "Initialized",
+      "inputs": [
+        {
+          "name": "version",
+          "type": "uint8",
+          "indexed": false,
+          "internalType": "uint8"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "KickEnabledUpdated",
+      "inputs": [
+        {
+          "name": "_isKickEnabled",
+          "type": "bool",
+          "indexed": false,
+          "internalType": "bool"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "MemberActivatedStrategy",
+      "inputs": [
+        {
+          "name": "_member",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "_strategy",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "_pointsToIncrease",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "MemberDeactivatedStrategy",
+      "inputs": [
+        {
+          "name": "_member",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "_strategy",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "MemberKicked",
+      "inputs": [
+        {
+          "name": "_member",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "_transferAddress",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "_amountReturned",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "MemberPowerDecreased",
+      "inputs": [
+        {
+          "name": "_member",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "_unstakedAmount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "MemberPowerIncreased",
+      "inputs": [
+        {
+          "name": "_member",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "_stakedAmount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "MemberRegistered",
+      "inputs": [
+        {
+          "name": "_member",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "_amountStaked",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "MemberRegisteredWithCovenant",
+      "inputs": [
+        {
+          "name": "_member",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "_amountStaked",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "_covenantSig",
+          "type": "string",
+          "indexed": false,
+          "internalType": "string"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "MemberUnregistered",
+      "inputs": [
+        {
+          "name": "_member",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "_amountReturned",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "OwnershipTransferred",
+      "inputs": [
+        {
+          "name": "previousOwner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "newOwner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "OwnershipTransferred",
+      "inputs": [
+        {
+          "name": "previousOwner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "newOwner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "PoolCreated",
+      "inputs": [
+        {
+          "name": "_poolId",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "_strategy",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "_community",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "_token",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "_metadata",
+          "type": "tuple",
+          "indexed": false,
+          "internalType": "struct Metadata",
+          "components": [
+            {
+              "name": "protocol",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "pointer",
+              "type": "string",
+              "internalType": "string"
+            }
+          ]
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "PoolRejected",
+      "inputs": [
+        {
+          "name": "_strategy",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "RegistryInitialized",
+      "inputs": [
+        {
+          "name": "_profileId",
+          "type": "bytes32",
+          "indexed": false,
+          "internalType": "bytes32"
+        },
+        {
+          "name": "_communityName",
+          "type": "string",
+          "indexed": false,
+          "internalType": "string"
+        },
+        {
+          "name": "_metadata",
+          "type": "tuple",
+          "indexed": false,
+          "internalType": "struct Metadata",
+          "components": [
+            {
+              "name": "protocol",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "pointer",
+              "type": "string",
+              "internalType": "string"
+            }
+          ]
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "RoleAdminChanged",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "indexed": true,
+          "internalType": "bytes32"
+        },
+        {
+          "name": "previousAdminRole",
+          "type": "bytes32",
+          "indexed": true,
+          "internalType": "bytes32"
+        },
+        {
+          "name": "newAdminRole",
+          "type": "bytes32",
+          "indexed": true,
+          "internalType": "bytes32"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "RoleGranted",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "indexed": true,
+          "internalType": "bytes32"
+        },
+        {
+          "name": "account",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "sender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "RoleRevoked",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "indexed": true,
+          "internalType": "bytes32"
+        },
+        {
+          "name": "account",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "sender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "StrategyAdded",
+      "inputs": [
+        {
+          "name": "_strategy",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "StrategyRemoved",
+      "inputs": [
+        {
+          "name": "_strategy",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "Upgraded",
+      "inputs": [
+        {
+          "name": "implementation",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "error",
+      "name": "AllowlistTooBig",
+      "inputs": [
+        {
+          "name": "size",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "CallerNotOwner",
+      "inputs": [
+        {
+          "name": "_caller",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "CannotAddFunctionToDiamondThatAlreadyExists",
+      "inputs": [
+        {
+          "name": "_selector",
+          "type": "bytes4",
+          "internalType": "bytes4"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "CannotAddSelectorsToZeroAddress",
+      "inputs": [
+        {
+          "name": "_selectors",
+          "type": "bytes4[]",
+          "internalType": "bytes4[]"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "CannotRemoveFunctionThatDoesNotExist",
+      "inputs": [
+        {
+          "name": "_selector",
+          "type": "bytes4",
+          "internalType": "bytes4"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "CannotRemoveImmutableFunction",
+      "inputs": [
+        {
+          "name": "_selector",
+          "type": "bytes4",
+          "internalType": "bytes4"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "CannotReplaceFunctionThatDoesNotExists",
+      "inputs": [
+        {
+          "name": "_selector",
+          "type": "bytes4",
+          "internalType": "bytes4"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "CannotReplaceFunctionWithTheSameFunctionFromTheSameFacet",
+      "inputs": [
+        {
+          "name": "_selector",
+          "type": "bytes4",
+          "internalType": "bytes4"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "CannotReplaceFunctionsFromFacetWithZeroAddress",
+      "inputs": [
+        {
+          "name": "_selectors",
+          "type": "bytes4[]",
+          "internalType": "bytes4[]"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "CannotReplaceImmutableFunction",
+      "inputs": [
+        {
+          "name": "_selector",
+          "type": "bytes4",
+          "internalType": "bytes4"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "CantDecreaseMoreThanPower",
+      "inputs": [
+        {
+          "name": "_decreaseAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_currentPower",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "CommunityFunctionDoesNotExist",
+      "inputs": [
+        {
+          "name": "selector",
+          "type": "bytes4",
+          "internalType": "bytes4"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "CommunityPaused",
+      "inputs": [
+        {
+          "name": "controller",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "CommunitySelectorPaused",
+      "inputs": [
+        {
+          "name": "selector",
+          "type": "bytes4",
+          "internalType": "bytes4"
+        },
+        {
+          "name": "controller",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "DecreaseUnderMinimum",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "InitializationFunctionReverted",
+      "inputs": [
+        {
+          "name": "_initializationContractAddress",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_calldata",
+          "type": "bytes",
+          "internalType": "bytes"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "KickNotEnabled",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "NewFeeGreaterThanMax",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "NoBytecodeAtAddress",
+      "inputs": [
+        {
+          "name": "_contractAddress",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_message",
+          "type": "string",
+          "internalType": "string"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "NoSelectorsProvidedForFacetForCut",
+      "inputs": [
+        {
+          "name": "_facetAddress",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "OnlyEmptyCommunity",
+      "inputs": [
+        {
+          "name": "totalMembers",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "PointsDeactivated",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "RemoveFacetAddressMustBeZeroAddress",
+      "inputs": [
+        {
+          "name": "_facetAddress",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "SenderNotNewOwner",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "SenderNotStrategy",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "StrategyDisabled",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "StrategyExists",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "UserAlreadyActivated",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "UserNotInCouncil",
+      "inputs": [
+        {
+          "name": "_user",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "UserNotInRegistry",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "ValueCannotBeZero",
+      "inputs": []
+    },
+    {
+      "type": "function",
+      "name": "registerMember",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "error",
+      "name": "StakeRequiredForMembership",
+      "inputs": []
+    },
+    {
+      "type": "function",
+      "name": "isPaused",
+      "inputs": [
+        {
+          "name": "selector",
+          "type": "bytes4",
+          "internalType": "bytes4"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "pause",
+      "inputs": [
+        {
+          "name": "duration",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "pauseController",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "pauseFacet",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "pausedSelectorUntil",
+      "inputs": [
+        {
+          "name": "selector",
+          "type": "bytes4",
+          "internalType": "bytes4"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "pausedUntil",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "setPauseFacet",
+      "inputs": [
+        {
+          "name": "facet",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "unpause",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "event",
+      "name": "PauseControllerUpdated",
+      "inputs": [
+        {
+          "name": "controller",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "PauseFacetUpdated",
+      "inputs": [
+        {
+          "name": "facet",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "error",
+      "name": "NotOwner",
+      "inputs": [
+        {
+          "name": "caller",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "PauseControllerNotSet",
+      "inputs": []
+    },
+    {
+      "type": "function",
+      "name": "ercAddress",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "isRegisteredMember",
+      "inputs": [
+        {
+          "name": "_member",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "error",
+      "name": "StrategyNotEnabled",
+      "inputs": []
+    }
+  ]
+}
