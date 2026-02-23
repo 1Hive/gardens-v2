@@ -100,6 +100,9 @@
     "web#build": {
       "dependsOn": [
         "web#generate"
+      ],
+      "outputs": [
+        ".next/**"
       ]
     },
     "subgraph#build": {
