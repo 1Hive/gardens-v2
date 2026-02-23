@@ -376,9 +376,6 @@ importers:
       '@synthetixio/synpress':
         specifier: 4.1.1
         version: 4.1.1(@depay/solana-web3.js@1.98.3)(@depay/web3-blockchains@9.8.10)(@playwright/test@1.48.2)(ethers@5.8.0)(playwright-core@1.48.2)
-      '@synthetixio/synpress-metamask':
-        specifier: 0.0.12
-        version: 0.0.12(@playwright/test@1.48.2)(playwright-core@1.48.2)
       '@types/node':
         specifier: ^24.1.0
         version: 24.10.13
@@ -9741,35 +9738,6 @@ packages:
       - zod
     dev: true
 
-  /@synthetixio/synpress-cache@0.0.12(playwright-core@1.48.2):
-    resolution: {integrity: sha512-+3ry/p0TnW8yS2d6i9uFPQcHQ20DqeJoDVya0rBus0VPQy0zWxFQ4JWOlb2MyxBaog3shbX+G96UOfvdbpHqNA==}
-    hasBin: true
-    peerDependencies:
-      playwright-core: 1.48.2
-    dependencies:
-      axios: 1.13.2(debug@4.4.3)
-      chalk: 5.3.0
-      commander: 12.0.0
-      esbuild: 0.16.10
-      fs-extra: 11.2.0
-      glob: 13.0.0
-      gradient-string: 2.0.2
-      playwright-core: 1.48.2
-      progress: 2.0.3
-      tsup: 8.0.2
-      unzip-crx-3: 0.2.0
-      unzipper: 0.10.14
-      zod: 3.22.4
-    transitivePeerDependencies:
-      - '@microsoft/api-extractor'
-      - '@swc/core'
-      - debug
-      - postcss
-      - supports-color
-      - ts-node
-      - typescript
-    dev: true
-
   /@synthetixio/synpress-cache@0.0.13(playwright-core@1.48.2):
     resolution: {integrity: sha512-fKRz4Xq5a0IGzu4TMjrd7W6d+7W28RmoruqvwjmWLWBAJcsWgdUhLHWlS2o1/sRxLsDj2e4hq5nfsisOHShrsQ==}
     hasBin: true
@@ -9799,44 +9767,12 @@ packages:
       - typescript
     dev: true
 
-  /@synthetixio/synpress-core@0.0.12(@playwright/test@1.48.2):
-    resolution: {integrity: sha512-OBJDWP/6Hf2olJD98IDeOMxrIJ8pGtnADmxBf0WTUHZiXOwysEnHWksOCaAI3Hef5X4I+MUTCRx2ea4AmvRG5g==}
-    peerDependencies:
-      '@playwright/test': '*'
-    dependencies:
-      '@playwright/test': 1.48.2
-    dev: true
-
   /@synthetixio/synpress-core@0.0.13(@playwright/test@1.48.2):
     resolution: {integrity: sha512-m0UPNN0s+o3KL0eGpilkna3wNYFHN3v49WsWKDRn/qslzAXJXgf26/w1f00z3gbcOjUY97i2FaieRLCsjF4sOg==}
     peerDependencies:
       '@playwright/test': '*'
     dependencies:
       '@playwright/test': 1.48.2
-    dev: true
-
-  /@synthetixio/synpress-metamask@0.0.12(@playwright/test@1.48.2)(playwright-core@1.48.2):
-    resolution: {integrity: sha512-OHJq8r10+yLzsqUgF7c42xT0jTQASzapdFvGxa7Pz3GTCXz3k9VQVYjULXcVckM9rqr5FYhjhcb1MgovkDQHNw==}
-    peerDependencies:
-      '@playwright/test': '*'
-    dependencies:
-      '@playwright/test': 1.48.2
-      '@synthetixio/synpress-cache': 0.0.12(playwright-core@1.48.2)
-      '@synthetixio/synpress-core': 0.0.12(@playwright/test@1.48.2)
-      '@viem/anvil': 0.0.7
-      fs-extra: 11.2.0
-      zod: 3.22.4
-    transitivePeerDependencies:
-      - '@microsoft/api-extractor'
-      - '@swc/core'
-      - bufferutil
-      - debug
-      - playwright-core
-      - postcss
-      - supports-color
-      - ts-node
-      - typescript
-      - utf-8-validate
     dev: true
 
   /@synthetixio/synpress-metamask@0.0.13(@playwright/test@1.48.2)(playwright-core@1.48.2):

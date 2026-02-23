@@ -15,7 +15,7 @@ jobs:
     timeout-minutes: 45
     env:
       CI: "true"
-      HEADLESS: "true"
+      HEADLESS: "false"
       E2E_WALLET_SEED_PHRASE: ${{ secrets.E2E_WALLET_SEED_PHRASE }}
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
@@ -101,6 +101,8 @@ jobs:
             echo "Found deployment state: ${state}"
 
             if [ "${state}" = "READY" ] && [ -n "${url}" ]; then
+              echo "Resolved preview URL: https://${url}"
+              echo "::notice::Using Vercel preview URL https://${url}"
               echo "preview_url=https://${url}" >> "$GITHUB_OUTPUT"
               exit 0
             fi
@@ -115,6 +117,45 @@ jobs:
           done
 
           echo "Timed out waiting for Vercel preview deployment."
+          exit 1
+
+      - name: Warm up Vercel preview deployment
+        if: steps.preflight.outputs.run_e2e == 'true'
+        shell: bash
+        env:
+          PREVIEW_URL: ${{ steps.vercel.outputs.preview_url }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${PREVIEW_URL:-}" ]; then
+            echo "Missing PREVIEW_URL output from Vercel step."
+            exit 1
+          fi
+
+          echo "Warming up preview deployment at: ${PREVIEW_URL}"
+
+          # Give the deployment a short grace period before probing.
+          sleep 20
+
+          # Probe for up to 5 minutes to absorb first-hit build/cold-start latency.
+          for i in {1..30}; do
+            status="$(curl -sS -o /dev/null -w "%{http_code}" \
+              --max-time 20 \
+              --retry 2 \
+              --retry-delay 2 \
+              "${PREVIEW_URL}")"
+
+            echo "Warm-up attempt ${i}/30 -> HTTP ${status}"
+
+            if [[ "${status}" =~ ^2[0-9]{2}$ || "${status}" =~ ^3[0-9]{2}$ ]]; then
+              echo "Preview is responding (HTTP ${status})."
+              exit 0
+            fi
+
+            sleep 10
+          done
+
+          echo "Preview warm-up timed out without a successful HTTP response."
           exit 1
 
       - name: Run E2E tests

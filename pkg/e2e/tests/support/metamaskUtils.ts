@@ -205,7 +205,30 @@ export async function confirmTransaction({
 export async function connectWallet(page: Page, metamask: MetaMask) {
   await page.getByTestId("connectButton").click();
   await page.getByTestId("rk-wallet-option-injected").click();
-  await metamask.connectToDapp();
+  const maxConnectAttempts = 3;
+  let lastError: unknown;
+
+  for (let attempt = 1; attempt <= maxConnectAttempts; attempt++) {
+    try {
+      await metamask.connectToDapp();
+      lastError = undefined;
+      break;
+    } catch (error) {
+      lastError = error;
+      if (attempt === maxConnectAttempts) {
+        throw error;
+      }
+
+      console.warn(
+        `[connectWallet] MetaMask connectToDapp failed on attempt ${attempt}/${maxConnectAttempts}, retrying...`
+      );
+      await page.waitForTimeout(1500);
+    }
+  }
+
+  if (lastError) {
+    throw lastError;
+  }
 
   // Verify the connected account address
   await expect(page.locator("[data-testid='accounts']")).toHaveText(
