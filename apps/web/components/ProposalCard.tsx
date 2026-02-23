@@ -318,7 +318,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
             </header>
           </div>
 
-          <Divider />
+          <Divider className="sm:hidden" />
 
           {isPoolEnabled && !isProposalEnded && (
             <div className="flex gap-4 flex-wrap w-full  mb-2">

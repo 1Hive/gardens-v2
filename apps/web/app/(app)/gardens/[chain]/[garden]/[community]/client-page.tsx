@@ -632,9 +632,9 @@ export default function ClientPage({
                     />
                   ))}
                 </div>
-              : <div className="rounded-xl border border-neutral-soft-content/20 p-6 flex flex-col items-center text-center gap-3">
-                  <p className="text-neutral-soft-content">
-                    No pools match the selected filters.
+              : <div className=" p-6 flex flex-col items-center text-center gap-3">
+                  <p className="text-neutral-soft-content text-xs sm:text-sm">
+                    No pools found for this filter.
                   </p>
                 </div>
               }

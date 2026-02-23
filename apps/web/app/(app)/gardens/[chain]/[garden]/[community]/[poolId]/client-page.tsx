@@ -64,6 +64,7 @@ export default function ClientPage({
 }: {
   params: { chain: string; poolId: number; garden: string; community: string };
 }) {
+  const communityScopeId = _community.toLowerCase();
   const searchParams = useCollectQueryParams();
 
   const { data, refetch, error, fetching } = useSubgraphQuery<getPoolDataQuery>(
@@ -125,12 +126,12 @@ export default function ClientPage({
     query: getCommunityDocument,
     enabled: !!wallet && !!strategy?.token,
     variables: {
-      communityAddr: _community.toLowerCase(),
+      communityAddr: communityScopeId,
       tokenAddr: garden.toLocaleLowerCase(),
     },
     changeScope: [
-      { topic: "community", id: communityAddress },
-      { topic: "member", containerId: communityAddress },
+      { topic: "community", id: communityScopeId },
+      { topic: "member", containerId: communityScopeId },
     ],
   });
 
@@ -138,11 +139,11 @@ export default function ClientPage({
     query: isMemberDocument,
     variables: {
       me: wallet?.toLowerCase(),
-      comm: _community.toLowerCase(),
+      comm: communityScopeId,
     },
     changeScope: [
-      { topic: "community", id: communityAddress },
-      { topic: "member", containerId: communityAddress },
+      { topic: "community", id: communityScopeId },
+      { topic: "member", containerId: communityScopeId },
     ],
     enabled: wallet !== undefined,
   });
@@ -189,6 +190,9 @@ export default function ClientPage({
         comm: communityAddress?.toLowerCase(),
       },
       changeScope: [
+        // Community membership changes (join/leave) are published with community containerId.
+        { topic: "member", containerId: communityScopeId },
+        { topic: "community", id: communityScopeId },
         {
           topic: "member",
           id: wallet,
@@ -222,7 +226,9 @@ export default function ClientPage({
   );
 
   const memberTokensInCommunity = BigInt(
-    memberData?.member?.memberCommunity?.[0]?.stakedTokens ?? 0,
+    memberData?.member?.memberCommunity?.[0]?.stakedTokens ??
+      isMemberResult?.member?.memberCommunity?.[0]?.stakedTokens ??
+      0,
   );
 
   const { data: membersStrategyData } =
@@ -244,8 +250,10 @@ export default function ClientPage({
 
   const membersStrategies = membersStrategyData?.memberStrategies;
 
-  const isMemberCommunity =
-    !!memberData?.member?.memberCommunity?.[0]?.isRegistered;
+  const isMemberCommunity = !!(
+    memberData?.member?.memberCommunity?.[0]?.isRegistered ??
+    isMemberResult?.member?.memberCommunity?.[0]?.isRegistered
+  );
 
   const memberActivatedStrategy =
     memberStrategyData?.memberStrategy?.activatedPoints > 0n;
@@ -329,7 +337,7 @@ export default function ClientPage({
   });
 
   const { data: tokenGarden } = useToken({
-    address: strategy?.token as Address,
+    address: garden as Address,
     chainId: chainId,
     enabled: !isMemberCommunity,
   });
