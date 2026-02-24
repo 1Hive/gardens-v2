@@ -91,6 +91,7 @@ type Props = {
   communityAddr: `0x${string}`;
   alloAddr: `0x${string}`;
   governanceToken: Pick<TokenGarden, "decimals" | "id" | "symbol">;
+  initialStrategyType: number;
 };
 
 const poolSettingValues: Record<
@@ -191,7 +192,11 @@ const defaultEthChallengeColateral = 0.001;
 const defaultMaticProposalColateral = 10;
 const defaultMaticChallengeColateral = 5;
 
-export function PoolForm({ governanceToken, communityAddr }: Props) {
+export function PoolForm({
+  governanceToken,
+  communityAddr,
+  initialStrategyType,
+}: Props) {
   const chain = useChainFromPath()!;
   const {
     register,
@@ -203,7 +208,7 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
   } = useForm<FormInputs>({
     mode: "onBlur",
     defaultValues: {
-      strategyType: 1,
+      strategyType: initialStrategyType,
       pointSystemType: 0,
       sybilResistanceType: "allowList",
       rulingTime: parseTimeUnit(DEFAULT_RULING_TIMEOUT_SEC, "seconds", "days"),
@@ -711,17 +716,6 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
               type="markdown"
               rows={7}
               placeholder="Enter a description of your pool..."
-            />
-            <FormSelect
-              label="Pool type"
-              register={register}
-              errors={errors}
-              registerKey="strategyType"
-              required
-              options={Object.entries(PoolTypes).map(([value, text]) => ({
-                label: capitalize(text),
-                value: value,
-              }))}
             />
             {PoolTypes[strategyType] !== "signaling" && (
               <div className="flex items-end gap-4 flex-wrap md:flex-nowrap">
