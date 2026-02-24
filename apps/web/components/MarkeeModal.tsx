@@ -80,6 +80,7 @@ export default function MarkeeModal({
   const isConnected = !!address;
 
   const { writeAsync, isLoading: isPending } = useContractWrite({
+    mode: "recklesslyUnprepared",
     address: strategyAddress,
     abi: TOP_DAWG_PARTNER_ABI,
     functionName: "createMarkee",
@@ -180,8 +181,8 @@ export default function MarkeeModal({
     setIsConfirming(true);
     try {
       const { hash } = await writeAsync({
-        args: [message.trim(), name.trim()],
-        value: parseEther(ethAmount),
+        recklesslySetUnpreparedArgs: [message.trim(), name.trim()],
+        recklesslySetUnpreparedOverrides: { value: parseEther(ethAmount) },
       });
       await publicClient.waitForTransactionReceipt({ hash });
       onSuccess();
@@ -377,7 +378,7 @@ export default function MarkeeModal({
               </span>
             </button>
 
-            {/* Min to join */}
+            {/* Minimum to buy */}
             <button
               type="button"
               onClick={() => { setEthAmount(minToJoinEth); setEthError(false); setInputError(null); }}
@@ -391,14 +392,14 @@ export default function MarkeeModal({
                 {minToJoinEth} ETH
               </span>
               <span className="text-xs text-neutral-content/50 mt-0.5 leading-tight">
-                Min to join
+                Minimum to buy
               </span>
             </button>
 
-            {/* Custom entry */}
+            {/* Custom entry — match height of preset buttons */}
             <input
               type="number"
-              className={`input input-bordered w-full bg-neutral text-neutral-content placeholder:text-neutral-content/30 font-mono text-sm text-center transition-colors ${
+              className={`input input-bordered w-full h-auto bg-neutral text-neutral-content placeholder:text-neutral-content/30 font-mono text-xs text-center transition-colors py-2.5 ${
                 ethError ? "border-red-500" : "border-border-neutral"
               }`}
               placeholder={takeTopSpotEth}
