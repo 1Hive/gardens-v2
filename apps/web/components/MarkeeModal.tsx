@@ -187,9 +187,10 @@ export default function MarkeeModal({
       onSuccess();
     } catch (err: any) {
       setIsConfirming(false);
+      console.error("[MarkeeModal] transaction error:", err);
       const msg = err?.message ?? "";
       if (!msg.includes("User rejected") && !msg.includes("user rejected")) {
-        setInputError("Transaction failed. Please try again.");
+        setInputError(`Transaction failed: ${msg.slice(0, 120) || "Please try again."}`);
       }
     } finally {
       setIsConfirming(false);
