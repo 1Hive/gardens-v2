@@ -7,12 +7,11 @@ import { base } from "viem/chains";
 import {
   useAccount,
   useBalance,
-  useContractWrite,
   useNetwork,
-  usePublicClient,
   useSwitchNetwork,
 } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 
 const TOP_DAWG_PARTNER_ABI = [
   {
@@ -79,14 +78,14 @@ export default function MarkeeModal({
   const isOnBase = chain?.id === base.id;
   const isConnected = !!address;
 
-  const { writeAsync, isLoading: isPending } = useContractWrite({
+  const { writeAsync, isLoading: isPending } = useContractWriteWithConfirmations({
     address: strategyAddress,
     abi: TOP_DAWG_PARTNER_ABI,
     functionName: "createMarkee",
-    mode: "recklesslyUnprepared" as const,
+    contractName: "TopDawgPartnerStrategy",
+    onConfirmations: onSuccess,
+    showNotification: false,
   });
-
-  const publicClient = usePublicClient({ chainId: base.id });
 
   useEffect(() => {
     dialogRef.current?.showModal();
@@ -174,20 +173,15 @@ export default function MarkeeModal({
 
   const handleSubmit = async () => {
     if (!validate()) return;
-    if (!writeAsync || !publicClient) {
-      setInputError("Unable to connect to Base. Please refresh and try again.");
-      return;
-    }
+    if (!writeAsync) return;
     setIsConfirming(true);
     try {
-      const { hash } = await writeAsync({
-        recklesslySetUnpreparedArgs: [message.trim(), name.trim()],
-        recklesslySetUnpreparedOverrides: { value: parseEther(ethAmount) },
+      await writeAsync({
+        args: [message.trim(), name.trim()],
+        value: parseEther(ethAmount),
       } as any);
-      await publicClient.waitForTransactionReceipt({ hash });
-      onSuccess();
+      // onSuccess is called via onConfirmations in the hook
     } catch (err: any) {
-      setIsConfirming(false);
       console.error("[MarkeeModal] transaction error:", err);
       const msg = err?.message ?? "";
       if (!msg.includes("User rejected") && !msg.includes("user rejected")) {
