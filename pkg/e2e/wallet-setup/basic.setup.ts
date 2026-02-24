@@ -78,18 +78,26 @@ export default defineWalletSetup(PASSWORD, async (context, walletPage) => {
   await dismissTransientPopovers(walletPage);
 
   // Keep network preconfiguration in cache so tests don't repeat this step.
-  await withRetry("switchNetwork(OP Mainnet)", async () => {
-    await dismissTransientPopovers(walletPage);
-    try {
-      await metamask.switchNetwork(OP_MAINNET.name);
-      return;
-    } catch {
-      // If network does not exist yet, add it then switch.
-    }
+  // Best effort only: intermittent MetaMask overlays can block this click path in CI.
+  try {
+    await withRetry("switchNetwork(OP Mainnet)", async () => {
+      await dismissTransientPopovers(walletPage);
+      try {
+        await metamask.switchNetwork(OP_MAINNET.name);
+        return;
+      } catch {
+        // If network does not exist yet, add it then switch.
+      }
 
-    await dismissTransientPopovers(walletPage);
-    await metamask.addNetwork(OP_MAINNET);
-    await dismissTransientPopovers(walletPage);
-    await metamask.switchNetwork(OP_MAINNET.name);
-  });
+      await dismissTransientPopovers(walletPage);
+      await metamask.addNetwork(OP_MAINNET);
+      await dismissTransientPopovers(walletPage);
+      await metamask.switchNetwork(OP_MAINNET.name);
+    });
+  } catch (error) {
+    console.warn(
+      `[wallet-setup] Unable to pre-switch to ${OP_MAINNET.name}; continuing without preconfiguration.`,
+      error
+    );
+  }
 });

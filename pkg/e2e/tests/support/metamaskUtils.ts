@@ -1,6 +1,103 @@
 import { MetaMask } from "@synthetixio/synpress/playwright";
 import { expect, Page } from "@playwright/test";
 
+const OP_MAINNET = {
+  name: "OP Mainnet",
+  rpcUrl: "https://mainnet.optimism.io",
+  chainId: 10,
+  symbol: "ETH",
+  blockExplorerUrl: "https://optimistic.etherscan.io"
+};
+
+const OP_MAINNET_CHAIN_ID_HEX = "0xa";
+
+async function dismissWalletPopovers(walletPage: Page) {
+  const closeSelectors = [
+    '[data-testid="popover-close"]',
+    'button[aria-label="Close"]'
+  ];
+
+  for (let i = 0; i < 6; i++) {
+    let clicked = false;
+
+    for (const selector of closeSelectors) {
+      const button = walletPage.locator(selector).first();
+      if (await button.isVisible().catch(() => false)) {
+        await button.click({ timeout: 1000 }).catch(() => {});
+        clicked = true;
+      }
+    }
+
+    await walletPage.keyboard.press("Escape").catch(() => {});
+    await walletPage.waitForTimeout(250);
+
+    if (!clicked) {
+      return;
+    }
+  }
+}
+
+async function ensureOptimismNetwork(page: Page, metamask: MetaMask) {
+  const chainId = await page.evaluate(async () => {
+    const provider = (window as any).ethereum;
+    if (!provider) {
+      throw new Error("Missing injected ethereum provider");
+    }
+
+    return (await provider.request({ method: "eth_chainId" })) as string;
+  });
+
+  if (chainId.toLowerCase() === OP_MAINNET_CHAIN_ID_HEX) {
+    return;
+  }
+
+  const maxSwitchAttempts = 3;
+  let lastError: unknown;
+
+  for (let attempt = 1; attempt <= maxSwitchAttempts; attempt++) {
+    try {
+      await dismissWalletPopovers(metamask.page);
+
+      try {
+        await metamask.switchNetwork(OP_MAINNET.name);
+      } catch {
+        await dismissWalletPopovers(metamask.page);
+        await metamask.addNetwork(OP_MAINNET);
+        await dismissWalletPopovers(metamask.page);
+        await metamask.switchNetwork(OP_MAINNET.name);
+      }
+
+      const switchedChainId = await page.evaluate(async () => {
+        const provider = (window as any).ethereum;
+        return (await provider.request({ method: "eth_chainId" })) as string;
+      });
+
+      if (switchedChainId.toLowerCase() !== OP_MAINNET_CHAIN_ID_HEX) {
+        throw new Error(
+          `Switch reported success but chainId is ${switchedChainId}`
+        );
+      }
+
+      lastError = undefined;
+      break;
+    } catch (error) {
+      lastError = error;
+      if (attempt === maxSwitchAttempts) {
+        throw error;
+      }
+
+      console.warn(
+        `[connectWallet] Network switch failed on attempt ${attempt}/${maxSwitchAttempts}, retrying...`
+      );
+      await page.waitForTimeout(1500);
+    }
+  }
+
+  if (lastError) {
+    throw lastError;
+  }
+}
+
 export async function approveTokenAllowance({
   page,
   metamask,
@@ -234,4 +331,7 @@ export async function connectWallet(page: Page, metamask: MetaMask) {
   await expect(page.locator("[data-testid='accounts']")).toHaveText(
     "0x327F…7394"
   );
+
+  // E2E flows run on Optimism; switch MetaMask network if needed.
+  await ensureOptimismNetwork(page, metamask);
 }
