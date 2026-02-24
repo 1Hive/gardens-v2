@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { ChevronDownIcon, ClipboardDocumentIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import { CheckIcon } from "@heroicons/react/24/solid";
+import { ChevronDownIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { formatEther, parseEther } from "viem";
 import { base } from "viem/chains";
 import {
@@ -41,10 +40,19 @@ const TOP_DAWG_PARTNER_ABI = [
     inputs: [],
     outputs: [{ name: "", type: "uint256" }],
   },
+  {
+    name: "minimumPrice",
+    type: "function",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "uint256" }],
+  },
 ] as const;
 
-const DEFAULT_MAX_MESSAGE = 100;
-const DEFAULT_MAX_NAME = 50;
+// Confirmed values from Basescan
+const DEFAULT_MAX_MESSAGE = 223;
+const DEFAULT_MAX_NAME = 22;
+const DEFAULT_MIN_PRICE = parseEther("0.003"); // 3000000000000000 wei
 const MIN_INCREMENT = parseEther("0.001");
 
 type LeaderboardEntry = {
@@ -69,18 +77,19 @@ export default function MarkeeModal({
   strategyAddress,
   currentTopDawg,
   currentMessage,
-  minimumPrice,
+  minimumPrice: minimumPriceProp,
   subgraphUrl,
 }: Props) {
   const [message, setMessage] = useState("");
   const [name, setName] = useState("");
   const [ethAmount, setEthAmount] = useState("");
   const [inputError, setInputError] = useState<string | null>(null);
+  const [messageError, setMessageError] = useState(false);
+  const [ethError, setEthError] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
   const [leaderboardOpen, setLeaderboardOpen] = useState(false);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [leaderboardLoading, setLeaderboardLoading] = useState(false);
-  const [copied, setCopied] = useState(false);
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   const { address } = useAccount();
@@ -92,6 +101,7 @@ export default function MarkeeModal({
   const isOnBase = chain?.id === base.id;
   const isConnected = !!address;
 
+  // Read limits and min price directly from contract (confirmed values as defaults)
   const { data: maxMessageLength } = useContractRead({
     address: strategyAddress,
     abi: TOP_DAWG_PARTNER_ABI,
@@ -104,9 +114,22 @@ export default function MarkeeModal({
     functionName: "maxNameLength",
     chainId: base.id,
   });
+  const { data: contractMinPrice } = useContractRead({
+    address: strategyAddress,
+    abi: TOP_DAWG_PARTNER_ABI,
+    functionName: "minimumPrice",
+    chainId: base.id,
+  });
 
   const maxMsg = maxMessageLength ? Number(maxMessageLength) : DEFAULT_MAX_MESSAGE;
   const maxName = maxNameLength ? Number(maxNameLength) : DEFAULT_MAX_NAME;
+  // Use contract read value, fall back to prop, then hardcoded default
+  const minPrice =
+    contractMinPrice && contractMinPrice > BigInt(0)
+      ? contractMinPrice
+      : minimumPriceProp > BigInt(0)
+        ? minimumPriceProp
+        : DEFAULT_MIN_PRICE;
 
   const { writeAsync, isLoading: isPending } = useContractWrite({
     address: strategyAddress,
@@ -147,62 +170,67 @@ export default function MarkeeModal({
       .finally(() => setLeaderboardLoading(false));
   }, [leaderboardOpen, leaderboard.length, subgraphUrl, strategyAddress]);
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(currentMessage).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
-  };
-
   const handleBackdropClick = (e: React.MouseEvent<HTMLDialogElement>) => {
     if (e.target === dialogRef.current) onClose();
   };
 
-  // Take top spot = currentTopDawg + 0.001 ETH (or minimumPrice if no top dawg)
+  // Take top spot = currentTopDawg + 0.001 ETH (or minPrice if no top dawg)
   const takeTopSpot =
-    currentTopDawg > BigInt(0)
-      ? currentTopDawg + MIN_INCREMENT
-      : minimumPrice > BigInt(0)
-        ? minimumPrice
-        : MIN_INCREMENT;
-
-  // Minimum to join = minimumPrice (or 0.001 if not set)
-  const minToJoin = minimumPrice > BigInt(0) ? minimumPrice : MIN_INCREMENT;
+    currentTopDawg > BigInt(0) ? currentTopDawg + MIN_INCREMENT : minPrice;
+  const minToJoin = minPrice;
 
   const takeTopSpotEth = parseFloat(formatEther(takeTopSpot)).toFixed(3);
   const minToJoinEth = parseFloat(formatEther(minToJoin)).toFixed(3);
 
+  // Total ETH raised across all leaderboard entries
+  const totalRaised = leaderboard.reduce(
+    (sum, e) => sum + BigInt(e.totalFundsAdded),
+    BigInt(0),
+  );
+
   const validate = () => {
+    let valid = true;
     if (!message.trim()) {
-      setInputError("Message cannot be empty.");
-      return false;
+      setMessageError(true);
+      valid = false;
+    } else {
+      setMessageError(false);
     }
     if (!ethAmount || isNaN(parseFloat(ethAmount)) || parseFloat(ethAmount) <= 0) {
+      setEthError(true);
       setInputError("Enter a valid ETH amount.");
-      return false;
+      valid = false;
+    } else {
+      let parsedAmount: bigint;
+      try {
+        parsedAmount = parseEther(ethAmount);
+      } catch {
+        setEthError(true);
+        setInputError("Invalid ETH amount.");
+        return false;
+      }
+      if (parsedAmount < minToJoin) {
+        setEthError(true);
+        setInputError(`Minimum is ${minToJoinEth} ETH to join the leaderboard.`);
+        valid = false;
+      } else if (balance && parsedAmount > balance.value) {
+        setEthError(true);
+        setInputError("Insufficient ETH balance.");
+        valid = false;
+      } else {
+        setEthError(false);
+        if (valid) setInputError(null);
+      }
     }
-    let parsedAmount: bigint;
-    try {
-      parsedAmount = parseEther(ethAmount);
-    } catch {
-      setInputError("Invalid ETH amount.");
-      return false;
+    if (!valid && !inputError) {
+      setInputError("Please fill in all required fields.");
     }
-    if (parsedAmount < minToJoin) {
-      setInputError(`Minimum is ${minToJoinEth} ETH to join the leaderboard.`);
-      return false;
-    }
-    if (balance && parsedAmount > balance.value) {
-      setInputError("Insufficient ETH balance.");
-      return false;
-    }
-    setInputError(null);
-    return true;
+    return valid;
   };
 
   const handleSubmit = async () => {
-    if (!validate() || !writeAsync) return;
-    if (!publicClient) {
+    if (!validate()) return;
+    if (!writeAsync || !publicClient) {
       setInputError("Unable to connect to Base. Please refresh and try again.");
       return;
     }
@@ -226,7 +254,6 @@ export default function MarkeeModal({
   };
 
   const isLoading = isPending || isConfirming || isSwitching;
-  const canSubmit = isConnected && isOnBase && !!message.trim() && !!ethAmount && !isLoading;
 
   return (
     <dialog
@@ -245,7 +272,7 @@ export default function MarkeeModal({
             <p className="text-xs text-neutral-content/60 mt-0.5">
               62% to Gardens Treasury · 38% to{" "}
               <a
-                href="https://markee.xyz"
+                href="https://app.gardens.fund/gardens/8453/0xee3027f1e021b09d629922d40436c5dea3c6cb38/0xce6b968c8bd130ca08f1fcc97b509a824380d867"
                 target="_blank"
                 rel="noreferrer"
                 className="underline underline-offset-2 hover:text-primary-content transition-colors"
@@ -265,25 +292,11 @@ export default function MarkeeModal({
 
         {/* Current message + leaderboard */}
         <div className="mb-5 rounded border border-neutral-content/20 bg-neutral-focus px-4 py-3">
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex-1 min-w-0">
-              <p className="text-xs text-neutral-content/50 mb-1">Current message</p>
-              <p className="font-mono text-sm text-neutral-content break-words">
-                {currentMessage}
-              </p>
-            </div>
-            <button
-              onClick={handleCopy}
-              className="btn btn-ghost btn-xs btn-circle flex-shrink-0 mt-0.5"
-              aria-label="Copy current message"
-              title="Copy to clipboard"
-            >
-              {copied ? (
-                <CheckIcon className="h-4 w-4 text-success" />
-              ) : (
-                <ClipboardDocumentIcon className="h-4 w-4 text-neutral-content/50" />
-              )}
-            </button>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs text-neutral-content/50 mb-1">Current message</p>
+            <p className="font-mono text-sm text-neutral-content break-words">
+              {currentMessage}
+            </p>
           </div>
 
           <button
@@ -303,23 +316,32 @@ export default function MarkeeModal({
               ) : leaderboard.length === 0 ? (
                 <p className="text-xs text-neutral-content/40">No entries yet.</p>
               ) : (
-                leaderboard.map((entry, i) => (
-                  <div key={i} className="flex items-start justify-between gap-2">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-mono text-xs text-neutral-content break-words">
-                        {entry.message}
-                      </p>
-                      {entry.name && (
-                        <p className="text-xs text-neutral-content/40 mt-0.5">
-                          {entry.name}
+                <>
+                  {leaderboard.map((entry, i) => (
+                    <div key={i} className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-mono text-xs text-neutral-content break-words">
+                          {entry.message}
                         </p>
-                      )}
+                        {entry.name && (
+                          <p className="text-xs text-neutral-content/40 mt-0.5">
+                            {entry.name}
+                          </p>
+                        )}
+                      </div>
+                      <span className="text-xs font-mono text-neutral-content/50 flex-shrink-0 mt-0.5">
+                        {parseFloat(formatEther(BigInt(entry.totalFundsAdded))).toFixed(3)} ETH
+                      </span>
                     </div>
-                    <span className="text-xs font-mono text-neutral-content/50 flex-shrink-0 mt-0.5">
-                      {parseFloat(formatEther(BigInt(entry.totalFundsAdded))).toFixed(3)} ETH
+                  ))}
+                  {/* Total raised */}
+                  <div className="flex justify-between pt-2 border-t border-neutral-content/10">
+                    <span className="text-xs text-neutral-content/50 font-medium">Total raised</span>
+                    <span className="text-xs font-mono font-semibold text-neutral-content/70">
+                      {parseFloat(formatEther(totalRaised)).toFixed(3)} ETH
                     </span>
                   </div>
-                ))
+                </>
               )}
               <p className="pt-2 text-xs text-neutral-content/40 border-t border-neutral-content/10">
                 Add funds and edit your existing messages at{" "}
@@ -336,22 +358,6 @@ export default function MarkeeModal({
           )}
         </div>
 
-        {/* Wrong network banner */}
-        {isConnected && !isOnBase && (
-          <div className="mb-5 rounded border border-yellow-500/30 bg-yellow-500/10 px-4 py-3 flex items-center justify-between">
-            <p className="text-sm text-yellow-400">
-              Switch to Base to pay for the sign.
-            </p>
-            <button
-              onClick={() => switchNetwork?.(base.id)}
-              className="btn btn-xs ml-3 bg-yellow-500 text-black border-0 hover:opacity-80"
-              disabled={isSwitching}
-            >
-              {isSwitching ? "Switching..." : "Switch to Base"}
-            </button>
-          </div>
-        )}
-
         {/* Your Message */}
         <div className="mb-4">
           <label className="block text-sm font-medium text-neutral-content mb-1.5">
@@ -361,16 +367,22 @@ export default function MarkeeModal({
             </span>
           </label>
           <textarea
-            className="textarea textarea-bordered w-full bg-neutral border-border-neutral text-neutral-content placeholder:text-neutral-content/30 resize-none font-mono text-sm"
+            className={`textarea textarea-bordered w-full bg-neutral text-neutral-content placeholder:text-neutral-content/30 resize-none font-mono text-sm transition-colors ${
+              messageError ? "border-red-500" : "border-border-neutral"
+            }`}
             placeholder="this is a sign."
             value={message}
             maxLength={maxMsg}
             rows={3}
             onChange={(e) => {
               setMessage(e.target.value);
-              setInputError(null);
+              setMessageError(false);
+              if (inputError === "Please fill in all required fields.") setInputError(null);
             }}
           />
+          {messageError && (
+            <p className="mt-1 text-xs text-red-400">Message is required.</p>
+          )}
         </div>
 
         {/* Your Name */}
@@ -384,7 +396,7 @@ export default function MarkeeModal({
           <input
             type="text"
             className="input input-bordered w-full bg-neutral border-border-neutral text-neutral-content placeholder:text-neutral-content/30 text-sm"
-            placeholder="anonymous"
+            placeholder="vitalik"
             value={name}
             maxLength={maxName}
             onChange={(e) => setName(e.target.value)}
@@ -392,7 +404,7 @@ export default function MarkeeModal({
         </div>
 
         {/* ETH Amount — 3 columns */}
-        <div className="mb-5">
+        <div className="mb-4">
           <label className="block text-sm font-medium text-neutral-content mb-2">
             ETH Amount
             {balance && (
@@ -402,11 +414,15 @@ export default function MarkeeModal({
             )}
           </label>
           <div className="grid grid-cols-3 gap-2">
-            {/* Take top spot */}
+            {/* Take top spot — highlighted */}
             <button
               type="button"
-              onClick={() => { setEthAmount(takeTopSpotEth); setInputError(null); }}
-              className="flex flex-col items-center justify-center rounded border border-neutral-content/20 bg-neutral-focus hover:border-primary-content/40 hover:bg-neutral-focus/80 transition-colors px-2 py-2.5 text-center cursor-pointer"
+              onClick={() => { setEthAmount(takeTopSpotEth); setEthError(false); setInputError(null); }}
+              className={`flex flex-col items-center justify-center rounded border-2 bg-neutral-focus hover:bg-neutral-focus/80 transition-colors px-2 py-2.5 text-center cursor-pointer ${
+                ethAmount === takeTopSpotEth
+                  ? "border-primary"
+                  : "border-primary/40 hover:border-primary"
+              }`}
             >
               <span className="text-xs font-mono font-semibold text-neutral-content">
                 {takeTopSpotEth} ETH
@@ -419,8 +435,12 @@ export default function MarkeeModal({
             {/* Min to join */}
             <button
               type="button"
-              onClick={() => { setEthAmount(minToJoinEth); setInputError(null); }}
-              className="flex flex-col items-center justify-center rounded border border-neutral-content/20 bg-neutral-focus hover:border-primary-content/40 hover:bg-neutral-focus/80 transition-colors px-2 py-2.5 text-center cursor-pointer"
+              onClick={() => { setEthAmount(minToJoinEth); setEthError(false); setInputError(null); }}
+              className={`flex flex-col items-center justify-center rounded border bg-neutral-focus hover:border-primary-content/40 hover:bg-neutral-focus/80 transition-colors px-2 py-2.5 text-center cursor-pointer ${
+                ethAmount === minToJoinEth && ethAmount !== takeTopSpotEth
+                  ? "border-primary-content/60"
+                  : "border-neutral-content/20"
+              }`}
             >
               <span className="text-xs font-mono font-semibold text-neutral-content">
                 {minToJoinEth} ETH
@@ -430,37 +450,56 @@ export default function MarkeeModal({
               </span>
             </button>
 
-            {/* Manual entry */}
-            <div className="relative">
-              <input
-                type="number"
-                className="input input-bordered w-full h-full bg-neutral border-border-neutral text-neutral-content placeholder:text-neutral-content/30 font-mono text-sm text-center"
-                placeholder="custom"
-                value={ethAmount}
-                min="0"
-                step="0.001"
-                onChange={(e) => {
-                  setEthAmount(e.target.value);
-                  setInputError(null);
-                }}
-              />
-            </div>
+            {/* Custom entry */}
+            <input
+              type="number"
+              className={`input input-bordered w-full bg-neutral text-neutral-content placeholder:text-neutral-content/30 font-mono text-sm text-center transition-colors ${
+                ethError ? "border-red-500" : "border-border-neutral"
+              }`}
+              placeholder={takeTopSpotEth}
+              value={ethAmount}
+              min="0"
+              step="0.001"
+              onChange={(e) => {
+                setEthAmount(e.target.value);
+                setEthError(false);
+                setInputError(null);
+              }}
+            />
           </div>
+          {ethError && (
+            <p className="mt-1 text-xs text-red-400">{inputError}</p>
+          )}
         </div>
 
-        {/* Error */}
-        {inputError && (
+        {/* Wrong network banner — below ETH selection */}
+        {isConnected && !isOnBase && (
+          <div className="mb-4 rounded border border-yellow-500/30 bg-yellow-500/10 px-4 py-3 flex items-center justify-between">
+            <p className="text-sm text-yellow-400">
+              Switch to Base to pay for the sign.
+            </p>
+            <button
+              onClick={() => switchNetwork?.(base.id)}
+              className="btn btn-xs ml-3 bg-yellow-500 text-black border-0 hover:opacity-80"
+              disabled={isSwitching}
+            >
+              {isSwitching ? "Switching..." : "Switch to Base"}
+            </button>
+          </div>
+        )}
+
+        {/* General error (non-field-specific) */}
+        {inputError && !messageError && !ethError && (
           <div className="mb-4 rounded border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-400">
             {inputError}
           </div>
         )}
 
-        {/* Action — centered */}
-        <div className="flex justify-center">
+        {/* Action — centered, always clickable */}
+        <div className="flex justify-center mt-5">
           {!isConnected ? (
             <button
               onClick={() => {
-                // Close dialog first so RainbowKit modal isn't behind it
                 dialogRef.current?.close();
                 openConnectModal?.();
               }}
@@ -471,12 +510,8 @@ export default function MarkeeModal({
           ) : (
             <button
               onClick={handleSubmit}
-              disabled={!canSubmit}
-              className={`btn btn-sm border-0 px-8 text-white transition-colors ${
-                canSubmit
-                  ? "bg-green-600 hover:bg-green-500"
-                  : "bg-neutral-content/20 cursor-not-allowed"
-              }`}
+              disabled={isLoading}
+              className="btn btn-sm border-0 px-8 text-white bg-green-600 hover:bg-green-500 disabled:bg-green-600/50 disabled:text-white/70"
             >
               {isPending ?
                 "Confirm in wallet..."
@@ -488,7 +523,7 @@ export default function MarkeeModal({
         </div>
 
         <p className="mt-4 text-center text-xs text-neutral-content/40">
-          You&apos;ll receive MARKEE tokens for this purchase
+          You&apos;ll receive MARKEE tokens and become an owner of the Markee network
         </p>
       </div>
       <form method="dialog" className="modal-backdrop">
