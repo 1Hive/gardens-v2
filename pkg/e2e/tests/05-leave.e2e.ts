@@ -16,7 +16,7 @@ const { expect } = test;
 test.setTimeout(240000);
 
 // Define a basic test case
-test("should join and leave community", async ({
+test("should leave community", async ({
   context,
   page,
   metamaskPage,

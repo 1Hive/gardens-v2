@@ -16,7 +16,7 @@ const { expect } = test;
 test.setTimeout(240000);
 
 // Define a basic test case
-test("should join and leave community", async ({
+test("should join community", async ({
   context,
   page,
   metamaskPage,
@@ -50,7 +50,7 @@ test("should join and leave community", async ({
   );
 
   await page
-    .getByTestId("community-card-0x9ee73d7afd1d75d9d3468ab7845150180936dec4") // Opt - 🧪 End-to-End Test Playground
+    .getByTestId(`community-card-${process.env.E2E_COMMUNITY_ID}`) // Opt - 🧪 End-to-End Test Playground
     .click();
 
   // Wait for page loaded

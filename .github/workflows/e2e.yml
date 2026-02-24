@@ -1,11 +1,11 @@
-name: E2E PR
+name: E2E
 
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
 
 concurrency:
-  group: e2e-pr-${{ github.event.pull_request.number || github.ref }}
+  group: e2e-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -169,7 +169,7 @@ jobs:
         if: steps.preflight.outputs.run_e2e == 'true'
         env:
           PLAYWRIGHT_BASE_URL: ${{ steps.vercel.outputs.preview_url }}
-        run: pnpm --filter e2e test
+        run: xvfb-run -a pnpm --filter e2e test
 
       - name: Upload Playwright report
         if: ${{ !cancelled() && steps.preflight.outputs.run_e2e == 'true' }}

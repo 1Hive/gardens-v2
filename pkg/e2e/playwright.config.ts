@@ -32,28 +32,33 @@ export default defineConfig({
   },
   projects: [
     {
-      name: "00-join",
-      testMatch: /00..*\.e2e\.ts$/
+      name: "00-prepare",
+      testMatch: /00-.*\.e2e\.ts$/
     },
     {
-      name: "01-stake",
-      testMatch: /01..*\.e2e\.ts$/,
-      dependencies: ["00-join"]
+      name: "01-join",
+      testMatch: /01-.*\.e2e\.ts$/,
+      dependencies: ["00-prepare"]
     },
     {
-      name: "02-create-pool",
-      testMatch: /02..*\.e2e\.ts$/,
-      dependencies: ["01-stake"]
+      name: "02-stake",
+      testMatch: /02-.*\.e2e\.ts$/,
+      dependencies: ["01-join"]
     },
     {
-      name: "03-approve-pool",
-      testMatch: /03..*\.e2e\.ts$/,
-      dependencies: ["02-create-pool"]
+      name: "03-create-pool",
+      testMatch: /03-.*\.e2e\.ts$/,
+      dependencies: ["02-stake"]
     },
     {
-      name: "99-leave",
-      testMatch: /99..*\.e2e\.ts$/,
-      dependencies: ["03-approve-pool"]
+      name: "04-approve-pool",
+      testMatch: /04-.*\.e2e\.ts$/,
+      dependencies: ["03-create-pool"]
+    },
+    {
+      name: "05-leave",
+      testMatch: /05-.*\.e2e\.ts$/,
+      dependencies: ["04-approve-pool"]
     }
   ]
   // Additional Synpress-specific configuration can be added here
