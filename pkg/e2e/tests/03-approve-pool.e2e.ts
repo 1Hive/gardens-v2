@@ -8,7 +8,6 @@ import {
   connectWallet,
   expectNoErrorToast
 } from "./support/metamaskUtils";
-
 const test = testWithSynpress(metaMaskFixtures(basicSetup));
 
 const { expect } = test;
@@ -17,7 +16,7 @@ const { expect } = test;
 test.setTimeout(240000);
 
 // Define a basic test case
-test("should increase stake in community", async ({
+test("should approve a pool as council safe", async ({
   context,
   page,
   metamaskPage,
@@ -45,18 +44,16 @@ test("should increase stake in community", async ({
   await page.bringToFront();
   await page.waitForTimeout(2000); // Wait for tx to succeed and UI to update
 
-  // 5. Stake 0.2 tokens
-  const stakeInput = page.getByTestId("stake-input").locator(":scope:visible");
-  await expect(stakeInput).toBeVisible({ timeout: 60000 });
-  await stakeInput.fill("0.2");
+  // Find the first pending pool card and navigate to it
+  const poolCard = page.locator('[data-testid^="pool-card-"]').first();
+  await expect(poolCard).toBeVisible({ timeout: 30000 });
+  await poolCard.click();
 
-  await page.getByTestId("btn-stake").locator(":scope:visible").click();
+  // Approve the pool
+  const approveBtn = page.getByTestId("btn-approve");
+  await expect(approveBtn).toBeVisible({ timeout: 30000 });
+  await approveBtn.click();
 
-  // Approve token allowance for staking
-  await approveTokenAllowance({ page, metamask, extensionId });
-  await page.waitForTimeout(1000); // Wait for next tx to launch
-
-  // Confirm the stake transaction
   await confirmTransaction({ metamask, extensionId });
   await expectNoErrorToast(page);
 });

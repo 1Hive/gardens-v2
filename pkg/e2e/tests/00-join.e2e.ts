@@ -81,5 +81,4 @@ test("should join and leave community", async ({
   await expectNoErrorToast(page);
 
   // Close the modal
-  await page.getByTestId("modal-close-button-register").click();
 });

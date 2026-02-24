@@ -117,7 +117,10 @@ export function PoolCard({ pool, token }: Props) {
           }
         </div>
         {!isEnabled ?
-          <div className="banner md:min-w-[262px]">
+          <div
+            className="banner md:min-w-[262px]"
+            data-testid={"pool-card-" + pool.poolId}
+          >
             {pool.archived ?
               <ArchiveBoxIcon className="h-8 w-8 text-secondary-content" />
             : <ClockIcon className="h-8 w-8 text-secondary-content" />}

@@ -8,7 +8,6 @@ import {
   connectWallet,
   expectNoErrorToast
 } from "./support/metamaskUtils";
-
 const test = testWithSynpress(metaMaskFixtures(basicSetup));
 
 const { expect } = test;
@@ -17,7 +16,7 @@ const { expect } = test;
 test.setTimeout(240000);
 
 // Define a basic test case
-test("should join and leave community", async ({
+test("should create a pool in the community", async ({
   context,
   page,
   metamaskPage,
