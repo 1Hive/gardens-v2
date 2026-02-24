@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
-import { formatEther } from "viem";
+import { formatEther, parseEther } from "viem";
 import MarkeeModal from "./MarkeeModal";
 
 const MARKEE_SUBGRAPH_ID = "8kMCKUHSY7o6sQbsvufeLVo8PifxrsnagjVTMGcs6KdF";
@@ -11,6 +11,10 @@ export const MARKEE_SUBGRAPH_URL = SUBGRAPH_GATEWAY_KEY
   : `https://api.studio.thegraph.com/query/1742437/markee-base/version/latest`;
 
 export const GARDENS_STRATEGY = "0x346419315740f085ba14ca7239d82105a9a2bdbe";
+
+// Confirmed from Basescan readContract
+const MIN_PRICE = parseEther("0.003");
+const MIN_INCREMENT = parseEther("0.001");
 
 const QUERY = `{
   topDawgPartnerStrategy(id: "${GARDENS_STRATEGY}") {
@@ -32,7 +36,7 @@ type SignData = {
 const DEFAULT_DATA: SignData = {
   message: "this is a sign.",
   totalFundsAdded: BigInt(0),
-  minimumPrice: BigInt(0),
+  minimumPrice: MIN_PRICE,
 };
 
 export default function MarkeeSign() {
@@ -59,10 +63,12 @@ export default function MarkeeSign() {
         console.log("[MarkeeSign] subgraph response:", JSON.stringify(res.data));
         const strategy = res.data?.topDawgPartnerStrategy;
         const markee = strategy?.markees?.[0];
+        // Use subgraph minimumPrice only if it looks valid (> 0), else fall back to confirmed value
+        const subgraphMinPrice = BigInt(strategy?.minimumPrice ?? 0);
         setData({
           message: markee?.message ?? "this is a sign.",
           totalFundsAdded: BigInt(markee?.totalFundsAdded ?? 0),
-          minimumPrice: BigInt(strategy?.minimumPrice ?? 0),
+          minimumPrice: subgraphMinPrice > BigInt(0) ? subgraphMinPrice : MIN_PRICE,
         });
       })
       .catch((err) => {
@@ -75,9 +81,15 @@ export default function MarkeeSign() {
     fetchData();
   }, [fetchData]);
 
+  // Amount needed to take the top spot
+  const takeTopSpot =
+    data.totalFundsAdded > BigInt(0)
+      ? data.totalFundsAdded + MIN_INCREMENT
+      : data.minimumPrice;
+
   const ethDisplay =
     data.totalFundsAdded > BigInt(0)
-      ? `${parseFloat(formatEther(data.totalFundsAdded)).toFixed(3)} ETH to change`
+      ? `${parseFloat(formatEther(takeTopSpot)).toFixed(3)} ETH to change`
       : "be first!";
 
   return (
@@ -94,7 +106,7 @@ export default function MarkeeSign() {
           </p>
         </div>
 
-        {/* Price badge — bottom center, only visible on hover */}
+        {/* Price badge — bottom center, visible on hover */}
         <span className="absolute -bottom-3 left-1/2 -translate-x-1/2 rounded-full border border-neutral-content/30 bg-neutral px-3 py-0.5 text-xs font-mono text-neutral-content/60 opacity-0 group-hover:opacity-100 group-hover:border-primary-content/40 group-hover:text-primary-content/70 transition-all duration-200 whitespace-nowrap">
           {loading ? "···" : ethDisplay}
         </span>
@@ -111,6 +123,7 @@ export default function MarkeeSign() {
           currentTopDawg={data.totalFundsAdded}
           currentMessage={data.message}
           minimumPrice={data.minimumPrice}
+          takeTopSpot={takeTopSpot}
           subgraphUrl={MARKEE_SUBGRAPH_URL}
         />
       )}
