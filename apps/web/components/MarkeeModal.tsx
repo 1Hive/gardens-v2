@@ -7,7 +7,6 @@ import { base } from "viem/chains";
 import {
   useAccount,
   useBalance,
-  useContractRead,
   useContractWrite,
   useNetwork,
   usePublicClient,
@@ -26,34 +25,11 @@ const TOP_DAWG_PARTNER_ABI = [
     ],
     outputs: [{ name: "markeeAddress", type: "address" }],
   },
-  {
-    name: "maxMessageLength",
-    type: "function",
-    stateMutability: "view",
-    inputs: [],
-    outputs: [{ name: "", type: "uint256" }],
-  },
-  {
-    name: "maxNameLength",
-    type: "function",
-    stateMutability: "view",
-    inputs: [],
-    outputs: [{ name: "", type: "uint256" }],
-  },
-  {
-    name: "minimumPrice",
-    type: "function",
-    stateMutability: "view",
-    inputs: [],
-    outputs: [{ name: "", type: "uint256" }],
-  },
 ] as const;
 
-// Confirmed values from Basescan
+// Confirmed from Basescan readContract
 const DEFAULT_MAX_MESSAGE = 223;
 const DEFAULT_MAX_NAME = 22;
-const DEFAULT_MIN_PRICE = parseEther("0.003"); // 3000000000000000 wei
-const MIN_INCREMENT = parseEther("0.001");
 
 type LeaderboardEntry = {
   message: string;
@@ -68,6 +44,7 @@ type Props = {
   currentTopDawg: bigint;
   currentMessage: string;
   minimumPrice: bigint;
+  takeTopSpot: bigint;
   subgraphUrl: string;
 };
 
@@ -77,7 +54,8 @@ export default function MarkeeModal({
   strategyAddress,
   currentTopDawg,
   currentMessage,
-  minimumPrice: minimumPriceProp,
+  minimumPrice,
+  takeTopSpot,
   subgraphUrl,
 }: Props) {
   const [message, setMessage] = useState("");
@@ -100,36 +78,6 @@ export default function MarkeeModal({
 
   const isOnBase = chain?.id === base.id;
   const isConnected = !!address;
-
-  // Read limits and min price directly from contract (confirmed values as defaults)
-  const { data: maxMessageLength } = useContractRead({
-    address: strategyAddress,
-    abi: TOP_DAWG_PARTNER_ABI,
-    functionName: "maxMessageLength",
-    chainId: base.id,
-  });
-  const { data: maxNameLength } = useContractRead({
-    address: strategyAddress,
-    abi: TOP_DAWG_PARTNER_ABI,
-    functionName: "maxNameLength",
-    chainId: base.id,
-  });
-  const { data: contractMinPrice } = useContractRead({
-    address: strategyAddress,
-    abi: TOP_DAWG_PARTNER_ABI,
-    functionName: "minimumPrice",
-    chainId: base.id,
-  });
-
-  const maxMsg = maxMessageLength ? Number(maxMessageLength) : DEFAULT_MAX_MESSAGE;
-  const maxName = maxNameLength ? Number(maxNameLength) : DEFAULT_MAX_NAME;
-  // Use contract read value, fall back to prop, then hardcoded default
-  const minPrice =
-    contractMinPrice && contractMinPrice > BigInt(0)
-      ? contractMinPrice
-      : minimumPriceProp > BigInt(0)
-        ? minimumPriceProp
-        : DEFAULT_MIN_PRICE;
 
   const { writeAsync, isLoading: isPending } = useContractWrite({
     address: strategyAddress,
@@ -174,15 +122,10 @@ export default function MarkeeModal({
     if (e.target === dialogRef.current) onClose();
   };
 
-  // Take top spot = currentTopDawg + 0.001 ETH (or minPrice if no top dawg)
-  const takeTopSpot =
-    currentTopDawg > BigInt(0) ? currentTopDawg + MIN_INCREMENT : minPrice;
-  const minToJoin = minPrice;
-
+  // Passed in from MarkeeSign (computed correctly there)
   const takeTopSpotEth = parseFloat(formatEther(takeTopSpot)).toFixed(3);
-  const minToJoinEth = parseFloat(formatEther(minToJoin)).toFixed(3);
+  const minToJoinEth = parseFloat(formatEther(minimumPrice)).toFixed(3);
 
-  // Total ETH raised across all leaderboard entries
   const totalRaised = leaderboard.reduce(
     (sum, e) => sum + BigInt(e.totalFundsAdded),
     BigInt(0),
@@ -209,7 +152,7 @@ export default function MarkeeModal({
         setInputError("Invalid ETH amount.");
         return false;
       }
-      if (parsedAmount < minToJoin) {
+      if (parsedAmount < minimumPrice) {
         setEthError(true);
         setInputError(`Minimum is ${minToJoinEth} ETH to join the leaderboard.`);
         valid = false;
@@ -222,8 +165,8 @@ export default function MarkeeModal({
         if (valid) setInputError(null);
       }
     }
-    if (!valid && !inputError) {
-      setInputError("Please fill in all required fields.");
+    if (!valid && message.trim()) {
+      // Only set generic error if no specific eth error was set
     }
     return valid;
   };
@@ -254,6 +197,8 @@ export default function MarkeeModal({
   };
 
   const isLoading = isPending || isConfirming || isSwitching;
+  // Grey out buy button if connected but on wrong network
+  const buyDisabled = isLoading || (isConnected && !isOnBase);
 
   return (
     <dialog
@@ -334,7 +279,6 @@ export default function MarkeeModal({
                       </span>
                     </div>
                   ))}
-                  {/* Total raised */}
                   <div className="flex justify-between pt-2 border-t border-neutral-content/10">
                     <span className="text-xs text-neutral-content/50 font-medium">Total raised</span>
                     <span className="text-xs font-mono font-semibold text-neutral-content/70">
@@ -363,7 +307,7 @@ export default function MarkeeModal({
           <label className="block text-sm font-medium text-neutral-content mb-1.5">
             Your Message{" "}
             <span className="text-xs text-neutral-content/40 font-normal">
-              ({message.length}/{maxMsg})
+              ({message.length}/{DEFAULT_MAX_MESSAGE})
             </span>
           </label>
           <textarea
@@ -372,12 +316,12 @@ export default function MarkeeModal({
             }`}
             placeholder="this is a sign."
             value={message}
-            maxLength={maxMsg}
+            maxLength={DEFAULT_MAX_MESSAGE}
             rows={3}
             onChange={(e) => {
               setMessage(e.target.value);
               setMessageError(false);
-              if (inputError === "Please fill in all required fields.") setInputError(null);
+              setInputError(null);
             }}
           />
           {messageError && (
@@ -390,7 +334,7 @@ export default function MarkeeModal({
           <label className="block text-sm font-medium text-neutral-content mb-1.5">
             Your Name{" "}
             <span className="text-xs text-neutral-content/40 font-normal">
-              (optional · {name.length}/{maxName})
+              (optional · {name.length}/{DEFAULT_MAX_NAME})
             </span>
           </label>
           <input
@@ -398,7 +342,7 @@ export default function MarkeeModal({
             className="input input-bordered w-full bg-neutral border-border-neutral text-neutral-content placeholder:text-neutral-content/30 text-sm"
             placeholder="vitalik"
             value={name}
-            maxLength={maxName}
+            maxLength={DEFAULT_MAX_NAME}
             onChange={(e) => setName(e.target.value)}
           />
         </div>
@@ -407,21 +351,21 @@ export default function MarkeeModal({
         <div className="mb-4">
           <label className="block text-sm font-medium text-neutral-content mb-2">
             ETH Amount
-            {balance && (
+            {isOnBase && balance && (
               <span className="text-xs text-neutral-content/40 font-normal ml-2">
                 (balance: {parseFloat(formatEther(balance.value)).toFixed(3)} ETH)
               </span>
             )}
           </label>
           <div className="grid grid-cols-3 gap-2">
-            {/* Take top spot — highlighted */}
+            {/* Take top spot — gold border highlight */}
             <button
               type="button"
               onClick={() => { setEthAmount(takeTopSpotEth); setEthError(false); setInputError(null); }}
-              className={`flex flex-col items-center justify-center rounded border-2 bg-neutral-focus hover:bg-neutral-focus/80 transition-colors px-2 py-2.5 text-center cursor-pointer ${
+              className={`flex flex-col items-center justify-center rounded bg-neutral-focus hover:bg-neutral-focus/80 transition-colors px-2 py-2.5 text-center cursor-pointer ${
                 ethAmount === takeTopSpotEth
-                  ? "border-primary"
-                  : "border-primary/40 hover:border-primary"
+                  ? "border-2 border-yellow-400"
+                  : "border-2 border-yellow-400/50 hover:border-yellow-400"
               }`}
             >
               <span className="text-xs font-mono font-semibold text-neutral-content">
@@ -436,9 +380,9 @@ export default function MarkeeModal({
             <button
               type="button"
               onClick={() => { setEthAmount(minToJoinEth); setEthError(false); setInputError(null); }}
-              className={`flex flex-col items-center justify-center rounded border bg-neutral-focus hover:border-primary-content/40 hover:bg-neutral-focus/80 transition-colors px-2 py-2.5 text-center cursor-pointer ${
+              className={`flex flex-col items-center justify-center rounded border bg-neutral-focus hover:border-neutral-content/40 hover:bg-neutral-focus/80 transition-colors px-2 py-2.5 text-center cursor-pointer ${
                 ethAmount === minToJoinEth && ethAmount !== takeTopSpotEth
-                  ? "border-primary-content/60"
+                  ? "border-neutral-content/60"
                   : "border-neutral-content/20"
               }`}
             >
@@ -488,14 +432,14 @@ export default function MarkeeModal({
           </div>
         )}
 
-        {/* General error (non-field-specific) */}
+        {/* General error */}
         {inputError && !messageError && !ethError && (
           <div className="mb-4 rounded border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-400">
             {inputError}
           </div>
         )}
 
-        {/* Action — centered, always clickable */}
+        {/* Action — centered */}
         <div className="flex justify-center mt-5">
           {!isConnected ? (
             <button
@@ -510,8 +454,12 @@ export default function MarkeeModal({
           ) : (
             <button
               onClick={handleSubmit}
-              disabled={isLoading}
-              className="btn btn-sm border-0 px-8 text-white bg-green-600 hover:bg-green-500 disabled:bg-green-600/50 disabled:text-white/70"
+              disabled={buyDisabled}
+              className={`btn btn-sm border-0 px-8 text-white transition-colors ${
+                buyDisabled
+                  ? "bg-neutral-content/30 cursor-not-allowed"
+                  : "bg-green-600 hover:bg-green-500"
+              }`}
             >
               {isPending ?
                 "Confirm in wallet..."
@@ -523,7 +471,7 @@ export default function MarkeeModal({
         </div>
 
         <p className="mt-4 text-center text-xs text-neutral-content/40">
-          You&apos;ll receive MARKEE tokens and become an owner of the Markee network
+          You&apos;ll receive MARKEE tokens and become a Markee Network owner
         </p>
       </div>
       <form method="dialog" className="modal-backdrop">
