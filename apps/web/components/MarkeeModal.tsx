@@ -79,7 +79,9 @@ export default function MarkeeModal({
   const isConnected = !!address;
 
   const { writeAsync, isLoading: isPending } = useContractWriteWithConfirmations({
-    mode: "recklesslyUnprepared" as const,
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore: wagmi v1 recklesslyUnprepared mode not in wrapper type signature
+    mode: "recklesslyUnprepared",
     address: strategyAddress,
     abi: TOP_DAWG_PARTNER_ABI,
     functionName: "createMarkee",
@@ -177,10 +179,10 @@ export default function MarkeeModal({
     if (!writeAsync) return;
     setIsConfirming(true);
     try {
-      await writeAsync({
-        recklesslySetUnpreparedArgs: [message.trim(), name.trim()],
-        recklesslySetUnpreparedOverrides: { value: parseEther(ethAmount) },
-      } as any);
+      await (writeAsync as any)({
+        args: [message.trim(), name.trim()],
+        value: parseEther(ethAmount),
+      });
       // onSuccess is called via onConfirmations in the hook
     } catch (err: any) {
       console.error("[MarkeeModal] transaction error:", err);
