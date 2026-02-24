@@ -80,10 +80,10 @@ export default function MarkeeModal({
   const isConnected = !!address;
 
   const { writeAsync, isLoading: isPending } = useContractWrite({
-    mode: "recklesslyUnprepared",
     address: strategyAddress,
     abi: TOP_DAWG_PARTNER_ABI,
     functionName: "createMarkee",
+    mode: "recklesslyUnprepared" as const,
   });
 
   const publicClient = usePublicClient({ chainId: base.id });
@@ -183,7 +183,7 @@ export default function MarkeeModal({
       const { hash } = await writeAsync({
         recklesslySetUnpreparedArgs: [message.trim(), name.trim()],
         recklesslySetUnpreparedOverrides: { value: parseEther(ethAmount) },
-      });
+      } as any);
       await publicClient.waitForTransactionReceipt({ hash });
       onSuccess();
     } catch (err: any) {
