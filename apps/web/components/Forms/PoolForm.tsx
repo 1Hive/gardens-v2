@@ -277,7 +277,10 @@ export function PoolForm({
       parse: (value: string) => value + " %",
     },
     minimumConviction: {
-      label: "Minimum conviction:",
+      label:
+        PoolTypes[strategyType] === "streaming" ?
+          "Minimum conviction to stream:"
+        : "Minimum conviction:",
       parse: (value: string) => value + " %",
     },
     convictionGrowth: {
@@ -384,6 +387,12 @@ export function PoolForm({
   };
 
   const contractWrite = async (ipfsHash: string) => {
+    if (!previewData) {
+      throw new Error("No preview data");
+    }
+
+    const isStreamingPool = PoolTypes[previewData.strategyType] === "streaming";
+
     let spendingLimit: number;
     let minimumConviction;
     let convictionGrowth;
@@ -399,6 +408,11 @@ export function PoolForm({
         ?.minimumConviction as number; // percentage
       convictionGrowth = poolSettingValues[optionType].values
         ?.convictionGrowth as number; // days
+    }
+
+    if (isStreamingPool) {
+      // Streaming pools use a fixed internal spending limit for threshold math.
+      spendingLimit = 25;
     }
 
     // parse to percentage fraction
@@ -423,12 +437,6 @@ export function PoolForm({
 
     const maxAmountStr = (previewData?.maxAmount ?? 0).toString();
 
-    if (!previewData) {
-      throw new Error("No preview data");
-    }
-
-    const isStreamingPool =
-      PoolTypes[previewData.strategyType] === "streaming";
     const monthlyBudget = Number(previewData.monthlyBudget ?? 0);
     const streamingRatePerSecond =
       isStreamingPool ?
@@ -1145,7 +1153,11 @@ export function PoolForm({
                 <div className="flex flex-col">
                   <FormInput
                     tooltip="% of Pool's voting weight needed to pass the smallest funding proposal possible. Higher funding requests demand greater conviction to pass."
-                    label="Minimum conviction"
+                    label={
+                      PoolTypes[strategyType] === "streaming" ?
+                        "Minimum conviction to stream:"
+                      : "Minimum conviction:"
+                    }
                     register={register}
                     errors={errors}
                     registerKey="minimumConviction"
@@ -1158,7 +1170,7 @@ export function PoolForm({
                     }}
                     registerOptions={{
                       max: {
-                        value: 99.9,
+                        value: 100,
                         message: "Minimum conviction should be under 100%",
                       },
                     }}
@@ -1201,7 +1213,11 @@ export function PoolForm({
                 <div className="flex flex-col">
                   <FormInput
                     tooltip={`A fixed amount of ${governanceToken.symbol} that overrides Minimum Conviction when the Pool's activated governance is low.`}
-                    label="Minimum threshold points"
+                    label={
+                      PoolTypes[strategyType] === "streaming" ?
+                        "Minimum threshold to stream:"
+                      : "Minimum threshold:"
+                    }
                     register={register}
                     registerOptions={{
                       min: {

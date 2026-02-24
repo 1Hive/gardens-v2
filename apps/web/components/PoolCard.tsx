@@ -17,6 +17,7 @@ import {
   PoolMetadata,
 } from "#/subgraph/.graphclient";
 import { Skeleton } from "./Skeleton";
+import { StreamingPoolGraphic } from "./StreamingPoolGraphic";
 import TooltipIfOverflow from "./TooltipIfOverflow";
 import { blueLand, grass } from "@/assets";
 import { Badge, Card, DisplayNumber, Statistic } from "@/components";
@@ -123,6 +124,8 @@ export function PoolCard({ pool, token }: Props) {
             : <ClockIcon className="h-8 w-8 text-secondary-content" />}
             <h6>{pool.archived ? "Archived" : "Waiting for approval"}</h6>
           </div>
+        : poolType != null && PoolTypes[poolType] === "streaming" ?
+          <StreamingPoolGraphic className="mt-0 h-12 sm:h-14 border-[#0f645f]/35" />
         : <Image
             src={
               poolType != null && PoolTypes[poolType] === "funding" ?

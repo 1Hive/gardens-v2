@@ -12,6 +12,7 @@ import { Badge } from "@/components";
 import { Button } from "@/components/Button";
 import { PoolForm } from "@/components/Forms/PoolForm";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { StreamingPoolGraphic } from "@/components/StreamingPoolGraphic";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 
 type ClientPageProps = {
@@ -90,13 +91,16 @@ export default function ClientPage({
                   <p className="text-sm text-neutral-soft-content min-h-[58px]">
                     {option.description}
                   </p>
-                  <Image
-                    src={option.image}
-                    alt={`${option.title} pool`}
-                    width={640}
-                    height={160}
-                    className="h-16 w-full rounded-lg object-cover mt-4"
-                  />
+                  {option.type === 2 ?
+                    <StreamingPoolGraphic />
+                  : <Image
+                      src={option.image}
+                      alt={`${option.title} pool`}
+                      width={640}
+                      height={160}
+                      className="h-16 w-full rounded-lg object-cover mt-4"
+                    />
+                  }
                 </button>
               ))}
             </div>
