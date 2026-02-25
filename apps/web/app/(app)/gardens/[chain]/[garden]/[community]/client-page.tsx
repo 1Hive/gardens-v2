@@ -363,7 +363,7 @@ export default function ClientPage({
     if (!canSeeArchivedPools && poolStatusFilter === "archive") {
       setPoolStatusFilter("active");
     }
-  }, [canSeeArchivedPools, poolStatusFilter]);
+  }, [canSeeArchivedPools, poolStatusFilter, setPoolStatusFilter]);
 
   useEffect(() => {
     const newPoolId = searchParams[QUERY_PARAMS.communityPage.newPool];
