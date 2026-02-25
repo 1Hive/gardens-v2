@@ -701,7 +701,7 @@ export function Proposals({
     ),
     // "closed" filter groups both cancelled (3) and rejected (6) proposals
     closed: sortedProposals.filter((p) =>
-      [3, 6].includes(Number(p.proposalStatus)),
+      (CLOSED_STATUSES as readonly number[]).includes(Number(p.proposalStatus)),
     ).length,
   };
 
@@ -961,6 +961,9 @@ export function Proposals({
   );
 }
 
+// Statuses that are grouped under the "closed" filter (cancelled=3, rejected=6)
+const CLOSED_STATUSES = [3, 6] as const;
+
 export function useProposalFilter<
   T extends {
     proposalStatus: string | number;
@@ -988,7 +991,7 @@ export function useProposalFilter<
   const FILTER_STATUS: Record<Exclude<FilterType, null>, number | number[]> = {
     all: 0,
     active: 1,
-    closed: [3, 6],
+    closed: [...CLOSED_STATUSES],
     executed: 4,
     disputed: 5,
   };
