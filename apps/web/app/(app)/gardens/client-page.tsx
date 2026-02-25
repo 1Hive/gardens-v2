@@ -33,7 +33,7 @@ const Header = () => {
   return (
     <header className="flex flex-col items-center gap-8 w-full">
       <div className="flex items-center text-center w-full">
-        <div className="relative flex-1">
+        <div className="relative shrink-0 w-[175px] hidden sm:block">
           <Image
             src={resolvedTheme === "lightTheme" ? clouds1 : gardensNight}
             alt="clouds"
@@ -41,7 +41,7 @@ const Header = () => {
             height={175}
           />
         </div>
-        <div className="sm:mx-10 flex flex-col items-center w-full gap-5">
+        <div className="sm:mx-10 flex flex-1 min-w-0 flex-col items-center gap-5">
           <div className="flex flex-col items-center w-full">
             <h1 className="max-w-xl text-center text-neutral-content">
               Welcome to Gardens
@@ -62,7 +62,7 @@ const Header = () => {
             </Link>
           </div>
         </div>
-        <div className="relative flex-1">
+        <div className="relative shrink-0 w-[175px] hidden sm:block">
           <Image src={clouds2} alt="clouds" width={175} height={175} />
         </div>
       </div>

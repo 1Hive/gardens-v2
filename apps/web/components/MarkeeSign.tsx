@@ -88,7 +88,7 @@ export default function MarkeeSign() {
         aria-label="Click to edit this Markee sign"
       >
         {/* Sign body */}
-        <div className="border border-neutral-content/30 rounded px-16 py-8 sm:min-w-[420px] max-w-lg bg-neutral hover:border-primary-content/50 transition-colors duration-200">
+        <div className="border border-neutral-content/30 rounded px-8 md:px-16 py-8 max-w-lg bg-neutral hover:border-primary-content/50 transition-colors duration-200">
           <p className="font-mono text-neutral-content text-lg group-hover:text-primary-content transition-colors duration-200 text-center leading-snug">
             {loading ? "loading..." : data.message}
           </p>
