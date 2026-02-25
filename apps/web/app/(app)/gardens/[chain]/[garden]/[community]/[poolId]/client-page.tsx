@@ -29,7 +29,6 @@ import {
 } from "#/subgraph/.graphclient";
 import {
   ActivatePoints,
-  Button,
   CheckSybil,
   InfoBox,
   PoolGovernance,
@@ -44,7 +43,6 @@ import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import { SubscriptionId, usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
-import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { usePoolToken } from "@/hooks/usePoolToken";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
