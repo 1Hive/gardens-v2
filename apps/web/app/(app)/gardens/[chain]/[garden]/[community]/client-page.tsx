@@ -40,7 +40,7 @@ import {
   RegisterMember,
   Statistic,
 } from "@/components";
-import { Divider } from "@/components/Diivider";
+import { Divider } from "@/components/Divider";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import MarkdownWrapper from "@/components/MarkdownWrapper";
 import { Skeleton } from "@/components/Skeleton";
