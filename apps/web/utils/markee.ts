@@ -33,7 +33,10 @@ type MarkeeSubgraphResponse = {
   errors?: unknown;
 };
 
-async function postMarkeeQuery(query: string): Promise<MarkeeSubgraphResponse> {
+async function postMarkeeQuery(
+  query: string,
+  variables?: Record<string, unknown>,
+): Promise<MarkeeSubgraphResponse> {
   const urls = [MARKEE_GATEWAY_URL, MARKEE_STUDIO_URL].filter(
     (url): url is string => Boolean(url),
   );
@@ -44,7 +47,7 @@ async function postMarkeeQuery(query: string): Promise<MarkeeSubgraphResponse> {
       const response = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query }),
+        body: JSON.stringify({ query, variables }),
       });
 
       if (!response.ok) {
@@ -71,31 +74,37 @@ async function postMarkeeQuery(query: string): Promise<MarkeeSubgraphResponse> {
 
 export async function fetchMarkeeSignData(strategyAddress: Address) {
   const strategyId = strategyAddress.toLowerCase();
-  const result = await postMarkeeQuery(`{
-    topDawgPartnerStrategy(id: "${strategyId}") {
-      minimumPrice
-      markees(first: 1, orderBy: totalFundsAdded, orderDirection: desc) {
-        message
-        name
-        totalFundsAdded
+  const result = await postMarkeeQuery(
+    `query($id: ID!) {
+      topDawgPartnerStrategy(id: $id) {
+        minimumPrice
+        markees(first: 1, orderBy: totalFundsAdded, orderDirection: desc) {
+          message
+          name
+          totalFundsAdded
+        }
       }
-    }
-  }`);
+    }`,
+    { id: strategyId },
+  );
 
   return result.data?.topDawgPartnerStrategy ?? null;
 }
 
 export async function fetchMarkeeLeaderboard(strategyAddress: Address) {
   const strategyId = strategyAddress.toLowerCase();
-  const result = await postMarkeeQuery(`{
-    topDawgPartnerStrategy(id: "${strategyId}") {
-      markees(first: 10, orderBy: totalFundsAdded, orderDirection: desc) {
-        message
-        name
-        totalFundsAdded
+  const result = await postMarkeeQuery(
+    `query($id: ID!) {
+      topDawgPartnerStrategy(id: $id) {
+        markees(first: 10, orderBy: totalFundsAdded, orderDirection: desc) {
+          message
+          name
+          totalFundsAdded
+        }
       }
-    }
-  }`);
+    }`,
+    { id: strategyId },
+  );
 
   return result.data?.topDawgPartnerStrategy?.markees ?? [];
 }
