@@ -198,8 +198,11 @@ export default function ClientPage({
     enabled: !!wallet && !!strategy?.registryCommunity?.id,
   });
 
-  const { data: memberStrategyData, refetch: refetchMemberStrategyData } =
-    useSubgraphQuery<getMemberStrategyQuery>({
+  const {
+    data: memberStrategyData,
+    refetch: refetchMemberStrategyData,
+    fetching: fetchingMemberStrategy,
+  } = useSubgraphQuery<getMemberStrategyQuery>({
       query: getMemberStrategyDocument,
       variables: {
         member_strategy: `${wallet?.toLowerCase()}-${strategy?.id.toLowerCase()}`,
@@ -246,7 +249,10 @@ export default function ClientPage({
   );
 
   const memberActivatedStrategy =
-    memberStrategyData?.memberStrategy?.activatedPoints > 0n;
+    (memberStrategyData?.memberStrategy?.activatedPoints ?? 0n) > 0n;
+
+  const shouldShowActivateGovernanceCard =
+    isMemberCommunity && !memberActivatedStrategy && !fetchingMemberStrategy;
 
   const { subscribe, unsubscribe, connected } = usePubSubContext();
 
@@ -539,7 +545,7 @@ export default function ClientPage({
       )}
 
       {/* Activate governance box */}
-      {isMemberCommunity && !memberActivatedStrategy && (
+      {shouldShowActivateGovernanceCard && (
         <div className="border rounded-xl shadow-md border-primary-content bg-primary p-4 sm:p-6 dark:bg-primary-soft-dark mt-6 sm:mt-0">
           <div className="flex items-start gap-3 sm:gap-4">
             <div className="rounded-full bg-primary-content/10 p-3 flex-shrink-0">

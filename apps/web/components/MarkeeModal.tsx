@@ -62,7 +62,8 @@ export default function MarkeeModal({
     switchNetworkAsync,
     isLoading: isSwitching,
   } = useSwitchNetwork();
-  const { openConnectModal } = useConnectModal();
+  const { openConnectModal, connectModalOpen } = useConnectModal();
+  const [hiddenForConnect, setHiddenForConnect] = useState(false);
 
   const activeAddress = address;
   const isOnBase = connectedChainId === MarkeeNetwork.id;
@@ -90,6 +91,14 @@ export default function MarkeeModal({
   useEffect(() => {
     dialogRef.current?.showModal();
   }, []);
+
+  useEffect(() => {
+    if (!hiddenForConnect || connectModalOpen) return;
+    if (!dialogRef.current?.open) {
+      dialogRef.current?.showModal();
+    }
+    setHiddenForConnect(false);
+  }, [connectModalOpen, hiddenForConnect]);
 
   useEffect(() => {
     if (!leaderboardOpen || leaderboard.length > 0) return;
@@ -230,12 +239,17 @@ export default function MarkeeModal({
     onClose();
   };
 
+  const handleDialogClose = () => {
+    if (hiddenForConnect) return;
+    onClose();
+  };
+
   return (
     <dialog
       ref={dialogRef}
       className="modal max-sm:modal-bottom"
       onClick={handleBackdropClick}
-      onClose={onClose}
+      onClose={handleDialogClose}
     >
       <div className="modal-box bg-neutral border border-border-neutral dark:border-white/15 dark:shadow-[0_20px_60px_rgba(0,0,0,0.45)] max-w-md w-full p-0 max-h-[85vh] flex flex-col overflow-hidden">
         {/* Header */}
@@ -515,6 +529,7 @@ export default function MarkeeModal({
           {!isConnected ?
             <button
               onClick={() => {
+                setHiddenForConnect(true);
                 dialogRef.current?.close();
                 openConnectModal?.();
               }}

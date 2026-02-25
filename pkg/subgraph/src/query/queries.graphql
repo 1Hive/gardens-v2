@@ -271,6 +271,7 @@ query getCommunity($communityAddr: ID!, $tokenAddr: ID!) {
       id
       proposals(first: 1000) {
         id
+        proposalStatus
       }
       archived
       isEnabled
@@ -284,9 +285,6 @@ query getCommunity($communityAddr: ID!, $tokenAddr: ID!) {
       config {
         proposalType
         pointSystem
-      }
-      proposals(first: 1000) {
-        id
       }
     }
     covenantIpfsHash

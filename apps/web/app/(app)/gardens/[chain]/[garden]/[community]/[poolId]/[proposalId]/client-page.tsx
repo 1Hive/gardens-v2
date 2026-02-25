@@ -631,7 +631,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                 )}
               {status !== "executed" && status !== "cancelled" && (
                 <Button
-                  onClick={() => setOpenSupportersModal(!openSupportersModal)}
+                  onClick={() => setOpenSupportersModal(true)}
                   btnStyle="outline"
                   color="tertiary"
                   className=""
@@ -662,15 +662,14 @@ export default function ClientPage({ params }: ClientPageProps) {
             </section>
           )}
 
-          {filteredAndSortedProposalSupporters.length > 0 &&
-            totalSupportPct != null && (
+          {shouldShowSupportersTab && (
               <section className="xl:max-h-10">
                 <ProposalSupportersTable
                   supporters={filteredAndSortedProposalSupporters}
                   beneficiary={beneficiary}
                   submitter={submitter}
-                  totalActivePoints={totalEffectiveActivePoints}
-                  totalStakedAmount={totalSupportPct}
+                  totalActivePoints={totalEffectiveActivePoints ?? 0}
+                  totalStakedAmount={totalSupportPct ?? 0}
                   openSupportersModal={openSupportersModal}
                   setOpenSupportersModal={setOpenSupportersModal}
                 />
@@ -1016,16 +1015,13 @@ export default function ClientPage({ params }: ClientPageProps) {
             </>
           )}
 
-          {shouldShowSupportersTab &&
-            selectedTab === 3 &&
-            filteredAndSortedProposalSupporters.length > 0 &&
-            totalSupportPct != null && (
+          {shouldShowSupportersTab && selectedTab === 3 && (
               <ProposalSupportersTable
                 supporters={filteredAndSortedProposalSupporters}
                 beneficiary={beneficiary}
                 submitter={submitter}
-                totalActivePoints={totalEffectiveActivePoints}
-                totalStakedAmount={totalSupportPct}
+                totalActivePoints={totalEffectiveActivePoints ?? 0}
+                totalStakedAmount={totalSupportPct ?? 0}
                 openSupportersModal={openSupportersModal}
                 setOpenSupportersModal={setOpenSupportersModal}
                 withModal={false}
