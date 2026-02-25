@@ -483,7 +483,9 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
           protocol: 1n,
           pointer: ipfsHash,
         },
-      ],
+      ] as unknown as NonNullable<
+        Parameters<NonNullable<typeof writeCreatePool>>[0]
+      >["args"],
     });
   };
 

@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { PowerIcon } from "@heroicons/react/24/outline";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { Address, useAccount } from "wagmi";
 import { CVStrategy, CVStrategyConfig } from "#/subgraph/.graphclient";
@@ -21,6 +22,7 @@ type ActiveMemberProps = {
   isMemberActivated: boolean | undefined;
   isMember: boolean | undefined;
   handleTxSuccess?: () => void;
+  activate?: boolean;
 };
 
 export function ActivatePoints({
@@ -28,6 +30,7 @@ export function ActivatePoints({
   isMember,
   isMemberActivated,
   handleTxSuccess = () => {},
+  activate = true,
 }: ActiveMemberProps) {
   const { address: connectedAccount } = useAccount();
   const { openConnectModal } = useConnectModal();
@@ -90,18 +93,14 @@ export function ActivatePoints({
   useErrorDetails(errorActivatePoints, "activatePoints");
   useErrorDetails(errorDeactivatePoints, "deactivatePoints");
 
-  async function handleClick() {
-    if (connectedAccount) {
-      if (isMemberActivated) {
-        writeDeactivatePoints?.({ args: [] });
-      } else {
-        writeActivatePoints?.({
-          args: [],
-        });
-      }
-    } else {
-      openConnectModal?.();
-    }
+  function handleActivate() {
+    if (!connectedAccount) return openConnectModal?.();
+    writeActivatePoints?.({ args: [] });
+  }
+
+  function handleDeactivate() {
+    if (!connectedAccount) return openConnectModal?.();
+    writeDeactivatePoints?.({ args: [] });
   }
 
   // Activate Disable Button condition => message mapping
@@ -124,16 +123,35 @@ export function ActivatePoints({
     disableActiveBtnCondition,
   );
 
+  // ACTIVATE BUTTON
+  if (activate) {
+    return (
+      <Button
+        onClick={handleActivate}
+        btnStyle="filled"
+        color="primary"
+        disabled={missmatchUrl || disableActiveBtn}
+        tooltip={tooltipMessage}
+        isLoading={isLoadingActivatePoints}
+      >
+        Activate governance
+      </Button>
+    );
+  }
+
+  // DEACTIVATE BUTTON
   return (
     <Button
-      onClick={handleClick}
-      btnStyle={isMemberActivated ? "outline" : "filled"}
-      color={isMemberActivated ? "danger" : "primary"}
-      disabled={missmatchUrl || disableActiveBtn || !isAllowed}
+      onClick={handleDeactivate}
+      btnStyle="filled"
+      color="danger"
+      disabled={missmatchUrl || disableActiveBtn || !isMemberActivated}
       tooltip={tooltipMessage}
-      isLoading={isLoadingActivatePoints || isLoadingDeactivatePoints}
+      isLoading={isLoadingDeactivatePoints}
+      className="!w-full"
+      icon={<PowerIcon className="h-5 w-5" />}
     >
-      {isMemberActivated ? "Deactivate governance" : "Activate governance"}
+      Deactivate governance
     </Button>
   );
 }

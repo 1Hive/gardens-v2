@@ -30,12 +30,12 @@ const PROPOSAL_STATUS_STYLES = [
   "bg-secondary-soft dark:bg-secondary-soft-dark text-secondary-content",
   "bg-danger-soft dark:bg-danger-soft-dark text-danger-content",
   "bg-tertiary-soft dark:bg-tertiary-dark text-tertiary-content",
-  "bg-danger-soft dark:bg-danger-soft-dark text-danger-content",
+  "bg-secondary-soft dark:bg-secondary-soft-dark text-secondary-content",
   "bg-danger-soft dark:bg-danger-soft-dark text-danger-content",
 ];
 
 const BASE_STYLES =
-  "border-none rounded-lg leading-5 py-1 px-2 cursor-default inline-flex flex-wrap items-center gap-1 whitespace-normal break-words";
+  "border-none rounded-full leading-5 py-1 px-3 cursor-default inline-flex flex-wrap items-center gap-1 whitespace-normal break-words";
 
 export function Badge({
   type,
@@ -99,9 +99,11 @@ export function Badge({
       data-tip={tooltip}
     >
       {Boolean(iconIncluded) && (
-        <span className={"h-5 w-5 text-inherit"}>{iconIncluded}</span>
+        <span className={"w-4 h-4 sm:h-5 sm:w-5 text-inherit"}>
+          {iconIncluded}
+        </span>
       )}
-      <p className="first-letter:uppercase text-sm font-semibold text-inherit">
+      <p className="first-letter:uppercase text-xs sm:text-sm font-semibold text-inherit">
         {content}
       </p>
     </div>
