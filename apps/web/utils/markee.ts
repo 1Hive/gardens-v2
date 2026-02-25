@@ -66,7 +66,7 @@ async function postMarkeeQuery(query: string): Promise<MarkeeSubgraphResponse> {
     }
   }
 
-  throw lastError ?? new Error("Failed to query Markee subgraph");
+  throw lastError ?? new Error(`Failed to query Markee subgraph (attempted URLs: ${urls.join(", ")})`);
 }
 
 export async function fetchMarkeeSignData(strategyAddress: Address) {
