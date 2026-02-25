@@ -126,7 +126,7 @@ export function Button({
   const buttonElement = (
     <button
       type={type}
-      className={`${btnStyles[btnStyle][disabled ? "disabled" : color]} flex relative cursor-pointer justify-center rounded-lg px-4 py-2 transition-all ease-out disabled:cursor-not-allowed disabled:shadow-none h-fit text-sm gap-2 ${className}`}
+      className={`${btnStyles[btnStyle][disabled ? "disabled" : color]} flex relative cursor-pointer justify-center rounded-lg px-4 py-2 transition-all w-full sm:w-auto ease-out disabled:cursor-not-allowed disabled:shadow-none h-fit text-sm gap-2 ${className}`}
       onClick={onClick}
       disabled={disabled || isLoading}
       style={style}
@@ -148,7 +148,8 @@ export function Button({
     </button>
   );
 
-  const tooltipPositionClasses = `${tooltipSide} ${tooltipDesktopSide ? `sm:${tooltipDesktopSide}` : ""}`.trim();
+  const tooltipPositionClasses =
+    `${tooltipSide} ${tooltipDesktopSide ? `sm:${tooltipDesktopSide}` : ""}`.trim();
 
   return disabled || forceShowTooltip ?
       <div
