@@ -46,16 +46,16 @@ import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useTheme } from "@/providers/ThemeProvider";
 import { logOnce } from "@/utils/log";
 
+const dedupeChains = (chainList: Chain[]) =>
+  chainList.filter(
+    (candidate, index, arr) =>
+      arr.findIndex((item) => item.id === candidate.id) === index,
+  );
+
 const createCustomConfig = (
   chain: Chain | undefined,
   simulatedWallet?: Address,
 ) => {
-  const dedupeChains = (chainList: Chain[]) =>
-    chainList.filter(
-      (candidate, index, arr) =>
-        arr.findIndex((item) => item.id === candidate.id) === index,
-    );
-
   let usedChains: Chain[] = [];
   if (chain) {
     usedChains = dedupeChains([chain, base, mainnet]);
