@@ -2,33 +2,23 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { ChevronDownIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import { formatEther, parseEther } from "viem";
-import { base } from "viem/chains";
-import {
-  useAccount,
-  useBalance,
-  useNetwork,
-  useSwitchNetwork,
-} from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { formatEther, parseEther, UserRejectedRequestError } from "viem";
+import { useAccount, useBalance, useChainId, useSwitchNetwork } from "wagmi";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
-
-const TOP_DAWG_PARTNER_ABI = [
-  {
-    name: "createMarkee",
-    type: "function",
-    stateMutability: "payable",
-    inputs: [
-      { name: "_message", type: "string" },
-      { name: "_name", type: "string" },
-    ],
-    outputs: [{ name: "markeeAddress", type: "address" }],
-  },
-] as const;
+import { MarkeeAbi } from "@/src/customAbis";
+import {
+  fetchMarkeeLeaderboard,
+  GARDENS_STRATEGY,
+  MarkeeNetwork,
+} from "@/utils/markee";
+import { getTxMessage } from "@/utils/transactionMessages";
 
 // Confirmed from Basescan readContract
 const DEFAULT_MAX_MESSAGE = 223;
 const DEFAULT_MAX_NAME = 22;
+const trimTrailingZeros = (value: string) =>
+  value.replace(/(\.\d*?[1-9])0+$/u, "$1").replace(/\.0+$/u, "");
 
 type LeaderboardEntry = {
   message: string;
@@ -39,23 +29,18 @@ type LeaderboardEntry = {
 type Props = {
   onClose: () => void;
   onSuccess: () => void;
-  strategyAddress: `0x${string}`;
   currentTopDawg: bigint;
   currentMessage: string;
   minimumPrice: bigint;
   takeTopSpot: bigint;
-  subgraphUrl: string;
 };
 
 export default function MarkeeModal({
   onClose,
   onSuccess,
-  strategyAddress,
-  currentTopDawg,
   currentMessage,
   minimumPrice,
   takeTopSpot,
-  subgraphUrl,
 }: Props) {
   const [message, setMessage] = useState("");
   const [name, setName] = useState("");
@@ -67,28 +52,40 @@ export default function MarkeeModal({
   const [leaderboardOpen, setLeaderboardOpen] = useState(false);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [leaderboardLoading, setLeaderboardLoading] = useState(false);
+  const [leaderboardError, setLeaderboardError] = useState<string | null>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   const { address } = useAccount();
-  const { chain } = useNetwork();
-  const { switchNetwork, isLoading: isSwitching } = useSwitchNetwork();
-  const { data: balance } = useBalance({ address, chainId: base.id });
+  const connectedChainId = useChainId();
+  const {
+    switchNetwork,
+    switchNetworkAsync,
+    isLoading: isSwitching,
+  } = useSwitchNetwork();
   const { openConnectModal } = useConnectModal();
 
-  const isOnBase = chain?.id === base.id;
-  const isConnected = !!address;
-
-  const { writeAsync, isLoading: isPending } = useContractWriteWithConfirmations({
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore: wagmi v1 recklesslyUnprepared mode not in wrapper type signature
-    mode: "recklesslyUnprepared",
-    address: strategyAddress,
-    abi: TOP_DAWG_PARTNER_ABI,
-    functionName: "createMarkee",
-    contractName: "TopDawgPartnerStrategy",
-    onConfirmations: onSuccess,
-    showNotification: false,
+  const activeAddress = address;
+  const isOnBase = connectedChainId === MarkeeNetwork.id;
+  const isConnected = !!activeAddress;
+  const { data: baseBalanceData } = useBalance({
+    address: activeAddress,
+    chainId: MarkeeNetwork.id,
+    watch: true,
+    enabled: activeAddress != null,
   });
+  const baseBalance = baseBalanceData?.value ?? null;
+
+  const { writeAsync, isLoading: isPending } =
+    useContractWriteWithConfirmations({
+      address: GARDENS_STRATEGY,
+      abi: MarkeeAbi,
+      functionName: "createMarkee",
+      contractName: "TopDawgPartnerStrategy",
+      onConfirmations: onSuccess,
+      showNotification: false,
+      chainId: MarkeeNetwork.id,
+      account: activeAddress,
+    });
 
   useEffect(() => {
     dialogRef.current?.showModal();
@@ -97,37 +94,24 @@ export default function MarkeeModal({
   useEffect(() => {
     if (!leaderboardOpen || leaderboard.length > 0) return;
     setLeaderboardLoading(true);
-    fetch(subgraphUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        query: `{
-          topDawgPartnerStrategy(id: "${strategyAddress.toLowerCase()}") {
-            markees(first: 10, orderBy: totalFundsAdded, orderDirection: desc) {
-              message
-              name
-              totalFundsAdded
-            }
-          }
-        }`,
-      }),
-    })
-      .then((r) => r.json())
-      .then((res) => {
-        const entries = res.data?.topDawgPartnerStrategy?.markees ?? [];
+    setLeaderboardError(null);
+    fetchMarkeeLeaderboard(GARDENS_STRATEGY)
+      .then((entries) => {
         setLeaderboard(entries);
       })
-      .catch((err) => console.error("[MarkeeModal] leaderboard fetch error:", err))
+      .catch(() => {
+        setLeaderboardError("Unable to load leaderboard.");
+      })
       .finally(() => setLeaderboardLoading(false));
-  }, [leaderboardOpen, leaderboard.length, subgraphUrl, strategyAddress]);
-
-  const handleBackdropClick = (e: React.MouseEvent<HTMLDialogElement>) => {
-    if (e.target === dialogRef.current) onClose();
-  };
+  }, [leaderboardOpen, leaderboard.length]);
 
   // Passed in from MarkeeSign (computed correctly there)
-  const takeTopSpotEth = parseFloat(formatEther(takeTopSpot)).toFixed(3);
-  const minToJoinEth = parseFloat(formatEther(minimumPrice)).toFixed(3);
+  const takeTopSpotInput = formatEther(takeTopSpot);
+  const minToJoinInput = formatEther(minimumPrice);
+  const takeTopSpotEth = trimTrailingZeros(
+    parseFloat(takeTopSpotInput).toFixed(3),
+  );
+  const minToJoinEth = trimTrailingZeros(parseFloat(minToJoinInput).toFixed(6));
 
   const totalRaised = leaderboard.reduce(
     (sum, e) => sum + BigInt(e.totalFundsAdded),
@@ -142,7 +126,11 @@ export default function MarkeeModal({
     } else {
       setMessageError(false);
     }
-    if (!ethAmount || isNaN(parseFloat(ethAmount)) || parseFloat(ethAmount) <= 0) {
+    if (
+      !ethAmount ||
+      isNaN(parseFloat(ethAmount)) ||
+      parseFloat(ethAmount) <= 0
+    ) {
       setEthError(true);
       setInputError("Enter a valid ETH amount.");
       valid = false;
@@ -157,9 +145,11 @@ export default function MarkeeModal({
       }
       if (parsedAmount < minimumPrice) {
         setEthError(true);
-        setInputError(`Minimum is ${minToJoinEth} ETH to join the leaderboard.`);
+        setInputError(
+          `Minimum is ${minToJoinEth} ETH to join the leaderboard.`,
+        );
         valid = false;
-      } else if (balance && parsedAmount > balance.value) {
+      } else if (baseBalance != null && parsedAmount > baseBalance) {
         setEthError(true);
         setInputError("Insufficient ETH balance.");
         valid = false;
@@ -176,28 +166,69 @@ export default function MarkeeModal({
 
   const handleSubmit = async () => {
     if (!validate()) return;
-    if (!writeAsync) return;
+    if (!activeAddress) {
+      setInputError("Connect your wallet before submitting.");
+      return;
+    }
+    if (!isOnBase) {
+      try {
+        if (switchNetworkAsync) {
+          await switchNetworkAsync(MarkeeNetwork.id);
+        } else {
+          switchNetwork?.(MarkeeNetwork.id);
+        }
+        setInputError("Switched to Base. Please submit again.");
+      } catch (switchError) {
+        console.error("[MarkeeModal] Failed to switch to Base", switchError);
+        setInputError("Please switch your wallet to Base mainnet first.");
+      }
+      return;
+    }
     setIsConfirming(true);
     try {
-      await (writeAsync as any)({
-        args: [message.trim(), name.trim()],
-        value: parseEther(ethAmount),
+      const value = parseEther(ethAmount);
+      const args = [message.trim(), name.trim()] as const;
+
+      await writeAsync({
+        args,
+        value,
       });
       // onSuccess is called via onConfirmations in the hook
     } catch (err: any) {
-      console.error("[MarkeeModal] transaction error:", err);
-      const msg = err?.message ?? "";
-      if (!msg.includes("User rejected") && !msg.includes("user rejected")) {
-        setInputError(`Transaction failed: ${msg.slice(0, 120) || "Please try again."}`);
-      }
+      if (err?.cause instanceof UserRejectedRequestError) return;
+      setInputError(
+        getTxMessage("error", err, "Transaction failed. Please try again."),
+      );
     } finally {
       setIsConfirming(false);
     }
   };
 
   const isLoading = isPending || isConfirming || isSwitching;
-  // Grey out buy button if connected but on wrong network
-  const buyDisabled = isLoading || (isConnected && !isOnBase);
+  let parsedAmount: bigint | null = null;
+  if (ethAmount && !isNaN(parseFloat(ethAmount)) && parseFloat(ethAmount) > 0) {
+    try {
+      parsedAmount = parseEther(ethAmount);
+    } catch {
+      parsedAmount = null;
+    }
+  }
+  const hasInsufficientBalance =
+    isOnBase &&
+    baseBalance != null &&
+    parsedAmount != null &&
+    parsedAmount > baseBalance;
+  const amountHasError = ethError || hasInsufficientBalance;
+  const buyDisabled =
+    isLoading || (isConnected && !isOnBase) || hasInsufficientBalance;
+  const buyTooltip = hasInsufficientBalance ? "Insufficient balance" : "";
+  const isFormDirty =
+    message.length > 0 || name.length > 0 || ethAmount.length > 0;
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDialogElement>) => {
+    if (e.target !== dialogRef.current) return;
+    if (isFormDirty) return;
+    onClose();
+  };
 
   return (
     <dialog
@@ -206,9 +237,9 @@ export default function MarkeeModal({
       onClick={handleBackdropClick}
       onClose={onClose}
     >
-      <div className="modal-box bg-neutral border border-border-neutral max-w-md w-full">
+      <div className="modal-box bg-neutral border border-border-neutral dark:border-white/15 dark:shadow-[0_20px_60px_rgba(0,0,0,0.45)] max-w-md w-full p-0 max-h-[85vh] flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between mb-5">
+        <div className="sticky top-0 z-10 bg-neutral border-b border-border-neutral dark:border-white/15 px-6 py-4 flex items-center justify-between">
           <div>
             <h3 className="text-lg font-semibold text-neutral-content">
               Change the Markee Message
@@ -234,10 +265,13 @@ export default function MarkeeModal({
           </button>
         </div>
 
+        <div className="overflow-y-auto px-6 py-5">
         {/* Current message + leaderboard */}
         <div className="mb-5 rounded border border-neutral-content/20 bg-neutral-focus px-4 py-3">
           <div className="flex-1 min-w-0">
-            <p className="text-xs text-neutral-content/50 mb-1">Current message</p>
+            <p className="text-xs text-neutral-content/50 mb-1">
+              Current message
+            </p>
             <p className="font-mono text-sm text-neutral-content break-words">
               {currentMessage}
             </p>
@@ -255,14 +289,22 @@ export default function MarkeeModal({
 
           {leaderboardOpen && (
             <div className="mt-3 border-t border-neutral-content/10 pt-3 space-y-2">
-              {leaderboardLoading ? (
-                <p className="text-xs text-neutral-content/40 font-mono">loading...</p>
-              ) : leaderboard.length === 0 ? (
-                <p className="text-xs text-neutral-content/40">No entries yet.</p>
-              ) : (
-                <>
-                  {leaderboard.map((entry, i) => (
-                    <div key={i} className="flex items-start justify-between gap-2">
+              {leaderboardLoading ?
+                <p className="text-xs text-neutral-content/40 font-mono">
+                  loading...
+                </p>
+              : leaderboardError ?
+                <p className="text-xs text-red-400">{leaderboardError}</p>
+              : leaderboard.length === 0 ?
+                <p className="text-xs text-neutral-content/40">
+                  No entries yet.
+                </p>
+              : <>
+                  {leaderboard.map((entry) => (
+                    <div
+                      key={`${entry.totalFundsAdded}-${entry.name}-${entry.message}`}
+                      className="flex items-start justify-between gap-2"
+                    >
                       <div className="flex-1 min-w-0">
                         <p className="font-mono text-xs text-neutral-content break-words">
                           {entry.message}
@@ -274,18 +316,23 @@ export default function MarkeeModal({
                         )}
                       </div>
                       <span className="text-xs font-mono text-neutral-content/50 flex-shrink-0 mt-0.5">
-                        {parseFloat(formatEther(BigInt(entry.totalFundsAdded))).toFixed(3)} ETH
+                        {parseFloat(
+                          formatEther(BigInt(entry.totalFundsAdded)),
+                        ).toFixed(3)}{" "}
+                        ETH
                       </span>
                     </div>
                   ))}
                   <div className="flex justify-between pt-2 border-t border-neutral-content/10">
-                    <span className="text-xs text-neutral-content/50 font-medium">Total raised</span>
+                    <span className="text-xs text-neutral-content/50 font-medium">
+                      Total raised
+                    </span>
                     <span className="text-xs font-mono font-semibold text-neutral-content/70">
                       {parseFloat(formatEther(totalRaised)).toFixed(3)} ETH
                     </span>
                   </div>
                 </>
-              )}
+              }
               <p className="pt-2 text-xs text-neutral-content/40 border-t border-neutral-content/10">
                 Add funds and edit your existing messages at{" "}
                 <a
@@ -310,7 +357,7 @@ export default function MarkeeModal({
             </span>
           </label>
           <textarea
-            className={`textarea textarea-bordered w-full bg-neutral text-neutral-content placeholder:text-neutral-content/30 resize-none font-mono text-sm transition-colors ${
+            className={`textarea textarea-bordered w-full bg-neutral text-neutral-content placeholder:text-neutral-content/30 resize-y min-h-[88px] max-h-56 font-mono text-sm transition-colors ${
               messageError ? "border-red-500" : "border-border-neutral"
             }`}
             placeholder="this is a sign."
@@ -350,59 +397,80 @@ export default function MarkeeModal({
         <div className="mb-4">
           <label className="block text-sm font-medium text-neutral-content mb-2">
             ETH Amount
-            {isOnBase && balance && (
+            {isOnBase && baseBalance != null && (
               <span className="text-xs text-neutral-content/40 font-normal ml-2">
-                (balance: {parseFloat(formatEther(balance.value)).toFixed(3)} ETH)
+                (balance: {parseFloat(formatEther(baseBalance)).toFixed(3)} ETH)
               </span>
             )}
           </label>
           <div className="grid grid-cols-3 gap-2">
             {/* Take top spot — gold border highlight */}
-            <button
-              type="button"
-              onClick={() => { setEthAmount(takeTopSpotEth); setEthError(false); setInputError(null); }}
-              className={`flex flex-col items-center justify-center rounded bg-neutral-focus hover:bg-neutral-focus/80 transition-colors px-2 py-2.5 text-center cursor-pointer ${
-                ethAmount === takeTopSpotEth
-                  ? "border-2 border-yellow-400"
-                  : "border-2 border-yellow-400/50 hover:border-yellow-400"
-              }`}
+            <div
+              className="tooltip tooltip-top"
+              data-tip={`Set to ${takeTopSpotInput} ETH`}
             >
-              <span className="text-xs font-mono font-semibold text-neutral-content">
-                {takeTopSpotEth} ETH
-              </span>
-              <span className="text-xs text-neutral-content/50 mt-0.5 leading-tight">
-                Take top spot
-              </span>
-            </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setEthAmount(takeTopSpotInput);
+                  setEthError(false);
+                  setInputError(null);
+                }}
+                className={`flex flex-col items-center justify-center rounded bg-neutral-focus hover:bg-neutral-focus/80 transition-colors px-2 py-2.5 text-center cursor-pointer ${
+                  ethAmount === takeTopSpotInput ?
+                    "border-2 border-yellow-400"
+                  : "border-2 border-yellow-400/50 hover:border-yellow-400"
+                }`}
+              >
+                <span className="text-xs font-mono font-semibold text-neutral-content">
+                  {takeTopSpotEth} ETH
+                </span>
+                <span className="text-xs text-neutral-content/50 mt-0.5 leading-tight">
+                  Take top spot
+                </span>
+              </button>
+            </div>
 
             {/* Minimum to buy */}
-            <button
-              type="button"
-              onClick={() => { setEthAmount(minToJoinEth); setEthError(false); setInputError(null); }}
-              className={`flex flex-col items-center justify-center rounded border bg-neutral-focus hover:border-neutral-content/40 hover:bg-neutral-focus/80 transition-colors px-2 py-2.5 text-center cursor-pointer ${
-                ethAmount === minToJoinEth && ethAmount !== takeTopSpotEth
-                  ? "border-neutral-content/60"
-                  : "border-neutral-content/20"
-              }`}
+            <div
+              className="tooltip tooltip-top"
+              data-tip={`Set to ${minToJoinInput} ETH`}
             >
-              <span className="text-xs font-mono font-semibold text-neutral-content">
-                {minToJoinEth} ETH
-              </span>
-              <span className="text-xs text-neutral-content/50 mt-0.5 leading-tight">
-                Minimum to buy
-              </span>
-            </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setEthAmount(minToJoinInput);
+                  setEthError(false);
+                  setInputError(null);
+                }}
+                className={`flex flex-col items-center justify-center rounded border bg-neutral-focus hover:border-neutral-content/40 hover:bg-neutral-focus/80 transition-colors px-2 py-2.5 text-center cursor-pointer ${
+                  (
+                    ethAmount === minToJoinInput &&
+                    ethAmount !== takeTopSpotInput
+                  ) ?
+                    "border-neutral-content/60"
+                  : "border-neutral-content/20"
+                }`}
+              >
+                <span className="text-xs font-mono font-semibold text-neutral-content">
+                  {minToJoinEth} ETH
+                </span>
+                <span className="text-xs text-neutral-content/50 mt-0.5 leading-tight">
+                  Minimum to buy
+                </span>
+              </button>
+            </div>
 
             {/* Custom entry — match height of preset buttons */}
             <input
               type="number"
               className={`input input-bordered w-full h-auto bg-neutral text-neutral-content placeholder:text-neutral-content/30 font-mono text-xs text-center transition-colors py-2.5 ${
-                ethError ? "border-red-500" : "border-border-neutral"
+                amountHasError ? "border-red-500" : "border-border-neutral"
               }`}
               placeholder={takeTopSpotEth}
               value={ethAmount}
               min="0"
-              step="0.001"
+              step="any"
               onChange={(e) => {
                 setEthAmount(e.target.value);
                 setEthError(false);
@@ -410,8 +478,12 @@ export default function MarkeeModal({
               }}
             />
           </div>
-          {ethError && (
-            <p className="mt-1 text-xs text-red-400">{inputError}</p>
+          {(ethError || hasInsufficientBalance) && (
+            <p className="mt-2 rounded border border-red-500/30 bg-red-500/10 px-2 pt-2 pb-1.5 text-xs text-red-300">
+              {hasInsufficientBalance ?
+                "Insufficient ETH balance."
+              : inputError}
+            </p>
           )}
         </div>
 
@@ -422,7 +494,7 @@ export default function MarkeeModal({
               Switch to Base to pay for the sign.
             </p>
             <button
-              onClick={() => switchNetwork?.(base.id)}
+              onClick={() => switchNetwork?.(MarkeeNetwork.id)}
               className="btn btn-xs ml-3 bg-yellow-500 text-black border-0 hover:opacity-80"
               disabled={isSwitching}
             >
@@ -440,7 +512,7 @@ export default function MarkeeModal({
 
         {/* Action — centered */}
         <div className="flex justify-center mt-5">
-          {!isConnected ? (
+          {!isConnected ?
             <button
               onClick={() => {
                 dialogRef.current?.close();
@@ -450,31 +522,46 @@ export default function MarkeeModal({
             >
               Connect Wallet
             </button>
-          ) : (
-            <button
-              onClick={handleSubmit}
-              disabled={buyDisabled}
-              className={`btn btn-sm border-0 px-8 text-white transition-colors ${
-                buyDisabled
-                  ? "bg-neutral-content/30 cursor-not-allowed"
-                  : "bg-green-600 hover:bg-green-500"
-              }`}
+          : <div
+              className={buyTooltip ? "tooltip tooltip-top" : ""}
+              data-tip={buyTooltip}
             >
-              {isPending ?
-                "Confirm in wallet..."
-              : isConfirming ?
-                "Confirming..."
-              : "Buy Message"}
-            </button>
-          )}
+              <button
+                onClick={handleSubmit}
+                disabled={buyDisabled}
+                className={`btn btn-sm px-8 text-white transition-colors ${
+                  buyDisabled ?
+                    "!bg-neutral-700/70 !text-neutral-300/70 !border !border-neutral-500/60 !shadow-none opacity-80 cursor-not-allowed"
+                  : "border-0 bg-green-600 hover:bg-green-500"
+                }`}
+              >
+                {isPending ?
+                  "Confirm in wallet..."
+                : isConfirming ?
+                  "Confirming..."
+                : "Buy Message"}
+              </button>
+            </div>
+          }
         </div>
 
         <p className="mt-4 text-center text-xs text-neutral-content/40">
           You&apos;ll receive MARKEE tokens and become a Markee Network owner
         </p>
+        </div>
       </div>
       <form method="dialog" className="modal-backdrop">
-        <button onClick={onClose}>close</button>
+        <button
+          onClick={(e) => {
+            if (isFormDirty) {
+              e.preventDefault();
+              return;
+            }
+            onClose();
+          }}
+        >
+          close
+        </button>
       </form>
     </dialog>
   );

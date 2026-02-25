@@ -2,30 +2,18 @@
 
 import React, { useCallback, useEffect, useState } from "react";
 import { formatEther, parseEther } from "viem";
+import { usePublicClient } from "wagmi";
 import MarkeeModal from "./MarkeeModal";
-
-const MARKEE_SUBGRAPH_ID = "8kMCKUHSY7o6sQbsvufeLVo8PifxrsnagjVTMGcs6KdF";
-const SUBGRAPH_GATEWAY_KEY = process.env.NEXT_PUBLIC_SUBGRAPH_KEY;
-export const MARKEE_SUBGRAPH_URL = SUBGRAPH_GATEWAY_KEY
-  ? `https://gateway.thegraph.com/api/${SUBGRAPH_GATEWAY_KEY}/subgraphs/id/${MARKEE_SUBGRAPH_ID}`
-  : `https://api.studio.thegraph.com/query/1742437/markee-base/version/latest`;
-
-export const GARDENS_STRATEGY = "0x346419315740f085ba14ca7239d82105a9a2bdbe";
+import { MarkeeAbi } from "@/src/customAbis";
+import {
+  fetchMarkeeSignData,
+  GARDENS_STRATEGY,
+  MarkeeNetwork,
+} from "@/utils/markee";
 
 // Confirmed from Basescan readContract
 const MIN_PRICE = parseEther("0.003");
 const MIN_INCREMENT = parseEther("0.001");
-
-const QUERY = `{
-  topDawgPartnerStrategy(id: "${GARDENS_STRATEGY}") {
-    minimumPrice
-    markees(first: 1, orderBy: totalFundsAdded, orderDirection: desc) {
-      message
-      name
-      totalFundsAdded
-    }
-  }
-}`;
 
 type SignData = {
   message: string;
@@ -42,40 +30,42 @@ const DEFAULT_DATA: SignData = {
 export default function MarkeeSign() {
   const [data, setData] = useState<SignData>(DEFAULT_DATA);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const basePublicClient = usePublicClient({ chainId: MarkeeNetwork.id });
 
-  const fetchData = useCallback(() => {
+  const fetchData = useCallback(async () => {
+    if (basePublicClient == null) return;
     setLoading(true);
-    fetch(MARKEE_SUBGRAPH_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query: QUERY }),
-    })
-      .then((r) => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        return r.json();
-      })
-      .then((res) => {
-        if (res.errors) {
-          console.error("[MarkeeSign] GraphQL errors:", JSON.stringify(res.errors));
-          return;
-        }
-        console.log("[MarkeeSign] subgraph response:", JSON.stringify(res.data));
-        const strategy = res.data?.topDawgPartnerStrategy;
-        const markee = strategy?.markees?.[0];
-        // Use subgraph minimumPrice only if it looks valid (> 0), else fall back to confirmed value
-        const subgraphMinPrice = BigInt(strategy?.minimumPrice ?? 0);
-        setData({
-          message: markee?.message ?? "this is a sign.",
-          totalFundsAdded: BigInt(markee?.totalFundsAdded ?? 0),
-          minimumPrice: subgraphMinPrice > BigInt(0) ? subgraphMinPrice : MIN_PRICE,
-        });
-      })
-      .catch((err) => {
-        console.error("[MarkeeSign] fetch error:", err);
-      })
-      .finally(() => setLoading(false));
-  }, []);
+    setLoadError(null);
+    try {
+      const strategy = await fetchMarkeeSignData(GARDENS_STRATEGY);
+      const onchainMinPrice = await basePublicClient
+        .readContract({
+          address: GARDENS_STRATEGY,
+          abi: MarkeeAbi,
+          functionName: "minimumPrice",
+        })
+        .catch(() => BigInt(0));
+      const markee = strategy?.markees?.[0];
+      const subgraphMinPrice = BigInt(strategy?.minimumPrice ?? 0);
+
+      setData({
+        message: markee?.message ?? DEFAULT_DATA.message,
+        totalFundsAdded: BigInt(markee?.totalFundsAdded ?? 0),
+        minimumPrice:
+          onchainMinPrice > BigInt(0) ?
+            onchainMinPrice
+          : subgraphMinPrice > BigInt(0) ?
+            subgraphMinPrice
+          : MIN_PRICE,
+      });
+    } catch (error) {
+      setLoadError("Unable to load Markee data right now.");
+    } finally {
+      setLoading(false);
+    }
+  }, [basePublicClient]);
 
   useEffect(() => {
     fetchData();
@@ -83,19 +73,20 @@ export default function MarkeeSign() {
 
   // Amount needed to take the top spot
   const takeTopSpot =
-    data.totalFundsAdded > BigInt(0)
-      ? data.totalFundsAdded + MIN_INCREMENT
-      : data.minimumPrice;
+    data.totalFundsAdded > BigInt(0) ?
+      data.totalFundsAdded + MIN_INCREMENT
+    : data.minimumPrice;
 
   const ethDisplay =
-    data.totalFundsAdded > BigInt(0)
-      ? `${parseFloat(formatEther(takeTopSpot)).toFixed(3)} ETH to change`
-      : "be first!";
+    data.totalFundsAdded > BigInt(0) ?
+      `${parseFloat(formatEther(takeTopSpot)).toFixed(3)} ETH to change`
+    : "be first!";
 
   return (
     <>
       <button
         onClick={() => setModalOpen(true)}
+        disabled={loading || loadError != null}
         className="group relative mx-auto mt-6 mb-4 cursor-pointer"
         aria-label="Click to edit this Markee sign"
       >
@@ -108,7 +99,7 @@ export default function MarkeeSign() {
 
         {/* Price badge — bottom center, visible on hover */}
         <span className="absolute -bottom-3 left-1/2 -translate-x-1/2 rounded-full border border-neutral-content/30 bg-neutral px-3 py-0.5 text-xs font-mono text-neutral-content/60 opacity-0 group-hover:opacity-100 group-hover:border-primary-content/40 group-hover:text-primary-content/70 transition-all duration-200 whitespace-nowrap">
-          {loading ? "···" : ethDisplay}
+          {loading ? "···" : loadError ? "unavailable" : ethDisplay}
         </span>
       </button>
 
@@ -119,12 +110,10 @@ export default function MarkeeSign() {
             setModalOpen(false);
             setTimeout(fetchData, 2000);
           }}
-          strategyAddress="0x346419315740F085Ba14cA7239D82105a9a2BDBE"
           currentTopDawg={data.totalFundsAdded}
           currentMessage={data.message}
           minimumPrice={data.minimumPrice}
           takeTopSpot={takeTopSpot}
-          subgraphUrl={MARKEE_SUBGRAPH_URL}
         />
       )}
     </>
