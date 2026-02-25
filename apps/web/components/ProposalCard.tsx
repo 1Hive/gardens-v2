@@ -169,7 +169,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
       : 0;
 
     const poolWeightAllocatedInProposal = (
-      (inputValue * Number(memberPoolWeight)) /
+      (inputValue * Number(memberPoolWeight ?? 0)) /
       100
     ).toFixed(2);
 
@@ -190,7 +190,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
       !alreadyExecuted;
 
     const impossibleToPass =
-      (thresholdPct != null && thresholdPct >= 100) || thresholdPct === 0;
+      (thresholdPct ?? 0) >= 100 || (thresholdPct ?? 0) === 0;
 
     const ProposalCountDown = (
       <>
@@ -243,6 +243,12 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
       ProposalStatus[proposalStatus] === "cancelled" ||
       ProposalStatus[proposalStatus] === "rejected" ||
       ProposalStatus[proposalStatus] === "executed";
+
+    console.log("threshold", thresholdPct != null && isSignalingType);
+    console.log(
+      "first",
+      currentConvictionPct != null && totalSupportPct != null,
+    );
 
     const proposalCardContent = (
       <>
@@ -369,7 +375,20 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
                           />
                         </div>
                       </div>
-                    )}
+                      <div className="h-3 flex items-center mb-2">
+                        <ConvictionBarChart
+                          compact
+                          currentConvictionPct={currentConvictionPct}
+                          thresholdPct={isSignalingType ? 0 : thresholdPct ?? 0}
+                          proposalSupportPct={totalSupportPct}
+                          isSignalingType={isSignalingType}
+                          proposalNumber={proposalNumber}
+                          refreshConviction={triggerConvictionRefetch}
+                          proposalStatus={proposalStatus}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
