@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useState } from "react";
 import { formatEther, parseEther } from "viem";
-import { usePublicClient } from "wagmi";
+import { useContractRead } from "wagmi";
 import MarkeeModal from "./MarkeeModal";
 import { MarkeeAbi } from "@/src/customAbis";
 import {
@@ -32,32 +32,29 @@ export default function MarkeeSign() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
-  const basePublicClient = usePublicClient({ chainId: MarkeeNetwork.id });
+  const { data: onchainMinPrice } = useContractRead({
+    address: GARDENS_STRATEGY,
+    abi: MarkeeAbi,
+    functionName: "minimumPrice",
+    chainId: MarkeeNetwork.id,
+  });
 
   const fetchData = useCallback(async () => {
-    if (basePublicClient == null) return;
     setLoading(true);
     setLoadError(null);
     try {
       const strategy = await fetchMarkeeSignData(GARDENS_STRATEGY);
-      const onchainMinPrice = await basePublicClient
-        .readContract({
-          address: GARDENS_STRATEGY,
-          abi: MarkeeAbi,
-          functionName: "minimumPrice",
-        })
-        .catch(() => BigInt(0));
       const markee = strategy?.markees?.[0];
       const subgraphMinPrice = BigInt(strategy?.minimumPrice ?? 0);
+      const onchainMinPriceValue =
+        typeof onchainMinPrice === "bigint" ? onchainMinPrice : BigInt(0);
 
       setData({
         message: markee?.message ?? DEFAULT_DATA.message,
         totalFundsAdded: BigInt(markee?.totalFundsAdded ?? 0),
         minimumPrice:
-          onchainMinPrice > BigInt(0) ?
-            onchainMinPrice
-          : subgraphMinPrice > BigInt(0) ?
-            subgraphMinPrice
+          onchainMinPriceValue > BigInt(0) ? onchainMinPriceValue
+          : subgraphMinPrice > BigInt(0) ? subgraphMinPrice
           : MIN_PRICE,
       });
     } catch (error) {
@@ -65,7 +62,7 @@ export default function MarkeeSign() {
     } finally {
       setLoading(false);
     }
-  }, [basePublicClient]);
+  }, [onchainMinPrice]);
 
   useEffect(() => {
     fetchData();
@@ -87,19 +84,23 @@ export default function MarkeeSign() {
       <button
         onClick={() => setModalOpen(true)}
         disabled={loading || loadError != null}
-        className="group relative mx-auto mt-6 mb-4 cursor-pointer"
+        className="group relative mx-auto mt-6 mb-4 cursor-pointer max-sm:w-full"
         aria-label="Click to edit this Markee sign"
       >
         {/* Sign body */}
-        <div className="border border-neutral-content/30 rounded px-16 py-8 min-w-[420px] max-w-lg bg-neutral hover:border-primary-content/50 transition-colors duration-200">
+        <div className="border border-neutral-content/30 rounded px-16 py-8 sm:min-w-[420px] max-w-lg bg-neutral hover:border-primary-content/50 transition-colors duration-200">
           <p className="font-mono text-neutral-content text-lg group-hover:text-primary-content transition-colors duration-200 text-center leading-snug">
             {loading ? "loading..." : data.message}
           </p>
         </div>
 
         {/* Price badge — bottom center, visible on hover */}
-        <span className="absolute -bottom-3 left-1/2 -translate-x-1/2 rounded-full border border-neutral-content/30 bg-neutral px-3 py-0.5 text-xs font-mono text-neutral-content/60 opacity-0 group-hover:opacity-100 group-hover:border-primary-content/40 group-hover:text-primary-content/70 transition-all duration-200 whitespace-nowrap">
-          {loading ? "···" : loadError ? "unavailable" : ethDisplay}
+        <span className="absolute -bottom-3 left-1/2 -translate-x-1/2 rounded-full border border-neutral-content/30 bg-neutral px-3 py-0.5 text-xs font-mono text-neutral-content/60 opacity-0 group-hover:opacity-100 group-hover:border-primary-content/40 group-hover:text-primary-content/70 max-sm:opacity-100 max-sm:border-primary-content/40 max-sm:text-primary-content/70 transition-all duration-200 whitespace-nowrap">
+          {loading ?
+            "···"
+          : loadError ?
+            "unavailable"
+          : ethDisplay}
         </span>
       </button>
 

@@ -233,7 +233,7 @@ export default function MarkeeModal({
   return (
     <dialog
       ref={dialogRef}
-      className="modal"
+      className="modal max-sm:modal-bottom"
       onClick={handleBackdropClick}
       onClose={onClose}
     >

@@ -31,8 +31,8 @@ const Header = () => {
   const { tooltipMessage, isConnected } = useDisableButtons();
   const { resolvedTheme } = useTheme();
   return (
-    <header className="flex flex-col items-center gap-8 ">
-      <div className="flex items-center text-center">
+    <header className="flex flex-col items-center gap-8 w-full">
+      <div className="flex items-center text-center w-full">
         <div className="relative flex-1">
           <Image
             src={resolvedTheme === "lightTheme" ? clouds1 : gardensNight}
@@ -41,8 +41,8 @@ const Header = () => {
             height={175}
           />
         </div>
-        <div className="mx-10 flex flex-col items-center gap-5">
-          <div className="flex flex-col items-center">
+        <div className="sm:mx-10 flex flex-col items-center w-full gap-5">
+          <div className="flex flex-col items-center w-full">
             <h1 className="max-w-xl text-center text-neutral-content">
               Welcome to Gardens
             </h1>
