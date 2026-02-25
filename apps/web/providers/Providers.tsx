@@ -147,6 +147,8 @@ const createCustomConfig = (
   };
 };
 
+type CustomWagmiConfig = ReturnType<typeof createCustomConfig>["config"];
+
 type Props = {
   children: React.ReactNode;
 };
@@ -182,7 +184,7 @@ const ProvidersWithQueryParams = ({ children }: Props) => {
     return walletFromQuery as Address;
   }, [queryParams]);
 
-  const [wagmiConfig, setWagmiConfig] = useState<Config | null>(null);
+  const [wagmiConfig, setWagmiConfig] = useState<CustomWagmiConfig | null>(null);
   const [simulatedConnector, setSimulatedConnector] =
     useState<MockConnector | null>(null);
   const [activeSimulatedWallet, setActiveSimulatedWallet] =

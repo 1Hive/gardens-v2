@@ -1,9 +1,8 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { AbiFunction, AbiParameter } from "abitype";
 import {
-  AbiFunction,
-  AbiParameter,
   Address,
   decodeFunctionResult,
   encodeFunctionData,
@@ -140,7 +139,10 @@ const normalizeValueForParameter = (
   }
 
   if (parameter.type === "tuple") {
-    const components = parameter.components ?? [];
+    const components =
+      "components" in parameter && Array.isArray(parameter.components) ?
+        (parameter.components as AbiParameter[])
+      : [];
     if (Array.isArray(value)) {
       return components.map((component, index) =>
         normalizeValueForParameter(value[index], component),
@@ -245,8 +247,8 @@ export default function DiamondAdminPage() {
   const knownAbiFunctions = useMemo(
     () =>
       [...registryCommunityABI, ...cvStrategyABI].filter(
-        (item): item is AbiFunction => item.type === "function",
-      ),
+        (item) => item.type === "function",
+      ) as unknown as AbiFunction[],
     [],
   );
 
