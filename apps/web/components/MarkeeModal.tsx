@@ -17,6 +17,7 @@ import { getTxMessage } from "@/utils/transactionMessages";
 // Confirmed from Basescan readContract
 const DEFAULT_MAX_MESSAGE = 223;
 const DEFAULT_MAX_NAME = 22;
+const MAX_ETH_AMOUNT = 1000;
 const trimTrailingZeros = (value: string) =>
   value.replace(/(\.\d*?[1-9])0+$/u, "$1").replace(/\.0+$/u, "");
 
@@ -143,7 +144,11 @@ export default function MarkeeModal({
         setInputError("Invalid ETH amount.");
         return false;
       }
-      if (parsedAmount < minimumPrice) {
+      if (parseFloat(ethAmount) > MAX_ETH_AMOUNT) {
+        setEthError(true);
+        setInputError(`Amount cannot exceed ${MAX_ETH_AMOUNT} ETH.`);
+        valid = false;
+      } else if (parsedAmount < minimumPrice) {
         setEthError(true);
         setInputError(
           `Minimum is ${minToJoinEth} ETH to join the leaderboard.`,
@@ -470,6 +475,7 @@ export default function MarkeeModal({
               placeholder={takeTopSpotEth}
               value={ethAmount}
               min="0"
+              max={MAX_ETH_AMOUNT}
               step="any"
               onChange={(e) => {
                 setEthAmount(e.target.value);
