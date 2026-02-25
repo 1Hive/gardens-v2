@@ -18,6 +18,7 @@ import {
 import { AddrethConfig } from "addreth";
 import { Bounce, ToastContainer } from "react-toastify";
 import { Address, createWalletClient, custom, isAddress } from "viem";
+import { base } from "viem/chains";
 import {
   Chain,
   configureChains,
@@ -49,9 +50,15 @@ const createCustomConfig = (
   chain: Chain | undefined,
   simulatedWallet?: Address,
 ) => {
+  const dedupeChains = (chainList: Chain[]) =>
+    chainList.filter(
+      (candidate, index, arr) =>
+        arr.findIndex((item) => item.id === candidate.id) === index,
+    );
+
   let usedChains: Chain[] = [];
   if (chain) {
-    usedChains = [chain, mainnet];
+    usedChains = dedupeChains([chain, base, mainnet]);
   } else {
     const isClient = typeof window !== "undefined";
     const queryAllChains =
@@ -66,10 +73,11 @@ const createCustomConfig = (
         : !!chainConfig.isTestnet,
       )
       .map(([chainId]) => Number(chainId));
-    usedChains = [
+    usedChains = dedupeChains([
       ...CHAINS.filter((elem) => usedChainIds.includes(elem.id)),
+      base,
       mainnet,
-    ];
+    ]);
   }
 
   const { publicClient, chains } = configureChains(usedChains, [

@@ -14,6 +14,9 @@ type ChartWrapperProps = {
   growing?: boolean | null;
   isSignalingType?: boolean;
   proposalStatus?: string;
+  support?: number;
+  threshold?: number;
+  conviction?: number;
 };
 
 export const ChartWrapper = ({
@@ -22,6 +25,9 @@ export const ChartWrapper = ({
   growing,
   isSignalingType,
   proposalStatus,
+  support,
+  threshold,
+  conviction,
 }: ChartWrapperProps) => {
   const growthClassname =
     growing ? "text-primary-content" : "text-danger-content";
@@ -33,13 +39,15 @@ export const ChartWrapper = ({
       name: "Support",
       className: "h-3 w-8 rounded-md",
       style: { backgroundColor: chartColors.support },
-      info: "Represents the total pool weight currently allocated to a proposal.",
+      info: "Represents the Total Voting Power allocated to a proposal (out of 100 VP).",
+      value: support,
     },
     {
       name: "Conviction",
       className: "h-3 w-8 rounded-md",
       style: { backgroundColor: chartColors.conviction },
-      info: "Accumulated pool weight for a proposal, increasing over time, based on the conviction growth.",
+      info: "Voting Power accumulated as conviction for a proposal. Conviction grows or shrinks over time to meet support.",
+      value: conviction,
     },
     {
       name: "Threshold",
@@ -48,13 +56,14 @@ export const ChartWrapper = ({
       },
       className: "w-5 border-t-[1px] border-dashed rotate-90 -mx-3",
       info: "The minimum level of conviction required for a proposal to pass.",
+      value: threshold,
     },
   ] as const;
 
   return (
     <>
-      <div className="flex flex-col gap-6 mt-2">
-        <div className="flex gap-4 flex-wrap">
+      <div className="flex flex-col gap-2 sm:gap-4 mt-2">
+        <div className="flex flex-col sm:flex-row flex-wrap items-start gap-2 sm:gap-4">
           {legend
             .filter((item) => !(isSignalingType && item.name === "Threshold"))
             .map((item) => (
@@ -68,13 +77,14 @@ export const ChartWrapper = ({
                           style={item.style}
                         />
                         <FlagIcon
-                          className="absolute -left-[3.5px] -top-5 h-3 w-3"
+                          className="absolute -left-[3.70px] sm:-left-[3.50px] -top-5 h-3 w-3"
                           style={{ color: chartColors.markLine }}
                         />
                       </div>
                     : <div className={`${item.className}`} style={item.style} />
                     }
-                    <p className="text-sm">{item.name}</p>
+                    <p className="text-sm">{item.name}: </p>
+                    <p className="font-medium">{item.value} VP</p>
                   </div>
                 </InfoWrapper>
               </Fragment>
@@ -87,7 +97,9 @@ export const ChartWrapper = ({
         <div className="space-y-2">
           {growing !== null && (
             <>
-              <p className={`flex items-center gap-2 ${growthClassname}`}>
+              <p
+                className={`flex items-center gap-1 text-xs sm:text-sm ${growthClassname}`}
+              >
                 Conviction {growing ? "is growing" : "is decreasing"}!
                 <span>
                   {growing ?
@@ -97,7 +109,7 @@ export const ChartWrapper = ({
               </p>
             </>
           )}
-          <p>
+          <p className="text-sm sm:text-[16px]">
             {proposalStatus === "disputed" ?
               "Proposal is awaiting dispute resolution."
             : message}

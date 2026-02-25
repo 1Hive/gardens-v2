@@ -333,11 +333,11 @@ export const ProposalsModalSupport = forwardRef<
                             <div className="flex gap-10">
                               <div className="flex flex-col items-center justify-center">
                                 <p className="subtitle2">
-                                  <span className="text-2xl font-semibold text-primary-content">
-                                    {poolWeightAllocatedInProposal}
+                                  <span className="text-xl font-semibold text-primary-content">
+                                    {poolWeightAllocatedInProposal} VP
                                   </span>
-                                  /{memberPoolWeight}%{" "}
-                                  <span className="text-neutral-soft-content text-sm">
+                                  {/* /{memberPoolWeight} VP */}
+                                  <span className="text-neutral-soft-content text-sm ml-1">
                                     ({inputValue}% of your voting power)
                                   </span>
                                 </p>

@@ -433,7 +433,7 @@ export function CheckSybil({
 
   return (
     <>
-      <div onClickCapture={(e) => handleCheckSybil(e)} className="w-fit">
+      <div onClickCapture={(e) => handleCheckSybil(e)} className="w-full">
         {children}
       </div>
       <Modal
