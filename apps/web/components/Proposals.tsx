@@ -39,7 +39,7 @@ import {
   RegistryCommunity,
   getMembersStrategyQuery,
 } from "#/subgraph/.graphclient";
-import { Divider } from "./Diivider";
+import { Divider } from "./Divider";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { PoolGovernanceProps } from "./PoolGovernance";
 import { ProposalCardProps, ProposalHandle } from "./ProposalCard";
@@ -682,7 +682,7 @@ export function Proposals({
     0: "inactive",
     1: "active",
     2: "paused",
-    3: "closed",
+    3: "cancelled",
     4: "executed",
     5: "disputed",
     6: "rejected",
@@ -699,6 +699,10 @@ export function Proposals({
       },
       {} as Record<string, number>,
     ),
+    // "closed" filter groups both cancelled (3) and rejected (6) proposals
+    closed: sortedProposals.filter((p) =>
+      (CLOSED_STATUSES as readonly number[]).includes(Number(p.proposalStatus)),
+    ).length,
   };
 
   const {
@@ -957,6 +961,9 @@ export function Proposals({
   );
 }
 
+// Statuses that are grouped under the "closed" filter (cancelled=3, rejected=6)
+const CLOSED_STATUSES = [3, 6] as const;
+
 export function useProposalFilter<
   T extends {
     proposalStatus: string | number;
@@ -984,7 +991,7 @@ export function useProposalFilter<
   const FILTER_STATUS: Record<Exclude<FilterType, null>, number | number[]> = {
     all: 0,
     active: 1,
-    closed: [3, 6],
+    closed: [...CLOSED_STATUSES],
     executed: 4,
     disputed: 5,
   };

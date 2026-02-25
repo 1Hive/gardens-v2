@@ -28,7 +28,7 @@ import {
 } from "#/subgraph/.graphclient";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
-import { Divider } from "./Diivider";
+import { Divider } from "./Divider";
 import { EthAddress } from "./EthAddress";
 import { ExpandableComponent } from "./Expandable";
 import PoolEditForm from "./Forms/PoolEditForm";

@@ -17,8 +17,8 @@ import {
   ProposalMetadata,
 } from "#/subgraph/.graphclient";
 import { Countdown } from "./Countdown";
-import { Divider } from "./Diivider";
 import { DisplayNumber } from "./DisplayNumber";
+import { Divider } from "./Divider";
 import { ProposalInputItem } from "./Proposals";
 import TooltipIfOverflow from "./TooltipIfOverflow";
 import { Badge, Card, EthAddress } from "@/components";
