@@ -92,6 +92,7 @@ export default function ClientPage({
   const searchParams = useCollectQueryParams();
   const { address: accountAddress } = useAccount();
   const showArchived = useFlag("showArchived");
+  const showLoupe = useFlag("loupe");
   const isFetchingNFT = useRef<boolean>(false);
   const { publish } = usePubSubContext();
   const chain = useChainFromPath();
@@ -219,6 +220,10 @@ export default function ClientPage({
   const { tooltipMessage, isConnected, missmatchUrl, isButtonDisabled } =
     useDisableButtons();
   const createPoolHref = `/gardens/${chain?.id}/${tokenAddr}/${communityAddr}/create-pool`;
+  const adminLoupeHref =
+    chain?.id != null ?
+      `/admin?chainId=${chain.id}&address=${communityAddr}`
+    : undefined;
 
   useEffect(() => {
     if (error) {
@@ -358,7 +363,7 @@ export default function ClientPage({
     if (!canSeeArchivedPools && poolStatusFilter === "archive") {
       setPoolStatusFilter("active");
     }
-  }, [canSeeArchivedPools, poolStatusFilter]);
+  }, [canSeeArchivedPools, poolStatusFilter, setPoolStatusFilter]);
 
   useEffect(() => {
     const newPoolId = searchParams[QUERY_PARAMS.communityPage.newPool];
@@ -471,13 +476,25 @@ export default function ClientPage({
                 {/* Community name + Address */}
                 <div className=" flex-flex-col">
                   <h2>{communityName}</h2>
-                  <EthAddress
-                    icon={false}
-                    address={communityAddr as Address}
-                    label="Community address"
-                    textColor="var(--color-grey-900)"
-                    explorer="louper"
-                  />
+                  <div className="flex items-center gap-1">
+                    <EthAddress
+                      icon={false}
+                      address={communityAddr as Address}
+                      label="Community address"
+                      textColor="var(--color-grey-900)"
+                      explorer="louper"
+                    />
+                    {showLoupe && adminLoupeHref && (
+                      <Link
+                        href={adminLoupeHref}
+                        className="text-lg leading-none"
+                        title="Open in diamond facet diagnostics"
+                        aria-label="Open community address in diamond facet diagnostics"
+                      >
+                        🔎
+                      </Link>
+                    )}
+                  </div>
                   {registryCommunity?.councilSafe && (
                     <EthAddress
                       icon={false}
@@ -716,13 +733,25 @@ export default function ClientPage({
                     {/* Community name + Address */}
                     <div className="mb-3">
                       <h2>{communityName}</h2>
-                      <EthAddress
-                        icon={false}
-                        address={communityAddr as Address}
-                        label="Community address"
-                        textColor="var(--color-grey-900)"
-                        explorer="louper"
-                      />
+                      <div className="flex items-center gap-1">
+                        <EthAddress
+                          icon={false}
+                          address={communityAddr as Address}
+                          label="Community address"
+                          textColor="var(--color-grey-900)"
+                          explorer="louper"
+                        />
+                        {showLoupe && adminLoupeHref && (
+                          <Link
+                            href={adminLoupeHref}
+                            className="text-lg leading-none"
+                            title="Open in diamond facet diagnostics"
+                            aria-label="Open community address in diamond facet diagnostics"
+                          >
+                            🔎
+                          </Link>
+                        )}
+                      </div>
                       {registryCommunity?.councilSafe && (
                         <EthAddress
                           icon={false}
