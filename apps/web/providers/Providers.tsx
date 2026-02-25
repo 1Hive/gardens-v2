@@ -21,6 +21,7 @@ import { Address, createWalletClient, custom, isAddress } from "viem";
 import { base } from "viem/chains";
 import {
   Chain,
+  Config,
   configureChains,
   ConnectorAlreadyConnectedError,
   createConfig,
@@ -181,7 +182,7 @@ const ProvidersWithQueryParams = ({ children }: Props) => {
     return walletFromQuery as Address;
   }, [queryParams]);
 
-  const [wagmiConfig, setWagmiConfig] = useState<any>(null);
+  const [wagmiConfig, setWagmiConfig] = useState<Config | null>(null);
   const [simulatedConnector, setSimulatedConnector] =
     useState<MockConnector | null>(null);
   const [activeSimulatedWallet, setActiveSimulatedWallet] =
