@@ -903,7 +903,6 @@ export function Proposals({
                       proposalData={proposalData}
                       strategyConfig={strategy.config}
                       inputData={inputs[proposalData.id]}
-                      stakedFilter={stakedFilters[proposalData.id]}
                       isAllocationView={allocationView}
                       memberActivatedPoints={memberActivatedPoints}
                       memberPoolWeight={memberPoolWeight}

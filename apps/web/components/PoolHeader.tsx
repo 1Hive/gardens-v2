@@ -41,7 +41,6 @@ import { SuperfluidStream } from "@/assets";
 import { TransactionStatusNotification } from "@/components/TransactionStatusNotification";
 import { chainConfigMap } from "@/configs/chains";
 import { usePubSubContext } from "@/contexts/pubsub.context";
-import { VOTING_POINT_SYSTEM_DESCRIPTION } from "@/globals";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useCouncil } from "@/hooks/useCouncil";
