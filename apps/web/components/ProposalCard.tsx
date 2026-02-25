@@ -244,12 +244,6 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
       ProposalStatus[proposalStatus] === "rejected" ||
       ProposalStatus[proposalStatus] === "executed";
 
-    console.log("threshold", thresholdPct != null && isSignalingType);
-    console.log(
-      "first",
-      currentConvictionPct != null && totalSupportPct != null,
-    );
-
     const proposalCardContent = (
       <>
         <div
@@ -375,20 +369,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
                           />
                         </div>
                       </div>
-                      <div className="h-3 flex items-center mb-2">
-                        <ConvictionBarChart
-                          compact
-                          currentConvictionPct={currentConvictionPct}
-                          thresholdPct={isSignalingType ? 0 : thresholdPct ?? 0}
-                          proposalSupportPct={totalSupportPct}
-                          isSignalingType={isSignalingType}
-                          proposalNumber={proposalNumber}
-                          refreshConviction={triggerConvictionRefetch}
-                          proposalStatus={proposalStatus}
-                        />
-                      </div>
-                    </div>
-                  )}
+                    )}
                 </div>
               </div>
             </div>
