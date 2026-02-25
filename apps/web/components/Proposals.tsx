@@ -682,7 +682,7 @@ export function Proposals({
     0: "inactive",
     1: "active",
     2: "paused",
-    3: "closed",
+    3: "cancelled",
     4: "executed",
     5: "disputed",
     6: "rejected",
@@ -699,6 +699,10 @@ export function Proposals({
       },
       {} as Record<string, number>,
     ),
+    // "closed" filter groups both cancelled (3) and rejected (6) proposals
+    closed: sortedProposals.filter((p) =>
+      [3, 6].includes(Number(p.proposalStatus)),
+    ).length,
   };
 
   const {
