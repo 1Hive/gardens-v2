@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowTopRightOnSquareIcon,
   Bars3Icon,
@@ -36,6 +36,8 @@ export function HeadphoneIcon() {
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const originalBodyOverflow = useRef("");
+  const originalHtmlOverflow = useRef("");
   const [showCampaignBadge, setShowCampaignBadge] = useState(true);
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -72,18 +74,18 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const previousBodyOverflow = document.body.style.overflow;
-    const previousHtmlOverflow = document.documentElement.style.overflow;
 
     if (mobileMenuOpen) {
+      originalBodyOverflow.current = document.body.style.overflow;
+      originalHtmlOverflow.current = document.documentElement.style.overflow;
       document.body.style.overflow = "hidden";
       document.documentElement.style.overflow = "hidden";
-    }
 
-    return () => {
-      document.body.style.overflow = previousBodyOverflow;
-      document.documentElement.style.overflow = previousHtmlOverflow;
-    };
+      return () => {
+        document.body.style.overflow = originalBodyOverflow.current;
+        document.documentElement.style.overflow = originalHtmlOverflow.current;
+      };
+    }
   }, [mobileMenuOpen]);
 
   const handleCampaignClick = () => {
