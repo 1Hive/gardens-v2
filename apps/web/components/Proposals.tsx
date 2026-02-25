@@ -39,7 +39,7 @@ import {
   RegistryCommunity,
   getMembersStrategyQuery,
 } from "#/subgraph/.graphclient";
-import { Divider } from "./Diivider";
+import { Divider } from "./Divider";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { PoolGovernanceProps } from "./PoolGovernance";
 import { ProposalCardProps, ProposalHandle } from "./ProposalCard";
