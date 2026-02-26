@@ -48,21 +48,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const storageKey = "gardensCampaignsBadgeSeen";
-    const isCampaignPath = pathname?.startsWith("/gardens/campaigns");
-    const hasSeen = window.localStorage.getItem(storageKey) === "true";
-
-    if (isCampaignPath) {
-      window.localStorage.setItem(storageKey, "true");
-      setShowCampaignBadge(false);
-      return;
-    }
-
-    setShowCampaignBadge(!hasSeen);
-  }, [pathname]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
     const reset = () => {
       window.scrollTo({ top: 0, left: 0, behavior: "auto" });
       document.documentElement.scrollTop = 0;
@@ -87,13 +72,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       };
     }
   }, [mobileMenuOpen]);
-
-  const handleCampaignClick = () => {
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem("gardensCampaignsBadgeSeen", "true");
-    }
-    setShowCampaignBadge(false);
-  };
 
   return (
     <div className="min-h-screen bg-primary relative">
@@ -167,14 +145,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <Link
               href="/gardens/campaigns"
               className="flex items-center gap-3 text-sm"
-              onClick={handleCampaignClick}
             >
-              <div className="relative inline-flex items-center">
-                <h5 className="hover:opacity-70">Campaigns</h5>
-                {showCampaignBadge && (
-                  <span className="absolute bg-primary-content dark:bg-[#98ff98] -top-1 -right-2 rounded-full text-neutral w-2 h-2 font-bold leading-none flex items-center justify-center" />
-                )}
-              </div>
+              <h5 className="hover:opacity-70">Campaigns</h5>
             </Link>
 
             <a
@@ -220,19 +192,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <Link
                   href="/gardens/campaigns"
                   className="text-base font-medium hover:opacity-70 px-1 py-2 rounded-md"
-                  onClick={() => {
-                    handleCampaignClick();
-                    setMobileMenuOpen(false);
-                  }}
+                  onClick={() => setMobileMenuOpen(false)}
                 >
-                  <span className="relative inline-flex items-center">
-                    Campaigns
-                    {showCampaignBadge && (
-                      <span className="absolute -top-2 -right-4 h-4 w-4 rounded-full bg-primary-content text-neutral text-[10px] font-bold leading-none flex items-center justify-center">
-                        1
-                      </span>
-                    )}
-                  </span>
+                  Campaigns
                 </Link>
 
                 <a

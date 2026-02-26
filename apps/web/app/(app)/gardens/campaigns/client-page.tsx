@@ -93,8 +93,8 @@ export default function CampaignsPage() {
       {/* Content */}
       <div className="mx-auto max-w-7xl px-4 pb-10 flex flex-col gap-10 items-center">
         <div className="flex items-center justify-center gap-2 mt-10">
-          <Button>Active</Button>
-          <Button disabled>Ended</Button>
+          <Button disabled>Active</Button>
+          <Button>Ended</Button>
         </div>
 
         {campaigns.map((c) => (
@@ -128,7 +128,7 @@ export default function CampaignsPage() {
                 <h3 className="font-bold drop-shadow">{c.name}</h3>
                 <div className="flex items-center gap-2 text-sm mt-1 ">
                   <CalendarIcon className="h-4 w-4" />
-                  <span>Ends {c.endDate}</span>
+                  <span>Ended {c.endDate}</span>
                 </div>
               </div>
             </div>
