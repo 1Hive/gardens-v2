@@ -212,6 +212,7 @@ export default function GardensGrowthInitiativePage({
   const [openModal, setOpenModal] = useState(false);
 
   const campaigns = CAMPAIGNS[campaignId];
+  const isEndedCampaign = !isCampaignActive(campaigns, Date.now());
 
   const howToParticipate = PARTICIPATION_BY_CAMPAIGN[campaignId];
 
@@ -296,10 +297,15 @@ export default function GardensGrowthInitiativePage({
             src={campaigns?.banner}
             alt="Gardens Growth Initiative"
             fill
-            className="object-cover"
+            className={`object-cover ${isEndedCampaign ? "grayscale" : ""}`}
             priority
           />
           <div className="absolute inset-0 bg-gradient-to-b from-neutral/5 via-neutral to-neutral/5 dark:from-neutral/30 dark:to-neutral/30" />
+          {isEndedCampaign && (
+            <div className="absolute inset-x-0 top-0 bg-danger py-2 text-center text-xs font-extrabold uppercase tracking-[0.2em] text-white shadow-lg">
+              Campaign Ended
+            </div>
+          )}
         </div>
 
         <div className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
@@ -333,7 +339,7 @@ export default function GardensGrowthInitiativePage({
                 <div className="flex items-center gap-2 text-sm">
                   <CalendarIcon className="h-6 w-6 " />
                   <span className="font-semibold">
-                    Ends {campaigns?.endDate}
+                    {isEndedCampaign ? "Ended" : "Ends"} {campaigns?.endDate}
                   </span>
                 </div>
 
@@ -581,4 +587,21 @@ export default function GardensGrowthInitiativePage({
       </div>
     </div>
   );
+}
+
+function isCampaignActive(
+  campaign: (typeof CAMPAIGNS)[keyof typeof CAMPAIGNS] | undefined,
+  referenceTimestamp: number,
+) {
+  if (!campaign) {
+    return false;
+  }
+
+  const endDateTimestamp = Date.parse(campaign.endDate);
+
+  if (Number.isNaN(endDateTimestamp)) {
+    return false;
+  }
+
+  return endDateTimestamp >= referenceTimestamp;
 }
