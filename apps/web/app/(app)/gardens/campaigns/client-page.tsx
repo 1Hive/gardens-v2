@@ -101,10 +101,10 @@ export default function CampaignsPage() {
           <Link
             key={c.id}
             href={`/gardens/campaigns/${c.id}`}
-            className="section-layout !p-0  rounded-xl overflow-hidden hover:shadow-lg transition group w-full max-w-2xl"
+            className="section-layout !p-0 rounded-xl overflow-hidden hover:shadow-lg transition group w-full max-w-2xl border border-danger/50"
           >
             {/* Image */}
-            <div className="relative h-48 w-full">
+            <div className="relative h-48 w-full grayscale">
               <Image
                 src={c.banner ?? "/placeholder.svg"}
                 alt={c.name}
@@ -112,6 +112,9 @@ export default function CampaignsPage() {
                 className="object-cover !rounded-lg"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-neutral to-transparent" />
+              <div className="absolute inset-x-0 top-0 bg-danger py-2 text-center text-xs font-extrabold uppercase tracking-[0.2em] text-white shadow-lg">
+                Campaign Ended
+              </div>
 
               {c.logo && (
                 <div className="absolute top-4 left-4 h-12 w-12  rounded-xl p-2 shadow-md backdrop-blur">
@@ -126,7 +129,7 @@ export default function CampaignsPage() {
 
               <div className="absolute bottom-4 left-4 right-4">
                 <h3 className="font-bold drop-shadow">{c.name}</h3>
-                <div className="flex items-center gap-2 text-sm mt-1 ">
+                <div className="flex items-center gap-2 text-sm mt-1 font-semibold">
                   <CalendarIcon className="h-4 w-4" />
                   <span>Ended {c.endDate}</span>
                 </div>
@@ -159,7 +162,7 @@ export default function CampaignsPage() {
                 >
                   <div className="h-2 bg-neutral-soft dark:bg-neutral-soft-content rounded-full overflow-hidden mb-4">
                     <div
-                      className="h-full bg-primary-content transition-all"
+                      className="h-full bg-neutral-soft-content transition-all"
                       style={{
                         width: `${
                           ((statsByCampaign[c.id]?.totalStreamedSup ?? 0) /
