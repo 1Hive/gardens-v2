@@ -295,7 +295,7 @@ export default function GardensGrowthInitiativePage({
         <div className="absolute inset-0">
           <Image
             src={campaigns?.banner}
-            alt="Gardens Growth Initiative"
+            alt={campaigns?.name ?? "Campaign hero image"}
             fill
             className={`object-cover ${isEndedCampaign ? "grayscale" : ""}`}
             priority
