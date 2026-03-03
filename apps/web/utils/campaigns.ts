@@ -37,4 +37,15 @@ export const CAMPAIGNS = {
     logo: GoodDollarLogo,
     leaderboardEndpoint: "/api/superfluid-points-gd/leaderboard",
   },
+  "3": {
+    id: "3",
+    name: "Superfluid Ecosystem Rewards 2.0",
+    description:
+      "Earn SUP rewards by staking governance tokens, adding funds to pools, and following Gardens on Farcaster.",
+    tokenSymbol: "SUP",
+    endDate: "1 Jun 2026",
+    banner: SuperBanner,
+    logo: SuperLogo,
+    leaderboardEndpoint: "/api/superfluid-points/leaderboard",
+  },
 } as const;
