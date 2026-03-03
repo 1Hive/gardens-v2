@@ -24,7 +24,7 @@ import {
   LeaderboardResponse,
   WalletEntry,
 } from "@/types";
-import { CAMPAIGNS, CampaignId } from "@/utils/campaigns";
+import { CAMPAIGNS, CampaignId, isCampaignActive } from "@/utils/campaigns";
 import { shortenAddress } from "@/utils/text";
 import { formatNumber, timeAgo } from "@/utils/time";
 
@@ -174,6 +174,55 @@ export const PARTICIPATION_BY_CAMPAIGN: Record<string, ParticipationStep[]> = {
       highlighted: true,
     },
   ],
+  "3": [
+    {
+      title: "Follow Gardens on Farcaster",
+      description: (
+        <>
+          Stay connected with the Gardens community.{" "}
+          <Link
+            href="https://farcaster.xyz/gardens"
+            target="_blank"
+            rel="noreferrer"
+            className="underline"
+          >
+            Follow Gardens on Farcaster
+          </Link>
+          .
+        </>
+      ),
+      icon: <ChatBubbleLeftRightIcon className="h-5 w-5" />,
+      activities: ["Farcaster Follow"],
+      pointsInfo: "1 point",
+    },
+    {
+      title: "Add Funds into a Funding Pool",
+      description: (
+        <>
+          Stream funds or make a one-time transfer in{" "}
+          <Link
+            href="https://docs.superfluid.org/docs/concepts/overview/super-tokens#pure-super-tokens"
+            target="_blank"
+            rel="noreferrer"
+            className="underline"
+          >
+            Pure Super Token
+          </Link>{" "}
+          into a funding pool.{" "}
+        </>
+      ),
+      icon: <ArrowTrendingUpIcon className="h-5 w-5" />,
+      activities: ["Add Funds"],
+      pointsInfo: "1 point per $1 added (minimum $10)",
+    },
+    {
+      title: "Join a Community & Increase Your Stake",
+      description: "Become an active member and increase your stake.",
+      icon: <UsersIcon className="h-5 w-5" />,
+      activities: ["Stake & Governance"],
+      pointsInfo: "Points split based on stake size",
+    },
+  ],
 };
 
 function getWalletRankAndPoints(
@@ -202,7 +251,6 @@ type ClientPageProps = {
 export default function GardensGrowthInitiativePage({
   campaignId,
 }: ClientPageProps) {
-  const isEndedCampaign = true;
   const [superfluidStreamsData, setSuperfluidStreamsData] =
     useState<LeaderboardResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -213,6 +261,7 @@ export default function GardensGrowthInitiativePage({
   const [openModal, setOpenModal] = useState(false);
 
   const campaigns = CAMPAIGNS[campaignId];
+  const isEndedCampaign = !isCampaignActive(campaigns?.endDate ?? "");
 
   const howToParticipate = PARTICIPATION_BY_CAMPAIGN[campaignId];
 

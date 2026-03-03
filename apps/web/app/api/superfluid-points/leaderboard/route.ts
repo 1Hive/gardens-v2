@@ -6,6 +6,7 @@ import { chainConfigMap } from "@/configs/chains";
 const PINATA_POINTS_SNAPSHOT_NAME = "superfluid-activity-points";
 const PINATA_POINTS_SNAPSHOT_CID =
   process.env.SUPERFLUID_POINTS_SNAPSHOT_CID ?? null;
+const DEFAULT_CAMPAIGN_ID = process.env.SUPERFLUID_POINT_SYSTEM_ID ?? null;
 const normalizeGateway = (gw?: string | null) => {
   if (!gw || gw.trim() === "") return "https://gateway.pinata.cloud";
   const trimmed = gw.trim().replace(/\/$/, "");
@@ -57,13 +58,14 @@ const fetchIpfsJson = async <T = any>(cid: string): Promise<T | null> => {
   }
 };
 
-const resolveLatestPointsCid = async (): Promise<string | null> => {
-  if (PINATA_POINTS_SNAPSHOT_CID) return PINATA_POINTS_SNAPSHOT_CID;
+const resolveLatestPointsCid = async (
+  snapshotName: string,
+): Promise<string | null> => {
   if (!pinataClient) return null;
   try {
     const res = await pinataClient.pinList({
       status: "pinned",
-      metadata: { name: PINATA_POINTS_SNAPSHOT_NAME, keyvalues: {} },
+      metadata: { name: snapshotName, keyvalues: {} },
       pageLimit: 100,
       pageOffset: 0,
     });
@@ -72,7 +74,7 @@ const resolveLatestPointsCid = async (): Promise<string | null> => {
     for (const row of rows) {
       const name = row?.metadata?.name;
       const cid = row?.ipfs_pin_hash;
-      if (name !== PINATA_POINTS_SNAPSHOT_NAME || !cid) continue;
+      if (name !== snapshotName || !cid) continue;
       const pinnedAtStr = row?.date_pinned ?? row?.metadata?.timestamp;
       const pinnedAt = pinnedAtStr ? Date.parse(pinnedAtStr) : Number.NaN;
       const pinnedAtMs = Number.isNaN(pinnedAt) ? 0 : pinnedAt;
@@ -134,7 +136,10 @@ const SUPERFLUID_POOL_TOTALS_QUERY = gql`
   }
 `;
 const TOTAL_STREAMED_SUP_FALLBACK = 3_578;
-const TARGET_STREAM_SUP = 847_000;
+const DEFAULT_TARGET_STREAM_SUP = 847_000;
+const TARGET_STREAM_SUP_BY_CAMPAIGN: Record<string, number> = {
+  "510": 516_000,
+};
 
 const fetchSuperfluidTotals = async (): Promise<number | null> => {
   const chainConfig = chainConfigMap[SUPERFLUID_CHAIN_ID];
@@ -183,6 +188,12 @@ export async function GET(request: Request) {
   try {
     const url = new URL(request.url);
     const cidFromQuery = url.searchParams.get("cid");
+    const campaignIdFromQuery = url.searchParams.get("campaignId")?.trim() || null;
+    const campaignId = campaignIdFromQuery ?? DEFAULT_CAMPAIGN_ID;
+    const snapshotName =
+      campaignIdFromQuery && campaignId ?
+        `${PINATA_POINTS_SNAPSHOT_NAME}-${campaignId}`
+      : PINATA_POINTS_SNAPSHOT_NAME;
     const walletAddressParam = url.searchParams.get("walletAddress");
     const normalizedWalletAddress =
       walletAddressParam && walletAddressParam.toLowerCase().startsWith("0x") ?
@@ -190,8 +201,8 @@ export async function GET(request: Request) {
       : null;
     const cid =
       cidFromQuery ??
-      PINATA_POINTS_SNAPSHOT_CID ??
-      (await resolveLatestPointsCid());
+      (campaignIdFromQuery ? null : PINATA_POINTS_SNAPSHOT_CID) ??
+      (await resolveLatestPointsCid(snapshotName));
 
     if (!cid) {
       return NextResponse.json(
@@ -211,12 +222,17 @@ export async function GET(request: Request) {
     const sanitized = stripSnapshot(data);
     const totalStreamedSup =
       (await fetchSuperfluidTotals()) ?? TOTAL_STREAMED_SUP_FALLBACK;
+    const targetStreamSup =
+      (campaignId ?
+        TARGET_STREAM_SUP_BY_CAMPAIGN[String(campaignId)]
+      : undefined) ?? DEFAULT_TARGET_STREAM_SUP;
 
     return NextResponse.json({
+      campaignId,
       cid,
       snapshot: sanitized,
       totalStreamedSup,
-      targetStreamSup: TARGET_STREAM_SUP,
+      targetStreamSup,
     });
   } catch (error) {
     console.error("[leaderboard] unexpected error", { error });
