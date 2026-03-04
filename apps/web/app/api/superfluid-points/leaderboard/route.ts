@@ -130,7 +130,7 @@ export const revalidate = 0;
 const SUPERFLUID_CHAIN_ID = 8453;
 const DEFAULT_GARDENS_GDA_ID = "0x5f86aeb40ea66373c7ce337f777c37951fdaaeea";
 const GARDENS_GDA_ID_BY_CAMPAIGN: Record<string, string | undefined> = {
-  "510": undefined,
+  "510": "0x9E3889A48dee1c55e67A5828b1766157ADE564b6",
 };
 const SUPERFLUID_POOL_TOTALS_QUERY = gql`
   query poolTotals($id: ID!) {
