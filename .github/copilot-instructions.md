@@ -293,4 +293,4 @@ Check:
 * `pkg/contracts/scripts/verify-storage-layout.sh`
 * `pkg/subgraph/schema.graphql`
 * `pkg/subgraph/src/**`
-* `apps/web` ABI usage & wagmi bindings
+* `apps/web` 

@@ -12,6 +12,7 @@ export const cheats = [
   "showExcludedCommunities",
   "showAsCouncilSafe",
   "showUseSuperTokenBalance",
+  "loupe",
 ] as const;
 
 export type CheatName = (typeof cheats)[number];
@@ -35,6 +36,8 @@ const getFlagFromEnv = (flag: CheatName) => {
       return process.env.NEXT_PUBLIC_FLAG_SHOWASCOUNCILSAFE;
     case "showUseSuperTokenBalance":
       return process.env.NEXT_PUBLIC_FLAG_SHOWUSESUPERTOKENBALANCE;
+    case "loupe":
+      return process.env.NEXT_PUBLIC_FLAG_LOUPE;
     default:
       return undefined;
   }

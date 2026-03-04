@@ -12,10 +12,10 @@ type InfoWrapperProps = {
   contentFlex?: boolean;
 };
 
-const sizeMap = {
-  sm: { width: 18, height: 18 },
-  md: { width: 22, height: 22 },
-  lg: { width: 2, height: 2 },
+const iconSizeClasses: Record<NonNullable<InfoWrapperProps["size"]>, string> = {
+  sm: "w-4 h-4",
+  md: "w-5 h-5",
+  lg: "w-6 h-6",
 };
 
 export function InfoWrapper({
@@ -28,10 +28,10 @@ export function InfoWrapper({
   hideIcon = false,
   contentFlex = false,
 }: InfoWrapperProps): JSX.Element {
-  const { width, height } = sizeMap[size];
+  const iconSizeClass = iconSizeClasses[size];
 
   return (
-    <div className="flex gap-1 items-center mx-1 h-fit">
+    <div className="flex gap-1 items-center justify-center mx-1 h-fit">
       {!hoverOnChildren && (
         <div className={`${contentFlex ? "flex-1" : ""}`}>{children}</div>
       )}
@@ -44,7 +44,7 @@ export function InfoWrapper({
         )}
         {!hideIcon &&
           (customIcon ?? (
-            <InformationCircleIcon width={width} height={height} />
+            <InformationCircleIcon className={iconSizeClass} />
           ))}
       </div>
     </div>
