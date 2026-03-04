@@ -197,17 +197,13 @@ export async function GET(request: Request) {
   try {
     const url = new URL(request.url);
     const cidFromQuery = url.searchParams.get("cid");
-    const campaignIdFromQuery = url.searchParams.get("campaignId")?.trim() || null;
+    const campaignIdFromQuery =
+      Boolean(url.searchParams.get("campaignId")?.trim()) || null;
     const campaignId = campaignIdFromQuery ?? DEFAULT_CAMPAIGN_ID;
     const snapshotName =
-      campaignIdFromQuery && campaignId ?
-        `${PINATA_POINTS_SNAPSHOT_NAME}-${campaignId}`
+      campaignIdFromQuery ?
+        `${PINATA_POINTS_SNAPSHOT_NAME}-${campaignIdFromQuery}`
       : PINATA_POINTS_SNAPSHOT_NAME;
-    const walletAddressParam = url.searchParams.get("walletAddress");
-    const normalizedWalletAddress =
-      walletAddressParam && walletAddressParam.toLowerCase().startsWith("0x") ?
-        walletAddressParam.toLowerCase()
-      : null;
     const cid =
       cidFromQuery ??
       (campaignIdFromQuery ? null : PINATA_POINTS_SNAPSHOT_CID) ??
@@ -230,20 +226,21 @@ export async function GET(request: Request) {
 
     const sanitized = stripSnapshot(data);
     const hasCampaignSpecificGdaId =
-      Boolean(campaignId) &&
+      Boolean(campaignIdFromQuery) &&
       Object.prototype.hasOwnProperty.call(
         GARDENS_GDA_ID_BY_CAMPAIGN,
-        String(campaignId),
+        String(campaignIdFromQuery),
       );
     const gardensGdaId =
       hasCampaignSpecificGdaId ?
-        GARDENS_GDA_ID_BY_CAMPAIGN[String(campaignId)]
+        GARDENS_GDA_ID_BY_CAMPAIGN[String(campaignIdFromQuery)]
       : DEFAULT_GARDENS_GDA_ID;
     const totalStreamedSup =
-      (await fetchSuperfluidTotals(gardensGdaId)) ?? TOTAL_STREAMED_SUP_FALLBACK;
+      (await fetchSuperfluidTotals(gardensGdaId)) ??
+      TOTAL_STREAMED_SUP_FALLBACK;
     const targetStreamSup =
-      (campaignId ?
-        TARGET_STREAM_SUP_BY_CAMPAIGN[String(campaignId)]
+      (campaignIdFromQuery ?
+        TARGET_STREAM_SUP_BY_CAMPAIGN[String(campaignIdFromQuery)]
       : undefined) ?? DEFAULT_TARGET_STREAM_SUP;
 
     return NextResponse.json({
