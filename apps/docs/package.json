@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@inkeep/cxkit-react": "^0.5.100",
-    "next": "^14.2.5",
+    "next": "^15.5.10",
     "nextra": "^3.2.3",
     "nextra-theme-docs": "^3.2.3",
     "react": "18.2.0",
