@@ -199,7 +199,7 @@ export async function GET(request: Request) {
     const url = new URL(request.url);
     const cidFromQuery = url.searchParams.get("cid");
     const campaignIdFromQuery =
-      Boolean(url.searchParams.get("campaignId")?.trim()) || null;
+      url.searchParams.get("campaignId")?.trim() || null;
     const campaignId = campaignIdFromQuery ?? DEFAULT_CAMPAIGN_ID;
     const snapshotName =
       campaignIdFromQuery ?
