@@ -85,6 +85,7 @@ const resolveLatestPointsCid = async (
     if (!latest) {
       console.warn("[leaderboard] no exact points snapshot found", {
         totalPins: rows.length,
+        snapshotName,
       });
     }
     return latest?.cid ?? null;

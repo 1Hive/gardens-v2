@@ -140,6 +140,7 @@ const resolveLatestPointsCid = async (
     if (!latest) {
       console.warn("[leaderboard-gd] no exact points snapshot found", {
         totalPins: rows.length,
+        snapshotName,
       });
     }
     return latest?.cid ?? null;
