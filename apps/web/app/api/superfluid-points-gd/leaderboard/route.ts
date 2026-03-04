@@ -8,6 +8,7 @@ const PINATA_POINTS_SNAPSHOT_CID =
   process.env.SUPERFLUID_GD_POINTS_SNAPSHOT_CID ??
   process.env.SUPERFLUID_POINTS_SNAPSHOT_CID ??
   null;
+const DEFAULT_CAMPAIGN_ID = process.env.SUPERFLUID_POINT_GD_SYSTEM_ID ?? null;
 const normalizeGateway = (gw?: string | null) => {
   if (!gw || gw.trim() === "") return "https://gateway.pinata.cloud";
   const trimmed = gw.trim().replace(/\/$/, "");
@@ -111,14 +112,15 @@ const fetchIpfsJson = async <T = any>(cid: string): Promise<T | null> => {
   }
 };
 
-const resolveLatestPointsCid = async (): Promise<string | null> => {
-  if (PINATA_POINTS_SNAPSHOT_CID) return PINATA_POINTS_SNAPSHOT_CID;
+const resolveLatestPointsCid = async (
+  snapshotName: string,
+): Promise<string | null> => {
   if (!pinataClient) return null;
 
   try {
     const res = await pinataClient.pinList({
       status: "pinned",
-      metadata: { name: PINATA_POINTS_SNAPSHOT_NAME, keyvalues: {} },
+      metadata: { name: snapshotName, keyvalues: {} },
       pageLimit: 20,
       pageOffset: 0,
     });
@@ -127,7 +129,7 @@ const resolveLatestPointsCid = async (): Promise<string | null> => {
     for (const row of rows) {
       const name = row?.metadata?.name;
       const cid = row?.ipfs_pin_hash;
-      if (name !== PINATA_POINTS_SNAPSHOT_NAME || !cid) continue;
+      if (name !== snapshotName || !cid) continue;
       const pinnedAtStr = row?.date_pinned ?? row?.metadata?.timestamp;
       const pinnedAt = pinnedAtStr ? Date.parse(pinnedAtStr) : Number.NaN;
       const pinnedAtMs = Number.isNaN(pinnedAt) ? 0 : pinnedAt;
@@ -195,10 +197,17 @@ export async function GET(request: Request) {
   try {
     const url = new URL(request.url);
     const cidFromQuery = url.searchParams.get("cid");
+    const campaignIdFromQuery =
+      Boolean(url.searchParams.get("campaignId")?.trim()) || null;
+    const campaignId = campaignIdFromQuery ?? DEFAULT_CAMPAIGN_ID;
+    const snapshotName =
+      campaignIdFromQuery ?
+        `${PINATA_POINTS_SNAPSHOT_NAME}-${campaignIdFromQuery}`
+      : PINATA_POINTS_SNAPSHOT_NAME;
     const cid =
       cidFromQuery ??
-      PINATA_POINTS_SNAPSHOT_CID ??
-      (await resolveLatestPointsCid());
+      (campaignIdFromQuery ? null : PINATA_POINTS_SNAPSHOT_CID) ??
+      (await resolveLatestPointsCid(snapshotName));
 
     if (!cid) {
       return NextResponse.json(
@@ -221,6 +230,7 @@ export async function GET(request: Request) {
       (await fetchSuperfluidTotals()) ?? TOTAL_STREAMED_SUP_FALLBACK;
 
     return NextResponse.json({
+      campaignId,
       cid,
       snapshot: sanitized,
       totalStreamedSup,

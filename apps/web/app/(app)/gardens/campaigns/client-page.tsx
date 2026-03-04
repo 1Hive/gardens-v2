@@ -8,7 +8,7 @@ import { PlantBanner } from "@/assets";
 import { Button } from "@/components/Button";
 import { Skeleton } from "@/components/Skeleton";
 import { fetchSuperfluidLeaderboard } from "@/types";
-import { CAMPAIGNS } from "@/utils/campaigns";
+import { CAMPAIGNS, CampaignId, isCampaignActive } from "@/utils/campaigns";
 import { formatNumber, timeAgo } from "@/utils/time";
 
 type CampaignStats = {
@@ -18,7 +18,9 @@ type CampaignStats = {
   lastUpdated: string | null;
 };
 
-type Campaign = (typeof CAMPAIGNS)[keyof typeof CAMPAIGNS];
+type Campaign = (typeof CAMPAIGNS)[keyof typeof CAMPAIGNS] & {
+  slug: CampaignId;
+};
 type CampaignTab = "active" | "ended";
 type CategorizedCampaigns = {
   activeCampaigns: Campaign[];
@@ -34,7 +36,14 @@ export default function CampaignsPage() {
 
   const [activeTab, setActiveTab] = useState<CampaignTab>("active");
 
-  const campaigns = useMemo<Campaign[]>(() => Object.values(CAMPAIGNS), []);
+  const campaigns = useMemo<Campaign[]>(
+    () =>
+      Object.entries(CAMPAIGNS).map(([slug, campaign]) => ({
+        ...campaign,
+        slug: slug as CampaignId,
+      })),
+    [],
+  );
   const now = Date.now();
   const { activeCampaigns, endedCampaigns } = categorizeCampaigns(
     campaigns,
@@ -59,7 +68,7 @@ export default function CampaignsPage() {
             if (!res) return null;
 
             return [
-              campaign.id,
+              campaign.slug,
               {
                 totalStreamedSup: res.totalStreamedSup,
                 walletCount: res.snapshot.wallets.length,
@@ -164,7 +173,7 @@ export default function CampaignsPage() {
             )}
           </div>
         : displayedCampaigns.map((c) => {
-            const isEndedCampaign = !isCampaignActive(c, now);
+            const isEndedCampaign = !isCampaignActive(c.endDate, now);
             const cardBorderClasses =
               isEndedCampaign ? "border-danger/50" : (
                 "border-neutral-soft-content/30 dark:border-white/10"
@@ -176,8 +185,8 @@ export default function CampaignsPage() {
 
             return (
               <Link
-                key={c.id}
-                href={`/gardens/campaigns/${c.id}`}
+                key={c.slug}
+                href={`/gardens/campaigns/${c.slug}`}
                 className={`section-layout !p-0 rounded-xl overflow-hidden transition group w-full max-w-2xl border ${cardBorderClasses} ${cardStateClasses} ${isEndedCampaign ? "hover:shadow-none" : "hover:shadow-lg"}`}
               >
                 {/* Image */}
@@ -230,11 +239,11 @@ export default function CampaignsPage() {
                         <span className="">Claimed</span>
                         <span className="font-medium">
                           {formatNumber(
-                            statsByCampaign[c.id]?.totalStreamedSup ?? 0,
+                            statsByCampaign[c.slug]?.totalStreamedSup ?? 0,
                           )}{" "}
                           /{" "}
                           {formatNumber(
-                            statsByCampaign[c.id]?.targetStreamSup ?? 0,
+                            statsByCampaign[c.slug]?.targetStreamSup ?? 0,
                           )}{" "}
                           {c.tokenSymbol}
                         </span>
@@ -250,8 +259,9 @@ export default function CampaignsPage() {
                           className="h-full bg-neutral-soft-content transition-all"
                           style={{
                             width: `${
-                              ((statsByCampaign[c.id]?.totalStreamedSup ?? 0) /
-                                (statsByCampaign[c.id]?.targetStreamSup ??
+                              ((statsByCampaign[c.slug]?.totalStreamedSup ??
+                                0) /
+                                (statsByCampaign[c.slug]?.targetStreamSup ??
                                   10)) *
                               100
                             }%`,
@@ -262,7 +272,7 @@ export default function CampaignsPage() {
                         <div className="flex items-center gap-2">
                           <UserGroupIcon className="h-5 w-5 text-neutral-soft-content" />
                           <span className="text-neutral-soft-content text-sm">
-                            {statsByCampaign[c.id]?.walletCount} participants
+                            {statsByCampaign[c.slug]?.walletCount} participants
                           </span>
                         </div>
                         <div>
@@ -270,7 +280,7 @@ export default function CampaignsPage() {
                             {" "}
                             Last updated:{" "}
                             {timeAgo(
-                              statsByCampaign[c.id]?.lastUpdated ?? undefined,
+                              statsByCampaign[c.slug]?.lastUpdated ?? undefined,
                             )}
                           </span>
                         </div>
@@ -287,23 +297,13 @@ export default function CampaignsPage() {
   );
 }
 
-function isCampaignActive(campaign: Campaign, referenceTimestamp: number) {
-  const endDateTimestamp = Date.parse(campaign.endDate);
-
-  if (Number.isNaN(endDateTimestamp)) {
-    return false;
-  }
-
-  return endDateTimestamp >= referenceTimestamp;
-}
-
 function categorizeCampaigns(
   campaigns: Campaign[],
   referenceTimestamp: number,
 ): CategorizedCampaigns {
   return campaigns.reduce<CategorizedCampaigns>(
     (acc, campaign) => {
-      if (isCampaignActive(campaign, referenceTimestamp)) {
+      if (isCampaignActive(campaign.endDate, referenceTimestamp)) {
         acc.activeCampaigns.push(campaign);
       } else {
         acc.endedCampaigns.push(campaign);
