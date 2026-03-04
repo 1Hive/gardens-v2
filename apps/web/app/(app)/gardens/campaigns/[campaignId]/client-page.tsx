@@ -263,7 +263,7 @@ export default function GardensGrowthInitiativePage({
   const campaigns = CAMPAIGNS[campaignId];
   const isEndedCampaign = !isCampaignActive(campaigns?.endDate ?? "");
 
-  const howToParticipate = PARTICIPATION_BY_CAMPAIGN[campaignId];
+  const howToParticipate = PARTICIPATION_BY_CAMPAIGN[campaignId] ?? [];
 
   const { address: connectedAccount } = useAccount();
 
@@ -282,6 +282,7 @@ export default function GardensGrowthInitiativePage({
   });
 
   const wallets = superfluidStreamsData?.snapshot?.wallets ?? [];
+  const targetStreamSup = superfluidStreamsData?.targetStreamSup ?? 847_000;
 
   const connectedDisplayName = useMemo(() => {
     if (!connectedAccount) return null;
@@ -420,7 +421,8 @@ export default function GardensGrowthInitiativePage({
 
               <div className="space-y-4 p-6">
                 {loading ?
-                  Array.from({ length: 4 }).map((_, idx) => (
+                  Array.from({ length: Math.max(howToParticipate.length, 1) }).map(
+                    (_, idx) => (
                     <div
                       // eslint-disable-next-line react/no-array-index-key
                       key={`step-skeleton-${idx}`}
@@ -441,7 +443,8 @@ export default function GardensGrowthInitiativePage({
                         </div>
                       </div>
                     </div>
-                  ))
+                    ),
+                  )
                 : howToParticipate.map((step) => (
                     <div
                       key={step.title}
@@ -593,7 +596,7 @@ export default function GardensGrowthInitiativePage({
                         {formatNumber(
                           superfluidStreamsData?.totalStreamedSup ?? 0,
                         )}{" "}
-                        / {formatNumber(847_000)} SUP
+                        / {formatNumber(targetStreamSup)} SUP
                       </span>
                     </div>
 
@@ -603,7 +606,7 @@ export default function GardensGrowthInitiativePage({
                         style={{
                           width: `${
                             ((superfluidStreamsData?.totalStreamedSup ?? 0) /
-                              847_000) *
+                              Math.max(targetStreamSup, 1)) *
                             100
                           }%`,
                         }}

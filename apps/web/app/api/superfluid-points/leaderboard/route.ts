@@ -127,7 +127,10 @@ export const revalidate = 0;
 
 // Pull total streamed from Superfluid subgraph (Base mainnet)
 const SUPERFLUID_CHAIN_ID = 8453;
-const GARDENS_GDA_ID = "0x5f86aeb40ea66373c7ce337f777c37951fdaaeea";
+const DEFAULT_GARDENS_GDA_ID = "0x5f86aeb40ea66373c7ce337f777c37951fdaaeea";
+const GARDENS_GDA_ID_BY_CAMPAIGN: Record<string, string | undefined> = {
+  "510": undefined,
+};
 const SUPERFLUID_POOL_TOTALS_QUERY = gql`
   query poolTotals($id: ID!) {
     pool(id: $id) {
@@ -138,10 +141,16 @@ const SUPERFLUID_POOL_TOTALS_QUERY = gql`
 const TOTAL_STREAMED_SUP_FALLBACK = 3_578;
 const DEFAULT_TARGET_STREAM_SUP = 847_000;
 const TARGET_STREAM_SUP_BY_CAMPAIGN: Record<string, number> = {
-  "510": 516_000,
+  "510": 519_000,
 };
 
-const fetchSuperfluidTotals = async (): Promise<number | null> => {
+const fetchSuperfluidTotals = async (
+  gardensGdaId?: string,
+): Promise<number | null> => {
+  if (!gardensGdaId) {
+    return 0;
+  }
+
   const chainConfig = chainConfigMap[SUPERFLUID_CHAIN_ID];
   const superfluidSubgraphUrl =
     chainConfig?.publishedSuperfluidSubgraphUrl ??
@@ -161,7 +170,7 @@ const fetchSuperfluidTotals = async (): Promise<number | null> => {
     });
     const res = await client
       .query(SUPERFLUID_POOL_TOTALS_QUERY, {
-        id: GARDENS_GDA_ID.toLowerCase(),
+        id: gardensGdaId.toLowerCase(),
       })
       .toPromise();
 
@@ -220,8 +229,18 @@ export async function GET(request: Request) {
     }
 
     const sanitized = stripSnapshot(data);
+    const hasCampaignSpecificGdaId =
+      Boolean(campaignId) &&
+      Object.prototype.hasOwnProperty.call(
+        GARDENS_GDA_ID_BY_CAMPAIGN,
+        String(campaignId),
+      );
+    const gardensGdaId =
+      hasCampaignSpecificGdaId ?
+        GARDENS_GDA_ID_BY_CAMPAIGN[String(campaignId)]
+      : DEFAULT_GARDENS_GDA_ID;
     const totalStreamedSup =
-      (await fetchSuperfluidTotals()) ?? TOTAL_STREAMED_SUP_FALLBACK;
+      (await fetchSuperfluidTotals(gardensGdaId)) ?? TOTAL_STREAMED_SUP_FALLBACK;
     const targetStreamSup =
       (campaignId ?
         TARGET_STREAM_SUP_BY_CAMPAIGN[String(campaignId)]
