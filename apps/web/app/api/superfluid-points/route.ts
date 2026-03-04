@@ -2867,7 +2867,7 @@ const processChain = async ({
         sharePercent: share * 100,
         token: "aggregate",
         chainId,
-        bonusApplied: entry.isBonus,
+        bonusApplied: false,
       });
       walletActivities.set(key, list);
     }
@@ -2931,11 +2931,12 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   const campaignIdParam = url.searchParams.get("campaignId")?.trim() ?? "";
   const hasCampaignIdOverride = campaignIdParam.length > 0;
+  const parsedCampaignId = hasCampaignIdOverride ? Number(campaignIdParam) : 0;
   const campaignIdOverride =
-    hasCampaignIdOverride ? Number(campaignIdParam) : null;
+    hasCampaignIdOverride ? parsedCampaignId : null;
   if (
     hasCampaignIdOverride &&
-    (!Number.isInteger(campaignIdOverride) || campaignIdOverride <= 0)
+    (!Number.isInteger(parsedCampaignId) || parsedCampaignId <= 0)
   ) {
     console.log = originalConsole.log;
     console.warn = originalConsole.warn;
