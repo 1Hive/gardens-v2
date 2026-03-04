@@ -260,7 +260,7 @@ Check:
 * Changing CV math without tests
 * Removing events used by subgraph
 * Contract size increase near limit without justification
-* “Quick fix” in protocol-critical paths without tests
+* "Quick fix" in protocol-critical paths without tests
 
 ---
 
@@ -293,4 +293,4 @@ Check:
 * `pkg/contracts/scripts/verify-storage-layout.sh`
 * `pkg/subgraph/schema.graphql`
 * `pkg/subgraph/src/**`
-* `apps/web` ABI usage & wagmi bindings
+* `apps/web` 
