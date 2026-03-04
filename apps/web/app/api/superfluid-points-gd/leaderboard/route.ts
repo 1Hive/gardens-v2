@@ -197,11 +197,12 @@ export async function GET(request: Request) {
   try {
     const url = new URL(request.url);
     const cidFromQuery = url.searchParams.get("cid");
-    const campaignIdFromQuery = url.searchParams.get("campaignId")?.trim() || null;
+    const campaignIdFromQuery =
+      Boolean(url.searchParams.get("campaignId")?.trim()) || null;
     const campaignId = campaignIdFromQuery ?? DEFAULT_CAMPAIGN_ID;
     const snapshotName =
-      campaignIdFromQuery && campaignId ?
-        `${PINATA_POINTS_SNAPSHOT_NAME}-${campaignId}`
+      campaignIdFromQuery ?
+        `${PINATA_POINTS_SNAPSHOT_NAME}-${campaignIdFromQuery}`
       : PINATA_POINTS_SNAPSHOT_NAME;
     const cid =
       cidFromQuery ??
