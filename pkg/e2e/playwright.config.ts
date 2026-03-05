@@ -72,9 +72,14 @@ export default defineConfig({
       dependencies: ["06-activate-governance"]
     },
     {
+      name: "08-cancel-proposal",
+      testMatch: /08..*\.e2e\.ts$/,
+      dependencies: ["07-allocate-proposal"]
+    },
+    {
       name: "99-leave",
       testMatch: /99..*\.e2e\.ts$/,
-      dependencies: ["07-allocate-proposal"]
+      dependencies: ["08-cancel-proposal"]
     }
   ]
   // Additional Synpress-specific configuration can be added here

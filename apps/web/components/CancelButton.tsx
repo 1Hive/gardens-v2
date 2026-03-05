@@ -49,6 +49,7 @@ function CancelButton({ proposalData }: Props) {
       <Button
         btnStyle="outline"
         color="danger"
+        testId="btn-cancel-proposal"
         onClick={() => setIsModalOpen(true)}
       >
         Cancel
@@ -79,6 +80,7 @@ function CancelButton({ proposalData }: Props) {
               btnStyle="filled"
               color="danger"
               isLoading={isLoading}
+              testId="btn-confirm-cancel-proposal"
               onClick={() =>
                 writeCancel({ args: [BigInt(proposalData.proposalNumber)] })
               }
