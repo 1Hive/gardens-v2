@@ -1,9 +1,11 @@
 import { MetaMask } from "@synthetixio/synpress/playwright";
 import { expect, Page } from "@playwright/test";
 
+const OPTIMISM_RPC_URL = process.env.RPC_URL_OPTIMISM?.trim() || "https://mainnet.optimism.io";
+
 const OP_MAINNET = {
   name: "OP Mainnet",
-  rpcUrl: "https://mainnet.optimism.io",
+  rpcUrl: OPTIMISM_RPC_URL,
   chainId: 10,
   symbol: "ETH",
   blockExplorerUrl: "https://optimistic.etherscan.io"
@@ -37,6 +39,127 @@ async function dismissWalletPopovers(walletPage: Page) {
   }
 }
 
+async function clickFirstVisible(
+  walletPage: Page,
+  selectors: string[],
+  timeout = 1500
+) {
+  for (const selector of selectors) {
+    const locator = walletPage.locator(selector).first();
+    const isVisible = await locator.isVisible().catch(() => false);
+    if (!isVisible) {
+      continue;
+    }
+    await locator.click({ timeout }).catch(() => {});
+    return true;
+  }
+
+  return false;
+}
+
+async function fillFirstVisibleInput(
+  walletPage: Page,
+  selectors: string[],
+  value: string
+) {
+  for (const selector of selectors) {
+    const locator = walletPage.locator(selector).first();
+    const isVisible = await locator.isVisible().catch(() => false);
+    if (!isVisible) {
+      continue;
+    }
+    await locator.fill(value, { timeout: 2500 }).catch(() => {});
+    return true;
+  }
+
+  return false;
+}
+
+async function fallbackAddAndSwitchOptimismNetwork(
+  walletPage: Page,
+  metamask: MetaMask
+) {
+  const currentUrl = walletPage.url();
+  if (!currentUrl.startsWith("chrome-extension://")) {
+    throw new Error(`Wallet page is not an extension page: ${currentUrl}`);
+  }
+
+  const extensionOrigin = new URL(currentUrl).origin;
+  await walletPage.goto(`${extensionOrigin}/home.html#settings/networks/add-network`);
+  await walletPage.waitForLoadState("domcontentloaded");
+  await dismissWalletPopovers(walletPage);
+
+  const networkNameFilled = await fillFirstVisibleInput(
+    walletPage,
+    [
+      ".networks-tab__add-network-form .form-field:nth-child(1) input",
+      'input[name="networkName"]',
+      '[data-testid="network-form-network-name"] input'
+    ],
+    OP_MAINNET.name
+  );
+  const rpcFilled = await fillFirstVisibleInput(
+    walletPage,
+    [
+      ".networks-tab__add-network-form .form-field:nth-child(2) input",
+      'input[name="rpcUrl"]',
+      '[data-testid="network-form-rpc-url"] input'
+    ],
+    OP_MAINNET.rpcUrl
+  );
+  const chainIdFilled = await fillFirstVisibleInput(
+    walletPage,
+    [
+      ".networks-tab__add-network-form .form-field:nth-child(3) input",
+      'input[name="chainId"]',
+      '[data-testid="network-form-chain-id"] input'
+    ],
+    String(OP_MAINNET.chainId)
+  );
+  const symbolFilled = await fillFirstVisibleInput(
+    walletPage,
+    [
+      '[data-testid="network-form-ticker"] input',
+      ".networks-tab__add-network-form .form-field:nth-child(4) input",
+      'input[name="ticker"]',
+      '[data-testid="network-form-symbol"] input'
+    ],
+    OP_MAINNET.symbol
+  );
+
+  if (!networkNameFilled || !rpcFilled || !chainIdFilled || !symbolFilled) {
+    throw new Error("Could not locate one or more network form inputs in MetaMask");
+  }
+
+  await fillFirstVisibleInput(
+    walletPage,
+    [
+      ".networks-tab__add-network-form .form-field:last-child input",
+      'input[name="blockExplorerUrl"]',
+      '[data-testid="network-form-block-explorer-url"] input'
+    ],
+    OP_MAINNET.blockExplorerUrl
+  );
+
+  const saveClicked = await clickFirstVisible(walletPage, [
+    ".networks-tab__add-network-form-footer button.btn-primary",
+    '[data-testid="network-form-save"]',
+    'button[type="submit"]'
+  ]);
+  if (!saveClicked) {
+    throw new Error("Could not find network save button in MetaMask");
+  }
+
+  await walletPage.waitForTimeout(1000);
+  await dismissWalletPopovers(walletPage);
+  await walletPage.goto(`${extensionOrigin}/home.html`);
+  await walletPage.waitForLoadState("domcontentloaded");
+  await dismissWalletPopovers(walletPage);
+  await clickFirstVisible(walletPage, [".home__new-network-added__switch-to-button"], 1200);
+
+  await metamask.switchNetwork(OP_MAINNET.name);
+}
+
 async function ensureOptimismNetwork(page: Page, metamask: MetaMask) {
   const chainId = await page.evaluate(async () => {
     const provider = (window as any).ethereum;
@@ -61,10 +184,14 @@ async function ensureOptimismNetwork(page: Page, metamask: MetaMask) {
       try {
         await metamask.switchNetwork(OP_MAINNET.name);
       } catch {
-        await dismissWalletPopovers(metamask.page);
-        await metamask.addNetwork(OP_MAINNET);
-        await dismissWalletPopovers(metamask.page);
-        await metamask.switchNetwork(OP_MAINNET.name);
+        try {
+          await dismissWalletPopovers(metamask.page);
+          await metamask.addNetwork(OP_MAINNET);
+          await dismissWalletPopovers(metamask.page);
+          await metamask.switchNetwork(OP_MAINNET.name);
+        } catch {
+          await fallbackAddAndSwitchOptimismNetwork(metamask.page, metamask);
+        }
       }
 
       const switchedChainId = await page.evaluate(async () => {

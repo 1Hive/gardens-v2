@@ -91,6 +91,10 @@
       "next@>=13.3.0 <14.2.34": ">=14.2.34",
       "base-x": "3.0.9",
       "tar@<7.5.7": ">=7.5.7"
+    },
+    "patchedDependencies": {
+      "@synthetixio/synpress-cache@0.0.14": "patches/@synthetixio__synpress-cache@0.0.14.patch",
+      "@synthetixio/synpress-metamask@0.0.14": "patches/@synthetixio__synpress-metamask@0.0.14.patch"
     }
   }
 }

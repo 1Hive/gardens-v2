@@ -18,7 +18,7 @@
   "license": "ISC",
   "devDependencies": {
     "@playwright/test": "1.48.2",
-    "@synthetixio/synpress": "4.1.1",
+    "@synthetixio/synpress": "4.1.2",
     "@types/node": "^24.1.0",
     "dotenv": "^17.2.1"
   }

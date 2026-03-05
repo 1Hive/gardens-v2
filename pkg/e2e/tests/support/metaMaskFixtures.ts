@@ -16,6 +16,7 @@ type WalletSetup = {
   hash: string;
 };
 
+// Keep this in sync with `patches/@synthetixio__synpress-metamask@0.0.14.patch`.
 const DEFAULT_METAMASK_VERSION = "11.9.1";
 const CACHE_DIR_NAME = ".cache-synpress";
 
