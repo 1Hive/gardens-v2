@@ -79,6 +79,4 @@ test("should join community", async ({
   await page.waitForTimeout(1000); // Wait for the tx to open
   await confirmTransaction({ metamask, extensionId });
   await expectNoErrorToast(page);
-
-  // Close the modal
 });

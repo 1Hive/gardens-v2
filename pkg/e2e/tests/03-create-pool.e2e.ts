@@ -72,8 +72,7 @@ test("should create a pool in the community", async ({
   await approveTokenAllowance({ page, metamask, extensionId });
   await page.waitForTimeout(1000); // Wait for next tx to launch
 
-  // // Confirm the stake transaction
+  // Confirm the stake transaction
   await confirmTransaction({ metamask, extensionId });
   await expectNoErrorToast(page);
-  await page.waitForTimeout(6000);
 });

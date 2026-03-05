@@ -77,18 +77,35 @@ test("should ensure wallet is not a member before running e2e flow", async ({
     throw new Error("E2E_COMMUNITY_ID environment variable is not set.");
   }
 
-  await page.getByTestId(`community-card-${communityId}`).click();
-  await page.waitForLoadState("networkidle");
+  const communityCard = page.getByTestId(`community-card-${communityId}`);
+  await expect(communityCard).toBeVisible({ timeout: 60000 });
 
-  const urlPath = page.url().split("?")[0].split("#")[0];
-  const urlParts = urlPath.split("/");
-  const candidate = urlParts[urlParts.length - 1];
-  if (!isAddress(candidate)) {
+  const targetHref = await communityCard.evaluate((el) => {
+    const href = el.closest("a")?.getAttribute("href");
+    return href ?? "";
+  });
+  if (!targetHref.startsWith("/gardens/")) {
     throw new Error(
-      `Could not resolve community contract address from URL: ${page.url()}`
+      `Community card link is missing or invalid for ${communityId}: ${targetHref}`
     );
   }
-  const communityAddress = candidate;
+
+  await communityCard.click();
+  await page.waitForLoadState("networkidle");
+
+  // Some runs don't navigate on click even though the card has a valid link.
+  // Force navigation to the card href so contract extraction is deterministic.
+  if (new URL(page.url()).pathname === "/gardens") {
+    await page.goto(targetHref, { timeout: 60000 });
+    await page.waitForLoadState("networkidle");
+  }
+
+  if (!isAddress(communityId)) {
+    throw new Error(
+      `E2E_COMMUNITY_ID is not a valid address: ${communityId}`
+    );
+  }
+  const communityAddress = communityId;
 
   const readMembership = async () => {
     const result = await page.evaluate(

@@ -394,13 +394,16 @@ export async function confirmTransaction({
   let notificationPage: Page | undefined;
   const sleep = (ms: number) =>
     new Promise((resolve) => setTimeout(resolve, ms));
+  const findNotificationPages = () =>
+    metamask.page
+      .context()
+      .pages()
+      .filter((p) => !p.isClosed() && p.url().includes(notificationPageUrl));
 
   // Wait for the transaction confirmation popup
   for (let i = 0; i < 40; i++) {
-    notificationPage = metamask.page
-      .context()
-      .pages()
-      .find((p) => p.url().includes(notificationPageUrl));
+    const notificationPages = findNotificationPages();
+    notificationPage = notificationPages[notificationPages.length - 1];
     if (notificationPage) break;
     await sleep(250);
   }
@@ -416,13 +419,72 @@ export async function confirmTransaction({
   await notificationPage.waitForLoadState("networkidle", {
     timeout: 15000
   });
+  await notificationPage.bringToFront().catch(() => {});
 
-  const confirmBtn = notificationPage.getByRole("button", {
-    name: "Confirm",
-    exact: true
-  });
+  const scrollConfirmView = async () => {
+    // Legacy MetaMask keeps Confirm in a scrollable pane.
+    // Avoid `page.evaluate` because LavaMoat blocks direct global access.
+    await notificationPage?.mouse.wheel(0, 1200).catch(() => {});
+    await notificationPage?.keyboard.press("PageDown").catch(() => {});
+    await notificationPage?.keyboard.press("End").catch(() => {});
+  };
 
-  await confirmBtn.click({ timeout: 60000 });
+  const confirmSelectors = [
+    '[data-testid="confirm-footer-button"]',
+    'button:has-text("Confirm")',
+    '[data-testid="page-container-footer-next"]'
+  ];
+
+  let clicked = false;
+  for (let i = 0; i < 20; i++) {
+    const notificationPages = findNotificationPages();
+    const latestNotificationPage =
+      notificationPages[notificationPages.length - 1];
+    if (latestNotificationPage) {
+      notificationPage = latestNotificationPage;
+      await notificationPage.bringToFront().catch(() => {});
+    }
+
+    await scrollConfirmView();
+
+    for (const selector of confirmSelectors) {
+      const button = notificationPage.locator(selector).first();
+      const visible = await button.isVisible().catch(() => false);
+      if (!visible) {
+        continue;
+      }
+
+      const enabled = await button.isEnabled().catch(() => false);
+      if (!enabled) {
+        continue;
+      }
+
+      await button.scrollIntoViewIfNeeded().catch(() => {});
+      try {
+        await button.click({ timeout: 5000 });
+        clicked = true;
+        break;
+      } catch {
+        try {
+          await button.click({ timeout: 5000, force: true });
+          clicked = true;
+          break;
+        } catch {
+        }
+      }
+    }
+
+    if (clicked) {
+      break;
+    }
+
+    await sleep(250);
+  }
+
+  if (!clicked) {
+    throw new Error("MetaMask Confirm button was not clickable");
+  }
+
   await metamask.page.waitForTimeout(1000);
 }
 
