@@ -24,7 +24,7 @@ import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { usePoolToken } from "@/hooks/usePoolToken";
-import { PointSystems, PoolTypes } from "@/types";
+import { PointSystems, PoolTypes, ProposalStatus } from "@/types";
 import { capitalize } from "@/utils/text";
 
 type Props = {
@@ -33,7 +33,7 @@ type Props = {
     CVStrategy,
     "id" | "isEnabled" | "poolId" | "metadataHash" | "archived"
   > & {
-    proposals: Pick<CVProposal, "id">[];
+    proposals: Pick<CVProposal, "id" | "proposalStatus">[];
     config: Pick<CVStrategyConfig, "proposalType" | "pointSystem">;
     metadata?: Maybe<Omit<PoolMetadata, "id">>;
   };
@@ -69,6 +69,11 @@ export function PoolCard({ pool, token }: Props) {
 
   const isNewPool =
     searchParams[QUERY_PARAMS.communityPage.newPool] === pool.poolId.toString();
+  const activeOrDisputedProposalsCount = proposals.filter(
+    (proposal) =>
+      ProposalStatus[proposal.proposalStatus] === "active" ||
+      ProposalStatus[proposal.proposalStatus] === "disputed",
+  ).length;
 
   return (
     <>
@@ -99,7 +104,7 @@ export function PoolCard({ pool, token }: Props) {
           />
           <Statistic
             icon={<HandRaisedIcon />}
-            count={proposals.length}
+            count={activeOrDisputedProposalsCount}
             label="proposals"
             className={`${isEnabled ? "visible" : "invisible"}`}
           />

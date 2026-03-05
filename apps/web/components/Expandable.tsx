@@ -41,7 +41,8 @@ export const ExpandableComponent = ({
     setNeedsExpansion(hasOverflow);
   }, [children, previewHeight, withDescription]);
 
-  const showPreview = !expanded && previewHeight && withDescription;
+  const showPreview =
+    !expanded && withDescription && (previewHeight ?? 0) > 0;
 
   if (withDescription) {
     return (

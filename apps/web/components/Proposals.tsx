@@ -22,6 +22,7 @@ import {
   ChevronDownIcon,
   HandRaisedIcon,
 } from "@heroicons/react/24/outline";
+import { CheckIcon } from "@heroicons/react/24/solid";
 
 import Link from "next/link";
 import { Id, toast } from "react-toastify";
@@ -38,7 +39,7 @@ import {
   RegistryCommunity,
   getMembersStrategyQuery,
 } from "#/subgraph/.graphclient";
-import { Divider } from "./Diivider";
+import { Divider } from "./Divider";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { PoolGovernanceProps } from "./PoolGovernance";
 import { ProposalCardProps, ProposalHandle } from "./ProposalCard";
@@ -681,7 +682,7 @@ export function Proposals({
     0: "inactive",
     1: "active",
     2: "paused",
-    3: "closed",
+    3: "cancelled",
     4: "executed",
     5: "disputed",
     6: "rejected",
@@ -698,6 +699,10 @@ export function Proposals({
       },
       {} as Record<string, number>,
     ),
+    // "closed" filter groups both cancelled (3) and rejected (6) proposals
+    closed: sortedProposals.filter((p) =>
+      (CLOSED_STATUSES as readonly number[]).includes(Number(p.proposalStatus)),
+    ).length,
   };
 
   const {
@@ -839,7 +844,7 @@ export function Proposals({
 
         {sortedProposals.length !== 0 && filteredAndSorted.length === 0 ?
           <div className="flex flex-col items-center justify-center text-center">
-            <p className="text-neutral-soft-content text-sm">
+            <p className="text-neutral-soft-content text-xs sm:text-sm text-center">
               There are no {filter && filter} proposals at the moment.
             </p>
           </div>
@@ -892,7 +897,7 @@ export function Proposals({
                   <div className="flex flex-col items-center justify-center text-center my-4">
                     <p className="text-neutral-soft-content text-sm">
                       There are currently no active or disputed proposals to
-                      vote.
+                      vote on.
                     </p>
                   </div>
                 )}
@@ -904,7 +909,6 @@ export function Proposals({
                       proposalData={proposalData}
                       strategyConfig={strategy.config}
                       inputData={inputs[proposalData.id]}
-                      stakedFilter={stakedFilters[proposalData.id]}
                       isAllocationView={allocationView}
                       memberActivatedPoints={memberActivatedPoints}
                       memberPoolWeight={memberPoolWeight}
@@ -959,6 +963,9 @@ export function Proposals({
   );
 }
 
+// Statuses that are grouped under the "closed" filter (cancelled=3, rejected=6)
+const CLOSED_STATUSES = [3, 6] as const;
+
 export function useProposalFilter<
   T extends {
     proposalStatus: string | number;
@@ -986,7 +993,7 @@ export function useProposalFilter<
   const FILTER_STATUS: Record<Exclude<FilterType, null>, number | number[]> = {
     all: 0,
     active: 1,
-    closed: [3, 6],
+    closed: [...CLOSED_STATUSES],
     executed: 4,
     disputed: 5,
   };
@@ -1127,21 +1134,24 @@ function ProposalFiltersUI({
   };
 
   return (
-    <div className="flex flex-col lg:flex-row justify-between bg-neutral rounded-2xl items-center gap-2 lg:gap-4">
+    <div className="w-full min-w-0 flex flex-col lg:flex-row justify-between bg-neutral rounded-2xl items-stretch lg:items-center gap-2 lg:gap-4">
       {/* FILTERS */}
-      <div className="flex  gap-2 lg:gap-2 sm:justify-between flex-wrap">
+      <div className="min-w-0 flex gap-2 lg:gap-2 overflow-x-auto sm:overflow-visible pb-1 sm:pb-0 sm:justify-between  sm:flex-wrap items-center">
         {FILTERS.map((f) => (
           <button
             key={f}
             type="button"
             onClick={() => setFilter(f)}
-            className={`rounded-full px-3 py-1.5 font-semibold border transition-all duration-150 ease-out ${
+            className={`shrink-0 rounded-full px-3 py-1.5 font-semibold border transition-all duration-150 ease-out flex items-center ${
               filter === f ?
                 `${FILTER_BADGE_STYLES[f]} border-transparent`
               : "bg-transparent border-neutral-soft-content/30 text-neutral-soft-content hover:border-neutral-soft-content hover:text-primary-content"
             }`}
           >
-            <span className="capitalize text-sm sm:text-md">{f}</span>
+            <span className="capitalize inline-flex items-center gap-1 text-sm sm:text-md">
+              {filter === f && <CheckIcon className="h-3.5 w-3.5" />}
+              {f}
+            </span>
             <span className="ml-1 opacity-80 text-xs sm:text-sm">
               ({counts[f] ?? 0})
             </span>
@@ -1152,14 +1162,14 @@ function ProposalFiltersUI({
       <Divider className="sm:hidden my-2 sm:my-0" />
 
       {/* SORT DROPDOWN */}
-      <div className="w-full lg:w-fit flex justify-between items-center ">
+      <div className="w-full min-w-0 lg:w-fit flex justify-between items-center ">
         <div className="w-[70px]  flex items-start justify-center">
           <p className="text-sm text-neutral-soft-content mb-1 sm:mb-0">
             Sort by
           </p>
         </div>
         <div
-          className={`dropdown dropdown-start w-full relative group ${disableSort ? "pointer-events-none" : "dropdown-hover"}`}
+          className={`dropdown dropdown-start w-full min-w-0 relative group ${disableSort ? "pointer-events-none" : "dropdown-hover"}`}
           onMouseLeave={() => setIsSortDropdownLocked(false)}
         >
           <button

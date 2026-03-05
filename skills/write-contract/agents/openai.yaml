@@ -1,0 +1,4 @@
+interface:
+  display_name: "Write Contract"
+  short_description: "Prepare Gardens V2 write transactions"
+  default_prompt: "Use $write-contract to prepare a Gardens V2 contract write, calldata, or multisig payload."

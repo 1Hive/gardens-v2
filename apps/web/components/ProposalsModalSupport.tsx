@@ -1,7 +1,7 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 "use client";
 
-import { forwardRef, useEffect, useImperativeHandle } from "react";
+import { forwardRef, useImperativeHandle } from "react";
 import {
   HandRaisedIcon,
   ExclamationTriangleIcon,
@@ -43,7 +43,6 @@ export type ProposalCardProps = {
     "decay" | "proposalType" | "allowlist"
   >;
   inputData?: ProposalInputItem;
-  stakedFilter: ProposalInputItem;
   poolToken?: {
     address: Address;
     symbol: string;
@@ -84,7 +83,6 @@ export const ProposalsModalSupport = forwardRef<
       strategyConfig,
       isPoolEnabled,
       inputData,
-      stakedFilter,
       poolToken,
       isAllocationView,
 
@@ -116,7 +114,6 @@ export const ProposalsModalSupport = forwardRef<
       thresholdPct,
       totalSupportPct,
       timeToPass,
-      triggerConvictionRefetch,
       updatedConviction,
     } = useConvictionRead({
       proposalData,

@@ -4127,7 +4127,7 @@ export type getCommunityQuery = {
     registryCommunity?: Maybe<(Pick<RegistryCommunity, 'communityName' | 'id' | 'archived' | 'covenantIpfsHash' | 'communityFee' | 'protocolFee' | 'registerStakeAmount' | 'registerToken' | 'councilSafe' | 'membersCount'> & {
         members?: Maybe<Array<Pick<MemberCommunity, 'memberAddress' | 'stakedTokens'>>>;
         strategies?: Maybe<Array<(Pick<CVStrategy, 'id' | 'archived' | 'isEnabled' | 'poolId' | 'token' | 'metadataHash'> & {
-            proposals: Array<Pick<CVProposal, 'id'>>;
+            proposals: Array<Pick<CVProposal, 'id' | 'proposalStatus'>>;
             metadata?: Maybe<Pick<PoolMetadata, 'title' | 'description'>>;
             config: Pick<CVStrategyConfig, 'proposalType' | 'pointSystem'>;
         })>>;

@@ -11,7 +11,6 @@ import {
   getMembersStrategyQuery,
   TokenGarden,
 } from "#/subgraph/.graphclient";
-import { MemberStrategyData } from "./Proposals";
 import {
   ActivatePoints,
   Badge,
@@ -29,7 +28,10 @@ import { calculatePercentageBigInt } from "@/utils/numbers";
 export type PoolGovernanceProps = {
   memberPoolWeight: number | undefined;
   tokenDecimals: number;
-  strategy: Pick<CVStrategy, "id" | "sybil" | "poolId"> & {
+  strategy: Pick<
+    CVStrategy,
+    "id" | "sybil" | "poolId" | "totalEffectiveActivePoints"
+  > & {
     registryCommunity: { garden: Pick<TokenGarden, "symbol"> };
     config: Pick<CVStrategyConfig, "pointSystem" | "allowlist">;
   };
@@ -52,7 +54,7 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
 }) => {
   const { address } = useAccount();
   const showVotingPowerBox =
-    isMemberCommunity && memberActivatedStrategy && address;
+    isMemberCommunity && memberActivatedStrategy && !!address;
   const poolSystem = strategy.config.pointSystem;
   const [triggerSybilCheckModalClose, setTriggerSybilCheckModalClose] =
     useState(false);
@@ -195,13 +197,12 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
               {openGovernanceDetailsModal ? "Close" : "Show"} Active Members
             </Button>
 
-            {membersStrategyData && (
-              <PoolGovernanceDetails
-                membersStrategyData={membersStrategyData}
-                openGovernanceDetailsModal={openGovernanceDetailsModal}
-                setOpenGovernanceDetailsModal={setOpenGovernanceDetailsModal}
-              />
-            )}
+            <PoolGovernanceDetails
+              membersStrategyData={membersStrategyData}
+              totalEffectiveActivePoints={strategy.totalEffectiveActivePoints}
+              openGovernanceDetailsModal={openGovernanceDetailsModal}
+              setOpenGovernanceDetailsModal={setOpenGovernanceDetailsModal}
+            />
           </div>
         </div>
       </div>
@@ -212,14 +213,17 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
 type MemberColumn = Column<getMembersStrategyQuery["memberStrategies"][0]>;
 
 const PoolGovernanceDetails: React.FC<{
-  membersStrategyData: getMembersStrategyQuery;
+  membersStrategyData: getMembersStrategyQuery | undefined;
+  totalEffectiveActivePoints: bigint | number | string;
   openGovernanceDetailsModal: boolean;
   setOpenGovernanceDetailsModal: (open: boolean) => void;
 }> = ({
   membersStrategyData,
+  totalEffectiveActivePoints,
   openGovernanceDetailsModal,
   setOpenGovernanceDetailsModal,
 }) => {
+  const totalPoolActivePoints = BigInt(totalEffectiveActivePoints ?? 0);
   const columns: MemberColumn[] = [
     {
       header: "Member",
@@ -238,7 +242,26 @@ const PoolGovernanceDetails: React.FC<{
       ),
     },
     {
-      header: "Voting power used",
+      header: (
+        <span className="block w-full text-right text-neutral-soft-content">
+          Voting power in pool
+        </span>
+      ),
+      render: (member) => (
+        <span className="block w-full text-right">
+          {totalPoolActivePoints > 0n ?
+            `${calculatePercentageBigInt(BigInt(member.activatedPoints), totalPoolActivePoints)} VP`
+          : "0 VP"}
+        </span>
+      ),
+      className: "text-right min-w-[9rem]",
+    },
+    {
+      header: (
+        <span className="block w-full text-right text-neutral-soft-content">
+          Voting power used
+        </span>
+      ),
       render: (member) => {
         // Calculate total staked points from active (1) and disputed (5) proposals only
         const activeStakedPoints =
@@ -247,7 +270,7 @@ const PoolGovernanceDetails: React.FC<{
           }, 0n) ?? 0n;
 
         return (
-          <span>
+          <span className="block w-full text-right">
             {calculatePercentageBigInt(
               activeStakedPoints,
               BigInt(member.activatedPoints),
@@ -256,7 +279,7 @@ const PoolGovernanceDetails: React.FC<{
           </span>
         );
       },
-      className: "flex justify-end",
+      className: "text-right min-w-[8rem]",
     },
   ];
 
@@ -266,7 +289,7 @@ const PoolGovernanceDetails: React.FC<{
       setOpenModal={setOpenGovernanceDetailsModal}
       openModal={openGovernanceDetailsModal}
       description="A list of all the community members and their activity in this pool."
-      data={membersStrategyData.memberStrategies}
+      data={membersStrategyData?.memberStrategies ?? []}
       columns={columns}
     />
   );

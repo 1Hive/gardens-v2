@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Address, useContractRead, useContractReads } from "wagmi";
+import { Address, useContractRead } from "wagmi";
 import {
   CVProposal,
   CVStrategy,
@@ -63,35 +63,28 @@ export const useConvictionRead = ({
   const shouldReadThreshold =
     enabled && PoolTypes[strategyConfig?.proposalType] === "funding";
 
-  const { data: thresholdReads } = useContractReads({
-    allowFailure: true,
-    contracts:
-      shouldReadThreshold ?
-        [
-          {
-            ...cvStrategyContract,
-            functionName: "calculateThreshold",
-            args: [proposalData?.requestedAmount ?? 0],
-          },
-        ]
-      : [],
+  const {
+    data: thresholdFromContract,
+    error: thresholdReadError,
+    refetch: triggerThresholdRefetch,
+  } = useContractRead({
+    ...cvStrategyContract,
+    functionName: "calculateThreshold",
+    args: [proposalData?.requestedAmount ?? 0],
     enabled: shouldReadThreshold,
+    watch: true,
   });
 
-  const thresholdRes = thresholdReads?.[0];
-
   if (
-    thresholdRes?.error &&
-    thresholdRes.error.message.includes("AmountOverMaxRatio") === false
+    thresholdReadError &&
+    thresholdReadError.message.includes("AmountOverMaxRatio") === false
   ) {
     logOnce(
       "error",
       "Error reading threshold from contract",
-      thresholdRes?.error,
+      thresholdReadError,
     );
   }
-
-  const thresholdFromContract = thresholdRes?.result;
 
   //calculate time to pass for proposal te be executed
   const alphaDecay = +strategyConfig?.decay / CV_SCALE_PRECISION;
@@ -182,7 +175,10 @@ export const useConvictionRead = ({
         currentConvictionPct,
         updatedConviction,
         timeToPass,
-        triggerConvictionRefetch: () => triggerConvictionRefetch(),
+        triggerConvictionRefetch: () => {
+          void triggerConvictionRefetch();
+          void triggerThresholdRefetch();
+        },
       }
     : {
         thresholdPct: undefined,

@@ -24,7 +24,7 @@ type ConvictionBarChartProps = {
   defaultChartMaxValue?: boolean;
   proposalStatus: string;
   onReadyToExecute?: () => void;
-  refreshConviction?: () => Promise<any>;
+  refreshConviction?: () => Promise<any> | void;
 };
 
 export function getChartColors(isDarkTheme?: boolean) {

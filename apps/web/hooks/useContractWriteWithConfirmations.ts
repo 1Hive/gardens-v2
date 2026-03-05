@@ -145,7 +145,7 @@ export function useContractWriteWithConfirmations<
       }
       // If we can't simulate, fall back to normal write
       if (
-        !publicClient ||
+        publicClient == null ||
         !props.address ||
         !props.abi ||
         !props.functionName
@@ -191,6 +191,7 @@ export function useContractWriteWithConfirmations<
       return txResult.writeAsync?.(overrides as any);
     },
     [
+      connectedAddress,
       connector?.id,
       forceSimulate,
       councilSafeFromFlag,

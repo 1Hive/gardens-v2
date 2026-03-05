@@ -30,7 +30,7 @@ export const DataTable: React.FC<DataTableProps> = ({
 }) => {
   const content = (
     <div
-      className={`overflow-x-hidden max-h-[750px] ${withModal ? "" : "section-layout"} `}
+      className={`overflow-x-hidden max-h-[700px] ${withModal ? "" : "section-layout"} `}
     >
       <div className="inline-block min-w-full py-2 align-middle sm:px-4 lg:px-6">
         {!withModal && title && <h5 className="mb-4">{title}</h5>}

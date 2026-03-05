@@ -24,7 +24,7 @@ import {
   LeaderboardResponse,
   WalletEntry,
 } from "@/types";
-import { CAMPAIGNS, CampaignId } from "@/utils/campaigns";
+import { CAMPAIGNS, CampaignId, isCampaignActive } from "@/utils/campaigns";
 import { shortenAddress } from "@/utils/text";
 import { formatNumber, timeAgo } from "@/utils/time";
 
@@ -174,6 +174,55 @@ export const PARTICIPATION_BY_CAMPAIGN: Record<string, ParticipationStep[]> = {
       highlighted: true,
     },
   ],
+  "3": [
+    {
+      title: "Follow Gardens on Farcaster",
+      description: (
+        <>
+          Stay connected with the Gardens community.{" "}
+          <Link
+            href="https://farcaster.xyz/gardens"
+            target="_blank"
+            rel="noreferrer"
+            className="underline"
+          >
+            Follow Gardens on Farcaster
+          </Link>
+          .
+        </>
+      ),
+      icon: <ChatBubbleLeftRightIcon className="h-5 w-5" />,
+      activities: ["Farcaster Follow"],
+      pointsInfo: "1 point",
+    },
+    {
+      title: "Add Funds into a Funding Pool",
+      description: (
+        <>
+          Stream funds or make a one-time transfer in{" "}
+          <Link
+            href="https://docs.superfluid.org/docs/concepts/overview/super-tokens#pure-super-tokens"
+            target="_blank"
+            rel="noreferrer"
+            className="underline"
+          >
+            Pure Super Token
+          </Link>{" "}
+          into a funding pool.{" "}
+        </>
+      ),
+      icon: <ArrowTrendingUpIcon className="h-5 w-5" />,
+      activities: ["Add Funds"],
+      pointsInfo: "1 point per $1 added (minimum $10)",
+    },
+    {
+      title: "Join a Community & Increase Your Stake",
+      description: "Become an active member and increase your stake.",
+      icon: <UsersIcon className="h-5 w-5" />,
+      activities: ["Stake & Governance"],
+      pointsInfo: "Points split based on stake size",
+    },
+  ],
 };
 
 function getWalletRankAndPoints(
@@ -212,8 +261,9 @@ export default function GardensGrowthInitiativePage({
   const [openModal, setOpenModal] = useState(false);
 
   const campaigns = CAMPAIGNS[campaignId];
+  const isEndedCampaign = !isCampaignActive(campaigns?.endDate ?? "");
 
-  const howToParticipate = PARTICIPATION_BY_CAMPAIGN[campaignId];
+  const howToParticipate = PARTICIPATION_BY_CAMPAIGN[campaignId] ?? [];
 
   const { address: connectedAccount } = useAccount();
 
@@ -232,6 +282,7 @@ export default function GardensGrowthInitiativePage({
   });
 
   const wallets = superfluidStreamsData?.snapshot?.wallets ?? [];
+  const targetStreamSup = superfluidStreamsData?.targetStreamSup ?? 847_000;
 
   const connectedDisplayName = useMemo(() => {
     if (!connectedAccount) return null;
@@ -294,12 +345,17 @@ export default function GardensGrowthInitiativePage({
         <div className="absolute inset-0">
           <Image
             src={campaigns?.banner}
-            alt="Gardens Growth Initiative"
+            alt={campaigns?.name ?? "Campaign hero image"}
             fill
-            className="object-cover"
+            className={`object-cover ${isEndedCampaign ? "grayscale" : ""}`}
             priority
           />
           <div className="absolute inset-0 bg-gradient-to-b from-neutral/5 via-neutral to-neutral/5 dark:from-neutral/30 dark:to-neutral/30" />
+          {isEndedCampaign && (
+            <div className="absolute inset-x-0 top-0 bg-danger py-2 text-center text-xs font-extrabold uppercase tracking-[0.2em] text-white shadow-lg">
+              Campaign Ended
+            </div>
+          )}
         </div>
 
         <div className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
@@ -323,7 +379,7 @@ export default function GardensGrowthInitiativePage({
 
             <div className="flex-1">
               <h1 className="text-4xl font-bold tracking-tight mb-3">
-                Superfluid Ecosystem Rewards
+                {campaigns?.name}
               </h1>
               <p className="text-lg  max-w-3xl mb-6">
                 {campaigns?.description}
@@ -333,7 +389,9 @@ export default function GardensGrowthInitiativePage({
                 <div className="flex items-center gap-2 text-sm">
                   <CalendarIcon className="h-6 w-6 " />
                   <span className="font-semibold">
-                    Ends {campaigns?.endDate}
+                    {isEndedCampaign ?
+                      `Ended ${campaigns?.endDate}`
+                    : `Ends ${campaigns?.endDate}`}
                   </span>
                 </div>
 
@@ -363,7 +421,8 @@ export default function GardensGrowthInitiativePage({
 
               <div className="space-y-4 p-6">
                 {loading ?
-                  Array.from({ length: 4 }).map((_, idx) => (
+                  Array.from({ length: Math.max(howToParticipate.length, 1) }).map(
+                    (_, idx) => (
                     <div
                       // eslint-disable-next-line react/no-array-index-key
                       key={`step-skeleton-${idx}`}
@@ -384,7 +443,8 @@ export default function GardensGrowthInitiativePage({
                         </div>
                       </div>
                     </div>
-                  ))
+                    ),
+                  )
                 : howToParticipate.map((step) => (
                     <div
                       key={step.title}
@@ -536,7 +596,7 @@ export default function GardensGrowthInitiativePage({
                         {formatNumber(
                           superfluidStreamsData?.totalStreamedSup ?? 0,
                         )}{" "}
-                        / {formatNumber(847_000)} SUP
+                        / {formatNumber(targetStreamSup)} SUP
                       </span>
                     </div>
 
@@ -546,7 +606,7 @@ export default function GardensGrowthInitiativePage({
                         style={{
                           width: `${
                             ((superfluidStreamsData?.totalStreamedSup ?? 0) /
-                              847_000) *
+                              Math.max(targetStreamSup, 1)) *
                             100
                           }%`,
                         }}

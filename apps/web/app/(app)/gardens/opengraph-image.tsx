@@ -1,8 +1,7 @@
-import type { Metadata, ServerRuntime } from "next";
+import type { Metadata } from "next";
 import { ImageResponse } from "next/og";
-import { GARDENS_COVER_BASE64 } from "./[chain]/[garden]/[community]/ogAssets";
 
-export const runtime: ServerRuntime = "nodejs";
+export const runtime = "edge";
 
 export const alt = "Gardens";
 export const size = {
@@ -16,27 +15,7 @@ export const metadata: Metadata = {
   description: "Create, govern, and fund communities together.",
 };
 
-let cachedGardensCoverDataUrl: string | null = null;
-
-function getGardensCoverDataUrl() {
-  if (cachedGardensCoverDataUrl) {
-    return cachedGardensCoverDataUrl;
-  }
-
-  cachedGardensCoverDataUrl = `data:image/svg+xml;base64,${GARDENS_COVER_BASE64}`;
-
-  return cachedGardensCoverDataUrl;
-}
-
 export default async function Image() {
-  let gardensCoverSrc: string | null = null;
-
-  try {
-    gardensCoverSrc = getGardensCoverDataUrl();
-  } catch (error) {
-    console.error("Failed to load Gardens cover OG image asset.", { error });
-  }
-
   return new ImageResponse(
     (
       <div
@@ -52,20 +31,47 @@ export default async function Image() {
           fontSize: "56px",
           fontWeight: 600,
           letterSpacing: "-0.01em",
+          background:
+            "radial-gradient(circle at top right, rgba(16,185,129,0.35), transparent 34%), linear-gradient(135deg, #0F172A 0%, #111827 55%, #164E63 100%)",
         }}
       >
-        {gardensCoverSrc ?
-          // eslint-disable-next-line @next/next/no-img-element -- Rendering inside ImageResponse.
-          <img
-            alt="Gardens cover illustration"
-            src={gardensCoverSrc}
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "18px",
+            padding: "48px",
+            textAlign: "center",
+          }}
+        >
+          <div
             style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
+              display: "flex",
+              alignItems: "center",
+              gap: "14px",
+              fontSize: "26px",
+              fontWeight: 500,
+              color: "#A7F3D0",
+              textTransform: "uppercase",
+              letterSpacing: "0.14em",
             }}
-          />
-        : <span>Gardens</span>}
+          >
+            <span>Gardens</span>
+            <span style={{ opacity: 0.55 }}>Collective Funding</span>
+          </div>
+          <div
+            style={{
+              fontSize: "72px",
+              fontWeight: 700,
+              lineHeight: 1.05,
+              maxWidth: "900px",
+            }}
+          >
+            Create, govern, and fund communities together.
+          </div>
+        </div>
       </div>
     ),
   );
