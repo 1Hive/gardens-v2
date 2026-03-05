@@ -203,20 +203,20 @@ export default function ClientPage({
     refetch: refetchMemberStrategyData,
     fetching: fetchingMemberStrategy,
   } = useSubgraphQuery<getMemberStrategyQuery>({
-      query: getMemberStrategyDocument,
-      variables: {
-        member_strategy: `${wallet?.toLowerCase()}-${strategy?.id.toLowerCase()}`,
+    query: getMemberStrategyDocument,
+    variables: {
+      member_strategy: `${wallet?.toLowerCase()}-${strategy?.id.toLowerCase()}`,
+    },
+    changeScope: [
+      {
+        topic: "proposal",
+        containerId: strategy?.poolId,
+        type: "update",
       },
-      changeScope: [
-        {
-          topic: "proposal",
-          containerId: strategy?.poolId,
-          type: "update",
-        },
-        { topic: "member", id: wallet, containerId: strategy?.poolId },
-      ],
-      enabled: !!wallet && !!strategy?.id,
-    });
+      { topic: "member", id: wallet, containerId: strategy?.poolId },
+    ],
+    enabled: !!wallet && !!strategy?.id,
+  });
 
   const memberTokensInCommunity = BigInt(
     memberData?.member?.memberCommunity?.[0]?.stakedTokens ??
@@ -506,7 +506,7 @@ export default function ClientPage({
             <div className="flex-1 space-y-4">
               <div>
                 <h4 className="mb-1 sm:mb-2">{`Join ${communityName} community`}</h4>
-                <p className="subtitle2 text-xs sm:text-sm">
+                <p className=" text-xs sm:text-sm">
                   You must be a member of this community before activating
                   governance or voting on proposals.
                 </p>
@@ -530,15 +530,16 @@ export default function ClientPage({
                   </ul>
                 </div>
               </div>
-
-              {tokenGarden && (
-                <RegisterMember
-                  memberData={wallet ? isMemberResult : undefined}
-                  registrationCost={totalRegistrationCost}
-                  token={tokenGarden}
-                  registryCommunity={registryCommunity}
-                />
-              )}
+              <div className="w-full flex justify-end">
+                {tokenGarden && (
+                  <RegisterMember
+                    memberData={wallet ? isMemberResult : undefined}
+                    registrationCost={totalRegistrationCost}
+                    token={tokenGarden}
+                    registryCommunity={registryCommunity}
+                  />
+                )}
+              </div>
             </div>
           </div>
         </div>
