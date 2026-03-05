@@ -983,6 +983,7 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
                 min: 1 / 10 ** ETH_DECIMALS,
               }}
               suffix={chain.nativeCurrency?.symbol ?? "ETH"}
+              testId="input-collateral-create-proposal"
             />
             <FormInput
               tooltip={
@@ -998,6 +999,7 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
                 min: 1 / 10 ** ETH_DECIMALS,
               }}
               suffix={chain.nativeCurrency?.symbol ?? "ETH"}
+              testId="input-dispute-proposal"
             />
             <FormInput
               label="Ruling Time"

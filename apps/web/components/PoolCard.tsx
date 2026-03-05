@@ -75,6 +75,11 @@ export function PoolCard({ pool, token }: Props) {
       <Card
         href={`${pathname}/${poolId}`}
         className={`w-full bg-primary ${isNewPool ? "shadow-2xl" : ""}`}
+        testId={
+          isEnabled ?
+            "pool-card-approved-" + pool.poolId
+          : "pool-card-unapproved-" + pool.poolId
+        }
       >
         <header className="mb-4 flex flex-col w-full justify-between items-start gap-2">
           <div className="flex w-full justify-between items-center gap-1">
@@ -117,10 +122,7 @@ export function PoolCard({ pool, token }: Props) {
           }
         </div>
         {!isEnabled ?
-          <div
-            className="banner md:min-w-[262px]"
-            data-testid={"pool-card-" + pool.poolId}
-          >
+          <div className="banner md:min-w-[262px]">
             {pool.archived ?
               <ArchiveBoxIcon className="h-8 w-8 text-secondary-content" />
             : <ClockIcon className="h-8 w-8 text-secondary-content" />}

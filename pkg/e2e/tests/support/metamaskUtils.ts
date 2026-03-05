@@ -295,7 +295,7 @@ export async function confirmTransaction({
     exact: true
   });
 
-  await confirmBtn.click({ timeout: 40000 });
+  await confirmBtn.click({ timeout: 60000 });
   await metamask.page.waitForTimeout(1000);
 }
 

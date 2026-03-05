@@ -56,9 +56,14 @@ export default defineConfig({
       dependencies: ["03-create-pool"]
     },
     {
-      name: "05-leave",
-      testMatch: /05-.*\.e2e\.ts$/,
+      name: "05-create-proposal",
+      testMatch: /05..*\.e2e\.ts$/,
       dependencies: ["04-approve-pool"]
+    },
+    {
+      name: "99-leave",
+      testMatch: /99..*\.e2e\.ts$/,
+      dependencies: ["05-create-proposal"]
     }
   ]
   // Additional Synpress-specific configuration can be added here

@@ -1243,6 +1243,7 @@ const PoolFiltersUI = ({
           className="text-sm font-semibold text-primary-content hover:underline disabled:text-neutral-soft-content disabled:no-underline disabled:cursor-not-allowed"
           onClick={onSelectAll}
           disabled={allVisibleSelected}
+          data-testid="btn-select-all"
         >
           Select all
         </button>

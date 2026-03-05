@@ -43,9 +43,12 @@ test("should approve a pool as council safe", async ({
 
   await page.bringToFront();
   await page.waitForTimeout(2000); // Wait for tx to succeed and UI to update
-
+  const selectAllBtn = page.getByTestId("btn-select-all");
+  await selectAllBtn.click();
   // Find the first pending pool card and navigate to it
-  const poolCard = page.locator('[data-testid^="pool-card-"]').first();
+  const poolCard = page
+    .locator('[data-testid^="pool-card-unapproved-"]')
+    .first();
   await expect(poolCard).toBeVisible({ timeout: 30000 });
   await poolCard.click();
 

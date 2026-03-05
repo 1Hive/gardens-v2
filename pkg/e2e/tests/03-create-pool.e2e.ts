@@ -54,11 +54,17 @@ test("should create a pool in the community", async ({
     .getByTestId("input-pool-description")
     .locator('[contenteditable="true"]');
   const tokenAddressInput = page.getByTestId("input-token-address");
+  const proposalCollateralInput = page.getByTestId(
+    "input-collateral-create-proposal"
+  );
+  const disputeCollateralInput = page.getByTestId("input-dispute-proposal");
 
   // Fill all inputs
   await nameInput.fill("Test Pool");
   await descriptionInput.fill("Test Description");
   await tokenAddressInput.fill("0x8b2f706cd2bc0df6679218177c56e72c5241de9b");
+  await proposalCollateralInput.fill("0.0000000001");
+  await disputeCollateralInput.fill("0.0000000001");
   await page.getByTestId("btn-preview-pool").click();
   await page.getByTestId("btn-submit-pool").click();
 
