@@ -13,21 +13,17 @@ import { CheckIcon } from "@heroicons/react/24/solid";
 
 import { FetchTokenResult } from "@wagmi/core";
 import { Dnum, multiply } from "dnum";
-import { Maybe } from "graphql/jsutils/Maybe";
 import Image from "next/image";
 import Link from "next/link";
 import { Address } from "viem";
 import { useAccount, useToken } from "wagmi";
 import {
-  CVProposal,
-  CVStrategy,
-  CVStrategyConfig,
   getCommunityDocument,
   getCommunityQuery,
   isMemberDocument,
   isMemberQuery,
-  PoolMetadata,
 } from "#/subgraph/.graphclient";
+import { LoupeButton } from "@/apps/web/components/LoupeButton";
 import {
   CommunityLogo,
   groupFlowers,
@@ -45,7 +41,6 @@ import {
   RegisterMember,
   Statistic,
 } from "@/components";
-import { LoupeButton } from "@/apps/web/components/LoupeButton";
 import { Divider } from "@/components/Diivider";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import MarkdownWrapper from "@/components/MarkdownWrapper";

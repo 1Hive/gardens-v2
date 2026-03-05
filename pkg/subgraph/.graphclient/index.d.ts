@@ -4259,7 +4259,7 @@ export declare function getBuiltGraphSDK<TGlobalContext = any, TOperationContext
     }>, options?: TOperationContext): Promise<getRegistryFactoryDataQuery>;
     getPoolData(variables: Exact<{
         garden: Scalars["ID"]["input"];
-        poolId: Scalars["BigInt"]["input"];
+        strategyId: Scalars["ID"]["input"];
     }>, options?: TOperationContext): Promise<getPoolDataQuery>;
     getProposalData(variables: Exact<{
         garden: Scalars["ID"]["input"];
@@ -4279,7 +4279,7 @@ export declare function getBuiltGraphSDK<TGlobalContext = any, TOperationContext
         communityAddr: Scalars["ID"]["input"];
     }>, options?: TOperationContext): Promise<getCommunityTitlesQuery>;
     getPoolTitles(variables: Exact<{
-        poolId: Scalars["BigInt"]["input"];
+        strategyId: Scalars["ID"]["input"];
     }>, options?: TOperationContext): Promise<getPoolTitlesQuery>;
     getProposalTitles(variables: Exact<{
         proposalId: Scalars["ID"]["input"];
@@ -4309,7 +4309,7 @@ export declare function getBuiltGraphSDK<TGlobalContext = any, TOperationContext
         communityAddr: Scalars["ID"]["input"];
     }>, options?: TOperationContext): Promise<getCommunityNameQuery>;
     getPoolTitle(variables: Exact<{
-        poolId: Scalars["BigInt"]["input"];
+        strategyId: Scalars["ID"]["input"];
     }>, options?: TOperationContext): Promise<getPoolTitleQuery>;
     getProposalTitle(variables: Exact<{
         proposalId: Scalars["ID"]["input"];
@@ -4469,7 +4469,7 @@ export type getRegistryFactoryDataQuery = {
 };
 export type getPoolDataQueryVariables = Exact<{
     garden: Scalars['ID']['input'];
-    poolId: Scalars['BigInt']['input'];
+    strategyId: Scalars['ID']['input'];
 }>;
 export type getPoolDataQuery = {
     allos: Array<Pick<Allo, 'id' | 'chainId' | 'tokenNative'>>;
@@ -4555,7 +4555,7 @@ export type getCommunityTitlesQuery = {
     })>;
 };
 export type getPoolTitlesQueryVariables = Exact<{
-    poolId: Scalars['BigInt']['input'];
+    strategyId: Scalars['ID']['input'];
 }>;
 export type getPoolTitlesQuery = {
     cvstrategies: Array<(Pick<CVStrategy, 'poolId' | 'metadataHash'> & {
@@ -4637,7 +4637,7 @@ export type getCommunityNameQuery = {
     registryCommunity?: Maybe<Pick<RegistryCommunity, 'communityName'>>;
 };
 export type getPoolTitleQueryVariables = Exact<{
-    poolId: Scalars['BigInt']['input'];
+    strategyId: Scalars['ID']['input'];
 }>;
 export type getPoolTitleQuery = {
     cvstrategies: Array<(Pick<CVStrategy, 'archived' | 'isEnabled'> & {

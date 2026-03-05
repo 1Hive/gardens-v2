@@ -52,7 +52,6 @@ export const ProposalTimeline: FC<Props> = ({
   const proposalType = proposalData.strategy?.config?.proposalType;
   const poolType =
     proposalType != null ? PoolTypes[String(proposalType)] : undefined;
-  const isStreamingType = poolType === "streaming";
   const isFundingType = poolType === "funding";
   const endNodeLabel = isFundingType ? "Executed" : "Ended";
   const endNodeTooltip =

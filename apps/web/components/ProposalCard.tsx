@@ -126,7 +126,6 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
     const metadata = proposalData.metadata ?? metadataResult;
 
     const {
-      id,
       proposalNumber,
       proposalStatus,
       requestedAmount,
@@ -610,7 +609,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
         {isAllocationView ?
           proposalCardContent
         : <Card
-            href={`${pathname}/${id}`}
+            href={`${pathname}/${proposalNumber}`}
             className={`py-4 ${isNewProposal ? "shadow-2xl" : ""}`}
           >
             {proposalCardContent}

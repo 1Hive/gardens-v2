@@ -17,9 +17,11 @@ import {
   POOL_FUNDING_ICON_BASE64,
   POOL_SIGNALING_ICON_BASE64,
 } from "../../ogAssets";
+import { resolveStrategyAddress } from "../route-helpers";
 import { ChainIcon, getConfigByChain } from "@/configs/chains";
 import { queryByChain } from "@/providers/urql";
 import { PoolTypes, ProposalStatus } from "@/types";
+import { buildProposalEntityId } from "@/utils/proposals";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic"; // keep OG image fresh with live status
@@ -131,7 +133,22 @@ async function loadProposal(
     return { chainId: resolvedChainId, data: null };
   }
 
-  const proposalId = params.proposalId?.toLowerCase?.() ?? params.proposalId;
+  const strategyAddress = await resolveStrategyAddress(
+    params.chain,
+    params.poolId,
+  );
+
+  if (!strategyAddress) {
+    console.error("Unable to resolve strategy for proposal OG image.", {
+      poolSlug: params.poolId,
+    });
+    return { chainId: resolvedChainId, data: null };
+  }
+
+  const proposalId = buildProposalEntityId(
+    strategyAddress,
+    params.proposalId,
+  ).toLowerCase();
 
   try {
     const proposalResult = await queryByChain<getProposalTitleQuery>(

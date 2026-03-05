@@ -45,7 +45,6 @@ export function PoolCard({ pool, token }: Props) {
   const searchParams = useCollectQueryParams();
 
   let {
-    poolId,
     proposals,
     isEnabled,
     config,
@@ -74,7 +73,7 @@ export function PoolCard({ pool, token }: Props) {
   return (
     <>
       <Card
-        href={`${pathname}/${poolId}`}
+        href={`${pathname}/${pool.id}`}
         className={`w-full bg-primary ${isNewPool ? "shadow-2xl" : ""}`}
       >
         <header className="mb-4 flex flex-col w-full justify-between items-start gap-2">

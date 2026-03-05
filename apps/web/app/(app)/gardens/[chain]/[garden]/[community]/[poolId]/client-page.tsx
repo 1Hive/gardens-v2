@@ -68,43 +68,64 @@ export type AlloQuery = getAlloQuery["allos"][number];
 const SYNC_STREAM_HIDE_WINDOW_SECONDS = 15 * 60;
 
 export default function ClientPage({
-  params: { chain, poolId, garden, community: _community },
+  params: { chain, poolId: poolSlug, garden, community: _community },
 }: {
-  params: { chain: string; poolId: number; garden: string; community: string };
+  params: { chain: string; poolId: string; garden: string; community: string };
 }) {
   const searchParams = useCollectQueryParams();
   const { publish } = usePubSubContext();
+  const strategyAddress = poolSlug.toLowerCase();
+  const [poolIdForScope, setPoolIdForScope] = useState<number | undefined>();
   const { data, error, refetch, fetching } = useSubgraphQuery<getPoolDataQuery>(
     {
       query: getPoolDataDocument,
-      variables: { poolId: poolId, garden: garden.toLowerCase() },
-      changeScope: [
-        {
-          topic: "pool",
-          id: poolId,
-        },
-        {
-          topic: "proposal",
-          containerId: poolId,
-          type: "update",
-        },
-        {
-          topic: "member",
-          function: "activatePoints",
-          type: "update",
-          containerId: poolId,
-        },
-        {
-          topic: "member",
-          function: "deactivatePoints",
-          type: "update",
-          containerId: poolId,
-        },
-      ],
+      variables: {
+        strategyId: strategyAddress,
+        garden: garden.toLowerCase(),
+      },
+      changeScope:
+        poolIdForScope != null ?
+          [
+            {
+              topic: "pool",
+              id: poolIdForScope,
+            },
+            {
+              topic: "proposal",
+              containerId: poolIdForScope,
+              type: "update",
+            },
+            {
+              topic: "member",
+              function: "activatePoints",
+              type: "update",
+              containerId: poolIdForScope,
+            },
+            {
+              topic: "member",
+              function: "deactivatePoints",
+              type: "update",
+              containerId: poolIdForScope,
+            },
+          ]
+        : undefined,
     },
   );
 
   const strategy = data?.cvstrategies?.[0];
+  const resolvedPoolId =
+    strategy?.poolId != null ? Number(strategy.poolId) : undefined;
+  const poolId = resolvedPoolId;
+
+  useEffect(() => {
+    if (
+      resolvedPoolId != null &&
+      resolvedPoolId !== poolIdForScope &&
+      Number.isFinite(resolvedPoolId)
+    ) {
+      setPoolIdForScope(resolvedPoolId);
+    }
+  }, [resolvedPoolId, poolIdForScope]);
 
   const communityAddress = strategy?.registryCommunity.id as Address;
 
@@ -125,11 +146,7 @@ export default function ClientPage({
   });
 
   //Community Query and Register Member data
-  const {
-    data: result,
-    error: errorCommunityQuery,
-    refetch: refetchCommunityQuery,
-  } = useSubgraphQuery<getCommunityQuery>({
+  const { data: result } = useSubgraphQuery<getCommunityQuery>({
     query: getCommunityDocument,
     enabled: !!wallet && !!strategy?.token,
     variables: {
@@ -189,18 +206,21 @@ export default function ClientPage({
         me: wallet?.toLowerCase(),
         comm: communityAddress?.toLowerCase(),
       },
-      changeScope: [
-        {
-          topic: "member",
-          id: wallet,
-          containerId: strategy?.poolId,
-        },
-        {
-          topic: "proposal",
-          containerId: strategy?.poolId,
-          function: "allocate",
-        },
-      ],
+      changeScope:
+        poolId != null ?
+          [
+            {
+              topic: "member",
+              id: wallet,
+              containerId: poolId,
+            },
+            {
+              topic: "proposal",
+              containerId: poolId,
+              function: "allocate",
+            },
+          ]
+        : undefined,
       enabled: !!wallet && !!strategy?.registryCommunity?.id,
     });
 
@@ -210,14 +230,17 @@ export default function ClientPage({
       variables: {
         member_strategy: `${wallet?.toLowerCase()}-${strategy?.id.toLowerCase()}`,
       },
-      changeScope: [
-        {
-          topic: "proposal",
-          containerId: strategy?.poolId,
-          type: "update",
-        },
-        { topic: "member", id: wallet, containerId: strategy?.poolId },
-      ],
+      changeScope:
+        poolId != null ?
+          [
+            {
+              topic: "proposal",
+              containerId: poolId,
+              type: "update",
+            },
+            { topic: "member", id: wallet, containerId: poolId },
+          ]
+        : undefined,
       enabled: !!wallet && !!strategy?.id,
     },
   );
@@ -232,14 +255,17 @@ export default function ClientPage({
       variables: {
         strategyId: `${strategy?.id.toLowerCase()}`,
       },
-      changeScope: [
-        {
-          topic: "proposal",
-          containerId: strategy?.poolId,
-          type: "update",
-        },
-        { topic: "member", id: wallet, containerId: strategy?.poolId },
-      ],
+      changeScope:
+        poolId != null ?
+          [
+            {
+              topic: "proposal",
+              containerId: poolId,
+              type: "update",
+            },
+            { topic: "member", id: wallet, containerId: poolId },
+          ]
+        : undefined,
       enabled: !!wallet,
     });
 
@@ -259,7 +285,7 @@ export default function ClientPage({
       {
         topic: "member",
         id: wallet,
-        containerId: strategy?.poolId,
+        containerId: poolId ?? strategy?.poolId,
         type: "update",
       },
       () => {
@@ -271,7 +297,7 @@ export default function ClientPage({
         unsubscribe(subscriptionId.current);
       }
     };
-  }, [connected]);
+  }, [connected, poolId]);
 
   const poolTokenAddr = strategy?.token as Address;
 
@@ -478,7 +504,7 @@ export default function ClientPage({
       receiver: streamInfo?.superfluidGDA as Address,
       superToken: effectiveSuperToken as Address,
       chainId,
-      containerId: poolId,
+      containerId: poolId ?? strategyAddress,
     });
 
   useEffect(() => {
@@ -498,6 +524,7 @@ export default function ClientPage({
   const stillLoading =
     fetching ||
     (!data && !error) ||
+    poolId == null ||
     (isMissingFundingToken && !error && !hasWaitedForPoolToken);
 
   if ((!strategy || isMissingFundingToken) && stillLoading) {
@@ -540,13 +567,21 @@ export default function ClientPage({
     );
   }
 
+  if (poolId == null) {
+    return (
+      <div className="mt-96 col-span-12">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
   const showMissingFundingTokenWarning = isMissingFundingToken && !error;
 
   const alloInfo = data.allos[0];
 
   const isEnabled = data.cvstrategies?.[0]?.isEnabled as boolean;
 
-  const createProposalUrl = `/gardens/${chain}/${garden}/${communityAddress}/${poolId}/create-proposal`;
+  const createProposalUrl = `/gardens/${chain}/${garden}/${communityAddress}/${strategyAddress}/create-proposal`;
 
   const memberPoolWeight =
     memberPower != null && +strategy.totalEffectiveActivePoints > 0 ?

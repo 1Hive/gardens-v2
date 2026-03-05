@@ -38,10 +38,6 @@ export const EthAddress = ({
   const divParentRef = React.useRef<HTMLDivElement>(null);
   const chain = useChainFromPath();
   const { resolvedTheme } = useTheme();
-  const louperNetworkSlug = chain?.network?.replace(
-    /-([a-z])/g,
-    (_, letter: string) => letter.toUpperCase(),
-  );
 
   const { data: ensName } = useEnsName({
     address: address as Address,

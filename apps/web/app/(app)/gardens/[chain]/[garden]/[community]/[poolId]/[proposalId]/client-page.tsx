@@ -58,6 +58,7 @@ import {
   calculatePercentageBigInt,
   roundToSignificant,
 } from "@/utils/numbers";
+import { buildProposalEntityId, extractProposalNumber } from "@/utils/proposals";
 import { prettyTimestamp } from "@/utils/text";
 
 type ProposalSupporter = {
@@ -80,7 +81,14 @@ export type ClientPageProps = {
 };
 
 export default function ClientPage({ params }: ClientPageProps) {
-  const { proposalId, garden, community: communityAddr, poolId } = params;
+  const {
+    proposalId: proposalSlug,
+    garden,
+    community: communityAddr,
+    poolId: poolSlug,
+  } = params;
+  const strategyAddress = poolSlug.toLowerCase();
+  const [poolIdForScope, setPoolIdForScope] = useState<number | undefined>();
   const [convictionRefreshing, setConvictionRefreshing] = useState(true);
   const [openSupportersModal, setOpenSupportersModal] = useState(false);
   const [selectedTab, setSelectedTab] = useState(0);
@@ -96,7 +104,11 @@ export default function ClientPage({ params }: ClientPageProps) {
     return Object.fromEntries(new URLSearchParams(window.location.search));
   });
 
-  const [, proposalNumber] = proposalId.split("-");
+  const proposalNumber = extractProposalNumber(proposalSlug);
+  const proposalEntityId = buildProposalEntityId(
+    strategyAddress,
+    proposalSlug,
+  );
   const {
     data,
     fetching,
@@ -105,15 +117,18 @@ export default function ClientPage({ params }: ClientPageProps) {
     query: getProposalDataDocument,
     variables: {
       garden: garden.toLowerCase(),
-      proposalId: proposalId.toLowerCase(),
+      proposalId: proposalEntityId.toLowerCase(),
       communityId: communityAddr.toLowerCase(),
     },
-    changeScope: {
-      topic: "proposal",
-      containerId: poolId,
-      id: proposalNumber,
-      type: "update",
-    },
+    changeScope:
+      poolIdForScope != null ?
+        {
+          topic: "proposal",
+          containerId: poolIdForScope,
+          id: proposalNumber,
+          type: "update",
+        }
+      : undefined,
   });
 
   //query to get proposal supporters
@@ -121,7 +136,7 @@ export default function ClientPage({ params }: ClientPageProps) {
     {
       query: getProposalSupportersDocument,
       variables: {
-        proposalId: proposalId.toLowerCase(),
+        proposalId: proposalEntityId.toLowerCase(),
       },
     },
   );
@@ -153,6 +168,21 @@ export default function ClientPage({ params }: ClientPageProps) {
       }
     : undefined;
   const proposalSupporters = supportersData?.members;
+  const resolvedPoolId =
+    proposalData?.strategy?.poolId != null ?
+      Number(proposalData.strategy.poolId)
+    : undefined;
+  const poolId = resolvedPoolId;
+
+  useEffect(() => {
+    if (
+      resolvedPoolId != null &&
+      resolvedPoolId !== poolIdForScope &&
+      Number.isFinite(resolvedPoolId)
+    ) {
+      setPoolIdForScope(resolvedPoolId);
+    }
+  }, [resolvedPoolId, poolIdForScope]);
 
   const filteredAndSortedProposalSupporters: ProposalSupporter[] =
     proposalSupporters ?
@@ -337,7 +367,7 @@ export default function ClientPage({ params }: ClientPageProps) {
     receiver: resolvedStreamingEscrow as Address,
     superToken: proposalData?.strategy?.config?.superfluidToken as Address,
     chainId,
-    containerId: +poolId,
+    containerId: poolId ?? proposalSlug,
   });
   const shouldTickFallback = isStreamingType && explorerTotalStreamedBn == null;
 
@@ -610,7 +640,8 @@ export default function ClientPage({ params }: ClientPageProps) {
     !supportersData ||
     !metadata ||
     proposalIdNumber == null ||
-    updatedConviction == null
+    updatedConviction == null ||
+    poolId == null
   ) {
     return (
       <div className="col-span-12 flex min-h-[40vh] items-center justify-center">

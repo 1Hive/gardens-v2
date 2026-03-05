@@ -11,7 +11,6 @@ import {
   getMembersStrategyQuery,
   TokenGarden,
 } from "#/subgraph/.graphclient";
-import { MemberStrategyData } from "./Proposals";
 import {
   ActivatePoints,
   Badge,
