@@ -26,7 +26,8 @@ export default defineConfig({
     ? [["line"], ["github"], ["html", { open: "never" }]]
     : [["html", { open: "never" }]],
   use: {
-    // Set base URL for tests
+    // Set base
+    // URL for tests
     baseURL,
     trace: "on-first-retry"
   },

@@ -31,9 +31,23 @@ test("should create a proposal in the pool", async ({
   );
 
   await page.bringToFront();
-  await connectWallet(page, metamask);
+  await await connectWallet(page, metamask);
+
+  const subgraphRes = await fetch(
+    "https://api.studio.thegraph.com/query/102093/gardens-v2---optimism/version/latest",
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        query:
+          "{ cvstrategies(first: 1, orderBy: poolId, orderDirection: desc, where: { isEnabled: true }) { id poolId } }"
+      })
+    }
+  ).then((r) => r.json());
+  const { poolId } = subgraphRes.data.cvstrategies[0];
+  console.log("subgraph RESP", subgraphRes);
   await page.goto(
-    "gardens/10/0x8b2f706cd2bc0df6679218177c56e72c5241de9b/0x9ee73d7afd1d75d9d3468ab7845150180936dec4/189/create-proposal",
+    `gardens/10/0x8b2f706cd2bc0df6679218177c56e72c5241de9b/0x9ee73d7afd1d75d9d3468ab7845150180936dec4/${poolId}/create-proposal`,
     {
       timeout: 60000 // Increase timeout to handle slow loading
     }
