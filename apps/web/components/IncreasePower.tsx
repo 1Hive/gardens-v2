@@ -394,6 +394,7 @@ export const IncreasePower = ({
                     "[--range-shdw:var(--color-grey-400)]"
                   : ""
                 }`}
+                data-testid="input-slider-vote"
               />
             </div>
 

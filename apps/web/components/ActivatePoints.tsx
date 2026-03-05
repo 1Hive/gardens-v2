@@ -133,6 +133,7 @@ export function ActivatePoints({
         disabled={missmatchUrl || disableActiveBtn}
         tooltip={tooltipMessage}
         isLoading={isLoadingActivatePoints}
+        testId="btn-activate-governance"
       >
         Activate governance
       </Button>

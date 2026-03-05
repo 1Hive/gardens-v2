@@ -805,6 +805,7 @@ export function Proposals({
                         enableCheck={strategy.sybil?.type === "Passport"}
                       >
                         <Button
+                          testId="btn-vote-on-proposals"
                           icon={
                             <AdjustmentsHorizontalIcon height={24} width={24} />
                           }
