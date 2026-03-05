@@ -31,6 +31,7 @@ import { Button } from "./Button";
 import { Divider } from "./Diivider";
 import { EthAddress } from "./EthAddress";
 import { ExpandableComponent } from "./Expandable";
+import { LoupeButton } from "@/apps/web/components/LoupeButton";
 import PoolEditForm from "./Forms/PoolEditForm";
 import { InfoBox } from "./InfoBox";
 import MarkdownWrapper from "./MarkdownWrapper";
@@ -706,13 +707,20 @@ export default function PoolHeader({
 
             <div className="flex flex-col gap-4">
               {/* Addresses */}
-              <div className="flex flex-col sm:flex-row items-baseline justify-between">
-                <EthAddress
-                  icon={false}
-                  address={strategy.id as Address}
-                  label="Pool Address:"
-                  textColor="var(--color-grey-800)"
-                />
+              <div className="flex flex-col sm:flex-row items-baseline justify-between gap-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <EthAddress
+                    icon={false}
+                    address={strategy.id as Address}
+                    label="Pool Address:"
+                    textColor="var(--color-grey-800)"
+                  />
+                  <LoupeButton
+                    diamond={strategy.id as Address}
+                    chainId={chainId}
+                    className="px-2 py-1"
+                  />
+                </div>
                 <div className="flex">
                   <a
                     href={`https://app.safe.global/transactions/queue?safe=${safePrefix}:${strategy.registryCommunity.councilSafe}`}

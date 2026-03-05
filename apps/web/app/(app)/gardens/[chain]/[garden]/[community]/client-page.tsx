@@ -45,6 +45,7 @@ import {
   RegisterMember,
   Statistic,
 } from "@/components";
+import { LoupeButton } from "@/apps/web/components/LoupeButton";
 import { Divider } from "@/components/Diivider";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import MarkdownWrapper from "@/components/MarkdownWrapper";
@@ -476,13 +477,20 @@ export default function ClientPage({
                 {/* Community name + Address */}
                 <div className=" flex-flex-col">
                   <h2>{communityName}</h2>
-                  <EthAddress
-                    icon={false}
-                    address={communityAddr as Address}
-                    label="Community address"
-                    textColor="var(--color-grey-900)"
-                    explorer="louper"
-                  />
+                  <div className="flex flex-wrap items-center gap-2">
+                    <EthAddress
+                      icon={false}
+                      address={communityAddr as Address}
+                      label="Community address"
+                      textColor="var(--color-grey-900)"
+                      explorer="louper"
+                    />
+                    <LoupeButton
+                      diamond={communityAddr}
+                      chainId={chain?.id}
+                      className="px-2 py-1"
+                    />
+                  </div>
                   {registryCommunity?.councilSafe && (
                     <EthAddress
                       icon={false}
@@ -721,13 +729,20 @@ export default function ClientPage({
                     {/* Community name + Address */}
                     <div className="mb-3">
                       <h2>{communityName}</h2>
-                      <EthAddress
-                        icon={false}
-                        address={communityAddr as Address}
-                        label="Community address"
-                        textColor="var(--color-grey-900)"
-                        explorer="louper"
-                      />
+                      <div className="flex flex-wrap items-center gap-2">
+                        <EthAddress
+                          icon={false}
+                          address={communityAddr as Address}
+                          label="Community address"
+                          textColor="var(--color-grey-900)"
+                          explorer="louper"
+                        />
+                        <LoupeButton
+                          diamond={communityAddr}
+                          chainId={chain?.id}
+                          className="px-2 py-1"
+                        />
+                      </div>
                       {registryCommunity?.councilSafe && (
                         <EthAddress
                           icon={false}
