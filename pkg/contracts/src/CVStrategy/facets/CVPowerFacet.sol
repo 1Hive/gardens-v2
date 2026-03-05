@@ -100,6 +100,7 @@ contract CVPowerFacet is CVStrategyBaseFacet {
             for (uint256 i = 0; i < voterStakedProposals[_member].length; i++) {
                 _rebalanceProposalStake(_member, voterStakedProposals[_member][i], balancingRatio);
             }
+            _pruneVoterProposals(_member);
         }
         totalPointsActivated -= pointsToDecrease;
 
@@ -154,6 +155,7 @@ contract CVPowerFacet is CVStrategyBaseFacet {
             }
         }
         totalVoterStakePct[_member] = 0;
+        delete voterStakedProposals[_member];
     }
 
     function _rebalanceProposalStake(address _member, uint256 _proposalId, uint256 _balancingRatio) internal {

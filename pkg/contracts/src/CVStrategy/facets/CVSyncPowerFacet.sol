@@ -136,6 +136,8 @@ contract CVSyncPowerFacet is CVStrategyBaseFacet {
             for (uint256 i = 0; i < voterStakedProposals[_member].length; i++) {
                 _rebalanceProposalStake(_member, voterStakedProposals[_member][i], balancingRatio);
             }
+
+            _pruneVoterProposals(_member);
         }
 
         totalPointsActivated -= _decrease;

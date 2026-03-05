@@ -134,7 +134,9 @@ contract CommunityPowerFacet is CommunityBaseFacet {
         }
 
         memberActivatedInStrategies[_member][_strategy] = false;
-        memberPowerInStrategy[_member][_strategy] = 0; emit MemberDeactivatedStrategy(_member, _strategy);
+        memberPowerInStrategy[_member][_strategy] = 0;
+        removeStrategyFromMember(_member, _strategy);
+        emit MemberDeactivatedStrategy(_member, _strategy);
     }
 
     // Sig: 0x559de05d
@@ -156,27 +158,31 @@ contract CommunityPowerFacet is CommunityBaseFacet {
     }
 
     // Sig: 0x5ecf71c5
-    function decreasePower(uint256 _amountUnstaked) public {
+    function decreasePower(uint256 _amountUnstaked) public nonReentrant {
         onlyRegistryMemberSender();
         address member = msg.sender;
         address[] storage memberStrategies = strategiesByMember[member];
+        uint256 currentStake = addressToMemberInfo[member].stakedAmount;
 
-        uint256 pointsToDecrease;
-
-        if (addressToMemberInfo[member].stakedAmount - _amountUnstaked < registerStakeAmount) {
+        if (currentStake - _amountUnstaked < registerStakeAmount) {
             revert DecreaseUnderMinimum();
-        } gardenToken.safeTransfer(member, _amountUnstaked);
+        }
+
+        addressToMemberInfo[member].stakedAmount = currentStake - _amountUnstaked;
+
         for (uint256 i = 0; i < memberStrategies.length; i++) {
             address strategy = memberStrategies[i];
-            pointsToDecrease = CVStrategy(payable(strategy)).decreasePower(member, _amountUnstaked);
-            uint256 currentPower = memberPowerInStrategy[member][memberStrategies[i]];
+            uint256 pointsToDecrease = CVStrategy(payable(strategy)).decreasePower(member, _amountUnstaked);
+            uint256 currentPower = memberPowerInStrategy[member][strategy];
             if (pointsToDecrease > currentPower) {
                 revert CantDecreaseMoreThanPower(pointsToDecrease, currentPower);
-            } else {
-                memberPowerInStrategy[member][memberStrategies[i]] -= pointsToDecrease;
             }
+            memberPowerInStrategy[member][strategy] = currentPower - pointsToDecrease;
         }
-        addressToMemberInfo[member].stakedAmount -= _amountUnstaked; emit MemberPowerDecreased(member, _amountUnstaked); }
+
+        gardenToken.safeTransfer(member, _amountUnstaked);
+        emit MemberPowerDecreased(member, _amountUnstaked);
+    }
 
     /*|--------------------------------------------|*/
     /*|              INTERNAL HELPERS              |*/

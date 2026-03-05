@@ -56,6 +56,7 @@ abstract contract CVStrategyBaseFacet {
     error StrategyPaused(address controller);
     error StrategySelectorPaused(bytes4 selector, address controller);
     error OnlyOwner(address sender, address ownerAddress);
+    error BlockNumberRegression(uint256 recordedBlock, uint256 currentBlock);
 
     /*|--------------------------------------------|*/
     /*|              CONSTANTS                     |*/
@@ -406,7 +407,9 @@ abstract contract CVStrategyBaseFacet {
         }
 
         blockNumber = block.number;
-        assert(_proposal.blockLast <= blockNumber);
+        if (_proposal.blockLast > blockNumber) {
+            revert BlockNumberRegression(_proposal.blockLast, blockNumber);
+        }
         if (_proposal.blockLast == blockNumber) {
             return (0, 0); // Conviction already stored
         }
@@ -424,6 +427,22 @@ abstract contract CVStrategyBaseFacet {
             return true;
         }
         return registryCommunity.enabledStrategies(address(this));
+    }
+
+    function _pruneVoterProposals(address _member) internal {
+        uint256[] storage memberProposals = voterStakedProposals[_member];
+        uint256 i = 0;
+        while (i < memberProposals.length) {
+            uint256 proposalId = memberProposals[i];
+            if (proposals[proposalId].voterStakedPoints[_member] == 0) {
+                memberProposals[i] = memberProposals[memberProposals.length - 1];
+                memberProposals.pop();
+            } else {
+                unchecked {
+                    ++i;
+                }
+            }
+        }
     }
 
     /// @notice Getter for the 'poolAmount'.

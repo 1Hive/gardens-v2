@@ -152,17 +152,18 @@ contract CVDisputeFacet is CVStrategyBaseFacet {
             collateralVault.withdrawCollateral(
                 proposalId, proposal.disputeInfo.challenger, arbitrableConfig.challengerCollateralAmount
             );
+            uint256 submitterCollateralHalf = arbitrableConfig.submitterCollateralAmount / 2;
             collateralVault.withdrawCollateralFor(
                 proposalId,
                 proposal.submitter,
                 address(registryCommunity.councilSafe()),
-                arbitrableConfigs[currentArbitrableConfigVersion].submitterCollateralAmount / 2
+                submitterCollateralHalf
             );
             collateralVault.withdrawCollateralFor(
                 proposalId,
                 proposal.submitter,
                 proposal.disputeInfo.challenger,
-                arbitrableConfigs[currentArbitrableConfigVersion].submitterCollateralAmount / 2
+                submitterCollateralHalf
             );
         }
 

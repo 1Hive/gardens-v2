@@ -8,6 +8,9 @@ library ConvictionsUtils {
     uint256 public constant D = 10000000; // 10**7
     uint256 internal constant TWO_128 = 0x100000000000000000000000000000000; // 2**128
     uint256 internal constant TWO_127 = 0x80000000000000000000000000000000; // 2**127
+    error AShouldBeUnderTwo_128();
+    error AShouldBeUnderOrEqTwo_128();
+    error BShouldBeLessTwo_128();
 
     /**
      * @dev Conviction formula: a^t * y(0) + x * (1 - a^t) / (1 - a)
@@ -76,10 +79,9 @@ library ConvictionsUtils {
      * @return _result (_a / 2^128)^_b * 2^128
      */
     function _pow(uint256 _a, uint256 _b) internal pure returns (uint256 _result) {
-        // TODO: Uncomment when contract size fixed with diamond
-        // if (_a >= TWO_128) {
-        //     revert AShouldBeUnderTwo_128();
-        // }
+        if (_a >= TWO_128) {
+            revert AShouldBeUnderTwo_128();
+        }
 
         uint256 a = _a;
         uint256 b = _b;
@@ -103,13 +105,12 @@ library ConvictionsUtils {
      * @return _result _a * _b / 2^128
      */
     function _mul(uint256 _a, uint256 _b) internal pure returns (uint256 _result) {
-        // TODO: Uncomment when contract size fixed with diamond
-        // if (_a > TWO_128) {
-        //     revert AShouldBeUnderOrEqTwo_128();
-        // }
-        // if (_b > TWO_128) {
-        //     revert BShouldBeLessTwo_128();
-        // }
+        if (_a > TWO_128) {
+            revert AShouldBeUnderOrEqTwo_128();
+        }
+        if (_b >= TWO_128) {
+            revert BShouldBeLessTwo_128();
+        }
 
         return ((_a * _b) + TWO_127) >> 128;
     }

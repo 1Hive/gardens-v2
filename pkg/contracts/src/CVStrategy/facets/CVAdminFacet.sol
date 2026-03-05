@@ -280,5 +280,6 @@ contract CVAdminFacet is CVStrategyBaseFacet {
             }
         }
         totalVoterStakePct[_member] = 0;
+        delete voterStakedProposals[_member];
     }
 }
