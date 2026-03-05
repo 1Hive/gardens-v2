@@ -1,5 +1,10 @@
 import type { Metadata } from "next";
+import { notFound, redirect } from "next/navigation";
 import ClientPage from "./client-page";
+import {
+  resolveStrategyAddress,
+  stringifySearchParams,
+} from "../route-helpers";
 
 const TITLE = "Gardens - Create a proposal";
 const DESCRIPTION =
@@ -18,8 +23,18 @@ function buildPoolOgImagePath(params: PageParams["params"]) {
   return `/gardens/${params.chain}/${params.garden}/${params.community}/${params.poolId}/opengraph-image-12jbcu`;
 }
 
-export function generateMetadata({ params }: PageParams): Metadata {
-  const ogImage = buildPoolOgImagePath(params);
+export async function generateMetadata({
+  params,
+}: PageParams): Promise<Metadata> {
+  const strategyAddress = await resolveStrategyAddress(
+    params.chain,
+    params.poolId,
+  );
+  const normalizedParams = {
+    ...params,
+    poolId: strategyAddress ?? params.poolId,
+  };
+  const ogImage = buildPoolOgImagePath(normalizedParams);
   return {
     title: TITLE,
     description: DESCRIPTION,
@@ -37,6 +52,26 @@ export function generateMetadata({ params }: PageParams): Metadata {
   };
 }
 
-export default function Page({ params }: PageParams) {
-  return <ClientPage params={params} />;
+type PageProps = PageParams & {
+  searchParams: Record<string, string | string[] | undefined>;
+};
+
+export default async function Page({ params, searchParams }: PageProps) {
+  const strategyAddress = await resolveStrategyAddress(
+    params.chain,
+    params.poolId,
+  );
+
+  if (!strategyAddress) {
+    notFound();
+  }
+
+  const normalizedSlug = strategyAddress.toLowerCase();
+  if (params.poolId.toLowerCase() !== normalizedSlug) {
+    redirect(
+      `/gardens/${params.chain}/${params.garden}/${params.community}/${normalizedSlug}/create-proposal${stringifySearchParams(searchParams)}`,
+    );
+  }
+
+  return <ClientPage params={{ ...params, poolId: normalizedSlug }} />;
 }

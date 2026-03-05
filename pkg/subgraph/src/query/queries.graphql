@@ -318,7 +318,7 @@ query getRegistryFactoryData {
   }
 }
 
-query getPoolData($garden: ID!, $poolId: BigInt!) {
+query getPoolData($garden: ID!, $strategyId: ID!) {
   allos(first: 1000) {
     id
     chainId
@@ -333,7 +333,7 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
     ipfsCovenant
     decimals
   }
-  cvstrategies(first: 1000, where: { poolId: $poolId }) {
+  cvstrategies(first: 1000, where: { id: $strategyId }) {
     token
     metadataHash
     metadata {
@@ -407,7 +407,7 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
     first: 1
     orderBy: version
     orderDirection: desc
-    where: { strategy_: { poolId: $poolId } }
+    where: { strategy_: { id: $strategyId } }
   ) {
     submitterCollateralAmount
     challengerCollateralAmount
@@ -560,8 +560,8 @@ query getCommunityTitles($communityAddr: ID!) {
   }
 }
 
-query getPoolTitles($poolId: BigInt!) {
-  cvstrategies(first: 1000, where: { poolId: $poolId }) {
+query getPoolTitles($strategyId: ID!) {
+  cvstrategies(first: 1000, where: { id: $strategyId }) {
     poolId
     metadataHash
     metadata {
@@ -702,8 +702,8 @@ query getCommunityName($communityAddr: ID!) {
   }
 }
 
-query getPoolTitle($poolId: BigInt!) {
-  cvstrategies(first: 1, where: { poolId: $poolId }) {
+query getPoolTitle($strategyId: ID!) {
+  cvstrategies(first: 1, where: { id: $strategyId }) {
     metadata {
       title
     }

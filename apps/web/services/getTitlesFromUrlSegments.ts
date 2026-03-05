@@ -8,6 +8,7 @@ import {
   RegistryCommunity,
   TokenGarden,
 } from "#/subgraph/.graphclient";
+import { buildProposalEntityId } from "@/utils/proposals";
 import { capitalize } from "@/utils/text";
 
 interface CommunityTitlesResult {
@@ -38,14 +39,14 @@ interface ProposalTitlesResult {
 
 interface QueryMapItem {
   document: DocumentNode;
-  getVariables: (arg: string) => Record<string, unknown>;
+  getVariables: (arg: string, segments: string[]) => Record<string, unknown>;
   parseResult: (arg: any) => Promise<(string | undefined)[]>;
 }
 
 export const queryMap: Record<number, QueryMapItem> = {
   3: {
     document: getCommunityTitlesDocument,
-    getVariables: (communityAddr: string) => ({
+    getVariables: (communityAddr: string, _segments: string[]) => ({
       communityAddr: communityAddr.toLowerCase(),
     }),
     parseResult: async (
@@ -57,7 +58,9 @@ export const queryMap: Record<number, QueryMapItem> = {
   },
   4: {
     document: getPoolTitlesDocument,
-    getVariables: (poolId: string) => ({ poolId }),
+    getVariables: (strategyId: string, _segments: string[]) => ({
+      strategyId: strategyId.toLowerCase(),
+    }),
     parseResult: async (
       resData: PoolTitlesResult,
     ): Promise<(string | undefined)[]> => {
@@ -72,7 +75,15 @@ export const queryMap: Record<number, QueryMapItem> = {
   },
   5: {
     document: getProposalTitlesDocument,
-    getVariables: (proposalId: string) => ({ proposalId }),
+    getVariables: (proposalSegment: string, segments: string[]) => {
+      const strategySegment = segments[4] ?? "";
+      return {
+        proposalId: buildProposalEntityId(
+          strategySegment.toLowerCase(),
+          proposalSegment,
+        ).toLowerCase(),
+      };
+    },
     parseResult: async (
       resData: ProposalTitlesResult,
     ): Promise<(string | undefined)[]> => {

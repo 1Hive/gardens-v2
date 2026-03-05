@@ -26,13 +26,16 @@ type ClientPageProps = {
 };
 
 export default function ClientPage({
-  params: { poolId, garden },
+  params: { poolId: poolSlug, garden },
 }: ClientPageProps) {
+  const strategyAddress = poolSlug.toLowerCase();
   const { data } = useSubgraphQuery<getPoolDataQuery>({
     query: getPoolDataDocument,
-    variables: { poolId, garden: garden.toLowerCase() },
+    variables: { strategyId: strategyAddress, garden: garden.toLowerCase() },
   });
   const strategyObj = data?.cvstrategies?.[0];
+  const resolvedPoolId =
+    strategyObj?.poolId != null ? Number(strategyObj.poolId) : undefined;
 
   const { data: metadataResult } = useMetadataIpfsFetch({
     hash: strategyObj?.metadataHash,
@@ -60,6 +63,7 @@ export default function ClientPage({
     !tokenGarden ||
     metadata == null ||
     !strategyObj ||
+    resolvedPoolId == null ||
     (poolToken == undefined && PoolTypes[proposalType] === "funding")
   ) {
     return (
@@ -100,7 +104,7 @@ export default function ClientPage({
     <div className="page-layout col-span-12 mx-auto">
       <section className="section-layout">
         <div className="text-center sm:mt-5 mb-12">
-          <h2 className="mb-2">Create a Proposal in Pool #{poolId}</h2>
+          <h2 className="mb-2">Create a Proposal in Pool #{resolvedPoolId}</h2>
           <div className="">
             <h4 className="">{metadata.title}</h4>
           </div>
@@ -109,7 +113,7 @@ export default function ClientPage({
           arbitrableConfig={data.arbitrableConfigs[0]}
           poolBalance={poolBalanceFormatted}
           strategy={strategyObj}
-          poolId={+poolId}
+          poolId={resolvedPoolId}
           poolParams={data.cvstrategies[0].config}
           proposalType={proposalType}
           alloInfo={alloInfo}

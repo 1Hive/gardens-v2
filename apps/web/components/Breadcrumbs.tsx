@@ -69,7 +69,7 @@ export function Breadcrumbs() {
       const result = await queryByChain(
         chain,
         queryItem.document,
-        queryItem.getVariables(segments[entityIndex]),
+        queryItem.getVariables(segments[entityIndex], segments),
         undefined,
         skipPublished,
       );

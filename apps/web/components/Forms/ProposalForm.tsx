@@ -221,7 +221,7 @@ export const ProposalForm = ({
       if (pathname) {
         const newPath = pathname.replace(
           "/create-proposal",
-          `/${strategy.id}-${proposalId}`,
+          `/${proposalId.toString()}`,
         );
         const searchParams = new URLSearchParams();
         searchParams.set(

@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import { notFound, redirect } from "next/navigation";
 import { getPoolTitleDocument } from "#/subgraph/.graphclient";
 import ClientPage from "./client-page";
 import { FALLBACK_TITLE, getDescriptionText } from "./opengraph-image";
+import { resolveStrategyAddress, stringifySearchParams } from "./route-helpers";
 import { chainConfigMap } from "@/configs/chains";
 import { queryByChain } from "@/providers/urql";
 import { PoolTypes } from "@/types";
@@ -42,7 +44,14 @@ export async function generateMetadata({
 }: PageParams): Promise<Metadata> {
   const chainId = Number(params.chain);
   const chainConfig = chainConfigMap[params.chain] ?? chainConfigMap[chainId];
-  const poolId = params.poolId?.toString();
+  const strategyAddress = await resolveStrategyAddress(
+    params.chain,
+    params.poolId,
+  );
+  const normalizedParams = {
+    ...params,
+    poolId: strategyAddress ?? params.poolId,
+  };
   let description = getDescriptionText(undefined);
   const fallbackMetadata: Metadata = {
     title: titlePrefix + FALLBACK_TITLE,
@@ -50,13 +59,13 @@ export async function generateMetadata({
     openGraph: {
       title: titlePrefix + FALLBACK_TITLE,
       description,
-      images: [{ url: buildOgImagePath(params) }],
+      images: [{ url: buildOgImagePath(normalizedParams) }],
     },
     twitter: {
       card: "summary_large_image",
       title: titlePrefix + FALLBACK_TITLE,
       description,
-      images: [buildOgImagePath(params)],
+      images: [buildOgImagePath(normalizedParams)],
     },
   };
 
@@ -67,9 +76,9 @@ export async function generateMetadata({
     return fallbackMetadata;
   }
 
-  if (!poolId) {
-    console.error("Missing poolId for pool metadata generation.", {
-      poolId: params.poolId,
+  if (!strategyAddress) {
+    console.error("Missing strategy address for pool metadata generation.", {
+      poolSlug: params.poolId,
     });
     return fallbackMetadata;
   }
@@ -78,7 +87,7 @@ export async function generateMetadata({
     const poolResult = await queryByChain(
       chainConfig,
       getPoolTitleDocument,
-      { poolId },
+      { strategyId: strategyAddress },
       { requestPolicy: "network-only" },
       true,
     );
@@ -86,7 +95,7 @@ export async function generateMetadata({
     if (poolResult.error) {
       console.error("Error fetching pool metadata.", {
         chainId: params.chain,
-        poolId,
+        strategyAddress,
         error: poolResult.error,
       });
       return fallbackMetadata;
@@ -108,7 +117,7 @@ export async function generateMetadata({
       : "unknown";
     const poolType = PoolTypes[pool?.config?.proposalType as number];
     const actualDescription = getDescriptionText(poolType);
-    const ogImageUrl = buildOgImagePath(params, status);
+    const ogImageUrl = buildOgImagePath(normalizedParams, status);
     return {
       title: poolTitle,
       description: actualDescription,
@@ -127,19 +136,39 @@ export async function generateMetadata({
   } catch (error) {
     console.error("Failed to generate pool metadata.", {
       chainId: params.chain,
-      poolId,
+      strategyAddress,
       error,
     });
     return fallbackMetadata;
   }
 }
 
-export default function Page(props: PageParams) {
+type PageProps = PageParams & {
+  searchParams: Record<string, string | string[] | undefined>;
+};
+
+export default async function Page(props: PageProps) {
+  const strategyAddress = await resolveStrategyAddress(
+    props.params.chain,
+    props.params.poolId,
+  );
+
+  if (!strategyAddress) {
+    notFound();
+  }
+
+  const normalizedSlug = strategyAddress.toLowerCase();
+  if (props.params.poolId.toLowerCase() !== normalizedSlug) {
+    redirect(
+      `/gardens/${props.params.chain}/${props.params.garden}/${props.params.community}/${normalizedSlug}${stringifySearchParams(props.searchParams)}`,
+    );
+  }
+
   return (
     <ClientPage
       params={{
         ...props.params,
-        poolId: Number(props.params.poolId),
+        poolId: normalizedSlug,
       }}
     />
   );
