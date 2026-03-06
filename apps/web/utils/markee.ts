@@ -97,7 +97,7 @@ export async function fetchMarkeeLeaderboard(strategyAddress: Address) {
 // Centralized on markee.xyz. Cross-domain callers (e.g. Gardens) hit this
 // endpoint directly — no Redis config needed on their side.
 
-const MARKEE_VIEWS_URL = "https://markee.xyz/api/views";
+const MARKEE_VIEWS_URL = "https://www.markee.xyz/api/views";
 
 /**
  * Record a view for a strategy address + current message.
