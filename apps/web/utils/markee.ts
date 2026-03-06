@@ -126,3 +126,20 @@ export async function fetchMarkeeViews(
   const res = await fetch(`${MARKEE_VIEWS_URL}?addresses=${param}`);
   return res.json();
 }
+
+/**
+ * Fetch per-message view counts for a leaderboard.
+ * Returns a map of message → view count.
+ * Uses pipe delimiter (||) since messages can contain commas.
+ */
+export async function fetchMarkeeMessageViews(
+  strategyAddress: Address,
+  messages: string[],
+): Promise<Record<string, number>> {
+  if (messages.length === 0) return {};
+  const param = messages.join("||");
+  const res = await fetch(
+    `${MARKEE_VIEWS_URL}?address=${strategyAddress.toLowerCase()}&messages=${encodeURIComponent(param)}`,
+  );
+  return res.json();
+}
