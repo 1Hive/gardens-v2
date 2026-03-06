@@ -9,7 +9,7 @@ import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithC
 import { MarkeeAbi } from "@/src/customAbis";
 import {
   fetchMarkeeLeaderboard,
-  fetchMarkeeMessageViews,
+  fetchMarkeeViews,
   GARDENS_STRATEGY,
   MarkeeNetwork,
 } from "@/utils/markee";
@@ -22,6 +22,8 @@ const trimTrailingZeros = (value: string) =>
   value.replace(/(\.\d*?[1-9])0+$/u, "$1").replace(/\.0+$/u, "");
 
 type LeaderboardEntry = {
+  id: string;
+  address: string;
   message: string;
   name: string;
   totalFundsAdded: string;
@@ -74,7 +76,8 @@ export default function MarkeeModal({
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [leaderboardLoading, setLeaderboardLoading] = useState(false);
   const [leaderboardError, setLeaderboardError] = useState<string | null>(null);
-  const [messageViews, setMessageViews] = useState<Record<string, number>>({});
+  // Keyed by markee address (lowercase) → totalViews
+  const [entryViews, setEntryViews] = useState<Record<string, number>>({});
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   const { address } = useAccount();
@@ -122,7 +125,7 @@ export default function MarkeeModal({
     setHiddenForConnect(false);
   }, [connectModalOpen, hiddenForConnect]);
 
-  // Fetch leaderboard + per-message views when opened
+  // Fetch leaderboard + batch views by individual markee address
   useEffect(() => {
     if (!leaderboardOpen || leaderboard.length > 0) return;
     setLeaderboardLoading(true);
@@ -130,12 +133,15 @@ export default function MarkeeModal({
     fetchMarkeeLeaderboard(GARDENS_STRATEGY)
       .then((entries) => {
         setLeaderboard(entries);
-        // Fetch per-message views for all leaderboard entries
-        const messages = entries.map((e) => e.message);
-        return fetchMarkeeMessageViews(GARDENS_STRATEGY, messages);
+        const addresses = entries.map((e) => e.address);
+        return fetchMarkeeViews(addresses);
       })
-      .then((views) => {
-        setMessageViews(views);
+      .then((viewsMap) => {
+        const flat: Record<string, number> = {};
+        for (const [addr, counts] of Object.entries(viewsMap)) {
+          flat[addr.toLowerCase()] = counts.totalViews;
+        }
+        setEntryViews(flat);
       })
       .catch(() => {
         setLeaderboardError("Unable to load leaderboard.");
@@ -187,7 +193,7 @@ export default function MarkeeModal({
           `Minimum is ${minToJoinEth} ETH to join the leaderboard.`,
         );
         valid = false;
-      } else if (baseBalance != null && parsedAmount > baseBalance) {
+      } else if (baseBalance !== null && parsedAmount > baseBalance) {
         setEthError(true);
         setInputError("Insufficient ETH balance.");
         valid = false;
@@ -245,8 +251,8 @@ export default function MarkeeModal({
   }
   const hasInsufficientBalance =
     isOnBase &&
-    baseBalance != null &&
-    parsedAmount != null &&
+    baseBalance !== null &&
+    parsedAmount !== null &&
     parsedAmount > baseBalance;
   const amountHasError = ethError || hasInsufficientBalance;
   const buyDisabled =
@@ -344,37 +350,40 @@ export default function MarkeeModal({
                     No entries yet.
                   </p>
                 : <>
-                    {leaderboard.map((entry) => (
-                      <div
-                        key={`${entry.totalFundsAdded}-${entry.name}-${entry.message}`}
-                        className="flex items-start justify-between gap-2"
-                      >
-                        <div className="flex-1 min-w-0">
-                          <p className="font-mono text-xs text-neutral-content break-words">
-                            {entry.message}
-                          </p>
-                          {entry.name && (
-                            <p className="text-xs text-neutral-content/40 mt-0.5">
-                              {entry.name}
+                    {leaderboard.map((entry) => {
+                      const views = entryViews[entry.address.toLowerCase()];
+                      return (
+                        <div
+                          key={entry.address}
+                          className="flex items-start justify-between gap-2"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <p className="font-mono text-xs text-neutral-content break-words">
+                              {entry.message}
                             </p>
-                          )}
-                        </div>
-                        <div className="flex flex-col items-end gap-1 flex-shrink-0 mt-0.5">
-                          <span className="text-xs font-mono text-neutral-content/50">
-                            {parseFloat(
-                              formatEther(BigInt(entry.totalFundsAdded)),
-                            ).toFixed(3)}{" "}
-                            ETH
-                          </span>
-                          {messageViews[entry.message] !== undefined && (
-                            <span className="flex items-center gap-0.5 text-xs font-mono text-neutral-content/30">
-                              <EyeIcon className="h-2.5 w-2.5" />
-                              {messageViews[entry.message].toLocaleString()}
+                            {entry.name && (
+                              <p className="text-xs text-neutral-content/40 mt-0.5">
+                                {entry.name}
+                              </p>
+                            )}
+                          </div>
+                          <div className="flex flex-col items-end gap-1 flex-shrink-0 mt-0.5">
+                            <span className="text-xs font-mono text-neutral-content/50">
+                              {parseFloat(
+                                formatEther(BigInt(entry.totalFundsAdded)),
+                              ).toFixed(3)}{" "}
+                              ETH
                             </span>
-                          )}
+                            {views !== undefined && (
+                              <span className="flex items-center gap-0.5 text-xs font-mono text-neutral-content/30">
+                                <EyeIcon className="h-2.5 w-2.5" />
+                                {views.toLocaleString()}
+                              </span>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                     <div className="flex justify-between pt-2 border-t border-neutral-content/10">
                       <span className="text-xs text-neutral-content/50 font-medium">
                         Total raised
@@ -449,7 +458,7 @@ export default function MarkeeModal({
           <div className="mb-4">
             <label className="block text-sm font-medium text-neutral-content mb-2">
               ETH Amount
-              {isOnBase && baseBalance != null && (
+              {isOnBase && baseBalance !== null && (
                 <span className="text-xs text-neutral-content/40 font-normal ml-2">
                   (balance: {parseFloat(formatEther(baseBalance)).toFixed(3)} ETH)
                 </span>
