@@ -7,6 +7,8 @@ import MarkeeModal from "./MarkeeModal";
 import { MarkeeAbi } from "@/src/customAbis";
 import {
   fetchMarkeeSignData,
+  fetchMarkeeViews,
+  recordMarkeeView,
   GARDENS_STRATEGY,
   MarkeeNetwork,
 } from "@/utils/markee";
@@ -32,6 +34,8 @@ export default function MarkeeSign() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [totalViews, setTotalViews] = useState<number | null>(null);
+
   const { data: onchainMinPrice } = useContractRead({
     address: GARDENS_STRATEGY,
     abi: MarkeeAbi,
@@ -67,6 +71,14 @@ export default function MarkeeSign() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Record a view once the message is loaded (fire-and-forget)
+  useEffect(() => {
+    if (loading || loadError || data.message === DEFAULT_DATA.message) return;
+    recordMarkeeView(GARDENS_STRATEGY, data.message)
+      .then((res) => setTotalViews(res.totalViews))
+      .catch(() => {}); // never block the UI
+  }, [loading, loadError, data.message]);
 
   // Amount needed to take the top spot
   const takeTopSpot =
