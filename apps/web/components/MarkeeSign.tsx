@@ -91,7 +91,7 @@ export default function MarkeeSign() {
 
   // Record a view once the real message is loaded (fire-and-forget)
   useEffect(() => {
-    if (loading || loadError || data.message === DEFAULT_DATA.message) return;
+    if (loading || loadError !== null || data.message === DEFAULT_DATA.message) return;
     recordMarkeeView(GARDENS_STRATEGY, data.message)
       .then((res) => setTotalViews(res.totalViews))
       .catch(() => {});
