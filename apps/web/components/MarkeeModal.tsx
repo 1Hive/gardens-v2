@@ -9,6 +9,7 @@ import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithC
 import { MarkeeAbi } from "@/src/customAbis";
 import {
   fetchMarkeeLeaderboard,
+  fetchMarkeeMessageViews,
   GARDENS_STRATEGY,
   MarkeeNetwork,
 } from "@/utils/markee";
@@ -33,7 +34,26 @@ type Props = {
   currentMessage: string;
   minimumPrice: bigint;
   takeTopSpot: bigint;
+  totalViews: number | null;
 };
+
+function EyeIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
 
 export default function MarkeeModal({
   onClose,
@@ -41,6 +61,7 @@ export default function MarkeeModal({
   currentMessage,
   minimumPrice,
   takeTopSpot,
+  totalViews,
 }: Props) {
   const [message, setMessage] = useState("");
   const [name, setName] = useState("");
@@ -53,6 +74,7 @@ export default function MarkeeModal({
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [leaderboardLoading, setLeaderboardLoading] = useState(false);
   const [leaderboardError, setLeaderboardError] = useState<string | null>(null);
+  const [messageViews, setMessageViews] = useState<Record<string, number>>({});
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   const { address } = useAccount();
@@ -100,6 +122,7 @@ export default function MarkeeModal({
     setHiddenForConnect(false);
   }, [connectModalOpen, hiddenForConnect]);
 
+  // Fetch leaderboard + per-message views when opened
   useEffect(() => {
     if (!leaderboardOpen || leaderboard.length > 0) return;
     setLeaderboardLoading(true);
@@ -107,6 +130,12 @@ export default function MarkeeModal({
     fetchMarkeeLeaderboard(GARDENS_STRATEGY)
       .then((entries) => {
         setLeaderboard(entries);
+        // Fetch per-message views for all leaderboard entries
+        const messages = entries.map((e) => e.message);
+        return fetchMarkeeMessageViews(GARDENS_STRATEGY, messages);
+      })
+      .then((views) => {
+        setMessageViews(views);
       })
       .catch(() => {
         setLeaderboardError("Unable to load leaderboard.");
@@ -167,9 +196,6 @@ export default function MarkeeModal({
         if (valid) setInputError(null);
       }
     }
-    if (!valid && message.trim()) {
-      // Only set generic error if no specific eth error was set
-    }
     return valid;
   };
 
@@ -197,12 +223,7 @@ export default function MarkeeModal({
     try {
       const value = parseEther(ethAmount);
       const args = [message.trim(), name.trim()] as const;
-
-      await writeAsync({
-        args,
-        value,
-      });
-      // onSuccess is called via onConfirmations in the hook
+      await writeAsync({ args, value });
     } catch (err: any) {
       if (err?.cause instanceof UserRejectedRequestError) return;
       setInputError(
@@ -233,6 +254,7 @@ export default function MarkeeModal({
   const buyTooltip = hasInsufficientBalance ? "Insufficient balance" : "";
   const isFormDirty =
     message.length > 0 || name.length > 0 || ethAmount.length > 0;
+
   const handleBackdropClick = (e: React.MouseEvent<HTMLDialogElement>) => {
     if (e.target !== dialogRef.current) return;
     if (isFormDirty) return;
@@ -258,17 +280,25 @@ export default function MarkeeModal({
             <h3 className="text-lg font-semibold text-neutral-content">
               Change the Markee Message
             </h3>
-            <p className="text-xs text-neutral-content/60 mt-0.5">
-              62% to Gardens Treasury · 38% to{" "}
-              <a
-                href="https://app.gardens.fund/gardens/8453/0xee3027f1e021b09d629922d40436c5dea3c6cb38/0xce6b968c8bd130ca08f1fcc97b509a824380d867"
-                target="_blank"
-                rel="noreferrer"
-                className="underline underline-offset-2 hover:text-primary-content transition-colors"
-              >
-                Markee Cooperative
-              </a>
-            </p>
+            <div className="flex items-center gap-3 mt-0.5">
+              <p className="text-xs text-neutral-content/60">
+                62% to Gardens Treasury · 38% to{" "}
+                <a
+                  href="https://app.gardens.fund/gardens/8453/0xee3027f1e021b09d629922d40436c5dea3c6cb38/0xce6b968c8bd130ca08f1fcc97b509a824380d867"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="underline underline-offset-2 hover:text-primary-content transition-colors"
+                >
+                  Markee Cooperative
+                </a>
+              </p>
+              {totalViews !== null && (
+                <span className="flex items-center gap-1 text-xs font-mono text-neutral-content/40">
+                  <EyeIcon className="h-3 w-3" />
+                  {totalViews.toLocaleString()}
+                </span>
+              )}
+            </div>
           </div>
           <button
             onClick={onClose}
@@ -280,289 +310,297 @@ export default function MarkeeModal({
         </div>
 
         <div className="overflow-y-auto px-6 py-5">
-        {/* Current message + leaderboard */}
-        <div className="mb-5 rounded border border-neutral-content/20 bg-neutral-focus px-4 py-3">
-          <div className="flex-1 min-w-0">
-            <p className="text-xs text-neutral-content/50 mb-1">
-              Current message
-            </p>
-            <p className="font-mono text-sm text-neutral-content break-words">
-              {currentMessage}
-            </p>
-          </div>
-
-          <button
-            onClick={() => setLeaderboardOpen((o) => !o)}
-            className="mt-3 flex items-center gap-1 text-xs text-neutral-content/50 hover:text-neutral-content/80 transition-colors"
-          >
-            <ChevronDownIcon
-              className={`h-3.5 w-3.5 transition-transform duration-200 ${leaderboardOpen ? "rotate-180" : ""}`}
-            />
-            {leaderboardOpen ? "Hide leaderboard" : "Show leaderboard"}
-          </button>
-
-          {leaderboardOpen && (
-            <div className="mt-3 border-t border-neutral-content/10 pt-3 space-y-2">
-              {leaderboardLoading ?
-                <p className="text-xs text-neutral-content/40 font-mono">
-                  loading...
-                </p>
-              : leaderboardError ?
-                <p className="text-xs text-red-400">{leaderboardError}</p>
-              : leaderboard.length === 0 ?
-                <p className="text-xs text-neutral-content/40">
-                  No entries yet.
-                </p>
-              : <>
-                  {leaderboard.map((entry) => (
-                    <div
-                      key={`${entry.totalFundsAdded}-${entry.name}-${entry.message}`}
-                      className="flex items-start justify-between gap-2"
-                    >
-                      <div className="flex-1 min-w-0">
-                        <p className="font-mono text-xs text-neutral-content break-words">
-                          {entry.message}
-                        </p>
-                        {entry.name && (
-                          <p className="text-xs text-neutral-content/40 mt-0.5">
-                            {entry.name}
-                          </p>
-                        )}
-                      </div>
-                      <span className="text-xs font-mono text-neutral-content/50 flex-shrink-0 mt-0.5">
-                        {parseFloat(
-                          formatEther(BigInt(entry.totalFundsAdded)),
-                        ).toFixed(3)}{" "}
-                        ETH
-                      </span>
-                    </div>
-                  ))}
-                  <div className="flex justify-between pt-2 border-t border-neutral-content/10">
-                    <span className="text-xs text-neutral-content/50 font-medium">
-                      Total raised
-                    </span>
-                    <span className="text-xs font-mono font-semibold text-neutral-content/70">
-                      {parseFloat(formatEther(totalRaised)).toFixed(3)} ETH
-                    </span>
-                  </div>
-                </>
-              }
-              <p className="pt-2 text-xs text-neutral-content/40 border-t border-neutral-content/10">
-                Add funds and edit your existing messages at{" "}
-                <a
-                  href="https://www.markee.xyz/ecosystem/gardens"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="underline underline-offset-2 hover:text-neutral-content/70 transition-colors"
-                >
-                  markee.xyz/ecosystem/gardens
-                </a>
+          {/* Current message + leaderboard */}
+          <div className="mb-5 rounded border border-neutral-content/20 bg-neutral-focus px-4 py-3">
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-neutral-content/50 mb-1">
+                Current message
+              </p>
+              <p className="font-mono text-sm text-neutral-content break-words">
+                {currentMessage}
               </p>
             </div>
-          )}
-        </div>
 
-        {/* Your Message */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-neutral-content mb-1.5">
-            Your Message{" "}
-            <span className="text-xs text-neutral-content/40 font-normal">
-              ({message.length}/{DEFAULT_MAX_MESSAGE})
-            </span>
-          </label>
-          <textarea
-            className={`textarea textarea-bordered w-full bg-neutral text-neutral-content placeholder:text-neutral-content/30 resize-y min-h-[88px] max-h-56 font-mono text-sm transition-colors ${
-              messageError ? "border-red-500" : "border-border-neutral"
-            }`}
-            placeholder="this is a sign."
-            value={message}
-            maxLength={DEFAULT_MAX_MESSAGE}
-            rows={3}
-            onChange={(e) => {
-              setMessage(e.target.value);
-              setMessageError(false);
-              setInputError(null);
-            }}
-          />
-          {messageError && (
-            <p className="mt-1 text-xs text-red-400">Message is required.</p>
-          )}
-        </div>
+            <button
+              onClick={() => setLeaderboardOpen((o) => !o)}
+              className="mt-3 flex items-center gap-1 text-xs text-neutral-content/50 hover:text-neutral-content/80 transition-colors"
+            >
+              <ChevronDownIcon
+                className={`h-3.5 w-3.5 transition-transform duration-200 ${leaderboardOpen ? "rotate-180" : ""}`}
+              />
+              {leaderboardOpen ? "Hide leaderboard" : "Show leaderboard"}
+            </button>
 
-        {/* Your Name */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-neutral-content mb-1.5">
-            Your Name{" "}
-            <span className="text-xs text-neutral-content/40 font-normal">
-              (optional · {name.length}/{DEFAULT_MAX_NAME})
-            </span>
-          </label>
-          <input
-            type="text"
-            className="input input-bordered w-full bg-neutral border-border-neutral text-neutral-content placeholder:text-neutral-content/30 text-sm"
-            placeholder="vitalik"
-            value={name}
-            maxLength={DEFAULT_MAX_NAME}
-            onChange={(e) => setName(e.target.value)}
-          />
-        </div>
-
-        {/* ETH Amount — 3 columns */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-neutral-content mb-2">
-            ETH Amount
-            {isOnBase && baseBalance != null && (
-              <span className="text-xs text-neutral-content/40 font-normal ml-2">
-                (balance: {parseFloat(formatEther(baseBalance)).toFixed(3)} ETH)
-              </span>
+            {leaderboardOpen && (
+              <div className="mt-3 border-t border-neutral-content/10 pt-3 space-y-2">
+                {leaderboardLoading ?
+                  <p className="text-xs text-neutral-content/40 font-mono">
+                    loading...
+                  </p>
+                : leaderboardError ?
+                  <p className="text-xs text-red-400">{leaderboardError}</p>
+                : leaderboard.length === 0 ?
+                  <p className="text-xs text-neutral-content/40">
+                    No entries yet.
+                  </p>
+                : <>
+                    {leaderboard.map((entry) => (
+                      <div
+                        key={`${entry.totalFundsAdded}-${entry.name}-${entry.message}`}
+                        className="flex items-start justify-between gap-2"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="font-mono text-xs text-neutral-content break-words">
+                            {entry.message}
+                          </p>
+                          {entry.name && (
+                            <p className="text-xs text-neutral-content/40 mt-0.5">
+                              {entry.name}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex flex-col items-end gap-1 flex-shrink-0 mt-0.5">
+                          <span className="text-xs font-mono text-neutral-content/50">
+                            {parseFloat(
+                              formatEther(BigInt(entry.totalFundsAdded)),
+                            ).toFixed(3)}{" "}
+                            ETH
+                          </span>
+                          {messageViews[entry.message] !== undefined && (
+                            <span className="flex items-center gap-0.5 text-xs font-mono text-neutral-content/30">
+                              <EyeIcon className="h-2.5 w-2.5" />
+                              {messageViews[entry.message].toLocaleString()}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                    <div className="flex justify-between pt-2 border-t border-neutral-content/10">
+                      <span className="text-xs text-neutral-content/50 font-medium">
+                        Total raised
+                      </span>
+                      <span className="text-xs font-mono font-semibold text-neutral-content/70">
+                        {parseFloat(formatEther(totalRaised)).toFixed(3)} ETH
+                      </span>
+                    </div>
+                  </>
+                }
+                <p className="pt-2 text-xs text-neutral-content/40 border-t border-neutral-content/10">
+                  Add funds and edit your existing messages at{" "}
+                  <a
+                    href="https://www.markee.xyz/ecosystem/gardens"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="underline underline-offset-2 hover:text-neutral-content/70 transition-colors"
+                  >
+                    markee.xyz/ecosystem/gardens
+                  </a>
+                </p>
+              </div>
             )}
-          </label>
-          <div className="grid grid-cols-3 gap-2">
-            {/* Take top spot — gold border highlight */}
-            <div
-              className="tooltip tooltip-top"
-              data-tip={`Set to ${takeTopSpotInput} ETH`}
-            >
-              <button
-                type="button"
-                onClick={() => {
-                  setEthAmount(takeTopSpotInput);
-                  setEthError(false);
-                  setInputError(null);
-                }}
-                className={`flex flex-col items-center justify-center rounded bg-neutral-focus hover:bg-neutral-focus/80 transition-colors px-2 py-2.5 text-center cursor-pointer ${
-                  ethAmount === takeTopSpotInput ?
-                    "border-2 border-yellow-400"
-                  : "border-2 border-yellow-400/50 hover:border-yellow-400"
-                }`}
-              >
-                <span className="text-xs font-mono font-semibold text-neutral-content">
-                  {takeTopSpotEth} ETH
-                </span>
-                <span className="text-xs text-neutral-content/50 mt-0.5 leading-tight">
-                  Take top spot
-                </span>
-              </button>
-            </div>
+          </div>
 
-            {/* Minimum to buy */}
-            <div
-              className="tooltip tooltip-top"
-              data-tip={`Set to ${minToJoinInput} ETH`}
-            >
-              <button
-                type="button"
-                onClick={() => {
-                  setEthAmount(minToJoinInput);
-                  setEthError(false);
-                  setInputError(null);
-                }}
-                className={`flex flex-col items-center justify-center rounded border bg-neutral-focus hover:border-neutral-content/40 hover:bg-neutral-focus/80 transition-colors px-2 py-2.5 text-center cursor-pointer ${
-                  (
-                    ethAmount === minToJoinInput &&
-                    ethAmount !== takeTopSpotInput
-                  ) ?
-                    "border-neutral-content/60"
-                  : "border-neutral-content/20"
-                }`}
-              >
-                <span className="text-xs font-mono font-semibold text-neutral-content">
-                  {minToJoinEth} ETH
-                </span>
-                <span className="text-xs text-neutral-content/50 mt-0.5 leading-tight">
-                  Minimum to buy
-                </span>
-              </button>
-            </div>
-
-            {/* Custom entry — match height of preset buttons */}
-            <input
-              type="number"
-              className={`input input-bordered w-full h-auto bg-neutral text-neutral-content placeholder:text-neutral-content/30 font-mono text-xs text-center transition-colors py-2.5 ${
-                amountHasError ? "border-red-500" : "border-border-neutral"
+          {/* Your Message */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-neutral-content mb-1.5">
+              Your Message{" "}
+              <span className="text-xs text-neutral-content/40 font-normal">
+                ({message.length}/{DEFAULT_MAX_MESSAGE})
+              </span>
+            </label>
+            <textarea
+              className={`textarea textarea-bordered w-full bg-neutral text-neutral-content placeholder:text-neutral-content/30 resize-y min-h-[88px] max-h-56 font-mono text-sm transition-colors ${
+                messageError ? "border-red-500" : "border-border-neutral"
               }`}
-              placeholder={takeTopSpotEth}
-              value={ethAmount}
-              min="0"
-              step="any"
+              placeholder="this is a sign."
+              value={message}
+              maxLength={DEFAULT_MAX_MESSAGE}
+              rows={3}
               onChange={(e) => {
-                setEthAmount(e.target.value);
-                setEthError(false);
+                setMessage(e.target.value);
+                setMessageError(false);
                 setInputError(null);
               }}
             />
+            {messageError && (
+              <p className="mt-1 text-xs text-red-400">Message is required.</p>
+            )}
           </div>
-          {(ethError || hasInsufficientBalance) && (
-            <p className="mt-2 rounded border border-red-500/30 bg-red-500/10 px-2 pt-2 pb-1.5 text-xs text-red-300">
-              {hasInsufficientBalance ?
-                "Insufficient ETH balance."
-              : inputError}
-            </p>
-          )}
-        </div>
 
-        {/* Wrong network banner — below ETH selection */}
-        {isConnected && !isOnBase && (
-          <div className="mb-4 rounded border border-yellow-500/30 bg-yellow-500/10 px-4 py-3 flex items-center justify-between">
-            <p className="text-sm text-yellow-400">
-              Switch to Base to pay for the sign.
-            </p>
-            <button
-              onClick={() => switchNetwork?.(MarkeeNetwork.id)}
-              className="btn btn-xs ml-3 bg-yellow-500 text-black border-0 hover:opacity-80"
-              disabled={isSwitching}
-            >
-              {isSwitching ? "Switching..." : "Switch to Base"}
-            </button>
+          {/* Your Name */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-neutral-content mb-1.5">
+              Your Name{" "}
+              <span className="text-xs text-neutral-content/40 font-normal">
+                (optional · {name.length}/{DEFAULT_MAX_NAME})
+              </span>
+            </label>
+            <input
+              type="text"
+              className="input input-bordered w-full bg-neutral border-border-neutral text-neutral-content placeholder:text-neutral-content/30 text-sm"
+              placeholder="vitalik"
+              value={name}
+              maxLength={DEFAULT_MAX_NAME}
+              onChange={(e) => setName(e.target.value)}
+            />
           </div>
-        )}
 
-        {/* General error */}
-        {inputError && !messageError && !ethError && (
-          <div className="mb-4 rounded border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-400">
-            {inputError}
-          </div>
-        )}
-
-        {/* Action — centered */}
-        <div className="flex justify-center mt-5">
-          {!isConnected ?
-            <button
-              onClick={() => {
-                setHiddenForConnect(true);
-                dialogRef.current?.close();
-                openConnectModal?.();
-              }}
-              className="btn btn-sm bg-primary text-primary-content hover:opacity-80 border-0 px-8"
-            >
-              Connect Wallet
-            </button>
-          : <div
-              className={buyTooltip ? "tooltip tooltip-top" : ""}
-              data-tip={buyTooltip}
-            >
-              <button
-                onClick={handleSubmit}
-                disabled={buyDisabled}
-                className={`btn btn-sm px-8 text-white transition-colors ${
-                  buyDisabled ?
-                    "!bg-neutral-700/70 !text-neutral-300/70 !border !border-neutral-500/60 !shadow-none opacity-80 cursor-not-allowed"
-                  : "border-0 bg-green-600 hover:bg-green-500"
-                }`}
+          {/* ETH Amount — 3 columns */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-neutral-content mb-2">
+              ETH Amount
+              {isOnBase && baseBalance != null && (
+                <span className="text-xs text-neutral-content/40 font-normal ml-2">
+                  (balance: {parseFloat(formatEther(baseBalance)).toFixed(3)} ETH)
+                </span>
+              )}
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              {/* Take top spot — gold border highlight */}
+              <div
+                className="tooltip tooltip-top"
+                data-tip={`Set to ${takeTopSpotInput} ETH`}
               >
-                {isPending ?
-                  "Confirm in wallet..."
-                : isConfirming ?
-                  "Confirming..."
-                : "Buy Message"}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEthAmount(takeTopSpotInput);
+                    setEthError(false);
+                    setInputError(null);
+                  }}
+                  className={`flex flex-col items-center justify-center rounded bg-neutral-focus hover:bg-neutral-focus/80 transition-colors px-2 py-2.5 text-center cursor-pointer ${
+                    ethAmount === takeTopSpotInput ?
+                      "border-2 border-yellow-400"
+                    : "border-2 border-yellow-400/50 hover:border-yellow-400"
+                  }`}
+                >
+                  <span className="text-xs font-mono font-semibold text-neutral-content">
+                    {takeTopSpotEth} ETH
+                  </span>
+                  <span className="text-xs text-neutral-content/50 mt-0.5 leading-tight">
+                    Take top spot
+                  </span>
+                </button>
+              </div>
+
+              {/* Minimum to buy */}
+              <div
+                className="tooltip tooltip-top"
+                data-tip={`Set to ${minToJoinInput} ETH`}
+              >
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEthAmount(minToJoinInput);
+                    setEthError(false);
+                    setInputError(null);
+                  }}
+                  className={`flex flex-col items-center justify-center rounded border bg-neutral-focus hover:border-neutral-content/40 hover:bg-neutral-focus/80 transition-colors px-2 py-2.5 text-center cursor-pointer ${
+                    (
+                      ethAmount === minToJoinInput &&
+                      ethAmount !== takeTopSpotInput
+                    ) ?
+                      "border-neutral-content/60"
+                    : "border-neutral-content/20"
+                  }`}
+                >
+                  <span className="text-xs font-mono font-semibold text-neutral-content">
+                    {minToJoinEth} ETH
+                  </span>
+                  <span className="text-xs text-neutral-content/50 mt-0.5 leading-tight">
+                    Minimum to buy
+                  </span>
+                </button>
+              </div>
+
+              {/* Custom entry */}
+              <input
+                type="number"
+                className={`input input-bordered w-full h-auto bg-neutral text-neutral-content placeholder:text-neutral-content/30 font-mono text-xs text-center transition-colors py-2.5 ${
+                  amountHasError ? "border-red-500" : "border-border-neutral"
+                }`}
+                placeholder={takeTopSpotEth}
+                value={ethAmount}
+                min="0"
+                step="any"
+                onChange={(e) => {
+                  setEthAmount(e.target.value);
+                  setEthError(false);
+                  setInputError(null);
+                }}
+              />
+            </div>
+            {(ethError || hasInsufficientBalance) && (
+              <p className="mt-2 rounded border border-red-500/30 bg-red-500/10 px-2 pt-2 pb-1.5 text-xs text-red-300">
+                {hasInsufficientBalance ?
+                  "Insufficient ETH balance."
+                : inputError}
+              </p>
+            )}
+          </div>
+
+          {/* Wrong network banner */}
+          {isConnected && !isOnBase && (
+            <div className="mb-4 rounded border border-yellow-500/30 bg-yellow-500/10 px-4 py-3 flex items-center justify-between">
+              <p className="text-sm text-yellow-400">
+                Switch to Base to pay for the sign.
+              </p>
+              <button
+                onClick={() => switchNetwork?.(MarkeeNetwork.id)}
+                className="btn btn-xs ml-3 bg-yellow-500 text-black border-0 hover:opacity-80"
+                disabled={isSwitching}
+              >
+                {isSwitching ? "Switching..." : "Switch to Base"}
               </button>
             </div>
-          }
-        </div>
+          )}
 
-        <p className="mt-4 text-center text-xs text-neutral-content/40">
-          You&apos;ll receive MARKEE tokens and become a Markee Network owner
-        </p>
+          {/* General error */}
+          {inputError && !messageError && !ethError && (
+            <div className="mb-4 rounded border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-400">
+              {inputError}
+            </div>
+          )}
+
+          {/* Action */}
+          <div className="flex justify-center mt-5">
+            {!isConnected ?
+              <button
+                onClick={() => {
+                  setHiddenForConnect(true);
+                  dialogRef.current?.close();
+                  openConnectModal?.();
+                }}
+                className="btn btn-sm bg-primary text-primary-content hover:opacity-80 border-0 px-8"
+              >
+                Connect Wallet
+              </button>
+            : <div
+                className={buyTooltip ? "tooltip tooltip-top" : ""}
+                data-tip={buyTooltip}
+              >
+                <button
+                  onClick={handleSubmit}
+                  disabled={buyDisabled}
+                  className={`btn btn-sm px-8 text-white transition-colors ${
+                    buyDisabled ?
+                      "!bg-neutral-700/70 !text-neutral-300/70 !border !border-neutral-500/60 !shadow-none opacity-80 cursor-not-allowed"
+                    : "border-0 bg-green-600 hover:bg-green-500"
+                  }`}
+                >
+                  {isPending ?
+                    "Confirm in wallet..."
+                  : isConfirming ?
+                    "Confirming..."
+                  : "Buy Message"}
+                </button>
+              </div>
+            }
+          </div>
+
+          <p className="mt-4 text-center text-xs text-neutral-content/40">
+            You&apos;ll receive MARKEE tokens and become a Markee Network owner
+          </p>
         </div>
       </div>
       <form method="dialog" className="modal-backdrop">
