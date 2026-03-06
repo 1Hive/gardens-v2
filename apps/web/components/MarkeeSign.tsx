@@ -7,7 +7,6 @@ import MarkeeModal from "./MarkeeModal";
 import { MarkeeAbi } from "@/src/customAbis";
 import {
   fetchMarkeeSignData,
-  fetchMarkeeViews,
   recordMarkeeView,
   GARDENS_STRATEGY,
   MarkeeNetwork,
@@ -28,6 +27,24 @@ const DEFAULT_DATA: SignData = {
   totalFundsAdded: BigInt(0),
   minimumPrice: MIN_PRICE,
 };
+
+function EyeIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
 
 export default function MarkeeSign() {
   const [data, setData] = useState<SignData>(DEFAULT_DATA);
@@ -72,12 +89,12 @@ export default function MarkeeSign() {
     fetchData();
   }, [fetchData]);
 
-  // Record a view once the message is loaded (fire-and-forget)
+  // Record a view once the real message is loaded (fire-and-forget)
   useEffect(() => {
     if (loading || loadError || data.message === DEFAULT_DATA.message) return;
     recordMarkeeView(GARDENS_STRATEGY, data.message)
       .then((res) => setTotalViews(res.totalViews))
-      .catch(() => {}); // never block the UI
+      .catch(() => {});
   }, [loading, loadError, data.message]);
 
   // Amount needed to take the top spot
@@ -106,7 +123,7 @@ export default function MarkeeSign() {
           </p>
         </div>
 
-        {/* Price badge — bottom center, visible on hover */}
+        {/* Price badge — bottom center */}
         <span className="absolute -bottom-3 left-1/2 -translate-x-1/2 rounded-full border border-neutral-content/30 bg-neutral px-3 py-0.5 text-xs font-mono text-neutral-content/60 opacity-0 group-hover:opacity-100 group-hover:border-primary-content/40 group-hover:text-primary-content/70 max-sm:opacity-100 max-sm:border-primary-content/40 max-sm:text-primary-content/70 transition-all duration-200 whitespace-nowrap">
           {loading ?
             "···"
@@ -114,6 +131,14 @@ export default function MarkeeSign() {
             "unavailable"
           : ethDisplay}
         </span>
+
+        {/* View count badge — bottom right */}
+        {totalViews !== null && (
+          <span className="absolute -bottom-3 right-0 flex items-center gap-1 rounded-full border border-neutral-content/30 bg-neutral px-2.5 py-0.5 text-xs font-mono text-neutral-content/60 opacity-0 group-hover:opacity-100 group-hover:border-primary-content/40 group-hover:text-primary-content/70 max-sm:opacity-100 max-sm:border-primary-content/40 max-sm:text-primary-content/70 transition-all duration-200 whitespace-nowrap">
+            <EyeIcon className="h-3 w-3" />
+            {totalViews.toLocaleString()}
+          </span>
+        )}
       </button>
 
       {modalOpen && (
