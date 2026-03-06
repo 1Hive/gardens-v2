@@ -35,6 +35,8 @@ import { publicProvider } from "wagmi/providers/public";
 import ThemeProvider from "./ThemeProvider";
 import { TransactionNotificationProvider } from "./TransactionNotificationProvider";
 import { UrqlProvider } from "./UrqlProvider";
+import { CgPluginLibProvider } from "@/contexts/cgPluginLib.context";
+import { CgDataProvider } from "@/contexts/cgData.context";
 import { chainConfigMap, CHAINS } from "@/configs/chains";
 import { isProd } from "@/configs/isProd";
 import { QUERY_PARAMS } from "@/constants/query-params";
@@ -156,9 +158,13 @@ type Props = {
 const Providers = ({ children }: Props) => {
   return (
     <Suspense fallback={null}>
-      <QueryParamsProvider>
-        <ProvidersWithQueryParams>{children}</ProvidersWithQueryParams>
-      </QueryParamsProvider>
+      <CgPluginLibProvider>
+        <CgDataProvider>
+          <QueryParamsProvider>
+            <ProvidersWithQueryParams>{children}</ProvidersWithQueryParams>
+          </QueryParamsProvider>
+        </CgDataProvider>
+      </CgPluginLibProvider>
     </Suspense>
   );
 };

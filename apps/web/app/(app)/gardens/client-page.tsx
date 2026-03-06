@@ -26,6 +26,7 @@ import { useSubgraphQueryMultiChain } from "@/hooks/useSubgraphQueryMultiChain";
 import { useTheme } from "@/providers/ThemeProvider";
 import { getProtopiansOwners } from "@/services/alchemy";
 import { safeABI } from "@/src/customAbis";
+import { useCgData } from "@/contexts/cgData.context";
 
 const Header = () => {
   const { tooltipMessage, isConnected } = useDisableButtons();
@@ -187,8 +188,24 @@ export default function ClientPage() {
       ],
     });
 
+  const { userInfo } = useCgData();
+
   return (
     <div className="page-layout max-w-7xl mx-auto">
+      {userInfo && (
+        <div className="flex items-center gap-3 rounded-lg bg-neutral px-4 py-3 mb-4">
+          {userInfo.imageUrl && (
+            <img
+              src={userInfo.imageUrl}
+              alt={userInfo.name}
+              className="h-8 w-8 rounded-full"
+            />
+          )}
+          <span className="text-neutral-content">
+            Hello, {userInfo.name}!
+          </span>
+        </div>
+      )}
       <Header />
       <Communities
         communities={(communitiesSections as unknown as LightCommunity[]) ?? []}
