@@ -117,7 +117,15 @@ export default function MarkeeSign() {
         aria-label="Click to edit this Markee sign"
       >
         {/* Sign body */}
-        <div className="border border-neutral-content/30 rounded px-8 md:px-16 py-8 max-w-lg bg-neutral hover:border-primary-content/50 transition-colors duration-200">
+        <div className="relative border border-neutral-content/30 rounded px-8 md:px-16 py-8 max-w-lg bg-neutral hover:border-primary-content/50 transition-colors duration-200">
+          {/* View count — inside card, top right */}
+          {totalViews !== null && (
+            <span className="absolute top-2 right-3 flex items-center gap-1 text-xs font-mono text-neutral-content/40 group-hover:text-primary-content/50 transition-colors duration-200">
+              <EyeIcon className="h-3 w-3" />
+              {totalViews.toLocaleString()}
+            </span>
+          )}
+
           <p className="font-mono text-neutral-content text-lg group-hover:text-primary-content transition-colors duration-200 text-center leading-snug">
             {loading ? "loading..." : data.message}
           </p>
@@ -131,14 +139,6 @@ export default function MarkeeSign() {
             "unavailable"
           : ethDisplay}
         </span>
-
-        {/* View count badge — bottom right */}
-        {totalViews !== null && (
-          <span className="absolute -bottom-3 right-0 flex items-center gap-1 rounded-full border border-neutral-content/30 bg-neutral px-2.5 py-0.5 text-xs font-mono text-neutral-content/60 opacity-0 group-hover:opacity-100 group-hover:border-primary-content/40 group-hover:text-primary-content/70 max-sm:opacity-100 max-sm:border-primary-content/40 max-sm:text-primary-content/70 transition-all duration-200 whitespace-nowrap">
-            <EyeIcon className="h-3 w-3" />
-            {totalViews.toLocaleString()}
-          </span>
-        )}
       </button>
 
       {modalOpen && (
@@ -152,6 +152,7 @@ export default function MarkeeSign() {
           currentMessage={data.message}
           minimumPrice={data.minimumPrice}
           takeTopSpot={takeTopSpot}
+          totalViews={totalViews}
         />
       )}
     </>
