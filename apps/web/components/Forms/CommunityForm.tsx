@@ -32,6 +32,7 @@ import {
   CV_PERCENTAGE_SCALE_DECIMALS,
 } from "@/utils/numbers";
 import { ethAddressRegEx } from "@/utils/text";
+import { useCgData } from "@/contexts/cgData.context";
 
 // Constants
 const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** 18;
@@ -89,6 +90,14 @@ export const CommunityForm = () => {
   const { switchNetwork, data: switchNetworkData } = useSwitchNetwork();
   const [tokenData, setTokenData] = useState<TokenData | null>(null);
   const [tokenIsFetching, setTokenIsFetching] = useState<boolean>(false);
+  const { communityInfo } = useCgData();
+
+  // Pre-fill community name from Common Ground when available
+  useEffect(() => {
+    if (communityInfo?.title) {
+      setValue("title", communityInfo.title);
+    }
+  }, [communityInfo?.title, setValue]);
 
   // Effect to validate token address when it changes
   useEffect(() => {
