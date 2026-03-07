@@ -19,6 +19,8 @@
   },
   "dependencies": {
     "@allo-team/allo-v2-sdk": "^1.0.34",
+    "@common-ground-dao/cg-plugin-lib": "^0.9.15",
+    "@common-ground-dao/cg-plugin-lib-host": "^0.9.15",
     "@divvi/referral-sdk": "^1.0.0",
     "@emeraldpay/hashicon-react": "^0.5.2",
     "@goodsdks/citizen-sdk": "1.2.0",

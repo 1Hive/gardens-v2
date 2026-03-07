@@ -124,6 +124,12 @@ importers:
       '@allo-team/allo-v2-sdk':
         specifier: ^1.0.34
         version: 1.0.76(@typechain/ethers-v6@0.5.1)(ethers@6.16.0)(typechain@8.3.2)(typescript@5.2.2)
+      '@common-ground-dao/cg-plugin-lib':
+        specifier: ^0.9.15
+        version: 0.9.15
+      '@common-ground-dao/cg-plugin-lib-host':
+        specifier: ^0.9.15
+        version: 0.9.15(crypto@1.0.1)
       '@divvi/referral-sdk':
         specifier: ^1.0.0
         version: 1.0.0
@@ -1831,6 +1837,19 @@ packages:
       - supports-color
     dev: false
 
+  /@common-ground-dao/cg-plugin-lib-host@0.9.15(crypto@1.0.1):
+    resolution: {integrity: sha512-y2tSZgW5yZ5YaWp05E1bCbN8O2ATnxjqYUFZjVXmLf50mq9Q3yOjpCNcvJ61IHBBuvEEUkyU1Cr73LZlWtt1KA==}
+    peerDependencies:
+      crypto: ^1.0.1
+    dependencies:
+      '@types/node': 22.19.15
+      crypto: 1.0.1
+    dev: false
+
+  /@common-ground-dao/cg-plugin-lib@0.9.15:
+    resolution: {integrity: sha512-uJXynFsob97hrFRic7B0dh53yICJ+IBDZVCwUQF8Zq6EmoZnZhKPFjOh5tItf5a9cSTS6UvpWKwXTr0jZhlMLg==}
+    dev: false
+
   /@cspotcode/source-map-support@0.8.1:
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
     engines: {node: '>=12'}
@@ -2995,7 +3014,7 @@ packages:
       yargs: 17.7.2
     optionalDependencies:
       node-libcurl: 4.1.0
-      uWebSockets.js: git@github.com+uNetworking/uWebSockets.js/fcfc622a4286909593b7f390056d89e0ca3b56b9
+      uWebSockets.js: github.com/uNetworking/uWebSockets.js/a80dda2d22ba32cf174ef78cc8d743e910a9be21
     transitivePeerDependencies:
       - bufferutil
       - encoding
@@ -9581,7 +9600,7 @@ packages:
   /@types/bn.js@4.11.6:
     resolution: {integrity: sha512-pqr857jrp2kPuO9uRjZ3PwnJTjoQy+fcdxvBTvHm6dkmEL9q+hDD/2j/0ELOBPtPnS8LjCX0gI9nbl8lVkadpg==}
     dependencies:
-      '@types/node': 20.19.17
+      '@types/node': 20.19.30
     dev: false
 
   /@types/bn.js@5.1.5:
@@ -9906,7 +9925,7 @@ packages:
   /@types/node-fetch@2.6.13:
     resolution: {integrity: sha512-QGpRVpzSaUs30JBSGPjOg4Uveu384erbHBoT1zeONvyCfwQxIkUshLAOqN/k9EjGviPRmWTTe6aH2qySWKTVSw==}
     dependencies:
-      '@types/node': 20.19.17
+      '@types/node': 20.19.30
       form-data: 4.0.4
     dev: false
 
@@ -9936,6 +9955,12 @@ packages:
       undici-types: 6.21.0
     dev: false
 
+  /@types/node@22.19.15:
+    resolution: {integrity: sha512-F0R/h2+dsy5wJAUe3tAU6oqa2qbWY5TpNfL/RGmo1y38hiyO1w3x2jPtt76wmuaJI4DQnOBu21cNXQ2STIUUWg==}
+    dependencies:
+      undici-types: 6.21.0
+    dev: false
+
   /@types/node@22.7.5:
     resolution: {integrity: sha512-jML7s2NAzMWc//QSJ1a3prpk78cOPchGvXJsC3C6R6PSMoooztvRVQEz89gmBTBY1SPMaqo5teB4uNHPdetShQ==}
     dependencies:
@@ -9949,7 +9974,7 @@ packages:
   /@types/pbkdf2@3.1.2:
     resolution: {integrity: sha512-uRwJqmiXmh9++aSu1VNEn3iIxWOhd8AHXNSdlaLfdAAdSTY9jYVeGWnzejM3dvrkbqE3/hyQkQQ29IFATEGlew==}
     dependencies:
-      '@types/node': 20.19.17
+      '@types/node': 20.19.30
     dev: false
 
   /@types/pg-pool@2.0.6:
@@ -10001,7 +10026,7 @@ packages:
   /@types/secp256k1@4.0.6:
     resolution: {integrity: sha512-hHxJU6PAEUn0TP4S/ZOzuTUvJWuZ6eIKeNKb5RBpODvSl6hp1Wrw4s7ATY50rklRCScUDpHzVA/DQdSjJ3UoYQ==}
     dependencies:
-      '@types/node': 20.19.17
+      '@types/node': 20.19.30
     dev: false
 
   /@types/semver@7.5.8:
@@ -10039,7 +10064,7 @@ packages:
   /@types/ws@8.18.1:
     resolution: {integrity: sha512-ThVF6DCVhA8kUGy+aazFQ4kXQ7E1Ty7A3ypFOe0IcJV8O/M511G99AW24irKrW56Wt44yG9+ij8FaqoBGkuBXg==}
     dependencies:
-      '@types/node': 20.19.17
+      '@types/node': 20.19.30
     dev: false
 
   /@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.18.2-alpha.2)(eslint@8.57.0)(typescript@5.2.2):
@@ -13339,6 +13364,11 @@ packages:
     peerDependenciesMeta:
       uWebSockets.js:
         optional: true
+    dev: false
+
+  /crypto@1.0.1:
+    resolution: {integrity: sha512-VxBKmeNcqQdiUQUW2Tzq0t377b54N2bMtXO/qiLa+6eRRmmC4qT3D4OnTGoT/U6O9aklQ/jTwbOtRMTTY8G0Ig==}
+    deprecated: This package is no longer supported. It's now a built-in Node module. If you've depended on crypto, you should switch to the one that's built-in.
     dev: false
 
   /css-selector-parser@3.0.5:
@@ -19917,7 +19947,7 @@ packages:
     dependencies:
       '@mapbox/node-pre-gyp': 1.0.11
       env-paths: 2.2.0
-      nan: git@github.com+JCMais/nan/0ec2eca8b2fd7518affb3945d087e393ad839b7e
+      nan: github.com/JCMais/nan/0ec2eca8b2fd7518affb3945d087e393ad839b7e
       node-gyp: 10.2.0
       npmlog: 7.0.1
       rimraf: 5.0.5
@@ -25080,18 +25110,18 @@ packages:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
     dev: false
 
-  git@github.com+JCMais/nan/0ec2eca8b2fd7518affb3945d087e393ad839b7e:
-    resolution: {commit: 0ec2eca8b2fd7518affb3945d087e393ad839b7e, repo: git@github.com:JCMais/nan.git, type: git}
+  github.com/JCMais/nan/0ec2eca8b2fd7518affb3945d087e393ad839b7e:
+    resolution: {tarball: https://codeload.github.com/JCMais/nan/tar.gz/0ec2eca8b2fd7518affb3945d087e393ad839b7e}
     name: nan
     version: 2.22.0
     requiresBuild: true
     dev: false
     optional: true
 
-  git@github.com+uNetworking/uWebSockets.js/fcfc622a4286909593b7f390056d89e0ca3b56b9:
-    resolution: {commit: fcfc622a4286909593b7f390056d89e0ca3b56b9, repo: git@github.com:uNetworking/uWebSockets.js.git, type: git}
+  github.com/uNetworking/uWebSockets.js/a80dda2d22ba32cf174ef78cc8d743e910a9be21:
+    resolution: {tarball: https://codeload.github.com/uNetworking/uWebSockets.js/tar.gz/a80dda2d22ba32cf174ef78cc8d743e910a9be21}
     name: uWebSockets.js
-    version: 20.57.0
+    version: 20.60.0
     requiresBuild: true
     dev: false
     optional: true
