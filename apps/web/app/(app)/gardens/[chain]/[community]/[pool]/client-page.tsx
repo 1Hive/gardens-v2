@@ -56,11 +56,12 @@ import {
 } from "@/utils/numbers";
 
 export type AlloQuery = getAlloQuery["allos"][number];
+const DEBUG_LABEL = "#debug [PoolPage client-page.tsx]";
 
 export default function ClientPage({
-  params: { chain, poolId: poolSlug, garden, community: _community },
+  params: { chain, pool: poolSlug, community: _community },
 }: {
-  params: { chain: string; poolId: string; garden: string; community: string };
+  params: { chain: string; pool: string; community: string };
 }) {
   const searchParams = useCollectQueryParams();
   const strategyAddress = poolSlug.toLowerCase();
@@ -70,7 +71,6 @@ export default function ClientPage({
       query: getPoolDataDocument,
       variables: {
         strategyId: strategyAddress,
-        garden: garden.toLowerCase(),
       },
       changeScope:
         poolIdForScope != null ?
@@ -140,7 +140,6 @@ export default function ClientPage({
     enabled: !!wallet && !!strategy?.token,
     variables: {
       communityAddr: _community.toLowerCase(),
-      tokenAddr: garden.toLocaleLowerCase(),
     },
     changeScope: [
       { topic: "community", id: communityAddress },
@@ -435,11 +434,12 @@ export default function ClientPage({
   const stillLoading =
     fetching ||
     (!data && !error) ||
-    poolId == null ||
+    (strategy != null && poolId == null) ||
     (isMissingFundingToken && !error && !hasWaitedForPoolToken);
 
   if ((!strategy || isMissingFundingToken) && stillLoading) {
-    console.debug("Loading pool data, waiting for", {
+    console.log(`${DEBUG_LABEL} render waiting`, {
+      branch: "waiting-for-strategy-or-funding-token",
       strategy,
       poolTokenIfFundingPool: poolToken,
       isFundingPool: poolType === "funding",
@@ -459,6 +459,14 @@ export default function ClientPage({
   if (!strategy) {
     const title =
       isWrongNetwork ? "Switch network to continue" : "Pool unavailable";
+
+    console.log(`${DEBUG_LABEL} render missing-strategy`, {
+      branch: "missing-strategy",
+      isWrongNetwork,
+      errorPresent: !!error,
+      expectedChainId,
+      connectedChainId,
+    });
     const description =
       isWrongNetwork ?
         `Connect your wallet to ${expectedChainName} to view this pool.`
@@ -479,6 +487,10 @@ export default function ClientPage({
   }
 
   if (poolId == null) {
+    console.log(`${DEBUG_LABEL} render missing-pool-id`, {
+      branch: "missing-pool-id",
+      strategyResolved: !!strategy,
+    });
     return (
       <div className="mt-96 col-span-12">
         <LoadingSpinner />
@@ -492,7 +504,7 @@ export default function ClientPage({
 
   const isEnabled = data.cvstrategies?.[0]?.isEnabled as boolean;
 
-  const createProposalUrl = `/gardens/${chain}/${garden}/${communityAddress}/${strategyAddress}/create-proposal`;
+  const createProposalUrl = `/gardens/${chain}/${communityAddress}/${strategyAddress}/create-proposal`;
 
   const memberPoolWeight =
     memberPower != null && +strategy.totalEffectiveActivePoints > 0 ?
@@ -501,6 +513,13 @@ export default function ClientPage({
         BigInt(strategy.totalEffectiveActivePoints),
       )
     : undefined;
+
+  console.log(`${DEBUG_LABEL} render ready`, {
+    branch: "ready",
+    poolId,
+    proposalCount: strategy?.proposals?.length,
+    isEnabled,
+  });
 
   const registerAndActivateFromPool = (
     <>

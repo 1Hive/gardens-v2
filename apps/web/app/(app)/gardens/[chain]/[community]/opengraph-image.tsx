@@ -22,7 +22,6 @@ export const FALLBACK_TITLE = "Community";
 // Image generation
 type ImageParams = {
   chain: string;
-  garden: string;
   community: string;
 };
 

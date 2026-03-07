@@ -45,9 +45,8 @@ export const FALLBACK_TITLE = "Pool";
 // Image generation
 type ImageParams = {
   chain: string;
-  garden: string;
   community: string;
-  poolId: string | number;
+  pool: string;
 };
 
 let cachedGardenLogoDataUrl: string | null = null;
@@ -443,10 +442,10 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const chainId = Number(params.chain);
   const chainConfig = chainConfigMap[params.chain] ?? chainConfigMap[chainId];
-  const poolSlug = params.poolId?.toString();
+  const strategySlug = params.pool?.toString();
   const strategyAddress = await resolveStrategyAddress(
     params.chain,
-    poolSlug ?? "",
+    strategySlug ?? "",
   );
 
   let description = getDescriptionText(undefined);
@@ -467,7 +466,7 @@ export async function generateMetadata({
     console.error(
       "Missing strategy address for pool opengraph-image metadata.",
       {
-        poolSlug,
+        strategySlug,
       },
     );
     return fallbackMetadata;
@@ -518,10 +517,10 @@ export async function generateMetadata({
 export default async function Image({ params }: { params: ImageParams }) {
   const chainId = Number(params.chain);
   const chainConfig = chainConfigMap[params.chain] ?? chainConfigMap[chainId];
-  const poolSlug = params.poolId?.toString();
+  const strategySlug = params.pool?.toString();
   const strategyAddress = await resolveStrategyAddress(
     params.chain,
-    poolSlug ?? "",
+    strategySlug ?? "",
   );
 
   if (chainConfig == null) {
@@ -535,7 +534,7 @@ export default async function Image({ params }: { params: ImageParams }) {
     console.error(
       "Missing strategy address for pool opengraph-image generation.",
       {
-        poolSlug,
+        strategySlug,
       },
     );
     return renderImage({ title: "Pool", chainId });

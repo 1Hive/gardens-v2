@@ -12,7 +12,6 @@ import {
   CVStrategyConfig,
   Maybe,
   MemberCommunity,
-  TokenGarden,
 } from "#/subgraph/.graphclient";
 import { FormAddressInput } from "./FormAddressInput";
 import { FormInput } from "./FormInput";
@@ -60,7 +59,6 @@ type ProposalFormProps = {
   proposalType: number;
   poolParams: Pick<CVStrategyConfig, "decay">;
   alloInfo: Pick<Allo, "id" | "chainId" | "tokenNative">;
-  tokenGarden: Pick<TokenGarden, "symbol" | "decimals">;
   spendingLimit: number | string | undefined;
   spendingLimitPct: number;
   poolBalance: string | undefined;

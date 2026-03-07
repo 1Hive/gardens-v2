@@ -2,11 +2,9 @@
 
 import React, { useEffect, useState } from "react";
 import { ChevronRightIcon } from "@heroicons/react/24/solid";
-import { fetchToken } from "@wagmi/core";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { toast } from "react-toastify";
-import { Address } from "viem";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useFlag } from "@/hooks/useFlag";
 import { queryByChain } from "@/providers/urql";
@@ -44,21 +42,6 @@ export function Breadcrumbs() {
     const isStaticSegment = segments[segmentsLength - 1].includes("create");
     const entityIndex =
       isStaticSegment ? segmentsLength - 2 : segmentsLength - 1;
-
-    if (entityIndex === 2) {
-      const tokenArgs = {
-        address: segments[2] as Address,
-        chainId: parseInt(segments[1]),
-      };
-      const tokenData = await fetchToken(tokenArgs)
-        .then((token) => token?.name)
-        .catch(() => {
-          console.error("Error fetching token from address: ", tokenArgs);
-          toast.error("Token not found");
-          return undefined;
-        });
-      return [tokenData, parseStaticSegment(segments[segmentsLength - 1])];
-    }
 
     const queryItem = queryMap[entityIndex];
 
@@ -98,7 +81,7 @@ export function Breadcrumbs() {
 
     return segments
       .map((segment, index) => {
-        if (index < 3) {
+        if (index < 2) {
           return undefined;
         }
 

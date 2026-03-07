@@ -13,14 +13,13 @@ const DESCRIPTION =
 type PageParams = {
   params: {
     chain: string;
-    garden: string;
     community: string;
-    poolId: string;
+    pool: string;
   };
 };
 
 function buildPoolOgImagePath(params: PageParams["params"]) {
-  return `/gardens/${params.chain}/${params.garden}/${params.community}/${params.poolId}/opengraph-image-12jbcu`;
+  return `/gardens/${params.chain}/${params.community}/${params.pool}/opengraph-image-12jbcu`;
 }
 
 export async function generateMetadata({
@@ -28,11 +27,11 @@ export async function generateMetadata({
 }: PageParams): Promise<Metadata> {
   const strategyAddress = await resolveStrategyAddress(
     params.chain,
-    params.poolId,
+    params.pool,
   );
   const normalizedParams = {
     ...params,
-    poolId: strategyAddress ?? params.poolId,
+    pool: strategyAddress ?? params.pool,
   };
   const ogImage = buildPoolOgImagePath(normalizedParams);
   return {
@@ -59,7 +58,7 @@ type PageProps = PageParams & {
 export default async function Page({ params, searchParams }: PageProps) {
   const strategyAddress = await resolveStrategyAddress(
     params.chain,
-    params.poolId,
+    params.pool,
   );
 
   if (!strategyAddress) {
@@ -67,11 +66,11 @@ export default async function Page({ params, searchParams }: PageProps) {
   }
 
   const normalizedSlug = strategyAddress.toLowerCase();
-  if (params.poolId.toLowerCase() !== normalizedSlug) {
+  if (params.pool.toLowerCase() !== normalizedSlug) {
     redirect(
-      `/gardens/${params.chain}/${params.garden}/${params.community}/${normalizedSlug}/create-proposal${stringifySearchParams(searchParams)}`,
+      `/gardens/${params.chain}/${params.community}/${normalizedSlug}/create-proposal${stringifySearchParams(searchParams)}`,
     );
   }
 
-  return <ClientPage params={{ ...params, poolId: normalizedSlug }} />;
+  return <ClientPage params={{ ...params, pool: normalizedSlug }} />;
 }

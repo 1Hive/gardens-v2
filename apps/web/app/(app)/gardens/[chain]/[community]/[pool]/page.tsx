@@ -1,19 +1,22 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
-import { getPoolTitleDocument } from "#/subgraph/.graphclient";
+import {
+  getCommunityNameDocument,
+  getPoolTitleDocument,
+} from "#/subgraph/.graphclient";
 import ClientPage from "./client-page";
 import { FALLBACK_TITLE, getDescriptionText } from "./opengraph-image";
 import { resolveStrategyAddress, stringifySearchParams } from "./route-helpers";
-import { chainConfigMap } from "@/configs/chains";
+import { chainConfigMap, type ChainData } from "@/configs/chains";
 import { queryByChain } from "@/providers/urql";
 import { PoolTypes } from "@/types";
+import { hasEthereumAddressFormat } from "@/utils/web3";
 
 type PageParams = {
   params: {
     chain: string;
-    garden: string;
     community: string;
-    poolId: string;
+    pool: string;
   };
 };
 
@@ -34,10 +37,33 @@ function buildOgImagePath(
   }
   queryParts.push(OG_IMAGE_VERSION);
   const query = queryParts.length ? `?${queryParts.join("&")}` : "";
-  return `/gardens/${params.chain}/${params.garden}/${params.community}/${params.poolId}/${OG_IMAGE_TOKEN}${query}`;
+  return `/gardens/${params.chain}/${params.community}/${params.pool}/${OG_IMAGE_TOKEN}${query}`;
 }
 
 const titlePrefix = "Gardens - ";
+
+async function communityExistsOnChain(
+  chainConfig: ChainData | undefined,
+  communityAddress: string | undefined,
+): Promise<boolean> {
+  if (!chainConfig || !communityAddress) {
+    return false;
+  }
+
+  if (!hasEthereumAddressFormat(communityAddress)) {
+    return false;
+  }
+
+  const result = await queryByChain(
+    chainConfig,
+    getCommunityNameDocument,
+    { communityAddr: communityAddress.toLowerCase() },
+    undefined,
+    true,
+  );
+
+  return !!result?.data?.registryCommunity;
+}
 
 export async function generateMetadata({
   params,
@@ -46,11 +72,11 @@ export async function generateMetadata({
   const chainConfig = chainConfigMap[params.chain] ?? chainConfigMap[chainId];
   const strategyAddress = await resolveStrategyAddress(
     params.chain,
-    params.poolId,
+    params.pool,
   );
   const normalizedParams = {
     ...params,
-    poolId: strategyAddress ?? params.poolId,
+    pool: strategyAddress ?? params.pool,
   };
   let description = getDescriptionText(undefined);
   const fallbackMetadata: Metadata = {
@@ -78,7 +104,7 @@ export async function generateMetadata({
 
   if (!strategyAddress) {
     console.error("Missing strategy address for pool metadata generation.", {
-      poolSlug: params.poolId,
+      strategySlug: params.pool,
     });
     return fallbackMetadata;
   }
@@ -148,9 +174,31 @@ type PageProps = PageParams & {
 };
 
 export default async function Page(props: PageProps) {
+  const numericChain = Number(props.params.chain);
+  const chainConfig =
+    chainConfigMap[props.params.chain] ?? chainConfigMap[numericChain];
+
+  const currentCommunityExists = await communityExistsOnChain(
+    chainConfig,
+    props.params.community,
+  );
+
+  if (!currentCommunityExists) {
+    const legacyCommunityExists = await communityExistsOnChain(
+      chainConfig,
+      props.params.pool,
+    );
+
+    if (legacyCommunityExists) {
+      redirect(
+        `/gardens/${props.params.chain}/${props.params.pool}${stringifySearchParams(props.searchParams)}`,
+      );
+    }
+  }
+
   const strategyAddress = await resolveStrategyAddress(
     props.params.chain,
-    props.params.poolId,
+    props.params.pool,
   );
 
   if (!strategyAddress) {
@@ -158,9 +206,9 @@ export default async function Page(props: PageProps) {
   }
 
   const normalizedSlug = strategyAddress.toLowerCase();
-  if (props.params.poolId.toLowerCase() !== normalizedSlug) {
+  if (props.params.pool.toLowerCase() !== normalizedSlug) {
     redirect(
-      `/gardens/${props.params.chain}/${props.params.garden}/${props.params.community}/${normalizedSlug}${stringifySearchParams(props.searchParams)}`,
+      `/gardens/${props.params.chain}/${props.params.community}/${normalizedSlug}${stringifySearchParams(props.searchParams)}`,
     );
   }
 
@@ -168,7 +216,7 @@ export default async function Page(props: PageProps) {
     <ClientPage
       params={{
         ...props.params,
-        poolId: normalizedSlug,
+        pool: normalizedSlug,
       }}
     />
   );

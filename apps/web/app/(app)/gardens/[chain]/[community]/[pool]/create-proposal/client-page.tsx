@@ -20,18 +20,17 @@ type ClientPageProps = {
   params: {
     chain: string;
     community: string;
-    poolId: string;
-    garden: string;
+    pool: string;
   };
 };
 
 export default function ClientPage({
-  params: { poolId: poolSlug, garden },
+  params: { pool: poolSlug },
 }: ClientPageProps) {
   const strategyAddress = poolSlug.toLowerCase();
   const { data } = useSubgraphQuery<getPoolDataQuery>({
     query: getPoolDataDocument,
-    variables: { strategyId: strategyAddress, garden: garden.toLowerCase() },
+    variables: { strategyId: strategyAddress },
   });
   const strategyObj = data?.cvstrategies?.[0];
   const resolvedPoolId =
@@ -44,7 +43,6 @@ export default function ClientPage({
 
   const metadata = strategyObj?.metadata ?? metadataResult;
 
-  const tokenGarden = data?.tokenGarden;
   const poolTokenAddr = strategyObj?.token;
   const proposalType = strategyObj?.config?.proposalType as number;
 
@@ -60,7 +58,6 @@ export default function ClientPage({
   });
 
   if (
-    !tokenGarden ||
     metadata == null ||
     !strategyObj ||
     resolvedPoolId == null ||
@@ -117,7 +114,6 @@ export default function ClientPage({
           poolParams={data.cvstrategies[0].config}
           proposalType={proposalType}
           alloInfo={alloInfo}
-          tokenGarden={tokenGarden}
           spendingLimit={spendingLimitValueNum}
           spendingLimitPct={spendingLimitValuePct}
         />
