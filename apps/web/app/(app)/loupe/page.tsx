@@ -1,9 +1,8 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import type { AbiFunction, AbiParameter } from "abitype";
 import {
-  AbiFunction,
-  AbiParameter,
   Address,
   decodeFunctionResult,
   encodeFunctionData,
@@ -35,6 +34,9 @@ type DiamondFacet = {
 
 type SignatureMap = Record<string, string[]>;
 const EMPTY_FACETS: DiamondFacet[] = [];
+type AggregatedAbiEntry =
+  | (typeof registryCommunityABI)[number]
+  | (typeof cvStrategyABI)[number];
 
 const FACETS_ABI = [
   {
@@ -128,7 +130,9 @@ const normalizeValueForParameter = (
       ...parameter,
       type: `${getTypeWithoutArraySuffix(parameter.type)}`,
     };
-    return value.map((entry) => normalizeValueForParameter(entry, nestedParameter));
+    return value.map((entry: unknown) =>
+      normalizeValueForParameter(entry, nestedParameter),
+    );
   }
 
   if (parameter.type.startsWith("uint") || parameter.type.startsWith("int")) {
@@ -140,15 +144,19 @@ const normalizeValueForParameter = (
   }
 
   if (parameter.type === "tuple") {
-    const components = parameter.components ?? [];
+    const components = (
+      "components" in parameter && Array.isArray(parameter.components) ?
+        parameter.components
+      : []
+    ) as AbiParameter[];
     if (Array.isArray(value)) {
-      return components.map((component, index) =>
+      return components.map((component: AbiParameter, index: number) =>
         normalizeValueForParameter(value[index], component),
       );
     }
     if (value != null && typeof value === "object") {
       const source = value as Record<string, unknown>;
-      return components.map((component, index) => {
+      return components.map((component: AbiParameter, index: number) => {
         const fromName =
           component.name && component.name in source ?
             source[component.name]
@@ -168,7 +176,10 @@ const normalizeValueForParameter = (
 const normalizeArgsForInputs = (
   rawArgs: unknown[],
   inputs: readonly AbiParameter[],
-) => inputs.map((input, index) => normalizeValueForParameter(rawArgs[index], input));
+) =>
+  inputs.map((input: AbiParameter, index: number) =>
+    normalizeValueForParameter(rawArgs[index], input),
+  );
 
 export default function DiamondAdminPage() {
   const [addressInput, setAddressInput] = useState("");
@@ -242,13 +253,20 @@ export default function DiamondAdminPage() {
   );
 
   const selectedChain = CHAINS.find((entry) => entry.id === selectedChainId);
-  const knownAbiFunctions = useMemo(
-    () =>
-      [...registryCommunityABI, ...cvStrategyABI].filter(
-        (item): item is AbiFunction => item.type === "function",
-      ),
-    [],
-  );
+  const knownAbiFunctions = useMemo(() => {
+    const combined = [
+      ...registryCommunityABI,
+      ...cvStrategyABI,
+    ] as AggregatedAbiEntry[];
+    return combined
+      .filter(
+        (
+          item,
+        ): item is Extract<AggregatedAbiEntry, { type: "function" }> =>
+          item.type === "function",
+      )
+      .map((item) => item as unknown as AbiFunction);
+  }, []);
 
   const knownFunctionBySignature = useMemo(() => {
     const entries = knownAbiFunctions.map((fn) => [
