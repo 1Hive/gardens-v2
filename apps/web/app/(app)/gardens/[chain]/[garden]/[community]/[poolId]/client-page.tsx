@@ -31,7 +31,6 @@ import {
 } from "#/subgraph/.graphclient";
 import {
   ActivatePoints,
-  Button,
   CheckSybil,
   DisplayNumber,
   EthAddress,
@@ -72,6 +71,7 @@ export default function ClientPage({
 }: {
   params: { chain: string; poolId: string; garden: string; community: string };
 }) {
+  const communityScopeId = _community.toLowerCase();
   const searchParams = useCollectQueryParams();
   const { publish } = usePubSubContext();
   const strategyAddress = poolSlug.toLowerCase();
@@ -150,12 +150,12 @@ export default function ClientPage({
     query: getCommunityDocument,
     enabled: !!wallet && !!strategy?.token,
     variables: {
-      communityAddr: _community.toLowerCase(),
+      communityAddr: communityScopeId,
       tokenAddr: garden.toLocaleLowerCase(),
     },
     changeScope: [
-      { topic: "community", id: communityAddress },
-      { topic: "member", containerId: communityAddress },
+      { topic: "community", id: communityScopeId },
+      { topic: "member", containerId: communityScopeId },
     ],
   });
 
@@ -163,11 +163,11 @@ export default function ClientPage({
     query: isMemberDocument,
     variables: {
       me: wallet?.toLowerCase(),
-      comm: _community.toLowerCase(),
+      comm: communityScopeId,
     },
     changeScope: [
-      { topic: "community", id: communityAddress },
-      { topic: "member", containerId: communityAddress },
+      { topic: "community", id: communityScopeId },
+      { topic: "member", containerId: communityScopeId },
     ],
     enabled: wallet !== undefined,
   });
@@ -199,12 +199,24 @@ export default function ClientPage({
     useState(false);
   const [selectedTab, setSelectedTab] = useState(0);
 
-  const { data: memberData, error: errorMemberData } =
-    useSubgraphQuery<isMemberQuery>({
-      query: isMemberDocument,
-      variables: {
-        me: wallet?.toLowerCase(),
-        comm: communityAddress?.toLowerCase(),
+  const {
+    data: memberData,
+    error: errorMemberData,
+    refetch: refetchMemberData,
+  } = useSubgraphQuery<isMemberQuery>({
+    query: isMemberDocument,
+    variables: {
+      me: wallet?.toLowerCase(),
+      comm: communityAddress?.toLowerCase(),
+    },
+    changeScope: [
+      // Community membership changes (join/leave) are published with community containerId.
+      { topic: "member", containerId: communityScopeId },
+      { topic: "community", id: communityScopeId },
+      {
+        topic: "member",
+        id: wallet,
+        containerId: strategy?.poolId,
       },
       changeScope:
         poolId != null ?
@@ -224,8 +236,11 @@ export default function ClientPage({
       enabled: !!wallet && !!strategy?.registryCommunity?.id,
     });
 
-  const { data: memberStrategyData } = useSubgraphQuery<getMemberStrategyQuery>(
-    {
+  const {
+    data: memberStrategyData,
+    refetch: refetchMemberStrategyData,
+    fetching: fetchingMemberStrategy,
+  } = useSubgraphQuery<getMemberStrategyQuery>({
       query: getMemberStrategyDocument,
       variables: {
         member_strategy: `${wallet?.toLowerCase()}-${strategy?.id.toLowerCase()}`,
@@ -242,11 +257,12 @@ export default function ClientPage({
           ]
         : undefined,
       enabled: !!wallet && !!strategy?.id,
-    },
-  );
+    });
 
   const memberTokensInCommunity = BigInt(
-    memberData?.member?.memberCommunity?.[0]?.stakedTokens ?? 0,
+    memberData?.member?.memberCommunity?.[0]?.stakedTokens ??
+      isMemberResult?.member?.memberCommunity?.[0]?.stakedTokens ??
+      0,
   );
 
   const { data: membersStrategyData } =
@@ -271,16 +287,25 @@ export default function ClientPage({
 
   const membersStrategies = membersStrategyData?.memberStrategies;
 
-  const isMemberCommunity =
-    !!memberData?.member?.memberCommunity?.[0]?.isRegistered;
+  const isMemberCommunity = !!(
+    memberData?.member?.memberCommunity?.[0]?.isRegistered ??
+    isMemberResult?.member?.memberCommunity?.[0]?.isRegistered
+  );
 
   const memberActivatedStrategy =
-    memberStrategyData?.memberStrategy?.activatedPoints > 0n;
+    (memberStrategyData?.memberStrategy?.activatedPoints ?? 0n) > 0n;
+
+  const shouldShowActivateGovernanceCard =
+    isMemberCommunity && !memberActivatedStrategy && !fetchingMemberStrategy;
 
   const { subscribe, unsubscribe, connected } = usePubSubContext();
 
   const subscriptionId = useRef<SubscriptionId>();
   useEffect(() => {
+    if (!connected || !wallet || strategy?.poolId == null) {
+      return;
+    }
+
     subscriptionId.current = subscribe(
       {
         topic: "member",
@@ -289,7 +314,10 @@ export default function ClientPage({
         type: "update",
       },
       () => {
-        return refetchMemberPower();
+        void refetchMemberPower();
+        void refetchMemberData();
+        void refetchMemberStrategyData();
+        void refetch();
       },
     );
     return () => {
@@ -365,7 +393,7 @@ export default function ClientPage({
   });
 
   const { data: tokenGarden } = useToken({
-    address: strategy?.token as Address,
+    address: garden as Address,
     chainId: chainId,
     enabled: !isMemberCommunity,
   });
@@ -743,7 +771,7 @@ export default function ClientPage({
       )}
 
       {/* Activate governance box */}
-      {isMemberCommunity && !memberActivatedStrategy && (
+      {shouldShowActivateGovernanceCard && (
         <div className="border rounded-xl shadow-md border-primary-content bg-primary p-4 sm:p-6 dark:bg-primary-soft-dark mt-6 sm:mt-0">
           <div className="flex items-start gap-3 sm:gap-4">
             <div className="rounded-full bg-primary-content/10 p-3 flex-shrink-0">
@@ -780,9 +808,8 @@ export default function ClientPage({
                   </li>
                   <li>
                     If you’re eligible to vote, you can allocate your Voting
-                    Power (VP) across multiple proposals at the same time as
-                    support. The more VP you allocate, the faster its conviction
-                    grows.
+                    Power (VP) across multiple proposals as support. The more VP
+                    you allocate, the faster its conviction grows.
                   </li>
                 </ul>
               </InfoBox>

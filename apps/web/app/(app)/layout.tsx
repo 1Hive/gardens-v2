@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowTopRightOnSquareIcon,
   Bars3Icon,
@@ -12,6 +12,8 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { newLogo } from "@/assets";
 import { Button, ConnectWallet, ThemeButton } from "@/components";
 import Footer from "@/components/Footer";
+
+const CAMPAIGN_BADGE_STORAGE_KEY = "gardensCampaignsBadgeSeen-1";
 
 export function HeadphoneIcon() {
   return (
@@ -36,6 +38,8 @@ export function HeadphoneIcon() {
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const originalBodyOverflow = useRef("");
+  const originalHtmlOverflow = useRef("");
   const [showCampaignBadge, setShowCampaignBadge] = useState(true);
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -46,12 +50,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const storageKey = "gardensCampaignsBadgeSeen";
     const isCampaignPath = pathname?.startsWith("/gardens/campaigns");
-    const hasSeen = window.localStorage.getItem(storageKey) === "true";
+    const hasSeen =
+      window.localStorage.getItem(CAMPAIGN_BADGE_STORAGE_KEY) === "true";
 
     if (isCampaignPath) {
-      window.localStorage.setItem(storageKey, "true");
+      window.localStorage.setItem(CAMPAIGN_BADGE_STORAGE_KEY, "true");
       setShowCampaignBadge(false);
       return;
     }
@@ -72,23 +76,23 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const previousBodyOverflow = document.body.style.overflow;
-    const previousHtmlOverflow = document.documentElement.style.overflow;
 
     if (mobileMenuOpen) {
+      originalBodyOverflow.current = document.body.style.overflow;
+      originalHtmlOverflow.current = document.documentElement.style.overflow;
       document.body.style.overflow = "hidden";
       document.documentElement.style.overflow = "hidden";
-    }
 
-    return () => {
-      document.body.style.overflow = previousBodyOverflow;
-      document.documentElement.style.overflow = previousHtmlOverflow;
-    };
+      return () => {
+        document.body.style.overflow = originalBodyOverflow.current;
+        document.documentElement.style.overflow = originalHtmlOverflow.current;
+      };
+    }
   }, [mobileMenuOpen]);
 
   const handleCampaignClick = () => {
     if (typeof window !== "undefined") {
-      window.localStorage.setItem("gardensCampaignsBadgeSeen", "true");
+      window.localStorage.setItem(CAMPAIGN_BADGE_STORAGE_KEY, "true");
     }
     setShowCampaignBadge(false);
   };

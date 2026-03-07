@@ -19,6 +19,7 @@ import {
 } from "@/assets";
 import { Button, Communities } from "@/components";
 import { LightCommunity } from "@/components/Communities";
+import MarkeeSign from "@/components/MarkeeSign";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useFlag } from "@/hooks/useFlag";
 import { useSubgraphQueryMultiChain } from "@/hooks/useSubgraphQueryMultiChain";
@@ -30,9 +31,9 @@ const Header = () => {
   const { tooltipMessage, isConnected } = useDisableButtons();
   const { resolvedTheme } = useTheme();
   return (
-    <header className="flex flex-col items-center gap-8 ">
-      <div className="flex items-center text-center">
-        <div className="relative flex-1">
+    <header className="flex flex-col items-center gap-8 w-full">
+      <div className="flex items-center text-center w-full">
+        <div className="relative shrink-0 w-[175px] hidden sm:block">
           <Image
             src={resolvedTheme === "lightTheme" ? clouds1 : gardensNight}
             alt="clouds"
@@ -40,15 +41,16 @@ const Header = () => {
             height={175}
           />
         </div>
-        <div className="mx-10 flex flex-col items-center gap-5">
-          <div className="flex flex-col items-center">
+        <div className="sm:mx-10 flex flex-1 min-w-0 flex-col items-center gap-5">
+          <div className="flex flex-col items-center w-full">
             <h1 className="max-w-xl text-center text-neutral-content">
               Welcome to Gardens
             </h1>
-            <p className="text-xl  text-center">
+            <p className="text-xl text-center">
               Where communities grow through collective decision-making
             </p>
-            <Link href="/gardens/create-community" className="mt-6 z-10">
+            <MarkeeSign />
+            <Link href="/gardens/create-community" className="mt-10 z-10">
               <Button
                 btnStyle="filled"
                 disabled={!isConnected}
@@ -60,7 +62,7 @@ const Header = () => {
             </Link>
           </div>
         </div>
-        <div className="relative flex-1">
+        <div className="relative shrink-0 w-[175px] hidden sm:block">
           <Image src={clouds2} alt="clouds" width={175} height={175} />
         </div>
       </div>
@@ -144,7 +146,6 @@ export default function ClientPage() {
                 protopianOwners.length > 0 &&
                 x.chain.safePrefix
               ) {
-                // Council Safe supported
                 const councilSafeAddress = x.councilSafe as Address;
                 try {
                   const communityCouncil = await readContract({
@@ -156,7 +157,6 @@ export default function ClientPage() {
 
                   return {
                     ...x,
-                    // Consider Protopian can be transferred to councilSafe
                     isProtopian: !![
                       ...communityCouncil,
                       councilSafeAddress,

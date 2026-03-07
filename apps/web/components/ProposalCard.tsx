@@ -6,6 +6,7 @@ import {
   HandRaisedIcon,
   ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
+
 import { usePathname } from "next/navigation";
 import { Address, formatUnits } from "viem";
 import { useBalance, useContractRead } from "wagmi";
@@ -18,6 +19,7 @@ import {
 } from "#/subgraph/.graphclient";
 import { Countdown } from "./Countdown";
 import { DisplayNumber } from "./DisplayNumber";
+import { Divider } from "./Divider";
 import { ProposalInputItem } from "./Proposals";
 import TooltipIfOverflow from "./TooltipIfOverflow";
 import { Badge, Card, EthAddress } from "@/components";
@@ -186,7 +188,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
       : 0;
 
     const poolWeightAllocatedInProposal = (
-      (inputValue * Number(memberPoolWeight)) /
+      (inputValue * Number(memberPoolWeight ?? 0)) /
       100
     ).toFixed(2);
 
@@ -359,7 +361,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
       !alreadyExecuted;
 
     const impossibleToPass =
-      (thresholdPct != null && thresholdPct >= 100) || thresholdPct === 0;
+      (thresholdPct ?? 0) >= 100 || (thresholdPct ?? 0) === 0;
 
     const ProposalCountDown = (
       <>
@@ -443,7 +445,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
                   )}
                 </div>
                 <div className="flex  justify-between items-center">
-                  <div className="flex sm:items-center flex-col items-start sm:flex-row gap-2">
+                  <div className="flex sm:items-center flex-col items-start sm:flex-row gap-1">
                     <div
                       className="flex items-center gap-1"
                       onClick={(e) => {
@@ -530,25 +532,25 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
             </header>
           </div>
 
-          {/* support description or slider */}
+          <Divider className="sm:hidden" />
+
           {isPoolEnabled && !isProposalEnded && (
-            <div className="flex gap-4 flex-wrap w-full">
-              <div className={`w-full ${isSignalingType ? "mt-2" : "mt-4"}`}>
-                {/* manage support view */}
+            <div className="flex gap-4 flex-wrap w-full  mb-2">
+              <div className={`w-full  ${isSignalingType ? "mt-0" : "mt-2"}`}>
                 <div className="w-full ">
                   {currentConvictionPct != null &&
                     (isSignalingType ||
                       (thresholdPct != null && totalSupportPct != null)) && (
                       <div>
                         <div
-                          className={`flex items-baseline justify-between gap-4 ${isSignalingType ? "mb-0" : "mb-1"}`}
+                          className={`flex flex-col-reverse sm:flex-row items-baseline justify-between gap-1 ${isSignalingType ? "mb-0" : "mb-1"}`}
                         >
                           <div>
                             <span className="text-xs">{ProposalCountDown}</span>
                           </div>
-                          <ul className="flex gap-2 items-baseline text-xs sm:text-sm">
+                          <ul className="flex gap-1.5 sm:gap-2 items-center text-xs sm:text-sm">
                             <li>
-                              <span className="text-xs text-[#74c898] dark:text-primary-dark-base ">
+                              <span className="text-xs text-[#74c898] dark:text-primary-dark-base text-justify ">
                                 conviction: {currentConvictionPct} VP
                               </span>
                             </li>
@@ -568,9 +570,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
                           </ul>
                         </div>
 
-                        <div
-                          className={`flex items-center h-2 sm:h-3 ${isSignalingType ? "mb-1" : "mb-3"}`}
-                        >
+                        <div className="flex items-center h-2 sm:h-3">
                           <ConvictionBarChart
                             compact
                             currentConvictionPct={currentConvictionPct}

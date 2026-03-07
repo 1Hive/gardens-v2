@@ -1,0 +1,4 @@
+interface:
+  display_name: "Query Subgraph"
+  short_description: "Fetch Gardens V2 data from subgraph endpoints"
+  default_prompt: "Use $query-subgraph to retrieve Gardens V2 data directly from the correct subgraph endpoint."

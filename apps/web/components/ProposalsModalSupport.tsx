@@ -43,7 +43,6 @@ export type ProposalCardProps = {
     "decay" | "proposalType" | "allowlist"
   >;
   inputData?: ProposalInputItem;
-  stakedFilter: ProposalInputItem;
   poolToken?: {
     address: Address;
     symbol: string;

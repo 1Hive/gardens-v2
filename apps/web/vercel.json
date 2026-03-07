@@ -21,12 +21,8 @@
       "schedule": "*/15 * * * *"
     },
     {
-      "path": "/api/superfluid-points",
+      "path": "/api/superfluid-points?campaignId=510",
       "schedule": "*/15 * * * *"
-    },
-    {
-      "path": "/api/superfluid-points-gd",
-      "schedule": "10/15 * * * *"
     }
   ]
 }

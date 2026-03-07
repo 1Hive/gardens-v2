@@ -73,7 +73,7 @@ export function Modal({
       ref={dialogRef}
     >
       <div
-        className={`modal-box flex flex-col rounded-2xl bg-primary p-0 ${sizeMap[size]}`}
+        className={`modal-box flex flex-col overflow-hidden rounded-2xl bg-primary p-0 ${sizeMap[size]}`}
       >
         <div className="flex items-center justify-between w-full p-2 shadow">
           <div className="flex gap-4 items-center p-2">

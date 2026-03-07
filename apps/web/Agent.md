@@ -47,10 +47,10 @@ The contract system follows a factory pattern with upgradeable proxies:
 
 ### Key Patterns
 
-- **UUPS Upgradeable**: Contracts use OpenZeppelin's UUPS proxy pattern
-- **ERC1967 Proxies**: Strategy instances are deployed as minimal proxies
-- **Clone Pattern**: Used for CollateralVault and strategy deployment
-- **Diamond Pattern**: RegistryFactory uses EIP-2535 Diamond Standard
+- **UUPS Upgradeable**: Contracts use OpenZeppelin's UUPS proxy pattern for upgradeable implementations
+- **ERC1967 Proxies**: Upgradeable entrypoints (e.g., RegistryCommunity deployments) run behind ERC1967-compliant proxies such as UUPS
+- **EIP-1167 Minimal Clones**: Lightweight contracts (CollateralVault instances and similar helpers) are deployed via minimal proxy clones
+- **Diamond Pattern**: RegistryCommunity and CVStrategy are EIP-2535 diamonds whose facets are coordinated by RegistryFactory
 
 ### External Dependencies
 
@@ -195,7 +195,7 @@ foundryup
 **Contract Size Optimization**:
 
 - CVStrategy contracts are near the 24KB limit
-- Many error messages are commented out with `@todo take commented when contract size fixed with diamond`
+- Many error messages are commented out with `@todo uncomment when contract size is fixed with diamond`
 - Consider Diamond pattern for future size reduction
 
 ### Subgraph Development
@@ -305,11 +305,11 @@ Add `verify-storage` as a prerequisite to deployment targets in Makefile:
 ```makefile
 # For production deployments (always build + verify)
 deploy-my-contract: verify-storage
-	-forge script script/DeployMyContract.s.sol ...
+	forge script script/DeployMyContract.s.sol ...
 
 # For local testing (quick verification)
 deploy-local: verify-storage-quick
-	-forge script script/DeployLocal.s.sol ...
+	forge script script/DeployLocal.s.sol ...
 ```
 
 This ensures storage alignment is verified (and contracts are built) before any deployment proceeds.

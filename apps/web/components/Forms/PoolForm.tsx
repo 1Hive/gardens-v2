@@ -515,7 +515,9 @@ export function PoolForm({
           protocol: 1n,
           pointer: ipfsHash,
         },
-      ],
+      ] as unknown as NonNullable<
+        Parameters<NonNullable<typeof writeCreatePool>>[0]
+      >["args"],
     });
   };
 

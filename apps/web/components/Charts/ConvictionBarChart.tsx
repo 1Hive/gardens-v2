@@ -25,7 +25,7 @@ type ConvictionBarChartProps = {
   proposalStatus: string;
   proposalType: "funding" | "streaming" | "signaling";
   onReadyToExecute?: () => void;
-  refreshConviction?: () => Promise<any>;
+  refreshConviction?: () => Promise<any> | void;
 };
 
 export function getChartColors(isDarkTheme?: boolean) {

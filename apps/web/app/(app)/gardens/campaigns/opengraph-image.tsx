@@ -1,11 +1,7 @@
 import type { Metadata } from "next";
 import { ImageResponse } from "next/og";
-import {
-  COMMUNITY_IMAGE_BASE64,
-  GARDEN_LOGO_BASE64,
-} from "../[chain]/[garden]/[community]/ogAssets";
 
-export const runtime = "nodejs";
+export const runtime = "edge";
 
 export const alt = "Gardens Campaigns";
 export const size = {
@@ -24,8 +20,6 @@ function formatTitle(title: string) {
 }
 
 async function renderImage(title: string) {
-  const campaignImageSrc = `data:image/png;base64,${COMMUNITY_IMAGE_BASE64}`;
-  const gardenLogoSrc = `data:image/png;base64,${GARDEN_LOGO_BASE64}`;
   const safeTitle = formatTitle(title);
 
   return new ImageResponse(
@@ -42,7 +36,9 @@ async function renderImage(title: string) {
           color: "#e2e8f0",
           fontFamily:
             '"Inter", "Manrope", "Helvetica Neue", "Arial", sans-serif',
-          gap: "32px",
+              gap: "32px",
+              background:
+                "radial-gradient(circle at top right, rgba(59,130,246,0.28), transparent 28%), radial-gradient(circle at bottom left, rgba(16,185,129,0.22), transparent 32%), linear-gradient(135deg, #0f172a 0%, #111827 55%, #0b1120 100%)",
         }}
       >
         <div
@@ -53,12 +49,23 @@ async function renderImage(title: string) {
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "18px" }}>
-            {/* eslint-disable-next-line @next/next/no-img-element -- Rendering inside ImageResponse. */}
-            <img
-              alt="Gardens logo"
-              src={gardenLogoSrc}
-              style={{ height: "60px", width: "60px" }}
-            />
+            <div
+              style={{
+                height: "60px",
+                width: "60px",
+                borderRadius: "18px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                background:
+                  "linear-gradient(135deg, rgba(16,185,129,0.9), rgba(59,130,246,0.9))",
+                color: "#f8fafc",
+                fontSize: "28px",
+                fontWeight: 800,
+              }}
+            >
+              G
+            </div>
             <span
               style={{
                 fontSize: "32px",
@@ -92,18 +99,49 @@ async function renderImage(title: string) {
             flexGrow: 1,
           }}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element -- Rendering inside ImageResponse. */}
-          <img
-            alt="Campaign illustration"
-            src={campaignImageSrc}
+          <div
             style={{
               width: "240px",
               height: "240px",
               borderRadius: "32px",
-              objectFit: "cover",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background:
+                "linear-gradient(145deg, rgba(30,41,59,0.92), rgba(15,23,42,0.82))",
+              border: "1px solid rgba(148,163,184,0.18)",
               boxShadow: "0 12px 36px rgba(0,0,0,0.35)",
             }}
-          />
+          >
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: "10px",
+                color: "#93c5fd",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: "34px",
+                  fontWeight: 800,
+                  color: "#f8fafc",
+                }}
+              >
+                SUP
+              </div>
+              <div
+                style={{
+                  fontSize: "18px",
+                  letterSpacing: "0.16em",
+                  textTransform: "uppercase",
+                }}
+              >
+                Campaigns
+              </div>
+            </div>
+          </div>
 
           <div
             style={{

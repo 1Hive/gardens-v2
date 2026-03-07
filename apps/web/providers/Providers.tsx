@@ -18,8 +18,10 @@ import {
 import { AddrethConfig } from "addreth";
 import { Bounce, ToastContainer } from "react-toastify";
 import { Address, createWalletClient, custom, isAddress } from "viem";
+import { base } from "viem/chains";
 import {
   Chain,
+  Config,
   configureChains,
   ConnectorAlreadyConnectedError,
   createConfig,
@@ -45,13 +47,19 @@ import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useTheme } from "@/providers/ThemeProvider";
 import { logOnce } from "@/utils/log";
 
+const dedupeChains = (chainList: Chain[]) =>
+  chainList.filter(
+    (candidate, index, arr) =>
+      arr.findIndex((item) => item.id === candidate.id) === index,
+  );
+
 const createCustomConfig = (
   chain: Chain | undefined,
   simulatedWallet?: Address,
 ) => {
   let usedChains: Chain[] = [];
   if (chain) {
-    usedChains = [chain, mainnet];
+    usedChains = dedupeChains([chain, base, mainnet]);
   } else {
     const isClient = typeof window !== "undefined";
     const queryAllChains =
@@ -66,10 +74,11 @@ const createCustomConfig = (
         : !!chainConfig.isTestnet,
       )
       .map(([chainId]) => Number(chainId));
-    usedChains = [
+    usedChains = dedupeChains([
       ...CHAINS.filter((elem) => usedChainIds.includes(elem.id)),
+      base,
       mainnet,
-    ];
+    ]);
   }
 
   const { publicClient, chains } = configureChains(usedChains, [
@@ -138,6 +147,8 @@ const createCustomConfig = (
   };
 };
 
+type CustomWagmiConfig = ReturnType<typeof createCustomConfig>["config"];
+
 type Props = {
   children: React.ReactNode;
 };
@@ -173,7 +184,7 @@ const ProvidersWithQueryParams = ({ children }: Props) => {
     return walletFromQuery as Address;
   }, [queryParams]);
 
-  const [wagmiConfig, setWagmiConfig] = useState<any>(null);
+  const [wagmiConfig, setWagmiConfig] = useState<CustomWagmiConfig | null>(null);
   const [simulatedConnector, setSimulatedConnector] =
     useState<MockConnector | null>(null);
   const [activeSimulatedWallet, setActiveSimulatedWallet] =

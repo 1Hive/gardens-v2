@@ -1,0 +1,4 @@
+interface:
+  display_name: "Read Contracts"
+  short_description: "Read Gardens V2 contract state from ABIs"
+  default_prompt: "Use $read-contracts to look up a Gardens V2 contract address and read live on-chain state from it."

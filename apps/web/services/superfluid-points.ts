@@ -110,6 +110,21 @@ const fetchJson = async <T>(
 
 const cachedPointsClients = new Map<string, PointsClient>();
 
+const resolveApiKeyForCampaign = ({
+  apiKeyEnvVar,
+  campaignId,
+}: {
+  apiKeyEnvVar: string;
+  campaignId?: number;
+}) => {
+  if (campaignId) {
+    const campaignScopedApiKey =
+      process.env[`${apiKeyEnvVar}_${campaignId}`]?.trim() ?? "";
+    if (campaignScopedApiKey) return campaignScopedApiKey;
+  }
+  return process.env[apiKeyEnvVar]?.trim() ?? "";
+};
+
 const createSuperfluidPointsClient = ({
   apiKey,
   campaignId,
@@ -221,31 +236,42 @@ const createSuperfluidPointsClient = ({
 export const getSuperfluidPointsClientByEnv = ({
   apiKeyEnvVar,
   campaignIdEnvVar,
+  campaignId,
 }: {
   apiKeyEnvVar: string;
   campaignIdEnvVar: string;
+  campaignId?: number;
 }): PointsClient => {
-  const apiKey = process.env[apiKeyEnvVar];
-  const campaignId = Number(process.env[campaignIdEnvVar] ?? "") || 0;
+  const resolvedCampaignId =
+    campaignId ?? (Number(process.env[campaignIdEnvVar] ?? "") || 0);
+  const apiKey = resolveApiKeyForCampaign({
+    apiKeyEnvVar,
+    campaignId: resolvedCampaignId || undefined,
+  });
   if (!apiKey) {
     throw new Error(`${apiKeyEnvVar} is required`);
   }
-  if (!campaignId) {
+  if (!resolvedCampaignId) {
     throw new Error(`${campaignIdEnvVar} is required`);
   }
   const baseUrl = resolveBaseUrl();
-  const cacheKey = `${baseUrl}|${campaignId}|${apiKey}`;
+  const cacheKey = `${baseUrl}|${resolvedCampaignId}|${apiKey}`;
   const cached = cachedPointsClients.get(cacheKey);
   if (cached) return cached;
-  const created = createSuperfluidPointsClient({ apiKey, campaignId, baseUrl });
+  const created = createSuperfluidPointsClient({
+    apiKey,
+    campaignId: resolvedCampaignId,
+    baseUrl,
+  });
   cachedPointsClients.set(cacheKey, created);
   return created;
 };
 
-export const getSuperfluidPointsClient = (): PointsClient => {
+export const getSuperfluidPointsClient = (campaignId?: number): PointsClient => {
   return getSuperfluidPointsClientByEnv({
     apiKeyEnvVar: "SUPERFLUID_POINT_API_KEY",
     campaignIdEnvVar: "SUPERFLUID_POINT_SYSTEM_ID",
+    campaignId,
   });
 };
 
