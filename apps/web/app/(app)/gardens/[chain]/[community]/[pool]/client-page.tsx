@@ -537,7 +537,7 @@ export default function ClientPage({
             <div className="flex-1 space-y-4">
               <div>
                 <h4 className="mb-1 sm:mb-2">{`Join ${communityName} community`}</h4>
-                <p className="subtitle2 text-xs sm:text-sm">
+                <p className=" text-xs sm:text-sm">
                   You must be a member of this community before activating
                   governance or voting on proposals.
                 </p>
@@ -561,15 +561,16 @@ export default function ClientPage({
                   </ul>
                 </div>
               </div>
-
-              {tokenGarden && (
-                <RegisterMember
-                  memberData={wallet ? isMemberResult : undefined}
-                  registrationCost={totalRegistrationCost}
-                  token={tokenGarden}
-                  registryCommunity={registryCommunity}
-                />
-              )}
+              <div className="w-full flex justify-end">
+                {tokenGarden && (
+                  <RegisterMember
+                    memberData={wallet ? isMemberResult : undefined}
+                    registrationCost={totalRegistrationCost}
+                    token={tokenGarden}
+                    registryCommunity={registryCommunity}
+                  />
+                )}
+              </div>
             </div>
           </div>
         </div>

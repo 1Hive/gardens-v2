@@ -270,7 +270,7 @@ export default function PoolHeader({
   const poolConfig = [
     {
       label: "Spending limit",
-      value: `${spendingLimit > 99 ? "100" : roundToSignificant(spendingLimit, 2)} %`,
+      value: `${spendingLimitPct.toFixed(0)} %`,
       info: "Max percentage of the pool funds that can be spent in a single proposal.",
     },
     {
