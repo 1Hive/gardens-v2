@@ -15,6 +15,7 @@ import {
   queryMap,
 } from "@/services/getTitlesFromUrlSegments";
 import { truncateString } from "@/utils/text";
+import TooltipIfOverflow from "./TooltipIfOverflow";
 interface Breadcrumb {
   href: string;
   label: string;
@@ -132,24 +133,24 @@ export function Breadcrumbs() {
     <>
       <div className="my-[2px] border-l-2 border-solid border-neutral-soft-content h-5" />
       <div aria-label="Breadcrumbs" className="flex w-full items-center pt-px">
-        <ol className="flex w-full items-center overflow-hidden">
+        <ol className="flex w-fit max-w-full items-center overflow-hidden">
           {breadcrumbs.map(({ href, label }, index) => (
             <li
               key={href}
-              className="flex max-w-[30%] items-center overflow-hidden text-neutral-soft-content"
+              className="flex min-w-0 items-center overflow-hidden text-neutral-soft-content"
             >
               {index !== 0 && (
                 <ChevronRightIcon className="mx-1 h-5 w-5 flex-shrink-0" />
               )}
               {index === breadcrumbs.length - 1 ?
-                <span className="subtitle2 truncate font-semibold text-neutral-soft-content">
-                  {label}
-                </span>
+                <div className="subtitle2 w-full font-semibold text-neutral-soft-content">
+                  <TooltipIfOverflow>{label}</TooltipIfOverflow>
+                </div>
               : <Link
                   href={href}
-                  className="subtitle2 truncate font-semibold text-primary-content"
+                  className="subtitle2 block w-full font-semibold text-primary-content"
                 >
-                  {label}
+                  <TooltipIfOverflow>{label}</TooltipIfOverflow>
                 </Link>
               }
             </li>
