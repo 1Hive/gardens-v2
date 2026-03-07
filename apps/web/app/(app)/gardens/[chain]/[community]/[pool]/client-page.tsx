@@ -438,7 +438,7 @@ export default function ClientPage({
     (isMissingFundingToken && !error && !hasWaitedForPoolToken);
 
   if ((!strategy || isMissingFundingToken) && stillLoading) {
-    console.log(`${DEBUG_LABEL} render waiting`, {
+    console.debug(`${DEBUG_LABEL} render waiting`, {
       branch: "waiting-for-strategy-or-funding-token",
       strategy,
       poolTokenIfFundingPool: poolToken,
@@ -460,7 +460,7 @@ export default function ClientPage({
     const title =
       isWrongNetwork ? "Switch network to continue" : "Pool unavailable";
 
-    console.log(`${DEBUG_LABEL} render missing-strategy`, {
+    console.debug(`${DEBUG_LABEL} render missing-strategy`, {
       branch: "missing-strategy",
       isWrongNetwork,
       errorPresent: !!error,
@@ -487,9 +487,9 @@ export default function ClientPage({
   }
 
   if (poolId == null) {
-    console.log(`${DEBUG_LABEL} render missing-pool-id`, {
+    console.debug(`${DEBUG_LABEL} render missing-pool-id`, {
       branch: "missing-pool-id",
-      strategyResolved: !!strategy,
+      strategyResolved: strategy != null,
     });
     return (
       <div className="mt-96 col-span-12">
@@ -514,7 +514,7 @@ export default function ClientPage({
       )
     : undefined;
 
-  console.log(`${DEBUG_LABEL} render ready`, {
+  console.debug(`${DEBUG_LABEL} render ready`, {
     branch: "ready",
     poolId,
     proposalCount: strategy?.proposals?.length,
