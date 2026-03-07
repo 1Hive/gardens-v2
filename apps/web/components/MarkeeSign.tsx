@@ -17,13 +17,17 @@ const MIN_PRICE = parseEther("0.003");
 const MIN_INCREMENT = parseEther("0.001");
 
 type SignData = {
+  markeeAddress: string | null; // individual markee contract address
   message: string;
   totalFundsAdded: bigint;
   minimumPrice: bigint;
 };
 
+const DEFAULT_MESSAGE = "this is a sign.";
+
 const DEFAULT_DATA: SignData = {
-  message: "this is a sign.",
+  markeeAddress: null,
+  message: DEFAULT_MESSAGE,
   totalFundsAdded: BigInt(0),
   minimumPrice: MIN_PRICE,
 };
@@ -71,7 +75,8 @@ export default function MarkeeSign() {
         typeof onchainMinPrice === "bigint" ? onchainMinPrice : BigInt(0);
 
       setData({
-        message: markee?.message ?? DEFAULT_DATA.message,
+        markeeAddress: markee?.address ?? null,
+        message: markee?.message ?? DEFAULT_MESSAGE,
         totalFundsAdded: BigInt(markee?.totalFundsAdded ?? 0),
         minimumPrice:
           onchainMinPriceValue > BigInt(0) ? onchainMinPriceValue
@@ -89,13 +94,13 @@ export default function MarkeeSign() {
     fetchData();
   }, [fetchData]);
 
-  // Record a view once the real message is loaded (fire-and-forget)
+  // Record a view using the individual markee contract address
   useEffect(() => {
-    if (loading || loadError !== null || data.message === DEFAULT_DATA.message) return;
-    recordMarkeeView(GARDENS_STRATEGY, data.message)
+    if (loading || loadError !== null || data.message === DEFAULT_MESSAGE || data.markeeAddress === null) return;
+    recordMarkeeView(data.markeeAddress, data.message)
       .then((res) => setTotalViews(res.totalViews))
       .catch(() => {});
-  }, [loading, loadError, data.message]);
+  }, [loading, loadError, data.message, data.markeeAddress]);
 
   // Amount needed to take the top spot
   const takeTopSpot =
@@ -112,7 +117,7 @@ export default function MarkeeSign() {
     <>
       <button
         onClick={() => setModalOpen(true)}
-        disabled={loading || loadError != null}
+        disabled={loading || loadError !== null}
         className="group relative mx-auto mt-6 mb-4 cursor-pointer max-sm:w-full"
         aria-label="Click to edit this Markee sign"
       >
@@ -135,7 +140,7 @@ export default function MarkeeSign() {
         <span className="absolute -bottom-3 left-1/2 -translate-x-1/2 rounded-full border border-neutral-content/30 bg-neutral px-3 py-0.5 text-xs font-mono text-neutral-content/60 opacity-0 group-hover:opacity-100 group-hover:border-primary-content/40 group-hover:text-primary-content/70 max-sm:opacity-100 max-sm:border-primary-content/40 max-sm:text-primary-content/70 transition-all duration-200 whitespace-nowrap">
           {loading ?
             "···"
-          : loadError ?
+          : loadError !== null ?
             "unavailable"
           : ethDisplay}
         </span>

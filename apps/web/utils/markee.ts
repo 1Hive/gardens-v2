@@ -18,6 +18,8 @@ export const GARDENS_STRATEGY =
 export const MarkeeNetwork = base;
 
 export type MarkeeEntry = {
+  id: string;
+  address: string; // individual markee contract address — used as the views key
   message: string;
   name: string;
   totalFundsAdded: string;
@@ -70,6 +72,8 @@ export async function fetchMarkeeSignData(strategyAddress: Address) {
     topDawgPartnerStrategy(id: "${strategyId}") {
       minimumPrice
       markees(first: 1, orderBy: totalFundsAdded, orderDirection: desc) {
+        id
+        address
         message
         name
         totalFundsAdded
@@ -84,6 +88,8 @@ export async function fetchMarkeeLeaderboard(strategyAddress: Address) {
   const result = await postMarkeeQuery(`{
     topDawgPartnerStrategy(id: "${strategyId}") {
       markees(first: 10, orderBy: totalFundsAdded, orderDirection: desc) {
+        id
+        address
         message
         name
         totalFundsAdded
@@ -94,52 +100,37 @@ export async function fetchMarkeeLeaderboard(strategyAddress: Address) {
 }
 
 // ─── View Tracking ────────────────────────────────────────────────────────────
-// Centralized on markee.xyz. Cross-domain callers (e.g. Gardens) hit this
-// endpoint directly — no Redis config needed on their side.
+// Centralized on markee.xyz. Views are keyed by individual markee contract
+// address (markee.address), not the strategy address — matching markee.xyz.
 
 const MARKEE_VIEWS_URL = "https://www.markee.xyz/api/views";
 
 /**
- * Record a view for a strategy address + current message.
+ * Record a view for an individual markee contract address + current message.
+ * Pass markee.address (the individual markee contract), not the strategy address.
  * Fire-and-forget safe — errors are swallowed by the caller.
  */
 export async function recordMarkeeView(
-  strategyAddress: Address,
+  markeeAddress: string,
   message: string,
 ): Promise<{ totalViews: number; messageViews: number; counted: boolean }> {
   const res = await fetch(MARKEE_VIEWS_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ address: strategyAddress, message }),
+    body: JSON.stringify({ address: markeeAddress, message }),
   });
   return res.json();
 }
 
 /**
- * Fetch total view counts for one or more strategy addresses.
+ * Fetch total view counts for one or more individual markee contract addresses.
  * Returns a map of address → { totalViews }.
  */
 export async function fetchMarkeeViews(
-  strategyAddresses: Address[],
+  markeeAddresses: string[],
 ): Promise<Record<string, { totalViews: number }>> {
-  const param = strategyAddresses.map((a) => a.toLowerCase()).join(",");
+  if (markeeAddresses.length === 0) return {};
+  const param = markeeAddresses.map((a) => a.toLowerCase()).join(",");
   const res = await fetch(`${MARKEE_VIEWS_URL}?addresses=${param}`);
-  return res.json();
-}
-
-/**
- * Fetch per-message view counts for a leaderboard.
- * Returns a map of message → view count.
- * Uses pipe delimiter (||) since messages can contain commas.
- */
-export async function fetchMarkeeMessageViews(
-  strategyAddress: Address,
-  messages: string[],
-): Promise<Record<string, number>> {
-  if (messages.length === 0) return {};
-  const param = messages.join("||");
-  const res = await fetch(
-    `${MARKEE_VIEWS_URL}?address=${strategyAddress.toLowerCase()}&messages=${encodeURIComponent(param)}`,
-  );
   return res.json();
 }
