@@ -438,7 +438,7 @@ export default function ClientPage({
     (isMissingFundingToken && !error && !hasWaitedForPoolToken);
 
   if ((!strategy || isMissingFundingToken) && stillLoading) {
-    console.debug(`${DEBUG_LABEL} render waiting`, {
+    console.log(`${DEBUG_LABEL} render waiting`, {
       branch: "waiting-for-strategy-or-funding-token",
       strategy,
       poolTokenIfFundingPool: poolToken,
@@ -460,6 +460,13 @@ export default function ClientPage({
     const title =
       isWrongNetwork ? "Switch network to continue" : "Pool unavailable";
 
+    console.log(`${DEBUG_LABEL} render missing-strategy`, {
+      branch: "missing-strategy",
+      isWrongNetwork,
+      errorPresent: !!error,
+      expectedChainId,
+      connectedChainId,
+    });
     const description =
       isWrongNetwork ?
         `Connect your wallet to ${expectedChainName} to view this pool.`
@@ -480,6 +487,10 @@ export default function ClientPage({
   }
 
   if (poolId == null) {
+    console.log(`${DEBUG_LABEL} render missing-pool-id`, {
+      branch: "missing-pool-id",
+      strategyResolved: !!strategy,
+    });
     return (
       <div className="mt-96 col-span-12">
         <LoadingSpinner />
@@ -502,6 +513,13 @@ export default function ClientPage({
         BigInt(strategy.totalEffectiveActivePoints),
       )
     : undefined;
+
+  console.log(`${DEBUG_LABEL} render ready`, {
+    branch: "ready",
+    poolId,
+    proposalCount: strategy?.proposals?.length,
+    isEnabled,
+  });
 
   const registerAndActivateFromPool = (
     <>
