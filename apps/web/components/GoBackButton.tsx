@@ -9,15 +9,15 @@ export const GoBackButton = () => {
   const path = usePathname();
 
   const onBackClicked = () => {
-    const pathSegments = path.split("/");
-    pathSegments.pop();
+    const segments = path.split("/").filter((segment) => segment !== "");
+    segments.pop();
 
-    if (pathSegments.length === 4) {
-      // case => :empty:/:gardens:/:chaindId:/:communityId:/
-      // remove the last two segments
-      pathSegments.splice(-2);
+    if (segments.length <= 2) {
+      router.push("/gardens");
+      return;
     }
-    const newPath = pathSegments.join("/");
+
+    const newPath = `/${segments.join("/")}`;
     router.push(newPath);
   };
 

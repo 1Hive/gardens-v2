@@ -44,21 +44,21 @@ interface QueryMapItem {
 }
 
 export const queryMap: Record<number, QueryMapItem> = {
-  3: {
+  2: {
     document: getCommunityTitlesDocument,
-    getVariables: (communityAddr: string, _segments: string[]) => ({
+    getVariables: (communityAddr: string) => ({
       communityAddr: communityAddr.toLowerCase(),
     }),
     parseResult: async (
       resData: CommunityTitlesResult,
     ): Promise<(string | undefined)[]> => {
       const community = resData?.registryCommunity;
-      return [community?.garden?.name, community?.communityName ?? undefined];
+      return [community?.communityName ?? undefined];
     },
   },
-  4: {
+  3: {
     document: getPoolTitlesDocument,
-    getVariables: (strategyId: string, _segments: string[]) => ({
+    getVariables: (strategyId: string) => ({
       strategyId: strategyId.toLowerCase(),
     }),
     parseResult: async (
@@ -67,16 +67,16 @@ export const queryMap: Record<number, QueryMapItem> = {
       const pool = resData?.cvstrategies[0];
       const poolTitle = getMetadataTitle(pool?.metadata);
       return [
-        pool?.registryCommunity?.garden?.name,
         pool?.registryCommunity?.communityName ?? undefined,
-        poolTitle || `Pool #${pool?.poolId}`,
+        poolTitle ??
+          (pool?.poolId != null ? `Pool #${pool.poolId}` : undefined),
       ];
     },
   },
-  5: {
+  4: {
     document: getProposalTitlesDocument,
     getVariables: (proposalSegment: string, segments: string[]) => {
-      const strategySegment = segments[4] ?? "";
+      const strategySegment = segments[3] ?? "";
       return {
         proposalId: buildProposalEntityId(
           strategySegment.toLowerCase(),
@@ -91,10 +91,15 @@ export const queryMap: Record<number, QueryMapItem> = {
       const strategyTitle = getMetadataTitle(proposal?.strategy?.metadata);
       const proposalTitle = getMetadataTitle(proposal?.metadata);
       return [
-        proposal?.strategy?.registryCommunity?.garden?.name,
         proposal?.strategy?.registryCommunity?.communityName ?? undefined,
-        strategyTitle || `Pool #${proposal?.strategy?.poolId}`,
-        proposalTitle || `Proposal #${proposal?.proposalNumber}`,
+        strategyTitle ??
+          (proposal?.strategy?.poolId != null ?
+            `Pool #${proposal.strategy.poolId}`
+          : undefined),
+        proposalTitle ??
+          (proposal?.proposalNumber != null ?
+            `Proposal #${proposal.proposalNumber}`
+          : undefined),
       ];
     },
   },
@@ -115,4 +120,3 @@ function getMetadataTitle(
 export const parseStaticSegment = (str: string): string => {
   return capitalize(str.replace(/-/g, " "));
 };
-

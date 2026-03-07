@@ -40,7 +40,7 @@ import {
   RegisterMember,
   Statistic,
 } from "@/components";
-import { Divider } from "@/components/Diivider";
+import { Divider } from "@/components/Divider";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { LoupeButton } from "@/components/LoupeButton";
 import MarkdownWrapper from "@/components/MarkdownWrapper";
@@ -86,9 +86,9 @@ type CommunityMetricsProps = {
 type MemberColumn = Column<MembersStaked>;
 
 export default function ClientPage({
-  params: { garden: tokenAddr, community: communityAddr },
+  params: { community: communityAddr },
 }: {
-  params: { garden: string; community: string };
+  params: { community: string };
 }) {
   const searchParams = useCollectQueryParams();
   const { address: accountAddress } = useAccount();
@@ -101,11 +101,6 @@ export default function ClientPage({
 
   const covenantSectionRef = useRef<HTMLDivElement>(null);
 
-  const { data: tokenGarden } = useToken({
-    address: tokenAddr as Address,
-    chainId: chain?.id,
-  });
-
   const {
     data: result,
     error,
@@ -114,7 +109,6 @@ export default function ClientPage({
     query: getCommunityDocument,
     variables: {
       communityAddr: communityAddr.toLowerCase(),
-      tokenAddr: tokenAddr.toLowerCase(),
     },
     changeScope: [
       { topic: "community", id: communityAddr },
@@ -123,6 +117,13 @@ export default function ClientPage({
   });
 
   const registryCommunity = result?.registryCommunity;
+  const tokenAddress = registryCommunity?.garden?.id;
+
+  const { data: tokenGarden } = useToken({
+    address: tokenAddress as Address,
+    chainId: chain?.id,
+    enabled: !!tokenAddress,
+  });
 
   const { data: covenantResult } = useIpfsFetch<{ covenant: string }>({
     hash: registryCommunity?.covenantIpfsHash,
@@ -219,7 +220,7 @@ export default function ClientPage({
 
   const { tooltipMessage, isConnected, missmatchUrl, isButtonDisabled } =
     useDisableButtons();
-  const createPoolHref = `/gardens/${chain?.id}/${tokenAddr}/${communityAddr}/create-pool`;
+  const createPoolHref = `/gardens/${chain?.id}/${communityAddr}/create-pool`;
 
   useEffect(() => {
     if (error) {

@@ -71,9 +71,8 @@ const SYNC_STREAM_HIDE_WINDOW_SECONDS = 15 * 60;
 export type ProposalPageParams = {
   proposalId: string;
   community: string;
-  poolId: string;
+  pool: string;
   chain: string;
-  garden: string;
 };
 
 export type ClientPageProps = {
@@ -83,9 +82,8 @@ export type ClientPageProps = {
 export default function ClientPage({ params }: ClientPageProps) {
   const {
     proposalId: proposalSlug,
-    garden,
     community: communityAddr,
-    poolId: poolSlug,
+    pool: poolSlug,
   } = params;
   const strategyAddress = poolSlug.toLowerCase();
   const [poolIdForScope, setPoolIdForScope] = useState<number | undefined>();
@@ -116,7 +114,6 @@ export default function ClientPage({ params }: ClientPageProps) {
   } = useSubgraphQuery<getProposalDataQuery>({
     query: getProposalDataDocument,
     variables: {
-      garden: garden.toLowerCase(),
       proposalId: proposalEntityId.toLowerCase(),
       communityId: communityAddr.toLowerCase(),
     },
@@ -274,16 +271,27 @@ export default function ClientPage({ params }: ClientPageProps) {
   const isStreamingType = PoolTypes[proposalType] === "streaming";
   const requestedAmount = proposalData?.requestedAmount;
   const beneficiary = proposalData?.beneficiary as Address | undefined;
-  const streamingEscrowFromSubgraph = proposalData?.streamingEscrow as
-    | Address
-    | undefined;
+  const streamingEscrowFromSubgraph = (
+    (
+      proposalData as
+        | {
+            streamingEscrow?: Address | null;
+          }
+        | undefined
+    )?.streamingEscrow ?? undefined
+  ) as Address | undefined;
 
   const resolvedStreamingEscrow = streamingEscrowFromSubgraph;
 
   const submitter = proposalData?.submitter as Address | undefined;
   const superfluidExplorerBaseUrl =
     chainId != null ?
-      chainConfigMap[chainId]?.superfluidExplorerUrl
+      (
+        chainConfigMap as Record<
+          string | number,
+          { superfluidExplorerUrl?: string }
+        >
+      )[chainId]?.superfluidExplorerUrl
     : undefined;
   const superfluidExplorerUrl =
     (
@@ -363,12 +371,17 @@ export default function ClientPage({ params }: ClientPageProps) {
     : 0n;
   const proposalTotalStreamedBn =
     streamedUntilSnapshotBn + (proposalFlowRateBn * elapsedMs) / 1000n;
-  const { liveTotalStreamedBn: explorerTotalStreamedBn } = useSuperfluidStream({
+  const superfluidStreamResult = useSuperfluidStream({
     receiver: resolvedStreamingEscrow as Address,
     superToken: proposalData?.strategy?.config?.superfluidToken as Address,
     chainId,
-    containerId: poolId ?? proposalSlug,
   });
+  const explorerTotalStreamedBn =
+    (
+      superfluidStreamResult as typeof superfluidStreamResult & {
+        liveTotalStreamedBn?: bigint | null;
+      }
+    )?.liveTotalStreamedBn;
   const shouldTickFallback = isStreamingType && explorerTotalStreamedBn == null;
 
   const proposalFlowPerMonth =
@@ -389,7 +402,16 @@ export default function ClientPage({ params }: ClientPageProps) {
     : null;
   const proposalTotalStreamedDisplay =
     poolToken ? (proposalTotalStreamed ?? 0).toFixed(4) : null;
-  const streamInfo = proposalData?.strategy?.stream;
+  const streamInfo =
+    (
+      proposalData?.strategy as
+        | {
+            stream?: {
+              maxFlowRate?: bigint | number | string | null;
+            };
+          }
+        | undefined
+    )?.stream;
   const superTokenAddress = proposalData?.strategy?.config?.superfluidToken as
     | Address
     | undefined;
@@ -418,7 +440,7 @@ export default function ClientPage({ params }: ClientPageProps) {
   } = useConvictionRead({
     proposalData: proposalData as getProposalDataQuery["cvproposal"],
     strategyConfig: proposalData?.strategy?.config,
-    tokenData: data?.tokenGarden?.decimals,
+    tokenData: proposalData?.strategy?.registryCommunity?.garden?.decimals,
     enabled: proposalData?.proposalNumber != null && proposalData != null,
   });
 
@@ -548,7 +570,7 @@ export default function ClientPage({ params }: ClientPageProps) {
       functionName: "lastRebalanceAt",
       enabled: isStreamingType && !!proposalData?.strategy?.id,
       watch: true,
-    });
+    } as any);
   const lastRebalanceAt = Number(lastRebalanceAtValue ?? 0n);
   const hideSyncStreamButton =
     lastRebalanceAt > 0 &&
@@ -558,7 +580,7 @@ export default function ClientPage({ params }: ClientPageProps) {
     useContractWriteWithConfirmations({
       address: proposalData?.strategy?.id as Address,
       abi: cvStrategyABI,
-      functionName: "rebalance",
+      functionName: "rebalance" as any,
       contractName: "CVStrategy",
       fallbackErrorMessage:
         "Failed to sync stream for this strategy. Please try again.",
@@ -568,7 +590,7 @@ export default function ClientPage({ params }: ClientPageProps) {
           topic: "stream",
           containerId: poolId,
           function: "rebalance",
-        });
+        } as any);
       },
     });
 
@@ -751,11 +773,6 @@ export default function ClientPage({ params }: ClientPageProps) {
                             onReadyToExecute={triggerConvictionRefetch}
                             defaultChartMaxValue
                             proposalStatus={proposalStatus}
-                            proposalType={
-                              PoolTypes[
-                                proposalData.strategy.config.proposalType
-                              ]
-                            }
                           />
                         </div>
                       </div>
@@ -1266,24 +1283,19 @@ export default function ClientPage({ params }: ClientPageProps) {
                             <div className="flex flex-col gap-2">
                               <div className="w-full h-[0.10px] bg-neutral-soft-content" />
                               <h4 className="mt-4">Progress</h4>
-                              <div className="flex flex-col gap-2">
-                                <ConvictionBarChart
-                                  currentConvictionPct={currentConvictionPct}
-                                  thresholdPct={thresholdPct ?? 0}
-                                  proposalSupportPct={totalSupportPct ?? 0}
-                                  isSignalingType={isSignalingType}
-                                  proposalNumber={Number(proposalIdNumber)}
-                                  timeToPass={Number(timeToPass)}
-                                  onReadyToExecute={triggerConvictionRefetch}
-                                  defaultChartMaxValue
-                                  proposalStatus={proposalStatus}
-                                  proposalType={
-                                    PoolTypes[
-                                      proposalData.strategy.config.proposalType
-                                    ]
-                                  }
-                                />
-                              </div>
+                        <div className="flex flex-col gap-2">
+                          <ConvictionBarChart
+                            currentConvictionPct={currentConvictionPct}
+                            thresholdPct={thresholdPct ?? 0}
+                            proposalSupportPct={totalSupportPct ?? 0}
+                            isSignalingType={isSignalingType}
+                            proposalNumber={Number(proposalIdNumber)}
+                            timeToPass={Number(timeToPass)}
+                            onReadyToExecute={triggerConvictionRefetch}
+                            defaultChartMaxValue
+                            proposalStatus={proposalStatus}
+                          />
+                        </div>
                             </div>
                           )}
                         </div>
