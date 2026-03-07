@@ -834,6 +834,7 @@ export default function PoolHeader({
                           }
                           forceShowTooltip={true}
                           onClick={() => addStrategyByPoolId()}
+                          testId="btn-approve"
                         >
                           Approve
                         </Button>

@@ -169,7 +169,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
       : 0;
 
     const poolWeightAllocatedInProposal = (
-      (inputValue * Number(memberPoolWeight ?? 0)) /
+      (inputValue * Number(memberPoolWeight)) /
       100
     ).toFixed(2);
 
@@ -190,7 +190,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
       !alreadyExecuted;
 
     const impossibleToPass =
-      (thresholdPct ?? 0) >= 100 || (thresholdPct ?? 0) === 0;
+      (thresholdPct != null && thresholdPct >= 100) || thresholdPct === 0;
 
     const ProposalCountDown = (
       <>

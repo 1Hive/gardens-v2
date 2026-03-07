@@ -621,6 +621,7 @@ export default function ClientPage({
                   disabled={!isConnected || missmatchUrl}
                   tooltip={tooltipMessage}
                   icon={<PlusIcon height={24} width={24} />}
+                  testId="btn-create-pool"
                 >
                   Create New Pool
                 </Button>
@@ -1087,6 +1088,7 @@ const PoolFiltersUI = ({
               `${POOL_STATUS_FILTER_BADGE_STYLES[filter.key]} border-transparent shadow-sm ring-1 ring-black/10`
             : "bg-transparent border-neutral-soft-content/30 text-neutral-soft-content hover:border-neutral-soft-content hover:text-primary-content"
           }`}
+          data-testid="btn-select-all"
         >
           <span className="inline-flex items-center gap-1 text-sm sm:text-md">
             {selectedFilter === filter.key && (

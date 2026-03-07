@@ -296,6 +296,7 @@ export const ProposalsModalSupport = forwardRef<
                     <div className="flex items-center gap-8 flex-grow flex-wrap">
                       <div className={"flex-grow sm:max-w-[460px] "}>
                         <input
+                          data-testid="input-slider-vote"
                           type="range"
                           min={0}
                           max={Number(memberActivatedPoints)}

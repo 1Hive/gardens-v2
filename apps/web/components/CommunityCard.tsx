@@ -63,6 +63,7 @@ export function CommunityCard({
   return (
     <Card
       key={id}
+      testId={`community-card-${id}`}
       href={`/gardens/${chainId}/${tokenAddr}/${id}`}
       className={` ${isNewCommunity ? "shadow-2xl" : ""}`}
     >

@@ -17,6 +17,14 @@
       "path": "./pkg/subgraph",
     },
     {
+      "name": "Services",
+      "path": "./pkg/services",
+    },
+    {
+      "name": "E2E",
+      "path": "./pkg/e2e",
+    },
+    {
       "name": "Root",
       "path": ".",
     },

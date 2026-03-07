@@ -751,6 +751,7 @@ export function Proposals({
                       !isConnected || missmatchUrl || !isMemberCommunity
                     }
                     tooltip={tooltipMessage}
+                    testId="btn-add-proposal"
                   >
                     Add New Proposal
                   </Button>
@@ -788,6 +789,7 @@ export function Proposals({
                           }
                           tooltip={tooltipMessage}
                           className="!w-full sm:!w-auto"
+                          testId="btn-add-proposal"
                         >
                           Add New Proposal
                         </Button>
@@ -803,6 +805,7 @@ export function Proposals({
                         enableCheck={strategy.sybil?.type === "Passport"}
                       >
                         <Button
+                          testId="btn-vote-on-proposals"
                           icon={
                             <AdjustmentsHorizontalIcon height={24} width={24} />
                           }

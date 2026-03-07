@@ -52,7 +52,10 @@ export function TransactionStatusNotification({
     showClickToExplorer ? textColor : "dark:text-neutral-inverted-content";
 
   return (
-    <div className="flex flex-row items-center gap-2">
+    <div
+      className="flex flex-row items-center gap-2"
+      data-testid="transaction-status-notification"
+    >
       {icon && (
         <div className="relative flex items-center justify-center">
           <Image
@@ -70,7 +73,9 @@ export function TransactionStatusNotification({
         </div>
       )}
       <div className="flex flex-col gap-1 min-w-0">
-        <div className={`${textClass} font-medium text-base break-words whitespace-normal`}>
+        <div
+          className={`${textClass} font-medium text-base break-words whitespace-normal`}
+        >
           {message}
         </div>
         {chain?.blockExplorers?.default.url && showClickToExplorer && (

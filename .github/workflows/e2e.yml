@@ -1,0 +1,184 @@
+name: E2E
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+concurrency:
+  group: e2e-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  e2e:
+    name: E2E (playwright + synpress)
+    if: ${{ !github.event.pull_request.draft }}
+    concurrency:
+      group: e2e-global
+      cancel-in-progress: false
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      CI: "true"
+      HEADLESS: "false"
+      E2E_WALLET_SEED_PHRASE: ${{ secrets.E2E_WALLET_SEED_PHRASE }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      VERCEL_TEAM_ID: ${{ secrets.VERCEL_TEAM_ID }}
+      PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+
+    steps:
+      - name: Preflight secrets check
+        id: preflight
+        shell: bash
+        run: |
+          missing=0
+          for key in E2E_WALLET_SEED_PHRASE VERCEL_TOKEN VERCEL_PROJECT_ID; do
+            if [ -z "${!key:-}" ]; then
+              echo "::warning::Missing required secret: ${key}"
+              missing=1
+            fi
+          done
+
+          if [ "$missing" -eq 1 ]; then
+            echo "run_e2e=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "run_e2e=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout
+        if: steps.preflight.outputs.run_e2e == 'true'
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup pnpm
+        if: steps.preflight.outputs.run_e2e == 'true'
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8.14.0
+
+      - name: Setup Node
+        if: steps.preflight.outputs.run_e2e == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: pnpm
+
+      - name: Install dependencies
+        if: steps.preflight.outputs.run_e2e == 'true'
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browser and deps
+        if: steps.preflight.outputs.run_e2e == 'true'
+        run: pnpm --filter e2e exec playwright install --with-deps chromium
+
+      - name: Wait for Vercel preview deployment
+        if: steps.preflight.outputs.run_e2e == 'true'
+        id: vercel
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          base_api="https://api.vercel.com/v6/deployments"
+          query="?projectId=${VERCEL_PROJECT_ID}&limit=20&meta-githubCommitSha=${PR_HEAD_SHA}"
+          if [ -n "${VERCEL_TEAM_ID:-}" ]; then
+            query="${query}&teamId=${VERCEL_TEAM_ID}"
+          fi
+
+          for i in {1..60}; do
+            response="$(curl -fsSL \
+              -H "Authorization: Bearer ${VERCEL_TOKEN}" \
+              "${base_api}${query}")"
+
+            deployment="$(echo "${response}" | jq -c --arg sha "${PR_HEAD_SHA}" \
+              '[.deployments[] | select(.meta.githubCommitSha == $sha)] | sort_by(.createdAt) | last')"
+
+            if [ "${deployment}" = "null" ] || [ -z "${deployment}" ]; then
+              echo "No Vercel deployment found yet for ${PR_HEAD_SHA}. Retrying..."
+              sleep 10
+              continue
+            fi
+
+            state="$(echo "${deployment}" | jq -r '.readyState // .state // ""')"
+            url="$(echo "${deployment}" | jq -r '.url // ""')"
+
+            echo "Found deployment state: ${state}"
+
+            if [ "${state}" = "READY" ] && [ -n "${url}" ]; then
+              echo "Resolved preview URL: https://${url}"
+              echo "::notice::Using Vercel preview URL https://${url}"
+              echo "preview_url=https://${url}" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+
+            if [ "${state}" = "ERROR" ] || [ "${state}" = "FAILED" ] || [ "${state}" = "CANCELED" ]; then
+              echo "Vercel deployment ended in state ${state}"
+              echo "${deployment}"
+              exit 1
+            fi
+
+            sleep 10
+          done
+
+          echo "Timed out waiting for Vercel preview deployment."
+          exit 1
+
+      - name: Warm up Vercel preview deployment
+        if: steps.preflight.outputs.run_e2e == 'true'
+        shell: bash
+        env:
+          PREVIEW_URL: ${{ steps.vercel.outputs.preview_url }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${PREVIEW_URL:-}" ]; then
+            echo "Missing PREVIEW_URL output from Vercel step."
+            exit 1
+          fi
+
+          echo "Warming up preview deployment at: ${PREVIEW_URL}"
+
+          # Give the deployment a short grace period before probing.
+          sleep 20
+
+          # Probe for up to 5 minutes to absorb first-hit build/cold-start latency.
+          for i in {1..30}; do
+            status="$(curl -sS -o /dev/null -w "%{http_code}" \
+              --max-time 20 \
+              --retry 2 \
+              --retry-delay 2 \
+              "${PREVIEW_URL}")"
+
+            echo "Warm-up attempt ${i}/30 -> HTTP ${status}"
+
+            if [[ "${status}" =~ ^2[0-9]{2}$ || "${status}" =~ ^3[0-9]{2}$ ]]; then
+              echo "Preview is responding (HTTP ${status})."
+              exit 0
+            fi
+
+            sleep 10
+          done
+
+          echo "Preview warm-up timed out without a successful HTTP response."
+          exit 1
+
+      - name: Run E2E tests
+        if: steps.preflight.outputs.run_e2e == 'true'
+        env:
+          PLAYWRIGHT_BASE_URL: ${{ steps.vercel.outputs.preview_url }}
+        run: xvfb-run -a pnpm --filter e2e test
+
+      - name: Upload Playwright report
+        if: ${{ !cancelled() && steps.preflight.outputs.run_e2e == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: pkg/e2e/playwright-report
+          retention-days: 14
+
+      - name: Skip E2E (missing secrets)
+        if: steps.preflight.outputs.run_e2e != 'true'
+        run: echo "Skipping E2E because required secrets are missing."

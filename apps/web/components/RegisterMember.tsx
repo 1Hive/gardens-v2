@@ -190,12 +190,14 @@ export function RegisterMember({
         transactions={[covenantAgreementTx, allowanceTx, registrationTx]}
         onClose={() => setIsOpenModal(false)}
         isOpen={isOpenModal}
+        testId="register"
       />
 
       <Button
         {...buttonProps}
         isLoading={isUnregistering}
         className="!w-full sm:!w-auto"
+        testId="register-member-button"
       >
         {isMember ? "Leave" : "Join"}
       </Button>
