@@ -23,7 +23,6 @@ import {
   isMemberDocument,
   isMemberQuery,
 } from "#/subgraph/.graphclient";
-import { LoupeButton } from "@/apps/web/components/LoupeButton";
 import {
   CommunityLogo,
   groupFlowers,
@@ -43,6 +42,7 @@ import {
 } from "@/components";
 import { Divider } from "@/components/Diivider";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { LoupeButton } from "@/components/LoupeButton";
 import MarkdownWrapper from "@/components/MarkdownWrapper";
 import { Skeleton } from "@/components/Skeleton";
 import { TokenGardenFaucet } from "@/components/TokenGardenFaucet";
