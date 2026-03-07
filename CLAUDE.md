@@ -6,6 +6,36 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Gardens v2 is a modular governance framework that enables communities to create and manage multiple governance pools with customizable parameters and voting mechanisms. The project implements Conviction Voting on top of Allo Protocol v2, deployed across 6+ networks including Gnosis Chain, Polygon, Arbitrum, Optimism, Base, and Celo.
 
+## Local Skills
+
+Claude should treat `skills/` as the local skill library for this repo.
+
+- Skill root: `./skills`
+- Skill entrypoint pattern: `./skills/<skill-name>/SKILL.md`
+- Before executing a task, check whether one of the skills below applies and load that `SKILL.md` first.
+- If multiple skills apply, use the smallest set needed and run them in this order:
+  1. `query-subgraph`
+  2. `read-contracts`
+  3. `write-contract`
+
+### Available Skills
+
+1. `query-subgraph`
+   - Path: `./skills/query-subgraph/SKILL.md`
+   - Use when the request is about indexed Gardens data, entity lookup, or GraphQL queries.
+2. `read-contracts`
+   - Path: `./skills/read-contracts/SKILL.md`
+   - Use when the request is about on-chain reads, live contract state, addresses, ABIs, or `cast call`.
+3. `write-contract`
+   - Path: `./skills/write-contract/SKILL.md`
+   - Use when the request is about preparing state-changing tx calldata, multisig payloads, or write transaction details.
+
+### Skill Invocation Hints
+
+- Users may invoke a skill explicitly with `$query-subgraph`, `$read-contracts`, or `$write-contract`.
+- If the user does not name a skill, infer it from intent using the trigger rules above.
+- When a skill is used, follow its workflow and safety rules exactly.
+
 ## Monorepo Architecture
 
 This is a pnpm workspace monorepo with Turbo for build orchestration:
