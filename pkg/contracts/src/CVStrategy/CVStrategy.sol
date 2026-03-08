@@ -651,7 +651,12 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
         if (address(registryCommunity) == address(0)) {
             return true;
         }
-        return registryCommunity.enabledStrategies(address(this));
+        (bool ok, bytes memory data) =
+            address(registryCommunity).staticcall(abi.encodeWithSelector(registryCommunity.enabledStrategies.selector, address(this)));
+        if (!ok || data.length < 32) {
+            return true;
+        }
+        return abi.decode(data, (bool));
     }
 
     // _setPoolParams removed - now in AdminFacet

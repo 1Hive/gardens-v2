@@ -123,7 +123,7 @@ contract CommunityMemberFacet is CommunityBaseFacet {
         if (totalMembers > 0) {
             totalMembers -= 1;
         }
-        deactivateAllStrategies(_member, memberStrategies);
+        deactivateAllStrategies(_member, memberStrategies, false);
         gardenToken.safeTransfer(_member, member.stakedAmount);
         emit MemberUnregistered(_member, member.stakedAmount);
     }
@@ -143,7 +143,7 @@ contract CommunityMemberFacet is CommunityBaseFacet {
         delete addressToMemberInfo[_member];
         totalMembers -= 1;
 
-        deactivateAllStrategies(_member, memberStrategies);
+        deactivateAllStrategies(_member, memberStrategies, true);
         gardenToken.safeTransfer(_transferAddress, member.stakedAmount);
         emit MemberKicked(_member, _transferAddress, member.stakedAmount);
     }
@@ -152,9 +152,14 @@ contract CommunityMemberFacet is CommunityBaseFacet {
     /*|              INTERNAL HELPERS              |*/
     /*|--------------------------------------------|*/
 
-    function deactivateAllStrategies(address _member, address[] memory memberStrategies) internal {
+    function deactivateAllStrategies(address _member, address[] memory memberStrategies, bool clearPowerMapping) internal {
         for (uint256 i = 0; i < memberStrategies.length; i++) {
-            CVStrategy(payable(memberStrategies[i])).deactivatePoints(_member);
+            address strategy = memberStrategies[i];
+            CVStrategy(payable(strategy)).deactivatePoints(_member);
+            if (clearPowerMapping) {
+                memberActivatedInStrategies[_member][strategy] = false;
+                memberPowerInStrategy[_member][strategy] = 0;
+            }
         }
     }
 }

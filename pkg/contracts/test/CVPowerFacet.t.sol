@@ -264,7 +264,7 @@ contract CVPowerFacetTest is Test {
         facet.deactivatePoints(member);
 
         assertEq(facet.totalPointsActivated(), 0);
-        assertEq(registry.lastDeactivated(), member);
+        assertEq(registry.lastDeactivated(), address(0));
     }
 
     function test_deactivatePoints_withdraws_support() public {

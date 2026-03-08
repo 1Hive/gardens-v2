@@ -30,6 +30,7 @@ contract StreamingEscrow is ProxyOwnableUpgrader, SuperAppBase {
     error OnlyHost(address sender); // 0x1cb0a1d5
     error SuperTokenTransferFailed(address to, uint256 amount);
     error SetOutflowFailed(address receiver, int96 flowRate);
+    error ReentrantCall();
 
     /*|--------------------------------------------|*/
     /*|              STORAGE                       |*/
@@ -43,7 +44,8 @@ contract StreamingEscrow is ProxyOwnableUpgrader, SuperAppBase {
 
     address public beneficiary;
     bool public disputed;
-    uint256[46] private __gap;
+    uint256 private _reentrancyLock;
+    uint256[45] private __gap;
 
     /*|--------------------------------------------|*/
     /*|              INITIALIZER                   |*/
@@ -106,32 +108,47 @@ contract StreamingEscrow is ProxyOwnableUpgrader, SuperAppBase {
         _;
     }
 
+    modifier nonReentrantEscrow() {
+        if (_reentrancyLock == 1) {
+            revert ReentrantCall();
+        }
+        _reentrancyLock = 1;
+        _;
+        _reentrancyLock = 0;
+    }
+
     /*|--------------------------------------------|*/
     /*|              EXTERNAL                      |*/
     /*|--------------------------------------------|*/
-    function setBeneficiary(address _beneficiary) external onlyStrategy {
+    function setBeneficiary(address _beneficiary) external onlyStrategy nonReentrantEscrow {
         if (_beneficiary == address(0)) {
             revert InvalidAddress();
         }
         address previous = beneficiary;
-        beneficiary = _beneficiary;
+        if (previous == _beneficiary) {
+            return;
+        }
 
         if (!disputed) {
             _setOutflow(0, previous);
             _setOutflow(_currentGDAFlowRate(), _beneficiary);
         }
+        beneficiary = _beneficiary;
     }
 
-    function setDisputed(bool _disputed) external onlyStrategy {
-        disputed = _disputed;
-        if (disputed) {
+    function setDisputed(bool _disputed) external onlyStrategy nonReentrantEscrow {
+        if (disputed == _disputed) {
+            return;
+        }
+        if (_disputed) {
             _setOutflow(0, beneficiary);
         } else {
             _setOutflow(_currentGDAFlowRate(), beneficiary);
         }
+        disputed = _disputed;
     }
 
-    function syncOutflow() public {
+    function syncOutflow() public nonReentrantEscrow {
         _drainExcessToBeneficiary();
         _setOutflow(disputed ? int96(0) : _currentGDAFlowRate(), beneficiary);
     }

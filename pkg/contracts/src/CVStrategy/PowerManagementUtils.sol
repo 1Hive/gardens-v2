@@ -34,6 +34,9 @@ library PowerManagementUtils {
         uint256 _pointConfigMaxAmount
     ) internal returns (uint256) {
         uint256 memberPower = _votingPowerRegistry.getMemberPowerInStrategy(_member, address(this));
+        if (memberPower >= _pointConfigMaxAmount) {
+            return 0;
+        }
         if (memberPower + _amountToStake > _pointConfigMaxAmount) {
             _amountToStake = _pointConfigMaxAmount - memberPower;
         }
@@ -47,14 +50,16 @@ library PowerManagementUtils {
     {
         uint256 totalStake = _votingPowerRegistry.getMemberStakedAmount(_member) + _amountToStake;
 
-        uint256 decimal = 18;
-        try ERC20(address(_votingPowerRegistry.ercAddress())).decimals() returns (uint8 _decimal) {
-            decimal = uint256(_decimal);
-        } catch {
+        uint256 scale = _decimalScale(_votingPowerRegistry);
+        if (totalStake > type(uint256).max / scale) {
+            totalStake = type(uint256).max / scale;
         }
-        uint256 newTotalPoints = Math.sqrt(totalStake * 10 ** decimal);
+        uint256 newTotalPoints = Math.sqrt(totalStake * scale);
         uint256 currentPoints = _votingPowerRegistry.getMemberPowerInStrategy(_member, address(this));
 
+        if (newTotalPoints <= currentPoints) {
+            return 0;
+        }
         uint256 pointsToIncrease = newTotalPoints - currentPoints;
 
         return pointsToIncrease;
@@ -72,11 +77,12 @@ library PowerManagementUtils {
         } else if (_pointSystem == PointSystem.Quadratic) {
             pointsToDecrease = decreasePowerQuadratic(_votingPowerRegistry, _member, _amountToUnstake);
         } else if (_pointSystem == PointSystem.Capped) {
-            if (_votingPowerRegistry.getMemberPowerInStrategy(_member, address(this)) < _pointConfigMaxAmount) {
+            uint256 memberPower = _votingPowerRegistry.getMemberPowerInStrategy(_member, address(this));
+            uint256 memberStake = _votingPowerRegistry.getMemberStakedAmount(_member);
+            if (memberPower < _pointConfigMaxAmount) {
                 pointsToDecrease = _amountToUnstake;
-            } else if (_votingPowerRegistry.getMemberStakedAmount(_member) - _amountToUnstake < _pointConfigMaxAmount) {
-                pointsToDecrease =
-                    _pointConfigMaxAmount - (_votingPowerRegistry.getMemberStakedAmount(_member) - _amountToUnstake);
+            } else if (memberStake < _pointConfigMaxAmount) {
+                pointsToDecrease = _pointConfigMaxAmount - memberStake;
             }
         } else if (_pointSystem == PointSystem.Custom) {
             // Custom is handled directly in CVPowerFacet, where current and previous values are available.
@@ -87,17 +93,35 @@ library PowerManagementUtils {
     function decreasePowerQuadratic(
         IVotingPowerRegistry _votingPowerRegistry,
         address _member,
-        uint256 _amountToUnstake
+        uint256
     ) internal returns (uint256) {
-        uint256 decimal = 18;
-        try ERC20(address(_votingPowerRegistry.ercAddress())).decimals() returns (uint8 _decimal) {
-            decimal = uint256(_decimal);
-        } catch {
+        uint256 scale = _decimalScale(_votingPowerRegistry);
+        uint256 newTotalStake = _votingPowerRegistry.getMemberStakedAmount(_member);
+        if (newTotalStake > type(uint256).max / scale) {
+            newTotalStake = type(uint256).max / scale;
         }
-        uint256 newTotalStake = _votingPowerRegistry.getMemberStakedAmount(_member) - _amountToUnstake;
-        uint256 newTotalPoints = Math.sqrt(newTotalStake * 10 ** decimal);
-        uint256 pointsToDecrease =
-            _votingPowerRegistry.getMemberPowerInStrategy(_member, address(this)) - newTotalPoints;
+        uint256 newTotalPoints = Math.sqrt(newTotalStake * scale);
+        uint256 currentPoints = _votingPowerRegistry.getMemberPowerInStrategy(_member, address(this));
+        if (newTotalPoints >= currentPoints) {
+            return 0;
+        }
+        uint256 pointsToDecrease = currentPoints - newTotalPoints;
         return pointsToDecrease;
+    }
+
+    function _decimalScale(IVotingPowerRegistry _votingPowerRegistry) internal view returns (uint256 scale) {
+        uint256 decimal = 18;
+        address ercAddress = address(_votingPowerRegistry.ercAddress());
+        if (ercAddress.code.length > 0) {
+            try ERC20(ercAddress).decimals() returns (uint8 _decimal) {
+                decimal = uint256(_decimal);
+            } catch {}
+        }
+
+        // 10**78 overflows uint256, cap to largest safe exponent.
+        if (decimal > 77) {
+            decimal = 77;
+        }
+        scale = 10 ** decimal;
     }
 }

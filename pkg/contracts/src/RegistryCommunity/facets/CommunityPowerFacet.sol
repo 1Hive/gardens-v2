@@ -91,7 +91,18 @@ contract CommunityPowerFacet is CommunityBaseFacet {
         onlyStrategyAddress(msg.sender, _strategy);
 
         if (memberActivatedInStrategies[_member][_strategy]) {
-            revert UserAlreadyActivated();
+            bool isListed;
+            for (uint256 i = 0; i < strategiesByMember[_member].length; i++) {
+                if (strategiesByMember[_member][i] == _strategy) {
+                    isListed = true;
+                    break;
+                }
+            }
+            if (isListed || memberPowerInStrategy[_member][_strategy] == 0) {
+                revert UserAlreadyActivated();
+            }
+            // Recover stale activation flags left behind by historical unregister flows.
+            memberActivatedInStrategies[_member][_strategy] = false;
         }
 
         Member memory member = addressToMemberInfo[_member];
@@ -194,6 +205,7 @@ contract CommunityPowerFacet is CommunityBaseFacet {
             if (memberStrategies[i] == _strategy) {
                 memberStrategies[i] = memberStrategies[memberStrategies.length - 1];
                 memberStrategies.pop();
+                break;
             }
         }
     }

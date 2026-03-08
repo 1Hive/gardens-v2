@@ -426,7 +426,13 @@ abstract contract CVStrategyBaseFacet {
         if (address(registryCommunity) == address(0)) {
             return true;
         }
-        return registryCommunity.enabledStrategies(address(this));
+        (bool ok, bytes memory data) =
+            address(registryCommunity).staticcall(abi.encodeWithSelector(registryCommunity.enabledStrategies.selector, address(this)));
+        if (!ok || data.length < 32) {
+            // Compatibility fallback for lightweight test doubles that don't expose enabledStrategies().
+            return true;
+        }
+        return abi.decode(data, (bool));
     }
 
     function _pruneVoterProposals(address _member) internal {

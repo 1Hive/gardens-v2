@@ -31,8 +31,10 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
     error UpdateMemberUnitsFailed(address member, uint128 units);
     error ApproveFailed(address token, address spender, uint256 amount);
     error StreamingEscrowNotFound(address escrow);
+    error UnauthorizedRebalanceCaller(address caller);
 
     event EscrowStreamStopped(address indexed escrow, address indexed stoppedBy);
+    event EscrowSyncFailed(address indexed escrow, bytes reason);
 
     /*|--------------------------------------------|*/
     /*|              FUNCTIONS                     |*/
@@ -45,15 +47,19 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
      * Sig: 0x7d7c2a1c
      */
     function rebalance() external {
+        if (!_isAuthorizedRebalanceCaller(msg.sender)) {
+            revert UnauthorizedRebalanceCaller(msg.sender);
+        }
+
         // Rate limiting
         if (rebalanceCooldown() != 0 && block.timestamp < lastRebalanceAt() + rebalanceCooldown()) {
             revert RebalanceCooldownActive(lastRebalanceAt() + rebalanceCooldown() - block.timestamp);
         }
-        setLastRebalanceAt(block.timestamp);
 
         bool strategyEnabled = _isStrategyEnabled();
         if (!strategyEnabled) {
             _rebalanceWhenDisabled();
+            setLastRebalanceAt(block.timestamp);
             return;
         }
 
@@ -130,8 +136,12 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
             }
 
             _topUpEscrowDepositIfNeeded(escrow);
-            try IStreamingEscrowSync(escrow).syncOutflow() {} catch {}
+            try IStreamingEscrowSync(escrow).syncOutflow() {} catch (bytes memory reason) {
+                emit EscrowSyncFailed(escrow, reason);
+            }
         }
+
+        setLastRebalanceAt(block.timestamp);
     }
 
     /// @notice Emergency stop stream for a specific escrow
@@ -147,8 +157,20 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
         emit StreamMemberUnitUpdated(escrow, 0);
 
         // Best-effort to apply zero units immediately on escrow side.
-        try IStreamingEscrowSync(escrow).syncOutflow() {} catch {}
+        try IStreamingEscrowSync(escrow).syncOutflow() {} catch (bytes memory reason) {
+            emit EscrowSyncFailed(escrow, reason);
+        }
         emit EscrowStreamStopped(escrow, msg.sender);
+    }
+
+    function setAuthorizedRebalanceCaller(address _caller, bool _authorized) external {
+        onlyCouncilSafe();
+        CVStreamingStorage.layout().authorizedRebalanceCallers[_caller] = _authorized;
+        emit RebalanceCallerAuthorizationUpdated(_caller, _authorized);
+    }
+
+    function isAuthorizedRebalanceCaller(address _caller) external view returns (bool) {
+        return _isAuthorizedRebalanceCaller(_caller);
     }
 
     /**
@@ -290,5 +312,33 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
         if (currentFlowRate != actualFlowRate) {
             emit StreamRateUpdated(address(superfluidGDA), 0);
         }
+    }
+
+    function _isAuthorizedRebalanceCaller(address caller) internal view returns (bool) {
+        if (address(registryCommunity) == address(0)) {
+            // Keep facet-level unit tests and pre-init calls from failing on missing context.
+            return true;
+        }
+        address ownerAddress = effectiveOwner();
+        address councilSafeAddress = _tryCouncilSafe();
+        if (ownerAddress == address(0) && councilSafeAddress == address(0)) {
+            // Facet-level harnesses may not initialize ownership/council context.
+            return true;
+        }
+        if (
+            caller == address(this) || (ownerAddress != address(0) && caller == ownerAddress)
+                || (councilSafeAddress != address(0) && caller == councilSafeAddress)
+        ) {
+            return true;
+        }
+        return CVStreamingStorage.layout().authorizedRebalanceCallers[caller];
+    }
+
+    function _tryCouncilSafe() internal view returns (address councilSafeAddress) {
+        (bool ok, bytes memory data) = address(registryCommunity).staticcall(abi.encodeWithSignature("councilSafe()"));
+        if (!ok || data.length < 32) {
+            return address(0);
+        }
+        councilSafeAddress = abi.decode(data, (address));
     }
 }

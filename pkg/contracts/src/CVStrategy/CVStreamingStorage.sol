@@ -11,6 +11,7 @@ library CVStreamingStorage {
         // Reserved to preserve storage layout compatibility with previous versions.
         bool __deprecated_disabledConvictionSnapshotTaken;
         mapping(uint256 => address) proposalEscrow;
+        mapping(address => bool) authorizedRebalanceCallers;
     }
 
     function layout() internal pure returns (Layout storage l) {
@@ -32,6 +33,7 @@ abstract contract CVStreamingBase {
     /*|--------------------------------------------|*/
     event StreamMemberUnitUpdated(address indexed member, int96 newUnit);
     event StreamRateUpdated(address indexed gda, uint256 flowRate);
+    event RebalanceCallerAuthorizationUpdated(address indexed caller, bool authorized);
 
     function lastRebalanceAt() public view returns (uint256) {
         return CVStreamingStorage.layout().lastRebalanceAt;

@@ -120,7 +120,7 @@ contract CVPowerFacet is CVStrategyBaseFacet {
 
     // Sig: 0x6453d9c4
     function deactivatePoints(address _member) external onlyRegistryCommunity {
-        _deactivatePoints(_member);
+        _deactivatePointsFromRegistry(_member);
     }
 
     /*|--------------------------------------------|*/
@@ -138,6 +138,16 @@ contract CVPowerFacet is CVStrategyBaseFacet {
         // remove support from all proposals
         _withdraw(_member);
         emit PointsDeactivated(_member);
+    }
+
+    function _deactivatePointsFromRegistry(address _member) internal {
+        totalPointsActivated -= votingPowerRegistry.getMemberPowerInStrategy(_member, address(this));
+
+        bool hadStakeToWithdraw = totalVoterStakePct[_member] != 0 || voterStakedProposals[_member].length != 0;
+        if (hadStakeToWithdraw) {
+            _withdraw(_member);
+            emit PointsDeactivated(_member);
+        }
     }
 
     function _withdraw(address _member) internal {

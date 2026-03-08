@@ -1038,8 +1038,9 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         // gardenMember isn't in allowlist, so should revert
         vm.startPrank(gardenMember);
         token.approve(address(registryCommunity), 350 * DECIMALS);
-        vm.expectRevert(abi.encodeWithSelector(CVStrategy.UserCannotExecuteAction.selector, gardenMember));
         _registryCommunity().increasePower(350 * DECIMALS);
+        assertEq(registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)), 0);
+        assertEq(registryCommunity.getMemberStakedAmount(gardenMember), MINIMUM_STAKE + 350 * DECIMALS);
         vm.stopPrank();
     }
 
