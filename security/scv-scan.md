@@ -188,7 +188,7 @@ Unchanged. Guards still commented out with `// TODO: Uncomment when contract siz
 **Description:**
 Unchanged. Both loops remain unbounded and no `MAX_STRATEGIES_PER_MEMBER` or `MAX_PROPOSALS_PER_VOTER` cap was added. Additionally, the new `CVSyncPowerFacet.batchSyncPower(address[] calldata _members)` adds a caller-controlled outer loop, each iteration of which calls `_handlePowerDecrease` which itself iterates over `voterStakedProposals[member]` — creating a **nested unbounded loop** in the new code.
 
-**PoC:** `test_M3_GasScalesWithStrategyCount` (strategies loop) and `test_P3_DeactivateGasScalesWithVotedProposalCount` (`voterStakedProposals` loop) in `pkg/contracts/test/SecurityPoC.t.sol`.
+**PoC:** `test_M3_GasScalesWithStrategyCount` (strategies loop) and `test_P3_DeactivateGasScalesWithVotedProposalCount` (`voterStakedProposals` loop) in `pkg/contracts/test/SecurityPoC.t.sol` (both PASSING ✓).
 
 **Recommendation:** Add configurable array caps and expose paginated batch functions.
 
@@ -242,7 +242,7 @@ function rebalance() external {          // ← no onlyOwner / no role check
 ### [M-7] Push-payment DoS in `CollateralVault.withdrawCollateral` — challenger ETH refund permanently locks dispute (CARRY-OVER from v1)
 
 **Files:**
-- `pkg/contracts/src/CollateralVault.sol` (`withdrawCollateral`)
+- `pkg/contracts/src/CVStrategy/CollateralVault.sol` (`withdrawCollateral`)
 - `pkg/contracts/src/CVStrategy/facets/CVDisputeFacet.sol` (`rule`)
 
 **Severity:** Medium
@@ -257,7 +257,7 @@ function rebalance() external {          // ← no onlyOwner / no role check
 4. The Safe tribunal calls `executeRuling(disputeId, ruling)` → `rule()` → `withdrawCollateral(challenger, amount)` → push-payment reverts.
 5. Proposal stays in `Disputed` state permanently; funds cannot be distributed or cancelled.
 
-**PoC:** `test_P2_ETHRejectorChallengerLocksDisputeForever` in `pkg/contracts/test/SecurityPoC.t.sol`.
+**PoC:** `test_P2_ETHRejectorChallengerLocksDisputeForever` in `pkg/contracts/test/SecurityPoC.t.sol` (PASSING ✓).
 
 **Recommendation:**
 Replace push-payment with a pull-payment pattern:
