@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { ChevronRightIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { toast } from "react-toastify";
+import TooltipIfOverflow from "./TooltipIfOverflow";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useFlag } from "@/hooks/useFlag";
 import { queryByChain } from "@/providers/urql";
@@ -13,7 +13,6 @@ import {
   queryMap,
 } from "@/services/getTitlesFromUrlSegments";
 import { truncateString } from "@/utils/text";
-import TooltipIfOverflow from "./TooltipIfOverflow";
 interface Breadcrumb {
   href: string;
   label: string;

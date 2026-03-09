@@ -25,6 +25,7 @@ import {
   useEnsName,
   useSwitchNetwork,
 } from "wagmi";
+import { getCommunityNameDocument } from "#/subgraph/.graphclient";
 import TooltipIfOverflow from "./TooltipIfOverflow";
 import { isSafeAvatarUrl } from "@/app/api/utils";
 import { BeeKeeperNFT, FirstHolderNFT, ProtopianNFT } from "@/assets";
@@ -32,10 +33,9 @@ import { walletIcon } from "@/assets";
 import { Button, DisplayNumber } from "@/components";
 import { ChainIcon } from "@/configs/chains";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
-import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { useOwnerOfNFT } from "@/hooks/useOwnerOfNFT";
+import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { formatAddress } from "@/utils/formatAddress";
-import { getCommunityNameDocument } from "#/subgraph/.graphclient";
 
 export function ConnectWallet() {
   const path = usePathname();
