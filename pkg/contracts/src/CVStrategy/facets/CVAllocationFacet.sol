@@ -45,6 +45,8 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
     error ProposalInvalidForAllocation(uint256 _proposalId, ProposalStatus _proposalStatus); // 0x9c3f44fe
     error NativeTransferFailed(address recipient, uint256 amount); // 0xa5b05eec
     error ProposalSupportDuplicated(uint256 _proposalId, uint256 index); //0xadebb154
+    error TooManyAllocations(uint256 provided, uint256 maxAllowed);
+    error TooManyVoterStakedProposals(address voter, uint256 current, uint256 maxAllowed);
 
     /*|--------------------------------------------|*/
     /*|              MODIFIERS                     |*/
@@ -70,6 +72,9 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
     function allocate(bytes memory _data, address _sender) external payable onlyAllo onlyInitialized {
         registryCommunity.onlyStrategyEnabled(address(this));
         ProposalSupport[] memory pv = abi.decode(_data, (ProposalSupport[]));
+        if (pv.length > MAX_ALLOCATIONS_PER_TX) {
+            revert TooManyAllocations(pv.length, MAX_ALLOCATIONS_PER_TX);
+        }
         for (uint256 i = 0; i < pv.length; i++) {
             _checkProposalAllocationValidity(pv[i].proposalId, pv[i].deltaSupport);
         }
@@ -152,6 +157,10 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
                 }
             }
             if (!hasProposal) {
+                uint256 currentCount = voterStakedProposals[_sender].length;
+                if (currentCount >= MAX_VOTER_STAKED_PROPOSALS) {
+                    revert TooManyVoterStakedProposals(_sender, currentCount, MAX_VOTER_STAKED_PROPOSALS);
+                }
                 voterStakedProposals[_sender].push(proposal.proposalId);
             }
             if (previousStakedPoints <= stakedPoints) {

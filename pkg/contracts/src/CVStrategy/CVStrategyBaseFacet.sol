@@ -63,6 +63,10 @@ abstract contract CVStrategyBaseFacet {
     /*|--------------------------------------------|*/
     uint256 public constant RULING_OPTIONS = 3;
     uint256 public constant DISPUTE_COOLDOWN_SEC = 2 hours;
+    uint256 public constant MAX_PROPOSAL_COUNT = 128;
+    uint256 public constant MAX_ALLOCATIONS_PER_TX = 64;
+    uint256 public constant MAX_VOTER_STAKED_PROPOSALS = 128;
+    uint256 public constant MAX_SYNC_BATCH_MEMBERS = 128;
 
     /// @notice Native token address (defined here to avoid import conflicts with allo-v2)
     address internal constant NATIVE_TOKEN = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;

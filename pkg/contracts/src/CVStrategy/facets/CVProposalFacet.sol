@@ -38,6 +38,7 @@ contract CVProposalFacet is CVStrategyBaseFacet, CVStreamingBase {
     error CannotEditRequestedAmountWithActiveSupport(uint256 proposalId, uint256 currentAmount, uint256 newAmount); // 0xb5018617
     error StreamingEscrowFactoryNotSet(); // 0x1dd8d4b9
     error UpdateMemberUnitsFailed(address member, uint128 units);
+    error ProposalLimitReached(uint256 current, uint256 max);
 
     /*|--------------------------------------------|*/
     /*|              EVENTS                        |*/
@@ -88,6 +89,9 @@ contract CVProposalFacet is CVStrategyBaseFacet, CVStreamingBase {
             );
         }
 
+        if (proposalCounter >= MAX_PROPOSAL_COUNT) {
+            revert ProposalLimitReached(proposalCounter, MAX_PROPOSAL_COUNT);
+        }
         uint256 proposalId = ++proposalCounter;
         Proposal storage p = proposals[proposalId];
 

@@ -27,6 +27,7 @@ contract CVSyncPowerFacet is CVStrategyBaseFacet {
     /*|--------------------------------------------|*/
 
     error NotAuthorizedSyncCaller(address caller);
+    error SyncBatchTooLarge(uint256 provided, uint256 maxAllowed);
 
     /*|--------------------------------------------|*/
     /*|              EVENTS                        |*/
@@ -80,6 +81,9 @@ contract CVSyncPowerFacet is CVStrategyBaseFacet {
     function batchSyncPower(address[] calldata _members) external {
         if (!CVSyncPowerStorage.layout().authorizedSyncCallers[msg.sender]) {
             revert NotAuthorizedSyncCaller(msg.sender);
+        }
+        if (_members.length > MAX_SYNC_BATCH_MEMBERS) {
+            revert SyncBatchTooLarge(_members.length, MAX_SYNC_BATCH_MEMBERS);
         }
 
         for (uint256 i = 0; i < _members.length; i++) {

@@ -26,6 +26,7 @@ contract CommunityPowerFacet is CommunityBaseFacet {
     error DecreaseUnderMinimum(); // 0x9c47d02e
     error CantDecreaseMoreThanPower(uint256 _decreaseAmount, uint256 _currentPower); // 0x8a11f318
     error PointsDeactivated(); // 0xd4d3290e
+    error TooManyMemberStrategies(address member, uint256 current, uint256 maxAllowed);
 
     /*|--------------------------------------------|*/
     /*|              EVENTS                        |*/
@@ -131,6 +132,10 @@ contract CommunityPowerFacet is CommunityBaseFacet {
             }
         }
         if (!alreadyListed) {
+            uint256 current = strategiesByMember[_member].length;
+            if (current >= MAX_STRATEGIES_PER_MEMBER) {
+                revert TooManyMemberStrategies(_member, current, MAX_STRATEGIES_PER_MEMBER);
+            }
             strategiesByMember[_member].push(_strategy);
         }
 

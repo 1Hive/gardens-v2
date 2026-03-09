@@ -53,6 +53,8 @@ abstract contract CommunityBaseFacet is ProxyOwnableUpgrader, ReentrancyGuardUpg
     address public constant NATIVE = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
     /// @notice The precision scale used in the contract to avoid loss of precision
     uint256 public constant PRECISION_SCALE = 10 ** 4;
+    /// @notice Safety cap to keep per-member strategy iteration bounded.
+    uint256 public constant MAX_STRATEGIES_PER_MEMBER = 64;
     /// @notice The maximum fee that can be charged to the community
     uint256 public constant MAX_FEE = 10 * PRECISION_SCALE;
     /// @notice Role to council safe members

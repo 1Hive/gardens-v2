@@ -43,6 +43,16 @@ contract HypercertSignalPool is BaseStrategyUpgradeable {
 
     /// @notice Precision denominator for decay (10^7), matching ConvictionsUtils.D
     uint256 public constant D = ConvictionsUtils.D;
+    /// @notice Bound total registered hypercerts to keep global scans bounded.
+    uint256 public constant MAX_HYPERCERT_COUNT = 128;
+    /// @notice Bound per-transaction allocation fanout.
+    uint256 public constant MAX_SIGNAL_ALLOCATIONS = 64;
+    /// @notice Bound reclaim batch size.
+    uint256 public constant MAX_RECLAIM_BATCH = 64;
+
+    error HypercertLimitReached(uint256 current, uint256 maxAllowed);
+    error AllocationBatchTooLarge(uint256 provided, uint256 maxAllowed);
+    error ReclaimBatchTooLarge(uint256 provided, uint256 maxAllowed);
 
     // ── Storage ──────────────────────────────────────────────────────
 
@@ -141,6 +151,9 @@ contract HypercertSignalPool is BaseStrategyUpgradeable {
         uint256 hypercertId = abi.decode(_data, (uint256));
         if (hypercertId == 0) revert ZeroHypercertId();
         if (_hypercertIndex[hypercertId] != 0) revert HypercertAlreadyRegistered(hypercertId);
+        if (_hypercertIds.length >= MAX_HYPERCERT_COUNT) {
+            revert HypercertLimitReached(_hypercertIds.length, MAX_HYPERCERT_COUNT);
+        }
 
         _hypercertIds.push(hypercertId);
         _hypercertIndex[hypercertId] = _hypercertIds.length; // 1-indexed
@@ -164,6 +177,9 @@ contract HypercertSignalPool is BaseStrategyUpgradeable {
         if (!votingPowerRegistry.isMember(_sender)) revert NotEligibleVoter(_sender);
 
         HypercertSignal[] memory signals = abi.decode(_data, (HypercertSignal[]));
+        if (signals.length > MAX_SIGNAL_ALLOCATIONS) {
+            revert AllocationBatchTooLarge(signals.length, MAX_SIGNAL_ALLOCATIONS);
+        }
         uint256 currentUsed = voterUsedPoints[_sender];
 
         for (uint256 i = 0; i < signals.length;) {
@@ -274,6 +290,9 @@ contract HypercertSignalPool is BaseStrategyUpgradeable {
     ///      Also decrements stakedAmounts to keep data consistent.
     /// @param _hypercertIds Array of deregistered hypercert IDs to reclaim from
     function reclaimStakes(uint256[] calldata _hypercertIds) external {
+        if (_hypercertIds.length > MAX_RECLAIM_BATCH) {
+            revert ReclaimBatchTooLarge(_hypercertIds.length, MAX_RECLAIM_BATCH);
+        }
         for (uint256 i = 0; i < _hypercertIds.length;) {
             uint256 hcId = _hypercertIds[i];
             if (hypercertActive[hcId]) revert HypercertStillActive(hcId);
