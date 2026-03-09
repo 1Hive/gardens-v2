@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import {
   getProposalTitleDocument,
@@ -72,11 +73,28 @@ export function titleCaseStatus(status?: string): string | undefined {
 
 const titlePrefix = "Gardens - ";
 
+function getRequestMetadataBase(): URL | undefined {
+  const requestHeaders = headers();
+  const host =
+    requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host");
+  if (!host) return undefined;
+  const proto =
+    requestHeaders.get("x-forwarded-proto") ??
+    (host.includes("localhost") ? "http" : "https");
+  try {
+    return new URL(`${proto}://${host}`);
+  } catch {
+    return undefined;
+  }
+}
+
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
+  const metadataBase = getRequestMetadataBase();
   const fallbackDescription = ENDED_PROPOSAL_DESCRIPTION;
   const fallbackMetadata: Metadata = {
+    metadataBase,
     title: FALLBACK_TITLE,
     description: fallbackDescription,
     openGraph: {
@@ -168,6 +186,7 @@ export async function generateMetadata({
       rawTitle && rawTitle.length > 0 ? rawTitle : FALLBACK_TITLE;
 
     return {
+      metadataBase,
       title,
       description,
       openGraph: {

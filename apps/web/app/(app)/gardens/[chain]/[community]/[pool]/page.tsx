@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import {
   getCommunityNameDocument,
@@ -40,6 +41,21 @@ function buildOgImagePath(
   return `/gardens/${params.chain}/${params.community}/${params.pool}/${OG_IMAGE_TOKEN}${query}`;
 }
 
+function getRequestMetadataBase(): URL | undefined {
+  const requestHeaders = headers();
+  const host =
+    requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host");
+  if (!host) return undefined;
+  const proto =
+    requestHeaders.get("x-forwarded-proto") ??
+    (host.includes("localhost") ? "http" : "https");
+  try {
+    return new URL(`${proto}://${host}`);
+  } catch {
+    return undefined;
+  }
+}
+
 const titlePrefix = "Gardens - ";
 
 async function communityExistsOnChain(
@@ -68,6 +84,7 @@ async function communityExistsOnChain(
 export async function generateMetadata({
   params,
 }: PageParams): Promise<Metadata> {
+  const metadataBase = getRequestMetadataBase();
   const chainId = Number(params.chain);
   const chainConfig = chainConfigMap[params.chain] ?? chainConfigMap[chainId];
   const strategyAddress = await resolveStrategyAddress(
@@ -80,6 +97,7 @@ export async function generateMetadata({
   };
   let description = getDescriptionText(undefined);
   const fallbackMetadata: Metadata = {
+    metadataBase,
     title: titlePrefix + FALLBACK_TITLE,
     description,
     openGraph: {
@@ -145,6 +163,7 @@ export async function generateMetadata({
     const actualDescription = getDescriptionText(poolType);
     const ogImageUrl = buildOgImagePath(normalizedParams, status);
     return {
+      metadataBase,
       title: poolTitle,
       description: actualDescription,
       openGraph: {
