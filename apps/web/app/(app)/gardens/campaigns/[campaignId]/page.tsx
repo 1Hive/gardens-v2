@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import ClientPage from "./client-page";
 import { SuperBanner } from "@/assets";
 import { CAMPAIGNS, CampaignId } from "@/utils/campaigns";
+import { logOnce } from "@/utils/log";
 
 type PageParams = {
   params: {
@@ -38,6 +39,10 @@ export async function generateMetadata({
   return fallbackMetadata;
 }
 
-export default function Page({ params }: PageParams) {
+export default function Page({
+  params,
+}: PageParams) {
+  logOnce("debug", "Loading page: (app)/gardens/campaigns/[campaignId]/page.tsx");
   return <ClientPage campaignId={params.campaignId} />;
 }
+

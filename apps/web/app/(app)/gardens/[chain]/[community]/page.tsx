@@ -5,6 +5,7 @@ import ClientPage from "./client-page";
 import { FALLBACK_TITLE, description } from "./opengraph-image";
 import { chainConfigMap } from "@/configs/chains";
 import { queryByChain } from "@/providers/urql";
+import { logOnce } from "@/utils/log";
 
 type PageParams = {
   params: {
@@ -13,10 +14,14 @@ type PageParams = {
   };
 };
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
+
 const OG_IMAGE_VERSION = "v=3";
 
 function buildOgImagePath(params: PageParams["params"]) {
-  return `/gardens/${params.chain}/${params.community}/opengraph-image-w94mav?${OG_IMAGE_VERSION}`;
+  return `/gardens/${params.chain}/${params.community}/opengraph-image?${OG_IMAGE_VERSION}`;
 }
 
 function getRequestMetadataBase(): URL | undefined {
@@ -116,6 +121,10 @@ export async function generateMetadata({
   }
 }
 
-export default function Page({ params }: PageParams) {
+export default function Page({
+  params,
+}: PageParams) {
+  logOnce("debug", "Loading page: (app)/gardens/[chain]/[community]/page.tsx");
   return <ClientPage params={params} />;
 }
+

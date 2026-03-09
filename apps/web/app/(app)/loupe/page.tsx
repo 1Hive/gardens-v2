@@ -25,6 +25,7 @@ import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { CHAINS } from "@/configs/chains";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import { cvStrategyABI, registryCommunityABI } from "@/src/generated";
+import { logOnce } from "@/utils/log";
 import { shortenAddress } from "@/utils/text";
 
 type DiamondFacet = {
@@ -182,6 +183,7 @@ const normalizeArgsForInputs = (
   );
 
 export default function DiamondAdminPage() {
+  logOnce("debug", "Loading page: (app)/loupe/page.tsx");
   const [addressInput, setAddressInput] = useState("");
   const [diamondAddress, setDiamondAddress] = useState<Address>();
   const [selectedChainId, setSelectedChainId] = useState<number>(
@@ -970,3 +972,4 @@ export default function DiamondAdminPage() {
     </div>
   );
 }
+

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import ClientPage from "./client-page";
 import { PlantBanner } from "@/assets";
+import { logOnce } from "@/utils/log";
 
 export const description =
   "Discover and join campaigns across the Gardens ecosystem.";
@@ -26,5 +27,7 @@ export const metadata: Metadata = {
 };
 
 export default function Page() {
+  logOnce("debug", "Loading page: (app)/gardens/campaigns/page.tsx");
   return <ClientPage />;
 }
+

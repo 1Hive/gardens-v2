@@ -11,6 +11,7 @@ import { resolveStrategyAddress, stringifySearchParams } from "./route-helpers";
 import { chainConfigMap, type ChainData } from "@/configs/chains";
 import { queryByChain } from "@/providers/urql";
 import { PoolTypes } from "@/types";
+import { logOnce } from "@/utils/log";
 import { hasEthereumAddressFormat } from "@/utils/web3";
 
 type PageParams = {
@@ -25,7 +26,7 @@ export const dynamic = "force-dynamic"; // keep metadata fresh for status-aware 
 export const revalidate = 0;
 export const fetchCache = "force-no-store";
 
-const OG_IMAGE_TOKEN = "opengraph-image-12jbcu";
+const OG_IMAGE_TOKEN = "opengraph-image";
 const OG_IMAGE_VERSION = "v=4";
 
 function buildOgImagePath(
@@ -193,6 +194,7 @@ type PageProps = PageParams & {
 };
 
 export default async function Page(props: PageProps) {
+  logOnce("debug", "Loading page: (app)/gardens/[chain]/[community]/[pool]/page.tsx");
   const numericChain = Number(props.params.chain);
   const chainConfig =
     chainConfigMap[props.params.chain] ?? chainConfigMap[numericChain];
@@ -240,3 +242,4 @@ export default async function Page(props: PageProps) {
     />
   );
 }
+

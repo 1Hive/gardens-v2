@@ -1,9 +1,26 @@
 /** @type {import('next').NextConfig} */
+const isProdEnv =
+  process.env.NEXT_PUBLIC_ENV_GARDENS === "prod" ||
+  process.env.VERCEL_ENV === "production";
+
 module.exports = {
   reactStrictMode: true,
   async rewrites() {
     const addressPattern = "(0x[a-fA-F0-9]{40})";
     return [
+      {
+        source: "/gardens/:chainId/:community/opengraph-image-:hash",
+        destination: "/gardens/:chainId/:community/opengraph-image",
+      },
+      {
+        source: "/gardens/:chainId/:community/:pool/opengraph-image-:hash",
+        destination: "/gardens/:chainId/:community/:pool/opengraph-image",
+      },
+      {
+        source:
+          "/gardens/:chainId/:community/:pool/:proposal/opengraph-image-:hash",
+        destination: "/gardens/:chainId/:community/:pool/:proposal/opengraph-image",
+      },
       {
         source:
           "/gardens/:chainId/:governanceToken/:community/:poolId/:pool" +
@@ -47,15 +64,15 @@ module.exports = {
       config.output.chunkFilename = "chunks/[name].js";
     }
     // Silence dynamic require warnings coming from GraphQL Mesh/Yoga packages bundled via .graphclient
-    const criticalRequestExpr = "Critical dependency: the request of a dependency is an expression";
+    const criticalRequestExpr =
+      "Critical dependency: the request of a dependency is an expression";
     const meshModules = /@graphql-mesh|@whatwg-node\/fetch|graphql-yoga/;
     const existingIgnore = config.ignoreWarnings ?? [];
     config.ignoreWarnings = [
       ...existingIgnore,
       (warning) => {
         const msg = typeof warning?.message === "string" ? warning.message : "";
-        const resource =
-          (warning?.module && warning.module.resource) || "";
+        const resource = (warning?.module && warning.module.resource) || "";
         return msg.includes(criticalRequestExpr) && meshModules.test(resource);
       },
     ];
@@ -141,15 +158,17 @@ module.exports = withSentryConfig(module.exports, {
   // side errors will fail.
   tunnelRoute: "/monitoring",
 
-  // Hides source maps from generated client bundles
-  hideSourceMaps: false,
+  // Keep source maps hidden only in production environments
+  hideSourceMaps: isProdEnv,
+  sourcemaps: {
+    deleteSourcemapsAfterUpload: isProdEnv,
+  },
 
-  // Automatically tree-shake Sentry logger statements to reduce bundle size
-  disableLogger: true,
-
-  // Enables automatic instrumentation of Vercel Cron Monitors. (Does not yet work with App Router route handlers.)
-  // See the following for more information:
-  // https://docs.sentry.io/product/crons/
-  // https://vercel.com/docs/cron-jobs
-  automaticVercelMonitors: true,
+  // Replacements for deprecated `disableLogger` and `automaticVercelMonitors`
+  webpack: {
+    treeshake: {
+      removeDebugLogging: true,
+    },
+    automaticVercelMonitors: true,
+  },
 });

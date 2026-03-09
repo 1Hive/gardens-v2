@@ -5,6 +5,7 @@ import {
   resolveStrategyAddress,
   stringifySearchParams,
 } from "../route-helpers";
+import { logOnce } from "@/utils/log";
 
 const TITLE = "Gardens - Create a proposal";
 const DESCRIPTION =
@@ -19,7 +20,7 @@ type PageParams = {
 };
 
 function buildPoolOgImagePath(params: PageParams["params"]) {
-  return `/gardens/${params.chain}/${params.community}/${params.pool}/opengraph-image-12jbcu`;
+  return `/gardens/${params.chain}/${params.community}/${params.pool}/opengraph-image?v=4`;
 }
 
 export async function generateMetadata({
@@ -55,7 +56,14 @@ type PageProps = PageParams & {
   searchParams: Record<string, string | string[] | undefined>;
 };
 
-export default async function Page({ params, searchParams }: PageProps) {
+export default async function Page({
+  params,
+  searchParams,
+}: PageProps) {
+  logOnce(
+    "debug",
+    "Loading page: (app)/gardens/[chain]/[community]/[pool]/create-proposal/page.tsx",
+  );
   const strategyAddress = await resolveStrategyAddress(
     params.chain,
     params.pool,
@@ -74,3 +82,4 @@ export default async function Page({ params, searchParams }: PageProps) {
 
   return <ClientPage params={{ ...params, pool: normalizedSlug }} />;
 }
+

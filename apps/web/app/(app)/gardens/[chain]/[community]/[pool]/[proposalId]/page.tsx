@@ -13,6 +13,7 @@ import {
 import { getConfigByChain } from "@/configs/chains";
 import { queryByChain } from "@/providers/urql";
 import { ProposalStatus } from "@/types";
+import { logOnce } from "@/utils/log";
 import {
   buildProposalEntityId,
   extractProposalNumber,
@@ -29,7 +30,7 @@ export const DISPUTED_PROPOSAL_DESCRIPTION =
   "This proposal is disputed and now going through arbitration.";
 export const ENDED_PROPOSAL_DESCRIPTION =
   "This proposal has ended and can no longer receive support.";
-export const OG_IMAGE_TOKEN = "opengraph-image-1eoc0x";
+export const OG_IMAGE_TOKEN = "opengraph-image";
 export const OG_IMAGE_VERSION = "v=3";
 
 type PageProps = {
@@ -224,6 +225,10 @@ export default async function Page({
   params,
   searchParams,
 }: PagePropsWithSearch) {
+  logOnce(
+    "debug",
+    "Loading page: (app)/gardens/[chain]/[community]/[pool]/[proposalId]/page.tsx",
+  );
   const strategyAddress = await resolveStrategyAddress(
     params.chain,
     params.pool,
@@ -256,3 +261,4 @@ export default async function Page({
     />
   );
 }
+
