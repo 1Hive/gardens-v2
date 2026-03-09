@@ -14,7 +14,7 @@ type PageParams = {
 };
 
 function buildCommunityOgImagePath(params: PageParams["params"]) {
-  return `/gardens/${params.chain}/${params.community}/opengraph-image?v=3`;
+  return `/gardens/${params.chain}/${params.community}/create-pool/opengraph-image?v=1`;
 }
 
 export function generateMetadata({ params }: PageParams): Metadata {

@@ -20,7 +20,7 @@ type PageParams = {
 };
 
 function buildPoolOgImagePath(params: PageParams["params"]) {
-  return `/gardens/${params.chain}/${params.community}/${params.pool}/opengraph-image?v=4`;
+  return `/gardens/${params.chain}/${params.community}/${params.pool}/create-proposal/opengraph-image?v=1`;
 }
 
 export async function generateMetadata({

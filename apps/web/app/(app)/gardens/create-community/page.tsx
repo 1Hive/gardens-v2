@@ -6,7 +6,7 @@ import { logOnce } from "@/utils/log";
 const TITLE = "Gardens - Create your community";
 const DESCRIPTION =
   "Launch a new Gardens community and invite members to collaborate, govern, and fund shared ideas.";
-const OG_IMAGE_PATH = "/gardens/opengraph-image?v=1";
+const OG_IMAGE_PATH = "/gardens/create-community/opengraph-image?v=1";
 
 export const metadata: Metadata = {
   title: TITLE,
