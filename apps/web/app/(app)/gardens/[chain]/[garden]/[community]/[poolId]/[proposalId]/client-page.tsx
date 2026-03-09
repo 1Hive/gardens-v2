@@ -337,7 +337,7 @@ export default function ClientPage({ params }: ClientPageProps) {
       {
         condition:
           currentConvictionPct == null ||
-          thresholdPct == null ||
+          thresholdPct === undefined ||
           currentConvictionPct <= thresholdPct,
         message: "Proposal has not reached the threshold yet",
       },
@@ -467,8 +467,7 @@ export default function ClientPage({ params }: ClientPageProps) {
               {/* Conviction Progress */}
               {proposalData.strategy?.isEnabled &&
                 currentConvictionPct != null &&
-                (isSignalingType ||
-                  (thresholdPct != null && totalSupportPct != null)) && (
+                totalSupportPct != null && (
                   <div className="">
                     {(status === "active" || status === "disputed") && (
                       <div className="flex flex-col gap-2">
@@ -823,8 +822,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                     {/* Conviction Progress */}
                     {proposalData.strategy.isEnabled &&
                       currentConvictionPct != null &&
-                      (isSignalingType ||
-                        (thresholdPct != null && totalSupportPct != null)) && (
+                      totalSupportPct != null && (
                         <div className="">
                           {(status === "active" || status === "disputed") && (
                             <div className="flex flex-col gap-2">
