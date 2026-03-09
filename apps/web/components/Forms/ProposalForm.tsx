@@ -33,6 +33,7 @@ import {
   calculatePercentageBigInt,
   convertSecondsToReadableTime,
 } from "@/utils/numbers";
+import { formatProposalSlug } from "@/utils/proposals";
 
 //protocol : 1 => means ipfs!, to do some checks later
 type FormInputs = {
@@ -217,9 +218,10 @@ export const ProposalForm = ({
       });
       setLoading(false);
       if (pathname) {
+        const proposalSlug = formatProposalSlug(proposalId.toString());
         const newPath = pathname.replace(
           "/create-proposal",
-          `/${proposalId.toString()}`,
+          `/${proposalSlug}`,
         );
         const searchParams = new URLSearchParams();
         searchParams.set(

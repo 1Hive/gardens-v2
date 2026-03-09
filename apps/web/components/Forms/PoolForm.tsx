@@ -6,7 +6,7 @@ import React, { ReactNode, useEffect, useState } from "react";
 import { ArrowPathRoundedSquareIcon } from "@heroicons/react/24/solid";
 import sfMeta from "@superfluid-finance/metadata";
 import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { Address, isAddress, parseUnits, zeroAddress } from "viem";
 import { polygon } from "viem/chains";
@@ -242,7 +242,6 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
   const [showWarningMessage, setShowWarningMessage] = useState(false);
 
   const router = useRouter();
-  const pathname = usePathname();
   const { publish } = usePubSubContext();
   const { isConnected, missmatchUrl, tooltipMessage } = useDisableButtons();
 
@@ -512,6 +511,7 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
         "RegistryCommunity",
         "PoolCreated",
       ).args;
+      const strategyAddress = (newPoolData._strategy as string).toLowerCase();
       publish({
         topic: "pool",
         function: "createPool",
@@ -522,10 +522,7 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
       });
       setLoading(false);
       router.push(
-        pathname?.replace(
-          "/create-pool",
-          `?${QUERY_PARAMS.communityPage.newPool}=${newPoolData._poolId}`,
-        ),
+        `/gardens/${chain.id}/${communityAddr}/${strategyAddress}?${QUERY_PARAMS.communityPage.newPool}=${newPoolData._poolId}`,
       );
     },
   });
