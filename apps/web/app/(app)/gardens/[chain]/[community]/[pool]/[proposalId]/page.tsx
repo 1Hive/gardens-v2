@@ -1,12 +1,22 @@
 import type { Metadata } from "next";
+import { notFound, redirect } from "next/navigation";
 import {
   getProposalTitleDocument,
   type getProposalTitleQuery,
 } from "#/subgraph/.graphclient";
 import ClientPage, { type ProposalPageParams } from "./client-page";
+import {
+  resolveStrategyAddress,
+  stringifySearchParams,
+} from "../route-helpers";
 import { getConfigByChain } from "@/configs/chains";
 import { queryByChain } from "@/providers/urql";
 import { ProposalStatus } from "@/types";
+import {
+  buildProposalEntityId,
+  extractProposalNumber,
+  formatProposalSlug,
+} from "@/utils/proposals";
 
 export const dynamic = "force-dynamic"; // ensure latest proposal status for OG
 export const revalidate = 0; // do not cache this route
@@ -39,7 +49,8 @@ export function buildOgImagePath(
   }
   paramsList.push(OG_IMAGE_VERSION);
   const query = paramsList.length ? `?${paramsList.join("&")}` : "";
-  return `/gardens/${params.chain}/${params.garden}/${params.community}/${params.poolId}/${params.proposalId}/${OG_IMAGE_TOKEN}${query}`;
+  const proposalSlug = formatProposalSlug(params.proposalId);
+  return `/gardens/${params.chain}/${params.community}/${params.pool}/${proposalSlug}/${OG_IMAGE_TOKEN}${query}`;
 }
 
 export function getDescriptionFromStatus(
@@ -86,6 +97,17 @@ export async function generateMetadata({
   const chainConfig =
     getConfigByChain(chainKey) ??
     (Number.isFinite(chainId) ? getConfigByChain(chainId) : undefined);
+  const strategyAddress = await resolveStrategyAddress(
+    params.chain,
+    params.pool,
+  );
+  const normalizedProposalSegment = extractProposalNumber(params.proposalId);
+  const canonicalProposalSlug = formatProposalSlug(normalizedProposalSegment);
+  const normalizedParams: ProposalPageParams = {
+    ...params,
+    pool: strategyAddress ?? params.pool,
+    proposalId: canonicalProposalSlug,
+  };
 
   if (!chainConfig) {
     console.error("Unsupported chainId for proposal metadata generation.", {
@@ -94,7 +116,17 @@ export async function generateMetadata({
     return fallbackMetadata;
   }
 
-  const proposalId = params.proposalId?.toLowerCase?.() ?? params.proposalId;
+  if (!strategyAddress) {
+    console.error("Unable to resolve strategy address for proposal metadata.", {
+      strategySlug: params.pool,
+    });
+    return fallbackMetadata;
+  }
+
+  const proposalId = buildProposalEntityId(
+    strategyAddress,
+    canonicalProposalSlug,
+  ).toLowerCase();
 
   try {
     const proposalResult = await queryByChain<getProposalTitleQuery>(
@@ -143,7 +175,7 @@ export async function generateMetadata({
         description,
         images: [
           {
-            url: buildOgImagePath(params, status, imageTitle),
+            url: buildOgImagePath(normalizedParams, status, imageTitle),
             alt: titleCaseStatus(status) ?? "Proposal",
           },
         ],
@@ -152,7 +184,7 @@ export async function generateMetadata({
         card: "summary_large_image",
         title,
         description,
-        images: [buildOgImagePath(params, status, imageTitle)],
+        images: [buildOgImagePath(normalizedParams, status, imageTitle)],
       },
     };
   } catch (error) {
@@ -165,6 +197,43 @@ export async function generateMetadata({
   }
 }
 
-export default function Page({ params }: PageProps) {
-  return <ClientPage params={params} />;
+type PagePropsWithSearch = PageProps & {
+  searchParams: Record<string, string | string[] | undefined>;
+};
+
+export default async function Page({
+  params,
+  searchParams,
+}: PagePropsWithSearch) {
+  const strategyAddress = await resolveStrategyAddress(
+    params.chain,
+    params.pool,
+  );
+
+  if (!strategyAddress) {
+    notFound();
+  }
+
+  const normalizedStrategy = strategyAddress.toLowerCase();
+  const normalizedProposalSegment = extractProposalNumber(params.proposalId);
+  const canonicalProposalSlug = formatProposalSlug(normalizedProposalSegment);
+
+  if (
+    params.pool.toLowerCase() !== normalizedStrategy ||
+    params.proposalId.toLowerCase() !== canonicalProposalSlug
+  ) {
+    redirect(
+      `/gardens/${params.chain}/${params.community}/${normalizedStrategy}/${canonicalProposalSlug}${stringifySearchParams(searchParams)}`,
+    );
+  }
+
+  return (
+    <ClientPage
+      params={{
+        ...params,
+        pool: normalizedStrategy,
+        proposalId: normalizedProposalSegment,
+      }}
+    />
+  );
 }

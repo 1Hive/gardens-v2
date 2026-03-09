@@ -1,6 +1,44 @@
 /** @type {import('next').NextConfig} */
 module.exports = {
   reactStrictMode: true,
+  async rewrites() {
+    const addressPattern = "(0x[a-fA-F0-9]{40})";
+    return [
+      {
+        source:
+          "/gardens/:chainId/:governanceToken/:community/:poolId/:pool" +
+          addressPattern,
+        destination: "/gardens/:chainId/:community/:pool",
+      },
+      {
+        source:
+          "/gardens/:chainId/:governanceToken/:community/:poolId/:pool" +
+          addressPattern +
+          "/create-proposal",
+        destination: "/gardens/:chainId/:community/:pool/create-proposal",
+      },
+      {
+        source:
+          "/gardens/:chainId/:governanceToken/:community/:poolId/:pool" +
+          addressPattern +
+          "-:proposal",
+        destination: "/gardens/:chainId/:community/:pool/:proposal",
+      },
+      {
+        source:
+          "/gardens/:chainId/:governanceToken" +
+          addressPattern +
+          "/:community" +
+          addressPattern +
+          "/:poolId(\\d+)",
+        destination: "/gardens/:chainId/:community/:poolId",
+      },
+      {
+        source: "/gardens/:chainId/:governanceToken/:community/create-pool",
+        destination: "/gardens/:chainId/:community/create-pool",
+      },
+    ];
+  },
   webpack: (config, { isServer }) => {
     config.resolve.fallback = { fs: false, net: false, tls: false };
     config.externals.push("pino-pretty", "lokijs", "encoding");

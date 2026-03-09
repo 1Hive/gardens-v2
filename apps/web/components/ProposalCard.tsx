@@ -33,6 +33,7 @@ import {
 import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { PoolTypes, ProposalStatus } from "@/types";
 import { calculatePercentageBigInt } from "@/utils/numbers";
+import { formatProposalSlug } from "@/utils/proposals";
 import { prettyTimestamp } from "@/utils/text";
 
 export type ProposalCardProps = {
@@ -108,7 +109,6 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
     const metadata = proposalData.metadata ?? metadataResult;
 
     const {
-      id,
       proposalNumber,
       proposalStatus,
       requestedAmount,
@@ -117,6 +117,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
       executedAt,
     } = proposalData;
     const pathname = usePathname();
+    const proposalSlug = formatProposalSlug(proposalNumber);
 
     const searchParams = useCollectQueryParams();
     const isNewProposal =
@@ -392,7 +393,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
         {isAllocationView ?
           proposalCardContent
         : <Card
-            href={`${pathname}/${id}`}
+            href={`${pathname}/${proposalSlug}`}
             className={`py-4 ${isNewProposal ? "shadow-2xl" : ""}`}
           >
             {proposalCardContent}

@@ -1,17 +1,22 @@
 import type { Metadata } from "next";
-import { getPoolTitleDocument } from "#/subgraph/.graphclient";
+import { notFound, redirect } from "next/navigation";
+import {
+  getCommunityNameDocument,
+  getPoolTitleDocument,
+} from "#/subgraph/.graphclient";
 import ClientPage from "./client-page";
 import { FALLBACK_TITLE, getDescriptionText } from "./opengraph-image";
-import { chainConfigMap } from "@/configs/chains";
+import { resolveStrategyAddress, stringifySearchParams } from "./route-helpers";
+import { chainConfigMap, type ChainData } from "@/configs/chains";
 import { queryByChain } from "@/providers/urql";
 import { PoolTypes } from "@/types";
+import { hasEthereumAddressFormat } from "@/utils/web3";
 
 type PageParams = {
   params: {
     chain: string;
-    garden: string;
     community: string;
-    poolId: string;
+    pool: string;
   };
 };
 
@@ -32,17 +37,47 @@ function buildOgImagePath(
   }
   queryParts.push(OG_IMAGE_VERSION);
   const query = queryParts.length ? `?${queryParts.join("&")}` : "";
-  return `/gardens/${params.chain}/${params.garden}/${params.community}/${params.poolId}/${OG_IMAGE_TOKEN}${query}`;
+  return `/gardens/${params.chain}/${params.community}/${params.pool}/${OG_IMAGE_TOKEN}${query}`;
 }
 
 const titlePrefix = "Gardens - ";
+
+async function communityExistsOnChain(
+  chainConfig: ChainData | undefined,
+  communityAddress: string | undefined,
+): Promise<boolean> {
+  if (!chainConfig || !communityAddress) {
+    return false;
+  }
+
+  if (!hasEthereumAddressFormat(communityAddress)) {
+    return false;
+  }
+
+  const result = await queryByChain(
+    chainConfig,
+    getCommunityNameDocument,
+    { communityAddr: communityAddress.toLowerCase() },
+    undefined,
+    true,
+  );
+
+  return !!result?.data?.registryCommunity;
+}
 
 export async function generateMetadata({
   params,
 }: PageParams): Promise<Metadata> {
   const chainId = Number(params.chain);
   const chainConfig = chainConfigMap[params.chain] ?? chainConfigMap[chainId];
-  const poolId = params.poolId?.toString();
+  const strategyAddress = await resolveStrategyAddress(
+    params.chain,
+    params.pool,
+  );
+  const normalizedParams = {
+    ...params,
+    pool: strategyAddress ?? params.pool,
+  };
   let description = getDescriptionText(undefined);
   const fallbackMetadata: Metadata = {
     title: titlePrefix + FALLBACK_TITLE,
@@ -50,13 +85,13 @@ export async function generateMetadata({
     openGraph: {
       title: titlePrefix + FALLBACK_TITLE,
       description,
-      images: [{ url: buildOgImagePath(params) }],
+      images: [{ url: buildOgImagePath(normalizedParams) }],
     },
     twitter: {
       card: "summary_large_image",
       title: titlePrefix + FALLBACK_TITLE,
       description,
-      images: [buildOgImagePath(params)],
+      images: [buildOgImagePath(normalizedParams)],
     },
   };
 
@@ -67,9 +102,9 @@ export async function generateMetadata({
     return fallbackMetadata;
   }
 
-  if (!poolId) {
-    console.error("Missing poolId for pool metadata generation.", {
-      poolId: params.poolId,
+  if (!strategyAddress) {
+    console.error("Missing strategy address for pool metadata generation.", {
+      strategySlug: params.pool,
     });
     return fallbackMetadata;
   }
@@ -78,7 +113,7 @@ export async function generateMetadata({
     const poolResult = await queryByChain(
       chainConfig,
       getPoolTitleDocument,
-      { poolId },
+      { strategyId: strategyAddress },
       { requestPolicy: "network-only" },
       true,
     );
@@ -86,7 +121,7 @@ export async function generateMetadata({
     if (poolResult.error) {
       console.error("Error fetching pool metadata.", {
         chainId: params.chain,
-        poolId,
+        strategyAddress,
         error: poolResult.error,
       });
       return fallbackMetadata;
@@ -108,7 +143,7 @@ export async function generateMetadata({
       : "unknown";
     const poolType = PoolTypes[pool?.config?.proposalType as number];
     const actualDescription = getDescriptionText(poolType);
-    const ogImageUrl = buildOgImagePath(params, status);
+    const ogImageUrl = buildOgImagePath(normalizedParams, status);
     return {
       title: poolTitle,
       description: actualDescription,
@@ -127,19 +162,61 @@ export async function generateMetadata({
   } catch (error) {
     console.error("Failed to generate pool metadata.", {
       chainId: params.chain,
-      poolId,
+      strategyAddress,
       error,
     });
     return fallbackMetadata;
   }
 }
 
-export default function Page(props: PageParams) {
+type PageProps = PageParams & {
+  searchParams: Record<string, string | string[] | undefined>;
+};
+
+export default async function Page(props: PageProps) {
+  const numericChain = Number(props.params.chain);
+  const chainConfig =
+    chainConfigMap[props.params.chain] ?? chainConfigMap[numericChain];
+
+  const currentCommunityExists = await communityExistsOnChain(
+    chainConfig,
+    props.params.community,
+  );
+
+  if (!currentCommunityExists) {
+    const legacyCommunityExists = await communityExistsOnChain(
+      chainConfig,
+      props.params.pool,
+    );
+
+    if (legacyCommunityExists) {
+      redirect(
+        `/gardens/${props.params.chain}/${props.params.pool}${stringifySearchParams(props.searchParams)}`,
+      );
+    }
+  }
+
+  const strategyAddress = await resolveStrategyAddress(
+    props.params.chain,
+    props.params.pool,
+  );
+
+  if (!strategyAddress) {
+    notFound();
+  }
+
+  const normalizedSlug = strategyAddress.toLowerCase();
+  if (props.params.pool.toLowerCase() !== normalizedSlug) {
+    redirect(
+      `/gardens/${props.params.chain}/${props.params.community}/${normalizedSlug}${stringifySearchParams(props.searchParams)}`,
+    );
+  }
+
   return (
     <ClientPage
       params={{
         ...props.params,
-        poolId: Number(props.params.poolId),
+        pool: normalizedSlug,
       }}
     />
   );

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ImageResponse } from "next/og";
 import { getPoolTitleDocument } from "#/subgraph/.graphclient";
+import { resolveStrategyAddress } from "./route-helpers";
 import {
   GARDEN_LOGO_BASE64,
   GRASS_BASE64,
@@ -44,9 +45,8 @@ export const FALLBACK_TITLE = "Pool";
 // Image generation
 type ImageParams = {
   chain: string;
-  garden: string;
   community: string;
-  poolId: string | number;
+  pool: string;
 };
 
 let cachedGardenLogoDataUrl: string | null = null;
@@ -442,7 +442,11 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const chainId = Number(params.chain);
   const chainConfig = chainConfigMap[params.chain] ?? chainConfigMap[chainId];
-  const poolId = params.poolId?.toString();
+  const strategySlug = params.pool?.toString();
+  const strategyAddress = await resolveStrategyAddress(
+    params.chain,
+    strategySlug ?? "",
+  );
 
   let description = getDescriptionText(undefined);
 
@@ -458,10 +462,13 @@ export async function generateMetadata({
     return fallbackMetadata;
   }
 
-  if (!poolId) {
-    console.error("Missing poolId for pool opengraph-image metadata.", {
-      poolId: params.poolId,
-    });
+  if (!strategyAddress) {
+    console.error(
+      "Missing strategy address for pool opengraph-image metadata.",
+      {
+        strategySlug,
+      },
+    );
     return fallbackMetadata;
   }
 
@@ -469,7 +476,7 @@ export async function generateMetadata({
     const poolResult = await queryByChain(
       chainConfig,
       getPoolTitleDocument,
-      { poolId },
+      { strategyId: strategyAddress },
       { requestPolicy: "network-only" },
       true,
     );
@@ -477,7 +484,7 @@ export async function generateMetadata({
     if (poolResult.error) {
       console.error("Error fetching pool metadata for OG image.", {
         chainId: params.chain,
-        poolId,
+        strategyAddress,
         error: poolResult.error,
       });
       return fallbackMetadata;
@@ -500,7 +507,7 @@ export async function generateMetadata({
   } catch (error) {
     console.error("Failed to generate metadata for pool OG image.", {
       chainId: params.chain,
-      poolId,
+      strategyAddress,
       error,
     });
     return fallbackMetadata;
@@ -510,7 +517,11 @@ export async function generateMetadata({
 export default async function Image({ params }: { params: ImageParams }) {
   const chainId = Number(params.chain);
   const chainConfig = chainConfigMap[params.chain] ?? chainConfigMap[chainId];
-  const poolId = params.poolId?.toString();
+  const strategySlug = params.pool?.toString();
+  const strategyAddress = await resolveStrategyAddress(
+    params.chain,
+    strategySlug ?? "",
+  );
 
   if (chainConfig == null) {
     console.error("Unsupported chainId for pool opengraph-image generation.", {
@@ -519,10 +530,13 @@ export default async function Image({ params }: { params: ImageParams }) {
     return renderImage({ title: "Pool", chainId });
   }
 
-  if (!poolId) {
-    console.error("Missing poolId for pool opengraph-image generation.", {
-      poolId: params.poolId,
-    });
+  if (!strategyAddress) {
+    console.error(
+      "Missing strategy address for pool opengraph-image generation.",
+      {
+        strategySlug,
+      },
+    );
     return renderImage({ title: "Pool", chainId });
   }
 
@@ -530,7 +544,7 @@ export default async function Image({ params }: { params: ImageParams }) {
     const poolResult = await queryByChain(
       chainConfig,
       getPoolTitleDocument,
-      { poolId },
+      { strategyId: strategyAddress },
       { requestPolicy: "network-only" },
       true,
     );
@@ -538,7 +552,7 @@ export default async function Image({ params }: { params: ImageParams }) {
     if (poolResult.error) {
       console.error("Error fetching pool data for OG image.", {
         chainId: params.chain,
-        poolId,
+        strategyAddress,
         error: poolResult.error,
       });
       return await renderImage({ title: "Pool", chainId });
@@ -564,7 +578,7 @@ export default async function Image({ params }: { params: ImageParams }) {
   } catch (error) {
     console.error("Failed to fetch pool data for OG image.", {
       chainId: params.chain,
-      poolId,
+      strategyAddress,
       error,
     });
     return await renderImage({ title: "Pool", chainId });

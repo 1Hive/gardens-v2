@@ -8,13 +8,12 @@ const DESCRIPTION =
 type PageParams = {
   params: {
     chain: string;
-    garden: string;
     community: string;
   };
 };
 
 function buildCommunityOgImagePath(params: PageParams["params"]) {
-  return `/gardens/${params.chain}/${params.garden}/${params.community}/opengraph-image-w94mav`;
+  return `/gardens/${params.chain}/${params.community}/opengraph-image-w94mav`;
 }
 
 export function generateMetadata({ params }: PageParams): Metadata {

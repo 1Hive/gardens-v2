@@ -56,46 +56,65 @@ import {
 } from "@/utils/numbers";
 
 export type AlloQuery = getAlloQuery["allos"][number];
+const DEBUG_LABEL = "#debug [PoolPage client-page.tsx]";
 
 export default function ClientPage({
-  params: { chain, poolId, garden, community: _community },
+  params: { chain, pool: poolSlug, community: _community },
 }: {
-  params: { chain: string; poolId: number; garden: string; community: string };
+  params: { chain: string; pool: string; community: string };
 }) {
-  const communityScopeId = _community.toLowerCase();
   const searchParams = useCollectQueryParams();
-
-  const { data, refetch, error, fetching } = useSubgraphQuery<getPoolDataQuery>(
+  const strategyAddress = poolSlug.toLowerCase();
+  const [poolIdForScope, setPoolIdForScope] = useState<number | undefined>();
+  const { data, error, refetch, fetching } = useSubgraphQuery<getPoolDataQuery>(
     {
       query: getPoolDataDocument,
-      variables: { poolId: poolId, garden: garden.toLowerCase() },
-      changeScope: [
-        {
-          topic: "pool",
-          id: poolId,
-        },
-        {
-          topic: "proposal",
-          containerId: poolId,
-          type: "update",
-        },
-        {
-          topic: "member",
-          function: "activatePoints",
-          type: "update",
-          containerId: poolId,
-        },
-        {
-          topic: "member",
-          function: "deactivatePoints",
-          type: "update",
-          containerId: poolId,
-        },
-      ],
+      variables: {
+        strategyId: strategyAddress,
+      },
+      changeScope:
+        poolIdForScope != null ?
+          [
+            {
+              topic: "pool",
+              id: poolIdForScope,
+            },
+            {
+              topic: "proposal",
+              containerId: poolIdForScope,
+              type: "update",
+            },
+            {
+              topic: "member",
+              function: "activatePoints",
+              type: "update",
+              containerId: poolIdForScope,
+            },
+            {
+              topic: "member",
+              function: "deactivatePoints",
+              type: "update",
+              containerId: poolIdForScope,
+            },
+          ]
+        : undefined,
     },
   );
 
   const strategy = data?.cvstrategies?.[0];
+  const resolvedPoolId =
+    strategy?.poolId != null ? Number(strategy.poolId) : undefined;
+  const poolId = resolvedPoolId;
+
+  useEffect(() => {
+    if (
+      resolvedPoolId != null &&
+      resolvedPoolId !== poolIdForScope &&
+      Number.isFinite(resolvedPoolId)
+    ) {
+      setPoolIdForScope(resolvedPoolId);
+    }
+  }, [resolvedPoolId, poolIdForScope]);
 
   const communityAddress = strategy?.registryCommunity.id as Address;
 
@@ -120,12 +139,11 @@ export default function ClientPage({
     query: getCommunityDocument,
     enabled: !!wallet && !!strategy?.token,
     variables: {
-      communityAddr: communityScopeId,
-      tokenAddr: garden.toLocaleLowerCase(),
+      communityAddr: _community.toLowerCase(),
     },
     changeScope: [
-      { topic: "community", id: communityScopeId },
-      { topic: "member", containerId: communityScopeId },
+      { topic: "community", id: communityAddress },
+      { topic: "member", containerId: communityAddress },
     ],
   });
 
@@ -133,11 +151,11 @@ export default function ClientPage({
     query: isMemberDocument,
     variables: {
       me: wallet?.toLowerCase(),
-      comm: communityScopeId,
+      comm: _community.toLowerCase(),
     },
     changeScope: [
-      { topic: "community", id: communityScopeId },
-      { topic: "member", containerId: communityScopeId },
+      { topic: "community", id: communityAddress },
+      { topic: "member", containerId: communityAddress },
     ],
     enabled: wallet !== undefined,
   });
@@ -168,60 +186,55 @@ export default function ClientPage({
   const [triggerSybilCheckModalClose, setTriggerSybilCheckModalClose] =
     useState(false);
   const [selectedTab, setSelectedTab] = useState(0);
-  //
 
-  const {
-    data: memberData,
-    error: errorMemberData,
-    refetch: refetchMemberData,
-  } = useSubgraphQuery<isMemberQuery>({
-    query: isMemberDocument,
-    variables: {
-      me: wallet?.toLowerCase(),
-      comm: communityAddress?.toLowerCase(),
-    },
-    changeScope: [
-      // Community membership changes (join/leave) are published with community containerId.
-      { topic: "member", containerId: communityScopeId },
-      { topic: "community", id: communityScopeId },
-      {
-        topic: "member",
-        id: wallet,
-        containerId: strategy?.poolId,
+  const { data: memberData, error: errorMemberData } =
+    useSubgraphQuery<isMemberQuery>({
+      query: isMemberDocument,
+      variables: {
+        me: wallet?.toLowerCase(),
+        comm: communityAddress?.toLowerCase(),
       },
-      {
-        topic: "proposal",
-        containerId: strategy?.poolId,
-        function: "allocate",
-      },
-    ],
-    enabled: !!wallet && !!strategy?.registryCommunity?.id,
-  });
+      changeScope:
+        poolId != null ?
+          [
+            {
+              topic: "member",
+              id: wallet,
+              containerId: poolId,
+            },
+            {
+              topic: "proposal",
+              containerId: poolId,
+              function: "allocate",
+            },
+          ]
+        : undefined,
+      enabled: !!wallet && !!strategy?.registryCommunity?.id,
+    });
 
-  const {
-    data: memberStrategyData,
-    refetch: refetchMemberStrategyData,
-    fetching: fetchingMemberStrategy,
-  } = useSubgraphQuery<getMemberStrategyQuery>({
-    query: getMemberStrategyDocument,
-    variables: {
-      member_strategy: `${wallet?.toLowerCase()}-${strategy?.id.toLowerCase()}`,
-    },
-    changeScope: [
-      {
-        topic: "proposal",
-        containerId: strategy?.poolId,
-        type: "update",
+  const { data: memberStrategyData } = useSubgraphQuery<getMemberStrategyQuery>(
+    {
+      query: getMemberStrategyDocument,
+      variables: {
+        member_strategy: `${wallet?.toLowerCase()}-${strategy?.id.toLowerCase()}`,
       },
-      { topic: "member", id: wallet, containerId: strategy?.poolId },
-    ],
-    enabled: !!wallet && !!strategy?.id,
-  });
+      changeScope:
+        poolId != null ?
+          [
+            {
+              topic: "proposal",
+              containerId: poolId,
+              type: "update",
+            },
+            { topic: "member", id: wallet, containerId: poolId },
+          ]
+        : undefined,
+      enabled: !!wallet && !!strategy?.id,
+    },
+  );
 
   const memberTokensInCommunity = BigInt(
-    memberData?.member?.memberCommunity?.[0]?.stakedTokens ??
-      isMemberResult?.member?.memberCommunity?.[0]?.stakedTokens ??
-      0,
+    memberData?.member?.memberCommunity?.[0]?.stakedTokens ?? 0,
   );
 
   const { data: membersStrategyData } =
@@ -230,50 +243,41 @@ export default function ClientPage({
       variables: {
         strategyId: `${strategy?.id.toLowerCase()}`,
       },
-      changeScope: [
-        {
-          topic: "proposal",
-          containerId: strategy?.poolId,
-          type: "update",
-        },
-        { topic: "member", id: wallet, containerId: strategy?.poolId },
-      ],
+      changeScope:
+        poolId != null ?
+          [
+            {
+              topic: "proposal",
+              containerId: poolId,
+              type: "update",
+            },
+            { topic: "member", id: wallet, containerId: poolId },
+          ]
+        : undefined,
       enabled: !!wallet,
     });
 
   const membersStrategies = membersStrategyData?.memberStrategies;
 
-  const isMemberCommunity = !!(
-    memberData?.member?.memberCommunity?.[0]?.isRegistered ??
-    isMemberResult?.member?.memberCommunity?.[0]?.isRegistered
-  );
+  const isMemberCommunity =
+    !!memberData?.member?.memberCommunity?.[0]?.isRegistered;
 
   const memberActivatedStrategy =
-    (memberStrategyData?.memberStrategy?.activatedPoints ?? 0n) > 0n;
-
-  const shouldShowActivateGovernanceCard =
-    isMemberCommunity && !memberActivatedStrategy && !fetchingMemberStrategy;
+    memberStrategyData?.memberStrategy?.activatedPoints > 0n;
 
   const { subscribe, unsubscribe, connected } = usePubSubContext();
 
   const subscriptionId = useRef<SubscriptionId>();
   useEffect(() => {
-    if (!connected || !wallet || strategy?.poolId == null) {
-      return;
-    }
-
     subscriptionId.current = subscribe(
       {
         topic: "member",
         id: wallet,
-        containerId: strategy?.poolId,
+        containerId: poolId ?? strategy?.poolId,
         type: "update",
       },
       () => {
-        void refetchMemberPower();
-        void refetchMemberData();
-        void refetchMemberStrategyData();
-        void refetch();
+        return refetchMemberPower();
       },
     );
     return () => {
@@ -281,22 +285,21 @@ export default function ClientPage({
         unsubscribe(subscriptionId.current);
       }
     };
-  }, [
-    connected,
-    wallet,
-    strategy?.poolId,
-    subscribe,
-    unsubscribe,
-    refetchMemberPower,
-    refetchMemberData,
-    refetchMemberStrategyData,
-    refetch,
-  ]);
-  //
+  }, [connected, poolId]);
 
   const poolTokenAddr = strategy?.token as Address;
 
   const proposalType = strategy?.config.proposalType;
+  const effectiveStrategy =
+    strategy ?
+      {
+        ...strategy,
+        config: {
+          ...strategy.config,
+          proposalType,
+        },
+      }
+    : strategy;
 
   const numericChainId = Number(chain);
   const chainConfig =
@@ -350,7 +353,7 @@ export default function ClientPage({
   });
 
   const { data: tokenGarden } = useToken({
-    address: garden as Address,
+    address: strategy?.token as Address,
     chainId: chainId,
     enabled: !isMemberCommunity,
   });
@@ -385,9 +388,7 @@ export default function ClientPage({
     poolAddress: strategy?.id,
     poolTokenAddr: poolTokenAddr,
     enabled:
-      !!strategy &&
-      PoolTypes[strategy.config.proposalType] !== "signaling" &&
-      !!poolTokenAddr,
+      !!strategy && PoolTypes[proposalType] !== "signaling" && !!poolTokenAddr,
     watch: true,
   });
 
@@ -411,6 +412,7 @@ export default function ClientPage({
     +minThresholdPoints > +totalPointsActivatedInPool;
 
   const poolType = proposalType != null ? PoolTypes[proposalType] : undefined;
+  const isStreamingPool = poolType === "streaming";
   const needsFundingToken = poolType === "funding";
   const isMissingFundingToken = needsFundingToken && !poolToken;
   const [hasWaitedForPoolToken, setHasWaitedForPoolToken] = useState(false);
@@ -432,10 +434,12 @@ export default function ClientPage({
   const stillLoading =
     fetching ||
     (!data && !error) ||
+    (strategy != null && poolId == null) ||
     (isMissingFundingToken && !error && !hasWaitedForPoolToken);
 
   if ((!strategy || isMissingFundingToken) && stillLoading) {
-    console.debug("Loading pool data, waiting for", {
+    console.debug(`${DEBUG_LABEL} render waiting`, {
+      branch: "waiting-for-strategy-or-funding-token",
       strategy,
       poolTokenIfFundingPool: poolToken,
       isFundingPool: poolType === "funding",
@@ -455,6 +459,14 @@ export default function ClientPage({
   if (!strategy) {
     const title =
       isWrongNetwork ? "Switch network to continue" : "Pool unavailable";
+
+    console.debug(`${DEBUG_LABEL} render missing-strategy`, {
+      branch: "missing-strategy",
+      isWrongNetwork,
+      errorPresent: !!error,
+      expectedChainId,
+      connectedChainId,
+    });
     const description =
       isWrongNetwork ?
         `Connect your wallet to ${expectedChainName} to view this pool.`
@@ -474,13 +486,25 @@ export default function ClientPage({
     );
   }
 
+  if (poolId == null) {
+    console.debug(`${DEBUG_LABEL} render missing-pool-id`, {
+      branch: "missing-pool-id",
+      strategyResolved: strategy != null,
+    });
+    return (
+      <div className="mt-96 col-span-12">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
   const showMissingFundingTokenWarning = isMissingFundingToken && !error;
 
   const alloInfo = data.allos[0];
 
   const isEnabled = data.cvstrategies?.[0]?.isEnabled as boolean;
 
-  const createProposalUrl = `/gardens/${chain}/${garden}/${communityAddress}/${poolId}/create-proposal`;
+  const createProposalUrl = `/gardens/${chain}/${communityAddress}/${strategyAddress}/create-proposal`;
 
   const memberPoolWeight =
     memberPower != null && +strategy.totalEffectiveActivePoints > 0 ?
@@ -489,6 +513,13 @@ export default function ClientPage({
         BigInt(strategy.totalEffectiveActivePoints),
       )
     : undefined;
+
+  console.debug(`${DEBUG_LABEL} render ready`, {
+    branch: "ready",
+    poolId,
+    proposalCount: strategy?.proposals?.length,
+    isEnabled,
+  });
 
   const registerAndActivateFromPool = (
     <>
@@ -546,7 +577,7 @@ export default function ClientPage({
       )}
 
       {/* Activate governance box */}
-      {shouldShowActivateGovernanceCard && (
+      {isMemberCommunity && !memberActivatedStrategy && (
         <div className="border rounded-xl shadow-md border-primary-content bg-primary p-4 sm:p-6 dark:bg-primary-soft-dark mt-6 sm:mt-0">
           <div className="flex items-start gap-3 sm:gap-4">
             <div className="rounded-full bg-primary-content/10 p-3 flex-shrink-0">
@@ -583,8 +614,9 @@ export default function ClientPage({
                   </li>
                   <li>
                     If you’re eligible to vote, you can allocate your Voting
-                    Power (VP) across multiple proposals as support. The more VP
-                    you allocate, the faster its conviction grows.
+                    Power (VP) across multiple proposals at the same time as
+                    support. The more VP you allocate, the faster its conviction
+                    grows.
                   </li>
                 </ul>
               </InfoBox>
@@ -611,144 +643,65 @@ export default function ClientPage({
     </>
   );
 
-  return (
-    <>
-      {showMissingFundingTokenWarning && (
-        <div className="col-span-12 mt-4">
-          <InfoBox infoBoxType="warning" title="Funding token unavailable">
-            We could not load the funding token for this pool.
-          </InfoBox>
-        </div>
-      )}
-      {/* ================= DESKTOP ================= */}
+  const StreamingPoolInfo = () => {
+    if (!isStreamingPool) return null;
 
-      {/*  Join community - Activate governace path and description from pool page */}
-      <div className="hidden col-span-12 xl:col-span-9 sm:flex flex-col gap-6">
-        <PoolHeader
-          poolToken={poolToken}
-          strategy={strategy}
-          arbitrableConfig={data.arbitrableConfigs[0]}
-          poolId={poolId}
-          ipfsResult={metadata}
-          isEnabled={isEnabled}
-          maxAmount={maxAmount}
-          superTokenCandidate={superTokenCandidate}
-          superToken={
-            superTokenInfo && {
-              ...superTokenInfo,
-              sameAsUnderlying: superTokenCandidate?.sameAsUnderlying,
-              address: effectiveSuperToken as Address,
-            }
-          }
-          setSuperTokenCandidate={setSuperTokenCandidate}
-          minThGtTotalEffPoints={minThGtTotalEffPoints}
-          communityName={communityName ?? ""}
-        />
-        {registerAndActivateFromPool}
-      </div>
+    return (
+      <InfoBox
+        infoBoxType="info"
+        title="Streaming pool"
+        className="rounded-xl bg-neutral sm:p-4"
+      >
+        This pool supports continuous funding via Superfluid streams. Pool
+        balances and proposal execution can change over time as streams flow in.
+      </InfoBox>
+    );
+  };
 
-      {isEnabled && (
-        <div className="hidden sm:col-span-12 xl:col-span-3 sm:flex flex-col gap-6">
-          <>
-            {poolToken && PoolTypes[proposalType] !== "signaling" && (
-              <PoolMetrics
-                communityAddress={communityAddress}
-                strategy={strategy}
-                poolId={poolId}
-                poolToken={poolToken}
-                chainId={Number(chain)}
-                superToken={
-                  superTokenInfo && {
-                    ...superTokenInfo,
-                    sameAsUnderlying: superTokenCandidate?.sameAsUnderlying,
-                    address: effectiveSuperToken as Address,
-                  }
-                }
-              />
-            )}
-          </>
+  return effectiveStrategy ?
+      <>
+        {showMissingFundingTokenWarning && (
+          <div className="col-span-12 mt-4">
+            <InfoBox infoBoxType="warning" title="Funding token unavailable">
+              We could not load the funding token for this pool.
+            </InfoBox>
+          </div>
+        )}
+        {/* ================= DESKTOP ================= */}
 
-          <PoolGovernance
-            memberPoolWeight={memberPoolWeight}
-            tokenDecimals={tokenDecimals}
-            strategy={strategy}
-            communityAddress={communityAddress}
-            memberTokensInCommunity={memberTokensInCommunity}
-            isMemberCommunity={isMemberCommunity}
-            memberActivatedStrategy={memberActivatedStrategy}
-            membersStrategyData={
-              membersStrategies ?
-                { memberStrategies: membersStrategies }
-              : undefined
-            }
-          />
-        </div>
-      )}
-
-      {isEnabled && (
-        <section className="hidden col-span-12 xl:col-span-9 sm:flex flex-col gap-4 sm:gap-8">
-          <Proposals
+        {/*  Join community - Activate governace path and description from pool page */}
+        <div className="hidden col-span-12 xl:col-span-9 sm:flex flex-col gap-6">
+          <PoolHeader
             poolToken={poolToken}
-            strategy={{ ...strategy, title: metadata?.title }}
-            alloInfo={alloInfo}
-            communityAddress={communityAddress}
-            createProposalUrl={createProposalUrl}
-            proposalType={proposalType}
+            strategy={effectiveStrategy}
+            arbitrableConfig={data.arbitrableConfigs[0]}
+            poolId={poolId}
+            ipfsResult={metadata}
+            isEnabled={isEnabled}
+            maxAmount={maxAmount}
+            superTokenCandidate={superTokenCandidate}
+            superToken={
+              superTokenInfo && {
+                ...superTokenInfo,
+                sameAsUnderlying: superTokenCandidate?.sameAsUnderlying,
+                address: effectiveSuperToken as Address,
+              }
+            }
+            setSuperTokenCandidate={setSuperTokenCandidate}
             minThGtTotalEffPoints={minThGtTotalEffPoints}
+            communityName={communityName ?? ""}
           />
-        </section>
-      )}
-
-      {/* ================= MOBILE ================= */}
-
-      <div className="block md:hidden col-span-12">
-        <div
-          role="tablist"
-          className="tabs tabs-boxed w-full border1 bg-neutral p-1"
-          aria-label="Pool sections"
-        >
-          {["Overview", "Proposals", "Governance"].map((label, index) => (
-            <button
-              key={label}
-              type="button"
-              role="tab"
-              className={`tab rounded-lg border-0 text-neutral-soft-content ${selectedTab === index ? "tab-active !bg-primary-button dark:!bg-primary-dark-base !text-neutral-inverted-content" : "hover:text-neutral-content"}`}
-              aria-selected={selectedTab === index}
-              onClick={() => setSelectedTab(index)}
-            >
-              {label}
-            </button>
-          ))}
+          <StreamingPoolInfo />
+          {registerAndActivateFromPool}
         </div>
 
-        <div className="mt-4">
-          {selectedTab === 0 && isEnabled && (
-            <div className="col-span-12 sm:hidden space-y-6">
-              <PoolHeader
-                poolToken={poolToken}
-                strategy={strategy}
-                arbitrableConfig={data.arbitrableConfigs[0]}
-                poolId={poolId}
-                ipfsResult={metadata}
-                isEnabled={isEnabled}
-                maxAmount={maxAmount}
-                superTokenCandidate={superTokenCandidate}
-                superToken={
-                  superTokenInfo && {
-                    ...superTokenInfo,
-                    sameAsUnderlying: superTokenCandidate?.sameAsUnderlying,
-                    address: effectiveSuperToken as Address,
-                  }
-                }
-                setSuperTokenCandidate={setSuperTokenCandidate}
-                minThGtTotalEffPoints={minThGtTotalEffPoints}
-                communityName={communityName ?? ""}
-              />
-
+        {isEnabled && (
+          <div className="hidden sm:col-span-12 xl:col-span-3 sm:flex flex-col gap-6">
+            <>
               {poolToken && PoolTypes[proposalType] !== "signaling" && (
                 <PoolMetrics
                   communityAddress={communityAddress}
-                  strategy={strategy}
+                  strategy={effectiveStrategy}
                   poolId={poolId}
                   poolToken={poolToken}
                   chainId={Number(chain)}
@@ -761,42 +714,141 @@ export default function ClientPage({
                   }
                 />
               )}
-            </div>
-          )}
+            </>
 
-          {selectedTab === 1 && isEnabled && (
+            <PoolGovernance
+              memberPoolWeight={memberPoolWeight}
+              tokenDecimals={tokenDecimals}
+              strategy={effectiveStrategy}
+              communityAddress={communityAddress}
+              memberTokensInCommunity={memberTokensInCommunity}
+              isMemberCommunity={isMemberCommunity}
+              memberActivatedStrategy={memberActivatedStrategy}
+              membersStrategyData={
+                membersStrategies ?
+                  { memberStrategies: membersStrategies }
+                : undefined
+              }
+            />
+          </div>
+        )}
+
+        {isEnabled && (
+          <section className="hidden col-span-12 xl:col-span-9 sm:flex flex-col gap-4 sm:gap-8">
             <Proposals
               poolToken={poolToken}
-              strategy={{ ...strategy, title: metadata?.title }}
+              strategy={{ ...effectiveStrategy, title: metadata?.title }}
               alloInfo={alloInfo}
               communityAddress={communityAddress}
               createProposalUrl={createProposalUrl}
               proposalType={proposalType}
               minThGtTotalEffPoints={minThGtTotalEffPoints}
             />
-          )}
+          </section>
+        )}
 
-          {selectedTab === 2 && (
-            <>
-              <PoolGovernance
-                memberPoolWeight={memberPoolWeight}
-                tokenDecimals={tokenDecimals}
-                strategy={strategy}
+        {/* ================= MOBILE ================= */}
+
+        <div className="block md:hidden col-span-12">
+          <div
+            role="tablist"
+            className="tabs tabs-boxed w-full border1 bg-neutral p-1"
+            aria-label="Pool sections"
+          >
+            {["Overview", "Proposals", "Governance"].map((label, index) => (
+              <button
+                key={label}
+                type="button"
+                role="tab"
+                className={`tab rounded-lg border-0 text-neutral-soft-content ${selectedTab === index ? "tab-active !bg-primary-button dark:!bg-primary-dark-base !text-neutral-inverted-content" : "hover:text-neutral-content"}`}
+                aria-selected={selectedTab === index}
+                onClick={() => setSelectedTab(index)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          <div className="mt-4">
+            {selectedTab === 0 && isEnabled && (
+              <div className="col-span-12 sm:hidden space-y-6">
+                <PoolHeader
+                  poolToken={poolToken}
+                  strategy={effectiveStrategy}
+                  arbitrableConfig={data.arbitrableConfigs[0]}
+                  poolId={poolId}
+                  ipfsResult={metadata}
+                  isEnabled={isEnabled}
+                  maxAmount={maxAmount}
+                  superTokenCandidate={superTokenCandidate}
+                  superToken={
+                    superTokenInfo && {
+                      ...superTokenInfo,
+                      sameAsUnderlying: superTokenCandidate?.sameAsUnderlying,
+                      address: effectiveSuperToken as Address,
+                    }
+                  }
+                  setSuperTokenCandidate={setSuperTokenCandidate}
+                  minThGtTotalEffPoints={minThGtTotalEffPoints}
+                  communityName={communityName ?? ""}
+                />
+                <StreamingPoolInfo />
+                {poolToken && PoolTypes[proposalType] !== "signaling" && (
+                  <PoolMetrics
+                    communityAddress={communityAddress}
+                    strategy={effectiveStrategy}
+                    poolId={poolId}
+                    poolToken={poolToken}
+                    chainId={Number(chain)}
+                    superToken={
+                      superTokenInfo && {
+                        ...superTokenInfo,
+                        sameAsUnderlying: superTokenCandidate?.sameAsUnderlying,
+                        address: effectiveSuperToken as Address,
+                      }
+                    }
+                  />
+                )}
+              </div>
+            )}
+
+            {selectedTab === 1 && isEnabled && (
+              <Proposals
+                poolToken={poolToken}
+                strategy={{ ...effectiveStrategy, title: metadata?.title }}
+                alloInfo={alloInfo}
                 communityAddress={communityAddress}
-                memberTokensInCommunity={memberTokensInCommunity}
-                isMemberCommunity={isMemberCommunity}
-                memberActivatedStrategy={memberActivatedStrategy}
-                membersStrategyData={
-                  membersStrategies ?
-                    { memberStrategies: membersStrategies }
-                  : undefined
-                }
+                createProposalUrl={createProposalUrl}
+                proposalType={proposalType}
+                minThGtTotalEffPoints={minThGtTotalEffPoints}
               />
-              {registerAndActivateFromPool}
-            </>
-          )}
+            )}
+
+            {selectedTab === 2 && (
+              <>
+                <PoolGovernance
+                  memberPoolWeight={memberPoolWeight}
+                  tokenDecimals={tokenDecimals}
+                  strategy={strategy}
+                  communityAddress={communityAddress}
+                  memberTokensInCommunity={memberTokensInCommunity}
+                  isMemberCommunity={isMemberCommunity}
+                  memberActivatedStrategy={memberActivatedStrategy}
+                  membersStrategyData={
+                    membersStrategies ?
+                      { memberStrategies: membersStrategies }
+                    : undefined
+                  }
+                />
+                {registerAndActivateFromPool}
+              </>
+            )}
+          </div>
         </div>
-      </div>
-    </>
-  );
+      </>
+    : <>
+        <div className="mt-96 col-span-12">
+          <LoadingSpinner />
+        </div>
+      </>;
 }

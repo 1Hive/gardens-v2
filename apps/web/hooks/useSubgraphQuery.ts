@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { AnyVariables, DocumentInput, OperationContext } from "@urql/next";
 import { isEqual } from "lodash-es";
 import { toast } from "react-toastify";
@@ -80,19 +80,25 @@ export function useSubgraphQuery<
     console.error(`No subgraph address found for chain ${chainId}`);
   }
 
+  const normalizedChangeScope = useMemo(() => {
+    if (!changeScope || (Array.isArray(changeScope) && changeScope.length === 0))
+      return undefined;
+    const scopes = Array.isArray(changeScope) ? changeScope : [changeScope];
+    return scopes.map((scope) => ({
+      ...scope,
+      chainId: scope.chainId ?? chainId,
+    }));
+  }, [changeScope, chainId]);
+
   useEffect(() => {
-    if (!changeScope || changeScope.length === 0) {
+    if (!normalizedChangeScope || normalizedChangeScope.length === 0) {
+      return;
+    }
+    if (!connected) {
       return;
     }
 
-    changeScope = Array.isArray(changeScope) ? changeScope : [changeScope];
-    changeScope.forEach((scope) => {
-      if (!scope.chainId) {
-        scope.chainId = chainId;
-      }
-    });
-
-    subscritionId.current = subscribe(changeScope, () => {
+    const subscriptionId = subscribe(normalizedChangeScope, () => {
       return refetchFromOutside.call({
         response,
         fetching,
@@ -101,10 +107,11 @@ export function useSubgraphQuery<
         mounted,
       });
     });
+    subscritionId.current = subscriptionId;
 
     return () => {
-      if (subscritionId.current) {
-        unsubscribe(subscritionId.current);
+      if (subscriptionId) {
+        unsubscribe(subscriptionId);
       }
       try {
         if (toast.isActive(pendingRefreshToastId)) {
@@ -114,7 +121,7 @@ export function useSubgraphQuery<
         // ignore when toast is already dismissed
       }
     };
-  }, [connected]);
+  }, [connected, normalizedChangeScope]);
 
   const fetch = async () => {
     const withLowercaseAddresses: AnyVariables = {};
