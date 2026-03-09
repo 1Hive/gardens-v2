@@ -4,6 +4,7 @@ pragma solidity ^0.8.19;
 import {CVStrategyBaseFacet} from "../CVStrategyBaseFacet.sol";
 import {CVSyncPowerStorage} from "../CVSyncPowerStorage.sol";
 import {Proposal} from "../ICVStrategy.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
 /**
  * @title CVSyncPowerFacet
@@ -20,6 +21,7 @@ import {Proposal} from "../ICVStrategy.sol";
  *      to avoid consuming __gap slots.
  */
 contract CVSyncPowerFacet is CVStrategyBaseFacet {
+    using Math for uint256;
     /*|--------------------------------------------|*/
     /*|              ERRORS                        |*/
     /*|--------------------------------------------|*/
@@ -131,10 +133,37 @@ contract CVSyncPowerFacet is CVStrategyBaseFacet {
         if (unusedPower < _decrease && voterStake > 0) {
             // Must reduce conviction on active proposals
             uint256 reductionNeeded = _decrease - unusedPower;
-            uint256 balancingRatio = (reductionNeeded << 128) / voterStake;
-
+            uint256 remainingReduction = reductionNeeded;
+            uint256 remainingStake = voterStake;
             for (uint256 i = 0; i < voterStakedProposals[_member].length; i++) {
-                _rebalanceProposalStake(_member, voterStakedProposals[_member][i], balancingRatio);
+                if (remainingReduction == 0 || remainingStake == 0) {
+                    break;
+                }
+                uint256 proposalId = voterStakedProposals[_member][i];
+                uint256 stakedPoints = proposals[proposalId].voterStakedPoints[_member];
+                if (stakedPoints == 0) {
+                    continue;
+                }
+
+                // Sequential proportional rebalance with exact residual settlement:
+                // the final non-zero proposal absorbs rounding residual so that
+                // total removed stake equals reductionNeeded exactly.
+                uint256 stakeDelta;
+                if (stakedPoints >= remainingStake) {
+                    stakeDelta = remainingReduction;
+                    remainingStake = 0;
+                } else {
+                    stakeDelta = stakedPoints.mulDiv(remainingReduction, remainingStake);
+                    remainingStake -= stakedPoints;
+                }
+                if (stakeDelta > stakedPoints) {
+                    stakeDelta = stakedPoints;
+                }
+
+                if (stakeDelta != 0) {
+                    _rebalanceProposalStake(_member, proposalId, stakeDelta);
+                    remainingReduction -= stakeDelta;
+                }
             }
 
             _pruneVoterProposals(_member);
@@ -151,11 +180,11 @@ contract CVSyncPowerFacet is CVStrategyBaseFacet {
         }
     }
 
-    function _rebalanceProposalStake(address _member, uint256 _proposalId, uint256 _balancingRatio) internal {
+    function _rebalanceProposalStake(address _member, uint256 _proposalId, uint256 _stakeDelta) internal {
         Proposal storage proposal = proposals[_proposalId];
         uint256 stakedPoints = proposal.voterStakedPoints[_member];
-        uint256 newStakedPoints = stakedPoints - ((stakedPoints * _balancingRatio + (1 << 127)) >> 128);
-        uint256 stakeDelta = stakedPoints - newStakedPoints;
+        uint256 stakeDelta = _stakeDelta > stakedPoints ? stakedPoints : _stakeDelta;
+        uint256 newStakedPoints = stakedPoints - stakeDelta;
         uint256 oldStake = proposal.stakedAmount;
 
         proposal.stakedAmount -= stakeDelta;

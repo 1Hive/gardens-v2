@@ -414,6 +414,8 @@ contract CVStreamingFacetTest is Test {
     //////////////////////////////////////////////////////////////*/
 
     function test_rebalance_updates_timestamp() public {
+        facet.setupProposal(1, ProposalStatus.Active, 100 ether, 0, block.number - 10);
+        facet.setStreamingEscrowExternal(1, escrow1);
         uint256 nowTs = block.timestamp + 10;
         vm.warp(nowTs);
         facet.rebalance();
@@ -432,6 +434,8 @@ contract CVStreamingFacetTest is Test {
 
     function test_rebalance_starts_stream_when_enabled() public {
         facet.setShouldStartStream(true);
+        facet.setupProposal(1, ProposalStatus.Active, 100 ether, 0, block.number - 10);
+        facet.setStreamingEscrowExternal(1, escrow1);
         facet.rebalance();
         assertGt(facet.getLastRebalance(), 0);
     }

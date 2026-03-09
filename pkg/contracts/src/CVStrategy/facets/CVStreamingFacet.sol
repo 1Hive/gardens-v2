@@ -58,8 +58,10 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
 
         bool strategyEnabled = _isStrategyEnabled();
         if (!strategyEnabled) {
-            _rebalanceWhenDisabled();
-            setLastRebalanceAt(block.timestamp);
+            bool didWorkWhenDisabled = _rebalanceWhenDisabled();
+            if (didWorkWhenDisabled) {
+                setLastRebalanceAt(block.timestamp);
+            }
             return;
         }
 
@@ -67,6 +69,9 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
 
         uint256 poolAmount = getPoolAmount();
         uint256 totalEligibleConviction = 0;
+        bool didMeaningfulWork = false;
+        bool hadEscrowSyncError = false;
+        bool syncedAnyEscrow = false;
 
         // Rebalancing logic: Update units for each active streaming proposal
         // Loop through all proposals and update their GDA units based on conviction
@@ -125,6 +130,9 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
         int96 currentFlowRate = superfluidToken.getGDAFlowRate(address(this), superfluidGDA);
         int96 actualFlowRate = superfluidToken.distributeFlow(superfluidGDA, _toInt96StreamingRate(requestedFlowRate));
         if (currentFlowRate != actualFlowRate) {
+            didMeaningfulWork = true;
+        }
+        if (currentFlowRate != actualFlowRate) {
             emit StreamRateUpdated(address(superfluidGDA), actualFlowRate > 0 ? uint256(uint96(actualFlowRate)) : 0);
         }
 
@@ -135,13 +143,23 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
                 continue;
             }
 
-            _topUpEscrowDepositIfNeeded(escrow);
-            try IStreamingEscrowSync(escrow).syncOutflow() {} catch (bytes memory reason) {
+            if (_topUpEscrowDepositIfNeeded(escrow)) {
+                didMeaningfulWork = true;
+            }
+            try IStreamingEscrowSync(escrow).syncOutflow() {
+                syncedAnyEscrow = true;
+            } catch (bytes memory reason) {
+                hadEscrowSyncError = true;
                 emit EscrowSyncFailed(escrow, reason);
             }
         }
 
-        setLastRebalanceAt(block.timestamp);
+        if (syncedAnyEscrow) {
+            didMeaningfulWork = true;
+        }
+        if (didMeaningfulWork && !hadEscrowSyncError) {
+            setLastRebalanceAt(block.timestamp);
+        }
     }
 
     /// @notice Emergency stop stream for a specific escrow
@@ -271,27 +289,27 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
         return int96(uint96(flowRate));
     }
 
-    function _topUpEscrowDepositIfNeeded(address escrow) internal {
+    function _topUpEscrowDepositIfNeeded(address escrow) internal returns (bool) {
         uint256 requiredDeposit;
         try IStreamingEscrowSync(escrow).depositAmount() returns (uint256 amount) {
             requiredDeposit = amount;
         } catch {
-            return;
+            return false;
         }
 
         if (requiredDeposit == 0) {
-            return;
+            return false;
         }
 
         uint256 escrowBalance = superfluidToken.balanceOf(escrow);
         if (escrowBalance >= requiredDeposit) {
-            return;
+            return false;
         }
 
         uint256 missingDeposit = requiredDeposit - escrowBalance;
         uint256 strategyBalance = superfluidToken.balanceOf(address(this));
         if (strategyBalance == 0) {
-            return;
+            return false;
         }
 
         uint256 topUp = missingDeposit > strategyBalance ? strategyBalance : missingDeposit;
@@ -299,19 +317,23 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
             if (!superfluidToken.transfer(escrow, topUp)) {
                 revert SuperTokenTransferFailed(escrow, topUp);
             }
+            return true;
         }
+        return false;
     }
 
-    function _rebalanceWhenDisabled() internal {
+    function _rebalanceWhenDisabled() internal returns (bool) {
         if (address(superfluidToken) == address(0) || address(superfluidGDA) == address(0)) {
-            return;
+            return false;
         }
 
         int96 currentFlowRate = superfluidToken.getGDAFlowRate(address(this), superfluidGDA);
         int96 actualFlowRate = superfluidToken.distributeFlow(superfluidGDA, 0);
         if (currentFlowRate != actualFlowRate) {
             emit StreamRateUpdated(address(superfluidGDA), 0);
+            return true;
         }
+        return false;
     }
 
     function _isAuthorizedRebalanceCaller(address caller) internal view returns (bool) {

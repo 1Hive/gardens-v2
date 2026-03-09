@@ -47,3 +47,33 @@ Result:
 - Previously processed findings remain non-exploitable under the merged PoC gate.
 - `M-7` remains exploitable and is now correctly surfaced as a failing security gate.
 - No duplicate vulnerability IDs remain in the merged report set.
+
+---
+
+## Post-Fix Run (after patching `M-7` + cooldown-on-success semantics)
+
+### Contract changes applied
+- `pkg/contracts/src/CVStrategy/facets/CVDisputeFacet.sol`
+  - Non-blocking collateral payout handling in `rule()` via `try/catch`.
+  - Added `CollateralPayoutFailed` event for failed payout telemetry.
+- `pkg/contracts/src/CVStrategy/facets/CVStreamingFacet.sol`
+  - `rebalance()` now commits `lastRebalanceAt` only when work is meaningful and escrow syncs have no errors.
+  - No new external UI/subgraph integration surface added in this patch.
+
+### Validation rerun
+Commands:
+```bash
+forge test --match-path pkg/contracts/test/SecurityPoC.t.sol -q
+forge test --match-path pkg/contracts/test/CVStreamingFacet.t.sol -q
+forge test -q
+```
+
+Result:
+- Security PoC: **15/15 passed**
+- CVStreamingFacet suite: **27/27 passed**
+- Full Foundry suite: **passed** (exit code 0)
+
+### Updated interpretation
+- `M-7` is no longer reproducible in the merged PoC gate.
+- Combined merged security gate is fully green.
+- Deduplicated unique finding catalog remains unchanged at **14** total.

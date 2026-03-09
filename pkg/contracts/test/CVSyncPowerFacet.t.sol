@@ -298,15 +298,40 @@ contract CVSyncPowerFacetTest is Test {
         vm.prank(syncCaller);
         facet.syncPower(member);
 
-        // 20/80 reduction (after consuming 20 unused power) => ~75% remains per proposal.
-        // Rounding is applied per proposal, so totals can differ by 1 from the exact ratio.
-        assertEq(facet.getProposalStakedAmount(1), 37);
-        assertEq(facet.getVoterStakedPoints(1, member), 37);
+        // 20/80 reduction (after consuming 20 unused power) => 75% remains per proposal.
+        // The implementation settles residual exactly, so total removed stake matches reductionNeeded.
+        assertEq(facet.getProposalStakedAmount(1), 38);
+        assertEq(facet.getVoterStakedPoints(1, member), 38);
         assertEq(facet.getProposalStakedAmount(2), 22);
         assertEq(facet.getVoterStakedPoints(2, member), 22);
+        assertEq(facet.totalVoterStakePct(member), 60);
+        assertEq(facet.totalStaked(), 60);
+        assertEq(facet.totalPointsActivated(), 60);
+    }
+
+    function test_syncPower_decreaseRebalancesProposals_exactResidualSettlement() public {
+        _authorizeSyncCaller();
+        community.setCachedPower(member, 100);
+        registry.setLivePower(member, 59); // decrease by 41
+        facet.setTotalPointsActivated(100);
+        facet.setTotalStaked(80);
+        facet.setVoterStake(member, 80);
+
+        // Member stakes 50 and 30 across two proposals.
+        facet.setProposal(1, member, 50, 50);
+        facet.pushVoterProposal(member, 1);
+        facet.setProposal(2, member, 30, 30);
+        facet.pushVoterProposal(member, 2);
+
+        vm.prank(syncCaller);
+        facet.syncPower(member);
+
+        // Unused power = 20, reductionNeeded = 41 - 20 = 21.
+        // Remaining stake after exact settlement must be 80 - 21 = 59.
         assertEq(facet.totalVoterStakePct(member), 59);
         assertEq(facet.totalStaked(), 59);
-        assertEq(facet.totalPointsActivated(), 60);
+        assertEq(facet.getVoterStakedPoints(1, member) + facet.getVoterStakedPoints(2, member), 59);
+        assertEq(facet.totalPointsActivated(), 59);
     }
 
     // ─── Batch Sync ─────────────────────────────────────────────────────
