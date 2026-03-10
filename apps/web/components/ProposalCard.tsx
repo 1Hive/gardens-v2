@@ -179,19 +179,23 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
 
     const alreadyExecuted = proposalStatus[proposalStatus] === "executed";
 
-    const supportNeededToPass = (
-      (thresholdPct ?? 0) - (totalSupportPct ?? 0)
-    ).toFixed(2);
+    const hasThreshold = thresholdPct != null;
+    const thresholdValue = thresholdPct ?? 0;
+    const supportNeededToPass = (thresholdValue - (totalSupportPct ?? 0)).toFixed(
+      2,
+    );
 
-    const readyToBeExecuted = (currentConvictionPct ?? 0) > (thresholdPct ?? 0);
+    const readyToBeExecuted =
+      hasThreshold && (currentConvictionPct ?? 0) > thresholdValue;
 
     const proposalWillPass =
+      hasThreshold &&
       Number(supportNeededToPass) < 0 &&
-      (currentConvictionPct ?? 0) < (thresholdPct ?? 0) &&
+      (currentConvictionPct ?? 0) < thresholdValue &&
       !alreadyExecuted;
 
     const impossibleToPass =
-      (thresholdPct ?? 0) >= 100 || (thresholdPct ?? 0) === 0;
+      hasThreshold && (thresholdValue >= 100 || thresholdValue === 0);
 
     const ProposalCountDown = (
       <>
@@ -326,8 +330,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
               <div className={`w-full  ${isSignalingType ? "mt-0" : "mt-2"}`}>
                 <div className="w-full ">
                   {currentConvictionPct != null &&
-                    (isSignalingType ||
-                      (thresholdPct != null && totalSupportPct != null)) && (
+                    totalSupportPct != null && (
                       <div>
                         <div
                           className={`flex flex-col-reverse sm:flex-row items-baseline justify-between gap-1 ${isSignalingType ? "mb-0" : "mb-1"}`}
@@ -347,7 +350,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
                               </span>
                             </li>
 
-                            {!isSignalingType && (
+                            {!isSignalingType && hasThreshold && (
                               <li>
                                 <span className="text-xs text-neutral-soft-content">
                                   threshold: {thresholdPct} VP
