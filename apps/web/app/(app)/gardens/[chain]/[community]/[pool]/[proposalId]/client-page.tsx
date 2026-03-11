@@ -542,6 +542,13 @@ export default function ClientPage({ params }: ClientPageProps) {
     missmatchUrl: isSyncStreamWrongNetwork,
   } = useDisableButtons();
 
+  const hasInsufficientPoolFunds =
+    !isSignalingType &&
+    !isStreamingType &&
+    requestedAmount != null &&
+    poolToken?.balance != null &&
+    BigInt(requestedAmount) > poolToken.balance;
+
   const disableExecuteButton = useMemo<ConditionObject[]>(
     () => [
       {
@@ -555,8 +562,17 @@ export default function ClientPage({ params }: ClientPageProps) {
         condition: proposalStatus === "disputed",
         message: "Proposal is being disputed",
       },
+      {
+        condition: hasInsufficientPoolFunds,
+        message: "Not enough funds in the pool",
+      },
     ],
-    [address, thresholdPct, currentConvictionPct, proposalStatus],
+    [
+      thresholdPct,
+      currentConvictionPct,
+      proposalStatus,
+      hasInsufficientPoolFunds,
+    ],
   );
 
   const {
