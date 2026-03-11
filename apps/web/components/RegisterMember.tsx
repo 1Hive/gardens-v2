@@ -165,7 +165,7 @@ export function RegisterMember({
     () => ({
       onClick: handleClick,
       btnStyle: isMember ? "outline" : "filled",
-      color: isMember ? "danger" : "primary",
+      color: isMember ? "danger" : "tertiary",
       disabled:
         missmatchUrl ||
         disableRegMemberBtnCondition.some((cond) => cond.condition),

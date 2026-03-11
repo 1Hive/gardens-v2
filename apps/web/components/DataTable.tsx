@@ -40,7 +40,7 @@ export const DataTable: React.FC<DataTableProps> = ({
             <tr className="uppercase tracking-wider">
               {columns.map((col) => (
                 <th
-                  key={(col.header ?? "").toString()}
+                  key={`header-${columns.indexOf(col)}-${typeof col.header === "string" ? col.header : "node"}`}
                   scope="col"
                   className={`py-2.5 sm:py-3.5 px-[1px] ${col.className ?? ""}`}
                 >

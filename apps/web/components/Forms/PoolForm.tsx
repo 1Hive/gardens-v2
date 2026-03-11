@@ -412,6 +412,27 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
       throw new Error("No preview data");
     }
 
+    const tribunalSafeAddress =
+      previewData.tribunalAddress ||
+      getValues("tribunalAddress") ||
+      chain.globalTribunal;
+    if (!tribunalSafeAddress || !isAddress(tribunalSafeAddress)) {
+      throw new Error("Missing or invalid tribunal Safe address.");
+    }
+
+    const arbitratorAddress = chain.arbitrator;
+    if (!arbitratorAddress || !isAddress(arbitratorAddress)) {
+      throw new Error("Missing or invalid arbitrator address for this chain.");
+    }
+
+    const sybilScorerAddress =
+      sybilResistanceType === "gitcoinPassport" ? chain.passportScorer
+      : sybilResistanceType === "goodDollar" ? chain.goodDollar
+      : zeroAddress;
+    if (!sybilScorerAddress || !isAddress(sybilScorerAddress)) {
+      throw new Error("Missing or invalid sybil scorer address.");
+    }
+
     // sybil resistance set
     let allowList: Address[] = [];
     if (
@@ -447,8 +468,8 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
               previewData.disputeCollateral.toString(),
               ETH_DECIMALS,
             ),
-            tribunalSafe: previewData.tribunalAddress as Address,
-            arbitrator: chain.arbitrator as Address,
+            tribunalSafe: tribunalSafeAddress,
+            arbitrator: arbitratorAddress,
           },
           pointConfig: {
             maxAmount: parseUnits(maxAmountStr, governanceToken.decimals),
@@ -456,12 +477,7 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
           pointSystem: previewData.pointSystemType,
           proposalType: previewData.strategyType,
           registryCommunity: communityAddr,
-          sybilScorer:
-            sybilResistanceType === "gitcoinPassport" ?
-              (chain.passportScorer as Address)
-            : sybilResistanceType === "goodDollar" ?
-              (chain.goodDollar as Address)
-            : zeroAddress,
+          sybilScorer: sybilScorerAddress,
           sybilScorerThreshold: BigInt(
             Math.round(
               (

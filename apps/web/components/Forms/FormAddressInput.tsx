@@ -12,7 +12,6 @@ import {
 } from "wagmi";
 import { FormInput } from "./FormInput";
 import { LoadingSpinner } from "../LoadingSpinner";
-import { getConfigByChain } from "@/configs/chains";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useFlag } from "@/hooks/useFlag";
 import { safeABI } from "@/src/customAbis";
@@ -105,16 +104,16 @@ export const FormAddressInput = ({
   }, [ensAddress]);
 
   const validateSafeAddress = async (address: string) => {
-    if (
-      bypassSafeCheck ||
-      !getConfigByChain(publicClient.chain.id)?.safePrefix
-    ) {
+    if (bypassSafeCheck) {
       return true;
+    }
+    if (!publicClient) {
+      return "Unable to validate Safe address without an RPC client.";
     }
     try {
       setIsValidatingSafe(true);
       const isSafe = await Promise.all([
-        publicClient?.readContract({
+        publicClient.readContract({
           address: address as Address,
           abi: safeABI,
           functionName: "getOwners",

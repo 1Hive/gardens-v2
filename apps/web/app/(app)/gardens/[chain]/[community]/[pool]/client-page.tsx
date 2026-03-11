@@ -12,7 +12,6 @@ import {
   useAccount,
   useChainId,
   useContractRead,
-  useToken,
 } from "wagmi";
 import {
   getAlloQuery,
@@ -72,8 +71,12 @@ export default function ClientPage({
   }, []);
 
   const searchParams = useCollectQueryParams();
+  const newPoolId = searchParams[QUERY_PARAMS.communityPage.newPool];
   const strategyAddress = poolSlug.toLowerCase();
+  const pendingNewPoolRefetch = useRef<string | null>(null);
   const [poolIdForScope, setPoolIdForScope] = useState<number | undefined>();
+  const [hasResolvedInitialNewPoolLookup, setHasResolvedInitialNewPoolLookup] =
+    useState(() => !Boolean(newPoolId));
   const { data, error, refetch, fetching } = useSubgraphQuery<getPoolDataQuery>(
     {
       query: getPoolDataDocument,
@@ -113,6 +116,33 @@ export default function ClientPage({
   const resolvedPoolId =
     strategy?.poolId != null ? Number(strategy.poolId) : undefined;
   const poolId = resolvedPoolId;
+
+  useEffect(() => {
+    if (!newPoolId) {
+      pendingNewPoolRefetch.current = null;
+      setHasResolvedInitialNewPoolLookup(true);
+      return;
+    }
+
+    if (strategy || error) {
+      setHasResolvedInitialNewPoolLookup(true);
+      return;
+    }
+
+    setHasResolvedInitialNewPoolLookup(false);
+
+    if (pendingNewPoolRefetch.current === newPoolId) {
+      return;
+    }
+
+    pendingNewPoolRefetch.current = newPoolId;
+
+    void refetch().finally(() => {
+      if (pendingNewPoolRefetch.current === newPoolId) {
+        setHasResolvedInitialNewPoolLookup(true);
+      }
+    });
+  }, [newPoolId, strategy, error]);
 
   useEffect(() => {
     if (
@@ -360,11 +390,7 @@ export default function ClientPage({
     enabled: !!effectiveSuperToken && !!wallet,
   });
 
-  const { data: tokenGarden } = useToken({
-    address: strategy?.token as Address,
-    chainId: chainId,
-    enabled: !isMemberCommunity,
-  });
+  const tokenGarden = strategy?.registryCommunity?.garden;
 
   const { data: metadataResult } = useMetadataIpfsFetch({
     hash: strategy?.metadataHash,
@@ -423,6 +449,8 @@ export default function ClientPage({
   const isStreamingPool = poolType === "streaming";
   const needsFundingToken = poolType === "funding";
   const isMissingFundingToken = needsFundingToken && !poolToken;
+  const isAwaitingNewPoolIndexing =
+    Boolean(newPoolId) && !strategy && !error && !hasResolvedInitialNewPoolLookup;
   const [hasWaitedForPoolToken, setHasWaitedForPoolToken] = useState(false);
 
   useEffect(() => {
@@ -441,6 +469,7 @@ export default function ClientPage({
 
   const stillLoading =
     fetching ||
+    isAwaitingNewPoolIndexing ||
     (!data && !error) ||
     (strategy != null && poolId == null) ||
     (isMissingFundingToken && !error && !hasWaitedForPoolToken);

@@ -39,6 +39,7 @@ const statusToTextColor: Record<TransactionStatus, string> = {
 };
 
 export function TransactionStatusNotification({
+  contractName,
   message,
   status,
   showClickToExplorer,
@@ -47,7 +48,6 @@ export function TransactionStatusNotification({
   const chain = useChainFromPath();
   const icon = statusToIcon[status];
   const textColor = statusToTextColor[status];
-
   const textClass =
     showClickToExplorer ? textColor : "dark:text-neutral-inverted-content";
 
@@ -70,6 +70,11 @@ export function TransactionStatusNotification({
         </div>
       )}
       <div className="flex flex-col gap-1 min-w-0">
+        {contractName && (
+          <div className="font-medium text-base break-words whitespace-normal dark:text-neutral-inverted-content">
+            {contractName}
+          </div>
+        )}
         <div className={`${textClass} font-medium text-base break-words whitespace-normal`}>
           {message}
         </div>
