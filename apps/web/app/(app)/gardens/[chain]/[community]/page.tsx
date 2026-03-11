@@ -5,7 +5,6 @@ import ClientPage from "./client-page";
 import { FALLBACK_TITLE, description } from "./opengraph-image";
 import { chainConfigMap } from "@/configs/chains";
 import { queryByChain } from "@/providers/urql";
-import { logOnce } from "@/utils/log";
 
 type PageParams = {
   params: {
@@ -124,7 +123,6 @@ export async function generateMetadata({
 export default function Page({
   params,
 }: PageParams) {
-  logOnce("debug", "Loading page: (app)/gardens/[chain]/[community]/page.tsx");
   return <ClientPage params={params} />;
 }
 

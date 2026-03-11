@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import ClientPage from "./client-page";
-import { logOnce } from "@/utils/log";
 
 const TITLE = "Gardens";
 const DESCRIPTION = "Create, govern, and fund communities together.";
@@ -25,7 +24,6 @@ export function generateMetadata(): Metadata {
 }
 
 export default function Page() {
-  logOnce("debug", "Loading page: (app)/gardens/page.tsx");
   return <ClientPage />;
 }
 

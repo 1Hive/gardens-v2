@@ -58,6 +58,7 @@ import {
   calculatePercentageBigInt,
   roundToSignificant,
 } from "@/utils/numbers";
+import { logOnce } from "@/utils/log";
 import { buildProposalEntityId, extractProposalNumber } from "@/utils/proposals";
 import { prettyTimestamp } from "@/utils/text";
 
@@ -85,6 +86,14 @@ export default function ClientPage({ params }: ClientPageProps) {
     community: communityAddr,
     pool: poolSlug,
   } = params;
+
+  useEffect(() => {
+    logOnce(
+      "debug",
+      "Loading page: (app)/gardens/[chain]/[community]/[pool]/[proposalId]/page.tsx",
+    );
+  }, []);
+
   const strategyAddress = poolSlug.toLowerCase();
   const [poolIdForScope, setPoolIdForScope] = useState<number | undefined>();
   const [convictionRefreshing, setConvictionRefreshing] = useState(true);

@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import ClientPage from "./client-page";
-import { logOnce } from "@/utils/log";
 
 const TITLE = "Gardens - Create a pool";
 const DESCRIPTION =
@@ -39,10 +38,6 @@ export function generateMetadata({ params }: PageParams): Metadata {
 export default function Page({
   params,
 }: PageParams) {
-  logOnce(
-    "debug",
-    "Loading page: (app)/gardens/[chain]/[community]/create-pool/page.tsx",
-  );
   return <ClientPage params={params} />;
 }
 

@@ -49,6 +49,7 @@ import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { useSuperfluidToken } from "@/hooks/useSuperfluidToken";
 import { registryCommunityABI } from "@/src/generated";
 import { PoolTypes } from "@/types";
+import { logOnce } from "@/utils/log";
 import {
   calculatePercentageBigInt,
   formatTokenAmount,
@@ -63,6 +64,13 @@ export default function ClientPage({
 }: {
   params: { chain: string; pool: string; community: string };
 }) {
+  useEffect(() => {
+    logOnce(
+      "debug",
+      "Loading page: (app)/gardens/[chain]/[community]/[pool]/page.tsx",
+    );
+  }, []);
+
   const searchParams = useCollectQueryParams();
   const strategyAddress = poolSlug.toLowerCase();
   const [poolIdForScope, setPoolIdForScope] = useState<number | undefined>();

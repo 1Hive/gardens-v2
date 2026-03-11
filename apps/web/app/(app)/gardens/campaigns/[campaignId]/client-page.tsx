@@ -25,6 +25,7 @@ import {
   WalletEntry,
 } from "@/types";
 import { CAMPAIGNS, CampaignId, isCampaignActive } from "@/utils/campaigns";
+import { logOnce } from "@/utils/log";
 import { shortenAddress } from "@/utils/text";
 import { formatNumber, timeAgo } from "@/utils/time";
 
@@ -259,6 +260,13 @@ export default function GardensGrowthInitiativePage({
   );
 
   const [openModal, setOpenModal] = useState(false);
+
+  useEffect(() => {
+    logOnce(
+      "debug",
+      "Loading page: (app)/gardens/campaigns/[campaignId]/page.tsx",
+    );
+  }, []);
 
   const campaigns = CAMPAIGNS[campaignId];
   const isEndedCampaign = !isCampaignActive(campaigns?.endDate ?? "");

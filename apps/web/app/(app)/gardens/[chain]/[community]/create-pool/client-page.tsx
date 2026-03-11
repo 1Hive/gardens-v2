@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Address } from "viem";
 import {
   getPoolCreationDataDocument,
@@ -9,6 +9,7 @@ import {
 import { PoolForm } from "@/components/Forms/PoolForm";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
+import { logOnce } from "@/utils/log";
 
 type ClientPageProps = {
   params: { chain: string; community: string };
@@ -17,6 +18,13 @@ type ClientPageProps = {
 export default function ClientPage({
   params: { community },
 }: ClientPageProps) {
+  useEffect(() => {
+    logOnce(
+      "debug",
+      "Loading page: (app)/gardens/[chain]/[community]/create-pool/page.tsx",
+    );
+  }, []);
+
   const { data: result } = useSubgraphQuery<getPoolCreationDataQuery>({
     query: getPoolCreationDataDocument,
     variables: {

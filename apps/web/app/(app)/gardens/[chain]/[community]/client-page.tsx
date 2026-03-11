@@ -61,6 +61,7 @@ import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { getProtopiansOwners } from "@/services/alchemy";
 import { registryCommunityABI } from "@/src/generated";
 import { Column, PoolTypes } from "@/types";
+import { logOnce } from "@/utils/log";
 import {
   calculatePercentageBigInt,
   formatCountWhenPlus1k,
@@ -90,6 +91,10 @@ export default function ClientPage({
 }: {
   params: { community: string };
 }) {
+  useEffect(() => {
+    logOnce("debug", "Loading page: (app)/gardens/[chain]/[community]/page.tsx");
+  }, []);
+
   const searchParams = useCollectQueryParams();
   const { address: accountAddress } = useAccount();
   const showArchived = useFlag("showArchived");

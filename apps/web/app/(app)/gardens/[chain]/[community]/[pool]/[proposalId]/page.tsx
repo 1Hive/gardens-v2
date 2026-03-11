@@ -13,7 +13,6 @@ import {
 import { getConfigByChain } from "@/configs/chains";
 import { queryByChain } from "@/providers/urql";
 import { ProposalStatus } from "@/types";
-import { logOnce } from "@/utils/log";
 import {
   buildProposalEntityId,
   extractProposalNumber,
@@ -225,10 +224,6 @@ export default async function Page({
   params,
   searchParams,
 }: PagePropsWithSearch) {
-  logOnce(
-    "debug",
-    "Loading page: (app)/gardens/[chain]/[community]/[pool]/[proposalId]/page.tsx",
-  );
   const strategyAddress = await resolveStrategyAddress(
     params.chain,
     params.pool,

@@ -5,7 +5,6 @@ import {
   resolveStrategyAddress,
   stringifySearchParams,
 } from "../route-helpers";
-import { logOnce } from "@/utils/log";
 
 const TITLE = "Gardens - Create a proposal";
 const DESCRIPTION =
@@ -60,10 +59,6 @@ export default async function Page({
   params,
   searchParams,
 }: PageProps) {
-  logOnce(
-    "debug",
-    "Loading page: (app)/gardens/[chain]/[community]/[pool]/create-proposal/page.tsx",
-  );
   const strategyAddress = await resolveStrategyAddress(
     params.chain,
     params.pool,

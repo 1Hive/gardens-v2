@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Address } from "wagmi";
 import { getPoolDataDocument, getPoolDataQuery } from "#/subgraph/.graphclient";
 import { ProposalForm } from "@/components/Forms";
@@ -10,6 +10,7 @@ import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { usePoolToken } from "@/hooks/usePoolToken";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { PoolTypes } from "@/types";
+import { logOnce } from "@/utils/log";
 import {
   CV_SCALE_PRECISION,
   formatTokenAmount,
@@ -27,6 +28,13 @@ type ClientPageProps = {
 export default function ClientPage({
   params: { pool: poolSlug },
 }: ClientPageProps) {
+  useEffect(() => {
+    logOnce(
+      "debug",
+      "Loading page: (app)/gardens/[chain]/[community]/[pool]/create-proposal/page.tsx",
+    );
+  }, []);
+
   const strategyAddress = poolSlug.toLowerCase();
   const { data } = useSubgraphQuery<getPoolDataQuery>({
     query: getPoolDataDocument,

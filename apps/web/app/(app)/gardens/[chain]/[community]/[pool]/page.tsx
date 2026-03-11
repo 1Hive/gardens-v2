@@ -11,7 +11,6 @@ import { resolveStrategyAddress, stringifySearchParams } from "./route-helpers";
 import { chainConfigMap, type ChainData } from "@/configs/chains";
 import { queryByChain } from "@/providers/urql";
 import { PoolTypes } from "@/types";
-import { logOnce } from "@/utils/log";
 import { hasEthereumAddressFormat } from "@/utils/web3";
 
 type PageParams = {
@@ -194,7 +193,6 @@ type PageProps = PageParams & {
 };
 
 export default async function Page(props: PageProps) {
-  logOnce("debug", "Loading page: (app)/gardens/[chain]/[community]/[pool]/page.tsx");
   const numericChain = Number(props.params.chain);
   const chainConfig =
     chainConfigMap[props.params.chain] ?? chainConfigMap[numericChain];
