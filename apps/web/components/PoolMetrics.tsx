@@ -302,6 +302,8 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     walletBalance && superToken ?
       scaleTo(walletBalance.value, poolToken.decimals, superToken.decimals)
     : walletBalance?.value;
+  const walletBalanceExact =
+    walletBalance ? formatUnits(walletBalance.value, poolToken.decimals) : "0";
 
   const hasInsufficientBalance =
     !!walletBalance?.formatted && +walletBalance.formatted < amount;
@@ -485,6 +487,10 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
       {poolToken.symbol}
     </label>
   );
+
+  const fillTransferAmountWithWalletBalance = () => {
+    setAmount(trimEnd(trimEnd(walletBalanceExact, "0"), "."));
+  };
 
   const availableBalanceTooltipMessage = [
     walletBalance && +walletBalance.formatted > 0 ?
@@ -734,6 +740,18 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
         onClose={() => setIsTransferModalOpened(false)}
       >
         <div className="flex flex-col gap-6">
+          <div className="flex items-center justify-between gap-3 text-sm">
+            <span>Wallet balance:</span>
+            <button
+              type="button"
+              onClick={fillTransferAmountWithWalletBalance}
+              className="text-primary-content hover:underline disabled:opacity-50"
+              disabled={!walletBalance || walletBalance.value <= 0n}
+            >
+              {roundToSignificant(walletBalanceExact, 4, { truncate: true })}{" "}
+              {poolToken.symbol}
+            </button>
+          </div>
           <label className="flex flex-col gap-2">
             Amount to transfer:
             {fundAmountInput}

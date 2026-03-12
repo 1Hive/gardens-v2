@@ -7,12 +7,7 @@ import {
   UserGroupIcon,
 } from "@heroicons/react/24/outline";
 import { Address } from "viem";
-import {
-  useBalance,
-  useAccount,
-  useChainId,
-  useContractRead,
-} from "wagmi";
+import { useBalance, useAccount, useChainId, useContractRead } from "wagmi";
 import {
   getAlloQuery,
   getCommunityDocument,
@@ -56,7 +51,6 @@ import {
 } from "@/utils/numbers";
 
 export type AlloQuery = getAlloQuery["allos"][number];
-const DEBUG_LABEL = "#debug [PoolPage client-page.tsx]";
 
 export default function ClientPage({
   params: { chain, pool: poolSlug, community: _community },
@@ -185,7 +179,8 @@ export default function ClientPage({
     ],
   });
 
-  const { data: isMemberResult } = useSubgraphQuery<isMemberQuery>({
+  const { data: isMemberResult, fetching: isMemberFetching } =
+    useSubgraphQuery<isMemberQuery>({
     query: isMemberDocument,
     variables: {
       me: wallet?.toLowerCase(),
@@ -224,8 +219,13 @@ export default function ClientPage({
   const [triggerSybilCheckModalClose, setTriggerSybilCheckModalClose] =
     useState(false);
   const [selectedTab, setSelectedTab] = useState(0);
+  const [hasStartedMembershipLookup, setHasStartedMembershipLookup] =
+    useState(() => !wallet);
+  const [hasStartedActivationLookup, setHasStartedActivationLookup] =
+    useState(() => !wallet);
+  const [hasJustJoinedCommunity, setHasJustJoinedCommunity] = useState(false);
 
-  const { data: memberData, error: errorMemberData } =
+  const { data: memberData, error: errorMemberData, fetching: memberDataFetching } =
     useSubgraphQuery<isMemberQuery>({
       query: isMemberDocument,
       variables: {
@@ -238,7 +238,7 @@ export default function ClientPage({
             {
               topic: "member",
               id: wallet,
-              containerId: poolId,
+              containerId: strategy?.registryCommunity?.id,
             },
             {
               topic: "proposal",
@@ -250,8 +250,8 @@ export default function ClientPage({
       enabled: !!wallet && !!strategy?.registryCommunity?.id,
     });
 
-  const { data: memberStrategyData } = useSubgraphQuery<getMemberStrategyQuery>(
-    {
+  const { data: memberStrategyData, fetching: memberStrategyFetching } =
+    useSubgraphQuery<getMemberStrategyQuery>({
       query: getMemberStrategyDocument,
       variables: {
         member_strategy: `${wallet?.toLowerCase()}-${strategy?.id.toLowerCase()}`,
@@ -268,11 +268,21 @@ export default function ClientPage({
           ]
         : undefined,
       enabled: !!wallet && !!strategy?.id,
-    },
-  );
+    });
+
+  const isMemberCommunityResult =
+    isMemberResult?.member?.memberCommunity?.[0];
+  const memberCommunityFromPoolResult =
+    memberData?.member?.memberCommunity?.[0];
+  const memberCommunityData =
+    isMemberCommunityResult?.isRegistered ?
+      isMemberCommunityResult
+    : memberCommunityFromPoolResult?.isRegistered ?
+      memberCommunityFromPoolResult
+    : isMemberCommunityResult ?? memberCommunityFromPoolResult;
 
   const memberTokensInCommunity = BigInt(
-    memberData?.member?.memberCommunity?.[0]?.stakedTokens ?? 0,
+    memberCommunityData?.stakedTokens ?? 0,
   );
 
   const { data: membersStrategyData } =
@@ -297,11 +307,64 @@ export default function ClientPage({
 
   const membersStrategies = membersStrategyData?.memberStrategies;
 
-  const isMemberCommunity =
-    !!memberData?.member?.memberCommunity?.[0]?.isRegistered;
+  const isMemberCommunity = !!memberCommunityData?.isRegistered;
 
+  const memberActivatedOnChain = memberPower != null && memberPower > 0n;
   const memberActivatedStrategy =
+    memberActivatedOnChain ||
     memberStrategyData?.memberStrategy?.activatedPoints > 0n;
+  const hasResolvedMembershipState =
+    !wallet || (hasStartedMembershipLookup && !isMemberFetching && !memberDataFetching);
+  const hasResolvedActivationState =
+    !wallet || (hasStartedActivationLookup && !memberStrategyFetching);
+  const showJoinCommunitySection =
+    hasResolvedMembershipState && !isMemberCommunity && !!registryCommunity;
+  const showActivateGovernanceSection =
+    hasResolvedMembershipState &&
+    isMemberCommunity &&
+    (hasResolvedActivationState || hasJustJoinedCommunity) &&
+    !memberActivatedStrategy;
+
+  useEffect(() => {
+    if (
+      !wallet ||
+      isMemberFetching ||
+      memberDataFetching ||
+      isMemberCommunityResult !== undefined ||
+      memberCommunityFromPoolResult !== undefined
+    ) {
+      setHasStartedMembershipLookup(true);
+    }
+  }, [
+    wallet,
+    isMemberFetching,
+    memberDataFetching,
+    isMemberCommunityResult,
+    memberCommunityFromPoolResult,
+  ]);
+
+  useEffect(() => {
+    if (!wallet || memberStrategyFetching || memberStrategyData !== undefined) {
+      setHasStartedActivationLookup(true);
+    }
+  }, [wallet, memberStrategyFetching, memberStrategyData]);
+
+  const previousResolvedMembershipState = useRef<boolean | null>(null);
+  useEffect(() => {
+    if (!hasResolvedMembershipState) {
+      return;
+    }
+
+    if (previousResolvedMembershipState.current === false && isMemberCommunity) {
+      setHasJustJoinedCommunity(true);
+    }
+
+    if (!isMemberCommunity || memberActivatedStrategy) {
+      setHasJustJoinedCommunity(false);
+    }
+
+    previousResolvedMembershipState.current = isMemberCommunity;
+  }, [hasResolvedMembershipState, isMemberCommunity, memberActivatedStrategy]);
 
   const { subscribe, unsubscribe, connected } = usePubSubContext();
 
@@ -450,7 +513,10 @@ export default function ClientPage({
   const needsFundingToken = poolType === "funding";
   const isMissingFundingToken = needsFundingToken && !poolToken;
   const isAwaitingNewPoolIndexing =
-    Boolean(newPoolId) && !strategy && !error && !hasResolvedInitialNewPoolLookup;
+    Boolean(newPoolId) &&
+    !strategy &&
+    !error &&
+    !hasResolvedInitialNewPoolLookup;
   const [hasWaitedForPoolToken, setHasWaitedForPoolToken] = useState(false);
 
   useEffect(() => {
@@ -475,12 +541,6 @@ export default function ClientPage({
     (isMissingFundingToken && !error && !hasWaitedForPoolToken);
 
   if ((!strategy || isMissingFundingToken) && stillLoading) {
-    console.debug(`${DEBUG_LABEL} render waiting`, {
-      branch: "waiting-for-strategy-or-funding-token",
-      strategy,
-      poolTokenIfFundingPool: poolToken,
-      isFundingPool: poolType === "funding",
-    });
     return (
       <div className="mt-96 col-span-12">
         <LoadingSpinner />
@@ -497,13 +557,6 @@ export default function ClientPage({
     const title =
       isWrongNetwork ? "Switch network to continue" : "Pool unavailable";
 
-    console.debug(`${DEBUG_LABEL} render missing-strategy`, {
-      branch: "missing-strategy",
-      isWrongNetwork,
-      errorPresent: !!error,
-      expectedChainId,
-      connectedChainId,
-    });
     const description =
       isWrongNetwork ?
         `Connect your wallet to ${expectedChainName} to view this pool.`
@@ -524,10 +577,6 @@ export default function ClientPage({
   }
 
   if (poolId == null) {
-    console.debug(`${DEBUG_LABEL} render missing-pool-id`, {
-      branch: "missing-pool-id",
-      strategyResolved: strategy != null,
-    });
     return (
       <div className="mt-96 col-span-12">
         <LoadingSpinner />
@@ -551,17 +600,10 @@ export default function ClientPage({
       )
     : undefined;
 
-  console.debug(`${DEBUG_LABEL} render ready`, {
-    branch: "ready",
-    poolId,
-    proposalCount: strategy?.proposals?.length,
-    isEnabled,
-  });
-
   const registerAndActivateFromPool = (
     <>
       {/* Join community box */}
-      {!isMemberCommunity && registryCommunity && (
+      {showJoinCommunitySection && (
         <div className="border rounded-xl shadow-md border-tertiary-content bg-primary p-4 sm:p-6 dark:bg-primary-soft-dark mt-6 sm:mt-0">
           <div className="flex items-start gap-3 sm:gap-4">
             <div className="rounded-full bg-tertiary-content/10 p-3 flex-shrink-0">
@@ -614,7 +656,7 @@ export default function ClientPage({
       )}
 
       {/* Activate governance box */}
-      {isMemberCommunity && !memberActivatedStrategy && (
+      {showActivateGovernanceSection && (
         <div className="border rounded-xl shadow-md border-primary-content bg-primary p-4 sm:p-6 dark:bg-primary-soft-dark mt-6 sm:mt-0">
           <div className="flex items-start gap-3 sm:gap-4">
             <div className="rounded-full bg-primary-content/10 p-3 flex-shrink-0">
