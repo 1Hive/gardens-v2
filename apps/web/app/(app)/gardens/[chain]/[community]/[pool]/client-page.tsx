@@ -589,6 +589,10 @@ export default function ClientPage({
   const alloInfo = data.allos[0];
 
   const isEnabled = data.cvstrategies?.[0]?.isEnabled as boolean;
+  const showJoinCommunitySectionWhenEnabled =
+    isEnabled && showJoinCommunitySection;
+  const showActivateGovernanceSectionWhenEnabled =
+    isEnabled && showActivateGovernanceSection;
 
   const createProposalUrl = `/gardens/${chain}/${communityAddress}/${strategyAddress}/create-proposal`;
 
@@ -603,7 +607,7 @@ export default function ClientPage({
   const registerAndActivateFromPool = (
     <>
       {/* Join community box */}
-      {showJoinCommunitySection && (
+      {showJoinCommunitySectionWhenEnabled && (
         <div className="border rounded-xl shadow-md border-tertiary-content bg-primary p-4 sm:p-6 dark:bg-primary-soft-dark mt-6 sm:mt-0">
           <div className="flex items-start gap-3 sm:gap-4">
             <div className="rounded-full bg-tertiary-content/10 p-3 flex-shrink-0">
@@ -656,7 +660,7 @@ export default function ClientPage({
       )}
 
       {/* Activate governance box */}
-      {showActivateGovernanceSection && (
+      {showActivateGovernanceSectionWhenEnabled && (
         <div className="border rounded-xl shadow-md border-primary-content bg-primary p-4 sm:p-6 dark:bg-primary-soft-dark mt-6 sm:mt-0">
           <div className="flex items-start gap-3 sm:gap-4">
             <div className="rounded-full bg-primary-content/10 p-3 flex-shrink-0">
