@@ -175,6 +175,21 @@ query getPoolCreationData($communityAddr: ID!, $tokenAddr: ID!) {
   }
 }
 
+query getGlobalPauseState {
+  globalPauseControllers(
+    first: 1
+    where: { pausedUntil_not: null }
+    orderBy: updatedAt
+    orderDirection: desc
+  ) {
+    id
+    pausedUntil
+    pausedSelectors
+    createdAt
+    updatedAt
+  }
+}
+
 query getProposalSupporters($proposalId: String!) {
   members(first: 1000) {
     id

@@ -347,6 +347,22 @@ tasks:
           --broadcast \
           -vv
         ignore_error: true
+
+  refresh-facets-mainnet:
+    desc: Redeploy changed facet snapshots and write .FACETS addresses in networks.json (mainnet)
+    cmds:
+      - cmd: |
+          forge script script/RefreshFacets.s.sol:RefreshFacets \
+          --rpc-url ${RPC_URL_MAINNET} \
+          --sig "run(string)" 'mainnet' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --ffi \
+          --chain-id 1 \
+          --broadcast \
+          --verify \
+          -vvv
+        ignore_error: true
       - task: sync-abis
   deploy-streaming-escrow-factory-ethsep:
     desc: Deploy streaming escrow factory ethsep (set on registry factory)
@@ -375,6 +391,20 @@ tasks:
           --broadcast \
           --verify \
           --chain-id 11155111 \
+          -vvv
+  deploy-streaming-escrow-factory-arbsep:
+    desc: Deploy streaming escrow factory arbsep (set on registry factory)
+    cmds:
+      - cmd: |
+          forge script script/DeployStreamingEscrowFactory.s.sol:DeployStreamingEscrowFactory \
+          --rpc-url ${RPC_URL_ARB_TESTNET} \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --sig "run(string,uint256)" 'arbsepolia' ${P} \
+          --ffi \
+          --broadcast \
+          --verify \
+          --chain-id 421614 \
           -vvv
   deploy-token-opsep:
     desc: Deploy token opsep
@@ -778,8 +808,8 @@ tasks:
           -vv
         ignore_error: true
       - task: sync-abis
-  deploy-global-pause-controller-opsep:
-    desc: Deploy global pause controller opsep
+  deploy-or-upgrade-global-pause-controller-opsep:
+    desc: Deploy or upgrade global pause controller opsep
     cmds:
       - cmd: |
           forge script script/DeployGlobalPauseController.s.sol:DeployGlobalPauseController \
@@ -820,6 +850,20 @@ tasks:
           --broadcast \
           --verify \
           --chain-id 11155420 \
+          -vvv
+  upgrade-streaming-escrows-arbsep:
+    desc: Deploy or upgrade streaming escrows on arbsep (networks.json managed in script, optional I implementation)
+    cmds:
+      - cmd: |
+          forge script script/DeployOrUpgradeStreamingEscrows.s.sol:DeployOrUpgradeStreamingEscrows \
+          --rpc-url ${RPC_URL_ARB_TESTNET} \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --sig "run(string,address)" 'arbsepolia' ${I:-0x0000000000000000000000000000000000000000} \
+          --ffi \
+          --broadcast \
+          --verify \
+          --chain-id 421614 \
           -vvv
   deploy-snapshot-strategy-facets-opsep:
     desc: Deploy and snapshot strategy facets opsep
@@ -2467,6 +2511,86 @@ tasks:
     cmds:
       - task: upgrade-celo
       - task: verify-blockscout-celo
+
+  deploy-mainnet:
+    desc: Deploy mainnet
+    cmds:
+      - cmd: |
+          forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
+          --rpc-url ${RPC_URL_MAINNET} \
+          --sig "run(string)" 'mainnet' \
+          --chain-id 1 \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --ffi \
+          --broadcast \
+          --verify \
+          -vvv
+        ignore_error: true
+      - task: sync-abis
+
+  upgrade-mainnet:
+    desc: Upgrade mainnet
+    deps:
+      - verify-storage
+      - task: refresh-facets-mainnet
+    cmds:
+      - cmd: |
+          forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
+          --rpc-url ${RPC_URL_MAINNET} \
+          --sig "run(string)" 'mainnet' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --ffi \
+          --chain-id 1 \
+          --broadcast \
+          --verify \
+          -vvv
+
+  upgrade-atomic-diamond-mainnet:
+    desc: Upgrade atomic diamond mainnet
+    deps:
+      - verify-storage
+      - task: refresh-facets-mainnet
+    cmds:
+      - cmd: |
+          forge script script/UpgradeAllDiamonds.s.sol:UpgradeAllDiamonds \
+          --rpc-url ${RPC_URL_MAINNET} \
+          --sig "run(string)" 'mainnet' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --chain-id 1 \
+          --broadcast \
+          --ffi \
+          --verify \
+          --slow \
+          --via-ir
+
+  verify-etherscan-mainnet:
+    desc: Verify contracts on Etherscan mainnet
+    cmds:
+      - cmd: |
+          forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
+          --rpc-url ${RPC_URL_MAINNET} \
+          --sig "run(string)" 'mainnet' \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --ffi \
+          --chain-id 1 \
+          --verify \
+          -vvv \
+          --slow
+        ignore_error: true
+
+  upgrade-and-verify-mainnet:
+    desc: Upgrade and verify mainnet
+    deps:
+      - verify-storage
+      - task: refresh-facets-mainnet
+    cmds:
+      - task: upgrade-mainnet
+      - task: verify-etherscan-mainnet
+
   upgrade-and-verify-all-mainnets:
     desc: Upgrade and verify arbitrum, optimism, polygon, gnosis, base, celo
     deps:
@@ -2506,6 +2630,166 @@ tasks:
             echo "All networks succeeded."
           fi
           exit 0
+
+  pause-all-networks-with-pause-controller:
+    desc: Pause factory, communities and strategies on every network with ENVS.PAUSE_CONTROLLER set
+    cmds:
+      - cmd: |
+          set +e
+
+          DURATION_SECONDS=${DURATION_SECONDS:-3600}
+          if [ "${DURATION_SECONDS}" -le 0 ]; then
+            echo "[FAIL] DURATION_SECONDS must be > 0"
+            exit 1
+          fi
+
+          NETWORKS=$(jq -r '.networks[] | select(.ENVS.PAUSE_CONTROLLER? != null and (.ENVS.PAUSE_CONTROLLER | ascii_downcase) != "0x0000000000000000000000000000000000000000") | .name' config/networks.json)
+          if [ -z "${NETWORKS}" ]; then
+            echo "[INFO] No network has ENVS.PAUSE_CONTROLLER set"
+            exit 0
+          fi
+
+          failed=0
+          failed_networks=""
+          succeeded_networks=""
+          declare -a pids
+          declare -a names
+
+          for network in ${NETWORKS}; do
+            rpc=""
+            chain_id=""
+
+            case "${network}" in
+              ethsepolia) rpc="${RPC_URL_SEP_TESTNET}"; chain_id="11155111" ;;
+              arbsepolia) rpc="${RPC_URL_ARB_TESTNET}"; chain_id="421614" ;;
+              opsepolia) rpc="${RPC_URL_OP_TESTNET}"; chain_id="11155420" ;;
+              arbitrum) rpc="${RPC_URL_ARB}"; chain_id="42161" ;;
+              optimism) rpc="${RPC_URL_OPT}"; chain_id="10" ;;
+              polygon) rpc="${RPC_URL_POLYGON}"; chain_id="137" ;;
+              gnosis) rpc="${RPC_URL_GNOSIS}"; chain_id="100" ;;
+              base) rpc="${RPC_URL_BASE}"; chain_id="8453" ;;
+              celo) rpc="${RPC_URL_CELO}"; chain_id="42220" ;;
+              mainnet) rpc="${RPC_URL_MAINNET}"; chain_id="1" ;;
+              *)
+                echo "[FAIL] ${network}: unknown network mapping"
+                failed=1
+                failed_networks="${failed_networks} ${network}"
+                continue
+                ;;
+            esac
+
+            if [ -z "${rpc}" ]; then
+              echo "[FAIL] ${network}: missing RPC env var for network"
+              failed=1
+              failed_networks="${failed_networks} ${network}"
+              continue
+            fi
+
+            echo "[INFO] ${network}: pausing targets for ${DURATION_SECONDS}s"
+            forge script script/PauseAllByController.s.sol:PauseAllByController \
+              --rpc-url "${rpc}" \
+              --private-key "${PRIVATE_KEY}" \
+              --sig "run(string,uint256)" "${network}" "${DURATION_SECONDS}" \
+              --chain-id "${chain_id}" \
+              --broadcast \
+              --slow \
+              -vv &
+            pids+=($!)
+            names+=("${network}")
+          done
+
+          for i in "${!pids[@]}"; do
+            if wait "${pids[$i]}"; then
+              echo "[OK] ${names[$i]}"
+              succeeded_networks="${succeeded_networks} ${names[$i]}"
+            else
+              echo "[FAIL] ${names[$i]}"
+              failed=1
+              failed_networks="${failed_networks} ${names[$i]}"
+            fi
+          done
+
+          if [ "${failed}" -ne 0 ]; then
+            echo "[SUMMARY] pause run completed with failures"
+            echo "[SUMMARY] succeeded:${succeeded_networks}"
+            echo "[SUMMARY] failed:${failed_networks}"
+            exit 1
+          fi
+
+          echo "[SUMMARY] pause run completed successfully on all eligible networks"
+          echo "[SUMMARY] succeeded:${succeeded_networks}"
+  unpause-all-networks-with-pause-controller:
+    desc: Unpause factory, communities and strategies on every network with ENVS.PAUSE_CONTROLLER set
+    cmds:
+      - cmd: |
+          set +e
+
+          NETWORKS=$(jq -r '.networks[] | select(.ENVS.PAUSE_CONTROLLER? != null and (.ENVS.PAUSE_CONTROLLER | ascii_downcase) != "0x0000000000000000000000000000000000000000") | .name' config/networks.json)
+          if [ -z "${NETWORKS}" ]; then
+            echo "[INFO] No network has ENVS.PAUSE_CONTROLLER set"
+            exit 0
+          fi
+
+          failed=0
+          failed_networks=""
+          succeeded_networks=""
+
+          for network in ${NETWORKS}; do
+            rpc=""
+            chain_id=""
+
+            case "${network}" in
+              ethsepolia) rpc="${RPC_URL_SEP_TESTNET}"; chain_id="11155111" ;;
+              arbsepolia) rpc="${RPC_URL_ARB_TESTNET}"; chain_id="421614" ;;
+              opsepolia) rpc="${RPC_URL_OP_TESTNET}"; chain_id="11155420" ;;
+              arbitrum) rpc="${RPC_URL_ARB}"; chain_id="42161" ;;
+              optimism) rpc="${RPC_URL_OPT}"; chain_id="10" ;;
+              polygon) rpc="${RPC_URL_POLYGON}"; chain_id="137" ;;
+              gnosis) rpc="${RPC_URL_GNOSIS}"; chain_id="100" ;;
+              base) rpc="${RPC_URL_BASE}"; chain_id="8453" ;;
+              celo) rpc="${RPC_URL_CELO}"; chain_id="42220" ;;
+              mainnet) rpc="${RPC_URL_MAINNET}"; chain_id="1" ;;
+              *)
+                echo "[FAIL] ${network}: unknown network mapping"
+                failed=1
+                failed_networks="${failed_networks} ${network}"
+                continue
+                ;;
+            esac
+
+            if [ -z "${rpc}" ]; then
+              echo "[FAIL] ${network}: missing RPC env var for network"
+              failed=1
+              failed_networks="${failed_networks} ${network}"
+              continue
+            fi
+
+            echo "[INFO] ${network}: unpausing targets"
+            if forge script script/UnpauseAllByController.s.sol:UnpauseAllByController \
+              --rpc-url "${rpc}" \
+              --private-key "${PRIVATE_KEY}" \
+              --sig "run(string)" "${network}" \
+              --chain-id "${chain_id}" \
+              --broadcast \
+              -vv; then
+              echo "[OK] ${network}"
+              succeeded_networks="${succeeded_networks} ${network}"
+            else
+              echo "[FAIL] ${network}"
+              failed=1
+              failed_networks="${failed_networks} ${network}"
+            fi
+          done
+
+          if [ "${failed}" -ne 0 ]; then
+            echo "[SUMMARY] unpause run completed with failures"
+            echo "[SUMMARY] succeeded:${succeeded_networks}"
+            echo "[SUMMARY] failed:${failed_networks}"
+            exit 1
+          fi
+
+          echo "[SUMMARY] unpause run completed successfully on all eligible networks"
+          echo "[SUMMARY] succeeded:${succeeded_networks}"
   submit-safe-payloads:
     desc: Submit Safe Transaction Builder payloads to the Safe Transaction Service
     cmds:

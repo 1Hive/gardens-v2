@@ -303,3 +303,11 @@ type CollateralVaultDeposit @entity(immutable: false) {
   withdrawnAt: BigInt
   withdrawnTo: Bytes
 }
+
+type GlobalPauseController @entity(immutable: false) {
+  id: ID!
+  pausedUntil: BigInt
+  pausedSelectors: [String!]!
+  createdAt: BigInt!
+  updatedAt: BigInt!
+}
