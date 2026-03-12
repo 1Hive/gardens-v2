@@ -39,7 +39,7 @@ module.exports = {
           "/gardens/:chainId/:governanceToken/:community/:poolId/:pool" +
           addressPattern +
           "-:proposal",
-        destination: "/gardens/:chainId/:community/:pool/:proposal",
+        destination: "/gardens/:chainId/:community/:pool/proposal-:proposal",
       },
       {
         source:
