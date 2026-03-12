@@ -53,12 +53,12 @@ import { alloABI, cvStrategyABI } from "@/src/generated";
 import { PoolTypes, ProposalStatus, Column } from "@/types";
 
 import { useErrorDetails } from "@/utils/getErrorName";
+import { logOnce } from "@/utils/log";
 import {
   SEC_TO_MONTH,
   calculatePercentageBigInt,
   roundToSignificant,
 } from "@/utils/numbers";
-import { logOnce } from "@/utils/log";
 import { buildProposalEntityId, extractProposalNumber } from "@/utils/proposals";
 import { prettyTimestamp } from "@/utils/text";
 

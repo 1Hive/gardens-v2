@@ -118,7 +118,7 @@ export default function ClientPage({
       return;
     }
 
-    if (strategy || error) {
+    if (strategy ?? error) {
       setHasResolvedInitialNewPoolLookup(true);
       return;
     }
