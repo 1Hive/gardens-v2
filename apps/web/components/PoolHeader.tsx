@@ -992,7 +992,7 @@ export default function PoolHeader({
             />
           )}
           {!isEnabled && (
-            <div className="banner">
+            <div className="banner mt-2">
               {isArchived ?
                 <ArchiveBoxIcon className="h-8 w-8 text-secondary-content" />
               : <ClockIcon className="h-8 w-8 text-secondary-content" />}
