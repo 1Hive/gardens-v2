@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { getCommunityNameDocument } from "#/subgraph/.graphclient";
 import ClientPage from "./client-page";
 import { FALLBACK_TITLE, description } from "./opengraph-image";
@@ -8,15 +9,33 @@ import { queryByChain } from "@/providers/urql";
 type PageParams = {
   params: {
     chain: string;
-    garden: string;
     community: string;
   };
 };
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
+
 const OG_IMAGE_VERSION = "v=3";
 
 function buildOgImagePath(params: PageParams["params"]) {
-  return `/gardens/${params.chain}/${params.garden}/${params.community}/opengraph-image-w94mav?${OG_IMAGE_VERSION}`;
+  return `/gardens/${params.chain}/${params.community}/opengraph-image?${OG_IMAGE_VERSION}`;
+}
+
+function getRequestMetadataBase(): URL | undefined {
+  const requestHeaders = headers();
+  const host =
+    requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host");
+  if (!host) return undefined;
+  const proto =
+    requestHeaders.get("x-forwarded-proto") ??
+    (host.includes("localhost") ? "http" : "https");
+  try {
+    return new URL(`${proto}://${host}`);
+  } catch {
+    return undefined;
+  }
 }
 
 const titlePrefix = "Gardens - ";
@@ -24,9 +43,11 @@ const titlePrefix = "Gardens - ";
 export async function generateMetadata({
   params,
 }: PageParams): Promise<Metadata> {
+  const metadataBase = getRequestMetadataBase();
   const chainId = Number(params.chain);
   const chainConfig = chainConfigMap[params.chain] ?? chainConfigMap[chainId];
   const fallbackMetadata: Metadata = {
+    metadataBase,
     title: titlePrefix + FALLBACK_TITLE,
     description,
     openGraph: {
@@ -74,6 +95,7 @@ export async function generateMetadata({
     }
 
     return {
+      metadataBase,
       title,
       description,
       openGraph: {
@@ -98,6 +120,9 @@ export async function generateMetadata({
   }
 }
 
-export default function Page({ params }: PageParams) {
+export default function Page({
+  params,
+}: PageParams) {
   return <ClientPage params={params} />;
 }
+

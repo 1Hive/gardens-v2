@@ -160,18 +160,18 @@ query getMember($me: ID!) {
   }
 }
 
-query getPoolCreationData($communityAddr: ID!, $tokenAddr: ID!) {
-  tokenGarden(id: $tokenAddr) {
-    decimals
-    id
-    symbol
-  }
+query getPoolCreationData($communityAddr: ID!) {
   allos(first: 1000) {
     id
   }
   registryCommunity(id: $communityAddr) {
     communityName
     isValid
+    garden {
+      id
+      symbol
+      decimals
+    }
   }
 }
 
@@ -253,7 +253,7 @@ query getCommunities {
   }
 }
 
-query getCommunity($communityAddr: ID!, $tokenAddr: ID!) {
+query getCommunity($communityAddr: ID!) {
   registryCommunity(id: $communityAddr) {
     communityName
     id
@@ -297,11 +297,13 @@ query getCommunity($communityAddr: ID!, $tokenAddr: ID!) {
     registerToken
     councilSafe
     membersCount
-  }
-  tokenGarden(id: $tokenAddr) {
-    symbol
-    decimals
-    id
+    garden {
+      id
+      symbol
+      decimals
+      address
+      chainId
+    }
   }
 }
 
@@ -318,22 +320,13 @@ query getRegistryFactoryData {
   }
 }
 
-query getPoolData($garden: ID!, $poolId: BigInt!) {
+query getPoolData($strategyId: ID!) {
   allos(first: 1000) {
     id
     chainId
     tokenNative
   }
-  tokenGarden(id: $garden) {
-    address
-    name
-    symbol
-    description
-    totalBalance
-    ipfsCovenant
-    decimals
-  }
-  cvstrategies(first: 1000, where: { poolId: $poolId }) {
+  cvstrategies(first: 1000, where: { id: $strategyId }) {
     token
     metadataHash
     metadata {
@@ -373,6 +366,8 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
         id
         symbol
         decimals
+        address
+        chainId
       }
       members(first: 1000) {
         memberAddress
@@ -407,7 +402,7 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
     first: 1
     orderBy: version
     orderDirection: desc
-    where: { strategy_: { poolId: $poolId } }
+    where: { strategy_: { id: $strategyId } }
   ) {
     submitterCollateralAmount
     challengerCollateralAmount
@@ -418,16 +413,11 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
   }
 }
 
-query getProposalData($garden: ID!, $proposalId: ID!, $communityId: ID!) {
+query getProposalData($proposalId: ID!, $communityId: ID!) {
   allos(first: 1000) {
     id
     chainId
     tokenNative
-  }
-  tokenGarden(id: $garden) {
-    name
-    symbol
-    decimals
   }
   registryCommunity(id: $communityId) {
     councilSafe
@@ -467,6 +457,8 @@ query getProposalData($garden: ID!, $proposalId: ID!, $communityId: ID!) {
           id
           symbol
           decimals
+          address
+          chainId
         }
         members(first: 1000) {
           memberAddress
@@ -556,12 +548,13 @@ query getCommunityTitles($communityAddr: ID!) {
     communityName
     garden {
       name
+      id
     }
   }
 }
 
-query getPoolTitles($poolId: BigInt!) {
-  cvstrategies(first: 1000, where: { poolId: $poolId }) {
+query getPoolTitles($strategyId: ID!) {
+  cvstrategies(first: 1000, where: { id: $strategyId }) {
     poolId
     metadataHash
     metadata {
@@ -699,11 +692,14 @@ query getMemberPassportAndCommunities($memberId: ID!) {
 query getCommunityName($communityAddr: ID!) {
   registryCommunity(id: $communityAddr) {
     communityName
+    garden {
+      id
+    }
   }
 }
 
-query getPoolTitle($poolId: BigInt!) {
-  cvstrategies(first: 1, where: { poolId: $poolId }) {
+query getPoolTitle($strategyId: ID!) {
+  cvstrategies(first: 1, where: { id: $strategyId }) {
     metadata {
       title
     }

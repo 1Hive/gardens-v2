@@ -8,13 +8,12 @@ const DESCRIPTION =
 type PageParams = {
   params: {
     chain: string;
-    garden: string;
     community: string;
   };
 };
 
 function buildCommunityOgImagePath(params: PageParams["params"]) {
-  return `/gardens/${params.chain}/${params.garden}/${params.community}/opengraph-image-w94mav`;
+  return `/gardens/${params.chain}/${params.community}/create-pool/opengraph-image?v=1`;
 }
 
 export function generateMetadata({ params }: PageParams): Metadata {
@@ -36,6 +35,9 @@ export function generateMetadata({ params }: PageParams): Metadata {
   };
 }
 
-export default function Page({ params }: PageParams) {
+export default function Page({
+  params,
+}: PageParams) {
   return <ClientPage params={params} />;
 }
+

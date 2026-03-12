@@ -38,6 +38,9 @@ export async function generateMetadata({
   return fallbackMetadata;
 }
 
-export default function Page({ params }: PageParams) {
+export default function Page({
+  params,
+}: PageParams) {
   return <ClientPage campaignId={params.campaignId} />;
 }
+

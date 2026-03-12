@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Address } from "wagmi";
 import { getPoolDataDocument, getPoolDataQuery } from "#/subgraph/.graphclient";
 import { ProposalForm } from "@/components/Forms";
@@ -10,6 +10,7 @@ import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { usePoolToken } from "@/hooks/usePoolToken";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { PoolTypes } from "@/types";
+import { logOnce } from "@/utils/log";
 import {
   CV_SCALE_PRECISION,
   formatTokenAmount,
@@ -20,19 +21,28 @@ type ClientPageProps = {
   params: {
     chain: string;
     community: string;
-    poolId: string;
-    garden: string;
+    pool: string;
   };
 };
 
 export default function ClientPage({
-  params: { poolId, garden },
+  params: { pool: poolSlug },
 }: ClientPageProps) {
+  useEffect(() => {
+    logOnce(
+      "debug",
+      "Loading page: (app)/gardens/[chain]/[community]/[pool]/create-proposal/page.tsx",
+    );
+  }, []);
+
+  const strategyAddress = poolSlug.toLowerCase();
   const { data } = useSubgraphQuery<getPoolDataQuery>({
     query: getPoolDataDocument,
-    variables: { poolId, garden: garden.toLowerCase() },
+    variables: { strategyId: strategyAddress },
   });
   const strategyObj = data?.cvstrategies?.[0];
+  const resolvedPoolId =
+    strategyObj?.poolId != null ? Number(strategyObj.poolId) : undefined;
 
   const { data: metadataResult } = useMetadataIpfsFetch({
     hash: strategyObj?.metadataHash,
@@ -41,7 +51,6 @@ export default function ClientPage({
 
   const metadata = strategyObj?.metadata ?? metadataResult;
 
-  const tokenGarden = data?.tokenGarden;
   const poolTokenAddr = strategyObj?.token;
   const proposalType = strategyObj?.config?.proposalType as number;
 
@@ -57,9 +66,9 @@ export default function ClientPage({
   });
 
   if (
-    !tokenGarden ||
     metadata == null ||
     !strategyObj ||
+    resolvedPoolId == null ||
     (poolToken == undefined && PoolTypes[proposalType] === "funding")
   ) {
     return (
@@ -100,7 +109,7 @@ export default function ClientPage({
     <div className="page-layout col-span-12 mx-auto">
       <section className="section-layout">
         <div className="text-center sm:mt-5 mb-12">
-          <h2 className="mb-2">Create a Proposal in Pool #{poolId}</h2>
+          <h2 className="mb-2">Create a Proposal in Pool #{resolvedPoolId}</h2>
           <div className="">
             <h4 className="">{metadata.title}</h4>
           </div>
@@ -109,11 +118,10 @@ export default function ClientPage({
           arbitrableConfig={data.arbitrableConfigs[0]}
           poolBalance={poolBalanceFormatted}
           strategy={strategyObj}
-          poolId={+poolId}
+          poolId={resolvedPoolId}
           poolParams={data.cvstrategies[0].config}
           proposalType={proposalType}
           alloInfo={alloInfo}
-          tokenGarden={tokenGarden}
           spendingLimit={spendingLimitValueNum}
           spendingLimitPct={spendingLimitValuePct}
         />

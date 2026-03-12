@@ -6,7 +6,7 @@ import React, { ReactNode, useEffect, useState } from "react";
 import { ArrowPathRoundedSquareIcon } from "@heroicons/react/24/solid";
 import sfMeta from "@superfluid-finance/metadata";
 import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { Address, isAddress, parseUnits, zeroAddress } from "viem";
 import { polygon } from "viem/chains";
@@ -242,7 +242,6 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
   const [showWarningMessage, setShowWarningMessage] = useState(false);
 
   const router = useRouter();
-  const pathname = usePathname();
   const { publish } = usePubSubContext();
   const { isConnected, missmatchUrl, tooltipMessage } = useDisableButtons();
 
@@ -413,6 +412,27 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
       throw new Error("No preview data");
     }
 
+    const tribunalSafeAddress =
+      previewData.tribunalAddress ||
+      getValues("tribunalAddress") ||
+      chain.globalTribunal;
+    if (!tribunalSafeAddress || !isAddress(tribunalSafeAddress)) {
+      throw new Error("Missing or invalid tribunal Safe address.");
+    }
+
+    const arbitratorAddress = chain.arbitrator;
+    if (!arbitratorAddress || !isAddress(arbitratorAddress)) {
+      throw new Error("Missing or invalid arbitrator address for this chain.");
+    }
+
+    const sybilScorerAddress =
+      sybilResistanceType === "gitcoinPassport" ? chain.passportScorer
+      : sybilResistanceType === "goodDollar" ? chain.goodDollar
+      : zeroAddress;
+    if (!sybilScorerAddress || !isAddress(sybilScorerAddress)) {
+      throw new Error("Missing or invalid sybil scorer address.");
+    }
+
     // sybil resistance set
     let allowList: Address[] = [];
     if (
@@ -448,8 +468,8 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
               previewData.disputeCollateral.toString(),
               ETH_DECIMALS,
             ),
-            tribunalSafe: previewData.tribunalAddress as Address,
-            arbitrator: chain.arbitrator as Address,
+            tribunalSafe: tribunalSafeAddress,
+            arbitrator: arbitratorAddress,
           },
           pointConfig: {
             maxAmount: parseUnits(maxAmountStr, governanceToken.decimals),
@@ -457,12 +477,7 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
           pointSystem: previewData.pointSystemType,
           proposalType: previewData.strategyType,
           registryCommunity: communityAddr,
-          sybilScorer:
-            sybilResistanceType === "gitcoinPassport" ?
-              (chain.passportScorer as Address)
-            : sybilResistanceType === "goodDollar" ?
-              (chain.goodDollar as Address)
-            : zeroAddress,
+          sybilScorer: sybilScorerAddress,
           sybilScorerThreshold: BigInt(
             Math.round(
               (
@@ -512,6 +527,7 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
         "RegistryCommunity",
         "PoolCreated",
       ).args;
+      const strategyAddress = (newPoolData._strategy as string).toLowerCase();
       publish({
         topic: "pool",
         function: "createPool",
@@ -522,10 +538,7 @@ export function PoolForm({ governanceToken, communityAddr }: Props) {
       });
       setLoading(false);
       router.push(
-        pathname?.replace(
-          "/create-pool",
-          `?${QUERY_PARAMS.communityPage.newPool}=${newPoolData._poolId}`,
-        ),
+        `/gardens/${chain.id}/${communityAddr}/${strategyAddress}?${QUERY_PARAMS.communityPage.newPool}=${newPoolData._poolId}`,
       );
     },
   });

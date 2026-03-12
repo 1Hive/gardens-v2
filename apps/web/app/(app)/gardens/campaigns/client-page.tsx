@@ -9,6 +9,7 @@ import { Button } from "@/components/Button";
 import { Skeleton } from "@/components/Skeleton";
 import { fetchSuperfluidLeaderboard } from "@/types";
 import { CAMPAIGNS, CampaignId, isCampaignActive } from "@/utils/campaigns";
+import { logOnce } from "@/utils/log";
 import { formatNumber, timeAgo } from "@/utils/time";
 
 type CampaignStats = {
@@ -35,6 +36,10 @@ export default function CampaignsPage() {
   const [loading, setLoading] = useState<boolean>(true);
 
   const [activeTab, setActiveTab] = useState<CampaignTab>("active");
+
+  useEffect(() => {
+    logOnce("debug", "Loading page: (app)/gardens/campaigns/page.tsx");
+  }, []);
 
   const campaigns = useMemo<Campaign[]>(
     () =>

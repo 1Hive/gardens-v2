@@ -44,7 +44,7 @@ export function CommunityCard({
   strategies,
   isProtopian = false,
 }: CommunityCardProps) {
-  const { address: tokenAddr, chainId, symbol: tokenSymbol, decimals } = garden;
+  const { chainId, symbol: tokenSymbol, decimals } = garden;
 
   const poolsCount = strategies?.length ?? 0;
   const communityStakedTokens =
@@ -63,7 +63,7 @@ export function CommunityCard({
   return (
     <Card
       key={id}
-      href={`/gardens/${chainId}/${tokenAddr}/${id}`}
+      href={`/gardens/${chainId}/${id}`}
       className={` ${isNewCommunity ? "shadow-2xl" : ""}`}
     >
       <div className="flex justify-between text-neutral-content text-sm">

@@ -38,6 +38,7 @@ import { Modal } from "./Modal";
 import { Skeleton } from "./Skeleton";
 import { Statistic } from "./Statistic";
 import { SuperfluidStream } from "@/assets";
+import { LoupeButton } from "@/components/LoupeButton";
 import { TransactionStatusNotification } from "@/components/TransactionStatusNotification";
 import { chainConfigMap } from "@/configs/chains";
 import { usePubSubContext } from "@/contexts/pubsub.context";
@@ -45,7 +46,6 @@ import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useCouncil } from "@/hooks/useCouncil";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
-import { useFlag } from "@/hooks/useFlag";
 import { MetadataV1 } from "@/hooks/useIpfsFetch";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 
@@ -157,7 +157,6 @@ export default function PoolHeader({
     useState(false);
   const [isShareDropdownLocked, setIsShareDropdownLocked] = useState(false);
   const [toastId, setToastId] = useState<ReturnType<typeof toast>>();
-  const showLoupe = useFlag("loupe");
 
   const { data: passportStrategyData } =
     useSubgraphQuery<getPassportStrategyQuery>({
@@ -217,8 +216,6 @@ export default function PoolHeader({
 
   const communityAddr = strategy.registryCommunity.id as Address;
   const poolAddr = strategy.id as Address;
-  const getLoupeAdminHref = (address: Address) =>
-    `/admin?chainId=${chainId}&address=${address}`;
   const defaultResolution = arbitrableConfig.defaultRuling;
   const proposalCollateral = arbitrableConfig.submitterCollateralAmount;
   const disputeCollateral = arbitrableConfig.challengerCollateralAmount;
@@ -683,42 +680,32 @@ export default function PoolHeader({
 
             <div className="flex flex-col gap-4">
               {/* Addresses */}
-              <div className="flex flex-col sm:flex-row items-baseline justify-between">
-                <div className="flex items-center gap-1">
+              <div className="flex flex-col sm:flex-row items-baseline justify-between gap-4">
+                <div className="flex flex-wrap items-center gap-2">
                   <EthAddress
                     icon={false}
                     address={poolAddr}
                     label="Pool Address:"
                     textColor="var(--color-grey-800)"
                   />
-                  {showLoupe && (
-                    <a
-                      href={getLoupeAdminHref(poolAddr)}
-                      className="text-lg leading-none"
-                      title="Open pool address in diamond facet diagnostics"
-                      aria-label="Open pool address in diamond facet diagnostics"
-                    >
-                      🔎
-                    </a>
-                  )}
+                  <LoupeButton
+                    diamond={poolAddr}
+                    chainId={chainId}
+                    className="px-2 py-1"
+                  />
                 </div>
-                <div className="flex items-center gap-1">
+                <div className="flex flex-wrap items-center gap-2">
                   <EthAddress
                     icon={false}
                     address={communityAddr}
                     label="Community Address:"
                     textColor="var(--color-grey-800)"
                   />
-                  {showLoupe && (
-                    <a
-                      href={getLoupeAdminHref(communityAddr)}
-                      className="text-lg leading-none"
-                      title="Open community address in diamond facet diagnostics"
-                      aria-label="Open community address in diamond facet diagnostics"
-                    >
-                      🔎
-                    </a>
-                  )}
+                  <LoupeButton
+                    diamond={communityAddr}
+                    chainId={chainId}
+                    className="px-2 py-1"
+                  />
                 </div>
                 <div className="flex">
                   <a
@@ -1005,7 +992,7 @@ export default function PoolHeader({
             />
           )}
           {!isEnabled && (
-            <div className="banner">
+            <div className="banner mt-2">
               {isArchived ?
                 <ArchiveBoxIcon className="h-8 w-8 text-secondary-content" />
               : <ClockIcon className="h-8 w-8 text-secondary-content" />}

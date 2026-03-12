@@ -27,6 +27,7 @@ import { LoadingToast } from "@/components/LoadingToast";
 import { Skeleton } from "@/components/Skeleton";
 import { TransactionStatusNotification } from "@/components/TransactionStatusNotification";
 import { WalletBalance } from "@/components/WalletBalance";
+import { logOnce } from "@/utils/log";
 
 const toastButtons = [
   {
@@ -94,6 +95,7 @@ const demoAddressList: Address[] = [
 ] as Address[];
 
 export default function DesignSystemPage() {
+  logOnce("debug", "Loading page: (app)/playground/page.tsx");
   const [radioValue, setRadioValue] = useState("option-a");
   const [textValue, setTextValue] = useState("100");
   const [errorTextValue, setErrorTextValue] = useState("");
@@ -583,3 +585,4 @@ function DemoCard({
     </div>
   );
 }
+
