@@ -222,19 +222,23 @@ abstract contract CVStrategyBaseFacet {
         _;
     }
 
+    function proxyOwner() internal view returns (address) {
+        return _owner;
+    }
+
     /**
-     * @notice Resolve effective owner, supporting owner-proxy contracts exposing owner()
-     * @dev Falls back to diamond owner when owner() cannot be resolved.
+     * @notice Resolve effective owner using ProxyOwnableUpgrader-style semantics.
+     * @dev If proxy owner is a contract exposing owner(), resolve recursively, else return proxy owner.
      */
     function effectiveOwner() internal view returns (address) {
-        address diamondOwner = LibDiamond.contractOwner();
-        if (diamondOwner.code.length == 0) {
-            return diamondOwner;
+        address currentOwner = proxyOwner();
+        if (currentOwner.code.length == 0) {
+            return currentOwner;
         }
-        try IOwnableLike(diamondOwner).owner() returns (address resolvedOwner) {
-            return resolvedOwner == address(0) ? diamondOwner : resolvedOwner;
+        try IOwnableLike(currentOwner).owner() returns (address resolvedOwner) {
+            return resolvedOwner == address(0) ? currentOwner : resolvedOwner;
         } catch {
-            return diamondOwner;
+            return currentOwner;
         }
     }
 
@@ -256,7 +260,7 @@ abstract contract CVStrategyBaseFacet {
             return;
         }
         address controller = LibPauseStorage.layout().pauseController;
-        if (controller != address(0) && IPauseController(controller).isPaused(address(this))) {
+        if (controller != address(0) && controller.code.length != 0 && IPauseController(controller).isPaused(address(this))) {
             revert StrategyPaused(controller);
         }
     }
@@ -266,7 +270,10 @@ abstract contract CVStrategyBaseFacet {
             return;
         }
         address controller = LibPauseStorage.layout().pauseController;
-        if (controller != address(0) && IPauseController(controller).isPaused(address(this), selector)) {
+        if (
+            controller != address(0) && controller.code.length != 0
+                && IPauseController(controller).isPaused(address(this), selector)
+        ) {
             revert StrategySelectorPaused(selector, controller);
         }
     }

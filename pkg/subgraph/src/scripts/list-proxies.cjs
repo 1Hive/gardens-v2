@@ -36,6 +36,9 @@ const baseSubgraph =
 const celoSubgraph =
   "https://api.studio.thegraph.com/query/102093/gardens-v2---celo/" +
   subgraphConfig.VERSION_PROD;
+const mainnetSubgraph =
+  "https://api.studio.thegraph.com/query/102093/gardens-v2---mainnet/" +
+  subgraphConfig.VERSION_PROD;
 
 // @ts-ignore
 const chainArg = process.argv[process.argv.length - 1];
@@ -56,7 +59,7 @@ const jsons = {
   [viemChains.base.id]: baseSubgraph,
   [viemChains.celo.id]: celoSubgraph,
   // @ts-ignore
-  // [viemChains.mainnet.id]: mainnetLatest
+  [viemChains.mainnet.id]: mainnetSubgraph,
 };
 
 async function extractProxies(chainId) {

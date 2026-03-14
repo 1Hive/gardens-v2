@@ -345,6 +345,28 @@ contract RegistryCommunityHarness is RegistryCommunity {
     }
 }
 
+contract RegistryCommunityFacetCutsHarness is RegistryCommunity {
+    function setStrategyFacetCutsForTest(IDiamond.FacetCut[] memory cuts) external {
+        _setFacetCuts(cuts, strategyFacetCuts);
+    }
+
+    function strategyFacetCutsLengthForTest() external view returns (uint256) {
+        return strategyFacetCuts.length;
+    }
+
+    function strategyFacetCutFacetForTest(uint256 idx) external view returns (address) {
+        return strategyFacetCuts[idx].facetAddress;
+    }
+
+    function strategyFacetCutActionForTest(uint256 idx) external view returns (IDiamond.FacetCutAction) {
+        return strategyFacetCuts[idx].action;
+    }
+
+    function strategyFacetCutSelectorForTest(uint256 idx, uint256 selectorIdx) external view returns (bytes4) {
+        return strategyFacetCuts[idx].functionSelectors[selectorIdx];
+    }
+}
+
 contract RegistryCommunityTest is Test {
     address internal owner = makeAddr("owner");
     address internal councilSafe = makeAddr("councilSafe");
@@ -714,6 +736,8 @@ contract RegistryCommunityTest is Test {
 
     function test_stub_functions_revert_without_facets() public {
         RegistryCommunity community = new RegistryCommunity();
+        CVStrategyInitializeParamsV0_3 memory initParams;
+        Metadata memory metadata = Metadata({protocol: 0, pointer: ""});
         CommunityParams memory communityParams = CommunityParams({
             councilSafe: address(0),
             feeReceiver: address(0),
@@ -730,6 +754,20 @@ contract RegistryCommunityTest is Test {
             )
         );
         community.addStrategy(address(0x1));
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                RegistryCommunity.CommunityFunctionDoesNotExist.selector, CREATE_POOL_WITH_TOKEN_SELECTOR
+            )
+        );
+        community.createPool(address(0x1), initParams, metadata);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                RegistryCommunity.CommunityFunctionDoesNotExist.selector, CREATE_POOL_WITH_STRATEGY_SELECTOR
+            )
+        );
+        community.createPool(address(0x2), address(0x3), initParams, metadata);
 
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -900,6 +938,13 @@ contract RegistryCommunityTest is Test {
             )
         );
         community.kickMember(address(0x6), address(0x7));
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                RegistryCommunity.CommunityFunctionDoesNotExist.selector, RegistryCommunity.setPauseController.selector
+            )
+        );
+        community.setPauseController(address(0xA));
     }
 
     function test_diamondCut_and_delegate_success_paths() public {
@@ -1216,6 +1261,46 @@ contract RegistryCommunityTest is Test {
 
         (ok, ) = address(community).call(abi.encodeWithSelector(bytes4(0xdeadbeef)));
         assertFalse(ok);
+    }
+
+    function test_setFacetCuts_internal_copies_and_clears_previous_entries() public {
+        RegistryCommunityFacetCutsHarness community = new RegistryCommunityFacetCutsHarness();
+
+        IDiamond.FacetCut[] memory initialCuts = new IDiamond.FacetCut[](2);
+        bytes4[] memory selectors0 = new bytes4[](2);
+        selectors0[0] = RegistryCommunity.addStrategy.selector;
+        selectors0[1] = RegistryCommunity.removeStrategy.selector;
+        initialCuts[0] = IDiamond.FacetCut({
+            facetAddress: address(0xA1),
+            action: IDiamond.FacetCutAction.Add,
+            functionSelectors: selectors0
+        });
+        bytes4[] memory selectors1 = new bytes4[](1);
+        selectors1[0] = RegistryCommunity.setCommunityFee.selector;
+        initialCuts[1] = IDiamond.FacetCut({
+            facetAddress: address(0xA2),
+            action: IDiamond.FacetCutAction.Replace,
+            functionSelectors: selectors1
+        });
+        community.setStrategyFacetCutsForTest(initialCuts);
+        assertEq(community.strategyFacetCutsLengthForTest(), 2);
+        assertEq(community.strategyFacetCutFacetForTest(0), address(0xA1));
+        assertEq(uint256(community.strategyFacetCutActionForTest(1)), uint256(IDiamond.FacetCutAction.Replace));
+        assertEq(community.strategyFacetCutSelectorForTest(0, 1), RegistryCommunity.removeStrategy.selector);
+
+        IDiamond.FacetCut[] memory replacementCuts = new IDiamond.FacetCut[](1);
+        bytes4[] memory replacementSelectors = new bytes4[](1);
+        replacementSelectors[0] = RegistryCommunity.addStrategyByPoolId.selector;
+        replacementCuts[0] = IDiamond.FacetCut({
+            facetAddress: address(0xB1),
+            action: IDiamond.FacetCutAction.Remove,
+            functionSelectors: replacementSelectors
+        });
+        community.setStrategyFacetCutsForTest(replacementCuts);
+        assertEq(community.strategyFacetCutsLengthForTest(), 1);
+        assertEq(community.strategyFacetCutFacetForTest(0), address(0xB1));
+        assertEq(uint256(community.strategyFacetCutActionForTest(0)), uint256(IDiamond.FacetCutAction.Remove));
+        assertEq(community.strategyFacetCutSelectorForTest(0, 0), RegistryCommunity.addStrategyByPoolId.selector);
     }
 
 }

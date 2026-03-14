@@ -31,6 +31,7 @@ import {
 } from "#/subgraph/.graphclient";
 import {
   ActivatePoints,
+  Button,
   CheckSybil,
   DisplayNumber,
   EthAddress,
@@ -218,46 +219,32 @@ export default function ClientPage({
         id: wallet,
         containerId: strategy?.poolId,
       },
-      changeScope:
-        poolId != null ?
-          [
-            {
-              topic: "member",
-              id: wallet,
-              containerId: poolId,
-            },
-            {
-              topic: "proposal",
-              containerId: poolId,
-              function: "allocate",
-            },
-          ]
-        : undefined,
-      enabled: !!wallet && !!strategy?.registryCommunity?.id,
-    });
+    ],
+    enabled: !!wallet && !!strategy?.registryCommunity?.id,
+  });
 
   const {
     data: memberStrategyData,
     refetch: refetchMemberStrategyData,
     fetching: fetchingMemberStrategy,
   } = useSubgraphQuery<getMemberStrategyQuery>({
-      query: getMemberStrategyDocument,
-      variables: {
-        member_strategy: `${wallet?.toLowerCase()}-${strategy?.id.toLowerCase()}`,
-      },
-      changeScope:
-        poolId != null ?
-          [
-            {
-              topic: "proposal",
-              containerId: poolId,
-              type: "update",
-            },
-            { topic: "member", id: wallet, containerId: poolId },
-          ]
-        : undefined,
-      enabled: !!wallet && !!strategy?.id,
-    });
+    query: getMemberStrategyDocument,
+    variables: {
+      member_strategy: `${wallet?.toLowerCase()}-${strategy?.id.toLowerCase()}`,
+    },
+    changeScope:
+      poolId != null ?
+        [
+          {
+            topic: "proposal",
+            containerId: poolId,
+            type: "update",
+          },
+          { topic: "member", id: wallet, containerId: poolId },
+        ]
+      : undefined,
+    enabled: !!wallet && !!strategy?.id,
+  });
 
   const memberTokensInCommunity = BigInt(
     memberData?.member?.memberCommunity?.[0]?.stakedTokens ??

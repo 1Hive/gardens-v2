@@ -1268,6 +1268,66 @@ export type Covenant_orderBy =
   | 'id'
   | 'text';
 
+export type GlobalPauseController = {
+  id: Scalars['ID']['output'];
+  pausedUntil?: Maybe<Scalars['BigInt']['output']>;
+  pausedSelectors: Array<Scalars['String']['output']>;
+  createdAt: Scalars['BigInt']['output'];
+  updatedAt: Scalars['BigInt']['output'];
+};
+
+export type GlobalPauseController_filter = {
+  id?: InputMaybe<Scalars['ID']['input']>;
+  id_not?: InputMaybe<Scalars['ID']['input']>;
+  id_gt?: InputMaybe<Scalars['ID']['input']>;
+  id_lt?: InputMaybe<Scalars['ID']['input']>;
+  id_gte?: InputMaybe<Scalars['ID']['input']>;
+  id_lte?: InputMaybe<Scalars['ID']['input']>;
+  id_in?: InputMaybe<Array<Scalars['ID']['input']>>;
+  id_not_in?: InputMaybe<Array<Scalars['ID']['input']>>;
+  pausedUntil?: InputMaybe<Scalars['BigInt']['input']>;
+  pausedUntil_not?: InputMaybe<Scalars['BigInt']['input']>;
+  pausedUntil_gt?: InputMaybe<Scalars['BigInt']['input']>;
+  pausedUntil_lt?: InputMaybe<Scalars['BigInt']['input']>;
+  pausedUntil_gte?: InputMaybe<Scalars['BigInt']['input']>;
+  pausedUntil_lte?: InputMaybe<Scalars['BigInt']['input']>;
+  pausedUntil_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  pausedUntil_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  pausedSelectors?: InputMaybe<Array<Scalars['String']['input']>>;
+  pausedSelectors_not?: InputMaybe<Array<Scalars['String']['input']>>;
+  pausedSelectors_contains?: InputMaybe<Array<Scalars['String']['input']>>;
+  pausedSelectors_contains_nocase?: InputMaybe<Array<Scalars['String']['input']>>;
+  pausedSelectors_not_contains?: InputMaybe<Array<Scalars['String']['input']>>;
+  pausedSelectors_not_contains_nocase?: InputMaybe<Array<Scalars['String']['input']>>;
+  createdAt?: InputMaybe<Scalars['BigInt']['input']>;
+  createdAt_not?: InputMaybe<Scalars['BigInt']['input']>;
+  createdAt_gt?: InputMaybe<Scalars['BigInt']['input']>;
+  createdAt_lt?: InputMaybe<Scalars['BigInt']['input']>;
+  createdAt_gte?: InputMaybe<Scalars['BigInt']['input']>;
+  createdAt_lte?: InputMaybe<Scalars['BigInt']['input']>;
+  createdAt_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  createdAt_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  updatedAt?: InputMaybe<Scalars['BigInt']['input']>;
+  updatedAt_not?: InputMaybe<Scalars['BigInt']['input']>;
+  updatedAt_gt?: InputMaybe<Scalars['BigInt']['input']>;
+  updatedAt_lt?: InputMaybe<Scalars['BigInt']['input']>;
+  updatedAt_gte?: InputMaybe<Scalars['BigInt']['input']>;
+  updatedAt_lte?: InputMaybe<Scalars['BigInt']['input']>;
+  updatedAt_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  updatedAt_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  /** Filter for the block changed event. */
+  _change_block?: InputMaybe<BlockChangedFilter>;
+  and?: InputMaybe<Array<InputMaybe<GlobalPauseController_filter>>>;
+  or?: InputMaybe<Array<InputMaybe<GlobalPauseController_filter>>>;
+};
+
+export type GlobalPauseController_orderBy =
+  | 'id'
+  | 'pausedUntil'
+  | 'pausedSelectors'
+  | 'createdAt'
+  | 'updatedAt';
+
 export type GoodDollarStrategy = {
   id: Scalars['ID']['output'];
   sybilProtection: SybilProtection;
@@ -2715,6 +2775,8 @@ export type Query = {
   collateralVaults: Array<CollateralVault>;
   collateralVaultDeposit?: Maybe<CollateralVaultDeposit>;
   collateralVaultDeposits: Array<CollateralVaultDeposit>;
+  globalPauseController?: Maybe<GlobalPauseController>;
+  globalPauseControllers: Array<GlobalPauseController>;
   /** Access to subgraph metadata */
   _meta?: Maybe<_Meta_>;
 };
@@ -3201,6 +3263,24 @@ export type QuerycollateralVaultDepositsArgs = {
   orderBy?: InputMaybe<CollateralVaultDeposit_orderBy>;
   orderDirection?: InputMaybe<OrderDirection>;
   where?: InputMaybe<CollateralVaultDeposit_filter>;
+  block?: InputMaybe<Block_height>;
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type QueryglobalPauseControllerArgs = {
+  id: Scalars['ID']['input'];
+  block?: InputMaybe<Block_height>;
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type QueryglobalPauseControllersArgs = {
+  skip?: InputMaybe<Scalars['Int']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  orderBy?: InputMaybe<GlobalPauseController_orderBy>;
+  orderDirection?: InputMaybe<OrderDirection>;
+  where?: InputMaybe<GlobalPauseController_filter>;
   block?: InputMaybe<Block_height>;
   subgraphError?: _SubgraphErrorPolicy_;
 };
@@ -4336,6 +4416,10 @@ export type _SubgraphErrorPolicy_ =
   collateralVaultDeposit: InContextSdkMethod<Query['collateralVaultDeposit'], QuerycollateralVaultDepositArgs, MeshContext>,
   /** null **/
   collateralVaultDeposits: InContextSdkMethod<Query['collateralVaultDeposits'], QuerycollateralVaultDepositsArgs, MeshContext>,
+  /** null **/
+  globalPauseController: InContextSdkMethod<Query['globalPauseController'], QueryglobalPauseControllerArgs, MeshContext>,
+  /** null **/
+  globalPauseControllers: InContextSdkMethod<Query['globalPauseControllers'], QueryglobalPauseControllersArgs, MeshContext>,
   /** Access to subgraph metadata **/
   _meta: InContextSdkMethod<Query['_meta'], Query_metaArgs, MeshContext>
   };

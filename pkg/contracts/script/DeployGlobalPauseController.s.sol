@@ -11,20 +11,36 @@ interface IPauseFacet {
     function setPauseController(address controller) external;
 }
 
+interface IRegistryFactoryPauseController {
+    function globalPauseController() external view returns (address);
+    function setGlobalPauseController(address controller) external;
+}
+
+interface IUUPSUpgradeableProxy {
+    function upgradeTo(address newImplementation) external;
+}
+
 contract DeployGlobalPauseController is BaseMultiChain {
     using stdJson for string;
 
     function runCurrentNetwork(string memory networkJson) public override {
         address proxyOwner = networkJson.readAddress(getKeyNetwork(".ENVS.PROXY_OWNER"));
+        address controller = networkJson.readAddress(getKeyNetwork(".ENVS.PAUSE_CONTROLLER"));
+        address controllerImplementation = address(new GlobalPauseController());
 
-        address controller = address(
-            new ERC1967Proxy(
-                address(new GlobalPauseController()),
-                abi.encodeWithSelector(GlobalPauseController.initialize.selector, proxyOwner)
-            )
-        );
+        if (controller == address(0)) {
+            controller = address(
+                new ERC1967Proxy(
+                    controllerImplementation,
+                    abi.encodeWithSelector(GlobalPauseController.initialize.selector, proxyOwner)
+                )
+            );
 
-        _writeNetworkAddress(".ENVS.PAUSE_CONTROLLER", controller);
+            _writeNetworkAddress(".ENVS.PAUSE_CONTROLLER", controller);
+        } else {
+            IUUPSUpgradeableProxy(payable(controller)).upgradeTo(controllerImplementation);
+        }
+        _writeNetworkAddress(".IMPLEMENTATIONS.PAUSE_CONTROLLER", controllerImplementation);
 
         address[] memory registryCommunityProxies =
             networkJson.readAddressArray(getKeyNetwork(".PROXIES.REGISTRY_COMMUNITIES"));
@@ -36,6 +52,9 @@ contract DeployGlobalPauseController is BaseMultiChain {
         for (uint256 i = 0; i < cvStrategyProxies.length; i++) {
             _setPauseController(cvStrategyProxies[i], controller);
         }
+
+        address registryFactoryProxy = networkJson.readAddress(getKeyNetwork(".PROXIES.REGISTRY_FACTORY"));
+        _setFactoryPauseController(registryFactoryProxy, controller);
     }
 
     function _setPauseController(address target, address controller) internal {
@@ -43,6 +62,15 @@ contract DeployGlobalPauseController is BaseMultiChain {
         address current = pauseFacet.pauseController();
         if (current != controller) {
             pauseFacet.setPauseController(controller);
+        } else {
+        }
+    }
+
+    function _setFactoryPauseController(address factory, address controller) internal {
+        IRegistryFactoryPauseController registryFactory = IRegistryFactoryPauseController(factory);
+        address current = registryFactory.globalPauseController();
+        if (current != controller) {
+            registryFactory.setGlobalPauseController(controller);
         } else {
         }
     }

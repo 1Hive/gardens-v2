@@ -137,6 +137,12 @@ contract CommunityStrategyFacetTest is Test {
         facet.addStrategyByPoolId(1);
     }
 
+    function test_addStrategyByPoolId_reverts_when_pool_strategy_is_zero() public {
+        vm.prank(council);
+        vm.expectRevert(CommunityStrategyFacet.ValueCannotBeZero.selector);
+        facet.addStrategyByPoolId(999);
+    }
+
     function test_removeStrategy_reverts_when_not_enabled() public {
         vm.prank(council);
         vm.expectRevert(CommunityStrategyFacet.StrategyNotEnabled.selector);
@@ -179,5 +185,14 @@ contract CommunityStrategyFacetTest is Test {
         vm.prank(council);
         facet.rejectPool(strategy);
         assertFalse(facet.enabledStrategies(strategy));
+    }
+
+    function test_addStrategy_without_sybil_scorer_keeps_zero_activation() public {
+        address strategy = address(new MockCVStrategy(ISybilScorer(address(0))));
+
+        vm.prank(council);
+        facet.addStrategy(strategy);
+        assertTrue(facet.enabledStrategies(strategy));
+        assertEq(sybil.lastStrategy(), address(0));
     }
 }

@@ -1,0 +1,24 @@
+{
+  "network": "mainnet",
+  "chainId": 1,
+  "dataSources": [
+    {
+      "name": "RegistryFactory",
+      "startBlock": 0,
+      "address": "0x0000000000000000000000000000000000000000",
+      "customTemplate": "registryFactory"
+    },
+    {
+      "name": "PassportScorer",
+      "startBlock": 0,
+      "address": "0x0000000000000000000000000000000000000000",
+      "customTemplate": "passportScorer"
+    },
+    {
+      "name": "GoodDollarSybil",
+      "startBlock": 0,
+      "address": "0x0000000000000000000000000000000000000000",
+      "customTemplate": "goodDollarSybil"
+    }
+  ]
+}

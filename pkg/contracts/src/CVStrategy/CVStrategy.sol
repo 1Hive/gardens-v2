@@ -906,6 +906,9 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
         if (controller == address(0)) {
             return;
         }
+        if (controller.code.length == 0) {
+            return;
+        }
         if (IPauseController(controller).isPaused(address(this))) {
             revert StrategyPaused(controller);
         }

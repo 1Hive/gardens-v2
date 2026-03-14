@@ -24,11 +24,14 @@ contract StreamingEscrowFactory is ProxyOwnableUpgrader {
     ISuperfluid public host;
     address public escrowImplementation;
     address[] public escrows;
+    mapping(address escrow => bool isRegistered) public isSuperAppRegistered;
     uint256[45] private __gap;
 
     event EscrowDeployed(
         address indexed escrow, address indexed strategy, address indexed beneficiary, address superToken, address pool
     );
+    event EscrowSuperAppRegistrationStatus(address indexed escrow, bool registered);
+    event EscrowSuperAppRegistrationFailed(address indexed escrow, bytes reason);
 
     function initialize(address _owner, ISuperfluid _host, address _escrowImplementation) external initializer {
         if (_owner == address(0) || address(_host) == address(0)) {
@@ -65,7 +68,15 @@ contract StreamingEscrowFactory is ProxyOwnableUpgrader {
 
         uint256 configWord = SuperAppDefinitions.APP_LEVEL_FINAL | SuperAppDefinitions.BEFORE_AGREEMENT_CREATED_NOOP
             | SuperAppDefinitions.BEFORE_AGREEMENT_UPDATED_NOOP | SuperAppDefinitions.BEFORE_AGREEMENT_TERMINATED_NOOP;
-        host.registerAppByFactory(ISuperApp(escrow), configWord);
+        try host.registerAppByFactory(ISuperApp(escrow), configWord) {
+            isSuperAppRegistered[escrow] = true;
+            emit EscrowSuperAppRegistrationStatus(escrow, true);
+        } catch (bytes memory reason) {
+            isSuperAppRegistered[escrow] = false;
+            emit EscrowSuperAppRegistrationFailed(escrow, reason);
+            emit EscrowSuperAppRegistrationStatus(escrow, false);
+        }
+
         emit EscrowDeployed(escrow, strategy, beneficiary, address(superToken), address(pool));
     }
 

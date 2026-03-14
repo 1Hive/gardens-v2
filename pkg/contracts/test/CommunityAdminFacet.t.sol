@@ -221,4 +221,34 @@ contract CommunityAdminFacetTest is Test {
         vm.expectRevert(abi.encodeWithSelector(CommunityAdminFacet.UserNotInCouncil.selector, address(this)));
         facet.setCommunityParams(params);
     }
+
+    function test_isCouncilMember_false_for_non_member() public view {
+        assertFalse(facet.isCouncilMember(address(0xDEAD)));
+    }
+
+    function test_setCommunityParams_noop_when_same_values() public {
+        facet.setRegisterStakeAmount(10);
+        facet.setCommunityFeeRaw(3);
+        facet.setCommunityNameRaw("same");
+        facet.setCovenantIpfsHashRaw("sameHash");
+        facet.setTotalMembers(5);
+
+        CommunityParams memory params = CommunityParams({
+            councilSafe: address(0),
+            feeReceiver: address(0),
+            communityFee: 3,
+            communityName: "same",
+            registerStakeAmount: 10,
+            isKickEnabled: false,
+            covenantIpfsHash: "sameHash"
+        });
+
+        vm.prank(council);
+        facet.setCommunityParams(params);
+
+        assertEq(facet.registerStakeAmount(), 10);
+        assertEq(facet.communityFee(), 3);
+        assertEq(facet.communityName(), "same");
+        assertEq(address(facet.pendingCouncilSafe()), address(0));
+    }
 }

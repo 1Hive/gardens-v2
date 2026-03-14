@@ -109,6 +109,8 @@ contract MockPool {
 contract MockSuperToken {
     address public host;
     bool public connectPoolReturn = true;
+    bool public transferShouldSucceed = true;
+    bool public flowShouldSucceed = true;
 
     address public lastFlowReceiver;
     int96 public lastFlowRate;
@@ -122,6 +124,14 @@ contract MockSuperToken {
 
     function setConnectPoolReturn(bool ok) external {
         connectPoolReturn = ok;
+    }
+
+    function setTransferShouldSucceed(bool ok) external {
+        transferShouldSucceed = ok;
+    }
+
+    function setFlowShouldSucceed(bool ok) external {
+        flowShouldSucceed = ok;
     }
 
     function getHost() external view returns (address) {
@@ -147,12 +157,18 @@ contract MockSuperToken {
     }
 
     function transfer(address to, uint256 amount) external returns (bool) {
+        if (!transferShouldSucceed) {
+            return false;
+        }
         balances[msg.sender] -= amount;
         balances[to] += amount;
         return true;
     }
 
     function flow(address receiver, int96 flowRate) external returns (bool) {
+        if (!flowShouldSucceed) {
+            return false;
+        }
         lastFlowReceiver = receiver;
         lastFlowRate = flowRate;
         flowCallCount++;
@@ -179,6 +195,12 @@ contract StreamingEscrowHarness is StreamingEscrow {
 
 contract StreamingEscrowTest is Test {
     address internal constant CFA_V1_FORWARDER = 0xcfA132E353cB4E398080B9700609bb008eceB125;
+    uint256 internal constant NEW_SUPER_TOKEN_SLOT = 151;
+    uint256 internal constant NEW_POOL_SLOT = 152;
+    uint256 internal constant NEW_HOST_SLOT = 153;
+    uint256 internal constant NEW_GDA_SLOT = 154;
+    uint256 internal constant NEW_STRATEGY_SLOT = 155;
+    uint256 internal constant NEW_BENEFICIARY_AND_DISPUTED_SLOT = 156;
 
     StreamingEscrowHarness internal escrow;
     MockForwarder internal forwarder;
@@ -224,6 +246,7 @@ contract StreamingEscrowTest is Test {
         assertEq(escrow.beneficiary(), beneficiary);
         assertEq(escrow.strategy(), strategy);
         assertEq(escrow.owner(), owner);
+        assertEq(escrow.storageSchemaVersion(), 2);
     }
 
     function test_initialize_reverts_on_invalid_addresses() public {
@@ -333,6 +356,77 @@ contract StreamingEscrowTest is Test {
         assertEq(host.callAgreementCount(), start + 3);
     }
 
+    function test_reinitializeV2Migrate_moves_legacy_slots_to_new_layout() public {
+        vm.store(address(escrow), bytes32(NEW_SUPER_TOKEN_SLOT), bytes32(0));
+        vm.store(address(escrow), bytes32(NEW_POOL_SLOT), bytes32(0));
+        vm.store(address(escrow), bytes32(NEW_HOST_SLOT), bytes32(0));
+        vm.store(address(escrow), bytes32(NEW_GDA_SLOT), bytes32(0));
+        vm.store(address(escrow), bytes32(NEW_STRATEGY_SLOT), bytes32(0));
+        vm.store(address(escrow), bytes32(NEW_BENEFICIARY_AND_DISPUTED_SLOT), bytes32(0));
+
+        address legacySuperToken = address(0x1111);
+        address legacyPool = address(0x2222);
+        address legacyHost = address(0x3333);
+        address legacyGda = address(0x4444);
+        address legacyStrategy = address(0x5555);
+        address legacyBeneficiary = address(0x6666);
+        bool legacyDisputed = true;
+
+        vm.store(address(escrow), bytes32(uint256(101)), bytes32(uint256(uint160(legacySuperToken))));
+        vm.store(address(escrow), bytes32(uint256(102)), bytes32(uint256(uint160(legacyPool))));
+        vm.store(address(escrow), bytes32(uint256(103)), bytes32(uint256(uint160(legacyHost))));
+        vm.store(address(escrow), bytes32(uint256(104)), bytes32(uint256(uint160(legacyGda))));
+        vm.store(address(escrow), bytes32(uint256(105)), bytes32(uint256(uint160(legacyStrategy))));
+
+        uint256 packed = uint256(uint160(legacyBeneficiary));
+        if (legacyDisputed) {
+            packed |= (uint256(1) << 160);
+        }
+        vm.store(address(escrow), bytes32(uint256(106)), bytes32(packed));
+
+        vm.prank(owner);
+        escrow.reinitializeV2Migrate();
+
+        assertEq(address(escrow.superToken()), legacySuperToken);
+        assertEq(address(escrow.pool()), legacyPool);
+        assertEq(address(escrow.host()), legacyHost);
+        assertEq(address(escrow.gda()), legacyGda);
+        assertEq(escrow.strategy(), legacyStrategy);
+        assertEq(escrow.beneficiary(), legacyBeneficiary);
+        assertTrue(escrow.disputed());
+        assertEq(escrow.storageSchemaVersion(), 2);
+    }
+
+    function test_reinitializeV2Migrate_only_owner_and_once() public {
+        vm.prank(other);
+        vm.expectRevert();
+        escrow.reinitializeV2Migrate();
+
+        vm.prank(owner);
+        vm.expectRevert(StreamingEscrow.MigrationNotRequired.selector);
+        escrow.reinitializeV2Migrate();
+
+        vm.store(address(escrow), bytes32(NEW_SUPER_TOKEN_SLOT), bytes32(0));
+        vm.store(address(escrow), bytes32(NEW_POOL_SLOT), bytes32(0));
+        vm.store(address(escrow), bytes32(NEW_HOST_SLOT), bytes32(0));
+        vm.store(address(escrow), bytes32(NEW_GDA_SLOT), bytes32(0));
+        vm.store(address(escrow), bytes32(NEW_STRATEGY_SLOT), bytes32(0));
+        vm.store(address(escrow), bytes32(NEW_BENEFICIARY_AND_DISPUTED_SLOT), bytes32(0));
+        vm.store(address(escrow), bytes32(uint256(101)), bytes32(uint256(uint160(address(0x11)))));
+        vm.store(address(escrow), bytes32(uint256(102)), bytes32(uint256(uint160(address(0x22)))));
+        vm.store(address(escrow), bytes32(uint256(103)), bytes32(uint256(uint160(address(0x33)))));
+        vm.store(address(escrow), bytes32(uint256(104)), bytes32(uint256(uint160(address(0x44)))));
+        vm.store(address(escrow), bytes32(uint256(105)), bytes32(uint256(uint160(address(0x55)))));
+        vm.store(address(escrow), bytes32(uint256(106)), bytes32(uint256(uint160(address(0x66)))));
+
+        vm.prank(owner);
+        escrow.reinitializeV2Migrate();
+
+        vm.prank(owner);
+        vm.expectRevert();
+        escrow.reinitializeV2Migrate();
+    }
+
     function test_syncOutflow_drains_excess_balance_above_deposit() public {
         pool.setMemberFlowRate(address(escrow), 10);
         forwarder.setDeposit(30);
@@ -369,6 +463,16 @@ contract StreamingEscrowTest is Test {
         escrow.setBeneficiary(address(0));
     }
 
+    function test_setBeneficiary_same_address_is_noop() public {
+        pool.setMemberFlowRate(address(escrow), 123);
+        uint256 start = host.callAgreementCount();
+
+        escrow.setBeneficiary(beneficiary);
+
+        assertEq(host.callAgreementCount(), start);
+        assertEq(escrow.beneficiary(), beneficiary);
+    }
+
     function test_setDisputed_toggles_outflow() public {
         pool.setMemberFlowRate(address(escrow), 77);
         uint256 start = host.callAgreementCount();
@@ -379,6 +483,18 @@ contract StreamingEscrowTest is Test {
         escrow.setDisputed(false);
         assertEq(host.callAgreementCount(), start + 1);
         assertEq(host.lastAgreement(), address(cfa));
+    }
+
+    function test_setDisputed_same_value_is_noop() public {
+        uint256 start = host.callAgreementCount();
+
+        escrow.setDisputed(false);
+        assertEq(host.callAgreementCount(), start);
+
+        escrow.setDisputed(true);
+        start = host.callAgreementCount();
+        escrow.setDisputed(true);
+        assertEq(host.callAgreementCount(), start);
     }
 
     function test_claim_reverts_when_disputed() public {
@@ -453,6 +569,28 @@ contract StreamingEscrowTest is Test {
         assertEq(token.balanceOf(strategy), 100);
     }
 
+    function test_drainToBeneficiary_reverts_on_transfer_failure() public {
+        token.mint(address(escrow), 55);
+        token.setTransferShouldSucceed(false);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(StreamingEscrow.SuperTokenTransferFailed.selector, beneficiary, 55)
+        );
+        escrow.drainToBeneficiary();
+    }
+
+    function test_claim_reverts_on_transfer_failure() public {
+        pool.setMemberFlowRate(address(escrow), 10);
+        forwarder.setDeposit(30);
+        token.mint(address(escrow), 100);
+        token.setTransferShouldSucceed(false);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(StreamingEscrow.SuperTokenTransferFailed.selector, beneficiary, 70)
+        );
+        escrow.claim();
+    }
+
     function test_afterAgreementChanged_onlyHost() public {
         vm.expectRevert(abi.encodeWithSelector(StreamingEscrow.OnlyHost.selector, address(this)));
         escrow.afterAgreementCreated(ISuperToken(address(token)), address(0xDDAD), bytes32(0), "", "", "");
@@ -505,6 +643,7 @@ contract StreamingEscrowTest is Test {
         escrow.afterAgreementUpdated(ISuperToken(address(token)), address(0xDDAD), bytes32(0), "", "", ctx);
 
         assertEq(host.callAgreementWithContextCount(), 0);
+        assertEq(token.lastFlowRate(), 0);
     }
 
     function test_afterAgreementTerminated_calls_flow_when_matching() public {
@@ -525,9 +664,15 @@ contract StreamingEscrowTest is Test {
         assertEq(escrow.exposedCurrentGDAFlowRate(), 0);
     }
 
+    function test_currentGDAFlowRate_positive_returns_value() public {
+        pool.setMemberFlowRate(address(escrow), 11);
+        assertEq(escrow.exposedCurrentGDAFlowRate(), 11);
+    }
+
     function test_setOutflow_skips_zero_receiver() public {
         token.resetFlows();
         escrow.exposedSetOutflow(1, address(0));
         assertEq(token.flowCallCount(), 0);
     }
+
 }

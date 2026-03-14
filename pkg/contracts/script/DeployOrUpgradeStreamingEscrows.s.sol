@@ -10,6 +10,7 @@ import {ISuperfluid} from "@superfluid-finance/ethereum-contracts/contracts/inte
 interface IStreamingEscrowUUPS {
     function strategy() external view returns (address);
     function upgradeTo(address newImplementation) external;
+    function reinitializeV2Migrate() external;
 }
 
 interface ICVStrategySuperToken {
@@ -94,35 +95,11 @@ contract DeployOrUpgradeStreamingEscrows is BaseMultiChain {
         console2.log("Escrow implementation", targetEscrowImplementation);
         console2.log("Escrows", total);
 
-        uint256 upgraded = 0;
-        uint256 skipped = 0;
-        for (uint256 i = 0; i < total; i++) {
-            address escrow = factory.escrows(i);
-            if (_codehash(_implementationOf(escrow)) == _codehash(targetEscrowImplementation)) {
-                skipped++;
-                continue;
-            }
-
-            IStreamingEscrowUUPS target = IStreamingEscrowUUPS(escrow);
-            address strategy;
-            try target.strategy() returns (address s) {
-                strategy = s;
-            } catch {
-                console2.log("Skip (no strategy getter)", escrow);
-                skipped++;
-                continue;
-            }
-
-            try target.upgradeTo(targetEscrowImplementation) {
-                upgraded++;
-                console2.log("Upgraded", escrow, "strategy", strategy);
-            } catch {
-                console2.log("Failed", escrow, "strategy", strategy);
-            }
-        }
-
-        console2.log("Upgraded total", upgraded);
-        console2.log("Skipped total", skipped);
+        // NOTE: Existing escrow proxies are intentionally NOT upgraded here.
+        // This keeps current storage/layout untouched for already-deployed escrows.
+        // The factory template above is still updated, so only newly deployed escrows use the new implementation.
+        console2.log("Existing escrow upgrades disabled");
+        console2.log("Existing escrows left untouched", total);
     }
 
     function _upgradeFactoryIfChanged(StreamingEscrowFactory factory, address factoryProxy) internal {

@@ -43,6 +43,14 @@ contract GlobalPauseControllerTest is Test {
         controller.pause(target, duration);
     }
 
+    function test_pause_by_owner_sets_exact_deadline() public {
+        uint256 start = block.timestamp;
+        controller.pause(target, 17);
+
+        assertEq(controller.pausedUntil(target), start + 17);
+        assertTrue(controller.isPaused(target));
+    }
+
     function test_unpause_clears_state() public {
         controller.pause(target, 10);
         controller.unpause(target);
@@ -57,6 +65,11 @@ contract GlobalPauseControllerTest is Test {
         controller.unpauseSelector(target, selector);
         assertFalse(controller.isPaused(target, selector));
         assertEq(controller.pausedSelectorUntil(target, selector), 0);
+    }
+
+    function test_pauseSelector_invalid_duration() public {
+        vm.expectRevert(abi.encodeWithSelector(GlobalPauseController.InvalidDuration.selector, 0));
+        controller.pauseSelector(target, selector, 0);
     }
 
     function test_isPaused_selector_inherits_global() public {
@@ -76,6 +89,16 @@ contract GlobalPauseControllerTest is Test {
         assertTrue(controller.isPaused(target, selector));
     }
 
+    function test_pauseSelector_only_authorized() public {
+        vm.prank(address(0xBAD));
+        vm.expectRevert(abi.encodeWithSelector(GlobalPauseController.NotAuthorized.selector, address(0xBAD), target));
+        controller.pauseSelector(target, selector, 3);
+
+        vm.prank(target);
+        controller.pauseSelector(target, selector, 3);
+        assertTrue(controller.isPaused(target, selector));
+    }
+
     function test_unpause_only_authorized() public {
         controller.pause(target, 10);
 
@@ -86,5 +109,31 @@ contract GlobalPauseControllerTest is Test {
         vm.prank(target);
         controller.unpause(target);
         assertFalse(controller.isPaused(target));
+    }
+
+    function test_unpauseSelector_only_authorized() public {
+        controller.pauseSelector(target, selector, 10);
+
+        vm.prank(address(0xBAD));
+        vm.expectRevert(abi.encodeWithSelector(GlobalPauseController.NotAuthorized.selector, address(0xBAD), target));
+        controller.unpauseSelector(target, selector);
+
+        vm.prank(target);
+        controller.unpauseSelector(target, selector);
+        assertFalse(controller.isPaused(target, selector));
+    }
+
+    function test_selector_pause_expires_independently() public {
+        uint256 start = block.timestamp;
+        controller.pauseSelector(target, selector, 4);
+
+        uint256 selectorPausedUntil = controller.pausedSelectorUntil(target, selector);
+        assertGe(selectorPausedUntil, start + 4);
+        assertTrue(controller.isPaused(target, selector));
+        assertFalse(controller.isPaused(target));
+
+        vm.warp(selectorPausedUntil + 1);
+        assertFalse(controller.isPaused(target, selector));
+        assertEq(controller.pausedSelectorUntil(target, selector), selectorPausedUntil);
     }
 }

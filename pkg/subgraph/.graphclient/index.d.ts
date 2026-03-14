@@ -1110,6 +1110,58 @@ export type Covenant_filter = {
     or?: InputMaybe<Array<InputMaybe<Covenant_filter>>>;
 };
 export type Covenant_orderBy = 'id' | 'text';
+export type GlobalPauseController = {
+    id: Scalars['ID']['output'];
+    pausedUntil?: Maybe<Scalars['BigInt']['output']>;
+    pausedSelectors: Array<Scalars['String']['output']>;
+    createdAt: Scalars['BigInt']['output'];
+    updatedAt: Scalars['BigInt']['output'];
+};
+export type GlobalPauseController_filter = {
+    id?: InputMaybe<Scalars['ID']['input']>;
+    id_not?: InputMaybe<Scalars['ID']['input']>;
+    id_gt?: InputMaybe<Scalars['ID']['input']>;
+    id_lt?: InputMaybe<Scalars['ID']['input']>;
+    id_gte?: InputMaybe<Scalars['ID']['input']>;
+    id_lte?: InputMaybe<Scalars['ID']['input']>;
+    id_in?: InputMaybe<Array<Scalars['ID']['input']>>;
+    id_not_in?: InputMaybe<Array<Scalars['ID']['input']>>;
+    pausedUntil?: InputMaybe<Scalars['BigInt']['input']>;
+    pausedUntil_not?: InputMaybe<Scalars['BigInt']['input']>;
+    pausedUntil_gt?: InputMaybe<Scalars['BigInt']['input']>;
+    pausedUntil_lt?: InputMaybe<Scalars['BigInt']['input']>;
+    pausedUntil_gte?: InputMaybe<Scalars['BigInt']['input']>;
+    pausedUntil_lte?: InputMaybe<Scalars['BigInt']['input']>;
+    pausedUntil_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+    pausedUntil_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+    pausedSelectors?: InputMaybe<Array<Scalars['String']['input']>>;
+    pausedSelectors_not?: InputMaybe<Array<Scalars['String']['input']>>;
+    pausedSelectors_contains?: InputMaybe<Array<Scalars['String']['input']>>;
+    pausedSelectors_contains_nocase?: InputMaybe<Array<Scalars['String']['input']>>;
+    pausedSelectors_not_contains?: InputMaybe<Array<Scalars['String']['input']>>;
+    pausedSelectors_not_contains_nocase?: InputMaybe<Array<Scalars['String']['input']>>;
+    createdAt?: InputMaybe<Scalars['BigInt']['input']>;
+    createdAt_not?: InputMaybe<Scalars['BigInt']['input']>;
+    createdAt_gt?: InputMaybe<Scalars['BigInt']['input']>;
+    createdAt_lt?: InputMaybe<Scalars['BigInt']['input']>;
+    createdAt_gte?: InputMaybe<Scalars['BigInt']['input']>;
+    createdAt_lte?: InputMaybe<Scalars['BigInt']['input']>;
+    createdAt_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+    createdAt_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+    updatedAt?: InputMaybe<Scalars['BigInt']['input']>;
+    updatedAt_not?: InputMaybe<Scalars['BigInt']['input']>;
+    updatedAt_gt?: InputMaybe<Scalars['BigInt']['input']>;
+    updatedAt_lt?: InputMaybe<Scalars['BigInt']['input']>;
+    updatedAt_gte?: InputMaybe<Scalars['BigInt']['input']>;
+    updatedAt_lte?: InputMaybe<Scalars['BigInt']['input']>;
+    updatedAt_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+    updatedAt_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+    /** Filter for the block changed event. */
+    _change_block?: InputMaybe<BlockChangedFilter>;
+    and?: InputMaybe<Array<InputMaybe<GlobalPauseController_filter>>>;
+    or?: InputMaybe<Array<InputMaybe<GlobalPauseController_filter>>>;
+};
+export type GlobalPauseController_orderBy = 'id' | 'pausedUntil' | 'pausedSelectors' | 'createdAt' | 'updatedAt';
 export type GoodDollarStrategy = {
     id: Scalars['ID']['output'];
     sybilProtection: SybilProtection;
@@ -2305,6 +2357,8 @@ export type Query = {
     collateralVaults: Array<CollateralVault>;
     collateralVaultDeposit?: Maybe<CollateralVaultDeposit>;
     collateralVaultDeposits: Array<CollateralVaultDeposit>;
+    globalPauseController?: Maybe<GlobalPauseController>;
+    globalPauseControllers: Array<GlobalPauseController>;
     /** Access to subgraph metadata */
     _meta?: Maybe<_Meta_>;
 };
@@ -2683,6 +2737,20 @@ export type QuerycollateralVaultDepositsArgs = {
     orderBy?: InputMaybe<CollateralVaultDeposit_orderBy>;
     orderDirection?: InputMaybe<OrderDirection>;
     where?: InputMaybe<CollateralVaultDeposit_filter>;
+    block?: InputMaybe<Block_height>;
+    subgraphError?: _SubgraphErrorPolicy_;
+};
+export type QueryglobalPauseControllerArgs = {
+    id: Scalars['ID']['input'];
+    block?: InputMaybe<Block_height>;
+    subgraphError?: _SubgraphErrorPolicy_;
+};
+export type QueryglobalPauseControllersArgs = {
+    skip?: InputMaybe<Scalars['Int']['input']>;
+    first?: InputMaybe<Scalars['Int']['input']>;
+    orderBy?: InputMaybe<GlobalPauseController_orderBy>;
+    orderDirection?: InputMaybe<OrderDirection>;
+    where?: InputMaybe<GlobalPauseController_filter>;
     block?: InputMaybe<Block_height>;
     subgraphError?: _SubgraphErrorPolicy_;
 };
@@ -3642,6 +3710,9 @@ export type ResolversTypes = ResolversObject<{
     Covenant_filter: Covenant_filter;
     Covenant_orderBy: Covenant_orderBy;
     Float: ResolverTypeWrapper<Scalars['Float']['output']>;
+    GlobalPauseController: ResolverTypeWrapper<GlobalPauseController>;
+    GlobalPauseController_filter: GlobalPauseController_filter;
+    GlobalPauseController_orderBy: GlobalPauseController_orderBy;
     GoodDollarStrategy: ResolverTypeWrapper<GoodDollarStrategy>;
     GoodDollarStrategy_filter: GoodDollarStrategy_filter;
     GoodDollarStrategy_orderBy: GoodDollarStrategy_orderBy;
@@ -3736,6 +3807,8 @@ export type ResolversParentTypes = ResolversObject<{
     Covenant: Covenant;
     Covenant_filter: Covenant_filter;
     Float: Scalars['Float']['output'];
+    GlobalPauseController: GlobalPauseController;
+    GlobalPauseController_filter: GlobalPauseController_filter;
     GoodDollarStrategy: GoodDollarStrategy;
     GoodDollarStrategy_filter: GoodDollarStrategy_filter;
     GoodDollarUser: GoodDollarUser;
@@ -3898,6 +3971,14 @@ export type CollateralVaultDepositResolvers<ContextType = MeshContext, ParentTyp
 export type CovenantResolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['Covenant'] = ResolversParentTypes['Covenant']> = ResolversObject<{
     id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
     text?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+    __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+}>;
+export type GlobalPauseControllerResolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['GlobalPauseController'] = ResolversParentTypes['GlobalPauseController']> = ResolversObject<{
+    id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+    pausedUntil?: Resolver<Maybe<ResolversTypes['BigInt']>, ParentType, ContextType>;
+    pausedSelectors?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+    createdAt?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
+    updatedAt?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
 export type GoodDollarStrategyResolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['GoodDollarStrategy'] = ResolversParentTypes['GoodDollarStrategy']> = ResolversObject<{
@@ -4069,6 +4150,8 @@ export type QueryResolvers<ContextType = MeshContext, ParentType extends Resolve
     collateralVaults?: Resolver<Array<ResolversTypes['CollateralVault']>, ParentType, ContextType, RequireFields<QuerycollateralVaultsArgs, 'skip' | 'first' | 'subgraphError'>>;
     collateralVaultDeposit?: Resolver<Maybe<ResolversTypes['CollateralVaultDeposit']>, ParentType, ContextType, RequireFields<QuerycollateralVaultDepositArgs, 'id' | 'subgraphError'>>;
     collateralVaultDeposits?: Resolver<Array<ResolversTypes['CollateralVaultDeposit']>, ParentType, ContextType, RequireFields<QuerycollateralVaultDepositsArgs, 'skip' | 'first' | 'subgraphError'>>;
+    globalPauseController?: Resolver<Maybe<ResolversTypes['GlobalPauseController']>, ParentType, ContextType, RequireFields<QueryglobalPauseControllerArgs, 'id' | 'subgraphError'>>;
+    globalPauseControllers?: Resolver<Array<ResolversTypes['GlobalPauseController']>, ParentType, ContextType, RequireFields<QueryglobalPauseControllersArgs, 'skip' | 'first' | 'subgraphError'>>;
     _meta?: Resolver<Maybe<ResolversTypes['_Meta_']>, ParentType, ContextType, Partial<Query_metaArgs>>;
 }>;
 export type RegistryCommunityResolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['RegistryCommunity'] = ResolversParentTypes['RegistryCommunity']> = ResolversObject<{
@@ -4175,6 +4258,7 @@ export type Resolvers<ContextType = MeshContext> = ResolversObject<{
     CollateralVault?: CollateralVaultResolvers<ContextType>;
     CollateralVaultDeposit?: CollateralVaultDepositResolvers<ContextType>;
     Covenant?: CovenantResolvers<ContextType>;
+    GlobalPauseController?: GlobalPauseControllerResolvers<ContextType>;
     GoodDollarStrategy?: GoodDollarStrategyResolvers<ContextType>;
     GoodDollarUser?: GoodDollarUserResolvers<ContextType>;
     Int8?: GraphQLScalarType;
@@ -4237,6 +4321,9 @@ export declare function getBuiltGraphSDK<TGlobalContext = any, TOperationContext
         communityAddr: Scalars["ID"]["input"];
         tokenAddr: Scalars["ID"]["input"];
     }>, options?: TOperationContext): Promise<getPoolCreationDataQuery>;
+    getGlobalPauseState(variables?: Exact<{
+        [key: string]: never;
+    }>, options?: TOperationContext): Promise<getGlobalPauseStateQuery>;
     getProposalSupporters(variables: Exact<{
         proposalId: Scalars["String"]["input"];
     }>, options?: TOperationContext): Promise<getProposalSupportersQuery>;
@@ -4404,6 +4491,12 @@ export type getPoolCreationDataQuery = {
     tokenGarden?: Maybe<Pick<TokenGarden, 'decimals' | 'id' | 'symbol'>>;
     allos: Array<Pick<Allo, 'id'>>;
     registryCommunity?: Maybe<Pick<RegistryCommunity, 'communityName' | 'isValid'>>;
+};
+export type getGlobalPauseStateQueryVariables = Exact<{
+    [key: string]: never;
+}>;
+export type getGlobalPauseStateQuery = {
+    globalPauseControllers: Array<Pick<GlobalPauseController, 'id' | 'pausedUntil' | 'pausedSelectors' | 'createdAt' | 'updatedAt'>>;
 };
 export type getProposalSupportersQueryVariables = Exact<{
     proposalId: Scalars['String']['input'];
@@ -4666,6 +4759,7 @@ export declare const getMemberStrategyDocument: DocumentNode<getMemberStrategyQu
 export declare const isMemberDocument: DocumentNode<isMemberQuery, isMemberQueryVariables>;
 export declare const getMemberDocument: DocumentNode<getMemberQuery, getMemberQueryVariables>;
 export declare const getPoolCreationDataDocument: DocumentNode<getPoolCreationDataQuery, getPoolCreationDataQueryVariables>;
+export declare const getGlobalPauseStateDocument: DocumentNode<getGlobalPauseStateQuery, getGlobalPauseStateQueryVariables>;
 export declare const getProposalSupportersDocument: DocumentNode<getProposalSupportersQuery, getProposalSupportersQueryVariables>;
 export declare const getGardenCommunitiesDocument: DocumentNode<getGardenCommunitiesQuery, getGardenCommunitiesQueryVariables>;
 export declare const getCommunitiesDocument: DocumentNode<getCommunitiesQuery, getCommunitiesQueryVariables>;
@@ -4699,6 +4793,7 @@ export declare function getSdk<C, E>(requester: Requester<C, E>): {
     isMember(variables: isMemberQueryVariables, options?: C): Promise<isMemberQuery>;
     getMember(variables: getMemberQueryVariables, options?: C): Promise<getMemberQuery>;
     getPoolCreationData(variables: getPoolCreationDataQueryVariables, options?: C): Promise<getPoolCreationDataQuery>;
+    getGlobalPauseState(variables?: getGlobalPauseStateQueryVariables, options?: C): Promise<getGlobalPauseStateQuery>;
     getProposalSupporters(variables: getProposalSupportersQueryVariables, options?: C): Promise<getProposalSupportersQuery>;
     getGardenCommunities(variables: getGardenCommunitiesQueryVariables, options?: C): Promise<getGardenCommunitiesQuery>;
     getCommunities(variables?: getCommunitiesQueryVariables, options?: C): Promise<getCommunitiesQuery>;

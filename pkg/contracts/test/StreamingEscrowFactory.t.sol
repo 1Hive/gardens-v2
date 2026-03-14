@@ -18,6 +18,7 @@ contract MockHost {
     address public gda;
     address public lastApp;
     uint256 public lastConfig;
+    bool public revertOnRegister;
 
     constructor(address _gda) {
         gda = _gda;
@@ -28,8 +29,15 @@ contract MockHost {
     }
 
     function registerAppByFactory(ISuperApp app, uint256 configWord) external {
+        if (revertOnRegister) {
+            revert("NOT_WHITELISTED");
+        }
         lastApp = address(app);
         lastConfig = configWord;
+    }
+
+    function setRevertOnRegister(bool value) external {
+        revertOnRegister = value;
     }
 
     function callAgreement(address, bytes calldata, bytes calldata) external pure returns (bytes memory) {
@@ -96,9 +104,24 @@ contract StreamingEscrowFactoryTest is Test {
             factory.deployEscrow(ISuperToken(address(token)), ISuperfluidPool(address(pool)), beneficiary, address(this));
 
         assertEq(host.lastApp(), escrow);
+        assertTrue(factory.isSuperAppRegistered(escrow));
         assertEq(StreamingEscrow(escrow).strategy(), address(this));
         assertEq(StreamingEscrow(escrow).beneficiary(), beneficiary);
         assertEq(StreamingEscrow(escrow).owner(), address(this));
+    }
+
+    function test_deployEscrow_continues_when_superApp_registration_fails() public {
+        host.setRevertOnRegister(true);
+
+        address escrow =
+            factory.deployEscrow(ISuperToken(address(token)), ISuperfluidPool(address(pool)), beneficiary, address(this));
+
+        assertEq(host.lastApp(), address(0));
+        assertFalse(factory.isSuperAppRegistered(escrow));
+        assertEq(StreamingEscrow(escrow).strategy(), address(this));
+        assertEq(StreamingEscrow(escrow).beneficiary(), beneficiary);
+        assertEq(StreamingEscrow(escrow).owner(), address(this));
+        assertEq(factory.escrowsLength(), 1);
     }
 
     function test_deployEscrow_reverts_when_sender_not_strategy() public {
@@ -157,5 +180,17 @@ contract StreamingEscrowFactoryTest is Test {
         address newImpl = address(new StreamingEscrow());
         factory.setEscrowImplementation(newImpl);
         assertEq(factory.escrowImplementation(), newImpl);
+    }
+
+    function test_escrowsLength_increases_on_deploy() public {
+        assertEq(factory.escrowsLength(), 0);
+
+        factory.deployEscrow(ISuperToken(address(token)), ISuperfluidPool(address(pool)), beneficiary, address(this));
+        assertEq(factory.escrowsLength(), 1);
+
+        factory.deployEscrow(
+            ISuperToken(address(token)), ISuperfluidPool(address(pool)), address(0xCAFE), address(this)
+        );
+        assertEq(factory.escrowsLength(), 2);
     }
 }

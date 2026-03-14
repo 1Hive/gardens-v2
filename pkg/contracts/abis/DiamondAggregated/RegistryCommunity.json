@@ -2493,6 +2493,19 @@
     },
     {
       "type": "function",
+      "name": "MAX_STRATEGIES_PER_MEMBER",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
       "name": "registerMember",
       "inputs": [],
       "outputs": [],
@@ -2691,6 +2704,27 @@
         }
       ],
       "stateMutability": "view"
+    },
+    {
+      "type": "error",
+      "name": "TooManyMemberStrategies",
+      "inputs": [
+        {
+          "name": "member",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "current",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "maxAllowed",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
     },
     {
       "type": "error",

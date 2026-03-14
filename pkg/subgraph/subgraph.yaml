@@ -6,15 +6,15 @@ schema:
 dataSources:
   - kind: ethereum/contract
     name: RegistryFactory
-    network: sepolia
+    network: optimism-sepolia
     context:
       chainId: 
         type: Int
-        data: 11155111
+        data: 11155420
     source:
-      address: "0xe01464829b1b888bf92a8d1cec3114bb9787984d"
+      address: "0xEC8824e9a9498520891ec678e98c5bd3e65229c2"
       abi: RegistryFactory
-      startBlock: 5998577
+      startBlock: 29036730
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -47,15 +47,15 @@ dataSources:
 
   - kind: ethereum/contract
     name: PassportScorer
-    network: sepolia
+    network: optimism-sepolia
     context:
       chainId: 
         type: Int
-        data: 11155111
+        data: 11155420
     source:
-      address: "0xd58ff588177f02cc535a0e235a4c002a17e27202"
+      address: "0xe3DC6e82B599cD80904aCf0a3cd9f7401d92CC37"
       abi: PassportScorer
-      startBlock: 5998577
+      startBlock: 29036730
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -84,15 +84,15 @@ dataSources:
 
   - kind: ethereum/contract
     name: GoodDollarSybil
-    network: sepolia
+    network: optimism-sepolia
     context:
       chainId: 
         type: Int
-        data: 11155111
+        data: 11155420
     source:
-      address: "0xa50ec350146e42b1ad15705da04c7cb6929e1f2a"
+      address: "0xb01AC9015E04ecC424E646eBAb32dfa7670Ae8a6"
       abi: GoodDollarSybil
-      startBlock: 5998577
+      startBlock: 29036730
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -113,10 +113,41 @@ dataSources:
           handler: handleStrategyAdded
       file: ./src/mappings/good-dollar-sybil.ts
 
+  - kind: ethereum/contract
+    name: GlobalPauseController
+    network: optimism-sepolia
+    context:
+      chainId:
+        type: Int
+        data: 11155420
+    source:
+      address: "0x10452f6fbdbf46a01a46f815c41a9a39eaadf7b1"
+      abi: GlobalPauseController
+      startBlock: 29036730
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - GlobalPauseController
+      abis:
+        - name: GlobalPauseController
+          file: ../contracts/abis/GlobalPauseController.sol/GlobalPauseController.json
+      eventHandlers:
+        - event: ContractPaused(indexed address,uint64,indexed address)
+          handler: handleContractPaused
+        - event: ContractUnpaused(indexed address,indexed address)
+          handler: handleContractUnpaused
+        - event: SelectorPaused(indexed address,indexed bytes4,uint64,indexed address)
+          handler: handleSelectorPaused
+        - event: SelectorUnpaused(indexed address,indexed bytes4,indexed address)
+          handler: handleSelectorUnpaused
+      file: ./src/mappings/global-pause-controller.ts
+
 templates:
   - kind: ethereum/contract
     name: RegistryCommunity
-    network: sepolia
+    network: optimism-sepolia
     source:
       abi: RegistryCommunity
     mapping:
@@ -190,7 +221,7 @@ templates:
 
   - kind: ethereum/contract
     name: CVStrategy
-    network: sepolia
+    network: optimism-sepolia
     source:
       abi: CVStrategy
     mapping:
@@ -274,7 +305,7 @@ templates:
 
   - kind: ethereum/contract
     name: CollateralVault
-    network: sepolia
+    network: optimism-sepolia
     source:
       abi: CollateralVault
     mapping:

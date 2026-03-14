@@ -4,6 +4,7 @@ pragma solidity ^0.8.19;
 import "forge-std/Test.sol";
 
 import {CVStreamingFacet} from "../src/CVStrategy/facets/CVStreamingFacet.sol";
+import {CVStrategyBaseFacet} from "../src/CVStrategy/CVStrategyBaseFacet.sol";
 import {CVStreamingStorage, CVStreamingBase} from "../src/CVStrategy/CVStreamingStorage.sol";
 import {Proposal, ProposalStatus, CVParams} from "../src/CVStrategy/ICVStrategy.sol";
 import {ConvictionsUtils} from "../src/CVStrategy/ConvictionsUtils.sol";
@@ -15,6 +16,7 @@ import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import {IStrategy} from "allo-v2-contracts/core/interfaces/IStrategy.sol";
 import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {LibDiamond} from "../src/diamonds/libraries/LibDiamond.sol";
 import {RegistryCommunity} from "../src/RegistryCommunity/RegistryCommunity.sol";
 
 contract MockGDAAgreement {
@@ -115,6 +117,7 @@ contract MockSuperToken {
     uint256 public lastUpgradeAmount;
     int96 public gdaFlowRate;
     int96 public lastDistributedFlowRate;
+    bool public transferShouldSucceed = true;
 
     constructor(address _host, address _underlyingToken) {
         host = _host;
@@ -138,9 +141,16 @@ contract MockSuperToken {
     }
 
     function transfer(address to, uint256 amount) external returns (bool) {
+        if (!transferShouldSucceed) {
+            return false;
+        }
         balances[msg.sender] -= amount;
         balances[to] += amount;
         return true;
+    }
+
+    function setTransferShouldSucceed(bool value) external {
+        transferShouldSucceed = value;
     }
 
     function upgrade(uint256 amount) external {
@@ -162,11 +172,19 @@ contract MockSuperToken {
 contract MockSuperfluidPool {
     mapping(address => uint128) public memberUnits;
     uint256 public updateCount;
+    bool public updateShouldSucceed = true;
 
     function updateMemberUnits(address member, uint128 units) external returns (bool) {
+        if (!updateShouldSucceed) {
+            return false;
+        }
         memberUnits[member] = units;
         updateCount++;
         return true;
+    }
+
+    function setUpdateShouldSucceed(bool value) external {
+        updateShouldSucceed = value;
     }
 }
 
@@ -193,9 +211,14 @@ contract MockRegistryCommunityStreaming {
     error StrategyDisabled();
 
     bool public strategyEnabled = true;
+    address public councilSafeAddress;
 
     function setStrategyEnabled(bool enabled) external {
         strategyEnabled = enabled;
+    }
+
+    function setCouncilSafe(address safe_) external {
+        councilSafeAddress = safe_;
     }
 
     function onlyStrategyEnabled(address) external view {
@@ -207,22 +230,42 @@ contract MockRegistryCommunityStreaming {
     function enabledStrategies(address) external view returns (bool) {
         return strategyEnabled;
     }
+
+    function councilSafe() external view returns (address) {
+        return councilSafeAddress;
+    }
 }
 
 contract MockStreamingEscrowSync {
     uint256 public requiredDeposit;
     uint256 public syncCount;
+    bool public revertSync;
+    bool public revertDepositLookup;
 
     function setRequiredDeposit(uint256 amount) external {
         requiredDeposit = amount;
     }
 
     function depositAmount() external view returns (uint256) {
+        if (revertDepositLookup) {
+            revert("deposit lookup failed");
+        }
         return requiredDeposit;
     }
 
     function syncOutflow() external {
+        if (revertSync) {
+            revert("sync failed");
+        }
         syncCount++;
+    }
+
+    function setRevertSync(bool value) external {
+        revertSync = value;
+    }
+
+    function setRevertDepositLookup(bool value) external {
+        revertDepositLookup = value;
     }
 }
 
@@ -275,6 +318,14 @@ contract CVStreamingFacetHarness is CVStreamingFacet {
 
     function exposedBaseShouldStartStream() external view returns (bool) {
         return super._shouldStartStream(1, 1);
+    }
+
+    function exposedShouldStartStream(uint256 totalEligibleConviction, uint256 maxConviction)
+        external
+        view
+        returns (bool)
+    {
+        return super._shouldStartStream(totalEligibleConviction, maxConviction);
     }
 
     function exposedCalculateProposalConviction(uint256 proposalId) external view returns (uint256) {
@@ -356,6 +407,10 @@ contract CVStreamingFacetHarness is CVStreamingFacet {
         Proposal storage p = proposals[proposalId];
         return (p.blockLast, p.convictionLast, uint8(p.proposalStatus));
     }
+
+    function setDiamondOwner(address owner_) external {
+        LibDiamond.setContractOwner(owner_);
+    }
 }
 
 contract CVStreamingFacetTest is Test {
@@ -400,6 +455,8 @@ contract CVStreamingFacetTest is Test {
         facet.setupThresholdParams(9_000_000, 1_000_000, 0);
         facet.setupStreamingRatePerSecond(1);
         facet.setupTotalPointsActivated(1_000 * D);
+        facet.setDiamondOwner(address(this));
+        registry.setCouncilSafe(address(0xC011C1));
 
         allo.setPool(1, address(token));
         token.mint(address(facet), 1_000 ether);
@@ -429,6 +486,14 @@ contract CVStreamingFacetTest is Test {
 
         vm.warp(nowTs + 1);
         vm.expectRevert(abi.encodeWithSelector(CVStreamingBase.RebalanceCooldownActive.selector, 99));
+        facet.rebalance();
+    }
+
+    function test_rebalance_reverts_for_unauthorized_caller() public {
+        vm.prank(address(0xBAD));
+        vm.expectRevert(
+            abi.encodeWithSelector(CVStreamingFacet.UnauthorizedRebalanceCaller.selector, address(0xBAD))
+        );
         facet.rebalance();
     }
 
@@ -466,6 +531,37 @@ contract CVStreamingFacetTest is Test {
         assertEq(superToken.upgradeCallCount(), 0);
     }
 
+    function test_wrapIfNeeded_native_pool_token_returns_early() public {
+        allo.setPool(1, 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
+        token.mint(address(facet), 100 ether);
+
+        facet.setSkipWrap(false);
+        facet.exposedWrapIfNeeded();
+
+        assertEq(superToken.upgradeCallCount(), 0);
+    }
+
+    function test_wrapIfNeeded_underlying_mismatch_returns_early() public {
+        allo.setPool(1, address(0xBEEF));
+        token.mint(address(facet), 100 ether);
+
+        facet.setSkipWrap(false);
+        facet.exposedWrapIfNeeded();
+
+        assertEq(superToken.upgradeCallCount(), 0);
+    }
+
+    function test_wrapIfNeeded_success_upgrades_underlying_balance() public {
+        token.mint(address(facet), 25 ether);
+
+        facet.setSkipWrap(false);
+        facet.exposedWrapIfNeeded();
+
+        assertEq(superToken.upgradeCallCount(), 1);
+        assertEq(superToken.lastUpgradeAmount(), 1_025 ether);
+        assertEq(superToken.balanceOf(address(facet)), 1_025 ether);
+    }
+
     /*//////////////////////////////////////////////////////////////
                 SHOULD START STREAM TESTS
     //////////////////////////////////////////////////////////////*/
@@ -484,6 +580,18 @@ contract CVStreamingFacetTest is Test {
     function test_shouldStartStream_no_supertoken() public {
         facet.setupSuperfluidToken(address(0));
         assertFalse(facet.exposedBaseShouldStartStream());
+    }
+
+    function test_shouldStartStream_false_when_rate_or_conviction_zero() public {
+        facet.useRealShouldStartStream();
+        superToken.mint(address(facet), 100 ether);
+
+        facet.setupStreamingRatePerSecond(0);
+        assertFalse(facet.exposedShouldStartStream(1, 1));
+
+        facet.setupStreamingRatePerSecond(1);
+        assertFalse(facet.exposedShouldStartStream(0, 1));
+        assertFalse(facet.exposedShouldStartStream(1, 0));
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -643,6 +751,14 @@ contract CVStreamingFacetTest is Test {
         assertEq(convictionAfterSecondRebalance, convictionAfterSnapshot);
     }
 
+    function test_rebalance_disabled_without_flow_change_keeps_timestamp() public {
+        registry.setStrategyEnabled(false);
+
+        facet.rebalance();
+
+        assertEq(facet.getLastRebalance(), 0);
+    }
+
     // Note: Extreme edge case tests removed as they cause overflow in conviction calculation
     // The scaling and overflow protection logic is tested with realistic values in other tests
 
@@ -703,6 +819,55 @@ contract CVStreamingFacetTest is Test {
 
         assertEq(superToken.balanceOf(address(escrow)), 20 ether);
         assertEq(escrow.syncCount(), 1);
+    }
+
+    function test_rebalance_ignores_deposit_lookup_failures() public {
+        MockStreamingEscrowSync escrow = new MockStreamingEscrowSync();
+        escrow.setRevertDepositLookup(true);
+
+        facet.setupProposal(1, ProposalStatus.Active, 1 ether, 0, block.number - 5);
+        facet.setStreamingEscrowExternal(1, address(escrow));
+
+        facet.rebalance();
+
+        assertEq(escrow.syncCount(), 1);
+    }
+
+    function test_rebalance_sync_error_does_not_advance_timestamp() public {
+        MockStreamingEscrowSync escrow = new MockStreamingEscrowSync();
+        escrow.setRevertSync(true);
+
+        facet.setShouldStartStream(true);
+        facet.setupProposal(1, ProposalStatus.Active, 1 ether, 0, block.number - 5);
+        facet.setStreamingEscrowExternal(1, address(escrow));
+
+        facet.rebalance();
+
+        assertEq(facet.getLastRebalance(), 0);
+    }
+
+    function test_rebalance_update_member_units_failure_reverts() public {
+        facet.setupProposal(1, ProposalStatus.Active, 1 ether, 0, block.number - 5);
+        facet.setStreamingEscrowExternal(1, escrow1);
+        gdaPool.setUpdateShouldSucceed(false);
+
+        vm.expectRevert();
+        facet.rebalance();
+    }
+
+    function test_rebalance_transfer_failure_reverts_on_top_up() public {
+        MockStreamingEscrowSync escrow = new MockStreamingEscrowSync();
+        escrow.setRequiredDeposit(1 ether);
+
+        superToken.mint(address(facet), 1 ether);
+        superToken.setTransferShouldSucceed(false);
+        facet.setupProposal(1, ProposalStatus.Active, 1 ether, 0, block.number - 5);
+        facet.setStreamingEscrowExternal(1, address(escrow));
+
+        vm.expectRevert(
+            abi.encodeWithSelector(CVStreamingFacet.SuperTokenTransferFailed.selector, address(escrow), 1 ether)
+        );
+        facet.rebalance();
     }
 
     function test_rebalance_zero_conviction() public {
@@ -770,6 +935,50 @@ contract CVStreamingFacetTest is Test {
         facet.rebalance();
 
         assertEq(gdaPool.memberUnits(escrow1), 0);
+    }
+
+    function test_setAuthorizedRebalanceCaller_defaults_to_false_for_unknown_caller() public view {
+        assertFalse(facet.isAuthorizedRebalanceCaller(address(0xB0B)));
+    }
+
+    function test_setAuthorizedRebalanceCaller_allows_council_and_enables_rebalance() public {
+        address caller = address(0xB0B);
+
+        vm.prank(registry.councilSafe());
+        facet.setAuthorizedRebalanceCaller(caller, true);
+        assertTrue(facet.isAuthorizedRebalanceCaller(caller));
+
+        vm.prank(caller);
+        facet.rebalance();
+    }
+
+    function test_stopEscrowStream_requires_owner_and_zeroes_units() public {
+        facet.setupProposal(1, ProposalStatus.Active, 1 ether, 0, block.number - 5);
+        facet.setStreamingEscrowExternal(1, escrow1);
+        facet.rebalance();
+        assertGt(gdaPool.memberUnits(escrow1), 0);
+
+        vm.prank(address(0xBAD));
+        vm.expectRevert(
+            abi.encodeWithSelector(CVStrategyBaseFacet.OnlyOwner.selector, address(0xBAD), address(this))
+        );
+        facet.stopEscrowStream(escrow1);
+
+        facet.stopEscrowStream(escrow1);
+        assertEq(gdaPool.memberUnits(escrow1), 0);
+    }
+
+    function test_stopEscrowStream_reverts_for_zero_address() public {
+        vm.expectRevert(abi.encodeWithSelector(CVStreamingFacet.StreamingEscrowNotFound.selector, address(0)));
+        facet.stopEscrowStream(address(0));
+    }
+
+    function test_stopEscrowStream_tolerates_sync_failure() public {
+        MockStreamingEscrowSync escrow = new MockStreamingEscrowSync();
+        escrow.setRevertSync(true);
+
+        facet.stopEscrowStream(address(escrow));
+        assertEq(gdaPool.memberUnits(address(escrow)), 0);
     }
 
     // Note: Removed unrealistic uint128 max test - causes overflow in conviction calculation

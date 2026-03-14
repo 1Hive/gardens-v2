@@ -8,6 +8,9 @@ import "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/g
 import "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/gdav1/ISuperfluidPool.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperToken.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
+import {
+    ReentrancyGuardUpgradeable
+} from "openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
 
 interface ICFAv1ForwarderLike {
     function getBufferAmountByFlowrate(ISuperToken token, int96 flowrate) external view returns (uint256);
@@ -17,8 +20,9 @@ interface ICFAv1ForwarderLike {
  * @title StreamingEscrow
  * @notice Receives Superfluid GDA pool distributions and forwards them to the beneficiary unless disputed.
  */
-contract StreamingEscrow is ProxyOwnableUpgrader, SuperAppBase {
+contract StreamingEscrow is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, SuperAppBase {
     using SuperTokenV1Library for ISuperToken;
+    uint8 public constant CURRENT_STORAGE_SCHEMA_VERSION = 2;
 
     /*|--------------------------------------------|*/
     /*|              ERRORS                        |*/
@@ -30,7 +34,7 @@ contract StreamingEscrow is ProxyOwnableUpgrader, SuperAppBase {
     error OnlyHost(address sender); // 0x1cb0a1d5
     error SuperTokenTransferFailed(address to, uint256 amount);
     error SetOutflowFailed(address receiver, int96 flowRate);
-    error ReentrantCall();
+    error MigrationNotRequired();
 
     /*|--------------------------------------------|*/
     /*|              STORAGE                       |*/
@@ -44,8 +48,22 @@ contract StreamingEscrow is ProxyOwnableUpgrader, SuperAppBase {
 
     address public beneficiary;
     bool public disputed;
-    uint256 private _reentrancyLock;
+    uint8 public storageSchemaVersion;
     uint256[45] private __gap;
+
+    // Legacy layout slots from pre-ReentrancyGuardUpgradeable deployment:
+    // slot 101: superToken
+    // slot 102: pool
+    // slot 103: host
+    // slot 104: gda
+    // slot 105: strategy
+    // slot 106: beneficiary (lower 20 bytes) + disputed (byte at offset 20)
+    uint256 private constant _LEGACY_SUPER_TOKEN_SLOT = 101;
+    uint256 private constant _LEGACY_POOL_SLOT = 102;
+    uint256 private constant _LEGACY_HOST_SLOT = 103;
+    uint256 private constant _LEGACY_GDA_SLOT = 104;
+    uint256 private constant _LEGACY_STRATEGY_SLOT = 105;
+    uint256 private constant _LEGACY_BENEFICIARY_AND_DISPUTED_SLOT = 106;
 
     /*|--------------------------------------------|*/
     /*|              INITIALIZER                   |*/
@@ -65,6 +83,7 @@ contract StreamingEscrow is ProxyOwnableUpgrader, SuperAppBase {
         }
 
         ProxyOwnableUpgrader.initialize(_initialOwner);
+        __ReentrancyGuard_init();
 
         superToken = _superToken;
         pool = _pool;
@@ -77,11 +96,53 @@ contract StreamingEscrow is ProxyOwnableUpgrader, SuperAppBase {
                 host.getAgreementClass(keccak256("org.superfluid-finance.agreements.GeneralDistributionAgreement.v1"))
             )
         );
+        storageSchemaVersion = CURRENT_STORAGE_SCHEMA_VERSION;
 
         bool success = _superToken.connectPool(_pool);
         if (!success) {
             revert ConnectPoolFailed(address(_pool), address(_superToken));
         }
+    }
+
+    /// @notice One-time migration for upgrading from pre-ReentrancyGuardUpgradeable layout.
+    /// @dev Copies legacy values from their old slots into the new storage positions.
+    function reinitializeV2Migrate() external reinitializer(2) onlyOwner {
+        if (
+            address(superToken) != address(0) || address(pool) != address(0) || address(host) != address(0)
+                || address(gda) != address(0) || strategy != address(0) || beneficiary != address(0)
+        ) {
+            revert MigrationNotRequired();
+        }
+
+        address legacySuperToken;
+        address legacyPool;
+        address legacyHost;
+        address legacyGda;
+        address legacyStrategy;
+        address legacyBeneficiary;
+        bool legacyDisputed;
+
+        assembly {
+            legacySuperToken := sload(_LEGACY_SUPER_TOKEN_SLOT)
+            legacyPool := sload(_LEGACY_POOL_SLOT)
+            legacyHost := sload(_LEGACY_HOST_SLOT)
+            legacyGda := sload(_LEGACY_GDA_SLOT)
+            legacyStrategy := sload(_LEGACY_STRATEGY_SLOT)
+            let packed := sload(_LEGACY_BENEFICIARY_AND_DISPUTED_SLOT)
+            legacyBeneficiary := and(packed, 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+            legacyDisputed := iszero(iszero(and(shr(160, packed), 0xFF)))
+        }
+
+        __ReentrancyGuard_init();
+
+        superToken = ISuperToken(legacySuperToken);
+        pool = ISuperfluidPool(legacyPool);
+        host = ISuperfluid(legacyHost);
+        gda = IGeneralDistributionAgreementV1(legacyGda);
+        strategy = legacyStrategy;
+        beneficiary = legacyBeneficiary;
+        disputed = legacyDisputed;
+        storageSchemaVersion = CURRENT_STORAGE_SCHEMA_VERSION;
     }
 
     /*|--------------------------------------------|*/
@@ -108,19 +169,10 @@ contract StreamingEscrow is ProxyOwnableUpgrader, SuperAppBase {
         _;
     }
 
-    modifier nonReentrantEscrow() {
-        if (_reentrancyLock == 1) {
-            revert ReentrantCall();
-        }
-        _reentrancyLock = 1;
-        _;
-        _reentrancyLock = 0;
-    }
-
     /*|--------------------------------------------|*/
     /*|              EXTERNAL                      |*/
     /*|--------------------------------------------|*/
-    function setBeneficiary(address _beneficiary) external onlyStrategy nonReentrantEscrow {
+    function setBeneficiary(address _beneficiary) external onlyStrategy nonReentrant {
         if (_beneficiary == address(0)) {
             revert InvalidAddress();
         }
@@ -136,7 +188,7 @@ contract StreamingEscrow is ProxyOwnableUpgrader, SuperAppBase {
         beneficiary = _beneficiary;
     }
 
-    function setDisputed(bool _disputed) external onlyStrategy nonReentrantEscrow {
+    function setDisputed(bool _disputed) external onlyStrategy nonReentrant {
         if (disputed == _disputed) {
             return;
         }
@@ -148,7 +200,7 @@ contract StreamingEscrow is ProxyOwnableUpgrader, SuperAppBase {
         disputed = _disputed;
     }
 
-    function syncOutflow() public nonReentrantEscrow {
+    function syncOutflow() public nonReentrant {
         _drainExcessToBeneficiary();
         _setOutflow(disputed ? int96(0) : _currentGDAFlowRate(), beneficiary);
     }

@@ -310,6 +310,86 @@ contract RegistryFactoryTest is Test {
         factory.initializeV2(dummyCuts, address(0), "", dummyCuts, address(0), "");
     }
 
+    function test_register_and_unregister_contracts_with_zero_address_guard() public {
+        address target = address(0xC0DE);
+
+        vm.prank(owner);
+        factory.registerContract(target);
+        assertTrue(factory.isContractRegistered(target));
+
+        vm.prank(owner);
+        factory.unregisterContract(target);
+        assertFalse(factory.isContractRegistered(target));
+
+        vm.prank(owner);
+        vm.expectRevert(RegistryFactory.AddressCannotBeZero.selector);
+        factory.registerContract(address(0));
+
+        vm.prank(owner);
+        vm.expectRevert(RegistryFactory.AddressCannotBeZero.selector);
+        factory.unregisterContract(address(0));
+    }
+
+    function test_setGlobalPauseController_only_owner_and_non_zero() public {
+        vm.prank(owner);
+        factory.setGlobalPauseController(address(0xCAFE));
+        assertEq(factory.globalPauseController(), address(0xCAFE));
+
+        vm.prank(owner);
+        vm.expectRevert(RegistryFactory.AddressCannotBeZero.selector);
+        factory.setGlobalPauseController(address(0));
+
+        vm.expectRevert();
+        factory.setGlobalPauseController(address(0xBEEF));
+    }
+
+    function test_clear_and_upsert_facet_cuts_and_init_getters() public {
+        IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](1);
+        bytes4[] memory selectors = new bytes4[](1);
+        selectors[0] = bytes4(keccak256("a()"));
+        cuts[0] =
+            IDiamond.FacetCut({facetAddress: address(0x1111), action: IDiamond.FacetCutAction.Add, functionSelectors: selectors});
+
+        vm.startPrank(owner);
+        factory.setCommunityFacets(cuts, address(0xAAAA), hex"1234");
+        factory.setStrategyFacets(cuts, address(0xBBBB), hex"5678");
+        vm.stopPrank();
+
+        (IDiamond.FacetCut[] memory communityCuts, address communityInit, bytes memory communityCalldata) =
+            factory.getCommunityFacets();
+        assertEq(communityCuts.length, 1);
+        assertEq(communityCuts[0].facetAddress, address(0x1111));
+        assertEq(communityInit, address(0xAAAA));
+        assertEq(communityCalldata, hex"1234");
+
+        (IDiamond.FacetCut[] memory strategyCuts, address strategyInit, bytes memory strategyCalldata) =
+            factory.getStrategyFacets();
+        assertEq(strategyCuts.length, 1);
+        assertEq(strategyCuts[0].facetAddress, address(0x1111));
+        assertEq(strategyInit, address(0xBBBB));
+        assertEq(strategyCalldata, hex"5678");
+
+        vm.prank(owner);
+        factory.upsertCommunityFacetCut(0, address(0x2222), IDiamond.FacetCutAction.Replace, selectors);
+        (communityCuts,,) = factory.getCommunityFacets();
+        assertEq(communityCuts[0].facetAddress, address(0x2222));
+        assertEq(uint8(communityCuts[0].action), uint8(IDiamond.FacetCutAction.Replace));
+
+        vm.prank(owner);
+        vm.expectRevert(bytes("invalid facet index"));
+        factory.upsertCommunityFacetCut(2, address(0x3333), IDiamond.FacetCutAction.Add, selectors);
+
+        vm.prank(owner);
+        factory.clearCommunityFacetCuts();
+        (communityCuts,,) = factory.getCommunityFacets();
+        assertEq(communityCuts.length, 0);
+
+        vm.prank(owner);
+        factory.clearStrategyFacetCuts();
+        (strategyCuts,,) = factory.getStrategyFacets();
+        assertEq(strategyCuts.length, 0);
+    }
+
     function _toSingleton(address a) internal pure returns (address[] memory arr) {
         arr = new address[](1);
         arr[0] = a;

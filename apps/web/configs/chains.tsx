@@ -13,6 +13,7 @@ import {
   celo,
   Chain,
   gnosis,
+  mainnet,
   optimism,
   optimismSepolia,
   polygon,
@@ -38,7 +39,7 @@ export const CHAINS: Chain[] = [
   gnosis,
   base,
   celo,
-  // mainnet,
+  mainnet,
 ];
 
 // if (process.env.NODE_ENV === "development") {
@@ -350,21 +351,27 @@ export const chainConfigMap: {
     isTestnet: false,
     safePrefix: "celo",
   },
-  // 1: {
-  //   id: 1,
-  //   name: mainnet.name,
-  //   icon: Ethereum,
-  //   explorer: "https://eth.blockscout.com",
-  //   blockTime: 12,
-  //   confirmations: 3, // 3
-  //   rpcUrl: process.env.RPC_URL_ETHEREUM!,
-  //   subgraphUrl: `${process.env.NEXT_PUBLIC_SUBGRAPH_URL_ETHEREUM?.replace("/version/latest", "")}/${SUBGRAPH_PRODNET_VERSION}`,
-  //   globalTribunal: "0x",
-  //   allo: "0x",
-  //   arbitrator: "0x",
-  //   passportScorer: "0x",
-  //   isTestnet: false,
-  // },
+  1: {
+    id: 1,
+    name: mainnet.name,
+    icon: Ethereum,
+    explorer: "https://etherscan.io",
+    blockTime: 12,
+    confirmations: 3,
+    rpcUrl: process.env.RPC_URL_MAINNET!,
+    subgraphUrl:
+      process.env.NEXT_PUBLIC_SUBGRAPH_URL_ETHEREUM ?
+        `${process.env.NEXT_PUBLIC_SUBGRAPH_URL_ETHEREUM.replace("/version/latest", "")}/${SUBGRAPH_PRODNET_VERSION}`
+      : "",
+    superfluidExplorerUrl: getSuperfluidExplorerUrl("eth-mainnet"),
+    globalTribunal: "0x0000000000000000000000000000000000000000",
+    allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
+    arbitrator: "0x0000000000000000000000000000000000000000",
+    passportScorer: "0x0000000000000000000000000000000000000000",
+    goodDollar: "0x0000000000000000000000000000000000000000",
+    isTestnet: false,
+    safePrefix: "eth",
+  },
 };
 
 export function getConfigByChain(chainId: ChainId): ChainData | undefined {
