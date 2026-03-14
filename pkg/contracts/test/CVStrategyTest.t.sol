@@ -191,6 +191,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         // passportScorer.transferOwnership(factoryOwner);
 
         vm.startPrank(factoryOwner);
+        registryFactory.registerContract(address(safeArbitrator));
+        registryFactory.registerContract(address(passportScorer));
         registryFactory.setProtocolFee(address(registryCommunity), PROTOCOL_FEE_PERCENTAGE);
         vm.stopPrank();
         token.approve(address(registryCommunity), registryCommunity.getBasisStakedAmount());
@@ -2713,6 +2715,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
             abi.encodeWithSelector(SafeArbitrator.initialize.selector, 0.01 ether, factoryOwner)
         );
         SafeArbitrator newArbitrator = SafeArbitrator(payable(address(newArbitratorProxy)));
+        vm.prank(factoryOwner);
+        registryFactory.registerContract(address(newArbitrator));
 
         // Get current version
         uint256 currentVersion = cv.currentArbitrableConfigVersion();

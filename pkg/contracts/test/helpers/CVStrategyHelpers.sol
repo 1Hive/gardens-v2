@@ -53,6 +53,7 @@ contract MockRegistryCommunity {
     mapping(address => bool) public members;
     mapping(bytes32 => mapping(address => bool)) public roles;
     address public councilSafe;
+    address public registryFactory;
     bool public strategyEnabled = true;
 
     function setMember(address member, bool allowed) external {
@@ -65,6 +66,10 @@ contract MockRegistryCommunity {
 
     function setCouncilSafe(address councilSafe_) external {
         councilSafe = councilSafe_;
+    }
+
+    function setRegistryFactory(address registryFactory_) external {
+        registryFactory = registryFactory_;
     }
 
     function setStrategyEnabled(bool enabled) external {

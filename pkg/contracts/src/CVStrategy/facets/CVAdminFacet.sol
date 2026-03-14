@@ -24,6 +24,7 @@ contract CVAdminFacet is CVStrategyBaseFacet {
     error SuperfluidGDAConnectFailed(address gda, address superToken, address caller); // 0x9bd2355f
     error SuperfluidGDADisconnectFailed(address gda, address superToken, address caller); // 0x3746bbff
     error VotingPowerRegistryNotAllowed(address target);
+    error ArbitratorNotAllowed(address target);
     error RebalanceCallFailed();
 
     /*|--------------------------------------------|*/
@@ -181,6 +182,13 @@ contract CVAdminFacet is CVStrategyBaseFacet {
         address[] memory membersToAdd,
         address[] memory membersToRemove
     ) internal {
+        if (
+            address(_arbitrableConfig.arbitrator) != address(0)
+                && !IRegistryFactory(registryCommunity.registryFactory()).isContractRegistered(address(_arbitrableConfig.arbitrator))
+        ) {
+            revert ArbitratorNotAllowed(address(_arbitrableConfig.arbitrator));
+        }
+
         if (membersToAdd.length > 0) {
             _addToAllowList(membersToAdd);
         }

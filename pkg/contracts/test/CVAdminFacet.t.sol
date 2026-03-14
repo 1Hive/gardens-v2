@@ -248,6 +248,7 @@ contract CVAdminFacetTest is Test {
     }
 
     function test_setPoolParams_updates_allowlist_and_configs() public {
+        factoryAllowlist.setAllowed(address(arbitrator), true);
         address[] memory add = new address[](1);
         add[0] = member;
         address[] memory remove = new address[](1);
@@ -285,7 +286,24 @@ contract CVAdminFacetTest is Test {
         assertEq(sybil.lastModifiedThreshold(), 5);
     }
 
+    function test_setPoolParams_revertsIfArbitratorNotAllowed() public {
+        ArbitrableConfig memory arb = ArbitrableConfig({
+            arbitrator: IArbitrator(address(arbitrator)),
+            tribunalSafe: address(0xBEEF),
+            submitterCollateralAmount: 1,
+            challengerCollateralAmount: 1,
+            defaultRuling: 1,
+            defaultRulingTimeout: 10
+        });
+        CVParams memory params = CVParams({maxRatio: 1, weight: 2, decay: 3, minThresholdPoints: 4});
+
+        vm.prank(councilSafe);
+        vm.expectRevert(abi.encodeWithSelector(CVAdminFacet.ArbitratorNotAllowed.selector, address(arbitrator)));
+        facet.setPoolParams(arb, params, 5, new address[](0), new address[](0), address(0));
+    }
+
     function test_connect_and_disconnect_superfluid_gda() public {
+        factoryAllowlist.setAllowed(address(arbitrator), true);
         MockSuperfluidHost host = new MockSuperfluidHost();
         MockSuperToken token = new MockSuperToken(address(host));
         host.setAgreement(address(0xD00D));

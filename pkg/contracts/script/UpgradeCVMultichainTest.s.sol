@@ -235,6 +235,8 @@ contract UpgradeCVMultichainTest is BaseMultiChain, StrategyDiamondConfiguratorB
             registryFactory.upgradeTo(registryFactoryImplementation);
         }
 
+        _registerRequiredContracts(registryFactory);
+
         if (factoryAction == FactoryAction.All || factoryAction == FactoryAction.SetCommunityFacets) {
             bytes32 communityCutsDigest = _facetCutsDigest(communityCuts);
             string memory communityCutsDigestHex = _bytes32ToHex(communityCutsDigest);
@@ -406,6 +408,19 @@ contract UpgradeCVMultichainTest is BaseMultiChain, StrategyDiamondConfiguratorB
             );
         }
         registryFactory.setStrategyFacetInit(strategyInit, strategyInitCalldata);
+    }
+
+    function _registerRequiredContracts(RegistryFactory registryFactory) internal {
+        _registerContractIfPresent(registryFactory, _readAddressOrZero(".ENVS.ARBITRATOR"));
+        _registerContractIfPresent(registryFactory, _readAddressOrZero(".ENVS.PASSPORT_SCORER"));
+        _registerContractIfPresent(registryFactory, _readAddressOrZero(".ENVS.GOOD_DOLLAR_SYBIL"));
+    }
+
+    function _registerContractIfPresent(RegistryFactory registryFactory, address target) internal {
+        if (target == address(0)) return;
+        if (!registryFactory.isContractRegistered(target)) {
+            registryFactory.registerContract(target);
+        }
     }
 
     function _parsePhase(string memory phase) internal pure returns (Phase) {

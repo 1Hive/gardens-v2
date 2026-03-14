@@ -50,6 +50,7 @@ import {LibDiamond} from "../diamonds/libraries/LibDiamond.sol";
 import {IDiamondCut} from "../diamonds/interfaces/IDiamondCut.sol";
 import {IDiamondLoupe} from "../diamonds/interfaces/IDiamondLoupe.sol";
 import {IVotingPowerRegistry} from "../interfaces/IVotingPowerRegistry.sol";
+import {IRegistryFactory} from "../IRegistryFactory.sol";
 import {IPauseController} from "../interfaces/IPauseController.sol";
 import {LibPauseStorage} from "../pausing/LibPauseStorage.sol";
 
@@ -68,9 +69,11 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
     error NotImplemented(bytes4 selector); //0xc79348a6
     error TokenCannotBeZero(address token); //0x61a8cdce
     error TokenNotAllowed(address token); // 0x94403b70
+    error ArbitratorNotAllowed(address target);
     error AmountOverMaxRatio(uint256 requestedAmount, uint256 maxAllowed, uint256 poolAmount); // 0x3e4bb863
     error AddressCannotBeZero(address input); //0x084c41ef
     error RegistryCannotBeZero(address registry); // 0x22947713
+    error SybilScorerNotAllowed(address target);
     error SupportUnderflow(uint256 _support, int256 _delta, int256 _result); // 0x3bbc7142
     error NotEnoughPointsToSupport(uint256 pointsSupport, uint256 pointsBalance); // 0xd64182fe
 
@@ -230,6 +233,9 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
             ? IVotingPowerRegistry(ip.registryCommunity)
             : IVotingPowerRegistry(ip.votingPowerRegistry);
 
+        _requireRegisteredArbitrator(address(ip.arbitrableConfig.arbitrator));
+        _requireRegisteredSybilScorer(ip.sybilScorer);
+
         proposalType = ip.proposalType;
         pointSystem = ip.pointSystem;
         pointConfig = ip.pointConfig;
@@ -309,6 +315,20 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
 
     function _revertZeroAddress(address _address) internal pure {
         if (_address == address(0)) revert AddressCannotBeZero(_address);
+    }
+
+    function _requireRegisteredArbitrator(address _arbitrator) internal view {
+        if (_arbitrator == address(0)) return;
+        if (!IRegistryFactory(registryCommunity.registryFactory()).isContractRegistered(_arbitrator)) {
+            revert ArbitratorNotAllowed(_arbitrator);
+        }
+    }
+
+    function _requireRegisteredSybilScorer(address _sybilScorer) internal view {
+        if (_sybilScorer == address(0)) return;
+        if (!IRegistryFactory(registryCommunity.registryFactory()).isContractRegistered(_sybilScorer)) {
+            revert SybilScorerNotAllowed(_sybilScorer);
+        }
     }
 
     function onlyCouncilSafe() internal view {
@@ -686,6 +706,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
             revert OnlyCouncilSafe(msg.sender, address(registryCommunity.councilSafe()), owner());
         }
         _revertZeroAddress(_sybilScorer);
+        _requireRegisteredSybilScorer(_sybilScorer);
 
         sybilScorer = ISybilScorer(_sybilScorer);
         _registerToSybilScorer(threshold);

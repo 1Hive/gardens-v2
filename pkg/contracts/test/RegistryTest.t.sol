@@ -150,6 +150,8 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
             abi.encodeCall(CVStrategyDiamondInit.init, ())
         );
 
+        registryFactory.registerContract(address(safeArbitrator));
+
         // registryFactory = new RegistryFactory();
         // _registryFactory().setReceiverAddress(address(protocolFeeReceiver));
 

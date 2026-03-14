@@ -171,6 +171,18 @@ contract MockExternalVotingPowerRegistryForStrategy {
     }
 }
 
+contract MockContractRegistryForStrategy {
+    mapping(address => bool) public allowed;
+
+    function setAllowed(address target, bool isAllowed) external {
+        allowed[target] = isAllowed;
+    }
+
+    function isContractRegistered(address target) external view returns (bool) {
+        return allowed[target];
+    }
+}
+
 contract CVStrategyCoverageHarness is CVStrategyHarness {
     function setSuperfluidGDA(address gda) external {
         superfluidGDA = ISuperfluidPool(gda);
@@ -189,6 +201,7 @@ contract CVStrategyTest is Test {
     CVStrategyHarness internal strategy;
     MockAlloWithPool internal allo;
     MockRegistryCommunity internal registryCommunity;
+    MockContractRegistryForStrategy internal contractRegistry;
     MockSybilScorer internal sybil;
     MockCollateralVault internal collateralVault;
     DummyFacet internal dummyFacet;
@@ -201,6 +214,7 @@ contract CVStrategyTest is Test {
     function setUp() public {
         allo = new MockAlloWithPool();
         registryCommunity = new MockRegistryCommunity();
+        contractRegistry = new MockContractRegistryForStrategy();
         sybil = new MockSybilScorer();
         collateralVault = new MockCollateralVault();
         dummyFacet = new DummyFacet();
@@ -210,9 +224,11 @@ contract CVStrategyTest is Test {
         strategy.setPoolId(1);
 
         registryCommunity.setCouncilSafe(councilSafe);
+        registryCommunity.setRegistryFactory(address(contractRegistry));
         registryCommunity.setMember(member, true);
         strategy.setRegistryCommunity(address(registryCommunity));
         strategy.setVotingPowerRegistry(address(registryCommunity));
+        contractRegistry.setAllowed(address(sybil), true);
 
         allo.setPoolToken(1, address(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE));
     }
@@ -410,6 +426,13 @@ contract CVStrategyTest is Test {
         vm.prank(councilSafe);
         vm.expectRevert(abi.encodeWithSelector(CVStrategy.AddressCannotBeZero.selector, address(0)));
         strategy.setSybilScorer(address(0), 10);
+
+        address unregisteredSybilScorer = makeAddr("unregisteredSybilScorer");
+        vm.prank(councilSafe);
+        vm.expectRevert(
+            abi.encodeWithSelector(CVStrategy.SybilScorerNotAllowed.selector, unregisteredSybilScorer)
+        );
+        strategy.setSybilScorer(unregisteredSybilScorer, 10);
 
         vm.prank(councilSafe);
         strategy.setSybilScorer(address(sybil), 10);
@@ -653,6 +676,7 @@ contract CVStrategyTest is Test {
         CVStrategyHarness local = new CVStrategyHarness();
         MockAlloWithPool localAllo = new MockAlloWithPool();
         MockRegistryCommunity localRegistry = new MockRegistryCommunity();
+        MockContractRegistryForStrategy localContractRegistry = new MockContractRegistryForStrategy();
         MockSybilScorer localSybil = new MockSybilScorer();
         MockCollateralVault template = new MockCollateralVault();
         MockArbitrator arb = new MockArbitrator();
@@ -660,6 +684,9 @@ contract CVStrategyTest is Test {
         localAllo.setPoolToken(1, address(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE));
         local.setAllo(address(localAllo));
         local.setCollateralVaultTemplateRaw(address(template));
+        localRegistry.setRegistryFactory(address(localContractRegistry));
+        localContractRegistry.setAllowed(address(localSybil), true);
+        localContractRegistry.setAllowed(address(arb), true);
 
         CVStrategyInitializeParamsV0_3 memory params;
         params.registryCommunity = address(localRegistry);
@@ -710,6 +737,57 @@ contract CVStrategyTest is Test {
 
         assertEq(local.currentArbitrableConfigVersion(), 0);
         assertEq(address(local.sybilScorer()), address(0));
+    }
+
+    function test_initialize_reverts_when_arbitrator_not_registered() public {
+        CVStrategyHarness local = new CVStrategyHarness();
+        MockAlloWithPool localAllo = new MockAlloWithPool();
+        MockRegistryCommunity localRegistry = new MockRegistryCommunity();
+        MockContractRegistryForStrategy localContractRegistry = new MockContractRegistryForStrategy();
+        MockCollateralVault template = new MockCollateralVault();
+        MockArbitrator arb = new MockArbitrator();
+
+        localAllo.setPoolToken(1, address(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE));
+        local.setAllo(address(localAllo));
+        local.setCollateralVaultTemplateRaw(address(template));
+        localRegistry.setRegistryFactory(address(localContractRegistry));
+
+        CVStrategyInitializeParamsV0_3 memory params;
+        params.registryCommunity = address(localRegistry);
+        params.proposalType = ProposalType.Funding;
+        params.pointSystem = PointSystem.Unlimited;
+        params.pointConfig = PointSystemConfig(100);
+        params.arbitrableConfig = ArbitrableConfig(IArbitrator(address(arb)), address(0xBEEF), 0, 0, 1, 2);
+
+        vm.prank(address(localAllo));
+        vm.expectRevert(abi.encodeWithSelector(CVStrategy.ArbitratorNotAllowed.selector, address(arb)));
+        local.initialize(1, abi.encode(params));
+    }
+
+    function test_initialize_reverts_when_sybil_scorer_not_registered() public {
+        CVStrategyHarness local = new CVStrategyHarness();
+        MockAlloWithPool localAllo = new MockAlloWithPool();
+        MockRegistryCommunity localRegistry = new MockRegistryCommunity();
+        MockContractRegistryForStrategy localContractRegistry = new MockContractRegistryForStrategy();
+        MockSybilScorer localSybil = new MockSybilScorer();
+        MockCollateralVault template = new MockCollateralVault();
+
+        localAllo.setPoolToken(1, address(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE));
+        local.setAllo(address(localAllo));
+        local.setCollateralVaultTemplateRaw(address(template));
+        localRegistry.setRegistryFactory(address(localContractRegistry));
+
+        CVStrategyInitializeParamsV0_3 memory params;
+        params.registryCommunity = address(localRegistry);
+        params.proposalType = ProposalType.Funding;
+        params.pointSystem = PointSystem.Unlimited;
+        params.pointConfig = PointSystemConfig(100);
+        params.sybilScorer = address(localSybil);
+        params.sybilScorerThreshold = 7;
+
+        vm.prank(address(localAllo));
+        vm.expectRevert(abi.encodeWithSelector(CVStrategy.SybilScorerNotAllowed.selector, address(localSybil)));
+        local.initialize(1, abi.encode(params));
     }
 
     function test_initialize_streaming_reverts_without_superfluid_data() public {
