@@ -178,6 +178,16 @@ contract CVSyncPowerFacetTest is Test {
         vm.stopPrank();
     }
 
+    function test_setAuthorizedSyncCaller_revertsWhenUsingInternalVotingPowerRegistry() public {
+        facet.setVotingPowerRegistry(address(community));
+
+        vm.prank(councilSafe);
+        vm.expectRevert(
+            abi.encodeWithSelector(CVSyncPowerFacet.SyncDisabledForInternalRegistry.selector, address(community))
+        );
+        facet.setAuthorizedSyncCaller(syncCaller, true);
+    }
+
     // ─── Sync Power: No Change ──────────────────────────────────────────
 
     function test_syncPower_noOpWhenPowerUnchanged() public {
@@ -191,6 +201,16 @@ contract CVSyncPowerFacetTest is Test {
 
         // totalPointsActivated should be unchanged
         assertEq(facet.totalPointsActivated(), 100);
+    }
+
+    function test_syncPower_revertsWhenUsingInternalVotingPowerRegistry() public {
+        facet.setVotingPowerRegistry(address(community));
+
+        vm.prank(syncCaller);
+        vm.expectRevert(
+            abi.encodeWithSelector(CVSyncPowerFacet.SyncDisabledForInternalRegistry.selector, address(community))
+        );
+        facet.syncPower(member);
     }
 
     // ─── Sync Power: Increase ───────────────────────────────────────────
@@ -365,6 +385,18 @@ contract CVSyncPowerFacetTest is Test {
 
         vm.prank(unauthorized);
         vm.expectRevert(abi.encodeWithSelector(CVSyncPowerFacet.NotAuthorizedSyncCaller.selector, unauthorized));
+        facet.batchSyncPower(members);
+    }
+
+    function test_batchSyncPower_revertsWhenUsingInternalVotingPowerRegistry() public {
+        address[] memory members = new address[](1);
+        members[0] = member;
+        facet.setVotingPowerRegistry(address(community));
+
+        vm.prank(syncCaller);
+        vm.expectRevert(
+            abi.encodeWithSelector(CVSyncPowerFacet.SyncDisabledForInternalRegistry.selector, address(community))
+        );
         facet.batchSyncPower(members);
     }
 

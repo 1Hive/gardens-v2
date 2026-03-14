@@ -28,6 +28,7 @@ contract CVSyncPowerFacet is CVStrategyBaseFacet {
 
     error NotAuthorizedSyncCaller(address caller);
     error SyncBatchTooLarge(uint256 provided, uint256 maxAllowed);
+    error SyncDisabledForInternalRegistry(address registryCommunity);
 
     /*|--------------------------------------------|*/
     /*|              EVENTS                        |*/
@@ -49,6 +50,7 @@ contract CVSyncPowerFacet is CVStrategyBaseFacet {
     /// @param _caller The address to authorize (e.g., Green Goods HatsModule)
     /// @param _authorized Whether to authorize or deauthorize
     function setAuthorizedSyncCaller(address _caller, bool _authorized) external {
+        _revertIfUsingInternalVotingPowerRegistry();
         onlyCouncilSafe();
         CVSyncPowerStorage.layout().authorizedSyncCallers[_caller] = _authorized;
         emit AuthorizedSyncCallerUpdated(_caller, _authorized);
@@ -68,6 +70,7 @@ contract CVSyncPowerFacet is CVStrategyBaseFacet {
     ///      conviction on all proposals the member has staked on.
     /// @param _member The member whose power changed
     function syncPower(address _member) external {
+        _revertIfUsingInternalVotingPowerRegistry();
         if (!CVSyncPowerStorage.layout().authorizedSyncCallers[msg.sender]) {
             revert NotAuthorizedSyncCaller(msg.sender);
         }
@@ -79,6 +82,7 @@ contract CVSyncPowerFacet is CVStrategyBaseFacet {
     /// @dev Useful when a role change affects multiple members simultaneously
     /// @param _members Array of member addresses to sync
     function batchSyncPower(address[] calldata _members) external {
+        _revertIfUsingInternalVotingPowerRegistry();
         if (!CVSyncPowerStorage.layout().authorizedSyncCallers[msg.sender]) {
             revert NotAuthorizedSyncCaller(msg.sender);
         }
@@ -94,6 +98,12 @@ contract CVSyncPowerFacet is CVStrategyBaseFacet {
     /*|--------------------------------------------|*/
     /*|              INTERNAL HELPERS              |*/
     /*|--------------------------------------------|*/
+
+    function _revertIfUsingInternalVotingPowerRegistry() internal view {
+        if (address(votingPowerRegistry) == address(registryCommunity)) {
+            revert SyncDisabledForInternalRegistry(address(registryCommunity));
+        }
+    }
 
     function _syncPowerInternal(address _member) internal {
         CVSyncPowerStorage.Layout storage syncLayout = CVSyncPowerStorage.layout();
