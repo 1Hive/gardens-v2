@@ -1,10 +1,5 @@
 import type { Metadata } from "next";
-import { notFound, redirect } from "next/navigation";
 import ClientPage from "./client-page";
-import {
-  resolveStrategyAddress,
-  stringifySearchParams,
-} from "../route-helpers";
 
 const TITLE = "Gardens - Create a pool";
 const DESCRIPTION =
@@ -45,4 +40,3 @@ export default function Page({
 }: PageParams) {
   return <ClientPage params={params} />;
 }
-

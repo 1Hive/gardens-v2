@@ -375,7 +375,7 @@ export default function ClientPage({
     previousResolvedMembershipState.current = isMemberCommunity;
   }, [hasResolvedMembershipState, isMemberCommunity, memberActivatedStrategy]);
 
-  const { subscribe, unsubscribe, connected } = usePubSubContext();
+  const { subscribe, unsubscribe, connected, publish } = usePubSubContext();
 
   const subscriptionId = useRef<SubscriptionId>();
   useEffect(() => {

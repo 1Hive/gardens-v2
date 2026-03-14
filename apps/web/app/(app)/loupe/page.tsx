@@ -1,9 +1,8 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import type { AbiFunction, AbiParameter } from "abitype";
 import {
-  AbiFunction,
-  AbiParameter,
   Address,
   decodeFunctionResult,
   encodeFunctionData,
@@ -86,7 +85,7 @@ const parseFunctionFromSignature = (signature: string) =>
   parseAbiItem(`function ${signature.trim()}`) as AbiFunction;
 
 const toCanonicalSignature = (abiFunction: AbiFunction) =>
-  `${abiFunction.name}(${(abiFunction.inputs ?? []).map((input) => input.type).join(",")})`;
+  `${abiFunction.name}(${(abiFunction.inputs ?? []).map((input: AbiParameter) => input.type).join(",")})`;
 
 const selectorFromSignature = (signature: string) =>
   keccak256(stringToHex(signature)).slice(0, 10).toLowerCase();
@@ -115,6 +114,20 @@ const parseBoolish = (value: unknown) => {
   return value;
 };
 
+const isTupleParameter = (
+  parameter: AbiParameter,
+): parameter is AbiParameter & { components: readonly AbiParameter[] } =>
+  "components" in parameter && Array.isArray(parameter.components);
+
+const isAbiFunctionItem = (item: unknown): item is AbiFunction =>
+  Boolean(
+    item &&
+      typeof item === "object" &&
+      "type" in item &&
+      "name" in item &&
+      (item as { type?: unknown }).type === "function",
+  );
+
 const normalizeValueForParameter = (
   value: unknown,
   parameter: AbiParameter,
@@ -142,15 +155,15 @@ const normalizeValueForParameter = (
   }
 
   if (parameter.type === "tuple") {
-    const components = parameter.components ?? [];
+    const components = isTupleParameter(parameter) ? parameter.components : [];
     if (Array.isArray(value)) {
-      return components.map((component, index) =>
+      return components.map((component: AbiParameter, index: number) =>
         normalizeValueForParameter(value[index], component),
       );
     }
     if (value != null && typeof value === "object") {
       const source = value as Record<string, unknown>;
-      return components.map((component, index) => {
+      return components.map((component: AbiParameter, index: number) => {
         const fromName =
           component.name && component.name in source ?
             source[component.name]
@@ -237,7 +250,7 @@ export default function DiamondAdminPage() {
       Array.from(
         new Set(
           facets.flatMap((facet) =>
-            facet.functionSelectors.filter((selector) =>
+            facet.functionSelectors.filter((selector: string) =>
               SELECTOR_REGEX.test(selector),
             ),
           ),
@@ -247,11 +260,11 @@ export default function DiamondAdminPage() {
   );
 
   const selectedChain = CHAINS.find((entry) => entry.id === selectedChainId);
-  const knownAbiFunctions = useMemo(
+  const knownAbiFunctions = useMemo<AbiFunction[]>(
     () =>
-      [...registryCommunityABI, ...cvStrategyABI].filter(
-        (item): item is AbiFunction => item.type === "function",
-      ),
+      [...registryCommunityABI, ...cvStrategyABI]
+        .filter(isAbiFunctionItem)
+        .map((item) => item as AbiFunction),
     [],
   );
 

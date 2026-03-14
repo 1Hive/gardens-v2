@@ -23,7 +23,6 @@ import {
   isMemberDocument,
   isMemberQuery,
 } from "#/subgraph/.graphclient";
-import { LoupeButton } from "@/apps/web/components/LoupeButton";
 import {
   CommunityLogo,
   groupFlowers,
@@ -93,7 +92,10 @@ export default function ClientPage({
   params: { community: string };
 }) {
   useEffect(() => {
-    logOnce("debug", "Loading page: (app)/gardens/[chain]/[community]/page.tsx");
+    logOnce(
+      "debug",
+      "Loading page: (app)/gardens/[chain]/[community]/page.tsx",
+    );
   }, []);
 
   const searchParams = useCollectQueryParams();

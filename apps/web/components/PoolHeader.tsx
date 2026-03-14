@@ -37,7 +37,6 @@ import MarkdownWrapper from "./MarkdownWrapper";
 import { Modal } from "./Modal";
 import { Skeleton } from "./Skeleton";
 import { Statistic } from "./Statistic";
-import { LoupeButton } from "@/apps/web/components/LoupeButton";
 import { SuperfluidStream } from "@/assets";
 import { LoupeButton } from "@/components/LoupeButton";
 import { TransactionStatusNotification } from "@/components/TransactionStatusNotification";

@@ -105,7 +105,7 @@ type DemoPoolCard = {
     poolId: string;
     metadataHash: string | null;
     metadata: { title: string; description: string };
-    proposals: { id: string }[];
+    proposals: { id: string; proposalStatus: number }[];
     config: { proposalType: number; pointSystem: number };
   };
 };
@@ -124,7 +124,10 @@ const demoPoolCards: DemoPoolCard[] = [
         title: "Core Grants Pool",
         description: "Funding pool for ecosystem grants.",
       },
-      proposals: [{ id: "p-1" }, { id: "p-2" }],
+      proposals: [
+        { id: "p-1", proposalStatus: 0 },
+        { id: "p-2", proposalStatus: 1 },
+      ],
       config: { proposalType: 1, pointSystem: 0 },
     },
   },
@@ -141,7 +144,11 @@ const demoPoolCards: DemoPoolCard[] = [
         title: "Governance Signals",
         description: "Signaling pool for collective preferences.",
       },
-      proposals: [{ id: "p-1" }, { id: "p-2" }, { id: "p-3" }],
+      proposals: [
+        { id: "p-1", proposalStatus: 0 },
+        { id: "p-2", proposalStatus: 0 },
+        { id: "p-3", proposalStatus: 1 },
+      ],
       config: { proposalType: 0, pointSystem: 3 },
     },
   },
@@ -158,7 +165,7 @@ const demoPoolCards: DemoPoolCard[] = [
         title: "Continuous Support",
         description: "Streaming pool with monthly budgets.",
       },
-      proposals: [{ id: "p-1" }],
+      proposals: [{ id: "p-1", proposalStatus: 0 }],
       config: { proposalType: 2, pointSystem: 1 },
     },
   },
@@ -612,7 +619,7 @@ export default function DesignSystemPage() {
                 isSignalingType={false}
                 compact={false}
                 proposalStatus="active"
-                proposalType={"funding"}
+                proposalType="funding"
               />
             </div>
           </DemoCard>
@@ -708,4 +715,3 @@ function DemoCard({
     </div>
   );
 }
-
