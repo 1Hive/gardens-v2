@@ -551,7 +551,6 @@ export default function DesignSystemPage() {
                 register={addressListRegister}
                 setValue={addressListSetValue}
                 errors={{}}
-                pointSystemType={0}
                 tooltip="Add individual addresses or paste a list"
                 required
               />

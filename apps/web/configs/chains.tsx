@@ -81,6 +81,14 @@ const getGatewayKey = () => {
   return serverKey || process.env.NEXT_PUBLIC_SUBGRAPH_KEY || "";
 };
 
+const getAlchemyRpcUrl = (network: string) => {
+  const apiKey = process.env.NEXT_PUBLIC_ALCHEMY_KEY;
+  return apiKey ? `https://${network}.g.alchemy.com/v2/${apiKey}` : undefined;
+};
+
+const getRpcUrl = (serverUrl: string | undefined, alchemyUrl?: string) =>
+  serverUrl ?? alchemyUrl ?? "";
+
 const getSuperfluidSubgraphUrls = (publishedId: string) => {
   const gatewayKey = getGatewayKey();
   return {
@@ -136,7 +144,10 @@ export const chainConfigMap: {
     explorer: "https://sepolia.arbiscan.io/",
     blockTime: 12,
     confirmations: 2,
-    rpcUrl: process.env.RPC_URL_ARB_TESTNET!,
+    rpcUrl: getRpcUrl(
+      process.env.RPC_URL_ARB_TESTNET,
+      getAlchemyRpcUrl("arb-sepolia"),
+    ),
     ...getSubgraphUrls(
       "BfZYwhZ1rTb22Nah1u6YyXtUtAdgGNtZhW1EBb4mFzAU",
       "gardens-v2---arbitrum-sepolia",
@@ -158,7 +169,10 @@ export const chainConfigMap: {
     explorer: "https://sepolia-optimism.etherscan.io/",
     blockTime: 2,
     confirmations: 1,
-    rpcUrl: process.env.RPC_URL_OP_TESTNET!,
+    rpcUrl: getRpcUrl(
+      process.env.RPC_URL_OP_TESTNET,
+      getAlchemyRpcUrl("opt-sepolia"),
+    ),
     ...getSubgraphUrls(
       "5B7swx86RJEpywgvS63kMLVx9U6RKfERfU5tWYnUuGXe",
       "gardens-v-2-optimism-sepolia",
@@ -182,7 +196,10 @@ export const chainConfigMap: {
     explorer: "https://sepolia.etherscan.io/",
     blockTime: 12,
     confirmations: 1, // 3
-    rpcUrl: process.env.RPC_URL_ETH_TESTNET!,
+    rpcUrl: getRpcUrl(
+      process.env.RPC_URL_ETH_TESTNET,
+      getAlchemyRpcUrl("eth-sepolia"),
+    ),
     ...getSubgraphUrls(
       "5xWqmgdaKXziaJg4EuV5pzWFCNmX2eRLsHKBissnbDNx",
       "gardens-v-2-sepolia",

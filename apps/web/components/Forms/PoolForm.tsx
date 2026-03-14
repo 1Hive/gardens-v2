@@ -1014,7 +1014,6 @@ export function PoolForm({
                   addresses={sybilResistanceValue}
                   setValue={setValue}
                   errors={errors}
-                  pointSystemType={pointSystemType}
                 />
               )}
             </div>

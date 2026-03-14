@@ -37,6 +37,7 @@ import {
 } from "@/components";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import PoolHeader from "@/components/PoolHeader";
+import { TokenGardenFaucet } from "@/components/TokenGardenFaucet";
 import { chainConfigMap } from "@/configs/chains";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
@@ -190,17 +191,17 @@ export default function ClientPage({
 
   const { data: isMemberResult, fetching: isMemberFetching } =
     useSubgraphQuery<isMemberQuery>({
-    query: isMemberDocument,
-    variables: {
-      me: wallet?.toLowerCase(),
-      comm: _community.toLowerCase(),
-    },
-    changeScope: [
-      { topic: "community", id: communityAddress },
-      { topic: "member", containerId: communityAddress },
-    ],
-    enabled: wallet !== undefined,
-  });
+      query: isMemberDocument,
+      variables: {
+        me: wallet?.toLowerCase(),
+        comm: _community.toLowerCase(),
+      },
+      changeScope: [
+        { topic: "community", id: communityAddress },
+        { topic: "member", containerId: communityAddress },
+      ],
+      enabled: wallet !== undefined,
+    });
 
   const registryCommunity = result?.registryCommunity;
   let { communityName, communityFee, registerStakeAmount, protocolFee } =
@@ -228,36 +229,41 @@ export default function ClientPage({
   const [triggerSybilCheckModalClose, setTriggerSybilCheckModalClose] =
     useState(false);
   const [selectedTab, setSelectedTab] = useState(0);
-  const [hasStartedMembershipLookup, setHasStartedMembershipLookup] =
-    useState(() => !wallet);
-  const [hasStartedActivationLookup, setHasStartedActivationLookup] =
-    useState(() => !wallet);
+  const [hasStartedMembershipLookup, setHasStartedMembershipLookup] = useState(
+    () => !wallet,
+  );
+  const [hasStartedActivationLookup, setHasStartedActivationLookup] = useState(
+    () => !wallet,
+  );
   const [hasJustJoinedCommunity, setHasJustJoinedCommunity] = useState(false);
 
-  const { data: memberData, error: errorMemberData, fetching: memberDataFetching } =
-    useSubgraphQuery<isMemberQuery>({
-      query: isMemberDocument,
-      variables: {
-        me: wallet?.toLowerCase(),
-        comm: communityAddress?.toLowerCase(),
-      },
-      changeScope:
-        poolId != null ?
-          [
-            {
-              topic: "member",
-              id: wallet,
-              containerId: strategy?.registryCommunity?.id,
-            },
-            {
-              topic: "proposal",
-              containerId: poolId,
-              function: "allocate",
-            },
-          ]
-        : undefined,
-      enabled: !!wallet && !!strategy?.registryCommunity?.id,
-    });
+  const {
+    data: memberData,
+    error: errorMemberData,
+    fetching: memberDataFetching,
+  } = useSubgraphQuery<isMemberQuery>({
+    query: isMemberDocument,
+    variables: {
+      me: wallet?.toLowerCase(),
+      comm: communityAddress?.toLowerCase(),
+    },
+    changeScope:
+      poolId != null ?
+        [
+          {
+            topic: "member",
+            id: wallet,
+            containerId: strategy?.registryCommunity?.id,
+          },
+          {
+            topic: "proposal",
+            containerId: poolId,
+            function: "allocate",
+          },
+        ]
+      : undefined,
+    enabled: !!wallet && !!strategy?.registryCommunity?.id,
+  });
 
   const { data: memberStrategyData, fetching: memberStrategyFetching } =
     useSubgraphQuery<getMemberStrategyQuery>({
@@ -279,13 +285,11 @@ export default function ClientPage({
       enabled: !!wallet && !!strategy?.id,
     });
 
-  const isMemberCommunityResult =
-    isMemberResult?.member?.memberCommunity?.[0];
+  const isMemberCommunityResult = isMemberResult?.member?.memberCommunity?.[0];
   const memberCommunityFromPoolResult =
     memberData?.member?.memberCommunity?.[0];
   const memberCommunityData =
-    isMemberCommunityResult?.isRegistered ?
-      isMemberCommunityResult
+    isMemberCommunityResult?.isRegistered ? isMemberCommunityResult
     : memberCommunityFromPoolResult?.isRegistered ?
       memberCommunityFromPoolResult
     : isMemberCommunityResult ?? memberCommunityFromPoolResult;
@@ -323,7 +327,8 @@ export default function ClientPage({
     memberActivatedOnChain ||
     memberStrategyData?.memberStrategy?.activatedPoints > 0n;
   const hasResolvedMembershipState =
-    !wallet || (hasStartedMembershipLookup && !isMemberFetching && !memberDataFetching);
+    !wallet ||
+    (hasStartedMembershipLookup && !isMemberFetching && !memberDataFetching);
   const hasResolvedActivationState =
     !wallet || (hasStartedActivationLookup && !memberStrategyFetching);
   const showJoinCommunitySection =
@@ -364,7 +369,10 @@ export default function ClientPage({
       return;
     }
 
-    if (previousResolvedMembershipState.current === false && isMemberCommunity) {
+    if (
+      previousResolvedMembershipState.current === false &&
+      isMemberCommunity
+    ) {
       setHasJustJoinedCommunity(true);
     }
 
@@ -910,21 +918,6 @@ export default function ClientPage({
     </>
   );
 
-  const StreamingPoolInfo = () => {
-    if (!isStreamingPool) return null;
-
-    return (
-      <InfoBox
-        infoBoxType="info"
-        title="Streaming pool"
-        className="rounded-xl bg-neutral sm:p-4"
-      >
-        This pool supports continuous funding via Superfluid streams. Pool
-        balances and proposal execution can change over time as streams flow in.
-      </InfoBox>
-    );
-  };
-
   return effectiveStrategy ?
       <>
         {showMissingFundingTokenWarning && (
@@ -934,6 +927,16 @@ export default function ClientPage({
             </InfoBox>
           </div>
         )}
+        {poolToken && tokenDecimals && (
+          <TokenGardenFaucet
+            token={{
+              address: poolToken.address,
+              decimals: tokenDecimals,
+              symbol: poolToken.symbol,
+            }}
+          />
+        )}
+
         {/* ================= DESKTOP ================= */}
 
         {/*  Join community - Activate governace path and description from pool page */}
@@ -958,7 +961,6 @@ export default function ClientPage({
             minThGtTotalEffPoints={minThGtTotalEffPoints}
             communityName={communityName ?? ""}
           />
-          <StreamingPoolInfo />
           {registerAndActivateFromPool}
         </div>
 
@@ -997,6 +999,8 @@ export default function ClientPage({
                 : undefined
               }
             />
+
+            <StreamingInfoCard />
           </div>
         )}
 
@@ -1059,7 +1063,6 @@ export default function ClientPage({
                   minThGtTotalEffPoints={minThGtTotalEffPoints}
                   communityName={communityName ?? ""}
                 />
-                <StreamingPoolInfo />
                 {poolToken && PoolTypes[proposalType] !== "signaling" && (
                   <PoolMetrics
                     communityAddress={communityAddress}

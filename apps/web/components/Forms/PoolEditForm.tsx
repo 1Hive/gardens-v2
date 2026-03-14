@@ -177,7 +177,6 @@ export default function PoolEditForm({
   strategy,
   initValues,
   proposalType,
-  pointSystemType,
   setModalOpen,
 }: Props) {
   const {
@@ -569,7 +568,6 @@ export default function PoolEditForm({
                     // required={sybilResistanceType === "allowList"}
                     setValue={setValue}
                     errors={errors}
-                    pointSystemType={pointSystemType}
                   />
                 )
               }

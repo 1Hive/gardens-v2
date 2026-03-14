@@ -699,6 +699,9 @@ export function Proposals({
       },
       {} as Record<string, number>,
     ),
+    active: sortedProposals.filter((p) =>
+      [1, 5].includes(Number(p.proposalStatus)),
+    ).length,
     // "closed" filter groups both cancelled (3) and rejected (6) proposals
     closed: sortedProposals.filter((p) =>
       (CLOSED_STATUSES as readonly number[]).includes(Number(p.proposalStatus)),
@@ -982,7 +985,6 @@ export function useProposalFilter<
     | "active"
     | "closed"
     | "executed"
-    | "disputed"
     | null;
 
   const [filter, setFilter] = useState<FilterType>("active");
@@ -991,10 +993,9 @@ export function useProposalFilter<
 
   const FILTER_STATUS: Record<Exclude<FilterType, null>, number | number[]> = {
     all: 0,
-    active: 1,
+    active: [1, 5],
     closed: [...CLOSED_STATUSES],
     executed: 4,
-    disputed: 5,
   };
 
   const filteredProposals = useMemo(() => {
@@ -1091,7 +1092,7 @@ function ProposalFiltersUI({
   disableSort: boolean;
 }) {
   const FILTERS = useMemo(() => {
-    const allFilters = ["all", "active", "disputed", "executed", "closed"];
+    const allFilters = ["all", "active", "executed", "closed"];
 
     // Remove "executed" filter when poolType is a signaling pool
     return +poolType === 0 ?
@@ -1126,8 +1127,6 @@ function ProposalFiltersUI({
   const FILTER_BADGE_STYLES: Record<string, string> = {
     all: "bg-tertiary-soft text-tertiary-content dark:bg-tertiary-dark",
     active: "bg-primary-soft text-primary-content dark:bg-primary-soft-dark",
-    disputed:
-      "bg-secondary-soft dark:bg-secondary-soft-dark text-secondary-content",
     executed: "bg-tertiary-soft dark:bg-tertiary-dark text-tertiary-content",
     closed: "bg-danger-soft text-danger-content dark:bg-danger-soft-dark",
   };
