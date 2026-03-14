@@ -28,36 +28,36 @@
       },
       "hash": "81110e255f68858c5c6b2403411abfd6abb4238e",
       "IMPLEMENTATIONS": {
-        "CV_STRATEGY": "0x9249c425236b680a120b0d539b9c27e46352fc74",
-        "REGISTRY_COMMUNITY": "0x9fb6667cec448916ba7a297fa714250f505d63c7",
+        "CV_STRATEGY": "0x6c30b1b68e5870e7ad696b0e0b3b72a082b9967a",
+        "REGISTRY_COMMUNITY": "0x432f57306a9ca7b43036dfb2cab0ee2be25ea99e",
         "COLLATERAL_VAULT": "0x32ef7222b5291b3710f0a59ab042118f9dd06a47",
-        "STREAMING_ESCROW": "0x72a7a93bbeca276fcaaa3ff3b4f80ba558bb368d",
-        "STREAMING_ESCROW_FACTORY": "0xf24428a5131554e035a303055cde741b8497728d"
+        "STREAMING_ESCROW": "0xfe057beaaf57c324d9732c86c17ed8e108b1732e",
+        "STREAMING_ESCROW_FACTORY": "0xa074457f91413d0e1b97b5e2e559dc3e17f4d151"
       },
       "FACETS": {
         "DIAMOND_LOUPE": "0x8ee541646122d2e29369cd1cc2999e49f0b30913",
-        "CV_ADMIN": "0x0e635dad01193b9d93739bc652c5e999962ededa",
-        "CV_ALLOCATION": "0xe5a996868d8bc8448d16f05f4d5d90b4a266d487",
-        "CV_DISPUTE": "0x30ef983627a626c990a7ac4f8c7bc43ab12020d8",
-        "CV_PAUSE": "0x97f683784f019eed0653759d80e54e9ca2a12037",
-        "CV_POWER": "0x3745aba0e3e9e684ead9765fbd0e9dc3330a03fb",
-        "CV_PROPOSAL": "0x02670345dc42b186cd8f1a8a96f4d23ce0ad972e",
-        "CV_SYNC_POWER": "0xeef10990688bbf9cf829ad06dc5dcbcab361544a",
-        "CV_STREAMING": "0xff33574e818e03d25b7b52549da7efc6f72f8358",
-        "COMMUNITY_ADMIN": "0xd371a791449dde047fa69dca98e8aa5404904699",
-        "COMMUNITY_MEMBER": "0x5ed675f25f94ba32c5635b80abe0333c6e9e9c95",
-        "COMMUNITY_PAUSE": "0x1567c2cf384a1bd35c0e2273c8aed2f40d65a42f",
-        "COMMUNITY_POOL": "0x8e2e20ac126b5468c1c6f60c9389ac8e12ec70df",
-        "COMMUNITY_POWER": "0xb47dfde7c91ae495c14dc94242047fb3033194cb",
-        "COMMUNITY_STRATEGY": "0x30f5747d1cb883c2430d5bcbed5c1f661e66c9f8"
+        "CV_ADMIN": "0x9e194cf9abb7d63e4cbe11e61e429e97f5f1e822",
+        "CV_ALLOCATION": "0xff2dbd0b2f915d5c832a5ffccc3d6f8320943435",
+        "CV_DISPUTE": "0x792c923f677d03a56ff8978c6e6c6e6e9ec3076e",
+        "CV_PAUSE": "0x2354c77f51ba0419eda4f5c5b857472075483e0e",
+        "CV_POWER": "0x765554677e5f90442f25010bd5ee945db2af4e86",
+        "CV_PROPOSAL": "0xe4d983cf5981d7672ac7568608e19bc35b6005aa",
+        "CV_SYNC_POWER": "0x9ce1416e2473f537e30fb8bd67f645dde71e1ade",
+        "CV_STREAMING": "0xaa2922ce226e15f15a87af29c9e390eadd629655",
+        "COMMUNITY_ADMIN": "0xbbf700ab1a4bae4103c9b38811115a213052494f",
+        "COMMUNITY_MEMBER": "0x332c04ffa19387d356e1329506f5189b2bf5e813",
+        "COMMUNITY_PAUSE": "0x952cfb326203401233663691293d1368b6306d2e",
+        "COMMUNITY_POOL": "0x744b18e3f6b3563f001fe4a030fcc86faa204d40",
+        "COMMUNITY_POWER": "0xf8869710b09acaecbc1031bd4d0c2271a97bd658",
+        "COMMUNITY_STRATEGY": "0xd9865b741d89f0ee723af94df74a27887f7fa12c"
       },
       "INITS": {
         "REGISTRY_COMMUNITY_DIAMOND_INIT": "0x0259e8f8689034d043a1e8bd0c5f23d43a1dc289",
         "CV_STRATEGY_DIAMOND_INIT": "0xf0d3f695dd6dea9211ac4e8f43014ed92a7d54c1"
       },
       "FACTORY_STATE": {
-        "COMMUNITY_CUTS_DIGEST": "0x662fe9d42a102a3e7e52170d63301df04f44f94ce3ff57c83211161a17fda4ad",
-        "STRATEGY_CUTS_DIGEST": "0xd0e5dba7025cc5a3318009e42d8f96ad8a16f19bfee53a830f6d8301ffb60a45"
+        "COMMUNITY_CUTS_DIGEST": "0xf49eece4ee4d23aa45f136ec12984bace522cb541c58ea8a1d66279e30af2e74",
+        "STRATEGY_CUTS_DIGEST": "0xdae8e6651a325e5375726246a7fe4a15032f2ca0084e11083b1032a9a7d2a5be"
       }
     },
     {
@@ -77,15 +77,17 @@
         "ARBITRATOR": "0x49222C53695C77a0F8b78Eb42606B893E98DfE6a",
         "PASSPORT_SCORER": "0x6ad70508f44aa0e86e7af80ccc4fc1f160c2df46",
         "GOOD_DOLLAR_SYBIL": "0x9DdE3cE47cC11ee04Ea1e2C440116B3De6f11Ed8",
-        "PAUSE_CONTROLLER": "0x1a261de078aa00c5b3afac3f549f69af498b5e50"
+        "PAUSE_CONTROLLER": "0x0000000000000000000000000000000000000000"
       },
       "PROXIES": {
         "REGISTRY_FACTORY": "0xf42f88c13804147b2fdda13c093ce14219aea395",
         "REGISTRY_COMMUNITIES": [
           "0x0418f78ec03c974ca5b88463f4a5da3e2333c4ab",
           "0x0dce74cf0ccef1fff89469f3befc08806f8e4a3b",
+          "0x16a8d4fc921b8b1cc8729f4da72745e950499296",
           "0x2f8a9454de2e74bc9a0761703b3f7da0470b1e56",
           "0x8036ac3d1685e3603b8a0418e7e1ee033b794485",
+          "0x88efb94f3c0ac2d31efcede444264caf8d594ab8",
           "0x8b8732dac9c30ac89bf660b99fb90000d826ab83",
           "0xa488ac456c7c5964af7d323b7ce795d02e7c5154",
           "0xa502fffb9082700cad62366bc6ce37b15207680f",
@@ -103,6 +105,7 @@
           "0x2b08977d2ceb9520f4faa1556cfe0098e3b6306a",
           "0x2c668e36496b2acd69e46418d5c1de0f43c9c4d2",
           "0x2f0af7438699d6b9ee6849a906f85f7c5851b3e6",
+          "0x316e665465960b79aea9bf53e33a9a2bbcde39e6",
           "0x33482037160b54625e7844cbaa90f808b4dcc1ee",
           "0x39e279272604b7c09ccffb23d4ab5311b5754d7d",
           "0x3bd8c9056a448c7ab3f398df2ffea114febd9139",
@@ -124,31 +127,36 @@
           "0xe6dedd7a954c51ddb283b751db6970a75d067cad"
         ]
       },
-      "hash": "5434e25f594adfc3b64a7c1b4ea6e381e264ea81",
+      "hash": "ee93562f3a8fa000c319b24ccb098ab96243a0e0",
       "IMPLEMENTATIONS": {
-        "CV_STRATEGY": "0xed9a35c3a11d258d0d8267c2e64b69929c7ae530",
-        "REGISTRY_COMMUNITY": "0xb0a89a25caace1008f9e904ae31bdaae3607b3ca",
+        "CV_STRATEGY": "0x63083caf1475c9ca68d01930d6c3b416069f3201",
+        "REGISTRY_COMMUNITY": "0x6b065cf78b734db07b1736b03a38b5ea60bead03",
         "COLLATERAL_VAULT": "0x5d5a26a0b5b14ca4c8b116db7d04289bbe52d9e0"
       },
       "FACETS": {
-        "DIAMOND_LOUPE": "0xd29565a90116316c0db23c58b882df268915038f",
-        "CV_ADMIN": "0x47146aa964f052f5ed623490b3acc00310717167",
-        "CV_ALLOCATION": "0xf173cc9b499aed7cdef8ccf3ddd5699ca0cff918",
-        "CV_DISPUTE": "0xb6bffe55d06c8197ddf967ec0e7863d785cf85ab",
-        "CV_POWER": "0xd3e736ea0bcfcf753d00fb1e320d4cef79d37830",
-        "CV_PROPOSAL": "0x71d195d4121fc5674249e9a1b950c3871105db9b",
-        "COMMUNITY_ADMIN": "0x7c7c7a9e8ac8180f97a53995c4e4d7fc87461472",
-        "COMMUNITY_MEMBER": "0x56b2b909be8acd6e4661b2b29fe47b676af84aa2",
-        "COMMUNITY_POOL": "0xd299f16bda95c28e55479d62486a7deed4423754",
-        "COMMUNITY_POWER": "0x6c32981f7af786aa2dff0960bd3a2228c75f2d7c",
-        "COMMUNITY_STRATEGY": "0x1db344a3f518d66fec13a33c185986094ce9854c",
-        "CV_PAUSE": "0x8f4787cbe9425ab0118aacceeff4e9f537880fe7",
-        "CV_SYNC_POWER": "0x5745abda7b603b7466c650e75cf0b05329ba4a61",
-        "CV_STREAMING": "0xe8349bfaad382b8d32243b350c54cee104ab7bd4",
-        "COMMUNITY_PAUSE": "0x7a89bb823a63211e24d3be0dd9de2002acf56d31"
+        "DIAMOND_LOUPE": "0xa358eb95f0fc074b71e46faa92356898c4e697b4",
+        "CV_ADMIN": "0x3a19f7f445840b2c8652e01c91a4893c916883d6",
+        "CV_ALLOCATION": "0x99d00d89d310e9eccd8e57a33c1bce5283b842d2",
+        "CV_DISPUTE": "0x6094f21ef36cd62f67c985b35ec8270a39085184",
+        "CV_POWER": "0x845c8d0218bb6c4d50220e508c845db044db1320",
+        "CV_PROPOSAL": "0x5391cd3f62749ae1b9ffb48fab4a85fdfb3d6469",
+        "COMMUNITY_ADMIN": "0xda2e80226926038cf80f6f3e75436301f28aa1ed",
+        "COMMUNITY_MEMBER": "0x88b4e86cda312cae2f8c01795b81633c41ced084",
+        "COMMUNITY_POOL": "0x74efd18a4c6b0095b2bbc1f565ff5564c59fee88",
+        "COMMUNITY_POWER": "0xbd3996d009e120b2fd56a9e7fd87ed567b5ba7ef",
+        "COMMUNITY_STRATEGY": "0x0126708eb2f77820b3e0ce3becf82a571e959889",
+        "CV_PAUSE": "0x51a65be3863736ad613ad10a8ebb233801f9ed8c",
+        "CV_SYNC_POWER": "0x0645d0802819f546761318c2d1e9d1dd1f419934",
+        "CV_STREAMING": "0x504f37f4b4aa1e9e798992a1a89477c4072d0f6f",
+        "COMMUNITY_PAUSE": "0xa3e5edc0d251d5deaafd76cd6237c3ef57d551ab"
       },
       "INITS": {
-        "REGISTRY_COMMUNITY_DIAMOND_INIT": "0xd29565a90116316c0db23c58b882df268915038f"
+        "REGISTRY_COMMUNITY_DIAMOND_INIT": "0xd29565a90116316c0db23c58b882df268915038f",
+        "CV_STRATEGY_DIAMOND_INIT": "0x690ecf2db34c3e2e1f3308021189532a312175a5"
+      },
+      "FACTORY_STATE": {
+        "COMMUNITY_CUTS_DIGEST": "0x4f98ff1d2a7585e20b8f5cea0c85586ecc89730ec9c8e39641916b6d74362b68",
+        "STRATEGY_CUTS_DIGEST": "0x1e3aa019b7c23e22453282e68b527d778dd8fbb9d633b39164d24fe092b59b45"
       }
     },
     {
@@ -168,7 +176,8 @@
         "ARBITRATOR": "0xCcbAc15Eb0D8C241D4b6A74E650dE089c292D131",
         "PASSPORT_SCORER": "0xe3DC6e82B599cD80904aCf0a3cd9f7401d92CC37",
         "GOOD_DOLLAR_SYBIL": "0xb01AC9015E04ecC424E646eBAb32dfa7670Ae8a6",
-        "PAUSE_CONTROLLER": "0x055e19753612989d98de37aaac92f4f5b05193f1"
+        "PAUSE_CONTROLLER": "0x10452f6fbdbf46a01a46f815c41a9a39eaadf7b1",
+        "STREAMING_ESCROW_FACTORY": "0x4d3cd8c4289251c696b99aef4b8e30c03f0e1aa0"
       },
       "PROXIES": {
         "REGISTRY_FACTORY": "0xec8824e9a9498520891ec678e98c5bd3e65229c2",
@@ -190,34 +199,37 @@
       },
       "hash": "394cf8d0e805fdb17b186eeee4901dcea4849f21",
       "IMPLEMENTATIONS": {
-        "CV_STRATEGY": "0x26d7999195b096f06af5882e70038efdf094930c",
-        "REGISTRY_COMMUNITY": "0x664591262918fa0d7bd29c22348795e7590f981b",
-        "COLLATERAL_VAULT": "0xb60d6b4c50e8a3b073c3d408fe7786c4a939720e"
+        "CV_STRATEGY": "0xd3ca89f3b54b5cc2591313f888f5d684bbc1fb9e",
+        "REGISTRY_COMMUNITY": "0x5a09dd4fae451a4b3048af777c18b39b17f2d168",
+        "COLLATERAL_VAULT": "0xb60d6b4c50e8a3b073c3d408fe7786c4a939720e",
+        "STREAMING_ESCROW_FACTORY": "0x4ca809a39af60db42216aed73b2d59a69d618bb2",
+        "STREAMING_ESCROW": "0x9b3d977762b19ebed3bc35335379f4d576327b13",
+        "PAUSE_CONTROLLER": "0x3a4ba4d51e553141d0e1fc20426b070f6bf34ac1"
       },
       "FACETS": {
         "DIAMOND_LOUPE": "0xefe2fd44fb9d974e3cddfd00d362f09d60ad91da",
-        "CV_ADMIN": "0xb40dc9ea957002e7a4bb9a4c036b64ac4a22a819",
-        "CV_ALLOCATION": "0x44f5a719648614e9091998de7e79ba8be950a994",
-        "CV_DISPUTE": "0xd44516b0534e6524a2b1b95f6d4ee3490ae705d3",
-        "CV_PAUSE": "0x2cc03fb3705298d3bc6cf8af63c7151cb09a3a35",
-        "CV_POWER": "0xa6cc681c3e67d37c5546292d5d7c58984d200713",
-        "CV_PROPOSAL": "0xd1fcde4b3a9724be8956b3831ec56ed50f5d0480",
-        "CV_SYNC_POWER": "0x90408bbc1977fcc1aec8ac42b98f1c9fc5edc522",
-        "CV_STREAMING": "0x5a356d1ede21cfb9c731efaf97c2e6a422a8ab48",
-        "COMMUNITY_ADMIN": "0xc6793f52a1818e933f0b843605de4b5f03f2821d",
-        "COMMUNITY_MEMBER": "0x87699cf4327005efe94d182ebd5bd5241a588233",
-        "COMMUNITY_PAUSE": "0x6d30c8785f597e29d75ad42b10888e1f1d4fe22c",
-        "COMMUNITY_POOL": "0x1f1e01d07a9c10e73398a8947424615849b954a3",
-        "COMMUNITY_POWER": "0xb919d4146ada8656396eba342a9a7a2acf2a9bb5",
-        "COMMUNITY_STRATEGY": "0x0bd304c6def4cba688128f86f9d66fba5cbf3e20"
+        "CV_ADMIN": "0x06cf482803d82b7e428966b65eb52fd6f41e7bde",
+        "CV_ALLOCATION": "0xe2130def4735547b6f48166dd503867f66295926",
+        "CV_DISPUTE": "0x0f7da437abe536bdcce8ddda6c1f83631fae0b44",
+        "CV_PAUSE": "0x88eddba553f9b150afba3b40d4735df9de7ffd81",
+        "CV_POWER": "0x666a4d3719fa469c8d4b3e81b207a32cc6559c77",
+        "CV_PROPOSAL": "0x3ac45f2b6d7937f04f1180d79ce4e0bc38c401e8",
+        "CV_SYNC_POWER": "0x92ba9e611826965c873290d69639facfa2f0e68e",
+        "CV_STREAMING": "0xb63f75c59685ae4d3e2539b1746f4f7f5cc923cd",
+        "COMMUNITY_ADMIN": "0x17f573ea636f7012d401422f600c19ea4e06402b",
+        "COMMUNITY_MEMBER": "0xfa89cfadd1c3feca320544b321e107b71eb748c2",
+        "COMMUNITY_PAUSE": "0x08a7f2766f9e07c682bc5caddd607350cf62e284",
+        "COMMUNITY_POOL": "0x5bf88db03b68ba011429bf38abef3620b990dde0",
+        "COMMUNITY_POWER": "0x85a652e78affaab219a72983d3f40893a8b2eead",
+        "COMMUNITY_STRATEGY": "0x8ae36290187db4a71f5c0745940edf10f6c436d9"
       },
       "INITS": {
         "REGISTRY_COMMUNITY_DIAMOND_INIT": "0x05098d4be4783db70d94cc8db2daea30f2280837",
         "CV_STRATEGY_DIAMOND_INIT": "0x569fc4c1b71c16f1b85e9d7f1de644b3bc42ce5e"
       },
       "FACTORY_STATE": {
-        "COMMUNITY_CUTS_DIGEST": "0x35edf69183308c97026dbbd4bd56fa171ecc47253f99a80f8c02c5490db47203",
-        "STRATEGY_CUTS_DIGEST": "0x68757b0bc55e4c1a5efd2c32b403e7e520445130d02c66389c67abcc2c91f2c3"
+        "COMMUNITY_CUTS_DIGEST": "0x89921b154fde37dad8aeda59e5058a60235934d1cd648d653fecffc5e4ef40a4",
+        "STRATEGY_CUTS_DIGEST": "0x818c82b34d60640d5fe38053c55e2ac793f25a8e30dd66ac820abb9e7262bf86"
       }
     },
     {
@@ -240,15 +252,20 @@
         "REGISTRY_COMMUNITIES": [
           "0x01a2c3c4e7c38885bf3d01e38847184ff2368fea",
           "0x050ebb32303a724b0b3ef84c917da5b76b772d51",
+          "0x072c84bd770a9f2b527237a0b7dbd3908e2cb9fc",
           "0x0f143af46eef341b3f0dbf98c3ecb47f57067fef",
           "0x110f4a8153c04eace288e712eb4b975b46376b8c",
+          "0x2789f2d1b8050c724d3fc8258faf7f1e45f5707c",
           "0x2851b7e3d1ad8ba5637afe196968f1a4a9875e03",
           "0x2e8b031ae32debce51126b17356f122e4c07e941",
           "0x2ed599a96ea90c5c777abb0a13dfb6af1d5fbe76",
+          "0x3056c5f59994b8c1d2949c38758d0672a5cb7cc9",
+          "0x374874383fca7e1236fa5db8bb89d62fab9252e7",
           "0x3f69323378e45f8d1d90e24e4ad7b772d8afa2e0",
           "0x400b3316447a4362abe36206c145550080046831",
           "0x40f44e992cc53eff241f51c825c7a1853eedaeb0",
           "0x41a9ed5de7998583cd20bf738ca38e649e0eafe3",
+          "0x46cbcf5879c0279119512b621be056755f99e836",
           "0x5396c94ea47916f5661734fee769d0d7cc8b14c6",
           "0x561f7c4c65f42af17eab52b7065a5d2c080a3904",
           "0x5a48adf540cb5c79edb027bef3ebf551ce63661f",
@@ -259,17 +276,23 @@
           "0x7508c3bcc2ce964ef858762cfbfa8bbbcf406ec9",
           "0x7c31db900d9c0db7cf005a862c12a0c298d47220",
           "0x8281fd9c5f709a681813c49843a253a05d9b837c",
+          "0x8619e82a70fc412602e51f5056769ddb27d1b412",
           "0x8c3e27f075bb82e8730660828a1159c9438f3e58",
           "0x9082908714e7119854da2dfa20fd8f268356f3ad",
           "0x98d84697794f4aae7540c1f85433e2ab39ab1206",
+          "0x9c90920df8051340bd7250bce83e6770d634a132",
           "0xa50d2ce829ea7b731c3b0a244032b639ff94cb92",
           "0xab90f7d562edac4fdfcac4d1cd93a45ac4a1fdab",
           "0xb747bf0e9bc114c2ed63b3e5cdac9c5afdc93ea3",
           "0xbb8b8ddc3775d825b6cf33bfa9ddcd771b88c6ee",
           "0xc3ba42da1d9f6b09d4d1315ac04f873a5ba64d3c",
+          "0xd6c828e18114683208d24be26494b038357a829e",
           "0xdd65d3eac26d91f1040fe3beca11863cd354788e",
           "0xe0902356a984540ca097021dbd9e0650974c7f7d",
+          "0xe2e9da541d8bcff895444e7c001ffd5e7192b87d",
+          "0xe5937a5d9ef051643c0b7cb8226b61ef82f7a20b",
           "0xe8cb705f0f29c554e71972af1bfbe16bb2673683",
+          "0xee843ac13f23ce668845f7e82384730f5e6721c0",
           "0xee9cc69179697f3bf8172624c5803b58bf6bf73f",
           "0xf62a2e4ecf3bf73313b3bbbfb1563cb4433c8933",
           "0xfa1d8bdb95e0288779df13f40ff32567647e7ffa",
@@ -304,7 +327,7 @@
           "0xfa7299335e6b6d1305ec968ef23471d27002d682"
         ]
       },
-      "hash": "ffd9f1e4770b6473ef0b777b8afd67c48e908210",
+      "hash": "0367eaf7ea8b3e699d10c4eb13455a20391b0473",
       "IMPLEMENTATIONS": {
         "CV_STRATEGY": "0xee99dbf0bfffc9c811d109a3e4a1eed857463127",
         "REGISTRY_COMMUNITY": "0xc895e3075ebb4b0899979da5d51e112f858605b3",
@@ -365,6 +388,7 @@
           "0xe5b10de982897a60cfae8481bac5848816c0f705",
           "0xe6b60735f5bffd8c255195f2db5cc35b78021872",
           "0xee1a9cf8625c2f1f25201ac1a9a9e81f53d5e846",
+          "0xf3630ea5ed1d9695acab2a3db408b56e3a6c600c",
           "0xf515b83f7e0ab851f822e56b0fe63dfa973e74f0"
         ],
         "CV_STRATEGIES": [
@@ -374,6 +398,7 @@
           "0x0d0b0de6493ff38ebfd5580ed2a38cf5400f82e1",
           "0x0df82861284051ed49c2eb5ef9dd626724f63ad1",
           "0x0e09df5ea5c0a93f7acfc03148e26fb246cdc68e",
+          "0x0e12b430409e4748de176b50c39f111a321a5db8",
           "0x114964e7d57288eb8e117b98dd8972c514027025",
           "0x115c61ce04720cba6c647fedaa694ebbac3f201a",
           "0x15a4ec8c5bf8fa1da8a911aad5c4260be73b9059",
@@ -386,6 +411,7 @@
           "0x336aa86505bdeefceedad46ddaa66a5d3d5bae67",
           "0x346c63ab5b47302ae1d70e7fdb7f37fdd82d9a02",
           "0x3715bac18af8f0d27aa2121abc70c8051c632799",
+          "0x3c1d37c92e075bd71afc88b17364b5713414cf48",
           "0x411f00636b53776c3bff34f837415c598fff4222",
           "0x442f6424f5b533dff6da469334dc3b81c80a7aca",
           "0x4ceda4f34d3512900cc03c813e7eff4619ce5cfa",
@@ -405,6 +431,7 @@
           "0x6ff884f45d0932b6d41ef538478c275d96a9bce3",
           "0x700068416593a3da20cd7b8488961d3421079212",
           "0x757e04b47663d1f0b2605d843cad0cef248b9372",
+          "0x83d1f1a2ccfe9ba80a99ba44507b5aaa01b5b65c",
           "0x84e67b84709ae4473cff1141a083a24f80518570",
           "0x8ace844a662569786a0d12b5364ba27fe4e74106",
           "0x8d24fb40164a26c320808aa00c567f3f65bce284",
@@ -424,12 +451,15 @@
           "0xaeecbc91e44541204d0c784e4ac3e8eca6a47cc8",
           "0xb3551608e7833f517d77419f4035e1a6b14391b7",
           "0xba1b0de347da5b4f50b9fb0840c957081b74ad2d",
+          "0xbc3a4c9b9372fa24223b0618eae191caca31162e",
           "0xbd49a3020277ce697c918bea2044b02557d0c8b3",
+          "0xbee669ae394ef7ecbf020a8c3e7746cf46995f5f",
           "0xc12cb9c057c708eeeca45164a120ad1971e52eec",
           "0xca1a9dda3d2753c073f25c8271365152fabe7ca6",
           "0xcec4c6ca57b3494a8fd0abdc4604d534d451d8a2",
           "0xd6620f7576894543f5225ab44f9eb32133710db3",
           "0xd9cf1f7d077166236e260819257a567b1ca22c8c",
+          "0xdaed833eb4c401332ec890beafec08efe678f46f",
           "0xe1e19cab1c84b3d3123af8c49b26e141a8ac4163",
           "0xe2aee72d564f933f12fb13b2694d1ac49b93ba34",
           "0xed6704f988ffe321be99cf2a8625ec2551fbe36c",
@@ -445,7 +475,7 @@
           "0xfed43acfa82e0e924d507124892878b6086b581d"
         ]
       },
-      "hash": "de50c7d3c9c03e9a1077820a40ef56fa4f7f6e06",
+      "hash": "a260b8245475b1e9a33c96a5bb9650a116604a93",
       "IMPLEMENTATIONS": {
         "CV_STRATEGY": "0x118c20b2739b6aa924067b03741460c5bfdfb51e",
         "REGISTRY_COMMUNITY": "0x4746affa50795796ceb69d0e56eebd4b0ed58493",
@@ -570,6 +600,7 @@
           "0x2e3ab6f45e407283e719da6eeb7844a2f6bccd07",
           "0x36f9176031e7de875659a3d1044cb62d1c2a9d2d",
           "0x3d62928a1b27cd21fbc2633020c5b7c53d8c123d",
+          "0x4082579717ebff10d8b7ffd2ee6582a9274dbeec",
           "0x48ed3db635557079f8e1d0b83b37097abe78d6f1",
           "0x48fdb39d6dc7064f6a3f5f48369fe26f2e434f5b",
           "0x561989f8f5f2bcae9c25bab1448efb8e2674ebe6",
@@ -593,6 +624,7 @@
           "0x74545010e013e5601009305288193cbd5c8702b4",
           "0x777ddf053fb46a48cccf5b91d3417d4daf3ec9e2",
           "0x7c86c9a368324f51c6ef2fe88a1f5a332cac3c2d",
+          "0x7cc039c127d2e655974f9106567cdb86f7895c87",
           "0x7de5cd9bccd6d15ca7ebfd9cd37aafbef6b8d1ad",
           "0x7fe71a32d39954844d1954acae5191116ad116ac",
           "0x831fa1bbcdfe199d56213c40340544aeb7912349",
@@ -626,7 +658,7 @@
           "0xfbad687a935390ff59b36cd6c9462d0b1948e378"
         ]
       },
-      "hash": "faa946a1fe1b190e20c847c0c8eba2139a73b238",
+      "hash": "49a66b14c484808a2760e85accc9dfc072c13fb4",
       "IMPLEMENTATIONS": {
         "CV_STRATEGY": "0x136711c8f9455b0c04f26683ecbc8220fd6a2c33",
         "REGISTRY_COMMUNITY": "0x9e4cae73e539a391613e4e99fe1d1a28142b74b2",
@@ -678,6 +710,7 @@
           "0xb8f04ae1044ff4cab7dfcfac5b8bdbcb760a0193",
           "0xbcec9ad3b6b561a1e5dee9953f87c39a01628e4c",
           "0xc18a4de8c69948bc1322b5aa85a94d4195136913",
+          "0xce6b968c8bd130ca08f1fcc97b509a824380d867",
           "0xceb70621ae510967d6f864949907bdd7cab9eae5",
           "0xdac6e19e4fd51d48cae4e25e7604d7ab83935278",
           "0xe190096f15354d80618f4d5c0239f7a3fb584342",
@@ -697,6 +730,7 @@
           "0x6b57c434de064306e7981662895868d700683dcc",
           "0x6cf124c57ddd95d17559e3caf07539bc63cc7728",
           "0x7b569e081796dd8fd72e386fb1671091c2604bd3",
+          "0x8ad5953a53b7a69203e87de928481e6066011e82",
           "0x8fe008e79f1f66453865e611224d66ad4cb536aa",
           "0x9127bf81bdd0526ca992579e9bc8f232d880d650",
           "0xaaaa24e573d86c9e8b7bfccea38e3b4e864cf8fa",
@@ -707,7 +741,7 @@
           "0xf51f81d34fbfc56bb57dca0a3a4f1591065bf499"
         ]
       },
-      "hash": "8b4accc859935e0f8c25b97b0e3e3bc4aa32e2f9",
+      "hash": "20635dd50dd409cd883732950ff3599fa83a31a3",
       "IMPLEMENTATIONS": {
         "CV_STRATEGY": "0xca52f3a0a730f977b80ac9a02f256de6f7526116",
         "REGISTRY_COMMUNITY": "0x7ffa9482a1753b93de61bec126a80a5662828700",
