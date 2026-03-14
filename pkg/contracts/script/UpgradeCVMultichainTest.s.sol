@@ -122,7 +122,7 @@ contract UpgradeCVMultichainTest is BaseMultiChain, StrategyDiamondConfiguratorB
         run(network);
     }
 
-    function runCurrentNetwork(string memory networkJson) public override {
+    function runCurrentNetwork(string memory networkJson) public virtual override {
         bool doFactory = phaseSelection == Phase.All || phaseSelection == Phase.Factory;
         bool doCommunities = phaseSelection == Phase.All || phaseSelection == Phase.Communities;
         bool doStrategies = phaseSelection == Phase.All || phaseSelection == Phase.Strategies;

@@ -15,5 +15,7 @@ contract DeployERC20 is Native, Script {
         vm.startBroadcast();
         GV2ERC20 token = new GV2ERC20(name, symbol, 18);
         vm.stopBroadcast();
+
+        console2.log("Token", address(token));
     }
 }
