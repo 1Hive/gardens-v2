@@ -39,7 +39,16 @@ contract CommunityPauseFacetHarness is CommunityPauseFacet {
 
 contract CVPauseFacetHarness is CVPauseFacet {
     function setOwner(address owner_) external {
+        _owner = owner_;
         LibDiamond.setContractOwner(owner_);
+    }
+}
+
+contract MockOwnableOwner {
+    address public owner;
+
+    constructor(address owner_) {
+        owner = owner_;
     }
 }
 
@@ -183,6 +192,21 @@ contract PauseFacetBaseTest is Test {
         cv.setOwner(address(0xCAFE));
         vm.expectRevert(
             abi.encodeWithSelector(PauseFacetBase.NotOwner.selector, address(this), address(0xCAFE))
+        );
+        cv.setPauseController(address(controller));
+    }
+
+    function test_cvPauseFacet_uses_raw_proxy_owner_not_resolved_owner() public {
+        CVPauseFacetHarness cv = new CVPauseFacetHarness();
+        MockOwnableOwner rawOwner = new MockOwnableOwner(address(this));
+        cv.setOwner(address(rawOwner));
+
+        vm.prank(address(rawOwner));
+        cv.setPauseController(address(controller));
+        assertEq(cv.pauseController(), address(controller));
+
+        vm.expectRevert(
+            abi.encodeWithSelector(PauseFacetBase.NotOwner.selector, address(this), address(rawOwner))
         );
         cv.setPauseController(address(controller));
     }
