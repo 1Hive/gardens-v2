@@ -1,18 +1,18 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { blo } from "blo";
 import Image from "next/image";
 import { RegisterOptions } from "react-hook-form";
-import { Address, isAddress } from "viem";
+import { Address, createPublicClient, http, isAddress } from "viem";
 import {
   useEnsAddress,
   useEnsAvatar,
   useEnsName,
   useNetwork,
-  usePublicClient,
 } from "wagmi";
 import { FormInput } from "./FormInput";
 import { LoadingSpinner } from "../LoadingSpinner";
-import { getConfigByChain } from "@/configs/chains";
+import { getChain, getConfigByChain } from "@/configs/chains";
+import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useFlag } from "@/hooks/useFlag";
 import { safeABI } from "@/src/customAbis";
@@ -60,9 +60,25 @@ export const FormAddressInput = ({
   ...rest
 }: Props) => {
   const debouncedValue = useDebounce(value, 500);
-  const { chain } = useNetwork();
-  // const connectedChainId = chain?.id;
-  const publicClient = usePublicClient();
+  const { chain: connectedChain } = useNetwork();
+  const chainIdFromPath = useChainIdFromPath();
+  const validationChain = useMemo(
+    () =>
+      (chainIdFromPath ? getChain(chainIdFromPath) : undefined) ??
+      (connectedChain?.id ? getChain(connectedChain.id) : undefined) ??
+      connectedChain,
+    [chainIdFromPath, connectedChain],
+  );
+  const publicClient = useMemo(() => {
+    if (!validationChain) {
+      return undefined;
+    }
+
+    return createPublicClient({
+      chain: validationChain,
+      transport: http(getConfigByChain(validationChain.id)?.rpcUrl),
+    });
+  }, [validationChain]);
 
   const [inputValue, setInputValue] = useState<string>(value ?? "");
   const [isValidatingSafe, setIsValidatingSafe] = useState<boolean>(false);
@@ -105,10 +121,11 @@ export const FormAddressInput = ({
   }, [ensAddress]);
 
   const validateSafeAddress = async (address: string) => {
-    if (
-      bypassSafeCheck ||
-      !getConfigByChain(publicClient.chain.id)?.safePrefix
-    ) {
+    if (!publicClient) {
+      return "Unable to validate Safe address without an RPC client.";
+    }
+
+    if (bypassSafeCheck || !getConfigByChain(publicClient.chain.id)?.safePrefix) {
       return true;
     }
     try {
@@ -129,11 +146,11 @@ export const FormAddressInput = ({
       if (isSafe) {
         return true;
       } else {
-        return `Not a valid Safe address in ${chain?.name} network`;
+        return `Not a valid Safe address in ${validationChain?.name} network`;
       }
     } catch (err) {
       console.error(err);
-      return `Not a valid Safe address in ${chain?.name} network`;
+      return `Not a valid Safe address in ${validationChain?.name} network`;
     } finally {
       setIsValidatingSafe(false);
     }
@@ -144,19 +161,20 @@ export const FormAddressInput = ({
       return true;
     }
 
-    if (!Boolean(publicClient)) {
+    const client = publicClient;
+    if (!client) {
       return "Unable to validate token address without an RPC client.";
     }
 
     try {
       setIsValidatingERC20(true);
       const [symbol, decimals] = await Promise.all([
-        publicClient.readContract({
+        client.readContract({
           address: address as Address,
           abi: erc20ABI,
           functionName: "symbol",
         }),
-        publicClient.readContract({
+        client.readContract({
           address: address as Address,
           abi: erc20ABI,
           functionName: "decimals",
