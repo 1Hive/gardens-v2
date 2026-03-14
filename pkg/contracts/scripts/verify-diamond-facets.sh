@@ -207,7 +207,7 @@ verify_network() {
   if [[ -n "$network" ]]; then
     while read -r facet_impl; do
       [[ -z "$facet_impl" ]] && continue
-      expected_facets["$(echo "$facet_impl" | tr '[:upper:]' '[:lower:]')"]=1
+      expected_facets["$(echo "$facet_impl" | tr '[:upper:]' '[:lower:]')"]="$facet_impl"
     done < <(load_facets_for_network "$network")
   fi
 
@@ -223,12 +223,12 @@ verify_network() {
     echo "  - Inspecting proxy: $proxy"
     while read -r facet; do
       [[ -z "$facet" ]] && continue
-      if [[ -n "${seen[$facet]:-}" ]]; then
+      facet_lc=$(echo "$facet" | tr '[:upper:]' '[:lower:]')
+      if [[ -n "${seen[$facet_lc]:-}" ]]; then
         continue
       fi
-      seen["$facet"]=1
+      seen["$facet_lc"]="$facet"
 
-      facet_lc=$(echo "$facet" | tr '[:upper:]' '[:lower:]')
       if [[ ${#expected_facets[@]} -gt 0 && -z "${expected_facets[$facet_lc]:-}" ]]; then
         echo "    - ERROR: facet $facet is not declared in config/networks.json FACETS for $network"
         unknown_facet_count=$((unknown_facet_count + 1))
@@ -251,6 +251,32 @@ verify_network() {
         "$contract"
     done < <(get_facet_addresses "$proxy" | sort -u)
   done
+
+  if [[ ${#expected_facets[@]} -gt 0 ]]; then
+    echo "  - Verifying all ${#expected_facets[@]} facet implementation(s) declared in config/networks.json"
+    for facet_lc in "${!expected_facets[@]}"; do
+      facet="${expected_facets[$facet_lc]}"
+      if [[ -n "${seen[$facet_lc]:-}" ]]; then
+        continue
+      fi
+
+      echo "    - Fetching codehash for declared facet $facet"
+      codehash=$(cast codehash --rpc-url "$rpc_url" "$facet")
+      contract=${HASH_TO_CONTRACT[$codehash]:-}
+      if [[ -z "$contract" ]]; then
+        echo "    - Unknown facet codehash for declared facet $facet (skipping)"
+        continue
+      fi
+
+      echo "    - Verifying declared facet $facet as $contract"
+      forge verify-contract \
+        --chain-id "$chain_id" \
+        --etherscan-api-key "$ETHERSCAN_API_KEY" \
+        "$facet" \
+        "$contract"
+      seen["$facet_lc"]="$facet"
+    done
+  fi
 
   local total
   total=$(printf '%s\n' "${!seen[@]}" | wc -l | tr -d ' ')
