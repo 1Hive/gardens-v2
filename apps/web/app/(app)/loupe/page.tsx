@@ -128,7 +128,9 @@ const normalizeValueForParameter = (
       ...parameter,
       type: `${getTypeWithoutArraySuffix(parameter.type)}`,
     };
-    return value.map((entry) => normalizeValueForParameter(entry, nestedParameter));
+    return value.map((entry) =>
+      normalizeValueForParameter(entry, nestedParameter),
+    );
   }
 
   if (parameter.type.startsWith("uint") || parameter.type.startsWith("int")) {
@@ -168,7 +170,10 @@ const normalizeValueForParameter = (
 const normalizeArgsForInputs = (
   rawArgs: unknown[],
   inputs: readonly AbiParameter[],
-) => inputs.map((input, index) => normalizeValueForParameter(rawArgs[index], input));
+) =>
+  inputs.map((input, index) =>
+    normalizeValueForParameter(rawArgs[index], input),
+  );
 
 export default function DiamondAdminPage() {
   const [addressInput, setAddressInput] = useState("");
@@ -251,10 +256,9 @@ export default function DiamondAdminPage() {
   );
 
   const knownFunctionBySignature = useMemo(() => {
-    const entries = knownAbiFunctions.map((fn) => [
-      toCanonicalSignature(fn),
-      fn,
-    ] as const);
+    const entries = knownAbiFunctions.map(
+      (fn) => [toCanonicalSignature(fn), fn] as const,
+    );
     return new Map(entries);
   }, []);
 
@@ -509,7 +513,9 @@ export default function DiamondAdminPage() {
         const rawResult = response.data ?? "0x";
         if ((functionAbi.outputs ?? []).length === 0) {
           setReadOutput(
-            rawResult !== "0x" ? `Raw return data:\n${rawResult}` : "No return value (0x)",
+            rawResult !== "0x" ?
+              `Raw return data:\n${rawResult}`
+            : "No return value (0x)",
           );
           return;
         }
@@ -555,7 +561,9 @@ export default function DiamondAdminPage() {
       setTxHash(hash);
     } catch (runError) {
       const message =
-        runError instanceof Error ? runError.message : "Unknown execution error";
+        runError instanceof Error ?
+          runError.message
+        : "Unknown execution error";
       setExecutionError(message);
     } finally {
       setIsExecutingRead(false);
@@ -633,9 +641,7 @@ export default function DiamondAdminPage() {
         {isError && (
           <InfoBox infoBoxType="error" title="Unable to read facets">
             {error?.message ?
-              error?.message
-                .split("\n")
-                .map((line) => <p key={line}>{line}</p>)
+              error?.message.split("\n").map((line) => <p key={line}>{line}</p>)
             : "The diamond does not expose loupe data."}
           </InfoBox>
         )}
@@ -855,7 +861,11 @@ export default function DiamondAdminPage() {
                   <div className="flex flex-wrap gap-2">
                     <Button
                       btnStyle="outline"
-                      color={selectedFunctionKind === "read" ? "primary" : "secondary"}
+                      color={
+                        selectedFunctionKind === "read" ? "primary" : (
+                          "secondary"
+                        )
+                      }
                       className="sm:w-auto"
                       onClick={() => void executeFunction("read")}
                       isLoading={isExecutingRead}
