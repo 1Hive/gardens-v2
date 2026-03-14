@@ -183,6 +183,11 @@ const transferAbi = parseAbi([
 const toLower = (addr?: string | null) => addr?.toLowerCase() ?? "";
 const isValidAddr = (addr?: string | null) =>
   typeof addr === "string" && addr.toLowerCase().startsWith("0x");
+const parseBooleanParam = (value?: string | null) => {
+  if (!value) return false;
+  const normalized = value.trim().toLowerCase();
+  return ["1", "true", "yes", "on"].includes(normalized);
+};
 const safeStringify = (value: unknown) => {
   try {
     return JSON.stringify(value, (_key, val) =>
@@ -1375,10 +1380,7 @@ const cacheHydrationPromise = Promise.all([
 const ensureLatestPointsSnapshotCid = async (
   snapshotName = PINATA_POINTS_SNAPSHOT_NAME,
 ): Promise<string | null> => {
-  if (
-    snapshotName === PINATA_POINTS_SNAPSHOT_NAME &&
-    latestPointsSnapshotCid
-  ) {
+  if (snapshotName === PINATA_POINTS_SNAPSHOT_NAME && latestPointsSnapshotCid) {
     return latestPointsSnapshotCid;
   }
   if (!CAN_WRITE_PINATA) return null;
@@ -2930,10 +2932,15 @@ export async function GET(req: Request) {
   }
   const url = new URL(req.url);
   const campaignIdParam = url.searchParams.get("campaignId")?.trim() ?? "";
+  const walletParam = url.searchParams.get("wallet")?.trim() ?? "";
+  const targetWallet = walletParam ? toLower(walletParam) : null;
+  const traceOnlyRequested = parseBooleanParam(
+    url.searchParams.get("traceOnly"),
+  );
+  const traceOnly = traceOnlyRequested || Boolean(targetWallet);
   const hasCampaignIdOverride = campaignIdParam.length > 0;
   const parsedCampaignId = hasCampaignIdOverride ? Number(campaignIdParam) : 0;
-  const campaignIdOverride =
-    hasCampaignIdOverride ? parsedCampaignId : null;
+  const campaignIdOverride = hasCampaignIdOverride ? parsedCampaignId : null;
   if (
     hasCampaignIdOverride &&
     (!Number.isInteger(parsedCampaignId) || parsedCampaignId <= 0)
@@ -2943,6 +2950,15 @@ export async function GET(req: Request) {
     console.error = originalConsole.error;
     return NextResponse.json(
       { error: "campaignId must be a positive integer" },
+      { status: 400 },
+    );
+  }
+  if (targetWallet && !isValidAddr(targetWallet)) {
+    console.log = originalConsole.log;
+    console.warn = originalConsole.warn;
+    console.error = originalConsole.error;
+    return NextResponse.json(
+      { error: "wallet must be a valid 0x address" },
       { status: 400 },
     );
   }
@@ -2979,7 +2995,9 @@ export async function GET(req: Request) {
   // Reset transient state each run
   notionDisabled = false;
   await cacheHydrationPromise;
-  await hydratePointsSnapshotFromIpfs(snapshotName);
+  if (!traceOnly) {
+    await hydratePointsSnapshotFromIpfs(snapshotName);
+  }
   // Invalidate caches if campaign window changed since last hydration
   if (
     creationCacheCampaignVersion &&
@@ -2999,6 +3017,13 @@ export async function GET(req: Request) {
   }
 
   const flushCaches = async () => {
+    if (traceOnly) {
+      return {
+        creationBlockCacheCid: null,
+        transferLogCacheCid: null,
+        priceCacheCid: null,
+      };
+    }
     const [creationPin, transferPin, pricePin] = await Promise.all([
       persistCreationBlockCache(),
       persistTransferLogCache(),
@@ -3252,9 +3277,15 @@ export async function GET(req: Request) {
       ...farcasterDiscardedWallets.values(),
       ...walletActivitiesByWallet.keys(),
     ]);
+    const scopedAddresses =
+      targetWallet ?
+        new Set<string>(
+          [targetWallet].filter((address) => allAddresses.has(address)),
+        )
+      : allAddresses;
 
     if (!SKIP_IDENTITY_RESOLUTION) {
-      for (const address of allAddresses) {
+      for (const address of scopedAddresses) {
         if (ensNameByWallet.has(address) && ensAvatarByWallet.has(address)) {
           continue;
         }
@@ -3279,7 +3310,7 @@ export async function GET(req: Request) {
       streamUsd: number;
     }> = [];
 
-    for (const address of allAddresses) {
+    for (const address of scopedAddresses) {
       if (EXCLUDED_WALLETS.has(address)) continue;
       const value = totals.get(address) ?? { fundUsd: 0, streamUsd: 0 };
       const fundPoints = value.fundUsd >= 10 ? Math.floor(value.fundUsd) : 0;
@@ -3370,7 +3401,10 @@ export async function GET(req: Request) {
       event: string;
       payload: { account: string; points: number; metadata?: any };
     }> = [];
-    const existingTotalsByAddress = await fetchExistingTotalsByAddress();
+    const existingTotalsByAddress =
+      traceOnly ?
+        new Map<string, Record<string, number>>()
+      : await fetchExistingTotalsByAddress();
 
     const emptyCategoryTotals = Array.from(eventNames).reduce(
       (acc, n) => {
@@ -3495,7 +3529,11 @@ export async function GET(req: Request) {
       });
     }
 
-    if (allEventPayloads.length && !STACK_DRY_RUN) {
+    if (traceOnly) {
+      console.log("[superfluid-points] TRACE ONLY - skipping event diff sync", {
+        wallet: targetWallet,
+      });
+    } else if (allEventPayloads.length && !STACK_DRY_RUN) {
       console.log("[superfluid-points] stack sendEvents request", {
         count: allEventPayloads.length,
       });
@@ -3522,7 +3560,7 @@ export async function GET(req: Request) {
     // Export as CSV (Notion sync runs when configured; CSV remains fallback)
     const walletBreakdownCsv = buildWalletCsv(walletBreakdown);
     const pointsSnapshotPromise =
-      walletBreakdown.length && CAN_WRITE_PINATA ?
+      !traceOnly && walletBreakdown.length && CAN_WRITE_PINATA ?
         pinPointsSnapshotToIpfs(walletBreakdown, snapshotName)
       : null;
 
@@ -3533,7 +3571,7 @@ export async function GET(req: Request) {
       failed: 0,
     };
 
-    if (notionClient && NOTION_DB_ID_TRIMMED && !notionDisabled) {
+    if (!traceOnly && notionClient && NOTION_DB_ID_TRIMMED && !notionDisabled) {
       notionSync.attempted = true;
       try {
         // Fetch existing pages to update in place
@@ -3670,20 +3708,31 @@ export async function GET(req: Request) {
       responsePointsCid = await pointsSnapshotPromise;
     }
 
+    const responseTotals =
+      targetWallet ?
+        Object.fromEntries(
+          Array.from(totals.entries()).filter(
+            ([address]) => address === targetWallet,
+          ),
+        )
+      : Object.fromEntries(totals.entries());
+
     const pinned = await flushCaches();
     responseCreationCid = pinned.creationBlockCacheCid;
     responseTransferCid = pinned.transferLogCacheCid;
     pinnedPriceCacheCid = pinned.priceCacheCid ?? pinnedPriceCacheCid;
-    responseRunLogsCid = await pinRunLogsToIpfs(runLogBuffer);
-    logPinnedArtifacts({
-      pointsSnapshotCid: responsePointsCid,
-      runLogsCid: responseRunLogsCid,
-    });
-    if (responseRunLogsCid) {
-      console.log("[superfluid-points] run logs pinned", {
-        cid: responseRunLogsCid,
-        url: `https://gateway.pinata.cloud/ipfs/${responseRunLogsCid}`,
+    if (!traceOnly) {
+      responseRunLogsCid = await pinRunLogsToIpfs(runLogBuffer);
+      logPinnedArtifacts({
+        pointsSnapshotCid: responsePointsCid,
+        runLogsCid: responseRunLogsCid,
       });
+      if (responseRunLogsCid) {
+        console.log("[superfluid-points] run logs pinned", {
+          cid: responseRunLogsCid,
+          url: `https://gateway.pinata.cloud/ipfs/${responseRunLogsCid}`,
+        });
+      }
     }
     console.log = originalConsole.log;
     console.warn = originalConsole.warn;
@@ -3692,9 +3741,12 @@ export async function GET(req: Request) {
     return NextResponse.json(
       {
         csv: walletBreakdownCsv,
-        message: "Superfluid stack sync completed",
+        message:
+          traceOnly ?
+            "Superfluid wallet trace completed"
+          : "Superfluid stack sync completed",
         updated: updates,
-        totals: Object.fromEntries(totals.entries()),
+        totals: responseTotals,
         missingPrices: missingPriceEntries,
         overrideTemplate: missingPriceEntries.reduce(
           (acc, curr) => {
@@ -3719,13 +3771,15 @@ export async function GET(req: Request) {
         pointsSnapshotCid: responsePointsCid,
         campaignId: effectiveCampaignId,
         runLogsCid: responseRunLogsCid,
+        targetWallet,
         campaignWindow: {
           start,
           end,
           startIso: new Date(start * 1000).toISOString(),
           endIso: new Date(end * 1000).toISOString(),
         },
-        dryRun: STACK_DRY_RUN,
+        dryRun: STACK_DRY_RUN || traceOnly,
+        traceOnly,
         debug: chainDebug,
       },
       { status: 200 },
@@ -3735,16 +3789,18 @@ export async function GET(req: Request) {
     responseCreationCid = pinned.creationBlockCacheCid;
     responseTransferCid = pinned.transferLogCacheCid;
     pinnedPriceCacheCid = pinned.priceCacheCid ?? pinnedPriceCacheCid;
-    responseRunLogsCid = await pinRunLogsToIpfs(runLogBuffer);
-    logPinnedArtifacts({
-      pointsSnapshotCid: responsePointsCid,
-      runLogsCid: responseRunLogsCid,
-    });
-    if (responseRunLogsCid) {
-      console.log("[superfluid-points] run logs pinned", {
-        cid: responseRunLogsCid,
-        url: `https://gateway.pinata.cloud/ipfs/${responseRunLogsCid}`,
+    if (!traceOnly) {
+      responseRunLogsCid = await pinRunLogsToIpfs(runLogBuffer);
+      logPinnedArtifacts({
+        pointsSnapshotCid: responsePointsCid,
+        runLogsCid: responseRunLogsCid,
       });
+      if (responseRunLogsCid) {
+        console.log("[superfluid-points] run logs pinned", {
+          cid: responseRunLogsCid,
+          url: `https://gateway.pinata.cloud/ipfs/${responseRunLogsCid}`,
+        });
+      }
     }
     console.log = originalConsole.log;
     console.warn = originalConsole.warn;
